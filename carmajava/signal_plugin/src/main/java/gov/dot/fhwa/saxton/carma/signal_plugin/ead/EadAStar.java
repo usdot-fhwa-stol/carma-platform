@@ -34,9 +34,6 @@ public class EadAStar implements IEad {
     protected double                    maxAccel_;                  //maximum allowed acceleration, m/s^2
     protected double                    fractionalMaxAccel_;        //maximum acceleration times a reasonable factor
     protected List<Node>                currentPath_;               //path through the current intersection
-    protected double                    ddt_ = 0.0;                 //distance downtrack of the current plan start, m // TODO remove
-    protected double                    timeOnPath_ = 0.0;          //time since beginning the current path, sec // TODO remove
-    protected boolean                   intListChanged_ = true;     //has the list of known intersections changed? // TODO remove
     protected List<IntersectionData>    intList_;                   //list of all known intersections
     protected int                       currentNodeIndex_ = 1;      //index to the next node downtrack in currentPath_
     protected double                    speedCmd_ = 0.0;            //speed command from the current node, m/s
@@ -57,8 +54,6 @@ public class EadAStar implements IEad {
     protected double                    idlePower_;                 //brake power wasted at idle under no load, J/s
     protected boolean                   useIdleMin_;                //should we use idle power as min for all situations?
                                                                     // if not then it will only be used when speed = 0
-    protected double                    maxDistanceError_;          //max allowable deviation from plan, m // TODO remove
-    protected boolean                   replanNeeded_ = true;       //do we need to replan the trajectory? // TODO remove
 
     protected ICostModel                timeCostModel_;             //model of travel time cost between nodes in the tree
     protected ICostModel                fuelCostModel_;             //model of fuel cost to travel between nodes in the tree
@@ -91,7 +86,6 @@ public class EadAStar implements IEad {
         
         //set the max distance error to be half the typical distance between nodes a nominal speed
         speedLimit_ = (double)config.getMaximumSpeed(0.0) / Constants.MPS_TO_MPH;
-        maxDistanceError_ = 0.5*speedLimit_*fineTimeInc_;
         fractionalMaxAccel_ = maxAccel_ * 0.75;
 
         timeCostModel_ = new TimeCostModel(speedLimit_, maxAccel_);
@@ -112,159 +106,154 @@ public class EadAStar implements IEad {
     }
 
     @Override
-    public void intersectionListHasChanged() {
-        intListChanged_ = true;
-    }
-
-    @Override
     public void setStopBoxWidth(double width) {
         stopBoxWidth_ = width;
     }
 
-    /**
-     * NOTE that this method will only be called if vehicle is on a known approach lane to the nearest intersection.
-     */
-    @Override
-    public double getTargetSpeed(double speed, double operSpeed, double accel,
-                                 List<IntersectionData> intersections) throws Exception {
+//     /**
+//      * NOTE that this method will only be called if vehicle is on a known approach lane to the nearest intersection.
+//      */
+//     @Override
+//     public double getTargetSpeed(double speed, double operSpeed, double accel,
+//                                  List<IntersectionData> intersections) throws Exception {
 
-        if (intersections == null  ||  intersections.size() == 0) {
-            String msg = "getTargetSpeed invoked with a empty intersection list.";
-            log_.error("EAD", msg);
-            throw new Exception(msg);
-        }
+//         if (intersections == null  ||  intersections.size() == 0) {
+//             String msg = "getTargetSpeed invoked with a empty intersection list.";
+//             log_.error("EAD", msg);
+//             throw new Exception(msg);
+//         }
 
-        intList_ = intersections;
-        long methodStartTime = System.currentTimeMillis();
-        double dtsb = intersections.get(0).dtsb; //if we are close to the stop bar this will be a positive value
-        double replanThreshold = 5.0*Math.max(speed, 2.0); //no need to replan if within 5 sec of stop bar
+//         intList_ = intersections;
+//         long methodStartTime = System.currentTimeMillis();
+//         double dtsb = intersections.get(0).dtsb; //if we are close to the stop bar this will be a positive value
+//         double replanThreshold = 5.0*Math.max(speed, 2.0); //no need to replan if within 5 sec of stop bar
 
-        if (firstCall_) {
-            speedCmd_ = speed;
-            firstCall_ = false;
-        }
-
-
-        ////////// BUILD & SOLVE THE DIJKSTRA TREE TO DEFINE THE BEST PATH
+//         if (firstCall_) {
+//             speedCmd_ = speed;
+//             firstCall_ = false;
+//         }
 
 
-        //TODO: monitor the execution time of this block; if it is big we may need to put it in a separate thread
-
-        //TODO: may be able to avoid replanning every time the intersection data is updated; should do so only when
-        //      it is an advantage (e.g. no point if there is only 1 intersection and we are 3 sec from passing its bar)
-
-        //if the intersection picture has changed since previous time step or we otherwise need to replan then
-        if (replanNeeded_  ||  (intListChanged_  &&  dtsb > replanThreshold)) {
-            Node goal;
-            if (intListChanged_) {
-                log_.info("EAD", "///// getTargetSpeed replanning begun due to changed intersection data.");
-            }else {
-                log_.info("EAD", "///// getTargetSpeed replanning begun due to other need.");
-            }
-
-            //define starting node and reset DDT since we are beginning execution of a new path
-            // (starting the plan at commanded speed rather than actual speed will allow for smoother transitions
-            // from one plan to another, since actual speed may be nowhere near commanded speed, but acceleration
-            // is already trying to get us to the command quickly)
-            if (Math.abs(speed - speedCmd_) > 2.0) {
-                log_.warn("EAD", "New plan being generated when actual speed differs greatly from command."
-                            + " prev command = " +  speedCmd_ + ", actual = " + speed);
-            }
-            Node startNode = new Node(0.0, 0.0, speedCmd_);
-            currentNodeIndex_ = 0;
-            ddt_ = 0.0;
-            timeOnPath_ = 0.0;
-            currentPath_ = null;
-
-            //perform coarse planning to determine the goal node downtrack of the first intersection [planCoarsePath]
-            goal = planCoarsePath(operSpeed, startNode);
-
-            //build a detailed plan to reach the near-term goal node downtrack of first intersection [planDetailedPath]
-            try {
-                currentPath_ = planDetailedPath(startNode, goal);
-            }catch (Exception e) {
-                log_.warn("EAD", "getTargetSpeed trapped exception from planDetailedPath: " + e.toString());
-            }
-
-            if (currentPath_ == null  ||  currentPath_.size() == 0) {
-                String msg = "getTargetSpeed produced an unusable detailed path.";
-                log_.error("EAD", msg);
-                throw new Exception(msg);
-            }
-
-            //clear the intersection changed indicator
-            intListChanged_ = false;
-            replanNeeded_ = false;
-
-        //else (no need to create a new plan)
-        }else {
-            //compute the current distance downtrack from the beginning of the current plan
-            double deltaTime = 0.001*((double)(methodStartTime - prevMethodStartTime_));
-            timeOnPath_ += deltaTime;
-            ddt_ += deltaTime*speed;
-        }
+//         ////////// BUILD & SOLVE THE DIJKSTRA TREE TO DEFINE THE BEST PATH
 
 
+//         //TODO: monitor the execution time of this block; if it is big we may need to put it in a separate thread
 
-        ////////// FOLLOW THE DEFINED PATH (TRAJECTORY)
+//         //TODO: may be able to avoid replanning every time the intersection data is updated; should do so only when
+//         //      it is an advantage (e.g. no point if there is only 1 intersection and we are 3 sec from passing its bar)
+
+//         //if the intersection picture has changed since previous time step or we otherwise need to replan then
+//         if (replanNeeded_  ||  (intListChanged_  &&  dtsb > replanThreshold)) {
+//             Node goal;
+//             if (intListChanged_) {
+//                 log_.info("EAD", "///// getTargetSpeed replanning begun due to changed intersection data.");
+//             }else {
+//                 log_.info("EAD", "///// getTargetSpeed replanning begun due to other need.");
+//             }
+
+//             //define starting node and reset DDT since we are beginning execution of a new path
+//             // (starting the plan at commanded speed rather than actual speed will allow for smoother transitions
+//             // from one plan to another, since actual speed may be nowhere near commanded speed, but acceleration
+//             // is already trying to get us to the command quickly)
+//             if (Math.abs(speed - speedCmd_) > 2.0) {
+//                 log_.warn("EAD", "New plan being generated when actual speed differs greatly from command."
+//                             + " prev command = " +  speedCmd_ + ", actual = " + speed);
+//             }
+//             Node startNode = new Node(0.0, 0.0, speedCmd_);
+//             currentNodeIndex_ = 0;
+//             ddt_ = 0.0;
+//             timeOnPath_ = 0.0;
+//             currentPath_ = null;
+
+//             //perform coarse planning to determine the goal node downtrack of the first intersection [planCoarsePath]
+//             goal = planCoarsePath(operSpeed, startNode);
+
+//             //build a detailed plan to reach the near-term goal node downtrack of first intersection [planDetailedPath]
+//             try {
+//                 currentPath_ = planDetailedPath(startNode, goal);
+//             }catch (Exception e) {
+//                 log_.warn("EAD", "getTargetSpeed trapped exception from planDetailedPath: " + e.toString());
+//             }
+
+//             if (currentPath_ == null  ||  currentPath_.size() == 0) {
+//                 String msg = "getTargetSpeed produced an unusable detailed path.";
+//                 log_.error("EAD", msg);
+//                 throw new Exception(msg);
+//             }
+
+//             //clear the intersection changed indicator
+//             intListChanged_ = false;
+//             replanNeeded_ = false;
+
+//         //else (no need to create a new plan)
+//         }else {
+//             //compute the current distance downtrack from the beginning of the current plan
+//             double deltaTime = 0.001*((double)(methodStartTime - prevMethodStartTime_));
+//             timeOnPath_ += deltaTime;
+//             ddt_ += deltaTime*speed;
+//         }
 
 
-        //determine which is the next node in the plan, based on time from start of plan
-        Node currentNode = currentPath_.get(currentNodeIndex_);
-        if (timeOnPath_ > currentNode.getTimeAsDouble()) {
-            double error = ddt_ - currentNode.getDistanceAsDouble();
-            log_.info("EAD", "Crossed detailed path node " + currentNodeIndex_ + " at time = "
-                        + timeOnPath_ + " sec, dist = " + ddt_ + " m, dist error = " + error);
 
-            //if we are sufficiently far off plan then indicate it's time to replan
-            // TODO replan will trigger abrupt stopping in some case, where the vehicle cannot plan
-            // Tracking dtd error is not needed inside CARMA plugin 
-//            if (Math.abs(error) > maxDistanceError_) {
-//                replanNeeded_ = true;
-//                log_.info("EAD", "Performance has deviated too far from plan. Replan needed.");
-//            }
+//         ////////// FOLLOW THE DEFINED PATH (TRAJECTORY)
 
-            //we should never reach the end of a plan, but check just in case
-            if (currentNodeIndex_ < currentPath_.size() - 1) {
-                //get the speed of the next downtrack node and use it as the new command
-                ++currentNodeIndex_;
-            }else {
-                replanNeeded_ = true;
-                String msg = "getTargetSpeed has fallen off the end of the path at node " + currentNodeIndex_;
-                log_.warn("EAD", msg);
-            }
-        }
 
-        //determine speed command by interpolating between the two nearest nodes - this avoids severe jerking
-        // produced by the controller when subjected to large step function of reduced speeds
-        if (currentNodeIndex_ > 0) {
-            Node prevNode = currentPath_.get(currentNodeIndex_ - 1);
-            if (prevNode.getSpeed() == currentNode.getSpeed()) {
-                speedCmd_ = currentNode.getSpeedAsDouble();
-            }else {
-                double prevSpeed = prevNode.getSpeedAsDouble();
-                double deltaSpeed = currentNode.getSpeedAsDouble() - prevSpeed;
-                double prevTime = prevNode.getTimeAsDouble();
-                double deltaTime = currentNode.getTimeAsDouble() - prevTime;
-                double f;
-                try {
-                    f = (timeOnPath_ - prevTime)/deltaTime;
-                }catch (ArithmeticException e) { //should never happen
-                    f = 1.0;
-                    log_.warn("EAD", "Divide by zero when interpolating speed command.");
-                }
-                speedCmd_ = prevSpeed + f*deltaSpeed;
-                log_.debug("EAD", "speed cmd interpolation: node = " + currentNodeIndex_ + ", prevSpeed = " + prevSpeed + ", deltaSpeed = "
-                            + deltaSpeed + ", prevTime = " + prevTime + ", deltaTime = " + deltaTime + ", f = " + f);
-            }
-        }
+//         //determine which is the next node in the plan, based on time from start of plan
+//         Node currentNode = currentPath_.get(currentNodeIndex_);
+//         if (timeOnPath_ > currentNode.getTimeAsDouble()) {
+//             double error = ddt_ - currentNode.getDistanceAsDouble();
+//             log_.info("EAD", "Crossed detailed path node " + currentNodeIndex_ + " at time = "
+//                         + timeOnPath_ + " sec, dist = " + ddt_ + " m, dist error = " + error);
 
-        prevMethodStartTime_ = methodStartTime;
-        long totalTime = System.currentTimeMillis() - methodStartTime;
-        log_.debug("EAD", "getTargetSpeed completed in " + totalTime + " ms.");
+//             //if we are sufficiently far off plan then indicate it's time to replan
+//             // TODO replan will trigger abrupt stopping in some case, where the vehicle cannot plan
+//             // Tracking dtd error is not needed inside CARMA plugin 
+// //            if (Math.abs(error) > maxDistanceError_) {
+// //                replanNeeded_ = true;
+// //                log_.info("EAD", "Performance has deviated too far from plan. Replan needed.");
+// //            }
 
-        return speedCmd_;
-    }
+//             //we should never reach the end of a plan, but check just in case
+//             if (currentNodeIndex_ < currentPath_.size() - 1) {
+//                 //get the speed of the next downtrack node and use it as the new command
+//                 ++currentNodeIndex_;
+//             }else {
+//                 replanNeeded_ = true;
+//                 String msg = "getTargetSpeed has fallen off the end of the path at node " + currentNodeIndex_;
+//                 log_.warn("EAD", msg);
+//             }
+//         }
+
+//         //determine speed command by interpolating between the two nearest nodes - this avoids severe jerking
+//         // produced by the controller when subjected to large step function of reduced speeds
+//         if (currentNodeIndex_ > 0) {
+//             Node prevNode = currentPath_.get(currentNodeIndex_ - 1);
+//             if (prevNode.getSpeed() == currentNode.getSpeed()) {
+//                 speedCmd_ = currentNode.getSpeedAsDouble();
+//             }else {
+//                 double prevSpeed = prevNode.getSpeedAsDouble();
+//                 double deltaSpeed = currentNode.getSpeedAsDouble() - prevSpeed;
+//                 double prevTime = prevNode.getTimeAsDouble();
+//                 double deltaTime = currentNode.getTimeAsDouble() - prevTime;
+//                 double f;
+//                 try {
+//                     f = (timeOnPath_ - prevTime)/deltaTime;
+//                 }catch (ArithmeticException e) { //should never happen
+//                     f = 1.0;
+//                     log_.warn("EAD", "Divide by zero when interpolating speed command.");
+//                 }
+//                 speedCmd_ = prevSpeed + f*deltaSpeed;
+//                 log_.debug("EAD", "speed cmd interpolation: node = " + currentNodeIndex_ + ", prevSpeed = " + prevSpeed + ", deltaSpeed = "
+//                             + deltaSpeed + ", prevTime = " + prevTime + ", deltaTime = " + deltaTime + ", f = " + f);
+//             }
+//         }
+
+//         prevMethodStartTime_ = methodStartTime;
+//         long totalTime = System.currentTimeMillis() - methodStartTime;
+//         log_.debug("EAD", "getTargetSpeed completed in " + totalTime + " ms.");
+
+//         return speedCmd_;
+//     }
 
     ////////////////////
     // protected members
@@ -443,6 +432,7 @@ public class EadAStar implements IEad {
             throw new Exception(msg);
         }
 
+        intList_ = intersections;
         long methodStartTime = System.currentTimeMillis();
         double dtsb = intersections.get(0).dtsb; //if we are close to the stop bar this will be a positive value
         double replanThreshold = 5.0*Math.max(speed, 2.0); //no need to replan if within 5 sec of stop bar
@@ -455,50 +445,38 @@ public class EadAStar implements IEad {
         //TODO: may be able to avoid replanning every time the intersection data is updated; should do so only when
         //      it is an advantage (e.g. no point if there is only 1 intersection and we are 3 sec from passing its bar)
 
-        //if the intersection picture has changed since previous time step or we otherwise need to replan then
-        replanNeeded_ = true; // TODO remove 
-        // TODO In the getTargetSpeed function everything in this block is needed
-        if (replanNeeded_  ||  (intListChanged_  &&  dtsb > replanThreshold)) {
-            Node goal;
+        Node goal;
 
-            //define starting node and reset DDT since we are beginning execution of a new path
-            // (starting the plan at commanded speed rather than actual speed will allow for smoother transitions
-            // from one plan to another, since actual speed may be nowhere near commanded speed, but acceleration
-            // is already trying to get us to the command quickly)
-            // if (Math.abs(speed - speedCmd_) > 2.0) {
-            //     log_.warn("EAD", "New plan being generated when actual speed differs greatly from command."
-            //                 + " prev command = " +  speedCmd_ + ", actual = " + speed);
-            // }
-            Node startNode = new Node(0.0, 0.0, speedCmd_);
-            currentNodeIndex_ = 0;
-            ddt_ = 0.0;
-            timeOnPath_ = 0.0;
-            currentPath_ = null;
+        //define starting node and reset DDT since we are beginning execution of a new path
+        // (starting the plan at commanded speed rather than actual speed will allow for smoother transitions
+        // from one plan to another, since actual speed may be nowhere near commanded speed, but acceleration
+        // is already trying to get us to the command quickly)
 
-            //perform coarse planning to determine the goal node downtrack of the first intersection [planCoarsePath]
-            goal = planCoarsePath(operSpeed, startNode);
+        // TODO find a way to add this check back in
+        // if (Math.abs(speed - speedCmd_) > 2.0) {
+        //     log_.warn("EAD", "New plan being generated when actual speed differs greatly from command."
+        //                 + " prev command = " +  speedCmd_ + ", actual = " + speed);
+        // }
+        speedCmd_ = speed; // TODO remove when the above check is re-added
+        Node startNode = new Node(0.0, 0.0, speedCmd_);
+        currentNodeIndex_ = 0;
+        currentPath_ = null;
 
-            //build a detailed plan to reach the near-term goal node downtrack of first intersection [planDetailedPath]
-            try {
-                currentPath_ = planDetailedPath(startNode, goal);
-            }catch (Exception e) {
-                log_.warn("EAD", "plan trapped exception from planDetailedPath: " + e.toString());
-            }
+        //perform coarse planning to determine the goal node downtrack of the first intersection [planCoarsePath]
+        goal = planCoarsePath(operSpeed, startNode);
 
-            if (currentPath_ == null  ||  currentPath_.size() == 0) {
-                String msg = "plan produced an unusable detailed path.";
-                log_.error("EAD", msg);
-                throw new Exception(msg);
-            }
-
-        //else (no need to create a new plan)
-        }else {
-            //compute the current distance downtrack from the beginning of the current plan
-            double deltaTime = 0.001*((double)(methodStartTime - prevMethodStartTime_));
-            timeOnPath_ += deltaTime;
-            ddt_ += deltaTime*speed;
+        //build a detailed plan to reach the near-term goal node downtrack of first intersection [planDetailedPath]
+        try {
+            currentPath_ = planDetailedPath(startNode, goal);
+        }catch (Exception e) {
+            log_.warn("EAD", "getTargetSpeed trapped exception from planDetailedPath: " + e.toString());
         }
 
+        if (currentPath_ == null  ||  currentPath_.size() == 0) {
+            String msg = "getTargetSpeed produced an unusable detailed path.";
+            log_.error("EAD", msg);
+            throw new Exception(msg);
+        }
 
         prevMethodStartTime_ = methodStartTime;
         long totalTime = System.currentTimeMillis() - methodStartTime;

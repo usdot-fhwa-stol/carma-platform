@@ -17,6 +17,8 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementHolder;
+import java.util.List;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 
 /**
  * Interface for an EAD wrapper
@@ -27,6 +29,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementHolder;
 public interface ITrajectory {
 	public void engage();
     public boolean isStopConfirmed();
-    public DataElementHolder getSpeedCommand(DataElementHolder state) throws Exception;
+   //TODO remove public DataElementHolder getSpeedCommand(DataElementHolder state) throws Exception;
+    public List<Node> plan(DataElementHolder stateData) throws Exception;
     public void close();
 }

@@ -270,5 +270,5 @@ public class EadIntersectionManager {
 	private int[]				intersectionIds_;	//array of IDs of intersections that we will pay attention to
 	private IntersectionGeometry intersectionGeom_;	//vehicle's relationship to the nearest intersection, if on its map
 	private MapMessage			map_;				//the MAP message that describes the nearest intersection (we may not be on it)
-	private static ILogger		log_ = LoggerManager.getLogger(Trajectory.class);
+	private static ILogger		log_ = LoggerManager.getLogger(EadIntersectionManager.class);
 }

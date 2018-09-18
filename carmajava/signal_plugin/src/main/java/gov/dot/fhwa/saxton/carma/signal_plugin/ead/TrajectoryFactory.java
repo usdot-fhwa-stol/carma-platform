@@ -35,7 +35,7 @@ public class TrajectoryFactory {
             tClass = Class.forName(trajectoryClassName);
         }
         catch(ClassNotFoundException cnfe)   {
-            tClass = SimulatedTrajectory.class;
+            //tClass = SimulatedTrajectory.class; TODO deal with this
         }
 
         Object newObject = null;

@@ -113,7 +113,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private double operSpeedScalingFactor = 1.0;
     private double speedCommandQuantizationFactor = 0.1;
     private AtomicBoolean involvedInControl = new AtomicBoolean(false);
-    private final double CM_PER_M = 100.0;
+    static private final double CM_PER_M = 100.0;
 
     public TrafficSignalPlugin(PluginServiceLocator psl) {
         super(psl);
@@ -194,7 +194,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      * @param x X value of the offset in meters
      * @param y Y value of the offset in meters
      */
-    private void addNodeOffset(Lane lane, Location ref, float x, float y) {
+    static private void addNodeOffset(Lane lane, Location ref, float x, float y) {
         lane.addNodeCm(ref, (int) (x * 100), (int) (y * 100));
     }
 
@@ -203,7 +203,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      * @param data The {@class IntersectionData} instance to be converted
      * @return The map data from input converted into a Glidepath formatted object
      */
-    private MapMessage convertMapMessage(IntersectionData data) {
+    static protected MapMessage convertMapMessage(IntersectionData data) {
         MapMessage map = new MapMessage();
         map.setContentVersion(data.getIntersectionGeometry().getRevision());
         map.setElevationsPresent(false);
@@ -254,7 +254,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      * @param data The {@class IntersectionData} instance to be converted
      * @return The SPAT data from input converted into a Glidepath formatted object
      */
-    private SpatMessage convertSpatMessage(IntersectionData data) {
+    static protected SpatMessage convertSpatMessage(IntersectionData data) {
         IntersectionState state = data.getIntersectionState();
         if (state == null) {
             throw new IllegalArgumentException("convertSpatMessage called with null spat");
@@ -634,17 +634,15 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
         log.info("Requesting AStar plan with intersections: " + intersections.toString());
 
+        List<Node> eadResult;
         try {
-            glidepathTrajectory.getSpeedCommand(state); // TODO do we really need the trajectory object. It's purpose is 99% filled by the plugin
+            eadResult = glidepathTrajectory.plan(state); // TODO do we really need the trajectory object. It's purpose is 99% filled by the plugin
         } catch (Exception e) {
             log.error("Glidepath trajectory planning threw exception!", e);
             TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
             tpr.requestHigherPriority(); // indicate generic failure
             return tpr;
         }
-
-        // GET NODES OUT OF EADASTAR
-        List<Node> eadResult = ead.getCurrentPath();
 
         if (eadResult == null) {
             log.warn("Ead result is null");

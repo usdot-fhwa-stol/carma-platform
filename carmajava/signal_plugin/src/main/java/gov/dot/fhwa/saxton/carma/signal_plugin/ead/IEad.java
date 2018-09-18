@@ -20,6 +20,7 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.ITreeSolver;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 
 import java.util.List;
 
@@ -33,16 +34,16 @@ public interface IEad {
 	void initialize(long timestep, ITreeSolver solver);
 
 
-	/**
-	 * Calculates the new target speed to be used to command the vehicle's motion for the current time step.
-	 * @param speed - current vehicle speed, m/s
-	 * @param operSpeed - current desired speed, m/s
-	 * @param accel - current vehicle forward acceleration, m/s^2
-	 * @param intersections - list of known intersections, if any, sorted in order from nearest to farthest
-	 * @return target speed, m/s
-	 */
-	double getTargetSpeed(double speed, double operSpeed, double accel,
-						  List<IntersectionData> intersections) throws Exception;
+	// TODO remove /**
+	//  * Calculates the new target speed to be used to command the vehicle's motion for the current time step.
+	//  * @param speed - current vehicle speed, m/s
+	//  * @param operSpeed - current desired speed, m/s
+	//  * @param accel - current vehicle forward acceleration, m/s^2
+	//  * @param intersections - list of known intersections, if any, sorted in order from nearest to farthest
+	//  * @return target speed, m/s
+	//  */
+	// double getTargetSpeed(double speed, double operSpeed, double accel,
+	// 					  List<IntersectionData> intersections) throws Exception;
 
 
 	/**
@@ -51,11 +52,15 @@ public interface IEad {
 	 */
 	void setStopBoxWidth(double width);
 
+	// TODO comment
+	List<Node> plan(double speed, double operSpeed, double accel,
+                                 List<IntersectionData> intersections) throws Exception;
 
-	/**
-	 * Notifies the EAD object that the list of intersections has changed in some significant way
-	 * since the previous time step.
-	 */
-	void intersectionListHasChanged();
+
+	// /**
+	//  * Notifies the EAD object that the list of intersections has changed in some significant way
+	//  * since the previous time step.
+	//  */
+	// void intersectionListHasChanged();
 	
 }

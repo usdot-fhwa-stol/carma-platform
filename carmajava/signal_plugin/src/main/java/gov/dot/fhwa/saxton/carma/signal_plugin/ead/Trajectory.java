@@ -24,6 +24,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.asd.map.MapMessage;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.ISpatMessage;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.AStarSolver;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 
@@ -216,37 +217,155 @@ public class Trajectory implements ITrajectory {
 		return new ArrayList<>(intersectionManager_.getSortedIntersections());
 	}
 	
-	/**
-	 * 
-	 * NOTE: In this plugin this function does not return meaningful commands. Instead whole plans are ingested from the EadAStar object at a higher level
-	 * 
-	 * Computes the speed command, ID of nearest intersections in view and DTSB relative to that intersections
-	 * for the current time step based on various combinations of config parameters and
-	 * previous handling of intersections description data.
-	 *
-	 * (state contains valid MAP message || valid MAP previously received) &&
-	 * 		intersections geometry fully decomposed  &&  vehicle position is associated with a lane  &&
-	 * 			signal is red/yellow && (-W < DTSB < 0) : command = 0, computed DTSB
-	 * 			signal is green || (DTSB > 0) : speed command from EAD library, computed DTSB
-	 * 		intersections not fully decomposed  ||  vehicle cannot be associated with a single lane :
-	 * 			command = operating speed, DTSB = very large
-	 * 	    &&  no valid MAP has ever been received :
-	 * 			command = operating speed, DTSB = very large
-	 * 
-	 * Note: DTSB = distance to stop bar; in situations when vehicle can't associate an intersections and lane
-	 * 		(e.g. out of DSRC radio range of any intersections) then we still want the vehicle to operate under
-	 * 		automated control, so will set the speed command to the operating speed.
-	 * 		W = width of the intersection's stop box.
-	 * 
-	 * @param stateData contains current SPEED, OPERATING_SPEED, ACCELERATION, LATITUDE (vehicle), LONGITUDE (vehicle),
-	 *        list of known intersections (including MAP & SPAT data for each). It may
-	 *        also contain other elements.
-	 * 
-	 * @return DataElementHolder containing SPEED_COMMAND, SELECTED_INTERSECTION_ID, LANE_ID, DTSB, SIGNAL_PHASE/TIME
-	 *
-	 * @throws Exception for invalid input data or various computational anomalies
-	 */
-	public DataElementHolder getSpeedCommand(DataElementHolder stateData) throws Exception {
+	// /**
+	//  * 
+	//  * NOTE: In this plugin this function does not return meaningful commands. Instead whole plans are ingested from the EadAStar object at a higher level
+	//  * 
+	//  * Computes the speed command, ID of nearest intersections in view and DTSB relative to that intersections
+	//  * for the current time step based on various combinations of config parameters and
+	//  * previous handling of intersections description data.
+	//  *
+	//  * (state contains valid MAP message || valid MAP previously received) &&
+	//  * 		intersections geometry fully decomposed  &&  vehicle position is associated with a lane  &&
+	//  * 			signal is red/yellow && (-W < DTSB < 0) : command = 0, computed DTSB
+	//  * 			signal is green || (DTSB > 0) : speed command from EAD library, computed DTSB
+	//  * 		intersections not fully decomposed  ||  vehicle cannot be associated with a single lane :
+	//  * 			command = operating speed, DTSB = very large
+	//  * 	    &&  no valid MAP has ever been received :
+	//  * 			command = operating speed, DTSB = very large
+	//  * 
+	//  * Note: DTSB = distance to stop bar; in situations when vehicle can't associate an intersections and lane
+	//  * 		(e.g. out of DSRC radio range of any intersections) then we still want the vehicle to operate under
+	//  * 		automated control, so will set the speed command to the operating speed.
+	//  * 		W = width of the intersection's stop box.
+	//  * 
+	//  * @param stateData contains current SPEED, OPERATING_SPEED, ACCELERATION, LATITUDE (vehicle), LONGITUDE (vehicle),
+	//  *        list of known intersections (including MAP & SPAT data for each). It may
+	//  *        also contain other elements.
+	//  * 
+	//  * @return DataElementHolder containing SPEED_COMMAND, SELECTED_INTERSECTION_ID, LANE_ID, DTSB, SIGNAL_PHASE/TIME
+	//  *
+	//  * @throws Exception for invalid input data or various computational anomalies
+	//  */
+	// public DataElementHolder getSpeedCommand(DataElementHolder stateData) throws Exception {
+	// 	long entryTime = System.currentTimeMillis();
+
+
+	// 	////////// EXTRACT & VALIDATE INPUT STATE (except SPAT)
+
+
+	// 	DoubleDataElement curSpeedElement;
+	// 	DoubleDataElement curAccelElement;
+	// 	DoubleDataElement operSpeedElem;
+	// 	DoubleDataElement vehicleLat;
+	// 	DoubleDataElement vehicleLon;
+	// 	List<IntersectionData> inputIntersections = new ArrayList<>();
+	// 	double operSpeed;
+	// 	try {
+	// 		//convert all input data from the incoming state vector; this will include all intersections now in view
+	// 		if (stateData == null) {
+	// 			log_.error("TRAJ", "getSpeedCommand - input stateData is null.");
+	// 			throw new Exception("No state data input to getSpeedCommand.");
+	// 		}
+	// 		curSpeedElement = (DoubleDataElement) stateData.get(DataElementKey.SMOOTHED_SPEED);
+	// 		curAccelElement = (DoubleDataElement) stateData.get(DataElementKey.ACCELERATION);
+	// 		operSpeedElem = (DoubleDataElement) stateData.get(DataElementKey.OPERATING_SPEED);
+	// 		vehicleLat = (DoubleDataElement) stateData.get(DataElementKey.LATITUDE);
+	// 		vehicleLon = (DoubleDataElement) stateData.get(DataElementKey.LONGITUDE);
+	// 		IntersectionCollectionDataElement icde =
+	// 				(IntersectionCollectionDataElement) stateData.get(DataElementKey.INTERSECTION_COLLECTION);
+	// 		if (icde != null) {
+	// 			inputIntersections = icde.value().intersections;
+	// 		}
+
+	// 		//check that all critical elements are present - will throw exception if missing
+	// 		validateElement(curSpeedElement, "curSpeedElement", true);
+	// 		validateElement(curAccelElement, "curAccelElement", true);
+	// 		validateElement(operSpeedElem, "operSpeed", true);
+	// 		validateElement(vehicleLat, "vehicleLat", true);
+	// 		validateElement(vehicleLon, "vehicleLon", true);
+
+	// 		// override the driver selected operating speed with one stored in the config file if it is valid (for testing)
+	// 		operSpeed = operSpeedElem.value();
+	// 		if (osOverride_ > 0.0) {
+	// 			operSpeed = osOverride_ / Constants.MPS_TO_MPH;
+	// 		}
+
+	// 		//track how old the critical input elements are
+	// 		long oldestTime;
+	// 		if (respectTimeouts_) {
+	// 			oldestTime = curSpeedElement.timeStamp();
+	// 			if (curAccelElement.timeStamp() < oldestTime) oldestTime = curAccelElement.timeStamp();
+	// 			if (vehicleLat.timeStamp() < oldestTime) oldestTime = vehicleLat.timeStamp();
+	// 			if (vehicleLon.timeStamp() < oldestTime) oldestTime = vehicleLon.timeStamp();
+	// 			if ((entryTime - oldestTime) > 0.9 * timeStepSize_) { //allow time for this method to execute within the time step
+	// 				log_.warnf("TRAJ", "getSpeedCommand detects stale input data. curTime = %d, oldestTime = %d, timeStepSize_ = %d",
+	// 						entryTime, oldestTime, timeStepSize_);
+	// 				log_.warnf("TRAJ", "    speed is            %5d ms old", entryTime - curSpeedElement.timeStamp());
+	// 				log_.warnf("TRAJ", "    accel is            %5d ms old", entryTime - curAccelElement.timeStamp());
+	// 				log_.warnf("TRAJ", "    latitude is         %5d ms old", entryTime - vehicleLat.timeStamp());
+	// 				log_.warnf("TRAJ", "    longitude is        %5d ms old", entryTime - vehicleLon.timeStamp());
+	// 			}
+	// 		}
+	// 		curSpeed_ = curSpeedElement.value(); //this is the smoothed value
+	// 		curAccel_ = curAccelElement.value(); //smoothed
+	// 	}catch (Exception e) {
+	// 		log_.error("TRAJ", "Unknown exception trapped in input processing: " + e.toString());
+	// 		throw e;
+	// 	}
+
+
+	// 	////////// UNDERSTAND THE INTERSECTION GEOMETRY & WHERE WE FIT IN
+
+
+	// 	double dtsb;
+	// 	double lat = vehicleLat.value();
+	// 	double lon = vehicleLon.value();
+	// 	try {
+	// 		//update internal record of intersections in view, sorted by distance from the vehicle (nearest first)
+	// 		// ASSUMES all intersections within view are ones on our route (we will be traversing them)
+	// 		Location vehicleLoc = new Location(lat, lon);
+	// 		dtsb = intersectionManager_.updateIntersections(inputIntersections, vehicleLoc);
+
+	// 		log_.debug("TRAJ", "getspeedCommand returned from call to updateIntersections");
+
+	// 	}catch (Exception e) {
+	// 		log_.error("TRAJ", "getSpeedCommand detected exception in intersection or spat calcs: " + e.toString());
+	// 		throw e;
+	// 	}
+
+
+	// 	////////// RUN EAD TO GENERATE NEW PLAN
+
+	// 	//take necessary actions based on the current state
+	// 	double cmd = 0.0;  //the speed command we are to return;
+
+	// 	//get speed command from EAD (assume it will handle position in stop box w/red light)
+	// 	try {
+	// 		log_.info("TrafficSignalPlugin", intersections_.toString());
+	// 		cmd = ead_.getTargetSpeed(curSpeed_, operSpeed, curAccel_, intersections_);
+	// 	}catch (Exception e) {
+	// 		if (eadErrorCount_++ < MAX_EAD_ERROR_COUNT) {
+	// 			cmd = prevCmd_;
+	// 			log_.warnf("TRAJ", "Exception trapped from EAD algo: " + e.toString() +
+	// 							"\n    Continuing to use previous command. " +
+	// 							"curSpeed = %.2f, operSpeed = %.2f, dtsb = %.2f, timeRemaining = %.2f",
+	// 					curSpeed_, operSpeed, dtsb, timeRemaining_);
+	// 		}else {
+	// 			log_.errorf("TRAJ", "Exception trapped by EAD algo: " + e.toString() +
+	// 							"\n    Too many errors...rethrowing. " +
+	// 							"curSpeed = %.2f, operSpeed = %.2f, dtsb = %.2f, timeRemaining = %.2f",
+	// 					curSpeed_, operSpeed, dtsb, timeRemaining_);
+	// 			throw e;
+	// 		}
+	// 	}
+
+	// 	log_.debug("TRAJ", "getSpeedCommand completed executing current state.");
+
+	// 	return null;
+	// } //getSpeedCommand()
+
+	public List<Node> plan(DataElementHolder stateData) throws Exception {
 		long entryTime = System.currentTimeMillis();
 
 
@@ -263,7 +382,7 @@ public class Trajectory implements ITrajectory {
 		try {
 			//convert all input data from the incoming state vector; this will include all intersections now in view
 			if (stateData == null) {
-				log_.error("TRAJ", "getSpeedCommand - input stateData is null.");
+				log_.error("TRAJ", "plan - input stateData is null.");
 				throw new Exception("No state data input to getSpeedCommand.");
 			}
 			curSpeedElement = (DoubleDataElement) stateData.get(DataElementKey.SMOOTHED_SPEED);
@@ -298,7 +417,7 @@ public class Trajectory implements ITrajectory {
 				if (vehicleLat.timeStamp() < oldestTime) oldestTime = vehicleLat.timeStamp();
 				if (vehicleLon.timeStamp() < oldestTime) oldestTime = vehicleLon.timeStamp();
 				if ((entryTime - oldestTime) > 0.9 * timeStepSize_) { //allow time for this method to execute within the time step
-					log_.warnf("TRAJ", "getSpeedCommand detects stale input data. curTime = %d, oldestTime = %d, timeStepSize_ = %d",
+					log_.warnf("TRAJ", "plan detects stale input data. curTime = %d, oldestTime = %d, timeStepSize_ = %d",
 							entryTime, oldestTime, timeStepSize_);
 					log_.warnf("TRAJ", "    speed is            %5d ms old", entryTime - curSpeedElement.timeStamp());
 					log_.warnf("TRAJ", "    accel is            %5d ms old", entryTime - curAccelElement.timeStamp());
@@ -326,43 +445,46 @@ public class Trajectory implements ITrajectory {
 			Location vehicleLoc = new Location(lat, lon);
 			dtsb = intersectionManager_.updateIntersections(inputIntersections, vehicleLoc);
 
-			log_.debug("TRAJ", "getspeedCommand returned from call to updateIntersections");
+			log_.debug("TRAJ", "plan returned from call to updateIntersections");
 
 		}catch (Exception e) {
-			log_.error("TRAJ", "getSpeedCommand detected exception in intersection or spat calcs: " + e.toString());
+			log_.error("TRAJ", "plan detected exception in intersection or spat calcs: " + e.toString());
 			throw e;
 		}
 
 
 		////////// RUN EAD TO GENERATE NEW PLAN
 
-		//take necessary actions based on the current state
-		double cmd = 0.0;  //the speed command we are to return;
+		List<Node> path;
 
 		//get speed command from EAD (assume it will handle position in stop box w/red light)
 		try {
 			log_.info("TrafficSignalPlugin", intersections_.toString());
-			cmd = ead_.getTargetSpeed(curSpeed_, operSpeed, curAccel_, intersections_);
+			path = ead_.plan(curSpeed_, operSpeed, curAccel_, intersections_);
 		}catch (Exception e) {
-			if (eadErrorCount_++ < MAX_EAD_ERROR_COUNT) {
-				cmd = prevCmd_;
-				log_.warnf("TRAJ", "Exception trapped from EAD algo: " + e.toString() +
-								"\n    Continuing to use previous command. " +
-								"curSpeed = %.2f, operSpeed = %.2f, dtsb = %.2f, timeRemaining = %.2f",
-						curSpeed_, operSpeed, dtsb, timeRemaining_);
-			}else {
-				log_.errorf("TRAJ", "Exception trapped by EAD algo: " + e.toString() +
-								"\n    Too many errors...rethrowing. " +
-								"curSpeed = %.2f, operSpeed = %.2f, dtsb = %.2f, timeRemaining = %.2f",
-						curSpeed_, operSpeed, dtsb, timeRemaining_);
-				throw e;
-			}
+			// TODO find best place for if (eadErrorCount_++ < MAX_EAD_ERROR_COUNT) {
+			// 	cmd = prevCmd_;
+			// 	log_.warnf("TRAJ", "Exception trapped from EAD algo: " + e.toString() +
+			// 					"\n    Continuing to use previous command. " +
+			// 					"curSpeed = %.2f, operSpeed = %.2f, dtsb = %.2f, timeRemaining = %.2f",
+			// 			curSpeed_, operSpeed, dtsb, timeRemaining_);
+			// }else {
+			// 	log_.errorf("TRAJ", "Exception trapped by EAD algo: " + e.toString() +
+			// 					"\n    Too many errors...rethrowing. " +
+			// 					"curSpeed = %.2f, operSpeed = %.2f, dtsb = %.2f, timeRemaining = %.2f",
+			// 			curSpeed_, operSpeed, dtsb, timeRemaining_);
+			// 	throw e;
+			// }
+			log_.errorf("TRAJ", "Exception trapped by EAD algo: " + e.toString() +
+			"\n    Too many errors...rethrowing. " +
+			"curSpeed = %.2f, operSpeed = %.2f, dtsb = %.2f, timeRemaining = %.2f",
+				curSpeed_, operSpeed, dtsb, timeRemaining_);
+			throw e;
 		}
 
-		log_.debug("TRAJ", "getSpeedCommand completed executing current state.");
-
-		return null;
-	} //getSpeedCommand()
+		log_.debug("TRAJ", "plan completed executing current state.");
+		return path;
+	}
 
 
 	//////////////////
@@ -582,214 +704,6 @@ public class Trajectory implements ITrajectory {
 		// }
 
 		// return dtsb;
-	}
-
-	/**
-	 * Finds the index of the intersection with given ID in our internal list of known intersections.
-	 *
-	 * @param id - ID of the intersection in question.
-	 * @return index of this intersection in internal list, or -1 if not found.
-	 */
-	private int intersectionIndex(int id) {
-		int res = -1;
-
-		if (intersections_.size() > 0) {
-			for (int i = 0;  i < intersections_.size();  ++i) {
-				if (intersections_.get(i).intersectionId == id) {
-					res = i;
-				}
-			}
-		}
-		return res;
-	}
-
-
-	/**
-	 * Updates geometry for the nearest intersection and computes the DTSB relative to it if vehicle is on a
-	 * known approach lane.  If it is not on an intersection map then it cannot be associated with any lane.
-	 *
-	 * @param vehicleLoc - current vehicle location
-	 * @return DTSB relative to nearest intersection on the designated approach lane; very large if no association
-	 */
-	private double updateNearestGeometry(Location vehicleLoc) {
-		//find the distance to the stop bar of the approach to the current intersection (negative values mean we
-		// are crossing the box and about to depart the intersection)
-		double dtsb = Double.MAX_VALUE;
-		log_.debug("TRAJ", "updateNearestGeometry entered with " + intersections_.size() + " intersections.");
-		if (intersections_.size() > 0) {
-			boolean validMap = loadNewMap(intersections_.get(0).map); //creates intersectionGeom_ if one is valid
-			log_.debug("TRAJ", "updateNearestGeometry: validMap = " + validMap + " and intersectionGeom "
-						+ (intersectionGeom_ == null ? "is" : "is not") + " null.");
-
-			if (validMap) {
-				//compute the current vehicle geometry relative to the intersections
-				boolean associatedWithLane = intersectionGeom_.computeGeometry(vehicleLoc.lat(), vehicleLoc.lon());
-				//get the DTSB
-				dtsb = intersectionGeom_.dtsb();
-				//log_.debug("TRAJ", "updateNearestGeometry: dtsb = " + dtsb);
-
-				//if the computation was successful (vehicle can be associated with a lane) then
-				if (associatedWithLane) {
-					int laneId = intersectionGeom_.laneId();
-					log_.debugf("TRAJ",
-							"  updateNearestGeometry: we are %.1f m from stop bar on lane %d of intersection %d",
-							dtsb, laneId, map_.getIntersectionId());
-				}
-			}
-		}
-
-		return dtsb;
-	}
-
-
-	/**
-	 * If we are on an intersection map and associated with an approach lane then this will update the
-	 * spat data for that lane.  This data will be used by the failsafe mechanism as well as the EAD algorithm.
-	 */
-	private void updateSpatData() throws Exception {
-		approachLaneId_ = -1;
-		phase_ = NONE;
-
-		//if we have a valid intersection geometry (nearest intersection has a map defined) then
-		if (intersectionGeom_ != null) {
-			//log_.debug("TRAJ", "Entering updateSpatData with non-null intersectionGeom.");
-			int laneId = intersectionGeom_.laneId();
-			DataElementHolder spat = null;
-
-			//if we are on the map for the nearest intersection then
-			if (intersectionGeom_.isApproach(laneId)) {
-				approachLaneId_ = laneId;
-				if (approachLaneId_ != prevApproachLaneId_) {
-					timeStepsNewIntersection_ = 1;
-					spatsReceivedOnNewIntersection_ = 0;
-					spatReliableOnNearest_ = false;
-					intersectionsChanged_ = true;
-					log_.debug("TRAJ", "updateSpatData: approach lane ID changed from " + prevApproachLaneId_ + " to " + approachLaneId_);
-				}else if (approachLaneId_ >= 0){
-					++timeStepsNewIntersection_;
-				}
-
-				//get its spat info
-				log_.debug("TRAJ", "updateSpatData getting spat for approach lane " + laneId + ". intersections_ size = " + intersections_.size());
-				ISpatMessage sm = intersections_.get(0).spat;
-				spat = null;
-				if (sm != null) {
-					spat = sm.getSpatForLane(approachLaneId_);
-					log_.debug("TRAJ", "updateSpatData: spat = " + (spat == null ? "null" : "not null"));
-					log_.debug("TRAJ", " spat = " + spat.toString());
-					PhaseDataElement pde = ((PhaseDataElement) spat.get(DataElementKey.SIGNAL_PHASE));
-					if (pde != null) {
-						phase_ = pde.value();
-					}
-					DoubleDataElement dde = ((DoubleDataElement) spat.get(DataElementKey.SIGNAL_TIME_TO_NEXT_PHASE));
-					if (dde != null) {
-						timeRemaining_ = dde.value();
-					}
-					spatErrorCounter_ = 0;
-					++spatsReceivedOnNewIntersection_;
-				}
-				log_.debug("TRAJ", "updateSpatData: spat defined, spatsReceivedOnNewIntersection = " +
-							spatsReceivedOnNewIntersection_);
-
-				//determine if the spat signal on this intersection is reliable (if the intersection is just
-				// now coming into view the messages may be spotty, so we don't want to deal with them yet)
-				if (!spatReliableOnNearest_) {
-					if (timeStepsNewIntersection_ > minStepsNewIntersection_) {
-						if ((double)spatsReceivedOnNewIntersection_ / (double)timeStepsNewIntersection_ > 0.7) {
-							spatReliableOnNearest_ = true;
-							log_.info("TRAJ", "Considering spat to be reliable on new intersection after receiving "
-										+ spatsReceivedOnNewIntersection_ + " messages in " + timeStepsNewIntersection_
-										+ " time steps on approach lane " + approachLaneId_);
-						}
-					}
-				}
-			}
-
-			//if we are in an intersection but don't have a spat message then attempt to extrapolate one
-			if (approachLaneId_ >= 0  &&  spatReliableOnNearest_  &&  spat == null) {
-				if (spatErrorCounter_++ > maxSpatErrors_) {
-					log_.errorf("TRAJ", "updateSpatData: fatal error missing SPAT data for %d consecutive time steps", spatErrorCounter_);
-					throw new Exception("Missing SPAT data for too many consecutive time steps.");
-				} else {
-					String msg = "updateSpatData: missing SPAT data, %d consecutive. Generating extrapolated data.";
-					if (spatErrorCounter_ > 5) {
-						log_.warnf("TRAJ", msg, spatErrorCounter_);
-					} else {
-						log_.infof("TRAJ", msg, spatErrorCounter_);
-					}
-				}
-				double step = (double) timeStepSize_ / 1000.0;
-
-				//we may be in a situation where first view of this intersection only provided a MAP message but
-				// no SPAT (or we just exited one intersection and are now focusing on this one), in which case
-				// there would be no history to extrapolate from
-				if (prevPhase_ == NONE  &&  spatErrorCounter_ < 4) {
-					log_.error("TRAJ", "updateSpatData unable to extrapolate because no spat history on this intersection.");
-					throw new Exception("Missing SPAT data and no history from which to extrapolate.");
-				}else {
-					if (prevTime1_ >= step) {
-						phase_ = prevPhase_;
-						timeRemaining_ = prevTime1_ - step;
-					} else {
-						if (extrapolatedSecondPhase_) { //only allow this branch to execute once
-							log_.error("TRAJ", "updateSpatData unable to extrapolate two additional phases.");
-							throw new Exception("Unable to extrapolate SPAT data through two additional phases.");
-						}
-						extrapolatedSecondPhase_ = true;
-						phase_ = prevPhase_.next();
-						if (phase_ == NONE) {
-							phase_ = phase_.next();
-						}
-						timeRemaining_ = Math.max(prevTime1_ - step, 0.0);
-					}
-				}
-			} //endif intersection but no spat message
-		} //endif have intersection geometry
-		log_.debug("TRAJ", "updateSpatData: end of geometry block.");
-
-		//populate the simpler elements of the intersection data
-		if (intersections_ != null  &&  intersections_.size() > 0) {
-			intersections_.get(0).laneId = approachLaneId_;
-			intersections_.get(0).currentPhase = phase_;
-			intersections_.get(0).timeToNextPhase = timeRemaining_;
-		}
-	}
-
-	/**
-	 * newMap exists and is different from previously stored map : initialize intersections geometry model from it
-	 * else : do nothing
-	 */
-	private boolean loadNewMap(MapMessage newMap) {
-		log_.debug("TRAJ", "loadNewMap entered. newMap = " + (newMap == null ? "null" : "valid"));
-		//if there is a new incoming MAP message and it belongs to the list of intersections we care about then
-		if (newMap != null  &&  wantThisIntersection(newMap.getIntersectionId())) {
-
-			//if it is different from the MAP we were working with in the previous time step then
-			if (map_ == null  ||  newMap.getIntersectionId() != map_.getIntersectionId()  ||
-					newMap.getContentVersion() != map_.getContentVersion()) {
-		
-				//create a new intersection object
-				map_ = newMap;
-				intersectionGeom_ = new IntersectionGeometry();
-				intersectionGeom_.initialize(map_);
-			}
-		}
-
-		return map_ != null; //if we have handled one at any time in the past we are now good
-	}
-	
-	
-	private boolean wantThisIntersection(int thisId) {
-		boolean wanted = false;
-		log_.info("TRAJ", "Checking if intersection is needed id: " + thisId);
-		for (int id : intersectionIds_) {
-			if (thisId == id) {
-				wanted = true;
-				break;
-			}
-		}
-
-		return wanted;
 	}
 
 	/**
