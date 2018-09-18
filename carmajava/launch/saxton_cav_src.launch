@@ -313,7 +313,7 @@
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
         <remap from="outgoing_bsm"
-               to="/$(arg TOP_NS)/$(arg GUIDE_NS)/outgoing_bsm"/>
+               to="/$(arg TOP_NS)/$(arg GUIDE_NS)/bsm"/>
         <remap from="outgoing_mobility_request"
                to="/$(arg TOP_NS)/$(arg GUIDE_NS)/outgoing_mobility_request"/>
         <remap from="outgoing_mobility_path"
