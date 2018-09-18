@@ -28,7 +28,7 @@
 # ...
 # }
 
-cav_msgs/MovementPhaseState event_state
+j2735_msgs/MovementPhaseState event_state
 
 cav_msgs/TimeChangeDetails timing
 bool timing_exists

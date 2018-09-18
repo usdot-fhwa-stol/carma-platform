@@ -19,7 +19,7 @@ bool name_exists
 # -- A globally unique value set,
 # -- consisting of a regionID and
 # -- intersection ID assignment
-cav_msgs/IntersectionReferenceID id
+j2735_msgs/IntersectionReferenceID id
 
 # revision MsgCount  ::= INTEGER (0..127)
 # -- Required default values about lane descriptions follow
@@ -68,7 +68,7 @@ cav_msgs/GenericLane[] lane_list
 # The DF_PreemptPriorityList data frame consists of a list of RegionalSignalControlZone entries.
 #
 # PreemptPriorityList ::= SEQUENCE (SIZE(1..32)) OF SignalControlZone
-cav_msgs/SignalControlZone[] preempt_priority_list
+j2735_msgs/SignalControlZone[] preempt_priority_list
 bool preempt_priority_data_exists
 
 #TODO: RegionalExtensions are not yet implemented in asn1c

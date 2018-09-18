@@ -17,21 +17,21 @@
 #  -- LSB = 1/10 micro degree
 #  -- Providing a range of plus-minus 180 degrees
 #  -- Convert to degree with factor 0.0000001 when field is used
-float64 longitude
+int32 longitude
 
-float64 LONGITUDE_UNAVAILABLE = 180.0000001
-float64 LONGITUDE_MAX = 180.0
-float64 LONGITUDE_MIN = -179.9999999
+int32 LONGITUDE_UNAVAILABLE = 1800000001
+int32 LONGITUDE_MAX = 1800000000
+int32 LONGITUDE_MIN = -1799999999
 
 #Latitude ::= INTEGER (-900000000..900000001)
 #  -- LSB = 1/10 micro degree
 #  -- Providing a range of plus-minus 90 degrees
 #  -- Convert to degree with factor 0.0000001 when field is used
-float64 latitude
+int32 latitude
 
-float64 LATITUDE_UNAVAILABLE = 90.0000001
-float64 LATITUDE_MAX = 90.0
-float64 LATITUDE_MIN = -90.0
+int32 LATITUDE_UNAVAILABLE = 900000001
+int32 LATITUDE_MAX = 900000000
+int32 LATITUDE_MIN = -900000000
 
 
 

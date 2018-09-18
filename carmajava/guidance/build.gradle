@@ -56,6 +56,7 @@ dependencies {
   compile 'org.ros.rosjava_messages:sensor_msgs:1.12.5'
   compile 'org.ros.rosjava_messages:cav_msgs:0.1.0'
   compile 'org.ros.rosjava_messages:cav_srvs:0.1.0'
+  compile 'org.ros.rosjava_messages:j2735_msgs:0.1.0'
   compile 'org.reflections:reflections:0.9.11'
 
   compile project(':guidance_plugin_api')

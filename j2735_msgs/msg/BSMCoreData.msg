@@ -13,7 +13,7 @@
 #MsgCount ::= INTEGER (0..127)
 uint8 msg_count
 
-uint16 MSG_COUNT_MAX = 127
+uint8 MSG_COUNT_MAX = 127
 
 #TemporaryID ::= OCTET STRING (SIZE(4))
 uint8[] id
@@ -27,41 +27,41 @@ uint16 ID_TIME_MAX = 3000
 #  -- The values from 61000 to 65534 are reserved
 #  -- The value of 65535 shall represent an unavailable value in the range of the minute
 #  -- Unit is milliseconds
-uint32 sec_mark
+uint16 sec_mark
 
-uint32 SEC_MARK_MOD = 60000
-uint32 SEC_MARK_UNAVAILABLE = 65535
-
-#Latitude ::= INTEGER (-900000000..900000001)
-#  -- LSB = 1/10 micro degree
-#  -- Providing a range of plus-minus 90 degrees
-#  -- Convert to degree with factor 0.0000001 when field is used
-float64 latitude
-
-float64 LATITUDE_UNAVAILABLE = 90.0000001
-float64 LATITUDE_MAX = 90.0
-float64 LATITUDE_MIN = -90.0
+uint16 SEC_MARK_MOD = 60000
+uint16 SEC_MARK_UNAVAILABLE = 65535
 
 #Longitude ::= INTEGER (-1799999999..1800000001)
 #  -- LSB = 1/10 micro degree
 #  -- Providing a range of plus-minus 180 degrees
 #  -- Convert to degree with factor 0.0000001 when field is used
-float64 longitude
+int32 longitude
 
-float64 LONGITUDE_UNAVAILABLE = 180.0000001
-float64 LONGITUDE_MAX = 180.0
-float64 LONGITUDE_MIN = -179.9999999
+int32 LONGITUDE_UNAVAILABLE = 1800000001
+int32 LONGITUDE_MAX = 1800000000
+int32 LONGITUDE_MIN = -1799999999
+
+#Latitude ::= INTEGER (-900000000..900000001)
+#  -- LSB = 1/10 micro degree
+#  -- Providing a range of plus-minus 90 degrees
+#  -- Convert to degree with factor 0.0000001 when field is used
+int32 latitude
+
+int32 LATITUDE_UNAVAILABLE = 900000001
+int32 LATITUDE_MAX = 900000000
+int32 LATITUDE_MIN = -900000000
 
 #Elevation ::= INTEGER (-4096..61439)
 #  -- In units of 10 cm steps above or below the reference ellipsoid
 #  -- Providing a range of -409.5 to + 6143.9 meters
 #  -- The value -4096 shall be used when Unknown is to be sent
 #  -- Convert to meter with factor 0.1 when field is used
-float32 elev
+int32 elev
 
-float32 ELEVATION_UNAVAILABLE = -409.6
-float32 ELEVATION_MAX = 6143.9
-float32 ELEVATION_MIN = -409.5
+int32 ELEVATION_UNAVAILABLE = -4096
+int32 ELEVATION_MAX = 61439
+int32 ELEVATION_MIN = -4095
 
 # Used to model the accuracy of the positional determination with respect to each given axis.
 j2735_msgs/PositionalAccuracy accuracy
@@ -72,20 +72,20 @@ j2735_msgs/TransmissionState transmission
 #Speed ::= INTEGER (0..8191) -- Units of 0.02 m/s
 #  -- The value 8191 indicates that speed is unavailable
 #  -- Convert to m/s with factor 0.02 when field is used
-float32 speed
+uint16 speed
 
-float32 SPEED_UNAVAILABLE = 163.82
-float32 SPEED_MAX = 163.8
-float32 SPEED_MIN = 0
+uint16 SPEED_UNAVAILABLE = 8191
+uint16 SPEED_MAX = 8190
+uint16 SPEED_MIN = 0
 
 #Heading ::= INTEGER (0..28800)
 #  -- LSB of 0.0125 degrees
 #  -- A range of 0 to 359.9875 degrees
 #  -- Convert to degree with factor 0.0125 when field is used
-float32 heading
-float32 HEADING_UNAVAILABLE = 360.0
-float32 HEADING_MAX = 359.9875
-float32 HEADING_MIN = 0
+uint16 heading
+uint16 HEADING_UNAVAILABLE = 28800
+uint16 HEADING_MAX = 28798
+uint16 HEADING_MIN = 0
 
 #SteeringWheelAngle ::= INTEGER (-126..127)
 #  -- LSB units of 1.5 degrees, a range of -189 to +189 degrees
@@ -94,10 +94,10 @@ float32 HEADING_MIN = 0
 #  -- +126 = +189 deg and beyond
 #  -- +127 to be used for unavailable
 #  -- Convert to degree with factor 1.5 when this field is used
-float32 angle
-float32 STEER_WHEEL_ANGLE_UNAVAILABLE = 190.5
-float32 STEER_WHEEL_ANGLE_MAX = 189.0
-float32 STEER_WHEEL_ANGLE_MIN = -189.0
+int8 angle
+int8 STEER_WHEEL_ANGLE_UNAVAILABLE = 127
+int8 STEER_WHEEL_ANGLE_MAX = 126
+int8 STEER_WHEEL_ANGLE_MIN = -126
 
 # Set of acceleration values in 3 orthogonal directions of the vehicle and with yaw rotation rates expressed as a structure.
 j2735_msgs/AccelerationSet4Way accelSet

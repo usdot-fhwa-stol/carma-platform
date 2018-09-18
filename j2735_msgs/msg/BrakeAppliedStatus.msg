@@ -18,3 +18,9 @@
 
 uint8  brake_applied_status
 
+uint8 UNAVAILABLE=0
+uint8 LEFT_FRONT=1
+uint8 LEFT_REAR=2
+uint8 RIGHT_FRONT=3
+uint8 RIGHT_REAR=4
+

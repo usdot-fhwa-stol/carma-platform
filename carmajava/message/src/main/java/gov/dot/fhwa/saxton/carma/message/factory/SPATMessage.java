@@ -5,10 +5,10 @@ import org.ros.internal.message.Message;
 import org.ros.message.MessageFactory;
 
 import cav_msgs.ByteArray;
-import cav_msgs.IntersectionState;
-import cav_msgs.MovementEvent;
-import cav_msgs.MovementState;
-import cav_msgs.SPAT;
+import j2735_msgs.IntersectionState;
+import j2735_msgs.MovementEvent;
+import j2735_msgs.MovementState;
+import j2735_msgs.SPAT;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
 public class SPATMessage implements IMessage<SPAT> {
