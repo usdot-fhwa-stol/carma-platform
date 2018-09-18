@@ -38,9 +38,8 @@ public class CoarsePathNeighbors extends NeighborBase {
 
     protected double                        lagTime_; //vehicle response lag, sec
     protected double                        fractionalMaxAccel_;
-    protected static final double           TYPICAL_INTERSECTION_WIDTH = 40.0; // meters
     protected static ILogger                log_ = LoggerManager.getLogger(CoarsePathNeighbors.class);
-
+    public    static final double           TYPICAL_INTERSECTION_WIDTH = 40.0; // meters
 
     public CoarsePathNeighbors() {
         history_ = new ArrayList<>();
@@ -136,7 +135,7 @@ public class CoarsePathNeighbors extends NeighborBase {
                 do {
                     Node neighbor = new Node(nodeLoc, nodeTime, nodeSpeed);
                     neighbors.add(neighbor);
-
+                    log_.debug("PLAN", "case one: time = " + nodeTime + " speed = " + nodeSpeed + " loc = " + nodeLoc);
                     nodeTime += timeInc_;
                     nodeSpeed = 2.0*distToNext/(nodeTime - curTime) - curSpeed;
                 }while (nodeSpeed >= crawlingSpeed_  &&  nodeTime <= greenExpiration);
@@ -145,6 +144,7 @@ public class CoarsePathNeighbors extends NeighborBase {
             //find the following green phase and the speed reduction we need to get there
             double timeOfNextGreen = timeOfGreenBegin(intersectionIndex, timeAtNext) + timeBuffer_;
             double greenExpiration = timeOfNextGreen + phaseDuration(intersectionIndex, SignalPhase.GREEN) - timeBuffer_;
+            log_.debug("PLAN", "timeOfNextGreen = " + timeOfNextGreen + " greenExpiration = " + greenExpiration);
 
             //If we are really close to the next intersection then
             // If it will be green while staying at current speed, then it is handled above, and there is no chance
@@ -157,10 +157,10 @@ public class CoarsePathNeighbors extends NeighborBase {
             if (distToNext < lagDist  ||  (timeOfNextGreen - curTime) <= lagTime_) {
                 nodeSpeed = 0.0;
 
-            //else we are far enough away from the intersection to possibly plan a slowdown to catch the following green
+            //else we are far enough away from the intersection we need to plan to arrive at the start of the next green phase
             }else {
                 double calcSpeed = 2.0*(distToNext - lagDist)/(timeOfNextGreen - curTime - lagTime_) - curSpeed; //may be negative
-                nodeSpeed = min(calcSpeed, curSpeed); //if denominator is small calcSpeed is meaningless
+                nodeSpeed = Math.max(Math.min(calcSpeed, speedLimit_), 0); //avoid meaningless speed
             }
 
             //if the speed required to get us through the next green is above crawling speed then
@@ -171,7 +171,7 @@ public class CoarsePathNeighbors extends NeighborBase {
                 while (nodeSpeed >= crawlingSpeed_ && nodeTime <= greenExpiration) {
                     Node neighbor = new Node(nodeLoc, nodeTime, nodeSpeed);
                     neighbors.add(neighbor);
-
+                    log_.debug("PLAN", "case two: time = " + nodeTime + " speed = " + nodeSpeed + " loc = " + nodeLoc);
                     nodeTime += timeInc_;
                     nodeSpeed = 2.0 * distToNext / (nodeTime - curTime) - curSpeed;
                 }
@@ -186,21 +186,22 @@ public class CoarsePathNeighbors extends NeighborBase {
 
                 //TODO - these calcs are for debug purposes only - REMOVE FOR PRODUCTION RELEASE!
                 //first, determine the decel distance & time from current speed
-                double decelTime = curSpeed/maxAccel_;
-                double decelDist = 0.5*curSpeed*decelTime;
+                //double decelTime = curSpeed/maxAccel_;
+                //double decelDist = 0.5*curSpeed*decelTime;
 
                 //add the time to get from current location (at current speed) to the decel point
                 // (assume that intersections are far enough apart that this will always be non-negative)
-                double cruiseTime = (distToNext - decelDist)/curSpeed;
+                //double cruiseTime = (distToNext - decelDist)/curSpeed;
 
                 //determine where this falls in the red cycle, and add the cycle time remaining to our time allotment
-                double waitTime = timeOfNextGreen - (curTime + cruiseTime + decelTime);
-                log_.debug("EAD", "Need to stop at red: decelTime = " + decelTime + ", decelDist = " + decelDist
-                            + ", cruiseTime = " + cruiseTime + ", waitTime = " + waitTime);
+                //double waitTime = timeOfNextGreen - (curTime + cruiseTime + decelTime);
+                //log_.debug("EAD", "Need to stop at red: decelTime = " + decelTime + ", decelDist = " + decelDist
+                //            + ", cruiseTime = " + cruiseTime + ", waitTime = " + waitTime);
 
                 //create a single node at the start of green phase with zero speed
-                Node neighbor = new Node(nodeLoc, timeOfNextGreen, 0.0);
+                Node neighbor = new Node(nodeLoc, timeOfNextGreen - timeBuffer_, 0.0);
                 neighbors.add(neighbor);
+                log_.debug("EAD", "Need to stop at red:" + neighbor.toString());
             }
 
         //else - no more intersections downtrack

@@ -30,6 +30,12 @@ public abstract class NeighborBase implements INeighborCalculator {
         double  longestGreen = 0.0;
         double  longestYellow = 0.0;
         double  longestRed = 0.0;
+        
+        @Override
+        public String toString() {
+            return "IntersectionHistory [id=" + id + ", longestGreen=" + longestGreen + ", longestYellow="
+                    + longestYellow + ", longestRed=" + longestRed + "]";
+        }
     }
 
     protected class SignalState {
@@ -37,9 +43,9 @@ public abstract class NeighborBase implements INeighborCalculator {
         double      timeRemaining = 0.0;
     }
 
-    protected final double                  DEFAULT_GREEN_DURATION = 20.0;  //sec
-    protected final double                  DEFAULT_YELLOW_DURATION = 5.0;  //sec
-    protected final double                  DEFAULT_RED_DURATION = 25.0;    //sec
+    protected final double                  DEFAULT_GREEN_DURATION = 27.0;  //sec
+    protected final double                  DEFAULT_YELLOW_DURATION = 3.0;  //sec
+    protected final double                  DEFAULT_RED_DURATION = 30.0;    //sec
 
     protected List<IntersectionData>        intersections_;
     protected int                           numInt_;
@@ -182,8 +188,10 @@ public abstract class NeighborBase implements INeighborCalculator {
         // initialize() method was called, but they are not updated after that
         IntersectionData i = intersections_.get(index);
         double iDist = i.dtsb;
-        if (iDist <= 0.0) {
-            iDist = 0.01*(double)i.roughDist; //convert from cm to m
+        //TODO need to figure out under which condition, it did not calculate the dtsb correctly
+        if (iDist <= 0.0 || iDist >= Integer.MAX_VALUE) {
+            //if use roughDist, make sure it is pass the fine distance to that intersection
+            iDist = (0.01 * (double)i.roughDist) + CoarsePathNeighbors.TYPICAL_INTERSECTION_WIDTH; //convert from cm to m
         }
         return iDist - startLoc;
     }
@@ -234,12 +242,13 @@ public abstract class NeighborBase implements INeighborCalculator {
         IntersectionHistory h = getHistoricalData(intersectionIndex);
 
         switch(phase) {
+        //add max in those cases to make sure it did not return extremely small value
             case GREEN:
-                return h.longestGreen > 0.0 ? h.longestGreen : DEFAULT_GREEN_DURATION;
+                return Math.max(h.longestGreen, DEFAULT_GREEN_DURATION);
             case YELLOW:
-                return h.longestYellow > 0.0 ? h.longestYellow : DEFAULT_YELLOW_DURATION;
+                return Math.max(h.longestYellow, DEFAULT_YELLOW_DURATION);
             case RED:
-                return h.longestRed > 0.0 ? h.longestRed : DEFAULT_RED_DURATION;
+                return Math.max(h.longestRed, DEFAULT_RED_DURATION);
             default:
                 //would be nice to log a warning here, but base class doesn't have a log object
                 return -1.0;

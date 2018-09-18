@@ -988,6 +988,6 @@ public class Trajectory implements ITrajectory {
 	private double				cmdBias_;			//bias applied to command premium for fail-safe calculations
 
 	private static final int	MAX_EAD_ERROR_COUNT = 3;//max allowed number of EAD exceptions
-	private static final int 	STOP_DAMPING_TIMESTEPS = 6; //num timesteps before stopping vibrations disappear
+	private static final int 	STOP_DAMPING_TIMESTEPS = 19; //num timesteps before stopping vibrations disappear
 	private static ILogger		log_ = LoggerManager.getLogger(Trajectory.class);
 }

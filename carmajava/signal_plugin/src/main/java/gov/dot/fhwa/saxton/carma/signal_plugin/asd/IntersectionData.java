@@ -41,4 +41,13 @@ public class IntersectionData {
     public SignalPhase             currentPhase = SignalPhase.NONE;
     public double                  timeToNextPhase = -1.0;
     public double                  timeToThirdPhase = -1.0;
+    
+    @Override
+    public String toString() {
+        return "IntersectionData [roughDist=" + roughDist + ", missingTimesteps="
+                + missingTimesteps + ", intersectionId=" + intersectionId + ", laneId=" + laneId + ", dtsb=" + dtsb
+                + ", currentPhase=" + currentPhase + ", timeToNextPhase=" + timeToNextPhase + ", timeToThirdPhase="
+                + timeToThirdPhase + "]";
+    }
+    
 }
