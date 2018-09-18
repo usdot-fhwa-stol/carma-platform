@@ -74,7 +74,6 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener,
 	
 	// TODO: brake information on each individual wheel is not available
 	// When brake is applied at any angle, we set brake status to be 0xF
-	// TODO MIKE figure out brakes
 	protected final byte BRAKES_STATUS_UNAVAILABLE = 0x10;
 	protected final byte BRAKES_NOT_APPLIED = 0x0;
 	protected final byte BRAKES_APPLIED = 0xF;
