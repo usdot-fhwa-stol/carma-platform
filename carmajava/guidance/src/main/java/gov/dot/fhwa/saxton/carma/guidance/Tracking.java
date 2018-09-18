@@ -505,7 +505,7 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener,
 				acceleration.setLongitudinal((float) accel_set_linear.getX());
 			}
 
-			coreData.getAccuracy().setPresenceVector((short)(coreData.getAccelSet().getPresenceVector() | AccelerationSet4Way.ACCELERATION_AVAILABLE));
+			coreData.getAccelSet().setPresenceVector((short)(coreData.getAccelSet().getPresenceVector() | AccelerationSet4Way.ACCELERATION_AVAILABLE));
 			
 			if(accel_set_linear.getY() <= AccelerationSet4Way.ACCELERATION_MIN) {
 				acceleration.setLateral(AccelerationSet4Way.ACCELERATION_MIN);
@@ -515,7 +515,7 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener,
 				acceleration.setLateral((float) accel_set_linear.getY());
 			}
 
-			coreData.getAccuracy().setPresenceVector((short)(coreData.getAccelSet().getPresenceVector() | AccelerationSet4Way.ACCELERATION_AVAILABLE));
+			coreData.getAccelSet().setPresenceVector((short)(coreData.getAccelSet().getPresenceVector() | AccelerationSet4Way.ACCELERATION_AVAILABLE));
 
 			if(accel_set_linear.getZ() <= AccelerationSet4Way.ACCELERATION_VERTICAL_MIN) {
 				acceleration.setVert(AccelerationSet4Way.ACCELERATION_VERTICAL_MIN);
@@ -525,14 +525,14 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener,
 				acceleration.setVert((float) accel_set_linear.getZ());
 			}
 
-			coreData.getAccuracy().setPresenceVector((short)(coreData.getAccelSet().getPresenceVector() | AccelerationSet4Way.ACCELERATION_VERTICAL_AVAILABLE));
+			coreData.getAccelSet().setPresenceVector((short)(coreData.getAccelSet().getPresenceVector() | AccelerationSet4Way.ACCELERATION_VERTICAL_AVAILABLE));
 			
 			double yaw_rate = accelerationSubscriber.getLastMessage().getAccel().getAngular().getZ();
 			if(yaw_rate >= AccelerationSet4Way.YAWRATE_MIN && yaw_rate <= AccelerationSet4Way.YAWRATE_MAX) {
 				coreData.getAccelSet().setYawRate((float) yaw_rate);
 			}
 
-			coreData.getAccuracy().setPresenceVector((short)(coreData.getAccelSet().getPresenceVector() | AccelerationSet4Way.YAWRATE_AVAILABLE));
+			coreData.getAccelSet().setPresenceVector((short)(coreData.getAccelSet().getPresenceVector() | AccelerationSet4Way.YAWRATE_AVAILABLE));
 		}
 		
 		coreData.getBrakes().getWheelBrakes().setBrakeAppliedStatus(BRAKES_STATUS_UNAVAILABLE);
@@ -580,16 +580,16 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener,
 		// Set length and width only for the first time
 		if(vehicleLength >= VehicleSize.VEHICLE_LENGTH_MIN && vehicleLength <= VehicleSize.VEHICLE_LENGTH_MAX) {
 			coreData.getSize().setVehicleLength(vehicleLength);
-			coreData.getAccuracy().setPresenceVector((short)(coreData.getSize().getPresenceVector() | VehicleSize.VEHICLE_LENGTH_AVAILABLE));
+			coreData.getSize().setPresenceVector((short)(coreData.getSize().getPresenceVector() | VehicleSize.VEHICLE_LENGTH_AVAILABLE));
 		}
 		if(vehicleWidth >= VehicleSize.VEHICLE_WIDTH_MIN && vehicleWidth <= VehicleSize.VEHICLE_WIDTH_MAX) {
 			coreData.getSize().setVehicleWidth(vehicleWidth);
-			coreData.getAccuracy().setPresenceVector((short)(coreData.getSize().getPresenceVector() | VehicleSize.VEHICLE_WIDTH_AVAILABLE));
+			coreData.getSize().setPresenceVector((short)(coreData.getSize().getPresenceVector() | VehicleSize.VEHICLE_WIDTH_AVAILABLE));
 		}
 		
 		// Use ros node time and ignore leap second for now since it is not announced
 		coreData.setSecMark((short) (System.currentTimeMillis() % BSMCoreData.SEC_MARK_MOD));
-		coreData.getAccuracy().setPresenceVector((short)(coreData.getPresenceVector() | BSMCoreData.SEC_MARK_AVAILABLE));
+		coreData.setPresenceVector((short)(coreData.getPresenceVector() | BSMCoreData.SEC_MARK_AVAILABLE));
 
 		return bsmFrame;
 	}
