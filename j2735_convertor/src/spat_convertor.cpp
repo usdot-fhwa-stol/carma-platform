@@ -32,6 +32,10 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * CPP File containing SPATConvertor method definitions
+ */
+
 #include "spat_convertor.h"
 
 void SPATConvertor::convertTimeChangeDetails(const j2735_msgs::TimeChangeDetails& in_msg, cav_msgs::TimeChangeDetails& out_msg) {

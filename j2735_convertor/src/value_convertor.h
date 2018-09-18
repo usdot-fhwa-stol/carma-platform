@@ -46,13 +46,34 @@
 
 
 /**
- * @class BSMConvertor
- * @brief Is the class responsible for converting J2735 BSMs to CARMA usable BSMs
+ * @class ValueConvertor
+ * @brief Class responsible for converting between discrete values in j2735_msgs and cav_msgs
+ * 
+ * Provides templated functions which will perform unit conversions and casting.
+ * Additionally, conversion between presence vectors and unavailability values is supported.
  */
 class ValueConvertor 
 {
-    // TODO discuss need for extra parameters
   public:
+
+    /**
+     * @brief Converts values from j2735 standard to format used in cav_msgs
+     * 
+     * @tparam T Return type which the provided input should be converted to
+     * @tparam U Type of the input value
+     * @tparam V Type of the presence_vector defining if the output value represents actual data
+     * @tparam W Type of the presence_flag this type should be the same as V but is kept seperate to support Enums
+     * @tparam X Type of the unavailability_value which represents if the input value represents actual data. 
+     *           This type should be the same as U but is kept seperate to support Enums
+     * 
+     * @param in The input value to convert the type and units of
+     * @param conversion_factor The value to divide the input by to convert it to the desired units
+     * @param presence_vector A bit flag which is set to identify if the output value represents actual data
+     * @param presence_flag A flag with a single bit set to mark the presence vector as needed
+     * @param unavailability_value The value of the input which would mean that value was not representative of actual data
+     * 
+     * @return The converted input value in the new output unit and type
+     */
     template<typename T, typename U, typename V, typename W, typename X>
     static T valueJ2735ToCav(const U in, const double conversion_factor,
       V& presence_vector, const W presence_flag, const X unavailability_value) {
@@ -66,6 +87,24 @@ class ValueConvertor
       }
     }
 
+    /**
+     * @brief Converts values from cav_msgs standard to the j2735 standard
+     * 
+     * @tparam T Return type which the provided input should be converted to
+     * @tparam U Type of the input value
+     * @tparam V Type of the presence_vector defining if the input value represents actual data
+     * @tparam W Type of the presence_flag this type should be the same as V but is kept seperate to support Enums
+     * @tparam X Type of the unavailability_value which represents if the output value represents actual data. 
+     *           This type should be the same as U but is kept seperate to support Enums
+     * 
+     * @param in The input value to convert the type and units of
+     * @param conversion_factor The value to multiply the input by to convert it to the desired units
+     * @param presence_vector A bit flag which is set to identify if the input value represents actual data
+     * @param presence_flag A flag with a single bit set to mark the presence vector as needed
+     * @param unavailability_value The value of the output which would mean that value was not representative of actual data
+     * 
+     * @return The converted input value in the new output unit and type
+     */
     template<typename T, typename U, typename V, typename W, typename X>
     static T valueCavToJ2735(const U in, const double conversion_factor,
       const V presence_vector, const W presence_flag, const X unavailability_value) {
@@ -76,5 +115,4 @@ class ValueConvertor
         return (T)unavailability_value; // If field is unavailble return the unavailable flag
       }
     }
-
 };

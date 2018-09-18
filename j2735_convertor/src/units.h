@@ -33,7 +33,11 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-//TODO top comment
+/**
+ * Defined the units namespace which contains many unit conversion factors
+ * These are primarily meant to be used in conversions between j2735_msgs and cav_msgs
+ */
+
 namespace units {
   static const double DECA_MPS_PER_MPS = 10.0;
   static const double DECA_S_PER_S = 10.0;

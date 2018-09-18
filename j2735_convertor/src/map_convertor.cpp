@@ -32,6 +32,10 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * CPP File containing MapConvertor method definitions
+ */
+
 #include "map_convertor.h"
 
 void MapConvertor::convertOffsetXaxis(const j2735_msgs::OffsetXaxis& in_msg, cav_msgs::OffsetAxis& out_msg) {
@@ -56,7 +60,7 @@ void MapConvertor::convertComputedLane(const j2735_msgs::ComputedLane& in_msg, c
   // Done Convertion
   out_msg.rotatexy_exists = in_msg.rotatexy_exists;
 
-  // TODO ask Kyle about scaling
+  // TODO Scaling is currently not applied to other values
   out_msg.scale_x_axis = in_msg.scale_x_axis;
   out_msg.scale_x_axis_exists = in_msg.scale_x_axis_exists;
   out_msg.scale_y_axis = in_msg.scale_y_axis;
