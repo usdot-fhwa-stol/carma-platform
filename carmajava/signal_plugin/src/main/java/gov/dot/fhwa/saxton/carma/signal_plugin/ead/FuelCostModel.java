@@ -82,10 +82,10 @@ public class FuelCostModel implements ICostModel {
         //input sanity checks
         if (n2.getTime() <= n1.getTime()  ||  n2.getDistance() < n1.getDistance()  ||
                 n1.getSpeed() < 0  ||  n2.getSpeed() < 0) {
-            log_.warn("EAD", "Cost computation invoked with invalid nodes:");
-            log_.warn("EAD", "    n1: " + n1.toString());
-            log_.warn("EAD", "    n2: " + n2.toString());
-            log_.warn("EAD", "    " + numCosts_ + " costs have been evaluated since goal defined or previous error.");
+            log_.debug("EAD", "Cost computation invoked with invalid nodes:");
+            log_.debug("EAD", "    n1: " + n1.toString());
+            log_.debug("EAD", "    n2: " + n2.toString());
+            log_.debug("EAD", "    " + numCosts_ + " costs have been evaluated since goal defined or previous error.");
             numCosts_ = 0;
             return Double.MAX_VALUE;
         }else {

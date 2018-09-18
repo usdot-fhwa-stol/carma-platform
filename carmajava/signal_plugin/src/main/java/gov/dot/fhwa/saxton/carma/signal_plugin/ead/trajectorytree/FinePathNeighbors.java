@@ -37,7 +37,7 @@ public class FinePathNeighbors extends NeighborBase {
     protected double                        debugThreshold_;//node distance beyond which we will turn on debug logging
     protected double                        responseLag_; //vehicle dynamic response lag, sec
     protected static ILogger                log_ = LoggerManager.getLogger(FinePathNeighbors.class);
-    protected static double                 FOLATING_POINT_EPSILON = 0.001;
+    protected static double                 FOLATING_POINT_EPSILON = 0.1;
 
 
     public FinePathNeighbors() {
@@ -102,13 +102,11 @@ public class FinePathNeighbors extends NeighborBase {
             newSpeed -= speedInc_;
         }
         double dtsb = distToIntersection(currentIntersectionIndex(curDist), curDist);
-        //we only allow small speed around acceptableStopDist_ and will be caped to 0.0
-        if(minSpeed >= crawlingSpeed_ - FOLATING_POINT_EPSILON) {
-            speeds.add(minSpeed);
+        //we only allow small speed around acceptableStopDist_ and will be capped to 0.0
+        if(dtsb <= acceptableStopDist_ && minSpeed < FOLATING_POINT_EPSILON) {
+            speeds.add(0.0);
         } else {
-            if(dtsb <= acceptableStopDist_) {
-                speeds.add(0.0);
-            }
+            speeds.add(Math.max(minSpeed, crawlingSpeed_));
         }
         //increment from the current speed plus speedInc until the maxSpeed limit
         newSpeed = curSpeed + speedInc_;
@@ -169,9 +167,9 @@ public class FinePathNeighbors extends NeighborBase {
 
         //to account for uncertainties in the vehicle's dynamic response to speed command changes, we need
         // a little wiggle room, so don't want to cross the bar just as signal is changing color; we want
-        // to avoid red at crossing time +/- the specified buffer
-        boolean redIfEarly = phaseAtTime(currentInt, crossingTime - timeBuffer_).phase.equals(SignalPhase.RED);
-        boolean redIfLate  = phaseAtTime(currentInt, crossingTime + timeBuffer_).phase.equals(SignalPhase.RED);
+        // to avoid red at crossing time +/- the specified buffer (use a smaller time buffer to make fine plan easier)
+        boolean redIfEarly = phaseAtTime(currentInt, crossingTime - (timeBuffer_ * 0.25)).phase.equals(SignalPhase.RED);
+        boolean redIfLate  = phaseAtTime(currentInt, crossingTime + (timeBuffer_ * 0.25)).phase.equals(SignalPhase.RED);
         return redIfEarly || redIfLate;
     }
 
