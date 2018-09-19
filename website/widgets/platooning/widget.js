@@ -5,7 +5,7 @@ CarmaJS.registerNamespace("CarmaJS.WidgetFramework.Platooning");
 
 CarmaJS.WidgetFramework.Platooning = (function () {
         //Private variables
-        var t_platooning_info = '/saxton_cav/guidance/platooning_info';
+        var t_platooning_info = 'platooning_info';
         var hostDowntrackDistance = 0;
         var host_actual_gap = 0;
         var platoon_desired_gap = 0;
