@@ -118,14 +118,10 @@ public class Trajectory implements ITrajectory {
 		maxSpatErrors_ = config.getIntValue("ead.max.spat.errors");
 		log_.infof("TRAJ", "Max spat errors = %d", maxSpatErrors_);
 
-		//get the min number of time steps allowed before we bother to compute spat reliability
-		minStepsNewIntersection_ = config.getDefaultIntValue("asd.minSamplesForReliability", 4);
-
 		//get failsafe parameters
 		allowFailSafe_			= config.getBooleanValue("ead.failsafe.on");
 		failSafeDistBuf_		= config.getDoubleValue("ead.failsafe.distance.buffer");
 		failSafeResponseLag_	= config.getDoubleValue("ead.response.lag");
-		failSafeDecelFactor_	= config.getDoubleValue("ead.failsafe.decel.factor");
 		log_.infof("TRAJ", "allowFailSafe = %b, failSafeDistBuf = %.2f, failSafeResponseLag = %.2f", allowFailSafe_, failSafeDistBuf_, failSafeResponseLag_);
 		maxCmdAdj_		= config.getDoubleValue("ead.maxcmdadj");
 		cmdAccelGain_	= config.getDoubleValue("ead.cmdaccelgain");
@@ -160,27 +156,11 @@ public class Trajectory implements ITrajectory {
 		}
 		
 		//initialize other members
-		intersections_ = new ArrayList<>();
-		completedIntersections_ = new HashSet<>();
-		intersectionsChanged_ = false;
-		approachLaneId_ = -1;
-		prevApproachLaneId_ = -1;
-		extrapolatedSecondPhase_ = false;
-		spatReliableOnNearest_ = false;
-		timeStepsNewIntersection_ = 0;
-		spatsReceivedOnNewIntersection_ = 0;
-		prevCmd_ = 0.0;
 		curSpeed_ = 0.0;
 		curAccel_ = 0.0;
-		eadErrorCount_ = 0;
-		spatErrorCounter_ = 0;
 		stopConfirmed_ = false;
-		intersectionGeom_ = null;
 		phase_ = NONE;
-		prevPhase_ = NONE;
-		prevTime1_ = 0.0;
 		timeRemaining_ = 0.0;
-		map_ = null;
 		failSafeMode_ = false;
 		numStepsAtZero_ = 0;
 	}
@@ -459,8 +439,8 @@ public class Trajectory implements ITrajectory {
 
 		//get speed command from EAD (assume it will handle position in stop box w/red light)
 		try {
-			log_.info("TrafficSignalPlugin", intersections_.toString());
-			path = ead_.plan(curSpeed_, operSpeed, curAccel_, intersections_);
+			log_.info("TrafficSignalPlugin", this.getSortedIntersections().toString());
+			path = ead_.plan(curSpeed_, operSpeed, curAccel_, this.getSortedIntersections());
 		}catch (Exception e) {
 			// TODO find best place for if (eadErrorCount_++ < MAX_EAD_ERROR_COUNT) {
 			// 	cmd = prevCmd_;
@@ -840,26 +820,11 @@ public class Trajectory implements ITrajectory {
 		return p;
 	}
 	
-
-	private ArrayList<IntersectionData> intersections_; //all of the viable intersections currently in view
-	private HashSet<Integer>	completedIntersections_; //IDs of intersections we have already passed through
-	private boolean				intersectionsChanged_; //have the geometry of known intersections changed since prev time step?
-	private int					approachLaneId_;	//Lane ID of the current approach lane, if any; else -1
-	private int					prevApproachLaneId_;//value of approachLaneId from the previous time step
-	private boolean				extrapolatedSecondPhase_; //have we already attempted to extrapolate SPAT through a second phase?
-	private boolean				spatReliableOnNearest_; //is the spat signal being reliably received from the nearest intersection?
-	private int					timeStepsNewIntersection_; //number of time steps passed since a new intersection has been entered
-	private int					minStepsNewIntersection_; //min number of time steps in a new intersection before we can call its spat data reliable
-	private int					spatsReceivedOnNewIntersection_; //number of spat msgs received since new intersection has been entered
 	private double				osOverride_;		//FOR DEBUGGING ONLY - allows the config file to override the driver selected operating speed, m/s
 	private long				timeStepSize_;		//duration of a single time step, ms
 	private boolean				stopConfirmed_;		//are we at a complete stop?
 	private boolean				respectTimeouts_;	//should we honor the established timeouts?
-	private double				prevCmd_;			//speed command from the previous time step, m/s
-	private SignalPhase			prevPhase_;			//signal phase in the previous time step
-	private double				prevTime1_;			//signal time to end of current phase in previous time step, sec
 	private int[]				intersectionIds_;	//array of IDs of intersections that we will pay attention to
-	private int					spatErrorCounter_;	//number of consecutive times spat data is missing
 	private int					maxSpatErrors_;		//max allowable number of consecutive spat data errors
 	private double				speedLimit_;		//upper limit allowed for speed, m/s
 	private double				maxJerk_;			//max allowed jerk, m/s^3
@@ -867,10 +832,7 @@ public class Trajectory implements ITrajectory {
 	private double				curAccel_;			//current acceleration (smoothed), m/s^2
 	private SignalPhase			phase_;				//the signal's current phase
 	private double				timeRemaining_;		//time remaining in the current signal phase, sec
-	private IntersectionGeometry intersectionGeom_;	//vehicle's relationship to the nearest intersection, if on its map
-	private MapMessage			map_;				//the MAP message that describes the nearest intersection (we may not be on it)
 	private IEad				ead_;				//the EAD model that computes the speed commands
-	private int					eadErrorCount_;		//number of exceptions thrown by the EAD library
 	private boolean				accelLimiter_;		//is acceleration limiter used?
 	private boolean				jerkLimiter_;		//is jerk limiter used?
 	private double				maxCmdAdj_;			//difference (m/s) needed between current speed and command given to the XGV to get it to respond quickly
@@ -878,13 +840,11 @@ public class Trajectory implements ITrajectory {
 	private boolean				failSafeMode_;		//are we in failsafe mode (overriding all other trajectory calculations)?
 	private double				failSafeDistBuf_;	//distance buffer that failsafe will subtract from stop bar location, meters
 	private double				failSafeResponseLag_; //time that failsafe logic allows for the vehicle to respond to a command change, sec
-	private double				failSafeDecelFactor_; //Multiplier on the normal max allowed deceleration that should be used for failsafe
 	private	int					numStepsAtZero_;	//number of consecutive time steps with speed of zero (after first motion) for failsafe use
 	private double				cmdSpeedGain_;		//gain applied to speed difference for fail-safe calculations
 	private double				cmdAccelGain_;		//gain applied to acceleration for fail-safe calculations
 	private double				cmdBias_;			//bias applied to command premium for fail-safe calculations
 
-	private static final int	MAX_EAD_ERROR_COUNT = 3;//max allowed number of EAD exceptions
 	private static final int 	STOP_DAMPING_TIMESTEPS = 19; //num timesteps before stopping vibrations disappear
 	private static ILogger		log_ = LoggerManager.getLogger(Trajectory.class);
 

@@ -33,7 +33,9 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.EadIntersectionManager;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.PlanInterpolator;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.ArrayList;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -117,12 +119,13 @@ public class IntersectionProcessingTest {
     MapMessage eadMap = TrafficSignalPlugin.convertMapMessage(intData);
     SpatMessage eadSpat = TrafficSignalPlugin.convertSpatMessage(intData);
 
-    gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData eadIntData = new gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData();
-    eadIntData.map = eadMap;
-    eadIntData.spat = eadSpat;
-    eadIntData.intersectionId = eadIntData.map.getIntersectionId();
+    Map<Integer, IntersectionData> intersections = new HashMap<>();
+    intersections.put(intData.getIntersectionId(), intData);
+    gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData eadIntData = TrafficSignalPlugin.convertIntersections(intersections).get(0);
+
     
-    intManager.updateIntersections(Arrays.asList(eadIntData), vehicleLoc);
+    double dtsb = intManager.updateIntersections(Arrays.asList(eadIntData), vehicleLoc);
+    assertEquals(15.68, dtsb, 0.0001);
   }
 
   private SPAT buildNewSpat() {

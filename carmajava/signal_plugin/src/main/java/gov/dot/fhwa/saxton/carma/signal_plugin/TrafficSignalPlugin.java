@@ -65,6 +65,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementKey;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DoubleDataElement;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.GlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IntersectionCollectionDataElement;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.PhaseDataElement;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicationContext;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionCollection;
@@ -396,7 +397,13 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         try {
             Location curLoc = new Location(curPos.get().getLatitude(), curPos.get().getLongitude());
             double dtsb = glidepathTrajectory.updateIntersections(convertIntersections(intersections), curLoc);
+            final double REASONABLE_DTSB = 10000.0; // If we are more than 10km from an intersection the calculation has certainly failed
+
             updateUISignals();
+            if (dtsb < 0 || dtsb > REASONABLE_DTSB) { // TODO if our dtsb is within the stop box we should keep it as valid
+                log.warn("DTSB computation failed!");
+                return -1;
+            }
             return dtsb;
         } catch (Exception e) {
             log.warn("DTSB computation failed!", e);
@@ -430,20 +437,22 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         signalMsg.setIntersectionId((short)intersection.intersectionId);
         signalMsg.setLaneId((short)intersection.laneId);
         signalMsg.setRemainingDistance((float)intersection.dtsb);
-        signalMsg.setRemainingTime((short)intersection.timeToNextPhase);
-        switch(intersection.currentPhase) {
-            case GREEN:
-                signalMsg.setState(TrafficSignalInfo.GREEN);
-                break;
-            case YELLOW:
-                signalMsg.setState(TrafficSignalInfo.YELLOW);
-                break;
-            case RED:
-                signalMsg.setState(TrafficSignalInfo.RED);
-                break;
-            default: // Leave light off
-                break;
-        }
+        signalMsg.setRemainingTime((short)intersection.spat.getSpatForLane(intersection.laneId).getDoubleElement(DataElementKey.SIGNAL_TIME_TO_NEXT_PHASE));
+        // TODO uncomment
+        // switch(((PhaseDataElement) intersection.spat.getSpatForLane(intersection.laneId).get(DataElementKey.SIGNAL_PHASE)).value()) {
+        //     case GREEN: 
+        //         signalMsg.setState(TrafficSignalInfo.GREEN);
+        //         break;
+        //     case YELLOW:
+        //         signalMsg.setState(TrafficSignalInfo.YELLOW);
+        //         break;
+        //     case RED:
+        //         signalMsg.setState(TrafficSignalInfo.RED);
+        //         break;
+        //     default: // Leave light off
+        //         break;
+        // }
+        signalMsg.setState(TrafficSignalInfo.GREEN);
         return signalMsg;
     }
 
@@ -580,7 +589,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         // CHECK TRAJECTORY LENGTH
         double dtsb = computeDtsb();
 
-        if (dtsb > 0 && dtsb < Double.MAX_VALUE) {
+        if (dtsb > 0) {
             // DTSB computation successful, check to see if we can plan up to stop bar
             if (traj.getStartLocation() + (dtsb * 1.1) > traj.getEndLocation()) {
                 // Not enough distance to allow for proper glidepath execution
@@ -588,6 +597,9 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 tpr.requestLongerTrajectory(traj.getStartLocation() + (dtsb * 1.1)); // allow for some extra slack
                 return tpr;
             }
+        } else {
+            log.info("Attempted to plan with bad dtsb value: " + dtsb + "will not plan");
+            return new TrajectoryPlanningResponse();
         }
 
         log.info("DTSB within traj");
@@ -699,6 +711,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         steadySpeed.setSpeeds(0.0, 0.0);
                         pluginServiceLocator.getManeuverPlanner().planManeuver(steadySpeed,
                                 startDist + prev.getDistanceAsDouble(), traj.getEndLocation());
+                        
+                        traj.addManeuver(steadySpeed);
                         break;
                     }
 
@@ -716,6 +730,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                             startDist + prev.getDistanceAsDouble(), startDist + cur.getDistanceAsDouble());
                     traj.addManeuver(slowDown);
                 } 
+
+                prev = cur;
             }
         }
 

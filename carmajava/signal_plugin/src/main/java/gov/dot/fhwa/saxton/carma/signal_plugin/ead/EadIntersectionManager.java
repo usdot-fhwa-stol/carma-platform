@@ -123,12 +123,12 @@ public class EadIntersectionManager {
 		// (should be somewhere near the center of the stop box) then
 		if (intersectionGeom_ != null) {
 			int laneId = intersectionGeom_.laneId();
-			// If the vehicle is in the stop box (laneId == -1) AND we were previously on an approach lane
-			// OR The current lane is not an approach lane
+			// If the vehicle is not on a lane (possibly in the stop box (laneId == -1)) AND we were previously on an approach lane
+			// OR The current lane is an actual lane but not an approach lane
 			// OR The current dtsb is negative and less than half the stop box width (just past the stop bar)
 			// Then we have passed the stop bar of this intersection
 			if ((laneId == -1 && prevApproachLaneId_ >= 0) ||
-					!intersectionGeom_.isApproach(laneId) || dtsb < -0.5 * stopBoxWidth) {
+					(laneId != -1 && !intersectionGeom_.isApproach(laneId)) || dtsb < -0.5 * stopBoxWidth) {
 				//remove the nearest intersection from the list, along with its associated map
 				// don't want to do this any sooner, cuz we may be stopped for red a little past the stop bar
 				log_.info("TRAJ", "updateIntersections removing current intersection. laneID = "
@@ -261,6 +261,7 @@ public class EadIntersectionManager {
 			}
 		}
 
+		log_.debug("TRAJ", "Intersection " + thisId + " wanted?: " + wanted);
 		return wanted;
 	}
 	
