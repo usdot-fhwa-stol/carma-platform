@@ -208,7 +208,6 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         map.setContentVersion(data.getIntersectionGeometry().getRevision());
         map.setElevationsPresent(false);
         map.setOffsetsInDm(false);
-
         map.setIntersectionId(data.getIntersectionId());
 
         Position3D ref = data.getIntersectionGeometry().getRefPoint();
@@ -243,6 +242,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                     }
                 }
             }
+
+            laneList.add(cnvLane);
         }
         map.setLanes(laneList);
 
@@ -555,15 +556,16 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     public void onTerminate() {
     }
 
-    private List<gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData> convertIntersections(
+    static protected List<gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData> convertIntersections(
             Map<Integer, IntersectionData> data) {
         List<gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData> out = new ArrayList<>();
         for (IntersectionData datum : data.values()) {
             gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData converted = new gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData();
             converted.map = convertMapMessage(datum);
+            converted.intersectionId = converted.map.getIntersectionId();
             if (datum.getIntersectionState() != null) {
                 converted.spat = convertSpatMessage(datum);
-                log.debug("Converted map message with no spat");
+                //log.debug("Converted map message with no spat");
             }
         
             out.add(converted);

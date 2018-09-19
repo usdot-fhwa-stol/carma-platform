@@ -75,6 +75,8 @@ public class IntersectionProcessingTest {
     mockConfig = mock(IGlidepathAppConfig.class);
 
     when(mockConfig.getProperty("asd.intersections")).thenReturn("9945");
+    when(mockConfig.getIntValue("ead.cte.threshold")).thenReturn(400);
+		when(mockConfig.getIntValue("periodicDelay")).thenReturn(50);
 
     GlidepathApplicationContext.getInstance().setAppConfigOverride(mockConfig);
 
@@ -118,6 +120,7 @@ public class IntersectionProcessingTest {
     gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData eadIntData = new gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData();
     eadIntData.map = eadMap;
     eadIntData.spat = eadSpat;
+    eadIntData.intersectionId = eadIntData.map.getIntersectionId();
     
     intManager.updateIntersections(Arrays.asList(eadIntData), vehicleLoc);
   }
@@ -313,7 +316,7 @@ public class IntersectionProcessingTest {
       nodeXY.getDelta().setChoice((byte)n.choice);
       nodeXY.getDelta().setX((float)n.x);
       nodeXY.getDelta().setY((float)n.y);
-      l6.getNodeList().getNodes().getNodeSetXy().add(nodeXY);
+      l2.getNodeList().getNodes().getNodeSetXy().add(nodeXY);
     }
    
     j2735_msgs.Connection connectedLane1ForL2 = messageFactory.newFromType(j2735_msgs.Connection._TYPE);
@@ -345,15 +348,15 @@ public class IntersectionProcessingTest {
 
     List<NodeData> nodeDataForL3 = new ArrayList<>();
 
-    nodeDataForL2.add(new NodeData(2, -4.51999998093, 12.8999996185));
-    nodeDataForL2.add(new NodeData(1, -0.75, 5.21000003815));
-    nodeDataForL2.add(new NodeData(1, -1.55999994278, 5.61999988556));
-    nodeDataForL2.add(new NodeData(0, -1.33000004292, 3.52999997139));
-    nodeDataForL2.add(new NodeData(0, -2.95000004768, 4.57999992371));
-    nodeDataForL2.add(new NodeData(0, -2.83999991417, 2.95000004768));
-    nodeDataForL2.add(new NodeData(0, -3.81999993324, 2.8900001049));
-    nodeDataForL2.add(new NodeData(0, -4.23000001907, 2.1400001049));
-    nodeDataForL2.add(new NodeData(0, -3.88000011444, 1.78999996185));
+    nodeDataForL3.add(new NodeData(2, -4.51999998093, 12.8999996185));
+    nodeDataForL3.add(new NodeData(1, -0.75, 5.21000003815));
+    nodeDataForL3.add(new NodeData(1, -1.55999994278, 5.61999988556));
+    nodeDataForL3.add(new NodeData(0, -1.33000004292, 3.52999997139));
+    nodeDataForL3.add(new NodeData(0, -2.95000004768, 4.57999992371));
+    nodeDataForL3.add(new NodeData(0, -2.83999991417, 2.95000004768));
+    nodeDataForL3.add(new NodeData(0, -3.81999993324, 2.8900001049));
+    nodeDataForL3.add(new NodeData(0, -4.23000001907, 2.1400001049));
+    nodeDataForL3.add(new NodeData(0, -3.88000011444, 1.78999996185));
 
     for (NodeData n : nodeDataForL3) {
       NodeXY nodeXY = messageFactory.newFromType(NodeXY._TYPE);

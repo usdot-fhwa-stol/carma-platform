@@ -144,10 +144,10 @@ public class EadIntersectionManager {
 				if (sortedIntersections.size() > 0) {
 					sortedIntersections.peek().dtsb = dtsb;
 				}
-			}
-
-			if (intersectionGeom_.isApproach(laneId)) {
-				prevApproachLaneId_ = laneId;
+			} else {
+				if (intersectionGeom_.isApproach(laneId)) {
+					prevApproachLaneId_ = laneId;
+				}
 			}
 		}
 
