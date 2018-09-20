@@ -23,6 +23,10 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.asd.map.MapMessage;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementHolder;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementKey;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DoubleDataElement;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.PhaseDataElement;
 
 import java.io.IOException;
 import java.util.*;
@@ -144,9 +148,22 @@ public class EadIntersectionManager {
 				if (sortedIntersections.size() > 0) {
 					sortedIntersections.peek().dtsb = dtsb;
 				}
-			} else {
-				if (intersectionGeom_.isApproach(laneId)) {
-					prevApproachLaneId_ = laneId;
+			}
+			
+			if (intersectionGeom_.isApproach(laneId)) {
+				prevApproachLaneId_ = laneId;
+				sortedIntersections.peek().laneId = laneId;
+				log_.debug("INTR", "Trying to update spat for lane: " + laneId);
+				DoubleDataElement dde = (DoubleDataElement) sortedIntersections.peek().spat.getSpatForLane(laneId).get(DataElementKey.SIGNAL_TIME_TO_NEXT_PHASE);
+				if (dde != null) {
+						log_.debug("INTR","Updated timeToNextPhase: " + dde.value());
+						sortedIntersections.peek().timeToNextPhase = dde.value();
+				}
+
+				PhaseDataElement pde = (PhaseDataElement) sortedIntersections.peek().spat.getSpatForLane(laneId).get(DataElementKey.SIGNAL_PHASE);
+				if (pde != null) {
+						log_.debug("INTR","Updated phase: " + pde.value());
+						sortedIntersections.peek().currentPhase = pde.value();
 				}
 			}
 		}

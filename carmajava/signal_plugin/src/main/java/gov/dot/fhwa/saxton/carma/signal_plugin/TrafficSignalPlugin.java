@@ -22,6 +22,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -34,6 +36,7 @@ import org.ros.node.NodeConfiguration;
 
 import cav_msgs.GenericLane;
 import cav_msgs.IntersectionState;
+import cav_msgs.MovementEvent;
 import cav_msgs.MovementState;
 import cav_msgs.NodeListXY;
 import cav_msgs.NodeOffsetPointXY;
@@ -278,16 +281,60 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 if (lane.getConnectsToExists()) {
                     for (j2735_msgs.Connection connectsTo : lane.getConnectToList()) {
                         if (connectsTo.getSignalGroupExists()) {
-                            if (connectsTo.getSignalGroup() == movementData.getSignalGroup()
-                                    && connectsTo.getConnectingLane().getManeuverExists()
-                                    && connectsTo.getConnectingLane().getManeuver().getAllowedManeuvers() == 0) {
+                            if (connectsTo.getSignalGroup() == movementData.getSignalGroup()) {
+                                    
+                                // TODO Bad assumption: We are assuming that if there is any connection with the same signal group we can assume there is a straight path
+                                    // TODO we still need to have this check but the data is not available in the current map messages
+                                    // && connectsTo.getConnectingLane().getManeuverExists()
+                                    // && (connectsTo.getConnectingLane().getManeuver().getAllowedManeuvers() | j2735_msgs.AllowedManeuvers.STRAIGHT) > 0) {
                                 LaneSet lanes = new LaneSet(lane.getLaneId(), 0x01); // TODO: Detect maneuvers other
                                                                                      // than
                                                                                      // straight
                                 m.addLaneSet(lanes);
+                                break;
                             }
                         }
                     }
+                }
+            }
+
+            if (movementData.getMovementEventList().size() > 0) {
+                Queue<MovementEvent> sortedEvents = new PriorityQueue<>(
+                    (MovementEvent m1, MovementEvent m2) -> {
+                        if (!m1.getTimingExists())
+                            return 1; // Put events without timing at the end
+                        if (!m2.getTimingExists()) 
+                            return -1; // Put events without timing at the end
+                        return (int) (m1.getTiming().getMinEndTime() - m2.getTiming().getMinEndTime()); // Use the non-optional minEndTiming to sort events
+                    });
+                    
+                    sortedEvents.addAll(movementData.getMovementEventList()); // Sort the movement events by minEndTime
+
+                    MovementEvent earliestEvent = sortedEvents.peek();
+                    if (earliestEvent.getTimingExists() && earliestEvent.getTiming().getMaxEndTimeExists()) {
+                        DateTime dt = DateTime.now();
+                        long millisOfDay = dt.getMillisOfDay();
+                        long millisToHourStart = dt.getHourOfDay() * 3600000L;
+                        double secondInHour = (double)(millisOfDay - millisToHourStart) / 1000.0;
+                        m.setMaxTimeRemaining(Math.max(0.0, earliestEvent.getTiming().getMaxEndTime() - secondInHour));
+                        m.setMinTimeRemaining(Math.max(0.0, earliestEvent.getTiming().getMinEndTime() - secondInHour));
+                    }
+                //TODO move this statment log.warn("Empty movement event list in spat for intersection id: " + state.getId().getId());
+                
+                int phase = sortedEvents.peek().getEventState().getMovementPhaseState();
+                switch(phase) {
+                    case j2735_msgs.MovementPhaseState.PERMISSIVE_MOVEMENT_ALLOWED: // Green light
+                        m.setCurrentState(0x00000001);
+                        break;
+                    case j2735_msgs.MovementPhaseState.DARK: // Yellow TODO bug in our spats. Should be 7 or 8
+                        m.setCurrentState(0x00000002);
+                        break;
+                    case j2735_msgs.MovementPhaseState.STOP_AND_REMAIN: // Red light
+                        m.setCurrentState(0x00000004);
+                        break;
+                    default:
+                        //log.warn("Unsupported signal phase: " + phase);
+                        break;
                 }
             }
 
@@ -437,22 +484,26 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         signalMsg.setIntersectionId((short)intersection.intersectionId);
         signalMsg.setLaneId((short)intersection.laneId);
         signalMsg.setRemainingDistance((float)intersection.dtsb);
-        signalMsg.setRemainingTime((short)intersection.spat.getSpatForLane(intersection.laneId).getDoubleElement(DataElementKey.SIGNAL_TIME_TO_NEXT_PHASE));
-        // TODO uncomment
-        // switch(((PhaseDataElement) intersection.spat.getSpatForLane(intersection.laneId).get(DataElementKey.SIGNAL_PHASE)).value()) {
-        //     case GREEN: 
-        //         signalMsg.setState(TrafficSignalInfo.GREEN);
-        //         break;
-        //     case YELLOW:
-        //         signalMsg.setState(TrafficSignalInfo.YELLOW);
-        //         break;
-        //     case RED:
-        //         signalMsg.setState(TrafficSignalInfo.RED);
-        //         break;
-        //     default: // Leave light off
-        //         break;
-        // }
-        signalMsg.setState(TrafficSignalInfo.GREEN);
+        signalMsg.setRemainingTime((short)intersection.timeToNextPhase);
+        
+        if (intersection.currentPhase == null) {
+            return signalMsg;
+        }
+
+        switch(intersection.currentPhase) {
+            case GREEN: 
+                signalMsg.setState(TrafficSignalInfo.GREEN);
+                break;
+            case YELLOW:
+                signalMsg.setState(TrafficSignalInfo.YELLOW);
+                break;
+            case RED:
+                signalMsg.setState(TrafficSignalInfo.RED);
+                break;
+            default: // Leave light off
+                break;
+        }
+
         return signalMsg;
     }
 
@@ -572,6 +623,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData converted = new gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData();
             converted.map = convertMapMessage(datum);
             converted.intersectionId = converted.map.getIntersectionId();
+            
             if (datum.getIntersectionState() != null) {
                 converted.spat = convertSpatMessage(datum);
                 //log.debug("Converted map message with no spat");

@@ -53,16 +53,16 @@ public class Movement {
         this.currentState = state;
     }
 
-    public void setMinTimeRemaining(int timeRemaining)   {
-        this.minTimeRemaining = (double) timeRemaining / 10;
+    public void setMinTimeRemaining(double timeRemaining)   {
+        this.minTimeRemaining = timeRemaining;
     }
 
     public double getMinTimeRemaining()   {
         return minTimeRemaining;
     }
 
-    public void setMaxTimeRemaining(int timeRemaining)   {
-        this.maxTimeRemaining = (double) timeRemaining / 10;
+    public void setMaxTimeRemaining(double timeRemaining)   {
+        this.maxTimeRemaining = timeRemaining;
     }
 
     public double getMaxTimeRemaining()   {

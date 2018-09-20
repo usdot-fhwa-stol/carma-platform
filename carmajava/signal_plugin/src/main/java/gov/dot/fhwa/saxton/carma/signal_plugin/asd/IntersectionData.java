@@ -36,11 +36,11 @@ public class IntersectionData {
     public int                     missingTimesteps = 0; //num consecutive time steps since last MAP/SPAT data received
     //these are outputs from the Trajectory class
     public int                     intersectionId = -1; //can be gotten from map above
-    public int                     laneId = -1; // TODO this is not getting set
+    public int                     laneId = -1;
     public double                  dtsb; //distance to stop bar along the approach lane, in meters
-    public SignalPhase             currentPhase = SignalPhase.NONE; // TODO this is not getting set
+    public SignalPhase             currentPhase = SignalPhase.NONE;
     public double                  timeToNextPhase = -1.0;
-    public double                  timeToThirdPhase = -1.0;
+    public double                  timeToThirdPhase = -1.0; // TODO not set or used in meaningful way and should be removed
     
     @Override
     public String toString() {
