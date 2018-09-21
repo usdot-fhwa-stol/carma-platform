@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import java.time.LocalDateTime;
 import cav_msgs.IntersectionGeometry;
 import cav_msgs.IntersectionState;
@@ -42,8 +44,12 @@ public class GuidanceV2IService implements V2IService {
     private Thread expiryCheckThread;
     private List<V2IDataCallback> callbacks = Collections.synchronizedList(new ArrayList<>());
 
+
     private final Map<Integer, IntersectionData> intersections = Collections.synchronizedMap(new HashMap<>());
-    private final Map<Integer, DsrcCommsCheck> commsChecks = Collections.synchronizedMap(new HashMap<>());
+    private final Map<Integer, DsrcCommsCheck> spatCommsCheck = new ConcurrentHashMap<>();
+    private final Map<Integer, DsrcCommsCheck> mapCommsCheck = new ConcurrentHashMap<>();
+
+    private final ConcurrentHashMap<Integer, I2VData> trackedI2Vs = new ConcurrentHashMap<>();
 
     private IPubSubService pubSub;
     private ILogger log = LoggerManager.getLogger();
@@ -66,21 +72,10 @@ public class GuidanceV2IService implements V2IService {
             for (IntersectionGeometry geometry : map.getIntersections()) {
                 LocalDateTime msgTs = LocalDateTime.ofInstant(Instant.ofEpochMilli((long) (map.getHeader().getStamp().toSeconds() * 1000.0)), TimeZone.getDefault().toZoneId());
                 int id = geometry.getId().getId();
-                reportIntersectionComms(id, msgTs);
+                
+                reportNewMapComms(id, msgTs, geometry);
 
-                boolean reliableComms = commsChecks.get(id).isReliable();
-
-                if (reliableComms) {
-                    if (intersections.containsKey(id)) {
-                        intersections.get(id).updateIntersectionGeometry(geometry, msgTs);
-                    } else {
-                        createNewIntersectionData(id, geometry, msgTs);
-                    }
-                    fireCallbacks();
-                } else if (intersections.containsKey(id)) {
-                    intersections.remove(id);
-                    fireCallbacks();
-                } // if neither is true, do nothing
+                fireCallbacks();
             }
         });
 
@@ -89,33 +84,27 @@ public class GuidanceV2IService implements V2IService {
             for (IntersectionState state : spat.getIntersectionStateList()) {
                 LocalDateTime msgTs = LocalDateTime.now(); // TODO: Improve methodology for determining data age
                 int id = state.getId().getId();
-                reportIntersectionComms(id, msgTs);
-
-                boolean reliableComms = commsChecks.get(id).isReliable();
-
-                IntersectionData data = intersections.get(state.getId().getId());
-                if (reliableComms && intersections.containsKey(id)) {
-                    intersections.get(id).updateIntersectionState(state, msgTs);
-                    fireCallbacks();
-                } else if (!reliableComms && intersections.containsKey(id)) {
-                    intersections.remove(id);
-                    fireCallbacks();
-                } // if neither is true do nothing
+                reportNewSPATComms(id, msgTs, state);
+                fireCallbacks();
             }
         });
 
         expiryCheckThread = new Thread(() -> {
             while (!Thread.interrupted())  {
-                List<Integer> keys = new ArrayList<>(intersections.keySet());
-                for (int id : keys) {
-                    if (!commsChecks.get(id).isReliable()) {
-                        expireIntersectionData(id);
+
+                synchronized (trackedI2Vs) {
+                    List<Integer> keys = new ArrayList<>(intersections.keySet());
+                    for (int id : keys) {
+                        if (!mapCommsCheck.get(id).isReliable() ||  !spatCommsCheck.get(id).isReliable()) {
+                            log.debug("Removing unreliable intersection with id: " + id);
+                            trackedI2Vs.remove(id);
+                        }
                     }
                 }
                 try {
 					Thread.sleep(expiryTimeoutMs);
 				} catch (InterruptedException e) {
-					e.printStackTrace();
+                    log.error("Exception in V2I expiryCheckThread: ", e);
 				}
             }
         });
@@ -123,14 +112,16 @@ public class GuidanceV2IService implements V2IService {
     }
 
     private void fireCallbacks() {
+        List<IntersectionData> recentData = getV2IData();
         for (V2IDataCallback cb : callbacks) {
-            cb.onV2IDataChanged(getV2IData());
+            cb.onV2IDataChanged(recentData);
         }
     }
 
     private void expireIntersectionData(int id) {
         intersections.remove(id);
-        commsChecks.remove(id);
+        mapCommsCheck.remove(id);
+        spatCommsCheck.remove(id);
     }
 
     private void createNewIntersectionData(int id, IntersectionGeometry geometry, LocalDateTime ts) {
@@ -138,14 +129,52 @@ public class GuidanceV2IService implements V2IService {
         intersections.put(id, data);
     }
 
-    private void reportIntersectionComms(int id, LocalDateTime ts) {
-        if (commsChecks.containsKey(id)) {
-            commsChecks.get(id).recordNewCommsRx(ts);
-        } else {
-            DsrcCommsCheck newCheck = new DsrcCommsCheck();
-            newCheck.recordNewCommsRx(ts);
-            commsChecks.put(id, newCheck);
-        }
+    private void reportNewSPATComms(int id, LocalDateTime ts, IntersectionState state) {
+
+        I2VData newI2VData = new I2VData();
+
+        DsrcCommsCheck newSpatCheck = new DsrcCommsCheck();
+        newSpatCheck.recordNewCommsRx(ts);
+
+        newI2VData.spatComms = newSpatCheck;
+
+        trackedI2Vs.merge(id, newI2VData, (I2VData existingData, I2VData newValue) -> {
+            if (existingData.spatComms == null) {
+                existingData.spatComms = newSpatCheck;
+            }
+            existingData.spatComms.recordNewCommsRx(ts);
+            if (existingData.intersection != null) {
+                existingData.intersection.updateIntersectionState(state, ts);
+            }
+            log.debug("Updated spat comms for id: " + id);
+            return existingData;
+        });
+    }
+
+    private void reportNewMapComms(int id, LocalDateTime ts, IntersectionGeometry geometry) {
+
+        I2VData newI2VData = new I2VData();
+
+        DsrcCommsCheck newMapCheck = new DsrcCommsCheck();
+        newMapCheck.recordNewCommsRx(ts);
+
+        newI2VData.mapComms = newMapCheck;
+
+        IntersectionData newIntersectionData = new IntersectionData(geometry, ts); 
+        newI2VData.intersection = newIntersectionData;
+
+        trackedI2Vs.merge(id, newI2VData, (I2VData existingData, I2VData newValue) -> {
+            if (existingData.mapComms == null) {
+                existingData.mapComms = newMapCheck;
+            }
+            existingData.mapComms.recordNewCommsRx(ts);
+            if (existingData.intersection == null) {
+                existingData.intersection = newIntersectionData;
+            }
+            existingData.intersection.updateIntersectionGeometry(geometry, ts);
+            log.debug("Updated map comms for id: " + id);
+            return existingData;
+        });
     }
 
     private class DsrcCommsCheck {
@@ -174,6 +203,12 @@ public class GuidanceV2IService implements V2IService {
        }
     }
 
+    private class I2VData {
+        public IntersectionData intersection;
+        public DsrcCommsCheck mapComms;
+        public DsrcCommsCheck spatComms;
+    }
+
 	@Override
 	public void registerV2IDataCallback(V2IDataCallback callback) {
         callbacks.add(callback);
@@ -181,6 +216,19 @@ public class GuidanceV2IService implements V2IService {
 
 	@Override
 	public List<IntersectionData> getV2IData() {
-		return new ArrayList<IntersectionData>(intersections.values());
+        // Ensure we only get intersections which are reliable when the intersection was grabbed. This guarantees map and spat are present.
+        List<I2VData> intersections = trackedI2Vs.values().stream()
+        .filter(e -> e.intersection != null 
+            && e.mapComms != null && e.spatComms != null
+            && e.mapComms.isReliable() && e.spatComms.isReliable())
+        .collect(Collectors.toList());
+        
+        // Extract IntersectionData objects
+        List<IntersectionData> intData = new ArrayList<>();
+        for (I2VData intersection: intersections) {
+            intData.add(intersection.intersection);
+        }
+
+        return intData;
 	}
 }
