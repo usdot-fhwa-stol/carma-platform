@@ -169,7 +169,12 @@ ead/osOverride: "15"
 # Max distance in front of the stop bar that it is acceptable to stop, m
 ead/acceptableStopDistance: 6.0
 
-# ----- cost model params for AStar tree
+# A string identifying the fuel cost model which will be used for computing cost between nodes
+# DEFAULT: The fuel cost model use in the origional Glidepath Phase 2 whitepaper
+# MOVES_2010: The fuel cost model based on the EPA 2010 MOVES brief on vehicle efficiency
+ead.desiredCostModel: 'MOVES_2010'
+
+# ----- DEFAULT cost model params for AStar tree
 
 # drag coef Based on 0.84*Ac per http://ecomodder.com/wiki/index.php/Vehicle_Coefficient_of_Drag_List
 ead/dragCoefficient: 0.5
@@ -191,4 +196,38 @@ ead/vehicleMass: 2080.0
 ead/idleCost: 19300.0
 
 # true will make this the min energy rate for everything; false applies this only when speed is zero
-ead/useIdleMin: false
+ead.useIdleMin: false
+
+#### Start of Parameters used for MOVES Fuel Cost Model
+## Vehicle Type Parameters
+## Used in the Vehicle Specific Power (VSP) calculation
+## VSP = (A*v + B*v*v + C*v*v + M*v*(a + g * Math.sin(theta))) / f;
+## Where g is the acceleration due to gravity and theta is the road grade
+## v is the velocity and a is the acceleration
+## The other terms are listed as parameters below
+
+# The Rolling Term (A) used in the VSP calculation
+# Units: kW-s/m
+ead.MOVES.rollingTermA: 0.22112
+
+# The Rotating Term (B) used in the VSP calculation
+# Units: kW-s^2/m^2
+ead.MOVES.rotatingTermB: 0.002838
+
+# The Drag Term (C) used in the VSP calculation
+# Units: kW-s^3/m^3
+ead.MOVES.dragTermC: 0.000698
+
+# The vehicle mass (M)
+# Units: Metric tons
+ead.MOVES.vehicleMassInTons: 1.86686
+
+# The Fixed Mass Factor (f)
+# Units: Metric tons
+ead.MOVES.fixedMassFactor: 1.86686
+
+# The path to the table used for determining vehicle energy usage rates based on operation mode and source id
+ead.MOVES.baseRateTablePath: 'BaseRateForPassengerTruck.csv'
+
+#### End of Parameters used in MOVES Fuel Cost Model
+

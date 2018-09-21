@@ -268,23 +268,24 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         for (MovementState movementData : state.getMovementList()) {
             Movement m = new Movement();
 
-            for (GenericLane lane : data.getIntersectionGeometry().getLaneList()) {
-                // Detect based on connectsTo
-                if (lane.getConnectsToExists()) {
-                    for (j2735_msgs.Connection connectsTo : lane.getConnectToList()) {
-                        if (connectsTo.getSignalGroupExists()) {
-                            if (connectsTo.getSignalGroup() == movementData.getSignalGroup()
-                                    && connectsTo.getConnectingLane().getManeuverExists()
-                                    && connectsTo.getConnectingLane().getManeuver().getAllowedManeuvers() == 0) {
-                                LaneSet lanes = new LaneSet(lane.getLaneId(), 0x01); // TODO: Detect maneuvers other
-                                                                                     // than
-                                                                                     // straight
-                                m.addLaneSet(lanes);
-                            }
-                        }
-                    }
-                }
-            }
+            // TODO this causes a merge conflict, which is fixed in feature/fix_dtsb_calc branch 
+//            for (j2735_msgs.GenericLane lane : data.getIntersectionGeometry().getLaneList()) {
+//                // Detect based on connectsTo
+//                if (lane.getConnectsToExists()) {
+//                    for (j2735_msgs.Connection connectsTo : lane.getConnectToList()) {
+//                        if (connectsTo.getSignalGroupExists()) {
+//                            if (connectsTo.getSignalGroup() == movementData.getSignalGroup()
+//                                    && connectsTo.getConnectingLane().getManeuverExists()
+//                                    && connectsTo.getConnectingLane().getManeuver().getAllowedManeuvers() == 0) {
+//                                LaneSet lanes = new LaneSet(lane.getLaneId(), 0x01); // TODO: Detect maneuvers other
+//                                                                                     // than
+//                                                                                     // straight
+//                                m.addLaneSet(lanes);
+//                            }
+//                        }
+//                    }
+//                }
+//            }
 
             movements.add(m);
         }
