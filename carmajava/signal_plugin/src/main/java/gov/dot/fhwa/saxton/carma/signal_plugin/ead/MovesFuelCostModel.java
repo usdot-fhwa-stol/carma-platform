@@ -126,7 +126,7 @@ public class MovesFuelCostModel implements ICostModel {
 
                 Integer key = Integer.parseInt(data[0]);
 
-                List<Double> values = new ArrayList<>();
+                List<Double> values = new ArrayList<>(EXPECTED_BASE_RATE_TABLE_LENGTH - 1);
 
                 for (int i = 1; i < data.length; i++) {
                     values.add(Double.parseDouble(data[i]));
@@ -183,7 +183,7 @@ public class MovesFuelCostModel implements ICostModel {
         final double theta = ROAD_GRADE; 
 
         // Calculate the VehicleSpecificPower (VSP)
-        final double VSP = (A*v + B*v_sqr + C*v_sqr + M*v*(a + g * Math.sin(theta))) / f;
+        final double VSP = (A*v + B*v_sqr + C*v_sqr*v + M*v*(a + g * Math.sin(theta))) / f;
 
         // Determine Operating Mode from OpModeTable
         final int opMode = getModeConditional(VSP, v, a);
@@ -276,9 +276,9 @@ public class MovesFuelCostModel implements ICostModel {
 
     @Override
     public double heuristic(Node currentNode) {
-        //no cost if we are already beyond the location of the goal (we are as close as our grid spacing will allow)
-        if (currentNode.getDistance() >= goal.getDistance()) {
-            return 0.0;
+        //infinite cost if we pass the location and the time of the goal
+        if (currentNode.getDistance() > (goal.getDistance() + tolerances.getDistance())  ||  (currentNode.getTime() > goal.getTime() + tolerances.getTime()) ) {
+            return Double.POSITIVE_INFINITY;
         }
         //smooth acceleration from current location to ending location & speed, ignoring the signal
         return cost(currentNode, goal);
@@ -305,13 +305,13 @@ public class MovesFuelCostModel implements ICostModel {
 
         //if tolerances have been specified then use them
         if (tolerances != null) {
-            result = n.getDistance() >= goal.getDistance()  &&
-                   //Math.abs(n.getTime()     - goal_.getTime())     <= tolerances_.getTime()     &&
-                     Math.abs(n.getSpeed()    - goal.getSpeed())    <= tolerances.getSpeed();
+            result = Math.abs(n.getDistance() - goal.getDistance()) <= tolerances.getDistance()  &&
+                    Math.abs(n.getTime()     - goal.getTime())     <= tolerances.getTime()      &&
+                    Math.abs(n.getSpeed()    - goal.getSpeed())    <= tolerances.getSpeed();
         }else {
-            result = n.getDistance() == goal.getDistance()  &&
-                   //n.getTime()     == goal_.getTime()      &&
-                     n.getSpeed()    == goal.getSpeed();
+            result = n.getDistance() >= goal.getDistance()  &&
+                     n.getTime()     <= goal.getTime()      &&
+                     n.getSpeed()    >= goal.getSpeed();
         }
 
         if (result) {
@@ -326,26 +326,6 @@ public class MovesFuelCostModel implements ICostModel {
 
     @Override
     public boolean isUnusable(Node n) {
-        //if this node is more than one time increment beyond the goal distance and not near the goal speed
-        // then there is no point in considering it or its children
-        long excessDistance = n.getSpeed() * n.getTime();
-        if (n.getDistance() > goal.getDistance() + excessDistance) {
-            if (tolerances != null) {
-                if (Math.abs(n.getSpeed() - goal.getSpeed()) > tolerances.getSpeed()) {
-                    return true;
-                }
-            }else {
-                if (n.getSpeed() != goal.getSpeed()) {
-                    return true;
-                }
-            }
-        }
-
-        //if the node's time is significantly larger than the goal node's time, reject it
-        if (n.getTimeAsDouble() > goal.getTimeAsDouble() + 5.0) {
-            return true;
-        }
-
-        return false;
+        return (n.getDistance() > (goal.getDistance() + tolerances.getDistance()))  ||  ((n.getTime() > goal.getTime() + tolerances.getTime()));
     }
 }
