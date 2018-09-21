@@ -20,7 +20,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.ros.node.ConnectedNode;
+import org.ros.node.service.ServiceServer;
+
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceExceptionHandler;
+import java.lang.IllegalArgumentException;
 
 /**
  * Guidance package PubSubManager component
@@ -38,16 +43,18 @@ public class PubSubManager implements IPubSubService {
     protected ISubscriptionChannelFactory subFactory;
     protected IPublicationChannelFactory pubFactory;
     protected IServiceChannelFactory srvFactory;
+    protected IServiceServerManager srvServerManager;
     protected Map<String, IPublicationChannel<?>> pubChannelManagers;
     protected Map<String, ISubscriptionChannel<?>> subChannelManagers;
     protected Map<String, IServiceChannel<?, ?>> serviceChannelManagers;
 
     public PubSubManager(ISubscriptionChannelFactory subFactory, IPublicationChannelFactory pubFactory,
-            IServiceChannelFactory srvFactory) {
+            IServiceChannelFactory srvFactory, IServiceServerManager srvServerManager) {
 
         this.subFactory = subFactory;
         this.pubFactory = pubFactory;
         this.srvFactory = srvFactory;
+        this.srvServerManager = srvServerManager;
 
         pubChannelManagers = Collections.synchronizedMap(new HashMap<String, IPublicationChannel<?>>());
         subChannelManagers = Collections.synchronizedMap(new HashMap<String, ISubscriptionChannel<?>>());
@@ -120,4 +127,20 @@ public class PubSubManager implements IPubSubService {
             }
         }
     }
+    
+    /**
+     * Create an IServiceServer instance
+     *
+     * @param topicUrl A URL identifying the ROS service name
+     * @param type     The string identifier of the message type
+     * @param <T>      Type parameter of the service request message
+     * @param <S>      Type parameter of the service response message
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+	public <T, S> void createServiceServerForTopic(String topicUrl, String type,
+        OnServiceRequestCallback<T, S> callback) {
+        // Create the service
+        srvServerManager.createServiceServerForTopic(topicUrl, type, callback);
+	}
 }

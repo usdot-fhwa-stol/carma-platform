@@ -5,15 +5,15 @@
 vehicle_color: 'TRUCK-COLOR'
 
 # Double: Host vehicle height
-# Units: Meters
-vehicle_height: 1.7018
+# Units: Meters# TODO
+vehicle_height: 1.7018 
 
 # String: Host vehicle’s Unique ID that will be used in mobility messages.
 vehicle_id: 'DOT-TRUCK'
 
 # Double: Host vehicle length
 # Units: Meters
-vehicle_length: 4.8768
+vehicle_length: 8.74
 
 # String: Host vehicle make
 vehicle_make: 'Truck'
@@ -23,8 +23,8 @@ vehicle_model: 'Truck'
 
 # Double: Host vehicle width
 # Units: Meters
-vehicle_width: 2.1336
+vehicle_width: 2.362
 
 # Integer: Host vehicle year
-# Units: Year
-vehicle_year: 2013
+# Units: Year#TODO
+vehicle_year: 2013 

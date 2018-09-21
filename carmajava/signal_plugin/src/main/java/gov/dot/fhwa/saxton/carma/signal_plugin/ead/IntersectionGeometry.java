@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2018 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.Constants;
@@ -5,7 +21,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicat
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.Lane;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.Location;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.map.MapMessage;
-import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.IGlidepathAppConfig;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 
@@ -24,8 +40,8 @@ public class IntersectionGeometry {
 	public IntersectionGeometry() {
 		IGlidepathAppConfig config = (GlidepathApplicationContext.getInstance().getAppConfig());
 		assert(config != null);
-		cteThreshold_ = Integer.valueOf(config.getProperty("ead.cte.threshold"));
-		timeStep_ = 0.001*(double)Integer.valueOf(config.getProperty("periodicDelay"));
+		cteThreshold_ = config.getIntValue("ead.cte.threshold");
+		timeStep_ = 0.001*(double)config.getIntValue("periodicDelay");
 		largeMovement_ = (int)(70.0/Constants.MPS_TO_MPH * 100.0 * timeStep_ * 2.5); //70 MPH, 100 cm/m, time step, safety factor
 		laneIndex_ = -1;
 		laneDtsb_ = Integer.MAX_VALUE;

@@ -18,7 +18,7 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
 import java.io.IOException;
 
-import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.IGlidepathAppConfig;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.ICostModel;
 
 /**

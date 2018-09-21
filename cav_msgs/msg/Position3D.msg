@@ -10,34 +10,35 @@
 
 # Position3D ::= SEQUENCE {
 
-# lat Latitude, -- in 1/10th micro degrees
-# Latitude ::= INTEGER (-900000000..900000001)
-#  -- LSB = 1/10 micro degree
+# Deviates from J2735 standard:
+# Latitude in this message are conveyed as deg rather than 1/10th micro deg to avoid redundant unnecessary conversion by subscribers
+# lat Latitude, -- in degrees
+# Latitude ::= DOUBLE (-90.0000000-90.0000001)
 #  -- Providing a range of plus-minus 90 degrees
-#  -- Convert to degree with factor 0.0000001 when field is used
 float64 latitude
 
 float64 LATITUDE_UNAVAILABLE = 90.0000001
 float64 LATITUDE_MAX = 90.0
 float64 LATITUDE_MIN = -90.0
 
-# long Longitude, -- in 1/10th micro degrees
-# Longitude ::= INTEGER (-1799999999..1800000001)
-#  -- LSB = 1/10 micro degree
+# Deviates from J2735 standard:
+# Latitude in this message are conveyed as deg rather than 1/10th micro deg to avoid redundant unnecessary conversion by subscribers
+# long Longitude, -- in degrees
+# Longitude ::= INTEGER (-179.9999999-180.0000001)
 #  -- Providing a range of plus-minus 180 degrees
-#  -- Convert to degree with factor 0.0000001 when field is used
 float64 longitude
 
 float64 LONGITUDE_UNAVAILABLE = 180.0000001
 float64 LONGITUDE_MAX = 180.0
 float64 LONGITUDE_MIN = -179.9999999
 
-# elevation Elevation OPTIONAL, -- in 10 cm units
-# Elevation ::= INTEGER (-4096..61439)
-#  -- In units of 10 cm steps above or below the reference ellipsoid
+# Deviates from J2735 standard:
+# Elevation in this message are conveyed as m rather than 10 cm to avoid redundant unnecessary conversion by subscribers
+# elevation Elevation OPTIONAL, -- in 1 m units
+# Elevation ::= INTEGER (-409.6-6143.9)
+#  -- In units of m steps above or below the reference ellipsoid
 #  -- Providing a range of -409.5 to + 6143.9 meters
-#  -- The value -4096 shall be used when Unknown is to be sent
-#  -- Convert to meter with factor 0.1 when field is used
+#  -- The value -409.6 shall be used when Unknown is to be sent
 float32 elevation
 bool elevation_exists
 

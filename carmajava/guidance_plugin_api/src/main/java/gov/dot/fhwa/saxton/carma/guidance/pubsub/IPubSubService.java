@@ -35,6 +35,18 @@ public interface IPubSubService {
         String type) throws TopicNotFoundException;
 
     /**
+     * Get access to a new {@link IServiceServer} instance for the specified service and type
+     *
+     * @param topicUrl The URL of the service topic to access
+     * @param type     The String identifier of the service dialog type
+     * @param <T>      Type parameter for the request type of the service dialog
+     * @param <S>      Type parameter for the response type of the service dialog
+     * @return A new {@link IServiceServer} instance capable of calling the service
+     */
+    @SuppressWarnings("unchecked") <T, S> void createServiceServerForTopic(String topicUrl,
+        String type, OnServiceRequestCallback<T,S> callback);
+
+    /**
      * Get access to a new {@link ISubscriber} instance for the specified topic and type
      *
      * @param topicUrl The URL of the topic to subscribe to

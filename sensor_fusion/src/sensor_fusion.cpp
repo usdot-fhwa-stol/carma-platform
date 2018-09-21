@@ -68,16 +68,19 @@ inline void doTransform(const cav_msgs::ExternalObject& in, cav_msgs::ExternalOb
     out.header = transform.header;
 }
 
-}
+} // End tf2 namespace
 
 namespace torc
 {
+
 class SimTimer : public cav::Timer
 {
-    virtual boost::posix_time::ptime getTime() override {
+    virtual boost::posix_time::ptime getTime() override 
+    {
         return ros::Time::now().toBoost();
     }
 };
+
 /**
  * @brief Simple merging of sizes.
  * @param tgt
@@ -85,9 +88,9 @@ class SimTimer : public cav::Timer
  */
 void mergeSize(geometry_msgs::Vector3& tgt, const geometry_msgs::Vector3& src, size_t merged_so_far)
 {
-    tgt.x = ((tgt.x*merged_so_far)+src.x)/(merged_so_far+1);
-    tgt.y = ((tgt.y*merged_so_far)+src.y)/(merged_so_far+1);
-    tgt.z = ((tgt.z*merged_so_far)+src.z)/(merged_so_far+1);
+    tgt.x = ((tgt.x * merged_so_far) + src.x) / (merged_so_far + 1);
+    tgt.y = ((tgt.y * merged_so_far) + src.y) / (merged_so_far + 1);
+    tgt.z = ((tgt.z * merged_so_far) + src.z) / (merged_so_far + 1);
 }
 
 cav_msgs::ExternalObject toExternalObject(const TrackedObject& obj)
@@ -121,17 +124,22 @@ cav_msgs::ExternalObject toExternalObject(const TrackedObject& obj)
     size_t sizes_merged = 0;
     for(auto& it : obj.src_data)
     {
-        if(it.second.get() == nullptr) continue;
+        if(it.second.get() == nullptr) 
+        {
+            continue;
+        }
+
         cav_msgs::ExternalObject src_obj;
         uint32_t serial_size;
-        memcpy(&serial_size,it.second.get(),sizeof(uint32_t));
-        ros::serialization::IStream stream(it.second.get()+sizeof(uint32_t), serial_size);
+        memcpy(&serial_size, it.second.get(), sizeof(uint32_t));
+
+        ros::serialization::IStream stream(it.second.get() + sizeof(uint32_t), serial_size);
         ros::serialization::Serializer<cav_msgs::ExternalObject>::read(stream, src_obj);
 
         if((src_obj.presence_vector & cav_msgs::ExternalObject::SIZE_PRESENCE_VECTOR) != 0)
         {
             out.presence_vector |= cav_msgs::ExternalObject::SIZE_PRESENCE_VECTOR;
-            mergeSize(out.size,src_obj.size,sizes_merged++);
+            mergeSize(out.size, src_obj.size, sizes_merged++);
         }
 
         if((src_obj.presence_vector & cav_msgs::ExternalObject::OBJECT_TYPE_PRESENCE_VECTOR) != 0)
@@ -188,30 +196,27 @@ TrackedObject toTrackedObject(const cav_msgs::ExternalObject& obj)
 
     return ret;
 }
-}
+} // End torc namespace
 
-int SensorFusionApplication::run() {
+int SensorFusionApplication::run() 
+{
     nh_.reset(new ros::NodeHandle());
     pnh_.reset(new ros::NodeHandle("~"));
     ros::NodeHandle pnh("filtered");
     tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
 
-    pnh_->param<std::string>("inertial_frame_name",inertial_frame_name_,"odom");
-    pnh_->param<std::string>("body_frame_name",body_frame_name_,"base_link");
-    pnh_->param<std::string>("ned_frame_name",ned_frame_name_,"ned");
-    pnh_->param<bool>("use_interface_mgr",use_interface_mgr_,false);
-
-    // TODO remove once the truck pinpoint altitude values are correct
-    pnh_->param<bool>("use_altitude_override",use_altitude_override_, false);
-    pnh_->param<double>("altitude_override",altitude_override_, 0.0);
+    pnh_->param<std::string>("inertial_frame_name", inertial_frame_name_, "odom");
+    pnh_->param<std::string>("body_frame_name", body_frame_name_, "base_link");
+    pnh_->param<std::string>("ned_frame_name", ned_frame_name_, "ned");
+    pnh_->param<bool>("use_interface_mgr", use_interface_mgr_, true);
 
     bool use_sim_time;
     nh_->param<bool>("/use_sim_time", use_sim_time, false);
 
-		//This use sim time fix was added to support rosbag playback. The issue is that the tracker is time based
-		//and if a measurement comes in with an earlier time we assume it is old. So to support looping play back 
-		//we need to reset the tracker and also use a special SimTimer to read time from the ROS timer rather than
-		//the default timer.
+	/* This use sim time fix was added to support rosbag playback. The issue is that the tracker is time based
+	 * and if a measurement comes in with an earlier time we assume it is old. So to support looping play back 
+	 * we need to reset the tracker and also use a special SimTimer to read time from the ROS timer rather than
+	 * the default timer. */
     if(use_sim_time)
     {
         ROS_INFO_STREAM("Using Sim Time");
@@ -224,19 +229,18 @@ int SensorFusionApplication::run() {
                 ROS_INFO_STREAM("Detected an early clock, resetting tracker");
                 tracker_->reset();
             }
-
             time = msg->clock;
         });
-    }else
+    }
+    else
     {
         tracker_.reset(new torc::ObjectTracker());
     }
 
-
-    //setup dyn_recfg_server
+    // Setup dyn_recfg_server
     {
         dynamic_reconfigure::Server<sensor_fusion::SensorFusionConfig>::CallbackType f;
-        f = std::bind(&SensorFusionApplication::dyn_recfg_cb,this,std::placeholders::_1,std::placeholders::_2);
+        f = std::bind(&SensorFusionApplication::dyn_recfg_cb, this, std::placeholders::_1, std::placeholders::_2);
         dyn_cfg_server_->setCallback(f);
     }
 
@@ -246,82 +250,79 @@ int SensorFusionApplication::run() {
     {
         ROS_INFO_STREAM("Waiting for Interface Manager");
         ros::service::waitForService("get_drivers_with_capabilities");
-        update_services_timer_ = nh_->createTimer(ros::Duration(5.0),[this](const ros::TimerEvent& ev){ update_subscribed_services(); },false, true);
+        update_services_timer_ = nh_->createTimer(ros::Duration(5.0), [this](const ros::TimerEvent& ev){ update_subscribed_services(); }, false, true);
         ROS_INFO_STREAM("Interface Manager available");
     }
-		else
+	else
     {
-		    //This allows us to manually set the topics to listen, rather than querying the interface manager. Topics
-				//can be set through a xaml list in the launch file
+		//This allows us to manually set the topics to listen, rather than querying the interface manager. Topics can be set through a xaml list in the launch file
 				
-        //odometry
+        // Odometry
         {
             ROS_INFO_STREAM("Odometry Topics");
             XmlRpc::XmlRpcValue v;
-            pnh_->param("odometry_topics",v,v);
+            pnh_->param("odometry_topics", v, v);
             for(int i = 0; i < v.size(); i++)
             {
                 ROS_INFO_STREAM("Subscribing to "<< v[i]);
-                sub_map_[v[i]] = nh_->subscribe<nav_msgs::Odometry>(v[i],10,[this](const ros::MessageEvent<nav_msgs::Odometry const>& msg){ odom_cb(msg);});
+                sub_map_[v[i]] = nh_->subscribe<nav_msgs::Odometry>(v[i], 10, [this](const ros::MessageEvent<nav_msgs::Odometry const>& msg){ odom_cb(msg); });
             }
         }
 
-        //velocity
+        // Velocity
         {
-
             ROS_INFO_STREAM("Velocity Topics");
             XmlRpc::XmlRpcValue v;
-            pnh_->param("velocity_topics",v,v);
+            pnh_->param("velocity_topics", v, v);
             for(int i = 0; i < v.size(); i++)
             {
                 ROS_INFO_STREAM("Subscribing to "<< v[i]);
-                sub_map_[v[i]] = nh_->subscribe<geometry_msgs::TwistStamped>(v[i],10,[this](const ros::MessageEvent<geometry_msgs::TwistStamped>& msg){ velocity_cb(msg);});
+                sub_map_[v[i]] = nh_->subscribe<geometry_msgs::TwistStamped>(v[i], 10, [this](const ros::MessageEvent<geometry_msgs::TwistStamped>& msg){ velocity_cb(msg); });
             }
         }
 
-        //navsatfix
+        // NavSatFix
         {
             ROS_INFO_STREAM("NavSatFix Topics");
             XmlRpc::XmlRpcValue v;
-            pnh_->param("navsatfix_topics",v,v);
+            pnh_->param("navsatfix_topics", v, v);
             for(int i = 0; i < v.size(); i++)
             {
                 ROS_INFO_STREAM("Subscribing to "<< v[i]);
-                sub_map_[v[i]] = nh_->subscribe<sensor_msgs::NavSatFix>(v[i],10,[this](const ros::MessageEvent<sensor_msgs::NavSatFix>& msg){ navsatfix_cb(msg);});
+                sub_map_[v[i]] = nh_->subscribe<sensor_msgs::NavSatFix>(v[i], 10, [this](const ros::MessageEvent<sensor_msgs::NavSatFix>& msg){ navsatfix_cb(msg); });
             }
         }
 
-        //heading
+        // Heading
         {
             ROS_INFO_STREAM("Heading Topics");
             XmlRpc::XmlRpcValue v;
-            pnh_->param("heading_topics",v,v);
+            pnh_->param("heading_topics", v, v);
             for(int i = 0; i < v.size(); i++)
             {
                 ROS_INFO_STREAM("Subscribing to "<< v[i]);
-                sub_map_[v[i]] = nh_->subscribe<cav_msgs::HeadingStamped>(v[i],10,[this](const ros::MessageEvent<cav_msgs::HeadingStamped>& msg){ heading_cb(msg);});
+                sub_map_[v[i]] = nh_->subscribe<cav_msgs::HeadingStamped>(v[i], 10, [this](const ros::MessageEvent<cav_msgs::HeadingStamped>& msg){ heading_cb(msg); });
             }
         }
 
-        //objects
+        // Objects
         {
             ROS_INFO_STREAM("Objects Topics");
             XmlRpc::XmlRpcValue v;
-            pnh_->param("objects_topics",v,v);
+            pnh_->param("objects_topics", v, v);
             for(int i = 0; i < v.size(); i++)
             {
                 ROS_INFO_STREAM("Subscribing to "<< v[i]);
-                sub_map_[v[i]] =  nh_->subscribe<cav_msgs::ExternalObjectList>(v[i],10,[this,&v,i](const cav_msgs::ExternalObjectListConstPtr& msg){objects_cb_q_.push_back(std::make_pair(v[i], msg));});
+                sub_map_[v[i]] =  nh_->subscribe<cav_msgs::ExternalObjectList>(v[i], 10, [this, &v, i](const cav_msgs::ExternalObjectListConstPtr& msg){ objects_cb_q_.push_back(std::make_pair(v[i], msg)); });
             }
         }
     }
 
-    odom_pub_       = pnh.advertise<nav_msgs::Odometry>("odometry",100);
-    navsatfix_pub_  = pnh.advertise<sensor_msgs::NavSatFix>("nav_sat_fix",100);
-    velocity_pub_   = pnh.advertise<geometry_msgs::TwistStamped>("velocity",100);
-    heading_pub_    = pnh.advertise<cav_msgs::HeadingStamped>("heading",100);
-    objects_pub_    = pnh.advertise<cav_msgs::ExternalObjectList>("tracked_objects",100);
-    vehicles_pub_   = pnh.advertise<cav_msgs::ConnectedVehicleList>("tracked_vehicles",100);
+    odom_pub_       = pnh.advertise<nav_msgs::Odometry>("odometry", 100);
+    navsatfix_pub_  = pnh.advertise<sensor_msgs::NavSatFix>("nav_sat_fix", 100);
+    velocity_pub_   = pnh.advertise<geometry_msgs::TwistStamped>("velocity", 100);
+    heading_pub_    = pnh.advertise<cav_msgs::HeadingStamped>("heading", 100);
+    objects_pub_    = pnh.advertise<cav_msgs::ExternalObjectList>("tracked_objects", 100);
 
     ros::Rate r(20);
     while(ros::ok())
@@ -341,50 +342,60 @@ int SensorFusionApplication::run() {
     return 0;
 }
 
-void SensorFusionApplication::update_subscribed_services() {
-    ROS_DEBUG_STREAM("Updating subscribed services");
-    //odometry
+void SensorFusionApplication::update_subscribed_services() 
+{
+    ROS_INFO_STREAM("Updating subscribed services");
+
+    // Odometry
     std::vector<std::string> ret = get_api("position/odometry");
     for(const std::string& it : ret)
     {
         if(sub_map_.find(it) == sub_map_.end())
-            sub_map_[it] = nh_->subscribe<nav_msgs::Odometry>(it,1,[this](const ros::MessageEvent<nav_msgs::Odometry const>& msg){ odom_cb(msg);});
+        {
+            sub_map_[it] = nh_->subscribe<nav_msgs::Odometry>(it, 1, [this](const ros::MessageEvent<nav_msgs::Odometry const>& msg){ odom_cb(msg); });
+        }
     }
 
-    //nav_sat_fix
+    // Nav_Sat_Fix
     ret = get_api("position/nav_sat_fix");
     for(const std::string& it : ret)
     {
         if(sub_map_.find(it) == sub_map_.end())
-            sub_map_[it] = nh_->subscribe<sensor_msgs::NavSatFix>(it,1,[this](const ros::MessageEvent<sensor_msgs::NavSatFix const>&msg){ navsatfix_cb(msg);});
+        {
+            sub_map_[it] = nh_->subscribe<sensor_msgs::NavSatFix>(it, 1, [this](const ros::MessageEvent<sensor_msgs::NavSatFix const>&msg){ navsatfix_cb(msg); });
+        }
     }
 
-    //heading
+    // Heading
     ret = get_api("position/heading");
     for(const std::string& it : ret)
     {
         if(sub_map_.find(it) == sub_map_.end())
-            sub_map_[it] = nh_->subscribe<cav_msgs::HeadingStamped>(it,1,[this](const ros::MessageEvent<cav_msgs::HeadingStamped>&  msg){ heading_cb(msg);});
+        {
+            sub_map_[it] = nh_->subscribe<cav_msgs::HeadingStamped>(it, 1, [this](const ros::MessageEvent<cav_msgs::HeadingStamped>&  msg){ heading_cb(msg); });
+        }
     }
 
-    //velocity
+    // Velocity
     ret = get_api("position/velocity");
     for(const std::string& it : ret)
     {
         if(sub_map_.find(it) == sub_map_.end())
-            sub_map_[it] = nh_->subscribe<geometry_msgs::TwistStamped>(it,1,[this](const ros::MessageEvent<geometry_msgs::TwistStamped>& msg){ velocity_cb(msg);});
+        {
+            sub_map_[it] = nh_->subscribe<geometry_msgs::TwistStamped>(it, 1, [this](const ros::MessageEvent<geometry_msgs::TwistStamped>& msg){ velocity_cb(msg); });
+        }
     }
 
-    //tracked_objects
+    // Tracked_objects
     ret = get_api("sensor/objects");
     for(const std::string& it : ret)
     {
         if(sub_map_.find(it) == sub_map_.end())
-            sub_map_[it] = nh_->subscribe<cav_msgs::ExternalObjectList>(it,1,[this, it](const cav_msgs::ExternalObjectListConstPtr& msg){ objects_cb_q_.push_back(std::make_pair(it,msg));});
+        {
+            sub_map_[it] = nh_->subscribe<cav_msgs::ExternalObjectList>(it, 1, [this, it](const cav_msgs::ExternalObjectListConstPtr& msg){ objects_cb_q_.push_back(std::make_pair(it, msg)); });
+        }
     }
-
 }
-
 
 std::vector<std::string> SensorFusionApplication::get_api(const std::string &name)
 {
@@ -393,90 +404,67 @@ std::vector<std::string> SensorFusionApplication::get_api(const std::string &nam
     cav_srvs::GetDriversWithCapabilities srv;
     srv.request.capabilities.push_back(name);
 
-    ROS_DEBUG_STREAM("Sending request to get_drivers_with_capabilities: " << srv.request);
+    ROS_INFO_STREAM("Sending request to get_drivers_with_capabilities: " << srv.request);
     std::vector<std::string> ret;
+
     if(client.exists() && client.call(srv))
     {
+	    ROS_INFO_STREAM("get_drivers_with_capabilities returned: " << srv.response);
 
-	ROS_DEBUG_STREAM("get_drivers_with_capabilities returned: " << srv.response);
-        //The service returns a list of drivers that have the api we provided
+        // The service returns a list of drivers that have the api we provided
         for(std::string fqn : srv.response.driver_data)
         {
             size_t pos = fqn.find(name);
-            std::string driverName = fqn.substr(0,pos);
+            std::string driverName = fqn.substr(0, pos);
 
-            //Bond with the node if we haven't already
-            //todo: make bonding configurable, evaluate if it is even necessary
-//            if(bond_map_.find(driverName) == bond_map_.end())
-//            {
-//                ROS_DEBUG_STREAM("Bonding to node: " << driverName);
-//                ros::ServiceClient bond_client = nh_->serviceClient<cav_srvs::Bind>(driverName+"/bind");
-//                cav_srvs::Bind req;
-//                req.request.id = boost::lexical_cast<std::string>(uuid_);
-//
-//                if(bond_client.call(req))
-//                {
-//                    bond_map_[driverName]= std::unique_ptr<bond::Bond>(new bond::Bond(driverName+"/bond",
-//                                                                              boost::lexical_cast<std::string>(uuid_),
-//                                                                              boost::bind(&SensorFusionApplication::on_broken_cb,
-//                                                                                          this,
-//                                                                                          driverName),boost::bind(
-//                                    &SensorFusionApplication::on_connected_cb,this,driverName)));
-//
-//                    bond_map_[driverName]->start();
-//                    if(!bond_map_[driverName]->waitUntilFormed(ros::Duration(1.0)))
-//                    {
-//                        ROS_ERROR_STREAM("Failed to form bond");
-//                        continue;
-//                    }
-//
-//                }
-//            }
-
-            //If we haven't subscribed to the topic formed by the name of the node and the service
-            //add this topic to the return list
+            // If we haven't subscribed to the topic formed by the name of the node and the service add this topic to the return list
             if(sub_map_.find(fqn) == sub_map_.end())
+            {
                 ret.push_back(fqn);
+            }
         }
-
     }
     else
     {
-        ROS_WARN_STREAM_THROTTLE(2,"Unable to query service get_drivers_with_capabilites");
+        ROS_WARN_STREAM_THROTTLE(2, "Unable to query service get_drivers_with_capabilites");
     }
 
     return ret;
-
 }
 
-
-void SensorFusionApplication::publish_updates() {
-
+void SensorFusionApplication::publish_updates() 
+{
     if(!odom_map_.empty())
+    {
         odom_pub_.publish(odom_map_.begin()->second);
+    }
 
     if(!navsatfix_map_.empty())
+    {
         navsatfix_pub_.publish(navsatfix_map_.begin()->second);
+    }
 
     if(!heading_map_.empty())
+    {
         heading_pub_.publish(heading_map_.begin()->second);
+    }
 
     if(!velocity_map_.empty())
-        velocity_pub_.publish(velocity_map_.begin()->second);
-
-    cav_msgs::ConnectedVehicleList msg;
-    std_msgs::Header header;
-    header.frame_id = body_frame_name_;
-    header.stamp = ros::Time::now();
-
-    vehicles_pub_.publish(msg);
-
-    if(tracker_->process() > 0 && !tracker_->tracked_sensor->objects.empty())
     {
-        cav_msgs::ExternalObjectList list;
-        list.header.stamp = ros::Time::fromBoost(tracker_->tracked_sensor->time_stamp);
-        list.header.frame_id = inertial_frame_name_;
-        for (auto& it : tracker_->tracked_sensor->objects)
+        velocity_pub_.publish(velocity_map_.begin()->second);
+    }
+
+    tracker_->process();
+
+    cav_msgs::ExternalObjectList list;
+    list.header.stamp = ros::Time::fromBoost(tracker_->tracked_sensor_->time_stamp);
+    list.header.frame_id = inertial_frame_name_;
+
+    // Check if Tracked Objects list is empty
+    if(!tracker_->tracked_sensor_->objects.empty()) 
+    {
+        // Loop through all tracked objects and publish
+        for (auto& it : tracker_->tracked_sensor_->objects)
         {
             cav_msgs::ExternalObject obj = toExternalObject(it);
             obj.header = list.header;
@@ -485,89 +473,109 @@ void SensorFusionApplication::publish_updates() {
 
         static uint64_t objects_published = 0;
         objects_published += list.objects.size();
-        ROS_INFO_STREAM_THROTTLE(5.0, "Published " << objects_published << " so far");
-        ROS_DEBUG_STREAM("Publish objects: " << list.objects.size());
+        ROS_DEBUG_STREAM("(Object Tracker) Total: " << objects_published << ", This loop: " << list.objects.size());
         objects_pub_.publish(list);
     }
-    else {
-        ROS_DEBUG_STREAM_THROTTLE(1.0,"No tracked_objects");
+    else 
+    {
+        objects_pub_.publish(list); // Publishing an empty list when there are no tracked objects
+        ROS_DEBUG_STREAM("(Object Tracker) No tracked_objects");
     }
 }
 
-void SensorFusionApplication::objects_cb(const cav_msgs::ExternalObjectListConstPtr& msg,const std::string& topic_name) {
-
+void SensorFusionApplication::objects_cb(const cav_msgs::ExternalObjectListConstPtr& msg, const std::string& topic_name) 
+{
     std::hash<std::string> hash_fn;
     size_t hash = hash_fn(topic_name);
-    //Get Transform from object measurement to inertial frame
-    //All tracking should be done in inertial frame
+
+    // Variables and calls to track transform errors
+    std::string transform_error_1 = "";
+    bool first_transform_check = tf2_buffer_.canTransform(inertial_frame_name_, msg->header.frame_id, msg->header.stamp, ros::Duration(0.0), &transform_error_1);
+    std::string transform_error_2 = "";
+    bool second_transform_check = tf2_buffer_.canTransform(inertial_frame_name_, msg->header.frame_id, ros::Time(0), ros::Duration(0.0), &transform_error_2);
+    // Get Transform from object measurement to inertial frame. All tracking should be done in inertial frame
     geometry_msgs::TransformStamped transformStamped;
-    if(tf2_buffer_.canTransform(inertial_frame_name_,msg->header.frame_id,msg->header.stamp))
+
+    if(first_transform_check)
     {
-        transformStamped = tf2_buffer_.lookupTransform(inertial_frame_name_,msg->header.frame_id,msg->header.stamp);
+        transformStamped = tf2_buffer_.lookupTransform(inertial_frame_name_, msg->header.frame_id, msg->header.stamp);
     }
-    else if(tf2_buffer_.canTransform(inertial_frame_name_,msg->header.frame_id,ros::Time(0)))
+    else if(second_transform_check)
     {
-        ROS_DEBUG_STREAM("Using latest transform available");
-        transformStamped = tf2_buffer_.lookupTransform(inertial_frame_name_,msg->header.frame_id,ros::Time(0));
+        //ROS_INFO_STREAM("Using latest transform available");
+        transformStamped = tf2_buffer_.lookupTransform(inertial_frame_name_, msg->header.frame_id, ros::Time(0));
     }
     else
     {
-        ROS_WARN_STREAM("No transform available from " << inertial_frame_name_ << " to " << msg->header.frame_id);
+        //ROS_WARN_STREAM("No transform available from " << inertial_frame_name_ << " to " << msg->header.frame_id);
         return;
     }
+
+    //ROS_INFO_STREAM("Transform 1: " << first_transform_check << " : " << transform_error_1);
+    //ROS_INFO_STREAM("Transform 2: " << second_transform_check << " : " << transform_error_2);
 
     std::vector<torc::TrackedObject> transformed_list;
     for(auto & it : msg->objects)
     {
-        //Transform to inertial frame
+        // Transform to inertial frame
         cav_msgs::ExternalObject obj;
-        tf2::doTransform(it,obj,transformStamped);
+        tf2::doTransform(it, obj, transformStamped);
 
         geometry_msgs::TwistStamped twistStamped;
         try
         {
             if(!twist_history_buffer_.getTwist(body_frame_name_,obj.header.stamp,twistStamped))
+            {
                 continue;
-        }catch(cav::ExtrapolationException e)
+            }
+        }
+        catch(cav::ExtrapolationException e)
         {
-            ROS_WARN_STREAM(e.what());
-            twist_history_buffer_.getLatest(body_frame_name_,twistStamped);
+            //ROS_WARN_STREAM(e.what());
+            twist_history_buffer_.getLatest(body_frame_name_, twistStamped);
         }
 
         if(obj.presence_vector & cav_msgs::ExternalObject::VELOCITY_PRESENCE_VECTOR)
         {
             tf2::Vector3 obj_v;
-            tf2::convert(obj.velocity.twist.linear,obj_v);
+            tf2::convert(obj.velocity.twist.linear, obj_v);
 
             tf2::Vector3 body_v;
-            tf2::convert(twistStamped.twist.linear,body_v);
+            tf2::convert(twistStamped.twist.linear, body_v);
 
             obj_v += body_v;
+
             tf2::Quaternion rotation;
-            tf2::convert(transformStamped.transform.rotation,rotation);
-            tf2::Vector3 obj_v_rot = tf2::quatRotate(rotation,obj_v);
-            tf2::convert(obj_v_rot,obj.velocity.twist.linear);
+            tf2::convert(transformStamped.transform.rotation, rotation);
+
+            tf2::Vector3 obj_v_rot = tf2::quatRotate(rotation, obj_v);
+            tf2::convert(obj_v_rot, obj.velocity.twist.linear);
         }
 
-        transformed_list.push_back(torc::toTrackedObject(obj));
-        torc::TrackedObject& back = transformed_list.back();
+        transformed_list.push_back(torc::toTrackedObject(obj)); // Convert Object to Tracked Obj and Put in Tansformed List
+
+        torc::TrackedObject& back = transformed_list.back();    
+
         uint32_t serial_size = ros::serialization::serializationLength(obj);
-        boost::shared_array<uint8_t> buffer(new uint8_t[serial_size+sizeof(uint32_t)]);
+        boost::shared_array<uint8_t> buffer(new uint8_t[serial_size + sizeof(uint32_t)]);
         back.src_data[hash] = buffer;
-        memcpy(back.src_data[hash].get(),&serial_size,sizeof(uint32_t));
-        ros::serialization::OStream stream(back.src_data[hash].get()+sizeof(uint32_t),serial_size);
-        ros::serialization::serialize(stream,obj);
+
+        memcpy(back.src_data[hash].get(), &serial_size, sizeof(uint32_t));
+        ros::serialization::OStream stream(back.src_data[hash].get() + sizeof(uint32_t), serial_size);
+
+        ros::serialization::serialize(stream, obj);
     }
 
-
-    tracker_->addObjects(transformed_list.begin(),transformed_list.end(),hash,transformStamped.header.stamp.toBoost());
+    // Add all Message Objects to Object Tracker as measures objects
+    tracker_->addObjects(transformed_list.begin(), transformed_list.end(), hash, transformStamped.header.stamp.toBoost());
 }
 
-void SensorFusionApplication::bsm_cb(const cav_msgs::BSMConstPtr &msg) {
-    ROS_DEBUG_STREAM_NAMED("bsm_logger","Received bsm message: " << msg);
+void SensorFusionApplication::bsm_cb(const cav_msgs::BSMConstPtr &msg) 
+{
+    ROS_DEBUG_STREAM_NAMED("bsm_logger", "Received bsm message: " << msg);
     if(heading_map_.empty() || navsatfix_map_.empty())
     {
-        ROS_DEBUG_STREAM_NAMED("bsm_logger","Received bsm before heading and navsatfix updated unable to process msg");
+        ROS_DEBUG_STREAM_NAMED("bsm_logger", "Received bsm before heading and navsatfix updated unable to process msg");
         return;
     }
     auto hash = std::hash<std::string>();
@@ -578,19 +586,23 @@ void SensorFusionApplication::bsm_cb(const cav_msgs::BSMConstPtr &msg) {
     obj.presence_vector = 0;
 
     geometry_msgs::TransformStamped odom_tf, ned_odom_tf;
-    try {
+    try 
+    {
         odom_tf = tf2_buffer_.lookupTransform(inertial_frame_name_, body_frame_name_, msg->header.stamp);
         ned_odom_tf = tf2_buffer_.lookupTransform(ned_frame_name_, inertial_frame_name_, msg->header.stamp);
-    } catch (tf2::TransformException&ex) {
+    } 
+    catch (tf2::TransformException&ex) 
+    {
         ROS_WARN_STREAM(ex.what());
         return;
     }
+
     obj.presence_vector |= cav_msgs::ExternalObject::ID_PRESENCE_VECTOR;
     obj.id = (msg->core_data.id[0] << 24) | (msg->core_data.id[1] << 16) | (msg->core_data.id[2] << 8) | (msg->core_data.id[3]);
 
     obj.presence_vector |= cav_msgs::ExternalObject::BSM_ID_PRESENCE_VECTOR;
     obj.bsm_id.resize(msg->core_data.id.size());
-    std::copy(msg->core_data.id.begin(),msg->core_data.id.end(),obj.bsm_id.begin());
+    std::copy(msg->core_data.id.begin(), msg->core_data.id.end(), obj.bsm_id.begin());
 
     wgs84_utils::wgs84_coordinate bsm_coord;
     bsm_coord.heading   = msg->core_data.heading;
@@ -616,10 +628,8 @@ void SensorFusionApplication::bsm_cb(const cav_msgs::BSMConstPtr &msg) {
     odom_rot.w() = odom_tf.transform.rotation.w;
 
     Eigen::Transform<double, 3, Eigen::Affine> ned_odom_tf_eig;
-    ned_odom_tf_eig = Eigen::Translation3d(ned_odom_tf.transform.translation.x, ned_odom_tf.transform.translation.y,
-                                           ned_odom_tf.transform.translation.z)
-                      * Eigen::Quaterniond(ned_odom_tf.transform.rotation.w, ned_odom_tf.transform.rotation.x, ned_odom_tf.transform.rotation.y,
-                                           ned_odom_tf.transform.rotation.z);
+    ned_odom_tf_eig = Eigen::Translation3d(ned_odom_tf.transform.translation.x, ned_odom_tf.transform.translation.y, ned_odom_tf.transform.translation.z)
+        * Eigen::Quaterniond(ned_odom_tf.transform.rotation.w, ned_odom_tf.transform.rotation.x, ned_odom_tf.transform.rotation.y, ned_odom_tf.transform.rotation.z);
 
     Eigen::Quaterniond out_rot;
     Eigen::Vector3d out_pose;
@@ -637,15 +647,14 @@ void SensorFusionApplication::bsm_cb(const cav_msgs::BSMConstPtr &msg) {
     obj.pose.pose.orientation.z = out_rot.z();
     obj.pose.pose.orientation.w = out_rot.w();
 
-    if(msg->core_data.speed < cav_msgs::BSMCoreData::SPEED_UNAVAILABLE)
+    if(msg->core_data.presence_vector & cav_msgs::BSMCoreData::SPEED_AVAILABLE)
     {
-    
       Eigen::Vector3d velocity_vector;
       velocity_vector[0] = msg->core_data.speed;
       velocity_vector[1] = 0.0;
       velocity_vector[2] = 0.0;
       
-      velocity_vector = out_rot.inverse().toRotationMatrix()*velocity_vector;
+      velocity_vector = out_rot.inverse().toRotationMatrix() * velocity_vector;
       
       obj.presence_vector |= cav_msgs::ExternalObject::VELOCITY_PRESENCE_VECTOR;
       obj.velocity.twist.linear.x = velocity_vector[0];
@@ -660,44 +669,41 @@ void SensorFusionApplication::bsm_cb(const cav_msgs::BSMConstPtr &msg) {
     obj.size.x = msg->core_data.size.vehicle_length;
     obj.size.y = msg->core_data.size.vehicle_width / 2;
     obj.size.z = 1.5;
-    ROS_DEBUG_STREAM_NAMED("bsm_logger","Converted bsm message: " << obj);
+    ROS_DEBUG_STREAM_NAMED("bsm_logger", "Converted bsm message: " << obj);
 
     std::vector<torc::TrackedObject> objects;
     objects.push_back(torc::toTrackedObject(obj));
     torc::TrackedObject& back = objects.back();
     uint32_t serial_size = ros::serialization::serializationLength(obj);
-    boost::shared_array<uint8_t> buffer(new uint8_t[serial_size+sizeof(uint32_t)]);
+    boost::shared_array<uint8_t> buffer(new uint8_t[serial_size + sizeof(uint32_t)]);
     back.src_data[src_id] = buffer;
     memcpy(back.src_data[src_id].get(),&serial_size,sizeof(uint32_t));
-    ros::serialization::OStream stream(back.src_data[src_id].get()+sizeof(uint32_t),serial_size);
-    ros::serialization::serialize(stream,obj);
-    tracker_->addObjects(objects.begin(),objects.end(),src_id,msg->header.stamp.toBoost());
+    ros::serialization::OStream stream(back.src_data[src_id].get() + sizeof(uint32_t), serial_size);
+    ros::serialization::serialize(stream, obj);
+    tracker_->addObjects(objects.begin(), objects.end(), src_id, msg->header.stamp.toBoost());
 }
 
-void SensorFusionApplication::velocity_cb(const ros::MessageEvent<geometry_msgs::TwistStamped> &event) {
+void SensorFusionApplication::velocity_cb(const ros::MessageEvent<geometry_msgs::TwistStamped> &event) 
+{
     std::string name = event.getPublisherName();
     velocity_map_[name] = event.getMessage();
     twist_history_buffer_.addTwist(event.getMessage());
 }
 
-void SensorFusionApplication::heading_cb(const ros::MessageEvent<cav_msgs::HeadingStamped> &event) {
+void SensorFusionApplication::heading_cb(const ros::MessageEvent<cav_msgs::HeadingStamped> &event) 
+{
     std::string name = event.getPublisherName();
     heading_map_[name] = event.getMessage();
 }
 
-void SensorFusionApplication::navsatfix_cb(const ros::MessageEvent<sensor_msgs::NavSatFix> &event) {
-
+void SensorFusionApplication::navsatfix_cb(const ros::MessageEvent<sensor_msgs::NavSatFix> &event) 
+{
     std::string name = event.getPublisherName();
-    // TODO remove once Truck pinpoint is fixed
-    boost::shared_ptr<sensor_msgs::NavSatFix> msg = event.getMessage();
-    if (use_altitude_override_) {
-        msg.get()->altitude = altitude_override_;
-    }
-
-    navsatfix_map_[name] = msg;
+    navsatfix_map_[name] = event.getMessage();
 }
 
-void SensorFusionApplication::odom_cb(const ros::MessageEvent<nav_msgs::Odometry> &event) {
+void SensorFusionApplication::odom_cb(const ros::MessageEvent<nav_msgs::Odometry> &event) 
+{
     std::string name = event.getPublisherName();
     odom_map_[name] = event.getMessage();
 }
@@ -706,20 +712,23 @@ void SensorFusionApplication::dyn_recfg_cb(sensor_fusion::SensorFusionConfig &cf
 {
     static bool init = false;
     std::string msg = init ? "Reconfigure Request" : "Initial Config";
-    ROS_INFO("%s: \n\ttracker_lifetime_decay: %f\n\ttracker_score_threshold: %f\n\ttracker_max_velocity: %f\n\ttracker_minimum_track_score: %f",
-             msg.c_str(),
-        cfg.tracker_lifetime_decay,
-        cfg.tracker_score_threshold,
-        cfg.tracker_max_velocity,
-        cfg.tracker_minimum_track_score);
+    ROS_INFO("%s: \t\ntracker_life_time_decay: %f\t\ntracker_life_time_divider: %f\t\ntracker_life_time_threshold: %f\t\ntracker_out_of_range_dist: %f\t\ntracker_unassociated_group_dist: %f\t\ntracker_score_threshold: %f",
+        msg.c_str(),
+        cfg.tracker_life_time_decay,
+        cfg.tracker_life_time_divider,
+        cfg.tracker_life_time_threshold,
+        cfg.tracker_out_of_range_dist,
+        cfg.tracker_unassociated_group_dist,
+        cfg.tracker_score_threshold);
 
     config_ = cfg;
 
-    tracker_->config.life_time_decay = config_.tracker_lifetime_decay;
-    tracker_->config.max_velocity = config_.tracker_max_velocity;
-    tracker_->config.score_threshold = config_.tracker_score_threshold;
-    tracker_->config.minimum_tracker_score = config_.tracker_minimum_track_score;
+   tracker_->config.tracker_life_time_decay = config_.tracker_life_time_decay;
+   tracker_->config.tracker_life_time_divider = config_.tracker_life_time_divider;
+   tracker_->config.tracker_life_time_threshold = config_.tracker_life_time_threshold;
+   tracker_->config.tracker_out_of_range_dist = config_.tracker_out_of_range_dist;
+   tracker_->config.tracker_unassociated_group_dist = config_.tracker_unassociated_group_dist;
+   tracker_->config.tracker_score_threshold = config_.tracker_score_threshold;
 
     init = true;
 }
-

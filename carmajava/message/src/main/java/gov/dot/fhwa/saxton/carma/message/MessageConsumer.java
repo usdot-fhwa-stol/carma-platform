@@ -16,7 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.message;
 
-import cav_msgs.*;
+
 import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.message.factory.DSRCMessageFactory;
 import gov.dot.fhwa.saxton.carma.message.factory.IMessage;
@@ -36,6 +36,18 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.ros.message.MessageListener;
 import org.ros.node.parameter.ParameterTree;
 import org.ros.node.topic.Subscriber;
+
+import cav_msgs.ByteArray;
+import cav_msgs.MobilityOperation;
+import cav_msgs.MobilityPath;
+import cav_msgs.MobilityRequest;
+import cav_msgs.MobilityResponse;
+import cav_msgs.SystemAlert;
+
+import j2735_msgs.BSM;
+import j2735_msgs.SPAT;
+import j2735_msgs.MapData;
+
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
@@ -56,7 +68,7 @@ import org.ros.exception.ServiceNotFoundException;
  * rosparam set /interface_mgr/driver_wait_time 10
  * rosrun carma interfacemgr gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr
  * rostopic pub /saxton_cav/drivers/arada_application/comms/recv cav_msgs/ByteArray '{messageType: "BSM"}'
- * rostopic pub /host_bsm cav_msgs/BSM '{}'
+ * rostopic pub /host_bsm j2735_msgs/BSM '{}'
  */
 
 public class MessageConsumer extends SaxtonBaseNode {
@@ -71,15 +83,17 @@ public class MessageConsumer extends SaxtonBaseNode {
 	protected Publisher<MobilityPath> mobilityPathPub_; //incoming mobility path message after decoded
 	protected Publisher<MobilityResponse> mobilityResponsePub_; //incoming mobility response message after decoded
 	protected Publisher<MobilityOperation> mobilityOperationPub_; //incoming mobility operation message after decoded
+	protected Publisher<MapData> mapPub_; //incoming MAP message after decoded
+	protected Publisher<SPAT> spatPub_; //incoming SPAT message after decoded
 	
 	// Subscribers
 	protected Subscriber<SystemAlert> alertSub_;
 	protected Subscriber<ByteArray> inboundSub_; //incoming byte array, need to decode
-	protected Subscriber<BSM> bsmSub_; //outgoing BSM, need to encode
-	protected Subscriber<MobilityRequest> mobilityReqSub_; //outgoing mobility request message, need to encode
-	protected Subscriber<MobilityPath> mobilityPathSub_; //outgoing mobility path message, need to encode
-	protected Subscriber<MobilityResponse> mobilityResponseSub_; //incoming mobility response message after decoded
-	protected Subscriber<MobilityOperation> mobilityOperationSub_; //incoming mobility response message after decoded
+	protected Subscriber<BSM> bsmSub_; //outgoing plain BSM
+	protected Subscriber<MobilityRequest> mobilityReqSub_; //outgoing plain mobility request message
+	protected Subscriber<MobilityPath> mobilityPathSub_; //outgoing plain mobility path message
+	protected Subscriber<MobilityResponse> mobilityResponseSub_; //outgoing plain mobility response message
+	protected Subscriber<MobilityOperation> mobilityOperationSub_; //outgoing plain mobility operation message
 
 	// Used Services
 	protected ServiceClient<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient_;
@@ -206,14 +220,17 @@ public class MessageConsumer extends SaxtonBaseNode {
 		}
 		
 		//initialize Pubs
-		bsmPub_ = connectedNode_.newPublisher("incoming_bsm", BSM._TYPE);
+		bsmPub_ = connectedNode_.newPublisher("incoming_j2735_bsm", BSM._TYPE);
 		outboundPub_ = connectedNode_.newPublisher(J2735_outbound_binary_msg, ByteArray._TYPE);
 		mobilityReqPub_ = connectedNode_.newPublisher("incoming_mobility_request", MobilityRequest._TYPE);
 		mobilityPathPub_ = connectedNode_.newPublisher("incoming_mobility_path", MobilityPath._TYPE);
 		mobilityResponsePub_ = connectedNode_.newPublisher("incoming_mobility_response", MobilityResponse._TYPE);
 		mobilityOperationPub_ = connectedNode_.newPublisher("incoming_mobility_operation", MobilityOperation._TYPE);
+		mapPub_ = connectedNode_.newPublisher("incoming_j2735_map", MapData._TYPE);
+		spatPub_ = connectedNode_.newPublisher("incoming_j2735_spat", SPAT._TYPE);
 		if(bsmPub_ == null || outboundPub_ == null || mobilityReqPub_ == null ||
-		   mobilityPathPub_ == null || mobilityResponsePub_ == null || mobilityOperationPub_ == null) {
+		   mobilityPathPub_ == null || mobilityResponsePub_ == null ||
+		   mobilityOperationPub_ == null || mapPub_ == null || spatPub_ == null) {
 		    log_.error("Cannot initialize necessary publishers.");
 		    handleException(new RosRuntimeException("Cannot initialize necessary publishers."));
 		}
@@ -224,9 +241,11 @@ public class MessageConsumer extends SaxtonBaseNode {
 		messageCounters.registerEntry("MobilityPath");
 		messageCounters.registerEntry("MobilityResponse");
 		messageCounters.registerEntry("MobilityOperation");
+		messageCounters.registerEntry("MAP");
+		messageCounters.registerEntry("SPAT");
 		
 		//initialize Subs
-		bsmSub_ = connectedNode_.newSubscriber("outgoing_bsm", BSM._TYPE);
+		bsmSub_ = connectedNode_.newSubscriber("outgoing_j2735_bsm", BSM._TYPE);
 		inboundSub_ = connectedNode_.newSubscriber(J2735_inbound_binary_msg, ByteArray._TYPE);
 		mobilityReqSub_ = connectedNode_.newSubscriber("outgoing_mobility_request", MobilityRequest._TYPE);
 		mobilityPathSub_ = connectedNode_.newSubscriber("outgoing_mobility_path", MobilityPath._TYPE);
@@ -272,6 +291,14 @@ public class MessageConsumer extends SaxtonBaseNode {
 	                    log_.debug("V2V", "Received & decoded MobilityOperation, plan ID = " +
 								((MobilityOperation) decodedMessage.getMessage()).getHeader().getPlanId());
 						break;
+	                case "MAP":
+	                    MapData map = (MapData) decodedMessage.getMessage();
+	                    map.getHeader().setStamp(connectedNode_.getCurrentTime());
+	                    mapPub_.publish(map);
+                            break;
+	                case "SPAT":
+	                    spatPub_.publish((SPAT) decodedMessage.getMessage());
+                            break;
 	                default:
 	                    log_.warn("Cannot find correct publisher for " + decodedMessage.getType());
 	                }

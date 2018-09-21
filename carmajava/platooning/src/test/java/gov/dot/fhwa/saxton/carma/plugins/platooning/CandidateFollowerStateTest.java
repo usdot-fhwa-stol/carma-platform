@@ -86,7 +86,7 @@ public class CandidateFollowerStateTest {
         mockPlugin.platoonManager = mockManager;
         when(mockPlugin.getManeuverInputs()).thenReturn(mockInputs);
         mockPlugin.handleMobilityPath = new AtomicBoolean(true);
-        candidateFollowerState = new CandidateFollowerState(mockPlugin, mockLog, pluginServiceLocator, "A", "E1B2");
+        candidateFollowerState = new CandidateFollowerState(mockPlugin, mockLog, pluginServiceLocator, "A", "E1B2", 0.0);
     }
     
     @Test

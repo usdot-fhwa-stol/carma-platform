@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2018 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree;
 
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
@@ -101,7 +117,31 @@ public class AStarSolver implements ITreeSolver {
         }
       }
     }
-    log_.info("EAD", "solve:  No solution found.");
+    log_.info("EAD", "///// solve:  No solution found.");
+
+    //TODO - for debugging only!
+    Collection<Node> list = cameFrom.values();
+    log_.debug("EAD", "    Highest speed nodes at each time:");
+    for (int time = 0;  time < 600;  time += 2*Math.pow(10, -Node.getTimeUnits())) { //assumes timeIncr = 2 sec
+      Iterator<Node> iter = list.iterator();
+      List<Node> nodesAtTime = new ArrayList<Node>();
+      while (iter.hasNext()) {
+        Node node = iter.next();
+        if (node.getTime() == time) {
+          nodesAtTime.add(node);
+        }
+      }
+      Node highest = new Node(0, 0, 0);
+      for (Node n : nodesAtTime) {
+        if (n.getSpeed() > highest.getSpeed()) {
+          highest = n;
+        }
+      }
+      log_.debug("EAD", "    " + highest);
+    }
+    log_.debug("EAD","Ending sizes: closedSet=" + closedSet.size() + ", cameFrom=" +
+            cameFrom.size() + ", gScore=" + gScore.size() + ", openSetQueue=" + openSetQueue.size());
+
     return new LinkedList<>(); // Return empty list if no path exists
   }
 

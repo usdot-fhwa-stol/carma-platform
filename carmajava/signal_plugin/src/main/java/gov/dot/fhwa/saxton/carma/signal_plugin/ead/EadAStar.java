@@ -1,9 +1,25 @@
+/*
+ * Copyright (C) 2018 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.Constants;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicationContext;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData;
-import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.IGlidepathAppConfig;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.*;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
@@ -16,6 +32,7 @@ import java.util.List;
 public class EadAStar implements IEad {
 
     protected double                    maxAccel_;                  //maximum allowed acceleration, m/s^2
+    protected double                    fractionalMaxAccel_;        //maximum acceleration times a reasonable factor
     protected List<Node>                currentPath_;               //path through the current intersection
     protected double                    ddt_ = 0.0;                 //distance downtrack of the current plan start, m
     protected double                    timeOnPath_ = 0.0;          //time since beginning the current path, sec
@@ -23,6 +40,7 @@ public class EadAStar implements IEad {
     protected List<IntersectionData>    intList_;                   //list of all known intersections
     protected int                       currentNodeIndex_ = 1;      //index to the next node downtrack in currentPath_
     protected double                    speedCmd_ = 0.0;            //speed command from the current node, m/s
+    protected double                    speedLimit_ = 0.0;          //roadway speed limit, m/s
     protected boolean                   firstCall_ = true;          //is this the first call to getTargetSpeed()?
     protected double				    timeStep_;			        //duration of one time step, sec
     protected long                      prevMethodStartTime_;       //time of the previous call to getTargetSpeed(), ms
@@ -35,12 +53,17 @@ public class EadAStar implements IEad {
     protected double                    maxDistanceError_;          //max allowable deviation from plan, m
     protected boolean                   replanNeeded_ = true;       //do we need to replan the trajectory?
 
+
     protected String                    desiredFuelCostModel_;
     protected ICostModelFactory         costModelFactory_;
-    protected ICostModel                costModel_;                 //model of cost to travel between nodes in the tree
-    protected INeighborCalculator       neighborCalc_;              //calculates neighboring nodes to build the tree
+    protected ICostModel                timeCostModel_;             //model of travel time cost between nodes in the tree
+    protected ICostModel                fuelCostModel_;             //model of fuel cost to travel between nodes in the tree
+    protected INeighborCalculator       coarseNeighborCalc_;        //calculates neighboring nodes for the coarse grid
+    protected INeighborCalculator       fineNeighborCalc_;          //calculates neighboring nodes to build the fine grid tree
     protected ITreeSolver               solver_;                    //the tree solver
     protected static ILogger            log_ = LoggerManager.getLogger(EadAStar.class);
+
+    protected static final int          MAX_COURSE_PATH_ATTEMPTS = 100; //max iterations for solving coarse path
 
 
 
@@ -54,16 +77,22 @@ public class EadAStar implements IEad {
         fineTimeInc_ = config.getDoubleDefaultValue("ead.fine_time_inc", 2.0);
         fineSpeedInc_ = config.getDoubleDefaultValue("ead.fine_speed_inc", 1.0);
         desiredFuelCostModel_ = config.getProperty("ead.desiredCostModel");
-
         //set the max distance error to be half the typical distance between nodes a nominal speed
-        double speedLimit = (double)config.getMaximumSpeed() / Constants.MPS_TO_MPH;
-        maxDistanceError_ = 0.5*speedLimit*fineTimeInc_;
+        speedLimit_ = (double)config.getMaximumSpeed(0.0) / Constants.MPS_TO_MPH;
+        maxDistanceError_ = 0.5*speedLimit_*fineTimeInc_;
+        fractionalMaxAccel_ = maxAccel_ * 0.75;
 
         costModelFactory_ = new DefaultCostModelFactory(config);
-        costModel_ = costModelFactory_.getCostModel(desiredFuelCostModel_);
-        neighborCalc_ = new EadNeighborCalculator();
+        fuelCostModel_ = costModelFactory_.getCostModel(desiredFuelCostModel_);
+        timeCostModel_ = new TimeCostModel(speedLimit_, maxAccel_);
+        coarseNeighborCalc_ = new CoarsePathNeighbors();
+        fineNeighborCalc_ = new FinePathNeighbors();
     }
 
+    public List<Node> getCurrentPath() {
+        return currentPath_;
+    }
+    
     @Override
     public void initialize(long timestep, ITreeSolver solver) {
         timeStep_ = (double)timestep / 1000.0;
@@ -135,26 +164,10 @@ public class EadAStar implements IEad {
             timeOnPath_ = 0.0;
             currentPath_ = null;
 
-            //if there is more than one intersection in sight then
-            if (intersections.size() > 1) {
+            //perform coarse planning to determine the goal node downtrack of the first intersection [planCoarsePath]
+            goal = planCoarsePath(operSpeed, startNode);
 
-                //perform coarse planning to determine the goal node downtrack of the first intersection [planCoarsePath]
-                goal = planCoarsePath(operSpeed, startNode);
-
-            //else (only one intersection is known)
-            }else {
-
-                //define a goal node downtrack of the intersection where we can recover operating speed)
-                double dist = intersections.get(0).dtsb;
-                if (dist < 0.0) {
-                    dist = (double)intersections.get(0).roughDist / 100.0;
-                    log_.debug("EAD", "    overriding with dist = " + dist);
-                }
-                dist += 0.5*operSpeed*operSpeed/maxAccel_; //worst case going from stop at red back to full speed
-                goal = new Node(dist, 999.0, operSpeed); //large time allows heuristic calc to work
-            }
-
-            //build a detailed plan to get to the near-term goal node downtrack of first intersection [planDetailedPath]
+            //build a detailed plan to reach the near-term goal node downtrack of first intersection [planDetailedPath]
             try {
                 currentPath_ = planDetailedPath(startNode, goal);
             }catch (Exception e) {
@@ -171,7 +184,7 @@ public class EadAStar implements IEad {
             intListChanged_ = false;
             replanNeeded_ = false;
 
-        //else (no change in intersections)
+        //else (no need to create a new plan)
         }else {
             //compute the current distance downtrack from the beginning of the current plan
             double deltaTime = 0.001*((double)(methodStartTime - prevMethodStartTime_));
@@ -192,10 +205,12 @@ public class EadAStar implements IEad {
                         + timeOnPath_ + " sec, dist = " + ddt_ + " m, dist error = " + error);
 
             //if we are sufficiently far off plan then indicate it's time to replan
-            if (Math.abs(error) > maxDistanceError_) {
-                replanNeeded_ = true;
-                log_.info("EAD", "Performance has deviated too far from plan. Replan needed.");
-            }
+            // TODO replan will trigger abrupt stopping in some case, where the vehicle cannot plan
+            // Tracking dtd error is not needed inside CARMA plugin 
+//            if (Math.abs(error) > maxDistanceError_) {
+//                replanNeeded_ = true;
+//                log_.info("EAD", "Performance has deviated too far from plan. Replan needed.");
+//            }
 
             //we should never reach the end of a plan, but check just in case
             if (currentNodeIndex_ < currentPath_.size() - 1) {
@@ -209,7 +224,7 @@ public class EadAStar implements IEad {
         }
 
         //determine speed command by interpolating between the two nearest nodes - this avoids severe jerking
-        // produced by the XGV controller when subjected to large step function of reduced speeds
+        // produced by the controller when subjected to large step function of reduced speeds
         if (currentNodeIndex_ > 0) {
             Node prevNode = currentPath_.get(currentNodeIndex_ - 1);
             if (prevNode.getSpeed() == currentNode.getSpeed()) {
@@ -247,19 +262,19 @@ public class EadAStar implements IEad {
      * Defines a coarse-grained path through all the intersections to get a rough idea of the best long range trajectory.
      * Once this is complete, it will choose a node between the first (current) and second intersections that represents
      * the speed closest to our desired speed, and will return that as the goal node for detailed planning.
+     *
+     * This method only accounts for travel time, trying to minimize it without violating signal laws.
      * @return a node representing the best goal we can hope to reach after the first intersection
-     * @apiNote success is defined when a path ends in a node that is within half of the increment between adjacent nodes
-     * in the distance & speed dimensions (time dimension isn't compared).
      */
     protected Node planCoarsePath(double operSpeed, Node start) throws Exception {
 
         //we may be receiving spat signals from a farther intersection but haven't yet seen a MAP message from it,
         // so its rough distance is going to be a bogus, very large value; therefore, only look ahead for as many
         // intersections as we can see with maps defined
-        int numInt = intList_.size(); //guaranteed to be >= 2
+        int numInt = intList_.size(); //guaranteed to be >= 1
         int limit = numInt;
         for (int i = 0;  i < limit;  ++i) {
-            if (intList_.get(i).map == null) {
+            if (intList_.get(i).map == null) { //this should never be true for i = 0 because first intersection has a map
                 numInt = i;
                 break;
             }
@@ -270,60 +285,74 @@ public class EadAStar implements IEad {
             throw new Exception(msg);
         }
 
-        //define a goal node downtrack of the farthest known intersection (where we can recover operating speed)
-        double dist = 0.01 * (double)intList_.get(numInt - 1).roughDist; //converting from cm to m
-        double recoveryDist = 0.5*operSpeed*operSpeed/maxAccel_; //worst case going from stop at red back to full speed
-        dist += recoveryDist;
-        Node coarseGoal = new Node(dist, 999.0, operSpeed); //large time allows heuristic calculation to work
-        log_.debug("EAD", "planCoarsePath entered with " + numInt + " useful intersections and a course goal of "
-                    + coarseGoal.toString());
+        //define params for a goal node downtrack of the farthest known intersection (where we can recover operating speed)
+        //adding an extra distance to make sure the goal passes the fine distance to the second intersection
+        //this is the rough location for the second intersection
+        //rough distance need to convert from cm to m
+        double exitDist = (0.01 * (double)intList_.get(numInt - 1).roughDist) + CoarsePathNeighbors.TYPICAL_INTERSECTION_WIDTH * 2;
+        //plan to one more intersection width after the last intersection
+        double recoveryDist = CoarsePathNeighbors.TYPICAL_INTERSECTION_WIDTH; 
+        exitDist += recoveryDist;
+
+        //At this point we may be dealing with a single intersection that is nearby, or a string of several
+        // intersections where the final one may go through a couple cycles before we reach it. So there is no
+        // general way of knowing, even roughly, at what point in the final intersection's cycle we will reach it.
+        // Short of solving the problem to define a goal node prior to submitting it to the A* solver (redundant),
+        // we will simply define the goal node as if all intersections will be green when we arrive (able to stay at
+        // operating speed throughout) and let A* try to solve it. There are only a few nodes (one per intersection
+        // +1 at the end) so it will be quick.  If it fails, we increment the time of the goal node and try again.
+
+        //this is the fastest case, which is not be able to acheieve
+        double exitTime = exitDist / operSpeed;
 
         //create a neighbor calculator for this tree using a coarse scale grid
-        neighborCalc_.initialize(intList_, numInt, coarseTimeInc_, coarseSpeedInc_);
+        coarseNeighborCalc_.initialize(intList_, numInt, coarseTimeInc_, coarseSpeedInc_);
+        coarseNeighborCalc_.setOperatingSpeed(operSpeed);
 
-        //find the best path through this tree
-        costModel_.setGoal(coarseGoal);
-        costModel_.setTolerances(new Node(0.0, 0.0, 0.5*coarseSpeedInc_));
-        List<Node> path = solver_.solve(start, costModel_, neighborCalc_);
-        if (path == null  ||  path.size() == 0) {
-            String msg = "planCoarsePath solver was unable to define a path.";
+        //while no solution and we have not exceeded our cycle limit
+        List<Node> path = null;
+        Node coarseGoal = null;
+        int iter = 0;
+        while ((path == null  ||  path.size() == 0)  &&  iter < MAX_COURSE_PATH_ATTEMPTS) {
+
+            coarseGoal = new Node(exitDist, exitTime, operSpeed);
+            log_.debug("EAD", "planCoarsePath solving iter " + iter + " with " + numInt +
+                    " useful intersections and a course goal of " + coarseGoal.toString());
+
+            //find the best path through this tree
+            timeCostModel_.setGoal(coarseGoal);
+            timeCostModel_.setTolerances(new Node(1.0, 0.51 * coarseTimeInc_, 0.51 * coarseSpeedInc_));
+            path = solver_.solve(start, timeCostModel_, coarseNeighborCalc_);
+
+            //increment goal time
+            exitTime += 5*coarseTimeInc_;
+            ++iter;
+        }
+
+        //if we still haven't found a solution then throw exception
+        //the size of path list should be at least 3
+        //because element 0 is our start node, element 1 is our node at the first intersection and
+        // element 2 is the node after the first intersection
+        if (path == null  ||  path.size() < 3) {
+            String msg = "planCoarsePath solver was unable to define a path after " + iter + " iterations.";
             log_.error("EAD", msg);
             throw new Exception(msg);
         }
+        log_.debug("EAD", "planCoarsePath found a solution after " + iter + " iterations.");
 
-        //find the node between first & second intersections whose speed is closest to the operating speed (due to
-        // downtrack signal phases, it may not be practical to accelerate all the way to the operating speed in
-        // between); use this as the goal for the detailed planning
-        double adjustment = Math.max(recoveryDist - 0.5*coarseSpeedInc_*coarseTimeInc_, 0.5*recoveryDist);
-        double startSearch = intList_.get(0).dtsb + adjustment;
-        double endSearch = 0.01*(double)intList_.get(1).roughDist - adjustment;
-        double maxSpeedFound = 0.0;
-        Node tempFineGoal = null;
-        for (Node n : path) {
-            double curDist = n.getDistanceAsDouble();
-            if (curDist > startSearch) {
-                if (curDist > endSearch) {
-                    log_.debug("EAD", "planCoarsePath found new intermediate goal with speed of " + maxSpeedFound);
-                    break;
-                }else if (n.getSpeedAsDouble() > maxSpeedFound) {
-                    tempFineGoal = n;
-                    maxSpeedFound = n.getSpeedAsDouble();
-                }
-            }
-        }
+        //we always use the node after current intersection as the goal node
+        Node fineGoal = path.get(2);
 
-        //ensure the time for the new goal node is sufficiently large
-        Node fineGoal = new Node(tempFineGoal.getDistance(), 2*tempFineGoal.getTime(), tempFineGoal.getSpeed());
-
-        //evaluate the chosen path [summarizeCoarsePath]
+        //summarize the chosen path
         summarizeCoarsePath(path, coarseGoal, fineGoal);
-
+        
         return fineGoal;
     }
 
 
     /**
-     * Finds the best fine-grained path from current location to the far side of the nearest intersection.
+     * Finds the best fine-grained path from current location to the far side of the nearest intersection
+     * that minimizes fuel cost to reach the travel time goal.
      * @param goal - the node beyond the nearest intersection that we are trying to reach
      * @return - the best path to the goal node
      * @apiNote neighbor nodes are located according to the increments in each dimension specified by the
@@ -331,21 +360,20 @@ public class EadAStar implements IEad {
      */
     protected List<Node> planDetailedPath(Node start, Node goal) throws Exception {
         log_.debug("EAD", "Entering planDetailedPath with start = " + start.toString() + ", goal = " + goal.toString());
-
+        
         //create a neighbor calculator for this tree using a detailed grid
-        neighborCalc_.initialize(intList_, 1, fineTimeInc_, fineSpeedInc_);
+        fineNeighborCalc_.initialize(intList_, 1, fineTimeInc_, fineSpeedInc_);
 
         //find the best path through this tree [use AStarSolver]
-        costModel_.setGoal(goal);
-        costModel_.setTolerances(new Node(0.0, 0.0, 0.5*fineSpeedInc_));
-        List<Node> path = solver_.solve(start, costModel_, neighborCalc_);
+        fuelCostModel_.setGoal(goal);
+        fuelCostModel_.setTolerances(new Node(0.51*fineSpeedInc_*fineTimeInc_, 0.51*fineTimeInc_, 0.51*fineSpeedInc_));
+        List<Node> path = solver_.solve(start, fuelCostModel_, fineNeighborCalc_);
         if (path == null  ||  path.size() == 0) {
             String msg = "///// planDetailedPath solver was unable to define a path.";
             log_.error("EAD", msg);
             throw new Exception(msg);
         }
-        log_.debug("EAD", "planDetailedPath completed a path with " + path.size() + " nodes.");
-
+        
         //evaluate the chosen path [summarizeDetailedPath]
         summarizeDetailedPath(path, goal);
 
@@ -358,14 +386,14 @@ public class EadAStar implements IEad {
      */
     protected void summarizeCoarsePath(List<Node> path, Node coarseGoal, Node fineGoal) {
 
-        log_.debug("EAD", "///// Coarse plan covered " + intList_.size() + " intersections at distances of:");
+        log_.debug("EAD", "Coarse plan covered " + intList_.size() + " intersections at distances of:");
         log_.debugf("EAD", "    %.0f m", intList_.get(0).dtsb);
         for (int i = 1;  i < intList_.size();  ++i) {
             log_.debugf("EAD", "    %.0f m", 0.01 * (double)intList_.get(i).roughDist);
         }
-        log_.debug("EAD", "Coarse path plan:");
+        log_.info("EAD", "Coarse path plan:");
         for (Node n : path) {
-            log_.debug("EAD", "    " + n.toString());
+            log_.info("EAD", "    " + n.toString());
         }
         log_.debug("EAD", "Coarse path attempted to reach goal: " + coarseGoal.toString());
         log_.debug("EAD", "Coarse path yielded goal for detailed planning of: " + fineGoal.toString());
@@ -377,10 +405,20 @@ public class EadAStar implements IEad {
      */
     protected void summarizeDetailedPath(List<Node> path, Node goal) {
 
-        log_.debug("EAD", "///// Detailed path plan:");
+        log_.info("EAD", "///// Detailed path plan:");
         for (Node n : path) {
-            log_.debug("EAD", "    " + n.toString());
+            log_.info("EAD", "    " + n.toString());
         }
         log_.debug("EAD", "Detailed path attempted to reach goal: " + goal.toString());
+    }
+
+
+    /**
+     * Intended for use in testing only!  Sets up the objects memory of previous call.
+     * @param cmd - the speed command from the previous iteration
+     */
+    protected void injectSpeedCmd(double cmd) {
+        speedCmd_ = cmd;
+        firstCall_ = false;
     }
 }

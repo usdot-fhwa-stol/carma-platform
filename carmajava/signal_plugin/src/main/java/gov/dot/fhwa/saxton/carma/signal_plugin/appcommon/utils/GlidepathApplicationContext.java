@@ -1,10 +1,23 @@
+/*
+ * Copyright (C) 2018 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils;
 
-import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.GlidepathAppConfig;
-import gov.dot.fhwa.saxton.carma.signal_plugin.dvi.IGlidepathAppConfig;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.GlidepathAppConfig;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 
 /**
  * Wrapper to always return a reference to the Spring Application Context from
@@ -12,9 +25,8 @@ import org.springframework.context.ApplicationContextAware;
  * we do not need a reference to the Servlet context for this. All we need is
  * for this bean to be initialized during application startup.
  */
-public class GlidepathApplicationContext implements ApplicationContextAware {
+public class GlidepathApplicationContext {
 
-    private static ApplicationContext CONTEXT;
     private static IGlidepathAppConfig appConfigOverride = null;
 
     private GlidepathApplicationContext() {
@@ -29,47 +41,13 @@ public class GlidepathApplicationContext implements ApplicationContextAware {
         return GlidepathApplicationContextHolder._instance;
     }
 
-
-    /**
-     * This method is called from within the SpeedControl once it is
-     * done starting up, it will stick a reference to the app context into this bean.
-     * @param context a reference to the ApplicationContext.
-     */
-    public void setApplicationContext(ApplicationContext context) throws BeansException {
-        CONTEXT = context;
-    }
-
-    /**
-     * get the ApplicationContext
-     *
-     * @return
-     */
-    public ApplicationContext getApplicationContext()   {
-        return CONTEXT;
-    }
-
-    /**
-     * Provide access to spring beans through non-spring managed classes
-     *
-     * @param tClass
-     * @param <T>
-     * @return
-     * @throws org.springframework.beans.BeansException
-     */
-    public <T>  T getBean(Class<T> tClass) throws BeansException   {
-        return CONTEXT.getBean(tClass);
-    }
-
     /**
      * Directly acquire AppConfig, preferring the overridden version if it exists.
      *
      * @return
      */
     public IGlidepathAppConfig getAppConfig()   {
-        if (appConfigOverride != null) {
-            return appConfigOverride;
-        }
-        return getBean(GlidepathAppConfig.class);
+        return appConfigOverride;
     }
 
     /**

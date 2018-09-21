@@ -1,12 +1,27 @@
+/*
+ * Copyright (C) 2018 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package gov.dot.fhwa.saxton.carma.signal_plugin.appcommon;
 
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
-import gov.dot.fhwa.saxton.carma.signal_plugin.xgv.XgvStatus;
 
 import java.util.*;
 
-import static gov.dot.fhwa.saxton.glidepath.appcommon.DataElementKey.*;
+import static gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementKey.*;
 
 public class DataElementHolder {
 
@@ -119,26 +134,6 @@ public class DataElementHolder {
         return getDoubleElement( SPEED );
     }
 
-    /**
-     * Get the XgvStatus object if it exists, null otherwise
-     *
-     * @return XgvStatus or null
-     */
-    public XgvStatus getXgvStatus()   {
-        XgvStatus xgvStatus = null;
-
-        DataElement element = dataElements.get(XGV_STATUS);
-
-        if (element != null && element instanceof XgvStatusDataElement)   {
-            xgvStatus = ((XgvStatusDataElement) element).value();
-
-        }
-
-        return xgvStatus;
-
-    }
-
-
     public void putAll(DataElementHolder newData)   {
         dataElements.putAll(newData.dataElements);
     }
@@ -231,12 +226,6 @@ public class DataElementHolder {
             else if (value instanceof PhaseDataElement)   {
                 strValue = ((PhaseDataElement) value).value().toString();
             }
-            else if (value instanceof XgvStatusDataElement)   {
-                strValue = ((XgvStatusDataElement) value).value().toString();
-            }
-            else if (value instanceof MotionStatusDataElement)   {
-                strValue = ((MotionStatusDataElement) value).value().toString();
-            }
             else if (value instanceof IntDataElement)   {
                 strValue = Integer.toString(getIntElement(key));
             }
@@ -269,12 +258,6 @@ public class DataElementHolder {
             }
             else if (value instanceof PhaseDataElement)   {
                 strValue = ((PhaseDataElement) value).value().toString();
-            }
-            else if (value instanceof XgvStatusDataElement)   {
-                strValue = ((XgvStatusDataElement) value).value().toString();
-            }
-            else if (value instanceof MotionStatusDataElement)   {
-                strValue = ((MotionStatusDataElement) value).value().toString();
             }
 
             sb.append("\n        " + key + ": " + strValue);

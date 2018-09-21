@@ -21,6 +21,8 @@
 #include "gov_dot_fhwa_saxton_carma_message_factory_MobilityPathMessage.h"
 #include "gov_dot_fhwa_saxton_carma_message_factory_MobilityResponseMessage.h"
 #include "gov_dot_fhwa_saxton_carma_message_factory_MobilityOperationMessage.h"
+#include "gov_dot_fhwa_saxton_carma_message_factory_MapMessage.h"
+#include "gov_dot_fhwa_saxton_carma_message_factory_SPATMessage.h"
 #include "MessageFrame.h"
 
 /**
@@ -171,28 +173,28 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_BSMMessage
 		uint8_t *content = message -> value.choice.BasicSafetyMessage.coreData.id.buf;
 		(*env) -> SetByteArrayRegion(env, bsm_id, 0, 4, content);
 
-		jmethodID mid_setSecMark = (*env) -> GetMethodID(env, bsm_core_class, "setSecMark", "(I)V");
-		jint secMark = message -> value.choice.BasicSafetyMessage.coreData.secMark;
+		jmethodID mid_setSecMark = (*env) -> GetMethodID(env, bsm_core_class, "setSecMark", "(S)V");
+		jshort secMark = message -> value.choice.BasicSafetyMessage.coreData.secMark;
 		(*env) -> CallVoidMethod(env, plain_bsm, mid_setSecMark, secMark);
 
-		jmethodID mid_setLatitude = (*env) -> GetMethodID(env, bsm_core_class, "setLatitude", "(D)V");
-		jdouble lat = message -> value.choice.BasicSafetyMessage.coreData.lat / 10000000.0;
+		jmethodID mid_setLatitude = (*env) -> GetMethodID(env, bsm_core_class, "setLatitude", "(I)V");
+		jint lat = message -> value.choice.BasicSafetyMessage.coreData.lat;
 		(*env) -> CallVoidMethod(env, plain_bsm, mid_setLatitude, lat);
 
-		jmethodID mid_setLongitude = (*env) -> GetMethodID(env, bsm_core_class, "setLongitude", "(D)V");
-		jdouble lon = message -> value.choice.BasicSafetyMessage.coreData.Long / 10000000.0;
+		jmethodID mid_setLongitude = (*env) -> GetMethodID(env, bsm_core_class, "setLongitude", "(I)V");
+		jint lon = message -> value.choice.BasicSafetyMessage.coreData.Long;
 		(*env) -> CallVoidMethod(env, plain_bsm, mid_setLongitude, lon);
 
-		jmethodID mid_setElev = (*env) -> GetMethodID(env, bsm_core_class, "setElev", "(F)V");
-		jfloat elev = message -> value.choice.BasicSafetyMessage.coreData.elev / 10.0;
+		jmethodID mid_setElev = (*env) -> GetMethodID(env, bsm_core_class, "setElev", "(I)V");
+		jint elev = message -> value.choice.BasicSafetyMessage.coreData.elev;
 		(*env) -> CallVoidMethod(env, plain_bsm, mid_setElev, elev);
 
-		jmethodID mid_setSemiMajor = (*env) -> GetMethodID(env, accuracy_class, "setSemiMajor", "(F)V");
-		jmethodID mid_setSemiMinor = (*env) -> GetMethodID(env, accuracy_class, "setSemiMinor", "(F)V");
-		jmethodID mid_setOrientation = (*env) -> GetMethodID(env, accuracy_class, "setOrientation", "(D)V");
-		jfloat major = message -> value.choice.BasicSafetyMessage.coreData.accuracy.semiMajor * 0.05;
-		jfloat minor = message -> value.choice.BasicSafetyMessage.coreData.accuracy.semiMinor * 0.05;
-		jdouble orientation = message -> value.choice.BasicSafetyMessage.coreData.accuracy.orientation * 0.0054932479;
+		jmethodID mid_setSemiMajor = (*env) -> GetMethodID(env, accuracy_class, "setSemiMajor", "(B)V");
+		jmethodID mid_setSemiMinor = (*env) -> GetMethodID(env, accuracy_class, "setSemiMinor", "(B)V");
+		jmethodID mid_setOrientation = (*env) -> GetMethodID(env, accuracy_class, "setOrientation", "(S)V");
+		jbyte major = message -> value.choice.BasicSafetyMessage.coreData.accuracy.semiMajor;
+		jbyte minor = message -> value.choice.BasicSafetyMessage.coreData.accuracy.semiMinor;
+		jshort orientation = message -> value.choice.BasicSafetyMessage.coreData.accuracy.orientation;
 		(*env) -> CallVoidMethod(env, accuracy, mid_setSemiMajor, major);
 		(*env) -> CallVoidMethod(env, accuracy, mid_setSemiMinor, minor);
 		(*env) -> CallVoidMethod(env, accuracy, mid_setOrientation, orientation);
@@ -201,26 +203,26 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_BSMMessage
 		jbyte transmissionstate = message -> value.choice.BasicSafetyMessage.coreData.transmission;
 		(*env) -> CallVoidMethod(env, transmission, mid_setTransmissionState, transmissionstate);
 
-		jmethodID mid_setSpeed = (*env) -> GetMethodID(env, bsm_core_class, "setSpeed", "(F)V");
-		jfloat speed = message -> value.choice.BasicSafetyMessage.coreData.speed * 0.02;
+		jmethodID mid_setSpeed = (*env) -> GetMethodID(env, bsm_core_class, "setSpeed", "(S)V");
+		jshort speed = message -> value.choice.BasicSafetyMessage.coreData.speed;
 		(*env) -> CallVoidMethod(env, plain_bsm, mid_setSpeed, speed);
 
-		jmethodID mid_setHeading = (*env) -> GetMethodID(env, bsm_core_class, "setHeading", "(F)V");
-		jfloat heading = message -> value.choice.BasicSafetyMessage.coreData.heading * 0.0125;
+		jmethodID mid_setHeading = (*env) -> GetMethodID(env, bsm_core_class, "setHeading", "(S)V");
+		jshort heading = message -> value.choice.BasicSafetyMessage.coreData.heading;
 		(*env) -> CallVoidMethod(env, plain_bsm, mid_setHeading, heading);
 
-		jmethodID mid_setAngle = (*env) -> GetMethodID(env, bsm_core_class, "setAngle", "(F)V");
-		jfloat angle = message -> value.choice.BasicSafetyMessage.coreData.angle * 1.5;
+		jmethodID mid_setAngle = (*env) -> GetMethodID(env, bsm_core_class, "setAngle", "(B)V");
+		jbyte angle = message -> value.choice.BasicSafetyMessage.coreData.angle;
 		(*env) -> CallVoidMethod(env, plain_bsm, mid_setAngle, angle);
 
-		jmethodID mid_accelset_setLongitude = (*env) -> GetMethodID(env, accelset_class, "setLongitudinal", "(F)V");
-		jmethodID mid_accelset_setLatitude = (*env) -> GetMethodID(env, accelset_class, "setLateral", "(F)V");
-		jmethodID mid_accelset_setVert = (*env) -> GetMethodID(env, accelset_class, "setVert", "(F)V");
-		jmethodID mid_accelset_setYaw = (*env) -> GetMethodID(env, accelset_class, "setYawRate", "(F)V");
-		jfloat accel_long = message -> value.choice.BasicSafetyMessage.coreData.accelSet.Long * 0.01;
-		jfloat accel_lat = message -> value.choice.BasicSafetyMessage.coreData.accelSet.lat * 0.01;
-		jfloat accel_vert = message -> value.choice.BasicSafetyMessage.coreData.accelSet.vert * 0.02 * 9.8;
-		jfloat accel_yaw = message -> value.choice.BasicSafetyMessage.coreData.accelSet.yaw * 0.01;
+		jmethodID mid_accelset_setLongitude = (*env) -> GetMethodID(env, accelset_class, "setLongitudinal", "(S)V");
+		jmethodID mid_accelset_setLatitude = (*env) -> GetMethodID(env, accelset_class, "setLateral", "(S)V");
+		jmethodID mid_accelset_setVert = (*env) -> GetMethodID(env, accelset_class, "setVert", "(B)V");
+		jmethodID mid_accelset_setYaw = (*env) -> GetMethodID(env, accelset_class, "setYawRate", "(S)V");
+		jshort accel_long = message -> value.choice.BasicSafetyMessage.coreData.accelSet.Long;
+		jshort accel_lat = message -> value.choice.BasicSafetyMessage.coreData.accelSet.lat;
+		jbyte accel_vert = message -> value.choice.BasicSafetyMessage.coreData.accelSet.vert;
+		jshort accel_yaw = message -> value.choice.BasicSafetyMessage.coreData.accelSet.yaw;
 		(*env) -> CallVoidMethod(env, accelset, mid_accelset_setLongitude, accel_long);
 		(*env) -> CallVoidMethod(env, accelset, mid_accelset_setLatitude, accel_lat);
 		(*env) -> CallVoidMethod(env, accelset, mid_accelset_setVert, accel_vert);
@@ -236,10 +238,10 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_BSMMessage
 		brake_content[5] = message->value.choice.BasicSafetyMessage.coreData.brakes.auxBrakes;
 		(*env) -> SetByteArrayRegion(env, brakeStatus, 0, 6, brake_content);
 
-		jmethodID mid_setVehicleWidth = (*env) -> GetMethodID(env, size_class, "setVehicleWidth", "(F)V");
-		jmethodID mid_setVehicleLength = (*env) -> GetMethodID(env, size_class, "setVehicleLength", "(F)V");
-		jfloat v_width = message->value.choice.BasicSafetyMessage.coreData.size.width / 100.0;
-		jfloat v_length = message->value.choice.BasicSafetyMessage.coreData.size.length / 100.0;
+		jmethodID mid_setVehicleWidth = (*env) -> GetMethodID(env, size_class, "setVehicleWidth", "(S)V");
+		jmethodID mid_setVehicleLength = (*env) -> GetMethodID(env, size_class, "setVehicleLength", "(S)V");
+		jshort v_width = message->value.choice.BasicSafetyMessage.coreData.size.width;
+		jshort v_length = message->value.choice.BasicSafetyMessage.coreData.size.length;
 		(*env) -> CallVoidMethod(env, size, mid_setVehicleWidth, v_width);
 		(*env) -> CallVoidMethod(env, size, mid_setVehicleLength, v_length);
 	}
@@ -846,8 +848,8 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityPa
 		int temp_offsets_Z[60] = {0};
 		for(int i = 0; i < count; i++) {
 			temp_offsets_X[i] = message -> value.choice.TestMessage02.body.trajectory.list.array[i] -> offsetX;
-			temp_offsets_Y[i] = message -> value.choice.TestMessage02.body.trajectory. list.array[i] -> offsetY;
-			temp_offsets_Z[i] = message -> value.choice.TestMessage02.body.trajectory. list.array[i] -> offsetZ;
+			temp_offsets_Y[i] = message -> value.choice.TestMessage02.body.trajectory.list.array[i] -> offsetY;
+			temp_offsets_Z[i] = message -> value.choice.TestMessage02.body.trajectory.list.array[i] -> offsetZ;
 		}
 		(*env) -> SetIntArrayRegion(env, offsets_X, 0, count, temp_offsets_X);
 		(*env) -> SetIntArrayRegion(env, offsets_Y, 0, count, temp_offsets_Y);
@@ -1206,3 +1208,243 @@ JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MobilityOp
 	}
 }
 
+/**
+ * Decode Map
+ * 
+ */
+JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_MapMessage_decodeMap
+  (JNIEnv *env, jobject obj, jbyteArray encodedArray, jobject plain_map, jintArray intersectionGeometry,
+   jintArray laneId, jintArray ingressApproach, jintArray egressApproach, jintArray laneDirection, jintArray laneType, jobjectArray nodeXY, jobjectArray connectsTo) {
+	asn_dec_rval_t rval; /* Decoder return value */
+	MessageFrame_t *message = 0; /* Construct MessageFrame */
+
+	int len = (*env) -> GetArrayLength(env, encodedArray); /* Number of bytes in encoded mobility path */
+	jbyte *encodedMsg = (*env) -> GetByteArrayElements(env, encodedArray, 0); /* Get Java byte array content */
+	char buf[len]; /* Input buffer for decoder function */
+	for(int i = 0; i < len; i++) {
+	    buf[i] = encodedMsg[i];
+	} /* Copy into buffer */
+	rval = uper_decode(0, &asn_DEF_MessageFrame, (void **) &message, buf, len, 0, 0);
+	if(rval.code == RC_OK) {
+
+		jclass map_data_class = (*env) -> GetObjectClass(env, plain_map);
+		jmethodID mid_setMsgCount = (*env) -> GetMethodID(env, map_data_class, "setMsgIssueRevision", "(B)V");
+		jbyte msgCount = message -> value.choice.MapData.msgIssueRevision;
+		(*env) -> CallVoidMethod(env, plain_map, mid_setMsgCount, msgCount);
+
+		// In current decoder, we assume we have only one intersection in this list
+		if(message -> value.choice.MapData.intersections && message -> value.choice.MapData.intersections -> list.count >= 1) {
+			int intersectionData[9] = {0};
+			intersectionData[8] = 1;
+			intersectionData[0] = message -> value.choice.MapData.intersections -> list.array[0] -> id.id;
+			intersectionData[1] = message -> value.choice.MapData.intersections -> list.array[0] -> revision;
+			intersectionData[2] = message -> value.choice.MapData.intersections -> list.array[0] -> refPoint.lat;
+			intersectionData[3] = message -> value.choice.MapData.intersections -> list.array[0] -> refPoint.Long;
+			if(message -> value.choice.MapData.intersections -> list.array[0] -> refPoint.elevation) {
+				intersectionData[4] = *message -> value.choice.MapData.intersections -> list.array[0] -> refPoint.elevation;
+				intersectionData[5] = 1;
+			}
+			if(message -> value.choice.MapData.intersections -> list.array[0] -> laneWidth) {
+				intersectionData[6] = *message -> value.choice.MapData.intersections -> list.array[0] -> laneWidth;
+				intersectionData[7] = 1;
+			}
+			(*env) -> SetIntArrayRegion(env, intersectionGeometry, 0, 9, intersectionData);
+
+			// the MAP message allowed up to 255 lanes in each intersection
+			int laneIDData[255];
+			// Initialize lane ID with invalid value to indicate the end
+			for(int i = 0; i < 255; i++) {
+				laneIDData[i] = -1;
+			}
+			int ingressApproachData[255] = {0};
+			int egressApproachData[255] = {0};
+			int laneDirectionData[255] = {0};
+			int laneTypeData[255] = {0};
+			// each node needs three data fields for X, Y and type
+			// each lane has up to 63 nodes, so 63 * 3 = 189
+			int nodeOffsetData[255][189] = {0};
+			int connectionsData[255][32] = {0};
+			for(int i = 0; i < 255; i++) {
+				for(int j = 0; j < 32; j++) {
+					connectionsData[i][j] = -1;
+				}
+			}
+			int numOfLanes = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.count;
+			for(int i = 0; i < numOfLanes; i++) {
+				laneIDData[i] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> laneID;
+				if(message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> ingressApproach) {
+					ingressApproachData[i] = *message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> ingressApproach;
+				} else {
+					ingressApproachData[i] = -1;
+				}
+				if(message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> egressApproach) {
+					egressApproachData[i] = *message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> egressApproach;
+				} else {
+					egressApproachData[i] = -1;
+				}
+				laneDirectionData[i] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i]->laneAttributes.directionalUse.buf[0];
+				laneTypeData[i] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i]->laneAttributes.laneType.present;
+				int numOfNodes = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.count;
+				for(int j = 0; j < numOfNodes; j++) {
+					int offsetType = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.present;
+					switch(offsetType) {
+					case NodeOffsetPointXY_PR_node_XY1:
+						nodeOffsetData[i][j * 3] = 1;
+						nodeOffsetData[i][j * 3 + 1] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY1.x;
+						nodeOffsetData[i][j * 3 + 2] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY1.y;
+						break;
+					case NodeOffsetPointXY_PR_node_XY2:
+						nodeOffsetData[i][j * 3] = 2;
+						nodeOffsetData[i][j * 3 + 1] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY2.x;
+						nodeOffsetData[i][j * 3 + 2] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY2.y;
+						break;
+					case NodeOffsetPointXY_PR_node_XY3:
+						nodeOffsetData[i][j * 3] = 3;
+						nodeOffsetData[i][j * 3 + 1] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY3.x;
+						nodeOffsetData[i][j * 3 + 2] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY3.y;
+						break;
+					case NodeOffsetPointXY_PR_node_XY4:
+						nodeOffsetData[i][j * 3] = 4;
+						nodeOffsetData[i][j * 3 + 1] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY4.x;
+						nodeOffsetData[i][j * 3 + 2] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY4.y;
+						break;
+					case NodeOffsetPointXY_PR_node_XY5:
+						nodeOffsetData[i][j * 3] = 5;
+						nodeOffsetData[i][j * 3 + 1] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY5.x;
+						nodeOffsetData[i][j * 3 + 2] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY5.y;
+						break;
+					case NodeOffsetPointXY_PR_node_XY6:
+						nodeOffsetData[i][j * 3] = 6;
+						nodeOffsetData[i][j * 3 + 1] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY6.x;
+						nodeOffsetData[i][j * 3 + 2] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_XY6.y;
+						break;
+					case NodeOffsetPointXY_PR_node_LatLon:
+						nodeOffsetData[i][j * 3] = 7;
+						nodeOffsetData[i][j * 3 + 1] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_LatLon.lat;
+						nodeOffsetData[i][j * 3 + 1] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> nodeList.choice.nodes.list.array[j]->delta.choice.node_LatLon.lon;
+						break;
+					default:
+						break;
+					}
+				}
+				if(message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> connectsTo) {
+					int numOfConnection = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> connectsTo -> list.count;
+					for(int j = 0; j < numOfConnection; j++) {
+						connectionsData[i][j * 2] = message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> connectsTo -> list.array[j] -> connectingLane.lane;
+						if(message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> connectsTo -> list.array[j] -> signalGroup) {
+							connectionsData[i][j * 2 + 1] = *message -> value.choice.MapData.intersections -> list.array[0] -> laneSet.list.array[i] -> connectsTo -> list.array[j] -> signalGroup;
+						} else {
+							connectionsData[i][j * 2 + 1] = -1;
+						}
+					}
+				} else {
+					connectionsData[i][0] = -1;
+				}
+			}
+			(*env) -> SetIntArrayRegion(env, laneId, 0, 255, laneIDData);
+			(*env) -> SetIntArrayRegion(env, ingressApproach, 0, 255, ingressApproachData);
+			(*env) -> SetIntArrayRegion(env, egressApproach, 0, 255, egressApproachData);
+			(*env) -> SetIntArrayRegion(env, laneDirection, 0, 255, laneDirectionData);
+			(*env) -> SetIntArrayRegion(env, laneType, 0, 255, laneTypeData);
+			for(int i = 0; i < numOfLanes; i++) {
+				jintArray laneNodes = (*env) -> GetObjectArrayElement(env, nodeXY, i);
+				jintArray connections = (*env) -> GetObjectArrayElement(env, connectsTo, i);
+				(*env) -> SetIntArrayRegion(env, laneNodes, 0, 189, nodeOffsetData[i]);
+				(*env) -> SetIntArrayRegion(env, connections, 0, 32, connectionsData[i]);
+				(*env) -> DeleteLocalRef(env, laneNodes);
+				(*env) -> DeleteLocalRef(env, connections);
+			}
+		}
+		return 0;
+	} else {
+		return -1;
+	}
+}
+
+/**
+ * Decode Spat
+ * 
+ */
+JNIEXPORT jint JNICALL Java_gov_dot_fhwa_saxton_carma_message_factory_SPATMessage_decodeSPAT
+    (JNIEnv *env, jobject obj, jbyteArray encodedArray, jintArray intersection, jobjectArray movementState) {
+	asn_dec_rval_t rval; /* Decoder return value */
+	MessageFrame_t *message = 0; /* Construct MessageFrame */
+
+	int len = (*env) -> GetArrayLength(env, encodedArray); /* Number of bytes in encoded mobility path */
+	jbyte *encodedMsg = (*env) -> GetByteArrayElements(env, encodedArray, 0); /* Get Java byte array content */
+	char buf[len]; /* Input buffer for decoder function */
+	for(int i = 0; i < len; i++) {
+		buf[i] = encodedMsg[i];
+	} /* Copy into buffer */
+	rval = uper_decode(0, &asn_DEF_MessageFrame, (void **) &message, buf, len, 0, 0);
+	if(rval.code == RC_OK) {
+		int intersectionData[8] = {0};
+		if(message->value.choice.SPAT.timeStamp) {
+			intersectionData[0] = *message->value.choice.SPAT.timeStamp;
+			intersectionData[1] = 1;
+		}
+		// In current decoder, we assume we have only one intersection in this list
+		intersectionData[2] = message->value.choice.SPAT.intersections.list.array[0]->id.id;
+		intersectionData[3] = message->value.choice.SPAT.intersections.list.array[0]->revision;
+		if(message->value.choice.SPAT.intersections.list.array[0]->moy) {
+			intersectionData[4] = *message->value.choice.SPAT.intersections.list.array[0]->moy;
+			intersectionData[5] = 1;
+		}
+		if(message->value.choice.SPAT.intersections.list.array[0]->timeStamp) {
+			intersectionData[6] = *message->value.choice.SPAT.intersections.list.array[0]->timeStamp;
+			intersectionData[7] = 1;
+		}
+		(*env) -> SetIntArrayRegion(env, intersection, 0, 8, intersectionData);
+
+		// each intersection allows up to 255 state
+		// each state may contain up to 16 movement events plus one phase state enum
+		// each movement event contains 9 integer data fields
+		// each state needs 9 * 16 + 1 = 145 space
+		int statesData[255][145];
+		for(int i = 0; i < 255; i++) {
+			for(int j = 0; j < 145; j++) {
+				statesData[i][j] = -1;
+			}
+		}
+		int numOfStates = message->value.choice.SPAT.intersections.list.array[0]->states.list.count;
+		for(int i = 0; i < numOfStates; i++) {
+			statesData[i][0] = message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->signalGroup;
+			int numOfEvent = message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.count;
+			for(int j = 0; j < numOfEvent; j++) {
+				statesData[i][j * 9 + 1] = message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->eventState;
+				if(message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing) {
+					statesData[i][j * 9 + 9] = 1;
+					if(message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing->startTime) {
+						statesData[i][j * 9 + 2] = *message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing->startTime;
+						statesData[i][j * 9 + 3] = 1;
+					} else {
+						statesData[i][j * 9 + 3] = 0;
+					}
+					statesData[i][j * 9 + 4] = message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing->minEndTime;
+					if(message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing->maxEndTime) {
+						statesData[i][j * 9 + 5] = *message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing->maxEndTime;
+						statesData[i][j * 9 + 6] = 1;
+					} else {
+						statesData[i][j * 9 + 6] = 0;
+					}
+					if(message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing->nextTime) {
+						statesData[i][j * 9 + 7] = *message->value.choice.SPAT.intersections.list.array[0]->states.list.array[i]->state_time_speed.list.array[j]->timing->nextTime;
+						statesData[i][j * 9 + 8] = 1;
+					} else {
+						statesData[i][j * 9 + 8] = 0;
+					}
+				} else {
+					statesData[i][j * 9 + 9] = 0;
+				}
+			}
+		}
+		for(int i = 0; i < 255; i++) {
+			jintArray events = (*env) -> GetObjectArrayElement(env, movementState, i);
+			(*env) -> SetIntArrayRegion(env, events, 0, 145, statesData[i]);
+			(*env) -> DeleteLocalRef(env, events);
+		}
+		return 0;
+	} else {
+		return -1;
+	}
+}
