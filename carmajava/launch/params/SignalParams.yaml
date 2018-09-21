@@ -201,7 +201,7 @@ ead.useIdleMin: false
 #### Start of Parameters used for MOVES Fuel Cost Model
 ## Vehicle Type Parameters
 ## Used in the Vehicle Specific Power (VSP) calculation
-## VSP = (A*v + B*v*v + C*v*v + M*v*(a + g * Math.sin(theta))) / f;
+## VSP = (A*v + B*v*v + C*v*v*v + M*v*(a + g * Math.sin(theta))) / f;
 ## Where g is the acceleration due to gravity and theta is the road grade
 ## v is the velocity and a is the acceleration
 ## The other terms are listed as parameters below
