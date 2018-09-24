@@ -256,16 +256,18 @@ conflict_detection_temporal_bias: 0.0
 # This was implemented to address a controller bug in the Cadillac SRX where the vehicle was unable to stay still when commanded 0 speed
 use_wrench_effort_stopping_override: false
 
-# Integer: The number of messages from a given intersection we must receive before checking it's reliability
-v2i_comms_reliability_check_threshold: 5
+# Integer: The number of map messages from a given intersection we must receive before checking it's reliability
+v2i_map_comms_reliability_check_threshold: 3
 
-# Double: The percentage of expected messages from an interesction we must actively receive to consider it reliable
-# Units: percent
-v2i_comms_reliability_percent: 0.75
+# Integer: The number of spat messages from a given intersection we must receive before checking it's reliability
+v2i_spat_comms_reliability_check_threshold: 5
 
-# Double: The number of messages expected per intersection per second
-v2i_comms_expected_msgs_per_sec: 0.9
+# Double: The minimum number of map messages per intersection per second which must be recieved for the data stream to be considered reliable
+v2i_min_map_msgs_per_sec: 0.5
+
+# Double: The minimum number of spat messages per intersection per second which must be recieved for the data stream to be considered reliable
+v2i_min_spat_msgs_per_sec: 5.0
 
 # Integer: The amount of time between expiry checks for unreliable intersection communications
 # Units: ms
-v2i_comms_data_expiry_timeout: 1000
+v2i_comms_data_expiry_timeout: 2000

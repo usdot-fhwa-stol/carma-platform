@@ -326,7 +326,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                     case j2735_msgs.MovementPhaseState.PERMISSIVE_MOVEMENT_ALLOWED: // Green light
                         m.setCurrentState(0x00000001);
                         break;
-                    case j2735_msgs.MovementPhaseState.DARK: // Yellow TODO bug in our spats. Should be 7 or 8
+                    case j2735_msgs.MovementPhaseState.PROTECTED_CLEARANCE: // Yellow
                         m.setCurrentState(0x00000002);
                         break;
                     case j2735_msgs.MovementPhaseState.STOP_AND_REMAIN: // Red light

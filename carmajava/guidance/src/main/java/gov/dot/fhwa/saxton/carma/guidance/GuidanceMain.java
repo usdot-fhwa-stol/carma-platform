@@ -104,12 +104,13 @@ public class GuidanceMain extends SaxtonBaseNode {
     GuidanceRouteService routeService = new GuidanceRouteService(pubSubService);
     routeService.init();
 
-
-    int commsReliabilityCheckThreshold = node.getParameterTree().getInteger("~v2i_comms_reliability_check_threshold", 5);
-    double commsReliabilityPct =  node.getParameterTree().getDouble("~v2i_comms_reliability_percent", 0.75);
-    double commsReliabilityExpectedV2IMsgsPerSec = node.getParameterTree().getDouble("~v2i_comms_expected_msgs_per_sec", 1.1);
+    int mapCommsReliabilityCheckThreshold = node.getParameterTree().getInteger("~v2i_map_comms_reliability_check_threshold", 2);
+    int spatCommsReliabilityCheckThreshold = node.getParameterTree().getInteger("~v2i_spat_comms_reliability_check_threshold", 5);
+    double minMapMsgsPerSec = node.getParameterTree().getDouble("~v2i_min_map_msgs_per_sec", 0.9);
+    double minSpatMsgsPerSec = node.getParameterTree().getDouble("~v2i_min_spat_msgs_per_sec", 8.0);
     long expiryTimeoutMs = node.getParameterTree().getInteger("~v2i_comms_data_expiry_timeout", 1000);
-    GuidanceV2IService v2iService = new GuidanceV2IService(pubSubService, commsReliabilityCheckThreshold, commsReliabilityPct, commsReliabilityExpectedV2IMsgsPerSec, expiryTimeoutMs);
+    GuidanceV2IService v2iService = new GuidanceV2IService(pubSubService, mapCommsReliabilityCheckThreshold, spatCommsReliabilityCheckThreshold, 
+      minMapMsgsPerSec, minSpatMsgsPerSec, expiryTimeoutMs);
     v2iService.init();
 
     routeService.registerNewRouteCallback((route) -> trajectoryConverter.setRoute(Route.fromMessage(route)));

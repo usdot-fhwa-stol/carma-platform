@@ -150,9 +150,9 @@ public class EadIntersectionManager {
 				}
 			}
 			
-			if (intersectionGeom_.isApproach(laneId)) {
+			if (intersectionGeom_.isApproach(laneId)) { // TODO intersectionGeom can be null when an intersection update removes the intersection during procssing
 				prevApproachLaneId_ = laneId;
-				sortedIntersections.peek().laneId = laneId;
+				sortedIntersections.peek().laneId = laneId; // TODO top of sorted intersections can be null when an intersection update removes the intersection during procssing
 				log_.debug("INTR", "Trying to update spat for lane: " + laneId);
 				DoubleDataElement dde = (DoubleDataElement) sortedIntersections.peek().spat.getSpatForLane(laneId).get(DataElementKey.SIGNAL_TIME_TO_NEXT_PHASE);
 				if (dde != null) {
