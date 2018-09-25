@@ -198,21 +198,7 @@ public class Trajectory implements ITrajectory {
 	}
 	
 
-    /**
-     * Generates a plan based on the input data
-     * 
-     * @param stateData The current vehicle state data
-		 * The following elements must be present in the vehicle state data
-		 * - SMOOTHED_SPEED
-		 * - ACCELERATION
-		 * - OPERATING_SPEED
-		 * - LATITUDE
-		 * - LONGITUDE
-		 * - INTERSECTION_COLLECTION
-		 * 
-     * @return A list of node defining the planned vehicle trajectory
-     */
-	public List<Node> plan(DataElementHolder stateData) throws Exception {
+@Override	public List<Node> plan(DataElementHolder stateData) throws Exception {
 		long entryTime = System.currentTimeMillis();
 
 
