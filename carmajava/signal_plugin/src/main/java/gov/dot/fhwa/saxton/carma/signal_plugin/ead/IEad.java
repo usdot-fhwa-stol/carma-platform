@@ -39,15 +39,15 @@ public interface IEad {
 	 */
 	void setStopBoxWidth(double width);
 
-	// TODO comment
-	List<Node> plan(double speed, double operSpeed, double accel,
-                                 List<IntersectionData> intersections) throws Exception;
-
-
-	// /**
-	//  * Notifies the EAD object that the list of intersections has changed in some significant way
-	//  * since the previous time step.
-	//  */
-	// void intersectionListHasChanged();
+	/**
+	 * Generates a plan based on the input data
+	 * 
+	 * @param speed The current speed of the vehicle
+	 * @param operSpeed The target operating speed of the vehicle
+	 * @param intersections A sorted list of intersection data with the nearest intersections appearing earlier in the list
+	 * 
+	 * @return A list of node defining the planned vehicle trajectory
+	 */
+	List<Node> plan(double speed, double operSpeed, List<IntersectionData> intersections) throws Exception;
 	
 }
