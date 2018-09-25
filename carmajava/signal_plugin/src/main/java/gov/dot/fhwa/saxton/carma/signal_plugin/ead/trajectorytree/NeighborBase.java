@@ -138,15 +138,12 @@ public abstract class NeighborBase implements INeighborCalculator {
         switch (i.currentPhase) {
             case GREEN:
                 h.longestGreen  = Math.max(h.longestGreen,  i.timeToNextPhase);
-                h.longestYellow = Math.max(h.longestYellow, i.timeToThirdPhase);
                 break;
             case YELLOW:
                 h.longestYellow = Math.max(h.longestYellow, i.timeToNextPhase);
-                h.longestRed    = Math.max(h.longestRed,    i.timeToThirdPhase);
                 break;
             case RED:
                 h.longestRed    = Math.max(h.longestRed,    i.timeToNextPhase);
-                h.longestGreen  = Math.max(h.longestGreen,  i.timeToThirdPhase);
                 break;
             default:
                 //do nothing - this is a normal condition, especially for intersections beyond the nearest

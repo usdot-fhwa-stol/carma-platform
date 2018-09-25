@@ -40,14 +40,12 @@ public class IntersectionData {
     public double                  dtsb; //distance to stop bar along the approach lane, in meters
     public SignalPhase             currentPhase = SignalPhase.NONE;
     public double                  timeToNextPhase = -1.0;
-    public double                  timeToThirdPhase = -1.0; // TODO not set or used in meaningful way and should be removed
     
     @Override
     public String toString() {
         return "IntersectionData [roughDist=" + roughDist + ", missingTimesteps="
                 + missingTimesteps + ", intersectionId=" + intersectionId + ", laneId=" + laneId + ", dtsb=" + dtsb
-                + ", currentPhase=" + currentPhase + ", timeToNextPhase=" + timeToNextPhase + ", timeToThirdPhase="
-                + timeToThirdPhase + "]";
+                + ", currentPhase=" + currentPhase + ", timeToNextPhase=" + timeToNextPhase + "]";
     }
     
 }
