@@ -32,7 +32,7 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * TODO. Handles intersection conversion and dtsb calc
+ * Class responsible for updating intersection data used for identifying the current intersection and lane of the host vehicle.
  */
 public class EadIntersectionManager {
 	/**
@@ -83,10 +83,10 @@ public class EadIntersectionManager {
 
 	/**
 	 * Refreshes the internal list of intersections in view with the latest input data.
-	 * TODO
 	 *
 	 * @param inputIntersections - list of intersections sensed by the vehicle in this time step
 	 * @param vehicleLoc - current location of the vehicle
+	 * 
 	 * @return distance to stop bar of the nearest intersection
 	 */
 	public double updateIntersections(List<IntersectionData> inputIntersections, Location vehicleLoc) throws Exception {
