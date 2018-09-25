@@ -34,9 +34,17 @@ public class Node {
   private double timeDouble; //sec
   private double speedDouble; //m/s
 
-  private static final int DISTANCE_UNITS = -2; // distance is in units of 10^DISTANCE_UNITS meters
+  private static final int DISTANCE_UNITS = -1; // distance is in units of 10^DISTANCE_UNITS meters
   private static final int TIME_UNITS = -1; //time in units of 10^TIME_UNITS sec
   private static final int SPEED_UNITS = DISTANCE_UNITS - TIME_UNITS; // speed is in units of 10^SPEED_UNITS (m/s)
+  // Pre-compute factors to save on calls to Math.pow();
+  private static final double M_TO_DIST_UNITS = Math.pow(10.0, -(double)DISTANCE_UNITS);
+  private static final double S_TO_TIME_UNITS = Math.pow(10.0, -(double)TIME_UNITS);
+  private static final double M_PER_S_TO_SPEED_UNITS = Math.pow(10.0, -(double)SPEED_UNITS);
+
+  private static final double DIST_UNITS_TO_M = Math.pow(10.0, (double)DISTANCE_UNITS);
+  private static final double TIME_UNITS_TO_S = Math.pow(10.0, (double)TIME_UNITS);
+  private static final double SPEED_UNITS_TO_M_PER_S = Math.pow(10.0, (double)SPEED_UNITS);
 
   /**
    * Constructor that takes in real-world units
@@ -46,13 +54,13 @@ public class Node {
    */
   public Node(double distance, double time, double speed) {
     //round the inputs to the nearest internal unit
-    this.distance = (long)(distance*Math.pow(10.0, -(double)DISTANCE_UNITS) + 0.5);
-    this.time     = (long)(time    *Math.pow(10.0, -(double)TIME_UNITS)     + 0.5);
-    this.speed    = (long)(speed   *Math.pow(10.0, -(double)SPEED_UNITS)    + 0.5);
+    this.distance = (long)(distance*M_TO_DIST_UNITS + 0.5);
+    this.time     = (long)(time    *S_TO_TIME_UNITS + 0.5);
+    this.speed    = (long)(speed   *M_PER_S_TO_SPEED_UNITS + 0.5);
     //store the rounded values as doubles for faster future access
-    distDouble = (double)(this.distance) * Math.pow(10.0, (double)DISTANCE_UNITS);
-    timeDouble = (double)(this.time)     * Math.pow(10.0, (double)TIME_UNITS);
-    speedDouble = (double)(this.speed)   * Math.pow(10.0, (double)SPEED_UNITS);
+    distDouble = (double)(this.distance) * DIST_UNITS_TO_M;
+    timeDouble = (double)(this.time)     * TIME_UNITS_TO_S;
+    speedDouble = (double)(this.speed)   * SPEED_UNITS_TO_M_PER_S;
 
   }
 
@@ -63,9 +71,9 @@ public class Node {
    * @param speed The speed in units of speedUnits
    */
   public Node(long distance, long time, long speed) {
-    distDouble = (double)distance * Math.pow(10.0, (double)DISTANCE_UNITS);
-    timeDouble = (double)time     * Math.pow(10.0, (double)TIME_UNITS);
-    speedDouble = (double)speed   * Math.pow(10.0, (double)SPEED_UNITS);
+    distDouble = (double)distance * DIST_UNITS_TO_M;
+    timeDouble = (double)time     * TIME_UNITS_TO_S;
+    speedDouble = (double)speed   * SPEED_UNITS_TO_M_PER_S;
     this.distance = distance;
     this.time = time;
     this.speed = speed;
@@ -126,7 +134,9 @@ public class Node {
   }
 
   @Override public int hashCode() {
-    return Objects.hash(distance, speed, time);
+    //long dist = Math.round(distDouble); // Round the distance to the nearest m to speed up search. TODO develop more robust way of doing this
+    long dist = distance;
+    return Objects.hash(dist, speed, time);
   }
 
   @Override public boolean equals(Object obj) {
@@ -136,7 +146,9 @@ public class Node {
       return false;
     } else {
       Node n2 = (Node) obj;
-      return this.distance == n2.distance && this.speed == n2.speed && this.time == n2.time;
+      // Round the distance to the nearest m to speed up search. TODO develop more robust way of doing this
+      //return Math.round(this.distDouble) == Math.round(n2.distDouble) && this.speed == n2.speed && this.time == n2.time;
+      return this.distDouble == n2.distDouble && this.speed == n2.speed && this.time == n2.time;
     }
   }
 
