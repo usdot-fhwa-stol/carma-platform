@@ -72,8 +72,8 @@ public class AStarSolver implements ITreeSolver {
 
       // Check if this node is the goal
       if (costModel.isGoal(current)) {
-        log_.debug("EAD", "Found our goal with node " + current.toString());
-        log_.debug("EAD","Ending sizes: closedSet=" + closedSet.size() + ", cameFrom=" +
+        log_.info("EAD", "Found our goal with node " + current.toString());
+        log_.info("EAD","Ending sizes: closedSet=" + closedSet.size() + ", cameFrom=" +
                     cameFrom.size() + ", gScore=" + gScore.size() + ", openSetQueue=" + openSetQueue.size());
         return rebuildPath(cameFrom, current); // Get path
       }
