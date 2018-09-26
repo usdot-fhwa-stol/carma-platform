@@ -45,12 +45,6 @@ dependencies {
   testCompile 'junit:junit:4.12'
 }
 
-installApp {
-    doLast {
-        delete 'build/scripts'
-    }
-}
-
 test {
     testLogging {
         showStandardStreams = true
