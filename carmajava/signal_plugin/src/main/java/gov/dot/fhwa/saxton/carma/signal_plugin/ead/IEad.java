@@ -33,19 +33,6 @@ public interface IEad {
 	 */
 	void initialize(long timestep, ITreeSolver solver);
 
-
-	// TODO remove /**
-	//  * Calculates the new target speed to be used to command the vehicle's motion for the current time step.
-	//  * @param speed - current vehicle speed, m/s
-	//  * @param operSpeed - current desired speed, m/s
-	//  * @param accel - current vehicle forward acceleration, m/s^2
-	//  * @param intersections - list of known intersections, if any, sorted in order from nearest to farthest
-	//  * @return target speed, m/s
-	//  */
-	// double getTargetSpeed(double speed, double operSpeed, double accel,
-	// 					  List<IntersectionData> intersections) throws Exception;
-
-
 	/**
 	 * Allows specification of the longitudinal width of the intersections's stop box.
 	 * @param width - width of the box, m
