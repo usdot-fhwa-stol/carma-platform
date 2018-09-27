@@ -93,9 +93,3 @@ task writeVersionFile << {
 compileJava {
     dependsOn writeVersionFile
 }
-
-installApp {
-    doLast {
-        delete 'build/scripts'
-    }
-}

@@ -53,9 +53,3 @@ dependencies {
   compile project(':geometry')
 }
 
-installApp {
-    doLast {
-        delete 'build/scripts'
-    }
-}
-

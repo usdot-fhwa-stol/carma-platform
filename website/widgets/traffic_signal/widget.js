@@ -12,14 +12,12 @@ CarmaJS.WidgetFramework.TrafficSignal = (function () {
 
         //*** Private Variables ***
         var t_traffic_signal_info = 'traffic_signal_info';
-
         var traffic_signal_max = 3;
 
         var svgLayerSpeed;
         var svgLayer1;
         var svgLayer2;
         var svgLayer3;
-
 
         //Listeners
         var listenerSpeedAccel;
