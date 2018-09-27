@@ -47,9 +47,3 @@ dependencies {
   compile project(':rosutils')
 }
 
-installApp {
-    doLast {
-        delete 'build/scripts'
-    }
-}
-

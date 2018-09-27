@@ -42,7 +42,10 @@ public class EadIntersectionManager {
 	public EadIntersectionManager() throws Exception {
 		//Get application context
 		IGlidepathAppConfig config = GlidepathApplicationContext.getInstance().getAppConfig();
-		assert(config != null);
+		
+		if (config == null) {
+			throw new IllegalArgumentException("Null config returned by GlidepathApplicationContext");
+		}
 
 		//get the list of intersections that we will be paying attention to
 		String tmpList = config.getProperty("asd.intersections");
