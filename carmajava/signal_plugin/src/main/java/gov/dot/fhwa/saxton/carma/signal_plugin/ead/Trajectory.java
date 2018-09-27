@@ -159,10 +159,7 @@ public class Trajectory implements ITrajectory {
 		curSpeed_ = 0.0;
 		curAccel_ = 0.0;
 		stopConfirmed_ = false;
-		phase_ = NONE;
 		timeRemaining_ = 0.0;
-		failSafeMode_ = false;
-		numStepsAtZero_ = 0;
 	}
 
 	/**
@@ -340,126 +337,6 @@ public class Trajectory implements ITrajectory {
 
 		return intersectionManager_.updateIntersections(inputIntersections, vehicleLoc);
 	}
-
-	/**
-	 * // TODO this is good logic to have but maybe not the place for it
-	 * current speed/distance state is beyond the safe limit for approaching red or yellow signal : command maximum deceleration
-	 * current speed/distance state is in the safe zone for the signal state : cmdIn
-	 * 
-	 * Note: jerk limit is ignored here, as this is an emergency maneuver. Also, emergency command is intentionally
-	 * not dependent upon current actual speed, because measured speed may be drifting in wrong direction; we know
-	 * we have to bring the vehicle to a stop along a sharp downward speed trajectory in a given distance, so 
-	 * distance is all that's necessary to know.
-	 * 
-	 * Note (3/1/15):  At this moment the XGV/vehicle responsiveness is only something we know empirically. Available data 
-	 * indicates that it will achieve serious acceleration only when abs(command - speed) > 1 m/s.  Further, it takes
-	 * somewhere around 1 to 1.5 sec to achieve a significant amount of torque (positive or negative) that begins to
-	 * accelerate the vehicle in the desired way, even with an instantaneous 1 m/s command premium over actual speed.
-	 */
-	private double applyFailSafeCheck(double cmdIn, double distance, double speed) {
-		return cmdIn;
-		// double cmd = cmdIn;
-		
-		// //if the failsafe toggle has been turned off or if we are not approaching an intersections then return
-		// if (!allowFailSafe_  ||  phase_ == NONE) {
-		// 	return cmd;
-		// }
-		
-		// //set the acceleration limit higher than in normal ops since this is for handling emergency situations (this will be a positive number)
-		// double decel = failSafeDecelFactor_*accelMgr_.getAccelLimit();
-		
-		// //compute the distance that will be covered during vehicle response lag
-		// double lagDistance = failSafeResponseLag_ * speed;
-		
-		// //determine emergency stop distance for our current speed (limited to be non-negative)
-		// double emerDistance = Math.max((0.5*speed*speed / decel + lagDistance + failSafeDistBuf_), 0.0);
-		
-		// //are we in fail-safe mode?
-		// if (failSafe(emerDistance, distance, speed)) {
-
-		// 	//if we haven't yet reached the bar, we have time to slow more gradually
-		// 	double failsafeCmd;
-		// 	if (distance > 0.0) {
-		// 		//determine where we will be one time step in the future, going at the current speed (may be negative!)
-		// 		// plan to stop failSafeDistBuf_ short of the stop bar, and account for the response lag time
-		// 		double futureDistance = distance - 0.001*timeStepSize_*speed - lagDistance - failSafeDistBuf_;
-		// 		//determine the speed we want to have at that point in time to achieve a smooth slow-down
-		// 		double desiredSpeed = Math.sqrt(Math.max(2.0*decel*futureDistance, 0.0));
-
-		// 		//determine control adjustment that provides a command sufficiently below the actual speed that the controller will take it seriously
-		// 		double adj = calcControlAdjustment(speed, desiredSpeed, -decel);
-		// 		double rawCmd = desiredSpeed + adj;
-
-		// 		//compute the new fail-safe command
-		// 		failsafeCmd = Math.max(Math.min(rawCmd, speed), 0.0);
-
-		// 		//under no circumstances do we want the resultant command to be larger than the previous one!
-		// 		if (failsafeCmd > prevCmd_) {
-		// 			failsafeCmd = 0.99*prevCmd_;
-		// 		}
-		// 		log_.debugf("TRAJ", "Fail-safe futureDistance = %.2f, speed = %.2f, desiredSpeed = %.2f, rawCmd = %.2f, adj = %.2f, failsafeCmd = %.2f",
-		// 				futureDistance, speed, desiredSpeed, rawCmd, adj, failsafeCmd);
-		// 	}else {
-		// 		//need immediate stop!
-		// 		failsafeCmd = 0.0;
-		// 		log_.debugf("TRAJ", "Fail-safe commanding 0 since we are past the stop bar!");
-		// 	}
-
-		// 	//if it is less than the input command then use it
-		// 	if (failsafeCmd < cmdIn) {
-		// 		cmd = failsafeCmd;
-		// 		log_.warn("TRAJ", "FAIL-SAFE has overridden the calculated command");
-		// 	}
-
-		// }
-		
-		// return cmd;
-	}
-
-	/**
-	 * !failSafeMode_  &&  distance < emerDist  &&  can't get through a green light at current speed : true, and set failSafeMode_
-	 * failSafeMode_  &&  speed == 0 for 5 consecutive time steps : false, and clear failSafeMode_
-	 * otherwise, return current failSafeMode_ without changing it
-	 * 
-	 * The idea is that once we decide we need a failsafe (emergency) stop, then we are committed to it until the deed is done.
-	 */
-	private boolean failSafe(double emerDist, double distance, double speed) {
-		
-		//if already in failsafe mode then
-		if (failSafeMode_) {
-			//if speed has been zero for enough time steps then
-			if (speed < 0.001  &&  ++numStepsAtZero_ > STOP_DAMPING_TIMESTEPS) {
-				//turn off failsafe and trust the EAD to take over the departure
-				failSafeMode_ = false;
-				numStepsAtZero_ = 0;
-				log_.info("TRAJ", "///// Fail-safe has been turned off.");
-			}
-		//else
-		}else {
-			//if current DTSB < our emergency stop distance for this speed and speed is non-zero then
-			// (the only way this will be triggered if distance < 0 is if we are creeping past the stop bar,
-			// so no need to guard against negative distance since it will be real close to zero; we're not
-			// trying to escape through the beginning of yellow or red)
-			if (distance < emerDist  &&  speed > 0.08) {
-		
-				//determine time to cross stop bar at current speed
-				double timeToCross = Math.max(distance/speed, 0.0);
-			
-				//determine if we have to stop (go into failsafe mode): if
-				//	green and we can't make it through before expiring, or
-				//	yellow, or
-				//	red and it will still be red when we arrive
-				failSafeMode_ = (phase_.equals(SignalPhase.GREEN)  &&  timeToCross >= timeRemaining_)  ||
-								 phase_.equals(SignalPhase.YELLOW)                                     ||
-								(phase_.equals(SignalPhase.RED)    &&  timeToCross <= timeRemaining_);
-				if (failSafeMode_) {
-					log_.warnf("TRAJ", "///// FAIL-SAFE ACTIVATED; will remain active until vehicle stops. timeToCross = %.2f", timeToCross);
-				}
-			}
-		}
-
-		return failSafeMode_;
-	}
 	
 	private double				osOverride_;		//FOR DEBUGGING ONLY - allows the config file to override the driver selected operating speed, m/s
 	private long				timeStepSize_;		//duration of a single time step, ms
@@ -471,22 +348,18 @@ public class Trajectory implements ITrajectory {
 	private double				maxJerk_;			//max allowed jerk, m/s^3
 	private double				curSpeed_;			//current vehicle speed, m/s
 	private double				curAccel_;			//current acceleration (smoothed), m/s^2
-	private SignalPhase			phase_;				//the signal's current phase
 	private double				timeRemaining_;		//time remaining in the current signal phase, sec
 	private IEad				ead_;				//the EAD model that computes the speed commands
 	private boolean				accelLimiter_;		//is acceleration limiter used?
 	private boolean				jerkLimiter_;		//is jerk limiter used?
 	private double				maxCmdAdj_;			//difference (m/s) needed between current speed and command given to the XGV to get it to respond quickly
 	private boolean				allowFailSafe_;		//does the user want failsafe logic involved?
-	private boolean				failSafeMode_;		//are we in failsafe mode (overriding all other trajectory calculations)?
 	private double				failSafeDistBuf_;	//distance buffer that failsafe will subtract from stop bar location, meters
 	private double				failSafeResponseLag_; //time that failsafe logic allows for the vehicle to respond to a command change, sec
-	private	int					numStepsAtZero_;	//number of consecutive time steps with speed of zero (after first motion) for failsafe use
 	private double				cmdSpeedGain_;		//gain applied to speed difference for fail-safe calculations
 	private double				cmdAccelGain_;		//gain applied to acceleration for fail-safe calculations
 	private double				cmdBias_;			//bias applied to command premium for fail-safe calculations
 
-	private static final int 	STOP_DAMPING_TIMESTEPS = 19; //num timesteps before stopping vibrations disappear
 	private static ILogger		log_ = LoggerManager.getLogger(Trajectory.class);
 
 	private EadIntersectionManager intersectionManager_ = new EadIntersectionManager();
