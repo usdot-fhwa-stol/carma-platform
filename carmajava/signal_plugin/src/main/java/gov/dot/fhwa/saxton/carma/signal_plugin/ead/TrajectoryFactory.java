@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
+
 /**
  * Factory method to instantiate an appropriate ITrajectory concrete class
  */
@@ -25,28 +26,17 @@ public class TrajectoryFactory {
      * Reflection helper to create a ITrajectory object based on class name
      *
      * @param trajectoryClassName
-     * @return
+     * @throws If the target class cannot be found or initialized the corresponding exceptions will be thrown by this function
+     * @return A non-null fully initialized object of the requested class cast to type ITrajectory
      */
-    public static ITrajectory newInstance(String trajectoryClassName)   {
+    public static ITrajectory newInstance(String trajectoryClassName) throws Exception {
         @SuppressWarnings("rawtypes")
 		Class tClass = null;
 
-        try   {
-            tClass = Class.forName(trajectoryClassName);
-        }
-        catch(ClassNotFoundException cnfe)   {
-            //tClass = SimulatedTrajectory.class; TODO deal with this
-        }
+        tClass = Class.forName(trajectoryClassName);
 
         Object newObject = null;
-        try   {
-            newObject = tClass.newInstance();
-        }
-        catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
+        newObject = tClass.newInstance();
 
         return (ITrajectory) newObject;
     }

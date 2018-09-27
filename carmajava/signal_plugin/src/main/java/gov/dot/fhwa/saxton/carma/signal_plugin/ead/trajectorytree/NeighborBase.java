@@ -185,7 +185,7 @@ public abstract class NeighborBase implements INeighborCalculator {
         // initialize() method was called, but they are not updated after that
         IntersectionData i = intersections_.get(index);
         double iDist = i.dtsb;
-        //TODO need to figure out under which condition, it did not calculate the dtsb correctly
+        //If the dtsb is not able to be calculated when processing intersection geometry is will default to Integer.MAX_VALUE
         if (iDist <= 0.0 || iDist >= Integer.MAX_VALUE) {
             //if use roughDist, make sure it is pass the fine distance to that intersection
             iDist = (0.01 * (double)i.roughDist) + CoarsePathNeighbors.TYPICAL_INTERSECTION_WIDTH; //convert from cm to m
