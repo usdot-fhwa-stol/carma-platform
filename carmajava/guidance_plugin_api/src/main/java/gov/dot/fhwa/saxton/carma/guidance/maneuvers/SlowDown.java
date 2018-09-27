@@ -77,10 +77,12 @@ public class SlowDown extends LongitudinalManeuver {
 
         double deltaV = endSpeed_ - startSpeed_; //always negative
         double lagDistance = startSpeed_ * inputs_.getResponseLag();
-        double displacement = endDist - startDist - lagDistance;
+        double rawDisplacement = endDist - startDist;
+        double displacement = rawDisplacement - lagDistance;
         if(displacement <= 0) {
-            log_.error("SlowDown.planToTargetDistance do not have enough distance to plan. Throwing exception.");
-            throw new ArithmeticException("Negative displacement found in SlowDown maneuver: " + displacement);
+            log_.error("SlowDown.planToTargetDistance do not have enough distance to plan when accounting for lag time." +
+                " Maneuver will be planned without this consideration. StartDist: " + startDist + " endDist: " + endDist + " lagDistance: " + lagDistance);
+            displacement = rawDisplacement;
         }
         workingAccel_ = (startSpeed_ * deltaV + 0.5 * deltaV * deltaV) / displacement; //supposed to be negative
         if (workingAccel_ < -maxAccel_) {

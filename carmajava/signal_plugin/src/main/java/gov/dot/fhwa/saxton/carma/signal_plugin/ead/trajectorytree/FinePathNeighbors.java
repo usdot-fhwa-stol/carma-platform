@@ -48,7 +48,7 @@ public class FinePathNeighbors extends NeighborBase {
         maxAccel_ = config.getDoubleDefaultValue("defaultAccel", 2.0);
         speedLimit_ = config.getMaximumSpeed(0.0) / MPS_TO_MPH;
         crawlingSpeed_ = config.getDoubleDefaultValue("crawlingSpeed", 5.0) / MPS_TO_MPH;
-        acceptableStopDist_ = config.getDoubleDefaultValue("ead.acceptableStopDistance", 6.0);
+       // acceptableStopDist_ = config.getDoubleDefaultValue("ead.acceptableStopDistance", 6.0);
         timeBuffer_ = config.getDoubleDefaultValue("ead.timebuffer", 4.0);
         debugThreshold_ = config.getDoubleDefaultValue("ead.debugThreshold", -1.0);
         responseLag_ = config.getDoubleDefaultValue("ead.response.lag", 1.9);
@@ -59,7 +59,8 @@ public class FinePathNeighbors extends NeighborBase {
     public void initialize(List<IntersectionData> intersections, int numIntersections, double timeIncrement,
                            double speedIncrement) {
 
-        log_.debug("EAD", "initialize called with timeInc = " + timeIncrement + ", speedInc = " + speedIncrement);
+        log_.info("EAD", "initialize called with timeInc = " + timeIncrement + ", speedInc = " + speedIncrement);
+        acceptableStopDist_ = 1.1 * 2.0 * timeIncrement * speedIncrement; // Set the acceptable stop distance as half the distance increment
         super.initialize(intersections, numIntersections, timeIncrement, speedIncrement);
     }
 
@@ -88,17 +89,19 @@ public class FinePathNeighbors extends NeighborBase {
         // we will create nodes at regular increments between these
         double minSpeed = Math.max(curSpeed - maxAccel_*variableTimeInc, 0.0);
         double maxSpeed = Math.min(curSpeed + maxAccel_*variableTimeInc, speedLimit_);
-        log_.debug("PLAN", "Generating neighbors of node " + node.toString() + ". Initial minSpeed = " + minSpeed + ", maxSpeed = " + maxSpeed);
+        log_.info("PLAN", "Generating neighbors of node " + node.toString() + ". Initial minSpeed = " + minSpeed + ", maxSpeed = " + maxSpeed);
         
         double newSpeed = curSpeed;
         //add current speed if it is larger than crawling speed
-        if(curSpeed > crawlingSpeed_ - FOLATING_POINT_EPSILON) {
+        if(curSpeed > crawlingSpeed_) {
             speeds.add(curSpeed);
         }
         //decrement from the current speed minus speedInc until the minSpeed
         newSpeed = curSpeed - speedInc_;
         while(newSpeed > minSpeed) {
-            speeds.add(newSpeed);
+            if (newSpeed > crawlingSpeed_) {
+                speeds.add(newSpeed);
+            }
             newSpeed -= speedInc_;
         }
         double dtsb = distToIntersection(currentIntersectionIndex(curDist), curDist);
@@ -111,7 +114,9 @@ public class FinePathNeighbors extends NeighborBase {
         //increment from the current speed plus speedInc until the maxSpeed limit
         newSpeed = curSpeed + speedInc_;
         while(newSpeed < maxSpeed) {
-            speeds.add(newSpeed);
+            if (newSpeed > crawlingSpeed_) {
+                speeds.add(newSpeed);
+            }
             newSpeed += speedInc_; 
         }
         speeds.add(maxSpeed);
