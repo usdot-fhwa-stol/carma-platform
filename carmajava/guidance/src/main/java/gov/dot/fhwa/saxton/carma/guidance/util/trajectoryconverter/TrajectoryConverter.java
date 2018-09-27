@@ -521,6 +521,12 @@ public class TrajectoryConverter implements ITrajectoryConverter {
         if (currentSegDowntrack > currentSeg.length()) {
           currentSegDowntrack = currentSegDowntrack - currentSeg.length(); // Map distance onto new segment
           segmentIdx++;
+
+          if (segmentIdx >= routeSegments.size()) {
+            // Not possible to generate predictions beyond route size
+            break;
+          }
+
           currentSeg = routeSegments.get(segmentIdx);
         }
 
