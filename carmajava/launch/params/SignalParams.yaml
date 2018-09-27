@@ -6,7 +6,7 @@
 #-----
 
 # maximumSpeed and crawlingSpeed are in mph
-maximumSpeed: 35
+maximumSpeed: 35.0
 crawlingSpeed: 5.0
 
 # all accel limits are in m/s^2 (accel & decel limits must always be the same due to XGV implementation)
@@ -109,7 +109,9 @@ asd/mapport: 7789
 asd/maxpacketsize: 1472
 
 #comma-separated list of (decimal) intersections IDs that will be used; other intersections ignored
-asd/intersections: "1901"
+# TFHRC West Int: 9709
+# TFHRC East Int: 9945
+asd/intersections: "9709"
 
 # number of time steps after first seeing data from a new intersection before we start calculating spat reliability
 asd/minSamplesForReliability: 4
@@ -172,7 +174,7 @@ ead/acceptableStopDistance: 6.0
 # A string identifying the fuel cost model which will be used for computing cost between nodes
 # DEFAULT: The fuel cost model use in the origional Glidepath Phase 2 whitepaper
 # MOVES_2010: The fuel cost model based on the EPA 2010 MOVES brief on vehicle efficiency
-ead.desiredCostModel: 'MOVES_2010'
+ead/desiredCostModel: 'DEFAULT'
 
 # ----- DEFAULT cost model params for AStar tree
 
@@ -196,7 +198,7 @@ ead/vehicleMass: 2080.0
 ead/idleCost: 19300.0
 
 # true will make this the min energy rate for everything; false applies this only when speed is zero
-ead.useIdleMin: false
+ead/useIdleMin: false
 
 #### Start of Parameters used for MOVES Fuel Cost Model
 ## Vehicle Type Parameters
@@ -208,26 +210,26 @@ ead.useIdleMin: false
 
 # The Rolling Term (A) used in the VSP calculation
 # Units: kW-s/m
-ead.MOVES.rollingTermA: 0.22112
+ead/MOVES/rollingTermA: 0.22112
 
 # The Rotating Term (B) used in the VSP calculation
 # Units: kW-s^2/m^2
-ead.MOVES.rotatingTermB: 0.002838
+ead/MOVES/rotatingTermB: 0.002838
 
 # The Drag Term (C) used in the VSP calculation
 # Units: kW-s^3/m^3
-ead.MOVES.dragTermC: 0.000698
+ead/MOVES/dragTermC: 0.000698
 
 # The vehicle mass (M)
 # Units: Metric tons
-ead.MOVES.vehicleMassInTons: 1.86686
+ead/MOVES/vehicleMassInTons: 1.86686
 
 # The Fixed Mass Factor (f)
 # Units: Metric tons
-ead.MOVES.fixedMassFactor: 1.86686
+ead/MOVES/fixedMassFactor: 1.86686
 
 # The path to the table used for determining vehicle energy usage rates based on operation mode and source id
-ead.MOVES.baseRateTablePath: 'BaseRateForPassengerTruck.csv'
+ead/MOVES/baseRateTablePath: 'BaseRateForPassengerTruck.csv'
 
 #### End of Parameters used in MOVES Fuel Cost Model
 

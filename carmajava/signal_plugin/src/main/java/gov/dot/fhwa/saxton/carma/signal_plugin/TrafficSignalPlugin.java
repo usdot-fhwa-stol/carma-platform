@@ -22,6 +22,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -34,6 +36,7 @@ import org.ros.node.NodeConfiguration;
 
 import cav_msgs.GenericLane;
 import cav_msgs.IntersectionState;
+import cav_msgs.MovementEvent;
 import cav_msgs.MovementState;
 import cav_msgs.NodeListXY;
 import cav_msgs.NodeOffsetPointXY;
@@ -65,6 +68,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementKey;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DoubleDataElement;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.GlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IntersectionCollectionDataElement;
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.PhaseDataElement;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicationContext;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionCollection;
@@ -113,7 +117,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private double operSpeedScalingFactor = 1.0;
     private double speedCommandQuantizationFactor = 0.1;
     private AtomicBoolean involvedInControl = new AtomicBoolean(false);
-    private final double CM_PER_M = 100.0;
+    static private final double CM_PER_M = 100.0;
 
     public TrafficSignalPlugin(PluginServiceLocator psl) {
         super(psl);
@@ -194,7 +198,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      * @param x X value of the offset in meters
      * @param y Y value of the offset in meters
      */
-    private void addNodeOffset(Lane lane, Location ref, float x, float y) {
+    static private void addNodeOffset(Lane lane, Location ref, float x, float y) {
         lane.addNodeCm(ref, (int) (x * 100), (int) (y * 100));
     }
 
@@ -203,12 +207,11 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      * @param data The {@class IntersectionData} instance to be converted
      * @return The map data from input converted into a Glidepath formatted object
      */
-    private MapMessage convertMapMessage(IntersectionData data) {
+    static protected MapMessage convertMapMessage(IntersectionData data) {
         MapMessage map = new MapMessage();
         map.setContentVersion(data.getIntersectionGeometry().getRevision());
         map.setElevationsPresent(false);
         map.setOffsetsInDm(false);
-
         map.setIntersectionId(data.getIntersectionId());
 
         Position3D ref = data.getIntersectionGeometry().getRefPoint();
@@ -243,6 +246,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                     }
                 }
             }
+
+            laneList.add(cnvLane);
         }
         map.setLanes(laneList);
 
@@ -254,8 +259,11 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      * @param data The {@class IntersectionData} instance to be converted
      * @return The SPAT data from input converted into a Glidepath formatted object
      */
-    private SpatMessage convertSpatMessage(IntersectionData data) {
+    static protected SpatMessage convertSpatMessage(IntersectionData data) {
         IntersectionState state = data.getIntersectionState();
+        if (state == null) {
+            throw new IllegalArgumentException("convertSpatMessage called with null spat");
+        }
         SpatMessage cnvSpat = new SpatMessage();
 
         cnvSpat.setContentVersion(state.getRevision());
@@ -268,24 +276,67 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         for (MovementState movementData : state.getMovementList()) {
             Movement m = new Movement();
 
-            // TODO this causes a merge conflict, which is fixed in feature/fix_dtsb_calc branch 
-//            for (j2735_msgs.GenericLane lane : data.getIntersectionGeometry().getLaneList()) {
-//                // Detect based on connectsTo
-//                if (lane.getConnectsToExists()) {
-//                    for (j2735_msgs.Connection connectsTo : lane.getConnectToList()) {
-//                        if (connectsTo.getSignalGroupExists()) {
-//                            if (connectsTo.getSignalGroup() == movementData.getSignalGroup()
-//                                    && connectsTo.getConnectingLane().getManeuverExists()
-//                                    && connectsTo.getConnectingLane().getManeuver().getAllowedManeuvers() == 0) {
-//                                LaneSet lanes = new LaneSet(lane.getLaneId(), 0x01); // TODO: Detect maneuvers other
-//                                                                                     // than
-//                                                                                     // straight
-//                                m.addLaneSet(lanes);
-//                            }
-//                        }
-//                    }
-//                }
-//            }
+            for (GenericLane lane : data.getIntersectionGeometry().getLaneList()) {
+                // Detect based on connectsTo
+                if (lane.getConnectsToExists()) {
+                    for (j2735_msgs.Connection connectsTo : lane.getConnectToList()) {
+                        if (connectsTo.getSignalGroupExists()) {
+                            if (connectsTo.getSignalGroup() == movementData.getSignalGroup()) {
+                                    
+                                // TODO Bad assumption: We are assuming that if there is any connection with the same signal group we can assume there is a straight path
+                                    // TODO we still need to have this check but the data is not available in the current map messages
+                                    // && connectsTo.getConnectingLane().getManeuverExists()
+                                    // && (connectsTo.getConnectingLane().getManeuver().getAllowedManeuvers() | j2735_msgs.AllowedManeuvers.STRAIGHT) > 0) {
+                                LaneSet lanes = new LaneSet(lane.getLaneId(), 0x01); // TODO: Detect maneuvers other
+                                                                                     // than
+                                                                                     // straight
+                                m.addLaneSet(lanes);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (movementData.getMovementEventList().size() > 0) {
+                Queue<MovementEvent> sortedEvents = new PriorityQueue<>(
+                    (MovementEvent m1, MovementEvent m2) -> {
+                        if (!m1.getTimingExists())
+                            return 1; // Put events without timing at the end
+                        if (!m2.getTimingExists()) 
+                            return -1; // Put events without timing at the end
+                        return (int) (m1.getTiming().getMinEndTime() - m2.getTiming().getMinEndTime()); // Use the non-optional minEndTiming to sort events
+                    });
+                    
+                    sortedEvents.addAll(movementData.getMovementEventList()); // Sort the movement events by minEndTime
+
+                    MovementEvent earliestEvent = sortedEvents.peek();
+                    if (earliestEvent.getTimingExists() && earliestEvent.getTiming().getMaxEndTimeExists()) {
+                        DateTime dt = DateTime.now();
+                        long millisOfDay = dt.getMillisOfDay();
+                        long millisToHourStart = dt.getHourOfDay() * 3600000L;
+                        double secondInHour = (double)(millisOfDay - millisToHourStart) / 1000.0;
+                        m.setMaxTimeRemaining(Math.max(0.0, earliestEvent.getTiming().getMaxEndTime() - secondInHour));
+                        m.setMinTimeRemaining(Math.max(0.0, earliestEvent.getTiming().getMinEndTime() - secondInHour));
+                    }
+                //TODO move this statment log.warn("Empty movement event list in spat for intersection id: " + state.getId().getId());
+                
+                int phase = sortedEvents.peek().getEventState().getMovementPhaseState();
+                switch(phase) {
+                    case j2735_msgs.MovementPhaseState.PERMISSIVE_MOVEMENT_ALLOWED: // Green light
+                        m.setCurrentState(0x00000001);
+                        break;
+                    case j2735_msgs.MovementPhaseState.PROTECTED_CLEARANCE: // Yellow
+                        m.setCurrentState(0x00000002);
+                        break;
+                    case j2735_msgs.MovementPhaseState.STOP_AND_REMAIN: // Red light
+                        m.setCurrentState(0x00000004);
+                        break;
+                    default:
+                        //log.warn("Unsupported signal phase: " + phase);
+                        break;
+                }
+            }
 
             movements.add(m);
         }
@@ -335,7 +386,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                     // Walk through all the movements to compare
                     IntersectionState oldIntersectionState = old.getIntersectionState();
                     if (oldIntersectionState == null) {
-                        log.warn("Intersection could not be processed because it has no state: " + old);
+                        log.warn("Intersection could not be processed because it has no state. Id: " + old.getIntersectionId());
                         continue;
                     }
                     phaseChangeCheckLoop: for (MovementState oldMov : oldIntersectionState.getMovementList()) {
@@ -393,7 +444,13 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         try {
             Location curLoc = new Location(curPos.get().getLatitude(), curPos.get().getLongitude());
             double dtsb = glidepathTrajectory.updateIntersections(convertIntersections(intersections), curLoc);
+            final double REASONABLE_DTSB = 10000.0; // If we are more than 10km from an intersection the calculation has certainly failed
+
             updateUISignals();
+            if (dtsb < 0 || dtsb > REASONABLE_DTSB) { // TODO if our dtsb is within the stop box we should keep it as valid
+                log.warn("DTSB computation failed!");
+                return -1;
+            }
             return dtsb;
         } catch (Exception e) {
             log.warn("DTSB computation failed!", e);
@@ -428,8 +485,13 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         signalMsg.setLaneId((short)intersection.laneId);
         signalMsg.setRemainingDistance((float)intersection.dtsb);
         signalMsg.setRemainingTime((short)intersection.timeToNextPhase);
+        
+        if (intersection.currentPhase == null) {
+            return signalMsg;
+        }
+
         switch(intersection.currentPhase) {
-            case GREEN:
+            case GREEN: 
                 signalMsg.setState(TrafficSignalInfo.GREEN);
                 break;
             case YELLOW:
@@ -441,6 +503,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             default: // Leave light off
                 break;
         }
+
         return signalMsg;
     }
 
@@ -553,14 +616,19 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     public void onTerminate() {
     }
 
-    private List<gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData> convertIntersections(
+    static protected List<gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData> convertIntersections(
             Map<Integer, IntersectionData> data) {
         List<gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData> out = new ArrayList<>();
         for (IntersectionData datum : data.values()) {
             gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData converted = new gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData();
             converted.map = convertMapMessage(datum);
-            converted.spat = convertSpatMessage(datum);
-
+            converted.intersectionId = converted.map.getIntersectionId();
+            
+            if (datum.getIntersectionState() != null) {
+                converted.spat = convertSpatMessage(datum);
+                //log.debug("Converted map message with no spat");
+            }
+        
             out.add(converted);
         }
 
@@ -573,7 +641,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         // CHECK TRAJECTORY LENGTH
         double dtsb = computeDtsb();
 
-        if (dtsb > 0 && dtsb < Double.MAX_VALUE) {
+        if (dtsb > 0) {
             // DTSB computation successful, check to see if we can plan up to stop bar
             if (traj.getStartLocation() + (dtsb * 1.1) > traj.getEndLocation()) {
                 // Not enough distance to allow for proper glidepath execution
@@ -581,6 +649,9 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 tpr.requestLongerTrajectory(traj.getStartLocation() + (dtsb * 1.1)); // allow for some extra slack
                 return tpr;
             }
+        } else {
+            log.info("Attempted to plan with bad dtsb value: " + dtsb + "will not plan");
+            return new TrajectoryPlanningResponse();
         }
 
         log.info("DTSB within traj");
@@ -629,17 +700,15 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
         log.info("Requesting AStar plan with intersections: " + intersections.toString());
 
+        List<Node> eadResult;
         try {
-            glidepathTrajectory.getSpeedCommand(state);
+            eadResult = glidepathTrajectory.plan(state); // TODO do we really need the trajectory object. It's purpose is 99% filled by the plugin
         } catch (Exception e) {
             log.error("Glidepath trajectory planning threw exception!", e);
             TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
             tpr.requestHigherPriority(); // indicate generic failure
             return tpr;
         }
-
-        // GET NODES OUT OF EADASTAR
-        List<Node> eadResult = ead.getCurrentPath();
 
         if (eadResult == null) {
             log.warn("Ead result is null");
@@ -694,6 +763,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         steadySpeed.setSpeeds(0.0, 0.0);
                         pluginServiceLocator.getManeuverPlanner().planManeuver(steadySpeed,
                                 startDist + prev.getDistanceAsDouble(), traj.getEndLocation());
+                        
+                        traj.addManeuver(steadySpeed);
                         break;
                     }
 
@@ -711,6 +782,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                             startDist + prev.getDistanceAsDouble(), startDist + cur.getDistanceAsDouble());
                     traj.addManeuver(slowDown);
                 } 
+
+                prev = cur;
             }
         }
 

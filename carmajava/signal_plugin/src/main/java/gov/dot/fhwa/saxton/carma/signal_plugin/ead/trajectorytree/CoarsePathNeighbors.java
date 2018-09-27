@@ -47,7 +47,7 @@ public class CoarsePathNeighbors extends NeighborBase {
         //get config parameters
         IGlidepathAppConfig config = GlidepathApplicationContext.getInstance().getAppConfig();
         maxAccel_ = config.getDoubleDefaultValue("defaultAccel", 2.0);
-        speedLimit_ = config.getDoubleDefaultValue("maximumSpeed", 30.0) / MPS_TO_MPH;
+        speedLimit_ = config.getMaximumSpeed(0.0) / MPS_TO_MPH; 
         crawlingSpeed_ = config.getDoubleDefaultValue("crawlingSpeed", 5.0) / MPS_TO_MPH;
         timeBuffer_ = config.getDoubleDefaultValue("ead.timebuffer", 4.0);
         lagTime_ = config.getDoubleDefaultValue("ead.response.lag", 1.9);

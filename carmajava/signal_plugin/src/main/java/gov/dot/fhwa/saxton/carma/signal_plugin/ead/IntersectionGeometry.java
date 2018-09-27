@@ -285,8 +285,8 @@ public class IntersectionGeometry {
 				//else (approach lane)
 				}else {
 					//if the candidate's DTSB is way different from the DTSB used in the previous time step then
-					int diff = prevDtsb_ - chosenLane.dtsb;
-					if (prevLane.index >= 0  &&  (diff < -20  ||  diff > largeMovement_)) { //allow for drift in position signal or slow time step processing
+					int diff = prevDtsb_ - chosenLane.dtsb; //TODO changed -20 to -100 not sure what the cutoff should be
+					if (prevLane.index >= 0  &&  (diff < -100 ||  diff > largeMovement_)) { //allow for drift in position signal or slow time step processing
 						
 						//if the candidate is different from the lane used in the previous time step then
 						if (chosenLane.index != prevLane.index) {

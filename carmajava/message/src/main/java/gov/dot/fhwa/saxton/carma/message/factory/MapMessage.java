@@ -175,6 +175,8 @@ public class MapMessage implements IMessage<MapData>{
                     } else {
                         Connection connection = messageFactory.newFromType(Connection._TYPE);
                         connection.getConnectingLane().setLane((short) connectsToData[i][j]);
+                        //connection.getConnectingLane().setManeuverExists(); // TODO This field is not populated
+                        //connection.getConnectingLane().getManeuver().setAllowedManeuvers(); // TODO This field is not populated. It should also be filled at the generic lane level
                         connection.setSignalGroupExists(connectsToData[i][j + 1] != -1);
                         if(connection.getSignalGroupExists()) {
                             connection.setSignalGroup((byte) connectsToData[i][j + 1]);
