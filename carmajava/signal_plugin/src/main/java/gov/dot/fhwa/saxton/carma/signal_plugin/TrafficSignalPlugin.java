@@ -743,6 +743,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         } */
 
         // CONVERT AND INSERT MANEUVERS
+        // TODO we should get the starting distance as current downtrack when starting to plan
         double startDist = traj.getStartLocation();
         Node prev = null;
         for (Node cur : eadResult) {
@@ -752,7 +753,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 if (Math
                         .abs(prev.getSpeedAsDouble() - cur.getSpeedAsDouble()) < speedCommandQuantizationFactor) {
                     SteadySpeed steadySpeed = new SteadySpeed(this);
-
+                    steadySpeed.setMaxAccel(pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getMaxAccelLimit());
+                    
                     if (cur.getSpeedAsDouble() > speedCommandQuantizationFactor) {
                         steadySpeed.setSpeeds(cur.getSpeedAsDouble(), cur.getSpeedAsDouble());
                         pluginServiceLocator.getManeuverPlanner().planManeuver(steadySpeed,
