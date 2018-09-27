@@ -23,6 +23,10 @@ public interface ILogger {
 
   public void debug(String tag, String message);
 
+  public void debugf(String message, Object... args);
+
+  public void debugf(String tag, String message, Object... args);
+
   public void debug(String tag, String message, Throwable t);
 
   public void info(String message);
@@ -33,6 +37,10 @@ public interface ILogger {
 
   public void info(String tag, String message, Throwable t);
 
+  public void infof(String message, Object... args);
+
+  public void infof(String tag, String message, Object... args);
+
   public void warn(String message);
 
   public void warn(String message, Throwable t);
@@ -40,6 +48,10 @@ public interface ILogger {
   public void warn(String tag, String message);
 
   public void warn(String tag, String message, Throwable t);
+
+  public void warnf(String message, Object... args);
+
+  public void warnf(String tag, String message, Object... args);
 
   public void error(String message);
 
@@ -49,6 +61,10 @@ public interface ILogger {
 
   public void error(String tag, String message, Throwable t);
 
+  public void errorf(String message, Object... args);
+
+  public void errorf(String tag, String message, Object... args);
+
   public void fatal(String message);
 
   public void fatal(String message, Throwable t);
@@ -57,6 +73,10 @@ public interface ILogger {
 
   public void fatal(String tag, String message, Throwable t);
 
+  public void fatalf(String message, Object... args);
+
+  public void fatalf(String tag, String message, Object... args);
+
   public void trace(String message);
 
   public void trace(String message, Throwable t);
@@ -64,4 +84,8 @@ public interface ILogger {
   public void trace(String tag, String message);
 
   public void trace(String tag, String message, Throwable t);
+
+  public void tracef(String message, Object... args);
+
+  public void tracef(String tag, String message, Object... args);
 }

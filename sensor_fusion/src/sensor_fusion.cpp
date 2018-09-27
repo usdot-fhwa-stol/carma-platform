@@ -647,7 +647,7 @@ void SensorFusionApplication::bsm_cb(const cav_msgs::BSMConstPtr &msg)
     obj.pose.pose.orientation.z = out_rot.z();
     obj.pose.pose.orientation.w = out_rot.w();
 
-    if(msg->core_data.speed < cav_msgs::BSMCoreData::SPEED_UNAVAILABLE)
+    if(msg->core_data.presence_vector & cav_msgs::BSMCoreData::SPEED_AVAILABLE)
     {
       Eigen::Vector3d velocity_vector;
       velocity_vector[0] = msg->core_data.speed;
