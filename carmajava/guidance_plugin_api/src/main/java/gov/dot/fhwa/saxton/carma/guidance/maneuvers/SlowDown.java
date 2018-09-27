@@ -24,7 +24,7 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
  */
 public class SlowDown extends LongitudinalManeuver {
     private double                  deltaT_;                    // expected duration of the "ideal" speed change, sec
-    private static final double MIN_ACCEL_ = 0.1;
+    private static final double MIN_ACCEL_ = 0.5;
     public SlowDown(IPlugin planner) {
         super(planner);
     }

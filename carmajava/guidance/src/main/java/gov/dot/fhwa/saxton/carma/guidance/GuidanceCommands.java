@@ -302,6 +302,9 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         } else if (speed < 0.0) {
             log.warn("GuidanceCommands received negative command from maneuver, clamping to 0.0");
             speed = 0.0;
+        } 
+        if (accel < 0.01) {
+            log.warn("MaxAccel of ~0 proposed: " + accel);
         }
 
         speedCommand.set(speed);

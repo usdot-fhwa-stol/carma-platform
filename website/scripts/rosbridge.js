@@ -34,7 +34,6 @@ var t_route_event = 'route_event';
 var t_active_route = 'route';
 
 var t_diagnostics = '/diagnostics';
-var t_nav_sat_fix = 'nav_sat_fix';
 
 var t_guidance_state = 'state';
 var t_incoming_bsm = 'bsm';
@@ -45,18 +44,22 @@ var t_ui_instructions = 'ui_instructions';
 //To Interface manager - topic base names
 var t_get_drivers_with_capabilities = 'get_drivers_with_capabilities';
 
-var tbn_robot_status = '/control/robot_status';
-var tbn_cmd_speed = '/control/cmd_speed';
-var tbn_lateral_control_driver = '/control/cmd_lateral';
+var tbn_nav_sat_fix = 'position/nav_sat_fix';
 
-var tbn_can_engine_speed = '/can/engine_speed';
-var tbn_can_speed = '/can/speed';
-var tbn_acc_engaged = '/can/acc_engaged';
+var tbn_robot_status = 'control/robot_status';
+var tbn_cmd_speed = 'control/cmd_speed';
+var tbn_lateral_control_driver = 'control/cmd_lateral';
 
-var tbn_inbound_binary_msg = '/comms/inbound_binary_msg';
-var tbn_outbound_binary_msg = '/comms/outbound_binary_msg';
+var tbn_can_engine_speed = 'can/engine_speed';
+var tbn_can_speed = 'can/speed';
+var tbn_acc_engaged = 'can/acc_engaged';
+
+var tbn_inbound_binary_msg = 'comms/inbound_binary_msg';
+var tbn_outbound_binary_msg = 'comms/outbound_binary_msg';
 
 //From Interface manager - will hold the topic fully qualified name
+var t_nav_sat_fix = '';
+
 var t_robot_status = '';
 var t_cmd_speed = '';
 var t_lateral_control_driver = '';
@@ -1541,7 +1544,7 @@ function getDriversWithCapabilities()
 
           if (result.driver_data.length == 0)
           {
-            console.log('getCommsDriver() returned no CONTROLLER drivers: ' + result.driver_data.length);
+            console.log('getDriversWithCapabilities() returned no CONTROLLER drivers: ' + result.driver_data.length);
             return;
           }
 
@@ -1564,13 +1567,34 @@ function getDriversWithCapabilities()
 
           if (result.driver_data.length == 0)
           {
-            console.log('getCommsDriver() returned no MOCK drivers: ' + result.driver_data.length);
+            console.log('getDriversWithCapabilities() returned no MOCK drivers: ' + result.driver_data.length);
             return;
           }
 
           //JS ES6 syntax to assign the fully qualified name of the topic to the specific variable.
           t_lateral_control_driver = result.driver_data.find(element => element.endsWith(tbn_lateral_control_driver));
           console.log(t_lateral_control_driver );
+      });
+
+      //position
+      driverList = [];
+      driverList.push(tbn_nav_sat_fix);
+
+      request = new ROSLIB.ServiceRequest({
+        capabilities: driverList
+      });
+
+      serviceClient.callService(request, function (result) {
+
+        if (result.driver_data.length == 0)
+        {
+          console.log('getDriversWithCapabilities() returned no POSITION drivers: ' + result.driver_data.length);
+          return;
+        }
+
+        //JS ES6 syntax to assign the fully qualified name of the topic to the specific variable.
+        t_nav_sat_fix = result.driver_data.find(element => element.endsWith(tbn_nav_sat_fix));
+        console.log(t_nav_sat_fix );
       });
 
       //can drivers
@@ -1587,7 +1611,7 @@ function getDriversWithCapabilities()
 
           if (result.driver_data.length == 0)
           {
-            console.log('getCommsDriver() returned no CAN drivers: ' + result.driver_data.length);
+            console.log('getDriversWithCapabilities() returned no CAN drivers: ' + result.driver_data.length);
             return;
           }
 
@@ -1598,6 +1622,8 @@ function getDriversWithCapabilities()
 
           console.log(t_can_engine_speed + ';' + t_can_speed + ';' + t_acc_engaged );
       });
+
+
 
       //comms drivers
       driverList = [];
@@ -1612,7 +1638,7 @@ function getDriversWithCapabilities()
 
           if (result.driver_data.length == 0)
           {
-            console.log('getCommsDriver() returned no COMMS drivers: ' + result.driver_data.length);
+            console.log('getDriversWithCapabilities() returned no COMMS drivers: ' + result.driver_data.length);
             return;
           }
 
