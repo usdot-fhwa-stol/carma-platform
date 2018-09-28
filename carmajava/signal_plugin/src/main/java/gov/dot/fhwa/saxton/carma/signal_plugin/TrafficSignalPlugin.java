@@ -172,10 +172,13 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                     return; // If we are not expecting user acknowledgement then don't continue
                 }
                 if (request.getData()) { // If user acknowledged it is safe to continue
+                    log.info("User confirmed: All Clear");
                     if (checkCurrentPhase(SignalPhase.GREEN)) { // If we are still in the green phase
                         // Notify the arbitrator we need to replan to continue through the intersection
+                        log.info("Continuing at new green light");
                         triggerNewPlan(true);
                     } else {
+                        log.info("Light not green despite user confirmation");
                         response.setMessage("The light is no longer green. Waiting till next green light.");
                         response.setSuccess(false);
                         return;
@@ -548,11 +551,13 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 awaitingUserInput.set(true);
                 // Send user input request to get confirmation to continue
                 askUserIfIntersectionIsClear();
+                log.info("Requesting user confirmation");
 
             } else if (System.currentTimeMillis() - UI_REQUEST_INTERVAL > prevUIRequestTime.get() // Already awaiting confirmation and enough time has elapsed
                 && awaitingUserInput.compareAndSet(false, true)) { // AND we are not currently waiting for user input
                 // Then we want to request input from the user again
                 askUserIfIntersectionIsClear();
+                log.info("Re-Requesting user confirmation");
             }
         } else if (!stoppedForLight && awaitingUserConfirmation.compareAndSet(true, false)) {
             // We are no longer waiting at the intersection

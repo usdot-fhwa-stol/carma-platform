@@ -279,7 +279,7 @@ public class EadAStar implements IEad {
         List<IntersectionData> intersections) throws Exception {
 
         if (intersections == null  ||  intersections.size() == 0) {
-            String msg = "getTargetSpeed invoked with a empty intersection list.";
+            String msg = "plan invoked with a empty intersection list.";
             log_.error("EAD", msg);
             throw new Exception(msg);
         }
@@ -304,18 +304,19 @@ public class EadAStar implements IEad {
         try {
             currentPath_ = planDetailedPath(startNode, goal);
         }catch (Exception e) {
-            log_.warn("EAD", "getTargetSpeed trapped exception from planDetailedPath: " + e.toString());
+            log_.warn("EAD", "plan trapped exception from planDetailedPath: ", e);
+            throw e;
         }
 
         if (currentPath_ == null  ||  currentPath_.size() == 0) {
-            String msg = "getTargetSpeed produced an unusable detailed path.";
+            String msg = "plan produced an unusable detailed path.";
             log_.error("EAD", msg);
             throw new Exception(msg);
         }
 
         prevMethodStartTime_ = methodStartTime;
         long totalTime = System.currentTimeMillis() - methodStartTime;
-        log_.info("EAD", "getTargetSpeed completed in " + totalTime + " ms.");
+        log_.info("EAD", "plan completed in " + totalTime + " ms.");
         
         return currentPath_;
     }
