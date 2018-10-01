@@ -184,6 +184,7 @@ public class EadAStar implements IEad {
             throw new Exception(msg);
         }
         log_.debug("EAD", "planCoarsePath found a solution after " + iter + " iterations.");
+        //System.out.println("planCoarsePath found a solution after " + iter + " iterations.");
 
         //we always use the node after current intersection as the goal node
         Node fineGoal = path.get(2);
@@ -237,10 +238,13 @@ public class EadAStar implements IEad {
             log_.debugf("EAD", "    %.0f m", 0.01 * (double)intList_.get(i).roughDist);
         }
         log_.info("EAD", "Coarse path plan:");
+        //System.out.println("Coarse path plan:");
         for (Node n : path) {
             log_.info("EAD", "    " + n.toString());
+            //System.out.println(n);
         }
         log_.debug("EAD", "Coarse path attempted to reach goal: " + coarseGoal.toString());
+        //System.out.println("Coarse path attempted to reach goal: " + coarseGoal.toString());
         log_.debug("EAD", "Coarse path yielded goal for detailed planning of: " + fineGoal.toString());
     }
 
@@ -251,8 +255,10 @@ public class EadAStar implements IEad {
     protected void summarizeDetailedPath(List<Node> path, Node goal) {
 
         log_.info("EAD", "///// Detailed path plan:");
+        //System.out.println("Detailed path plan:");
         for (Node n : path) {
             log_.info("EAD", "    " + n.toString());
+            //System.out.println(n);
         }
         log_.debug("EAD", "Detailed path attempted to reach goal: " + goal.toString());
     }

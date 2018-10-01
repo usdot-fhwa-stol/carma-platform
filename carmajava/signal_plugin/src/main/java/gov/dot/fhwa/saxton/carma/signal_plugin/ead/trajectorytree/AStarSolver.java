@@ -64,10 +64,12 @@ public class AStarSolver implements ITreeSolver {
     });
 
     openSetQueue.add(start); // Place start on queue
+    long visitedNodes = 0;
 
     // Begin search
     while (!openSetQueue.isEmpty()) {
       Node current = openSetQueue.poll(); // Retrieve and remove the next node on the queue
+      visitedNodes++;
       closedSet.put(current, true); // Mark the node visited
 
       // Check if this node is the goal
@@ -75,6 +77,8 @@ public class AStarSolver implements ITreeSolver {
         log_.info("EAD", "Found our goal with node " + current.toString());
         log_.info("EAD","Ending sizes: closedSet=" + closedSet.size() + ", cameFrom=" +
                     cameFrom.size() + ", gScore=" + gScore.size() + ", openSetQueue=" + openSetQueue.size());
+        log_.debug("EAD", "We have visited " + visitedNodes + " nodes to find the solution");
+        //System.out.println("We have visited " + visitedNodes + " nodes to find the solution");
         return rebuildPath(cameFrom, current); // Get path
       }
 
