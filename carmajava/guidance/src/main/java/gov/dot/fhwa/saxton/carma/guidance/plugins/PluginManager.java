@@ -130,11 +130,8 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
                 pluginServiceLocator.getTrajectoryConverter(),
                 pluginServiceLocator.getLightBarManager(),
                 pluginServiceLocator.getTrackingService(),
-<<<<<<< HEAD
+                pluginServiceLocator.getV2IService(),
                 pluginServiceLocator.getTimeProvider());
-=======
-                pluginServiceLocator.getV2IService());
->>>>>>> glidepath-integration
         jobQueue.add(this::onStartup);
         stateMachine.registerStateChangeListener(this);
     }
