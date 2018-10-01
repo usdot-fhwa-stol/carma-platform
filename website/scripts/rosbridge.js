@@ -1933,7 +1933,6 @@ function evaluateNextStep() {
     if (isDriverTopicsAllAvailable() == false){
         //console.log ('evaluateNextStep: calling waitForGetDriversWithCapabilities')
         waitForGetDriversWithCapabilities();
-        return;
     }
 
     if (selectedRoute.name == 'No Route Selected') {

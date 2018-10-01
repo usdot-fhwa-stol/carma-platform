@@ -202,7 +202,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      * @param y Y value of the offset in meters
      */
     static private void addNodeOffset(Lane lane, Location ref, float x, float y) {
-        lane.addNodeCm(ref, (int) (x * 100), (int) (y * 100));
+        lane.addNodeCm(ref, (int) (x * 100.0), (int) (y * 100.0));
     }
 
     /**
@@ -488,6 +488,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         signalMsg.setLaneId((short)intersection.laneId);
         signalMsg.setRemainingDistance((float)intersection.dtsb);
         signalMsg.setRemainingTime((short)intersection.timeToNextPhase);
+
+        log.info("UI Intersection: " + intersection.intersectionId + " dtsb: " + intersection.dtsb);
         
         if (intersection.currentPhase == null) {
             return signalMsg;
