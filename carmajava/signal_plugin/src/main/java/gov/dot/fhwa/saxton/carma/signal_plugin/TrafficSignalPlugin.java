@@ -118,6 +118,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private double speedCommandQuantizationFactor = 0.1;
     private AtomicBoolean involvedInControl = new AtomicBoolean(false);
     static private final double CM_PER_M = 100.0;
+    static private final double MAX_DTSB = Integer.MAX_VALUE - 5.0; // Legacy Glidepath code returns Integer.MAX_VALUE for invalid dtsb. Add fudge factor for detecting it as a double
 
     public TrafficSignalPlugin(PluginServiceLocator psl) {
         super(psl);
@@ -167,6 +168,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         pubSubService.createServiceServerForTopic(GO_BUTTON_SRVS, SetBool._TYPE, 
             (SetBoolRequest request, SetBoolResponse response) -> {
                 if (!awaitingUserInput.compareAndSet(true, false)) {
+                    log.warn("Ignoring unexpected go button service request");
                     response.setMessage(this.getVersionInfo().componentName() + " did not expect UI input and is ignoring the input.");
                     response.setSuccess(false);
                     return; // If we are not expecting user acknowledgement then don't continue
@@ -184,6 +186,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         return;
                     }
                 } else { // User indicated it is not safe to continue
+                    log.info("User said it is not safe to continue");
                     prevUIRequestTime.set(System.currentTimeMillis()); // TODO should this be ROS time
                 }
 
@@ -432,34 +435,33 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     /**
      * Compute the DTSB value if we're on a known MAP message
      * 
-     * @return -1 if DTSB check fails for any reason, Double.MAX_VALUE if we're not on a MAP message
+     * @return Integer.MAX_VALUE if DTSB check fails for any reason
      */
     private double computeDtsb() {
         NavSatFix posMsg = curPos.get();
         if (posMsg == null) {
             log.warn("NavSatFix was null");
-            return -1;
+            return MAX_DTSB; 
         }
         if (glidepathTrajectory == null) {
             log.warn("Traj was null");
-            return -1;
+            return MAX_DTSB;
         }
         try {
             Location curLoc = new Location(curPos.get().getLatitude(), curPos.get().getLongitude());
             double dtsb = glidepathTrajectory.updateIntersections(convertIntersections(intersections), curLoc);
-            final double REASONABLE_DTSB = 10000.0; // If we are more than 10km from an intersection the calculation has certainly failed
 
             updateUISignals();
-            if (dtsb < 0 || dtsb > REASONABLE_DTSB) { // TODO if our dtsb is within the stop box we should keep it as valid
+            if (dtsb >= MAX_DTSB || dtsb < -0.5 * glidepathTrajectory.getSortedIntersections().get(0).dtsb) { 
                 log.warn("DTSB computation failed!");
-                return -1;
+                return MAX_DTSB;
             }
             return dtsb;
         } catch (Exception e) {
             log.warn("DTSB computation failed!", e);
         }
 
-        return -1;
+        return MAX_DTSB;
     }
 
     /**
@@ -489,7 +491,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         signalMsg.setRemainingDistance((float)intersection.dtsb);
         signalMsg.setRemainingTime((short)intersection.timeToNextPhase);
 
-        log.info("UI Intersection: " + intersection.intersectionId + " dtsb: " + intersection.dtsb);
+        log.debug("UI Intersection: " + intersection.intersectionId + " dtsb: " + intersection.dtsb);
         
         if (intersection.currentPhase == null) {
             return signalMsg;
@@ -520,7 +522,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private boolean checkIntersectionMaps() {
         double dtsb = computeDtsb();
         log.info("Computed DTSB: " + dtsb);
-        return dtsb > 0 && dtsb < Double.MAX_VALUE;
+        return dtsb < MAX_DTSB;
     }
 
     @Override
@@ -563,6 +565,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             }
         } else if (!stoppedForLight && awaitingUserConfirmation.compareAndSet(true, false)) {
             // We are no longer waiting at the intersection
+            log.info("Resuming operation after stop");
         }
 
         long tsEnd = System.currentTimeMillis();
@@ -645,10 +648,33 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     @Override
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedStartSpeed) {
         log.info("Entered planTrajectory");
+
+        // If we are stopped at a light we must stay stopped until user confirmation.
+        boolean stoppedForLight = stoppedAtLight();
+        boolean phaseIsGreen = checkCurrentPhase(SignalPhase.GREEN);
+        if (stoppedForLight && !phaseIsGreen && awaitingUserConfirmation.get()) {
+            // CHECK PLANNING PRIORITY
+            if (!traj.getLongitudinalManeuvers().isEmpty()) {
+                TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
+                tpr.requestHigherPriority();
+                return tpr;
+            }
+            SteadySpeed steadySpeed = new SteadySpeed(this);
+            steadySpeed.setMaxAccel(pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getMaxAccelLimit() * 2.0); // TODO determine if having twice the max accel is really ok
+
+            steadySpeed.setSpeeds(0.0, 0.0);
+            pluginServiceLocator.getManeuverPlanner().planManeuver(steadySpeed,
+                    traj.getStartLocation(), traj.getEndLocation());
+            
+            traj.addManeuver(steadySpeed);
+
+            return new TrajectoryPlanningResponse();
+        }
+
         // CHECK TRAJECTORY LENGTH
         double dtsb = computeDtsb();
 
-        if (dtsb > 0) {
+        if (dtsb < MAX_DTSB) {
             // DTSB computation successful, check to see if we can plan up to stop bar
             if (traj.getStartLocation() + (dtsb * 1.1) > traj.getEndLocation()) {
                 // Not enough distance to allow for proper glidepath execution
@@ -760,7 +786,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 if (Math
                         .abs(prev.getSpeedAsDouble() - cur.getSpeedAsDouble()) < speedCommandQuantizationFactor) {
                     SteadySpeed steadySpeed = new SteadySpeed(this);
-                    steadySpeed.setMaxAccel(pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getMaxAccelLimit());
+                    steadySpeed.setMaxAccel(pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getMaxAccelLimit() * 2.0); // TODO determine if having twice the max accel is really ok
                     
                     if (cur.getSpeedAsDouble() > speedCommandQuantizationFactor) {
                         steadySpeed.setSpeeds(cur.getSpeedAsDouble(), cur.getSpeedAsDouble());
