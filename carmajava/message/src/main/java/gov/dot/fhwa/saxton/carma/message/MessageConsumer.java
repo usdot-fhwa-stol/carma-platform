@@ -16,7 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.message;
 
-import cav_msgs.*;
+
 import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.message.factory.DSRCMessageFactory;
 import gov.dot.fhwa.saxton.carma.message.factory.IMessage;
@@ -36,6 +36,18 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.ros.message.MessageListener;
 import org.ros.node.parameter.ParameterTree;
 import org.ros.node.topic.Subscriber;
+
+import cav_msgs.ByteArray;
+import cav_msgs.MobilityOperation;
+import cav_msgs.MobilityPath;
+import cav_msgs.MobilityRequest;
+import cav_msgs.MobilityResponse;
+import cav_msgs.SystemAlert;
+
+import j2735_msgs.BSM;
+import j2735_msgs.SPAT;
+import j2735_msgs.MapData;
+
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
@@ -56,7 +68,7 @@ import org.ros.exception.ServiceNotFoundException;
  * rosparam set /interface_mgr/driver_wait_time 10
  * rosrun carma interfacemgr gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr
  * rostopic pub /saxton_cav/drivers/arada_application/comms/recv cav_msgs/ByteArray '{messageType: "BSM"}'
- * rostopic pub /host_bsm cav_msgs/BSM '{}'
+ * rostopic pub /host_bsm j2735_msgs/BSM '{}'
  */
 
 public class MessageConsumer extends SaxtonBaseNode {
@@ -208,14 +220,14 @@ public class MessageConsumer extends SaxtonBaseNode {
 		}
 		
 		//initialize Pubs
-		bsmPub_ = connectedNode_.newPublisher("incoming_bsm", BSM._TYPE);
+		bsmPub_ = connectedNode_.newPublisher("incoming_j2735_bsm", BSM._TYPE);
 		outboundPub_ = connectedNode_.newPublisher(J2735_outbound_binary_msg, ByteArray._TYPE);
 		mobilityReqPub_ = connectedNode_.newPublisher("incoming_mobility_request", MobilityRequest._TYPE);
 		mobilityPathPub_ = connectedNode_.newPublisher("incoming_mobility_path", MobilityPath._TYPE);
 		mobilityResponsePub_ = connectedNode_.newPublisher("incoming_mobility_response", MobilityResponse._TYPE);
 		mobilityOperationPub_ = connectedNode_.newPublisher("incoming_mobility_operation", MobilityOperation._TYPE);
-		mapPub_ = connectedNode_.newPublisher("incoming_map", MapData._TYPE);
-		spatPub_ = connectedNode_.newPublisher("incoming_spat", SPAT._TYPE);
+		mapPub_ = connectedNode_.newPublisher("incoming_j2735_map", MapData._TYPE);
+		spatPub_ = connectedNode_.newPublisher("incoming_j2735_spat", SPAT._TYPE);
 		if(bsmPub_ == null || outboundPub_ == null || mobilityReqPub_ == null ||
 		   mobilityPathPub_ == null || mobilityResponsePub_ == null ||
 		   mobilityOperationPub_ == null || mapPub_ == null || spatPub_ == null) {
@@ -233,7 +245,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 		messageCounters.registerEntry("SPAT");
 		
 		//initialize Subs
-		bsmSub_ = connectedNode_.newSubscriber("outgoing_bsm", BSM._TYPE);
+		bsmSub_ = connectedNode_.newSubscriber("outgoing_j2735_bsm", BSM._TYPE);
 		inboundSub_ = connectedNode_.newSubscriber(J2735_inbound_binary_msg, ByteArray._TYPE);
 		mobilityReqSub_ = connectedNode_.newSubscriber("outgoing_mobility_request", MobilityRequest._TYPE);
 		mobilityPathSub_ = connectedNode_.newSubscriber("outgoing_mobility_path", MobilityPath._TYPE);
@@ -283,8 +295,10 @@ public class MessageConsumer extends SaxtonBaseNode {
 	                    MapData map = (MapData) decodedMessage.getMessage();
 	                    map.getHeader().setStamp(connectedNode_.getCurrentTime());
 	                    mapPub_.publish(map);
+                            break;
 	                case "SPAT":
 	                    spatPub_.publish((SPAT) decodedMessage.getMessage());
+                            break;
 	                default:
 	                    log_.warn("Cannot find correct publisher for " + decodedMessage.getType());
 	                }

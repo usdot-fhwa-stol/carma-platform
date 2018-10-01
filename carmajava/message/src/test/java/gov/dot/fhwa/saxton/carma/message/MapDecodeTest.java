@@ -10,7 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.ros.message.MessageFactory;
 
-import cav_msgs.MapData;
+import j2735_msgs.MapData;
 import gov.dot.fhwa.saxton.carma.message.factory.MapMessage;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 

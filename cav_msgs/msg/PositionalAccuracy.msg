@@ -15,6 +15,14 @@
 #   orientation   SemiMajorAxisOrientation
 #   }
 
+# The presence vector is used to determine what optional items are set
+# Existance can be quickly checked using bit operators
+# Example msg.presence_vector & Msg.FLAG != 0
+uint16 presence_vector
+
+uint16 ACCURACY_AVAILABLE = 1
+uint16 ACCURACY_ORIENTATION_AVAILABLE = 2
+
 #SemiMajorAxisAccuracy ::= INTEGER (0..255)
 #   -- semi-major/semi-minor axis accuracy at one standard dev
 #   -- range 0-12.7 meter, LSB = .05m
@@ -24,7 +32,6 @@
 float32 semiMajor
 float32 semiMinor
 
-float32 ACCURACY_UNAVAILABLE = 12.75
 float32 ACCURACY_MAX = 12.7
 float32 ACCURACY_MIN = 0.0
 
@@ -39,6 +46,5 @@ float32 ACCURACY_MIN = 0.0
 #   -- Convert to degree with factor 0.0054932479 when this field is used
 float64 orientation
 
-float64 ACCURACY_ORIENTATION_UNAVAILABLE = 360.0
 float64 ACCURACY_ORIENTATION_MAX = 359.9945078786
 float64 ACCURACY_ORIENTATION_MIN = 0

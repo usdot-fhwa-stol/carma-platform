@@ -74,11 +74,35 @@ subprojects {
     targetCompatibility = 1.8
     sourceCompatibility = 1.8
 
+
     /*
      * Some IDE support if you use it.
      */
     /* apply plugin: "eclipse" */
     /* apply plugin: "idea" */
+    
+}
+
+/*
+ * Create set of all sub-projects which are rosjava nodes. They will be applications with a main class of org.ros.RosRun
+ */
+def nodeProjects() {
+    subprojects.findAll {
+        subproject -> subproject.plugins.hasPlugin('application') && subproject.hasProperty('mainClassName') && subproject.property('mainClassName') == 'org.ros.RosRun'
+    }
+}
+
+/*
+ * Delete the build/scripts folder for all rosjava nodes to prevent duplicate executables from being created on build
+ */
+gradle.projectsEvaluated {
+    configure(nodeProjects()) {
+        task cleanScripts(dependsOn: 'installApp') << {
+            file('build/scripts').deleteDir()
+        }
+
+        installApp.finalizedBy(cleanScripts)
+    }
 }
 
 /*

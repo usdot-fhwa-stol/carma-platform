@@ -297,6 +297,13 @@
     <!-- Message Package -->
     <group ns="$(arg MSG_NS)">
 
+      <!-- j2735 Convertor Node -->
+      <node pkg="j2735_convertor" type="j2735_convertor_node" name="j2735_convertor">
+        <remap from="system_alert"
+               to="/$(arg TOP_NS)/system_alert"/>
+        <remap from="outgoing_bsm"
+               to="/$(arg TOP_NS)/$(arg GUIDE_NS)/bsm"/>
+      </node>
       <!-- Message Consumer Node -->
       <node pkg="carma" type="message" name="message_consumer"
             args="gov.dot.fhwa.saxton.carma.message.MessageConsumer">
@@ -307,8 +314,6 @@
 
         <remap from="system_alert"
                to="/$(arg TOP_NS)/system_alert"/>
-        <remap from="outgoing_bsm"
-               to="/$(arg TOP_NS)/$(arg GUIDE_NS)/bsm"/>
         <remap from="outgoing_mobility_request"
                to="/$(arg TOP_NS)/$(arg GUIDE_NS)/outgoing_mobility_request"/>
         <remap from="outgoing_mobility_path"
@@ -398,6 +403,12 @@
                to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_operation"/>
         <remap from="incoming_mobility_path"
                to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_mobility_path"/>
+
+        <!-- V2I -->
+        <remap from="incoming_map"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_map"/>
+        <remap from="incoming_spat"
+               to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_spat"/>
                
       </node>
     </group>
@@ -409,8 +420,6 @@
 
       <remap from="system_alert"
              to="/$(arg TOP_NS)/system_alert"/>
-      <remap from="get_system_version"
-             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/get_system_version"/>
       <remap from="nav_sat_fix"
              to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
       <remap from="get_available_routes"
@@ -427,6 +436,8 @@
              to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
       <remap from="bsm"
              to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_bsm"/>
+      <remap from="get_system_version"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/get_system_version"/>
       <remap from="state"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/state"/>               
       <remap from="ui_platoon_vehicle_info"
@@ -439,25 +450,18 @@
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/activate_plugin"/>
       <remap from="set_guidance_active"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/set_guidance_active"/>
-      <remap from="cmd_speed"
-             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/cmd_speed"/>
-      <remap from="robot_status"
-             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/robot_status"/>
-      <remap from="acc_engaged"
-             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_can/can/acc_engaged"/>
-      <remap from="engine_speed"
-             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_can/can/engine_speed"/>
-      <remap from="speed"
-             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_can/can/speed"/>
-      <remap from="driver_discovery"
-             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>
-      <remap from="cmd_lateral"
-             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/lateral_controller/control/cmd_lateral"/>
       <remap from="plugins/controlling_plugins"
              to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/controlling_plugins"/>
+      <remap from="traffic_signal_info"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/traffic_signal_info"/>
+      <remap from="platooning_info"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/platooning_info"/>
+      <remap from="driver_discovery"
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>
       <remap from="get_drivers_with_capabilities"
-             to="/saxton_cav/interface_manager/get_drivers_with_capabilities"/>
-
+             to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
+      <remap from="traffic_signal_info"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/traffic_signal_info"/>
       <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
         <arg name="port" value="9090"/> <!-- The default port for rosbridge is 9090 -->
       </include>

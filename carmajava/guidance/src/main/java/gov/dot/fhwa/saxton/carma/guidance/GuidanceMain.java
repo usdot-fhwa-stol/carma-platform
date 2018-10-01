@@ -30,11 +30,13 @@ import cav_srvs.GetSystemVersionResponse;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.*;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.TrajectoryExecutor;
 import gov.dot.fhwa.saxton.carma.guidance.util.GuidanceRouteService;
+import gov.dot.fhwa.saxton.carma.guidance.util.GuidanceV2IService;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.ITimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.guidance.util.ROSTimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.util.SaxtonLoggerProxyFactory;
+import gov.dot.fhwa.saxton.carma.guidance.util.V2IService;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.TrajectoryConverter;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
@@ -84,7 +86,7 @@ public class GuidanceMain extends SaxtonBaseNode {
   protected final AtomicBoolean systemReady = new AtomicBoolean(false);
   protected boolean initialized = false;
 
-  ServiceServer<GetSystemVersionRequest, GetSystemVersionResponse> systemVersionServer;
+  protected IServiceServer<GetSystemVersionRequest, GetSystemVersionResponse> systemVersionServer;
   protected final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
   protected final MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
 
@@ -104,6 +106,15 @@ public class GuidanceMain extends SaxtonBaseNode {
     GuidanceRouteService routeService = new GuidanceRouteService(pubSubService);
     routeService.init();
 
+    int mapCommsReliabilityCheckThreshold = node.getParameterTree().getInteger("~v2i_map_comms_reliability_check_threshold", 2);
+    int spatCommsReliabilityCheckThreshold = node.getParameterTree().getInteger("~v2i_spat_comms_reliability_check_threshold", 5);
+    double minMapMsgsPerSec = node.getParameterTree().getDouble("~v2i_min_map_msgs_per_sec", 0.9);
+    double minSpatMsgsPerSec = node.getParameterTree().getDouble("~v2i_min_spat_msgs_per_sec", 8.0);
+    long expiryTimeoutMs = node.getParameterTree().getInteger("~v2i_comms_data_expiry_timeout", 1000);
+    GuidanceV2IService v2iService = new GuidanceV2IService(pubSubService, mapCommsReliabilityCheckThreshold, spatCommsReliabilityCheckThreshold, 
+      minMapMsgsPerSec, minSpatMsgsPerSec, expiryTimeoutMs);
+    v2iService.init();
+
     routeService.registerNewRouteCallback((route) -> trajectoryConverter.setRoute(Route.fromMessage(route)));
     routeService.registerNewRouteCallback((route) -> conflictManager.setRoute(Route.fromMessage(route)));
     routeService.registerNewRouteStateCallback((state) -> trajectoryConverter.setRouteState(state.getDownTrack(),
@@ -122,7 +133,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     MobilityRouter router = new MobilityRouter(stateMachine, pubSubService, node, conflictManager, trajectoryConverter, vehicleAwareness, trajectoryExecutor, tracking);
     ITimeProvider timeProvider = new ROSTimeProvider(node);
     PluginManager pluginManager = new PluginManager(stateMachine, pubSubService, guidanceCommands, maneuverInputs,
-        routeService, node, router, conflictManager, trajectoryConverter, lightBarManager, tracking, timeProvider);
+        routeService, node, router, conflictManager, trajectoryConverter, lightBarManager, tracking, v2iService, timeProvider);
     Arbitrator arbitrator = new Arbitrator(stateMachine, pubSubService, node, pluginManager, trajectoryExecutor, vehicleAwareness);
 
     tracking.setTrajectoryExecutor(trajectoryExecutor);
@@ -154,8 +165,8 @@ public class GuidanceMain extends SaxtonBaseNode {
         guidanceExceptionHandler);
     IPublicationChannelFactory publicationChannelFactory = new RosPublicationChannelFactory(node);
     IServiceChannelFactory serviceChannelFactory = new RosServiceChannelFactory(node, this);
-
-    pubSubService = new PubSubManager(subscriptionChannelFactory, publicationChannelFactory, serviceChannelFactory);
+    IServiceServerManager serviceServerManager = new RosServiceServerManager(node, exceptionHandler);
+    pubSubService = new PubSubManager(subscriptionChannelFactory, publicationChannelFactory, serviceChannelFactory, serviceServerManager);
   }
 
   /**
@@ -234,6 +245,7 @@ public class GuidanceMain extends SaxtonBaseNode {
 
     final GuidanceStateMachine stateMachine = new GuidanceStateMachine();
     final GuidanceExceptionHandler guidanceExceptionHandler = new GuidanceExceptionHandler(stateMachine);
+    exceptionHandler = guidanceExceptionHandler;
     log.info("Guidance exception handler initialized");
 
     // Allow GuidanceExceptionHandler to take over in the event a thread dies due to an uncaught exception
@@ -261,15 +273,12 @@ public class GuidanceMain extends SaxtonBaseNode {
     initExecutor(stateMachine, connectedNode);
     log.info("Guidance main executor initialized");
 
-    systemVersionServer = connectedNode.newServiceServer("get_system_version", GetSystemVersion._TYPE,
-        new ServiceResponseBuilder<GetSystemVersionRequest, GetSystemVersionResponse>() {
-          @Override
-          public void build(GetSystemVersionRequest request, GetSystemVersionResponse response)
-              throws ServiceException {
-            response.setSystemName(version.componentName());
-            response.setRevision(version.revisionString());
-          }
-        });
+    pubSubService.createServiceServerForTopic("get_system_version", GetSystemVersion._TYPE, 
+      (GetSystemVersionRequest request, GetSystemVersionResponse response) -> {
+        response.setSystemName(version.componentName());
+        response.setRevision(version.revisionString());
+      }
+    );
   }//onStart
 
   /**

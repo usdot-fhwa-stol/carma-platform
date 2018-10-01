@@ -56,10 +56,15 @@ bool movement_name_exists
 # -- permanent green movement state
 uint8 signal_group
 
-# state-time-speed MovementEventList
-cav_msgs/MovementEventList state_time_speed
+# The MovementEventList data frame consists of a list of MovementEvent entries.
+#
+# MovementEventList ::= SEQUENCE (SIZE(1..16)) OF MovementEvent
+cav_msgs/MovementEvent[] movement_event_list
 
-cav_msgs/ManeuverAssistList maneuver_assist_list
+# This entry is used directly by one other data structure in this standard, a DF called DF_LaneAttributes <ASN>.
+#  In addition, this item may be used by data structures in other ITS standards.
+# ManeuverAssistList ::= SEQUENCE (SIZE(1..16)) OF ConnectionManeuverAssist
+j2735_msgs/ConnectionManeuverAssist[] connection_maneuver_assist_list
 bool maneuver_assist_list_exists
 
 # regional #TODO: RegionalExtensions are not yet implemented in asn1c

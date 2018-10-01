@@ -41,6 +41,7 @@ bool time_stamp_exists
 string name
 bool name_exists
 
-cav_msgs/IntersectionStateList intersections
+# IntersectionStateList ::= SEQUENCE (SIZE(1..32)) OF IntersectionState
+cav_msgs/IntersectionState[] intersection_state_list
 
 # regional #TODO: RegionalExtensions are not yet implemented in asn1c

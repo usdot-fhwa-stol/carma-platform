@@ -29,13 +29,13 @@ import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
 public class SpeedUpTest {
-    private FakeManeuverInputs   inputs_;
     private FakeGuidanceCommands commands_;
+    private IManeuverInputs inputs_;
 
 
     @Before
     public void setup() {
-        inputs_ = new FakeManeuverInputs();
+        inputs_ = mock(IManeuverInputs.class);
         commands_ = new FakeGuidanceCommands();
         AccStrategyManager.setAccStrategyFactory(new NoOpAccStrategyFactory());
         ILoggerFactory mockFact = mock(ILoggerFactory.class);
@@ -47,41 +47,49 @@ public class SpeedUpTest {
     @Test
     public void testSpeedUpNominal() {
         //specify the start & end speeds
-        double targetSpeed = inputs_.getTargetSpeed();
-        double maxAccel = inputs_.getAccel();
+        double currentSpeed = 5.0; // start at 5 m/s
+        double targetSpeed = 10.0; // 10 m/s
+        final double targetSpeedSqr = targetSpeed * targetSpeed;
+        final double maxAccel = 1.0; // 1 m/s^2
+        final double responseLag = 0.0; // Assume perfect vehicle response
+
+        double currentDist = 0.0; // Start at 0 m
+
+        when(inputs_.getDistanceFromRouteStart()).thenReturn(currentDist);
+        when(inputs_.getCurrentSpeed()).thenReturn(currentSpeed);
+        when(inputs_.getMaxAccelLimit()).thenReturn(maxAccel);
+        when(inputs_.getResponseLag()).thenReturn(responseLag);
 
         //plan the maneuver
         SpeedUp mvr = new SpeedUp(mock(IPlugin.class));
-        double startSpeed = inputs_.getSlowSpeed();
-        mvr.setSpeeds(startSpeed, targetSpeed);
+        mvr.setSpeeds(currentSpeed, targetSpeed);
         mvr.setMaxAccel(maxAccel);
 
-        double startDist = inputs_.getStartDist();
-        mvr.plan(inputs_, commands_, startDist);
+        mvr.plan(inputs_, commands_, currentDist);
         double endDist = mvr.getEndDistance();
 
         //compute expected distance required to perform the maneuver
-        double deltaV = targetSpeed - startSpeed;
-        double mvrLength = 1.0*(startSpeed*deltaV/maxAccel + 0.5*deltaV*deltaV/maxAccel) + 0.2*targetSpeed;
-        assertEquals(startDist + mvrLength, endDist, 0.1);
+        double deltaV = targetSpeed - currentSpeed;
+        double mvrLength = 1.0*(currentSpeed*deltaV/maxAccel + 0.5*deltaV*deltaV/maxAccel) + 0.2*targetSpeed;
+        assertEquals(currentDist + mvrLength, endDist, 0.1);
 
         //execute the maneuver
-        inputs_.setTestCase("SpeedUpNominal");
-        double prevCmd = 0.0;
         boolean done;
-        int i = 0;
+        double timeStep = 0.1;
         do {
+            // Execute timestep
             done = mvr.executeTimeStep();
             double speedCmd = commands_.getSpeedCmd();
             double accelCmd = commands_.getAccelCmd();
-            assertEquals(inputs_.getAccel(), accelCmd, 0.001);
-
-            double expectedSpeedCmd = Math.min(inputs_.getSlowSpeed() + (double)i * 0.1 * accelCmd, inputs_.getTargetSpeed());
-            System.out.println("expected = " + expectedSpeedCmd + ", actual = " + speedCmd + ", prev = " + prevCmd);
-            assertTrue(speedCmd >= prevCmd);
-            assertEquals(expectedSpeedCmd, speedCmd, 0.02);
-            prevCmd = speedCmd;
-            ++i;
+            // Calculate expected result
+            double expectedMaxAccel = Math.abs((targetSpeedSqr - currentSpeed * currentSpeed) / (2.0 * (endDist - currentDist)));
+            // Check the output commands
+            assertEquals(expectedMaxAccel, accelCmd, 0.001); // Max accel should be limited
+            assertEquals(targetSpeed, speedCmd, 0.001); // Speed command should not change
+            
+            // Update our current distance and speed
+            currentDist += 0.5 * accelCmd * timeStep + timeStep * currentSpeed;
+            currentSpeed = accelCmd * timeStep;
         } while (!done);
     }
 }

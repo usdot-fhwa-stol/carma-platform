@@ -95,7 +95,7 @@ public class FollowerStateTest {
         Trajectory traj = new Trajectory(0, 50.0);
         when(mockRouteService.isAlgorithmEnabledInRange(0.0, 50.0, PlatooningPlugin.PLATOONING_FLAG)).thenReturn(true);
         when(mockRouteService.getAlgorithmEnabledWindowInRange(0, 50.0, PlatooningPlugin.PLATOONING_FLAG)).thenReturn(new double[]{0.0, 50.0});
-        when(mockPlugin.minimumManeuverLength).thenReturn(15.0);
+        when(mockPlugin.getMinimumManeuverLength()).thenReturn(15.0);
         TrajectoryPlanningResponse tpr = followerState.planTrajectory(traj, 0);
         assertEquals(0, tpr.getRequests().size());
         assertEquals(0.0, traj.getComplexManeuver().getStartDistance(), 0.001);
