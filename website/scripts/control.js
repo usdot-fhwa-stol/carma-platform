@@ -384,7 +384,7 @@ function sendModalResponse(operatorResponse, serviceName) {
         console.log('Result for service call on ' + serviceClient.name + ': ' + result.success + '; message: ' + result.message);
         console.log('Boolean(result.success): ' + Boolean(result.success));
 
-        //UI expects service to return true, if no errors occured during processing.
+        //UI expects service to return true, if no errors occurred during processing.
         //If there was, then service should return false with a brief message explanation.
         if (Boolean(result.success) == true)
         {
