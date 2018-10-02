@@ -470,7 +470,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             double dtsb = glidepathTrajectory.updateIntersections(convertIntersections(intersections), curPos.get());
             log.info("DTSB from legacy updateIntersections: " + dtsb + " AcceptableStopDistance " + acceptableStopDistance);
             updateUISignals();
-            if (dtsb >= MAX_DTSB || dtsb < -acceptableStopDistance) { 
+            if (dtsb >= MAX_DTSB) {
                 log.warn("DTSB computation failed!");
                 return MAX_DTSB;
             }
