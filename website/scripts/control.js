@@ -404,6 +404,8 @@ function sendModalResponse(operatorResponse, serviceName) {
             var modalFooter = document.getElementsByClassName('modal-footer')[0];
             modalFooter.innerHTML = modalFooter.innerHTML + '<p>Response not processed: ' + result.message + '</p>';
         }
+    }, function(error) {
+        console.log("Calling service " + operatorResponse + " failed with error: " + error); // TODO we need to identify how to handle failure
     });
 
 }

@@ -102,7 +102,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private AtomicBoolean awaitingUserConfirmation = new AtomicBoolean(false);
     private AtomicLong prevUIRequestTime = new AtomicLong();
     private final long UI_REQUEST_INTERVAL = 100;
-    private final String GO_BUTTON_SRVS = "traffic_signal_plugin/go_button";
+    private final String GO_BUTTON_SRVS = "/traffic_signal_plugin/go_button";
     private static final double ZERO_SPEED_NOISE = 0.04;	//speed threshold below which we consider the vehicle stopped, m/s
     private MessageFactory messageFactory = NodeConfiguration.newPrivate().getTopicMessageFactory();
     private final int NUM_SIGNALS_ON_UI = 3;
@@ -167,7 +167,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
         pubSubService.createServiceServerForTopic(GO_BUTTON_SRVS, SetBool._TYPE, 
             (SetBoolRequest request, SetBoolResponse response) -> {
-                if (!awaitingUserInput.compareAndSet(true, false)) {
+                //if (!awaitingUserInput.compareAndSet(true, false)) {
+                if (!awaitingUserInput.get()) {
                     log.warn("Ignoring unexpected go button service request");
                     response.setMessage(this.getVersionInfo().componentName() + " did not expect UI input and is ignoring the input.");
                     response.setSuccess(false);
@@ -183,11 +184,13 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         log.info("Light not green despite user confirmation");
                         response.setMessage("The light is no longer green. Waiting till next green light.");
                         response.setSuccess(false);
+                        awaitingUserInput.set(false);
                         return;
                     }
                 } else { // User indicated it is not safe to continue
                     log.info("User said it is not safe to continue");
                     prevUIRequestTime.set(System.currentTimeMillis()); // TODO should this be ROS time
+                    awaitingUserInput.set(false);
                 }
 
                 response.setSuccess(true); // If we reach this point the service request has been handled
