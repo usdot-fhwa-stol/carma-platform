@@ -114,7 +114,7 @@ public class FinePathNeighbors extends NeighborBase {
         // we will create nodes at regular increments between these
         double minSpeed = Math.max(curSpeed - maxAccel_*variableTimeInc, 0.0);
         double maxSpeed = Math.min(curSpeed + maxAccel_*variableTimeInc, speedLimit_);
-        log_.info("PLAN", "Generating neighbors of node " + node.toString() + ". Initial minSpeed = " + minSpeed + ", maxSpeed = " + maxSpeed);
+        log_.debug("PLAN", "Generating neighbors of node " + node.toString() + ". Initial minSpeed = " + minSpeed + ", maxSpeed = " + maxSpeed);
 
         int currentInt = currentIntersectionIndex(curDist);
         double dtsb = distToIntersection(currentInt, curDist);

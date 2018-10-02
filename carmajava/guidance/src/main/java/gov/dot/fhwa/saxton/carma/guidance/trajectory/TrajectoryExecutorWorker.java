@@ -58,6 +58,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   protected int timeStepsWithoutTraj = 0;
   protected static final int MAX_ACCEPTABLE_TIMESTEPS_WITHOUT_TRAJECTORY = 3;
   protected TrajectoryConverter trajectoryConverter;
+  protected final double DOWNTRACK_EPSILON = 0.001;
 
   // Storage struct for internal representation of callbacks based on trajectory completion percent
   private class PctCallback {
@@ -250,14 +251,17 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
    * Periodic loop method for iterating, this is where maneuvers get executed
    * 
    * Synchronized to prevent race conditions with onCleanRestart and abortTrajectory functions
+   * 
+   * NOTE: A epsilon is added to the downtrack distance to allow starting from a stop
+   * TODO: Discuss epsilon value with team
    */
   public synchronized void loop() {
     activeManeuversMsg = activeManeuversPub.newMessage();
 
     if (currentTrajectory.get() != null) {
-      currentLongitudinalManeuver = currentTrajectory.get().getManeuverAt(downtrackDistance, ManeuverType.LONGITUDINAL);
-      currentLateralManeuver = currentTrajectory.get().getManeuverAt(downtrackDistance, ManeuverType.LATERAL);
-      currentComplexManeuver = currentTrajectory.get().getManeuverAt(downtrackDistance, ManeuverType.COMPLEX);
+      currentLongitudinalManeuver = currentTrajectory.get().getManeuverAt(downtrackDistance + DOWNTRACK_EPSILON, ManeuverType.LONGITUDINAL);
+      currentLateralManeuver = currentTrajectory.get().getManeuverAt(downtrackDistance + DOWNTRACK_EPSILON, ManeuverType.LATERAL);
+      currentComplexManeuver = currentTrajectory.get().getManeuverAt(downtrackDistance + DOWNTRACK_EPSILON, ManeuverType.COMPLEX);
 
       if (currentComplexManeuver != null) {
         try {

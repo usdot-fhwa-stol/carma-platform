@@ -435,6 +435,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             }
 
             // Remove expired intersections
+            // TODO if I add one and remove one the size is the unchanged 
             int prevNumIntersections = intersections.entrySet().size();
             intersections.entrySet().removeIf(entry -> !foundIds.contains(entry.getKey()));
             boolean deletedIntersection = intersections.entrySet().size() != prevNumIntersections;
