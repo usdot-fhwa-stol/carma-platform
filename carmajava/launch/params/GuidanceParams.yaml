@@ -263,10 +263,10 @@ v2i_map_comms_reliability_check_threshold: 3
 v2i_spat_comms_reliability_check_threshold: 5
 
 # Double: The minimum number of map messages per intersection per second which must be recieved for the data stream to be considered reliable
-v2i_min_map_msgs_per_sec: 0.5
+v2i_min_map_msgs_per_sec: 0.3
 
 # Double: The minimum number of spat messages per intersection per second which must be recieved for the data stream to be considered reliable
-v2i_min_spat_msgs_per_sec: 5.0
+v2i_min_spat_msgs_per_sec: 3.0
 
 # Integer: The amount of time between expiry checks for unreliable intersection communications
 # Units: ms

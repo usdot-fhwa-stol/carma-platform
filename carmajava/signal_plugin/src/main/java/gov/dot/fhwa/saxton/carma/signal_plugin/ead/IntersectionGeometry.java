@@ -36,12 +36,13 @@ public class IntersectionGeometry {
 
 	/**
 	 * Constructs the IntersectionGeometry object
+	 * 
+	 * @param cteThreshold The threshold in cm over which the vehicle will no longer be associated with a lane
+	 * @param periodicDelay The expected data rate of position updates
 	 */
-	public IntersectionGeometry() {
-		IGlidepathAppConfig config = (GlidepathApplicationContext.getInstance().getAppConfig());
-		assert(config != null);
-		cteThreshold_ = config.getIntValue("ead.cte.threshold");
-		timeStep_ = 0.001*(double)config.getIntValue("periodicDelay");
+	public IntersectionGeometry(int cteThreshold, int periodicDelay) {
+		cteThreshold_ = cteThreshold;
+		timeStep_ = 0.001*(double)periodicDelay;
 		largeMovement_ = (int)(70.0/Constants.MPS_TO_MPH * 100.0 * timeStep_ * 2.5); //70 MPH, 100 cm/m, time step, safety factor
 		laneIndex_ = -1;
 		laneDtsb_ = Integer.MAX_VALUE;

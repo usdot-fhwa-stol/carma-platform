@@ -103,11 +103,17 @@ public class GuidanceV2IService implements V2IService {
                         I2VData data = entry.getValue();
                         LocalDateTime now = LocalDateTime.now();
                         boolean oldEnoughCreationTime = now.minus(expiryTimeoutMs, ChronoUnit.MILLIS).isAfter(data.creationTime);
+                        boolean mapIsNull = data.mapComms == null;
+                        boolean spatIsNull = data.spatComms == null;
                         if(oldEnoughCreationTime // If this intersection was detected long enough ago
-                            && ((data.mapComms == null || data.spatComms == null) // AND (It still has not seen both map and spat OR map or spat is unreliable)
+                            && ((mapIsNull || spatIsNull) // AND (It still has not seen both map and spat OR map or spat is unreliable)
                             || (!data.mapComms.isReliable() ||  !data.spatComms.isReliable())))
                         {
-                            log.info("Removing unreliable intersection with id: " + id);
+                            log.info("Removing unreliable intersection with id: " + id
+                                + " causes: mapIsNull: " + mapIsNull + " spatIsNull: " + spatIsNull
+                                + " mapIsNotReliable: " + !data.mapComms.isReliable()
+                                + " spatIsNotReliable: " + !data.spatComms.isReliable()
+                            );
                             trackedI2Vs.remove(id);
                         }
                     }
