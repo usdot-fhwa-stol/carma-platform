@@ -33,6 +33,8 @@ import org.joda.time.DateTime;
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
 import org.ros.node.NodeConfiguration;
+import org.ros.rosjava_geometry.Transform;
+import org.ros.rosjava_geometry.Vector3;
 
 import cav_msgs.GenericLane;
 import cav_msgs.IntersectionState;
@@ -45,7 +47,12 @@ import cav_msgs.Position3D;
 import cav_msgs.TrafficSignalInfo;
 import cav_msgs.TrafficSignalInfoList;
 import cav_msgs.UIInstructions;
+import cav_srvs.GetTransform;
+import cav_srvs.GetTransformRequest;
+import cav_srvs.GetTransformResponse;
 import geometry_msgs.TwistStamped;
+import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
@@ -60,6 +67,8 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IServiceServer;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnServiceResponseCallback;
+import gov.dot.fhwa.saxton.carma.guidance.pubsub.TopicNotFoundException;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.IntersectionData;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.Constants;
@@ -94,7 +103,6 @@ import std_srvs.SetBoolResponse;
  */
 public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlugin {
 
-    private ISubscriber<NavSatFix> gpsSub;
     private ISubscriber<TwistStamped> velocitySub;
     private IPublisher<TrafficSignalInfoList> trafficSignalInfoPub;
     private IPublisher<UIInstructions> uiInstructionsPub;
@@ -102,14 +110,15 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private AtomicBoolean awaitingUserConfirmation = new AtomicBoolean(false);
     private AtomicLong prevUIRequestTime = new AtomicLong();
     private final long UI_REQUEST_INTERVAL = 100;
-    private final String GO_BUTTON_SRVS = "traffic_signal_plugin/go_button";
+    private final String GO_BUTTON_SRVS = "/traffic_signal_plugin/go_button";
     private static final double ZERO_SPEED_NOISE = 0.04;	//speed threshold below which we consider the vehicle stopped, m/s
     private MessageFactory messageFactory = NodeConfiguration.newPrivate().getTopicMessageFactory();
     private final int NUM_SIGNALS_ON_UI = 3;
 
+    protected IService<GetTransformRequest, GetTransformResponse> getTransformClient;
     private Map<Integer, IntersectionData> intersections = Collections
             .synchronizedMap(new HashMap<Integer, IntersectionData>());
-    private AtomicReference<NavSatFix> curPos = new AtomicReference<>();
+    private AtomicReference<Location> curPos = new AtomicReference<>(); // Only allowed to be null at startup
     private AtomicReference<TwistStamped> curVel = new AtomicReference<>();
     private gov.dot.fhwa.saxton.carma.signal_plugin.ead.Trajectory glidepathTrajectory;
     private PolyHoloA velFilter = new PolyHoloA();
@@ -118,6 +127,11 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private double speedCommandQuantizationFactor = 0.1;
     private AtomicBoolean involvedInControl = new AtomicBoolean(false);
     static private final double CM_PER_M = 100.0;
+    static private final double MAX_DTSB = Integer.MAX_VALUE - 5.0; // Legacy Glidepath code returns Integer.MAX_VALUE for invalid dtsb. Add fudge factor for detecting it as a double
+
+    private final long LOOP_PERIOD = 100; // Plugin will loop at 10Hz
+    private final GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();;
+    private double acceptableStopDistance;
 
     public TrafficSignalPlugin(PluginServiceLocator psl) {
         super(psl);
@@ -137,22 +151,13 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         // Initialize Speed Filter
         velFilter.initialize(appConfig.getPeriodicDelay() * Constants.MS_TO_SEC); // TODO determine what the best value should be given we no longer use the periodic executor
         
+        // TODO use stopbox width instead
+        // The acceptable stop distance will be used instead of the stopbox width to define acceptable distance past the stop bar
+        acceptableStopDistance = appConfig.getDoubleDefaultValue("ead.acceptableStopDistance", 6.0);
+
         // log the key params here
         pluginServiceLocator.getV2IService().registerV2IDataCallback(this::handleNewIntersectionData);
         setAvailability(false);
-        gpsSub = pluginServiceLocator.getPubSubService().getSubscriberForTopic("nav_sat_fix", NavSatFix._TYPE);
-        gpsSub.registerOnMessageCallback((msg) -> {
-            curPos.set(msg);
-            if (checkIntersectionMaps()) {
-                if (involvedInControl.compareAndSet(false, true)) {
-                    triggerNewPlan(true);
-                    log.info("On map and replanning");
-                }
-            } else if (involvedInControl.compareAndSet(true, false)) {
-                log.info("Off map requesting replan");
-                triggerNewPlan(false);
-            }
-        });
 
         velocitySub = pluginServiceLocator.getPubSubService().getSubscriberForTopic("velocity", TwistStamped._TYPE);
         velocitySub.registerOnMessageCallback((msg) -> {
@@ -166,27 +171,42 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
         pubSubService.createServiceServerForTopic(GO_BUTTON_SRVS, SetBool._TYPE, 
             (SetBoolRequest request, SetBoolResponse response) -> {
-                if (!awaitingUserInput.compareAndSet(true, false)) {
+                //if (!awaitingUserInput.compareAndSet(true, false)) {
+                if (!awaitingUserInput.get()) {
+                    log.warn("Ignoring unexpected go button service request");
                     response.setMessage(this.getVersionInfo().componentName() + " did not expect UI input and is ignoring the input.");
                     response.setSuccess(false);
                     return; // If we are not expecting user acknowledgement then don't continue
                 }
                 if (request.getData()) { // If user acknowledged it is safe to continue
+                    log.info("User confirmed: All Clear");
                     if (checkCurrentPhase(SignalPhase.GREEN)) { // If we are still in the green phase
                         // Notify the arbitrator we need to replan to continue through the intersection
+                        log.info("Continuing at new green light");
                         triggerNewPlan(true);
                     } else {
+                        log.info("Light not green despite user confirmation");
                         response.setMessage("The light is no longer green. Waiting till next green light.");
                         response.setSuccess(false);
+                        awaitingUserInput.set(false);
                         return;
                     }
                 } else { // User indicated it is not safe to continue
+                    log.info("User said it is not safe to continue");
                     prevUIRequestTime.set(System.currentTimeMillis()); // TODO should this be ROS time
+                    awaitingUserInput.set(false);
                 }
 
                 response.setSuccess(true); // If we reach this point the service request has been handled
             }
         );
+
+        try {
+            getTransformClient = pubSubService.getServiceForTopic("get_transform", GetTransform._TYPE);
+        } catch (TopicNotFoundException tnfe) {
+            log.error("get_transform service cannot be found", tnfe);
+            this.setActivation(false); // TODO is this the best way to handle this error?
+        }
 
         log.info("STARTUP", "TrafficSignalPlugin has been initialized.");
     }
@@ -199,7 +219,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      * @param y Y value of the offset in meters
      */
     static private void addNodeOffset(Lane lane, Location ref, float x, float y) {
-        lane.addNodeCm(ref, (int) (x * 100), (int) (y * 100));
+        lane.addNodeCm(ref, (int) (x * 100.0), (int) (y * 100.0));
     }
 
     /**
@@ -415,12 +435,18 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             }
 
             // Remove expired intersections
+            // TODO if I add one and remove one the size is the unchanged 
             int prevNumIntersections = intersections.entrySet().size();
             intersections.entrySet().removeIf(entry -> !foundIds.contains(entry.getKey()));
             boolean deletedIntersection = intersections.entrySet().size() != prevNumIntersections;
 
             // Trigger new plan on phase change
-            if ((phaseChanged || newIntersection || deletedIntersection) && checkIntersectionMaps()) {
+            boolean onMap = checkIntersectionMaps();
+            if ((phaseChanged || newIntersection || deletedIntersection) && onMap) {
+                log.info("Requesting new plan with causes - PhaseChanged: " + phaseChanged 
+                    + " NewIntersection: " + newIntersection 
+                    + " deletedIntersection: " + deletedIntersection
+                    + " onMap: " + onMap);
                 triggerNewPlan(true);
             }
         }
@@ -429,34 +455,31 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     /**
      * Compute the DTSB value if we're on a known MAP message
      * 
-     * @return -1 if DTSB check fails for any reason, Double.MAX_VALUE if we're not on a MAP message
+     * @return Integer.MAX_VALUE if DTSB check fails for any reason
      */
     private double computeDtsb() {
-        NavSatFix posMsg = curPos.get();
-        if (posMsg == null) {
-            log.warn("NavSatFix was null");
-            return -1;
+        if (curPos.get() == null) { // NULL will only be present at startup and will never be assigned making this check thread safe.
+            log.warn("Vehicle Location was null");
+            return MAX_DTSB; 
         }
         if (glidepathTrajectory == null) {
             log.warn("Traj was null");
-            return -1;
+            return MAX_DTSB;
         }
         try {
-            Location curLoc = new Location(curPos.get().getLatitude(), curPos.get().getLongitude());
-            double dtsb = glidepathTrajectory.updateIntersections(convertIntersections(intersections), curLoc);
-            final double REASONABLE_DTSB = 10000.0; // If we are more than 10km from an intersection the calculation has certainly failed
-
+            double dtsb = glidepathTrajectory.updateIntersections(convertIntersections(intersections), curPos.get());
+            log.info("DTSB from legacy updateIntersections: " + dtsb + " AcceptableStopDistance " + acceptableStopDistance);
             updateUISignals();
-            if (dtsb < 0 || dtsb > REASONABLE_DTSB) { // TODO if our dtsb is within the stop box we should keep it as valid
+            if (dtsb >= MAX_DTSB) {
                 log.warn("DTSB computation failed!");
-                return -1;
+                return MAX_DTSB;
             }
             return dtsb;
         } catch (Exception e) {
             log.warn("DTSB computation failed!", e);
         }
 
-        return -1;
+        return MAX_DTSB;
     }
 
     /**
@@ -485,6 +508,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         signalMsg.setLaneId((short)intersection.laneId);
         signalMsg.setRemainingDistance((float)intersection.dtsb);
         signalMsg.setRemainingTime((short)intersection.timeToNextPhase);
+
+        log.debug("UI Intersection: " + intersection.intersectionId + " dtsb: " + intersection.dtsb);
         
         if (intersection.currentPhase == null) {
             return signalMsg;
@@ -515,7 +540,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private boolean checkIntersectionMaps() {
         double dtsb = computeDtsb();
         log.info("Computed DTSB: " + dtsb);
-        return dtsb > 0 && dtsb < Double.MAX_VALUE;
+        return dtsb < MAX_DTSB;
     }
 
     @Override
@@ -536,7 +561,22 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     @Override
     public void loop() throws InterruptedException {
         long tsStart = System.currentTimeMillis();
+
+        // Update vehicle position with most recent transform
+        updateCurrentLocation();
         
+        // Update state variables for stopping case
+        evaluateStatesForStopping();
+
+        long tsEnd = System.currentTimeMillis();
+        long sleepDuration = Math.max(LOOP_PERIOD - (tsEnd - tsStart), 0);
+        Thread.sleep(sleepDuration);
+    }
+
+    /**
+     * Helper function to evaluate state variables for the stopping condition
+     */
+    private void evaluateStatesForStopping() {
         // We were stopped at a red light and now the light is green
         boolean stoppedForLight = stoppedAtLight();
         boolean phaseIsGreen = checkCurrentPhase(SignalPhase.GREEN);
@@ -548,19 +588,42 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 awaitingUserInput.set(true);
                 // Send user input request to get confirmation to continue
                 askUserIfIntersectionIsClear();
+                log.info("Requesting user confirmation");
 
             } else if (System.currentTimeMillis() - UI_REQUEST_INTERVAL > prevUIRequestTime.get() // Already awaiting confirmation and enough time has elapsed
                 && awaitingUserInput.compareAndSet(false, true)) { // AND we are not currently waiting for user input
                 // Then we want to request input from the user again
                 askUserIfIntersectionIsClear();
+                log.info("Re-Requesting user confirmation");
             }
         } else if (!stoppedForLight && awaitingUserConfirmation.compareAndSet(true, false)) {
             // We are no longer waiting at the intersection
+            log.info("Resuming operation after stop");
         }
+    }
+    /**
+     * Helper function which gets the current lat/lon position of the vehicle's front bumper
+     */
+    private void updateCurrentLocation() {
+        Transform earthToHostVehicle = getTransform("earth", "vehicle_front", Time.fromMillis(0));
+        if (earthToHostVehicle == null) {
+            log.warn("Failed to get transform from vehicle_front to earth");
+            return;
+        }
+        Vector3 transInECEF = earthToHostVehicle.getTranslation();
+        Point3D hostVehicleInECEF = new Point3D(transInECEF.getX(), transInECEF.getY(), transInECEF.getZ());
+        gov.dot.fhwa.saxton.carma.geometry.geodesic.Location carmaLocation = gcc.cartesian2Geodesic(hostVehicleInECEF, Transform.identity());
+        curPos.set(new Location(carmaLocation.getLatitude(), carmaLocation.getLongitude()));
 
-        long tsEnd = System.currentTimeMillis();
-        long sleepDuration = Math.max(100 - (tsEnd - tsStart), 0);
-        Thread.sleep(sleepDuration);
+        if (checkIntersectionMaps()) {
+            if (involvedInControl.compareAndSet(false, true)) {
+                log.info("On map and replanning");
+                triggerNewPlan(true);
+            }
+        } else if (involvedInControl.compareAndSet(true, false)) {
+            log.info("Off map requesting replan");
+            triggerNewPlan(false);
+        }
     }
 
     /**
@@ -638,10 +701,33 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     @Override
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedStartSpeed) {
         log.info("Entered planTrajectory");
+
+        // If we are stopped at a light we must stay stopped until user confirmation.
+        boolean stoppedForLight = stoppedAtLight();
+        boolean phaseIsGreen = checkCurrentPhase(SignalPhase.GREEN);
+        if (stoppedForLight && !phaseIsGreen && awaitingUserConfirmation.get()) {
+            // CHECK PLANNING PRIORITY
+            if (!traj.getLongitudinalManeuvers().isEmpty()) {
+                TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
+                tpr.requestHigherPriority();
+                return tpr;
+            }
+            SteadySpeed steadySpeed = new SteadySpeed(this);
+            steadySpeed.setMaxAccel(pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getMaxAccelLimit() * 2.0); // TODO determine if having twice the max accel is really ok
+
+            steadySpeed.setSpeeds(0.0, 0.0);
+            pluginServiceLocator.getManeuverPlanner().planManeuver(steadySpeed,
+                    traj.getStartLocation(), traj.getEndLocation());
+            
+            traj.addManeuver(steadySpeed);
+
+            return new TrajectoryPlanningResponse();
+        }
+
         // CHECK TRAJECTORY LENGTH
         double dtsb = computeDtsb();
 
-        if (dtsb > 0) {
+        if (dtsb < MAX_DTSB) {
             // DTSB computation successful, check to see if we can plan up to stop bar
             if (traj.getStartLocation() + (dtsb * 1.1) > traj.getEndLocation()) {
                 // Not enough distance to allow for proper glidepath execution
@@ -688,8 +774,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         * operSpeedScalingFactor);
         state.put(DataElementKey.OPERATING_SPEED, operSpeedElem);
 
-        vehicleLat = new DoubleDataElement(curPos.get().getLatitude());
-        vehicleLon = new DoubleDataElement(curPos.get().getLongitude());
+        vehicleLat = new DoubleDataElement(curPos.get().lat());
+        vehicleLon = new DoubleDataElement(curPos.get().lon());
         state.put(DataElementKey.LATITUDE, vehicleLat);
         state.put(DataElementKey.LONGITUDE, vehicleLon);
 
@@ -743,6 +829,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         } */
 
         // CONVERT AND INSERT MANEUVERS
+        // TODO we should get the starting distance as current downtrack when starting to plan
         double startDist = traj.getStartLocation();
         Node prev = null;
         for (Node cur : eadResult) {
@@ -752,7 +839,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 if (Math
                         .abs(prev.getSpeedAsDouble() - cur.getSpeedAsDouble()) < speedCommandQuantizationFactor) {
                     SteadySpeed steadySpeed = new SteadySpeed(this);
-
+                    steadySpeed.setMaxAccel(pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getMaxAccelLimit() * 2.0); // TODO determine if having twice the max accel is really ok
+                    
                     if (cur.getSpeedAsDouble() > speedCommandQuantizationFactor) {
                         steadySpeed.setSpeeds(cur.getSpeedAsDouble(), cur.getSpeedAsDouble());
                         pluginServiceLocator.getManeuverPlanner().planManeuver(steadySpeed,
@@ -790,5 +878,44 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         log.info("Planning complete");
         setAvailability(false);
         return new TrajectoryPlanningResponse();
+    }
+
+    private Transform getTransform(String parentFrame, String childFrame, Time stamp) {
+	    GetTransformRequest request = getTransformClient.newMessage();
+	    request.setParentFrame(parentFrame);
+	    request.setChildFrame(childFrame);
+	    request.setStamp(stamp);
+
+	    final GetTransformResponse[] response = new GetTransformResponse[1];
+	    final boolean[] gotTransform = {false};
+
+	    getTransformClient.call(request,
+		    new OnServiceResponseCallback<GetTransformResponse>() {
+
+			    @Override
+			    public void onSuccess(GetTransformResponse msg) {
+			    	if (msg.getErrorStatus() == GetTransformResponse.NO_ERROR
+					    || msg.getErrorStatus() == GetTransformResponse.COULD_NOT_EXTRAPOLATE) {
+					    response[0] = msg;
+					    gotTransform[0] = true;
+				    } else {
+			    		log.warn("TRANSFORM", "Request for transform ParentFrame: " + request.getParentFrame() +
+						    " ChildFrame: " + request.getChildFrame() + " returned ErrorCode: " + msg.getErrorStatus());
+				    }
+			    }
+
+			    @Override
+			    public void onFailure(Exception e) {
+                    log.error("get_transform service call failed", e);
+				    // TODO how to handle this case?
+			    }
+
+		    });
+
+	    if(gotTransform[0]) {
+	    	return Transform.fromTransformMessage(response[0].getTransform().getTransform());
+	    } else {
+	    	return null;
+	    }
     }
 }

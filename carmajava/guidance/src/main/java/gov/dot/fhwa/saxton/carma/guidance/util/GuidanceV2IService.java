@@ -107,7 +107,7 @@ public class GuidanceV2IService implements V2IService {
                             && ((data.mapComms == null || data.spatComms == null) // AND (It still has not seen both map and spat OR map or spat is unreliable)
                             || (!data.mapComms.isReliable() ||  !data.spatComms.isReliable())))
                         {
-                            log.debug("Removing unreliable intersection with id: " + id);
+                            log.info("Removing unreliable intersection with id: " + id);
                             trackedI2Vs.remove(id);
                         }
                     }

@@ -138,15 +138,12 @@ public abstract class NeighborBase implements INeighborCalculator {
         switch (i.currentPhase) {
             case GREEN:
                 h.longestGreen  = Math.max(h.longestGreen,  i.timeToNextPhase);
-                h.longestYellow = Math.max(h.longestYellow, i.timeToThirdPhase);
                 break;
             case YELLOW:
                 h.longestYellow = Math.max(h.longestYellow, i.timeToNextPhase);
-                h.longestRed    = Math.max(h.longestRed,    i.timeToThirdPhase);
                 break;
             case RED:
                 h.longestRed    = Math.max(h.longestRed,    i.timeToNextPhase);
-                h.longestGreen  = Math.max(h.longestGreen,  i.timeToThirdPhase);
                 break;
             default:
                 //do nothing - this is a normal condition, especially for intersections beyond the nearest
@@ -188,7 +185,7 @@ public abstract class NeighborBase implements INeighborCalculator {
         // initialize() method was called, but they are not updated after that
         IntersectionData i = intersections_.get(index);
         double iDist = i.dtsb;
-        //TODO need to figure out under which condition, it did not calculate the dtsb correctly
+        //If the dtsb is not able to be calculated when processing intersection geometry is will default to Integer.MAX_VALUE
         if (iDist <= 0.0 || iDist >= Integer.MAX_VALUE) {
             //if use roughDist, make sure it is pass the fine distance to that intersection
             iDist = (0.01 * (double)i.roughDist) + CoarsePathNeighbors.TYPICAL_INTERSECTION_WIDTH; //convert from cm to m

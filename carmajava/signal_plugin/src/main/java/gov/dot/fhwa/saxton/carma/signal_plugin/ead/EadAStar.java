@@ -184,6 +184,7 @@ public class EadAStar implements IEad {
             throw new Exception(msg);
         }
         log_.debug("EAD", "planCoarsePath found a solution after " + iter + " iterations.");
+        //System.out.println("planCoarsePath found a solution after " + iter + " iterations.");
 
         //we always use the node after current intersection as the goal node
         Node fineGoal = path.get(2);
@@ -237,10 +238,13 @@ public class EadAStar implements IEad {
             log_.debugf("EAD", "    %.0f m", 0.01 * (double)intList_.get(i).roughDist);
         }
         log_.info("EAD", "Coarse path plan:");
+        //System.out.println("Coarse path plan:");
         for (Node n : path) {
             log_.info("EAD", "    " + n.toString());
+            //System.out.println(n);
         }
         log_.debug("EAD", "Coarse path attempted to reach goal: " + coarseGoal.toString());
+        //System.out.println("Coarse path attempted to reach goal: " + coarseGoal.toString());
         log_.debug("EAD", "Coarse path yielded goal for detailed planning of: " + fineGoal.toString());
     }
 
@@ -251,8 +255,10 @@ public class EadAStar implements IEad {
     protected void summarizeDetailedPath(List<Node> path, Node goal) {
 
         log_.info("EAD", "///// Detailed path plan:");
+        //System.out.println("Detailed path plan:");
         for (Node n : path) {
             log_.info("EAD", "    " + n.toString());
+            //System.out.println(n);
         }
         log_.debug("EAD", "Detailed path attempted to reach goal: " + goal.toString());
     }
@@ -266,42 +272,33 @@ public class EadAStar implements IEad {
         firstCall_ = false;
     }
 
-    // TODO this implementation is not done
-    public List<Node> plan(double speed, double operSpeed, double accel,
-                                 List<IntersectionData> intersections) throws Exception {
+    /**
+     * Generates a plan based on the input data
+     * 
+     * @param speed The current speed of the vehicle
+     * @param operSpeed The target operating speed of the vehicle
+     * @param intersections A sorted list of intersection data with the nearest intersections appearing earlier in the list
+     * 
+     * @return A list of node defining the planned vehicle trajectory
+     */
+    public List<Node> plan(double speed, double operSpeed, 
+        List<IntersectionData> intersections) throws Exception {
 
         if (intersections == null  ||  intersections.size() == 0) {
-            String msg = "getTargetSpeed invoked with a empty intersection list.";
+            String msg = "plan invoked with a empty intersection list.";
             log_.error("EAD", msg);
             throw new Exception(msg);
         }
 
         intList_ = intersections;
         long methodStartTime = System.currentTimeMillis();
-        double dtsb = intersections.get(0).dtsb; //if we are close to the stop bar this will be a positive value
-        double replanThreshold = 5.0*Math.max(speed, 2.0); //no need to replan if within 5 sec of stop bar
 
         ////////// BUILD & SOLVE THE DIJKSTRA TREE TO DEFINE THE BEST PATH
-
-
-        //TODO: monitor the execution time of this block; if it is big we may need to put it in a separate thread
-
-        //TODO: may be able to avoid replanning every time the intersection data is updated; should do so only when
-        //      it is an advantage (e.g. no point if there is only 1 intersection and we are 3 sec from passing its bar)
 
         Node goal;
 
         //define starting node and reset DDT since we are beginning execution of a new path
-        // (starting the plan at commanded speed rather than actual speed will allow for smoother transitions
-        // from one plan to another, since actual speed may be nowhere near commanded speed, but acceleration
-        // is already trying to get us to the command quickly)
-
-        // TODO find a way to add this check back in
-        // if (Math.abs(speed - speedCmd_) > 2.0) {
-        //     log_.warn("EAD", "New plan being generated when actual speed differs greatly from command."
-        //                 + " prev command = " +  speedCmd_ + ", actual = " + speed);
-        // }
-        speedCmd_ = speed; // TODO remove when the above check is re-added
+        speedCmd_ = speed; // The starting speed command is the current speed
         Node startNode = new Node(0.0, 0.0, speedCmd_);
         currentNodeIndex_ = 0;
         currentPath_ = null;
@@ -313,19 +310,20 @@ public class EadAStar implements IEad {
         try {
             currentPath_ = planDetailedPath(startNode, goal);
         }catch (Exception e) {
-            log_.warn("EAD", "getTargetSpeed trapped exception from planDetailedPath: " + e.toString());
+            log_.warn("EAD", "plan trapped exception from planDetailedPath: ", e);
+            throw e;
         }
 
         if (currentPath_ == null  ||  currentPath_.size() == 0) {
-            String msg = "getTargetSpeed produced an unusable detailed path.";
+            String msg = "plan produced an unusable detailed path.";
             log_.error("EAD", msg);
             throw new Exception(msg);
         }
 
         prevMethodStartTime_ = methodStartTime;
         long totalTime = System.currentTimeMillis() - methodStartTime;
-        log_.info("EAD", "getTargetSpeed completed in " + totalTime + " ms.");
+        log_.info("EAD", "plan completed in " + totalTime + " ms.");
         
-        return currentPath_; // TODO
+        return currentPath_;
     }
 }

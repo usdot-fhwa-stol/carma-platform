@@ -134,9 +134,7 @@ public class Node {
   }
 
   @Override public int hashCode() {
-    //long dist = Math.round(distDouble); // Round the distance to the nearest m to speed up search. TODO develop more robust way of doing this
-    long dist = distance;
-    return Objects.hash(dist, speed, time);
+    return Objects.hash(distance, speed, time);
   }
 
   @Override public boolean equals(Object obj) {
@@ -146,8 +144,6 @@ public class Node {
       return false;
     } else {
       Node n2 = (Node) obj;
-      // Round the distance to the nearest m to speed up search. TODO develop more robust way of doing this
-      //return Math.round(this.distDouble) == Math.round(n2.distDouble) && this.speed == n2.speed && this.time == n2.time;
       return this.distDouble == n2.distDouble && this.speed == n2.speed && this.time == n2.time;
     }
   }
