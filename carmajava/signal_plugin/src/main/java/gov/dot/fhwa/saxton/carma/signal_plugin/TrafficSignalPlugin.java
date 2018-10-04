@@ -423,7 +423,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                                                     .getEventState().getMovementPhaseState() != newMov.getMovementEventList().get(i)
                                                     .getEventState().getMovementPhaseState())) {
                                         // Phase change detected, a replan will be needed
-                                        phaseChanged = true;
+                                        phaseChanged = true; // TODO for performance this should only be set if the phase changing is for the current intersection
                                         break phaseChangeCheckLoop; // Break outer for loop labeled phaseChangeCheckLoop
                                     }
 

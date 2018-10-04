@@ -19,6 +19,7 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.asd;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.map.MapMessage;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.ISpatMessage;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.IntersectionGeometry;
 
 /**
  * Collector for all data relative to a single intersections that needs to be passed through the system.
@@ -40,6 +41,16 @@ public class IntersectionData {
     public double                  dtsb; //distance to stop bar along the approach lane, in meters
     public SignalPhase             currentPhase = SignalPhase.NONE;
     public double                  timeToNextPhase = -1.0;
+    public IntersectionGeometry    geometry = null;
+
+    // TODO comment
+    public double bestDTSB() {
+        if (geometry == null) { // If there is no geometry than dtsb will not be set
+            return (0.01 * (double)roughDist); // Use rough dist if geometry is not available
+        } else {
+            return dtsb; // Use dtsb if available
+        }
+    }
     
     @Override
     public String toString() {

@@ -134,7 +134,7 @@ public class EadAStar implements IEad {
         //adding an extra distance to make sure the goal passes the fine distance to the second intersection
         //this is the rough location for the second intersection
         //rough distance need to convert from cm to m
-        double exitDist = (0.01 * (double)intList_.get(numInt - 1).roughDist) + CoarsePathNeighbors.TYPICAL_INTERSECTION_WIDTH * 2;
+        double exitDist = intList_.get(numInt - 1).bestDTSB() + CoarsePathNeighbors.TYPICAL_INTERSECTION_WIDTH * 2;
         //plan to one more intersection width after the last intersection
         double recoveryDist = CoarsePathNeighbors.TYPICAL_INTERSECTION_WIDTH; 
         exitDist += recoveryDist;
@@ -235,7 +235,7 @@ public class EadAStar implements IEad {
         log_.debug("EAD", "Coarse plan covered " + intList_.size() + " intersections at distances of:");
         log_.debugf("EAD", "    %.0f m", intList_.get(0).dtsb);
         for (int i = 1;  i < intList_.size();  ++i) {
-            log_.debugf("EAD", "    %.0f m", 0.01 * (double)intList_.get(i).roughDist);
+            log_.debugf("EAD", "    %.0f m", intList_.get(i).bestDTSB());
         }
         log_.info("EAD", "Coarse path plan:");
         //System.out.println("Coarse path plan:");
