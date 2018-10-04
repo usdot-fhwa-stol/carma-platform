@@ -144,17 +144,6 @@ public class Trajectory implements ITrajectory {
 		log_.infof("TRAJ", "2. EADlib initialized. speedLimit = %.2f, maxJerk = %.2f",
 				speedLimit_, maxJerk_);
 		
-		// Get operating speed override - if this is non-zero it will be used for OS regardless of user input! Intended for testing only!
-		osOverride_ = 0.0;
-		String tempStr = config.getProperty("ead.osOverride");
-		if (tempStr != null) {
-			double tempVal = Double.valueOf(tempStr);
-			if (tempVal > 0.0  &&  tempVal < 35.0) {
-				osOverride_ = tempVal;
-				log_.warnf("TRAJ", "///// OS has been overridden with %.1f mph", tempVal);
-			}
-		}
-		
 		//initialize other members
 		curSpeed_ = 0.0;
 		curAccel_ = 0.0;
@@ -235,9 +224,6 @@ public class Trajectory implements ITrajectory {
 
 			// override the driver selected operating speed with one stored in the config file if it is valid (for testing)
 			operSpeed = operSpeedElem.value();
-			if (osOverride_ > 0.0) {
-				operSpeed = osOverride_ / Constants.MPS_TO_MPH;
-			}
 
 			//track how old the critical input elements are
 			long oldestTime;
@@ -338,7 +324,6 @@ public class Trajectory implements ITrajectory {
 		return intersectionManager_.updateIntersections(inputIntersections, vehicleLoc);
 	}
 	
-	private double				osOverride_;		//FOR DEBUGGING ONLY - allows the config file to override the driver selected operating speed, m/s
 	private long				timeStepSize_;		//duration of a single time step, ms
 	private boolean				stopConfirmed_;		//are we at a complete stop?
 	private boolean				respectTimeouts_;	//should we honor the established timeouts?

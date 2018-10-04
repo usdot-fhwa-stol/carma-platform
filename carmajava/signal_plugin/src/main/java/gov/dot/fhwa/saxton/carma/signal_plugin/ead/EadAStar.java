@@ -290,6 +290,8 @@ public class EadAStar implements IEad {
             throw new Exception(msg);
         }
 
+        log_.info("EAD", "plan function called with operating speed: " + operSpeed + " and current speed: " + speed);
+
         intList_ = intersections;
         long methodStartTime = System.currentTimeMillis();
 

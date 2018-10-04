@@ -111,8 +111,8 @@ public class GuidanceV2IService implements V2IService {
                         {
                             log.info("Removing unreliable intersection with id: " + id
                                 + " causes: mapIsNull: " + mapIsNull + " spatIsNull: " + spatIsNull
-                                + " mapIsNotReliable: " + !data.mapComms.isReliable()
-                                + " spatIsNotReliable: " + !data.spatComms.isReliable()
+                                + " mapIsNotReliable: " + (!mapIsNull ? !data.mapComms.isReliable() : false)
+                                + " spatIsNotReliable: " + (!spatIsNull ? !data.spatComms.isReliable() : false)
                             );
                             trackedI2Vs.remove(id);
                         }

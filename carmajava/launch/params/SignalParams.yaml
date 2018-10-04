@@ -164,10 +164,6 @@ ead/cmdaccelgain: 0.17
 ead/cmdspeedgain: 0.0
 ead/cmdbias: 0.0
 
-# if > 0 then overrides the operating speed (mph), regardless of what is entered on the tablet
-# TODO remove this
-ead/osOverride: "15"
-
 # Max distance in front of the stop bar that it is acceptable to stop, m
 ead/acceptableStopDistance: 6.0
 
