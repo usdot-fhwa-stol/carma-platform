@@ -26,7 +26,7 @@ maximumJerk: 10.0
 defaultspeed: 20.0
 
 # periodicDelay is time step size in ms
-periodicDelay: 50
+periodicDelay: 100
 
 # sleep adjustment in ms, used to fiddle with end of cycle computations to help get cycles as close as possible to periodicDelay
 sleep/adjustment: 6

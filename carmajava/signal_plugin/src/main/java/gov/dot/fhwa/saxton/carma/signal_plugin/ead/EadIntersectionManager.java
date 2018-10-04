@@ -47,6 +47,10 @@ public class EadIntersectionManager {
 		if (config == null) {
 			throw new IllegalArgumentException("Null config returned by GlidepathApplicationContext");
 		}
+		
+		// Load constants for intersection geometry processing
+		cteThreshold_ = config.getIntValue("ead.cte.threshold");
+		periodicDelay_ = config.getIntValue("periodicDelay");
 
 		//get the list of intersections that we will be paying attention to
 		String tmpList = config.getProperty("asd.intersections");
@@ -94,6 +98,7 @@ public class EadIntersectionManager {
 			log_.warnf("TRAJ", "Input intersections with MAP ID = %d and SPAT ID = %d", mapId, spatId);
 			return false;
 		}
+		// TODO map and spat ids of 0 are valid and should be accounted for
 		if (mapId == 0  ||  spatId == 0) {
 			log_.warn("TRAJ", "Input intersections with neither MAP nor SPAT attached.");
 			return false;
@@ -120,7 +125,7 @@ public class EadIntersectionManager {
 	 * @param inputIntersections - list of intersections sensed by the vehicle in this time step
 	 * @param vehicleLoc - current location of the vehicle
 	 * 
-	 * @return distance to stop bar of the nearest intersection TODO
+	 * @return distance to stop bar of the nearest intersection
 	 */
 	public double updateIntersections(List<IntersectionData> inputIntersections, Location vehicleLoc) throws Exception {
 		double dtsb = Double.MAX_VALUE;
@@ -221,13 +226,21 @@ public class EadIntersectionManager {
 		return dtsb;
 	}
 
+	/**
+	 * Function generates a new IntersectionGeometry object using the provided vehicle location and map message
+	 * 
+	 * @param vehicleLoc The vehicle location as a gps fix
+	 * @param mapMessage The map message to generate geometry for
+	 * 
+	 * @return An initialized IntersectionGeometry object if the vehicle location could be matched with a lane. Null otherwise
+	 */
 	private IntersectionGeometry computeIntersectionGeometry(Location vehicleLoc, MapMessage mapMessage) {
 		//find the distance to the stop bar of the approach to the current intersection (negative values mean we
 		// are crossing the box and about to depart the intersection)
 		double dtsb = Double.MAX_VALUE; // TODO change this to Integer.MAX_VALUE all over
 		log_.debug("TRAJ", "computeIntersectionGeometry entered with intersectionId: " + mapMessage.getIntersectionId());
 		
-		IntersectionGeometry geometry = new IntersectionGeometry();
+		IntersectionGeometry geometry = new IntersectionGeometry(cteThreshold_, periodicDelay_);
 		geometry.initialize(mapMessage);
 
 		//compute the current vehicle geometry relative to the intersections
@@ -267,4 +280,6 @@ public class EadIntersectionManager {
 	private AtomicReference<Integer> prevApproachLaneId_ = new AtomicReference<>();;//value of approachLaneId from the previous time step
 	private int[]				intersectionIds_;	//array of IDs of intersections that we will pay attention to
 	private static ILogger		log_ = LoggerManager.getLogger(EadIntersectionManager.class);
+	private final int cteThreshold_;
+	private final int periodicDelay_;
 }
