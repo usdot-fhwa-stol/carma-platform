@@ -423,7 +423,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                                                     .getEventState().getMovementPhaseState() != newMov.getMovementEventList().get(i)
                                                     .getEventState().getMovementPhaseState())) {
                                         // Phase change detected, a replan will be needed
-                                        phaseChanged = true;
+                                        phaseChanged = true; // TODO for performance this should only be set if the phase changing is for the current intersection
                                         break phaseChangeCheckLoop; // Break outer for loop labeled phaseChangeCheckLoop
                                     }
 
@@ -435,10 +435,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             }
 
             // Remove expired intersections
-            // TODO if I add one and remove one the size is the unchanged 
-            int prevNumIntersections = intersections.entrySet().size();
-            intersections.entrySet().removeIf(entry -> !foundIds.contains(entry.getKey()));
-            boolean deletedIntersection = intersections.entrySet().size() != prevNumIntersections;
+            boolean deletedIntersection = intersections.entrySet().removeIf(entry -> !foundIds.contains(entry.getKey()));
 
             // Trigger new plan on phase change
             boolean onMap = checkIntersectionMaps();
@@ -493,6 +490,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             final TrafficSignalInfo signalMsg = intersectionDataToMsg(glidepathTrajectory.getSortedIntersections().get(i));
             msg.getTrafficSignalInfoList().add(signalMsg);
         }
+        log.debug("SIGNAL_DISPLAY", "NumInt: " + msg.getTrafficSignalInfoList().size());
         trafficSignalInfoPub.publish(msg);
     }
 
@@ -682,17 +680,19 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     static protected List<gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData> convertIntersections(
             Map<Integer, IntersectionData> data) {
         List<gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData> out = new ArrayList<>();
-        for (IntersectionData datum : data.values()) {
-            gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData converted = new gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData();
-            converted.map = convertMapMessage(datum);
-            converted.intersectionId = converted.map.getIntersectionId();
+        synchronized (data) {
+            for (IntersectionData datum : data.values()) {
+                gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData converted = new gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData();
+                converted.map = convertMapMessage(datum);
+                converted.intersectionId = converted.map.getIntersectionId();
+                
+                if (datum.getIntersectionState() != null) {
+                    converted.spat = convertSpatMessage(datum);
+                    //log.debug("Converted map message with no spat");
+                }
             
-            if (datum.getIntersectionState() != null) {
-                converted.spat = convertSpatMessage(datum);
-                //log.debug("Converted map message with no spat");
+                out.add(converted);
             }
-        
-            out.add(converted);
         }
 
         return out;
