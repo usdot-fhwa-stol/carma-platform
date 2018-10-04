@@ -771,7 +771,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         state.put(DataElementKey.ACCELERATION, curAccelElement);
         operSpeedElem = new DoubleDataElement(
                 pluginServiceLocator.getRouteService().getSpeedLimitAtLocation(traj.getStartLocation()).getLimit()
-                        * operSpeedScalingFactor);
+                        * operSpeedScalingFactor); // NOTE: This field is used as the speed limit for Ead algorithm and does not support variables speed limits in a route
         state.put(DataElementKey.OPERATING_SPEED, operSpeedElem);
 
         vehicleLat = new DoubleDataElement(curPos.get().lat());
