@@ -381,6 +381,15 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      */
     private void handleNewIntersectionData(List<IntersectionData> data) {
         synchronized (intersections) {
+            // Get current intersection if available to compare for phase change
+            Integer currentIntId = null;
+            if (glidepathTrajectory != null) {
+                List<gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData> trackedIntersections = glidepathTrajectory.getSortedIntersections();
+                if (trackedIntersections.size() > 0) {
+                    currentIntId = trackedIntersections.get(0).intersectionId;
+                }
+            }
+
             boolean phaseChanged = false;
             boolean newIntersection = false;
             List<Integer> foundIds = new LinkedList<>();
@@ -407,6 +416,11 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                     IntersectionState oldIntersectionState = old.getIntersectionState();
                     if (oldIntersectionState == null) {
                         log.warn("Intersection could not be processed because it has no state. Id: " + old.getIntersectionId());
+                        continue;
+                    }
+                    
+                    if (currentIntId != null && currentIntId != datum.getIntersectionId()) {
+                        log.debug("Ignoring phase check for future intersection: " + datum.getIntersectionId());
                         continue;
                     }
                     phaseChangeCheckLoop: for (MovementState oldMov : oldIntersectionState.getMovementList()) {
