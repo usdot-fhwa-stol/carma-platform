@@ -470,24 +470,21 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      */
     private double computeDtsb() {
         if (curPos.get() == null) { // NULL will only be present at startup and will never be assigned making this check thread safe.
-            log.warn("Vehicle Location was null");
             return MAX_DTSB; 
         }
         if (glidepathTrajectory == null) {
-            log.warn("Traj was null");
             return MAX_DTSB;
         }
         try {
             double dtsb = glidepathTrajectory.updateIntersections(convertIntersections(intersections), curPos.get());
-            log.info("DTSB from legacy updateIntersections: " + dtsb + " AcceptableStopDistance " + acceptableStopDistance);
             updateUISignals();
             if (dtsb >= MAX_DTSB) {
-                log.warn("DTSB computation failed!");
+                log.debug("DTSB computation failed!");
                 return MAX_DTSB;
             }
             return dtsb;
         } catch (Exception e) {
-            log.warn("DTSB computation failed!", e);
+            log.debug("DTSB computation failed!", e);
         }
 
         return MAX_DTSB;
@@ -504,7 +501,6 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             final TrafficSignalInfo signalMsg = intersectionDataToMsg(glidepathTrajectory.getSortedIntersections().get(i));
             msg.getTrafficSignalInfoList().add(signalMsg);
         }
-        log.debug("SIGNAL_DISPLAY", "NumInt: " + msg.getTrafficSignalInfoList().size());
         trafficSignalInfoPub.publish(msg);
     }
 
@@ -806,7 +802,6 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         } catch (Exception e) {
             log.error("Glidepath trajectory planning threw exception!", e);
             TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
-            tpr.requestHigherPriority(); // indicate generic failure
             return tpr;
         }
 
