@@ -388,8 +388,10 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 foundIds.add(datum.getIntersectionId()); // Track the visible intersection ids
                 if (!intersections.containsKey(datum.getIntersectionId())) {
                     intersections.put(datum.getIntersectionId(), datum);
+                    log.info("INT_DATA","new int");
                     newIntersection = true;
                 } else {
+                    log.info("INT_DATA","old int");
                     // If it is in the list, check to see if this has changed the phase
                     IntersectionData old = intersections.get(datum.getIntersectionId());
                     intersections.put(datum.getIntersectionId(), datum);
@@ -406,12 +408,13 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                     // Walk through all the movements to compare
                     IntersectionState oldIntersectionState = old.getIntersectionState();
                     if (oldIntersectionState == null) {
-                        log.warn("Intersection could not be processed because it has no state. Id: " + old.getIntersectionId());
+                        log.warn("INT_DATA","Intersection could not be processed because it has no state. Id: " + old.getIntersectionId());
                         continue;
                     }
                     phaseChangeCheckLoop: for (MovementState oldMov : oldIntersectionState.getMovementList()) {
                         for (MovementState newMov : datum.getIntersectionState().getMovementList()) {
                             if (oldMov.getSignalGroup() == newMov.getSignalGroup()) {
+                                log.info("INT_DATA","In same group");
                                 // If we find a shared movement, check the movement events for sameness
 
                                 // ASSUMPTION: Phase states within a movement will always be reported in the same order
@@ -422,6 +425,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                                             || (oldMov.getMovementEventList().get(i)
                                                     .getEventState().getMovementPhaseState() != newMov.getMovementEventList().get(i)
                                                     .getEventState().getMovementPhaseState())) {
+                                        log.info("INT_DATA","Phase change");
                                         // Phase change detected, a replan will be needed
                                         phaseChanged = true; // TODO for performance this should only be set if the phase changing is for the current intersection
                                         break phaseChangeCheckLoop; // Break outer for loop labeled phaseChangeCheckLoop
@@ -439,8 +443,9 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
             // Trigger new plan on phase change
             boolean onMap = checkIntersectionMaps();
+            log.info("INT_DATA","NewIntData: onMap: " + onMap + " intersections: " + intersections.values());
             if ((phaseChanged || newIntersection || deletedIntersection) && onMap) {
-                log.info("Requesting new plan with causes - PhaseChanged: " + phaseChanged 
+                log.info("INT_DATA","Requesting new plan with causes - PhaseChanged: " + phaseChanged 
                     + " NewIntersection: " + newIntersection 
                     + " deletedIntersection: " + deletedIntersection
                     + " onMap: " + onMap);
