@@ -90,6 +90,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.SpatMessage;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.EadAStar;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 import gov.dot.fhwa.saxton.carma.signal_plugin.filter.PolyHoloA;
+import j2735_msgs.MovementPhaseState;
 import sensor_msgs.NavSatFix;
 import std_msgs.Bool;
 import std_srvs.SetBool;
@@ -435,7 +436,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                                     if (i >= newMov.getMovementEventList().size()
                                             || (oldMov.getMovementEventList().get(i)
                                                     .getEventState().getMovementPhaseState() != newMov.getMovementEventList().get(i)
-                                                    .getEventState().getMovementPhaseState())) {
+                                                    .getEventState().getMovementPhaseState() && newMov.getMovementEventList().get(i)
+                                                    .getEventState().getMovementPhaseState() != MovementPhaseState.PROTECTED_CLEARANCE)) { // Do not replan on transition to yellow
                                         // Phase change detected, a replan will be needed
                                         phaseChanged = true; // TODO for performance this should only be set if the phase changing is for the current intersection
                                         break phaseChangeCheckLoop; // Break outer for loop labeled phaseChangeCheckLoop
@@ -453,7 +455,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
             // Trigger new plan on phase change
             boolean onMap = checkIntersectionMaps();
-            if ((phaseChanged || newIntersection || deletedIntersection) && onMap) {
+            if (!stoppedAtLight() && (phaseChanged || newIntersection || deletedIntersection) && onMap) {
                 log.info("Requesting new plan with causes - PhaseChanged: " + phaseChanged 
                     + " NewIntersection: " + newIntersection 
                     + " deletedIntersection: " + deletedIntersection

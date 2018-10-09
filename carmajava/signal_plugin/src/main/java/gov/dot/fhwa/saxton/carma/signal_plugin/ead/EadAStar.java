@@ -292,6 +292,13 @@ public class EadAStar implements IEad {
 
         log_.info("EAD", "plan function called with operating speed: " + operSpeed + " and current speed: " + speed);
 
+        for (IntersectionData intersection: intersections) {
+            log_.info("EAD", "Intersection " + intersection.intersectionId 
+                + " phase: " + intersection.currentPhase 
+                + " timeToNextPhase: " + intersection.timeToNextPhase);
+        }
+
+
         intList_ = intersections;
         long methodStartTime = System.currentTimeMillis();
 
@@ -324,7 +331,7 @@ public class EadAStar implements IEad {
 
         prevMethodStartTime_ = methodStartTime;
         long totalTime = System.currentTimeMillis() - methodStartTime;
-        log_.info("EAD", "plan completed in " + totalTime + " ms.");
+        log_.error("EAD", "plan completed in " + totalTime + " ms.");
         
         return currentPath_;
     }
