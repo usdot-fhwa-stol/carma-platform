@@ -35,7 +35,7 @@
   <arg name="CARMA_DIR" default="$(find carma)" doc="The path of the package directory"/>
   <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/launch/params" doc="Directory of yaml parameter files"/>
   <!-- Path to Unified Robot Description Format URDF file for loading static transforms -->
-  <arg name="URDF_FILE" default="$(arg CARMA_DIR)/launch/urdf/saxton_cav_green_srx.urdf" doc="Path to the vehicle's URDF file"/>
+  <arg name="URDF_FILE" default="$(arg CARMA_DIR)/launch/urdf/saxton_cav.urdf" doc="Path to the vehicle's URDF file"/>
   <!-- Simulated Driver Arguments -->
   <!-- Directory of Simulation Files -->
   <arg name="DATA_DIR" default="$(arg CARMA_DIR)/mock_drivers/src/test/data" doc="Directory of driver simulation data files"/>
@@ -64,7 +64,7 @@
   <!-- JVM Debug arguments -->
   <arg name="JVM_DEBUG_OPTS"    default="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005" doc="Start rosjava node with these JVM arguments for debugging"/>
   <!-- JVM Logging Options -->
-  <arg name="log_config" default="/opt/carma/src/CarmaPlatform/carmajava/launch/params/log-config.properties" doc="The location of the logging configuration file"/>
+  <arg name="log_config" default="$(arg PARAM_DIR)/log-config.properties" doc="The location of the logging configuration file"/>
   <arg name="JVM_LOG_OPTS" value="-Djava.util.logging.config.file=$(arg log_config)"/>
   <!-- Apply logging properties to all java nodes using JAVA_OPTS-->
   <env name="JAVA_OPTS" value="$(arg JVM_LOG_OPTS)"/>
@@ -182,7 +182,6 @@
             to="/$(arg TOP_NS)/system_alert"/>
 
           <include file="$(arg LAUNCH_DIR)/drivers.launch">
-
             <arg name="mock_dsrc" value="$(arg mock_dsrc)" />
             <arg name="mock_pinpoint" value="$(arg mock_pinpoint)" />
             <arg name="mock_can" value="$(arg mock_can)" />

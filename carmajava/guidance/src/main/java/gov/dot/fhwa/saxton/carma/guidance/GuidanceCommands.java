@@ -71,7 +71,8 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     private static final long CONTROLLER_TIMEOUT_PERIOD_MS = 200;
     public static final double MAX_SPEED_CMD_M_S = 35.7632; // 80 MPH, hardcoded to persist through configuration change 
     private final IManeuverInputs maneuverInputs;
-    AtomicBoolean usingWrenchEffort = new AtomicBoolean(false); // TODO remove if wrench effort override is removed
+    private AtomicBoolean usingWrenchEffort = new AtomicBoolean(false); // TODO remove if wrench effort override is removed
+    private boolean useWrenchEffortStoppingOverride; // TODO remove if wrench effort override is removed
 
     GuidanceCommands(GuidanceStateMachine stateMachine, IPubSubService iPubSubService, ConnectedNode node, IManeuverInputs maneuverInputs) {
         super(stateMachine, iPubSubService, node);
@@ -88,6 +89,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     @Override
     public void onStartup() {
         vehicleAccelLimit = node.getParameterTree().getDouble("~vehicle_acceleration_limit", 2.5);
+        useWrenchEffortStoppingOverride = node.getParameterTree().getBoolean("~use_wrench_effort_stopping_override", false);
         log.info("GuidanceCommands using max accel limit of " + vehicleAccelLimit);
         velocitySubscriber = pubSubService.getSubscriberForTopic("velocity", TwistStamped._TYPE);
         currentState.set(GuidanceState.STARTUP);
@@ -340,7 +342,8 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
                 // If the vehicle wants to stand still (0 mph) we will command with wrench effort instead
                 // This should be refactored or removed once the STOL TO 26 demo is complete
                 final double SIX_MPH = 2.68224;
-                if (Math.abs(cachedSpeed) < 0.1
+                if (useWrenchEffortStoppingOverride
+                    && Math.abs(cachedSpeed) < 0.1
                     && Math.abs(cachedMaxAccel) - maneuverInputs.getMaxAccelLimit() < 0.00001
                     && maneuverInputs.getCurrentSpeed() < SIX_MPH) {
                     std_msgs.Float32 effortMsg = wrenchEffortPublisher.newMessage();
