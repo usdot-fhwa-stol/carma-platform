@@ -136,6 +136,7 @@ public class EadIntersectionManager {
 		});
 		
 		if (inputIntersections == null  ||  inputIntersections.size() <= 0) {
+			sortedIntersections_.set(sortedIntersections); // Store sorted intersections
 			throw new IllegalArgumentException("updateIntersections called with no intersection data");
 		}
 
@@ -178,6 +179,7 @@ public class EadIntersectionManager {
 
 		if (sortedIntersections.size() <= 0) {
 			log_.warn("TRAJ", "No valid intersections detected");
+			sortedIntersections_.set(sortedIntersections); // Store sorted intersections
 			return dtsb;
 		}
 

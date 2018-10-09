@@ -141,6 +141,9 @@ CarmaJS.WidgetFramework.TrafficSignal = (function () {
 
                 //If nothing on the list, exit
                 if (message.traffic_signal_info_list == null || message.traffic_signal_info_list.length == 0) {
+                    showEachTrafficSignal(null, svgLayer1); // Reset traffic lights when empty data is provided
+                    showEachTrafficSignal(null, svgLayer2);
+                    showEachTrafficSignal(null, svgLayer3);
                     return;
                 }
 
