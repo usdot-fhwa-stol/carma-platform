@@ -664,8 +664,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         
         return currentLongitudinalManeuver.getPlanner().equals(this) 
             && currentLongitudinalManeuver instanceof SteadySpeed
-            && Math.abs(currentLongitudinalManeuver.getTargetSpeed()) < ZERO_SPEED_NOISE
-            && Math.abs(currentSpeed) < ZERO_SPEED_NOISE;
+            && Math.abs(currentLongitudinalManeuver.getTargetSpeed()) < ZERO_SPEED_NOISE;
     }
 
     /**
