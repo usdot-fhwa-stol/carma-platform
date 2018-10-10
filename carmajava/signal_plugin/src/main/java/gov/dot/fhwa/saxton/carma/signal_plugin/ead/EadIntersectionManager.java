@@ -142,7 +142,7 @@ public class EadIntersectionManager {
 
 		log_.debug("TRAJ", "updateIntersections has inputIntersections size = " + inputIntersections.size());
 
-		//loop through all input intersections
+		//loop through all input intersections and only keep those whose maps we are on
 		for (IntersectionData input : inputIntersections) {
 
 			if (!validIntersection(input)) { // Check that intersection is valid
@@ -170,9 +170,9 @@ public class EadIntersectionManager {
 						log_.debug("INTR","Updated phase: " + pde.value());
 						input.currentPhase = pde.value();
 				}
-			}
 
-			sortedIntersections.add(input); // Add the intersection to our sorted set
+				sortedIntersections.add(input); // Add the intersection to our sorted set
+			}
 
 			log_.debug("TRAJ", "updateIntersections - preparing to look at known intersections for id = " + input.intersectionId);
 		}
