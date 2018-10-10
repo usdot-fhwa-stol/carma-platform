@@ -123,7 +123,7 @@ ead/trajectoryclass: 'gov.dot.fhwa.saxton.glidepath.ead.Trajectory'
 
 # these define the granularity of the AStar tree grid; coarse for first pass across all intersections, fine for
 # the detailed pass looking at only the nearest intersection
-ead/coarse_time_inc: 6.0
+ead/coarse_time_inc: 2.0
 ead/coarse_speed_inc: 2.0
 ead/fine_time_inc: 2.0
 ead/fine_speed_inc: 1.0
@@ -167,7 +167,7 @@ ead/acceptableStopDistance: 6.0
 # A string identifying the fuel cost model which will be used for computing cost between nodes
 # DEFAULT: The fuel cost model use in the origional Glidepath Phase 2 whitepaper
 # MOVES_2010: The fuel cost model based on the EPA 2010 MOVES brief on vehicle efficiency
-ead/desiredCostModel: 'DEFAULT'
+ead/desiredCostModel: 'MOVES_2010'
 
 # ----- DEFAULT cost model params for AStar tree
 

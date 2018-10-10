@@ -170,7 +170,7 @@ public class EadAStar implements IEad {
             path = solver_.solve(start, timeCostModel_, coarseNeighborCalc_);
 
             //increment goal time
-            exitTime += 5*coarseTimeInc_;
+            exitTime += coarseTimeInc_;
             ++iter;
         }
 
