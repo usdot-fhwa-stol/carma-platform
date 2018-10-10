@@ -9,8 +9,9 @@
 maximumSpeed: 35.0
 crawlingSpeed: 5.0
 
+# Accel must match guidance accel values for maneuver generation to match plan
 # all accel limits are in m/s^2 (accel & decel limits must always be the same due to XGV implementation)
-defaultAccel: 2.0
+defaultAccel: 2.5
 # situation-specific accel limits
 rampUpAccel: 1.84
 scenario2InitiateAccel: 1.81
@@ -125,7 +126,7 @@ ead/trajectoryclass: 'gov.dot.fhwa.saxton.glidepath.ead.Trajectory'
 # the detailed pass looking at only the nearest intersection
 ead/coarse_time_inc: 2.0
 ead/coarse_speed_inc: 2.0
-ead/fine_time_inc: 2.0
+ead/fine_time_inc: 3.0
 ead/fine_speed_inc: 1.0
 
 # enables limiting of speed commands based on maximum acceleration capability
