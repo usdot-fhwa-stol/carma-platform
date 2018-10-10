@@ -131,8 +131,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     static private final double MAX_DTSB = Integer.MAX_VALUE - 5.0; // Legacy Glidepath code returns Integer.MAX_VALUE for invalid dtsb. Add fudge factor for detecting it as a double
 
     private final long LOOP_PERIOD = 100; // Plugin will loop at 10Hz
-    private final GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();;
-    private double acceptableStopDistance;
+    private final GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
 
     public TrafficSignalPlugin(PluginServiceLocator psl) {
         super(psl);
@@ -151,10 +150,6 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
         // Initialize Speed Filter
         velFilter.initialize(appConfig.getPeriodicDelay() * Constants.MS_TO_SEC); // TODO determine what the best value should be given we no longer use the periodic executor
-        
-        // TODO use stopbox width instead
-        // The acceptable stop distance will be used instead of the stopbox width to define acceptable distance past the stop bar
-        acceptableStopDistance = appConfig.getDoubleDefaultValue("ead.acceptableStopDistance", 6.0);
 
         // log the key params here
         pluginServiceLocator.getV2IService().registerV2IDataCallback(this::handleNewIntersectionData);
