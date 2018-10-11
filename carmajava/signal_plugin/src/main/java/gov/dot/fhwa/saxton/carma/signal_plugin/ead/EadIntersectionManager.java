@@ -158,6 +158,7 @@ public class EadIntersectionManager {
 				input.dtsb = geometry.dtsb();
 				input.laneId = geometry.laneId();
 				input.geometry = geometry;
+				input.stopBoxWidth = geometry.stopBoxWidth();
 
 				DoubleDataElement dde = (DoubleDataElement) input.spat.getSpatForLane(input.laneId).get(DataElementKey.SIGNAL_TIME_TO_NEXT_PHASE);
 				if (dde != null) {
