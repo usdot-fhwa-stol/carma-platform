@@ -58,7 +58,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   protected int timeStepsWithoutTraj = 0;
   protected static final int MAX_ACCEPTABLE_TIMESTEPS_WITHOUT_TRAJECTORY = 3;
   protected TrajectoryConverter trajectoryConverter;
-  protected final double DOWNTRACK_EPSILON = 0.001;
+  protected final double DOWNTRACK_EPSILON = 0.1;
 
   // Storage struct for internal representation of callbacks based on trajectory completion percent
   private class PctCallback {

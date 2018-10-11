@@ -32,7 +32,7 @@ public abstract class ManeuverBase implements ISimpleManeuver {
     protected IGuidanceCommands                 commands_;
     protected ILogger                           log_ = LoggerManager.getLogger();
     protected final IPlugin                     planner_;
-    protected final double                      DOWNTRACK_EPSILON = 0.001;
+    protected final double                      DOWNTRACK_EPSILON = 0.1;
 
     /**
      * Constructs a Maneuver and sets the planner's name
