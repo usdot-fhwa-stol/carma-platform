@@ -449,8 +449,9 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             boolean deletedIntersection = intersections.entrySet().removeIf(entry -> !foundIds.contains(entry.getKey()));
 
             // Trigger new plan on phase change
-            boolean onMap = checkIntersectionMaps();
-            if (!stoppedAtLight() && (phaseChanged || newIntersection || deletedIntersection) && onMap) {
+            double dtsb = computeDtsb();
+            boolean onMap = checkIntersectionMaps(dtsb);
+            if (!stoppedAtLight() && (phaseChanged || newIntersection || deletedIntersection) && onMap && dtsb > 6.0) {
                 log.info("Requesting new plan with causes - PhaseChanged: " + phaseChanged 
                     + " NewIntersection: " + newIntersection 
                     + " deletedIntersection: " + deletedIntersection
@@ -538,6 +539,9 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         return signalMsg;
     }
 
+    private boolean checkIntersectionMaps(double dtsb) {
+        return dtsb < MAX_DTSB;
+    }
     /**
      * Check to see if we're on a MAP message
      * 
