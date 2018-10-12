@@ -1,4 +1,4 @@
-# CARMA Platform Release Notes
+## CARMA Platform Release Notes
 ***********************************************************************
 
 Version 2.7.3, released 09 October 2018
@@ -22,7 +22,7 @@ Material changes to the software in this version are:
 -PR 1036, allow guidance plugins to set up ROS service servers
 
 Version 2.7.2, released 17 July 2018
--------------------------------------------------------------------------------------------
+***********************************************************************
 This is the first public release of the CARMA platform (internally known as Prototype I).
 
 Installation must be performed from a development computer.  Once the system is built 
