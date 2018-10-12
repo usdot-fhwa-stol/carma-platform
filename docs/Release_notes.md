@@ -1,4 +1,4 @@
-CARMA Platform Release Notes
+# CARMA Platform Release Notes
 ***********************************************************************
 
 Version 2.7.3, released 09 October 2018
