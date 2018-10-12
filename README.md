@@ -19,28 +19,15 @@ The platform's performance requirements are specified to conform the following p
 ### Release Notes
 The current version release of the CARMA software platform. [CARMA Release Notes](<docs/Release_notes.md>)
 
-
 ### Architecture & Design
-:  The documentation describes the architecture of a single CARMA vehicle.  There may be several of these vehicles operating in concert, communicating with each other via DSRC or cellular means.  They can also communicate with roadside infrastructure using DSRC or cellular.  The communication among software components within a single vehicle, however, is mostly done via the Robot Operating System (ROS) framework.  There are no ROS communications between neighboring vehicles. [CAV Platform Architecture Document](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/24838181/CAV%20Platform%20Architecture.docx) 
+The documentation describes the architecture of a single CARMA vehicle.  There may be several of these vehicles operating in concert, communicating with each other via DSRC or cellular means.  They can also communicate with roadside infrastructure using DSRC or cellular.  The communication among software components within a single vehicle, however, is mostly done via the Robot Operating System (ROS) framework.  There are no ROS communications between neighboring vehicles. [CAV Platform Architecture Document](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/24838181/CAV%20Platform%20Architecture.docx) 
+
+### Developers Guide 
 
 ### Users Guide
 This guide describes the PC configuration steps necessary to install and run the CARMA platform. The steps match what the development team performed on their own PCs and some configuration may be different for other users. [CARMA User Guide](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/24805504/CARMA%20User%20Guide.docx) 
 
-### Developers Guide
-
-### Getting Started
-The following instructions describe the procedure to fetch, build, and run the application. 
-
-### Prerequisites
-
-#### Build
-to be added.
-
-#### Deployment
-to be added.
-
-#### Testing
-to be added.
+### Administrator Guide
 
 #### Contribution
 Welcome to the CARMA contributing guide. Please read this guide to learn about our development process, how to propose pull requests and improvements, and how to build and test your changes to this project. [CARMA Contributing Guide](docs/Contributing.md) 
