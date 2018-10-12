@@ -5,7 +5,7 @@ Version 2.7.3, released 09 October 2018
 ***********************************************************************
 Material changes to the software in this version are:
 
-- PR 982, fixed unit tests
+\-PR 982, fixed unit tests
 -PR 983, added decoding of J2735/2016 SPAT & MAP messages
 -PR 988, improved platooning plugin's use of mobility message connection
 -PR 1003, configuration changes for operation on the Saxton Ford Escape
