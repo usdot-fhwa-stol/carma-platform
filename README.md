@@ -12,6 +12,7 @@ Managing automated vehicle motion involves three aspects. The first is **navigat
 ![CARMA Demo](docs/image/CARMA2_Platooning_from_Office.jpg)
 
 ### System Specifications
+to be added.
 
 ### Release Notes
 The current version release of the CARMA software platform. [CARMA Release Notes](<docs/Release_notes.md>)
@@ -29,8 +30,6 @@ This guide describes the PC configuration steps necessary to install and run the
 The following instructions describe the procedure to fetch, build, and run the application. 
 
 ### Prerequisites
-
-
 
 #### Build
 to be added.
