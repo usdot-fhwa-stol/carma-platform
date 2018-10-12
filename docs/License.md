@@ -10,7 +10,7 @@ licenses associated with them.  These packages and their license information are
 below.
 
 -------------------------------------------------------------------------------------------
-EVENTEMITTER2:
+## EVENTEMITTER2:
 
 Copyright (c) 2016 Paolo Fragomeni <http://www.github.com/0x00a> and Contributors
 Released under the MIT License
@@ -20,7 +20,7 @@ Minified by jsDelivr using UglifyJS v3.0.24.
 Original file: https://github.com/hij1nx/EventEmitter2
 
 -------------------------------------------------------------------------------------------
-FONT-AWESOME:
+## FONT-AWESOME:
 
 Source: https://github.com/FortAwesome/Font-Awesome/blob/master/LICENSE.txt
 
@@ -32,15 +32,15 @@ Full Font Awesome Free license: https://fontawesome.com/license/free.
 In the Font Awesome Free download, the CC BY 4.0 license applies to all icons
 packaged as SVG and JS file types.
 
-# Fonts: SIL OFL 1.1 License (https://scripts.sil.org/OFL)
+## Fonts: SIL OFL 1.1 License (https://scripts.sil.org/OFL)
 In the Font Awesome Free download, the SIL OLF license applies to all icons
 packaged as web and desktop font files.
 
-# Code: MIT License (https://opensource.org/licenses/MIT)
+## Code: MIT License (https://opensource.org/licenses/MIT)
 In the Font Awesome Free download, the MIT license applies to all non-font and
 non-icon files.
 
-# Attribution
+## Attribution
 Attribution is required by MIT, SIL OLF, and CC BY licenses. Downloaded Font
 Awesome Free files already contain embedded comments with sufficient
 attribution, so you shouldn't need to do anything additional when using these
@@ -50,14 +50,14 @@ We've kept attribution comments terse, so we ask that you do not actively work
 to remove them from files, especially code. They're a great way for folks to
 learn about Font Awesome.
 
-# Brand Icons
+## Brand Icons
 All brand icons are trademarks of their respective owners. The use of these
 trademarks does not indicate endorsement of the trademark holder by Font
 Awesome, nor vice versa. **Please do not use brand logos for any purpose except
 to represent the company, product, or service to which they refer.**
 
 -------------------------------------------------------------------------------------------
-JQUERY and JQUERY-UI:
+## JQUERY and JQUERY-UI:
 
 Copyright JS Foundation and other contributors, https://js.foundation/
 
@@ -81,14 +81,14 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 -------------------------------------------------------------------------------------------
-JQWIDGETS:
+## JQWIDGETS:
 
 CARMA is distributed with commercially licensed redistributable modules for 
 jQWidgets.  For more information regarding the licensing, please visit: 
 http://www.jqwidgets.com/license.
 
 -------------------------------------------------------------------------------------------
-ROS CORE (3-clause BSD):
+## ROS CORE (3-clause BSD):
 
 Redistribution and use in source and binary forms, with or without modification, are 
 permitted provided that the following conditions are met:
@@ -115,7 +115,7 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 -------------------------------------------------------------------------------------------
-ROSLIB:
+## ROSLIB:
 
 Source: https://github.com/RobotWebTools/roslibjs and http://wiki.ros.org/roslibjs
 
@@ -153,7 +153,7 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
 -------------------------------------------------------------------------------------------
-SVG:
+## SVG:
 
 Copyright (c) 2012-2018 Wout Fierens
 https://svgdotjs.github.io/
