@@ -29,13 +29,23 @@ The documentation describes the architecture of a single CARMA vehicle.  There m
 ## Detail Design Guide's
 The Connected and Automated Vehicle (CAV) Platform that is the subject of the STOL II, Task Order 13, and work is being built as a reusable and extensible platform to support research in connected and cooperative vehicle operations over the next several years. The architecture for this platform has been described in the CARMA Platform Architecture Document. This document picks up from that high level description and presents additional details of both the hardware and software design. The design presented here represents an as-built view of the platform, v2.7.2, as of August 2018. 
 
+CARMA provides the following living documents to keep users and stakeholders informed of the latest developments:
+1. [ODE Architecture](docs/JPO%20ODE%20Architecture.docx)
+2. [ODE User Guide](docs/JPO_ODE_UserGuide.docx)
+3. [ODE Output Schema Reference Guide](docs/ODE_Output_Schema_Reference.docx)
+4. [ODE REST API Guide](https://usdot-jpo-ode.github.io/)
+5. [ODE Smoke Tests](https://github.com/usdot-jpo-ode/jpo-ode/wiki/JPO-ODE-QA-Documents)
+
+
 ## Developers Guide 
-This guide describes
+This guide describes 
 
 ## Users Guide
 This guide describes the PC configuration steps necessary to install and run the CARMA platform. The steps match what the development team performed on their own PCs and some configuration may be different for other users. [CARMA User Guide](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29392940/CARMA%202.7%20USER%20GUIDE.docx)
 
 ## Administrator Guide
+This guide describes [Administrator Guide](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29392940/CARMA%202.7%20USER%20GUIDE.docx)
+
 
 ## Contribution
 Welcome to the CARMA contributing guide. Please read this guide to learn about our development process, how to propose pull requests and improvements, and how to build and test your changes to this project. [CARMA Contributing Guide](docs/Contributing.md) 
