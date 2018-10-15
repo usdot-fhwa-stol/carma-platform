@@ -40,11 +40,9 @@ CARMA provides the following living documents to keep users and stakeholders inf
 7. [CAV Platform Detailed Design - Maneuvers](https://github.com/usdot-jpo-ode/jpo-ode/wiki/JPO-ODE-QA-Documents)
 8. [CAV Platform Detailed Design - Logging](https://github.com/usdot-jpo-ode/jpo-ode/wiki/JPO-ODE-QA-Documents)
 9. [CAV Platform Detailed Design - CommandandDataAPI](https://github.com/usdot-jpo-ode/jpo-ode/wiki/JPO-ODE-QA-Documents)
-10. [CAV Platform Detailed Design - CommandandDataAPI](https://github.com/usdot-jpo-ode/jpo-ode/wiki/JPO-ODE-QA-Documents)
-11. [CAV Platform Detailed Design - CommandandDataAPI](https://github.com/usdot-jpo-ode/jpo-ode/wiki/JPO-ODE-QA-Documents)
-12. [CAV Platform Detailed Design - CommandandDataAPI](https://github.com/usdot-jpo-ode/jpo-ode/wiki/JPO-ODE-QA-Documents)
-
-
+10. [CAV Platform Detailed Design - Environment.Message](https://github.com/usdot-jpo-ode/jpo-ode/wiki/JPO-ODE-QA-Documents)
+11. [CAV Platform Detailed Design - Sensor Fusion](https://github.com/usdot-jpo-ode/jpo-ode/wiki/JPO-ODE-QA-Documents)
+12. [CAV Platform Detailed Design - Geometry](https://github.com/usdot-jpo-ode/jpo-ode/wiki/JPO-ODE-QA-Documents)
 
 ## Developers Guide 
 This guide describes how to develop a plug-in. [Developers Guide](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29556796/CARMA%202.7%20Developers%20Guide.docx)
