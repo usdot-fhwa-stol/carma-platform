@@ -16,29 +16,11 @@ The following table identifies the documents covering each of the packages.
 |Guidance.Tracking|[CAV Platform Detailed Design – Guidance.Tracking](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
 |Guidance.Trajectory|[CAV Platform Detailed Design – Trajectory](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
 |Guidance.Trajectory|[CAV Platform Detailed Design – Trajectory](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
-|Guidance.Trajectory|[CAV Platform Detailed Design – Trajectory](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
-|Guidance.Trajectory|[CAV Platform Detailed Design – Trajectory](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
-|Guidance.Trajectory|[CAV Platform Detailed Design – Trajectory](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
-|Guidance.Trajectory|[CAV Platform Detailed Design – Trajectory](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
+|Guidance.Maneuvers|[CAV Platform Detailed Design – Maneuvers](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
+|Guidance conflict handling (covers multiple packages)|[CAV Platform Detailed Design – Trajectory](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
+|Guidance.Plugins|[CAV Platform Detailed Design – Plugins](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
+|Guidance.Platooning|[CAV Platform Detailed Design – Plug-ins.Platooning](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
+|Guidance.Lane Change Plugin|[CAV Platform Detailed Design – Plug-ins.Lane Change](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
+|Guidance.Speed Harm Plugin|[CAV Platform Detailed Design – Plugins.SpeedHarmonization](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
 
 
-
-
-|Guidance.Maneuvers|CAV Platform Detailed Design – Maneuvers.docx|
-|Guidance conflict handling - covers multiple packages|CAV Platform Detailed Design – Conflict Handling System.docx|
-|Guidance.Plugins|CAV Platform Detailed Design – Plugins.docx|
-|Guidance.Platooning|CAV Platform Detailed Design – Plug-ins.Platooning.docx|
-|Guidance.Lane Change Plugin|CAV Platform Detailed Design – Plug-ins.Lane Change.docx|
-|Guidance.Speed Harm Plugin|CAV Platform Detailed Design – Plugins.SpeedHarmonization.docx|
-
-
-
-
-|Name|Visibility|Description|
-|----|----------|-----------|
-|[jpo-ode](https://github.com/usdot-jpo-ode/jpo-ode)|public|Contains the public components of the application code.|
-|[jpo-cvdp](https://github.com/usdot-jpo-ode/jpo-cvdp)|public|Privacy Protection Module|
-|[jpo-security](https://github.com/usdot-jpo-ode/jpo-security)|public|Security dependencies.|
-|[asn1_codec](https://github.com/usdot-jpo-ode/asn1_codec)|public|ASN.1 Encoder/Decoder module|
-|jpo-ode-private|private|Proprietary dependencies.|
-|[jpo-security-svcs](https://github.com/usdot-jpo-ode/jpo-security-svcs)|public|Provides cryptographic services.|
