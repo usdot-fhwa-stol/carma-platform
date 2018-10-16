@@ -1,4 +1,5 @@
-# CARMA
+# Detailed Design Page
+The Connected and Automated Vehicle (CAV) Platform that is the subject of the STOL II, Task Order 13, and work is being built as a reusable and extensible platform to support research in connected and cooperative vehicle operations over the next several years. The architecture for this platform has been described in the CARMA Platform Architecture Document. This document picks up from that high level description and presents additional details of both the hardware and software design. The design presented here represents an as-built view of the platform, v2.7.2, as of August 2018.
 
 ![CARMA Arch](docs/image/CARMA2_Cadillacs_platooning.jpg)
 
