@@ -17,8 +17,11 @@ The following table identifies the documents covering each of the packages.
 |Guidance.Trajectory|CAV Platform Detailed Design – Trajectory.docx|
 |Guidance.Maneuvers|CAV Platform Detailed Design – Maneuvers.docx|
 |Guidance conflict handling - covers multiple packages|CAV Platform Detailed Design – Conflict Handling System.docx|
-|Guidance|CAV Platform Detailed Design – Guidance.docx|
-|Guidance|CAV Platform Detailed Design – Guidance.docx|
+|Guidance.Plugins|CAV Platform Detailed Design – Plugins.docx|
+|Guidance.Platooning|CAV Platform Detailed Design – Plug-ins.Platooning.docx|
+|Guidance.Lane Change Plugin|CAV Platform Detailed Design – Plug-ins.Lane Change.docx|
+|Guidance.Speed Harm Plugin|CAV Platform Detailed Design – Plugins.SpeedHarmonization.docx|
+
 
 
 
