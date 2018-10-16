@@ -10,7 +10,7 @@ The following package diagram is repeated from the Architecture Document for eas
 The following table identifies the documents covering each of the packages.  
 
 |Package|Attached Document(s)|
-|----|----------|-----------|
+|----|-----------|
 |Guidance|CAV Platform Detailed Design – Guidance.docx|
 |Guidance|public|Contains the public components of the application code.|
 
