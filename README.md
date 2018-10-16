@@ -28,7 +28,7 @@ The documentation describes the architecture of a single CARMA vehicle.  There m
 
 ## Detailed Design Documents
 Please see the Detail Design document page for detailed design specification for CARMA and other additional information.
-[Detail Design Page](docs/Detail_Design.md)
+[Detail Design Page](Detail_Design.md)
 
 ## Developers Guide 
 This guide describes the overall approach to develop a plug-in. [Developers Guide](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29556796/CARMA%202.7%20Developers%20Guide.docx)
