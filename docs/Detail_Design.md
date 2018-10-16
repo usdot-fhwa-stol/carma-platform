@@ -6,10 +6,10 @@ The Connected and Automated Vehicle (CAV) Platform that is the subject of the ST
 
 CARMA provides the following living documents to keep users and stakeholders informed of the latest developments:
 1. [CAV Platform Detailed Design - Guidance](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589642/CAV%20Platform%20Detailed%20Design%20-%20Guidance.docx)
-2. [Developers Guide](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589642/CAV%20Platform%20Detailed%20Design%20-%20Guidance.docx)
-3. [Developers Guide](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589642/CAV%20Platform%20Detailed%20Design%20-%20Guidance.docx)
-4. [Developers Guide](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589642/CAV%20Platform%20Detailed%20Design%20-%20Guidance.docx)
-5. [Developers Guide](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589642/CAV%20Platform%20Detailed%20Design%20-%20Guidance.docx)
+2. [CAV Platform Detailed Design - Plugins](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589642/CAV%20Platform%20Detailed%20Design%20-%20Guidance.docx)
+3. [CAV Platform Detailed Design - Plug-ins.Cruising](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589642/CAV%20Platform%20Detailed%20Design%20-%20Guidance.docx)
+4. [CAV Platform Detailed Design - Arbitrator](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589642/CAV%20Platform%20Detailed%20Design%20-%20Guidance.docx)
+5. [CAV Platform Detailed Design - Guidance.Tracking](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589642/CAV%20Platform%20Detailed%20Design%20-%20Guidance.docx)
 6. [Developers Guide](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589642/CAV%20Platform%20Detailed%20Design%20-%20Guidance.docx)
 7. [Developers Guide](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589642/CAV%20Platform%20Detailed%20Design%20-%20Guidance.docx)
 8. [Developers Guide](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589642/CAV%20Platform%20Detailed%20Design%20-%20Guidance.docx)
