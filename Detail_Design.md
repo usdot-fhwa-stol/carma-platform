@@ -9,11 +9,16 @@ The following package diagram is repeated from the Architecture Document for eas
 ## Software Detailed Design Documents
 The following table identifies the documents covering each of the packages.  
 
+|Package|Attached Document(s)|
+|----|----------|-----------|
+|Guidance|CAV Platform Detailed Design – Guidance.docx|
+|Guidance|public|Contains the public components of the application code.|
+
+
 |Name|Visibility|Description|
 |----|----------|-----------|
 |[jpo-ode](https://github.com/usdot-jpo-ode/jpo-ode)|public|Contains the public components of the application code.|
 |[jpo-cvdp](https://github.com/usdot-jpo-ode/jpo-cvdp)|public|Privacy Protection Module|
-|[jpo-s3-deposit](https://github.com/usdot-jpo-ode/jpo-s3-deposit)|public|S3 depositor service. Optional, comment out of `docker-compose.yml` file if not used.|
 |[jpo-security](https://github.com/usdot-jpo-ode/jpo-security)|public|Security dependencies.|
 |[asn1_codec](https://github.com/usdot-jpo-ode/asn1_codec)|public|ASN.1 Encoder/Decoder module|
 |jpo-ode-private|private|Proprietary dependencies.|
