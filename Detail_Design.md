@@ -12,7 +12,14 @@ The following table identifies the documents covering each of the packages.
 |Package|Attached Document(s)|
 |----|-----------|
 |Guidance|CAV Platform Detailed Design – Guidance.docx|
-|Guidance|public|Contains the public components of the application code.|
+|Guidance.Arbitrator|CAV Platform Detailed Design – Arbitrator.docx|
+|Guidance.Tracking|CAV Platform Detailed Design – Guidance.Tracking.docx|
+|Guidance.Trajectory|CAV Platform Detailed Design – Trajectory.docx|
+|Guidance.Maneuvers|CAV Platform Detailed Design – Maneuvers.docx|
+|Guidance conflict handling - covers multiple packages|CAV Platform Detailed Design – Conflict Handling System.docx|
+|Guidance|CAV Platform Detailed Design – Guidance.docx|
+|Guidance|CAV Platform Detailed Design – Guidance.docx|
+
 
 
 |Name|Visibility|Description|
