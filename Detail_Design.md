@@ -11,7 +11,7 @@ The following table identifies the documents covering each of the packages.
 
 |Package|Attached Document(s)|
 |----|-----------|
-|Guidance|[CAV Platform Detailed Design]https://github.com/usdot-jpo-ode/jpo-ode
+|Guidance|[CAV Platform Detailed Design](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
 |Guidance.Arbitrator|CAV Platform Detailed Design – Arbitrator.docx|
 |Guidance.Tracking|CAV Platform Detailed Design – Guidance.Tracking.docx|
 |Guidance.Trajectory|CAV Platform Detailed Design – Trajectory.docx|
