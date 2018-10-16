@@ -11,7 +11,7 @@ The following table identifies the documents covering each of the packages.
 
 |Package|Attached Document(s)|
 |----|-----------|
-|Guidance|CAV Platform Detailed Design – Guidance.docx|
+|Guidance|[CAV Platform Detailed Design]https://github.com/usdot-jpo-ode/jpo-ode
 |Guidance.Arbitrator|CAV Platform Detailed Design – Arbitrator.docx|
 |Guidance.Tracking|CAV Platform Detailed Design – Guidance.Tracking.docx|
 |Guidance.Trajectory|CAV Platform Detailed Design – Trajectory.docx|
