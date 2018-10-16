@@ -5,14 +5,10 @@ The Connected and Automated Vehicle (CAV) Platform that is the subject of the ST
 The following package diagram is repeated from the Architecture Document for easy reference.  It serves as a visual index to the rest of the detailed design.  Each package of non-trivial complexity is described in its own separate design document. 
 ![Software Package](docs/image/Software_Designs.png)
 
-## What Is CARMA
-![CARMA Arch](docs/image/CARMA2_Architecture.png)
 
 
 
-
-
-## Other Supporting Detailed Design Documents ##
+## Other Supporting Detailed Design Documents 
 CARMA provides the following living documents to keep users and stakeholders informed of the latest developments:
 1. [CAV Platform Detailed Design - Guidance](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589642/CAV%20Platform%20Detailed%20Design%20-%20Guidance.docx)
 2. [CAV Platform Detailed Design - Plugins](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589642/CAV%20Platform%20Detailed%20Design%20-%20Guidance.docx)
