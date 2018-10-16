@@ -159,10 +159,10 @@ public class MovesFuelCostModel implements ICostModel {
         //input sanity checks
         if (n2.getTime() <= n1.getTime()  ||  n2.getDistance() < n1.getDistance()  ||
                 n1.getSpeed() < 0  ||  n2.getSpeed() < 0) {
-            log.warn("EAD", "Cost computation invoked with invalid nodes:");
-            log.warn("EAD", "    n1: " + n1.toString());
-            log.warn("EAD", "    n2: " + n2.toString());
-            log.warn("EAD", "    " + numCosts + " costs have been evaluated since goal defined or previous error.");
+            log.debug("EAD", "Cost computation invoked with invalid nodes:");
+            log.debug("EAD", "    n1: " + n1.toString());
+            log.debug("EAD", "    n2: " + n2.toString());
+            log.debug("EAD", "    " + numCosts + " costs have been evaluated since goal defined or previous error.");
             numCosts = 0;
             return Double.MAX_VALUE;
         }else {
@@ -191,9 +191,9 @@ public class MovesFuelCostModel implements ICostModel {
         // Return the highest cost which would still be in the table when our result is in the undefined region
         // Additionally log the occurrence
         if (opMode == -1) {
-            log.warn("EAD", "Invalid operating mode found for MOVES cost calculation. Using highest known cost in table: " + DEFAULT_PEAK_ENERGY_KJ + " KJ");
-            log.warn("EAD", "    Node 1: " + n1.toString());
-            log.warn("EAD", "    Node 2: " + n2.toString());
+            log.debug("EAD", "Invalid operating mode found for MOVES cost calculation. Using highest known cost in table: " + DEFAULT_PEAK_ENERGY_KJ + " KJ");
+            log.debug("EAD", "    Node 1: " + n1.toString());
+            log.debug("EAD", "    Node 2: " + n2.toString());
             return J_PER_KJ * ((DEFAULT_PEAK_ENERGY_KJ / SEC_PER_HR) * dt);
         }
 

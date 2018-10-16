@@ -34,8 +34,8 @@ public class Node {
   private double timeDouble; //sec
   private double speedDouble; //m/s
 
-  private static final int DISTANCE_UNITS = -1; // distance is in units of 10^DISTANCE_UNITS meters
-  private static final int TIME_UNITS = -1; //time in units of 10^TIME_UNITS sec
+  private static final int DISTANCE_UNITS = 0; // distance is in units of 10^DISTANCE_UNITS meters
+  private static final int TIME_UNITS = 0; //time in units of 10^TIME_UNITS sec
   private static final int SPEED_UNITS = DISTANCE_UNITS - TIME_UNITS; // speed is in units of 10^SPEED_UNITS (m/s)
   // Pre-compute factors to save on calls to Math.pow();
   private static final double M_TO_DIST_UNITS = Math.pow(10.0, -(double)DISTANCE_UNITS);

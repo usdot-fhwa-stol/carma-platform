@@ -128,7 +128,7 @@ public class FinePathNeighbors extends NeighborBase {
         }
 
         //we only allow small speed around acceptableStopDist_ and will be capped to 0.0
-        if(dtsb <= acceptableStopDist_ && minSpeed < FLOATING_POINT_EPSILON) {
+        if(dtsb <= acceptableStopDist_ && minSpeed < FLOATING_POINT_EPSILON && curSpeed > FLOATING_POINT_EPSILON) {
             speeds.add(0.0);
         } else {
             speeds.add(Math.max(minSpeed, crawlingSpeed_));

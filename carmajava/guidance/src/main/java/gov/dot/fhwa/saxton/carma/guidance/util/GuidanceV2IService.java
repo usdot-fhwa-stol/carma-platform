@@ -130,9 +130,9 @@ public class GuidanceV2IService implements V2IService {
 
     private void fireCallbacks() {
         List<IntersectionData> recentData = getV2IData();
-        for (V2IDataCallback cb : callbacks) {
+        callbacks.forEach((V2IDataCallback cb) -> {
             cb.onV2IDataChanged(recentData);
-        }
+        });
     }
 
     private void reportNewSPATComms(int id, LocalDateTime ts, IntersectionState state) {
@@ -150,7 +150,10 @@ public class GuidanceV2IService implements V2IService {
             }
             existingData.spatComms.recordNewCommsRx(ts);
             if (existingData.intersection != null) {
-                existingData.intersection.updateIntersectionState(state, ts);
+                IntersectionGeometry curGeometry = existingData.intersection.getIntersectionGeometry();
+                LocalDateTime curGeometryStamp = existingData.intersection.getIntersectionGeometryRxTimestamp();
+                IntersectionData newIntData = new IntersectionData(curGeometry, curGeometryStamp, state, ts);
+                existingData.intersection = newIntData;
             }
             log.debug("Updated spat comms for id: " + id);
             return existingData;
@@ -176,8 +179,12 @@ public class GuidanceV2IService implements V2IService {
             existingData.mapComms.recordNewCommsRx(ts);
             if (existingData.intersection == null) {
                 existingData.intersection = newIntersectionData;
+            } else {
+                IntersectionState curState = existingData.intersection.getIntersectionState();
+                LocalDateTime curStateStamp = existingData.intersection.getIntersectionStateRxTimestamp();
+                IntersectionData newIntData = new IntersectionData(geometry, ts, curState, curStateStamp);
+                existingData.intersection = newIntData;
             }
-            existingData.intersection.updateIntersectionGeometry(geometry, ts);
             log.debug("Updated map comms for id: " + id);
             return existingData;
         });

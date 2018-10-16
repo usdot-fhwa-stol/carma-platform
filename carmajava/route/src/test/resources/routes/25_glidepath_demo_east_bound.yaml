@@ -1,7 +1,7 @@
 # Route file based off the east bound waypoints used in glidepath demos
 !gov.dot.fhwa.saxton.carma.route.Route
 routeName: "25 Glidepath Demo East Bound"
-maxJoinDistance: 20
+maxJoinDistance: 0
 waypoints:
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location

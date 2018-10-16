@@ -205,7 +205,10 @@ public class CruisingPlugin extends AbstractPlugin implements IStrategicPlugin {
     private void planTrajectoryGap(TrajectorySegment trajSeg, Trajectory traj) {
         // Use RouteService to find all necessary speed limits in this trajectory segment
         SortedSet<SpeedLimit> trajLimits = routeService.getSpeedLimitsInRange(trajSeg.startLocation, trajSeg.endLocation);
-        trajLimits.add(routeService.getSpeedLimitAtLocation(trajSeg.endLocation));
+        SpeedLimit endingLimit = routeService.getSpeedLimitAtLocation(trajSeg.endLocation);
+        if (endingLimit != null) {
+            trajLimits.add(endingLimit);
+        }
 
         // Merge segments with same speed limits
         List<SpeedLimit> mergedLimits = new LinkedList<SpeedLimit>();

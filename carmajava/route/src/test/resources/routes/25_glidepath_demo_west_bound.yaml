@@ -1,8 +1,56 @@
 # Route file based off the west bound waypoints used in glidepath demos
 !gov.dot.fhwa.saxton.carma.route.Route
 routeName: "25 Glidepath Demo West Bound"
-maxJoinDistance: 20
+maxJoinDistance: 0
 waypoints:
+  - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
+    location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
+      latitude: 38.956474
+      longitude: -77.146381
+      altitude: 72.0
+    minCrossTrack: -10.0
+    maxCrossTrack: 10.0
+    lowerSpeedLimit: 0
+    upperSpeedLimit: 25
+    laneCount: 1
+    nearestMileMarker: 1.0
+    roadType: SECONDARY    
+    interiorLaneMarkings: SOLID_WHITE
+    leftMostLaneMarking: SOLID_YELLOW
+    rightMostLaneMarking: SOLID_WHITE
+
+  - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
+    location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
+      latitude: 38.955516
+      longitude: -77.146742
+      altitude: 72.0
+    minCrossTrack: -10.0
+    maxCrossTrack: 10.0
+    lowerSpeedLimit: 0
+    upperSpeedLimit: 25
+    laneCount: 1
+    nearestMileMarker: 1.0
+    roadType: SECONDARY    
+    interiorLaneMarkings: SOLID_WHITE
+    leftMostLaneMarking: SOLID_YELLOW
+    rightMostLaneMarking: SOLID_WHITE
+
+  - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
+    location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
+      latitude: 38.955310
+      longitude: -77.146830
+      altitude: 72.0
+    minCrossTrack: -10.0
+    maxCrossTrack: 10.0
+    lowerSpeedLimit: 0
+    upperSpeedLimit: 25
+    laneCount: 1
+    nearestMileMarker: 1.0
+    roadType: SECONDARY    
+    interiorLaneMarkings: SOLID_WHITE
+    leftMostLaneMarking: SOLID_YELLOW
+    rightMostLaneMarking: SOLID_WHITE
+
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
       latitude: 38.9551558
