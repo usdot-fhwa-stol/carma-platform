@@ -22,16 +22,16 @@ The following table identifies the documents covering each of the packages.
 |Guidance.Platooning|[CAV Platform Detailed Design – Plug-ins.Platooning](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
 |Guidance.Lane Change Plugin|[CAV Platform Detailed Design – Plug-ins.Lane Change](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
 |Guidance.Speed Harm Plugin|[CAV Platform Detailed Design – Plugins.SpeedHarmonization](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
-
-
-|Guidance.Speed Harm Plugin|[CAV Platform Detailed Design – Plugins.SpeedHarmonization](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
-|Guidance.Speed Harm Plugin|[CAV Platform Detailed Design – Plugins.SpeedHarmonization](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
-|Guidance.Speed Harm Plugin|[CAV Platform Detailed Design – Plugins.SpeedHarmonization](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
-|Guidance.Speed Harm Plugin|[CAV Platform Detailed Design – Plugins.SpeedHarmonization](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
-|Guidance.Speed Harm Plugin|[CAV Platform Detailed Design – Plugins.SpeedHarmonization](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
-|Guidance.Speed Harm Plugin|[CAV Platform Detailed Design – Plugins.SpeedHarmonization](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
-|Guidance.Speed Harm Plugin|[CAV Platform Detailed Design – Plugins.SpeedHarmonization](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
-|Guidance.Speed Harm Plugin|[CAV Platform Detailed Design – Plugins.SpeedHarmonization](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
+|Transform Sever|[CAV Platform Detailed Design – TransformServer](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
+|Logger|[CAV Platform Detailed Design – Operator UI](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
+|Operator UI|[CAV Platform Detailed Design – Plugins.SpeedHarmonization](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
+|Vehicle Environment.Roadway|[CAV Platform Detailed Design – RoadwayEnvironment](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
+|Vehicle Environment.Message|[CAV Platform Detailed Design – Message](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
+|Vehicle Environment.Sensor Fusion|[CAV Platform Detailed Design – Sensor Fusion](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
+|Vehicle Environment.Geometry|[CAV Platform Detailed Design – Geometry](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
+[CAV Platform Detailed Design – Geometry.Cartesian](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
+[CAV Platform Detailed Design – Geometry.Geodesic](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
+|Vehicle Environment.Route|[CAV Platform Detailed Design](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
 
 
 
