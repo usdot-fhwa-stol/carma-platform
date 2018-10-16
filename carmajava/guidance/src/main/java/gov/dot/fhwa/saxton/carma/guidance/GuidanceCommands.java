@@ -380,7 +380,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
             // Set the speed/accel commands to ensure valid values are passed to the controller before we engage
             // Comparing against default value of -1 to avoid race condition where first maneuver starts executing before this loop is called after engagement
             speedCommand.compareAndSet(-1.0, current_speed);
-            maxAccel.compareAndSet(-1.0, current_speed);
+            maxAccel.compareAndSet(-1.0, maneuverInputs.getMaxAccelLimit());
 
             msg.setSpeed(speedCommand.get());
             //TODO maybe need to change maxAccel and commands in lateralMsgs
