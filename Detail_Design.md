@@ -45,5 +45,5 @@ The following table identifies the documents covering each of the packages.
 |System installation, configuration and startup|[CAV Platform Detailed Design – LaunchScript](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
 ||[CAV Platform Remote Install and Launch](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/37748788/CAV%20Platform%20Remote%20Install%20and%20Launch.docx)
 ||[CAV Platform Vehicle Configuration](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/37978189/CAV%20Platform%20Vehicle%20Configuration.docx)
-||[CAV Platform Vehicle PC Setup](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
+||[CAV Platform Vehicle PC Setup](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/37945418/CAV%20Platform%20Vehicle%20PC%20Setup.docx)
 ||[CAV Platform Vehicle PC Structure and Use](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
