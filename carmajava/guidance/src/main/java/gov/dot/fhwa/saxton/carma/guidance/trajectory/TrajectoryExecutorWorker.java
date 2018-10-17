@@ -58,7 +58,6 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
   protected int timeStepsWithoutTraj = 0;
   protected static final int MAX_ACCEPTABLE_TIMESTEPS_WITHOUT_TRAJECTORY = 3;
   protected TrajectoryConverter trajectoryConverter;
-  protected final double DOWNTRACK_EPSILON = 0.1;
 
   // Storage struct for internal representation of callbacks based on trajectory completion percent
   private class PctCallback {
@@ -91,18 +90,29 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
    * as a result of the new trajectory completion value. This is the main event-driven method
    * for this class.
    * 
+   * NOTE: When there is no next trajectory we will set the current downtrack distance to start of our current trajectory
+   *       to ensure we will execute commands even with GPS drift
+   * 
    * @param downtrack The current downtrack distance from RouteState
    */
   public void updateDowntrackDistance(double downtrack) {
     log.debug("TrajectoryExecutorWorker updating downtrack distance to " + downtrack);
-    this.downtrackDistance = downtrack;
 
-    if (currentTrajectory.get() == null) {
+    Trajectory curTraj = currentTrajectory.get();
+    if (curTraj == null) {
       // Nothing to do
       log.info("Finished downtrack distance update with no trajectory.");
+      this.downtrackDistance = downtrack;
       return;
     } else {
-      if (downtrackDistance >= currentTrajectory.get().getEndLocation()) {
+      // When there is no next trajectory we will set the current downtrack distance to start of our current trajectory
+      //       to ensure we will execute commands even with GPS drift
+      if (nextTrajectory.get() == null) {
+        downtrackDistance = Math.max(downtrack, curTraj.getStartLocation());
+      } else {
+        this.downtrackDistance = downtrack;
+      }
+      if (downtrackDistance >= curTraj.getEndLocation()) {
         swapTrajectories();
       }
     }
@@ -259,9 +269,9 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     activeManeuversMsg = activeManeuversPub.newMessage();
 
     if (currentTrajectory.get() != null) {
-      currentLongitudinalManeuver = currentTrajectory.get().getManeuverAt(downtrackDistance + DOWNTRACK_EPSILON, ManeuverType.LONGITUDINAL);
-      currentLateralManeuver = currentTrajectory.get().getManeuverAt(downtrackDistance + DOWNTRACK_EPSILON, ManeuverType.LATERAL);
-      currentComplexManeuver = currentTrajectory.get().getManeuverAt(downtrackDistance + DOWNTRACK_EPSILON, ManeuverType.COMPLEX);
+      currentLongitudinalManeuver = currentTrajectory.get().getManeuverAt(downtrackDistance, ManeuverType.LONGITUDINAL);
+      currentLateralManeuver = currentTrajectory.get().getManeuverAt(downtrackDistance, ManeuverType.LATERAL);
+      currentComplexManeuver = currentTrajectory.get().getManeuverAt(downtrackDistance, ManeuverType.COMPLEX);
 
       if (currentComplexManeuver != null) {
         try {

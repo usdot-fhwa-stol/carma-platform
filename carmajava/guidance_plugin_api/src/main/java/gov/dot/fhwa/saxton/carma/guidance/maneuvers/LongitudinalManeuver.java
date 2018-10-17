@@ -59,7 +59,10 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
 
     @Override
     public boolean executeTimeStep() {
-        verifyLocation();
+        // TODO Evaluate removal of verify location
+        // GPS drift can cause a stationary vehicle to fail to pass the start point of a maneuver
+        // The verifyLocation check is removed to prevent this
+        // verifyLocation();
 
         if (startTime_ == 0) {
             startTime_ = System.currentTimeMillis();
