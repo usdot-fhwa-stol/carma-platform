@@ -48,15 +48,4 @@ By contributing to the Federal Highway Administration (FHWA) Connected Automated
 
 ## Contact
 
-![CARMA Image](docs/image/CARMA_icon.png)
-
-
-
-
-
-
-
-
-
-
-
+[![CARMA Image](docs/image/CARMA_icon.png)](https://highways.dot.gov/research/research-programs/operations/CARMA)
