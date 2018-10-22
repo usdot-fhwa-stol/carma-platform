@@ -90,18 +90,29 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
    * as a result of the new trajectory completion value. This is the main event-driven method
    * for this class.
    * 
+   * NOTE: When there is no next trajectory we will set the current downtrack distance to start of our current trajectory
+   *       to ensure we will execute commands even with GPS drift
+   * 
    * @param downtrack The current downtrack distance from RouteState
    */
   public void updateDowntrackDistance(double downtrack) {
     log.debug("TrajectoryExecutorWorker updating downtrack distance to " + downtrack);
-    this.downtrackDistance = downtrack;
 
-    if (currentTrajectory.get() == null) {
+    Trajectory curTraj = currentTrajectory.get();
+    if (curTraj == null) {
       // Nothing to do
       log.info("Finished downtrack distance update with no trajectory.");
+      this.downtrackDistance = downtrack;
       return;
     } else {
-      if (downtrackDistance >= currentTrajectory.get().getEndLocation()) {
+      // When there is no next trajectory we will set the current downtrack distance to start of our current trajectory
+      //       to ensure we will execute commands even with GPS drift
+      if (nextTrajectory.get() == null) {
+        downtrackDistance = Math.max(downtrack, curTraj.getStartLocation());
+      } else {
+        this.downtrackDistance = downtrack;
+      }
+      if (downtrackDistance >= curTraj.getEndLocation()) {
         swapTrajectories();
       }
     }
@@ -250,6 +261,9 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
    * Periodic loop method for iterating, this is where maneuvers get executed
    * 
    * Synchronized to prevent race conditions with onCleanRestart and abortTrajectory functions
+   * 
+   * NOTE: A epsilon is added to the downtrack distance to allow starting from a stop
+   * TODO: Discuss epsilon value with team
    */
   public synchronized void loop() {
     activeManeuversMsg = activeManeuversPub.newMessage();

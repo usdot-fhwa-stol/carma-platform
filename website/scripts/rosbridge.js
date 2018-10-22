@@ -25,27 +25,56 @@ var ip = CarmaJS.Config.getIP(); // TODO: Update with proper environment IP addr
 // Topics
 var t_system_alert = 'system_alert';
 var t_available_plugins = 'plugins/available_plugins';
-var t_controlling_plugins = 'plugins/controlling_plugins'; 
-var t_nav_sat_fix = 'nav_sat_fix';
+var t_controlling_plugins = 'plugins/controlling_plugins';
 var t_guidance_instructions = 'ui_instructions';
 var t_ui_platoon_vehicle_info = 'ui_platoon_vehicle_info';
+
 var t_route_state = 'route_state';
 var t_route_event = 'route_event';
 var t_active_route = 'route';
-var t_cmd_speed = 'cmd_speed';
-var t_robot_status = 'robot_status';
+
 var t_diagnostics = '/diagnostics';
-var t_acc_engaged = 'acc_engaged';
-var t_can_engine_speed = 'engine_speed';
-var t_can_speed = 'speed';
+
 var t_guidance_state = 'state';
 var t_incoming_bsm = 'bsm';
+
+var t_driver_discovery = 'driver_discovery';
+var t_ui_instructions = 'ui_instructions';
+
+//To Interface manager - topic base names
+var t_get_drivers_with_capabilities = 'get_drivers_with_capabilities';
+
+var tbn_nav_sat_fix = 'position/nav_sat_fix';
+
+var tbn_robot_status = 'control/robot_status';
+var tbn_cmd_speed = 'control/cmd_speed';
+var tbn_lateral_control_driver = 'control/cmd_lateral';
+
+var tbn_can_engine_speed = 'can/engine_speed';
+var tbn_can_speed = 'can/speed';
+var tbn_acc_engaged = 'can/acc_engaged';
+
+var tbn_inbound_binary_msg = 'comms/inbound_binary_msg';
+var tbn_outbound_binary_msg = 'comms/outbound_binary_msg';
+
+//From Interface manager - will hold the topic fully qualified name
+var t_nav_sat_fix = '';
+
+var t_robot_status = '';
+var t_cmd_speed = '';
+var t_lateral_control_driver = '';
+
+var t_can_engine_speed = '';
+var t_can_speed = '';
+var t_acc_engaged = '';
+
 var t_inbound_binary_msg = '';
 var t_outbound_binary_msg = '';
-var t_get_drivers_with_capabilities = 'get_drivers_with_capabilities';
-var t_driver_discovery = 'driver_discovery';
-var t_lateral_control_driver = 'cmd_lateral';
-var t_ui_instructions = 'ui_instructions';
+
+//Interface manager - getDriverswithCapabilities call are asynchronous so putting logic to wait.
+var bGetDriversWithCapCalled = false;
+var getDriversWithCap_counter = 0;
+var getDriversWithCap_max_trial = 10;
 
 // Services
 var s_get_available_routes = 'get_available_routes';
@@ -77,6 +106,7 @@ var waitingForRouteStateSegmentStartup = false;
 var timer; 
 var engaged_timer = '00h 00m 00s'; //timer starts after vehicle first engages. 
 var host_instructions = '';
+
 
 //Elements frequently accessed.
 var divCapabilitiesMessage = document.getElementById('divCapabilitiesMessage');
@@ -920,7 +950,10 @@ function checkGuidanceState() {
                 //Show modal popup for Shutdown alerts from Guidance, which is equivalent to Fatal since it cannot restart with this state.
                 messageTypeFullDescription = 'System received a Guidance SHUTDOWN. <br/><br/>' + message.description;
                 messageTypeFullDescription += '<br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
-                listenerSystemAlert.unsubscribe();
+
+                if(listenerSystemAlert != null && listenerSystemAlert != 'undefined')
+                    listenerSystemAlert.unsubscribe();
+
                 showModal(true, messageTypeFullDescription, false);
                 break;
             default:
@@ -1485,6 +1518,176 @@ function showVehicleInfo(itemName, index) {
     }
 }
 
+
+/*
+    The interface manager manages the fully qualified topic names based on available capability.
+    Currently interface manager can only handle list from same capability/driver at a time.
+*/
+function getDriversWithCapabilities()
+{
+      if (bGetDriversWithCapCalled == true)
+        return;
+
+      bGetDriversWithCapCalled = true;
+
+      //Get the drivers for inbound and outbound
+      //rosservice call /saxton_cav/interface_manager/get_drivers_with_capabilities "['inbound_binary_msg','outbound_binary_msg']"
+      //driver_data: [/saxton_cav/drivers/dsrc/comms/inbound_binary_msg, /saxton_cav/drivers/dsrc/comms/outbound_binary_msg]
+      var serviceClient = new ROSLIB.Service({
+          ros: ros,
+          name: t_get_drivers_with_capabilities,
+          serviceType: 'cav_srvs/GetDriversWithCapabilities'
+      });
+
+      var driverList = [];
+
+      //controller
+      driverList.push(tbn_robot_status);
+      driverList.push(tbn_cmd_speed);
+
+      // Create a Service Request
+      var request = new ROSLIB.ServiceRequest({
+        capabilities: driverList
+      });
+
+      // Call the service and get back the results in the callback.
+      serviceClient.callService(request, function (result) {
+
+          if (result.driver_data.length == 0)
+          {
+            console.log('getDriversWithCapabilities() returned no CONTROLLER drivers: ' + result.driver_data.length);
+            return;
+          }
+
+          //JS ES6 syntax to assign the fully qualified name of the topic to the specific variable.
+          t_robot_status = result.driver_data.find(element => element.endsWith(tbn_robot_status));
+          t_cmd_speed = result.driver_data.find(element => element.endsWith(tbn_cmd_speed));
+
+          //console.log(t_robot_status + ';' + t_cmd_speed);
+      });
+
+      //mock controller
+      driverList = [];
+      driverList.push(tbn_lateral_control_driver);
+
+      request = new ROSLIB.ServiceRequest({
+            capabilities: driverList
+      });
+
+      serviceClient.callService(request, function (result) {
+
+          if (result.driver_data.length == 0)
+          {
+            console.log('getDriversWithCapabilities() returned no MOCK drivers: ' + result.driver_data.length);
+            return;
+          }
+
+          //JS ES6 syntax to assign the fully qualified name of the topic to the specific variable.
+          t_lateral_control_driver = result.driver_data.find(element => element.endsWith(tbn_lateral_control_driver));
+          //console.log(t_lateral_control_driver );
+      });
+
+      //position
+      driverList = [];
+      driverList.push(tbn_nav_sat_fix);
+
+      request = new ROSLIB.ServiceRequest({
+        capabilities: driverList
+      });
+
+      serviceClient.callService(request, function (result) {
+
+        if (result.driver_data.length == 0)
+        {
+          console.log('getDriversWithCapabilities() returned no POSITION drivers: ' + result.driver_data.length);
+          return;
+        }
+
+        //JS ES6 syntax to assign the fully qualified name of the topic to the specific variable.
+        t_nav_sat_fix = result.driver_data.find(element => element.endsWith(tbn_nav_sat_fix));
+        console.log(t_nav_sat_fix );
+      });
+
+      //can drivers
+      driverList = [];
+      driverList.push(tbn_can_engine_speed);
+      driverList.push(tbn_can_speed);
+      driverList.push(tbn_acc_engaged);
+
+      request = new ROSLIB.ServiceRequest({
+            capabilities: driverList
+      });
+
+      serviceClient.callService(request, function (result) {
+
+          if (result.driver_data.length == 0)
+          {
+            console.log('getDriversWithCapabilities() returned no CAN drivers: ' + result.driver_data.length);
+            return;
+          }
+
+          //JS ES6 syntax to assign the fully qualified name of the topic to the specific variable.
+          t_can_engine_speed = result.driver_data.find(element => element.endsWith(tbn_can_engine_speed));
+          t_can_speed = result.driver_data.find(element => element.endsWith(tbn_can_speed));
+          t_acc_engaged = result.driver_data.find(element => element.endsWith(tbn_acc_engaged));
+
+          //console.log(t_can_engine_speed + ';' + t_can_speed + ';' + t_acc_engaged );
+      });
+
+
+
+      //comms drivers
+      driverList = [];
+      driverList.push(tbn_inbound_binary_msg);
+      driverList.push(tbn_outbound_binary_msg);
+
+      request = new ROSLIB.ServiceRequest({
+            capabilities: driverList
+      });
+
+      serviceClient.callService(request, function (result) {
+
+          if (result.driver_data.length == 0)
+          {
+            console.log('getDriversWithCapabilities() returned no COMMS drivers: ' + result.driver_data.length);
+            return;
+          }
+
+          //JS ES6 syntax to assign the fully qualified name of the topic to the specific variable.
+          t_inbound_binary_msg = result.driver_data.find(element => element.endsWith(tbn_inbound_binary_msg));
+          t_outbound_binary_msg = result.driver_data.find(element => element.endsWith(tbn_outbound_binary_msg));
+
+          //console.log(t_inbound_binary_msg + ';' + t_outbound_binary_msg );
+      });
+
+}
+
+
+
+/*
+    Show the system name and version on the footer.
+*/
+function showSystemVersion() {
+
+    // Calling service
+    var serviceClient = new ROSLIB.Service({
+        ros: ros,
+        name: s_get_system_version,
+        serviceType: 'cav_srvs/GetSystemVersion'
+    });
+
+    // Then we create a Service Request.
+    var request = new ROSLIB.ServiceRequest({
+    });
+
+    // Call the service and get back the results in the callback.
+    serviceClient.callService(request, function (result) {
+
+        var elemSystemVersion = document.getElementsByClassName('systemversion');
+        elemSystemVersion[0].innerHTML = result.system_name + ' ' + result.revision;
+    });
+}
+
 /*
     Subscribe to topic and add each vehicle as a marker on the map.
     If already exist, update the marker with latest long and lat.
@@ -1512,47 +1715,9 @@ function mapOtherVehicles() {
 
 
 /*
-    Get the drivers for inbound and oubound.
     Update the signal icon on the status bar based on the binary incoming and outgoing messages.
 */
 function showCommStatus() {
-
-      //Get the drivers for inbound and outbound
-      //rosservice call /saxton_cav/interface_manager/get_drivers_with_capabilities "['inbound_binary_msg','outbound_binary_msg']"
-      //  driver_data: [/saxton_cav/drivers/dsrc/comms/inbound_binary_msg, /saxton_cav/drivers/dsrc/comms/outbound_binary_msg]
-      var serviceClient = new ROSLIB.Service({
-          ros: ros,
-          name: '/saxton_cav/interface_manager/get_drivers_with_capabilities', //t_get_drivers_with_capabilities
-          serviceType: 'cav_srvs/GetDriversWithCapabilities'
-      });
-
-      var driverlist = ['inbound_binary_msg', 'outbound_binary_msg'];
-
-      // Then we create a Service Request.
-      var request = new ROSLIB.ServiceRequest({
-        capabilities: driverlist
-      });
-
-      // Call the service and get back the results in the callback.
-      serviceClient.callService(request, function (result) {
-
-          if (result.driver_data.length != 2)
-          {
-            console.log('getCommsDriver() returned less than 2 drivers: ' + result.driver_data.length);
-            return;
-          }
-
-          t_inbound_binary_msg = result.driver_data[0];
-          t_outbound_binary_msg = result.driver_data[1];
-
-          //Update the comms status
-          updateCommStatus();
-      });
-}
-/*
-    Update the signal icon on the status bar based on the binary incoming and outgoing messages.
-*/
-function updateCommStatus() {
 
     // Get the Object by ID
     var a = document.getElementById('objOBUBroadcast');
@@ -1561,7 +1726,6 @@ function updateCommStatus() {
 
     if (t_outbound_binary_msg != null && t_outbound_binary_msg != '')
     {
-
        //Subscribe to Topic
        var listenerClientOutboundMsg = new ROSLIB.Topic({
            ros: ros,
@@ -1633,6 +1797,8 @@ function showStatusandLogs() {
     getParams();
     getVehicleInfo();
 
+    getDriversWithCapabilities();
+
     showSystemVersion();
     showNavSatFix();
     showSpeedAccelInfo();
@@ -1644,30 +1810,6 @@ function showStatusandLogs() {
     showUIInstructions();
     mapOtherVehicles();
     showCommStatus();
-}
-
-/*
-    Show the system name and version on the footer.
-*/
-function showSystemVersion() {
-
-    // Calling service
-    var serviceClient = new ROSLIB.Service({
-        ros: ros,
-        name: s_get_system_version,
-        serviceType: 'cav_srvs/GetSystemVersion'
-    });
-
-    // Then we create a Service Request.
-    var request = new ROSLIB.ServiceRequest({
-    });
-
-    // Call the service and get back the results in the callback.
-    serviceClient.callService(request, function (result) {
-
-        var elemSystemVersion = document.getElementsByClassName('systemversion');
-        elemSystemVersion[0].innerHTML = result.system_name + ' ' + result.revision;
-    });
 }
 
 /*
@@ -1688,9 +1830,9 @@ function startEngagedTimer() {
 */
 function waitForSystemReady() {
 
-    setTimeout(function () {                                                               //  call a 5s setTimeout when the loop is called
-        checkSystemAlerts();                                          //  check here
-        ready_counter++;                                              //  increment the counter
+    setTimeout(function () {   //  call a 5s setTimeout when the loop is called
+        checkSystemAlerts();   //  check here
+        ready_counter++;       //  increment the counter
 
         //  if the counter < 4, call the loop function
         if (ready_counter < ready_max_trial && isSystemAlert.ready == false) {
@@ -1700,9 +1842,7 @@ function waitForSystemReady() {
 
         //If system is now ready
         if (isSystemAlert.ready == true) {
-            showRouteOptions();
-            showStatusandLogs();
-            enableGuidance();
+            evaluateNextStep(); //call to evaluate next step after system is ready.
         }
         else { //If over max tries
             if (ready_counter >= ready_max_trial)
@@ -1710,6 +1850,73 @@ function waitForSystemReady() {
         }
     }, 3000)//  ..  setTimeout()
 }
+
+/*
+Ensures all driver topics needed are populated from getDriversWithCapablities
+*/
+function isDriverTopicsAllAvailable()
+{
+    if  ( t_robot_status == null || t_robot_status == '' ||
+          t_cmd_speed == null || t_cmd_speed == '' ||
+          t_lateral_control_driver == null || t_lateral_control_driver == '' ||
+          t_can_engine_speed == null || t_can_engine_speed == '' ||
+          t_can_speed == null || t_can_speed == '' ||
+          t_acc_engaged == null || t_acc_engaged == '' ||
+          t_inbound_binary_msg == null || t_inbound_binary_msg == '' ||
+          t_outbound_binary_msg == null || t_outbound_binary_msg == ''
+         )
+            return false;
+     else
+     {
+            /*
+            console.log( 't_robot_status : ' + t_robot_status);
+            console.log( 't_cmd_speed: ' + t_cmd_speed);
+            console.log( 't_lateral_control_driver: ' + t_lateral_control_driver);
+            console.log( 't_can_engine_speed: ' + t_can_engine_speed);
+            console.log( 't_can_speed: ' + t_can_speed);
+            console.log( 't_acc_engaged: ' + t_acc_engaged);
+            console.log( 't_inbound_binary_msg: ' + t_inbound_binary_msg);
+            console.log( 't_outbound_binary_msg: ' + t_outbound_binary_msg);
+            */
+            return true;
+     }
+}
+
+/*
+    Wait to get all the service responses from interface manager.
+*/
+function waitForGetDriversWithCapabilities() {
+
+    setTimeout(function () {   //  call a 5s setTimeout when the loop is called
+
+        getDriversWithCapabilities(); //  subscribe if hasn't been done yet.
+
+        //If over max tries
+        if (getDriversWithCap_counter >= getDriversWithCap_max_trial)
+        {
+            //console.log('***waitForGetDriversWithCapabilities 1 ***: ' + getDriversWithCap_counter);
+            divCapabilitiesMessage.innerHTML = 'Sorry, did not receive driver topics, please refresh your browser to try again.';
+            return;
+        }
+
+        //  if the counter < max, call the loop function
+        if ( isDriverTopicsAllAvailable() == false )
+        {
+            //console.log('***waitForGetDriversWithCapabilities 2 ***: ' + getDriversWithCap_counter);
+            getDriversWithCap_counter++;  //  increment the counter when waiting
+            divCapabilitiesMessage.innerHTML = 'Awaiting driver topics ...';
+            waitForGetDriversWithCapabilities();
+        }
+        else //isDriverTopicsAllAvailable() == true
+        {
+
+            //console.log('***waitForGetDriversWithCapabilities 3 ***: ' + getDriversWithCap_counter);
+            evaluateNextStep(); //call to evaluate next step after system is ready.
+        }
+
+    }, 3000)//  ..  setTimeout()
+}
+
 
 /*
     Evaluate next step AFTER connecting
@@ -1721,6 +1928,11 @@ function evaluateNextStep() {
     if (isSystemAlert.ready == false) {
         waitForSystemReady();
         return;
+    }
+
+    if (isDriverTopicsAllAvailable() == false){
+        //console.log ('evaluateNextStep: calling waitForGetDriversWithCapabilities')
+        waitForGetDriversWithCapabilities();
     }
 
     if (selectedRoute.name == 'No Route Selected') {

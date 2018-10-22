@@ -56,9 +56,9 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
     private IPublisher<cav_msgs.LateralControl> lateralControlPublisher;
     private IPublisher<std_msgs.Float32> wrenchEffortPublisher;
     private ISubscriber<TwistStamped> velocitySubscriber;
-    private AtomicDouble speedCommand = new AtomicDouble(0.0);
-    private AtomicDouble maxAccel = new AtomicDouble(0.0);
-    private AtomicDouble steeringCommand = new AtomicDouble(0.0);
+    private AtomicDouble speedCommand = new AtomicDouble(-1.0); // -1 used to indicate unset
+    private AtomicDouble maxAccel = new AtomicDouble(-1.0); // -1 used to indicate unset
+    private AtomicDouble steeringCommand = new AtomicDouble();
     private AtomicDouble lateralAccel = new AtomicDouble(0.0);
     private AtomicDouble yawRate = new AtomicDouble(0.0);
     private long sleepDurationMillis = 100;
@@ -303,6 +303,9 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
             log.warn("GuidanceCommands received negative command from maneuver, clamping to 0.0");
             speed = 0.0;
         }
+        if (accel < 0.01) {
+            log.warn("MaxAccel of ~0 proposed: " + accel);
+        }
 
         speedCommand.set(speed);
         maxAccel.set(Math.min(Math.abs(accel), Math.abs(vehicleAccelLimit)));
@@ -341,6 +344,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
                 // TODO This is a special case fix for the 2013 Cadillac SRX TORC speed controller
                 // If the vehicle wants to stand still (0 mph) we will command with wrench effort instead
                 // This should be refactored or removed once the STOL TO 26 demo is complete
+                // TODO This logic should be refactored into the Cadillac controller driver which should handle the bug internally. 
                 final double SIX_MPH = 2.68224;
                 if (useWrenchEffortStoppingOverride
                     && Math.abs(cachedSpeed) < 0.1
@@ -370,15 +374,17 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
             double current_speed = 0.0;
             if (velocitySubscriber.getLastMessage() != null) {
                 current_speed = velocitySubscriber.getLastMessage().getTwist().getLinear().getX();
-                if (current_speed < 0) {
-                    current_speed = 0.0;
-                } else {
-                    current_speed = Math.min(current_speed, MAX_SPEED_CMD_M_S);
-                }
+                
+                current_speed = Math.min(Math.max(current_speed, 0.0), MAX_SPEED_CMD_M_S);
             }
-            msg.setSpeed(current_speed);
+            // Set the speed/accel commands to ensure valid values are passed to the controller before we engage
+            // Comparing against default value of -1 to avoid race condition where first maneuver starts executing before this loop is called after engagement
+            speedCommand.compareAndSet(-1.0, current_speed);
+            maxAccel.compareAndSet(-1.0, maneuverInputs.getMaxAccelLimit());
+
+            msg.setSpeed(speedCommand.get());
             //TODO maybe need to change maxAccel and commands in lateralMsgs
-            msg.setMaxAccel(1.0);
+            msg.setMaxAccel(maxAccel.get());
             speedAccelPublisher.publish(msg);
 
             cav_msgs.LateralControl lateralMsg = lateralControlPublisher.newMessage();

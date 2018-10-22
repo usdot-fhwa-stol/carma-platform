@@ -25,7 +25,7 @@ import org.ros.internal.message.Message;
 import org.ros.message.MessageFactory;
 import org.ros.node.ConnectedNode;
 
-import cav_msgs.BSM;
+import j2735_msgs.BSM;
 import cav_msgs.ByteArray;
 import gov.dot.fhwa.saxton.carma.message.helper.BSMMessageHelper;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;

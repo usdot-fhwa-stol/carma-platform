@@ -38,17 +38,12 @@ dependencies {
   compile 'org.ros.rosjava_core:rosjava:[0.3,0.4)'
   compile 'org.ros.rosjava_messages:cav_msgs:0.1.0'
   compile 'org.ros.rosjava_messages:cav_srvs:0.1.0'
+  compile 'org.ros.rosjava_messages:j2735_msgs:0.1.0'
   compile 'org.ros.rosjava_messages:bond:1.7.16'
   compile 'org.ros.rosjava_messages:diagnostic_msgs:1.12.5'
   compile 'org.ros.rosjava_messages:sensor_msgs:1.12.5'
   compile 'org.ros.rosjava_messages:nav_msgs:1.12.5'
   /* Local subproject dependency */
   compile project(':rosutils')
-}
-
-installApp {
-    doLast {
-        delete 'build/scripts'
-    }
 }
 

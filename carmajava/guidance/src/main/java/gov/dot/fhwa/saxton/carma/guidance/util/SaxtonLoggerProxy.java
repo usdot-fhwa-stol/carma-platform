@@ -151,4 +151,64 @@ public class SaxtonLoggerProxy implements ILogger {
 	public void trace(String tag, String message, Throwable t) {
 		log.trace(tag, message, t);
 	}
+
+	@Override
+	public void debugf(String message, Object... args) {
+		log.debug(String.format(message, args));
+	}
+
+	@Override
+	public void debugf(String tag, String message, Object... args) {
+		log.debug(tag, String.format(message, args));
+	}
+
+	@Override
+	public void infof(String message, Object... args) {
+		log.info(String.format(message, args));
+	}
+
+	@Override
+	public void infof(String tag, String message, Object... args) {
+		log.info(tag, String.format(message, args));
+	}
+	
+	@Override
+	public void warnf(String message, Object... args) {
+		log.warn(String.format(message, args));
+	}
+
+	@Override
+	public void warnf(String tag, String message, Object... args) {
+		log.warn(tag, String.format(message, args));
+	}
+	
+	@Override
+	public void errorf(String message, Object... args) {
+		log.error(String.format(message, args));
+	}
+
+	@Override
+	public void errorf(String tag, String message, Object... args) {
+		log.error(tag, String.format(message, args));
+	}
+	
+	@Override
+	public void fatalf(String message, Object... args) {
+		log.fatal(String.format(message, args));
+	}
+
+	@Override
+	public void fatalf(String tag, String message, Object... args) {
+		log.fatal(tag, String.format(message, args));
+	}
+
+	@Override
+	public void tracef(String message, Object... args) {
+		log.trace(String.format(message, args));
+	}
+
+	@Override
+	public void tracef(String tag, String message, Object... args) {
+		log.trace(tag, String.format(message, args));
+	}
 }

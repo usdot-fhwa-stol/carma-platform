@@ -32,6 +32,7 @@ public abstract class ManeuverBase implements ISimpleManeuver {
     protected IGuidanceCommands                 commands_;
     protected ILogger                           log_ = LoggerManager.getLogger();
     protected final IPlugin                     planner_;
+    protected final double                      DOWNTRACK_EPSILON = 0.1;
 
     /**
      * Constructs a Maneuver and sets the planner's name
@@ -88,9 +89,11 @@ public abstract class ManeuverBase implements ISimpleManeuver {
     /**
      * Verifies that the vehicle is between the specified start & end locations for this maneuver
      * @throws IllegalStateException if we are outside the allowable region
+     * NOTE: A epsilon is added to the downtrack distance to allow starting from a stop
+     * TODO: Discuss epsilon value with team
      */
     protected void verifyLocation() throws IllegalStateException {
-        double currentLocation = inputs_.getDistanceFromRouteStart();
+        double currentLocation = inputs_.getDistanceFromRouteStart() + DOWNTRACK_EPSILON;
         if (currentLocation < startDist_  ||  currentLocation > endDist_) {
             throw new IllegalStateException("Maneuver attempted to execute at distance " + currentLocation
                                             + ". Maneuver start dist = " + startDist_ + ", end dist = " + endDist_);
