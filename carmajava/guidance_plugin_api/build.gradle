@@ -33,7 +33,9 @@ dependencies {
   /* compile project(':sibling_gradle_project') */
   compile 'org.ros.rosjava_messages:cav_msgs:0.1.0'
   compile 'org.ros.rosjava_messages:cav_srvs:0.1.0'
+  compile 'org.ros.rosjava_messages:j2735_msgs:0.1.0'
   compile 'org.ros.rosjava_messages:std_msgs:0.5.10'
+  compile 'org.ros.rosjava_messages:std_srvs:1.11.2'
   compile 'commons-logging:commons-logging:1.2'
   compile project(':geometry')
   /* compile 'gov.dot.fhwa.saxton.utils:1.0-SNAPSHOT' */

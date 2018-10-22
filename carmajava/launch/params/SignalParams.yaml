@@ -1,0 +1,229 @@
+# SignalParams.yaml
+# Defines all configurable parameters for the Signal Plugin
+
+#-----
+#----- Basic params
+#-----
+
+# maximumSpeed and crawlingSpeed are in mph
+maximumSpeed: 35.0
+crawlingSpeed: 5.0
+
+# Accel must match guidance accel values for maneuver generation to match plan
+# all accel limits are in m/s^2 (accel & decel limits must always be the same due to XGV implementation)
+defaultAccel: 2.5
+# situation-specific accel limits
+rampUpAccel: 1.84
+scenario2InitiateAccel: 1.81
+scenario3InitiateAccel: 1.82
+scenario4InitiateAccel: 0.5
+scenario2DepartureAccel: 0.9
+scenario3DepartureAccel: 1.83
+
+# maximumJerk is in m/s^3
+maximumJerk: 10.0
+
+# periodicDelay is time step size in ms
+periodicDelay: 100
+
+# sleep adjustment in ms, used to fiddle with end of cycle computations to help get cycles as close as possible to periodicDelay
+sleep/adjustment: 6
+
+###### performancechecks turned off for testing only - this causes code to throw errors if data is stale
+performancechecks: true
+
+#-----
+#----- DVI
+#-----
+
+# missingDataThreshold identifies the number of consecutive read cycles with missing data that is considered a fault
+missingDataThreshold: 5
+
+# uiRefresh - indicates in how many read cycles to go through before updating UI
+uiRefresh: 5
+
+# slowLogging - indicates how many read cycles to go through before logging; not used at this time
+slowLogging: 30
+
+# starts the consumers as soon as the software starts running
+autoStartConsumption: true
+
+# mps value - determine motion status using this value on both sides of the current speed when comparing last speed
+motion/status/smoothing: 0.14
+
+# number of elements to use in speed queue to calculate 'last speed'...avg over last second if 10Hz
+motion/status/queue: 10
+
+# concrete type of IDataFilter, missing value defaults to NoFilter
+datafilter: 'gov.dot.fhwa.saxton.glidepath.filter.PolyHoloA'
+
+# indicates how many warning/statusMessages can accumulate within cycleMax before we forward to DVI
+#   i.e. 10 within 20 cycles
+cycleMax: 20
+cycleThreshold: 10
+
+# distance in feet to automatically roll logs and stop application, this value must be negative to indicate
+#  beyond the stop bar
+dtsb/auto/stop: -400.0
+
+#-----
+#----- Consumers
+#-----
+
+# consumer list...if auto start is true, these are automatically started
+#     if auto start false, this list is available from consumers.html to manually test consumers
+consumers:
+ - gov.dot.fhwa.saxton.glidepath.asd.map.MapConsumer
+ - gov.dot.fhwa.saxton.glidepath.gps.GpsConsumer
+ - gov.dot.fhwa.saxton.glidepath.xgv.XgvConsumer
+ - gov.dot.fhwa.saxton.glidepath.asd.spat.SpatConsumer
+
+#this debug flag is simply used to NOT validate the ultimate DataElementHolder returned from all consumers
+#  this allows debugging/checking of a single consumer
+debug: true
+
+#-----
+#----- Pinpoint
+#-----
+
+gps/host: "192.168.0.5"
+gps/port: 9501
+gps/udpport: 8123
+# turner lab glidepath 192.168.0.5 LOCAL
+#gps.host: 172.24.0.29
+# turner lab caddy 192.168.88.29
+# turner lab glidepath 166.143.153.184 REMOTE
+# turner lab glidepath 192.168.0.5 LOCAL
+#gps.host: 166.143.153.184
+
+#-----
+#----- ASD
+#-----
+
+asd/initialTimeout: 2000
+asd/operTimeout: 30
+asd/spatport: 7788
+asd/mapport: 7789
+asd/maxpacketsize: 1472
+
+#comma-separated list of (decimal) intersections IDs that will be used; other intersections ignored
+# TFHRC West Int: 9709
+# TFHRC East Int: 9945
+asd/intersections: "9709,9945"
+
+# number of time steps after first seeing data from a new intersection before we start calculating spat reliability
+asd/minSamplesForReliability: 4
+
+#-----
+#----- EAD
+#-----
+
+# concrete type of ITrajectory to instantiate, missing value defaults to simulated
+ead/trajectoryclass: 'gov.dot.fhwa.saxton.glidepath.ead.Trajectory'
+#ead/trajectoryclass: gov.dot.fhwa.saxton.glidepath.ead.SimulatedTrajectory
+
+# these define the granularity of the AStar tree grid; coarse for first pass across all intersections, fine for
+# the detailed pass looking at only the nearest intersection
+ead/coarse_time_inc: 2.0
+ead/coarse_speed_inc: 2.0
+ead/fine_time_inc: 3.0
+ead/fine_speed_inc: 1.0
+
+# enables limiting of speed commands based on maximum acceleration capability
+ead/accelLimiter: false
+
+# enables limiting of speed commands based on maximum allowable jerk
+ead/jerkLimiter: false
+
+# buffer at beginning of yellow or end of green, sec, to avoid crossing as the signal changes
+ead/timebuffer: 4.0
+
+# ead/cte/threshold is in cm; the CTE beyond which we stop trying to associate with a lane
+ead/cte/threshold: 400
+
+# lag time, sec, that it will take (on average) for the vehicle to respond to a command change
+ead/response/lag: 1.9
+
+# max number of consecutive missing SPAT messages before it is considered a critical error
+ead/max/spat/errors: 5
+
+# is the failsafe stopping logic enabled?
+ead/failsafe/on: true
+
+# distance in front of stop bar that failsafe tries to stop (allows for positional error)
+ead/failsafe/distance/buffer: -1.99
+
+# multiplier on max decel used only for failsafe
+ead/failsafe/decel/factor: 1.3
+
+# Vehichle control parameters
+ead/maxcmdadj: 3.0
+ead/cmdaccelgain: 0.17
+ead/cmdspeedgain: 0.0
+ead/cmdbias: 0.0
+
+# Max distance in front of the stop bar that it is acceptable to stop, m
+ead/acceptableStopDistance: 6.0
+
+# A string identifying the fuel cost model which will be used for computing cost between nodes
+# DEFAULT: The fuel cost model use in the origional Glidepath Phase 2 whitepaper
+# MOVES_2010: The fuel cost model based on the EPA 2010 MOVES brief on vehicle efficiency
+ead/desiredCostModel: 'MOVES_2010'
+
+# ----- DEFAULT cost model params for AStar tree
+
+# drag coef Based on 0.84*Ac per http://ecomodder.com/wiki/index.php/Vehicle_Coefficient_of_Drag_List
+ead/dragCoefficient: 0.5
+
+# frontal area of the vehicle in m2 (2013 SRX is 2.89)
+ead/frontalArea: 2.89
+
+# air density in kg/m3; Value 1.29 @0 deg C, 1.23 @ 15 deg C, 1.20 @ 20 deg C, 1.16 @ 30 deg C
+ead/airDensity: 1.20
+
+# vehicle mass in kg; Cadillac 2013 SRX curb weight :  1916 kg + two people @82 kg each
+ead/vehicleMass: 2080.0
+
+# rollingResistanceOverride forces this constant value; if not specified then coef will be calculated as a function of speed
+#ead/rollingResistanceOverride: 0.02
+
+# idle cost is the equivalent amount of mechanical energy wasted by the idling engine while vehicle is stopped, J/s
+# 19.3 kJ/s is suggested by Guoyuan Wu on 12/29/17.
+ead/idleCost: 19300.0
+
+# true will make this the min energy rate for everything; false applies this only when speed is zero
+ead/useIdleMin: false
+
+#### Start of Parameters used for MOVES Fuel Cost Model
+## Vehicle Type Parameters
+## Used in the Vehicle Specific Power (VSP) calculation
+## VSP = (A*v + B*v*v + C*v*v*v + M*v*(a + g * Math.sin(theta))) / f;
+## Where g is the acceleration due to gravity and theta is the road grade
+## v is the velocity and a is the acceleration
+## The other terms are listed as parameters below
+
+# The Rolling Term (A) used in the VSP calculation
+# Units: kW-s/m
+ead/MOVES/rollingTermA: 0.22112
+
+# The Rotating Term (B) used in the VSP calculation
+# Units: kW-s^2/m^2
+ead/MOVES/rotatingTermB: 0.002838
+
+# The Drag Term (C) used in the VSP calculation
+# Units: kW-s^3/m^3
+ead/MOVES/dragTermC: 0.000698
+
+# The vehicle mass (M)
+# Units: Metric tons
+ead/MOVES/vehicleMassInTons: 1.86686
+
+# The Fixed Mass Factor (f)
+# Units: Metric tons
+ead/MOVES/fixedMassFactor: 1.86686
+
+# The path to the table used for determining vehicle energy usage rates based on operation mode and source id
+ead/MOVES/baseRateTablePath: '/opt/carma/params/BaseRateForPassengerTruck.csv'
+
+#### End of Parameters used in MOVES Fuel Cost Model
+

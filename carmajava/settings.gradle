@@ -27,5 +27,7 @@ include 'rosutils'
 include 'speedharm'
 include 'lateral_control_driver'
 include 'platooning'
+include 'signal_plugin'
 include 'rsumetering'
 include 'cooperativemerge'
+

@@ -11,15 +11,13 @@ CarmaJS.WidgetFramework.TrafficSignal = (function () {
 //CarmaJS.WidgetFramework.LaneChange = (function () {
 
         //*** Private Variables ***
-        var t_traffic_signal_info = '/saxton_cav/guidance/traffic_signal_info';
-
+        var t_traffic_signal_info = 'traffic_signal_info';
         var traffic_signal_max = 3;
 
         var svgLayerSpeed;
         var svgLayer1;
         var svgLayer2;
         var svgLayer3;
-
 
         //Listeners
         var listenerSpeedAccel;
@@ -143,6 +141,9 @@ CarmaJS.WidgetFramework.TrafficSignal = (function () {
 
                 //If nothing on the list, exit
                 if (message.traffic_signal_info_list == null || message.traffic_signal_info_list.length == 0) {
+                    showEachTrafficSignal(null, svgLayer1); // Reset traffic lights when empty data is provided
+                    showEachTrafficSignal(null, svgLayer2);
+                    showEachTrafficSignal(null, svgLayer3);
                     return;
                 }
 

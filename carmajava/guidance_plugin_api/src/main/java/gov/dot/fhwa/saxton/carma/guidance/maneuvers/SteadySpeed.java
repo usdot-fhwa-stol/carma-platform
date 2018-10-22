@@ -66,6 +66,7 @@ public class SteadySpeed extends LongitudinalManeuver {
 
         //set end distance to start distance
         endDist_ = endDist;
+        workingAccel_ = 0.5 * maxAccel_;
         return endSpeed_;
     }
 

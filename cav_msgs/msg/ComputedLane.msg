@@ -52,27 +52,18 @@
 # -- the value 255 is reserved for future use
 uint16 reference_lane_id
 
-# The DrivenLineOffsetSmall data element is an integer value expressing the offset in a defined axis from a reference
-# lane number from which a computed lane is offset.
-# DrivenLineOffsetSm ::= INTEGER (-2047..2047)
-# -- LSB units are 1 cm.
-# The DE_DrivenLineOffsetLarge data element is an integer value expressing the offset in a defined axis from a
-# reference lane number from which a computed lane is offset.
-# DrivenLineOffsetLg ::= INTEGER (-32767..32767)
-# -- LSB units are 1 cm.
+# The offset axis for the computed lane
+cav_msgs/OffsetAxis offset_x_axis
 
-cav_msgs/OffsetXaxis offset_x_axis
+cav_msgs/OffsetAxis offset_y_axis
 
-cav_msgs/OffsetYaxis offset_y_axis
-
-# Angle ::= INTEGER (0..239)
-#  -- Unsigned units of 1.5 degree, in 1 octet
+# Deviates from J2735 standard:
+# DrivenLineOffsetSm in this message are conveyed as deg rather than 1.5 deg units to avoid redundant unnecessary conversion by subscribers
+# Angle ::= FLOAT (0..359)
+#  -- Unsigned units of 1 degree, in 1 octet
 #  -- the true north is 0, positive is clockwise
-#  -- the values 240 to 254 shall not be sent
-#  -- the value 255 (0xFF) indicates an invalid value
-# NOTE: use invalid value to indicate unavailability as well.
-uint16 rotateXY
-uint16 ROTATEXY_INVALID=255
+#  -- the values 360 to 381 shall not be sent
+float32 rotateXY
 bool rotatexy_exists
 
 # Scale-B12 ::= INTEGER (-2048..2047)

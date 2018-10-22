@@ -38,17 +38,12 @@ dependencies {
   compile 'org.ros.rosjava_core:rosjava:[0.3,0.4)'
   compile 'org.ros.rosjava_messages:cav_msgs:0.1.0'
   compile 'org.ros.rosjava_messages:cav_srvs:0.1.0'
+  compile 'org.ros.rosjava_messages:j2735_msgs:0.1.0'
   /* Local subproject dependency */
   compile project(':rosutils')
   
   testCompile 'org.mockito:mockito-core:2.+'
   testCompile 'junit:junit:4.12'
-}
-
-installApp {
-    doLast {
-        delete 'build/scripts'
-    }
 }
 
 test {

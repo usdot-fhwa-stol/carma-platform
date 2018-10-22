@@ -64,6 +64,7 @@ required_plugins:
 
 # Plugin name (as reported in Plugin.msg) to be used for the minimal arbitrator's trajectory
 arbitrator_plugins:
+  - Traffic Signal Plugin
   - Cooperative Merge Plugin
   - Platooning Plugin
   - Yield Plugin
@@ -213,6 +214,7 @@ light_bar_priorities:
   - Light Bar State Machine
   - Lane Change Plugin
   - Platooning Plugin
+  - Traffic Signal Plugin
   - Yield Plugin
   - Speed Harmonization Plugin
   - Route Following Plugin
@@ -253,3 +255,19 @@ conflict_detection_temporal_bias: 0.0
 # Boolean: If true the controller will switch to wrench effort control when commanded 0 m/s speed with 2.5m/s/s max accel and the vehicle is going less then 6 mph
 # This was implemented to address a controller bug in the Cadillac SRX where the vehicle was unable to stay still when commanded 0 speed
 use_wrench_effort_stopping_override: false
+
+# Integer: The number of map messages from a given intersection we must receive before checking it's reliability
+v2i_map_comms_reliability_check_threshold: 3
+
+# Integer: The number of spat messages from a given intersection we must receive before checking it's reliability
+v2i_spat_comms_reliability_check_threshold: 5
+
+# Double: The minimum number of map messages per intersection per second which must be recieved for the data stream to be considered reliable
+v2i_min_map_msgs_per_sec: 0.3
+
+# Double: The minimum number of spat messages per intersection per second which must be recieved for the data stream to be considered reliable
+v2i_min_spat_msgs_per_sec: 3.0
+
+# Integer: The amount of time between expiry checks for unreliable intersection communications
+# Units: ms
+v2i_comms_data_expiry_timeout: 2000

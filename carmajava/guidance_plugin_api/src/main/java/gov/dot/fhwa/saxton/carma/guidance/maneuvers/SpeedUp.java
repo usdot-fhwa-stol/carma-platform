@@ -24,7 +24,7 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.IPlugin;
  */
 public class SpeedUp extends LongitudinalManeuver {
     private double                  deltaT_;                    // expected duration of the "ideal" speed change, sec
-    private static final double MIN_ACCEL_ = 0.1;
+    private static final double MIN_ACCEL_ = 0.5;
     public SpeedUp(IPlugin planner) {
         super(planner);
     }
@@ -80,10 +80,12 @@ public class SpeedUp extends LongitudinalManeuver {
 
         double deltaV = endSpeed_ - startSpeed_; //always positive
         double lagDistance = startSpeed_ * inputs_.getResponseLag();
-        double displacement = endDist - startDist - lagDistance;
+        double rawDisplacement = endDist - startDist;
+        double displacement = rawDisplacement - lagDistance;
         if(displacement <= 0) {
-            log_.error("SpeedUp.planToTargetDistance do not have enough distance to plan. Throwing exception.");
-            throw new ArithmeticException("Negative displacement found in SpeedUp maneuver: " + displacement);
+            log_.error("SpeedUp.planToTargetDistance do not have enough distance to plan when accounting for lag time." +
+                " Maneuver will be planned without this consideration. StartDist: " + startDist + " endDist: " + endDist + " lagDistance: " + lagDistance);
+            displacement = rawDisplacement;
         }
         workingAccel_ = (startSpeed_ * deltaV + 0.5 * deltaV * deltaV) / displacement;
         if (workingAccel_ > maxAccel_) {

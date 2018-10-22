@@ -33,20 +33,20 @@
 # ...
 # }
 
-cav_msgs/AdvisorySpeedType type
+j2735_msgs/AdvisorySpeedType type
 
-# SpeedAdvice ::= INTEGER (0..500) OPTIONAL
-# This data element represents the recommended velocity of an object, typically a vehicle speed along a roadway,
-# expressed in unsigned units of 0.1 meters per second.
-#-- LSB units are 0.1 m/s^2
-#-- the value 499 shall be used for values at or greater than 49.9 m/s
-#-- the value 500 shall be used to indicate that speed is unavailable
+# Deviates from J2735 standard:
+# SpeedAdvice in this message are conveyed as m/s rather than 1/10th m/s to avoid redundant unnecessary conversion by subscribers
+# SpeedAdvice ::= FLOAT (0..50.0) OPTIONAL
+# This data element represents the recommended velocity of an object, typically a vehicle speed along a roadway.
+#-- the value 49.9 shall be used for values at or greater than 49.9 m/s
+#-- the value 50.0 shall be used to indicate that speed is unavailable
 float32 speed
-float32 SPEED_UNAVAILABLE = 500
+float32 SPEED_UNAVAILABLE = 50.0
 bool speed_exists
 
 # SpeedConfidence is an enum already with 0 as unavailable.
-cav_msgs/SpeedConfidence confidence
+j2735_msgs/SpeedConfidence confidence
 
 # ZoneLength ::= INTEGER (0..10000)
 # -- Unit = 1 meter, 0 = unknown,

@@ -1,6 +1,12 @@
 CARMA Platform Release Notes
 ----------------------------
 
+Version 2.7.4, released 22 October 2018
+---------------------------------------
+
+Redacted files with sensitive data that cannot be publicly distributed.
+
+
 Version 2.7.3, released 09 October 2018
 ---------------------------------------
 
@@ -34,5 +40,6 @@ directory, can be run to transfer the executable and configuration files to the 
 vehicle computer in a directory named /opt/carma. Please see the User Guide in the docs
 folder for more details.
 
-Operating the software requires that it is installed in a properly modified Cadillac SRX, 
-Ford Escape or Freightliner Cascadia truck with device drivers in place.  
+Operating the software requires that it is installed in a properly modified vehicle, with
+corresponding device drivers in place.  Use at FHWA Saxton Lab is on customized Cadillac SRX, 
+Ford Escape and Freightliner Cascadia truck.   
