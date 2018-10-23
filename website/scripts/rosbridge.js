@@ -117,6 +117,13 @@ var MAX_LOG_LINES = 100;
 var METER_TO_MPH = 2.23694;
 var METER_TO_MILE = 0.000621371;
 
+//Get the drivers topic from Interface Manager
+var serviceClientForGetDriversWithCap = new ROSLIB.Service({
+  ros: ros,
+  name: t_get_drivers_with_capabilities,
+  serviceType: 'cav_srvs/GetDriversWithCapabilities'
+});
+
 //Getters and Setters for bool and string session variables. 
 var isGuidance = {
     get active() {
@@ -1050,13 +1057,6 @@ function printParam(itemName, index) {
 */
 function checkRobotEnabled() {
 
-    //Get the drivers topic from Interface Manager
-    var serviceClient = new ROSLIB.Service({
-      ros: ros,
-      name: t_get_drivers_with_capabilities,
-      serviceType: 'cav_srvs/GetDriversWithCapabilities'
-    });
-
     var driverList = [];
 
     //controller
@@ -1068,7 +1068,7 @@ function checkRobotEnabled() {
     });
 
     // Call the service and get back the results in the callback.
-    serviceClient.callService(request, function (result) {
+    serviceClientForGetDriversWithCap.callService(request, function (result) {
 
         if (result.driver_data.length == 0)
         {
@@ -1079,7 +1079,7 @@ function checkRobotEnabled() {
         //JS ES6 syntax to assign the fully qualified name of the topic to the specific variable.
         t_robot_status = result.driver_data.find(element => element.endsWith(tbn_robot_status));
 
-        console.log('t_robot_status:' + t_robot_status);
+        //console.log('t_robot_status:' + t_robot_status);
 
         var listenerRobotStatus = new ROSLIB.Topic({
             ros: ros,
@@ -1101,14 +1101,6 @@ function checkRobotEnabled() {
 */
 function showDiagnostics() {
 
-
-    //Get the drivers topic from Interface Manager
-    var serviceClient = new ROSLIB.Service({
-      ros: ros,
-      name: t_get_drivers_with_capabilities,
-      serviceType: 'cav_srvs/GetDriversWithCapabilities'
-    });
-
     var driverList = [];
 
     //controller
@@ -1118,7 +1110,8 @@ function showDiagnostics() {
             capabilities: driverList
       });
 
-      serviceClient.callService(request, function (result) {
+      // Call the service and get back the results in the callback.
+      serviceClientForGetDriversWithCap.callService(request, function (result) {
 
             if (result.driver_data.length == 0)
             {
@@ -1270,13 +1263,6 @@ function showControllingPlugins()
 */
 function checkLateralControlDriver() {
 
-    //Get the drivers topic from Interface Manager
-    var serviceClient = new ROSLIB.Service({
-      ros: ros,
-      name: t_get_drivers_with_capabilities,
-      serviceType: 'cav_srvs/GetDriversWithCapabilities'
-    });
-
     var driverList = [];
 
     //controller
@@ -1288,7 +1274,7 @@ function checkLateralControlDriver() {
     });
 
     // Call the service and get back the results in the callback.
-    serviceClient.callService(request, function (result) {
+    serviceClientForGetDriversWithCap.callService(request, function (result) {
 
         if (result.driver_data.length == 0)
         {
@@ -1299,7 +1285,7 @@ function checkLateralControlDriver() {
         //JS ES6 syntax to assign the fully qualified name of the topic to the specific variable.
         t_lateral_control_driver = result.driver_data.find(element => element.endsWith(t_lateral_control_driver));
 
-        console.log('t_lateral_control_driver:' + t_lateral_control_driver); //TODO: Comment out.
+        //console.log('t_lateral_control_driver:' + t_lateral_control_driver);
 
         //Subscription
         var listenerLateralControl = new ROSLIB.Topic({
@@ -1515,13 +1501,6 @@ function mapEachRouteSegment(segment) {
 */
 function showNavSatFix() {
 
-    //Get the drivers topic from Interface Manager
-    var serviceClient = new ROSLIB.Service({
-      ros: ros,
-      name: t_get_drivers_with_capabilities,
-      serviceType: 'cav_srvs/GetDriversWithCapabilities'
-    });
-
     var driverList = [];
 
       driverList.push(tbn_nav_sat_fix);
@@ -1530,7 +1509,8 @@ function showNavSatFix() {
         capabilities: driverList
       });
 
-      serviceClient.callService(request, function (result) {
+      // Call the service and get back the results in the callback.
+      serviceClientForGetDriversWithCap.callService(request, function (result) {
 
         if (result.driver_data.length == 0)
         {
@@ -1540,7 +1520,7 @@ function showNavSatFix() {
 
         //JS ES6 syntax to assign the fully qualified name of the topic to the specific variable.
         t_nav_sat_fix = result.driver_data.find(element => element.endsWith(tbn_nav_sat_fix));
-        console.log('t_nav_sat_fix: ' + t_nav_sat_fix );
+        //console.log('t_nav_sat_fix: ' + t_nav_sat_fix );
 
         var listenerNavSatFix = new ROSLIB.Topic({
             ros: ros,
@@ -1574,14 +1554,6 @@ function showNavSatFix() {
 */
 function showSpeedAccelInfo() {
 
-
-    //Get the drivers topic from Interface Manager
-    var serviceClient = new ROSLIB.Service({
-      ros: ros,
-      name: t_get_drivers_with_capabilities,
-      serviceType: 'cav_srvs/GetDriversWithCapabilities'
-    });
-
     var driverList = [];
 
     //controller
@@ -1593,7 +1565,7 @@ function showSpeedAccelInfo() {
     });
 
     // Call the service and get back the results in the callback.
-    serviceClient.callService(request, function (result) {
+    serviceClientForGetDriversWithCap.callService(request, function (result) {
 
         if (result.driver_data.length == 0)
         {
@@ -1603,8 +1575,7 @@ function showSpeedAccelInfo() {
 
         //JS ES6 syntax to assign the fully qualified name of the topic to the specific variable.
         t_cmd_speed = result.driver_data.find(element => element.endsWith(tbn_cmd_speed));
-
-        console.log('t_cmd_speed:' + t_cmd_speed); //TODO: Comment out.
+        //console.log('t_cmd_speed:' + t_cmd_speed);
 
         //Get Speed Accell Info
         var listenerSpeedAccel = new ROSLIB.Topic({
@@ -1631,13 +1602,6 @@ function showSpeedAccelInfo() {
 */
 function showCANSpeeds() {
 
-    //Get the drivers topic from Interface Manager
-    var serviceClient = new ROSLIB.Service({
-      ros: ros,
-      name: t_get_drivers_with_capabilities,
-      serviceType: 'cav_srvs/GetDriversWithCapabilities'
-    });
-
     var driverList = [];
 
     //can drivers
@@ -1648,7 +1612,8 @@ function showCANSpeeds() {
         capabilities: driverList
     });
 
-    serviceClient.callService(request, function (result) {
+    // Call the service and get back the results in the callback.
+    serviceClientForGetDriversWithCap.callService(request, function (result) {
 
         if (result.driver_data.length == 0)
         {
@@ -1660,8 +1625,8 @@ function showCANSpeeds() {
         t_can_engine_speed = result.driver_data.find(element => element.endsWith(tbn_can_engine_speed));
         t_can_speed = result.driver_data.find(element => element.endsWith(tbn_can_speed));
 
-        console.log('t_can_engine_speed:' + t_can_engine_speed  );
-        console.log('t_can_speed:' + t_can_speed  );
+        //console.log('t_can_engine_speed:' + t_can_engine_speed  );
+        //console.log('t_can_speed:' + t_can_speed  );
 
         //Listeners below
 
@@ -1919,13 +1884,6 @@ function mapOtherVehicles() {
 */
 function showCommStatus() {
 
-    //Get the drivers topic from Interface Manager
-    var serviceClient = new ROSLIB.Service({
-      ros: ros,
-      name: t_get_drivers_with_capabilities,
-      serviceType: 'cav_srvs/GetDriversWithCapabilities'
-    });
-
     var driverList = [];
 
     //comms drivers
@@ -1936,7 +1894,8 @@ function showCommStatus() {
         capabilities: driverList
     });
 
-    serviceClient.callService(request, function (result) {
+    // Call the service and get back the results in the callback.
+    serviceClientForGetDriversWithCap.callService(request, function (result) {
 
       if (result.driver_data.length == 0)
       {
