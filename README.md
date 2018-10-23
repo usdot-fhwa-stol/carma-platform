@@ -46,5 +46,6 @@ Welcome to the CARMA contributing guide. Please read this guide to learn about o
 By contributing to the Federal Highway Administration (FHWA) Connected Automated Research Mobility Applications (CARMA), you agree that your contributions will be licensed under its Apache License 2.0 license. [CARMA License](<docs/License.md>) 
 
 ## Contact
+Please click on the CARMA logo below to vist the Federal Highway Adminstration(FHWA) CARMA website.
 
 [![CARMA Image](docs/image/CARMA_icon.png)](https://highways.dot.gov/research/research-programs/operations/CARMA)
