@@ -191,12 +191,6 @@ install(TARGETS j2735_convertor_node
 # )
 
 
-install(DIRECTORY
-        launch
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-        PATTERN ".svn" EXCLUDE
-        )
-
 #############
 ## Testing ##
 #############
