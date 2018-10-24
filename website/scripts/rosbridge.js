@@ -103,8 +103,8 @@ var sound_counter_max = 3; //max # of times the sounds will be repeated.
 var sound_played_once = false;
 var isModalPopupShowing = false;
 var waitingForRouteStateSegmentStartup = false;
-var timer; 
-var engaged_timer = '00h 00m 00s'; //timer starts after vehicle first engages. 
+var timer;
+var engaged_timer = '00h 00m 00s'; //timer starts after vehicle first engages.
 var host_instructions = '';
 
 
@@ -124,7 +124,7 @@ var serviceClientForGetDriversWithCap = new ROSLIB.Service({
   serviceType: 'cav_srvs/GetDriversWithCapabilities'
 });
 
-//Getters and Setters for bool and string session variables. 
+//Getters and Setters for bool and string session variables.
 var isGuidance = {
     get active() {
         var isGuidanceActive = sessionStorage.getItem('isGuidanceActive');
@@ -282,7 +282,7 @@ function connectToROS() {
             var messageTypeFullDescription = 'ROS Connection Closed.';
             messageTypeFullDescription += '<br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
             showModal(true, messageTypeFullDescription, false);
-            
+
         });
 
         // Create a connection to the rosbridge WebSocket server.
@@ -553,7 +553,7 @@ function showSubCapabilitiesView2() {
     divSubCapabilities.style.display = 'block';
 
     if (waitingForRouteStateSegmentStartup == false) {
-        //Need to wait for route current segment to publish to not get negative total lengths. 
+        //Need to wait for route current segment to publish to not get negative total lengths.
         setTimeout(function () {
             checkRouteInfo();
             //console.log('Wait call for checkRouteInfo.');
@@ -790,7 +790,7 @@ function activateGuidance() {
             return;
         }
 
-        //When active = false, this is equivalent to disengaging guidance. Would not be INACTIVE since inactivity is set by guidance. 
+        //When active = false, this is equivalent to disengaging guidance. Would not be INACTIVE since inactivity is set by guidance.
         if (newStatus == false)
         {
             setCAVButtonState('DISENGAGED');
@@ -801,8 +801,8 @@ function activateGuidance() {
         //checkAvailability will call setCAVButtonState
         if (newStatus == true){
             openTab(event, 'divDriverView');
-            CarmaJS.WidgetFramework.loadWidgets(); //Just loads the widget          
-            checkAvailability(); //Start checking availability (or re-subscribe) if Guidance has been engaged.           
+            CarmaJS.WidgetFramework.loadWidgets(); //Just loads the widget
+            checkAvailability(); //Start checking availability (or re-subscribe) if Guidance has been engaged.
             checkRobotEnabled(); //Start checking if Robot is active
             return;
         }
@@ -833,7 +833,7 @@ function setCAVButtonState(state) {
             btnCAVGuidance.className = 'button_cav button_disabled'; //color to gray
             btnCAVGuidance.title = 'CAV Guidance is disabled.';
             btnCAVGuidance.innerHTML = 'CAV Guidance';
-            
+
             isGuidance.active = false;
             isGuidance.engaged = false;
 
@@ -843,7 +843,7 @@ function setCAVButtonState(state) {
             btnCAVGuidance.className = 'button_cav button_active'; //color to purple
             btnCAVGuidance.title = 'CAV Guidance is now active.';
             btnCAVGuidance.innerHTML = 'CAV Guidance - ACTIVE <i class="fa fa-check"></i>';
-            
+
             isGuidance.active = true;
             isGuidance.engaged = false;
 
@@ -855,7 +855,7 @@ function setCAVButtonState(state) {
             btnCAVGuidance.innerHTML = 'CAV Guidance - INACTIVE <i class="fa fa-times-circle-o"></i>';
 
             isGuidance.active = false;
-            //isGuidance.engaged = false; //LEAVE value as-is. 
+            //isGuidance.engaged = false; //LEAVE value as-is.
 
             //This check to make sure inactive sound is only played once even when it's been published multiple times in a row.
             //It will get reset when status changes back to engage.
@@ -870,7 +870,7 @@ function setCAVButtonState(state) {
 
             btnCAVGuidance.title = 'Click to Stop CAV Guidance.';
             btnCAVGuidance.innerHTML = 'CAV Guidance - ENGAGED <i class="fa fa-check-circle-o"></i>';
-            
+
             isGuidance.active = true;
             isGuidance.engaged = true;
 
@@ -943,7 +943,7 @@ function checkGuidanceState() {
                 setCAVButtonState('ACTIVE');
                 break;
             case 4: //ENGAGED
-                //start the timer when it first engages. 
+                //start the timer when it first engages.
                 messageTypeFullDescription = 'Guidance is now ENGAGED.';
                 startEngagedTimer();
                 setCAVButtonState('ENGAGED');
@@ -1115,8 +1115,8 @@ function showDiagnostics() {
 
             if (result.driver_data.length == 0)
             {
-            console.log('getDriversWithCapabilities() returned no CAN drivers for acc_engaged: ' + result.driver_data.length);
-            return;
+                console.log('getDriversWithCapabilities() returned no CAN drivers for acc_engaged: ' + result.driver_data.length);
+                return;
             }
 
             //JS ES6 syntax to assign the fully qualified name of the topic to the specific variable.
@@ -1514,8 +1514,8 @@ function showNavSatFix() {
 
         if (result.driver_data.length == 0)
         {
-          console.log('getDriversWithCapabilities() returned no POSITION drivers for nav_sat_fix: ' + result.driver_data.length);
-          return;
+            console.log('getDriversWithCapabilities() returned no POSITION drivers for nav_sat_fix: ' + result.driver_data.length);
+            return;
         }
 
         //JS ES6 syntax to assign the fully qualified name of the topic to the specific variable.
@@ -1899,8 +1899,8 @@ function showCommStatus() {
 
       if (result.driver_data.length == 0)
       {
-        console.log('getDriversWithCapabilities() returned no COMMS drivers: ' + result.driver_data.length);
-        return;
+            console.log('getDriversWithCapabilities() returned no COMMS drivers: ' + result.driver_data.length);
+            return;
       }
 
       //JS ES6 syntax to assign the fully qualified name of the topic to the specific variable.
