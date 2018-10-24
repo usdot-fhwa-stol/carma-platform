@@ -136,12 +136,13 @@ public class EadIntersectionManager {
 		});
 		
 		if (inputIntersections == null  ||  inputIntersections.size() <= 0) {
+			sortedIntersections_.set(sortedIntersections); // Store sorted intersections
 			throw new IllegalArgumentException("updateIntersections called with no intersection data");
 		}
 
 		log_.debug("TRAJ", "updateIntersections has inputIntersections size = " + inputIntersections.size());
 
-		//loop through all input intersections
+		//loop through all input intersections and only keep those whose maps we are on
 		for (IntersectionData input : inputIntersections) {
 
 			if (!validIntersection(input)) { // Check that intersection is valid
@@ -157,6 +158,7 @@ public class EadIntersectionManager {
 				input.dtsb = geometry.dtsb();
 				input.laneId = geometry.laneId();
 				input.geometry = geometry;
+				input.stopBoxWidth = geometry.stopBoxWidth();
 
 				DoubleDataElement dde = (DoubleDataElement) input.spat.getSpatForLane(input.laneId).get(DataElementKey.SIGNAL_TIME_TO_NEXT_PHASE);
 				if (dde != null) {
@@ -169,15 +171,16 @@ public class EadIntersectionManager {
 						log_.debug("INTR","Updated phase: " + pde.value());
 						input.currentPhase = pde.value();
 				}
-			}
 
-			sortedIntersections.add(input); // Add the intersection to our sorted set
+				sortedIntersections.add(input); // Add the intersection to our sorted set
+			}
 
 			log_.debug("TRAJ", "updateIntersections - preparing to look at known intersections for id = " + input.intersectionId);
 		}
 
 		if (sortedIntersections.size() <= 0) {
 			log_.warn("TRAJ", "No valid intersections detected");
+			sortedIntersections_.set(sortedIntersections); // Store sorted intersections
 			return dtsb;
 		}
 

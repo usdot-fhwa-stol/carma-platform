@@ -42,6 +42,7 @@ public class IntersectionData {
     public SignalPhase             currentPhase = SignalPhase.NONE;
     public double                  timeToNextPhase = -1.0;
     public IntersectionGeometry    geometry = null;
+    public double                  stopBoxWidth = -1.0; // This will only be set if geometry is not null
 
     // TODO comment
     public double bestDTSB() {

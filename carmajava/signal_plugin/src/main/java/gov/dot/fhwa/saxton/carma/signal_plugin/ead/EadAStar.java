@@ -170,7 +170,7 @@ public class EadAStar implements IEad {
             path = solver_.solve(start, timeCostModel_, coarseNeighborCalc_);
 
             //increment goal time
-            exitTime += 5*coarseTimeInc_;
+            exitTime += coarseTimeInc_;
             ++iter;
         }
 
@@ -212,7 +212,7 @@ public class EadAStar implements IEad {
 
         //find the best path through this tree [use AStarSolver]
         fuelCostModel_.setGoal(goal);
-        fuelCostModel_.setTolerances(new Node(0.51*fineSpeedInc_*fineTimeInc_, 0.51*fineTimeInc_, 0.51*fineSpeedInc_));
+        fuelCostModel_.setTolerances(new Node(0.51*fineSpeedInc_*fineTimeInc_, fineTimeInc_, 0.51*fineSpeedInc_)); // timeInc must be full size to allow for cases where vehicle is traveling at max speed
         List<Node> path = solver_.solve(start, fuelCostModel_, fineNeighborCalc_);
         if (path == null  ||  path.size() == 0) {
             String msg = "///// planDetailedPath solver was unable to define a path.";
@@ -292,6 +292,13 @@ public class EadAStar implements IEad {
 
         log_.info("EAD", "plan function called with operating speed: " + operSpeed + " and current speed: " + speed);
 
+        for (IntersectionData intersection: intersections) {
+            log_.info("EAD", "Intersection " + intersection.intersectionId 
+                + " phase: " + intersection.currentPhase 
+                + " timeToNextPhase: " + intersection.timeToNextPhase);
+        }
+
+
         intList_ = intersections;
         long methodStartTime = System.currentTimeMillis();
 
@@ -324,7 +331,7 @@ public class EadAStar implements IEad {
 
         prevMethodStartTime_ = methodStartTime;
         long totalTime = System.currentTimeMillis() - methodStartTime;
-        log_.info("EAD", "plan completed in " + totalTime + " ms.");
+        log_.error("EAD", "plan completed in " + totalTime + " ms.");
         
         return currentPath_;
     }

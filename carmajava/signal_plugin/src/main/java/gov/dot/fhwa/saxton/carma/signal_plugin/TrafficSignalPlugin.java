@@ -90,6 +90,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.SpatMessage;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.EadAStar;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 import gov.dot.fhwa.saxton.carma.signal_plugin.filter.PolyHoloA;
+import j2735_msgs.MovementPhaseState;
 import sensor_msgs.NavSatFix;
 import std_msgs.Bool;
 import std_srvs.SetBool;
@@ -130,8 +131,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     static private final double MAX_DTSB = Integer.MAX_VALUE - 5.0; // Legacy Glidepath code returns Integer.MAX_VALUE for invalid dtsb. Add fudge factor for detecting it as a double
 
     private final long LOOP_PERIOD = 100; // Plugin will loop at 10Hz
-    private final GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();;
-    private double acceptableStopDistance;
+    private final GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
 
     public TrafficSignalPlugin(PluginServiceLocator psl) {
         super(psl);
@@ -150,10 +150,6 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
         // Initialize Speed Filter
         velFilter.initialize(appConfig.getPeriodicDelay() * Constants.MS_TO_SEC); // TODO determine what the best value should be given we no longer use the periodic executor
-        
-        // TODO use stopbox width instead
-        // The acceptable stop distance will be used instead of the stopbox width to define acceptable distance past the stop bar
-        acceptableStopDistance = appConfig.getDoubleDefaultValue("ead.acceptableStopDistance", 6.0);
 
         // log the key params here
         pluginServiceLocator.getV2IService().registerV2IDataCallback(this::handleNewIntersectionData);
@@ -381,6 +377,15 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      */
     private void handleNewIntersectionData(List<IntersectionData> data) {
         synchronized (intersections) {
+            // Get current intersection if available to compare for phase change
+            Integer currentIntId = null;
+            if (glidepathTrajectory != null) {
+                List<gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData> trackedIntersections = glidepathTrajectory.getSortedIntersections();
+                if (trackedIntersections.size() > 0) {
+                    currentIntId = trackedIntersections.get(0).intersectionId;
+                }
+            }
+
             boolean phaseChanged = false;
             boolean newIntersection = false;
             List<Integer> foundIds = new LinkedList<>();
@@ -409,6 +414,11 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         log.warn("Intersection could not be processed because it has no state. Id: " + old.getIntersectionId());
                         continue;
                     }
+                    
+                    if (currentIntId != null && currentIntId != datum.getIntersectionId()) {
+                        log.debug("Ignoring phase check for future intersection: " + datum.getIntersectionId());
+                        continue;
+                    }
                     phaseChangeCheckLoop: for (MovementState oldMov : oldIntersectionState.getMovementList()) {
                         for (MovementState newMov : datum.getIntersectionState().getMovementList()) {
                             if (oldMov.getSignalGroup() == newMov.getSignalGroup()) {
@@ -421,7 +431,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                                     if (i >= newMov.getMovementEventList().size()
                                             || (oldMov.getMovementEventList().get(i)
                                                     .getEventState().getMovementPhaseState() != newMov.getMovementEventList().get(i)
-                                                    .getEventState().getMovementPhaseState())) {
+                                                    .getEventState().getMovementPhaseState() && newMov.getMovementEventList().get(i)
+                                                    .getEventState().getMovementPhaseState() != MovementPhaseState.PROTECTED_CLEARANCE)) { // Do not replan on transition to yellow
                                         // Phase change detected, a replan will be needed
                                         phaseChanged = true; // TODO for performance this should only be set if the phase changing is for the current intersection
                                         break phaseChangeCheckLoop; // Break outer for loop labeled phaseChangeCheckLoop
@@ -438,8 +449,9 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             boolean deletedIntersection = intersections.entrySet().removeIf(entry -> !foundIds.contains(entry.getKey()));
 
             // Trigger new plan on phase change
-            boolean onMap = checkIntersectionMaps();
-            if ((phaseChanged || newIntersection || deletedIntersection) && onMap) {
+            double dtsb = computeDtsb();
+            boolean onMap = checkIntersectionMaps(dtsb);
+            if (!stoppedAtLight() && (phaseChanged || newIntersection || deletedIntersection) && onMap && dtsb > 6.0) {
                 log.info("Requesting new plan with causes - PhaseChanged: " + phaseChanged 
                     + " NewIntersection: " + newIntersection 
                     + " deletedIntersection: " + deletedIntersection
@@ -456,24 +468,22 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      */
     private double computeDtsb() {
         if (curPos.get() == null) { // NULL will only be present at startup and will never be assigned making this check thread safe.
-            log.warn("Vehicle Location was null");
             return MAX_DTSB; 
         }
         if (glidepathTrajectory == null) {
-            log.warn("Traj was null");
             return MAX_DTSB;
         }
+
         try {
             double dtsb = glidepathTrajectory.updateIntersections(convertIntersections(intersections), curPos.get());
-            log.info("DTSB from legacy updateIntersections: " + dtsb + " AcceptableStopDistance " + acceptableStopDistance);
             updateUISignals();
             if (dtsb >= MAX_DTSB) {
-                log.warn("DTSB computation failed!");
+                log.debug("DTSB computation failed! Returning MAX_DTSB");
                 return MAX_DTSB;
             }
             return dtsb;
         } catch (Exception e) {
-            log.warn("DTSB computation failed!", e);
+            log.debug("DTSB computation failed!", e);
         }
 
         return MAX_DTSB;
@@ -490,7 +500,6 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             final TrafficSignalInfo signalMsg = intersectionDataToMsg(glidepathTrajectory.getSortedIntersections().get(i));
             msg.getTrafficSignalInfoList().add(signalMsg);
         }
-        log.debug("SIGNAL_DISPLAY", "NumInt: " + msg.getTrafficSignalInfoList().size());
         trafficSignalInfoPub.publish(msg);
     }
 
@@ -530,6 +539,9 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         return signalMsg;
     }
 
+    private boolean checkIntersectionMaps(double dtsb) {
+        return dtsb < MAX_DTSB;
+    }
     /**
      * Check to see if we're on a MAP message
      * 
@@ -651,8 +663,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         
         return currentLongitudinalManeuver.getPlanner().equals(this) 
             && currentLongitudinalManeuver instanceof SteadySpeed
-            && Math.abs(currentLongitudinalManeuver.getTargetSpeed()) < ZERO_SPEED_NOISE
-            && Math.abs(currentSpeed) < ZERO_SPEED_NOISE;
+            && Math.abs(currentLongitudinalManeuver.getTargetSpeed()) < ZERO_SPEED_NOISE;
     }
 
     /**
@@ -792,7 +803,6 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         } catch (Exception e) {
             log.error("Glidepath trajectory planning threw exception!", e);
             TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
-            tpr.requestHigherPriority(); // indicate generic failure
             return tpr;
         }
 

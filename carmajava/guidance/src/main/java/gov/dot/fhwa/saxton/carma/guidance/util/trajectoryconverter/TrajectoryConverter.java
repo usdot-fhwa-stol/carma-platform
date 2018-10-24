@@ -192,7 +192,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     //final double startTime = currentTime; 
     final double startingDowntrack = downtrack;
     final double startingSegDowntrack = segDowntrack;
-    final int startingSegIdx = route.getSegments().get(currentSegmentIdx).getUptrackWaypoint().getWaypointId();  
+    final int startingSegIdx = route.getSegments().get(currentSegmentIdx).getUptrackWaypoint().getWaypointId();  // TODO this call is redundant just use currentSegmentIdx
     ////
     // Process longitudinal maneuvers
     ////
@@ -209,7 +209,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
       }
 
       // If this maneuver is happening or will happen add it to the path
-      if (maneuver.getEndDistance() > longitudinalSimData.downtrack) {
+      if (maneuver.getEndDistance() > longitudinalSimData.downtrack && longitudinalSimData.segmentIdx < route.getSegments().size()) {
         log.debug("PATH", "convertToPath adding long mvr #" + i);
         longitudinalSimData = addLongitudinalManeuverToPath(maneuver, path, longitudinalSimData, maxPointsInPath);
         // Ensure there are no overlapping points in time
@@ -273,7 +273,7 @@ public class TrajectoryConverter implements ITrajectoryConverter {
     ////
     // This is a very simplistic handling of the complex maneuver.
     // If complex maneuvers become more common this should be changed
-    if (complexManeuver != null) {
+    if (complexManeuver != null && longitudinalSimData.segmentIdx < route.getSegments().size()) {
       double averageSpeed = 0.5 * (complexManeuver.getMinExpectedSpeed() + complexManeuver.getMaxExpectedSpeed());
       double startDist = complexManeuver.getStartDistance();
       double endDist = complexManeuver.getEndDistance();

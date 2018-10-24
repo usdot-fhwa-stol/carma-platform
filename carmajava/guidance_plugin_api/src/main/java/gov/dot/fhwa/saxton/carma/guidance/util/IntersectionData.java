@@ -80,27 +80,6 @@ public class IntersectionData {
     }
 
     /**
-     * Package-private member to update intersection state for this instance, immutable outside of this pacakge.
-     */
-    protected void updateIntersectionState(IntersectionState state, LocalDateTime timestamp) {
-        if (state.getId().getId() != intersectionId) {
-            // Do not update as this SPAT is not for this intersection, 
-            return;
-        }
-
-        this.state = state;
-        this.stateRxTimestamp = timestamp;
-    }
-
-    /**
-     * Package-private member to update intersection geometry for this instance, immutable outside of this pacakge.
-     */
-    protected void updateIntersectionGeometry(IntersectionGeometry geometry, LocalDateTime timestamp) {
-        this.geometry = geometry;
-        this.stateRxTimestamp = timestamp;
-    }
-
-    /**
      * Get the timestamp the message containing this intersection state data was received
      */
     public LocalDateTime getIntersectionStateRxTimestamp() {

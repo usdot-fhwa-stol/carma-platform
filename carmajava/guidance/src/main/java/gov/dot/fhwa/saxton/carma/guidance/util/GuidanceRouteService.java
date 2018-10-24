@@ -160,12 +160,17 @@ public class GuidanceRouteService implements RouteService {
 
   @Override
   public SpeedLimit getSpeedLimitAtLocation(double location) {
+    if (location > limits.last().getLimit()) {
+      return limits.last();
+    }
+
     for (SpeedLimit limit : limits) {
       if (limit.getLocation() >= location) {
         return limit;
       }
     }
 
+    // Should be unreachable
     return null;
   }
 

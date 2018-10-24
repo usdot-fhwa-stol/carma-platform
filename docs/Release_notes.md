@@ -1,8 +1,15 @@
-## CARMA Platform Release Notes
-***********************************************************************
+CARMA Platform Release Notes
+----------------------------
 
-**Version 2.7.3, released 09 October 2018**
-***********************************************************************
+Version 2.7.4, released 22 October 2018
+---------------------------------------
+
+Redacted files with sensitive data that cannot be publicly distributed.
+
+
+Version 2.7.3, released 09 October 2018
+---------------------------------------
+
 Material changes to the software in this version are:
 
 -PR 982, fixed unit tests  
@@ -21,8 +28,10 @@ Material changes to the software in this version are:
 -PR 1035, added UI widget for traffic signal plugin  
 -PR 1036, allow guidance plugins to set up ROS service servers  
 
-**Version 2.7.2, released 17 July 2018**
-***********************************************************************
+
+Version 2.7.2, released 17 July 2018
+------------------------------------
+
 This is the first public release of the CARMA platform (internally known as Prototype I).
 
 Installation must be performed from a development computer.  Once the system is built 
@@ -31,5 +40,6 @@ directory, can be run to transfer the executable and configuration files to the 
 vehicle computer in a directory named /opt/carma. Please see the User Guide in the docs
 folder for more details.
 
-Operating the software requires that it is installed in a properly modified Cadillac SRX, 
-Ford Escape or Freightliner Cascadia truck with device drivers in place.  
+Operating the software requires that it is installed in a properly modified vehicle, with
+corresponding device drivers in place.  Use at FHWA Saxton Lab is on customized Cadillac SRX, 
+Ford Escape and Freightliner Cascadia truck.   
