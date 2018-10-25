@@ -130,9 +130,11 @@ public class CoarsePathNeighbors extends NeighborBase {
                 timeAtNext += (speedAtNext - curSpeed) / maxAccel_;
             }else {
                 // Only continuos accelerations are allowed so we will reduce our max accel in this case to reach top smooth speed at intersection
-                timeAtNext += (2.0 * (distToNext - lagDist)) / (curSpeed + operSpeed_);
+                //timeAtNext += (2.0 * (distToNext - lagDist)) / (curSpeed + operSpeed_);
                 // An alternative approach is to accelerate to operating speed before reaching the intersection.
                 // However, this can make the target distance un-achievable if the fine plan time steps do not line up with the inflection point when max speed is achieved. 
+                double cruiseTime = (distToNext - distToOperSpeed) / operSpeed_;
+                timeAtNext += timeToOperSpeed + cruiseTime;
             }
 
 
@@ -149,7 +151,9 @@ public class CoarsePathNeighbors extends NeighborBase {
                 } else { // We arrived at the light too early and need to slow down
                     double extraTime = timeBuffer_ - phaseTimeElapsed;
                     timeAtNext += extraTime;
-                    speedAtNext = 2.0*(distToNext - lagDist)/(timeAtNext - (curTime + lagTime_)) - curSpeed;
+                    if (speedAtNext < operSpeed_) {
+                        speedAtNext = 2.0*(distToNext - lagDist)/(timeAtNext - (curTime + lagTime_)) - curSpeed;
+                    }
                     state = phaseAtTime(intersectionIndex, timeAtNext); // Update state
                     validGreen = true;
                 }

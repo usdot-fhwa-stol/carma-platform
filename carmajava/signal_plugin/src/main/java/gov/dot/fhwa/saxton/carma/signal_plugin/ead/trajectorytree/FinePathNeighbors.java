@@ -107,6 +107,23 @@ public class FinePathNeighbors extends NeighborBase {
             } else {
                 log_.debug("PLAN", "Remove candidate speed due to signal violation: " + v);
             }
+
+            // If we can reach the speed limit add a extra node which gets us there as fast as possible
+            if (v >= speedLimit_) {
+                
+                double timeToLimit = (speedLimit_ - curSpeed) / maxAccel_;
+                deltaD = timeToLimit * (curSpeed + v) * 0.5;
+                newDist = curDist + deltaD;
+                double modifiedNewTime = curTime + timeToLimit; 
+                //System.out.println("Potential extra neighbor: " + new Node(newDist, modifiedNewTime, v));
+                if(!signalViolation(curDist, newDist, curTime, modifiedNewTime, v)) {
+
+                    neighbors.add(new Node(newDist, modifiedNewTime, v));
+                } else {
+                    log_.debug("PLAN", "Remove candidate speed due to signal violation: " + v);
+                }
+                
+            }
         }
         log_.debug("PLAN", "Generating neighbors of size " + neighbors.size());
 
