@@ -188,8 +188,6 @@ public class EadIntersectionManager {
 		IntersectionGeometry nearGeometry = sortedIntersections.peek().geometry;
 		dtsb = sortedIntersections.peek().dtsb;
 
-		double stopBoxWidth = nearGeometry == null ? 0.0 : nearGeometry.stopBoxWidth(); // TODO we need ead to read the stop box width from the intersection data automatically
-
 		//if we have transitioned to an egress lane or are no longer associated with a lane
 		// (should be somewhere near the center of the stop box) then
 		if (nearGeometry != null) { 
@@ -198,6 +196,7 @@ public class EadIntersectionManager {
 			// OR The current lane is an actual lane but not an approach lane
 			// OR The current dtsb is negative and less than half the stop box width (just past the stop bar)
 			// Then we have passed the stop bar of this intersection
+			double stopBoxWidth = nearGeometry.stopBoxWidth();
 			if ((laneId == -1 && prevApproachLaneId_.get() >= 0) ||
 					(laneId != -1 && !nearGeometry.isApproach(laneId)) || dtsb < -0.5 * stopBoxWidth) {
 				//remove the nearest intersection from the list, along with its associated map

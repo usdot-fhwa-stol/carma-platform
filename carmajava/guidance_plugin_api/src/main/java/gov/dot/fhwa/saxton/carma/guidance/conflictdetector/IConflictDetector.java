@@ -46,4 +46,22 @@ public interface IConflictDetector {
    * @return A sorted list of conflict spaces where the two paths conflict
    */
   public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath, List<RoutePointStamped> otherPath);
+
+  /**
+   * Returns the list of conflicts between two provided vehicle paths.
+   * The returned set of conflicts is only for the provided paths and ignores any other currently tracked paths
+   * 
+   * @param hostPath The path representing the host trajectory
+   * @param otherPath The path to find conflicts with by comparing against the host trajectory
+   * @param downtrackMargin The margin around a RoutePointStamped in the downtrack dimension in which a collision will be considered to have occurred
+   * @param crosstrackMargin The margin around a RoutePointStamped in the crosstrack dimension in which a collision will be considered to have occurred
+   * @param timeMargin The margin around a RoutePointStamped in the time dimension in which a collision will be considered to have occurred
+   * @param longitudinalBias The percentage of the longitudinal conflict margin by which to bias the host vehicle's position to the front
+   * @param lateralBias The percentage of the lateral conflict margin by which to bias the host vehicle's position to the right
+   * @param temporalBias The percentage of the time conflict margin by which to bias the host vehicle's position forward in time
+   * 
+   * @return A sorted list of conflict spaces where the two paths conflict
+   */
+  public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath, List<RoutePointStamped> otherPath, 
+    double downtrackMargin, double crosstrackMargin, double timeMargin, double longitudinalBias, double lateralBias, double temporalBias);
 }

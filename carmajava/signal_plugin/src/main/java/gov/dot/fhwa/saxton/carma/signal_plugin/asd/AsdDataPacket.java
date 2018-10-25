@@ -153,7 +153,7 @@ public class AsdDataPacket {
 	 */
 	public String toString(int n) {
 		
-		String out = new String();
+		String out = "";
 		
 		for (int i = 0;  i < Math.min(n, buffer_.length);  ++i){
 			out += String.format("%02x ", buffer_[i]);

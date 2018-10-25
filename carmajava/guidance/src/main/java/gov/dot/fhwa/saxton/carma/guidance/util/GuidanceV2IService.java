@@ -140,7 +140,6 @@ public class GuidanceV2IService implements V2IService {
         I2VData newI2VData = new I2VData(LocalDateTime.now());
 
         DsrcCommsCheck newSpatCheck = new DsrcCommsCheck(spatCommsReliabilityCheckThreshold, minSpatMsgsPerSec);
-        newSpatCheck.recordNewCommsRx(ts);
 
         newI2VData.spatComms = newSpatCheck;
 
@@ -165,7 +164,6 @@ public class GuidanceV2IService implements V2IService {
         I2VData newI2VData = new I2VData(LocalDateTime.now());
 
         DsrcCommsCheck newMapCheck = new DsrcCommsCheck(mapCommsReliabilityCheckThreshold, minMapMsgsPerSec);
-        newMapCheck.recordNewCommsRx(ts);
 
         newI2VData.mapComms = newMapCheck;
 
