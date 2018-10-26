@@ -19,15 +19,6 @@ package gov.dot.fhwa.saxton.carma.signal_plugin;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.joda.time.DateTime;
-
-import cav_msgs.Connection;
-import cav_msgs.GenericLane;
-import cav_msgs.IntersectionState;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -53,8 +44,6 @@ import cav_msgs.NodeListXY;
 import cav_msgs.NodeOffsetPointXY;
 import cav_msgs.NodeXY;
 import cav_msgs.Position3D;
-import geometry_msgs.TwistStamped;
-import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import cav_msgs.TrafficSignalInfo;
 import cav_msgs.TrafficSignalInfoList;
 import cav_msgs.UIInstructions;
@@ -74,13 +63,6 @@ import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SteadySpeed;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.AbstractPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.IStrategicPlugin;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
-import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
-import gov.dot.fhwa.saxton.carma.guidance.util.IntersectionData;
-import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementHolder;
-import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementKey;
-import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DoubleDataElement;
-import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IntersectionCollectionDataElement;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IServiceServer;
@@ -107,9 +89,6 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.Movement;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.SpatMessage;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.EadAStar;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.PlanInterpolator;
-import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
-import gov.dot.fhwa.saxton.carma.signal_plugin.filter.PolyHoloA;
-import sensor_msgs.NavSatFix;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 import gov.dot.fhwa.saxton.carma.signal_plugin.filter.PolyHoloA;
 import j2735_msgs.MovementPhaseState;
@@ -177,7 +156,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         // This must be done before callbacks are created
         this.collisionChecker = new ObjectCollisionChecker(
             this.pluginServiceLocator,
-            new DefaultMotionPredictorFactory(this.pluginServiceLocator.getParameterSource()),
+            new DefaultMotionPredictorFactory(appConfig),
             new PlanInterpolator()
         );
 
