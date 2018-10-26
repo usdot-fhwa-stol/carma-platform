@@ -18,7 +18,9 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree;
 
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.INodeCollisionChecker;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase.NONE;
@@ -58,6 +60,7 @@ public abstract class NeighborBase implements INeighborCalculator {
     protected double                        timeBuffer_;    // time, sec, at end of green phase that we don't want to touch
     protected double                        operSpeed_;     //desired vehicle speed if no signal constraints, m/s
 
+    protected INodeCollisionChecker         collisionChecker_;
 
     /**
      * This will only be called when we are on the map of an intersection, so input intersections is
@@ -65,7 +68,7 @@ public abstract class NeighborBase implements INeighborCalculator {
      */
     @Override
     public void initialize(List<IntersectionData> intersections, int numIntersections, double timeIncrement,
-                           double speedIncrement) {
+                           double speedIncrement, INodeCollisionChecker collisionChecker) {
 
         intersections_ = intersections;
         numInt_ = numIntersections;
@@ -245,5 +248,15 @@ public abstract class NeighborBase implements INeighborCalculator {
                 //would be nice to log a warning here, but base class doesn't have a log object
                 return -1.0;
         }
+    }
+    
+    /**
+     * Returns a boolean flag to indicate if the given node pair has any conflict with detected NCV 
+     * @param startNode
+     * @param endNode
+     * @return true if collision detected
+     */
+    protected boolean hasConflict(Node startNode, Node endNode) {
+        return this.collisionChecker_.hasCollision(Arrays.asList(startNode, endNode));
     }
 }
