@@ -31,3 +31,9 @@ devel
 carmajava/guidance/src/main/resources/version
 carmajava/guidance/out/**
 carmajava/route/out/**
+
+# Ignore sensitive data files and directories
+srx_can_driver
+srx_objects
+truck_can_driver
+**/J2735_201603.asn1
