@@ -234,13 +234,13 @@ public class Trajectory implements ITrajectory {
 				if (vehicleLon.timeStamp() < oldestTime) oldestTime = vehicleLon.timeStamp();
 				if ((entryTime - oldestTime) > 0.9 * timeStepSize_) { //allow time for this method to execute within the time step
 					log_.warnf("TRAJ", "plan detects stale input data. curTime = %d, oldestTime = %d, timeStepSize_ = %d",
-							entryTime, oldestTime, timeStepSize_);
+							entryTime, oldestTime, timeStepSize_);					
 					log_.warnf("TRAJ", "    speed is            %5d ms old", entryTime - curSpeedElement.timeStamp());
 					log_.warnf("TRAJ", "    accel is            %5d ms old", entryTime - curAccelElement.timeStamp());
 					log_.warnf("TRAJ", "    latitude is         %5d ms old", entryTime - vehicleLat.timeStamp());
 					log_.warnf("TRAJ", "    longitude is        %5d ms old", entryTime - vehicleLon.timeStamp());
 				}
-			}
+			}			
 			curSpeed_ = curSpeedElement.value(); //this is the smoothed value
 			curAccel_ = curAccelElement.value(); //smoothed
 		}catch (Exception e) {

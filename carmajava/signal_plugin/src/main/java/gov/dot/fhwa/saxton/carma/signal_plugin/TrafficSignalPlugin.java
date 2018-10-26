@@ -88,6 +88,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.LaneSet;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.Movement;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.SpatMessage;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.EadAStar;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.PlanInterpolator;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 import gov.dot.fhwa.saxton.carma.signal_plugin.filter.PolyHoloA;
 import j2735_msgs.MovementPhaseState;
@@ -126,6 +127,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private EadAStar ead;
     private double operSpeedScalingFactor = 1.0;
     private double speedCommandQuantizationFactor = 0.1;
+    private ObjectCollisionChecker collisionChecker; // Collision checker responsible for tracking NCVs and providing collision checks capabilities
     private AtomicBoolean involvedInControl = new AtomicBoolean(false);
     static private final double CM_PER_M = 100.0;
     static private final double MAX_DTSB = Integer.MAX_VALUE - 5.0; // Legacy Glidepath code returns Integer.MAX_VALUE for invalid dtsb. Add fudge factor for detecting it as a double
@@ -149,6 +151,15 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     @Override
     public void onInitialize() {
         // load params
+
+        // Setup the collision checker
+        // This must be done before callbacks are created
+        this.collisionChecker = new ObjectCollisionChecker(
+            this.pluginServiceLocator,
+            new DefaultMotionPredictorFactory(appConfig),
+            new PlanInterpolator()
+        );
+
         // Pass params into GlidepathAppConfig
         appConfig = new GlidepathAppConfig(pluginServiceLocator.getParameterSource(), pluginServiceLocator.getRouteService());
         GlidepathApplicationContext.getInstance().setAppConfigOverride(appConfig);
@@ -332,8 +343,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         if (!m2.getTimingExists()) 
                             return -1; // Put events without timing at the end
                         return (int) (m1.getTiming().getMinEndTime() - m2.getTiming().getMinEndTime()); // Use the non-optional minEndTiming to sort events
-                    });
-                    
+                    }); 
+
                     sortedEvents.addAll(movementData.getMovementEventList()); // Sort the movement events by minEndTime
 
                     MovementEvent earliestEvent = sortedEvents.peek();
@@ -574,7 +585,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     public void onResume() {
         log.info("TrafficSignalPlugin trying to resume.");
         defaultSpeedLimit = appConfig.getMaximumSpeed(0.0);
-        ead = new EadAStar();
+        ead = new EadAStar(collisionChecker);
         try {
             glidepathTrajectory = new gov.dot.fhwa.saxton.carma.signal_plugin.ead.Trajectory(ead);
         } catch (Exception e) {

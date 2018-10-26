@@ -46,10 +46,10 @@ public class SpatMessage implements ISpatMessage {
     private DateTime timestamp;
 
     private List<Movement> movements = new ArrayList<Movement>();
-
+    
     public SpatMessage()   {
     }
-
+    
     /**
      * Gets the spat data for the provided lane, assumes STRAIGHT lane
      *

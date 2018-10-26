@@ -63,7 +63,7 @@ public class EadAStar implements IEad {
 
 
 
-    public EadAStar() {
+    public EadAStar(INodeCollisionChecker collisionChecker) {
 
         IGlidepathAppConfig config = GlidepathApplicationContext.getInstance().getAppConfig();
         maxAccel_ = config.getDoubleDefaultValue("defaultAccel", 2.0);
