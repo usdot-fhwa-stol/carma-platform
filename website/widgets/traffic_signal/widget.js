@@ -21,7 +21,7 @@ CarmaJS.WidgetFramework.TrafficSignal = (function () {
 
         //Listeners
         var listenerSpeedAccel;
-        var listenerCANSpeed;
+        var listenerSFVelocity;
 
         //*** Widget Install Folder ***
         //Currently the URL path from document or window are pointing to the page, not the actual folder location.
@@ -93,15 +93,15 @@ CarmaJS.WidgetFramework.TrafficSignal = (function () {
         /*
             Display the actual speed
         */
-        var showCANSpeeds = function () {
+        var showActualSpeed = function () {
 
-            listenerCANSpeed = new ROSLIB.Topic({
+            listenerSFVelocity = new ROSLIB.Topic({
                 ros: ros,
-                name: t_can_speed,
-                messageType: 'std_msgs/Float64'
+                name: t_sensor_fusion_filtered_velocity,
+                messageType: 'geometry_msgs/TwistStamped'
             });
 
-            listenerCANSpeed.subscribe(function (message) {
+            listenerSFVelocity.subscribe(function (message) {
 
                 if (svgLayerSpeed == null)
                     return;
@@ -109,14 +109,13 @@ CarmaJS.WidgetFramework.TrafficSignal = (function () {
                 if (svgLayerSpeed.getElementById('svgActualText') == null)
                     return;
 
-                if (message.data != null && message.data != 'undefined')
-                {
-                    var speedActual = String(Math.round(message.data * METER_TO_MPH));
-
-                    svgLayerSpeed.getElementById('svgActualText').innerHTML = speedActual.padStart(2,'0');
+                //If nothing on the Twist, skip
+                if (message.twist == null || message.twist.linear == null || message.twist.linear.x == null) {
+                    return;
                 }
 
-
+                var actualSpeedMPH = String(Math.round(message.twist.linear.x * METER_TO_MPH));
+                svgLayerSpeed.getElementById('svgActualText').innerHTML = actualSpeedMPH.padStart(2,'0');
             });
         };
 
@@ -359,9 +358,9 @@ CarmaJS.WidgetFramework.TrafficSignal = (function () {
                     listenerRouteState.unsubscribe();
                 if (listenerSpeedAccel)
                     listenerSpeedAccel.unsubscribe();
-                if (listenerCANSpeed)
-                   listenerCANSpeed.unsubscribe();
-                if (listenerTrafficSignalInfo) //TODO:
+                if (listenerSFVelocity)
+                   listenerSFVelocity.unsubscribe();
+                if (listenerTrafficSignalInfo)
                    listenerTrafficSignalInfo.unsubscribe();
                 this.element.empty();
                 this._super();
@@ -372,8 +371,8 @@ CarmaJS.WidgetFramework.TrafficSignal = (function () {
            showSpeedAccelInfo: function(){
               showSpeedAccelInfo();
            },
-           showCANSpeeds: function(){
-              showCANSpeeds();
+           showActualSpeed: function(){
+              showActualSpeed();
            },
            showTrafficSignalInfo: function(){
               showTrafficSignalInfo();
@@ -389,7 +388,7 @@ CarmaJS.WidgetFramework.TrafficSignal = (function () {
             container.trafficSignalIntersection();
             container.trafficSignalIntersection("checkRouteState", null);
             container.trafficSignalIntersection("showSpeedAccelInfo", null);
-            container.trafficSignalIntersection("showCANSpeeds", null);
+            container.trafficSignalIntersection("showActualSpeed", null);
             container.trafficSignalIntersection("showTrafficSignalInfo", null);
         };
 
