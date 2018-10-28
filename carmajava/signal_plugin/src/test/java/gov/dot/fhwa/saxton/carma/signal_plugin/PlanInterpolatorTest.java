@@ -44,7 +44,7 @@ import static org.junit.Assert.assertTrue;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 
 /**
- * Runs unit tests for the RouteWorker class
+ * Runs unit tests for the PlanInterpolator class
  */
 public class PlanInterpolatorTest {
 

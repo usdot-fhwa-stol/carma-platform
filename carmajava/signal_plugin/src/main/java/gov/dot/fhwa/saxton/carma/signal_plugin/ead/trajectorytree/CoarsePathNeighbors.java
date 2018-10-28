@@ -38,7 +38,7 @@ public class CoarsePathNeighbors extends NeighborBase {
 
     protected double                        lagTime_; //vehicle response lag, sec
     protected double                        fractionalMaxAccel_;
-    protected static ILogger                log_ = LoggerManager.getLogger(CoarsePathNeighbors.class);
+    protected static final ILogger                log_ = LoggerManager.getLogger(CoarsePathNeighbors.class);
     public    static final double           TYPICAL_INTERSECTION_WIDTH = 40.0; // meters
 
     public CoarsePathNeighbors() {
@@ -76,6 +76,14 @@ public class CoarsePathNeighbors extends NeighborBase {
     public List<Node> neighbors(Node node) {
         
         log_.debug("PLAN", "Entering coarse node " + node.toString());
+        int intIndex = currentIntersectionIndex(node.getDistanceAsDouble());
+        if (intIndex >= 0) {
+            SignalState sigState = phaseAtTime(currentIntersectionIndex(node.getDistanceAsDouble()), node.getTimeAsDouble());
+            //System.out.println("Generating neighbors of node " + node.toString() + " Phase: " + sigState.phase + " timeRemaining: " + sigState.timeRemaining);
+        } else {
+            //System.out.println("Generating neighbors of node " + node.toString());
+        }
+
         List<Node> neighbors = new ArrayList<>();
 
         double curTime = node.getTimeAsDouble();
@@ -97,13 +105,17 @@ public class CoarsePathNeighbors extends NeighborBase {
             }
         }
 
+
         //if there is an intersection downtrack then
         if (intersectionIndex >= 0) {
+
+            //System.out.println("IntersectionIndex: " + intersectionIndex);
+            SignalState sigState = phaseAtTime(intersectionIndex, curTime);
+            //System.out.println(" Phase at currentTime: " + sigState.phase + " timeRemaining: " + sigState.timeRemaining);
 
             //get its distance from us & use that value for all our neighbors
             double lagDist = lagTime_*curSpeed;
 
-            //compute time to reach operating speed and travel to that next intersection
             double speedAtNext = operSpeed_;
             double deltaSpeed = Math.abs(operSpeed_ - curSpeed);
             double timeToOperSpeed = deltaSpeed / maxAccel_;
@@ -117,35 +129,60 @@ public class CoarsePathNeighbors extends NeighborBase {
                 speedAtNext = Math.sqrt(curSpeed*curSpeed + 2.0*maxAccel_*Math.max(distToNext-lagDist, 0.0));
                 timeAtNext += (speedAtNext - curSpeed) / maxAccel_;
             }else {
+                // Only continuos accelerations are allowed so we will reduce our max accel in this case to reach top smooth speed at intersection
+                //timeAtNext += (2.0 * (distToNext - lagDist)) / (curSpeed + operSpeed_);
+                // An alternative approach is to accelerate to operating speed before reaching the intersection.
+                // However, this can make the target distance un-achievable if the fine plan time steps do not line up with the inflection point when max speed is achieved. 
                 double cruiseTime = (distToNext - distToOperSpeed) / operSpeed_;
                 timeAtNext += timeToOperSpeed + cruiseTime;
+            }
+
+
+
+
+            // Check the time buffer for arrival
+            boolean validGreen = false;
+            double phaseTimeElapsed = 0.0;
+            SignalState state = phaseAtTime(intersectionIndex, timeAtNext);
+            if (state.phase == SignalPhase.GREEN && state.timeRemaining > timeBuffer_) {
+                phaseTimeElapsed = phaseDuration(intersectionIndex, SignalPhase.GREEN) - state.timeRemaining;
+                if (phaseTimeElapsed > timeBuffer_) {
+                    validGreen = true;
+                } else { // We arrived at the light too early and need to slow down
+                    double extraTime = timeBuffer_ - phaseTimeElapsed;
+                    timeAtNext += extraTime;
+                    if (speedAtNext < operSpeed_) {
+                        speedAtNext = 2.0*(distToNext - lagDist)/(timeAtNext - (curTime + lagTime_)) - curSpeed;
+                    }
+                    state = phaseAtTime(intersectionIndex, timeAtNext); // Update state
+                    validGreen = true;
+                }
             }
 
             double nodeTime = timeAtNext;
             double nodeSpeed = speedAtNext;
             double nodeLoc = curLoc + distToNext;
 
-            //if that intersection's signal will be green when we arrive at max speed then
-            SignalState state = phaseAtTime(intersectionIndex, timeAtNext);
-            SignalPhase phaseAtNext = state.phase;
-            if (phaseAtNext == SignalPhase.GREEN) {
+            if (validGreen) {
 
                 //slice up the remainder of that green phase into neighbor nodes
-                double greenExpiration = curTime + state.timeRemaining - timeBuffer_;
+                double greenExpiration = timeAtNext + state.timeRemaining - timeBuffer_;
                 do {
                     Node neighbor = new Node(nodeLoc, nodeTime, nodeSpeed);
+                   // //System.out.println("Potential Neighbor: " + neighbor.toString());
                     neighbors.add(neighbor);
                     log_.debug("PLAN", "case one: time = " + nodeTime + " speed = " + nodeSpeed + " loc = " + nodeLoc);
                     nodeTime += timeInc_;
-                    nodeSpeed = 2.0*distToNext/(nodeTime - curTime) - curSpeed;
+                    nodeSpeed = 2.0*(distToNext - lagDist)/(nodeTime - (curTime + lagTime_)) - curSpeed;
                 }while (nodeSpeed >= crawlingSpeed_  &&  nodeTime <= greenExpiration);
             }
 
             //find the following green phase and the speed reduction we need to get there
+            //System.out.println("Phases: G: " + phaseDuration(intersectionIndex, SignalPhase.GREEN) + " Y: " + phaseDuration(intersectionIndex, SignalPhase.YELLOW) + " R: " + phaseDuration(intersectionIndex, SignalPhase.RED));
             double timeOfNextGreen = timeOfGreenBegin(intersectionIndex, timeAtNext) + timeBuffer_;
-            double greenExpiration = timeOfNextGreen + phaseDuration(intersectionIndex, SignalPhase.GREEN) - timeBuffer_;
+            double greenExpiration = timeOfNextGreen + phaseDuration(intersectionIndex, SignalPhase.GREEN) - (2.0 * timeBuffer_); 
             log_.debug("PLAN", "timeOfNextGreen = " + timeOfNextGreen + " greenExpiration = " + greenExpiration);
-
+            //System.out.println("timeAtNext: " + timeAtNext + " timeOfNextGreen = " + timeOfNextGreen + " greenExpiration = " + greenExpiration);
             //If we are really close to the next intersection then
             // If it will be green while staying at current speed, then it is handled above, and there is no chance
             //   that we will be able to consider getting through in the following green phase.
@@ -170,14 +207,15 @@ public class CoarsePathNeighbors extends NeighborBase {
                 nodeTime = timeOfNextGreen;
                 while (nodeSpeed >= crawlingSpeed_ && nodeTime <= greenExpiration) {
                     Node neighbor = new Node(nodeLoc, nodeTime, nodeSpeed);
+                    ////System.out.println("Potential Neighbor: " + neighbor.toString());
                     neighbors.add(neighbor);
                     log_.debug("PLAN", "case two: time = " + nodeTime + " speed = " + nodeSpeed + " loc = " + nodeLoc);
                     nodeTime += timeInc_;
-                    nodeSpeed = 2.0 * distToNext / (nodeTime - curTime) - curSpeed;
+                    nodeSpeed = 2.0*(distToNext - lagDist)/(nodeTime - (curTime + lagTime_)) - curSpeed;
                 }
 
             //else if we haven't yet found any solution at this intersection (we have to stop for the red)
-            }else if (neighbors.size() == 0){
+            } else if (neighbors.size() == 0) {
                 //we will need to come to a stop while red expires
 
 
@@ -199,8 +237,9 @@ public class CoarsePathNeighbors extends NeighborBase {
                 //            + ", cruiseTime = " + cruiseTime + ", waitTime = " + waitTime);
 
                 //create a single node at the start of green phase with zero speed
-                Node neighbor = new Node(nodeLoc, timeOfNextGreen - timeBuffer_, 0.0);
+                Node neighbor = new Node(nodeLoc, timeOfNextGreen, 0.0);
                 neighbors.add(neighbor);
+                //System.out.println("Potential Neighbor: " + neighbor.toString());
                 log_.debug("EAD", "Need to stop at red:" + neighbor.toString());
             }
 
@@ -220,10 +259,12 @@ public class CoarsePathNeighbors extends NeighborBase {
             double timeAtOperSpeed = curTime + deltaTime;
 
             //add the node
+            //System.out.println("Potential Neighbor: " + new Node(operSpeedLoc, timeAtOperSpeed, operSpeed_).toString());
             neighbors.add(new Node(operSpeedLoc, timeAtOperSpeed, operSpeed_));
         }
         log_.debug("PLAN", "returning " + neighbors.size() + " neighbors.");
 
+        //System.out.println();
         return neighbors;
     }
 

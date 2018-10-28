@@ -37,7 +37,7 @@ import java.util.List;
  */
 public class SpatMessage implements ISpatMessage {
 
-    private static ILogger logger = LoggerManager.getLogger(SpatMessage.class);
+    private static final ILogger logger = LoggerManager.getLogger(SpatMessage.class);
 
     private int version;
 
@@ -46,7 +46,6 @@ public class SpatMessage implements ISpatMessage {
     private DateTime timestamp;
 
     private List<Movement> movements = new ArrayList<Movement>();
-    private static Movement lastMovement = null;
 
     public SpatMessage()   {
     }
@@ -70,21 +69,10 @@ public class SpatMessage implements ISpatMessage {
         for (Movement movement : movements)   {
             for (LaneSet laneSet : movement.getLaneSets())   {
                 if (laneSet.getLane() == lane && laneSet.isStraight())   {
-                    // let's only log when movement changes for now
-                    if (lastMovement != null)   {
-                        if (lastMovement.getCurrentStateAsEnum() != movement.getCurrentStateAsEnum())   {
-                            logger.debug("SPAT", " ########## THIS IS THE LANE #############");
-                            logger.debug("SPAT", "LaneSet: " + laneSet.getLane() + "  :  " + laneSet.getMovementAsString());
-                            logger.debug("SPAT", "State: " + movement.getCurrentStateAsEnum() + " : " + movement.getMinTimeRemaining() + " : " + movement.getMaxTimeRemaining());
-                            logger.debug("SPAT", "Current State: " + movement.getCurrentState());
-                        }
-                    }
-
                     // In our timed signal, the signal actually uses MAX time to indicate when the signal will change
                     // we will use the configured signal phase times to correctly set the third phase
                     holder.put(DataElementKey.SIGNAL_PHASE, new PhaseDataElement(movement.getCurrentStateAsEnum()));
                     holder.put(DataElementKey.SIGNAL_TIME_TO_NEXT_PHASE, new DoubleDataElement(movement.getMaxTimeRemaining()));
-                    lastMovement = movement;
                 }
             }
         }

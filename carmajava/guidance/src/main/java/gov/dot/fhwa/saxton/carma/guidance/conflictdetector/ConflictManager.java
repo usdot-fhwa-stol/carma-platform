@@ -360,6 +360,13 @@ public class ConflictManager implements IConflictManager {
 
   @Override
   public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath, List<RoutePointStamped> otherPath) {
+    return getConflicts(hostPath, otherPath, downtrackMargin, crosstrackMargin, timeMargin, longitudinalBias, lateralBias, temporalBias);
+  }
+
+  // Note the parameters in this function are overriding the class members by the same name
+  @Override
+  public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath, List<RoutePointStamped> otherPath, 
+    double downtrackMargin, double crosstrackMargin, double timeMargin, double longitudinalBias, double lateralBias, double temporalBias) {
     log.info("Getting conflicts between two paths");
     if (hostPath == null || otherPath == null || hostPath.isEmpty() || otherPath.isEmpty()) {
       return new LinkedList<>();

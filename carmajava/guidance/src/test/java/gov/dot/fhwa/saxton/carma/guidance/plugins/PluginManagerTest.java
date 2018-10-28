@@ -21,6 +21,7 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.GuidanceRouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
+import gov.dot.fhwa.saxton.carma.guidance.util.ITimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryConverter;
 import gov.dot.fhwa.saxton.utils.ComponentVersion;
@@ -156,7 +157,7 @@ public class PluginManagerTest {
         pm = new PluginManager(mock(GuidanceStateMachine.class), mock(IPubSubService.class), 
         mock(IGuidanceCommands.class), mock(IManeuverInputs.class), mock(GuidanceRouteService.class), node,
         mock(IMobilityRouter.class), mock(IConflictDetector.class), mock(ITrajectoryConverter.class),
-        mock(ILightBarManager.class), mock(Tracking.class));
+        mock(ILightBarManager.class), mock(Tracking.class), mock(ITimeProvider.class));
         pluginClasses = new ArrayList<>();
         plugins = new ArrayList<>();
     }

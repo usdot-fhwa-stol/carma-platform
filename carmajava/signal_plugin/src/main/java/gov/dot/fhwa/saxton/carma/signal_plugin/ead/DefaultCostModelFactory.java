@@ -51,7 +51,7 @@ public class DefaultCostModelFactory implements ICostModelFactory{
     switch(desiredModelName) {
       case "DEFAULT":
         double vehicleMass = config.getDoubleValue("ead.vehicleMass");
-        double rollingRes = config.getDoubleDefaultValue("ead.rollingResistanceOverride", 0.0);
+        double rollingRes = config.getDoubleValue("ead.rollingResistanceOverride");
         double dragCoef = config.getDoubleValue("ead.dragCoefficient");
         double frontalArea = config.getDoubleValue("ead.frontalArea");
         double airDensity = config.getDoubleValue("ead.airDensity");
