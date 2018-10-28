@@ -53,8 +53,10 @@ import cav_srvs.GetTransformResponse;
 import geometry_msgs.TwistStamped;
 import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
+import gov.dot.fhwa.saxton.carma.guidance.ManeuverPlanner;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.TrajectoryPlanningResponse;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuverInputs;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ManeuverType;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.SlowDown;
@@ -132,6 +134,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
     private final long LOOP_PERIOD = 100; // Plugin will loop at 10Hz
     private final GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
+    private TrafficSignalManeuverInputs pluginManeuverInputs; // Custom maneuver inputs used for planning
+    private ManeuverPlanner pluginManeuverPlanner; // Maneuver planner used with pluginManeuverInputs for planning
 
     public TrafficSignalPlugin(PluginServiceLocator psl) {
         super(psl);
@@ -147,6 +151,11 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         // Pass params into GlidepathAppConfig
         GlidepathAppConfig appConfig = new GlidepathAppConfig(pluginServiceLocator.getParameterSource(), pluginServiceLocator.getRouteService());
         GlidepathApplicationContext.getInstance().setAppConfigOverride(appConfig);
+
+        // Initialize custom maneuver inputs
+        IManeuverInputs platformInputs = pluginServiceLocator.getManeuverPlanner().getManeuverInputs();
+        pluginManeuverInputs = new TrafficSignalManeuverInputs(platformInputs, appConfig.getDoubleValue("ead.response.lag"), appConfig.getDoubleValue("defaultAccel"));
+        pluginManeuverPlanner = new ManeuverPlanner(pluginServiceLocator.getManeuverPlanner().getGuidanceCommands(), pluginManeuverInputs);
 
         // Initialize Speed Filter
         velFilter.initialize(appConfig.getPeriodicDelay() * Constants.MS_TO_SEC); // TODO determine what the best value should be given we no longer use the periodic executor
@@ -654,7 +663,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      * @return True if the current maneuver is a steady speed stop maneuver planned by this plugin
      */
     private boolean stoppedAtLight() {
-        double currentSpeed = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
+        double currentSpeed = pluginManeuverInputs.getCurrentSpeed();
         LongitudinalManeuver currentLongitudinalManeuver = (LongitudinalManeuver) pluginServiceLocator.getArbitratorService().getCurrentlyExecutingManeuver(ManeuverType.LONGITUDINAL);
         if (currentLongitudinalManeuver == null) {
             return false; // Can't be stopped at a light if we are not under automated control or in a complex maneuver which we would not have planned
@@ -724,10 +733,10 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 return tpr;
             }
             SteadySpeed steadySpeed = new SteadySpeed(this);
-            steadySpeed.setMaxAccel(pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getMaxAccelLimit() * 2.0); // TODO determine if having twice the max accel is really ok
+            steadySpeed.setMaxAccel(pluginManeuverInputs.getMaxAccelLimit() * 2.0); // TODO determine if having twice the max accel is really ok
 
             steadySpeed.setSpeeds(0.0, 0.0);
-            pluginServiceLocator.getManeuverPlanner().planManeuver(steadySpeed,
+            pluginManeuverPlanner.planManeuver(steadySpeed,
                     traj.getStartLocation(), traj.getEndLocation());
             
             traj.addManeuver(steadySpeed);
@@ -849,17 +858,17 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 if (Math
                         .abs(prev.getSpeedAsDouble() - cur.getSpeedAsDouble()) < speedCommandQuantizationFactor) {
                     SteadySpeed steadySpeed = new SteadySpeed(this);
-                    steadySpeed.setMaxAccel(pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getMaxAccelLimit() * 2.0); // TODO determine if having twice the max accel is really ok
+                    steadySpeed.setMaxAccel(pluginManeuverInputs.getMaxAccelLimit() * 2.0); // TODO determine if having twice the max accel is really ok
                     
                     if (cur.getSpeedAsDouble() > speedCommandQuantizationFactor) {
                         steadySpeed.setSpeeds(cur.getSpeedAsDouble(), cur.getSpeedAsDouble());
-                        pluginServiceLocator.getManeuverPlanner().planManeuver(steadySpeed,
+                        pluginManeuverPlanner.planManeuver(steadySpeed,
                                 startDist + prev.getDistanceAsDouble(), startDist + cur.getDistanceAsDouble());
                     } else {
                         // We're coming to a stop, so plan an indefinite length stop maneuver, to be
                         // overridden by replan later
                         steadySpeed.setSpeeds(0.0, 0.0);
-                        pluginServiceLocator.getManeuverPlanner().planManeuver(steadySpeed,
+                        pluginManeuverPlanner.planManeuver(steadySpeed,
                                 startDist + prev.getDistanceAsDouble(), traj.getEndLocation());
                         
                         traj.addManeuver(steadySpeed);
@@ -870,13 +879,13 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 } else if (prev.getSpeedAsDouble() < cur.getSpeedAsDouble()) {
                     SpeedUp speedUp = new SpeedUp(this);
                     speedUp.setSpeeds(prev.getSpeedAsDouble(), cur.getSpeedAsDouble());
-                    pluginServiceLocator.getManeuverPlanner().planManeuver(speedUp,
+                    pluginManeuverPlanner.planManeuver(speedUp,
                             startDist + prev.getDistanceAsDouble(), startDist + cur.getDistanceAsDouble());
                     traj.addManeuver(speedUp);
                 } else {
                     SlowDown slowDown = new SlowDown(this);
                     slowDown.setSpeeds(prev.getSpeedAsDouble(), cur.getSpeedAsDouble());
-                    pluginServiceLocator.getManeuverPlanner().planManeuver(slowDown,
+                    pluginManeuverPlanner.planManeuver(slowDown,
                             startDist + prev.getDistanceAsDouble(), startDist + cur.getDistanceAsDouble());
                     traj.addManeuver(slowDown);
                 } 
