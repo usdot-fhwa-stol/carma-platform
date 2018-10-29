@@ -134,7 +134,7 @@ public class CoarsePathNeighbors extends NeighborBase {
             }else {
                 //accelerate to operating speed before reaching the intersection.
                 //need to use an intermediate node to check conflicts
-                intermediateNode = new Node(curLoc + distToOperSpeed, timeAtNext, speedAtNext);
+                intermediateNode = new Node(curLoc + distToOperSpeed, curTime + timeToOperSpeed, speedAtNext);
                 double cruiseTime = (distToNext - distToOperSpeed) / operSpeed_;
                 timeAtNext += timeToOperSpeed + cruiseTime;
             }
@@ -152,6 +152,12 @@ public class CoarsePathNeighbors extends NeighborBase {
                     timeAtNext += extraTime;
                     if (speedAtNext < operSpeed_) {
                         speedAtNext = 2.0*(distToNext - lagDist)/(timeAtNext - (curTime + lagTime_)) - curSpeed;
+                    } else {
+                        if(intermediateNode != null) {
+                            // update intermediate node if we shift the goal node time
+                            intermediateNode = new Node(intermediateNode.getDistanceAsDouble() + extraTime * deltaSpeed,
+                                                        intermediateNode.getTimeAsDouble() + 2 * extraTime, operSpeed_);
+                        }
                     }
                     state = phaseAtTime(intersectionIndex, timeAtNext); // Update state
                     validGreen = true;
