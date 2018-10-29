@@ -155,8 +155,10 @@ public class CoarsePathNeighbors extends NeighborBase {
                     } else {
                         if(intermediateNode != null) {
                             // update intermediate node if we shift the goal node time
-                            intermediateNode = new Node(intermediateNode.getDistanceAsDouble() + extraTime * deltaSpeed,
-                                                        intermediateNode.getTimeAsDouble() + 2 * extraTime, operSpeed_);
+                            double timeShift = 2 * extraTime * operSpeed_/ deltaSpeed;
+                            double distanceShift = 0.5 * (operSpeed_ + curSpeed) * timeShift;
+                            intermediateNode = new Node(intermediateNode.getDistanceAsDouble() + distanceShift,
+                                                        intermediateNode.getTimeAsDouble() + timeShift, operSpeed_);
                         }
                     }
                     state = phaseAtTime(intersectionIndex, timeAtNext); // Update state
