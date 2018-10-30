@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Matchers;
 import org.mockito.Mockito;
 
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
@@ -75,7 +76,7 @@ public class EADAStarPlanTest {
         List<IntersectionData> intersections = Arrays.asList(intersection1);
         try {
             List<Node> res = ead.plan(1.935252945217594, 11.176, intersections);
-            System.out.println("A* Planning for two intersections takes " + (System.currentTimeMillis() - startTime) + " ms to finish");
+            System.out.println("A* Planning for one intersections takes " + (System.currentTimeMillis() - startTime) + " ms to finish");
             for(Node n : res) {
                 System.out.println(n.toString());
             }
@@ -218,5 +219,38 @@ public class EADAStarPlanTest {
         System.out.println("\n\n");
 
         assertTrue(0 == failureCount);// Test fails if any plans fail
+    }
+    
+    @Test
+    public void planSingleIntersectionWithNonstoppingNCV() {
+        when(mockConfig.getDoubleDefaultValue("ead.coarse_time_inc", 5.0)).thenReturn(2.0);
+        when(mockConfig.getDoubleDefaultValue("ead.coarse_speed_inc", 3.0)).thenReturn(2.0);
+        when(mockConfig.getDoubleDefaultValue("ead.fine_time_inc", 2.0)).thenReturn(2.0);
+        when(mockConfig.getDoubleDefaultValue("ead.fine_speed_inc", 1.0)).thenReturn(1.0);
+        when(mockConfig.getDoubleDefaultValue("ead.acceptableStopDistance", 6.0)).thenReturn(6.0);
+        when(mockCC.hasCollision(Matchers.anyList())).thenReturn(false);
+        long startTime = System.currentTimeMillis();
+        EadAStar ead = new EadAStar(mockCC);
+        ead.initialize(1, new AStarSolver());
+        IntersectionData intersection1 = new IntersectionData(); // Id 9945
+        intersection1.map = mock(MapMessage.class, Mockito.withSettings().stubOnly());
+        intersection1.roughDist = 8423; 
+        intersection1.dtsb = 84.23;
+        intersection1.currentPhase = SignalPhase.GREEN;
+        intersection1.timeToNextPhase = 26;
+        intersection1.stopBoxWidth = 35.18;
+        intersection1.intersectionId = 9945;
+        intersection1.geometry = new IntersectionGeometry(40, 100);
+        List<IntersectionData> intersections = Arrays.asList(intersection1);
+        try {
+            List<Node> res = ead.plan(1.935252945217594, 11.176, intersections);
+            System.out.println("A* Planning for one intersections takes " + (System.currentTimeMillis() - startTime) + " ms to finish");
+            for(Node n : res) {
+                System.out.println(n.toString());
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+            assertTrue(false); // indicate the failure
+        }
     }
 }

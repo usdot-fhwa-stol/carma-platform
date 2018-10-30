@@ -75,7 +75,6 @@ public abstract class NeighborBase implements INeighborCalculator {
         speedInc_ = speedIncrement;
         collisionChecker_ = collisionChecker;
 
-
         //This method will be called each time the EAD model replans, which will happen each time a visible signal
         // changes phases. This is an opportunity to learn more about its cycle timing, so grab whatever info is there.
 
