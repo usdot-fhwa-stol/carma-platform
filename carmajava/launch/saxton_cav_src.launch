@@ -422,6 +422,8 @@
              to="/$(arg TOP_NS)/system_alert"/>
       <remap from="nav_sat_fix"
              to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
+      <remap from="velocity"
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/velocity"/>
       <remap from="get_available_routes"
              to="/$(arg TOP_NS)/$(arg RT_NS)/get_available_routes"/>
       <remap from="set_active_route"
