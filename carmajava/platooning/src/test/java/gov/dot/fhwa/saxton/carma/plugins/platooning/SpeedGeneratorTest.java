@@ -63,7 +63,7 @@ public class SpeedGeneratorTest {
                                        new ManeuverPlanner(mock(IGuidanceCommands.class), mockManeuverInputs),
                                        mockRouteService, mock(IMobilityRouter.class), mock(IConflictDetector.class),
                                        mock(ITrajectoryConverter.class), mock(ILightBarManager.class),
-                                       mock(TrackingService.class), mock(ITimeProvider.class));
+                                       mock(TrackingService.class), null, mock(ITimeProvider.class));
         mockPlugin.timeHeadway = 1.0;
         mockPlugin.standStillHeadway = 5.0;
         mockPlugin.kpPID = 1.0;

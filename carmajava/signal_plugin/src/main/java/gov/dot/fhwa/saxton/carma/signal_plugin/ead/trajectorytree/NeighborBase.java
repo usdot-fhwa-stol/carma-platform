@@ -69,11 +69,11 @@ public abstract class NeighborBase implements INeighborCalculator {
     @Override
     public void initialize(List<IntersectionData> intersections, int numIntersections, double timeIncrement,
                            double speedIncrement, INodeCollisionChecker collisionChecker) {
-
         intersections_ = intersections;
         numInt_ = numIntersections;
         timeInc_ = timeIncrement;
         speedInc_ = speedIncrement;
+        collisionChecker_ = collisionChecker;
 
 
         //This method will be called each time the EAD model replans, which will happen each time a visible signal

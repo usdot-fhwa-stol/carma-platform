@@ -21,6 +21,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicat
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.map.MapMessage;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.EadAStar;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.INodeCollisionChecker;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.IntersectionGeometry;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.AStarSolver;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
@@ -28,6 +29,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 public class EADAStarPlanTest {
     
     IGlidepathAppConfig mockConfig = mock(IGlidepathAppConfig.class, Mockito.withSettings().stubOnly());
+    INodeCollisionChecker mockCC = mock(INodeCollisionChecker.class, Mockito.withSettings().stubOnly());
     final double timeBuffer = 4.0;
     
     @Before
@@ -59,7 +61,7 @@ public class EADAStarPlanTest {
         when(mockConfig.getDoubleDefaultValue("ead.fine_speed_inc", 1.0)).thenReturn(1.0);
         when(mockConfig.getDoubleDefaultValue("ead.acceptableStopDistance", 6.0)).thenReturn(6.0);
         long startTime = System.currentTimeMillis();
-        EadAStar ead = new EadAStar();
+        EadAStar ead = new EadAStar(mockCC);
         ead.initialize(1, new AStarSolver());
         IntersectionData intersection1 = new IntersectionData(); // Id 9945
         intersection1.map = mock(MapMessage.class, Mockito.withSettings().stubOnly());
@@ -92,7 +94,7 @@ public class EADAStarPlanTest {
         when(mockConfig.getDoubleDefaultValue("ead.fine_speed_inc", 1.0)).thenReturn(1.0);
         when(mockConfig.getDoubleDefaultValue("ead.acceptableStopDistance", 6.0)).thenReturn(6.0);
         long startTime = System.currentTimeMillis();
-        EadAStar ead = new EadAStar();
+        EadAStar ead = new EadAStar(mockCC);
         ead.initialize(1, new AStarSolver());
         IntersectionData intersection1 = new IntersectionData(); // Id 9709
         intersection1.map = mock(MapMessage.class, Mockito.withSettings().stubOnly());
@@ -160,7 +162,7 @@ public class EADAStarPlanTest {
                                 }
                                 //System.out.println("DTSB1: " + dist1 + " DTSB2: " + dist2 + " Phase1: " + phase1 + " Phase2: " + phase2 + " timeToNext1: " + i + " timeToNext2: " + j);
                                 long startTime = System.currentTimeMillis();
-                                ead = new EadAStar();
+                                ead = new EadAStar(mockCC);
                                 solver = new AStarSolver();
                                 ead.initialize(1, solver);
                                 IntersectionData intersection1 = new IntersectionData(); // Id 9709
