@@ -87,25 +87,25 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
     this.timeProvider = psl.getTimeProvider();
     this.conflictDetector = psl.getConflictDetector();
 
-    String predictionModel = psl.getParameterSource().getString("ead.NCVHandling.objectMotionPredictorModel");
+    String predictionModel = psl.getParameterSource().getString("~ead/NCVHandling/objectMotionPredictorModel");
     this.motionPredictor = modelFactory.getMotionPredictor(predictionModel);
 
-    this.maxHistoricalDataAge = psl.getParameterSource().getInteger("ead.NCVHandling.collision.maxObjectHistoricalDataAge");
-    this.distanceStep = psl.getParameterSource().getDouble("ead.NCVHandling.collision.distanceStep");
-    this.timeDuration = psl.getParameterSource().getDouble("ead.NCVHandling.collision.timeDuration");
+    this.maxHistoricalDataAge = psl.getParameterSource().getInteger("~ead/NCVHandling/collision/maxObjectHistoricalDataAge");
+    this.distanceStep = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/distanceStep");
+    this.timeDuration = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/timeDuration");
     this.NCVReplanPeriod = (long) ((timeDuration / 2.0) * MS_PER_S); // Always replan after half of the ncv prediction has elapsed
 
-    this.downtrackBuffer = psl.getParameterSource().getDouble("ead.NCVHandling.collision.downtrackBuffer");
-    this.crosstrackBuffer = psl.getParameterSource().getDouble("ead.NCVHandling.collision.crosstrackBuffer");
+    this.downtrackBuffer = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/downtrackBuffer");
+    this.crosstrackBuffer = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/crosstrackBuffer");
     
     // The downtrack and crosstrack margins are half the vehicle dimension plus the amount of buffer
     this.downtrackMargin = (psl.getParameterSource().getDouble("vehicle_length") / 2.0) + this.downtrackBuffer;
     this.crosstrackMargin = (psl.getParameterSource().getDouble("vehicle_width") / 2.0) + this.crosstrackBuffer;
-    this.timeMargin = psl.getParameterSource().getDouble("ead.NCVHandling.collision.timeMargin");
+    this.timeMargin = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/timeMargin");
 
-    this.longitudinalBias = psl.getParameterSource().getDouble("ead.NCVHandling.collision.longitudinalBias");
-    this.lateralBias = psl.getParameterSource().getDouble("ead.NCVHandling.collision.lateralBias");
-    this.temporalBias = psl.getParameterSource().getDouble("ead.NCVHandling.collision.temporalBias");
+    this.longitudinalBias = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/longitudinalBias");
+    this.lateralBias = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/lateralBias");
+    this.temporalBias = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/temporalBias");
 
     this.motionInterpolator = motionInterpolator;
     
