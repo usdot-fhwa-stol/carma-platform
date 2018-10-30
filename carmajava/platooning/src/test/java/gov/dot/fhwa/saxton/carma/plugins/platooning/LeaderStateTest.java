@@ -51,6 +51,7 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.ITimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryConverter;
 
@@ -81,7 +82,7 @@ public class LeaderStateTest {
                                                         mock(ManeuverPlanner.class),      mockRouteService,
                                                         mockRouter,                       mock(IConflictDetector.class),
                                                         mock(ITrajectoryConverter.class), mock(ILightBarManager.class),
-                                                        mock(TrackingService.class));
+                                                        mock(TrackingService.class), mock(ITimeProvider.class));
         mockPlugin.platoonManager = mockManager;
         mockPlugin.maxPlatoonSize = 5;
         mockPlugin.mobilityRequestPublisher = mockRequestPub;

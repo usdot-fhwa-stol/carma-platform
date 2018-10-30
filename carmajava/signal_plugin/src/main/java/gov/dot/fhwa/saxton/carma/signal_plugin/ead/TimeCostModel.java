@@ -31,7 +31,7 @@ public class TimeCostModel implements ICostModel {
     private Node            tolerances_ = new Node(0, 0, 0);
     private double          speedLimit_; // m/s
     private int             numCosts_ = 0;
-    protected static ILogger log_ = LoggerManager.getLogger(TimeCostModel.class);
+    protected static final ILogger log_ = LoggerManager.getLogger(TimeCostModel.class);
 
 
     /**
@@ -101,10 +101,16 @@ public class TimeCostModel implements ICostModel {
      */
     @Override
     public boolean isGoal(Node n) {
+        // boolean result = n.getDistance() >= goal_.getDistance() - tolerances_.getDistance()  &&
+        //                  n.getTime()     <= goal_.getTime()     + tolerances_.getTime()      &&
+        //                  n.getSpeed()    >= goal_.getSpeed()    - tolerances_.getSpeed()     &&
+        //                  n.getSpeed()    <= goal_.getSpeed()    + tolerances_.getSpeed();
+    
+        // There is no need to check the time as time is the cost of the search
+        // Therefore the final path is guaranteed to have minimal time to reach the target distance and speed
         boolean result = n.getDistance() >= goal_.getDistance() - tolerances_.getDistance()  &&
-                         n.getTime()     <= goal_.getTime()     + tolerances_.getTime()      &&
-                         n.getSpeed()    >= goal_.getSpeed()    - tolerances_.getSpeed()     &&
-                         n.getSpeed()    <= goal_.getSpeed()    + tolerances_.getSpeed();
+                        n.getSpeed()    >= goal_.getSpeed()    - tolerances_.getSpeed()     &&
+                        n.getSpeed()    <= goal_.getSpeed()    + tolerances_.getSpeed();
 
         if (result) {
             log_.debug("PLAN", "///// TimeCostModel has found a node that matches our goal.");
@@ -119,10 +125,8 @@ public class TimeCostModel implements ICostModel {
     public boolean isUnusable(Node n) {
         //reject a node if its time is significantly larger than goal time or its distance is
         // significantly larger than goal distance
-        long timeTol = tolerances_.getTime();
         long distTol = tolerances_.getDistance();
 
-        return n.getTime() > goal_.getTime() + 3*timeTol  ||
-                n.getDistance() > goal_.getDistance() + 3*distTol;
+        return n.getDistance() > goal_.getDistance() + 3*distTol;
     }
 }

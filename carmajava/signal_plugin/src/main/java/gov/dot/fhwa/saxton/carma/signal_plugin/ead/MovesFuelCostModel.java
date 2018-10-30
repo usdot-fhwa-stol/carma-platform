@@ -60,7 +60,7 @@ public class MovesFuelCostModel implements ICostModel {
     private final double DEFAULT_PEAK_ENERGY_KJ; // The highest cost found in the energy consumption table
 
     private int numCosts = 0;
-    protected static ILogger log = LoggerManager.getLogger(FuelCostModel.class);
+    protected static final ILogger log = LoggerManager.getLogger(FuelCostModel.class);
 
 
     /**

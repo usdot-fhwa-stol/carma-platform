@@ -54,9 +54,9 @@ public class Node {
    */
   public Node(double distance, double time, double speed) {
     //round the inputs to the nearest internal unit
-    this.distance = (long)(distance*M_TO_DIST_UNITS + 0.5);
-    this.time     = (long)(time    *S_TO_TIME_UNITS + 0.5);
-    this.speed    = (long)(speed   *M_PER_S_TO_SPEED_UNITS + 0.5);
+    this.distance = Math.round(distance*M_TO_DIST_UNITS);
+    this.time     = Math.round(time    *S_TO_TIME_UNITS);
+    this.speed    = Math.round(speed   *M_PER_S_TO_SPEED_UNITS);
     //store the rounded values as doubles for faster future access
     distDouble = (double)(this.distance) * DIST_UNITS_TO_M;
     timeDouble = (double)(this.time)     * TIME_UNITS_TO_S;
@@ -133,6 +133,18 @@ public class Node {
     return SPEED_UNITS;
   }
 
+  public static double roundToDistUnits(double dist) {
+    return new Node(dist, 0.0, 0.0).distDouble;
+  }
+
+  public static double roundToTimeUnits(double time) {
+    return new Node(0.0, time, 0.0).timeDouble;
+  }
+
+  public static double roundToSpeedUnits(double speed) {
+    return new Node(0.0, 0.0, speed).speedDouble;
+  }
+
   @Override public int hashCode() {
     return Objects.hash(distance, speed, time);
   }
@@ -144,7 +156,7 @@ public class Node {
       return false;
     } else {
       Node n2 = (Node) obj;
-      return this.distDouble == n2.distDouble && this.speed == n2.speed && this.time == n2.time;
+      return this.distance == n2.distance && this.speed == n2.speed && this.time == n2.time;
     }
   }
 

@@ -41,6 +41,7 @@ import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.GuidanceRouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
+import gov.dot.fhwa.saxton.carma.guidance.util.ITimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.guidance.util.RequiredLane;
 import gov.dot.fhwa.saxton.carma.guidance.util.SpeedLimit;
@@ -165,7 +166,7 @@ public class RouteFollowingPluginTest {
                 mockPluginManagementService, mock(IPubSubService.class), mockParameterSource,
                 new ManeuverPlanner(mock(IGuidanceCommands.class), mock(IManeuverInputs.class)), routeService,
                 mock(IMobilityRouter.class), mock(IConflictDetector.class), mock(ITrajectoryConverter.class),
-                mock(ILightBarManager.class), mock(Tracking.class));
+                mock(ILightBarManager.class), mock(Tracking.class), mock(ITimeProvider.class));
         rfp = new RouteFollowingPlugin(psl);
         traj = new Trajectory(TRAJ_START, TRAJ_END); 
 

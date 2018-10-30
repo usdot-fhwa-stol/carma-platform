@@ -159,11 +159,9 @@ public abstract class NeighborBase implements INeighborCalculator {
     protected int currentIntersectionIndex(double dist) {
         //Assumes the intersections_ attribute is sorted from nearest to farthest
         //Note that the intersection's dtsb and roughDist are measured from the stop bar outward
-        if (intersections_.size() > 0) {
-            for (int current = 0; current < intersections_.size(); ++current) {
-                if (distToIntersection(current, dist) > 0.0) {
-                    return current;
-                }
+        for (int current = 0; current < intersections_.size(); ++current) {
+            if (distToIntersection(current, dist) >= 0.0) {
+                return current;
             }
         }
 
@@ -185,13 +183,9 @@ public abstract class NeighborBase implements INeighborCalculator {
         // initialize() method was called, but they are not updated after that
         IntersectionData i = intersections_.get(index);
         double iDist = i.dtsb;
-        // TODO remove commented code if uneeded
-        // //If the dtsb is not able to be calculated when processing intersection geometry is will default to Integer.MAX_VALUE
-        // if (iDist <= 0.0 || iDist >= Integer.MAX_VALUE) {
-        //     //if use roughDist, make sure it is pass the fine distance to that intersection
-        //     iDist = (0.01 * (double)i.roughDist) + CoarsePathNeighbors.TYPICAL_INTERSECTION_WIDTH; //convert from cm to m
-        // }
-        return i.bestDTSB() - startLoc;
+
+        //System.out.println("BestDTSB for int: " + i.intersectionId + " index: " + index + " dtsb: " + i.bestDTSB() + " startLoc: " + startLoc);
+        return Node.roundToDistUnits(i.bestDTSB() - startLoc);
     }
 
 
@@ -207,7 +201,7 @@ public abstract class NeighborBase implements INeighborCalculator {
 
         if (futureTime <= i.timeToNextPhase) {
             result.phase = i.currentPhase;
-            result.timeRemaining = i.timeToNextPhase;
+            result.timeRemaining = i.timeToNextPhase - futureTime;
             return result;
         }
 
@@ -238,7 +232,7 @@ public abstract class NeighborBase implements INeighborCalculator {
      */
     protected double phaseDuration(int intersectionIndex, SignalPhase phase) {
         IntersectionHistory h = getHistoricalData(intersectionIndex);
-
+        
         switch(phase) {
         //add max in those cases to make sure it did not return extremely small value
             case GREEN:

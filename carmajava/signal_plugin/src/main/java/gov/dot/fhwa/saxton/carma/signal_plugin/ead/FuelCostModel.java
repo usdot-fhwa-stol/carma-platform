@@ -42,7 +42,7 @@ public class FuelCostModel implements ICostModel {
     private double          idleCost_;
     private boolean         useIdleMin_;
     private int             numCosts_ = 0;
-    protected static ILogger log_ = LoggerManager.getLogger(FuelCostModel.class);
+    protected static final ILogger log_ = LoggerManager.getLogger(FuelCostModel.class);
 
 
     /**
@@ -179,7 +179,7 @@ public class FuelCostModel implements ICostModel {
             result = Math.abs(n.getDistance() - goal_.getDistance()) <= tolerances_.getDistance()  &&
                      Math.abs(n.getTime()     - goal_.getTime())     <= tolerances_.getTime()      &&
                      Math.abs(n.getSpeed()    - goal_.getSpeed())    <= tolerances_.getSpeed();
-        }else {
+        } else {
             result = n.getDistance() >= goal_.getDistance()  &&
                      n.getTime()     <= goal_.getTime()      &&
                      n.getSpeed()    >= goal_.getSpeed();

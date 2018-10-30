@@ -29,7 +29,7 @@ import java.util.*;
  */
 public class AStarSolver implements ITreeSolver {
 
-  protected static ILogger log_ = LoggerManager.getLogger(AStarSolver.class);
+  protected static final ILogger log_ = LoggerManager.getLogger(AStarSolver.class);
 
   @Override
   public List<Node> solve(Node start, ICostModel costModel, INeighborCalculator neighborCalculator) {
@@ -123,28 +123,28 @@ public class AStarSolver implements ITreeSolver {
     }
     log_.info("EAD", "///// solve:  No solution found.");
 
-    //TODO - for debugging only!
-    Collection<Node> list = cameFrom.values();
-    log_.debug("EAD", "    Highest speed nodes at each time:");
-    for (int time = 0;  time < 600;  time += 2*Math.pow(10, -Node.getTimeUnits())) { //assumes timeIncr = 2 sec
-      Iterator<Node> iter = list.iterator();
-      List<Node> nodesAtTime = new ArrayList<Node>();
-      while (iter.hasNext()) {
-        Node node = iter.next();
-        if (node.getTime() == time) {
-          nodesAtTime.add(node);
-        }
-      }
-      Node highest = new Node(0, 0, 0);
-      for (Node n : nodesAtTime) {
-        if (n.getSpeed() > highest.getSpeed()) {
-          highest = n;
-        }
-      }
-      log_.debug("EAD", "    " + highest);
-    }
-    log_.debug("EAD","Ending sizes: closedSet=" + closedSet.size() + ", cameFrom=" +
-            cameFrom.size() + ", gScore=" + gScore.size() + ", openSetQueue=" + openSetQueue.size());
+    // //TODO - for debugging only!
+    // Collection<Node> list = cameFrom.values();
+    // log_.debug("EAD", "    Highest speed nodes at each time:");
+    // for (int time = 0;  time < 600;  time += 2*Math.pow(10, -Node.getTimeUnits())) { //assumes timeIncr = 2 sec
+    //   Iterator<Node> iter = list.iterator();
+    //   List<Node> nodesAtTime = new ArrayList<Node>();
+    //   while (iter.hasNext()) {
+    //     Node node = iter.next();
+    //     if (node.getTime() == time) {
+    //       nodesAtTime.add(node);
+    //     }
+    //   }
+    //   Node highest = new Node(0, 0, 0);
+    //   for (Node n : nodesAtTime) {
+    //     if (n.getSpeed() > highest.getSpeed()) {
+    //       highest = n;
+    //     }
+    //   }
+    //   log_.debug("EAD", "    " + highest);
+    // }
+    // log_.debug("EAD","Ending sizes: closedSet=" + closedSet.size() + ", cameFrom=" +
+    //         cameFrom.size() + ", gScore=" + gScore.size() + ", openSetQueue=" + openSetQueue.size());
 
     return new LinkedList<>(); // Return empty list if no path exists
   }

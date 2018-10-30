@@ -56,9 +56,9 @@ public class PlanInterpolator implements IMotionInterpolator {
       final double dv = v_f - v_0;
       final double dx = x_f - x_0;
       
+      // If the distance is less than our distance step we will directly add the current point to our path with no interpolation
       if (dx < distanceStep) {
-        throw new IllegalArgumentException("interpolateMotion distance step size of "
-         + distanceStep + " is less than gab between nodes " + prevNode + " " + n);
+        points.add(new RoutePointStamped(x_f, 0, t_f));
       }
 
       final double a = dv / dt; // Assume constant acceleration

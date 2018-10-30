@@ -30,7 +30,7 @@ public class CarmaLoggerProxy implements ILogger {
 
     private LogEntry generateLogEntry(LogEntry.Level level, String tag, String message, Object extra) {
         LogEntry log = new LogEntry(level, tag, message, System.currentTimeMillis(),
-                extra, this.origin);
+                extra, this.origin); // TODO origin is never set not clear if even needed
         return log;
     }
 

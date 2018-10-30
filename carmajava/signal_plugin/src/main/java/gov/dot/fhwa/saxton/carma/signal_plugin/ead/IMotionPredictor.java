@@ -18,8 +18,8 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
 import java.util.List;
 
+import cav_msgs.RoadwayObstacle;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
-import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 
 /**
  * A MotionInterpolator is responsible for interpolating the position of the host vehicle between two or more nodes in a plan
@@ -41,5 +41,6 @@ public interface IMotionPredictor {
    * 
    * @return A list of RoutePointStamped which can be plugged into the conflict detection system provided by CARMA. The returned list is exclusive of the history data.
    */
-  public List<RoutePointStamped> predictMotion(String objId, List<Node> objTrajectory, double distanceStep, double timeDuration);
+  public List<RoutePointStamped> predictMotion(String objId, List<RoadwayObstacle> objTrajectory, double distanceStep, double timeDuration);
+  
 }
