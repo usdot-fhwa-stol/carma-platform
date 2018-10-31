@@ -99,6 +99,7 @@ import std_msgs.Bool;
 import std_srvs.SetBool;
 import std_srvs.SetBoolRequest;
 import std_srvs.SetBoolResponse;
+import cav_msgs.RoadwayEnvironment;
 
 /**
  * Top level class in the Traffic Signal Plugin that does trajectory planning through
@@ -108,6 +109,7 @@ import std_srvs.SetBoolResponse;
 public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlugin {
 
     private ISubscriber<TwistStamped> velocitySub;
+    private ISubscriber<RoadwayEnvironment> obstacleSub;
     private IPublisher<TrafficSignalInfoList> trafficSignalInfoPub;
     private IPublisher<UIInstructions> uiInstructionsPub;
     private AtomicBoolean awaitingUserInput = new AtomicBoolean(false);
@@ -192,6 +194,11 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         velocitySub.registerOnMessageCallback((msg) -> {
             curVel.set(msg);
             velFilter.addRawDataPoint(msg.getTwist().getLinear().getX());
+        });
+
+        obstacleSub = pluginServiceLocator.getPubSubService().getSubscriberForTopic("roadway_environment", RoadwayEnvironment._TYPE);
+        obstacleSub.registerOnMessageCallback((msg) -> {
+            collisionChecker.updateObjects(msg.getRoadwayObstacles());
         });
 
         uiInstructionsPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("ui_instructions", UIInstructions._TYPE);
