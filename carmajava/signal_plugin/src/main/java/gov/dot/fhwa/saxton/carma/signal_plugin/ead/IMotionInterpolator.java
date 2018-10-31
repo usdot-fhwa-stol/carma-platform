@@ -38,8 +38,10 @@ public interface IMotionInterpolator {
    * 
    * @param path A time sorted list of nodes which define the host vehicle's desired trajectory
    * @param distanceStep The max distance gap between each point in the output list
+   * @param timeOffset A time offset which will be applied to the time of each input node
+   * @param distanceOffset A distance offset which will be applied to the distance of each input node
    * 
    * @return A list of route point stamped. The lanes and route segment values will not be set.
    */
-  public List<RoutePointStamped> interpolateMotion(List<Node> trajectory, double distanceStep);
+  public List<RoutePointStamped> interpolateMotion(List<Node> trajectory, double distanceStep, double timeOffset, double distanceOffset);
 }

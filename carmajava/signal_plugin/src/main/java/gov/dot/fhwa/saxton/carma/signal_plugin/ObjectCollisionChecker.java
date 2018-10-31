@@ -222,7 +222,9 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
    * @param hostPlan The host plan to set as the current plan
    */
   public void setHostPlan(List<Node> hostPlan) {
-    interpolatedHostPlan.set(motionInterpolator.interpolateMotion(hostPlan, distanceStep));
+    interpolatedHostPlan.set(motionInterpolator.interpolateMotion(hostPlan, distanceStep,
+      timeProvider.getCurrentTimeSeconds(), routeService.getCurrentDowntrackDistance()
+    ));
   }
 
   /**
@@ -259,10 +261,12 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
   }
 
   @Override
-  public boolean hasCollision(List<Node> trajectory) {
+  public boolean hasCollision(List<Node> trajectory, double timeOffset, double distanceOffset) {
     
     // Convert the proposed trajectory to route points
-    List<RoutePointStamped> routePlan = motionInterpolator.interpolateMotion(trajectory, distanceStep);
+    List<RoutePointStamped> routePlan = motionInterpolator.interpolateMotion(trajectory, distanceStep,
+      timeOffset, distanceOffset
+    );
 
     return checkCollision(routePlan); // Check for collisions with tracked objects
 

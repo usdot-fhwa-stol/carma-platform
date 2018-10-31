@@ -19,6 +19,7 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 import java.util.LinkedList;
 import java.util.List;
 
+import gov.dot.fhwa.saxton.carma.guidance.util.ITimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 
@@ -31,7 +32,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 public class PlanInterpolator implements IMotionInterpolator {
 
   @Override
-  public List<RoutePointStamped> interpolateMotion(List<Node> trajectory, double distanceStep) {
+  public List<RoutePointStamped> interpolateMotion(List<Node> trajectory, double distanceStep, double timeOffset, double distanceOffset) {
     Node prevNode = null;
     List<RoutePointStamped> points = new LinkedList<>();
 
@@ -39,7 +40,7 @@ public class PlanInterpolator implements IMotionInterpolator {
     for (Node n: trajectory) {
       if (prevNode == null) {
 
-        points.add(new RoutePointStamped(n.getDistanceAsDouble(), 0, n.getTimeAsDouble())); // Add the first node to the list
+        points.add(new RoutePointStamped(n.getDistanceAsDouble() + distanceOffset, 0, n.getTimeAsDouble() + timeOffset)); // Add the first node to the list
         prevNode = n;
         continue;
       }
@@ -48,11 +49,11 @@ public class PlanInterpolator implements IMotionInterpolator {
       final double x_0 = prevNode.getDistanceAsDouble();
       final double v_0 = prevNode.getSpeedAsDouble();
 
-      final double t_f = n.getTimeAsDouble();
+      final double t_f = n.getTimeAsDouble() + distanceOffset;
       final double v_f = n.getSpeedAsDouble();
-      final double x_f = n.getDistanceAsDouble();
+      final double x_f = n.getDistanceAsDouble() + timeOffset;
 
-      final double dt =  t_f - t_0;
+      final double dt = t_f - t_0;
       final double dv = v_f - v_0;
       final double dx = x_f - x_0;
       
