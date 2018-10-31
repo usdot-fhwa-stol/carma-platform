@@ -35,10 +35,10 @@ public class MockCollisionChecker implements INodeCollisionChecker {
     
     
     private boolean onSegment(Node p, Node q, Node r) {
-        return q.getTime()     >= Math.max(p.getTime(), r.getTime())     &&
-               q.getTime()     <= Math.min(p.getTime(), r.getTime())     &&
-               q.getDistance() >= Math.max(p.getDistance(), r.getDistance()) &&
-               q.getDistance() <= Math.min(p.getDistance(), r.getDistance());
+        return q.getTime()     <= Math.max(p.getTime(), r.getTime())     &&
+               q.getTime()     >= Math.min(p.getTime(), r.getTime())     &&
+               q.getDistance() <= Math.max(p.getDistance(), r.getDistance()) &&
+               q.getDistance() >= Math.min(p.getDistance(), r.getDistance());
     }
     
     private int orientation(Node p, Node q, Node r) {
