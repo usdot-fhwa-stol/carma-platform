@@ -157,7 +157,7 @@ public class PluginManagerTest {
         pm = new PluginManager(mock(GuidanceStateMachine.class), mock(IPubSubService.class), 
         mock(IGuidanceCommands.class), mock(IManeuverInputs.class), mock(GuidanceRouteService.class), node,
         mock(IMobilityRouter.class), mock(IConflictDetector.class), mock(ITrajectoryConverter.class),
-        mock(ILightBarManager.class), mock(Tracking.class), mock(ITimeProvider.class));
+        mock(ILightBarManager.class), mock(Tracking.class), null, mock(ITimeProvider.class));
         pluginClasses = new ArrayList<>();
         plugins = new ArrayList<>();
     }

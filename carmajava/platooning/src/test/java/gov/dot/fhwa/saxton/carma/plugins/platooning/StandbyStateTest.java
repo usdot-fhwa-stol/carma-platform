@@ -71,7 +71,7 @@ public class StandbyStateTest {
                                                         mock(ManeuverPlanner.class),      mockRouteService,
                                                         mock(IMobilityRouter.class),      mock(IConflictDetector.class),
                                                         mock(ITrajectoryConverter.class), mock(ILightBarManager.class),
-                                                        mock(TrackingService.class), mock(ITimeProvider.class));
+                                                        mock(TrackingService.class), null, mock(ITimeProvider.class));
         mockPlugin.handleMobilityPath = new AtomicBoolean(true);
         mockPlugin.platoonManager = mockManager;
         standbyState = new StandbyState(mockPlugin, mockLog, pluginServiceLocator);

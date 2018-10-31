@@ -82,7 +82,7 @@ public class LeaderStateTest {
                                                         mock(ManeuverPlanner.class),      mockRouteService,
                                                         mockRouter,                       mock(IConflictDetector.class),
                                                         mock(ITrajectoryConverter.class), mock(ILightBarManager.class),
-                                                        mock(TrackingService.class), mock(ITimeProvider.class));
+                                                        mock(TrackingService.class), null, mock(ITimeProvider.class));
         mockPlugin.platoonManager = mockManager;
         mockPlugin.maxPlatoonSize = 5;
         mockPlugin.mobilityRequestPublisher = mockRequestPub;
