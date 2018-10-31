@@ -828,7 +828,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         // CONVERT DATA ELEMENTS
         List<Node> eadResult = null;
         double speedLimit = pluginServiceLocator.getRouteService().getSpeedLimitAtLocation(traj.getStartLocation()).getLimit();
-        DataElementHolder state;
+        DataElementHolder state = new DataElementHolder();
         // Try 3 times to plan. With updated state data each time if needed. We will accept the first completed plan
         for (int i = 0; i < 3; i++) {
             dtsb = computeDtsb();
