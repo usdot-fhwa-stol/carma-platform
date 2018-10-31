@@ -197,7 +197,7 @@ ead/rollingResistanceOverride: 0.0
 ead/idleCost: 19300.0
 
 # true will make this the min energy rate for everything; false applies this only when speed is zero
-ead.useIdleMin: false
+ead/useIdleMin: false
 
 ## NCV Handling ##
 
@@ -205,45 +205,45 @@ ead.useIdleMin: false
 # Options:
 # SIMPLE_LINEAR_REGRESSION: Simple linear regression used to predict motion based on past history
 # UCR_NEURAL_NET: Neural net based prediction of motion based on historical data (NOT IMPLEMENTED)
-ead.NCVHandling.objectMotionPredictorModel: "SIMPLE_LINEAR_REGRESSION"
+ead/NCVHandling/objectMotionPredictorModel: "SIMPLE_LINEAR_REGRESSION"
 
 # Integer: The maximum age of a sensed NCV data sample in ms. Older samples will be removed from object history
 # Units: ms 
-ead.NCVHandling.collision.maxObjectHistoricalDataAge: 3000
+ead/NCVHandling/collision/maxObjectHistoricalDataAge: 3000
 
 # Double: The maximum distance between points in the interpolated vehicle path used for collision checking
 # Units: m
-ead.NCVHandling.collision.distanceStep: 2.5
+ead/NCVHandling/collision/distanceStep: 2.5
 
 # Double: The amount of forward time to predict detected NCV motion for
 # Units: s
-ead.NCVHandling.collision.timeDuration: 3.0
+ead/NCVHandling/collision/timeDuration: 3.0
 
 # Double: The amount of buffer to put around the host vehicle's downtrack bounds when doing a collision check
 # The downtrack margin will be (vehicle's length / 2.0) + downtrack buffer
 # Units: m
-ead.NCVHandling.collision.downtrackBuffer: 8.0
+ead/NCVHandling/collision/downtrackBuffer: 8.0
 
 # Double: The amount of buffer to put around the host vehicle's crosstrack bounds when doing a collision check
 # The crosstrack margin will be (vehicle's width / 2.0) + crosstrack buffer
 # Units: m
-ead.NCVHandling.collision.crosstrackBuffer: 2.0
+ead/NCVHandling/collision/crosstrackBuffer: 2.0
 
 # Double: The margin which will define collision bounds in the time dimension
 # Units: s
-ead.NCVHandling.collision.timeMargin: 0.2
+ead/NCVHandling/collision/timeMargin: 0.2
 
 # Double: The percentage of the lateral conflict margin by which to bias the host vehicle's position to the right
 # Units: percent
-ead.NCVHandling.collision.longitudinalBias: 0.0
+ead/NCVHandling/collision/longitudinalBias: 0.0
 
 # Double: The percentage of the longitudinal conflict margin by which to bias the host vehicle's position to the front
 # Units: percent
-ead.NCVHandling.collision.lateralBias: 0.0
+ead/NCVHandling/collision/lateralBias: 0.0
 
 # Double: The percentage of the time conflict margin by which to bias the host vehicle's position forward in time
 # Units: percent
-ead.NCVHandling.collision.temporalBias: 0.0
+ead/NCVHandling/collision/temporalBias: 0.0
 
 #### Start of Parameters used for MOVES Fuel Cost Model
 ## Vehicle Type Parameters
