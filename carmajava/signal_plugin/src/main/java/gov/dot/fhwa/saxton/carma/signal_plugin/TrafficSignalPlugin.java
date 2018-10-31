@@ -828,10 +828,11 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         // CONVERT DATA ELEMENTS
         List<Node> eadResult = null;
         double speedLimit = pluginServiceLocator.getRouteService().getSpeedLimitAtLocation(traj.getStartLocation()).getLimit();
+        DataElementHolder state = new DataElementHolder();
         // Try 3 times to plan. With updated state data each time if needed. We will accept the first completed plan
         for (int i = 0; i < 3; i++) {
             dtsb = computeDtsb();
-            DataElementHolder state = getCurrentStateData(speedLimit);
+            state = getCurrentStateData(speedLimit);
 
             log.info("Requesting AStar plan with intersections: " + intersections.toString());
 
@@ -849,6 +850,13 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         } else {
             log.info("Ead result is path of size: " + eadResult.size());
         }
+
+
+        // Set the new plan as the current plan for collision checker
+        DoubleDataElement startTime = (DoubleDataElement) state.get(DataElementKey.PLANNING_START_TIME);
+		DoubleDataElement startDowntrack = (DoubleDataElement) state.get(DataElementKey.PLANNING_START_DOWNTRACK);
+
+        collisionChecker.setHostPlan(eadResult, startTime.value(), startDowntrack.value());
 
         /*
          * Optimization has been decided against due to complexities in trajectory behavior.
@@ -934,6 +942,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         DoubleDataElement operSpeedElem;
         DoubleDataElement vehicleLat;
         DoubleDataElement vehicleLon;
+        DoubleDataElement planningStartTime;
+        DoubleDataElement planningStartDowntrack;
         IntersectionCollectionDataElement icde;
 
         if (curVel.get() != null) {
@@ -958,6 +968,11 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         ic.intersections = convertIntersections(intersections);
         icde = new IntersectionCollectionDataElement(ic);
         state.put(DataElementKey.INTERSECTION_COLLECTION, icde);
+
+        planningStartTime = new DoubleDataElement(pluginServiceLocator.getTimeProvider().getCurrentTimeSeconds());
+        planningStartDowntrack = new DoubleDataElement(pluginServiceLocator.getRouteService().getCurrentDowntrackDistance());
+        state.put(DataElementKey.PLANNING_START_TIME, planningStartTime);
+        state.put(DataElementKey.PLANNING_START_DOWNTRACK, planningStartDowntrack);
 
         return state;
     }

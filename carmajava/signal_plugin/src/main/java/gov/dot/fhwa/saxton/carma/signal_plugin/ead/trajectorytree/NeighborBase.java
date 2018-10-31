@@ -62,18 +62,23 @@ public abstract class NeighborBase implements INeighborCalculator {
 
     protected INodeCollisionChecker         collisionChecker_;
 
+    protected double                        planningStartTime_; // Starting planning time in seconds.
+    protected double                        planningStartDowntrack_; // Starting planning downtrack distance 
+
     /**
      * This will only be called when we are on the map of an intersection, so input intersections is
      * guaranteed to have at least one member.  They will be ordered from nearest to farthest.
      */
     @Override
     public void initialize(List<IntersectionData> intersections, int numIntersections, double timeIncrement,
-                           double speedIncrement, INodeCollisionChecker collisionChecker) {
+                           double speedIncrement, INodeCollisionChecker collisionChecker, double planningStartTime, double planningStartDowntrack) {
         intersections_ = intersections;
         numInt_ = numIntersections;
         timeInc_ = timeIncrement;
         speedInc_ = speedIncrement;
         collisionChecker_ = collisionChecker;
+        planningStartTime_ = planningStartTime;
+        planningStartDowntrack_ = planningStartDowntrack;
 
         //This method will be called each time the EAD model replans, which will happen each time a visible signal
         // changes phases. This is an opportunity to learn more about its cycle timing, so grab whatever info is there.
@@ -256,6 +261,6 @@ public abstract class NeighborBase implements INeighborCalculator {
      * @return true if collision detected
      */
     protected boolean hasConflict(Node startNode, Node endNode) {
-        return this.collisionChecker_.hasCollision(Arrays.asList(startNode, endNode));
+        return this.collisionChecker_.hasCollision(Arrays.asList(startNode, endNode), planningStartTime_, planningStartDowntrack_);
     }
 }

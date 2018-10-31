@@ -111,9 +111,10 @@ public class EadAStar implements IEad {
      * the speed closest to our desired speed, and will return that as the goal node for detailed planning.
      *
      * This method only accounts for travel time, trying to minimize it without violating signal laws.
+     * Start time and downtrack distance are used for back calculating carma route positions and don't impact node states
      * @return a node representing the best goal we can hope to reach after the first intersection
      */
-    protected Node planCoarsePath(double operSpeed, Node start) throws Exception {
+    protected Node planCoarsePath(double operSpeed, Node start, double startTime, double startDowntrack) throws Exception {
 
         //we may be receiving spat signals from a farther intersection but haven't yet seen a MAP message from it,
         // so its rough distance is going to be a bogus, very large value; therefore, only look ahead for as many
@@ -153,7 +154,7 @@ public class EadAStar implements IEad {
         double exitTime = exitDist / operSpeed;
 
         //create a neighbor calculator for this tree using a coarse scale grid
-        coarseNeighborCalc_.initialize(intList_, numInt, coarseTimeInc_, coarseSpeedInc_, collisionChecker_);
+        coarseNeighborCalc_.initialize(intList_, numInt, coarseTimeInc_, coarseSpeedInc_, collisionChecker_, startTime, startDowntrack);
         coarseNeighborCalc_.setOperatingSpeed(operSpeed);
 
         //while no solution and we have not exceeded our cycle limit
@@ -202,16 +203,17 @@ public class EadAStar implements IEad {
     /**
      * Finds the best fine-grained path from current location to the far side of the nearest intersection
      * that minimizes fuel cost to reach the travel time goal.
+     * Start time and downtrack distance are used for back calculating carma route positions and don't impact node states
      * @param goal - the node beyond the nearest intersection that we are trying to reach
      * @return - the best path to the goal node
      * @apiNote neighbor nodes are located according to the increments in each dimension specified by the
      * config file parameters fineTimeInc, fineDistInc and fineSpeedInc.
      */
-    protected List<Node> planDetailedPath(Node start, Node goal) throws Exception {
+    protected List<Node> planDetailedPath(Node start, Node goal, double startTime, double startDowntrack) throws Exception {
         log_.debug("EAD", "Entering planDetailedPath with start = " + start.toString() + ", goal = " + goal.toString());
         
         //create a neighbor calculator for this tree using a detailed grid
-        fineNeighborCalc_.initialize(intList_, 1, fineTimeInc_, fineSpeedInc_, collisionChecker_);
+        fineNeighborCalc_.initialize(intList_, 1, fineTimeInc_, fineSpeedInc_, collisionChecker_, startTime, startDowntrack);
 
         //System.out.println("Goal: " + goal);
         //find the best path through this tree [use AStarSolver]
@@ -282,11 +284,14 @@ public class EadAStar implements IEad {
      * @param speed The current speed of the vehicle
      * @param operSpeed The target operating speed of the vehicle
      * @param intersections A sorted list of intersection data with the nearest intersections appearing earlier in the list
+     * @param startTime The time which planning is considered to have begun at. This is used for converting nodes to route locations
+     * @param startDowntrack The downtrack distance where planning is considered to have begun at. This is used for converting nodes to route locations
      * 
      * @return A list of node defining the planned vehicle trajectory
      */
+    @Override
     public List<Node> plan(double speed, double operSpeed, 
-        List<IntersectionData> intersections) throws Exception {
+        List<IntersectionData> intersections, double startTime, double startDowntrack) throws Exception {
 
         if (intersections == null  ||  intersections.size() == 0) {
             String msg = "plan invoked with a empty intersection list.";
@@ -317,11 +322,11 @@ public class EadAStar implements IEad {
         currentPath_ = null;
 
         //perform coarse planning to determine the goal node downtrack of the first intersection [planCoarsePath]
-        goal = planCoarsePath(operSpeed, startNode);
+        goal = planCoarsePath(operSpeed, startNode, startTime, startDowntrack);
 
         //build a detailed plan to reach the near-term goal node downtrack of first intersection [planDetailedPath]
         try {
-            currentPath_ = planDetailedPath(startNode, goal);
+            currentPath_ = planDetailedPath(startNode, goal, startTime, startDowntrack);
         }catch (Exception e) {
             log_.warn("EAD", "plan trapped exception from planDetailedPath: ", e);
             throw e;

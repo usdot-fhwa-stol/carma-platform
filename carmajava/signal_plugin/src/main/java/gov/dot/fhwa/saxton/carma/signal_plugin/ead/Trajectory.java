@@ -249,6 +249,9 @@ public class Trajectory implements ITrajectory {
 		}
 
 
+		DoubleDataElement startTime = (DoubleDataElement) stateData.get(DataElementKey.PLANNING_START_TIME);
+		DoubleDataElement startDowntrack = (DoubleDataElement) stateData.get(DataElementKey.PLANNING_START_DOWNTRACK);
+
 		////////// UNDERSTAND THE INTERSECTION GEOMETRY & WHERE WE FIT IN
 
 
@@ -276,7 +279,7 @@ public class Trajectory implements ITrajectory {
 		//get speed command from EAD (assume it will handle position in stop box w/red light)
 		try {
 			log_.info("TrafficSignalPlugin", this.getSortedIntersections().toString());
-			path = ead_.plan(curSpeed_, operSpeed, this.getSortedIntersections());
+			path = ead_.plan(curSpeed_, operSpeed, this.getSortedIntersections(), startTime.value(), startDowntrack.value());
 		}catch (Exception e) {
 			log_.errorf("TRAJ", "Exception trapped by EAD algo: " + e.toString() +
 			"\n    Too many errors...rethrowing. " +
