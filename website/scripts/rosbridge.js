@@ -35,6 +35,8 @@ var t_active_route = 'route';
 
 var t_diagnostics = '/diagnostics';
 
+var t_sensor_fusion_filtered_velocity = 'velocity';
+
 var t_guidance_state = 'state';
 var t_incoming_bsm = 'bsm';
 
@@ -103,8 +105,8 @@ var sound_counter_max = 3; //max # of times the sounds will be repeated.
 var sound_played_once = false;
 var isModalPopupShowing = false;
 var waitingForRouteStateSegmentStartup = false;
-var timer; 
-var engaged_timer = '00h 00m 00s'; //timer starts after vehicle first engages. 
+var timer;
+var engaged_timer = '00h 00m 00s'; //timer starts after vehicle first engages.
 var host_instructions = '';
 
 
@@ -117,7 +119,14 @@ var MAX_LOG_LINES = 100;
 var METER_TO_MPH = 2.23694;
 var METER_TO_MILE = 0.000621371;
 
-//Getters and Setters for bool and string session variables. 
+//Get the drivers topic from Interface Manager
+var serviceClientForGetDriversWithCap = new ROSLIB.Service({
+  ros: ros,
+  name: t_get_drivers_with_capabilities,
+  serviceType: 'cav_srvs/GetDriversWithCapabilities'
+});
+
+//Getters and Setters for bool and string session variables.
 var isGuidance = {
     get active() {
         var isGuidanceActive = sessionStorage.getItem('isGuidanceActive');
@@ -275,7 +284,7 @@ function connectToROS() {
             var messageTypeFullDescription = 'ROS Connection Closed.';
             messageTypeFullDescription += '<br/><br/>PLEASE TAKE MANUAL CONTROL OF THE VEHICLE.';
             showModal(true, messageTypeFullDescription, false);
-            
+
         });
 
         // Create a connection to the rosbridge WebSocket server.
@@ -546,7 +555,7 @@ function showSubCapabilitiesView2() {
     divSubCapabilities.style.display = 'block';
 
     if (waitingForRouteStateSegmentStartup == false) {
-        //Need to wait for route current segment to publish to not get negative total lengths. 
+        //Need to wait for route current segment to publish to not get negative total lengths.
         setTimeout(function () {
             checkRouteInfo();
             //console.log('Wait call for checkRouteInfo.');
@@ -783,7 +792,7 @@ function activateGuidance() {
             return;
         }
 
-        //When active = false, this is equivalent to disengaging guidance. Would not be INACTIVE since inactivity is set by guidance. 
+        //When active = false, this is equivalent to disengaging guidance. Would not be INACTIVE since inactivity is set by guidance.
         if (newStatus == false)
         {
             setCAVButtonState('DISENGAGED');
@@ -794,8 +803,8 @@ function activateGuidance() {
         //checkAvailability will call setCAVButtonState
         if (newStatus == true){
             openTab(event, 'divDriverView');
-            CarmaJS.WidgetFramework.loadWidgets(); //Just loads the widget          
-            checkAvailability(); //Start checking availability (or re-subscribe) if Guidance has been engaged.           
+            CarmaJS.WidgetFramework.loadWidgets(); //Just loads the widget
+            checkAvailability(); //Start checking availability (or re-subscribe) if Guidance has been engaged.
             checkRobotEnabled(); //Start checking if Robot is active
             return;
         }
@@ -826,7 +835,7 @@ function setCAVButtonState(state) {
             btnCAVGuidance.className = 'button_cav button_disabled'; //color to gray
             btnCAVGuidance.title = 'CAV Guidance is disabled.';
             btnCAVGuidance.innerHTML = 'CAV Guidance';
-            
+
             isGuidance.active = false;
             isGuidance.engaged = false;
 
@@ -836,7 +845,7 @@ function setCAVButtonState(state) {
             btnCAVGuidance.className = 'button_cav button_active'; //color to purple
             btnCAVGuidance.title = 'CAV Guidance is now active.';
             btnCAVGuidance.innerHTML = 'CAV Guidance - ACTIVE <i class="fa fa-check"></i>';
-            
+
             isGuidance.active = true;
             isGuidance.engaged = false;
 
@@ -848,7 +857,7 @@ function setCAVButtonState(state) {
             btnCAVGuidance.innerHTML = 'CAV Guidance - INACTIVE <i class="fa fa-times-circle-o"></i>';
 
             isGuidance.active = false;
-            //isGuidance.engaged = false; //LEAVE value as-is. 
+            //isGuidance.engaged = false; //LEAVE value as-is.
 
             //This check to make sure inactive sound is only played once even when it's been published multiple times in a row.
             //It will get reset when status changes back to engage.
@@ -863,7 +872,7 @@ function setCAVButtonState(state) {
 
             btnCAVGuidance.title = 'Click to Stop CAV Guidance.';
             btnCAVGuidance.innerHTML = 'CAV Guidance - ENGAGED <i class="fa fa-check-circle-o"></i>';
-            
+
             isGuidance.active = true;
             isGuidance.engaged = true;
 
@@ -936,7 +945,7 @@ function checkGuidanceState() {
                 setCAVButtonState('ACTIVE');
                 break;
             case 4: //ENGAGED
-                //start the timer when it first engages. 
+                //start the timer when it first engages.
                 messageTypeFullDescription = 'Guidance is now ENGAGED.';
                 startEngagedTimer();
                 setCAVButtonState('ENGAGED');
@@ -1049,16 +1058,42 @@ function printParam(itemName, index) {
     If no longer active, show the Guidance as Yellow. If active, show Guidance as green.
 */
 function checkRobotEnabled() {
-    var listenerRobotStatus = new ROSLIB.Topic({
-        ros: ros,
-        name: t_robot_status,
-        messageType: 'cav_msgs/RobotEnabled'
+
+    var driverList = [];
+
+    //controller
+    driverList.push(tbn_robot_status);
+
+    // Create a Service Request
+    var request = new ROSLIB.ServiceRequest({
+    capabilities: driverList
     });
 
-    //Issue #606 - removed the dependency on UI state on robot_status. Only show on Status tab.
-    listenerRobotStatus.subscribe(function (message) {
-        insertNewTableRow('tblFirstB', 'Robot Active', message.robot_active);
-        insertNewTableRow('tblFirstB', 'Robot Enabled', message.robot_enabled);
+    // Call the service and get back the results in the callback.
+    serviceClientForGetDriversWithCap.callService(request, function (result) {
+
+        if (result.driver_data.length == 0)
+        {
+            console.log('getDriversWithCapabilities() returned no CONTROLLER driver for robot_status: ' + result.driver_data.length);
+            return;
+        }
+
+        //JS ES6 syntax to assign the fully qualified name of the topic to the specific variable.
+        t_robot_status = result.driver_data.find(element => element.endsWith(tbn_robot_status));
+
+        //console.log('t_robot_status:' + t_robot_status);
+
+        var listenerRobotStatus = new ROSLIB.Topic({
+            ros: ros,
+            name: t_robot_status,
+            messageType: 'cav_msgs/RobotEnabled'
+        });
+
+        //Issue #606 - removed the dependency on UI state on robot_status. Only show on Status tab.
+        listenerRobotStatus.subscribe(function (message) {
+            insertNewTableRow('tblFirstB', 'Robot Active', message.robot_active);
+            insertNewTableRow('tblFirstB', 'Robot Enabled', message.robot_enabled);
+        });
     });
 }
 
@@ -1068,48 +1103,74 @@ function checkRobotEnabled() {
 */
 function showDiagnostics() {
 
+    var driverList = [];
 
-    var listenerACCEngaged = new ROSLIB.Topic({
-        ros: ros,
-        name: t_acc_engaged,
-        messageType: 'std_msgs/Bool'
-    });
+    //controller
+      driverList.push(tbn_acc_engaged);
 
-    listenerACCEngaged.subscribe(function (message) {
-        insertNewTableRow('tblFirstB', 'ACC Engaged', message.data);
-    });
+      request = new ROSLIB.ServiceRequest({
+            capabilities: driverList
+      });
 
-    var listenerDiagnostics = new ROSLIB.Topic({
-        ros: ros,
-        name: t_diagnostics,
-        messageType: 'diagnostic_msgs/DiagnosticArray'
-    });
+      // Call the service and get back the results in the callback.
+      serviceClientForGetDriversWithCap.callService(request, function (result) {
 
-    listenerDiagnostics.subscribe(function (messageList) {
-
-        messageList.status.forEach(
-            function (myStatus) {
-                insertNewTableRow('tblFirstA', 'Diagnostic Name', myStatus.name);
-                insertNewTableRow('tblFirstA', 'Diagnostic Message', myStatus.message);
-                insertNewTableRow('tblFirstA', 'Diagnostic Hardware ID', myStatus.hardware_id);
-
-                myStatus.values.forEach(
-                    function (myValues) {
-                        if (myValues.key == 'Primed') {
-                            insertNewTableRow('tblFirstB', myValues.key, myValues.value);
-                            var imgACCPrimed = document.getElementById('imgACCPrimed');
-
-                            if (myValues.value == 'True')
-                                imgACCPrimed.style.backgroundColor = '#4CAF50'; //Green
-                            else
-                                imgACCPrimed.style.backgroundColor = '#b32400'; //Red
-                        }
-                        // Commented out since Diagnostics key/value pair can be many and can change. Only subscribe to specific ones.
-                        // insertNewTableRow('tblFirstA', myValues.key, myValues.value);
-                    }); //foreach
+            if (result.driver_data.length == 0)
+            {
+                console.log('getDriversWithCapabilities() returned no CAN drivers for acc_engaged: ' + result.driver_data.length);
+                return;
             }
-        );//foreach
+
+            //JS ES6 syntax to assign the fully qualified name of the topic to the specific variable.
+
+            t_acc_engaged = result.driver_data.find(element => element.endsWith(tbn_acc_engaged));
+
+            //console.log('t_acc_engaged:' + t_acc_engaged  );
+
+            var listenerACCEngaged = new ROSLIB.Topic({
+                ros: ros,
+                name: t_acc_engaged,
+                messageType: 'std_msgs/Bool'
+            });
+
+            listenerACCEngaged.subscribe(function (message) {
+                insertNewTableRow('tblFirstB', 'ACC Engaged', message.data);
+            });
+
+            var listenerDiagnostics = new ROSLIB.Topic({
+                ros: ros,
+                name: t_diagnostics,
+                messageType: 'diagnostic_msgs/DiagnosticArray'
+            });
+
+            listenerDiagnostics.subscribe(function (messageList) {
+
+                messageList.status.forEach(
+                    function (myStatus) {
+                        insertNewTableRow('tblFirstA', 'Diagnostic Name', myStatus.name);
+                        insertNewTableRow('tblFirstA', 'Diagnostic Message', myStatus.message);
+                        insertNewTableRow('tblFirstA', 'Diagnostic Hardware ID', myStatus.hardware_id);
+
+                        myStatus.values.forEach(
+                            function (myValues) {
+                                if (myValues.key == 'Primed') {
+                                    insertNewTableRow('tblFirstB', myValues.key, myValues.value);
+                                    var imgACCPrimed = document.getElementById('imgACCPrimed');
+
+                                    if (myValues.value == 'True')
+                                        imgACCPrimed.style.backgroundColor = '#4CAF50'; //Green
+                                    else
+                                        imgACCPrimed.style.backgroundColor = '#b32400'; //Red
+                                }
+                                // Commented out since Diagnostics key/value pair can be many and can change. Only subscribe to specific ones.
+                                // insertNewTableRow('tblFirstA', myValues.key, myValues.value);
+                            }); //foreach
+                    }
+                );//foreach
+            });
+
     });
+
 }
 
 /*
@@ -1203,16 +1264,44 @@ function showControllingPlugins()
     Show the Lateral Control Driver message
 */
 function checkLateralControlDriver() {
-    var listenerLateralControl = new ROSLIB.Topic({
-        ros: ros,
-        name: t_lateral_control_driver,
-        messageType: 'cav_msgs/LateralControl'
+
+    var driverList = [];
+
+    //controller
+    driverList.push(tbn_lateral_control_driver);
+
+    // Create a Service Request
+    var request = new ROSLIB.ServiceRequest({
+        capabilities: driverList
     });
 
-    listenerLateralControl.subscribe(function (message) {
-        insertNewTableRow('tblFirstB', 'Lateral Axle Angle', message.axle_angle);
-        insertNewTableRow('tblFirstB', 'Lateral Max Axle Angle Rate', message.max_axle_angle_rate);
-        insertNewTableRow('tblFirstB', 'Lateral Max Accel', message.max_accel);
+    // Call the service and get back the results in the callback.
+    serviceClientForGetDriversWithCap.callService(request, function (result) {
+
+        if (result.driver_data.length == 0)
+        {
+            console.log('getDriversWithCapabilities() returned no MOCK driver for lateral_control_driver: ' + result.driver_data.length);
+            return;
+        }
+
+        //JS ES6 syntax to assign the fully qualified name of the topic to the specific variable.
+        t_lateral_control_driver = result.driver_data.find(element => element.endsWith(t_lateral_control_driver));
+
+        //console.log('t_lateral_control_driver:' + t_lateral_control_driver);
+
+        //Subscription
+        var listenerLateralControl = new ROSLIB.Topic({
+            ros: ros,
+            name: t_lateral_control_driver,
+            messageType: 'cav_msgs/LateralControl'
+        });
+
+        listenerLateralControl.subscribe(function (message) {
+            insertNewTableRow('tblFirstB', 'Lateral Axle Angle', message.axle_angle);
+            insertNewTableRow('tblFirstB', 'Lateral Max Axle Angle Rate', message.max_axle_angle_rate);
+            insertNewTableRow('tblFirstB', 'Lateral Max Accel', message.max_accel);
+        });
+
     });
 }
 
@@ -1414,27 +1503,50 @@ function mapEachRouteSegment(segment) {
 */
 function showNavSatFix() {
 
-    var listenerNavSatFix = new ROSLIB.Topic({
-        ros: ros,
-        name: t_nav_sat_fix,
-        messageType: 'sensor_msgs/NavSatFix'
-    });
+    var driverList = [];
 
-    listenerNavSatFix.subscribe(function (message) {
+      driverList.push(tbn_nav_sat_fix);
 
-        if (message.latitude == null || message.longitude == null)
+      request = new ROSLIB.ServiceRequest({
+        capabilities: driverList
+      });
+
+      // Call the service and get back the results in the callback.
+      serviceClientForGetDriversWithCap.callService(request, function (result) {
+
+        if (result.driver_data.length == 0)
+        {
+            console.log('getDriversWithCapabilities() returned no POSITION drivers for nav_sat_fix: ' + result.driver_data.length);
             return;
-
-        insertNewTableRow('tblFirstA', 'NavSatStatus', message.status.status);
-        insertNewTableRow('tblFirstA', 'Latitude', message.latitude.toFixed(6));
-        insertNewTableRow('tblFirstA', 'Longitude', message.longitude.toFixed(6));
-        insertNewTableRow('tblFirstA', 'Altitude', message.altitude.toFixed(6));
-
-        if (hostmarker != null) {
-            moveMarkerWithTimeout(hostmarker, message.latitude, message.longitude, 0);
         }
 
-        //listenerNavSatFix.unsubscribe();
+        //JS ES6 syntax to assign the fully qualified name of the topic to the specific variable.
+        t_nav_sat_fix = result.driver_data.find(element => element.endsWith(tbn_nav_sat_fix));
+        //console.log('t_nav_sat_fix: ' + t_nav_sat_fix );
+
+        var listenerNavSatFix = new ROSLIB.Topic({
+            ros: ros,
+            name: t_nav_sat_fix,
+            messageType: 'sensor_msgs/NavSatFix'
+        });
+
+        listenerNavSatFix.subscribe(function (message) {
+
+            if (message.latitude == null || message.longitude == null)
+                return;
+
+            insertNewTableRow('tblFirstA', 'NavSatStatus', message.status.status);
+            insertNewTableRow('tblFirstA', 'Latitude', message.latitude.toFixed(6));
+            insertNewTableRow('tblFirstA', 'Longitude', message.longitude.toFixed(6));
+            insertNewTableRow('tblFirstA', 'Altitude', message.altitude.toFixed(6));
+
+            if (hostmarker != null) {
+                moveMarkerWithTimeout(hostmarker, message.latitude, message.longitude, 0);
+            }
+
+            //listenerNavSatFix.unsubscribe();
+        });
+
     });
 
 }
@@ -1444,22 +1556,47 @@ function showNavSatFix() {
 */
 function showSpeedAccelInfo() {
 
-    //Get Speed Accell Info
-    var listenerSpeedAccel = new ROSLIB.Topic({
-        ros: ros,
-        name: t_cmd_speed,
-        messageType: 'cav_msgs/SpeedAccel'
+    var driverList = [];
+
+    //controller
+    driverList.push(tbn_cmd_speed);
+
+    // Create a Service Request
+    var request = new ROSLIB.ServiceRequest({
+    capabilities: driverList
     });
 
-    listenerSpeedAccel.subscribe(function (message) {
+    // Call the service and get back the results in the callback.
+    serviceClientForGetDriversWithCap.callService(request, function (result) {
 
-        var cmd_speed_mph = Math.round(message.speed * METER_TO_MPH);
+        if (result.driver_data.length == 0)
+        {
+            console.log('getDriversWithCapabilities() returned no CONTROLLER driver for cmd_speed: ' + result.driver_data.length);
+            return;
+        }
 
-        insertNewTableRow('tblFirstB', 'Cmd Speed (m/s)', message.speed.toFixed(2));
-        insertNewTableRow('tblFirstB', 'Cmd Speed (MPH)', cmd_speed_mph);
-        insertNewTableRow('tblFirstB', 'Max Accel', message.max_accel.toFixed(2));
+        //JS ES6 syntax to assign the fully qualified name of the topic to the specific variable.
+        t_cmd_speed = result.driver_data.find(element => element.endsWith(tbn_cmd_speed));
+        //console.log('t_cmd_speed:' + t_cmd_speed);
 
+        //Get Speed Accell Info
+        var listenerSpeedAccel = new ROSLIB.Topic({
+            ros: ros,
+            name: t_cmd_speed,
+            messageType: 'cav_msgs/SpeedAccel'
+        });
+
+        listenerSpeedAccel.subscribe(function (message) {
+
+            var cmd_speed_mph = Math.round(message.speed * METER_TO_MPH);
+
+            insertNewTableRow('tblFirstB', 'Cmd Speed (m/s)', message.speed.toFixed(2));
+            insertNewTableRow('tblFirstB', 'Cmd Speed (MPH)', cmd_speed_mph);
+            insertNewTableRow('tblFirstB', 'Max Accel', message.max_accel.toFixed(2));
+
+        });
     });
+
 }
 
 /*
@@ -1467,29 +1604,83 @@ function showSpeedAccelInfo() {
 */
 function showCANSpeeds() {
 
-    var listenerCANEngineSpeed = new ROSLIB.Topic({
-        ros: ros,
-        name: t_can_engine_speed,
-        messageType: 'std_msgs/Float64'
+    var driverList = [];
+
+    //can drivers
+    driverList.push(tbn_can_engine_speed);
+    driverList.push(tbn_can_speed);
+
+    request = new ROSLIB.ServiceRequest({
+        capabilities: driverList
     });
 
-    listenerCANEngineSpeed.subscribe(function (message) {
-        insertNewTableRow('tblFirstB', 'CAN Engine Speed', message.data);
+    // Call the service and get back the results in the callback.
+    serviceClientForGetDriversWithCap.callService(request, function (result) {
+
+        if (result.driver_data.length == 0)
+        {
+            console.log('getDriversWithCapabilities() returned no CAN drivers for can_engine_speed and can_speed: ' + result.driver_data.length);
+            return;
+        }
+
+        //JS ES6 syntax to assign the fully qualified name of the topic to the specific variable.
+        t_can_engine_speed = result.driver_data.find(element => element.endsWith(tbn_can_engine_speed));
+        t_can_speed = result.driver_data.find(element => element.endsWith(tbn_can_speed));
+
+        //console.log('t_can_engine_speed:' + t_can_engine_speed  );
+        //console.log('t_can_speed:' + t_can_speed  );
+
+        //Listeners below
+
+        var listenerCANEngineSpeed = new ROSLIB.Topic({
+            ros: ros,
+            name: t_can_engine_speed,
+            messageType: 'std_msgs/Float64'
+        });
+
+        listenerCANEngineSpeed.subscribe(function (message) {
+            insertNewTableRow('tblFirstB', 'CAN Engine Speed', message.data);
+        });
+
+        var listenerCANSpeed = new ROSLIB.Topic({
+            ros: ros,
+            name: t_can_speed,
+            messageType: 'std_msgs/Float64'
+        });
+
+        listenerCANSpeed.subscribe(function (message) {
+            var speedMPH = Math.round(message.data * METER_TO_MPH);
+            insertNewTableRow('tblFirstB', 'CAN Speed (m/s)', message.data);
+            insertNewTableRow('tblFirstB', 'CAN Speed (MPH)', speedMPH);
+        });
+
     });
 
-    var listenerCANSpeed = new ROSLIB.Topic({
-        ros: ros,
-        name: t_can_speed,
-        messageType: 'std_msgs/Float64'
-    });
-
-    listenerCANSpeed.subscribe(function (message) {
-        var speedMPH = Math.round(message.data * METER_TO_MPH);
-        insertNewTableRow('tblFirstB', 'CAN Speed (m/s)', message.data);
-        insertNewTableRow('tblFirstB', 'CAN Speed (MPH)', speedMPH);
-    });
 }
 
+/*
+    The Sensor Fusion velocity can be used to derive the actual speed.
+*/
+function showActualSpeed(){
+
+    var listenerSFVelocity = new ROSLIB.Topic({
+        ros: ros,
+        name: t_sensor_fusion_filtered_velocity,
+        messageType: 'geometry_msgs/TwistStamped'
+    });
+
+    listenerSFVelocity.subscribe(function (message) {
+
+        //If nothing on the Twist, skip
+        if (message.twist == null || message.twist.linear == null || message.twist.linear.x == null) {
+            return;
+        }
+
+        var actualSpeedMPH = Math.round(message.twist.linear.x * METER_TO_MPH);
+        insertNewTableRow('tblFirstB', 'SF Velocity (m/s)', message.twist.linear.x);
+        insertNewTableRow('tblFirstB', 'SF Velocity (MPH)', actualSpeedMPH);
+    });
+}
 /*
     Display the Vehicle Info in the System Status tab.
 */
@@ -1519,10 +1710,10 @@ function showVehicleInfo(itemName, index) {
 }
 
 
-/*
+/* 10/16/2018 MF Issue #1015: commented out to enforce this logic individually *
     The interface manager manages the fully qualified topic names based on available capability.
     Currently interface manager can only handle list from same capability/driver at a time.
-*/
+*
 function getDriversWithCapabilities()
 {
       if (bGetDriversWithCapCalled == true)
@@ -1661,8 +1852,7 @@ function getDriversWithCapabilities()
       });
 
 }
-
-
+*/
 
 /*
     Show the system name and version on the footer.
@@ -1719,58 +1909,85 @@ function mapOtherVehicles() {
 */
 function showCommStatus() {
 
-    // Get the Object by ID
-    var a = document.getElementById('objOBUBroadcast');
-    // Get the SVG document inside the Object tag
-    var svgDoc = a.contentDocument;
+    var driverList = [];
 
-    if (t_outbound_binary_msg != null && t_outbound_binary_msg != '')
-    {
-       //Subscribe to Topic
-       var listenerClientOutboundMsg = new ROSLIB.Topic({
-           ros: ros,
-           name: t_outbound_binary_msg,
-           messageType: 'cav_msgs/ByteArray'
-       });
+    //comms drivers
+    driverList.push(tbn_inbound_binary_msg);
+    driverList.push(tbn_outbound_binary_msg);
 
-       listenerClientOutboundMsg.subscribe(function (message) {
+    request = new ROSLIB.ServiceRequest({
+        capabilities: driverList
+    });
 
-           // Get one of the SVG items by ID;
-           var svgItem1 = svgDoc.getElementById('signal-right');
-           // Set the colour to something else
-           svgItem1.setAttribute('fill', '#4CAF50'); //green
+    // Call the service and get back the results in the callback.
+    serviceClientForGetDriversWithCap.callService(request, function (result) {
 
-           //set back to black after 5 seconds.
-          setTimeout(function(){
+      if (result.driver_data.length == 0)
+      {
+            console.log('getDriversWithCapabilities() returned no COMMS drivers: ' + result.driver_data.length);
+            return;
+      }
+
+      //JS ES6 syntax to assign the fully qualified name of the topic to the specific variable.
+      t_inbound_binary_msg = result.driver_data.find(element => element.endsWith(tbn_inbound_binary_msg));
+      t_outbound_binary_msg = result.driver_data.find(element => element.endsWith(tbn_outbound_binary_msg));
+
+      //console.log(t_inbound_binary_msg + ';' + t_outbound_binary_msg );
+
+        // Get the Object by ID
+        var a = document.getElementById('objOBUBroadcast');
+        // Get the SVG document inside the Object tag
+        var svgDoc = a.contentDocument;
+
+        if (t_outbound_binary_msg != null && t_outbound_binary_msg != '')
+        {
+           //Subscribe to Topic
+           var listenerClientOutboundMsg = new ROSLIB.Topic({
+               ros: ros,
+               name: t_outbound_binary_msg,
+               messageType: 'cav_msgs/ByteArray'
+           });
+
+           listenerClientOutboundMsg.subscribe(function (message) {
+
+               // Get one of the SVG items by ID;
+               var svgItem1 = svgDoc.getElementById('signal-right');
                // Set the colour to something else
-               svgItem1.setAttribute('fill', '#000000'); //black
-          }, 5000);
-       });
-    }
+               svgItem1.setAttribute('fill', '#4CAF50'); //green
 
-    if (t_inbound_binary_msg != null && t_inbound_binary_msg != '')
-    {
-       //Subscribe to Topic
-        var listenerClientInboundMsg = new ROSLIB.Topic({
-            ros: ros,
-            name: t_inbound_binary_msg,
-            messageType: 'cav_msgs/ByteArray'
-        });
+               //set back to black after 5 seconds.
+              setTimeout(function(){
+                   // Set the colour to something else
+                   svgItem1.setAttribute('fill', '#000000'); //black
+              }, 5000);
+           });
+        }
 
-        listenerClientInboundMsg.subscribe(function (message) {
+        if (t_inbound_binary_msg != null && t_inbound_binary_msg != '')
+        {
+           //Subscribe to Topic
+            var listenerClientInboundMsg = new ROSLIB.Topic({
+                ros: ros,
+                name: t_inbound_binary_msg,
+                messageType: 'cav_msgs/ByteArray'
+            });
 
-           // Get one of the SVG items by ID;
-           var svgItem2 = svgDoc.getElementById('signal-left');
-           // Set the colour to something else
-           svgItem2.setAttribute('fill', '#4CAF50'); //green
+            listenerClientInboundMsg.subscribe(function (message) {
 
-           //set back to black after 5 seconds.
-           setTimeout(function(){
-               svgItem2.setAttribute('fill', '#000000'); //black
-           }, 5000);
+               // Get one of the SVG items by ID;
+               var svgItem2 = svgDoc.getElementById('signal-left');
+               // Set the colour to something else
+               svgItem2.setAttribute('fill', '#4CAF50'); //green
 
-        });
-    }
+               //set back to black after 5 seconds.
+               setTimeout(function(){
+                   svgItem2.setAttribute('fill', '#000000'); //black
+               }, 5000);
+
+            });
+        }
+
+    });
 }
 
 /*
@@ -1797,12 +2014,13 @@ function showStatusandLogs() {
     getParams();
     getVehicleInfo();
 
-    getDriversWithCapabilities();
+    //getDriversWithCapabilities(); //10/16/18 MF: Duplicating the logic to each function so doesn't have to wait for all services at once.
 
     showSystemVersion();
     showNavSatFix();
     showSpeedAccelInfo();
     showCANSpeeds();
+    showActualSpeed();
     showDiagnostics();
     showDriverStatus();
     showControllingPlugins();
@@ -1816,7 +2034,7 @@ function showStatusandLogs() {
     Start timer after engaging Guidance.
 */
 function startEngagedTimer() {
-    // Start counter    
+    // Start counter
     if (timer == null && isGuidance.engaged == true)
     {
         timer = setInterval(countUpTimer, 1000);
@@ -1853,7 +2071,8 @@ function waitForSystemReady() {
 
 /*
 Ensures all driver topics needed are populated from getDriversWithCapablities
-*/
+//Issue#1015 MF: NOT used but will keep for now in case need to revert.
+*
 function isDriverTopicsAllAvailable()
 {
     if  ( t_robot_status == null || t_robot_status == '' ||
@@ -1868,7 +2087,7 @@ function isDriverTopicsAllAvailable()
             return false;
      else
      {
-            /*
+
             console.log( 't_robot_status : ' + t_robot_status);
             console.log( 't_cmd_speed: ' + t_cmd_speed);
             console.log( 't_lateral_control_driver: ' + t_lateral_control_driver);
@@ -1877,14 +2096,15 @@ function isDriverTopicsAllAvailable()
             console.log( 't_acc_engaged: ' + t_acc_engaged);
             console.log( 't_inbound_binary_msg: ' + t_inbound_binary_msg);
             console.log( 't_outbound_binary_msg: ' + t_outbound_binary_msg);
-            */
+
             return true;
      }
 }
-
+*/
 /*
     Wait to get all the service responses from interface manager.
-*/
+    //Issue#1015 MF: NOT USED, but keeping for now.
+*
 function waitForGetDriversWithCapabilities() {
 
     setTimeout(function () {   //  call a 5s setTimeout when the loop is called
@@ -1916,7 +2136,7 @@ function waitForGetDriversWithCapabilities() {
 
     }, 3000)//  ..  setTimeout()
 }
-
+*/
 
 /*
     Evaluate next step AFTER connecting
@@ -1930,10 +2150,11 @@ function evaluateNextStep() {
         return;
     }
 
-    if (isDriverTopicsAllAvailable() == false){
-        //console.log ('evaluateNextStep: calling waitForGetDriversWithCapabilities')
-        waitForGetDriversWithCapabilities();
-    }
+    //Issue#1015 MF: Not used Commented out for now until further testing to make sure we don't need this again.
+    //if (isDriverTopicsAllAvailable() == false){
+    //    //console.log ('evaluateNextStep: calling waitForGetDriversWithCapabilities')
+    //    waitForGetDriversWithCapabilities();
+    //}
 
     if (selectedRoute.name == 'No Route Selected') {
         showRouteOptions();

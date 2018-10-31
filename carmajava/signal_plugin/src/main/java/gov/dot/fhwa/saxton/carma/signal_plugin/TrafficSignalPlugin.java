@@ -88,6 +88,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.LaneSet;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.Movement;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.SpatMessage;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.EadAStar;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.PlanInterpolator;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 import gov.dot.fhwa.saxton.carma.signal_plugin.filter.PolyHoloA;
 import j2735_msgs.MovementPhaseState;
@@ -126,12 +127,18 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private EadAStar ead;
     private double operSpeedScalingFactor = 1.0;
     private double speedCommandQuantizationFactor = 0.1;
+    private ObjectCollisionChecker collisionChecker; // Collision checker responsible for tracking NCVs and providing collision checks capabilities
     private AtomicBoolean involvedInControl = new AtomicBoolean(false);
     static private final double CM_PER_M = 100.0;
     static private final double MAX_DTSB = Integer.MAX_VALUE - 5.0; // Legacy Glidepath code returns Integer.MAX_VALUE for invalid dtsb. Add fudge factor for detecting it as a double
 
     private final long LOOP_PERIOD = 100; // Plugin will loop at 10Hz
     private final GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
+    private double acceptableStopDistance;
+    private double twiceAcceptableStopDistance;
+    private double defaultSpeedLimit;
+    private double defaultAccel;
+    private GlidepathAppConfig appConfig;
 
     public TrafficSignalPlugin(PluginServiceLocator psl) {
         super(psl);
@@ -144,9 +151,23 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     @Override
     public void onInitialize() {
         // load params
+
+        // Setup the collision checker
+        // This must be done before callbacks are created
+        this.collisionChecker = new ObjectCollisionChecker(
+            this.pluginServiceLocator,
+            new DefaultMotionPredictorFactory(appConfig),
+            new PlanInterpolator()
+        );
+
         // Pass params into GlidepathAppConfig
-        GlidepathAppConfig appConfig = new GlidepathAppConfig(pluginServiceLocator.getParameterSource(), pluginServiceLocator.getRouteService());
+        appConfig = new GlidepathAppConfig(pluginServiceLocator.getParameterSource(), pluginServiceLocator.getRouteService());
         GlidepathApplicationContext.getInstance().setAppConfigOverride(appConfig);
+
+        acceptableStopDistance = appConfig.getDoubleDefaultValue("ead.acceptableStopDistance", 6.0);
+
+        twiceAcceptableStopDistance = 2.0 * acceptableStopDistance;
+        defaultAccel = appConfig.getDoubleValue("defaultAccel");
 
         // Initialize Speed Filter
         velFilter.initialize(appConfig.getPeriodicDelay() * Constants.MS_TO_SEC); // TODO determine what the best value should be given we no longer use the periodic executor
@@ -322,8 +343,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         if (!m2.getTimingExists()) 
                             return -1; // Put events without timing at the end
                         return (int) (m1.getTiming().getMinEndTime() - m2.getTiming().getMinEndTime()); // Use the non-optional minEndTiming to sort events
-                    });
-                    
+                    }); 
+
                     sortedEvents.addAll(movementData.getMovementEventList()); // Sort the movement events by minEndTime
 
                     MovementEvent earliestEvent = sortedEvents.peek();
@@ -434,7 +455,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                                                     .getEventState().getMovementPhaseState() && newMov.getMovementEventList().get(i)
                                                     .getEventState().getMovementPhaseState() != MovementPhaseState.PROTECTED_CLEARANCE)) { // Do not replan on transition to yellow
                                         // Phase change detected, a replan will be needed
-                                        phaseChanged = true; // TODO for performance this should only be set if the phase changing is for the current intersection
+                                        phaseChanged = true; 
                                         break phaseChangeCheckLoop; // Break outer for loop labeled phaseChangeCheckLoop
                                     }
 
@@ -447,11 +468,18 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
             // Remove expired intersections
             boolean deletedIntersection = intersections.entrySet().removeIf(entry -> !foundIds.contains(entry.getKey()));
-
             // Trigger new plan on phase change
             double dtsb = computeDtsb();
             boolean onMap = checkIntersectionMaps(dtsb);
-            if (!stoppedAtLight() && (phaseChanged || newIntersection || deletedIntersection) && onMap && dtsb > 6.0) {
+            TwistStamped curTwist = curVel.get();
+            double curSpeed = defaultSpeedLimit;
+            if (curTwist != null) {
+                curSpeed = curTwist.getTwist().getLinear().getX();
+            }
+            double maxStoppingDistance = (0.5 * curSpeed * curSpeed) / defaultAccel;
+            double MIN_REPLANNING_DTSB = Math.max(twiceAcceptableStopDistance, 1.0 + maxStoppingDistance);
+
+            if (!stoppedAtLight() && (phaseChanged || newIntersection || deletedIntersection) && onMap && dtsb > MIN_REPLANNING_DTSB) {
                 log.info("Requesting new plan with causes - PhaseChanged: " + phaseChanged 
                     + " NewIntersection: " + newIntersection 
                     + " deletedIntersection: " + deletedIntersection
@@ -556,7 +584,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     @Override
     public void onResume() {
         log.info("TrafficSignalPlugin trying to resume.");
-        ead = new EadAStar();
+        defaultSpeedLimit = appConfig.getMaximumSpeed(0.0);
+        ead = new EadAStar(collisionChecker);
         try {
             glidepathTrajectory = new gov.dot.fhwa.saxton.carma.signal_plugin.ead.Trajectory(ead);
         } catch (Exception e) {
@@ -654,12 +683,10 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      * @return True if the current maneuver is a steady speed stop maneuver planned by this plugin
      */
     private boolean stoppedAtLight() {
-        double currentSpeed = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
         LongitudinalManeuver currentLongitudinalManeuver = (LongitudinalManeuver) pluginServiceLocator.getArbitratorService().getCurrentlyExecutingManeuver(ManeuverType.LONGITUDINAL);
         if (currentLongitudinalManeuver == null) {
             return false; // Can't be stopped at a light if we are not under automated control or in a complex maneuver which we would not have planned
         }
-        currentLongitudinalManeuver.getPlanner().equals(this);
         
         return currentLongitudinalManeuver.getPlanner().equals(this) 
             && currentLongitudinalManeuver instanceof SteadySpeed
@@ -763,47 +790,21 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         log.info("Granted highest planning priority");
 
         // CONVERT DATA ELEMENTS
-        DataElementHolder state = new DataElementHolder();
-        DoubleDataElement curSpeedElement;
-        DoubleDataElement curAccelElement;
-        DoubleDataElement operSpeedElem;
-        DoubleDataElement vehicleLat;
-        DoubleDataElement vehicleLon;
-        IntersectionCollectionDataElement icde;
+        List<Node> eadResult = null;
+        double speedLimit = pluginServiceLocator.getRouteService().getSpeedLimitAtLocation(traj.getStartLocation()).getLimit();
+        // Try 3 times to plan. With updated state data each time if needed. We will accept the first completed plan
+        for (int i = 0; i < 3; i++) {
+            dtsb = computeDtsb();
+            DataElementHolder state = getCurrentStateData(speedLimit);
 
-        if (curVel.get() != null) {
-            curSpeedElement = new DoubleDataElement(velFilter.getSmoothedValue());
-            curAccelElement = new DoubleDataElement(velFilter.getSmoothedDerivative());
-        } else {
-            curSpeedElement = new DoubleDataElement(0.0);
-            curAccelElement = new DoubleDataElement(0.0);
-        }
-        state.put(DataElementKey.SMOOTHED_SPEED, curSpeedElement);
-        state.put(DataElementKey.ACCELERATION, curAccelElement);
-        operSpeedElem = new DoubleDataElement(
-                pluginServiceLocator.getRouteService().getSpeedLimitAtLocation(traj.getStartLocation()).getLimit()
-                        * operSpeedScalingFactor); // NOTE: This field is used as the speed limit for Ead algorithm and does not support variables speed limits in a route
-        state.put(DataElementKey.OPERATING_SPEED, operSpeedElem);
+            log.info("Requesting AStar plan with intersections: " + intersections.toString());
 
-        vehicleLat = new DoubleDataElement(curPos.get().lat());
-        vehicleLon = new DoubleDataElement(curPos.get().lon());
-        state.put(DataElementKey.LATITUDE, vehicleLat);
-        state.put(DataElementKey.LONGITUDE, vehicleLon);
-
-        IntersectionCollection ic = new IntersectionCollection();
-        ic.intersections = convertIntersections(intersections);
-        icde = new IntersectionCollectionDataElement(ic);
-        state.put(DataElementKey.INTERSECTION_COLLECTION, icde);
-
-        log.info("Requesting AStar plan with intersections: " + intersections.toString());
-
-        List<Node> eadResult;
-        try {
-            eadResult = glidepathTrajectory.plan(state); // TODO do we really need the trajectory object. It's purpose is 99% filled by the plugin
-        } catch (Exception e) {
-            log.error("Glidepath trajectory planning threw exception!", e);
-            TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
-            return tpr;
+            try {
+                eadResult = glidepathTrajectory.plan(state); // TODO do we really need the trajectory object. It's purpose is 99% filled by the plugin
+                break;
+            } catch (Exception e) {
+                log.error("Glidepath trajectory planning threw exception!", e);
+            }
         }
 
         if (eadResult == null) {
@@ -888,6 +889,41 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         log.info("Planning complete");
         setAvailability(false);
         return new TrajectoryPlanningResponse();
+    }
+
+    private DataElementHolder getCurrentStateData(double operatingSpeed) {
+        DataElementHolder state = new DataElementHolder();
+        DoubleDataElement curSpeedElement;
+        DoubleDataElement curAccelElement;
+        DoubleDataElement operSpeedElem;
+        DoubleDataElement vehicleLat;
+        DoubleDataElement vehicleLon;
+        IntersectionCollectionDataElement icde;
+
+        if (curVel.get() != null) {
+            curSpeedElement = new DoubleDataElement(velFilter.getSmoothedValue());
+            curAccelElement = new DoubleDataElement(velFilter.getSmoothedDerivative());
+        } else {
+            curSpeedElement = new DoubleDataElement(0.0);
+            curAccelElement = new DoubleDataElement(0.0);
+        }
+        state.put(DataElementKey.SMOOTHED_SPEED, curSpeedElement);
+        state.put(DataElementKey.ACCELERATION, curAccelElement);
+        operSpeedElem = new DoubleDataElement(operatingSpeed * operSpeedScalingFactor); // NOTE: This field is used as the speed limit for Ead algorithm and does not support variables speed limits in a route
+        state.put(DataElementKey.OPERATING_SPEED, operSpeedElem);
+
+        Location curLoc = curPos.get();
+        vehicleLat = new DoubleDataElement(curLoc.lat());
+        vehicleLon = new DoubleDataElement(curLoc.lon());
+        state.put(DataElementKey.LATITUDE, vehicleLat);
+        state.put(DataElementKey.LONGITUDE, vehicleLon);
+
+        IntersectionCollection ic = new IntersectionCollection();
+        ic.intersections = convertIntersections(intersections);
+        icde = new IntersectionCollectionDataElement(ic);
+        state.put(DataElementKey.INTERSECTION_COLLECTION, icde);
+
+        return state;
     }
 
     private Transform getTransform(String parentFrame, String childFrame, Time stamp) {

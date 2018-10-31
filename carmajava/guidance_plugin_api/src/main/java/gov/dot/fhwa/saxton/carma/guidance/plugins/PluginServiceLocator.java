@@ -23,6 +23,7 @@ import gov.dot.fhwa.saxton.carma.guidance.mobilityrouter.IMobilityRouter;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
+import gov.dot.fhwa.saxton.carma.guidance.util.ITimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.V2IService;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryConverter;
@@ -45,14 +46,16 @@ public class PluginServiceLocator {
     private final ITrajectoryConverter trajectoryConverter;
     private final ILightBarManager lightBarManager;
     private final TrackingService trackingService;
+    private final ITimeProvider timeProvider;
     private final V2IService v2iService;
+
 
     public PluginServiceLocator(ArbitratorService arbitratorService,
         PluginManagementService pluginManagementService, IPubSubService iPubSubService,
         ParameterSource parameterSource, ManeuverPlanner maneuverPlanner, RouteService routeService,
         IMobilityRouter mobilityRouter, IConflictDetector conflictDetector,
         ITrajectoryConverter trajectoryConverter, ILightBarManager lightBarManager, TrackingService trackingService,
-        V2IService v2iService) {
+        V2IService v2iService, ITimeProvider timeProvider) {
             
         this.arbitratorService = arbitratorService;
         this.IPubSubService = iPubSubService;
@@ -65,6 +68,7 @@ public class PluginServiceLocator {
         this.trajectoryConverter = trajectoryConverter;
         this.lightBarManager = lightBarManager;
         this.trackingService = trackingService;
+        this.timeProvider = timeProvider;
         this.v2iService = v2iService;
     }
 
@@ -145,6 +149,13 @@ public class PluginServiceLocator {
         return trackingService;
     }
 
+    /**
+     * Get the {@link ITimeProvider} instance available to the plugins
+     */
+    public ITimeProvider getTimeProvider() {
+        return timeProvider;
+    }
+    
     /**
      * Get the {@link V2IService} instance available to the plugins
      */

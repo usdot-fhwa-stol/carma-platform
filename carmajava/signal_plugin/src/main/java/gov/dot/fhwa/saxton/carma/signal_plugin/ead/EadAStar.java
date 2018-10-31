@@ -57,13 +57,13 @@ public class EadAStar implements IEad {
     protected INeighborCalculator       coarseNeighborCalc_;        //calculates neighboring nodes for the coarse grid
     protected INeighborCalculator       fineNeighborCalc_;          //calculates neighboring nodes to build the fine grid tree
     protected ITreeSolver               solver_;                    //the tree solver
-    protected static ILogger            log_ = LoggerManager.getLogger(EadAStar.class);
+    protected static final ILogger            log_ = LoggerManager.getLogger(EadAStar.class);
 
-    protected static final int          MAX_COURSE_PATH_ATTEMPTS = 100; //max iterations for solving coarse path
+    protected static final int          MAX_COURSE_PATH_ATTEMPTS = 1; // max iterations for solving coarse path
 
 
 
-    public EadAStar() {
+    public EadAStar(INodeCollisionChecker collisionChecker) {
 
         IGlidepathAppConfig config = GlidepathApplicationContext.getInstance().getAppConfig();
         maxAccel_ = config.getDoubleDefaultValue("defaultAccel", 2.0);
@@ -164,6 +164,7 @@ public class EadAStar implements IEad {
             log_.debug("EAD", "planCoarsePath solving iter " + iter + " with " + numInt +
                     " useful intersections and a course goal of " + coarseGoal.toString());
 
+            //System.out.println("CoarseGoal: " + coarseGoal);
             //find the best path through this tree
             timeCostModel_.setGoal(coarseGoal);
             timeCostModel_.setTolerances(new Node(1.0, 0.51 * coarseTimeInc_, 0.51 * coarseSpeedInc_));
@@ -184,7 +185,7 @@ public class EadAStar implements IEad {
             throw new Exception(msg);
         }
         log_.debug("EAD", "planCoarsePath found a solution after " + iter + " iterations.");
-        //System.out.println("planCoarsePath found a solution after " + iter + " iterations.");
+        //////System.out.println("planCoarsePath found a solution after " + iter + " iterations.");
 
         //we always use the node after current intersection as the goal node
         Node fineGoal = path.get(2);
@@ -210,6 +211,7 @@ public class EadAStar implements IEad {
         //create a neighbor calculator for this tree using a detailed grid
         fineNeighborCalc_.initialize(intList_, 1, fineTimeInc_, fineSpeedInc_);
 
+        //System.out.println("Goal: " + goal);
         //find the best path through this tree [use AStarSolver]
         fuelCostModel_.setGoal(goal);
         fuelCostModel_.setTolerances(new Node(0.51*fineSpeedInc_*fineTimeInc_, fineTimeInc_, 0.51*fineSpeedInc_)); // timeInc must be full size to allow for cases where vehicle is traveling at max speed
@@ -255,10 +257,10 @@ public class EadAStar implements IEad {
     protected void summarizeDetailedPath(List<Node> path, Node goal) {
 
         log_.info("EAD", "///// Detailed path plan:");
-        //System.out.println("Detailed path plan:");
+        //////System.out.println("Detailed path plan:");
         for (Node n : path) {
             log_.info("EAD", "    " + n.toString());
-            //System.out.println(n);
+            //////System.out.println(n);
         }
         log_.debug("EAD", "Detailed path attempted to reach goal: " + goal.toString());
     }

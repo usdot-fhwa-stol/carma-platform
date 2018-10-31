@@ -46,6 +46,7 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.ITimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryConverter;
 
@@ -70,7 +71,7 @@ public class StandbyStateTest {
                                                         mock(ManeuverPlanner.class),      mockRouteService,
                                                         mock(IMobilityRouter.class),      mock(IConflictDetector.class),
                                                         mock(ITrajectoryConverter.class), mock(ILightBarManager.class),
-                                                        mock(TrackingService.class));
+                                                        mock(TrackingService.class), mock(ITimeProvider.class));
         mockPlugin.handleMobilityPath = new AtomicBoolean(true);
         mockPlugin.platoonManager = mockManager;
         standbyState = new StandbyState(mockPlugin, mockLog, pluginServiceLocator);

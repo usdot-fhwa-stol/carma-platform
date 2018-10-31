@@ -482,3 +482,20 @@ waypoints:
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
+
+    # TODO Remove this node once the glidepath routes can be tested without cruising plugin crashing due to end of route
+  - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
+    location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
+      latitude: 38.966996
+      longitude: -77.140407
+      altitude: 72.0
+    minCrossTrack: -10.0
+    maxCrossTrack: 10.0
+    lowerSpeedLimit: 0
+    upperSpeedLimit: 25
+    laneCount: 1
+    nearestMileMarker: 1.0
+    roadType: SECONDARY    
+    interiorLaneMarkings: SOLID_WHITE
+    leftMostLaneMarking: SOLID_YELLOW
+    rightMostLaneMarking: SOLID_WHITE

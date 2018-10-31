@@ -1,5 +1,4 @@
 # CARMA
-
 ![CARMA Arch](docs/image/CARMA_web_banner_18oct18_5.png)
 
 **Connected Automated Research Mobility Applications (CARMA)**, CARMA is a reusable, extensible platform for controlling SAE level 1 connected, automated vehicles (CAVs). It provides a rich, generic API for third party plugins that implement vehicle guidance algorithms. It is written in Java and C++ and runs in a Robot Operating System (ROS) environment. It offers a rich application programming interface (API) for third party authors to develop guidance plugins that can plan vehicle trajectories under certain conditions. The platform can be reused on a variety of properly equipped vehicles.
@@ -17,8 +16,7 @@ CARMA provides the navigation and guidance functions for its host vehicle, as we
 
 ## System Specifications
 The platform's performance requirements are specified to conform the following performance requirements. Performance requirements shall only be applicable to the platform being developed, including Android tablets and GUIs; computers, software, positioning units, and processors that are not part of the OEM vehicle. The functional requirements are specified to confirm the following functional requirements.  Functional requirements shall be applicable to the platform being developed, including the vehicle's control, MAP and SPAT messages, etc.
-[Performance Requirements](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/11304971/CARMA2+Draft+Performance+Requirements) and 
-[Functional Requirements](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/7864327/CARMA2+Functional+Requirements)
+[CAV Platform Requirements](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/56786945/Platform+Requirements+Document?preview=/56786945/56852481/CAV%20Platform%20Requirements.docx)
 
 ## Release Notes
 The current version release of the CARMA software platform. [CARMA Release Notes](<docs/Release_notes.md>)

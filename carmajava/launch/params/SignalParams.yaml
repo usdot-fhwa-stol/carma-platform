@@ -7,11 +7,11 @@
 
 # maximumSpeed and crawlingSpeed are in mph
 maximumSpeed: 35.0
-crawlingSpeed: 5.0
+crawlingSpeed: 7.0
 
 # Accel must match guidance accel values for maneuver generation to match plan
 # all accel limits are in m/s^2 (accel & decel limits must always be the same due to XGV implementation)
-defaultAccel: 2.5
+defaultAccel: 2.0
 # situation-specific accel limits
 rampUpAccel: 1.84
 scenario2InitiateAccel: 1.81
@@ -126,7 +126,7 @@ ead/trajectoryclass: 'gov.dot.fhwa.saxton.glidepath.ead.Trajectory'
 # the detailed pass looking at only the nearest intersection
 ead/coarse_time_inc: 2.0
 ead/coarse_speed_inc: 2.0
-ead/fine_time_inc: 3.0
+ead/fine_time_inc: 2.0
 ead/fine_speed_inc: 1.0
 
 # enables limiting of speed commands based on maximum acceleration capability
@@ -142,7 +142,7 @@ ead/timebuffer: 4.0
 ead/cte/threshold: 400
 
 # lag time, sec, that it will take (on average) for the vehicle to respond to a command change
-ead/response/lag: 1.9
+ead/response/lag: 0.0
 
 # max number of consecutive missing SPAT messages before it is considered a critical error
 ead/max/spat/errors: 5
@@ -185,7 +185,8 @@ ead/airDensity: 1.20
 ead/vehicleMass: 2080.0
 
 # rollingResistanceOverride forces this constant value; if not specified then coef will be calculated as a function of speed
-#ead/rollingResistanceOverride: 0.02
+# 0.02
+ead/rollingResistanceOverride: 0.0
 
 # idle cost is the equivalent amount of mechanical energy wasted by the idling engine while vehicle is stopped, J/s
 # 19.3 kJ/s is suggested by Guoyuan Wu on 12/29/17.
@@ -193,6 +194,52 @@ ead/idleCost: 19300.0
 
 # true will make this the min energy rate for everything; false applies this only when speed is zero
 ead/useIdleMin: false
+
+## NCV Handling ##
+
+# String: Identifies the NCV motion prediction model which will be used to predict future trajectories of detected NCVs
+# Options:
+# SIMPLE_LINEAR_REGRESSION: Simple linear regression used to predict motion based on past history
+# UCR_NEURAL_NET: Neural net based prediction of motion based on historical data (NOT IMPLEMENTED)
+ead/NCVHandling/objectMotionPredictorModel: "SIMPLE_LINEAR_REGRESSION"
+
+# Integer: The maximum age of a sensed NCV data sample in ms. Older samples will be removed from object history
+# Units: ms 
+ead/NCVHandling/collision/maxObjectHistoricalDataAge: 3000
+
+# Double: The maximum distance between points in the interpolated vehicle path used for collision checking
+# Units: m
+ead/NCVHandling/collision/distanceStep: 2.5
+
+# Double: The amount of forward time to predict detected NCV motion for
+# Units: s
+ead/NCVHandling/collision/timeDuration: 3.0
+
+# Double: The amount of buffer to put around the host vehicle's downtrack bounds when doing a collision check
+# The downtrack margin will be (vehicle's length / 2.0) + downtrack buffer
+# Units: m
+ead/NCVHandling/collision/downtrackBuffer: 8.0
+
+# Double: The amount of buffer to put around the host vehicle's crosstrack bounds when doing a collision check
+# The crosstrack margin will be (vehicle's width / 2.0) + crosstrack buffer
+# Units: m
+ead/NCVHandling/collision/crosstrackBuffer: 2.0
+
+# Double: The margin which will define collision bounds in the time dimension
+# Units: s
+ead/NCVHandling/collision/timeMargin: 0.2
+
+# Double: The percentage of the lateral conflict margin by which to bias the host vehicle's position to the right
+# Units: percent
+ead/NCVHandling/collision/longitudinalBias: 0.0
+
+# Double: The percentage of the longitudinal conflict margin by which to bias the host vehicle's position to the front
+# Units: percent
+ead/NCVHandling/collision/lateralBias: 0.0
+
+# Double: The percentage of the time conflict margin by which to bias the host vehicle's position forward in time
+# Units: percent
+ead/NCVHandling/collision/temporalBias: 0.0
 
 #### Start of Parameters used for MOVES Fuel Cost Model
 ## Vehicle Type Parameters
@@ -226,4 +273,3 @@ ead/MOVES/fixedMassFactor: 1.86686
 ead/MOVES/baseRateTablePath: '/opt/carma/params/BaseRateForPassengerTruck.csv'
 
 #### End of Parameters used in MOVES Fuel Cost Model
-
