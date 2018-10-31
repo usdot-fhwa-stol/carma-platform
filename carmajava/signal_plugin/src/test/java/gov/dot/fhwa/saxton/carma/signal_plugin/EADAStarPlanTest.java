@@ -164,7 +164,7 @@ public class EADAStarPlanTest {
                                 long startTime = System.currentTimeMillis();
                                 //The following code is for NCV handling
                                 int randomPredictionStartLoc = ThreadLocalRandom.current().nextInt((int)dist1, (int)dist2 + 1);
-                                int randomPredictionStartTime = ThreadLocalRandom.current().nextInt(1, 51);
+                                int randomPredictionStartTime = 0;
                                 int randomPredictionSpeed = ThreadLocalRandom.current().nextInt(1, 11);
                                 int predictionPeriod = 5;
                                 ((MockCollisionChecker) mockCC).setPredictedTrajectory(
@@ -201,6 +201,7 @@ public class EADAStarPlanTest {
                                     // }
                                 } catch(Exception e) {
                                     System.out.println("FAILED: DTSB1: " + dist1 + " DTSB2: " + dist2 + " Phase1: " + phase1 + " Phase2: " + phase2 + " timeToNext1: " + i + " timeToNext2: " + j);
+                                    System.out.println("randomPredictionStartLoc: " + randomPredictionStartLoc + " randomPredictionStartTime: " + randomPredictionStartTime + " randomPredictionSpeed: " + randomPredictionSpeed);
                                     failureCount++;
                                     //e.printStackTrace();
                                     //assertTrue(false); // indicate the failure
@@ -262,6 +263,49 @@ public class EADAStarPlanTest {
 //            Node{distance=     104, time=    13, speed=  11}
 //            Node{distance=     125, time=    15, speed=  10}
             System.out.println("A* Planning for one intersections takes " + (System.currentTimeMillis() - startTime) + " ms to finish");
+            for(Node n : res) {
+                System.out.println(n.toString());
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+            assertTrue(false); // indicate the failure
+        }
+    }
+    
+    @Test
+    public void planTwoIntersectionsWithNCV() {
+        // FAILED: DTSB1: 50.0 DTSB2: 130.0 Phase1: RED Phase2: RED timeToNext1: 11.0 timeToNext2: 10.0
+        when(mockConfig.getDoubleDefaultValue("ead.coarse_time_inc", 5.0)).thenReturn(2.0);
+        when(mockConfig.getDoubleDefaultValue("ead.coarse_speed_inc", 3.0)).thenReturn(2.0);
+        when(mockConfig.getDoubleDefaultValue("ead.fine_time_inc", 2.0)).thenReturn(2.0);
+        when(mockConfig.getDoubleDefaultValue("ead.fine_speed_inc", 1.0)).thenReturn(1.0);
+        when(mockConfig.getDoubleDefaultValue("ead.acceptableStopDistance", 6.0)).thenReturn(10.0);
+        long startTime = System.currentTimeMillis();
+        ((MockCollisionChecker) mockCC).setPredictedTrajectory(new Node(57, 35, 8), new Node(97, 40, 8));
+        EadAStar ead = new EadAStar(mockCC);
+        ead.initialize(1, new AStarSolver());
+        IntersectionData intersection1 = new IntersectionData(); // Id 9709
+        intersection1.map = mock(MapMessage.class, Mockito.withSettings().stubOnly());
+        intersection1.roughDist = 2000;
+        intersection1.dtsb = 20.00;
+        intersection1.currentPhase = SignalPhase.GREEN;
+        intersection1.timeToNextPhase = 15;
+        intersection1.stopBoxWidth = 32.90;
+        intersection1.intersectionId = 9709;
+        intersection1.geometry = new IntersectionGeometry(40, 100);
+        IntersectionData intersection2 = new IntersectionData(); // Id 9945
+        intersection2.map = mock(MapMessage.class, Mockito.withSettings().stubOnly());
+        intersection2.roughDist = 10000;
+        intersection2.dtsb = 100.00;
+        intersection2.currentPhase = SignalPhase.GREEN;
+        intersection2.timeToNextPhase = 15.0;
+        intersection2.stopBoxWidth = 35.18;
+        intersection2.intersectionId = 9945;
+        intersection2.geometry = new IntersectionGeometry(40, 100);
+        List<IntersectionData> intersections = Arrays.asList(intersection1, intersection2);
+        try {
+            List<Node> res = ead.plan(1.9352529452127594, 11.176, intersections);
+            System.out.println("A* Planning for two intersections takes " + (System.currentTimeMillis() - startTime) + " ms to finish");
             for(Node n : res) {
                 System.out.println(n.toString());
             }

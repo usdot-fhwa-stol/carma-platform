@@ -242,10 +242,10 @@ public class EadAStar implements IEad {
             log_.debugf("EAD", "    %.0f m", intList_.get(i).bestDTSB());
         }
         log_.info("EAD", "Coarse path plan:");
-        System.out.println("Coarse path plan:");
+        //System.out.println("Coarse path plan:");
         for (Node n : path) {
             log_.info("EAD", "    " + n.toString());
-            System.out.println(n);
+            //System.out.println(n);
         }
         log_.debug("EAD", "Coarse path attempted to reach goal: " + coarseGoal.toString());
         //System.out.println("Coarse path attempted to reach goal: " + coarseGoal.toString());

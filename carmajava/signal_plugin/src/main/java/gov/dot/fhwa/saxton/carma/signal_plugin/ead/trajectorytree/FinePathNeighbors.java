@@ -72,6 +72,7 @@ public class FinePathNeighbors extends NeighborBase {
 
     @Override
     public List<Node> neighbors(Node node) {
+        //System.out.println("Generating neighbors of node " + node.toString());
         List<Node> neighbors = new ArrayList<>();
         int c = currentIntersectionIndex(node.getDistanceAsDouble());
         if (c >= 0 ) {
