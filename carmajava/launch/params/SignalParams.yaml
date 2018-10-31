@@ -66,6 +66,10 @@ cycleThreshold: 10
 #  beyond the stop bar
 dtsb/auto/stop: -400.0
 
+# Double: Time remaining in the red phase where the continue through intersection popup will appear
+# Units: Seconds
+popupOnRedTime: 3.0
+
 #-----
 #----- Consumers
 #-----

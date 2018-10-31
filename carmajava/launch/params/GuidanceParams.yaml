@@ -74,11 +74,11 @@ arbitrator_plugins:
 
 # Double: Time that it takes the host vehicle to respond to a new speed command
 # Units: seconds
-vehicle_response_lag: 0.0
+vehicle_response_lag: 1.4
 
 # Double: Maximum acceleration GuidanceCommands can command of the vehicle
 # Units: m/s/s
-vehicle_acceleration_limit: 2.0
+vehicle_acceleration_limit: 2.5
 
 # Double: A multiplier applied to the actual speed limit which will result in the cruising plugin's target speed
 # Max: 1.0
