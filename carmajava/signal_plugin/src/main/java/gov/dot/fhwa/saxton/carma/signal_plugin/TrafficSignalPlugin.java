@@ -131,6 +131,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private double speedCommandQuantizationFactor = 0.1;
     private ObjectCollisionChecker collisionChecker; // Collision checker responsible for tracking NCVs and providing collision checks capabilities
     private AtomicBoolean involvedInControl = new AtomicBoolean(false);
+    private double popupOnRedTime;
     static private final double CM_PER_M = 100.0;
     static private final double MAX_DTSB = Integer.MAX_VALUE - 5.0; // Legacy Glidepath code returns Integer.MAX_VALUE for invalid dtsb. Add fudge factor for detecting it as a double
 
@@ -167,6 +168,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         // Pass params into GlidepathAppConfig
         appConfig = new GlidepathAppConfig(pluginServiceLocator.getParameterSource(), pluginServiceLocator.getRouteService());
         GlidepathApplicationContext.getInstance().setAppConfigOverride(appConfig);
+
+        popupOnRedTime = appConfig.getDoubleValue("popupOnRedTime");
 
         // Initialize custom maneuver inputs
         IManeuverInputs platformInputs = pluginServiceLocator.getManeuverPlanner().getManeuverInputs();
@@ -625,10 +628,11 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      * Helper function to evaluate state variables for the stopping condition
      */
     private void evaluateStatesForStopping() {
-        // We were stopped at a red light and now the light is green
+        // We were stopped at a red light and now the light is green or will be in a few seconds
         boolean stoppedForLight = stoppedAtLight();
         boolean phaseIsGreen = checkCurrentPhase(SignalPhase.GREEN);
-        if (stoppedForLight && phaseIsGreen) {
+        boolean phaseIsGreenSoon = phaseIsGreen || checkCurrentPhaseAndRemainingTime(SignalPhase.RED, popupOnRedTime);
+        if (stoppedForLight && phaseIsGreenSoon) {
             // If we have not requested acknowledgement from the user do it now
             if (awaitingUserConfirmation.compareAndSet(false, true)) {
                 // Update state variables
@@ -712,6 +716,22 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private boolean checkCurrentPhase(SignalPhase phase) {
         List<gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData> sortedIntersections = glidepathTrajectory.getSortedIntersections();
         return !sortedIntersections.isEmpty() && sortedIntersections.get(0).currentPhase == phase;
+    }
+
+    /**
+     * Helper function returns true if the current phase of the nearest intersection is equal to the requested phase
+     * and there is less than or equal time remaining to the specified maxTimeRemaining
+     * 
+     * @param phase The phase to check against
+     * @param maxTimeRemaining The max time allowed to be remaining in this phase for the function to return true
+     * 
+     * @return True if nearest intersection phase is equal to current phase and has less than or equal time remaining to maxTimeRemaining
+     */
+    private boolean checkCurrentPhaseAndRemainingTime(SignalPhase phase, double maxTimeRemaining) {
+        List<gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData> sortedIntersections = glidepathTrajectory.getSortedIntersections();
+        return !sortedIntersections.isEmpty() 
+            && sortedIntersections.get(0).currentPhase == phase
+            && sortedIntersections.get(0).timeToNextPhase <= maxTimeRemaining;
     }
 
     @Override
