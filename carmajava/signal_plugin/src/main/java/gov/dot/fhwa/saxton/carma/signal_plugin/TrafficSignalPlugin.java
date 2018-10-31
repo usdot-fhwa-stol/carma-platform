@@ -934,6 +934,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         DoubleDataElement operSpeedElem;
         DoubleDataElement vehicleLat;
         DoubleDataElement vehicleLon;
+        DoubleDataElement planningStartTime;
+        DoubleDataElement planningStartDowntrack;
         IntersectionCollectionDataElement icde;
 
         if (curVel.get() != null) {
@@ -958,6 +960,11 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         ic.intersections = convertIntersections(intersections);
         icde = new IntersectionCollectionDataElement(ic);
         state.put(DataElementKey.INTERSECTION_COLLECTION, icde);
+
+        planningStartTime = new DoubleDataElement(pluginServiceLocator.getTimeProvider().getCurrentTimeSeconds());
+        planningStartDowntrack = new DoubleDataElement(pluginServiceLocator.getRouteService().getCurrentDowntrackDistance());
+        state.put(DataElementKey.PLANNING_START_TIME, planningStartTime);
+        state.put(DataElementKey.PLANNING_START_DOWNTRACK, planningStartDowntrack);
 
         return state;
     }

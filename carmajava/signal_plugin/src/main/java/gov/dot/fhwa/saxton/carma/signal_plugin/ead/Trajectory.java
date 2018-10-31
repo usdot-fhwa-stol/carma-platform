@@ -249,6 +249,20 @@ public class Trajectory implements ITrajectory {
 		}
 
 
+		DoubleDataElement startTime = (DoubleDataElement) stateData.get(DataElementKey.PLANNING_START_TIME);
+		DoubleDataElement startDowntrack = (DoubleDataElement) stateData.get(DataElementKey.PLANNING_START_DOWNTRACK);
+
+		if (startTime == null) {
+			startTime = new DoubleDataElement(0.0);
+			log_.error("TRAJ", "No start time provided. NCV handling will be incorrect");
+		}
+
+		if (startDowntrack == null) {
+			startDowntrack = new DoubleDataElement(0.0);
+			log_.error("TRAJ", "No start downtrack provided. NCV handling will be incorrect");
+		}
+
+
 		////////// UNDERSTAND THE INTERSECTION GEOMETRY & WHERE WE FIT IN
 
 
@@ -276,7 +290,7 @@ public class Trajectory implements ITrajectory {
 		//get speed command from EAD (assume it will handle position in stop box w/red light)
 		try {
 			log_.info("TrafficSignalPlugin", this.getSortedIntersections().toString());
-			path = ead_.plan(curSpeed_, operSpeed, this.getSortedIntersections());
+			path = ead_.plan(curSpeed_, operSpeed, this.getSortedIntersections(), startTime.value(), startDowntrack.value());
 		}catch (Exception e) {
 			log_.errorf("TRAJ", "Exception trapped by EAD algo: " + e.toString() +
 			"\n    Too many errors...rethrowing. " +

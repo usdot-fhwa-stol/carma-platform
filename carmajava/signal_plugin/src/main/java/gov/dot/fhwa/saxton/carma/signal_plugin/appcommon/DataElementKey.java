@@ -45,5 +45,7 @@ public enum DataElementKey {
     SPAT_LIST,                      // list of SPAT messages captured
     SIGNAL_PHASE,
     SIGNAL_TIME_TO_NEXT_PHASE,      // seconds (double)
-    SIGNAL_TIME_TO_THIRD_PHASE      // seconds (double)
+    SIGNAL_TIME_TO_THIRD_PHASE,     // seconds (double)
+    PLANNING_START_TIME,            // seconds (double) 
+    PLANNING_START_DOWNTRACK        // seconds (double)
 }

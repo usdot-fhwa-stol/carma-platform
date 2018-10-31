@@ -61,13 +61,13 @@ public class FinePathNeighbors extends NeighborBase {
 
     @Override
     public void initialize(List<IntersectionData> intersections, int numIntersections, double timeIncrement,
-                           double speedIncrement, INodeCollisionChecker collisionChecker) {
+                    double speedIncrement, INodeCollisionChecker collisionChecker, double planningStartTime, double planningStartDowntrack) {
 
         log_.info("EAD", "initialize called with timeInc = " + timeIncrement + ", speedInc = " + speedIncrement);
         // Set the acceptable stop distance to at least half the distance increment
         acceptableStopDist_ = Math.max(1.1 * 2.0 * timeIncrement * speedIncrement, acceptableStopDist_); 
         log_.info("EAD", "Using acceptable stop distance of: " + acceptableStopDist_);
-        super.initialize(intersections, numIntersections, timeIncrement, speedIncrement, collisionChecker);
+        super.initialize(intersections, numIntersections, timeIncrement, speedIncrement, collisionChecker, planningStartTime, planningStartDowntrack);
     }
 
     @Override

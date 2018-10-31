@@ -60,9 +60,9 @@ public class CoarsePathNeighbors extends NeighborBase {
 
     @Override
     public void initialize(List<IntersectionData> intersections, int numIntersections, double timeIncrement,
-                           double speedIncrement, INodeCollisionChecker collisionChecker) {
+                double speedIncrement, INodeCollisionChecker collisionChecker, double planningStartTime, double planningStartDowntrack) {
         log_.debug("EAD", "initialize called with timeInc = " + timeIncrement + ", speedInc = " + speedIncrement);
-        super.initialize(intersections, numIntersections, timeIncrement, speedIncrement, collisionChecker);
+        super.initialize(intersections, numIntersections, timeIncrement, speedIncrement, collisionChecker, planningStartTime, planningStartDowntrack);
     }
 
 
