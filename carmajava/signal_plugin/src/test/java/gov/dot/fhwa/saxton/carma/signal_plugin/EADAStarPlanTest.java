@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -153,14 +154,22 @@ public class EADAStarPlanTest {
                 while (phase1 != SignalPhase.NONE) {
                     phase2 = SignalPhase.GREEN;
                     while (phase2 != SignalPhase.NONE) {
-                        for (double i = 0; i <  30.0; i+=1) {
-                            for (double j = 0; j <  30.0; j+=1) {
+                        for (double i = 0; i <  30.0; i+=5) {
+                            for (double j = 0; j <  30.0; j+=5) {
                                 if ((phase1 == SignalPhase.GREEN || phase2 == SignalPhase.GREEN) && (i < timeBuffer * 3.0 || j < timeBuffer * 3.0)) {
                                     //System.out.println("Ignoring impossible timing's dues to time buffer");
                                     continue;
                                 }
                                 //System.out.println("DTSB1: " + dist1 + " DTSB2: " + dist2 + " Phase1: " + phase1 + " Phase2: " + phase2 + " timeToNext1: " + i + " timeToNext2: " + j);
                                 long startTime = System.currentTimeMillis();
+                                //The following code is for NCV handling
+                                int randomPredictionStartLoc = ThreadLocalRandom.current().nextInt((int)dist1, (int)dist2 + 1);
+                                int randomPredictionStartTime = ThreadLocalRandom.current().nextInt(1, 51);
+                                int randomPredictionSpeed = ThreadLocalRandom.current().nextInt(1, 11);
+                                int predictionPeriod = 5;
+                                ((MockCollisionChecker) mockCC).setPredictedTrajectory(
+                                        new Node(randomPredictionStartLoc, randomPredictionStartTime, randomPredictionSpeed),
+                                        new Node(randomPredictionStartLoc + predictionPeriod * randomPredictionSpeed, randomPredictionStartTime + predictionPeriod, randomPredictionSpeed));
                                 ead = new EadAStar(mockCC);
                                 solver = new AStarSolver();
                                 ead.initialize(1, solver);
