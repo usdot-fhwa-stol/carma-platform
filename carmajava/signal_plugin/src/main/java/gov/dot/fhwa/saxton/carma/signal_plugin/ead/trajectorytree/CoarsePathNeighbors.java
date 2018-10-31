@@ -75,7 +75,7 @@ public class CoarsePathNeighbors extends NeighborBase {
      */
     @Override
     public List<Node> neighbors(Node node) {
-        System.out.println("Generating neighbors of node " + node.toString());
+        //System.out.println("Generating neighbors of node " + node.toString());
         log_.debug("PLAN", "Entering coarse node " + node.toString());
         int intIndex = currentIntersectionIndex(node.getDistanceAsDouble());
         if (intIndex >= 0) {
@@ -178,14 +178,14 @@ public class CoarsePathNeighbors extends NeighborBase {
                     Node neighbor = new Node(nodeLoc, nodeTime, nodeSpeed);
                     //only the first node can have non-linear acceleration
                     if(intermediateNode != null) {
-                        System.out.println("1 " + hasConflict(node, intermediateNode));
-                        System.out.println("2 " + hasConflict(intermediateNode, neighbor));
+                        //System.out.println("1 " + hasConflict(node, intermediateNode));
+                        //System.out.println("2 " + hasConflict(intermediateNode, neighbor));
                         if(!hasConflict(node, intermediateNode) && !hasConflict(intermediateNode, neighbor)) {
                             neighbors.add(neighbor);
                         }
                         intermediateNode = null;   
                     } else {
-                        System.out.println("3 " + hasConflict(node, neighbor));
+                        //System.out.println("3 " + hasConflict(node, neighbor));
                         if(!hasConflict(node, neighbor)) {        
                             neighbors.add(neighbor);
                         }
@@ -226,7 +226,7 @@ public class CoarsePathNeighbors extends NeighborBase {
                 while (nodeSpeed >= crawlingSpeed_ && nodeTime <= greenExpiration) {
                     Node neighbor = new Node(nodeLoc, nodeTime, nodeSpeed);
                     ////System.out.println("Potential Neighbor: " + neighbor.toString());
-                    System.out.println("4 " + hasConflict(node, neighbor));
+                    //System.out.println("4 " + hasConflict(node, neighbor));
                     if(!hasConflict(node, neighbor)) {
                         neighbors.add(neighbor);
                     }
@@ -234,14 +234,10 @@ public class CoarsePathNeighbors extends NeighborBase {
                     nodeTime += timeInc_;
                     nodeSpeed = 2.0*(distToNext - lagDist)/(nodeTime - (curTime + lagTime_)) - curSpeed;
                 }
-
-            //else if we haven't yet found any solution at this intersection (we have to stop for the red)
-            } else if (neighbors.size() == 0) {
+            }
+            //if we haven't yet found any solution at this intersection (we have to stop for the red)
+            if (neighbors.size() == 0) {
                 //we will need to come to a stop while red expires
-
-
-
-
 
                 //TODO - these calcs are for debug purposes only - REMOVE FOR PRODUCTION RELEASE!
                 //first, determine the decel distance & time from current speed
@@ -260,7 +256,7 @@ public class CoarsePathNeighbors extends NeighborBase {
                 //create a single node at the start of green phase with zero speed
                 Node neighbor = new Node(nodeLoc, timeOfNextGreen, 0.0);
                 //move stopping goal node upstream if it has conflict
-                System.out.println("5 " + hasConflict(node, neighbor));
+                //System.out.println("5 " + hasConflict(node, neighbor));
                 if(hasConflict(node, neighbor)) {
                     neighbors.add(new Node(nodeLoc - TYPICAL_VEHICLE_LENGTH, timeOfNextGreen, 0.0));
                 } else {
@@ -288,7 +284,7 @@ public class CoarsePathNeighbors extends NeighborBase {
 
             //check conflict before we deem it as a valid node
             Node neighbor = new Node(operSpeedLoc, timeAtOperSpeed, operSpeed_);
-            System.out.println("6 " + hasConflict(node, neighbor));
+            //System.out.println("6 " + hasConflict(node, neighbor));
             if(!hasConflict(node, neighbor)) {
                 //System.out.println("Potential Neighbor: " + new Node(operSpeedLoc, timeAtOperSpeed, operSpeed_).toString());
                 neighbors.add(neighbor);
