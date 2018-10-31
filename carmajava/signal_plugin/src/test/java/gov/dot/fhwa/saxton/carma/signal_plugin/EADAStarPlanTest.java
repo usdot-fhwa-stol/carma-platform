@@ -29,9 +29,8 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 public class EADAStarPlanTest {
     
     IGlidepathAppConfig mockConfig = mock(IGlidepathAppConfig.class, Mockito.withSettings().stubOnly());
-    INodeCollisionChecker mockCC = mock(INodeCollisionChecker.class, Mockito.withSettings().stubOnly());
+    INodeCollisionChecker mockCC = new MockCollisionChecker();
     final double timeBuffer = 4.0;
-    INodeCollisionChecker mockCollisionChecker = mock(INodeCollisionChecker.class, Mockito.withSettings().stubOnly());
     
     @Before
     public void setup() {
@@ -46,7 +45,6 @@ public class EADAStarPlanTest {
         when(mockConfig.getDoubleDefaultValue("crawlingSpeed", 5.0)).thenReturn(5.0);
         when(mockConfig.getDoubleDefaultValue("ead.timebuffer", 4.0)).thenReturn(timeBuffer);
         when(mockConfig.getDoubleDefaultValue("ead.response.lag", 1.9)).thenReturn(0.0); // Was 1.9
-        when(mockCollisionChecker.hasCollision(any())).thenReturn(false);
     }
 
     // These default phases will be used for phases which are not specified. Check NeighborBase.java to confirm.
@@ -157,7 +155,6 @@ public class EADAStarPlanTest {
                     while (phase2 != SignalPhase.NONE) {
                         for (double i = 0; i <  30.0; i+=1) {
                             for (double j = 0; j <  30.0; j+=1) {
-                            
                                 if ((phase1 == SignalPhase.GREEN || phase2 == SignalPhase.GREEN) && (i < timeBuffer * 3.0 || j < timeBuffer * 3.0)) {
                                     //System.out.println("Ignoring impossible timing's dues to time buffer");
                                     continue;
@@ -211,7 +208,6 @@ public class EADAStarPlanTest {
                 System.out.println("Completed: " + totalCount + " plans");
             }
         }
-
         System.out.println("\n\n ////// Test Complete //////");
         System.out.println("Total Plans: " + totalCount);
         System.out.println("Failed Plans: " + failureCount);
@@ -220,6 +216,50 @@ public class EADAStarPlanTest {
         System.out.println("\n\n");
 
         assertTrue(0 == failureCount);// Test fails if any plans fail
+    }
+    
+    @Test
+    public void planSingleIntersectionWithNCV() {
+        // FAILED: DTSB1: 50.0 DTSB2: 130.0 Phase1: RED Phase2: RED timeToNext1: 11.0 timeToNext2: 10.0
+        when(mockConfig.getDoubleDefaultValue("ead.coarse_time_inc", 5.0)).thenReturn(2.0);
+        when(mockConfig.getDoubleDefaultValue("ead.coarse_speed_inc", 3.0)).thenReturn(2.0);
+        when(mockConfig.getDoubleDefaultValue("ead.fine_time_inc", 2.0)).thenReturn(2.0);
+        when(mockConfig.getDoubleDefaultValue("ead.fine_speed_inc", 1.0)).thenReturn(1.0);
+        when(mockConfig.getDoubleDefaultValue("ead.acceptableStopDistance", 6.0)).thenReturn(6.0);
+        ((MockCollisionChecker) mockCC).setPredictedTrajectory(new Node(20, 2, 1), new Node(26, 8, 1));
+        long startTime = System.currentTimeMillis();
+        EadAStar ead = new EadAStar(mockCC);
+        ead.initialize(1, new AStarSolver());
+        IntersectionData intersection1 = new IntersectionData(); // Id 9945
+        intersection1.map = mock(MapMessage.class, Mockito.withSettings().stubOnly());
+        intersection1.roughDist = 8423; 
+        intersection1.dtsb = 84.23;
+        intersection1.currentPhase = SignalPhase.GREEN;
+        intersection1.timeToNextPhase = 26.99095117187494;
+        intersection1.stopBoxWidth = 35.18;
+        intersection1.intersectionId = 9945;
+        intersection1.geometry = new IntersectionGeometry(40, 100);
+        List<IntersectionData> intersections = Arrays.asList(intersection1);
+        try {
+            List<Node> res = ead.plan(1.935252945217594, 11.176, intersections);
+            // If ther is no prediction, the plan is:
+//            Node{distance=       0, time=     0, speed=   2}
+//            Node{distance=       6, time=     2, speed=   4}
+//            Node{distance=      17, time=     4, speed=   7}
+//            Node{distance=      34, time=     6, speed=  10}
+//            Node{distance=      40, time=     7, speed=  11}
+//            Node{distance=      62, time=     9, speed=  11}
+//            Node{distance=      83, time=    11, speed=  10}
+//            Node{distance=     104, time=    13, speed=  11}
+//            Node{distance=     125, time=    15, speed=  10}
+            System.out.println("A* Planning for one intersections takes " + (System.currentTimeMillis() - startTime) + " ms to finish");
+            for(Node n : res) {
+                System.out.println(n.toString());
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+            assertTrue(false); // indicate the failure
+        }
     }
     
 }
