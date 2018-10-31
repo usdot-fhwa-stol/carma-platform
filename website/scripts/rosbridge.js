@@ -35,6 +35,8 @@ var t_active_route = 'route';
 
 var t_diagnostics = '/diagnostics';
 
+var t_sensor_fusion_filtered_velocity = 'velocity';
+
 var t_guidance_state = 'state';
 var t_incoming_bsm = 'bsm';
 
@@ -1657,6 +1659,29 @@ function showCANSpeeds() {
 }
 
 /*
+    The Sensor Fusion velocity can be used to derive the actual speed.
+*/
+function showActualSpeed(){
+
+    var listenerSFVelocity = new ROSLIB.Topic({
+        ros: ros,
+        name: t_sensor_fusion_filtered_velocity,
+        messageType: 'geometry_msgs/TwistStamped'
+    });
+
+    listenerSFVelocity.subscribe(function (message) {
+
+        //If nothing on the Twist, skip
+        if (message.twist == null || message.twist.linear == null || message.twist.linear.x == null) {
+            return;
+        }
+
+        var actualSpeedMPH = Math.round(message.twist.linear.x * METER_TO_MPH);
+        insertNewTableRow('tblFirstB', 'SF Velocity (m/s)', message.twist.linear.x);
+        insertNewTableRow('tblFirstB', 'SF Velocity (MPH)', actualSpeedMPH);
+    });
+}
+/*
     Display the Vehicle Info in the System Status tab.
 */
 function getVehicleInfo() {
@@ -1995,6 +2020,7 @@ function showStatusandLogs() {
     showNavSatFix();
     showSpeedAccelInfo();
     showCANSpeeds();
+    showActualSpeed();
     showDiagnostics();
     showDriverStatus();
     showControllingPlugins();

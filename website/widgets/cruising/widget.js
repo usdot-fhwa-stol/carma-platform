@@ -12,7 +12,7 @@ CarmaJS.WidgetFramework.Cruising = (function () {
         var listenerRouteState;
         var listenerRoute;
         var listenerSpeedAccel;
-        var listenerCANSpeed;
+        var listenerSFVelocity;
 
         //*** Widget Install Folder ***
         //Currently the URL path from document or window are pointing to the page, not the actual folder location.
@@ -191,19 +191,25 @@ CarmaJS.WidgetFramework.Cruising = (function () {
         };
 
         /*
-            Display the CAN speeds
+            Show the actual speed by leveraging Sensor Fusion's Velocity.
         */
-        var showCANSpeeds = function () {
+        var showActualSpeed = function () {
 
-            listenerCANSpeed = new ROSLIB.Topic({
+            listenerSFVelocity = new ROSLIB.Topic({
                 ros: ros,
-                name: t_can_speed,
-                messageType: 'std_msgs/Float64'
+                name: t_sensor_fusion_filtered_velocity,
+                messageType: 'geometry_msgs/TwistStamped'
             });
 
-            listenerCANSpeed.subscribe(function (message) {
-                var speedMPH = Math.round(message.data * METER_TO_MPH);
-                setSpeedometer(speedMPH);
+            listenerSFVelocity.subscribe(function (message) {
+
+                //If nothing on the Twist, skip
+                if (message.twist == null || message.twist.linear == null || message.twist.linear.x == null) {
+                    return;
+                }
+
+                var actualSpeedMPH = Math.round(message.twist.linear.x * METER_TO_MPH);
+                setSpeedometer(actualSpeedMPH);
             });
         };
 
@@ -283,13 +289,13 @@ CarmaJS.WidgetFramework.Cruising = (function () {
                 $(this.element).append(myDiv);
              },
             _destroy: function() {
-                 if (listenerCANSpeed)
-                    listenerCANSpeed.unsubscribe();
+                 if (listenerSFVelocity)
+                    listenerSFVelocity.unsubscribe();
                 this.element.empty();
                 this._super();
             },
-             showCANSpeeds: function(){
-                showCANSpeeds();
+             showActualSpeed: function(){
+                showActualSpeed();
              }
         });//CarmaJS.cruisingSpeedometer
 
@@ -306,7 +312,7 @@ CarmaJS.WidgetFramework.Cruising = (function () {
             container.cruisingSpeedCmd("showSpeedAccelInfo",null);
 
             container.cruisingSpeedometer();
-            container.cruisingSpeedometer("showCANSpeeds",null);
+            container.cruisingSpeedometer("showActualSpeed",null);
         };
 
         //*** Public API  ***

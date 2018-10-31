@@ -32,6 +32,7 @@ public class EADAStarPlanTest {
     IGlidepathAppConfig mockConfig = mock(IGlidepathAppConfig.class, Mockito.withSettings().stubOnly());
     INodeCollisionChecker mockCC = mock(INodeCollisionChecker.class, Mockito.withSettings().stubOnly());
     final double timeBuffer = 4.0;
+    INodeCollisionChecker mockCollisionChecker = mock(INodeCollisionChecker.class, Mockito.withSettings().stubOnly());
     
     @Before
     public void setup() {
@@ -46,6 +47,7 @@ public class EADAStarPlanTest {
         when(mockConfig.getDoubleDefaultValue("crawlingSpeed", 5.0)).thenReturn(5.0);
         when(mockConfig.getDoubleDefaultValue("ead.timebuffer", 4.0)).thenReturn(timeBuffer);
         when(mockConfig.getDoubleDefaultValue("ead.response.lag", 1.9)).thenReturn(0.0); // Was 1.9
+        when(mockCollisionChecker.hasCollision(any())).thenReturn(false);
     }
 
     // These default phases will be used for phases which are not specified. Check NeighborBase.java to confirm.
@@ -154,8 +156,8 @@ public class EADAStarPlanTest {
                 while (phase1 != SignalPhase.NONE) {
                     phase2 = SignalPhase.GREEN;
                     while (phase2 != SignalPhase.NONE) {
-                        for (double i = 0; i <  30.0; i+=5) {
-                            for (double j = 0; j <  30.0; j+=5) {
+                        for (double i = 0; i <  30.0; i+=1) {
+                            for (double j = 0; j <  30.0; j+=1) {
                             
                                 if ((phase1 == SignalPhase.GREEN || phase2 == SignalPhase.GREEN) && (i < timeBuffer * 3.0 || j < timeBuffer * 3.0)) {
                                     //System.out.println("Ignoring impossible timing's dues to time buffer");
