@@ -220,10 +220,13 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
    * The provided host plan will be interpolated using the provided IMotionInterpolator
    * 
    * @param hostPlan The host plan to set as the current plan
+   * @param startTime The time which planning is considered to have begun at. This is used for converting nodes to route locations
+	 * @param startDowntrack The downtrack distance where planning is considered to have begun at. This is used for converting nodes to route locations
+	 * 
    */
-  public void setHostPlan(List<Node> hostPlan) {
+  public void setHostPlan(List<Node> hostPlan, double startTime, double startDowntrack) {
     interpolatedHostPlan.set(motionInterpolator.interpolateMotion(hostPlan, distanceStep,
-      timeProvider.getCurrentTimeSeconds(), routeService.getCurrentDowntrackDistance()
+      startTime, startDowntrack
     ));
   }
 
