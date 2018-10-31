@@ -116,7 +116,7 @@ public class ExecutionStateTest {
                                                         mockManeuverPlanner,      mockRouteService,
                                                         mockRouter,                       mock(IConflictDetector.class),
                                                         mockTrajectoryConverter, mock(ILightBarManager.class),
-                                                        mock(TrackingService.class));
+                                                        mock(TrackingService.class), null, null);
         when(mockPlugin.getCommsTimeoutMS()).thenReturn(500L);
 
         when(mockPlugin.getVehicleId()).thenReturn(VEHICLE_ID);

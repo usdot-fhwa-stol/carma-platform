@@ -19,12 +19,16 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicationContext;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.INodeCollisionChecker;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 
+import java.io.InvalidObjectException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.Constants.MPS_TO_MPH;
 
@@ -57,13 +61,13 @@ public class FinePathNeighbors extends NeighborBase {
 
     @Override
     public void initialize(List<IntersectionData> intersections, int numIntersections, double timeIncrement,
-                           double speedIncrement) {
+                           double speedIncrement, INodeCollisionChecker collisionChecker) {
 
         log_.info("EAD", "initialize called with timeInc = " + timeIncrement + ", speedInc = " + speedIncrement);
         // Set the acceptable stop distance to at least half the distance increment
         acceptableStopDist_ = Math.max(1.1 * 2.0 * timeIncrement * speedIncrement, acceptableStopDist_); 
         log_.info("EAD", "Using acceptable stop distance of: " + acceptableStopDist_);
-        super.initialize(intersections, numIntersections, timeIncrement, speedIncrement);
+        super.initialize(intersections, numIntersections, timeIncrement, speedIncrement, collisionChecker);
     }
 
     @Override
@@ -132,9 +136,9 @@ public class FinePathNeighbors extends NeighborBase {
             //System.out.println("Potential Neighbor: " + new Node(curDist, newTime, 0.0).toString());
             neighbors.add(new Node(curDist, newTime, 0.0));
         }
-        //System.out.println();
         
-        return neighbors;
+        List<Node> neightborsWithoutConflicts = neighbors.stream().filter(n -> !hasConflict(node, n)).collect(Collectors.toList());
+        return neightborsWithoutConflicts;
     }
     
     ////////////////////

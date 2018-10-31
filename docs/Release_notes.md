@@ -1,6 +1,18 @@
 CARMA Platform Release Notes
 ----------------------------
 
+Version 2.8.0, released 31 October 2018
+---------------------------------------
+
+-Added traffic signal plugin that provides GlidePath functionality (eco-approach and
+ departure at a signalized intersection) for one or more fixed phase plan traffic signals 
+ in the planned route.  
+-Issue 1015, fixed UI to use Interface Manager for all driver topics and sensor fusion for
+ source of vehicle speed  
+-Issue 1041, fixed NPE caused by end of route in VehicleAwareness  
+-Issue 1031, gave plugins access to ROS time  
+-Issue 1078, allowed traffic signal popup for operator confirmation to appear earlier  
+
 Version 2.7.4, released 22 October 2018
 ---------------------------------------
 

@@ -77,7 +77,7 @@ public class FollowerStateTest {
                                                         planner,                          mockRouteService,
                                                         mock(IMobilityRouter.class),      mock(IConflictDetector.class),
                                                         mock(ITrajectoryConverter.class), mock(ILightBarManager.class),
-                                                        mock(TrackingService.class), mock(ITimeProvider.class));
+                                                        mock(TrackingService.class), null, mock(ITimeProvider.class));
         when(mockFact.createLoggerForClass(any())).thenReturn(mockLog);
         LoggerManager.setLoggerFactory(mockFact);
         NoOpAccStrategyFactory noOpAccStrategyFactory = new NoOpAccStrategyFactory();
