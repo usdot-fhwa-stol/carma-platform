@@ -289,6 +289,7 @@ public class EadAStar implements IEad {
      * 
      * @return A list of node defining the planned vehicle trajectory
      */
+    @Override
     public List<Node> plan(double speed, double operSpeed, 
         List<IntersectionData> intersections, double startTime, double startDowntrack) throws Exception {
 
