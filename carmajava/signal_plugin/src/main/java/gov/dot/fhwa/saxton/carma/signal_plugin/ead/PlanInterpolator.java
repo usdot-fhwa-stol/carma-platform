@@ -49,9 +49,9 @@ public class PlanInterpolator implements IMotionInterpolator {
       final double x_0 = prevNode.getDistanceAsDouble();
       final double v_0 = prevNode.getSpeedAsDouble();
 
-      final double t_f = n.getTimeAsDouble() + distanceOffset;
+      final double t_f = n.getTimeAsDouble() + timeOffset;
       final double v_f = n.getSpeedAsDouble();
-      final double x_f = n.getDistanceAsDouble() + timeOffset;
+      final double x_f = n.getDistanceAsDouble() + distanceOffset;
 
       final double dt = t_f - t_0;
       final double dv = v_f - v_0;

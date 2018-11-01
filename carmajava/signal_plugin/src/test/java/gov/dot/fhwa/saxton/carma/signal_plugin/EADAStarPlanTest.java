@@ -75,7 +75,7 @@ public class EADAStarPlanTest {
         intersection1.geometry = new IntersectionGeometry(40, 100);
         List<IntersectionData> intersections = Arrays.asList(intersection1);
         try {
-            List<Node> res = ead.plan(1.935252945217594, 11.176, intersections);
+            List<Node> res = ead.plan(1.935252945217594, 11.176, intersections, 0, 0);
             System.out.println("A* Planning for one intersections takes " + (System.currentTimeMillis() - startTime) + " ms to finish");
             for(Node n : res) {
                 System.out.println(n.toString());
@@ -117,7 +117,7 @@ public class EADAStarPlanTest {
         intersection2.geometry = new IntersectionGeometry(40, 100);
         List<IntersectionData> intersections = Arrays.asList(intersection1, intersection2);
         try {
-            List<Node> res = ead.plan(1.9352529452127594, 11.176, intersections);
+            List<Node> res = ead.plan(1.9352529452127594, 11.176, intersections, 0, 0);
             System.out.println("A* Planning for two intersections takes " + (System.currentTimeMillis() - startTime) + " ms to finish");
             for(Node n : res) {
                 System.out.println(n.toString());
@@ -193,7 +193,7 @@ public class EADAStarPlanTest {
                                 intersection2.geometry = new IntersectionGeometry(40, 100);
                                 List<IntersectionData> intersections = Arrays.asList(intersection1, intersection2);
                                 try {
-                                    List<Node> res = ead.plan(0, 11.176, intersections);
+                                    List<Node> res = ead.plan(0, 11.176, intersections, 0, 0);
                                     totalPlanningTime += System.currentTimeMillis() - startTime;
                                     //System.out.println("A* Planning for two intersections takes " + (System.currentTimeMillis() - startTime) + " ms to finish");
                                     // for(Node n : res) {
@@ -251,7 +251,7 @@ public class EADAStarPlanTest {
         intersection1.geometry = new IntersectionGeometry(40, 100);
         List<IntersectionData> intersections = Arrays.asList(intersection1);
         try {
-            List<Node> res = ead.plan(1.935252945217594, 11.176, intersections);
+            List<Node> res = ead.plan(1.935252945217594, 11.176, intersections, 0, 0);
             // If ther is no prediction, the plan is:
 //            Node{distance=       0, time=     0, speed=   2}
 //            Node{distance=       6, time=     2, speed=   4}
@@ -304,7 +304,7 @@ public class EADAStarPlanTest {
         intersection2.geometry = new IntersectionGeometry(40, 100);
         List<IntersectionData> intersections = Arrays.asList(intersection1, intersection2);
         try {
-            List<Node> res = ead.plan(1.9352529452127594, 11.176, intersections);
+            List<Node> res = ead.plan(1.9352529452127594, 11.176, intersections, 0, 0);
             System.out.println("A* Planning for two intersections takes " + (System.currentTimeMillis() - startTime) + " ms to finish");
             for(Node n : res) {
                 System.out.println(n.toString());

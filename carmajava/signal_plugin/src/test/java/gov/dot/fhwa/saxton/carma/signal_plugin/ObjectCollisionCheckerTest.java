@@ -132,7 +132,7 @@ public class ObjectCollisionCheckerTest {
     // Note: Nodes in this test are defined using double constructor
     Node n1 = new Node(0.0, 0.0, 5.0);
     Node n2 = new Node(5.0, 1.0, 5.0);
-    assertFalse(occ.hasCollision(Arrays.asList(n1,n2)));
+    assertFalse(occ.hasCollision(Arrays.asList(n1,n2), 0, 0));
 
     // Return the current lane id as 0 with crosstrack 0.0
     when(rs.getCurrentCrosstrackDistance()).thenReturn(0.0);
@@ -155,7 +155,7 @@ public class ObjectCollisionCheckerTest {
     assertEquals(0, occ.trackedLaneObjectsPredictions.get(0).size()); // 0 predictions
 
     // Check that the collision is not found since there is no prediction
-    assertFalse(occ.hasCollision(Arrays.asList(n1,n2)));
+    assertFalse(occ.hasCollision(Arrays.asList(n1,n2), 0, 0));
 
     currentTime = 610L; // The current time is 0.61
 
@@ -170,10 +170,10 @@ public class ObjectCollisionCheckerTest {
     assertEquals(7, occ.trackedLaneObjectsPredictions.get(0).size()); // 1 predictions
 
     // Check that the collision is found
-    assertTrue(occ.hasCollision(Arrays.asList(n1,n2)));
+    assertTrue(occ.hasCollision(Arrays.asList(n1,n2), 0, 0));
 
     // Set the host plan with collisions
-    occ.setHostPlan(Arrays.asList(n1,n2));
+    occ.setHostPlan(Arrays.asList(n1,n2), 0, 0);
     // Obstacle is sampled a third time
     ro2 = newRoadwayObstacle(0, 3.5, 0.7, 5.0); // Object id 0 with stamp at 0.6
     ro.setPrimaryLane((byte)0);
@@ -186,7 +186,7 @@ public class ObjectCollisionCheckerTest {
     // Set the host plan without collisions
     n1 = new Node(0.0, 4.0, 0.0);
     n2 = new Node(0.0, 5.0, 0.0);
-    occ.setHostPlan(Arrays.asList(n1,n2));
+    occ.setHostPlan(Arrays.asList(n1,n2), 0, 0);
 
     // Obstacle is sampled a fourth time
     ro2 = newRoadwayObstacle(0, 4, 0.8, 5.0); // Object id 0 with stamp at 0.6

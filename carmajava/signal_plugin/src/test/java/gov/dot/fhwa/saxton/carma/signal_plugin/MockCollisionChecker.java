@@ -10,7 +10,7 @@ public class MockCollisionChecker implements INodeCollisionChecker {
     Node ncvStartNode, ncvEndNode;
     
     @Override
-    public boolean hasCollision(List<Node> trajectory) {
+    public boolean hasCollision(List<Node> trajectory, double timeOffset, double distanceOffset) {
         Node p1 = trajectory.get(0);
         Node q1 = trajectory.get(1);
         Node p2 = ncvStartNode;
