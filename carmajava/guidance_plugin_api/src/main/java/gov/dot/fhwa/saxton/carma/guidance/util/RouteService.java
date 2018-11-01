@@ -143,4 +143,10 @@ public interface RouteService {
    * @param algorithm The enabled algorithm flag
    */
   boolean isAlgorithmEnabledInRange(double start, double end, String algorithm);
+  
+  /**
+   * Return true if current route data is available
+   * @return the availability of current route data 
+   */
+  boolean isRouteDataAvailable();
 }

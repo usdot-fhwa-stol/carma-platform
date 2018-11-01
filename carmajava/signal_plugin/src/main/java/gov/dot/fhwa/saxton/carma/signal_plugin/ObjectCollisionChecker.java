@@ -122,6 +122,10 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
    */
   public void updateObjects(List<RoadwayObstacle> obstacles) {
 
+	if(!routeService.isRouteDataAvailable()) {
+		return;
+	}
+	
     // Iterate over detected objects and keep only those in front of us in the same lane. 
     int currentLane = routeService.getCurrentRouteSegment().determinePrimaryLane(routeService.getCurrentCrosstrackDistance());
     int inLaneObjectCount = 0;
