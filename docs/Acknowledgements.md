@@ -1,7 +1,5 @@
 DRAFT
 
-Acknowledgements
-
 The following people have made direct and substantial contributions to the design and code in this repository, listed in alphabetical order:
 --------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -36,3 +34,5 @@ Chris Stanley (Leidos) - STOL Program Manager
 Dale Thompson (FHWA) - Government oversight  
 Randy Van Gorder (FHWA) - Government oversight  
 Govindarajan Vadakpat (FHWA) - Government oversight  
+
+Edited by third party (jas) on the TestMod branch
