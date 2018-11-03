@@ -1,6 +1,6 @@
 DRAFT
 
-Acknowledgements
+Edit #2 after first PR was rejected.  REMOVE THIS WHOLE LINE.
 
 The following people have made direct and substantial contributions to the design and code in this repository, listed in alphabetical order:
 --------------------------------------------------------------------------------------------------------------------------------------------
