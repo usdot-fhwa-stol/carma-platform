@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   cav_driver_utils
   can_msgs
   sensor_msgs
+  diagnostic_updater
 )
 
 ## System dependencies are found with CMake's conventions
