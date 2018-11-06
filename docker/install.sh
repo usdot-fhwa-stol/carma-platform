@@ -6,8 +6,7 @@ cd ~/carma_ws
 rosdep install --from-paths src --ignore-src --rosdistro=kinetic -y
 catkin_make install
 
-sudo mkdir -p /opt/carma/app/bin /opt/carma/params /opt/carma/routes /opt/carma/urdf /opt/carma/logs /opt/carma/launch /opt/carma/app/mock_data /opt/carma/app/engineering_tools
-sudo chown -R carma:carma /opt/carma
+mkdir -p /opt/carma/app/bin /opt/carma/params /opt/carma/routes /opt/carma/urdf /opt/carma/logs /opt/carma/launch /opt/carma/app/mock_data /opt/carma/app/engineering_tools
 
 # Copy the installed files
 cd ~/carma_ws 

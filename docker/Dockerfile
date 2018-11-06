@@ -9,6 +9,7 @@ ARG CARMA_VERSION=develop
 
 RUN mkdir /root/.ssh/
 RUN echo "${SSH_PRIVATE_KEY}" > /root/.ssh/id_rsa
+RUN chmod 600 /root/.ssh/id_rsa
 RUN touch /root/.ssh/known_hosts
 RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 
@@ -30,8 +31,8 @@ RUN apt-get install -y ros-kinetic-rosjava ros-kinetic-rosbridge-server
 
 RUN rosdep update
 
-RUN mkdir -p ~/carma_ws/src
-COPY --from=source-code /root/src/. ~/carma_ws/src
+RUN mkdir -p ~/carma_ws/
+COPY --from=source-code /root/src /root/carma_ws/src
 
 # Copy the built files into their installed location
 RUN ~/carma_ws/src/CARMAPlatform/docker/install.sh
