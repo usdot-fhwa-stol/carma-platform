@@ -2,7 +2,7 @@
 
 # CARMA extra packages checkout script
 
-if [[ ! -z $EXTRA_PACKAGES ]]
+if [[ ! -z $EXTRA_PACKAGES ]]; then
     echo "Attempting to check out extra CARMA packages from $EXTRA_PACKAGES..."
     git clone $EXTRA_PACKAGES
 else 
