@@ -26,6 +26,14 @@ Welcome to the CARMA contributing guide. Please read this guide to learn about o
 ### Making Changes
 
 
+### Submitting Changes
+
+[Detailed Walkthrough of One Pull Request per Commit](http://ndlib.github.io/practices/one-commit-per-pull-request/)
+
+* Read the article ["Using Pull Requests"](https://help.github.com/articles/using-pull-requests) on GitHub.
+
+
+
 
 
 #### That’s all there is to it. The fundamentals are:
