@@ -260,6 +260,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
       );
       
       if (!conflictSpaces.isEmpty()) {
+       // System.out.println("ConflictSpaces: " + conflictSpaces);
         return true;
       }
     }
@@ -270,12 +271,20 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
   @Override
   public boolean hasCollision(List<Node> trajectory, double timeOffset, double distanceOffset) {
     
+   // System.out.println("Checking collision with traj: " + trajectory);
+   // System.out.println("timeOffest: " + timeOffset + " distanceOffset: " + distanceOffset + " distanceStep: " + distanceStep);
     // Convert the proposed trajectory to route points
     List<RoutePointStamped> routePlan = motionInterpolator.interpolateMotion(trajectory, distanceStep,
       timeOffset, distanceOffset
     );
 
-    return checkCollision(routePlan); // Check for collisions with tracked objects
+  //  System.out.println("RoutePlan: " + routePlan);
+
+    boolean hasCollision = checkCollision(routePlan);
+    // if (hasCollision) {
+    //   System.out.println("HasCollision: " + hasCollision + " with node: " + trajectory.get(1));
+    // }
+    return hasCollision; // Check for collisions with tracked objects
 
   }
 }
