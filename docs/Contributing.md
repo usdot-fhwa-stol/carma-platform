@@ -16,7 +16,7 @@ Welcome to the CARMA contributing guide. Please read this guide to learn about o
 ### Reporting Issues
 
 * Make sure you have a [GitHub account](https://github.com/signup/free)
-* Submit a [Github issue](https://github.com/usdot-fhwa-stol/CARMAPlatform/issues/new)
+* Submit a [CARMAPlatform issue](https://github.com/usdot-fhwa-stol/CARMAPlatform/issues/new)
   * Clearly describing the issue
     * Provide a descriptive summary
     * Explain the expected behavior
