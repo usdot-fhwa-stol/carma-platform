@@ -1,10 +1,11 @@
 FROM ros:kinetic-ros-base AS source-code
 RUN apt-get update
-RUN apt-get install -y git
+RUN apt-get install -y git ssh
 
 ARG SSH_PRIVATE_KEY
 ARG EXTRA_PACKAGES
 ENV EXTRA_PACKAGES ${EXTRA_PACKAGES}
+ARG CARMA_VERSION=develop
 
 RUN mkdir /root/.ssh/
 RUN echo "${SSH_PRIVATE_KEY}" > /root/.ssh/id_rsa
@@ -14,9 +15,10 @@ RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 # Acquire the software source
 ARG carma_version=develop
 RUN \
+        cd /root && \
         mkdir src && \
         cd src && \
-        git clone https://github.com/usdot-fhwa-stol/CARMAPlatform.git --branch ${carma_version} && \
+        git clone https://github.com/usdot-fhwa-stol/CARMAPlatform.git --branch ${CARMA_VERSION} && \
         cd .. && \
         ./src/CARMAPlatform/docker/checkout.sh
 
