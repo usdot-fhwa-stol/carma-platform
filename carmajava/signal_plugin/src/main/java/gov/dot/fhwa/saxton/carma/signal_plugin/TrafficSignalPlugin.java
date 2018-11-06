@@ -190,6 +190,9 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         pluginServiceLocator.getV2IService().registerV2IDataCallback(this::handleNewIntersectionData);
         setAvailability(false);
 
+        velocitySub = pluginServiceLocator.getPubSubService().getSubscriberForTopic("velocity", TwistStamped._TYPE);
+        obstacleSub = pluginServiceLocator.getPubSubService().getSubscriberForTopic("roadway_environment", RoadwayEnvironment._TYPE);
+        
         uiInstructionsPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("ui_instructions", UIInstructions._TYPE);
 
         trafficSignalInfoPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("traffic_signal_info", TrafficSignalInfoList._TYPE);
@@ -592,13 +595,12 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     @Override
     public void onResume() {
         log.info("TrafficSignalPlugin trying to resume.");
-        velocitySub = pluginServiceLocator.getPubSubService().getSubscriberForTopic("velocity", TwistStamped._TYPE);
+        
         velocitySub.registerOnMessageCallback((msg) -> {
             curVel.set(msg);
             velFilter.addRawDataPoint(msg.getTwist().getLinear().getX());
         });
 
-        obstacleSub = pluginServiceLocator.getPubSubService().getSubscriberForTopic("roadway_environment", RoadwayEnvironment._TYPE);
         obstacleSub.registerOnMessageCallback((msg) -> {
             collisionChecker.updateObjects(msg.getRoadwayObstacles());
         });
