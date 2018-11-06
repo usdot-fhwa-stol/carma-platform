@@ -31,6 +31,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
  */
 public class PlanInterpolator implements IMotionInterpolator {
 
+  double MIN_ACCELERATION = 0.000001;
   @Override
   public List<RoutePointStamped> interpolateMotion(List<Node> trajectory, double distanceStep, double timeOffset, double distanceOffset) {
     Node prevNode = null;
@@ -68,23 +69,33 @@ public class PlanInterpolator implements IMotionInterpolator {
       double v_old = v_0;
       double v = Math.sqrt(v_old * v_old + two_a_x);
       double t;
+      double x = x_0 + distanceStep;
       
-      if (a == 0.0) {
+      if (Math.abs(a) < MIN_ACCELERATION) {
         t = t_0 + distanceStep / v; // With constant speed 
+
+        // Interpolate between current node and previous node
+        while (x < x_f) {
+
+          points.add(new RoutePointStamped(x, 0, t)); // Add previous node and the new interpolated nodes to list
+          v_old = v;
+          v = Math.sqrt(v_old * v_old + two_a_x);
+          t += distanceStep / v;
+          x += distanceStep;
+        }
+
       } else {
         t = t_0 + (v - v_old) / a; // With constant acceleration
-      }
-      
-      double x = x_0 + distanceStep;
 
-      // Interpolate between current node and previous node
-      while (x < x_f) {
+        // Interpolate between current node and previous node
+        while (x < x_f) {
 
-        points.add(new RoutePointStamped(x, 0, t)); // Add previous node and the new interpolated nodes to list
-        v_old = v;
-        v = Math.sqrt(v_old * v_old + two_a_x);
-        t += (v - v_old) / a;
-        x += distanceStep;
+          points.add(new RoutePointStamped(x, 0, t)); // Add previous node and the new interpolated nodes to list
+          v_old = v;
+          v = Math.sqrt(v_old * v_old + two_a_x);
+          t += (v - v_old) / a;
+          x += distanceStep;
+        }
       }
 
       // Add the current node to the list
