@@ -16,6 +16,9 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.pubsub;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import org.ros.message.MessageListener;
 import org.ros.node.topic.Subscriber;
 import gov.dot.fhwa.saxton.carma.guidance.*;
@@ -31,6 +34,7 @@ public class RosSubscriber<T> implements ISubscriber<T> {
     protected RosSubscriptionChannel<T> parent;
     protected T lastMessage = null;
     protected GuidanceExceptionHandler exceptionHandler;
+    protected List<MessageListener<T>> listeners = new LinkedList<>();
 
     RosSubscriber(Subscriber<T> subscriber, RosSubscriptionChannel<T> parent, GuidanceExceptionHandler exceptionHandler) {
         this.subscriber = subscriber;
@@ -49,7 +53,7 @@ public class RosSubscriber<T> implements ISubscriber<T> {
     }
 
     @Override public void registerOnMessageCallback(final OnMessageCallback<T> callback) {
-        subscriber.addMessageListener(new MessageListener<T>() {
+    	MessageListener<T> listener = new MessageListener<T>() {
             @Override public void onNewMessage(T t) {
                 try {
                     callback.onMessage(t);
@@ -58,10 +62,15 @@ public class RosSubscriber<T> implements ISubscriber<T> {
                     exceptionHandler.handleException(e);
                 }
             }
-        });
+        };
+        listeners.add(listener);
+        subscriber.addMessageListener(listener);
     }
 
     @Override public void close() {
+    	for(MessageListener<T> listener : listeners) {
+    		subscriber.removeMessageListener(listener);
+    	}
         parent.notifyClientShutdown();
     }
 }
