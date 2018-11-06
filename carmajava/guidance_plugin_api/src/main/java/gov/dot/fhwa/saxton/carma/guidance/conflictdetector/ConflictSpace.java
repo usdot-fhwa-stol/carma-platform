@@ -180,4 +180,10 @@ public final class ConflictSpace {
   public Set<String> getConflictingVehicles() {
     return conflictingVehicles;
   }
+
+  @Override
+  public String toString() {
+    return "ConflictSpace: Downtrack [" + startDowntrack + ", " + endDowntrack +"] Time: [" + startTime + ", " + endTime 
+    + "] Lane: " + lane + " segment: " + segmentIdx;  
+  }
 }
