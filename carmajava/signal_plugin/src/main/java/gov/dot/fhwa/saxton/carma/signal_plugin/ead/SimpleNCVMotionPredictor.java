@@ -90,7 +90,7 @@ public class SimpleNCVMotionPredictor implements IMotionPredictor {
     double endTime = timeDuration + t;
     double endDistance = (endTime - intercept) / slope;
 
-    if (slope > 1.0) { // If the s/m is greater than 1 m/s (2.23694 mph) then assume the vehicle is stopped
+    if (slope > 1.0 || Double.isNaN(slope)) { // If the s/m is greater than 1 m/s (2.23694 mph) then assume the vehicle is stopped
       // Use small time increments instead of distance steps
       while (t < endTime) {
 
