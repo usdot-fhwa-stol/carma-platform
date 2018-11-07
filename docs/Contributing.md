@@ -31,13 +31,13 @@ There are a few guidelines that we need contributors to follow so that we can ha
 #### Fork the Repository
 **Make a fork of our develop branch.** 
 
-* Firstly you need a local fork of the project, so go ahead and press the “Fork” button in GitHub. Read the article ["Using Pull Requests"] 
+* Firstly you need a local fork of the project, so go ahead and press the “Fork” button in GitHub. Read the article ["Fork a repo"](https://help.github.com/articles/fork-a-repo/) 
 * This will create a copy of the repository in your own GitHub account and you’ll see a note that it’s been forked underneath the project name:
 * With the repository forked, you’re ready to clone it so that you have a local working copy of the code base.
  
 #### Clone the Repository
 **Then clone a local copy of this forked branch.**
-* You can alternatively copy the URL by using the green “Clone or download” button from your repository page that you just forked from the original repository page. Read the article ["Using Pull Requests"]
+* You can alternatively copy the URL by using the green “Clone or download” button from your repository page that you just forked from the original repository page. Read the article ["Cloning a repository"](https://help.github.com/articles/cloning-a-repository/) on GitHub. 
 * Once you click the button, you’ll be able to copy the URL by clicking the binder button next to the URL:
 
 #### Create a New Branch
