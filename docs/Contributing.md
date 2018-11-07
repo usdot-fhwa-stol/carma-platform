@@ -55,8 +55,7 @@ There are a few guidelines that we need contributors to follow so that we can ha
 
 ## Branching Model
 In order to make the development process efficient, please comply with the branching model described below. On this model, we mainly use five branches - master, develop, feature, release, and hotfix.
-
-![Branching workflow](docs/image/git-model%402x.png)
+![Branching Workflow](docs/image/CARMA2_Architecture.png)
 
 ### master
 This is the latest stable version of CARMAPlatform.
