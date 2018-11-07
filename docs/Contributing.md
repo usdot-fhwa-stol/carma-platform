@@ -31,7 +31,7 @@ There are a few guidelines that we need contributors to follow so that we can ha
 #### Fork the Repository
 **Make a fork of our develop branch.** 
 
-* Firstly you need a local fork of the project, so go ahead and press the “fork” button in GitHub. 
+* Firstly you need a local fork of the project, so go ahead and press the “Fork” button in GitHub. 
 * This will create a copy of the repository in your own GitHub account and you’ll see a note that it’s been forked underneath the project name:
 * With the repository forked, you’re ready to clone it so that you have a local working copy of the code base.
  
@@ -60,8 +60,10 @@ There are a few guidelines that we need contributors to follow so that we can ha
 In order to make the development process efficient, please comply with the branching model described below. On this model, we mainly use five branches - master, develop, feature, release, and hotfix.
 
 ### master
+This is the latest stable version of CARMAPlatform.
 
 ### develop
+This branch should be kept stable at all times. This is important because new branches are created off of this branch.
 
 ### feature
 
