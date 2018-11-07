@@ -76,6 +76,9 @@ In order to make the development process efficient, please comply with the branc
 * The naming convention for this branch starts with release/ followed by its version. For example, **release/v1.0.1.**
 
 **hotfix**
+* This branch is created for handling emergency situations – it allows developers to quickly fix something in production. This branch uses master as the parent branch and merges into both master and develop.
+* The name of this branch starts with hotfix/ followed by its version. For example, **hotfix/v0.1.1.**
+
 
 
 
