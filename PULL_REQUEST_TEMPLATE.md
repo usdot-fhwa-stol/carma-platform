@@ -6,14 +6,6 @@ More detailed description, if necessary. Try to be as descriptive as you can: ev
 
 Description can have multiple paragraphs and you can use code examples inside:
 
-``` ruby
-class PostsController
-  def index
-    respond_with Post.limit(10)
-  end
-end
-```
-
 Changes proposed in this pull request:
 * 
 * 
