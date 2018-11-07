@@ -42,8 +42,8 @@ There are a few guidelines that we need contributors to follow so that we can ha
 
 #### Create a New Branch
 **The number one rule is to put each piece of work on its own branch.**
-•	Create a branch specific to the issue you are working on. Read the article "Creating and deleting branches" on GitHub.
-•	Name your branch **"fix-xxx."** The **xxx** is a short description of the changes you're making. For example, **"fix-typo-on-readme-md".**
+* Create a branch specific to the issue you are working on. Read the article "Creating and deleting branches" on GitHub.
+* Name your branch **"fix-xxx."** The **xxx** is a short description of the changes you're making. For example, **"fix-typo-on-readme-md".**
 
 
 #### Make Changes Locally
