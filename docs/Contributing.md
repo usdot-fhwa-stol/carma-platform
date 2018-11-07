@@ -54,6 +54,8 @@ There are a few guidelines that we need contributors to follow so that we can ha
 
 * Read the article ["Using Pull Requests"](https://help.github.com/articles/using-pull-requests) on GitHub.
 
+### Merging Changes
+
 
 
 
