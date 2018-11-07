@@ -59,14 +59,18 @@ In order to make the development process efficient, please comply with the branc
 
 **Main branches**
 
-**master** - This branch contains production-ready code of CARMAPlatform.
+**master**
+* This branch contains production-ready code of CARMAPlatform.
+* This branch should be kept stable at all times
 
-**develop** - This branch should be kept stable at all times. This is important because new branches are created off of this branch.
+**develop**
+* This branch contains code for the upcoming release.
+* This branch should be kept stable at all times. This is important because new branches are created off of this branch.
 
 **Supporting branches**
 
 **feature**
-* These branches are created from develop; each feature branch is used to implement a single task. After completing the task, the feature branch must be merged into develop.
+* These branches are created from develop; **each feature branch is used to implement a single task**. After completing the task, the feature branch must be merged into develop.
 * To avoid ambiguity, we use a specific naming convention for feature branches − they always begin with feature/ followed by a description based on the functionality implemented by the feature. For example, **feature/sign-up-with-email-and-password.** 
 * Thanks to this naming, team members can easily tell what code each branch contains.
 
