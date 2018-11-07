@@ -88,7 +88,7 @@ RUN useradd -m $USERNAME && \
 
 # Install necessary packages
 RUN apt-get update
-RUN apt-get install -y sudo ros-kinetic-rosjava ros-kinetic-rosbridge-server ros-kinetic-robot tmux apache2 php7.0 libapache2-mod-php7.0 vim less
+RUN apt-get install -y sudo ros-kinetic-rosjava ros-kinetic-rosbridge-server ros-kinetic-robot tmux apache2 php7.0 libapache2-mod-php7.0 vim nano less
 
 USER carma
 
@@ -96,7 +96,5 @@ USER carma
 COPY --from=install --chown=carma /opt/carma /opt/carma
 COPY --from=install --chown=www-data /var/www/html/. /var/www/html
 COPY --from=install --chown=carma /root/.bashrc /home/carma/.bashrc
-
-EXPOSE 80
 
 CMD [ "/opt/carma/entrypoint.sh" ]
