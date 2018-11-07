@@ -56,7 +56,7 @@ There are a few guidelines that we need contributors to follow so that we can ha
 ## Branching Model
 In order to make the development process efficient, please comply with the branching model described below. On this model, we mainly use five branches - master, develop, feature, release, and hotfix.
 
-[Branching Workflow](docs/image/git_Workflow.png)
+![Branching Workflow](docs/image/Git_Workflow.png)
 
 **Main branches**
 
