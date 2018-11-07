@@ -69,7 +69,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
 
 
   private final long NCVReplanPeriod; // ms
-  private final double MS_PER_S = 1000.0; // ms
+  private static final double MS_PER_S = 1000.0; // ms
   private Long ncvDetectionTime = null; // ms
 
   /**
@@ -127,12 +127,13 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
 	}
 	
     // Iterate over detected objects and keep only those in front of us in the same lane. 
-    int currentLane = routeService.getCurrentRouteSegment().determinePrimaryLane(routeService.getCurrentCrosstrackDistance());
+    final int currentLane = routeService.getCurrentRouteSegment().determinePrimaryLane(routeService.getCurrentCrosstrackDistance());
     int inLaneObjectCount = 0;
+    final double currentDowntrack = routeService.getCurrentDowntrackDistance();
 
     for (RoadwayObstacle obs : obstacles) {
 
-      double frontObjectDistToCenters =  obs.getDownTrack() - routeService.getCurrentDowntrackDistance();
+      double frontObjectDistToCenters =  obs.getDownTrack() - currentDowntrack;
       boolean inLane = obs.getPrimaryLane() == currentLane;
 
       // If the object is in the same lane and in front of the host vehicle
