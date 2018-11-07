@@ -31,18 +31,18 @@ There are a few guidelines that we need contributors to follow so that we can ha
 #### Fork the Repository
 **Make a fork of our develop branch.** 
 
-* Firstly you need a local fork of the project, so go ahead and press the “Fork” button in GitHub. Read the article "Fork a repo" on GitHub. 
+* Firstly you need a local fork of the project, so go ahead and press the “Fork” button in GitHub. Read the article ["Fork a repo"](https://help.github.com/articles/fork-a-repo/) on GitHub.
 * This will create a copy of the repository in your own GitHub account and you’ll see a note that it’s been forked underneath the project name:
 * With the repository forked, you’re ready to clone it so that you have a local working copy of the code base.
  
 #### Clone the Repository
 **Then clone a local copy of this forked branch.**
-* You can alternatively copy the URL by using the green “Clone or download” button from your repository page that you just forked from the original repository page. 
+* You can alternatively copy the URL by using the green “Clone or download” button from your repository page that you just forked from the original repository page. Read the article ["Cloning a repository"](https://help.github.com/articles/cloning-a-repository/) on GitHub. 
 * Once you click the button, you’ll be able to copy the URL by clicking the binder button next to the URL:
 
 #### Create a New Branch
 **The number one rule is to put each piece of work on its own branch.**
-* Create a branch specific to the issue you are working on. Read the article "Creating and deleting branches" on GitHub.
+* Create a branch specific to the issue you are working on. Read the article ["Creating and deleting branches"](https://help.github.com/articles/creating-and-deleting-branches-within-your-repository/) on GitHub. 
 * Name your branch **"fix-xxx."** The **xxx** is a short description of the changes you're making. For example, **"fix-typo-on-readme-md".**
 
 
