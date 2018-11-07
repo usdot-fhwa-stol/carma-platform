@@ -56,6 +56,9 @@ There are a few guidelines that we need contributors to follow so that we can ha
 
 ### Merging Changes
 
+## Branching Model
+In order to make the development process efficient, please comply with the branching model described below. On this model, we mainly use six branches - master, develop, feature, release, contributor and hotfix.
+
 
 
 
