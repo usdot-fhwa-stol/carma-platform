@@ -30,8 +30,8 @@
 
 
 # /////////////////////////////////////////////////////////////////////////////
-# Stage 1 - Install the SSH private key and acquire the CARMA source as well as any
-#           extra packages
+# Stage 1 - Install the SSH private key and acquire the CARMA source as well as
+#           any extra packages
 # /////////////////////////////////////////////////////////////////////////////
 FROM ros:kinetic-ros-base AS source-code
 RUN apt-get update
