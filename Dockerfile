@@ -93,7 +93,7 @@ RUN apt-get install -y sudo ros-kinetic-rosjava ros-kinetic-rosbridge-server tmu
 USER carma
 
 # Migrate the files from the install stage
-COPY --from=install --chown=carma /opt/carma /opt/
+COPY --from=install --chown=carma /opt/carma /opt/carma
 COPY --from=install --chown=www-data /var/www/html/. /var/www/html
 COPY --from=install --chown=carma /root/.bashrc /home/carma/.bashrc
 
