@@ -43,14 +43,11 @@ There are a few guidelines that we need contributors to follow so that we can ha
 #### Create a New Branch
 **The number one rule is to put each piece of work on its own branch.**
 
- 
-
-
-
+#### Make Changes Locally
+**Do the work, write good commit messages.**
 
 ### Submitting Changes
-
-[Detailed Walkthrough of One Pull Request per Commit](http://ndlib.github.io/practices/one-commit-per-pull-request/)
+A Pull Request is the way to notify the project maintainers that you have some work that they should review and add to the project. You’re requesting that they pull your changes in.
 
 * Read the article ["Using Pull Requests"](https://help.github.com/articles/using-pull-requests) on GitHub.
 
