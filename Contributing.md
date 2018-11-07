@@ -55,6 +55,7 @@ There are a few guidelines that we need contributors to follow so that we can ha
 
 ## Branching Model
 In order to make the development process efficient, please comply with the branching model described below. On this model, we mainly use five branches - master, develop, feature, release, and hotfix.
+
 ![Branch Workflow](docs/image/Git_Workflow.png)
 
 ### master
@@ -66,8 +67,14 @@ This branch should be kept stable at all times. This is important because new br
 ### feature
 
 ### release
+* This branch is created every iteration (i.e. sprint) from develop, and when the team rolls out a release it’s deployed to the staging server for testing. A stable release is merged first into the master branch and then into develop.
+* The naming convention for this branch starts with release/ followed by its version. For example, **release/v1.0.1.**
+
 
 ### hotfix
+* This branch is created for handling emergency situations – it allows developers to quickly fix something in production. This branch uses master as the parent branch and merges into both master and develop.
+* The name of this branch starts with hotfix/ followed by its version. For example, **hotfix/v0.1.1.**
+
 
 
 
