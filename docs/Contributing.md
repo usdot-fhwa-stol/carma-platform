@@ -47,9 +47,9 @@ There are a few guidelines that we need contributors to follow so that we can ha
 **Do the work, write good commit messages.**
 
 ### Submitting Changes
-A Pull Request is the way to notify the project maintainers that you have some work that they should review and add to the project. You’re requesting that they pull your changes in.
-
-* Read the article ["Using Pull Requests"](https://help.github.com/articles/using-pull-requests) on GitHub.
+* A Pull Request is the way to notify the project maintainers that you have some work that they should review and add to the project. 
+* You’re requesting that they pull your changes in. Read the article ["Using Pull Requests"](https://help.github.com/articles/using-pull-requests) on GitHub.
+* To create one, go to your fork of the project, click on the Pull Requests tab, and click the big green “New Pull Request” button.
 
 ### Merging Changes
 
