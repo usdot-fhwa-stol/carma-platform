@@ -66,10 +66,13 @@ In order to make the development process efficient, please comply with the branc
 **Supporting branches**
 
 **feature**
-* To avoid ambiguity, we use a specific naming convention for feature branches − they always begin with feature/ followed by a description based on the functionality implemented by the feature. For example,**feature/sign-up-with-email-and-password.** 
+* These branches are created from develop; each feature branch is used to implement a single task. After completing the task, the feature branch must be merged into develop.
+* To avoid ambiguity, we use a specific naming convention for feature branches − they always begin with feature/ followed by a description based on the functionality implemented by the feature. For example, **feature/sign-up-with-email-and-password.** 
 * Thanks to this naming, team members can easily tell what code each branch contains.
 
 **release**
+* This branch is created every iteration (i.e. sprint) from develop, and when the team rolls out a release it’s deployed to the staging server for testing. A stable release is merged first into the master branch and then into develop.
+* The naming convention for this branch starts with release/ followed by its version. For example, **release/v1.0.1.**
 
 **hotfix**
 
