@@ -95,7 +95,7 @@ USER carma
 # Migrate the files from the install stage
 COPY --from=install --chown=carma /opt/carma /opt/
 COPY --from=install --chown=www-data /var/www/html/. /var/www/html
-COPY --from=install --chown=carma /home/carma/.bashrc /home/carma/.bashrc
+COPY --from=install --chown=carma /root/.bashrc /home/carma/.bashrc
 
 EXPOSE 80
 

@@ -1,0 +1,45 @@
+.git
+.cache
+circle.yml
+README.md
+
+**/*.class
+*.bak
+logs
+.project
+.classpath
+.settings
+gradle.properties
+.gradle
+*~
+myClock.bin
+/*.tar.gz
+*.class
+**/bin
+
+# ignore build directories
+**/build
+**/target
+**/devel
+
+# ignore Intellij project files and dirs
+*.ipr
+*.iws
+*.iml
+.idea
+/src/ruby/*
+!/src/ruby/*.rb
+
+# Ignore root level CMakeLists.txt
+/CMakeLists.txt
+
+# Ignore Guidance auto-generate VersionID files
+carmajava/guidance/src/main/resources/version
+carmajava/guidance/out/**
+carmajava/route/out/**
+
+# Ignore sensitive data files and directories
+srx_can_driver
+srx_objects
+truck_can_driver
+**/J2735_201603.asn1

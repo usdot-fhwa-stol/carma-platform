@@ -39,6 +39,6 @@ mkdir -p /var/www/html
 cp -r ~/carma_ws/src/CARMAPlatform/website/* /var/www/html
 
 # Setup the user login configuration
-echo "source /opt/ros/kinetic/setup.bash" >> /home/$USERNAME/.bashrc
-echo "source /opt/carma/app/bin/setup.bash" >> /home/$USERNAME/.bashrc
-echo "cd /opt/carma" >> /home/$USERNAME/.bashrc
+echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
+echo "source /opt/carma/app/bin/setup.bash" >> ~/.bashrc
+echo "cd /opt/carma" >> ~/.bashrc
