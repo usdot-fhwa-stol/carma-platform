@@ -61,14 +61,15 @@ In order to make the development process efficient, please comply with the branc
 
 **master** - This branch contains production-ready code of CARMAPlatform.
 
-**develop** - 
-This branch should be kept stable at all times. This is important because new branches are created off of this branch.
+**develop** - This branch should be kept stable at all times. This is important because new branches are created off of this branch.
 
-### feature
+**Supporting branches**
 
-### release
+**feature**
 
-### hotfix
+**release**
+
+**hotfix**
 
 
 
