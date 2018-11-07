@@ -66,6 +66,8 @@ In order to make the development process efficient, please comply with the branc
 **Supporting branches**
 
 **feature**
+* To avoid ambiguity, we use a specific naming convention for feature branches − they always begin with feature/ followed by a description based on the functionality implemented by the feature. For example,**feature/sign-up-with-email-and-password.** 
+* Thanks to this naming, team members can easily tell what code each branch contains.
 
 **release**
 
