@@ -20,6 +20,7 @@
 CONFIG_FOLDER=$1
 
 docker run \
+    --rm \
     -v $CONFIG_FOLDER/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml \
     -v $CONFIG_FOLDER/saxton_cav.urdf:/opt/carma/urdf/saxton_cav.urdf \
     -v $CONFIG_FOLDER/saxton_cav.launch:/opt/carma/launch/saxton_cav.launch \

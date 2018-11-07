@@ -88,7 +88,7 @@ RUN useradd -m $USERNAME && \
 
 # Install necessary packages
 RUN apt-get update
-RUN apt-get install -y sudo ros-kinetic-rosjava ros-kinetic-rosbridge-server tmux apache2 php7.0 libapache2-mod-php7.0 vim less
+RUN apt-get install -y sudo ros-kinetic-rosjava ros-kinetic-rosbridge-server ros-kinetic-robot tmux apache2 php7.0 libapache2-mod-php7.0 vim less
 
 USER carma
 
