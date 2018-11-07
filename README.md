@@ -1,7 +1,7 @@
 # CARMA
 ![CARMA Arch](docs/image/CARMA_web_banner_18oct18_5.png)
 
-**Connected Automated Research Mobility Applications (CARMA)**, CARMA is a reusable, extensible platform for controlling SAE level 1 connected, automated vehicles (CAVs). It provides a rich, generic API for third party plugins that implement vehicle guidance algorithms. It is written in Java and C++ and runs in a Robot Operating System (ROS) environment. It offers a rich application programming interface (API) for third party authors to develop guidance plugins that can plan vehicle trajectories under certain conditions. The platform can be reused on a variety of properly equipped vehicles.
+**Cooperative Automated Research Mobility Applications (CARMA)**, CARMA is a reusable, extensible platform for controlling SAE level 1 connected, automated vehicles (CAVs). It provides a rich, generic API for third party plugins that implement vehicle guidance algorithms. It is written in Java and C++ and runs in a Robot Operating System (ROS) environment. It offers a rich application programming interface (API) for third party authors to develop guidance plugins that can plan vehicle trajectories under certain conditions. The platform can be reused on a variety of properly equipped vehicles.
 
 ## What Is CARMA
 ![CARMA Arch](docs/image/CARMA2_Architecture.png)
