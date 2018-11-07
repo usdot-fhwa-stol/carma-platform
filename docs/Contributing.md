@@ -33,8 +33,12 @@ Make a fork of our develop branch
  * Click on the fork button to start the forking process. With the repository forked, you’re ready to clone it so that you have a local working copy of the code base.
  
 #### Clone the Repository
+Then clone a local copy of this forked branch
 * You can alternatively copy the URL by using the green “Clone or download” button from your repository page that you just forked from the original repository page. 
 * Once you click the button, you’ll be able to copy the URL by clicking the binder button next to the URL:
+
+#### Create a New Branch
+The number one rule is to put each piece of work on its own branch.
 
  
 
