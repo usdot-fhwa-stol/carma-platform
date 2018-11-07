@@ -27,6 +27,7 @@ There are a few guidelines that we need contributors to follow so that we can ha
 ### Making Changes
 
 #### Fork the Repository
+Make a fork of our develop branch 
  * You can fork a repository on GitHub by navigating with your browser to the GitHub URL of the open-source project you would like to contribute to.
  * When you’re on the main page for the repository, you’ll see a “Fork” button on your upper right-hand side of the page, underneath your user icon:
  * Click on the fork button to start the forking process. With the repository forked, you’re ready to clone it so that you have a local working copy of the code base.
