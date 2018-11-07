@@ -222,7 +222,7 @@ ead/NCVHandling/collision/timeDuration: 3.0
 # Double: The amount of buffer to put around the host vehicle's downtrack bounds when doing a collision check
 # The downtrack margin will be (vehicle's length / 2.0) + downtrack buffer
 # Units: m
-ead/NCVHandling/collision/downtrackBuffer: 8.0
+ead/NCVHandling/collision/downtrackBuffer: 3.0
 
 # Double: The amount of buffer to put around the host vehicle's crosstrack bounds when doing a collision check
 # The crosstrack margin will be (vehicle's width / 2.0) + crosstrack buffer
