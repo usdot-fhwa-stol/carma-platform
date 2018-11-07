@@ -18,6 +18,7 @@ There are a few guidelines that we need contributors to follow so that we can ha
 
 * Make sure you have a [GitHub account](https://github.com/signup/free).
 * Ensure the issue was not already reported by searching on GitHub under [Issues](https://github.com/usdot-fhwa-stol/CARMAPlatform/issues)
+* If you're unable to find an open issue addressing the problem, open a new one.
 * Submit a [CARMAPlatform issue](https://github.com/usdot-fhwa-stol/CARMAPlatform/issues/new).
   * Clearly describing the issue
     * Provide a descriptive summary
