@@ -43,7 +43,7 @@ There are a few guidelines that we need contributors to follow so that we can ha
 #### Create a New Branch
 **The number one rule is to put each piece of work on its own branch.**
 
-Read the article ["Using Pull Requests"]
+Read the article ["Creating and deleting branches"](https://help.github.com/articles/creating-and-deleting-branches-within-your-repository/) on GitHub.
 
 #### Make Changes Locally
 **Do the work, write good commit messages.**
