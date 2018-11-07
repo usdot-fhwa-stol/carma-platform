@@ -58,9 +58,8 @@ In order to make the development process efficient, please comply with the branc
 ![Branching Workflow](darrell_updates/docs/image/git_Workflow.png)
 
 **Main branches**
-* master** - This branch contains production-ready code of CARMAPlatform.
-
-### develop
+**master** - This branch contains production-ready code of CARMAPlatform.
+**develop** - 
 This branch should be kept stable at all times. This is important because new branches are created off of this branch.
 
 ### feature
