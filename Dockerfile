@@ -12,7 +12,6 @@
 #  License for the specific language governing permissions and limitations under
 #  the License.
 
-
 # CARMA Docker Configuration Script
 #
 # Performs all necessary tasks related to generation of a generic CARMA docker image
@@ -28,8 +27,6 @@
 #
 # EXTRA_PACKAGES - The repo to checkout any additional packages from at build time. 
 #                  Default = none
-#
-# CARMA_VERSION - The branch/commit/tag of CARMA to build and install. Default = master
 
 
 # /////////////////////////////////////////////////////////////////////////////
@@ -45,8 +42,6 @@ ARG EXTRA_PACKAGES
 ENV EXTRA_PACKAGES ${EXTRA_PACKAGES}
 ARG EXTRA_PACKAGES_VERSION=master
 ENV EXTRA_PACKAGES_VERSION ${EXTRA_PACKAGES_VERSION}
-ARG CARMA_VERSION=master
-ENV CARMA_VERSION ${CARMA_VERSION}}
 
 # Set up the SSH key for usage by git
 RUN mkdir /root/.ssh/
@@ -56,7 +51,8 @@ RUN touch /root/.ssh/known_hosts
 RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 
 # Acquire the software source
-RUN ./src/CARMAPlatform/docker/checkout.sh
+COPY . /root/src/CARMAPlatform/
+RUN /root/src/CARMAPlatform/docker/checkout.sh
 
 
 # /////////////////////////////////////////////////////////////////////////////
@@ -67,13 +63,10 @@ FROM ros:kinetic-ros-base AS install
 # Install necessary packages
 RUN apt-get update
 RUN apt-get install -y ros-kinetic-rosjava ros-kinetic-rosbridge-server
-
 RUN rosdep update
 
-RUN mkdir -p ~/carma_ws/src
+# Copy the source files from the previous stage and build/install
 COPY --from=source-code /root/src /root/carma_ws/src
-
-# Copy the built files into their installed location
 RUN ~/carma_ws/src/CARMAPlatform/docker/install.sh
 
 # /////////////////////////////////////////////////////////////////////////////
@@ -90,7 +83,6 @@ RUN useradd -m $USERNAME && \
         mkdir -p /etc/sudoers.d && \
         echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/$USERNAME && \
         chmod 0440 /etc/sudoers.d/$USERNAME && \
-        # Replace 1000 with your user/group id
         usermod  --uid 1000 $USERNAME && \
         groupmod --gid 1000 $USERNAME
 
