@@ -61,13 +61,14 @@ public class PlanInterpolator implements IMotionInterpolator {
       // If the distance is less than our distance step we will directly add the current point to our path with no interpolation
       if (dx < distanceStep) {
         points.add(new RoutePointStamped(x_f, 0, t_f));
+        continue;
       }
 
       final double a = dv / dt; // Assume constant acceleration
       final double two_a_x = 2 * a * distanceStep;
 
       double v_old = v_0;
-      double v = Math.sqrt(v_old * v_old + two_a_x);
+      double v = v_old; 
       double t;
       double x = x_0 + distanceStep;
       
@@ -78,13 +79,12 @@ public class PlanInterpolator implements IMotionInterpolator {
         while (x < x_f) {
 
           points.add(new RoutePointStamped(x, 0, t)); // Add previous node and the new interpolated nodes to list
-          v_old = v;
-          v = Math.sqrt(v_old * v_old + two_a_x);
           t += distanceStep / v;
           x += distanceStep;
         }
 
       } else {
+        v = Math.sqrt(v_old * v_old + two_a_x);
         t = t_0 + (v - v_old) / a; // With constant acceleration
 
         // Interpolate between current node and previous node
