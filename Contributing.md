@@ -96,7 +96,7 @@ This is the latest stable version of CARMAPlatform.
 * This branch is created for handling emergency situations – it allows developers to quickly fix something in production. This branch uses master as the parent branch and merges into both master and develop.
 * The name of this branch starts with hotfix/ followed by its version. For example, **hotfix/v0.1.1.**
 
-# The End
+## The End
 Hope this guide helps you get started in contributing to the CARMA project! If you still have questions, don't hesitate to send an email over to info@xxxx.orgjoind.in and we'll get back to you. 
 
 
