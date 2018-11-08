@@ -49,10 +49,10 @@ There are a few guidelines that we need contributors to follow so that we can ha
 
 #### Make Changes Locally
 **Do the work, write good commit messages.**
-* When you have finished making your changes, you'll need to push up your changes to a topic branch in your fork of the repository. 
-* With them all committed, push them: 
-* This pushes everything in that branch up. 
-
+* Open up the project in your favorite text editor, select the file you want to contribute to, and make your changes.
+* Commit your changes using a descriptive commit message.
+* When you have finished making your changes, you'll need to push up your changes to a topic branch in your fork of the repository.  Read the article ["Committing and reviewing changes to your project"](https://help.github.com/desktop/guides/contributing-to-projects/committing-and-reviewing-changes-to-your-project/) on GitHub. 
+* With them all committed, push them, this pushes everything in that branch up. 
 
 ### Submitting Changes
 * A Pull Request is the way to notify the project maintainers that you have some work that they should review and add to the project. 
