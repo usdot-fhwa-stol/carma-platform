@@ -52,11 +52,12 @@ There are a few guidelines that we need contributors to follow so that we can ha
 * When you have finished making your changes, you'll need to push up your changes to a topic branch in your fork of the repository. 
 * With them all committed, push them: 
 * This pushes everything in that branch up. 
-* Then you can go back to your forked branch and issue a pull request to the original repository and choose the correct original branch (should be **`develop`**).
+
 
 ### Submitting Changes
 * A Pull Request is the way to notify the project maintainers that you have some work that they should review and add to the project. 
 * You’re requesting that they pull your changes in. Read the article ["Using Pull Requests"](https://help.github.com/articles/using-pull-requests) on GitHub.
+* Then you can go back to your forked branch and issue a pull request to the original repository and choose the correct original branch (should be **`develop`**).
 * To create one, go to your fork of the project, click on the Pull Requests tab, and click the big green “New Pull Request” button.
 
 ### Merging Changes
