@@ -70,7 +70,7 @@ Welcome to the CARMAPlatform contributing guide. There are a few guidelines that
 ## Branching Model
 In order to make the development process efficient, please comply with the branching model described below. On this model, we mainly use five branches - master, develop, feature, release, and hotfix.
 
-![Branch Workflow](docs/image/Git_Workflow.png)
+![A successful Git branching model](docs/image/Git_Workflow.png)
 
 ### master
 * This branch contains production-ready code of CARMAPlatform.
