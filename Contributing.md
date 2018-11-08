@@ -43,8 +43,9 @@ There are a few guidelines that we need contributors to follow so that we can ha
 #### Create a New Branch
 **The number one rule is to put each piece of work on its own branch.**
 * Create a branch specific to the issue you are working on. Read the article ["Creating and deleting branches"](https://help.github.com/articles/creating-and-deleting-branches-within-your-repository/) on GitHub. 
-* Name your branch **"fix-xxx."** The **xxx** is a short description of the changes you're making. For example, **"fix-typo-on-readme-md".**
-
+* For enhancements, name the branch according to the feature e.g. **`feature/auto-activate`.**
+* For un-reported bug fixes, add a **`fix-`** prefix e.g. **`fix-admin-notices`.**
+* For code that addresses an existing Issue, add the Issue number as a prefix e.g. **`feature/123-auto-activate`** or **`feature/321-fix-admin-notices`.**
 
 #### Make Changes Locally
 **Do the work, write good commit messages.**
