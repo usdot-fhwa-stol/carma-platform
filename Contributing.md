@@ -4,8 +4,7 @@ The Cooperative Automation Research Mobility Applications (CARMA) software platf
 
 # How to Contribute 
 
-Welcome to the CARMAPlatform contributing guide. We want your help to make the CARMA Project great.
-There are a few guidelines that we need contributors to follow so that we can have a chance of keeping on top of things.
+Welcome to the CARMAPlatform contributing guide. There are a few guidelines that we need contributors to follow so that we can have a chance of keeping on top of things.
 
 ## Contribution Tasks
 
@@ -61,12 +60,12 @@ There are a few guidelines that we need contributors to follow so that we can ha
 * To create one, go to your fork of the project, click on the Pull Requests tab, and click the big green “New Pull Request” button.
 
 ### Merging Changes
-**We want your help to make CARMA Project great.**
-* All pull requests will be reviewed by the CARMA team. 
+**We want your help to make CARMAPlatform Project great.**
+* All pull requests will be reviewed by the CARMAPlatform team. 
 * During the review of your pull request the team member will either merge it, request changes to it, or close it with an explanation. 
 * For major changes the reviewer may require additional support from the team, which could cause some delay. 
 * We'll do our best to provide updates and feedback throughout the process. 
-* Feel free to open pull requests, and the CARMA team will communicate through it with any comments.
+* Feel free to open pull requests, and the CARMAPlatform team will communicate through it with any comments.
 
 ## Branching Model
 In order to make the development process efficient, please comply with the branching model described below. On this model, we mainly use five branches - master, develop, feature, release, and hotfix.
@@ -76,8 +75,6 @@ In order to make the development process efficient, please comply with the branc
 ### master
 * This branch contains production-ready code of CARMAPlatform.
 * This branch should be kept stable at all times
-
-This is the latest stable version of CARMAPlatform.
 
 ### develop
 * This branch contains code for the upcoming release.
@@ -97,4 +94,4 @@ This is the latest stable version of CARMAPlatform.
 * The name of this branch starts with hotfix/ followed by its version. For example, **hotfix/v0.1.1.**
 
 ## The End
-Hope this guide helps you get started in contributing to the CARMA project! 
+Hope this guide helps you get started in contributing to the CARMAPlatform project! 
