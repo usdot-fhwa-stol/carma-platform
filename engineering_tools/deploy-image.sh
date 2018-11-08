@@ -21,6 +21,12 @@
 # $1 - image name to load
 # $2 - Username to use on remote host
 # $3 - IP address or hostname of remote host
+# 
+# pv will be used to monitor the progress of the image transfer over the network
+# if it is installed. Otherwise no progress will be tracked. pv can be installed
+# by running:
+#
+# sudo apt-get install pv
 
 if [ ! -z $(command -v pv) ]; then
     echo "Installing docker image $1 to host $2@$3..."
