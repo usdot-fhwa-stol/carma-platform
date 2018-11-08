@@ -48,6 +48,7 @@ There are a few guidelines that we need contributors to follow so that we can ha
 
 #### Make Changes Locally
 **Do the work, write good commit messages.**
+* When you have finished making your changes, you'll need to push up your changes to your fork so we can grab them. With them all committed, push them: This pushes everything in that branch up. Then you can go back to your forked branch and issue a pull request from there. 
 
 ### Submitting Changes
 * A Pull Request is the way to notify the project maintainers that you have some work that they should review and add to the project. 
