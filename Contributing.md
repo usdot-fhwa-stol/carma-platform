@@ -63,8 +63,10 @@ There are a few guidelines that we need contributors to follow so that we can ha
 ### Merging Changes
 **We want your help to make CARMA Project great.**
 * All pull requests will be reviewed by the CARMA team. 
-* During the review of your pull request the team member will either merge it, request changes to it, or close it with an explanation. * * For major changes the reviewer may require additional support from the team, which could cause some delay. 
-* We'll do our best to provide updates and feedback throughout the process. Feel free to open pull requests, and the CARMA team will communicate through it with any comments.
+* During the review of your pull request the team member will either merge it, request changes to it, or close it with an explanation. 
+* For major changes the reviewer may require additional support from the team, which could cause some delay. 
+* We'll do our best to provide updates and feedback throughout the process. 
+* Feel free to open pull requests, and the CARMA team will communicate through it with any comments.
 
 ## Branching Model
 In order to make the development process efficient, please comply with the branching model described below. On this model, we mainly use five branches - master, develop, feature, release, and hotfix.
