@@ -97,6 +97,6 @@ This is the latest stable version of CARMAPlatform.
 * The name of this branch starts with hotfix/ followed by its version. For example, **hotfix/v0.1.1.**
 
 ## The End
-Hope this guide helps you get started in contributing to the CARMA project! If you still have questions, don't hesitate to send an email over to info@xxxx.orgjoind.in and we'll get back to you. 
+Hope this guide helps you get started in contributing to the CARMA project! If you still have questions, don't hesitate to send an email over to and we'll get back to you. 
 
 
