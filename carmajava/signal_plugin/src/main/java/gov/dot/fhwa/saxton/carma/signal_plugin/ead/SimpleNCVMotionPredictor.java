@@ -48,22 +48,23 @@ public class SimpleNCVMotionPredictor implements IMotionPredictor {
     // Set endtime as the last timestamp in the provided history plus the time duration 
     double startDist = objTrajectory.get(objTrajectory.size() - 1).getDownTrack();
     double d = startDist;
-    double t = objTrajectory.get(objTrajectory.size() - 1).getObject().getHeader().getStamp().toSeconds();
-    double endTime = timeDuration + t;
+    double startTime = objTrajectory.get(objTrajectory.size() - 1).getObject().getHeader().getStamp().toSeconds();
+    double t = startTime;
+    double endTime = timeDuration + startTime;
     double endDist = startDist + timeDuration * averageSpeed;
 
     if (averageSpeed < 1.0) { // If the m/s is smaller than 1 m/s (2.23694 mph) then assume the vehicle is stopped
       // Use small time increments instead of distance steps
       while (t < endTime) {
-
-        t += 0.1;
+    	t += 0.1;
         projection.add(new RoutePointStamped(d, 0, t)); // Assume that the vehicle is stationary
       }
     } else { // Vehicle is in motion so use distance steps
+      double timeStep = distanceStep / averageSpeed;
       while (d < endDist) {
-
-        d += distanceStep;
-        projection.add(new RoutePointStamped(d, 0, d + (distanceStep / averageSpeed)));
+        d += distanceStep;        
+        t += timeStep;
+        projection.add(new RoutePointStamped(d, 0, t));
       }
     }
 
