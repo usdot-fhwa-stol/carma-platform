@@ -140,7 +140,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
       // Add it to the set of tracked object histories
       // TODO this currently does not handle if the lane index changes between the host and detected object
       if (inLane && frontObjectDistToCenters > -0.0) {
-        obs.getObject().setId(0);
+        obs.getObject().setId(0); // TODO allow for multiple object ids when sensor fusion is tuned better
         inLaneObjectCount++;
         if (!trackedLaneObjectsHistory.containsKey(obs.getObject().getId())) {
           // Sort object history as time sorted priority queue
