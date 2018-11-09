@@ -23,26 +23,8 @@ import cav_msgs.RoadwayObstacle;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
 
 /**
- * The SimpleNCVMotionPredictor provides an implementation of IMotionPredictor using simple linear regression to predict future detected vehicle motions.
+ * The SimpleNCVMotionPredictor provides an implementation of IMotionPredictor using average vehicle speed to predict future detected vehicle motions.
  * The returned list of RoutePointStamped objects can be used to check conflicts with the CARMA conflict detection system
- * 
- * Simple Linear Regression
- * 
- * Equation of a line -> y = a*x + b
- * Where 
- * x is the independent variable
- * y is the dependent variable
- * a is the slope of the line
- * b is the intercept of the line
- * 
- * The simple linear regression equation is as follows
- * 
- * b = (Ey * E(x^2) - Ex * E(xy)) / (n * E(x^2) - (Ex)^2);
- * a = (n * E(xy) - Ex * Ey) / (n * E(x^2) - (Ex)^2);
- * 
- * Where
- * n = number of samples in data set
- * E represents the summation symbol Sigma
  */
 public class SimpleNCVMotionPredictor implements IMotionPredictor {
 
@@ -51,57 +33,38 @@ public class SimpleNCVMotionPredictor implements IMotionPredictor {
 
     List<RoutePointStamped> projection = new LinkedList<>();
 
-    // Return an empty list if provided with less than 2 points
-    if (objTrajectory.size() < 2) {
+    // Return an empty list if provided with an empty list
+    if (objTrajectory.isEmpty()) {
       return projection; 
     }
 
-    double sumDist = 0; // Since we are using distance steps the independent variable will be distance
-    double sumTime = 0; // Since we are using distance steps the dependent variable will be time
-    double sumSqrDist = 0;
-    double sumDistxTime = 0;
-
-    // Calculate sums for regression
-    for (RoadwayObstacle n: objTrajectory) {
-      
-      double d = n.getDownTrack();
-      double t = n.getObject().getHeader().getStamp().toSeconds();
-      double d_sqr = d * d;
-      double td = t * d; 
-
-      sumDist += d;
-      sumTime += t;
-      sumSqrDist += d_sqr;
-      sumDistxTime += td; 
-    }
-
-    // Compute intercept and slope
-    double count = objTrajectory.size();
-    double denominator = (count * sumSqrDist - sumDist * sumDist);
-
-    double intercept = (sumTime * sumSqrDist - sumDist * sumDistxTime) / denominator;
-    double slope = (count * sumDistxTime - sumDist * sumTime) / denominator;
-
-    // Generate projection using regression model
+    // Calculate average speed from historical data
+    double averageSpeed = objTrajectory.stream()
+    		                       .mapToDouble(a -> a.getObject().getVelocity().getTwist().getLinear().getX())
+    		                       .average()
+    		                       .getAsDouble();
+    
+    // Generate projection using average speed
     // Set endtime as the last timestamp in the provided history plus the time duration 
     double startDist = objTrajectory.get(objTrajectory.size() - 1).getDownTrack();
     double d = startDist;
-    double t = objTrajectory.get(objTrajectory.size() - 1).getObject().getHeader().getStamp().toSeconds();
-    double endTime = timeDuration + t;
-    double endDistance = (endTime - intercept) / slope;
+    double startTime = objTrajectory.get(objTrajectory.size() - 1).getObject().getHeader().getStamp().toSeconds();
+    double t = startTime;
+    double endTime = timeDuration + startTime;
+    double endDist = startDist + timeDuration * averageSpeed;
 
-    if (slope > 1.0 || Double.isNaN(slope)) { // If the s/m is greater than 1 m/s (2.23694 mph) then assume the vehicle is stopped
+    if (averageSpeed < 1.0) { // If the m/s is smaller than 1 m/s (2.23694 mph) then assume the vehicle is stopped
       // Use small time increments instead of distance steps
       while (t < endTime) {
-
-        t += 0.1;
+    	t += 0.1;
         projection.add(new RoutePointStamped(d, 0, t)); // Assume that the vehicle is stationary
       }
     } else { // Vehicle is in motion so use distance steps
-      while (d < endDistance) {
-
-        d += distanceStep;
-        projection.add(new RoutePointStamped(d, 0, d * slope + intercept));
+      double timeStep = distanceStep / averageSpeed;
+      while (d < endDist) {
+        d += distanceStep;        
+        t += timeStep;
+        projection.add(new RoutePointStamped(d, 0, t));
       }
     }
 
