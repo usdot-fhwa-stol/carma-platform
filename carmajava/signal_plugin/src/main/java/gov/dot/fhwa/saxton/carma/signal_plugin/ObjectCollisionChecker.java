@@ -124,8 +124,8 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
 
 	if(!routeService.isRouteDataAvailable()) {
 		return;
-	}
-	
+  }
+  	
     // Iterate over detected objects and keep only those in front of us in the same lane. 
     final int currentLane = routeService.getCurrentRouteSegment().determinePrimaryLane(routeService.getCurrentCrosstrackDistance());
     int inLaneObjectCount = 0;
@@ -140,7 +140,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
       // Add it to the set of tracked object histories
       // TODO this currently does not handle if the lane index changes between the host and detected object
       if (inLane && frontObjectDistToCenters > -0.0) {
-        
+        obs.getObject().setId(0); // TODO allow for multiple object ids when sensor fusion is tuned better
         inLaneObjectCount++;
         if (!trackedLaneObjectsHistory.containsKey(obs.getObject().getId())) {
           // Sort object history as time sorted priority queue
@@ -175,9 +175,9 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
       }
 
       List<RoutePointStamped> predictions = motionPredictor.predictMotion(e.getKey().toString(), new ArrayList<>(e.getValue()), distanceStep, timeDuration);
-      log.info("CollisionChecker", "Found " + predictions.size() + " stamped route points for the NCV prediction:");
+      //log.info("CollisionChecker", "Found " + predictions.size() + " stamped route points for the NCV prediction:");
       for(RoutePointStamped pp : predictions) {
-    	  log.info("CollisionChecker", pp.toString());
+    	  //log.info("CollisionChecker", pp.toString());
       }
       trackedLaneObjectsPredictions.put(e.getKey(), predictions);
     }
