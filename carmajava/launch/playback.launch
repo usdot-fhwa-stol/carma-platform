@@ -22,7 +22,7 @@
 <launch>
 
   <!-- Path to Unified Robot Description Format URDF file -->
-  <arg name="URDF_FILE" default="$(find carma)/launch/urdf/saxton_cav_green_srx.urdf" doc="Path to the vehicle's URDF file"/>
+  <arg name="URDF_FILE" default="$(find carma)/launch/urdf/saxton_cav.urdf" doc="Path to the vehicle's URDF file"/>
 
   <!-- Needed Params -->
   <arg name="vehicle_id" doc="The bag file to be used to run this test"/>
