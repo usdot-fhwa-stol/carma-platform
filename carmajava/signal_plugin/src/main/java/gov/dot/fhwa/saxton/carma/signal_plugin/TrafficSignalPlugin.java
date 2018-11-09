@@ -601,9 +601,6 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             velFilter.addRawDataPoint(msg.getTwist().getLinear().getX());
         });
 
-        obstacleSub.registerOnMessageCallback((msg) -> {
-            collisionChecker.updateObjects(msg.getRoadwayObstacles());
-        });
         defaultSpeedLimit = appConfig.getMaximumSpeed(0.0);
         ead = new EadAStar(collisionChecker);
         try {
@@ -621,12 +618,15 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     public void loop() throws InterruptedException {
         long tsStart = System.currentTimeMillis();
 
+        // Update radar detection
+        collisionChecker.updateObjects(obstacleSub.getLastMessage().getRoadwayObstacles());
+        
         // Update vehicle position with most recent transform
         updateCurrentLocation();
         
         // Update state variables for stopping case
         evaluateStatesForStopping();
-
+        
         long tsEnd = System.currentTimeMillis();
         long sleepDuration = Math.max(LOOP_PERIOD - (tsEnd - tsStart), 0);
         Thread.sleep(sleepDuration);
