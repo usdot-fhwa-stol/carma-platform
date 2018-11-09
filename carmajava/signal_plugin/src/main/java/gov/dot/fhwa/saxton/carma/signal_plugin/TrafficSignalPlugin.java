@@ -112,8 +112,11 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private ISubscriber<RoadwayEnvironment> obstacleSub;
     private IPublisher<TrafficSignalInfoList> trafficSignalInfoPub;
     private IPublisher<UIInstructions> uiInstructionsPub;
-    private AtomicBoolean awaitingUserInput = new AtomicBoolean(false);
-    private AtomicBoolean awaitingUserConfirmation = new AtomicBoolean(false);
+
+    private AtomicBoolean awaitingUserInput = new AtomicBoolean(false); //Used to track if the user has provided an input on UI popup.
+    private AtomicBoolean awaitingUserConfirmation = new AtomicBoolean(false); //Used to track when
+    private AtomicBoolean userRequestedToWait = new AtomicBoolean(false); //Used to track when driver said NOT to continue on UI popup.
+    private final long WAIT_INTERVAL = 5000;
     private AtomicLong prevUIRequestTime = new AtomicLong();
     private final long UI_REQUEST_INTERVAL = 100;
     private final String GO_BUTTON_SRVS = "/traffic_signal_plugin/go_button";
@@ -147,6 +150,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private double defaultAccel;
     private GlidepathAppConfig appConfig;
 
+
     public TrafficSignalPlugin(PluginServiceLocator psl) {
         super(psl);
         version.setName("Traffic Signal Plugin");
@@ -177,7 +181,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         IManeuverInputs platformInputs = pluginServiceLocator.getManeuverPlanner().getManeuverInputs();
         pluginManeuverInputs = new TrafficSignalManeuverInputs(platformInputs, appConfig.getDoubleValue("ead.response.lag"), appConfig.getDoubleValue("defaultAccel"));
         pluginManeuverPlanner = new ManeuverPlanner(pluginServiceLocator.getManeuverPlanner().getGuidanceCommands(), pluginManeuverInputs);
-        
+
         acceptableStopDistance = appConfig.getDoubleDefaultValue("ead.acceptableStopDistance", 6.0);
 
         twiceAcceptableStopDistance = 2.0 * acceptableStopDistance;
@@ -192,40 +196,80 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
         velocitySub = pluginServiceLocator.getPubSubService().getSubscriberForTopic("velocity", TwistStamped._TYPE);
         obstacleSub = pluginServiceLocator.getPubSubService().getSubscriberForTopic("roadway_environment", RoadwayEnvironment._TYPE);
-        
+
         uiInstructionsPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("ui_instructions", UIInstructions._TYPE);
 
         trafficSignalInfoPub = pluginServiceLocator.getPubSubService().getPublisherForTopic("traffic_signal_info", TrafficSignalInfoList._TYPE);
 
-        pubSubService.createServiceServerForTopic(GO_BUTTON_SRVS, SetBool._TYPE, 
+        //This is the service that is sent to the UI to use for acknowledgement response.
+        //NOTE: awaitingUserConfirmation is not being evaluated here, only awaitingUserInput
+        pubSubService.createServiceServerForTopic(GO_BUTTON_SRVS, SetBool._TYPE,
             (SetBoolRequest request, SetBoolResponse response) -> {
-                //if (!awaitingUserInput.compareAndSet(true, false)) {
+
+                log.info("GO_BUTTON_SRVS 1: awaitingUserConfirmation: " + awaitingUserConfirmation + "; awaitingUserInput: " + awaitingUserInput);
+
+                // If plugin awaitingUserInput is False, then don't do anything and fail the service call.
                 if (!awaitingUserInput.get()) {
+
                     log.warn("Ignoring unexpected go button service request");
-                    response.setMessage(this.getVersionInfo().componentName() + " did not expect UI input and is ignoring the input.");
-                    response.setSuccess(false);
-                    return; // If we are not expecting user acknowledgement then don't continue
-                }
-                if (request.getData()) { // If user acknowledged it is safe to continue
-                    log.info("User confirmed: All Clear");
-                    if (checkCurrentPhase(SignalPhase.GREEN)) { // If we are still in the green phase
-                        // Notify the arbitrator we need to replan to continue through the intersection
-                        log.info("Continuing at new green light");
-                        triggerNewPlan(true);
-                    } else {
-                        log.info("Light not green despite user confirmation");
-                        response.setMessage("The light is no longer green. Waiting till next green light.");
-                        response.setSuccess(false);
-                        awaitingUserInput.set(false);
-                        return;
-                    }
-                } else { // User indicated it is not safe to continue
-                    log.info("User said it is not safe to continue");
-                    prevUIRequestTime.set(System.currentTimeMillis()); // TODO should this be ROS time
-                    awaitingUserInput.set(false);
+                    log.info("GO_BUTTON_SRVS 2: awaitingUserConfirmation: " + awaitingUserConfirmation + "; awaitingUserInput:" + awaitingUserInput);
+
+                    response.setMessage(this.getVersionInfo().componentName() + " did not expect user input therefore ignoring the request.");
+                    response.setSuccess(false); //Set to fail to notify caller it wasn't expected.
+                    return;
                 }
 
-                response.setSuccess(true); // If we reach this point the service request has been handled
+                // If user acknowledged YES that it is safe to continue.
+                if (request.getData()) {
+
+                    log.info("User confirmed all clear.");
+                    log.info("GO_BUTTON_SRVS 3: awaitingUserConfirmation: " + awaitingUserConfirmation + "; awaitingUserInput:" + awaitingUserInput);
+
+                    if (checkCurrentPhase(SignalPhase.GREEN)) { // If still in the GREEN phase
+
+                        //Set false to acknowledge receipt
+                        awaitingUserInput.set(false);
+                        awaitingUserConfirmation.set(false);
+
+                        // Notify the arbitrator we need to replan to continue through the intersection
+                        log.info("Current Phase is GREEN after user confirmed. Continuing through intersection and trigger new plan.");
+                        log.info("GO_BUTTON_SRVS 4: awaitingUserConfirmation: " + awaitingUserConfirmation + "; awaitingUserInput:" + awaitingUserInput);
+
+                        // Update vehicle position with most recent transform
+                        updateCurrentLocation(); //INSTEAD OF directly calling triggerNewPlan(true);
+
+                        response.setSuccess(true);
+                        return;
+
+                    } else {//Else no longer green.
+
+                        log.info("Current Phase is NO LONGER GREEN after user confirmed");
+                        log.info("GO_BUTTON_SRVS 5: awaitingUserConfirmation: " + awaitingUserConfirmation + "; awaitingUserInput:" + awaitingUserInput);
+
+                        response.setMessage("No longer green. Please wait to respond until the next green light."); //TODO: TEST
+                        response.setSuccess(true);  //Need to set to false in order to leave the popup open instead of success which the popup disappears.
+
+                        //Set true since popup remains open.
+                        awaitingUserInput.set(true);
+                        awaitingUserConfirmation.set(true);
+
+                        return;
+                    }
+
+                } else { // Else user indicated it is not safe to continue
+
+                    log.info("User said it is not safe to continue");
+                    response.setMessage("You said NOT continue, waiting for 5 seconds...");
+                    response.setSuccess(true); // If we reach this point the service request has been handled
+
+                    // Update the time since user did respond at this time, instead of expiring sooner.
+                    //TODO: should this be ROS time
+                    prevUIRequestTime.set(System.currentTimeMillis());
+
+                    awaitingUserInput.set(false);
+                    awaitingUserConfirmation.set(true); // user said no
+                    userRequestedToWait.set(true); // application flag used in the loop() to call sleep.
+                }
             }
         );
 
@@ -241,7 +285,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
     /**
      * Add node offset to Lane object
-     * 
+     *
      * @param lane Lane to add the offset to
      * @param x X value of the offset in meters
      * @param y Y value of the offset in meters
@@ -330,7 +374,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                     for (j2735_msgs.Connection connectsTo : lane.getConnectToList()) {
                         if (connectsTo.getSignalGroupExists()) {
                             if (connectsTo.getSignalGroup() == movementData.getSignalGroup()) {
-                                    
+
                                 // TODO Bad assumption: We are assuming that if there is any connection with the same signal group we can assume there is a straight path
                                     // TODO we still need to have this check but the data is not available in the current map messages
                                     // && connectsTo.getConnectingLane().getManeuverExists()
@@ -351,10 +395,10 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                     (MovementEvent m1, MovementEvent m2) -> {
                         if (!m1.getTimingExists())
                             return 1; // Put events without timing at the end
-                        if (!m2.getTimingExists()) 
+                        if (!m2.getTimingExists())
                             return -1; // Put events without timing at the end
                         return (int) (m1.getTiming().getMinEndTime() - m2.getTiming().getMinEndTime()); // Use the non-optional minEndTiming to sort events
-                    }); 
+                    });
 
                     sortedEvents.addAll(movementData.getMovementEventList()); // Sort the movement events by minEndTime
 
@@ -368,7 +412,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         m.setMinTimeRemaining(Math.max(0.0, earliestEvent.getTiming().getMinEndTime() - secondInHour));
                     }
                 //TODO move this statment log.warn("Empty movement event list in spat for intersection id: " + state.getId().getId());
-                
+
                 int phase = sortedEvents.peek().getEventState().getMovementPhaseState();
                 switch(phase) {
                     case j2735_msgs.MovementPhaseState.PERMISSIVE_MOVEMENT_ALLOWED: // Green light
@@ -395,7 +439,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
     /**
      * Helper function to trigger a new plan from arbitrator to accommodate for Glidepath planning
-     * 
+     *
      * @param availability The availability to set when calling this replan
      */
     private void triggerNewPlan(boolean availability) {
@@ -436,7 +480,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                      * case, but I'm not sure it's an issue as we're unlikely to experience very
                      * large numbers of movements in a single intersection. But in the event
                      * performance is an issue this might be a likely culprit to investigate.
-                     * 
+                     *
                      * -KR
                      */
 
@@ -446,7 +490,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         log.warn("Intersection could not be processed because it has no state. Id: " + old.getIntersectionId());
                         continue;
                     }
-                    
+
                     if (currentIntId != null && currentIntId != datum.getIntersectionId()) {
                         log.debug("Ignoring phase check for future intersection: " + datum.getIntersectionId());
                         continue;
@@ -457,7 +501,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                                 // If we find a shared movement, check the movement events for sameness
 
                                 // ASSUMPTION: Phase states within a movement will always be reported in the same order
-                                // There is no ID for an individual movement event within a movement, so I can only 
+                                // There is no ID for an individual movement event within a movement, so I can only
                                 // compare different messages based on positional similarity.
                                 for (int i = 0; i < oldMov.getMovementEventList().size(); i++) {
                                     if (i >= newMov.getMovementEventList().size()
@@ -466,7 +510,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                                                     .getEventState().getMovementPhaseState() && newMov.getMovementEventList().get(i)
                                                     .getEventState().getMovementPhaseState() != MovementPhaseState.PROTECTED_CLEARANCE)) { // Do not replan on transition to yellow
                                         // Phase change detected, a replan will be needed
-                                        phaseChanged = true; 
+                                        phaseChanged = true;
                                         break phaseChangeCheckLoop; // Break outer for loop labeled phaseChangeCheckLoop
                                     }
 
@@ -491,8 +535,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             double MIN_REPLANNING_DTSB = Math.max(twiceAcceptableStopDistance, 1.0 + maxStoppingDistance);
 
             if (!stoppedAtLight() && (phaseChanged || newIntersection || deletedIntersection) && onMap && dtsb > MIN_REPLANNING_DTSB) {
-                log.info("Requesting new plan with causes - PhaseChanged: " + phaseChanged 
-                    + " NewIntersection: " + newIntersection 
+                log.info("Requesting new plan with causes - PhaseChanged: " + phaseChanged
+                    + " NewIntersection: " + newIntersection
                     + " deletedIntersection: " + deletedIntersection
                     + " onMap: " + onMap);
                 triggerNewPlan(true);
@@ -502,12 +546,12 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
     /**
      * Compute the DTSB value if we're on a known MAP message
-     * 
+     *
      * @return Integer.MAX_VALUE if DTSB check fails for any reason
      */
     private double computeDtsb() {
         if (curPos.get() == null) { // NULL will only be present at startup and will never be assigned making this check thread safe.
-            return MAX_DTSB; 
+            return MAX_DTSB;
         }
         if (glidepathTrajectory == null) {
             return MAX_DTSB;
@@ -544,7 +588,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
     /**
      * Helper function builds a TrafficSignalInfo message from IntersectionData
-     * 
+     *
      * @param intersection The intersection to convert to a message
      * @return The fully defined message
      */
@@ -556,13 +600,13 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         signalMsg.setRemainingTime((short)intersection.timeToNextPhase);
 
         log.debug("UI Intersection: " + intersection.intersectionId + " dtsb: " + intersection.dtsb);
-        
+
         if (intersection.currentPhase == null) {
             return signalMsg;
         }
 
         switch(intersection.currentPhase) {
-            case GREEN: 
+            case GREEN:
                 signalMsg.setState(TrafficSignalInfo.GREEN);
                 break;
             case YELLOW:
@@ -583,7 +627,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     }
     /**
      * Check to see if we're on a MAP message
-     * 
+     *
      * @return true, if we're on a MAP message, false O.W.
      */
     private boolean checkIntersectionMaps() {
@@ -595,7 +639,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     @Override
     public void onResume() {
         log.info("TrafficSignalPlugin trying to resume.");
-        
+
         velocitySub.registerOnMessageCallback((msg) -> {
             curVel.set(msg);
             velFilter.addRawDataPoint(msg.getTwist().getLinear().getX());
@@ -623,7 +667,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
         // Update vehicle position with most recent transform
         updateCurrentLocation();
-        
+
         // Update state variables for stopping case
         evaluateStatesForStopping();
 
@@ -634,33 +678,82 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
     /**
      * Helper function to evaluate state variables for the stopping condition
+     *
      */
     private void evaluateStatesForStopping() {
-        // We were stopped at a red light and now the light is green or will be in a few seconds
+
         boolean stoppedForLight = stoppedAtLight();
         boolean phaseIsGreen = checkCurrentPhase(SignalPhase.GREEN);
         boolean phaseIsGreenSoon = phaseIsGreen || checkCurrentPhaseAndRemainingTime(SignalPhase.RED, popupOnRedTime);
-        if (stoppedForLight && phaseIsGreenSoon) {
-            // If we have not requested acknowledgement from the user do it now
-            if (awaitingUserConfirmation.compareAndSet(false, true)) {
-                // Update state variables
-                prevUIRequestTime.set(System.currentTimeMillis());
-                awaitingUserInput.set(true);
-                // Send user input request to get confirmation to continue
-                askUserIfIntersectionIsClear();
-                log.info("Requesting user confirmation");
 
-            } else if (System.currentTimeMillis() - UI_REQUEST_INTERVAL > prevUIRequestTime.get() // Already awaiting confirmation and enough time has elapsed
-                && awaitingUserInput.compareAndSet(false, true)) { // AND we are not currently waiting for user input
-                // Then we want to request input from the user again
-                askUserIfIntersectionIsClear();
-                log.info("Re-Requesting user confirmation");
+        log.info("evaluateStatesForStopping 0a: stoppedForLight: " + stoppedForLight  + "; phaseIsGreenSoon: " + phaseIsGreenSoon + "; phaseIsGreen: " + phaseIsGreen);
+        log.info("evaluateStatesForStopping 0b: awaitingUserConfirmation: " + awaitingUserConfirmation + "; awaitingUserInput:" + awaitingUserInput + "; userRequestedToWait: " + userRequestedToWait);
+
+        //The userRequestedToWait is created to track the GO_BUTTON_SRV response, since the thread here needs to stop.
+        if (userRequestedToWait.compareAndSet(true, false)){
+            try {
+                log.info("evaluateStatesForStopping: BEFORE sleep");
+                Thread.sleep(WAIT_INTERVAL);
+                log.info("evaluateStatesForStopping: AFTER sleep");
+            } catch(InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.info("evaluateStatesForStopping: Failed TO SLEEP");
+                //do not throw exception
             }
-        } else if (!stoppedForLight && awaitingUserConfirmation.compareAndSet(true, false)) {
+        }
+
+        // If stopped & light is green/green soon, & have NOT requested user input/confirmation
+        if (stoppedForLight
+          && phaseIsGreenSoon
+          && awaitingUserConfirmation.compareAndSet(false, true)
+          && awaitingUserInput.compareAndSet(false, true))
+        {
+            // Send user input request to get confirmation to continue
+            askUserIfIntersectionIsClear();
+
+            log.info("evaluateStatesForStopping 1: New Request: awaitingUserConfirmation: " + awaitingUserConfirmation + "; awaitingUserInput:" + awaitingUserInput);
+        }
+        // If stopped & light is green/green soon, & still waiting for YES confirmation but NOT user input, & enough time has elapsed
+        else if (stoppedForLight
+          && phaseIsGreenSoon
+          && awaitingUserConfirmation.get()
+          && awaitingUserInput.compareAndSet(false, true)
+          && System.currentTimeMillis() - UI_REQUEST_INTERVAL > prevUIRequestTime.get())
+        {
+                // Then we want to resend the request input from the user
+                askUserIfIntersectionIsClear();
+
+                log.info("evaluateStatesForStopping 2: Re-Requesting: awaitingUserConfirmation: " + awaitingUserConfirmation + "; awaitingUserInput:" + awaitingUserInput);
+        }
+        else if ( awaitingUserConfirmation.get()
+                  && awaitingUserInput.get())
+        { // NO ACTION needed since the popup should still be showing.
+          // && stoppedForLight: true
+          // && (
+          // phaseIsGreen: false; phaseIsGreenSoon: false ||
+          // phaseIsGreen: false; phaseIsGreenSoon: true ||
+          // phaseIsGreen: true; phaseIsGreenSoon: true ||
+          // )
+
+           log.info("evaluateStatesForStopping 3: AWAITING BOTH: awaitingUserConfirmation: " + awaitingUserConfirmation + "; awaitingUserInput:" + awaitingUserInput);
+
+        }
+        else //Logging scenario when NOT waiting for user input or confirmation, and it's green.
+        {
+            //    !awaitingUserConfirmation.get()
+            // && !awaitingUserInput.get()
+            // && !stoppedForLight
+            // && (
+            // phaseIsGreen: false; phaseIsGreenSoon: false ||
+            // phaseIsGreen: false; phaseIsGreenSoon: true ||
+            // phaseIsGreen: true; phaseIsGreenSoon: true ||
+            // )
+
             // We are no longer waiting at the intersection
-            log.info("Resuming operation after stop");
+            log.info("evaluateStatesForStopping 4: NO ACTION: awaitingUserConfirmation: " + awaitingUserConfirmation + "; awaitingUserInput:" + awaitingUserInput);
         }
     }
+
     /**
      * Helper function which gets the current lat/lon position of the vehicle's front bumper
      */
@@ -690,6 +783,10 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      * Helper function which sends a acknowledgement request to the UI which will request input from the user
      */
     private void askUserIfIntersectionIsClear() {
+
+		// Update this variable everytime a request is made.
+		prevUIRequestTime.set(System.currentTimeMillis());
+
         UIInstructions uiMsg = uiInstructionsPub.newMessage();
         uiMsg.setType(UIInstructions.ACK_REQUIRED);
         uiMsg.setMsg("Is it safe to continue through intersection?");
@@ -700,7 +797,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
     /**
      * Helper function returns true if the vehicle is currently stopped at a light based on an plan from this plugin
-     * 
+     * NOTE: Only checks for speed. DOES NOT check whether the phase is RED. DOES NOT check IF vehicle is in fact at the stop bar.
+     *
      * @return True if the current maneuver is a steady speed stop maneuver planned by this plugin
      */
     private boolean stoppedAtLight() {
@@ -708,17 +806,17 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         if (currentLongitudinalManeuver == null) {
             return false; // Can't be stopped at a light if we are not under automated control or in a complex maneuver which we would not have planned
         }
-        
-        return currentLongitudinalManeuver.getPlanner().equals(this) 
+
+        return currentLongitudinalManeuver.getPlanner().equals(this)
             && currentLongitudinalManeuver instanceof SteadySpeed
             && Math.abs(currentLongitudinalManeuver.getTargetSpeed()) < ZERO_SPEED_NOISE;
     }
 
     /**
      * Helper function returns true if the current phase of the nearest intersection is equal to the requested phase
-     * 
+     *
      * @param phase The phase to check against
-     * 
+     *
      * @return True if nearest intersection phase is equal to current phase
      */
     private boolean checkCurrentPhase(SignalPhase phase) {
@@ -729,23 +827,23 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     /**
      * Helper function returns true if the current phase of the nearest intersection is equal to the requested phase
      * and there is less than or equal time remaining to the specified maxTimeRemaining
-     * 
+     *
      * @param phase The phase to check against
      * @param maxTimeRemaining The max time allowed to be remaining in this phase for the function to return true
-     * 
+     *
      * @return True if nearest intersection phase is equal to current phase and has less than or equal time remaining to maxTimeRemaining
      */
     private boolean checkCurrentPhaseAndRemainingTime(SignalPhase phase, double maxTimeRemaining) {
         List<gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData> sortedIntersections = glidepathTrajectory.getSortedIntersections();
-        return !sortedIntersections.isEmpty() 
+        return !sortedIntersections.isEmpty()
             && sortedIntersections.get(0).currentPhase == phase
             && sortedIntersections.get(0).timeToNextPhase <= maxTimeRemaining;
     }
 
     @Override
     public void onSuspend() {
-    	velocitySub.close();
-    	obstacleSub.close();
+        velocitySub.close();
+        obstacleSub.close();
         log.info("SignalPlugin has been suspended.");
     }
 
@@ -761,12 +859,12 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData converted = new gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData();
                 converted.map = convertMapMessage(datum);
                 converted.intersectionId = converted.map.getIntersectionId();
-                
+
                 if (datum.getIntersectionState() != null) {
                     converted.spat = convertSpatMessage(datum);
                     //log.debug("Converted map message with no spat");
                 }
-            
+
                 out.add(converted);
             }
         }
@@ -781,6 +879,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         // If we are stopped at a light we must stay stopped until user confirmation.
         boolean stoppedForLight = stoppedAtLight();
         boolean phaseIsGreen = checkCurrentPhase(SignalPhase.GREEN);
+
         if (stoppedForLight && !phaseIsGreen && awaitingUserConfirmation.get()) {
             // CHECK PLANNING PRIORITY
             if (!traj.getLongitudinalManeuvers().isEmpty()) {
@@ -794,7 +893,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             steadySpeed.setSpeeds(0.0, 0.0);
             pluginManeuverPlanner.planManeuver(steadySpeed,
                     traj.getStartLocation(), traj.getEndLocation());
-            
+
             traj.addManeuver(steadySpeed);
 
             return new TrajectoryPlanningResponse();
@@ -864,7 +963,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
          * Optimization has been decided against due to complexities in trajectory behavior.
          * Will be re-explored if performance issues arise as a result of the way a trajectory
          * is constructed out of many small maneuvers
-         * 
+         *
          * - KR
          */
 
@@ -897,7 +996,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         .abs(prev.getSpeedAsDouble() - cur.getSpeedAsDouble()) < speedCommandQuantizationFactor) {
                     SteadySpeed steadySpeed = new SteadySpeed(this);
                     steadySpeed.setMaxAccel(pluginManeuverInputs.getMaxAccelLimit() * 2.0); // TODO determine if having twice the max accel is really ok
-                    
+
                     if (cur.getSpeedAsDouble() > speedCommandQuantizationFactor) {
                         steadySpeed.setSpeeds(cur.getSpeedAsDouble(), cur.getSpeedAsDouble());
                         pluginManeuverPlanner.planManeuver(steadySpeed,
@@ -908,7 +1007,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         steadySpeed.setSpeeds(0.0, 0.0);
                         pluginManeuverPlanner.planManeuver(steadySpeed,
                                 startDist + prev.getDistanceAsDouble(), traj.getEndLocation());
-                        
+
                         traj.addManeuver(steadySpeed);
                         break;
                     }
@@ -926,7 +1025,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                     pluginManeuverPlanner.planManeuver(slowDown,
                             startDist + prev.getDistanceAsDouble(), startDist + cur.getDistanceAsDouble());
                     traj.addManeuver(slowDown);
-                } 
+                }
 
                 prev = cur;
             }

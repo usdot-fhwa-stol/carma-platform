@@ -195,7 +195,8 @@ CarmaJS.WidgetFramework.TrafficSignal = (function () {
                 //null from calling procedure means to turn off the signal or gray it out.
                 if (item == null)
                 {
-                    console.log ('showEachTrafficSignal() item is null');
+                    //Commenting out since called out too much when signal is no longer used or grayed out. Will use only for testing.
+                    //console.log ('showEachTrafficSignal() item is null');
 
                     //Clear info
                     svgLayerForSignal.getElementById('svgIntxHeaderText').innerHTML = 'INTERSECTION XXXX';
