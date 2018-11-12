@@ -3,8 +3,6 @@
 # if they change
 
 .cache
-circle.yml
-README.md
 
 **/*.class
 *.bak
