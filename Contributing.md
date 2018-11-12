@@ -82,16 +82,16 @@ In order to make the development process efficient, please comply with the branc
 
 ### feature
 * These branches are created from develop; **each feature branch is used to implement a single task.** After completing the task, the feature branch must be merged into develop.
-* To avoid ambiguity, we use a specific naming convention for feature branches − they always begin with feature/ followed by a description based on the functionality implemented by the feature. For example, **'feature/sign-up-with-email-and-password'.**
+* To avoid ambiguity, we use a specific naming convention for feature branches − they always begin with feature/ followed by a description based on the functionality implemented by the feature. For example, **feature/sign-up-with-email-and-password.**
 * Thanks to this naming, team members can easily tell what code each branch contains.
 
 ### release
 * This branch is created every iteration (i.e. sprint) from develop, and when the team rolls out a release it’s deployed to the staging server for testing. A stable release is merged first into the master branch and then into develop.
-* The naming convention for this branch starts with release/ followed by its version. For example, **'release/v1.0.1'.**
+* The naming convention for this branch starts with release/ followed by its version. For example, **release/v1.0.1.**
 
 ### hotfix
 * This branch is created for handling emergency situations – it allows developers to quickly fix something in production. This branch uses master as the parent branch and merges into both master and develop.
-* The name of this branch starts with hotfix/ followed by its version. For example, **'hotfix/v0.1.1'.**
+* The name of this branch starts with hotfix/ followed by its version. For example, **hotfix/v0.1.1.**
 
 ## The End
 Hope this guide helps you get started in contributing to the CARMAPlatform project! 
