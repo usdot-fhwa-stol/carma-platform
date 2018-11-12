@@ -16,8 +16,10 @@ There are a few guidelines that we need contributors to follow so that we can ha
 
 ### Reporting Issues
 
-* Make sure you have a [GitHub account](https://github.com/signup/free)
-* Submit a [CARMAPlatform issue](https://github.com/usdot-fhwa-stol/CARMAPlatform/issues/new)
+* Make sure you have a [GitHub account](https://github.com/signup/free).
+* Ensure the issue was not already reported by searching on GitHub under [Issues](https://github.com/usdot-fhwa-stol/CARMAPlatform/issues)
+* If you're unable to find an open issue addressing the problem, open a new one.
+* Submit a [CARMAPlatform issue](https://github.com/usdot-fhwa-stol/CARMAPlatform/issues/new).
   * Clearly describing the issue
     * Provide a descriptive summary
     * Explain the expected behavior
@@ -26,12 +28,47 @@ There are a few guidelines that we need contributors to follow so that we can ha
 
 ### Making Changes
 
+#### Fork the Repository
+**Make a fork of our develop branch.** 
+
+* Firstly you need a local fork of the project, so go ahead and press the “Fork” button in GitHub. 
+* This will create a copy of the repository in your own GitHub account and you’ll see a note that it’s been forked underneath the project name:
+* With the repository forked, you’re ready to clone it so that you have a local working copy of the code base.
+ 
+#### Clone the Repository
+**Then clone a local copy of this forked branch.**
+* You can alternatively copy the URL by using the green “Clone or download” button from your repository page that you just forked from the original repository page. 
+* Once you click the button, you’ll be able to copy the URL by clicking the binder button next to the URL:
+
+#### Create a New Branch
+**The number one rule is to put each piece of work on its own branch.**
+
+#### Make Changes Locally
+**Do the work, write good commit messages.**
 
 ### Submitting Changes
+* A Pull Request is the way to notify the project maintainers that you have some work that they should review and add to the project. 
+* You’re requesting that they pull your changes in. Read the article ["Using Pull Requests"](https://help.github.com/articles/using-pull-requests) on GitHub.
+* To create one, go to your fork of the project, click on the Pull Requests tab, and click the big green “New Pull Request” button.
 
-[Detailed Walkthrough of One Pull Request per Commit](http://ndlib.github.io/practices/one-commit-per-pull-request/)
+### Merging Changes
 
-* Read the article ["Using Pull Requests"](https://help.github.com/articles/using-pull-requests) on GitHub.
+## Branching Model
+In order to make the development process efficient, please comply with the branching model described below. On this model, we mainly use five branches - master, develop, feature, release, and hotfix.
+
+### master
+This is the latest stable version of CARMAPlatform.
+
+### develop
+This branch should be kept stable at all times. This is important because new branches are created off of this branch.
+
+### feature
+
+### release
+
+### hotfix
+
+
 
 
 
