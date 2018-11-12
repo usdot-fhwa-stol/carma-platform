@@ -405,12 +405,12 @@ function sendModalResponse(operatorResponse, serviceName) {
             document.getElementById('audioAlert4').pause();
 
             if (result.message != '')
-                modalFooterMessage.innerHTML = 'Success: ' + result.message;
+                modalFooterMessage.innerHTML = result.message;
         }
         else
         {
             if (result.message != '')
-                modalFooterMessage.innerHTML = 'Failed: ' + result.message;
+                modalFooterMessage.innerHTML = result.message;
         }
     }, function(error) {
 

@@ -182,13 +182,13 @@ CarmaJS.WidgetFramework.TrafficSignal = (function () {
 
                 if (svgLayerForSignal == null)
                 {
-                    console.log ('showEachTrafficSignal() svgLayerForSignal is null');
+                    //console.log ('showEachTrafficSignal() svgLayerForSignal is null');
                     return;
                 }
 
                 if (svgLayerForSignal.getElementById('svgCircleTopText') == null)
                 {
-                    console.log ('showEachTrafficSignal() svgCircleTopText is null');
+                    //console.log ('showEachTrafficSignal() svgCircleTopText is null');
                     return;
                 }
 
@@ -304,10 +304,10 @@ CarmaJS.WidgetFramework.TrafficSignal = (function () {
         ***/
         $.widget("CarmaJS.trafficSignalIntersection", {
            _create: function() {
-                var myDiv = $("<object id='tsp_speed' type='image/svg+xml' data='" + installfoldername + "tsp_speed.svg' style='width: 325px; height: 500px;'></object>"
-                          + "<object id='tsp_intx1' type='image/svg+xml' data='" + installfoldername + "tsp_signal_intx.svg' style='width: 325px; height: 500px;'></object>"
-                          + "<object id='tsp_intx2' type='image/svg+xml' data='" + installfoldername + "tsp_signal_intx.svg' style='width: 325px; height: 500px;'></object>"
-                          + "<object id='tsp_intx3' type='image/svg+xml' data='" + installfoldername + "tsp_signal_intx.svg' style='width: 325px; height: 500px;'></object>");
+                var myDiv = $("<object id='tsp_speed' type='image/svg+xml' data='" + installfoldername + "tsp_speed.svg' style='width: 270px; height: 490px;'></object>"
+                          + "<object id='tsp_intx1' type='image/svg+xml' data='" + installfoldername + "tsp_signal_intx.svg' style='width: 270px; height: 490px;'></object>"
+                          + "<object id='tsp_intx2' type='image/svg+xml' data='" + installfoldername + "tsp_signal_intx.svg' style='width: 270px; height: 490px;'></object>"
+                          + "<object id='tsp_intx3' type='image/svg+xml' data='" + installfoldername + "tsp_signal_intx.svg' style='width: 270px; height: 490px;'></object>");
 
                 $(this.element).append(myDiv);
 

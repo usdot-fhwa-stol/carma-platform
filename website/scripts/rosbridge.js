@@ -1360,7 +1360,6 @@ function showUIInstructions() {
             if (message.type == UIInstructionsType.ACK_REQUIRED.value)
             {
                 //Show popup to user for acknowledgement and send the response over to the specific plugin.
-                console.log('UIInstructions received.');//TODO: FOR TESTING ONLY
                 showModalAck(msg, message.response_service);
             }
         }
