@@ -125,7 +125,7 @@ public class IntersectionProcessingTest {
 
     
     double dtsb = intManager.updateIntersections(Arrays.asList(eadIntData), vehicleLoc);
-    assertEquals(15.68, dtsb, 0.0001);
+    assertEquals(15.7, dtsb, 0.0001);
   }
 
   private SPAT buildNewSpat() {

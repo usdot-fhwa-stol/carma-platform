@@ -154,10 +154,7 @@ public class ObjectCollisionCheckerTest {
     assertEquals(1, occ.trackedLaneObjectsHistory.size()); // Object id is being tracked
     assertEquals(1, occ.trackedLaneObjectsPredictions.size()); // Object id is being tracked
     assertEquals(1, occ.trackedLaneObjectsHistory.get(0).size()); // 1 history element 
-    assertEquals(0, occ.trackedLaneObjectsPredictions.get(0).size()); // 0 predictions
-
-    // Check that the collision is not found since there is no prediction
-    assertFalse(occ.hasCollision(Arrays.asList(n1,n2), 0, 0));
+    assertEquals(7, occ.trackedLaneObjectsPredictions.get(0).size()); // 7 predicted points
 
     currentTime.set(610L); // The current time is 0.61
 
@@ -198,92 +195,6 @@ public class ObjectCollisionCheckerTest {
     occ.updateObjects(Arrays.asList(ro2)); // Call to trigger replan
     
     verify(as, times(1)).requestNewPlan(); // Verify replan did not occur
-
-  }
-
-   /**
-   * Tests basic ncv collision detection in the ObjectCollisionChecker
-   * @throws Exception
-   */
-  @Test
-  public void testUpdateObjectsTiming() throws Exception {
-
-    IMotionInterpolator planInterpolator = new PlanInterpolator();
-    IMotionPredictorModelFactory motionPredictorFactory = new DefaultMotionPredictorFactory(mock(IGlidepathAppConfig.class));
-
-    PluginServiceLocator        psl = mock(PluginServiceLocator.class);
-    ParameterSource             ps = mock(ParameterSource.class);
-    RouteService                rs = mock(RouteService.class);
-    ITimeProvider               tp = mock(ITimeProvider.class);
-    IMobilityTimeProvider mobilityTimeProvider = mock(IMobilityTimeProvider.class);
-    ArbitratorService           as = mock(ArbitratorService.class);
-    Route                       route = mock(Route.class);
-    RouteSegment mockSegment = mock(RouteSegment.class);
-    List<RouteSegment> routeSegments = new ArrayList<>(Collections.nCopies(200, mockSegment)); // Create route full of the mocked segment
-    when(route.getSegments()).thenReturn(routeSegments);
-    when(mockSegment.determinePrimaryLane(anyDouble())).thenReturn(0);
-
-    // Create conflict manager using default guidance settings
-
-    ConflictManager cm = new ConflictManager(new double[] {10.0, 6.0, 0.2}, 5.0, 1.2, 0.1,
-      0.0, -0.25, 0.0, mobilityTimeProvider);
-
-    cm.setRoute(route);
-
-    when(psl.getParameterSource()).thenReturn(ps);
-    when(psl.getRouteService()).thenReturn(rs);
-    when(psl.getTimeProvider()).thenReturn(tp);
-    when(psl.getConflictDetector()).thenReturn(cm);
-    when(psl.getArbitratorService()).thenReturn(as);
-
-    when(ps.getString("~ead/NCVHandling/objectMotionPredictorModel")).thenReturn("SIMPLE_LINEAR_REGRESSION");
-    when(ps.getInteger("~ead/NCVHandling/collision/maxObjectHistoricalDataAge")).thenReturn(3000);
-    when(ps.getDouble("~ead/NCVHandling/collision/distanceStep")).thenReturn(2.5);
-    when(ps.getDouble("~ead/NCVHandling/collision/timeDuration")).thenReturn(3.0);
-    when(ps.getDouble("~ead/NCVHandling/collision/downtrackBuffer")).thenReturn(3.0);
-    when(ps.getDouble("~ead/NCVHandling/collision/crosstrackBuffer")).thenReturn(2.0);
-    when(ps.getDouble("~ead/NCVHandling/collision/timeMargin")).thenReturn(0.2);
-    when(ps.getDouble("~ead/NCVHandling/collision/longitudinalBias")).thenReturn(0.0);
-    when(ps.getDouble("~ead/NCVHandling/collision/lateralBias")).thenReturn(0.0);
-    when(ps.getDouble("~ead/NCVHandling/collision/temporalBias")).thenReturn(0.0);
-    when(ps.getDouble("vehicle_length")).thenReturn(4.8768);
-    when(ps.getDouble("vehicle_width")).thenReturn(2.1336);
-
-    ObjectCollisionChecker occ = new ObjectCollisionChecker(psl, motionPredictorFactory, planInterpolator);
-
-    // Check no collisions without object data
-    // Note: Nodes in this test are defined using double constructor
-    Node n1 = new Node(0.0, 0.0, 5.0);
-    Node n2 = new Node(5.0, 1.0, 5.0);
-    assertFalse(occ.hasCollision(Arrays.asList(n1,n2), 0, 0));
-
-    // Return the current lane id as 0 with crosstrack 0.0
-    when(rs.getCurrentCrosstrackDistance()).thenReturn(0.0);
-    when(rs.getCurrentRouteSegment()).thenReturn(mockSegment);
-    double currentDowntrack = 0.0;
-    when(rs.getCurrentDowntrackDistance()).thenReturn(currentDowntrack);
-    when(rs.isRouteDataAvailable()).thenReturn(true);
-
-    final AtomicLong currentTime = new AtomicLong(0L); // The current time is 0.51
-    when(tp.getCurrentTimeMillis()).thenAnswer(i -> currentTime.get());
-    when(mobilityTimeProvider.getCurrentTimeMillis()).thenAnswer(i -> currentTime.get());
-
-    for(int i=0; i<15;i++) {
-      Thread.sleep(1000);
-    }
-    final long PERIOD = 50;
-    long startTime = System.currentTimeMillis();
-    currentTime.set(startTime);
-    while (currentTime.get() - startTime < 30000) {
-      RoadwayObstacle ro = newRoadwayObstacle(0, 2.5, (double)currentTime.get() * 1000.0, 5.0); // Object id 0 with stamp at 0.5
-      ro.setPrimaryLane((byte)0);
-      occ.updateObjects(Arrays.asList(ro));
-      System.out.println("Time: " + tp.getCurrentTimeMillis() + " predictions: " + occ.trackedLaneObjectsPredictions.size());
-      Thread.sleep(Math.max(0,PERIOD - (System.currentTimeMillis() - currentTime.get())));
-      currentTime.set(System.currentTimeMillis());
-    }
-
-    System.out.println("Took: " + (System.currentTimeMillis() - startTime));
 
   }
 
