@@ -44,6 +44,9 @@
   <!-- Directory containing additional carma launch files such as the drivers.launch file -->
   <arg name="LAUNCH_DIR" default="$(arg CARMA_DIR)/launch" doc="Directory containing additional carma launch files such as driver.launch"/>
   
+  <env name="ROSCONSOLE_CONFIG_FILE"
+      value="$(arg PARAM_DIR)/roscpp_log.config"/>
+      
   <!-- Simulation Usage -->
   <arg name="mock_can"            	default="true" doc="True if using a simulated can driver"/>
   <arg name="mock_dsrc"           	default="true" doc="True if using a simulated dsrc driver"/>

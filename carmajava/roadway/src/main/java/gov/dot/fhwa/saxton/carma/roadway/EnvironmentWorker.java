@@ -183,7 +183,8 @@ public class EnvironmentWorker {
     double crosstrackDistance = objPosition.getY(); //bestSegment.crossTrackDistance(objPosition);
     
     // Convert velocities
-    Vector3 velocityLinear = objInSegment.apply(Vector3.fromVector3Message(obj.getVelocity().getTwist().getLinear()));
+    Transform odomInSegment = bestSegment.getECEFToSegmentTransform().invert().multiply(earthToOdom);
+    Vector3 velocityLinear = odomInSegment.getRotationAndScale().rotateAndScaleVector(Vector3.fromVector3Message(obj.getVelocity().getTwist().getLinear()));
 
     // Calculate obj lanes
     int primaryLane = bestSegment.determinePrimaryLane(crosstrackDistance);
