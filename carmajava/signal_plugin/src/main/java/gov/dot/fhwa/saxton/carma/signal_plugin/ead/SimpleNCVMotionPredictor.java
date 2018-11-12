@@ -27,6 +27,9 @@ import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointSta
  * The returned list of RoutePointStamped objects can be used to check conflicts with the CARMA conflict detection system
  */
 public class SimpleNCVMotionPredictor implements IMotionPredictor {
+	
+  protected static double FLOATING_POINT_EPSILON = 0.000001; 
+  protected static double RADAR_DETECTION_NOISE  = 1.0;
 
    @Override
   public List<RoutePointStamped> predictMotion(String objId, List<RoadwayObstacle> objTrajectory, double distanceStep, double timeDuration) {
@@ -43,7 +46,7 @@ public class SimpleNCVMotionPredictor implements IMotionPredictor {
     		                       .mapToDouble(a -> a.getObject().getVelocity().getTwist().getLinear().getX())
     		                       .average()
     		                       .getAsDouble();
-    
+
     // Generate projection using average speed
     // Set endtime as the last timestamp in the provided history plus the time duration 
     double startDist = objTrajectory.get(objTrajectory.size() - 1).getDownTrack();
@@ -53,15 +56,17 @@ public class SimpleNCVMotionPredictor implements IMotionPredictor {
     double endTime = timeDuration + startTime;
     double endDist = startDist + timeDuration * averageSpeed;
 
-    if (averageSpeed < 1.0) { // If the m/s is smaller than 1 m/s (2.23694 mph) then assume the vehicle is stopped
+    // Add the initial point
+    projection.add(new RoutePointStamped(d, 0, t));
+    if (averageSpeed < RADAR_DETECTION_NOISE) { // If the m/s is smaller than 1 m/s (2.23694 mph) then assume the vehicle is stopped
       // Use small time increments instead of distance steps
-      while (t < endTime) {
+      while (t + FLOATING_POINT_EPSILON < endTime) {
     	t += 0.1;
         projection.add(new RoutePointStamped(d, 0, t)); // Assume that the vehicle is stationary
       }
     } else { // Vehicle is in motion so use distance steps
       double timeStep = distanceStep / averageSpeed;
-      while (d < endDist) {
+      while (d + FLOATING_POINT_EPSILON < endDist) {
         d += distanceStep;        
         t += timeStep;
         projection.add(new RoutePointStamped(d, 0, t));
