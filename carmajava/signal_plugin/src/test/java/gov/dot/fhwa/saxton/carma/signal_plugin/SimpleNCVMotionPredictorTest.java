@@ -74,7 +74,7 @@ public class SimpleNCVMotionPredictorTest {
     assertTrue(routePointAlmostEqual(new RoutePointStamped(10.8, 0.0, 1.8), points.get(4), 0.0001));
     assertTrue(routePointAlmostEqual(new RoutePointStamped(11.0, 0.0, 2.0), points.get(5), 0.0001));
     
-    // 2 Node list with 0 acceleration
+    // 2 Node list with steady acceleration
     n1 = newRoadwayObstacle(14.0, 0.0, 0.8);
     RoadwayObstacle n2 = newRoadwayObstacle(15.0, 1.0, 1.2);
     points = motionPredictor.predictMotion("1", Arrays.asList(n1,n2), 1.0, 5.0);
