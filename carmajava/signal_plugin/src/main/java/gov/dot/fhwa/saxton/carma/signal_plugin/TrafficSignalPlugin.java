@@ -247,7 +247,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         log.info("GO_BUTTON_SRVS 5: awaitingUserConfirmation: " + awaitingUserConfirmation + "; awaitingUserInput:" + awaitingUserInput);
 
                         response.setMessage("No longer green. Please wait to respond until the next green light."); //TODO: TEST
-                        response.setSuccess(true);  //Need to set to false in order to leave the popup open instead of success which the popup disappears.
+                        response.setSuccess(false);  //Need to set to false in order to leave the popup open instead of success which the popup disappears.
 
                         //Set true since popup remains open.
                         awaitingUserInput.set(true);
@@ -259,7 +259,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 } else { // Else user indicated it is not safe to continue
 
                     log.info("User said it is not safe to continue");
-                    response.setMessage("You said NOT continue, waiting for 5 seconds...");
+                    response.setMessage("If not safe to continue, please wait for " + (WAIT_INTERVAL/1000) + " seconds...");
                     response.setSuccess(true); // If we reach this point the service request has been handled
 
                     // Update the time since user did respond at this time, instead of expiring sooner.

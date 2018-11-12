@@ -419,7 +419,7 @@ function sendModalResponse(operatorResponse, serviceName) {
           var modalFooterMessage = document.getElementById('divFooterMessage'); //Added specifically for returned messages.
           modalFooterMessage.innerHTML = ''; //Clear every time.
 
-          modalFooterMessage.innerHTML = 'Error with service call:' + operatorResponse + ': ' error;
+          modalFooterMessage.innerHTML = 'Error with service call:' + operatorResponse + ': ' + error;
 
     });
 
