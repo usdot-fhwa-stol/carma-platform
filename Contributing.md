@@ -45,12 +45,12 @@ Welcome to the CARMAPlatform contributing guide. There are a few guidelines that
 * Create a branch specific to the issue being addressed. Read the article ["Creating and deleting branches"](https://help.github.com/articles/creating-and-deleting-branches-within-your-repository/) on GitHub. 
 * For enhancements, name the branch according to the feature e.g. **`feature/123-auto-activate`.**
 * For un-reported bug fixes, add a **`fix-`** prefix e.g. **`fix/321-admin-notices`.**
-* For code that addresses an existing Issue, add the Issue number as a prefix e.g. **`feature/123-auto-activate`** or **`fix/321-admin-notices`.**
+* For code that addresses an existing issue, add the Issue number as a prefix e.g. **`feature/123-auto-activate`** or **`fix/321-admin-notices`.**
 
 #### Make Changes Locally
 **Do the work, write good commit messages.**
 * Open up the project in your favorite text editor, select the file you want to contribute to, and make your changes.
-* Commit your changes using a descriptive commit message that begins with the **`issue number being addressed`**
+* Commit your changes using a descriptive commit message that begins with the **`issue number being addressed`**.
 * When you have finished making your changes, you'll need to push up your changes to a topic branch in your fork of the repository.  Read the article ["Committing and reviewing changes to your project"](https://help.github.com/desktop/guides/contributing-to-projects/committing-and-reviewing-changes-to-your-project/) on GitHub. 
 * With them all committed, push them, this pushes everything in that branch up. 
 
@@ -87,12 +87,13 @@ In order to make the development process efficient, please comply with the branc
 * Thanks to this naming, team members can easily tell what code each branch contains.
 
 ### release
-* This branch is created every iteration (i.e. sprint) from develop, and when the team rolls out a release it’s deployed to the staging server for testing. A stable release is merged first into the master branch and then into develop.
-* The naming convention for this branch starts with release/ followed by its version. For example, **release/v1.0.1.**
+* A release branch is created whenever a set of functionality is ready for production release. It is normally created from develop and is used to keep the contents stable for final acceptance testing while other development activities may continue on other branches. 
+* Once the release is accepted, it will be merged into the master branch and versioned, then merged into develop.
+* The naming convention for this branch starts with release/ followed by its version. For example:  **`release/v1.0.1.`**.
 
 ### hotfix
 * This branch is created for handling emergency situations – it allows developers to quickly fix something in production. This branch uses master as the parent branch and merges into both master and develop.
-* The name of this branch starts with hotfix/ followed by its version. For example, **hotfix/v0.1.1.**
+* The name of this branch starts with hotfix/ followed by its version. For example: **`hotfix/v0.1.1.`** 
 
 ## The End
 Hope this guide helps you get started in contributing to the CARMAPlatform project! 
