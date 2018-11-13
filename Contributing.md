@@ -79,7 +79,7 @@ In order to make the development process efficient, please comply with the branc
 * This branch should be kept stable at all times
 
 ### develop
-* When the features/fixes are finished then are merged into develop, where you bring them together for testing, before the final push onto master.
+* When the features/fixes are finished they are merged into develop, where we bring them together for testing, before the final push onto master.
 
 ### feature/fix
 * These branches are created from develop; **each feature/fix branch is used to implement a single task.** After completing the task, the feature/fix branch must be merged into develop.
