@@ -55,9 +55,10 @@ Welcome to the CARMAPlatform contributing guide. There are a few guidelines that
 * With them all committed, push them, this pushes everything in that branch up. 
 
 ### Submitting Changes
+**Let you tell others about changes you've pushed to a GitHub branch.**
 * A Pull Request is the way to notify the project maintainers that you have some work that they should review and add to the project. 
 * You’re requesting that they pull your changes in. Read the article ["Using Pull Requests"](https://help.github.com/articles/using-pull-requests) on GitHub.
-* Then you can go back to your forked branch and issue a pull request to the original repository and choose the correct original branch (should be **`develop`**).
+* Then you can go back to your forked branch and issue a pull request to the repository and choose the correct original branch (should be **`develop`**).
 * To create one, go to your fork of the project, click on the Pull Requests tab, and click the big green “New Pull Request” button.
 
 ### Merging Changes
