@@ -301,7 +301,7 @@ public class EADAStarPlanTest {
         when(mockConfig.getDoubleDefaultValue("ead.fine_speed_inc", 1.0)).thenReturn(1.0);
         when(mockConfig.getDoubleDefaultValue("ead.acceptableStopDistance", 6.0)).thenReturn(10.0);
         long startTime = System.currentTimeMillis();
-        ((MockCollisionChecker) mockCC).setPredictedTrajectory(new Node(57, 35, 8), new Node(97, 40, 8));
+        ((MockCollisionChecker) mockCC).setPredictedTrajectory(new Node(20, 2, 1), new Node(26, 8, 1)); // used to be new Node(57, 35, 4), new Node(97, 40, 4)
         EadAStar ead = new EadAStar(mockCC);
         ead.initialize(1, new AStarSolver());
         IntersectionData intersection1 = new IntersectionData(); // Id 9709
