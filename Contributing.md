@@ -83,7 +83,7 @@ In order to make the development process efficient, please comply with the branc
 
 ### feature/fix
 * These branches are created from develop; **each feature/fix branch is used to implement a single task.** After completing the task, the feature/fix branch must be merged into develop.
-* To avoid ambiguity, we use a specific naming convention for feature/fix branches − they always begin with feature/fix followed by the  issue number being addressed and a description based on the functionality implemented by the feature. For example: **`feature/123-sign-up-with-email-and-password`** or **`fix/321-admin-notices`.**
+* To avoid ambiguity, we use a specific naming convention for feature/fix branches − they always begin with feature/fix followed by the  issue number being addressed and a description based on the functionality implemented by the feature/fix. For example: **`feature/123-sign-up-with-email-and-password`** or **`fix/321-admin-notices`.**
 * Thanks to this naming, team members can easily tell what code each branch contains.
 
 ### release
