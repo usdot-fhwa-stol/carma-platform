@@ -112,10 +112,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private ISubscriber<RoadwayEnvironment> obstacleSub;
     private IPublisher<TrafficSignalInfoList> trafficSignalInfoPub;
     private IPublisher<UIInstructions> uiInstructionsPub;
-    private AtomicBoolean awaitingUserInput = new AtomicBoolean(false);
     private AtomicBoolean awaitingUserConfirmation = new AtomicBoolean(false);
-    private AtomicLong prevUIRequestTime = new AtomicLong();
-    private static final long UI_REQUEST_INTERVAL = 100;
     private static final String GO_BUTTON_SRVS = "/traffic_signal_plugin/go_button";
     private static final double ZERO_SPEED_NOISE = 0.04;	//speed threshold below which we consider the vehicle stopped, m/s
     private MessageFactory messageFactory = NodeConfiguration.newPrivate().getTopicMessageFactory();
@@ -199,33 +196,33 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
         pubSubService.createServiceServerForTopic(GO_BUTTON_SRVS, SetBool._TYPE, 
             (SetBoolRequest request, SetBoolResponse response) -> {
-                //if (!awaitingUserInput.compareAndSet(true, false)) {
-                if (!awaitingUserInput.get()) {
-                    log.warn("Ignoring unexpected go button service request");
-                    response.setMessage(this.getVersionInfo().componentName() + " did not expect UI input and is ignoring the input.");
-                    response.setSuccess(false);
-                    return; // If we are not expecting user acknowledgement then don't continue
-                }
+
+                //NOTE: awaitingUserConfirmation does not get set in this service response
+                //      Instead, awaitingUserConfirmation will be set from true to false during evaluateAtStopping() when stoppedAtLight=false.
                 if (request.getData()) { // If user acknowledged it is safe to continue
+
                     log.info("User confirmed: All Clear");
+
                     if (checkCurrentPhase(SignalPhase.GREEN)) { // If we are still in the green phase
                         // Notify the arbitrator we need to replan to continue through the intersection
                         log.info("Continuing at new green light");
                         triggerNewPlan(true);
+                        response.setSuccess(true);
+                        return;
                     } else {
                         log.info("Light not green despite user confirmation");
-                        response.setMessage("The light is no longer green. Waiting till next green light.");
+                        response.setMessage("Sorry, the light is no longer green. When it's safe to continue, please press the YES button.");
                         response.setSuccess(false);
-                        awaitingUserInput.set(false);
                         return;
                     }
+
                 } else { // User indicated it is not safe to continue
                     log.info("User said it is not safe to continue");
-                    prevUIRequestTime.set(System.currentTimeMillis()); // TODO should this be ROS time
-                    awaitingUserInput.set(false);
+                    response.setMessage("When it's safe to continue, please press the YES button.");
+                    response.setSuccess(false);
+                    return;
                 }
 
-                response.setSuccess(true); // If we reach this point the service request has been handled
             }
         );
 
@@ -636,30 +633,32 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      * Helper function to evaluate state variables for the stopping condition
      */
     private void evaluateStatesForStopping() {
+
         // We were stopped at a red light and now the light is green or will be in a few seconds
-        boolean stoppedForLight = stoppedAtLight();
+        boolean stoppedForLight = stoppedAtLight(); //Only set when inside planTrajectory method.
         boolean phaseIsGreen = checkCurrentPhase(SignalPhase.GREEN);
         boolean phaseIsGreenSoon = phaseIsGreen || checkCurrentPhaseAndRemainingTime(SignalPhase.RED, popupOnRedTime);
+
         if (stoppedForLight && phaseIsGreenSoon) {
+
             // If we have not requested acknowledgement from the user do it now
             if (awaitingUserConfirmation.compareAndSet(false, true)) {
-                // Update state variables
-                prevUIRequestTime.set(System.currentTimeMillis());
-                awaitingUserInput.set(true);
                 // Send user input request to get confirmation to continue
                 askUserIfIntersectionIsClear();
                 log.info("Requesting user confirmation");
-
-            } else if (System.currentTimeMillis() - UI_REQUEST_INTERVAL > prevUIRequestTime.get() // Already awaiting confirmation and enough time has elapsed
-                && awaitingUserInput.compareAndSet(false, true)) { // AND we are not currently waiting for user input
-                // Then we want to request input from the user again
-                askUserIfIntersectionIsClear();
-                log.info("Re-Requesting user confirmation");
             }
-        } else if (!stoppedForLight && awaitingUserConfirmation.compareAndSet(true, false)) {
+            else{
+                log.info("Already waiting for confirmation.");
+            }
+
+        } else if (!stoppedForLight && awaitingUserConfirmation.compareAndSet(true,false)){
             // We are no longer waiting at the intersection
+            // NOTE: stoppedForLight is only re-evaluated in planTrajectory(), so it will it will only be set from true to false at that time.
+            // When stoppedForLight is no longer true (meaning vehicle is on the move again) AND awaitingUserConfirmation is true at the time,
+            // then set awaitingUserConfirmation back to false and resume operation.
             log.info("Resuming operation after stop");
         }
+
     }
     /**
      * Helper function which gets the current lat/lon position of the vehicle's front bumper
