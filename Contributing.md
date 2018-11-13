@@ -41,6 +41,7 @@ Welcome to the CARMAPlatform contributing guide. There are a few guidelines that
 
 #### Create a New Branch
 **The number one rule is to put each piece of work on its own branch.**
+* Check out the branch you want to make modifications to (normally this is the **`develop branch`**).
 * Create a branch specific to the issue you are working on. Read the article ["Creating and deleting branches"](https://help.github.com/articles/creating-and-deleting-branches-within-your-repository/) on GitHub. 
 * For enhancements, name the branch according to the feature e.g. **`feature/auto-activate`.**
 * For un-reported bug fixes, add a **`fix-`** prefix e.g. **`fix-admin-notices`.**
