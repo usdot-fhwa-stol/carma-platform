@@ -50,7 +50,7 @@ Welcome to the CARMAPlatform contributing guide. There are a few guidelines that
 #### Make Changes Locally
 **Do the work, write good commit messages.**
 * Open up the project in your favorite text editor, select the file you want to contribute to, and make your changes.
-* Commit your changes using a descriptive commit message.
+* Commit your changes using a descriptive commit message **`that begins with the Issue number being addressed`**
 * When you have finished making your changes, you'll need to push up your changes to a topic branch in your fork of the repository.  Read the article ["Committing and reviewing changes to your project"](https://help.github.com/desktop/guides/contributing-to-projects/committing-and-reviewing-changes-to-your-project/) on GitHub. 
 * With them all committed, push them, this pushes everything in that branch up. 
 
