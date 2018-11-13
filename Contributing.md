@@ -44,7 +44,7 @@ Welcome to the CARMAPlatform contributing guide. There are a few guidelines that
 * Check out the branch you want to make modifications to (normally this is the **`develop branch`**).
 * Create a branch specific to the issue being addressed. Read the article ["Creating and deleting branches"](https://help.github.com/articles/creating-and-deleting-branches-within-your-repository/) on GitHub. 
 * For enhancements, name the branch according to the feature e.g. **`feature/123-auto-activate`.**
-* For un-reported bug fixes, add a **`fix-`** prefix e.g. **`fix/321-admin-notices`.**
+* For bug fixes, add a **`fix-`** prefix e.g. **`fix/321-admin-notices`.**
 * For code that addresses an existing issue, add the Issue number as a prefix e.g. **`feature/123-auto-activate`** or **`fix/321-admin-notices`.**
 
 #### Make Changes Locally
