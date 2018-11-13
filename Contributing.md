@@ -43,14 +43,14 @@ Welcome to the CARMAPlatform contributing guide. There are a few guidelines that
 **The number one rule is to put each piece of work on its own branch.**
 * Check out the branch you want to make modifications to (normally this is the **`develop branch`**).
 * Create a branch specific to the issue being addressed. Read the article ["Creating and deleting branches"](https://help.github.com/articles/creating-and-deleting-branches-within-your-repository/) on GitHub. 
-* For enhancements, name the branch according to the feature e.g. **`feature/auto-activate`.**
-* For un-reported bug fixes, add a **`fix-`** prefix e.g. **`fix-admin-notices`.**
+* For enhancements, name the branch according to the feature e.g. **`feature/123-auto-activate`.**
+* For un-reported bug fixes, add a **`fix-`** prefix e.g. **`fix/321-admin-notices`.**
 * For code that addresses an existing Issue, add the Issue number as a prefix e.g. **`feature/123-auto-activate`** or **`fix/321-admin-notices`.**
 
 #### Make Changes Locally
 **Do the work, write good commit messages.**
 * Open up the project in your favorite text editor, select the file you want to contribute to, and make your changes.
-* Commit your changes using a descriptive commit message that begins with the **`Issue number being addressed`**
+* Commit your changes using a descriptive commit message that begins with the **`issue number being addressed`**
 * When you have finished making your changes, you'll need to push up your changes to a topic branch in your fork of the repository.  Read the article ["Committing and reviewing changes to your project"](https://help.github.com/desktop/guides/contributing-to-projects/committing-and-reviewing-changes-to-your-project/) on GitHub. 
 * With them all committed, push them, this pushes everything in that branch up. 
 
@@ -83,7 +83,7 @@ In order to make the development process efficient, please comply with the branc
 
 ### feature/fix
 * These branches are created from develop; **each feature/fix branch is used to implement a single task.** After completing the task, the feature/fix branch must be merged into develop.
-* To avoid ambiguity, we use a specific naming convention for feature/fix branches − they always begin with feature/fix followed by a description based on the functionality implemented by the feature. For example: **`feature/123-sign-up-with-email-and-password`** or **`fix/321-admin-notices`.**
+* To avoid ambiguity, we use a specific naming convention for feature/fix branches − they always begin with feature/fix followed by the  issue number being addressed and a description based on the functionality implemented by the feature. For example: **`feature/123-sign-up-with-email-and-password`** or **`fix/321-admin-notices`.**
 * Thanks to this naming, team members can easily tell what code each branch contains.
 
 ### release
