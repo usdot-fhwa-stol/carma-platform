@@ -3,7 +3,7 @@
 The Cooperative Automation Research Mobility Applications (CARMA) software platform is designed to be open source to enable collaboration with industry, academia, infrastructure owner operators (IOOs), and other public agencies on cooperative automation applications. Developed on a Robot Operating System (ROS), a flexible framework for writing software, CARMA has an innovative approach to collaboration for automated vehicle development.
 
 # Code of Conduct 
-Help us keep CARMAPlatform open and inclusive. Please read and follow our Code of Conduct.[CARMA Code of Conduct](Code_of_Conduct.md) 
+Help us keep CARMAPlatform open and inclusive. Please read and follow our Code of Conduct. [CARMA Code of Conduct](Code_of_Conduct.md) 
 
 # How to Contribute 
 
