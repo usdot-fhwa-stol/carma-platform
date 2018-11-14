@@ -932,7 +932,6 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         }
 
         log.info("Planning complete");
-        setAvailability(false);
         return new TrajectoryPlanningResponse();
     }
 
