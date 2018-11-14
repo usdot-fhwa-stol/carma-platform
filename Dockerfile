@@ -34,8 +34,10 @@
 #           any extra packages
 # /////////////////////////////////////////////////////////////////////////////
 FROM ros:kinetic-ros-base AS source-code
-RUN apt-get update
-RUN apt-get install -y git ssh
+RUN apt-get update && \
+        apt-get install -y \
+        git \
+        ssh
 
 ARG SSH_PRIVATE_KEY
 ARG EXTRA_PACKAGES
@@ -44,16 +46,15 @@ ARG EXTRA_PACKAGES_VERSION=master
 ENV EXTRA_PACKAGES_VERSION ${EXTRA_PACKAGES_VERSION}
 
 # Set up the SSH key for usage by git
-RUN mkdir /root/.ssh/
-RUN echo "${SSH_PRIVATE_KEY}" > /root/.ssh/id_rsa
-RUN chmod 600 /root/.ssh/id_rsa
-RUN touch /root/.ssh/known_hosts
-RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
+RUN mkdir /root/.ssh/ && \
+        echo "${SSH_PRIVATE_KEY}" > /root/.ssh/id_rsa && \
+        chmod 600 /root/.ssh/id_rsa && \
+        touch /root/.ssh/known_hosts && \
+        ssh-keyscan github.com >> /root/.ssh/known_hosts
 
 # Acquire the software source
 COPY . /root/src/CARMAPlatform/
 RUN /root/src/CARMAPlatform/docker/checkout.sh
-
 
 # /////////////////////////////////////////////////////////////////////////////
 # Stage 2 - Build and install the software 
@@ -61,9 +62,11 @@ RUN /root/src/CARMAPlatform/docker/checkout.sh
 FROM ros:kinetic-ros-base AS install
 
 # Install necessary packages
-RUN apt-get update
-RUN apt-get install -y ros-kinetic-rosjava ros-kinetic-rosbridge-server
-RUN rosdep update
+RUN apt-get update && \
+        apt-get install -y \
+        ros-kinetic-rosjava \
+        ros-kinetic-rosbridge-server \
+       rosdep update
 
 # Copy the source files from the previous stage and build/install
 COPY --from=source-code /root/src /root/carma_ws/src
@@ -87,14 +90,21 @@ RUN useradd -m $USERNAME && \
         groupmod --gid 1000 $USERNAME
 
 # Install necessary packages
-RUN apt-get update
-RUN apt-get install -y sudo ros-kinetic-rosjava ros-kinetic-rosbridge-server ros-kinetic-robot tmux apache2 php7.0 libapache2-mod-php7.0 vim nano less
+RUN apt-get update && \
+        apt-get install -y \
+        sudo \
+        ros-kinetic-rosjava \
+        ros-kinetic-rosbridge-server \
+        ros-kinetic-robot \
+        tmux \
+        vim \
+        nano \
+        less
 
 USER carma
 
 # Migrate the files from the install stage
 COPY --from=install --chown=carma /opt/carma /opt/carma
-COPY --from=install --chown=www-data /var/www/html/. /var/www/html
 COPY --from=install --chown=carma /root/.bashrc /home/carma/.bashrc
 
-CMD [ "/opt/carma/entrypoint.sh" ]
+ENTRYPOINT [ "/opt/carma/entrypoint.sh" ]
