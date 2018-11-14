@@ -5,6 +5,7 @@
 .cache
 circle.yml
 README.md
+website
 
 **/*.class
 *.bak
