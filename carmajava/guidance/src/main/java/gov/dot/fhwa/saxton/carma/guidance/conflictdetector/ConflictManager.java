@@ -363,6 +363,9 @@ public class ConflictManager implements IConflictManager {
     return getConflicts(hostPath, otherPath, downtrackMargin, crosstrackMargin, timeMargin, longitudinalBias, lateralBias, temporalBias);
   }
 
+  public static long nanoSecBuilding = 0;
+  public static long nanoSecChecking = 0;
+
   // Note the parameters in this function are overriding the class members by the same name
   @Override
   public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath, List<RoutePointStamped> otherPath, 
@@ -371,11 +374,19 @@ public class ConflictManager implements IConflictManager {
     if (hostPath == null || otherPath == null || hostPath.isEmpty() || otherPath.isEmpty()) {
       return new LinkedList<>();
     }
+
+    //System.out.println("Host: " + hostPath.size());
+    //System.out.println("Other: " + otherPath.size());
+
+    long startTime = System.nanoTime();
     // Prepare to store conflicts
     List<ConflictSpace> conflicts = new LinkedList<>();
     // Build Map for other path
     NSpatialHashMap otherPathMap = NSpatialHashMapFactory.buildSpatialHashMap(cellSize);
     insertPoints(otherPath, otherPathMap);
+
+    nanoSecBuilding += (System.nanoTime()- startTime);
+    startTime = System.nanoTime();
 
     // Iterate over all points in the host path
     ConflictSpace currentConflict = null;
@@ -433,6 +444,8 @@ public class ConflictManager implements IConflictManager {
       closeConflict(currentConflict, prevPoint.getDowntrack(), prevPoint.getStamp());
       conflicts.add(currentConflict);
     }
+
+    nanoSecChecking += (System.nanoTime() - startTime);
 
     return conflicts;
   }

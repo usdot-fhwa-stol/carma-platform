@@ -189,22 +189,36 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
     }
 
     // Check for collisions using new object data
-    boolean collisionDetected = checkCollision(interpolatedHostPlan.get());
+    
 
-    if (collisionDetected) { // Any time there is a detected collision force a replan
-      ncvDetectionTime = timeProvider.getCurrentTimeMillis();
-      arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
-
-    } else if (ncvDetectionTime != null && timeProvider.getCurrentTimeMillis() - ncvDetectionTime > NCVReplanPeriod){ // If there was previously a replan to avoid a ncv and enough time has passed replan
-      ncvDetectionTime = timeProvider.getCurrentTimeMillis();
-      arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
-
-    } else if (inLaneObjectCount == 0) { // If no in lane objects were detected the ncv is no longer an issue. The assumption being made here is that sensor fusion has already filtered our incoming object data.
-      
-      ncvDetectionTime = null;
-    } else {
-      // There is no need to take action when the plan is executing well without collisions
+    if (ncvDetectionTime == null) {
+      boolean collisionDetected = checkCollision(interpolatedHostPlan.get());
+      if (collisionDetected) { // Any time there is a detected collision force a replan
+        ncvDetectionTime = timeProvider.getCurrentTimeMillis();
+        arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
+  
+      }
+    } else if (ncvDetectionTime != null && timeProvider.getCurrentTimeMillis() - ncvDetectionTime > NCVReplanPeriod) {
+      boolean collisionDetected = checkCollision(interpolatedHostPlan.get());
+      if (collisionDetected) {
+        ncvDetectionTime = timeProvider.getCurrentTimeMillis();
+        arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
+      }
     }
+    // if (collisionDetected) { // Any time there is a detected collision force a replan
+    //   ncvDetectionTime = timeProvider.getCurrentTimeMillis();
+    //   arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
+
+    // } else if (ncvDetectionTime != null && timeProvider.getCurrentTimeMillis() - ncvDetectionTime > NCVReplanPeriod){ // If there was previously a replan to avoid a ncv and enough time has passed replan
+    //   ncvDetectionTime = timeProvider.getCurrentTimeMillis();
+    //   arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
+
+    // } else if (inLaneObjectCount == 0) { // If no in lane objects were detected the ncv is no longer an issue. The assumption being made here is that sensor fusion has already filtered our incoming object data.
+      
+    //  // ncvDetectionTime = null;
+    // } else {
+    //   // There is no need to take action when the plan is executing well without collisions
+    // }
   }
 
   /**
