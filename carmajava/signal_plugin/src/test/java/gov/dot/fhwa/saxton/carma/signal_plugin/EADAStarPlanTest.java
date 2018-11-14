@@ -341,8 +341,9 @@ public class EADAStarPlanTest {
     @Test
     public void planSingleIntersectionWithComplexNCV() {
 
+        int samples = 25;
         long totalTime = 0;
-        for (int i =0; i < 50; i++) {
+        for (int i =0; i < samples; i++) {
 
             // FAILED: DTSB1: 50.0 DTSB2: 130.0 Phase1: RED Phase2: RED timeToNext1: 11.0 timeToNext2: 10.0
             when(mockConfig.getDoubleDefaultValue("ead.coarse_time_inc", 5.0)).thenReturn(2.0);
@@ -472,7 +473,7 @@ public class EADAStarPlanTest {
                 assertTrue(false); // indicate the failure
             }
         }
-        System.out.println("AverageTime: " + (totalTime / 50));
+        System.out.println("AverageTime: " + (totalTime / samples));
     }
 
   /** 
