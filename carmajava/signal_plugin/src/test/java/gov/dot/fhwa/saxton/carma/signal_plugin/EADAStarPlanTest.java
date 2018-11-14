@@ -296,14 +296,13 @@ public class EADAStarPlanTest {
     
     @Test
     public void planTwoIntersectionsWithNCV() {
-        // FAILED: DTSB1: 50.0 DTSB2: 130.0 Phase1: RED Phase2: RED timeToNext1: 11.0 timeToNext2: 10.0
         when(mockConfig.getDoubleDefaultValue("ead.coarse_time_inc", 5.0)).thenReturn(2.0);
         when(mockConfig.getDoubleDefaultValue("ead.coarse_speed_inc", 3.0)).thenReturn(2.0);
         when(mockConfig.getDoubleDefaultValue("ead.fine_time_inc", 2.0)).thenReturn(2.0);
         when(mockConfig.getDoubleDefaultValue("ead.fine_speed_inc", 1.0)).thenReturn(1.0);
         when(mockConfig.getDoubleDefaultValue("ead.acceptableStopDistance", 6.0)).thenReturn(10.0);
         long startTime = System.currentTimeMillis();
-        ((MockCollisionChecker) mockCC).setPredictedTrajectory(new Node(20, 2, 1), new Node(26, 8, 1)); // used to be new Node(57, 35, 4), new Node(97, 40, 4)
+        ((MockCollisionChecker) mockCC).setPredictedTrajectory(new Node(20, 2, 1), new Node(26, 8, 1));
         EadAStar ead = new EadAStar(mockCC);
         ead.initialize(1, new AStarSolver());
         IntersectionData intersection1 = new IntersectionData(); // Id 9709
