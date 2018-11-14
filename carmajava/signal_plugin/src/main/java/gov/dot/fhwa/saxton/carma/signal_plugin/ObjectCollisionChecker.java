@@ -94,7 +94,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
     this.distanceStep = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/distanceStep");
     this.timeDuration = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/timeDuration");
     this.NCVReplanPeriod = (long) ((timeDuration / 2.0) * MS_PER_S); // Always replan after half of the ncv prediction has elapsed
-
+    log.info("ReplanPeriod: " + NCVReplanPeriod);
     this.downtrackBuffer = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/downtrackBuffer");
     this.crosstrackBuffer = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/crosstrackBuffer");
     
@@ -195,6 +195,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
       boolean collisionDetected = checkCollision(interpolatedHostPlan.get());
       if (collisionDetected) { // Any time there is a detected collision force a replan
         ncvDetectionTime = timeProvider.getCurrentTimeMillis();
+        log.info("OCC", "NEW PLAN: First ncv detection");
         arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
   
       }
@@ -202,6 +203,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
       boolean collisionDetected = checkCollision(interpolatedHostPlan.get());
       if (collisionDetected) {
         ncvDetectionTime = timeProvider.getCurrentTimeMillis();
+        log.info("OCC", "NEW PLAN: timer triggered");
         arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
       }
     }
@@ -290,7 +292,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
 
   @Override
   public boolean hasCollision(List<Node> trajectory, double timeOffset, double distanceOffset) {
-    
+
    // System.out.println("Checking collision with traj: " + trajectory);
    // System.out.println("timeOffest: " + timeOffset + " distanceOffset: " + distanceOffset + " distanceStep: " + distanceStep);
     // Convert the proposed trajectory to route points
