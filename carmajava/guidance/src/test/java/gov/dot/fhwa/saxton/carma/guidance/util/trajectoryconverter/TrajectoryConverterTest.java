@@ -39,6 +39,7 @@ import static org.mockito.Mockito.*;
 import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialstructure.NSpatialHashMapFactory;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictManager;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IMobilityTimeProvider;
@@ -183,7 +184,7 @@ public class TrajectoryConverterTest {
     when(timeProvider.getCurrentTimeMillis()).thenReturn(0L);
     when(timeProvider.getCurrentTimeSeconds()).thenReturn(0.0);
     double[] cellSize = {5.0,2.5,0.15};
-    ConflictManager cm = new ConflictManager(cellSize, 2.5, 1.0, 0.05, 0.0, 0.0, 0.0, timeProvider);
+    ConflictManager cm = new ConflictManager(new NSpatialHashMapFactory(cellSize), 2.5, 1.0, 0.05, 0.0, 0.0, 0.0, timeProvider);
     cm.setRoute(route);
     // Call function
     List<RoutePointStamped> tempPoints = tc.convertToPath(traj, 0, 0, 0, 0, 0, 0);

@@ -16,45 +16,30 @@
 
 package gov.dot.fhwa.saxton.carma.guidance.conflictdetector;
 
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.AxisAlignedBoundingBox;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.CartesianObject;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.Vector3D;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap.NSpatialHashMap;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap.NSpatialHashMapFactory;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap.SimpleHashStrategy;
-import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialstructure.ISpatialStructure;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialstructure.ISpatialStructureFactory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
-import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.TrajectoryConverter;
 import gov.dot.fhwa.saxton.carma.route.Route;
-import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
-import java.util.function.BiConsumer;
-
-import org.jboss.netty.util.internal.ConcurrentHashMap;
-
-import cav_msgs.MobilityPath;
-import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 
 /**
  * Class Maintains a tracked set of external vehicle paths from MobilityPath and
  * MobilityRequests messages The set of paths can be queried for collisions.
  * 
- * Collision detection is done with a {@link NSpatialHashMap} The path sets are
+ * Collision detection is done with an injected {@link ISpatialStructure} The path sets are
  * synchronized making this class Thread-Safe
  * 
  * The times stamps used on paths should all be referenced to the same origin
@@ -62,8 +47,7 @@ import gov.dot.fhwa.saxton.carma.route.RouteSegment;
  * {@link IMobilityTimeProvider}
  */
 public class ConflictManager implements IConflictManager {
-  // The maximum size of a cell in the map
-  private final double[] cellSize;
+  private final ISpatialStructureFactory structureFactory;
   // Dimensions used for collision detection around point
   private final double downtrackMargin;
   private final double crosstrackMargin;
@@ -72,8 +56,8 @@ public class ConflictManager implements IConflictManager {
   private final double longitudinalBias;
   private final double temporalBias;
   // The tracked paths
-  private final Map<String, NSpatialHashMap> mobilityPathSpatialMaps = Collections.synchronizedMap(new HashMap<>());
-  private final Map<String, NSpatialHashMap> requestedPathSpatialMaps = Collections.synchronizedMap(new HashMap<>());
+  private final Map<String, ISpatialStructure> mobilityPathSpatialMaps = Collections.synchronizedMap(new HashMap<>());
+  private final Map<String, ISpatialStructure> requestedPathSpatialMaps = Collections.synchronizedMap(new HashMap<>());
   private final Map<String, String> planIdMap = Collections.synchronizedMap(new HashMap<>());
   // Time provider
   private final IMobilityTimeProvider timeProvider;
@@ -84,7 +68,7 @@ public class ConflictManager implements IConflictManager {
   /**
    * Constructor
    * 
-   * @param cellSize         3 element array of cell sizes for collision lookup
+   * @param structureFactory Factory used to produce spatial structures used for collision checking
    * @param downtrackMargin  The downtrack distance margin within which a point
    *                         will be considered in collision
    * @param crosstrackMargin The crosstrack distance margin within which a point
@@ -100,10 +84,10 @@ public class ConflictManager implements IConflictManager {
    * @param timeProvider     The object responsible to determining the time used
    *                         in mobility messages
    */
-  public ConflictManager(double[] cellSize, double downtrackMargin, double crosstrackMargin, double timeMargin,
+  public ConflictManager(ISpatialStructureFactory structureFactory, double downtrackMargin, double crosstrackMargin, double timeMargin,
       double lateralBias, double longitudinalBias, double temporalBias, IMobilityTimeProvider timeProvider) {
 
-    this.cellSize = cellSize;
+    this.structureFactory = structureFactory;
     this.downtrackMargin = downtrackMargin;
     this.crosstrackMargin = crosstrackMargin;
     this.timeMargin = timeMargin;
@@ -165,33 +149,36 @@ public class ConflictManager implements IConflictManager {
    * 
    * @return True if the path could be added. False if not.
    */
-  private void addPath(List<RoutePointStamped> path, String key, Map<String, NSpatialHashMap> map) {
+  private void addPath(List<RoutePointStamped> path, String key, Map<String, ISpatialStructure> map) {
     log.info("addPath");
     // Get current path for this vehicle
-    NSpatialHashMap vehiclesPath = map.get(key);
+    ISpatialStructure vehiclesPath = map.get(key);
     // If not current path for this vehicle add it
     if (vehiclesPath == null) {
       log.info("Creating new spatial hash map");
-      vehiclesPath = NSpatialHashMapFactory.buildSpatialHashMap(cellSize);
+      vehiclesPath = structureFactory.buildSpatialStructure();
       map.put(key, vehiclesPath);
     }
     log.info("Preparing to insert points");
     // Insert points
     long time0 = System.currentTimeMillis();
-    insertPoints(path, vehiclesPath);
+    insertPoints(path, vehiclesPath, downtrackMargin, crosstrackMargin, timeMargin);
     long time1 = System.currentTimeMillis();
     log.debug("addPath: call to insertPoints took " + (time1 - time0) + " ms.");
   }
 
   /**
-   * Helper function inserts a list of RoutePointStamped into a NSpatialHashMap
+   * Helper function inserts a list of RoutePointStamped into a ISpatialStructure
    * 
    * @param path The points to insert
    * @param map  The map to insert points into
+   * @param downtrackMargin The downtrack margin to use around points
+   * @param crosstrackMargin The crosstrack margin to use around points
+   * @param timeMargin The time margin to use around points
    */
-  private void insertPoints(List<RoutePointStamped> path, NSpatialHashMap map) {
+  private void insertPoints(List<RoutePointStamped> path, ISpatialStructure map, double downtrackMargin, double crosstrackMargin, double timeMargin) {
     // Add points to spatial map
-    log.info("Inserting path with size " + path.size());
+    log.debug("Inserting path with size " + path.size());
     int count = 0;
     for (RoutePointStamped routePoint : path) {
       // log.info("Inserting point " + count + ": " + routePoint.getPoint());
@@ -205,7 +192,7 @@ public class ConflictManager implements IConflictManager {
       // log.info("Inserted point");
       count++;
     }
-    log.info("Done inserting");
+    log.debug("Done inserting");
   }
 
   @Override
@@ -305,16 +292,16 @@ public class ConflictManager implements IConflictManager {
    * @return A list static ids for vehicles which the provided point conflict
    *         with. The list is empty if no conflict exist
    */
-  private List<String> hasCollision(Map<String, NSpatialHashMap> mapContainer, RoutePointStamped routePoint,
+  private List<String> hasCollision(Map<String, ISpatialStructure> mapContainer, RoutePointStamped routePoint,
       double minTime) {
     final int TIME_IDX = 2, MAX_IDX = 1;
     List<String> conflictingVehicles = new LinkedList<>();
     // Directly access iterator for safe removal while iterating
     synchronized (mapContainer) {
-      for (Iterator<Entry<String, NSpatialHashMap>> i = mapContainer.entrySet().iterator(); i.hasNext();) {
-        Entry<String, NSpatialHashMap> entry = i.next();
+      for (Iterator<Entry<String, ISpatialStructure>> i = mapContainer.entrySet().iterator(); i.hasNext();) {
+        Entry<String, ISpatialStructure> entry = i.next();
         String id = entry.getKey();
-        NSpatialHashMap map = entry.getValue();
+        ISpatialStructure map = entry.getValue();
 
         // If the maximum time of the current map is before the minimum time being
         // evaluated
@@ -360,7 +347,7 @@ public class ConflictManager implements IConflictManager {
 
   @Override
   public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath, List<RoutePointStamped> otherPath) {
-    return getConflicts(hostPath, otherPath, downtrackMargin, crosstrackMargin, timeMargin, longitudinalBias, lateralBias, temporalBias);
+    return getConflicts(hostPath, otherPath, structureFactory.buildSpatialStructure(), downtrackMargin, crosstrackMargin, timeMargin, longitudinalBias, lateralBias, temporalBias);
   }
 
   public static long nanoSecBuilding = 0;
@@ -368,7 +355,7 @@ public class ConflictManager implements IConflictManager {
 
   // Note the parameters in this function are overriding the class members by the same name
   @Override
-  public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath, List<RoutePointStamped> otherPath, 
+  public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath, List<RoutePointStamped> otherPath, ISpatialStructure spatialStructure,
     double downtrackMargin, double crosstrackMargin, double timeMargin, double longitudinalBias, double lateralBias, double temporalBias) {
     log.info("Getting conflicts between two paths");
     if (hostPath == null || otherPath == null || hostPath.isEmpty() || otherPath.isEmpty()) {
@@ -382,9 +369,8 @@ public class ConflictManager implements IConflictManager {
     // Prepare to store conflicts
     List<ConflictSpace> conflicts = new LinkedList<>();
     // Build Map for other path
-    NSpatialHashMap otherPathMap = NSpatialHashMapFactory.buildSpatialHashMap(cellSize);
-    insertPoints(otherPath, otherPathMap);
-
+    insertPoints(otherPath, spatialStructure, downtrackMargin, crosstrackMargin, timeMargin);
+    
     nanoSecBuilding += (System.nanoTime()- startTime);
     startTime = System.nanoTime();
 
@@ -413,7 +399,7 @@ public class ConflictManager implements IConflictManager {
       CartesianObject boundingBox = new CartesianObject(pointCloud);
 
       // Update conflicts
-      if (!otherPathMap.getCollisions(boundingBox).isEmpty()) {
+      if (!spatialStructure.getCollisions(boundingBox).isEmpty()) {
         // If no conflict is being tracked this is a new conflict
         if (currentConflict == null) {
           currentConflict = new ConflictSpace(routePoint.getDowntrack(), routePoint.getStamp(), lane,
