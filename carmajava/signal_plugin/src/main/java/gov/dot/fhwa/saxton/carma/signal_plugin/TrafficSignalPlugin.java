@@ -113,10 +113,10 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private IPublisher<TrafficSignalInfoList> trafficSignalInfoPub;
     private IPublisher<UIInstructions> uiInstructionsPub;
     private AtomicBoolean awaitingUserConfirmation = new AtomicBoolean(false);
-    private final String GO_BUTTON_SRVS = "/traffic_signal_plugin/go_button";
+    private static final String GO_BUTTON_SRVS = "/traffic_signal_plugin/go_button";
     private static final double ZERO_SPEED_NOISE = 0.04;	//speed threshold below which we consider the vehicle stopped, m/s
     private MessageFactory messageFactory = NodeConfiguration.newPrivate().getTopicMessageFactory();
-    private final int NUM_SIGNALS_ON_UI = 3;
+    private static final int NUM_SIGNALS_ON_UI = 3;
 
     protected IService<GetTransformRequest, GetTransformResponse> getTransformClient;
     private Map<Integer, IntersectionData> intersections = Collections
@@ -131,11 +131,11 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private ObjectCollisionChecker collisionChecker; // Collision checker responsible for tracking NCVs and providing collision checks capabilities
     private AtomicBoolean involvedInControl = new AtomicBoolean(false);
     private double popupOnRedTime;
-    static private final double CM_PER_M = 100.0;
-    static private final double MAX_DTSB = Integer.MAX_VALUE - 5.0; // Legacy Glidepath code returns Integer.MAX_VALUE for invalid dtsb. Add fudge factor for detecting it as a double
+    private static final double CM_PER_M = 100.0;
+    private static final double MAX_DTSB = Integer.MAX_VALUE - 5.0; // Legacy Glidepath code returns Integer.MAX_VALUE for invalid dtsb. Add fudge factor for detecting it as a double
 
-    private final long LOOP_PERIOD = 100; // Plugin will loop at 10Hz
-    private final GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
+    private static final long LOOP_PERIOD = 100; // Plugin will loop at 10Hz
+    private static final GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
     private TrafficSignalManeuverInputs pluginManeuverInputs; // Custom maneuver inputs used for planning
     private ManeuverPlanner pluginManeuverPlanner; // Maneuver planner used with pluginManeuverInputs for planning
     private double acceptableStopDistance;
@@ -598,9 +598,6 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             velFilter.addRawDataPoint(msg.getTwist().getLinear().getX());
         });
 
-        obstacleSub.registerOnMessageCallback((msg) -> {
-            collisionChecker.updateObjects(msg.getRoadwayObstacles());
-        });
         defaultSpeedLimit = appConfig.getMaximumSpeed(0.0);
         ead = new EadAStar(collisionChecker);
         try {
@@ -618,12 +615,15 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     public void loop() throws InterruptedException {
         long tsStart = System.currentTimeMillis();
 
+        // Update radar detection
+        collisionChecker.updateObjects(obstacleSub.getLastMessage().getRoadwayObstacles());
+        
         // Update vehicle position with most recent transform
         updateCurrentLocation();
         
         // Update state variables for stopping case
         evaluateStatesForStopping();
-
+        
         long tsEnd = System.currentTimeMillis();
         long sleepDuration = Math.max(LOOP_PERIOD - (tsEnd - tsStart), 0);
         Thread.sleep(sleepDuration);
@@ -932,7 +932,6 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         }
 
         log.info("Planning complete");
-        setAvailability(false);
         return new TrajectoryPlanningResponse();
     }
 

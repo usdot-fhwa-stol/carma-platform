@@ -31,6 +31,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
  */
 public class PlanInterpolator implements IMotionInterpolator {
 
+  double MIN_ACCELERATION = 0.000001;
   @Override
   public List<RoutePointStamped> interpolateMotion(List<Node> trajectory, double distanceStep, double timeOffset, double distanceOffset) {
     Node prevNode = null;
@@ -45,8 +46,8 @@ public class PlanInterpolator implements IMotionInterpolator {
         continue;
       }
 
-      final double t_0 = prevNode.getTimeAsDouble();
-      final double x_0 = prevNode.getDistanceAsDouble();
+      final double t_0 = prevNode.getTimeAsDouble() + timeOffset;
+      final double x_0 = prevNode.getDistanceAsDouble() + distanceOffset;
       final double v_0 = prevNode.getSpeedAsDouble();
 
       final double t_f = n.getTimeAsDouble() + timeOffset;
@@ -60,31 +61,41 @@ public class PlanInterpolator implements IMotionInterpolator {
       // If the distance is less than our distance step we will directly add the current point to our path with no interpolation
       if (dx < distanceStep) {
         points.add(new RoutePointStamped(x_f, 0, t_f));
+        continue;
       }
 
       final double a = dv / dt; // Assume constant acceleration
       final double two_a_x = 2 * a * distanceStep;
 
       double v_old = v_0;
-      double v = Math.sqrt(v_old * v_old + two_a_x);
+      double v = v_old; 
       double t;
-      
-      if (a == 0.0) {
-        t = t_0 + distanceStep / v; // With constant speed 
-      } else {
-        t = t_0 + (v - v_old) / a; // With constant acceleration
-      }
-      
       double x = x_0 + distanceStep;
+      
+      if (Math.abs(a) < MIN_ACCELERATION) {
+        t = t_0 + distanceStep / v; // With constant speed 
 
-      // Interpolate between current node and previous node
-      while (x < x_f) {
+        // Interpolate between current node and previous node
+        while (x < x_f) {
 
-        points.add(new RoutePointStamped(x, 0, t)); // Add previous node and the new interpolated nodes to list
-        v_old = v;
+          points.add(new RoutePointStamped(x, 0, t)); // Add previous node and the new interpolated nodes to list
+          t += distanceStep / v;
+          x += distanceStep;
+        }
+
+      } else {
         v = Math.sqrt(v_old * v_old + two_a_x);
-        t += (v - v_old) / a;
-        x += distanceStep;
+        t = t_0 + (v - v_old) / a; // With constant acceleration
+
+        // Interpolate between current node and previous node
+        while (x < x_f) {
+
+          points.add(new RoutePointStamped(x, 0, t)); // Add previous node and the new interpolated nodes to list
+          v_old = v;
+          v = Math.sqrt(v_old * v_old + two_a_x);
+          t += (v - v_old) / a;
+          x += distanceStep;
+        }
       }
 
       // Add the current node to the list

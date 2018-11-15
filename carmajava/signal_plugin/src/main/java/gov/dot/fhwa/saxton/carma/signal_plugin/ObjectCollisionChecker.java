@@ -69,7 +69,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
 
 
   private final long NCVReplanPeriod; // ms
-  private final double MS_PER_S = 1000.0; // ms
+  private static final double MS_PER_S = 1000.0; // ms
   private Long ncvDetectionTime = null; // ms
 
   /**
@@ -94,7 +94,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
     this.distanceStep = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/distanceStep");
     this.timeDuration = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/timeDuration");
     this.NCVReplanPeriod = (long) ((timeDuration / 2.0) * MS_PER_S); // Always replan after half of the ncv prediction has elapsed
-
+    log.info("ReplanPeriod: " + NCVReplanPeriod);
     this.downtrackBuffer = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/downtrackBuffer");
     this.crosstrackBuffer = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/crosstrackBuffer");
     
@@ -124,22 +124,23 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
 
 	if(!routeService.isRouteDataAvailable()) {
 		return;
-	}
-	
+  }
+  	
     // Iterate over detected objects and keep only those in front of us in the same lane. 
-    int currentLane = routeService.getCurrentRouteSegment().determinePrimaryLane(routeService.getCurrentCrosstrackDistance());
+    final int currentLane = routeService.getCurrentRouteSegment().determinePrimaryLane(routeService.getCurrentCrosstrackDistance());
     int inLaneObjectCount = 0;
+    final double currentDowntrack = routeService.getCurrentDowntrackDistance();
 
     for (RoadwayObstacle obs : obstacles) {
 
-      double frontObjectDistToCenters =  obs.getDownTrack() - routeService.getCurrentDowntrackDistance();
+      double frontObjectDistToCenters =  obs.getDownTrack() - currentDowntrack;
       boolean inLane = obs.getPrimaryLane() == currentLane;
 
       // If the object is in the same lane and in front of the host vehicle
       // Add it to the set of tracked object histories
       // TODO this currently does not handle if the lane index changes between the host and detected object
       if (inLane && frontObjectDistToCenters > -0.0) {
-        
+        obs.getObject().setId(0); // TODO allow for multiple object ids when sensor fusion is tuned better
         inLaneObjectCount++;
         if (!trackedLaneObjectsHistory.containsKey(obs.getObject().getId())) {
           // Sort object history as time sorted priority queue
@@ -173,10 +174,12 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
         continue; // No point in computing prediction if the object is expired anyway
       }
 
-      trackedLaneObjectsPredictions.put(
-        e.getKey(), 
-        motionPredictor.predictMotion(e.getKey().toString(), new ArrayList<>(e.getValue()), distanceStep, timeDuration)
-      );
+      List<RoutePointStamped> predictions = motionPredictor.predictMotion(e.getKey().toString(), new ArrayList<>(e.getValue()), distanceStep, timeDuration);
+      //log.info("CollisionChecker", "Found " + predictions.size() + " stamped route points for the NCV prediction:");
+      for(RoutePointStamped pp : predictions) {
+    	  //log.info("CollisionChecker", pp.toString());
+      }
+      trackedLaneObjectsPredictions.put(e.getKey(), predictions);
     }
 
     // Remove expired objects
@@ -186,22 +189,38 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
     }
 
     // Check for collisions using new object data
-    boolean collisionDetected = checkCollision(interpolatedHostPlan.get());
+    
 
-    if (collisionDetected) { // Any time there is a detected collision force a replan
-      ncvDetectionTime = timeProvider.getCurrentTimeMillis();
-      arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
-
-    } else if (ncvDetectionTime != null && timeProvider.getCurrentTimeMillis() - ncvDetectionTime > NCVReplanPeriod){ // If there was previously a replan to avoid a ncv and enough time has passed replan
-      ncvDetectionTime = timeProvider.getCurrentTimeMillis();
-      arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
-
-    } else if (inLaneObjectCount == 0) { // If no in lane objects were detected the ncv is no longer an issue. The assumption being made here is that sensor fusion has already filtered our incoming object data.
-      
-      ncvDetectionTime = null;
-    } else {
-      // There is no need to take action when the plan is executing well without collisions
+    if (ncvDetectionTime == null) {
+      boolean collisionDetected = checkCollision(interpolatedHostPlan.get());
+      if (collisionDetected) { // Any time there is a detected collision force a replan
+        ncvDetectionTime = timeProvider.getCurrentTimeMillis();
+        log.info("OCC", "NEW PLAN: First ncv detection");
+        arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
+  
+      }
+    } else if (ncvDetectionTime != null && timeProvider.getCurrentTimeMillis() - ncvDetectionTime > NCVReplanPeriod) {
+      boolean collisionDetected = checkCollision(interpolatedHostPlan.get());
+      if (collisionDetected) {
+        ncvDetectionTime = timeProvider.getCurrentTimeMillis();
+        log.info("OCC", "NEW PLAN: timer triggered");
+        arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
+      }
     }
+    // if (collisionDetected) { // Any time there is a detected collision force a replan
+    //   ncvDetectionTime = timeProvider.getCurrentTimeMillis();
+    //   arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
+
+    // } else if (ncvDetectionTime != null && timeProvider.getCurrentTimeMillis() - ncvDetectionTime > NCVReplanPeriod){ // If there was previously a replan to avoid a ncv and enough time has passed replan
+    //   ncvDetectionTime = timeProvider.getCurrentTimeMillis();
+    //   arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
+
+    // } else if (inLaneObjectCount == 0) { // If no in lane objects were detected the ncv is no longer an issue. The assumption being made here is that sensor fusion has already filtered our incoming object data.
+      
+    //  // ncvDetectionTime = null;
+    // } else {
+    //   // There is no need to take action when the plan is executing well without collisions
+    // }
   }
 
   /**
@@ -229,9 +248,12 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
 	 * 
    */
   public void setHostPlan(List<Node> hostPlan, double startTime, double startDowntrack) {
-    interpolatedHostPlan.set(motionInterpolator.interpolateMotion(hostPlan, distanceStep,
-      startTime, startDowntrack
-    ));
+    List<RoutePointStamped> hostPlanPoints = motionInterpolator.interpolateMotion(hostPlan, distanceStep, startTime, startDowntrack);
+    log.info("CollisionChecker", "Found " + hostPlanPoints.size() + " stamped route points for the host plan:");
+    for(RoutePointStamped hpp : hostPlanPoints) {
+    	log.info("CollisionChecker", hpp.toString());
+    }
+    interpolatedHostPlan.set(hostPlanPoints);
   }
 
   /**
@@ -260,6 +282,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
       );
       
       if (!conflictSpaces.isEmpty()) {
+       // System.out.println("ConflictSpaces: " + conflictSpaces);
         return true;
       }
     }
@@ -269,13 +292,21 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
 
   @Override
   public boolean hasCollision(List<Node> trajectory, double timeOffset, double distanceOffset) {
-    
+
+   // System.out.println("Checking collision with traj: " + trajectory);
+   // System.out.println("timeOffest: " + timeOffset + " distanceOffset: " + distanceOffset + " distanceStep: " + distanceStep);
     // Convert the proposed trajectory to route points
     List<RoutePointStamped> routePlan = motionInterpolator.interpolateMotion(trajectory, distanceStep,
       timeOffset, distanceOffset
     );
 
-    return checkCollision(routePlan); // Check for collisions with tracked objects
+  //  System.out.println("RoutePlan: " + routePlan);
+
+    boolean hasCollision = checkCollision(routePlan);
+    // if (hasCollision) {
+    //   System.out.println("HasCollision: " + hasCollision + " with node: " + trajectory.get(1));
+    // }
+    return hasCollision; // Check for collisions with tracked objects
 
   }
 }

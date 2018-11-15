@@ -109,7 +109,7 @@ public class IntersectionGeometry {
 			}
 		}
 		
-		log_.infof("INTR", "End of initialize for intersections ID %d, took = %d ms, stopBoxWidth = %.2f",
+		log_.debugf("INTR", "End of initialize for intersections ID %d, took = %d ms, stopBoxWidth = %.2f",
 				map_.getIntersectionId(), System.currentTimeMillis()-startTime, stopBoxWidth_);
 	}
 	
@@ -353,7 +353,7 @@ public class IntersectionGeometry {
 			cte_ = chosenLane.cte;
 			prevLaneIndex_ = chosenLane.index;
 			prevLaneApproach_ = chosenLane.index >= 0  &&  map_.getLane(chosenLane.index).isApproach();
-			log_.infof("INTR", "computeGeometry succeeded. lane index = %d, lane ID = %d, laneDtsb = %d cm, CTE = %d cm", 
+			log_.debugf("INTR", "computeGeometry succeeded. lane index = %d, lane ID = %d, laneDtsb = %d cm, CTE = %d cm", 
 						laneIndex_, laneId(), laneDtsb_, cte_);
 		}else {
 			laneIndex_ = -1;

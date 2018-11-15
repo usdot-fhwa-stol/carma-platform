@@ -326,7 +326,9 @@ public class EadAStar implements IEad {
 
         //build a detailed plan to reach the near-term goal node downtrack of first intersection [planDetailedPath]
         try {
+            FinePathNeighbors.numCollisions = 0; // TODO remove this variable
             currentPath_ = planDetailedPath(startNode, goal, startTime, startDowntrack);
+            log_.info("EAD", "NumCollisions: " + FinePathNeighbors.numCollisions);
         }catch (Exception e) {
             log_.warn("EAD", "plan trapped exception from planDetailedPath: ", e);
             throw e;

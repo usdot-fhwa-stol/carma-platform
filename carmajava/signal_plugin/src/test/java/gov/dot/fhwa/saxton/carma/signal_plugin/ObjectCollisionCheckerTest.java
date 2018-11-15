@@ -42,6 +42,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.PlanInterpolator;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.ArrayList;
 import org.apache.commons.logging.LogFactory;
 import org.junit.After;
@@ -115,16 +116,16 @@ public class ObjectCollisionCheckerTest {
     when(psl.getConflictDetector()).thenReturn(cm);
     when(psl.getArbitratorService()).thenReturn(as);
 
-    when(ps.getString("ead.NCVHandling.objectMotionPredictorModel")).thenReturn("SIMPLE_LINEAR_REGRESSION");
-    when(ps.getInteger("ead.NCVHandling.collision.maxObjectHistoricalDataAge")).thenReturn(3000);
-    when(ps.getDouble("ead.NCVHandling.collision.distanceStep")).thenReturn(2.5);
-    when(ps.getDouble("ead.NCVHandling.collision.timeDuration")).thenReturn(3.0);
-    when(ps.getDouble("ead.NCVHandling.collision.downtrackBuffer")).thenReturn(8.0);
-    when(ps.getDouble("ead.NCVHandling.collision.crosstrackBuffer")).thenReturn(2.0);
-    when(ps.getDouble("ead.NCVHandling.collision.timeMargin")).thenReturn(0.2);
-    when(ps.getDouble("ead.NCVHandling.collision.longitudinalBias")).thenReturn(0.0);
-    when(ps.getDouble("ead.NCVHandling.collision.lateralBias")).thenReturn(0.0);
-    when(ps.getDouble("ead.NCVHandling.collision.temporalBias")).thenReturn(0.0);
+    when(ps.getString("~ead/NCVHandling/objectMotionPredictorModel")).thenReturn("SIMPLE_LINEAR_REGRESSION");
+    when(ps.getInteger("~ead/NCVHandling/collision/maxObjectHistoricalDataAge")).thenReturn(3000);
+    when(ps.getDouble("~ead/NCVHandling/collision/distanceStep")).thenReturn(2.5);
+    when(ps.getDouble("~ead/NCVHandling/collision/timeDuration")).thenReturn(3.0);
+    when(ps.getDouble("~ead/NCVHandling/collision/downtrackBuffer")).thenReturn(8.0);
+    when(ps.getDouble("~ead/NCVHandling/collision/crosstrackBuffer")).thenReturn(2.0);
+    when(ps.getDouble("~ead/NCVHandling/collision/timeMargin")).thenReturn(0.2);
+    when(ps.getDouble("~ead/NCVHandling/collision/longitudinalBias")).thenReturn(0.0);
+    when(ps.getDouble("~ead/NCVHandling/collision/lateralBias")).thenReturn(0.0);
+    when(ps.getDouble("~ead/NCVHandling/collision/temporalBias")).thenReturn(0.0);
 
     ObjectCollisionChecker occ = new ObjectCollisionChecker(psl, motionPredictorFactory, planInterpolator);
 
@@ -139,10 +140,11 @@ public class ObjectCollisionCheckerTest {
     when(rs.getCurrentRouteSegment()).thenReturn(mockSegment);
     double currentDowntrack = 0.0;
     when(rs.getCurrentDowntrackDistance()).thenReturn(currentDowntrack);
+    when(rs.isRouteDataAvailable()).thenReturn(true);
 
-    long currentTime = 510L; // The current time is 0.51
-    when(tp.getCurrentTimeMillis()).thenReturn(currentTime);
-    when(mobilityTimeProvider.getCurrentTimeMillis()).thenReturn(currentTime);
+    final AtomicLong currentTime = new AtomicLong(510L); // The current time is 0.51
+    when(tp.getCurrentTimeMillis()).thenAnswer(i -> currentTime.get());
+    when(mobilityTimeProvider.getCurrentTimeMillis()).thenAnswer(i -> currentTime.get());
 
     // Add one obstacle in current lane
     RoadwayObstacle ro = newRoadwayObstacle(0, 2.5, 0.5, 5.0); // Object id 0 with stamp at 0.5
@@ -152,12 +154,9 @@ public class ObjectCollisionCheckerTest {
     assertEquals(1, occ.trackedLaneObjectsHistory.size()); // Object id is being tracked
     assertEquals(1, occ.trackedLaneObjectsPredictions.size()); // Object id is being tracked
     assertEquals(1, occ.trackedLaneObjectsHistory.get(0).size()); // 1 history element 
-    assertEquals(0, occ.trackedLaneObjectsPredictions.get(0).size()); // 0 predictions
+    assertEquals(7, occ.trackedLaneObjectsPredictions.get(0).size()); // 7 predicted points
 
-    // Check that the collision is not found since there is no prediction
-    assertFalse(occ.hasCollision(Arrays.asList(n1,n2), 0, 0));
-
-    currentTime = 610L; // The current time is 0.61
+    currentTime.set(610L); // The current time is 0.61
 
     // Obstacle is sampled a second time
     RoadwayObstacle ro2 = newRoadwayObstacle(0, 3.0, 0.6, 5.0); // Object id 0 with stamp at 0.6
@@ -178,7 +177,7 @@ public class ObjectCollisionCheckerTest {
     ro2 = newRoadwayObstacle(0, 3.5, 0.7, 5.0); // Object id 0 with stamp at 0.6
     ro.setPrimaryLane((byte)0);
 
-    currentTime = 710L; // The current time is 0.71
+    currentTime.set(710L); // The current time is 0.71
     occ.updateObjects(Arrays.asList(ro2)); // Call to trigger replan
     
     verify(as, times(1)).requestNewPlan(); // Verify replan occurred
@@ -192,7 +191,7 @@ public class ObjectCollisionCheckerTest {
     ro2 = newRoadwayObstacle(0, 4, 0.8, 5.0); // Object id 0 with stamp at 0.6
     ro.setPrimaryLane((byte)0);
 
-    currentTime = 810L; // The current time is 0.81
+    currentTime.set(810L); // The current time is 0.81
     occ.updateObjects(Arrays.asList(ro2)); // Call to trigger replan
     
     verify(as, times(1)).requestNewPlan(); // Verify replan did not occur

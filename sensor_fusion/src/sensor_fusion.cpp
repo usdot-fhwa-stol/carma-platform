@@ -265,7 +265,7 @@ int SensorFusionApplication::run()
             for(int i = 0; i < v.size(); i++)
             {
                 ROS_INFO_STREAM("Subscribing to "<< v[i]);
-                sub_map_[v[i]] = nh_->subscribe<nav_msgs::Odometry>(v[i], 10, [this](const ros::MessageEvent<nav_msgs::Odometry const>& msg){ odom_cb(msg); });
+                sub_map_[v[i]] = nh_->subscribe<nav_msgs::Odometry>(v[i], 1, [this](const ros::MessageEvent<nav_msgs::Odometry const>& msg){ odom_cb(msg); });
             }
         }
 
@@ -277,7 +277,7 @@ int SensorFusionApplication::run()
             for(int i = 0; i < v.size(); i++)
             {
                 ROS_INFO_STREAM("Subscribing to "<< v[i]);
-                sub_map_[v[i]] = nh_->subscribe<geometry_msgs::TwistStamped>(v[i], 10, [this](const ros::MessageEvent<geometry_msgs::TwistStamped>& msg){ velocity_cb(msg); });
+                sub_map_[v[i]] = nh_->subscribe<geometry_msgs::TwistStamped>(v[i], 1, [this](const ros::MessageEvent<geometry_msgs::TwistStamped>& msg){ velocity_cb(msg); });
             }
         }
 
@@ -289,7 +289,7 @@ int SensorFusionApplication::run()
             for(int i = 0; i < v.size(); i++)
             {
                 ROS_INFO_STREAM("Subscribing to "<< v[i]);
-                sub_map_[v[i]] = nh_->subscribe<sensor_msgs::NavSatFix>(v[i], 10, [this](const ros::MessageEvent<sensor_msgs::NavSatFix>& msg){ navsatfix_cb(msg); });
+                sub_map_[v[i]] = nh_->subscribe<sensor_msgs::NavSatFix>(v[i], 1, [this](const ros::MessageEvent<sensor_msgs::NavSatFix>& msg){ navsatfix_cb(msg); });
             }
         }
 
@@ -301,7 +301,7 @@ int SensorFusionApplication::run()
             for(int i = 0; i < v.size(); i++)
             {
                 ROS_INFO_STREAM("Subscribing to "<< v[i]);
-                sub_map_[v[i]] = nh_->subscribe<cav_msgs::HeadingStamped>(v[i], 10, [this](const ros::MessageEvent<cav_msgs::HeadingStamped>& msg){ heading_cb(msg); });
+                sub_map_[v[i]] = nh_->subscribe<cav_msgs::HeadingStamped>(v[i], 1, [this](const ros::MessageEvent<cav_msgs::HeadingStamped>& msg){ heading_cb(msg); });
             }
         }
 
@@ -313,7 +313,7 @@ int SensorFusionApplication::run()
             for(int i = 0; i < v.size(); i++)
             {
                 ROS_INFO_STREAM("Subscribing to "<< v[i]);
-                sub_map_[v[i]] =  nh_->subscribe<cav_msgs::ExternalObjectList>(v[i], 10, [this, &v, i](const cav_msgs::ExternalObjectListConstPtr& msg){ objects_cb_q_.push_back(std::make_pair(v[i], msg)); });
+                sub_map_[v[i]] =  nh_->subscribe<cav_msgs::ExternalObjectList>(v[i], 1, [this, &v, i](const cav_msgs::ExternalObjectListConstPtr& msg){ objects_cb_q_.push_back(std::make_pair(v[i], msg)); });
             }
         }
     }
@@ -494,7 +494,16 @@ void SensorFusionApplication::objects_cb(const cav_msgs::ExternalObjectListConst
     std::string transform_error_2 = "";
     bool second_transform_check = tf2_buffer_.canTransform(inertial_frame_name_, msg->header.frame_id, ros::Time(0), ros::Duration(0.0), &transform_error_2);
     // Get Transform from object measurement to inertial frame. All tracking should be done in inertial frame
-    geometry_msgs::TransformStamped transformStamped;
+    geometry_msgs::TransformStamped transformStamped, sensor_in_veh_tf;
+
+    // Get Transform from sensor frame to vehicle frame. This should be a static transform so if this lookup fails log an error
+    try {
+        sensor_in_veh_tf = tf2_buffer_.lookupTransform(body_frame_name_, msg->header.frame_id, msg->header.stamp);
+
+    } catch (tf2::TransformException &ex) {
+        ROS_ERROR("%s",ex.what());
+        return;
+    }
 
     if(first_transform_check)
     {
@@ -537,16 +546,21 @@ void SensorFusionApplication::objects_cb(const cav_msgs::ExternalObjectListConst
 
         if(obj.presence_vector & cav_msgs::ExternalObject::VELOCITY_PRESENCE_VECTOR)
         {
-            tf2::Vector3 obj_v;
-            tf2::convert(obj.velocity.twist.linear, obj_v);
+            tf2::Vector3 obj_v_unrotated;
+            tf2::convert(obj.velocity.twist.linear, obj_v_unrotated);
+
+            tf2::Quaternion sensor_in_veh_rot;
+            tf2::convert(sensor_in_veh_tf.transform.rotation, sensor_in_veh_rot);
+
+            tf2::Vector3 obj_v = tf2::quatRotate(sensor_in_veh_rot, obj_v_unrotated);
 
             tf2::Vector3 body_v;
             tf2::convert(twistStamped.twist.linear, body_v);
 
-            obj_v += body_v;
-
             tf2::Quaternion rotation;
             tf2::convert(transformStamped.transform.rotation, rotation);
+
+            obj_v += body_v;
 
             tf2::Vector3 obj_v_rot = tf2::quatRotate(rotation, obj_v);
             tf2::convert(obj_v_rot, obj.velocity.twist.linear);
