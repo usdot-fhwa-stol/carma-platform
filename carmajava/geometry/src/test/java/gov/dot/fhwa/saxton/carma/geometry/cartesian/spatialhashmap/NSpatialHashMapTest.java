@@ -14,12 +14,12 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap;
+package gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialstructure;
 
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.*;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap.NSpatialHashMap;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap.NSpatialHashStrategy;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap.SimpleHashStrategy;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialstructure.NSpatialHashMap;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialstructure.NSpatialHashStrategy;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialstructure.SimpleHashStrategy;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
