@@ -14,7 +14,7 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap;
+package gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialstructure;
 
 import java.util.Arrays;
 

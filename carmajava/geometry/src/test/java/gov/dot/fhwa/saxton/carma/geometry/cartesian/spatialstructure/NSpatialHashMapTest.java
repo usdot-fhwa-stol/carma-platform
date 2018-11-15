@@ -14,12 +14,12 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap;
+package gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialstructure;
 
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.*;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap.NSpatialHashMap;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap.NSpatialHashStrategy;
-import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap.SimpleHashStrategy;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialstructure.NSpatialHashMap;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialstructure.NSpatialHashStrategy;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialstructure.SimpleHashStrategy;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -58,7 +58,8 @@ public class NSpatialHashMapTest {
   public void testInsert() throws Exception {
     // Test 2D
     double[] cellSizes = {2,2};
-    NSpatialHashMap map = NSpatialHashMapFactory.buildSpatialHashMap(cellSizes);
+    NSpatialHashMapFactory factory = new NSpatialHashMapFactory(cellSizes);
+    NSpatialHashMap map = factory.buildSpatialStructure();
 
     // Test 2D Object
     List<? extends Point> points = new LinkedList<>(Arrays.asList(
@@ -115,7 +116,8 @@ public class NSpatialHashMapTest {
     assertEquals(2, cellsWithObject);
 
     // Test single point object inserts to the same key as that point
-    map = NSpatialHashMapFactory.buildSpatialHashMap(cellSizes); // Reset map
+    factory = new NSpatialHashMapFactory(cellSizes);
+    map = factory.buildSpatialStructure(); // Reset map
     points = new LinkedList<>(Arrays.asList(
       new Point2D(4,4)
     ));
@@ -128,7 +130,8 @@ public class NSpatialHashMapTest {
 
     // Test 3D object that fits within a cell
     cellSizes = new double[]{2,2,2};
-    map = NSpatialHashMapFactory.buildSpatialHashMap(cellSizes); // Reset map
+    factory = new NSpatialHashMapFactory(cellSizes);
+    map = factory.buildSpatialStructure(); // Reset map
 
     points = new LinkedList<>(Arrays.asList(
       new Point3D(4.5,4.5,4.5),
@@ -161,7 +164,8 @@ public class NSpatialHashMapTest {
   public void testGetCollisionsWithPoint() throws Exception {
     // Test 2D
     double[] cellSizes = {1,1};
-    NSpatialHashMap map = NSpatialHashMapFactory.buildSpatialHashMap(cellSizes);
+    NSpatialHashMapFactory factory = new NSpatialHashMapFactory(cellSizes);
+    NSpatialHashMap map = factory.buildSpatialStructure();
 
 
     // Test No Intersect 2D Objects and Point
@@ -189,7 +193,9 @@ public class NSpatialHashMapTest {
 
     // Test No Intersect 3D
     cellSizes = new double[]{1,1,1};
-    map = NSpatialHashMapFactory.buildSpatialHashMap(cellSizes); // Reset map
+    factory = new NSpatialHashMapFactory(cellSizes);
+    map = factory.buildSpatialStructure(); // Reset map
+
     points = new LinkedList<>(Arrays.asList(
       new Point3D(1,0, 7),
       new Point3D(4,0, 8),
@@ -208,7 +214,9 @@ public class NSpatialHashMapTest {
 
     // Test No Intersect nd
     cellSizes = new double[]{1,1,1,1,1};
-    map = NSpatialHashMapFactory.buildSpatialHashMap(cellSizes); // Reset map
+    factory = new NSpatialHashMapFactory(cellSizes);
+    map = factory.buildSpatialStructure(); // Reset map
+
     points = new LinkedList<>(Arrays.asList(
       new Point(1, 0, 7, 5, 3),
       new Point(4, 0, 6, 7, 5),
@@ -238,7 +246,8 @@ public class NSpatialHashMapTest {
     // Test 2D
     double[] cellSizes = {1,1};
     IIntersectionChecker aabbChecker = new AxisAlignedBoundingBox();
-    NSpatialHashMap map = NSpatialHashMapFactory.buildSpatialHashMap(cellSizes);
+    NSpatialHashMapFactory factory = new NSpatialHashMapFactory(cellSizes);
+    NSpatialHashMap map = factory.buildSpatialStructure();
 
 
     // Test No Intersect 2D
@@ -289,7 +298,8 @@ public class NSpatialHashMapTest {
     ));
     obj2 = new CartesianObject(points2);
 
-    map = NSpatialHashMapFactory.buildSpatialHashMap(cellSizes); // Reset map
+    factory = new NSpatialHashMapFactory(cellSizes);
+    map = factory.buildSpatialStructure(); // Reset map
     map.insert(obj);
 
     collidingObjects = map.getCollisions(obj2);
@@ -321,7 +331,8 @@ public class NSpatialHashMapTest {
 
     // Test No Intersect 3D
     cellSizes = new double[]{1,1,1};
-    map = NSpatialHashMapFactory.buildSpatialHashMap(cellSizes); // Reset map
+    factory = new NSpatialHashMapFactory(cellSizes);
+    map = factory.buildSpatialStructure(); // Reset map
 
     points = new LinkedList<>(Arrays.asList(
       new Point3D(1,0, 7),
@@ -352,7 +363,8 @@ public class NSpatialHashMapTest {
 
     // Test No Intersect nd
     cellSizes = new double[]{1,1,1,1,1};
-    map = NSpatialHashMapFactory.buildSpatialHashMap(cellSizes); // Reset map
+    factory = new NSpatialHashMapFactory(cellSizes);
+    map = factory.buildSpatialStructure(); // Reset map
 
     points = new LinkedList<>(Arrays.asList(
       new Point(1, 0, 7, 5, 3),
@@ -402,8 +414,9 @@ public class NSpatialHashMapTest {
     // Test 2D
     double[] cellSizes = {2,2};
     IIntersectionChecker aabbChecker = new AxisAlignedBoundingBox();
-    NSpatialHashMap map = NSpatialHashMapFactory.buildSpatialHashMap(cellSizes);
-
+    NSpatialHashMapFactory factory = new NSpatialHashMapFactory(cellSizes);
+    NSpatialHashMap map = factory.buildSpatialStructure();
+    
     // Test Removing object
     List<? extends Point> points = new LinkedList<>(Arrays.asList(
       new Point2D(4,4),
@@ -448,7 +461,8 @@ public class NSpatialHashMapTest {
     // Test 2D
     double[] cellSizes = {2,2};
     IIntersectionChecker aabbChecker = new AxisAlignedBoundingBox();
-    NSpatialHashMap map = NSpatialHashMapFactory.buildSpatialHashMap(cellSizes);
+    NSpatialHashMapFactory factory = new NSpatialHashMapFactory(cellSizes);
+    NSpatialHashMap map = factory.buildSpatialStructure();
 
     List<? extends Point> points = new LinkedList<>(Arrays.asList(
       new Point2D(0,2),
@@ -482,7 +496,8 @@ public class NSpatialHashMapTest {
     // Test 2D
     double[] cellSizes = {2,2};
     IIntersectionChecker aabbChecker = new AxisAlignedBoundingBox();
-    NSpatialHashMap map = NSpatialHashMapFactory.buildSpatialHashMap(cellSizes);
+    NSpatialHashMapFactory factory = new NSpatialHashMapFactory(cellSizes);
+    NSpatialHashMap map = factory.buildSpatialStructure();
 
     assertNull(map.getBounds());
 

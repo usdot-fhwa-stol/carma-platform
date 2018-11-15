@@ -13,6 +13,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.ros.message.Time;
 
 import cav_msgs.RoadwayObstacle;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialstructure.ISpatialStructureFactory;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialstructure.NSpatialHashMapFactory;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictSpace;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
@@ -67,6 +69,8 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
   private final double lateralBias;
   private final double temporalBias;
 
+  private final ISpatialStructureFactory structureFactory;
+
 
   private final long NCVReplanPeriod; // ms
   private static final double MS_PER_S = 1000.0; // ms
@@ -106,6 +110,14 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
     this.longitudinalBias = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/longitudinalBias");
     this.lateralBias = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/lateralBias");
     this.temporalBias = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/temporalBias");
+
+    double[] cellSize = new double[] {
+      psl.getParameterSource().getDouble("~ead/NCVHandling/collision/cell_downtrack_size"),
+      psl.getParameterSource().getDouble("~ead/NCVHandling/collision/cell_crosstrack_size"),
+      psl.getParameterSource().getDouble("~ead/NCVHandling/collision/cell_time_size")
+    };
+
+    this.structureFactory = new NSpatialHashMapFactory(cellSize);
 
     this.motionInterpolator = motionInterpolator;
     
@@ -276,7 +288,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
       }
       // Check for conflicts against each object and return true if any conflict is found
       List<ConflictSpace> conflictSpaces = conflictDetector.getConflicts(
-        routePlan, objPlan,
+        routePlan, objPlan, structureFactory.buildSpatialStructure(),
         downtrackMargin, crosstrackMargin, dynamicTimeMargin,
         longitudinalBias, lateralBias, temporalBias
       );
