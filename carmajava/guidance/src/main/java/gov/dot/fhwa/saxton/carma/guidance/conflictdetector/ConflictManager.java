@@ -363,6 +363,7 @@ public class ConflictManager implements IConflictManager {
     return getConflicts(hostPath, otherPath, downtrackMargin, crosstrackMargin, timeMargin, longitudinalBias, lateralBias, temporalBias);
   }
 
+  // TODO remove these variables
   public static long nanoSecBuilding = 0;
   public static long nanoSecChecking = 0;
 
