@@ -84,15 +84,26 @@ public class PlanInterpolator implements IMotionInterpolator {
         }
 
       } else {
-        v = Math.sqrt(v_old * v_old + two_a_x);
+        double v_f_sqr = v_old * v_old + two_a_x;
+        if (v_f_sqr <= 0.0) {
+          v = 0.0;
+        } else {
+          v = Math.sqrt(v_f_sqr);
+        }
         t = t_0 + (v - v_old) / a; // With constant acceleration
 
         // Interpolate between current node and previous node
         while (x < x_f) {
 
           points.add(new RoutePointStamped(x, 0, t)); // Add previous node and the new interpolated nodes to list
+
           v_old = v;
-          v = Math.sqrt(v_old * v_old + two_a_x);
+          v_f_sqr = v_old * v_old + two_a_x;
+          if (v_f_sqr <= 0.0) {
+            v = 0.0;
+          } else {
+            v = Math.sqrt(v_f_sqr);
+          }
           t += (v - v_old) / a;
           x += distanceStep;
         }

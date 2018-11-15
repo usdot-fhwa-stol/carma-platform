@@ -40,6 +40,7 @@ import sensor_msgs.NavSatFix;
 import sensor_msgs.NavSatStatus;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 
@@ -135,6 +136,31 @@ public class PlanInterpolatorTest {
     assertTrue(routePointAlmostEqual(new RoutePointStamped(15.0, 0.0, 1.0), points.get(points.size() - 1), 0.0001)); // Include last node
     assertEquals(3, points.size());
     assertTrue(routePointAlmostEqual(new RoutePointStamped(12.75, 0.0, 0.55), points.get(1), 0.0001));
+  }
+
+  /**
+   * Tests if the interpolation between two nodes can generate an NaN value
+   * @throws Exception
+   */
+  @Test
+  public void testNaNEdgeCase() throws Exception {
+    PlanInterpolator planInterpolator = new PlanInterpolator();
+
+
+    // Empty list will return empty list
+    List<RoutePointStamped> points = planInterpolator.interpolateMotion(new ArrayList<Node>(), 0.2, 0, 0);
+    assertTrue(points.isEmpty());
+
+    // A single node will return a single point
+    Node n1 = new Node(0.0, 0.0, 2.0);
+    Node n2 = new Node(84.0, 64.0, 0.0);
+    points = planInterpolator.interpolateMotion(Arrays.asList(n1,n2), 2.5, 0, 0);
+
+    for (RoutePointStamped p: points) {
+      assertFalse(Double.isNaN(p.getDowntrack()));
+      assertFalse(Double.isNaN(p.getCrosstrack()));
+      assertFalse(Double.isNaN(p.getStamp()));
+    }
   }
 
   /**
