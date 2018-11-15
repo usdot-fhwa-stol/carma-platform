@@ -1,6 +1,12 @@
 CARMA Platform Release Notes
 ----------------------------
 
+Version 2.8.1, released 15 November 2018  
+----------------------------------------  
+
+-Issue #51 fixed to prevent platooning plugin from failing on startup.
+-Updates to several administrative documents.
+
 Version 2.8.0, released 31 October 2018
 ---------------------------------------
 
