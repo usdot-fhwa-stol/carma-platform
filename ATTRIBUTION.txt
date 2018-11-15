@@ -1,0 +1,41 @@
+The following people have made direct and substantial contributions to the design and code in this repository, listed in alphabetical order:
+* David Ference - Software Engineer (Leidos)
+* Mae Fromm - Developer (Leidos)
+* Michael McConnell - Developer (Leidos)
+* Shuwei Qiang - Developer (Leidos)
+* Kyle Rush - Lead Developer (Leidos) 
+* John Stark - Principal Investigator (Leidos)
+
+Other significant contributions have been made by:
+* Philip Azeredo - System Test (Volpe) 
+* Monica Brito - Graphics, Communications & Publicity (Leidos)
+* Michael Chang - Unit Testing & Verification (Leidos) 
+* Laura Dailey - Graphics, Communications & Publicity (Leidos)
+* Darrell Dorman - Site setup & Configuration Management (Leidos) 
+* Ed Leslie - Project Management (Leidos)
+* Sudkahar Nallamothu - Project Management (Leidos)
+* Tim Tiernan - System Test Lead (Volpe) 
+* Thomas Watters (formerly of TORC Robotics)
+
+The development team would also like to acknowledge vital participation from the following people:
+* Osman Altan - Government oversight (formerly FHWA) 
+* Matt Barth – Traffic Signal Algorithm (University of California Riverside)
+* Dave Bevly – Heavy truck integration & testing (Auburn University)
+* Lowell Brown - Heavy truck integration & testing (Auburn University)
+* Aaron Dalton – Device driver & hardware integration (TORC Robotics)
+* Valerie Garrison – Project Management (TORC Robotics)
+* Ariel Gold - Government oversight and sponsor (USDOT ITS JPO)
+* Randy Van Gorder - Government oversight (FHWA) 
+* Peng Hao - Traffic Signal Algorithm (University of California Riverside)
+* Taylor Lochrane - Government Task Lead (FHWA)
+* Jeff Loftus - Government oversight and sponsor (FMCSA)
+* Patrick Smith - Heavy truck integration & testing (Auburn University) 
+* Chris Stanley - STOL Program Manager (Leidos) 
+* Zachary Taylor – Device driver & hardware integration (TORC Robotics)
+* Dale Thompson - Government oversight (FHWA)
+* Transurban
+* Mark Umansky – Device driver & hardware integration (TORC Robotics)
+* VA State Police
+* Govindarajan Vadakpat - Government oversight (FHWA) 
+* VDOT
+* Guoyuan Wu – Traffic Signal Algorithm (University of California Riverside)
