@@ -172,7 +172,6 @@ acc_vehicle_front_frame_id: 'vehicle_front'
 # Note: This string must match the Versionable.getVersionInfo().componentName() value of the plugin
 default_mobility_conflict_handler: 'Yield Plugin'
 
-
 # Double: The size of a the downtrack dimension of a cell in the collision systems spatial hash map
 # Units: meters
 # Dimension should be larger than 1 car length
