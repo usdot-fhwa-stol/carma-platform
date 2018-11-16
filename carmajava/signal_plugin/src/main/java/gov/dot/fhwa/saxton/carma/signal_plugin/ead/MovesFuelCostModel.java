@@ -61,7 +61,8 @@ public class MovesFuelCostModel implements ICostModel {
 
     private int numCosts = 0;
     protected static final ILogger log = LoggerManager.getLogger(FuelCostModel.class);
-
+    protected static final double FUEL_COST_NORMALIZATION_DENOMINATOR = 425000.0;
+    protected static final double TIME_COST = 1.0;
 
     /**
      * Builds the cost model object with several injected calculation parameters.
@@ -200,7 +201,9 @@ public class MovesFuelCostModel implements ICostModel {
         // Get Parameters
         final List<Double> baseRateList = baseRateTable.get(opMode);
 
-        return J_PER_KJ * ((baseRateList.get(BASE_RATE_ENERGY_COL) / SEC_PER_HR) * dt); // Return the energy in J by converting KJ/hr to KJ/s and multiplying by dt and J/KJ
+        double normalizedFuelCost = (J_PER_KJ * ((baseRateList.get(BASE_RATE_ENERGY_COL) / SEC_PER_HR) * dt)) / FUEL_COST_NORMALIZATION_DENOMINATOR;
+        //System.out.println("normalizedFuelCost: " + normalizedFuelCost);
+        return normalizedFuelCost + TIME_COST; // Return the energy in J by converting KJ/hr to KJ/s and multiplying by dt and J/KJ
     }
 
     /**
@@ -281,7 +284,9 @@ public class MovesFuelCostModel implements ICostModel {
             return Double.POSITIVE_INFINITY;
         }
         //smooth acceleration from current location to ending location & speed, ignoring the signal
-        return cost(currentNode, goal);
+        double normalizedHeuristics = (goal.getDistanceAsDouble() - currentNode.getDistanceAsDouble()) / goal.getDistanceAsDouble(); 
+        //System.out.println("normalizedHeuristics: " + normalizedHeuristics);
+        return normalizedHeuristics;
     }
 
     @Override
@@ -306,11 +311,9 @@ public class MovesFuelCostModel implements ICostModel {
         //if tolerances have been specified then use them
         if (tolerances != null) {
             result = Math.abs(n.getDistance() - goal.getDistance()) <= tolerances.getDistance()  &&
-                    Math.abs(n.getTime()     - goal.getTime())     <= tolerances.getTime()      &&
                     Math.abs(n.getSpeed()    - goal.getSpeed())    <= tolerances.getSpeed();
         }else {
             result = n.getDistance() >= goal.getDistance()  &&
-                     n.getTime()     <= goal.getTime()      &&
                      n.getSpeed()    >= goal.getSpeed();
         }
 
@@ -326,6 +329,6 @@ public class MovesFuelCostModel implements ICostModel {
 
     @Override
     public boolean isUnusable(Node n) {
-        return (n.getDistance() > (goal.getDistance() + tolerances.getDistance()))  ||  ((n.getTime() > goal.getTime() + tolerances.getTime()));
+        return n.getDistance() > (goal.getDistance() + tolerances.getDistance());
     }
 }

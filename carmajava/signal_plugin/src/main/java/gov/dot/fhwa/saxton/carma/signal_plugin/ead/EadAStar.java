@@ -153,50 +153,52 @@ public class EadAStar implements IEad {
         //this is the fastest case, which is not be able to acheieve
         double exitTime = exitDist / operSpeed;
 
-        //create a neighbor calculator for this tree using a coarse scale grid
-        coarseNeighborCalc_.initialize(intList_, numInt, coarseTimeInc_, coarseSpeedInc_, collisionChecker_, startTime, startDowntrack);
-        coarseNeighborCalc_.setOperatingSpeed(operSpeed);
-
-        //while no solution and we have not exceeded our cycle limit
-        List<Node> path = null;
-        Node coarseGoal = null;
-        int iter = 0;
-        while ((path == null  ||  path.size() == 0)  &&  iter < MAX_COURSE_PATH_ATTEMPTS) {
-
-            coarseGoal = new Node(exitDist, exitTime, operSpeed);
-            log_.debug("EAD", "planCoarsePath solving iter " + iter + " with " + numInt +
-                    " useful intersections and a course goal of " + coarseGoal.toString());
-
-            //System.out.println("CoarseGoal: " + coarseGoal);
-            //find the best path through this tree
-            timeCostModel_.setGoal(coarseGoal);
-            timeCostModel_.setTolerances(new Node(1.0, 0.51 * coarseTimeInc_, 0.51 * coarseSpeedInc_));
-            path = solver_.solve(start, timeCostModel_, coarseNeighborCalc_);
-
-            //increment goal time
-            exitTime += coarseTimeInc_;
-            ++iter;
-        }
-
-        //if we still haven't found a solution then throw exception
-        //the size of path list should be at least 3
-        //because element 0 is our start node, element 1 is our node at the first intersection and
-        // element 2 is the node after the first intersection
-        if (path == null  ||  path.size() < 3) {
-            String msg = "planCoarsePath solver was unable to define a path after " + iter + " iterations.";
-            log_.error("EAD", msg);
-            throw new Exception(msg);
-        }
-        log_.debug("EAD", "planCoarsePath found a solution after " + iter + " iterations.");
-        //////System.out.println("planCoarsePath found a solution after " + iter + " iterations.");
-
-        //we always use the node after current intersection as the goal node
-        Node fineGoal = path.get(2);
-
-        //summarize the chosen path
-        summarizeCoarsePath(path, coarseGoal, fineGoal);
+        Node coarseGoal = new Node(exitDist, exitTime, operSpeed);
         
-        return fineGoal;
+//        //create a neighbor calculator for this tree using a coarse scale grid
+//        coarseNeighborCalc_.initialize(intList_, numInt, coarseTimeInc_, coarseSpeedInc_, collisionChecker_, startTime, startDowntrack);
+//        coarseNeighborCalc_.setOperatingSpeed(operSpeed);
+//
+//        //while no solution and we have not exceeded our cycle limit
+//        List<Node> path = null;
+//        Node coarseGoal = null;
+//        int iter = 0;
+//        while ((path == null  ||  path.size() == 0)  &&  iter < MAX_COURSE_PATH_ATTEMPTS) {
+//
+//            coarseGoal = new Node(exitDist, exitTime, operSpeed);
+//            log_.debug("EAD", "planCoarsePath solving iter " + iter + " with " + numInt +
+//                    " useful intersections and a course goal of " + coarseGoal.toString());
+//
+//            //System.out.println("CoarseGoal: " + coarseGoal);
+//            //find the best path through this tree
+//            timeCostModel_.setGoal(coarseGoal);
+//            timeCostModel_.setTolerances(new Node(1.0, 0.51 * coarseTimeInc_, 0.51 * coarseSpeedInc_));
+//            path = solver_.solve(start, timeCostModel_, coarseNeighborCalc_);
+//
+//            //increment goal time
+//            exitTime += coarseTimeInc_;
+//            ++iter;
+//        }
+//
+//        //if we still haven't found a solution then throw exception
+//        //the size of path list should be at least 3
+//        //because element 0 is our start node, element 1 is our node at the first intersection and
+//        // element 2 is the node after the first intersection
+//        if (path == null  ||  path.size() < 3) {
+//            String msg = "planCoarsePath solver was unable to define a path after " + iter + " iterations.";
+//            log_.error("EAD", msg);
+//            throw new Exception(msg);
+//        }
+//        log_.debug("EAD", "planCoarsePath found a solution after " + iter + " iterations.");
+//        //////System.out.println("planCoarsePath found a solution after " + iter + " iterations.");
+//
+//        //we always use the node after current intersection as the goal node
+//        Node fineGoal = path.get(2);
+//
+//        //summarize the chosen path
+//        summarizeCoarsePath(path, coarseGoal, fineGoal);
+        
+        return coarseGoal;
     }
 
 

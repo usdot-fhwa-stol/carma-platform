@@ -63,12 +63,18 @@ public class EADAStarPlanTest {
         when(mockFact.createLoggerForClass(any())).thenReturn(mockLogger);
         LoggerManager.setLoggerFactory(mockFact);
         GlidepathApplicationContext.getInstance().setAppConfigOverride(mockConfig);
-        when(mockConfig.getProperty("ead.desiredCostModel")).thenReturn("DEFAULT");
         when(mockConfig.getDoubleDefaultValue("defaultAccel", 2.0)).thenReturn(2.0);
         when(mockConfig.getMaximumSpeed(0.0)).thenReturn(25);
         when(mockConfig.getDoubleDefaultValue("crawlingSpeed", 5.0)).thenReturn(5.0);
         when(mockConfig.getDoubleDefaultValue("ead.timebuffer", 4.0)).thenReturn(timeBuffer);
         when(mockConfig.getDoubleDefaultValue("ead.response.lag", 1.9)).thenReturn(0.0); // Was 1.9
+        when(mockConfig.getProperty("ead.desiredCostModel")).thenReturn("MOVES_2010");
+        when(mockConfig.getDoubleValue("ead.MOVES.rollingTermA")).thenReturn(0.22112); 
+        when(mockConfig.getDoubleValue("ead.MOVES.rotatingTermB")).thenReturn(0.002838); 
+        when(mockConfig.getDoubleValue("ead.MOVES.dragTermC")).thenReturn(0.000698); 
+        when(mockConfig.getDoubleValue("ead.MOVES.vehicleMassInTons")).thenReturn(1.86686); 
+        when(mockConfig.getDoubleValue("ead.MOVES.fixedMassFactor")).thenReturn(1.86686); 
+        when(mockConfig.getProperty("ead.MOVES.baseRateTablePath")).thenReturn("/home/qsw/carma/src/CARMAPlatform/carmajava/launch/params/BaseRateForPassengerTruck.csv");
     }
 
     // These default phases will be used for phases which are not specified. Check NeighborBase.java to confirm.
