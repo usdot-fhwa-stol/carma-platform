@@ -74,7 +74,7 @@ public class EADAStarPlanTest {
         when(mockConfig.getDoubleValue("ead.MOVES.dragTermC")).thenReturn(0.000698); 
         when(mockConfig.getDoubleValue("ead.MOVES.vehicleMassInTons")).thenReturn(1.86686); 
         when(mockConfig.getDoubleValue("ead.MOVES.fixedMassFactor")).thenReturn(1.86686); 
-        when(mockConfig.getProperty("ead.MOVES.baseRateTablePath")).thenReturn("/home/qsw/carma/src/CARMAPlatform/carmajava/launch/params/BaseRateForPassengerTruck.csv");
+        when(mockConfig.getProperty("ead.MOVES.baseRateTablePath")).thenReturn("/home/qswawrq/carma/src/CARMAPlatform/carmajava/launch/params/BaseRateForPassengerTruck.csv");
     }
 
     // These default phases will be used for phases which are not specified. Check NeighborBase.java to confirm.

@@ -116,7 +116,7 @@ public class FinePathNeighbors extends NeighborBase {
             }
 
             // If we can reach the speed limit add a extra node which gets us there as fast as possible
-            if (v >= speedLimit_) {
+            if (v > speedLimit_) {
                 
                 double timeToLimit = (speedLimit_ - curSpeed) / maxAccel_;
                 deltaD = timeToLimit * (curSpeed + v) * 0.5;

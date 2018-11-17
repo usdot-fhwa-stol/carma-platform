@@ -203,7 +203,7 @@ public class MovesFuelCostModel implements ICostModel {
 
         double normalizedFuelCost = (J_PER_KJ * ((baseRateList.get(BASE_RATE_ENERGY_COL) / SEC_PER_HR) * dt)) / FUEL_COST_NORMALIZATION_DENOMINATOR;
         //System.out.println("normalizedFuelCost: " + normalizedFuelCost);
-        return normalizedFuelCost + TIME_COST; // Return the energy in J by converting KJ/hr to KJ/s and multiplying by dt and J/KJ
+        return n2.getTimeAsDouble() - n1.getDistanceAsDouble(); // Return the energy in J by converting KJ/hr to KJ/s and multiplying by dt and J/KJ
     }
 
     /**
@@ -286,7 +286,7 @@ public class MovesFuelCostModel implements ICostModel {
         //smooth acceleration from current location to ending location & speed, ignoring the signal
         double normalizedHeuristics = (goal.getDistanceAsDouble() - currentNode.getDistanceAsDouble()) / goal.getDistanceAsDouble(); 
         //System.out.println("normalizedHeuristics: " + normalizedHeuristics);
-        return normalizedHeuristics;
+        return 0;
     }
 
     @Override
