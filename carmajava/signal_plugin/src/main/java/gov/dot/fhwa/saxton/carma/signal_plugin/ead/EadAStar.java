@@ -137,7 +137,7 @@ public class EadAStar implements IEad {
         //adding an extra distance to make sure the goal passes the fine distance to the second intersection
         //this is the rough location for the second intersection
         //rough distance need to convert from cm to m
-        double exitDist = intList_.get(numInt - 1).bestDTSB() + CoarsePathNeighbors.TYPICAL_INTERSECTION_WIDTH * 2;
+        double exitDist = intList_.get(numInt - 1).bestDTSB();
         //plan to one more intersection width after the last intersection
         double recoveryDist = CoarsePathNeighbors.TYPICAL_INTERSECTION_WIDTH; 
         exitDist += recoveryDist;

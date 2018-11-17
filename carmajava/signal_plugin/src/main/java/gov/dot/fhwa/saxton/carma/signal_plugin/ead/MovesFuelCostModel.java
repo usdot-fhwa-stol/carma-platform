@@ -203,7 +203,8 @@ public class MovesFuelCostModel implements ICostModel {
 
         double normalizedFuelCost = (J_PER_KJ * ((baseRateList.get(BASE_RATE_ENERGY_COL) / SEC_PER_HR) * dt)) / FUEL_COST_NORMALIZATION_DENOMINATOR;
         //System.out.println("normalizedFuelCost: " + normalizedFuelCost);
-        return n2.getTimeAsDouble() - n1.getDistanceAsDouble(); // Return the energy in J by converting KJ/hr to KJ/s and multiplying by dt and J/KJ
+        // time cost: (n2.getTimeAsDouble() - n1.getDistanceAsDouble())
+        return 1; // Return the energy in J by converting KJ/hr to KJ/s and multiplying by dt and J/KJ
     }
 
     /**
