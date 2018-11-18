@@ -24,9 +24,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 
-import java.io.InvalidObjectException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -74,7 +72,6 @@ public class FinePathNeighbors extends NeighborBase {
 
     @Override
     public List<Node> neighbors(Node node) {
-        //System.out.println("Generating neighbors of node " + node.toString());
         List<Node> neighbors = new ArrayList<>();
         int c = currentIntersectionIndex(node.getDistanceAsDouble());
         if (c >= 0 ) {

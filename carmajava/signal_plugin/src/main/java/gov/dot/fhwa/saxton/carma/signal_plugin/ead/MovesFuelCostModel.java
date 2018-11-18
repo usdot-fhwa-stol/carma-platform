@@ -62,7 +62,8 @@ public class MovesFuelCostModel implements ICostModel {
     private int numCosts = 0;
     protected static final ILogger log = LoggerManager.getLogger(FuelCostModel.class);
     protected static final double FUEL_COST_NORMALIZATION_DENOMINATOR = 425000.0;
-    protected static final double TIME_COST = 1.0;
+    protected static final double TIME_COST_NORMALIZATION_DENOMINATOR = 2.0;
+    protected static final double HEURISTICS_MULTIPLIER = 60.0;
 
     /**
      * Builds the cost model object with several injected calculation parameters.
@@ -202,9 +203,10 @@ public class MovesFuelCostModel implements ICostModel {
         final List<Double> baseRateList = baseRateTable.get(opMode);
 
         double normalizedFuelCost = (J_PER_KJ * ((baseRateList.get(BASE_RATE_ENERGY_COL) / SEC_PER_HR) * dt)) / FUEL_COST_NORMALIZATION_DENOMINATOR;
+        double normalizedTimeCost = (n2.getTime() - n1.getTime()) / TIME_COST_NORMALIZATION_DENOMINATOR;
         //System.out.println("normalizedFuelCost: " + normalizedFuelCost);
-        // time cost: (n2.getTimeAsDouble() - n1.getDistanceAsDouble())
-        return 1; // Return the energy in J by converting KJ/hr to KJ/s and multiplying by dt and J/KJ
+        // time cost: n2.getTime() - n1.getTime()
+        return normalizedFuelCost + normalizedTimeCost; // Return the energy in J by converting KJ/hr to KJ/s and multiplying by dt and J/KJ
     }
 
     /**
@@ -281,13 +283,13 @@ public class MovesFuelCostModel implements ICostModel {
     @Override
     public double heuristic(Node currentNode) {
         //infinite cost if we pass the location and the time of the goal
-        if (currentNode.getDistance() > (goal.getDistance() + tolerances.getDistance())  ||  (currentNode.getTime() > goal.getTime() + tolerances.getTime()) ) {
-            return Double.POSITIVE_INFINITY;
+        if (currentNode.getDistance() > goal.getDistance() + tolerances.getDistance()) {
+        	return Double.POSITIVE_INFINITY;
         }
         //smooth acceleration from current location to ending location & speed, ignoring the signal
         double normalizedHeuristics = (goal.getDistanceAsDouble() - currentNode.getDistanceAsDouble()) / goal.getDistanceAsDouble(); 
         //System.out.println("normalizedHeuristics: " + normalizedHeuristics);
-        return 0;
+        return normalizedHeuristics * HEURISTICS_MULTIPLIER;
     }
 
     @Override

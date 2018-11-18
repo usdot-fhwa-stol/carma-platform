@@ -153,7 +153,7 @@ public class EadAStar implements IEad {
         //this is the fastest case, which is not be able to acheieve
         double exitTime = exitDist / operSpeed;
 
-        Node coarseGoal = new Node(exitDist, exitTime, operSpeed);
+        Node coarseGoal = new Node(exitDist, 0, operSpeed);
         
 //        //create a neighbor calculator for this tree using a coarse scale grid
 //        coarseNeighborCalc_.initialize(intList_, numInt, coarseTimeInc_, coarseSpeedInc_, collisionChecker_, startTime, startDowntrack);
@@ -220,7 +220,7 @@ public class EadAStar implements IEad {
         //System.out.println("Goal: " + goal);
         //find the best path through this tree [use AStarSolver]
         fuelCostModel_.setGoal(goal);
-        fuelCostModel_.setTolerances(new Node(0.51*fineSpeedInc_*fineTimeInc_, fineTimeInc_, 0.51*fineSpeedInc_)); // timeInc must be full size to allow for cases where vehicle is traveling at max speed
+        fuelCostModel_.setTolerances(new Node(0.51*fineSpeedInc_*fineTimeInc_, 0, 0.51*fineSpeedInc_)); // timeInc must be full size to allow for cases where vehicle is traveling at max speed
         List<Node> path = solver_.solve(start, fuelCostModel_, fineNeighborCalc_);
         if (path == null  ||  path.size() == 0) {
             String msg = "///// planDetailedPath solver was unable to define a path.";

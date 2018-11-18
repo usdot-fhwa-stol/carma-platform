@@ -152,11 +152,11 @@ public class FuelCostModel implements ICostModel {
     @Override
     public double heuristic(Node currentNode) {
         //infinite cost if we pass the location and the time of the goal
-        if (currentNode.getDistance() > (goal_.getDistance() + tolerances_.getDistance())  ||  (currentNode.getTime() > goal_.getTime() + tolerances_.getTime()) ) {
+        if (currentNode.getDistance() > (goal_.getDistance() + tolerances_.getDistance())) {
             return Double.POSITIVE_INFINITY;
         }
         //smooth acceleration from current location to ending location & speed, ignoring the signal
-        return cost(currentNode, goal_);
+        return 0;
     }
 
     @Override
@@ -177,11 +177,9 @@ public class FuelCostModel implements ICostModel {
         //if tolerances have been specified then use them
         if (tolerances_ != null) {
             result = Math.abs(n.getDistance() - goal_.getDistance()) <= tolerances_.getDistance()  &&
-                     Math.abs(n.getTime()     - goal_.getTime())     <= tolerances_.getTime()      &&
                      Math.abs(n.getSpeed()    - goal_.getSpeed())    <= tolerances_.getSpeed();
         } else {
             result = n.getDistance() >= goal_.getDistance()  &&
-                     n.getTime()     <= goal_.getTime()      &&
                      n.getSpeed()    >= goal_.getSpeed();
         }
 
@@ -196,6 +194,6 @@ public class FuelCostModel implements ICostModel {
 
     @Override
     public boolean isUnusable(Node n) {
-        return (n.getDistance() > (goal_.getDistance() + tolerances_.getDistance()))  ||  ((n.getTime() > goal_.getTime() + tolerances_.getTime()));    
+        return n.getDistance() > (goal_.getDistance() + tolerances_.getDistance());
     }
 }

@@ -68,6 +68,7 @@ public class EADAStarPlanTest {
         when(mockConfig.getDoubleDefaultValue("crawlingSpeed", 5.0)).thenReturn(5.0);
         when(mockConfig.getDoubleDefaultValue("ead.timebuffer", 4.0)).thenReturn(timeBuffer);
         when(mockConfig.getDoubleDefaultValue("ead.response.lag", 1.9)).thenReturn(0.0); // Was 1.9
+        //when(mockConfig.getProperty("ead.desiredCostModel")).thenReturn("DEFAULT");
         when(mockConfig.getProperty("ead.desiredCostModel")).thenReturn("MOVES_2010");
         when(mockConfig.getDoubleValue("ead.MOVES.rollingTermA")).thenReturn(0.22112); 
         when(mockConfig.getDoubleValue("ead.MOVES.rotatingTermB")).thenReturn(0.002838); 
@@ -84,7 +85,6 @@ public class EADAStarPlanTest {
 
     @Test
     public void planSingleIntersection() {
-        // FAILED: DTSB1: 50.0 DTSB2: 130.0 Phase1: RED Phase2: RED timeToNext1: 11.0 timeToNext2: 10.0
         when(mockConfig.getDoubleDefaultValue("ead.coarse_time_inc", 5.0)).thenReturn(2.0);
         when(mockConfig.getDoubleDefaultValue("ead.coarse_speed_inc", 3.0)).thenReturn(2.0);
         when(mockConfig.getDoubleDefaultValue("ead.fine_time_inc", 2.0)).thenReturn(2.0);
