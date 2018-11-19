@@ -72,8 +72,6 @@ Welcome to the CARMAPlatform contributing guide. There are a few guidelines that
 ## Branching Model
 Vincent Driessen’s  ["git flow"](https://nvie.com/posts/a-successful-git-branching-model/) branching model is a git branching and release management workflow that helps developers keep track of features, hotfixes and releases in a software projects. We will follow this model and mainly use five branches - master, develop, feature, release, and hotfix. 
 
-we will be following
-
 ### master
 * This branch contains production-ready code of CARMAPlatform.
 * This branch should be kept stable at all times
