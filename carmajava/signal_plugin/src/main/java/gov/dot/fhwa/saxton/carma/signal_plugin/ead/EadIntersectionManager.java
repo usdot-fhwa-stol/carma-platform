@@ -265,7 +265,7 @@ public class EadIntersectionManager {
 	
 	private boolean wantThisIntersection(int thisId) {
 		boolean wanted = false;
-		log_.info("TRAJ", "Checking if intersection is needed id: " + thisId);
+		log_.debug("TRAJ", "Checking if intersection is needed id: " + thisId);
 		for (int id : intersectionIds_) {
 			if (thisId == id) {
 				wanted = true;

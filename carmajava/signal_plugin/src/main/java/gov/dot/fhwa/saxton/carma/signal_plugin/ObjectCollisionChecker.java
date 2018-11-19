@@ -76,6 +76,8 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
   private static final double MS_PER_S = 1000.0; // ms
   private Long ncvDetectionTime = null; // ms
 
+  private final IReplanHandle replanHandle;
+
   /**
    * Constructor
    * 
@@ -84,7 +86,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
    * @param motionInterpolator The host vehicle motion interpolator which will interpolate vehicle plans as needed
    */
   public ObjectCollisionChecker(PluginServiceLocator psl,
-    IMotionPredictorModelFactory modelFactory, IMotionInterpolator motionInterpolator) {
+    IMotionPredictorModelFactory modelFactory, IMotionInterpolator motionInterpolator, IReplanHandle replanHandle) {
     this.log = LoggerManager.getLogger();
     this.routeService = psl.getRouteService();
     this.arbitratorService = psl.getArbitratorService();
@@ -120,6 +122,8 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
     this.structureFactory = new NSpatialHashMapFactory(cellSize);
 
     this.motionInterpolator = motionInterpolator;
+
+    this.replanHandle = replanHandle;
     
   }
 
@@ -208,7 +212,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
       if (collisionDetected) { // Any time there is a detected collision force a replan
         ncvDetectionTime = timeProvider.getCurrentTimeMillis();
         log.info("OCC", "NEW PLAN: First ncv detection");
-        arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
+        replanHandle.triggerNewPlan(true); // Request a replan from the plugin
   
       }
     } else if (ncvDetectionTime != null && timeProvider.getCurrentTimeMillis() - ncvDetectionTime > NCVReplanPeriod) {
@@ -216,16 +220,16 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
       if (collisionDetected) {
         ncvDetectionTime = timeProvider.getCurrentTimeMillis();
         log.info("OCC", "NEW PLAN: timer triggered");
-        arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
+        replanHandle.triggerNewPlan(true); // Request a replan from the plugin
       }
     }
     // if (collisionDetected) { // Any time there is a detected collision force a replan
     //   ncvDetectionTime = timeProvider.getCurrentTimeMillis();
-    //   arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
+    //   replanHandle.triggerNewPlan(true); // Request a replan from the plugin
 
     // } else if (ncvDetectionTime != null && timeProvider.getCurrentTimeMillis() - ncvDetectionTime > NCVReplanPeriod){ // If there was previously a replan to avoid a ncv and enough time has passed replan
     //   ncvDetectionTime = timeProvider.getCurrentTimeMillis();
-    //   arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
+    //   replanHandle.triggerNewPlan(true); // Request a replan from the plugin
 
     // } else if (inLaneObjectCount == 0) { // If no in lane objects were detected the ncv is no longer an issue. The assumption being made here is that sensor fusion has already filtered our incoming object data.
       

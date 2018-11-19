@@ -73,6 +73,7 @@ import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnServiceResponseCallback;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.TopicNotFoundException;
 import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.IntersectionData;
+import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.Constants;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementHolder;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.DataElementKey;
@@ -106,7 +107,7 @@ import cav_msgs.RoadwayEnvironment;
  * signalized intersections. This is a port of the functionality developed under
  * the STOL I contract TO 17 and STOL II contract TO 13, Glidepath project.
  */
-public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlugin {
+public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlugin, IReplanHandle {
 
     private ISubscriber<TwistStamped> velocitySub;
     private ISubscriber<RoadwayEnvironment> obstacleSub;
@@ -143,6 +144,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private double defaultSpeedLimit;
     private double defaultAccel;
     private GlidepathAppConfig appConfig;
+    private AtomicBoolean replanning = new AtomicBoolean(false);
 
     public TrafficSignalPlugin(PluginServiceLocator psl) {
         super(psl);
@@ -161,7 +163,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         this.collisionChecker = new ObjectCollisionChecker(
             this.pluginServiceLocator,
             new DefaultMotionPredictorFactory(appConfig),
-            new PlanInterpolator()
+            new PlanInterpolator(),
+            this
         );
 
         // Pass params into GlidepathAppConfig
@@ -390,15 +393,14 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         return cnvSpat;
     }
 
-    /**
-     * Helper function to trigger a new plan from arbitrator to accommodate for Glidepath planning
-     * 
-     * @param availability The availability to set when calling this replan
-     */
-    private void triggerNewPlan(boolean availability) {
-        log.info("Requesting replan with availability: " + availability);
-        setAvailability(availability);
-        pluginServiceLocator.getArbitratorService().requestNewPlan();
+    @Override
+    public void triggerNewPlan(boolean availability) {
+        log.info("Trying to request replan with availability: " + availability);
+        if (replanning.compareAndSet(false, true)) {
+            log.info("Requesting replan with availability: " + availability);
+            setAvailability(availability);
+            pluginServiceLocator.getArbitratorService().requestNewPlan();
+        }
     }
 
     /**
@@ -773,6 +775,9 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         return out;
     }
 
+    /**
+     * NOTE: This function assumes any requests to change the planning process (higher priority / longer trajectories) will be granted
+     */
     @Override
     public TrajectoryPlanningResponse planTrajectory(Trajectory traj, double expectedStartSpeed) {
         log.info("Entered planTrajectory");
@@ -795,7 +800,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                     traj.getStartLocation(), traj.getEndLocation());
             
             traj.addManeuver(steadySpeed);
-
+            replanning.set(false);
             return new TrajectoryPlanningResponse();
         }
 
@@ -803,15 +808,22 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         double dtsb = computeDtsb();
 
         if (dtsb < MAX_DTSB) {
+            double maxDTSB = dtsb;
+            for (gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData i: glidepathTrajectory.getSortedIntersections()) {
+                if (maxDTSB < i.bestDTSB()) {
+                    maxDTSB = i.bestDTSB();
+                }
+            }
             // DTSB computation successful, check to see if we can plan up to stop bar
-            if (traj.getStartLocation() + (dtsb * 1.1) > traj.getEndLocation()) {
+            if (traj.getStartLocation() + ( maxDTSB / 0.7 ) > traj.getEndLocation()) {
                 // Not enough distance to allow for proper glidepath execution
                 TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
-                tpr.requestLongerTrajectory(traj.getStartLocation() + (dtsb * 1.1)); // allow for some extra slack
+                tpr.requestLongerTrajectory(traj.getStartLocation() + (maxDTSB / 0.69)); // allow for some extra slack
                 return tpr;
             }
         } else {
             log.info("Attempted to plan with bad dtsb value: " + dtsb + "will not plan");
+            replanning.set(false);
             return new TrajectoryPlanningResponse();
         }
 
@@ -838,6 +850,17 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             log.info("Requesting AStar plan with intersections: " + intersections.toString());
 
             try {
+                synchronized (collisionChecker) {
+                    log.info("EAD", "NCV at start of planning");
+                    for (Entry<Integer, List<RoutePointStamped>> prediction: collisionChecker.trackedLaneObjectsPredictions.entrySet()) {
+                        String predictionText = "Prediction for id: " + prediction.getKey() + "\n";
+                        for (RoutePointStamped p: prediction.getValue()) {
+                            predictionText += p.toString() + "\n";
+                        }
+                        log.info("EAD", predictionText);
+                    }
+                    log.info("EAD", "Done NCV list");
+                }
                 eadResult = glidepathTrajectory.plan(state); // TODO do we really need the trajectory object. It's purpose is 99% filled by the plugin
                 break;
             } catch (Exception e) {
@@ -847,6 +870,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
         if (eadResult == null) {
             log.warn("Ead result is null");
+            replanning.set(false);
             return new TrajectoryPlanningResponse();
         } else {
             log.info("Ead result is path of size: " + eadResult.size());
@@ -932,6 +956,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         }
 
         log.info("Planning complete");
+        replanning.set(false);
         return new TrajectoryPlanningResponse();
     }
 
