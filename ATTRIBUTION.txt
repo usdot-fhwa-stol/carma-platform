@@ -15,7 +15,7 @@ Other significant contributions have been made by:
 * Ed Leslie - Project Management (Leidos)
 * Sudkahar Nallamothu - Project Management (Leidos)
 * Tim Tiernan - System Test Lead (Volpe) 
-* Thomas Watters (formerly of TORC Robotics)
+* Thomas Watters - Driver Development (formerly of TORC Robotics)
 
 The development team would also like to acknowledge vital participation from the following people:
 * Osman Altan - Government oversight (formerly FHWA) 
