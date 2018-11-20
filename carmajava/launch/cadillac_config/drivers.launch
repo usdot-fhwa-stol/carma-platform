@@ -50,6 +50,9 @@ If not using simulated drivers they are activated if the respective mock argumen
 
   <!--SRX Controller Driver Node-->
   <include unless="$(arg mock_srx_controller)" file="$(find srx_controller)/launch/srx_controller.launch">
+    <arg name="k_p" value="0.5" />
+    <arg name="k_i" value="0.01" />
+    <arg name="k_d" value="0.005" />
     <arg name="srx_controller_can_device" value="can1"/>
   </include>
       
