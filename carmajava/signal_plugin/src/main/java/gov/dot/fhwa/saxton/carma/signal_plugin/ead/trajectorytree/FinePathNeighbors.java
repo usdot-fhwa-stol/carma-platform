@@ -113,21 +113,24 @@ public class FinePathNeighbors extends NeighborBase {
             }
 
             // If we can reach the speed limit add a extra node which gets us there as fast as possible
-            if (v > speedLimit_) {
+            // TODO this was taken out because truncation prevented it working in new planner
+            // if (v > speedLimit_) {
                 
-                double timeToLimit = (speedLimit_ - curSpeed) / maxAccel_;
-                deltaD = timeToLimit * (curSpeed + v) * 0.5;
-                newDist = curDist + deltaD;
-                double modifiedNewTime = curTime + timeToLimit; 
-                //System.out.println("Potential extra neighbor: " + new Node(newDist, modifiedNewTime, v));
-                if(!signalViolation(curDist, newDist, curTime, modifiedNewTime, v)) {
+            //     double timeToLimit = (speedLimit_ - curSpeed) / maxAccel_;
+            //     deltaD = timeToLimit * (curSpeed + v) * 0.5;
+            //     newDist = curDist + deltaD;
+            //     double modifiedNewTime = curTime + timeToLimit; 
+            //     if (newDist < curDist) {
+            //         System.out.println("Found issue 2: ");
+            //     }
+            //     //System.out.println("Potential extra neighbor: " + new Node(newDist, modifiedNewTime, v));
+            //     if(!signalViolation(curDist, newDist, curTime, modifiedNewTime, v)) {
 
-                    neighbors.add(new Node(newDist, modifiedNewTime, v));
-                } else {
-                    log_.debug("PLAN", "Remove candidate speed due to signal violation: " + v);
-                }
-                
-            }
+            //         neighbors.add(new Node(newDist, modifiedNewTime, v));
+            //     } else {
+            //         log_.debug("PLAN", "Remove candidate speed due to signal violation: " + v);
+            //     }
+            // }
         }
         log_.debug("PLAN", "Generating neighbors of size " + neighbors.size());
 
@@ -138,6 +141,10 @@ public class FinePathNeighbors extends NeighborBase {
         }
         
         List<Node> neightborsWithoutConflicts = neighbors.stream().filter(n -> !hasConflict(node, n)).collect(Collectors.toList());
+        // if (neightborsWithoutConflicts.size() == 0) {
+        //     double newSpeed = Math.max(curSpeed - (maxAccel_ * variableTimeInc), 0);
+        //     neightborsWithoutConflicts.add(new Node(curDist + ((curSpeed + newSpeed) * 0.5 *variableTimeInc), newTime, newSpeed));
+        // }
         numCollisions += (neighbors.size() - neightborsWithoutConflicts.size());
         return neightborsWithoutConflicts;
     }

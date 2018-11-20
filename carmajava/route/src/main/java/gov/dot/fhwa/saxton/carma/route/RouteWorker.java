@@ -272,6 +272,7 @@ public class RouteWorker {
       resetRouteStateVariables(); // Reset all route state variables when a new route is selected
       activeRoute = route;
 
+      log.info("Selected Route: " + route.routeName);
       handleEvent(WorkerEvent.ROUTE_SELECTED);
       return SetActiveRouteResponse.NO_ERROR;
     }
