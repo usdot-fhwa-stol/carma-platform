@@ -19,6 +19,7 @@ import org.ros.message.MessageFactory;
 import org.ros.message.Time;
 import org.ros.node.NodeConfiguration;
 
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialstructure.NSpatialHashMapFactory;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictManager;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IConflictDetector;
@@ -370,8 +371,8 @@ public class EADAStarPlanTest {
         
             // Create conflict manager using default guidance settings
         
-            // There may be a bug in ConflictManager or hash map because setting cell size for time to 3 makse the planning fail
-            ConflictManager cm = new ConflictManager(new double[] {20.0, 15.0, 1.5}, 5.0, 1.2, 0.1, // USE THESE VALUES
+            // There may be a bug in ConflictManager or hash map because setting cell size for time to 3 makes the planning fail
+            ConflictManager cm = new ConflictManager(new NSpatialHashMapFactory(new double[] {20.0, 15.0, 2.0}), 5.0, 1.2, 0.1, // USE THESE VALUES
             0.0, -0.25, 0.0, mobilityTimeProvider);
         
             cm.setRoute(route);
@@ -396,6 +397,9 @@ public class EADAStarPlanTest {
             when(ps.getDouble("~ead/NCVHandling/collision/longitudinalBias")).thenReturn(0.0);
             when(ps.getDouble("~ead/NCVHandling/collision/lateralBias")).thenReturn(0.0);
             when(ps.getDouble("~ead/NCVHandling/collision/temporalBias")).thenReturn(0.0);
+            when(ps.getDouble("~ead/NCVHandling/collision/cell_downtrack_size")).thenReturn(20.0);
+            when(ps.getDouble("~ead/NCVHandling/collision/cell_crosstrack_size")).thenReturn(15.0);
+            when(ps.getDouble("~ead/NCVHandling/collision/cell_time_size")).thenReturn(2.0);
 
             ObjectCollisionChecker occ = new ObjectCollisionChecker(psl, motionPredictorFactory, planInterpolator);
 

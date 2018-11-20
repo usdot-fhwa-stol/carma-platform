@@ -14,28 +14,29 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialhashmap;
+package gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialstructure;
 
 import java.util.HashMap;
 
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.AxisAlignedBoundingBox;
 
 /**
- * Factory/builder pattern class for the construction of NSpatialHashMap instances.
+ * Factory pattern class for the construction of NSpatialHashMap instances.
  * <p>
  * Assigns the strategies needed by the NSpatialHashMap instance.
  */
-public class NSpatialHashMapFactory {
+public class NSpatialHashMapFactory implements ISpatialStructureFactory{
+    public final double[] cellDims;
     /**
-     * Build a NSpatialHashMap with the default configuration.
-     * <p>
-     * {@link SimpleHashStrategy} is used to hash objects
-     * {@link AxisAlignedBoundingBox} is used for collision detection
-     * {@link HashMap} is used for the underlying data structure
+     * Constructor
      * 
-     * The returned map is not thread safe on its own
+     * @param cellDims The dimensions of a cell which this will map points to
      */
-    public static NSpatialHashMap buildSpatialHashMap(double[] cellDims) {
+    public NSpatialHashMapFactory(double[] cellDims) {
+        this.cellDims = cellDims;
+    }
+    @Override
+    public NSpatialHashMap buildSpatialStructure() {
         return new NSpatialHashMap(new AxisAlignedBoundingBox(), new SimpleHashStrategy(cellDims), new HashMap<>());
     }
 }

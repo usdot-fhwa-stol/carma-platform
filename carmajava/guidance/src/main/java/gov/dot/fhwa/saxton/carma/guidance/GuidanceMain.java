@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.guidance;
 
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialstructure.NSpatialHashMapFactory;
 import gov.dot.fhwa.saxton.carma.guidance.arbitrator.Arbitrator;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictManager;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IMobilityTimeProvider;
@@ -212,7 +213,7 @@ public class GuidanceMain extends SaxtonBaseNode {
     // Set time strategy
     IMobilityTimeProvider timeProvider = new SystemUTCTimeProvider();
     // Build conflict manager
-    conflictManager = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, lateralBias,
+    conflictManager = new ConflictManager(new NSpatialHashMapFactory(cellSize), downtrackMargin, crosstrackMargin, timeMargin, lateralBias,
     longitudinalBias, temporalBias, timeProvider);
   }
 

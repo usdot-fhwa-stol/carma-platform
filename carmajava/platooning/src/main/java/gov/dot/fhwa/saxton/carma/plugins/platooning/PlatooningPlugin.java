@@ -225,7 +225,32 @@ public class PlatooningPlugin extends AbstractPlugin
         log.info("Load param desiredTimeGap = " + desiredTimeGap);
         log.info("Load param platooningMinGap = " + platooningMinGap);
         
-        // get get_drivers_with_capabilities service
+        
+        
+        // initialize necessary pubs/subs
+        mobilityRequestPublisher   = pubSubService.getPublisherForTopic("outgoing_mobility_request", MobilityRequest._TYPE);
+        mobilityOperationPublisher = pubSubService.getPublisherForTopic("outgoing_mobility_operation", MobilityOperation._TYPE);
+        platooningInfoPublisher    = pubSubService.getPublisherForTopic("platooning_info", PlatooningInfo._TYPE);
+        roadwaySub                 = pubSubService.getSubscriberForTopic("roadway_environment", RoadwayEnvironment._TYPE);
+        
+        
+        // get light bar manager
+        lightBarManager = pluginServiceLocator.getLightBarManager();
+        
+        // get control on mobility path capability
+        AtomicBoolean tempCapability = pluginServiceLocator.getMobilityRouter().acquireDisableMobilityPathCapability();
+        if(tempCapability != null) {
+            this.handleMobilityPath = tempCapability;
+            log.debug("Acquired control on mobility router for handling mobility path");
+        } else {
+            log.warn("Try to acquire control on mobility router for handling mobility path but failed");
+        }
+    }
+
+    @Override
+    public void onResume() {
+    	
+    	// get get_drivers_with_capabilities service
         String cmdSpeedTopic = null;
         try {
             getCapabilitiesService = pubSubService.getServiceForTopic("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
@@ -266,25 +291,6 @@ public class PlatooningPlugin extends AbstractPlugin
             }
         }
         
-        // initialize necessary pubs/subs
-        mobilityRequestPublisher   = pubSubService.getPublisherForTopic("outgoing_mobility_request", MobilityRequest._TYPE);
-        mobilityOperationPublisher = pubSubService.getPublisherForTopic("outgoing_mobility_operation", MobilityOperation._TYPE);
-        platooningInfoPublisher    = pubSubService.getPublisherForTopic("platooning_info", PlatooningInfo._TYPE);
-        roadwaySub                 = pubSubService.getSubscriberForTopic("roadway_environment", RoadwayEnvironment._TYPE);
-        
-        
-        // get light bar manager
-        lightBarManager = pluginServiceLocator.getLightBarManager();
-        
-        // get control on mobility path capability
-        AtomicBoolean tempCapability = pluginServiceLocator.getMobilityRouter().acquireDisableMobilityPathCapability();
-        if(tempCapability != null) {
-            this.handleMobilityPath = tempCapability;
-            log.debug("Acquired control on mobility router for handling mobility path");
-        } else {
-            log.warn("Try to acquire control on mobility router for handling mobility path but failed");
-        }
-        
         if(mobilityRequestPublisher != null && mobilityOperationPublisher != null && platooningInfoPublisher != null
                 && roadwaySub != null && cmdSpeedSub != null) {
             pubSubInitialized = true;
@@ -292,10 +298,7 @@ public class PlatooningPlugin extends AbstractPlugin
         } else {
             log.info("Platooning plugin's sub/pub initialization failed");
         }
-    }
-
-    @Override
-    public void onResume() {
+        
         if(pubSubInitialized) {
          // register with MobilityRouter
             pluginServiceLocator.getMobilityRouter().registerMobilityRequestHandler(MOBILITY_STRATEGY, this);

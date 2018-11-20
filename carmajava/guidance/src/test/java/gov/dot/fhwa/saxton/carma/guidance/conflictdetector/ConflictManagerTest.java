@@ -37,6 +37,7 @@ import static org.mockito.Mockito.*;
 import gov.dot.fhwa.saxton.carma.geometry.GeodesicCartesianConverter;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point;
 import gov.dot.fhwa.saxton.carma.geometry.cartesian.Point3D;
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialstructure.NSpatialHashMapFactory;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.FutureLateralManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.IManeuver;
@@ -90,7 +91,7 @@ public class ConflictManagerTest {
     double timeMargin = 0.05;
     MockTimeProvider timeProvider = new MockTimeProvider();
     timeProvider.setCurrentTime(0.0);
-    ConflictManager cm = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, 0.0, 0.0, 0.0, timeProvider);
+    ConflictManager cm = new ConflictManager(new NSpatialHashMapFactory(cellSize), downtrackMargin, crosstrackMargin, timeMargin, 0.0, 0.0, 0.0, timeProvider);
     cm.setRoute(route);
     // Build path
     List<RoutePointStamped> path = new ArrayList<>();
@@ -113,7 +114,7 @@ public class ConflictManagerTest {
     double timeMargin = 0.5;
     MockTimeProvider timeProvider = new MockTimeProvider();
     timeProvider.setCurrentTime(0.0);
-    ConflictManager cm = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, 0.0, 0.0, 0.0, timeProvider);
+    ConflictManager cm = new ConflictManager(new NSpatialHashMapFactory(cellSize), downtrackMargin, crosstrackMargin, timeMargin, 0.0, 0.0, 0.0, timeProvider);
     cm.setRoute(route);
     // Build path
     List<RoutePointStamped> path = new ArrayList<>();
@@ -170,7 +171,7 @@ public class ConflictManagerTest {
     double timeMargin = 0.5;
     MockTimeProvider timeProvider = new MockTimeProvider();
     timeProvider.setCurrentTime(0.0);
-    ConflictManager cm = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, 0.0, 0.0, 0.0, timeProvider);
+    ConflictManager cm = new ConflictManager(new NSpatialHashMapFactory(cellSize), downtrackMargin, crosstrackMargin, timeMargin, 0.0, 0.0, 0.0, timeProvider);
     cm.setRoute(route);
     // Build path
     List<RoutePointStamped> path = new ArrayList<>();
@@ -229,7 +230,7 @@ public class ConflictManagerTest {
     double timeMargin = 0.5;
     MockTimeProvider timeProvider = new MockTimeProvider();
     timeProvider.setCurrentTime(0.0);
-    ConflictManager cm = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, 0.0, 0.0, 0.0, timeProvider);
+    ConflictManager cm = new ConflictManager(new NSpatialHashMapFactory(cellSize), downtrackMargin, crosstrackMargin, timeMargin, 0.0, 0.0, 0.0, timeProvider);
     cm.setRoute(route);
     //// Test conflict with same path
     // Build path
@@ -528,7 +529,7 @@ public class ConflictManagerTest {
     double timeMargin = 0.5;
     MockTimeProvider timeProvider = new MockTimeProvider();
     timeProvider.setCurrentTime(0.0);
-    ConflictManager cm = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, 0.0, 0.0, 0.0, timeProvider);
+    ConflictManager cm = new ConflictManager(new NSpatialHashMapFactory(cellSize), downtrackMargin, crosstrackMargin, timeMargin, 0.0, 0.0, 0.0, timeProvider);
     cm.setRoute(route);
     //// Test conflict with same path
     // Build path
@@ -734,7 +735,7 @@ public class ConflictManagerTest {
     double timeMargin = 0.5;
     MockTimeProvider timeProvider = new MockTimeProvider();
     timeProvider.setCurrentTime(0.0);
-    ConflictManager cm = new ConflictManager(cellSize, downtrackMargin, crosstrackMargin, timeMargin, 0.0, 0.0, 0.0, timeProvider);
+    ConflictManager cm = new ConflictManager(new NSpatialHashMapFactory(cellSize), downtrackMargin, crosstrackMargin, timeMargin, 0.0, 0.0, 0.0, timeProvider);
     cm.setRoute(route);
     //// Test conflict with same path
     // Build path
