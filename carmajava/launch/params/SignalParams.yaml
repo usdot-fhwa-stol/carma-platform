@@ -113,7 +113,7 @@ asd/maxpacketsize: 1472
 #comma-separated list of (decimal) intersections IDs that will be used; other intersections ignored
 # TFHRC West Int: 9709
 # TFHRC East Int: 9945
-asd/intersections: "9709,9945"
+asd/intersections: "9709"
 
 # number of time steps after first seeing data from a new intersection before we start calculating spat reliability
 asd/minSamplesForReliability: 4
@@ -232,7 +232,7 @@ ead/NCVHandling/collision/distanceStep: 2.5
 
 # Double: The amount of forward time to predict detected NCV motion for
 # Units: s
-ead/NCVHandling/collision/timeDuration: 3.0
+ead/NCVHandling/collision/timeDuration: 18.0
 
 # Double: The amount of buffer to put around the host vehicle's downtrack bounds when doing a collision check
 # The downtrack margin will be (vehicle's length / 2.0) + downtrack buffer

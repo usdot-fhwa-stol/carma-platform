@@ -139,7 +139,7 @@ public class EadAStar implements IEad {
         //rough distance need to convert from cm to m
         double exitDist = intList_.get(numInt - 1).bestDTSB();
         //plan to one more intersection width after the last intersection
-        double recoveryDist = CoarsePathNeighbors.TYPICAL_INTERSECTION_WIDTH; 
+        double recoveryDist = CoarsePathNeighbors.TYPICAL_INTERSECTION_WIDTH * 3.0;  // TODO 3 multiplier is work around for NCV blocking goal
         exitDist += recoveryDist;
 
         //At this point we may be dealing with a single intersection that is nearby, or a string of several

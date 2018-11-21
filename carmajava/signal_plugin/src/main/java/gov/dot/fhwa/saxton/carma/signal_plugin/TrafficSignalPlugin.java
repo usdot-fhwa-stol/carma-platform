@@ -175,7 +175,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
         // Initialize custom maneuver inputs
         IManeuverInputs platformInputs = pluginServiceLocator.getManeuverPlanner().getManeuverInputs();
-        pluginManeuverInputs = new TrafficSignalManeuverInputs(platformInputs, appConfig.getDoubleValue("ead.response.lag"), appConfig.getDoubleValue("defaultAccel"));
+        pluginManeuverInputs = new TrafficSignalManeuverInputs(platformInputs, appConfig.getDoubleValue("ead.response.lag"), appConfig.getDoubleValue("defaultAccel") + 1.0);
         pluginManeuverPlanner = new ManeuverPlanner(pluginServiceLocator.getManeuverPlanner().getGuidanceCommands(), pluginManeuverInputs);
         
         acceptableStopDistance = appConfig.getDoubleDefaultValue("ead.acceptableStopDistance", 6.0);
@@ -939,12 +939,14 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                     traj.addManeuver(steadySpeed);
                 } else if (prev.getSpeedAsDouble() < cur.getSpeedAsDouble()) {
                     SpeedUp speedUp = new SpeedUp(this);
+                    speedUp.setMaxAccel(pluginManeuverInputs.getMaxAccelLimit());
                     speedUp.setSpeeds(prev.getSpeedAsDouble(), cur.getSpeedAsDouble());
                     pluginManeuverPlanner.planManeuver(speedUp,
                             startDist + prev.getDistanceAsDouble(), startDist + cur.getDistanceAsDouble());
                     traj.addManeuver(speedUp);
                 } else {
                     SlowDown slowDown = new SlowDown(this);
+                    slowDown.setMaxAccel(pluginManeuverInputs.getMaxAccelLimit());
                     slowDown.setSpeeds(prev.getSpeedAsDouble(), cur.getSpeedAsDouble());
                     pluginManeuverPlanner.planManeuver(slowDown,
                             startDist + prev.getDistanceAsDouble(), startDist + cur.getDistanceAsDouble());
