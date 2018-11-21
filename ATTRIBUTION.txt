@@ -3,7 +3,7 @@ The following people have made direct and substantial contributions to the desig
 * Mae Fromm - Software Engineer (Leidos)
 * Michael McConnell - Software Engineer (Leidos)
 * Shuwei Qiang - Software Engineer (Leidos)
-* Kyle Rush - Lead Software Engineer (Leidos) 
+* Kyle Rush - Software Engineer (Leidos) 
 * John Stark - Software Engineer & Principal Investigator (Leidos)
 
 Other significant contributions have been made by:
