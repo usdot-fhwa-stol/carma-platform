@@ -12,7 +12,7 @@ Other significant contributions have been made by:
 * Michael Chang - Unit Testing & Verification (Leidos) 
 * Laura Dailey - Graphics, Communications & Publicity (Leidos)
 * Darrell Dorman - Site setup & Configuration Management (Leidos) 
-* Ed Leslie - Project Management (Leidos)
+* Ed Leslie - Vehicle hardware & project management (Leidos)
 * Sudkahar Nallamothu - Project Management (Leidos)
 * Tim Tiernan - System Test Lead (Volpe) 
 * Thomas Watters - Driver Development (formerly of TORC Robotics)
