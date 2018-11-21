@@ -1,10 +1,10 @@
 The following people have made direct and substantial contributions to the design and code in this repository, listed in alphabetical order:
 * David Ference - Software Engineer (Leidos)
-* Mae Fromm - Developer (Leidos)
-* Michael McConnell - Developer (Leidos)
-* Shuwei Qiang - Developer (Leidos)
-* Kyle Rush - Lead Developer (Leidos) 
-* John Stark - Principal Investigator (Leidos)
+* Mae Fromm - Software Engineer (Leidos)
+* Michael McConnell - Software Engineer (Leidos)
+* Shuwei Qiang - Software Engineer (Leidos)
+* Kyle Rush - Lead Software Engineer (Leidos) 
+* John Stark - Software Engineer & Principal Investigator (Leidos)
 
 Other significant contributions have been made by:
 * Philip Azeredo - System Test (Volpe) 
