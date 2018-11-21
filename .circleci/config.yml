@@ -11,6 +11,6 @@ jobs:
       - run:
           name: Print the Current Time
           command: date
-     - run:
+      - run:
           name:  SourceClear Scan
           command:  curl -sSL https://download.sourceclear.com/ci.sh | bash
