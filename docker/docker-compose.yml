@@ -5,12 +5,10 @@ services:
     image: carma-web:latest
     network_mode: host
     container_name: carma-web
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+    volumes_from: 
+      - container:carma-config:ro
+    volumes: 
+      - /var/run/docker.sock:/var/run/docker.sock 
     ports:
       - 80:80
-  roscore:
-    image: ros:kinetic-ros-base
-    network_mode: host
-    container_name: roscore
-    command: roscore
+    restart: unless-stopped

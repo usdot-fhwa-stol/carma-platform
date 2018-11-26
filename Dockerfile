@@ -65,7 +65,7 @@ FROM ros:kinetic-ros-base AS install
 RUN apt-get update && \
         apt-get install -y \
         ros-kinetic-rosjava \
-        ros-kinetic-rosbridge-server \
+        ros-kinetic-rosbridge-server && \
        rosdep update
 
 # Copy the source files from the previous stage and build/install
@@ -106,5 +106,12 @@ USER carma
 # Migrate the files from the install stage
 COPY --from=install --chown=carma /opt/carma /opt/carma
 COPY --from=install --chown=carma /root/.bashrc /home/carma/.bashrc
+ADD carmajava/launch/cadillac_config/* /opt/carma/vehicle/
+RUN ln -sf /var/www/html/scripts/carma.config.js && \
+        ln -sf /opt/carma/params/HostVehicleParams.yaml /opt/carma/vehicle/HostVehicleParams.yaml && \
+        ln -sf /opt/carma/urdf/saxton_cav.urdf /opt/carma/vehicle/saxton_cav.urdf && \
+        ln -sf /opt/carma/launch/saxton_cav.launch /opt/carma/launch/saxton_cav.launch && \
+        ln -sf /opt/carma/drivers/drivers.launch /opt/carma/vehicle/drivers.launch && \
+        ln -sf /var/www/html/scripts/carma.config.js /opt/carma/vehicle/carma.config.js
 
 ENTRYPOINT [ "/opt/carma/entrypoint.sh" ]

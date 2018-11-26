@@ -18,5 +18,4 @@
 # CARMA Docker Entrypoint Script
 
 source /opt/carma/app/bin/setup.bash
-RECORD_ROSBAG=$1
-tmux new-session -s carma -- roslaunch carma saxton_cav.launch use_rosbag:=$RECORD_ROSBAG
+tmux new-session -s carma -- roslaunch carma saxton_cav.launch use_rosbag:=true
