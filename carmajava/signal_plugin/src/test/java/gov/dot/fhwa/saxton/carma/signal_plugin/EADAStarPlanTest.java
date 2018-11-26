@@ -79,6 +79,11 @@ public class EADAStarPlanTest {
         when(mockConfig.getDoubleValue("ead.MOVES.vehicleMassInTons")).thenReturn(1.86686); 
         when(mockConfig.getDoubleValue("ead.MOVES.fixedMassFactor")).thenReturn(1.86686); 
         when(mockConfig.getProperty("ead.MOVES.baseRateTablePath")).thenReturn("/opt/carma/src/CARMAPlatform/carmajava/launch/params/BaseRateForPassengerTruck.csv");
+        
+        when(mockConfig.getDoubleValue("ead.MOVES.fuelNormalizationDenominator")).thenReturn(425000.0); 
+        when(mockConfig.getDoubleValue("ead.MOVES.timeNormalizationDenominator")).thenReturn(2.0); 
+        when(mockConfig.getDoubleValue("ead.MOVES.heuristicWeight")).thenReturn(60.0); 
+        
         mockReplanHandle = mock(IReplanHandle.class, Mockito.withSettings().stubOnly());
     }
 
@@ -630,6 +635,157 @@ public class EADAStarPlanTest {
                 for(Node n : res) {
                     System.out.println(n.toString());
                 }
+            } catch(Exception e) {
+                System.out.println("NumCollisions: " + FinePathNeighbors.numCollisions);
+                e.printStackTrace();
+                assertTrue(false); // indicate the failure
+            }
+        }
+        System.out.println("AverageTime: " + (totalTime / samples));
+    }
+
+    @Test
+    public void planTwoIntersectionWithComplexNCV() {
+
+        int samples = 1;
+        long totalTime = 0;
+        for (int i =0; i < samples; i++) {
+
+            // FAILED: DTSB1: 50.0 DTSB2: 130.0 Phase1: RED Phase2: RED timeToNext1: 11.0 timeToNext2: 10.0
+            when(mockConfig.getDoubleDefaultValue("ead.coarse_time_inc", 5.0)).thenReturn(2.0);
+            when(mockConfig.getDoubleDefaultValue("ead.coarse_speed_inc", 3.0)).thenReturn(2.0);
+            when(mockConfig.getDoubleDefaultValue("ead.fine_time_inc", 2.0)).thenReturn(2.0);
+            when(mockConfig.getDoubleDefaultValue("ead.fine_speed_inc", 1.0)).thenReturn(1.0);
+            when(mockConfig.getDoubleDefaultValue("ead.acceptableStopDistance", 6.0)).thenReturn(6.0);
+
+
+    //// Start setup of collision checker
+            IMotionInterpolator planInterpolator = new PlanInterpolator();
+            IMotionPredictorModelFactory motionPredictorFactory = new DefaultMotionPredictorFactory(mock(IGlidepathAppConfig.class, Mockito.withSettings().stubOnly()));
+        
+            PluginServiceLocator        psl = mock(PluginServiceLocator.class, Mockito.withSettings().stubOnly());
+            ParameterSource             ps = mock(ParameterSource.class, Mockito.withSettings().stubOnly());
+            RouteService                rs = mock(RouteService.class, Mockito.withSettings().stubOnly());
+            ITimeProvider               tp = mock(ITimeProvider.class, Mockito.withSettings().stubOnly());
+            IMobilityTimeProvider mobilityTimeProvider = mock(IMobilityTimeProvider.class, Mockito.withSettings().stubOnly());
+            ArbitratorService           as = mock(ArbitratorService.class, Mockito.withSettings().stubOnly());
+            Route                       route = mock(Route.class, Mockito.withSettings().stubOnly());
+            RouteSegment mockSegment = mock(RouteSegment.class, Mockito.withSettings().stubOnly());
+            List<RouteSegment> routeSegments = new ArrayList<>(Collections.nCopies(200, mockSegment)); // Create route full of the mocked segment
+            when(route.getSegments()).thenReturn(routeSegments);
+            when(mockSegment.determinePrimaryLane(anyDouble())).thenReturn(0);
+        
+            // Create conflict manager using default guidance settings
+        
+            // There may be a bug in ConflictManager or hash map because setting cell size for time to 3 makes the planning fail
+            ConflictManager cm = new ConflictManager(new NSpatialHashMapFactory(new double[] {20.0, 15.0, 2.0}), 5.0, 1.2, 0.1, // USE THESE VALUES
+            0.0, -0.25, 0.0, mobilityTimeProvider);
+        
+            cm.setRoute(route);
+        
+            when(psl.getParameterSource()).thenReturn(ps);
+            when(psl.getRouteService()).thenReturn(rs);
+            when(psl.getTimeProvider()).thenReturn(tp);
+            when(psl.getConflictDetector()).thenReturn(cm);
+            when(psl.getArbitratorService()).thenReturn(as);
+        
+
+
+            when(ps.getString("~ead/NCVHandling/objectMotionPredictorModel")).thenReturn("SIMPLE_LINEAR_REGRESSION");
+            when(ps.getInteger("~ead/NCVHandling/collision/maxObjectHistoricalDataAge")).thenReturn(6000);
+            when(ps.getDouble("~ead/NCVHandling/collision/distanceStep")).thenReturn(2.5);
+            when(ps.getDouble("~ead/NCVHandling/collision/timeDuration")).thenReturn(3.0);
+            when(ps.getDouble("~ead/NCVHandling/collision/downtrackBuffer")).thenReturn(3.0);
+            when(ps.getDouble("~ead/NCVHandling/collision/crosstrackBuffer")).thenReturn(2.0);
+            when(ps.getDouble("vehicle_length")).thenReturn(4.8768);
+            when(ps.getDouble("vehicle_width")).thenReturn(2.1336);
+            when(ps.getDouble("~ead/NCVHandling/collision/timeMargin")).thenReturn(0.2);
+            when(ps.getDouble("~ead/NCVHandling/collision/longitudinalBias")).thenReturn(0.0);
+            when(ps.getDouble("~ead/NCVHandling/collision/lateralBias")).thenReturn(0.0);
+            when(ps.getDouble("~ead/NCVHandling/collision/temporalBias")).thenReturn(0.0);
+            when(ps.getDouble("~ead/NCVHandling/collision/cell_downtrack_size")).thenReturn(20.0);
+            when(ps.getDouble("~ead/NCVHandling/collision/cell_crosstrack_size")).thenReturn(15.0);
+            when(ps.getDouble("~ead/NCVHandling/collision/cell_time_size")).thenReturn(2.0);
+
+            ObjectCollisionChecker occ = new ObjectCollisionChecker(psl, motionPredictorFactory, planInterpolator, mockReplanHandle);
+
+            //// End setup of collision checker
+
+            //// Set starting state
+
+            // Return the current lane id as 0 with crosstrack 0.0
+            when(rs.getCurrentCrosstrackDistance()).thenReturn(0.0);
+            when(rs.getCurrentRouteSegment()).thenReturn(mockSegment);
+            double currentDowntrack = 0.0;
+            when(rs.getCurrentDowntrackDistance()).thenReturn(currentDowntrack);
+            when(rs.isRouteDataAvailable()).thenReturn(true);
+
+            long currentTime = 510L; // The current time is 0.51
+            when(tp.getCurrentTimeMillis()).thenReturn(currentTime);
+            when(mobilityTimeProvider.getCurrentTimeMillis()).thenReturn(currentTime);
+
+            //// End set starting state
+
+
+
+
+            // Add one obstacle in current lane
+            RoadwayObstacle ro = newRoadwayObstacle(0, 20, 0.5, 2.0); // Object id 0 with stamp at 0.5
+            ro.setPrimaryLane((byte)0);
+            occ.updateObjects(Arrays.asList(ro));
+
+            currentTime = 610L; // The current time is 0.61
+
+            // Obstacle is sampled a second time
+            RoadwayObstacle ro2 = newRoadwayObstacle(0, 20.2, 0.6, 2.0); // Object id 0 with stamp at 0.6
+            ro.setPrimaryLane((byte)0);
+            occ.updateObjects(Arrays.asList(ro2));
+
+
+            long startTime = System.currentTimeMillis();
+            PLAN_START_TIME = startTime;
+            EadAStar ead = new EadAStar(occ);
+            ead.initialize(1, new AStarSolver());
+            IntersectionData intersection1 = new IntersectionData(); // Id 9709
+            intersection1.map = mock(MapMessage.class, Mockito.withSettings().stubOnly());
+            intersection1.roughDist = 2000;
+            intersection1.dtsb = 50.00;
+            intersection1.currentPhase = SignalPhase.GREEN;
+            intersection1.timeToNextPhase = 15;
+            intersection1.stopBoxWidth = 32.90;
+            intersection1.intersectionId = 9709;
+            intersection1.geometry = new IntersectionGeometry(40, 100);
+            IntersectionData intersection2 = new IntersectionData(); // Id 9945
+            intersection2.map = mock(MapMessage.class, Mockito.withSettings().stubOnly());
+            intersection2.roughDist = 10000;
+            intersection2.dtsb = 130.00;
+            intersection2.currentPhase = SignalPhase.GREEN;
+            intersection2.timeToNextPhase = 15.0;
+            intersection2.stopBoxWidth = 35.18;
+            intersection2.intersectionId = 9945;
+            intersection2.geometry = new IntersectionGeometry(40, 100);
+            List<IntersectionData> intersections = Arrays.asList(intersection1, intersection2);
+            try {
+               // System.out.println("Plan Start Time: " + (double)(currentTime + 10L) / 1000.0);
+                List<Node> res = ead.plan(0.0, 11.176, intersections, (double)(currentTime + 10L) / 1000.0, currentDowntrack);
+                //System.out.println("TimeSpentBuildingMaps: " + TimeUnit.NANOSECONDS.toMillis(ConflictManager.nanoSecBuilding));
+                //System.out.println("TimeSpentCheckingMaps: " + TimeUnit.NANOSECONDS.toMillis(ConflictManager.nanoSecChecking));
+                // If there is no prediction, the plan is:
+    //            Node{distance=       0, time=     0, speed=   2}
+    //            Node{distance=       6, time=     2, speed=   4}
+    //            Node{distance=      17, time=     4, speed=   7}
+    //            Node{distance=      34, time=     6, speed=  10}
+    //            Node{distance=      40, time=     7, speed=  11}
+    //            Node{distance=      62, time=     9, speed=  11}
+    //            Node{distance=      83, time=    11, speed=  10}
+    //            Node{distance=     104, time=    13, speed=  11}
+    //            Node{distance=     125, time=    15, speed=  10}
+                totalTime += System.currentTimeMillis() - startTime;
+                System.out.println("A* Planning for one intersections takes " + (System.currentTimeMillis() - startTime) + " ms to finish");
+                for(Node n : res) {
+                    System.out.println(n.toString());
+                }
+                System.out.println("NumCollisions: " + FinePathNeighbors.numCollisions);
             } catch(Exception e) {
                 System.out.println("NumCollisions: " + FinePathNeighbors.numCollisions);
                 e.printStackTrace();

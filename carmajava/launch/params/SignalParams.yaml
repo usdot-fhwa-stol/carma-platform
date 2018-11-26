@@ -291,4 +291,17 @@ ead/MOVES/fixedMassFactor: 1.86686
 # The path to the table used for determining vehicle energy usage rates based on operation mode and source id
 ead/MOVES/baseRateTablePath: '/opt/carma/params/BaseRateForPassengerTruck.csv'
 
+# The value which the calculated fuel cost will be devided by to generate a normalize cost from ~0-1
+# Units: Joules
+ead/MOVES/fuelNormalizationDenominator: 425000.0
+
+# The value which the calculated time cost will be devided by to generate a normalize cost from ~0-1
+# This should be the same as the timestep size
+# Units: Joules
+ead/MOVES/timeNormalizationDenominator: 2.0
+
+# The value which will be multiplied by the hueristic of a node to make A* operate as Weighted A*. 
+# Units: The same as the heuristic measurement (default is distance in meters)
+ead/MOVES/heuristicWeight: 60.0
+
 #### End of Parameters used in MOVES Fuel Cost Model

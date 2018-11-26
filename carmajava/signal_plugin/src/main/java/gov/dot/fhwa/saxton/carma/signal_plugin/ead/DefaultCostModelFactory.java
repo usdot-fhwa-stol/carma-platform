@@ -61,14 +61,19 @@ public class DefaultCostModelFactory implements ICostModelFactory{
         return new FuelCostModel(vehicleMass, rollingRes, dragCoef, frontalArea, airDensity, idlePower, useIdleMin);
       case "MOVES_2010":
         double rollingTermA = config.getDoubleValue("ead.MOVES.rollingTermA");
-        double rotatingTermB = config.getDoubleDefaultValue("ead.MOVES.rotatingTermB", 0.0);
+        double rotatingTermB = config.getDoubleValue("ead.MOVES.rotatingTermB");
         double dragTermC = config.getDoubleValue("ead.MOVES.dragTermC");
         double vehicleMassInTons = config.getDoubleValue("ead.MOVES.vehicleMassInTons");
         double fixedMassFactor = config.getDoubleValue("ead.MOVES.fixedMassFactor");
         String baseRateTablePath = config.getProperty("ead.MOVES.baseRateTablePath");
 
+        double fuelNormalizationDenominator = config.getDoubleValue("ead.MOVES.fuelNormalizationDenominator");
+        double timeNormalizationDenominator = config.getDoubleValue("ead.MOVES.timeNormalizationDenominator");
+        double heuristicWeight = config.getDoubleValue("ead.MOVES.heuristicWeight");
+
         try {
-          return new MovesFuelCostModel(rollingTermA, rotatingTermB, dragTermC, vehicleMassInTons, fixedMassFactor, baseRateTablePath);
+          return new MovesFuelCostModel(rollingTermA, rotatingTermB, dragTermC, vehicleMassInTons, fixedMassFactor, baseRateTablePath,
+            fuelNormalizationDenominator, timeNormalizationDenominator, heuristicWeight);
         } catch (IOException e) {
           throw new IllegalArgumentException(e.getMessage());
         }

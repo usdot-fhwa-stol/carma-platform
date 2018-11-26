@@ -61,24 +61,31 @@ public class MovesFuelCostModel implements ICostModel {
 
     private int numCosts = 0;
     protected static final ILogger log = LoggerManager.getLogger(FuelCostModel.class);
-    protected static final double FUEL_COST_NORMALIZATION_DENOMINATOR = 425000.0;
-    protected static final double TIME_COST_NORMALIZATION_DENOMINATOR = 2.0;
-    protected static final double HEURISTICS_MULTIPLIER = 60.0;
+    protected final double fuelNormalizationDenominator;
+    protected final double timeNormalizationDenominator;
+    protected final double heuristicWeight;
 
     /**
      * Builds the cost model object with several injected calculation parameters.
      * These parameters should come from the EPA "MOVES2010 Highway Vehicle Population and Activity Data",
      * in accordance with the MOVES Brief document provided by UCR.
+     * 
      * @param rollingTermA - Term corresponding to vehicle roll. Units: kW - s/m
      * @param rotatingTermB - Term corresponding to vehicle rotation. Units: kW - s^2/m^2
      * @param dragTermC - Term corresponding to vehicle drag. Units: kW - s^3/m^3
      * @param vehicleMassInTons - Source vehicle mass. Units: metric tons
      * @param fixedMassFactor - Fixed mass factor. Units: metric tons
      * @param baseRateTablePath - Path to the csv file used to store the energy consumption parameters based on vehicle state
+     * @param fuelNormalizationDenominator - Divides the calculated fuel cost to normalize it for a range ~0-1
+     * @param timeNormalizationDenominator - Divides the calculated time cost to normalize it for a range ~0-1
+     * @param heuristicWeight - Weight factor to apply to the calculated heuristic. When non-one A* will behave as Weighted A*
+     * 
      * @throws IOException - Exception thrown when the file specified by baseRateTablePath cannot be loaded properly
      */
     public MovesFuelCostModel(double rollingTermA, double rotatingTermB, double dragTermC, double vehicleMassInTons,
-        double fixedMassFactor, String baseRateTablePath) throws IOException {
+        double fixedMassFactor, String baseRateTablePath,
+        double fuelNormalizationDenominator, double timeNormalizationDenominator,
+        double heuristicWeight) throws IOException {
         //assign injected params
         this.rollingTermA = rollingTermA;
         this.rotatingTermB = rotatingTermB;
@@ -95,6 +102,10 @@ public class MovesFuelCostModel implements ICostModel {
             }
         }
 
+        this.timeNormalizationDenominator = timeNormalizationDenominator;
+        this.fuelNormalizationDenominator = fuelNormalizationDenominator;
+        this.heuristicWeight = heuristicWeight;
+        
         this.DEFAULT_PEAK_ENERGY_KJ = maxValue;
     }
 
@@ -202,8 +213,8 @@ public class MovesFuelCostModel implements ICostModel {
         // Get Parameters
         final List<Double> baseRateList = baseRateTable.get(opMode);
 
-        double normalizedFuelCost = (J_PER_KJ * ((baseRateList.get(BASE_RATE_ENERGY_COL) / SEC_PER_HR) * dt)) / FUEL_COST_NORMALIZATION_DENOMINATOR;
-        double normalizedTimeCost = (n2.getTimeAsDouble() - n1.getTimeAsDouble()) / TIME_COST_NORMALIZATION_DENOMINATOR;
+        double normalizedFuelCost = (J_PER_KJ * ((baseRateList.get(BASE_RATE_ENERGY_COL) / SEC_PER_HR) * dt)) / fuelNormalizationDenominator;
+        double normalizedTimeCost = (n2.getTimeAsDouble() - n1.getTimeAsDouble()) / timeNormalizationDenominator;
         //System.out.println("normalizedFuelCost: " + normalizedFuelCost);
         // time cost: n2.getTime() - n1.getTime()
         return normalizedFuelCost + normalizedTimeCost; // Return the energy in J by converting KJ/hr to KJ/s and multiplying by dt and J/KJ
@@ -289,7 +300,7 @@ public class MovesFuelCostModel implements ICostModel {
         //smooth acceleration from current location to ending location & speed, ignoring the signal
         double normalizedHeuristics = (goal.getDistanceAsDouble() - currentNode.getDistanceAsDouble()) / goal.getDistanceAsDouble(); 
         //System.out.println("normalizedHeuristics: " + normalizedHeuristics);
-        return normalizedHeuristics * HEURISTICS_MULTIPLIER;
+        return normalizedHeuristics * heuristicWeight;
     }
 
     @Override
