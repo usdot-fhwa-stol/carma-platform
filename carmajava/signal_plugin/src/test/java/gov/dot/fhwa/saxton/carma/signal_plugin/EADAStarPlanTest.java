@@ -404,6 +404,7 @@ public class EADAStarPlanTest {
             when(ps.getInteger("~ead/NCVHandling/collision/maxObjectHistoricalDataAge")).thenReturn(3000);
             when(ps.getDouble("~ead/NCVHandling/collision/distanceStep")).thenReturn(2.5);
             when(ps.getDouble("~ead/NCVHandling/collision/timeDuration")).thenReturn(3.0);
+            when(ps.getDouble("~ead/NCVHandling/collision/replanPeriod")).thenReturn(1.5);
             when(ps.getDouble("~ead/NCVHandling/collision/downtrackBuffer")).thenReturn(3.0);
             when(ps.getDouble("~ead/NCVHandling/collision/crosstrackBuffer")).thenReturn(2.0);
             when(ps.getDouble("vehicle_length")).thenReturn(4.8768);
@@ -546,6 +547,7 @@ public class EADAStarPlanTest {
             when(ps.getInteger("~ead/NCVHandling/collision/maxObjectHistoricalDataAge")).thenReturn(6000);
             when(ps.getDouble("~ead/NCVHandling/collision/distanceStep")).thenReturn(2.5);
             when(ps.getDouble("~ead/NCVHandling/collision/timeDuration")).thenReturn(3.0);
+            when(ps.getDouble("~ead/NCVHandling/collision/replanPeriod")).thenReturn(1.5);
             when(ps.getDouble("~ead/NCVHandling/collision/downtrackBuffer")).thenReturn(3.0);
             when(ps.getDouble("~ead/NCVHandling/collision/crosstrackBuffer")).thenReturn(2.0);
             when(ps.getDouble("vehicle_length")).thenReturn(4.8768);
@@ -695,6 +697,7 @@ public class EADAStarPlanTest {
             when(ps.getInteger("~ead/NCVHandling/collision/maxObjectHistoricalDataAge")).thenReturn(6000);
             when(ps.getDouble("~ead/NCVHandling/collision/distanceStep")).thenReturn(2.5);
             when(ps.getDouble("~ead/NCVHandling/collision/timeDuration")).thenReturn(3.0);
+            when(ps.getDouble("~ead/NCVHandling/collision/replanPeriod")).thenReturn(1.5);
             when(ps.getDouble("~ead/NCVHandling/collision/downtrackBuffer")).thenReturn(3.0);
             when(ps.getDouble("~ead/NCVHandling/collision/crosstrackBuffer")).thenReturn(2.0);
             when(ps.getDouble("vehicle_length")).thenReturn(4.8768);

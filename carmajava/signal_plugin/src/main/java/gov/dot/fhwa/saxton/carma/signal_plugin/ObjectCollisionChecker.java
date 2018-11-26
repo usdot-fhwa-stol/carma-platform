@@ -99,7 +99,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
     this.maxHistoricalDataAge = psl.getParameterSource().getInteger("~ead/NCVHandling/collision/maxObjectHistoricalDataAge");
     this.distanceStep = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/distanceStep");
     this.timeDuration = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/timeDuration");
-    this.NCVReplanPeriod = (long) ((timeDuration / 2.0) * MS_PER_S); // Always replan after half of the ncv prediction has elapsed
+    this.NCVReplanPeriod = (long) (psl.getParameterSource().getDouble("~ead/NCVHandling/collision/replanPeriod") * MS_PER_S); // Always replan after half of the ncv prediction has elapsed
     log.info("ReplanPeriod: " + NCVReplanPeriod);
     this.downtrackBuffer = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/downtrackBuffer");
     this.crosstrackBuffer = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/crosstrackBuffer");

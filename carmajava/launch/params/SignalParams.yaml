@@ -234,6 +234,11 @@ ead/NCVHandling/collision/distanceStep: 2.5
 # Units: s
 ead/NCVHandling/collision/timeDuration: 18.0
 
+# Double: The amount of time which will pass between replans caused by NCV detection. 
+# Should be at most half the ead/NCVHandling/collision/timeDuration value
+# Units: s
+ead/NCVHandling/collision/replanPeriod: 4.0
+
 # Double: The amount of buffer to put around the host vehicle's downtrack bounds when doing a collision check
 # The downtrack margin will be (vehicle's length / 2.0) + downtrack buffer
 # Units: m
