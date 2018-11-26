@@ -12,5 +12,9 @@ jobs:
           name: Install curl
           command: apt-get update && apt-get install -y curl
       - run:
+          name: ls
+          command:  ls
+      - run:
           name: SourceClear Scan
           command:  curl -sSL https://download.sourceclear.com/ci.sh | bash  
+
