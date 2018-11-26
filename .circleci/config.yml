@@ -1,13 +1,7 @@
 version: 2
 jobs:
   build:
-    docker:
-      - image: circleci/openjdk:latest
-    steps:
-      - checkout
-      - run:
-          name: Print the Current Time
-          command: date
+    steps:     
       - run:
           name: SourceClear Scan
           command:  curl -sSL https://download.sourceclear.com/ci.sh | bash  
