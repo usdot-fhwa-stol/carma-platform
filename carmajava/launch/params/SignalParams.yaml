@@ -201,6 +201,9 @@ ead/useIdleMin: false
 
 ## NCV Handling ##
 
+# Boolean: True if NCV handling will be enabled when operating the plugin. False otherwise
+ead/handleNCV: true
+
 # String: Identifies the NCV motion prediction model which will be used to predict future trajectories of detected NCVs
 # Options:
 # SIMPLE_LINEAR_REGRESSION: Simple linear regression used to predict motion based on past history
@@ -296,16 +299,16 @@ ead/MOVES/fixedMassFactor: 1.86686
 # The path to the table used for determining vehicle energy usage rates based on operation mode and source id
 ead/MOVES/baseRateTablePath: '/opt/carma/params/BaseRateForPassengerTruck.csv'
 
-# The value which the calculated fuel cost will be devided by to generate a normalize cost from ~0-1
+# Double: The value which the calculated fuel cost will be devided by to generate a normalize cost from ~0-1
 # Units: Joules
 ead/MOVES/fuelNormalizationDenominator: 425000.0
 
-# The value which the calculated time cost will be devided by to generate a normalize cost from ~0-1
+# Double: The value which the calculated time cost will be devided by to generate a normalize cost from ~0-1
 # This should be the same as the timestep size
 # Units: Joules
 ead/MOVES/timeNormalizationDenominator: 2.0
 
-# The value which will be multiplied by the hueristic of a node to make A* operate as Weighted A*. 
+# Double: The value which will be multiplied by the hueristic of a node to make A* operate as Weighted A*. 
 # Units: The same as the heuristic measurement (default is distance in meters)
 ead/MOVES/heuristicWeight: 60.0
 

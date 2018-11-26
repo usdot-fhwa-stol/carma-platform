@@ -28,6 +28,7 @@ import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.IMotionInterpolator;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.IMotionPredictor;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.INodeCollisionChecker;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ITrafficSignalPluginCollisionChecker;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 
 /**
@@ -38,7 +39,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
  * After a replan occurs additional replans will be requested at time increments equal to half the prediction period or when a new collision is identified
  * This system is capable of handling multiple in lane objects, but makes the assumption that lane id's will not change between the host vehicle and the detected objects.
  */
-public class ObjectCollisionChecker implements INodeCollisionChecker {
+public class ObjectCollisionChecker implements ITrafficSignalPluginCollisionChecker {
 
   private final IConflictDetector conflictDetector;
 
@@ -127,15 +128,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
     
   }
 
-  /**
-   * Function to be called when new objects are detected by host vehicle sensors
-   * This will update object histories and predictions
-   * If a collision is detected based on new predictions then a replan will be requested
-   * 
-   * Note: This function assumes this data will be provided at a fixed rate which is below half the prediction period 
-   * 
-   * @param obstacles The list of detected objects in route space around the vehicle
-   */
+  @Override
   public void updateObjects(List<RoadwayObstacle> obstacles) {
 
 	if(!routeService.isRouteDataAvailable()) {
@@ -254,15 +247,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
     }
   }
 
-  /**
-   * Sets the current host vehicle plan which will be used for collision checks
-   * The provided host plan will be interpolated using the provided IMotionInterpolator
-   * 
-   * @param hostPlan The host plan to set as the current plan
-   * @param startTime The time which planning is considered to have begun at. This is used for converting nodes to route locations
-	 * @param startDowntrack The downtrack distance where planning is considered to have begun at. This is used for converting nodes to route locations
-	 * 
-   */
+  @Override
   public void setHostPlan(List<Node> hostPlan, double startTime, double startDowntrack) {
     List<RoutePointStamped> hostPlanPoints = motionInterpolator.interpolateMotion(hostPlan, distanceStep, startTime, startDowntrack);
     log.info("CollisionChecker", "Found " + hostPlanPoints.size() + " stamped route points for the host plan:");

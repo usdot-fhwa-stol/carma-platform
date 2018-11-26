@@ -129,7 +129,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private EadAStar ead;
     private double operSpeedScalingFactor = 1.0;
     private double speedCommandQuantizationFactor = 0.1;
-    private ObjectCollisionChecker collisionChecker; // Collision checker responsible for tracking NCVs and providing collision checks capabilities
+    private ITrafficSignalPluginCollisionChecker collisionChecker; // Collision checker responsible for tracking NCVs and providing collision checks capabilities
     private AtomicBoolean involvedInControl = new AtomicBoolean(false);
     private double popupOnRedTime;
     private static final double CM_PER_M = 100.0;
@@ -160,12 +160,16 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
         // Setup the collision checker
         // This must be done before callbacks are created
-        this.collisionChecker = new ObjectCollisionChecker(
-            this.pluginServiceLocator,
-            new DefaultMotionPredictorFactory(appConfig),
-            new PlanInterpolator(),
-            this
-        );
+        if (appConfig.getBooleanValue("ead.handleNCV")) { // Check if we will handle NCVs
+            this.collisionChecker = new ObjectCollisionChecker(
+                this.pluginServiceLocator,
+                new DefaultMotionPredictorFactory(appConfig),
+                new PlanInterpolator(),
+                this
+            );
+        } else { // Use No-Op collision checker if not handling NCVs
+            this.collisionChecker = new NoCollisionChecker();
+        }
 
         // Pass params into GlidepathAppConfig
         appConfig = new GlidepathAppConfig(pluginServiceLocator.getParameterSource(), pluginServiceLocator.getRouteService());
@@ -850,16 +854,19 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             log.info("Requesting AStar plan with intersections: " + intersections.toString());
 
             try {
-                synchronized (collisionChecker) {
-                    log.info("EAD", "NCV at start of planning");
-                    for (Entry<Integer, List<RoutePointStamped>> prediction: collisionChecker.trackedLaneObjectsPredictions.entrySet()) {
-                        String predictionText = "Prediction for id: " + prediction.getKey() + "\n";
-                        for (RoutePointStamped p: prediction.getValue()) {
-                            predictionText += p.toString() + "\n";
+                // TODO remove this print after NCV handling is stable
+                if (appConfig.getBooleanValue("ead.handleNCV")) {
+                    synchronized (collisionChecker) {
+                        log.info("EAD", "NCV at start of planning");
+                        for (Entry<Integer, List<RoutePointStamped>> prediction: ((ObjectCollisionChecker) collisionChecker).trackedLaneObjectsPredictions.entrySet()) {
+                            String predictionText = "Prediction for id: " + prediction.getKey() + "\n";
+                            for (RoutePointStamped p: prediction.getValue()) {
+                                predictionText += p.toString() + "\n";
+                            }
+                            log.info("EAD", predictionText);
                         }
-                        log.info("EAD", predictionText);
+                        log.info("EAD", "Done NCV list");
                     }
-                    log.info("EAD", "Done NCV list");
                 }
                 eadResult = glidepathTrajectory.plan(state); // TODO do we really need the trajectory object. It's purpose is 99% filled by the plugin
                 break;
