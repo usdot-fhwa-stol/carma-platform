@@ -2,7 +2,7 @@ version: '2'
 
 services:
   carma:
-    image: carma
+    image: usdot-carma/carma
     network_mode: host
     container_name: carma
     volumes_from: 
