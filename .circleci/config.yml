@@ -2,9 +2,8 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/openjdk:latest
-    steps:     
-      - run:
-          name: SourceClear Scan
-          command:  curl -sSL https://download.sourceclear.com/ci.sh | bash  
+      - image: circleci/openjdk:latest     
+    test:           
+     - post:
+         - curl -sSL https://download.sourceclear.com/ci.sh | bash  
 
