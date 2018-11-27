@@ -4,6 +4,6 @@ jobs:
     docker:
       - image: circleci/openjdk:latest     
     test:           
-     - post:
+      - post:
          - curl -sSL https://download.sourceclear.com/ci.sh | bash  
 
