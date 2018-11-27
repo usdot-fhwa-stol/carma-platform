@@ -59,21 +59,32 @@ function openTab(evt, name) {
     }
 
     var tab = document.getElementsByClassName('tab');
+    var imgCARMAIconColor = document.getElementById('imgCARMAIconColor');
 
     for (i = 0; i < tab.length; i++) {
 
-        //If DriverView, collapse left navigation bar.
+        //If not Task View, collapse left navigation bar.
         if (name != 'divCapabilities')
+        {
             tab[i].style.width = '6%';
+            imgCARMAIconColor.style.width='90%';
+            imgCARMAIconColor.style.height= '15%';
+            imgCARMAIconColor.style.padding = '20px 0px 0px 5px';
+        }
         else
+        {
             tab[i].style.width = '12%';
+            imgCARMAIconColor.style.width='90%';
+            imgCARMAIconColor.style.height= '25%';
+            imgCARMAIconColor.style.padding = '20px 0px 0px 20px';
+        }
     }
 
     var tabheader = document.getElementsByClassName('tabheader');
 
     for (i = 0; i < tabheader.length; i++) {
 
-        //If DriverView, collapse left navigation bar.
+        //If not Task View, adjust the button size.
         if (name != 'divCapabilities')
             tabheader[i].style.width = '88%';
         else
