@@ -106,12 +106,12 @@ USER carma
 # Migrate the files from the install stage
 COPY --from=install --chown=carma /opt/carma /opt/carma
 COPY --from=install --chown=carma /root/.bashrc /home/carma/.bashrc
-ADD carmajava/launch/cadillac_config/* /opt/carma/vehicle/
-RUN ln -sf /var/www/html/scripts/carma.config.js && \
-        ln -sf /opt/carma/params/HostVehicleParams.yaml /opt/carma/vehicle/HostVehicleParams.yaml && \
+ADD carmajava/launch/* /opt/carma/vehicle/
+RUN sudo chown carma:carma -R /opt/carma/vehicle && \
+	ln -sf /opt/carma/params/HostVehicleParams.yaml /opt/carma/vehicle/HostVehicleParams.yaml && \
         ln -sf /opt/carma/urdf/saxton_cav.urdf /opt/carma/vehicle/saxton_cav.urdf && \
-        ln -sf /opt/carma/launch/saxton_cav.launch /opt/carma/launch/saxton_cav.launch && \
-        ln -sf /opt/carma/drivers/drivers.launch /opt/carma/vehicle/drivers.launch && \
-        ln -sf /var/www/html/scripts/carma.config.js /opt/carma/vehicle/carma.config.js
+        ln -sf /opt/carma/launch/saxton_cav.launch /opt/carma/vehicle/saxton_cav.launch && \
+        ln -sf /opt/carma/drivers/drivers.launch /opt/carma/vehicle/drivers.launch 
 
 ENTRYPOINT [ "/opt/carma/entrypoint.sh" ]
+

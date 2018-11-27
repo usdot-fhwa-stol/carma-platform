@@ -3,9 +3,6 @@
 # if they change
 
 .cache
-circle.yml
-README.md
-website
 
 **/*.class
 *.bak
