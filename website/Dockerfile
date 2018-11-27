@@ -43,3 +43,9 @@ RUN apt-get update && \
 
 # Copy the website files to bes served
 COPY --chown=www-data . /var/www/html
+
+# Deploy the vehicle specific JS file
+RUN mkdir -p /opt/carma/vehicle && \
+    touch /opt/carma/vehicle/carma.config.js && \
+    ln -sf /opt/carma/vehicle/carma.config.js /var/www/html/scripts/carma.config.js && \
+    chown www-data:www-data /opt/carma/vehicle/carma.config.js
