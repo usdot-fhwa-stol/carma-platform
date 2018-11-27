@@ -35,7 +35,7 @@ This guide describes the overall approach to develop a plug-in. [Developers Guid
 The User Guide describes the complete functionality specific to the Cadillac SRX. Some vehicle IPs/power procedures may change when using other vehicles. [CARMA User Guide](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29392940/CARMA%202.7%20USER%20GUIDE.docx)
 
 ## Administrator Guide
-This guide describes [Administrator Guide](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29392940/CARMA%202.7%20USER%20GUIDE.docx)
+This guide describes This guide describes the vehicle and developer PC configuration, build, deployment and testing steps necessary to install and run the CARMA platform. [Administrator Guide](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29392940/CARMA%202.7%20USER%20GUIDE.docx)
 
 ## Contribution
 Welcome to the CARMA contributing guide. Please read this guide to learn about our development process, how to propose pull requests and improvements, and how to build and test your changes to this project. [CARMA Contributing Guide](Contributing.md) 
