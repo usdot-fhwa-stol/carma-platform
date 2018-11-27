@@ -2,7 +2,9 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/openjdk:latest     
+      - image: circleci/openjdk:latest  
+    steps:
+      
   test:           
       - post:
          - curl -sSL https://download.sourceclear.com/ci.sh | bash  
