@@ -379,8 +379,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         m.setMaxTimeRemaining(Math.max(0.0, earliestEvent.getTiming().getMaxEndTime() - secondInHour));
                         m.setMinTimeRemaining(Math.max(0.0, earliestEvent.getTiming().getMinEndTime() - secondInHour));
                         //TODO remove!!!!!
-                        m.setMaxTimeRemaining(100.0);
-                        m.setMinTimeRemaining(100.0);
+                        //m.setMaxTimeRemaining(100.0);
+                        //m.setMinTimeRemaining(100.0);
                     }
                 //TODO move this statment log.warn("Empty movement event list in spat for intersection id: " + state.getId().getId());
                 
@@ -400,7 +400,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         break;
                 }
                 // TODO remove!!!
-                m.setCurrentState(0x00000001);
+                //m.setCurrentState(0x00000001);
             }
 
             movements.add(m);
