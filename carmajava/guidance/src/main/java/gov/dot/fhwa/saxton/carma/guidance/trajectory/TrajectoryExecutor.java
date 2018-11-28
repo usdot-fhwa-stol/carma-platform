@@ -246,7 +246,7 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
                 maneuverType = "LATERAL";
             }
 
-            log.info("Maneuver #" + idx + " from [" + m.getStartDistance() + ", " + m.getEndDistance() + ") of type " + maneuverType);
+            log.info("Maneuver #" + idx + " from [" + m.getStartDistance() + ", " + m.getEndDistance() + ") of type " + maneuverType + " planned by: " + m.getPlanner().getVersionInfo().componentName());
             if (m instanceof LongitudinalManeuver) {
                 LongitudinalManeuver lonMvr = (LongitudinalManeuver) m;
                 log.info("Speeds from " + lonMvr.getStartSpeed() + " to " + lonMvr.getTargetSpeed());
