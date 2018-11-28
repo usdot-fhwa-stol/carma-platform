@@ -92,6 +92,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.Movement;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.SpatMessage;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.EadAStar;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.PlanInterpolator;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.CoarsePathNeighbors;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 import gov.dot.fhwa.saxton.carma.signal_plugin.filter.PolyHoloA;
 import j2735_msgs.MovementPhaseState;
@@ -158,6 +159,10 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     public void onInitialize() {
         // load params
 
+        // Pass params into GlidepathAppConfig
+        appConfig = new GlidepathAppConfig(pluginServiceLocator.getParameterSource(), pluginServiceLocator.getRouteService());
+        GlidepathApplicationContext.getInstance().setAppConfigOverride(appConfig);
+
         // Setup the collision checker
         // This must be done before callbacks are created
         if (appConfig.getBooleanValue("ead.handleNCV")) { // Check if we will handle NCVs
@@ -170,10 +175,6 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         } else { // Use No-Op collision checker if not handling NCVs
             this.collisionChecker = new NoCollisionChecker();
         }
-
-        // Pass params into GlidepathAppConfig
-        appConfig = new GlidepathAppConfig(pluginServiceLocator.getParameterSource(), pluginServiceLocator.getRouteService());
-        GlidepathApplicationContext.getInstance().setAppConfigOverride(appConfig);
 
         popupOnRedTime = appConfig.getDoubleValue("popupOnRedTime");
 
@@ -370,6 +371,9 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         double secondInHour = (double)(millisOfDay - millisToHourStart) / 1000.0;
                         m.setMaxTimeRemaining(Math.max(0.0, earliestEvent.getTiming().getMaxEndTime() - secondInHour));
                         m.setMinTimeRemaining(Math.max(0.0, earliestEvent.getTiming().getMinEndTime() - secondInHour));
+                        //TODO remove!!!!!
+                        m.setMaxTimeRemaining(100.0);
+                        m.setMinTimeRemaining(100.0);
                     }
                 //TODO move this statment log.warn("Empty movement event list in spat for intersection id: " + state.getId().getId());
                 
@@ -388,6 +392,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         //log.warn("Unsupported signal phase: " + phase);
                         break;
                 }
+                // TODO remove!!!
+                m.setCurrentState(0x00000001);
             }
 
             movements.add(m);
@@ -687,7 +693,10 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             }
         } else if (involvedInControl.compareAndSet(true, false)) {
             log.info("Off map requesting replan");
-            triggerNewPlan(false);
+
+            // TODO handle this check better
+            // used to be triggerNewPlan(false);
+            setAvailability(false);
         }
     }
 
@@ -818,11 +827,12 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                     maxDTSB = i.bestDTSB();
                 }
             }
+            double planEndLocation = maxDTSB + (CoarsePathNeighbors.TYPICAL_INTERSECTION_WIDTH * 3.0);
             // DTSB computation successful, check to see if we can plan up to stop bar
-            if (traj.getStartLocation() + ( maxDTSB / 0.7 ) > traj.getEndLocation()) {
+            if (traj.getStartLocation() + ( planEndLocation / 0.7 ) > traj.getEndLocation()) {
                 // Not enough distance to allow for proper glidepath execution
                 TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
-                tpr.requestLongerTrajectory(traj.getStartLocation() + (maxDTSB / 0.69)); // allow for some extra slack
+                tpr.requestLongerTrajectory(traj.getStartLocation() + (planEndLocation / 0.69)); // allow for some extra slack
                 return tpr;
             }
         } else {
@@ -963,8 +973,10 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 prev = cur;
             }
         }
-
+        
         log.info("Planning complete");
+        log.info("Added Maneuvers: " + traj.getLongitudinalManeuvers().toString());
+        
         replanning.set(false);
         return new TrajectoryPlanningResponse();
     }
