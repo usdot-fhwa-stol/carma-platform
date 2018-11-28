@@ -29,6 +29,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.util.concurrent.AtomicDouble;
+
 import org.joda.time.DateTime;
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
@@ -148,6 +150,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     // Planning Variables
     private AtomicBoolean replanning = new AtomicBoolean(false);
     private AtomicReference<List<Node>> currentPlan = new AtomicReference<>();
+    private AtomicDouble planStartingDowntrack = new AtomicDouble();
 
 
     public TrafficSignalPlugin(PluginServiceLocator psl) {
@@ -401,89 +404,88 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         return cnvSpat;
     }
 
+    private void setPlan(List<Node> plan, double startingDowntrack) {
+        synchronized (currentPlan) {
+            currentPlan.set(plan);
+            planStartingDowntrack.set(startingDowntrack);
+        }
+    }
+
     @Override
     public void triggerNewPlan(boolean availability) {
         log.info("Trying to request replan with availability: " + availability);
         if (replanning.compareAndSet(false, true)) {
             // Just return if the availability is false
             if (!availability) {
-                replanning.set(false);
                 setAvailability(availability);
+                pluginServiceLocator.getArbitratorService().requestNewPlan();
+                replanning.set(false);
+                return;
+            }
+
+            log.info("Attempting Ead Plan");
+            // Planning
+            double currentDowntrack = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
+            double speedLimit = pluginServiceLocator.getRouteService().getSpeedLimitAtLocation(currentDowntrack).getLimit();
+            DataElementHolder state = null;
+            List<Node> eadResult = null;
+            
+            for (int i = 0; i < 3; i++) {
+                state = getCurrentStateData(speedLimit);
+
+                eadResult = generatePlan(state);
+                if (eadResult != null) {
+                    break;
+                }
+            }
+            
+            // Store the current plan
+            DoubleDataElement startTime = (DoubleDataElement) state.get(DataElementKey.PLANNING_START_TIME);
+            DoubleDataElement startDowntrack = (DoubleDataElement) state.get(DataElementKey.PLANNING_START_DOWNTRACK);
+
+            setPlan(eadResult, startDowntrack.value());
+            
+            if (eadResult == null) {
+                log.warn("Ead result was null requesting plan with no availability");
+                setAvailability(false);
                 pluginServiceLocator.getArbitratorService().requestNewPlan();
                 return;
             }
 
-            // CHECK TRAJECTORY LENGTH
-            double dtsb = computeDtsb();
+            log.info("Ead result is path of size: " + eadResult.size());
+            // Set the new plan as the current plan for collision checker
+            collisionChecker.setHostPlan(eadResult, startTime.value(), startDowntrack.value());
 
-            if (dtsb >= MAX_DTSB) {
-                log.info("Attempted to plan with bad dtsb value: " + dtsb + "will not plan");
-                replanning.set(false);
-                return;
-                // TODO is this handling sufficient
-            }
-
-            log.info("Granted highest planning priority");
-
-            // CONVERT DATA ELEMENTS
-            List<Node> eadResult = null;
-            double currentDowntrack = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
-            double speedLimit = pluginServiceLocator.getRouteService().getSpeedLimitAtLocation(currentDowntrack).getLimit();
-            DataElementHolder state = new DataElementHolder();
-            // Try 3 times to plan. With updated state data each time if needed. We will accept the first completed plan
-            for (int i = 0; i < 3; i++) {
-                dtsb = computeDtsb();
-                state = getCurrentStateData(speedLimit);
-
-                log.info("Requesting AStar plan with intersections: " + intersections.toString());
-
-                try {
-                    // TODO remove this print after NCV handling is stable
-                    if (appConfig.getBooleanValue("ead.handleNCV")) {
-                        synchronized (collisionChecker) {
-                            log.info("EAD", "NCV at start of planning");
-                            for (Entry<Integer, List<RoutePointStamped>> prediction: ((ObjectCollisionChecker) collisionChecker).trackedLaneObjectsPredictions.entrySet()) {
-                                String predictionText = "Prediction for id: " + prediction.getKey() + "\n";
-                                for (RoutePointStamped p: prediction.getValue()) {
-                                    predictionText += p.toString() + "\n";
-                                }
-                                log.info("EAD", predictionText);
-                            }
-                            log.info("EAD", "Done NCV list");
-                        }
-                    }
-                    eadResult = glidepathTrajectory.plan(state); // TODO do we really need the trajectory object. It's purpose is 99% filled by the plugin
-                    break;
-                } catch (Exception e) {
-                    log.error("Glidepath trajectory planning threw exception!", e);
-                }
-            }
-
-            if (eadResult == null) {
-                log.warn("Ead result is null");
-                replanning.set(false);
-                return;// TODO is this ok
-            } else {
-                log.info("Ead result is path of size: " + eadResult.size());
-                currentPlan.set(eadResult);
-                // Set the new plan as the current plan for collision checker
-                DoubleDataElement startTime = (DoubleDataElement) state.get(DataElementKey.PLANNING_START_TIME);
-		        DoubleDataElement startDowntrack = (DoubleDataElement) state.get(DataElementKey.PLANNING_START_DOWNTRACK);
-
-                collisionChecker.setHostPlan(eadResult, startTime.value(), startDowntrack.value());
-            }
-
-
-
-
-
-
-
-
-            log.info("Requesting replan with availability: " + availability);
+            log.info("Planning Successful Requesting replan with availability: " + availability);
             setAvailability(availability);
             pluginServiceLocator.getArbitratorService().requestNewPlan();
         }
+    }
+
+    private List<Node> generatePlan(DataElementHolder state) {
+        // Try 3 times to plan. With updated state data each time if needed. We will accept the first completed plan
+        log.info("Requesting AStar plan with intersections: " + intersections.toString());
+
+        try {
+            // TODO remove this print after NCV handling is stable
+            if (appConfig.getBooleanValue("ead.handleNCV")) {
+                synchronized (collisionChecker) {
+                    log.info("EAD", "NCV at start of planning");
+                    for (Entry<Integer, List<RoutePointStamped>> prediction: ((ObjectCollisionChecker) collisionChecker).trackedLaneObjectsPredictions.entrySet()) {
+                        String predictionText = "Prediction for id: " + prediction.getKey() + "\n";
+                        for (RoutePointStamped p: prediction.getValue()) {
+                            predictionText += p.toString() + "\n";
+                        }
+                        log.info("EAD", predictionText);
+                    }
+                    log.info("EAD", "Done NCV list");
+                }
+            }
+            return glidepathTrajectory.plan(state); // TODO do we really need the trajectory object. It's purpose is 99% filled by the plugin
+        } catch (Exception e) {
+            log.error("Glidepath trajectory planning threw exception!", e);
+        }
+        return null;
     }
 
     /**
@@ -887,41 +889,16 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             return new TrajectoryPlanningResponse();
         }
 
-        // CHECK TRAJECTORY LENGTH
-        double dtsb = computeDtsb();
-
-        if (dtsb < MAX_DTSB) {
-            double maxDTSB = dtsb;
-            for (gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData i: glidepathTrajectory.getSortedIntersections()) {
-                if (maxDTSB < i.bestDTSB()) {
-                    maxDTSB = i.bestDTSB();
-                }
-            }
-            // DTSB computation successful, check to see if we can plan up to stop bar
-            if (traj.getStartLocation() + ( maxDTSB / 0.7 ) > traj.getEndLocation()) {
-                // Not enough distance to allow for proper glidepath execution
-                TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
-                tpr.requestLongerTrajectory(traj.getStartLocation() + (maxDTSB / 0.69)); // allow for some extra slack
-                return tpr;
-            }
-        } else {
-            log.info("Attempted to plan with bad dtsb value: " + dtsb + "will not plan");
-            replanning.set(false);
-            return new TrajectoryPlanningResponse();
-        }
-
-        log.info("DTSB within traj");
-
         // CHECK PLANNING PRIORITY
         if (!traj.getLongitudinalManeuvers().isEmpty()) {
-                TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
-                tpr.requestHigherPriority();
-                return tpr;
+            TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
+            tpr.requestHigherPriority();
+            return tpr;
         }
 
         log.info("Granted highest planning priority");
 
-        // CONVERT DATA ELEMENTS
+        // See if valid plan is available
         List<Node> eadResult = currentPlan.get();
 
         if (eadResult == null) {
@@ -931,6 +908,20 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         } else {
             log.info("PlanTrajectory: Ead result is path of size: " + eadResult.size());
         }
+
+        // CHECK TRAJECTORY LENGTH
+
+        // DTSB computation successful, check to see if we can plan up to stop bar
+        double planLength = eadResult.get(eadResult.size() - 1).getDistanceAsDouble();
+        if (traj.getStartLocation() + ( planLength / 0.7 ) > traj.getEndLocation()) {
+            // Not enough distance to allow for proper glidepath execution
+            TrajectoryPlanningResponse tpr = new TrajectoryPlanningResponse();
+            tpr.requestLongerTrajectory(traj.getStartLocation() + (planLength / 0.69)); // allow for some extra slack
+            return tpr;
+        }
+
+        log.info("DTSB within traj");
+
 
 
         /*
@@ -960,7 +951,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
         // CONVERT AND INSERT MANEUVERS
         // TODO we should get the starting distance as current downtrack when starting to plan
-        double startDist = traj.getStartLocation();
+        double startDist = planStartingDowntrack.get(); // TODO this change is not thread safe
         Node prev = null;
         for (Node cur : eadResult) {
             if (prev == null) {
