@@ -1,0 +1,18 @@
+version: '2'
+
+services:
+  carma:
+    image: usdot-carma/carma
+    network_mode: host
+    container_name: carma
+    volumes_from: 
+      - container:carma-config:ro
+    volumes:
+      - carma-logs:/opt/carma/logs
+      - ros-logs:/opt/carma/.ros
+    
+volumes:
+  carma-logs:
+    external: true
+  ros-logs:
+    external: true

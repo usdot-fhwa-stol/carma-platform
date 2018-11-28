@@ -33,11 +33,7 @@
 # Stage 1 - Install the SSH private key and acquire the CARMA source as well as
 #           any extra packages
 # /////////////////////////////////////////////////////////////////////////////
-FROM ros:kinetic-ros-base AS source-code
-RUN apt-get update && \
-        apt-get install -y \
-        git \
-        ssh
+FROM carma-base AS source-code
 
 ARG SSH_PRIVATE_KEY
 ARG EXTRA_PACKAGES
@@ -46,72 +42,42 @@ ARG EXTRA_PACKAGES_VERSION=master
 ENV EXTRA_PACKAGES_VERSION ${EXTRA_PACKAGES_VERSION}
 
 # Set up the SSH key for usage by git
-RUN mkdir /root/.ssh/ && \
-        echo "${SSH_PRIVATE_KEY}" > /root/.ssh/id_rsa && \
-        chmod 600 /root/.ssh/id_rsa && \
-        touch /root/.ssh/known_hosts && \
-        ssh-keyscan github.com >> /root/.ssh/known_hosts
+RUN mkdir ~/.ssh/ && \
+        echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa && \
+        chmod 600 ~/.ssh/id_rsa && \
+        touch ~/.ssh/known_hosts && \
+        ssh-keyscan github.com >> ~/.ssh/known_hosts
 
 # Acquire the software source
-COPY . /root/src/CARMAPlatform/
-RUN /root/src/CARMAPlatform/docker/checkout.sh
+RUN mkdir ~/src
+COPY --chown=carma . /home/carma/src/CARMAPlatform/
+RUN ~/src/CARMAPlatform/docker/checkout.sh
 
 # /////////////////////////////////////////////////////////////////////////////
 # Stage 2 - Build and install the software 
 # /////////////////////////////////////////////////////////////////////////////
-FROM ros:kinetic-ros-base AS install
-
-# Install necessary packages
-RUN apt-get update && \
-        apt-get install -y \
-        ros-kinetic-rosjava \
-        ros-kinetic-rosbridge-server && \
-       rosdep update
+FROM carma-base AS install
 
 # Copy the source files from the previous stage and build/install
-COPY --from=source-code /root/src /root/carma_ws/src
+RUN mkdir ~/carma_ws
+COPY --from=source-code --chown=carma /home/carma/src /home/carma/carma_ws/src
 RUN ~/carma_ws/src/CARMAPlatform/docker/install.sh
 
 # /////////////////////////////////////////////////////////////////////////////
 # Stage 3 - Finalize deployment
 # /////////////////////////////////////////////////////////////////////////////
-FROM ros:kinetic-ros-base
-
-# Add carma user
-ENV USERNAME carma
-RUN useradd -m $USERNAME && \
-        echo "$USERNAME:$USERNAME" | chpasswd && \
-        usermod --shell /bin/bash $USERNAME && \
-        usermod -aG sudo $USERNAME && \
-        mkdir -p /etc/sudoers.d && \
-        echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/$USERNAME && \
-        chmod 0440 /etc/sudoers.d/$USERNAME && \
-        usermod  --uid 1000 $USERNAME && \
-        groupmod --gid 1000 $USERNAME
-
-# Install necessary packages
-RUN apt-get update && \
-        apt-get install -y \
-        sudo \
-        ros-kinetic-rosjava \
-        ros-kinetic-rosbridge-server \
-        ros-kinetic-robot \
-        tmux \
-        vim \
-        nano \
-        less
-
-USER carma
+FROM carma-base
 
 # Migrate the files from the install stage
 COPY --from=install --chown=carma /opt/carma /opt/carma
 COPY --from=install --chown=carma /root/.bashrc /home/carma/.bashrc
+
 ADD carmajava/launch/* /opt/carma/vehicle/
+
 RUN sudo chown carma:carma -R /opt/carma/vehicle && \
-	ln -sf /opt/carma/params/HostVehicleParams.yaml /opt/carma/vehicle/HostVehicleParams.yaml && \
-        ln -sf /opt/carma/urdf/saxton_cav.urdf /opt/carma/vehicle/saxton_cav.urdf && \
-        ln -sf /opt/carma/launch/saxton_cav.launch /opt/carma/vehicle/saxton_cav.launch && \
-        ln -sf /opt/carma/drivers/drivers.launch /opt/carma/vehicle/drivers.launch 
+	ln -sf /opt/carma/vehicle/HostVehicleParams.yaml /opt/carma/params/HostVehicleParams.yaml && \
+        ln -sf /opt/carma/vehicle/saxton_cav.urdf /opt/carma/urdf/saxton_cav.urdf && \
+        ln -sf /opt/carma/vehicle/saxton_cav.launch /opt/carma/launch/saxton_cav.launch && \
+        ln -sf /opt/carma/vehicle/drivers.launch /opt/carma/drivers/drivers.launch 
 
 ENTRYPOINT [ "/opt/carma/entrypoint.sh" ]
-
