@@ -451,8 +451,8 @@ public class RouteWorker {
       laneChangeCount = 0;
     }
 
-    log.info("Downtrack: " + downtrackDistance + ", Crosstrack: " + crossTrackDistance);
-    log.info("Downtrack Waypoint: " + currentWaypointIndex);
+    log.debug("Downtrack: " + downtrackDistance + ", Crosstrack: " + crossTrackDistance);
+    log.debug("Downtrack Waypoint: " + currentWaypointIndex);
 
     if (leftRouteVicinity()) {
       recievedLeftRouteEvents++;

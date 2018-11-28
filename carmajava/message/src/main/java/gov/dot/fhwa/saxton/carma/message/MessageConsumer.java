@@ -322,7 +322,7 @@ public class MessageConsumer extends SaxtonBaseNode {
                         log_.debug("Found message factory on type " + outgoingMessage.getType());
                         MessageContainer encodedMessage = message.encode(outgoingMessage.getMessage());
                         if(encodedMessage.getMessage() != null) {
-                            log_.info("We encode " + outgoingMessage.getType());
+                            log_.debug("We encode " + outgoingMessage.getType());
                             messageCounters.onMessageSending(((ByteArray) encodedMessage.getMessage()).getMessageType());
                             outboundPub_.publish((ByteArray) encodedMessage.getMessage());
                         } else {

@@ -130,7 +130,7 @@ public class EnvironmentWorker {
    */
   public void handleExternalObjectsMsg(cav_msgs.ExternalObjectList externalObjects) {
     if (currentSegment == null || routeState == null || activeRoute == null) {
-      log.info("Roadway ignoring object message as no route is selected");
+      log.debug("Roadway ignoring object message as no route is selected");
       return;
     }
     List<cav_msgs.ExternalObject> objects = externalObjects.getObjects();

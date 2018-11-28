@@ -678,7 +678,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      */
     private boolean checkIntersectionMaps() {
         double dtsb = computeDtsb();
-        log.info("Computed DTSB: " + dtsb);
+        log.debug("Computed DTSB: " + dtsb);
         return dtsb < MAX_DTSB;
     }
 
