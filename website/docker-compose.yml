@@ -12,3 +12,4 @@ services:
 #    stdin_open: true
 #    tty: true
 #    entrypoint: bash
+    restart: always
