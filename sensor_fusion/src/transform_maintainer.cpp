@@ -47,10 +47,10 @@ void TransformMaintainer::nav_sat_fix_update_cb(const sensor_msgs::NavSatFixCons
     }
 
     last_nav_sat_stamp = host_veh_loc->header.stamp;
-    ROS_WARN_STREAM("TRANSFORM | New nav sat received: " << last_nav_sat_stamp);
+    ROS_DEBUG_STREAM("TRANSFORM | New nav sat received: " << last_nav_sat_stamp);
 
     last_heading_stamp = heading_msg->header.stamp;
-    ROS_WARN_STREAM("TRANSFORM | New heading received: " << last_heading_stamp);
+    ROS_DEBUG_STREAM("TRANSFORM | New heading received: " << last_heading_stamp);
 
     std::string frame_id = host_veh_loc->header.frame_id;
     if (frame_id != global_pos_sensor_frame_) {
@@ -238,7 +238,7 @@ tf2::Stamped<tf2::Transform> TransformMaintainer::get_transform(
   }
   else if(tf2_buffer_->canTransform(parent_frame, child_frame, ros::Time(0)) && can_use_most_recent_tf)
   {
-    ROS_WARN_STREAM("Using latest transform available");
+    ROS_DEBUG_STREAM("TRANSFORM | Using latest transform available"); // This expected on the nav_sat update
     transform_stamped = tf2_buffer_->lookupTransform(parent_frame, child_frame, ros::Time(0));
   }
   else
