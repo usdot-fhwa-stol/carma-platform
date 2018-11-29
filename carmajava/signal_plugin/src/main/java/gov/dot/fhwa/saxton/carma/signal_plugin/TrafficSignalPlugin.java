@@ -418,9 +418,10 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     }
 
     @Override
-    public void triggerNewPlan(boolean availability) {
+    public void triggerNewPlan(final boolean availability) {
         log.info("Trying to request replan with availability: " + availability);
         if (replanning.compareAndSet(false, true)) {
+
             // Just return if the availability is false
             if (!availability) {
                 setAvailability(availability);
@@ -429,42 +430,54 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 return;
             }
 
-            log.info("Attempting Ead Plan");
-            // Planning
-            double currentDowntrack = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
-            double speedLimit = pluginServiceLocator.getRouteService().getSpeedLimitAtLocation(currentDowntrack).getLimit();
-            DataElementHolder state = null;
-            List<Node> eadResult = null;
-            
-            for (int i = 0; i < 3; i++) {
-                state = getCurrentStateData(speedLimit);
+            // Generate plan in new thread
+            Thread planningThread = new Thread(new Runnable() {
 
-                eadResult = generatePlan(state);
-                if (eadResult != null) {
-                    break;
+                @Override
+                public void run() {
+                    log.info("Attempting Ead Plan");
+                    // Planning
+                    double currentDowntrack = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
+                    double speedLimit = pluginServiceLocator.getRouteService().getSpeedLimitAtLocation(currentDowntrack).getLimit();
+                    DataElementHolder state = null;
+                    List<Node> eadResult = null;
+                    
+                    for (int i = 0; i < 3; i++) {
+                        state = getCurrentStateData(speedLimit);
+        
+                        eadResult = generatePlan(state);
+                        if (eadResult != null) {
+                            break;
+                        }
+                    }
+                    
+                    // Store the current plan
+                    DoubleDataElement startTime = (DoubleDataElement) state.get(DataElementKey.PLANNING_START_TIME);
+                    DoubleDataElement startDowntrack = (DoubleDataElement) state.get(DataElementKey.PLANNING_START_DOWNTRACK);
+        
+                    setPlan(eadResult, startDowntrack.value());
+                    
+                    if (eadResult == null) {
+                        log.warn("Ead result was null requesting plan with no availability");
+                        setAvailability(false);
+                        pluginServiceLocator.getArbitratorService().requestNewPlan();
+                        return;
+                    }
+        
+                    log.info("Ead result is path of size: " + eadResult.size());
+                    // Set the new plan as the current plan for collision checker
+                    collisionChecker.setHostPlan(eadResult, startTime.value(), startDowntrack.value());
+        
+                    log.info("Planning Successful Requesting replan with availability: " + availability);
+                    setAvailability(availability);
+                    pluginServiceLocator.getArbitratorService().requestNewPlan();
                 }
-            }
+
+            });
+
+            planningThread.start();
+
             
-            // Store the current plan
-            DoubleDataElement startTime = (DoubleDataElement) state.get(DataElementKey.PLANNING_START_TIME);
-            DoubleDataElement startDowntrack = (DoubleDataElement) state.get(DataElementKey.PLANNING_START_DOWNTRACK);
-
-            setPlan(eadResult, startDowntrack.value());
-            
-            if (eadResult == null) {
-                log.warn("Ead result was null requesting plan with no availability");
-                setAvailability(false);
-                pluginServiceLocator.getArbitratorService().requestNewPlan();
-                return;
-            }
-
-            log.info("Ead result is path of size: " + eadResult.size());
-            // Set the new plan as the current plan for collision checker
-            collisionChecker.setHostPlan(eadResult, startTime.value(), startDowntrack.value());
-
-            log.info("Planning Successful Requesting replan with availability: " + availability);
-            setAvailability(availability);
-            pluginServiceLocator.getArbitratorService().requestNewPlan();
         }
     }
 
@@ -709,7 +722,10 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         long tsStart = System.currentTimeMillis();
 
         // Update radar detection
-        collisionChecker.updateObjects(obstacleSub.getLastMessage().getRoadwayObstacles());
+        RoadwayEnvironment lastMsg = obstacleSub.getLastMessage();
+        if (lastMsg != null) {
+            collisionChecker.updateObjects(obstacleSub.getLastMessage().getRoadwayObstacles());
+        }
         
         // Update vehicle position with most recent transform
         updateCurrentLocation();
@@ -960,7 +976,10 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
 
         // CONVERT AND INSERT MANEUVERS
         // TODO we should get the starting distance as current downtrack when starting to plan
-        double startDist = planStartingDowntrack.get(); // TODO this change is not thread safe
+        double startDist;
+        synchronized (currentPlan) {
+            startDist = planStartingDowntrack.get(); // TODO this change is not thread safe
+        }
         Node prev = null;
         for (Node cur : eadResult) {
             if (prev == null) {
