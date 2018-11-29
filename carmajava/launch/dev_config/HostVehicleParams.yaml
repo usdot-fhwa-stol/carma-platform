@@ -1,0 +1,30 @@
+# HostVehicleParams.yaml
+# Defines the ros parameters which define the host vehicle's characteristics
+
+# String: Host vehicle color
+vehicle_color: 'N/A'
+
+# Double: Host vehicle height
+# Units: Meters
+vehicle_height: 1.7018
+
+# String: Host vehicle’s Unique ID that will be used in mobility messages.
+vehicle_id: 'DEV-PC'
+
+# Double: Host vehicle length
+# Units: Meters
+vehicle_length: 4.8768
+
+# String: Host vehicle make
+vehicle_make: 'FOR DEVELOPMENT ONLY'
+
+# String: Host vehicle model
+vehicle_model: 'FOR DEVELOPMENT ONLY'
+
+# Double: Host vehicle width
+# Units: Meters
+vehicle_width: 2.1336
+
+# Integer: Host vehicle year
+# Units: Year
+vehicle_year: 2018

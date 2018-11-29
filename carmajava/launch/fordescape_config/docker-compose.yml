@@ -10,6 +10,8 @@ services:
     volumes:
       - carma-logs:/opt/carma/logs
       - ros-logs:/opt/carma/.ros
+    stdin_open: true
+    tty: true
     
 volumes:
   carma-logs:

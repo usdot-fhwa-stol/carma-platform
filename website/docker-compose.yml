@@ -9,6 +9,6 @@ services:
       - container:carma-config:ro
     volumes: 
       - /var/run/docker.sock:/var/run/docker.sock 
-    ports:
-      - 80:80
-    restart: always
+#    stdin_open: true
+#    tty: true
+#    entrypoint: bash
