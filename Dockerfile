@@ -75,7 +75,6 @@ COPY --from=install --chown=carma /root/.bashrc /home/carma/.bashrc
 ADD carmajava/launch/* /opt/carma/vehicle/
 
 RUN sudo chown carma:carma -R /opt/carma/vehicle && \
-	ln -sf /opt/carma/vehicle/HostVehicleParams.yaml /opt/carma/params/HostVehicleParams.yaml && \
         ln -sf /opt/carma/vehicle/saxton_cav.urdf /opt/carma/urdf/saxton_cav.urdf && \
         ln -sf /opt/carma/vehicle/saxton_cav.launch /opt/carma/launch/saxton_cav.launch && \
         ln -sf /opt/carma/vehicle/drivers.launch /opt/carma/drivers/drivers.launch 
