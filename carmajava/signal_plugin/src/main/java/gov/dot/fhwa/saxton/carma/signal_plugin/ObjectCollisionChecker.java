@@ -150,9 +150,10 @@ public class ObjectCollisionChecker implements ITrafficSignalPluginCollisionChec
       obs.getSecondaryLanes().readBytes(secondaryLanes);
 
       boolean inLane = (obs.getPrimaryLane() == currentLane)
-       || (ArrayUtils.contains(secondaryLanes, (byte) 0 )
+       || (ArrayUtils.contains(secondaryLanes, (byte) currentLane )
        && (obs.getPrimaryLane() == (currentLane + 1) || obs.getPrimaryLane() == (currentLane - 1)));
 
+       log.info("OCC", "Object found in lane: " + currentLane + " secondary lanes: " + secondaryLanes);
       // If the object is in the same lane and in front of the host vehicle
       // Add it to the set of tracked object histories
       // TODO this currently does not handle if the lane index changes between the host and detected object
