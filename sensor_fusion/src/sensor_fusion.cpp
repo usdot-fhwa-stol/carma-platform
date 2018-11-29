@@ -349,11 +349,13 @@ int SensorFusionApplication::run()
         // TODO only update the transforms if new data is provided
         if (!odom_map_.empty())
             tf_maintainer_.odometry_update_cb(odom_map_.begin()->second); // Always update odometry first
-        if (!navsatfix_map_.empty() && !heading_map_.empty())
+        if (!navsatfix_map_.empty() && !heading_map_.empty() && navsatfix_map_.begin()->second->header.seq != last_nav_sat_seq) {
             tf_maintainer_.nav_sat_fix_update_cb(navsatfix_map_.begin()->second, heading_map_.begin()->second);
+            last_nav_sat_seq = navsatfix_map_.begin()->second->header.seq;
+        }
 
         // After updating transforms we should process bsm objects
-        ROS_INFO_STREAM("BSM Id map of size: " << bsm_id_map_.size());
+        ROS_DEBUG_STREAM("BSM Id map of size: " << bsm_id_map_.size());
         for (std::pair<std::string, cav_msgs::BSMConstPtr> el : bsm_id_map_)
         {
             process_bsm(el.second);
