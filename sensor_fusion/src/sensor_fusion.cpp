@@ -35,6 +35,7 @@
 #include "sensor_fusion.h"
 #include "wgs84_utils.h"
 #include "timer.h"
+#include "transform_maintainer.h"
 #include <cav_msgs/ConnectedVehicleList.h>
 
 #include <cav_srvs/GetDriversWithCapabilities.h>
@@ -75,7 +76,7 @@ namespace torc
 
 class SimTimer : public cav::Timer
 {
-    virtual boost::posix_time::ptime getTime() override 
+    virtual boost::posix_time::ptime getTime() override
     {
         return ros::Time::now().toBoost();
     }
@@ -198,7 +199,7 @@ TrackedObject toTrackedObject(const cav_msgs::ExternalObject& obj)
 }
 } // End torc namespace
 
-int SensorFusionApplication::run() 
+int SensorFusionApplication::run()
 {
     nh_.reset(new ros::NodeHandle());
     pnh_.reset(new ros::NodeHandle("~"));
@@ -208,8 +209,19 @@ int SensorFusionApplication::run()
     pnh_->param<std::string>("inertial_frame_name", inertial_frame_name_, "odom");
     pnh_->param<std::string>("body_frame_name", body_frame_name_, "base_link");
     pnh_->param<std::string>("ned_frame_name", ned_frame_name_, "ned");
-    pnh_->param<bool>("use_interface_mgr", use_interface_mgr_, true);
+    pnh_->param<std::string>("earth_frame_name", earth_frame_name_, "earth");
+    pnh_->param<std::string>("global_pos_sensor_frame_name", global_pos_sensor_frame_name_, "pinpoint");
+    pnh_->param<std::string>("local_pos_sensor_frame_name", local_pos_sensor_frame_name_, "pinpoint");
+    pnh_->param<bool>("use_interface_mgr", use_interface_mgr_, false);
 
+    // Setup transform maintainer
+    tf2_broadcaster_.reset(new tf2_ros::TransformBroadcaster());
+    tf_maintainer_.init(&tf2_buffer_, &(*tf2_broadcaster_),
+     &odom_map_, &navsatfix_map_, &heading_map_,
+     earth_frame_name_, ned_frame_name_, inertial_frame_name_, 
+     body_frame_name_, global_pos_sensor_frame_name_, local_pos_sensor_frame_name_);
+
+    // Use sim time if needed
     bool use_sim_time;
     nh_->param<bool>("/use_sim_time", use_sim_time, false);
 
@@ -244,8 +256,8 @@ int SensorFusionApplication::run()
         dyn_cfg_server_->setCallback(f);
     }
 
-    ros::Subscriber bsm_sub = nh_->subscribe<cav_msgs::BSM>("bsm", 1000, &SensorFusionApplication::bsm_cb, this);
-
+    ros::Subscriber bsm_sub = nh_->subscribe<cav_msgs::BSM>("bsm", 50, &SensorFusionApplication::bsm_map_cb, this);
+    
     if(use_interface_mgr_)
     {
         ROS_INFO_STREAM("Waiting for Interface Manager");
@@ -253,9 +265,9 @@ int SensorFusionApplication::run()
         update_services_timer_ = nh_->createTimer(ros::Duration(5.0), [this](const ros::TimerEvent& ev){ update_subscribed_services(); }, false, true);
         ROS_INFO_STREAM("Interface Manager available");
     }
-	else
+		else
     {
-		//This allows us to manually set the topics to listen, rather than querying the interface manager. Topics can be set through a xaml list in the launch file
+		    //This allows us to manually set the topics to listen, rather than querying the interface manager. Topics can be set through a xaml list in the launch file
 				
         // Odometry
         {
@@ -327,8 +339,31 @@ int SensorFusionApplication::run()
     ros::Rate r(20);
     while(ros::ok())
     {
-        ros::spinOnce();
+        // Process callbacks
+        ros::spinOnce(); // spinOnce tries to process all the elements in every subscriber queue at the moment it is called. 
 
+        // Can we get them processed afterword just like objects
+
+        // Updates transforms with new data.
+        // If we got a new nav sat fix but not a new heading should we wait for the new heading?
+        // TODO only update the transforms if new data is provided
+        if (!odom_map_.empty())
+            tf_maintainer_.odometry_update_cb(odom_map_.begin()->second); // Always update odometry first
+        if (!navsatfix_map_.empty() && !heading_map_.empty())
+            tf_maintainer_.nav_sat_fix_update_cb(navsatfix_map_.begin()->second, heading_map_.begin()->second);
+
+        // After updating transforms we should process bsm objects
+        ROS_INFO_STREAM("BSM Id map of size: " << bsm_id_map_.size());
+        for (std::pair<std::string, cav_msgs::BSMConstPtr> el : bsm_id_map_)
+        {
+            process_bsm(el.second);
+        }
+
+        // Clear the bsm map. It will be rebuilt on the next call to spinOnce.
+        bsm_id_map_.clear();
+
+
+        // After updating transforms we should process the sensor objects
         while(!objects_cb_q_.empty())
         {
             objects_cb(objects_cb_q_.front().second,objects_cb_q_.front().first);
@@ -345,12 +380,12 @@ int SensorFusionApplication::run()
 void SensorFusionApplication::update_subscribed_services() 
 {
     ROS_INFO_STREAM("Updating subscribed services");
-
+    
     // Odometry
     std::vector<std::string> ret = get_api("position/odometry");
     for(const std::string& it : ret)
     {
-        if(sub_map_.find(it) == sub_map_.end())
+        if(sub_map_.find(it) == sub_map_.end()) 
         {
             sub_map_[it] = nh_->subscribe<nav_msgs::Odometry>(it, 1, [this](const ros::MessageEvent<nav_msgs::Odometry const>& msg){ odom_cb(msg); });
         }
@@ -360,7 +395,7 @@ void SensorFusionApplication::update_subscribed_services()
     ret = get_api("position/nav_sat_fix");
     for(const std::string& it : ret)
     {
-        if(sub_map_.find(it) == sub_map_.end())
+        if(sub_map_.find(it) == sub_map_.end()) 
         {
             sub_map_[it] = nh_->subscribe<sensor_msgs::NavSatFix>(it, 1, [this](const ros::MessageEvent<sensor_msgs::NavSatFix const>&msg){ navsatfix_cb(msg); });
         }
@@ -370,7 +405,7 @@ void SensorFusionApplication::update_subscribed_services()
     ret = get_api("position/heading");
     for(const std::string& it : ret)
     {
-        if(sub_map_.find(it) == sub_map_.end())
+        if(sub_map_.find(it) == sub_map_.end()) 
         {
             sub_map_[it] = nh_->subscribe<cav_msgs::HeadingStamped>(it, 1, [this](const ros::MessageEvent<cav_msgs::HeadingStamped>&  msg){ heading_cb(msg); });
         }
@@ -390,7 +425,7 @@ void SensorFusionApplication::update_subscribed_services()
     ret = get_api("sensor/objects");
     for(const std::string& it : ret)
     {
-        if(sub_map_.find(it) == sub_map_.end())
+        if(sub_map_.find(it) == sub_map_.end()) 
         {
             sub_map_[it] = nh_->subscribe<cav_msgs::ExternalObjectList>(it, 1, [this, it](const cav_msgs::ExternalObjectListConstPtr& msg){ objects_cb_q_.push_back(std::make_pair(it, msg)); });
         }
@@ -409,8 +444,8 @@ std::vector<std::string> SensorFusionApplication::get_api(const std::string &nam
 
     if(client.exists() && client.call(srv))
     {
-	    ROS_INFO_STREAM("get_drivers_with_capabilities returned: " << srv.response);
-
+        ROS_INFO_STREAM("get_drivers_with_capabilities returned: " << srv.response);
+        
         // The service returns a list of drivers that have the api we provided
         for(std::string fqn : srv.response.driver_data)
         {
@@ -418,7 +453,7 @@ std::vector<std::string> SensorFusionApplication::get_api(const std::string &nam
             std::string driverName = fqn.substr(0, pos);
 
             // If we haven't subscribed to the topic formed by the name of the node and the service add this topic to the return list
-            if(sub_map_.find(fqn) == sub_map_.end())
+            if(sub_map_.find(fqn) == sub_map_.end()) 
             {
                 ret.push_back(fqn);
             }
@@ -584,9 +619,33 @@ void SensorFusionApplication::objects_cb(const cav_msgs::ExternalObjectListConst
     tracker_->addObjects(transformed_list.begin(), transformed_list.end(), hash, transformStamped.header.stamp.toBoost());
 }
 
-void SensorFusionApplication::bsm_cb(const cav_msgs::BSMConstPtr &msg) 
-{
-    ROS_DEBUG_STREAM_NAMED("bsm_logger", "Received bsm message: " << msg);
+inline std::string bsmIdFromBuffer(std::vector<uint8_t> id_buffer) {
+
+    if (id_buffer.size() != 4) {
+        // TODO throw exception
+        return "";
+    }
+
+    std::stringstream stream;
+    for (int i = 0; i < id_buffer.size(); i++) {
+        stream << std::setfill ('0') << std::setw(2) << std::hex << id_buffer[i];
+    }
+
+    return stream.str();
+
+}
+
+void SensorFusionApplication::bsm_map_cb(const cav_msgs::BSMConstPtr &msg) {
+
+    ROS_INFO_NAMED("bsm_logger","PROCESSING BSM");
+    std::string bsm_id = bsmIdFromBuffer(msg->core_data.id);
+    ROS_INFO_STREAM_NAMED("bsm_logger","BSM_ID: " << bsm_id);
+    bsm_id_map_[bsm_id] = msg;
+}
+
+// TODO investigate BSM fusion further. There may be extra bugs introduced by merge
+void SensorFusionApplication::process_bsm(const cav_msgs::BSMConstPtr &msg) {
+    ROS_DEBUG_STREAM_NAMED("bsm_logger","Received bsm message: " << msg);
     if(heading_map_.empty() || navsatfix_map_.empty())
     {
         ROS_DEBUG_STREAM_NAMED("bsm_logger", "Received bsm before heading and navsatfix updated unable to process msg");
@@ -594,22 +653,23 @@ void SensorFusionApplication::bsm_cb(const cav_msgs::BSMConstPtr &msg)
     }
     auto hash = std::hash<std::string>();
     size_t src_id = hash("bsm_objects");
-    cav_msgs::ExternalObject obj;
-    obj.header.frame_id = inertial_frame_name_;
-    obj.header.stamp = msg->header.stamp;
-    obj.presence_vector = 0;
 
-    geometry_msgs::TransformStamped odom_tf, ned_odom_tf;
-    try 
-    {
-        odom_tf = tf2_buffer_.lookupTransform(inertial_frame_name_, body_frame_name_, msg->header.stamp);
-        ned_odom_tf = tf2_buffer_.lookupTransform(ned_frame_name_, inertial_frame_name_, msg->header.stamp);
-    } 
-    catch (tf2::TransformException&ex) 
-    {
-        ROS_WARN_STREAM(ex.what());
+    tf2::Stamped<tf2::Transform> ecef_in_ned_tf, odom_in_map_tf;
+    try {
+
+        odom_in_map_tf = tf_maintainer_.get_transform(ned_frame_name_, inertial_frame_name_, msg->header.stamp, true);
+        ecef_in_ned_tf = tf_maintainer_.get_transform(ned_frame_name_, "earth", msg->header.stamp, true);
+
+    } catch (tf2::TransformException&ex) {
+        ROS_WARN_STREAM_NAMED("bsm_logger", "Sensor fusion transform lookup exception: " << ex.what());
         return;
     }
+
+    cav_msgs::ExternalObject obj;
+    obj.header.frame_id = inertial_frame_name_;
+    obj.header.stamp = odom_in_map_tf.stamp_; // Use the timestamp of the transform for this bsm to ensure it can be converted
+    obj.presence_vector = 0;
+
 
     obj.presence_vector |= cav_msgs::ExternalObject::ID_PRESENCE_VECTOR;
     obj.id = (msg->core_data.id[0] << 24) | (msg->core_data.id[1] << 16) | (msg->core_data.id[2] << 8) | (msg->core_data.id[3]);
@@ -618,37 +678,32 @@ void SensorFusionApplication::bsm_cb(const cav_msgs::BSMConstPtr &msg)
     obj.bsm_id.resize(msg->core_data.id.size());
     std::copy(msg->core_data.id.begin(), msg->core_data.id.end(), obj.bsm_id.begin());
 
-    wgs84_utils::wgs84_coordinate bsm_coord;
-    bsm_coord.heading   = msg->core_data.heading;
-    bsm_coord.elevation = msg->core_data.elev;
-    bsm_coord.lat       = msg->core_data.latitude;
-    bsm_coord.lon       = msg->core_data.longitude;
+    wgs84_utils::wgs84_coordinate bsm_coord_rad;
+    bsm_coord_rad.heading   = msg->core_data.heading * wgs84_utils::DEG2RAD;
+    bsm_coord_rad.elevation = msg->core_data.elev;
+    bsm_coord_rad.lat       = msg->core_data.latitude * wgs84_utils::DEG2RAD;
+    bsm_coord_rad.lon       = msg->core_data.longitude * wgs84_utils::DEG2RAD;
 
-    wgs84_utils::wgs84_coordinate ref_wgs84;
-    ref_wgs84.heading   = heading_map_.begin()->second->heading;
-    ref_wgs84.elevation = navsatfix_map_.begin()->second->altitude;
-    ref_wgs84.lat       = navsatfix_map_.begin()->second->latitude;
-    ref_wgs84.lon       = navsatfix_map_.begin()->second->longitude;
+   
+    // All tf2 multiplication works as expected with matrix on right applied to matrix on left to do multiplication
+    ROS_DEBUG_STREAM_NAMED("bsm_logger","bsm_coord_rad (lat,lon,elev,heading): (" << bsm_coord_rad.lat << ", " << bsm_coord_rad.lon << ", " << bsm_coord_rad.elevation << ", " << bsm_coord_rad.heading << ")");
+    // Get bsm position in nef frame
+    tf2::Vector3 bsm_in_map_trans = wgs84_utils::geodesic_2_cartesian(bsm_coord_rad, ecef_in_ned_tf);
+    // Apply heading as orientation
+    const tf2::Vector3 z_axis(0,0,1);
+    tf2::Quaternion rot_in_ned(z_axis, bsm_coord_rad.heading);
+    // BSM transform in map
+    tf2::Transform bsm_in_map_tf(rot_in_ned, bsm_in_map_trans);
+    
 
-    Eigen::Vector3d odom_pose;
-    odom_pose[0] = odom_tf.transform.translation.x;
-    odom_pose[1] = odom_tf.transform.translation.y;
-    odom_pose[2] = odom_tf.transform.translation.z;
-
-    Eigen::Quaterniond odom_rot;
-    odom_rot.x() = odom_tf.transform.rotation.x;
-    odom_rot.y() = odom_tf.transform.rotation.y;
-    odom_rot.z() = odom_tf.transform.rotation.z;
-    odom_rot.w() = odom_tf.transform.rotation.w;
-
-    Eigen::Transform<double, 3, Eigen::Affine> ned_odom_tf_eig;
-    ned_odom_tf_eig = Eigen::Translation3d(ned_odom_tf.transform.translation.x, ned_odom_tf.transform.translation.y, ned_odom_tf.transform.translation.z)
-        * Eigen::Quaterniond(ned_odom_tf.transform.rotation.w, ned_odom_tf.transform.rotation.x, ned_odom_tf.transform.rotation.y, ned_odom_tf.transform.rotation.z);
-
-    Eigen::Quaterniond out_rot;
-    Eigen::Vector3d out_pose;
-
-    wgs84_utils::convertToOdom(bsm_coord, ref_wgs84, odom_pose, odom_rot, ned_odom_tf_eig, out_pose, out_rot);
+    tf2::Transform bsm_in_odom = odom_in_map_tf.inverse() * bsm_in_map_tf;
+    tf2::Vector3 bsm_trans = bsm_in_odom.getOrigin();
+    tf2::Quaternion bsm_rot = bsm_in_odom.getRotation();
+    
+    
+    Eigen::Vector3d out_pose(bsm_trans.getX(), bsm_trans.getY(), bsm_trans.getZ());
+    
+    Eigen::Quaterniond out_rot(bsm_rot.getW(), bsm_rot.getX(), bsm_rot.getY(), bsm_rot.getZ()); // Quaturniond is a quaturnion with double values
 
     obj.presence_vector |= cav_msgs::ExternalObject::POSE_PRESENCE_VECTOR;
 
@@ -668,7 +723,7 @@ void SensorFusionApplication::bsm_cb(const cav_msgs::BSMConstPtr &msg)
       velocity_vector[1] = 0.0;
       velocity_vector[2] = 0.0;
       
-      velocity_vector = out_rot.inverse().toRotationMatrix() * velocity_vector;
+      velocity_vector = out_rot.toRotationMatrix() * velocity_vector;
       
       obj.presence_vector |= cav_msgs::ExternalObject::VELOCITY_PRESENCE_VECTOR;
       obj.velocity.twist.linear.x = velocity_vector[0];
@@ -680,11 +735,13 @@ void SensorFusionApplication::bsm_cb(const cav_msgs::BSMConstPtr &msg)
     obj.confidence = 1.0;
 
     obj.presence_vector |= cav_msgs::ExternalObject::SIZE_PRESENCE_VECTOR;
-    obj.size.x = msg->core_data.size.vehicle_length;
+    // TODO double check these size values
+    obj.size.x = msg->core_data.size.vehicle_length / 2;
     obj.size.y = msg->core_data.size.vehicle_width / 2;
-    obj.size.z = 1.5;
+    obj.size.z = 1.5; // TODO probably worth picking a picking a big z value
     ROS_DEBUG_STREAM_NAMED("bsm_logger", "Converted bsm message: " << obj);
 
+    //TODO uncomment this is where fusion occurs
     std::vector<torc::TrackedObject> objects;
     objects.push_back(torc::toTrackedObject(obj));
     torc::TrackedObject& back = objects.back();
@@ -694,7 +751,8 @@ void SensorFusionApplication::bsm_cb(const cav_msgs::BSMConstPtr &msg)
     memcpy(back.src_data[src_id].get(),&serial_size,sizeof(uint32_t));
     ros::serialization::OStream stream(back.src_data[src_id].get() + sizeof(uint32_t), serial_size);
     ros::serialization::serialize(stream, obj);
-    tracker_->addObjects(objects.begin(), objects.end(), src_id, msg->header.stamp.toBoost());
+    tracker_->addObjects(objects.begin(), objects.end(),src_id, obj.header.stamp.toBoost());
+    //bsm_obj_ = obj; //TODO used to bypass fusion
 }
 
 void SensorFusionApplication::velocity_cb(const ros::MessageEvent<geometry_msgs::TwistStamped> &event) 
@@ -705,19 +763,19 @@ void SensorFusionApplication::velocity_cb(const ros::MessageEvent<geometry_msgs:
 }
 
 void SensorFusionApplication::heading_cb(const ros::MessageEvent<cav_msgs::HeadingStamped> &event) 
-{
+{    
     std::string name = event.getPublisherName();
     heading_map_[name] = event.getMessage();
 }
 
 void SensorFusionApplication::navsatfix_cb(const ros::MessageEvent<sensor_msgs::NavSatFix> &event) 
-{
+{    
     std::string name = event.getPublisherName();
     navsatfix_map_[name] = event.getMessage();
 }
 
 void SensorFusionApplication::odom_cb(const ros::MessageEvent<nav_msgs::Odometry> &event) 
-{
+{    
     std::string name = event.getPublisherName();
     odom_map_[name] = event.getMessage();
 }
