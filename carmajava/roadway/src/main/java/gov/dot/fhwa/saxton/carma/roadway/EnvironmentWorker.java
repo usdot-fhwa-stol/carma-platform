@@ -74,6 +74,7 @@ public class EnvironmentWorker {
   protected RouteState routeState;
   protected double distBackward;
   protected double distForward;
+  GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
 
   /**
    * Constructor
@@ -135,7 +136,9 @@ public class EnvironmentWorker {
     }
     List<cav_msgs.ExternalObject> objects = externalObjects.getObjects();
     List<RoadwayObstacle> roadwayObstacles = new LinkedList<>();
+    // TODO we may want the transform to be done per object
     Transform earthToOdom = roadwayMgr.getTransform(earthFrame, odomFrame, externalObjects.getHeader().getStamp());
+    log.debug("Objects Stamp: " + externalObjects.getHeader().getStamp());
     if (earthToOdom == null) {
       log.warn("Roadway could not process object message as earth to odom transform was null");
     }
@@ -162,10 +165,18 @@ public class EnvironmentWorker {
     ConnectedVehicleType connectedVehicleType = ConnectedVehicleType.NOT_CONNECTED;
     if ((short) (obj.getPresenceVector() & cav_msgs.ExternalObject.BSM_ID_PRESENCE_VECTOR) != 0) {
       connectedVehicleType = ConnectedVehicleType.CONNECTED;
+      log.debug("SF_TEST", "Connected Obj");// TODO remove after fixing sensor fusion
     }
     // Convert object to ECEF frame  
     Transform objInOdom = Transform.fromPoseMessage(obj.getPose().getPose());
     Transform objInECEF = earthToOdom.multiply(objInOdom);
+
+    // // TODO remove after fixing sensor fusion
+    // if (connectedVehicleType == ConnectedVehicleType.CONNECTED) {
+    //   Point3D objInECEFp = new Point3D(objInECEF.getTranslation().getX(), objInECEF.getTranslation().getY(), objInECEF.getTranslation().getZ());
+    //   log.info("SF_TEST", "BSM Object: " + gcc.cartesian2Geodesic(objInECEFp, Transform.identity()));
+    // }
+
     Vector3 objVecECEF = objInECEF.getTranslation();
     Point3D objPositionECEF = new Point3D(objVecECEF.getX(), objVecECEF.getY(), objVecECEF.getZ());
 
@@ -185,7 +196,7 @@ public class EnvironmentWorker {
     // Convert velocities
     Transform odomInSegment = bestSegment.getECEFToSegmentTransform().invert().multiply(earthToOdom);
     Vector3 velocityLinear = odomInSegment.getRotationAndScale().rotateAndScaleVector(Vector3.fromVector3Message(obj.getVelocity().getTwist().getLinear()));
-
+    
     // Calculate obj lanes
     int primaryLane = bestSegment.determinePrimaryLane(crosstrackDistance);
     // If the relative lane field is defined use that instead of calculated lane
