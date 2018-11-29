@@ -1,6 +1,7 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -10,6 +11,7 @@ import java.util.PriorityQueue;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.ros.message.Time;
 
 import cav_msgs.RoadwayObstacle;
@@ -143,7 +145,13 @@ public class ObjectCollisionChecker implements ITrafficSignalPluginCollisionChec
     for (RoadwayObstacle obs : obstacles) {
 
       double frontObjectDistToCenters =  obs.getDownTrack() - currentDowntrack;
-      boolean inLane = obs.getPrimaryLane() == currentLane;
+
+      byte[] secondaryLanes = new byte[obs.getSecondaryLanes().readableBytes()];
+      obs.getSecondaryLanes().readBytes(secondaryLanes);
+
+      boolean inLane = (obs.getPrimaryLane() == currentLane)
+       || (ArrayUtils.contains(secondaryLanes, (byte) 0 )
+       && (obs.getPrimaryLane() == (currentLane + 1) || obs.getPrimaryLane() == (currentLane - 1)));
 
       // If the object is in the same lane and in front of the host vehicle
       // Add it to the set of tracked object histories
