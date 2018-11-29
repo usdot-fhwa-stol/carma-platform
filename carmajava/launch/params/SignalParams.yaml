@@ -212,7 +212,7 @@ ead/NCVHandling/objectMotionPredictorModel: "SIMPLE_LINEAR_REGRESSION"
 
 # Integer: The maximum age of a sensed NCV data sample in ms. Older samples will be removed from object history
 # Units: ms 
-ead/NCVHandling/collision/maxObjectHistoricalDataAge: 3000
+ead/NCVHandling/collision/maxObjectHistoricalDataAge: 500
 
 # Double: The size of a the downtrack dimension of a cell in the collision systems spatial hash map
 # Units: meters
@@ -240,7 +240,7 @@ ead/NCVHandling/collision/timeDuration: 18.0
 # Double: The amount of time which will pass between replans caused by NCV detection. 
 # Should be at most half the ead/NCVHandling/collision/timeDuration value
 # Units: s
-ead/NCVHandling/collision/replanPeriod: 4.0
+ead/NCVHandling/collision/replanPeriod: 6.0
 
 # Double: The amount of buffer to put around the host vehicle's downtrack bounds when doing a collision check
 # The downtrack margin will be (vehicle's length / 2.0) + downtrack buffer
