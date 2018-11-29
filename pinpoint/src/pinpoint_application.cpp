@@ -236,8 +236,7 @@ void PinPointApplication::onGlobalPoseChangedHandler(const torc::PinPointGlobalP
     msg.longitude = pose.longitude;
     msg.latitude = pose.latitude;
 
-    // TODO Remove this line
-    ROS_INFO_STREAM("Lat: " << pose.latitude << " Lon: " << pose.longitude << " Alt: " << pose.altitude);
+    ROS_DEBUG_STREAM("Lat: " << pose.latitude << " Lon: " << pose.longitude << " Alt: " << pose.altitude);
 
     msg.position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
     msg.position_covariance = {latest_filter_accuracy_.position.east * latest_filter_accuracy_.position.east, 0.0, 0.0,
