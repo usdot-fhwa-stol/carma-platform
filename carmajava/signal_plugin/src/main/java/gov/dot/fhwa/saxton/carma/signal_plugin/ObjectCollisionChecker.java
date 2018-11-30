@@ -55,6 +55,7 @@ public class ObjectCollisionChecker implements ITrafficSignalPluginCollisionChec
   private final RouteService routeService;
   private final ArbitratorService arbitratorService;
   private final ITimeProvider timeProvider;
+  private final PluginServiceLocator psl;
 
   private final IMotionPredictor motionPredictor;
   private final IMotionInterpolator motionInterpolator;
@@ -91,6 +92,7 @@ public class ObjectCollisionChecker implements ITrafficSignalPluginCollisionChec
   public ObjectCollisionChecker(PluginServiceLocator psl,
     IMotionPredictorModelFactory modelFactory, IMotionInterpolator motionInterpolator, IReplanHandle replanHandle) {
     this.log = LoggerManager.getLogger();
+    this.psl = psl;
     this.routeService = psl.getRouteService();
     this.arbitratorService = psl.getArbitratorService();
     this.timeProvider = psl.getTimeProvider();
@@ -149,9 +151,12 @@ public class ObjectCollisionChecker implements ITrafficSignalPluginCollisionChec
       byte[] secondaryLanes = new byte[obs.getSecondaryLanes().readableBytes()];
       obs.getSecondaryLanes().readBytes(secondaryLanes);
 
-      boolean inLane = (obs.getPrimaryLane() == currentLane)
-       || (ArrayUtils.contains(secondaryLanes, (byte) currentLane )
-       && (obs.getPrimaryLane() == (currentLane + 1) || obs.getPrimaryLane() == (currentLane - 1)));
+      // TODO Uncomment to open up lane detection region if needed
+      // boolean inLane = (obs.getPrimaryLane() == currentLane)
+      //  || (ArrayUtils.contains(secondaryLanes, (byte) currentLane )
+      //  && (obs.getPrimaryLane() == (currentLane + 1) || obs.getPrimaryLane() == (currentLane - 1)));
+
+      boolean inLane = obs.getPrimaryLane() == currentLane;
 
        log.info("OCC", "Object found in lane: " + currentLane + " secondary lanes: " + secondaryLanes);
       // If the object is in the same lane and in front of the host vehicle
@@ -209,16 +214,16 @@ public class ObjectCollisionChecker implements ITrafficSignalPluginCollisionChec
     // Check for collisions using new object data
     
 
-    if (ncvDetectionTime == null) {
-      boolean collisionDetected = checkCollision(interpolatedHostPlan.get());
-      if (collisionDetected) { // Any time there is a detected collision force a replan
+    if (ncvDetectionTime == null && psl.getArbitratorService().getCurrentTrajectory() != null) {
+      boolean collisionDetected = checkCollision(interpolatedHostPlan.get(), 1.2);
+      //if (collisionDetected) { // Any time there is a detected collision force a replan // TODO if the first plan fails we never replan as there is no collision to detect
         ncvDetectionTime = timeProvider.getCurrentTimeMillis();
         log.info("OCC", "NEW PLAN: First ncv detection");
         replanHandle.triggerNewPlan(true); // Request a replan from the plugin
   
-      }
+      //}
     } else if (ncvDetectionTime != null && timeProvider.getCurrentTimeMillis() - ncvDetectionTime > NCVReplanPeriod) {
-      boolean collisionDetected = checkCollision(interpolatedHostPlan.get());
+      boolean collisionDetected = checkCollision(interpolatedHostPlan.get(), 1.2);
       if (collisionDetected) {
         ncvDetectionTime = timeProvider.getCurrentTimeMillis();
         log.info("OCC", "NEW PLAN: timer triggered");
@@ -270,14 +275,16 @@ public class ObjectCollisionChecker implements ITrafficSignalPluginCollisionChec
    * Helper function to check collisions between predicted object trajectories and the provided plan
    * 
    * @param routePlan The plan to check for collisions with
+   * @param marginFactor Factor multiplied by margins to modify their size. NOTE: Not applied to crosstrack margins
    * 
    * @return True if a collision was found. False otherwise
    */
-  private boolean checkCollision(List<RoutePointStamped> routePlan) {
+  private boolean checkCollision(List<RoutePointStamped> routePlan, double marginFactor) {
     // Check the proposed trajectory against all tracked objects for collisions
     for (Entry<Integer, List<RoutePointStamped>> objPrediction: trackedLaneObjectsPredictions.entrySet()) {
       List<RoutePointStamped> objPlan = objPrediction.getValue();
       double dynamicTimeMargin = timeMargin;
+      
       // Compute an estimated time margin to ensure overlap of collision bounds
       if (objPrediction.getValue().size() > 1) {
         // TODO this assumes linear regression used for motion prediction resulting in constant slope
@@ -287,7 +294,7 @@ public class ObjectCollisionChecker implements ITrafficSignalPluginCollisionChec
       // Check for conflicts against each object and return true if any conflict is found
       List<ConflictSpace> conflictSpaces = conflictDetector.getConflicts(
         routePlan, objPlan, structureFactory.buildSpatialStructure(),
-        downtrackMargin, crosstrackMargin, dynamicTimeMargin,
+        downtrackMargin * marginFactor, crosstrackMargin, dynamicTimeMargin * marginFactor,
         longitudinalBias, lateralBias, temporalBias
       );
       
@@ -312,7 +319,7 @@ public class ObjectCollisionChecker implements ITrafficSignalPluginCollisionChec
 
   //  System.out.println("RoutePlan: " + routePlan);
 
-    boolean hasCollision = checkCollision(routePlan);
+    boolean hasCollision = checkCollision(routePlan, 1.0);
     // if (hasCollision) {
     //   System.out.println("HasCollision: " + hasCollision + " with node: " + trajectory.get(1));
     // }
