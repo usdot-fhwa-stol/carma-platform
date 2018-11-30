@@ -351,7 +351,8 @@ public class MovesFuelCostModel implements ICostModel {
           return 0.0;
         }
         //infinite cost if we pass the location and the time of the goal
-        if (currentNode.getDistance() > goal.getDistance() + tolerances.getDistance()) {
+        final double goalDistance = goal.getDistance() + tolerances.getDistance();
+        if (currentNode.getDistance() > goalDistance) {
         	return Double.POSITIVE_INFINITY;
         }
 
@@ -360,7 +361,7 @@ public class MovesFuelCostModel implements ICostModel {
          * The values will be normalized and weighted to mirror the cost function
          * This is guaranteed to by optimistic 
          */
-        double distanceToGoal = goal.getDistanceAsDouble() - currentNode.getDistanceAsDouble();
+        double distanceToGoal = goalDistance - currentNode.getDistanceAsDouble();
         double minSecToGoal = distanceToGoal / maxVelocity; // TODO this could be more accurate by calculating the piece wise function to max speed
         double minJToGoal = getJFromOpMode(1, minSecToGoal); // OpMode of 1 is idle and represents minimum possible fuel usage 
         double minNormJToGoal = minJToGoal / fuelNormalizationDenominator;
