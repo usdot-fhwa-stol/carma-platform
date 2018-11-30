@@ -15,7 +15,7 @@
 #  the License.
 
 # Kill all CARMA containers
-./kill.bash
+bash /var/www/html/scripts/kill.bash
 
 # Launch platform
 docker-compose -f /opt/carma/vehicle/docker-compose.yml up -d
