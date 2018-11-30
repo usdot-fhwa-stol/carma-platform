@@ -15,9 +15,7 @@
 #  the License.
 
 # Kill all CARMA containers
-docker-compose -f /opt/carma/vehicle/docker-compose.yml down
-docker kill carma
-docker rm carma
+./kill.bash
 
 # Launch platform
 docker-compose -f /opt/carma/vehicle/docker-compose.yml up -d
