@@ -84,6 +84,7 @@ public class EADAStarPlanTest {
         when(mockConfig.getDoubleValue("ead.MOVES.timeNormalizationDenominator")).thenReturn(2.0); 
         when(mockConfig.getDoubleValue("ead.MOVES.heuristicWeight")).thenReturn(60.0); 
         when(mockConfig.getDoubleValue("ead.MOVES.percentTimeCost")).thenReturn(0.5); 
+        when(mockConfig.getMaximumSpeed(0.0)).thenReturn(25);
         
         mockReplanHandle = mock(IReplanHandle.class, Mockito.withSettings().stubOnly());
     }

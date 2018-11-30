@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
 import java.io.IOException;
 
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.Constants;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.ICostModel;
 
@@ -71,10 +72,11 @@ public class DefaultCostModelFactory implements ICostModelFactory{
         double timeNormalizationDenominator = config.getDoubleValue("ead.MOVES.timeNormalizationDenominator");
         double heuristicWeight = config.getDoubleValue("ead.MOVES.heuristicWeight");
         double percentTimeCost = config.getDoubleValue("ead.MOVES.percentTimeCost");
+        double maxSpeed = ((double)config.getMaximumSpeed(0.0)) / Constants.MPS_TO_MPH;
 
         try {
           return new MovesFuelCostModel(rollingTermA, rotatingTermB, dragTermC, vehicleMassInTons, fixedMassFactor, baseRateTablePath,
-            fuelNormalizationDenominator, timeNormalizationDenominator, heuristicWeight, percentTimeCost);
+            fuelNormalizationDenominator, timeNormalizationDenominator, heuristicWeight, percentTimeCost, maxSpeed);
         } catch (IOException e) {
           throw new IllegalArgumentException(e.getMessage());
         }

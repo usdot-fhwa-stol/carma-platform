@@ -67,6 +67,7 @@ public class MovesFuelCostModel implements ICostModel {
 
     protected final double percentCostForTime;
     protected final double percentCostForFuel;
+    protected final double maxVelocity;
 
     /**
      * Builds the cost model object with several injected calculation parameters.
@@ -83,14 +84,15 @@ public class MovesFuelCostModel implements ICostModel {
      * @param timeNormalizationDenominator - Divides the calculated time cost to normalize it for a range ~0-1
      * @param heuristicWeight - Weight factor to apply to the calculated heuristic. When non-one A* will behave as Weighted A*
      * @param percentCostForTime - A factor (0-1) which will be multiplied by the time cost after normalization. (1 - percentCostForTime) will be multiplied by the fuel.
-     * 
+     * // TODO
      * @throws IOException - Exception thrown when the file specified by baseRateTablePath cannot be loaded properly
      */
     public MovesFuelCostModel(double rollingTermA, double rotatingTermB, double dragTermC, double vehicleMassInTons,
         double fixedMassFactor, String baseRateTablePath,
         double fuelNormalizationDenominator, double timeNormalizationDenominator,
         double heuristicWeight,
-        double percentCostForTime) throws IOException {
+        double percentCostForTime,
+        double maxVelocity) throws IOException {
         //assign injected params
         this.rollingTermA = rollingTermA;
         this.rotatingTermB = rotatingTermB;
@@ -101,7 +103,7 @@ public class MovesFuelCostModel implements ICostModel {
 
         this.percentCostForTime = percentCostForTime;
         this.percentCostForFuel = 1.0 - percentCostForTime;
-
+        this.maxVelocity = maxVelocity;
         // Find the highest energy cost in the table and store it for use when values fall outside table scope
         double maxValue = 0; 
         for(Entry<Integer, List<Double>> entry: this.baseRateTable.entrySet()) {
@@ -191,23 +193,14 @@ public class MovesFuelCostModel implements ICostModel {
         }
 
         // Get VSP
-        final double A = rollingTermA;
-        final double B = rotatingTermB;
-        final double C = dragTermC;
-        final double M = vehicleMassInTons;
-        final double f = fixedMassFactor;
-        final double g = 9.8; // Acceleration due to gravity = 9.8 m/s^2
-        final double v = n2.getSpeedAsDouble(); // We are using the target node's velocity
-        final double v_sqr = v*v;
-        final double dt = n2.getTimeAsDouble() - n1.getTimeAsDouble(); // Change in time in seconds
-        final double a = (v - n1.getSpeedAsDouble()) / dt; // a = dV / dt : We are using the acceleration to get from current speed to target speed
-        final double theta = ROAD_GRADE; 
-
-        // Calculate the VehicleSpecificPower (VSP)
-        final double VSP = (A*v + B*v_sqr + C*v_sqr*v + M*v*(a + g * Math.sin(theta))) / f;
+        final double dv = n2.getSpeedAsDouble() - n1.getSpeedAsDouble();
+        final double avg_v = (n2.getSpeedAsDouble() + n1.getSpeedAsDouble()) / 2.0;
+        final double dt = n2.getTimeAsDouble() -  n1.getTimeAsDouble(); // Change in time in seconds
+        final double a = dv / dt; // a = dV / dt : We are using the acceleration to get from current speed to target speed
+        final double VSP = getVSP(a,avg_v);
 
         // Determine Operating Mode from OpModeTable
-        final int opMode = getModeConditional(VSP, v, a);
+        final int opMode = getModeConditional(VSP, avg_v, a);
 
         // Return the highest cost which would still be in the table when our result is in the undefined region
         // Additionally log the occurrence
@@ -218,11 +211,10 @@ public class MovesFuelCostModel implements ICostModel {
             return J_PER_KJ * ((DEFAULT_PEAK_ENERGY_KJ / SEC_PER_HR) * dt);
         }
 
-        // Get Parameters
-        final List<Double> baseRateList = baseRateTable.get(opMode);
+        // Normalize Cost
+        double normalizedFuelCost = getJFromOpMode(opMode, dt) / fuelNormalizationDenominator;
+        double normalizedTimeCost = dt / timeNormalizationDenominator;
 
-        double normalizedFuelCost = (J_PER_KJ * ((baseRateList.get(BASE_RATE_ENERGY_COL) / SEC_PER_HR) * dt)) / fuelNormalizationDenominator;
-        double normalizedTimeCost = (n2.getTimeAsDouble() - n1.getTimeAsDouble()) / timeNormalizationDenominator;
         //System.out.println("normalizedFuelCost: " + normalizedFuelCost);
         // time cost: n2.getTime() - n1.getTime()
         
@@ -230,11 +222,63 @@ public class MovesFuelCostModel implements ICostModel {
     }
 
     /**
+     * Helper function to convert KJ/Hr to J/s
+     * 
+     * @param kjPerHr The KJ/Hr to convert
+     * 
+     * @return The converted J/s
+     */
+    protected double toJPerSec(double kjPerHr) {
+      return J_PER_KJ * (kjPerHr / SEC_PER_HR);
+    }
+
+    /**
+     * Helper function to calculate the energy usage in joules 
+     * 
+     * @param opMode The operational mode to lookup emissions data for
+     * @param dt The change in time in seconds
+     * 
+     * @return The usage of energy in joules
+     */
+    protected double getJFromOpMode(int opMode, double dt) {
+      final List<Double> baseRateList = baseRateTable.get(opMode);
+
+      return toJPerSec(baseRateList.get(BASE_RATE_ENERGY_COL)) * dt;
+    }
+
+    /**
+     * Helper function to calculate the Vehicle Specific Power based on ending speed and acceleration to required to reach that speed
+     * 
+     * @param acceleration The acceleration required to go from current speed to endSpeed
+     * @param averageSpeed The average speed over the region of given acceleration
+     * 
+     * @return The vehicle specific power
+     */
+    protected double getVSP(double accelerationToEndSpeed, double averageSpeed) {
+        // Get VSP
+        final double A = rollingTermA;
+        final double B = rotatingTermB;
+        final double C = dragTermC;
+        final double M = vehicleMassInTons;
+        final double f = fixedMassFactor;
+        final double g = 9.8; // Acceleration due to gravity = 9.8 m/s^2
+        final double v = averageSpeed; // We are using the target node's velocity
+        final double v_sqr = v*v;
+        final double a = accelerationToEndSpeed; // a = dV / dt : We are using the acceleration to get from current speed to target speed
+        final double theta = ROAD_GRADE; 
+
+        // Calculate the VehicleSpecificPower (VSP)
+        final double VSP = (A*v + B*v_sqr + C*v_sqr*v + M*v*(a + g * Math.sin(theta))) / f;
+
+        return VSP;
+    }
+
+    /**
      * Helper function for identifying the operating mode of the host vehicle based on vehicle specific power (VSP), velocity, and acceleration
      * 
      * This is a reconstruction of the conditional table lookup required by the UCR MOVES brief
      */
-    private int getModeConditional(double VSP, double velocity, double acceleration) {
+    protected int getModeConditional(double VSP, double velocity, double acceleration) {
         // In the MOVES documentation this table is presented in mi/hr here it is converted to m/s to avoid conversions
         final double FIFTY_MPH_IN_MPS = 22.352;
         final double TWENTY_FIVE_MPH_IN_MPS = 11.176;
@@ -306,10 +350,21 @@ public class MovesFuelCostModel implements ICostModel {
         if (currentNode.getDistance() > goal.getDistance() + tolerances.getDistance()) {
         	return Double.POSITIVE_INFINITY;
         }
-        //smooth acceleration from current location to ending location & speed, ignoring the signal
-        double normalizedHeuristics = (goal.getDistanceAsDouble() - currentNode.getDistanceAsDouble()) / goal.getDistanceAsDouble(); 
+
+        /**
+         * Minimum cost to goal will be fuel use while idle for the minimum possible travel time to the goal
+         * The values will be normalized and weighted to mirror the cost function
+         * This is guaranteed to by optimistic 
+         */
+        double distanceToGoal = goal.getDistanceAsDouble() - currentNode.getDistanceAsDouble();
+        double minSecToGoal = distanceToGoal / maxVelocity; // TODO this could be more accurate by calculating the piece wise function to max speed
+        double minJToGoal = getJFromOpMode(1, minSecToGoal); // OpMode of 1 is idle and represents minimum possible fuel usage 
+        double minNormJToGoal = minJToGoal / fuelNormalizationDenominator;
+        double minNormTimeToGoal = minSecToGoal / timeNormalizationDenominator;
+
+        double minCostToGoal = minNormJToGoal * percentCostForFuel + minNormTimeToGoal * percentCostForTime;
         //System.out.println("normalizedHeuristics: " + normalizedHeuristics);
-        return normalizedHeuristics * heuristicWeight;
+        return minCostToGoal * heuristicWeight;
     }
 
     @Override
