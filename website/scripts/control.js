@@ -67,16 +67,16 @@ function openTab(evt, name) {
         if (name != 'divCapabilities')
         {
             tab[i].style.width = '6%';
-            imgCARMAIconColor.style.width='90%';
-            imgCARMAIconColor.style.height= '15%';
-            imgCARMAIconColor.style.padding = '20px 0px 0px 5px';
+            imgCARMAIconColor.style.width='55px';
+            imgCARMAIconColor.style.height= 'auto';
+            imgCARMAIconColor.style.padding = '20px 0px 0px 7px';
         }
         else
         {
             tab[i].style.width = '12%';
-            imgCARMAIconColor.style.width='90%';
-            imgCARMAIconColor.style.height= '25%';
-            imgCARMAIconColor.style.padding = '20px 0px 0px 20px';
+            imgCARMAIconColor.style.width='120px';
+            imgCARMAIconColor.style.height= '120px';
+            imgCARMAIconColor.style.padding = '20px 0px 0px 15px';
         }
     }
 
