@@ -15,9 +15,12 @@
 #  the License.
 
 # CARMA packages checkout script
+
+set -ex
+
 if [[ ! -z $EXTRA_PACKAGES ]]; then
     echo "Attempting to check out extra CARMA packages from $EXTRA_PACKAGES version $EXTRA_PACKAGES_VERSION..."
-    cd /root/src
+    cd ~/src
     git clone --depth=1 $EXTRA_PACKAGES -b $EXTRA_PACKAGES_VERSION
 else 
     echo "No extra packages for CARMA specified."

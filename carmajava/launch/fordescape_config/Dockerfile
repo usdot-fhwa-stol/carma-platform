@@ -1,5 +1,3 @@
-#!/bin/bash
-
 #  Copyright (C) 2018 LEIDOS.
 # 
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -14,8 +12,10 @@
 #  License for the specific language governing permissions and limitations under
 #  the License.
 
+FROM busybox:latest
 
-# CARMA Docker Entrypoint Script
+ADD . /root/vehicle
+VOLUME /opt/carma/vehicle
 
-source /opt/carma/app/bin/setup.bash
-tmux new-session -s carma -- roslaunch carma saxton_cav.launch use_rosbag:=true
+CMD  cp /root/vehicle/* /opt/carma/vehicle
+
