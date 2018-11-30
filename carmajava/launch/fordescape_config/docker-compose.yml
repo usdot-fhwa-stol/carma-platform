@@ -25,6 +25,6 @@ services:
     volumes:
       - /opt/carma/logs:/opt/carma/logs
       - /opt/carma/.ros:/home/carma/.ros
-      - /opt/carma/vehicle/HostVehicleParams.yml:/opt/carma/vehicle/HostVehicleParams.yml
+      - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
     stdin_open: true
     tty: true
