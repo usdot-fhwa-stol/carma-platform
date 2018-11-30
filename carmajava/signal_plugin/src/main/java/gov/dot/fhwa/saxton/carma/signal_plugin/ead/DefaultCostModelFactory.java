@@ -70,10 +70,11 @@ public class DefaultCostModelFactory implements ICostModelFactory{
         double fuelNormalizationDenominator = config.getDoubleValue("ead.MOVES.fuelNormalizationDenominator");
         double timeNormalizationDenominator = config.getDoubleValue("ead.MOVES.timeNormalizationDenominator");
         double heuristicWeight = config.getDoubleValue("ead.MOVES.heuristicWeight");
+        double percentTimeCost = config.getDoubleValue("ead.MOVES.percentTimeCost");
 
         try {
           return new MovesFuelCostModel(rollingTermA, rotatingTermB, dragTermC, vehicleMassInTons, fixedMassFactor, baseRateTablePath,
-            fuelNormalizationDenominator, timeNormalizationDenominator, heuristicWeight);
+            fuelNormalizationDenominator, timeNormalizationDenominator, heuristicWeight, percentTimeCost);
         } catch (IOException e) {
           throw new IllegalArgumentException(e.getMessage());
         }

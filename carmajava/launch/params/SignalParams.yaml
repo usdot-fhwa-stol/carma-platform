@@ -245,7 +245,7 @@ ead/NCVHandling/collision/replanPeriod: 6.0
 # Double: The amount of buffer to put around the host vehicle's downtrack bounds when doing a collision check
 # The downtrack margin will be (vehicle's length / 2.0) + downtrack buffer
 # Units: m
-ead/NCVHandling/collision/downtrackBuffer: 3.0
+ead/NCVHandling/collision/downtrackBuffer: 2.0
 
 # Double: The amount of buffer to put around the host vehicle's crosstrack bounds when doing a collision check
 # The crosstrack margin will be (vehicle's width / 2.0) + crosstrack buffer
@@ -311,5 +311,8 @@ ead/MOVES/timeNormalizationDenominator: 2.0
 # Double: The value which will be multiplied by the hueristic of a node to make A* operate as Weighted A*. 
 # Units: The same as the heuristic measurement (default is distance in meters)
 ead/MOVES/heuristicWeight: 60.0
+
+# Double: A factor (0-1) which will be multiplied by the time cost after normalization. (1 - percentCostForTime) will be multiplied by the fuel cost.
+ead/MOVES/percentTimeCost: 0.5
 
 #### End of Parameters used in MOVES Fuel Cost Model

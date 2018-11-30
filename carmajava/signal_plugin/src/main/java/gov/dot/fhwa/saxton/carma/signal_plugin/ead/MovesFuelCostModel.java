@@ -65,6 +65,9 @@ public class MovesFuelCostModel implements ICostModel {
     protected final double timeNormalizationDenominator;
     protected final double heuristicWeight;
 
+    protected final double percentCostForTime;
+    protected final double percentCostForFuel;
+
     /**
      * Builds the cost model object with several injected calculation parameters.
      * These parameters should come from the EPA "MOVES2010 Highway Vehicle Population and Activity Data",
@@ -79,13 +82,15 @@ public class MovesFuelCostModel implements ICostModel {
      * @param fuelNormalizationDenominator - Divides the calculated fuel cost to normalize it for a range ~0-1
      * @param timeNormalizationDenominator - Divides the calculated time cost to normalize it for a range ~0-1
      * @param heuristicWeight - Weight factor to apply to the calculated heuristic. When non-one A* will behave as Weighted A*
+     * @param percentCostForTime - A factor (0-1) which will be multiplied by the time cost after normalization. (1 - percentCostForTime) will be multiplied by the fuel.
      * 
      * @throws IOException - Exception thrown when the file specified by baseRateTablePath cannot be loaded properly
      */
     public MovesFuelCostModel(double rollingTermA, double rotatingTermB, double dragTermC, double vehicleMassInTons,
         double fixedMassFactor, String baseRateTablePath,
         double fuelNormalizationDenominator, double timeNormalizationDenominator,
-        double heuristicWeight) throws IOException {
+        double heuristicWeight,
+        double percentCostForTime) throws IOException {
         //assign injected params
         this.rollingTermA = rollingTermA;
         this.rotatingTermB = rotatingTermB;
@@ -93,6 +98,9 @@ public class MovesFuelCostModel implements ICostModel {
         this.vehicleMassInTons = vehicleMassInTons;
         this.fixedMassFactor = fixedMassFactor;
         this.baseRateTable = loadTable(baseRateTablePath); // Load the base rates table
+
+        this.percentCostForTime = percentCostForTime;
+        this.percentCostForFuel = 1.0 - percentCostForTime;
 
         // Find the highest energy cost in the table and store it for use when values fall outside table scope
         double maxValue = 0; 
@@ -217,7 +225,8 @@ public class MovesFuelCostModel implements ICostModel {
         double normalizedTimeCost = (n2.getTimeAsDouble() - n1.getTimeAsDouble()) / timeNormalizationDenominator;
         //System.out.println("normalizedFuelCost: " + normalizedFuelCost);
         // time cost: n2.getTime() - n1.getTime()
-        return normalizedFuelCost + normalizedTimeCost; // Return the energy in J by converting KJ/hr to KJ/s and multiplying by dt and J/KJ
+        
+        return normalizedFuelCost * percentCostForFuel + normalizedTimeCost * percentCostForTime; // Return the energy in J by converting KJ/hr to KJ/s and multiplying by dt and J/KJ
     }
 
     /**
