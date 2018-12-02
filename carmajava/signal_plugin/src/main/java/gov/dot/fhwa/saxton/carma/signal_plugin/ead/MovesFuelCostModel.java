@@ -372,7 +372,9 @@ public class MovesFuelCostModel implements ICostModel {
         return minCostToGoal * heuristicWeight;
     }
 
-    // @Override
+    // 
+    // NOTE: THIS IS NOT DONE. OUT GOAL IS AT OPERATING SPEED. THEREFOR THE MORE COMPLEX H MUST TAKE THAT INTO ACCOUNT
+    //@Override
     // public double heuristic(Node currentNode) {
 
     // if (isGoal(currentNode)) {

@@ -82,7 +82,7 @@ public class EADAStarPlanTest {
         
         when(mockConfig.getDoubleValue("ead.MOVES.fuelNormalizationDenominator")).thenReturn(425000.0); 
         when(mockConfig.getDoubleValue("ead.MOVES.timeNormalizationDenominator")).thenReturn(2.0); 
-        when(mockConfig.getDoubleValue("ead.MOVES.heuristicWeight")).thenReturn(60.0); 
+        when(mockConfig.getDoubleValue("ead.MOVES.heuristicWeight")).thenReturn(1.0); 
         when(mockConfig.getDoubleValue("ead.MOVES.percentTimeCost")).thenReturn(0.5); 
         when(mockConfig.getMaximumSpeed(0.0)).thenReturn(25);
         
@@ -107,15 +107,15 @@ public class EADAStarPlanTest {
         IntersectionData intersection1 = new IntersectionData(); // Id 9945
         intersection1.map = mock(MapMessage.class, Mockito.withSettings().stubOnly());
         intersection1.roughDist = 1581; 
-        intersection1.dtsb = -1.0;
+        intersection1.dtsb = 50;
         intersection1.currentPhase = SignalPhase.GREEN;
-        intersection1.timeToNextPhase = 13.631097656249949;
+        intersection1.timeToNextPhase = 8.631097656249949;
         intersection1.stopBoxWidth = 32.90;
         intersection1.intersectionId = 9709;
         intersection1.geometry = new IntersectionGeometry(40, 100);
         List<IntersectionData> intersections = Arrays.asList(intersection1);
         try {
-            List<Node> res = ead.plan(10.228841293559354, 11.176, intersections, 0, 0);
+            List<Node> res = ead.plan(0, 11.176, intersections, 0, 0);
             System.out.println("A* Planning for one intersections takes " + (System.currentTimeMillis() - startTime) + " ms to finish");
             for(Node n : res) {
                 System.out.println(n.toString());

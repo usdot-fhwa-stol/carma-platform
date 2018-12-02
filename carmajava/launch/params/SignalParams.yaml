@@ -7,6 +7,7 @@
 
 # maximumSpeed and crawlingSpeed are in mph
 maximumSpeed: 35.0
+# NOTE: crawlingSpeed must be achievable from 0 using defaultAccel with the given fine_time_inc
 crawlingSpeed: 7.0
 
 # Accel must match guidance accel values for maneuver generation to match plan
