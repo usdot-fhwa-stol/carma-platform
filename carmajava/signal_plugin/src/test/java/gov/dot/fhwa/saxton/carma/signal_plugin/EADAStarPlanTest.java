@@ -44,8 +44,10 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.IMotionInterpolator;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.INodeCollisionChecker;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.IntersectionGeometry;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.PlanInterpolator;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.ANAStarSolver;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.AStarSolver;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.FinePathNeighbors;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.ITreeSolver;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 import cav_msgs.RoadwayObstacle;
 
@@ -101,9 +103,12 @@ public class EADAStarPlanTest {
         when(mockConfig.getDoubleDefaultValue("ead.fine_time_inc", 2.0)).thenReturn(2.0);
         when(mockConfig.getDoubleDefaultValue("ead.fine_speed_inc", 1.0)).thenReturn(1.0);
         when(mockConfig.getDoubleDefaultValue("ead.acceptableStopDistance", 6.0)).thenReturn(6.0);
-        long startTime = System.currentTimeMillis();
         EadAStar ead = new EadAStar(mockCC);
-        ead.initialize(1, new AStarSolver());
+        ANAStarSolver solver = new ANAStarSolver();
+        solver.setMaxPlanningTimeMS(Long.MAX_VALUE);
+        ead.initialize(1, solver);
+        // AStarSolver s = new AStarSolver();
+        // ead.initialize(1, s);
         IntersectionData intersection1 = new IntersectionData(); // Id 9945
         intersection1.map = mock(MapMessage.class, Mockito.withSettings().stubOnly());
         intersection1.roughDist = 1581; 
@@ -115,6 +120,7 @@ public class EADAStarPlanTest {
         intersection1.geometry = new IntersectionGeometry(40, 100);
         List<IntersectionData> intersections = Arrays.asList(intersection1);
         try {
+            long startTime = System.currentTimeMillis();
             List<Node> res = ead.plan(0, 11.176, intersections, 0, 0);
             System.out.println("A* Planning for one intersections takes " + (System.currentTimeMillis() - startTime) + " ms to finish");
             for(Node n : res) {
@@ -183,10 +189,11 @@ public class EADAStarPlanTest {
         when(mockConfig.getDoubleDefaultValue("ead.acceptableStopDistance", 6.0)).thenReturn(6.0);
         int totalCount = 0;
         int failureCount = 0;
-        double totalPlanningTime = 0.0;
+        long totalPlanningTime = 0;
         SignalPhase phase1 = SignalPhase.GREEN;
         SignalPhase phase2 = SignalPhase.GREEN;
         EadAStar ead;
+        //ANAStarSolver solver;
         AStarSolver solver;
         for (double dist1 = 20; dist1 < 100; dist1 += 30.0) {
             for (double dist2 = dist1 + 80; dist2 < 250; dist2 += 30.0) {
@@ -201,7 +208,6 @@ public class EADAStarPlanTest {
                                     continue;
                                 }
                                 //System.out.println("DTSB1: " + dist1 + " DTSB2: " + dist2 + " Phase1: " + phase1 + " Phase2: " + phase2 + " timeToNext1: " + i + " timeToNext2: " + j);
-                                long startTime = System.currentTimeMillis();
                                 //The following code is for NCV handling
                                 int randomPredictionStartLoc = ThreadLocalRandom.current().nextInt((int)dist1, (int)dist2 + 1);
                                 int randomPredictionStartTime = 0;
@@ -211,8 +217,9 @@ public class EADAStarPlanTest {
                                         new Node(randomPredictionStartLoc, randomPredictionStartTime, randomPredictionSpeed),
                                         new Node(randomPredictionStartLoc + predictionPeriod * randomPredictionSpeed, randomPredictionStartTime + predictionPeriod, randomPredictionSpeed));
                                 ead = new EadAStar(mockCC);
-                                solver = new AStarSolver();
-                                ead.initialize(1, solver);
+                                //solver = new ANAStarSolver();
+                                //solver.setMaxPlanningTimeMS(200);
+                                ead.initialize(1, new AStarSolver());
                                 IntersectionData intersection1 = new IntersectionData(); // Id 9709
                                 intersection1.map = mock(MapMessage.class);
                                 intersection1.roughDist = (int)(dist1*100.0);
@@ -232,6 +239,7 @@ public class EADAStarPlanTest {
                                 intersection2.intersectionId = 9945;
                                 intersection2.geometry = new IntersectionGeometry(40, 100);
                                 List<IntersectionData> intersections = Arrays.asList(intersection1, intersection2);
+                                long startTime = System.currentTimeMillis();
                                 try {
                                     List<Node> res = ead.plan(0, 11.176, intersections, 0, 0);
                                     totalPlanningTime += System.currentTimeMillis() - startTime;
@@ -262,7 +270,7 @@ public class EADAStarPlanTest {
         System.out.println("Total Plans: " + totalCount);
         System.out.println("Failed Plans: " + failureCount);
         System.out.println("Percent Failed: " + ((double)failureCount / (double)totalCount));
-        System.out.println("Average Planning Time ms: " + (totalPlanningTime / (double)(totalCount - failureCount))); 
+        System.out.println("Average Planning Time ms: " + (totalPlanningTime / (totalCount - failureCount))); 
         System.out.println("\n\n");
 
         assertTrue(0 == failureCount);// Test fails if any plans fail

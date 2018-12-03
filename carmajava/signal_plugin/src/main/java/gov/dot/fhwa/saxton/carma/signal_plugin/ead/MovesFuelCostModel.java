@@ -344,80 +344,81 @@ public class MovesFuelCostModel implements ICostModel {
         }
     }
 
-    @Override
-    public double heuristic(Node currentNode) { // TODO though less accurate this heuristic is faster than the one below
+    // @Override
+    // public double heuristic(Node currentNode) { // TODO though less accurate this heuristic is faster than the one below
 
-        if (isGoal(currentNode)) {
-          return 0.0;
-        }
-        //infinite cost if we pass the location and the time of the goal
-        final double goalDistance = goal.getDistance() + tolerances.getDistance();
-        if (currentNode.getDistance() > goalDistance) {
-        	return Double.POSITIVE_INFINITY;
-        }
+    //     if (isGoal(currentNode)) {
+    //       return 0.0;
+    //     }
+    //     //infinite cost if we pass the location and the time of the goal
+    //     final double goalDistance = goal.getDistance() + tolerances.getDistance();
+    //     if (currentNode.getDistance() > goalDistance) {
+    //     	return Double.POSITIVE_INFINITY;
+    //     }
 
-        /**
-         * Minimum cost to goal will be fuel use while idle for the minimum possible travel time to the goal
-         * The values will be normalized and weighted to mirror the cost function
-         * This is guaranteed to by optimistic 
-         */
-        double distanceToGoal = goalDistance - currentNode.getDistanceAsDouble();
-        double minSecToGoal = distanceToGoal / maxVelocity; // TODO this could be more accurate by calculating the piece wise function to max speed
-        double minJToGoal = getJFromOpMode(1, minSecToGoal); // OpMode of 1 is idle and represents minimum possible fuel usage 
-        double minNormJToGoal = minJToGoal / fuelNormalizationDenominator;
-        double minNormTimeToGoal = minSecToGoal / timeNormalizationDenominator;
+    //     /**
+    //      * Minimum cost to goal will be fuel use while idle for the minimum possible travel time to the goal
+    //      * The values will be normalized and weighted to mirror the cost function
+    //      * This is guaranteed to by optimistic 
+    //      */
+    //     double distanceToGoal = goalDistance - currentNode.getDistanceAsDouble();
+    //     double minSecToGoal = distanceToGoal / maxVelocity; // TODO this could be more accurate by calculating the piece wise function to max speed
+    //     double minJToGoal = getJFromOpMode(1, minSecToGoal); // OpMode of 1 is idle and represents minimum possible fuel usage 
+    //     double minNormJToGoal = minJToGoal / fuelNormalizationDenominator;
+    //     double minNormTimeToGoal = minSecToGoal / timeNormalizationDenominator;
 
-        double minCostToGoal = minNormJToGoal * percentCostForFuel + minNormTimeToGoal * percentCostForTime;
-        //System.out.println("normalizedHeuristics: " + normalizedHeuristics);
-        return minCostToGoal * heuristicWeight;
-    }
+    //     double minCostToGoal = minNormJToGoal * percentCostForFuel + minNormTimeToGoal * percentCostForTime;
+    //     //System.out.println("normalizedHeuristics: " + normalizedHeuristics);
+    //     return minCostToGoal * heuristicWeight;
+    // }
 
     // 
     // NOTE: THIS IS NOT DONE. OUT GOAL IS AT OPERATING SPEED. THEREFOR THE MORE COMPLEX H MUST TAKE THAT INTO ACCOUNT
-    //@Override
-    // public double heuristic(Node currentNode) {
+    @Override
+    public double heuristic(Node currentNode) {
 
-    // if (isGoal(currentNode)) {
-    //   return 0.0;
-    // }
-    //  //infinite cost if we pass the location and the time of the goal
-    //  final double goalDistance = goal.getDistance() + tolerances.getDistance();
-    //  if (currentNode.getDistance() > goalDistance) {
-    //   System.out.println("HERE Node: " + currentNode);
-    //   return Double.POSITIVE_INFINITY;
-    // }
+    if (isGoal(currentNode)) {
+      return 0.0;
+    }
+     //infinite cost if we pass the location and the time of the goal
+     final double goalDistance = goal.getDistance() + tolerances.getDistance();
+     if (currentNode.getDistance() > goalDistance) {
+      //System.out.println("HERE Node: " + currentNode);
+      return Double.POSITIVE_INFINITY;
+    }
 
-    // /**
-    //  * Minimum cost to goal will be fuel use while idle for the minimum possible travel time to the goal
-    //  * The values will be normalized and weighted to mirror the cost function
-    //  * This is guaranteed to by optimistic 
-    //  */
-    // final double maxAccel_ = 1.5; // TODO make an input to constructor
-    // final double distanceToGoal = goalDistance - currentNode.getDistanceAsDouble();
-    // double minSecToGoal;
+    /**
+     * Minimum cost to goal will be fuel use while idle for the minimum possible travel time to the goal
+     * The values will be normalized and weighted to mirror the cost function
+     * This is guaranteed to by optimistic 
+     */
+    final double maxAccel_ = 1.5; // TODO make an input to constructor
+    final double distanceToGoal = goalDistance - currentNode.getDistanceAsDouble();
+    double minSecToGoal;
     
-    // final double curSpeed = currentNode.getSpeedAsDouble();
-    // final double deltaSpeed = maxVelocity - currentNode.getSpeedAsDouble();
-    // final double timeToOperSpeed = deltaSpeed / maxAccel_;
-    // final double distToOperSpeed = curSpeed*timeToOperSpeed + 0.5 * maxAccel_*timeToOperSpeed*timeToOperSpeed;
+    final double curSpeed = currentNode.getSpeedAsDouble();
+    final double deltaSpeed = maxVelocity - currentNode.getSpeedAsDouble();
+    final double timeToOperSpeed = deltaSpeed / maxAccel_;
+    final double distToOperSpeed = curSpeed*timeToOperSpeed + 0.5 * maxAccel_*timeToOperSpeed*timeToOperSpeed;
     
-    // if (distToOperSpeed > distanceToGoal) {
-    //   double speedAtNext = Math.sqrt(curSpeed*curSpeed + 2.0*maxAccel_*distanceToGoal);
-    //   minSecToGoal = (speedAtNext - curSpeed) / maxAccel_;
-    // } else {
-    //   //accelerate to operating speed before reaching the goal.
-    //   double cruiseTime = (distanceToGoal - distToOperSpeed) / maxVelocity;
-    //   minSecToGoal = timeToOperSpeed + cruiseTime;
-    // }
+    if (distToOperSpeed > distanceToGoal) {
+      return Double.POSITIVE_INFINITY; // If we can't reach operating speed before the goal this node is irrelevant
+      // double speedAtNext = Math.sqrt(curSpeed*curSpeed + 2.0*maxAccel_*distanceToGoal);
+      // minSecToGoal = (speedAtNext - curSpeed) / maxAccel_;
+    } else {
+      //accelerate to operating speed before reaching the goal.
+      double cruiseTime = (distanceToGoal - distToOperSpeed) / maxVelocity;
+      minSecToGoal = timeToOperSpeed + cruiseTime;
+    }
     
-    // double minJToGoal = getJFromOpMode(1, minSecToGoal); // OpMode of 1 is idle and represents minimum possible fuel usage 
-    // double minNormJToGoal = minJToGoal / fuelNormalizationDenominator;
-    // double minNormTimeToGoal = minSecToGoal / timeNormalizationDenominator;
+    double minJToGoal = getJFromOpMode(1, minSecToGoal); // OpMode of 1 is idle and represents minimum possible fuel usage 
+    double minNormJToGoal = minJToGoal / fuelNormalizationDenominator;
+    double minNormTimeToGoal = minSecToGoal / timeNormalizationDenominator;
 
-    // double minCostToGoal = minNormJToGoal * percentCostForFuel + minNormTimeToGoal * percentCostForTime;
-    // //System.out.println("normalizedHeuristics: " + normalizedHeuristics);
-    // return minCostToGoal * heuristicWeight;
-    // }
+    double minCostToGoal = minNormJToGoal * percentCostForFuel + minNormTimeToGoal * percentCostForTime;
+    //System.out.println("normalizedHeuristics: " + normalizedHeuristics);
+    return minCostToGoal * heuristicWeight;
+    }
 
     @Override
     public void setTolerances(Node tolerances) {
