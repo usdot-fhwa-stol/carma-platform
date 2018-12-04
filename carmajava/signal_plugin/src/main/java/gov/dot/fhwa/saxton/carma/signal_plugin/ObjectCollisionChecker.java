@@ -158,7 +158,7 @@ public class ObjectCollisionChecker implements ITrafficSignalPluginCollisionChec
 
       boolean inLane = obs.getPrimaryLane() == currentLane;
 
-       log.info("OCC", "Object found in lane: " + currentLane + " secondary lanes: " + secondaryLanes);
+      // log.info("OCC", "Object found in lane: " + currentLane + " secondary lanes: " + secondaryLanes);
       // If the object is in the same lane and in front of the host vehicle
       // Add it to the set of tracked object histories
       // TODO this currently does not handle if the lane index changes between the host and detected object
@@ -224,11 +224,11 @@ public class ObjectCollisionChecker implements ITrafficSignalPluginCollisionChec
       //}
     } else if (ncvDetectionTime != null && timeProvider.getCurrentTimeMillis() - ncvDetectionTime > NCVReplanPeriod) {
       boolean collisionDetected = checkCollision(interpolatedHostPlan.get(), 1.2);
-      if (collisionDetected) {
+    //  if (collisionDetected) {
         ncvDetectionTime = timeProvider.getCurrentTimeMillis();
         log.info("OCC", "NEW PLAN: timer triggered");
         replanHandle.triggerNewPlan(true); // Request a replan from the plugin
-      }
+   //   }
     }
     // if (collisionDetected) { // Any time there is a detected collision force a replan
     //   ncvDetectionTime = timeProvider.getCurrentTimeMillis();
