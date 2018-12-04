@@ -33,33 +33,34 @@ public class ANAStarSolver implements ITreeSolver {
 
   protected static final ILogger log_ = LoggerManager.getLogger(AStarSolver.class);
   protected long maxPlanningTimeMS = 500;
+  public static long iterationCount = 0;
 
   @Override
   public List<Node> solve(Node start, ICostModel costModel, INeighborCalculator neighborCalculator) {
 
     // List of optimal parent from each node
     // This map is used to extract the optimal path once the goal is found
-    final Map<Node,Node> cameFrom = new HashMap<>(800);
+    final Map<Node,Node> cameFrom = new HashMap<>(1500);
 
     // List of nodes which will no longer be explored as their cost is guaranteed to be greater then G
-    final Set<Node> closedSet = new HashSet<>(800);
+    final Set<Node> closedSet = new HashSet<>(1500);
 
     // Each node's actual cost to reach from the start node
-    final Map<Node, Double> gScore = new HashMap<>(800);
+    final Map<Node, Double> gScore = new HashMap<>(1500);
 
     // Each node's heuristic cost to reach from the start node
-    final Map<Node, Double> hScore = new HashMap<>(800);
+    final Map<Node, Double> hScore = new HashMap<>(1500);
 
     // Expected e-score cost to reach goal from start through each node
     // eScore determines order of node expansion
     // eScore = (G - gScore) / hScore
-    final Map<Node, Double> eScore = new HashMap<>(800);
+    final Map<Node, Double> eScore = new HashMap<>(1500);
 
     // Queue of discovered nodes which still need to be evaluated
     // The queue is ordered by eScore
     // No assumption is made about the ordering of nodes with equal eScore
     // Higher eScore means higher priority
-    PriorityQueue<Node> openSetQueue = new PriorityQueue<>(800, new Comparator<Node>() {
+    PriorityQueue<Node> openSetQueue = new PriorityQueue<>(1500, new Comparator<Node>() {
       @Override public int compare(Node n1, Node n2) {
         return eScore.get(n1) > eScore.get(n2) ? -1 : 1;
       }
@@ -77,7 +78,7 @@ public class ANAStarSolver implements ITreeSolver {
 
     List<Node> bestPath = new LinkedList<>();
 
-    long iterationCount = 0;
+    iterationCount = 0;
 
     long endTime = System.currentTimeMillis() + maxPlanningTimeMS;
     if (endTime < 0) {
@@ -108,6 +109,7 @@ public class ANAStarSolver implements ITreeSolver {
 
         if (gScoreOfNode + hScoreOfNode >= G.doubleValue()) {
           closedSet.add(n);
+          //eScore.put(n, Double.NEGATIVE_INFINITY);
           continue;
         }
 
@@ -116,8 +118,8 @@ public class ANAStarSolver implements ITreeSolver {
         nodeToUpdate.add(n);
       }
 
-      // Easiest way to update eScore values is rebuild the priority queue
-      openSetQueue = new PriorityQueue<>(800, new Comparator<Node>() {
+      // // Easiest way to update eScore values is rebuild the priority queue
+      openSetQueue = new PriorityQueue<>(1500, new Comparator<Node>() {
         @Override public int compare(Node n1, Node n2) {
           return eScore.get(n1) > eScore.get(n2) ? -1 : 1;
         }
@@ -179,8 +181,8 @@ public class ANAStarSolver implements ITreeSolver {
       // Check if this node is the goal
       if (costModel.isGoal(current)) {
         log_.info("EAD", "Found our goal with node " + current.toString());
-        // log_.info("EAD","Ending sizes: closedSet=" + closedSet.size() + ", cameFrom=" +
-        //             cameFrom.size() + ", gScore=" + gScore.size() + ", openSetQueue=" + openSetQueue.size());
+        log_.info("EAD", "Ending sizes: closedSet=" + closedSet.size() + ", cameFrom=" +
+                    cameFrom.size() + ", gScore=" + gScore.size() + ", openSetQueue=" + openSetQueue.size());
         log_.debug("EAD", "We have visited " + visitedNodes + " nodes to find the solution");
 
         G.setValue(gScore.get(current));
