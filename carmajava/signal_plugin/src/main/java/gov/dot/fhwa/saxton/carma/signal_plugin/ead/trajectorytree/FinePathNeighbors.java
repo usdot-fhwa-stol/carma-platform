@@ -137,12 +137,6 @@ public class FinePathNeighbors extends NeighborBase {
             // }
         }
         log_.debug("PLAN", "Generating neighbors of size " + neighbors.size());
-
-        if (neighbors.size() == 0 && curSpeed < FLOATING_POINT_EPSILON) {
-            //System.out.println("Stopped and no neighbors must be at stop bar so adding 0 speed node");
-            //System.out.println("Potential Neighbor: " + new Node(curDist, newTime, 0.0).toString());
-            neighbors.add(new Node(curDist, newTime, 0.0));
-        }
         
         //System.out.println();
         List<Node> neightborsWithoutConflicts = neighbors.stream().filter(n -> !hasConflict(node, n)).collect(Collectors.toList());
@@ -150,6 +144,15 @@ public class FinePathNeighbors extends NeighborBase {
         //     double newSpeed = Math.max(curSpeed - (maxAccel_ * variableTimeInc), 0);
         //     neightborsWithoutConflicts.add(new Node(curDist + ((curSpeed + newSpeed) * 0.5 *variableTimeInc), newTime, newSpeed));
         // }
+        // No non collision solution exists so stop the vehicle
+        if (neighbors.size() != 0 && neightborsWithoutConflicts.size() == 0) {
+            neighbors.add(new Node(curDist, newTime, 0.0));
+        } else if (neighbors.size() == 0 && curSpeed < FLOATING_POINT_EPSILON) {
+            //System.out.println("Stopped and no neighbors must be at stop bar so adding 0 speed node");
+            //System.out.println("Potential Neighbor: " + new Node(curDist, newTime, 0.0).toString());
+            neighbors.add(new Node(curDist, newTime, 0.0));
+        }
+
         numCollisions += (neighbors.size() - neightborsWithoutConflicts.size());
         return neightborsWithoutConflicts;
     }
