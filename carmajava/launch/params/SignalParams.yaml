@@ -131,7 +131,7 @@ ead/trajectoryclass: 'gov.dot.fhwa.saxton.glidepath.ead.Trajectory'
 # the detailed pass looking at only the nearest intersection
 ead/coarse_time_inc: 2.0
 ead/coarse_speed_inc: 2.0
-ead/fine_time_inc: 2.0
+ead/fine_time_inc: 1.0
 ead/fine_speed_inc: 1.0
 
 # enables limiting of speed commands based on maximum acceleration capability
@@ -236,12 +236,12 @@ ead/NCVHandling/collision/distanceStep: 2.5
 
 # Double: The amount of forward time to predict detected NCV motion for
 # Units: s
-ead/NCVHandling/collision/timeDuration: 18.0
+ead/NCVHandling/collision/timeDuration: 12.0
 
 # Double: The amount of time which will pass between replans caused by NCV detection. 
 # Should be at most half the ead/NCVHandling/collision/timeDuration value
 # Units: s
-ead/NCVHandling/collision/replanPeriod: 6.0
+ead/NCVHandling/collision/replanPeriod: 3.0
 
 # Double: The amount of buffer to put around the host vehicle's downtrack bounds when doing a collision check
 # The downtrack margin will be (vehicle's length / 2.0) + downtrack buffer
@@ -307,13 +307,13 @@ ead/MOVES/fuelNormalizationDenominator: 425000.0
 # Double: The value which the calculated time cost will be devided by to generate a normalize cost from ~0-1
 # This should be the same as the timestep size
 # Units: Joules
-ead/MOVES/timeNormalizationDenominator: 2.0
+ead/MOVES/timeNormalizationDenominator: 1.0
 
 # Double: The value which will be multiplied by the hueristic of a node to make A* operate as Weighted A*. 
 # Units: The same as the heuristic measurement (default is distance in meters)
-ead/MOVES/heuristicWeight: 60.0
+ead/MOVES/heuristicWeight: 1.0
 
 # Double: A factor (0-1) which will be multiplied by the time cost after normalization. (1 - percentCostForTime) will be multiplied by the fuel cost.
-ead/MOVES/percentTimeCost: 0.5
+ead/MOVES/percentTimeCost: 0.0
 
 #### End of Parameters used in MOVES Fuel Cost Model
