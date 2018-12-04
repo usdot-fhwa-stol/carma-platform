@@ -94,6 +94,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.Movement;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.SpatMessage;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.EadAStar;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.PlanInterpolator;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.ANAStarSolver;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.CoarsePathNeighbors;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 import gov.dot.fhwa.saxton.carma.signal_plugin.filter.PolyHoloA;
@@ -465,7 +466,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         return;
                     }
         
-                    log.info("Ead result is path of size: " + eadResult.size());
+                    log.info("EadAStar result is path of size: " + eadResult.size());
+                    log.info("EadAStar Num ANA iterations: " + ANAStarSolver.iterationCount);
                     // Set the new plan as the current plan for collision checker
                     collisionChecker.setHostPlan(eadResult, startTime.value(), startDowntrack.value());
         
@@ -982,10 +984,26 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             startDist = planStartingDowntrack.get(); // TODO this change is not thread safe
         }
         Node prev = null;
+        double prevManeuverEndDist = 0;
+        boolean firstManeuver = true;
         for (Node cur : eadResult) {
             if (prev == null) {
                 prev = cur;
+                prevManeuverEndDist = startDist + prev.getDistanceAsDouble();
             } else {
+
+                double maneuverEndDist = prevManeuverEndDist + (cur.getDistanceAsDouble() - prev.getDistanceAsDouble());
+                
+                if (maneuverEndDist < traj.getStartLocation()) {
+                    prev = cur;
+                    prevManeuverEndDist = maneuverEndDist;
+                    continue;
+                    
+                } else if (firstManeuver) {
+                    prevManeuverEndDist = traj.getStartLocation();
+                    firstManeuver = false;
+                }
+
                 if (Math
                         .abs(prev.getSpeedAsDouble() - cur.getSpeedAsDouble()) < speedCommandQuantizationFactor) {
                     SteadySpeed steadySpeed = new SteadySpeed(this);
@@ -994,13 +1012,13 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                     if (cur.getSpeedAsDouble() > speedCommandQuantizationFactor) {
                         steadySpeed.setSpeeds(cur.getSpeedAsDouble(), cur.getSpeedAsDouble());
                         pluginManeuverPlanner.planManeuver(steadySpeed,
-                                startDist + prev.getDistanceAsDouble(), startDist + cur.getDistanceAsDouble());
+                                prevManeuverEndDist, maneuverEndDist);
                     } else {
                         // We're coming to a stop, so plan an indefinite length stop maneuver, to be
                         // overridden by replan later
                         steadySpeed.setSpeeds(0.0, 0.0);
                         pluginManeuverPlanner.planManeuver(steadySpeed,
-                                startDist + prev.getDistanceAsDouble(), traj.getEndLocation());
+                                prevManeuverEndDist, traj.getEndLocation());
                         
                         traj.addManeuver(steadySpeed);
                         break;
@@ -1012,17 +1030,18 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                     speedUp.setMaxAccel(pluginManeuverInputs.getMaxAccelLimit());
                     speedUp.setSpeeds(prev.getSpeedAsDouble(), cur.getSpeedAsDouble());
                     pluginManeuverPlanner.planManeuver(speedUp,
-                            startDist + prev.getDistanceAsDouble(), startDist + cur.getDistanceAsDouble());
+                            prevManeuverEndDist, maneuverEndDist);
                     traj.addManeuver(speedUp);
                 } else {
                     SlowDown slowDown = new SlowDown(this);
                     slowDown.setMaxAccel(pluginManeuverInputs.getMaxAccelLimit());
                     slowDown.setSpeeds(prev.getSpeedAsDouble(), cur.getSpeedAsDouble());
                     pluginManeuverPlanner.planManeuver(slowDown,
-                            startDist + prev.getDistanceAsDouble(), startDist + cur.getDistanceAsDouble());
+                            prevManeuverEndDist, maneuverEndDist);
                     traj.addManeuver(slowDown);
                 } 
 
+                prevManeuverEndDist = maneuverEndDist;
                 prev = cur;
             }
         }
