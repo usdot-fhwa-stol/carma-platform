@@ -22,6 +22,9 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 
 /**
+ * 
+ * TODO: This model has been deprecated for MOVES and has therefore not been updated for new algorithm changes as of 12/5/18
+ * 
  * Cost model for use in the trajectory tree solution. Computes a cost between neighboring nodes
  * based on an estimation of fuel cost to travel between those nodes.
  *
