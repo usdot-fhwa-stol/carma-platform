@@ -180,11 +180,15 @@ public class CoarsePathNeighbors extends NeighborBase {
                     if(intermediateNode != null) {
                         //System.out.println("1 " + hasConflict(node, intermediateNode));
                         //System.out.println("2 " + hasConflict(intermediateNode, neighbor));
-                        neighbors.add(neighbor);
+                        if(!hasConflict(node, intermediateNode) && !hasConflict(intermediateNode, neighbor)) {
+                            neighbors.add(neighbor);
+                        }
                         intermediateNode = null;   
                     } else {
                         //System.out.println("3 " + hasConflict(node, neighbor));
-                        neighbors.add(neighbor);
+                        if(!hasConflict(node, neighbor)) {        
+                            neighbors.add(neighbor);
+                        }
                     }
                     nodeTime += timeInc_;
                     nodeSpeed = 2.0*(distToNext - lagDist)/(nodeTime - (curTime + lagTime_)) - curSpeed;
@@ -223,7 +227,9 @@ public class CoarsePathNeighbors extends NeighborBase {
                     Node neighbor = new Node(nodeLoc, nodeTime, nodeSpeed);
                     ////System.out.println("Potential Neighbor: " + neighbor.toString());
                     //System.out.println("4 " + hasConflict(node, neighbor));
-                    neighbors.add(neighbor);
+                    if(!hasConflict(node, neighbor)) {
+                        neighbors.add(neighbor);
+                    }
                     log_.debug("PLAN", "case two: time = " + nodeTime + " speed = " + nodeSpeed + " loc = " + nodeLoc);
                     nodeTime += timeInc_;
                     nodeSpeed = 2.0*(distToNext - lagDist)/(nodeTime - (curTime + lagTime_)) - curSpeed;
@@ -248,7 +254,17 @@ public class CoarsePathNeighbors extends NeighborBase {
                 //            + ", cruiseTime = " + cruiseTime + ", waitTime = " + waitTime);
 
                 //create a single node at the start of green phase with zero speed
-                neighbors.add(new Node(nodeLoc, timeOfNextGreen, 0.0));
+                Node neighbor = new Node(nodeLoc, timeOfNextGreen, 0.0);
+                //move stopping goal node upstream if it has conflict
+                //System.out.println("5 " + hasConflict(node, neighbor));
+                if(hasConflict(node, neighbor)) {
+                    neighbors.add(new Node(nodeLoc - TYPICAL_VEHICLE_LENGTH, timeOfNextGreen, 0.0));
+                } else {
+                    neighbors.add(neighbor);
+                }
+                
+                //System.out.println("Potential Neighbor: " + neighbor.toString());
+                log_.debug("EAD", "Need to stop at red:" + neighbor.toString());
             }
 
         //else - no more intersections downtrack
@@ -269,8 +285,10 @@ public class CoarsePathNeighbors extends NeighborBase {
             //check conflict before we deem it as a valid node
             Node neighbor = new Node(operSpeedLoc, timeAtOperSpeed, operSpeed_);
             //System.out.println("6 " + hasConflict(node, neighbor));
-            //System.out.println("Potential Neighbor: " + new Node(operSpeedLoc, timeAtOperSpeed, operSpeed_).toString());
-            neighbors.add(neighbor);
+            if(!hasConflict(node, neighbor)) {
+                //System.out.println("Potential Neighbor: " + new Node(operSpeedLoc, timeAtOperSpeed, operSpeed_).toString());
+                neighbors.add(neighbor);
+            }
             
         }
         log_.debug("PLAN", "returning " + neighbors.size() + " neighbors.");
