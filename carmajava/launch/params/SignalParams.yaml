@@ -114,7 +114,7 @@ asd/maxpacketsize: 1472
 #comma-separated list of (decimal) intersections IDs that will be used; other intersections ignored
 # TFHRC West Int: 9709
 # TFHRC East Int: 9945
-asd/intersections: "9709"
+asd/intersections: "9709,9945"
 
 # number of time steps after first seeing data from a new intersection before we start calculating spat reliability
 asd/minSamplesForReliability: 4
@@ -314,6 +314,6 @@ ead/MOVES/timeNormalizationDenominator: 1.0
 ead/MOVES/heuristicWeight: 1.0
 
 # Double: A factor (0-1) which will be multiplied by the time cost after normalization. (1 - percentCostForTime) will be multiplied by the fuel cost.
-ead/MOVES/percentTimeCost: 0.0
+ead/MOVES/percentTimeCost: 0.5
 
 #### End of Parameters used in MOVES Fuel Cost Model
