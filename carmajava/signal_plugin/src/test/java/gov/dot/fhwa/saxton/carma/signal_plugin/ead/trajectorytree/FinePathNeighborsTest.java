@@ -235,35 +235,7 @@ public class FinePathNeighborsTest {
       assertEquals(2, speeds.size());
       assertEquals(2.2352, speeds.get(0), 0.0001);
       assertEquals(2.0, speeds.get(1), 0.0001);
-    }
-
-  // // NOTE: This test is only valid of testGetViableSpeeds is passing
-  // @Test
-  // public void testNeighbors() {
-  //   when(mockConfig.getDoubleDefaultValue("defaultAccel", 2.0)).thenReturn(1.0);
-  //   when(mockConfig.getMaximumSpeed(0.0)).thenReturn(25);
-  //   when(mockConfig.getDoubleDefaultValue("crawlingSpeed", 5.0)).thenReturn(5.0);
-
-  //   FinePathNeighbors fpn = new FinePathNeighbors();
-
-  //   IntersectionData intersection1 = new IntersectionData(); // Id 9945
-  //   intersection1.map = mock(MapMessage.class, Mockito.withSettings().stubOnly());
-  //   intersection1.roughDist = 8423; 
-  //   intersection1.dtsb = 5.0;
-  //   intersection1.currentPhase = SignalPhase.GREEN;
-  //   intersection1.timeToNextPhase = 6.1;
-  //   intersection1.stopBoxWidth = 35.18;
-  //   intersection1.intersectionId = 9945;
-  //   intersection1.geometry = new IntersectionGeometry(40, 100);
-  //   List<IntersectionData> intersections = Arrays.asList(intersection1);
-
-  //   double timeIncrement = 1.0;
-  //   double speedIncrement = 1.0;
-  //   fpn.initialize(intersections, 1, timeIncrement, speedIncrement, new NoCollisionChecker(), 0, 0);
-
-  //   fpn.neighbors(new Node(0,0,10));
-
-  // }
+  }
 
   /** 
    * Helper function acts as constructor for RoadwayObstacle
