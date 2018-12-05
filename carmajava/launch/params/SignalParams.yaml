@@ -301,8 +301,9 @@ ead/MOVES/fixedMassFactor: 1.86686
 ead/MOVES/baseRateTablePath: '/opt/carma/params/BaseRateForPassengerTruck.csv'
 
 # Double: The value which the calculated fuel cost will be devided by to generate a normalize cost from ~0-1
+# Multiply 211859.0 by the fine time inc to get the normalization factor
 # Units: Joules
-ead/MOVES/fuelNormalizationDenominator: 425000.0
+ead/MOVES/fuelNormalizationDenominator: 211859.0
 
 # Double: The value which the calculated time cost will be devided by to generate a normalize cost from ~0-1
 # This should be the same as the timestep size

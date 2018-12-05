@@ -379,9 +379,9 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         double secondInHour = (double)(millisOfDay - millisToHourStart) / 1000.0;
                         m.setMaxTimeRemaining(Math.max(0.0, earliestEvent.getTiming().getMaxEndTime() - secondInHour));
                         m.setMinTimeRemaining(Math.max(0.0, earliestEvent.getTiming().getMinEndTime() - secondInHour));
-                        //TODO remove!!!!!
-                        m.setMaxTimeRemaining(100.0);
-                        m.setMinTimeRemaining(100.0);
+                        //TODO Uncomment to disable lights
+                        //m.setMaxTimeRemaining(100.0);
+                        //m.setMinTimeRemaining(100.0);
                     }
                 //TODO move this statment log.warn("Empty movement event list in spat for intersection id: " + state.getId().getId());
                 
@@ -400,8 +400,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         //log.warn("Unsupported signal phase: " + phase);
                         break;
                 }
-                // TODO remove!!!
-                m.setCurrentState(0x00000001);
+                // TODO Uncomment to disable lights
+                //m.setCurrentState(0x00000001);
             }
 
             movements.add(m);
