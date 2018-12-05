@@ -35,6 +35,7 @@
  */
 #include "object_tracker.h"
 #include "twist_history_buffer.h"
+#include "transform_maintainer.h"
 #include <sensor_fusion/SensorFusionConfig.h>
 
 #include <nav_msgs/Odometry.h>
@@ -56,6 +57,7 @@
 
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
+#include <tf2/LinearMath/Transform.h>
 
 #include <dynamic_reconfigure/server.h>
 
@@ -64,6 +66,7 @@
 #include <string>
 #include <unordered_map>
 #include <memory>
+#include <array>
 
 
 
@@ -110,6 +113,10 @@ private:
 
     std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
 
+    std::unique_ptr<tf2_ros::TransformBroadcaster> tf2_broadcaster_;
+
+    TransformMaintainer tf_maintainer_;
+
     cav::TwistHistoryBuffer twist_history_buffer_;
 
     std::unique_ptr<ros::NodeHandle> nh_, pnh_;
@@ -118,7 +125,12 @@ private:
 
     bool use_interface_mgr_;
 
-    std::string inertial_frame_name_, body_frame_name_, ned_frame_name_;
+    std::string inertial_frame_name_, body_frame_name_, ned_frame_name_,
+      earth_frame_name_, global_pos_sensor_frame_name_, local_pos_sensor_frame_name_;
+
+    cav_msgs::ExternalObject bsm_obj_;
+
+    long unsigned int last_nav_sat_seq = -1;
 
     /**
      * @brief This function is the bond call back for on_broken event
@@ -206,7 +218,9 @@ private:
 
     std::deque<std::pair<std::string, cav_msgs::ExternalObjectListConstPtr>> objects_cb_q_;
     void objects_cb(const cav_msgs::ExternalObjectListConstPtr &objList, const std::string&);
-
-    void bsm_cb(const cav_msgs::BSMConstPtr& msg);
+    
+    std::unordered_map<std::string, cav_msgs::BSMConstPtr> bsm_id_map_;
+    void bsm_map_cb(const cav_msgs::BSMConstPtr& msg);
+    void process_bsm(const cav_msgs::BSMConstPtr& msg);
 };
 
