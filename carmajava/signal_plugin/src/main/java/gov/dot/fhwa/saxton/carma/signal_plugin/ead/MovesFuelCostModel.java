@@ -84,7 +84,8 @@ public class MovesFuelCostModel implements ICostModel {
      * @param timeNormalizationDenominator - Divides the calculated time cost to normalize it for a range ~0-1
      * @param heuristicWeight - Weight factor to apply to the calculated heuristic. When non-one A* will behave as Weighted A*
      * @param percentCostForTime - A factor (0-1) which will be multiplied by the time cost after normalization. (1 - percentCostForTime) will be multiplied by the fuel.
-     * // TODO
+     * @param maxVelocity - The maximum velocity the vehicle can travel in m/s
+     * 
      * @throws IOException - Exception thrown when the file specified by baseRateTablePath cannot be loaded properly
      */
     public MovesFuelCostModel(double rollingTermA, double rotatingTermB, double dragTermC, double vehicleMassInTons,
@@ -196,7 +197,7 @@ public class MovesFuelCostModel implements ICostModel {
         final double dv = n2.getSpeedAsDouble() - n1.getSpeedAsDouble();
         final double avg_v = (n2.getSpeedAsDouble() + n1.getSpeedAsDouble()) / 2.0;
         final double dt = n2.getTimeAsDouble() -  n1.getTimeAsDouble(); // Change in time in seconds
-        final double a = dv / dt; // a = dV / dt : We are using the acceleration to get from current speed to target speed
+        final double a = dv / dt; // We are using the acceleration to get from current speed to target speed
         final double VSP = getVSP(a,avg_v);
 
         // Determine Operating Mode from OpModeTable
@@ -216,9 +217,9 @@ public class MovesFuelCostModel implements ICostModel {
         double normalizedTimeCost = dt / timeNormalizationDenominator;
 
         //System.out.println("normalizedFuelCost: " + normalizedFuelCost);
-        // time cost: n2.getTime() - n1.getTime()
         
-        return normalizedFuelCost * percentCostForFuel + normalizedTimeCost * percentCostForTime; // Return the energy in J by converting KJ/hr to KJ/s and multiplying by dt and J/KJ
+        // Return the a linear combination of the normalized fuel cost in J and time cost in s. 
+        return normalizedFuelCost * percentCostForFuel + normalizedTimeCost * percentCostForTime;
     }
 
     /**
@@ -344,46 +345,22 @@ public class MovesFuelCostModel implements ICostModel {
         }
     }
 
-    // @Override
-    // public double heuristic(Node currentNode) { // TODO though less accurate this heuristic is faster than the one below
 
-    //     if (isGoal(currentNode)) {
-    //       return 0.0;
-    //     }
-    //     //infinite cost if we pass the location and the time of the goal
-    //     final double goalDistance = goal.getDistance() + tolerances.getDistance();
-    //     if (currentNode.getDistance() > goalDistance) {
-    //     	return Double.POSITIVE_INFINITY;
-    //     }
-
-    //     /**
-    //      * Minimum cost to goal will be fuel use while idle for the minimum possible travel time to the goal
-    //      * The values will be normalized and weighted to mirror the cost function
-    //      * This is guaranteed to by optimistic 
-    //      */
-    //     double distanceToGoal = goalDistance - currentNode.getDistanceAsDouble();
-    //     double minSecToGoal = distanceToGoal / maxVelocity; // TODO this could be more accurate by calculating the piece wise function to max speed
-    //     double minJToGoal = getJFromOpMode(1, minSecToGoal); // OpMode of 1 is idle and represents minimum possible fuel usage 
-    //     double minNormJToGoal = minJToGoal / fuelNormalizationDenominator;
-    //     double minNormTimeToGoal = minSecToGoal / timeNormalizationDenominator;
-
-    //     double minCostToGoal = minNormJToGoal * percentCostForFuel + minNormTimeToGoal * percentCostForTime;
-    //     //System.out.println("normalizedHeuristics: " + normalizedHeuristics);
-    //     return minCostToGoal * heuristicWeight;
-    // }
-
-    // 
-    // NOTE: THIS IS NOT DONE. OUT GOAL IS AT OPERATING SPEED. THEREFOR THE MORE COMPLEX H MUST TAKE THAT INTO ACCOUNT
+    /**
+     * Heuristic is calculated by finding the fastest trajectory to the goal assuming no lights or other vehicles.
+     * The fuel cost comes from J/S of fuel usage used to idle multiplied by the travel time. 
+     * This result is combined with the travel time using the same linear combination as the cost model.
+     * This ensures that the heuristic is always consistent and directly comparable with the actual cost
+     */
     @Override
     public double heuristic(Node currentNode) {
 
     if (isGoal(currentNode)) {
       return 0.0;
     }
-     //infinite cost if we pass the location and the time of the goal
+     //infinite cost if we are passed the goal but did not satisfy the goal condition
      final double goalDistance = goal.getDistance() + tolerances.getDistance();
      if (currentNode.getDistance() > goalDistance) {
-      //System.out.println("HERE Node: " + currentNode);
       return Double.POSITIVE_INFINITY;
     }
 
@@ -402,7 +379,7 @@ public class MovesFuelCostModel implements ICostModel {
     final double distToOperSpeed = curSpeed*timeToOperSpeed + 0.5 * maxAccel_*timeToOperSpeed*timeToOperSpeed;
     
     if (distToOperSpeed > distanceToGoal) {
-      return Double.POSITIVE_INFINITY; // If we can't reach operating speed before the goal this node is irrelevant
+      return Double.POSITIVE_INFINITY; // If we can't reach operating speed before the goal this node is irrelevant. TODO is this true?
       // double speedAtNext = Math.sqrt(curSpeed*curSpeed + 2.0*maxAccel_*distanceToGoal);
       // minSecToGoal = (speedAtNext - curSpeed) / maxAccel_;
     } else {
@@ -417,7 +394,7 @@ public class MovesFuelCostModel implements ICostModel {
 
     double minCostToGoal = minNormJToGoal * percentCostForFuel + minNormTimeToGoal * percentCostForTime;
     //System.out.println("normalizedHeuristics: " + normalizedHeuristics);
-    return minCostToGoal * heuristicWeight;
+    return minCostToGoal * heuristicWeight; // Apply heuristic weight. If greater than 1.0 this will be an inadmissable heuristic
     }
 
     @Override
@@ -432,8 +409,9 @@ public class MovesFuelCostModel implements ICostModel {
     }
 
     /**
-     * Note that time comparisons are currently disabled because we don't have a good way to anticipate how much
-     * time might be spent waiting at a red light, or not.
+     * We are at out goal if past the target distance and at operating speed. 
+     * Time is ignored as there is no way to predict how long will be spent at a light.
+     * Since time is part of the cost model it will still be minimized during the search
      */
     @Override
     public boolean isGoal(Node n) {
@@ -460,6 +438,7 @@ public class MovesFuelCostModel implements ICostModel {
 
     @Override
     public boolean isUnusable(Node n) {
-        return n.getDistance() > (goal.getDistance() + tolerances.getDistance());
+        return n.getDistance() > (goal.getDistance() + tolerances.getDistance()) &&
+          Math.abs(n.getSpeed()    - goal.getSpeed())    >= tolerances.getSpeed();
     }
 }
