@@ -179,7 +179,7 @@ public class EadIntersectionManager {
 		}
 
 		if (sortedIntersections.size() <= 0) {
-			log_.warn("TRAJ", "No valid intersections detected");
+			log_.debug("TRAJ", "No valid intersections detected");
 			sortedIntersections_.set(sortedIntersections); // Store sorted intersections
 			return dtsb;
 		}
@@ -265,7 +265,7 @@ public class EadIntersectionManager {
 	
 	private boolean wantThisIntersection(int thisId) {
 		boolean wanted = false;
-		log_.info("TRAJ", "Checking if intersection is needed id: " + thisId);
+		log_.debug("TRAJ", "Checking if intersection is needed id: " + thisId);
 		for (int id : intersectionIds_) {
 			if (thisId == id) {
 				wanted = true;

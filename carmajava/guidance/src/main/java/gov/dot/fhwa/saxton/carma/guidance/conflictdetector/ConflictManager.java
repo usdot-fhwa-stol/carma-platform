@@ -358,7 +358,7 @@ public class ConflictManager implements IConflictManager {
   @Override
   public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath, List<RoutePointStamped> otherPath, ISpatialStructure spatialStructure,
     double downtrackMargin, double crosstrackMargin, double timeMargin, double longitudinalBias, double lateralBias, double temporalBias) {
-    log.info("Getting conflicts between two paths");
+    log.debug("Getting conflicts between two paths");
     if (hostPath == null || otherPath == null || hostPath.isEmpty() || otherPath.isEmpty()) {
       return new LinkedList<>();
     }
