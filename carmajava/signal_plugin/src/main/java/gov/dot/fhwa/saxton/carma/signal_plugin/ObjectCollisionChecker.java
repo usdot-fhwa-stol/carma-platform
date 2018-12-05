@@ -104,7 +104,7 @@ public class ObjectCollisionChecker implements ITrafficSignalPluginCollisionChec
     this.maxHistoricalDataAge = psl.getParameterSource().getInteger("~ead/NCVHandling/collision/maxObjectHistoricalDataAge");
     this.distanceStep = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/distanceStep");
     this.timeDuration = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/timeDuration");
-    this.NCVReplanPeriod = (long) (psl.getParameterSource().getDouble("~ead/NCVHandling/collision/replanPeriod") * MS_PER_S); // Always replan after half of the ncv prediction has elapsed
+    this.NCVReplanPeriod = (long) (psl.getParameterSource().getDouble("~ead/NCVHandling/collision/replanPeriod") * MS_PER_S); // Should be at least half of the ncv prediction has elapsed
     log.info("ReplanPeriod: " + NCVReplanPeriod);
     this.downtrackBuffer = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/downtrackBuffer");
     this.crosstrackBuffer = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/crosstrackBuffer");
@@ -158,7 +158,6 @@ public class ObjectCollisionChecker implements ITrafficSignalPluginCollisionChec
 
       boolean inLane = obs.getPrimaryLane() == currentLane;
 
-      // log.info("OCC", "Object found in lane: " + currentLane + " secondary lanes: " + secondaryLanes);
       // If the object is in the same lane and in front of the host vehicle
       // Add it to the set of tracked object histories
       // TODO this currently does not handle if the lane index changes between the host and detected object
@@ -215,35 +214,19 @@ public class ObjectCollisionChecker implements ITrafficSignalPluginCollisionChec
     
 
     if (ncvDetectionTime == null && psl.getArbitratorService().getCurrentTrajectory() != null) {
-      boolean collisionDetected = checkCollision(interpolatedHostPlan.get(), 1.2);
-      //if (collisionDetected) { // Any time there is a detected collision force a replan // TODO if the first plan fails we never replan as there is no collision to detect
-        ncvDetectionTime = timeProvider.getCurrentTimeMillis();
-        log.info("OCC", "NEW PLAN: First ncv detection");
-        replanHandle.triggerNewPlan(true); // Request a replan from the plugin
+      ncvDetectionTime = timeProvider.getCurrentTimeMillis();
+      log.info("OCC", "NEW PLAN: First ncv detection");
+      replanHandle.triggerNewPlan(true); // Request a replan from the plugin
   
-      //}
     } else if (ncvDetectionTime != null && timeProvider.getCurrentTimeMillis() - ncvDetectionTime > NCVReplanPeriod) {
-      boolean collisionDetected = checkCollision(interpolatedHostPlan.get(), 1.2);
+    // TODO Until NCV handling is reliable we should always replan here no only if there is a collision
+    // boolean collisionDetected = checkCollision(interpolatedHostPlan.get(), 1.2);
     //  if (collisionDetected) {
         ncvDetectionTime = timeProvider.getCurrentTimeMillis();
         log.info("OCC", "NEW PLAN: timer triggered");
         replanHandle.triggerNewPlan(true); // Request a replan from the plugin
    //   }
     }
-    // if (collisionDetected) { // Any time there is a detected collision force a replan
-    //   ncvDetectionTime = timeProvider.getCurrentTimeMillis();
-    //   replanHandle.triggerNewPlan(true); // Request a replan from the plugin
-
-    // } else if (ncvDetectionTime != null && timeProvider.getCurrentTimeMillis() - ncvDetectionTime > NCVReplanPeriod){ // If there was previously a replan to avoid a ncv and enough time has passed replan
-    //   ncvDetectionTime = timeProvider.getCurrentTimeMillis();
-    //   replanHandle.triggerNewPlan(true); // Request a replan from the plugin
-
-    // } else if (inLaneObjectCount == 0) { // If no in lane objects were detected the ncv is no longer an issue. The assumption being made here is that sensor fusion has already filtered our incoming object data.
-      
-    //  // ncvDetectionTime = null;
-    // } else {
-    //   // There is no need to take action when the plan is executing well without collisions
-    // }
   }
 
   /**
@@ -320,9 +303,7 @@ public class ObjectCollisionChecker implements ITrafficSignalPluginCollisionChec
   //  System.out.println("RoutePlan: " + routePlan);
 
     boolean hasCollision = checkCollision(routePlan, 1.0);
-    // if (hasCollision) {
-    //   System.out.println("HasCollision: " + hasCollision + " with node: " + trajectory.get(1));
-    // }
+
     return hasCollision; // Check for collisions with tracked objects
 
   }
