@@ -73,6 +73,10 @@ dependencies {
   testCompile 'junit:junit:4.12'
 }
 
+task printVersion << {
+    println "$gitVersion.version $gitVersion.shortBranch"
+}
+
 task writeVersionFile << {
     println "Updating build number to: " + gitVersion.version
     println "Updating build suffix to: " + gitVersion.shortBranch
