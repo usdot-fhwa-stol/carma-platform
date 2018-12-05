@@ -24,10 +24,11 @@ import java.util.*;
 import org.apache.commons.lang.mutable.MutableDouble;
 
 /**
- * Implements the AStar algorithm which can operate on nodes with distance, time, speed states
+ * Implements the Anytime Non-parametric A* (ANA*) algorithm which can operate on nodes with distance, time, speed states
  * The cost, heuristic, and goal is provided by the ICostModel
  * The neighbors of a node is provided by the INeighborCalculator
- * This can function as a Dijkstra solver if the ICostModel always returns a heuristic of 0
+ * 
+ * ANA* algorithm is described http://goldberg.berkeley.edu/pubs/ana-aaai-2011-vdberg-shah-goldberg.pdf
  */
 public class ANAStarSolver implements ITreeSolver {
 
@@ -42,13 +43,10 @@ public class ANAStarSolver implements ITreeSolver {
     // This map is used to extract the optimal path once the goal is found
     final Map<Node,Node> cameFrom = new HashMap<>(1500);
 
-    // List of nodes which will no longer be explored as their cost is guaranteed to be greater then G
-    final Set<Node> closedSet = new HashSet<>(1500);
-
     // Each node's actual cost to reach from the start node
     final Map<Node, Double> gScore = new HashMap<>(1500);
 
-    // Each node's heuristic cost to reach from the start node
+    // Each node's heuristic cost to reach the goal
     final Map<Node, Double> hScore = new HashMap<>(1500);
 
     // Expected e-score cost to reach goal from start through each node
@@ -68,7 +66,10 @@ public class ANAStarSolver implements ITreeSolver {
 
 
     // Initialize values
+    // Best total cost to goal so far
     MutableDouble G = new MutableDouble(Double.POSITIVE_INFINITY);
+    // Best sub-optimal bound so far (min E-score)
+    // E is not used for calculations, but can be evaluated as a representation of path optimality
     MutableDouble E = new MutableDouble(Double.POSITIVE_INFINITY);
 
     // Cost of going from start to start is zero.
@@ -85,9 +86,11 @@ public class ANAStarSolver implements ITreeSolver {
       // Overflow has occurred which means we should use Long.MAX_VALUE
       endTime = Long.MAX_VALUE;
     }
+    // While the openSet is not empty there might still be a more optimal path
     while(!openSetQueue.isEmpty()) {
       iterationCount++;
-      List<Node> result = improveSolution(start, costModel, neighborCalculator, G, E, openSetQueue, gScore, eScore, hScore, cameFrom, closedSet, endTime);
+      // Improve the current path solution by evaluating remaining nodes in openSet
+      List<Node> result = improveSolution(start, costModel, neighborCalculator, G, E, openSetQueue, gScore, eScore, hScore, cameFrom, endTime);
 
       // If the result is not empty then it contains a better path
       if (!result.isEmpty()) {
@@ -98,18 +101,14 @@ public class ANAStarSolver implements ITreeSolver {
       if (System.currentTimeMillis() > endTime) {
         break;
       }
-      // TODO could print here
 
       // Update eScores in openSet with new G and prune the open set
-
       List<Node> nodeToUpdate = new ArrayList<>(openSetQueue.size());
       for (Node n: openSetQueue) {
         final double gScoreOfNode = gScore.get(n);
         final double hScoreOfNode = hScore.get(n);
 
         if (gScoreOfNode + hScoreOfNode >= G.doubleValue()) {
-          //closedSet.add(n);
-          //eScore.put(n, Double.NEGATIVE_INFINITY);
           continue;
         }
 
@@ -118,7 +117,9 @@ public class ANAStarSolver implements ITreeSolver {
         nodeToUpdate.add(n);
       }
 
-      // // Easiest way to update eScore values is rebuild the priority queue
+      // Easiest way to update eScore values is rebuild the priority queue
+      // Note: Rebuilding the queue is the single most costly operation in ANA*. 
+      // If there is a faster data structure it would be worth investigating.
       openSetQueue = new PriorityQueue<>(1500, new Comparator<Node>() {
         @Override public int compare(Node n1, Node n2) {
           return eScore.get(n1) > eScore.get(n2) ? -1 : 1;
@@ -130,7 +131,7 @@ public class ANAStarSolver implements ITreeSolver {
     }
 
     //System.out.println("IterationCount: " + iterationCount);
-    return bestPath; // Return empty list if no path exists
+    return bestPath; // Return best path found or empty list if no path exists
   }
 
 
@@ -138,19 +139,28 @@ public class ANAStarSolver implements ITreeSolver {
 
 
 
-  /**
-   * @param start
-   * @param costModel
-   * @param neighborCalculator
-   * @param G
-   * @return
-   */
+/**
+ * Improve the current best path solution by continuing to evaluate nodes in the openSet
+ * 
+ * @param start The starting node
+ * @param costModel Cost model
+ * @param neighborCalculator Neighbor calculator for generating a nodes neighbors
+ * @param G Smallest path cost yet found
+ * @param E Smallest eScore yet found
+ * @param openSetQueue The queue containing the open set
+ * @param gScore Map of gScores
+ * @param eScore Map of eScores
+ * @param hScore Map of hScores
+ * @param cameFrom Map of optimal parents from each node evaluated so far
+ * @param endTime The max ending time
+ * 
+ * @return An improved path or an empty list if no improved path could be found
+ */
 
   protected List<Node> improveSolution(Node start, ICostModel costModel, INeighborCalculator neighborCalculator,
    MutableDouble G, MutableDouble E, PriorityQueue<Node> openSetQueue,
     Map<Node, Double> gScore, Map<Node, Double> eScore, Map<Node, Double> hScore,
     Map<Node,Node> cameFrom,
-    Set<Node> closedSet,
     long endTime) {
 
 
@@ -163,11 +173,6 @@ public class ANAStarSolver implements ITreeSolver {
     while (!openSetQueue.isEmpty() && (firstRun || (System.currentTimeMillis() < endTime) ) ) {
       Node current = openSetQueue.poll(); // Retrieve and remove the next node on the queue
       visitedNodes++;
-      
-      
-      if (closedSet.contains(current)) {
-        continue;
-      }
 
       double gScoreOfNode = gScore.get(current);
       double hScoreOfNode = hScore.get(current);
@@ -181,7 +186,7 @@ public class ANAStarSolver implements ITreeSolver {
       // Check if this node is the goal
       if (costModel.isGoal(current)) {
         log_.info("EAD", "Found our goal with node " + current.toString());
-        log_.info("EAD", "Ending sizes: closedSet=" + closedSet.size() + ", cameFrom=" +
+        log_.info("EAD", "Ending sizes: " + ", cameFrom=" +
                     cameFrom.size() + ", gScore=" + gScore.size() + ", openSetQueue=" + openSetQueue.size());
         log_.debug("EAD", "We have visited " + visitedNodes + " nodes to find the solution");
 
@@ -196,17 +201,12 @@ public class ANAStarSolver implements ITreeSolver {
       //if this node is unusable then toss it out and move on
       if (costModel.isUnusable(current) || (gScoreOfNode + hScoreOfNode >= G.doubleValue())) {
         //log_.debug("EAD", "Skipping unusable node " + current.toString());
-        //closedSet.add(current);
         continue;
       }
 
       // Iterate over the list of neighbors
       List<Node> neighbors = neighborCalculator.neighbors(current);
       for (Node neighbor : neighbors) {
-        if (closedSet.contains(neighbor)) {    // Ignore the neighbor which is already visited.
-          //log_.debug("EAD", "Neighbor " + neighbor.toString() + " is already in the closed set.");
-          continue;
-        }
 
         // Calculate cost to neighbor
         double cost = costModel.cost(current, neighbor);
@@ -214,6 +214,7 @@ public class ANAStarSolver implements ITreeSolver {
         double tentativeGScore = gScoreOfNode + cost;
         Double oldGScore = gScore.get(neighbor);
 
+        // If going to this neighbor from current node is more optimal than previous parent update its scores
         if (oldGScore == null || tentativeGScore < oldGScore) {
           gScore.put(neighbor, tentativeGScore);
           cameFrom.put(neighbor, current);
@@ -225,6 +226,7 @@ public class ANAStarSolver implements ITreeSolver {
             hScore.put(neighbor, neighborHScore);
           }
 
+          // If this neighbor is not going to result in a better G value than current G value don't add it to the open set
           if (tentativeGScore + neighborHScore < G.doubleValue()) {
             double neighborEScore = (G.doubleValue() - tentativeGScore) / neighborHScore;
             eScore.put(neighbor, neighborEScore);
@@ -238,6 +240,13 @@ public class ANAStarSolver implements ITreeSolver {
     return new LinkedList<>(); // Return empty list if no path exists
   }
 
+  /**
+   * Sets the maximum allowed planning time in ms for the solver.
+   * 
+   * This is not a strict bound. At least one solution must be found before it will be evaluated. 
+   * 
+   * @param maxPlanningTimeMS Max planning time in ms
+   */
   public void setMaxPlanningTimeMS(long maxPlanningTimeMS) {
     this.maxPlanningTimeMS = maxPlanningTimeMS;
   }
