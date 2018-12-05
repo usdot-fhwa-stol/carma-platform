@@ -69,6 +69,7 @@ public class EADAStarPlanTest {
         LoggerManager.setLoggerFactory(mockFact);
         GlidepathApplicationContext.getInstance().setAppConfigOverride(mockConfig);
         when(mockConfig.getDoubleDefaultValue("defaultAccel", 2.0)).thenReturn(2.0);
+        when(mockConfig.getDoubleValue("defaultAccel")).thenReturn(2.0);
         when(mockConfig.getMaximumSpeed(0.0)).thenReturn(25);
         when(mockConfig.getDoubleDefaultValue("crawlingSpeed", 5.0)).thenReturn(5.0);
         when(mockConfig.getDoubleDefaultValue("ead.timebuffer", 4.0)).thenReturn(timeBuffer);
@@ -82,7 +83,7 @@ public class EADAStarPlanTest {
         when(mockConfig.getDoubleValue("ead.MOVES.fixedMassFactor")).thenReturn(1.86686); 
         when(mockConfig.getProperty("ead.MOVES.baseRateTablePath")).thenReturn("/opt/carma/src/CARMAPlatform/carmajava/launch/params/BaseRateForPassengerTruck.csv");
         
-        when(mockConfig.getDoubleValue("ead.MOVES.fuelNormalizationDenominator")).thenReturn(425000.0); 
+        when(mockConfig.getDoubleValue("ead.MOVES.fuelNormalizationDenominator")).thenReturn(211859.0); 
         when(mockConfig.getDoubleValue("ead.MOVES.timeNormalizationDenominator")).thenReturn(1.0); 
         when(mockConfig.getDoubleValue("ead.MOVES.heuristicWeight")).thenReturn(1.0); 
         when(mockConfig.getDoubleValue("ead.MOVES.percentTimeCost")).thenReturn(0.5); 
