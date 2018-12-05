@@ -439,6 +439,6 @@ public class MovesFuelCostModel implements ICostModel {
     @Override
     public boolean isUnusable(Node n) {
         return n.getDistance() > (goal.getDistance() + tolerances.getDistance()) &&
-          Math.abs(n.getSpeed()    - goal.getSpeed())    >= tolerances.getSpeed();
+          Math.abs(n.getSpeed()    - goal.getSpeed())    > tolerances.getSpeed();
     }
 }
