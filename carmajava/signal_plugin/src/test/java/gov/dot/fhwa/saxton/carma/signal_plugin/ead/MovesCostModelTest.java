@@ -22,13 +22,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -42,7 +35,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.MovesFuelCostModel;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 
 /**
- * Runs unit tests for the PlanInterpolator class
+ * Runs unit tests for the MovesCostModel class
  */
 public class MovesCostModelTest {
 
@@ -75,7 +68,8 @@ public class MovesCostModelTest {
       2.0,      // timeNormalizationDenominator
       60.0,     // heuristicWeight
       0.5,      // percentCostForTime
-      11.176    // maxVelocity
+      11.176,   // maxVelocity
+      1.5       // maxAccel
     );
 
 
@@ -99,7 +93,8 @@ public class MovesCostModelTest {
       2.0,      // timeNormalizationDenominator
       60.0,     // heuristicWeight
       0.5,      // percentCostForTime
-      11.176    // maxVelocity
+      11.176,   // maxVelocity
+      1.5       // maxAccel
     );
 
 
@@ -170,7 +165,8 @@ public class MovesCostModelTest {
       2.0,      // timeNormalizationDenominator
       60.0,     // heuristicWeight
       0.5,      // percentCostForTime
-      11.176    // maxVelocity
+      11.176,   // maxVelocity
+      1.5       // maxAccel
     );
 
     assertEquals(19256.305555, costModel.toJPerSec(69322.7), 0.000001);
@@ -195,7 +191,8 @@ public class MovesCostModelTest {
       2.0,      // timeNormalizationDenominator
       60.0,     // heuristicWeight
       0.5,       // percentCostForTime
-      11.176    // maxVelocity
+      11.176,   // maxVelocity
+      1.5       // maxAccel
     );
 
 
@@ -269,7 +266,8 @@ public class MovesCostModelTest {
       1.0,      // timeNormalizationDenominator
       60.0,     // heuristicWeight
       1.0,      // percentCostForTime
-      11.176    // maxVelocity
+      11.176,   // maxVelocity
+      1.5       // maxAccel
     );
     // dist, time, speed
     assertEquals(2.0, costModel.cost(new Node(10, 10, 5), new Node(10, 12, 5)), 0.0000001);
@@ -286,7 +284,8 @@ public class MovesCostModelTest {
       2.0,      // timeNormalizationDenominator
       60.0,     // heuristicWeight
       1.0,      // percentCostForTime
-      11.176    // maxVelocity
+      11.176,   // maxVelocity
+      1.5       // maxAccel
     );
     // dist, time, speed
     assertEquals(1.0, costModel.cost(new Node(10, 10, 5), new Node(10, 12, 5)), 0.0000001);
@@ -303,7 +302,8 @@ public class MovesCostModelTest {
       2.0,      // timeNormalizationDenominator
       60.0,     // heuristicWeight
       0.0,      // percentCostForTime
-      11.176    // maxVelocity
+      11.176,   // maxVelocity
+      1.5       // maxAccel
     );
     // dist, time, speed
     assertEquals(costModel.getJFromOpMode(28, 10), costModel.cost(new Node(0, 0, 10), new Node(150, 10, 20)), 0.0000001);
@@ -320,7 +320,8 @@ public class MovesCostModelTest {
       2.0,      // timeNormalizationDenominator
       60.0,     // heuristicWeight
       0.0,      // percentCostForTime
-      11.176    // maxVelocity
+      11.176,   // maxVelocity
+      1.5       // maxAccel
     );
     // dist, time, speed
     assertEquals(costModel.getJFromOpMode(28, 10) / 425000.0, costModel.cost(new Node(0, 0, 10), new Node(150, 10, 20)), 0.0000001);
@@ -337,7 +338,8 @@ public class MovesCostModelTest {
       10.0,     // timeNormalizationDenominator
       60.0,     // heuristicWeight
       0.5,      // percentCostForTime
-      11.176    // maxVelocity
+      11.176,   // maxVelocity
+      1.5       // maxAccel
     );
     // dist, time, speed
     assertEquals((0.5 * costModel.getJFromOpMode(28, 10) / 425000.0) + 0.5, costModel.cost(new Node(0, 0, 10), new Node(150, 10, 20)), 0.0000001);
@@ -364,7 +366,8 @@ public class MovesCostModelTest {
       1.0,      // timeNormalizationDenominator
       1.0,      // heuristicWeight
       0.0,      // percentCostForTime
-      10.0      // maxVelocity
+      10.0,     // maxVelocity
+      1.5       // maxAccel
     );
     // dist, time, speed
     costModel.setGoal(new Node(10,10,10));
@@ -386,7 +389,8 @@ public class MovesCostModelTest {
       1.0,      // timeNormalizationDenominator
       1.0,      // heuristicWeight
       0.0,      // percentCostForTime
-      10.0      // maxVelocity
+      10.0,     // maxVelocity
+      1.5       // maxAccel
     );
     // dist, time, speed
     costModel.setGoal(new Node(10,10,10));
@@ -406,7 +410,8 @@ public class MovesCostModelTest {
       1.0,      // timeNormalizationDenominator
       1.0,      // heuristicWeight
       0.5,      // percentCostForTime
-      10.0      // maxVelocity
+      10.0,     // maxVelocity
+      1.5       // maxAccel
     );
     // dist, time, speed
     costModel.setGoal(new Node(10,10,10));
@@ -427,7 +432,8 @@ public class MovesCostModelTest {
       1.0,      // timeNormalizationDenominator
       2.0,      // heuristicWeight
       0.5,      // percentCostForTime
-      10.0      // maxVelocity
+      10.0,     // maxVelocity
+      1.5       // maxAccel
     );
     // dist, time, speed
     costModel.setGoal(new Node(10,10,10));
@@ -456,7 +462,8 @@ public class MovesCostModelTest {
       2.0,      // timeNormalizationDenominator
       60.0,     // heuristicWeight
       0.5,      // percentCostForTime
-      11.176    // maxVelocity
+      11.176,   // maxVelocity
+      1.5       // maxAccel
     );
     // dist, time, speed
     costModel.setGoal(new Node(10,10,10));
@@ -487,7 +494,8 @@ public class MovesCostModelTest {
       2.0,      // timeNormalizationDenominator
       60.0,     // heuristicWeight
       0.0,      // percentCostForTime
-      11.176    // maxVelocity
+      11.176,   // maxVelocity
+      1.5       // maxAccel
     );
 
     double t = 2.0;

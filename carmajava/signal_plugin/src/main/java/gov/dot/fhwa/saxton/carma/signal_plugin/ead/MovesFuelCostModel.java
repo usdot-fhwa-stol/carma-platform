@@ -68,6 +68,7 @@ public class MovesFuelCostModel implements ICostModel {
     protected final double percentCostForTime;
     protected final double percentCostForFuel;
     protected final double maxVelocity;
+    protected final double maxAccel;
 
     /**
      * Builds the cost model object with several injected calculation parameters.
@@ -93,7 +94,8 @@ public class MovesFuelCostModel implements ICostModel {
         double fuelNormalizationDenominator, double timeNormalizationDenominator,
         double heuristicWeight,
         double percentCostForTime,
-        double maxVelocity) throws IOException {
+        double maxVelocity,
+        double maxAccel) throws IOException {
         //assign injected params
         this.rollingTermA = rollingTermA;
         this.rotatingTermB = rotatingTermB;
@@ -105,6 +107,7 @@ public class MovesFuelCostModel implements ICostModel {
         this.percentCostForTime = percentCostForTime;
         this.percentCostForFuel = 1.0 - percentCostForTime;
         this.maxVelocity = maxVelocity;
+        this.maxAccel = maxAccel;
         // Find the highest energy cost in the table and store it for use when values fall outside table scope
         double maxValue = 0; 
         for(Entry<Integer, List<Double>> entry: this.baseRateTable.entrySet()) {
@@ -369,14 +372,13 @@ public class MovesFuelCostModel implements ICostModel {
      * The values will be normalized and weighted to mirror the cost function
      * This is guaranteed to by optimistic 
      */
-    final double maxAccel_ = 1.5; // TODO make an input to constructor
     final double distanceToGoal = goalDistance - currentNode.getDistanceAsDouble();
     double minSecToGoal;
     
     final double curSpeed = currentNode.getSpeedAsDouble();
     final double deltaSpeed = maxVelocity - currentNode.getSpeedAsDouble();
-    final double timeToOperSpeed = deltaSpeed / maxAccel_;
-    final double distToOperSpeed = curSpeed*timeToOperSpeed + 0.5 * maxAccel_*timeToOperSpeed*timeToOperSpeed;
+    final double timeToOperSpeed = deltaSpeed / maxAccel;
+    final double distToOperSpeed = curSpeed*timeToOperSpeed + 0.5 * maxAccel*timeToOperSpeed*timeToOperSpeed;
     
     if (distToOperSpeed > distanceToGoal) {
       return Double.POSITIVE_INFINITY; // If we can't reach operating speed before the goal this node is irrelevant. TODO is this true?

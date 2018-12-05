@@ -73,10 +73,11 @@ public class DefaultCostModelFactory implements ICostModelFactory{
         double heuristicWeight = config.getDoubleValue("ead.MOVES.heuristicWeight");
         double percentTimeCost = config.getDoubleValue("ead.MOVES.percentTimeCost");
         double maxSpeed = ((double)config.getMaximumSpeed(0.0)) / Constants.MPS_TO_MPH;
+        double maxAccel = config.getDoubleValue("defaultAccel");
 
         try {
           return new MovesFuelCostModel(rollingTermA, rotatingTermB, dragTermC, vehicleMassInTons, fixedMassFactor, baseRateTablePath,
-            fuelNormalizationDenominator, timeNormalizationDenominator, heuristicWeight, percentTimeCost, maxSpeed);
+            fuelNormalizationDenominator, timeNormalizationDenominator, heuristicWeight, percentTimeCost, maxSpeed, maxAccel);
         } catch (IOException e) {
           throw new IllegalArgumentException(e.getMessage());
         }
