@@ -421,7 +421,7 @@ public class MovesFuelCostModel implements ICostModel {
 
         //if tolerances have been specified then use them
         if (tolerances != null) {
-            result = n.getDistance() > (goal.getDistance() - tolerances.getDistance())  &&
+            result = n.getDistance() >= (goal.getDistance() - tolerances.getDistance())  &&
                     Math.abs(n.getSpeed()    - goal.getSpeed())    <= tolerances.getSpeed();
         }else {
             result = n.getDistance() >= goal.getDistance()  &&
