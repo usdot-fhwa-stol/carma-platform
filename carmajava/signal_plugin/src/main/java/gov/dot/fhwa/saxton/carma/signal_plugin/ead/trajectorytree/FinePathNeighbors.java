@@ -89,7 +89,7 @@ public class FinePathNeighbors extends NeighborBase {
         double timeToStop = curSpeed / maxAccel_;
         double distToStop = timeToStop * curSpeed * 0.5;
         
-        // TODO I am not convinved this check is any guarentee of invalid behavior !!!
+        // TODO I am not convinved this check is any guarentee of invalid behavior
         if(signalViolation(node, new Node(curDist + distToStop, timeToStop + curTime, 0.0))) {
             //System.out.println("this node has no neighbor because of signal violation: " + node);
             //System.out.println();
@@ -115,37 +115,15 @@ public class FinePathNeighbors extends NeighborBase {
                 //System.out.println("Signal Violation N1: " + node + " n2: " + potentialNeighbor); 
                 log_.debug("PLAN", "Remove candidate speed due to signal violation: " + v);
             }
-
-            // If we can reach the speed limit add a extra node which gets us there as fast as possible
-            // TODO this was taken out because truncation prevented it working in new planner
-            // if (v > speedLimit_) {
-                
-            //     double timeToLimit = (speedLimit_ - curSpeed) / maxAccel_;
-            //     deltaD = timeToLimit * (curSpeed + v) * 0.5;
-            //     newDist = curDist + deltaD;
-            //     double modifiedNewTime = curTime + timeToLimit; 
-            //     if (newDist < curDist) {
-            //         System.out.println("Found issue 2: ");
-            //     }
-            //     //System.out.println("Potential extra neighbor: " + new Node(newDist, modifiedNewTime, v));
-            //     if(!signalViolation(curDist, newDist, curTime, modifiedNewTime, v)) {
-
-            //         neighbors.add(new Node(newDist, modifiedNewTime, v));
-            //     } else {
-            //         log_.debug("PLAN", "Remove candidate speed due to signal violation: " + v);
-            //     }
-            // }
         }
         log_.debug("PLAN", "Generating neighbors of size " + neighbors.size());
         
         //System.out.println();
         List<Node> neightborsWithoutConflicts = neighbors.stream().filter(n -> !hasConflict(node, n)).collect(Collectors.toList());
-        // if (neightborsWithoutConflicts.size() == 0) {
-        //     double newSpeed = Math.max(curSpeed - (maxAccel_ * variableTimeInc), 0);
-        //     neightborsWithoutConflicts.add(new Node(curDist + ((curSpeed + newSpeed) * 0.5 *variableTimeInc), newTime, newSpeed));
-        // }
+
         // No non collision solution exists so stop the vehicle
         if (neighbors.size() != 0 && neightborsWithoutConflicts.size() == 0) {
+            // TODO this node needs to be given more thought
             neighbors.add(new Node(curDist, newTime, 0.0));
         } else if (neighbors.size() == 0 && curSpeed < FLOATING_POINT_EPSILON) {
             //System.out.println("Stopped and no neighbors must be at stop bar so adding 0 speed node");
