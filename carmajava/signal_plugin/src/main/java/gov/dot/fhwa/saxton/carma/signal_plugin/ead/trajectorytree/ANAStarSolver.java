@@ -108,7 +108,7 @@ public class ANAStarSolver implements ITreeSolver {
         final double hScoreOfNode = hScore.get(n);
 
         if (gScoreOfNode + hScoreOfNode >= G.doubleValue()) {
-          closedSet.add(n);
+          //closedSet.add(n);
           //eScore.put(n, Double.NEGATIVE_INFINITY);
           continue;
         }
@@ -196,7 +196,7 @@ public class ANAStarSolver implements ITreeSolver {
       //if this node is unusable then toss it out and move on
       if (costModel.isUnusable(current) || (gScoreOfNode + hScoreOfNode >= G.doubleValue())) {
         //log_.debug("EAD", "Skipping unusable node " + current.toString());
-        closedSet.add(current);
+        //closedSet.add(current);
         continue;
       }
 
