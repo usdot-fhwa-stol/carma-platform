@@ -77,7 +77,7 @@ public abstract class LongitudinalManeuver extends ManeuverBase {
         boolean overrideActive = Math.abs(speedCmd - overrideCmd) > SPEED_EPSILON;
 
         if (overrideActive) {
-            log_.warn(String.format("ACC override engaged! Speed command reduced from %.02f m/s to %.02f m/s. Adjusting max accel to command %.02f m/s^2",
+            log_.debug(String.format("ACC override engaged! Speed command reduced from %.02f m/s to %.02f m/s. Adjusting max accel to command %.02f m/s^2",
             speedCmd,
             overrideCmd,
             accStrategy.getMaxAccel()));

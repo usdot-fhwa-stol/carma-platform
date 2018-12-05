@@ -130,7 +130,7 @@ public class EnvironmentWorker {
    */
   public void handleExternalObjectsMsg(cav_msgs.ExternalObjectList externalObjects) {
     if (currentSegment == null || routeState == null || activeRoute == null) {
-      log.info("Roadway ignoring object message as no route is selected");
+      log.debug("Roadway ignoring object message as no route is selected");
       return;
     }
     List<cav_msgs.ExternalObject> objects = externalObjects.getObjects();
@@ -185,7 +185,7 @@ public class EnvironmentWorker {
     // Convert velocities
     Transform odomInSegment = bestSegment.getECEFToSegmentTransform().invert().multiply(earthToOdom);
     Vector3 velocityLinear = odomInSegment.getRotationAndScale().rotateAndScaleVector(Vector3.fromVector3Message(obj.getVelocity().getTwist().getLinear()));
-
+    
     // Calculate obj lanes
     int primaryLane = bestSegment.determinePrimaryLane(crosstrackDistance);
     // If the relative lane field is defined use that instead of calculated lane

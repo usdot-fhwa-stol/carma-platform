@@ -272,6 +272,7 @@ public class RouteWorker {
       resetRouteStateVariables(); // Reset all route state variables when a new route is selected
       activeRoute = route;
 
+      log.info("Selected Route: " + route.routeName);
       handleEvent(WorkerEvent.ROUTE_SELECTED);
       return SetActiveRouteResponse.NO_ERROR;
     }
@@ -450,8 +451,8 @@ public class RouteWorker {
       laneChangeCount = 0;
     }
 
-    log.info("Downtrack: " + downtrackDistance + ", Crosstrack: " + crossTrackDistance);
-    log.info("Downtrack Waypoint: " + currentWaypointIndex);
+    log.debug("Downtrack: " + downtrackDistance + ", Crosstrack: " + crossTrackDistance);
+    log.debug("Downtrack Waypoint: " + currentWaypointIndex);
 
     if (leftRouteVicinity()) {
       recievedLeftRouteEvents++;

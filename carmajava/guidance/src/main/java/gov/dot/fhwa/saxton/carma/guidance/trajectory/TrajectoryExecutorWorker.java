@@ -101,7 +101,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     Trajectory curTraj = currentTrajectory.get();
     if (curTraj == null) {
       // Nothing to do
-      log.info("Finished downtrack distance update with no trajectory.");
+      log.debug("Finished downtrack distance update with no trajectory.");
       this.downtrackDistance = downtrack;
       return;
     } else {
@@ -120,7 +120,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     // Notify subscribers if needed
     invokeCallbacks();
 
-    log.info("Finished downtrack distance update.");
+    log.debug("Finished downtrack distance update.");
   }
 
   /**
