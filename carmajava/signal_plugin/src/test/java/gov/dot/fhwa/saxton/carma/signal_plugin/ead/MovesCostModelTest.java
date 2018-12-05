@@ -372,10 +372,33 @@ public class MovesCostModelTest {
     // dist, time, speed
     costModel.setGoal(new Node(10,10,10));
     costModel.setTolerances(new Node(0,0,0));
-    assertEquals(14948.333333333334, costModel.heuristic(new Node(0,0,0)), 0.0000001);
-    assertEquals(14948.333333333334 * 0.5, costModel.heuristic(new Node(5,0,0)), 0.0000001);
-    assertEquals(0.0, costModel.heuristic(new Node(10,0,0)), 0.0000001);
+    assertEquals(Double.POSITIVE_INFINITY, costModel.heuristic(new Node(0,0,0)), 0.0000001);
+    assertEquals(14948.333333333334, costModel.heuristic(new Node(0,0,10)), 0.0000001);
+    assertEquals(14948.333333333334 * 0.5, costModel.heuristic(new Node(5,0,10)), 0.0000001);
+    assertEquals(Double.POSITIVE_INFINITY, costModel.heuristic(new Node(10,0,0)), 0.0000001);
+    assertEquals(0.0, costModel.heuristic(new Node(10,0,10)), 0.0000001);
     assertEquals(Double.POSITIVE_INFINITY, costModel.heuristic(new Node(11,0,0)), 0.0000001);
+
+
+    // Piece-wise cost
+    costModel = new MovesFuelCostModel(
+      0.22112,  // rollingTermA
+      0.002838, // rotatingTermB
+      0.000698, // dragTermC
+      1.86686,  // vehicleMassInTons
+      1.86686,  // fixedMassFactor
+      "/opt/carma/src/CARMAPlatform/carmajava/launch/params/BaseRateForPassengerTruck.csv", // baseRateTablePath
+      1.0, // fuelNormalizationDenominator
+      1.0,      // timeNormalizationDenominator
+      1.0,      // heuristicWeight
+      0.0,      // percentCostForTime
+      15.0,     // maxVelocity
+      1.5       // maxAccel
+    );
+    // dist, time, speed
+    costModel.setGoal(new Node(90,11,15));
+    costModel.setTolerances(new Node(0,0,0));
+    assertEquals(14948.333333333334 * 11.0, costModel.heuristic(new Node(0,0,0)), 0.0000001);
 
     // Only h value no weight with normalization only fuel
     costModel = new MovesFuelCostModel(
@@ -395,8 +418,8 @@ public class MovesCostModelTest {
     // dist, time, speed
     costModel.setGoal(new Node(10,10,10));
     costModel.setTolerances(new Node(0,0,0));
-    assertEquals(0.03517254901, costModel.heuristic(new Node(0,0,0)), 0.0000001);
-    assertEquals(0.03517254901 * 0.5, costModel.heuristic(new Node(5,0,0)), 0.0000001);
+    assertEquals(0.03517254901, costModel.heuristic(new Node(0,0,10)), 0.0000001);
+    assertEquals(0.03517254901 * 0.5, costModel.heuristic(new Node(5,0,10)), 0.0000001);
 
     // Only h value no weight with both time and fuel
     costModel = new MovesFuelCostModel(
@@ -416,8 +439,8 @@ public class MovesCostModelTest {
     // dist, time, speed
     costModel.setGoal(new Node(10,10,10));
     costModel.setTolerances(new Node(0,0,0));
-    assertEquals((0.03517254901 * 0.5) + 0.5, costModel.heuristic(new Node(0,0,0)), 0.0000001);
-    assertEquals((0.03517254901 * 0.5 + 0.5) * 0.5, costModel.heuristic(new Node(5,0,0)), 0.0000001);
+    assertEquals((0.03517254901 * 0.5) + 0.5, costModel.heuristic(new Node(0,0,10)), 0.0000001);
+    assertEquals((0.03517254901 * 0.5 + 0.5) * 0.5, costModel.heuristic(new Node(5,0,10)), 0.0000001);
 
   
     // Weighted h value with both time and fuel
@@ -438,8 +461,8 @@ public class MovesCostModelTest {
     // dist, time, speed
     costModel.setGoal(new Node(10,10,10));
     costModel.setTolerances(new Node(0,0,0));
-    assertEquals(2.0 * ((0.03517254901 * 0.5) + 0.5), costModel.heuristic(new Node(0,0,0)), 0.0000001);
-    assertEquals(2.0 * ((0.03517254901 * 0.5 + 0.5) * 0.5), costModel.heuristic(new Node(5,0,0)), 0.0000001);
+    assertEquals(2.0 * ((0.03517254901 * 0.5) + 0.5), costModel.heuristic(new Node(0,0,10)), 0.0000001);
+    assertEquals(2.0 * ((0.03517254901 * 0.5 + 0.5) * 0.5), costModel.heuristic(new Node(5,0,10)), 0.0000001);
   }
   
   /**
