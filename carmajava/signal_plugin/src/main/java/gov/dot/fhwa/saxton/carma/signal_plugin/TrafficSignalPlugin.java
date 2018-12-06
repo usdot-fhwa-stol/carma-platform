@@ -900,12 +900,14 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 } else if (prev.getSpeedAsDouble() < cur.getSpeedAsDouble()) {
                     SpeedUp speedUp = new SpeedUp(this);
                     speedUp.setSpeeds(prev.getSpeedAsDouble(), cur.getSpeedAsDouble());
+                    speedUp.setMaxAccel(pluginManeuverInputs.getMaxAccelLimit());
                     pluginManeuverPlanner.planManeuver(speedUp,
                             startDist + prev.getDistanceAsDouble(), startDist + cur.getDistanceAsDouble());
                     traj.addManeuver(speedUp);
                 } else {
                     SlowDown slowDown = new SlowDown(this);
                     slowDown.setSpeeds(prev.getSpeedAsDouble(), cur.getSpeedAsDouble());
+                    slowDown.setMaxAccel(pluginManeuverInputs.getMaxAccelLimit());
                     pluginManeuverPlanner.planManeuver(slowDown,
                             startDist + prev.getDistanceAsDouble(), startDist + cur.getDistanceAsDouble());
                     traj.addManeuver(slowDown);

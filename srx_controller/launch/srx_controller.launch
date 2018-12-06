@@ -1,6 +1,14 @@
 <launch>
 	<arg name="srx_controller_can_device" default="can0" />
+    <arg name="k_p" default="0.1" />
+    <arg name="k_i" default="0.01" />
+    <arg name="k_d" default="0.005" />
+
     <node name="srx_controller" pkg="srx_controller" type="srx_controller_node" output="screen">
+        <param name="k_p" value="$(arg k_p)" />
+        <param name="k_i" value="$(arg k_i)" />
+        <param name="k_d" value="$(arg k_d)" />
+
         <remap from="received_messages" to="$(arg srx_controller_can_device)/received_messages" />
         <remap from="sent_messages" to="$(arg srx_controller_can_device)/sent_messages" />
     </node>

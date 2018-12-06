@@ -1,5 +1,3 @@
-#!/bin/bash
-
 #  Copyright (C) 2018 LEIDOS.
 # 
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -14,8 +12,9 @@
 #  License for the specific language governing permissions and limitations under
 #  the License.
 
-# Kill all CARMA containers
-bash /var/www/html/scripts/kill.bash
+FROM busybox:latest
 
-# Launch platform
-docker-compose -f /opt/carma/vehicle/docker-compose.yml up -d
+ADD . /root/vehicle
+VOLUME /opt/carma/vehicle
+
+CMD  cp /root/vehicle/* /opt/carma/vehicle

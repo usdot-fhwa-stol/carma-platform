@@ -182,20 +182,21 @@ CarmaJS.WidgetFramework.TrafficSignal = (function () {
 
                 if (svgLayerForSignal == null)
                 {
-                    console.log ('showEachTrafficSignal() svgLayerForSignal is null');
+                    //console.log ('showEachTrafficSignal() svgLayerForSignal is null');
                     return;
                 }
 
                 if (svgLayerForSignal.getElementById('svgCircleTopText') == null)
                 {
-                    console.log ('showEachTrafficSignal() svgCircleTopText is null');
+                    //console.log ('showEachTrafficSignal() svgCircleTopText is null');
                     return;
                 }
 
                 //null from calling procedure means to turn off the signal or gray it out.
                 if (item == null)
                 {
-                    console.log ('showEachTrafficSignal() item is null');
+                    //Commenting out since called out too much when signal is no longer used or grayed out. Will use only for testing.
+                    //console.log ('showEachTrafficSignal() item is null');
 
                     //Clear info
                     svgLayerForSignal.getElementById('svgIntxHeaderText').innerHTML = 'INTERSECTION XXXX';
@@ -303,10 +304,10 @@ CarmaJS.WidgetFramework.TrafficSignal = (function () {
         ***/
         $.widget("CarmaJS.trafficSignalIntersection", {
            _create: function() {
-                var myDiv = $("<object id='tsp_speed' type='image/svg+xml' data='" + installfoldername + "tsp_speed.svg' style='width: 325px; height: 500px;'></object>"
-                          + "<object id='tsp_intx1' type='image/svg+xml' data='" + installfoldername + "tsp_signal_intx.svg' style='width: 325px; height: 500px;'></object>"
-                          + "<object id='tsp_intx2' type='image/svg+xml' data='" + installfoldername + "tsp_signal_intx.svg' style='width: 325px; height: 500px;'></object>"
-                          + "<object id='tsp_intx3' type='image/svg+xml' data='" + installfoldername + "tsp_signal_intx.svg' style='width: 325px; height: 500px;'></object>");
+                var myDiv = $("<object id='tsp_speed' type='image/svg+xml' data='" + installfoldername + "tsp_speed.svg' style='width: 270px; height: 490px;'></object>"
+                          + "<object id='tsp_intx1' type='image/svg+xml' data='" + installfoldername + "tsp_signal_intx.svg' style='width: 270px; height: 490px;'></object>"
+                          + "<object id='tsp_intx2' type='image/svg+xml' data='" + installfoldername + "tsp_signal_intx.svg' style='width: 270px; height: 490px;'></object>"
+                          + "<object id='tsp_intx3' type='image/svg+xml' data='" + installfoldername + "tsp_signal_intx.svg' style='width: 270px; height: 490px;'></object>");
 
                 $(this.element).append(myDiv);
 

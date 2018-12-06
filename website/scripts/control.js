@@ -59,21 +59,32 @@ function openTab(evt, name) {
     }
 
     var tab = document.getElementsByClassName('tab');
+    var imgCARMAIconColor = document.getElementById('imgCARMAIconColor');
 
     for (i = 0; i < tab.length; i++) {
 
-        //If DriverView, collapse left navigation bar.
+        //If not Task View, collapse left navigation bar.
         if (name != 'divCapabilities')
+        {
             tab[i].style.width = '6%';
+            imgCARMAIconColor.style.width='55px';
+            imgCARMAIconColor.style.height= 'auto';
+            imgCARMAIconColor.style.padding = '20px 0px 0px 7px';
+        }
         else
+        {
             tab[i].style.width = '12%';
+            imgCARMAIconColor.style.width='120px';
+            imgCARMAIconColor.style.height= '120px';
+            imgCARMAIconColor.style.padding = '20px 0px 0px 15px';
+        }
     }
 
     var tabheader = document.getElementsByClassName('tabheader');
 
     for (i = 0; i < tabheader.length; i++) {
 
-        //If DriverView, collapse left navigation bar.
+        //If not Task View, adjust the button size.
         if (name != 'divCapabilities')
             tabheader[i].style.width = '88%';
         else
@@ -313,9 +324,13 @@ function showModalAck(msg, response_service) {
     var span_modal = document.getElementsByClassName('close')[0];
     var btnModalButton1 = document.getElementById('btnModalButton1');
     var btnModalButton2 = document.getElementById('btnModalButton2');
+    var modalFooterMessage = document.getElementById('divFooterMessage');
+
+    modalFooterMessage.innerHTML = ''; //Clear every time.
 
     btnModalButton1.title = 'YES';
     btnModalButton1.innerHTML = 'YES';
+
     btnModalButton1.onclick = function () {
         sendModalResponse(true, response_service);
         return;
@@ -340,7 +355,6 @@ function showModalAck(msg, response_service) {
     var modalBody = document.getElementsByClassName('modal-body')[0];
     var modalHeader = document.getElementsByClassName('modal-header')[0];
     var modalFooter = document.getElementsByClassName('modal-footer')[0];
-
 
     modalHeader.innerHTML = '<span class="close">&times;</span><h2>ACTION REQUIRED &nbsp; <i class="fa fa-exclamation-triangle" style="font-size:40px; color:red;"></i></h2>';
     modalHeader.style.backgroundColor = '#ffcc00'; // yellow
@@ -381,8 +395,10 @@ function sendModalResponse(operatorResponse, serviceName) {
     // is a ROSLIB.ServiceResponse object.
     serviceClient.callService(serviceRequest, function(result) {
 
-        console.log('Result for service call on ' + serviceClient.name + ': ' + result.success + '; message: ' + result.message);
-        console.log('Boolean(result.success): ' + Boolean(result.success));
+        console.log('Result for service call on ' + serviceClient.name + ': ' + result.success + '; Boolean(result.success): ' + Boolean(result.success)  + '; message: ' + result.message);
+
+        var modalFooterMessage = document.getElementById('divFooterMessage'); //Added specifically for returned messages.
+        modalFooterMessage.innerHTML = ''; //Clear every time.
 
         //UI expects service to return true, if no errors occurred during processing.
         //If there was, then service should return false with a brief message explanation.
@@ -398,14 +414,24 @@ function sendModalResponse(operatorResponse, serviceName) {
             document.getElementById('audioAlert2').pause();
             document.getElementById('audioAlert3').pause();
             document.getElementById('audioAlert4').pause();
+
+            if (result.message != '')
+                modalFooterMessage.innerHTML = result.message;
         }
         else
         {
-            var modalFooter = document.getElementsByClassName('modal-footer')[0];
-            modalFooter.innerHTML = modalFooter.innerHTML + '<p>Response not processed: ' + result.message + '</p>';
+            if (result.message != '')
+                modalFooterMessage.innerHTML = result.message;
         }
     }, function(error) {
-        console.log("Calling service " + operatorResponse + " failed with error: " + error); // TODO we need to identify how to handle failure
+
+          console.log("Calling service " + operatorResponse + " failed with error: " + error); // TODO we need to identify how to handle failure
+
+          var modalFooterMessage = document.getElementById('divFooterMessage'); //Added specifically for returned messages.
+          modalFooterMessage.innerHTML = ''; //Clear every time.
+
+          modalFooterMessage.innerHTML = 'Error with service call:' + operatorResponse + ': ' + error;
+
     });
 
 }
@@ -427,6 +453,9 @@ function showModal(showWarning, modalMessage, restart) {
     var span_modal = document.getElementsByClassName('close')[0];
     var btnModalButton1 = document.getElementById('btnModalButton1');
     var btnModalButton2 = document.getElementById('btnModalButton2');
+    var modalFooterMessage = document.getElementById('divFooterMessage');
+
+    modalFooterMessage.innerHTML = ''; //Clear every time.
 
     btnModalButton1.title = 'Continue to Restart';
     btnModalButton2.title = 'Logout and Shutdown';
