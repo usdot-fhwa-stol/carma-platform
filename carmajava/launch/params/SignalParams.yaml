@@ -140,7 +140,7 @@ ead/accelLimiter: false
 ead/jerkLimiter: false
 
 # buffer at beginning of yellow or end of green, sec, to avoid crossing as the signal changes
-ead/timebuffer: 4.0
+ead/timebuffer: 3.0
 
 # ead/cte/threshold is in cm; the CTE beyond which we stop trying to associate with a lane
 ead/cte/threshold: 400
