@@ -100,67 +100,67 @@ public class MockCANDriver extends AbstractMockDriver {
 
   @Override protected void publishData(List<String[]> data) {
 
-    for (String[] elements : data) {
-      // Make messages
-      std_msgs.Bool acc = accPub.newMessage();
-      std_msgs.Float64 accel = accelPub.newMessage();
-      std_msgs.Bool brakeLights = brakeLightsPub.newMessage();
-      std_msgs.Float64 brakePos = brakePositionPub.newMessage();
-      std_msgs.Float64 engineSpeed = engineSpeedPub.newMessage();
-      std_msgs.Float64 fuelFlow = fuelFlowPub.newMessage();
-      std_msgs.Float64 odometry = odometryPub.newMessage();
-      std_msgs.Bool parkingBrake = parkingBrakePub.newMessage();
-      std_msgs.Float64 speed = speedPub.newMessage();
-      std_msgs.Float64 steering = steeringPub.newMessage();
-      std_msgs.Float64 throttle = throttlePub.newMessage();
-      cav_msgs.TurnSignal turnSignalState = turnSignalPub.newMessage();
-      j2735_msgs.TransmissionState transmissionState = transmissionPub.newMessage();
-      std_msgs.Bool tractionActiveState = tractionActivePub.newMessage();
-      std_msgs.Bool tractionEnabledState = tractionEnabledPub.newMessage();
-      std_msgs.Bool antilockState = antilockBrakePub.newMessage();
-      std_msgs.Bool stabilityActiveState = stabilityActivePub.newMessage();
-      std_msgs.Bool stabilityEnabledState = stabilityEnabledPub.newMessage();
+    // for (String[] elements : data) {
+    //   // Make messages
+    //   std_msgs.Bool acc = accPub.newMessage();
+    //   std_msgs.Float64 accel = accelPub.newMessage();
+    //   std_msgs.Bool brakeLights = brakeLightsPub.newMessage();
+    //   std_msgs.Float64 brakePos = brakePositionPub.newMessage();
+    //   std_msgs.Float64 engineSpeed = engineSpeedPub.newMessage();
+    //   std_msgs.Float64 fuelFlow = fuelFlowPub.newMessage();
+    //   std_msgs.Float64 odometry = odometryPub.newMessage();
+    //   std_msgs.Bool parkingBrake = parkingBrakePub.newMessage();
+    //   std_msgs.Float64 speed = speedPub.newMessage();
+    //   std_msgs.Float64 steering = steeringPub.newMessage();
+    //   std_msgs.Float64 throttle = throttlePub.newMessage();
+    //   cav_msgs.TurnSignal turnSignalState = turnSignalPub.newMessage();
+    //   j2735_msgs.TransmissionState transmissionState = transmissionPub.newMessage();
+    //   std_msgs.Bool tractionActiveState = tractionActivePub.newMessage();
+    //   std_msgs.Bool tractionEnabledState = tractionEnabledPub.newMessage();
+    //   std_msgs.Bool antilockState = antilockBrakePub.newMessage();
+    //   std_msgs.Bool stabilityActiveState = stabilityActivePub.newMessage();
+    //   std_msgs.Bool stabilityEnabledState = stabilityEnabledPub.newMessage();
 
-      // Set Data
-      acc.setData(Boolean.parseBoolean(elements[ACC_IDX]));
-      accel.setData(Float.parseFloat(elements[ACCEL_IDX]));
-      brakeLights.setData(Boolean.parseBoolean(elements[BRAKE_LIGHTS_IDX]));
-      brakePos.setData(Float.parseFloat(elements[BRAKE_POS_IDX]));
-      engineSpeed.setData(Float.parseFloat(elements[ENGINE_SPEED_IDX]));
-      fuelFlow.setData(Float.parseFloat(elements[FUEL_FLOW_IDX]));
-      odometry.setData(Float.parseFloat(elements[ODOMETRY_IDX]));
-      parkingBrake.setData(Boolean.parseBoolean(elements[PARKING_BRAKE_IDX]));
-      speed.setData(Float.parseFloat(elements[SPEED_IDX]));
-      steering.setData(Float.parseFloat(elements[STEERING_IDX]));
-      throttle.setData(Float.parseFloat(elements[THROTTLE_IDX]));
-      turnSignalState.setState(Byte.parseByte(elements[TURN_SIGNAL_STATE_IDX]));
-      transmissionState.setTransmissionState(Byte.parseByte(elements[TRANSMISSION_STATE_IDX]));
-      tractionActiveState.setData(Boolean.parseBoolean(elements[TRACTION_ACTIVE_IDX]));
-      tractionEnabledState.setData(Boolean.parseBoolean(elements[TRACTION_ENABLED_IDX]));
-      antilockState.setData(Boolean.parseBoolean(elements[ANTILOCK_BRAKE_IDX]));
-      stabilityActiveState.setData(Boolean.parseBoolean(elements[STABILITY_ACTIVE_IDX]));
-      stabilityEnabledState.setData(Boolean.parseBoolean(elements[STABILITY_ENABLED_IDX]));
+    //   // Set Data
+    //   acc.setData(Boolean.parseBoolean(elements[ACC_IDX]));
+    //   accel.setData(Float.parseFloat(elements[ACCEL_IDX]));
+    //   brakeLights.setData(Boolean.parseBoolean(elements[BRAKE_LIGHTS_IDX]));
+    //   brakePos.setData(Float.parseFloat(elements[BRAKE_POS_IDX]));
+    //   engineSpeed.setData(Float.parseFloat(elements[ENGINE_SPEED_IDX]));
+    //   fuelFlow.setData(Float.parseFloat(elements[FUEL_FLOW_IDX]));
+    //   odometry.setData(Float.parseFloat(elements[ODOMETRY_IDX]));
+    //   parkingBrake.setData(Boolean.parseBoolean(elements[PARKING_BRAKE_IDX]));
+    //   speed.setData(Float.parseFloat(elements[SPEED_IDX]));
+    //   steering.setData(Float.parseFloat(elements[STEERING_IDX]));
+    //   throttle.setData(Float.parseFloat(elements[THROTTLE_IDX]));
+    //   turnSignalState.setState(Byte.parseByte(elements[TURN_SIGNAL_STATE_IDX]));
+    //   transmissionState.setTransmissionState(Byte.parseByte(elements[TRANSMISSION_STATE_IDX]));
+    //   tractionActiveState.setData(Boolean.parseBoolean(elements[TRACTION_ACTIVE_IDX]));
+    //   tractionEnabledState.setData(Boolean.parseBoolean(elements[TRACTION_ENABLED_IDX]));
+    //   antilockState.setData(Boolean.parseBoolean(elements[ANTILOCK_BRAKE_IDX]));
+    //   stabilityActiveState.setData(Boolean.parseBoolean(elements[STABILITY_ACTIVE_IDX]));
+    //   stabilityEnabledState.setData(Boolean.parseBoolean(elements[STABILITY_ENABLED_IDX]));
       
-      // Publish Data
-      accPub.publish(acc);
-      accelPub.publish(accel);
-      brakeLightsPub.publish(brakeLights);
-      brakePositionPub.publish(brakePos);
-      engineSpeedPub.publish(engineSpeed);
-      fuelFlowPub.publish(fuelFlow);
-      odometryPub.publish(odometry);
-      parkingBrakePub.publish(parkingBrake);
-      speedPub.publish(speed);
-      steeringPub.publish(steering);
-      throttlePub.publish(throttle);
-      turnSignalPub.publish(turnSignalState);
-      transmissionPub.publish(transmissionState);
-      tractionActivePub.publish(tractionActiveState);
-      tractionEnabledPub.publish(tractionEnabledState);
-      antilockBrakePub.publish(antilockState);
-      stabilityActivePub.publish(stabilityActiveState);
-      stabilityEnabledPub.publish(stabilityEnabledState);
-    }
+    //   // Publish Data
+    //   accPub.publish(acc);
+    //   accelPub.publish(accel);
+    //   brakeLightsPub.publish(brakeLights);
+    //   brakePositionPub.publish(brakePos);
+    //   engineSpeedPub.publish(engineSpeed);
+    //   fuelFlowPub.publish(fuelFlow);
+    //   odometryPub.publish(odometry);
+    //   parkingBrakePub.publish(parkingBrake);
+    //   speedPub.publish(speed);
+    //   steeringPub.publish(steering);
+    //   throttlePub.publish(throttle);
+    //   turnSignalPub.publish(turnSignalState);
+    //   transmissionPub.publish(transmissionState);
+    //   tractionActivePub.publish(tractionActiveState);
+    //   tractionEnabledPub.publish(tractionEnabledState);
+    //   antilockBrakePub.publish(antilockState);
+    //   stabilityActivePub.publish(stabilityActiveState);
+    //   stabilityEnabledPub.publish(stabilityEnabledState);
+    // }
   }
 
   @Override protected short getExpectedColCount() {
