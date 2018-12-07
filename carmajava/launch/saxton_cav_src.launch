@@ -111,6 +111,62 @@
     <!-- Vehicle Transforms -->
     <param name="robot_description" textfile="$(arg URDF_FILE)"/>
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+
+    <!-- ROS Bridge for UI -->
+    <group ns="$(arg UI_NS)">
+
+      <rosparam command="load" file="$(arg PARAM_DIR)/CommandAPIParams.yaml"/>
+
+      <remap from="system_alert"
+             to="/$(arg TOP_NS)/system_alert"/>
+      <remap from="nav_sat_fix"
+             to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
+      <remap from="velocity"
+               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/velocity"/>
+      <remap from="get_available_routes"
+             to="/$(arg TOP_NS)/$(arg RT_NS)/get_available_routes"/>
+      <remap from="set_active_route"
+             to="/$(arg TOP_NS)/$(arg RT_NS)/set_active_route"/>
+      <remap from="start_active_route"
+             to="/$(arg TOP_NS)/$(arg RT_NS)/start_active_route"/>
+      <remap from="route_state"
+             to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
+      <remap from="route_event"
+               to="/$(arg TOP_NS)/$(arg RT_NS)/route_event"/>
+      <remap from="route"
+             to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
+      <remap from="bsm"
+             to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_bsm"/>
+      <remap from="get_system_version"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/get_system_version"/>
+      <remap from="state"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/state"/>               
+      <remap from="ui_platoon_vehicle_info"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/ui_platoon_vehicle_info"/>
+      <remap from="plugins/available_plugins"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/available_plugins"/>
+      <remap from="plugins/get_registered_plugins"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/get_registered_plugins"/>
+      <remap from="plugins/activate_plugin"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/activate_plugin"/>
+      <remap from="set_guidance_active"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/set_guidance_active"/>
+      <remap from="plugins/controlling_plugins"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/controlling_plugins"/>
+      <remap from="traffic_signal_info"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/traffic_signal_info"/>
+      <remap from="platooning_info"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/platooning_info"/>
+      <remap from="driver_discovery"
+             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>
+      <remap from="get_drivers_with_capabilities"
+             to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
+      <remap from="traffic_signal_info"
+             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/traffic_signal_info"/>
+      <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
+        <arg name="port" value="9090"/> <!-- The default port for rosbridge is 9090 -->
+      </include>
+    </group>
     
     <!-- Drivers Package -->
       <group ns="$(arg DRIVER_NS)">
@@ -411,62 +467,6 @@
                to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_spat"/>
                
       </node>
-    </group>
-
-    <!-- ROS Bridge for UI -->
-    <group ns="$(arg UI_NS)">
-
-      <rosparam command="load" file="$(arg PARAM_DIR)/CommandAPIParams.yaml"/>
-
-      <remap from="system_alert"
-             to="/$(arg TOP_NS)/system_alert"/>
-      <remap from="nav_sat_fix"
-             to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
-      <remap from="velocity"
-               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/velocity"/>
-      <remap from="get_available_routes"
-             to="/$(arg TOP_NS)/$(arg RT_NS)/get_available_routes"/>
-      <remap from="set_active_route"
-             to="/$(arg TOP_NS)/$(arg RT_NS)/set_active_route"/>
-      <remap from="start_active_route"
-             to="/$(arg TOP_NS)/$(arg RT_NS)/start_active_route"/>
-      <remap from="route_state"
-             to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
-      <remap from="route_event"
-               to="/$(arg TOP_NS)/$(arg RT_NS)/route_event"/>
-      <remap from="route"
-             to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
-      <remap from="bsm"
-             to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_bsm"/>
-      <remap from="get_system_version"
-             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/get_system_version"/>
-      <remap from="state"
-             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/state"/>               
-      <remap from="ui_platoon_vehicle_info"
-             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/ui_platoon_vehicle_info"/>
-      <remap from="plugins/available_plugins"
-             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/available_plugins"/>
-      <remap from="plugins/get_registered_plugins"
-             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/get_registered_plugins"/>
-      <remap from="plugins/activate_plugin"
-             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/activate_plugin"/>
-      <remap from="set_guidance_active"
-             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/set_guidance_active"/>
-      <remap from="plugins/controlling_plugins"
-             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/plugins/controlling_plugins"/>
-      <remap from="traffic_signal_info"
-             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/traffic_signal_info"/>
-      <remap from="platooning_info"
-             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/platooning_info"/>
-      <remap from="driver_discovery"
-             to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>
-      <remap from="get_drivers_with_capabilities"
-             to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
-      <remap from="traffic_signal_info"
-             to="/$(arg TOP_NS)/$(arg GUIDE_NS)/traffic_signal_info"/>
-      <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
-        <arg name="port" value="9090"/> <!-- The default port for rosbridge is 9090 -->
-      </include>
     </group>
     <!-- Record Rosbag of all topics excluding /rosout since that only contains logs -->
     <node pkg="rosbag" type="record" name="rosbag_node"
