@@ -42,11 +42,11 @@
   <arg name="log_config" default="$(arg PARAM_DIR)/log-config.properties" doc="The location of the logging config file"/>
 
   <!-- Disable Mock Drivers -->
-  <arg name="mock_can"            	default="false" doc="True if using a simulated can driver"/>
+  <arg name="mock_can"            	default="true" doc="True if using a simulated can driver"/>
   <arg name="mock_dsrc"           	default="false" doc="True if using a simulated dsrc driver"/>
   <arg name="mock_srx_controller" 	default="false" doc="True if using a simulated srx controller driver"/>
   <arg name="mock_pinpoint"       	default="false" doc="True if using a simulated pinpoint driver"/>
-  <arg name="mock_radar"          	default="false" doc="True if using a simulated radar driver"/>
+  <arg name="mock_radar"          	default="true" doc="True if using a simulated radar driver"/>
   <arg name="mock_lateral_controller"   default="true" doc="True if using a simulated lateral controller"/>
 
   <!-- Rosbag Flag -->

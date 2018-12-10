@@ -24,6 +24,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.EadAStar;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.INodeCollisionChecker;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.IntersectionGeometry;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.AStarSolver;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.FinePathNeighbors;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 
 public class EADAStarPlanTest {
@@ -141,83 +142,114 @@ public class EADAStarPlanTest {
         when(mockConfig.getDoubleDefaultValue("ead.fine_time_inc", 2.0)).thenReturn(2.0);
         when(mockConfig.getDoubleDefaultValue("ead.fine_speed_inc", 1.0)).thenReturn(1.0);
         when(mockConfig.getDoubleDefaultValue("ead.acceptableStopDistance", 6.0)).thenReturn(6.0);
-        int totalCount = 0;
-        int failureCount = 0;
-        double totalPlanningTime = 0.0;
-        SignalPhase phase1 = SignalPhase.GREEN;
-        SignalPhase phase2 = SignalPhase.GREEN;
-        EadAStar ead;
-        AStarSolver solver;
-        for (double dist1 = 20; dist1 < 100; dist1 += 30.0) {
-            for (double dist2 = dist1 + 80; dist2 < 250; dist2 += 30.0) {
-                phase1 = SignalPhase.GREEN;
-                while (phase1 != SignalPhase.NONE) {
-                    phase2 = SignalPhase.GREEN;
-                    while (phase2 != SignalPhase.NONE) {
-                        for (double i = 0; i <  30.0; i+=1) {
-                            for (double j = 0; j <  30.0; j+=1) {
+
+
+        Node n1 = new Node(48,8,3);
+        Node n2 = new Node(54,10,3);
+       
+
+        IntersectionData intersection1 = new IntersectionData(); // Id 9709
+        intersection1.map = mock(MapMessage.class);
+        intersection1.roughDist = 6929;
+        intersection1.dtsb = 53.32;
+        intersection1.currentPhase = SignalPhase.RED;
+        intersection1.timeToNextPhase = 29.89300000000003;
+        intersection1.stopBoxWidth = 32.90;
+        intersection1.intersectionId = 9709;
+        intersection1.geometry = new IntersectionGeometry(40, 100);
+        IntersectionData intersection2 = new IntersectionData(); // Id 9945
+        intersection2.map = mock(MapMessage.class);
+        intersection2.roughDist = 23454;
+        intersection2.dtsb = 224.26;
+        intersection2.currentPhase = SignalPhase.GREEN;
+        intersection2.timeToNextPhase = 10.793024414062529;
+        intersection2.stopBoxWidth = 35.18;
+        intersection2.intersectionId = 9945;
+        intersection2.geometry = new IntersectionGeometry(40, 100);
+        List<IntersectionData> intersections = Arrays.asList(intersection1, intersection2);
+        
+        FinePathNeighbors fp = new FinePathNeighbors();
+        fp.initialize(intersections, 2, 2.0, 1.0);
+        fp.signalViolation(n1, n2);
+
+
+        // int totalCount = 0;
+        // int failureCount = 0;
+        // double totalPlanningTime = 0.0;
+        // SignalPhase phase1 = SignalPhase.GREEN;
+        // SignalPhase phase2 = SignalPhase.GREEN;
+        // EadAStar ead;
+        // AStarSolver solver;
+        // for (double dist1 = 20; dist1 < 100; dist1 += 30.0) {
+        //     for (double dist2 = dist1 + 80; dist2 < 250; dist2 += 30.0) {
+        //         phase1 = SignalPhase.GREEN;
+        //         while (phase1 != SignalPhase.NONE) {
+        //             phase2 = SignalPhase.GREEN;
+        //             while (phase2 != SignalPhase.NONE) {
+        //                 for (double i = 0; i <  30.0; i+=1) {
+        //                     for (double j = 0; j <  30.0; j+=1) {
                             
-                                if ((phase1 == SignalPhase.GREEN || phase2 == SignalPhase.GREEN) && (i < timeBuffer * 3.0 || j < timeBuffer * 3.0)) {
-                                    //System.out.println("Ignoring impossible timing's dues to time buffer");
-                                    continue;
-                                }
-                                //System.out.println("DTSB1: " + dist1 + " DTSB2: " + dist2 + " Phase1: " + phase1 + " Phase2: " + phase2 + " timeToNext1: " + i + " timeToNext2: " + j);
-                                long startTime = System.currentTimeMillis();
-                                ead = new EadAStar(mockCollisionChecker);
-                                solver = new AStarSolver();
-                                ead.initialize(1, solver);
-                                IntersectionData intersection1 = new IntersectionData(); // Id 9709
-                                intersection1.map = mock(MapMessage.class);
-                                intersection1.roughDist = (int)(dist1*100.0);
-                                intersection1.dtsb = dist1;
-                                intersection1.currentPhase = phase1;
-                                intersection1.timeToNextPhase = (double)i;
-                                intersection1.stopBoxWidth = 32.90;
-                                intersection1.intersectionId = 9709;
-                                intersection1.geometry = new IntersectionGeometry(40, 100);
-                                IntersectionData intersection2 = new IntersectionData(); // Id 9945
-                                intersection2.map = mock(MapMessage.class);
-                                intersection2.roughDist = (int)(dist2*100.0);
-                                intersection2.dtsb = dist2;
-                                intersection2.currentPhase = phase2;
-                                intersection2.timeToNextPhase = (double)j;
-                                intersection2.stopBoxWidth = 35.18;
-                                intersection2.intersectionId = 9945;
-                                intersection2.geometry = new IntersectionGeometry(40, 100);
-                                List<IntersectionData> intersections = Arrays.asList(intersection1, intersection2);
-                                try {
-                                    List<Node> res = ead.plan(0, 11.176, intersections);
-                                    totalPlanningTime += System.currentTimeMillis() - startTime;
-                                    //System.out.println("A* Planning for two intersections takes " + (System.currentTimeMillis() - startTime) + " ms to finish");
-                                    // for(Node n : res) {
-                                    //     System.out.println(n.toString());
-                                    // }
-                                } catch(Exception e) {
-                                    System.out.println("FAILED: DTSB1: " + dist1 + " DTSB2: " + dist2 + " Phase1: " + phase1 + " Phase2: " + phase2 + " timeToNext1: " + i + " timeToNext2: " + j);
-                                    failureCount++;
-                                    //e.printStackTrace();
-                                    //assertTrue(false); // indicate the failure
-                                }
-                                totalCount++;
-                            }
-                        }
+        //                         if ((phase1 == SignalPhase.GREEN || phase2 == SignalPhase.GREEN) && (i < timeBuffer * 3.0 || j < timeBuffer * 3.0)) {
+        //                             //System.out.println("Ignoring impossible timing's dues to time buffer");
+        //                             continue;
+        //                         }
+        //                         //System.out.println("DTSB1: " + dist1 + " DTSB2: " + dist2 + " Phase1: " + phase1 + " Phase2: " + phase2 + " timeToNext1: " + i + " timeToNext2: " + j);
+        //                         long startTime = System.currentTimeMillis();
+        //                         ead = new EadAStar(mockCollisionChecker);
+        //                         solver = new AStarSolver();
+        //                         ead.initialize(1, solver);
+        //                         IntersectionData intersection1 = new IntersectionData(); // Id 9709
+        //                         intersection1.map = mock(MapMessage.class);
+        //                         intersection1.roughDist = (int)(dist1*100.0);
+        //                         intersection1.dtsb = dist1;
+        //                         intersection1.currentPhase = phase1;
+        //                         intersection1.timeToNextPhase = (double)i;
+        //                         intersection1.stopBoxWidth = 32.90;
+        //                         intersection1.intersectionId = 9709;
+        //                         intersection1.geometry = new IntersectionGeometry(40, 100);
+        //                         IntersectionData intersection2 = new IntersectionData(); // Id 9945
+        //                         intersection2.map = mock(MapMessage.class);
+        //                         intersection2.roughDist = (int)(dist2*100.0);
+        //                         intersection2.dtsb = dist2;
+        //                         intersection2.currentPhase = phase2;
+        //                         intersection2.timeToNextPhase = (double)j;
+        //                         intersection2.stopBoxWidth = 35.18;
+        //                         intersection2.intersectionId = 9945;
+        //                         intersection2.geometry = new IntersectionGeometry(40, 100);
+        //                         List<IntersectionData> intersections = Arrays.asList(intersection1, intersection2);
+        //                         try {
+        //                             List<Node> res = ead.plan(0, 11.176, intersections);
+        //                             totalPlanningTime += System.currentTimeMillis() - startTime;
+        //                             //System.out.println("A* Planning for two intersections takes " + (System.currentTimeMillis() - startTime) + " ms to finish");
+        //                             // for(Node n : res) {
+        //                             //     System.out.println(n.toString());
+        //                             // }
+        //                         } catch(Exception e) {
+        //                             System.out.println("FAILED: DTSB1: " + dist1 + " DTSB2: " + dist2 + " Phase1: " + phase1 + " Phase2: " + phase2 + " timeToNext1: " + i + " timeToNext2: " + j);
+        //                             failureCount++;
+        //                             //e.printStackTrace();
+        //                             //assertTrue(false); // indicate the failure
+        //                         }
+        //                         totalCount++;
+        //                     }
+        //                 }
                         
-                        phase2 = phase2.next();
-                    }
+        //                 phase2 = phase2.next();
+        //             }
                     
-                    phase1 = phase1.next();
-                }
-                System.out.println("Completed: " + totalCount + " plans");
-            }
-        }
+        //             phase1 = phase1.next();
+        //         }
+        //         System.out.println("Completed: " + totalCount + " plans");
+        //     }
+        // }
 
-        System.out.println("\n\n ////// Test Complete //////");
-        System.out.println("Total Plans: " + totalCount);
-        System.out.println("Failed Plans: " + failureCount);
-        System.out.println("Percent Failed: " + ((double)failureCount / (double)totalCount));
-        System.out.println("Average Planning Time ms: " + (totalPlanningTime / (double)(totalCount - failureCount))); 
-        System.out.println("\n\n");
+        // System.out.println("\n\n ////// Test Complete //////");
+        // System.out.println("Total Plans: " + totalCount);
+        // System.out.println("Failed Plans: " + failureCount);
+        // System.out.println("Percent Failed: " + ((double)failureCount / (double)totalCount));
+        // System.out.println("Average Planning Time ms: " + (totalPlanningTime / (double)(totalCount - failureCount))); 
+        // System.out.println("\n\n");
 
-        assertTrue(0 == failureCount);// Test fails if any plans fail
+        // assertTrue(0 == failureCount);// Test fails if any plans fail
     }
 }
