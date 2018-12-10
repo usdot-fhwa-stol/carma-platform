@@ -67,6 +67,7 @@
 #include <unordered_map>
 #include <memory>
 #include <array>
+#include <limits>
 
 
 
@@ -128,9 +129,7 @@ private:
     std::string inertial_frame_name_, body_frame_name_, ned_frame_name_,
       earth_frame_name_, global_pos_sensor_frame_name_, local_pos_sensor_frame_name_;
 
-    cav_msgs::ExternalObject bsm_obj_;
-
-    long unsigned int last_nav_sat_seq = -1;
+    unsigned long last_nav_sat_seq = std::numeric_limits<unsigned long>::max();
 
     /**
      * @brief This function is the bond call back for on_broken event

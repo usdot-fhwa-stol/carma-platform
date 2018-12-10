@@ -16,6 +16,29 @@
 
 #include "transform_maintainer.h"
 
+namespace tf2
+{
+    // Functions based off tf2/buffer_core.cpp
+    void transformTF2ToMsg(const tf2::Transform& tf2, geometry_msgs::Transform& msg)
+    {
+        msg.translation.x = tf2.getOrigin().x();
+        msg.translation.y = tf2.getOrigin().y();
+        msg.translation.z = tf2.getOrigin().z();
+        msg.rotation.x = tf2.getRotation().x();
+        msg.rotation.y = tf2.getRotation().y();
+        msg.rotation.z = tf2.getRotation().z();
+        msg.rotation.w = tf2.getRotation().w();
+    }
+
+    void transformTF2ToMsg(const tf2::Transform& tf2, geometry_msgs::TransformStamped& msg, ros::Time stamp, const std::string& frame_id, const std::string& child_frame_id)
+    {
+        transformTF2ToMsg(tf2, msg.transform);
+        msg.header.stamp = stamp;
+        msg.header.frame_id = frame_id;
+        msg.child_frame_id = child_frame_id;
+    }
+}
+
 void TransformMaintainer::nav_sat_fix_update_cb(const sensor_msgs::NavSatFixConstPtr host_veh_loc, const cav_msgs::HeadingStampedConstPtr heading_msg)
 {
     
@@ -78,8 +101,8 @@ void TransformMaintainer::nav_sat_fix_update_cb(const sensor_msgs::NavSatFixCons
       no_earth_to_map_ = false;
     }
     // Keep publishing transform to maintain timestamp
-    geometry_msgs::TransformStamped earth_to_map_msg
-     = tf2::toMsg(earth_to_map_, host_veh_loc->header.stamp, earth_frame_, map_frame_);
+    geometry_msgs::TransformStamped earth_to_map_msg;
+    tf2::transformTF2ToMsg(earth_to_map_, earth_to_map_msg, host_veh_loc->header.stamp, earth_frame_, map_frame_);
     
     tf_stamped_msgs.push_back(earth_to_map_msg);
 
@@ -99,8 +122,8 @@ void TransformMaintainer::nav_sat_fix_update_cb(const sensor_msgs::NavSatFixCons
       earth_to_map_, odom_to_base_link);
     //TODO do we need to sync the heading too? Currently pinpoint's heading and nav_sat_fix are always synched. But this maynot always be the case
     // Publish newly calculated transforms
-    geometry_msgs::TransformStamped map_to_odom_msg 
-      = tf2::toMsg(map_to_odom_,  host_veh_loc->header.stamp, map_frame_, odom_frame_);
+    geometry_msgs::TransformStamped map_to_odom_msg;
+    tf2::transformTF2ToMsg(map_to_odom_, map_to_odom_msg, host_veh_loc->header.stamp, map_frame_, odom_frame_);
     
     tf_stamped_msgs.push_back(map_to_odom_msg);
 
@@ -121,7 +144,7 @@ void TransformMaintainer::nav_sat_fix_update_cb(const sensor_msgs::NavSatFixCons
   {
     // Calculate map->global_position_sensor transform
 
-    tf2::Vector3 global_sensor_in_map = wgs84_utils::geodesic_2_cartesian(host_veh_coord, earth_to_map.inverse());
+    tf2::Vector3 global_sensor_in_map = wgs84_utils::geodesic_to_ecef(host_veh_coord, earth_to_map.inverse());
 
     // T_x_y = transform describing location of y with respect to x
     // m = map frame
@@ -169,8 +192,8 @@ void TransformMaintainer::odometry_update_cb(const nav_msgs::OdometryConstPtr od
     if (parent_frame_id == odom_frame_ && child_frame_id == base_link_frame_) {
       tf2::fromMsg(odometry->pose.pose, odom_to_base_link_);
       // Publish updated transform
-      geometry_msgs::TransformStamped odom_to_base_link_msg 
-        = tf2::toMsg(odom_to_base_link_,  odometry->header.stamp, odom_frame_, base_link_frame_);
+      geometry_msgs::TransformStamped odom_to_base_link_msg; 
+      tf2::transformTF2ToMsg(odom_to_base_link_, odom_to_base_link_msg, odometry->header.stamp, odom_frame_, base_link_frame_);
       tf2_buffer_->setTransform(odom_to_base_link_msg, "/saxton_cav/sensor_fusion");
       tf2_broadcaster_->sendTransform(odom_to_base_link_msg);
 
@@ -190,8 +213,8 @@ void TransformMaintainer::odometry_update_cb(const nav_msgs::OdometryConstPtr od
       tf2::Transform T_o_b = T_o_p * T_b_p.inverse();
       odom_to_base_link_ = T_o_b;
       // Publish updated transform
-      geometry_msgs::TransformStamped odom_to_base_link_msg 
-        = tf2::toMsg(odom_to_base_link_,  odometry->header.stamp, odom_frame_, base_link_frame_);
+      geometry_msgs::TransformStamped odom_to_base_link_msg;
+      tf2::transformTF2ToMsg(odom_to_base_link_, odom_to_base_link_msg, odometry->header.stamp, odom_frame_, base_link_frame_);
       tf2_buffer_->setTransform(odom_to_base_link_msg, "/saxton_cav/sensor_fusion");
       tf2_broadcaster_->sendTransform(odom_to_base_link_msg);
 

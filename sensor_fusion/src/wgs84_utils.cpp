@@ -118,19 +118,18 @@ void wgs84_utils::convertToOdom(const wgs84_utils::wgs84_coordinate &src,
  * The returned 3d point is defined relative to a frame which has a transform with the ECEF frame.
  * @param location The geodesic location to convert must be in radians
  * @param frame2ecefTransform A transform which defines the location of the ECEF frame relative to the 3d point's frame of origin
- * @return The calculated 3d point
+ * @return The calculated 3d point in the ECEF frame. 
  */
-//TODO lat/lon must be in radians
-tf2::Vector3 wgs84_utils::geodesic_2_cartesian(const wgs84_utils::wgs84_coordinate &loc, tf2::Transform ecef_in_ned) {
+tf2::Vector3 wgs84_utils::geodesic_to_ecef(const wgs84_utils::wgs84_coordinate &loc, tf2::Transform ecef_in_ned) {
 
     constexpr double Rea = 6378137.0; // Semi-major axis radius meters
     constexpr double Rea_sqr = Rea*Rea;
     constexpr double f = 1.0 / 298.257223563; //The flattening factor
     constexpr double Reb = Rea * (1.0 - f); // //The semi-minor axis = 6356752.0
     constexpr double Reb_sqr = Reb*Reb;
-    constexpr double e = 0.08181919084262149; // The first eccentricity (hard coded as optimization) calculated as Math.sqrt(Rea*Rea - Reb*Reb) / Rea;
+    constexpr double e = 0.08181919084262149; // The first eccentricity (hard coded as optimization) calculated as Math.sqrt(Rea*Rea - Reb*Reb) / Rea; as C++11 sqrt is not constexpr
     constexpr double e_sqr = e*e;
-    constexpr double e_p = 0.08209443794969568; // e prime (hard coded as optimization) calculated as Math.sqrt((Rea_sqr - Reb_sqr) / Reb_sqr);
+    constexpr double e_p = 0.08209443794969568; // e prime (hard coded as optimization) calculated as Math.sqrt((Rea_sqr - Reb_sqr) / Reb_sqr); as C++11 sqrt is not constexpr
 
 
     // frame2ecefTransform needs to define the position of the ecefFrame relative to the desired frame
@@ -156,11 +155,16 @@ tf2::Vector3 wgs84_utils::geodesic_2_cartesian(const wgs84_utils::wgs84_coordina
     return point_in_ned;
 }
 
-// TODO comment
-// Lat and lon must be in radians
+/**
+ * Generates a transform describing the location/orientation of an NED frame in the ECEF frame based on the provided lat lon point.
+ * 
+ * @param loc The location of the NED frame in WGS-84 lat/lon with angles in radians
+ * 
+ * @return The transform describing the location/orientation of an NED frame in the ECEF frame
+ */
 tf2::Transform wgs84_utils::ecef_to_ned_from_loc(wgs84_coordinate loc) {
 
-    tf2::Vector3 ecef_point = wgs84_utils::geodesic_2_cartesian(loc, tf2::Transform::getIdentity());
+    tf2::Vector3 ecef_point = wgs84_utils::geodesic_to_ecef(loc, tf2::Transform::getIdentity());
 
     // Rotation matrix of north east down frame with respect to ecef
     // Found at https://en.wikipedia.org/wiki/North_east_down

@@ -54,27 +54,10 @@
 #include <cav_msgs/HeadingStamped.h>
 #include "wgs84_utils.h"
 
-namespace tf2
-{
-    inline // inline is required to make this compile. Not sure why
-    geometry_msgs::TransformStamped toMsg(const tf2::Transform& tf, ros::Time stamp, const std::string& frame_id, const std::string& child_frame_id)
-    {
-        geometry_msgs::TransformStamped msg;
-        msg.transform = tf2::toMsg(tf);
-        msg.header.stamp = stamp;
-        msg.header.frame_id = frame_id;
-        msg.child_frame_id = child_frame_id;
-        
-        return msg;
-    }
-}
-
 /**
- * TODO
- * @brief A ROS node that monitors multiple sources to produce a filtered version
- *
- * This class monitors all drivers that provide position and tracked objects api*
- *
+ * @brief The TransformMaintainer is responsible for updating coordinate transforms
+ * 
+ * Transforms should be updated when new NavSatFix data is available or new odometry data is available.
  */
 class TransformMaintainer
 {
