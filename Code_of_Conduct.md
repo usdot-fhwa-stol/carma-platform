@@ -2,7 +2,21 @@
 
 ## Our Pledge
 
-In the interest of fostering an open and welcoming environment, we as contributors and maintainers pledge to making participation in our project and our community a harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, gender identity and expression, level of experience, nationality, personal appearance, race, religion, or sexual identity and orientation.
+In the interest of fostering an open and welcoming environment, we as contributors and maintainers pledge to making participation in our project and our community a harassment-free experience for everyone.
+DOT will not post comments and will take down comments that: 
+
+* Contain vulgar or abusive language, personal attacks of any kind, offensive
+  terms that target specific ethnic or racial groups, or discriminatory language
+  based on race, sex, gender, religion, national origin, age or disability
+* Promote or endorse services or products
+* Are off-topic- e.g., comments that do not pertain to the topic of the blog post
+* Contain security sensitive information
+* Contain gratuitous links to Web sites that are viewed as spam
+
+DOT does not discriminate against any views, but reserves the right to remove
+comments that do not adhere to these standards. All posted comments reflect the views of the author and do not necessarily reflect the views or position of DOT or the Federal government.
+
+DOT will not redact or edit a comment to remove objectionable content, so please ensure that your comment contains none of the above.
 
 ## Our Standards
 
