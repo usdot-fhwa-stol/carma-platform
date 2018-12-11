@@ -45,6 +45,8 @@ RUN usermod -aG docker www-data
 
 # Copy the website files to bes served
 COPY --chown=www-data . /var/www/html
+RUN mv /var/www/html/scripts/docker_launch.bash /var/www/html/scripts/launch.bash && \
+    mv /var/www/html/scripts/docker_kill.bash /var/www/html/scripts/kill.bash
 
 # Deploy the vehicle specific JS file
 RUN mkdir -p /opt/carma/vehicle && \
