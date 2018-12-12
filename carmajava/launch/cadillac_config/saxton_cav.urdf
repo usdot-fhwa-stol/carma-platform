@@ -62,11 +62,11 @@
     <origin xyz="0 0 -1.1" rpy="3.14159265359 0 0" />
   </joint>
 
-  <!-- host_vehicle -> vehicle_front Transform vehicle_front is FLU-->
+  <!-- host_vehicle -> vehicle_front Transform vehicle_front is FLU used to be x of 2.4384-->
   <joint name="host_vehicle_to_vehicle_front" type="fixed">
     <parent link="host_vehicle" />
     <child link="vehicle_front" />
-    <origin xyz="2.4384 0 0" rpy="3.14159265359 0 0" />
+    <origin xyz="3.0 0 0" rpy="3.14159265359 0 0" />
   </joint>
 
   <!--base_link is center of rear axle FLU oriented x down the longitudinal axis of the vehicle-->

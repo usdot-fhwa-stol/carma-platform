@@ -144,6 +144,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private double defaultSpeedLimit;
     private double defaultAccel;
     private GlidepathAppConfig appConfig;
+    private Long lastReplanTime = null;
 
     public TrafficSignalPlugin(PluginServiceLocator psl) {
         super(psl);
@@ -478,6 +479,11 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 }
             }
 
+            boolean replanTimeout = false;
+            if (lastReplanTime != null && System.currentTimeMillis() > (lastReplanTime + 4000)) {
+                replanTimeout = true;
+            }
+
             // Remove expired intersections
             boolean deletedIntersection = intersections.entrySet().removeIf(entry -> !foundIds.contains(entry.getKey()));
             // Trigger new plan on phase change
@@ -491,7 +497,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             double maxStoppingDistance = (0.5 * curSpeed * curSpeed) / defaultAccel;
             double MIN_REPLANNING_DTSB = Math.max(twiceAcceptableStopDistance, 1.0 + maxStoppingDistance);
 
-            if (!stoppedAtLight() && (phaseChanged || newIntersection || deletedIntersection) && onMap && dtsb > MIN_REPLANNING_DTSB) {
+            if (!stoppedAtLight() && (phaseChanged || newIntersection || deletedIntersection || replanTimeout) && onMap && dtsb > MIN_REPLANNING_DTSB) {
                 log.info("Requesting new plan with causes - PhaseChanged: " + phaseChanged 
                     + " NewIntersection: " + newIntersection 
                     + " deletedIntersection: " + deletedIntersection
@@ -916,6 +922,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 prev = cur;
             }
         }
+
+        lastReplanTime = System.currentTimeMillis();
 
         log.info("Planning complete");
         setAvailability(false);
