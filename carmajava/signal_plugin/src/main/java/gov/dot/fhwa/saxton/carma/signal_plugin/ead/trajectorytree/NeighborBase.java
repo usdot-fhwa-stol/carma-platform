@@ -49,7 +49,7 @@ public abstract class NeighborBase implements INeighborCalculator {
 
     protected final double                  DEFAULT_GREEN_DURATION = 27.0;  //sec was 27
     protected final double                  DEFAULT_YELLOW_DURATION = 3.0;  //sec was 3
-    protected final double                  DEFAULT_RED_DURATION = 3r0.0;    //sec was 30
+    protected final double                  DEFAULT_RED_DURATION = 30.0;    //sec was 30
 
     protected List<IntersectionData>        intersections_;
     protected int                           numInt_;
