@@ -51,10 +51,10 @@ If not using simulated drivers they are activated if the respective mock argumen
   <!--SRX Controller Driver Node-->
   <include unless="$(arg mock_srx_controller)" file="$(find srx_controller)/launch/srx_controller.launch">
 
-    <!-- Low Speed Values -->
-    <arg name="k_p" value="0.5" />
+    <!-- Low Speed Values 0.5 0.003 0.04 , 0.032-->
+    <arg name="k_p" value="0.4" />
     <arg name="k_i" value="0.003" />
-    <arg name="k_d" value="0.04" />
+    <arg name="k_d" value="0.01" />
     <!-- HighSpeed Values -->
     <!--
     <arg name="k_p" default="0.1" />

@@ -128,8 +128,8 @@ ead/trajectoryclass: 'gov.dot.fhwa.saxton.glidepath.ead.Trajectory'
 
 # these define the granularity of the AStar tree grid; coarse for first pass across all intersections, fine for
 # the detailed pass looking at only the nearest intersection
-ead/coarse_time_inc: 2.0
-ead/coarse_speed_inc: 2.0
+ead/coarse_time_inc: 1.0
+ead/coarse_speed_inc: 1.0
 ead/fine_time_inc: 2.0
 ead/fine_speed_inc: 1.0
 
@@ -167,7 +167,7 @@ ead/cmdspeedgain: 0.0
 ead/cmdbias: 0.0
 
 # Max distance in front of the stop bar that it is acceptable to stop, m
-ead/acceptableStopDistance: 6.0
+ead/acceptableStopDistance: 10.0
 
 # A string identifying the fuel cost model which will be used for computing cost between nodes
 # DEFAULT: The fuel cost model use in the origional Glidepath Phase 2 whitepaper
