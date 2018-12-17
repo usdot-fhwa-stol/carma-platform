@@ -690,7 +690,7 @@ void SensorFusionApplication::process_bsm(const cav_msgs::BSMConstPtr &msg) {
     // All tf2 multiplication works as expected with matrix on right applied to matrix on left to do multiplication
     ROS_DEBUG_STREAM_NAMED("bsm_logger","bsm_coord_rad (lat,lon,elev,heading): (" << bsm_coord_rad.lat << ", " << bsm_coord_rad.lon << ", " << bsm_coord_rad.elevation << ", " << bsm_coord_rad.heading << ")");
     // Get bsm position in nef frame
-    tf2::Vector3 bsm_in_map_trans = wgs84_utils::geodesic_2_cartesian(bsm_coord_rad, ecef_in_ned_tf);
+    tf2::Vector3 bsm_in_map_trans = wgs84_utils::geodesic_to_ecef(bsm_coord_rad, ecef_in_ned_tf);
     // Apply heading as orientation
     const tf2::Vector3 z_axis(0,0,1);
     tf2::Quaternion rot_in_ned(z_axis, bsm_coord_rad.heading);
@@ -754,7 +754,6 @@ void SensorFusionApplication::process_bsm(const cav_msgs::BSMConstPtr &msg) {
     ros::serialization::OStream stream(back.src_data[src_id].get() + sizeof(uint32_t), serial_size);
     ros::serialization::serialize(stream, obj);
     tracker_->addObjects(objects.begin(), objects.end(),src_id, obj.header.stamp.toBoost());
-    //bsm_obj_ = obj; //TODO used to bypass fusion
 }
 
 void SensorFusionApplication::velocity_cb(const ros::MessageEvent<geometry_msgs::TwistStamped> &event) 

@@ -4,6 +4,10 @@
 launch_pid=$1
 echo $launch_pid
 
+# Get the Process Id of the roslaunch file as an argument
+launch_pid=$1
+echo $launch_pid
+
 # Assumes ROS Java was installed as package and included in this source
 source /opt/ros/kinetic/setup.bash
 

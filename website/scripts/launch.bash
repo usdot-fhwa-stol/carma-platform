@@ -3,6 +3,9 @@
 # Kill all ROS related processes
 pkill -f ros
 
+# Kill all ROS related processes
+pkill -f ros
+
 # Source ROS (Must be called after ROS_HOME assignment)
 # Assumes ROS Java was installed as package and included in this source
 source /opt/ros/kinetic/setup.bash
