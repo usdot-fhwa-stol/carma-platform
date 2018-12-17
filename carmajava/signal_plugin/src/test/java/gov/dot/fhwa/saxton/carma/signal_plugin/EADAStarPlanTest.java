@@ -96,7 +96,7 @@ public class EADAStarPlanTest {
         when(mockConfig.getDoubleValue("ead.MOVES.dragTermC")).thenReturn(0.000698); 
         when(mockConfig.getDoubleValue("ead.MOVES.vehicleMassInTons")).thenReturn(1.86686); 
         when(mockConfig.getDoubleValue("ead.MOVES.fixedMassFactor")).thenReturn(1.86686); 
-        when(mockConfig.getProperty("ead.MOVES.baseRateTablePath")).thenReturn("/opt/carma/src/CARMAPlatform/carmajava/launch/params/BaseRateForPassengerTruck.csv");
+        when(mockConfig.getProperty("ead.MOVES.baseRateTablePath")).thenReturn("../launch/params/BaseRateForPassengerTruck.csv");
         
         when(mockConfig.getDoubleValue("ead.MOVES.fuelNormalizationDenominator")).thenReturn(211859.0); 
         when(mockConfig.getDoubleValue("ead.MOVES.timeNormalizationDenominator")).thenReturn(1.0); 

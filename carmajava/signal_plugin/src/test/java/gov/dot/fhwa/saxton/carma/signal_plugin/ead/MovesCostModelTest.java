@@ -42,6 +42,7 @@ public class MovesCostModelTest {
   ILoggerFactory mockFact = mock(ILoggerFactory.class, Mockito.withSettings().stubOnly());
   ILogger log = mock(ILogger.class, Mockito.withSettings().stubOnly());
   IGlidepathAppConfig mockConfig = mock(IGlidepathAppConfig.class, Mockito.withSettings().stubOnly());
+  String csvFile = "../launch/params/BaseRateForPassengerTruck.csv";
 
   @Before
   public void setUp() throws Exception {
@@ -63,7 +64,7 @@ public class MovesCostModelTest {
       0.000698, // dragTermC
       1.86686,  // vehicleMassInTons
       1.86686,  // fixedMassFactor
-      "/opt/carma/src/CARMAPlatform/carmajava/launch/params/BaseRateForPassengerTruck.csv", // baseRateTablePath
+      csvFile, // baseRateTablePath
       425000.0, // fuelNormalizationDenominator
       2.0,      // timeNormalizationDenominator
       60.0,     // heuristicWeight
@@ -88,7 +89,7 @@ public class MovesCostModelTest {
       0.000698, // dragTermC
       1.86686,  // vehicleMassInTons
       1.86686,  // fixedMassFactor
-      "/opt/carma/src/CARMAPlatform/carmajava/launch/params/BaseRateForPassengerTruck.csv", // baseRateTablePath
+      csvFile, // baseRateTablePath
       425000.0, // fuelNormalizationDenominator
       2.0,      // timeNormalizationDenominator
       60.0,     // heuristicWeight
@@ -160,7 +161,7 @@ public class MovesCostModelTest {
       0.000698, // dragTermC
       1.86686,  // vehicleMassInTons
       1.86686,  // fixedMassFactor
-      "/opt/carma/src/CARMAPlatform/carmajava/launch/params/BaseRateForPassengerTruck.csv", // baseRateTablePath
+      csvFile, // baseRateTablePath
       425000.0, // fuelNormalizationDenominator
       2.0,      // timeNormalizationDenominator
       60.0,     // heuristicWeight
@@ -186,7 +187,7 @@ public class MovesCostModelTest {
       0.000698, // dragTermC
       1.86686,  // vehicleMassInTons
       1.86686,  // fixedMassFactor
-      "/opt/carma/src/CARMAPlatform/carmajava/launch/params/BaseRateForPassengerTruck.csv", // baseRateTablePath
+      csvFile, // baseRateTablePath
       425000.0, // fuelNormalizationDenominator
       2.0,      // timeNormalizationDenominator
       60.0,     // heuristicWeight
@@ -261,7 +262,7 @@ public class MovesCostModelTest {
       0.000698, // dragTermC
       1.86686,  // vehicleMassInTons
       1.86686,  // fixedMassFactor
-      "/opt/carma/src/CARMAPlatform/carmajava/launch/params/BaseRateForPassengerTruck.csv", // baseRateTablePath
+      csvFile, // baseRateTablePath
       425000.0, // fuelNormalizationDenominator
       1.0,      // timeNormalizationDenominator
       60.0,     // heuristicWeight
@@ -279,7 +280,7 @@ public class MovesCostModelTest {
       0.000698, // dragTermC
       1.86686,  // vehicleMassInTons
       1.86686,  // fixedMassFactor
-      "/opt/carma/src/CARMAPlatform/carmajava/launch/params/BaseRateForPassengerTruck.csv", // baseRateTablePath
+      csvFile, // baseRateTablePath
       425000.0, // fuelNormalizationDenominator
       2.0,      // timeNormalizationDenominator
       60.0,     // heuristicWeight
@@ -297,7 +298,7 @@ public class MovesCostModelTest {
       0.000698, // dragTermC
       1.86686,  // vehicleMassInTons
       1.86686,  // fixedMassFactor
-      "/opt/carma/src/CARMAPlatform/carmajava/launch/params/BaseRateForPassengerTruck.csv", // baseRateTablePath
+      csvFile, // baseRateTablePath
       1.0,      // fuelNormalizationDenominator
       2.0,      // timeNormalizationDenominator
       60.0,     // heuristicWeight
@@ -315,7 +316,7 @@ public class MovesCostModelTest {
       0.000698, // dragTermC
       1.86686,  // vehicleMassInTons
       1.86686,  // fixedMassFactor
-      "/opt/carma/src/CARMAPlatform/carmajava/launch/params/BaseRateForPassengerTruck.csv", // baseRateTablePath
+      csvFile, // baseRateTablePath
       425000.0,      // fuelNormalizationDenominator
       2.0,      // timeNormalizationDenominator
       60.0,     // heuristicWeight
@@ -333,7 +334,7 @@ public class MovesCostModelTest {
       0.000698, // dragTermC
       1.86686,  // vehicleMassInTons
       1.86686,  // fixedMassFactor
-      "/opt/carma/src/CARMAPlatform/carmajava/launch/params/BaseRateForPassengerTruck.csv", // baseRateTablePath
+      csvFile, // baseRateTablePath
       425000.0, // fuelNormalizationDenominator
       10.0,     // timeNormalizationDenominator
       60.0,     // heuristicWeight
@@ -361,7 +362,7 @@ public class MovesCostModelTest {
       0.000698, // dragTermC
       1.86686,  // vehicleMassInTons
       1.86686,  // fixedMassFactor
-      "/opt/carma/src/CARMAPlatform/carmajava/launch/params/BaseRateForPassengerTruck.csv", // baseRateTablePath
+      csvFile, // baseRateTablePath
       1.0, // fuelNormalizationDenominator
       1.0,      // timeNormalizationDenominator
       1.0,      // heuristicWeight
@@ -387,7 +388,7 @@ public class MovesCostModelTest {
       0.000698, // dragTermC
       1.86686,  // vehicleMassInTons
       1.86686,  // fixedMassFactor
-      "/opt/carma/src/CARMAPlatform/carmajava/launch/params/BaseRateForPassengerTruck.csv", // baseRateTablePath
+      csvFile, // baseRateTablePath
       1.0, // fuelNormalizationDenominator
       1.0,      // timeNormalizationDenominator
       1.0,      // heuristicWeight
@@ -407,7 +408,7 @@ public class MovesCostModelTest {
       0.000698, // dragTermC
       1.86686,  // vehicleMassInTons
       1.86686,  // fixedMassFactor
-      "/opt/carma/src/CARMAPlatform/carmajava/launch/params/BaseRateForPassengerTruck.csv", // baseRateTablePath
+      csvFile, // baseRateTablePath
       425000.0, // fuelNormalizationDenominator
       1.0,      // timeNormalizationDenominator
       1.0,      // heuristicWeight
@@ -428,7 +429,7 @@ public class MovesCostModelTest {
       0.000698, // dragTermC
       1.86686,  // vehicleMassInTons
       1.86686,  // fixedMassFactor
-      "/opt/carma/src/CARMAPlatform/carmajava/launch/params/BaseRateForPassengerTruck.csv", // baseRateTablePath
+      csvFile, // baseRateTablePath
       425000.0, // fuelNormalizationDenominator
       1.0,      // timeNormalizationDenominator
       1.0,      // heuristicWeight
@@ -450,7 +451,7 @@ public class MovesCostModelTest {
       0.000698, // dragTermC
       1.86686,  // vehicleMassInTons
       1.86686,  // fixedMassFactor
-      "/opt/carma/src/CARMAPlatform/carmajava/launch/params/BaseRateForPassengerTruck.csv", // baseRateTablePath
+      csvFile, // baseRateTablePath
       425000.0, // fuelNormalizationDenominator
       1.0,      // timeNormalizationDenominator
       2.0,      // heuristicWeight
@@ -480,7 +481,7 @@ public class MovesCostModelTest {
       0.000698, // dragTermC
       1.86686,  // vehicleMassInTons
       1.86686,  // fixedMassFactor
-      "/opt/carma/src/CARMAPlatform/carmajava/launch/params/BaseRateForPassengerTruck.csv", // baseRateTablePath
+      csvFile, // baseRateTablePath
       425000.0, // fuelNormalizationDenominator
       2.0,      // timeNormalizationDenominator
       60.0,     // heuristicWeight
@@ -512,7 +513,7 @@ public class MovesCostModelTest {
       0.000698, // dragTermC
       1.86686,  // vehicleMassInTons
       1.86686,  // fixedMassFactor
-      "/opt/carma/src/CARMAPlatform/carmajava/launch/params/BaseRateForPassengerTruck.csv", // baseRateTablePath
+      csvFile, // baseRateTablePath
       425000.0, // fuelNormalizationDenominator
       2.0,      // timeNormalizationDenominator
       60.0,     // heuristicWeight
