@@ -7,11 +7,12 @@
 
 # maximumSpeed and crawlingSpeed are in mph
 maximumSpeed: 35.0
+# NOTE: crawlingSpeed must be achievable from 0 using defaultAccel with the given fine_time_inc
 crawlingSpeed: 7.0
 
 # Accel must match guidance accel values for maneuver generation to match plan
 # all accel limits are in m/s^2 (accel & decel limits must always be the same due to XGV implementation)
-defaultAccel: 2.0
+defaultAccel: 1.5
 # situation-specific accel limits
 rampUpAccel: 1.84
 scenario2InitiateAccel: 1.81
@@ -130,7 +131,7 @@ ead/trajectoryclass: 'gov.dot.fhwa.saxton.glidepath.ead.Trajectory'
 # the detailed pass looking at only the nearest intersection
 ead/coarse_time_inc: 2.0
 ead/coarse_speed_inc: 2.0
-ead/fine_time_inc: 2.0
+ead/fine_time_inc: 1.0
 ead/fine_speed_inc: 1.0
 
 # enables limiting of speed commands based on maximum acceleration capability
@@ -140,7 +141,7 @@ ead/accelLimiter: false
 ead/jerkLimiter: false
 
 # buffer at beginning of yellow or end of green, sec, to avoid crossing as the signal changes
-ead/timebuffer: 4.0
+ead/timebuffer: 3.0
 
 # ead/cte/threshold is in cm; the CTE beyond which we stop trying to associate with a lane
 ead/cte/threshold: 400
@@ -166,40 +167,21 @@ ead/cmdaccelgain: 0.17
 ead/cmdspeedgain: 0.0
 ead/cmdbias: 0.0
 
+# Set to true to make lights always considered green with 900s remaining.
+# Meant for debugging use only
+ead/debug/ignoreLights: false
+
 # Max distance in front of the stop bar that it is acceptable to stop, m
 ead/acceptableStopDistance: 6.0
 
 # A string identifying the fuel cost model which will be used for computing cost between nodes
-# DEFAULT: The fuel cost model use in the origional Glidepath Phase 2 whitepaper
 # MOVES_2010: The fuel cost model based on the EPA 2010 MOVES brief on vehicle efficiency
 ead/desiredCostModel: 'MOVES_2010'
 
-# ----- DEFAULT cost model params for AStar tree
-
-# drag coef Based on 0.84*Ac per http://ecomodder.com/wiki/index.php/Vehicle_Coefficient_of_Drag_List
-ead/dragCoefficient: 0.5
-
-# frontal area of the vehicle in m2 (2013 SRX is 2.89)
-ead/frontalArea: 2.89
-
-# air density in kg/m3; Value 1.29 @0 deg C, 1.23 @ 15 deg C, 1.20 @ 20 deg C, 1.16 @ 30 deg C
-ead/airDensity: 1.20
-
-# vehicle mass in kg; Cadillac 2013 SRX curb weight :  1916 kg + two people @82 kg each
-ead/vehicleMass: 2080.0
-
-# rollingResistanceOverride forces this constant value; if not specified then coef will be calculated as a function of speed
-# 0.02
-ead/rollingResistanceOverride: 0.0
-
-# idle cost is the equivalent amount of mechanical energy wasted by the idling engine while vehicle is stopped, J/s
-# 19.3 kJ/s is suggested by Guoyuan Wu on 12/29/17.
-ead/idleCost: 19300.0
-
-# true will make this the min energy rate for everything; false applies this only when speed is zero
-ead/useIdleMin: false
-
 ## NCV Handling ##
+
+# Boolean: True if NCV handling will be enabled when operating the plugin. False otherwise
+ead/handleNCV: false
 
 # String: Identifies the NCV motion prediction model which will be used to predict future trajectories of detected NCVs
 # Options:
@@ -209,7 +191,7 @@ ead/NCVHandling/objectMotionPredictorModel: "SIMPLE_LINEAR_REGRESSION"
 
 # Integer: The maximum age of a sensed NCV data sample in ms. Older samples will be removed from object history
 # Units: ms 
-ead/NCVHandling/collision/maxObjectHistoricalDataAge: 3000
+ead/NCVHandling/collision/maxObjectHistoricalDataAge: 500
 
 # Double: The size of a the downtrack dimension of a cell in the collision systems spatial hash map
 # Units: meters
@@ -223,7 +205,7 @@ ead/NCVHandling/collision/cell_crosstrack_size: 15.0
 
 # Double: The size of a the time dimension of a cell in the collision systems spatial hash map
 # Units: seconds
-# Dimension should be larger than one timestep in a MobilityPath
+# Dimension should be larger than two time margins
 ead/NCVHandling/collision/cell_time_size: 2.0
 
 # Double: The maximum distance between points in the interpolated vehicle path used for collision checking
@@ -232,12 +214,17 @@ ead/NCVHandling/collision/distanceStep: 2.5
 
 # Double: The amount of forward time to predict detected NCV motion for
 # Units: s
-ead/NCVHandling/collision/timeDuration: 3.0
+ead/NCVHandling/collision/timeDuration: 12.0
+
+# Double: The amount of time which will pass between replans caused by NCV detection. 
+# Should be at most half the ead/NCVHandling/collision/timeDuration value
+# Units: s
+ead/NCVHandling/collision/replanPeriod: 3.0
 
 # Double: The amount of buffer to put around the host vehicle's downtrack bounds when doing a collision check
 # The downtrack margin will be (vehicle's length / 2.0) + downtrack buffer
 # Units: m
-ead/NCVHandling/collision/downtrackBuffer: 3.0
+ead/NCVHandling/collision/downtrackBuffer: 2.0
 
 # Double: The amount of buffer to put around the host vehicle's crosstrack bounds when doing a collision check
 # The crosstrack margin will be (vehicle's width / 2.0) + crosstrack buffer
@@ -290,5 +277,22 @@ ead/MOVES/fixedMassFactor: 1.86686
 
 # The path to the table used for determining vehicle energy usage rates based on operation mode and source id
 ead/MOVES/baseRateTablePath: '/opt/carma/params/BaseRateForPassengerTruck.csv'
+
+# Double: The value which the calculated fuel cost will be devided by to generate a normalize cost from ~0-1
+# Multiply 211859.0 by the fine time inc to get the normalization factor
+# Units: Joules
+ead/MOVES/fuelNormalizationDenominator: 211859.0
+
+# Double: The value which the calculated time cost will be devided by to generate a normalize cost from ~0-1
+# This should be the same as the timestep size
+# Units: Joules
+ead/MOVES/timeNormalizationDenominator: 1.0
+
+# Double: The value which will be multiplied by the hueristic of a node to make A* operate as Weighted A*. 
+# Units: The same as the heuristic measurement (default is distance in meters)
+ead/MOVES/heuristicWeight: 1.0
+
+# Double: A factor (0-1) which will be multiplied by the time cost after normalization. (1 - percentCostForTime) will be multiplied by the fuel cost.
+ead/MOVES/percentTimeCost: 0.5
 
 #### End of Parameters used in MOVES Fuel Cost Model

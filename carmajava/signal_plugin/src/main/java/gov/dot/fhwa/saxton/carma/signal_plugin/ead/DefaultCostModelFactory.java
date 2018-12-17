@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
 
 import java.io.IOException;
 
+import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.Constants;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.ICostModel;
 
@@ -49,26 +50,24 @@ public class DefaultCostModelFactory implements ICostModelFactory{
    */
   public ICostModel getCostModel(String desiredModelName) throws IllegalArgumentException {
     switch(desiredModelName) {
-      case "DEFAULT":
-        double vehicleMass = config.getDoubleValue("ead.vehicleMass");
-        double rollingRes = config.getDoubleValue("ead.rollingResistanceOverride");
-        double dragCoef = config.getDoubleValue("ead.dragCoefficient");
-        double frontalArea = config.getDoubleValue("ead.frontalArea");
-        double airDensity = config.getDoubleValue("ead.airDensity");
-        double idlePower = config.getDoubleValue("ead.idleCost");
-        boolean useIdleMin = config.getBooleanValue("ead.useIdleMin");
-
-        return new FuelCostModel(vehicleMass, rollingRes, dragCoef, frontalArea, airDensity, idlePower, useIdleMin);
       case "MOVES_2010":
         double rollingTermA = config.getDoubleValue("ead.MOVES.rollingTermA");
-        double rotatingTermB = config.getDoubleDefaultValue("ead.MOVES.rotatingTermB", 0.0);
+        double rotatingTermB = config.getDoubleValue("ead.MOVES.rotatingTermB");
         double dragTermC = config.getDoubleValue("ead.MOVES.dragTermC");
         double vehicleMassInTons = config.getDoubleValue("ead.MOVES.vehicleMassInTons");
         double fixedMassFactor = config.getDoubleValue("ead.MOVES.fixedMassFactor");
         String baseRateTablePath = config.getProperty("ead.MOVES.baseRateTablePath");
 
+        double fuelNormalizationDenominator = config.getDoubleValue("ead.MOVES.fuelNormalizationDenominator");
+        double timeNormalizationDenominator = config.getDoubleValue("ead.MOVES.timeNormalizationDenominator");
+        double heuristicWeight = config.getDoubleValue("ead.MOVES.heuristicWeight");
+        double percentTimeCost = config.getDoubleValue("ead.MOVES.percentTimeCost");
+        double maxSpeed = ((double)config.getMaximumSpeed(0.0)) / Constants.MPS_TO_MPH;
+        double maxAccel = config.getDoubleValue("defaultAccel");
+
         try {
-          return new MovesFuelCostModel(rollingTermA, rotatingTermB, dragTermC, vehicleMassInTons, fixedMassFactor, baseRateTablePath);
+          return new MovesFuelCostModel(rollingTermA, rotatingTermB, dragTermC, vehicleMassInTons, fixedMassFactor, baseRateTablePath,
+            fuelNormalizationDenominator, timeNormalizationDenominator, heuristicWeight, percentTimeCost, maxSpeed, maxAccel);
         } catch (IOException e) {
           throw new IllegalArgumentException(e.getMessage());
         }

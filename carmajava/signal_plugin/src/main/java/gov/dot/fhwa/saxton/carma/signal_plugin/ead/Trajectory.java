@@ -23,6 +23,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.asd.Location;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.map.MapMessage;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.ISpatMessage;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.ANAStarSolver;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.AStarSolver;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
@@ -134,7 +135,10 @@ public class Trajectory implements ITrajectory {
 
 		//pass config parameters to the EAD library
 		try {
-			ead_.initialize(timeStepSize_, new AStarSolver());
+			ANAStarSolver solver = new ANAStarSolver();
+			solver.setMaxPlanningTimeMS(200);
+			ead_.initialize(timeStepSize_, solver);
+			//ead_.initialize(timeStepSize_, new AStarSolver());
 		} catch (Exception e) {
 			log_.errorf("TRAJ", "Exception thrown by EAD library initialize(). maxJerk = %f, speedLimit = %f",
 					maxJerk_, speedLimit_);

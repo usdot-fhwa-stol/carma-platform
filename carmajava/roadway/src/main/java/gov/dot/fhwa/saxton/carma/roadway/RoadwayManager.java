@@ -104,8 +104,8 @@ public class RoadwayManager extends SaxtonBaseNode implements IRoadwayManager{
     environmentWorker = new EnvironmentWorker(this, connectedNode.getLog(), earthFrameId,
       mapFrameId, odomFrameId, baseLinkFrameId, globalPositionSensorFrameId, localPositionSensorFrameId,
        distBackward, distForward);
-    transformMaintainer = new TransformMaintainer(this, connectedNode.getLog(), earthFrameId,
-      mapFrameId, odomFrameId, baseLinkFrameId, globalPositionSensorFrameId, localPositionSensorFrameId);
+    // transformMaintainer = new TransformMaintainer(this, connectedNode.getLog(), earthFrameId,
+    //   mapFrameId, odomFrameId, baseLinkFrameId, globalPositionSensorFrameId, localPositionSensorFrameId);
 
     // Used Services
     // Must be called before message subscribers
@@ -151,7 +151,7 @@ public class RoadwayManager extends SaxtonBaseNode implements IRoadwayManager{
     headingSub = connectedNode.newSubscriber("heading", cav_msgs.HeadingStamped._TYPE);
     headingSub.addMessageListener((cav_msgs.HeadingStamped message) -> {
         try {
-          transformMaintainer.handleHeadingMsg(message);
+          //transformMaintainer.handleHeadingMsg(message);
         } catch (Throwable e) {
           handleException(e);
         }
@@ -160,7 +160,7 @@ public class RoadwayManager extends SaxtonBaseNode implements IRoadwayManager{
     gpsSub = connectedNode.newSubscriber("nav_sat_fix", sensor_msgs.NavSatFix._TYPE);
     gpsSub.addMessageListener((sensor_msgs.NavSatFix message) -> {
         try {
-          transformMaintainer.handleNavSatFixMsg(message);
+          //transformMaintainer.handleNavSatFixMsg(message);
         } catch (Throwable e) {
           handleException(e);
         }
@@ -169,7 +169,7 @@ public class RoadwayManager extends SaxtonBaseNode implements IRoadwayManager{
     odometrySub = connectedNode.newSubscriber("odometry", nav_msgs.Odometry._TYPE);
     odometrySub.addMessageListener((nav_msgs.Odometry message) -> {
         try {
-          transformMaintainer.handleOdometryMsg(message);
+          //transformMaintainer.handleOdometryMsg(message);
         } catch (Throwable e) {
           handleException(e);
         }
@@ -187,7 +187,7 @@ public class RoadwayManager extends SaxtonBaseNode implements IRoadwayManager{
     velocitySub = connectedNode.newSubscriber("velocity", geometry_msgs.TwistStamped._TYPE);
     velocitySub.addMessageListener((geometry_msgs.TwistStamped message) -> {
         try {
-          transformMaintainer.handleVelocityMsg(message);
+          //transformMaintainer.handleVelocityMsg(message);
         } catch (Throwable e) {
           handleException(e);
         }
@@ -252,6 +252,7 @@ public class RoadwayManager extends SaxtonBaseNode implements IRoadwayManager{
             if (response.getErrorStatus() == GetTransformResponse.NO_ERROR
               || response.getErrorStatus() == GetTransformResponse.COULD_NOT_EXTRAPOLATE) {
 
+              log.debug("Transform stamp: " + response.getTransform().getHeader().getStamp());
               rh.setResult(Transform.fromTransformMessage(response.getTransform().getTransform()));
 
             } else {

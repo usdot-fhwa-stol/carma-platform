@@ -1,6 +1,23 @@
+/*
+ * Copyright (C) 2018 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package gov.dot.fhwa.saxton.carma.signal_plugin;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -10,6 +27,7 @@ import java.util.PriorityQueue;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.ros.message.Time;
 
 import cav_msgs.RoadwayObstacle;
@@ -28,6 +46,7 @@ import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.IMotionInterpolator;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.IMotionPredictor;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.INodeCollisionChecker;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ITrafficSignalPluginCollisionChecker;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 
 /**
@@ -38,7 +57,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
  * After a replan occurs additional replans will be requested at time increments equal to half the prediction period or when a new collision is identified
  * This system is capable of handling multiple in lane objects, but makes the assumption that lane id's will not change between the host vehicle and the detected objects.
  */
-public class ObjectCollisionChecker implements INodeCollisionChecker {
+public class ObjectCollisionChecker implements ITrafficSignalPluginCollisionChecker {
 
   private final IConflictDetector conflictDetector;
 
@@ -52,6 +71,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
   private final RouteService routeService;
   private final ArbitratorService arbitratorService;
   private final ITimeProvider timeProvider;
+  private final PluginServiceLocator psl;
 
   private final IMotionPredictor motionPredictor;
   private final IMotionInterpolator motionInterpolator;
@@ -76,6 +96,8 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
   private static final double MS_PER_S = 1000.0; // ms
   private Long ncvDetectionTime = null; // ms
 
+  private final IReplanHandle replanHandle;
+
   /**
    * Constructor
    * 
@@ -84,8 +106,9 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
    * @param motionInterpolator The host vehicle motion interpolator which will interpolate vehicle plans as needed
    */
   public ObjectCollisionChecker(PluginServiceLocator psl,
-    IMotionPredictorModelFactory modelFactory, IMotionInterpolator motionInterpolator) {
+    IMotionPredictorModelFactory modelFactory, IMotionInterpolator motionInterpolator, IReplanHandle replanHandle) {
     this.log = LoggerManager.getLogger();
+    this.psl = psl;
     this.routeService = psl.getRouteService();
     this.arbitratorService = psl.getArbitratorService();
     this.timeProvider = psl.getTimeProvider();
@@ -97,7 +120,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
     this.maxHistoricalDataAge = psl.getParameterSource().getInteger("~ead/NCVHandling/collision/maxObjectHistoricalDataAge");
     this.distanceStep = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/distanceStep");
     this.timeDuration = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/timeDuration");
-    this.NCVReplanPeriod = (long) ((timeDuration / 2.0) * MS_PER_S); // Always replan after half of the ncv prediction has elapsed
+    this.NCVReplanPeriod = (long) (psl.getParameterSource().getDouble("~ead/NCVHandling/collision/replanPeriod") * MS_PER_S); // Should be at least half of the ncv prediction has elapsed
     log.info("ReplanPeriod: " + NCVReplanPeriod);
     this.downtrackBuffer = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/downtrackBuffer");
     this.crosstrackBuffer = psl.getParameterSource().getDouble("~ead/NCVHandling/collision/crosstrackBuffer");
@@ -120,18 +143,12 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
     this.structureFactory = new NSpatialHashMapFactory(cellSize);
 
     this.motionInterpolator = motionInterpolator;
+
+    this.replanHandle = replanHandle;
     
   }
 
-  /**
-   * Function to be called when new objects are detected by host vehicle sensors
-   * This will update object histories and predictions
-   * If a collision is detected based on new predictions then a replan will be requested
-   * 
-   * Note: This function assumes this data will be provided at a fixed rate which is below half the prediction period 
-   * 
-   * @param obstacles The list of detected objects in route space around the vehicle
-   */
+  @Override
   public void updateObjects(List<RoadwayObstacle> obstacles) {
 
 	if(!routeService.isRouteDataAvailable()) {
@@ -146,6 +163,15 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
     for (RoadwayObstacle obs : obstacles) {
 
       double frontObjectDistToCenters =  obs.getDownTrack() - currentDowntrack;
+
+      byte[] secondaryLanes = new byte[obs.getSecondaryLanes().readableBytes()];
+      obs.getSecondaryLanes().readBytes(secondaryLanes);
+
+      // TODO Uncomment to open up lane detection region if needed
+      // boolean inLane = (obs.getPrimaryLane() == currentLane)
+      //  || (ArrayUtils.contains(secondaryLanes, (byte) currentLane )
+      //  && (obs.getPrimaryLane() == (currentLane + 1) || obs.getPrimaryLane() == (currentLane - 1)));
+
       boolean inLane = obs.getPrimaryLane() == currentLane;
 
       // If the object is in the same lane and in front of the host vehicle
@@ -203,36 +229,20 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
     // Check for collisions using new object data
     
 
-    if (ncvDetectionTime == null) {
-      boolean collisionDetected = checkCollision(interpolatedHostPlan.get());
-      if (collisionDetected) { // Any time there is a detected collision force a replan
-        ncvDetectionTime = timeProvider.getCurrentTimeMillis();
-        log.info("OCC", "NEW PLAN: First ncv detection");
-        arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
+    if (ncvDetectionTime == null && psl.getArbitratorService().getCurrentTrajectory() != null) {
+      ncvDetectionTime = timeProvider.getCurrentTimeMillis();
+      log.info("OCC", "NEW PLAN: First ncv detection");
+      replanHandle.triggerNewPlan(true); // Request a replan from the plugin
   
-      }
     } else if (ncvDetectionTime != null && timeProvider.getCurrentTimeMillis() - ncvDetectionTime > NCVReplanPeriod) {
-      boolean collisionDetected = checkCollision(interpolatedHostPlan.get());
-      if (collisionDetected) {
+    // TODO Until NCV handling is reliable we should always replan here no only if there is a collision
+    // boolean collisionDetected = checkCollision(interpolatedHostPlan.get(), 1.2);
+    //  if (collisionDetected) {
         ncvDetectionTime = timeProvider.getCurrentTimeMillis();
         log.info("OCC", "NEW PLAN: timer triggered");
-        arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
-      }
+        replanHandle.triggerNewPlan(true); // Request a replan from the plugin
+   //   }
     }
-    // if (collisionDetected) { // Any time there is a detected collision force a replan
-    //   ncvDetectionTime = timeProvider.getCurrentTimeMillis();
-    //   arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
-
-    // } else if (ncvDetectionTime != null && timeProvider.getCurrentTimeMillis() - ncvDetectionTime > NCVReplanPeriod){ // If there was previously a replan to avoid a ncv and enough time has passed replan
-    //   ncvDetectionTime = timeProvider.getCurrentTimeMillis();
-    //   arbitratorService.requestNewPlan(); // Request a replan from the arbitrator
-
-    // } else if (inLaneObjectCount == 0) { // If no in lane objects were detected the ncv is no longer an issue. The assumption being made here is that sensor fusion has already filtered our incoming object data.
-      
-    //  // ncvDetectionTime = null;
-    // } else {
-    //   // There is no need to take action when the plan is executing well without collisions
-    // }
   }
 
   /**
@@ -250,15 +260,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
     }
   }
 
-  /**
-   * Sets the current host vehicle plan which will be used for collision checks
-   * The provided host plan will be interpolated using the provided IMotionInterpolator
-   * 
-   * @param hostPlan The host plan to set as the current plan
-   * @param startTime The time which planning is considered to have begun at. This is used for converting nodes to route locations
-	 * @param startDowntrack The downtrack distance where planning is considered to have begun at. This is used for converting nodes to route locations
-	 * 
-   */
+  @Override
   public void setHostPlan(List<Node> hostPlan, double startTime, double startDowntrack) {
     List<RoutePointStamped> hostPlanPoints = motionInterpolator.interpolateMotion(hostPlan, distanceStep, startTime, startDowntrack);
     log.info("CollisionChecker", "Found " + hostPlanPoints.size() + " stamped route points for the host plan:");
@@ -272,14 +274,16 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
    * Helper function to check collisions between predicted object trajectories and the provided plan
    * 
    * @param routePlan The plan to check for collisions with
+   * @param marginFactor Factor multiplied by margins to modify their size. NOTE: Not applied to crosstrack margins
    * 
    * @return True if a collision was found. False otherwise
    */
-  private boolean checkCollision(List<RoutePointStamped> routePlan) {
+  private boolean checkCollision(List<RoutePointStamped> routePlan, double marginFactor) {
     // Check the proposed trajectory against all tracked objects for collisions
     for (Entry<Integer, List<RoutePointStamped>> objPrediction: trackedLaneObjectsPredictions.entrySet()) {
       List<RoutePointStamped> objPlan = objPrediction.getValue();
       double dynamicTimeMargin = timeMargin;
+      
       // Compute an estimated time margin to ensure overlap of collision bounds
       if (objPrediction.getValue().size() > 1) {
         // TODO this assumes linear regression used for motion prediction resulting in constant slope
@@ -289,7 +293,7 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
       // Check for conflicts against each object and return true if any conflict is found
       List<ConflictSpace> conflictSpaces = conflictDetector.getConflicts(
         routePlan, objPlan, structureFactory.buildSpatialStructure(),
-        downtrackMargin, crosstrackMargin, dynamicTimeMargin,
+        downtrackMargin * marginFactor, crosstrackMargin, dynamicTimeMargin * marginFactor,
         longitudinalBias, lateralBias, temporalBias
       );
       
@@ -314,10 +318,8 @@ public class ObjectCollisionChecker implements INodeCollisionChecker {
 
   //  System.out.println("RoutePlan: " + routePlan);
 
-    boolean hasCollision = checkCollision(routePlan);
-    // if (hasCollision) {
-    //   System.out.println("HasCollision: " + hasCollision + " with node: " + trajectory.get(1));
-    // }
+    boolean hasCollision = checkCollision(routePlan, 1.0);
+
     return hasCollision; // Check for collisions with tracked objects
 
   }

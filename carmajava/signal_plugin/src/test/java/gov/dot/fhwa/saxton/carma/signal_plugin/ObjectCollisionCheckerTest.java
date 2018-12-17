@@ -69,12 +69,14 @@ public class ObjectCollisionCheckerTest {
   ILogger log;
   NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
   MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
+  IReplanHandle mockReplanHandle;
 
   @Before
   public void setUp() throws Exception {
     loggerFactory = new SaxtonLoggerProxyFactory(LogFactory.getLog(ObjectCollisionCheckerTest.class));
     LoggerManager.setLoggerFactory(loggerFactory);
     log = LoggerManager.getLogger();
+    mockReplanHandle = mock(IReplanHandle.class);
     log.info("Setting up tests for PlanInterpolator");
   }
 
@@ -121,6 +123,7 @@ public class ObjectCollisionCheckerTest {
     when(ps.getInteger("~ead/NCVHandling/collision/maxObjectHistoricalDataAge")).thenReturn(3000);
     when(ps.getDouble("~ead/NCVHandling/collision/distanceStep")).thenReturn(2.5);
     when(ps.getDouble("~ead/NCVHandling/collision/timeDuration")).thenReturn(3.0);
+    when(ps.getDouble("~ead/NCVHandling/collision/replanPeriod")).thenReturn(1.5);
     when(ps.getDouble("~ead/NCVHandling/collision/downtrackBuffer")).thenReturn(8.0);
     when(ps.getDouble("~ead/NCVHandling/collision/crosstrackBuffer")).thenReturn(2.0);
     when(ps.getDouble("~ead/NCVHandling/collision/timeMargin")).thenReturn(0.2);
@@ -131,7 +134,7 @@ public class ObjectCollisionCheckerTest {
     when(ps.getDouble("~ead/NCVHandling/collision/cell_crosstrack_size")).thenReturn(15.0);
     when(ps.getDouble("~ead/NCVHandling/collision/cell_time_size")).thenReturn(2.0);
 
-    ObjectCollisionChecker occ = new ObjectCollisionChecker(psl, motionPredictorFactory, planInterpolator);
+    ObjectCollisionChecker occ = new ObjectCollisionChecker(psl, motionPredictorFactory, planInterpolator, mockReplanHandle);
 
     // Check no collisions without object data
     // Note: Nodes in this test are defined using double constructor

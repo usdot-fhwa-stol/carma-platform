@@ -135,7 +135,9 @@ public class EnvironmentWorker {
     }
     List<cav_msgs.ExternalObject> objects = externalObjects.getObjects();
     List<RoadwayObstacle> roadwayObstacles = new LinkedList<>();
+    // TODO we may want the transform to be done per object
     Transform earthToOdom = roadwayMgr.getTransform(earthFrame, odomFrame, externalObjects.getHeader().getStamp());
+    log.debug("Objects Stamp: " + externalObjects.getHeader().getStamp());
     if (earthToOdom == null) {
       log.warn("Roadway could not process object message as earth to odom transform was null");
     }
@@ -163,9 +165,11 @@ public class EnvironmentWorker {
     if ((short) (obj.getPresenceVector() & cav_msgs.ExternalObject.BSM_ID_PRESENCE_VECTOR) != 0) {
       connectedVehicleType = ConnectedVehicleType.CONNECTED;
     }
+    
     // Convert object to ECEF frame  
     Transform objInOdom = Transform.fromPoseMessage(obj.getPose().getPose());
     Transform objInECEF = earthToOdom.multiply(objInOdom);
+
     Vector3 objVecECEF = objInECEF.getTranslation();
     Point3D objPositionECEF = new Point3D(objVecECEF.getX(), objVecECEF.getY(), objVecECEF.getZ());
 

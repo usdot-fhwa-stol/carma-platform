@@ -161,6 +161,6 @@ public class Node {
   }
 
   @Override public String toString() {
-    return String.format("Node{distance=%8d, time=%6d, speed=%4d}", distance, time, speed);
+    return String.format("Node{ distance= %8d, time= %6d, speed= %4d }", distance, time, speed);
   }
 }
