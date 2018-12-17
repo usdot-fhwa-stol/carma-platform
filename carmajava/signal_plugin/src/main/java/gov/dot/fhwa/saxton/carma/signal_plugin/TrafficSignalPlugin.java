@@ -149,6 +149,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private double defaultAccel;
     private GlidepathAppConfig appConfig;
     private static boolean ignoreLights = false; // Static so it can be used in static spat functions
+    private static final int MAX_PLAN_RETRIES = 3; // Maximum number of replanning attempts when a replan request is processed
 
     // Planning Variables
     private AtomicBoolean replanning = new AtomicBoolean(false);
@@ -450,7 +451,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                     DataElementHolder state = null;
                     List<Node> eadResult = null;
                     
-                    for (int i = 0; i < 3; i++) {
+                    for (int i = 0; i < MAX_PLAN_RETRIES; i++) {
                         state = getCurrentStateData(speedLimit);
         
                         eadResult = generatePlan(state);
