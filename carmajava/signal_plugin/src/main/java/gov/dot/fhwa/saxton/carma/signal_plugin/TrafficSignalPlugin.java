@@ -181,7 +181,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                 this
             );
         } else { // Use No-Op collision checker if not handling NCVs
-            this.collisionChecker = new NoCollisionChecker();
+            this.collisionChecker = new NoOpCollisionChecker();
         }
 
         popupOnRedTime = appConfig.getDoubleValue("popupOnRedTime");

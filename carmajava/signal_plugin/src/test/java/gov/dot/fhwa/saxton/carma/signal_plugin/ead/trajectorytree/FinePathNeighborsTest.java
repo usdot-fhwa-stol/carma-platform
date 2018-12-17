@@ -36,7 +36,7 @@ import gov.dot.fhwa.saxton.carma.route.Route;
 import gov.dot.fhwa.saxton.carma.route.RouteSegment;
 import gov.dot.fhwa.saxton.carma.guidance.util.ITimeProvider;
 import gov.dot.fhwa.saxton.carma.signal_plugin.IReplanHandle;
-import gov.dot.fhwa.saxton.carma.signal_plugin.NoCollisionChecker;
+import gov.dot.fhwa.saxton.carma.signal_plugin.NoOpCollisionChecker;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicationContext;
@@ -109,7 +109,7 @@ public class FinePathNeighborsTest {
 
       double timeIncrement = 1.0;
       double speedIncrement = 1.0;
-      fpn.initialize(intersections, 1, timeIncrement, speedIncrement, new NoCollisionChecker(), 0, 0);
+      fpn.initialize(intersections, 1, timeIncrement, speedIncrement, new NoOpCollisionChecker(), 0, 0);
 
       List<Double> speeds = fpn.getViableSpeeds(new Node(0,0,0), timeIncrement);
 
@@ -120,7 +120,7 @@ public class FinePathNeighborsTest {
       // Make crawling speed larger than max speed to check capping behavior
       when(mockConfig.getDoubleDefaultValue("crawlingSpeed", 5.0)).thenReturn(5.0);
       fpn = new FinePathNeighbors();
-      fpn.initialize(intersections, 1, timeIncrement, speedIncrement, new NoCollisionChecker(), 0, 0);
+      fpn.initialize(intersections, 1, timeIncrement, speedIncrement, new NoOpCollisionChecker(), 0, 0);
 
       speeds = fpn.getViableSpeeds(new Node(0,0,0), timeIncrement);
 
@@ -133,7 +133,7 @@ public class FinePathNeighborsTest {
       when(mockConfig.getDoubleDefaultValue("crawlingSpeed", 5.0)).thenReturn(2.23694);
       when(mockConfig.getDoubleDefaultValue("defaultAccel", 2.0)).thenReturn(2.0);
       fpn = new FinePathNeighbors();
-      fpn.initialize(intersections, 1, timeIncrement, speedIncrement, new NoCollisionChecker(), 0, 0);
+      fpn.initialize(intersections, 1, timeIncrement, speedIncrement, new NoOpCollisionChecker(), 0, 0);
 
       speeds = fpn.getViableSpeeds(new Node(0,0,9), timeIncrement);
 
@@ -148,7 +148,7 @@ public class FinePathNeighborsTest {
       when(mockConfig.getDoubleDefaultValue("crawlingSpeed", 5.0)).thenReturn(2.23694);
       when(mockConfig.getDoubleDefaultValue("defaultAccel", 2.0)).thenReturn(2.0);
       fpn = new FinePathNeighbors();
-      fpn.initialize(intersections, 1, timeIncrement, speedIncrement, new NoCollisionChecker(), 0, 0);
+      fpn.initialize(intersections, 1, timeIncrement, speedIncrement, new NoOpCollisionChecker(), 0, 0);
 
       speeds = fpn.getViableSpeeds(new Node(0,0,10), timeIncrement);
 
@@ -162,7 +162,7 @@ public class FinePathNeighborsTest {
       when(mockConfig.getDoubleDefaultValue("crawlingSpeed", 5.0)).thenReturn(2.23694);
       when(mockConfig.getDoubleDefaultValue("defaultAccel", 2.0)).thenReturn(2.0);
       fpn = new FinePathNeighbors();
-      fpn.initialize(intersections, 1, timeIncrement, speedIncrement, new NoCollisionChecker(), 0, 0);
+      fpn.initialize(intersections, 1, timeIncrement, speedIncrement, new NoOpCollisionChecker(), 0, 0);
 
       speeds = fpn.getViableSpeeds(new Node(0,0,11), timeIncrement);
 
@@ -177,7 +177,7 @@ public class FinePathNeighborsTest {
       when(mockConfig.getDoubleDefaultValue("crawlingSpeed", 5.0)).thenReturn(5.0);
       when(mockConfig.getDoubleDefaultValue("defaultAccel", 2.0)).thenReturn(2.0);
       fpn = new FinePathNeighbors();
-      fpn.initialize(intersections, 1, timeIncrement, speedIncrement, new NoCollisionChecker(), 0, 0);
+      fpn.initialize(intersections, 1, timeIncrement, speedIncrement, new NoOpCollisionChecker(), 0, 0);
 
       speeds = fpn.getViableSpeeds(new Node(0,0,3.0), timeIncrement);
 
@@ -204,7 +204,7 @@ public class FinePathNeighborsTest {
       intersection1.geometry = new IntersectionGeometry(40, 100);
       intersections = Arrays.asList(intersection1);
 
-      fpn.initialize(intersections, 1, timeIncrement, speedIncrement, new NoCollisionChecker(), 0, 0);
+      fpn.initialize(intersections, 1, timeIncrement, speedIncrement, new NoOpCollisionChecker(), 0, 0);
 
       speeds = fpn.getViableSpeeds(new Node(0,0,0), timeIncrement);
 
@@ -228,7 +228,7 @@ public class FinePathNeighborsTest {
       intersection1.geometry = new IntersectionGeometry(40, 100);
       intersections = Arrays.asList(intersection1);
 
-      fpn.initialize(intersections, 1, timeIncrement, speedIncrement, new NoCollisionChecker(), 0, 0);
+      fpn.initialize(intersections, 1, timeIncrement, speedIncrement, new NoOpCollisionChecker(), 0, 0);
 
       speeds = fpn.getViableSpeeds(new Node(0,0,0), timeIncrement);
 

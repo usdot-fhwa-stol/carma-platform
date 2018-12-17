@@ -9,7 +9,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 /**
  * No-Op Collision Checker for the Traffic Signal Plugin. Allows NCV handling to be effectively turned off by injecting this as the primary ITrafficSignalPluginCollisionChecker
  */
-public class NoCollisionChecker implements ITrafficSignalPluginCollisionChecker {
+public class NoOpCollisionChecker implements ITrafficSignalPluginCollisionChecker {
 
   @Override
   public boolean hasCollision(List<Node> trajectory, double timeOffset, double distanceOffset) {
