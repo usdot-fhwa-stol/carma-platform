@@ -74,7 +74,6 @@ public class EnvironmentWorker {
   protected RouteState routeState;
   protected double distBackward;
   protected double distForward;
-  GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
 
   /**
    * Constructor
@@ -165,17 +164,11 @@ public class EnvironmentWorker {
     ConnectedVehicleType connectedVehicleType = ConnectedVehicleType.NOT_CONNECTED;
     if ((short) (obj.getPresenceVector() & cav_msgs.ExternalObject.BSM_ID_PRESENCE_VECTOR) != 0) {
       connectedVehicleType = ConnectedVehicleType.CONNECTED;
-      log.debug("SF_TEST", "Connected Obj");// TODO remove after fixing sensor fusion
     }
+    
     // Convert object to ECEF frame  
     Transform objInOdom = Transform.fromPoseMessage(obj.getPose().getPose());
     Transform objInECEF = earthToOdom.multiply(objInOdom);
-
-    // // TODO remove after fixing sensor fusion
-    // if (connectedVehicleType == ConnectedVehicleType.CONNECTED) {
-    //   Point3D objInECEFp = new Point3D(objInECEF.getTranslation().getX(), objInECEF.getTranslation().getY(), objInECEF.getTranslation().getZ());
-    //   log.info("SF_TEST", "BSM Object: " + gcc.cartesian2Geodesic(objInECEFp, Transform.identity()));
-    // }
 
     Vector3 objVecECEF = objInECEF.getTranslation();
     Point3D objPositionECEF = new Point3D(objVecECEF.getX(), objVecECEF.getY(), objVecECEF.getZ());
