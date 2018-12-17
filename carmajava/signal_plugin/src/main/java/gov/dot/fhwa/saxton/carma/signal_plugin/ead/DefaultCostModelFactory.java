@@ -50,16 +50,6 @@ public class DefaultCostModelFactory implements ICostModelFactory{
    */
   public ICostModel getCostModel(String desiredModelName) throws IllegalArgumentException {
     switch(desiredModelName) {
-      case "DEFAULT":
-        double vehicleMass = config.getDoubleValue("ead.vehicleMass");
-        double rollingRes = config.getDoubleValue("ead.rollingResistanceOverride");
-        double dragCoef = config.getDoubleValue("ead.dragCoefficient");
-        double frontalArea = config.getDoubleValue("ead.frontalArea");
-        double airDensity = config.getDoubleValue("ead.airDensity");
-        double idlePower = config.getDoubleValue("ead.idleCost");
-        boolean useIdleMin = config.getBooleanValue("ead.useIdleMin");
-
-        return new FuelCostModel(vehicleMass, rollingRes, dragCoef, frontalArea, airDensity, idlePower, useIdleMin);
       case "MOVES_2010":
         double rollingTermA = config.getDoubleValue("ead.MOVES.rollingTermA");
         double rotatingTermB = config.getDoubleValue("ead.MOVES.rotatingTermB");

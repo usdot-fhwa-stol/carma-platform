@@ -171,34 +171,8 @@ ead/cmdbias: 0.0
 ead/acceptableStopDistance: 6.0
 
 # A string identifying the fuel cost model which will be used for computing cost between nodes
-# DEFAULT: The fuel cost model use in the origional Glidepath Phase 2 whitepaper
 # MOVES_2010: The fuel cost model based on the EPA 2010 MOVES brief on vehicle efficiency
 ead/desiredCostModel: 'MOVES_2010'
-
-# ----- DEFAULT cost model params for AStar tree
-
-# drag coef Based on 0.84*Ac per http://ecomodder.com/wiki/index.php/Vehicle_Coefficient_of_Drag_List
-ead/dragCoefficient: 0.5
-
-# frontal area of the vehicle in m2 (2013 SRX is 2.89)
-ead/frontalArea: 2.89
-
-# air density in kg/m3; Value 1.29 @0 deg C, 1.23 @ 15 deg C, 1.20 @ 20 deg C, 1.16 @ 30 deg C
-ead/airDensity: 1.20
-
-# vehicle mass in kg; Cadillac 2013 SRX curb weight :  1916 kg + two people @82 kg each
-ead/vehicleMass: 2080.0
-
-# rollingResistanceOverride forces this constant value; if not specified then coef will be calculated as a function of speed
-# 0.02
-ead/rollingResistanceOverride: 0.0
-
-# idle cost is the equivalent amount of mechanical energy wasted by the idling engine while vehicle is stopped, J/s
-# 19.3 kJ/s is suggested by Guoyuan Wu on 12/29/17.
-ead/idleCost: 19300.0
-
-# true will make this the min energy rate for everything; false applies this only when speed is zero
-ead/useIdleMin: false
 
 ## NCV Handling ##
 

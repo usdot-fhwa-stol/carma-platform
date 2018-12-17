@@ -74,7 +74,6 @@ public class EADAStarPlanTest {
         when(mockConfig.getDoubleDefaultValue("crawlingSpeed", 5.0)).thenReturn(5.0);
         when(mockConfig.getDoubleDefaultValue("ead.timebuffer", 4.0)).thenReturn(timeBuffer);
         when(mockConfig.getDoubleDefaultValue("ead.response.lag", 1.9)).thenReturn(0.0); // Was 1.9
-        //when(mockConfig.getProperty("ead.desiredCostModel")).thenReturn("DEFAULT");
         when(mockConfig.getProperty("ead.desiredCostModel")).thenReturn("MOVES_2010");
         when(mockConfig.getDoubleValue("ead.MOVES.rollingTermA")).thenReturn(0.22112); 
         when(mockConfig.getDoubleValue("ead.MOVES.rotatingTermB")).thenReturn(0.002838); 
