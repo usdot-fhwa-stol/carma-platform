@@ -167,6 +167,10 @@ ead/cmdaccelgain: 0.17
 ead/cmdspeedgain: 0.0
 ead/cmdbias: 0.0
 
+# Set to true to make lights always considered green with 900s remaining.
+# Meant for debugging use only
+ead/debug/ignoreLights: false
+
 # Max distance in front of the stop bar that it is acceptable to stop, m
 ead/acceptableStopDistance: 6.0
 

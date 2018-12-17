@@ -148,6 +148,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private double defaultSpeedLimit;
     private double defaultAccel;
     private GlidepathAppConfig appConfig;
+    private static boolean ignoreLights = false; // Static so it can be used in static spat functions
 
     // Planning Variables
     private AtomicBoolean replanning = new AtomicBoolean(false);
@@ -170,6 +171,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         // Pass params into GlidepathAppConfig
         appConfig = new GlidepathAppConfig(pluginServiceLocator.getParameterSource(), pluginServiceLocator.getRouteService());
         GlidepathApplicationContext.getInstance().setAppConfigOverride(appConfig);
+
+        ignoreLights = appConfig.getBooleanValue("ead.debug.ignoreLights");
 
         // Setup the collision checker
         // This must be done before callbacks are created
@@ -379,9 +382,11 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         double secondInHour = (double)(millisOfDay - millisToHourStart) / 1000.0;
                         m.setMaxTimeRemaining(Math.max(0.0, earliestEvent.getTiming().getMaxEndTime() - secondInHour));
                         m.setMinTimeRemaining(Math.max(0.0, earliestEvent.getTiming().getMinEndTime() - secondInHour));
-                        //TODO Uncomment to disable lights
-                        //m.setMaxTimeRemaining(100.0);
-                        //m.setMinTimeRemaining(100.0);
+                        // Check if lights should always be green
+                        if (ignoreLights) {
+                            m.setMaxTimeRemaining(900.0);
+                            m.setMinTimeRemaining(900.0);
+                        }
                     }
                 //TODO move this statment log.warn("Empty movement event list in spat for intersection id: " + state.getId().getId());
                 
@@ -400,8 +405,10 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                         //log.warn("Unsupported signal phase: " + phase);
                         break;
                 }
-                // TODO Uncomment to disable lights
-                //m.setCurrentState(0x00000001);
+                // Check if lights should always be green
+                if (ignoreLights) {
+                    m.setCurrentState(0x00000001);
+                }
             }
 
             movements.add(m);
