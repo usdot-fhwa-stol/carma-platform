@@ -42,7 +42,7 @@ public class FinePathNeighbors extends NeighborBase {
     protected static final double                 FLOATING_POINT_EPSILON = 0.1;
     public static int numCollisions = 0; // TODO remove
 
-
+    protected static int prevAccelDir = -2;
     public FinePathNeighbors() {
         history_ = new ArrayList<>();
 
@@ -90,11 +90,11 @@ public class FinePathNeighbors extends NeighborBase {
         double distToStop = timeToStop * curSpeed * 0.5;
         
         // TODO I am not convinved this check is any guarentee of invalid behavior
-        if(signalViolation(node, new Node(curDist + distToStop, timeToStop + curTime, 0.0))) {
-            //System.out.println("this node has no neighbor because of signal violation: " + node);
-            //System.out.println();
-            return neighbors;
-        }
+        // if(signalViolation(node, new Node(curDist + distToStop, timeToStop + curTime, 0.0))) {
+        //     //System.out.println("this node has no neighbor because of signal violation: " + node);
+        //     //System.out.println();
+        //     return neighbors;
+        // }
 
         double variableTimeInc = Math.max(timeInc_, responseLag_);
         //System.out.println("TimeInc: " + variableTimeInc);
@@ -167,7 +167,21 @@ public class FinePathNeighbors extends NeighborBase {
         if(dtsb <= acceptableStopDist_ && minSpeed < FLOATING_POINT_EPSILON && curSpeed > FLOATING_POINT_EPSILON) {
             speeds.add(0.0);
         } else {
+            if (FinePathNeighbors.prevAccelDir == -1) {
+                maxSpeed = curSpeed;
+            } else if (FinePathNeighbors.prevAccelDir == 1) {
+                minSpeed = curSpeed;
+            } else {
+    
+            }
             speeds.add(Math.max(minSpeed, roundedCrawlingSpeed));
+        }
+        if (FinePathNeighbors.prevAccelDir == -1) {
+            maxSpeed = curSpeed;
+        } else if (FinePathNeighbors.prevAccelDir == 1) {
+            minSpeed = curSpeed;
+        } else {
+
         }
 
         ////System.out.println("Speeds2: " + speeds);
@@ -252,9 +266,13 @@ public class FinePathNeighbors extends NeighborBase {
         final double acceleration = (endSpeed - startSpeed) / (endTime - startTime);
 
         // Compute velocity at stop bar
-        double vf = Math.sqrt(startSpeed * startSpeed + 2.0 * dtsb * acceleration);
-
-        double crossingTime = startTime + ((vf - startSpeed) /  acceleration);
+        double crossingTime = startTime;
+        if (Math.abs(acceleration) < FLOATING_POINT_EPSILON) {
+            crossingTime += dtsb / startSpeed;
+        } else {
+            double vf = Math.sqrt(startSpeed * startSpeed + 2.0 * dtsb * acceleration);
+            crossingTime += ((vf - startSpeed) /  acceleration);
+        }
         //log_.debug("EAD", "Stop bar will be crossed: interpFactor = " + interpFactor
         //            + ", crossingTime = " + crossingTime);
 

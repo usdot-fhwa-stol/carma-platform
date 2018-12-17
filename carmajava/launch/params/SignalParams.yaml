@@ -141,7 +141,7 @@ ead/accelLimiter: false
 ead/jerkLimiter: false
 
 # buffer at beginning of yellow or end of green, sec, to avoid crossing as the signal changes
-ead/timebuffer: 4.0
+ead/timebuffer: 3.0
 
 # ead/cte/threshold is in cm; the CTE beyond which we stop trying to associate with a lane
 ead/cte/threshold: 400
@@ -203,7 +203,7 @@ ead/useIdleMin: false
 ## NCV Handling ##
 
 # Boolean: True if NCV handling will be enabled when operating the plugin. False otherwise
-ead/handleNCV: true
+ead/handleNCV: false
 
 # String: Identifies the NCV motion prediction model which will be used to predict future trajectories of detected NCVs
 # Options:

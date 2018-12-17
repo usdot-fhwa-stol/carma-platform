@@ -60,7 +60,7 @@ public class MovesFuelCostModel implements ICostModel {
     private final double DEFAULT_PEAK_ENERGY_KJ; // The highest cost found in the energy consumption table
 
     private int numCosts = 0;
-    protected static final ILogger log = LoggerManager.getLogger(FuelCostModel.class);
+    protected static final ILogger log = LoggerManager.getLogger(MovesFuelCostModel.class);
     protected final double fuelNormalizationDenominator;
     protected final double timeNormalizationDenominator;
     protected final double heuristicWeight;
@@ -362,7 +362,7 @@ public class MovesFuelCostModel implements ICostModel {
       return 0.0;
     }
      //infinite cost if we are passed the goal but did not satisfy the goal condition
-     final double goalDistance = goal.getDistance() + tolerances.getDistance();
+     final double goalDistance = goal.getDistanceAsDouble() + tolerances.getDistanceAsDouble();
      if (currentNode.getDistance() > goalDistance) {
       return Double.POSITIVE_INFINITY;
     }

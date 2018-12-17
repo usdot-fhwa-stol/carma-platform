@@ -219,7 +219,7 @@ public class EadAStar implements IEad {
             log_.info("EAD", "    " + n.toString());
             //////System.out.println(n);
         }
-        log_.debug("EAD", "Detailed path attempted to reach goal: " + goal.toString());
+        log_.info("EAD", "Detailed path attempted to reach goal: " + goal.toString());
     }
 
     /**

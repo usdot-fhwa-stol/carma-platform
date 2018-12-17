@@ -794,9 +794,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         } else if (involvedInControl.compareAndSet(true, false)) {
             log.info("Off map requesting replan");
 
-            // TODO handle this check better
-            // used to be triggerNewPlan(false);
-            setAvailability(false);
+            triggerNewPlan(false);
         }
     }
 

@@ -204,6 +204,19 @@ public class ANAStarSolver implements ITreeSolver {
         continue;
       }
 
+      Node prevNode = cameFrom.get(current);
+      if (prevNode != null) {
+        if (current.getSpeed() - prevNode.getSpeed() > 0) {
+          FinePathNeighbors.prevAccelDir = 1;
+        } else if (current.getSpeed() - prevNode.getSpeed() < 0) {
+          FinePathNeighbors.prevAccelDir = -1;
+        } else {
+          FinePathNeighbors.prevAccelDir = 0;
+        }
+      } else {
+        FinePathNeighbors.prevAccelDir = -2;
+      }
+
       // Iterate over the list of neighbors
       List<Node> neighbors = neighborCalculator.neighbors(current);
       for (Node neighbor : neighbors) {
