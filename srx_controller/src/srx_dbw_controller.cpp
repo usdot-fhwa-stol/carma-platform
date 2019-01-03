@@ -51,6 +51,9 @@ torc::SRXDBWController::~SRXDBWController() {
 void torc::SRXDBWController::connect(const std::string &recv_topic, const std::string &out_topic) {
     if(running_) return;
 
+    // Check if we will allow the light bar to remain on when robotic is off
+    pnh_.param<bool>("allow_lights_when_disengaged", allow_lights_when_disengaged_, false);
+
     //We use the async nodehandle to connect to the received topic so that we can receive can messages
     //regardless of the speed of the Driver Application that is using this
     async_nh_.reset(new ros::NodeHandle(nh_.getNamespace()));
@@ -78,10 +81,14 @@ void torc::SRXDBWController::connect(const std::string &recv_topic, const std::s
 void torc::SRXDBWController::close() {
     if(!running_) return;
     running_ = false;
-    // Turn off lights
-    LightParams_t lightsOff{};
-    setLights(LightID_t::Front, lightsOff);
-    setLights(LightID_t::Rear, lightsOff);
+
+    if (!allow_lights_when_disengaged_) {
+        // Turn off lights
+        LightParams_t lightsOff{};
+        setLights(LightID_t::Front, lightsOff);
+        setLights(LightID_t::Rear, lightsOff);
+    }
+
     // Shutdown threads
     can_in_sub_.shutdown();
     cv_.notify_all();
@@ -94,10 +101,13 @@ void torc::SRXDBWController::disableRoboticControl() {
     ctrl_msg_.CommandMode = CommandMode_t::Disabled;
     ctrl_msg_.EnableDBW = false;
     sendSpeedCmd();
-    // Turn off lights
-    LightParams_t lightsOff{};
-    setLights(LightID_t::Front, lightsOff);
-    setLights(LightID_t::Rear, lightsOff);
+
+    if (!allow_lights_when_disengaged_) {
+        // Turn off lights
+        LightParams_t lightsOff{};
+        setLights(LightID_t::Front, lightsOff);
+        setLights(LightID_t::Rear, lightsOff);
+    }
 }
 
 void torc::SRXDBWController::setWrenchEffort(float effort) {
