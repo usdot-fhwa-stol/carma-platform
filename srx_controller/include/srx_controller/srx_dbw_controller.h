@@ -269,6 +269,7 @@ private:
     std::condition_variable cv_;
     volatile bool running_ = false;
     std::shared_ptr<std::thread> process_thread_;
+    bool allow_lights_when_disengaged_ = false;
 
     // Control message is maintains the state of the previous message sent
     ControlMessage_t ctrl_msg_;
