@@ -19,7 +19,8 @@ task wrapper(type: Wrapper) {
 }
 
 buildscript {
-  apply from: "https://github.com/rosjava/rosjava_bootstrap/raw/kinetic/buildscript.gradle"
+ // Default bootstrap file for rosjava came from here "https://github.com/rosjava/rosjava_bootstrap/raw/kinetic/buildscript.gradle"
+ apply from: "rosjava_bootstrap.gradle"
 }
 
 apply plugin: 'catkin'
