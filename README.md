@@ -47,13 +47,13 @@ The CARMAPlatform is distributed as a set of multiple independent packages hoste
 
 ### Sensor Drivers
 * [CARMATorcPinpointDriver](https://github.com/usdot-fhwa-stol/CARMATorcPinpointDriver)
-* [CARMADriverUtils](https://github.com/usdot-fhwa-stol/CARMADriverUtils)
 * [CARMADelphiEsrDriver](https://github.com/usdot-fhwa-stol/CARMADelphiEsrDriver)
 * [CARMACohdaDsrcDriver](https://github.com/usdot-fhwa-stol/CARMACohdaDsrcDriver)
 
 ### General System Utilites
 * [CARMAWebUi](https://github.com/usdot-fhwa-stol/CARMAWebUi)
 * [CARMAMsgs](https://github.com/usdot-fhwa-stol/CARMAMsgs)
+* [CARMADriverUtils](https://github.com/usdot-fhwa-stol/CARMADriverUtils)
 
 A full list of available packages may be found at in the [USDOT FHWA STOL](https://github.com/usdot-fhwa-stol) Github organization.
 
