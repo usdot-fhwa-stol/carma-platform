@@ -24,7 +24,7 @@ find_package(Boost REQUIRED system)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES driver_application cav_socketcan_interface ros_socketcan_interface
+  LIBRARIES driver_application cav_socketcan_interface ros_socketcan_interface driver_wrapper
   CATKIN_DEPENDS bondcpp cav_msgs cav_srvs roscpp std_msgs
 #  DEPENDS system_lib
 )
@@ -43,35 +43,36 @@ include_directories(
 ## Declare a C++ library
 add_library(driver_application
     src/driver_application/driver_application.cpp
-    include/driver_application/driver_application.h
-)
+    include/driver_application/driver_application.h)
 
 add_dependencies(driver_application ${catkin_EXPORTED_TARGETS})
 
 # Specify libraries to link a library or executable target against
- target_link_libraries(driver_application
-   ${catkin_LIBRARIES}
- )
+target_link_libraries(driver_application ${catkin_LIBRARIES})
 
 add_library(cav_socketcan_interface
         src/socketcan_interface/socketcan_interface.cpp
-        include/cav_driver_utils/can/socketcan_interface/socketcan_interface.h
-        )
+        include/cav_driver_utils/can/socketcan_interface/socketcan_interface.h)
 
 add_dependencies(cav_socketcan_interface ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(cav_socketcan_interface
-        ${Boost_LIBRARIES})
+target_link_libraries(cav_socketcan_interface ${Boost_LIBRARIES})
 
 add_library(ros_socketcan_interface
         src/ros_socketcan_bridge/ros_socketcan_bridge.cpp
-        include/cav_driver_utils/can/ros_socketcan_bridge/ros_socketcan_bridge.h
-        )
+        include/cav_driver_utils/can/ros_socketcan_bridge/ros_socketcan_bridge.h)
 
 add_dependencies(ros_socketcan_interface ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(ros_socketcan_interface
-        ${Boost_LIBRARIES})
+target_link_libraries(ros_socketcan_interface ${Boost_LIBRARIES})
+
+add_library(driver_wrapper
+    src/driver_wrapper/driver_wrapper.cpp
+    include/driver_wrapper/driver_wrapper.h)
+
+add_dependencies(driver_wrapper ${catkin_EXPORTED_TARGETS})
+
+target_link_libraries(driver_wrapper ${catkin_LIBRARIES})
 
 #############
 ## Install ##

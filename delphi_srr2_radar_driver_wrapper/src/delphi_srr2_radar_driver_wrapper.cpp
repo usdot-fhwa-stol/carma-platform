@@ -16,7 +16,7 @@
 
 #include "delphi_srr2_radar_driver_wrapper.h"
 
-DelphiSrr2RadarDriverWrapper::DelphiSrr2RadarDriverWrapper(int argc, char **argv, const std::string &name) :cav::DriverWrapper (argc, argv, name) {}
+DelphiSrr2RadarDriverWrapper::~DelphiSrr2RadarDriverWrapper() {}
 
 void DelphiSrr2RadarDriverWrapper::initialize() {}
 
@@ -26,4 +26,24 @@ void DelphiSrr2RadarDriverWrapper::post_spin() {}
 
 void DelphiSrr2RadarDriverWrapper::shutdown() {}
 
+void DelphiSrr2RadarDriverWrapper::srr_status5_cb(const delphi_srr_msgs::SrrStatus5ConstPtr &msg)
+{
+    switch(msg->CAN_TX_SYSTEM_STATUS)
+    {
+        case delphi_srr_msgs::SrrStatus5::CAN_TX_SYSTEM_STATUS_Running:
+            status_.status = cav_msgs::DriverStatus::OPERATIONAL;
+            break;
+        case delphi_srr_msgs::SrrStatus5::CAN_TX_SYSTEM_STATUS_Faulty:
+            status_.status = cav_msgs::DriverStatus::FAULT;
+            break;
+        case delphi_srr_msgs::SrrStatus5::CAN_TX_SYSTEM_STATUS_StartUp:
+        case delphi_srr_msgs::SrrStatus5::CAN_TX_SYSTEM_STATUS_Blocked:
+        case delphi_srr_msgs::SrrStatus5::CAN_TX_SYSTEM_STATUS_Hot:
+            status_.status = cav_msgs::DriverStatus::DEGRADED;
+            break;
+        default:
+            status_.status = cav_msgs::DriverStatus::OFF;
+            break;
+    }
 
+}

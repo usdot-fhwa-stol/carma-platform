@@ -16,9 +16,9 @@
  * the License.
  */
 
-#include "ros/ros.h"
-#include "cav_msgs/DriverStatus.h"
-#include "cav_msgs/SystemAlert.h"
+#include <ros/ros.h>
+#include <cav_msgs/DriverStatus.h>
+#include <cav_msgs/SystemAlert.h>
 
 namespace cav
 {
@@ -35,7 +35,7 @@ public:
      */
     DriverWrapper(int argc, char** argv, std::string name = "driver_wrapper") : status_(), spin_rate_(10), shutdown_(false)
     {
-        ros::init(argc,argv,name);
+        ros::init(argc, argv, name);
     }
 
     /**
@@ -52,6 +52,9 @@ public:
 protected:
 
     std::shared_ptr<ros::NodeHandle> nh_, private_nh_;
+    cav_msgs::DriverStatus status_;
+    bool shutdown_;
+    int spin_rate_;
 
 private:
 
@@ -80,16 +83,14 @@ private:
      */
     virtual void shutdown() = 0;
 
+    /**
+     * @brief Callback on system alert topic
+     */
     void system_alert_cb(const cav_msgs::SystemAlertConstPtr& msg);
 
     // Initialize necessary publishers and subscribers
     ros::Publisher  driver_status_pub_;
     ros::Subscriber system_alert_sub_;
-
-    // Initialize shutdown flag, spin rate and driver status
-    cav_msgs::DriverStatus status_;
-    bool                   shutdown_;
-    int                    spin_rate_;
 
 };
 
