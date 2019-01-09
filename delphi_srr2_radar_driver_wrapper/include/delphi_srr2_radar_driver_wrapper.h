@@ -18,14 +18,13 @@
 
 #include <driver_wrapper/driver_wrapper.h>
 #include <delphi_srr_msgs/SrrStatus5.h>
-#include <string>
 
 class DelphiSrr2RadarDriverWrapper : public cav::DriverWrapper
 {
     ros::Subscriber srr_status5_sub_;
 
 public:
-    DelphiSrr2RadarDriverWrapper(int argc, char **argv, const std::string &name = "delphi_srr2_radar_driver_wrapper") : DriverWrapper (argc, argv, name) {}
+    DelphiSrr2RadarDriverWrapper(int argc, char **argv, const std::string &name = "delphi_srr2_radar_driver_wrapper");
     virtual ~DelphiSrr2RadarDriverWrapper();
 
 private:

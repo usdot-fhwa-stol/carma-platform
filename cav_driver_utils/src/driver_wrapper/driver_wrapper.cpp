@@ -29,8 +29,8 @@ int DriverWrapper::run()
 
     //Initialize pubs and subs
     driver_status_pub_ = nh_->advertise<cav_msgs::DriverStatus>("driver_discovery", 1);
-    system_alert_sub_ = nh_->subscribe("system_alert",10,&DriverWrapper::system_alert_cb, this);
-    ros::Timer timer = private_nh_->createTimer(ros::Duration(1), &DriverWrapper::status_publish_timer,this);
+    system_alert_sub_ = nh_->subscribe("system_alert", 10, &DriverWrapper::system_alert_cb, this);
+    ros::Timer timer = private_nh_->createTimer(ros::Duration(1), &DriverWrapper::status_publish_timer, this);
 
     ROS_INFO_STREAM("Driver Initializing");
 

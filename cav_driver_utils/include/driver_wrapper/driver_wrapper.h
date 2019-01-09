@@ -25,6 +25,7 @@ namespace cav
 
 class DriverWrapper
 {
+
 public:
 
     /**
@@ -53,15 +54,8 @@ protected:
 
     std::shared_ptr<ros::NodeHandle> nh_, private_nh_;
     cav_msgs::DriverStatus status_;
-    bool shutdown_;
-    int spin_rate_;
 
 private:
-
-    /**
-     * @brief Called every second to publish the status message
-     */
-    void status_publish_timer(const ros::TimerEvent &) const;
 
     /**
      * @brief Initialize the node prior to beginning ROS loop.
@@ -84,6 +78,11 @@ private:
     virtual void shutdown() = 0;
 
     /**
+     * @brief Called every second to publish the status message
+     */
+    void status_publish_timer(const ros::TimerEvent &) const;
+
+    /**
      * @brief Callback on system alert topic
      */
     void system_alert_cb(const cav_msgs::SystemAlertConstPtr& msg);
@@ -91,6 +90,8 @@ private:
     // Initialize necessary publishers and subscribers
     ros::Publisher  driver_status_pub_;
     ros::Subscriber system_alert_sub_;
+    int spin_rate_;
+    bool shutdown_;
 
 };
 
