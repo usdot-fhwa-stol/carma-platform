@@ -1,5 +1,0 @@
-<library path="lib/libsocketcan_interface_plugin">
-  <class type="can::SocketCANInterface" base_class_type="can::DriverInterface">
-    <description>SocketCAN inteface plugin.</description>
-  </class>
-</library>
