@@ -150,6 +150,7 @@ public class EADAStarPlanTest {
 
     @Test
     public void planTwoIntersections() {
+        
         // FAILED: DTSB1: 50.0 DTSB2: 130.0 Phase1: RED Phase2: RED timeToNext1: 11.0 timeToNext2: 10.0
         when(mockConfig.getDoubleDefaultValue("ead.coarse_time_inc", 5.0)).thenReturn(2.0);
         when(mockConfig.getDoubleDefaultValue("ead.coarse_speed_inc", 3.0)).thenReturn(2.0);
@@ -221,8 +222,8 @@ public class EADAStarPlanTest {
                 while (phase1 != SignalPhase.NONE) {
                     phase2 = SignalPhase.GREEN;
                     while (phase2 != SignalPhase.NONE) {
-                        for (double i = 0; i <  30.0; i+=5) {
-                            for (double j = 0; j <  30.0; j+=5) {
+                        for (double i = 0; i <  30.0; i+=10) {
+                            for (double j = 0; j <  30.0; j+=10) {
                                 if ((phase1 == SignalPhase.GREEN || phase2 == SignalPhase.GREEN) && (i < timeBuffer * 3.0 || j < timeBuffer * 3.0)) {
                                     //System.out.println("Ignoring impossible timing's dues to time buffer");
                                     continue;
