@@ -10,14 +10,16 @@ jobs:
     steps:
       - run:
           name: Create src folder
-          command: mkdir src
+          command: |
+            mkdir src/CARMAPlatform
+            mkdir src/CARMAMsgs
       - checkout:
-          path: src
+          path: src/CARMAPlatform
       - run: 
           name: Pull CARMAMsgs
           command: |
             source /opt/ros/kinetic/setup.bash
-            git clone -b develop --depth 1 git@github.com:usdot-fhwa-stol/CARMAMsgs.git src
+            git clone -b develop --depth 1 git@github.com:usdot-fhwa-stol/CARMAMsgs.git src/CARMAMsgs
       - run:
           name: Print the Current Time
           command: date
