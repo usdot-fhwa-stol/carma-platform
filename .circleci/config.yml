@@ -23,9 +23,6 @@ jobs:
             source /opt/ros/kinetic/setup.bash
             git clone -b develop --depth 1 git@github.com:usdot-fhwa-stol/CARMAMsgs.git src/CARMAMsgs
       - run:
-          name: Print the Current Time
-          command: date
-      - run:
           name: Build CARMA
           command: |
             source /opt/ros/kinetic/setup.bash
