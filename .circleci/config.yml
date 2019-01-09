@@ -11,8 +11,10 @@ jobs:
       - run:
           name: Create src folder
           command: |
-            mkdir src/CARMAPlatform
-            mkdir src/CARMAMsgs
+            mkdir src
+            cd src
+            mkdir CARMAPlatform
+            mkdir CARMAMsgs
       - checkout:
           path: src/CARMAPlatform
       - run: 
