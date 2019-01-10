@@ -31,7 +31,7 @@ RUN apt-get update && \
 RUN apt-get update && apt-get install apt-transport-https && \
         sh -c 'echo "deb [trusted=yes] https://s3.amazonaws.com/autonomoustuff-repo/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/autonomoustuff-public.list' && \
         apt-get update && \
-        apt-get install ros-kinetic-astuff_sensor_msgs
+        apt-get install ros-kinetic-astuff-sensor-msgs
 
 
 # Add carma user
