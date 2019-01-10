@@ -43,10 +43,10 @@ jobs:
       - run:
           name: Save Java Test results
           command: |
-            mkdir -p ~/junit/
-            find . -type f -regex ".*/build/test-results/.*html" -exec cp {} ~/junit/ \;
+            mkdir -p ~/junit/ ~/reports/
+            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/junit/ \;
           when: always
       - store_test_results:
           path: ~/junit
       - store_artifacts:
-          path: ~/junit
+          path: src/CARMAPlatform/carmajava/build/reports/allTests

@@ -90,6 +90,12 @@ subprojects {
     
 }
 
+task testReport(type: TestReport) {
+    destinationDir = file("$buildDir/reports/allTests")
+    // Include the results from the `test` task in all subprojects
+    reportOn subprojects*.test
+}
+
 /*
  * Create set of all sub-projects which are rosjava nodes. They will be applications with a main class of org.ros.RosRun
  */
