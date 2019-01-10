@@ -43,8 +43,9 @@ jobs:
       - run:
           name: Save Java Test results
           command: |
-            mkdir -p ~/junit/ /reports/tests
-            mv src/CARMAPlatform/carmajava/build/reports/allTests/* /reports/tests/
+            mkdir -p ~/junit/ 
+            sudo mkdir -p /reports/tests
+            sudo mv src/CARMAPlatform/carmajava/build/reports/allTests/* /reports/tests/
             find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/junit/ \;
           when: always
       - store_test_results:
