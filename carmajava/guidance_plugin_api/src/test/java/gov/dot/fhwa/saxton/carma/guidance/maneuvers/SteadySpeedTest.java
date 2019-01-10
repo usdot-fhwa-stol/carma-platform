@@ -68,17 +68,8 @@ public class SteadySpeedTest {
 
         assertEquals(startDist, mvr.getStartDistance(), 0.001);
 
-        //execute the maneuver before it is scheduled
-        inputs_.setTestCase("SteadySpeedNominal-1");
-        try {
-            mvr.executeTimeStep();
-            assertTrue(false);
-        }catch (IllegalStateException ise) {
-            assertTrue(true);
-        }
-
         //execute a couple time steps of the maneuver when it is supposed to happen
-        inputs_.setTestCase("SteadySpeedNominal-2");
+        inputs_.setTestCase("SteadySpeedNominal-1");
         try {
             boolean done;
             do {

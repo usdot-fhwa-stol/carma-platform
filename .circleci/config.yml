@@ -2,12 +2,51 @@ version: 2
 jobs:
   build:
     docker:
-      - image: debian:stretch
+      - image: usdotfhwastol/carma-base:2.8.1
+        user: carma
+        environment:
+          TERM: xterm
+    working_directory: "/opt/carma/"
     steps:
-      - checkout
       - run:
-          name: Greeting
-          command: echo Hello, world.
+          name: Create src folder
+          command: |
+            mkdir src
+            cd src
+            mkdir CARMAPlatform
+            mkdir CARMAMsgs
+      - checkout:
+          path: src/CARMAPlatform
+      - run: 
+          name: Pull CARMAMsgs
+          command: |
+            source /opt/ros/kinetic/setup.bash
+            git clone -b develop --depth 1 git@github.com:usdot-fhwa-stol/CARMAMsgs.git src/CARMAMsgs
       - run:
-          name: Print the Current Time
-          command: date
+          name: Build CARMA
+          command: |
+            source /opt/ros/kinetic/setup.bash
+            catkin_make install
+      - run:
+          name: Run C++ Tests
+          command: |
+            source /opt/ros/kinetic/setup.bash
+            source /opt/carma/devel/setup.bash
+            catkin_make run_tests
+      - run:
+          name: Run Java Tests
+          command: |
+            source /opt/ros/kinetic/setup.bash
+            source /opt/carma/devel/setup.bash
+            cd src/CARMAPlatform/carmajava/
+            ./gradlew test --info
+      - run:
+          name: Save Java Test results
+          command: |
+            mkdir -p ~/junit/
+            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/junit/ \;
+          when: always
+      - store_test_results:
+          path: ~/junit
+      - store_artifacts:
+          path: ~/junit

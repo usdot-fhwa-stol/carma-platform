@@ -28,6 +28,7 @@ import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictManager;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IMobilityTimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.ITimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
@@ -105,6 +106,8 @@ public class ObjectCollisionCheckerTest {
     List<RouteSegment> routeSegments = new ArrayList<>(Collections.nCopies(200, mockSegment)); // Create route full of the mocked segment
     when(route.getSegments()).thenReturn(routeSegments);
     when(mockSegment.determinePrimaryLane(anyDouble())).thenReturn(0);
+    Trajectory mockTraj = mock(Trajectory.class);
+    when(as.getCurrentTrajectory()).thenReturn(mockTraj);
 
     // Create conflict manager using default guidance settings
 
@@ -187,8 +190,6 @@ public class ObjectCollisionCheckerTest {
     currentTime.set(710L); // The current time is 0.71
     occ.updateObjects(Arrays.asList(ro2)); // Call to trigger replan
     
-    verify(as, times(1)).requestNewPlan(); // Verify replan occurred
-
     // Set the host plan without collisions
     n1 = new Node(0.0, 4.0, 0.0);
     n2 = new Node(0.0, 5.0, 0.0);
@@ -201,8 +202,6 @@ public class ObjectCollisionCheckerTest {
     currentTime.set(810L); // The current time is 0.81
     occ.updateObjects(Arrays.asList(ro2)); // Call to trigger replan
     
-    verify(as, times(1)).requestNewPlan(); // Verify replan did not occur
-
   }
 
   /**
