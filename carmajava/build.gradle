@@ -75,6 +75,12 @@ subprojects {
     targetCompatibility = 1.8
     sourceCompatibility = 1.8
 
+    test {
+        reports {
+            junitXml.enabled = false
+            html.enabled = true
+        }               
+    }
 
     /*
      * Some IDE support if you use it.
@@ -82,6 +88,12 @@ subprojects {
     /* apply plugin: "eclipse" */
     /* apply plugin: "idea" */
     
+}
+
+task testReport(type: TestReport) {
+    destinationDir = file("$buildDir/reports/allTests")
+    // Include the results from the `test` task in all subprojects
+    reportOn subprojects*.test
 }
 
 /*
