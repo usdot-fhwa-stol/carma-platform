@@ -75,6 +75,12 @@ subprojects {
     targetCompatibility = 1.8
     sourceCompatibility = 1.8
 
+    test {
+        reports {
+            junitXml.enabled = false
+            html.enabled = true
+        }               
+    }
 
     /*
      * Some IDE support if you use it.

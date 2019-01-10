@@ -44,7 +44,7 @@ jobs:
           name: Save Java Test results
           command: |
             mkdir -p ~/junit/
-            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/junit/ \;
+            find . -type f -regex ".*/build/test-results/.*html" -exec cp {} ~/junit/ \;
           when: always
       - store_test_results:
           path: ~/junit
