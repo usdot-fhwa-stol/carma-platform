@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.Ignore;
 import org.mockito.Mockito;
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
@@ -199,6 +200,7 @@ public class EADAStarPlanTest {
      * Note: This test may take a long time to run and should be tweaked as needed
      */
     @Test
+    @Ignore("Ignore large test in CI system")
     public void planManyCases() {
         when(mockConfig.getDoubleDefaultValue("ead.coarse_time_inc", 5.0)).thenReturn(2.0);
         when(mockConfig.getDoubleDefaultValue("ead.coarse_speed_inc", 3.0)).thenReturn(2.0);
@@ -214,14 +216,14 @@ public class EADAStarPlanTest {
         ANAStarSolver solver;
         long totalIterationCount = 0;
         //AStarSolver solver;
-        for (double dist1 = 20; dist1 < 100; dist1 += 50.0) {
-            for (double dist2 = dist1 + 80; dist2 < 250; dist2 += 50.0) {
+        for (double dist1 = 20; dist1 < 100; dist1 += 20.0) {
+            for (double dist2 = dist1 + 80; dist2 < 250; dist2 += 20.0) {
                 phase1 = SignalPhase.GREEN;
                 while (phase1 != SignalPhase.NONE) {
                     phase2 = SignalPhase.GREEN;
                     while (phase2 != SignalPhase.NONE) {
-                        for (double i = 0; i <  30.0; i+=20) {
-                            for (double j = 0; j <  30.0; j+=20) {
+                        for (double i = 0; i <  30.0; i+=5) {
+                            for (double j = 0; j <  30.0; j+=5) {
                                 if ((phase1 == SignalPhase.GREEN || phase2 == SignalPhase.GREEN) && (i < timeBuffer * 3.0 || j < timeBuffer * 3.0)) {
                                     //System.out.println("Ignoring impossible timing's dues to time buffer");
                                     continue;
