@@ -38,5 +38,5 @@ jobs:
           command: |
             source /opt/ros/kinetic/setup.bash
             source /opt/carma/devel/setup.bash
-            cd src/carmajava/
+            cd src/CARMAPlatform/carmajava/
             ./gradlew test
