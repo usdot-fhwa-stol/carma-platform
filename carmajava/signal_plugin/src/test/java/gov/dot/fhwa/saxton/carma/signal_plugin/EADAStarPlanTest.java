@@ -214,14 +214,14 @@ public class EADAStarPlanTest {
         ANAStarSolver solver;
         long totalIterationCount = 0;
         //AStarSolver solver;
-        for (double dist1 = 20; dist1 < 100; dist1 += 30.0) {
-            for (double dist2 = dist1 + 80; dist2 < 250; dist2 += 30.0) {
+        for (double dist1 = 20; dist1 < 100; dist1 += 50.0) {
+            for (double dist2 = dist1 + 80; dist2 < 250; dist2 += 50.0) {
                 phase1 = SignalPhase.GREEN;
                 while (phase1 != SignalPhase.NONE) {
                     phase2 = SignalPhase.GREEN;
                     while (phase2 != SignalPhase.NONE) {
-                        for (double i = 0; i <  30.0; i+=10) {
-                            for (double j = 0; j <  30.0; j+=10) {
+                        for (double i = 0; i <  30.0; i+=20) {
+                            for (double j = 0; j <  30.0; j+=20) {
                                 if ((phase1 == SignalPhase.GREEN || phase2 == SignalPhase.GREEN) && (i < timeBuffer * 3.0 || j < timeBuffer * 3.0)) {
                                     //System.out.println("Ignoring impossible timing's dues to time buffer");
                                     continue;
