@@ -41,6 +41,10 @@ public class PluginLifecycleHandlerTest {
         when(mockFact.createLoggerForClass(anyObject())).thenReturn(mockLogger);
         LoggerManager.setLoggerFactory(mockFact);
         p = mock(IPlugin.class);
+        doAnswer((in) -> {
+            Thread.sleep(50);
+            return null;
+        }).when(p).loop();
         ComponentVersion cv = new ComponentVersion();
         when(p.getVersionInfo()).thenReturn(cv);
         handler = new PluginLifecycleHandler(p);
