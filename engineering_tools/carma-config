@@ -1,0 +1,99 @@
+#!/bin/bash
+
+#  Copyright (C) 2018-2019 LEIDOS.
+# 
+#  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#  use this file except in compliance with the License. You may obtain a copy of
+#  the License at
+# 
+#  http://www.apache.org/licenses/LICENSE-2.0
+# 
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#  License for the specific language governing permissions and limitations under
+#  the License.
+
+# Code below largely based on template from Stack Overflow:
+# https://stackoverflow.com/questions/37257551/defining-subcommands-that-take-arguments-in-bash
+# Question asked by user 
+# DiogoSaraiva (https://stackoverflow.com/users/4465820/diogosaraiva)
+# and answered by user 
+# Charles Duffy (https://stackoverflow.com/users/14122/charles-duffy)
+# Attribution here is in line with Stack Overflow's Attribution policy cc-by-sa found here:
+# https://stackoverflow.blog/2009/06/25/attribution-required/
+
+carma-config__set() {
+    echo "Configuration setting functionality not yet implemented"
+    exit 1
+}
+
+carma-config__edit() {
+    echo "Configuation editing functionality not yet implemented"
+    exit 1
+}
+
+carma-config__reset() {
+    echo "Configuration resetting functionality not yet implemented"
+    exit 1
+}
+
+carma-config__list() {
+    echo "Configuration listing functionality not yet implemented"
+    exit 1
+}
+
+carma-config__install() {
+    echo "Configuration installation functionality not yet implemented"
+    exit 1
+}
+
+carma-config__status() {
+    echo "Configuration reporting functionality not yet implemented"
+    exit 1
+}
+
+carma-config__help() {
+    cat <<HELP
+---------------------------------------------------------------
+CARMA Platform Configuration Tool
+---------------------------------------------------------------
+
+Please enter one of the following commands:
+  status - Report the current configuration status
+  list - List available configurations
+  install - Install a configuration
+  set - Select an installed configuration
+  edit - Open a text editor to modify the current configuration
+  reset - Restore a configuration to its default state
+  help - Display this information"
+HELP
+}
+
+carma-config() {
+    local cmdname=$1; shift
+    if type "carma-config__$cmdname" >/dev/null 2>&1; then
+        "carma-config__$cmdname" "$@"
+    else
+        carma-config__help
+        exit -1
+    fi
+}
+
+
+# if the functions above are sourced into an interactive interpreter, the user can
+# just call "carma-config set" or "carma-config reset" with no further code needed.
+
+# if invoked as a script rather than sourced, call function named on argv via the below;
+# note that this must be the first operation other than a function definition
+# for $_ to successfully distinguish between sourcing and invocation:
+[[ $_ != $0 ]] && return
+
+# make sure we actually *did* get passed a valid function name
+if declare -f "carma-config__$1" >/dev/null 2>&1; then
+  # invoke that function, passing arguments through
+  "carma-config__$@" # same as "$1" "$2" "$3" ... for full argument list
+else
+    carma-config__help
+    exit -1
+fi
