@@ -33,7 +33,7 @@
 # Stage 1 - Install the SSH private key and acquire the CARMA source as well as
 #           any extra packages
 # /////////////////////////////////////////////////////////////////////////////
-FROM carma-base AS source-code
+FROM usdotfhwastol/carma-base:2.8.2 AS source-code
 
 ARG SSH_PRIVATE_KEY
 ARG EXTRA_PACKAGES
@@ -56,7 +56,7 @@ RUN ~/src/CARMAPlatform/docker/checkout.sh
 # /////////////////////////////////////////////////////////////////////////////
 # Stage 2 - Build and install the software 
 # /////////////////////////////////////////////////////////////////////////////
-FROM carma-base AS install
+FROM usdotfhwastol/carma-base:2.8.2 AS install
 
 # Copy the source files from the previous stage and build/install
 RUN mkdir ~/carma_ws
@@ -66,7 +66,7 @@ RUN ~/carma_ws/src/CARMAPlatform/docker/install.sh
 # /////////////////////////////////////////////////////////////////////////////
 # Stage 3 - Finalize deployment
 # /////////////////////////////////////////////////////////////////////////////
-FROM carma-base
+FROM usdotfhwastol/carma-base:2.8.2
 
 # Migrate the files from the install stage
 COPY --from=install --chown=carma /opt/carma /opt/carma
