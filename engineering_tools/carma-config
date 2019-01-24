@@ -24,6 +24,12 @@
 # https://stackoverflow.blog/2009/06/25/attribution-required/
 
 carma-config__set() {
+    if [[ -z $1 ]]; then
+        echo "Please specify a tag string for carma-config to set."
+        echo "Done."
+        exit -1
+    fi
+
     if docker container inspect carma-config > /dev/null; then
         echo "Clearing existing CARMA configuration instance..."
         docker rm carma-config
@@ -34,17 +40,29 @@ carma-config__set() {
 }
 
 carma-config__edit() {
+    if ! docker container inspect carma-config > /dev/null 2>&1; then
+        echo "No existing CARMA configuration found, nothing to edit. Please set a config."
+        echo "Done."
+        exit 1
+    fi
+
     echo "Opening shell inside carma-config container with read/write privileges..."
     docker run -it --rm --volumes-from carma-config usdotfhwastol/carma-base:latest
 }
 
 carma-config__inspect() {
+    if ! docker container inspect carma-config > /dev/null 2>&1; then
+        echo "No existing CARMA configuration found, nothing to inspect. Please set a config."
+        echo "Done."
+        exit 1
+    fi
+
     echo "Opening shell inside carma-config container with read-only privileges..."
     docker run -it --rm --volumes-from carma-config:ro usdotfhwastol/carma-base:latest
 }
 
 carma-config__reset() {
-    if ! docker container inspect carma-config > /dev/null; then
+    if ! docker container inspect carma-config > /dev/null 2>&1; then
         echo "No existing CARMA configuration found, nothing to reset. Please set a config."
         echo "Done."
         exit 1
