@@ -31,19 +31,16 @@ carma-config__set() {
 
     docker run --name carma-config $1
     echo "Set $1 as current CARMA configuration instance..."
-    echo "Done."
 }
 
 carma-config__edit() {
     echo "Opening shell inside carma-config container with read/write privileges..."
     docker run -it --rm --volumes-from carma-config usdotfhwastol/carma-base:latest
-    echo "Done."
 }
 
 carma-config__inspect() {
     echo "Opening shell inside carma-config container with read-only privileges..."
     docker run -it --rm --volumes-from carma-config:ro usdotfhwastol/carma-base:latest
-    echo "Done."
 }
 
 carma-config__reset() {
@@ -62,19 +59,24 @@ carma-config__list_local() {
     echo "Locally installed images: "
     echo ""
     docker images usdotfhwastol/carma-config
-    echo "Done."
 }
 
 carma-config__list_remote() {
     echo "Remotely available images from usdotfhwastol Dockerhub: "
     echo ""
     wget -q https://registry.hub.docker.com/v1/repositories/usdotfhwastol/carma-config/tags -O -  | sed -e 's/[][]//g' -e 's/"//g' -e 's/ //g' | tr '}' '\n'  | awk -F: '{print "usdotfhwastol/carma-config:"$3}'
-    echo "Done."
 }
 
 carma-config__install() {
-    docker pull $1
-    echo "Done."
+    echo "Downloading usdotfhwastol/carma-config:$1..."
+    docker pull usdotfhwastol/carma-config:$1
+    echo "Building temporary container of usdotfhwastol/carma-config:$1 to read dependency data..."
+    docker run --name carma-config-tmp usdotfhwastol/carma-config:$1
+    local $DOCKER_FILE=`docker run --rm --volumes-from carma-config-tmp:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/docker-compose.yml'`
+    echo "Cleaning up temporary container..."
+    docker rm carma-config-tmp
+    echo "Downloading usdotfhwastol/carma-config:$1 dependencies..."
+    echo "$DOCKER_FILE" | docker-compose pull
 }
 
 carma-config__status() {
@@ -91,8 +93,9 @@ CARMA Platform Configuration Tool
 
 Please enter one of the following commands:
   status - Report the current configuration status
-  list - List available configurations
-  install - Install a configuration
+  list_local - List available configurations on the host machine
+  list_remote - List available configurations on Dockerhub
+  install - Install a configuration and download dependencies
   set - Select an installed configuration
   edit - Open a text editor to modify the current configuration
   reset - Restore a configuration to its default state
@@ -104,6 +107,7 @@ carma-config() {
     local cmdname=$1; shift
     if type "carma-config__$cmdname" >/dev/null 2>&1; then
         "carma-config__$cmdname" "$@"
+        echo "Done."
     else
         carma-config__help
         exit -1
@@ -123,6 +127,7 @@ carma-config() {
 if declare -f "carma-config__$1" >/dev/null 2>&1; then
   # invoke that function, passing arguments through
   "carma-config__$@" # same as "$1" "$2" "$3" ... for full argument list
+  echo "Done."
 else
     carma-config__help
     exit -1
