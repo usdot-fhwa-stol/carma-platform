@@ -15,23 +15,22 @@
 #  the License.
 
 USERNAME=usdotfhwastol
-IMAGE=carma-base
+IMAGE=carma-config
+DIR_NAME=${PWD##*/}
+CONFIG_NAME=`echo $DIR_NAME | sed 's/_/-/g'`
 
 echo ""
-echo "##### CARMA Base Docker Image Build Script #####"
+echo "##### CARMA $CONFIG_NAME Configuration Docker Image Build Script #####"
 echo ""
 
 cd "$(dirname "$0")"
 
-TAG=$("../engineering_tools/get-carma-version.sh")
+TAG="$("../../engineering_tools/get-carma-version.sh")-$CONFIG_NAME"
 
-echo "Building docker image for CARMA Base version: $TAG"
+echo "Building docker image for CARMA Configuration version: $TAG"
 echo "Final image name: $USERNAME/$IMAGE:$TAG"
 
 docker build --no-cache -t $USERNAME/$IMAGE:$TAG .
-docker tag $USERNAME/$IMAGE:$TAG $USERNAME/$IMAGE:latest
-
-echo "Tagged $USERNAME/$IMAGE:$TAG as $USERNAME/$IMAGE:latest"
 
 echo ""
 echo "##### CARMA Base Docker Image Build Done! #####"
