@@ -50,11 +50,14 @@ RUN mkdir -p /opt/carma && chown carma:carma -R /opt/carma
 USER carma
 
 ADD package.xml /home/carma/workspace/src/carma_base/
+ADD entrypoint.sh /home/carma
 RUN rosdep update && \
         rosdep install --from-paths ~/workspace/src --ignore-src -y
 
 # Final system setup
 RUN mkdir -p /opt/carma/app/bin /opt/carma/params /opt/carma/routes /opt/carma/urdf /opt/carma/logs /opt/carma/launch /opt/carma/app/mock_data /opt/carma/app/engineering_tools /opt/carma/drivers &&\
     echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc &&\
-    echo "source /opt/carma/app/bin/setup.bash" >> ~/.bashrc &&\
+    echo "if [[ -f /opt/carma/app/bin/setup.bash ]]; then; source /opt/carma/app/bin/setup.bash; fi" >> ~/.bashrc &&\
     echo "cd /opt/carma" >> ~/.bashrc 
+
+ENTRYPOINT [ "/home/carma/entrypoint.sh" ]
