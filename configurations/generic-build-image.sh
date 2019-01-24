@@ -33,4 +33,4 @@ echo "Final image name: $USERNAME/$IMAGE:$TAG"
 docker build --no-cache -t $USERNAME/$IMAGE:$TAG .
 
 echo ""
-echo "##### CARMA Base Docker Image Build Done! #####"
+echo "##### CARMA $CONFIG_NAME Docker Image Build Done! #####"

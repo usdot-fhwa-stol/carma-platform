@@ -1,1 +1,1 @@
-generic-build-image.sh
+../generic-build-image.sh
