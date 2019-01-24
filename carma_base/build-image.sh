@@ -21,18 +21,17 @@ echo ""
 echo "##### CARMA Base Docker Image Build Script #####"
 echo ""
 
-if [[ -z "$1" ]]; then
-    TAG=latest
-else
-    TAG="$1"
-fi
+cd "$(dirname "$0")"
 
-echo "Building docker image for CARMA Base"
+TAG=$("../engineering_tools/get-carma-version.sh")
+
+echo "Building docker image for CARMA Base version: $TAG"
 echo "Final image name: $USERNAME/$IMAGE:$TAG"
 
-cd ..
-docker build -t $USERNAME/$IMAGE:$TAG .
+docker build --no-cache -t $USERNAME/$IMAGE:$TAG .
 docker tag $USERNAME/$IMAGE:$TAG $USERNAME/$IMAGE:latest
+
+echo "Tagged $USERNAME/$IMAGE:$TAG as $USERNAME/$IMAGE:latest"
 
 echo ""
 echo "##### CARMA Base Docker Image Build Done! #####"
