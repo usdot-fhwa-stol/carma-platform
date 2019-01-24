@@ -24,33 +24,63 @@
 # https://stackoverflow.blog/2009/06/25/attribution-required/
 
 carma-config__set() {
-    echo "Configuration setting functionality not yet implemented"
-    exit 1
+    if docker container inspect carma-config > /dev/null; then
+        echo "Clearing existing CARMA configuration instance..."
+        docker rm carma-config
+    fi
+
+    docker run --name carma-config $1
+    echo "Set $1 as current CARMA configuration instance..."
+    echo "Done."
 }
 
 carma-config__edit() {
-    echo "Configuation editing functionality not yet implemented"
-    exit 1
+    echo "Opening shell inside carma-config container with read/write privileges..."
+    docker run -it --rm --volumes-from carma-config usdotfhwastol/carma-base:latest
+    echo "Done."
+}
+
+carma-config__inspect() {
+    echo "Opening shell inside carma-config container with read-only privileges..."
+    docker run -it --rm --volumes-from carma-config:ro usdotfhwastol/carma-base:latest
+    echo "Done."
 }
 
 carma-config__reset() {
-    echo "Configuration resetting functionality not yet implemented"
-    exit 1
+    if ! docker container inspect carma-config > /dev/null; then
+        echo "No existing CARMA configuration found, nothing to reset. Please set a config."
+        echo "Done."
+        exit 1
+    fi
+
+    local CURRENT_IMAGE=`docker container inspect --format='{{.Config.Image}}' carma-config`
+    echo "Found current config: $CURRENT_IMAGE, resetting to base state"
+    carma-config__set $CURRENT_IMAGE
 }
 
-carma-config__list() {
-    echo "Configuration listing functionality not yet implemented"
-    exit 1
+carma-config__list_local() {
+    echo "Locally installed images: "
+    echo ""
+    docker images usdotfhwastol/carma-config
+    echo "Done."
+}
+
+carma-config__list_remote() {
+    echo "Remotely available images from usdotfhwastol Dockerhub: "
+    echo ""
+    wget -q https://registry.hub.docker.com/v1/repositories/usdotfhwastol/carma-config/tags -O -  | sed -e 's/[][]//g' -e 's/"//g' -e 's/ //g' | tr '}' '\n'  | awk -F: '{print "usdotfhwastol/carma-config:"$3}'
+    echo "Done."
 }
 
 carma-config__install() {
-    echo "Configuration installation functionality not yet implemented"
-    exit 1
+    docker pull $1
+    echo "Done."
 }
 
 carma-config__status() {
-    echo "Configuration reporting functionality not yet implemented"
-    exit 1
+    local CURRENT_IMAGE=`docker container inspect --format='{{.Config.Image}}' carma-config`
+    echo "Current configuration is loaded from image: $CURRENT_IMAGE"
+    echo "Done."
 }
 
 carma-config__help() {
