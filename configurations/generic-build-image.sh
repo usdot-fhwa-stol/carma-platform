@@ -16,6 +16,7 @@
 
 USERNAME=usdotfhwastol
 IMAGE=carma-config
+cd "$(dirname "$0")"
 DIR_NAME=${PWD##*/}
 CONFIG_NAME=`echo $DIR_NAME | sed 's/_/-/g'`
 
@@ -23,7 +24,6 @@ echo ""
 echo "##### CARMA $CONFIG_NAME Configuration Docker Image Build Script #####"
 echo ""
 
-cd "$(dirname "$0")"
 
 TAG="$("../../engineering_tools/get-carma-version.sh")-$CONFIG_NAME"
 
