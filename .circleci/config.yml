@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: usdotfhwastol/carma-base:2.8.1
+      - image: usdotfhwastol/carma-base:2.8.2
         user: carma
         environment:
           TERM: xterm
