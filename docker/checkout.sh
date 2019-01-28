@@ -17,11 +17,5 @@
 # CARMA packages checkout script
 
 set -ex
-
-if [[ ! -z $EXTRA_PACKAGES ]]; then
-    echo "Attempting to check out extra CARMA packages from $EXTRA_PACKAGES version $EXTRA_PACKAGES_VERSION..."
-    cd ~/src
-    git clone --depth=1 $EXTRA_PACKAGES -b $EXTRA_PACKAGES_VERSION
-else 
-    echo "No extra packages for CARMA specified."
-fi
+cd ~/src
+git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAMsgs.git

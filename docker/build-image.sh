@@ -29,7 +29,7 @@ echo "Building docker image for CARMA version: $FULL_VERSION_STRING"
 echo "Final image name: $USERNAME/$IMAGE:$FULL_VERSION_STRING"
 
 cd ..
-docker build -t $USERNAME/$IMAGE:$FULL_VERSION_STRING --build-arg SSH_PRIVATE_KEY="$(cat ~/.ssh/id_rsa)" --build-arg EXTRA_PACKAGES=git@github.com:fhwa-saxton/CARMASensitive.git .
+docker build -t $USERNAME/$IMAGE:$FULL_VERSION_STRING .
 docker tag $USERNAME/$IMAGE:$FULL_VERSION_STRING $USERNAME/$IMAGE:latest
 
 echo "Tagged $USERNAME/$IMAGE:$FULL_VERSION_STRING as $USERNAME/$IMAGE:latest"

@@ -30,25 +30,11 @@
 
 
 # /////////////////////////////////////////////////////////////////////////////
-# Stage 1 - Install the SSH private key and acquire the CARMA source as well as
-#           any extra packages
+# Stage 1 - Acquire the CARMA source as well as any extra packages
 # /////////////////////////////////////////////////////////////////////////////
-FROM usdotfhwastol/carma-base:2.8.2 AS source-code
 
-ARG SSH_PRIVATE_KEY
-ARG EXTRA_PACKAGES
-ENV EXTRA_PACKAGES ${EXTRA_PACKAGES}
-ARG EXTRA_PACKAGES_VERSION=master
-ENV EXTRA_PACKAGES_VERSION ${EXTRA_PACKAGES_VERSION}
+FROM usdotfhwastol/carma-base:2.8.3 AS source-code
 
-# Set up the SSH key for usage by git
-RUN mkdir ~/.ssh/ && \
-        echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa && \
-        chmod 600 ~/.ssh/id_rsa && \
-        touch ~/.ssh/known_hosts && \
-        ssh-keyscan github.com >> ~/.ssh/known_hosts
-
-# Acquire the software source
 RUN mkdir ~/src
 COPY --chown=carma . /home/carma/src/CARMAPlatform/
 RUN ~/src/CARMAPlatform/docker/checkout.sh
@@ -56,7 +42,8 @@ RUN ~/src/CARMAPlatform/docker/checkout.sh
 # /////////////////////////////////////////////////////////////////////////////
 # Stage 2 - Build and install the software 
 # /////////////////////////////////////////////////////////////////////////////
-FROM usdotfhwastol/carma-base:2.8.2 AS install
+
+FROM usdotfhwastol/carma-base:2.8.3 AS install
 
 # Copy the source files from the previous stage and build/install
 RUN mkdir ~/carma_ws
@@ -66,7 +53,8 @@ RUN ~/carma_ws/src/CARMAPlatform/docker/install.sh
 # /////////////////////////////////////////////////////////////////////////////
 # Stage 3 - Finalize deployment
 # /////////////////////////////////////////////////////////////////////////////
-FROM usdotfhwastol/carma-base:2.8.2
+
+FROM usdotfhwastol/carma-base:2.8.3
 
 # Migrate the files from the install stage
 COPY --from=install --chown=carma /opt/carma /opt/carma
@@ -78,5 +66,3 @@ RUN sudo chown carma:carma -R /opt/carma/vehicle && \
         ln -sf /opt/carma/vehicle/saxton_cav.urdf /opt/carma/urdf/saxton_cav.urdf && \
         ln -sf /opt/carma/vehicle/saxton_cav.launch /opt/carma/launch/saxton_cav.launch && \
         ln -sf /opt/carma/vehicle/drivers.launch /opt/carma/drivers/drivers.launch 
-
-ENTRYPOINT [ "/opt/carma/entrypoint.sh" ]

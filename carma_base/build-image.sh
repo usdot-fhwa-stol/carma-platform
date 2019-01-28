@@ -23,7 +23,12 @@ echo ""
 
 cd "$(dirname "$0")"
 
-TAG=$("../engineering_tools/get-carma-version.sh")
+
+if [[ -z "$1" ]]; then
+    TAG=$("../engineering_tools/get-carma-version.sh")
+else
+    TAG="$1"
+fi
 
 echo "Building docker image for CARMA Base version: $TAG"
 echo "Final image name: $USERNAME/$IMAGE:$TAG"
