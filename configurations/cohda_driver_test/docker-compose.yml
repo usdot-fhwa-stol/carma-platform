@@ -1,0 +1,55 @@
+#  Copyright (C) 2018-2019 LEIDOS.
+# 
+#  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#  use this file except in compliance with the License. You may obtain a copy of
+#  the License at
+# 
+#  http://www.apache.org/licenses/LICENSE-2.0
+# 
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#  License for the specific language governing permissions and limitations under
+#  the License.
+
+# Docker Compose Spec Version
+version: '2'
+
+services:
+  roscore:
+    image: usdotfhwastol/carma-base
+    container_name: roscore
+    network_mode: host
+    volumes:
+      - /opt/carma/.ros:/home/carma/.ros
+    stdin_open: true
+    tty: true
+    command: roscore
+  carma:
+    image: usdotfhwastol/carma
+    depends_on: roscore
+    network_mode: host
+    container_name: carma
+    volumes_from: 
+      - container:carma-config:ro
+    volumes:
+      - /opt/carma/logs:/opt/carma/logs
+      - /opt/carma/.ros:/home/carma/.ros
+      - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
+    stdin_open: true
+    tty: true
+    command: roslaunch carma saxton_cav.launch
+  cohda_dsrc_driver:
+    image: usdotfhwastol/carma-cohda-dsrc-driver
+    container_name: carma-cohda-dsrc-driver
+    depends_on: roscore
+    network_mode: host
+    volumes_from: 
+      - container:carma-config:ro
+    volumes:
+      - /opt/carma/logs:/opt/carma/logs
+      - /opt/carma/.ros:/home/carma/.ros
+      - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
+    stdin_open: true
+    tty: true
+    command: roslaunch dsrc_driver dsrc_node.launch
