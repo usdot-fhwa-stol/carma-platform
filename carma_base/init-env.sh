@@ -14,4 +14,8 @@
 #  License for the specific language governing permissions and limitations under
 #  the License.
 
-source ~/.base-image/init-env.sh; exec "$@"
+
+# Sets all environment variables and sources scripts necessary for CARMA to operate
+
+[ -f "/opt/ros/kinetic/setup.bash" ] && source /opt/ros/kinetic/setup.bash
+[ -f "/opt/carma/app/bin/setup.bash" ] && source /opt/carma/app/bin/setup.bash

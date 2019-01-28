@@ -26,10 +26,10 @@ RUN apt-get update && \
         tmux \
         vim \
         nano \
-        less
+        less \
+        apt-transport-https
 
-RUN apt-get update && apt-get install -y apt-transport-https && \
-        sh -c 'echo "deb [trusted=yes] https://s3.amazonaws.com/autonomoustuff-repo/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/autonomoustuff-public.list' && \
+RUN sh -c 'echo "deb [trusted=yes] https://s3.amazonaws.com/autonomoustuff-repo/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/autonomoustuff-public.list' && \
         apt-get update && \
         apt-get install -y ros-kinetic-astuff-sensor-msgs
 
@@ -49,15 +49,15 @@ RUN mkdir -p /opt/carma && chown carma:carma -R /opt/carma
 
 USER carma
 
-ADD package.xml /home/carma/workspace/src/carma_base/
-ADD entrypoint.sh /home/carma
+ADD package.xml /home/carma/.base-image/workspace/src/carma_base/
+ADD entrypoint.sh /home/carma/.base-image/
+ADD init-env.sh /home/carma/.base-image/
 RUN rosdep update && \
-        rosdep install --from-paths ~/workspace/src --ignore-src -y
+        rosdep install --from-paths ~/.base-image/workspace/src --ignore-src -y
 
 # Final system setup
 RUN mkdir -p /opt/carma/app/bin /opt/carma/params /opt/carma/routes /opt/carma/urdf /opt/carma/logs /opt/carma/launch /opt/carma/app/mock_data /opt/carma/app/engineering_tools /opt/carma/drivers &&\
-    echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc &&\
-    echo "if [[ -f /opt/carma/app/bin/setup.bash ]]; then; source /opt/carma/app/bin/setup.bash; fi" >> ~/.bashrc &&\
+    echo "source ~/.base-image/init-env.sh" >> ~/.bashrc &&\
     echo "cd /opt/carma" >> ~/.bashrc 
 
-ENTRYPOINT [ "/home/carma/entrypoint.sh" ]
+ENTRYPOINT [ "/home/carma/.base-image/entrypoint.sh" ]
