@@ -98,7 +98,7 @@ public class PluginLifecycleHandlerTest {
         handler.suspend();
         Thread.sleep(100);
         handler.terminate();
-        Thread.sleep(100);
+        Thread.sleep(500);
         verify(p).onTerminate();
         running = false;
     }
