@@ -239,7 +239,7 @@ public class PluginLifecycleHandler {
      * @throws IllegalStateException
      */
     public void terminate() {
-    	System.out.println(state.get().name());
+    	System.out.println("See here!!!!!!!" + state.get().name());
         switch (state.get()) {
             case UNINITIALIZED:
                 throw new IllegalStateException();
