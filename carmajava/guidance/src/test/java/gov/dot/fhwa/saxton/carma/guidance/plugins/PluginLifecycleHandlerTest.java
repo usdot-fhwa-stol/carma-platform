@@ -97,8 +97,11 @@ public class PluginLifecycleHandlerTest {
         Thread.sleep(100);
         handler.suspend();
         Thread.sleep(100);
+        System.out.println("Start to terminate!");
         handler.terminate();
-        Thread.sleep(500);
+        Thread.sleep(100);
+        Thread.yield();
+        System.out.println("Ends on termination!");
         verify(p).onTerminate();
         running = false;
     }
