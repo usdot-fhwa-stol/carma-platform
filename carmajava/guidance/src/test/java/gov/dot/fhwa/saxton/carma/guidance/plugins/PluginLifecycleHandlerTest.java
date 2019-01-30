@@ -18,17 +18,10 @@ package gov.dot.fhwa.saxton.carma.guidance.plugins;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.listeners.InvocationListener;
-import org.mockito.listeners.MethodInvocationReport;
-import org.mockito.stubbing.Answer;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
-
-import javax.naming.CompoundName;
 
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
@@ -39,7 +32,7 @@ public class PluginLifecycleHandlerTest {
     @Before public void setUp() throws Exception {
         ILoggerFactory mockFact = mock(ILoggerFactory.class);
         ILogger mockLogger = mock(ILogger.class);
-        when(mockFact.createLoggerForClass(anyObject())).thenReturn(mockLogger);
+        when(mockFact.createLoggerForClass(any())).thenReturn(mockLogger);
         LoggerManager.setLoggerFactory(mockFact);
         p = mock(IPlugin.class);
         doAnswer((in) -> {
@@ -97,11 +90,8 @@ public class PluginLifecycleHandlerTest {
         Thread.sleep(100);
         handler.suspend();
         Thread.sleep(100);
-        System.out.println("Start to terminate!");
         handler.terminate();
         Thread.sleep(100);
-        Thread.yield();
-        System.out.println("Ends on termination!");
         verify(p).onTerminate();
         running = false;
     }

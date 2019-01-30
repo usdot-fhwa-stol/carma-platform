@@ -216,13 +216,13 @@ public class PluginLifecycleHandler {
      */
     private void doTerminate() {
         log.info("PLUGIN", "Terminating " + plugin.getVersionInfo().componentName() + ":" + plugin.getVersionInfo().revisionString());
-        t.interrupt();
         tasks.clear();
         state.set(PluginState.DESTROYING);
         try {
             tasks.put(new TerminatePluginTask(plugin, new TaskCompletionCallback() {
                 @Override public void onComplete() {
                     state.set(PluginState.DESTROYED);
+                    Thread.currentThread().interrupt();
                 }
             }));
         } catch (InterruptedException e) {
@@ -239,7 +239,6 @@ public class PluginLifecycleHandler {
      * @throws IllegalStateException
      */
     public void terminate() {
-    	System.out.println("See here!!!!!!!" + state.get().name());
         switch (state.get()) {
             case UNINITIALIZED:
                 throw new IllegalStateException();
