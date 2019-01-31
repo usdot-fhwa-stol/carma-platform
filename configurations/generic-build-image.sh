@@ -41,6 +41,7 @@ echo "Final image name: $USERNAME/$IMAGE:$TAG"
 docker build --no-cache -t $USERNAME/$IMAGE:$TAG \
     --build-arg VERSION="$TAG" \
     --build-arg VCS_REF=`git rev-parse --short HEAD` \
+    --build-arg CONFIG_NAME="carma-config:$CONFIG_NAME" \
     --build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` .
 
 echo ""
