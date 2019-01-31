@@ -121,8 +121,9 @@ Please enter one of the following commands:
   status - Report the current configuration status
   list_local - List available configurations on the host machine
   list_remote - List available configurations on Dockerhub
-  install - Install a configuration and download dependencies
-  set - Select an installed configuration
+  install <tag> - Install a configuration identified by <tag> and download 
+                  dependencies
+  set <tag> - Set the configuration to the version identified by <tag>
   edit - Open a shell inside the current configuration storage with r/w 
          permissions
   inspect - Open a shell inside the current configuration storage with r/o
