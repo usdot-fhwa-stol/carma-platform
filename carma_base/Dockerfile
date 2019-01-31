@@ -49,11 +49,14 @@ RUN mkdir -p /opt/carma && chown carma:carma -R /opt/carma
 
 USER carma
 
-ADD package.xml /home/carma/.base-image/workspace/src/carma_base/
-ADD entrypoint.sh /home/carma/.base-image/
-ADD init-env.sh /home/carma/.base-image/
+ADD --chown=carma package.xml /home/carma/.base-image/workspace/src/carma_base/
+ADD --chown=carma entrypoint.sh /home/carma/.base-image/
+ADD --chown=carma init-env.sh /home/carma/.base-image/
 RUN rosdep update && \
         rosdep install --from-paths ~/.base-image/workspace/src --ignore-src -y
+
+RUN sudo git clone --depth 1 https://github.com/vishnubob/wait-for-it.git ~/.base-image/wait-for-it &&\
+    sudo mv ~/.base-image/wait-for-it/wait-for-it.sh /usr/bin 
 
 # Final system setup
 RUN mkdir -p /opt/carma/app/bin /opt/carma/params /opt/carma/routes /opt/carma/urdf /opt/carma/logs /opt/carma/launch /opt/carma/app/mock_data /opt/carma/app/engineering_tools /opt/carma/drivers &&\
