@@ -29,7 +29,11 @@ echo "Building docker image for CARMA version: $FULL_VERSION_STRING"
 echo "Final image name: $USERNAME/$IMAGE:$FULL_VERSION_STRING"
 
 cd ..
-docker build -t $USERNAME/$IMAGE:$FULL_VERSION_STRING .
+docker build -t $USERNAME/$IMAGE:$FULL_VERSION_STRING \
+    --build-arg VERSION="$FULL_VERSION_STRING" \
+    --build-arg VCS_REF=`git rev-parse — short HEAD` \
+    --build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` .
+
 docker tag $USERNAME/$IMAGE:$FULL_VERSION_STRING $USERNAME/$IMAGE:latest
 
 echo "Tagged $USERNAME/$IMAGE:$FULL_VERSION_STRING as $USERNAME/$IMAGE:latest"

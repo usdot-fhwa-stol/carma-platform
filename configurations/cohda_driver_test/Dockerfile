@@ -14,6 +14,20 @@
 
 FROM busybox:latest
 
+ARG BUILD_DATE
+ARG VCS_REF
+ARG VERSION
+
+LABEL org.label-schema.schema-version="1.0"
+LABEL org.label-schema.name="carma-config:cohda-driver-test"
+LABEL org.label-schema.description="System configuration data for the CARMA Platform"
+LABEL org.label-schema.vendor="Leidos"
+LABEL org.label-schema.version="2.8.3"
+LABEL org.label-schema.url="https://highways.dot.gov/research/research-programs/operations/CARMA"
+LABEL org.label-schema.vcs-url="https://github.com/usdot-fhwa-stol/CARMAPlatform"
+LABEL org.label-schema.vcs-ref=${VCS_REF}}
+LABEL org.label-schema.build-date=${BUILD_DATE}
+
 ADD . /root/vehicle
 VOLUME /opt/carma/vehicle
 

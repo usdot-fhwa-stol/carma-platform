@@ -22,8 +22,6 @@ services:
     network_mode: host
     volumes:
       - /opt/carma/.ros:/home/carma/.ros
-    stdin_open: true
-    tty: true
     command: roscore
   carma:
     image: usdotfhwastol/carma
@@ -37,8 +35,6 @@ services:
       - /opt/carma/logs:/opt/carma/logs
       - /opt/carma/.ros:/home/carma/.ros
       - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
-    stdin_open: true
-    tty: true
     command: wait-for-it.sh localhost:11311 -- roslaunch carma saxton_cav_docker.launch
   cohda_dsrc_driver:
     image: usdotfhwastol/carma-cohda-dsrc-driver
@@ -52,6 +48,4 @@ services:
       - /opt/carma/logs:/opt/carma/logs
       - /opt/carma/.ros:/home/carma/.ros
       - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
-    stdin_open: true
-    tty: true
     command: wait-for-it.sh localhost:11311 -- roslaunch dsrc_driver dsrc_node.launch remap_ns:=/saxton_cav/drivers
