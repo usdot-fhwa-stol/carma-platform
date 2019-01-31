@@ -14,6 +14,14 @@
 #  License for the specific language governing permissions and limitations under
 #  the License.
 
+#
+# GENERIC Build Script for CARMA Configuration Images
+#
+# Do not run this script itself, rather symlink this script into the individual
+# configuration folders below and invoke it there to build the appropriate config
+# image using docker build. Automatically acquires folder name and system version
+# and passes neessary data into the docker build process.
+
 USERNAME=usdotfhwastol
 IMAGE=carma-config
 cd "$(dirname "$0")"
