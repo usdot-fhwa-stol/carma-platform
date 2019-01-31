@@ -56,8 +56,8 @@ RUN ~/carma_ws/src/CARMAPlatform/docker/install.sh
 
 FROM usdotfhwastol/carma-base:2.8.3
 
-ARG BUILD_DATE
-ARG VCS_REF
+ARG BUILD_DATE="NULL"
+ARG VCS_REF="NULL"
 
 LABEL org.label-schema.schema-version="1.0"
 LABEL org.label-schema.name="CARMA"
@@ -79,3 +79,5 @@ RUN sudo chown carma:carma -R /opt/carma/vehicle && \
         ln -sf /opt/carma/vehicle/saxton_cav.urdf /opt/carma/urdf/saxton_cav.urdf && \
         ln -sf /opt/carma/vehicle/saxton_cav.launch /opt/carma/launch/saxton_cav.launch && \
         ln -sf /opt/carma/vehicle/drivers.launch /opt/carma/drivers/drivers.launch 
+
+CMD "roslaunch carma saxton_cav_docker.launch"
