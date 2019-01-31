@@ -15,7 +15,7 @@
   the License.
 -->
 <!--
-	saxton_cav.launch
+	saxton_cav_docker.launch
 
   A the ros launch file for the STOL CAV Prototype ROS Network.
   Launches all the needed ros nodes and sets up the parameter server.
@@ -23,9 +23,7 @@
 
   File is meant to be run on a configured vehicle pc.
   Applies the appropriate arguments to the saxton_cav_src.launch file to launch on a vehicle
-  
-  Note: To ensure all ros processes are killed before launch use
-  pkill -f ros
+  using the Dockerized deployment of CARMA
 -->
 <launch>
 
