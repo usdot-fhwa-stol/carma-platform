@@ -16,9 +16,9 @@
 
 FROM ros:kinetic-ros-base 
 
-ARG BUILD_DATE
-ARG VERSION
-ARG VCS_REF
+ARG BUILD_DATE="NULL"
+ARG VERSION="NULL"
+ARG VCS_REF="NULL"
 
 LABEL org.label-schema.schema-version="1.0"
 LABEL org.label-schema.name="carma-base"
