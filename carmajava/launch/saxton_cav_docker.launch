@@ -42,7 +42,7 @@
   <arg name="log_config" default="$(arg PARAM_DIR)/log-config.properties" doc="The location of the logging config file"/>
 
   <!-- Disable Drivers -->
-  <arg name="launch_drivers" default="false" doc="True if drivers are to launch with platform">
+  <arg name="launch_drivers" default="false" doc="True if drivers are to launch with platform"/>
 
   <!-- Include the detailed launch file and pass in new arguments -->
   <include file="$(find carma)/saxton_cav_src.launch" pass_all_args="true"/>
