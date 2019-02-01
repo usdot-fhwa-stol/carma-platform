@@ -128,7 +128,7 @@ public class GuidanceStateHandler extends GuidanceComponent implements IStateCha
     @Override
     public void onSystemReady() {
         
-        robotStatusSub = pubSubService.getSubscriberForTopic("robot_enabled", RobotEnabled._TYPE);
+        robotStatusSub = pubSubService.getSubscriberForTopic("robot_status", RobotEnabled._TYPE);
         if(robotStatusSub != null) {
             robotStatusSub.registerOnMessageCallback(new OnMessageCallback<RobotEnabled>() {
                 @Override

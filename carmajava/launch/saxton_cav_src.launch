@@ -326,9 +326,9 @@
         <remap from="outgoing_mobility_operation"
                to="/$(arg TOP_NS)/$(arg GUIDE_NS)/outgoing_mobility_operation"/>
         <remap from="inbound_binary_msg"
-               to="/$(arg TOP_NS)/$(arg DRIVER_NS)/dsrc/comms/inbound_binary_msg"/>
+               to="/comms/inbound_binary_msg"/>
         <remap from="outbound_binary_msg"
-               to="/$(arg TOP_NS)/$(arg DRIVER_NS)/dsrc/comms/outbound_binary_msg"/>
+               to="/comms/outbound_binary_msg"/>
 
       </node>
     </group>
@@ -354,8 +354,8 @@
         <!-- Arbitrator Thread-->
         <remap from="route_state"
                to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
-        <remap from="robot_enabled"
-               to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/robot_status"/>
+        <remap from="robot_status"
+               to="/control/robot_status"/>
         
         <!-- GuidanceStateHandler Thread-->
         <remap from="route_event"
@@ -363,11 +363,11 @@
         
         <!-- GuidanceCommands Thread -->
         <remap from="cmd_speed"
-               to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/cmd_speed"/>
+               to="/control/cmd_speed"/>
         <remap from="cmd_longitudinal_effort"
-               to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/cmd_longitudinal_effort"/>
+               to="/control/cmd_longitudinal_effort"/>
         <remap from="enable_robotic"
-               to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/enable_robotic"/>
+               to="/srx_controller/control/enable_robotic"/>
 
         <!-- Tracking Thread-->
         <!-- Params -->
@@ -422,7 +422,7 @@
 
         <!-- LightBar Thread -->
         <remap from="set_lights"
-               to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/set_lights"/>
+               to="/control/set_lights"/>
                
       </node>
     </group>
