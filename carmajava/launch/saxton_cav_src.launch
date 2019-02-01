@@ -367,7 +367,7 @@
         <remap from="cmd_longitudinal_effort"
                to="/control/cmd_longitudinal_effort"/>
         <remap from="enable_robotic"
-               to="/srx_controller/control/enable_robotic"/>
+               to="/control/enable_robotic"/>
 
         <!-- Tracking Thread-->
         <!-- Params -->
