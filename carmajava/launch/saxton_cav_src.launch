@@ -325,8 +325,11 @@
                to="/$(arg TOP_NS)/$(arg GUIDE_NS)/outgoing_mobility_response"/>
         <remap from="outgoing_mobility_operation"
                to="/$(arg TOP_NS)/$(arg GUIDE_NS)/outgoing_mobility_operation"/>
-        <remap from="get_drivers_with_capabilities"
-               to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
+        <remap from="inbound_binary_msg"
+               to="/comms/inbound_binary_msg"/>
+        <remap from="outbound_binary_msg"
+               to="/comms/outbound_binary_msg"/>
+
       </node>
     </group>
 
@@ -351,13 +354,21 @@
         <!-- Arbitrator Thread-->
         <remap from="route_state"
                to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
-        <remap from="robot_enabled"
-               to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/robot_status"/>
+        <remap from="robot_status"
+               to="/control/robot_status"/>
         
         <!-- GuidanceStateHandler Thread-->
         <remap from="route_event"
                to="/$(arg TOP_NS)/$(arg RT_NS)/route_event"/>
         
+        <!-- GuidanceCommands Thread -->
+        <remap from="cmd_speed"
+               to="/control/cmd_speed"/>
+        <remap from="cmd_longitudinal_effort"
+               to="/control/cmd_longitudinal_effort"/>
+        <remap from="enable_robotic"
+               to="/control/enable_robotic"/>
+
         <!-- Tracking Thread-->
         <!-- Params -->
         <remap from="vehicle_length"
@@ -377,10 +388,6 @@
                to="/$(arg TOP_NS)/$(arg RD_NS)/get_transform"/>
         <remap from="acceleration"
                to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/acceleration"/>
-
-        <!-- Trajectory Thread-->
-        <remap from="get_drivers_with_capabilities"
-               to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
 
         <!-- Trajectory and Arbitrator -->
         <remap from="route_state" to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
@@ -412,6 +419,10 @@
                to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_map"/>
         <remap from="incoming_spat"
                to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_spat"/>
+
+        <!-- LightBar Thread -->
+        <remap from="set_lights"
+               to="/control/set_lights"/>
                
       </node>
     </group>
