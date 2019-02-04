@@ -15,29 +15,32 @@
 #  the License.
 
 USERNAME=usdotfhwastol
-IMAGE=carma
+IMAGE=carma-base
+
+echo ""
+echo "##### CARMA Base Docker Image Build Script #####"
+echo ""
 
 cd "$(dirname "$0")"
 
-echo ""
-echo "##### CARMA Docker Image Build Script #####"
-echo ""
 
-FULL_VERSION_STRING=$("../engineering_tools/get-carma-version.sh")
+if [[ -z "$1" ]]; then
+    TAG=$("../engineering_tools/get-carma-version.sh")
+else
+    TAG="$1"
+fi
 
-echo "Building docker image for CARMA version: $FULL_VERSION_STRING"
-echo "Final image name: $USERNAME/$IMAGE:$FULL_VERSION_STRING"
+echo "Building docker image for CARMA Base version: $TAG"
+echo "Final image name: $USERNAME/$IMAGE:$TAG"
 
-cd ..
-docker build --no-cache -t $USERNAME/$IMAGE:$FULL_VERSION_STRING \
-    --build-arg VERSION="$FULL_VERSION_STRING" \
+docker build --no-cache -t $USERNAME/$IMAGE:$TAG \
+    --build-arg VERSION="$TAG" \
     --build-arg VCS_REF=`git rev-parse --short HEAD` \
     --build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` .
 
-docker tag $USERNAME/$IMAGE:$FULL_VERSION_STRING $USERNAME/$IMAGE:latest
+docker tag $USERNAME/$IMAGE:$TAG $USERNAME/$IMAGE:latest
 
-echo "Tagged $USERNAME/$IMAGE:$FULL_VERSION_STRING as $USERNAME/$IMAGE:latest"
+echo "Tagged $USERNAME/$IMAGE:$TAG as $USERNAME/$IMAGE:latest"
 
 echo ""
-echo "##### CARMA Docker Image Build Done! #####"
-
+echo "##### CARMA Base Docker Image Build Done! #####"

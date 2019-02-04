@@ -30,25 +30,11 @@
 
 
 # /////////////////////////////////////////////////////////////////////////////
-# Stage 1 - Install the SSH private key and acquire the CARMA source as well as
-#           any extra packages
+# Stage 1 - Acquire the CARMA source as well as any extra packages
 # /////////////////////////////////////////////////////////////////////////////
-FROM carma-base AS source-code
 
-ARG SSH_PRIVATE_KEY
-ARG EXTRA_PACKAGES
-ENV EXTRA_PACKAGES ${EXTRA_PACKAGES}
-ARG EXTRA_PACKAGES_VERSION=master
-ENV EXTRA_PACKAGES_VERSION ${EXTRA_PACKAGES_VERSION}
+FROM usdotfhwastol/carma-base:2.8.3 AS source-code
 
-# Set up the SSH key for usage by git
-RUN mkdir ~/.ssh/ && \
-        echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa && \
-        chmod 600 ~/.ssh/id_rsa && \
-        touch ~/.ssh/known_hosts && \
-        ssh-keyscan github.com >> ~/.ssh/known_hosts
-
-# Acquire the software source
 RUN mkdir ~/src
 COPY --chown=carma . /home/carma/src/CARMAPlatform/
 RUN ~/src/CARMAPlatform/docker/checkout.sh
@@ -56,7 +42,8 @@ RUN ~/src/CARMAPlatform/docker/checkout.sh
 # /////////////////////////////////////////////////////////////////////////////
 # Stage 2 - Build and install the software 
 # /////////////////////////////////////////////////////////////////////////////
-FROM carma-base AS install
+
+FROM usdotfhwastol/carma-base:2.8.3 AS install
 
 # Copy the source files from the previous stage and build/install
 RUN mkdir ~/carma_ws
@@ -66,7 +53,21 @@ RUN ~/carma_ws/src/CARMAPlatform/docker/install.sh
 # /////////////////////////////////////////////////////////////////////////////
 # Stage 3 - Finalize deployment
 # /////////////////////////////////////////////////////////////////////////////
-FROM carma-base
+
+FROM usdotfhwastol/carma-base:2.8.3
+
+ARG BUILD_DATE="NULL"
+ARG VCS_REF="NULL"
+
+LABEL org.label-schema.schema-version="1.0"
+LABEL org.label-schema.name="CARMA"
+LABEL org.label-schema.description="Binary application for the CARMA Platform"
+LABEL org.label-schema.vendor="Leidos"
+LABEL org.label-schema.version="2.8.3"
+LABEL org.label-schema.url="https://highways.dot.gov/research/research-programs/operations/CARMA"
+LABEL org.label-schema.vcs-url="https://github.com/usdot-fhwa-stol/CARMAPlatform"
+LABEL org.label-schema.vcs-ref=${VCS_REF}
+LABEL org.label-schema.build-date=${BUILD_DATE}
 
 # Migrate the files from the install stage
 COPY --from=install --chown=carma /opt/carma /opt/carma
@@ -79,4 +80,4 @@ RUN sudo chown carma:carma -R /opt/carma/vehicle && \
         ln -sf /opt/carma/vehicle/saxton_cav.launch /opt/carma/launch/saxton_cav.launch && \
         ln -sf /opt/carma/vehicle/drivers.launch /opt/carma/drivers/drivers.launch 
 
-ENTRYPOINT [ "/opt/carma/entrypoint.sh" ]
+CMD "roslaunch carma saxton_cav_docker.launch"

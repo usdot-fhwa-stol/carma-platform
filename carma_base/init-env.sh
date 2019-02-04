@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #  Copyright (C) 2018-2019 LEIDOS.
 # 
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,10 +14,8 @@
 #  License for the specific language governing permissions and limitations under
 #  the License.
 
-FROM busybox:latest
 
-ADD . /root/vehicle
-VOLUME /opt/carma/vehicle
+# Sets all environment variables and sources scripts necessary for CARMA to operate
 
-CMD  cp /root/vehicle/* /opt/carma/vehicle
-
+[ -f "/opt/ros/kinetic/setup.bash" ] && source /opt/ros/kinetic/setup.bash
+[ -f "/opt/carma/app/bin/setup.bash" ] && source /opt/carma/app/bin/setup.bash

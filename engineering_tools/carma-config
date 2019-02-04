@@ -1,0 +1,165 @@
+#!/bin/bash
+
+#  Copyright (C) 2018-2019 LEIDOS.
+# 
+#  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#  use this file except in compliance with the License. You may obtain a copy of
+#  the License at
+# 
+#  http://www.apache.org/licenses/LICENSE-2.0
+# 
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#  License for the specific language governing permissions and limitations under
+#  the License.
+
+# Code below largely based on template from Stack Overflow:
+# https://stackoverflow.com/questions/37257551/defining-subcommands-that-take-arguments-in-bash
+# Question asked by user 
+# DiogoSaraiva (https://stackoverflow.com/users/4465820/diogosaraiva)
+# and answered by user 
+# Charles Duffy (https://stackoverflow.com/users/14122/charles-duffy)
+# Attribution here is in line with Stack Overflow's Attribution policy cc-by-sa found here:
+# https://stackoverflow.blog/2009/06/25/attribution-required/
+
+carma-config__set() {
+    if [[ -z $1 ]]; then
+        echo "Please specify a tag string for carma-config to set."
+        echo "Done."
+        exit -1
+    fi
+
+    if docker container inspect carma-config > /dev/null; then
+        echo "Clearing existing CARMA configuration instance..."
+        docker rm carma-config
+    fi
+
+    docker run --name carma-config $1
+    echo "Set $1 as current CARMA configuration instance..."
+}
+
+carma-config__edit() {
+    if ! docker container inspect carma-config > /dev/null 2>&1; then
+        echo "No existing CARMA configuration found, nothing to edit. Please set a config."
+        echo "Done."
+        exit 1
+    fi
+
+    echo "Opening shell inside carma-config container with read/write privileges..."
+    docker run -it --rm --volumes-from carma-config usdotfhwastol/carma-base:latest
+}
+
+carma-config__inspect() {
+    if ! docker container inspect carma-config > /dev/null 2>&1; then
+        echo "No existing CARMA configuration found, nothing to inspect. Please set a config."
+        echo "Done."
+        exit 1
+    fi
+
+    echo "Opening shell inside carma-config container with read-only privileges..."
+    docker run -it --rm --volumes-from carma-config:ro usdotfhwastol/carma-base:latest
+}
+
+carma-config__reset() {
+    if ! docker container inspect carma-config > /dev/null 2>&1; then
+        echo "No existing CARMA configuration found, nothing to reset. Please set a config."
+        echo "Done."
+        exit 1
+    fi
+
+    local CURRENT_IMAGE=`docker container inspect --format='{{.Config.Image}}' carma-config`
+    echo "Found current config: $CURRENT_IMAGE, resetting to base state"
+    carma-config__set $CURRENT_IMAGE
+}
+
+carma-config__list_local() {
+    echo "Locally installed images: "
+    echo ""
+    docker images usdotfhwastol/carma-config
+}
+
+carma-config__list_remote() {
+    echo "Remotely available images from usdotfhwastol Dockerhub: "
+    echo ""
+    wget -q https://registry.hub.docker.com/v1/repositories/usdotfhwastol/carma-config/tags -O -  | sed -e 's/[][]//g' -e 's/"//g' -e 's/ //g' | tr '}' '\n'  | awk -F: '{print "usdotfhwastol/carma-config:"$3}'
+}
+
+carma-config__install() {
+    echo "Downloading usdotfhwastol/carma-config:$1..."
+    docker pull usdotfhwastol/carma-config:$1
+    echo "Building temporary container of usdotfhwastol/carma-config:$1 to read dependency data..."
+    docker run --name carma-config-tmp usdotfhwastol/carma-config:$1
+    local $DOCKER_FILE=`docker run --rm --volumes-from carma-config-tmp:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/docker-compose.yml'`
+    echo "Cleaning up temporary container..."
+    docker rm carma-config-tmp
+    echo "Downloading usdotfhwastol/carma-config:$1 dependencies..."
+    echo "$DOCKER_FILE" | docker-compose pull
+}
+
+carma-config__status() {
+    local CURRENT_IMAGE=`docker container inspect --format='{{.Config.Image}}' carma-config`
+    echo "Current configuration is loaded from image: $CURRENT_IMAGE"
+    echo ""
+    echo "  -- docker-compose.yml:"
+    docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/docker-compose.yml'
+    echo "  -- saxton_cav.launch:"
+    docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/saxton_cav.launch'
+    echo "  -- carma.config.js:"
+    docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/carma.config.js'
+    echo "  -- saxton_cav.urdf:"
+    docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/saxton_cav.urdf'
+}
+
+carma-config__help() {
+    cat <<HELP
+-------------------------------------------------------------------------------
+| CARMA Platform Configuration Tool                                           |
+-------------------------------------------------------------------------------
+
+Please enter one of the following commands:
+  status - Report the current configuration status
+  list_local - List available configurations on the host machine
+  list_remote - List available configurations on Dockerhub
+  install <tag> - Install a configuration identified by <tag> and download 
+                  dependencies
+  set <tag> - Set the configuration to the version identified by <tag>
+  edit - Open a shell inside the current configuration storage with r/w 
+         permissions
+  inspect - Open a shell inside the current configuration storage with r/o
+            permissions
+  reset - Restore a configuration to its default state
+  help - Display this information"
+HELP
+}
+
+carma-config() {
+    local cmdname=$1; shift
+    if type "carma-config__$cmdname" >/dev/null 2>&1; then
+        "carma-config__$cmdname" "$@"
+        echo "Done."
+    else
+        carma-config__help
+        exit -1
+    fi
+}
+
+
+# if the functions above are sourced into an interactive interpreter, the user can
+# just call "carma-config set" or "carma-config reset" with no further code needed.
+
+# if invoked as a script rather than sourced, call function named on argv via the below;
+# note that this must be the first operation other than a function definition
+# for $_ to successfully distinguish between sourcing and invocation:
+[[ $_ != $0 ]] && return
+
+# make sure we actually *did* get passed a valid function name
+if declare -f "carma-config__$1" >/dev/null 2>&1; then
+  # invoke that function, passing arguments through
+  "carma-config__$@" # same as "$1" "$2" "$3" ... for full argument list
+  echo "Done."
+else
+    carma-config__help
+    echo "Done."
+    exit -1
+fi
