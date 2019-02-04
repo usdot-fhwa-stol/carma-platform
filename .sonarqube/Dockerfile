@@ -28,7 +28,10 @@ ENV SONAR_DIR=/opt/sonarqube
 RUN sudo apt-get -y install curl && \
         sudo mkdir $SONAR_DIR && \
         sudo curl -o $SONAR_DIR/sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-3.3.0.1492-linux.zip && \
-        sudo curl -o $SONAR_DIR/build-wrapper.zip https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip
+        sudo curl -o $SONAR_DIR/build-wrapper.zip https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip && \
+        # Install Dependancy of NodeJs 6+
+        sudo curl -sL https://deb.nodesource.com/setup_10.x | sudo bash - && \
+        sudo sudo apt-get install -y nodejs
 
 # Unzip scanner
 RUN cd $SONAR_DIR && \ 
