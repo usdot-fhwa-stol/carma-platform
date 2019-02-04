@@ -19,10 +19,9 @@ FROM usdotfhwastol/carma-base:2.8.3
 
 ARG BUILD_DATE="NULL"
 ARG VCS_REF="NULL"
+ARG VERSION="NULL"
 
-# Install SonarQube Binaries
-ARG PROPERTIES_FILE=sonar-scanner.properties
-
+# Set environment variable for SonarQube Binaries
 ENV SONAR_DIR=/opt/sonarqube
 
 # Pull scanner from internet
@@ -45,15 +44,12 @@ RUN cd $SONAR_DIR && \
         # Add scanner and wrapper to PATH
         sudo echo PATH=$PATH:$SONAR_DIR/sonar-scanner/bin/:$SONAR_DIR/build-wrapper/ >> /home/carma/.base-image/init-env.sh
 
-# Copy in sonar.properties file
-COPY $PROPERTIES_FILE $SONAR_DIR/sonar-scanner/conf/sonar-scanner.properties
-
 # Set metadata labels
 LABEL org.label-schema.schema-version="1.0"
 LABEL org.label-schema.name="CARMA-SonarCloud"
 LABEL org.label-schema.description="Base image for CARMA CI testing using SonarCloud"
 LABEL org.label-schema.vendor="Leidos"
-LABEL org.label-schema.version="2.8.3"
+LABEL org.label-schema.version="${VERSION}"
 LABEL org.label-schema.url="https://highways.dot.gov/research/research-programs/operations/CARMA"
 LABEL org.label-schema.vcs-url="https://github.com/usdot-fhwa-stol/CARMAPlatform"
 LABEL org.label-schema.vcs-ref=${VCS_REF}
