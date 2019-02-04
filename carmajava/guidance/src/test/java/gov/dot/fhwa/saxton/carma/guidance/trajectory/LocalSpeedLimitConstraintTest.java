@@ -25,7 +25,7 @@ import org.ros.node.NodeConfiguration;
 import std_msgs.Header;
 
 import static org.junit.Assert.*;
-
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import cav_msgs.Route;
@@ -33,10 +33,13 @@ import cav_msgs.RouteSegment;
 import cav_msgs.RouteWaypoint;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
+
 import java.util.ArrayList;
 import java.util.List;
 
-@Ignore("TODO Resolve NPE in test appearing in CI")
 public class LocalSpeedLimitConstraintTest {
   private NodeConfiguration nodeConfig = NodeConfiguration.newPrivate();
   private MessageFactory messageFactory = nodeConfig.getTopicMessageFactory();
@@ -89,6 +92,12 @@ public class LocalSpeedLimitConstraintTest {
 
   @Before
   public void setup() {
+	
+	ILoggerFactory mockFact = mock(ILoggerFactory.class);
+    ILogger mockLogger = mock(ILogger.class);
+    when(mockFact.createLoggerForClass(any())).thenReturn(mockLogger);
+    LoggerManager.setLoggerFactory(mockFact);
+      
     List<Double> speeds = new ArrayList<>();
     speeds.add(10.0);
     speeds.add(20.0);
