@@ -12,42 +12,49 @@
 #  License for the specific language governing permissions and limitations under
 #  the License.
 
-# CARMA Base Image Docker Configuration Script
+# CARMA Base CI Image Docker Configuration Script
 
 # Use carma-base image to pull in ros dependancies
 FROM usdotfhwastol/carma-base:2.8.3
 
+ARG BUILD_DATE="NULL"
+ARG VCS_REF="NULL"
 
 # Install SonarQube Binaries
-
-ARG SONAR_SCANNER_ZIP="/Sonar-Scanner/sonar-scanner-cli-3.3.0.1492-linux.zip"
-ARG SONAR_WRAPPER_ZIP="/Sonar-Scanner/build-wrapper-linux-x86.zip"
 ARG PROPERTIES_FILE=sonar-scanner.properties
-#RUN wget https://sonarsource.bintray.com/Distribution/sonarqube/sonarqube-$SONARQUBE_VERSION.zip && \
-#        apt-get -y install unzip && \
-#        sudo unzip sonarqube-$SONARQUBE_VERSION.zip -d /opt && \
-#        sudo mv /opt/sonarqube-$SONARQUBE_VERSION /opt/sonarqube
+
 ENV SONAR_DIR=/opt/sonarqube
 
-COPY $SONAR_SCANNER_ZIP $SONAR_DIR/
-COPY $SONAR_WRAPPER_ZIP $SONAR_DIR/
+# Pull scanner from internet
+RUN sudo apt-get -y install curl && \
+        sudo mkdir $SONAR_DIR && \
+        sudo curl -o $SONAR_DIR/sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-3.3.0.1492-linux.zip && \
+        sudo curl -o $SONAR_DIR/build-wrapper.zip https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip
 
-#Try pulling from internet
-RUN cd $SONAR_DIR && \
+# Unzip scanner
+RUN cd $SONAR_DIR && \ 
         sudo apt-get -y install unzip && \
-        sudo unzip $SONAR_DIR/sonar-scanner-cli-3.3.0.1492-linux.zip -d . && \
-        sudo mkdir $SONAR_DIR/sonar-scanner && \
-        cd $(ls $SONAR_DIR | grep "sonar-scanner-" | grep -v zip) && \
-        sudo mv * -t $SONAR_DIR/sonar-scanner && \
-        cd $SONAR_DIR && \
-        sudo unzip $SONAR_DIR/build-wrapper-linux-x86.zip -d . && \
-        sudo mkdir $SONAR_DIR/build-wrapper && \
-        cd $(ls $SONAR_DIR | grep "build-wrapper-" | grep -v zip) && \
-        sudo mv * -t $SONAR_DIR/build-wrapper && \
-       # Add scanner and wrapper to PATH
-        export PATH=$PATH:$SONAR_DIR/sonar-scanner/bin/:$SONAR_DIR/sonar-wrapper/ 
-        # TODO need to set export in /home/../init-env.
-        
-RUN sudo cp -r $SONAR_DIR /opt/sonar_backup
+        sudo unzip $SONAR_DIR/sonar-scanner.zip -d . && \
+        sudo unzip $SONAR_DIR/build-wrapper.zip -d . && \
+        # Remove zip files 
+        sudo rm $SONAR_DIR/sonar-scanner.zip && \
+        sudo rm $SONAR_DIR/build-wrapper.zip && \
+        # Rename files 
+        sudo mv $(ls $SONAR_DIR | grep "sonar-scanner-") $SONAR_DIR/sonar-scanner/ && \
+        sudo mv $(ls $SONAR_DIR | grep "build-wrapper-") $SONAR_DIR/build-wrapper/ && \
+        # Add scanner and wrapper to PATH
+        sudo echo PATH=$PATH:$SONAR_DIR/sonar-scanner/bin/:$SONAR_DIR/build-wrapper/ >> /home/carma/.base-image/init-env.sh
+
 # Copy in sonar.properties file
 COPY $PROPERTIES_FILE $SONAR_DIR/sonar-scanner/conf/sonar-scanner.properties
+
+# Set metadata labels
+LABEL org.label-schema.schema-version="1.0"
+LABEL org.label-schema.name="CARMA-SonarCloud"
+LABEL org.label-schema.description="Base image for CARMA CI testing using SonarCloud"
+LABEL org.label-schema.vendor="Leidos"
+LABEL org.label-schema.version="2.8.3"
+LABEL org.label-schema.url="https://highways.dot.gov/research/research-programs/operations/CARMA"
+LABEL org.label-schema.vcs-url="https://github.com/usdot-fhwa-stol/CARMAPlatform"
+LABEL org.label-schema.vcs-ref=${VCS_REF}
+LABEL org.label-schema.build-date=${BUILD_DATE}
