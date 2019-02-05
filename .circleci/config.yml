@@ -76,7 +76,7 @@ jobs:
             echo "PR NUM ${CIRCLE_PR_NUMBER}"
             echo "Repo name ${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
             echo "URL ${CIRCLE_PULL_REQUEST}"
-            export PR_NUM=${CIRCLE_PULL_REQUEST} | cut -d'/' -f7 
+            export PR_NUM=`echo ${CIRCLE_PULL_REQUEST} | cut -d'/' -f7`
             echo "ACTUAL NUM ${PR_NUM}"
             bash /home/carma/.base-image/entrypoint.sh
             export PATH=$PATH:/opt/sonarqube/sonar-scanner/bin/:/opt/sonarqube/build-wrapper/
