@@ -40,7 +40,9 @@ jobs:
       - run:
           name: Build CARMA
           # Using sonar cloud build wrapper for C++ analysis
+          # TODO remove entrypoint line after rebuilding image
           command: |
+            bash /home/carma/.base-image/entrypoint.sh
             source /opt/ros/kinetic/setup.bash
             build-wrapper-linux-x86-64 --out-dir bw-output catkin_make install
       - run:

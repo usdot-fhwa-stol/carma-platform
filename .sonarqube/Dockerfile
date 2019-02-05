@@ -59,3 +59,6 @@ LABEL org.label-schema.url="https://highways.dot.gov/research/research-programs/
 LABEL org.label-schema.vcs-url="https://github.com/usdot-fhwa-stol/CARMAPlatform"
 LABEL org.label-schema.vcs-ref=${VCS_REF}
 LABEL org.label-schema.build-date=${BUILD_DATE}
+
+# Setup environment on login
+ENTRYPOINT [ "/home/carma/.base-image/entrypoint.sh" ]
