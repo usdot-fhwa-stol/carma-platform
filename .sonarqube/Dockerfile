@@ -15,7 +15,9 @@
 # CARMA Base CI Image Docker Configuration Script
 
 # Use carma-base image to pull in ros dependancies
-FROM usdotfhwastol/carma-base:2.8.3
+# This image is meant to be build with carma_base/build-image.sh
+# The latest tag is used to grab the carma_base image build directly before this one
+FROM usdotfhwastol/carma-base:latest
 
 ARG BUILD_DATE="NULL"
 ARG VCS_REF="NULL"
