@@ -43,6 +43,8 @@ jobs:
           # TODO remove entrypoint line after rebuilding image
           command: |
             bash /home/carma/.base-image/entrypoint.sh
+            export PATH=$PATH:/opt/sonarqube/sonar-scanner/bin/:/opt/sonarqube/build-wrapper/
+            echo $PATH
             source /opt/ros/kinetic/setup.bash
             build-wrapper-linux-x86-64 --out-dir bw-output catkin_make install
       - run:
@@ -73,6 +75,8 @@ jobs:
             echo "PR BRANCH ${CIRCLE_BRANCH}"
             echo "PR NUM ${CIRCLE_PR_NUMBER}"
             echo "Repo name ${CIRCLE_PROJECT_REPONAME}"
+            bash /home/carma/.base-image/entrypoint.sh
+            export PATH=$PATH:/opt/sonarqube/sonar-scanner/bin/:/opt/sonarqube/build-wrapper/
             sonar-scanner -Dproject.settings=src/CARMAPlatform/.sonarqube/sonar-scanner.properties -Dsonar.login=${SONAR_SCANNER_TOKEN} -Dsonar.pullrequest.base=UNKNOWN -Dsonar.pullrequest.branch=${CIRCLE_BRANCH} -Dsonar.pullrequest.key=${CIRCLE_PR_NUMBER} -Dsonar.pullrequest.provider=GitHub -Dsonar.pullrequest.github.repository=${CIRCLE_PROJECT_REPONAME}
       - store_test_results:
           path: ~/junit
