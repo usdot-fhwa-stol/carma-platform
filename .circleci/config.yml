@@ -67,13 +67,13 @@ jobs:
             find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/junit/ \;
           when: always
       - run:
-        name: Run Sonar Scanner
-        command: |
-          echo ${ENV_TEST}
-          echo "PR BRANCH ${CIRCLE_BRANCH}"
-          echo "PR NUM ${CIRCLE_PR_NUMBER}"
-          echo "Repo name ${CIRCLE_PROJECT_REPONAME}"
-          sonar-scanner -Dproject.settings=src/CARMAPlatform/.sonarqube/sonar-scanner.properties -Dsonar.login=${SONAR_SCANNER_TOKEN} -Dsonar.pullrequest.base=UNKNOWN -Dsonar.pullrequest.branch=${CIRCLE_BRANCH} -Dsonar.pullrequest.key=${CIRCLE_PR_NUMBER} -Dsonar.pullrequest.provider=GitHub -Dsonar.pullrequest.github.repository=${CIRCLE_PROJECT_REPONAME}
+          name: Run Sonar Scanner
+          command: |
+            echo ${ENV_TEST}
+            echo "PR BRANCH ${CIRCLE_BRANCH}"
+            echo "PR NUM ${CIRCLE_PR_NUMBER}"
+            echo "Repo name ${CIRCLE_PROJECT_REPONAME}"
+            sonar-scanner -Dproject.settings=src/CARMAPlatform/.sonarqube/sonar-scanner.properties -Dsonar.login=${SONAR_SCANNER_TOKEN} -Dsonar.pullrequest.base=UNKNOWN -Dsonar.pullrequest.branch=${CIRCLE_BRANCH} -Dsonar.pullrequest.key=${CIRCLE_PR_NUMBER} -Dsonar.pullrequest.provider=GitHub -Dsonar.pullrequest.github.repository=${CIRCLE_PROJECT_REPONAME}
       - store_test_results:
           path: ~/junit
       - store_artifacts:
