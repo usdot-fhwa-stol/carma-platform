@@ -17,7 +17,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: usdotfhwastol/carma-base:2.8.2
+      - image: usdotfhwastol/carma-base-ci:2.8.3
         user: carma
         environment:
           TERM: xterm
@@ -39,9 +39,10 @@ jobs:
             git clone -b develop --depth 1 git@github.com:usdot-fhwa-stol/CARMAMsgs.git src/CARMAMsgs
       - run:
           name: Build CARMA
+          # Using sonar cloud build wrapper for C++ analysis
           command: |
             source /opt/ros/kinetic/setup.bash
-            catkin_make install
+            build-wrapper-linux-x86-64 --out-dir bw-output catkin_make install
       - run:
           name: Run C++ Tests
           command: |
@@ -63,6 +64,20 @@ jobs:
             sudo mv src/CARMAPlatform/carmajava/build/reports/allTests/* /reports/tests/
             find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/junit/ \;
           when: always
+      - run:
+        name: Run Sonar Scanner
+        command: |
+          echo ${ENV_TEST}
+          echo "PR BRANCH ${CIRCLE_BRANCH}"
+          echo "PR NUM ${CIRCLE_PR_NUMBER}"
+          echo "Repo name ${CIRCLE_PROJECT_REPONAME}"
+          sonar-scanner -Dproject.settings=src/CARMAPlatform/.sonarqube/sonar-scanner.properties \
+            -Dsonar.login=${SONAR_SCANNER_TOKEN} \
+            -Dsonar.pullrequest.base=UNKNOWN \
+            -Dsonar.pullrequest.branch=${CIRCLE_BRANCH} \
+            -Dsonar.pullrequest.key=${CIRCLE_PR_NUMBER} \
+            -Dsonar.pullrequest.provider=GitHub \
+            -Dsonar.pullrequest.github.repository=${CIRCLE_PROJECT_REPONAME}
       - store_test_results:
           path: ~/junit
       - store_artifacts:
