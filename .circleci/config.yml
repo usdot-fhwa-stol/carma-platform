@@ -76,6 +76,7 @@ jobs:
             echo "PR NUM ${CIRCLE_PR_NUMBER}"
             echo "Repo name ${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
             echo "URL ${CIRCLE_PULL_REQUEST}"
+            echo "Compare URL ${CIRCLE_COMPARE_URL}"
             export PR_NUM=`echo ${CIRCLE_PULL_REQUEST} | cut -d'/' -f7`
             echo "ACTUAL NUM ${PR_NUM}"
             bash /home/carma/.base-image/entrypoint.sh
