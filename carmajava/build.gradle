@@ -21,35 +21,9 @@ task wrapper(type: Wrapper) {
 buildscript {
  // Default bootstrap file for rosjava came from here "https://github.com/rosjava/rosjava_bootstrap/raw/kinetic/buildscript.gradle"
  apply from: "rosjava_bootstrap.gradle"
-
-  repositories {
-    maven {
-      url "https://plugins.gradle.org/m2/"
-    }
-
-    // Setup sonar cloud plugin for CI integration
-    maven {
-      url "https://plugins.gradle.org/m2/"
-    }
-  }
-
-    dependencies {
-        classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.7"
-    }
 }
 
 apply plugin: 'catkin'
-apply plugin: "org.sonarqube"
-
-// SonarQube Plugin Global Properties
-sonarqube {
-    properties {
-        //property "sonar.sourceEncoding", "UTF-8"
-        property "sonar.projectKey", "usdot-fhwa-stol_CARMAPlatform"
-        property "sonar.organization", "usdot-fhwa-stol"
-        property "sonar.host.url", "https://sonarcloud.io"
-    }
-}
 
 allprojects {
     /*
@@ -106,14 +80,6 @@ subprojects {
             junitXml.enabled = false
             html.enabled = true
         }               
-    }
-
-    // SonarQube Plugin Sub-Project properties
-    sonarqube {
-        properties {
-            property "sonar.sources", "src"
-            property "sonar.java.binaries", "bin"
-        }
     }
 
     /*
