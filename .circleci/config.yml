@@ -76,8 +76,8 @@ jobs:
             echo "PR NUM ${CIRCLE_PR_NUMBER}"
             echo "Repo name ${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
             echo "URL ${CIRCLE_PULL_REQUEST}"
-            export PR_NUM=$(cut -d'/' -f7 <<<'${CIRCLE_PULL_REQUEST}')
-            echo $PR_NUM
+            export PR_NUM=${CIRCLE_PULL_REQUEST} | cut -d'/' -f7 
+            echo "ACTUAL NUM ${PR_NUM}"
             bash /home/carma/.base-image/entrypoint.sh
             export PATH=$PATH:/opt/sonarqube/sonar-scanner/bin/:/opt/sonarqube/build-wrapper/
             sonar-scanner -Dproject.settings=src/CARMAPlatform/.sonarqube/sonar-scanner.properties -Dsonar.login=${SONAR_SCANNER_TOKEN} -Dsonar.pullrequest.base=UNKNOWN -Dsonar.pullrequest.branch=${CIRCLE_BRANCH} -Dsonar.pullrequest.key=${PR_NUM} -Dsonar.pullrequest.provider=GitHub -Dsonar.pullrequest.github.repository=${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}
