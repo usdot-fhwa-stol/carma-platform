@@ -16,25 +16,6 @@
 version: '2'
 
 services:
-  roscore:
-    image: usdotfhwastol/carma-base:2.8.3
-    container_name: roscore
-    network_mode: host
-    volumes:
-      - /opt/carma/.ros:/home/carma/.ros
-    command: roscore
-  carma-web-ui:
-    image: usdotfhwastol/carma-web-ui:2.8.2
-    depends_on: 
-      - roscore
-    network_mode: host
-    container_name: carma-web-ui
-    volumes_from: 
-      - container:carma-config:ro
-    volumes:
-      - /opt/carma/logs:/opt/carma/logs
-      - /opt/carma/.ros:/home/carma/.ros
-      - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
   carma:
     image: usdotfhwastol/carma
     depends_on: 
