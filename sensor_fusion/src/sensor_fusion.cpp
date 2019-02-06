@@ -221,6 +221,10 @@ int SensorFusionApplication::run()
      earth_frame_name_, ned_frame_name_, inertial_frame_name_, 
      body_frame_name_, global_pos_sensor_frame_name_, local_pos_sensor_frame_name_);
 
+    for (float a=0; a < 5.0; a++) {
+        ROS_INFO_STREAM("TEST");
+    }
+
     // Use sim time if needed
     bool use_sim_time;
     nh_->param<bool>("/use_sim_time", use_sim_time, false);
