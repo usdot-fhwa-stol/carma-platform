@@ -223,6 +223,14 @@ int SensorFusionApplication::run()
 
     for (float a=0; a < 5.0; a++) {
         ROS_INFO_STREAM("TEST");
+        /*
+
+        TODO remove this
+        int a = 6;
+        int b = 7;
+        int c = 9;
+        ROS_INFO_STREAM(a*b*c)
+        */
     }
 
     // Use sim time if needed

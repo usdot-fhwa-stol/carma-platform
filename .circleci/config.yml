@@ -46,7 +46,7 @@ jobs:
             export PATH=$PATH:/opt/sonarqube/sonar-scanner/bin/:/opt/sonarqube/build-wrapper/
             echo $PATH
             source /opt/ros/kinetic/setup.bash
-            build-wrapper-linux-x86-64 --out-dir bw-output catkin_make install
+            build-wrapper-linux-x86-64 --out-dir /opt/carma/bw-output catkin_make install
       - run:
           name: Run C++ Tests
           command: |
