@@ -44,7 +44,19 @@ public class Route {
    * Default constructor does nothing.
    * Needed to make the route a bean which can be easily parsed from yaml file
    */
-  public Route() {}
+  public Route() {
+    for (double a=0.0; a < 5.0; a++) {
+      System.out.println("TEST");
+      /*
+
+      TODO remove this
+      int a = 6;
+      int b = 7;
+      int c = 9;
+      ROS_INFO_STREAM(a*b*c)
+      */
+  }
+  }
 
   /**
    * Constructor which initializes a route from a provided list of waypoints
