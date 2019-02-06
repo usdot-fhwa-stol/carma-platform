@@ -90,3 +90,4 @@ jobs:
           path: ~/junit
       - store_artifacts:
           path: /reports
+          path: /opt/carma/.scannerwork/report-task.txt
