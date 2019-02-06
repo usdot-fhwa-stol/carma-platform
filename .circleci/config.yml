@@ -86,6 +86,7 @@ jobs:
             bash /home/carma/.base-image/entrypoint.sh
             export PATH=$PATH:/opt/sonarqube/sonar-scanner/bin/:/opt/sonarqube/build-wrapper/
             cd src/CARMAPlatform
+            git fetch origin ${TARGET_BRANCH}
             sonar-scanner -Dproject.settings=.sonarqube/sonar-scanner.properties -Dsonar.login=${SONAR_SCANNER_TOKEN} -Dsonar.pullrequest.base=${TARGET_BRANCH} -Dsonar.pullrequest.branch=${CIRCLE_BRANCH} -Dsonar.pullrequest.key=${PR_NUM} -X
       - store_test_results:
           path: ~/junit
