@@ -22,7 +22,7 @@ jobs:
         environment:
           TERM: xterm
           GRADLE_OPTS: '-Dorg.gradle.jvmargs="-noverify -Xmx3072M -XX:+HeapDumpOnOutOfMemoryError"'
-          _JAVA_OPTIONS: "-Xms1024m -Xmx2048m"
+          _JAVA_OPTIONS: "-Xmx2048m"
     working_directory: "/opt/carma/"
     steps:
       - run:
