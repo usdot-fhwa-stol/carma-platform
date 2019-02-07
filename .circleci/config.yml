@@ -35,12 +35,6 @@ jobs:
       - run: 
           name: Pull CARMAMsgs
           command: |
-            cd src/CARMAPlatform
-            git branch -l -a
-            git fetch origin develop
-            echo "Diff"
-            git diff --name-status origin/develop | cat
-            cd ../..
             source /opt/ros/kinetic/setup.bash
             git clone -b develop --depth 1 git@github.com:usdot-fhwa-stol/CARMAMsgs.git src/CARMAMsgs
       - run:
@@ -93,7 +87,9 @@ jobs:
             export PATH=$PATH:/opt/sonarqube/sonar-scanner/bin/:/opt/sonarqube/build-wrapper/
             cd src/CARMAPlatform
             git fetch origin ${TARGET_BRANCH}
-            sonar-scanner -Dproject.settings=.sonarqube/sonar-scanner.properties -Dsonar.login=${SONAR_SCANNER_TOKEN} -Dsonar.pullrequest.base=${TARGET_BRANCH} -Dsonar.pullrequest.branch=${CIRCLE_BRANCH} -Dsonar.pullrequest.key=${PR_NUM} -X
+            echo "Diff"
+            git diff --name-status origin/${TARGET_BRANCH} | cat
+            sonar-scanner -Dproject.settings=.sonarqube/sonar-scanner.properties -Dsonar.login=${SONAR_SCANNER_TOKEN} -Dsonar.pullrequest.base=origin/${TARGET_BRANCH} -Dsonar.pullrequest.branch=${CIRCLE_BRANCH} -Dsonar.pullrequest.key=${PR_NUM} -X
       - store_test_results:
           path: ~/junit
       - store_artifacts:
