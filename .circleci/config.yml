@@ -25,13 +25,18 @@ version: 2
 # Every run command should start with source ${INIT_ENV} to ensure all default dependancies are available
 jobs:
   build:
+    # Pull docker image from docker hub
+    # XTERM used for better catkin_make output
     docker:
       - image: usdotfhwastol/carma-base-ci:2.8.3
         user: carma
         environment:
           TERM: xterm
           INIT_ENV: /home/carma/.base-image/init-env.sh
+    # Set working directory
     working_directory: "/opt/carma/"
+    # Pull code and execute tests
+    # Name of each run command defines purpose use
     steps:
       - run:
           name: Create src folder
@@ -41,6 +46,7 @@ jobs:
             cd src
             mkdir CARMAPlatform
             mkdir CARMAMsgs
+      # Checkout PR branch
       - checkout:
           path: src/CARMAPlatform
       - run: 
@@ -51,8 +57,6 @@ jobs:
             git clone -b develop --depth 1 git@github.com:usdot-fhwa-stol/CARMAMsgs.git src/CARMAMsgs
       - run:
           name: Build CARMA
-          # Using sonar cloud build wrapper for C++ analysis
-          # TODO remove entrypoint line after rebuilding image
           command: |
             source ${INIT_ENV}
             build-wrapper-linux-x86-64 --out-dir /opt/carma/bw-output catkin_make install
@@ -76,29 +80,24 @@ jobs:
             sudo mv src/CARMAPlatform/carmajava/build/reports/allTests/* /reports/tests/
             find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/junit/ \;
           when: always
+      # Run SonarCloud analysis
+      # PR Branchs and number extracted from Circle variables and github api
+      # Circle CI seems to make a change to the base branch, so we must fetch --force to ensure correct git file change stats
+      # SONAR_SCANNER_TOKEN MUST be secured as an environment variable in Circle CI NOT in this file. 
       - run:
           name: Run Sonar Scanner
           command: |
             source ${INIT_ENV}
-            echo "PR BRANCH ${CIRCLE_BRANCH}"
+            echo "PR branch ${CIRCLE_BRANCH}"
             echo "Repo name ${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
             echo "URL ${CIRCLE_PULL_REQUEST}"
             export PR_NUM=`echo ${CIRCLE_PULL_REQUEST} | cut -d'/' -f7`
-            echo "ACTUAL NUM ${PR_NUM}"
+            echo "PR number ${PR_NUM}"
             export BASE_BRANCH_URL="https://api.github.com/repos/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/pulls/${PR_NUM}"
             export TARGET_BRANCH=$(curl "$BASE_BRANCH_URL" | jq '.base.ref' | tr -d '"') 
             echo "Target Branch = ${TARGET_BRANCH}"
-            bash /home/carma/.base-image/entrypoint.sh
-            export PATH=$PATH:/opt/jq/:/opt/sonarqube/sonar-scanner/bin/:/opt/sonarqube/build-wrapper/
             cd src/CARMAPlatform
-            git config --global user.name "CARMA CI"
-            git config --global user.email "carma@ci.ci"\
-            echo "Branches"
-            git branch -l
             git fetch --force origin ${TARGET_BRANCH}:${TARGET_BRANCH}
-            git branch -l
-            echo "Diff"
-            git diff --name-status ${TARGET_BRANCH} | cat
             sonar-scanner -Dproject.settings=.sonarqube/sonar-scanner.properties -Dsonar.login=${SONAR_SCANNER_TOKEN} -Dsonar.pullrequest.base=${TARGET_BRANCH} -Dsonar.pullrequest.branch=${CIRCLE_BRANCH} -Dsonar.pullrequest.key=${PR_NUM} -X
       - store_test_results:
           path: ~/junit
