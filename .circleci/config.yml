@@ -53,17 +53,12 @@ jobs:
           name: Pull CARMAMsgs
           command: |
             source ${INIT_ENV}
-            echo "PATH ${PATH}"
             git clone -b develop --depth 1 git@github.com:usdot-fhwa-stol/CARMAMsgs.git src/CARMAMsgs
       - run:
           name: Build CARMA
           command: |
             source ${INIT_ENV}
-            echo "PATH ${PATH}"
-            [ -f "/opt/ros/kinetic/setup.bash" ] && source /opt/ros/kinetic/setup.bash
-            [ -f "/opt/carma/app/bin/setup.bash" ] && source /opt/carma/app/bin/setup.bash
-            echo $PATH
-            /opt/sonarqube/build-wrapper/build-wrapper-linux-x86-64 --out-dir /opt/carma/bw-output catkin_make install
+            build-wrapper/build-wrapper-linux-x86-64 --out-dir /opt/carma/bw-output catkin_make install
       - run:
           name: Run C++ Tests
           command: |
