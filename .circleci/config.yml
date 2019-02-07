@@ -37,6 +37,7 @@ jobs:
           command: |
             cd src/CARMAPlatform
             git branch -l -a
+            git fetch origin develop
             echo "Diff"
             git diff --name-status develop | cat
             cd ../..
