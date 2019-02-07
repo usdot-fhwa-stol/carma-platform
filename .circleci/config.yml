@@ -35,6 +35,7 @@ jobs:
       - run: 
           name: Pull CARMAMsgs
           command: |
+            git branch -l -a
             source /opt/ros/kinetic/setup.bash
             git clone -b develop --depth 1 git@github.com:usdot-fhwa-stol/CARMAMsgs.git src/CARMAMsgs
       - run:
