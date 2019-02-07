@@ -18,40 +18,26 @@ package gov.dot.fhwa.saxton.carma.guidance.lightbar;
 
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceAction;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceComponent;
-import gov.dot.fhwa.saxton.carma.guidance.GuidanceState;
 import gov.dot.fhwa.saxton.carma.guidance.GuidanceStateMachine;
 import gov.dot.fhwa.saxton.carma.guidance.IStateChangeListener;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
-import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.ISubscriber;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.OnServiceResponseCallback;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.TopicNotFoundException;
-import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
-import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
 
 import org.ros.node.ConnectedNode;
 import org.ros.node.parameter.ParameterTree;
 
 import cav_msgs.BSM;
 import cav_msgs.LightBarStatus;
-import cav_srvs.GetDriversWithCapabilities;
-import cav_srvs.GetDriversWithCapabilitiesRequest;
-import cav_srvs.GetDriversWithCapabilitiesResponse;
 import cav_srvs.SetLights;
 import cav_srvs.SetLightsRequest;
 import cav_srvs.SetLightsResponse;
@@ -67,7 +53,6 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
   private Map<String, ILightBarControlChangeHandler> handlerMap = Collections.synchronizedMap(new HashMap<>());
   private IService<SetLightsRequest, SetLightsResponse> lightBarService;
   private LightBarStatus statusMsg;
-  private final String LIGHT_BAR_SERVICE = "set_lights";
   private final String BSM_TOPIC = "bsm";
   private final LightBarStateMachine lightBarStateMachine;
   private final ISubscriber<BSM> bsmTopic;
@@ -337,65 +322,10 @@ public class LightBarManager extends GuidanceComponent implements IStateChangeLi
    * Uses the interface manager to find the required service
    */
   private void initLightBarService() {
-    // Register with the interface manager's service
-    IService<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> driverCapabilityService;
     try {
-      driverCapabilityService = pubSubService.getServiceForTopic("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE);
-    } catch (TopicNotFoundException tnfe) {
-      log.warn("Failed to find GetDriversWithCapabilities service. Not able to control light bar");
-      return;
-    }
-
-    // Build our request message for longitudinal control drivers
-    GetDriversWithCapabilitiesRequest req = driverCapabilityService.newMessage();
-
-    List<String> reqdCapabilities = new ArrayList<>();
-    reqdCapabilities.add(LIGHT_BAR_SERVICE);
-    req.setCapabilities(reqdCapabilities);
-
-    // Work around to pass a final object into our anonymous inner class so we can get the
-    // response
-    final GetDriversWithCapabilitiesResponse[] drivers = new GetDriversWithCapabilitiesResponse[1];
-    drivers[0] = null;
-
-    // Call the InterfaceManager to see if we have a driver that matches our requirements
-    driverCapabilityService.call(req, new OnServiceResponseCallback<GetDriversWithCapabilitiesResponse>() {
-        @Override
-        public void onSuccess(GetDriversWithCapabilitiesResponse msg) {
-            log.debug("Received GetDriversWithCapabilitiesResponse");
-            for (String driverName : msg.getDriverData()) {
-                log.debug("Discovered driver: " + driverName);
-            }
-
-            drivers[0] = msg;
-        }
-
-        @Override
-        public void onFailure(Exception e) {
-          log.warn("Failed to call GetDriversWithCapabilities service. Not able to control light bar");
-        }
-    });
-
-    // Verify that the message returned drivers that we can use
-    String lightBarServiceName = null;
-    if (drivers[0] != null) {
-        for (String serviceName : drivers[0].getDriverData()) {
-            if (serviceName.endsWith(LIGHT_BAR_SERVICE)) {
-              lightBarServiceName = serviceName;
-              break;
-            }
-        }
-        if (lightBarServiceName != null) {
-          try {
-            lightBarService = pubSubService.getServiceForTopic(lightBarServiceName, SetLights._TYPE);
-          } catch (TopicNotFoundException e1) {
-            log.warn("Failed to find  SetLights service. Not able to control light bar");
-          }
-        } else {
-          log.warn("Failed to find  SetLights service. Not able to control light bar. lightBarServiceName is null");
-        }
-    } else {
-      log.warn("Failed to find  SetLights service. Not able to control light bar. drivers[0] is null");
+  	  lightBarService = pubSubService.getServiceForTopic("set_lights", SetLights._TYPE);
+    } catch (TopicNotFoundException e1) {
+      log.warn("Failed to find  SetLights service. Not able to control light bar");
     }
   }
 

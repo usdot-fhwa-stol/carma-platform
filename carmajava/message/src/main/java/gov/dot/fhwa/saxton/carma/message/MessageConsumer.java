@@ -16,8 +16,6 @@
 
 package gov.dot.fhwa.saxton.carma.message;
 
-
-import cav_srvs.*;
 import gov.dot.fhwa.saxton.carma.message.factory.DSRCMessageFactory;
 import gov.dot.fhwa.saxton.carma.message.factory.IMessage;
 import gov.dot.fhwa.saxton.carma.message.factory.MessageContainer;
@@ -25,11 +23,7 @@ import gov.dot.fhwa.saxton.carma.message.helper.MessageStatistic;
 import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
-import gov.dot.fhwa.saxton.carma.rosutils.RosServiceSynchronizer;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -53,12 +47,7 @@ import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
 
-//Services
-import org.ros.node.service.ServiceClient;
-import org.ros.node.service.ServiceResponseListener;
-import org.ros.exception.RemoteException;
 import org.ros.exception.RosRuntimeException;
-import org.ros.exception.ServiceNotFoundException;
 
 /*
  * The Message package is part of the Vehicle Environment package.
@@ -94,9 +83,6 @@ public class MessageConsumer extends SaxtonBaseNode {
 	protected Subscriber<MobilityPath> mobilityPathSub_; //outgoing plain mobility path message
 	protected Subscriber<MobilityResponse> mobilityResponseSub_; //outgoing plain mobility response message
 	protected Subscriber<MobilityOperation> mobilityOperationSub_; //outgoing plain mobility operation message
-
-	// Used Services
-	protected ServiceClient<GetDriversWithCapabilitiesRequest, GetDriversWithCapabilitiesResponse> getDriversWithCapabilitiesClient_;
 	
 	// Log for this node
     protected SaxtonLogger log_ = null;
@@ -178,50 +164,9 @@ public class MessageConsumer extends SaxtonBaseNode {
             }
         }
 		
-		//Use cav_srvs.GetDriversWithCapabilities and wait for driversReady signal
-		getDriversWithCapabilitiesClient_ = this.waitForService("get_drivers_with_capabilities", GetDriversWithCapabilities._TYPE, connectedNode, 10000);
-		if(getDriversWithCapabilitiesClient_ == null) {
-			log_.error("Cannot find service get_drivers_with_capabilities");
-            handleException(new ServiceNotFoundException("get_drivers_with_capabilities is not found!"));
-		}
-		
-		//Make service calls and validate drivers information
-		GetDriversWithCapabilitiesRequest request = getDriversWithCapabilitiesClient_.newMessage();
-		List<String> capabilities = Arrays.asList("inbound_binary_msg", "outbound_binary_msg");
-		request.setCapabilities(capabilities);
-		final List<GetDriversWithCapabilitiesResponse> driver_response = new ArrayList<>();
-		try {
-            RosServiceSynchronizer.callSync(getDriversWithCapabilitiesClient_, request, new ServiceResponseListener<GetDriversWithCapabilitiesResponse>() {         	
-            	@Override
-            	public void onSuccess(GetDriversWithCapabilitiesResponse response) {
-            	    driver_response.add(response);
-            		log_.info("GetDriversWithCapabilitiesResponse: " + driver_response.get(0).getDriverData());
-            	}
-            	@Override
-            	public void onFailure(RemoteException e) {
-            		throw new RosRuntimeException(e);
-            	}
-            });
-        } catch (Exception e1) {
-            log_.error("GetDriversWithCapabilities call failed.");
-            handleException(e1);
-        }
-		String J2735_inbound_binary_msg = null, J2735_outbound_binary_msg = null;
-		for(String s : driver_response.get(0).getDriverData()) {
-			if(s.endsWith("/dsrc/comms/inbound_binary_msg")) {
-				J2735_inbound_binary_msg = s;
-			} else if(s.endsWith("/dsrc/comms/outbound_binary_msg")) {
-				J2735_outbound_binary_msg = s;
-			}
-		}
-		if(J2735_inbound_binary_msg == null || J2735_outbound_binary_msg == null) {
-			log_.error("Unable to find suitable dsrc drivers!");
-            handleException(new RosRuntimeException("Cannot find suitable DSRC drivers."));
-		}
-		
 		//initialize Pubs
 		bsmPub_ = connectedNode_.newPublisher("incoming_j2735_bsm", BSM._TYPE);
-		outboundPub_ = connectedNode_.newPublisher(J2735_outbound_binary_msg, ByteArray._TYPE);
+		outboundPub_ = connectedNode_.newPublisher("outbound_binary_msg", ByteArray._TYPE);
 		mobilityReqPub_ = connectedNode_.newPublisher("incoming_mobility_request", MobilityRequest._TYPE);
 		mobilityPathPub_ = connectedNode_.newPublisher("incoming_mobility_path", MobilityPath._TYPE);
 		mobilityResponsePub_ = connectedNode_.newPublisher("incoming_mobility_response", MobilityResponse._TYPE);
@@ -246,7 +191,7 @@ public class MessageConsumer extends SaxtonBaseNode {
 		
 		//initialize Subs
 		bsmSub_ = connectedNode_.newSubscriber("outgoing_j2735_bsm", BSM._TYPE);
-		inboundSub_ = connectedNode_.newSubscriber(J2735_inbound_binary_msg, ByteArray._TYPE);
+		inboundSub_ = connectedNode_.newSubscriber("inbound_binary_msg", ByteArray._TYPE);
 		mobilityReqSub_ = connectedNode_.newSubscriber("outgoing_mobility_request", MobilityRequest._TYPE);
 		mobilityPathSub_ = connectedNode_.newSubscriber("outgoing_mobility_path", MobilityPath._TYPE);
 		mobilityResponseSub_ = connectedNode_.newSubscriber("outgoing_mobility_response", MobilityResponse._TYPE);

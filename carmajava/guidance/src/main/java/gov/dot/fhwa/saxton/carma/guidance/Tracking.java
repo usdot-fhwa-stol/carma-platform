@@ -112,8 +112,8 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener,
 	protected TreeMap<Long, double[]> speedTimeTree = new TreeMap<Long, double[]>((a, b) -> Long.compare(a, b));
 	protected double trajectoryStartLocation = 0;
 	protected long trajectoryStartTime = 0;
-	private static final String DRIVER_BASE_PATH = "/saxton_cav/drivers";
-	private static final String CAN_DRIVER_BASE_PATH = "/srx_can/can/";
+	
+	private static final String CAN_DRIVER_BASE_PATH = "/can/";
 	private static final String STEERING_WHEEL_CAPABILITY = "steering_wheel_angle";
 	private static final String BRAKE_POSITION_CAPABILITY = "brake_position";
 	private static final String TRANSMISSION_STATE_CAPABILITY = "transmission_state";
@@ -172,15 +172,15 @@ public class Tracking extends GuidanceComponent implements IStateChangeListener,
         // Make service call to get drivers
         log.debug("Trying to get get_drivers_with_capabilities service...");
 
-        steeringWheelSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + STEERING_WHEEL_CAPABILITY, Float64._TYPE);
-        brakeSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + BRAKE_POSITION_CAPABILITY, Float64._TYPE);
-        transmissionSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + TRANSMISSION_STATE_CAPABILITY, j2735_msgs.TransmissionState._TYPE);
-        tractionActiveSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + TRACTION_CTRL_ACTIVE_CAPABILITY, std_msgs.Bool._TYPE);
-        tractionEnabledSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + TRACTION_CTRL_ENABLED_CAPABILITY, std_msgs.Bool._TYPE);
-        antilockBrakeSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + ANTILOCK_BRAKES_ACTIVE_CAPABILITY, std_msgs.Bool._TYPE);
-        stabilityActiveSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + STABILITY_CTRL_ACTIVE_CAPABILITY, std_msgs.Bool._TYPE);
-        stabilityEnabledSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + STABILITY_CTRL_ENABLED_CAPABILITY, std_msgs.Bool._TYPE);
-        parkingBrakeSubscriber = pubSubService.getSubscriberForTopic(DRIVER_BASE_PATH + CAN_DRIVER_BASE_PATH + PARKING_BRAKE_CAPABILITY, std_msgs.Bool._TYPE);
+        steeringWheelSubscriber = pubSubService.getSubscriberForTopic(CAN_DRIVER_BASE_PATH + STEERING_WHEEL_CAPABILITY, Float64._TYPE);
+        brakeSubscriber = pubSubService.getSubscriberForTopic(CAN_DRIVER_BASE_PATH + BRAKE_POSITION_CAPABILITY, Float64._TYPE);
+        transmissionSubscriber = pubSubService.getSubscriberForTopic(CAN_DRIVER_BASE_PATH + TRANSMISSION_STATE_CAPABILITY, j2735_msgs.TransmissionState._TYPE);
+        tractionActiveSubscriber = pubSubService.getSubscriberForTopic(CAN_DRIVER_BASE_PATH + TRACTION_CTRL_ACTIVE_CAPABILITY, std_msgs.Bool._TYPE);
+        tractionEnabledSubscriber = pubSubService.getSubscriberForTopic(CAN_DRIVER_BASE_PATH + TRACTION_CTRL_ENABLED_CAPABILITY, std_msgs.Bool._TYPE);
+        antilockBrakeSubscriber = pubSubService.getSubscriberForTopic(CAN_DRIVER_BASE_PATH + ANTILOCK_BRAKES_ACTIVE_CAPABILITY, std_msgs.Bool._TYPE);
+        stabilityActiveSubscriber = pubSubService.getSubscriberForTopic(CAN_DRIVER_BASE_PATH + STABILITY_CTRL_ACTIVE_CAPABILITY, std_msgs.Bool._TYPE);
+        stabilityEnabledSubscriber = pubSubService.getSubscriberForTopic(CAN_DRIVER_BASE_PATH + STABILITY_CTRL_ENABLED_CAPABILITY, std_msgs.Bool._TYPE);
+        parkingBrakeSubscriber = pubSubService.getSubscriberForTopic(CAN_DRIVER_BASE_PATH + PARKING_BRAKE_CAPABILITY, std_msgs.Bool._TYPE);
 
         if (steeringWheelSubscriber == null || brakeSubscriber == null || transmissionSubscriber == null
                 || tractionActiveSubscriber == null || tractionEnabledSubscriber == null
