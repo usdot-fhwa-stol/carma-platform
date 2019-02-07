@@ -54,27 +54,23 @@ jobs:
           # Using sonar cloud build wrapper for C++ analysis
           # TODO remove entrypoint line after rebuilding image
           command: |
-            bash /home/carma/.base-image/entrypoint.sh
-            export PATH=$PATH:/opt/sonarqube/sonar-scanner/bin/:/opt/sonarqube/build-wrapper/
-            echo $PATH
-            source /opt/ros/kinetic/setup.bash
+            source ${INIT_ENV}
             build-wrapper-linux-x86-64 --out-dir /opt/carma/bw-output catkin_make install
       - run:
           name: Run C++ Tests
           command: |
-            source /opt/ros/kinetic/setup.bash
-            source /opt/carma/devel/setup.bash
+            source ${INIT_ENV}
             catkin_make run_tests
       - run:
           name: Run Java Tests
           command: |
-            source /opt/ros/kinetic/setup.bash
-            source /opt/carma/devel/setup.bash
+            source ${INIT_ENV}
             cd src/CARMAPlatform/carmajava/
             ./gradlew testReport --info
       - run:
           name: Save Java Test results
           command: |
+            source ${INIT_ENV}
             mkdir -p ~/junit/ 
             sudo mkdir -p /reports/tests
             sudo mv src/CARMAPlatform/carmajava/build/reports/allTests/* /reports/tests/
@@ -83,6 +79,7 @@ jobs:
       - run:
           name: Run Sonar Scanner
           command: |
+            source ${INIT_ENV}
             echo "PR BRANCH ${CIRCLE_BRANCH}"
             echo "Repo name ${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
             echo "URL ${CIRCLE_PULL_REQUEST}"
