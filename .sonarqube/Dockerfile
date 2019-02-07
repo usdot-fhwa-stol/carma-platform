@@ -24,6 +24,9 @@ ARG VCS_REF="NULL"
 ARG VERSION="NULL"
 
 # Set environment variable for SonarQube Binaries
+# Two binaries are will go in this repo. 
+# The Build Wrapper which executes a code build to capture C++
+# The Sonar Scanner which evaluates both C++ and Java then uploads the results to SonarCloud
 ENV SONAR_DIR=/opt/sonarqube
 
 # Pull scanner from internet
@@ -33,7 +36,12 @@ RUN sudo apt-get -y install curl && \
         sudo curl -o $SONAR_DIR/build-wrapper.zip https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip && \
         # Install Dependancy of NodeJs 6+
         sudo curl -sL https://deb.nodesource.com/setup_10.x | sudo bash - && \
-        sudo sudo apt-get install -y nodejs
+        sudo sudo apt-get install -y nodejs && \
+        # Install JQ Json Parser Tool
+        sudo mkdir /opt/jq && \
+        sudo curl -L "https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64" -o /opt/jq/jq && \
+        sudo chmod +x /opt/jq/jq
+
 
 # Unzip scanner
 RUN cd $SONAR_DIR && \ 
@@ -46,8 +54,8 @@ RUN cd $SONAR_DIR && \
         # Rename files 
         sudo mv $(ls $SONAR_DIR | grep "sonar-scanner-") $SONAR_DIR/sonar-scanner/ && \
         sudo mv $(ls $SONAR_DIR | grep "build-wrapper-") $SONAR_DIR/build-wrapper/ && \
-        # Add scanner and wrapper to PATH
-        sudo echo PATH=$PATH:$SONAR_DIR/sonar-scanner/bin/:$SONAR_DIR/build-wrapper/ >> /home/carma/.base-image/init-env.sh
+        # Add scanner, wrapper, and jq to PATH
+        sudo echo PATH=$PATH::/opt/jq/:$SONAR_DIR/sonar-scanner/bin/:$SONAR_DIR/build-wrapper/ >> /home/carma/.base-image/init-env.sh
 
 # Set metadata labels
 LABEL org.label-schema.schema-version="1.0"

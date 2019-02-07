@@ -25,6 +25,7 @@ jobs:
     steps:
       - run:
           name: Create src folder
+          shell: /home/carma/.base-image/entrypoint.sh
           command: |
             mkdir src
             cd src
@@ -34,8 +35,10 @@ jobs:
           path: src/CARMAPlatform
       - run: 
           name: Pull CARMAMsgs
+          shell: /home/carma/.base-image/entrypoint.sh
           command: |
             source /opt/ros/kinetic/setup.bash
+            echo "PATH ${PATH}"
             git clone -b develop --depth 1 git@github.com:usdot-fhwa-stol/CARMAMsgs.git src/CARMAMsgs
       - run:
           name: Build CARMA
@@ -71,20 +74,16 @@ jobs:
       - run:
           name: Run Sonar Scanner
           command: |
-            echo ${ENV_TEST}
             echo "PR BRANCH ${CIRCLE_BRANCH}"
-            echo "PR NUM ${CIRCLE_PR_NUMBER}"
             echo "Repo name ${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
             echo "URL ${CIRCLE_PULL_REQUEST}"
             export PR_NUM=`echo ${CIRCLE_PULL_REQUEST} | cut -d'/' -f7`
             echo "ACTUAL NUM ${PR_NUM}"
-            curl -L "https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64" -o jq
-            chmod +x jq
             export BASE_BRANCH_URL="https://api.github.com/repos/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/pulls/${PR_NUM}"
-            export TARGET_BRANCH=$(curl "$BASE_BRANCH_URL" | ./jq '.base.ref' | tr -d '"') 
+            export TARGET_BRANCH=$(curl "$BASE_BRANCH_URL" | jq '.base.ref' | tr -d '"') 
             echo "Target Branch = ${TARGET_BRANCH}"
             bash /home/carma/.base-image/entrypoint.sh
-            export PATH=$PATH:/opt/sonarqube/sonar-scanner/bin/:/opt/sonarqube/build-wrapper/
+            export PATH=$PATH:/opt/jq/:/opt/sonarqube/sonar-scanner/bin/:/opt/sonarqube/build-wrapper/
             cd src/CARMAPlatform
             git config --global user.name "CARMA CI"
             git config --global user.email "carma@ci.ci"\
