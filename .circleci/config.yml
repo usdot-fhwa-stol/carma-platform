@@ -61,6 +61,7 @@ jobs:
             source ${INIT_ENV}
             echo "PATH ${PATH}"
             pwd
+            cat ${INIT_ENV}
             export PATH=$PATH:/opt/sonarqube/sonar-scanner/bin/:/opt/sonarqube/build-wrapper/
             echo $PATH
             /opt/sonarqube/build-wrapper/build-wrapper-linux-x86-64 --out-dir /opt/carma/bw-output catkin_make install
