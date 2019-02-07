@@ -68,6 +68,7 @@ jobs:
           name: Run Java Tests
           command: |
             source ${INIT_ENV}
+            source /opt/carma/devel/setup.bash
             cd src/CARMAPlatform/carmajava/
             ./gradlew testReport --info
       - run:
