@@ -38,10 +38,8 @@ jobs:
             cd src/CARMAPlatform
             git branch -l -a
             git fetch origin develop
-            git checkout remotes/origin/develop
-            git pull
             echo "Diff"
-            git diff --name-status develop | cat
+            git diff --name-status origin/develop | cat
             cd ../..
             source /opt/ros/kinetic/setup.bash
             git clone -b develop --depth 1 git@github.com:usdot-fhwa-stol/CARMAMsgs.git src/CARMAMsgs
