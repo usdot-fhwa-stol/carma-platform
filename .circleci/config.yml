@@ -35,9 +35,11 @@ jobs:
       - run: 
           name: Pull CARMAMsgs
           command: |
+            cd src/CARMAPlatform
             git branch -l -a
             echo "Diff"
             git diff --name-status develop | cat
+            cd ../..
             source /opt/ros/kinetic/setup.bash
             git clone -b develop --depth 1 git@github.com:usdot-fhwa-stol/CARMAMsgs.git src/CARMAMsgs
       - run:
