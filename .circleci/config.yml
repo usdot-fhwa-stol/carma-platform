@@ -13,7 +13,16 @@ version: 2
 #  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #  License for the specific language governing permissions and limitations under
 #  the License.
-# -Dsonar.pullrequest.provider=GitHub -Dsonar.pullrequest.github.repository=${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}
+# 
+
+# Configuration file for Circle CI 
+# CI will report failure if any executed command returns and error status
+# Operations performed are as follows
+# Build source code
+# Run unit tests for C++ and Java
+# Run static code analyzer for SourceCloud
+# Upload test results
+# Every run command should start with source ${INIT_ENV} to ensure all default dependancies are available
 jobs:
   build:
     docker:
@@ -27,7 +36,7 @@ jobs:
       - run:
           name: Create src folder
           command: |
-            ${INIT_ENV}
+            source ${INIT_ENV}
             mkdir src
             cd src
             mkdir CARMAPlatform
@@ -37,7 +46,7 @@ jobs:
       - run: 
           name: Pull CARMAMsgs
           command: |
-            ${INIT_ENV}
+            source ${INIT_ENV}
             echo "PATH ${PATH}"
             git clone -b develop --depth 1 git@github.com:usdot-fhwa-stol/CARMAMsgs.git src/CARMAMsgs
       - run:
