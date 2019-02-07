@@ -87,10 +87,11 @@ jobs:
             export PATH=$PATH:/opt/sonarqube/sonar-scanner/bin/:/opt/sonarqube/build-wrapper/
             cd src/CARMAPlatform
             git config --global user.name "CARMA CI"
-            git config --global user.email "carma@ci.ci"
-            git checkout ${TARGET_BRANCH}
-            git pull origin ${TARGET_BRANCH}
-            git checkout ${CIRCLE_BRANCH}
+            git config --global user.email "carma@ci.ci"\
+            echo "Branches"
+            git branch -l
+            git fetch origin ${TARGET_BRANCH}:${TARGET_BRANCH}
+            git branch -l
             echo "Diff"
             git diff --name-status ${TARGET_BRANCH} | cat
             sonar-scanner -Dproject.settings=.sonarqube/sonar-scanner.properties -Dsonar.login=${SONAR_SCANNER_TOKEN} -Dsonar.pullrequest.base=${TARGET_BRANCH} -Dsonar.pullrequest.branch=${CIRCLE_BRANCH} -Dsonar.pullrequest.key=${PR_NUM} -X
