@@ -36,6 +36,8 @@ jobs:
           name: Pull CARMAMsgs
           command: |
             git branch -l -a
+            echo "Diff"
+            git diff --name-status develop | cat
             source /opt/ros/kinetic/setup.bash
             git clone -b develop --depth 1 git@github.com:usdot-fhwa-stol/CARMAMsgs.git src/CARMAMsgs
       - run:
