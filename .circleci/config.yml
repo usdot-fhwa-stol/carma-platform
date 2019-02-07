@@ -21,12 +21,13 @@ jobs:
         user: carma
         environment:
           TERM: xterm
+          INIT_ENV: /home/carma/.base-image/init-env.sh
     working_directory: "/opt/carma/"
     steps:
       - run:
           name: Create src folder
-          shell: /home/carma/.base-image/entrypoint.sh
           command: |
+            ${INIT_ENV}
             mkdir src
             cd src
             mkdir CARMAPlatform
@@ -35,9 +36,8 @@ jobs:
           path: src/CARMAPlatform
       - run: 
           name: Pull CARMAMsgs
-          shell: /home/carma/.base-image/entrypoint.sh
           command: |
-            source /opt/ros/kinetic/setup.bash
+            ${INIT_ENV}
             echo "PATH ${PATH}"
             git clone -b develop --depth 1 git@github.com:usdot-fhwa-stol/CARMAMsgs.git src/CARMAMsgs
       - run:
