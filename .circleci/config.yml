@@ -90,7 +90,7 @@ jobs:
             git config --global user.email "carma@ci.ci"\
             echo "Branches"
             git branch -l
-            git fetch origin ${TARGET_BRANCH}:${TARGET_BRANCH}
+            git fetch --force origin ${TARGET_BRANCH}:${TARGET_BRANCH}
             git branch -l
             echo "Diff"
             git diff --name-status ${TARGET_BRANCH} | cat
