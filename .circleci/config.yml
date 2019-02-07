@@ -86,7 +86,8 @@ jobs:
             bash /home/carma/.base-image/entrypoint.sh
             export PATH=$PATH:/opt/sonarqube/sonar-scanner/bin/:/opt/sonarqube/build-wrapper/
             cd src/CARMAPlatform
-            git fetch origin ${TARGET_BRANCH}
+            git config --global user.name "CARMA CI"
+            git config --global user.email "carma@ci.ci"
             git checkout ${TARGET_BRANCH}
             git pull ${TARGET_BRANCH}
             echo "Diff"
