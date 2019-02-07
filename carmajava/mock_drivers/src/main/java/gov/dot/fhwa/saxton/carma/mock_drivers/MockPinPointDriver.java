@@ -17,10 +17,8 @@
 package gov.dot.fhwa.saxton.carma.mock_drivers;
 
 import org.ros.message.Time;
-import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
-import rosgraph_msgs.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -84,13 +82,13 @@ public class MockPinPointDriver extends AbstractMockDriver {
     // Topics
     // Published
     headingPub =
-      connectedNode.newPublisher("~/position/heading", cav_msgs.HeadingStamped._TYPE);
+      connectedNode.newPublisher("/position/heading", cav_msgs.HeadingStamped._TYPE);
     navSatFixPub =
-      connectedNode.newPublisher("~/position/nav_sat_fix", sensor_msgs.NavSatFix._TYPE);
+      connectedNode.newPublisher("/position/nav_sat_fix", sensor_msgs.NavSatFix._TYPE);
     odometryPub =
-      connectedNode.newPublisher("~/position/odometry", nav_msgs.Odometry._TYPE);
+      connectedNode.newPublisher("/position/odometry", nav_msgs.Odometry._TYPE);
     velocityPub =
-      connectedNode.newPublisher("~/position/velocity", geometry_msgs.TwistStamped._TYPE);
+      connectedNode.newPublisher("/position/velocity", geometry_msgs.TwistStamped._TYPE);
   }
 
   @Override protected void publishData(List<String[]> data) throws IllegalArgumentException {
