@@ -16,6 +16,7 @@
 
 USERNAME=usdotfhwastol
 IMAGE=carma-base
+CI_IMAGE=$IMAGE-ci
 
 echo ""
 echo "##### CARMA Base Docker Image Build Script #####"
@@ -42,5 +43,17 @@ docker tag $USERNAME/$IMAGE:$TAG $USERNAME/$IMAGE:latest
 
 echo "Tagged $USERNAME/$IMAGE:$TAG as $USERNAME/$IMAGE:latest"
 
+echo "Building docker image for CARMA Base CI version: $TAG"
+echo "Final image name: $USERNAME/$CI_IMAGE:$TAG"
+
+docker build -f "../.sonarqube/Dockerfile" --no-cache -t $USERNAME/$CI_IMAGE:$TAG \
+    --build-arg VERSION="$TAG" \
+    --build-arg VCS_REF=`git rev-parse --short HEAD` \
+    --build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` .
+
+docker tag $USERNAME/$CI_IMAGE:$TAG $USERNAME/$CI_IMAGE:latest
+
+echo "Tagged $USERNAME/$CI_IMAGE:$TAG as $USERNAME/$CI_IMAGE:latest"
+
 echo ""
-echo "##### CARMA Base Docker Image Build Done! #####"
+echo "##### CARMA Base Docker Image and CI Image Build Done! #####"
