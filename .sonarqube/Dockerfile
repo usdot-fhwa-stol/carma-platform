@@ -55,7 +55,7 @@ RUN cd $SONAR_DIR && \
         sudo mv $(ls $SONAR_DIR | grep "sonar-scanner-") $SONAR_DIR/sonar-scanner/ && \
         sudo mv $(ls $SONAR_DIR | grep "build-wrapper-") $SONAR_DIR/build-wrapper/ && \
         # Add scanner, wrapper, and jq to PATH
-        sudo echo PATH=$PATH::/opt/jq/:$SONAR_DIR/sonar-scanner/bin/:$SONAR_DIR/build-wrapper/ >> /home/carma/.base-image/init-env.sh
+        sudo echo PATH=$PATH:/opt/jq/:$SONAR_DIR/sonar-scanner/bin/:$SONAR_DIR/build-wrapper/ >> /home/carma/.base-image/init-env.sh
 
 # Set metadata labels
 LABEL org.label-schema.schema-version="1.0"
