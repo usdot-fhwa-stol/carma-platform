@@ -216,13 +216,13 @@ public class PluginLifecycleHandler {
      */
     private void doTerminate() {
         log.info("PLUGIN", "Terminating " + plugin.getVersionInfo().componentName() + ":" + plugin.getVersionInfo().revisionString());
-        t.interrupt();
         tasks.clear();
         state.set(PluginState.DESTROYING);
         try {
             tasks.put(new TerminatePluginTask(plugin, new TaskCompletionCallback() {
                 @Override public void onComplete() {
                     state.set(PluginState.DESTROYED);
+                    Thread.currentThread().interrupt();
                 }
             }));
         } catch (InterruptedException e) {

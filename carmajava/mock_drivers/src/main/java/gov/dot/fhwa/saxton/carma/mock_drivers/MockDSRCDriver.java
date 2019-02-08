@@ -17,14 +17,9 @@
 package gov.dot.fhwa.saxton.carma.mock_drivers;
 
 import cav_msgs.ByteArray;
-import cav_srvs.SendMessageRequest;
-import cav_srvs.SendMessageResponse;
 import org.jboss.netty.buffer.ChannelBuffers;
-import org.ros.exception.ServiceException;
 import org.ros.message.MessageListener;
 import org.ros.node.ConnectedNode;
-import org.ros.node.service.ServiceResponseBuilder;
-import org.ros.node.service.ServiceServer;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 
@@ -54,10 +49,6 @@ public class MockDSRCDriver extends AbstractMockDriver {
   Subscriber<cav_msgs.ByteArray> outboundSub;
   final String outboundTopic = "comms/outbound_binary_msg";
 
-  //Services
-  protected ServiceServer<cav_srvs.SendMessageRequest, cav_srvs.SendMessageResponse> sendServer;
-  final String sendService = "comms/send";
-
   private final int EXPECTED_DATA_COL_COUNT = 3;
 
   private final short SAMPLE_ID_IDX = 0;
@@ -74,25 +65,15 @@ public class MockDSRCDriver extends AbstractMockDriver {
     super(connectedNode);
     // Topics
     // Published
-    recvPub = connectedNode.newPublisher("~/" + recvTopic, cav_msgs.ByteArray._TYPE);
+    recvPub = connectedNode.newPublisher("/" + recvTopic, cav_msgs.ByteArray._TYPE);
 
     // Subscribed
-    outboundSub = connectedNode.newSubscriber("~/" + outboundTopic, cav_msgs.ByteArray._TYPE);
+    outboundSub = connectedNode.newSubscriber("/" + outboundTopic, cav_msgs.ByteArray._TYPE);
     outboundSub.addMessageListener(new MessageListener<ByteArray>() {
       @Override public void onNewMessage(ByteArray byteArray) {
         log.debug("Outbound " + byteArray.getMessageType() + " message received by " + getGraphName());
       }
     });
-
-    //Services
-    //Server
-    sendServer = connectedNode.newServiceServer("~/" + sendService, cav_srvs.SendMessage._TYPE,
-      new ServiceResponseBuilder<SendMessageRequest, SendMessageResponse>() {
-        @Override public void build(SendMessageRequest sendMessageRequest,
-          SendMessageResponse sendMessageResponse) throws ServiceException {
-          log.info("Send request received by " + getGraphName() + " with contents " + sendMessageRequest);
-        }
-      });
   }
 
   @Override protected void publishData(List<String[]> data) {
@@ -168,7 +149,7 @@ public class MockDSRCDriver extends AbstractMockDriver {
   }
 
   @Override public List<String> getDriverAPI() {
-    return new ArrayList<>(Arrays.asList(recvTopic, outboundTopic, sendService));
+    return new ArrayList<>(Arrays.asList(recvTopic, outboundTopic));
   }
   
   @Override public long getPublishDelay() {
