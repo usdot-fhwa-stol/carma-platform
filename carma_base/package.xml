@@ -16,7 +16,7 @@
 -->
 <package>
     <name>carma_base</name>
-    <version>2.8.1</version>
+    <version>2.8.4</version>
 
     <description>
         A metapackage to install the dependencies for CARMA
@@ -55,6 +55,8 @@
     <build_depend>roscpp</build_depend>
     <build_depend>socketcan_interface</build_depend>
     <build_depend>std_msgs</build_depend>
+    <build_depend>image_common</build_depend>
+    <build_depend>image_geometry</build_depend>
     <run_depend>bondcpp</run_depend>
     <run_depend>diagnostic_updater</run_depend>
     <run_depend>dynamic_reconfigure</run_depend>
