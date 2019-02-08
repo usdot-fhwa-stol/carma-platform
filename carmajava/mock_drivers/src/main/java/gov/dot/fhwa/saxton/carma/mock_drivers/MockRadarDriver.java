@@ -17,7 +17,6 @@
 package gov.dot.fhwa.saxton.carma.mock_drivers;
 
 import org.ros.message.Time;
-import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
 import java.util.ArrayList;
