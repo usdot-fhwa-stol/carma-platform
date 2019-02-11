@@ -33,20 +33,20 @@ carma-config__set() {
     if docker container inspect carma-config > /dev/null; then
         echo "Clearing existing CARMA configuration instance..."
         echo "Shutting down CARMA processes..."
-        local $OLD_CARMA_DOCKER_FILE=`docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/docker-compose.yml'`
-        echo "$OLD_CARMA_DOCKER_FILE" | docker-compose down
+        local OLD_CARMA_DOCKER_FILE="`docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/docker-compose.yml'`"
+        echo "$OLD_CARMA_DOCKER_FILE" | docker-compose -f - down
         echo "Shutting down CARMA background processes..."
-        local $OLD_CARMA_BACKGROUND_DOCKER_FILE=`docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/docker-compose-background.yml'`
-        echo "$OLD_CARMA_BACKGROUND_DOCKER_FILE" | docker-compose down
+        local OLD_CARMA_BACKGROUND_DOCKER_FILE="`docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/docker-compose-background.yml'`"
+        echo "$OLD_CARMA_BACKGROUND_DOCKER_FILE" | docker-compose -f - down
         echo "Deleting old CARMA config..."
         docker rm carma-config
     fi
 
-    docker run --name carma-config usdotfhwastol/carma-config:$1
-    echo "Set usdotfhwastol/carma-config:$1 as current CARMA configuration instance..."
+    echo "Setting usdotfhwastol/carma-config:$1 as current CARMA configuration instance..."
+    docker run --name carma-config "usdotfhwastol/carma-config:$1"
     echo "Starting usdotfhwastol/carma-config:$1 background processes..."
-    local $CARMA_BACKGROUND_DOCKER_FILE=`docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/docker-compose-background.yml'`
-    echo "$CARMA_BACKGROUND_DOCKER_FILE" | docker-compose up
+    local CARMA_BACKGROUND_DOCKER_FILE="`docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/docker-compose-background.yml'`"
+    echo "$CARMA_BACKGROUND_DOCKER_FILE" | docker-compose -f - up -d
 }
 
 carma-config__edit() {
@@ -100,13 +100,14 @@ carma-config__install() {
     docker pull usdotfhwastol/carma-config:$1
     echo "Building temporary container of usdotfhwastol/carma-config:$1 to read dependency data..."
     docker run --name carma-config-tmp usdotfhwastol/carma-config:$1
-    local $CARMA_DOCKER_FILE=`docker run --rm --volumes-from carma-config-tmp:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/docker-compose.yml'`
-    local $CARMA_BACKGROUND_DOCKER_FILE=`docker run --rm --volumes-from carma-config-tmp:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/docker-compose-background.yml'`
+    local CARMA_DOCKER_FILE="`docker run --rm --volumes-from carma-config-tmp:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/docker-compose.yml'`"
+    local CARMA_BACKGROUND_DOCKER_FILE="`docker run --rm --volumes-from carma-config-tmp:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/docker-compose-background.yml'`"
+
     echo "Cleaning up temporary container..."
     docker rm carma-config-tmp
     echo "Downloading usdotfhwastol/carma-config:$1 dependencies..."
-    echo "$CARMA_DOCKER_FILE" | docker-compose pull
-    echo "$CARMA_BACKGROUND_DOCKER_FILE" | docker-compose pull
+    echo "$CARMA_DOCKER_FILE" | docker-compose -f - pull
+    echo "$CARMA_BACKGROUND_DOCKER_FILE" | docker-compose -f - pull
 }
 
 carma-config__status() {
