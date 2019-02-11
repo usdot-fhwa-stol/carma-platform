@@ -33,7 +33,11 @@ echo "##### CARMA $CONFIG_NAME Configuration Docker Image Build Script #####"
 echo ""
 
 
-TAG="$("../../engineering_tools/get-carma-version.sh")-$CONFIG_NAME"
+if [[ -z "$1" ]]; then
+    TAG="$("../../engineering_tools/get-carma-version.sh")-$CONFIG_NAME"
+else
+    TAG="$1-$CONFIG_NAME"
+fi
 
 echo "Building docker image for CARMA Configuration version: $TAG"
 echo "Final image name: $USERNAME/$IMAGE:$TAG"

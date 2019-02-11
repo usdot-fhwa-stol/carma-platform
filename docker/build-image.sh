@@ -23,7 +23,11 @@ echo ""
 echo "##### CARMA Docker Image Build Script #####"
 echo ""
 
-FULL_VERSION_STRING=$("../engineering_tools/get-carma-version.sh")
+if [[ -z "$1" ]]; then
+    FULL_VERSION_STRING=$("../engineering_tools/get-carma-version.sh")
+else
+    FULL_VERSION_STRING="$1"
+fi
 
 echo "Building docker image for CARMA version: $FULL_VERSION_STRING"
 echo "Final image name: $USERNAME/$IMAGE:$FULL_VERSION_STRING"
