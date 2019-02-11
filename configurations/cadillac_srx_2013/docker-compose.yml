@@ -18,8 +18,6 @@ version: '2'
 services:
   carma:
     image: usdotfhwastol/carma
-    depends_on: 
-      - roscore
     network_mode: host
     container_name: carma
     volumes_from: 
@@ -29,11 +27,20 @@ services:
       - /opt/carma/.ros:/home/carma/.ros
       - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
     command: wait-for-it.sh localhost:11311 -- roslaunch carma saxton_cav_docker.launch
+  carma-mock-lateral-control-driver:
+    image: usdotfhwastol/carma
+    network_mode: host
+    container_name: carma-mock-lateral-control-driver
+    volumes_from: 
+      - container:carma-config:ro
+    volumes:
+      - /opt/carma/logs:/opt/carma/logs
+      - /opt/carma/.ros:/home/carma/.ros
+      - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
+    command: wait-for-it.sh localhost:11311 --  rosrun carma lateral_control_driver gov.dot.fhwa.saxton.carma.lateralcontroldriver.LateralControlDriver
   cohda_dsrc_driver:
     image: usdotfhwastol/carma-cohda-dsrc-driver:1.0.0
     container_name: carma-cohda-dsrc-driver
-    depends_on: 
-      - roscore
     network_mode: host
     volumes_from: 
       - container:carma-config:ro
@@ -45,8 +52,6 @@ services:
   cadillac-srx-2013-can-driver:
     image: usdotfhwastol/carma-cadillac-srx-2013-can-driver:1.0.1
     container_name: carma-cadillac-srx-2013-can-driver
-    depends_on: 
-      - roscore
     network_mode: host
     volumes_from: 
       - container:carma-config:ro
@@ -58,8 +63,6 @@ services:
   cadillac-srx-2013-objects-driver:
     image: usdotfhwastol/carma-cadillac-srx-2013-objects-driver:1.0.2
     container_name: carma-cadillac-srx-2013-objects-driver
-    depends_on: 
-      - roscore
     network_mode: host
     volumes_from: 
       - container:carma-config:ro
@@ -71,8 +74,6 @@ services:
   cadillac-srx-2013-controller-driver:
     image: usdotfhwastol/carma-cadillac-srx-2013-controller-driver:1.0.2
     container_name: carma-cadillac-srx-2013-controller-driver
-    depends_on: 
-      - roscore
     network_mode: host
     volumes_from: 
       - container:carma-config:ro
@@ -84,8 +85,6 @@ services:
   torc-pinpoint-driver:
     image: usdotfhwastol/carma-torc-pinpoint-driver:1.0.7
     container_name: carma-torc-pinpoint-driver
-    depends_on: 
-      - roscore
     network_mode: host
     volumes_from: 
       - container:carma-config:ro
