@@ -12,9 +12,26 @@
 #  License for the specific language governing permissions and limitations under
 #  the License.
 
-FROM busybox:latest
+# Docker Compose Spec Version
+version: '2'
 
-ADD . /root/vehicle
-VOLUME /opt/carma/vehicle
-
-CMD  cp /root/vehicle/* /opt/carma/vehicle
+services:
+  carma-web:
+    image: usdotfhwastol/carma-web-ui:2.8.2
+    network_mode: host
+    container_name: carma-web
+    volumes_from: 
+      - container:carma-config:ro
+    volumes: 
+      - /var/run/docker.sock:/var/run/docker.sock 
+    restart: always
+  roscore:
+    image: usdotfhwastol/carma-base:2.8.3
+    network_mode: host
+    container_name: roscore
+    volumes_from: 
+      - container:carma-config:ro
+    volumes:
+      - /opt/carma/.ros:/home/carma/.ros
+    restart: always
+    command: roscore

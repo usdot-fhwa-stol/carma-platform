@@ -23,7 +23,6 @@ source /opt/ros/kinetic/setup.bash
 cd ~/carma_ws
 catkin_make install
 
-mkdir -p /opt/carma/app/bin /opt/carma/params /opt/carma/routes /opt/carma/urdf /opt/carma/logs /opt/carma/launch /opt/carma/app/mock_data /opt/carma/app/engineering_tools /opt/carma/drivers
 
 # Copy the installed files
 cd ~/carma_ws 
@@ -36,9 +35,3 @@ ln -s  /opt/carma/launch/* /opt/carma/app/bin/share/carma
 cp -r src/CARMAPlatform/engineering_tools/* /opt/carma/app/engineering_tools/
 cp -r src/CARMAPlatform/engineering_tools /opt/carma/app/bin/share
 cp -r src/CARMAPlatform/carmajava/mock_drivers/src/test/data/. /opt/carma/app/mock_data
-cp src/CARMAPlatform/docker/entrypoint.sh /opt/carma/
-
-# Setup the user login configuration
-echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
-echo "source /opt/carma/app/bin/setup.bash" >> ~/.bashrc
-echo "cd /opt/carma" >> ~/.bashrc

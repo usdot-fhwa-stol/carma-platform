@@ -14,8 +14,9 @@
 #  License for the specific language governing permissions and limitations under
 #  the License.
 
-
-# CARMA Docker Entrypoint Script
-
-source /opt/carma/app/bin/setup.bash
-tmux new-session -s carma -- roslaunch carma saxton_cav.launch use_rosbag:=true
+# Intialize the CARMA environment by sourcing the necessary ROS shell scripts
+# then run whatever string is passed as argument to this script in that 
+# initialized context. E.g. "entrypoint.sh roslaunch carma saxton_cav_docker.launch"
+# runs "roslaunch carma saxton_cav_docker.launch" after setting up the environment
+# such that ROS and CARMA are on the user's PATH
+source ~/.base-image/init-env.sh; exec "$@"
