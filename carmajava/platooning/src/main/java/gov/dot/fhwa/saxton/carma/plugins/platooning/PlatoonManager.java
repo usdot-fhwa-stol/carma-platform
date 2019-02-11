@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -39,6 +40,7 @@ public class PlatoonManager implements Runnable {
     protected String               leaderID         = "";
     protected String               currentPlatoonID = UUID.randomUUID().toString();
     protected boolean              isFollower       = false;
+    
     // This field is only used by Follower State
     protected int                  platoonSize      = 2;   
     
@@ -48,11 +50,14 @@ public class PlatoonManager implements Runnable {
     private int                  previousFunctionalLeaderIndex = -1;
     private long                 memberInfoTimeout             = 250; // ms
     private List<PlatoonMember>  platoon                       = Collections.synchronizedList(new ArrayList<>());
+    
+    private Clock                clock;
 
-    public PlatoonManager(PlatooningPlugin plugin, ILogger log, PluginServiceLocator psl) {
+    public PlatoonManager(PlatooningPlugin plugin, ILogger log, PluginServiceLocator psl, Clock clock) {
         this.plugin            = plugin;
         this.log               = log;
         this.psl               = psl;
+        this.clock             = clock;
         this.memberInfoTimeout = (long) (plugin.statusMessageInterval * plugin.statusTimeoutFactor);
         this.leaderID          = psl.getMobilityRouter().getHostMobilityId();
     }
@@ -112,7 +117,7 @@ public class PlatoonManager implements Runnable {
                 pm.commandSpeed = cmdSpeed;
                 pm.vehiclePosition = dtDistance;
                 pm.vehicleSpeed = curSpeed;
-                pm.timestamp = System.currentTimeMillis();
+                pm.timestamp = clock.millis();
                 log.debug("Receive and update platooning info on vehicel " + pm.staticId);
                 log.debug("    BSM ID = "                                  + pm.bsmId);
                 log.debug("    Speed = "                                   + pm.vehicleSpeed);
@@ -123,7 +128,7 @@ public class PlatoonManager implements Runnable {
             }
         }
         if(!isExisted) {
-            PlatoonMember newMember = new PlatoonMember(senderId, senderBsmId, cmdSpeed, curSpeed, dtDistance, System.currentTimeMillis());
+            PlatoonMember newMember = new PlatoonMember(senderId, senderBsmId, cmdSpeed, curSpeed, dtDistance, clock.millis());
             platoon.add(newMember);
             Collections.sort(platoon, (a, b) -> (Double.compare(b.vehiclePosition, a.vehiclePosition)));
             log.debug("Add a new vehicle into our platoon list " + newMember.staticId);
@@ -192,7 +197,7 @@ public class PlatoonManager implements Runnable {
     protected synchronized void removeExpiredMember() {
         List<PlatoonMember> removeCandidates = new ArrayList<>();
         for(PlatoonMember pm : platoon) {
-            boolean isTimeout = System.currentTimeMillis() - pm.timestamp > this.memberInfoTimeout;
+            boolean isTimeout = clock.millis() - pm.timestamp > this.memberInfoTimeout;
             if(isTimeout) {
                 removeCandidates.add(pm);
                 log.debug("Found invalid vehicel entry " + pm.staticId + " in platoon list which will be removed");
@@ -218,9 +223,9 @@ public class PlatoonManager implements Runnable {
     public void run() {
         try {
             while(!Thread.currentThread().isInterrupted()) {
-                long loopStart = System.currentTimeMillis();
+                long loopStart = clock.millis();
                 removeExpiredMember();
-                long loopEnd = System.currentTimeMillis();
+                long loopEnd = clock.millis();
                 long sleepDuration = Math.max(this.memberInfoTimeout - (loopEnd - loopStart), 0);
                 Thread.sleep(sleepDuration);
             }

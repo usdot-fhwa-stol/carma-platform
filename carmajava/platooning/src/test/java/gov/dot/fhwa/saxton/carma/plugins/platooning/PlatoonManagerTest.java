@@ -21,6 +21,8 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.time.Clock;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,16 +37,18 @@ public class PlatoonManagerTest {
     private ILogger              mockLogger;
     private PluginServiceLocator mockPsl;
     private IMobilityRouter      mockRouter;
+    private Clock                mockClock;
     
     @Before
     public void setup() {
         mockLogger = mock(ILogger.class);
         mockPlugin = mock(PlatooningPlugin.class);
         mockPsl    = mock(PluginServiceLocator.class);
+        mockClock  = mock(Clock.class);
         mockRouter = mock(IMobilityRouter.class);
         when(mockPsl.getMobilityRouter()).thenReturn(mockRouter);
         mockPlugin.statusTimeoutFactor = 2.5;
-        manager    = new PlatoonManager(mockPlugin, mockLogger, mockPsl);
+        manager    = new PlatoonManager(mockPlugin, mockLogger, mockPsl, mockClock);
     }
     
     @Test
@@ -67,16 +71,11 @@ public class PlatoonManagerTest {
     
     @Test
     public void removeExpiredMember() {
+    	when(mockClock.millis()).thenReturn(1549901201448L, 1549901201448L, 1549901201699L);
         manager.memberUpdates("A", manager.currentPlatoonID, "00000000", "CMDSPEED:1.00,DTD:50.00,SPEED:1.00");
         assertEquals(2, manager.getTotalPlatooningSize());
         manager.removeExpiredMember();
         assertEquals(2, manager.getTotalPlatooningSize());
-        try {
-            Thread.sleep(2500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            e.printStackTrace();
-        }
         manager.removeExpiredMember();
         assertEquals(1, manager.getTotalPlatooningSize());
     }
