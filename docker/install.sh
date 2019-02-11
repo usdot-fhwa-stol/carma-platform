@@ -35,4 +35,3 @@ ln -s  /opt/carma/launch/* /opt/carma/app/bin/share/carma
 cp -r src/CARMAPlatform/engineering_tools/* /opt/carma/app/engineering_tools/
 cp -r src/CARMAPlatform/engineering_tools /opt/carma/app/bin/share
 cp -r src/CARMAPlatform/carmajava/mock_drivers/src/test/data/. /opt/carma/app/mock_data
-cp src/CARMAPlatform/docker/entrypoint.sh /opt/carma/
