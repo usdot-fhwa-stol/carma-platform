@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.plugins.platooning;
 
 import java.util.List;
+import java.time.Clock;
 import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -256,7 +257,7 @@ public class PlatooningPlugin extends AbstractPlugin
             // reset plug-in's sub-components
             this.setState(new StandbyState(this, log, pluginServiceLocator));
             if(platoonManagerThread == null) {
-                platoonManager       = new PlatoonManager(this, log, pluginServiceLocator);
+                platoonManager       = new PlatoonManager(this, log, pluginServiceLocator, Clock.systemUTC());
                 platoonManagerThread = new Thread(platoonManager);
                 platoonManagerThread.setName("Platooning List Manager");
                 platoonManagerThread.start();
