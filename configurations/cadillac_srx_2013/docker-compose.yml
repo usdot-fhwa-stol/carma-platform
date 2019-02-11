@@ -17,7 +17,7 @@ version: '2'
 
 services:
   carma:
-    image: usdotfhwastol/carma
+    image: usdotfhwastol/carma:2.8.3
     network_mode: host
     container_name: carma
     volumes_from: 
