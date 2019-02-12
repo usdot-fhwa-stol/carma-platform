@@ -16,10 +16,10 @@
 version: '2'
 
 services:
-  carma-web:
+  web-ui:
     image: usdotfhwastol/carma-web-ui:2.8.2
     network_mode: host
-    container_name: carma-web
+    container_name: web-ui
     volumes_from: 
       - container:carma-config:ro
     volumes: 

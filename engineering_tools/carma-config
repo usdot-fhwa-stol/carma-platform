@@ -32,21 +32,14 @@ carma-config__set() {
 
     if docker container inspect carma-config > /dev/null; then
         echo "Clearing existing CARMA configuration instance..."
-        echo "Shutting down CARMA processes..."
-        local OLD_CARMA_DOCKER_FILE="`docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/docker-compose.yml'`"
-        echo "$OLD_CARMA_DOCKER_FILE" | docker-compose -f - down
-        echo "Shutting down CARMA background processes..."
-        local OLD_CARMA_BACKGROUND_DOCKER_FILE="`docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/docker-compose-background.yml'`"
-        echo "$OLD_CARMA_BACKGROUND_DOCKER_FILE" | docker-compose -f - down
+        carma-config__stop
         echo "Deleting old CARMA config..."
         docker rm carma-config
     fi
 
     echo "Setting usdotfhwastol/carma-config:$1 as current CARMA configuration instance..."
     docker run --name carma-config "usdotfhwastol/carma-config:$1"
-    echo "Starting usdotfhwastol/carma-config:$1 background processes..."
-    local CARMA_BACKGROUND_DOCKER_FILE="`docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/docker-compose-background.yml'`"
-    echo "$CARMA_BACKGROUND_DOCKER_FILE" | docker-compose -f - up -d
+    carma-config__start
 }
 
 carma-config__edit() {
@@ -92,7 +85,9 @@ carma-config__list_local() {
 carma-config__list_remote() {
     echo "Remotely available images from usdotfhwastol Dockerhub: "
     echo ""
-    wget -q https://registry.hub.docker.com/v1/repositories/usdotfhwastol/carma-config/tags -O -  | sed -e 's/[][]//g' -e 's/"//g' -e 's/ //g' | tr '}' '\n'  | awk -F: '{print "usdotfhwastol/carma-config:"$3}'
+    wget -q https://registry.hub.docker.com/v1/repositories/usdotfhwastol/carma-config/tags -O -  | \
+    sed -e 's/[][]//g' -e 's/"//g' -e 's/ //g' | tr '}' '\n'  | \
+    awk -F: '{print "usdotfhwastol/carma-config:"$3}'
 }
 
 carma-config__install() {
@@ -110,20 +105,44 @@ carma-config__install() {
     echo "$CARMA_BACKGROUND_DOCKER_FILE" | docker-compose -f - pull
 }
 
+carma-config__start() {
+    echo "Starting CARMA background processes..."
+    docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
+    'cat /opt/carma/vehicle/docker-compose-background.yml' | \
+    docker-compose -f - -p carma-background up -d
+}
+
+carma-config__stop() {
+    echo "Shutting down CARMA processes..."
+    docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
+    'cat /opt/carma/vehicle/docker-compose.yml' | \
+    docker-compose -f - -p carma down
+
+    echo "Shutting down CARMA background processes..."
+    docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
+    'cat /opt/carma/vehicle/docker-compose-background.yml' | \
+    docker-compose -f - -p carma-background down
+}
+
 carma-config__status() {
     local CURRENT_IMAGE=`docker container inspect --format='{{.Config.Image}}' carma-config`
     echo "Current configuration is loaded from image: $CURRENT_IMAGE"
     echo ""
     echo "  -- docker-compose.yml:"
-    docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/docker-compose.yml'
+    docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
+    'cat /opt/carma/vehicle/docker-compose.yml'
     echo "  -- docker-compose-background.yml:"
-    docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/docker-compose-background.yml'
+    docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
+    'cat /opt/carma/vehicle/docker-compose-background.yml'
     echo "  -- saxton_cav.launch:"
-    docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/saxton_cav.launch'
+    docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
+    'cat /opt/carma/vehicle/saxton_cav.launch'
     echo "  -- carma.config.js:"
-    docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/carma.config.js'
+    docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
+    'cat /opt/carma/vehicle/carma.config.js'
     echo "  -- saxton_cav.urdf:"
-    docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/saxton_cav.urdf'
+    docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
+    'cat /opt/carma/vehicle/saxton_cav.urdf'
 }
 
 carma-config__help() {
@@ -144,6 +163,9 @@ Please enter one of the following commands:
   inspect - Open a shell inside the current configuration storage with r/o
             permissions
   reset - Restore a configuration to its default state
+  start - Start the CARMA platform's background processes. Platform must still
+          be launched from Web UI
+  stop - Stop the CARMA platform and it's background processes.
   help - Display this information"
 HELP
 }
