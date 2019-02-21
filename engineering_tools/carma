@@ -54,7 +54,7 @@ carma-config__edit() {
     fi
 
     echo "Opening shell inside carma-config container with read/write privileges..."
-    docker run -it --rm --volumes-from carma-config usdotfhwastol/carma-base:latest
+    docker run -it --rm --volumes-from carma-config usdotfhwastol/carma-base:latest bash
 }
 
 carma-config__inspect() {
@@ -65,7 +65,7 @@ carma-config__inspect() {
     fi
 
     echo "Opening shell inside carma-config container with read-only privileges..."
-    docker run -it --rm --volumes-from carma-config:ro usdotfhwastol/carma-base:latest
+    docker run -it --rm --volumes-from carma-config:ro usdotfhwastol/carma-base:latest bash
 }
 
 carma-config__reset() {
