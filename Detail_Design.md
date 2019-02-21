@@ -42,7 +42,7 @@ The following table identifies the documents covering each of the packages.
 |Drivers.Position|[CAV Platform Detailed Design – Pinpoint Driver](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/40828970/CAV%20Platform%20Detailed%20Design%20-%20Pinpoint%20Driver.docx)
 |Drivers.Sensor|[CAV Platform Detailed Design – SRX Radar Driver](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/40927302/CAV%20Platform%20Detailed%20Design%20-%20SRX%20Radar%20Driver.docx)
 ||[CAV Platform Detailed Design – Delphi Radar Driver](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/38633509/CAV%20Platform%20Detailed%20Design%20-%20Delphi%20Radar%20Driver.docx)
-|Drivers.CAN| CAV Platform Detailed Design – SRX CAN Driver **sensitive document** Please contact the CARMA Development Team
+|Drivers.CAN| |CAV Platform Detailed Design – SRX CAN Driver 
 ||[CAV Platform Detailed Design – Truck CAN Drive](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29589570/CAV%20Platform%20Detailed%20Design.docx)
 |System installation, configuration and startup (not shown in digram)|[CAV Platform Detailed Design – LaunchScript](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/40927236/CAV%20Platform%20Detailed%20Design%20-%20LaunchScript.docx)
 ||[CAV Platform Remote Install and Launch](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/37748788/CAV%20Platform%20Remote%20Install%20and%20Launch.docx)
