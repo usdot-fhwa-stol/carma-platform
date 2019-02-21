@@ -71,9 +71,6 @@ services:
       - /opt/carma/.ros:/home/carma/.ros
       - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
     command: wait-for-it.sh localhost:11311 -- roslaunch srx_objects srx_objects_socketcan.launch remap_ns:=/saxton_cav/drivers srx_objects_can_device:=can0
-      <arg name="k_p" default="0.1" />
-    <arg name="k_i" default="0.01" />
-    <arg name="k_d" default="0.005" />
   cadillac-srx-2013-controller-driver:
     image: usdotfhwastol/carma-cadillac-srx-2013-controller-driver:1.0.2
     container_name: carma-cadillac-srx-2013-controller-driver
