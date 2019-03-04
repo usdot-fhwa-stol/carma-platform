@@ -30,6 +30,7 @@ import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 
 import cav_msgs.RobotEnabled;
+import cav_msgs.LightBarStatus; //MF 02/2019 Added Light Bar Status Topic
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,7 +51,7 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
   // Published
   protected final Publisher<diagnostic_msgs.DiagnosticArray> diagnosticsPub;
   protected Publisher<RobotEnabled> statusPub;
-  protected final ServiceServer<SetEnableRoboticRequest, SetEnableRoboticResponse> enabledSrv;
+  protected Publisher<LightBarStatus> lightBarStatusPub; //MF 02/2019
 
   // Subscribed
   protected final Subscriber<std_msgs.Float32> longEffortSub;
@@ -58,6 +59,7 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
 
   // Services
   // Server
+  protected final ServiceServer<SetEnableRoboticRequest, SetEnableRoboticResponse> enabledSrv;
   protected final ServiceServer<GetLightsRequest, GetLightsResponse> getLightsService;
   protected final ServiceServer<cav_srvs.SetLightsRequest, cav_srvs.SetLightsResponse> setLightsService;
 
@@ -83,6 +85,7 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
     // Topics
     // Published
     statusPub = connectedNode.newPublisher("/control/robot_status", RobotEnabled._TYPE);
+    lightBarStatusPub = connectedNode.newPublisher("/control/light_bar_status", LightBarStatus._TYPE); //MF 02/2019
 
     diagnosticsPub = connectedNode.newPublisher("/diagnostics", diagnostic_msgs.DiagnosticArray._TYPE);
     enabledSrv = connectedNode.newServiceServer("/control/enable_robotic", cav_srvs.SetEnableRobotic._TYPE,
@@ -135,6 +138,16 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
       // Make messages
       diagnostic_msgs.DiagnosticArray diagMsg = diagnosticsPub.newMessage();
       RobotEnabled statusMsg = statusPub.newMessage();
+      LightBarStatus lightBarStatusMsg = lightBarStatusPub.newMessage(); //MF 02/2019
+
+      // //MF 02/2019: Build Light Bar Status Message //Right Arrow
+      // GREEN FLASH
+      lightBarStatusMsg.setGreenFlash(LightBarStatus.ON);
+      lightBarStatusMsg.setLeftArrow(LightBarStatus.OFF);
+      lightBarStatusMsg.setRightArrow(LightBarStatus.OFF);
+      lightBarStatusMsg.setGreenSolid(LightBarStatus.OFF);
+      lightBarStatusMsg.setFlash(LightBarStatus.OFF);
+      lightBarStatusMsg.setTakedown(LightBarStatus.OFF);
 
       // Build RobotEnabled Message
       statusMsg.setBrakeDecel(Double.parseDouble(elements[BRAKE_DECEL_IDX]));
@@ -167,6 +180,7 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
       // Publish Data
       diagnosticsPub.publish(diagMsg);
       statusPub.publish(statusMsg);
+      lightBarStatusPub.publish(lightBarStatusMsg); //MF 02/2019
     }
   }
 
