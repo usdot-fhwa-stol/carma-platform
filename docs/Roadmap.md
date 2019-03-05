@@ -13,4 +13,4 @@ Our first major goals are:
 - **Installation on heavy trucks, October 2019** - The CARMA system will be installed on four class 8 tractor-trailer trucks owned by FHWA and FMCSA.  Instrumentation of these trucks is currently underway at [AutonomouStuff](https://autonomoustuff.com).
 
 *Notional schedule of functionality*
-![Table of epics showing title of each epic and the approximate months that each is to be worked on.](image/Roadmap_20190228.png)
+[Confluence Roadmap graphic](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/122355713/CARMA+Roadmap)
