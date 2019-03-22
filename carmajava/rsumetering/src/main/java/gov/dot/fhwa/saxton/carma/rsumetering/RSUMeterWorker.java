@@ -61,6 +61,8 @@ public class RSUMeterWorker {
   protected final static long NANO_SEC_PER_MS = 1000000L; // Nano-seconds per milli-second
   protected final static long BSM_ID_TIMEOUT = 3000L; // Timeout of a bsm id in ms
   protected final static long PLATOON_TIMEOUT = 4000L; // Timeout of a platooning info message
+  protected static final double MIN_PLATOON_SPEED = 0.5; // m/s - could be more intelligent about comparing these to host's current speed
+  protected static final double MAX_PLATOON_SPEED = 35.0; // m/s
   protected final IRSUMeterManager manager;
   protected final SaxtonLogger log;
   protected final NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
@@ -267,6 +269,13 @@ public class RSUMeterWorker {
     
     double platoonSpeed = Double.parseDouble(paramsArray.get(2));
     String rearBsmId = paramsArray.get(0);
+
+    //perform sanity check on received params - no way to check BSM ID
+    if (platoonSpeed < MIN_PLATOON_SPEED  ||  platoonSpeed > MAX_PLATOON_SPEED) {
+      log.warn("Received operation message with suspect strategy values. platoonSpeed = " + platoonSpeed);
+      return;
+    }
+
     BSM cachedMsg = bsmMap.get(rearBsmId);
     // If we don't have a BSM for this rear vehicle then no value in tracking platoon
     if (cachedMsg == null) {
