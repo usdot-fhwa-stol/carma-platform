@@ -87,7 +87,7 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
     statusPub = connectedNode.newPublisher("control/robot_status", RobotEnabled._TYPE);
     lightBarStatusPub = connectedNode.newPublisher("control/light_bar_status", LightBarStatus._TYPE); //MF 02/2019
 
-    diagnosticsPub = connectedNode.newPublisher("diagnostics", diagnostic_msgs.DiagnosticArray._TYPE);
+    diagnosticsPub = connectedNode.newPublisher("/diagnostics", diagnostic_msgs.DiagnosticArray._TYPE);
     enabledSrv = connectedNode.newServiceServer("control/enable_robotic", cav_srvs.SetEnableRobotic._TYPE,
         new ServiceResponseBuilder<SetEnableRoboticRequest, SetEnableRoboticResponse>() {
           @Override
@@ -115,7 +115,7 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
             response.setStatus(lightStatus);
           }
         });
-    setLightsService = connectedNode.newServiceServer("/control/set_lights", cav_srvs.SetLights._TYPE,
+    setLightsService = connectedNode.newServiceServer("control/set_lights", cav_srvs.SetLights._TYPE,
         new ServiceResponseBuilder<SetLightsRequest, SetLightsResponse>() {
           @Override
           public void build(cav_srvs.SetLightsRequest request, cav_srvs.SetLightsResponse response) {
