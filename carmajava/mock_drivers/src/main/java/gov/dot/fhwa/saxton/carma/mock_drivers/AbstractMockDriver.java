@@ -98,7 +98,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
             cav_srvs.GetDriverApiResponse response) {
             List<String> FQNs = new LinkedList<>();
             for (String apiElement: getDriverAPI()) {
-              FQNs.add(getGraphName() + "/" + apiElement);
+              FQNs.add("/" + apiElement);
             }
             response.setApiList(FQNs);
           }
