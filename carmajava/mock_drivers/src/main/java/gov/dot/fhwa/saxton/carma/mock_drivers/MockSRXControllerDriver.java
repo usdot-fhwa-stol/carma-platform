@@ -84,11 +84,11 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
     super(connectedNode);
     // Topics
     // Published
-    statusPub = connectedNode.newPublisher("/control/robot_status", RobotEnabled._TYPE);
-    lightBarStatusPub = connectedNode.newPublisher("/control/light_bar_status", LightBarStatus._TYPE); //MF 02/2019
+    statusPub = connectedNode.newPublisher("control/robot_status", RobotEnabled._TYPE);
+    lightBarStatusPub = connectedNode.newPublisher("control/light_bar_status", LightBarStatus._TYPE); //MF 02/2019
 
-    diagnosticsPub = connectedNode.newPublisher("/diagnostics", diagnostic_msgs.DiagnosticArray._TYPE);
-    enabledSrv = connectedNode.newServiceServer("/control/enable_robotic", cav_srvs.SetEnableRobotic._TYPE,
+    diagnosticsPub = connectedNode.newPublisher("diagnostics", diagnostic_msgs.DiagnosticArray._TYPE);
+    enabledSrv = connectedNode.newServiceServer("control/enable_robotic", cav_srvs.SetEnableRobotic._TYPE,
         new ServiceResponseBuilder<SetEnableRoboticRequest, SetEnableRoboticResponse>() {
           @Override
           public void build(SetEnableRoboticRequest arg0, SetEnableRoboticResponse arg1) throws ServiceException {
@@ -97,12 +97,12 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
         });
 
     // Subscribed
-    longEffortSub = connectedNode.newSubscriber("/control/cmd_longitudinal_effort", std_msgs.Float32._TYPE);
-    subscriber = connectedNode.newSubscriber("/control/cmd_speed", cav_msgs.SpeedAccel._TYPE);
+    longEffortSub = connectedNode.newSubscriber("control/cmd_longitudinal_effort", std_msgs.Float32._TYPE);
+    subscriber = connectedNode.newSubscriber("control/cmd_speed", cav_msgs.SpeedAccel._TYPE);
 
     // Services
     // Server
-    getLightsService = connectedNode.newServiceServer("/control/get_lights", cav_srvs.GetLights._TYPE,
+    getLightsService = connectedNode.newServiceServer("control/get_lights", cav_srvs.GetLights._TYPE,
         new ServiceResponseBuilder<cav_srvs.GetLightsRequest, cav_srvs.GetLightsResponse>() {
           @Override
           public void build(cav_srvs.GetLightsRequest request, cav_srvs.GetLightsResponse response) {

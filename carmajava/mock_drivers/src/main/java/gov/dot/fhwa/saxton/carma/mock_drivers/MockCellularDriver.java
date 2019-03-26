@@ -58,10 +58,10 @@ public class MockCellularDriver extends AbstractMockDriver {
     super(connectedNode);
     // Topics
     // Published
-    recvPub = connectedNode.newPublisher("~/comms/recv", ByteArray._TYPE);
+    recvPub = connectedNode.newPublisher("comms/recv", ByteArray._TYPE);
 
     // Subscribed
-    outboundSub = connectedNode.newSubscriber("~/comms/outbound", ByteArray._TYPE);
+    outboundSub = connectedNode.newSubscriber("comms/outbound", ByteArray._TYPE);
     outboundSub.addMessageListener(new MessageListener<ByteArray>() {
       @Override public void onNewMessage(ByteArray byteArray) {
         log.info("Outbound " + byteArray.getMessageType() + " message received by "

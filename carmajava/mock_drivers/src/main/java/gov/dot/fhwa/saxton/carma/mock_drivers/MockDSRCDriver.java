@@ -65,10 +65,10 @@ public class MockDSRCDriver extends AbstractMockDriver {
     super(connectedNode);
     // Topics
     // Published
-    recvPub = connectedNode.newPublisher("/" + recvTopic, cav_msgs.ByteArray._TYPE);
+    recvPub = connectedNode.newPublisher(recvTopic, cav_msgs.ByteArray._TYPE);
 
     // Subscribed
-    outboundSub = connectedNode.newSubscriber("/" + outboundTopic, cav_msgs.ByteArray._TYPE);
+    outboundSub = connectedNode.newSubscriber(outboundTopic, cav_msgs.ByteArray._TYPE);
     outboundSub.addMessageListener(new MessageListener<ByteArray>() {
       @Override public void onNewMessage(ByteArray byteArray) {
         log.debug("Outbound " + byteArray.getMessageType() + " message received by " + getGraphName());
