@@ -44,8 +44,8 @@ public class ExecutionState implements ICooperativeMergeState {
   protected static final double MAX_TARGET_SPEED = 35.0; // m/s - a little over 75 mph
   protected static final double MIN_ACCEL = -2.0; // m/s^2 - trying to keep it smooth regardless of vehicle type
   protected static final double MAX_ACCEL = 2.0;  // m/s^2
-  protected static final double MIN_TARGET_STEER = -1.0; //currently not used; what units? what meaning?
-  protected static final double MAX_TARGET_STEER = 1.0; //currently not used; what units? what meaning?
+  protected static final double MIN_TARGET_STEER = -1.0; //radians; currently not used since v2 steering is manual
+  protected static final double MAX_TARGET_STEER = 1.0; //radians; currently not used since v2 steering is manual
 
   protected final CooperativeMergePlugin   plugin;
   protected final ILogger        log;

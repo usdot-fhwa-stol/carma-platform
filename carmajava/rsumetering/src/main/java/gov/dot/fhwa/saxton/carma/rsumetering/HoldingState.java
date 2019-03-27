@@ -29,9 +29,9 @@ import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
  * State which holds a vehicle at the ramp metering location until it is time to release it
  */
 public class HoldingState extends RSUMeteringStateBase {
-  protected static final double MIN_METER_DIST = 0.0; //meters
+  protected static final double MIN_METER_DIST = -10.0; //meters; allow buffer around meter location
   protected static final double MAX_METER_DIST = 1000.0; //meters
-  protected static final double MIN_MERGE_DIST = 5.0; //meters
+  protected static final double MIN_MERGE_DIST = -800.0; //meters
   protected static final double MAX_MERGE_DIST = 800.0; //meters
   protected static final double MIN_SPEED = 0.5; // m/s
   protected static final double MAX_SPEED = 35.0; // m/s - just over 75 mph

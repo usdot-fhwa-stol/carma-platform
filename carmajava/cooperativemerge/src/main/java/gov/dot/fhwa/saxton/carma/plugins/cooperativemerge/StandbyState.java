@@ -51,7 +51,7 @@ public class StandbyState implements ICooperativeMergeState {
 
   protected final static double MIN_RADIUS = 100.0; //meters
   protected final static double MAX_RADIUS = 10000.0; //meters
-  protected final static double MIN_MERGE_DIST_FROM_METER = 0.0; //meters
+  protected final static double MIN_MERGE_DIST_FROM_METER = -10.0; //meters; allow buffer around meter point
   protected final static double MAX_MERGE_DIST_FROM_METER = 1000.0; //meters
   protected final static double MIN_MERGE_LENGTH = 5.0; //meters
   protected final static double MAX_MERGE_LENGTH = 800.0; //meters
