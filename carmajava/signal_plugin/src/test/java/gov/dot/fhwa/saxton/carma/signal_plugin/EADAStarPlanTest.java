@@ -127,14 +127,14 @@ public class EADAStarPlanTest {
         // AStarSolver s = new AStarSolver();
         // ead.initialize(1, s);
         IntersectionData intersection1 = new IntersectionData(); // Id 9945
-        intersection1.map = mock(MapMessage.class, Mockito.withSettings().stubOnly());
-        intersection1.roughDist = 1581; 
-        intersection1.dtsb = 50;
-        intersection1.currentPhase = SignalPhase.GREEN;
-        intersection1.timeToNextPhase = 8.631097656249949;
-        intersection1.stopBoxWidth = 32.90;
-        intersection1.intersectionId = 9709;
-        intersection1.geometry = new IntersectionGeometry(40, 100);
+        intersection1.setMap(mock(MapMessage.class, Mockito.withSettings().stubOnly()));
+        intersection1.setRoughDist(1581); 
+        intersection1.setDtsb(50);
+        intersection1.setCurrentPhase(SignalPhase.GREEN);
+        intersection1.setTimeToNextPhase(8.631097656249949);
+        intersection1.setStopBoxWidth(32.90);
+        intersection1.setIntersectionId(9709);
+        intersection1.setGeometry(new IntersectionGeometry(40, 100));
         List<IntersectionData> intersections = Arrays.asList(intersection1);
         try {
             long startTime = System.currentTimeMillis();
@@ -163,23 +163,23 @@ public class EADAStarPlanTest {
         ead.initialize(1, solver);
         // ead.initialize(1, new AStarSolver());
         IntersectionData intersection1 = new IntersectionData(); // Id 9709
-        intersection1.map = mock(MapMessage.class, Mockito.withSettings().stubOnly());
-        intersection1.roughDist = 5700;
-        intersection1.dtsb = 40.49;
-        intersection1.currentPhase = SignalPhase.RED;
-        intersection1.timeToNextPhase = 29.82590234374993;
-        intersection1.stopBoxWidth = 32.90;
-        intersection1.intersectionId = 9709;
-        intersection1.geometry = new IntersectionGeometry(40, 100);
+        intersection1.setMap(mock(MapMessage.class, Mockito.withSettings().stubOnly()));
+        intersection1.setRoughDist(5700);
+        intersection1.setDtsb(40.49);
+        intersection1.setCurrentPhase(SignalPhase.RED);
+        intersection1.setTimeToNextPhase(29.82590234374993);
+        intersection1.setStopBoxWidth(32.90);
+        intersection1.setIntersectionId(9709);
+        intersection1.setGeometry(new IntersectionGeometry(40, 100));
         IntersectionData intersection2 = new IntersectionData(); // Id 9945
-        intersection2.map = mock(MapMessage.class, Mockito.withSettings().stubOnly());
-        intersection2.roughDist = 22394;
-        intersection2.dtsb = 211.48;
-        intersection2.currentPhase = SignalPhase.RED;
-        intersection2.timeToNextPhase = 4.3409023437498035;
-        intersection2.stopBoxWidth = 35.18;
-        intersection2.intersectionId = 9945;
-        intersection2.geometry = new IntersectionGeometry(40, 100);
+        intersection2.setMap(mock(MapMessage.class, Mockito.withSettings().stubOnly()));
+        intersection2.setRoughDist(22394);
+        intersection2.setDtsb(211.48);
+        intersection2.setCurrentPhase(SignalPhase.RED);
+        intersection2.setTimeToNextPhase(4.3409023437498035);
+        intersection2.setStopBoxWidth(35.18);
+        intersection2.setIntersectionId(9945);
+        intersection2.setGeometry(new IntersectionGeometry(40, 100));
         List<IntersectionData> intersections = Arrays.asList(intersection1, intersection2);
         try {
             List<Node> res = ead.plan(1.9352529452127594, 11.176, intersections, 0, 0);
@@ -243,23 +243,23 @@ public class EADAStarPlanTest {
                                 ead.initialize(1, solver);
                                 //ead.initialize(1, new AStarSolver());
                                 IntersectionData intersection1 = new IntersectionData(); // Id 9709
-                                intersection1.map = mock(MapMessage.class);
-                                intersection1.roughDist = (int)(dist1*100.0);
-                                intersection1.dtsb = dist1;
-                                intersection1.currentPhase = phase1;
-                                intersection1.timeToNextPhase = (double)i;
-                                intersection1.stopBoxWidth = 32.90;
-                                intersection1.intersectionId = 9709;
-                                intersection1.geometry = new IntersectionGeometry(40, 100);
+                                intersection1.setMap(mock(MapMessage.class));
+                                intersection1.setRoughDist((int)(dist1*100.0));
+                                intersection1.setDtsb(dist1);
+                                intersection1.setCurrentPhase(phase1);
+                                intersection1.setTimeToNextPhase((double)i);
+                                intersection1.setStopBoxWidth(32.90);
+                                intersection1.setIntersectionId(9709);
+                                intersection1.setGeometry(new IntersectionGeometry(40, 100));
                                 IntersectionData intersection2 = new IntersectionData(); // Id 9945
-                                intersection2.map = mock(MapMessage.class);
-                                intersection2.roughDist = (int)(dist2*100.0);
-                                intersection2.dtsb = dist2;
-                                intersection2.currentPhase = phase2;
-                                intersection2.timeToNextPhase = (double)j;
-                                intersection2.stopBoxWidth = 35.18;
-                                intersection2.intersectionId = 9945;
-                                intersection2.geometry = new IntersectionGeometry(40, 100);
+                                intersection2.setMap(mock(MapMessage.class));
+                                intersection2.setRoughDist((int)(dist2*100.0));
+                                intersection2.setDtsb(dist2);
+                                intersection2.setCurrentPhase(phase2);
+                                intersection2.setTimeToNextPhase((double)j);
+                                intersection2.setStopBoxWidth(35.18);
+                                intersection2.setIntersectionId(9945);
+                                intersection2.setGeometry(new IntersectionGeometry(40, 100));
                                 List<IntersectionData> intersections = Arrays.asList(intersection1, intersection2);
                                 long startTime = System.currentTimeMillis();
                                 try {

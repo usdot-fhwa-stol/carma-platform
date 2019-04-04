@@ -29,11 +29,11 @@ import java.util.ArrayList;
  */
 public class MinimumDistanceBetweenManeuversConstraint implements TrajectoryValidationConstraint {
 
-  public IManeuver lastLateralManeuver = null;
-  public IManeuver lastLongitudinalManeuver = null;
-  public boolean valid = true;
-  public List<IManeuver> offendingManeuvers = new ArrayList<>();
-  public double minimumDistanceBetweenManeuvers;
+  private IManeuver lastLateralManeuver = null;
+  private IManeuver lastLongitudinalManeuver = null;
+  private boolean valid = true;
+  private List<IManeuver> offendingManeuvers = new ArrayList<>();
+  private double minimumDistanceBetweenManeuvers;
 
   public MinimumDistanceBetweenManeuversConstraint(double minDist) {
     this.minimumDistanceBetweenManeuvers = minDist;

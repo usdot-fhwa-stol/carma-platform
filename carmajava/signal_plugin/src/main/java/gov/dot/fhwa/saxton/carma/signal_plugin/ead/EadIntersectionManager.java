@@ -67,10 +67,8 @@ public class EadIntersectionManager {
 		}
 
 		//initialize other members
-		sortedIntersections_.set(new PriorityQueue<>(
-			(IntersectionData i1, IntersectionData i2) -> {
-				return i1.roughDist - i2.roughDist;
-			}));
+		sortedIntersections_.set(new PriorityQueue<IntersectionData>(
+			(i1, i2) -> {return i1.getRoughDist() - i2.getRoughDist();}));
 		completedIntersections_ = new HashSet<>();
 		prevApproachLaneId_.set(-1);
 	}
@@ -86,13 +84,13 @@ public class EadIntersectionManager {
 
 	private boolean validIntersection(IntersectionData input) {
 
-		if (input.map == null || input.spat == null) {
+		if (input.getMap() == null || input.getSpat() == null) {
 			log_.warn("TRAJ", "Input intersections had null map or spat");
 			return false;
 		}
 
-		int	mapId = input.map.getIntersectionId();
-		int spatId = input.spat.getIntersectionId();
+		int	mapId = input.getMap().getIntersectionId();
+		int spatId = input.getSpat().getIntersectionId();
 
 		if (mapId != spatId) {
 			log_.warnf("TRAJ", "Input intersections with MAP ID = %d and SPAT ID = %d", mapId, spatId);
@@ -130,10 +128,8 @@ public class EadIntersectionManager {
 	public double updateIntersections(List<IntersectionData> inputIntersections, Location vehicleLoc) throws Exception {
 		double dtsb = Double.MAX_VALUE;
 
-		Queue<IntersectionData> sortedIntersections = new PriorityQueue<>(
-		(IntersectionData i1, IntersectionData i2) -> {
-			return i1.roughDist - i2.roughDist;
-		});
+		Queue<IntersectionData> sortedIntersections = new PriorityQueue<IntersectionData>(
+				(i1, i2) -> {return i1.getRoughDist() - i2.getRoughDist();});
 		
 		if (inputIntersections == null  ||  inputIntersections.size() <= 0) {
 			sortedIntersections_.set(sortedIntersections); // Store sorted intersections
@@ -150,32 +146,32 @@ public class EadIntersectionManager {
 			}
 
 			//calculate distance to this intersection's reference point
-			Location loc = input.map.getRefPoint();
-			input.roughDist = loc.distanceFrom(vehicleLoc); //returns cm
+			Location loc = input.getMap().getRefPoint();
+			input.setRoughDist(loc.distanceFrom(vehicleLoc)); //returns cm
 
-			IntersectionGeometry geometry = computeIntersectionGeometry(vehicleLoc, input.map);
+			IntersectionGeometry geometry = computeIntersectionGeometry(vehicleLoc, input.getMap());
 			if (geometry != null) {
-				input.dtsb = geometry.dtsb();
-				input.laneId = geometry.laneId();
-				input.geometry = geometry;
-				input.stopBoxWidth = geometry.stopBoxWidth();
+				input.setDtsb(geometry.dtsb());
+				input.setLaneId(geometry.laneId());
+				input.setGeometry(geometry);
+				input.setStopBoxWidth(geometry.stopBoxWidth());
 
-				DoubleDataElement dde = (DoubleDataElement) input.spat.getSpatForLane(input.laneId).get(DataElementKey.SIGNAL_TIME_TO_NEXT_PHASE);
+				DoubleDataElement dde = (DoubleDataElement) input.getSpat().getSpatForLane(input.getLaneId()).get(DataElementKey.SIGNAL_TIME_TO_NEXT_PHASE);
 				if (dde != null) {
 						log_.debug("INTR","Updated timeToNextPhase: " + dde.value());
-						input.timeToNextPhase = dde.value();
+						input.setTimeToNextPhase(dde.value());
 				}
 
-				PhaseDataElement pde = (PhaseDataElement) input.spat.getSpatForLane(input.laneId).get(DataElementKey.SIGNAL_PHASE);
+				PhaseDataElement pde = (PhaseDataElement) input.getSpat().getSpatForLane(input.getLaneId()).get(DataElementKey.SIGNAL_PHASE);
 				if (pde != null) {
 						log_.debug("INTR","Updated phase: " + pde.value());
-						input.currentPhase = pde.value();
+						input.setCurrentPhase(pde.value());
 				}
 
 				sortedIntersections.add(input); // Add the intersection to our sorted set
 			}
 
-			log_.debug("TRAJ", "updateIntersections - preparing to look at known intersections for id = " + input.intersectionId);
+			log_.debug("TRAJ", "updateIntersections - preparing to look at known intersections for id = " + input.getIntersectionId());
 		}
 
 		if (sortedIntersections.size() <= 0) {
@@ -185,8 +181,8 @@ public class EadIntersectionManager {
 		}
 
 		// Identify current intersection
-		IntersectionGeometry nearGeometry = sortedIntersections.peek().geometry;
-		dtsb = sortedIntersections.peek().dtsb;
+		IntersectionGeometry nearGeometry = sortedIntersections.peek().getGeometry();
+		dtsb = sortedIntersections.peek().getDtsb();
 
 		//if we have transitioned to an egress lane or are no longer associated with a lane
 		// (should be somewhere near the center of the stop box) then
@@ -205,19 +201,19 @@ public class EadIntersectionManager {
 							+ laneId + ", prevApproachLaneId = " + prevApproachLaneId_ + ", approach="
 							+ (nearGeometry.isApproach(laneId) ? "true" : "false") + ", dtsb = "
 							+ dtsb + ", stopBoxWidth = " + stopBoxWidth);
-				completedIntersections_.add(sortedIntersections.poll().intersectionId);
+				completedIntersections_.add(sortedIntersections.poll().getIntersectionId());
 				nearGeometry = null;
 				dtsb = Double.MAX_VALUE;
 
 				//generate the geometry for the next current intersection
 				if (sortedIntersections.size() > 0) {
-					dtsb = sortedIntersections.peek().dtsb;
+					dtsb = sortedIntersections.peek().getDtsb();
 				}
 			}
 			
 			if (nearGeometry != null && nearGeometry.isApproach(laneId)) {
 				prevApproachLaneId_.set(laneId);
-				sortedIntersections.peek().laneId = laneId;
+				sortedIntersections.peek().setLaneId(laneId);
 				log_.debug("INTR", "Trying to update spat for lane: " + laneId);
 			}
 		}

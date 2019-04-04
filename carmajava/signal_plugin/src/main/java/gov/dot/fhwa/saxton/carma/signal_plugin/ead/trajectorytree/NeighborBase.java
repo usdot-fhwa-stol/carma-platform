@@ -89,7 +89,7 @@ public abstract class NeighborBase implements INeighborCalculator {
             //if this intersection ID is already in the local history list then
             if (history_.size() > 0) {
                 for (IntersectionHistory h : history_) {
-                    if (i.intersectionId == h.id) {
+                    if (i.getIntersectionId() == h.id) {
                         //if its current phase data extends what we already know then record it
                         updateHistory(i, h);
                         found = true;
@@ -100,7 +100,7 @@ public abstract class NeighborBase implements INeighborCalculator {
             //else record current phase data in our history
             if (!found) {
                 IntersectionHistory newHist = new IntersectionHistory();
-                newHist.id = i.intersectionId;
+                newHist.id = i.getIntersectionId();
                 updateHistory(i, newHist);
                 history_.add(newHist);
             }
@@ -125,7 +125,7 @@ public abstract class NeighborBase implements INeighborCalculator {
      */
     public IntersectionHistory getHistoricalData(int index) {
         for (IntersectionHistory h : history_) {
-            if (h.id == intersections_.get(index).intersectionId) {
+            if (h.id == intersections_.get(index).getIntersectionId()) {
                 return h;
             }
         }
@@ -142,15 +142,15 @@ public abstract class NeighborBase implements INeighborCalculator {
      * @param h - historical record of intersection phase durations
      */
     protected void updateHistory(IntersectionData i, IntersectionHistory h) {
-        switch (i.currentPhase) {
+        switch (i.getCurrentPhase()) {
             case GREEN:
-                h.longestGreen  = Math.max(h.longestGreen,  i.timeToNextPhase);
+                h.longestGreen  = Math.max(h.longestGreen,  i.getTimeToNextPhase());
                 break;
             case YELLOW:
-                h.longestYellow = Math.max(h.longestYellow, i.timeToNextPhase);
+                h.longestYellow = Math.max(h.longestYellow, i.getTimeToNextPhase());
                 break;
             case RED:
-                h.longestRed    = Math.max(h.longestRed,    i.timeToNextPhase);
+                h.longestRed    = Math.max(h.longestRed,    i.getTimeToNextPhase());
                 break;
             default:
                 //do nothing - this is a normal condition, especially for intersections beyond the nearest
@@ -189,7 +189,7 @@ public abstract class NeighborBase implements INeighborCalculator {
         //all of the locations in intersections_ are distances from plan starting point, established when the
         // initialize() method was called, but they are not updated after that
         IntersectionData i = intersections_.get(index);
-        double iDist = i.dtsb;
+        double iDist = i.getDtsb();
 
         //System.out.println("BestDTSB for int: " + i.intersectionId + " index: " + index + " dtsb: " + i.bestDTSB() + " startLoc: " + startLoc);
         return Node.roundToDistUnits(i.bestDTSB() - startLoc);
@@ -206,14 +206,14 @@ public abstract class NeighborBase implements INeighborCalculator {
         SignalState result = new SignalState();
         IntersectionData i = intersections_.get(intersectionIndex);
 
-        if (futureTime <= i.timeToNextPhase) {
-            result.phase = i.currentPhase;
-            result.timeRemaining = i.timeToNextPhase - futureTime;
+        if (futureTime <= i.getTimeToNextPhase()) {
+            result.phase = i.getCurrentPhase();
+            result.timeRemaining = i.getTimeToNextPhase() - futureTime;
             return result;
         }
 
-        double cycleTime = i.timeToNextPhase;
-        SignalPhase phase = i.currentPhase;
+        double cycleTime = i.getTimeToNextPhase();
+        SignalPhase phase = i.getCurrentPhase();
         IntersectionHistory h = getHistoricalData(intersectionIndex);
         if (h != null) {
             do {

@@ -52,7 +52,6 @@ public class BSMMessage implements IMessage<BSM> {
 			System.loadLibrary("asn1c");
 		} catch (Exception e) {
 			System.out.println("Exception trapped while trying to load the asn1c library" + e.toString());
-			e.printStackTrace();
 		}
 	}
 

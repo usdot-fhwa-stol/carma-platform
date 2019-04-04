@@ -216,7 +216,7 @@ public class Trajectory implements ITrajectory {
 			IntersectionCollectionDataElement icde =
 					(IntersectionCollectionDataElement) stateData.get(DataElementKey.INTERSECTION_COLLECTION);
 			if (icde != null) {
-				inputIntersections = icde.value().intersections;
+				inputIntersections = icde.value().getIntersections();
 			}
 
 			//check that all critical elements are present - will throw exception if missing

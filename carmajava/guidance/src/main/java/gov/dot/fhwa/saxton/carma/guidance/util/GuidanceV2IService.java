@@ -228,9 +228,9 @@ public class GuidanceV2IService implements V2IService {
             this.creationTime = creationTime;
         }
 
-        public IntersectionData intersection;
-        public DsrcCommsCheck mapComms;
-        public DsrcCommsCheck spatComms;
+        private IntersectionData intersection;
+        private DsrcCommsCheck mapComms;
+        private DsrcCommsCheck spatComms;
     }
 
 	@Override

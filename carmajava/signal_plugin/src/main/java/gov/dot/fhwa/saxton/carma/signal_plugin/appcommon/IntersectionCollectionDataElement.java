@@ -29,7 +29,5 @@ public class IntersectionCollectionDataElement extends DataElement {
         return value_;
     }
 
-    ////////////////////////////
-
     protected IntersectionCollection value_;
 }
