@@ -34,7 +34,7 @@ public class ANAStarSolver implements ITreeSolver {
 
   protected static final ILogger log_ = LoggerManager.getLogger(AStarSolver.class);
   protected long maxPlanningTimeMS = 500;
-  public static long iterationCount = 0;
+  //public static long iterationCount = 0;
 
   @Override
   public List<Node> solve(Node start, ICostModel costModel, INeighborCalculator neighborCalculator) {
@@ -79,7 +79,7 @@ public class ANAStarSolver implements ITreeSolver {
 
     List<Node> bestPath = new LinkedList<>();
 
-    iterationCount = 0;
+    //iterationCount = 0;
 
     long endTime = System.currentTimeMillis() + maxPlanningTimeMS;
     if (endTime < 0) {
@@ -88,7 +88,7 @@ public class ANAStarSolver implements ITreeSolver {
     }
     // While the openSet is not empty there might still be a more optimal path
     while(!openSetQueue.isEmpty()) {
-      iterationCount++;
+      //iterationCount++;
       // Improve the current path solution by evaluating remaining nodes in openSet
       List<Node> result = improveSolution(start, costModel, neighborCalculator, G, E, openSetQueue, gScore, eScore, hScore, cameFrom, endTime);
 

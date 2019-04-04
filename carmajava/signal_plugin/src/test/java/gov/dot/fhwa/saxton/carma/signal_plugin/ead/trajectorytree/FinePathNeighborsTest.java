@@ -113,14 +113,14 @@ public class FinePathNeighborsTest {
       FinePathNeighbors fpn = new FinePathNeighbors();
 
       IntersectionData intersection1 = new IntersectionData(); // Id 9945
-      intersection1.map = mock(MapMessage.class, Mockito.withSettings().stubOnly());
-      intersection1.roughDist = 8423; 
-      intersection1.dtsb = 100.0;
-      intersection1.currentPhase = SignalPhase.GREEN;
-      intersection1.timeToNextPhase = 26.99095117187494;
-      intersection1.stopBoxWidth = 35.18;
-      intersection1.intersectionId = 9945;
-      intersection1.geometry = new IntersectionGeometry(40, 100);
+      intersection1.setMap(mock(MapMessage.class, Mockito.withSettings().stubOnly()));
+      intersection1.setRoughDist(8423); 
+      intersection1.setDtsb(100.0);
+      intersection1.setCurrentPhase(SignalPhase.GREEN);
+      intersection1.setTimeToNextPhase(26.99095117187494);
+      intersection1.setStopBoxWidth(35.18);
+      intersection1.setIntersectionId(9945);
+      intersection1.setGeometry(new IntersectionGeometry(40, 100));
       List<IntersectionData> intersections = Arrays.asList(intersection1);
 
       double timeIncrement = 1.0;
@@ -210,14 +210,14 @@ public class FinePathNeighborsTest {
       fpn = new FinePathNeighbors();
 
       intersection1 = new IntersectionData(); // Id 9945
-      intersection1.map = mock(MapMessage.class, Mockito.withSettings().stubOnly());
-      intersection1.roughDist = 8423; 
-      intersection1.dtsb = 5.0;
-      intersection1.currentPhase = SignalPhase.RED;
-      intersection1.timeToNextPhase = 26.99095117187494;
-      intersection1.stopBoxWidth = 35.18;
-      intersection1.intersectionId = 9945;
-      intersection1.geometry = new IntersectionGeometry(40, 100);
+      intersection1.setMap(mock(MapMessage.class, Mockito.withSettings().stubOnly()));
+      intersection1.setRoughDist(8423); 
+      intersection1.setDtsb(5.0);
+      intersection1.setCurrentPhase(SignalPhase.RED);
+      intersection1.setTimeToNextPhase(26.99095117187494);
+      intersection1.setStopBoxWidth(35.18);
+      intersection1.setIntersectionId(9945);
+      intersection1.setGeometry(new IntersectionGeometry(40, 100));
       intersections = Arrays.asList(intersection1);
 
       fpn.initialize(intersections, 1, timeIncrement, speedIncrement, new NoOpCollisionChecker(), 0, 0);
@@ -234,14 +234,14 @@ public class FinePathNeighborsTest {
       fpn = new FinePathNeighbors();
 
       intersection1 = new IntersectionData(); // Id 9945
-      intersection1.map = mock(MapMessage.class, Mockito.withSettings().stubOnly());
-      intersection1.roughDist = 8423; 
-      intersection1.dtsb = 5.0;
-      intersection1.currentPhase = SignalPhase.GREEN;
-      intersection1.timeToNextPhase = 26.99095117187494;
-      intersection1.stopBoxWidth = 35.18;
-      intersection1.intersectionId = 9945;
-      intersection1.geometry = new IntersectionGeometry(40, 100);
+      intersection1.setMap(mock(MapMessage.class, Mockito.withSettings().stubOnly()));
+      intersection1.setRoughDist(8423); 
+      intersection1.setDtsb(5.0);
+      intersection1.setCurrentPhase(SignalPhase.GREEN);
+      intersection1.setTimeToNextPhase(26.99095117187494);
+      intersection1.setStopBoxWidth(35.18);
+      intersection1.setIntersectionId(9945);
+      intersection1.setGeometry(new IntersectionGeometry(40, 100));
       intersections = Arrays.asList(intersection1);
 
       fpn.initialize(intersections, 1, timeIncrement, speedIncrement, new NoOpCollisionChecker(), 0, 0);

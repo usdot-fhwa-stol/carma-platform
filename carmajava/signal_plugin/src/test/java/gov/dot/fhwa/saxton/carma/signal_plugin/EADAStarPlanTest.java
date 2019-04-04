@@ -265,7 +265,7 @@ public class EADAStarPlanTest {
                                 try {
                                     List<Node> res = ead.plan(0, 11.176, intersections, 0, 0);
                                     totalPlanningTime += System.currentTimeMillis() - startTime;
-                                    totalIterationCount += ANAStarSolver.iterationCount;
+                                    //totalIterationCount += ANAStarSolver.iterationCount;
                                     //System.out.println("A* Planning for two intersections takes " + (System.currentTimeMillis() - startTime) + " ms to finish");
                                     // for(Node n : res) {
                                     //     System.out.println(n.toString());
@@ -314,14 +314,14 @@ public class EADAStarPlanTest {
         EadAStar ead = new EadAStar(mockCC);
         ead.initialize(1, new AStarSolver());
         IntersectionData intersection1 = new IntersectionData(); // Id 9945
-        intersection1.map = mock(MapMessage.class, Mockito.withSettings().stubOnly());
-        intersection1.roughDist = 8423; 
-        intersection1.dtsb = 84.23;
-        intersection1.currentPhase = SignalPhase.GREEN;
-        intersection1.timeToNextPhase = 26.99095117187494;
-        intersection1.stopBoxWidth = 35.18;
-        intersection1.intersectionId = 9945;
-        intersection1.geometry = new IntersectionGeometry(40, 100);
+        intersection1.setMap(mock(MapMessage.class, Mockito.withSettings().stubOnly()));
+        intersection1.setRoughDist(8423); 
+        intersection1.setDtsb(84.23);
+        intersection1.setCurrentPhase(SignalPhase.GREEN);
+        intersection1.setTimeToNextPhase(26.99095117187494);
+        intersection1.setStopBoxWidth(35.18);
+        intersection1.setIntersectionId(9945);
+        intersection1.setGeometry(new IntersectionGeometry(40, 100));
         List<IntersectionData> intersections = Arrays.asList(intersection1);
         try {
             List<Node> res = ead.plan(1.935252945217594, 11.176, intersections, 0, 0);
@@ -357,23 +357,23 @@ public class EADAStarPlanTest {
         EadAStar ead = new EadAStar(mockCC);
         ead.initialize(1, new AStarSolver());
         IntersectionData intersection1 = new IntersectionData(); // Id 9709
-        intersection1.map = mock(MapMessage.class, Mockito.withSettings().stubOnly());
-        intersection1.roughDist = 2000;
-        intersection1.dtsb = 20.00;
-        intersection1.currentPhase = SignalPhase.GREEN;
-        intersection1.timeToNextPhase = 15;
-        intersection1.stopBoxWidth = 32.90;
-        intersection1.intersectionId = 9709;
-        intersection1.geometry = new IntersectionGeometry(40, 100);
+        intersection1.setMap(mock(MapMessage.class, Mockito.withSettings().stubOnly()));
+        intersection1.setRoughDist(2000);
+        intersection1.setDtsb(20.00);
+        intersection1.setCurrentPhase(SignalPhase.GREEN);
+        intersection1.setTimeToNextPhase(15);
+        intersection1.setStopBoxWidth(32.90);
+        intersection1.setIntersectionId(9709);
+        intersection1.setGeometry(new IntersectionGeometry(40, 100));
         IntersectionData intersection2 = new IntersectionData(); // Id 9945
-        intersection2.map = mock(MapMessage.class, Mockito.withSettings().stubOnly());
-        intersection2.roughDist = 10000;
-        intersection2.dtsb = 100.00;
-        intersection2.currentPhase = SignalPhase.GREEN;
-        intersection2.timeToNextPhase = 15.0;
-        intersection2.stopBoxWidth = 35.18;
-        intersection2.intersectionId = 9945;
-        intersection2.geometry = new IntersectionGeometry(40, 100);
+        intersection2.setMap(mock(MapMessage.class, Mockito.withSettings().stubOnly()));
+        intersection2.setRoughDist(10000);
+        intersection2.setDtsb(100.00);
+        intersection2.setCurrentPhase(SignalPhase.GREEN);
+        intersection2.setTimeToNextPhase(15.0);
+        intersection2.setStopBoxWidth(35.18);
+        intersection2.setIntersectionId(9945);
+        intersection2.setGeometry(new IntersectionGeometry(40, 100));
         List<IntersectionData> intersections = Arrays.asList(intersection1, intersection2);
         try {
             List<Node> res = ead.plan(1.9352529452127594, 11.176, intersections, 0, 0);
@@ -492,23 +492,23 @@ public class EADAStarPlanTest {
             EadAStar ead = new EadAStar(occ);
             ead.initialize(1, new AStarSolver());
             IntersectionData intersection1 = new IntersectionData(); // Id 9709
-            intersection1.map = mock(MapMessage.class, Mockito.withSettings().stubOnly());
-            intersection1.roughDist = 2000;
-            intersection1.dtsb = 50.00;
-            intersection1.currentPhase = SignalPhase.GREEN;
-            intersection1.timeToNextPhase = 15;
-            intersection1.stopBoxWidth = 32.90;
-            intersection1.intersectionId = 9709;
-            intersection1.geometry = new IntersectionGeometry(40, 100);
+            intersection1.setMap(mock(MapMessage.class, Mockito.withSettings().stubOnly()));
+            intersection1.setRoughDist(2000);
+            intersection1.setDtsb(50.00);
+            intersection1.setCurrentPhase(SignalPhase.GREEN);
+            intersection1.setTimeToNextPhase(15);
+            intersection1.setStopBoxWidth(32.90);
+            intersection1.setIntersectionId(9709);
+            intersection1.setGeometry(new IntersectionGeometry(40, 100));
             IntersectionData intersection2 = new IntersectionData(); // Id 9945
-            intersection2.map = mock(MapMessage.class, Mockito.withSettings().stubOnly());
-            intersection2.roughDist = 10000;
-            intersection2.dtsb = 130.00;
-            intersection2.currentPhase = SignalPhase.GREEN;
-            intersection2.timeToNextPhase = 15.0;
-            intersection2.stopBoxWidth = 35.18;
-            intersection2.intersectionId = 9945;
-            intersection2.geometry = new IntersectionGeometry(40, 100);
+            intersection2.setMap(mock(MapMessage.class, Mockito.withSettings().stubOnly()));
+            intersection2.setRoughDist(10000);
+            intersection2.setDtsb(130.00);
+            intersection2.setCurrentPhase(SignalPhase.GREEN);
+            intersection2.setTimeToNextPhase(15.0);
+            intersection2.setStopBoxWidth(35.18);
+            intersection2.setIntersectionId(9945);
+            intersection2.setGeometry(new IntersectionGeometry(40, 100));
             List<IntersectionData> intersections = Arrays.asList(intersection1, intersection2);
             try {
                // System.out.println("Plan Start Time: " + (double)(currentTime + 10L) / 1000.0);
@@ -530,9 +530,7 @@ public class EADAStarPlanTest {
                 for(Node n : res) {
                     System.out.println(n.toString());
                 }
-                System.out.println("NumCollisions: " + FinePathNeighbors.numCollisions);
             } catch(Exception e) {
-                System.out.println("NumCollisions: " + FinePathNeighbors.numCollisions);
                 e.printStackTrace();
                 assertTrue(false); // indicate the failure
             }

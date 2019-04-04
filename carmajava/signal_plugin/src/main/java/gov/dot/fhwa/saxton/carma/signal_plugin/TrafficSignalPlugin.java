@@ -475,7 +475,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                     }
         
                     log.info("EadAStar result is path of size: " + eadResult.size());
-                    log.info("EadAStar Num ANA iterations: " + ANAStarSolver.iterationCount);
+                    //log.info("EadAStar Num ANA iterations: " + ANAStarSolver.iterationCount);
                     // Set the new plan as the current plan for collision checker
                     collisionChecker.setHostPlan(eadResult, startTime.value(), startDowntrack.value());
         

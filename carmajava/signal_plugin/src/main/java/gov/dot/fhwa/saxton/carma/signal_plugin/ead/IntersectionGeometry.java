@@ -126,10 +126,10 @@ public class IntersectionGeometry {
 		
 		Location vehicle = new Location(vehicleLat, vehicleLon);
 		class Candidate {
-			public int		index;
-			public boolean	approach;
-			public int		dtsb; //this is simply dist to the stop bar of THIS lane, not necessarily of the lane we approached the intersections on
-			public int		cte;
+			private int		index;
+			private boolean	approach;
+			private int		dtsb; //this is simply dist to the stop bar of THIS lane, not necessarily of the lane we approached the intersections on
+			private int		cte;
 		}
 		Vector<Candidate> candidateLanes = new Vector<Candidate>();
 		

@@ -21,7 +21,7 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.ead;
  */
 public class EadFactory {
 	
-	public static IEad newInstance(String className) {
+	public static IEad newInstance(String className) throws InstantiationException, IllegalAccessException {
 		@SuppressWarnings("rawtypes")
 		Class tClass;
 		
@@ -37,9 +37,9 @@ public class EadFactory {
             newObject = tClass.newInstance();
         }
         catch (InstantiationException e) {
-            e.printStackTrace();
+            throw e;
         } catch (IllegalAccessException e) {
-            e.printStackTrace();
+            throw e;
         }
 
         return (IEad)newObject;
