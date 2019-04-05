@@ -25,7 +25,7 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.filter;
  */
 public class DataFilterFactory {
 
-	public static IDataFilter newInstance(String className) {
+	public static IDataFilter newInstance(String className) throws InstantiationException, IllegalAccessException {
 		@SuppressWarnings("rawtypes")
 		Class tClass = null;
 		
@@ -41,9 +41,9 @@ public class DataFilterFactory {
             newObject = tClass.newInstance();
         }
         catch (InstantiationException e) {
-            e.printStackTrace();
+            throw e;
         } catch (IllegalAccessException e) {
-            e.printStackTrace();
+            throw e;
         }
 
         return (IDataFilter)newObject;

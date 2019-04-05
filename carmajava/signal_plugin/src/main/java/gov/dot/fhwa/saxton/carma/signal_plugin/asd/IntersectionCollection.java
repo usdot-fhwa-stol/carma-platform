@@ -22,5 +22,15 @@ import java.util.List;
  * Collection of all known intersections at the current time.
  */
 public class IntersectionCollection {
-    public List<IntersectionData> intersections; //ordered from nearest (element 0) to farthest from vehicle
+	
+    private List<IntersectionData> intersections; //ordered from nearest (element 0) to farthest from vehicle
+
+	public List<IntersectionData> getIntersections() {
+		return intersections;
+	}
+
+	public void setIntersections(List<IntersectionData> intersections) {
+		this.intersections = intersections;
+	}
+    
 }

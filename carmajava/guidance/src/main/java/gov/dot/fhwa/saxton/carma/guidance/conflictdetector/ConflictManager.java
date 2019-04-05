@@ -350,9 +350,9 @@ public class ConflictManager implements IConflictManager {
     return getConflicts(hostPath, otherPath, structureFactory.buildSpatialStructure(), downtrackMargin, crosstrackMargin, timeMargin, longitudinalBias, lateralBias, temporalBias);
   }
 
-  // TODO remove these variables
-  public static long nanoSecBuilding = 0;
-  public static long nanoSecChecking = 0;
+  // The following variables are for debugging only
+  // public static long nanoSecBuilding = 0;
+  // public static long nanoSecChecking = 0;
 
   // Note the parameters in this function are overriding the class members by the same name
   @Override
@@ -372,7 +372,7 @@ public class ConflictManager implements IConflictManager {
     // Build Map for other path
     insertPoints(otherPath, spatialStructure, downtrackMargin, crosstrackMargin, timeMargin);
     
-    nanoSecBuilding += (System.nanoTime()- startTime);
+    // nanoSecBuilding += (System.nanoTime()- startTime);
     startTime = System.nanoTime();
 
     // Iterate over all points in the host path
@@ -432,7 +432,7 @@ public class ConflictManager implements IConflictManager {
       conflicts.add(currentConflict);
     }
 
-    nanoSecChecking += (System.nanoTime() - startTime);
+    // nanoSecChecking += (System.nanoTime() - startTime);
 
     return conflicts;
   }

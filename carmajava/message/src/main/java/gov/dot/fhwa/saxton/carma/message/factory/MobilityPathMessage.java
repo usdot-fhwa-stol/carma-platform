@@ -52,7 +52,6 @@ public class MobilityPathMessage implements IMessage<MobilityPathMessage> {
                         System.loadLibrary("asn1c");
                 } catch (Exception e) {
                         System.out.println("Exception trapped while trying to load the asn1c library" + e.toString());
-                        e.printStackTrace();
                 }
         }
 

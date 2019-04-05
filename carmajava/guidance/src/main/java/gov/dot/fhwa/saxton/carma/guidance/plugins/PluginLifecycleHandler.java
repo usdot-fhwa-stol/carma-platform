@@ -55,7 +55,7 @@ public class PluginLifecycleHandler {
                 }
             }));
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            log.error("PLUGIN", e.getMessage());
         }
 
         t = new Thread(new PluginWorker(tasks));
@@ -94,7 +94,7 @@ public class PluginLifecycleHandler {
                 }
             }));
         } catch (InterruptedException e) {
-            e.printStackTrace();
+        	log.error("PLUGIN", e.getMessage());
         }
 
         // After resuming we always return to looping
@@ -106,7 +106,7 @@ public class PluginLifecycleHandler {
                 }
             }));
         } catch (InterruptedException e) {
-            e.printStackTrace();
+        	log.error("PLUGIN", e.getMessage());
         }
     }
 
@@ -165,7 +165,7 @@ public class PluginLifecycleHandler {
                 }
             }));
         } catch (InterruptedException e) {
-            e.printStackTrace();
+        	log.error("PLUGIN", e.getMessage());
         }
         t = new Thread(new PluginWorker(tasks));
         t.setName(plugin.getVersionInfo().componentName() + "DoSuspendPluginWorkerThread");
@@ -226,7 +226,7 @@ public class PluginLifecycleHandler {
                 }
             }));
         } catch (InterruptedException e) {
-            e.printStackTrace();
+        	log.error("PLUGIN", e.getMessage());
         }
 
         t = null;

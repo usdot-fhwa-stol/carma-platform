@@ -475,7 +475,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
                     }
         
                     log.info("EadAStar result is path of size: " + eadResult.size());
-                    log.info("EadAStar Num ANA iterations: " + ANAStarSolver.iterationCount);
+                    //log.info("EadAStar Num ANA iterations: " + ANAStarSolver.iterationCount);
                     // Set the new plan as the current plan for collision checker
                     collisionChecker.setHostPlan(eadResult, startTime.value(), startDowntrack.value());
         
@@ -528,7 +528,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
             if (glidepathTrajectory != null) {
                 List<gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData> trackedIntersections = glidepathTrajectory.getSortedIntersections();
                 if (trackedIntersections.size() > 0) {
-                    currentIntId = trackedIntersections.get(0).intersectionId;
+                    currentIntId = trackedIntersections.get(0).getIntersectionId();
                 }
             }
 
@@ -664,18 +664,18 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      */
     private TrafficSignalInfo intersectionDataToMsg(gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData intersection) {
         TrafficSignalInfo signalMsg = messageFactory.newFromType(TrafficSignalInfo._TYPE);
-        signalMsg.setIntersectionId((short)intersection.intersectionId);
-        signalMsg.setLaneId((short)intersection.laneId);
-        signalMsg.setRemainingDistance((float)intersection.dtsb);
-        signalMsg.setRemainingTime((short)intersection.timeToNextPhase);
+        signalMsg.setIntersectionId((short)intersection.getIntersectionId());
+        signalMsg.setLaneId((short)intersection.getLaneId());
+        signalMsg.setRemainingDistance((float)intersection.getDtsb());
+        signalMsg.setRemainingTime((short)intersection.getTimeToNextPhase());
 
-        log.debug("UI Intersection: " + intersection.intersectionId + " dtsb: " + intersection.dtsb);
+        log.debug("UI Intersection: " + intersection.getIntersectionId() + " dtsb: " + intersection.getDtsb());
         
-        if (intersection.currentPhase == null) {
+        if (intersection.getCurrentPhase() == null) {
             return signalMsg;
         }
 
-        switch(intersection.currentPhase) {
+        switch(intersection.getCurrentPhase()) {
             case GREEN: 
                 signalMsg.setState(TrafficSignalInfo.GREEN);
                 break;
@@ -843,7 +843,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
      */
     private boolean checkCurrentPhase(SignalPhase phase) {
         List<gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData> sortedIntersections = glidepathTrajectory.getSortedIntersections();
-        return !sortedIntersections.isEmpty() && sortedIntersections.get(0).currentPhase == phase;
+        return !sortedIntersections.isEmpty() && sortedIntersections.get(0).getCurrentPhase() == phase;
     }
 
     /**
@@ -858,8 +858,8 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
     private boolean checkCurrentPhaseAndRemainingTime(SignalPhase phase, double maxTimeRemaining) {
         List<gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData> sortedIntersections = glidepathTrajectory.getSortedIntersections();
         return !sortedIntersections.isEmpty() 
-            && sortedIntersections.get(0).currentPhase == phase
-            && sortedIntersections.get(0).timeToNextPhase <= maxTimeRemaining;
+            && sortedIntersections.get(0).getCurrentPhase() == phase
+            && sortedIntersections.get(0).getTimeToNextPhase() <= maxTimeRemaining;
     }
 
     @Override
@@ -879,11 +879,11 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         synchronized (data) {
             for (IntersectionData datum : data.values()) {
                 gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData converted = new gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData();
-                converted.map = convertMapMessage(datum);
-                converted.intersectionId = converted.map.getIntersectionId();
+                converted.setMap(convertMapMessage(datum));
+                converted.setIntersectionId(converted.getMap().getIntersectionId());
                 
                 if (datum.getIntersectionState() != null) {
-                    converted.spat = convertSpatMessage(datum);
+                    converted.setSpat(convertSpatMessage(datum));
                     //log.debug("Converted map message with no spat");
                 }
             
@@ -1089,7 +1089,7 @@ public class TrafficSignalPlugin extends AbstractPlugin implements IStrategicPlu
         state.put(DataElementKey.LONGITUDE, vehicleLon);
 
         IntersectionCollection ic = new IntersectionCollection();
-        ic.intersections = convertIntersections(intersections);
+        ic.setIntersections(convertIntersections(intersections));
         icde = new IntersectionCollectionDataElement(ic);
         state.put(DataElementKey.INTERSECTION_COLLECTION, icde);
 

@@ -20,19 +20,14 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.*;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicationContext;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.Location;
-import gov.dot.fhwa.saxton.carma.signal_plugin.asd.map.MapMessage;
-import gov.dot.fhwa.saxton.carma.signal_plugin.asd.spat.ISpatMessage;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.ANAStarSolver;
-import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.AStarSolver;
 import gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree.Node;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 
 import java.io.IOException;
 import java.util.*;
-
-import static gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase.NONE;
 
 /**
  * This class describes the speed trajectory for the Glidepath vehicle in any given situation.
@@ -58,11 +53,21 @@ public class Trajectory implements ITrajectory {
 		if (eadClass == null) {
 			eadClass = "default";
 		}
-		IEad ead = EadFactory.newInstance(eadClass);
-		if (ead == null) {
+		IEad ead;
+		try {
+			ead = EadFactory.newInstance(eadClass);	
+		} catch (InstantiationException e) {
+			log_.errorf("TRAJ", "Could not instantiate the EAD model %s", eadClass);
+			throw new Exception("Could not instantiate an EAD model.");
+		} catch (IllegalAccessException e) {
 			log_.errorf("TRAJ", "Could not instantiate the EAD model %s", eadClass);
 			throw new Exception("Could not instantiate an EAD model.");
 		}
+		if(ead == null) {
+			log_.errorf("TRAJ", "Could not instantiate the EAD model %s", eadClass);
+			throw new Exception("Could not instantiate an EAD model.");
+		}
+		
 		log_.debug("TRAJ", "Ready to construct EAD object.");
 
 		constructObject(ead);
@@ -216,7 +221,7 @@ public class Trajectory implements ITrajectory {
 			IntersectionCollectionDataElement icde =
 					(IntersectionCollectionDataElement) stateData.get(DataElementKey.INTERSECTION_COLLECTION);
 			if (icde != null) {
-				inputIntersections = icde.value().intersections;
+				inputIntersections = icde.value().getIntersections();
 			}
 
 			//check that all critical elements are present - will throw exception if missing

@@ -34,7 +34,6 @@ public class SPATMessage implements IMessage<SPAT> {
             System.loadLibrary("asn1c");
         } catch (Exception e) {
             System.out.println("Exception trapped while trying to load the asn1c library" + e.toString());
-            e.printStackTrace();
         }
     }
     

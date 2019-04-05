@@ -235,7 +235,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+            	log.error("STARTUP", e.getMessage());
             }
         }
 
@@ -293,7 +293,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+            	log.error("RESTART", e.getMessage());
             }
         }
         
@@ -317,7 +317,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+        	log.error("SHUTDOWN", e.getMessage());
         }
 
         for (IPlugin p : getRegisteredPlugins()) {
