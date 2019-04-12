@@ -24,6 +24,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 
 import org.apache.commons.logging.Log;
 import org.junit.Before;
@@ -208,8 +210,6 @@ public class ExecutionStateTest {
         msg.getHeader().setRecipientId(VEHICLE_ID);
         msg.getHeader().setSenderId(RSU_ID);
         msg.getHeader().setPlanId(planId);
-        msg.setStrategyParams(String.format("STATUS|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f", 1000.0, 1000.0, 1000.0));
-        // msg.setStrategyParams(String.format("STATUS|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f", 0.0, 400.0, 10.0));
         msg.setStrategy(CooperativeMergePlugin.MOBILITY_STRATEGY);
 
         CooperativeMergeManeuver mergeManeuver = new CooperativeMergeManeuver(
@@ -240,10 +240,17 @@ public class ExecutionStateTest {
         when(mockLoggerFactory.createLoggerForClass(any(Class.class))).thenReturn(mockLog);
         LoggerManager.setLoggerFactory(mockLoggerFactory);
 
+        msg.setStrategyParams(String.format("STATUS|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f", 0.00, 0.00, 0.00));
         executionState.onMobilityOperationMessage(msg);
+        verify(mockLog , times(1)).error("Received operation message with bad params. Exception: java.lang.IllegalArgumentException: Invalid type. Expected: COMMAND String: STATUS|METER_DIST:0.00,MERGE_DIST:0.00,SPEED:0.00");
 
-        verify(mockLog , times(1)).error("Received operation message with bad params. Exception: java.lang.IllegalArgumentException: Invalid type. Expected: COMMAND String: STATUS|METER_DIST:1000.00,MERGE_DIST:1000.00,SPEED:1000.00");
+        msg.setStrategyParams(String.format("COMMAND|SPEED:%.2f,ACCEL:%.2f,STEERING_ANGLE:%.2f", 35.1, 2.1, 1.1));
+        executionState.onMobilityOperationMessage(msg);
+        verify(mockLog , times(1)).error("Received operation message with suspect strategy values. targetSpeed = 35.1, maxAccel = 2.1, targetSteer = 1.1");
 
-        assertEquals(1,1);
+        msg.setStrategyParams(String.format("COMMAND|SPEED:%.2f,ACCEL:%.2f,STEERING_ANGLE:%.2f", 0.4, -2.1, -1.1));
+        executionState.onMobilityOperationMessage(msg);
+        verify(mockLog , times(1)).error("Received operation message with suspect strategy values. targetSpeed = 0.4, maxAccel = -2.1, targetSteer = -1.1");
+
     }
 }
