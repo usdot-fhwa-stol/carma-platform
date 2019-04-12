@@ -16,10 +16,24 @@
 version: '2'
 
 services:
+  roscore:
+    image: usdotfhwastol/carma-base:2.8.3
+    network_mode: host
+    container_name: roscore
+    environment:
+      - ROS_IP=192.168.88.10
+    volumes_from: 
+      - container:carma-config:ro
+    volumes:
+      - /opt/carma/.ros:/home/carma/.ros
+    restart: always
+    command: roscore
   platform:
     image: usdotfhwastol/carma:2.8.3
     network_mode: host
     container_name: platform
+    environment:
+      - ROS_IP=192.168.88.10
     volumes_from: 
       - container:carma-config:ro
     volumes:
@@ -31,6 +45,8 @@ services:
     image: usdotfhwastol/carma:2.8.3
     network_mode: host
     container_name: carma-mock-lateral-control-driver
+    environment:
+      - ROS_IP=192.168.88.10
     volumes_from: 
       - container:carma-config:ro
     volumes:
@@ -41,6 +57,8 @@ services:
   cohda_dsrc_driver:
     image: usdotfhwastol/carma-cohda-dsrc-driver:1.0.0
     container_name: carma-cohda-dsrc-driver
+    environment:
+      - ROS_IP=192.168.88.10
     network_mode: host
     volumes_from: 
       - container:carma-config:ro
@@ -52,6 +70,8 @@ services:
   cadillac-srx-2013-can-driver:
     image: usdotfhwastol/carma-cadillac-srx-2013-can-driver:1.0.1
     container_name: carma-cadillac-srx-2013-can-driver
+    environment:
+      - ROS_IP=192.168.88.10
     network_mode: host
     volumes_from: 
       - container:carma-config:ro
@@ -63,6 +83,8 @@ services:
   cadillac-srx-2013-objects-driver:
     image: usdotfhwastol/carma-cadillac-srx-2013-objects-driver:1.0.2
     container_name: carma-cadillac-srx-2013-objects-driver
+    environment:
+      - ROS_IP=192.168.88.10
     network_mode: host
     volumes_from: 
       - container:carma-config:ro
@@ -74,6 +96,8 @@ services:
   cadillac-srx-2013-controller-driver:
     image: usdotfhwastol/carma-cadillac-srx-2013-controller-driver:1.0.2
     container_name: carma-cadillac-srx-2013-controller-driver
+    environment:
+      - ROS_IP=192.168.88.10
     network_mode: host
     volumes_from: 
       - container:carma-config:ro
@@ -85,6 +109,8 @@ services:
   torc-pinpoint-driver:
     image: usdotfhwastol/carma-torc-pinpoint-driver:1.0.7
     container_name: carma-torc-pinpoint-driver
+    environment:
+      - ROS_IP=192.168.88.10
     network_mode: host
     volumes_from: 
       - container:carma-config:ro

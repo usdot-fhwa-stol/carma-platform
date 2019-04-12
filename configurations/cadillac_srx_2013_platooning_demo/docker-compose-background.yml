@@ -20,18 +20,10 @@ services:
     image: usdotfhwastol/carma-web-ui:2.8.2
     network_mode: host
     container_name: web-ui
+    environment:
+      - ROS_IP=192.168.88.10
     volumes_from: 
       - container:carma-config:ro
     volumes: 
       - /var/run/docker.sock:/var/run/docker.sock 
     restart: always
-  roscore:
-    image: usdotfhwastol/carma-base:2.8.3
-    network_mode: host
-    container_name: roscore
-    volumes_from: 
-      - container:carma-config:ro
-    volumes:
-      - /opt/carma/.ros:/home/carma/.ros
-    restart: always
-    command: roscore
