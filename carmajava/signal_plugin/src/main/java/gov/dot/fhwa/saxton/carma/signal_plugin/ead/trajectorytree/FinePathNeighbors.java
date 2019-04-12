@@ -40,7 +40,6 @@ public class FinePathNeighbors extends NeighborBase {
     protected double                        responseLag_; //vehicle dynamic response lag, sec
     protected static final ILogger                log_ = LoggerManager.getLogger(FinePathNeighbors.class);
     protected static final double                 FLOATING_POINT_EPSILON = 0.1;
-    public static int numCollisions = 0; // TODO remove
 
     protected static int prevAccelDir = -2;
     public FinePathNeighbors() {
@@ -55,7 +54,6 @@ public class FinePathNeighbors extends NeighborBase {
         timeBuffer_ = config.getDoubleDefaultValue("ead.timebuffer", 4.0);
         debugThreshold_ = config.getDoubleDefaultValue("ead.debugThreshold", -1.0);
         responseLag_ = config.getDoubleDefaultValue("ead.response.lag", 1.9);
-        numCollisions = 0;
     }
 
 
@@ -131,7 +129,6 @@ public class FinePathNeighbors extends NeighborBase {
             neighbors.add(new Node(curDist, newTime, 0.0));
         }
 
-        numCollisions += (neighbors.size() - neightborsWithoutConflicts.size());
         return neightborsWithoutConflicts;
     }
     

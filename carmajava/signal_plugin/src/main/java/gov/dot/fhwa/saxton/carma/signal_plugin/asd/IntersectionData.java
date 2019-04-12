@@ -30,19 +30,19 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.IntersectionGeometry;
  */
 public class IntersectionData {
     //these are inputs to the Trajectory class
-    public MapMessage              map = null;
-    public ISpatMessage            spat = null;
+    private MapMessage              map = null;
+    private ISpatMessage            spat = null;
     //these are for internal use by the Trajectory class
-    public int                     roughDist = Integer.MAX_VALUE; //straight-line dist from vehicle to ref point, cm
-    public int                     missingTimesteps = 0; //num consecutive time steps since last MAP/SPAT data received
+    private int                     roughDist = Integer.MAX_VALUE; //straight-line dist from vehicle to ref point, cm
+    private int                     missingTimesteps = 0; //num consecutive time steps since last MAP/SPAT data received
     //these are outputs from the Trajectory class
-    public int                     intersectionId = -1; //can be gotten from map above
-    public int                     laneId = -1;
-    public double                  dtsb; //distance to stop bar along the approach lane, in meters
-    public SignalPhase             currentPhase = SignalPhase.NONE;
-    public double                  timeToNextPhase = -1.0;
-    public IntersectionGeometry    geometry = null;
-    public double                  stopBoxWidth = -1.0; // This will only be set if geometry is not null
+    private int                     intersectionId = -1; //can be gotten from map above
+    private int                     laneId = -1;
+    private double                  dtsb; //distance to stop bar along the approach lane, in meters
+    private SignalPhase             currentPhase = SignalPhase.NONE;
+    private double                  timeToNextPhase = -1.0;
+    private IntersectionGeometry    geometry = null;
+    private double                  stopBoxWidth = -1.0; // This will only be set if geometry is not null
 
     // TODO comment
     public double bestDTSB() {
@@ -59,5 +59,85 @@ public class IntersectionData {
                 + missingTimesteps + ", intersectionId=" + intersectionId + ", laneId=" + laneId + ", dtsb=" + dtsb
                 + ", currentPhase=" + currentPhase + ", timeToNextPhase=" + timeToNextPhase + "]";
     }
-    
+
+	public MapMessage getMap() {
+		return map;
+	}
+
+	public void setMap(MapMessage map) {
+		this.map = map;
+	}
+
+	public ISpatMessage getSpat() {
+		return spat;
+	}
+
+	public void setSpat(ISpatMessage spat) {
+		this.spat = spat;
+	}
+
+	public int getIntersectionId() {
+		return intersectionId;
+	}
+
+	public void setIntersectionId(int intersectionId) {
+		this.intersectionId = intersectionId;
+	}
+
+	public int getLaneId() {
+		return laneId;
+	}
+
+	public void setLaneId(int laneId) {
+		this.laneId = laneId;
+	}
+
+	public double getDtsb() {
+		return dtsb;
+	}
+
+	public void setDtsb(double dtsb) {
+		this.dtsb = dtsb;
+	}
+
+	public SignalPhase getCurrentPhase() {
+		return currentPhase;
+	}
+
+	public void setCurrentPhase(SignalPhase currentPhase) {
+		this.currentPhase = currentPhase;
+	}
+
+	public double getTimeToNextPhase() {
+		return timeToNextPhase;
+	}
+
+	public void setTimeToNextPhase(double timeToNextPhase) {
+		this.timeToNextPhase = timeToNextPhase;
+	}
+
+	public int getRoughDist() {
+		return roughDist;
+	}
+
+	public void setRoughDist(int roughDist) {
+		this.roughDist = roughDist;
+	}
+
+	public IntersectionGeometry getGeometry() {
+		return geometry;
+	}
+
+	public void setGeometry(IntersectionGeometry geometry) {
+		this.geometry = geometry;
+	}
+
+	public double getStopBoxWidth() {
+		return stopBoxWidth;
+	}
+
+	public void setStopBoxWidth(double stopBoxWidth) {
+		this.stopBoxWidth = stopBoxWidth;
+	}
+	
 }

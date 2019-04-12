@@ -80,15 +80,17 @@ public class CandidateFollowerState implements IPlatooningState {
             List<SpeedLimit> mergedLimits = new LinkedList<SpeedLimit>();
             SpeedLimit limit_buffer = null;
             for (SpeedLimit limit : trajLimits) {
+                // Create new object to prevent speed limit modification
+                SpeedLimit followedLimit = new SpeedLimit(limit.getLocation(), limit.getLimit());
                 // Merge segments with same speed
                 if (limit_buffer == null) {
-                    limit_buffer = limit;
+                    limit_buffer = followedLimit;
                 } else {
-                    if (Math.abs(limit_buffer.getLimit() - limit.getLimit()) < SPEED_EPSILON) {
-                        limit_buffer.setLocation(limit.getLocation());
+                    if (Math.abs(limit_buffer.getLimit() - followedLimit.getLimit()) < SPEED_EPSILON) {
+                        limit_buffer.setLocation(followedLimit.getLocation());
                     } else {
                         mergedLimits.add(limit_buffer);
-                        limit_buffer = limit;
+                        limit_buffer = followedLimit;
                     }
                 }
             }

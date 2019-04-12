@@ -122,7 +122,7 @@ public class EadAStar implements IEad {
         int numInt = intList_.size(); //guaranteed to be >= 1
         int limit = numInt;
         for (int i = 0;  i < limit;  ++i) {
-            if (intList_.get(i).map == null) { //this should never be true for i = 0 because first intersection has a map
+            if (intList_.get(i).getMap() == null) { //this should never be true for i = 0 because first intersection has a map
                 numInt = i;
                 break;
             }
@@ -192,7 +192,7 @@ public class EadAStar implements IEad {
     protected void summarizeCoarsePath(List<Node> path, Node coarseGoal, Node fineGoal) {
 
         log_.debug("EAD", "Coarse plan covered " + intList_.size() + " intersections at distances of:");
-        log_.debugf("EAD", "    %.0f m", intList_.get(0).dtsb);
+        log_.debugf("EAD", "    %.0f m", intList_.get(0).getDtsb());
         for (int i = 1;  i < intList_.size();  ++i) {
             log_.debugf("EAD", "    %.0f m", intList_.get(i).bestDTSB());
         }
@@ -255,9 +255,9 @@ public class EadAStar implements IEad {
         log_.info("EAD", "plan function called with operating speed: " + operSpeed + " and current speed: " + speed);
 
         for (IntersectionData intersection: intersections) {
-            log_.info("EAD", "Intersection " + intersection.intersectionId 
-                + " phase: " + intersection.currentPhase 
-                + " timeToNextPhase: " + intersection.timeToNextPhase);
+            log_.info("EAD", "Intersection " + intersection.getIntersectionId() 
+                + " phase: " + intersection.getCurrentPhase() 
+                + " timeToNextPhase: " + intersection.getTimeToNextPhase());
         }
 
 
@@ -279,9 +279,7 @@ public class EadAStar implements IEad {
 
         //build a detailed plan to reach the near-term goal node downtrack of first intersection [planDetailedPath]
         try {
-            FinePathNeighbors.numCollisions = 0; // TODO remove this variable
             currentPath_ = planDetailedPath(startNode, goal, startTime, startDowntrack);
-            log_.info("EAD", "NumCollisions: " + FinePathNeighbors.numCollisions);
         }catch (Exception e) {
             log_.warn("EAD", "plan trapped exception from planDetailedPath: ", e);
             throw e;
