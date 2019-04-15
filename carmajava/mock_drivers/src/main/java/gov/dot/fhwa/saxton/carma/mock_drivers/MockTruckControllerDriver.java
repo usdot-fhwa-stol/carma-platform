@@ -81,20 +81,20 @@ public class MockTruckControllerDriver extends AbstractMockDriver {
     // Topics
     // Published
     diagnosticsPub =
-      connectedNode.newPublisher("/control/diagnostics", diagnostic_msgs.DiagnosticArray._TYPE);
+      connectedNode.newPublisher("control/diagnostics", diagnostic_msgs.DiagnosticArray._TYPE);
     enabledPub =
-      connectedNode.newPublisher("/control/robot_enabled", cav_msgs.RobotEnabled._TYPE);
+      connectedNode.newPublisher("control/robot_enabled", cav_msgs.RobotEnabled._TYPE);
 
     // Subscribed
     longEffortSub =
-      connectedNode.newSubscriber("/control/cmd_longitudinal_effort", std_msgs.Float32._TYPE);
+      connectedNode.newSubscriber("control/cmd_longitudinal_effort", std_msgs.Float32._TYPE);
     subscriber =
-      connectedNode.newSubscriber("/control/cmd_speed", cav_msgs.SpeedAccel._TYPE);
+      connectedNode.newSubscriber("control/cmd_speed", cav_msgs.SpeedAccel._TYPE);
 
     // Services
     // Server
     getLightsService = connectedNode
-      .newServiceServer("/control/get_lights", cav_srvs.GetLights._TYPE,
+      .newServiceServer("control/get_lights", cav_srvs.GetLights._TYPE,
         new ServiceResponseBuilder<GetLightsRequest, GetLightsResponse>() {
           @Override public void build(GetLightsRequest request,
             GetLightsResponse response) {
@@ -108,7 +108,7 @@ public class MockTruckControllerDriver extends AbstractMockDriver {
           }
         });
     setLightsService = connectedNode
-      .newServiceServer("/control/set_lights", cav_srvs.SetLights._TYPE,
+      .newServiceServer("control/set_lights", cav_srvs.SetLights._TYPE,
         new ServiceResponseBuilder<SetLightsRequest, SetLightsResponse>() {
           @Override public void build(SetLightsRequest request,
             SetLightsResponse response) {
