@@ -41,6 +41,7 @@ dependencies {
     /* Example of a local subproject dependency */
     /* compile project(':sibling_gradle_project') */
   testCompile 'junit:junit:4.12'
+  testCompile 'org.mockito:mockito-core:2.+'
   /* Local subproject dependency */
   compile project(':rosutils')
   compile project(':route')
