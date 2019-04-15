@@ -17,7 +17,7 @@ version: '2'
 
 services:
   roscore:
-    image: usdotfhwastol/carma-base:2.8.3
+    image: usdotfhwastol/carma-base:latest
     network_mode: host
     container_name: roscore
     volumes_from: 
