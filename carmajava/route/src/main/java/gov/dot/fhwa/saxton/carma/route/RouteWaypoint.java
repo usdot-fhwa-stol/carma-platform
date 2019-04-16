@@ -89,13 +89,12 @@ public class RouteWaypoint {
     // Deep copy needed maneuvers
     for (cav_msgs.Maneuver maneuver: wp.neededManeuvers) {
       cav_msgs.Maneuver newManeuver = messageFactory.newFromType(Maneuver._TYPE);
-      newManeuver.setLength(maneuver.getLength());
-      newManeuver.setPerformers(maneuver.getPerformers());
-      newManeuver.setStartRoadwayLaneId(maneuver.getStartRoadwayLaneId());
-      newManeuver.setStartRoadwayLink(maneuver.getStartRoadwayLink());
-      newManeuver.setStartRoadwayOriginatorPosition(maneuver.getStartRoadwayOriginatorPosition());
       newManeuver.setType(maneuver.getType());
-      neededManeuvers.add(newManeuver);
+      newManeuver.setLaneChangeManeuver(maneuver.getLaneChangeManeuver());
+      newManeuver.setIntersectionTransitStraightManeuver(maneuver.getIntersectionTransitStraightManeuver());
+      newManeuver.setIntersectionTransitLeftTurnManeuver(maneuver.getIntersectionTransitLeftTurnManeuver());
+      newManeuver.setIntersectionTransitRightTurnManeuver(maneuver.getIntersectionTransitRightTurnManeuver());
+      newManeuver.setStopAndWaitManeuver(maneuver.getStopAndWaitManeuver());
     }
     // Copy remaining fields
     laneCount = wp.laneCount;
