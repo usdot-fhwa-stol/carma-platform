@@ -29,6 +29,13 @@ import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
  * State which holds a vehicle at the ramp metering location until it is time to release it
  */
 public class HoldingState extends RSUMeteringStateBase {
+  protected static final double MIN_METER_DIST = -10.0; //meters; allow buffer around meter location
+  protected static final double MAX_METER_DIST = 1000.0; //meters
+  protected static final double MIN_MERGE_DIST = -800.0; //meters
+  protected static final double MAX_MERGE_DIST = 800.0; //meters
+  protected static final double MIN_SPEED = 0.5; // m/s
+  protected static final double MAX_SPEED = 35.0; // m/s - just over 75 mph
+
   protected final static String EXPECTED_OPERATION_PARAMS = "STATUS|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f,LANE:%d";
   protected final static String STATUS_TYPE_PARAM = "STATUS";
   protected final static List<String> OPERATION_PARAMS = new ArrayList<>(Arrays.asList("METER_DIST", "MERGE_DIST", "SPEED", "LANE"));
@@ -91,6 +98,15 @@ public class HoldingState extends RSUMeteringStateBase {
     double meterDist = Double.parseDouble(params.get(0));
     double mergeDist = Double.parseDouble(params.get(1));
     double speed = Double.parseDouble(params.get(2));
+
+    //perform sanity checks on the received values
+    if (meterDist < MIN_METER_DIST  ||  meterDist > MAX_METER_DIST  ||
+        mergeDist < MIN_MERGE_DIST  ||  mergeDist > MAX_MERGE_DIST  ||
+        speed < MIN_SPEED           ||  speed > MAX_SPEED) {
+      log.warn("Received operation message with suspect strategy values. meterDist = " + meterDist +
+                ", mergeDist = " + mergeDist + ", speed = " + speed);
+      return;
+    }
 
     // If we are already at the ramp meter or past it then hold there
     if (meterDist < 1.0) {

@@ -48,7 +48,14 @@ public class StandbyState implements ICooperativeMergeState {
   protected final static int LOOP_SLEEP_TIME = 1000; // ms
 
   protected final static double CM_PER_M = 100.0;
-  
+
+  protected final static double MIN_RADIUS = 100.0; //meters
+  protected final static double MAX_RADIUS = 10000.0; //meters
+  protected final static double MIN_MERGE_DIST_FROM_METER = -10.0; //meters; allow buffer around meter point
+  protected final static double MAX_MERGE_DIST_FROM_METER = 1000.0; //meters
+  protected final static double MIN_MERGE_LENGTH = 5.0; //meters
+  protected final static double MAX_MERGE_LENGTH = 800.0; //meters
+
   protected final CooperativeMergePlugin plugin;
   protected final ILogger log;
   protected final PluginServiceLocator pluginServiceLocator;
@@ -98,6 +105,15 @@ public class StandbyState implements ICooperativeMergeState {
       double meterRadius       = Double.parseDouble(params.get(0));
       double mergeDTDFromMeter = Double.parseDouble(params.get(1));
       double mergeLength       = Double.parseDouble(params.get(2));
+
+      //do a sanity check on the values
+      if (meterRadius < MIN_RADIUS                        ||  meterRadius > MAX_RADIUS  ||
+          mergeDTDFromMeter < MIN_MERGE_DIST_FROM_METER   ||  mergeDTDFromMeter > MAX_MERGE_DIST_FROM_METER  ||
+          mergeLength < MIN_MERGE_LENGTH                  ||  mergeLength > MAX_MERGE_LENGTH) {
+        log.error("Received mobility request with suspect strategy values. meterRadius = " + meterRadius +
+                  ", mergeDTDFromMeter = " + mergeDTDFromMeter + ", mergeLength = " + mergeLength);
+        return MobilityRequestResponse.NO_RESPONSE;
+      }
 
       cav_msgs.LocationECEF meterLoc = msg.getLocation();
       // TODO Probably would be good to add a function to route for doing this complicated process which happens alot

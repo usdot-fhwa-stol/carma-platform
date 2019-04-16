@@ -39,7 +39,14 @@ import gov.dot.fhwa.saxton.carma.rosutils.MobilityHelper;
  * Speed and steering commands received from an rsu are sent to the complex maneuver for execution.
  */
 public class ExecutionState implements ICooperativeMergeState {
-  
+
+  protected static final double MIN_TARGET_SPEED = 0.5; // m/s - if traffic is heavy, a slow speed may be okay
+  protected static final double MAX_TARGET_SPEED = 35.0; // m/s - a little over 75 mph
+  protected static final double MIN_ACCEL = -2.0; // m/s^2 - trying to keep it smooth regardless of vehicle type
+  protected static final double MAX_ACCEL = 2.0;  // m/s^2
+  protected static final double MIN_TARGET_STEER = -1.0; //radians; currently not used since v2 steering is manual
+  protected static final double MAX_TARGET_STEER = 1.0; //radians; currently not used since v2 steering is manual
+
   protected final CooperativeMergePlugin   plugin;
   protected final ILogger        log;
   protected final PluginServiceLocator pluginServiceLocator;
@@ -141,6 +148,16 @@ public class ExecutionState implements ICooperativeMergeState {
     double targetSpeed = Double.parseDouble(params.get(0));
     double maxAccel = Double.parseDouble(params.get(1));
     double targetSteer = Double.parseDouble(params.get(2));
+
+    //do a sanity check on the received values
+    if (targetSpeed < MIN_TARGET_SPEED  ||  targetSpeed > MAX_TARGET_SPEED  ||
+        maxAccel < MIN_ACCEL            ||  maxAccel > MAX_ACCEL  ||
+        targetSteer < MIN_TARGET_STEER  ||  targetSteer > MAX_TARGET_STEER) {
+      log.error("Received operation message with suspect strategy values. targetSpeed = " + targetSpeed +
+                ", maxAccel = " + maxAccel + ", targetSteer = " + targetSteer);
+      return;
+    }
+
     targetSteer = 0;//TODO this is a temporary override as TO26 I-95 routes files do not match lane geometry
 
     plugin.getCooperativeMergeInputs().setCommands(targetSpeed, maxAccel, targetSteer);

@@ -32,6 +32,15 @@ import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
  * Set the target vehicle speed to the platoon speed and activate the lane change indicator when needed
  */
 public class CommandingState extends RSUMeteringStateBase {
+  protected static final double MIN_METER_DIST = -10.0; //meters; allow some buffer around meter location
+  protected static final double MAX_METER_DIST = 1000.0; //meters
+  protected static final double MIN_MERGE_DIST = -800.0; //meters
+  protected static final double MAX_MERGE_DIST = 800.0; //meters
+  protected static final double MIN_SPEED = 0.5; // m/s
+  protected static final double MAX_SPEED = 35.0; // m/s - just over 75 mph
+  protected static final int    MIN_LANE = 0;
+  protected static final int    MAX_LANE = 5;
+
   protected final static String EXPECTED_OPERATION_PARAMS = "STATUS|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f,LANE:%d";
   protected final static String STATUS_TYPE_PARAM = "STATUS";
   protected final static List<String> OPERATION_PARAMS = new ArrayList<>(Arrays.asList("METER_DIST", "MERGE_DIST", "SPEED", "LANE"));
@@ -95,6 +104,16 @@ public class CommandingState extends RSUMeteringStateBase {
     int lane = Integer.parseInt(params.get(3));
     // Simply updating the command speed to the platoon speed may be enough to make this work
     // If it is not more complex logic can be added
+
+    //perform sanity check on incoming params
+    if (meterDist < MIN_METER_DIST  ||  meterDist > MAX_METER_DIST  ||
+        mergeDist < MIN_MERGE_DIST  ||  mergeDist > MAX_MERGE_DIST  ||
+        speed < MIN_SPEED           ||  speed > MAX_SPEED  ||
+        lane < MIN_LANE             ||  lane > MAX_LANE) {
+      log.warn("Received operation message with suspect strategy variables. meterDist = " + meterDist +
+                ", mergeDist = " + mergeDist + ", speed = " + speed + ", lane = " + lane);
+      return;
+    }
 
     PlatoonData platoon = worker.getNextPlatoon(vehicleId);
     double newCommandSpeed;
