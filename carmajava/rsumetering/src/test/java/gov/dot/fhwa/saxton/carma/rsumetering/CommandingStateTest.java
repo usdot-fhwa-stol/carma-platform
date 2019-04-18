@@ -90,7 +90,5 @@ public class CommandingStateTest {
         commandingState.onMobilityOperationMessage(msg);
         verify(mockLog , times(1)).warn("Received operation message with suspect strategy variables. meterDist = 0.0, mergeDist = 0.0, speed = 0.0, lane = 0");
 
-
-        // assertEquals(1,2);
     }
 }
