@@ -87,10 +87,15 @@ public class HoldingStateTest {
         holdingState.onMobilityOperationMessage(msg);
         verify(mockLog , times(1)).warn("Received operation message with bad params. Exception: java.lang.IllegalArgumentException: Invalid type. Expected: STATUS String: ");
 
-        msg.setStrategyParams(String.format("STATUS|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f,LANE:%d", 0.00, 0.00, 0.00, 0));
+        msg.setStrategyParams(String.format("STATUS|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f,LANE:%d", -11.00, -801.0, -0.6, 0));
         // Execute function
         holdingState.onMobilityOperationMessage(msg);
-        verify(mockLog , times(1)).warn("Received operation message with suspect strategy values. meterDist = 0.0, mergeDist = 0.0, speed = 0.0");
+        verify(mockLog , times(1)).warn("Received operation message with suspect strategy values. meterDist = -11.0, mergeDist = -801.0, speed = -0.6");
+
+        msg.setStrategyParams(String.format("STATUS|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f,LANE:%d", 1001.0, 801.0, 36.0, 0));
+        // // Execute function
+        holdingState.onMobilityOperationMessage(msg);
+        verify(mockLog , times(1)).warn("Received operation message with suspect strategy values. meterDist = 1001.0, mergeDist = 801.0, speed = 36.0");
 
     }
 }
