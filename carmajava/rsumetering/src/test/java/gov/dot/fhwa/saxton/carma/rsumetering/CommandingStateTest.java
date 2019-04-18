@@ -44,27 +44,12 @@ import cav_msgs.MobilityRequest;
 import cav_msgs.MobilityResponse;
 import gov.dot.fhwa.saxton.carma.rosutils.MobilityHelper;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
-import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
-import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
-import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 
 // This test only focus on the behavior of CommandingState API.
 public class CommandingStateTest {
-    protected CooperativeMergePlugin     mockPlugin;
-    protected ILogger                    mockLog;
-    protected Log                        mockSimpleLog;
-    protected RouteService               mockRouteService;
-    protected IManeuverInputs            mockInputs;
-    protected IGuidanceCommands          mockCommands;
-    protected IMobilityRouter            mockRouter;
-    protected PluginServiceLocator       pluginServiceLocator;
-    protected Route                      route;
-    protected IPublisher<MobilityRequest> mobilityRequestPub;
-    protected IPublisher<MobilityOperation> mobilityOperationPub;
-    protected IPublisher<MobilityResponse> mobilityResponsePub;
-    protected ITrajectoryConverter mockTrajectoryConverter;
-    protected ArbitratorService mockArbitratorService;
-    protected ManeuverPlanner mockManeuverPlanner;
+    protected SaxtonLogger                  mockLog;
+    protected Log                           mockSimpleLog;
+    protected RSUMeterWorker                mockRSUMeterWorker;
 
     NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
     MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
@@ -72,63 +57,40 @@ public class CommandingStateTest {
     final String VEHICLE_ID = "veh_id";
     final String BROADCAST_ID = "";
     final String RSU_ID = "rsu_id";
+    final double vehMaxAccel = 0.0;
+    final double distToMerge = 0.0;
+    final double initialTargetSpeed = 0.0;
 
     @Before
     public void setup() {
-        mockPlugin              = mock(CooperativeMergePlugin.class);
-        mockLog                 = mock(ILogger.class);
+        mockLog                 = mock(SaxtonLogger.class);
         mockSimpleLog           = mock(Log.class);
-        mockRouteService        = mock(RouteService.class);
-        mockInputs              = mock(IManeuverInputs.class);
-        mockRouter              = mock(IMobilityRouter.class);
-        mockTrajectoryConverter = mock(ITrajectoryConverter.class);
-        mockArbitratorService   = mock(ArbitratorService.class);
-        mockManeuverPlanner     = mock(ManeuverPlanner.class);
-        mockCommands            = mock(IGuidanceCommands.class);
-
-        mobilityRequestPub   = (IPublisher<MobilityRequest>) mock(IPublisher.class);
-        mobilityOperationPub = (IPublisher<MobilityOperation>) mock(IPublisher.class);
-        mobilityResponsePub  = (IPublisher<MobilityResponse>) mock(IPublisher.class);
-
-        when(mobilityRequestPub.newMessage()).thenReturn(messageFactory.newFromType(MobilityRequest._TYPE));
-        when(mobilityOperationPub.newMessage()).thenReturn(messageFactory.newFromType(MobilityOperation._TYPE));
-        when(mobilityResponsePub.newMessage()).thenReturn(messageFactory.newFromType(MobilityResponse._TYPE));
-
-        when(mockPlugin.getMobilityRequestPub()).thenReturn(mobilityRequestPub);
-        when(mockPlugin.getMobilityOperationPub()).thenReturn(mobilityOperationPub);
-        when(mockPlugin.getMobilityResponsePub()).thenReturn(mobilityResponsePub);
-
-        when(mockManeuverPlanner.getManeuverInputs()).thenReturn(mockInputs);
-        when(mockManeuverPlanner.getGuidanceCommands()).thenReturn(mockCommands);
-
-        pluginServiceLocator = new PluginServiceLocator(mockArbitratorService,    mock(PluginManagementService.class),
-                                                        mock(IPubSubService.class),       mock(ParameterSource.class),
-                                                        mockManeuverPlanner,      mockRouteService,
-                                                        mockRouter,                       mock(IConflictDetector.class),
-                                                        mockTrajectoryConverter, mock(ILightBarManager.class),
-                                                        mock(TrackingService.class), null, null);
-        when(mockPlugin.getCommsTimeoutMS()).thenReturn(500L);
-
-        when(mockPlugin.getVehicleId()).thenReturn(VEHICLE_ID);
-
-
-        route = (new FileStrategy("../route/src/test/resources/routes/colonial_farm_rd_outbound.yaml", mockSimpleLog)).load();
-        route = Route.fromMessage(route.toMessage(messageFactory)); // Assign waypoint ids
-
-        when(mockRouteService.getCurrentRoute()).thenReturn(route);
-
-        ILoggerFactory mockLoggerFactory = mock(ILoggerFactory.class);
-        when(mockLoggerFactory.createLoggerForClass(any(Class.class))).thenReturn(mockLog);
-        LoggerManager.setLoggerFactory(mockLoggerFactory);
-        
-        AccStrategyManager.setAccStrategyFactory(new BasicAccStrategyFactory(1.8, 2.5, 0, 0, 1.5, new Pipeline<>()));
+        mockRSUMeterWorker      = mock(RSUMeterWorker.class);
     }
-
 
     @Test
     public void testOnMobilityOperationMessage() {
-        assertEquals(2,1);
+
+        String planId = "AA-BB";
+        final CommandingState commandingState = new CommandingState( mockRSUMeterWorker, mockLog, VEHICLE_ID, planId, vehMaxAccel, distToMerge, initialTargetSpeed);
+        
+        // Initialize message
+        MobilityOperation msg = messageFactory.newFromType(MobilityOperation._TYPE);
+        msg.getHeader().setRecipientId(VEHICLE_ID);
+        msg.getHeader().setSenderId(VEHICLE_ID);
+        msg.getHeader().setPlanId(planId);
+
+        msg.setStrategyParams(String.format(""));
+        // Execute function
+        commandingState.onMobilityOperationMessage(msg);
+        verify(mockLog , times(1)).warn("Received operation message with bad params. Exception: java.lang.IllegalArgumentException: Invalid type. Expected: STATUS String: ");
+
+        msg.setStrategyParams(String.format("STATUS|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f,LANE:%d", 0.00, 0.00, 0.00, 0));
+        // Execute function
+        commandingState.onMobilityOperationMessage(msg);
+        verify(mockLog , times(1)).warn("Received operation message with suspect strategy variables. meterDist = 0.0, mergeDist = 0.0, speed = 0.0, lane = 0");
+
+
+        // assertEquals(1,2);
     }
-
-
 }
