@@ -59,7 +59,7 @@ public class RSUMeterWorkerTest {
     public void testonUpdatePlatoonWithOperationMsg() {
 
         String planId = "AA-BB";
-        String routeFilePath = "/home/carma/src/CARMAPlatform/carmajava/route/src/test/resources/routes/25_glidepath_demo_east_bound.yaml";
+        String routeFilePath = "../route/src/test/resources/routes/25_glidepath_demo_east_bound.yaml";
         String rsuId = "veh_id";
         double distToMerge = 0; 
         double mainRouteMergeDTD = 0; 
