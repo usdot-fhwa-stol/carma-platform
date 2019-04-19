@@ -50,6 +50,8 @@ import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPubSubService;
 import gov.dot.fhwa.saxton.carma.guidance.pubsub.IPublisher;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
 import gov.dot.fhwa.saxton.carma.guidance.util.RouteService;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.ITrajectoryConverter;
 import gov.dot.fhwa.saxton.carma.route.FileStrategy;
@@ -188,4 +190,56 @@ public class StandbyStateTest {
         // Check we are now in the planning state
         assertEquals("StandbyState", newState.getValue().toString());
     }
+
+    @Test
+    public void testOnMobilityRequestMessage() {
+        // Init state
+        StandbyState standbyState = new StandbyState(mockPlugin, mockLog, pluginServiceLocator);
+        mockPlugin.setState(null, standbyState);
+
+        when(mockTrajectoryConverter.pathToMessage(any())).thenReturn(messageFactory.newFromType(cav_msgs.Trajectory._TYPE));
+
+        MobilityRequest msg = messageFactory.newFromType(MobilityRequest._TYPE);
+
+        msg.getHeader().setRecipientId(BROADCAST_ID);
+        msg.getHeader().setSenderId(RSU_ID);
+        msg.setStrategy(CooperativeMergePlugin.MOBILITY_STRATEGY);
+
+        ILoggerFactory mockLoggerFactory = mock(ILoggerFactory.class);
+        when(mockLoggerFactory.createLoggerForClass(any(Class.class))).thenReturn(mockLog);
+        LoggerManager.setLoggerFactory(mockLoggerFactory);
+
+        GeodesicCartesianConverter gcc = new GeodesicCartesianConverter();
+
+        Point3D currentECEF = gcc.geodesic2Cartesian(new Location(90, 90, 72.0) , Transform.identity());
+        msg.getLocation().setEcefX((int)(currentECEF.getX() * StandbyState.CM_PER_M));
+        msg.getLocation().setEcefY((int)(currentECEF.getY() * StandbyState.CM_PER_M));
+        msg.getLocation().setEcefZ((int)(currentECEF.getZ() * StandbyState.CM_PER_M));
+
+        double radius = 100;
+        double mergeDist = -10;
+        double mergeLength = 5;
+
+        msg.setStrategyParams(String.format("COMMAND|RADIUS:%.2f,MERGE_DIST:%.2f,MERGE_LENGTH:%.2f", radius, mergeDist, mergeLength));
+        standbyState.onMobilityRequestMessage(msg);
+        verify(mockLog , times(1)).error("Received mobility request with invalid params. Exception: java.lang.IllegalArgumentException: Invalid type. Expected: INFO String: COMMAND|RADIUS:100.00,MERGE_DIST:-10.00,MERGE_LENGTH:5.00");
+
+        radius = 99;
+        mergeDist = -11;
+        mergeLength = 4;
+
+        msg.setStrategyParams(String.format("INFO|RADIUS:%.2f,MERGE_DIST:%.2f,MERGE_LENGTH:%.2f", radius, mergeDist, mergeLength));
+        standbyState.onMobilityRequestMessage(msg);
+        verify(mockLog , times(1)).error("Received mobility request with suspect strategy values. meterRadius = " + radius + ", mergeDTDFromMeter = " + mergeDist + ", mergeLength = " + mergeLength);
+
+        radius = 10001;
+        mergeDist = 1001;
+        mergeLength = 801;
+
+        msg.setStrategyParams(String.format("INFO|RADIUS:%.2f,MERGE_DIST:%.2f,MERGE_LENGTH:%.2f", radius, mergeDist, mergeLength));
+        standbyState.onMobilityRequestMessage(msg);
+        verify(mockLog , times(1)).error("Received mobility request with suspect strategy values. meterRadius = " + radius + ", mergeDTDFromMeter = " + mergeDist + ", mergeLength = " + mergeLength);
+
+    }
+
 }
