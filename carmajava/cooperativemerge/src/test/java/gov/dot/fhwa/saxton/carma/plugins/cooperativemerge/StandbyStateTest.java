@@ -240,15 +240,6 @@ public class StandbyStateTest {
         standbyState.onMobilityRequestMessage(msg);
         verify(mockLog , times(1)).error("Received mobility request with suspect strategy values. meterRadius = " + radius + ", mergeDTDFromMeter = " + mergeDist + ", mergeLength = " + mergeLength);
 
-        
-
-        // Verify set state value. Two times to account for init state
-        // ArgumentCaptor<ICooperativeMergeState> newState = ArgumentCaptor.forClass(ICooperativeMergeState.class);
-        // ArgumentCaptor<ICooperativeMergeState> oldState = ArgumentCaptor.forClass(ICooperativeMergeState.class);
-        // verify(mockPlugin, times(1)).setState(oldState.capture(), newState.capture());
-
-        // // Check we are now in the planning state
-        // assertEquals("StandbyState", newState.getValue().toString());
     }
 
 }

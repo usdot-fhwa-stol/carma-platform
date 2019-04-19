@@ -16,33 +16,17 @@
 
 package gov.dot.fhwa.saxton.carma.rsumetering;
 
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.ros.message.MessageFactory;
 import org.ros.node.NodeConfiguration;
 
-
 import cav_msgs.MobilityOperation;
-import cav_msgs.MobilityRequest;
-import cav_msgs.MobilityResponse;
-import gov.dot.fhwa.saxton.carma.rosutils.MobilityHelper;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
 // This test only focus on the behavior of CommandingState API.

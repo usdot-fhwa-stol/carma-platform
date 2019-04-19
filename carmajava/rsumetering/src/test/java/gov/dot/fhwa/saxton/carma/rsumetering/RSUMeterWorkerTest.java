@@ -16,33 +16,19 @@
 
 package gov.dot.fhwa.saxton.carma.rsumetering;
 
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.ros.message.MessageFactory;
 import org.ros.node.NodeConfiguration;
 
-import cav_msgs.BSM;
 import cav_msgs.MobilityOperation;
-import cav_msgs.MobilityRequest;
-import cav_msgs.MobilityResponse;
 import gov.dot.fhwa.saxton.carma.geometry.geodesic.Location;
-import gov.dot.fhwa.saxton.carma.rosutils.MobilityHelper;
 import gov.dot.fhwa.saxton.carma.rosutils.SaxtonLogger;
 
 // This test only focus on the behavior of CommandingState API.
@@ -73,8 +59,6 @@ public class RSUMeterWorkerTest {
     public void testonUpdatePlatoonWithOperationMsg() {
 
         String planId = "AA-BB";
-        double vehLagTime = 1.0;
-
         String routeFilePath = "/home/carma/src/CARMAPlatform/carmajava/route/src/test/resources/routes/25_glidepath_demo_east_bound.yaml";
         String rsuId = "veh_id";
         double distToMerge = 0; 
@@ -102,20 +86,15 @@ public class RSUMeterWorkerTest {
         msg.getHeader().setSenderId(VEHICLE_ID);
         msg.getHeader().setPlanId(planId);
         msg.setStrategy("Carma/Platooning");
-        msg.setStrategyParams(String.format(""));
+
+        msg.setStrategyParams(String.format("INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d", "s", 0.0, 0.4, 1));
         // Execute function
         rSUMeterWorker.handleMobilityOperationMsg(msg);
-        verify(mockLog, times(1)).warn("Received operation message with bad params. Exception: java.lang.IllegalArgumentException: Invalid type. Expected: STATUS String: ");
+        verify(mockLog, times(1)).warn("Received operation message with suspect strategy values. platoonSpeed = 0.4");
 
-        msg.setStrategyParams(String.format("INFO|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f,LANE:%d", -11.00, -801.0, -0.6, 0));
+        msg.setStrategyParams(String.format("INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d", "s", 0.0, 36.0, 1));
         // Execute function
         rSUMeterWorker.handleMobilityOperationMsg(msg);
-        verify(mockLog, times(1)).warn("Received operation message with suspect strategy values. meterDist = -11.0, mergeDist = -801.0, speed = -0.6");
-
-        msg.setStrategyParams(String.format("INFO|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f,LANE:%d", 1001.0, 801.0, 36.0, 0));
-        // Execute function
-        rSUMeterWorker.handleMobilityOperationMsg(msg);
-        verify(mockLog , times(1)).warn("Received operation message with suspect strategy values. meterDist = 1001.0, mergeDist = 801.0, speed = 36.0");
-
+        verify(mockLog, times(1)).warn("Received operation message with suspect strategy values. platoonSpeed = 36.0");
     }
 }
