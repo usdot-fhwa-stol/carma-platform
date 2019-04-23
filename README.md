@@ -1,3 +1,7 @@
+| CicleCI Build Status | Sonar Code Quality |
+|----------------------|---------------------|
+[![CircleCI](https://circleci.com/gh/usdot-fhwa-OPS/CARMAPlatform.svg?style=svg)](https://circleci.com/gh/usdot-fhwa-stol/CARMAPlatform) | [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=usdot-fhwa-ops_CARMAPlatform&metric=alert_status)](https://sonarcloud.io/dashboard?id=usdot-fhwa-stol_CARMAPlatform) |
+
 # CARMA
 ![CARMA Arch](docs/image/CARMA_web_banner_18oct18_5.png)
 
