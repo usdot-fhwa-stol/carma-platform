@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- New Guidance Commands Node -->
+    <group>
+        <node pkg="new_guidance_commands" type="new_guidance_commands_node" name="new_guidance_commands">
+        </node>
+    </group>
+</launch>
