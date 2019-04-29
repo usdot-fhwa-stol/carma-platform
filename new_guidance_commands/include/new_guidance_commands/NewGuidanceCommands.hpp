@@ -1,8 +1,12 @@
 // ROS
 #include <ros/ros.h>
 #include <sstream>
+#include <std_srvs/Trigger.h>
+#include <std_msgs/Float32.h>
 // CAV
 #include <cav_msgs/SpeedAccel.h>
+#include <cav_msgs/LateralControl.h>
+#include <cav_msgs/RobotEnabled.h>
 
 namespace new_guidance_commands {
 
@@ -30,20 +34,95 @@ class NewGuidanceCommands {
         */
         bool readParameters();
 
+        //! ROS node handle.
+        ros::NodeHandle& nodeHandle_;
+
+        //! ROS speedAccel subscriber.
+        ros::Subscriber speedAccelsubscriber_;
+        std::string speedAccel_subscriberTopic_;
+
         /*!
         * ROS topic callback method.
         * @param message the received message.
         */
-        void topicCallback(const cav_msgs::SpeedAccel& msg);
+        void speedAccel_SubscriberCallback(const cav_msgs::SpeedAccel& msg);
 
-        //! ROS node handle.
-        ros::NodeHandle& nodeHandle_;
 
-        //! ROS topic subscriber.
-        ros::Subscriber subscriber_;
 
-        //! ROS topic name to subscribe to.
-        std::string subscriberTopic_;
+        //! ROS wrenchEffort subscriber.
+        ros::Subscriber wrenchEffortsubscriber_;
+        std::string wrenchEffort_subscriberTopic_;
+
+        /*!
+        * ROS topic callback method.
+        * @param message the received message.
+        */
+        void wrenchEffort_SubscriberCallback(const std_msgs::Float32::ConstPtr& msg);
+
+
+
+        //! ROS lateralControl subscriber.
+        ros::Subscriber lateralControlsubscriber_;
+        std::string lateralControl_subscriberTopic_;
+
+        /*!
+        * ROS topic callback method.
+        * @param message the received message.
+        */
+        void lateralControl_SubscriberCallback(const cav_msgs::LateralControl& msg);
+
+
+
+        //! ROS  enable_robotic subscriber.
+        ros::Subscriber enable_roboticsubscriber_;
+        std::string enable_robotic_subscriberTopic_;
+
+        /*!
+        * ROS topic callback method.
+        * @param message the received message.
+        */
+        void enable_robotic_SubscriberCallback(const cav_msgs::RobotEnabled& msg);
+
+
+        //! ROS topic publishers.
+        ros::Publisher speedAccel_publisher_;
+        std::string speedAccel_publisherTopic_;
+
+        /*!
+        * ROS speedAccel publisher method.
+        * @param message the received message.
+        */
+        void speedAccel_Publisher(const cav_msgs::SpeedAccel& msg);
+
+
+        ros::Publisher wrenchEffort_publisher_;
+        std::string wrenchEffort_publisherTopic_;
+
+        /*!
+        * ROS wrenchEffort publisher method.
+        * @param message the received message.
+        */
+        void wrenchEffort_Publisher(const cav_msgs::SpeedAccel& msg);
+
+        
+        ros::Publisher lateralControl_publisher_;
+        std::string lateralControl_publisherTopic_;
+
+        /*!
+        * ROS lateralControl_publisher method.
+        * @param message the received message.
+        */
+        void lateralControl_Publisher(const cav_msgs::SpeedAccel& msg);
+
+
+        ros::Publisher  enable_robotic_publisher_;
+        std::string  enable_robotic_publisherTopic_;
+
+        /*!
+        * ROS  enable_robotic_publisher method.
+        * @param message the received message.
+        */
+        void  enable_robotic_Publisher(const cav_msgs::SpeedAccel& msg);
 
 };
 
