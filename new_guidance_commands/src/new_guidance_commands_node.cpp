@@ -9,10 +9,18 @@ int main(int argc, char** argv)
 
   ros::init(argc, argv, "new_guidance_commands");
   ros::NodeHandle nodeHandle("~");
-
   new_guidance_commands::NewGuidanceCommands NewGuidanceCommands(nodeHandle);
 
-  ros::spin();
+  ros::Rate rate(1);
+
+  while (ros::ok())
+  {
+    NewGuidanceCommands.publisher();
+
+    rate.sleep();
+    ros::spinOnce();
+  }
+  
   return 0;
 }
 

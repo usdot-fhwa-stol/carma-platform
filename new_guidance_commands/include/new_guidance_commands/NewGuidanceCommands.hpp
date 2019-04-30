@@ -26,6 +26,8 @@ class NewGuidanceCommands {
         * Destructor.
         */
         virtual ~NewGuidanceCommands();
+        
+        void publisher();
 
     private:
         /*!
@@ -92,7 +94,7 @@ class NewGuidanceCommands {
         * ROS speedAccel publisher method.
         * @param message the received message.
         */
-        void speedAccel_Publisher(const cav_msgs::SpeedAccel& msg);
+        void speedAccel_Publisher();
 
 
         ros::Publisher wrenchEffort_publisher_;
@@ -102,7 +104,7 @@ class NewGuidanceCommands {
         * ROS wrenchEffort publisher method.
         * @param message the received message.
         */
-        void wrenchEffort_Publisher(const cav_msgs::SpeedAccel& msg);
+        void wrenchEffort_Publisher();
 
         
         ros::Publisher lateralControl_publisher_;
@@ -112,7 +114,7 @@ class NewGuidanceCommands {
         * ROS lateralControl_publisher method.
         * @param message the received message.
         */
-        void lateralControl_Publisher(const cav_msgs::SpeedAccel& msg);
+        void lateralControl_Publisher();
 
 
         ros::Publisher  enable_robotic_publisher_;
@@ -122,8 +124,14 @@ class NewGuidanceCommands {
         * ROS  enable_robotic_publisher method.
         * @param message the received message.
         */
-        void  enable_robotic_Publisher(const cav_msgs::SpeedAccel& msg);
+        void enable_robotic_Publisher();
 
+
+        cav_msgs::SpeedAccel SpeedAccel_msg;
+        std_msgs::Float32::ConstPtr WrenchEffort_msg;
+        cav_msgs::LateralControl LateralControl_msg;
+        cav_msgs::RobotEnabled RobotEnabled_msg;
+        
 };
 
 }  // namespace new_guidance_commands

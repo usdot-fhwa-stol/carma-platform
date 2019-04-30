@@ -18,12 +18,22 @@ NewGuidanceCommands::NewGuidanceCommands(ros::NodeHandle &nodeHandle)
                                       &NewGuidanceCommands::lateralControl_SubscriberCallback, this);
   enable_roboticsubscriber_ = nodeHandle_.subscribe(enable_robotic_subscriberTopic_, 1,
                                       &NewGuidanceCommands::enable_robotic_SubscriberCallback, this);
+
+
+
+  wrenchEffort_publisher_ = nodeHandle_.advertise<std_msgs::Float32>(wrenchEffort_publisherTopic_, 1000);
+
   ROS_INFO("Successfully launched node.");
 }
 
 NewGuidanceCommands::~NewGuidanceCommands()
 {
 }
+
+void NewGuidanceCommands::publisher(){
+  ROS_INFO("publisher starts.");
+  wrenchEffort_Publisher();
+} 
 
 bool NewGuidanceCommands::readParameters()
 {
@@ -47,6 +57,7 @@ void NewGuidanceCommands::speedAccel_SubscriberCallback(const cav_msgs::SpeedAcc
 };
 
 void NewGuidanceCommands::wrenchEffort_SubscriberCallback(const std_msgs::Float32::ConstPtr& msg){
+    WrenchEffort_msg = msg;
     ROS_INFO("I heard wrenchEffort");
 };
 
@@ -58,19 +69,25 @@ void NewGuidanceCommands::enable_robotic_SubscriberCallback(const cav_msgs::Robo
     ROS_INFO("I heard enable_robotic");
 };
 
-void NewGuidanceCommands::speedAccel_Publisher(const cav_msgs::SpeedAccel& msg){
+void NewGuidanceCommands::speedAccel_Publisher(){
     ROS_INFO("I heard speedAccel");
 };
 
-void NewGuidanceCommands::wrenchEffort_Publisher(const cav_msgs::SpeedAccel& msg){
-    ROS_INFO("I heard wrenchEffort");
+void NewGuidanceCommands::wrenchEffort_Publisher(){
+    std_msgs::Float32 f;
+    f.data = 1.0f;
+
+    if(WrenchEffort_msg)
+      wrenchEffort_publisher_.publish(f);
+    
+    ROS_INFO("I publish wrenchEffort");
 };
 
-void NewGuidanceCommands::lateralControl_Publisher(const cav_msgs::SpeedAccel& msg){
+void NewGuidanceCommands::lateralControl_Publisher(){
     ROS_INFO("I heard lateralControl");
 };
 
-void  NewGuidanceCommands::enable_robotic_Publisher(const cav_msgs::SpeedAccel& msg){
+void  NewGuidanceCommands::enable_robotic_Publisher(){
     ROS_INFO("I heard enable_robotic");
 };
 
