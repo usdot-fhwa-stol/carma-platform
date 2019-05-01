@@ -1,3 +1,4 @@
+#include <mutex>
 // ROS
 #include <ros/ros.h>
 #include <sstream>
@@ -131,6 +132,7 @@ class NewGuidanceCommands {
         std_msgs::Float32::ConstPtr WrenchEffort_msg;
         cav_msgs::LateralControl LateralControl_msg;
         cav_msgs::RobotEnabled RobotEnabled_msg;
+        
         
 };
 

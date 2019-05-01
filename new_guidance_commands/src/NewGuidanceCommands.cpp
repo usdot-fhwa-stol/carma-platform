@@ -31,7 +31,7 @@ NewGuidanceCommands::~NewGuidanceCommands()
 }
 
 void NewGuidanceCommands::publisher(){
-  ROS_INFO("publisher starts.");
+  ROS_INFO("publisher");
   wrenchEffort_Publisher();
 } 
 
@@ -74,11 +74,9 @@ void NewGuidanceCommands::speedAccel_Publisher(){
 };
 
 void NewGuidanceCommands::wrenchEffort_Publisher(){
-    std_msgs::Float32 f;
-    f.data = 1.0f;
 
-    if(WrenchEffort_msg)
-      wrenchEffort_publisher_.publish(f);
+    if(WrenchEffort_msg != NULL)
+      wrenchEffort_publisher_.publish(WrenchEffort_msg);
     
     ROS_INFO("I publish wrenchEffort");
 };
