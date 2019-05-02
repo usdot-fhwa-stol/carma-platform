@@ -29,7 +29,7 @@ NewGuidanceCommands::~NewGuidanceCommands()
 }
 
 void NewGuidanceCommands::publisher(){
-  ROS_INFO("publisher");
+  ROS_DEBUG("Calling publisher functions");
   speedAccel_Publisher();
   wrenchEffort_Publisher();
   lateralControl_Publisher();
@@ -54,26 +54,26 @@ bool NewGuidanceCommands::readParameters()
 void NewGuidanceCommands::speedAccel_SubscriberCallback(const cav_msgs::SpeedAccel::ConstPtr& msg){
     std::lock_guard<std::mutex> lock(SpeedAccel_msg_mutex);
     SpeedAccel_msg = msg;
-    ROS_INFO("I heard SpeedAccel");
+    ROS_DEBUG("I heard SpeedAccel");
 };
 
 void NewGuidanceCommands::wrenchEffort_SubscriberCallback(const std_msgs::Float32::ConstPtr& msg){
     std::lock_guard<std::mutex> lock(WrenchEffort_msg_mutex);
     WrenchEffort_msg = msg;
-    ROS_INFO("I heard wrenchEffort");
+    ROS_DEBUG("I heard wrenchEffort");
 };
 
 void NewGuidanceCommands::lateralControl_SubscriberCallback(const cav_msgs::LateralControl::ConstPtr& msg){
     std::lock_guard<std::mutex> lock(LateralControl_msg_mutex);
     LateralControl_msg = msg;
-    ROS_INFO("I heard lateralControl");
+    ROS_DEBUG("I heard lateralControl");
 };
 
 void NewGuidanceCommands::speedAccel_Publisher(){
     std::lock_guard<std::mutex> lock(SpeedAccel_msg_mutex);
     if(SpeedAccel_msg != NULL) {
       speedAccel_publisher_.publish(SpeedAccel_msg);
-      ROS_INFO("I publish SpeedAccel");
+      ROS_DEBUG("I publish SpeedAccel");
     }
 };
 
@@ -81,7 +81,7 @@ void NewGuidanceCommands::wrenchEffort_Publisher(){
     std::lock_guard<std::mutex> lock(WrenchEffort_msg_mutex);
     if(WrenchEffort_msg != NULL) {
       wrenchEffort_publisher_.publish(WrenchEffort_msg);
-      ROS_INFO("I publish wrenchEffort");
+      ROS_DEBUG("I publish wrenchEffort");
     }
 };
 
@@ -89,7 +89,7 @@ void NewGuidanceCommands::lateralControl_Publisher(){
     std::lock_guard<std::mutex> lock(LateralControl_msg_mutex);
     if(LateralControl_msg != NULL) {
       lateralControl_publisher_.publish(LateralControl_msg);
-      ROS_INFO("I publish lateralControl");
+      ROS_DEBUG("I publish lateralControl");
     }
 };
 
