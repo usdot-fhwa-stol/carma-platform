@@ -75,18 +75,6 @@ class NewGuidanceCommands {
         void lateralControl_SubscriberCallback(const cav_msgs::LateralControl::ConstPtr& msg);
 
 
-
-        //! ROS  enable_robotic subscriber.
-        ros::Subscriber enable_roboticsubscriber_;
-        std::string enable_robotic_subscriberTopic_;
-
-        /*!
-        * ROS topic callback method.
-        * @param message the received message.
-        */
-        void enable_robotic_SubscriberCallback(const cav_msgs::RobotEnabled::ConstPtr& msg);
-
-
         //! ROS topic publishers.
         ros::Publisher speedAccel_publisher_;
         std::string speedAccel_publisherTopic_;
@@ -121,22 +109,14 @@ class NewGuidanceCommands {
         ros::Publisher  enable_robotic_publisher_;
         std::string  enable_robotic_publisherTopic_;
 
-        /*!
-        * ROS  enable_robotic_publisher method.
-        * @param message the received message.
-        */
-        void enable_robotic_Publisher();
-
 
         cav_msgs::SpeedAccel::ConstPtr SpeedAccel_msg;
         std_msgs::Float32::ConstPtr WrenchEffort_msg;
         cav_msgs::LateralControl::ConstPtr LateralControl_msg;
-        cav_msgs::RobotEnabled::ConstPtr RobotEnabled_msg;
 
         std::mutex SpeedAccel_msg_mutex;
         std::mutex WrenchEffort_msg_mutex;
         std::mutex LateralControl_msg_mutex;
-        std::mutex  RobotEnabled_msg_mutex;
         
 };
 

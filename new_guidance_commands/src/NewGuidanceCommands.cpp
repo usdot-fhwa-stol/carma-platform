@@ -16,12 +16,10 @@ NewGuidanceCommands::NewGuidanceCommands(ros::NodeHandle &nodeHandle)
                                       &NewGuidanceCommands::wrenchEffort_SubscriberCallback, this);
   lateralControlsubscriber_ = nodeHandle_.subscribe(lateralControl_subscriberTopic_, 1,
                                       &NewGuidanceCommands::lateralControl_SubscriberCallback, this);
-  enable_roboticsubscriber_ = nodeHandle_.subscribe(enable_robotic_subscriberTopic_, 1,
-                                      &NewGuidanceCommands::enable_robotic_SubscriberCallback, this);
 
-
-
+  speedAccel_publisher_ = nodeHandle_.advertise<cav_msgs::SpeedAccel>(speedAccel_publisherTopic_, 1000);
   wrenchEffort_publisher_ = nodeHandle_.advertise<std_msgs::Float32>(wrenchEffort_publisherTopic_, 1000);
+  lateralControl_publisher_ = nodeHandle_.advertise<cav_msgs::LateralControl>(lateralControl_publisherTopic_, 1000);
 
   ROS_INFO("Successfully launched node.");
 }
@@ -35,7 +33,6 @@ void NewGuidanceCommands::publisher(){
   speedAccel_Publisher();
   wrenchEffort_Publisher();
   lateralControl_Publisher();
-  enable_robotic_Publisher();
 } 
 
 bool NewGuidanceCommands::readParameters()
@@ -43,11 +40,9 @@ bool NewGuidanceCommands::readParameters()
   if (!nodeHandle_.getParam("speedAccel_subscriber_topic", speedAccel_subscriberTopic_) ||
       !nodeHandle_.getParam("wrenchEffort_subscriber_topic", wrenchEffort_subscriberTopic_) ||
       !nodeHandle_.getParam("lateralControl_subscriber_topic", lateralControl_subscriberTopic_) ||
-      !nodeHandle_.getParam("enable_robotic_subscriber_topic", enable_robotic_subscriberTopic_) ||
       !nodeHandle_.getParam("speedAccel_publisher_topic", speedAccel_publisherTopic_) ||
       !nodeHandle_.getParam("wrenchEffort_publisher_topic", wrenchEffort_publisherTopic_) ||
-      !nodeHandle_.getParam("lateralControl_publisher_topic", lateralControl_publisherTopic_)  ||
-      !nodeHandle_.getParam("enable_robotic_publisher_topic", enable_robotic_publisherTopic_)){
+      !nodeHandle_.getParam("lateralControl_publisher_topic", lateralControl_publisherTopic_)){
             return false;
       }
 
@@ -73,15 +68,9 @@ void NewGuidanceCommands::lateralControl_SubscriberCallback(const cav_msgs::Late
     ROS_INFO("I heard lateralControl");
 };
 
-void NewGuidanceCommands::enable_robotic_SubscriberCallback(const cav_msgs::RobotEnabled::ConstPtr& msg){
-    std::lock_guard<std::mutex> lock(RobotEnabled_msg_mutex);
-    RobotEnabled_msg = msg;
-    ROS_INFO("I heard enable_robotic");
-};
-
 void NewGuidanceCommands::speedAccel_Publisher(){
     std::lock_guard<std::mutex> lock(SpeedAccel_msg_mutex);
-    if(SpeedAccel_msg != NULL){
+    if(SpeedAccel_msg != NULL) {
       speedAccel_publisher_.publish(SpeedAccel_msg);
       ROS_INFO("I publish SpeedAccel");
     }
@@ -89,7 +78,7 @@ void NewGuidanceCommands::speedAccel_Publisher(){
 
 void NewGuidanceCommands::wrenchEffort_Publisher(){
     std::lock_guard<std::mutex> lock(WrenchEffort_msg_mutex);
-    if(WrenchEffort_msg != NULL){
+    if(WrenchEffort_msg != NULL) {
       wrenchEffort_publisher_.publish(WrenchEffort_msg);
       ROS_INFO("I publish wrenchEffort");
     }
@@ -97,17 +86,9 @@ void NewGuidanceCommands::wrenchEffort_Publisher(){
 
 void NewGuidanceCommands::lateralControl_Publisher(){
     std::lock_guard<std::mutex> lock(LateralControl_msg_mutex);
-    if(LateralControl_msg != NULL){
+    if(LateralControl_msg != NULL) {
       lateralControl_publisher_.publish(LateralControl_msg);
       ROS_INFO("I publish lateralControl");
-    }
-};
-
-void  NewGuidanceCommands::enable_robotic_Publisher(){
-    std::lock_guard<std::mutex> lock(RobotEnabled_msg_mutex);
-    if(RobotEnabled_msg != NULL){
-      enable_robotic_publisher_.publish(RobotEnabled_msg);
-      ROS_INFO("I publish enable_robotic");
     }
 };
 

@@ -1,9 +1,7 @@
 speedAccel_subscriber_topic: /control/cmd_speed
 wrenchEffort_subscriber_topic: /control/cmd_longitudinal_effort
 lateralControl_subscriber_topic: /control/cmd_lateral
-enable_robotic_subscriber_topic: /control/enable_robotic
 
 speedAccel_publisher_topic: /cmd_speed
 wrenchEffort_publisher_topic: /cmd_longitudinal_effort
 lateralControl_publisher_topic: /cmd_lateral
-enable_robotic_publisher_topic: /enable_robotic
