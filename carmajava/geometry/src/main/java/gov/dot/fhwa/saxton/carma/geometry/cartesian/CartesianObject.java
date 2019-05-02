@@ -37,7 +37,7 @@ public class CartesianObject implements CartesianElement {
   protected Point centroidOfBounds;
   protected Point centroidOfCloud;
   protected final int numDimensions;
-  protected List<? extends Point> pointCloud;
+  protected List<Point> pointCloud;
 
   /**
    * Constructor which defines a cartesian object by the provided point cloud
@@ -45,7 +45,7 @@ public class CartesianObject implements CartesianElement {
    * @param pointCloud The point cloud which defines this object
    * @throws IllegalArgumentException Thrown if the provided point cloud has points of varying dimensions
    */
-  public CartesianObject(List<? extends Point> pointCloud) throws IllegalArgumentException {
+  public CartesianObject(List<Point> pointCloud) throws IllegalArgumentException {
     this.validateInput(pointCloud);
     this.numDimensions = pointCloud.get(0).getNumDimensions();
     this.pointCloud = pointCloud;
@@ -56,7 +56,7 @@ public class CartesianObject implements CartesianElement {
    * @param points The point cloud to validate
    * @throws IllegalArgumentException Thrown if the provided point cloud has points of varying dimensions
    */
-  protected void validateInput(List<? extends Point> points) throws IllegalArgumentException {
+  protected void validateInput(List<Point> points) throws IllegalArgumentException {
     if (points.size() <= 0) {
       throw new IllegalArgumentException("Empty list of points provided to CartesianObject constructor");
     }
@@ -132,7 +132,7 @@ public class CartesianObject implements CartesianElement {
    * Get's the set of points originally used to define this object
    * @return list of points of the same dimension
    */
-  public List<? extends Point> getPointCloud() {
+  public List<Point> getPointCloud() {
     return pointCloud;
   }
 
