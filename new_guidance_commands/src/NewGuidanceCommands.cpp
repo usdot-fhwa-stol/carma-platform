@@ -55,7 +55,7 @@ bool NewGuidanceCommands::readParameters()
 }
 
 
-void NewGuidanceCommands::speedAccel_SubscriberCallback(const cav_msgs::SpeedAccel& msg){
+void NewGuidanceCommands::speedAccel_SubscriberCallback(const cav_msgs::SpeedAccel::ConstPtr& msg){
     std::lock_guard<std::mutex> lock(SpeedAccel_msg_mutex);
     SpeedAccel_msg = msg;
     ROS_INFO("I heard SpeedAccel");
@@ -67,13 +67,13 @@ void NewGuidanceCommands::wrenchEffort_SubscriberCallback(const std_msgs::Float3
     ROS_INFO("I heard wrenchEffort");
 };
 
-void NewGuidanceCommands::lateralControl_SubscriberCallback(const cav_msgs::LateralControl& msg){
+void NewGuidanceCommands::lateralControl_SubscriberCallback(const cav_msgs::LateralControl::ConstPtr& msg){
     std::lock_guard<std::mutex> lock(LateralControl_msg_mutex);
     LateralControl_msg = msg;
     ROS_INFO("I heard lateralControl");
 };
 
-void NewGuidanceCommands::enable_robotic_SubscriberCallback(const cav_msgs::RobotEnabled& msg){
+void NewGuidanceCommands::enable_robotic_SubscriberCallback(const cav_msgs::RobotEnabled::ConstPtr& msg){
     std::lock_guard<std::mutex> lock(RobotEnabled_msg_mutex);
     RobotEnabled_msg = msg;
     ROS_INFO("I heard enable_robotic");
@@ -81,7 +81,7 @@ void NewGuidanceCommands::enable_robotic_SubscriberCallback(const cav_msgs::Robo
 
 void NewGuidanceCommands::speedAccel_Publisher(){
     std::lock_guard<std::mutex> lock(SpeedAccel_msg_mutex);
-    if(SpeedAccel_msg.speed != NULL){
+    if(SpeedAccel_msg != NULL){
       speedAccel_publisher_.publish(SpeedAccel_msg);
       ROS_INFO("I publish SpeedAccel");
     }
@@ -97,7 +97,7 @@ void NewGuidanceCommands::wrenchEffort_Publisher(){
 
 void NewGuidanceCommands::lateralControl_Publisher(){
     std::lock_guard<std::mutex> lock(LateralControl_msg_mutex);
-    if(LateralControl_msg.max_accel != NULL){
+    if(LateralControl_msg != NULL){
       lateralControl_publisher_.publish(LateralControl_msg);
       ROS_INFO("I publish lateralControl");
     }
@@ -105,7 +105,7 @@ void NewGuidanceCommands::lateralControl_Publisher(){
 
 void  NewGuidanceCommands::enable_robotic_Publisher(){
     std::lock_guard<std::mutex> lock(RobotEnabled_msg_mutex);
-    if(RobotEnabled_msg.robot_active != NULL){
+    if(RobotEnabled_msg != NULL){
       enable_robotic_publisher_.publish(RobotEnabled_msg);
       ROS_INFO("I publish enable_robotic");
     }
