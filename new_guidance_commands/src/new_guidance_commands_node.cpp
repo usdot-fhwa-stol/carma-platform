@@ -11,7 +11,7 @@ int main(int argc, char** argv)
   ros::NodeHandle nodeHandle("~");
   new_guidance_commands::NewGuidanceCommands NewGuidanceCommands(nodeHandle);
 
-  ros::Rate rate(1000);
+  ros::Rate rate(NewGuidanceCommands.rate);
 
   while (ros::ok())
   {

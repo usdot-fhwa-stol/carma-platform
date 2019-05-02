@@ -42,7 +42,8 @@ bool NewGuidanceCommands::readParameters()
       !nodeHandle_.getParam("lateralControl_subscriber_topic", lateralControl_subscriberTopic_) ||
       !nodeHandle_.getParam("speedAccel_publisher_topic", speedAccel_publisherTopic_) ||
       !nodeHandle_.getParam("wrenchEffort_publisher_topic", wrenchEffort_publisherTopic_) ||
-      !nodeHandle_.getParam("lateralControl_publisher_topic", lateralControl_publisherTopic_)){
+      !nodeHandle_.getParam("lateralControl_publisher_topic", lateralControl_publisherTopic_) ||
+      !nodeHandle_.getParam("rate", rate)){
             return false;
       }
 

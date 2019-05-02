@@ -28,7 +28,11 @@ class NewGuidanceCommands {
         */
         virtual ~NewGuidanceCommands();
         
+        // Calls speedAccel_Publisher and wrenchEffort_Publisher and lateralControl_Publisher
         void publisher();
+
+        // runs publish at a desired frequency
+        int rate;
 
     private:
         /*!
@@ -110,10 +114,12 @@ class NewGuidanceCommands {
         std::string  enable_robotic_publisherTopic_;
 
 
+        // Messages used to transfer data from subscribers to publishers
         cav_msgs::SpeedAccel::ConstPtr SpeedAccel_msg;
         std_msgs::Float32::ConstPtr WrenchEffort_msg;
         cav_msgs::LateralControl::ConstPtr LateralControl_msg;
 
+        // Locks used to make the data transfer from subscribers to publishers thread safe
         std::mutex SpeedAccel_msg_mutex;
         std::mutex WrenchEffort_msg_mutex;
         std::mutex LateralControl_msg_mutex;

@@ -5,3 +5,6 @@ lateralControl_subscriber_topic: /control/cmd_lateral
 speedAccel_publisher_topic: /cmd_speed
 wrenchEffort_publisher_topic: /cmd_longitudinal_effort
 lateralControl_publisher_topic: /cmd_lateral
+
+# Runs publish at a desired frequency
+rate: 1000
