@@ -32,7 +32,10 @@ NewGuidanceCommands::~NewGuidanceCommands()
 
 void NewGuidanceCommands::publisher(){
   ROS_INFO("publisher");
+  speedAccel_Publisher();
   wrenchEffort_Publisher();
+  lateralControl_Publisher();
+  enable_robotic_Publisher();
 } 
 
 bool NewGuidanceCommands::readParameters()
@@ -53,40 +56,59 @@ bool NewGuidanceCommands::readParameters()
 
 
 void NewGuidanceCommands::speedAccel_SubscriberCallback(const cav_msgs::SpeedAccel& msg){
-  ROS_INFO("I heard SpeedAccel");
+    std::lock_guard<std::mutex> lock(SpeedAccel_msg_mutex);
+    SpeedAccel_msg = msg;
+    ROS_INFO("I heard SpeedAccel");
 };
 
 void NewGuidanceCommands::wrenchEffort_SubscriberCallback(const std_msgs::Float32::ConstPtr& msg){
+    std::lock_guard<std::mutex> lock(WrenchEffort_msg_mutex);
     WrenchEffort_msg = msg;
     ROS_INFO("I heard wrenchEffort");
 };
 
 void NewGuidanceCommands::lateralControl_SubscriberCallback(const cav_msgs::LateralControl& msg){
+    std::lock_guard<std::mutex> lock(LateralControl_msg_mutex);
+    LateralControl_msg = msg;
     ROS_INFO("I heard lateralControl");
 };
 
 void NewGuidanceCommands::enable_robotic_SubscriberCallback(const cav_msgs::RobotEnabled& msg){
+    std::lock_guard<std::mutex> lock(RobotEnabled_msg_mutex);
+    RobotEnabled_msg = msg;
     ROS_INFO("I heard enable_robotic");
 };
 
 void NewGuidanceCommands::speedAccel_Publisher(){
-    ROS_INFO("I heard speedAccel");
+    std::lock_guard<std::mutex> lock(SpeedAccel_msg_mutex);
+    if(SpeedAccel_msg.speed != NULL){
+      speedAccel_publisher_.publish(SpeedAccel_msg);
+      ROS_INFO("I publish SpeedAccel");
+    }
 };
 
 void NewGuidanceCommands::wrenchEffort_Publisher(){
-
-    if(WrenchEffort_msg != NULL)
+    std::lock_guard<std::mutex> lock(WrenchEffort_msg_mutex);
+    if(WrenchEffort_msg != NULL){
       wrenchEffort_publisher_.publish(WrenchEffort_msg);
-    
-    ROS_INFO("I publish wrenchEffort");
+      ROS_INFO("I publish wrenchEffort");
+    }
 };
 
 void NewGuidanceCommands::lateralControl_Publisher(){
-    ROS_INFO("I heard lateralControl");
+    std::lock_guard<std::mutex> lock(LateralControl_msg_mutex);
+    if(LateralControl_msg.max_accel != NULL){
+      lateralControl_publisher_.publish(LateralControl_msg);
+      ROS_INFO("I publish lateralControl");
+    }
 };
 
 void  NewGuidanceCommands::enable_robotic_Publisher(){
-    ROS_INFO("I heard enable_robotic");
+    std::lock_guard<std::mutex> lock(RobotEnabled_msg_mutex);
+    if(RobotEnabled_msg.robot_active != NULL){
+      enable_robotic_publisher_.publish(RobotEnabled_msg);
+      ROS_INFO("I publish enable_robotic");
+    }
 };
 
 } // namespace new_guidance_commands

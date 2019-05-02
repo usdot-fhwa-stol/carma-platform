@@ -132,7 +132,11 @@ class NewGuidanceCommands {
         std_msgs::Float32::ConstPtr WrenchEffort_msg;
         cav_msgs::LateralControl LateralControl_msg;
         cav_msgs::RobotEnabled RobotEnabled_msg;
-        
+
+        std::mutex SpeedAccel_msg_mutex;
+        std::mutex WrenchEffort_msg_mutex;
+        std::mutex LateralControl_msg_mutex;
+        std::mutex  RobotEnabled_msg_mutex;
         
 };
 
