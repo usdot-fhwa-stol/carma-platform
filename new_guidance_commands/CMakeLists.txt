@@ -9,9 +9,6 @@ add_compile_options(-std=c++11)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   cav_msgs
-  cav_srvs
-  geometry_msgs
-  j2735_msgs
   roscpp
   std_msgs
 )
@@ -108,7 +105,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
  INCLUDE_DIRS include
 #  LIBRARIES new_guidance_commands
- CATKIN_DEPENDS cav_msgs cav_srvs geometry_msgs j2735_msgs roscpp std_msgs
+ CATKIN_DEPENDS cav_msgs roscpp std_msgs
 #  DEPENDS system_lib
 )
 

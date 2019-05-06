@@ -7,4 +7,4 @@ wrenchEffort_publisher_topic: /cmd_longitudinal_effort
 lateralControl_publisher_topic: /cmd_lateral
 
 # Runs publish at a desired frequency
-rate: 1000
+rate: 10

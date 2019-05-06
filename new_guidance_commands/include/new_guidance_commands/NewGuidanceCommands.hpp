@@ -110,10 +110,6 @@ class NewGuidanceCommands {
         void lateralControl_Publisher();
 
 
-        ros::Publisher  enable_robotic_publisher_;
-        std::string  enable_robotic_publisherTopic_;
-
-
         // Messages used to transfer data from subscribers to publishers
         cav_msgs::SpeedAccel::ConstPtr SpeedAccel_msg;
         std_msgs::Float32::ConstPtr WrenchEffort_msg;
