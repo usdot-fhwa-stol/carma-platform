@@ -54,7 +54,7 @@ public class TrajectoryValidator {
 
     for (TrajectoryValidationConstraint c : constraints) {
       TrajectoryValidationResult result = c.getResult();
-      valid = valid & result.getSuccess();
+      valid = valid && result.getSuccess();
       if (!result.getSuccess()) {
         // Log our failure state, including as much detail on the failure as possible
         log.warn(String.format("Trajectory from [%.02f, %.02f) failed validation on constraint: %s for reason: %s!",

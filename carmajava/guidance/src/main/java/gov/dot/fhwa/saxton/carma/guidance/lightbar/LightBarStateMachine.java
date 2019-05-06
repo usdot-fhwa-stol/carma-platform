@@ -96,6 +96,8 @@ public class LightBarStateMachine implements ILightBarStateMachine, ILightBarCon
         // Show the center green light as flashing
         lightBarManager.setIndicator(LightBarIndicator.GREEN, IndicatorStatus.FLASH, this.getComponentName());
         break;
+      default:
+        log.error("Unknown new LightBarState!" + newState);
     }
   }
 

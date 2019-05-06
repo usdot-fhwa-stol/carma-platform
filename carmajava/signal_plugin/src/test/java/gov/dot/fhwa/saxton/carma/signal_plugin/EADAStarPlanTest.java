@@ -293,7 +293,8 @@ public class EADAStarPlanTest {
         System.out.println("Total Plans: " + totalCount);
         System.out.println("Failed Plans: " + failureCount);
         System.out.println("Total ANA Iterations: " + totalIterationCount);
-        System.out.println("Average Iterations Count: " + (totalIterationCount / (totalCount - failureCount))); 
+        int successCount = totalCount - failureCount;
+        System.out.println("Average Iterations Count: " + (successCount != 0 ? totalIterationCount / successCount : "No successful run"));
         System.out.println("Percent Failed: " + ((double)failureCount / (double)totalCount));
         System.out.println("Average Planning Time ms: " + (totalPlanningTime / (totalCount - failureCount))); 
         System.out.println("\n\n");
