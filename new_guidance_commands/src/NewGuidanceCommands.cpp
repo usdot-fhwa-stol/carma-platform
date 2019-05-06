@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2018-2019 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 #include "new_guidance_commands/NewGuidanceCommands.hpp"
 
 namespace new_guidance_commands {
@@ -43,7 +59,7 @@ bool NewGuidanceCommands::readParameters()
       !nodeHandle_.getParam("speedAccel_publisher_topic", speedAccel_publisherTopic_) ||
       !nodeHandle_.getParam("wrenchEffort_publisher_topic", wrenchEffort_publisherTopic_) ||
       !nodeHandle_.getParam("lateralControl_publisher_topic", lateralControl_publisherTopic_) ||
-      !nodeHandle_.getParam("rate", rate)){
+      !nodeHandle_.getParam("publish_rate", rate)){
             return false;
       }
 
