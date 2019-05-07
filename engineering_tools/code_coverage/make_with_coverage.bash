@@ -81,6 +81,6 @@ if [ "${do_test}" = true ]; then
   catkin_make run_tests -DCMAKE_CXX_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_C_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_BUILD_TYPE="Debug"
 fi
 
-bash collection_script $1 $2
+bash ${collection_script} $1 $2
 
 echo "Test coverage complete"
