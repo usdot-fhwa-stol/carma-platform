@@ -44,7 +44,7 @@ class NewGuidanceCommands {
         */
         virtual ~NewGuidanceCommands();
         
-        // Calls speedAccel_Publisher and wrenchEffort_Publisher and lateralControl_Publisher
+        // Calls SpeedAccelPublisher and WrenchEffortPublisher and LateralControlPublisher
         void publisher();
 
         // runs publish at a desired frequency
@@ -61,80 +61,77 @@ class NewGuidanceCommands {
         ros::NodeHandle& nodeHandle_;
 
         //! ROS speedAccel subscriber.
-        ros::Subscriber speedAccelsubscriber_;
-        std::string speedAccel_subscriberTopic_;
+        ros::Subscriber SpeedAccelSubscriber_;
 
         /*!
         * ROS topic callback method.
         * @param message the received message.
         */
-        void speedAccel_SubscriberCallback(const cav_msgs::SpeedAccel::ConstPtr& msg);
+        void SpeedAccelSubscriberCallback(const cav_msgs::SpeedAccel::ConstPtr& msg);
 
 
 
         //! ROS wrenchEffort subscriber.
-        ros::Subscriber wrenchEffortsubscriber_;
-        std::string wrenchEffort_subscriberTopic_;
+        ros::Subscriber WrenchEffortSubscriber_;
 
         /*!
         * ROS topic callback method.
         * @param message the received message.
         */
-        void wrenchEffort_SubscriberCallback(const std_msgs::Float32::ConstPtr& msg);
+        void WrenchEffortSubscriberCallback(const std_msgs::Float32::ConstPtr& msg);
 
 
 
         //! ROS lateralControl subscriber.
-        ros::Subscriber lateralControlsubscriber_;
-        std::string lateralControl_subscriberTopic_;
+        ros::Subscriber LateralControlSubscriber_;
 
         /*!
         * ROS topic callback method.
         * @param message the received message.
         */
-        void lateralControl_SubscriberCallback(const cav_msgs::LateralControl::ConstPtr& msg);
+        void LateralControlSubscriberCallback(const cav_msgs::LateralControl::ConstPtr& msg);
 
 
         //! ROS topic publishers.
-        ros::Publisher speedAccel_publisher_;
-        std::string speedAccel_publisherTopic_;
+        ros::Publisher SpeedAccelPublisher_;
+        std::string SpeedAccelPublisherTopic_;
 
         /*!
         * ROS speedAccel publisher method.
         * @param message the received message.
         */
-        void speedAccel_Publisher();
+        void SpeedAccelPublisher();
 
 
-        ros::Publisher wrenchEffort_publisher_;
-        std::string wrenchEffort_publisherTopic_;
+        ros::Publisher WrenchEffortPublisher_;
+        std::string WrenchEffortPublisherTopic_;
 
         /*!
         * ROS wrenchEffort publisher method.
         * @param message the received message.
         */
-        void wrenchEffort_Publisher();
+        void WrenchEffortPublisher();
 
         
-        ros::Publisher lateralControl_publisher_;
-        std::string lateralControl_publisherTopic_;
+        ros::Publisher LateralControlPublisher_;
+        std::string LateralControlPublisherTopic_;
 
         /*!
-        * ROS lateralControl_publisher method.
+        * ROS LateralControlPublisher method.
         * @param message the received message.
         */
-        void lateralControl_Publisher();
+        void LateralControlPublisher();
 
 
         // Messages used to transfer data from subscribers to publishers
-        cav_msgs::SpeedAccel::ConstPtr SpeedAccel_msg;
-        std_msgs::Float32::ConstPtr WrenchEffort_msg;
-        cav_msgs::LateralControl::ConstPtr LateralControl_msg;
+        cav_msgs::SpeedAccel::ConstPtr SpeedAccelMsg;
+        std_msgs::Float32::ConstPtr WrenchEffortMsg;
+        cav_msgs::LateralControl::ConstPtr LateralControlMsg;
 
         // Locks used to make the data transfer from subscribers to publishers thread safe
-        std::mutex SpeedAccel_msg_mutex;
-        std::mutex WrenchEffort_msg_mutex;
-        std::mutex LateralControl_msg_mutex;
+        std::mutex SpeedAccelMsgMutex;
+        std::mutex WrenchEffortMsgMutex;
+        std::mutex LateralControlMsgMutex;
 
         // Time used to check the timestamp for the last time subscribers reciaved message
         double SpeedAccelTimeTracker;
