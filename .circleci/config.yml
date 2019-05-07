@@ -65,12 +65,16 @@ jobs:
             source ${INIT_ENV}
             bash make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
             echo "Here----------------------------"
-            echo "Path ${PWD}"
+            echo "Current dir ${PWD}"
+            echo "Path- ${PATH}"
             echo "LS"
             ls ./coverage_reports/gcov
             echo ""
             echo "FIND"
             find . -name "*.gcov"
+            echo ""
+            echo "script--------"
+            cat /home/carma/.ci-image/engineering_tools/code_coverage/collect_gcovr.bash
             echo "Done----------------------------"
       - run:
           name: Run Java Tests
