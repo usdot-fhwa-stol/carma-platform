@@ -18,20 +18,20 @@
 #include <cav_msgs/SpeedAccel.h>
 
 #include <ros/ros.h>
-#include "new_guidance_commands/NewGuidanceCommands.hpp"
+#include "guidance_command_repeater/GuidanceCommandRepeater.hpp"
 
 int main(int argc, char** argv)
 {
 
-  ros::init(argc, argv, "new_guidance_commands");
+  ros::init(argc, argv, "guidance_command_repeater");
   ros::NodeHandle nodeHandle("~");
-  new_guidance_commands::NewGuidanceCommands NewGuidanceCommands(nodeHandle);
+  guidance_command_repeater::GuidanceCommandRepeater GuidanceCommandRepeater(nodeHandle);
 
-  ros::Rate rate(NewGuidanceCommands.rate);
+  ros::Rate rate(GuidanceCommandRepeater.rate);
 
   while (ros::ok())
   {
-    NewGuidanceCommands.publisher();
+    GuidanceCommandRepeater.publisher();
     rate.sleep();
     ros::spinOnce();
   }

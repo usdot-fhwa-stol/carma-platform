@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <launch>
     <!-- New Guidance Commands Node -->
-        <node pkg="new_guidance_commands" type="new_guidance_commands" name="new_guidance_commands" output="screen">
-            <rosparam command="load" file="$(find new_guidance_commands)/config/default.yaml" />
+        <node pkg="guidance_command_repeater" type="guidance_command_repeater" name="guidance_command_repeater" output="screen">
+            <rosparam command="load" file="$(find guidance_command_repeater)/config/default.yaml" />
             <remap from="/cmd_speed" to="/control/cmd_speed"/>
             <remap from="/cmd_longitudinal_effort" to="/control/cmd_longitudinal_effort"/>
             <remap from="/cmd_lateral" to="/control/cmd_lateral"/>

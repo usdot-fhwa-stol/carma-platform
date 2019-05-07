@@ -25,24 +25,24 @@
 #include <cav_msgs/LateralControl.h>
 #include <cav_msgs/RobotEnabled.h>
 
-namespace new_guidance_commands {
+namespace guidance_command_repeater {
 
 /*!
  * Main class for the node to handle the ROS interfacing.
  */
 
-class NewGuidanceCommands {
+class GuidanceCommandRepeater {
     public:
         /*!
         * Constructor.
         * @param nodeHandle the ROS node handle.
         */
-        NewGuidanceCommands(ros::NodeHandle& nodeHandle);
+        GuidanceCommandRepeater(ros::NodeHandle& nodeHandle);
 
         /*!
         * Destructor.
         */
-        virtual ~NewGuidanceCommands();
+        virtual ~GuidanceCommandRepeater();
         
         // Calls SpeedAccelPublisher and WrenchEffortPublisher and LateralControlPublisher
         void publisher();
@@ -145,4 +145,4 @@ class NewGuidanceCommands {
 
 };
 
-}  // namespace new_guidance_commands
+}  // namespace guidance_command_repeater
