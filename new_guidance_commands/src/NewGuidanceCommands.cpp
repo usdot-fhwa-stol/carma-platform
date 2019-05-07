@@ -90,7 +90,7 @@ void NewGuidanceCommands::lateralControl_SubscriberCallback(const cav_msgs::Late
 
 void NewGuidanceCommands::speedAccel_Publisher(){
     std::lock_guard<std::mutex> lock(SpeedAccel_msg_mutex);
-    if(SpeedAccel_msg != NULL && (ros::Time::now().toSec() - SpeedAccelTimeTracker) < TimeoutThresh.toSec()) {
+    if(SpeedAccel_msg != nullptr && (ros::Time::now().toSec() - SpeedAccelTimeTracker) < TimeoutThresh.toSec()) {
       speedAccel_publisher_.publish(SpeedAccel_msg);
       ROS_DEBUG("I publish SpeedAccel");
     }
@@ -98,7 +98,7 @@ void NewGuidanceCommands::speedAccel_Publisher(){
 
 void NewGuidanceCommands::wrenchEffort_Publisher(){
     std::lock_guard<std::mutex> lock(WrenchEffort_msg_mutex);
-    if(WrenchEffort_msg != NULL && (ros::Time::now().toSec() - WrenchEffortTimeTracker) < TimeoutThresh.toSec()) {
+    if(WrenchEffort_msg != nullptr && (ros::Time::now().toSec() - WrenchEffortTimeTracker) < TimeoutThresh.toSec()) {
       wrenchEffort_publisher_.publish(WrenchEffort_msg);
       ROS_DEBUG("I publish wrenchEffort");
     }
@@ -106,7 +106,7 @@ void NewGuidanceCommands::wrenchEffort_Publisher(){
 
 void NewGuidanceCommands::lateralControl_Publisher(){
     std::lock_guard<std::mutex> lock(LateralControl_msg_mutex);
-    if(LateralControl_msg != NULL && (ros::Time::now().toSec() - LateralControlTimeTracker) < TimeoutThresh.toSec()) {
+    if(LateralControl_msg != nullptr && (ros::Time::now().toSec() - LateralControlTimeTracker) < TimeoutThresh.toSec()) {
       lateralControl_publisher_.publish(LateralControl_msg);
       ROS_DEBUG("I publish lateralControl");
     }
