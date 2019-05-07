@@ -5,4 +5,4 @@ lateralControl_publisher_topic: /republish/cmd_lateral
 # Runs publish at a desired frequency
 publish_rate: 10
 # Timeout Treshold
-TimeoutThresh: 10
+timeout_thresh: 0.5

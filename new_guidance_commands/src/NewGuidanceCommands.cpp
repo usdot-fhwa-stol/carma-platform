@@ -55,13 +55,11 @@ void NewGuidanceCommands::publisher(){
 
 bool NewGuidanceCommands::readParameters()
 {
-  if (!nodeHandle_.getParam("speedAccel_publisher_topic", speedAccel_publisherTopic_) ||
-      !nodeHandle_.getParam("wrenchEffort_publisher_topic", wrenchEffort_publisherTopic_) ||
-      !nodeHandle_.getParam("lateralControl_publisher_topic", lateralControl_publisherTopic_) ||
-      !nodeHandle_.getParam("publish_rate", rate) ||
-      !nodeHandle_.getParam("TimeoutThresh", timeout)){
-            return false;
-      }
+  nodeHandle_.param<std::string>("speedAccel_publisher_topic", speedAccel_publisherTopic_, "/republish/cmd_speed");
+  nodeHandle_.param<std::string>("wrenchEffort_publisher_topic", wrenchEffort_publisherTopic_, "/republish/cmd_longitudinal_effort");
+  nodeHandle_.param<std::string>("lateralControl_publisher_topic", lateralControl_publisherTopic_, "/republish/cmd_lateral");
+  nodeHandle_.param("publish_rate", rate, 10);
+  nodeHandle_.param("timeout_thresh", timeout, 0.5);
 
   return true;
 }
