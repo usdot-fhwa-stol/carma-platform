@@ -60,6 +60,7 @@ if [ "${do_make}" = false && "${do_test}" = false ]; then
 fi
 
 execution_dir=$(readlink -f ${execution_dir}) # Get execution directory as absolute path
+collection_script=$(readlink -f collect_gcovr.bash) # Get collection script as absolute path
 cd ${execution_dir} # cd to execution directory
 echo "Execution Dir: ${execution_dir}"
 
@@ -80,6 +81,6 @@ if [ "${do_test}" = true ]; then
   catkin_make run_tests -DCMAKE_CXX_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_C_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_BUILD_TYPE="Debug"
 fi
 
-bash collect_gcovr.bash $1 $2
+bash collection_script $1 $2
 
 echo "Test coverage complete"
