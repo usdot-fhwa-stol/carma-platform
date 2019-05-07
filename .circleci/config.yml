@@ -67,14 +67,14 @@ jobs:
             echo "Here----------------------------"
             echo "Current dir ${PWD}"
             echo "Path- ${PATH}"
-            echo "LS"
-            ls ./coverage_reports/gcov
             echo ""
             echo "FIND"
             find . -name "*.gcov"
             echo ""
             echo "script--------"
             cat /home/carma/.ci-image/engineering_tools/code_coverage/collect_gcovr.bash
+            echo "LS"
+            ls ./coverage_reports/gcov
             echo "Done----------------------------"
       - run:
           name: Run Java Tests
