@@ -63,6 +63,7 @@ add_executable(${PROJECT_NAME}_node ${headers} src/main.cpp src/sensor_fusion.cp
 add_dependencies( ${PROJECT_NAME}_node ${PROJECT_NAME}_gencfg ${catkin_EXPORTED_TARGETS})
 
 add_library(wgs84_utils_library src/wgs84_utils.cpp)
+target_link_libraries(wgs84_utils_library)
 add_dependencies(wgs84_utils_library ${catkin_EXPORTED_TARGETS})
 
 add_library(transform_maintainer_library src/transform_maintainer.cpp)
@@ -125,7 +126,7 @@ install(DIRECTORY
 ##########
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
-catkin_add_gtest(transform_maintainer_test tests/transform_maintainer_test.cpp)
+catkin_add_gtest(transform_maintainer_test test/transform_maintainer_test.cpp)
 
 target_link_libraries( transform_maintainer_test
         wgs84_utils_library

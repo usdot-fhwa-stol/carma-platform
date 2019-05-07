@@ -57,6 +57,15 @@ RUN cd $SONAR_DIR && \
         # Add scanner, wrapper, and jq to PATH
         sudo echo 'export PATH=$PATH:/opt/jq/:$SONAR_DIR/sonar-scanner/bin/:$SONAR_DIR/build-wrapper/' >> /home/carma/.base-image/init-env.sh
 
+# Install gcovr for code coverage tests and add code_coverage script folder to path
+RUN sudo apt-get -y install gcovr && \
+        sudo echo 'export PATH=$PATH:/home/carma/.ci-image/engineering_tools/code_coverage/' >> /home/carma/.base-image/init-env.sh
+
+# Add engineering tools scripts to image
+ADD --chown=carma ./engineering_tools/code_coverage /home/carma/.ci-image/engineering_tools/code_coverage
+
+        
+
 # Set metadata labels
 LABEL org.label-schema.schema-version="1.0"
 LABEL org.label-schema.name="CARMA-SonarCloud"

@@ -14,18 +14,20 @@
  * the License.
  */
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.14.1'
+buildscript {
+  // Default bootstrap file for rosjava came from here "https://github.com/rosjava/rosjava_bootstrap/raw/kinetic/buildscript.gradle"
+  apply from: "rosjava_bootstrap.gradle"
 }
 
-buildscript {
- // Default bootstrap file for rosjava came from here "https://github.com/rosjava/rosjava_bootstrap/raw/kinetic/buildscript.gradle"
- apply from: "rosjava_bootstrap.gradle"
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.14.1'
 }
 
 apply plugin: 'catkin'
 
 allprojects {
+    // Apply jacoco plugin for code coverage reports used by SonarCloud
+    apply plugin: 'jacoco'
     /*
       A github url provides a good standard unique name for your project
       Example below, but you may wish to switch to your own unique url.
@@ -44,6 +46,8 @@ allprojects {
         maven {
             url uri("../../../../devel/share/maven")
         }
+
+        jcenter()
     }
 }
 
@@ -62,6 +66,8 @@ subprojects {
     apply plugin: "ros-java"
     apply plugin: 'checkstyle'
 
+
+
     checkstyle {
         configFile = rootProject.file("config/checkstyle.xml")
     }
@@ -75,11 +81,30 @@ subprojects {
     targetCompatibility = 1.8
     sourceCompatibility = 1.8
 
+
+
     test {
         reports {
             junitXml.enabled = false
             html.enabled = true
-        }               
+        }           
+
+        // Set the jacoco reports to be fresh each time
+        jacoco {
+            append = false
+        } 
+    }
+
+    // Identify sources of the jacoco reports
+    jacocoTestReport {
+        additionalSourceDirs = files(sourceSets.main.allSource.srcDirs)
+        sourceDirectories = files(sourceSets.main.allSource.srcDirs)
+        classDirectories =  files(sourceSets.main.output)
+        reports {
+            html.enabled = false
+            xml.enabled = true
+            csv.enabled = false
+        }
     }
 
     /*
@@ -88,6 +113,35 @@ subprojects {
     /* apply plugin: "eclipse" */
     /* apply plugin: "idea" */
     
+}
+
+// Task to run unit tests and collect all generated jacoco reports and place them in the top level build folder
+// Based off method described here https://gist.github.com/aalmiray/e6f54aa4b3803be0bcac
+task jacocoCombinedReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
+    // Requires submodule have test task
+    dependsOn = subprojects.test
+    // Set sources and classes to defaults
+    additionalSourceDirs = files(subprojects.sourceSets.main.allSource.srcDirs)
+    sourceDirectories = files(subprojects.sourceSets.main.allSource.srcDirs)
+    classDirectories =  files(subprojects.sourceSets.main.output)
+    executionData = files(subprojects.jacocoTestReport.executionData)
+    // Turn on XML reports.
+    // The XML report is required by SonarCloud
+    // The default location will put the reports  CARMAPlatform/carmajava/build/reports/jacoco/jacocoCombinedReport
+    reports {
+        html.enabled = false
+        xml.enabled = true
+        csv.enabled = false
+    }
+    // The onlyIf and doFirst lines here cause this task to only run for submodules with tests
+    onlyIf = {
+        true
+    }
+    doFirst {
+        executionData = files(executionData.findAll {
+            it.exists()
+        })
+    }
 }
 
 task testReport(type: TestReport) {
