@@ -32,7 +32,6 @@ int main(int argc, char** argv)
   while (ros::ok())
   {
     NewGuidanceCommands.publisher();
-
     rate.sleep();
     ros::spinOnce();
   }

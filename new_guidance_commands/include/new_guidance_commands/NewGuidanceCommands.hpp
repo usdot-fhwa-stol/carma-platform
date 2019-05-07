@@ -142,7 +142,7 @@ class NewGuidanceCommands {
         double LateralControlTimeTracker;
 
         ros::Duration TimeoutThresh;
-        double Timeout;
+        double timeout;
 
         void InitTimeTracker();
 

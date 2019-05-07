@@ -28,11 +28,11 @@ NewGuidanceCommands::NewGuidanceCommands(ros::NodeHandle &nodeHandle)
 
   InitTimeTracker();
 
-  speedAccelsubscriber_ = nodeHandle_.subscribe(speedAccel_subscriberTopic_, 1,
+  speedAccelsubscriber_ = nodeHandle_.subscribe("/cmd_speed", 1,
                                       &NewGuidanceCommands::speedAccel_SubscriberCallback, this);
-  wrenchEffortsubscriber_ = nodeHandle_.subscribe(wrenchEffort_subscriberTopic_, 1,
+  wrenchEffortsubscriber_ = nodeHandle_.subscribe("/cmd_longitudinal_effort", 1,
                                       &NewGuidanceCommands::wrenchEffort_SubscriberCallback, this);
-  lateralControlsubscriber_ = nodeHandle_.subscribe(lateralControl_subscriberTopic_, 1,
+  lateralControlsubscriber_ = nodeHandle_.subscribe("/cmd_lateral", 1,
                                       &NewGuidanceCommands::lateralControl_SubscriberCallback, this);
 
   speedAccel_publisher_ = nodeHandle_.advertise<cav_msgs::SpeedAccel>(speedAccel_publisherTopic_, 1);
@@ -55,14 +55,11 @@ void NewGuidanceCommands::publisher(){
 
 bool NewGuidanceCommands::readParameters()
 {
-  if (!nodeHandle_.getParam("speedAccel_subscriber_topic", speedAccel_subscriberTopic_) ||
-      !nodeHandle_.getParam("wrenchEffort_subscriber_topic", wrenchEffort_subscriberTopic_) ||
-      !nodeHandle_.getParam("lateralControl_subscriber_topic", lateralControl_subscriberTopic_) ||
-      !nodeHandle_.getParam("speedAccel_publisher_topic", speedAccel_publisherTopic_) ||
+  if (!nodeHandle_.getParam("speedAccel_publisher_topic", speedAccel_publisherTopic_) ||
       !nodeHandle_.getParam("wrenchEffort_publisher_topic", wrenchEffort_publisherTopic_) ||
       !nodeHandle_.getParam("lateralControl_publisher_topic", lateralControl_publisherTopic_) ||
       !nodeHandle_.getParam("publish_rate", rate) ||
-      !nodeHandle_.getParam("TimeoutThresh", Timeout)){
+      !nodeHandle_.getParam("TimeoutThresh", timeout)){
             return false;
       }
 
@@ -119,7 +116,7 @@ void NewGuidanceCommands::InitTimeTracker(){
   SpeedAccelTimeTracker = 0;
   WrenchEffortTimeTracker = 0;
   LateralControlTimeTracker = 0;
-  TimeoutThresh = ros::Duration(Timeout);
+  TimeoutThresh = ros::Duration(timeout);
 }
 
 } // namespace new_guidance_commands
