@@ -29,7 +29,7 @@
 #
 #
 
-usage() { echo "Usage: make_with_coverage.bash -e <execution dir> -o <output dir> -m -t ";}
+usage() { echo "Usage: make_with_coverage.bash -e <execution dir> -o <output dir> -m -t "; }
 
  
 
@@ -54,7 +54,7 @@ do
 	esac
 done
 
-if [ "${do_make}" = false && "${do_test}" = false]; then
+if [ "${do_make}" = false && "${do_test}" = false ]; then
   echo "Error -t or -m must be specified"
   exit 0
 fi
