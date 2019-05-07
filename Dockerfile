@@ -58,6 +58,7 @@ FROM usdotfhwastol/carma-base:2.8.3
 
 ARG BUILD_DATE="NULL"
 ARG VCS_REF="NULL"
+ARG VERSION="NULL"
 
 LABEL org.label-schema.schema-version="1.0"
 LABEL org.label-schema.name="CARMA"
