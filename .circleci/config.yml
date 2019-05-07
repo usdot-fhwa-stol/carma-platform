@@ -58,18 +58,19 @@ jobs:
           name: Build CARMA
           command: |
             source ${INIT_ENV}
-            build-wrapper-linux-x86-64 --out-dir /opt/carma/bw-output catkin_make install
+            build-wrapper-linux-x86-64 --out-dir /opt/carma/bw-output bash make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
       - run:
           name: Run C++ Tests
           command: |
             source ${INIT_ENV}
-            catkin_make run_tests
+            bash make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
       - run:
           name: Run Java Tests
           command: |
             source ${INIT_ENV}
             source /opt/carma/devel/setup.bash
             cd src/CARMAPlatform/carmajava/
+            ./gradlew jacocoCombinedReport --info
             ./gradlew testReport --info
       - run:
           name: Save Java Test results
@@ -94,6 +95,11 @@ jobs:
           name: Run Sonar Scanner
           command: |
             source ${INIT_ENV}
+            if [ -z "${CIRCLE_PULL_REQUEST}" ]; then
+              echo "Non-PR Build Detected. Running analysis on ${CIRCLE_BRANCH}"
+              sonar-scanner -Dproject.settings=.sonarqube/sonar-scanner.properties -Dsonar.login=${SONAR_SCANNER_TOKEN} 
+              exit 0;
+            fi
             echo "PR branch ${CIRCLE_BRANCH}"
             echo "Repo name ${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
             echo "URL ${CIRCLE_PULL_REQUEST}"
