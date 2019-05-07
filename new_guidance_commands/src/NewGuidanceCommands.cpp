@@ -24,8 +24,10 @@ NewGuidanceCommands::NewGuidanceCommands(ros::NodeHandle &nodeHandle)
   if (!readParameters())
   {
     ROS_ERROR("Could not read parameters.");
-    ros::requestShutdown();
   }
+
+  InitTimeTracker();
+
   speedAccelsubscriber_ = nodeHandle_.subscribe(speedAccel_subscriberTopic_, 1,
                                       &NewGuidanceCommands::speedAccel_SubscriberCallback, this);
   wrenchEffortsubscriber_ = nodeHandle_.subscribe(wrenchEffort_subscriberTopic_, 1,
@@ -33,9 +35,9 @@ NewGuidanceCommands::NewGuidanceCommands(ros::NodeHandle &nodeHandle)
   lateralControlsubscriber_ = nodeHandle_.subscribe(lateralControl_subscriberTopic_, 1,
                                       &NewGuidanceCommands::lateralControl_SubscriberCallback, this);
 
-  speedAccel_publisher_ = nodeHandle_.advertise<cav_msgs::SpeedAccel>(speedAccel_publisherTopic_, 1000);
-  wrenchEffort_publisher_ = nodeHandle_.advertise<std_msgs::Float32>(wrenchEffort_publisherTopic_, 1000);
-  lateralControl_publisher_ = nodeHandle_.advertise<cav_msgs::LateralControl>(lateralControl_publisherTopic_, 1000);
+  speedAccel_publisher_ = nodeHandle_.advertise<cav_msgs::SpeedAccel>(speedAccel_publisherTopic_, 1);
+  wrenchEffort_publisher_ = nodeHandle_.advertise<std_msgs::Float32>(wrenchEffort_publisherTopic_, 1);
+  lateralControl_publisher_ = nodeHandle_.advertise<cav_msgs::LateralControl>(lateralControl_publisherTopic_, 1);
 
   ROS_INFO("Successfully launched node.");
 }
@@ -59,7 +61,8 @@ bool NewGuidanceCommands::readParameters()
       !nodeHandle_.getParam("speedAccel_publisher_topic", speedAccel_publisherTopic_) ||
       !nodeHandle_.getParam("wrenchEffort_publisher_topic", wrenchEffort_publisherTopic_) ||
       !nodeHandle_.getParam("lateralControl_publisher_topic", lateralControl_publisherTopic_) ||
-      !nodeHandle_.getParam("publish_rate", rate)){
+      !nodeHandle_.getParam("publish_rate", rate) ||
+      !nodeHandle_.getParam("TimeoutThresh", Timeout)){
             return false;
       }
 
@@ -69,25 +72,28 @@ bool NewGuidanceCommands::readParameters()
 
 void NewGuidanceCommands::speedAccel_SubscriberCallback(const cav_msgs::SpeedAccel::ConstPtr& msg){
     std::lock_guard<std::mutex> lock(SpeedAccel_msg_mutex);
+    SpeedAccelTimeTracker = ros::Time::now().toSec();
     SpeedAccel_msg = msg;
     ROS_DEBUG("I heard SpeedAccel");
 };
 
 void NewGuidanceCommands::wrenchEffort_SubscriberCallback(const std_msgs::Float32::ConstPtr& msg){
     std::lock_guard<std::mutex> lock(WrenchEffort_msg_mutex);
+    WrenchEffortTimeTracker = ros::Time::now().toSec();
     WrenchEffort_msg = msg;
     ROS_DEBUG("I heard wrenchEffort");
 };
 
 void NewGuidanceCommands::lateralControl_SubscriberCallback(const cav_msgs::LateralControl::ConstPtr& msg){
     std::lock_guard<std::mutex> lock(LateralControl_msg_mutex);
+    LateralControlTimeTracker = ros::Time::now().toSec();
     LateralControl_msg = msg;
     ROS_DEBUG("I heard lateralControl");
 };
 
 void NewGuidanceCommands::speedAccel_Publisher(){
     std::lock_guard<std::mutex> lock(SpeedAccel_msg_mutex);
-    if(SpeedAccel_msg != NULL) {
+    if(SpeedAccel_msg != NULL && (ros::Time::now().toSec() - SpeedAccelTimeTracker) < TimeoutThresh.toSec()) {
       speedAccel_publisher_.publish(SpeedAccel_msg);
       ROS_DEBUG("I publish SpeedAccel");
     }
@@ -95,7 +101,7 @@ void NewGuidanceCommands::speedAccel_Publisher(){
 
 void NewGuidanceCommands::wrenchEffort_Publisher(){
     std::lock_guard<std::mutex> lock(WrenchEffort_msg_mutex);
-    if(WrenchEffort_msg != NULL) {
+    if(WrenchEffort_msg != NULL && (ros::Time::now().toSec() - WrenchEffortTimeTracker) < TimeoutThresh.toSec()) {
       wrenchEffort_publisher_.publish(WrenchEffort_msg);
       ROS_DEBUG("I publish wrenchEffort");
     }
@@ -103,10 +109,17 @@ void NewGuidanceCommands::wrenchEffort_Publisher(){
 
 void NewGuidanceCommands::lateralControl_Publisher(){
     std::lock_guard<std::mutex> lock(LateralControl_msg_mutex);
-    if(LateralControl_msg != NULL) {
+    if(LateralControl_msg != NULL && (ros::Time::now().toSec() - LateralControlTimeTracker) < TimeoutThresh.toSec()) {
       lateralControl_publisher_.publish(LateralControl_msg);
       ROS_DEBUG("I publish lateralControl");
     }
 };
+
+void NewGuidanceCommands::InitTimeTracker(){
+  SpeedAccelTimeTracker = 0;
+  WrenchEffortTimeTracker = 0;
+  LateralControlTimeTracker = 0;
+  TimeoutThresh = ros::Duration(Timeout);
+}
 
 } // namespace new_guidance_commands

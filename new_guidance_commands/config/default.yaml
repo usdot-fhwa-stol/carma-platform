@@ -8,3 +8,4 @@ lateralControl_publisher_topic: /cmd_lateral
 
 # Runs publish at a desired frequency
 publish_rate: 10
+TimeoutThresh: 10

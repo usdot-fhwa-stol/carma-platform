@@ -135,7 +135,17 @@ class NewGuidanceCommands {
         std::mutex SpeedAccel_msg_mutex;
         std::mutex WrenchEffort_msg_mutex;
         std::mutex LateralControl_msg_mutex;
-        
+
+        // Time used to check the timestamp for the last time subscribers reciaved message
+        double SpeedAccelTimeTracker;
+        double WrenchEffortTimeTracker;
+        double LateralControlTimeTracker;
+
+        ros::Duration TimeoutThresh;
+        double Timeout;
+
+        void InitTimeTracker();
+
 };
 
 }  // namespace new_guidance_commands
