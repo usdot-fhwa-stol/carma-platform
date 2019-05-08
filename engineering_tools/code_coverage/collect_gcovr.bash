@@ -58,7 +58,7 @@ fi
 gcovr -k -r . # Run gcovr with -k to ensure generated .gcov files are preserved -r . makes it run in the current directory
 
 echo "Ensuring output directory exists"
-mkdir ${output_dir}
+mkdir -p ${output_dir}
 
 
 echo "Deleting old files"
