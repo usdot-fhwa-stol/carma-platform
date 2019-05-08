@@ -54,7 +54,7 @@ do
 	esac
 done
 
-if [ "${do_make}" = false && "${do_test}" = false]; then
+if [ "${do_make}" = false && "${do_test}" = false ]; then
   echo "Error -t or -m must be specified"
   exit 0
 fi
@@ -80,6 +80,6 @@ if [ "${do_test}" = true ]; then
   catkin_make run_tests -DCMAKE_CXX_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_C_FLAGS="${COVERAGE_FLAGS}" -DCMAKE_BUILD_TYPE="Debug"
 fi
 
-bash collect_gcovr.bash $1 $2
+bash collect_gcovr.bash "${execution_dir}" "${output_dir}"
 
 echo "Test coverage complete"
