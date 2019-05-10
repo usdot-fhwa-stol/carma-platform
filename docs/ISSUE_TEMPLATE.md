@@ -1,4 +1,3 @@
-
 ### Types of Issue
 
 <!--- What types of issue? Put an `x` in the boxes that apply: -->
