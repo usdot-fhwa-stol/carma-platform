@@ -82,9 +82,6 @@ install(DIRECTORY
         mock_drivers/build
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/mock_drivers)
 install(DIRECTORY
-        roadway/build
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/roadway)
-install(DIRECTORY
         route/build
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/route)
 install(DIRECTORY

@@ -75,7 +75,6 @@
   <!-- Apply logging properties to all java nodes using JAVA_OPTS-->
   <env name="JAVA_OPTS" value="$(arg JVM_LOG_OPTS)"/>
   <!-- Set to true to enable debugging on the specified node -->
-  <arg name="debug_roadway_mgr" default="false" doc="Set true to enable debugging on the Roadway Manager node"/>
   <arg name="debug_guidance"        default="false" doc="Set true to enable debugging on the Guidance Main node"/>
   <arg name="debug_interface_mgr"   default="false" doc="Set true to enable debugging on the Interface Manager node"/>
   <arg name="debug_msg_consumer"    default="false" doc="Set true to enable debugging on the Message Consumer node"/>
@@ -92,7 +91,7 @@
   <arg name="GUIDE_NS"  default="guidance" doc="Namespace of nodes in guidance package"/>
   <arg name="MSG_NS"    default="message" doc="Namespace of nodes in message package"/>
   <arg name="SF_NS"     default="sensor_fusion" doc="Namespace of nodes in sensor fusion package"/>
-  <arg name="RD_NS"     default="roadway" doc="Namespace of nodes in roadway package"/>
+  <arg name="TS_NS"     default="transform" doc="Namespace of nodes in transform server package"/>
   <arg name="DRIVER_NS" default="drivers" doc="Namespace of nodes in drivers package"/>
   <arg name="RT_NS"     default="route" doc="Namespace of nodes in route package"/>
   <arg name="INTR_NS"   default="interface_manager" doc="Namespace of nodes in interface manager package"/>
@@ -236,39 +235,8 @@
       </node>
     </group>
 
-    <!-- Roadway Package -->
-    <group ns="$(arg RD_NS)">
-
-      <!-- Roadway Manager Node -->
-      <node pkg="carma" type="roadway" name="roadway_manager"
-            args="gov.dot.fhwa.saxton.carma.roadway.RoadwayManager">
-
-        <env if="$(arg debug_roadway_mgr)" name="ROADWAY_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
-
-        <rosparam command="load" file="$(arg PARAM_DIR)/RoadwayManagerParams.yaml"/>
-
-        <remap from="system_alert"
-               to="/$(arg TOP_NS)/system_alert"/>
-        <remap from="map"
-               to="/$(arg TOP_NS)/$(arg MSG_NS)/map"/>
-        <remap from="heading"
-               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/heading"/>
-        <remap from="nav_sat_fix"
-               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
-        <remap from="odometry"
-               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/odometry"/>
-        <remap from="objects"
-               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/tracked_objects"/>
-        <remap from="velocity"
-               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/velocity"/>
-        <remap from="get_transform"
-               to="/$(arg TOP_NS)/$(arg RD_NS)/get_transform"/>
-        <remap from="route_state"
-              to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
-        <remap from="route"
-              to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
-      </node>
-
+    <!-- Transform Server Package -->
+    <group ns="$(arg TS_NS)">
       <!-- Transform Server Node -->
       <node pkg="carma_transform_server" type="carma_transform_server_node" name="transform_server">
         <remap from="system_alert"
@@ -296,7 +264,7 @@
         <remap from="nav_sat_fix"
                to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
         <remap from="get_transform"
-               to="/$(arg TOP_NS)/$(arg RD_NS)/get_transform"/>
+               to="/$(arg TOP_NS)/$(arg TS_NS)/get_transform"/>
       </node>
     </group>
 
@@ -390,7 +358,7 @@
         <remap from="velocity"
                to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/velocity"/>
         <remap from="get_transform"
-               to="/$(arg TOP_NS)/$(arg RD_NS)/get_transform"/>
+               to="/$(arg TOP_NS)/$(arg TS_NS)/get_transform"/>
         <remap from="acceleration"
                to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/acceleration"/>
 
@@ -398,8 +366,6 @@
         <remap from="route_state" to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
 
         <!-- Maneuvers Thread-->
-        <remap from="roadway_environment"
-               to="/$(arg TOP_NS)/$(arg RD_NS)/roadway_environment"/>
         <remap from="route"
                to="/$(arg TOP_NS)/$(arg RT_NS)/route"/>
 
