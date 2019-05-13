@@ -30,7 +30,7 @@
             <param name="simulated_driver" type="string" value="$(arg simulated_driver)"/>
             <param name="data_file_path" type="string" value="$(arg data_file)"/>
             <remap from="driver_discovery"
-               to="/saxton_cav/drivers/driver_discovery"/>
+               to="/carma/drivers/driver_discovery"/>
         </node>
     </group>
 </launch>

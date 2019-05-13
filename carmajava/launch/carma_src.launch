@@ -15,19 +15,19 @@
   the License.
 -->
 <!--
-	saxton_cav_src.launch
+	carma_src.launch
 
-  A the ros launch file for the STOL CAV Prototype ROS Network.
+  The ros launch file for the CARMA 3 Platform ROS Network.
   Launches all the needed ros nodes and sets up the parameter server.
   Also sets up all static transforms used by tf2 within the system.
 
   Use:
   First delete the generated build/scripts folder in all java packages.
-  roslaunch carma saxton_cav.launch
+  roslaunch carma carma.launch
   After using source devel/setup.bash from workspace root.
 
   If not using simulated drivers they are activated using ros arguments as shown below.
-  roslaunch carma saxton_cav.launch mock_can:=false can_data_file:=/path/to/file.csv
+  roslaunch carma carma.launch mock_can:=false can_data_file:=/path/to/file.csv
 -->
 <launch>
   <!-- Constants -->
@@ -35,7 +35,7 @@
   <arg name="CARMA_DIR" default="$(find carma)" doc="The path of the package directory"/>
   <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/launch/params" doc="Directory of yaml parameter files"/>
   <!-- Path to Unified Robot Description Format URDF file for loading static transforms -->
-  <arg name="URDF_FILE" default="$(arg CARMA_DIR)/launch/urdf/saxton_cav.urdf" doc="Path to the vehicle's URDF file"/>
+  <arg name="URDF_FILE" default="$(arg CARMA_DIR)/launch/urdf/carma.urdf" doc="Path to the vehicle's URDF file"/>
   <!-- Simulated Driver Arguments -->
   <!-- Directory of Simulation Files -->
   <arg name="DATA_DIR" default="$(arg CARMA_DIR)/mock_drivers/src/test/data" doc="Directory of driver simulation data files"/>
@@ -87,7 +87,7 @@
   <arg name="debug_lateral_controller" default="false" doc="Set true to enable debugging on the Lateral Control Driver"/>
 
   <!-- ROS Namespaces -->
-  <arg name="TOP_NS"    default="saxton_cav" doc="CAV Prototype system namespace"/>
+  <arg name="TOP_NS"    default="carma" doc="CAV Prototype system namespace"/>
   <arg name="GUIDE_NS"  default="guidance" doc="Namespace of nodes in guidance package"/>
   <arg name="MSG_NS"    default="message" doc="Namespace of nodes in message package"/>
   <arg name="SF_NS"     default="sensor_fusion" doc="Namespace of nodes in sensor fusion package"/>

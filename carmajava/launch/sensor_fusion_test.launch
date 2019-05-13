@@ -26,7 +26,7 @@
   <arg name="bag" doc="The bag file to be used to run this test"/>
   <arg name="all_topics" default="false" doc="Set to true to play back all topics"/>
   <arg name="topics" doc="The bag file to be used to run this test" 
-    default="/tf /tf_static /saxton_cav/drivers/pin_point_application/position/odometry /saxton_cav/drivers/pin_point_application/position/velocity /saxton_cav/drivers/pin_point_application/position/nav_sat_fix /saxton_cav/drivers/pin_point_application/position/heading /saxton_cav/drivers/srx_objects/f_lrr/sensor/objects"/>
+    default="/tf /tf_static /carma/drivers/pin_point_application/position/odometry /carma/drivers/pin_point_application/position/velocity /carma/drivers/pin_point_application/position/nav_sat_fix /carma/drivers/pin_point_application/position/heading /carma/drivers/srx_objects/f_lrr/sensor/objects"/>
   
   <arg if="$(arg all_topics)" name="actual_topics" value=""/>
   <arg unless="$(arg all_topics)" name="actual_topics" value=" --topics $(arg topics) "/>
@@ -35,7 +35,7 @@
 
   <arg name="CARMA_DIR" default="$(find carma)" doc="The path of the package directory"/>
   <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/launch/params" doc="Directory of yaml parameter files"/>
-  <arg name="TOP_NS"    default="saxton_cav" doc="CAV Prototype system namespace"/>
+  <arg name="TOP_NS"    default="carma" doc="CAV Prototype system namespace"/>
   <arg name="DRIVER_NS" default="drivers" doc="Namespace of nodes in drivers package"/>
 
   <env name="ROSCONSOLE_CONFIG_FILE"

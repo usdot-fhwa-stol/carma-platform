@@ -22,7 +22,7 @@
   The launch file has four arguments
 
   1. bag: The path to the ros bag file which will be played. It is expected this file contains the topics
-  /saxton_cav/guidance/outgoing_mobility_request and /saxton_cav/guidance/outgoing_mobility_path 
+  /carma/guidance/outgoing_mobility_request and /carma/guidance/outgoing_mobility_path 
   Additionally the bag file should be from the same route being tested on
 
   2. start_time: The start time in seconds which the bag file should begin from. 
@@ -43,8 +43,8 @@
   <arg name="start_time" doc="The time in seconds to start the bag from"/>
   <arg name="dist_to_merge" doc="The expected distance to the lane change in m"/>
   <arg name="speed_limit" doc="The speed limit on this route in mph"/>
-  <arg name="request_topic" value="/saxton_cav/guidance/outgoing_mobility_request"/>
-  <arg name="path_topic" value="/saxton_cav/guidance/outgoing_mobility_path"/>
+  <arg name="request_topic" value="/carma/guidance/outgoing_mobility_request"/>
+  <arg name="path_topic" value="/carma/guidance/outgoing_mobility_path"/>
 
   <!-- Time Corrector Node -->
   <node pkg="carma" type="time_corrector_node.py" name="time_corrector_node">

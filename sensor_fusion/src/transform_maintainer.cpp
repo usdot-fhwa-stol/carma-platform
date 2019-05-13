@@ -129,7 +129,7 @@ void TransformMaintainer::nav_sat_fix_update_cb(const sensor_msgs::NavSatFixCons
 
     // Publish transform
     for (int i =0; i < tf_stamped_msgs.size(); i++) {
-      tf2_buffer_->setTransform(tf_stamped_msgs.at(i), "/saxton_cav/sensor_fusion");
+      tf2_buffer_->setTransform(tf_stamped_msgs.at(i), "/carma/sensor_fusion");
     }
     tf2_broadcaster_->sendTransform(tf_stamped_msgs);
 }
@@ -194,7 +194,7 @@ void TransformMaintainer::odometry_update_cb(const nav_msgs::OdometryConstPtr od
       // Publish updated transform
       geometry_msgs::TransformStamped odom_to_base_link_msg; 
       tf2::transformTF2ToMsg(odom_to_base_link_, odom_to_base_link_msg, odometry->header.stamp, odom_frame_, base_link_frame_);
-      tf2_buffer_->setTransform(odom_to_base_link_msg, "/saxton_cav/sensor_fusion");
+      tf2_buffer_->setTransform(odom_to_base_link_msg, "/carma/sensor_fusion");
       tf2_broadcaster_->sendTransform(odom_to_base_link_msg);
 
     } else if (parent_frame_id == odom_frame_ && child_frame_id == local_pos_sensor_frame_) {
@@ -215,7 +215,7 @@ void TransformMaintainer::odometry_update_cb(const nav_msgs::OdometryConstPtr od
       // Publish updated transform
       geometry_msgs::TransformStamped odom_to_base_link_msg;
       tf2::transformTF2ToMsg(odom_to_base_link_, odom_to_base_link_msg, odometry->header.stamp, odom_frame_, base_link_frame_);
-      tf2_buffer_->setTransform(odom_to_base_link_msg, "/saxton_cav/sensor_fusion");
+      tf2_buffer_->setTransform(odom_to_base_link_msg, "/carma/sensor_fusion");
       tf2_broadcaster_->sendTransform(odom_to_base_link_msg);
 
     } else {

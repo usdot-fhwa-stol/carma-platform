@@ -314,13 +314,13 @@ if [ ${EVERYTHING} == true ] || [ ${LAUNCH} == true ] || [ ${EXECUTABLES} == tru
 	if [ ${EVERYTHING} == true ] || [ ${LAUNCH} == true ]; then 
 		echo "Trying to copy launch ..."
 		# Delete old files
-		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "mv ${APP_DIR}/launch/saxton_cav.launch ${APP_DIR}/"
+		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "mv ${APP_DIR}/launch/carma.launch ${APP_DIR}/"
 		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "mv ${APP_DIR}/launch/drivers.launch ${APP_DIR}/"
 		SCRIPT="rm -r ${APP_DIR}/launch/*;"
 		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
 		# Copy the launch files to the remote machine using current symlink
 		scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${LAUNCH_DIR}/*.launch ${USERNAME}@${HOST}:"${APP_DIR}/launch/"
-		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "mv ${APP_DIR}/saxton_cav.launch ${APP_DIR}/launch/"
+		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "mv ${APP_DIR}/carma.launch ${APP_DIR}/launch/"
 		ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "mv ${APP_DIR}/drivers.launch ${APP_DIR}/launch/"
 	fi
 	# Create symlink to launch file so that roslaunch will work when package is sourced

@@ -15,14 +15,14 @@
   the License.
 -->
 <!--
-	saxton_cav.launch
+	carma.launch
 
   A the ros launch file for the STOL CAV Prototype ROS Network.
   Launches all the needed ros nodes and sets up the parameter server.
   Also sets up all static transforms used by tf2 within the system.
 
   File is meant to be run on a configured vehicle pc.
-  Applies the appropriate arguments to the saxton_cav_src.launch file to launch on a vehicle
+  Applies the appropriate arguments to the carma_src.launch file to launch on a vehicle
   
   Note: To ensure all ros processes are killed before launch use
   pkill -f ros
@@ -35,7 +35,7 @@
   <!-- Override Required Paths -->
   <arg name="CARMA_DIR" default="/opt/carma" doc="The path of the package directory"/>
   <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/params" doc="Directory of yaml parameter files"/>
-  <arg name="URDF_FILE" default="$(arg CARMA_DIR)/urdf/saxton_cav.urdf" doc="Path to the vehicle's URDF file"/>
+  <arg name="URDF_FILE" default="$(arg CARMA_DIR)/urdf/carma.urdf" doc="Path to the vehicle's URDF file"/>
   <arg name="DATA_DIR"  default="$(arg CARMA_DIR)/app/mock_data" doc="Directory of driver simulation"/>
   <arg name="SCRIPTS_DIR" default="$(arg CARMA_DIR)/app/engineering_tools" doc="The directory containing scripts for execution"/>
   <arg name="LAUNCH_DIR" default="$(arg CARMA_DIR)/app/bin/share/carma" doc="Directory containing additional carma launch files such as driver.launch"/>
@@ -53,5 +53,5 @@
   <arg name="use_rosbag" default="true" doc="Record a rosbag for the to 26 demo"/>
 
   <!-- Include the detailed launch file and pass in new arguments -->
-  <include file="$(find carma)/saxton_cav_src.launch" pass_all_args="true"/>
+  <include file="$(find carma)/carma_src.launch" pass_all_args="true"/>
 </launch>

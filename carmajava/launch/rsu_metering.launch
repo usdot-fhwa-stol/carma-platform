@@ -56,7 +56,7 @@
   <arg name="debug_mock_srx_controller" default="false" doc="Set true to enable debugging on the Mock SRX Controller Driver"/>
   
   <!-- ROS Namespaces -->
-  <arg name="TOP_NS"    default="saxton_cav" doc="CAV Prototype system namespace"/>
+  <arg name="TOP_NS"    default="carma" doc="CAV Prototype system namespace"/>
   <arg name="MSG_NS"    default="message" doc="Namespace of nodes in message package"/>
   <arg name="DRIVER_NS" default="drivers" doc="Namespace of nodes in drivers package"/>
   <arg name="RSU_NS" default="rsu" doc="Namespace of nodes in rsu metering package"/>
@@ -185,7 +185,7 @@
     </group>
     <!-- TODO Remove after TO 26 Demo is complete -->
     <node pkg="rosbag" type="record" name="rosbag_node"
-      args="record -o /opt/carma/logs/ /saxton_cav/message/incoming_mobility_operation /saxton_cav/message/incoming_bsm /saxton_cav/message/incoming_mobility_request /saxton_cav/message/incoming_mobility_response /saxton_cav/guidance/outgoing_mobility_request /saxton_cav/guidance/outgoing_mobility_response /saxton_cav/guidance/outgoing_mobility_operation"
+      args="record -o /opt/carma/logs/ /carma/message/incoming_mobility_operation /carma/message/incoming_bsm /carma/message/incoming_mobility_request /carma/message/incoming_mobility_response /carma/guidance/outgoing_mobility_request /carma/guidance/outgoing_mobility_response /carma/guidance/outgoing_mobility_operation"
     />
   </group>
 </launch>

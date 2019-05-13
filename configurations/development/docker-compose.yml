@@ -40,7 +40,7 @@ services:
       - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
     environment:
       - ROS_IP=127.0.0.1
-    command: wait-for-it.sh localhost:11311 -- roslaunch carma saxton_cav_docker.launch
+    command: wait-for-it.sh localhost:11311 -- roslaunch carma carma_docker.launch
   mock-lateral-control-driver:
     image: usdotfhwastol/carma:latest
     network_mode: host

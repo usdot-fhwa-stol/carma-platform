@@ -15,7 +15,7 @@
   the License.
 -->
 <!--
-	saxton_cav.launch
+	carma.launch
 
   A the ros launch file for the STOL CAV Prototype ROS Network.
   Launches all the needed ros nodes and sets up the parameter server.
@@ -32,12 +32,12 @@
 -->
 <launch>
   <!-- Include Main Launch File -->
-  <include pass_all_args="true" file="$(find carma)/launch/saxton_cav.launch"/>
+  <include pass_all_args="true" file="$(find carma)/launch/carma.launch"/>
   <!-- Launch Test Node -->
-  <group ns="/saxton_cav/test">
+  <group ns="/carma/test">
     <test test-name="transform_server_test" pkg="carma" type="transformServerTest.py" time-limit="35.0">
       <remap from="get_transform"
-             to="/saxton_cav/transform/get_transform"/>
+             to="/carma/transform/get_transform"/>
     </test>
   </group>
 </launch>
