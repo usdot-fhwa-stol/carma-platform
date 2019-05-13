@@ -97,8 +97,8 @@
   <arg name="INTR_NS"   default="interface_manager" doc="Namespace of nodes in interface manager package"/>
   <arg name="UI_NS"     default="ui" doc="Namespace of parameters used by the ui and rosbridge"/>
 
-  <!-- TODO Remove after TO 26 demo -->
-  <arg name="use_rosbag" default="false" doc="Record a rosbag for the to 26 demo"/>
+  <!-- Remove after TO 26 demo -->
+  <arg name="use_rosbag" default="false" doc="Record a rosbag"/>
 
   <!-- Launch Nodes -->
   <group ns="$(arg TOP_NS)">
@@ -198,7 +198,28 @@
 
       </group>
 
-    <!-- Sensor Fusion Package -->
+    <!-- Localization Package -->
+       <!-- Point Cloud Map -->
+	<node pkg="map_file" type="points_map_loader" name="points_map_loader" args="noupdate $(find aw_platform)/map/pcd_map.pcd" />
+
+       <!-- TODO group? -->
+       <!-- NDT Matching-->
+       <include file="$(find lidar_localizer)/launch/ndt_matching.launch">
+              <arg name="get_height" value="true" />
+       </include>
+
+       <!-- Deadreckoner -->
+       <include file="$(find deadreckoner)/launch/deadreckoner.launch">
+              <arg name="current_twist" value="/vehicle/twist" />
+              <arg name="current_odom" value="/vehicle/odom" />
+       </include>
+
+       <!-- Voxel Grid Filter -->
+       <include file="$(find points_downsampler)/launch/points_downsampler.launch">
+              <arg name="node_name" value="voxel_grid_filter" />
+       </include>
+
+    <!-- Sensor Fusion Package TODO -->
     <group ns="$(arg SF_NS)">
 
       <!-- Sensor Fusion Node -->
@@ -262,7 +283,7 @@
       </node>
     </group>
 
-    <!-- Guidance Package -->
+    <!-- Guidance Package TODO -->
     <group ns="$(arg GUIDE_NS)">
       <!-- Guidance Main Node -->
       <node pkg="carma" type="guidance" name="guidance_main"
