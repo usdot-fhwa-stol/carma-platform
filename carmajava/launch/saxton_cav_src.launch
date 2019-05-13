@@ -244,30 +244,6 @@
       </node>
     </group>
 
-    <!-- Route Package -->
-    <group ns="$(arg RT_NS)">
-
-      <!-- Route Manager Node -->
-      <node pkg="carma" type="route" name="route_manager"
-            args="gov.dot.fhwa.saxton.carma.route.RouteManager">
-
-        <env if="$(arg debug_route)" name="ROUTE_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
-
-        <rosparam command="load" file="$(arg PARAM_DIR)/RouteParams.yaml"/>
-
-        <remap from="package_path"
-               to="/$(arg TOP_NS)/package_path"/>
-        <remap from="system_alert"
-               to="/$(arg TOP_NS)/system_alert"/>
-        <remap from="tim"
-               to="/$(arg TOP_NS)/$(arg MSG_NS)/tim"/>
-        <remap from="nav_sat_fix"
-               to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/nav_sat_fix"/>
-        <remap from="get_transform"
-               to="/$(arg TOP_NS)/$(arg TS_NS)/get_transform"/>
-      </node>
-    </group>
-
     <!-- Message Package -->
     <group ns="$(arg MSG_NS)">
 
