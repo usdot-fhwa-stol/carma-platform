@@ -198,24 +198,6 @@
 
       </group>
 
-    <!-- Interface Manager Package -->
-    <group ns="$(arg INTR_NS)">
-
-      <!-- Interface Manager Node -->
-      <node pkg="carma" type="interfacemgr" name="interface_mgr"
-            args="gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr" required="true">
-
-        <env if="$(arg debug_interface_mgr)" name="INTERFACEMGR_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
-
-        <rosparam command="load" file="$(arg PARAM_DIR)/InterfaceMgrParams.yaml"/>
-
-        <remap from="system_alert"
-               to="/$(arg TOP_NS)/system_alert"/>
-        <remap from="driver_discovery"
-               to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>
-      </node>
-    </group>
-
     <!-- Sensor Fusion Package -->
     <group ns="$(arg SF_NS)">
 
