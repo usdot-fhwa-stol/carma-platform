@@ -32,8 +32,8 @@ usage() {
 
 
 # Default environment variables
-carma_workspace="../.."
-autoware_src="${carma_workspace}/src/autoware.ai"
+carma_workspace="$(realpath ../..)"
+autoware_src="$(realpath ${carma_workspace}/src/autoware.ai)"
 skip_autoware=false
 rebuild_carma=false
 carma_build_args=""
@@ -45,8 +45,8 @@ while getopts a:c:xrhm:b: option
 do
 	case "${option}"
 	in
-		a) autoware_src=${OPTARG};;
-		c) carma_workspace=${OPTARG};;
+		a) autoware_src="$(realpath ${OPTARG})";;
+		c) carma_workspace="$(realpath ${OPTARG})";;
     x) skip_autoware=true;;
     r) rebuild_carma=true;;
     m) carma_build_args=${OPTARG};;
@@ -58,6 +58,12 @@ do
 
 	esac
 done
+
+echo "
+Attempting to build CARMA
+CARMA Workspace: ${carma_workspace}
+Autoware Source Dir: ${autoware_src}
+"
 
 # Clean workspace if needed
 old_pwd="${PWD}"
@@ -79,13 +85,13 @@ else
   echo "Building Autoware required packages ${PACKAGE_SELECTION}"
 
   cd ${autoware_src}/ros
-  ./colcon_release "${autoware_build_args}" "--packages-up-to ${PACKAGE_SELECTION}"
+  ./colcon_release "${autoware_build_args}" --packages-up-to "${PACKAGE_SELECTION}"
   source ./install/local_setup.bash
-  echo "Autoware built successfuly. Binaries sourced from $(readlink -f ./install/local_setup.bash)"
+  echo "Autoware built successfuly. Binaries sourced from $(realpath ./install/local_setup.bash)"
 fi
 
 # Build CARMA 
 echo "Building CARMA"
 cd ${carma_workspace}
-catkin_make install "${carma_build_args}"
-echo echo "CARMA built successfuly. Binaries sourced from $(readlink -f ./devel/setup.bash)"
+catkin_make install ${carma_build_args}
+echo echo "CARMA built successfuly. Binaries sourced from $(realpath ./devel/setup.bash)"
