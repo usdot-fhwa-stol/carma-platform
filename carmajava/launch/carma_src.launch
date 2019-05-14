@@ -198,12 +198,40 @@
 
       </group>
 
+       <!-- Interface Manager Package -->
+       <group ns="$(arg INTR_NS)">
+
+       <!-- Interface Manager Node -->
+       <node pkg="carma" type="interfacemgr" name="interface_mgr"
+              args="gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr" required="true">
+
+              <env if="$(arg debug_interface_mgr)" name="INTERFACEMGR_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+
+              <rosparam command="load" file="$(arg PARAM_DIR)/InterfaceMgrParams.yaml"/>
+
+              <remap from="system_alert"
+                     to="/$(arg TOP_NS)/system_alert"/>
+              <remap from="driver_discovery"
+                     to="/$(arg TOP_NS)/$(arg DRIVER_NS)/driver_discovery"/>
+       </node>
+       </group>
+
     <!-- Localization Package -->
        <!-- Point Cloud Map -->
-	<node pkg="map_file" type="points_map_loader" name="points_map_loader" args="noupdate $(find aw_platform)/map/pcd_map.pcd" />
+	<node pkg="map_file" type="points_map_loader" name="points_map_loader" args="noupdate $(find carma)/map/example_map.pcd" />
 
        <!-- TODO group? -->
        <!-- NDT Matching-->
+       <!-- This namesapce sets the parameters which are not set by default in the ndt_matching.launch file -->
+       <!-- These parameters are not in the ndt_matching node private namespace-->
+       <!-- TODO resolve code duplication. These parameters already exist in base_link->velodyne tf -->
+       <param name="localizer" value="velodyne" />
+       <param name="tf_x" value="1.02" />
+       <param name="tf_y" value="0.0" />
+       <param name="tf_z" value="2.23" />
+       <param name="tf_roll" value="0.0" />
+       <param name="tf_pitch" value="0.0" />
+       <param name="tf_yaw" value="0.0" />
        <include file="$(find lidar_localizer)/launch/ndt_matching.launch">
               <arg name="get_height" value="true" />
        </include>
@@ -215,7 +243,7 @@
        </include>
 
        <!-- Voxel Grid Filter -->
-       <include file="$(find points_downsampler)/launch/points_downsampler.launch">
+       <include file="$(find points_downsampler)/launch/points_downsample.launch">
               <arg name="node_name" value="voxel_grid_filter" />
        </include>
 
