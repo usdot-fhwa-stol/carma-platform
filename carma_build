@@ -17,13 +17,15 @@
 # This scipt builds the CARMA platform and its Autoware.ai dependancies. 
 
 usage() { 
-  echo "USAGE carma_build.bash [OPTION]
+  echo "USAGE carma_build [OPTION]
   carma_build will build the CARMA Platform including any drivers in the same workspace as well as any required Autoware.ai components
   
   -a Path to Autoware.ai workspace. If this is not specified it is assumed CARMA and Autoware.ai share a workspace 
   -c Path to CARMA workspace.
   -x Skip Autoware.ai build. In this case Autoware.ai will be sourced from the location specified by -a
   -r CARMA rebuild flag. This will do a clean build of the CARMA code. Autoware.ai code is always cleaned before building even without this flag.
+  -m Additional build arguments to pass to CARMA's catkin_make install
+  -b Additional build arguments to pass to Autoware.ai's colcon build
   -h Print help
   ";
 }
@@ -34,10 +36,12 @@ carma_workspace="../.."
 autoware_src="${carma_workspace}/src/autoware.ai"
 skip_autoware=false
 rebuild_carma=false
+carma_build_args=""
+autoware_build_args=""
 PACKAGE_SELECTION="lidar_localizer map_file deadreckoner points_downsampler lane_planner waypoint_maker"
 
 # Read Options
-while getopts a:c:xrh option
+while getopts a:c:xrhm:b: option
 do
 	case "${option}"
 	in
@@ -45,6 +49,8 @@ do
 		c) carma_workspace=${OPTARG};;
     x) skip_autoware=true;;
     r) rebuild_carma=true;;
+    m) carma_build_args=${OPTARG};;
+    b) autoware_build_args=${OPTARG};;
     h) usage; exit 0;;
 		\?) echo "Unknown option: -$OPTARG" >&2; exit 1;;
 		:) echo "Missing option argument for -$OPTARG" >&2; exit 1;;
@@ -73,7 +79,7 @@ else
   echo "Building Autoware required packages ${PACKAGE_SELECTION}"
 
   cd ${autoware_src}/ros
-  ./colcon_release --packages-up-to "${PACKAGE_SELECTION}"
+  ./colcon_release "${autoware_build_args}" "--packages-up-to ${PACKAGE_SELECTION}"
   source ./install/local_setup.bash
   echo "Autoware built successfuly. Binaries sourced from $(readlink -f ./install/local_setup.bash)"
 fi
@@ -81,5 +87,5 @@ fi
 # Build CARMA 
 echo "Building CARMA"
 cd ${carma_workspace}
-catkin_make install
+catkin_make install "${carma_build_args}"
 echo echo "CARMA built successfuly. Binaries sourced from $(readlink -f ./devel/setup.bash)"
