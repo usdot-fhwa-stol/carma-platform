@@ -1,7 +1,7 @@
 CARMA Platform Release Notes
 ----------------------------
 
-Version 2.8.5, released 14 May 2019 
+Version 2.9.0, released 15 May 2019 
 ----------------------------------- 
 
 -PR 199, ignore raw CAN data in rosbags  
@@ -19,6 +19,7 @@ Version 2.8.5, released 14 May 2019
 -PR 228, fix for test coverage metrics  
 -PR 232, fix dockerfile version metadata  
 -PR 233, fix test coverage metrics  
+-PR 236, add SonarCloud status reporting to README
 
 Version 2.8.4, released 04 March 2019 
 ------------------------------------- 
