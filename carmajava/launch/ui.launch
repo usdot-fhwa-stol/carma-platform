@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<!--
+  Copyright (C) 2018-2019 LEIDOS.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+<!--
+	Launch file for launching the nodes in the CARMA localization stack minus drivers
+-->
+<launch>
+
+  <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/launch/params" doc="Directory of yaml parameter files"/>
+  <arg name="GUIDE_NS" default="guidance" doc="Namespace of nodes in guidance package"/>
+  <arg name="MSG_NS" default="message" doc="Namespace of nodes in message package"/>
+  <arg name="SF_NS" default="sensor_fusion" doc="Namespace of nodes in sensor fusion package"/>
+  <arg name="RT_NS" default="route" doc="Namespace of nodes in route package"/>
+  <arg name="INTR_NS" default="interface_manager" doc="Namespace of nodes in interface manager package"/>
+
+  <rosparam command="load" file="$(arg PARAM_DIR)/CommandAPIParams.yaml"/>
+
+  <remap from="system_alert" to="/system_alert"/>
+  <remap from="nav_sat_fix" to="/$(arg SF_NS)/filtered/nav_sat_fix"/>
+  <remap from="velocity" to="/$(arg SF_NS)/filtered/velocity"/>
+  <remap from="get_available_routes" to="/$(arg RT_NS)/get_available_routes"/>
+  <remap from="set_active_route" to="/$(arg RT_NS)/set_active_route"/>
+  <remap from="start_active_route" to="/$(arg RT_NS)/start_active_route"/>
+  <remap from="route_state" to="/$(arg RT_NS)/route_state"/>
+  <remap from="route_event" to="/$(arg RT_NS)/route_event"/>
+  <remap from="route" to="/$(arg RT_NS)/route"/>
+  <remap from="bsm" to="/$(arg MSG_NS)/incoming_bsm"/>
+  <remap from="get_system_version" to="/$(arg GUIDE_NS)/get_system_version"/>
+  <remap from="state" to="/$(arg GUIDE_NS)/state"/>
+  <remap from="ui_platoon_vehicle_info" to="/$(arg GUIDE_NS)/ui_platoon_vehicle_info"/>
+  <remap from="plugins/available_plugins" to="/$(arg GUIDE_NS)/plugins/available_plugins"/>
+  <remap from="plugins/get_registered_plugins" to="/$(arg GUIDE_NS)/plugins/get_registered_plugins"/>
+  <remap from="plugins/activate_plugin" to="/$(arg GUIDE_NS)/plugins/activate_plugin"/>
+  <remap from="set_guidance_active" to="/$(arg GUIDE_NS)/set_guidance_active"/>
+  <remap from="plugins/controlling_plugins" to="/$(arg GUIDE_NS)/plugins/controlling_plugins"/>
+  <remap from="traffic_signal_info" to="/$(arg GUIDE_NS)/traffic_signal_info"/>
+  <remap from="platooning_info" to="/$(arg GUIDE_NS)/platooning_info"/>
+  <remap from="driver_discovery" to="/$(arg DRIVER_NS)/driver_discovery"/>
+  <remap from="get_drivers_with_capabilities" to="/$(arg INTR_NS)/get_drivers_with_capabilities"/>
+  <remap from="traffic_signal_info" to="/$(arg GUIDE_NS)/traffic_signal_info"/>
+  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
+    <arg name="port" value="9090"/>
+    <!-- The default port for rosbridge is 9090 -->
+  </include>
+</launch>

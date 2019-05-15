@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<!--
+  Copyright (C) 2018-2019 LEIDOS.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+<!--
+	Launch file for launching the nodes in the CARMA localization stack minus drivers
+-->
+<launch>
+
+  <arg name="GUIDE_NS" default="guidance" doc="Namespace of nodes in guidance package"/>
+  <arg name="PARAM_DIR" default="$(find carma)/launch/params" doc="Directory of yaml parameter files"/>
+
+  <!-- j2735 Convertor Node -->
+  <node pkg="j2735_convertor" type="j2735_convertor_node" name="j2735_convertor">
+    <remap from="system_alert" to="/system_alert"/>
+    <remap from="outgoing_bsm" to="/$(arg GUIDE_NS)/bsm"/>
+  </node>
+  <!-- Message Consumer Node -->
+  <node pkg="carma" type="message" name="message_consumer" args="gov.dot.fhwa.saxton.carma.message.MessageConsumer">
+
+    <env if="$(arg debug_msg_consumer)" name="MESSAGE_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+
+    <rosparam command="load" file="$(arg PARAM_DIR)/MessageParams.yaml"/>
+
+    <remap from="system_alert" to="/system_alert"/>
+    <remap from="outgoing_mobility_request" to="/$(arg GUIDE_NS)/outgoing_mobility_request"/>
+    <remap from="outgoing_mobility_path" to="/$(arg GUIDE_NS)/outgoing_mobility_path"/>
+    <remap from="outgoing_mobility_response" to="/$(arg GUIDE_NS)/outgoing_mobility_response"/>
+    <remap from="outgoing_mobility_operation" to="/$(arg GUIDE_NS)/outgoing_mobility_operation"/>
+    <remap from="inbound_binary_msg" to="/comms/inbound_binary_msg"/>
+    <remap from="outbound_binary_msg" to="/comms/outbound_binary_msg"/>
+
+  </node>
+</launch>
