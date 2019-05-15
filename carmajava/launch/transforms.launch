@@ -22,9 +22,7 @@
 
   <!-- Transform Server Package -->
   <!-- Transform Server Node -->
-  <node pkg="carma_transform_server" type="carma_transform_server_node" name="transform_server">
-    <remap from="system_alert" to="/system_alert"/>
-  </node>
+  <node pkg="carma_transform_server" type="carma_transform_server_node" name="transform_server"/>
 
   <!-- TF2 Setup Initial Static Transforms -->
   <!-- Vehicle Transforms -->

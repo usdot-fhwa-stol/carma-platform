@@ -19,28 +19,17 @@
 -->
 <launch>
 
-  <arg name="GUIDE_NS" default="guidance" doc="Namespace of nodes in guidance package"/>
   <arg name="PARAM_DIR" default="$(find carma)/launch/params" doc="Directory of yaml parameter files"/>
+  <arg name="debug_msg_consumer" default="false" doc="Set true to enable debugging on the Message Consumer node"/>
 
   <!-- j2735 Convertor Node -->
-  <node pkg="j2735_convertor" type="j2735_convertor_node" name="j2735_convertor">
-    <remap from="system_alert" to="/system_alert"/>
-    <remap from="outgoing_bsm" to="/$(arg GUIDE_NS)/bsm"/>
-  </node>
+  <node pkg="j2735_convertor" type="j2735_convertor_node" name="j2735_convertor"/>
   <!-- Message Consumer Node -->
   <node pkg="carma" type="message" name="message_consumer" args="gov.dot.fhwa.saxton.carma.message.MessageConsumer">
 
     <env if="$(arg debug_msg_consumer)" name="MESSAGE_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
 
     <rosparam command="load" file="$(arg PARAM_DIR)/MessageParams.yaml"/>
-
-    <remap from="system_alert" to="/system_alert"/>
-    <remap from="outgoing_mobility_request" to="/$(arg GUIDE_NS)/outgoing_mobility_request"/>
-    <remap from="outgoing_mobility_path" to="/$(arg GUIDE_NS)/outgoing_mobility_path"/>
-    <remap from="outgoing_mobility_response" to="/$(arg GUIDE_NS)/outgoing_mobility_response"/>
-    <remap from="outgoing_mobility_operation" to="/$(arg GUIDE_NS)/outgoing_mobility_operation"/>
-    <remap from="inbound_binary_msg" to="/comms/inbound_binary_msg"/>
-    <remap from="outbound_binary_msg" to="/comms/outbound_binary_msg"/>
 
   </node>
 </launch>

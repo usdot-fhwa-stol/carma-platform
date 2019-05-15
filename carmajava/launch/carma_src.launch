@@ -90,9 +90,11 @@
   <arg name="MSG_NS" default="message" doc="Namespace of nodes in message package"/>
   <arg name="SF_NS" default="sensor_fusion" doc="Namespace of nodes in sensor fusion package"/>
   <arg name="TS_NS" default="transform" doc="Namespace of nodes in transform server package"/>
+  <arg name="ENV_NS" default="environment" doc="Namespace of nodes in environment stack"/>
   <arg name="RT_NS" default="route" doc="Namespace of nodes in route package"/>
-  <arg name="INTR_NS" default="interface_manager" doc="Namespace of nodes in interface manager package"/>
+  <arg name="INTR_NS" default="hardware_interface" doc="Namespace of nodes hardware interface stack"/>
   <arg name="UI_NS" default="ui" doc="Namespace of parameters used by the ui and rosbridge"/>
+  <arg name="LOCZ_NS" default="localization" doc="Namespace of parameters used by the ui and rosbridge"/>
   
   <!-- Maybe don't use these -->
   <arg name="CNTRL_NS" default="controller" doc="Namespace of parameters used by the ui and rosbridge"/>
@@ -118,87 +120,63 @@
   <!-- Load Vehicle Characteristics -->
   <rosparam command="load" file="$(arg PARAM_DIR)/HostVehicleParams.yaml"/>
 
-  <!-- Simulated Mock Drivers -->
-  <include file="$(arg CARMA_DIR)/launch/mock_drivers.launch" pass_all_args="true"/>
-
-  <!--Lateral Controller Driver Node TODO-->
-  <node if="$(arg mock_lateral_controller)" pkg="carma" type="lateral_control_driver" name="lateral_controller" args="gov.dot.fhwa.saxton.carma.lateralcontroldriver.LateralControlDriver">
-
-    <env if="$(arg debug_lateral_controller)" name="LATERAL_CONTROL_DRIVER_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
-
-    <rosparam command="load" file="$(arg PARAM_DIR)/LateralControllerParams.yaml"/>
-  </node>
-
-  <!--Driver Launch File if Using Actual Drivers -->
-  <remap from="ui_instructions" to="/$(arg UI_NS)/ui_instructions"/>
-
-  <remap from="system_alert" to="/system_alert"/>
-
-  <include file="$(arg LAUNCH_DIR)/drivers.launch">
-    <arg name="mock_dsrc" value="$(arg mock_dsrc)" />
-    <arg name="mock_pinpoint" value="$(arg mock_pinpoint)" />
-    <arg name="mock_can" value="$(arg mock_can)" />
-    <arg name="mock_srx_controller" value="$(arg mock_srx_controller)" />
-    <arg name="mock_radar" value="$(arg mock_radar)" />
-    <arg name="CARMA_DIR" value="$(arg CARMA_DIR)" />
-    <arg name="PARAM_DIR" value="$(arg PARAM_DIR)" />
-  </include>
-
-
-  <!-- Interface Manager Package -->
-  <group ns="$(arg INTR_NS)">
-
-    <!-- Interface Manager Node -->
-    <node pkg="carma" type="interfacemgr" name="interface_mgr" args="gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr" required="true">
-
-      <env if="$(arg debug_interface_mgr)" name="INTERFACEMGR_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
-
-      <rosparam command="load" file="$(arg PARAM_DIR)/InterfaceMgrParams.yaml"/>
-
-      <remap from="system_alert" to="/system_alert"/>
-      <remap from="driver_discovery" to="/driver_discovery"/>
-    </node>
+  <!-- Transforms Stack -->
+  <group ns="$(arg TF_NS)">
+    <include file="$(arg LAUNCH_DIR)/transforms.launch">
+      <arg name="URDF_FILE" value="$(arg URDF_FILE)"/>
+    </include>
   </group>
 
-  <!-- Transforms Stack -->
-  <include file="$(arg LAUNCH_DIR)/transforms.launch">
-    <arg name="URDF_FILE" value="$(arg URDF_FILE)"/>
-  </include>
+  <!-- Hardware Interface Stack -->
+  <group ns="$(arg INTR_NS)">
+    <include file="$(arg LAUNCH_DIR)/hardware_interface.launch" pass_all_args="true"/>
+  </group>
 
   <!-- Localization Stack -->
-  <include file="$(arg LAUNCH_DIR)/localization.launch"/>
+  <group ns="$(arg LOCZ_NS)">
+    <include file="$(arg LAUNCH_DIR)/localization.launch"/>
+  </group>
 
   <!-- Comms Stack -->
-  <include file="$(arg LAUNCH_DIR)/comms.launch">
-    <arg name="GUIDE_NS" value="$(arg GUIDE_NS)"/>
-    <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
-  </include>
+  <group ns="$(arg MSG_NS)">
+    <include file="$(arg LAUNCH_DIR)/comms.launch">
+      <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
+      <arg name="debug_msg_consumer" value="$(arg debug_msg_consumer)"/>
+    </include>
+  </group>
 
   <!-- Environment Perception Stack -->
-  <include file="$(arg LAUNCH_DIR)/environment.launch"/>
+  <group ns="$(arg ENV_NS)">
+    <include file="$(arg LAUNCH_DIR)/environment.launch"/>
+  </group>
 
   <!-- Guidance Stack -->
-  <include file="$(arg LAUNCH_DIR)/guidance.launch">
-    <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
-    <arg name="JVM_DEBUG_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
-    <arg name="log_config" value="$(arg log_config)"/>
-    <arg name="debug_guidance" value="$(arg debug_guidance)"/>
-    <arg name="MSG_NS" value="$(arg MSG_NS)"/>
-    <arg name="SF_NS" value="$(arg SF_NS)"/>
-    <arg name="TS_NS" value="$(arg TS_NS)"/>
-    <arg name="RT_NS" value="$(arg RT_NS)"/>
-    <arg name="UI_NS" value="$(arg UI_NS)"/>
-  </include>
+  <group ns="$(arg GUIDE_NS)">
+    <include file="$(arg LAUNCH_DIR)/guidance.launch">
+      <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
+      <arg name="JVM_DEBUG_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+      <arg name="log_config" value="$(arg log_config)"/>
+      <arg name="debug_guidance" value="$(arg debug_guidance)"/>
+      <arg name="MSG_NS" value="$(arg MSG_NS)"/>
+      <arg name="SF_NS" value="$(arg SF_NS)"/>
+      <arg name="TS_NS" value="$(arg TS_NS)"/>
+      <arg name="RT_NS" value="$(arg RT_NS)"/>
+      <arg name="UI_NS" value="$(arg UI_NS)"/>
+    </include>
+  </group>
 
-  <include file="$(arg LAUNCH_DIR)/ui.launch">
-    <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
-    <arg name="MSG_NS" value="$(arg MSG_NS)"/>
-    <arg name="SF_NS" value="$(arg SF_NS)"/>
-    <arg name="GUIDE_NS" value="$(arg GUIDE_NS)"/>
-    <arg name="RT_NS" value="$(arg RT_NS)"/>
-    <arg name="INTR_NS" value="$(arg INTR_NS)"/>
-  </include>
+  <!-- UI Stack -->
+  <group ns="$(arg UI_NS)">
+    <include file="$(arg LAUNCH_DIR)/ui.launch">
+      <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
+      <arg name="MSG_NS" value="$(arg MSG_NS)"/>
+      <arg name="SF_NS" value="$(arg SF_NS)"/>
+      <arg name="GUIDE_NS" value="$(arg GUIDE_NS)"/>
+      <arg name="RT_NS" value="$(arg RT_NS)"/>
+      <arg name="INTR_NS" value="$(arg INTR_NS)"/>
+    </include>
+  </group>
 
-  <!-- TODO should there be a data collection launch fileRecord Rosbag of all topics excluding /rosout and CAN messages since they may contain sensetive data -->
+  <!-- TODO should there be a data collection launch file. Record Rosbag of all topics excluding /rosout and CAN messages since they may contain sensetive data -->
   <node pkg="rosbag" type="record" name="rosbag_node" args="record -o /opt/carma/logs/ -a -x '/rosout(.*)|(.*)/received_messages|(.*)/sent_messages'" if="$(arg use_rosbag)" />
 </launch>

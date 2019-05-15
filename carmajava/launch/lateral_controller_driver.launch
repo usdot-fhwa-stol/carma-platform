@@ -19,6 +19,8 @@
 <launch>
     <arg name="remap_ns" default="/"/>
     <arg name="JVM_DEBUG_OPTS"    default="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005" doc="Start rosjava node with these JVM arguments for debugging"/>
+    <arg name="debug_lateral_controller" default="false" doc="Set true to enable debugging on the Lateral Control Driver"/>
+    <arg name="PARAM_DIR" default="$(find carma)/launch/params" doc="Directory of yaml parameter files"/>
 
     <group ns="$(arg remap_ns)">
         <node pkg="carma" type="lateral_control_driver" name="lateral_controller"

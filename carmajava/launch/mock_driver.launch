@@ -20,6 +20,9 @@
     <arg name="remap_ns" default="/"/>
     <arg name="debug_driver" default="false"/>
     <arg name="JVM_DEBUG_OPTS"    default="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005" doc="Start rosjava node with these JVM arguments for debugging"/>
+    <arg name="node_name" default="mock_driver"/>
+    <arg name="simulated_driver" default="can"/>
+    <arg name="data_file" default="invalid_file"/>
 
     <group ns="$(arg remap_ns)">
         <node pkg="carma" type="mock_drivers" name="$(arg node_name)"

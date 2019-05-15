@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+<!--
+  Copyright (C) 2018-2019 LEIDOS.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+<!--
+	Launch file for launching the nodes in the CARMA localization stack minus drivers
+-->
+<launch>
+  <group ns="h">
+  <!-- Constants -->
+  <!-- Directory of Parameter Files -->
+  <arg name="CARMA_DIR" default="$(find carma)" doc="The path of the package directory"/>
+  <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/launch/params" doc="Directory of yaml parameter files"/>
+  <!-- Simulated Driver Arguments -->
+  <!-- Directory of Simulation Files -->
+  <arg name="DATA_DIR" default="$(arg CARMA_DIR)/mock_drivers/src/test/data" doc="Directory of driver simulation data files"/>
+  <!-- Directory containing additional carma launch files such as the drivers.launch file -->
+  <arg name="LAUNCH_DIR" default="$(arg CARMA_DIR)/launch" doc="Directory containing additional carma launch files such as driver.launch"/>
+
+  <env name="ROSCONSOLE_CONFIG_FILE" value="$(arg PARAM_DIR)/roscpp_log.config"/>
+
+  <!-- Simulation Usage -->
+  <arg name="mock_can" default="true" doc="True if using a simulated can driver"/>
+  <arg name="mock_dsrc" default="true" doc="True if using a simulated dsrc driver"/>
+  <arg name="mock_srx_controller" default="true" doc="True if using a simulated srx controller driver"/>
+  <arg name="mock_pinpoint" default="true" doc="True if using a simulated pinpoint driver"/>
+  <arg name="mock_radar" default="true" doc="True if using a simulated radar driver"/>
+  <arg name="mock_lateral_controller" default="true" doc="True if using a simulated lateral controller"/>
+
+  <!-- Data Files -->
+  <arg name="can_data_file" default="$(arg DATA_DIR)/can.csv" doc="Path for can simulation data"/>
+  <arg name="dsrc_data_file" default="$(arg DATA_DIR)/dsrc.csv" doc="Path for dsrc simulation data"/>
+  <arg name="srx_controller_data_file" default="$(arg DATA_DIR)/srx_controller.csv" doc="Path for srx controller simulation data"/>
+  <arg name="pinpoint_data_file" default="$(arg DATA_DIR)/pinpoint_stationary.csv" doc="Path for pinpoint simulation data"/>
+  <arg name="radar_data_file" default="$(arg DATA_DIR)/radar.csv" doc="Path for radar simulation data"/>
+  <arg name="cellular_data_file" default="$(arg DATA_DIR)/dsrc.csv" doc="Path cellular can simulation data"/>
+
+  <!-- Debug -->
+  <!-- JVM Debug arguments -->
+  <arg name="JVM_DEBUG_OPTS" default="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005" doc="Start rosjava node with these JVM arguments for debugging"/>
+  <!-- JVM Logging Options -->
+  <arg name="log_config" default="$(arg PARAM_DIR)/log-config.properties" doc="The location of the logging configuration file"/>
+  <arg name="JVM_LOG_OPTS" value="-Djava.util.logging.config.file=$(arg log_config)"/>
+  <!-- Apply logging properties to all java nodes using JAVA_OPTS-->
+  <env name="JAVA_OPTS" value="$(arg JVM_LOG_OPTS)"/>
+  <!-- Set to true to enable debugging on the specified node -->
+  <arg name="debug_interface_mgr" default="false" doc="Set true to enable debugging on the Interface Manager node"/>
+  <arg name="debug_mock_pinpoint" default="false" doc="Set true to enable debugging on the Mock Pinpoint Driver"/>
+  <arg name="debug_mock_srx_controller" default="false" doc="Set true to enable debugging on the Mock SRX Controller Driver"/>
+  <arg name="debug_mock_can" default="false" doc="Set true to enable debugging on the Mock CAN Driver"/>
+  <arg name="debug_mock_dsrc" default="false" doc="Set true to enable debugging on the Mock dsrc Driver"/>
+  <arg name="debug_mock_radar" default="false" doc="Set true to enable debugging on the Mock Radar Driver"/>
+  <arg name="debug_lateral_controller" default="false" doc="Set true to enable debugging on the Lateral Control Driver"/>
+
+  <!-- Simulated Mock Drivers -->
+  <include file="$(arg LAUNCH_DIR)/mock_drivers.launch" pass_all_args="true"/>
+
+  <!--Lateral Controller Driver Node -->
+  <include file="$(arg LAUNCH_DIR)/lateral_controller_driver.launch">
+    <arg name="debug_lateral_controller" value="$(arg debug_lateral_controller)"/>
+    <arg name="JVM_DEBUG_OPTS"   value="$(arg JVM_DEBUG_OPTS)"/>
+    <arg name="PARAM_DIR"   value="$(arg PARAM_DIR)"/>
+  </include>
+
+  <!--Driver Launch File if Using Actual Drivers -->
+  <!-- <remap from="ui_instructions" to="/$(arg UI_NS)/ui_instructions"/> -->
+
+  <include file="$(arg LAUNCH_DIR)/drivers.launch">
+    <arg name="mock_dsrc" value="$(arg mock_dsrc)" />
+    <arg name="mock_pinpoint" value="$(arg mock_pinpoint)" />
+    <arg name="mock_can" value="$(arg mock_can)" />
+    <arg name="mock_srx_controller" value="$(arg mock_srx_controller)" />
+    <arg name="mock_radar" value="$(arg mock_radar)" />
+    <arg name="CARMA_DIR" value="$(arg CARMA_DIR)" />
+    <arg name="PARAM_DIR" value="$(arg PARAM_DIR)" />
+  </include>
+
+  <!-- Interface Manager Node -->
+  <node pkg="carma" type="interfacemgr" name="interface_mgr" args="gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr" required="true">
+
+    <env if="$(arg debug_interface_mgr)" name="INTERFACEMGR_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+
+    <rosparam command="load" file="$(arg PARAM_DIR)/InterfaceMgrParams.yaml"/>
+  </node>
+
+  </group>
+</launch>

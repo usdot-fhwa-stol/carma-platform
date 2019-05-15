@@ -35,5 +35,9 @@
   <param name="A" value="$(arg A)"/>
   <param name="B" value="$(arg B)"/>
 
-  <node pkg="topic_tools" type="relay" name="relay_vehicle_command" args="/controller$(arg B)/vehicle_commands /vehicle_cmd"/>
+  <group ns="/">
+    <node pkg="topic_tools" type="relay" name="relay_vehicle_command" args="/controller/vehicle_commands /vehicle_cmd"/>
+    <!-- <remap from="C" to="/G/C"/> -->
+  </group>
+
 </launch>

@@ -18,8 +18,31 @@
 	Launch file for launching the nodes in the CARMA localization stack minus drivers
 -->
 <launch>
+  <!-- Remap any absolute topics to be relative -->
+  <remap from="/vehicle/odom" to="vehicle/odom"/>
+  <remap from="/estimate_twist" to="estimate_twist"/>
+  <remap from="/estimated_vel" to="estimated_vel"/>
+  <remap from="/estimated_vel_kmph" to="estimated_vel_kmph"/>
+  <remap from="/estimated_vel_mps" to="estimated_vel_mps"/>
+  <remap from="/filtered_points" to="filtered_points"/>
+  <remap from="/imu_raw" to="imu_raw"/>
+  <remap from="/localizer_pose" to="localizer_pose"/>
+  <remap from="/ndt_pose" to="ndt_pose"/>
+  <remap from="/ndt_reliability" to="ndt_reliability"/>
+  <remap from="/ndt_stat" to="ndt_stat"/>
+  <remap from="/pmap_stat" to="pmap_stat"/>
+  <remap from="/points_downsampler_info" to="points_downsampler_info"/>
+  <remap from="/points_map" to="points_map"/>
+  <remap from="/predict_pose" to="predict_pose"/>
+  <remap from="/predict_pose_imu" to="predict_pose_imu"/>
+  <remap from="/predict_pose_imu_odom" to="predict_pose_imu_odom"/>
+  <remap from="/predict_pose_odom" to="predict_pose_odom"/>
+  <remap from="/time_ndt_matching" to="time_ndt_matching"/>
+
+  <!-- <arg name="current_twist" default="current_twist" doc="Remapping of the twist topic used by the deadreckoner node"/>
+  <arg name="current_odom" default="current_odom" doc="Remapping of the twist topic used by the deadreckoner node"/> -->
   <!-- Localization Package -->
-  <!-- Point Cloud Map -->
+  <!-- Point Cloud Map TODO file location-->
   <node pkg="map_file" type="points_map_loader" name="points_map_loader" args="noupdate $(find carma)/map/example_map.pcd" />
 
   <!-- TODO group? -->
@@ -27,6 +50,7 @@
   <!-- This namesapce sets the parameters which are not set by default in the ndt_matching.launch file -->
   <!-- These parameters are not in the ndt_matching node private namespace-->
   <!-- TODO resolve code duplication. These parameters already exist in base_link->velodyne tf -->
+
   <param name="localizer" value="velodyne" />
   <param name="tf_x" value="1.02" />
   <param name="tf_y" value="0.0" />
@@ -34,14 +58,16 @@
   <param name="tf_roll" value="0.0" />
   <param name="tf_pitch" value="0.0" />
   <param name="tf_yaw" value="0.0" />
+  
+
   <include file="$(find lidar_localizer)/launch/ndt_matching.launch">
     <arg name="get_height" value="true" />
   </include>
 
   <!-- Deadreckoner -->
   <include file="$(find deadreckoner)/launch/deadreckoner.launch">
-    <arg name="current_twist" value="/vehicle/twist" />
-    <arg name="current_odom" value="/vehicle/odom" />
+    <arg name="current_twist" value="vehicle/odom" />
+    <arg name="current_odom" value="vehicle/odom" />
   </include>
 
   <!-- Voxel Grid Filter -->

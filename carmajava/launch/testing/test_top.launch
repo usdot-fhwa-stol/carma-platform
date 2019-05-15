@@ -30,9 +30,14 @@
 <launch>
 
   <arg name="A" default="5"/>
+  <arg name="B" default="5"/>
 
   <!-- Include the detailed launch file and pass in new arguments -->
-  <include file="$(find carma)/launch/test_bottom.launch" pass_all_args="true">
+  <group ns="/">
+    <param name="C" value="C"/>
+    <remap from="C" to="/h/c"/>
+  </group>
+  <include file="$(find carma)/launch/testing/test_bottom.launch" pass_all_args="true">
     <arg name="B" default="$(arg B)"/>
   </include>
 </launch>
