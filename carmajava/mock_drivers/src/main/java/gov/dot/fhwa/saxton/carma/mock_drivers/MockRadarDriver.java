@@ -39,10 +39,7 @@ public class MockRadarDriver extends AbstractMockDriver {
   // Published
   Publisher<cav_msgs.ExternalObjectList> flrrObjectPub; // Front long range radar
   Publisher<cav_msgs.ExternalObjectList> lfsrrObjectPub; // Left front short range radar
-  Publisher<cav_msgs.ExternalObjectList> rsrrObjectPub; // Rear short range radar
-  Publisher<cav_msgs.ExternalObjectList> rfsrrObjectPub; // Right front short range radar
-  Publisher<cav_msgs.ExternalObjectList> visionObjectPub; // Camera
-
+  // TODO STARTING WITH TOPICS
   // CONSTANTS
   private final short COVARINCE_ELEMENT_COUNT = 36;
   private final short SAMPLE_ID_IDX = 0;
@@ -85,9 +82,6 @@ public class MockRadarDriver extends AbstractMockDriver {
     // Published
     flrrObjectPub = connectedNode.newPublisher("f_lrr/sensor/objects", cav_msgs.ExternalObjectList._TYPE);
     lfsrrObjectPub = connectedNode.newPublisher("lf_srr/sensor/objects", cav_msgs.ExternalObjectList._TYPE);
-    rsrrObjectPub = connectedNode.newPublisher("r_srr/sensor/objects", cav_msgs.ExternalObjectList._TYPE);
-    rfsrrObjectPub = connectedNode.newPublisher("rf_srr/sensor/objects", cav_msgs.ExternalObjectList._TYPE);
-    visionObjectPub = connectedNode.newPublisher("vision/sensor/objects", cav_msgs.ExternalObjectList._TYPE);
   }
 
   @Override protected void publishData(List<String[]> data) {

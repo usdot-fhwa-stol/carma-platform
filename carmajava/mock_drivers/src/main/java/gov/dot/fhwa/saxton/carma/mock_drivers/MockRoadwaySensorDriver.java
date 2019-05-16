@@ -33,7 +33,7 @@ import java.util.List;
  * rosparam set /mock_driver/data_file_path '/opt/carma/test_data/pinpoint_stationary.csv'
  * rosrun carma mock_drivers gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode
  */
-public class MockPinPointDriver extends AbstractMockDriver {
+public class MockRoadwaySensorDriver extends AbstractMockDriver {
 
   // Topics
   // Published
@@ -77,7 +77,7 @@ public class MockPinPointDriver extends AbstractMockDriver {
   final short MIN_ODOM_POSE_COVAR_IDX = MIN_ODOM_TWIST_COVAR_IDX + COVARINCE_ELEMENT_COUNT;
   private final short EXPECTED_DATA_COL_COUNT = MIN_ODOM_POSE_COVAR_IDX + COVARINCE_ELEMENT_COUNT;
 
-  public MockPinPointDriver(ConnectedNode connectedNode) {
+  public MockRoadwaySensorDriver(ConnectedNode connectedNode) {
     super(connectedNode);
     // Topics
     // Published

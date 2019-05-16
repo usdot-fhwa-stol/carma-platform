@@ -199,31 +199,43 @@ public abstract class AbstractMockDriver implements IMockDriver {
     driverStatusMsg.setName(getGraphName().toString());
     driverStatusMsg.setStatus(driverStatus);
     driverStatusMsg.setCanBus(false);
-    driverStatusMsg.setSensor(false);
-    driverStatusMsg.setPosition(false);
+    driverStatusMsg.setRadar(false);
+    driverStatusMsg.setGps(false);
+    driverStatusMsg.setImu(false);
+    driverStatusMsg.setLidar(false);
+    driverStatusMsg.setRoadwaySensor(false);
     driverStatusMsg.setComms(false);
-    driverStatusMsg.setLonController(false);
-    driverStatusMsg.setLatController(false);
+    driverStatusMsg.setController(false);
+    driverStatusMsg.setCamera(false);
 
     for (String driverType: getDriverTypesList()) {
       switch (driverType) {
         case "can":
           driverStatusMsg.setCanBus(true);
           break;
-        case "sensor":
-          driverStatusMsg.setSensor(true);
+        case "radar":
+          driverStatusMsg.setRadar(true);
           break;
-        case "position":
-          driverStatusMsg.setPosition(true);
+        case "gps":
+          driverStatusMsg.setGps(true);
+          break;
+        case "imu":
+          driverStatusMsg.setImu(true);
+          break;
+        case "lidar":
+          driverStatusMsg.setLidar(true);
+          break;
+        case "roadway_sensor":
+          driverStatusMsg.setRoadwaySensor(true);
           break;
         case "comms":
           driverStatusMsg.setComms(true);
           break;
-        case "lon_controller":
-          driverStatusMsg.setLonController(true);
+        case "controller":
+          driverStatusMsg.setController(true);
           break;
-        case "lat_controller":
-          driverStatusMsg.setLatController(true);
+        case "camera":
+          driverStatusMsg.setCamera(true);
           break;
       }
     }

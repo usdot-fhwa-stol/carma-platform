@@ -38,7 +38,7 @@ import java.util.List;
  * rosparam set /mock_driver/data_file_path '/home/username/temp.csv'
  * rosrun carmajava mock_drivers gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode
  */
-public class MockDSRCDriver extends AbstractMockDriver {
+public class MockCommsDriver extends AbstractMockDriver {
 
   // Topics
   // Published
@@ -61,7 +61,7 @@ public class MockDSRCDriver extends AbstractMockDriver {
   int vehicle_number = 3; //Need to match the length of binary data array
   int message_counter = 0; // Let driver send different inbound binary bytes
 
-  public MockDSRCDriver(ConnectedNode connectedNode) {
+  public MockCommsDriver(ConnectedNode connectedNode) {
     super(connectedNode);
     // Topics
     // Published

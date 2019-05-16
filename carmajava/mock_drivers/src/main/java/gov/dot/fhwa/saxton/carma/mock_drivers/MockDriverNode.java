@@ -41,7 +41,6 @@ public class MockDriverNode extends SaxtonBaseNode {
   }
 
   @Override public void onSaxtonStart(final ConnectedNode connectedNode) {
-
     final Log log = connectedNode.getLog();
     final ParameterTree params = connectedNode.getParameterTree();
     final IMockDriver simulatedDriver;
@@ -49,23 +48,29 @@ public class MockDriverNode extends SaxtonBaseNode {
       case "can":
         simulatedDriver = new MockCANDriver(connectedNode);
         break;
-      case "dsrc":
-        simulatedDriver = new MockDSRCDriver(connectedNode);
+      case "comms":
+        simulatedDriver = new MockCommsDriver(connectedNode);
         break;
-      case "srx_controller":
-        simulatedDriver = new MockSRXControllerDriver(connectedNode);
+      case "controller":
+        simulatedDriver = new MockControllerDriver(connectedNode);
         break;
       case "radar":
         simulatedDriver = new MockRadarDriver(connectedNode);
         break;
-      case "cellular":
-        simulatedDriver = new MockCellularDriver(connectedNode);
+      case "imu":
+        simulatedDriver = new MockImuDriver(connectedNode);
         break;
-      case "pinpoint":
-        simulatedDriver = new MockPinPointDriver(connectedNode);
+      case "gps":
+        simulatedDriver = new MockGnssDriver(connectedNode);
         break;
-      case "truck_controller":
-        simulatedDriver = new MockTruckControllerDriver(connectedNode);
+      case "lidar":
+        simulatedDriver = new MockLidarDriver(connectedNode);
+        break;
+      case "roadway_sensor":
+        simulatedDriver = new MockRoadwaySensorDriver(connectedNode);
+        break;
+      case "camera":
+        simulatedDriver = new MockCameraDriver(connectedNode);
         break;
       default:
         log.warn(

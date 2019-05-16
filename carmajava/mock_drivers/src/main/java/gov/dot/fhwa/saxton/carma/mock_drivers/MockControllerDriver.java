@@ -45,7 +45,7 @@ import java.util.List;
  * rosparam set /mock_driver/data_file_path '/home/username/temp.csv'
  * rosrun carmajava mock_drivers gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode
  */
-public class MockSRXControllerDriver extends AbstractMockDriver {
+public class MockControllerDriver extends AbstractMockDriver {
 
   // Topics
   // Published
@@ -80,7 +80,7 @@ public class MockSRXControllerDriver extends AbstractMockDriver {
   protected boolean rightArrow = false;
   protected boolean takedown = false;
 
-  public MockSRXControllerDriver(ConnectedNode connectedNode) {
+  public MockControllerDriver(ConnectedNode connectedNode) {
     super(connectedNode);
     // Topics
     // Published
