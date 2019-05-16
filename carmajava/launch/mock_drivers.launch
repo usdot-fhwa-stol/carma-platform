@@ -26,66 +26,52 @@ If not using simulated drivers they are activated if the respective mock argumen
 <launch>
 
   <!-- Directory of Parameter Files -->
-  <!-- Directory of Parameter Files -->
-  <arg name="CARMA_DIR" default="$(find carma)" doc="The path of the package directory"/>
-  <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/launch/params" doc="Directory of yaml parameter files"/>
   <arg name="LAUNCH_DIR" default="$(find carma)/launch" doc="The path of the launch file directory"/>
+  <arg name="PARAM_DIR" default="$(arg LAUNCH_DIR)/params" doc="Directory of yaml parameter files"/>
 
   <!-- Simulated Driver Arguments -->
   <!-- Directory of Simulation Files -->
-  <arg name="DATA_DIR" default="$(arg CARMA_DIR)/mock_drivers/src/test/data" doc="Directory of driver simulation data files"/>
+  <arg name="DATA_DIR" default="$(find carma)/mock_drivers/src/test/data" doc="Directory of driver simulation data files"/>
   
   <!-- Data Files -->
-  <arg name="can_data_file" default="$(arg DATA_DIR)/can.csv" doc="Path for can simulation data"/>
-  <arg name="dsrc_data_file" default="$(arg DATA_DIR)/dsrc.csv" doc="Path for dsrc simulation data"/>
-  <arg name="srx_controller_data_file" default="$(arg DATA_DIR)/srx_controller.csv" doc="Path for srx controller simulation data"/>
-  <arg name="pinpoint_data_file" default="$(arg DATA_DIR)/pinpoint_stationary.csv" doc="Path for pinpoint simulation data"/>
-  <arg name="radar_data_file" default="$(arg DATA_DIR)/radar.csv" doc="Path for radar simulation data"/>
-  <arg name="cellular_data_file" default="$(arg DATA_DIR)/dsrc.csv" doc="Path cellular can simulation data"/>
+  <arg name="can_data_file" value="$(arg DATA_DIR)/can.csv"/>
+  <arg name="dsrc_data_file" value="$(arg DATA_DIR)/dsrc.csv"/>
+  <arg name="srx_controller_data_file" value="$(arg DATA_DIR)/srx_controller.csv"/>
+  <arg name="pinpoint_data_file" value="$(arg DATA_DIR)/pinpoint_stationary.csv"/>
+  <arg name="radar_data_file" value="$(arg DATA_DIR)/radar.csv"/>
+  <arg name="cellular_data_file" value="$(arg DATA_DIR)/dsrc.csv"/>
 
   <!-- Debug -->
-  <!-- JVM Debug arguments -->
-  <arg name="JVM_DEBUG_OPTS" default="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005" doc="Start rosjava node with these JVM arguments for debugging"/>
-  <!-- JVM Logging Options -->
-  <arg name="log_config" default="$(arg PARAM_DIR)/log-config.properties" doc="The location of the logging configuration file"/>
-  <arg name="JVM_LOG_OPTS" value="-Djava.util.logging.config.file=$(arg log_config)"/>
-  <!-- Apply logging properties to all java nodes using JAVA_OPTS-->
-  <env name="JAVA_OPTS" value="$(arg JVM_LOG_OPTS)"/>
   <!-- Set to true to enable debugging on the specified node -->
-  <arg name="debug_interface_mgr" default="false" doc="Set true to enable debugging on the Interface Manager node"/> <!-- TODO Remove after roslaunch Kinetic is updated to include PR 1561 -->
-  <arg name="debug_mock_pinpoint" default="false" doc="Set true to enable debugging on the Mock Pinpoint Driver"/>
-  <arg name="debug_mock_srx_controller" default="false" doc="Set true to enable debugging on the Mock SRX Controller Driver"/>
-  <arg name="debug_mock_can" default="false" doc="Set true to enable debugging on the Mock CAN Driver"/>
-  <arg name="debug_mock_dsrc" default="false" doc="Set true to enable debugging on the Mock dsrc Driver"/>
-  <arg name="debug_mock_radar" default="false" doc="Set true to enable debugging on the Mock Radar Driver"/>
-  <arg name="debug_lateral_controller" default="false" doc="Set true to enable debugging on the Lateral Control Driver"/>
+  <arg name="debug_node" default="" doc="Set to the java node base name to enable debugging on that node"/>
 
   <!-- Simulation Usage -->
-  <arg name="mock_can"            default="true" doc="True if using a simulated can driver"/>
-  <arg name="mock_dsrc"           default="true" doc="True if using a simulated dsrc driver"/>
-  <arg name="mock_srx_controller" default="true" doc="True if using a simulated srx controller driver"/>
-  <arg name="mock_pinpoint"       default="true" doc="True if using a simulated pinpoint driver"/>
-  <arg name="mock_radar"          default="true" doc="True if using a simulated radar driver"/>
-  <arg name="mock_lateral_controller"   default="true" doc="True if using a simulated lateral controller"/>
+  <arg name="mock_drivers"        default="lateral_controller" doc="List of driver node types which will be launched as mock drivers"/>
 
-    <!-- Simulated DSRC Driver Node -->
-  <include if="$(arg mock_dsrc)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
+  <arg name="mock_can"                  value="$(eval 'can' in arg('mock_drivers').split())"/>
+  <arg name="mock_comms"                 value="$(eval 'comms' in arg('mock_drivers').split())"/>
+  <arg name="mock_lon_ontroller"       value="$(eval 'lon_controller' in arg('mock_drivers').split())"/>
+  <arg name="mock_gnss"             value="$(eval 'gnss' in arg('mock_drivers').split())"/>
+  <arg name="mock_radar"                value="$(eval 'radar' in arg('mock_drivers').split())"/>
+  <arg name="mock_lateral_controller"   value="$(eval 'lateral_controller' in arg('mock_drivers').split())"/>
+
+  <param name="OutputA" value="$(eval arg('mock_drivers').split())"/>
+  <param name="OutputB" value="$(eval 'gnss' in arg('mock_drivers').split())"/>
+
+  <!-- Simulated DSRC Driver Node -->
+  <include if="$(arg mock_comms)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
     <arg name="node_name"        value="dsrc"/>
     <arg name="simulated_driver" value="dsrc"/>
     <arg name="data_file"   value="$(arg dsrc_data_file)"/>
-    <arg name="debug_driver"     value="$(arg debug_mock_dsrc)"/>
-    <arg name="JVM_DEBUG_OPTS"   value="$(arg JVM_DEBUG_OPTS)"/>
-    <arg name="ns" value=""/>
+    <arg name="debug_driver"     value="$(eval arg('debug_node') == 'dsrc')"/>
   </include>
 
   <!-- Simulated PinPoint Driver Node -->
-  <include if="$(arg mock_pinpoint)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
+  <include if="$(arg mock_gnss)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
     <arg name="node_name"        value="pin_point_application"/>
     <arg name="simulated_driver" value="pinpoint"/>
     <arg name="data_file"   value="$(arg pinpoint_data_file)"/>
-    <arg name="debug_driver"     value="$(arg debug_mock_pinpoint)"/>
-    <arg name="JVM_DEBUG_OPTS"   value="$(arg JVM_DEBUG_OPTS)"/>
-    <arg name="ns" value=""/>
+    <arg name="debug_driver"     value="$(eval arg('debug_node') == 'pin_point_application')"/>
   </include>
 
   <!-- Simulated CAN Driver Node -->
@@ -93,19 +79,15 @@ If not using simulated drivers they are activated if the respective mock argumen
     <arg name="node_name"        value="srx_can"/>
     <arg name="simulated_driver" value="can"/>
     <arg name="data_file"   value="$(arg can_data_file)"/>
-    <arg name="debug_driver"     value="$(arg debug_mock_can)"/>
-    <arg name="JVM_DEBUG_OPTS"   value="$(arg JVM_DEBUG_OPTS)"/>
-    <arg name="ns" value=""/>
+    <arg name="debug_driver"     value="$(eval arg('debug_node') == 'srx_can')"/>
   </include>
 
   <!-- Simulated SRX Controller Driver Node -->
-  <include if="$(arg mock_srx_controller)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
+  <include if="$(arg mock_lon_ontroller)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
     <arg name="node_name"        value="srx_controller"/>
     <arg name="simulated_driver" value="srx_controller"/>
     <arg name="data_file"   value="$(arg srx_controller_data_file)"/>
-    <arg name="debug_driver"     value="$(arg debug_mock_srx_controller)"/>
-    <arg name="JVM_DEBUG_OPTS"   value="$(arg JVM_DEBUG_OPTS)"/>
-    <arg name="ns" value=""/>
+    <arg name="debug_driver"     value="$(eval arg('debug_node') == 'srx_controller')"/>
   </include>
 
   <!-- Simulated Radar Driver Node -->
@@ -113,9 +95,13 @@ If not using simulated drivers they are activated if the respective mock argumen
     <arg name="node_name"        value="srx_objects"/>
     <arg name="simulated_driver" value="radar"/>
     <arg name="data_file"   value="$(arg radar_data_file)"/>
-    <arg name="debug_driver"     value="$(arg debug_mock_radar)"/>
-    <arg name="JVM_DEBUG_OPTS"   value="$(arg JVM_DEBUG_OPTS)"/>
-    <arg name="ns" value=""/>
+    <arg name="debug_driver"     value="$(eval arg('debug_node') == 'srx_objects')"/>
   </include>
 	
+  <!--Lateral Controller Driver Node -->
+  <include file="$(arg LAUNCH_DIR)/lateral_controller_driver.launch">
+    <arg name="debug_node" value="$(eval arg('debug_node') == 'lateral_controller')"/>
+    <arg name="PARAM_DIR"   value="$(arg PARAM_DIR)"/>
+  </include>
+
 </launch>

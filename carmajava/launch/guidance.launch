@@ -21,23 +21,45 @@
   <arg name="PARAM_DIR" default="$(find carma)/launch/params" doc="Directory of yaml parameter files"/>
 
   <!-- Debug -->
-  <!-- JVM Debug arguments -->
-  <arg name="JVM_DEBUG_OPTS" default="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005" doc="Start rosjava node with these JVM arguments for debugging"/>
-  <!-- JVM Logging Options -->
-  <arg name="log_config" default="$(arg PARAM_DIR)/log-config.properties" doc="The location of the logging configuration file"/>
-  <arg name="JVM_LOG_OPTS" value="-Djava.util.logging.config.file=$(arg log_config)"/>
-  <!-- Apply logging properties to all java nodes using JAVA_OPTS-->
-  <env name="JAVA_OPTS" value="$(arg JVM_LOG_OPTS)"/>
   <!-- Set to true to enable debugging on the specified node -->
-  <arg name="debug_guidance" default="false" doc="Set true to enable debugging on the Guidance Main node"/>
-  
-  <!-- TODO how to deal with this file -->
-  <rosparam command="load" file="$(arg PARAM_DIR)/HostVehicleParams.yaml"/>
+  <arg name="debug_node" default="" doc="Set to the java node base name to enable debugging on that node"/>
+  <arg name="debug_guidance" value="$(eval arg('debug_node') == 'guidance')"/>
 
-    <!-- Guidance Main Node -->
+  <arg name="MSG_NS" default="/message" doc="Namespace of nodes in message package"/>
+  <arg name="TF_NS" default="/transform" doc="Namespace of nodes in transform server package"/>
+  <arg name="INTR_NS" default="/hardware_interface" doc="Namespace of nodes hardware interface stack"/>
+  <arg name="UI_NS" default="/ui" doc="Namespace of parameters used by the ui and rosbridge"/>
+  
+  <!-- Remap topics from external packages -->
+  <remap from="bsm" to="$(arg MSG_NS)/outgoing_bsm"/>
+  <remap from="incoming_map" to="$(arg MSG_NS)/incoming_map"/>
+  <remap from="incoming_spat" to="$(arg MSG_NS)/incoming_spat"/>
+  <remap from="outgoing_mobility_operation" to="$(arg MSG_NS)/outgoing_mobility_operation"/>
+  <remap from="outgoing_mobility_request" to="$(arg MSG_NS)/outgoing_mobility_request"/>
+  <remap from="outgoing_mobility_response" to="$(arg MSG_NS)/outgoing_mobility_response"/>
+
+  <remap from="heading" to="$(arg INTR_NS)/gnss/heading"/>
+  <remap from="nav_sat_fix" to="$(arg INTR_NS)/gnss/nav_sat_fix"/>
+  <remap from="velocity" to="$(arg INTR_NS)/gnss/velocity"/>
+  
+  <remap from="republish/cmd_lateral" to="$(arg INTR_NS)/control/cmd_lateral"/>
+  <remap from="republish/cmd_longitudinal_effort" to="$(arg INTR_NS)/control/cmd_longitudinal_effort"/>
+  <remap from="republish/cmd_speed" to="$(arg INTR_NS)/control/cmd_speed"/>
+  <remap from="robot_enabled" to="$(arg INTR_NS)/control/robot_enabled"/>
+  <remap from="control/cmd_lateral" to="$(arg INTR_NS)/control/cmd_lateral"/>
+  <remap from="control/cmd_longitudinal_effort" to="$(arg INTR_NS)/control/cmd_longitudinal_effort"/>
+  <remap from="control/cmd_speed" to="$(arg INTR_NS)/control/cmd_speed"/>
+
+  <remap from="ui_instructions" to="$(arg UI_NS)/ui_instructions"/>
+
+  <remap from="get_transform" to="$(arg TF_NS)/get_transform"/>
+
+  <remap from="~vehicle_id" to="/vehicle_id"/> <!-- TODO this is a special case for speed harm plugin until plugins become nodes -->
+
+  <!-- Guidance Main Node -->
   <node pkg="carma" type="guidance" name="guidance_main" args="gov.dot.fhwa.saxton.carma.guidance.GuidanceMain">
 
-    <env if="$(arg debug_guidance)" name="GUIDANCE_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+    <env if="$(arg debug_guidance)" name="GUIDANCE_OPTS" value="$(env JVM_DEBUG_OPTS)"/>
 
     <rosparam command="load" file="$(arg PARAM_DIR)/GuidanceParams.yaml"/>
     <rosparam command="load" file="$(arg PARAM_DIR)/ArbitratorParams.yaml"/>

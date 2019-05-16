@@ -18,6 +18,9 @@
 	Launch file for launching the nodes in the CARMA localization stack minus drivers
 -->
 <launch>
+
+  <arg name="INTR_NS" default="hardware_interface" doc="Namespace of nodes hardware interface stack"/>
+
   <!-- Remap any absolute topics to be relative -->
   <remap from="/vehicle/odom" to="vehicle/odom"/>
   <remap from="/estimate_twist" to="estimate_twist"/>
@@ -38,6 +41,9 @@
   <remap from="/predict_pose_imu_odom" to="predict_pose_imu_odom"/>
   <remap from="/predict_pose_odom" to="predict_pose_odom"/>
   <remap from="/time_ndt_matching" to="time_ndt_matching"/>
+
+  <!-- Remap topics from external packages -->
+  <remap from="imu_raw" to="$(arg INTR_NS)/imu/imu_raw"/>
 
   <!-- <arg name="current_twist" default="current_twist" doc="Remapping of the twist topic used by the deadreckoner node"/>
   <arg name="current_odom" default="current_odom" doc="Remapping of the twist topic used by the deadreckoner node"/> -->
@@ -66,7 +72,7 @@
 
   <!-- Deadreckoner -->
   <include file="$(find deadreckoner)/launch/deadreckoner.launch">
-    <arg name="current_twist" value="vehicle/odom" />
+    <arg name="current_twist" value="vehicle/twist" />
     <arg name="current_odom" value="vehicle/odom" />
   </include>
 
