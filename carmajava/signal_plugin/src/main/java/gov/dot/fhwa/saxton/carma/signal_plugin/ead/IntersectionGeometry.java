@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -109,7 +109,7 @@ public class IntersectionGeometry {
 			}
 		}
 		
-		log_.infof("INTR", "End of initialize for intersections ID %d, took = %d ms, stopBoxWidth = %.2f",
+		log_.debugf("INTR", "End of initialize for intersections ID %d, took = %d ms, stopBoxWidth = %.2f",
 				map_.getIntersectionId(), System.currentTimeMillis()-startTime, stopBoxWidth_);
 	}
 	
@@ -126,10 +126,10 @@ public class IntersectionGeometry {
 		
 		Location vehicle = new Location(vehicleLat, vehicleLon);
 		class Candidate {
-			public int		index;
-			public boolean	approach;
-			public int		dtsb; //this is simply dist to the stop bar of THIS lane, not necessarily of the lane we approached the intersections on
-			public int		cte;
+			private int		index;
+			private boolean	approach;
+			private int		dtsb; //this is simply dist to the stop bar of THIS lane, not necessarily of the lane we approached the intersections on
+			private int		cte;
 		}
 		Vector<Candidate> candidateLanes = new Vector<Candidate>();
 		
@@ -353,7 +353,7 @@ public class IntersectionGeometry {
 			cte_ = chosenLane.cte;
 			prevLaneIndex_ = chosenLane.index;
 			prevLaneApproach_ = chosenLane.index >= 0  &&  map_.getLane(chosenLane.index).isApproach();
-			log_.infof("INTR", "computeGeometry succeeded. lane index = %d, lane ID = %d, laneDtsb = %d cm, CTE = %d cm", 
+			log_.debugf("INTR", "computeGeometry succeeded. lane index = %d, lane ID = %d, laneDtsb = %d cm, CTE = %d cm", 
 						laneIndex_, laneId(), laneDtsb_, cte_);
 		}else {
 			laneIndex_ = -1;

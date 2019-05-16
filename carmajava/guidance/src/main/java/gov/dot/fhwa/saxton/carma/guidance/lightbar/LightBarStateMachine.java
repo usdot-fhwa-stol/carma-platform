@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -96,6 +96,8 @@ public class LightBarStateMachine implements ILightBarStateMachine, ILightBarCon
         // Show the center green light as flashing
         lightBarManager.setIndicator(LightBarIndicator.GREEN, IndicatorStatus.FLASH, this.getComponentName());
         break;
+      default:
+        log.error("Unknown new LightBarState!" + newState);
     }
   }
 

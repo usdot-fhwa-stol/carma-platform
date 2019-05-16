@@ -117,7 +117,7 @@ PARAMS_DIR="${LOCAL_CARMA_DIR}/carmajava/launch/params"
 ROUTES_DIR="${LOCAL_CARMA_DIR}/carmajava/route/src/test/resources/routes"
 URDF_DIR="${LOCAL_CARMA_DIR}/carmajava/launch/urdf"
 MOCK_DATA_DIR="${LOCAL_CARMA_DIR}/carmajava/mock_drivers/src/test/data"
-WEBSITE_DIR="${LOCAL_CARMA_DIR}/website"
+WEBSITE_DIR="${CATKIN_WS}/src/CARMAWebUi/website"
 SCRIPTS_DIR="${LOCAL_CARMA_DIR}/engineering_tools"
 
 # Define paths needed on vehicle pc

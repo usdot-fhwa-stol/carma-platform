@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,8 +31,10 @@ public interface INodeCollisionChecker {
    * The collision check is only performed for adjacent nodes in the list. (n0 with n1) and (n1 with n2) NOT (n0 with n2)
    * 
    * @param trajectory A time sorted list of nodes which define the host vehicle's desired trajectory
+   * @param timeOffset A time offset which will be applied to the time of each input node
+   * @param distanceOffset A distance offset which will be applied to the distance of each input node
    * 
    * @return True if a collision was found between a pair of nodes in the list. False otherwise
    */
-  public boolean hasCollision(List<Node> trajectory);
+  public boolean hasCollision(List<Node> trajectory, double timeOffset, double distanceOffset);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -130,12 +130,14 @@ public class EnvironmentWorker {
    */
   public void handleExternalObjectsMsg(cav_msgs.ExternalObjectList externalObjects) {
     if (currentSegment == null || routeState == null || activeRoute == null) {
-      log.info("Roadway ignoring object message as no route is selected");
+      log.debug("Roadway ignoring object message as no route is selected");
       return;
     }
     List<cav_msgs.ExternalObject> objects = externalObjects.getObjects();
     List<RoadwayObstacle> roadwayObstacles = new LinkedList<>();
+    // TODO we may want the transform to be done per object
     Transform earthToOdom = roadwayMgr.getTransform(earthFrame, odomFrame, externalObjects.getHeader().getStamp());
+    log.debug("Objects Stamp: " + externalObjects.getHeader().getStamp());
     if (earthToOdom == null) {
       log.warn("Roadway could not process object message as earth to odom transform was null");
     }
@@ -163,9 +165,11 @@ public class EnvironmentWorker {
     if ((short) (obj.getPresenceVector() & cav_msgs.ExternalObject.BSM_ID_PRESENCE_VECTOR) != 0) {
       connectedVehicleType = ConnectedVehicleType.CONNECTED;
     }
+    
     // Convert object to ECEF frame  
     Transform objInOdom = Transform.fromPoseMessage(obj.getPose().getPose());
     Transform objInECEF = earthToOdom.multiply(objInOdom);
+
     Vector3 objVecECEF = objInECEF.getTranslation();
     Point3D objPositionECEF = new Point3D(objVecECEF.getX(), objVecECEF.getY(), objVecECEF.getZ());
 
@@ -183,8 +187,9 @@ public class EnvironmentWorker {
     double crosstrackDistance = objPosition.getY(); //bestSegment.crossTrackDistance(objPosition);
     
     // Convert velocities
-    Vector3 velocityLinear = objInSegment.apply(Vector3.fromVector3Message(obj.getVelocity().getTwist().getLinear()));
-
+    Transform odomInSegment = bestSegment.getECEFToSegmentTransform().invert().multiply(earthToOdom);
+    Vector3 velocityLinear = odomInSegment.getRotationAndScale().rotateAndScaleVector(Vector3.fromVector3Message(obj.getVelocity().getTwist().getLinear()));
+    
     // Calculate obj lanes
     int primaryLane = bestSegment.determinePrimaryLane(crosstrackDistance);
     // If the relative lane field is defined use that instead of calculated lane

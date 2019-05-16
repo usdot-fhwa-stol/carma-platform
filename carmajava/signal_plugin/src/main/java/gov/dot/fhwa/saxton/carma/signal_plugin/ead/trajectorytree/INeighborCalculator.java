@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree;
 
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.INodeCollisionChecker;
 
 import java.util.List;
 
@@ -31,9 +32,12 @@ public interface INeighborCalculator {
    * @param numIntersections - the number of intersections to consider in this solution
    * @param timeIncrement - increment between adjacent time points in the grid, sec
    * @param speedIncrement - increment between adjacent speed points in the grid, m/s
+   * @param collisionChecker - Collision checker used for obstacle avoidance
+   * @param planningStartTime - The time which planning is considered to have begun at. This is used for converting nodes to route locations
+     @param planningStartDowntrack - The downtrack distance where planning is considered to have begun at. This is used for converting nodes to route locations
    */
   void initialize(List<IntersectionData> intersections, int numIntersections, double timeIncrement,
-                  double speedIncrement);
+                  double speedIncrement, INodeCollisionChecker collisionChecker, double planningStartTime, double planningStartDowntrack);
 
   /**
    * Gets a list of neighbors to the provided node

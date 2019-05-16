@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -58,10 +58,10 @@ public class MockCellularDriver extends AbstractMockDriver {
     super(connectedNode);
     // Topics
     // Published
-    recvPub = connectedNode.newPublisher("~/comms/recv", ByteArray._TYPE);
+    recvPub = connectedNode.newPublisher("comms/recv", ByteArray._TYPE);
 
     // Subscribed
-    outboundSub = connectedNode.newSubscriber("~/comms/outbound", ByteArray._TYPE);
+    outboundSub = connectedNode.newSubscriber("comms/outbound", ByteArray._TYPE);
     outboundSub.addMessageListener(new MessageListener<ByteArray>() {
       @Override public void onNewMessage(ByteArray byteArray) {
         log.info("Outbound " + byteArray.getMessageType() + " message received by "

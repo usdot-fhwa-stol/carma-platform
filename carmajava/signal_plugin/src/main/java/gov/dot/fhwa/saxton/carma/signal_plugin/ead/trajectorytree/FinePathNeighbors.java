@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,12 +19,14 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicationContext;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.INodeCollisionChecker;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.Constants.MPS_TO_MPH;
 
@@ -39,7 +41,7 @@ public class FinePathNeighbors extends NeighborBase {
     protected static final ILogger                log_ = LoggerManager.getLogger(FinePathNeighbors.class);
     protected static final double                 FLOATING_POINT_EPSILON = 0.1;
 
-
+    protected static int prevAccelDir = -2;
     public FinePathNeighbors() {
         history_ = new ArrayList<>();
 
@@ -57,13 +59,13 @@ public class FinePathNeighbors extends NeighborBase {
 
     @Override
     public void initialize(List<IntersectionData> intersections, int numIntersections, double timeIncrement,
-                           double speedIncrement) {
+                    double speedIncrement, INodeCollisionChecker collisionChecker, double planningStartTime, double planningStartDowntrack) {
 
         log_.info("EAD", "initialize called with timeInc = " + timeIncrement + ", speedInc = " + speedIncrement);
         // Set the acceptable stop distance to at least half the distance increment
         acceptableStopDist_ = Math.max(1.1 * 2.0 * timeIncrement * speedIncrement, acceptableStopDist_); 
         log_.info("EAD", "Using acceptable stop distance of: " + acceptableStopDist_);
-        super.initialize(intersections, numIntersections, timeIncrement, speedIncrement);
+        super.initialize(intersections, numIntersections, timeIncrement, speedIncrement, collisionChecker, planningStartTime, planningStartDowntrack);
     }
 
     @Override
@@ -84,11 +86,13 @@ public class FinePathNeighbors extends NeighborBase {
         //if this node will inevitably result in signal violation, return no neighbors
         double timeToStop = curSpeed / maxAccel_;
         double distToStop = timeToStop * curSpeed * 0.5;
-        if(signalViolation(curDist, curDist + distToStop, curTime, timeToStop + curTime, 0.0)) {
-            //System.out.println("this node has no neighbor because of signal violation: " + node);
-            //System.out.println();
-            return neighbors;
-        }
+        
+        // TODO I am not convinved this check is any guarentee of invalid behavior
+        // if(signalViolation(node, new Node(curDist + distToStop, timeToStop + curTime, 0.0))) {
+        //     //System.out.println("this node has no neighbor because of signal violation: " + node);
+        //     //System.out.println();
+        //     return neighbors;
+        // }
 
         double variableTimeInc = Math.max(timeInc_, responseLag_);
         //System.out.println("TimeInc: " + variableTimeInc);
@@ -100,46 +104,37 @@ public class FinePathNeighbors extends NeighborBase {
         for(double v : speeds) {
             double deltaD = variableTimeInc * (curSpeed + v) * 0.5;
             double newDist = curDist + deltaD;
-            //System.out.println("Potential Neighbor: " + new Node(newDist, newTime, v).toString());
-            if(!signalViolation(curDist, newDist, curTime, newTime, v)) {
+            Node potentialNeighbor = new Node(newDist, newTime, v);
+            //System.out.println("Potential Neighbor: " + potentialNeighbor.toString());
+            if(!signalViolation(node, potentialNeighbor)) {
 
-                neighbors.add(new Node(newDist, newTime, v));
+                neighbors.add(potentialNeighbor);
             } else {
+                //System.out.println("Signal Violation N1: " + node + " n2: " + potentialNeighbor); 
                 log_.debug("PLAN", "Remove candidate speed due to signal violation: " + v);
-            }
-
-            // If we can reach the speed limit add a extra node which gets us there as fast as possible
-            if (v >= speedLimit_) {
-                
-                double timeToLimit = (speedLimit_ - curSpeed) / maxAccel_;
-                deltaD = timeToLimit * (curSpeed + v) * 0.5;
-                newDist = curDist + deltaD;
-                double modifiedNewTime = curTime + timeToLimit; 
-                //System.out.println("Potential extra neighbor: " + new Node(newDist, modifiedNewTime, v));
-                if(!signalViolation(curDist, newDist, curTime, modifiedNewTime, v)) {
-
-                    neighbors.add(new Node(newDist, modifiedNewTime, v));
-                } else {
-                    log_.debug("PLAN", "Remove candidate speed due to signal violation: " + v);
-                }
-                
             }
         }
         log_.debug("PLAN", "Generating neighbors of size " + neighbors.size());
+        
+        //System.out.println();
+        List<Node> neightborsWithoutConflicts = neighbors.stream().filter(n -> !hasConflict(node, n)).collect(Collectors.toList());
 
-        if (neighbors.size() == 0 && curSpeed < FLOATING_POINT_EPSILON) {
+        // No non collision solution exists so stop the vehicle
+        if (neighbors.size() != 0 && neightborsWithoutConflicts.size() == 0) {
+            // TODO this node needs to be given more thought
+            neighbors.add(new Node(curDist, newTime, 0.0));
+        } else if (neighbors.size() == 0 && curSpeed < FLOATING_POINT_EPSILON) {
             //System.out.println("Stopped and no neighbors must be at stop bar so adding 0 speed node");
             //System.out.println("Potential Neighbor: " + new Node(curDist, newTime, 0.0).toString());
             neighbors.add(new Node(curDist, newTime, 0.0));
         }
-        //System.out.println();
-        
-        return neighbors;
+
+        return neightborsWithoutConflicts;
     }
     
     ////////////////////
 
-    private List<Double> getViableSpeeds(Node node, double variableTimeInc) {
+    protected List<Double> getViableSpeeds(Node node, double variableTimeInc) {
         double curTime = node.getTimeAsDouble();
         double curDist = node.getDistanceAsDouble();
         double curSpeed = node.getSpeedAsDouble();
@@ -169,7 +164,21 @@ public class FinePathNeighbors extends NeighborBase {
         if(dtsb <= acceptableStopDist_ && minSpeed < FLOATING_POINT_EPSILON && curSpeed > FLOATING_POINT_EPSILON) {
             speeds.add(0.0);
         } else {
+            if (FinePathNeighbors.prevAccelDir == -1) {
+                maxSpeed = curSpeed;
+            } else if (FinePathNeighbors.prevAccelDir == 1) {
+                minSpeed = curSpeed;
+            } else {
+    
+            }
             speeds.add(Math.max(minSpeed, roundedCrawlingSpeed));
+        }
+        if (FinePathNeighbors.prevAccelDir == -1) {
+            maxSpeed = curSpeed;
+        } else if (FinePathNeighbors.prevAccelDir == 1) {
+            minSpeed = curSpeed;
+        } else {
+
         }
 
         ////System.out.println("Speeds2: " + speeds);
@@ -214,10 +223,17 @@ public class FinePathNeighbors extends NeighborBase {
      * @param endTime - final time since start of plan, sec
      * @return true if a violation would occur (runs a red light) while moving from start to end
      */
-    private boolean signalViolation(double startDist, double endDist, double startTime, double endTime, double endingSpeed) {
+    protected boolean signalViolation(Node n1, Node n2) {
         //////System.out.println("Entering signalViolation: startDist = " + startDist + ", endDist = "
        //            + endDist + ", startTime = " + startTime + ", endTime = " + endTime);
+        final double startDist = n1.getDistanceAsDouble();
+        final double startTime = n1.getTimeAsDouble(); 
+        final double startSpeed = n1.getSpeedAsDouble();
 
+        final double endDist = n2.getDistanceAsDouble();
+        final double endTime = n2.getTimeAsDouble();
+        final double endSpeed = n2.getSpeedAsDouble();
+        
         //determine which intersection we are approaching [currentIntersectionIndex]
         int currentInt = currentIntersectionIndex(startDist);
         //////System.out.println("IntersectionIdex: " + currentInt);
@@ -229,7 +245,7 @@ public class FinePathNeighbors extends NeighborBase {
         //if the travel from start to end is not going to cross the stop bar then
         double distToInt = distToIntersection(currentInt, endDist);
         // Special case check for when we are stopping slightly passed the stop bar
-        if (Node.roundToSpeedUnits(endingSpeed) == 0 && distToInt == 0.0) {
+        if (Node.roundToSpeedUnits(endSpeed) == 0 && distToInt == 0.0) {
             return false;
         }
 
@@ -243,14 +259,21 @@ public class FinePathNeighbors extends NeighborBase {
             //System.out.println("Violates: false DTSB: " + dtsb);
             return false;
         }
-        //figure out exactly when we will cross the stop bar
-        // Note: distToIntersection here will give the distance from start of plan to the stop bar, which is
-        // the location of interest where we will cross; use this since all other distances are relative to plan start
-        double interpFactor = dtsb / (endDist - startDist);
-        double crossingTime = startTime + interpFactor*(endTime - startTime);
+
+        final double acceleration = (endSpeed - startSpeed) / (endTime - startTime);
+
+        // Compute velocity at stop bar
+        double crossingTime = startTime;
+        if (Math.abs(acceleration) < FLOATING_POINT_EPSILON) {
+            crossingTime += dtsb / startSpeed;
+        } else {
+            double vf = Math.sqrt(startSpeed * startSpeed + 2.0 * dtsb * acceleration);
+            crossingTime += ((vf - startSpeed) /  acceleration);
+        }
         //log_.debug("EAD", "Stop bar will be crossed: interpFactor = " + interpFactor
         //            + ", crossingTime = " + crossingTime);
 
+        
         //to account for uncertainties in the vehicle's dynamic response to speed command changes, we need
         // a little wiggle room, so don't want to cross the bar just as signal is changing color; we want
         // to avoid red at crossing time +/- the specified buffer (use a smaller time buffer to make fine plan easier)

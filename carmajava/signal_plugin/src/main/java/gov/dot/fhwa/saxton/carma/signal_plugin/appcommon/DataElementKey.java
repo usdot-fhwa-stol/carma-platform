@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,5 +45,7 @@ public enum DataElementKey {
     SPAT_LIST,                      // list of SPAT messages captured
     SIGNAL_PHASE,
     SIGNAL_TIME_TO_NEXT_PHASE,      // seconds (double)
-    SIGNAL_TIME_TO_THIRD_PHASE      // seconds (double)
+    SIGNAL_TIME_TO_THIRD_PHASE,     // seconds (double)
+    PLANNING_START_TIME,            // seconds (double) 
+    PLANNING_START_DOWNTRACK        // seconds (double)
 }

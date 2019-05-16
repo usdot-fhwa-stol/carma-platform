@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -70,19 +70,19 @@ public class PlanInterpolatorTest {
 
 
     // Empty list will return empty list
-    List<RoutePointStamped> points = planInterpolator.interpolateMotion(new ArrayList<Node>(), 0.2);
+    List<RoutePointStamped> points = planInterpolator.interpolateMotion(new ArrayList<Node>(), 0.2, 0, 0);
     assertTrue(points.isEmpty());
 
     // A single node will return a single point
     Node n1 = new Node(10.0, 0.0, 5.0);
-    points = planInterpolator.interpolateMotion(Arrays.asList(n1), 0.2);
+    points = planInterpolator.interpolateMotion(Arrays.asList(n1), 0.2, 0, 0);
     assertEquals(points.size(), 1);
     assertTrue(routePointAlmostEqual(new RoutePointStamped(10.0, 0.0, 0.0), points.get(0), 0.0));
 
     // 2 Node list with 0 acceleration
     n1 = new Node(10.0, 0.0, 5.0);
     Node n2 = new Node(15.0, 1.0, 5.0);
-    points = planInterpolator.interpolateMotion(Arrays.asList(n1,n2), 1.0);
+    points = planInterpolator.interpolateMotion(Arrays.asList(n1,n2), 1.0, 0, 0);
 
     assertTrue(routePointAlmostEqual(new RoutePointStamped(10.0, 0.0, 0.0), points.get(0), 0.0)); // Inclusive first node
     assertTrue(routePointAlmostEqual(new RoutePointStamped(15.0, 0.0, 1.0), points.get(points.size() - 1), 0.0001)); // Include last node
@@ -95,7 +95,7 @@ public class PlanInterpolatorTest {
     // 2 Node list with positive acceleration
     n1 = new Node(10.0, 0.0, 5.0);
     n2 = new Node(40.0, 4.0, 10.0);
-    points = planInterpolator.interpolateMotion(Arrays.asList(n1,n2), 5.0);
+    points = planInterpolator.interpolateMotion(Arrays.asList(n1,n2), 5.0, 0, 0);
 
     assertTrue(routePointAlmostEqual(new RoutePointStamped(10.0, 0.0, 0.0), points.get(0), 0.0)); // Inclusive first node
     assertTrue(routePointAlmostEqual(new RoutePointStamped(40.0, 0.0, 4.0), points.get(points.size() - 1), 0.0001)); // Include last node
@@ -110,7 +110,7 @@ public class PlanInterpolatorTest {
     n1 = new Node(10.0, 0.0, 5.0);
     n2 = new Node(40.0, 4.0, 10.0);
     Node n3 = new Node(70.0, 8.0, 5.0);
-    points = planInterpolator.interpolateMotion(Arrays.asList(n1,n2, n3), 5.0);
+    points = planInterpolator.interpolateMotion(Arrays.asList(n1,n2, n3), 5.0, 0, 0);
     assertTrue(routePointAlmostEqual(new RoutePointStamped(10.0, 0.0, 0.0), points.get(0), 0.0)); // Inclusive first node
     assertTrue(routePointAlmostEqual(new RoutePointStamped(70.0, 0.0, 8.0), points.get(points.size() - 1), 0.0001)); // Include last node
     assertEquals(13, points.size());
@@ -129,7 +129,7 @@ public class PlanInterpolatorTest {
     // 2 Node list with possible overshoot avoided
     n1 = new Node(10.0, 0.0, 5.0);
     n2 = new Node(15.0, 1.0, 5.0);
-    points = planInterpolator.interpolateMotion(Arrays.asList(n1,n2), 2.75);
+    points = planInterpolator.interpolateMotion(Arrays.asList(n1,n2), 2.75, 0, 0);
 
     assertTrue(routePointAlmostEqual(new RoutePointStamped(10.0, 0.0, 0.0), points.get(0), 0.0)); // Inclusive first node
     assertTrue(routePointAlmostEqual(new RoutePointStamped(15.0, 0.0, 1.0), points.get(points.size() - 1), 0.0001)); // Include last node

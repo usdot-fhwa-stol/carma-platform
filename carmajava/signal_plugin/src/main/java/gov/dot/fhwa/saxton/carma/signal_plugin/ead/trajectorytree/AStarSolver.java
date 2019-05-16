@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -79,7 +79,9 @@ public class AStarSolver implements ITreeSolver {
                     cameFrom.size() + ", gScore=" + gScore.size() + ", openSetQueue=" + openSetQueue.size());
         log_.debug("EAD", "We have visited " + visitedNodes + " nodes to find the solution");
         //System.out.println("We have visited " + visitedNodes + " nodes to find the solution");
-        return rebuildPath(cameFrom, current); // Get path
+        List<Node> path = rebuildPath(cameFrom, current); // Get path
+        //System.out.println("The total cost is " + fScore.get(path.get(path.size() - 1)));
+        return path;
       }
 
       //if this node is unusable then toss it out and move on
@@ -97,7 +99,9 @@ public class AStarSolver implements ITreeSolver {
         }
 
         // Calculate tentative gScore of neighbor
+        //System.out.println("Current Node is " + current + " with g = " + gScore.get(current));
         double tentative_gScore = gScore.get(current) + costModel.cost(current, neighbor);
+        //System.out.println("Current neighbor is " + neighbor + " with tentative gscore " + tentative_gScore);
         Double neighborGScore = gScore.get(neighbor); // null if neighbor is previously undiscovered node
 
         // If this neighbor is not a new node and the tentative gScore is worse than the current gScore

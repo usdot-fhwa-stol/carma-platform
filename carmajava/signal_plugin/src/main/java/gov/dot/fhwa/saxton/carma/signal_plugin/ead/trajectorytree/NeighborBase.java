@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,9 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree;
 
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.INodeCollisionChecker;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase.NONE;
@@ -58,6 +60,10 @@ public abstract class NeighborBase implements INeighborCalculator {
     protected double                        timeBuffer_;    // time, sec, at end of green phase that we don't want to touch
     protected double                        operSpeed_;     //desired vehicle speed if no signal constraints, m/s
 
+    protected INodeCollisionChecker         collisionChecker_;
+
+    protected double                        planningStartTime_; // Starting planning time in seconds.
+    protected double                        planningStartDowntrack_; // Starting planning downtrack distance 
 
     /**
      * This will only be called when we are on the map of an intersection, so input intersections is
@@ -65,13 +71,14 @@ public abstract class NeighborBase implements INeighborCalculator {
      */
     @Override
     public void initialize(List<IntersectionData> intersections, int numIntersections, double timeIncrement,
-                           double speedIncrement) {
-
+                           double speedIncrement, INodeCollisionChecker collisionChecker, double planningStartTime, double planningStartDowntrack) {
         intersections_ = intersections;
         numInt_ = numIntersections;
         timeInc_ = timeIncrement;
         speedInc_ = speedIncrement;
-
+        collisionChecker_ = collisionChecker;
+        planningStartTime_ = planningStartTime;
+        planningStartDowntrack_ = planningStartDowntrack;
 
         //This method will be called each time the EAD model replans, which will happen each time a visible signal
         // changes phases. This is an opportunity to learn more about its cycle timing, so grab whatever info is there.
@@ -82,7 +89,7 @@ public abstract class NeighborBase implements INeighborCalculator {
             //if this intersection ID is already in the local history list then
             if (history_.size() > 0) {
                 for (IntersectionHistory h : history_) {
-                    if (i.intersectionId == h.id) {
+                    if (i.getIntersectionId() == h.id) {
                         //if its current phase data extends what we already know then record it
                         updateHistory(i, h);
                         found = true;
@@ -93,7 +100,7 @@ public abstract class NeighborBase implements INeighborCalculator {
             //else record current phase data in our history
             if (!found) {
                 IntersectionHistory newHist = new IntersectionHistory();
-                newHist.id = i.intersectionId;
+                newHist.id = i.getIntersectionId();
                 updateHistory(i, newHist);
                 history_.add(newHist);
             }
@@ -118,7 +125,7 @@ public abstract class NeighborBase implements INeighborCalculator {
      */
     public IntersectionHistory getHistoricalData(int index) {
         for (IntersectionHistory h : history_) {
-            if (h.id == intersections_.get(index).intersectionId) {
+            if (h.id == intersections_.get(index).getIntersectionId()) {
                 return h;
             }
         }
@@ -135,15 +142,15 @@ public abstract class NeighborBase implements INeighborCalculator {
      * @param h - historical record of intersection phase durations
      */
     protected void updateHistory(IntersectionData i, IntersectionHistory h) {
-        switch (i.currentPhase) {
+        switch (i.getCurrentPhase()) {
             case GREEN:
-                h.longestGreen  = Math.max(h.longestGreen,  i.timeToNextPhase);
+                h.longestGreen  = Math.max(h.longestGreen,  i.getTimeToNextPhase());
                 break;
             case YELLOW:
-                h.longestYellow = Math.max(h.longestYellow, i.timeToNextPhase);
+                h.longestYellow = Math.max(h.longestYellow, i.getTimeToNextPhase());
                 break;
             case RED:
-                h.longestRed    = Math.max(h.longestRed,    i.timeToNextPhase);
+                h.longestRed    = Math.max(h.longestRed,    i.getTimeToNextPhase());
                 break;
             default:
                 //do nothing - this is a normal condition, especially for intersections beyond the nearest
@@ -182,7 +189,7 @@ public abstract class NeighborBase implements INeighborCalculator {
         //all of the locations in intersections_ are distances from plan starting point, established when the
         // initialize() method was called, but they are not updated after that
         IntersectionData i = intersections_.get(index);
-        double iDist = i.dtsb;
+        double iDist = i.getDtsb();
 
         //System.out.println("BestDTSB for int: " + i.intersectionId + " index: " + index + " dtsb: " + i.bestDTSB() + " startLoc: " + startLoc);
         return Node.roundToDistUnits(i.bestDTSB() - startLoc);
@@ -199,14 +206,14 @@ public abstract class NeighborBase implements INeighborCalculator {
         SignalState result = new SignalState();
         IntersectionData i = intersections_.get(intersectionIndex);
 
-        if (futureTime <= i.timeToNextPhase) {
-            result.phase = i.currentPhase;
-            result.timeRemaining = i.timeToNextPhase - futureTime;
+        if (futureTime <= i.getTimeToNextPhase()) {
+            result.phase = i.getCurrentPhase();
+            result.timeRemaining = i.getTimeToNextPhase() - futureTime;
             return result;
         }
 
-        double cycleTime = i.timeToNextPhase;
-        SignalPhase phase = i.currentPhase;
+        double cycleTime = i.getTimeToNextPhase();
+        SignalPhase phase = i.getCurrentPhase();
         IntersectionHistory h = getHistoricalData(intersectionIndex);
         if (h != null) {
             do {
@@ -245,5 +252,15 @@ public abstract class NeighborBase implements INeighborCalculator {
                 //would be nice to log a warning here, but base class doesn't have a log object
                 return -1.0;
         }
+    }
+    
+    /**
+     * Returns a boolean flag to indicate if the given node pair has any conflict with detected NCV 
+     * @param startNode
+     * @param endNode
+     * @return true if collision detected
+     */
+    protected boolean hasConflict(Node startNode, Node endNode) {
+        return this.collisionChecker_.hasCollision(Arrays.asList(startNode, endNode), planningStartTime_, planningStartDowntrack_);
     }
 }

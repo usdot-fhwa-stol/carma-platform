@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -55,7 +55,7 @@ public class PluginLifecycleHandler {
                 }
             }));
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            log.error("PLUGIN", e.getMessage());
         }
 
         t = new Thread(new PluginWorker(tasks));
@@ -94,7 +94,7 @@ public class PluginLifecycleHandler {
                 }
             }));
         } catch (InterruptedException e) {
-            e.printStackTrace();
+        	log.error("PLUGIN", e.getMessage());
         }
 
         // After resuming we always return to looping
@@ -106,7 +106,7 @@ public class PluginLifecycleHandler {
                 }
             }));
         } catch (InterruptedException e) {
-            e.printStackTrace();
+        	log.error("PLUGIN", e.getMessage());
         }
     }
 
@@ -165,7 +165,7 @@ public class PluginLifecycleHandler {
                 }
             }));
         } catch (InterruptedException e) {
-            e.printStackTrace();
+        	log.error("PLUGIN", e.getMessage());
         }
         t = new Thread(new PluginWorker(tasks));
         t.setName(plugin.getVersionInfo().componentName() + "DoSuspendPluginWorkerThread");
@@ -216,17 +216,17 @@ public class PluginLifecycleHandler {
      */
     private void doTerminate() {
         log.info("PLUGIN", "Terminating " + plugin.getVersionInfo().componentName() + ":" + plugin.getVersionInfo().revisionString());
-        t.interrupt();
         tasks.clear();
         state.set(PluginState.DESTROYING);
         try {
             tasks.put(new TerminatePluginTask(plugin, new TaskCompletionCallback() {
                 @Override public void onComplete() {
                     state.set(PluginState.DESTROYED);
+                    Thread.currentThread().interrupt();
                 }
             }));
         } catch (InterruptedException e) {
-            e.printStackTrace();
+        	log.error("PLUGIN", e.getMessage());
         }
 
         t = null;

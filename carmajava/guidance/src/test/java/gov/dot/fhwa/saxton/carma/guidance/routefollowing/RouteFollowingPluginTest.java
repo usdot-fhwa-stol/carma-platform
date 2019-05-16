@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -166,7 +166,7 @@ public class RouteFollowingPluginTest {
                 mockPluginManagementService, mock(IPubSubService.class), mockParameterSource,
                 new ManeuverPlanner(mock(IGuidanceCommands.class), mock(IManeuverInputs.class)), routeService,
                 mock(IMobilityRouter.class), mock(IConflictDetector.class), mock(ITrajectoryConverter.class),
-                mock(ILightBarManager.class), mock(Tracking.class), mock(ITimeProvider.class));
+                mock(ILightBarManager.class), mock(Tracking.class), null, mock(ITimeProvider.class));
         rfp = new RouteFollowingPlugin(psl);
         traj = new Trajectory(TRAJ_START, TRAJ_END); 
 

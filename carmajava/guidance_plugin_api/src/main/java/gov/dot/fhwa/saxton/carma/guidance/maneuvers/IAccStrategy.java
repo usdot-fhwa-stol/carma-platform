@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -51,7 +51,7 @@ public interface IAccStrategy {
   /**
    * Evaluate whether or not ACC would activate given the input conditions
    * 
-   * @param distToFrontVehicle Distance, in meters, to the vehicle directly in front of the current vehicle.
+   * @param distGap Distance, in meters, to the vehicle directly in front of the current vehicle minus the desired standoff distance
    * Use NO_FRONT_VEHICLE_DISTANCE if no such vehicle is detected.
    * @param currentSpeed The current vehicles speed, in meters per second,
    * @param frontVehicleSpeed The front vehicle's speed, in meters per second. Use NO_FRONT_VEHICLE_SPEED if there

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -68,17 +68,8 @@ public class SteadySpeedTest {
 
         assertEquals(startDist, mvr.getStartDistance(), 0.001);
 
-        //execute the maneuver before it is scheduled
-        inputs_.setTestCase("SteadySpeedNominal-1");
-        try {
-            mvr.executeTimeStep();
-            assertTrue(false);
-        }catch (IllegalStateException ise) {
-            assertTrue(true);
-        }
-
         //execute a couple time steps of the maneuver when it is supposed to happen
-        inputs_.setTestCase("SteadySpeedNominal-2");
+        inputs_.setTestCase("SteadySpeedNominal-1");
         try {
             boolean done;
             do {

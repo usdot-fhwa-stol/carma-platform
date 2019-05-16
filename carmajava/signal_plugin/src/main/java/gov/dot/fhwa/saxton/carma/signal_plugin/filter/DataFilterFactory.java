@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,7 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.filter;
  */
 public class DataFilterFactory {
 
-	public static IDataFilter newInstance(String className) {
+	public static IDataFilter newInstance(String className) throws InstantiationException, IllegalAccessException {
 		@SuppressWarnings("rawtypes")
 		Class tClass = null;
 		
@@ -41,9 +41,9 @@ public class DataFilterFactory {
             newObject = tClass.newInstance();
         }
         catch (InstantiationException e) {
-            e.printStackTrace();
+            throw e;
         } catch (IllegalAccessException e) {
-            e.printStackTrace();
+            throw e;
         }
 
         return (IDataFilter)newObject;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,5 +22,15 @@ import java.util.List;
  * Collection of all known intersections at the current time.
  */
 public class IntersectionCollection {
-    public List<IntersectionData> intersections; //ordered from nearest (element 0) to farthest from vehicle
+	
+    private List<IntersectionData> intersections; //ordered from nearest (element 0) to farthest from vehicle
+
+	public List<IntersectionData> getIntersections() {
+		return intersections;
+	}
+
+	public void setIntersections(List<IntersectionData> intersections) {
+		this.intersections = intersections;
+	}
+    
 }

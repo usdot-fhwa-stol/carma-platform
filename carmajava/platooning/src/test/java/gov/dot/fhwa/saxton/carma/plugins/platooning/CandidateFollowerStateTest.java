@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -79,7 +79,7 @@ public class CandidateFollowerStateTest {
                                                         planner,                          mockRouteService,
                                                         mockRouter,                       mock(IConflictDetector.class),
                                                         mock(ITrajectoryConverter.class), mock(ILightBarManager.class),
-                                                        mock(TrackingService.class), mock(ITimeProvider.class));
+                                                        mock(TrackingService.class), null, mock(ITimeProvider.class));
         when(mockFact.createLoggerForClass(any())).thenReturn(mockLog);
         LoggerManager.setLoggerFactory(mockFact);
         NoOpAccStrategyFactory noOpAccStrategyFactory = new NoOpAccStrategyFactory();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -246,7 +246,7 @@ public class TrajectoryExecutor extends GuidanceComponent implements IStateChang
                 maneuverType = "LATERAL";
             }
 
-            log.info("Maneuver #" + idx + " from [" + m.getStartDistance() + ", " + m.getEndDistance() + ") of type " + maneuverType);
+            log.info("Maneuver #" + idx + " from [" + m.getStartDistance() + ", " + m.getEndDistance() + ") of type " + maneuverType + " planned by: " + m.getPlanner().getVersionInfo().componentName());
             if (m instanceof LongitudinalManeuver) {
                 LongitudinalManeuver lonMvr = (LongitudinalManeuver) m;
                 log.info("Speeds from " + lonMvr.getStartSpeed() + " to " + lonMvr.getTargetSpeed());

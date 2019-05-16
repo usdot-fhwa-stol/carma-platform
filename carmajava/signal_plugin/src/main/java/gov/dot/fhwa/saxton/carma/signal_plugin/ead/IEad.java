@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,9 +45,12 @@ public interface IEad {
 	 * @param speed The current speed of the vehicle
 	 * @param operSpeed The target operating speed of the vehicle
 	 * @param intersections A sorted list of intersection data with the nearest intersections appearing earlier in the list
+	 * @param startTime The time which planning is considered to have begun at. This is used for converting nodes to route locations
+	 * @param startDowntrack The downtrack distance where planning is considered to have begun at. This is used for converting nodes to route locations
 	 * 
 	 * @return A list of node defining the planned vehicle trajectory
 	 */
-	List<Node> plan(double speed, double operSpeed, List<IntersectionData> intersections) throws Exception;
+	List<Node> plan(double speed, double operSpeed, 
+		List<IntersectionData> intersections, double startTime, double startDowntrack) throws Exception;
 	
 }

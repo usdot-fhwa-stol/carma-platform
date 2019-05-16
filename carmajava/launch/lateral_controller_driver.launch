@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!--
+  Copyright (C) 2018-2019 LEIDOS.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<!--Lateral Controller Driver Node-->
+<launch>
+    <arg name="remap_ns" default="/"/>
+    <arg name="JVM_DEBUG_OPTS"    default="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005" doc="Start rosjava node with these JVM arguments for debugging"/>
+
+    <group ns="$(arg remap_ns)">
+        <node pkg="carma" type="lateral_control_driver" name="lateral_controller"
+            args="gov.dot.fhwa.saxton.carma.lateralcontroldriver.LateralControlDriver">
+            <env if="$(arg debug_lateral_controller)" name="LATERAL_CONTROL_DRIVER_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+            <rosparam command="load" file="$(arg PARAM_DIR)/LateralControllerParams.yaml"/>
+        </node>
+    </group>
+</launch>

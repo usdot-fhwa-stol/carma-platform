@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -52,7 +52,6 @@ public class MobilityPathMessage implements IMessage<MobilityPathMessage> {
                         System.loadLibrary("asn1c");
                 } catch (Exception e) {
                         System.out.println("Exception trapped while trying to load the asn1c library" + e.toString());
-                        e.printStackTrace();
                 }
         }
 

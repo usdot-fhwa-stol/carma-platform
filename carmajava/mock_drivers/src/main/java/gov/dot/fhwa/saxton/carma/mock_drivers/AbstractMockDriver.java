@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -98,7 +98,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
             cav_srvs.GetDriverApiResponse response) {
             List<String> FQNs = new LinkedList<>();
             for (String apiElement: getDriverAPI()) {
-              FQNs.add(getGraphName() + "/" + apiElement);
+              FQNs.add("/" + apiElement);
             }
             response.setApiList(FQNs);
           }
@@ -122,9 +122,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
       reader = new RandomAccessFile(dataFilePath, "r");
       driverStatus = cav_msgs.DriverStatus.OPERATIONAL;
     } catch (FileNotFoundException e) {
-      e.printStackTrace();
-      log
-        .warn(getGraphName() + " could not find file " + dataFilePath + ".No data published");
+      log.warn(getGraphName() + " could not find file " + dataFilePath + ".No data published " + e.getMessage());
       driverStatus = cav_msgs.DriverStatus.DEGRADED;
     }
   }
@@ -183,11 +181,10 @@ public abstract class AbstractMockDriver implements IMockDriver {
         publishData(data);
 
       } catch (IOException e) {
-        e.printStackTrace();
         closeDataFile();
         reader = null;
         // Log warning if the node failed to read data in the file. All publishing will be stopped in this case as the file may be corrupt.
-        log.warn(getGraphName() + " failed to read data file. No data will be published");
+        log.warn(getGraphName() + " failed to read data file. No data will be published " + e.getMessage());
         driverStatus = cav_msgs.DriverStatus.FAULT;
       }
     }
@@ -245,7 +242,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
       try {
         reader.close();
       } catch (IOException ex) {
-        ex.printStackTrace();
+    	  log.warn(getGraphName() + " failed to close data reader. " + ex.getMessage());
       }
     }
   }

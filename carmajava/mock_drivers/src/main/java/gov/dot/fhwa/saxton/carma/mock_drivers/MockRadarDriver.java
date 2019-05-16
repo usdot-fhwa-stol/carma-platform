@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package gov.dot.fhwa.saxton.carma.mock_drivers;
 
 import org.ros.message.Time;
-import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
 import java.util.ArrayList;
@@ -84,11 +83,11 @@ public class MockRadarDriver extends AbstractMockDriver {
     super(connectedNode);
     // Topics
     // Published
-    flrrObjectPub = connectedNode.newPublisher("~/f_lrr/sensor/objects", cav_msgs.ExternalObjectList._TYPE);
-    lfsrrObjectPub = connectedNode.newPublisher("~/lf_srr/sensor/objects", cav_msgs.ExternalObjectList._TYPE);
-    rsrrObjectPub = connectedNode.newPublisher("~/r_srr/sensor/objects", cav_msgs.ExternalObjectList._TYPE);
-    rfsrrObjectPub = connectedNode.newPublisher("~/rf_srr/sensor/objects", cav_msgs.ExternalObjectList._TYPE);
-    visionObjectPub = connectedNode.newPublisher("~/vision/sensor/objects", cav_msgs.ExternalObjectList._TYPE);
+    flrrObjectPub = connectedNode.newPublisher("f_lrr/sensor/objects", cav_msgs.ExternalObjectList._TYPE);
+    lfsrrObjectPub = connectedNode.newPublisher("lf_srr/sensor/objects", cav_msgs.ExternalObjectList._TYPE);
+    rsrrObjectPub = connectedNode.newPublisher("r_srr/sensor/objects", cav_msgs.ExternalObjectList._TYPE);
+    rfsrrObjectPub = connectedNode.newPublisher("rf_srr/sensor/objects", cav_msgs.ExternalObjectList._TYPE);
+    visionObjectPub = connectedNode.newPublisher("vision/sensor/objects", cav_msgs.ExternalObjectList._TYPE);
   }
 
   @Override protected void publishData(List<String[]> data) {

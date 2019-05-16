@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package gov.dot.fhwa.saxton.carma.guidance.conflictdetector;
 
 import java.util.List;
 
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialstructure.ISpatialStructure;
 import gov.dot.fhwa.saxton.carma.guidance.util.trajectoryconverter.RoutePointStamped;
 
 /**
@@ -53,6 +54,7 @@ public interface IConflictDetector {
    * 
    * @param hostPath The path representing the host trajectory
    * @param otherPath The path to find conflicts with by comparing against the host trajectory
+   * @param spatialStructure The spatial structure which will store objects and provide collision checking capability
    * @param downtrackMargin The margin around a RoutePointStamped in the downtrack dimension in which a collision will be considered to have occurred
    * @param crosstrackMargin The margin around a RoutePointStamped in the crosstrack dimension in which a collision will be considered to have occurred
    * @param timeMargin The margin around a RoutePointStamped in the time dimension in which a collision will be considered to have occurred
@@ -62,6 +64,6 @@ public interface IConflictDetector {
    * 
    * @return A sorted list of conflict spaces where the two paths conflict
    */
-  public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath, List<RoutePointStamped> otherPath, 
+  public List<ConflictSpace> getConflicts(List<RoutePointStamped> hostPath, List<RoutePointStamped> otherPath, ISpatialStructure spatialStructure,
     double downtrackMargin, double crosstrackMargin, double timeMargin, double longitudinalBias, double lateralBias, double temporalBias);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -235,7 +235,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+            	log.error("STARTUP", e.getMessage());
             }
         }
 
@@ -293,7 +293,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+            	log.error("RESTART", e.getMessage());
             }
         }
         
@@ -317,7 +317,7 @@ public class PluginManager extends GuidanceComponent implements AvailabilityList
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+        	log.error("SHUTDOWN", e.getMessage());
         }
 
         for (IPlugin p : getRegisteredPlugins()) {

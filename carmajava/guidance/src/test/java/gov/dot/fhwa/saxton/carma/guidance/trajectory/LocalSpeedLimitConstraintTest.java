@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,13 +18,14 @@ package gov.dot.fhwa.saxton.carma.guidance.trajectory;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.Ignore;
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
 import org.ros.node.NodeConfiguration;
 import std_msgs.Header;
 
 import static org.junit.Assert.*;
-
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import cav_msgs.Route;
@@ -32,6 +33,10 @@ import cav_msgs.RouteSegment;
 import cav_msgs.RouteWaypoint;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.ISimpleManeuver;
 import gov.dot.fhwa.saxton.carma.guidance.maneuvers.LongitudinalManeuver;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
+import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
+import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -87,6 +92,12 @@ public class LocalSpeedLimitConstraintTest {
 
   @Before
   public void setup() {
+	
+	ILoggerFactory mockFact = mock(ILoggerFactory.class);
+    ILogger mockLogger = mock(ILogger.class);
+    when(mockFact.createLoggerForClass(any())).thenReturn(mockLogger);
+    LoggerManager.setLoggerFactory(mockFact);
+      
     List<Double> speeds = new ArrayList<>();
     speeds.add(10.0);
     speeds.add(20.0);

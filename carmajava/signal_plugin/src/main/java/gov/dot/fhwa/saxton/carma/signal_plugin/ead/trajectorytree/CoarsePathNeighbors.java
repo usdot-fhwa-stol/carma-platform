@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package gov.dot.fhwa.saxton.carma.signal_plugin.ead.trajectorytree;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.SignalPhase;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.utils.GlidepathApplicationContext;
 import gov.dot.fhwa.saxton.carma.signal_plugin.asd.IntersectionData;
+import gov.dot.fhwa.saxton.carma.signal_plugin.ead.INodeCollisionChecker;
 import gov.dot.fhwa.saxton.carma.signal_plugin.appcommon.IGlidepathAppConfig;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.ILogger;
 import gov.dot.fhwa.saxton.carma.signal_plugin.logger.LoggerManager;
@@ -40,6 +41,7 @@ public class CoarsePathNeighbors extends NeighborBase {
     protected double                        fractionalMaxAccel_;
     protected static final ILogger                log_ = LoggerManager.getLogger(CoarsePathNeighbors.class);
     public    static final double           TYPICAL_INTERSECTION_WIDTH = 40.0; // meters
+    public    static final double           TYPICAL_VEHICLE_LENGTH     = 5.0; // meters
 
     public CoarsePathNeighbors() {
         history_ = new ArrayList<>();
@@ -58,10 +60,9 @@ public class CoarsePathNeighbors extends NeighborBase {
 
     @Override
     public void initialize(List<IntersectionData> intersections, int numIntersections, double timeIncrement,
-                           double speedIncrement) {
-
+                double speedIncrement, INodeCollisionChecker collisionChecker, double planningStartTime, double planningStartDowntrack) {
         log_.debug("EAD", "initialize called with timeInc = " + timeIncrement + ", speedInc = " + speedIncrement);
-        super.initialize(intersections, numIntersections, timeIncrement, speedIncrement);
+        super.initialize(intersections, numIntersections, timeIncrement, speedIncrement, collisionChecker, planningStartTime, planningStartDowntrack);
     }
 
 
@@ -74,7 +75,7 @@ public class CoarsePathNeighbors extends NeighborBase {
      */
     @Override
     public List<Node> neighbors(Node node) {
-        
+        //System.out.println("Generating neighbors of node " + node.toString());
         log_.debug("PLAN", "Entering coarse node " + node.toString());
         int intIndex = currentIntersectionIndex(node.getDistanceAsDouble());
         if (intIndex >= 0) {
@@ -121,6 +122,7 @@ public class CoarsePathNeighbors extends NeighborBase {
             double timeToOperSpeed = deltaSpeed / maxAccel_;
             double distToOperSpeed = curSpeed*timeToOperSpeed + 0.5*maxAccel_*timeToOperSpeed*timeToOperSpeed;
             double timeAtNext = curTime;
+            Node intermediateNode = null;
             if (deltaSpeed > 1.0) { //ignore response lag for tiny speed changes
                 distToOperSpeed += lagDist;
                 timeAtNext += lagTime_;
@@ -129,16 +131,12 @@ public class CoarsePathNeighbors extends NeighborBase {
                 speedAtNext = Math.sqrt(curSpeed*curSpeed + 2.0*maxAccel_*Math.max(distToNext-lagDist, 0.0));
                 timeAtNext += (speedAtNext - curSpeed) / maxAccel_;
             }else {
-                // Only continuos accelerations are allowed so we will reduce our max accel in this case to reach top smooth speed at intersection
-                //timeAtNext += (2.0 * (distToNext - lagDist)) / (curSpeed + operSpeed_);
-                // An alternative approach is to accelerate to operating speed before reaching the intersection.
-                // However, this can make the target distance un-achievable if the fine plan time steps do not line up with the inflection point when max speed is achieved. 
+                //accelerate to operating speed before reaching the intersection.
+                //need to use an intermediate node to check conflicts
+                intermediateNode = new Node(curLoc + distToOperSpeed, curTime + timeToOperSpeed, speedAtNext);
                 double cruiseTime = (distToNext - distToOperSpeed) / operSpeed_;
                 timeAtNext += timeToOperSpeed + cruiseTime;
             }
-
-
-
 
             // Check the time buffer for arrival
             boolean validGreen = false;
@@ -153,6 +151,14 @@ public class CoarsePathNeighbors extends NeighborBase {
                     timeAtNext += extraTime;
                     if (speedAtNext < operSpeed_) {
                         speedAtNext = 2.0*(distToNext - lagDist)/(timeAtNext - (curTime + lagTime_)) - curSpeed;
+                    } else {
+                        if(intermediateNode != null) {
+                            // update intermediate node if we shift the goal node time
+                            double timeShift = 2 * extraTime * operSpeed_/ deltaSpeed;
+                            double distanceShift = 0.5 * (operSpeed_ + curSpeed) * timeShift;
+                            intermediateNode = new Node(intermediateNode.getDistanceAsDouble() + distanceShift,
+                                                        intermediateNode.getTimeAsDouble() + timeShift, operSpeed_);
+                        }
                     }
                     state = phaseAtTime(intersectionIndex, timeAtNext); // Update state
                     validGreen = true;
@@ -168,10 +174,22 @@ public class CoarsePathNeighbors extends NeighborBase {
                 //slice up the remainder of that green phase into neighbor nodes
                 double greenExpiration = timeAtNext + state.timeRemaining - timeBuffer_;
                 do {
+                    // System.out.println("Potential Neighbor: " + neighbor.toString());
                     Node neighbor = new Node(nodeLoc, nodeTime, nodeSpeed);
-                   // //System.out.println("Potential Neighbor: " + neighbor.toString());
-                    neighbors.add(neighbor);
-                    log_.debug("PLAN", "case one: time = " + nodeTime + " speed = " + nodeSpeed + " loc = " + nodeLoc);
+                    //only the first node can have non-linear acceleration
+                    if(intermediateNode != null) {
+                        //System.out.println("1 " + hasConflict(node, intermediateNode));
+                        //System.out.println("2 " + hasConflict(intermediateNode, neighbor));
+                        if(!hasConflict(node, intermediateNode) && !hasConflict(intermediateNode, neighbor)) {
+                            neighbors.add(neighbor);
+                        }
+                        intermediateNode = null;   
+                    } else {
+                        //System.out.println("3 " + hasConflict(node, neighbor));
+                        if(!hasConflict(node, neighbor)) {        
+                            neighbors.add(neighbor);
+                        }
+                    }
                     nodeTime += timeInc_;
                     nodeSpeed = 2.0*(distToNext - lagDist)/(nodeTime - (curTime + lagTime_)) - curSpeed;
                 }while (nodeSpeed >= crawlingSpeed_  &&  nodeTime <= greenExpiration);
@@ -208,19 +226,18 @@ public class CoarsePathNeighbors extends NeighborBase {
                 while (nodeSpeed >= crawlingSpeed_ && nodeTime <= greenExpiration) {
                     Node neighbor = new Node(nodeLoc, nodeTime, nodeSpeed);
                     ////System.out.println("Potential Neighbor: " + neighbor.toString());
-                    neighbors.add(neighbor);
+                    //System.out.println("4 " + hasConflict(node, neighbor));
+                    if(!hasConflict(node, neighbor)) {
+                        neighbors.add(neighbor);
+                    }
                     log_.debug("PLAN", "case two: time = " + nodeTime + " speed = " + nodeSpeed + " loc = " + nodeLoc);
                     nodeTime += timeInc_;
                     nodeSpeed = 2.0*(distToNext - lagDist)/(nodeTime - (curTime + lagTime_)) - curSpeed;
                 }
-
-            //else if we haven't yet found any solution at this intersection (we have to stop for the red)
-            } else if (neighbors.size() == 0) {
+            }
+            //if we haven't yet found any solution at this intersection (we have to stop for the red)
+            if (neighbors.size() == 0) {
                 //we will need to come to a stop while red expires
-
-
-
-
 
                 //TODO - these calcs are for debug purposes only - REMOVE FOR PRODUCTION RELEASE!
                 //first, determine the decel distance & time from current speed
@@ -238,7 +255,14 @@ public class CoarsePathNeighbors extends NeighborBase {
 
                 //create a single node at the start of green phase with zero speed
                 Node neighbor = new Node(nodeLoc, timeOfNextGreen, 0.0);
-                neighbors.add(neighbor);
+                //move stopping goal node upstream if it has conflict
+                //System.out.println("5 " + hasConflict(node, neighbor));
+                if(hasConflict(node, neighbor)) {
+                    neighbors.add(new Node(nodeLoc - TYPICAL_VEHICLE_LENGTH, timeOfNextGreen, 0.0));
+                } else {
+                    neighbors.add(neighbor);
+                }
+                
                 //System.out.println("Potential Neighbor: " + neighbor.toString());
                 log_.debug("EAD", "Need to stop at red:" + neighbor.toString());
             }
@@ -258,9 +282,14 @@ public class CoarsePathNeighbors extends NeighborBase {
             double operSpeedLoc = curLoc + deltaDist;
             double timeAtOperSpeed = curTime + deltaTime;
 
-            //add the node
-            //System.out.println("Potential Neighbor: " + new Node(operSpeedLoc, timeAtOperSpeed, operSpeed_).toString());
-            neighbors.add(new Node(operSpeedLoc, timeAtOperSpeed, operSpeed_));
+            //check conflict before we deem it as a valid node
+            Node neighbor = new Node(operSpeedLoc, timeAtOperSpeed, operSpeed_);
+            //System.out.println("6 " + hasConflict(node, neighbor));
+            if(!hasConflict(node, neighbor)) {
+                //System.out.println("Potential Neighbor: " + new Node(operSpeedLoc, timeAtOperSpeed, operSpeed_).toString());
+                neighbors.add(neighbor);
+            }
+            
         }
         log_.debug("PLAN", "returning " + neighbors.size() + " neighbors.");
 

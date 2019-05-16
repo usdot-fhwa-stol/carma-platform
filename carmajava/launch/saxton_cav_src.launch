@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-  Copyright (C) 2018 LEIDOS.
+  Copyright (C) 2018-2019 LEIDOS.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -44,6 +44,12 @@
   <!-- Directory containing additional carma launch files such as the drivers.launch file -->
   <arg name="LAUNCH_DIR" default="$(arg CARMA_DIR)/launch" doc="Directory containing additional carma launch files such as driver.launch"/>
   
+  <env name="ROSCONSOLE_CONFIG_FILE"
+      value="$(arg PARAM_DIR)/roscpp_log.config"/>
+
+  <!-- Startup Drivers With Main CARMA System -->
+  <arg name="launch_drivers"       default="true" doc="True if drivers are to be launched with the CARMA Platform, overrides mock_* args"/>
+      
   <!-- Simulation Usage -->
   <arg name="mock_can"            	default="true" doc="True if using a simulated can driver"/>
   <arg name="mock_dsrc"           	default="true" doc="True if using a simulated dsrc driver"/>
@@ -113,7 +119,7 @@
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
     
     <!-- Drivers Package -->
-      <group ns="$(arg DRIVER_NS)">
+      <group ns="$(arg DRIVER_NS)" if="$(arg launch_drivers)">
 
         <!-- Simulated DSRC Driver Node -->
           <node if="$(arg mock_dsrc)" pkg="carma" type="mock_drivers" name="dsrc"
@@ -322,8 +328,11 @@
                to="/$(arg TOP_NS)/$(arg GUIDE_NS)/outgoing_mobility_response"/>
         <remap from="outgoing_mobility_operation"
                to="/$(arg TOP_NS)/$(arg GUIDE_NS)/outgoing_mobility_operation"/>
-        <remap from="get_drivers_with_capabilities"
-               to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
+        <remap from="inbound_binary_msg"
+               to="/comms/inbound_binary_msg"/>
+        <remap from="outbound_binary_msg"
+               to="/comms/outbound_binary_msg"/>
+
       </node>
     </group>
 
@@ -348,13 +357,23 @@
         <!-- Arbitrator Thread-->
         <remap from="route_state"
                to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
-        <remap from="robot_enabled"
-               to="/$(arg TOP_NS)/$(arg DRIVER_NS)/srx_controller/control/robot_status"/>
+        <remap from="robot_status"
+               to="/control/robot_status"/>
         
         <!-- GuidanceStateHandler Thread-->
         <remap from="route_event"
                to="/$(arg TOP_NS)/$(arg RT_NS)/route_event"/>
         
+        <!-- GuidanceCommands Thread -->
+        <remap from="cmd_speed"
+               to="/control/cmd_speed"/>
+        <remap from="cmd_longitudinal_effort"
+               to="/control/cmd_longitudinal_effort"/>
+        <remap from="cmd_lateral"
+               to="/control/cmd_lateral"/>
+        <remap from="enable_robotic"
+               to="/control/enable_robotic"/>
+
         <!-- Tracking Thread-->
         <!-- Params -->
         <remap from="vehicle_length"
@@ -374,10 +393,6 @@
                to="/$(arg TOP_NS)/$(arg RD_NS)/get_transform"/>
         <remap from="acceleration"
                to="/$(arg TOP_NS)/$(arg SF_NS)/filtered/acceleration"/>
-
-        <!-- Trajectory Thread-->
-        <remap from="get_drivers_with_capabilities"
-               to="/$(arg TOP_NS)/$(arg INTR_NS)/get_drivers_with_capabilities"/>
 
         <!-- Trajectory and Arbitrator -->
         <remap from="route_state" to="/$(arg TOP_NS)/$(arg RT_NS)/route_state"/>
@@ -409,6 +424,10 @@
                to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_map"/>
         <remap from="incoming_spat"
                to="/$(arg TOP_NS)/$(arg MSG_NS)/incoming_spat"/>
+
+        <!-- LightBar Thread -->
+        <remap from="set_lights"
+               to="/control/set_lights"/>
                
       </node>
     </group>
@@ -468,9 +487,9 @@
         <arg name="port" value="9090"/> <!-- The default port for rosbridge is 9090 -->
       </include>
     </group>
-    <!-- Record Rosbag of all topics excluding /rosout since that only contains logs -->
+    <!-- Record Rosbag of all topics excluding /rosout and CAN messages since they may contain sensetive data -->
     <node pkg="rosbag" type="record" name="rosbag_node"
-      args="record -o /opt/carma/logs/ -a -x '/rosout(.*)'"
+      args="record -o /opt/carma/logs/ -a -x '/rosout(.*)|(.*)/received_messages|(.*)/sent_messages'"
       if="$(arg use_rosbag)" />
   </group>
 </launch>

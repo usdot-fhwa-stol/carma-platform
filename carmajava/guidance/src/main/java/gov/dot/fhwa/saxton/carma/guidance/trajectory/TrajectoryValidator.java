@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -54,7 +54,7 @@ public class TrajectoryValidator {
 
     for (TrajectoryValidationConstraint c : constraints) {
       TrajectoryValidationResult result = c.getResult();
-      valid = valid & result.getSuccess();
+      valid = valid && result.getSuccess();
       if (!result.getSuccess()) {
         // Log our failure state, including as much detail on the failure as possible
         log.warn(String.format("Trajectory from [%.02f, %.02f) failed validation on constraint: %s for reason: %s!",

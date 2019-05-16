@@ -11,6 +11,16 @@ body_frame_name: "base_link"
 # String: The Frame Id of a coordinate frame which is North Ead Down (NED) aligned 
 ned_frame_name: "map"
 
+# String: The id of the frame which represents an Earth Centered Earth Fixed (ECEF) frame
+earth_frame_name: 'earth'
+
+# String: The id of the frame which represents the global position sensor (GPS, GLONASS, etc.)
+# The global position sensor must provide locations in the WGS-84 standard.
+global_pos_sensor_frame_name: 'pinpoint'
+
+ # String: The id of the frame which represents the local position sensor (odometry from IMU or similar)
+local_pos_sensor_frame_name: 'pinpoint'
+
 # Boolean: True if sensor fusion will use the interface manager to find drivers
 use_interface_mgr: true
 
