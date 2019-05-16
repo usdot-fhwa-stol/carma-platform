@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -143,4 +143,10 @@ public interface RouteService {
    * @param algorithm The enabled algorithm flag
    */
   boolean isAlgorithmEnabledInRange(double start, double end, String algorithm);
+  
+  /**
+   * Return true if current route data is available
+   * @return the availability of current route data 
+   */
+  boolean isRouteDataAvailable();
 }

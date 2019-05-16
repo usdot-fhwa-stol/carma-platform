@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,11 +22,13 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import gov.dot.fhwa.saxton.carma.geometry.cartesian.spatialstructure.NSpatialHashMapFactory;
 import gov.dot.fhwa.saxton.carma.guidance.ArbitratorService;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.ConflictManager;
 import gov.dot.fhwa.saxton.carma.guidance.conflictdetector.IMobilityTimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.params.ParameterSource;
 import gov.dot.fhwa.saxton.carma.guidance.plugins.PluginServiceLocator;
+import gov.dot.fhwa.saxton.carma.guidance.trajectory.Trajectory;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.ITimeProvider;
 import gov.dot.fhwa.saxton.carma.guidance.util.LoggerManager;
@@ -42,6 +44,7 @@ import gov.dot.fhwa.saxton.carma.signal_plugin.ead.PlanInterpolator;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.ArrayList;
 import org.apache.commons.logging.LogFactory;
 import org.junit.After;
@@ -67,12 +70,14 @@ public class ObjectCollisionCheckerTest {
   ILogger log;
   NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate();
   MessageFactory messageFactory = nodeConfiguration.getTopicMessageFactory();
+  IReplanHandle mockReplanHandle;
 
   @Before
   public void setUp() throws Exception {
     loggerFactory = new SaxtonLoggerProxyFactory(LogFactory.getLog(ObjectCollisionCheckerTest.class));
     LoggerManager.setLoggerFactory(loggerFactory);
     log = LoggerManager.getLogger();
+    mockReplanHandle = mock(IReplanHandle.class);
     log.info("Setting up tests for PlanInterpolator");
   }
 
@@ -101,10 +106,12 @@ public class ObjectCollisionCheckerTest {
     List<RouteSegment> routeSegments = new ArrayList<>(Collections.nCopies(200, mockSegment)); // Create route full of the mocked segment
     when(route.getSegments()).thenReturn(routeSegments);
     when(mockSegment.determinePrimaryLane(anyDouble())).thenReturn(0);
+    Trajectory mockTraj = mock(Trajectory.class);
+    when(as.getCurrentTrajectory()).thenReturn(mockTraj);
 
     // Create conflict manager using default guidance settings
 
-    ConflictManager cm = new ConflictManager(new double[] {10.0, 6.0, 0.2}, 5.0, 1.2, 0.1,
+    ConflictManager cm = new ConflictManager(new NSpatialHashMapFactory(new double[] {20.0, 15.0, 2.0}), 5.0, 1.2, 0.1,
       0.0, -0.25, 0.0, mobilityTimeProvider);
 
     cm.setRoute(route);
@@ -115,34 +122,39 @@ public class ObjectCollisionCheckerTest {
     when(psl.getConflictDetector()).thenReturn(cm);
     when(psl.getArbitratorService()).thenReturn(as);
 
-    when(ps.getString("ead.NCVHandling.objectMotionPredictorModel")).thenReturn("SIMPLE_LINEAR_REGRESSION");
-    when(ps.getInteger("ead.NCVHandling.collision.maxObjectHistoricalDataAge")).thenReturn(3000);
-    when(ps.getDouble("ead.NCVHandling.collision.distanceStep")).thenReturn(2.5);
-    when(ps.getDouble("ead.NCVHandling.collision.timeDuration")).thenReturn(3.0);
-    when(ps.getDouble("ead.NCVHandling.collision.downtrackBuffer")).thenReturn(8.0);
-    when(ps.getDouble("ead.NCVHandling.collision.crosstrackBuffer")).thenReturn(2.0);
-    when(ps.getDouble("ead.NCVHandling.collision.timeMargin")).thenReturn(0.2);
-    when(ps.getDouble("ead.NCVHandling.collision.longitudinalBias")).thenReturn(0.0);
-    when(ps.getDouble("ead.NCVHandling.collision.lateralBias")).thenReturn(0.0);
-    when(ps.getDouble("ead.NCVHandling.collision.temporalBias")).thenReturn(0.0);
+    when(ps.getString("~ead/NCVHandling/objectMotionPredictorModel")).thenReturn("SIMPLE_LINEAR_REGRESSION");
+    when(ps.getInteger("~ead/NCVHandling/collision/maxObjectHistoricalDataAge")).thenReturn(3000);
+    when(ps.getDouble("~ead/NCVHandling/collision/distanceStep")).thenReturn(2.5);
+    when(ps.getDouble("~ead/NCVHandling/collision/timeDuration")).thenReturn(3.0);
+    when(ps.getDouble("~ead/NCVHandling/collision/replanPeriod")).thenReturn(1.5);
+    when(ps.getDouble("~ead/NCVHandling/collision/downtrackBuffer")).thenReturn(8.0);
+    when(ps.getDouble("~ead/NCVHandling/collision/crosstrackBuffer")).thenReturn(2.0);
+    when(ps.getDouble("~ead/NCVHandling/collision/timeMargin")).thenReturn(0.2);
+    when(ps.getDouble("~ead/NCVHandling/collision/longitudinalBias")).thenReturn(0.0);
+    when(ps.getDouble("~ead/NCVHandling/collision/lateralBias")).thenReturn(0.0);
+    when(ps.getDouble("~ead/NCVHandling/collision/temporalBias")).thenReturn(0.0);
+    when(ps.getDouble("~ead/NCVHandling/collision/cell_downtrack_size")).thenReturn(20.0);
+    when(ps.getDouble("~ead/NCVHandling/collision/cell_crosstrack_size")).thenReturn(15.0);
+    when(ps.getDouble("~ead/NCVHandling/collision/cell_time_size")).thenReturn(2.0);
 
-    ObjectCollisionChecker occ = new ObjectCollisionChecker(psl, motionPredictorFactory, planInterpolator);
+    ObjectCollisionChecker occ = new ObjectCollisionChecker(psl, motionPredictorFactory, planInterpolator, mockReplanHandle);
 
     // Check no collisions without object data
     // Note: Nodes in this test are defined using double constructor
     Node n1 = new Node(0.0, 0.0, 5.0);
     Node n2 = new Node(5.0, 1.0, 5.0);
-    assertFalse(occ.hasCollision(Arrays.asList(n1,n2)));
+    assertFalse(occ.hasCollision(Arrays.asList(n1,n2), 0, 0));
 
     // Return the current lane id as 0 with crosstrack 0.0
     when(rs.getCurrentCrosstrackDistance()).thenReturn(0.0);
     when(rs.getCurrentRouteSegment()).thenReturn(mockSegment);
     double currentDowntrack = 0.0;
     when(rs.getCurrentDowntrackDistance()).thenReturn(currentDowntrack);
+    when(rs.isRouteDataAvailable()).thenReturn(true);
 
-    long currentTime = 510L; // The current time is 0.51
-    when(tp.getCurrentTimeMillis()).thenReturn(currentTime);
-    when(mobilityTimeProvider.getCurrentTimeMillis()).thenReturn(currentTime);
+    final AtomicLong currentTime = new AtomicLong(510L); // The current time is 0.51
+    when(tp.getCurrentTimeMillis()).thenAnswer(i -> currentTime.get());
+    when(mobilityTimeProvider.getCurrentTimeMillis()).thenAnswer(i -> currentTime.get());
 
     // Add one obstacle in current lane
     RoadwayObstacle ro = newRoadwayObstacle(0, 2.5, 0.5, 5.0); // Object id 0 with stamp at 0.5
@@ -152,12 +164,9 @@ public class ObjectCollisionCheckerTest {
     assertEquals(1, occ.trackedLaneObjectsHistory.size()); // Object id is being tracked
     assertEquals(1, occ.trackedLaneObjectsPredictions.size()); // Object id is being tracked
     assertEquals(1, occ.trackedLaneObjectsHistory.get(0).size()); // 1 history element 
-    assertEquals(0, occ.trackedLaneObjectsPredictions.get(0).size()); // 0 predictions
+    assertEquals(7, occ.trackedLaneObjectsPredictions.get(0).size()); // 7 predicted points
 
-    // Check that the collision is not found since there is no prediction
-    assertFalse(occ.hasCollision(Arrays.asList(n1,n2)));
-
-    currentTime = 610L; // The current time is 0.61
+    currentTime.set(610L); // The current time is 0.61
 
     // Obstacle is sampled a second time
     RoadwayObstacle ro2 = newRoadwayObstacle(0, 3.0, 0.6, 5.0); // Object id 0 with stamp at 0.6
@@ -170,33 +179,29 @@ public class ObjectCollisionCheckerTest {
     assertEquals(7, occ.trackedLaneObjectsPredictions.get(0).size()); // 1 predictions
 
     // Check that the collision is found
-    assertTrue(occ.hasCollision(Arrays.asList(n1,n2)));
+    assertTrue(occ.hasCollision(Arrays.asList(n1,n2), 0, 0));
 
     // Set the host plan with collisions
-    occ.setHostPlan(Arrays.asList(n1,n2));
+    occ.setHostPlan(Arrays.asList(n1,n2), 0, 0);
     // Obstacle is sampled a third time
     ro2 = newRoadwayObstacle(0, 3.5, 0.7, 5.0); // Object id 0 with stamp at 0.6
     ro.setPrimaryLane((byte)0);
 
-    currentTime = 710L; // The current time is 0.71
+    currentTime.set(710L); // The current time is 0.71
     occ.updateObjects(Arrays.asList(ro2)); // Call to trigger replan
     
-    verify(as, times(1)).requestNewPlan(); // Verify replan occurred
-
     // Set the host plan without collisions
     n1 = new Node(0.0, 4.0, 0.0);
     n2 = new Node(0.0, 5.0, 0.0);
-    occ.setHostPlan(Arrays.asList(n1,n2));
+    occ.setHostPlan(Arrays.asList(n1,n2), 0, 0);
 
     // Obstacle is sampled a fourth time
     ro2 = newRoadwayObstacle(0, 4, 0.8, 5.0); // Object id 0 with stamp at 0.6
     ro.setPrimaryLane((byte)0);
 
-    currentTime = 810L; // The current time is 0.81
+    currentTime.set(810L); // The current time is 0.81
     occ.updateObjects(Arrays.asList(ro2)); // Call to trigger replan
     
-    verify(as, times(1)).requestNewPlan(); // Verify replan did not occur
-
   }
 
   /**

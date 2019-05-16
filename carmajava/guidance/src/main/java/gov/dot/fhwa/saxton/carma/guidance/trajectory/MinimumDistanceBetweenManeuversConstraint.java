@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,11 +29,11 @@ import java.util.ArrayList;
  */
 public class MinimumDistanceBetweenManeuversConstraint implements TrajectoryValidationConstraint {
 
-  public IManeuver lastLateralManeuver = null;
-  public IManeuver lastLongitudinalManeuver = null;
-  public boolean valid = true;
-  public List<IManeuver> offendingManeuvers = new ArrayList<>();
-  public double minimumDistanceBetweenManeuvers;
+  private IManeuver lastLateralManeuver = null;
+  private IManeuver lastLongitudinalManeuver = null;
+  private boolean valid = true;
+  private List<IManeuver> offendingManeuvers = new ArrayList<>();
+  private double minimumDistanceBetweenManeuvers;
 
   public MinimumDistanceBetweenManeuversConstraint(double minDist) {
     this.minimumDistanceBetweenManeuvers = minDist;

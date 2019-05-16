@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -160,9 +160,6 @@ public class GuidanceRouteService implements RouteService {
 
   @Override
   public SpeedLimit getSpeedLimitAtLocation(double location) {
-    if (location > limits.last().getLimit()) {
-      return limits.last();
-    }
 
     for (SpeedLimit limit : limits) {
       if (limit.getLocation() >= location) {
@@ -171,7 +168,7 @@ public class GuidanceRouteService implements RouteService {
     }
 
     // Should be unreachable
-    return null;
+    return limits.last();
   }
 
   @Override
@@ -326,5 +323,10 @@ public class GuidanceRouteService implements RouteService {
   @Override
   public int getCurrentSegmentIndex() {
     return routeState.getCurrentSegment().getPrevWaypoint().getWaypointId();
+  }
+  
+  @Override
+  public boolean isRouteDataAvailable() {
+	return routeState != null;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -102,11 +102,7 @@ public class Point implements CartesianElement {
   }
 
   @Override public String toString() {
-    String str = super.toString() + " (";
-    for (int i = 0; i < dimensions.length; i++) {
-      str = str.concat(" " + i + ",");
-    }
-    str = str.concat(" ): (");
+    String str = this.getClass().getSimpleName() + " (";
     for (int i = 0; i < dimensions.length; i++) {
       str = str.concat(" " + dimensions[i]);
       if (i != dimensions.length - 1) {

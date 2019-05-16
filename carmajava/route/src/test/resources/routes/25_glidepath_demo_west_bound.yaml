@@ -1,7 +1,7 @@
 # Route file based off the west bound waypoints used in glidepath demos
 !gov.dot.fhwa.saxton.carma.route.Route
-routeName: "25 Glidepath Demo West Bound"
-maxJoinDistance: 0
+routeName: 25 Glidepath Demo West Bound
+maxJoinDistance: 0.0
 waypoints:
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
@@ -13,8 +13,6 @@ waypoints:
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
@@ -29,512 +27,447 @@ waypoints:
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.955310
-      longitude: -77.146830
+      latitude: 38.95531
+      longitude: -77.14683
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9551558
-      longitude: -77.1468951
+      latitude: 38.9551892
+      longitude: -77.1469313
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9551197
-      longitude: -77.1469676
+      latitude: 38.9551562
+      longitude: -77.1470078
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9550845
-      longitude: -77.1470541
+      latitude: 38.9551304
+      longitude: -77.1470836
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9550589
-      longitude: -77.147166
+      latitude: 38.9551027
+      longitude: -77.1471821
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9549942
-      longitude: -77.1475728
+      latitude: 38.9550432
+      longitude: -77.1475849
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.954967
-      longitude: -77.1477443
+      latitude: 38.9550139
+      longitude: -77.1477591
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9549398
-      longitude: -77.1479176
+      latitude: 38.9549867
+      longitude: -77.147927
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9549163
-      longitude: -77.1480914
+      latitude: 38.9549643
+      longitude: -77.1480981
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9549009
-      longitude: -77.148267
+      latitude: 38.9549499
+      longitude: -77.148271
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.954893
-      longitude: -77.1484442
+      latitude: 38.954942
+      longitude: -77.1484415
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9548938
-      longitude: -77.1486198
+      latitude: 38.9549376
+      longitude: -77.1486158
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.954902
-      longitude: -77.1487969
+      latitude: 38.9549468
+      longitude: -77.1487956
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9549181
-      longitude: -77.1489728
+      latitude: 38.9549629
+      longitude: -77.1489688
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9549428
-      longitude: -77.1491522
+      latitude: 38.9549835
+      longitude: -77.1491468
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9550207
-      longitude: -77.1495264
+      latitude: 38.9550541
+      longitude: -77.149513
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9550595
-      longitude: -77.1496555
+      latitude: 38.9550887
+      longitude: -77.1496367
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9551135
-      longitude: -77.1498169
+      latitude: 38.9551417
+      longitude: -77.1497941
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.955179
-      longitude: -77.1499742
+      latitude: 38.9552051
+      longitude: -77.1499487
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9552587
-      longitude: -77.1501212
+      latitude: 38.9552837
+      longitude: -77.150089
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9553516
-      longitude: -77.1502545
+      latitude: 38.9553756
+      longitude: -77.1502156
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9554596
-      longitude: -77.1503664
+      latitude: 38.9554836
+      longitude: -77.1503329
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.955578
-      longitude: -77.1504624
+      latitude: 38.9555989
+      longitude: -77.1504329
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9556325
-      longitude: -77.1505176
+      latitude: 38.9556544
+      longitude: -77.1504747
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9556783
-      longitude: -77.1505721
+      latitude: 38.9557138
+      longitude: -77.1505439
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9557228
-      longitude: -77.1506347
+      latitude: 38.9557572
+      longitude: -77.1506025
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9557596
-      longitude: -77.1507042
+      latitude: 38.9557898
+      longitude: -77.1506881
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9557826
-      longitude: -77.1507844
+      latitude: 38.955816
+      longitude: -77.1507764
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9557976
-      longitude: -77.1508669
+      latitude: 38.955832
+      longitude: -77.1508615
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9558006
-      longitude: -77.1510397
+      latitude: 38.9558434
+      longitude: -77.151029
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.9557962
-      longitude: -77.1512157
+      latitude: 38.9558191
+      longitude: -77.1512278
       altitude: 72.0
     minCrossTrack: -10.0
     maxCrossTrack: 10.0
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
 
-    # TODO Remove this node once the glidepath routes can be tested without cruising plugin crashing due to end of route
   - !gov.dot.fhwa.saxton.carma.route.RouteWaypoint
     location: !gov.dot.fhwa.saxton.carma.geometry.geodesic.Location
-      latitude: 38.952430
+      latitude: 38.95243
       longitude: -77.181589
       altitude: 72.0
     minCrossTrack: -10.0
@@ -542,8 +475,7 @@ waypoints:
     lowerSpeedLimit: 0
     upperSpeedLimit: 25
     laneCount: 1
-    nearestMileMarker: 1.0
-    roadType: SECONDARY    
     interiorLaneMarkings: SOLID_WHITE
     leftMostLaneMarking: SOLID_YELLOW
     rightMostLaneMarking: SOLID_WHITE
+

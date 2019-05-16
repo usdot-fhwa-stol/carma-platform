@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -228,9 +228,9 @@ public class GuidanceV2IService implements V2IService {
             this.creationTime = creationTime;
         }
 
-        public IntersectionData intersection;
-        public DsrcCommsCheck mapComms;
-        public DsrcCommsCheck spatComms;
+        private IntersectionData intersection;
+        private DsrcCommsCheck mapComms;
+        private DsrcCommsCheck spatComms;
     }
 
 	@Override

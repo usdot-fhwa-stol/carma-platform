@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<!--
+  Copyright (C) 2018-2019 LEIDOS.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+<!--
+	saxton_cav.launch
+
+  A the ros launch file for the STOL CAV Prototype ROS Network.
+  Launches all the needed ros nodes and sets up the parameter server.
+  Also sets up all static transforms used by tf2 within the system.
+
+  File is meant to be run on a configured vehicle pc.
+  Applies the appropriate arguments to the saxton_cav_src.launch file to launch on a vehicle
+  
+  Note: To ensure all ros processes are killed before launch use
+  pkill -f ros
+-->
+<launch>
+
+  <!-- Set Environment Variables -->
+  <env name="ROS_IP" value="localhost"/>
+
+  <!-- Override Required Paths -->
+  <arg name="CARMA_DIR" default="/opt/carma" doc="The path of the package directory"/>
+  <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/params" doc="Directory of yaml parameter files"/>
+  <arg name="URDF_FILE" default="$(arg CARMA_DIR)/urdf/saxton_cav.urdf" doc="Path to the vehicle's URDF file"/>
+  <arg name="DATA_DIR"  default="$(arg CARMA_DIR)/app/mock_data" doc="Directory of driver simulation"/>
+  <arg name="SCRIPTS_DIR" default="$(arg CARMA_DIR)/app/engineering_tools" doc="The directory containing scripts for execution"/>
+  <arg name="LAUNCH_DIR" default="$(arg CARMA_DIR)/app/bin/share/carma" doc="Directory containing additional carma launch files such as driver.launch"/>
+  <arg name="log_config" default="$(arg PARAM_DIR)/log-config.properties" doc="The location of the logging config file"/>
+
+  <!-- Disable Mock Drivers -->
+  <arg name="mock_can"            	default="true" doc="True if using a simulated can driver"/>
+  <arg name="mock_dsrc"           	default="true" doc="True if using a simulated dsrc driver"/>
+  <arg name="mock_srx_controller" 	default="true" doc="True if using a simulated srx controller driver"/>
+  <arg name="mock_pinpoint"       	default="true" doc="True if using a simulated pinpoint driver"/>
+  <arg name="mock_radar"          	default="true" doc="True if using a simulated radar driver"/>
+  <arg name="mock_lateral_controller"   default="true" doc="True if using a simulated lateral controller"/>
+
+  <!-- Rosbag Flag -->
+  <arg name="use_rosbag" default="true" doc="Record a rosbag for the to 26 demo"/>
+
+  <!-- Include the detailed launch file and pass in new arguments -->
+  <include file="$(find carma)/saxton_cav_src.launch" pass_all_args="true"/>
+</launch>

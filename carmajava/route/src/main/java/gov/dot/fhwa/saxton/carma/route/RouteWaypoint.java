@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -86,17 +86,6 @@ public class RouteWaypoint {
     // String and Integer are immutable so add basic copy will work
     disabledGuidanceAlgorithms.addAll(wp.disabledGuidanceAlgorithms);
     laneClosures.addAll(wp.laneClosures);
-    // Deep copy needed maneuvers
-    for (cav_msgs.Maneuver maneuver: wp.neededManeuvers) {
-      cav_msgs.Maneuver newManeuver = messageFactory.newFromType(Maneuver._TYPE);
-      newManeuver.setLength(maneuver.getLength());
-      newManeuver.setPerformers(maneuver.getPerformers());
-      newManeuver.setStartRoadwayLaneId(maneuver.getStartRoadwayLaneId());
-      newManeuver.setStartRoadwayLink(maneuver.getStartRoadwayLink());
-      newManeuver.setStartRoadwayOriginatorPosition(maneuver.getStartRoadwayOriginatorPosition());
-      newManeuver.setType(maneuver.getType());
-      neededManeuvers.add(newManeuver);
-    }
     // Copy remaining fields
     laneCount = wp.laneCount;
     this.setLocation(wp.getLocation());

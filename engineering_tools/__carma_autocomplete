@@ -1,0 +1,66 @@
+#  Copyright (C) 2018-2019 LEIDOS.
+# 
+#  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#  use this file except in compliance with the License. You may obtain a copy of
+#  the License at
+# 
+#  http://www.apache.org/licenses/LICENSE-2.0
+# 
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#  License for the specific language governing permissions and limitations under
+#  the License.
+
+__list_docker_images()
+{
+  if [ -z "$1" ]; then 
+    docker image ls --format "{{.Repository}}:{{.Tag}}" "usdotfhwastol/carma-config" | grep -v "<none>$"
+  else
+    docker image ls --format "{{.Repository}}:{{.Tag}}" | grep -v "<none>$"
+  fi
+}
+
+__list_remote_images()
+{
+    wget -q https://registry.hub.docker.com/v1/repositories/usdotfhwastol/carma-config/tags -O -  | \
+    sed -e 's/[][]//g' -e 's/"//g' -e 's/ //g' | tr '}' '\n'  | \
+    awk -F: '{print "usdotfhwastol/carma-config:"$3}'
+}
+
+__carma()
+{
+  local cur prev subcmds config_subcmds
+  COMPREPLY=()
+  _get_comp_words_by_ref -n : cur prev
+  subcmds="config start stop ps help attach"
+  config_subcmds=" status list_local list_remote install set edit inspect reset"
+
+  case ${prev} in
+    "config")
+      COMPREPLY=( $(compgen -W "${config_subcmds}" -- ${cur}) )
+      ;;
+    "set")
+      COMPREPLY=( $(compgen -W "$(__list_docker_images $cur)" -- "${cur}") )
+      __ltrim_colon_completions "$cur"
+      ;;
+    "install")
+      COMPREPLY=( $(compgen -W "$(__list_remote_images)" -- "${cur}") )
+      __ltrim_colon_completions "$cur"
+      ;;
+    "stop")
+      COMPREPLY=( $(compgen -W "all" -- "${cur}") )
+      ;;
+    "start")
+      COMPREPLY=( $(compgen -W "all" -- "${cur}") )
+      ;;
+    "carma")
+      COMPREPLY=( $(compgen -W "${subcmds}" -- ${cur}) )
+      ;;
+    *)
+      return
+      ;;
+  esac
+}
+
+complete -F __carma carma

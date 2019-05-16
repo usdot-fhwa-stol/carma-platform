@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.geometry.cartesian;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import org.ros.rosjava_geometry.Transform;
@@ -265,5 +266,10 @@ public class CartesianObject implements CartesianElement {
 
   @Override public int getNumDimensions() {
     return numDimensions;
+  }
+
+  @Override public String toString() {
+    double[][] minMaxArray = getMinMaxCoordinates();
+    return this.getClass().getSimpleName() + " {" +"min " + Arrays.toString(minMaxArray[0]) + ", max " + Arrays.toString(minMaxArray[1]) + "}";
   }
 }

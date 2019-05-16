@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,7 +45,7 @@ public class QuaternionUtils {
       qx = (m[2][1] - m[1][2]) / S;
       qy = (m[0][2] - m[2][0]) / S; 
       qz = (m[1][0] - m[0][1]) / S; 
-    } else if ((m[0][0] > m[1][1])&(m[0][0] > m[2][2])) { 
+    } else if ((m[0][0] > m[1][1])&&(m[0][0] > m[2][2])) { 
       double S = Math.sqrt(1.0 + m[0][0] - m[1][1] - m[2][2]) * 2; // S=4*qx 
       qw = (m[2][1] - m[1][2]) / S;
       qx = 0.25 * S;

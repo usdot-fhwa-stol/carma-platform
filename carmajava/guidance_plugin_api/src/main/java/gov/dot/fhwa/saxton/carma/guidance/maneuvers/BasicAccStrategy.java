@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -60,9 +60,9 @@ public class BasicAccStrategy extends AbstractAccStrategy {
   }
 
   @Override
-  public boolean evaluateAccTriggerConditions(double distToFrontVehicle, double currentSpeed,
+  public boolean evaluateAccTriggerConditions(double distGap, double currentSpeed,
       double frontVehicleSpeed) {
-    return computeActualTimeGap(distGap(distToFrontVehicle), currentSpeed, frontVehicleSpeed) < desiredTimeGap;
+    return computeActualTimeGap(distGap, currentSpeed, frontVehicleSpeed) < desiredTimeGap;
   }
 
   @Override
@@ -95,7 +95,7 @@ public class BasicAccStrategy extends AbstractAccStrategy {
       double rawSpeedCmd = speedCmdSignal.get().getData() + currentSpeed;
       speedCmd = rawSpeedCmd;
       //speedCmd = applyAccelLimit(rawSpeedCmd, currentSpeed, maxAccel);
-      log.info(String.format(
+      log.debug(String.format(
           "ACC OVERRIDE CMD = %.02f, current speed = %.02f, override after accel limit applied (%.02f m/s/s) = %.02f, distToVehicle: %.02f m",
           rawSpeedCmd, currentSpeed, maxAccel, speedCmd, distToFrontVehicle));
       speedCmd = Math.min(speedCmd, desiredSpeedCommand);

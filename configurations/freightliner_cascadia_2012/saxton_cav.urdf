@@ -1,0 +1,80 @@
+<?xml version="1.0"?>
+<!--
+  Copyright (C) 2018-2019 LEIDOS.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+<!-- Green Cadillac Robot Description File
+    This file defines the static transformations of the CAV platform operating on the green cadillac.
+    These are only example values at this time. This is to test if it works
+-->
+<robot name="saxton_cav_truck"> <!-- TODO Verify heights-->
+  <!-- Frames -->
+  <link name="base_link" /> <!-- Back Axle -->
+  <link name="host_vehicle"/> <!-- Bounding box center of vehicle (used in BSM)-->
+  <link name="aabb_center"> <!-- Center of the car's axis aligned bounding box -->
+      <!-- Simple visual to draw box around car transforms  in rviz -->
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size="8.74 1.5 2.362" />
+      </geometry>
+      <material name="Green">
+        <color rgba="0.0 1.0 0.0 1.0"/>
+      </material>
+    </visual>
+  </link>
+  <link name="vehicle_front" /> <!-- Center of vehicle grill -->
+  <link name="pinpoint" /> <!-- Position Sensor (Accounting for internal transforms) -->
+  <!-- Radars -->
+  <link name="f_lrr_frame"/> <!-- Front Long Range Radar -->
+
+   <!-- base_link -> host_vehicle Transform -->
+  <joint name="base_link_to_host_vehicle" type="fixed">
+    <parent link="base_link" />
+    <child link="host_vehicle" />
+    <!-- Arguments (x y z roll pitch yaw) -->
+    <!-- Units: Meters and Rad-->
+    <origin xyz="3.37 0 -0.3556" rpy="3.14159265359 0 0" />
+  </joint>
+
+  <!-- host_vehicle -> aabb_center Transform -->
+  <joint name="host_vehicle_to_aabb_center" type="fixed">
+    <parent link="host_vehicle" />
+    <child link="aabb_center" />
+    <!-- Arguments (x y z roll pitch yaw) -->
+    <!-- Units: Meters and Rad-->
+    <origin xyz="0 0 -1.1" rpy="3.14159265359 0 0" />
+  </joint>
+
+  <!-- host_vehicle -> vehicle_front Transform vehicle_front is FLU-->
+  <joint name="host_vehicle_to_vehicle_front" type="fixed">
+    <parent link="host_vehicle" />
+    <child link="vehicle_front" />
+    <origin xyz="4.37 0 0" rpy="3.14159265359 0 0" />
+  </joint>
+
+  <!--base_link is center of rear axle FLU oriented x down the longitudinal axis of the vehicle-->
+  <joint name="base_link_pinpoint" type="fixed">
+    <parent link="base_link" />
+    <child link="pinpoint" />
+    <origin xyz="0 0 0" rpy="3.14159265359 0 0" />
+  </joint>
+
+  <!-- base_link -> f_lrr_frame Transform -->
+  <joint name="rear_link_f_lrr_frame" type="fixed">
+    <parent link="base_link"/>
+    <child link="f_lrr_frame"/>
+    <origin xyz="7.747 0 0" rpy="0 0 0" />
+  </joint>
+</robot>

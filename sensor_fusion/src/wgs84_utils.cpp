@@ -39,7 +39,7 @@
  * @param tie_point
  * @return
  */
-double wgs84_utils::calcMetersPerRadLat(const wgs84_utils::wgs84_coordinate &tie_point) 
+double wgs84_utils::calcMetersPerRadLat(const wgs84_utils::wgs84_coordinate &tie_point)
 {
     double a = EARTH_RADIUS_METERS;
     double e_sq = 0.00669438;
@@ -57,7 +57,7 @@ double wgs84_utils::calcMetersPerRadLat(const wgs84_utils::wgs84_coordinate &tie
  * @param tie_point
  * @return
  */
-double wgs84_utils::calcMetersPerRadLon(const wgs84_utils::wgs84_coordinate &tie_point) 
+double wgs84_utils::calcMetersPerRadLon(const wgs84_utils::wgs84_coordinate &tie_point)
 {
     double a = EARTH_RADIUS_METERS;
     double e_sq = 0.00669438;
@@ -107,8 +107,77 @@ void wgs84_utils::convertToOdom(const wgs84_utils::wgs84_coordinate &src,
 
     Eigen::Quaternion<double> q_offset;
     q_offset = Eigen::AngleAxisd(delta_heading * DEG2RAD, Eigen::Vector3d::UnitZ());
- 
+
     Eigen::Quaternion<double> neu_odom_rot(ned_odom_tf.rotation());
 
     out_rot =  neu_odom_rot * q_offset * odom_rot_ref;
 }
+
+/**
+ * Converts a given WSG-84 geodesic location into a 3d cartesian point
+ * The returned 3d point is defined relative to a frame which has a transform with the ECEF frame.
+ * @param location The geodesic location to convert must be in radians
+ * @param frame2ecefTransform A transform which defines the location of the ECEF frame relative to the 3d point's frame of origin
+ * @return The calculated 3d point in the ECEF frame. 
+ */
+tf2::Vector3 wgs84_utils::geodesic_to_ecef(const wgs84_utils::wgs84_coordinate &loc, tf2::Transform ecef_in_ned) {
+
+    constexpr double Rea = 6378137.0; // Semi-major axis radius meters
+    constexpr double Rea_sqr = Rea*Rea;
+    constexpr double f = 1.0 / 298.257223563; //The flattening factor
+    constexpr double Reb = Rea * (1.0 - f); // //The semi-minor axis = 6356752.0
+    constexpr double Reb_sqr = Reb*Reb;
+    constexpr double e = 0.08181919084262149; // The first eccentricity (hard coded as optimization) calculated as Math.sqrt(Rea*Rea - Reb*Reb) / Rea; as C++11 sqrt is not constexpr
+    constexpr double e_sqr = e*e;
+    constexpr double e_p = 0.08209443794969568; // e prime (hard coded as optimization) calculated as Math.sqrt((Rea_sqr - Reb_sqr) / Reb_sqr); as C++11 sqrt is not constexpr
+
+
+    // frame2ecefTransform needs to define the position of the ecefFrame relative to the desired frame
+    // Put geodesic in proper units
+    double lonRad = loc.lon;
+    double latRad = loc.lat;
+    double alt = loc.elevation;
+
+    double sinLat = sin(latRad);
+    double sinLon = sin(lonRad);
+    double cosLat = cos(latRad);
+    double cosLon = cos(lonRad);
+
+    double Ne = Rea / sqrt(1.0 - e_sqr * sinLat * sinLat);// The prime vertical radius of curvature
+
+    double x = (Ne + alt)*cosLat*cosLon;
+    double y = (Ne + alt)*cosLat*sinLon;
+    double z = (Ne*(1-e_sqr) + alt) * sinLat;
+
+    tf2::Vector3 ecef_point(x,y,z);
+
+    tf2::Vector3 point_in_ned = ecef_in_ned * ecef_point; 
+    return point_in_ned;
+}
+
+/**
+ * Generates a transform describing the location/orientation of an NED frame in the ECEF frame based on the provided lat lon point.
+ * 
+ * @param loc The location of the NED frame in WGS-84 lat/lon with angles in radians
+ * 
+ * @return The transform describing the location/orientation of an NED frame in the ECEF frame
+ */
+tf2::Transform wgs84_utils::ecef_to_ned_from_loc(wgs84_coordinate loc) {
+
+    tf2::Vector3 ecef_point = wgs84_utils::geodesic_to_ecef(loc, tf2::Transform::getIdentity());
+
+    // Rotation matrix of north east down frame with respect to ecef
+    // Found at https://en.wikipedia.org/wiki/North_east_down
+    double sinLat = sin(loc.lat);
+    double sinLon = sin(loc.lon);
+    double cosLat = cos(loc.lat);
+    double cosLon = cos(loc.lon);
+
+ 	  tf2::Matrix3x3 rotMat(
+      -sinLat * cosLon, -sinLon,  -cosLat * cosLon,
+      -sinLat * sinLon,  cosLon,  -cosLat * sinLon,
+                cosLat,       0,           -sinLat 
+    );
+    
+    return tf2::Transform(rotMat, ecef_point);
+  }

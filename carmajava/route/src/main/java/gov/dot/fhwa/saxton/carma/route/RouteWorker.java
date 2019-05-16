@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -272,6 +272,7 @@ public class RouteWorker {
       resetRouteStateVariables(); // Reset all route state variables when a new route is selected
       activeRoute = route;
 
+      log.info("Selected Route: " + route.routeName);
       handleEvent(WorkerEvent.ROUTE_SELECTED);
       return SetActiveRouteResponse.NO_ERROR;
     }
@@ -450,8 +451,8 @@ public class RouteWorker {
       laneChangeCount = 0;
     }
 
-    log.info("Downtrack: " + downtrackDistance + ", Crosstrack: " + crossTrackDistance);
-    log.info("Downtrack Waypoint: " + currentWaypointIndex);
+    log.debug("Downtrack: " + downtrackDistance + ", Crosstrack: " + crossTrackDistance);
+    log.debug("Downtrack Waypoint: " + currentWaypointIndex);
 
     if (leftRouteVicinity()) {
       recievedLeftRouteEvents++;

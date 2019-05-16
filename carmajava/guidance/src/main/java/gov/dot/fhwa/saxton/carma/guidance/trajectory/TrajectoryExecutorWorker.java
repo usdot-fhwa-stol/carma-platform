@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of * the License at *
@@ -101,7 +101,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     Trajectory curTraj = currentTrajectory.get();
     if (curTraj == null) {
       // Nothing to do
-      log.info("Finished downtrack distance update with no trajectory.");
+      log.debug("Finished downtrack distance update with no trajectory.");
       this.downtrackDistance = downtrack;
       return;
     } else {
@@ -120,7 +120,7 @@ public class TrajectoryExecutorWorker implements ManeuverFinishedListener {
     // Notify subscribers if needed
     invokeCallbacks();
 
-    log.info("Finished downtrack distance update.");
+    log.debug("Finished downtrack distance update.");
   }
 
   /**

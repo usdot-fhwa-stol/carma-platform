@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+import java.time.Clock;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -54,7 +56,7 @@ public class LeaderSelectionTest {
         when(mockPSL.getMobilityRouter()).thenReturn(mockRouter);
         when(mockPSL.getRouteService()).thenReturn(mockRouteService);
         when(mockRouter.getHostMobilityId()).thenReturn("FFFFFFFF");
-        manager     = new PlatoonManager(mockPlugin, mockLogger, mockPSL);
+        manager     = new PlatoonManager(mockPlugin, mockLogger, mockPSL, Clock.systemUTC());
         when(mockPlugin.getManeuverInputs()).thenReturn(mockInputs);
         // Disable APF algorithm by default
         mockPlugin.algorithmType = 0;

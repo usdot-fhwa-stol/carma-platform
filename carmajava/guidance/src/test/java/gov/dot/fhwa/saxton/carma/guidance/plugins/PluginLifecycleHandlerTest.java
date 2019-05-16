@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,15 +19,9 @@ package gov.dot.fhwa.saxton.carma.guidance.plugins;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.listeners.InvocationListener;
-import org.mockito.listeners.MethodInvocationReport;
-import org.mockito.stubbing.Answer;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
-
-import javax.naming.CompoundName;
 
 import gov.dot.fhwa.saxton.carma.guidance.util.ILogger;
 import gov.dot.fhwa.saxton.carma.guidance.util.ILoggerFactory;
@@ -38,9 +32,13 @@ public class PluginLifecycleHandlerTest {
     @Before public void setUp() throws Exception {
         ILoggerFactory mockFact = mock(ILoggerFactory.class);
         ILogger mockLogger = mock(ILogger.class);
-        when(mockFact.createLoggerForClass(anyObject())).thenReturn(mockLogger);
+        when(mockFact.createLoggerForClass(any())).thenReturn(mockLogger);
         LoggerManager.setLoggerFactory(mockFact);
         p = mock(IPlugin.class);
+        doAnswer((in) -> {
+            Thread.sleep(50);
+            return null;
+        }).when(p).loop();
         ComponentVersion cv = new ComponentVersion();
         when(p.getVersionInfo()).thenReturn(cv);
         handler = new PluginLifecycleHandler(p);

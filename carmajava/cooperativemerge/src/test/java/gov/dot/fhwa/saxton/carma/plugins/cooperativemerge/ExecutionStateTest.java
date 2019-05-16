@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -116,7 +116,7 @@ public class ExecutionStateTest {
                                                         mockManeuverPlanner,      mockRouteService,
                                                         mockRouter,                       mock(IConflictDetector.class),
                                                         mockTrajectoryConverter, mock(ILightBarManager.class),
-                                                        mock(TrackingService.class));
+                                                        mock(TrackingService.class), null, null);
         when(mockPlugin.getCommsTimeoutMS()).thenReturn(500L);
 
         when(mockPlugin.getVehicleId()).thenReturn(VEHICLE_ID);
@@ -188,5 +188,65 @@ public class ExecutionStateTest {
 
         // Check we are now in the planning state
         assertEquals("ExecutionState", newState.getValue().toString());
+    }
+
+
+    @Test
+    public void testOnMobilityOperationMessage() {
+        // Init state
+        double rampMeterDTD = 100;
+        double mergePointDTD = 500;
+        double mergeLength = 100;
+        double radius = 100;
+        RampMeterData rampMeterData = new RampMeterData(RSU_ID, rampMeterDTD, mergePointDTD, mergeLength, radius);
+        
+        String planId = "AA-BB";
+
+        MobilityOperation msg = messageFactory.newFromType(MobilityOperation._TYPE);
+        msg.getHeader().setRecipientId(VEHICLE_ID);
+        msg.getHeader().setSenderId(RSU_ID);
+        msg.getHeader().setPlanId(planId);
+        msg.setStrategy(CooperativeMergePlugin.MOBILITY_STRATEGY);
+
+        CooperativeMergeManeuver mergeManeuver = new CooperativeMergeManeuver(
+            mockPlugin,
+            mockPlugin.getCooperativeMergeInputs(),
+            pluginServiceLocator.getManeuverPlanner().getManeuverInputs(),
+            pluginServiceLocator.getManeuverPlanner().getGuidanceCommands(),
+            AccStrategyManager.newAccStrategy(),
+            0, 
+            600,
+            0, 
+            20,
+            2.5);
+        
+        final ExecutionState executionState = new ExecutionState(mockPlugin, mockLog, pluginServiceLocator, rampMeterData, planId, mergeManeuver);
+
+        mockPlugin.setState(null, executionState);
+        
+        // Setup mocks
+        when(mockInputs.getCurrentSpeed()).thenReturn(10.0);
+        when(mockInputs.getMaxAccelLimit()).thenReturn(2.5);
+        when(mockRouteService.getCurrentCrosstrackDistance()).thenReturn(0.0);
+        when(mockRouteService.getCurrentDowntrackDistance()).thenReturn(0.0);
+        when(mockRouteService.getCurrentSegmentIndex()).thenReturn(0);
+
+
+        ILoggerFactory mockLoggerFactory = mock(ILoggerFactory.class);
+        when(mockLoggerFactory.createLoggerForClass(any(Class.class))).thenReturn(mockLog);
+        LoggerManager.setLoggerFactory(mockLoggerFactory);
+
+        msg.setStrategyParams(String.format("STATUS|METER_DIST:%.2f,MERGE_DIST:%.2f,SPEED:%.2f", 0.00, 0.00, 0.00));
+        executionState.onMobilityOperationMessage(msg);
+        verify(mockLog , times(1)).error("Received operation message with bad params. Exception: java.lang.IllegalArgumentException: Invalid type. Expected: COMMAND String: STATUS|METER_DIST:0.00,MERGE_DIST:0.00,SPEED:0.00");
+
+        msg.setStrategyParams(String.format("COMMAND|SPEED:%.2f,ACCEL:%.2f,STEERING_ANGLE:%.2f", 35.1, 2.1, 1.1));
+        executionState.onMobilityOperationMessage(msg);
+        verify(mockLog , times(1)).error("Received operation message with suspect strategy values. targetSpeed = 35.1, maxAccel = 2.1, targetSteer = 1.1");
+
+        msg.setStrategyParams(String.format("COMMAND|SPEED:%.2f,ACCEL:%.2f,STEERING_ANGLE:%.2f", 0.4, -2.1, -1.1));
+        executionState.onMobilityOperationMessage(msg);
+        verify(mockLog , times(1)).error("Received operation message with suspect strategy values. targetSpeed = 0.4, maxAccel = -2.1, targetSteer = -1.1");
+
     }
 }

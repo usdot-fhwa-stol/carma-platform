@@ -1,3 +1,11 @@
+### Types of Issue
+
+<!--- What types of issue? Put an `x` in the boxes that apply: -->
+
+- [ ] Anomaly report (something appears to not work correctly)
+- [ ] Enhancement request (describe the enhancement being requested)
+- [ ] Other (please ensure the description clarifies why the issue doesn’t fall into either of the above categories)
+
 ### Descriptive summary
 
 ### Expected behavior

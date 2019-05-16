@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -78,24 +78,24 @@ public class MockCANDriver extends AbstractMockDriver {
     super(connectedNode);
     // Topics
     // Published
-    accPub = connectedNode.newPublisher("~/can/acc_engaged", std_msgs.Bool._TYPE);
-    accelPub = connectedNode.newPublisher("~/can/acceleration", std_msgs.Float64._TYPE);
-    brakeLightsPub = connectedNode.newPublisher("~/can/brake_lights", std_msgs.Bool._TYPE);
-    brakePositionPub = connectedNode.newPublisher("~/can/brake_position", std_msgs.Float64._TYPE);
-    engineSpeedPub = connectedNode.newPublisher("~/can/engine_speed", std_msgs.Float64._TYPE);
-    fuelFlowPub = connectedNode.newPublisher("~/can/fuel_flow", std_msgs.Float64._TYPE);
-    odometryPub = connectedNode.newPublisher("~/can/odometer", std_msgs.Float64._TYPE);
-    parkingBrakePub = connectedNode.newPublisher("~/can/parking_brake", std_msgs.Bool._TYPE);
-    speedPub = connectedNode.newPublisher("~/can/speed", std_msgs.Float64._TYPE);
-    steeringPub = connectedNode.newPublisher("~/can/steering_wheel_angle", std_msgs.Float64._TYPE);
-    throttlePub = connectedNode.newPublisher("~/can/throttle_position", std_msgs.Float64._TYPE);
-    turnSignalPub = connectedNode.newPublisher("~/can/turn_signal_state", cav_msgs.TurnSignal._TYPE);
-    transmissionPub = connectedNode.newPublisher("~/can/transmission_state", j2735_msgs.TransmissionState._TYPE);
-    tractionActivePub = connectedNode.newPublisher("~/can/traction_ctrl_active", std_msgs.Bool._TYPE);
-    tractionEnabledPub = connectedNode.newPublisher("~/can/traction_ctrl_enabled", std_msgs.Bool._TYPE);
-    antilockBrakePub = connectedNode.newPublisher("~/can/antilock_brakes_active", std_msgs.Bool._TYPE);
-    stabilityActivePub = connectedNode.newPublisher("~/can/stability_ctrl_active", std_msgs.Bool._TYPE);
-    stabilityEnabledPub = connectedNode.newPublisher("~/can/stability_ctrl_enabled", std_msgs.Bool._TYPE);
+    accPub = connectedNode.newPublisher("can/acc_engaged", std_msgs.Bool._TYPE);
+    accelPub = connectedNode.newPublisher("can/acceleration", std_msgs.Float64._TYPE);
+    brakeLightsPub = connectedNode.newPublisher("can/brake_lights", std_msgs.Bool._TYPE);
+    brakePositionPub = connectedNode.newPublisher("can/brake_position", std_msgs.Float64._TYPE);
+    engineSpeedPub = connectedNode.newPublisher("can/engine_speed", std_msgs.Float64._TYPE);
+    fuelFlowPub = connectedNode.newPublisher("can/fuel_flow", std_msgs.Float64._TYPE);
+    odometryPub = connectedNode.newPublisher("can/odometer", std_msgs.Float64._TYPE);
+    parkingBrakePub = connectedNode.newPublisher("can/parking_brake", std_msgs.Bool._TYPE);
+    speedPub = connectedNode.newPublisher("can/speed", std_msgs.Float64._TYPE);
+    steeringPub = connectedNode.newPublisher("can/steering_wheel_angle", std_msgs.Float64._TYPE);
+    throttlePub = connectedNode.newPublisher("can/throttle_position", std_msgs.Float64._TYPE);
+    turnSignalPub = connectedNode.newPublisher("can/turn_signal_state", cav_msgs.TurnSignal._TYPE);
+    transmissionPub = connectedNode.newPublisher("can/transmission_state", j2735_msgs.TransmissionState._TYPE);
+    tractionActivePub = connectedNode.newPublisher("can/traction_ctrl_active", std_msgs.Bool._TYPE);
+    tractionEnabledPub = connectedNode.newPublisher("can/traction_ctrl_enabled", std_msgs.Bool._TYPE);
+    antilockBrakePub = connectedNode.newPublisher("can/antilock_brakes_active", std_msgs.Bool._TYPE);
+    stabilityActivePub = connectedNode.newPublisher("can/stability_ctrl_active", std_msgs.Bool._TYPE);
+    stabilityEnabledPub = connectedNode.newPublisher("can/stability_ctrl_enabled", std_msgs.Bool._TYPE);
   }
 
   @Override protected void publishData(List<String[]> data) {
