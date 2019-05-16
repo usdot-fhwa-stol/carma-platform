@@ -33,7 +33,6 @@
   <!-- Simulation Usage -->
   <arg name="mock_drivers" default="lateral_controller" doc="True if using a simulated can driver"/>
   
-
   <!-- Debug -->
   <!-- Set to true to enable debugging on the specified node -->
   <arg name="debug_node" default="" doc="Set to the java node base name to enable debugging on that node. Requires JVM_DEBUG_OPTS environment variable to be set"/>
@@ -45,9 +44,9 @@
   <include file="$(arg LAUNCH_DIR)/mock_drivers.launch">
     <arg name="DATA_DIR" value="$(arg DATA_DIR)"/>
     <arg name="LAUNCH_DIR" value="$(arg LAUNCH_DIR)"/>
-    <arg name="PARAM_DIR" value="$(arg PARAM_DIR)" />
+    <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
     <arg name="debug_node" value="$(arg debug_node)"/>
-    <arg name="mock_drivers" value="$(arg mock_drivers)" />
+    <arg name="mock_drivers" value="$(arg mock_drivers)"/>
   </include>
 
   <!--Driver Launch File if Using Actual Drivers -->
