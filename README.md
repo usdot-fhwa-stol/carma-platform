@@ -7,8 +7,6 @@
 
 **Cooperative Automated Research Mobility Applications (CARMA)**, CARMA is a reusable, extensible platform for controlling SAE level 1 connected, automated vehicles (CAVs). It provides a rich, generic API for third party plugins that implement vehicle guidance algorithms. It is written in Java and C++ and runs in a Robot Operating System (ROS) environment. It offers a rich application programming interface (API) for third party authors to develop guidance plugins that can plan vehicle trajectories under certain conditions. The platform can be reused on a variety of properly equipped vehicles.
 
-** Repo Structure Note:**  The master branch of this repo relfects the second generation of CARMA code and documentation, called CARMA2, which was used by FHWA extensively during 2018. However, the team is actively working on the next generation, CARMA3, that is being integrated with [Autoware](https://github.com/autowarefoundation/autoware) for SAE level 2 and 3 automation capability.  The develop branch now reflects CARMA3 work, and may not be suitable for use outside the development team for a while.  Third party users are encouraged to continue modifying CARMA2 code (through the contribution process outlined below); please make branches off of the CARMA2-integration branch.  Updates on this branch will be merged into develop at an appropriate future date.
-
 ## What Is CARMA
 ![CARMA Arch](docs/image/CARMA2_Architecture.png)
 
@@ -26,6 +24,8 @@ The platform's performance requirements are specified to conform the following p
 
 ## Release Notes
 The current version release of the CARMA software platform. [CARMA Release Notes](<docs/Release_notes.md>)
+
+**Repo Structure Note:**  The master branch of this repo relfects the second generation of CARMA code and documentation, called CARMA2, which was used by FHWA extensively during 2018. However, the team is actively working on the next generation, CARMA3, that is being integrated with [Autoware](https://github.com/autowarefoundation/autoware) for SAE level 2 and 3 automation capability.  The develop branch now reflects CARMA3 work, and may not be suitable for use outside the development team for a while.  Third party users are encouraged to continue modifying CARMA2 code (through the contribution process outlined below); please make branches off of the CARMA2-integration branch.  Updates on this branch will be merged into develop at an appropriate future date.
 
 ## Roadmap
 The current CARMA development direction and release plans. [CARMA Roadmap](<docs/Roadmap.md>)
