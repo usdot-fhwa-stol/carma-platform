@@ -18,7 +18,6 @@
 	Launch file for launching the nodes in the CARMA localization stack minus drivers
 -->
 <launch>
-  <group ns="h">
   <!-- Constants -->
   <!-- Directory of Parameter Files -->
   <arg name="CARMA_DIR" default="$(find carma)" doc="The path of the package directory"/>
@@ -72,6 +71,7 @@
     <arg name="debug_lateral_controller" value="$(arg debug_lateral_controller)"/>
     <arg name="JVM_DEBUG_OPTS"   value="$(arg JVM_DEBUG_OPTS)"/>
     <arg name="PARAM_DIR"   value="$(arg PARAM_DIR)"/>
+    <arg name="ns" value=""/>
   </include>
 
   <!--Driver Launch File if Using Actual Drivers -->
@@ -95,5 +95,4 @@
     <rosparam command="load" file="$(arg PARAM_DIR)/InterfaceMgrParams.yaml"/>
   </node>
 
-  </group>
 </launch>

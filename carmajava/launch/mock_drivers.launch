@@ -75,6 +75,7 @@ If not using simulated drivers they are activated if the respective mock argumen
     <arg name="data_file"   value="$(arg dsrc_data_file)"/>
     <arg name="debug_driver"     value="$(arg debug_mock_dsrc)"/>
     <arg name="JVM_DEBUG_OPTS"   value="$(arg JVM_DEBUG_OPTS)"/>
+    <arg name="ns" value=""/>
   </include>
 
   <!-- Simulated PinPoint Driver Node -->
@@ -84,6 +85,7 @@ If not using simulated drivers they are activated if the respective mock argumen
     <arg name="data_file"   value="$(arg pinpoint_data_file)"/>
     <arg name="debug_driver"     value="$(arg debug_mock_pinpoint)"/>
     <arg name="JVM_DEBUG_OPTS"   value="$(arg JVM_DEBUG_OPTS)"/>
+    <arg name="ns" value=""/>
   </include>
 
   <!-- Simulated CAN Driver Node -->
@@ -93,6 +95,7 @@ If not using simulated drivers they are activated if the respective mock argumen
     <arg name="data_file"   value="$(arg can_data_file)"/>
     <arg name="debug_driver"     value="$(arg debug_mock_can)"/>
     <arg name="JVM_DEBUG_OPTS"   value="$(arg JVM_DEBUG_OPTS)"/>
+    <arg name="ns" value=""/>
   </include>
 
   <!-- Simulated SRX Controller Driver Node -->
@@ -102,6 +105,7 @@ If not using simulated drivers they are activated if the respective mock argumen
     <arg name="data_file"   value="$(arg srx_controller_data_file)"/>
     <arg name="debug_driver"     value="$(arg debug_mock_srx_controller)"/>
     <arg name="JVM_DEBUG_OPTS"   value="$(arg JVM_DEBUG_OPTS)"/>
+    <arg name="ns" value=""/>
   </include>
 
   <!-- Simulated Radar Driver Node -->
@@ -111,6 +115,7 @@ If not using simulated drivers they are activated if the respective mock argumen
     <arg name="data_file"   value="$(arg radar_data_file)"/>
     <arg name="debug_driver"     value="$(arg debug_mock_radar)"/>
     <arg name="JVM_DEBUG_OPTS"   value="$(arg JVM_DEBUG_OPTS)"/>
+    <arg name="ns" value=""/>
   </include>
 	
 </launch>

@@ -17,12 +17,21 @@
 
 <!--Lateral Controller Driver Node-->
 <launch>
-    <arg name="remap_ns" default="/"/>
+    <arg name="ns" default="/"/>
+    <arg name="using_ns" value="$(eval '' != arg('ns'))"/>
     <arg name="JVM_DEBUG_OPTS"    default="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005" doc="Start rosjava node with these JVM arguments for debugging"/>
     <arg name="debug_lateral_controller" default="false" doc="Set true to enable debugging on the Lateral Control Driver"/>
     <arg name="PARAM_DIR" default="$(find carma)/launch/params" doc="Directory of yaml parameter files"/>
 
-    <group ns="$(arg remap_ns)">
+    <group if="$(arg using_ns)" ns="$(arg ns)">
+        <node pkg="carma" type="lateral_control_driver" name="lateral_controller"
+            args="gov.dot.fhwa.saxton.carma.lateralcontroldriver.LateralControlDriver">
+            <env if="$(arg debug_lateral_controller)" name="LATERAL_CONTROL_DRIVER_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>
+            <rosparam command="load" file="$(arg PARAM_DIR)/LateralControllerParams.yaml"/>
+        </node>
+    </group>
+
+    <group unless="$(arg using_ns)">
         <node pkg="carma" type="lateral_control_driver" name="lateral_controller"
             args="gov.dot.fhwa.saxton.carma.lateralcontroldriver.LateralControlDriver">
             <env if="$(arg debug_lateral_controller)" name="LATERAL_CONTROL_DRIVER_OPTS" value="$(arg JVM_DEBUG_OPTS)"/>

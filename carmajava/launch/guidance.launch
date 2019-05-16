@@ -30,14 +30,10 @@
   <env name="JAVA_OPTS" value="$(arg JVM_LOG_OPTS)"/>
   <!-- Set to true to enable debugging on the specified node -->
   <arg name="debug_guidance" default="false" doc="Set true to enable debugging on the Guidance Main node"/>
-
-  <!-- ROS Namespaces -->
-  <arg name="MSG_NS" default="message" doc="Namespace of nodes in message package"/>
-  <arg name="SF_NS" default="sensor_fusion" doc="Namespace of nodes in sensor fusion package"/>
-  <arg name="TS_NS" default="transform" doc="Namespace of nodes in transform server package"/>
-  <arg name="RT_NS" default="route" doc="Namespace of nodes in route package"/>
-  <arg name="UI_NS" default="ui" doc="Namespace of parameters used by the ui and rosbridge"/>
   
+  <!-- TODO how to deal with this file -->
+  <rosparam command="load" file="$(arg PARAM_DIR)/HostVehicleParams.yaml"/>
+
     <!-- Guidance Main Node -->
   <node pkg="carma" type="guidance" name="guidance_main" args="gov.dot.fhwa.saxton.carma.guidance.GuidanceMain">
 
@@ -50,57 +46,9 @@
     <rosparam command="load" file="$(arg PARAM_DIR)/CooperativeMergeParams.yaml"/>
     <rosparam command="load" file="$(arg PARAM_DIR)/SignalParams.yaml"/>
 
-    <remap from="system_alert" to="/system_alert"/>
-
-    <!-- Arbitrator Thread-->
-    <remap from="route_state" to="/$(arg RT_NS)/route_state"/>
-    <remap from="robot_status" to="/$(arg CNTRL_NS)/robot_status"/>
-
-    <!-- GuidanceStateHandler Thread-->
-    <remap from="route_event" to="/$(arg RT_NS)/route_event"/>
-
-    <!-- GuidanceCommands Thread -->
-    <remap from="cmd_speed" to="/$(arg CNTRL_NS)/cmd_speed"/>
-    <remap from="cmd_longitudinal_effort" to="/$(arg CNTRL_NS)/cmd_longitudinal_effort"/>
-    <remap from="cmd_lateral" to="/$(arg CNTRL_NS)/cmd_lateral"/>
-    <remap from="enable_robotic" to="/$(arg CNTRL_NS)/enable_robotic"/>
-
-    <!-- Tracking Thread-->
-    <!-- Params -->
-    <remap from="vehicle_length" to="/vehicle_length"/>
-    <remap from="vehicle_width" to="/vehicle_width"/>
-    <remap from="vehicle_id" to="/vehicle_id"/>
-    <!-- Topics and Services -->
-    <remap from="heading" to="/$(arg SF_NS)/filtered/heading"/>
-    <remap from="nav_sat_fix" to="/$(arg SF_NS)/filtered/nav_sat_fix"/>
-    <remap from="velocity" to="/$(arg SF_NS)/filtered/velocity"/>
-    <remap from="get_transform" to="/$(arg TS_NS)/get_transform"/>
-    <remap from="acceleration" to="/$(arg SF_NS)/filtered/acceleration"/>
-
-    <!-- Trajectory and Arbitrator -->
-    <remap from="route_state" to="/$(arg RT_NS)/route_state"/>
-
-    <!-- Maneuvers Thread-->
-    <remap from="route" to="/$(arg RT_NS)/route"/>
-
-    <!-- Lane Change Plugin -->
-    <remap from="mobility_ack_inbound" to="/$(arg MSG_NS)/mobility_ack"/>
-    <remap from="ui_instructions" to="/$(arg UI_NS)/ui_instructions"/>
-
-    <!-- Mobility Router -->
-    <remap from="incoming_mobility_request" to="/$(arg MSG_NS)/incoming_mobility_request"/>
-    <remap from="incoming_mobility_response" to="/$(arg MSG_NS)/incoming_mobility_response"/>
-    <remap from="incoming_mobility_operation" to="/$(arg MSG_NS)/incoming_mobility_operation"/>
-    <remap from="incoming_mobility_path" to="/$(arg MSG_NS)/incoming_mobility_path"/>
-
-    <!-- V2I -->
-    <remap from="incoming_map" to="/$(arg MSG_NS)/incoming_map"/>
-    <remap from="incoming_spat" to="/$(arg MSG_NS)/incoming_spat"/>
-
-    <!-- LightBar Thread -->
-    <remap from="set_lights" to="/$(arg CNTRL_NS)/set_lights"/>
-
   </node>
+
+  <!-- TODO Route node will go here or above guidance node -->
 
   <!-- Guidance Command Repeater Node TODO remapping-->
   <include file="$(find guidance_command_repeater)/launch/guidance_command_repeater.launch"/>
