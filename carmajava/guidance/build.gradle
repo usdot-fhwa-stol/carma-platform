@@ -54,7 +54,7 @@ dependencies {
   compile 'org.ros.rosjava_core:rosjava:[0.3,0.4)'
   compile 'org.ros.rosjava_core:rosjava_geometry:0.3.5'
   compile 'org.ros.rosjava_messages:sensor_msgs:1.12.5'
-  compile 'org.ros.rosjava_messages:cav_msgs:0.1.0'
+  compile 'org.ros.rosjava_messages:cav_msgs:0.1.1'
   compile 'org.ros.rosjava_messages:cav_srvs:0.1.0'
   compile 'org.ros.rosjava_messages:j2735_msgs:0.1.0'
   compile 'org.reflections:reflections:0.9.11'
