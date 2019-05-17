@@ -27,10 +27,11 @@ project(carma)
 
 find_package(catkin REQUIRED
 	rosjava_build_tools
-    rosjava_messages #genjava was here
+        rosjava_messages #genjava was here
 	cav_msgs
 	cav_srvs
         j2735_msgs
+        autoware_msgs
 )
 # Enable integration tests using python
 #if(CATKIN_ENABLE_TESTING)
@@ -43,6 +44,7 @@ generate_rosjava_messages(
     cav_msgs
     cav_srvs
     j2735_msgs
+    autoware_msgs
 )
 # Set the gradle targets you want catkin's make to run by default, e.g.
 #   catkin_rosjava_setup(installApp)
