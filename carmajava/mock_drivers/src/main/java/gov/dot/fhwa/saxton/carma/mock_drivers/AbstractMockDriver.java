@@ -198,9 +198,9 @@ public abstract class AbstractMockDriver implements IMockDriver {
     cav_msgs.DriverStatus driverStatusMsg = discoveryPub.newMessage();
     driverStatusMsg.setName(getGraphName().toString());
     driverStatusMsg.setStatus(driverStatus);
-    driverStatusMsg.setCanBus(false);
+    driverStatusMsg.setCan(false);
     driverStatusMsg.setRadar(false);
-    driverStatusMsg.setGps(false);
+    driverStatusMsg.setGnss(false);
     driverStatusMsg.setImu(false);
     driverStatusMsg.setLidar(false);
     driverStatusMsg.setRoadwaySensor(false);
@@ -211,13 +211,13 @@ public abstract class AbstractMockDriver implements IMockDriver {
     for (String driverType: getDriverTypesList()) {
       switch (driverType) {
         case "can":
-          driverStatusMsg.setCanBus(true);
+          driverStatusMsg.setCan(true);
           break;
         case "radar":
           driverStatusMsg.setRadar(true);
           break;
         case "gps":
-          driverStatusMsg.setGps(true);
+          driverStatusMsg.setGnss(true);
           break;
         case "imu":
           driverStatusMsg.setImu(true);

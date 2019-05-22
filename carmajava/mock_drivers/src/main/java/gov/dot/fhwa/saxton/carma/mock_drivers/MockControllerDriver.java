@@ -83,7 +83,7 @@ public class MockControllerDriver extends AbstractMockDriver {
     statusPub = connectedNode.newPublisher("controller/robot_status", RobotEnabled._TYPE);
 
     // Subscribed
-    longEffortSub = connectedNode.newSubscriber("controller/vehicle_cmd", autoware_msgs.VehicleCmd._TYPE);
+    cmdSub = connectedNode.newSubscriber("controller/vehicle_cmd", autoware_msgs.VehicleCmd._TYPE);
 
     enabledSrv = connectedNode.newServiceServer("controller/enable_robotic", cav_srvs.SetEnableRobotic._TYPE,
         new ServiceResponseBuilder<SetEnableRoboticRequest, SetEnableRoboticResponse>() {
