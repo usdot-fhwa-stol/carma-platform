@@ -17,7 +17,7 @@ version: '2'
 
 services:
   roscore:
-    image: usdotfhwastol/carma-base:2.8.3
+    image: usdotfhwastol/carma-base:2.9.0
     network_mode: host
     container_name: roscore
     volumes_from: 
@@ -29,7 +29,7 @@ services:
     restart: always
     command: roscore
   platform:
-    image: usdotfhwastol/carma:2.8.3
+    image: usdotfhwastol/carma:2.9.0
     network_mode: host
     container_name: platform
     volumes_from: 
@@ -41,19 +41,6 @@ services:
       - /opt/carma/.ros:/home/carma/.ros
       - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
     command: wait-for-it.sh localhost:11311 -- roslaunch carma carma_docker.launch
-  mock-lateral-control-driver:
-    image: usdotfhwastol/carma:2.8.3
-    network_mode: host
-    container_name: carma-mock-lateral-control-driver
-    volumes_from: 
-      - container:carma-config:ro
-    environment:
-      - ROS_IP=192.168.88.10
-    volumes:
-      - /opt/carma/logs:/opt/carma/logs
-      - /opt/carma/.ros:/home/carma/.ros
-      - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
-    command: wait-for-it.sh localhost:11311 --  rosrun carma lateral_control_driver gov.dot.fhwa.saxton.carma.lateralcontroldriver.LateralControlDriver
   cohda_dsrc_driver:
     image: usdotfhwastol/carma-cohda-dsrc-driver:1.0.0
     container_name: carma-cohda-dsrc-driver
@@ -62,11 +49,12 @@ services:
       - container:carma-config:ro
     environment:
       - ROS_IP=192.168.88.10
+      - ROS_NAMESPACE=hardware_interface
     volumes:
       - /opt/carma/logs:/opt/carma/logs
       - /opt/carma/.ros:/home/carma/.ros
       - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
-    command: wait-for-it.sh localhost:11311 -- roslaunch dsrc_driver dsrc_node.launch remap_ns:=/carma/drivers
+    command: wait-for-it.sh localhost:11311 -- roslaunch dsrc_driver dsrc_node.launch
   cadillac-srx-2013-can-driver:
     image: usdotfhwastol/carma-cadillac-srx-2013-can-driver:1.0.1
     container_name: carma-cadillac-srx-2013-can-driver
@@ -75,11 +63,12 @@ services:
       - container:carma-config:ro
     environment:
       - ROS_IP=192.168.88.10
+      - ROS_NAMESPACE=hardware_interface
     volumes:
       - /opt/carma/logs:/opt/carma/logs
       - /opt/carma/.ros:/home/carma/.ros
       - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
-    command: wait-for-it.sh localhost:11311 -- roslaunch srx_can_driver srx_can_driver_socketcan.launch remap_ns:=/carma/drivers srx_can_can_device:=can2
+    command: wait-for-it.sh localhost:11311 -- roslaunch srx_can_driver srx_can_driver_socketcan.launch srx_can_can_device:=can2
   cadillac-srx-2013-objects-driver:
     image: usdotfhwastol/carma-cadillac-srx-2013-objects-driver:1.0.2
     container_name: carma-cadillac-srx-2013-objects-driver
@@ -88,22 +77,26 @@ services:
       - container:carma-config:ro
     environment:
       - ROS_IP=192.168.88.10
+      - ROS_NAMESPACE=hardware_interface
     volumes:
       - /opt/carma/logs:/opt/carma/logs
       - /opt/carma/.ros:/home/carma/.ros
       - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
-    command: wait-for-it.sh localhost:11311 -- roslaunch srx_objects srx_objects_socketcan.launch remap_ns:=/carma/drivers srx_objects_can_device:=can0
+    command: wait-for-it.sh localhost:11311 -- roslaunch srx_objects srx_objects_socketcan.launch srx_objects_can_device:=can0
   cadillac-srx-2013-controller-driver:
     image: usdotfhwastol/carma-cadillac-srx-2013-controller-driver:1.0.2
     container_name: carma-cadillac-srx-2013-controller-driver
     network_mode: host
     volumes_from: 
       - container:carma-config:ro
+    environment:
+      - ROS_IP=192.168.88.10
+      - ROS_NAMESPACE=hardware_interface
     volumes:
       - /opt/carma/logs:/opt/carma/logs
       - /opt/carma/.ros:/home/carma/.ros
       - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
-    command: wait-for-it.sh localhost:11311 -- roslaunch srx_controller srx_controller.launch remap_ns:=/carma/drivers srx_controller_can_device:=can1
+    command: wait-for-it.sh localhost:11311 -- roslaunch srx_controller srx_controller.launch srx_controller_can_device:=can1
   torc-pinpoint-driver:
     image: usdotfhwastol/carma-torc-pinpoint-driver:1.0.7
     container_name: carma-torc-pinpoint-driver
@@ -112,8 +105,9 @@ services:
       - container:carma-config:ro
     environment:
       - ROS_IP=192.168.88.10
+      - ROS_NAMESPACE=hardware_interface
     volumes:
       - /opt/carma/logs:/opt/carma/logs
       - /opt/carma/.ros:/home/carma/.ros
       - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
-    command: wait-for-it.sh localhost:11311 -- roslaunch pinpoint pinpoint.launch remap_ns:=/carma/drivers
+    command: wait-for-it.sh localhost:11311 -- roslaunch pinpoint pinpoint.launch 

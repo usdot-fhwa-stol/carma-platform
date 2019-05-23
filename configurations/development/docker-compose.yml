@@ -41,19 +41,6 @@ services:
     environment:
       - ROS_IP=127.0.0.1
     command: wait-for-it.sh localhost:11311 -- roslaunch carma carma_docker.launch
-  mock-lateral-control-driver:
-    image: usdotfhwastol/carma:latest
-    network_mode: host
-    container_name: carma-mock-lateral-control-driver
-    volumes_from: 
-      - container:carma-config:ro
-    volumes:
-      - /opt/carma/logs:/opt/carma/logs
-      - /opt/carma/.ros:/home/carma/.ros
-      - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
-    environment:
-      - ROS_IP=127.0.0.1
-    command: wait-for-it.sh localhost:11311 --  rosrun carma lateral_control_driver gov.dot.fhwa.saxton.carma.lateralcontroldriver.LateralControlDriver remap_ns:=/
   mock-can-driver:
     image: usdotfhwastol/carma:latest
     network_mode: host
@@ -66,11 +53,12 @@ services:
       - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
     environment:
       - ROS_IP=127.0.0.1
-    command: wait-for-it.sh localhost:11311 -- roslaunch carma mock_driver.launch simulated_driver:=can data_file:=/opt/carma/app/mock_data/can.csv remap_ns:=/ node_name:=srx_can_driver
-  mock-dsrc-driver:
+      - ROS_NAMESPACE=hardware_interface
+    command: wait-for-it.sh localhost:11311 -- roslaunch carma mock_driver.launch simulated_driver:=can data_file:=/opt/carma/app/mock_data/can.csv node_name:=mock_can
+  mock-comms-driver:
     image: usdotfhwastol/carma:latest
     network_mode: host
-    container_name: carma-mock-dsrc-driver
+    container_name: carma-mock-comms-driver
     volumes_from: 
       - container:carma-config:ro
     volumes:
@@ -79,11 +67,12 @@ services:
       - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
     environment:
       - ROS_IP=127.0.0.1
-    command: wait-for-it.sh localhost:11311 -- roslaunch carma mock_driver.launch simulated_driver:=dsrc data_file:=/opt/carma/app/mock_data/dsrc.csv remap_ns:=/ node_name:=dsrc_driver
-  mock-srx-controller-driver:
+      - ROS_NAMESPACE=hardware_interface
+    command: wait-for-it.sh localhost:11311 -- roslaunch carma mock_driver.launch simulated_driver:=comms data_file:=/opt/carma/app/mock_data/dsrc.csv node_name:=mock_comms
+  mock-controller-driver:
     image: usdotfhwastol/carma:latest
     network_mode: host
-    container_name: carma-mock-srx-controller-driver
+    container_name: carma-srx-controller-driver
     volumes_from: 
       - container:carma-config:ro
     volumes:
@@ -92,7 +81,8 @@ services:
       - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
     environment:
       - ROS_IP=127.0.0.1
-    command: wait-for-it.sh localhost:11311 -- roslaunch carma mock_driver.launch simulated_driver:=srx_controller data_file:=/opt/carma/app/mock_data/srx_controller.csv remap_ns:=/ node_name:=srx_controller
+      - ROS_NAMESPACE=hardware_interface
+    command: wait-for-it.sh localhost:11311 -- roslaunch carma mock_driver.launch simulated_driver:=controller data_file:=/opt/carma/app/mock_data/srx_controller.csv node_name:=mock_controller
   mock-radar-driver:
     image: usdotfhwastol/carma:latest
     network_mode: host
@@ -105,11 +95,12 @@ services:
       - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
     environment:
       - ROS_IP=127.0.0.1
-    command: wait-for-it.sh localhost:11311 -- roslaunch carma mock_driver.launch simulated_driver:=radar data_file:=/opt/carma/app/mock_data/radar.csv remap_ns:=/ node_name:=srx_objects
-  mock-pinpoint-driver:
+      - ROS_NAMESPACE=hardware_interface
+    command: wait-for-it.sh localhost:11311 -- roslaunch carma mock_driver.launch simulated_driver:=radar data_file:=/opt/carma/app/mock_data/radar.csv node_name:=mock_radar
+  mock-gnss-driver:
     image: usdotfhwastol/carma:latest
     network_mode: host
-    container_name: carma-mock-pinpoint-driver
+    container_name: carma-mock-gnss-driver
     volumes_from: 
       - container:carma-config:ro
     volumes:
@@ -118,4 +109,65 @@ services:
       - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
     environment:
       - ROS_IP=127.0.0.1
-    command: wait-for-it.sh localhost:11311 -- roslaunch carma mock_driver.launch simulated_driver:=pinpoint data_file:=/opt/carma/app/mock_data/pinpoint_stationary.csv remap_ns:=/ node_name:=pinpoint_driver
+      - ROS_NAMESPACE=hardware_interface
+    command: wait-for-it.sh localhost:11311 -- roslaunch carma mock_driver.launch simulated_driver:=gnss data_file:=/opt/carma/app/mock_data/pinpoint_stationary.csv node_name:=mock_gnss
+  mock-imu-driver:
+    image: usdotfhwastol/carma:latest
+    network_mode: host
+    container_name: carma-mock-imu-driver
+    volumes_from: 
+      - container:carma-config:ro
+    volumes:
+      - /opt/carma/logs:/opt/carma/logs
+      - /opt/carma/.ros:/home/carma/.ros
+      - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
+    environment:
+      - ROS_IP=127.0.0.1
+      - ROS_NAMESPACE=hardware_interface
+    # TODO data file
+    command: wait-for-it.sh localhost:11311 -- roslaunch carma mock_driver.launch simulated_driver:=imu data_file:=/opt/carma/app/mock_data/radar.csv node_name:=mock_imu
+  mock-lidar-driver:
+    image: usdotfhwastol/carma:latest
+    network_mode: host
+    container_name: carma-mock-lidar-driver
+    volumes_from: 
+      - container:carma-config:ro
+    volumes:
+      - /opt/carma/logs:/opt/carma/logs
+      - /opt/carma/.ros:/home/carma/.ros
+      - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
+    environment:
+      - ROS_IP=127.0.0.1
+      - ROS_NAMESPACE=hardware_interface
+    # TODO data file
+    command: wait-for-it.sh localhost:11311 -- roslaunch carma mock_driver.launch simulated_driver:=lidar data_file:=/opt/carma/app/mock_data/radar.csv node_name:=mock_lidar
+  mock-camera-driver:
+    image: usdotfhwastol/carma:latest
+    network_mode: host
+    container_name: carma-mock-camera-driver
+    volumes_from: 
+      - container:carma-config:ro
+    volumes:
+      - /opt/carma/logs:/opt/carma/logs
+      - /opt/carma/.ros:/home/carma/.ros
+      - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
+    environment:
+      - ROS_IP=127.0.0.1
+      - ROS_NAMESPACE=hardware_interface
+    # TODO data file
+    command: wait-for-it.sh localhost:11311 -- roslaunch carma mock_driver.launch simulated_driver:=camera data_file:=/opt/carma/app/mock_data/radar.csv node_name:=mock_camera
+  mock-roadway-sensor-driver:
+    image: usdotfhwastol/carma:latest
+    network_mode: host
+    container_name: carma-mock-roadway-sensor-driver
+    volumes_from: 
+      - container:carma-config:ro
+    volumes:
+      - /opt/carma/logs:/opt/carma/logs
+      - /opt/carma/.ros:/home/carma/.ros
+      - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
+    environment:
+      - ROS_IP=127.0.0.1
+      - ROS_NAMESPACE=hardware_interface
+    # TODO data file
+    command: wait-for-it.sh localhost:11311 -- roslaunch carma mock_driver.launch simulated_driver:=roadway_sensor data_file:=/opt/carma/app/mock_data/radar.csv node_name:=mock_roadway_sensor
