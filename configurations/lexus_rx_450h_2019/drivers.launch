@@ -47,13 +47,25 @@ If not using simulated drivers they are activated if the respective mock argumen
   <include unless="$(arg mock_comms)" file="$(find dsrc_driver)/launch/dsrc_node.launch"/>
 
   <!-- PACMOD Controller Driver Node -->
-  <include unless="$(arg mock_controller)" file="$(find ssc_interface_wrapper)/launch/ssc_interface_wrapper.launch"/>
+  <include unless="$(arg mock_controller)" file="$(find ssc_interface_wrapper)/launch/ssc_pacmod_driver.launch">
+    <arg name="pacmod_vehicle_type" default="LEXUS_RX_450H" />
+    <arg name="use_kvaser" default="true" />
+    <arg name="kvaser_hardware_id" default="10376" />
+    <arg name="kvaser_circuit_id" default="0" />
+  </include>
 
-  <!-- Novatel GPS/IMU Driver Nodes -->
-  <include unless="$(arg mock_lidar)" file="$(find novatel_gps_driver)/launch/novatel_gps_driver_eth.launch"/>
+  <!-- Novatel GNSS/IMU Driver Nodes -->
+  <include unless="$(arg mock_lidar)" file="$(find novatel_gps_driver)/launch/novatel_gps_driver_eth.launch">
+    <arg name="ip" value="192.168.74.10" />
+    <arg name="port" value="2000" />
+    <arg name="imu_rate" value="100" />
+  </include>
 
   <!-- Velodyne Lidar Driver Nodes -->
-  <include unless="$(arg mock_lidar)" file="$(find velodyne_lidar_wrapper)/launch/velodyne_lidar_wrapper.launch"/>
+  <include unless="$(arg mock_lidar)" file="$(find velodyne_lidar_wrapper)/launch/velodyne_lidar_driver.launch">
+    <arg name="frame_id" value="velodyne"/>
+    <arg name="device_ip" value="192.168.1.201"/>
+  </include>
 
   <!-- TODO AVT Vimba Camera Left Driver Node -->
   <!-- TODO AVT Vimba Camera Right Driver Node -->

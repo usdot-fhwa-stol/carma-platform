@@ -28,6 +28,7 @@ services:
       - /opt/carma/.ros:/home/carma/.ros
     restart: always
     command: roscore
+    
   platform:
     image: usdotfhwastol/carma:2.9.0
     network_mode: host
@@ -41,6 +42,7 @@ services:
       - /opt/carma/.ros:/home/carma/.ros
       - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
     command: wait-for-it.sh localhost:11311 -- roslaunch carma carma_docker.launch
+
   cohda_dsrc_driver:
     image: usdotfhwastol/carma-cohda-dsrc-driver:1.0.0
     container_name: carma-cohda-dsrc-driver
@@ -55,6 +57,7 @@ services:
       - /opt/carma/.ros:/home/carma/.ros
       - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
     command: wait-for-it.sh localhost:11311 -- roslaunch dsrc_driver dsrc_node.launch
+
   pacmod_controller_driver:
     image: usdotfhwastol/carma-pacmod-controller-driver:1.0.0
     container_name: carma-pacmod-controller-driver
@@ -68,7 +71,12 @@ services:
       - /opt/carma/logs:/opt/carma/logs
       - /opt/carma/.ros:/home/carma/.ros
       - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
-    command: wait-for-it.sh localhost:11311 -- roslaunch ssc_interface_wrapper ssc_interface_wrapper.launch
+    command: wait-for-it.sh localhost:11311 -- roslaunch ssc_interface_wrapper ssc_pacmod_driver.launch \
+      pacmod_vehicle_type:="LEXUS_RX_450H" \
+      use_kvaser:=true \
+      kvaser_hardware_id:=10376 \
+      kvaser_circuit_id:=0
+
   novatel_gnss_imu_driver:
     image: usdotfhwastol/novatel-gnss-imu-driver:1.0.0
     container_name: novatel-gnss-imu-driver
@@ -82,7 +90,11 @@ services:
       - /opt/carma/logs:/opt/carma/logs
       - /opt/carma/.ros:/home/carma/.ros
       - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
-    command: wait-for-it.sh localhost:11311 -- roslaunch novatel_gps_driver novatel_gps_driver_eth.launch
+    command: wait-for-it.sh localhost:11311 -- roslaunch novatel_gps_driver novatel_gps_driver_eth.launch \
+      ip:="192.168.74.10" \
+      port:=2000 \
+      imu_rate:=100
+  
   velodyne_lidar_driver:
     image: usdotfhwastol/velodyne-lidar-driver:1.0.0
     container_name: velodyne-lidar-driver
@@ -96,7 +108,9 @@ services:
       - /opt/carma/logs:/opt/carma/logs
       - /opt/carma/.ros:/home/carma/.ros
       - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
-    command: wait-for-it.sh localhost:11311 -- roslaunch velodyne_lidar_wrapper velodyne_lidar_wrapper.launch
+    command: wait-for-it.sh localhost:11311 -- roslaunch velodyne_lidar_wrapper velodyne_lidar_driver.launch \
+      frame_id:="velodyne" \
+      device_ip:="192.168.1.201"
 
   # TODO AVT Vimba Camera Left Driver Node
   # TODO AVT Vimba Camera Right Driver Node
