@@ -46,6 +46,9 @@
 
   <env name="ROSCONSOLE_CONFIG_FILE" value="$(arg PARAM_DIR)/roscpp_log.config"/>
 
+  <!-- Startup Drivers With Main CARMA System -->
+  <arg name="launch_drivers" default="true" doc="True if drivers are to be launched with the CARMA Platform, overrides mock_drivers arg if false"/>
+
   <!-- Simulation Usage -->
   <arg name="mock_drivers" 
     default="controller can comms gnss radar lidar camera roadway_sensor"

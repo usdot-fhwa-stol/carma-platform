@@ -41,13 +41,8 @@
   <arg name="LAUNCH_DIR" default="$(arg CARMA_DIR)/app/bin/share/carma" doc="Directory containing additional carma launch files such as driver.launch"/>
   <arg name="log_config" default="$(arg PARAM_DIR)/log-config.properties" doc="The location of the logging config file"/>
 
-  <!-- Disable Mock Drivers -->
-  <arg name="mock_can"            	default="true" doc="True if using a simulated can driver"/>
-  <arg name="mock_dsrc"           	default="true" doc="True if using a simulated dsrc driver"/>
-  <arg name="mock_srx_controller" 	default="true" doc="True if using a simulated srx controller driver"/>
-  <arg name="mock_pinpoint"       	default="true" doc="True if using a simulated pinpoint driver"/>
-  <arg name="mock_radar"          	default="true" doc="True if using a simulated radar driver"/>
-  <arg name="mock_lateral_controller"   default="true" doc="True if using a simulated lateral controller"/>
+  <!-- Startup Drivers With Main CARMA System -->
+  <arg name="launch_drivers" default="true" doc="True if drivers are to be launched with the CARMA Platform, overrides mock_drivers arg if false"/>
 
   <!-- Rosbag Flag -->
   <arg name="use_rosbag" default="true" doc="Record a rosbag for the to 26 demo"/>

@@ -33,6 +33,9 @@
   <!-- Simulation Usage -->
   <arg name="mock_drivers" default="controller can comms gnss radar lidar camera roadway_sensor" doc="List of driver node base names which will be launched as mock drivers"/>
   
+  <!-- Startup Drivers With Main CARMA System -->
+  <arg name="launch_drivers" default="true" doc="True if drivers are to be launched with the CARMA Platform, overrides mock_drivers arg if false"/>
+
   <!-- Debug -->
   <!-- Set to true to enable debugging on the specified node -->
   <arg name="debug_node" default="" doc="Set to the java node base name to enable debugging on that node. Requires JVM_DEBUG_OPTS environment variable to be set"/>
@@ -42,21 +45,23 @@
 
   <remap from="system_alert" to="/system_alert"/>
 
-  <!-- Simulated Mock Drivers -->
-  <include file="$(arg LAUNCH_DIR)/mock_drivers.launch">
-    <arg name="DATA_DIR" value="$(arg DATA_DIR)"/>
-    <arg name="LAUNCH_DIR" value="$(arg LAUNCH_DIR)"/>
-    <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
-    <arg name="debug_node" value="$(arg debug_node)"/>
-    <arg name="mock_drivers" value="$(arg mock_drivers)"/>
-  </include>
+  <group if="$(arg launch_drivers)">
+    <!-- Simulated Mock Drivers -->
+    <include file="$(arg LAUNCH_DIR)/mock_drivers.launch">
+      <arg name="DATA_DIR" value="$(arg DATA_DIR)"/>
+      <arg name="LAUNCH_DIR" value="$(arg LAUNCH_DIR)"/>
+      <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
+      <arg name="debug_node" value="$(arg debug_node)"/>
+      <arg name="mock_drivers" value="$(arg mock_drivers)"/>
+    </include>
 
-  <!--Driver Launch File if Using Actual Drivers -->
-  <include file="$(arg LAUNCH_DIR)/drivers.launch">
-    <arg name="mock_drivers" value="$(arg mock_drivers)" />
-    <arg name="CARMA_DIR" value="$(arg CARMA_DIR)" />
-    <arg name="PARAM_DIR" value="$(arg PARAM_DIR)" />
-  </include>
+    <!--Driver Launch File if Using Actual Drivers -->
+    <include file="$(arg LAUNCH_DIR)/drivers.launch">
+      <arg name="mock_drivers" value="$(arg mock_drivers)" />
+      <arg name="CARMA_DIR" value="$(arg CARMA_DIR)" />
+      <arg name="PARAM_DIR" value="$(arg PARAM_DIR)" />
+    </include>
+  </group>
 
   <!-- Interface Manager Node -->
   <arg name="debug_interface_mgr" value="$(eval arg('debug_node') == 'interface_mgr')"/>
