@@ -43,7 +43,7 @@ AUTOWARE_PACKAGE_SELECTION="lidar_localizer map_file deadreckoner points_downsam
 
 # The list of message packages used by autoware which will need to have thier rosjava artifacts generated for carma
 # Note: The order of this list is the order of compilation and therefore must account for dependancies
-MSGS_TO_GENERATE="jsk_footstep_msgs jsk_recognition_msgs autoware_msgs"
+MSGS_TO_GENERATE="jsk_footstep_msgs jsk_recognition_msgs autoware_msgs radar_msgs derived_object_msgs"
 
 # Read Options
 while getopts a:c:xrhm:b: option

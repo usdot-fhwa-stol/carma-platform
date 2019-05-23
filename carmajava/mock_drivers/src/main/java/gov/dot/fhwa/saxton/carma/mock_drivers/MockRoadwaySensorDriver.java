@@ -37,10 +37,8 @@ public class MockRoadwaySensorDriver extends AbstractMockDriver {
 
   // Topics
   // Published
-  final Publisher<cav_msgs.HeadingStamped> headingPub;
-  final Publisher<sensor_msgs.NavSatFix> navSatFixPub;
-  final Publisher<nav_msgs.Odometry> odometryPub;
-  final Publisher<geometry_msgs.TwistStamped> velocityPub;
+  final Publisher<derived_object_msgs.LaneModels> lanesPub;
+  final Publisher<derived_object_msgs.ObjectWithCovarianceArray> objectsPub;
 
   // CONSTANTS
   final short SAMPLE_ID_IDX = 0;
@@ -50,21 +48,28 @@ public class MockRoadwaySensorDriver extends AbstractMockDriver {
     super(connectedNode);
     // Topics TODO this whole node
     // Published
-    headingPub =
-      connectedNode.newPublisher("position/heading", cav_msgs.HeadingStamped._TYPE);
-    navSatFixPub =
-      connectedNode.newPublisher("position/nav_sat_fix", sensor_msgs.NavSatFix._TYPE);
-    odometryPub =
-      connectedNode.newPublisher("position/odometry", nav_msgs.Odometry._TYPE);
-    velocityPub =
-      connectedNode.newPublisher("position/velocity", geometry_msgs.TwistStamped._TYPE);
+    lanesPub =
+      connectedNode.newPublisher("roadway_sensor/lane_models", derived_object_msgs.LaneModels._TYPE);
+    objectsPub =
+      connectedNode.newPublisher("roadway_sensor/detected_objects", derived_object_msgs.ObjectWithCovarianceArray._TYPE);
   }
 
   @Override protected void publishData(List<String[]> data) throws IllegalArgumentException {
 
-    for (String[] elements : data) {
-      // TODO
-    }
+    String frameId = "mobile_eye";
+    Time currentTime = connectedNode.getCurrentTime();
+    derived_object_msgs.LaneModels laneMsg = lanesPub.newMessage();
+    derived_object_msgs.ObjectWithCovarianceArray objMsg = objectsPub.newMessage();
+
+    // Build Header
+    std_msgs.Header hdr = laneMsg.getHeader();
+    hdr.setFrameId(frameId);
+    hdr.setStamp(currentTime);
+
+    objMsg.setHeader(hdr);
+
+    lanesPub.publish(laneMsg);
+    objectsPub.publish(objMsg);
   }
 
   @Override protected short getExpectedColCount() {
@@ -76,14 +81,13 @@ public class MockRoadwaySensorDriver extends AbstractMockDriver {
   }
 
   @Override protected List<String> getDriverTypesList() {
-    return new ArrayList<>(Arrays.asList("position"));
+    return new ArrayList<>(Arrays.asList("roadway_sensor"));
   }
 
   @Override public List<String> getDriverAPI() {
     return new ArrayList<>(Arrays.asList(
-      "position/heading",
-      "position/nav_sat_fix",
-      "position/odometry",
-      "position/velocity"));
+      "roadway_sensor/lane_models",
+      "roadway_sensor/detected_objects"
+    ));
   }
 }
