@@ -123,9 +123,9 @@
     </include>
   </group>
 
-  <!-- Comms Stack -->
+  <!-- Comms Messaging Stack -->
   <group ns="$(arg MSG_NS)">
-    <include file="$(arg LAUNCH_DIR)/comms.launch">
+    <include file="$(arg LAUNCH_DIR)/message.launch">
       <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
       <arg name="debug_node" value="$(arg debug_node)"/>
       <arg name="INTR_NS" value="$(arg INTR_NS)"/>
