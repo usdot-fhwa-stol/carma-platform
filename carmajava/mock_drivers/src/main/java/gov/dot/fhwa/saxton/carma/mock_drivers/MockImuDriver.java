@@ -40,7 +40,7 @@ public class MockImuDriver extends AbstractMockDriver {
   final Publisher<sensor_msgs.Imu> imuPub;
   final String imuTopic = "imu/raw_data";
 
-  private final short EXPECTED_DATA_COL_COUNT = 1; // TODO
+  private final short EXPECTED_DATA_COL_COUNT = 132; // TODO
   private final short SAMPLE_ID_IDX = 1;
 
   public MockImuDriver(ConnectedNode connectedNode) {

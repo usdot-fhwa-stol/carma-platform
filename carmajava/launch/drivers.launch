@@ -31,13 +31,17 @@ If not using simulated drivers they are activated if the respective mock argumen
 
   <!-- Simulation Usage -->
   <!-- Simulation Usage -->
-  <arg name="mock_drivers"        default="lateral_controller" doc="List of driver node base names which will be launched as mock drivers"/>
+  <arg name="mock_drivers"        default="" doc="List of driver node base names which will be launched as mock drivers"/>
 
-  <arg name="mock_can"                  value="$(eval 'can' in arg('mock_drivers').split())"/>
-  <arg name="mock_comms"                value="$(eval 'comms' in arg('mock_drivers').split())"/>
-  <arg name="mock_lon_controller"       value="$(eval 'lon_controller' in arg('mock_drivers').split())"/>
-  <arg name="mock_gnss"                 value="$(eval 'gnss' in arg('mock_drivers').split())"/>
-  <arg name="mock_radar"                value="$(eval 'radar' in arg('mock_drivers').split())"/>
+  <arg name="mock_can"            value="$(eval 'can' in arg('mock_drivers').split())"/>
+  <arg name="mock_comms"          value="$(eval 'comms' in arg('mock_drivers').split())"/>
+  <arg name="mock_controller"     value="$(eval 'controller' in arg('mock_drivers').split())"/>
+  <arg name="mock_gnss"           value="$(eval 'gnss' in arg('mock_drivers').split())"/>
+  <arg name="mock_radar"          value="$(eval 'radar' in arg('mock_drivers').split())"/>
+  <arg name="mock_imu"            value="$(eval 'imu' in arg('mock_drivers').split())"/>
+  <arg name="mock_lidar"          value="$(eval 'lidar' in arg('mock_drivers').split())"/>
+  <arg name="mock_camera"         value="$(eval 'camera' in arg('mock_drivers').split())"/>
+  <arg name="mock_roadway_sensor" value="$(eval 'roadway_sensor' in arg('mock_drivers').split())"/>
 
   <!-- DSRC OBU Driver Node -->
   <include unless="$(arg mock_comms)" file="$(find dsrc_driver)/launch/dsrc_node.launch"/>
@@ -51,7 +55,7 @@ If not using simulated drivers they are activated if the respective mock argumen
   </include>
 
   <!--SRX Controller Driver Node-->
-  <include unless="$(arg mock_lon_controller)" file="$(find srx_controller)/launch/srx_controller.launch">
+  <include unless="$(arg mock_controller)" file="$(find srx_controller)/launch/srx_controller.launch">
     <arg name="srx_controller_can_device" value="can1"/>
   </include>
       

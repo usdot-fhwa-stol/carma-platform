@@ -48,7 +48,7 @@
 
   <!-- Simulation Usage -->
   <arg name="mock_drivers" 
-    default="lateral_controller can comms lon_controller gnss radar"
+    default="controller can comms gnss radar lidar camera roadway_sensor"
     doc="List of driver node base names which will be launched as mock drivers"
   />
 

@@ -42,7 +42,7 @@ public class MockCameraDriver extends AbstractMockDriver {
   final String imageTopic = "camera/1/image_raw";
   final String infoTopic = "camera/1/camera_info";
 
-  private final short EXPECTED_DATA_COL_COUNT = 1; // TODO
+  private final short EXPECTED_DATA_COL_COUNT = 132; // TODO
   private final short SAMPLE_ID_IDX = 1;
 
   public MockCameraDriver(ConnectedNode connectedNode) {

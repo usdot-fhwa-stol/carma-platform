@@ -33,7 +33,7 @@ If not using simulated drivers they are activated if the respective mock argumen
   <!-- Directory of Simulation Files -->
   <arg name="DATA_DIR" default="$(find carma)/mock_drivers/src/test/data" doc="Directory of driver simulation data files"/>
   
-  <!-- Data Files -->
+  <!-- Data Files TODO -->
   <arg name="can_data_file" value="$(arg DATA_DIR)/can.csv"/>
   <arg name="dsrc_data_file" value="$(arg DATA_DIR)/dsrc.csv"/>
   <arg name="srx_controller_data_file" value="$(arg DATA_DIR)/srx_controller.csv"/>
@@ -46,62 +46,92 @@ If not using simulated drivers they are activated if the respective mock argumen
   <arg name="debug_node" default="" doc="Set to the java node base name to enable debugging on that node"/>
 
   <!-- Simulation Usage -->
-  <arg name="mock_drivers"        default="lateral_controller" doc="List of driver node types which will be launched as mock drivers"/>
+  <arg name="mock_drivers" default="controller can comms gnss radar lidar camera roadway_sensor" doc="List of driver node base names which will be launched as mock drivers"/>
 
-  <arg name="mock_can"                  value="$(eval 'can' in arg('mock_drivers').split())"/>
-  <arg name="mock_comms"                 value="$(eval 'comms' in arg('mock_drivers').split())"/>
-  <arg name="mock_lon_ontroller"       value="$(eval 'lon_controller' in arg('mock_drivers').split())"/>
-  <arg name="mock_gnss"             value="$(eval 'gnss' in arg('mock_drivers').split())"/>
-  <arg name="mock_radar"                value="$(eval 'radar' in arg('mock_drivers').split())"/>
-  <arg name="mock_lateral_controller"   value="$(eval 'lateral_controller' in arg('mock_drivers').split())"/>
+  <arg name="mock_can"            value="$(eval 'can' in arg('mock_drivers').split())"/>
+  <arg name="mock_comms"          value="$(eval 'comms' in arg('mock_drivers').split())"/>
+  <arg name="mock_controller"     value="$(eval 'controller' in arg('mock_drivers').split())"/>
+  <arg name="mock_gnss"           value="$(eval 'gnss' in arg('mock_drivers').split())"/>
+  <arg name="mock_radar"          value="$(eval 'radar' in arg('mock_drivers').split())"/>
+  <arg name="mock_imu"            value="$(eval 'imu' in arg('mock_drivers').split())"/>
+  <arg name="mock_lidar"          value="$(eval 'lidar' in arg('mock_drivers').split())"/>
+  <arg name="mock_camera"         value="$(eval 'camera' in arg('mock_drivers').split())"/>
+  <arg name="mock_roadway_sensor" value="$(eval 'roadway_sensor' in arg('mock_drivers').split())"/>
 
-  <param name="OutputA" value="$(eval arg('mock_drivers').split())"/>
-  <param name="OutputB" value="$(eval 'gnss' in arg('mock_drivers').split())"/>
+  <!-- Remappings for external packages -->
+  <remap from="system_alert" to="/system_alert"/>
 
-  <!-- Simulated DSRC Driver Node -->
+  <!-- Simulated Comms Driver Node -->
   <include if="$(arg mock_comms)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
-    <arg name="node_name"        value="dsrc"/>
-    <arg name="simulated_driver" value="dsrc"/>
-    <arg name="data_file"   value="$(arg dsrc_data_file)"/>
-    <arg name="debug_driver"     value="$(eval arg('debug_node') == 'dsrc')"/>
+    <arg name="node_name"        value="mock_comms"/>
+    <arg name="simulated_driver" value="comms"/>
+    <arg name="data_file"        value="$(arg dsrc_data_file)"/><!-- TODO -->
+    <arg name="debug_driver"     value="$(eval arg('debug_node') == 'mock_comms')"/>
   </include>
 
-  <!-- Simulated PinPoint Driver Node -->
+  <!-- Simulated GNSS Driver Node -->
   <include if="$(arg mock_gnss)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
-    <arg name="node_name"        value="pin_point_application"/>
-    <arg name="simulated_driver" value="pinpoint"/>
-    <arg name="data_file"   value="$(arg pinpoint_data_file)"/>
-    <arg name="debug_driver"     value="$(eval arg('debug_node') == 'pin_point_application')"/>
+    <arg name="node_name"        value="mock_gnss"/>
+    <arg name="simulated_driver" value="gnss"/>
+    <arg name="data_file"        value="$(arg pinpoint_data_file)"/><!-- TODO -->
+    <arg name="debug_driver"     value="$(eval arg('debug_node') == 'mock_gnss')"/>
   </include>
 
   <!-- Simulated CAN Driver Node -->
   <include if="$(arg mock_can)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
-    <arg name="node_name"        value="srx_can"/>
+    <arg name="node_name"        value="mock_can"/>
     <arg name="simulated_driver" value="can"/>
-    <arg name="data_file"   value="$(arg can_data_file)"/>
-    <arg name="debug_driver"     value="$(eval arg('debug_node') == 'srx_can')"/>
+    <arg name="data_file"        value="$(arg can_data_file)"/><!-- TODO -->
+    <arg name="debug_driver"     value="$(eval arg('debug_node') == 'mock_can')"/>
   </include>
 
-  <!-- Simulated SRX Controller Driver Node -->
-  <include if="$(arg mock_lon_ontroller)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
-    <arg name="node_name"        value="srx_controller"/>
-    <arg name="simulated_driver" value="srx_controller"/>
-    <arg name="data_file"   value="$(arg srx_controller_data_file)"/>
-    <arg name="debug_driver"     value="$(eval arg('debug_node') == 'srx_controller')"/>
+  <!-- Simulated Controller Driver Node -->
+  <include if="$(arg mock_controller)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
+    <arg name="node_name"        value="mock_controller"/>
+    <arg name="simulated_driver" value="controller"/>
+    <arg name="data_file"        value="$(arg srx_controller_data_file)"/><!-- TODO -->
+    <arg name="debug_driver"     value="$(eval arg('debug_node') == 'mock_controller')"/>
   </include>
 
   <!-- Simulated Radar Driver Node -->
   <include if="$(arg mock_radar)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
-    <arg name="node_name"        value="srx_objects"/>
+    <arg name="node_name"        value="mock_radar"/>
     <arg name="simulated_driver" value="radar"/>
-    <arg name="data_file"   value="$(arg radar_data_file)"/>
-    <arg name="debug_driver"     value="$(eval arg('debug_node') == 'srx_objects')"/>
+    <arg name="data_file"        value="$(arg radar_data_file)"/><!-- TODO -->
+    <arg name="debug_driver"     value="$(eval arg('debug_node') == 'mock_radar')"/>
+  </include>
+
+  <!-- Simulated IMU Driver Node -->
+  <include if="$(arg mock_imu)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
+    <arg name="node_name"        value="mock_imu"/>
+    <arg name="simulated_driver" value="imu"/>
+    <arg name="data_file"        value="$(arg radar_data_file)"/> <!-- TODO -->
+    <arg name="debug_driver"     value="$(eval arg('debug_node') == 'mock_imu')"/>
+  </include>
+
+  <!-- Simulated Lidar Driver Node -->
+  <include if="$(arg mock_lidar)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
+    <arg name="node_name"        value="mock_lidar"/>
+    <arg name="simulated_driver" value="lidar"/>
+    <arg name="data_file"        value="$(arg radar_data_file)"/><!-- TODO -->
+    <arg name="debug_driver"     value="$(eval arg('debug_node') == 'mock_lidar')"/>
+  </include>
+
+  <!-- Simulated Camera Driver Node -->
+  <include if="$(arg mock_camera)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
+    <arg name="node_name"        value="mock_camera"/>
+    <arg name="simulated_driver" value="camera"/>
+    <arg name="data_file"   value="$(arg radar_data_file)"/><!-- TODO -->
+    <arg name="debug_driver"     value="$(eval arg('debug_node') == 'mock_camera')"/>
+  </include>
+
+  <!-- Simulated Roadway Sensor Driver Node -->
+  <include if="$(arg mock_roadway_sensor)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
+    <arg name="node_name"        value="mock_roadway_sensor"/>
+    <arg name="simulated_driver" value="roadway_sensor"/>
+    <arg name="data_file"   value="$(arg radar_data_file)"/><!-- TODO -->
+    <arg name="debug_driver"     value="$(eval arg('debug_node') == 'mock_roadway_sensor')"/>
   </include>
 	
-  <!--Lateral Controller Driver Node -->
-  <include file="$(arg LAUNCH_DIR)/lateral_controller_driver.launch">
-    <arg name="debug_node" value="$(eval arg('debug_node') == 'lateral_controller')"/>
-    <arg name="PARAM_DIR"   value="$(arg PARAM_DIR)"/>
-  </include>
 
 </launch>

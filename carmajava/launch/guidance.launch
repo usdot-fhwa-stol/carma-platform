@@ -42,19 +42,25 @@
   <remap from="nav_sat_fix" to="$(arg INTR_NS)/gnss/nav_sat_fix"/>
   <remap from="velocity" to="$(arg INTR_NS)/gnss/velocity"/>
   
-  <remap from="/republish/cmd_lateral" to="$(arg INTR_NS)/control/cmd_lateral"/>
-  <remap from="/republish/cmd_longitudinal_effort" to="$(arg INTR_NS)/control/cmd_longitudinal_effort"/>
-  <remap from="/republish/cmd_speed" to="$(arg INTR_NS)/control/cmd_speed"/>
-  <remap from="robot_enabled" to="$(arg INTR_NS)/control/robot_enabled"/>
-  <remap from="/control/cmd_lateral" to="$(arg INTR_NS)/control/cmd_lateral"/>
-  <remap from="/control/cmd_longitudinal_effort" to="$(arg INTR_NS)/control/cmd_longitudinal_effort"/>
-  <remap from="/control/cmd_speed" to="$(arg INTR_NS)/control/cmd_speed"/>
+  <remap from="/republish/cmd_lateral" to="$(arg INTR_NS)/controller/cmd_lateral"/>
+  <remap from="/republish/cmd_longitudinal_effort" to="$(arg INTR_NS)/controller/cmd_longitudinal_effort"/>
+  <remap from="/republish/cmd_speed" to="$(arg INTR_NS)/controller/cmd_speed"/>
+  <remap from="robot_enabled" to="$(arg INTR_NS)/controller/robot_enabled"/>
+  <remap from="/controller/cmd_lateral" to="$(arg INTR_NS)/controller/cmd_lateral"/>
+  <remap from="/controller/cmd_longitudinal_effort" to="$(arg INTR_NS)/controller/cmd_longitudinal_effort"/>
+  <remap from="/controller/cmd_speed" to="$(arg INTR_NS)/controller/cmd_speed"/>
+  <remap from="enable_robotic" to="$(arg INTR_NS)/controller/enable_robotic"/>
 
   <remap from="ui_instructions" to="$(arg UI_NS)/ui_instructions"/>
 
   <remap from="get_transform" to="$(arg TF_NS)/get_transform"/>
 
-  <remap from="~vehicle_id" to="/vehicle_id"/> <!-- TODO this is a special case for speed harm plugin until plugins become nodes -->
+  <!-- TODO Look into if there is a better way for handling global prameters -->
+  <remap from="~vehicle_id" to="/vehicle_id"/> 
+  <remap from="vehicle_length" to="/vehicle_length"/> 
+  <remap from="vehicle_width" to="/vehicle_width"/> 
+
+  <remap from="system_alert" to="/system_alert"/>
 
   <!-- Guidance Main Node -->
   <node pkg="carma" type="guidance" name="guidance_main" args="gov.dot.fhwa.saxton.carma.guidance.GuidanceMain">

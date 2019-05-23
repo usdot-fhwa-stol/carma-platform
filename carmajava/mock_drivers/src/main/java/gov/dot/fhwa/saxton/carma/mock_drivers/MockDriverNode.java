@@ -60,7 +60,7 @@ public class MockDriverNode extends SaxtonBaseNode {
       case "imu":
         simulatedDriver = new MockImuDriver(connectedNode);
         break;
-      case "gps":
+      case "gnss":
         simulatedDriver = new MockGnssDriver(connectedNode);
         break;
       case "lidar":

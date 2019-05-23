@@ -12,7 +12,7 @@ Automated Script to process bag files
 
 		#/carma/drivers/srx_can/can/brake_position > brake_position.csv
 		/carma/drivers/srx_can/can/speed > can_speed.csv
-		/carma/drivers/srx_controller/control/cmd_speed > cmd_speed.csv
+		/carma/drivers/srx_controller/controller/cmd_speed > cmd_speed.csv
 		#/carma/drivers/srx_objects/f_lrr/sensor/objects > front_radar.csv
 		#/carma/guidance/outgoing_mobility_operation > outgoing_mobility_operation.csv
 		/carma/guidance/outgoing_mobility_path > outgoing_mobility_path.csv

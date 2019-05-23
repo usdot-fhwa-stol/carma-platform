@@ -46,7 +46,7 @@ public class MockLidarDriver extends AbstractMockDriver {
   // CONSTANTS
   // TODO setup to use actual data file
   final short SAMPLE_ID_IDX = 0;
-  private final short EXPECTED_DATA_COL_COUNT = 1;
+  private final short EXPECTED_DATA_COL_COUNT = 132;
 
   public MockLidarDriver(ConnectedNode connectedNode) {
     super(connectedNode);

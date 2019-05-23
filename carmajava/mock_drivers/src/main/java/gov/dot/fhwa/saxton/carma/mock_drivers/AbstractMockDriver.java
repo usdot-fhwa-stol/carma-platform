@@ -216,7 +216,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
         case "radar":
           driverStatusMsg.setRadar(true);
           break;
-        case "gps":
+        case "gnss":
           driverStatusMsg.setGnss(true);
           break;
         case "imu":

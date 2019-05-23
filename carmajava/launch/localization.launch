@@ -45,6 +45,8 @@
   <!-- Remap topics from external packages -->
   <remap from="imu_raw" to="$(arg INTR_NS)/imu/imu_raw"/>
 
+  <remap from="system_alert" to="/system_alert"/>
+
   <!-- <arg name="current_twist" default="current_twist" doc="Remapping of the twist topic used by the deadreckoner node"/>
   <arg name="current_odom" default="current_odom" doc="Remapping of the twist topic used by the deadreckoner node"/> -->
   <!-- Localization Package -->

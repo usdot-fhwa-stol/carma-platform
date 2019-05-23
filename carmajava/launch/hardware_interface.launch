@@ -31,7 +31,7 @@
   <arg name="UI_NS" default="/ui" doc="Namespace of parameters used by the ui and rosbridge"/>
 
   <!-- Simulation Usage -->
-  <arg name="mock_drivers" default="lateral_controller" doc="True if using a simulated can driver"/>
+  <arg name="mock_drivers" default="controller can comms gnss radar lidar camera roadway_sensor" doc="List of driver node base names which will be launched as mock drivers"/>
   
   <!-- Debug -->
   <!-- Set to true to enable debugging on the specified node -->
@@ -39,6 +39,8 @@
 
   <!-- Remap topics from external packages -->
   <remap from="ui_instructions" to="$(arg UI_NS)/ui_instructions"/>
+
+  <remap from="system_alert" to="/system_alert"/>
 
   <!-- Simulated Mock Drivers -->
   <include file="$(arg LAUNCH_DIR)/mock_drivers.launch">

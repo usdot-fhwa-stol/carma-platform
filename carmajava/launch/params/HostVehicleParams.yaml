@@ -6,14 +6,14 @@ vehicle_color: 'UNCONFIGURED-COLOR'
 
 # Double: Host vehicle height
 # Units: Meters
-vehicle_height: 5.0
+vehicle_height: 2.0
 
 # String: Host vehicle’s Unique ID that will be used in mobility messages.
 vehicle_id: 'UNCONFIGURED-ID'
 
 # Double: Host vehicle length
 # Units: Meters
-vehicle_length: 15.0
+vehicle_length: 4.7
 
 # String: Host vehicle make
 vehicle_make: 'UNCONFIGURED-MAKE'
@@ -23,7 +23,7 @@ vehicle_model: 'UNCONFIGURED-MODEL'
 
 # Double: Host vehicle width
 # Units: Meters
-vehicle_width: 5.0
+vehicle_width: 1.75
 
 # Integer: Host vehicle year
 # Units: Year

@@ -95,7 +95,7 @@ public class MockControllerDriver extends AbstractMockDriver {
 
     // Services
     // Server
-    setLightsService = connectedNode.newServiceServer("control/set_lights", cav_srvs.SetLights._TYPE,
+    setLightsService = connectedNode.newServiceServer("controller/set_lights", cav_srvs.SetLights._TYPE,
         new ServiceResponseBuilder<SetLightsRequest, SetLightsResponse>() {
           @Override
           public void build(cav_srvs.SetLightsRequest request, cav_srvs.SetLightsResponse response) {
