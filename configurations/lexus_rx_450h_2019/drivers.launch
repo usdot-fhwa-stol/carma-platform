@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<!--
+  Copyright (C) 2018-2019 LEIDOS.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+<!--
+	drivers.launch
+
+This file is used for vehicle configurations. The arguments from carma.launch should pass on to carma_src.launch, which should then pass those arguments to this file. The arguments in the carma.launch file will override all of the default values of the arguments being passed, so you should be making changes to the carma.launch to configure it to your vehicle. 
+
+If not using simulated drivers they are activated if the respective mock arguments being passed in are false. These lines below activate the respective actual driver if the respective mock argument being passed is false.
+
+-->
+
+<launch>
+
+  <!-- Directory of Parameter Files -->
+  <arg name="CARMA_DIR" default="$(find carma)" doc="The path of the package directory"/>
+  <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/launch/params" doc="Directory of yaml parameter files"/>
+
+  <!-- Simulation Usage -->
+  <!-- Simulation Usage -->
+  <arg name="mock_drivers"        default="" doc="List of driver node base names which will be launched as mock drivers"/>
+
+  <arg name="mock_can"            value="$(eval 'can' in arg('mock_drivers').split())"/>
+  <arg name="mock_comms"          value="$(eval 'comms' in arg('mock_drivers').split())"/>
+  <arg name="mock_controller"     value="$(eval 'controller' in arg('mock_drivers').split())"/>
+  <arg name="mock_gnss"           value="$(eval 'gnss' in arg('mock_drivers').split())"/>
+  <arg name="mock_radar"          value="$(eval 'radar' in arg('mock_drivers').split())"/>
+  <arg name="mock_imu"            value="$(eval 'imu' in arg('mock_drivers').split())"/>
+  <arg name="mock_lidar"          value="$(eval 'lidar' in arg('mock_drivers').split())"/>
+  <arg name="mock_camera"         value="$(eval 'camera' in arg('mock_drivers').split())"/>
+  <arg name="mock_roadway_sensor" value="$(eval 'roadway_sensor' in arg('mock_drivers').split())"/>
+
+  <!-- DSRC OBU Driver Node -->
+  <include unless="$(arg mock_comms)" file="$(find dsrc_driver)/launch/dsrc_node.launch"/>
+
+  <!-- PACMOD Controller Driver Node -->
+  <include unless="$(arg mock_controller)" file="$(find ssc_interface_wrapper)/launch/ssc_interface_wrapper.launch"/>
+
+  <!-- Novatel GPS/IMU Driver Nodes -->
+  <include unless="$(arg mock_lidar)" file="$(find novatel_gps_driver)/launch/novatel_gps_driver_eth.launch"/>
+
+  <!-- Velodyne Lidar Driver Nodes -->
+  <include unless="$(arg mock_lidar)" file="$(find velodyne_lidar_wrapper)/launch/velodyne_lidar_wrapper.launch"/>
+
+  <!-- TODO AVT Vimba Camera Left Driver Node -->
+  <!-- TODO AVT Vimba Camera Right Driver Node -->
+  <!-- TODO DelphiESR Front Driver Node -->
+  <!-- TODO Delphi Srr2 Front Left Driver Node -->
+  <!-- TODO Delphi Srr2 Front Right Driver Node -->
+  <!-- TODO Delphi Srr2 Rear Left Driver Node -->
+  <!-- TODO Delphi Srr2 Rear Right Driver Node -->
+
+</launch>
