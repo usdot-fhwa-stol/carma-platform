@@ -1,6 +1,10 @@
 # HostVehicleParams.yaml
 # Defines the ros parameters which define the host vehicle's characteristics
 
+# TODO it doesn't make sense for this file to contain vehicle dimensions
+# A vehicle with different dimensions would have its own urdf and therefore its own docker configuration. 
+# The only parameters in this file that would truly change between vehicles of the same configuration is ID and color. 
+
 # String: Host vehicle color
 vehicle_color: 'UNCONFIGURED-COLOR'
 
