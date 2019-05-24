@@ -50,10 +50,9 @@
   <!-- <arg name="current_twist" default="current_twist" doc="Remapping of the twist topic used by the deadreckoner node"/>
   <arg name="current_odom" default="current_odom" doc="Remapping of the twist topic used by the deadreckoner node"/> -->
   <!-- Localization Package -->
-  <!-- Point Cloud Map TODO file location-->
-  <node pkg="map_file" type="points_map_loader" name="points_map_loader" args="noupdate $(find carma)/map/example_map.pcd" />
+  <!-- Point Cloud Map TODO file location and parameter loading process -->
+  <node pkg="map_file" type="points_map_loader" name="points_map_loader" args="noupdate $(find carma)/map/base_map.pcd" />
 
-  <!-- TODO group? -->
   <!-- NDT Matching-->
   <!-- This namesapce sets the parameters which are not set by default in the ndt_matching.launch file -->
   <!-- These parameters are not in the ndt_matching node private namespace-->
