@@ -30,6 +30,7 @@
 	<link name="radar_rl" />
 	<link name="radar_rr" />
   <link name="host_vehicle"/> <!-- Bounding box center of vehicle (used in BSM)-->
+	<link name="vehicle_front" />
 
   <!-- Reference Frame Transforms -->
   
