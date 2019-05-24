@@ -84,7 +84,7 @@ services:
       - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
     command: wait-for-it.sh localhost:11311 -- roslaunch srx_objects srx_objects_socketcan.launch srx_objects_can_device:=can0
   cadillac-srx-2013-controller-driver:
-    image: usdotfhwastol/carma-cadillac-srx-2013-controller-driver:1.0.2
+    image: usdotfhwastol/carma-cadillac-srx-2013-controller-driver:1.0.3
     container_name: carma-cadillac-srx-2013-controller-driver
     network_mode: host
     volumes_from: 
