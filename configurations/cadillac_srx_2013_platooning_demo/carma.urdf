@@ -18,7 +18,7 @@
     This file defines the static transformations of the CAV platform operating on the green cadillac.
     These are only example values at this time. This is to test if it works
 -->
-<robot name="carma_srx">
+<robot name="carma_vehicle">
   <!-- Frames -->
   <link name="base_link" /> <!-- Back Axle -->
   <link name="host_vehicle"/> <!-- Bounding box center of vehicle (used in BSM)-->
