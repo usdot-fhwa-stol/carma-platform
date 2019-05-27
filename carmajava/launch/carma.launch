@@ -17,7 +17,7 @@
 <!--
 	carma.launch
 
-  A the ros launch file for the STOL CAV Prototype ROS Network.
+  The ros launch file for the CARMA ROS Network.
   Launches all the needed ros nodes and sets up the parameter server.
   Also sets up all static transforms used by tf2 within the system.
 

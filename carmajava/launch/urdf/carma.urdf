@@ -14,9 +14,8 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<!-- Green Cadillac Robot Description File
-    This file defines the static transformations of the CAV platform operating on the green cadillac.
-    These are only example values at this time. This is to test if it works
+<!-- Example Robot Description File
+    This file defines the example static transformations of the CARMA platform operating on a passanger car.
 -->
 <robot name="vehicle_platform">
 

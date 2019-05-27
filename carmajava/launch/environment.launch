@@ -15,7 +15,7 @@
   the License.
 -->
 <!--
-	Launch file for launching the nodes in the CARMA localization stack minus drivers
+	Launch file for launching the nodes in the CARMA environmental perception stack
 -->
 <launch>
   <!-- TODO Object Tracking and World Model go here -->

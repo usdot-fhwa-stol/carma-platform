@@ -15,12 +15,7 @@
   the License.
 -->
 <!--
-	drivers.launch
-
-This file is used for vehicle configurations. The arguments from carma.launch should pass on to carma_src.launch, which should then pass those arguments to this file. The arguments in the carma.launch file will override all of the default values of the arguments being passed, so you should be making changes to the carma.launch to configure it to your vehicle. 
-
-If not using simulated drivers they are activated if the respective mock arguments being passed in are false. These lines below activate the respective actual driver if the respective mock argument being passed is false.
-
+	This file launches the desired mock drivers for CARMA
 -->
 
 <launch>

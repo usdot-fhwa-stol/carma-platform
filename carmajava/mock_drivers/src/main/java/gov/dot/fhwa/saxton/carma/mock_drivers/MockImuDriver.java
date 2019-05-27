@@ -25,7 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * A class which can be used to simulate a pinpoint position driver for the CarmaPlatform.
+ * A class which can be used to simulate a IMU driver for the CARMA Platform.
  * <p>
  * Command line test:
  * ROSJava does not support rosrun parameter setting so a rosrun is a multi step process

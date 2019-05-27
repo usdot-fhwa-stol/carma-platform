@@ -15,7 +15,7 @@
   the License.
 -->
 <!--
-	Launch file for launching the nodes in the CARMA localization stack minus drivers
+	Launch file for launching the nodes in the CARMA guidance stack
 -->
 <launch>
   <arg name="PARAM_DIR" default="$(find carma)/launch/params" doc="Directory of yaml parameter files"/>
@@ -76,7 +76,7 @@
 
   </node>
 
-  <!-- TODO Route node will go here or above guidance node -->
+  <!-- TODO Route Generation node (route planning) will go here or above guidance node -->
 
   <!-- Guidance Command Repeater Node TODO remapping-->
   <include file="$(find guidance_command_repeater)/launch/guidance_command_repeater.launch"/>

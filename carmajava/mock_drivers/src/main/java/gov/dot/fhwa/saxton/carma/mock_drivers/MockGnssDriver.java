@@ -25,11 +25,11 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * A class which can be used to simulate a pinpoint position driver for the CarmaPlatform.
+ * A class which can be used to simulate a GNSS driver for the CARMA Platform.
  * <p>
  * Command line test:
  * ROSJava does not support rosrun parameter setting so a rosrun is a multi step process
- * rosparam set /mock_driver/simulated_driver 'pinpoint'
+ * rosparam set /mock_driver/simulated_driver 'gnss'
  * rosparam set /mock_driver/data_file_path '/opt/carma/test_data/pinpoint_stationary.csv'
  * rosrun carma mock_drivers gov.dot.fhwa.saxton.carma.mock_drivers.MockDriverNode
  */
