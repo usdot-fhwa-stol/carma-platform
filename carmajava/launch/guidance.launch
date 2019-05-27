@@ -38,9 +38,9 @@
   <remap from="outgoing_mobility_request" to="$(arg MSG_NS)/outgoing_mobility_request"/>
   <remap from="outgoing_mobility_response" to="$(arg MSG_NS)/outgoing_mobility_response"/>
 
-  <remap from="heading" to="$(arg INTR_NS)/gnss/heading"/>
-  <remap from="nav_sat_fix" to="$(arg INTR_NS)/gnss/nav_sat_fix"/>
-  <remap from="velocity" to="$(arg INTR_NS)/gnss/velocity"/>
+  <remap from="heading" to="$(arg INTR_NS)/gnss/heading_raw"/>
+  <remap from="nav_sat_fix" to="$(arg INTR_NS)/gnss/fix_raw"/>
+  <remap from="velocity" to="$(arg INTR_NS)/gnss/vel_raw"/>
   
   <remap from="/republish/cmd_lateral" to="$(arg INTR_NS)/controller/cmd_lateral"/>
   <remap from="/republish/cmd_longitudinal_effort" to="$(arg INTR_NS)/controller/cmd_longitudinal_effort"/>
