@@ -1,0 +1,137 @@
+#!/bin/bash
+
+#  Copyright (C) 2018-2019 LEIDOS.
+# 
+#  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#  use this file except in compliance with the License. You may obtain a copy of
+#  the License at
+# 
+#  http://www.apache.org/licenses/LICENSE-2.0
+# 
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#  License for the specific language governing permissions and limitations under
+#  the License.
+
+# This scipt builds the CARMA platform and its Autoware.ai dependancies. 
+
+usage() { 
+  echo "USAGE carma_build [OPTION]
+  carma_build will build the CARMA Platform including any drivers in the same workspace as well as any required Autoware.ai components
+  
+  -a Path to Autoware.ai workspace. If this is not specified it is assumed CARMA and Autoware.ai share a workspace 
+  -c Path to CARMA workspace.
+  -x Skip Autoware.ai build. In this case Autoware.ai will be sourced from the location specified by -a
+  -r CARMA rebuild flag. This will do a clean build of the CARMA code. Autoware.ai code is always cleaned before building even without this flag.
+  -m Additional build arguments to pass to CARMA's catkin_make install
+  -b Additional build arguments to pass to Autoware.ai's colcon build
+  -h Print help
+  ";
+}
+
+
+# Default environment variables
+carma_workspace="$(realpath ../..)"
+autoware_src="$(realpath ${carma_workspace}/src/autoware.ai)"
+skip_autoware=false
+rebuild_carma=false
+carma_build_args=""
+autoware_build_args=""
+# The list of packages which are required by carma from autoware
+AUTOWARE_PACKAGE_SELECTION="lidar_localizer map_file deadreckoner points_downsampler lane_planner waypoint_maker autoware_msgs"
+
+# The list of message packages used by autoware which will need to have thier rosjava artifacts generated for carma
+# Note: The order of this list is the order of compilation and therefore must account for dependancies
+MSGS_TO_GENERATE="jsk_footstep_msgs jsk_recognition_msgs autoware_msgs radar_msgs derived_object_msgs"
+
+# Read Options
+while getopts a:c:xrhm:b: option
+do
+	case "${option}"
+	in
+		a) autoware_src="$(realpath ${OPTARG})";;
+		c) carma_workspace="$(realpath ${OPTARG})";;
+    x) skip_autoware=true;;
+    r) rebuild_carma=true;;
+    m) carma_build_args=${OPTARG};;
+    b) autoware_build_args=${OPTARG};;
+    h) usage; exit 0;;
+		\?) echo "Unknown option: -$OPTARG" >&2; exit 1;;
+		:) echo "Missing option argument for -$OPTARG" >&2; exit 1;;
+		*) echo "Unimplemented option: -$OPTARG" >&2; exit 1;;
+
+	esac
+done
+
+echo "
+Attempting to build CARMA
+CARMA Workspace: ${carma_workspace}
+Autoware Source Dir: ${autoware_src}
+"
+
+# Clean workspace if needed
+old_pwd="${PWD}"
+cd ${carma_workspace}
+
+if [ "${rebuild_carma}" = true ]; then
+  echo "Clean CARMA build requested with -r option"
+  echo "Claning carma workspace"
+  rm -rf build devel install
+fi
+
+cd ${old_pwd}
+
+###
+# Build autoware or skip if requested
+###
+if [ "${skip_autoware}" = true ]; then
+  echo "Skipping Autoware build due to -x option"
+  source "${autoware_src}/ros/install/setup.bash"
+else
+  echo "Building Autoware required packages ${AUTOWARE_PACKAGE_SELECTION}"
+
+  cd ${autoware_src}/ros
+
+  ./colcon_release "${autoware_build_args}" --executor sequential --packages-up-to "${AUTOWARE_PACKAGE_SELECTION}"
+  source ./install/setup.bash
+  echo "Autoware built successfuly. Binaries sourced from $(realpath ./install/setup.bash)"
+fi
+
+###
+# Generate rosjava message artifacts for autoware
+###
+
+# Set environment variables required by genjava_message_artifacts 
+# The default values do not resolve correctly with autoware's colon build
+export ROS_MAVEN_DEPLOYMENT_REPOSITORY_PREV=$ROS_MAVEN_DEPLOYMENT_REPOSITORY
+export ROS_MAVEN_DEPLOYMENT_REPOSITORY="${autoware_src}/ros/install/share/maven"
+export ROS_MAVEN_PATH_PREV=${ROS_MAVEN_PATH}
+export ROS_MAVEN_PATH="${ROS_MAVEN_PATH}:${autoware_src}/ros/install/share/maven"
+
+# Generate message artifacts
+echo "Trying to generate rosjava message artifacts for ${MSGS_TO_GENERATE}"
+genjava_message_artifacts -p ${MSGS_TO_GENERATE}
+
+# Copy jar and pom files to the directories where gradle will search for them during the carma build
+JAR_DIR="${ROS_MAVEN_DEPLOYMENT_REPOSITORY}"
+
+for message in ${MSGS_TO_GENERATE}
+do
+  JAR_DEST=${autoware_src}/ros/install/${message}/share/maven
+  mkdir -p ${JAR_DEST}
+  cp -R ${JAR_DIR}/* ${JAR_DEST}
+done
+
+# Reset maven deployment environment variable to ensure carma builds its java messages correctly
+export ROS_MAVEN_DEPLOYMENT_REPOSITORY=$ROS_MAVEN_DEPLOYMENT_REPOSITORY_PREV
+export ROS_MAVEN_PATH=$ROS_MAVEN_PATH_PREV
+
+
+###
+# Build CARMA 
+###
+echo "Building CARMA"
+cd ${carma_workspace}
+catkin_make install ${carma_build_args}
+echo echo "CARMA built successfuly. Binaries sourced from $(realpath ./devel/setup.bash)"

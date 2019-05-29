@@ -144,7 +144,7 @@ public class ManeuverInputs extends GuidanceComponent implements IManeuverInputs
         });
 
         /*
-         * Presently this subscriber will be mapped by saxton_cav.launch directly to the
+         * Presently this subscriber will be mapped by carma.launch directly to the
          * front long range object topic provided by the Radar Driver, bypassing sensor
          * fusion and the interface manager. This subscriber depends on sensor frame
          * data (rather than odom frame data) to accurately derive distance values to

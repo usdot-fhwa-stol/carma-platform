@@ -27,10 +27,13 @@ project(carma)
 
 find_package(catkin REQUIRED
 	rosjava_build_tools
-    rosjava_messages #genjava was here
-	cav_msgs
-	cav_srvs
+        rosjava_messages #genjava was here
+        cav_msgs
+        cav_srvs
         j2735_msgs
+        autoware_msgs
+        derived_object_msgs
+        radar_msgs
 )
 # Enable integration tests using python
 #if(CATKIN_ENABLE_TESTING)
@@ -38,12 +41,6 @@ find_package(catkin REQUIRED
 #  add_rostest(test/transform_server_integration.test)
 #endif()
 
-generate_rosjava_messages(
-  PACKAGES
-    cav_msgs
-    cav_srvs
-    j2735_msgs
-)
 # Set the gradle targets you want catkin's make to run by default, e.g.
 #   catkin_rosjava_setup(installApp)
 # Note that the catkin_create_rosjava_xxx scripts will usually automatically
@@ -81,9 +78,6 @@ install(DIRECTORY
 install(DIRECTORY
         mock_drivers/build
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/mock_drivers)
-install(DIRECTORY
-        roadway/build
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/roadway)
 install(DIRECTORY
         route/build
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/route)

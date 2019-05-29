@@ -17,7 +17,7 @@
 <!--
 	drivers.launch
 
-This file is used for vehicle configurations. The arguments from saxton_cav.launch should pass on to saxton_cav_src.launch, which should then pass those arguments to this file. The arguments in the saxton_cav.launch file will override all of the default values of the arguments being passed, so you should be making changes to the saxton_cav.launch to configure it to your vehicle. 
+This file is used for vehicle configurations. The arguments from carma.launch should pass on to carma_src.launch, which should then pass those arguments to this file. The arguments in the carma.launch file will override all of the default values of the arguments being passed, so you should be making changes to the carma.launch to configure it to your vehicle. 
 
 If not using simulated drivers they are activated if the respective mock arguments being passed in are false. These lines below activate the respective actual driver if the respective mock argument being passed is false.
 
@@ -30,18 +30,24 @@ If not using simulated drivers they are activated if the respective mock argumen
   <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/launch/params" doc="Directory of yaml parameter files"/>
 
   <!-- Simulation Usage -->
-  <arg name="mock_can"            	default="true" doc="True if using a simulated can driver"/>
-  <arg name="mock_dsrc"           	default="true" doc="True if using a simulated dsrc driver"/>
-  <arg name="mock_srx_controller" 	default="true" doc="True if using a simulated srx controller driver"/>
-  <arg name="mock_pinpoint"       	default="true" doc="True if using a simulated pinpoint driver"/>
-  <arg name="mock_radar"          	default="true" doc="True if using a simulated radar driver"/>
-  <arg name="mock_lateral_controller"   default="true" doc="True if using a simulated lateral controller"/>
+  <!-- Simulation Usage -->
+  <arg name="mock_drivers"        default="" doc="List of driver node base names which will be launched as mock drivers"/>
+
+  <arg name="mock_can"            value="$(eval 'can' in arg('mock_drivers').split())"/>
+  <arg name="mock_comms"          value="$(eval 'comms' in arg('mock_drivers').split())"/>
+  <arg name="mock_controller"     value="$(eval 'controller' in arg('mock_drivers').split())"/>
+  <arg name="mock_gnss"           value="$(eval 'gnss' in arg('mock_drivers').split())"/>
+  <arg name="mock_radar"          value="$(eval 'radar' in arg('mock_drivers').split())"/>
+  <arg name="mock_imu"            value="$(eval 'imu' in arg('mock_drivers').split())"/>
+  <arg name="mock_lidar"          value="$(eval 'lidar' in arg('mock_drivers').split())"/>
+  <arg name="mock_camera"         value="$(eval 'camera' in arg('mock_drivers').split())"/>
+  <arg name="mock_roadway_sensor" value="$(eval 'roadway_sensor' in arg('mock_drivers').split())"/>
 
   <!-- DSRC OBU Driver Node -->
-  <include unless="$(arg mock_dsrc)" file="$(find dsrc_driver)/launch/dsrc_node.launch"/>
+  <include unless="$(arg mock_comms)" file="$(find dsrc_driver)/launch/dsrc_node.launch"/>
       
   <!-- PinPoint Driver Node -->
-  <include unless="$(arg mock_pinpoint)" file="$(find pinpoint)/launch/pinpoint.launch"/>
+  <include unless="$(arg mock_gnss)" file="$(find pinpoint)/launch/pinpoint.launch"/>
 
   <!-- SRX CAN Driver Node -->
   <include unless="$(arg mock_can)" file="$(find srx_can_driver)/launch/srx_can_driver_socketcan.launch">
@@ -49,7 +55,7 @@ If not using simulated drivers they are activated if the respective mock argumen
   </include>
 
   <!--SRX Controller Driver Node-->
-  <include unless="$(arg mock_srx_controller)" file="$(find srx_controller)/launch/srx_controller.launch">
+  <include unless="$(arg mock_controller)" file="$(find srx_controller)/launch/srx_controller.launch">
 
     <!-- Low Speed Values -->
     <arg name="k_p" value="0.5" />

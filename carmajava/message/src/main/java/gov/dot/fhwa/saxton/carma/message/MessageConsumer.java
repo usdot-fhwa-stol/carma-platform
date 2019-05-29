@@ -56,7 +56,7 @@ import org.ros.exception.RosRuntimeException;
  * rostopic pub /system_alert cav_msgs/SystemAlert '{type: 5, description: hello}'
  * rosparam set /interface_mgr/driver_wait_time 10
  * rosrun carma interfacemgr gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr
- * rostopic pub /saxton_cav/drivers/arada_application/comms/recv cav_msgs/ByteArray '{messageType: "BSM"}'
+ * rostopic pub /carma/drivers/arada_application/comms/recv cav_msgs/ByteArray '{messageType: "BSM"}'
  * rostopic pub /host_bsm j2735_msgs/BSM '{}'
  */
 

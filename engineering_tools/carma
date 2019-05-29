@@ -237,15 +237,15 @@ carma-config__status() {
         echo "  -- docker-compose-background.yml:"
         docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
         'cat /opt/carma/vehicle/docker-compose-background.yml'
-        echo "  -- saxton_cav.launch:"
+        echo "  -- carma.launch:"
         docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
-        'cat /opt/carma/vehicle/saxton_cav.launch'
+        'cat /opt/carma/vehicle/carma.launch'
         echo "  -- carma.config.js:"
         docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
         'cat /opt/carma/vehicle/carma.config.js'
-        echo "  -- saxton_cav.urdf:"
+        echo "  -- carma.urdf:"
         docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
-        'cat /opt/carma/vehicle/saxton_cav.urdf'
+        'cat /opt/carma/vehicle/carma.urdf'
     else
         docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
         "cat /opt/carma/vehicle/$1"

@@ -45,5 +45,5 @@ cd /opt/carma
 catkin_make
 
 echo 'Completed, check for compilation errors. Then source and launch manually.'
-# Command : cd /opt/carma && source devel/setup.bash && roslaunch carma saxton_cav.launch
+# Command : cd /opt/carma && source devel/setup.bash && roslaunch carma carma.launch
 

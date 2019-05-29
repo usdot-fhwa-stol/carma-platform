@@ -43,21 +43,21 @@ class TestDSRCDriver(unittest.TestCase):
             get_driver = rospy.ServiceProxy('get_drivers_with_capabilities', GetDriversWithCapabilities)
             get_driver_response = get_driver(['inbound_binary_msg', 'outbound_binary_msg', 'send'])
             self.assertEqual(len(get_driver_response.driver_data), 3, 'Get_driver response has wrong number of results')
-            self.assertEqual(get_driver_response.driver_data[0], '/saxton_cav/drivers/dsrc/comms/inbound_binary_msg', 'inbound_binary_msg not found')
-            self.assertEqual(get_driver_response.driver_data[1], '/saxton_cav/drivers/dsrc/comms/outbound_binary_msg', 'outbound_binary_msg not found')
-            self.assertEqual(get_driver_response.driver_data[2], '/saxton_cav/drivers/dsrc/comms/send', 'send service not found')
+            self.assertEqual(get_driver_response.driver_data[0], '/carma/drivers/dsrc/comms/inbound_binary_msg', 'inbound_binary_msg not found')
+            self.assertEqual(get_driver_response.driver_data[1], '/carma/drivers/dsrc/comms/outbound_binary_msg', 'outbound_binary_msg not found')
+            self.assertEqual(get_driver_response.driver_data[2], '/carma/drivers/dsrc/comms/send', 'send service not found')
         except rospy.ServiceException, e:
             self.fail('Service get_drivers_with_capabilities call failed: %s' % e)
             
     def test_send_service(self):
         
         try:
-            rospy.wait_for_service('/saxton_cav/drivers/dsrc/comms/send', timeout=20)
+            rospy.wait_for_service('/carma/drivers/dsrc/comms/send', timeout=20)
         except rospy.ROSException, e:
             self.fail('Service sendMessage not found: %s' % e)
             
         try:
-            send_message = rospy.ServiceProxy('/saxton_cav/drivers/dsrc/comms/send', SendMessage)
+            send_message = rospy.ServiceProxy('/carma/drivers/dsrc/comms/send', SendMessage)
             send_message_response = send_message(ByteArray(std_msgs.msg.Header(), 'BSM', [1, 1, 1, 1]))
             self.assertEqual(send_message_response.errorStatus, 0, 'Service sendMessage got failure')
         except rospy.ServiceException, e:

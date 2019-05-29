@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
     <arg name="PARAM_DIR" default="$(find sensor_fusion)/launch/params" doc="Directory of yaml parameter files"/>
-    <arg name="TOP_NS"    default="saxton_cav" doc="CAV Prototype system namespace"/>
+    <arg name="TOP_NS"    default="carma" doc="CAV Prototype system namespace"/>
     <arg name="GUIDE_NS"  default="guidance" doc="Namespace of nodes in guidance package"/>
     <arg name="NEGTR_NS"  default="negotiator" doc="Namespace of nodes in negotiator package"/>
     <arg name="MSG_NS"    default="message" doc="Namespace of nodes in message package"/>
