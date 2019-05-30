@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ndt_pose_tf_wrapper</name>
+  <version>1.0.0</version>
+  <description>The ndt_pose_tf_wrapper package that takes in pose messages from ndt_matching node and publishes as tf2 transformation messages</description>
+  <maintainer email="carma@todo.todo">carma</maintainer>
+  <license>Apache License 2.0</license>
+  <author email="carma@todo.todo">carma</author>
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>geometry_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>std_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>	
+  <depend>tf2_geometry_msgs</depend>
+</package>
