@@ -33,6 +33,8 @@
 #include "autoware_config_msgs/ConfigWaypointFollower.h"
 #include "autoware_msgs/ControlCommandStamped.h"
 
+#include "pure_pursuit_wrapper_worker.hpp"
+
 namespace pure_pursuit_wrapper {
 
 /*!
@@ -71,6 +73,9 @@ class PurePursuitWrapper {
 
         void TrajectoryPlanPoseHandler(const geometry_msgs::PoseStamped::ConstPtr& pose, const cav_msgs::TrajectoryPlan::ConstPtr& tp);
 
+        // Convert TrajectoryPlanPoint to Waypoint. This is used by TrajectoryPlanHandler.
+        autoware_msgs::Waypoint TrajectoryPlanPointToWaypointConverter(double current_time, geometry_msgs::PoseStamped pose, cav_msgs::TrajectoryPlanPoint tpp);
+
     private:
 
         //@brief ROS node handle.
@@ -83,6 +88,8 @@ class PurePursuitWrapper {
         ros::Publisher way_points_pub_;
         ros::Publisher system_alert_pub_;
 
+        PurePursuitWrapperWorker ppww;
+
         /*!
         * Reads and verifies the ROS parameters.
         * @return true if successful.
@@ -94,9 +101,6 @@ class PurePursuitWrapper {
 
         // @brief ROS pusblishers.
         void PublisherForWayPoints(autoware_msgs::Lane& msg);
-
-        // Convert TrajectoryPlanPoint to Waypoint. This is used by TrajectoryPlanHandler.
-        autoware_msgs::Waypoint TrajectoryPlanPointToWaypointConverter(geometry_msgs::PoseStamped pose, cav_msgs::TrajectoryPlanPoint tpp);
           
         /*
          * @brief Handles caught exceptions which have reached the top level of this node

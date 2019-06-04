@@ -58,9 +58,9 @@ void PurePursuitWrapper::TrajectoryPlanPoseHandler(const geometry_msgs::PoseStam
       autoware_msgs::Lane lane;
       lane.header = tp->header;
       std::vector <autoware_msgs::Waypoint> waypoints;
-
+      double current_time = ros::Time::now().toSec();
       for(cav_msgs::TrajectoryPlanPoint tpp : tp->trajectory_points) {
-        autoware_msgs::Waypoint waypoint = TrajectoryPlanPointToWaypointConverter(*pose,tpp);
+        autoware_msgs::Waypoint waypoint = ppww.TrajectoryPlanPointToWaypointConverter(current_time, *pose,tpp);
         waypoints.push_back(waypoint);
       }
 
@@ -73,15 +73,14 @@ void PurePursuitWrapper::TrajectoryPlanPoseHandler(const geometry_msgs::PoseStam
 
 };
 
-autoware_msgs::Waypoint PurePursuitWrapper::TrajectoryPlanPointToWaypointConverter(geometry_msgs::PoseStamped pose, cav_msgs::TrajectoryPlanPoint tpp) {
+autoware_msgs::Waypoint PurePursuitWrapper::TrajectoryPlanPointToWaypointConverter(double current_time, geometry_msgs::PoseStamped pose, cav_msgs::TrajectoryPlanPoint tpp) {
   ROS_DEBUG_STREAM("Convertering TrajectoryPlanPointToWaypoint");
 
   autoware_msgs::Waypoint waypoint;
 
   waypoint.pose.pose.position.x = tpp.x;
   waypoint.pose.pose.position.y = tpp.y;
-  double begin = ros::Time::now().toSec();
-  double delta_t = tpp.target_time - (begin * 1000);
+  double delta_t = (tpp.target_time / 1000) - (current_time);
 
   waypoint.twist.twist.linear.x = (pose.pose.position.x - tpp.x) / delta_t;
   waypoint.twist.twist.linear.y = (pose.pose.position.y - tpp.y) / delta_t;

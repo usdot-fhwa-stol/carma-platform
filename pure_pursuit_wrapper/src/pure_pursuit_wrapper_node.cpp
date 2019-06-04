@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+#include "pure_pursuit_wrapper/pure_pursuit_wrapper.hpp"
 
 #include <ros/ros.h>
-#include "pure_pursuit_wrapper/pure_pursuit_wrapper.hpp"
 #include <ros/console.h>
 
 #include <message_filters/subscriber.h>

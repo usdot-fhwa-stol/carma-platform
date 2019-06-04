@@ -80,6 +80,9 @@ find_package(Boost REQUIRED COMPONENTS system)
 #   cav_msgs#   std_msgs
 # )
 
+add_library(pure_pursuit_wrapper_worker_library src/pure_pursuit_wrapper_worker.cpp)
+add_dependencies(pure_pursuit_wrapper_worker_library ${catkin_EXPORTED_TARGETS})
+
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
 ################################################
@@ -209,3 +212,9 @@ install(DIRECTORY
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+catkin_add_gtest(${PROJECT_NAME}_test test/${PROJECT_NAME}_test.cpp)
+
+target_link_libraries( ${PROJECT_NAME}_test pure_pursuit_wrapper_worker_library
+        ${catkin_LIBRARIES}
+        )
