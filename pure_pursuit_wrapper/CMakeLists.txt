@@ -169,7 +169,7 @@ target_link_libraries(${PROJECT_NAME}_node
 
 # Mark executable scripts (Python etc.) for installation
 # in contrast to setup.py, you can choose the destination
-install(TARGETS ${PROJECT_NAME}_node wgs84_utils_library transform_maintainer_library
+install(TARGETS ${PROJECT_NAME}_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
