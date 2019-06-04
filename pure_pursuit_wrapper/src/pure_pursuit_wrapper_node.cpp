@@ -23,9 +23,6 @@
 #include <message_filters/sync_policies/approximate_time.h>
 
 int main(int argc, char** argv) {
-  // if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info)) { 
-  //   ros::console::notifyLoggerLevelsChanged();
-  // }
 
   ros::init(argc, argv, "pure_pursuit_wrapper_node");
   ros::NodeHandle nh("~");

@@ -9,8 +9,4 @@
     <node pkg="pure_pursuit_wrapper" type="pure_pursuit_wrapper_node" name="pure_pursuit_wrapper_node" output="screen">
         <rosparam command="load" file="$(find pure_pursuit_wrapper)/config/default.yaml" />
     </node>
-
-    <!-- pure_pursuit -->
-  <!-- <node pkg="rostopic" type="rostopic" name="config_waypoint_follower_rostopic" args="pub -l -r 100 /config/waypoint_follower autoware_config_msgs/ConfigWaypointFollower '{ header: auto, param_flag: 1, velocity: 5.0, lookahead_distance: 4.0, lookahead_ratio: 2.0, minimum_lookahead_distance: 6.0, displacement_threshold: 0.0, relative_angle_threshold: 0.0 }' "/>
-  <node pkg="rostopic" type="rostopic" name="current_pose_rostopic" args="pub -l -r 100 /current_pose geometry_msgs/PoseStamped '{header: auto, pose: {position: {x: 0, y: 0, z: 0}, orientation: {x: 0, y: 0, w: 0}}}'"/> -->
 </launch>
