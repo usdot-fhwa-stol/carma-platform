@@ -73,9 +73,6 @@ class PurePursuitWrapper {
 
         void TrajectoryPlanPoseHandler(const geometry_msgs::PoseStamped::ConstPtr& pose, const cav_msgs::TrajectoryPlan::ConstPtr& tp);
 
-        // Convert TrajectoryPlanPoint to Waypoint. This is used by TrajectoryPlanHandler.
-        autoware_msgs::Waypoint TrajectoryPlanPointToWaypointConverter(double current_time, geometry_msgs::PoseStamped pose, cav_msgs::TrajectoryPlanPoint tpp);
-
     private:
 
         //@brief ROS node handle.

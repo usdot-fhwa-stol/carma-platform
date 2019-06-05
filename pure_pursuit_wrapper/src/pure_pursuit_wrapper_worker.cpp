@@ -24,10 +24,16 @@ autoware_msgs::Waypoint PurePursuitWrapperWorker::TrajectoryPlanPointToWaypointC
 
   waypoint.pose.pose.position.x = tpp.x;
   waypoint.pose.pose.position.y = tpp.y;
-  double delta_t = (tpp.target_time / 1000) - (current_time);
+  double delta_t_secound = (tpp.target_time / 1000) - current_time;
 
-  waypoint.twist.twist.linear.x = (pose.pose.position.x - tpp.x) / delta_t;
-  waypoint.twist.twist.linear.y = (pose.pose.position.y - tpp.y) / delta_t;
+  if(delta_t_secound != 0) {
+    waypoint.twist.twist.linear.x = 3.6 * (tpp.x - pose.pose.position.x) / delta_t_secound;
+    waypoint.twist.twist.linear.y = 3.6 * (tpp.y - pose.pose.position.y) / delta_t_secound;
+  }
+  else {
+    waypoint.twist.twist.linear.x = 0;
+    waypoint.twist.twist.linear.y = 0;
+  }
 
   return waypoint;
 };

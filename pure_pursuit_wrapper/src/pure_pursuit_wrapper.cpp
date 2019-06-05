@@ -73,23 +73,6 @@ void PurePursuitWrapper::TrajectoryPlanPoseHandler(const geometry_msgs::PoseStam
 
 };
 
-autoware_msgs::Waypoint PurePursuitWrapper::TrajectoryPlanPointToWaypointConverter(double current_time, geometry_msgs::PoseStamped pose, cav_msgs::TrajectoryPlanPoint tpp) {
-  ROS_DEBUG_STREAM("Convertering TrajectoryPlanPointToWaypoint");
-
-  autoware_msgs::Waypoint waypoint;
-
-  waypoint.pose.pose.position.x = tpp.x;
-  waypoint.pose.pose.position.y = tpp.y;
-  double delta_t = (tpp.target_time / 1000) - (current_time);
-
-  waypoint.twist.twist.linear.x = (pose.pose.position.x - tpp.x) / delta_t;
-  waypoint.twist.twist.linear.y = (pose.pose.position.y - tpp.y) / delta_t;
-
-  ROS_DEBUG_STREAM("Finish Convertering TrajectoryPlanPointToWaypoint");
-
-  return waypoint;
-}
-
 void PurePursuitWrapper::SystemAlertHandler(const cav_msgs::SystemAlert::ConstPtr& msg) {
     try {
       ROS_INFO_STREAM("Received SystemAlert message of type: " << msg->type);

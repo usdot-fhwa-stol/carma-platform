@@ -23,27 +23,57 @@
 TEST(TrajectoryPlanPointToWaypointConverterTest, test1)
 {  
 
-    geometry_msgs::PoseStamped pose;
+    geometry_msgs::PoseStamped current_pose;
     cav_msgs::TrajectoryPlanPoint tpp;
-
-    double current_time = 0;
-
-    pose.pose.position.x = 0.0;
-    pose.pose.position.y = 0.0;
-    pose.pose.position.z = 0.0;
+    pure_pursuit_wrapper::PurePursuitWrapperWorker ppww;
+    autoware_msgs::Waypoint waypoint;
+    double current_time;
+    
+    current_time = 0;
+    current_pose.pose.position.x = 0.0;
+    current_pose.pose.position.y = 0.0;
 
     tpp.x = 10;
     tpp.y = 10;
     tpp.target_time = 10000;
 
-    pure_pursuit_wrapper::PurePursuitWrapperWorker ppww;
-
-    autoware_msgs::Waypoint waypoint = ppww.TrajectoryPlanPointToWaypointConverter(current_time, pose, tpp);
+    waypoint = ppww.TrajectoryPlanPointToWaypointConverter(current_time, current_pose, tpp);
 
     double v_x = waypoint.twist.twist.linear.x;
-    double correct_v_x = -1;
+    double correct_v_x = 3.6;
 
-    EXPECT_EQ(v_x, correct_v_x);
+    EXPECT_EQ(correct_v_x, v_x);
+
+    current_time = 0;
+    current_pose.pose.position.x = 0.0;
+    current_pose.pose.position.y = 0.0;
+
+    tpp.x = 0;
+    tpp.y = 0;
+    tpp.target_time = 0;
+
+    waypoint = ppww.TrajectoryPlanPointToWaypointConverter(current_time, current_pose, tpp);
+
+    v_x = waypoint.twist.twist.linear.x;
+    correct_v_x = 0;
+
+    EXPECT_EQ(correct_v_x, v_x);
+
+    current_time = 0;
+    current_pose.pose.position.x = 10.0;
+    current_pose.pose.position.y = 10.0;
+
+    tpp.x = 0;
+    tpp.y = 0;
+    tpp.target_time = 10000;
+
+    waypoint = ppww.TrajectoryPlanPointToWaypointConverter(current_time, current_pose, tpp);
+
+    v_x = waypoint.twist.twist.linear.x;
+    correct_v_x = -3.6;
+
+    EXPECT_EQ(correct_v_x, v_x);
+
 }
 
 int main(int argc, char**argv)
