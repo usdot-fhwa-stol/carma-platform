@@ -24,7 +24,7 @@ autoware_msgs::Waypoint PurePursuitWrapperWorker::TrajectoryPlanPointToWaypointC
 
   waypoint.pose.pose.position.x = tpp.x;
   waypoint.pose.pose.position.y = tpp.y;
-  double delta_t_secound = (tpp.target_time / 1000) - current_time;
+  double delta_t_secound = (tpp.target_time / 1000.0) - current_time;
 
   if(delta_t_secound != 0) {
     waypoint.twist.twist.linear.x = 3.6 * (tpp.x - pose.pose.position.x) / delta_t_secound;
