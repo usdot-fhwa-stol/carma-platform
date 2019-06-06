@@ -1,6 +1,6 @@
 #!/bin/bash
 
-COMPONENT_TAG_PREFIX="${PWD##*/}*"
-
-git describe --match=$COMPONENT_TAG_PREFIX --always --dirty="-SNAPSHOT"
+cd "$(dirname "$0")"
+cd ..
+git describe --all --match=$COMPONENT_TAG_PREFIX --always --dirty="-SNAPSHOT" | awk -F "/" '{print $NF}'
 

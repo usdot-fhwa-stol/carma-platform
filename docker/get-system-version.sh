@@ -1,6 +1,6 @@
 #!/bin/bash
 
-COMPONENT_TAG_PREFIX="CARMAVersion*"
+COMPONENT_TAG_PREFIX="CARMASystem*"
 
-git describe --match=$COMPONENT_TAG_PREFIX --always --dirty="-SNAPSHOT"
+git describe --all --match=$COMPONENT_TAG_PREFIX --always --dirty="-SNAPSHOT" | awk -F "/" '{print $NF}'
 
