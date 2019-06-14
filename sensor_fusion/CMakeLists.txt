@@ -38,8 +38,8 @@ generate_dynamic_reconfigure_options(
 
 
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES sensor_fusion
+  INCLUDE_DIRS include
+  LIBRARIES wgs84_utils_library
   CATKIN_DEPENDS roscpp std_msgs nav_msgs sensor_msgs cav_msgs cav_srvs bondcpp tf2 tf2_ros tf2_geometry_msgs dynamic_reconfigure
 #  DEPENDS system_lib
 )
@@ -62,7 +62,7 @@ file(GLOB_RECURSE headers */*.hpp */*.h)
 add_executable(${PROJECT_NAME}_node ${headers} src/main.cpp src/sensor_fusion.cpp)
 add_dependencies( ${PROJECT_NAME}_node ${PROJECT_NAME}_gencfg ${catkin_EXPORTED_TARGETS})
 
-add_library(wgs84_utils_library src/wgs84_utils.cpp)
+add_library(wgs84_utils_library src/wgs84_utils/wgs84_utils.cpp)
 target_link_libraries(wgs84_utils_library)
 add_dependencies(wgs84_utils_library ${catkin_EXPORTED_TARGETS})
 
