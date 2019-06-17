@@ -1,5 +1,7 @@
 #!/bin/bash
 
-COMPONENT_TAG_PREFIX=`./get-package-name.sh`
-git describe --all --match="$COMPONENT_TAG_PREFIX_*" --always --dirty="-SNAPSHOT" | awk -F "/" '{print $NF}' | sed "s/$COMPONENT_TAG_PREFIX\_//"
+cd "$(dirname "$0")"
+cd ..
+COMPONENT_TAG_PREFIX="${PWD##*/}"
+git describe --all --match="$COMPONENT_TAG_PREFIX*" --always --dirty="-SNAPSHOT" | awk -F "/" '{print $NF}'
 
