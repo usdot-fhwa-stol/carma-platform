@@ -15,12 +15,12 @@
 #  the License.
 
 USERNAME=usdotfhwastol
-IMAGE=carma
 
 cd "$(dirname "$0")"
+IMAGE=$(./get-package-name.sh | tr '[:upper:]' '[:lower:]')
 
 echo ""
-echo "##### CARMA Docker Image Build Script #####"
+echo "##### $IMAGE Docker Image Build Script #####"
 echo ""
 
 while [[ $# -gt 0 ]]; do
@@ -46,7 +46,7 @@ if [[ -z "$COMPONENT_VERSION_STRING" ]]; then
     COMPONENT_VERSION_STRING=$("./get-component-version.sh")
 fi
 
-echo "Building docker image for CARMA version: $COMPONENT_VERSION_STRING"
+echo "Building docker image for $IMAGE version: $COMPONENT_VERSION_STRING"
 echo "Final image name: $USERNAME/$IMAGE:$COMPONENT_VERSION_STRING"
 
 cd ..
@@ -77,4 +77,4 @@ if [ "$PUSH" = true ]; then
 fi
 
 echo ""
-echo "##### CARMA Docker Image Build Done! #####"
+echo "##### $IMAGE Docker Image Build Done! #####"
