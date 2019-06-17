@@ -42,7 +42,7 @@ repositories:
   CARMANovatelGpsDriver:
     type: git
     url: git@github.com:usdot-fhwa-stol/CARMANovatelGpsDriver.git
-    version: master
+    version: develop
   CARMAPacmod3CanDriverWrapper:
     type: git
     url: git@github.com:usdot-fhwa-stol/CARMAPacmod3CanDriverWrapper.git
@@ -78,4 +78,4 @@ repositories:
   autoware.ai:
     type: git
     url: git@github.com:usdot-fhwa-stol/autoware.ai.git
-    version: master
+    version: carma-develop
