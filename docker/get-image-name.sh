@@ -17,13 +17,9 @@
 cd "$(dirname "$0")"
 REPO_NAME="$(./get-repo-name.sh)"
 
-if [ "$REPO_NAME" = "CARMAPlatform" ]; then
-  echo "carma"
-else
-  # This sed command based on Stack Overflow answer: https://stackoverflow.com/questions/28795479/awk-sed-script-to-convert-a-file-from-camelcase-to-underscores
-  # Asked by Corentin Peuvrel: https://stackoverflow.com/users/4608146/corentin-peuvrel
-  # Answered by pachopepe: https://stackoverflow.com/users/641896/pachopepe
-  # Credited in accordance with Stack Overflow's CC-BY license
-  echo $REPO_NAME | sed -r 's/CARMA/carma/' | sed -r 's/([A-Z])/-\L\1/g' | sed 's/^_//'
-fi
+# This sed command based on Stack Overflow answer: https://stackoverflow.com/questions/28795479/awk-sed-script-to-convert-a-file-from-camelcase-to-underscores
+# Asked by Corentin Peuvrel: https://stackoverflow.com/users/4608146/corentin-peuvrel
+# Answered by pachopepe: https://stackoverflow.com/users/641896/pachopepe
+# Credited in accordance with Stack Overflow's CC-BY license
+echo $REPO_NAME | sed -r 's/CARMA/carma/' | sed -r 's/([A-Z])/-\L\1/g' | sed 's/^_//'
 

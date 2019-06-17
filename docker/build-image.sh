@@ -17,7 +17,7 @@
 USERNAME=usdotfhwastol
 
 cd "$(dirname "$0")"
-IMAGE=$(./get-package-name.sh | tr '[:upper:]' '[:lower:]')
+IMAGE="$(./get-image-name.sh)"
 
 echo ""
 echo "##### $IMAGE Docker Image Build Script #####"
