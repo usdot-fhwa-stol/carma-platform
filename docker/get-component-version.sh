@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #  Copyright (C) 2018-2019 LEIDOS.
 # 
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,18 +14,8 @@
 #  License for the specific language governing permissions and limitations under
 #  the License.
 
-# Docker Compose Spec Version
-version: '2'
+cd "$(dirname "$0")"
+cd ..
+COMPONENT_TAG_PREFIX="${PWD##*/}"
+git describe --all --match="$COMPONENT_TAG_PREFIX*" --always --dirty="-SNAPSHOT" | awk -F "/" '{print $NF}' | sed "s/$COMPONENT_TAG_PREFIX\_//"
 
-services:
-  web-ui:
-    image: usdotfhwastol/carma-web-ui:2.8.2
-    network_mode: host
-    container_name: web-ui
-    environment:
-      - ROS_IP=192.168.88.10
-    volumes_from: 
-      - container:carma-config:ro
-    volumes: 
-      - /var/run/docker.sock:/var/run/docker.sock 
-    restart: always

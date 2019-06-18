@@ -14,8 +14,7 @@
 #  License for the specific language governing permissions and limitations under
 #  the License.
 
+SYSTEM_TAG_PREFIX="CARMASystem"
 
-# Sets all environment variables and sources scripts necessary for CARMA to operate
+git describe --all --match="$SYSTEM_TAG_PREFIX*" --always --dirty="-SNAPSHOT" | awk -F "/" '{print $NF}'
 
-[ -f "/opt/ros/kinetic/setup.bash" ] && source /opt/ros/kinetic/setup.bash
-[ -f "/opt/carma/app/bin/setup.bash" ] && source /opt/carma/app/bin/setup.bash
