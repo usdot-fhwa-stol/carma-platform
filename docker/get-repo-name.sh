@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #  Copyright (C) 2018-2019 LEIDOS.
 # 
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,19 +14,4 @@
 #  License for the specific language governing permissions and limitations under
 #  the License.
 
-# Docker Compose Spec Version
-version: '2'
-
-services:
-  carma:
-    image: usdot-carma/carma
-    network_mode: host
-    container_name: carma
-    volumes_from: 
-      - container:carma-config:ro
-    volumes:
-      - /opt/carma/logs:/opt/carma/logs
-      - /opt/carma/.ros:/home/carma/.ros
-      - /opt/carma/vehicle/HostVehicleParams.yaml:/opt/carma/params/HostVehicleParams.yaml
-    stdin_open: true
-    tty: true
+basename -s .git `git config --get remote.origin.url`

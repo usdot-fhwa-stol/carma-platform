@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   geometry_msgs
   autoware_msgs
+  autoware_config_msgs
   message_filters
 )
 
