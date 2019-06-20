@@ -141,43 +141,6 @@ tf2::Vector3 wgs84_utils::geodesic_to_ecef(const wgs84_utils::wgs84_coordinate &
     return point_in_ned;
 }
 
-  /**
-   * Converts a given 3d cartesian point in the ECEF frame into a WSG-84 geodesic location
-   * The provided point should be defined relative to a frame which has a transform with the ECEF
-   * @param point The cartesian point to be converted
-   * @return The calculated WSG-84 geodesic location
-   */
-  wgs84_utils::wgs84_coordinate wgs84_utils::ecef_to_geodesic(const tf2::Vector3& point) {
-
-    const double x = point[0];
-    const double y = point[1];
-    const double z = point[2];
-
-    // Calculate lat,lon,alt
-    const double p = sqrt((x*x) + (y*y));
-    // Handle special case of poles
-    if (p < 1.0e-10) {
-      const double poleLat = z < 0 ? -90:90;
-      constexpr double poleLon = 0;
-      const double poleAlt = z < 0 ? -z - Reb : z - Reb;
-      struct wgs84_coordinate geo_point = {poleLat, poleLon, 0, z};
-      return geo_point;
-    }
-    const double theta = atan((z*Rea) / (p*Reb));
-
-    const double lon = 2.0*atan(y / (x + p));
-    const double lat = atan((z + (e_p * e_p) * Reb * pow(sin(theta), 3)) / (p - e_sqr * Rea * pow(cos(theta), 3)));
-
-    const double cosLat = cos(lat);
-    const double sinLat = sin(lat);
-
-    const double N = Rea_sqr / sqrt(Rea_sqr * cosLat * cosLat + Reb_sqr * sinLat * sinLat);
-    const double alt = (p / cosLat) - N;
-
-    struct wgs84_coordinate geo_point = {lat * RAD2DEG, lon * RAD2DEG, 0, alt};
-    return geo_point;
-  }
-
 /**
  * Generates a transform describing the location/orientation of an NED frame in the ECEF frame based on the provided lat lon point.
  * 
