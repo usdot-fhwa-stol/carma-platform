@@ -38,9 +38,17 @@
 namespace wgs84_utils
 {
     constexpr double pi = 3.14159265358979323846;
-    constexpr double EARTH_RADIUS_METERS = 6378137.0;
     constexpr double DEG2RAD = pi/180.0;
     constexpr double RAD2DEG = 180.0/pi;
+    // Earth Geometry Constants
+    constexpr double Rea = 6378137.0; // Semi-major axis radius meters
+    constexpr double Rea_sqr = Rea*Rea;
+    constexpr double f = 1.0 / 298.257223563; //The flattening factor
+    constexpr double Reb = Rea * (1.0 - f); // //The semi-minor axis = 6356752.0
+    constexpr double Reb_sqr = Reb*Reb;
+    constexpr double e = 0.08181919084262149; // The first eccentricity (hard coded as optimization) calculated as Math.sqrt(Rea*Rea - Reb*Reb) / Rea;
+    constexpr double e_sqr = e*e;
+    constexpr double e_p = 0.08209443794969568; // e prime (hard coded as optimization) calculated as Math.sqrt((Rea_sqr - Reb_sqr) / Reb_sqr);
 
     struct wgs84_coordinate
     {
@@ -61,6 +69,8 @@ namespace wgs84_utils
     );
 
     tf2::Vector3 geodesic_to_ecef(const wgs84_coordinate &loc, tf2::Transform ecef_in_ned);
+
+    wgs84_coordinate ecef_to_geodesic(const tf2::Vector3& point);
 
     tf2::Transform ecef_to_ned_from_loc(wgs84_coordinate loc);
 

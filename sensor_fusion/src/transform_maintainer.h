@@ -52,7 +52,7 @@
 #include <memory>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <cav_msgs/HeadingStamped.h>
-#include "wgs84_utils.h"
+#include "wgs84_utils/wgs84_utils.h"
 
 /**
  * @brief The TransformMaintainer is responsible for updating coordinate transforms

@@ -31,7 +31,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-#include "wgs84_utils.h"
+#include "wgs84_utils/wgs84_utils.h"
 
 #include <cmath>
 /**
@@ -41,11 +41,9 @@
  */
 double wgs84_utils::calcMetersPerRadLat(const wgs84_utils::wgs84_coordinate &tie_point)
 {
-    double a = EARTH_RADIUS_METERS;
-    double e_sq = 0.00669438;
     double s_sq = pow(sin(tie_point.lat * DEG2RAD), 2);
 
-    double R_m = a * (1.0 - e_sq) / pow(sqrt(1.0 - e_sq * s_sq), 3);
+    double R_m = Rea * (1.0 - e_sqr) / pow(sqrt(1.0 - e_sqr * s_sq), 3);
 
     double meters_per_rad_lat = R_m + tie_point.elevation;
 
@@ -59,11 +57,9 @@ double wgs84_utils::calcMetersPerRadLat(const wgs84_utils::wgs84_coordinate &tie
  */
 double wgs84_utils::calcMetersPerRadLon(const wgs84_utils::wgs84_coordinate &tie_point)
 {
-    double a = EARTH_RADIUS_METERS;
-    double e_sq = 0.00669438;
     double s_sq = pow(sin(tie_point.lat * DEG2RAD), 2);
 
-    double R_n = a / (sqrt(1.0 - e_sq * s_sq));
+    double R_n = Rea / (sqrt(1.0 - e_sqr * s_sq));
 
     double meters_per_rad_lon = (R_n + tie_point.elevation) * cos(tie_point.lat * DEG2RAD);
 
@@ -122,16 +118,6 @@ void wgs84_utils::convertToOdom(const wgs84_utils::wgs84_coordinate &src,
  */
 tf2::Vector3 wgs84_utils::geodesic_to_ecef(const wgs84_utils::wgs84_coordinate &loc, tf2::Transform ecef_in_ned) {
 
-    constexpr double Rea = 6378137.0; // Semi-major axis radius meters
-    constexpr double Rea_sqr = Rea*Rea;
-    constexpr double f = 1.0 / 298.257223563; //The flattening factor
-    constexpr double Reb = Rea * (1.0 - f); // //The semi-minor axis = 6356752.0
-    constexpr double Reb_sqr = Reb*Reb;
-    constexpr double e = 0.08181919084262149; // The first eccentricity (hard coded as optimization) calculated as Math.sqrt(Rea*Rea - Reb*Reb) / Rea; as C++11 sqrt is not constexpr
-    constexpr double e_sqr = e*e;
-    constexpr double e_p = 0.08209443794969568; // e prime (hard coded as optimization) calculated as Math.sqrt((Rea_sqr - Reb_sqr) / Reb_sqr); as C++11 sqrt is not constexpr
-
-
     // frame2ecefTransform needs to define the position of the ecefFrame relative to the desired frame
     // Put geodesic in proper units
     double lonRad = loc.lon;
@@ -181,3 +167,4 @@ tf2::Transform wgs84_utils::ecef_to_ned_from_loc(wgs84_coordinate loc) {
     
     return tf2::Transform(rotMat, ecef_point);
   }
+
