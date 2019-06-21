@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CARMA_UTILS_CARMA_NODE_HANDLE_H
+#define CARMA_UTILS_CARMA_NODE_HANDLE_H
 /*
  * Copyright (C) 2018-2019 LEIDOS.
  *
@@ -43,7 +44,6 @@ namespace ros {
 
   class CARMANodeHandle: public NodeHandle
   {
-
     private:
       // Callback typedefs
       using SystemAlertCB = std::function<void(const cav_msgs::SystemAlertConstPtr&)>;
@@ -75,6 +75,7 @@ namespace ros {
 
       /**
        * @brief Wrapper for pub/sub callbacks which provides exception handling
+       * 
        * @param callback A callable which will be used as the callback to wrap
        * @tparam C The argument type for the callback
        * 
@@ -82,6 +83,7 @@ namespace ros {
        */ 
       template<class C> 
       boost::function< void(C)> callbackWrapper(const boost::function<void(C)>& callback);
+
       /**
        * @brief Wrapper for service callbacks which provides exception handling
        * @param callback A callable which will be used as the callback to wrap
@@ -100,7 +102,6 @@ namespace ros {
        */ 
       template<class E>
       boost::function< bool(E)> serviceEventCallbackWrapper(const boost::function<bool(E)>& callback);
-
       /**
        * @brief Handles incoming SystemAlert messages
        * 
@@ -233,6 +234,7 @@ namespace ros {
        * @param msg The message to publish
        */ 
       void publishSystemAlert(const cav_msgs::SystemAlert& msg);
+
       //////
       // OVERRIDES
       //   The following methods are overrides of NodeHandle
@@ -368,4 +370,6 @@ namespace ros {
 
 // Template functions cannot be linked unless the implementation is provided
 // Therefore include implementation to allow for template functions
-#include "../../src/carma_utils/CARMANodeHandle.cpp"
+#include "../../src/carma_utils/CARMANodeHandle.tpp"
+
+#endif // CARMA_UTILS_CARMA_NODE_HANDLE_H

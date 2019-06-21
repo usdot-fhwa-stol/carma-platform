@@ -46,9 +46,7 @@ include_directories(
 )
 
 ## Declare a C++ library
-add_library(${PROJECT_NAME}
-  src/${PROJECT_NAME}/CARMAUtils.cpp
-)
+add_library(${PROJECT_NAME} src/${PROJECT_NAME}/CARMANodeHandle.cpp)
 add_dependencies( ${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
