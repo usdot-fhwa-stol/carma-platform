@@ -21,7 +21,6 @@
 #include <sstream>
 #include "carma_utils/CARMANodeHandle.h"
 
-
 namespace ros {
   // Initialize default static values
 
@@ -100,6 +99,24 @@ namespace ros {
 
   void CARMANodeHandle::publishSystemAlert(const cav_msgs::SystemAlert& msg) {
     system_alert_pub_.publish(msg);
+  }
+  
+  void CARMANodeHandle::setSystemAlertCallback(SystemAlertCB cb) {
+    std::lock_guard<std::mutex> lock(system_alert_mutex_);
+    validateCallback(cb);
+    system_alert_cb_ = cb;
+  }
+
+  void CARMANodeHandle::setShutdownCallback(ShutdownCB cb) {
+    std::lock_guard<std::mutex> lock(shutdown_mutex_);
+    validateCallback(cb);
+    shutdown_cb_ = cb;
+  }
+
+  void CARMANodeHandle::setExceptionCallback(ExceptionCB cb) { 
+    std::lock_guard<std::mutex> lock(exception_mutex_);
+    validateCallback(cb);
+    exception_cb_ = cb;
   }
 
   void CARMANodeHandle::setSpinCallback(SpinCB cb) {
@@ -219,224 +236,15 @@ namespace ros {
     }
   }
 
-  template<class C>
-  bool CARMANodeHandle::validFunctionPtr(const C& cb) {
-    return !(!cb);
-  }
-
-  template<class C>
-  void CARMANodeHandle::validateCallback(const C& cb) { 
-    if (!validFunctionPtr(cb)) {
-      std::ostringstream msg;
-      msg << "Invalid callback used in CARMANodeHandle: Callback does not point to callable object";
-      throw std::invalid_argument(msg.str());
-    }
-  }
-
-  void CARMANodeHandle::setSystemAlertCallback(SystemAlertCB cb) {
-    std::lock_guard<std::mutex> lock(system_alert_mutex_);
-    validateCallback(cb);
-    system_alert_cb_ = cb;
-  }
-
-  void CARMANodeHandle::setShutdownCallback(ShutdownCB cb) {
-    std::lock_guard<std::mutex> lock(shutdown_mutex_);
-    validateCallback(cb);
-    shutdown_cb_ = cb;
-  }
-
-  void CARMANodeHandle::setExceptionCallback(ExceptionCB cb) { 
-    std::lock_guard<std::mutex> lock(exception_mutex_);
-    validateCallback(cb);
-    exception_cb_ = cb;
-  }
-
-  template<class C>
-  boost::function< void(C)> CARMANodeHandle::callbackWrapper(const boost::function<void(C)>& callback) {
-    validateCallback(callback);
-
-    boost::function< void(C)> wrappedFunc = 
-    [callback] (const C& msg) -> void {
-      try {
-        callback(msg);
-      } catch(const std::exception& e) {
-        handleException(e);
-      }
-    };
-
-    return wrappedFunc;
-  }
-
-  template<class C, class R>
-  boost::function< bool(C, R)> CARMANodeHandle::serviceCallbackWrapper(const boost::function<bool(C, R)>& callback) {
-    validateCallback(callback);
-
-    boost::function< bool(C, R)> wrappedFunc = 
-    [callback] (C req, R res) -> bool {
-      try {
-        callback(req, res);
-      } catch(const std::exception& e) {
-        handleException(e);
-      }
-    };
-
-    return wrappedFunc;
-  }
-
-  template<class E>
-  boost::function< bool(E)> CARMANodeHandle::serviceEventCallbackWrapper(const boost::function<bool(E)>& callback) {
-    validateCallback(callback);
-
-    boost::function< bool(E)> wrappedFunc = 
-    [callback] (E event) -> bool {
-      try {
-        callback(event);
-      } catch(const std::exception& e) {
-        handleException(e);
-      }
-    };
-
-    return wrappedFunc;
-  }
-
-  template<class M , class T >
-  Subscriber CARMANodeHandle::subscribe(const std::string &topic, uint32_t queue_size, void(T::*fp)(M), T *obj, const TransportHints &transport_hints) {
-
-    checkSubscriptionInput(topic);
-
-    auto func = callbackWrapper<M>(boost::bind(fp, obj, _1));
-    return NodeHandle::subscribe<M>(topic, queue_size, func, VoidConstPtr(), transport_hints);
-  }
-
-  template<class M , class T >
-  Subscriber CARMANodeHandle::subscribe(const std::string &topic, uint32_t queue_size, void(T::*fp)(M) const, T *obj, const TransportHints &transport_hints) {
-    
-    checkSubscriptionInput(topic);
-
-    auto func = callbackWrapper<M>(boost::bind(fp, obj, _1));
-    return NodeHandle::subscribe<M>(topic, queue_size, func, VoidConstPtr(), transport_hints);
-  }
-
-  template<class M , class T >
-  Subscriber CARMANodeHandle::subscribe(const std::string &topic, uint32_t queue_size, void(T::*fp)(const boost::shared_ptr< M const > &), T *obj, const TransportHints &transport_hints) {
-    
-    checkSubscriptionInput(topic);
-
-    auto func = callbackWrapper<const boost::shared_ptr< M const > &>(boost::bind(fp, obj, _1));
-    return NodeHandle::subscribe<M>(topic, queue_size, func, VoidConstPtr(), transport_hints);
-  }
-
-  template<class M , class T >
-  Subscriber CARMANodeHandle::subscribe(const std::string &topic, uint32_t queue_size, void(T::*fp)(const boost::shared_ptr< M const > &) const, T *obj, const TransportHints &transport_hints) {
-    
-    checkSubscriptionInput(topic);
-
-    auto func = callbackWrapper<const boost::shared_ptr< M const > &>(boost::bind(fp, obj, _1));
-    return NodeHandle::subscribe<M>(topic, queue_size, func, VoidConstPtr(), transport_hints);
-  }
-
-  template<class M , class T >
-  Subscriber CARMANodeHandle::subscribe(const std::string &topic, uint32_t queue_size, void(T::*fp)(M), const boost::shared_ptr< T > &obj, const TransportHints &transport_hints) {
-    
-    checkSubscriptionInput(topic);
-
-    auto func = callbackWrapper<M>(boost::bind(fp, obj, _1));
-    return NodeHandle::subscribe<M>(topic, queue_size, func, VoidConstPtr(), transport_hints);
-  }
-
-  template<class M , class T >
-  Subscriber CARMANodeHandle::subscribe(const std::string &topic, uint32_t queue_size, void(T::*fp)(M) const, const boost::shared_ptr< T > &obj, const TransportHints &transport_hints) {
-    
-    checkSubscriptionInput(topic);
-
-    auto func = callbackWrapper<M>(boost::bind(fp, obj, _1));
-    return NodeHandle::subscribe<M>(topic, queue_size, func, VoidConstPtr(), transport_hints);
-  }
-
-  template<class M , class T >
-  Subscriber CARMANodeHandle::subscribe(const std::string &topic, uint32_t queue_size, void(T::*fp)(const boost::shared_ptr< M const > &), const boost::shared_ptr< T > &obj, const TransportHints &transport_hints) {
-    
-    checkSubscriptionInput(topic);
-
-    auto func = callbackWrapper<const boost::shared_ptr< M const > &>(boost::bind(fp, obj, _1));
-    return NodeHandle::subscribe<M>(topic, queue_size, func, VoidConstPtr(), transport_hints);
-  }
-
-  template<class M , class T >
-  Subscriber CARMANodeHandle::subscribe(const std::string &topic, uint32_t queue_size, void(T::*fp)(const boost::shared_ptr< M const > &) const, const boost::shared_ptr< T > &obj, const TransportHints &transport_hints) {
-    
-    checkSubscriptionInput(topic);
-
-    auto func = callbackWrapper<const boost::shared_ptr< M const > &>(boost::bind(fp, obj, _1));
-    return NodeHandle::subscribe<M>(topic, queue_size, func, VoidConstPtr(), transport_hints);
-  }
-
-  template<class M >
-  Subscriber CARMANodeHandle::subscribe(const std::string &topic, uint32_t queue_size, void(*fp)(M), const TransportHints &transport_hints) {
-    
-    checkSubscriptionInput(topic);
-
-    auto func = callbackWrapper<M>(boost::bind(fp, _1));
-    return NodeHandle::subscribe<M>(topic, queue_size, func, VoidConstPtr(), transport_hints);
-  }
-
-  template<class M >
-  Subscriber CARMANodeHandle::subscribe(const std::string &topic, uint32_t queue_size, void(*fp)(const boost::shared_ptr< M const > &), const TransportHints &transport_hints) {
-    
-    checkSubscriptionInput(topic);
-
-    auto func = callbackWrapper<const boost::shared_ptr< M const > &>(boost::bind(fp, _1));
-    return NodeHandle::subscribe<M>(topic, queue_size, func, VoidConstPtr(), transport_hints);
-  }
-
-  template<class M >
-  Subscriber CARMANodeHandle::subscribe(const std::string &topic, uint32_t queue_size, const boost::function< void(const boost::shared_ptr< M const > &)> &callback, const VoidConstPtr &tracked_object, const TransportHints &transport_hints) {
-    
-    checkSubscriptionInput(topic);
-
-    auto func = callbackWrapper<const boost::shared_ptr< M const > &>(callback);
-    return NodeHandle::subscribe<M>(topic, queue_size, func, tracked_object, transport_hints);
-  }
-
-  template<class M , class C >
-  Subscriber CARMANodeHandle::subscribe(const std::string &topic, uint32_t queue_size, const boost::function< void(C)> &callback, const VoidConstPtr &tracked_object, const TransportHints &transport_hints) {
-    
-    checkSubscriptionInput(topic);
-
-    auto func = callbackWrapper<C>(callback);
-    return NodeHandle::subscribe<M>(topic, queue_size, func, tracked_object, transport_hints);
-  }
-
+  /////
+  // OVERRIDES
+  /////
   Subscriber CARMANodeHandle::subscribe(SubscribeOptions &ops) {
     ROS_WARN("subscribe(SubscribeOptions) called from CARMANodeHandle. This overload does not support exception handling. The user must implement their own");
 
     return NodeHandle::subscribe(ops);
   }
 
-  template<class M >
-  Publisher CARMANodeHandle::advertise (const std::string &topic, uint32_t queue_size, bool latch) {
-    checkPublisherInput(topic);
-    return NodeHandle::advertise<M>(topic, queue_size, latch);
-  }
-  
-  template<class M >
-  Publisher CARMANodeHandle::advertise (const std::string &topic, uint32_t queue_size, const SubscriberStatusCallback &connect_cb, const SubscriberStatusCallback &disconnect_cb, const VoidConstPtr &tracked_object, bool latch) {
-    checkPublisherInput(topic);
-    // Check if callbacks are set and if not set them to empty lambdas to prevent need for empty checks throughout code
-    SubscriberStatusCallback new_connect_cb = connect_cb;
-    SubscriberStatusCallback new_disconnect_cb = disconnect_cb;
-    if (!validFunctionPtr(connect_cb)) {
-      new_connect_cb = [](const SingleSubscriberPublisher& ssp) -> void {};
-    }
-    if (!validFunctionPtr(disconnect_cb)) {
-      new_disconnect_cb = [](const SingleSubscriberPublisher& ssp) -> void {};
-    }
-
-    auto connect_func = callbackWrapper<const SingleSubscriberPublisher&>(new_connect_cb);
-    auto disconnect_func = callbackWrapper<const SingleSubscriberPublisher&>(new_disconnect_cb);
-    return NodeHandle::advertise<M>(topic, queue_size, connect_func, disconnect_func, tracked_object, latch);
-  }
-  
   Publisher CARMANodeHandle::advertise (AdvertiseOptions &ops) {
     checkPublisherInput(ops.topic);
     // Check if callbacks are set and if not set them to empty lambdas to prevent need for empty checks throughout code
@@ -457,90 +265,12 @@ namespace ros {
     return NodeHandle::advertise(carma_ops);
   }
 
-  template<class T , class MReq , class MRes >
-  ServiceServer CARMANodeHandle::advertiseService (const std::string &service, bool(T::*srv_func)(MReq &, MRes &), T *obj) {
-    checkServiceInput(service);
-
-    auto func = serviceCallbackWrapper<MReq&, MRes&>(boost::bind(srv_func, obj, _1, _2));
-    return NodeHandle::advertiseService(service, func, VoidConstPtr());
-  }
-  
-  template<class T , class MReq , class MRes >
-  ServiceServer CARMANodeHandle::advertiseService (const std::string &service, bool(T::*srv_func)(ServiceEvent< MReq, MRes > &), T *obj) {
-    checkServiceInput(service);
-
-    auto func = serviceEventCallbackWrapper<ServiceEvent< MReq, MRes > &>(boost::bind(srv_func, obj, _1));
-    return NodeHandle::advertiseService(service, func, VoidConstPtr());
-  }
-  
-  template<class T , class MReq , class MRes >
-  ServiceServer CARMANodeHandle::advertiseService (const std::string &service, bool(T::*srv_func)(MReq &, MRes &), const boost::shared_ptr< T > &obj) {
-    checkServiceInput(service);
-
-    auto func = serviceCallbackWrapper<MReq&, MRes&>(boost::bind(srv_func, obj, _1, _2));
-    return NodeHandle::advertiseService(service, func, VoidConstPtr());
-  }
-  
-  template<class T , class MReq , class MRes >
-  ServiceServer CARMANodeHandle::advertiseService (const std::string &service, bool(T::*srv_func)(ServiceEvent< MReq, MRes > &), const boost::shared_ptr< T > &obj) {
-    checkServiceInput(service);
-
-    auto func = serviceEventCallbackWrapper<ServiceEvent< MReq, MRes > &>(boost::bind(srv_func, obj, _1));
-    return NodeHandle::advertiseService(service, func, VoidConstPtr());
-  }
-  
-  template<class MReq , class MRes >
-  ServiceServer CARMANodeHandle::advertiseService (const std::string &service, bool(*srv_func)(MReq &, MRes &)) {
-    checkServiceInput(service);
-
-    auto func = serviceCallbackWrapper<MReq&, MRes&>(boost::bind(srv_func, _1, _2));
-    return NodeHandle::advertiseService(service, func, VoidConstPtr());
-  }
-  
-  template<class MReq , class MRes >
-  ServiceServer CARMANodeHandle::advertiseService (const std::string &service, bool(*srv_func)(ServiceEvent< MReq, MRes > &)) {
-    checkServiceInput(service);
-
-    auto func = serviceEventCallbackWrapper<ServiceEvent< MReq, MRes > &>(boost::bind(srv_func, _1));
-    return NodeHandle::advertiseService(service, func, VoidConstPtr());
-  }
-  
-  template<class MReq , class MRes >
-  ServiceServer CARMANodeHandle::advertiseService (const std::string &service, const boost::function< bool(MReq &, MRes &)> &callback, const VoidConstPtr &tracked_object) {
-    checkServiceInput(service);
-
-    auto func = serviceCallbackWrapper<MReq&, MRes&>(callback);
-    return NodeHandle::advertiseService(service, func, tracked_object);
-  }
-  
-  template<class S >
-  ServiceServer CARMANodeHandle::advertiseService (const std::string &service, const boost::function< bool(S &)> &callback, const VoidConstPtr &tracked_object) {
-    checkServiceInput(service);
-
-    auto func = serviceEventCallbackWrapper<S &>(callback);
-    return NodeHandle::advertiseService(service, func, tracked_object);
-  }
-  
   ServiceServer CARMANodeHandle::advertiseService (AdvertiseServiceOptions &ops) {
 
     ROS_WARN("advertiseService(AdvertiseServiceOptions) called from CARMANodeHandle. This overload does not support exception handling. The user must implement their own");
     return NodeHandle::advertiseService(ops);
   }
 
-  template<class T >
-  SteadyTimer CARMANodeHandle::createSteadyTimer (WallDuration period, void(T::*callback)(const SteadyTimerEvent &), T *obj, bool oneshot, bool autostart) {
-
-    auto func = callbackWrapper<const SteadyTimerEvent &>(boost::bind(callback, obj, _1));
-    return NodeHandle::createSteadyTimer(period, func, oneshot, autostart);
-  }
-  
-  template<class T >
-  SteadyTimer CARMANodeHandle::createSteadyTimer (WallDuration period, void(T::*callback)(const SteadyTimerEvent &), const boost::shared_ptr< T > &obj, bool oneshot, bool autostart) {
-
-    auto func = callbackWrapper<const SteadyTimerEvent &>(boost::bind(callback, obj, _1));
-    return NodeHandle::createSteadyTimer(period, func, oneshot, autostart);
-  }
-  
   SteadyTimer CARMANodeHandle::createSteadyTimer (WallDuration period, const SteadyTimerCallback &callback, bool oneshot, bool autostart) {
 
     auto func = callbackWrapper<const SteadyTimerEvent &>(callback);
@@ -553,37 +283,6 @@ namespace ros {
     SteadyTimerOptions carma_ops(ops.period, func, ops.callback_queue, ops.oneshot, ops.autostart);
 
     return NodeHandle::createSteadyTimer(carma_ops);
-  }
-
-  template<class Handler , class Obj >
-  Timer CARMANodeHandle::createTimer (Rate r, Handler h, Obj o, bool oneshot, bool autostart) {
-
-    auto func = callbackWrapper<const TimerEvent&>(h);
-
-    return NodeHandle::createTimer (r.expectedCycleTime(), 
-      func,
-      oneshot, autostart);
-  }
-
-  template<class T >
-  Timer CARMANodeHandle::createTimer (Duration period, void(T::*callback)(const TimerEvent &) const, T *obj, bool oneshot, bool autostart) {
-
-    auto func = callbackWrapper<const TimerEvent &>(boost::bind(callback, obj, _1));
-    return NodeHandle::createTimer(period, func, oneshot, autostart);
-  }
-
-  template<class T >
-  Timer CARMANodeHandle::createTimer (Duration period, void(T::*callback)(const TimerEvent &), T *obj, bool oneshot, bool autostart) {
-
-    auto func = callbackWrapper<const TimerEvent &>(boost::bind(callback, obj, _1));
-    return NodeHandle::createTimer(period, func, oneshot, autostart);
-  }
-
-  template<class T >
-  Timer CARMANodeHandle::createTimer (Duration period, void(T::*callback)(const TimerEvent &), const boost::shared_ptr< T > &obj, bool oneshot, bool autostart) {
-
-    auto func = callbackWrapper<const TimerEvent &>(boost::bind(callback, obj, _1));
-    return NodeHandle::createTimer(period, func, oneshot, autostart);
   }
 
   Timer CARMANodeHandle::createTimer (Duration period, const TimerCallback &callback, bool oneshot, bool autostart) {
@@ -604,20 +303,6 @@ namespace ros {
     carma_ops.tracked_object = ops.tracked_object;
 
     return NodeHandle::createTimer(carma_ops);
-  }
-
-  template<class T >
-  WallTimer CARMANodeHandle::createWallTimer (WallDuration period, void(T::*callback)(const WallTimerEvent &), T *obj, bool oneshot, bool autostart) {
-
-    auto func = callbackWrapper<const WallTimerEvent &>(boost::bind(callback, obj, _1));
-    return NodeHandle::createWallTimer(period, func, oneshot, autostart);
-  }
-
-  template<class T >
-  WallTimer CARMANodeHandle::createWallTimer (WallDuration period, void(T::*callback)(const WallTimerEvent &), const boost::shared_ptr< T > &obj, bool oneshot, bool autostart) {
-
-    auto func = callbackWrapper<const WallTimerEvent &>(boost::bind(callback, obj, _1));
-    return NodeHandle::createWallTimer(period, func, oneshot, autostart);
   }
 
   WallTimer CARMANodeHandle::createWallTimer (WallDuration period, const WallTimerCallback &callback, bool oneshot, bool autostart) {

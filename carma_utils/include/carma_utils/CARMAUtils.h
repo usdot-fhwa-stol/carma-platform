@@ -1,3 +1,4 @@
+#pragma once
 /*
  * Copyright (C) 2018-2019 LEIDOS.
  *
