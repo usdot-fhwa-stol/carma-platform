@@ -17,7 +17,6 @@
 include 'guidance'
 include 'interfacemgr'
 include 'message'
-include 'roadway'
 include 'route'
 include 'template'
 include 'mock_drivers'

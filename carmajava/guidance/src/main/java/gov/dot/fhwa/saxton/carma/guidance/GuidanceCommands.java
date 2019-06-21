@@ -90,7 +90,7 @@ public class GuidanceCommands extends GuidanceComponent implements IGuidanceComm
         try {
             enableRoboticService = pubSubService.getServiceForTopic("enable_robotic", SetEnableRobotic._TYPE);
         } catch (TopicNotFoundException tnfe) {
-            exceptionHandler.handleException("GuidanceCommands unable to locate control/enable_robotic service", tnfe);
+            exceptionHandler.handleException("GuidanceCommands unable to locate controller/enable_robotic service", tnfe);
         }
         lateralControlPublisher = pubSubService.getPublisherForTopic("cmd_lateral", LateralControl._TYPE);
         currentState.set(GuidanceState.DRIVERS_READY);

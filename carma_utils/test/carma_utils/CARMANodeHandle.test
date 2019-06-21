@@ -1,0 +1,4 @@
+<!-- rostest file for testing the CARMANodeHandle NodeHandle wrapper -->
+<launch>
+  <test test-name="carma_utils_CARMANodeHandle_test" pkg="carma_utils" type="carma_utils_CARMANodeHandle_test" />
+</launch>

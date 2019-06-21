@@ -28,8 +28,8 @@ class SpeedWrenchFlipNode(object):
         #self.speed_limit = rospy.get_param('~speed_limit') * MPS_PER_MPH
         
         # Publishers
-        self.cmd_speed_pub = rospy.Publisher('/srx_controller/control/cmd_speed', SpeedAccel, queue_size=10)
-        self.cmd_effort_pub = rospy.Publisher('/srx_controller/control/cmd_longitudinal_effort', Float32, queue_size=10)
+        self.cmd_speed_pub = rospy.Publisher('/srx_controller/controller/cmd_speed', SpeedAccel, queue_size=10)
+        self.cmd_effort_pub = rospy.Publisher('/srx_controller/controller/cmd_longitudinal_effort', Float32, queue_size=10)
 
         # Subscribers
         self.switch_pub = rospy.Subscriber('/switch', Float32MultiArray, self.switch_cb)

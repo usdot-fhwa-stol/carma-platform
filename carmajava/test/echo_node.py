@@ -68,8 +68,8 @@ def echo_node():
     # run simultaneously.
     rospy.init_node('echo_node', anonymous=True)
 
-    rospy.Subscriber("/saxton_cav/sensor_fusion/filtered/tracked_objects", ExternalObjectList, external_objects_cb)
-    #rospy.Subscriber("/saxton_cav/route/route", Route, route_cb)
+    rospy.Subscriber("/carma/sensor_fusion/filtered/tracked_objects", ExternalObjectList, external_objects_cb)
+    #rospy.Subscriber("/carma/route/route", Route, route_cb)
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()
 

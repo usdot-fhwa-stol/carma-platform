@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<!--
+  Copyright (C) 2018-2019 LEIDOS.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+<!--
+	Launch file for launching the nodes in the CARMA hardware interface stack 
+-->
+<launch>
+  <!-- Constants -->
+  <!-- Directory of Parameter Files -->
+  <arg name="CARMA_DIR" default="$(find carma)" doc="The path of the package directory"/>
+  <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/launch/params" doc="Directory of yaml parameter files"/>
+  <!-- Simulated Driver Arguments -->
+  <!-- Directory of Simulation Files -->
+  <arg name="DATA_DIR" default="$(arg CARMA_DIR)/mock_drivers/src/test/data" doc="Directory of driver simulation data files"/>
+  <!-- Directory containing additional carma launch files such as the drivers.launch file -->
+  <arg name="LAUNCH_DIR" default="$(arg CARMA_DIR)/launch" doc="Directory containing additional carma launch files such as driver.launch"/>
+
+  <arg name="UI_NS" default="/ui" doc="Namespace of parameters used by the ui and rosbridge"/>
+
+  <!-- Simulation Usage -->
+  <arg name="mock_drivers" default="controller can comms gnss radar lidar camera roadway_sensor" doc="List of driver node base names which will be launched as mock drivers"/>
+  
+  <!-- Startup Drivers With Main CARMA System -->
+  <arg name="launch_drivers" default="true" doc="True if drivers are to be launched with the CARMA Platform, overrides mock_drivers arg if false"/>
+
+  <!-- Debug -->
+  <!-- Set to true to enable debugging on the specified node -->
+  <arg name="debug_node" default="" doc="Set to the java node base name to enable debugging on that node. Requires JVM_DEBUG_OPTS environment variable to be set"/>
+
+  <!-- Remap topics from external packages -->
+  <remap from="ui_instructions" to="$(arg UI_NS)/ui_instructions"/>
+
+  <remap from="system_alert" to="/system_alert"/>
+
+  <group if="$(arg launch_drivers)">
+    <!-- Simulated Mock Drivers -->
+    <include file="$(arg LAUNCH_DIR)/mock_drivers.launch">
+      <arg name="DATA_DIR" value="$(arg DATA_DIR)"/>
+      <arg name="LAUNCH_DIR" value="$(arg LAUNCH_DIR)"/>
+      <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
+      <arg name="debug_node" value="$(arg debug_node)"/>
+      <arg name="mock_drivers" value="$(arg mock_drivers)"/>
+    </include>
+
+    <!--Driver Launch File if Using Actual Drivers -->
+    <include file="$(arg LAUNCH_DIR)/drivers.launch">
+      <arg name="mock_drivers" value="$(arg mock_drivers)" />
+      <arg name="CARMA_DIR" value="$(arg CARMA_DIR)" />
+      <arg name="PARAM_DIR" value="$(arg PARAM_DIR)" />
+    </include>
+  </group>
+
+  <!-- Interface Manager Node -->
+  <arg name="debug_interface_mgr" value="$(eval arg('debug_node') == 'interface_mgr')"/>
+  <node pkg="carma" type="interfacemgr" name="interface_mgr" args="gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr" required="true">
+
+    <env if="$(arg debug_interface_mgr)" name="INTERFACEMGR_OPTS" value="$(env JVM_DEBUG_OPTS)"/>
+
+    <rosparam command="load" file="$(arg PARAM_DIR)/InterfaceMgrParams.yaml"/>
+  </node>
+
+</launch>

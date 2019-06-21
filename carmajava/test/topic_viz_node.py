@@ -52,24 +52,24 @@ class TopicVizNode(object):
     # Pub-Sub
     # External Objects
     self.objects_viz_pub = rospy.Publisher("/external_obj_viz", MarkerArray, queue_size=10)
-    self.objects_sub = rospy.Subscriber("/saxton_cav/sensor_fusion/filtered/tracked_objects", ExternalObjectList, self.external_objects_cb)
+    self.objects_sub = rospy.Subscriber("/carma/sensor_fusion/filtered/tracked_objects", ExternalObjectList, self.external_objects_cb)
     # Roadway Objects. 
     # TODO this might require a java node
     # Route
     self.route_viz_pub = rospy.Publisher("/route_viz", PoseArray, queue_size=10, latch=True)
-    self.route_sub = rospy.Subscriber("/saxton_cav/route/route", Route, self.route_cb)
+    self.route_sub = rospy.Subscriber("/carma/route/route", Route, self.route_cb)
     # Mobility Path
     self.path_viz_outbound_pub = rospy.Publisher("/mobility_path_viz_outbound", MarkerArray, queue_size=10)
     self.path_viz_inbound_pub = rospy.Publisher("/mobility_path_viz_inbound", MarkerArray, queue_size=10)
-    self.path_sub_outbound = rospy.Subscriber("/saxton_cav/guidance/outgoing_mobility_path", MobilityPath, self.path_message_outbound_cb)
-    self.path_sub_inbound = rospy.Subscriber("/saxton_cav/message/incoming_mobility_path", MobilityPath, self.path_message_inbound_cb)
+    self.path_sub_outbound = rospy.Subscriber("/carma/guidance/outgoing_mobility_path", MobilityPath, self.path_message_outbound_cb)
+    self.path_sub_inbound = rospy.Subscriber("/carma/message/incoming_mobility_path", MobilityPath, self.path_message_inbound_cb)
     # Mobility Request
     self.request_viz_outbound_pub = rospy.Publisher("/mobility_request_viz_outbound", MarkerArray, queue_size=10)
     self.request_viz_inbound_pub = rospy.Publisher("/mobility_request_viz_inbound", MarkerArray, queue_size=10)
-    self.request_sub_inbound = rospy.Subscriber("/saxton_cav/guidance/outgoing_mobility_request", MobilityRequest, self.request_message_outbound_cb)
-    self.request_sub_outbound = rospy.Subscriber("/saxton_cav/message/incoming_mobility_request", MobilityRequest, self.request_message_inbound_cb)
+    self.request_sub_inbound = rospy.Subscriber("/carma/guidance/outgoing_mobility_request", MobilityRequest, self.request_message_outbound_cb)
+    self.request_sub_outbound = rospy.Subscriber("/carma/message/incoming_mobility_request", MobilityRequest, self.request_message_inbound_cb)
     # Host Id
-    self.host_veh_id = rospy.get_param("/saxton_cav/vehicle_id")
+    self.host_veh_id = rospy.get_param("/carma/vehicle_id")
     
     # Color map for path / request messages
     self.id_color_map = dict({})

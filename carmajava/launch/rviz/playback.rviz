@@ -204,7 +204,7 @@ Visualization Manager:
       Name: AerialMapDisplay
       Object URI: https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoibXNtY2Nvbm5lbGwiLCJhIjoiY2pnemtzaWVmMmx6bjMycDk3NWJneG1sOSJ9.l-7MbiBNBwNevaxlYvNsiA
       Robot frame: host_vehicle
-      Topic: /saxton_cav/sensor_fusion/filtered/nav_sat_fix
+      Topic: /carma/sensor_fusion/filtered/nav_sat_fix
       Value: false
       Zoom: 18
     - Class: rviz/MarkerArray
