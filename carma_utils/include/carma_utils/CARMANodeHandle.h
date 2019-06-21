@@ -74,6 +74,44 @@ namespace ros {
       static bool allow_node_shutdown_; // Flag controlling if handle can call ros::shutdown
 
       /**
+       * @brief Wrapper for pub/sub callbacks which provides exception handling
+       * 
+       * This function can be used to wrap callbacks when they cannot be passed into CARMANodeHandle overriden functions
+       * And example of this would be the message_filters::Subscriber.subscribe() function which takes in a ros::NodeHandle
+       * 
+       * @param callback A callable which will be used as the callback to wrap
+       * @tparam C The argument type for the callback
+       * 
+       * @return A boost function which wraps callback in exception handling logic
+       */ 
+      template<class C> 
+      boost::function< void(C)> callbackWrapper(const boost::function<void(C)>& callback);
+
+      /**
+       * @brief Wrapper for service callbacks which provides exception handling
+       * @param callback A callable which will be used as the callback to wrap
+       * @tparam C The argument type for the callback
+       * 
+       * This function can be used to wrap callbacks when they cannot be passed into CARMANodeHandle overriden functions
+       * See callbackWrapper for an example of how this might apply to subscriptions
+       * 
+       * @return A boost function which wraps callback in exception handling logic
+       */ 
+      template<class C, class R>
+      boost::function< bool(C, R)> serviceCallbackWrapper(const boost::function<bool(C, R)>& callback);
+      /**
+       * @brief Wrapper for service callbacks that use the ServiceEvent<> interface which provides exception handling
+       * @param callback A callable which will be used as the callback to wrap
+       * @tparam C The argument type for the callback
+       * 
+       * This function can be used to wrap callbacks when they cannot be passed into CARMANodeHandle overriden functions
+       * See callbackWrapper for an example of how this might apply to subscriptions
+       * 
+       * @return A boost function which wraps callback in exception handling logic
+       */ 
+      template<class E>
+      boost::function< bool(E)> serviceEventCallbackWrapper(const boost::function<bool(E)>& callback);
+      /**
        * @brief Handles incoming SystemAlert messages
        * 
        * @param message The message to handle
@@ -205,45 +243,6 @@ namespace ros {
        * @param msg The message to publish
        */ 
       void publishSystemAlert(const cav_msgs::SystemAlert& msg);
-
-      /**
-       * @brief Wrapper for pub/sub callbacks which provides exception handling
-       * 
-       * This function can be used to wrap callbacks when they cannot be passed into CARMANodeHandle overriden functions
-       * And example of this would be the message_filters::Subscriber.subscribe() function which takes in a ros::NodeHandle
-       * 
-       * @param callback A callable which will be used as the callback to wrap
-       * @tparam C The argument type for the callback
-       * 
-       * @return A boost function which wraps callback in exception handling logic
-       */ 
-      template<class C> 
-      boost::function< void(C)> callbackWrapper(const boost::function<void(C)>& callback);
-
-      /**
-       * @brief Wrapper for service callbacks which provides exception handling
-       * @param callback A callable which will be used as the callback to wrap
-       * @tparam C The argument type for the callback
-       * 
-       * This function can be used to wrap callbacks when they cannot be passed into CARMANodeHandle overriden functions
-       * See callbackWrapper for an example of how this might apply to subscriptions
-       * 
-       * @return A boost function which wraps callback in exception handling logic
-       */ 
-      template<class C, class R>
-      boost::function< bool(C, R)> serviceCallbackWrapper(const boost::function<bool(C, R)>& callback);
-      /**
-       * @brief Wrapper for service callbacks that use the ServiceEvent<> interface which provides exception handling
-       * @param callback A callable which will be used as the callback to wrap
-       * @tparam C The argument type for the callback
-       * 
-       * This function can be used to wrap callbacks when they cannot be passed into CARMANodeHandle overriden functions
-       * See callbackWrapper for an example of how this might apply to subscriptions
-       * 
-       * @return A boost function which wraps callback in exception handling logic
-       */ 
-      template<class E>
-      boost::function< bool(E)> serviceEventCallbackWrapper(const boost::function<bool(E)>& callback);
 
       //////
       // OVERRIDES
