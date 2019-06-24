@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<launch>
+        <param name="route_file_path" type="str" value="/home/qswawrq/CARMAWorkspace/src/route_generator/resource/" />
+	<node pkg="route_generator" type="route_generator" name="route_generator" output="log" />
+</launch>
