@@ -27,7 +27,6 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "trajectory_executor");
   ROS_DEBUG("Entered main function for Trajectory executor, starting node...");
   trajectory_executor::TrajectoryExecutor te;
-  ROS_DEBUG("TEST");
 
   te.init();
   te.run();

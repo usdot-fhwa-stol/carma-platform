@@ -41,6 +41,7 @@ namespace trajectory_executor {
             std::map<std::string, std::string> queryControlPlugins();
             void onNewTrajectoryPlan(cav_msgs::TrajectoryPlan msg);
             void onTrajEmitTick(const ros::TimerEvent& te);
+            void shutdown(std::string reason);
         private:
             std::unique_ptr<ros::CARMANodeHandle> _default_nh;
             std::unique_ptr<ros::CARMANodeHandle> _timer_nh;
