@@ -196,11 +196,10 @@ target_link_libraries(${PROJECT_NAME}_node
 ## Testing ##
 #############
 
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_trajectory_executor.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
-
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
+if (CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(trajectory_executor_test test/trajectory_executor.test src/test/trajectory_executor_test.cpp)
+  add_rostest_gtest(trajectory_executor_test2 test/trajectory_executor2.test src/test/trajectory_executor_test2.cpp)
+  target_link_libraries(trajectory_executor_test ${catkin_LIBRARIES})
+  target_link_libraries(trajectory_executor_test2 ${catkin_LIBRARIES})
+endif()
