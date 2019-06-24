@@ -29,7 +29,7 @@ void RouteGenerator::initialize()
 {
     nh_.reset(new ros::CARMANodeHandle);
     pnh_.reset(new ros::CARMANodeHandle("~"));
-    nh_->getParam("route_file_path", route_file_path_);
+    pnh_->getParam("route_file_path", route_file_path_);
     route_file_path_pub_ = nh_->advertise<std_msgs::String>("selected_route_path", 1);
     get_available_route_srv_ = nh_->advertiseService("get_available_routes", &RouteGenerator::get_available_route_cb, this);
     set_active_route_srv_ = nh_->advertiseService("set_active_route", &RouteGenerator::set_active_route_cb, this);
@@ -45,21 +45,16 @@ void RouteGenerator::run()
 
 bool RouteGenerator::get_available_route_cb(cav_srvs::GetAvailableRoutesRequest &req, cav_srvs::GetAvailableRoutesResponse &resp)
 {
-    ROS_ERROR_STREAM("The call back is triggered!");
     std::vector<std::string> route_ids = read_route_names(route_file_path_);
-    ROS_ERROR_STREAM("Got a list of names!");
-    ROS_ERROR_STREAM(route_ids.size());
     for(int i = 0; i < route_ids.size(); ++i)
     {
-        std::string route_name = route_ids[i].substr(0, route_ids[i].find("."));
-        ROS_ERROR_STREAM(route_name);
+        std::string route_name = route_ids[i].substr(0, route_ids[i].find(".csv"));
         cav_msgs::Route route_msg;
         route_msg.routeID = route_name;
         route_msg.routeName = route_name;
         route_msg.valid = true;
         resp.availableRoutes.push_back(route_msg);
     }
-    ROS_ERROR_STREAM("Callback returned!");
     return true;
 }
 
@@ -72,9 +67,14 @@ bool RouteGenerator::set_active_route_cb(cav_srvs::SetActiveRouteRequest &req, c
         selected_route_file_path.data = route_file_path_ + route_file_name;
         route_file_path_pub_.publish(selected_route_file_path);
         resp.errorStatus = cav_srvs::SetActiveRouteResponse::NO_ERROR;
-        return true;
     }
-    return false;
+    else
+    {
+        ROS_WARN_STREAM("A route has already been started.");
+        resp.errorStatus = cav_srvs::SetActiveRouteResponse::ALREADY_FOLLOWING_ROUTE;
+    }
+    
+    return true;
 }
 
 bool RouteGenerator::start_active_route_cb(cav_srvs::StartActiveRouteRequest &req, cav_srvs::StartActiveRouteResponse &resp)
@@ -83,9 +83,14 @@ bool RouteGenerator::start_active_route_cb(cav_srvs::StartActiveRouteRequest &re
     {
         route_is_active_ = true;
         resp.errorStatus = cav_srvs::StartActiveRouteResponse::NO_ERROR;
-        return true;
     }
-    return false;
+    else
+    {
+        ROS_WARN_STREAM("A route has already been started.");
+        resp.errorStatus = cav_srvs::StartActiveRouteResponse::ALREADY_FOLLOWING_ROUTE;
+    }
+    
+    return true;
 }
 
 bool RouteGenerator::abort_active_route_cb(cav_srvs::AbortActiveRouteRequest &req, cav_srvs::AbortActiveRouteResponse &resp)
@@ -94,9 +99,13 @@ bool RouteGenerator::abort_active_route_cb(cav_srvs::AbortActiveRouteRequest &re
     {
         route_is_active_ = false;
         resp.error_status = cav_srvs::AbortActiveRouteResponse::NO_ERROR;
-        return true;
     }
-    return false;
+    else
+    {
+        ROS_WARN_STREAM("No active route to abort!");
+        resp.error_status = cav_srvs::AbortActiveRouteResponse::NO_ACTIVE_ROUTE;
+    }
+    return true;
 }
 
 std::vector<std::string> RouteGenerator::read_route_names(std::string route_path)

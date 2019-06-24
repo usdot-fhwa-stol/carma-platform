@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
 <launch>
-        <param name="route_file_path" type="str" value="/home/qswawrq/CARMAWorkspace/src/route_generator/resource/" />
-	<node pkg="route_generator" type="route_generator" name="route_generator" output="log" />
+        <arg name="route_file_folder" default="/opt/carma/routes/" />
+
+        <param name="route_file_path" type="str" value="$(arg route_file_folder)" />
+	<node pkg="route_generator" type="route_generator" name="route_generator"/>
 </launch>
