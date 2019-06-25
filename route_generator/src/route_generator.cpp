@@ -18,16 +18,13 @@
 
 #include "route_generator.h"
 
-RouteGenerator::RouteGenerator(int argc, char **argv, const std::string &name) : route_is_active_(false)
-{
-    ros::init(argc, argv, name);
-}
+RouteGenerator::RouteGenerator() : route_is_active_(false) {}
 
 RouteGenerator::~RouteGenerator() {}
 
 void RouteGenerator::initialize()
 {
-    nh_.reset(new ros::CARMANodeHandle);
+    nh_.reset(new ros::CARMANodeHandle());
     pnh_.reset(new ros::CARMANodeHandle("~"));
     pnh_->getParam("route_file_path", route_file_path_);
     route_file_path_pub_ = nh_->advertise<std_msgs::String>("selected_route_path", 1);
@@ -45,7 +42,7 @@ void RouteGenerator::run()
 
 bool RouteGenerator::get_available_route_cb(cav_srvs::GetAvailableRoutesRequest &req, cav_srvs::GetAvailableRoutesResponse &resp)
 {
-    std::vector<std::string> route_ids = read_route_names(route_file_path_);
+    std::vector<std::string> route_ids = RouteGenerator::read_route_names(route_file_path_);
     for(int i = 0; i < route_ids.size(); ++i)
     {
         std::string route_name = route_ids[i].substr(0, route_ids[i].find(".csv"));

@@ -33,10 +33,14 @@ class RouteGenerator
 
 public:
 
-    RouteGenerator(int argc, char **argv, const std::string &name = "route_generator");
+    RouteGenerator();
     virtual ~RouteGenerator();
 
+    // general starting point of this node
     void run();
+
+    // read file names in the given route path
+    static std::vector<std::string> read_route_names(std::string route_path);
 
 private:
 
@@ -67,6 +71,4 @@ private:
     // initialize this node
     void initialize();
 
-    // read file names in the given route path
-    std::vector<std::string> read_route_names(std::string route_path);
 };

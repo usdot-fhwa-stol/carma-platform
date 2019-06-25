@@ -55,10 +55,10 @@ add_executable( ${PROJECT_NAME}
   ${headers}
   src/route_generator.cpp
   src/main.cpp)
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-if(catkin_EXPORTED_TARGETS)
-  add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-endif()
+add_library(route_generator_library src/route_generator.cpp)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} route_generator_library)
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+add_dependencies(route_generator_library ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
@@ -81,3 +81,9 @@ install(TARGETS ${PROJECT_NAME}
 install(DIRECTORY launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
+#############
+## Testing ##
+#############
+catkin_add_gmock(${PROJECT_NAME}-test test/test_route_generator.cpp)
+target_link_libraries(${PROJECT_NAME}-test route_generator_library ${catkin_LIBRARIES})
