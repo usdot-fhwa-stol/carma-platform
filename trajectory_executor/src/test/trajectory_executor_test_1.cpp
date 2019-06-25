@@ -22,8 +22,7 @@ TEST_F(TrajectoryExecutorTestSuite, test_message_no_crash) {
 
     traj_pub.publish(plan);
 
-    boost::shared_ptr<const cav_msgs::SystemAlert> msg = ros::topic::waitForMessage<cav_msgs::SystemAlert>("system_alert", ros::Duration(0.5));
-    ASSERT_TRUE(!msg) << "Received system shutdown alert message from TrajectoryExecutor node.";
+    ASSERT_FALSE(recv_sys_alert) << "Received system shutdown alert message from TrajectoryExecutor node.";
 }
 
 TEST_F(TrajectoryExecutorTestSuite, test_emit_traj) {
@@ -32,8 +31,8 @@ TEST_F(TrajectoryExecutorTestSuite, test_emit_traj) {
 
     traj_pub.publish(plan);
 
-    boost::shared_ptr<const cav_msgs::TrajectoryPlan> msg = ros::topic::waitForMessage<cav_msgs::TrajectoryPlan>("/carma/guidance/control_plugins/pure_pursuit/trajectory", ros::Duration(1.5));
-    ASSERT_FALSE(!msg) << "Failed to receive trajectory execution message from TrajectoryExecutor node.";
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    ASSERT_GT(msg_count, 0) << "Failed to receive trajectory execution message from TrajectoryExecutor node.";
 } 
 
 TEST_F(TrajectoryExecutorTestSuite, test_runover_shutdown) {
@@ -42,13 +41,13 @@ TEST_F(TrajectoryExecutorTestSuite, test_runover_shutdown) {
 
     traj_pub.publish(plan);
 
-    boost::shared_ptr<const cav_msgs::SystemAlert> msg = ros::topic::waitForMessage<cav_msgs::SystemAlert>("system_alert", ros::Duration(1.5));
-    ASSERT_FALSE(!msg) << "Failed to receive system shutdown alert message from TrajectoryExecutor node.";
+    std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+    ASSERT_TRUE(recv_sys_alert) << "Failed to receive system shutdown alert message from TrajectoryExecutor node.";
 }
 
 int main (int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
-    ros::init(argc, argv, "trajectory_executor_test");
+    ros::init(argc, argv, "trajectory_executor_test_1");
 
     std::thread spinner([] {while (ros::ok()) ros::spin();});
 

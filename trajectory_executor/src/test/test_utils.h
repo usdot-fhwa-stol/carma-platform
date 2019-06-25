@@ -26,25 +26,32 @@ class TrajectoryExecutorTestSuite : public ::testing::Test
     public:
         TrajectoryExecutorTestSuite() {
             _nh = ros::NodeHandle();
-            traj_pub = _nh.advertise<cav_msgs::TrajectoryPlan>("trajectory", 5);
+            traj_pub = _nh.advertise<cav_msgs::TrajectoryPlan>("/trajectory", 5);
             traj_sub = _nh.subscribe<cav_msgs::TrajectoryPlan>("/carma/guidance/control_plugins/pure_pursuit/trajectory", 100, 
             &TrajectoryExecutorTestSuite::trajEmitCallback, this);
+            sys_alert_sub = _nh.subscribe<cav_msgs::SystemAlert>("/system_alert", 100, 
+            &TrajectoryExecutorTestSuite::sysAlertCallback, this);
         }
         ros::NodeHandle _nh;
         ros::Publisher traj_pub;
         ros::Subscriber traj_sub;
+        ros::Subscriber sys_alert_sub;
         int msg_count = 0;
         int last_points = 9999;
         bool shrinking = true;
+        bool recv_sys_alert = false;
 
         void trajEmitCallback(cav_msgs::TrajectoryPlan msg) {
-            ROS_DEBUG("TEST");
             msg_count++;
             if (msg.trajectory_points.size() < last_points && shrinking) {
                 last_points = msg.trajectory_points.size();
             } else {
                 shrinking = false;
             }
+        }
+
+        void sysAlertCallback(cav_msgs::SystemAlert msg) {
+            recv_sys_alert = true;
         }
 };
 

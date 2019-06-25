@@ -198,8 +198,12 @@ target_link_libraries(${PROJECT_NAME}_node
 
 if (CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
-  add_rostest_gtest(trajectory_executor_test test/trajectory_executor.test src/test/trajectory_executor_test.cpp)
-  add_rostest_gtest(trajectory_executor_test2 test/trajectory_executor2.test src/test/trajectory_executor_test2.cpp)
-  target_link_libraries(trajectory_executor_test ${catkin_LIBRARIES})
-  target_link_libraries(trajectory_executor_test2 ${catkin_LIBRARIES})
+  add_rostest_gtest(trajectory_executor_test_1 test/trajectory_executor_1.test src/test/trajectory_executor_test_1.cpp)
+  target_link_libraries(trajectory_executor_test_1 ${catkin_LIBRARIES})
+
+  add_rostest_gtest(trajectory_executor_test_2 test/trajectory_executor_2.test src/test/trajectory_executor_test_2.cpp)
+  target_link_libraries(trajectory_executor_test_2 ${catkin_LIBRARIES})
+
+  add_rostest_gtest(trajectory_executor_test_3 test/trajectory_executor_3.test src/test/trajectory_executor_test_3.cpp)
+  target_link_libraries(trajectory_executor_test_3 ${catkin_LIBRARIES})
 endif()

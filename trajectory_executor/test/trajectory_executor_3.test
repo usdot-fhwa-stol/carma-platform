@@ -19,5 +19,5 @@
     <node pkg="trajectory_executor" type="trajectory_executor_node" name="trajectory_executor_node">
         <rosparam command="load" file="$(find trajectory_executor)/config/default.yaml" />
     </node>
-    <test test-name="trajectory_executor_test2" pkg="trajectory_executor" type="trajectory_executor_test2" />
+    <test test-name="trajectory_executor_test_3" pkg="trajectory_executor" type="trajectory_executor_test_3" />
 </launch>
