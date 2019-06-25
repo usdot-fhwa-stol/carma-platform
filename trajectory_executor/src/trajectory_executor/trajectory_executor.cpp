@@ -46,8 +46,13 @@ namespace trajectory_executor
         ROS_DEBUG("Executing stub behavior for plugin discovery MVP...");
         std::map<std::string, std::string> out;
 
-        // TODO: Replace with temporary path to wherever pure_pursuit is mapped
-        out["pure_pursuit"] = "/carma/guidance/control_plugins/pure_pursuit/trajectory";
+        std::string default_control_plugin;
+        _default_nh->param<std::string>("default_control_plugin", default_control_plugin, "NULL");
+
+        std::string default_control_plugin_topic;
+        _default_nh->param<std::string>("default_control_plugin_topic", default_control_plugin_topic, "NULL");
+
+        out[default_control_plugin] = default_control_plugin_topic;
         return out;
     }
     
@@ -153,7 +158,7 @@ namespace trajectory_executor
         _msg_nh->setCallbackQueue(&_msg_callbacks);
         ROS_DEBUG("Initialized all node handles");
 
-        _default_nh->param("default_spin_rate", _default_spin_rate, 10);
+        _default_nh->param("spin_rate", _default_spin_rate, 10);
         _default_nh->param("trajectory_publish_rate", _min_traj_publish_tickrate_hz, 10);
 
         ROS_DEBUG_STREAM("Initalized params with default_spin_rate " << _default_spin_rate 

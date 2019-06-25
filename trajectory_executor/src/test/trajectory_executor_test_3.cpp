@@ -16,6 +16,10 @@
 
 #include "test_utils.h"
 
+/*!
+ * \brief Test that the Trajectory Executor properly shuts down if it encounters a trajectory
+ * containing a reference to a control plugin which was not discovered.
+ */
 TEST_F(TrajectoryExecutorTestSuite, test_control_plugin_not_found) {
     waitForSubscribers(traj_pub, 1, 500);
     cav_msgs::TrajectoryPlan plan = buildSampleTraj();
@@ -28,6 +32,9 @@ TEST_F(TrajectoryExecutorTestSuite, test_control_plugin_not_found) {
     ASSERT_TRUE(recv_sys_alert) << "Failed to receive system shutdown alert message from TrajectoryExecutor node.";
 }
 
+/*!
+ * \brief Main entrypoint for unit tests
+ */
 int main (int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     ros::init(argc, argv, "trajectory_executor_test_3");

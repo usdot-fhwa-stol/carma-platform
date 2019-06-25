@@ -16,6 +16,10 @@
 
 #include "test_utils.h"
 
+/*!
+ * \brief Test that the Trajectory executor properly emits all sub-trajectories as it 
+ * iterates through a single trajectory
+ */
 TEST_F(TrajectoryExecutorTestSuite, test_emit_multiple) {
     waitForSubscribers(traj_pub, 1, 500);
     cav_msgs::TrajectoryPlan plan = buildSampleTraj();
@@ -28,6 +32,9 @@ TEST_F(TrajectoryExecutorTestSuite, test_emit_multiple) {
     ASSERT_TRUE(shrinking) << "Output trajectory plans were not shrunk each time step as expected.";
 }
 
+/*!
+ * \brief Main entrypoint for unit tests
+ */
 int main (int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     ros::init(argc, argv, "trajectory_executor_test_2");

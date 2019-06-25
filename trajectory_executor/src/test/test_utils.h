@@ -21,6 +21,11 @@
 #include <cav_msgs/TrajectoryPlan.h>
 #include <cav_msgs/SystemAlert.h>
 
+/**
+ * Test fixture for TrajectoryExecutor testing
+ * Maintains publishers, subscribers, and message tracking for all tests.
+ * State is reset between tests to ensure clean results.
+ */
 class TrajectoryExecutorTestSuite : public ::testing::Test 
 {
     public:
@@ -55,6 +60,15 @@ class TrajectoryExecutorTestSuite : public ::testing::Test
         }
 };
 
+/*!
+ * \brief Waits for the specified number of subscribers to exist on the topic
+ * before continuing. Will wait until num_subscribers exist or until timeout_millis
+ * has elapsed.
+ * 
+ * \param pub The publisher of the topic you are waiting for
+ * \param num_subscribers The target number of subscribers to acheive
+ * \param timeout_millis The maximum number of milliseconds to wait
+ */
 void waitForSubscribers(ros::Publisher pub, int num_subscribers, int timeout_millis) {
     int elapsed_millis = 0;
     while (pub.getNumSubscribers() < num_subscribers && elapsed_millis < timeout_millis) {
@@ -69,6 +83,11 @@ void waitForSubscribers(ros::Publisher pub, int num_subscribers, int timeout_mil
     }
 }
 
+/*!
+ * \brief Build a small sample TrajectoryPlan message
+ * 
+ * \return A 10-point cav_msgs::TrajectoryPlan message containing sample data
+ */
 cav_msgs::TrajectoryPlan buildSampleTraj() {
     cav_msgs::TrajectoryPlan plan;
 

@@ -16,6 +16,9 @@
 
 #include "test_utils.h"
 
+/*!
+ * \brief Test that the trajectory executor can receive an input plan and not immediately crash
+ */
 TEST_F(TrajectoryExecutorTestSuite, test_message_no_crash) {
     waitForSubscribers(traj_pub, 1, 500);
     cav_msgs::TrajectoryPlan plan = buildSampleTraj();
@@ -25,6 +28,10 @@ TEST_F(TrajectoryExecutorTestSuite, test_message_no_crash) {
     ASSERT_FALSE(recv_sys_alert) << "Received system shutdown alert message from TrajectoryExecutor node.";
 }
 
+/*!
+ * \brief Test that the trajectory executor will output the trajectory on 
+ * the desired topic after receiving it on the input
+ */
 TEST_F(TrajectoryExecutorTestSuite, test_emit_traj) {
     waitForSubscribers(traj_pub, 1, 500);
     cav_msgs::TrajectoryPlan plan = buildSampleTraj();
@@ -35,6 +42,10 @@ TEST_F(TrajectoryExecutorTestSuite, test_emit_traj) {
     ASSERT_GT(msg_count, 0) << "Failed to receive trajectory execution message from TrajectoryExecutor node.";
 } 
 
+/*!
+ * \brief Test that the trajectory executor will shutdown properly after running 
+ * over the end of it's current trajectory
+ */
 TEST_F(TrajectoryExecutorTestSuite, test_runover_shutdown) {
     waitForSubscribers(traj_pub, 1, 500);
     cav_msgs::TrajectoryPlan plan = buildSampleTraj();
@@ -45,6 +56,9 @@ TEST_F(TrajectoryExecutorTestSuite, test_runover_shutdown) {
     ASSERT_TRUE(recv_sys_alert) << "Failed to receive system shutdown alert message from TrajectoryExecutor node.";
 }
 
+/*!
+ * \brief Main entrypoint for unit tests
+ */
 int main (int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     ros::init(argc, argv, "trajectory_executor_test_1");
