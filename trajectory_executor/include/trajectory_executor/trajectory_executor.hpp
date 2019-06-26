@@ -36,7 +36,7 @@ namespace trajectory_executor {
      * \param plan The plan to modify
      * \return A new message with the copied contents minus the first point
      */
-    cav_msgs::TrajectoryPlan trimFirstPoint(const cav_msgs::TrajectoryPlan plan);
+    cav_msgs::TrajectoryPlan trimFirstPoint(const cav_msgs::TrajectoryPlan &plan);
 
     /**
      * Trajectory Executor package primary worker class
@@ -97,21 +97,10 @@ namespace trajectory_executor {
              * \param te The timer event that triggered this callback
              */
             void onTrajEmitTick(const ros::TimerEvent& te);
-
-            /*!
-             * \brief Helper function to provide consistency in shutdown procedures
-             * for this node in the event of an error. Publishes a FATAL to 
-             * system_alert and calls exit(-1).
-             * 
-             * \param reason A string describing the fatal error, will be published
-             * in the system alert message
-             */
-            void shutdown(std::string reason);
         private:
             // Node handles to separate callback queues
-            std::unique_ptr<ros::CARMANodeHandle> _default_nh;
-            std::unique_ptr<ros::CARMANodeHandle> _timer_nh;
-            std::unique_ptr<ros::CARMANodeHandle> _msg_nh;
+            std::unique_ptr<ros::CARMANodeHandle> _private_nh;
+            std::unique_ptr<ros::CARMANodeHandle> _public_nh;
 
             // Callback queues to ensure these threads process correctly
             ros::CallbackQueue _timer_callbacks;

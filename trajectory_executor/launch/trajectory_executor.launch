@@ -22,7 +22,7 @@ Loads parameters and configures logging for node, defaults to screen output.
 <launch>
     <env name="ROSCONSOLE_CONFIG_FILE" value="$(find trajectory_executor)/config/roscpp_log.config"/>
     <!-- Trajectory Executor Node -->
-    <node pkg="trajectory_executor" type="trajectory_executor_node" name="trajectory_executor_node" output="screen">
+    <node pkg="trajectory_executor" type="trajectory_executor_node" name="trajectory_executor_node">
         <rosparam command="load" file="$(find trajectory_executor)/config/trajectory_executor.yaml" />
     </node>
 </launch>

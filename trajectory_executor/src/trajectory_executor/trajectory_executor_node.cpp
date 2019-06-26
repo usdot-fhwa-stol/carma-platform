@@ -14,9 +14,7 @@
  * the License.
  */
 
-#include <memory>
 #include <ros/ros.h>
-#include <carma_utils/CARMAUtils.h>
 #include "trajectory_executor/trajectory_executor.hpp"
 
 /**

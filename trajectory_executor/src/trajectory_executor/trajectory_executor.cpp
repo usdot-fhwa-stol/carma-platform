@@ -21,7 +21,7 @@
 
 namespace trajectory_executor 
 {
-    cav_msgs::TrajectoryPlan trimFirstPoint(const cav_msgs::TrajectoryPlan plan) {
+    cav_msgs::TrajectoryPlan trimFirstPoint(const cav_msgs::TrajectoryPlan &plan) {
         cav_msgs::TrajectoryPlan out(plan);
         out.trajectory_points.erase(out.trajectory_points.begin());
         return out;
@@ -47,10 +47,10 @@ namespace trajectory_executor
         std::map<std::string, std::string> out;
 
         std::string default_control_plugin;
-        _default_nh->param<std::string>("default_control_plugin", default_control_plugin, "NULL");
+        _private_nh->param<std::string>("default_control_plugin", default_control_plugin, "NULL");
 
         std::string default_control_plugin_topic;
-        _default_nh->param<std::string>("default_control_plugin_topic", default_control_plugin_topic, "NULL");
+        _private_nh->param<std::string>("default_control_plugin_topic", default_control_plugin_topic, "NULL");
 
         out[default_control_plugin] = default_control_plugin_topic;
         return out;
@@ -65,9 +65,6 @@ namespace trajectory_executor
 
         _cur_traj = std::unique_ptr<cav_msgs::TrajectoryPlan>(new cav_msgs::TrajectoryPlan(msg));
         ROS_DEBUG_STREAM("Successfully swapped trajectories!");
-
-        // TODO: Force traj emit
-        // TODO: Reset timer state
     }
 
     void TrajectoryExecutor::onTrajEmitTick(const ros::TimerEvent& te)
@@ -81,6 +78,7 @@ namespace trajectory_executor
                 _cur_traj = std::unique_ptr<cav_msgs::TrajectoryPlan>(new cav_msgs::TrajectoryPlan(trimFirstPoint(*_cur_traj)));
             }
             if (!_cur_traj->trajectory_points.empty()) {
+                // Determine the relevant control plugin for the current timestep
                 std::string control_plugin = _cur_traj->trajectory_points[0].controller_plugin_name;
                 std::map<std::string, ros::Publisher>::iterator it = _traj_publisher_map.find(control_plugin);
                 if (it != _traj_publisher_map.end()) {
@@ -93,11 +91,11 @@ namespace trajectory_executor
                     description_builder << "No match found for control plugin " 
                         << control_plugin << " at point " 
                         << _timesteps_since_last_traj << " in current trajectory!";
-                    shutdown(description_builder.str());
+                    throw description_builder.str();
                 }
                 _timesteps_since_last_traj++;
             } else {
-                shutdown("Ran out of trajectory data to consume!");
+                throw "Ran out of trajectory data to consume!");
             }
         } else {
             ROS_DEBUG("Awaiting initial trajectory publication...");
@@ -105,44 +103,18 @@ namespace trajectory_executor
         ROS_DEBUG("TrajectoryExecutor tick completed succesfully!");
     }
 
-    void TrajectoryExecutor::shutdown(std::string reason) {
-        ROS_ERROR_STREAM("FATAL ERROR: " << reason);
-        cav_msgs::SystemAlert system_alert;
-        system_alert.type = system_alert.FATAL;
-        system_alert.description = reason;
-        ROS_FATAL("Publishing FATAL error on system alert topic!");
-        _default_nh->publishSystemAlert(system_alert);
-        ros::shutdown();
-
-        exit(1);
-    }
-
     void TrajectoryExecutor::run()
     {
         ROS_DEBUG("Starting operations for TrajectoryExecutor component...");
-        _timer = _timer_nh->createTimer(
+        _timer = _private_nh->createTimer(
             ros::Duration(ros::Rate(this->_min_traj_publish_tickrate_hz)),
             &TrajectoryExecutor::onTrajEmitTick, 
             this);
 
-        ros::AsyncSpinner timer_spinner(1, &_timer_callbacks);
-        timer_spinner.start();
-        ROS_DEBUG("Timer thread started!");
-
-        ros::AsyncSpinner msg_spinner(1, &_msg_callbacks);
-        msg_spinner.start();
-
         ROS_DEBUG("TrajectoryExecutor component started succesfully! Starting to spin.");
 
-        ros::Rate r(_default_spin_rate);
-        while (ros::ok())
-        {
-            ros::spinOnce();
-            r.sleep();
-        }
-
-        timer_spinner.stop();
-        msg_spinner.stop();
+        _private_nh->setSpinRate(_default_spin_rate);
+        _private_nh->spin();
 
         ros::shutdown();
     }
@@ -151,20 +123,16 @@ namespace trajectory_executor
     {
         ROS_DEBUG("Initializing TrajectoryExecutor node...");
     
-        _default_nh = std::unique_ptr<ros::CARMANodeHandle>(new ros::CARMANodeHandle);
-        _timer_nh = std::unique_ptr<ros::CARMANodeHandle>(new ros::CARMANodeHandle);
-        _timer_nh->setCallbackQueue(&_timer_callbacks);
-        _msg_nh = std::unique_ptr<ros::CARMANodeHandle>(new ros::CARMANodeHandle);
-        _msg_nh->setCallbackQueue(&_msg_callbacks);
+        _private_nh = std::unique_ptr<ros::CARMANodeHandle>(new ros::CARMANodeHandle("~"));
         ROS_DEBUG("Initialized all node handles");
 
-        _default_nh->param("spin_rate", _default_spin_rate, 10);
-        _default_nh->param("trajectory_publish_rate", _min_traj_publish_tickrate_hz, 10);
+        _private_nh->param("spin_rate", _default_spin_rate, 10);
+        _private_nh->param("trajectory_publish_rate", _min_traj_publish_tickrate_hz, 10);
 
         ROS_DEBUG_STREAM("Initalized params with default_spin_rate " << _default_spin_rate 
             << " and trajectory_publish_rate " << _min_traj_publish_tickrate_hz);
 
-        this->_plan_sub = this->_msg_nh->subscribe<cav_msgs::TrajectoryPlan>("trajectory", 1000, &TrajectoryExecutor::onNewTrajectoryPlan, this);
+        this->_plan_sub = this->_private_nh->subscribe<cav_msgs::TrajectoryPlan>("trajectory", 5, &TrajectoryExecutor::onNewTrajectoryPlan, this);
         this->_cur_traj = std::unique_ptr<cav_msgs::TrajectoryPlan>();
         ROS_DEBUG("Subscribed to inbound trajectory plans.");
 
@@ -176,7 +144,7 @@ namespace trajectory_executor
         for (auto it = discovered_control_plugins.begin(); it != discovered_control_plugins.end(); it++)
         {
             ROS_DEBUG("Trajectory executor discovered control plugin %s listening on topic %s.", it->first.c_str(), it->second.c_str());
-            ros::Publisher control_plugin_pub = _msg_nh->advertise<cav_msgs::TrajectoryPlan>(it->second, 1000);
+            ros::Publisher control_plugin_pub = _public_nh->advertise<cav_msgs::TrajectoryPlan>(it->second, 1000);
             control_plugin_topics.insert(std::make_pair(it->first, control_plugin_pub));
         }
 
