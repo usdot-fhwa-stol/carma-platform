@@ -113,8 +113,8 @@ namespace trajectory_executor
 
         ROS_DEBUG("TrajectoryExecutor component started succesfully! Starting to spin.");
 
-        _private_nh->setSpinRate(_default_spin_rate);
-        _private_nh->spin();
+        ros::CARMANodeHandle::setSpinRate(_default_spin_rate);
+        ros::CARMANodeHandle::spin();
 
         ros::shutdown();
     }
@@ -123,6 +123,7 @@ namespace trajectory_executor
     {
         ROS_DEBUG("Initializing TrajectoryExecutor node...");
     
+        _public_nh = std::unique_ptr<ros::CARMANodeHandle>(new ros::CARMANodeHandle());
         _private_nh = std::unique_ptr<ros::CARMANodeHandle>(new ros::CARMANodeHandle("~"));
         ROS_DEBUG("Initialized all node handles");
 
