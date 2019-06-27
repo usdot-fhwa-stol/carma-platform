@@ -86,5 +86,5 @@ install(DIRECTORY launch
 #############
 ## Testing ##
 #############
-#catkin_add_gmock(${PROJECT_NAME}-test test/test_route_generator.cpp)
-#target_link_libraries(${PROJECT_NAME}-test ${catkin_LIBRARIES} route_generator_library)
+catkin_add_gmock(${PROJECT_NAME}-test test/test_autoware_plugin.cpp)
+target_link_libraries(${PROJECT_NAME}-test autoware_plugin_library ${catkin_LIBRARIES})

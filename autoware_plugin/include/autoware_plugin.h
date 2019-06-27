@@ -22,6 +22,8 @@
 #include <autoware_msgs/Lane.h>
 #include <boost/shared_ptr.hpp>
 #include <carma_utils/CARMAUtils.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TwistStamped.h>
 
 class AutowarePlugin
 {
@@ -34,6 +36,18 @@ public:
     // general starting point of this node
     void run();
 
+    // create uneven trajectory from waypoints
+    std::vector<cav_msgs::TrajectoryPlanPoint> create_uneven_trajectory_from_waypoints(std::vector<autoware_msgs::Waypoint> waypoints);
+
+    // get a sublist of waypoints marked by desired time span
+    std::vector<autoware_msgs::Waypoint> get_waypoints_in_time_boundary(std::vector<autoware_msgs::Waypoint> waypoints, double time_span);
+
+    // make an arbitaray trajectory evenly spaced
+    std::vector<cav_msgs::TrajectoryPlanPoint> even_trajectory(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory, double spacing);
+
+    // postprocess traj to add plugin names and shift time origin to the current ROS time
+    std::vector<cav_msgs::TrajectoryPlanPoint> post_process_traj_points(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory);
+
 private:
 
     // node handles
@@ -45,12 +59,17 @@ private:
     // subscriber for Autoware waypoints
     ros::Subscriber waypoints_sub_;
     ros::Subscriber pose_sub_;
+    ros::Subscriber twist_sub_;
 
+    // ROS params
     double trajectory_time_length_;
     double trajectory_point_spacing_;
 
     // local copy of pose
     boost::shared_ptr<geometry_msgs::PoseStamped const> pose_msg_;
+
+    // current vehicle speed
+    double current_speed_;
 
     // initialize this node
     void initialize();
@@ -58,17 +77,9 @@ private:
     // callback for the subscribers
     void waypoints_cb(const autoware_msgs::LaneConstPtr& msg);
     void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
+    void twist_cd(const geometry_msgs::TwistStampedConstPtr& msg);
 
     // convert waypoints to a trajectory
     std::vector<cav_msgs::TrajectoryPlanPoint> compose_trajectory_from_waypoints(std::vector<autoware_msgs::Waypoint> waypoints);
-
-    // get a sublist of waypoints marked by desired time span
-    std::vector<autoware_msgs::Waypoint> get_waypoints_in_time_boundary(std::vector<autoware_msgs::Waypoint> waypoints, double time_span);
-
-    // make an arbitaray trajectory evenly spaced
-    std::vector<cav_msgs::TrajectoryPlanPoint> even_trajectory(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory, double spacing);
-
-    // postprocess traj to add plugin names and shift time origin to the current ROS time
-    std::vector<cav_msgs::TrajectoryPlanPoint> post_process_traj_points(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory);
 
 };
