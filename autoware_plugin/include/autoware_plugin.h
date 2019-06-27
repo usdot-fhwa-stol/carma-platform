@@ -48,6 +48,9 @@ public:
     // postprocess traj to add plugin names and shift time origin to the current ROS time
     std::vector<cav_msgs::TrajectoryPlanPoint> post_process_traj_points(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory);
 
+    // local copy of pose
+    boost::shared_ptr<geometry_msgs::PoseStamped const> pose_msg_;
+
 private:
 
     // node handles
@@ -64,9 +67,6 @@ private:
     // ROS params
     double trajectory_time_length_;
     double trajectory_point_spacing_;
-
-    // local copy of pose
-    boost::shared_ptr<geometry_msgs::PoseStamped const> pose_msg_;
 
     // current vehicle speed
     double current_speed_;

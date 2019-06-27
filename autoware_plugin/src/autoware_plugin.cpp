@@ -36,7 +36,7 @@ void AutowarePlugin::initialize()
     pose_sub_ = nh_->subscribe("current_pose", 1, &AutowarePlugin::pose_cb, this);
     twist_sub_ = nh_->subscribe("current_velocity", 1, &AutowarePlugin::twist_cd, this);
     pnh_->param<double>("trajectory_time_length", trajectory_time_length_, 6.0);
-    pnh_->param<double>("trajectory_point_spacing", trajectory_point_spacing_, 6.0);
+    pnh_->param<double>("trajectory_point_spacing", trajectory_point_spacing_, 0.1);
 }
 
 void AutowarePlugin::run()
@@ -81,18 +81,21 @@ std::vector<cav_msgs::TrajectoryPlanPoint> AutowarePlugin::compose_trajectory_fr
 std::vector<cav_msgs::TrajectoryPlanPoint> AutowarePlugin::create_uneven_trajectory_from_waypoints(std::vector<autoware_msgs::Waypoint> waypoints)
 {
     std::vector<cav_msgs::TrajectoryPlanPoint> uneven_traj;
-    std::vector<double> speed_profile;
     // TODO land id is not populated because we are not using it in Autoware
-    cav_msgs::TrajectoryPlanPoint starting_point;
-    starting_point.target_time = 0.0;
-    starting_point.x = pose_msg_->pose.position.x;
-    starting_point.y = pose_msg_->pose.position.y;
-    uneven_traj.push_back(starting_point);
+    // Adding current vehicle location as the first trajectory point if it is not on the first waypoint
+    if(abs(pose_msg_->pose.position.x - waypoints[0].pose.pose.position.x) > 0.1 || abs(pose_msg_->pose.position.y - waypoints[0].pose.pose.position.y) > 0.1)
+    {
+        cav_msgs::TrajectoryPlanPoint starting_point;
+        starting_point.target_time = 0.0;
+        starting_point.x = pose_msg_->pose.position.x;
+        starting_point.y = pose_msg_->pose.position.y;
+        uneven_traj.push_back(starting_point);
+    }
     for(int i = 0; i < waypoints.size(); ++i)
     {
         double previous_wp_v = current_speed_;
-        double previous_wp_x = starting_point.x;
-        double previous_wp_y = starting_point.y;
+        double previous_wp_x = pose_msg_->pose.position.x;
+        double previous_wp_y = pose_msg_->pose.position.y;
         double previous_wp_t = 0.0;
         if(i != 0)
         {
@@ -142,13 +145,14 @@ std::vector<autoware_msgs::Waypoint> AutowarePlugin::get_waypoints_in_time_bound
 
 std::vector<cav_msgs::TrajectoryPlanPoint> AutowarePlugin::even_trajectory(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory, double time_spacing)
 {
+    std::cout << "Function is called!" << std::endl;
     std::vector<cav_msgs::TrajectoryPlanPoint> res;
     res.push_back(trajectory[0]);
-    double tp_timestamp = 0.0 + time_spacing;
+    double tp_timestamp = 0.0 + time_spacing * 1e9;
     int next_traj_point_index = 1;
     while(true)
     {
-        if(next_traj_point_index > trajectory.size())
+        if(next_traj_point_index >= trajectory.size())
         {
             break;
         }
@@ -160,13 +164,18 @@ std::vector<cav_msgs::TrajectoryPlanPoint> AutowarePlugin::even_trajectory(std::
         {
             cav_msgs::TrajectoryPlanPoint new_tp;
             new_tp.target_time = tp_timestamp;
-            double time_elapsed_precentage = (time_spacing * 1e9) / (trajectory[next_traj_point_index].target_time - res.back().target_time);
-            new_tp.x = res.back().x + time_elapsed_precentage * (trajectory[next_traj_point_index].x - res.back().x);
-            new_tp.y = res.back().y + time_elapsed_precentage * (trajectory[next_traj_point_index].y - res.back().y);
+            double time_elapsed_precentage = (tp_timestamp - trajectory[next_traj_point_index - 1].target_time) / (trajectory[next_traj_point_index].target_time - trajectory[next_traj_point_index - 1].target_time);
+            new_tp.x = trajectory[next_traj_point_index - 1].x + time_elapsed_precentage * (trajectory[next_traj_point_index].x - trajectory[next_traj_point_index - 1].x);
+            new_tp.y = trajectory[next_traj_point_index - 1].y + time_elapsed_precentage * (trajectory[next_traj_point_index].y - trajectory[next_traj_point_index - 1].y);
             res.push_back(new_tp);
-            tp_timestamp += time_spacing;
+            tp_timestamp += time_spacing * 1e9;
+            if(abs(new_tp.x - trajectory[next_traj_point_index].x) < 0.1 && abs(new_tp.y - trajectory[next_traj_point_index].y))
+            {
+                next_traj_point_index++;
+            }
         }
     }
+    return res;
 }
 
 std::vector<cav_msgs::TrajectoryPlanPoint> AutowarePlugin::post_process_traj_points(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory)
