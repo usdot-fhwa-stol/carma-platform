@@ -91,11 +91,19 @@ namespace trajectory_executor
                     description_builder << "No match found for control plugin " 
                         << control_plugin << " at point " 
                         << _timesteps_since_last_traj << " in current trajectory!";
-                    throw description_builder.str();
+                    cav_msgs::SystemAlert alert;
+                    alert.type = cav_msgs::SystemAlert::FATAL;
+                    alert.description = description_builder.str();
+
+                    _public_nh->publishSystemAlert(alert);
                 }
                 _timesteps_since_last_traj++;
             } else {
-                throw "Ran out of trajectory data to consume!");
+                cav_msgs::SystemAlert alert;
+                alert.type = cav_msgs::SystemAlert::FATAL;
+                alert.description = "Ran out of trajectory data to consume!";
+
+                _public_nh->publishSystemAlert(alert);
             }
         } else {
             ROS_DEBUG("Awaiting initial trajectory publication...");
