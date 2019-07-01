@@ -83,7 +83,7 @@ namespace ros {
        */ 
       template<class C> 
       boost::function< void(C)> callbackWrapper(const boost::function<void(C)>& callback);
-
+      
       /**
        * @brief Wrapper for service callbacks which provides exception handling
        * @param callback A callable which will be used as the callback to wrap
@@ -110,15 +110,6 @@ namespace ros {
        * Handles incoming SystemAlert messages and will shutdown this node if that message was of type SHUTDOWN
        */
       static void systemAlertHandler(const cav_msgs::SystemAlertConstPtr& message);
-      /**
-       * @brief Handles caught exceptions which have reached the top level of this node
-       * 
-       * @param message The exception to handle
-       * 
-       * If an exception reaches the top level of this node it should be passed to this function.
-       * The function will try to log the exception and publish a FATAL message to system_alert before shutting itself down.
-       */
-      static void handleException(const std::exception& e);
 
       /**
       * @brief Shutsdown this node
@@ -158,6 +149,15 @@ namespace ros {
       void initPubSub();
 
     public:
+      /**
+       * @brief Handles caught exceptions which have reached the top level of this node
+       * 
+       * @param message The exception to handle
+       * 
+       * If an exception reaches the top level of this node it should be passed to this function.
+       * The function will try to log the exception and publish a FATAL message to system_alert before shutting itself down.
+       */
+      static void handleException(const std::exception& e);
 
       /**
        * @brief Set the system alert callback
