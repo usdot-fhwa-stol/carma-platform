@@ -206,7 +206,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                         if (robotEnabled_) {
 
                             //if robotic control is no longer active then warn and alert all nodes to shut down
-                            if (Math.abs(System.currentTimeMillis() - lastRobotStatusMsgTime_) > robotStatusTimeout_ && !isShutdownUnderway()) {
+                            if (Math.abs((long)(connectedNode_.getCurrentTime().toSeconds() * 1000.0) - lastRobotStatusMsgTime_) > robotStatusTimeout_ && !isShutdownUnderway()) {
                                 log_.warn("SHUTDOWN", "InterfaceMgr.robotListener senses controller is no longer communicating at the hardware level.");
                                 publishSystemAlert(AlertSeverity.FATAL, "Controller disconnected", null);
                                 connectedNode.shutdown();
@@ -225,7 +225,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                             log_.info("DRIVER", "InterfaceMgr.robotListener sensed robot enabled command.");
                         }
 
-                        lastRobotStatusMsgTime_ = System.currentTimeMillis();
+                        lastRobotStatusMsgTime_ = (long)(connectedNode_.getCurrentTime().toSeconds() * 1000.0);
                         log_.debug("DRIVER", "InterfaceMgr.robotListener received robot_enabled msg: enabled = "
                                 + msg.getRobotEnabled() + ", active = " + msg.getRobotActive());
 

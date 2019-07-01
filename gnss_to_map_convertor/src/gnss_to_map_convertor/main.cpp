@@ -21,7 +21,7 @@ int main(int argc, char** argv){
 
   // Initialize node
   ros::init(argc, argv, "gnss_to_map_convertor");
-  GNSSToMapNode convertor;
+  gnss_to_map_convertor::GNSSToMapNode convertor;
 
   // Start execution
   convertor.run();

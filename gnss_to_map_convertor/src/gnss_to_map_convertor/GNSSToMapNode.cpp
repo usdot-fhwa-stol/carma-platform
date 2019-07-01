@@ -20,87 +20,90 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 
-GNSSToMapNode::GNSSToMapNode() : tfListener_(tfBuffer_), p_cnh_("~") {}
+namespace gnss_to_map_convertor {
 
-void GNSSToMapNode::fixCb(const novatel_gps_msgs::NovatelPositionConstPtr& fix_msg, const novatel_gps_msgs::NovatelDualAntennaHeadingConstPtr& heading_msg) {
-  // Get sensor and base_link transforms if not yet loaded
-  if (!baselink_in_sensor_set_) {
+  GNSSToMapNode::GNSSToMapNode() : tfListener_(tfBuffer_), p_cnh_("~") {}
+
+  void GNSSToMapNode::fixCb(const novatel_gps_msgs::NovatelPositionConstPtr& fix_msg, const novatel_gps_msgs::NovatelDualAntennaHeadingConstPtr& heading_msg) {
+    // Get sensor and base_link transforms if not yet loaded
+    if (!baselink_in_sensor_set_) {
+      try {
+        tf2::convert(tfBuffer_.lookupTransform(fix_msg->header.frame_id, base_link_frame_, ros::Time(0)).transform, baselink_in_sensor_);
+        tf2::convert(tfBuffer_.lookupTransform(ned_heading_frame_, fix_msg->header.frame_id, ros::Time(0)).transform, sensor_in_ned_);
+      } catch (tf2::TransformException &ex) {
+        ROS_WARN_STREAM("Ignoring fix message: Could not locate static transforms with exception " << ex.what());
+        return;
+      }
+      baselink_in_sensor_set_ = true;
+    }
+
+    sensor_msgs::NavSatFix nav_fix_msg;
+    nav_fix_msg.latitude = fix_msg->lat;
+    nav_fix_msg.longitude = fix_msg->lon;
+    nav_fix_msg.altitude = fix_msg->height;
+    sensor_msgs::NavSatFixConstPtr fix_ptr(new sensor_msgs::NavSatFix(nav_fix_msg));
+
+    geometry_msgs::PoseWithCovarianceStamped ecef_pose = gnss_to_map_convertor::poseFromGnss(
+      baselink_in_sensor_, sensor_in_ned_, fix_ptr, heading_msg
+    ); 
+    ecef_pose.header.frame_id = earth_frame_; // Set correct frame id
+
+    tf2::Transform map_in_earth;
     try {
-      tf2::convert(tfBuffer_.lookupTransform(fix_msg->header.frame_id, base_link_frame_, ros::Time(0)).transform, baselink_in_sensor_);
-      tf2::convert(tfBuffer_.lookupTransform(ned_heading_frame_, fix_msg->header.frame_id, ros::Time(0)).transform, sensor_in_ned_);
+      // The map_in_earth transform should only change occasionally so no need to lookup a specific time
+      tf2::convert(tfBuffer_.lookupTransform(earth_frame_, map_frame_, ros::Time(0)).transform, map_in_earth);
     } catch (tf2::TransformException &ex) {
-      ROS_WARN_STREAM("Ignoring fix message: Could not locate static transforms with exception " << ex.what());
+      ROS_ERROR_STREAM("Ignoring re-initialization request: Could not lookup transform with exception " << ex.what());
+      ecef_pose_pub_.publish(ecef_pose); // Still publish valid ecef_pose even if the map lookup fails
       return;
     }
-    baselink_in_sensor_set_ = true;
+
+    // Store pose as transform
+    tf2::Transform base_link_in_earth;
+    tf2::convert(ecef_pose.pose.pose, base_link_in_earth);
+
+    // Compute pose in map frame
+    geometry_msgs::PoseStamped map_pose;
+    map_pose.pose = gnss_to_map_convertor::ecefTFToMapPose(base_link_in_earth, map_in_earth);
+    map_pose.header = fix_msg->header;
+    map_pose.header.frame_id = map_frame_;
+
+    // Publish ECEF and Map poses
+    map_pose_pub_.publish(map_pose);
+    ecef_pose_pub_.publish(ecef_pose);
   }
 
-  sensor_msgs::NavSatFix nav_fix_msg;
-  nav_fix_msg.latitude = fix_msg->lat;
-  nav_fix_msg.longitude = fix_msg->lon;
-  nav_fix_msg.altitude = fix_msg->height;
-  sensor_msgs::NavSatFixConstPtr fix_ptr(new sensor_msgs::NavSatFix(nav_fix_msg));
+  int GNSSToMapNode::run() {
+    // Load parameters
+    base_link_frame_ = p_cnh_.param("base_link_frame_id", base_link_frame_);
+    earth_frame_ = p_cnh_.param("earth_frame_id", earth_frame_);
+    map_frame_ = p_cnh_.param("map_frame_id", map_frame_);
+    ned_heading_frame_ = p_cnh_.param("ned_heading_frame_id", ned_heading_frame_);
+    // ECEF Pose publisher
+    ecef_pose_pub_ = cnh_.advertise<geometry_msgs::PoseWithCovarianceStamped>("ecef_pose_with_cov", 10);
+    // Map pose publisher
+    map_pose_pub_ = cnh_.advertise<geometry_msgs::PoseStamped>("gnss_pose", 10, true);
+    // Fix Subscriber
+    fix_sub_.subscribe(cnh_, "bestpos", 1);
+    // Heading subscriber
+    heading_sub_.subscribe(cnh_, "dual_antenna_heading", 1);
 
-  geometry_msgs::PoseWithCovarianceStamped ecef_pose = gnss_to_map_convertor::poseFromGnss(
-    baselink_in_sensor_, sensor_in_ned_, fix_ptr, heading_msg
-  ); 
-  ecef_pose.header.frame_id = earth_frame_; // Set correct frame id
+    // Heading pose synchronizer
+    message_filters::Synchronizer<SyncPolicy> sync(SyncPolicy(10), fix_sub_, heading_sub_);
 
-  tf2::Transform map_in_earth;
-  try {
-    // The map_in_earth transform should only change occasionally so no need to lookup a specific time
-    tf2::convert(tfBuffer_.lookupTransform(earth_frame_, map_frame_, ros::Time(0)).transform, map_in_earth);
-  } catch (tf2::TransformException &ex) {
-    ROS_ERROR_STREAM("Ignoring re-initialization request: Could not lookup transform with exception " << ex.what());
-    ecef_pose_pub_.publish(ecef_pose); // Still publish valid ecef_pose even if the map lookup fails
-    return;
+    sync.registerCallback(boost::bind<void>([this] (
+      const novatel_gps_msgs::NovatelPositionConstPtr& m0,
+      const novatel_gps_msgs::NovatelDualAntennaHeadingConstPtr& m1) -> void {
+        try {
+          this->fixCb(m0,m1);
+        } catch(const std::exception& e) {
+          ros::CARMANodeHandle::handleException(e);
+        }},
+      _1,_2));
+
+    // Spin
+    cnh_.setSpinRate(20);
+    cnh_.spin();
+    return 0;
   }
-
-  // Store pose as transform
-  tf2::Transform base_link_in_earth;
-  tf2::convert(ecef_pose.pose.pose, base_link_in_earth);
-
-  // Compute pose in map frame
-  geometry_msgs::PoseStamped map_pose;
-  map_pose.pose = gnss_to_map_convertor::ecefTFToMapPose(base_link_in_earth, map_in_earth);
-  map_pose.header = fix_msg->header;
-  map_pose.header.frame_id = map_frame_;
-
-  // Publish ECEF and Map poses
-  map_pose_pub_.publish(map_pose);
-  ecef_pose_pub_.publish(ecef_pose);
-}
-
-int GNSSToMapNode::run() {
-  // Load parameters
-  base_link_frame_ = p_cnh_.param("base_link_frame_id", base_link_frame_);
-  earth_frame_ = p_cnh_.param("earth_frame_id", earth_frame_);
-  map_frame_ = p_cnh_.param("map_frame_id", map_frame_);
-  ned_heading_frame_ = p_cnh_.param("ned_heading_frame_id", ned_heading_frame_);
-  // ECEF Pose publisher
-  ecef_pose_pub_ = cnh_.advertise<geometry_msgs::PoseWithCovarianceStamped>("ecef_pose_with_cov", 10);
-  // Map pose publisher
-  map_pose_pub_ = cnh_.advertise<geometry_msgs::PoseStamped>("gnss_pose", 10, true);
-  // Fix Subscriber
-  fix_sub_.subscribe(cnh_, "bestpos", 1);
-  // Heading subscriber
-  heading_sub_.subscribe(cnh_, "dual_antenna_heading", 1);
-
-  // Heading pose synchronizer
-  message_filters::Synchronizer<SyncPolicy> sync(SyncPolicy(10), fix_sub_, heading_sub_);
-
-  sync.registerCallback(boost::bind<void>([this] (
-    const novatel_gps_msgs::NovatelPositionConstPtr& m0,
-    const novatel_gps_msgs::NovatelDualAntennaHeadingConstPtr& m1) -> void {
-      try {
-        this->fixCb(m0,m1);
-      } catch(const std::exception& e) {
-        ros::CARMANodeHandle::handleException(e);
-      }},
-    _1,_2));
-
-  // Spin
-  cnh_.setSpinRate(20);
-  cnh_.spin();
-  return 0;
 }
