@@ -30,6 +30,9 @@
 	<link name="radar_rr" />
   <link name="host_vehicle"/> <!-- Bounding box center of vehicle (used in BSM)-->
 	<link name="vehicle_front" />
+	<link name="novatel_gnss" />
+	<link name="novatel_imu" />
+	<link name="ned_heading" />
 
   <!-- Reference Frame Transforms -->
   
@@ -42,7 +45,7 @@
     <origin xyz="3.37 0 -0.3556" rpy="3.14159265359 0 0" />
   </joint>
 
-  <!-- host_vehicle -> vehicle_front Transform vehicle_front is FLU-->
+  <!-- base_link -> vehicle_front Transform vehicle_front is FLU-->
   <joint name="base_link_to_vehicle_front" type="fixed">
 		<parent link="base_link" />
 		<child link="vehicle_front" />
@@ -100,4 +103,24 @@
 		<origin xyz="-0.85 -1.05 0.535" rpy="0 0 -1.992" />
 	</joint>
 
+	<!-- Novatel Fix-->
+  <joint name="base_link_to_novatel" type="fixed">
+		<parent link="base_link" />
+		<child link="novatel_gnss" />
+		<origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+	<!-- Novatel IMU -->
+  <joint name="base_link_to_novatel_imu" type="fixed">
+		<parent link="base_link" />
+		<child link="novatel_imu" />
+		<origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+	<!-- Novatel to NED Heading -->
+  <joint name="gnss_to_ned_heading" type="fixed">
+		<parent link="novatel_gnss" />
+		<child link="ned_heading" />
+		<origin xyz="0 0 0" rpy="3.14159265358979323846 0 0" />
+  </joint>
 </robot>

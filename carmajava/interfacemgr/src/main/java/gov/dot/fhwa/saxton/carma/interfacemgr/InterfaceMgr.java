@@ -60,7 +60,9 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
     protected CancellableLoop mainLoop_;
     protected boolean robotListenerCreated_ = false;
     protected boolean robotEnabled_ = false; //latch - has robotic control been enabled ever?
+    protected long lastRobotStatusMsgTime_ = 0;
     protected boolean shutdownInitiated_ = false;
+    private final long robotStatusTimeout_ = 300; // No controller communication for 300ms will be considered a timeout
 
     @Override
     public GraphName getDefaultNodeName() {
@@ -204,9 +206,9 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                         if (robotEnabled_) {
 
                             //if robotic control is no longer active then warn and alert all nodes to shut down
-                            if (!msg.getRobotActive()) {
-                                log_.warn("SHUTDOWN", "InterfaceMgr.robotListener senses robot is no longer active at the hardware level.");
-                                publishSystemAlert(AlertSeverity.FATAL, "Robotic control has been disengaged.", null);
+                            if (Math.abs(System.currentTimeMillis() - lastRobotStatusMsgTime_) > robotStatusTimeout_ && !isShutdownUnderway()) {
+                                log_.warn("SHUTDOWN", "InterfaceMgr.robotListener senses controller is no longer communicating at the hardware level.");
+                                publishSystemAlert(AlertSeverity.FATAL, "Controller disconnected", null);
                                 connectedNode.shutdown();
                             }
 
@@ -223,6 +225,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
                             log_.info("DRIVER", "InterfaceMgr.robotListener sensed robot enabled command.");
                         }
 
+                        lastRobotStatusMsgTime_ = System.currentTimeMillis();
                         log_.debug("DRIVER", "InterfaceMgr.robotListener received robot_enabled msg: enabled = "
                                 + msg.getRobotEnabled() + ", active = " + msg.getRobotActive());
 
