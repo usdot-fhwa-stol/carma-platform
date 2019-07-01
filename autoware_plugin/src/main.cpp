@@ -22,7 +22,7 @@ int main(int argc, char** argv)
 {
   
     ros::init(argc, argv, "autoware_plugin");
-    AutowarePlugin ap;
+    autoware_plugin::AutowarePlugin ap;
     ap.run();
     return 0;
 
