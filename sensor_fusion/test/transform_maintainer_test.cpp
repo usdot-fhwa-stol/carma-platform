@@ -132,13 +132,13 @@ TEST(MapToECEFTransformTest, example1)
   tf2::Transform tf_map_to_baselink(map_to_baselink_rot, map_to_baselink_translation);
 
   tf2::Transform tf_map_to_ecef = (tf_map_to_baselink * ((tf_ecef_to_ned * tf_ned_to_baselink).inverse())).inverse();
-  std::cerr << tf_map_to_ecef.getOrigin().getX() << std::endl;
-  std::cerr << tf_map_to_ecef.getOrigin().getY() << std::endl;
-  std::cerr << tf_map_to_ecef.getOrigin().getZ() << std::endl;
-  std::cerr << tf_map_to_ecef.getRotation().getAxis().getX() << std::endl;
-  std::cerr << tf_map_to_ecef.getRotation().getAxis().getY() << std::endl;
-  std::cerr << tf_map_to_ecef.getRotation().getAxis().getZ() << std::endl;
-  std::cerr << tf_map_to_ecef.getRotation().getW() << std::endl;
+  std::cerr << std::setprecision(20) << tf_map_to_ecef.getOrigin().getX() << std::endl;
+  std::cerr << std::setprecision(20) << tf_map_to_ecef.getOrigin().getY() << std::endl;
+  std::cerr << std::setprecision(20) << tf_map_to_ecef.getOrigin().getZ() << std::endl;
+  std::cerr << std::setprecision(20) << tf_map_to_ecef.getRotation().getX() << std::endl;
+  std::cerr << std::setprecision(20) << tf_map_to_ecef.getRotation().getY() << std::endl;
+  std::cerr << std::setprecision(20) << tf_map_to_ecef.getRotation().getZ() << std::endl;
+  std::cerr << std::setprecision(20) << tf_map_to_ecef.getRotation().getW() << std::endl;
   
 }
 
