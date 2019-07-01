@@ -42,7 +42,7 @@ TEST(AutowarePluginTest, testGetWaypointsInTimeBoundary1)
     waypoints.push_back(wp_3);
     waypoints.push_back(wp_4);
     waypoints.push_back(wp_5);
-    AutowarePlugin ap;
+    autoware_plugin::AutowarePlugin ap;
     std::vector<autoware_msgs::Waypoint> res = ap.get_waypoints_in_time_boundary(waypoints, 6.0);
     EXPECT_EQ(4, res.size());
     EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
@@ -67,7 +67,7 @@ TEST(AutowarePluginTest, testGetWaypointsInTimeBoundary2)
     wp_2.pose.pose.position.x = 6.0;
     waypoints.push_back(wp_1);
     waypoints.push_back(wp_2);
-    AutowarePlugin ap;
+    autoware_plugin::AutowarePlugin ap;
     std::vector<autoware_msgs::Waypoint> res = ap.get_waypoints_in_time_boundary(waypoints, 6.0);
     EXPECT_EQ(2, res.size());
     EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
@@ -92,7 +92,7 @@ TEST(AutowarePluginTest, testGetWaypointsInTimeBoundary3)
     waypoints.push_back(wp_1);
     waypoints.push_back(wp_2);
     waypoints.push_back(wp_3);
-    AutowarePlugin ap;
+    autoware_plugin::AutowarePlugin ap;
     std::vector<autoware_msgs::Waypoint> res = ap.get_waypoints_in_time_boundary(waypoints, 5.0);
     EXPECT_EQ(3, res.size());
     EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
@@ -127,7 +127,7 @@ TEST(AutowarePluginTest, testCreateUnevenTrajectory1)
     waypoints.push_back(wp_3);
     waypoints.push_back(wp_4);
     waypoints.push_back(wp_5);
-    AutowarePlugin ap;
+    autoware_plugin::AutowarePlugin ap;
     // create pose message to indicate that the current location is on top of the starting waypoint
     ap.pose_msg_.reset(new geometry_msgs::PoseStamped());
     std::vector<cav_msgs::TrajectoryPlanPoint> traj = ap.create_uneven_trajectory_from_waypoints(waypoints);
@@ -168,7 +168,7 @@ TEST(AutowarePluginTest, testCreateUnevenTrajectory2)
     waypoints.push_back(wp_3);
     waypoints.push_back(wp_4);
     waypoints.push_back(wp_5);
-    AutowarePlugin ap;
+    autoware_plugin::AutowarePlugin ap;
     // create pose message to indicate that the current location is not near the starting waypoint
     geometry_msgs::PoseStamped pose;
     pose.pose.position.x = -1.0;
@@ -213,18 +213,11 @@ TEST(AutowarePluginTest, testEvenTrajectory)
     uneven_traj.push_back(tp_3);
     uneven_traj.push_back(tp_4);
     uneven_traj.push_back(tp_5);
-    AutowarePlugin ap;
+    autoware_plugin::AutowarePlugin ap;
     std::vector<cav_msgs::TrajectoryPlanPoint> res = ap.even_trajectory(uneven_traj, 0.1);
     EXPECT_EQ(7, res.size());
     EXPECT_NEAR(0.0, res[0].target_time / 1e9, 0.001);
     EXPECT_NEAR(0.0, res[0].x, 0.001);
-    std::cerr << res[0].x << std::endl;
-    std::cerr << res[1].x << std::endl;
-    std::cerr << res[2].x << std::endl;
-    std::cerr << res[3].x << std::endl;
-    std::cerr << res[4].x << std::endl;
-    std::cerr << res[5].x << std::endl;
-    std::cerr << res[6].x << std::endl;
     EXPECT_NEAR(0.1, res[1].target_time / 1e9, 0.001);
     EXPECT_NEAR(0.2999, res[1].x, 0.01);
     EXPECT_NEAR(0.2, res[2].target_time / 1e9, 0.001);
@@ -245,3 +238,5 @@ int main(int argc, char **argv)
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
+
+
