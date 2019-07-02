@@ -63,7 +63,7 @@
   <remap from="system_alert" to="/system_alert"/>
 
   <!-- Guidance Main Node -->
-  <node pkg="carma" type="guidance" name="guidance_main" args="gov.dot.fhwa.saxton.carma.guidance.GuidanceMain">
+  <!-- <node pkg="carma" type="guidance" name="guidance_main" args="gov.dot.fhwa.saxton.carma.guidance.GuidanceMain">
 
     <env if="$(arg debug_guidance)" name="GUIDANCE_OPTS" value="$(env JVM_DEBUG_OPTS)"/>
 
@@ -74,7 +74,10 @@
     <rosparam command="load" file="$(arg PARAM_DIR)/CooperativeMergeParams.yaml"/>
     <rosparam command="load" file="$(arg PARAM_DIR)/SignalParams.yaml"/>
 
-  </node>
+  </node> -->
+
+  <!-- Substitute UI integration node for Guidance Main -->
+  <include file="$(find ui_integration)/launch/ui_integration.launch"/>
 
   <!-- TODO Route Generation node (route planning) will go here or above guidance node -->
 
