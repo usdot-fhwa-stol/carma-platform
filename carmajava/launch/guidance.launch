@@ -79,5 +79,45 @@
   <!-- TODO Route Generation node (route planning) will go here or above guidance node -->
 
   <!-- Guidance Command Repeater Node TODO remapping-->
-  <include file="$(find guidance_command_repeater)/launch/guidance_command_repeater.launch"/>
+  <!--<include file="$(find guidance_command_repeater)/launch/guidance_command_repeater.launch"/>-->
+
+  <!-- TODO Check topic remapping-->
+  <!-- Control Stack -->
+  <!-- Waypoint Follower Config-->
+  <node pkg="rostopic" type="rostopic" name="config_waypoint_follower_rostopic"
+        args="pub -l /config/waypoint_follower autoware_config_msgs/ConfigWaypointFollower '{ header: auto, param_flag: 0, velocity: 5.0, lookahead_distance: 4.0, lookahead_ratio: 2.0, minimum_lookahead_distance: 6.0, displacement_threshold: 0.0, relative_angle_threshold: 0.0 }' "
+  />
+
+  <!-- Trajectory Executor -->
+  <include file="$(find trajectory_executor)/launch/trajectory_executor.launch" />
+
+  <!-- Pure Pursuit Wrapper -->
+  <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch" />
+
+  <!-- Twist Filter -->
+  <include file="$(find waypoint_follower)/launch/twist_filter.launch"/>
+
+  <!-- Planning Stack -->
+  <!-- Waypoint_loader config-->
+  <node pkg="rostopic" type="rostopic" name="config_waypoint_replanner_rostopic"
+        args="pub -l /config/waypoint_replanner autoware_config_msgs/ConfigWaypointReplanner '{replanning_mode: false, velocity_max: 10.0, velocity_min: 1.0, accel_limit: 0.98, decel_limit: 0.98, radius_thresh: 20.0, radius_min: 6.0, resample_mode: true, resample_interval: 1.0, velocity_offset: 4, end_point_offset: 5}' "
+  />
+  
+  <!-- Waypoint Loader -->
+  <node pkg="waypoint_maker" type="waypoint_loader" name="waypoint_loader"/>
+  <node pkg="waypoint_maker" type="waypoint_replanner" name="waypoint_replanner"/>
+  <node pkg="waypoint_maker" type="waypoint_marker_publisher" name="waypoint_marker_publisher" />
+
+  <!-- Lane Planner -->
+  <node pkg="lane_planner" type="lane_rule" name="lane_rule" />
+  <node pkg="lane_planner" type="lane_stop" name="lane_stop" />
+  <node pkg="lane_planner" type="lane_select" name="lane_select" />
+
+  <!-- AStar Planner -->
+  <include file="$(find waypoint_planner)/launch/astar_avoid.launch" />
+  <include file="$(find waypoint_planner)/launch/velocity_set.launch" />
+
+  <!-- Route Generator -->
+  <include file="$(find route_generator)/launch/route_generator.launch" />
+
 </launch>
