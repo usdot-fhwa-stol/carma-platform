@@ -153,12 +153,6 @@
       <arg name="UI_NS" value="$(arg UI_NS)"/>
       <arg name="INTR_NS" value="$(arg INTR_NS)"/>
     </include>
-    <include file="$(arg LAUNCH_DIR)/planning.launch">
-      <arg name="INTR_NS" value="$(arg INTR_NS)"/>
-    </include>
-    <include file="$(arg LAUNCH_DIR)/control.launch">
-      <arg name="INTR_NS" value="$(arg INTR_NS)"/>
-    </include>
   </group>
 
   <!-- UI Stack -->
