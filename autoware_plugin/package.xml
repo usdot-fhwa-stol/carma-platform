@@ -29,4 +29,5 @@
   <depend>cav_srvs</depend>
   <depend>cav_msgs</depend>
   <depend>carma_utils</depend>
+  <depend>autoware_msgs</depend>
 </package>

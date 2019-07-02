@@ -27,6 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
   cav_msgs
   cav_srvs
   carma_utils
+  autoware_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -37,7 +38,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils cav_msgs
+  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils cav_msgs autoware_msgs
 )
 
 ###########
@@ -58,8 +59,8 @@ add_executable( ${PROJECT_NAME}
   src/main.cpp)
 add_library(autoware_plugin_library src/autoware_plugin.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-#add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-#add_dependencies(autoware_plugin_library ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+add_dependencies(autoware_plugin_library ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
