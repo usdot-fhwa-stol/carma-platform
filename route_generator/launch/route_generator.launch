@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
         <arg name="route_file_folder" default="/opt/carma/routes/" />
-
+	<node pkg="route_generator" type="route_generator" name="route_generator" output="screen">
         <param name="route_file_path" type="str" value="$(arg route_file_folder)" />
-	<node pkg="route_generator" type="route_generator" name="route_generator"/>
+        </node>
 </launch>
