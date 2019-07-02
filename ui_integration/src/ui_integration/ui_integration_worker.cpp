@@ -72,14 +72,13 @@ namespace ui_integration
     {
         ROS_INFO("Initalizing UI integration node...");
         // Init our ROS objects
-        registered_plugin_service_server_ = nh_.advertiseService("get_registered_plugins", &UIIntegrationWorker::registered_plugin_cb, this);
-        active_plugin_service_server_ = nh_.advertiseService("get_active_plugins", &UIIntegrationWorker::active_plugin_cb, this);
-        activate_plugin_service_server_ = nh_.advertiseService("activate_plugin", &UIIntegrationWorker::activate_plugin_cb, this);
+        registered_plugin_service_server_ = nh_.advertiseService("plugins/get_registered_plugins", &UIIntegrationWorker::registered_plugin_cb, this);
+        active_plugin_service_server_ = nh_.advertiseService("plugins/get_active_plugins", &UIIntegrationWorker::active_plugin_cb, this);
+        activate_plugin_service_server_ = nh_.advertiseService("plugins/activate_plugin", &UIIntegrationWorker::activate_plugin_cb, this);
         guidance_activate_service_server_ = nh_.advertiseService("set_guidance_active", &UIIntegrationWorker::guidance_acivation_cb, this);
 
-        plugin_publisher_ = nh_.advertise<cav_msgs::PluginList>("available_plugins", 5, true);
+        plugin_publisher_ = nh_.advertise<cav_msgs::PluginList>("plugins/available_plugins", 5, true);
         enable_client_ = nh_.serviceClient<cav_srvs::SetEnableRobotic>("controller/enable_robotic");
-
 
         // Load the spin rate param to determine how fast to process messages
         // Default rate 10.0 Hz
