@@ -18,6 +18,7 @@
 
 #include <string>
 #include <ros/ros.h>
+#include <atomic>
 #include <carma_utils/CARMAUtils.h>
 #include <cav_srvs/PluginList.h>
 #include <cav_srvs/PluginActivation.h>
@@ -25,6 +26,8 @@
 #include <cav_srvs/SetEnableRobotic.h>
 #include <cav_msgs/PluginList.h>
 #include <std_msgs/Bool.h>
+#include <cav_msgs/GuidanceState.h>
+#include <cav_msgs/RobotEnabled.h>
 
 namespace ui_integration
 {
@@ -48,6 +51,7 @@ namespace ui_integration
             bool active_plugin_cb(cav_srvs::PluginListRequest& req, cav_srvs::PluginListResponse& res);
             bool activate_plugin_cb(cav_srvs::PluginActivationRequest& req, cav_srvs::PluginActivationResponse& res);
             bool guidance_acivation_cb(cav_srvs::SetGuidanceActiveRequest& req, cav_srvs::SetGuidanceActiveResponse& res);
+            void robot_status_cb(cav_msgs::RobotEnabled msg);
 
             // Helper functions
             void populate_plugin_list_response(cav_srvs::PluginListResponse& res);
@@ -60,12 +64,18 @@ namespace ui_integration
 
             // Publishers
             ros::Publisher plugin_publisher_;
+            ros::Publisher state_publisher_;
             ros::ServiceClient enable_client_;
+
+            // Subscribers
+            ros::Subscriber robot_status_subscriber_;
 
             // Node handles
             ros::CARMANodeHandle nh_, pnh_;
 
             std::string plugin_name_;
             std::string plugin_version_;
+
+            std::atomic<bool> guidance_activated_;
     };
 }
