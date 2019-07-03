@@ -51,7 +51,13 @@
   <remap from="velocity" to="$(arg INTR_NS)/gnss/velocity"/>
   <remap from="driver_discovery" to="$(arg INTR_NS)/driver_discovery"/>
   <remap from="get_drivers_with_capabilities" to="$(arg INTR_NS)/get_drivers_with_capabilities"/>
-
+  <remap from="controller/robotic_status" to="/hardware_interface/controller/robot_status"/>
+  <remap from="controller/vehicle_cmd" to="/hardware_interface/controller/vehicle_cmd"/>
+  <remap from="comms/outbound_binary_msg" to="/hardware_interface/comms/outbound_binary_msg"/>
+  <remap from="comms/inbound_binary_msg" to="/hardware_interface/comms/inbound_binary_msg"/>
+  <remap from="can/engine_speed" to="/hardware_interface/can/engine_speed"/>
+  <remap from="can/speed" to="/hardware_interface/can/speed"/>
+  <remap from="can/acc_engaged" to="/hardware_interface/can/acc_engaged"/>
 
   <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
     <arg name="port" value="9090"/>
