@@ -53,6 +53,20 @@ namespace ui_integration
         return true;
     }
 
+    void UIIntegrationWorker::robot_status_cb(cav_msgs::RobotEnabled msg)
+    {
+        cav_msgs::GuidanceState out;
+        if (guidance_activated_ && msg.robot_active) {
+            out.state = cav_msgs::GuidanceState::ENGAGED;
+        } else if (guidance_activated_ && msg.robot_enabled) {
+            out.state = cav_msgs::GuidanceState::ACTIVE;
+        } else {
+            out.state = cav_msgs::GuidanceState::DRIVERS_READY;
+        }
+
+        state_publisher_.publish(out);
+    }
+
     bool UIIntegrationWorker::guidance_acivation_cb(cav_srvs::SetGuidanceActiveRequest& req, cav_srvs::SetGuidanceActiveResponse& res)
     {
         // Translate message type from GuidanceActiveRequest to SetEnableRobotic
@@ -60,9 +74,11 @@ namespace ui_integration
         cav_srvs::SetEnableRobotic srv;
         if (req.guidance_active) {
             srv.request.set = cav_srvs::SetEnableRobotic::Request::ENABLE;
+            guidance_activated_ = true;
             res.guidance_status = true;
         } else {
             srv.request.set = cav_srvs::SetEnableRobotic::Request::DISABLE;
+            guidance_activated_ = false;
             res.guidance_status = false;
         }
 
@@ -79,7 +95,9 @@ namespace ui_integration
         active_plugin_service_server_ = nh_.advertiseService("plugins/get_active_plugins", &UIIntegrationWorker::active_plugin_cb, this);
         activate_plugin_service_server_ = nh_.advertiseService("plugins/activate_plugin", &UIIntegrationWorker::activate_plugin_cb, this);
         guidance_activate_service_server_ = nh_.advertiseService("set_guidance_active", &UIIntegrationWorker::guidance_acivation_cb, this);
-
+        
+        state_publisher_ = nh_.advertise<cav_msgs::GuidanceState>("state", 5);
+        robot_status_subscriber_ = nh_.subscribe<cav_msgs::RobotEnabled>("robot_status", 5, &UIIntegrationWorker::robot_status_cb, this);
         plugin_publisher_ = nh_.advertise<cav_msgs::PluginList>("plugins/available_plugins", 5, true);
         enable_client_ = nh_.serviceClient<cav_srvs::SetEnableRobotic>("controller/enable_robotic");
 

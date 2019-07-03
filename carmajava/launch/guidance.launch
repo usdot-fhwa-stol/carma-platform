@@ -46,11 +46,11 @@
   <remap from="/republish/cmd_longitudinal_effort" to="$(arg INTR_NS)/controller/cmd_longitudinal_effort"/>
   <remap from="/republish/cmd_speed" to="$(arg INTR_NS)/controller/cmd_speed"/>
   <remap from="robot_enabled" to="$(arg INTR_NS)/controller/robot_enabled"/>
+  <remap from="robot_status" to="/hardware_interface/controller/robot_status"/>
   <remap from="/controller/cmd_lateral" to="$(arg INTR_NS)/controller/cmd_lateral"/>
   <remap from="/controller/cmd_longitudinal_effort" to="$(arg INTR_NS)/controller/cmd_longitudinal_effort"/>
   <remap from="/controller/cmd_speed" to="$(arg INTR_NS)/controller/cmd_speed"/>
   <remap from="enable_robotic" to="$(arg INTR_NS)/controller/enable_robotic"/>
-  <remap from="state" to="autoware_state"/>
 
   <remap from="ui_instructions" to="$(arg UI_NS)/ui_instructions"/>
 
@@ -115,7 +115,9 @@
   <!-- Lane Planner -->
   <node pkg="lane_planner" type="lane_rule" name="lane_rule" />
   <node pkg="lane_planner" type="lane_stop" name="lane_stop" />
-  <node pkg="lane_planner" type="lane_select" name="lane_select" />
+  <node pkg="lane_planner" type="lane_select" name="lane_select">
+      <remap from="state" to="autoware_state"/>
+  </node>
 
   <!-- AStar Planner -->
   <include file="$(find waypoint_planner)/launch/astar_avoid.launch" />
