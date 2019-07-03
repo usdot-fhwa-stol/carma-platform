@@ -50,6 +50,7 @@
   <remap from="/controller/cmd_longitudinal_effort" to="$(arg INTR_NS)/controller/cmd_longitudinal_effort"/>
   <remap from="/controller/cmd_speed" to="$(arg INTR_NS)/controller/cmd_speed"/>
   <remap from="enable_robotic" to="$(arg INTR_NS)/controller/enable_robotic"/>
+  <remap from="state" to="autoware_state"/>
 
   <remap from="ui_instructions" to="$(arg UI_NS)/ui_instructions"/>
 
