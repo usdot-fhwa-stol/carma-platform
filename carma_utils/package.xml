@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package>
+  <name>carma_utils</name>
+  <version>1.0.0</version>
+  <description>
+    The carma_utils package provides helpful classes for use with the CARMA Platform.
+  </description>
+  <maintainer email="carma@todo.todo">carma</maintainer>
+  <license>Apache 2.0</license>
+  <author email="carma@todo.todo">carma</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>cav_msgs</build_depend>
+  <build_depend>cav_srvs</build_depend>
+  <build_depend>message_filters</build_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>cav_msgs</run_depend>
+  <run_depend>cav_srvs</run_depend>
+  <run_depend>message_filters</run_depend>
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+
+  </export>
+</package>

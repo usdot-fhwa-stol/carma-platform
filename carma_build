@@ -39,11 +39,11 @@ rebuild_carma=false
 carma_build_args=""
 autoware_build_args=""
 # The list of packages which are required by carma from autoware
-AUTOWARE_PACKAGE_SELECTION="map_tools lidar_localizer map_file deadreckoner points_downsampler lane_planner waypoint_maker autoware_msgs"
+AUTOWARE_PACKAGE_SELECTION="map_tools lidar_localizer map_file deadreckoner points_downsampler lane_planner waypoint_maker autoware_msgs autoware_config_msgs"
 
 # The list of message packages used by autoware which will need to have thier rosjava artifacts generated for carma
 # Note: The order of this list is the order of compilation and therefore must account for dependancies
-MSGS_TO_GENERATE="jsk_footstep_msgs jsk_recognition_msgs autoware_msgs radar_msgs derived_object_msgs"
+MSGS_TO_GENERATE="jsk_footstep_msgs jsk_recognition_msgs autoware_msgs radar_msgs derived_object_msgs autoware_config_msgs"
 
 # Read Options
 while getopts a:c:xrhm:b: option

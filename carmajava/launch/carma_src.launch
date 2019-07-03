@@ -85,6 +85,9 @@
   <arg name="INTR_NS" default="/hardware_interface" doc="Namespace of nodes hardware interface stack"/>
   <arg name="UI_NS" default="/ui" doc="Namespace of parameters used by the ui and rosbridge"/>
   <arg name="LOCZ_NS" default="/localization" doc="Namespace of parameters used by the ui and rosbridge"/>
+  
+  <!-- Map file arealist.txt file to load -->
+  <arg name="arealist_path" default="arealist.txt" doc="Path to the arealist.txt file which contains the paths and dimensions of each map cell to load"/>
 
   <!-- Remove after TO 26 demo -->
   <arg name="use_rosbag" default="false" doc="Record a rosbag"/>

@@ -20,7 +20,9 @@
 <launch>
 
   <arg name="INTR_NS" default="hardware_interface" doc="Namespace of nodes hardware interface stack"/>
-
+  <arg name="area" default="5x5" doc="Dimensions of the square of cells loaded at runtime using the download and arealist load types"/>
+  <arg name="arealist_path" default="arealist.txt" doc="Path to the arealist.txt file which contains the paths and dimensions of each map cell to load"/>
+  
   <!-- Remap any absolute topics to be relative -->
   <remap from="/vehicle/odom" to="vehicle/odom"/>
   <remap from="/estimate_twist" to="estimate_twist"/>
@@ -47,11 +49,20 @@
 
   <remap from="system_alert" to="/system_alert"/>
 
+  <remap from="bestpos" to="$(arg INTR_NS)/bestpos"/>
+  <remap from="dual_antenna_heading" to="$(arg INTR_NS)/gnss/dual_antenna_heading"/>
+  
+  <remap from="points_raw" to="$(arg INTR_NS)/lidar/points_raw"/>
+
   <!-- <arg name="current_twist" default="current_twist" doc="Remapping of the twist topic used by the deadreckoner node"/>
   <arg name="current_odom" default="current_odom" doc="Remapping of the twist topic used by the deadreckoner node"/> -->
   <!-- Localization Package -->
   <!-- Point Cloud Map TODO file location and parameter loading process -->
-  <node pkg="map_file" type="points_map_loader" name="points_map_loader" args="noupdate $(find carma)/map/base_map.pcd" />
+  <include file="$(find map_file)/launch/map_loader.launch">
+    <arg name="load_type" value="arealist" />
+    <arg name="area" value="$(arg area)" />
+    <arg name="arealist_path" value="$(arg arealist_path)" />
+  </include>
 
   <!-- NDT Matching-->
   <!-- This namesapce sets the parameters which are not set by default in the ndt_matching.launch file -->
@@ -70,7 +81,11 @@
   <include file="$(find lidar_localizer)/launch/ndt_matching.launch">
     <arg name="get_height" value="true" />
     <arg name="use_odom" value="true" />
+    <arg name="use_gnss" value="1"/>
   </include>
+
+  <!-- GNSS To Map Convertor -->
+  <include file="$(find gnss_to_map_convertor)/launch/gnss_to_map_convertor.launch"/>
 
   <!-- Deadreckoner -->
   <include file="$(find deadreckoner)/launch/deadreckoner.launch">

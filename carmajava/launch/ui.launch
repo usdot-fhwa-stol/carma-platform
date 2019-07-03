@@ -43,6 +43,7 @@
   <remap from="traffic_signal_info" to="$(arg GUIDE_NS)/traffic_signal_info"/>
   <remap from="platooning_info" to="$(arg GUIDE_NS)/platooning_info"/>
   <remap from="traffic_signal_info" to="$(arg GUIDE_NS)/traffic_signal_info"/>
+  <remap from="system_alert" to="/system_alert"/>
 
   <remap from="bsm" to="$(arg MSG_NS)/incoming_bsm"/>
 
