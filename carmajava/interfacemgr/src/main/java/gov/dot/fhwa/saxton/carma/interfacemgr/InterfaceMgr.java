@@ -62,7 +62,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
     protected boolean robotEnabled_ = false; //latch - has robotic control been enabled ever?
     protected long lastRobotStatusMsgTime_ = 0;
     protected boolean shutdownInitiated_ = false;
-    private long robotStatusTimeout_ = 500; // No controller communication for 300ms will be considered a timeout
+    private long robotStatusTimeout_ = 500; // No controller communication for this amount of time will be considered a timeout
 
     @Override
     public GraphName getDefaultNodeName() {
