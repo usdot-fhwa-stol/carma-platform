@@ -60,11 +60,14 @@ namespace ui_integration
         cav_srvs::SetEnableRobotic srv;
         if (req.guidance_active) {
             srv.request.set = cav_srvs::SetEnableRobotic::Request::ENABLE;
+            res.guidance_status = true;
         } else {
             srv.request.set = cav_srvs::SetEnableRobotic::Request::DISABLE;
+            res.guidance_status = false;
         }
 
         enable_client_.call(srv);
+        
         return true;
     }
 
