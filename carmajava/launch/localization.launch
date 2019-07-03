@@ -80,6 +80,7 @@
 
   <include file="$(find lidar_localizer)/launch/ndt_matching.launch">
     <arg name="get_height" value="true" />
+    <arg name="use_odom" value="true" />
     <arg name="use_gnss" value="1"/>
   </include>
 
@@ -95,5 +96,7 @@
   <!-- Voxel Grid Filter -->
   <include file="$(find points_downsampler)/launch/points_downsample.launch">
     <arg name="node_name" value="voxel_grid_filter" />
+    <arg name="points_topic" value="points_no_ground" />
+    
   </include>
 </launch>
