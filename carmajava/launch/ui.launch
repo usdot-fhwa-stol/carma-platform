@@ -20,9 +20,9 @@
 <launch>
 
   <arg name="PARAM_DIR" default="$(find carma)/launch/params" doc="Directory of yaml parameter files"/>
-  <arg name="GUIDE_NS" default="guidance" doc="Namespace of nodes in guidance package"/>
-  <arg name="MSG_NS" default="message" doc="Namespace of nodes in message package"/>
-  <arg name="INTR_NS" default="hardware_interface" doc="Namespace of nodes for hardware driver interface"/>
+  <arg name="GUIDE_NS" default="/guidance" doc="Namespace of nodes in guidance package"/>
+  <arg name="MSG_NS" default="/message" doc="Namespace of nodes in message package"/>
+  <arg name="INTR_NS" default="/hardware_interface" doc="Namespace of nodes for hardware driver interface"/>
 
   <rosparam command="load" file="$(arg PARAM_DIR)/CommandAPIParams.yaml"/>
 
