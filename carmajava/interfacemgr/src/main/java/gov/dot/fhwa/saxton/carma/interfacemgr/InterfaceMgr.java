@@ -62,7 +62,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
     protected boolean robotEnabled_ = false; //latch - has robotic control been enabled ever?
     protected long lastRobotStatusMsgTime_ = 0;
     protected boolean shutdownInitiated_ = false;
-    private final long robotStatusTimeout_ = 300; // No controller communication for 300ms will be considered a timeout
+    private long robotStatusTimeout_ = 500; // No controller communication for 300ms will be considered a timeout
 
     @Override
     public GraphName getDefaultNodeName() {
@@ -81,6 +81,7 @@ public class  InterfaceMgr extends SaxtonBaseNode implements IInterfaceMgr {
         try {
             ParameterTree param = connectedNode.getParameterTree();
             int waitTime = param.getInteger("~/driver_wait_time"); //seconds
+            robotStatusTimeout_ = param.getInteger("~/controller_status_timeout", (int)robotStatusTimeout_);
             worker_.setWaitTime(waitTime);
             log_.debug("STARTUP", "InterfaceMgr.onStart read waitTime = " + waitTime);
         } catch (Exception e) {
