@@ -63,6 +63,13 @@
 
   <remap from="system_alert" to="/system_alert"/>
 
+  <remap from="/base/lane_waypoints_raw" to="base/lane_waypoints_raw"/>       
+  <remap from="/lane_waypoints_array" to="lane_waypoints_array"/>
+  <remap from="/traffic_waypoints_array" to="traffic_waypoints_array"/>
+  <remap from="/red_waypoints_array" to="red_waypoints_array"/>
+  <remap from="/green_waypoints_array" to="green_waypoints_array"/>
+  <remap from="state" to="autoware_state"/>
+
   <!-- Guidance Main Node -->
   <!-- <node pkg="carma" type="guidance" name="guidance_main" args="gov.dot.fhwa.saxton.carma.guidance.GuidanceMain">
 
@@ -108,20 +115,23 @@
   />
   
   <!-- Waypoint Loader -->
-  <node pkg="waypoint_maker" type="waypoint_loader" name="waypoint_loader"/>
+  <node pkg="waypoint_maker" type="waypoint_loader" name="waypoint_loader">
+      
+  </node>
   <node pkg="waypoint_maker" type="waypoint_replanner" name="waypoint_replanner"/>
   <node pkg="waypoint_maker" type="waypoint_marker_publisher" name="waypoint_marker_publisher" />
 
   <!-- Lane Planner -->
-  <node pkg="lane_planner" type="lane_rule" name="lane_rule" />
-  <node pkg="lane_planner" type="lane_stop" name="lane_stop" />
-  <node pkg="lane_planner" type="lane_select" name="lane_select">
-      <remap from="state" to="autoware_state"/>
-  </node>
+  <node pkg="lane_planner" type="lane_stop" name="lane_stop"/>
+  <node pkg="lane_planner" type="lane_rule" name="lane_rule"/>
+  <node pkg="lane_planner" type="lane_select" name="lane_select"/>
 
   <!-- AStar Planner -->
   <include file="$(find waypoint_planner)/launch/astar_avoid.launch" />
   <include file="$(find waypoint_planner)/launch/velocity_set.launch" />
+
+  <!-- Autoware Plugin -->
+  <include file="$(find autoware_plugin)/launch/autoware_plugin.launch" />
 
   <!-- Route Generator -->
   <include file="$(find route_generator)/launch/route_generator.launch" />
