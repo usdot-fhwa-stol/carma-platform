@@ -40,12 +40,12 @@ void PurePursuitWrapper::Initialize() {
   system_alert_pub_ = nh_.advertise<cav_msgs::SystemAlert>("system_alert", 10, true);
 
   // Pose Subscriber
-  pose_sub.subscribe(nh_, "/current_pose", 1);
+  pose_sub.subscribe(nh_, "current_pose", 1);
   // Trajectory Plan Subscriber
   trajectory_plan_sub.subscribe(nh_, "trajectory_plan", 1);
 
   // WayPoints Publisher
-  way_points_pub_ = nh_.advertise<autoware_msgs::Lane>("/final_waypoints", 10, true);
+  way_points_pub_ = nh_.advertise<autoware_msgs::Lane>("final_waypoints", 10, true);
 }
 
 bool PurePursuitWrapper::ReadParameters() {
