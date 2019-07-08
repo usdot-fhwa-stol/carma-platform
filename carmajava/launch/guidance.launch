@@ -69,9 +69,11 @@
   <remap from="/red_waypoints_array" to="red_waypoints_array"/>
   <remap from="/green_waypoints_array" to="green_waypoints_array"/>
   <remap from="trajectory" to="plan_trajectory"/>
+  <!-- TODO use arguments for top level namespace -->
   <remap from="trajectory_plan" to="/guidance/pure_pursuit/trajectory"/>
   <remap from="current_pose" to="/localization/ndt_pose"/>
-  <remap from="current_velocity" to="/hardware_interface/vehicle/twist"/>
+  <remap from="current_velocity" to="$(arg INTR_NS)/vehicle/twist"/>
+  <remap from="controller/enable_robotic" to="$(arg INTR_NS)/controller/enable_robotic"/>
 
   <!-- Guidance Main Node -->
   <!-- <node pkg="carma" type="guidance" name="guidance_main" args="gov.dot.fhwa.saxton.carma.guidance.GuidanceMain">
