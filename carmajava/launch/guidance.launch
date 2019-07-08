@@ -106,7 +106,10 @@
   <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch" />
 
   <!-- Twist Filter -->
-  <include file="$(find waypoint_follower)/launch/twist_filter.launch"/>
+  <group>
+    <remap from="/twist_cmd" to="twist_cmd"/>
+    <include file="$(find waypoint_follower)/launch/twist_filter.launch"/>
+  </group>
 
   <!-- Planning Stack -->
   <!-- Waypoint_loader config-->
