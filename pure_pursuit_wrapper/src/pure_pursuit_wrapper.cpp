@@ -59,8 +59,11 @@ void PurePursuitWrapper::TrajectoryPlanPoseHandler(const geometry_msgs::PoseStam
       lane.header = tp->header;
       std::vector <autoware_msgs::Waypoint> waypoints;
       double current_time = ros::Time::now().toSec();
-      for(cav_msgs::TrajectoryPlanPoint tpp : tp->trajectory_points) {
-        autoware_msgs::Waypoint waypoint = ppww.TrajectoryPlanPointToWaypointConverter(current_time, *pose,tpp);
+      for(int i = 0; i < tp->trajectory_points.size() - 1; i++ ) {
+
+        cav_msgs::TrajectoryPlanPoint t1 = tp->trajectory_points[i];
+        cav_msgs::TrajectoryPlanPoint t2 = tp->trajectory_points[i + 1];
+        autoware_msgs::Waypoint waypoint = ppww.TrajectoryPlanPointToWaypointConverter(current_time, *pose,t1, t2);
         waypoints.push_back(waypoint);
       }
 

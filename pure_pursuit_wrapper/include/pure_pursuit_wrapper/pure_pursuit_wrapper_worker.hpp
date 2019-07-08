@@ -25,6 +25,6 @@ namespace pure_pursuit_wrapper {
 class PurePursuitWrapperWorker {
     public:
         // Convert TrajectoryPlanPoint to Waypoint. This is used by TrajectoryPlanHandler.
-        autoware_msgs::Waypoint TrajectoryPlanPointToWaypointConverter(double current_time, geometry_msgs::PoseStamped pose, cav_msgs::TrajectoryPlanPoint tpp);
+        autoware_msgs::Waypoint TrajectoryPlanPointToWaypointConverter(double current_time, geometry_msgs::PoseStamped pose, cav_msgs::TrajectoryPlanPoint tpp, cav_msgs::TrajectoryPlanPoint tpp2);
 };
 }
