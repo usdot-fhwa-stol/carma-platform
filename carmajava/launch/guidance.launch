@@ -68,7 +68,10 @@
   <remap from="/traffic_waypoints_array" to="traffic_waypoints_array"/>
   <remap from="/red_waypoints_array" to="red_waypoints_array"/>
   <remap from="/green_waypoints_array" to="green_waypoints_array"/>
-  <remap from="state" to="autoware_state"/>
+  <remap from="trajectory" to="plan_trajectory"/>
+  <remap from="trajectory_plan" to="/guidance/pure_pursuit/trajectory"/>
+  <remap from="current_pose" to="/localization/ndt_pose"/>
+  <remap from="current_velocity" to="/hardware_interface/vehicle/twist"/>
 
   <!-- Guidance Main Node -->
   <!-- <node pkg="carma" type="guidance" name="guidance_main" args="gov.dot.fhwa.saxton.carma.guidance.GuidanceMain">
@@ -96,7 +99,7 @@
   <!-- Control Stack -->
   <!-- Waypoint Follower Config-->
   <node pkg="rostopic" type="rostopic" name="config_waypoint_follower_rostopic"
-        args="pub -l /config/waypoint_follower autoware_config_msgs/ConfigWaypointFollower '{ header: auto, param_flag: 0, velocity: 5.0, lookahead_distance: 4.0, lookahead_ratio: 2.0, minimum_lookahead_distance: 6.0, displacement_threshold: 0.0, relative_angle_threshold: 0.0 }' "
+        args="pub -l config/waypoint_follower autoware_config_msgs/ConfigWaypointFollower '{ header: auto, param_flag: 0, velocity: 5.0, lookahead_distance: 4.0, lookahead_ratio: 2.0, minimum_lookahead_distance: 6.0, displacement_threshold: 0.0, relative_angle_threshold: 0.0 }' "
   />
 
   <!-- Trajectory Executor -->
@@ -124,7 +127,9 @@
   <!-- Lane Planner -->
   <node pkg="lane_planner" type="lane_stop" name="lane_stop"/>
   <node pkg="lane_planner" type="lane_rule" name="lane_rule"/>
-  <node pkg="lane_planner" type="lane_select" name="lane_select"/>
+  <node pkg="lane_planner" type="lane_select" name="lane_select">
+      <remap from="state" to="autoware_state"/>
+  </node>
 
   <!-- AStar Planner -->
   <include file="$(find waypoint_planner)/launch/astar_avoid.launch" />
