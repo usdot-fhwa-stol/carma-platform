@@ -53,7 +53,8 @@ namespace autoware_plugin
             return;
         }
         cav_msgs::TrajectoryPlan trajectory;
-        trajectory.header = msg->header;
+        trajectory.header.frame_id = msg->header.frame_id;
+        trajectory.header.stamp = ros::Time::now();
         trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
         trajectory.trajectory_points = compose_trajectory_from_waypoints(msg->waypoints);
         trajectory_pub_.publish(trajectory);
