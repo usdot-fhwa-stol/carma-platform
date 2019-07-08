@@ -30,7 +30,7 @@ autoware_msgs::Waypoint PurePursuitWrapperWorker::TrajectoryPlanPointToWaypointC
   double delta_t_second = fabs(((double)tpp.target_time / 1e9) - (double)current_time);
 
   if(delta_t_second != 0) {
-    waypoint.twist.twist.linear.x = 3.6 * (delta_pos / delta_t_second);
+    waypoint.twist.twist.linear.x = delta_pos / delta_t_second;
   }
   else {
     waypoint.twist.twist.linear.x = 0;
