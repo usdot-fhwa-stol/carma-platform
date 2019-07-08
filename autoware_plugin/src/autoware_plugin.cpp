@@ -182,5 +182,7 @@ namespace autoware_plugin
             trajectory[i].planner_plugin_name = "autoware";
             trajectory[i].target_time += current_nsec;
         }
+
+        return trajectory;
     }
 }
