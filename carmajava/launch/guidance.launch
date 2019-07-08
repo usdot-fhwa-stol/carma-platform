@@ -123,7 +123,7 @@
     <remap from="/ctrl_mode" to="ctrl_mode"/>
     <remap from="/emergency_stop" to="emergency_stop"/>
     <remap from="/state_cmd" to="state_cmd"/>
-    <remap from="/vehicle_cmd" to="$(arg INTR_NS)/controller/vehicle_cmd"/>
+    <remap from="/vehicle_cmd" to="$(arg INTR_NS)/vehicle_cmd"/>
     <include file="$(find waypoint_follower)/launch/twist_filter.launch"/>
   </group>
 
