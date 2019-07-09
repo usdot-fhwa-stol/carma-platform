@@ -64,6 +64,7 @@ namespace trajectory_executor
         ROS_DEBUG_STREAM("New plan contains " << msg.trajectory_points.size() << " points");
 
         _cur_traj = std::unique_ptr<cav_msgs::TrajectoryPlan>(new cav_msgs::TrajectoryPlan(msg));
+        _timesteps_since_last_traj = 0;
         ROS_DEBUG_STREAM("Successfully swapped trajectories!");
     }
 
