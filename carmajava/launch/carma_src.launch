@@ -88,6 +88,7 @@
   
   <!-- Map file arealist.txt file to load -->
   <arg name="arealist_path" default="arealist.txt" doc="Path to the arealist.txt file which contains the paths and dimensions of each map cell to load"/>
+  <arg name="area" default="5x5" doc="Dimensions of the square of cells loaded at runtime using the download and arealist load types"/>
 
   <!-- Remove after TO 26 demo -->
   <arg name="use_rosbag" default="false" doc="Record a rosbag"/>
@@ -126,6 +127,8 @@
   <group ns="$(arg LOCZ_NS)">
     <include file="$(arg LAUNCH_DIR)/localization.launch">
       <arg name="INTR_NS" value="$(arg INTR_NS)"/>
+      <arg name="arealist_path" value="$(arg arealist_path)"/>
+      <arg name="area" value="$(arg area)"/>
     </include>
   </group>
 
