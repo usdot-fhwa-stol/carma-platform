@@ -22,6 +22,8 @@
   <arg name="INTR_NS" default="hardware_interface" doc="Namespace of nodes hardware interface stack"/>
   <arg name="area" default="5x5" doc="Dimensions of the square of cells loaded at runtime using the download and arealist load types"/>
   <arg name="arealist_path" default="arealist.txt" doc="Path to the arealist.txt file which contains the paths and dimensions of each map cell to load"/>
+  <arg name="load_type" default="noupdate" doc="Enum of the map loading approach to use. Can be 'download', 'noupdate', or 'arealist'"/> 
+  <arg name="single_pcd_path" default="pcd_map.pcd" doc="Path to the map pcd file if using the noupdate load type"/>
   
   <!-- Remap any absolute topics to be relative -->
   <remap from="/vehicle/odom" to="vehicle/odom"/>
@@ -57,9 +59,10 @@
   <!-- Localization Package -->
   <!-- Point Cloud Map TODO file location and parameter loading process -->
   <include file="$(find map_file)/launch/map_loader.launch">
-    <arg name="load_type" value="arealist" />
-    <arg name="area" value="$(arg area)" />
-    <arg name="arealist_path" value="$(arg arealist_path)" />
+   <arg name="load_type" value="$(arg load_type)"/>
+   <arg name="single_pcd_path" value="$(arg single_pcd_path)"/>
+   <arg name="area" value="$(arg area)"/>
+   <arg name="arealist_path" value="$(arg arealist_path)"/>
   </include>
 
   <!-- NDT Matching-->
