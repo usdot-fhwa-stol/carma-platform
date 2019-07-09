@@ -96,6 +96,9 @@
 
   <!-- Voxel Grid Filter -->
   <group>
+  <node pkg="rostopic" type="rostopic" name="config_voxel_grid_filter_rostopic"
+	args="pub -l config/voxel_grid_filter autoware_config_msgs/ConfigVoxelGridFilter '{voxel_leaf_size: 4.0, measurement_range: 100.0}'"
+  />
     <remap from="/points_raw" to="ray_ground_filter/points_no_ground"/>
     <include file="$(find points_downsampler)/launch/points_downsample_remappable.launch">
       <arg name="node_name" value="voxel_grid_filter" />
