@@ -29,6 +29,7 @@
   <arg name="TF_NS" default="/transform" doc="Namespace of nodes in transform server package"/>
   <arg name="INTR_NS" default="/hardware_interface" doc="Namespace of nodes hardware interface stack"/>
   <arg name="UI_NS" default="/ui" doc="Namespace of parameters used by the ui and rosbridge"/>
+  <arg name="LOCZ_NS" default="/localization" doc="Namespace of parameters used by the ui and rosbridge"/>
   
   <!-- Remap topics from external packages -->
   <remap from="bsm" to="$(arg MSG_NS)/outgoing_bsm"/>
@@ -71,7 +72,7 @@
   <remap from="trajectory" to="plan_trajectory"/>
   <!-- TODO use arguments for top level namespace -->
   <remap from="trajectory_plan" to="/guidance/pure_pursuit/trajectory"/>
-  <remap from="current_pose" to="/localization/ndt_pose"/>
+  <remap from="current_pose" to="$(arg LOCZ_NS)/ndt_pose"/>
   <remap from="current_velocity" to="$(arg INTR_NS)/vehicle/twist"/>
   <remap from="controller/enable_robotic" to="$(arg INTR_NS)/controller/enable_robotic"/>
 

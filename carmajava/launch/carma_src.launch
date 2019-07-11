@@ -160,6 +160,7 @@
       <arg name="TF_NS" value="$(arg TF_NS)"/>
       <arg name="UI_NS" value="$(arg UI_NS)"/>
       <arg name="INTR_NS" value="$(arg INTR_NS)"/>
+      <arg name="LOCZ_NS" value="$(arg LOCZ_NS)"/>
     </include>
   </group>
 
