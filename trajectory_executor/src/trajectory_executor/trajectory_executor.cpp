@@ -18,11 +18,13 @@
 #include <ros/ros.h>
 #include <utility>
 #include <cav_msgs/SystemAlert.h>
+#include <exception>
 
 namespace trajectory_executor 
 {
     cav_msgs::TrajectoryPlan trimPastPoints(const cav_msgs::TrajectoryPlan &plan) {
         cav_msgs::TrajectoryPlan out(plan);
+        out.trajectory_points = std::vector<cav_msgs::TrajectoryPlanPoint>();
 
         uint64_t current_nsec = ros::Time::now().toNSec();
 
@@ -80,7 +82,6 @@ namespace trajectory_executor
     {
         std::unique_lock<std::mutex> lock(_cur_traj_mutex);
         ROS_DEBUG("TrajectoryExecutor tick start!");
-        
 
         if (_cur_traj != nullptr) {
             if (_timesteps_since_last_traj > 0) {
@@ -100,19 +101,12 @@ namespace trajectory_executor
                     description_builder << "No match found for control plugin " 
                         << control_plugin << " at point " 
                         << _timesteps_since_last_traj << " in current trajectory!";
-                    cav_msgs::SystemAlert alert;
-                    alert.type = cav_msgs::SystemAlert::FATAL;
-                    alert.description = description_builder.str();
 
-                    _public_nh->publishSystemAlert(alert);
+                    throw std::invalid_argument(description_builder.str());
                 }
                 _timesteps_since_last_traj++;
             } else {
-                cav_msgs::SystemAlert alert;
-                alert.type = cav_msgs::SystemAlert::FATAL;
-                alert.description = "Ran out of trajectory data to consume!";
-
-                _public_nh->publishSystemAlert(alert);
+                throw std::out_of_range("Ran out of trajectory data to consume!");
             }
         } else {
             ROS_DEBUG("Awaiting initial trajectory publication...");
