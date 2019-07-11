@@ -75,7 +75,6 @@ namespace autoware_plugin
     {
         std::vector<autoware_msgs::Waypoint> partial_waypoints = get_waypoints_in_time_boundary(waypoints, trajectory_time_length_);
         std::vector<cav_msgs::TrajectoryPlanPoint> tmp_trajectory = create_uneven_trajectory_from_waypoints(partial_waypoints);
-        //std::vector<cav_msgs::TrajectoryPlanPoint> evenly_spaced_trajectory = even_trajectory(tmp_trajectory, trajectory_point_spacing_);
         std::vector<cav_msgs::TrajectoryPlanPoint> final_trajectory = post_process_traj_points(tmp_trajectory);
         return final_trajectory;
     }
@@ -154,37 +153,6 @@ namespace autoware_plugin
             }
         }
         return sublist;
-    }
-
-    std::vector<cav_msgs::TrajectoryPlanPoint> AutowarePlugin::even_trajectory(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory, double time_spacing)
-    {
-        std::vector<cav_msgs::TrajectoryPlanPoint> res;
-        res.push_back(trajectory[0]);
-        double tp_timestamp = 0.0 + time_spacing * 1e9;
-        int next_traj_point_index = 1;
-        while(next_traj_point_index < trajectory.size())
-        {
-            if(trajectory[next_traj_point_index].target_time < tp_timestamp)
-            {
-                next_traj_point_index++;
-            }
-            else
-            {
-                cav_msgs::TrajectoryPlanPoint new_tp;
-                new_tp.target_time = tp_timestamp;
-                double time_elapsed_precentage = (tp_timestamp - trajectory[next_traj_point_index - 1].target_time) / (trajectory[next_traj_point_index].target_time - trajectory[next_traj_point_index - 1].target_time);
-
-                new_tp.x = trajectory[next_traj_point_index - 1].x + time_elapsed_precentage * (trajectory[next_traj_point_index].x - trajectory[next_traj_point_index - 1].x);
-
-                new_tp.y = trajectory[next_traj_point_index - 1].y + time_elapsed_precentage * (trajectory[next_traj_point_index].y - trajectory[next_traj_point_index - 1].y);
-
-                res.push_back(new_tp);
-
-
-                tp_timestamp += time_spacing * 1e9;
-            }
-        }
-        return res;
     }
 
     std::vector<cav_msgs::TrajectoryPlanPoint> AutowarePlugin::post_process_traj_points(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory)

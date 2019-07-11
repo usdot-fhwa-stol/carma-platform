@@ -44,9 +44,6 @@ namespace autoware_plugin
         // get a sublist of waypoints marked by desired time span
         std::vector<autoware_msgs::Waypoint> get_waypoints_in_time_boundary(std::vector<autoware_msgs::Waypoint> waypoints, double time_span);
 
-        // make an arbitaray trajectory evenly spaced
-        std::vector<cav_msgs::TrajectoryPlanPoint> even_trajectory(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory, double spacing);
-
         // postprocess traj to add plugin names and shift time origin to the current ROS time
         std::vector<cav_msgs::TrajectoryPlanPoint> post_process_traj_points(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory);
 
