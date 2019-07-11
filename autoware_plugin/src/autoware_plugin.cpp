@@ -52,6 +52,7 @@ namespace autoware_plugin
             ROS_WARN_STREAM("Received an empty trajectory!");
             return;
         }
+
         cav_msgs::TrajectoryPlan trajectory;
         trajectory.header.frame_id = msg->header.frame_id;
         trajectory.header.stamp = ros::Time::now();
@@ -67,15 +68,15 @@ namespace autoware_plugin
 
     void AutowarePlugin::twist_cd(const geometry_msgs::TwistStampedConstPtr& msg)
     {
-        current_speed_ = sqrt(pow(msg->twist.linear.x, 2) + pow(msg->twist.linear.y, 2) + pow(msg->twist.linear.z, 2));
+        current_speed_ = msg->twist.linear.x;
     }
 
     std::vector<cav_msgs::TrajectoryPlanPoint> AutowarePlugin::compose_trajectory_from_waypoints(std::vector<autoware_msgs::Waypoint> waypoints)
     {
         std::vector<autoware_msgs::Waypoint> partial_waypoints = get_waypoints_in_time_boundary(waypoints, trajectory_time_length_);
         std::vector<cav_msgs::TrajectoryPlanPoint> tmp_trajectory = create_uneven_trajectory_from_waypoints(partial_waypoints);
-        std::vector<cav_msgs::TrajectoryPlanPoint> evenly_spaced_trajectory = even_trajectory(tmp_trajectory, trajectory_point_spacing_);
-        std::vector<cav_msgs::TrajectoryPlanPoint> final_trajectory = post_process_traj_points(evenly_spaced_trajectory);
+        //std::vector<cav_msgs::TrajectoryPlanPoint> evenly_spaced_trajectory = even_trajectory(tmp_trajectory, trajectory_point_spacing_);
+        std::vector<cav_msgs::TrajectoryPlanPoint> final_trajectory = post_process_traj_points(tmp_trajectory);
         return final_trajectory;
     }
 
@@ -84,7 +85,7 @@ namespace autoware_plugin
         std::vector<cav_msgs::TrajectoryPlanPoint> uneven_traj;
         // TODO land id is not populated because we are not using it in Autoware
         // Adding current vehicle location as the first trajectory point if it is not on the first waypoint
-        if(abs(pose_msg_->pose.position.x - waypoints[0].pose.pose.position.x) > 0.1 || abs(pose_msg_->pose.position.y - waypoints[0].pose.pose.position.y) > 0.1)
+        if(fabs(pose_msg_->pose.position.x - waypoints[0].pose.pose.position.x) > 0.1 || fabs(pose_msg_->pose.position.y - waypoints[0].pose.pose.position.y) > 0.1)
         {
             cav_msgs::TrajectoryPlanPoint starting_point;
             starting_point.target_time = 0.0;
@@ -92,7 +93,8 @@ namespace autoware_plugin
             starting_point.y = pose_msg_->pose.position.y;
             uneven_traj.push_back(starting_point);
         }
-        double previous_wp_v = current_speed_;
+
+        double previous_wp_v = waypoints[0].twist.twist.linear.x;
         double previous_wp_x = pose_msg_->pose.position.x;
         double previous_wp_y = pose_msg_->pose.position.y;
         double previous_wp_t = 0.0;
@@ -105,15 +107,25 @@ namespace autoware_plugin
                 previous_wp_y = uneven_traj.back().y;
                 previous_wp_t = uneven_traj.back().target_time;
             }
+            if(i == 0 && uneven_traj.size() == 0)
+            {
+                cav_msgs::TrajectoryPlanPoint starting_point;
+                starting_point.target_time = 0.0;
+                starting_point.x = waypoints[i].pose.pose.position.x;
+                starting_point.y = waypoints[i].pose.pose.position.y;
+                uneven_traj.push_back(starting_point);
+                continue;
+            }
             cav_msgs::TrajectoryPlanPoint traj_point;
             // assume the vehicle is starting from stationary state because it is the same assumption made by pure pursuit wrapper node
-            double average_speed = (waypoints[i].twist.twist.linear.x + previous_wp_v) * 0.5;
+            double average_speed = previous_wp_v;
             double delta_d = sqrt(pow(waypoints[i].pose.pose.position.x - previous_wp_x, 2) + pow(waypoints[i].pose.pose.position.y - previous_wp_y, 2));
             traj_point.target_time = (delta_d / average_speed) * 1e9 + previous_wp_t;
             traj_point.x = waypoints[i].pose.pose.position.x;
             traj_point.y = waypoints[i].pose.pose.position.y;
             uneven_traj.push_back(traj_point);
         }
+
         return uneven_traj;
     }
 
@@ -161,14 +173,15 @@ namespace autoware_plugin
                 cav_msgs::TrajectoryPlanPoint new_tp;
                 new_tp.target_time = tp_timestamp;
                 double time_elapsed_precentage = (tp_timestamp - trajectory[next_traj_point_index - 1].target_time) / (trajectory[next_traj_point_index].target_time - trajectory[next_traj_point_index - 1].target_time);
+
                 new_tp.x = trajectory[next_traj_point_index - 1].x + time_elapsed_precentage * (trajectory[next_traj_point_index].x - trajectory[next_traj_point_index - 1].x);
+
                 new_tp.y = trajectory[next_traj_point_index - 1].y + time_elapsed_precentage * (trajectory[next_traj_point_index].y - trajectory[next_traj_point_index - 1].y);
+
                 res.push_back(new_tp);
+
+
                 tp_timestamp += time_spacing * 1e9;
-                if(abs(new_tp.x - trajectory[next_traj_point_index].x) < 0.1 && abs(new_tp.y - trajectory[next_traj_point_index].y))
-                {
-                    next_traj_point_index++;
-                }
             }
         }
         return res;
