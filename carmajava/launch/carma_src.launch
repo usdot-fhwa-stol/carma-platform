@@ -88,6 +88,10 @@
   
   <!-- Map file arealist.txt file to load -->
   <arg name="arealist_path" default="arealist.txt" doc="Path to the arealist.txt file which contains the paths and dimensions of each map cell to load"/>
+  <arg name="area" default="5x5" doc="Dimensions of the square of cells loaded at runtime using the download and arealist load types"/>
+  <arg name="load_type" default="noupdate" doc="Enum of the map loading approach to use. Can be 'download', 'noupdate', or 'arealist'"/> 
+  <arg name="single_pcd_path" default="pcd_map.pcd" doc="Path to the map pcd file if using the noupdate load type"/>
+  <arg name="area" default="1x1" doc="Dimensions of the square of cells loaded at runtime using the download and arealist load types"/>
 
   <!-- Remove after TO 26 demo -->
   <arg name="use_rosbag" default="false" doc="Record a rosbag"/>
@@ -126,6 +130,10 @@
   <group ns="$(arg LOCZ_NS)">
     <include file="$(arg LAUNCH_DIR)/localization.launch">
       <arg name="INTR_NS" value="$(arg INTR_NS)"/>
+      <arg name="arealist_path" value="$(arg arealist_path)"/>
+      <arg name="area" value="$(arg area)"/>
+      <arg name="load_type" value="$(arg load_type)"/>
+      <arg name="single_pcd_path" value="$(arg single_pcd_path)"/>
     </include>
   </group>
 
@@ -152,6 +160,7 @@
       <arg name="TF_NS" value="$(arg TF_NS)"/>
       <arg name="UI_NS" value="$(arg UI_NS)"/>
       <arg name="INTR_NS" value="$(arg INTR_NS)"/>
+      <arg name="LOCZ_NS" value="$(arg LOCZ_NS)"/>
     </include>
   </group>
 

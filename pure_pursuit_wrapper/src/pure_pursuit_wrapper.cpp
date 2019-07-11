@@ -40,12 +40,12 @@ void PurePursuitWrapper::Initialize() {
   system_alert_pub_ = nh_.advertise<cav_msgs::SystemAlert>("system_alert", 10, true);
 
   // Pose Subscriber
-  pose_sub.subscribe(nh_, "/current_pose", 1);
+  pose_sub.subscribe(nh_, "current_pose", 1);
   // Trajectory Plan Subscriber
   trajectory_plan_sub.subscribe(nh_, "trajectory_plan", 1);
 
   // WayPoints Publisher
-  way_points_pub_ = nh_.advertise<autoware_msgs::Lane>("/final_waypoints", 10, true);
+  way_points_pub_ = nh_.advertise<autoware_msgs::Lane>("final_waypoints", 10, true);
 }
 
 bool PurePursuitWrapper::ReadParameters() {
@@ -59,8 +59,11 @@ void PurePursuitWrapper::TrajectoryPlanPoseHandler(const geometry_msgs::PoseStam
       lane.header = tp->header;
       std::vector <autoware_msgs::Waypoint> waypoints;
       double current_time = ros::Time::now().toSec();
-      for(cav_msgs::TrajectoryPlanPoint tpp : tp->trajectory_points) {
-        autoware_msgs::Waypoint waypoint = ppww.TrajectoryPlanPointToWaypointConverter(current_time, *pose,tpp);
+      for(int i = 0; i < tp->trajectory_points.size() - 1; i++ ) {
+
+        cav_msgs::TrajectoryPlanPoint t1 = tp->trajectory_points[i];
+        cav_msgs::TrajectoryPlanPoint t2 = tp->trajectory_points[i + 1];
+        autoware_msgs::Waypoint waypoint = ppww.TrajectoryPlanPointToWaypointConverter(current_time, *pose,t1, t2);
         waypoints.push_back(waypoint);
       }
 

@@ -15,7 +15,6 @@
   the License.
 -->
 <launch>
-    <env name="ROSCONSOLE_CONFIG_FILE" value="$(find trajectory_executor)/config/roscpp_log.config"/>
     <node pkg="trajectory_executor" type="trajectory_executor_node" name="trajectory_executor_node">
         <rosparam command="load" file="$(find trajectory_executor)/config/trajectory_executor.yaml" />
     </node>

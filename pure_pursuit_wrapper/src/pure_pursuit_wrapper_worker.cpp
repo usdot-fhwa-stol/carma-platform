@@ -18,21 +18,23 @@
 
 namespace pure_pursuit_wrapper {
 
-autoware_msgs::Waypoint PurePursuitWrapperWorker::TrajectoryPlanPointToWaypointConverter(double current_time, geometry_msgs::PoseStamped pose, cav_msgs::TrajectoryPlanPoint tpp) {
+autoware_msgs::Waypoint PurePursuitWrapperWorker::TrajectoryPlanPointToWaypointConverter(double current_time, geometry_msgs::PoseStamped pose, cav_msgs::TrajectoryPlanPoint tpp, cav_msgs::TrajectoryPlanPoint tpp2) {
 
   autoware_msgs::Waypoint waypoint;
 
+
   waypoint.pose.pose.position.x = tpp.x;
   waypoint.pose.pose.position.y = tpp.y;
-  double delta_t_secound = (tpp.target_time / 1000.0) - current_time;
+  double delta_x = tpp.x - tpp2.x;
+  double delta_y = tpp.y - tpp2.y;
+  double delta_pos = sqrt(delta_x * delta_x + delta_y * delta_y);
+  double delta_t_second = (double)abs(tpp2.target_time - tpp.target_time) / 1e9;
 
-  if(delta_t_secound != 0) {
-    waypoint.twist.twist.linear.x = 3.6 * (tpp.x - pose.pose.position.x) / delta_t_secound;
-    waypoint.twist.twist.linear.y = 3.6 * (tpp.y - pose.pose.position.y) / delta_t_secound;
+  if(delta_t_second != 0) {
+    waypoint.twist.twist.linear.x = delta_pos / delta_t_second;
   }
   else {
     waypoint.twist.twist.linear.x = 0;
-    waypoint.twist.twist.linear.y = 0;
   }
 
   return waypoint;

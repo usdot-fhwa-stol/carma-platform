@@ -60,7 +60,7 @@ namespace ros {
     boost::function< bool(C, R)> wrappedFunc = 
     [callback] (C req, R res) -> bool {
       try {
-        callback(req, res);
+        return callback(req, res);
       } catch(const std::exception& e) {
         handleException(e);
       }
@@ -76,7 +76,7 @@ namespace ros {
     boost::function< bool(E)> wrappedFunc = 
     [callback] (E event) -> bool {
       try {
-        callback(event);
+        return callback(event);
       } catch(const std::exception& e) {
         handleException(e);
       }

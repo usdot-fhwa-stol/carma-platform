@@ -18,12 +18,22 @@
 #include <ros/ros.h>
 #include <utility>
 #include <cav_msgs/SystemAlert.h>
+#include <exception>
 
 namespace trajectory_executor 
 {
-    cav_msgs::TrajectoryPlan trimFirstPoint(const cav_msgs::TrajectoryPlan &plan) {
+    cav_msgs::TrajectoryPlan trimPastPoints(const cav_msgs::TrajectoryPlan &plan) {
         cav_msgs::TrajectoryPlan out(plan);
-        out.trajectory_points.erase(out.trajectory_points.begin());
+        out.trajectory_points = std::vector<cav_msgs::TrajectoryPlanPoint>();
+
+        uint64_t current_nsec = ros::Time::now().toNSec();
+
+        for (int i = 0; i < plan.trajectory_points.size(); i++) {
+            if (plan.trajectory_points[i].target_time > current_nsec) {
+                out.trajectory_points.push_back(plan.trajectory_points[i]);
+            }
+        }
+
         return out;
     }
 
@@ -64,6 +74,7 @@ namespace trajectory_executor
         ROS_DEBUG_STREAM("New plan contains " << msg.trajectory_points.size() << " points");
 
         _cur_traj = std::unique_ptr<cav_msgs::TrajectoryPlan>(new cav_msgs::TrajectoryPlan(msg));
+        _timesteps_since_last_traj = 0;
         ROS_DEBUG_STREAM("Successfully swapped trajectories!");
     }
 
@@ -71,11 +82,10 @@ namespace trajectory_executor
     {
         std::unique_lock<std::mutex> lock(_cur_traj_mutex);
         ROS_DEBUG("TrajectoryExecutor tick start!");
-        
 
         if (_cur_traj != nullptr) {
             if (_timesteps_since_last_traj > 0) {
-                _cur_traj = std::unique_ptr<cav_msgs::TrajectoryPlan>(new cav_msgs::TrajectoryPlan(trimFirstPoint(*_cur_traj)));
+                _cur_traj = std::unique_ptr<cav_msgs::TrajectoryPlan>(new cav_msgs::TrajectoryPlan(trimPastPoints(*_cur_traj)));
             }
             if (!_cur_traj->trajectory_points.empty()) {
                 // Determine the relevant control plugin for the current timestep
@@ -91,19 +101,12 @@ namespace trajectory_executor
                     description_builder << "No match found for control plugin " 
                         << control_plugin << " at point " 
                         << _timesteps_since_last_traj << " in current trajectory!";
-                    cav_msgs::SystemAlert alert;
-                    alert.type = cav_msgs::SystemAlert::FATAL;
-                    alert.description = description_builder.str();
 
-                    _public_nh->publishSystemAlert(alert);
+                    throw std::invalid_argument(description_builder.str());
                 }
                 _timesteps_since_last_traj++;
             } else {
-                cav_msgs::SystemAlert alert;
-                alert.type = cav_msgs::SystemAlert::FATAL;
-                alert.description = "Ran out of trajectory data to consume!";
-
-                _public_nh->publishSystemAlert(alert);
+                throw std::out_of_range("Ran out of trajectory data to consume!");
             }
         } else {
             ROS_DEBUG("Awaiting initial trajectory publication...");
@@ -141,7 +144,7 @@ namespace trajectory_executor
         ROS_DEBUG_STREAM("Initalized params with default_spin_rate " << _default_spin_rate 
             << " and trajectory_publish_rate " << _min_traj_publish_tickrate_hz);
 
-        this->_plan_sub = this->_private_nh->subscribe<cav_msgs::TrajectoryPlan>("trajectory", 5, &TrajectoryExecutor::onNewTrajectoryPlan, this);
+        this->_plan_sub = this->_public_nh->subscribe<cav_msgs::TrajectoryPlan>("trajectory", 5, &TrajectoryExecutor::onNewTrajectoryPlan, this);
         this->_cur_traj = std::unique_ptr<cav_msgs::TrajectoryPlan>();
         ROS_DEBUG("Subscribed to inbound trajectory plans.");
 

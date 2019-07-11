@@ -15,5 +15,5 @@
 -->
 <launch>
     <rosparam command="load" file="$(find autoware_plugin)/config/parameters.yaml"/>
-    <node name="autoware_plugin" pkg="autoware_plugin" type="autoware_plugin_node"/>
+    <node name="autoware_plugin" pkg="autoware_plugin" type="autoware_plugin"/>
 </launch>

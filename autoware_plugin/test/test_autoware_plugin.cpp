@@ -232,6 +232,42 @@ TEST(AutowarePluginTest, testEvenTrajectory)
     EXPECT_NEAR(1.9336, res[6].x, 0.01);
 }
 
+TEST(AutowarePluginTest, testEvenTrajectory2)
+{
+    // compose a trajectory
+    std::vector<cav_msgs::TrajectoryPlanPoint> uneven_traj;
+    cav_msgs::TrajectoryPlanPoint tp_1;
+    tp_1.target_time = 0.0;
+    tp_1.x = 84.8083;
+    tp_1.y = -40.2181;
+    cav_msgs::TrajectoryPlanPoint tp_2;
+    tp_2.target_time = 253700845;
+    tp_2.x = 84.8916;
+    tp_2.y = -39.4143;
+    cav_msgs::TrajectoryPlanPoint tp_3;
+    tp_3.target_time = 836997889;
+    tp_3.x = 86.5672;
+    tp_3.y = -40.2168;
+    uneven_traj.push_back(tp_1);
+    uneven_traj.push_back(tp_2);
+    uneven_traj.push_back(tp_3);
+    autoware_plugin::AutowarePlugin ap;
+    std::vector<cav_msgs::TrajectoryPlanPoint> res = ap.even_trajectory(uneven_traj, 0.1);
+    for(int i = 1; i < res.size(); ++i)
+    {
+        cav_msgs::TrajectoryPlanPoint tpp = res[i - 1]; 
+        cav_msgs::TrajectoryPlanPoint tpp2 = res[i];
+        double delta_x = tpp.x - tpp2.x;
+        double delta_y = tpp.y - tpp2.y;
+        double delta_pos = sqrt(delta_x * delta_x + delta_y * delta_y);
+        double delta_t_second = (double)abs(tpp2.target_time - tpp.target_time) / 1e9;
+        double speed = delta_pos / delta_t_second;
+        std::cerr << "speed" << i << " : " << speed << std::endl;
+    }
+
+}
+
+
 // Run all the tests
 int main(int argc, char **argv)
 {
