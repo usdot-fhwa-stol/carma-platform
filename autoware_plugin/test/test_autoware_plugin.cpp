@@ -134,13 +134,13 @@ TEST(AutowarePluginTest, testCreateUnevenTrajectory1)
     EXPECT_EQ(5, traj.size());
     EXPECT_NEAR(0.0, traj[0].target_time, 0.01);
     EXPECT_NEAR(0.0, traj[0].x, 0.01);
-    EXPECT_NEAR(0.1667, traj[1].target_time / 1e9, 0.001);
+    EXPECT_NEAR(0.25, traj[1].target_time / 1e9, 0.01);
     EXPECT_NEAR(0.5, traj[1].x, 0.01);
-    EXPECT_NEAR(0.4333, traj[2].target_time / 1e9, 0.001);
+    EXPECT_NEAR(0.45, traj[2].target_time / 1e9, 0.01);
     EXPECT_NEAR(1.3, traj[2].x, 0.01);
-    EXPECT_NEAR(0.4666, traj[3].target_time / 1e9, 0.001);
+    EXPECT_NEAR(0.5, traj[3].target_time / 1e9, 0.01);
     EXPECT_NEAR(1.4, traj[3].x, 0.01);
-    EXPECT_NEAR(0.6166, traj[4].target_time / 1e9, 0.001);
+    EXPECT_NEAR(0.65, traj[4].target_time / 1e9, 0.01);
     EXPECT_NEAR(2.0, traj[4].x, 0.01);
 }
 
@@ -177,96 +177,17 @@ TEST(AutowarePluginTest, testCreateUnevenTrajectory2)
     EXPECT_EQ(6, traj.size());
     EXPECT_NEAR(0.0, traj[0].target_time / 1e9, 0.01);
     EXPECT_NEAR(-1.0, traj[0].x, 0.01);
-    EXPECT_NEAR(1.0, traj[1].target_time / 1e9, 0.01);
+    EXPECT_NEAR(0.5, traj[1].target_time / 1e9, 0.01);
     EXPECT_NEAR(0.0, traj[1].x, 0.01);
-    EXPECT_NEAR(1.1667, traj[2].target_time / 1e9, 0.001);
+    EXPECT_NEAR(0.75, traj[2].target_time / 1e9, 0.001);
     EXPECT_NEAR(0.5, traj[2].x, 0.01);
-    EXPECT_NEAR(1.4333, traj[3].target_time / 1e9, 0.001);
+    EXPECT_NEAR(0.95, traj[3].target_time / 1e9, 0.001);
     EXPECT_NEAR(1.3, traj[3].x, 0.01);
-    EXPECT_NEAR(1.4666, traj[4].target_time / 1e9, 0.001);
+    EXPECT_NEAR(1.0, traj[4].target_time / 1e9, 0.001);
     EXPECT_NEAR(1.4, traj[4].x, 0.01);
-    EXPECT_NEAR(1.6166, traj[5].target_time / 1e9, 0.001);
+    EXPECT_NEAR(1.15, traj[5].target_time / 1e9, 0.001);
     EXPECT_NEAR(2.0, traj[5].x, 0.01);
 }
-
-TEST(AutowarePluginTest, testEvenTrajectory)
-{
-    // compose a trajectory
-    std::vector<cav_msgs::TrajectoryPlanPoint> uneven_traj;
-    cav_msgs::TrajectoryPlanPoint tp_1;
-    tp_1.target_time = 0.0;
-    tp_1.x = 0.0;
-    cav_msgs::TrajectoryPlanPoint tp_2;
-    tp_2.target_time = 0.1667 * 1e9;
-    tp_2.x = 0.5;
-    cav_msgs::TrajectoryPlanPoint tp_3;
-    tp_3.target_time = 0.4333 * 1e9;
-    tp_3.x = 1.3;
-    cav_msgs::TrajectoryPlanPoint tp_4;
-    tp_4.target_time = 0.4666 * 1e9;
-    tp_4.x = 1.4;
-    cav_msgs::TrajectoryPlanPoint tp_5;
-    tp_5.target_time = 0.6166 * 1e9;
-    tp_5.x = 2.0;
-    uneven_traj.push_back(tp_1);
-    uneven_traj.push_back(tp_2);
-    uneven_traj.push_back(tp_3);
-    uneven_traj.push_back(tp_4);
-    uneven_traj.push_back(tp_5);
-    autoware_plugin::AutowarePlugin ap;
-    std::vector<cav_msgs::TrajectoryPlanPoint> res = ap.even_trajectory(uneven_traj, 0.1);
-    EXPECT_EQ(7, res.size());
-    EXPECT_NEAR(0.0, res[0].target_time / 1e9, 0.001);
-    EXPECT_NEAR(0.0, res[0].x, 0.001);
-    EXPECT_NEAR(0.1, res[1].target_time / 1e9, 0.001);
-    EXPECT_NEAR(0.2999, res[1].x, 0.01);
-    EXPECT_NEAR(0.2, res[2].target_time / 1e9, 0.001);
-    EXPECT_NEAR(0.5999, res[2].x, 0.01);
-    EXPECT_NEAR(0.3, res[3].target_time / 1e9, 0.001);
-    EXPECT_NEAR(0.9, res[3].x, 0.01);
-    EXPECT_NEAR(0.4, res[4].target_time / 1e9, 0.001);
-    EXPECT_NEAR(1.2001, res[4].x, 0.01);
-    EXPECT_NEAR(0.5, res[5].target_time / 1e9, 0.001);
-    EXPECT_NEAR(1.5336, res[5].x, 0.01);
-    EXPECT_NEAR(0.6, res[6].target_time / 1e9, 0.001);
-    EXPECT_NEAR(1.9336, res[6].x, 0.01);
-}
-
-TEST(AutowarePluginTest, testEvenTrajectory2)
-{
-    // compose a trajectory
-    std::vector<cav_msgs::TrajectoryPlanPoint> uneven_traj;
-    cav_msgs::TrajectoryPlanPoint tp_1;
-    tp_1.target_time = 0.0;
-    tp_1.x = 84.8083;
-    tp_1.y = -40.2181;
-    cav_msgs::TrajectoryPlanPoint tp_2;
-    tp_2.target_time = 253700845;
-    tp_2.x = 84.8916;
-    tp_2.y = -39.4143;
-    cav_msgs::TrajectoryPlanPoint tp_3;
-    tp_3.target_time = 836997889;
-    tp_3.x = 86.5672;
-    tp_3.y = -40.2168;
-    uneven_traj.push_back(tp_1);
-    uneven_traj.push_back(tp_2);
-    uneven_traj.push_back(tp_3);
-    autoware_plugin::AutowarePlugin ap;
-    std::vector<cav_msgs::TrajectoryPlanPoint> res = ap.even_trajectory(uneven_traj, 0.1);
-    for(int i = 1; i < res.size(); ++i)
-    {
-        cav_msgs::TrajectoryPlanPoint tpp = res[i - 1]; 
-        cav_msgs::TrajectoryPlanPoint tpp2 = res[i];
-        double delta_x = tpp.x - tpp2.x;
-        double delta_y = tpp.y - tpp2.y;
-        double delta_pos = sqrt(delta_x * delta_x + delta_y * delta_y);
-        double delta_t_second = (double)abs(tpp2.target_time - tpp.target_time) / 1e9;
-        double speed = delta_pos / delta_t_second;
-        std::cerr << "speed" << i << " : " << speed << std::endl;
-    }
-
-}
-
 
 // Run all the tests
 int main(int argc, char **argv)
