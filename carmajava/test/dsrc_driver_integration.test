@@ -15,7 +15,7 @@
   the License.
 -->
 <!--
-	saxton_cav.launch
+	carma.launch
 
   A the ros launch file for the STOL CAV Prototype ROS Network.
   Launches all the needed ros nodes and sets up the parameter server.
@@ -32,12 +32,12 @@
 -->
 <launch>
   <!-- Include Main Launch File -->
-  <include pass_all_args="true" file="$(find carma)/launch/saxton_cav.launch"/>
+  <include pass_all_args="true" file="$(find carma)/launch/carma.launch"/>
   <!-- Launch Test Node -->
-  <group ns="/saxton_cav/test">
+  <group ns="/carma/test">
     <test test-name="dsrc_driver_test" pkg="carma" type="dsrcDriverTest.py" time-limit="60.0">
       <remap from="get_drivers_with_capabilities"
-             to="/saxton_cav/interface_manager/get_drivers_with_capabilities"/>
+             to="/carma/interface_manager/get_drivers_with_capabilities"/>
     </test>
   </group>
 </launch>

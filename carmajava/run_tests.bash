@@ -9,7 +9,6 @@ tests=(
      'message'
      'mock_drivers'
      'platooning'
-     'roadway'
      'rosutils'
      'route'
      'rsumetering'

@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<!--
+  Copyright (C) 2017 LEIDOS.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+<!--
+	playback.launch
+
+  A launch file for playing bag a rosbag file with visualization
+-->
+<launch>
+
+  <!-- Path to Unified Robot Description Format URDF file -->
+  <arg name="URDF_FILE" default="$(find carma)/launch/urdf/carma.urdf" doc="Path to the vehicle's URDF file"/>
+
+  <!-- Needed Params -->
+  <arg name="vehicle_id" doc="The bag file to be used to run this test"/>
+  <!-- Setup Ros Bag -->
+  <arg name="bag" doc="The bag file to be used to run this test"/>
+  <arg name="all_topics" default="true" doc="Set to true to play back all topics"/>
+  <arg name="topics" doc="The bag file to be used to run this test" default="/carma/route/route /carma/route/route_state /carma/sensor_fusion/filtered/heading /carma/sensor_fusion/filtered/nav_sat_fix /carma/sensor_fusion/filtered/odometry /carma/sensor_fusion/filtered/tracked_objects /carma/sensor_fusion/filtered/velocity"/>
+  
+  <arg if="$(arg all_topics)" name="actual_topics" value=""/>
+  <arg unless="$(arg all_topics)" name="actual_topics" value=" --topics $(arg topics) "/>
+
+  <param name="use_sim_time" value="true"/>
+
+  <param name="/carma/vehicle_id" value="$(arg vehicle_id)"/>
+
+  <!-- Load Robot Description Model-->
+  <!-- TODO take out transforms when urdf is commited Vehicle Transforms -->
+  <param name="robot_description" textfile="$(arg URDF_FILE)"/>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+
+  <!-- RViz Node -->
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find carma)/launch/rviz/playback.rviz"/>
+
+  <!-- Topic Visualization Node -->
+  <node pkg="carma" type="topic_viz_node.py" name="topic_viz_node"/>
+
+  <!-- Play Ros bag -->
+  <node name="player" pkg="rosbag" type="play" output="log" args="$(arg bag) --clock $(arg actual_topics)"/>
+</launch>

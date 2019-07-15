@@ -33,7 +33,7 @@
  */
 
 #include "sensor_fusion.h"
-#include "wgs84_utils.h"
+#include "wgs84_utils/wgs84_utils.h"
 #include "timer.h"
 #include "transform_maintainer.h"
 #include <cav_msgs/ConnectedVehicleList.h>

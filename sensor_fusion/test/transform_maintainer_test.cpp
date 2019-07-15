@@ -106,6 +106,42 @@ TEST(MapToOdomUpdateTest, test1)
   EXPECT_EQ(true, equal_quaternion(map_to_odom.getRotation(), solution_rot, 0.0001));
 }
 
+TEST(MapToECEFTransformTest, example1)
+{
+  
+  // This is not an actual test case, but a block of code to find out the transform between
+  // MAP frame and ECEF frame given its GPS output lat/lon/elevation and its location in map:
+  // T_m_b * (T_e_n * T_n_b)^-1
+  // => T_m_b * (T_e_b)^-1
+  // => T_m_b * T_b_e
+  // => T_m_e
+  wgs84_utils::wgs84_coordinate host_veh_coord;
+  host_veh_coord.lat = 38.956450218 * wgs84_utils::DEG2RAD;
+  host_veh_coord.lon = -77.1502303932 * wgs84_utils::DEG2RAD;
+  host_veh_coord.elevation = 73.2292646887;
+  host_veh_coord.heading = 0.0 * wgs84_utils::DEG2RAD;
+  tf2::Transform tf_ecef_to_ned = wgs84_utils::ecef_to_ned_from_loc(host_veh_coord);
+
+  tf2::Vector3 ned_to_baselink_translation(0, 0, 0);
+  tf2::Vector3 x_axis(1,0,0);
+  tf2::Quaternion ned_to_baselink_rot(x_axis, 180.0 * wgs84_utils::DEG2RAD);
+  tf2::Transform tf_ned_to_baselink(ned_to_baselink_rot, ned_to_baselink_translation);
+
+  tf2::Vector3 map_to_baselink_translation(0.540367901325, 1.03276705742, -37.4717445374);
+  tf2::Quaternion map_to_baselink_rot(-0.0120230214115,0.0028066100802,-0.224863943407, 0.974311950482);
+  tf2::Transform tf_map_to_baselink(map_to_baselink_rot, map_to_baselink_translation);
+
+  tf2::Transform tf_map_to_ecef = (tf_map_to_baselink * ((tf_ecef_to_ned * tf_ned_to_baselink).inverse())).inverse();
+  std::cerr << std::setprecision(20) << tf_map_to_ecef.getOrigin().getX() << std::endl;
+  std::cerr << tf_map_to_ecef.getOrigin().getY() << std::endl;
+  std::cerr << tf_map_to_ecef.getOrigin().getZ() << std::endl;
+  std::cerr << tf_map_to_ecef.getRotation().getX() << std::endl;
+  std::cerr << tf_map_to_ecef.getRotation().getY() << std::endl;
+  std::cerr << tf_map_to_ecef.getRotation().getZ() << std::endl;
+  std::cerr << tf_map_to_ecef.getRotation().getW() << std::endl;
+  
+}
+
 int main(int argc, char**argv)
 {
     testing::InitGoogleTest(&argc, argv);

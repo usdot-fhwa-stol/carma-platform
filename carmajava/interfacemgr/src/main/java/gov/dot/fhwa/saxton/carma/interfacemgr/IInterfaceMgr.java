@@ -22,23 +22,6 @@ import java.util.List;
 public interface IInterfaceMgr {
 
     /**
-     * Binds with the specified driver node.
-     *
-     * @param driverName - name of the driver's bind topic
-     */
-    void bindWithDriver(String driverName);
-
-
-    /**
-     * Requests the given driver's specific list of data capabilities.
-     *
-     * @param driverName - name of the driver's api topic
-     * @return - a list of data elements available from the driver
-     */
-    List<String> getDriverApi(String driverName);
-
-
-    /**
      * Sends a shutdown alert to the other nodes then shuts down this node
      * @param msg - the message that is to be sent along with the fatal error alert to other nodes
      */

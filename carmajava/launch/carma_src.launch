@@ -1,0 +1,179 @@
+<?xml version="1.0"?>
+<!--
+  Copyright (C) 2018-2019 LEIDOS.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+<!--
+	carma_src.launch
+
+  The ros launch file for the CARMA 3 Platform ROS Network.
+  Launches all the needed ros nodes and sets up the parameter server.
+  Also sets up all static transforms used by tf2 within the system.
+
+  Use:
+  First delete the generated build/scripts folder in all java packages.
+  roslaunch carma carma.launch
+  After using source devel/setup.bash from workspace root.
+
+  If not using simulated drivers they are activated using ros arguments as shown below.
+  roslaunch carma carma.launch mock_can:=false can_data_file:=/path/to/file.csv
+-->
+<launch>
+  <!-- Constants -->
+  <!-- Directory of Parameter Files -->
+  <arg name="CARMA_DIR" default="$(find carma)" doc="The path of the package directory"/>
+  <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/launch/params" doc="Directory of yaml parameter files"/>
+  <!-- Path to Unified Robot Description Format URDF file for loading static transforms -->
+  <arg name="URDF_FILE" default="$(arg CARMA_DIR)/launch/urdf/carma.urdf" doc="Path to the vehicle's URDF file"/>
+  <!-- Simulated Driver Arguments -->
+  <!-- Directory of Simulation Files -->
+  <arg name="DATA_DIR" default="$(arg CARMA_DIR)/mock_drivers/src/test/data" doc="Directory of driver simulation data files"/>
+  <!-- Directory of Engineering Tools -->
+  <arg name="SCRIPTS_DIR" default="$(arg CARMA_DIR)/../engineering_tools" doc="The directory containing scripts for execution"/>
+  <!-- Directory containing additional carma launch files such as the drivers.launch file -->
+  <arg name="LAUNCH_DIR" default="$(arg CARMA_DIR)/launch" doc="Directory containing additional carma launch files such as driver.launch"/>
+
+  <env name="ROSCONSOLE_CONFIG_FILE" value="$(arg PARAM_DIR)/roscpp_log.config"/>
+
+  <!-- Startup Drivers With Main CARMA System -->
+  <arg name="launch_drivers" default="true" doc="True if drivers are to be launched with the CARMA Platform, overrides mock_drivers arg if false"/>
+
+  <!-- Simulation Usage -->
+  <arg name="mock_drivers" 
+    default="controller can comms gnss radar lidar camera roadway_sensor"
+    doc="List of driver node base names which will be launched as mock drivers"
+  />
+
+  <!-- Data Files -->
+  <arg name="can_data_file" default="$(arg DATA_DIR)/can.csv" doc="Path for can simulation data"/>
+  <arg name="dsrc_data_file" default="$(arg DATA_DIR)/dsrc.csv" doc="Path for dsrc simulation data"/>
+  <arg name="srx_controller_data_file" default="$(arg DATA_DIR)/srx_controller.csv" doc="Path for srx controller simulation data"/>
+  <arg name="pinpoint_data_file" default="$(arg DATA_DIR)/pinpoint_stationary.csv" doc="Path for pinpoint simulation data"/>
+  <arg name="radar_data_file" default="$(arg DATA_DIR)/radar.csv" doc="Path for radar simulation data"/>
+  <arg name="cellular_data_file" default="$(arg DATA_DIR)/dsrc.csv" doc="Path cellular can simulation data"/>
+
+  <!-- Debug -->
+  <!-- JVM Debug arguments -->
+  <!-- JVM_DEBUG_OPTS: Start rosjava node with these JVM arguments for debugging -->
+  <env name="JVM_DEBUG_OPTS" value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"/>
+  <!-- JVM Logging Options -->
+  <arg name="log_config" default="$(arg PARAM_DIR)/log-config.properties" doc="The location of the logging configuration file"/>
+  <arg name="JVM_LOG_OPTS" value="-Djava.util.logging.config.file=$(arg log_config)"/>
+  <!-- Apply logging properties to all java nodes using JAVA_OPTS-->
+  <env name="JAVA_OPTS" value="$(arg JVM_LOG_OPTS)"/>
+  <!-- Set to true to enable debugging on the specified node -->
+  <arg name="debug_node" default="" doc="Set to the java node base name to enable debugging on that node"/>
+
+  <!-- ROS Namespaces -->
+  <arg name="GUIDE_NS" default="/guidance" doc="Namespace of nodes in guidance package"/>
+  <arg name="MSG_NS" default="/message" doc="Namespace of nodes in message package"/>
+  <arg name="SF_NS" default="/sensor_fusion" doc="Namespace of nodes in sensor fusion package"/>
+  <arg name="TF_NS" default="/transform" doc="Namespace of nodes in transform server package"/>
+  <arg name="ENV_NS" default="/environment" doc="Namespace of nodes in environment stack"/>
+  <arg name="RT_NS" default="/route" doc="Namespace of nodes in route package"/>
+  <arg name="INTR_NS" default="/hardware_interface" doc="Namespace of nodes hardware interface stack"/>
+  <arg name="UI_NS" default="/ui" doc="Namespace of parameters used by the ui and rosbridge"/>
+  <arg name="LOCZ_NS" default="/localization" doc="Namespace of parameters used by the ui and rosbridge"/>
+  
+  <!-- Map file arealist.txt file to load -->
+  <arg name="arealist_path" default="arealist.txt" doc="Path to the arealist.txt file which contains the paths and dimensions of each map cell to load"/>
+  <arg name="area" default="5x5" doc="Dimensions of the square of cells loaded at runtime using the download and arealist load types"/>
+  <arg name="load_type" default="noupdate" doc="Enum of the map loading approach to use. Can be 'download', 'noupdate', or 'arealist'"/> 
+  <arg name="single_pcd_path" default="pcd_map.pcd" doc="Path to the map pcd file if using the noupdate load type"/>
+  <arg name="area" default="1x1" doc="Dimensions of the square of cells loaded at runtime using the download and arealist load types"/>
+
+  <!-- Remove after TO 26 demo -->
+  <arg name="use_rosbag" default="false" doc="Record a rosbag"/>
+
+
+  <!-- Set package path for use with relative file paths -->
+  <param name="package_path" value="$(arg CARMA_DIR)"/>
+
+  <!-- Generate log name configuration file -->
+  <param name="log_name" type="str" command="$(arg SCRIPTS_DIR)/generate_log_name.sh"/>
+
+  <!-- Load Vehicle Characteristics -->
+  <rosparam command="load" file="$(arg PARAM_DIR)/HostVehicleParams.yaml"/>
+
+  <!-- Transforms Stack -->
+  <group ns="$(arg TF_NS)">
+    <include file="$(arg LAUNCH_DIR)/transforms.launch">
+      <arg name="URDF_FILE" value="$(arg URDF_FILE)"/>
+    </include>
+  </group>
+
+  <!-- Hardware Interface Stack -->
+  <group ns="$(arg INTR_NS)">
+    <include file="$(arg LAUNCH_DIR)/hardware_interface.launch">
+      <arg name="CARMA_DIR" value="$(arg CARMA_DIR)"/>
+      <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
+      <arg name="DATA_DIR" value="$(arg DATA_DIR)"/>
+      <arg name="LAUNCH_DIR" value="$(arg LAUNCH_DIR)"/>
+      <arg name="UI_NS" value="$(arg UI_NS)"/>
+      <arg name="mock_drivers" value="$(arg mock_drivers)"/>
+      <arg name="debug_node" value="$(arg debug_node)"/>
+    </include>
+  </group>
+
+  <!-- Localization Stack -->
+  <group ns="$(arg LOCZ_NS)">
+    <include file="$(arg LAUNCH_DIR)/localization.launch">
+      <arg name="INTR_NS" value="$(arg INTR_NS)"/>
+      <arg name="arealist_path" value="$(arg arealist_path)"/>
+      <arg name="area" value="$(arg area)"/>
+      <arg name="load_type" value="$(arg load_type)"/>
+      <arg name="single_pcd_path" value="$(arg single_pcd_path)"/>
+    </include>
+  </group>
+
+  <!-- Comms Messaging Stack -->
+  <group ns="$(arg MSG_NS)">
+    <include file="$(arg LAUNCH_DIR)/message.launch">
+      <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
+      <arg name="debug_node" value="$(arg debug_node)"/>
+      <arg name="INTR_NS" value="$(arg INTR_NS)"/>
+    </include>
+  </group>
+
+  <!-- Environment Perception Stack -->
+  <group ns="$(arg ENV_NS)">
+    <include file="$(arg LAUNCH_DIR)/environment.launch"/>
+  </group>
+
+  <!-- Guidance Stack -->
+  <group ns="$(arg GUIDE_NS)">
+    <include file="$(arg LAUNCH_DIR)/guidance.launch">
+      <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
+      <arg name="debug_node" value="$(arg debug_node)"/>
+      <arg name="MSG_NS" value="$(arg MSG_NS)"/>
+      <arg name="TF_NS" value="$(arg TF_NS)"/>
+      <arg name="UI_NS" value="$(arg UI_NS)"/>
+      <arg name="INTR_NS" value="$(arg INTR_NS)"/>
+      <arg name="LOCZ_NS" value="$(arg LOCZ_NS)"/>
+    </include>
+  </group>
+
+  <!-- UI Stack -->
+  <group ns="$(arg UI_NS)">
+    <include file="$(arg LAUNCH_DIR)/ui.launch">
+      <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
+      <arg name="MSG_NS" value="$(arg MSG_NS)"/>
+      <arg name="GUIDE_NS" value="$(arg GUIDE_NS)"/>
+      <arg name="INTR_NS" value="$(arg INTR_NS)"/>
+    </include>
+  </group>
+
+  <!-- TODO should there be a data collection launch file. Record Rosbag of all topics excluding /rosout and CAN messages since they may contain sensetive data -->
+  <node pkg="rosbag" type="record" name="rosbag_node" args="record -o /opt/carma/logs/ -a -x '/rosout(.*)|(.*)/received_messages|(.*)/sent_messages'" if="$(arg use_rosbag)" />
+</launch>
