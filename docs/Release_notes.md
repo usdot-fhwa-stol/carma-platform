@@ -3,7 +3,7 @@ CARMA Platform Release Notes
 
 Version 3.0.0, released 15 July 2019 
 ----------------------------------- 
-**Repository: CARMAPlatform**
+**Repository: CARMAPlatform**  
 -PR 982, fixed unit tests 
 -PR 260 Adds a carma_utils package containing CARMANodeHandle.h/.cpp files.  
 -PR 257 Updates sensor fusion CMakelists.txt file to export the wgs84_utils library  
@@ -12,34 +12,19 @@ Version 3.0.0, released 15 July 2019
 -PR 250 Add pure_pursuit_wrapper node.  
 -PR 249 Contains a node to integrate NDT matching node from Autoware  
 -PR 247 Performs and initial overhaul of CARMA2 code to make it conform to the new CARMA 3 driver API and integrate with Autoware components  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-**Repository: CARMASscInterfaceWrapper**
--PR 8 Launching the driver launch file for this wrapper does not map
--PR 3 Make launch file capable of launching full driver
-**Repository: CARMANovatelGpsDriver**
--PR 15, Publish heading messages when launching driver
--PR 14, Feature/add dual antenna heading msg
--PR 9, Add node name to status message
--PR 7, Feature/add header2 msg
--PR 6, Add support for BESTXYZ topic
--PR 4, Add launch file for full driver
--PR 3, Update driver type for carma3
--PR 2, The swri robotics novatel driver code has been modified to add CARMA system alert and driver discovery features
--PR 1, Add fix for messages build order
+**Repository: CARMASscInterfaceWrapper**  
+-PR 8 Launching the driver launch file for this wrapper does not map  
+-PR 3 Make launch file capable of launching full driver  
+**Repository: CARMANovatelGpsDriver**  
+-PR 15, Publish heading messages when launching driver  
+-PR 14, Feature/add dual antenna heading msg  
+-PR 9, Add node name to status message  
+-PR 7, Feature/add header2 msg  
+-PR 6, Add support for BESTXYZ topic  
+-PR 4, Add launch file for full driver  
+-PR 3, Update driver type for carma3  
+-PR 2, The swri robotics novatel driver code has been modified to add CARMA system alert and driver discovery features  
+-PR 1, Add fix for messages build order  
 **Repository: CARMAVelodyneLidarDriver**
 -PR 8, fixes the topic names provided by the wrapper to match the CARMA Driver API
 -PR 7, make topic name relative in wrapper
