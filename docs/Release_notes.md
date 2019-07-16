@@ -3,7 +3,7 @@ CARMA Platform Release Notes
 
 Version 3.0.0, released 15 July 2019 
 ----------------------------------- 
-**Repository: CARMAPlatform** 
+Repository: CARMAPlatform
 -PR 982, fixed unit tests 
 -PR 260 Adds a carma_utils package containing CARMANodeHandle.h/.cpp files.
 -PR 257 Updates sensor fusion CMakelists.txt file to export the wgs84_utils library
