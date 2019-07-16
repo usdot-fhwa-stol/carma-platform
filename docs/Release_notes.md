@@ -3,7 +3,7 @@ CARMA Platform Release Notes
 
 Version 3.0.0, released 15 July 2019 
 ----------------------------------- 
-Repository: CARMAPlatform
+**Repository: CARMAPlatform**
 -PR 982, fixed unit tests 
 -PR 260 Adds a carma_utils package containing CARMANodeHandle.h/.cpp files.
 -PR 257 Updates sensor fusion CMakelists.txt file to export the wgs84_utils library
@@ -12,6 +12,8 @@ Repository: CARMAPlatform
 -PR 250 Add pure_pursuit_wrapper node.
 -PR 249 Contains a node to integrate NDT matching node from Autoware.
 -PR 247 Performs and initial overhaul of CARMA2 code to make it conform to the new CARMA 3 driver API and integrate with Autoware components
+
+
 
 **Repository: CARMASscInterfaceWrapper**
 -PR 8 Launching the driver launch file for this wrapper does not map
