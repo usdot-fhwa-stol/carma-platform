@@ -29,4 +29,4 @@ default_control_plugin: pure_pursuit
 
 # String: Full path to default control plugin's trajectory input topic
 # Units: N/a
-default_control_plugin_topic: /carma/guidance/control_plugins/pure_pursuit/trajectory
+default_control_plugin_topic: /guidance/pure_pursuit/trajectory

@@ -31,10 +31,10 @@ class TrajectoryExecutorTestSuite : public ::testing::Test
     public:
         TrajectoryExecutorTestSuite() {
             _nh = ros::NodeHandle();
-            traj_pub = _nh.advertise<cav_msgs::TrajectoryPlan>("/trajectory_executor_node/trajectory", 5);
-            traj_sub = _nh.subscribe<cav_msgs::TrajectoryPlan>("/carma/guidance/control_plugins/pure_pursuit/trajectory", 100, 
+            traj_pub = _nh.advertise<cav_msgs::TrajectoryPlan>("trajectory", 5);
+            traj_sub = _nh.subscribe<cav_msgs::TrajectoryPlan>("guidance/pure_pursuit/trajectory", 100, 
             &TrajectoryExecutorTestSuite::trajEmitCallback, this);
-            sys_alert_sub = _nh.subscribe<cav_msgs::SystemAlert>("/system_alert", 100, 
+            sys_alert_sub = _nh.subscribe<cav_msgs::SystemAlert>("system_alert", 100, 
             &TrajectoryExecutorTestSuite::sysAlertCallback, this);
         }
         ros::NodeHandle _nh;
@@ -48,7 +48,7 @@ class TrajectoryExecutorTestSuite : public ::testing::Test
 
         void trajEmitCallback(cav_msgs::TrajectoryPlan msg) {
             msg_count++;
-            if (msg.trajectory_points.size() < last_points && shrinking) {
+            if (msg.trajectory_points.size() <= last_points && shrinking) {
                 last_points = msg.trajectory_points.size();
             } else {
                 shrinking = false;
@@ -94,12 +94,13 @@ cav_msgs::TrajectoryPlan buildSampleTraj() {
     plan.header.stamp = ros::Time::now();
     plan.trajectory_id = "TEST TRAJECTORY 1";
 
+    uint64_t cur_time_nanos = ros::Time::now().toNSec();
     for (int i = 0; i < 10; i++) {
         cav_msgs::TrajectoryPlanPoint p;
         p.controller_plugin_name = "pure_pursuit";
         p.lane_id = "0";
         p.planner_plugin_name = "cruising";
-        p.target_time = i * 0.1;
+        p.target_time = cur_time_nanos + i * 130000000;
         p.x = 10 * i;
         p.y = 10 * i;
         plan.trajectory_points.push_back(p);

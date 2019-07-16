@@ -36,7 +36,7 @@ namespace trajectory_executor {
      * \param plan The plan to modify
      * \return A new message with the copied contents minus the first point
      */
-    cav_msgs::TrajectoryPlan trimFirstPoint(const cav_msgs::TrajectoryPlan &plan);
+    cav_msgs::TrajectoryPlan trimPastPoints(const cav_msgs::TrajectoryPlan &plan);
 
     /**
      * Trajectory Executor package primary worker class

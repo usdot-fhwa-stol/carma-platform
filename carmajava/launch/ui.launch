@@ -48,7 +48,7 @@
   <remap from="bsm" to="$(arg MSG_NS)/incoming_bsm"/>
 
   <remap from="nav_sat_fix" to="$(arg INTR_NS)/gnss/nav_sat_fix"/>
-  <remap from="velocity" to="$(arg INTR_NS)/gnss/velocity"/>
+  <remap from="velocity" to="$(arg INTR_NS)/vehicle/twist"/>
   <remap from="driver_discovery" to="$(arg INTR_NS)/driver_discovery"/>
   <remap from="get_drivers_with_capabilities" to="$(arg INTR_NS)/get_drivers_with_capabilities"/>
   <remap from="controller/robotic_status" to="$(arg INTR_NS)/controller/robot_status"/>
