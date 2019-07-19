@@ -2,9 +2,10 @@ CARMA Platform Release Notes
 ----------------------------
 Pre-Release Version 3.0.0, released 15 July 2019 
 ----------------------------------- 
+
 **Summary:**
-CARMAPlatform pre-release version 3.0.0 is the first step to integrating Autoware and its components, specifically NDT matching and pure pursuit. CARMAPlatform now includes both lateral (steering) control and longitudinal (speed) control for full SAE level 2 autonomy. GNSS initialization of NDT matching has been added in order to localize the vehicle’s position on the 3D Point Cloud Map with LiDAR scan.  A temporary UI integration has been included for minimum viable functionality while awaiting further development of CARMA guidance node. Other highlights of this release are the new drivers (e.g. Velodyne LiDAR, Novatel GPS), conforming to the new CARMA3 API, Docker updates, and adding code coverage metrics to Sonar Cloud.
-**Repository: CARMAPlatform**  
+CARMAPlatform pre-release version 3.0.0 is the first step to integrating Autoware and its components, specifically NDT matching and pure pursuit. CARMAPlatform now includes both lateral (steering) control and longitudinal (speed) control for full SAE level 2 autonomy. GNSS initialization of NDT matching has been added in order to localize the vehicle’s position on the 3D Point Cloud Map with LiDAR scan.  A temporary UI integration has been included for minimum viable functionality while awaiting further development of CARMA guidance node. Other highlights of this release are the new drivers (e.g. Velodyne LiDAR, Novatel GPS), conforming to the new CARMA3 API, Docker updates, and adding code coverage metrics to Sonar Cloud.  
+**Repository: CARMAPlatform**      
 -PR 293: Update unit tests to match what expected in the actual code.  
 -PR 288: Fixes several issues encountered during integration testing for CARMA3 beta release.  
 -PR 287: Fixes topic re-mappings for the voxel grid filter after the ray_ground_filter was added. Also adds the ssc_interface (as package) into the carma_build script.  
@@ -34,9 +35,9 @@ CARMAPlatform pre-release version 3.0.0 is the first step to integrating Autowar
 -PR 250: Add pure_pursuit_wrapper node. This feature enables CARMA Guidance to communicate with Autoware pure_pursuit node.  
 -PR 249: Contains a node to integrate NDT matching node from Autoware.  
 -PR 247: Performs and initial overhaul of CARMA2 code to make it conform to the new CARMA 3 driver API and integrate with Autoware components, specifically NDT matching. 
-**Repository: CARMABase**
+**Repository: CARMABase**  
 -PR 1: Refactoring the Docker versioning and image dependencies.  
- **Repository: CARMASscInterfaceWrapper**  
+ **Repository: CARMASscInterfaceWrapper**    
  -PR10: Add a launch file for launching the SSC in a remappable way to this repo.  
 -PR9: Make vehicle/engage topic relative in ssc_interface_wrapper.  
 -PR 7: Fix topic remappings in SSC driver launch file.  
@@ -45,12 +46,12 @@ CARMAPlatform pre-release version 3.0.0 is the first step to integrating Autowar
 -PR 4: Add launch file for full driver.   
 -PR 2: Update driver type in DriverStatus message to match CARMA3 specifications.  
 -PR 1: Add initial wrapper.   
-**Repository: CARMAVehicleModelFramework**
+**Repository: CARMAVehicleModelFramework**  
 -PR 5: Correct some dependencies in vehicle model user examples.  
 -PR 4: Add support for code coverage metrics to Sonar Cloud.  
 -PR 3: Implementation of dynamic vehicle model.  
 -PR 1 and 2: Initial commit of vehicle model framework. 
-**Repository: CARMAVelodyneLidarDriver**
+**Repository: CARMAVelodyneLidarDriver**  
 -PR 8: Fixes the topic names provided by the wrapper to match the CARMA Driver API.  
 -PR 7: Make topic name relative in wrapper.  
 -PR 5: Adds a Lexus ready launch file to the LIDAR driver.  
@@ -58,12 +59,12 @@ CARMAPlatform pre-release version 3.0.0 is the first step to integrating Autowar
 -PR 3: Disable Sonar test reports.  
 -PR 2: Add Driver wrapper.  
 -PR 1: Add Sonar and Circle CI config files.  
-**Repository: CARMAConfig**
+**Repository: CARMAConfig**  
 -PR 5: Update carma.launch to use single map file.  
 -PR 3: Add initial Pacifica configuration folder.  
 -PR 2: Updates the urdf and drivers.launch file of the Lexus to include the frames needed for heading computations needed for GNSS initialization of NDT  
 -PR 1: Refactoring the Docker versioning and image dependencies.  
-**Repository: CARMACohdaDsrcDriver**
+**Repository: CARMACohdaDsrcDriver**  
 -PR 11: Fix global topic remapping in this driver.   
 -PR 9: Refactoring the Docker versioning and image dependencies.  
 -PR 7: Add support for code coverage metrics to Circle CI and comments for Sonar Cloud once unit tests are added.  
@@ -73,115 +74,144 @@ CARMAPlatform pre-release version 3.0.0 is the first step to integrating Autowar
 -PR 3: Configure Docker scripts and others for usage with new dockerized deployment to vehicle via DockerHub.  
 -PR 2: Update CI file to use new Docker image.  
 -PR 1: Setup Circle CI.  
-**Repository: CARMAVelodyneLidarDriver**
-
-
-
-
-
-
-
-
-
-
-
-
-
-**Repository: CARMAVelodyneLidarDriver**  
--PR 8, fixes the topic names provided by the wrapper to match the CARMA Driver API  
--PR 7, make topic name relative in wrapper  
--PR 5, adds a lexus ready launch file to for the lidar driver.  
--PR 4, updates driver type to support carma 3 driver types defined in CARMAMsgs  
--PR 2, add Driver wrapper  
-**Repository: autoware.ai**  
--PR 9 Add new launch file to voxel_grid_filter to allow remapping  
--PR 8 Use demo map file as default transform  
--PR 7 Make map_1_origin private and add update rate to params file  
--PR 6 Updates the points map loader to load map cells directly from arealist.txt file when no additional pcd paths are provided.  
--PR 3 Add the feature to enable waypoint loader to load new route file based on a subscribed topic.  
--PR 1 Adds the deadreckoner node from the AStuff fork of autoware.  
 **Repository: CARMAConfig**  
--PR 5, update carma.launch to use single map file  
--PR 3, Add initial pacifica config folder  
--PR 2, Update urdf file and drivers.launch for heading support  
--PR 1, Feature/docker refactor  
-**Repository: CARMACohdaDsrcDriver**  
--PR 11, Fix/node topic remapping  
--PR 9, Feature/docker refactor  
--PR 7, Add code coverage metrics to sonar cloud  
--PR 4, Update driver API  
--PR 3, Feature/dockerization  
--PR 2, Update CI file to use new docker image  
-**Repository: CARMAMsgs**  
--PR 13, Update driver type for carma3  
--PR 8, Fix cav_msgs cmakelists and package xml for j2735 deps   
--PR 7, Planning Plugin API   
--PR 6, Create TrajectoryExecutionStatus.msg   
--PR 5, Feature/messages for planning  
--PR 4, Update driver status msg  
--PR 3, Update docker version  
-**Repository: CARMATorcPinpointDriver**  
--PR 11, Feature/docker refactor  
--PR 10, Update driver type for carma3  
--PR 8, Add code coverage metrics to sonar cloud  
--PR 5, Apply CARMA dockerization config  
--PR 3, Update docker version  
-**Repository: CARMACadillacSrx2013ControllerDriver**  
--PR 12, Feature/docker refactor  
--PR 11, Update driver type for carma3  
--PR 9, Add code coverage metrics to sonar cloud  
--PR 8, Changes to add a new topic for light bar status based on front light bar   
--PR 6, Add sonar cloud support to driver   
--PR 4, Feature/dockerization  
--PR 3, Update docker image version  
-**Repository: CARMADelphiEsrDriver**  
--PR 9, Feature/docker refactor  
--PR 8, Update driver type for carma3  
--PR 6, Add code coverage metrics to sonar cloud  
--PR 3, Feature/dockerization  
--PR 2, Update docker version  
-**Repository: CARMADelphiSrr2Driver**  
--PR 13, Feature/docker refactor  
--PR 11, Add code coverage to sonar cloud  
--PR 8, Add AStuff srr2 driver to docker file  
--PR 6, Apply CARMA dockerization config  
--PR 4, Update docker image to newest version  
--PR 2, Driver Wrapper Skeleton Code  
-**Repository: CARMAFreightliner2012ControllerDriver**  
--PR 10, Feature/docker refactor  
--PR 9, Update driver type for carma3  
--PR 7, Add code coverage metrics to sonar cloud  
--PR 4, Apply CARMA dockerization config  
--PR 2, Update docker image version  
-**Repository: CARMATorcXgvControllerDriver**  
--PR 7, Update driver type for carma 3  
--PR 5, Add code coverage metrics to sonar cloud  
--PR 3, Apply CARMA dockerization config  
--PR 2, Update docker version  
+-PR14: Updates to SetActiveRoute.srv to add error code.   
+-PR 13: Updates the DriverStatus message to support the new driver types defined for CARMA 3.  
+-PR 12: Updates to DriverStatus.msg to add gps and imu.   
+-PR 10: Update version ID for cav_msgs.  
+-PR 8: Resolves build order issue with cav_msgs and j2735_msgs.  
+-PR 7: Adds the ROS messages necessary to support an initial implementation of the CARMA Planning Plugin API.  
+-PR 6: Create TrajectoryExecutionStatus.msg to add new feedback msg for control plugins.  
+-PR 5: Add new messages for trajectory planning.  
+-PR 4: Update DriverStatus message.  
+-PR 3: Update Docker image version.  
+-PR 2: Update copyrights.
+-PR 1: Setup Circle CI.  
 **Repository: CARMAWebUi**  
--PR 13, Feature/autoware ui widget  
--PR 12, Remove IM for controller topics  
--PR 11, Feature/docker refactor  
-**Repository: CARMAAvtVimbaDriver**  
--PR 8, Feature/docker refactor  
--PR 4, Add sonarcloud and circle ci support to repo  
--PR 3, Add build dependencies  
--PR 2, update with driver status and alert  
--PR 1, Apply CARMA dockerization config  
+-PR 13: Add a copy of the cruising widget to be usable with the Autoware plugin.  
+-PR 12: Remove IM for controller topics.  
+-PR 11: Refactoring the Docker versioning and image dependencies.  
 **Repository: CARMADriverUtils**  
--PR 11, update driver types for carma3  
--PR 9, add code coverage metrics to sonar cloud  
--PR 7, add sonar cloud to ci   
--PR 6, update driver api   
--PR 5, update docker image version for ci  
--PR 4, make spin rate visible  
--PR 2, driver Wrapper Base Class  
-**Repository: CARMAVehicleModelFramework**  
--PR 5, correct some dependencies in vehicle model user examples  
--PR 4, add support for code coverage metrics to sonar cloud  
--PR 3, implementation of dynamic vehicle model  
--PR 2, initial commit of vehicle model framework with examples  
--PR 1, initial commit of vehicle model framework  
+-PR 11: Update driver types for CARMA3.  
+-PR 9: Add code coverage metrics to Sonar Cloud.  
+-PR 8: Update comments.  
+-PR 7: Add Sonar Cloud to Circle CI.  
+-PR 6: Update driver API for XGV controller.  
+-PR 5: Update Docker image version for Circle CI.  
+-PR 4: Updated driver_wrapper to make spin rate visible.  
+-PR 3: Updated README file.  
+-PR 2: Add driver wrapper base class.  
+-PR 1: Setup Circle CI.  
+**Repository: CARMACadillacSrx2013CanDriver (Private)**  
+-PR 5: Update driver type for CARMA3.  
+-PR 4: Apply CARMA dockerization config.   
+-PR 3: Update Driver API.  
+-PR 2: Update Docker version.  
+-PR 1: Setup Circle CI.  
+**Repository: CARMACadillacSrx2013ControllerDriver**  
+-PR 12: Refactoring the Docker versioning and image dependencies.  
+-PR 11: Update driver type for CARMA3.  
+-PR 9: Add code coverage metrics to Sonar Cloud  
+-PR 8: Add a new topic for light bar status based on front light bar.  
+-PR 7: Update comment.  
+-PR 6: Add Sonar Cloud support to driver.   
+-PR 5: Change from private namespace to global namespace.  
+-PR 4: Apply CARMA dockerization config.   
+-PR 3: Update Docker image version.  
+-PR 2: Setup Circle CI.  
+-PR 1: Update driver to allow light bar to remain on when robotic is off. 
+**Repository: CARMACadillacSrx2013ObjectsDriver (Private)**  
+-PR 5: Update driver type for CARMA3.  
+-PR 3: Apply CARMA dockerization config.  
+-PR 2: Update Docker image version.  
+-PR 1: Setup Circle CI.  
+**Repository: CARMADelphiEsrDriver**  
+-PR 9: Refactoring the Docker versioning and image dependencies.  
+-PR 8: Update driver type for CARMA3.  
+-PR 6: Add code coverage metrics to Sonar Cloud.  
+-PR 5: Update comment.  
+-PR 4: Add Sonar Cloud to Circle CI.    
+-PR 3: Apply CARMA dockerization config.  
+-PR 2: Update Docker image version.  
+-PR 1: Setup Circle CI.  
+**Repository: CARMADelphiSrr2Driver**  
+-PR 13: Refactoring the Docker versioning and image dependencies.  
+-PR 12: Update driver type for CARMA3.  
+-PR 11: Add code coverage metrics to Sonar Cloud.  
+-PR 10: Update comment.   
+-PR 9: Add Sonar Cloud to Circle CI.  
+-PR 8: Add AStuff srr2 driver to Docker file.  
+-PR 7: Fix Docker image name.   
+-PR 6, Apply CARMA dockerization config.  
+-PR 5: Add a timeout for local messages and corrected initial driver status.   
+-PR 4: Update Docker image to newest version.  
+-PR 3: Update SRR2 driver wrapper.   
+-PR 2: Add driver wrapper skeleton code.  
+-PR 1: Setup Circle CI.  
+**Repository: CARMAFreightliner2012CanDriver (Private)**  
+-PR 7: Update driver type for CARMA3.  
+-PR 5: Apply CARMA dockerization config.  
+-PR 4: Update driver API.  
+-PR 3: Update Docker image to newest version.  
+-PR 1: Setup Circle CI.  
+**Repository: CARMAFreightliner2012ControllerDriver**  
+-PR 10: Refactoring the Docker versioning and image dependencies.  
+-PR 9: Update driver type for CARMA3.  
+-PR 7: Add code coverage metrics to Sonar Cloud.  
+-PR 6: Update comment.   
+-PR 5: Add Sonar Cloud to Circle CI.  
+-PR 4: Apply CARMA dockerization config.  
+-PR 3: Update driver API.  
+-PR 2: Update Docker image to newest version.  
+-PR 1: Setup Circle CI.  
+**Repository: CARMATorcXgvControllerDriver**  
+-PR 8: Refactoring the Docker versioning and image dependencies.  
+-PR 7: Update driver type for CARMA3.  
+-PR 5: Add code coverage metrics to Sonar Cloud.  
+-PR 4: Add Sonar Cloud to Circle CI.  
+-PR 3: Apply CARMA dockerization config.  
+-PR 2: Update Docker image to newest version.  
+-PR 1: Setup Circle CI.  
+**Repository: CARMATorcPinpointDriver**  
+-PR 11: Refactoring the Docker versioning and image dependencies.  
+-PR 10: Update driver type for CARMA3.  
+-PR 8: Add code coverage metrics to Sonar Cloud.  
+-PR 7: Update comment.  
+-PR 6: Add Sonar Cloud to Circle CI.  
+-PR 5: Apply CARMA dockerization config.  
+-PR 4: Update driver API.  
+-PR 3: Update Docker image to newest version.  
+-PR 2: Updated copyright.  
+-PR 1: Setup Circle CI.  
+**Repository: CARMANovatelGpsDriver (Forked)**  
+-PR 15: Update the driver launch file to publish heading messages by default.  
+-PR 14: Add dual antenna heading msg, unit test and documentation.  
+-PR 10: Merge latest SWRI master repo changes.   
+-PR 9: Add node name to status message.  
+-PR 8: Add support to DUALANTENNAHEADING message type.    
+-PR 7: Add support for HEADING2 message type.   
+-PR 6: Include the addition of BESTXYZ pushed to the SWRI master.  
+-PR 5: Merge latest SWRI master repo changes.   
+-PR 4: Adds a Lexus ready launch file to the repo for launching the carma3 compatible driver.  
+-PR 3: Update driver type for CARMA3.  
+-PR 2: The SWRI robotics Novatel driver code has been modified to add CARMA system alert and driver discovery features  
+-PR 1: Fix build order.  
+**Repository: CARMAAvtVimbaDriver (Forked)**  
+-PR 8: Refactoring the Docker versioning and image dependencies.  
+-PR 4: Add Sonar Cloud and Circle CI support to repo.  
+-PR 3: Add build dependencies.  
+-PR 2: Update with driver status and alert.  
+-PR 1: Apply CARMA dockerization config.  
+**Repository: autoware.ai (Forked)**  
+-PR 9 Add new launch file to voxel_grid_filter to allow remapping.  
+-PR 8: Use demo map file as default transform.  
+-PR 7: Make map_1_origin private and add update_rate to params file.  
+-PR 6: Updates the points map loader to load map cells directly from arealist.txt file when no additional PCD paths are provided.  
+-PR 5: Mark modifications on files.  
+-PR 4: Update map origin.  
+-PR 3: Add the feature to enable waypoint loader to load new route file based on a subscribed topic.  
+-PR 2: Add ECEF map TF broadcaster.  
+-PR 1: Adds the deadreckoner node from the AStuff fork of Autoware.  
 
 Version 2.9.0, released 15 May 2019 
 ----------------------------------- 
