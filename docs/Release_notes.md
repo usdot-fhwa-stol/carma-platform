@@ -34,7 +34,7 @@ CARMAPlatform pre-release version 3.0.0 is the first step to integrating Autowar
 -PR 251: Add map tools for splitting up PCD files larger than 1 GB.  
 -PR 250: Add pure_pursuit_wrapper node. This feature enables CARMA Guidance to communicate with Autoware pure_pursuit node.  
 -PR 249: Contains a node to integrate NDT matching node from Autoware.  
--PR 247: Performs and initial overhaul of CARMA2 code to make it conform to the new CARMA 3 driver API and integrate with Autoware components, specifically NDT matching. 
+-PR 247: Performs and initial overhaul of CARMA2 code to make it conform to the new CARMA 3 driver API and integrate with Autoware components, specifically NDT matching.   
 **Repository: CARMABase**  
 -PR 1: Refactoring the Docker versioning and image dependencies.  
  **Repository: CARMASscInterfaceWrapper**    
@@ -50,7 +50,7 @@ CARMAPlatform pre-release version 3.0.0 is the first step to integrating Autowar
 -PR 5: Correct some dependencies in vehicle model user examples.  
 -PR 4: Add support for code coverage metrics to Sonar Cloud.  
 -PR 3: Implementation of dynamic vehicle model.  
--PR 1 and 2: Initial commit of vehicle model framework. 
+-PR 1 and 2: Initial commit of vehicle model framework.   
 **Repository: CARMAVelodyneLidarDriver**  
 -PR 8: Fixes the topic names provided by the wrapper to match the CARMA Driver API.  
 -PR 7: Make topic name relative in wrapper.  
@@ -119,7 +119,7 @@ CARMAPlatform pre-release version 3.0.0 is the first step to integrating Autowar
 -PR 4: Apply CARMA dockerization config.   
 -PR 3: Update Docker image version.  
 -PR 2: Setup Circle CI.  
--PR 1: Update driver to allow light bar to remain on when robotic is off. 
+-PR 1: Update driver to allow light bar to remain on when robotic is off.   
 **Repository: CARMACadillacSrx2013ObjectsDriver (Private)**  
 -PR 5: Update driver type for CARMA3.  
 -PR 3: Apply CARMA dockerization config.  
