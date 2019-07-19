@@ -1,30 +1,92 @@
 CARMA Platform Release Notes
 ----------------------------
-
-Version 3.0.0, released 15 July 2019 
+Pre-Release Version 3.0.0, released 15 July 2019 
 ----------------------------------- 
+**Summary:**
+CARMAPlatform pre-release version 3.0.0 is the first step to integrating Autoware and its components, specifically NDT matching and pure pursuit. CARMAPlatform now includes both lateral (steering) control and longitudinal (speed) control for full SAE level 2 autonomy. GNSS initialization of NDT matching has been added in order to localize the vehicle’s position on the 3D Point Cloud Map with LiDAR scan.  A temporary UI integration has been included for minimum viable functionality while awaiting further development of CARMA guidance node. Other highlights of this release are the new drivers (e.g. Velodyne LiDAR, Novatel GPS), conforming to the new CARMA3 API, Docker updates, and adding code coverage metrics to Sonar Cloud.
 **Repository: CARMAPlatform**  
--PR 982, fixed unit tests 
--PR 260 Adds a carma_utils package containing CARMANodeHandle.h/.cpp files.  
--PR 257 Updates sensor fusion CMakelists.txt file to export the wgs84_utils library  
--PR 254 Refactoring the docker versioning and image dependencies.  
--PR 251 Add map tools for splitting up pcd files.  
--PR 250 Add pure_pursuit_wrapper node.  
--PR 249 Contains a node to integrate NDT matching node from Autoware  
--PR 247 Performs and initial overhaul of CARMA2 code to make it conform to the new CARMA 3 driver API and integrate with Autoware components  
-**Repository: CARMASscInterfaceWrapper**  
--PR 8 Launching the driver launch file for this wrapper does not map  
--PR 3 Make launch file capable of launching full driver  
-**Repository: CARMANovatelGpsDriver**  
--PR 15, Publish heading messages when launching driver  
--PR 14, Feature/add dual antenna heading msg  
--PR 9, Add node name to status message  
--PR 7, Feature/add header2 msg  
--PR 6, Add support for BESTXYZ topic  
--PR 4, Add launch file for full driver  
--PR 3, Update driver type for carma3  
--PR 2, The swri robotics novatel driver code has been modified to add CARMA system alert and driver discovery features  
--PR 1, Add fix for messages build order  
+-PR 293: Update unit tests to match what expected in the actual code.  
+-PR 288: Fixes several issues encountered during integration testing for CARMA3 beta release.  
+-PR 287: Fixes topic re-mappings for the voxel grid filter after the ray_ground_filter was added. Also adds the ssc_interface (as package) into the carma_build script.  
+-PR 286: Update namespace in UI launch file.  
+-PR 285: Add state tracking logic to ui_integration to facilitate the status reporting of the button on the Web UI.  
+-PR 284: Remap Autoware state topic to avoid conflict with CARMA guidance state topic.  
+-PR 283: Now that the UI is using static topics instead of going through the interface manager this PR properly remaps those topics to their actual location.  
+-PR 282: Fix UI Integration node to properly fill out the set_guidance_active response based on new guidance state.  
+-PR 281: Change localization configuration for points_downsample and ndt_matching.  
+-PR 280: Make the robot_status callback in interface manager configurable.  
+-PR 279: Add Autoware waypoints as an example.    
+-PR 278: Fix namespace issue for route generator parameters in launch file.  
+-PR 277: Adds a temporary UI integration for minimum viable functionality pending further development of a real guidance node compatible with CARMA3.  
+-PR 276: Add two launch files for launching CARMA3 planning stack and control stack.  
+-PR 274: Adds GNSS initialization of NDT to CARMA.  
+-PR 272: Fix ECEF unit test quaternion usage.  
+-PR 271: This is the initial implementation of Autoware plugin. This plugin takes in a list of waypoints from Autoware and convert them into a list of evenly spaced trajectory points.  
+-PR 270: Fix usage of CARMANodeHandle exceptions and compilation errors.   
+-PR 267: Provides similar API as original CARMA2 route node. It can work with CARMA2 UI and let user pick the route file (waypoint csv file) to load at run time.  
+-PR 266: Resolves a circular build error where functions could be included multiple times if CARMANodeHandle.h was included in multiple files in a single executable.  
+-PR 260: Add CARMANodeHandle to provide exception handling.   
+-PR 258: Resolves issues #252 and #253. There was a bad comment in the TF wrapper and a missing message dependency in the pure_pursuit_wrapper.  
+-PR 257: Update sensor fusion CMakelists.txt file to export the wgs84_utils library so that other ROS packages can use it. Additionally, copy over the ecef_to_geodesic function from carmajava geometry package.  
+-PR 255: Add a script (actually a unit test) to find out the transform between MAP and ECEF based on current lat/lon and pose in MAP frame.  
+-PR 254: Refactoring the Docker versioning and image dependencies.  
+-PR 251: Add map tools for splitting up PCD files larger than 1 GB.  
+-PR 250: Add pure_pursuit_wrapper node. This feature enables CARMA Guidance to communicate with Autoware pure_pursuit node.  
+-PR 249: Contains a node to integrate NDT matching node from Autoware.  
+-PR 247: Performs and initial overhaul of CARMA2 code to make it conform to the new CARMA 3 driver API and integrate with Autoware components, specifically NDT matching. 
+**Repository: CARMABase**
+-PR 1: Refactoring the Docker versioning and image dependencies.  
+ **Repository: CARMASscInterfaceWrapper**  
+ -PR10: Add a launch file for launching the SSC in a remappable way to this repo.  
+-PR9: Make vehicle/engage topic relative in ssc_interface_wrapper.  
+-PR 7: Fix topic remappings in SSC driver launch file.  
+-PR 6: Corrects some mismatched topic names in the driver wrapper and updates the launch file to have correct topic re-mappings for the PACMOD.  
+-PR 5: Use global report from PACMOD driver to determine the health status of the controller device; Add CAN support to include CAN messages that PACMOD provided.  
+-PR 4: Add launch file for full driver.   
+-PR 2: Update driver type in DriverStatus message to match CARMA3 specifications.  
+-PR 1: Add initial wrapper.   
+**Repository: CARMAVehicleModelFramework**
+-PR 5: Correct some dependencies in vehicle model user examples.  
+-PR 4: Add support for code coverage metrics to Sonar Cloud.  
+-PR 3: Implementation of dynamic vehicle model.  
+-PR 1 and 2: Initial commit of vehicle model framework. 
+**Repository: CARMAVelodyneLidarDriver**
+-PR 8: Fixes the topic names provided by the wrapper to match the CARMA Driver API.  
+-PR 7: Make topic name relative in wrapper.  
+-PR 5: Adds a Lexus ready launch file to the LIDAR driver.  
+-PR 4: Updates driver type to support CARMA3 driver types defined in CARMAMsgs.  
+-PR 3: Disable Sonar test reports.  
+-PR 2: Add Driver wrapper.  
+-PR 1: Add Sonar and Circle CI config files.  
+**Repository: CARMAConfig**
+-PR 5: Update carma.launch to use single map file.  
+-PR 3: Add initial Pacifica configuration folder.  
+-PR 2: Updates the urdf and drivers.launch file of the Lexus to include the frames needed for heading computations needed for GNSS initialization of NDT  
+-PR 1: Refactoring the Docker versioning and image dependencies.  
+**Repository: CARMACohdaDsrcDriver**
+-PR 11: Fix global topic remapping in this driver.   
+-PR 9: Refactoring the Docker versioning and image dependencies.  
+-PR 7: Add support for code coverage metrics to Circle CI and comments for Sonar Cloud once unit tests are added.  
+-PR 6: Fix comments.  
+-PR 5: Setup Sonar Cloud in Circle CI.  
+-PR 4: Update driver API to use global namespace in topic names.  
+-PR 3: Configure Docker scripts and others for usage with new dockerized deployment to vehicle via DockerHub.  
+-PR 2: Update CI file to use new Docker image.  
+-PR 1: Setup Circle CI.  
+**Repository: CARMAVelodyneLidarDriver**
+
+
+
+
+
+
+
+
+
+
+
+
+
 **Repository: CARMAVelodyneLidarDriver**  
 -PR 8, fixes the topic names provided by the wrapper to match the CARMA Driver API  
 -PR 7, make topic name relative in wrapper  
