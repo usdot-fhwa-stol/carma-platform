@@ -74,17 +74,6 @@
   <env name="JAVA_OPTS" value="$(arg JVM_LOG_OPTS)"/>
   <!-- Set to true to enable debugging on the specified node -->
   <arg name="debug_node" default="" doc="Set to the java node base name to enable debugging on that node"/>
-
-  <!-- ROS Namespaces -->
-  <arg name="GUIDE_NS" default="/guidance" doc="Namespace of nodes in guidance package"/>
-  <arg name="MSG_NS" default="/message" doc="Namespace of nodes in message package"/>
-  <arg name="SF_NS" default="/sensor_fusion" doc="Namespace of nodes in sensor fusion package"/>
-  <arg name="TF_NS" default="/transform" doc="Namespace of nodes in transform server package"/>
-  <arg name="ENV_NS" default="/environment" doc="Namespace of nodes in environment stack"/>
-  <arg name="RT_NS" default="/route" doc="Namespace of nodes in route package"/>
-  <arg name="INTR_NS" default="/hardware_interface" doc="Namespace of nodes hardware interface stack"/>
-  <arg name="UI_NS" default="/ui" doc="Namespace of parameters used by the ui and rosbridge"/>
-  <arg name="LOCZ_NS" default="/localization" doc="Namespace of parameters used by the ui and rosbridge"/>
   
   <!-- Map file arealist.txt file to load -->
   <arg name="arealist_path" default="arealist.txt" doc="Path to the arealist.txt file which contains the paths and dimensions of each map cell to load"/>
@@ -107,29 +96,27 @@
   <rosparam command="load" file="$(arg PARAM_DIR)/HostVehicleParams.yaml"/>
 
   <!-- Transforms Stack -->
-  <group ns="$(arg TF_NS)">
+  <group ns="$(env CARMA_TF_NS)">
     <include file="$(arg LAUNCH_DIR)/transforms.launch">
       <arg name="URDF_FILE" value="$(arg URDF_FILE)"/>
     </include>
   </group>
 
   <!-- Hardware Interface Stack -->
-  <group ns="$(arg INTR_NS)">
+  <group ns="$(env CARMA_INTR_NS)">
     <include file="$(arg LAUNCH_DIR)/hardware_interface.launch">
       <arg name="CARMA_DIR" value="$(arg CARMA_DIR)"/>
       <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
       <arg name="DATA_DIR" value="$(arg DATA_DIR)"/>
       <arg name="LAUNCH_DIR" value="$(arg LAUNCH_DIR)"/>
-      <arg name="UI_NS" value="$(arg UI_NS)"/>
       <arg name="mock_drivers" value="$(arg mock_drivers)"/>
       <arg name="debug_node" value="$(arg debug_node)"/>
     </include>
   </group>
 
   <!-- Localization Stack -->
-  <group ns="$(arg LOCZ_NS)">
+  <group ns="$(env CARMA_LOCZ_NS)">
     <include file="$(arg LAUNCH_DIR)/localization.launch">
-      <arg name="INTR_NS" value="$(arg INTR_NS)"/>
       <arg name="arealist_path" value="$(arg arealist_path)"/>
       <arg name="area" value="$(arg area)"/>
       <arg name="load_type" value="$(arg load_type)"/>
@@ -138,39 +125,30 @@
   </group>
 
   <!-- Comms Messaging Stack -->
-  <group ns="$(arg MSG_NS)">
+  <group ns="$(env CARMA_MSG_NS)">
     <include file="$(arg LAUNCH_DIR)/message.launch">
       <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
       <arg name="debug_node" value="$(arg debug_node)"/>
-      <arg name="INTR_NS" value="$(arg INTR_NS)"/>
     </include>
   </group>
 
   <!-- Environment Perception Stack -->
-  <group ns="$(arg ENV_NS)">
+  <group ns="$(env CARMA_ENV_NS)">
     <include file="$(arg LAUNCH_DIR)/environment.launch"/>
   </group>
 
   <!-- Guidance Stack -->
-  <group ns="$(arg GUIDE_NS)">
+  <group ns="$(arg CARMA_GUIDE_NS)">
     <include file="$(arg LAUNCH_DIR)/guidance.launch">
       <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
       <arg name="debug_node" value="$(arg debug_node)"/>
-      <arg name="MSG_NS" value="$(arg MSG_NS)"/>
-      <arg name="TF_NS" value="$(arg TF_NS)"/>
-      <arg name="UI_NS" value="$(arg UI_NS)"/>
-      <arg name="INTR_NS" value="$(arg INTR_NS)"/>
-      <arg name="LOCZ_NS" value="$(arg LOCZ_NS)"/>
     </include>
   </group>
 
   <!-- UI Stack -->
-  <group ns="$(arg UI_NS)">
+  <group ns="$(env CARMA_UI_NS)">
     <include file="$(arg LAUNCH_DIR)/ui.launch">
       <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
-      <arg name="MSG_NS" value="$(arg MSG_NS)"/>
-      <arg name="GUIDE_NS" value="$(arg GUIDE_NS)"/>
-      <arg name="INTR_NS" value="$(arg INTR_NS)"/>
     </include>
   </group>
 

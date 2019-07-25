@@ -28,8 +28,6 @@
   <!-- Directory containing additional carma launch files such as the drivers.launch file -->
   <arg name="LAUNCH_DIR" default="$(arg CARMA_DIR)/launch" doc="Directory containing additional carma launch files such as driver.launch"/>
 
-  <arg name="UI_NS" default="/ui" doc="Namespace of parameters used by the ui and rosbridge"/>
-
   <!-- Simulation Usage -->
   <arg name="mock_drivers" default="controller can comms gnss radar lidar camera roadway_sensor" doc="List of driver node base names which will be launched as mock drivers"/>
   
@@ -41,7 +39,7 @@
   <arg name="debug_node" default="" doc="Set to the java node base name to enable debugging on that node. Requires JVM_DEBUG_OPTS environment variable to be set"/>
 
   <!-- Remap topics from external packages -->
-  <remap from="ui_instructions" to="$(arg UI_NS)/ui_instructions"/>
+  <remap from="ui_instructions" to="$(optenv UI_NS)/ui_instructions"/>
 
   <remap from="system_alert" to="/system_alert"/>
 

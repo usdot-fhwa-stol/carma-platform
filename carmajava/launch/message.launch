@@ -22,11 +22,10 @@
   <arg name="PARAM_DIR" default="$(find carma)/launch/params" doc="Directory of yaml parameter files"/>
   <arg name="debug_node" default="" doc="Set to the java node base name to enable debugging on that node"/>
   <arg name="debug_msg_consumer" value="$(eval arg('debug_node') == 'message_consumer')"/>
-  <arg name="INTR_NS" default="hardware_interface" doc="Namespace of nodes hardware interface stack"/>
 
   <!-- Remap topics from external packages -->
-  <remap from="inbound_binary_msg" to="$(arg INTR_NS)/comms/inbound_binary_msg"/>
-  <remap from="outbound_binary_msg" to="$(arg INTR_NS)/comms/outbound_binary_msg"/>
+  <remap from="inbound_binary_msg" to="$(optenv INTR_NS)/comms/inbound_binary_msg"/>
+  <remap from="outbound_binary_msg" to="$(optenv INTR_NS)/comms/outbound_binary_msg"/>
 
   <remap from="system_alert" to="/system_alert"/>
 
