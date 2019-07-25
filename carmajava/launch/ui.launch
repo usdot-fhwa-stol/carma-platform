@@ -19,9 +19,7 @@
 -->
 <launch>
 
-  <arg name="PARAM_DIR" default="$(find carma)/launch/params" doc="Directory of yaml parameter files"/>
-
-  <rosparam command="load" file="$(arg PARAM_DIR)/CommandAPIParams.yaml"/>
+  <rosparam command="load" file="$(find carma)/ui/config/CommandAPIParams.yaml"/>
 
   <remap from="get_available_routes" to="$(optenv GUIDE_NS)/get_available_routes"/>
   <remap from="set_active_route" to="$(optenv GUIDE_NS)/set_active_route"/>

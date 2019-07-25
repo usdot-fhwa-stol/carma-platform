@@ -18,16 +18,7 @@
 	Launch file for launching the nodes in the CARMA hardware interface stack 
 -->
 <launch>
-  <!-- Constants -->
-  <!-- Directory of Parameter Files -->
-  <arg name="CARMA_DIR" default="$(find carma)" doc="The path of the package directory"/>
-  <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/launch/params" doc="Directory of yaml parameter files"/>
   <!-- Simulated Driver Arguments -->
-  <!-- Directory of Simulation Files -->
-  <arg name="DATA_DIR" default="$(arg CARMA_DIR)/mock_drivers/src/test/data" doc="Directory of driver simulation data files"/>
-  <!-- Directory containing additional carma launch files such as the drivers.launch file -->
-  <arg name="LAUNCH_DIR" default="$(arg CARMA_DIR)/launch" doc="Directory containing additional carma launch files such as driver.launch"/>
-
   <!-- Simulation Usage -->
   <arg name="mock_drivers" default="controller can comms gnss radar lidar camera roadway_sensor" doc="List of driver node base names which will be launched as mock drivers"/>
   
@@ -45,19 +36,14 @@
 
   <group if="$(arg launch_drivers)">
     <!-- Simulated Mock Drivers -->
-    <include file="$(arg LAUNCH_DIR)/mock_drivers.launch">
-      <arg name="DATA_DIR" value="$(arg DATA_DIR)"/>
-      <arg name="LAUNCH_DIR" value="$(arg LAUNCH_DIR)"/>
-      <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
+    <include file="mock_drivers.launch">
       <arg name="debug_node" value="$(arg debug_node)"/>
       <arg name="mock_drivers" value="$(arg mock_drivers)"/>
     </include>
 
-    <!--Driver Launch File if Using Actual Drivers -->
-    <include file="$(arg LAUNCH_DIR)/drivers.launch">
+    <!-- Driver Launch File if Using Actual Drivers -->
+    <include file="drivers.launch">
       <arg name="mock_drivers" value="$(arg mock_drivers)" />
-      <arg name="CARMA_DIR" value="$(arg CARMA_DIR)" />
-      <arg name="PARAM_DIR" value="$(arg PARAM_DIR)" />
     </include>
   </group>
 
@@ -67,7 +53,7 @@
 
     <env if="$(arg debug_interface_mgr)" name="INTERFACEMGR_OPTS" value="$(env JVM_DEBUG_OPTS)"/>
 
-    <rosparam command="load" file="$(arg PARAM_DIR)/InterfaceMgrParams.yaml"/>
+    <rosparam command="load" file="$(find carma)/interfacemgr/config/InterfaceMgrParams.yaml"/>
   </node>
 
 </launch>

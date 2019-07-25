@@ -19,7 +19,6 @@
 -->
 <launch>
 
-  <arg name="PARAM_DIR" default="$(find carma)/launch/params" doc="Directory of yaml parameter files"/>
   <arg name="debug_node" default="" doc="Set to the java node base name to enable debugging on that node"/>
   <arg name="debug_msg_consumer" value="$(eval arg('debug_node') == 'message_consumer')"/>
 
@@ -37,7 +36,7 @@
 
     <env if="$(arg debug_msg_consumer)" name="MESSAGE_OPTS" value="$(env JVM_DEBUG_OPTS)"/>
 
-    <rosparam command="load" file="$(arg PARAM_DIR)/MessageParams.yaml"/>
+    <rosparam command="load" file="$(find carma)/message/config/MessageParams.yaml"/>
 
   </node>
 </launch>

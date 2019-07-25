@@ -20,10 +20,6 @@
 
 <launch>
 
-  <!-- Directory of Parameter Files -->
-  <arg name="LAUNCH_DIR" default="$(find carma)/launch" doc="The path of the launch file directory"/>
-  <arg name="PARAM_DIR" default="$(arg LAUNCH_DIR)/params" doc="Directory of yaml parameter files"/>
-
   <!-- Simulated Driver Arguments -->
   <!-- Directory of Simulation Files -->
   <arg name="DATA_DIR" default="$(find carma)/mock_drivers/src/test/data" doc="Directory of driver simulation data files"/>
@@ -57,7 +53,7 @@
   <remap from="system_alert" to="/system_alert"/>
 
   <!-- Simulated Comms Driver Node -->
-  <include if="$(arg mock_comms)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
+  <include if="$(arg mock_comms)" file="mock_driver.launch">
     <arg name="node_name"        value="mock_comms"/>
     <arg name="simulated_driver" value="comms"/>
     <arg name="data_file"        value="$(arg dsrc_data_file)"/><!-- TODO -->
@@ -65,7 +61,7 @@
   </include>
 
   <!-- Simulated GNSS Driver Node -->
-  <include if="$(arg mock_gnss)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
+  <include if="$(arg mock_gnss)" file="mock_driver.launch">
     <arg name="node_name"        value="mock_gnss"/>
     <arg name="simulated_driver" value="gnss"/>
     <arg name="data_file"        value="$(arg pinpoint_data_file)"/><!-- TODO -->
@@ -73,7 +69,7 @@
   </include>
 
   <!-- Simulated CAN Driver Node -->
-  <include if="$(arg mock_can)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
+  <include if="$(arg mock_can)" file="mock_driver.launch">
     <arg name="node_name"        value="mock_can"/>
     <arg name="simulated_driver" value="can"/>
     <arg name="data_file"        value="$(arg can_data_file)"/><!-- TODO -->
@@ -81,7 +77,7 @@
   </include>
 
   <!-- Simulated Controller Driver Node -->
-  <include if="$(arg mock_controller)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
+  <include if="$(arg mock_controller)" file="mock_driver.launch">
     <arg name="node_name"        value="mock_controller"/>
     <arg name="simulated_driver" value="controller"/>
     <arg name="data_file"        value="$(arg srx_controller_data_file)"/><!-- TODO -->
@@ -89,7 +85,7 @@
   </include>
 
   <!-- Simulated Radar Driver Node -->
-  <include if="$(arg mock_radar)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
+  <include if="$(arg mock_radar)" file="mock_driver.launch">
     <arg name="node_name"        value="mock_radar"/>
     <arg name="simulated_driver" value="radar"/>
     <arg name="data_file"        value="$(arg radar_data_file)"/><!-- TODO -->
@@ -97,7 +93,7 @@
   </include>
 
   <!-- Simulated IMU Driver Node -->
-  <include if="$(arg mock_imu)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
+  <include if="$(arg mock_imu)" file="mock_driver.launch">
     <arg name="node_name"        value="mock_imu"/>
     <arg name="simulated_driver" value="imu"/>
     <arg name="data_file"        value="$(arg radar_data_file)"/> <!-- TODO -->
@@ -105,7 +101,7 @@
   </include>
 
   <!-- Simulated Lidar Driver Node -->
-  <include if="$(arg mock_lidar)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
+  <include if="$(arg mock_lidar)" file="mock_driver.launch">
     <arg name="node_name"        value="mock_lidar"/>
     <arg name="simulated_driver" value="lidar"/>
     <arg name="data_file"        value="$(arg radar_data_file)"/><!-- TODO -->
@@ -113,7 +109,7 @@
   </include>
 
   <!-- Simulated Camera Driver Node -->
-  <include if="$(arg mock_camera)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
+  <include if="$(arg mock_camera)" file="mock_driver.launch">
     <arg name="node_name"        value="mock_camera"/>
     <arg name="simulated_driver" value="camera"/>
     <arg name="data_file"   value="$(arg radar_data_file)"/><!-- TODO -->
@@ -121,7 +117,7 @@
   </include>
 
   <!-- Simulated Roadway Sensor Driver Node -->
-  <include if="$(arg mock_roadway_sensor)" file="$(arg LAUNCH_DIR)/mock_driver.launch">
+  <include if="$(arg mock_roadway_sensor)" file="mock_driver.launch">
     <arg name="node_name"        value="mock_roadway_sensor"/>
     <arg name="simulated_driver" value="roadway_sensor"/>
     <arg name="data_file"   value="$(arg radar_data_file)"/><!-- TODO -->

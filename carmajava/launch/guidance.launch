@@ -18,8 +18,6 @@
 	Launch file for launching the nodes in the CARMA guidance stack
 -->
 <launch>
-  <arg name="PARAM_DIR" default="$(find carma)/launch/params" doc="Directory of yaml parameter files"/>
-
   <!-- Debug -->
   <!-- Set to true to enable debugging on the specified node -->
   <arg name="debug_node" default="" doc="Set to the java node base name to enable debugging on that node"/>
@@ -70,27 +68,8 @@
   <remap from="current_velocity" to="$(optenv INTR_NS)/vehicle/twist"/>
   <remap from="controller/enable_robotic" to="$(optenv INTR_NS)/controller/enable_robotic"/>
 
-  <!-- Guidance Main Node -->
-  <!-- <node pkg="carma" type="guidance" name="guidance_main" args="gov.dot.fhwa.saxton.carma.guidance.GuidanceMain">
-
-    <env if="$(arg debug_guidance)" name="GUIDANCE_OPTS" value="$(env JVM_DEBUG_OPTS)"/>
-
-    <rosparam command="load" file="$(arg PARAM_DIR)/GuidanceParams.yaml"/>
-    <rosparam command="load" file="$(arg PARAM_DIR)/ArbitratorParams.yaml"/>
-    <rosparam command="load" file="$(arg PARAM_DIR)/SpeedHarmParams.yaml"/>
-    <rosparam command="load" file="$(arg PARAM_DIR)/PlatooningParams.yaml"/>
-    <rosparam command="load" file="$(arg PARAM_DIR)/CooperativeMergeParams.yaml"/>
-    <rosparam command="load" file="$(arg PARAM_DIR)/SignalParams.yaml"/>
-
-  </node> -->
-
   <!-- Substitute UI integration node for Guidance Main -->
   <include file="$(find ui_integration)/launch/ui_integration.launch"/>
-
-  <!-- TODO Route Generation node (route planning) will go here or above guidance node -->
-
-  <!-- Guidance Command Repeater Node TODO remapping-->
-  <!--<include file="$(find guidance_command_repeater)/launch/guidance_command_repeater.launch"/>-->
 
   <!-- TODO Check topic remapping-->
   <!-- Control Stack -->

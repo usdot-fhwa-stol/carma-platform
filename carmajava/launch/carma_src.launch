@@ -27,23 +27,14 @@
   After using source devel/setup.bash from workspace root.
 
   If not using simulated drivers they are activated using ros arguments as shown below.
-  roslaunch carma carma.launch mock_can:=false can_data_file:=/path/to/file.csv
+  roslaunch carma carma.launch mock_drivers="can"
 -->
 <launch>
   <!-- Constants -->
-  <!-- Directory of Parameter Files -->
-  <arg name="CARMA_DIR" default="$(find carma)" doc="The path of the package directory"/>
-  <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/launch/params" doc="Directory of yaml parameter files"/>
-  <!-- Path to Unified Robot Description Format URDF file for loading static transforms -->
-  <arg name="URDF_FILE" default="$(arg CARMA_DIR)/launch/urdf/carma.urdf" doc="Path to the vehicle's URDF file"/>
-  <!-- Simulated Driver Arguments -->
-  <!-- Directory of Simulation Files -->
-  <arg name="DATA_DIR" default="$(arg CARMA_DIR)/mock_drivers/src/test/data" doc="Directory of driver simulation data files"/>
   <!-- Directory of Engineering Tools -->
+  <!-- HERE2 TODO it probably makes sense to put urdf and scripts under /opt/carma/vehicle/config -->
   <arg name="SCRIPTS_DIR" default="$(arg CARMA_DIR)/../engineering_tools" doc="The directory containing scripts for execution"/>
-  <!-- Directory containing additional carma launch files such as the drivers.launch file -->
-  <arg name="LAUNCH_DIR" default="$(arg CARMA_DIR)/launch" doc="Directory containing additional carma launch files such as driver.launch"/>
-
+  <arg name="URDF_FILE" default="$(find carma)/launch/urdf/carma.urdf" doc="Path to the vehicle's URDF file"/>
   <env name="ROSCONSOLE_CONFIG_FILE" value="$(arg PARAM_DIR)/roscpp_log.config"/>
 
   <!-- Startup Drivers With Main CARMA System -->
@@ -54,14 +45,6 @@
     default="controller can comms gnss radar lidar camera roadway_sensor"
     doc="List of driver node base names which will be launched as mock drivers"
   />
-
-  <!-- Data Files -->
-  <arg name="can_data_file" default="$(arg DATA_DIR)/can.csv" doc="Path for can simulation data"/>
-  <arg name="dsrc_data_file" default="$(arg DATA_DIR)/dsrc.csv" doc="Path for dsrc simulation data"/>
-  <arg name="srx_controller_data_file" default="$(arg DATA_DIR)/srx_controller.csv" doc="Path for srx controller simulation data"/>
-  <arg name="pinpoint_data_file" default="$(arg DATA_DIR)/pinpoint_stationary.csv" doc="Path for pinpoint simulation data"/>
-  <arg name="radar_data_file" default="$(arg DATA_DIR)/radar.csv" doc="Path for radar simulation data"/>
-  <arg name="cellular_data_file" default="$(arg DATA_DIR)/dsrc.csv" doc="Path cellular can simulation data"/>
 
   <!-- Debug -->
   <!-- JVM Debug arguments -->
@@ -85,7 +68,6 @@
   <!-- Remove after TO 26 demo -->
   <arg name="use_rosbag" default="false" doc="Record a rosbag"/>
 
-
   <!-- Set package path for use with relative file paths -->
   <param name="package_path" value="$(arg CARMA_DIR)"/>
 
@@ -96,19 +78,16 @@
   <rosparam command="load" file="$(arg PARAM_DIR)/HostVehicleParams.yaml"/>
 
   <!-- Transforms Stack -->
+  <!-- HERE TODO how to handle the URDF. Additionally for maps we could leave as is -->
   <group ns="$(env CARMA_TF_NS)">
-    <include file="$(arg LAUNCH_DIR)/transforms.launch">
+    <include file="transforms.launch">
       <arg name="URDF_FILE" value="$(arg URDF_FILE)"/>
     </include>
   </group>
 
   <!-- Hardware Interface Stack -->
   <group ns="$(env CARMA_INTR_NS)">
-    <include file="$(arg LAUNCH_DIR)/hardware_interface.launch">
-      <arg name="CARMA_DIR" value="$(arg CARMA_DIR)"/>
-      <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
-      <arg name="DATA_DIR" value="$(arg DATA_DIR)"/>
-      <arg name="LAUNCH_DIR" value="$(arg LAUNCH_DIR)"/>
+    <include file="hardware_interface.launch">
       <arg name="mock_drivers" value="$(arg mock_drivers)"/>
       <arg name="debug_node" value="$(arg debug_node)"/>
     </include>
@@ -116,7 +95,7 @@
 
   <!-- Localization Stack -->
   <group ns="$(env CARMA_LOCZ_NS)">
-    <include file="$(arg LAUNCH_DIR)/localization.launch">
+    <include file="localization.launch">
       <arg name="arealist_path" value="$(arg arealist_path)"/>
       <arg name="area" value="$(arg area)"/>
       <arg name="load_type" value="$(arg load_type)"/>
@@ -126,30 +105,26 @@
 
   <!-- Comms Messaging Stack -->
   <group ns="$(env CARMA_MSG_NS)">
-    <include file="$(arg LAUNCH_DIR)/message.launch">
-      <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
+    <include file="message.launch">
       <arg name="debug_node" value="$(arg debug_node)"/>
     </include>
   </group>
 
   <!-- Environment Perception Stack -->
   <group ns="$(env CARMA_ENV_NS)">
-    <include file="$(arg LAUNCH_DIR)/environment.launch"/>
+    <include file="environment.launch"/>
   </group>
 
   <!-- Guidance Stack -->
   <group ns="$(arg CARMA_GUIDE_NS)">
-    <include file="$(arg LAUNCH_DIR)/guidance.launch">
-      <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
+    <include file="guidance.launch">
       <arg name="debug_node" value="$(arg debug_node)"/>
     </include>
   </group>
 
   <!-- UI Stack -->
   <group ns="$(env CARMA_UI_NS)">
-    <include file="$(arg LAUNCH_DIR)/ui.launch">
-      <arg name="PARAM_DIR" value="$(arg PARAM_DIR)"/>
-    </include>
+    <include file="ui.launch"/>
   </group>
 
   <!-- TODO should there be a data collection launch file. Record Rosbag of all topics excluding /rosout and CAN messages since they may contain sensetive data -->
