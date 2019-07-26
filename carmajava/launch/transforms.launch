@@ -26,6 +26,6 @@
 
   <!-- TF2 Setup Initial Static Transforms -->
   <!-- Vehicle Transforms -->
-  <rosparam name="robot_description" textfile="$(arg URDF_FILE)"/>
+  <param name="robot_description" textfile="$(arg URDF_FILE)"/>
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
 </launch>

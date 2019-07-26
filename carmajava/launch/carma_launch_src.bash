@@ -8,4 +8,4 @@ set +o allexport
 
 # Launch platform
 echo "Launching CARMA from source with args ${1}"
-roslaunch carma carma_src.launch $1
+roslaunch carma carma.launch $1

@@ -31,7 +31,8 @@
 -->
 <launch>
   <!-- Directory of vehicle config parameters -->
-  <arg name="CARMA_CONFIG_DIR" default="$(find carma)" doc="The directory continaing vehicle config type parameters"/> <!-- TODO where to put the default -->
+  <arg name="vehicle_config_dir" default="$(find carma)" doc="The directory continaing vehicle config type parameters"/> <!-- TODO where to put the default -->
+  <arg name="vehicle_calibration_dir" default="$(find carma)" doc="The directory continaing vehicle calibration type parameters"/>
 
   <!-- Startup Drivers With Main CARMA System -->
   <arg name="launch_drivers" default="true" doc="True if drivers are to be launched with the CARMA Platform, overrides mock_drivers arg if false"/>
@@ -51,9 +52,9 @@
 
   <!-- Logging -->
   <!-- C++ Logging -->
-  <env name="ROSCONSOLE_CONFIG_FILE" value="log-config/roscpp_log.config"/>
+  <env name="ROSCONSOLE_CONFIG_FILE" value="$(find carma)/launch/log-config/roscpp_log.config"/>
   <!-- JVM Logging Options -->
-  <arg name="log_config" default="log-config/log-config.properties" doc="The location of the logging configuration file"/>
+  <arg name="log_config" default="$(find carma)/launch/log-config/log-config.properties" doc="The location of the logging configuration file"/>
   <arg name="JVM_LOG_OPTS" value="-Djava.util.logging.config.file=$(arg log_config)"/>
   <!-- Apply logging properties to all java nodes using JAVA_OPTS-->
   <env name="JAVA_OPTS" value="$(arg JVM_LOG_OPTS)"/>
@@ -72,12 +73,13 @@
   <arg name="area" default="1x1" doc="Dimensions of the square of cells loaded at runtime using the download and arealist load types"/>
 
   <!-- Load Vehicle Characteristics -->
-  <rosparam command="load" file="$(arg CARMA_CONFIG_DIR)/HostVehicleParams.yaml"/>
+  <rosparam command="load" file="$(arg vehicle_calibration_dir)/identifiers/UniqueVehicleParams.yaml"/>
+  <rosparam command="load" file="$(arg vehicle_config_dir)/config/VehicleConfigParams.yaml"/>
 
   <!-- Transforms Stack -->
   <group ns="$(env CARMA_TF_NS)">
     <include file="transforms.launch">
-      <arg name="URDF_FILE" value="$(arg CARMA_CONFIG_DIR)/urdf/carma.urdf"/>
+      <arg name="URDF_FILE" value="$(arg vehicle_calibration_dir)/urdf/carma.urdf"/>
     </include>
   </group>
 
@@ -112,7 +114,7 @@
   </group>
 
   <!-- Guidance Stack -->
-  <group ns="$(arg CARMA_GUIDE_NS)">
+  <group ns="$(env CARMA_GUIDE_NS)">
     <include file="guidance.launch">
       <arg name="debug_node" value="$(arg debug_node)"/>
     </include>
