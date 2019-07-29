@@ -111,7 +111,8 @@ void UKFilter::Prediction(VectorXd &x, MatrixXd &P,double delta_t)
     // Set the predicted sigma points matrix dimensions
     Xsigma_pred_ = MatrixXd(n_x_, (2 * n_x_ + 1));
     //Generate here
-    vector<lib_vehicle_model::VehicleState> results = lib_vehicle_model::predict(state, 0.1, 0.2);
+    vector<lib_vehicle_model::VehicleState> results = lib_vehicle_model::predict(state, "d_t", "d_t");
+    //use the delta_t from the timestamp (const,const)
 //######################################################################
 
 //##################<Predict Mean and Covariance>#######################

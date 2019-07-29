@@ -34,7 +34,7 @@ MatrixXd H_wheelrt(2,9);
 MatrixXd H_wheelang(1,9);
 
 void imuCallback(const sensor_msgs::Imu &imu_msg);
-void gpsCallback(const geometry_msgs::PoseStamped &gps_msg);
+void gpsCallback(const geometry_msgs::PoseWithCovarianceStamped &gps_msg);
 void wheelrtCallback(const pacmod_msgs::WheelSpeedRpt &wheelrt_msg);
 void wheelangCallback(const std_msgs::Float64 &wheelang_msg);
 
@@ -54,7 +54,7 @@ int main(int argc, char** argv)
     //Subscriber object for imu driver
     ros::Subscriber imu_sub_ = nh_.subscribe("imu",10,&imuCallback);
     //Subscriber object for gps driver
-    ros::Subscriber gps_sub_ = nh_.subscribe("gnss_map_fix",10,&gpsCallback); //confirm
+    ros::Subscriber gps_sub_ = nh_.subscribe("gnss_pose",10,&gpsCallback);
     //Subscriber object for speeds of individual wheels
     ros::Subscriber can_sub_ = nh_.subscribe("parsed_tx/wheel_speed_rpt",10,&wheelrtCallback);
     //Subscriber object for steering wheel angle
@@ -71,7 +71,7 @@ int main(int argc, char** argv)
     // Generate Identitiy matrix for the initial covariance
     P = MatrixXd::Identity(X.size(), X.size());
 
-    int initialize=0; // Variable to check if initialized for the 1st time before entering into loop
+    bool initialize=0; // Variable to check if initialized for the 1st time before entering into loop
 
     while(ros::ok())
     {
@@ -81,7 +81,7 @@ int main(int argc, char** argv)
             X(1)=0;  //Y
             X(2)=0;  //Yaw
 
-            ukf.Prediction(X,P,0); //Need to work on timestamp
+            /*ukf.Prediction(X,P,0); //Need to work on timestamp
             //Need to update 6 times to incoperate all the sensors
             ukf.Update(X,P,H_,R_,z_raw_); // GPS
             ukf.Update(X,P,H_,R_,z_raw_); // IMU Yaw
@@ -89,7 +89,7 @@ int main(int argc, char** argv)
             ukf.Update(X,P,H_,R_,z_raw_); // IMU linear acceleration
             ukf.Update(X,P,H_,R_,z_raw_); // CAN wheel rotation
             ukf.Update(X,P,H_,R_,z_raw_); // CAN wheel angle
-
+                                                            */
             initialize=1;
         }
         else if(initialize==1)
@@ -109,6 +109,8 @@ int main(int argc, char** argv)
         ukf_pose_msg.pose.pose.position.x=X(0);
         ukf_pose_msg.pose.pose.position.y=X(1);
         ukf_pose_msg.pose.pose.orientation.z=X(2);
+        //Convert matrix to vector
+        ukf_pose_msg.pose.covariance=P;
 
         pose_pub_.publish(ukf_pose_msg);
         ros::spinOnce();
@@ -119,7 +121,7 @@ int main(int argc, char** argv)
 
 void imuCallback(const sensor_msgs::Imu &imu_msg)
  {
-     z_imu_raw(0)=imu_msg.orientation.z; //Yaw
+     z_imu_raw(0)=imu_msg.orientation.z; //Yaw //Transform
      z_imu_raw(1)=imu_msg.linear_acceleration.x; //Linear acceleration along x-direction
      z_imu_raw(2)=imu_msg.linear_acceleration.y; //Linear acceleration along y-direction
      z_imu_raw(3)=imu_msg.angular_velocity.z; //Angular velocity
@@ -137,9 +139,9 @@ void imuCallback(const sensor_msgs::Imu &imu_msg)
      //Covariance R
  }
 
-void gpsCallback(const geometry_msgs::PoseStamped &gps_msg)
+void gpsCallback(const geometry_msgs::PoseWithCovarianceStamped &gps_msg)
 {
-    ROS_INFO("I heard: [%s]", msg->data.c_str());
+
     z_gps_raw(0)=gps_msg.pose.position.x;
     z_gps_raw(1)=gps_msg.pose.position.y;
     z_gps_raw(2)=0; //Heading
