@@ -63,6 +63,9 @@ namespace bsm_generator
         // frequency for bsm generation
         double bsm_generation_frequency_;
 
+        // size of the vehicle
+        double vehicle_length_, vehicle_width_;
+
         // timer to run the bsm generation task
         ros::Timer timer_;
 
@@ -87,7 +90,6 @@ namespace bsm_generator
 
         // callback for the timer
         void generateBSM(const ros::TimerEvent& event);
-
     };
 
 }

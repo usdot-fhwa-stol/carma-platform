@@ -61,6 +61,21 @@ namespace bsm_generator
 
     float BSMGeneratorWorker::getSteerWheelAngleInRnage(const double angle)
     {
-        return static_cast<float>(std::max(std::min(angle, 189.0), -189.0));
+        return static_cast<float>(std::max(std::min(angle * 57.2958, 189.0), -189.0));
+    }
+
+    float BSMGeneratorWorker::getLongAccelInRange(const float accel)
+    {
+        return std::max(std::min(accel, 20.0f), -20.0f);
+    }
+
+    float BSMGeneratorWorker::getYawRateInRange(const double yaw_rate)
+    {
+        return static_cast<float>(std::max(std::min(yaw_rate, 327.67), -327.67));
+    }
+
+    uint8_t BSMGeneratorWorker::getBrakeAppliedStatus(const double brake)
+    {
+        return brake > 0.01 ? 0b1111 : 0;
     }
 }

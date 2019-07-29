@@ -34,6 +34,9 @@ namespace bsm_generator
             uint16_t getSecMark(const ros::Time now);
             float getSpeedInRange(const double speed);
             float getSteerWheelAngleInRnage(const double angle);
+            float getLongAccelInRange(const float accel);
+            float getYawRateInRange(const double yaw_rate);
+            uint8_t getBrakeAppliedStatus(const double brake);
 
         private:
 
