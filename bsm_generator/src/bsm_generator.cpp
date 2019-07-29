@@ -99,7 +99,6 @@ namespace bsm_generator
             geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("earth", "host_vehicle", ros::Time(0));
             tf2::Vector3 loc(tf.transform.translation.x, tf.transform.translation.y, tf.transform.translation.z);
             // TODO ecef_to_geodesic function is not in the library yet
-            /*
             wgs84_utils::wgs84_coordinate coord =  wgs84_utils::ecef_to_geodesic(loc);
             bsm_.core_data.longitude = coord.lon;
             bsm_.core_data.latitude = coord.lat;
@@ -107,7 +106,6 @@ namespace bsm_generator
             bsm_.core_data.presence_vector = bsm_.core_data.presence_vector | bsm_.core_data.LONGITUDE_AVAILABLE;
             bsm_.core_data.presence_vector = bsm_.core_data.presence_vector | bsm_.core_data.LATITUDE_AVAILABLE;
             bsm_.core_data.presence_vector = bsm_.core_data.presence_vector | bsm_.core_data.ELEVATION_AVAILABLE;
-            */
         }
         catch (tf2::TransformException &ex)
         {
