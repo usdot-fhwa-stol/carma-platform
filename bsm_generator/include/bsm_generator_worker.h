@@ -37,6 +37,7 @@ namespace bsm_generator
             float getLongAccelInRange(const float accel);
             float getYawRateInRange(const double yaw_rate);
             uint8_t getBrakeAppliedStatus(const double brake);
+            float getHeadingInRange(const float heading);
 
         private:
 

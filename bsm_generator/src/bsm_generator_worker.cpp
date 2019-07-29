@@ -76,6 +76,11 @@ namespace bsm_generator
 
     uint8_t BSMGeneratorWorker::getBrakeAppliedStatus(const double brake)
     {
-        return brake > 0.01 ? 0b1111 : 0;
+        return brake > 0.001 ? 0b1111 : 0;
+    }
+
+    float BSMGeneratorWorker::getHeadingInRange(const float heading)
+    {
+        return std::max(std::min(heading, 359.9875f), 0.0f);
     }
 }

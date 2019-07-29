@@ -16,6 +16,7 @@
  * the License.
  */
 
+#include <tf2_ros/transform_listener.h>
 #include <boost/shared_ptr.hpp>
 #include <carma_utils/CARMAUtils.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -24,6 +25,7 @@
 #include <pacmod_msgs/YawRateRpt.h>
 #include <j2735_msgs/TransmissionState.h>
 #include <std_msgs/Float64.h>
+#include <wgs84_utils/wgs84_utils.h>
 #include <novatel_gps_msgs/NovatelDualAntennaHeading.h>
 #include "bsm_generator_worker.h"
 
@@ -45,6 +47,7 @@ namespace bsm_generator
         // node handles
         std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
+        // worker class
         BSMGeneratorWorker worker;
 
         // publisher for generated BSMs
@@ -56,9 +59,13 @@ namespace bsm_generator
         ros::Subscriber yaw_sub_;
         ros::Subscriber gear_sub_;
         ros::Subscriber speed_sub_;
-        ros::Subscriber heading_sub_;
         ros::Subscriber steer_wheel_angle_sub_;
         ros::Subscriber brake_sub_;
+        ros::Subscriber heading_sub_;
+
+        // TF listenser
+        tf2_ros::Buffer tf2_buffer_;
+        std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
 
         // frequency for bsm generation
         double bsm_generation_frequency_;
@@ -84,9 +91,9 @@ namespace bsm_generator
         void yawCallback(const pacmod_msgs::YawRateRptConstPtr& msg);
         void gearCallback(const j2735_msgs::TransmissionStateConstPtr& msg);
         void speedCallback(const std_msgs::Float64ConstPtr& msg);
-        void headingCallback(const novatel_gps_msgs::NovatelDualAntennaHeadingConstPtr& msg);
         void steerWheelAngleCallback(const std_msgs::Float64ConstPtr& msg);
         void brakeCallback(const std_msgs::Float64ConstPtr& msg);
+        void headingCallback(const novatel_gps_msgs::NovatelDualAntennaHeadingConstPtr& msg);
 
         // callback for the timer
         void generateBSM(const ros::TimerEvent& event);

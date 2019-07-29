@@ -36,6 +36,9 @@ namespace bsm_generator
         accel_sub_ = nh_->subscribe("velocity_accel", 1, &BSMGenerator::accelCallback, this);
         yaw_sub_ = nh_->subscribe("yaw_rate_rpt", 1, &BSMGenerator::yawCallback, this);
         brake_sub_ = nh_->subscribe("brake_position", 1, &BSMGenerator::brakeCallback, this);
+        pose_sub_ = nh_->subscribe("pose", 1, &BSMGenerator::poseCallback, this);
+        heading_sub_ = nh_->subscribe("dual_antenna_heading", 1, &BSMGenerator::headingCallback, this);
+        tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
     }
 
     void BSMGenerator::initializeBSM()
@@ -86,6 +89,36 @@ namespace bsm_generator
     void BSMGenerator::brakeCallback(const std_msgs::Float64ConstPtr& msg)
     {
         bsm_.core_data.brakes.wheelBrakes.brake_applied_status = worker.getBrakeAppliedStatus(msg->data);
+    }
+
+    void BSMGenerator::poseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
+    {
+        // Use pose message as an indicator of new location updates
+        try
+        {
+            geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("earth", "host_vehicle", ros::Time(0));
+            tf2::Vector3 loc(tf.transform.translation.x, tf.transform.translation.y, tf.transform.translation.z);
+            // TODO ecef_to_geodesic function is not in the library yet
+            /*
+            wgs84_utils::wgs84_coordinate coord =  wgs84_utils::ecef_to_geodesic(loc);
+            bsm_.core_data.longitude = coord.lon;
+            bsm_.core_data.latitude = coord.lat;
+            bsm_.core_data.elev = coord.elevation;
+            bsm_.core_data.presence_vector = bsm_.core_data.presence_vector | bsm_.core_data.LONGITUDE_AVAILABLE;
+            bsm_.core_data.presence_vector = bsm_.core_data.presence_vector | bsm_.core_data.LATITUDE_AVAILABLE;
+            bsm_.core_data.presence_vector = bsm_.core_data.presence_vector | bsm_.core_data.ELEVATION_AVAILABLE;
+            */
+        }
+        catch (tf2::TransformException &ex)
+        {
+            ROS_WARN("%s", ex.what());
+            return;
+        }
+    }
+
+    void BSMGenerator::headingCallback(const novatel_gps_msgs::NovatelDualAntennaHeadingConstPtr& msg)
+    {
+        bsm_.core_data.heading = worker.getHeadingInRange(msg->heading);
     }
 
     void BSMGenerator::generateBSM(const ros::TimerEvent& event)

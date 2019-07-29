@@ -14,179 +14,92 @@
  * the License.
  */
 
-#include "autoware_plugin.h"
+#include "bsm_generator_worker.h"
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 
-TEST(AutowarePluginTest, testGetWaypointsInTimeBoundary1)
+TEST(BSMWorkerTest, testMsgCount)
 {
-    // compose a list of waypoints spanning 8 seconds
-    std::vector<autoware_msgs::Waypoint> waypoints;
-    autoware_msgs::Waypoint wp_1;
-    wp_1.twist.twist.linear.x = 2.0;
-    wp_1.pose.pose.position.x = 0.0;
-    autoware_msgs::Waypoint wp_2;
-    wp_2.twist.twist.linear.x = 4.0;
-    wp_2.pose.pose.position.x = 6.0;
-    autoware_msgs::Waypoint wp_3;
-    wp_3.twist.twist.linear.x = 8.0;
-    wp_3.pose.pose.position.x = 24.0;
-    autoware_msgs::Waypoint wp_4;
-    wp_4.twist.twist.linear.x = 8.0;
-    wp_4.pose.pose.position.x = 40.0;
-    autoware_msgs::Waypoint wp_5;
-    wp_5.twist.twist.linear.x = 8.0;
-    wp_5.pose.pose.position.x = 48.0;
-    waypoints.push_back(wp_1);
-    waypoints.push_back(wp_2);
-    waypoints.push_back(wp_3);
-    waypoints.push_back(wp_4);
-    waypoints.push_back(wp_5);
-    autoware_plugin::AutowarePlugin ap;
-    std::vector<autoware_msgs::Waypoint> res = ap.get_waypoints_in_time_boundary(waypoints, 6.0);
-    EXPECT_EQ(4, res.size());
-    EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(0.0, res[0].pose.pose.position.x, 0.01);
-    EXPECT_NEAR(4.0, res[1].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(6.0, res[1].pose.pose.position.x, 0.01);
-    EXPECT_NEAR(8.0, res[2].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(24.0, res[2].pose.pose.position.x, 0.01);
-    EXPECT_NEAR(8.0, res.back().twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(40.0, res.back().pose.pose.position.x, 0.01);
+    bsm_generator::BSMGeneratorWorker worker;
+    EXPECT_EQ(0, worker.getNextMsgCount());
+    for(int i = 1; i < 127; i++)
+    {
+        worker.getNextMsgCount();
+    }
+    EXPECT_EQ(127, worker.getNextMsgCount());
+    EXPECT_EQ(0, worker.getNextMsgCount());
 }
 
-TEST(AutowarePluginTest, testGetWaypointsInTimeBoundary2)
+TEST(BSMWorkerTest, testMsgId)
 {
-    // compose a list of waypoints spaning less than 6 seconds
-    std::vector<autoware_msgs::Waypoint> waypoints;
-    autoware_msgs::Waypoint wp_1;
-    wp_1.twist.twist.linear.x = 2.0;
-    wp_1.pose.pose.position.x = 0.0;
-    autoware_msgs::Waypoint wp_2;
-    wp_2.twist.twist.linear.x = 4.0;
-    wp_2.pose.pose.position.x = 6.0;
-    waypoints.push_back(wp_1);
-    waypoints.push_back(wp_2);
-    autoware_plugin::AutowarePlugin ap;
-    std::vector<autoware_msgs::Waypoint> res = ap.get_waypoints_in_time_boundary(waypoints, 6.0);
-    EXPECT_EQ(2, res.size());
-    EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(0.0, res[0].pose.pose.position.x, 0.01);
-    EXPECT_NEAR(4.0, res[1].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(6.0, res[1].pose.pose.position.x, 0.01);
+    bsm_generator::BSMGeneratorWorker worker;
+    ros::Time time1(10, 0);
+    std::vector<uint8_t> msgId1 = worker.getMsgId(time1);
+    ros::Time time2(11, 0);
+    std::vector<uint8_t> msgId2 = worker.getMsgId(time2);
+    ros::Time time3(310, 0);
+    std::vector<uint8_t> msgId3 = worker.getMsgId(time3);
+    EXPECT_TRUE(msgId1 == msgId2);
+    EXPECT_TRUE(msgId2 != msgId3);
 }
 
-TEST(AutowarePluginTest, testGetWaypointsInTimeBoundary3)
+TEST(BSMWorkerTest, testSecMark)
 {
-    // compose a list of waypoints spanning exactly 5 seconds
-    std::vector<autoware_msgs::Waypoint> waypoints;
-    autoware_msgs::Waypoint wp_1;
-    wp_1.twist.twist.linear.x = 2.0;
-    wp_1.pose.pose.position.x = 0.0;
-    autoware_msgs::Waypoint wp_2;
-    wp_2.twist.twist.linear.x = 4.0;
-    wp_2.pose.pose.position.x = 6.0;
-    autoware_msgs::Waypoint wp_3;
-    wp_3.twist.twist.linear.x = 8.0;
-    wp_3.pose.pose.position.x = 24.0;
-    waypoints.push_back(wp_1);
-    waypoints.push_back(wp_2);
-    waypoints.push_back(wp_3);
-    autoware_plugin::AutowarePlugin ap;
-    std::vector<autoware_msgs::Waypoint> res = ap.get_waypoints_in_time_boundary(waypoints, 5.0);
-    EXPECT_EQ(3, res.size());
-    EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(0.0, res[0].pose.pose.position.x, 0.01);
-    EXPECT_NEAR(4.0, res[1].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(6.0, res[1].pose.pose.position.x, 0.01);
-    EXPECT_NEAR(8.0, res[2].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(24.0, res[2].pose.pose.position.x, 0.01);
+    bsm_generator::BSMGeneratorWorker worker;
+    ros::Time time1(10, 0);
+    EXPECT_EQ(10000, worker.getSecMark(time1));
+    ros::Time time2(70, 0);
+    EXPECT_EQ(10000, worker.getSecMark(time2));
+    ros::Time time3(71, 0);
+    EXPECT_EQ(11000, worker.getSecMark(time3));
 }
 
-TEST(AutowarePluginTest, testCreateUnevenTrajectory1)
+TEST(BSMWorkerTest, testSpeedInRange)
 {
-    // compose a list of waypoints, uneven spaced
-    std::vector<autoware_msgs::Waypoint> waypoints;
-    autoware_msgs::Waypoint wp_1;
-    wp_1.twist.twist.linear.x = 2.0;
-    wp_1.pose.pose.position.x = 0.0;
-    autoware_msgs::Waypoint wp_2;
-    wp_2.twist.twist.linear.x = 4.0;
-    wp_2.pose.pose.position.x = 0.5;
-    autoware_msgs::Waypoint wp_3;
-    wp_3.twist.twist.linear.x = 2.0;
-    wp_3.pose.pose.position.x = 1.3;
-    autoware_msgs::Waypoint wp_4;
-    wp_4.twist.twist.linear.x = 4.0;
-    wp_4.pose.pose.position.x = 1.4;
-    autoware_msgs::Waypoint wp_5;
-    wp_5.twist.twist.linear.x = 4.0;
-    wp_5.pose.pose.position.x = 2.0;
-    waypoints.push_back(wp_1);
-    waypoints.push_back(wp_2);
-    waypoints.push_back(wp_3);
-    waypoints.push_back(wp_4);
-    waypoints.push_back(wp_5);
-    autoware_plugin::AutowarePlugin ap;
-    // create pose message to indicate that the current location is on top of the starting waypoint
-    ap.pose_msg_.reset(new geometry_msgs::PoseStamped());
-    std::vector<cav_msgs::TrajectoryPlanPoint> traj = ap.create_uneven_trajectory_from_waypoints(waypoints);
-    EXPECT_EQ(5, traj.size());
-    EXPECT_NEAR(0.0, traj[0].target_time, 0.01);
-    EXPECT_NEAR(0.0, traj[0].x, 0.01);
-    EXPECT_NEAR(0.25, traj[1].target_time / 1e9, 0.01);
-    EXPECT_NEAR(0.5, traj[1].x, 0.01);
-    EXPECT_NEAR(0.45, traj[2].target_time / 1e9, 0.01);
-    EXPECT_NEAR(1.3, traj[2].x, 0.01);
-    EXPECT_NEAR(0.5, traj[3].target_time / 1e9, 0.01);
-    EXPECT_NEAR(1.4, traj[3].x, 0.01);
-    EXPECT_NEAR(0.65, traj[4].target_time / 1e9, 0.01);
-    EXPECT_NEAR(2.0, traj[4].x, 0.01);
+    bsm_generator::BSMGeneratorWorker worker;
+    EXPECT_NEAR(163.8, worker.getSpeedInRange(170.0f), 0.01);
+    EXPECT_NEAR(0, worker.getSpeedInRange(-1.0f), 0.01);
+    EXPECT_NEAR(15.3, worker.getSpeedInRange(15.3f), 0.01);
 }
 
-TEST(AutowarePluginTest, testCreateUnevenTrajectory2)
+TEST(BSMWorkerTest, testSteerWheelAngleInRnage)
 {
-    // compose a list of waypoints, uneven spaced
-    std::vector<autoware_msgs::Waypoint> waypoints;
-    autoware_msgs::Waypoint wp_1;
-    wp_1.twist.twist.linear.x = 2.0;
-    wp_1.pose.pose.position.x = 0.0;
-    autoware_msgs::Waypoint wp_2;
-    wp_2.twist.twist.linear.x = 4.0;
-    wp_2.pose.pose.position.x = 0.5;
-    autoware_msgs::Waypoint wp_3;
-    wp_3.twist.twist.linear.x = 2.0;
-    wp_3.pose.pose.position.x = 1.3;
-    autoware_msgs::Waypoint wp_4;
-    wp_4.twist.twist.linear.x = 4.0;
-    wp_4.pose.pose.position.x = 1.4;
-    autoware_msgs::Waypoint wp_5;
-    wp_5.twist.twist.linear.x = 4.0;
-    wp_5.pose.pose.position.x = 2.0;
-    waypoints.push_back(wp_1);
-    waypoints.push_back(wp_2);
-    waypoints.push_back(wp_3);
-    waypoints.push_back(wp_4);
-    waypoints.push_back(wp_5);
-    autoware_plugin::AutowarePlugin ap;
-    // create pose message to indicate that the current location is not near the starting waypoint
-    geometry_msgs::PoseStamped pose;
-    pose.pose.position.x = -1.0;
-    ap.pose_msg_.reset(new geometry_msgs::PoseStamped(pose));
-    std::vector<cav_msgs::TrajectoryPlanPoint> traj = ap.create_uneven_trajectory_from_waypoints(waypoints);
-    EXPECT_EQ(6, traj.size());
-    EXPECT_NEAR(0.0, traj[0].target_time / 1e9, 0.01);
-    EXPECT_NEAR(-1.0, traj[0].x, 0.01);
-    EXPECT_NEAR(0.5, traj[1].target_time / 1e9, 0.01);
-    EXPECT_NEAR(0.0, traj[1].x, 0.01);
-    EXPECT_NEAR(0.75, traj[2].target_time / 1e9, 0.001);
-    EXPECT_NEAR(0.5, traj[2].x, 0.01);
-    EXPECT_NEAR(0.95, traj[3].target_time / 1e9, 0.001);
-    EXPECT_NEAR(1.3, traj[3].x, 0.01);
-    EXPECT_NEAR(1.0, traj[4].target_time / 1e9, 0.001);
-    EXPECT_NEAR(1.4, traj[4].x, 0.01);
-    EXPECT_NEAR(1.15, traj[5].target_time / 1e9, 0.001);
-    EXPECT_NEAR(2.0, traj[5].x, 0.01);
+    bsm_generator::BSMGeneratorWorker worker;
+    EXPECT_NEAR(189.0, worker.getSteerWheelAngleInRnage(3.316), 0.01);
+    EXPECT_NEAR(-189.0, worker.getSteerWheelAngleInRnage(-3.316), 0.01);
+    EXPECT_NEAR(57.2958, worker.getSteerWheelAngleInRnage(1), 0.01);
+}
+
+TEST(BSMWorkerTest, testLongAccelInRange)
+{
+    bsm_generator::BSMGeneratorWorker worker;
+    EXPECT_NEAR(20.0, worker.getLongAccelInRange(21.0f), 0.01);
+    EXPECT_NEAR(-20.0, worker.getLongAccelInRange(-21.0f), 0.01);
+    EXPECT_NEAR(2.5, worker.getLongAccelInRange(2.5f), 0.01);
+}
+
+TEST(BSMWorkerTest, testYawRateInRange)
+{
+    bsm_generator::BSMGeneratorWorker worker;
+    EXPECT_NEAR(327.67, worker.getYawRateInRange(330.0f), 0.01);
+    EXPECT_NEAR(-327.67, worker.getYawRateInRange(-330.0f), 0.01);
+    EXPECT_NEAR(9.1, worker.getYawRateInRange(9.1f), 0.01);
+}
+
+TEST(BSMWorkerTest, testBrakeAppliedStatus)
+{
+    bsm_generator::BSMGeneratorWorker worker;
+    EXPECT_EQ(0b1111, worker.getBrakeAppliedStatus(0.5));
+    EXPECT_EQ(0, worker.getBrakeAppliedStatus(0.0009));
+    EXPECT_EQ(0, worker.getBrakeAppliedStatus(0));
+}
+
+TEST(BSMWorkerTest, testHeading)
+{
+    bsm_generator::BSMGeneratorWorker worker;
+    EXPECT_NEAR(359.9875f, worker.getHeadingInRange(360.0f), 0.0001);
+    EXPECT_NEAR(0.0f, worker.getHeadingInRange(-60.0f), 0.0001);
+    EXPECT_NEAR(300.001f, worker.getHeadingInRange(300.001f), 0.0001);
 }
 
 // Run all the tests
@@ -195,5 +108,3 @@ int main(int argc, char **argv)
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
-
-
