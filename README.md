@@ -22,8 +22,10 @@ CARMA provides the navigation and guidance functions for its host vehicle, as we
 
 ![CARMA Demo](docs/image/CARMA2_Platooning_from_Office.jpg)
 
+<!-- We would like to publish this section, but are not ready to at this time:
 ## System Specifications
 The current CARMA requirements specification: [CARMA Platform Requirements](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/56786945/Platform+Requirements+Document?preview=/56786945/56852481/CAV%20Platform%20Requirements.docx)
+-->
 
 ## Release Notes
 The current version and release history of the CARMA software platform: [CARMA Release Notes](<docs/Release_notes.md>)
