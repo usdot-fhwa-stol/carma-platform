@@ -90,7 +90,7 @@ TEST(BSMWorkerTest, testBrakeAppliedStatus)
 {
     bsm_generator::BSMGeneratorWorker worker;
     EXPECT_EQ(0b1111, worker.getBrakeAppliedStatus(0.5));
-    EXPECT_EQ(0, worker.getBrakeAppliedStatus(0.009));
+    EXPECT_EQ(0, worker.getBrakeAppliedStatus(0.049));
     EXPECT_EQ(0, worker.getBrakeAppliedStatus(0));
 }
 
