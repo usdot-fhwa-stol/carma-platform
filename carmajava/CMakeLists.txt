@@ -64,9 +64,6 @@ install(DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_GLOBAL_MAVEN_DESTINATION}/gov/
 
 # Instal Binaries from Gradle Build folder
 install(DIRECTORY
-        guidance/build
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/guidance)
-install(DIRECTORY
         interfacemgr/build
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/interfacemgr)
 install(DIRECTORY

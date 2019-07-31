@@ -2,8 +2,6 @@
 tests=(
      'cooperativemerge'
      'geometry'
-     'guidance'
-     'guidance_plugin_api'
      'interfacemgr'
      'lateral_control_driver'
      'message'

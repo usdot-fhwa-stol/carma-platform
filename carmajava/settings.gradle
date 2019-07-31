@@ -14,14 +14,12 @@
  * the License.
  */
 
-include 'guidance'
 include 'interfacemgr'
 include 'message'
 include 'route'
 include 'template'
 include 'mock_drivers'
 include 'geometry'
-include 'guidance_plugin_api'
 include 'rosutils'
 include 'speedharm'
 include 'lateral_control_driver'
