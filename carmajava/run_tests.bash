@@ -1,16 +1,12 @@
 #!/bin/bash
 tests=(
-     'cooperativemerge'
      'geometry'
      'interfacemgr'
      'lateral_control_driver'
      'message'
      'mock_drivers'
-     'platooning'
      'rosutils'
      'route'
-     'rsumetering'
-     'speedharm'
      'template'
    )
 for test in "${tests[@]}"
