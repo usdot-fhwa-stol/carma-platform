@@ -19,8 +19,10 @@
 
 set -ex
 
-source /opt/ros/kinetic/setup.bash
+source /opt/autoware.ai/setup.bash
 cd ~/carma_ws
+rosdep update
+rosdep install --from-paths src --ignore-src -y
 catkin_make install
 
 
