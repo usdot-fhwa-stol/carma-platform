@@ -19,3 +19,4 @@
 set -ex
 cd ~/src
 git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAMsgs.git
+git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMANovatelGpsDriver.git

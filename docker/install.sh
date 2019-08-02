@@ -19,8 +19,10 @@
 
 set -ex
 
-source /opt/ros/kinetic/setup.bash
+source /opt/autoware.ai/setup.bash
 cd ~/carma_ws
+rosdep update
+rosdep install --from-paths src --ignore-src -y
 catkin_make install
 
 
@@ -28,7 +30,6 @@ catkin_make install
 cd ~/carma_ws 
 cp -r install/. /opt/carma/app/bin/ 
 chmod -R +x /opt/carma/app/bin 
-cp -r src/CARMAPlatform/carmajava/route/src/test/resources/routes/*.yaml /opt/carma/routes
 cp -r src/CARMAPlatform/carmajava/launch/params/* /opt/carma/params/
 cp -r src/CARMAPlatform/carmajava/launch/*.launch /opt/carma/launch/
 ln -s  /opt/carma/launch/* /opt/carma/app/bin/share/carma
