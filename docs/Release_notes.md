@@ -6,6 +6,7 @@ Pre-Release Version 3.0.0, released 15 July 2019
 **Summary:**
 CARMAPlatform pre-release version 3.0.0 is the first step to integrating Autoware and its components, specifically NDT matching and pure pursuit. CARMAPlatform now includes both lateral (steering) control and longitudinal (speed) control for full SAE level 2 autonomy. GNSS initialization of NDT matching has been added in order to localize the vehicle’s position on the 3D Point Cloud Map with LiDAR scan.  A temporary UI integration has been included for minimum viable functionality while awaiting further development of CARMA guidance node. Other highlights of this release are the new drivers (e.g. Velodyne LiDAR, Novatel GPS), conforming to the new CARMA3 API, Docker updates, and adding code coverage metrics to Sonar Cloud.  
 **Repository: CARMAPlatform**      
+-PR 303: Add missing package to build script
 -PR 293: Update unit tests to match what expected in the actual code.  
 -PR 288: Fixes several issues encountered during integration testing for CARMA3 beta release.  
 -PR 287: Fixes topic re-mappings for the voxel grid filter after the ray_ground_filter was added. Also adds the ssc_interface (as package) into the carma_build script.  

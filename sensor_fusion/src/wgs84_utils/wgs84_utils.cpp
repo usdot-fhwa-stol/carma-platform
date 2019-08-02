@@ -168,3 +168,38 @@ tf2::Transform wgs84_utils::ecef_to_ned_from_loc(wgs84_coordinate loc) {
     return tf2::Transform(rotMat, ecef_point);
   }
 
+wgs84_utils::wgs84_coordinate wgs84_utils::ecef_to_geodesic(const tf2::Vector3& point) {
+    double x = point.getX();
+    double y = point.getY();
+    double z = point.getZ();
+
+    // Calculate lat,lon,alt
+    double p = sqrt((x*x) + (y*y));
+    // Handle special case of poles
+    if (p < 1.0e-10) {
+      double poleLat = z < 0 ? -90:90;
+      double poleLon = 0;
+      double poleAlt = z < 0 ? -z - Reb : z - Reb;
+      wgs84_utils::wgs84_coordinate res;
+      res.lat = poleLat;
+      res.lon = poleLon;
+      res.elevation = poleAlt;
+      return res;
+    }
+    double theta = atan((z*Rea) / (p*Reb));
+
+    double lon = 2.0*atan(y / (x + p));
+    double lat = atan((z + (e_p * e_p) * Reb * pow(sin(theta), 3)) / (p - e_sqr * Rea * pow(cos(theta), 3)));
+
+    double cosLat = cos(lat);
+    double sinLat = sin(lat);
+
+    double N = Rea_sqr / sqrt(Rea_sqr * cosLat * cosLat + Reb_sqr * sinLat * sinLat);
+    double alt = (p / cosLat) - N;
+    wgs84_utils::wgs84_coordinate res;
+    res.lat = RAD2DEG* lat;
+    res.lon = RAD2DEG * lon;
+    res.elevation = alt;
+    return res;
+
+}

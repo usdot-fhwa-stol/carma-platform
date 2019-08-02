@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 LEIDOS.
+ * Copyright (C) 2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,9 +14,13 @@
  * the License.
  */
 
-include 'interfacemgr'
-include 'message'
-include 'template'
-include 'mock_drivers'
-include 'geometry'
-include 'rosutils'
+#include <ros/ros.h>
+#include "bsm_generator.h"
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, "bsm_generator");
+    bsm_generator::BSMGenerator bg;
+    bg.run();
+    return 0;
+};

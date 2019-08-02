@@ -28,10 +28,9 @@ Welcome to the CARMAPlatform contributing guide. There are a few guidelines that
 ### Making Changes
 
 #### Fork the Repository
-**Make a fork of CARMA Platform.** 
 
-* Firstly you need a local fork of the project, so go ahead and press the “Fork” button in GitHub. Read the article ["Fork a repo"](https://help.github.com/articles/fork-a-repo/) on GitHub.
-* This will create a copy of the repository in your own GitHub account and you’ll see a note that it’s been forked underneath the project name:
+* First, you need a local fork of the CARMA repository of interest, so go ahead and press the “Fork” button in GitHub. Read the article ["Fork a repo"](https://help.github.com/articles/fork-a-repo/) on GitHub.
+* This will create a copy of the repository in your own GitHub account and you’ll see a note that it’s been forked underneath the project name.
 * With the repository forked, you’re ready to clone it so that you have a local working copy of the code base.
  
 #### Clone the Repository
