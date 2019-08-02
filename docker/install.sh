@@ -19,11 +19,20 @@
 
 set -ex
 
-source /opt/ros/kinetic/setup.bash
-cd ~/carma_ws/src/CARMAPlatform
-./carma_build -c ~/carma_ws -a ~/carma_ws/src/autoware.ai
+source /opt/autoware.ai/setup.bash
+cd ~/carma_ws
+rosdep update
+rosdep install --from-paths src --ignore-src -y
+./carma_build -c ~/carma_ws -a /opt/autoware.ai/ -x
+
 
 # Copy the installed files
 cd ~/carma_ws 
-cp -r install/. /opt/carma/install
-chmod -R +x /opt/carma/install
+cp -r install/. /opt/carma/app/bin/ 
+chmod -R +x /opt/carma/app/bin 
+cp -r src/CARMAPlatform/carmajava/launch/params/* /opt/carma/params/
+cp -r src/CARMAPlatform/carmajava/launch/*.launch /opt/carma/launch/
+ln -s  /opt/carma/launch/* /opt/carma/app/bin/share/carma
+cp -r src/CARMAPlatform/engineering_tools/* /opt/carma/app/engineering_tools/
+cp -r src/CARMAPlatform/engineering_tools /opt/carma/app/bin/share
+cp -r src/CARMAPlatform/carmajava/mock_drivers/src/test/data/. /opt/carma/app/mock_data

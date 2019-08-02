@@ -19,6 +19,4 @@
 set -ex
 cd ~/src
 git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAMsgs.git
-git clone --depth=1 https://github.com/usdot-fhwa-stol/autoware.ai.git
-# TODO remove this as a dependency once the need for novatel_gps_msgs is removed
 git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMANovatelGpsDriver.git
