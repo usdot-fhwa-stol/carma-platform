@@ -18,10 +18,6 @@
 	Launch file for launching the nodes in the CARMA guidance stack
 -->
 <launch>
-  <!-- Debug -->
-  <!-- Set to true to enable debugging on the specified node -->
-  <arg name="debug_node" default="" doc="Set to the java node base name to enable debugging on that node"/>
-  <arg name="debug_guidance" value="$(eval arg('debug_node') == 'guidance')"/>
   
   <!-- Remap topics from external packages -->
   <remap from="bsm" to="$(optenv MSG_NS)/outgoing_bsm"/>

@@ -115,9 +115,7 @@
 
   <!-- Guidance Stack -->
   <group ns="$(env CARMA_GUIDE_NS)">
-    <include file="guidance.launch">
-      <arg name="debug_node" value="$(arg debug_node)"/>
-    </include>
+    <include file="guidance.launch"/>
   </group>
 
   <!-- UI Stack -->
