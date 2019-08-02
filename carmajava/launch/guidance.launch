@@ -18,6 +18,9 @@
 	Launch file for launching the nodes in the CARMA guidance stack
 -->
 <launch>
+
+  <!-- Arguments -->
+  <arg name="route_file_folder" default="$(find carma)/routes" doc="Path of folder containing routes to load"/>
   
   <!-- Remap topics from external packages -->
   <remap from="bsm" to="$(optenv MSG_NS)/outgoing_bsm"/>
@@ -127,6 +130,8 @@
   <include file="$(find autoware_plugin)/launch/autoware_plugin.launch" />
 
   <!-- Route Generator -->
-  <include file="$(find route_generator)/launch/route_generator.launch" />
+  <include file="$(find route_generator)/launch/route_generator.launch">
+    <arg name="route_file_folder" value="$(arg route_file_folder)"/>
+  </include>
 
 </launch>

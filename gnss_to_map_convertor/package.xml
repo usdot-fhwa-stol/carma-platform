@@ -62,7 +62,7 @@
   <build_depend>tf2_msgs</build_depend>
   <build_depend>cav_msgs</build_depend>
   <build_depend>cav_srvs</build_depend>
-  <build_depend>sensor_fusion</build_depend>
+  <build_depend>wgs84_utils</build_depend>
   <build_depend>message_filters</build_depend>
   <build_depend>novatel_gps_msgs</build_depend>
   <build_depend>carma_utils</build_depend>
@@ -74,7 +74,7 @@
   <run_depend>tf2_msgs</run_depend>
   <run_depend>cav_msgs</run_depend>
   <run_depend>cav_srvs</run_depend>
-  <run_depend>sensor_fusion</run_depend>
+  <run_depend>wgs84_utils</run_depend>
   <run_depend>message_filters</run_depend>
   <run_depend>novatel_gps_msgs</run_depend>
   <run_depend>carma_utils</run_depend>

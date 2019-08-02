@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package>
+  <name>wgs84_utils</name>
+  <version>0.1.5</version>
+  <description>The wgs84_utils package</description>
+  <maintainer email="carma@todo.todo">carma</maintainer>
+  <license>BSD</license>
+  <author email="watters@torcrobotics.com">Thomas Watters</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>tf2</build_depend>
+  <build_depend>tf2_ros</build_depend>
+  <build_depend version_gte="0.5.16">tf2_geometry_msgs</build_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>tf2</run_depend>
+  <run_depend>tf2_ros</run_depend>
+  <run_depend>tf2_geometry_msgs</run_depend>
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+
+  </export>
+</package>

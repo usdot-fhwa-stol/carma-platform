@@ -29,6 +29,7 @@
   <arg name="vehicle_calibration_dir" default="$(find carma)../../CARMAVehicleCalibration/development/vehicle"/>
   <arg name="load_type" value="noupdate"/>
   <arg name="single_pcd_path" value="$(find carma)/map/base_map.pcd"/>
+  <arg name="route_file_folder" value="$(find carma)/routes"/>
 
   <!-- Startup with mock drivers -->
   <arg name="launch_drivers" default="true" doc="True if drivers are to be launched with the CARMA Platform, overrides mock_drivers arg if false"/>

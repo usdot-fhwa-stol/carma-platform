@@ -33,5 +33,5 @@
   <depend>pacmod_msgs</depend>
   <depend>j2735_msgs</depend>
   <depend>novatel_gps_msgs</depend>
-  <depend>sensor_fusion</depend>
+  <depend>wgs84_utils</depend>
 </package>
