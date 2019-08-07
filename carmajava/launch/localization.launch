@@ -19,7 +19,6 @@
 -->
 <launch>
 
-  <arg name="INTR_NS" default="hardware_interface" doc="Namespace of nodes hardware interface stack"/>
   <arg name="area" default="5x5" doc="Dimensions of the square of cells loaded at runtime using the download and arealist load types"/>
   <arg name="arealist_path" default="arealist.txt" doc="Path to the arealist.txt file which contains the paths and dimensions of each map cell to load"/>
   <arg name="load_type" default="noupdate" doc="Enum of the map loading approach to use. Can be 'download', 'noupdate', or 'arealist'"/> 
@@ -47,12 +46,12 @@
   <remap from="/time_ndt_matching" to="time_ndt_matching"/>
 
   <!-- Remap topics from external packages -->
-  <remap from="imu_raw" to="$(arg INTR_NS)/imu/imu_raw"/>
+  <remap from="imu_raw" to="$(optenv INTR_NS)/imu/imu_raw"/>
 
   <remap from="system_alert" to="/system_alert"/>
 
-  <remap from="bestpos" to="$(arg INTR_NS)/bestpos"/>
-  <remap from="dual_antenna_heading" to="$(arg INTR_NS)/gnss/dual_antenna_heading"/>
+  <remap from="bestpos" to="$(optenv INTR_NS)/bestpos"/>
+  <remap from="dual_antenna_heading" to="$(optenv INTR_NS)/gnss/dual_antenna_heading"/>
   
   <!-- <arg name="current_twist" default="current_twist" doc="Remapping of the twist topic used by the deadreckoner node"/>
   <arg name="current_odom" default="current_odom" doc="Remapping of the twist topic used by the deadreckoner node"/> -->
@@ -90,7 +89,7 @@
 
   <!-- Deadreckoner -->
   <include file="$(find deadreckoner)/launch/deadreckoner.launch">
-    <arg name="current_twist" value="$(arg INTR_NS)/vehicle/twist" />
+    <arg name="current_twist" value="$(optenv INTR_NS)/vehicle/twist" />
     <arg name="current_odom" value="vehicle/odom" />
   </include>
 
@@ -106,7 +105,7 @@
   </group>
 
   <!-- Ray Ground Filter -->
-  <remap from="/points_raw" to="$(arg INTR_NS)/lidar/points_raw"/>
+  <remap from="/points_raw" to="$(optenv INTR_NS)/lidar/points_raw"/>
   <include file="$(find points_preprocessor)/launch/ray_ground_filter.launch">
     <arg name="no_ground_point_topic" value="points_no_ground" />
     <arg name="ground_point_topic" value="points_ground" />

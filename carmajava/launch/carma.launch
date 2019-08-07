@@ -17,31 +17,23 @@
 <!--
 	carma.launch
 
-  The ros launch file for the CARMA ROS Network.
+  A the ros launch file for the CARMA3 ROS Network.
   Launches all the needed ros nodes and sets up the parameter server.
   Also sets up all static transforms used by tf2 within the system.
 
-  File is meant to be run on a configured vehicle pc.
-  Applies the appropriate arguments to the carma_src.launch file to launch on a vehicle
-  
-  Note: To ensure all ros processes are killed before launch use
-  pkill -f ros
+  File is meant to be run on a configured for execution environment.
 -->
 <launch>
   <!-- Override Required Paths -->
-  <arg name="arealist_path" default="$(find aw_platform)/map/arealist.txt" doc="The path of the package directory"/>
-   <arg name="load_type" value="noupdate"/>
-   <arg name="single_pcd_path" value="$(find aw_platform)/map/pcd_map.pcd"/>
-  <arg name="area" default="1x1"/>
+  <arg name="vehicle_config_dir" default="$(find carma)../../CARMAConfig/development"/>
+  <arg name="vehicle_calibration_dir" default="$(find carma)../../CARMAVehicleCalibration/development/vehicle"/>
+  <arg name="load_type" value="noupdate"/>
+  <arg name="single_pcd_path" value="$(find carma)/map/base_map.pcd"/>
+  <arg name="route_file_folder" value="$(find carma)/routes"/>
 
-  <!-- Startup Drivers With Main CARMA System -->
+  <!-- Startup with mock drivers -->
   <arg name="launch_drivers" default="true" doc="True if drivers are to be launched with the CARMA Platform, overrides mock_drivers arg if false"/>
-
-  <!-- Disable Mock Drivers -->
-  <arg name="mock_drivers" 
-    default=""
-    doc="List of driver node base names which will be launched as mock drivers"
-  />
+  <arg name="mock_drivers" default="can comms controller gnss radar imu lidar camera roadway_sensor"/>
 
   <!-- Rosbag Flag -->
   <arg name="use_rosbag" default="true" doc="Record a rosbag for the to 26 demo"/>

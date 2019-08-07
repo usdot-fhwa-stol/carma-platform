@@ -31,7 +31,7 @@ find_package(catkin REQUIRED COMPONENTS
   pacmod_msgs
   j2735_msgs
   novatel_gps_msgs
-  sensor_fusion
+  wgs84_utils
 )
 
 ## System dependencies are found with CMake's conventions
@@ -43,7 +43,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 
 catkin_package(
   CATKIN_DEPENDS roscpp std_msgs cav_msgs carma_utils automotive_platform_msgs
-                 geometry_msgs pacmod_msgs j2735_msgs novatel_gps_msgs sensor_fusion
+                 geometry_msgs pacmod_msgs j2735_msgs novatel_gps_msgs wgs84_utils
 )
 
 ###########

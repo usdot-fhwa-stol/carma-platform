@@ -33,7 +33,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
   tf2_geometry_msgs
   tf2
-  sensor_fusion
+  wgs84_utils
   cav_msgs
   cav_srvs
   message_filters
@@ -133,7 +133,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES gnss_to_map_convertor
-  CATKIN_DEPENDS geometry_msgs roscpp rospy std_msgs tf2_msgs sensor_fusion message_filters novatel_gps_msgs carma_utils tf2_geometry_msgs
+  CATKIN_DEPENDS geometry_msgs roscpp rospy std_msgs tf2_msgs wgs84_utils message_filters novatel_gps_msgs carma_utils tf2_geometry_msgs
 #  DEPENDS system_lib
 )
 

@@ -1,7 +1,6 @@
-Thanks for the contribution, this is awesome.
+<!-- Thanks for the contribution, this is awesome. -->
 
 # PR Details
-
 ## Description
 
 <!--- Describe your changes in detail -->

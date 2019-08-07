@@ -24,57 +24,6 @@ If not using simulated drivers they are activated if the respective mock argumen
 -->
 
 <launch>
-
-  <!-- Directory of Parameter Files -->
-  <arg name="CARMA_DIR" default="$(find carma)" doc="The path of the package directory"/>
-  <arg name="PARAM_DIR" default="$(arg CARMA_DIR)/launch/params" doc="Directory of yaml parameter files"/>
-
-  <!-- Simulation Usage -->
-  <!-- Simulation Usage -->
-  <arg name="mock_drivers"        default="" doc="List of driver node base names which will be launched as mock drivers"/>
-
-  <arg name="mock_can"            value="$(eval 'can' in arg('mock_drivers').split())"/>
-  <arg name="mock_comms"          value="$(eval 'comms' in arg('mock_drivers').split())"/>
-  <arg name="mock_controller"     value="$(eval 'controller' in arg('mock_drivers').split())"/>
-  <arg name="mock_gnss"           value="$(eval 'gnss' in arg('mock_drivers').split())"/>
-  <arg name="mock_radar"          value="$(eval 'radar' in arg('mock_drivers').split())"/>
-  <arg name="mock_imu"            value="$(eval 'imu' in arg('mock_drivers').split())"/>
-  <arg name="mock_lidar"          value="$(eval 'lidar' in arg('mock_drivers').split())"/>
-  <arg name="mock_camera"         value="$(eval 'camera' in arg('mock_drivers').split())"/>
-  <arg name="mock_roadway_sensor" value="$(eval 'roadway_sensor' in arg('mock_drivers').split())"/>
-
-  <!-- DSRC OBU Driver Node -->
-  <include unless="$(arg mock_comms)" file="$(find dsrc_driver)/launch/dsrc_node.launch"/>
-
-  <!-- PACMOD Controller Driver Node -->
-  <include unless="$(arg mock_controller)" file="$(find ssc_interface_wrapper)/launch/ssc_pacmod_driver.launch">
-    <arg name="pacmod_vehicle_type" default="LEXUS_RX_450H" />
-    <arg name="use_kvaser" default="true" />
-    <arg name="kvaser_hardware_id" default="10376" />
-    <arg name="kvaser_circuit_id" default="0" />
-  </include>
-
-  <!-- Novatel GNSS/IMU Driver Nodes -->
-  <include unless="$(arg mock_lidar)" file="$(find novatel_gps_driver)/launch/novatel_gps_driver_eth.launch">
-    <arg name="ip" value="192.168.74.10" />
-    <arg name="port" value="2000" />
-    <arg name="imu_rate" value="100" />
-    <arg name="frame_id" value="novatel_gnss" />
-    <arg name="imu_frame_id" value="novatel_imu" />
-  </include>
-
-  <!-- Velodyne Lidar Driver Nodes -->
-  <include unless="$(arg mock_lidar)" file="$(find velodyne_lidar_driver_wrapper)/launch/velodyne_lidar_driver.launch">
-    <arg name="frame_id" value="velodyne"/>
-    <arg name="device_ip" value="192.168.1.201"/>
-  </include>
-
-  <!-- TODO AVT Vimba Camera Left Driver Node -->
-  <!-- TODO AVT Vimba Camera Right Driver Node -->
-  <!-- TODO DelphiESR Front Driver Node -->
-  <!-- TODO Delphi Srr2 Front Left Driver Node -->
-  <!-- TODO Delphi Srr2 Front Right Driver Node -->
-  <!-- TODO Delphi Srr2 Rear Left Driver Node -->
-  <!-- TODO Delphi Srr2 Rear Right Driver Node -->
-
+  <arg name="mock_drivers" default="controller can comms gnss radar lidar camera roadway_sensor" />
+  <!-- File not used in development environment where only mock drivers are used -->
 </launch>
