@@ -87,7 +87,7 @@ cd ${old_pwd}
 ###
 if [ "${skip_autoware}" = true ]; then
   echo "Skipping Autoware build due to -x option"
-  source "${autoware_src}/ros/install/setup.bash"
+  source ${autoware_src}/ros/install/setup.bash
 else
   echo "Building Autoware required packages ${AUTOWARE_PACKAGE_SELECTION}"
 

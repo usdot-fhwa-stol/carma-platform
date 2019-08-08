@@ -22,7 +22,7 @@
 
   <!-- Simulated Driver Arguments -->
   <!-- Directory of Simulation Files -->
-  <arg name="DATA_DIR" default="$(find carma)/mock_drivers/src/config/data" doc="Directory of driver simulation data files"/>
+  <arg name="DATA_DIR" default="$(find carma)/mock_drivers/config/data" doc="Directory of driver simulation data files"/>
   
   <!-- Data Files TODO -->
   <arg name="can_data_file" value="$(arg DATA_DIR)/can.csv"/>
@@ -37,7 +37,7 @@
   <arg name="debug_node" default="" doc="Set to the java node base name to enable debugging on that node"/>
 
   <!-- Simulation Usage -->
-  <arg name="mock_drivers" default="controller can comms gnss radar lidar camera roadway_sensor" doc="List of driver node base names which will be launched as mock drivers"/>
+  <arg name="mock_drivers" default="controller can comms gnss radar lidar camera roadway_sensor imu" doc="List of driver node base names which will be launched as mock drivers"/>
 
   <arg name="mock_can"            value="$(eval 'can' in arg('mock_drivers').split())"/>
   <arg name="mock_comms"          value="$(eval 'comms' in arg('mock_drivers').split())"/>
