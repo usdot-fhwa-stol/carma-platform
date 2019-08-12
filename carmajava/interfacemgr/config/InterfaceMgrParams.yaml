@@ -6,4 +6,4 @@ driver_wait_time: 20
 
 # Integer: The number of ms in which a controller must send a robot_status update for interface manager to consider it still active
 # Units: ms
-controller_status_timeout: 500
+controller_status_timeout: 1000
