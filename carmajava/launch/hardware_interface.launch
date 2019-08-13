@@ -36,13 +36,13 @@
 
   <group if="$(arg launch_drivers)">
     <!-- Simulated Mock Drivers -->
-    <include file="mock_drivers.launch">
+    <include file="$(find carma)/launch/mock_drivers.launch">
       <arg name="debug_node" value="$(arg debug_node)"/>
       <arg name="mock_drivers" value="$(arg mock_drivers)"/>
     </include>
 
     <!-- Driver Launch File if Using Actual Drivers -->
-    <include file="drivers.launch">
+    <include file="$(find carma)/launch/drivers.launch">
       <arg name="mock_drivers" value="$(arg mock_drivers)" />
     </include>
   </group>
