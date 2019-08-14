@@ -45,6 +45,7 @@ namespace ui_integration
              * \return The exit status of this program
              */
             int run();
+
         protected:
             // Message/service callbacks
             bool registered_plugin_cb(cav_srvs::PluginListRequest& req, cav_srvs::PluginListResponse& res);
@@ -52,9 +53,7 @@ namespace ui_integration
             bool activate_plugin_cb(cav_srvs::PluginActivationRequest& req, cav_srvs::PluginActivationResponse& res);
             bool guidance_acivation_cb(cav_srvs::SetGuidanceActiveRequest& req, cav_srvs::SetGuidanceActiveResponse& res);
             void robot_status_cb(cav_msgs::RobotEnabled msg);
-
-            // Helper functions
-            void populate_plugin_list_response(cav_srvs::PluginListResponse& res);
+            void plugin_discovery_cb(cav_msgs::Plugin msg);
 
             // Service servers 
             ros::ServiceServer registered_plugin_service_server_;
@@ -69,13 +68,23 @@ namespace ui_integration
 
             // Subscribers
             ros::Subscriber robot_status_subscriber_;
+            ros::Subscriber plugin_discovery_subscriber_;
 
             // Node handles
             ros::CARMANodeHandle nh_, pnh_;
 
-            std::string plugin_name_;
-            std::string plugin_version_;
+            // a list to keep track of plugin status
+            std::vector<cav_msgs::Plugin> plugins;
+
+            // required plugins
+            std::vector<std::string> required_plugins;
 
             std::atomic<bool> guidance_activated_;
+        
+        private:
+            // Helper functions
+            void populate_plugin_list_response(cav_srvs::PluginListResponse& res);
+            void populate_active_plugin_list_response(cav_srvs::PluginListResponse& res);
+            bool is_required_plugin(std::string plugin_name, std::string version);
     };
 }

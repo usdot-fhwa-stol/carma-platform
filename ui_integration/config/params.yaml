@@ -16,8 +16,7 @@
 # Units: hz
 spin_rate_hz: 10
 
-# String: The plugin name to report to the UI
-plugin_name: Autoware Plugin
-
-# String: The version number of the plugin to report to the UI
-plugin_version: 1.0.0
+# List of String: Required plugins for the platform to be functional
+required_plugins:
+  - Autoware Plugin 1.0.0
+  - Pure Pursuit Plugin 1.0.0

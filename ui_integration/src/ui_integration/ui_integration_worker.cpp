@@ -26,13 +26,22 @@ namespace ui_integration
 
     void UIIntegrationWorker::populate_plugin_list_response(cav_srvs::PluginListResponse& res)
     {
-        cav_msgs::Plugin p;
-        p.activated = true;
-        p.available = true;
-        p.required = true;
-        p.name = plugin_name_;
-        p.versionId = plugin_version_;
-        res.plugins.push_back(p);
+        for(int i = i; i < plugins.size(); ++i)
+        {
+            res.plugins.push_back(plugins[i]);
+        }
+    }
+
+    void UIIntegrationWorker::populate_active_plugin_list_response(cav_srvs::PluginListResponse& res)
+    {
+        for(int i = i; i < plugins.size(); ++i)
+        {
+            if(plugins[i].activated)
+            {
+                res.plugins.push_back(plugins[i]);
+            }
+            
+        }
     }
 
     bool UIIntegrationWorker::registered_plugin_cb(cav_srvs::PluginListRequest& req, cav_srvs::PluginListResponse& res)
@@ -43,14 +52,55 @@ namespace ui_integration
 
     bool UIIntegrationWorker::active_plugin_cb(cav_srvs::PluginListRequest& req, cav_srvs::PluginListResponse& res)
     {
-        populate_plugin_list_response(res);
+        populate_active_plugin_list_response(res);
         return true;
     }
 
     bool UIIntegrationWorker::activate_plugin_cb(cav_srvs::PluginActivationRequest& req, cav_srvs::PluginActivationResponse& res)
     {
-        res.newState = true;
-        return true;
+        for(int i = 0; i < plugins.size(); ++i)
+        {
+            // Go through the plugin list to find the corresponding plugin that the user wants to activate
+            if(req.pluginName.compare(plugins[i].name) && req.pluginName.compare(plugins[i].versionId))
+            {
+                plugins[i].activated = req.activated;
+                res.newState = plugins[i].activated;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void UIIntegrationWorker::plugin_discovery_cb(cav_msgs::Plugin msg)
+    {
+        // if plugin list does not have anything, add it to the list and return
+        if(plugins.size() == 0)
+        {
+            // check if a plugin required when it is newly discovered
+            msg.required = is_required_plugin(msg.name, msg.versionId);
+            plugins.push_back(msg);
+            return;
+        }
+        // if we have some entries in the list, check if the plugin is already in the record
+        size_t index = 0;
+        while(index < plugins.size())
+        {
+            // check version id to be safe, but in the normal case we do not allow same plugin with different version id existing together
+            if(plugins[index].name.compare(msg.name) == 0 && plugins[index].versionId.compare(msg.versionId) == 0)
+            {
+                // only availability can be changed by plugin itself
+                plugins[index].available = msg.available;
+                // this break will make sure that "index" variable stays at the location of matching entry if it exists
+                break;
+            }
+            ++index;
+        }
+        // index points to the end of pllugin list without a matching entry
+        if(index == plugins.size())
+        {
+            msg.required = is_required_plugin(msg.name, msg.versionId);
+            plugins.push_back(msg);
+        }
     }
 
     void UIIntegrationWorker::robot_status_cb(cav_msgs::RobotEnabled msg)
@@ -88,7 +138,19 @@ namespace ui_integration
         return true;
     }
 
-    int UIIntegrationWorker::run() 
+    bool UIIntegrationWorker::is_required_plugin(std::string plugin_name, std::string version)
+    {
+        for(int i = 0; i < required_plugins.size(); i++)
+        {
+            if(plugin_name.append(" " + version).compare(required_plugins[i]) == 0)
+            {
+               return true;
+            }
+        }
+        return false;
+    }
+
+    int UIIntegrationWorker::run()
     {
         ROS_INFO("Initalizing UI integration node...");
         // Init our ROS objects
@@ -99,6 +161,7 @@ namespace ui_integration
         guidance_activated_.store(false);
         state_publisher_ = nh_.advertise<cav_msgs::GuidanceState>("state", 5);
         robot_status_subscriber_ = nh_.subscribe<cav_msgs::RobotEnabled>("robot_status", 5, &UIIntegrationWorker::robot_status_cb, this);
+        plugin_discovery_subscriber_ = nh_.subscribe<cav_msgs::Plugin>("plugin_discovery", 5, &UIIntegrationWorker::plugin_discovery_cb, this);
         plugin_publisher_ = nh_.advertise<cav_msgs::PluginList>("plugins/available_plugins", 5, true);
         enable_client_ = nh_.serviceClient<cav_srvs::SetEnableRobotic>("controller/enable_robotic");
 
@@ -106,10 +169,7 @@ namespace ui_integration
         // Default rate 10.0 Hz
         double spin_rate = pnh_.param<double>("spin_rate_hz", 10.0);
 
-        plugin_name_ = pnh_.param<std::string>("plugin_name", "Autoware Plugin");
-        plugin_version_ = pnh_.param<std::string>("plugin_version", "1.0.0");
-
-        ROS_INFO_STREAM("UI Integration node configured for plugin: " << plugin_name_ << ":" << plugin_version_);
+        pnh_.getParam("required_plugins", required_plugins);
 
         // Spin until system shutdown
         ROS_INFO_STREAM("UI Integration node initialized, spinning at " << spin_rate << "hz...");
