@@ -31,15 +31,15 @@
 -->
 <launch>
   <!-- Directory of vehicle config parameters -->
-  <arg name="vehicle_config_dir" default="$(find carma)" doc="The directory continaing vehicle config type parameters"/> <!-- TODO where to put the default -->
-  <arg name="vehicle_calibration_dir" default="$(find carma)" doc="The directory continaing vehicle calibration type parameters"/>
+  <arg name="vehicle_config_dir" default="$(find carma)../../CARMAConfig/development" doc="The directory continaing vehicle config type parameters"/>
+  <arg name="vehicle_calibration_dir" default="$(find carma)../../CARMAVehicleCalibration/development/vehicle" doc="The directory continaing vehicle calibration type parameters"/>
 
   <!-- Startup Drivers With Main CARMA System -->
   <arg name="launch_drivers" default="true" doc="True if drivers are to be launched with the CARMA Platform, overrides mock_drivers arg if false"/>
 
   <!-- Simulation Usage -->
   <arg name="mock_drivers" 
-    default="controller can comms gnss radar lidar camera roadway_sensor"
+    default="controller can comms gnss radar lidar camera roadway_sensor imu"
     doc="List of driver node base names which will be launched as mock drivers"
   />
 
@@ -58,18 +58,16 @@
   <arg name="JVM_LOG_OPTS" value="-Djava.util.logging.config.file=$(arg log_config)"/>
   <!-- Apply logging properties to all java nodes using JAVA_OPTS-->
   <env name="JAVA_OPTS" value="$(arg JVM_LOG_OPTS)"/>
-  <!-- Set package path for use with relative file paths -->
-  <param name="package_path" value="$(find carma)"/>
   <!-- Generate log name configuration file -->
-  <param name="log_name" type="str" command="$(find carma)/../engineering_tools/generate_log_name.sh"/>
+  <param name="log_name" type="str" command="$(find carma)/scripts/generate_log_name.sh"/>
   <!-- ROS Bag -->
-  <arg name="use_rosbag" default="false" doc="Record a rosbag"/>
+  <arg name="use_rosbag" default="true" doc="Record a rosbag"/>
   
   <!-- Map files to load -->
   <arg name="arealist_path" default="arealist.txt" doc="Path to the arealist.txt file which contains the paths and dimensions of each map cell to load"/>
   <arg name="area" default="5x5" doc="Dimensions of the square of cells loaded at runtime using the download and arealist load types"/>
   <arg name="load_type" default="noupdate" doc="Enum of the map loading approach to use. Can be 'download', 'noupdate', or 'arealist'"/> 
-  <arg name="single_pcd_path" default="pcd_map.pcd" doc="Path to the map pcd file if using the noupdate load type"/>
+  <arg name="single_pcd_path" default="$(find carma)/map/base_map.pcd" doc="Path to the map pcd file if using the noupdate load type"/>
   <arg name="area" default="1x1" doc="Dimensions of the square of cells loaded at runtime using the download and arealist load types"/>
 
   <!-- Route File Locations -->
@@ -77,26 +75,27 @@
 
   <!-- Load Vehicle Characteristics -->
   <rosparam command="load" file="$(arg vehicle_calibration_dir)/identifiers/UniqueVehicleParams.yaml"/>
-  <rosparam command="load" file="$(arg vehicle_config_dir)/config/VehicleConfigParams.yaml"/>
+  <rosparam command="load" file="$(arg vehicle_config_dir)/VehicleConfigParams.yaml"/>
 
   <!-- Transforms Stack -->
   <group ns="$(env CARMA_TF_NS)">
-    <include file="transforms.launch">
+    <include file="$(find carma)/launch/transforms.launch">
       <arg name="URDF_FILE" value="$(arg vehicle_calibration_dir)/urdf/carma.urdf"/>
     </include>
   </group>
 
   <!-- Hardware Interface Stack -->
   <group ns="$(env CARMA_INTR_NS)">
-    <include file="hardware_interface.launch">
+    <include file="$(find carma)/launch/hardware_interface.launch">
       <arg name="mock_drivers" value="$(arg mock_drivers)"/>
       <arg name="debug_node" value="$(arg debug_node)"/>
+      <arg name="launch_drivers" value="$(arg launch_drivers)"/>
     </include>
   </group>
 
   <!-- Localization Stack -->
   <group ns="$(env CARMA_LOCZ_NS)">
-    <include file="localization.launch">
+    <include file="$(find carma)/launch/localization.launch">
       <arg name="arealist_path" value="$(arg arealist_path)"/>
       <arg name="area" value="$(arg area)"/>
       <arg name="load_type" value="$(arg load_type)"/>
@@ -106,24 +105,24 @@
 
   <!-- Comms Messaging Stack -->
   <group ns="$(env CARMA_MSG_NS)">
-    <include file="message.launch">
+    <include file="$(find carma)/launch/message.launch">
       <arg name="debug_node" value="$(arg debug_node)"/>
     </include>
   </group>
 
   <!-- Environment Perception Stack -->
   <group ns="$(env CARMA_ENV_NS)">
-    <include file="environment.launch"/>
+    <include file="$(find carma)/launch/environment.launch"/>
   </group>
 
   <!-- Guidance Stack -->
   <group ns="$(env CARMA_GUIDE_NS)">
-    <include file="guidance.launch"/>
+    <include file="$(find carma)/launch/guidance.launch"/>
   </group>
 
   <!-- UI Stack -->
   <group ns="$(env CARMA_UI_NS)">
-    <include file="ui.launch"/>
+    <include file="$(find carma)/launch/ui.launch"/>
   </group>
 
   <!-- TODO should there be a data collection launch file. Record Rosbag of all topics excluding /rosout and CAN messages since they may contain sensetive data -->

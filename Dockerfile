@@ -74,11 +74,4 @@ LABEL org.label-schema.build-date=${BUILD_DATE}
 COPY --from=install --chown=carma /opt/carma /opt/carma
 COPY --from=install --chown=carma /root/.bashrc /home/carma/.bashrc
 
-ADD carmajava/launch/* /opt/carma/vehicle/
-
-RUN sudo chown carma:carma -R /opt/carma/vehicle && \
-        ln -sf /opt/carma/vehicle/carma.urdf /opt/carma/urdf/carma.urdf && \
-        ln -sf /opt/carma/vehicle/carma.launch /opt/carma/launch/carma.launch && \
-        ln -sf /opt/carma/vehicle/drivers.launch /opt/carma/drivers/drivers.launch 
-
 CMD "roslaunch carma carma_docker.launch"

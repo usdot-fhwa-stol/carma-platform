@@ -65,9 +65,9 @@ add_dependencies(route_generator_library ${catkin_EXPORTED_TARGETS})
 ## Install ##
 #############
 
-install(DIRECTORY include/${PROJECT_NAME}/
+install(DIRECTORY include
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.hpp"
+  FILES_MATCHING PATTERN "*.h"
   PATTERN ".svn" EXCLUDE
 )
 

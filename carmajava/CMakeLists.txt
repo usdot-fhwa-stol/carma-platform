@@ -64,14 +64,26 @@ install(DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_GLOBAL_MAVEN_DESTINATION}/gov/
 
 # Instal Binaries from Gradle Build folder
 install(DIRECTORY
+        launch
+        routes
+        map
+        scripts
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+install(DIRECTORY
         interfacemgr/build
+        interfacemgr/config
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/interfacemgr)
 install(DIRECTORY
         message/build
+        message/config
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/message)
 install(DIRECTORY
         mock_drivers/build
+        mock_drivers/config
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/mock_drivers)
+install(DIRECTORY
+        ui/config
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/ui)
 install(DIRECTORY
         test
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/test)

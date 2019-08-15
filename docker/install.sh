@@ -19,7 +19,9 @@
 
 set -ex
 
-source /opt/autoware.ai/ros/install/setup.bash
+source /opt/ros/kinetic/setup.bash
+source /opt/autoware.ai/ros/install/setup.bash --extend
+
 cd ~/carma_ws
 rosdep update
 rosdep install --from-paths src --ignore-src -y
