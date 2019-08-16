@@ -28,7 +28,7 @@ namespace ui_integration
                     currentGuidanceState = State::DRIVERS_READY;
                 } else if(signal == Signal::SHUTDOWN)
                 {
-                    currentGuidanceState = State::SHUTDOWN;
+                    currentGuidanceState = State::OFF;
                 }
                 break;
             case State::DRIVERS_READY:
@@ -37,11 +37,11 @@ namespace ui_integration
                     currentGuidanceState = State::ACTIVE;
                 } else if(signal == Signal::SHUTDOWN)
                 {
-                    currentGuidanceState = State::SHUTDOWN;
+                    currentGuidanceState = State::OFF;
                 }
                 break;
             case State::ACTIVE:
-                if(signal == Signal::ENGAGED)
+                if(signal == Signal::ENGAGE)
                 {
                     currentGuidanceState = State::ENGAGED;
                 } else if(signal == Signal::DISENGAGED)
@@ -49,19 +49,31 @@ namespace ui_integration
                     currentGuidanceState = State::DRIVERS_READY;
                 } else if(signal == Signal::SHUTDOWN)
                 {
-                    currentGuidanceState = State::SHUTDOWN;
+                    currentGuidanceState = State::OFF;
                 }
                 break;
             case State::ENGAGED:
                 if(signal == Signal::DISENGAGED)
                 {
                     currentGuidanceState = State::DRIVERS_READY;
+                } else if(signal == Signal::OVERRIDE)
+                {
+                    currentGuidanceState = State::INACTIVE;
                 } else if(signal == Signal::SHUTDOWN)
                 {
-                    currentGuidanceState = State::SHUTDOWN;
+                    currentGuidanceState = State::OFF;
                 }
                 break;
-            case State::SHUTDOWN:
+            case State::INACTIVE:
+                if(signal == Signal::DISENGAGED)
+                {
+                    currentGuidanceState = State::DRIVERS_READY;
+                } else if(signal == Signal::SHUTDOWN)
+                {
+                    currentGuidanceState = State::OFF;
+                }
+                break;
+            case State::OFF:
                 break;
         }
     }
@@ -82,17 +94,21 @@ namespace ui_integration
         if(msg)
         {
             onGuidanceSignal(Signal::ACTIVATED);
+        } else
+        {
+            onGuidanceSignal(Signal::DISENGAGED);
         }
+        
     }
 
     void GuidanceStateMachine::onRoboticStatus(const cav_msgs::RobotEnabledConstPtr& msg)
     {
         if(msg->robot_enabled && msg->robot_active)
         {
-            onGuidanceSignal(Signal::ENGAGED);
+            onGuidanceSignal(Signal::ENGAGE);
         } else if(msg->robot_enabled && !msg->robot_active)
         {
-            onGuidanceSignal(Signal::DISENGAGED);
+            onGuidanceSignal(Signal::OVERRIDE);
         }
     }
 

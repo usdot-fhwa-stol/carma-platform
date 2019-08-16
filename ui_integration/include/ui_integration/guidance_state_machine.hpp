@@ -30,9 +30,10 @@ namespace ui_integration
             {
                 INITIALIZED = 0,
                 ACTIVATED = 1,
-                ENGAGED = 2,
+                ENGAGE = 2,
                 DISENGAGED = 3,
                 SHUTDOWN = 4,
+                OVERRIDE = 5,
             };
 
             enum State
@@ -42,7 +43,7 @@ namespace ui_integration
                 ACTIVE = 3,
                 ENGAGED = 4,
                 INACTIVE = 5,
-                SHUTDOWN = 0,
+                OFF = 0,
             };
 
             /*!

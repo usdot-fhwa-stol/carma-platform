@@ -53,7 +53,7 @@ namespace ui_integration
             bool active_plugin_cb(cav_srvs::PluginListRequest& req, cav_srvs::PluginListResponse& res);
             bool activate_plugin_cb(cav_srvs::PluginActivationRequest& req, cav_srvs::PluginActivationResponse& res);
             bool guidance_acivation_cb(cav_srvs::SetGuidanceActiveRequest& req, cav_srvs::SetGuidanceActiveResponse& res);
-            void robot_status_cb(cav_msgs::RobotEnabledConstPtr& msg);
+            void robot_status_cb(const cav_msgs::RobotEnabledConstPtr& msg);
             void plugin_discovery_cb(cav_msgs::Plugin msg);
             void system_alert_cb(const cav_msgs::SystemAlertConstPtr& msg);
 
@@ -90,6 +90,6 @@ namespace ui_integration
             void populate_plugin_list_response(cav_srvs::PluginListResponse& res);
             void populate_active_plugin_list_response(cav_srvs::PluginListResponse& res);
             bool is_required_plugin(std::string plugin_name, std::string version);
-            bool spin_cb()
+            bool spin_cb();
     };
 }

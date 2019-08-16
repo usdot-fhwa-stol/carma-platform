@@ -119,7 +119,7 @@ namespace ui_integration
         }
     }
 
-    void UIIntegrationWorker::robot_status_cb(cav_msgs::RobotEnabledConstPtr& msg)
+    void UIIntegrationWorker::robot_status_cb(const cav_msgs::RobotEnabledConstPtr& msg)
     {
         gsm.onRoboticStatus(msg);
     }

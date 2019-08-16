@@ -153,7 +153,8 @@ file(GLOB_RECURSE headers */*.hpp */*.h)
 add_executable(${PROJECT_NAME}_node 
   ${headers} 
   src/ui_integration/ui_integration_node.cpp
-  src/ui_integration/ui_integration_worker.cpp)
+  src/ui_integration/ui_integration_worker.cpp
+  src/ui_integration/guidance_state_machine.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -164,7 +165,7 @@ add_executable(${PROJECT_NAME}_node
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
+add_library(guidance_state_machine_library src/ui_integration/guidance_state_machine.cpp)
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
@@ -214,6 +215,9 @@ install(TARGETS ${PROJECT_NAME}_node
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
+
+catkin_add_gmock(${PROJECT_NAME}-test test/test_guidance_state_machine.cpp)
+target_link_libraries(${PROJECT_NAME}-test guidance_state_machine_library ${catkin_LIBRARIES})
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
