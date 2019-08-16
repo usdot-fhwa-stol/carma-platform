@@ -40,8 +40,19 @@ namespace ui_integration
             {
                 res.plugins.push_back(plugins[i]);
             }
-            
         }
+    }
+
+    bool UIIntegrationWorker::is_required_plugin(std::string plugin_name, std::string version)
+    {
+        for(int i = 0; i < required_plugins.size(); i++)
+        {
+            if(plugin_name.append(" " + version).compare(required_plugins[i]) == 0)
+            {
+               return true;
+            }
+        }
+        return false;
     }
 
     bool UIIntegrationWorker::registered_plugin_cb(cav_srvs::PluginListRequest& req, cav_srvs::PluginListResponse& res)
@@ -69,6 +80,11 @@ namespace ui_integration
             }
         }
         return false;
+    }
+
+    void UIIntegrationWorker::system_alert_cb(const cav_msgs::SystemAlertConstPtr& msg)
+    {
+        gsm.onSystemAlert(msg);
     }
 
     void UIIntegrationWorker::plugin_discovery_cb(cav_msgs::Plugin msg)
@@ -103,56 +119,42 @@ namespace ui_integration
         }
     }
 
-    void UIIntegrationWorker::robot_status_cb(cav_msgs::RobotEnabled msg)
+    void UIIntegrationWorker::robot_status_cb(cav_msgs::RobotEnabledConstPtr& msg)
     {
-        bool guidance_active = guidance_activated_.load();
-        cav_msgs::GuidanceState out;
-        if (guidance_active && msg.robot_active) {
-            out.state = cav_msgs::GuidanceState::ENGAGED;
-        } else if (guidance_active && msg.robot_enabled) {
-            out.state = cav_msgs::GuidanceState::ACTIVE;
-        } else {
-            out.state = cav_msgs::GuidanceState::DRIVERS_READY;
-        }
-
-        state_publisher_.publish(out);
+        gsm.onRoboticStatus(msg);
     }
 
     bool UIIntegrationWorker::guidance_acivation_cb(cav_srvs::SetGuidanceActiveRequest& req, cav_srvs::SetGuidanceActiveResponse& res)
     {
         // Translate message type from GuidanceActiveRequest to SetEnableRobotic
         ROS_INFO_STREAM("Request for guidance activation recv'd with status " << req.guidance_active);
+        gsm.onSetGuidanceActive(req.guidance_active);
         cav_srvs::SetEnableRobotic srv;
-        if (req.guidance_active) {
+        if (gsm.getCurrentState() == GuidanceStateMachine::ENGAGED) {
             srv.request.set = cav_srvs::SetEnableRobotic::Request::ENABLE;
-            guidance_activated_.store(true);
             res.guidance_status = true;
         } else {
             srv.request.set = cav_srvs::SetEnableRobotic::Request::DISABLE;
-            guidance_activated_.store(false);
             res.guidance_status = false;
         }
-
         enable_client_.call(srv);
-        
         return true;
     }
 
-    bool UIIntegrationWorker::is_required_plugin(std::string plugin_name, std::string version)
+    bool UIIntegrationWorker::spin_cb()
     {
-        for(int i = 0; i < required_plugins.size(); i++)
-        {
-            if(plugin_name.append(" " + version).compare(required_plugins[i]) == 0)
-            {
-               return true;
-            }
-        }
-        return false;
+        cav_msgs::GuidanceState state;
+        state.state = gsm.getCurrentState();
+        state_publisher_.publish(state);
+        return true;
     }
 
     int UIIntegrationWorker::run()
     {
         ROS_INFO("Initalizing UI integration node...");
+        using std::placeholders::_1;
+        std::function<void(const cav_msgs::SystemAlertConstPtr&)> system_alert_cb_function = std::bind(&UIIntegrationWorker::system_alert_cb, this, _1);
+        ros::CARMANodeHandle::setSystemAlertCallback(system_alert_cb_function);
         // Init our ROS objects
         registered_plugin_service_server_ = nh_.advertiseService("plugins/get_registered_plugins", &UIIntegrationWorker::registered_plugin_cb, this);
         active_plugin_service_server_ = nh_.advertiseService("plugins/get_active_plugins", &UIIntegrationWorker::active_plugin_cb, this);
@@ -173,6 +175,8 @@ namespace ui_integration
 
         // Spin until system shutdown
         ROS_INFO_STREAM("UI Integration node initialized, spinning at " << spin_rate << "hz...");
+        std::function<bool(void)> spin_cb_function = std::bind(&UIIntegrationWorker::spin_cb, this);
+        ros::CARMANodeHandle::setSpinCallback(spin_cb_function);
         ros::CARMANodeHandle::setSpinRate(spin_rate);
         ros::CARMANodeHandle::spin();
     } 
