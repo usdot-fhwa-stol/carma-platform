@@ -90,6 +90,7 @@
       <arg name="mock_drivers" value="$(arg mock_drivers)"/>
       <arg name="debug_node" value="$(arg debug_node)"/>
       <arg name="launch_drivers" value="$(arg launch_drivers)"/>
+      <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
     </include>
   </group>
 
@@ -100,6 +101,7 @@
       <arg name="area" value="$(arg area)"/>
       <arg name="load_type" value="$(arg load_type)"/>
       <arg name="single_pcd_path" value="$(arg single_pcd_path)"/>
+      <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
     </include>
   </group>
 
@@ -117,7 +119,9 @@
 
   <!-- Guidance Stack -->
   <group ns="$(env CARMA_GUIDE_NS)">
-    <include file="$(find carma)/launch/guidance.launch"/>
+    <include file="$(find carma)/launch/guidance.launch">
+      <arg name="route_file_folder" value="$(arg route_file_folder)"/>
+    </include>
   </group>
 
   <!-- UI Stack -->
@@ -126,5 +130,5 @@
   </group>
 
   <!-- TODO should there be a data collection launch file. Record Rosbag of all topics excluding /rosout and CAN messages since they may contain sensetive data -->
-  <node pkg="rosbag" type="record" name="rosbag_node" args="record -o /opt/carma/logs/ -a -x '/rosout(.*)|(.*)/received_messages|(.*)/sent_messages'" if="$(arg use_rosbag)" />
+  <node pkg="rosbag" type="record" name="rosbag_node" args="record -o /opt/carma/logs/ --lz4 -a -x '/rosout(.*)|(.*)/received_messages|(.*)/sent_messages|(.*)/ds_fusion/(.*)|(.*)/scan'" if="$(arg use_rosbag)" />
 </launch>
