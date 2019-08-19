@@ -42,7 +42,7 @@
   <!-- Example: -->
   <!-- <author email="jane.doe@example.com">Jane Doe</author> -->
 
-  <depend>catkin</depend>
+  <buildtool_depend>catkin</buildtool_depend>
   <depend>cav_msgs</depend>
   <depend>cav_srvs</depend>
   <depend>roscpp</depend>
