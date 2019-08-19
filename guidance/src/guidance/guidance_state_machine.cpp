@@ -68,6 +68,9 @@ namespace guidance
                 if(signal == Signal::DISENGAGED)
                 {
                     currentGuidanceState = State::DRIVERS_READY;
+                } else if(signal == Signal::ENGAGE)
+                {
+                    currentGuidanceState = State::ENGAGED;
                 } else if(signal == Signal::SHUTDOWN)
                 {
                     currentGuidanceState = State::OFF;
