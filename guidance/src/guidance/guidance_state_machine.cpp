@@ -14,9 +14,9 @@
  * the License.
  */
 
-#include "ui_integration/guidance_state_machine.hpp"
+#include "guidance/guidance_state_machine.hpp"
 
-namespace ui_integration
+namespace guidance
 {
     void GuidanceStateMachine::onGuidanceSignal(Signal signal)
     {

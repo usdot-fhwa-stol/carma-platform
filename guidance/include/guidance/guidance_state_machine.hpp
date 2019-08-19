@@ -20,7 +20,7 @@
 #include <cav_msgs/RobotEnabled.h>
 #include <cav_msgs/GuidanceState.h>
 
-namespace ui_integration
+namespace guidance
 {
     class GuidanceStateMachine
     {
@@ -47,7 +47,7 @@ namespace ui_integration
             };
 
             /*!
-             * \brief Default constructor for UIIntegrationWorker
+             * \brief Default constructor for GuidanceStateMachine
              */
             GuidanceStateMachine();
 

@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-# Integer: The rate at which the UI Integration Node will process message
+# Integer: The rate at which the Guidance Node will process message
 # Units: hz
 spin_rate_hz: 10
 

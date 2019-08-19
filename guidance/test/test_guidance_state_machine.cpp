@@ -14,12 +14,12 @@
  * the License.
  */
 
-#include "ui_integration/guidance_state_machine.hpp"
+#include "guidance/guidance_state_machine.hpp"
 #include <gtest/gtest.h>
 
 TEST(GuidanceStateMachineTest, testStates)
 {
-    ui_integration::GuidanceStateMachine gsm;
+    guidance::GuidanceStateMachine gsm;
     // test initial state
     EXPECT_EQ(1, static_cast<int>(gsm.getCurrentState()));
     cav_msgs::SystemAlert alert;

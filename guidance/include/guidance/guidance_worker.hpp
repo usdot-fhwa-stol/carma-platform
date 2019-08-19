@@ -28,20 +28,20 @@
 #include <std_msgs/Bool.h>
 #include <cav_msgs/GuidanceState.h>
 #include <cav_msgs/RobotEnabled.h>
-#include "ui_integration/guidance_state_machine.hpp"
+#include "guidance/guidance_state_machine.hpp"
 
-namespace ui_integration
+namespace guidance
 {
-    class UIIntegrationWorker
+    class GuidanceWorker
     {
         public:
             /*!
-             * \brief Default constructor for UIIntegrationWorker
+             * \brief Default constructor for GuidanceWorker
              */
-            UIIntegrationWorker();
+            GuidanceWorker();
 
             /*!
-             * \brief Begin normal execution of UIIntegration worker. Will take over control flow of program and exit from here.
+             * \brief Begin normal execution of Guidance worker. Will take over control flow of program and exit from here.
              * 
              * \return The exit status of this program
              */

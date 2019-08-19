@@ -14,17 +14,17 @@
  * the License.
  */
 
-#include "ui_integration/ui_integration_worker.hpp"
+#include "guidance/guidance_worker.hpp"
 
-namespace ui_integration
+namespace guidance
 {
-    UIIntegrationWorker::UIIntegrationWorker() 
+    GuidanceWorker::GuidanceWorker() 
     {
         nh_ = ros::CARMANodeHandle{};
         pnh_ = ros::CARMANodeHandle{"~"};
     }
 
-    void UIIntegrationWorker::populate_plugin_list_response(cav_srvs::PluginListResponse& res)
+    void GuidanceWorker::populate_plugin_list_response(cav_srvs::PluginListResponse& res)
     {
         for(int i = i; i < plugins.size(); ++i)
         {
@@ -32,7 +32,7 @@ namespace ui_integration
         }
     }
 
-    void UIIntegrationWorker::populate_active_plugin_list_response(cav_srvs::PluginListResponse& res)
+    void GuidanceWorker::populate_active_plugin_list_response(cav_srvs::PluginListResponse& res)
     {
         for(int i = i; i < plugins.size(); ++i)
         {
@@ -43,7 +43,7 @@ namespace ui_integration
         }
     }
 
-    bool UIIntegrationWorker::is_required_plugin(std::string plugin_name, std::string version)
+    bool GuidanceWorker::is_required_plugin(std::string plugin_name, std::string version)
     {
         for(int i = 0; i < required_plugins.size(); i++)
         {
@@ -55,19 +55,19 @@ namespace ui_integration
         return false;
     }
 
-    bool UIIntegrationWorker::registered_plugin_cb(cav_srvs::PluginListRequest& req, cav_srvs::PluginListResponse& res)
+    bool GuidanceWorker::registered_plugin_cb(cav_srvs::PluginListRequest& req, cav_srvs::PluginListResponse& res)
     {
         populate_plugin_list_response(res);
         return true;
     }
 
-    bool UIIntegrationWorker::active_plugin_cb(cav_srvs::PluginListRequest& req, cav_srvs::PluginListResponse& res)
+    bool GuidanceWorker::active_plugin_cb(cav_srvs::PluginListRequest& req, cav_srvs::PluginListResponse& res)
     {
         populate_active_plugin_list_response(res);
         return true;
     }
 
-    bool UIIntegrationWorker::activate_plugin_cb(cav_srvs::PluginActivationRequest& req, cav_srvs::PluginActivationResponse& res)
+    bool GuidanceWorker::activate_plugin_cb(cav_srvs::PluginActivationRequest& req, cav_srvs::PluginActivationResponse& res)
     {
         for(int i = 0; i < plugins.size(); ++i)
         {
@@ -82,12 +82,12 @@ namespace ui_integration
         return false;
     }
 
-    void UIIntegrationWorker::system_alert_cb(const cav_msgs::SystemAlertConstPtr& msg)
+    void GuidanceWorker::system_alert_cb(const cav_msgs::SystemAlertConstPtr& msg)
     {
         gsm.onSystemAlert(msg);
     }
 
-    void UIIntegrationWorker::plugin_discovery_cb(cav_msgs::Plugin msg)
+    void GuidanceWorker::plugin_discovery_cb(cav_msgs::Plugin msg)
     {
         // if plugin list does not have anything, add it to the list and return
         if(plugins.size() == 0)
@@ -119,12 +119,12 @@ namespace ui_integration
         }
     }
 
-    void UIIntegrationWorker::robot_status_cb(const cav_msgs::RobotEnabledConstPtr& msg)
+    void GuidanceWorker::robot_status_cb(const cav_msgs::RobotEnabledConstPtr& msg)
     {
         gsm.onRoboticStatus(msg);
     }
 
-    bool UIIntegrationWorker::guidance_acivation_cb(cav_srvs::SetGuidanceActiveRequest& req, cav_srvs::SetGuidanceActiveResponse& res)
+    bool GuidanceWorker::guidance_acivation_cb(cav_srvs::SetGuidanceActiveRequest& req, cav_srvs::SetGuidanceActiveResponse& res)
     {
         // Translate message type from GuidanceActiveRequest to SetEnableRobotic
         ROS_INFO_STREAM("Request for guidance activation recv'd with status " << req.guidance_active);
@@ -141,7 +141,7 @@ namespace ui_integration
         return true;
     }
 
-    bool UIIntegrationWorker::spin_cb()
+    bool GuidanceWorker::spin_cb()
     {
         cav_msgs::GuidanceState state;
         state.state = gsm.getCurrentState();
@@ -149,21 +149,21 @@ namespace ui_integration
         return true;
     }
 
-    int UIIntegrationWorker::run()
+    int GuidanceWorker::run()
     {
-        ROS_INFO("Initalizing UI integration node...");
+        ROS_INFO("Initalizing guidance node...");
         using std::placeholders::_1;
-        std::function<void(const cav_msgs::SystemAlertConstPtr&)> system_alert_cb_function = std::bind(&UIIntegrationWorker::system_alert_cb, this, _1);
+        std::function<void(const cav_msgs::SystemAlertConstPtr&)> system_alert_cb_function = std::bind(&GuidanceWorker::system_alert_cb, this, _1);
         ros::CARMANodeHandle::setSystemAlertCallback(system_alert_cb_function);
         // Init our ROS objects
-        registered_plugin_service_server_ = nh_.advertiseService("plugins/get_registered_plugins", &UIIntegrationWorker::registered_plugin_cb, this);
-        active_plugin_service_server_ = nh_.advertiseService("plugins/get_active_plugins", &UIIntegrationWorker::active_plugin_cb, this);
-        activate_plugin_service_server_ = nh_.advertiseService("plugins/activate_plugin", &UIIntegrationWorker::activate_plugin_cb, this);
-        guidance_activate_service_server_ = nh_.advertiseService("set_guidance_active", &UIIntegrationWorker::guidance_acivation_cb, this);
+        registered_plugin_service_server_ = nh_.advertiseService("plugins/get_registered_plugins", &GuidanceWorker::registered_plugin_cb, this);
+        active_plugin_service_server_ = nh_.advertiseService("plugins/get_active_plugins", &GuidanceWorker::active_plugin_cb, this);
+        activate_plugin_service_server_ = nh_.advertiseService("plugins/activate_plugin", &GuidanceWorker::activate_plugin_cb, this);
+        guidance_activate_service_server_ = nh_.advertiseService("set_guidance_active", &GuidanceWorker::guidance_acivation_cb, this);
         guidance_activated_.store(false);
         state_publisher_ = nh_.advertise<cav_msgs::GuidanceState>("state", 5);
-        robot_status_subscriber_ = nh_.subscribe<cav_msgs::RobotEnabled>("robot_status", 5, &UIIntegrationWorker::robot_status_cb, this);
-        plugin_discovery_subscriber_ = nh_.subscribe<cav_msgs::Plugin>("plugin_discovery", 5, &UIIntegrationWorker::plugin_discovery_cb, this);
+        robot_status_subscriber_ = nh_.subscribe<cav_msgs::RobotEnabled>("robot_status", 5, &GuidanceWorker::robot_status_cb, this);
+        plugin_discovery_subscriber_ = nh_.subscribe<cav_msgs::Plugin>("plugin_discovery", 5, &GuidanceWorker::plugin_discovery_cb, this);
         plugin_publisher_ = nh_.advertise<cav_msgs::PluginList>("plugins/available_plugins", 5, true);
         enable_client_ = nh_.serviceClient<cav_srvs::SetEnableRobotic>("controller/enable_robotic");
 
@@ -174,8 +174,8 @@ namespace ui_integration
         pnh_.getParam("required_plugins", required_plugins);
 
         // Spin until system shutdown
-        ROS_INFO_STREAM("UI Integration node initialized, spinning at " << spin_rate << "hz...");
-        std::function<bool(void)> spin_cb_function = std::bind(&UIIntegrationWorker::spin_cb, this);
+        ROS_INFO_STREAM("Guidance node initialized, spinning at " << spin_rate << "hz...");
+        std::function<bool(void)> spin_cb_function = std::bind(&GuidanceWorker::spin_cb, this);
         ros::CARMANodeHandle::setSpinCallback(spin_cb_function);
         ros::CARMANodeHandle::setSpinRate(spin_rate);
         ros::CARMANodeHandle::spin();
