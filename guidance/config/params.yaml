@@ -12,12 +12,11 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-# Integer: The rate at which the UI Integration Node will process message
+# Integer: The rate at which the Guidance Node will process message
 # Units: hz
 spin_rate_hz: 10
 
-# String: The plugin name to report to the UI
-plugin_name: Autoware Plugin
-
-# String: The version number of the plugin to report to the UI
-plugin_version: 1.0.0
+# List of String: Required plugins for the platform to be functional
+required_plugins:
+  - Autoware Plugin 1.0.0
+  - Pure Pursuit Plugin 1.0.0

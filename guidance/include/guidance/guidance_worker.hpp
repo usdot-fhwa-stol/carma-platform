@@ -28,33 +28,34 @@
 #include <std_msgs/Bool.h>
 #include <cav_msgs/GuidanceState.h>
 #include <cav_msgs/RobotEnabled.h>
+#include "guidance/guidance_state_machine.hpp"
 
-namespace ui_integration
+namespace guidance
 {
-    class UIIntegrationWorker
+    class GuidanceWorker
     {
         public:
             /*!
-             * \brief Default constructor for UIIntegrationWorker
+             * \brief Default constructor for GuidanceWorker
              */
-            UIIntegrationWorker();
+            GuidanceWorker();
 
             /*!
-             * \brief Begin normal execution of UIIntegration worker. Will take over control flow of program and exit from here.
+             * \brief Begin normal execution of Guidance worker. Will take over control flow of program and exit from here.
              * 
              * \return The exit status of this program
              */
             int run();
+
         protected:
             // Message/service callbacks
             bool registered_plugin_cb(cav_srvs::PluginListRequest& req, cav_srvs::PluginListResponse& res);
             bool active_plugin_cb(cav_srvs::PluginListRequest& req, cav_srvs::PluginListResponse& res);
             bool activate_plugin_cb(cav_srvs::PluginActivationRequest& req, cav_srvs::PluginActivationResponse& res);
             bool guidance_acivation_cb(cav_srvs::SetGuidanceActiveRequest& req, cav_srvs::SetGuidanceActiveResponse& res);
-            void robot_status_cb(cav_msgs::RobotEnabled msg);
-
-            // Helper functions
-            void populate_plugin_list_response(cav_srvs::PluginListResponse& res);
+            void robot_status_cb(const cav_msgs::RobotEnabledConstPtr& msg);
+            void plugin_discovery_cb(cav_msgs::Plugin msg);
+            void system_alert_cb(const cav_msgs::SystemAlertConstPtr& msg);
 
             // Service servers 
             ros::ServiceServer registered_plugin_service_server_;
@@ -69,13 +70,27 @@ namespace ui_integration
 
             // Subscribers
             ros::Subscriber robot_status_subscriber_;
+            ros::Subscriber plugin_discovery_subscriber_;
 
             // Node handles
             ros::CARMANodeHandle nh_, pnh_;
 
-            std::string plugin_name_;
-            std::string plugin_version_;
+            // a list to keep track of plugin status
+            std::vector<cav_msgs::Plugin> plugins;
+
+            // required plugins
+            std::vector<std::string> required_plugins;
 
             std::atomic<bool> guidance_activated_;
+        
+        private:
+            // Guidance state machine
+            GuidanceStateMachine gsm;
+            // Helper functions
+            void process_required_plugin_list(std::vector<std::string> list);
+            void populate_plugin_list_response(cav_srvs::PluginListResponse& res);
+            void populate_active_plugin_list_response(cav_srvs::PluginListResponse& res);
+            bool is_required_plugin(std::string plugin_name, std::string version);
+            bool spin_cb();
     };
 }

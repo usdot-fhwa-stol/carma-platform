@@ -15,14 +15,14 @@
  */
 
 #include <ros/ros.h>
-#include "ui_integration/ui_integration_worker.hpp"
+#include "guidance/guidance_worker.hpp"
 
 /*!
- * \brief Main entry point for UI Integration package
+ * \brief Main entry point for Guidance package
  */
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "ui_integration");
-    ui_integration::UIIntegrationWorker worker;
+    ros::init(argc, argv, "guidance");
+    guidance::GuidanceWorker worker;
     return worker.run();
 }

@@ -13,7 +13,7 @@
 # the License.
 
 cmake_minimum_required(VERSION 2.8.3)
-project(ui_integration)
+project(guidance)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
@@ -152,8 +152,9 @@ include_directories(
 file(GLOB_RECURSE headers */*.hpp */*.h)
 add_executable(${PROJECT_NAME}_node 
   ${headers} 
-  src/ui_integration/ui_integration_node.cpp
-  src/ui_integration/ui_integration_worker.cpp)
+  src/guidance/guidance_node.cpp
+  src/guidance/guidance_worker.cpp
+  src/guidance/guidance_state_machine.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -164,7 +165,7 @@ add_executable(${PROJECT_NAME}_node
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
+add_library(guidance_state_machine_library src/guidance/guidance_state_machine.cpp)
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
@@ -191,6 +192,13 @@ install(TARGETS ${PROJECT_NAME}_node
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
+## Mark cpp header files for installation
+# install(DIRECTORY include/${PROJECT_NAME}/
+#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+#   FILES_MATCHING PATTERN "*.h"
+#   PATTERN ".svn" EXCLUDE
+# )
+
 # Mark cpp header files for installation
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
@@ -198,12 +206,20 @@ install(DIRECTORY include/${PROJECT_NAME}/
   PATTERN ".svn" EXCLUDE
 )
 
-## Mark other files for installation (e.g. launch and bag files, etc.)
+# Mark other files for installation (e.g. launch and bag files, etc.)
 install(DIRECTORY
   launch
   config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
+
+## Mark other files for installation (e.g. launch and bag files, etc.)
+# install(FILES
+#   # myfile1
+#   # myfile2
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# )
 
 #############
 ## Testing ##
@@ -214,6 +230,9 @@ install(DIRECTORY
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
+
+catkin_add_gmock(${PROJECT_NAME}-test test/test_guidance_state_machine.cpp)
+target_link_libraries(${PROJECT_NAME}-test guidance_state_machine_library ${catkin_LIBRARIES})
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
