@@ -99,7 +99,8 @@
 
   <!-- Ray Ground Filter -->
   <remap from="/points_raw" to="$(optenv CARMA_INTR_NS)/lidar/points_raw"/>
-  <include file="$(find points_preprocessor)/launch/ray_ground_filter.launch">
+  <include file="$(find points_preprocessor)/launch/ray_ground_filter_file_config.launch">
+    <arg name="vehicle_clibration_params_file" value="$(arg vehicle_calibration_dir)/points_preprocessor/ray_ground_filter/calibration.yaml"/>
     <arg name="no_ground_point_topic" value="points_no_ground" />
     <arg name="ground_point_topic" value="points_ground" />
   </include>
