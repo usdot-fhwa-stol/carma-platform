@@ -47,7 +47,7 @@ namespace guidance
     {
         for(int i = 0; i < required_plugins.size(); i++)
         {
-            if(plugin_name.append(" " + version).compare(required_plugins[i]) == 0)
+            if(plugin_name.append(version).compare(required_plugins[i]) == 0)
             {
                return true;
             }
@@ -72,7 +72,7 @@ namespace guidance
         for(int i = 0; i < plugins.size(); ++i)
         {
             // Go through the plugin list to find the corresponding plugin that the user wants to activate
-            if(req.pluginName.compare(plugins[i].name) && req.pluginName.compare(plugins[i].versionId))
+            if(req.pluginName.compare(plugins[i].name) == 0 && req.pluginName.compare(plugins[i].versionId) == 0)
             {
                 plugins[i].activated = req.activated;
                 res.newState = plugins[i].activated;
@@ -107,11 +107,11 @@ namespace guidance
                 // only availability can be changed by plugin itself
                 plugins[index].available = msg.available;
                 // this break will make sure that "index" variable stays at the location of matching entry if it exists
-                break;
+                return;
             }
             ++index;
         }
-        // index points to the end of pllugin list without a matching entry
+        // index points to the end of plugin list without a matching entry
         if(index == plugins.size())
         {
             msg.required = is_required_plugin(msg.name, msg.versionId);
@@ -149,12 +149,18 @@ namespace guidance
         return true;
     }
 
+    void GuidanceWorker::process_required_plugin_list(std::vector<std::string> list)
+    {
+        for(auto name = list.begin(); name != list.end(); ++name)
+        {
+            name->erase(std::remove(name->begin(), name->end(), ' '), name->end());
+        }
+    }
+
     int GuidanceWorker::run()
     {
         ROS_INFO("Initalizing guidance node...");
-        using std::placeholders::_1;
-        std::function<void(const cav_msgs::SystemAlertConstPtr&)> system_alert_cb_function = std::bind(&GuidanceWorker::system_alert_cb, this, _1);
-        ros::CARMANodeHandle::setSystemAlertCallback(system_alert_cb_function);
+        ros::CARMANodeHandle::setSystemAlertCallback(std::bind(&GuidanceWorker::system_alert_cb, this, std::placeholders::_1));
         // Init our ROS objects
         registered_plugin_service_server_ = nh_.advertiseService("plugins/get_registered_plugins", &GuidanceWorker::registered_plugin_cb, this);
         active_plugin_service_server_ = nh_.advertiseService("plugins/get_active_plugins", &GuidanceWorker::active_plugin_cb, this);
@@ -172,11 +178,11 @@ namespace guidance
         double spin_rate = pnh_.param<double>("spin_rate_hz", 10.0);
 
         pnh_.getParam("required_plugins", required_plugins);
+        process_required_plugin_list(required_plugins);
 
         // Spin until system shutdown
         ROS_INFO_STREAM("Guidance node initialized, spinning at " << spin_rate << "hz...");
-        std::function<bool(void)> spin_cb_function = std::bind(&GuidanceWorker::spin_cb, this);
-        ros::CARMANodeHandle::setSpinCallback(spin_cb_function);
+        ros::CARMANodeHandle::setSpinCallback(std::bind(&GuidanceWorker::spin_cb, this));
         ros::CARMANodeHandle::setSpinRate(spin_rate);
         ros::CARMANodeHandle::spin();
     } 

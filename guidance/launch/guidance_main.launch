@@ -21,7 +21,7 @@ Loads parameters and configures logging for node
  -->
 <launch>
     <!-- UI Integration Node -->
-    <node pkg="guidance" type="guidance_node" name="guidance_node">
+    <node pkg="guidance" type="guidance_node" name="guidance_node" output="screen">
         <rosparam command="load" file="$(find guidance)/config/params.yaml" />
     </node>
 </launch>

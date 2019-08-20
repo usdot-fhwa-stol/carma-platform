@@ -87,6 +87,7 @@ namespace guidance
             // Guidance state machine
             GuidanceStateMachine gsm;
             // Helper functions
+            void process_required_plugin_list(std::vector<std::string> list);
             void populate_plugin_list_response(cav_srvs::PluginListResponse& res);
             void populate_active_plugin_list_response(cav_srvs::PluginListResponse& res);
             bool is_required_plugin(std::string plugin_name, std::string version);
