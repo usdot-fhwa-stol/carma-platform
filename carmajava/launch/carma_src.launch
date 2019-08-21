@@ -71,7 +71,7 @@
   <arg name="area" default="1x1" doc="Dimensions of the square of cells loaded at runtime using the download and arealist load types"/>
 
   <!-- Route File Locations -->
-  <arg name="route_file_folder" default="$(find carma)/routes" doc="Path of folder containing routes to load"/>
+  <arg name="route_file_folder" default="$(find carma)/routes/" doc="Path of folder containing routes to load"/>
 
   <!-- Load Vehicle Characteristics -->
   <rosparam command="load" file="$(arg vehicle_calibration_dir)/identifiers/UniqueVehicleParams.yaml"/>
