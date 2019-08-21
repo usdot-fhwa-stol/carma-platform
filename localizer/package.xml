@@ -17,9 +17,9 @@
 -->
 
 <package format="2">
-  <name>ndt_pose_tf_wrapper</name>
+  <name>localizer</name>
   <version>1.0.0</version>
-  <description>The ndt_pose_tf_wrapper package that takes in pose messages from ndt_matching node and publishes as tf2 transformation messages</description>
+  <description>The localizer package provides ndt or GNSS localization selection and publishes pose info as tf2 transformation messages</description>
   <maintainer email="carma@todo.todo">carma</maintainer>
   <license>Apache License 2.0</license>
   <author email="carma@todo.todo">carma</author>
@@ -30,4 +30,5 @@
   <depend>tf2</depend>
   <depend>tf2_ros</depend>	
   <depend>tf2_geometry_msgs</depend>
+  <depend>autoware_msgs</depend>
 </package>
