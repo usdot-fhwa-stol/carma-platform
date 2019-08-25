@@ -21,12 +21,20 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <autoware_msgs/NDTStat.h>
 
 namespace localizer
 {
 
+    enum LocalizerMode {
+        NDT = 0,
+        GNSS = 1,
+        AUTO = 2,
+    };
+
     class Localizer
     {
+
         public:
 
             Localizer();
@@ -55,9 +63,15 @@ namespace localizer
             double score_upper_limit_;
             int unreliable_message_upper_limit_;
             int localization_mode_;
+            int ndt_unreliable_counter;
 
             // callbacks
             void ndtPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
+            void gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
+            void ndtScoreCallback(const autoware_msgs::NDTStatConstPtr& msg);
+
+            // helper function
+            void publishPoseStamped(const geometry_msgs::PoseStampedConstPtr& msg);
 
     };
 	

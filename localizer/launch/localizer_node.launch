@@ -14,5 +14,5 @@
 <?xml version="1.0"?>
 <launch>
     <rosparam command="load" file="$(find localizer)/config/parameters.yaml"/>
-    <node pkg="localizer" type="localizer" name="localizer_node" output="screen"/>
+    <node pkg="localizer" type="localizer" name="localizer" output="screen"/>
 </launch>

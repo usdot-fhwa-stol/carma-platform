@@ -18,7 +18,11 @@
 
 namespace localizer
 {
-	Localizer::Localizer() : spin_rate_(10.0), score_upper_limit_(2.0), unreliable_message_upper_limit_(3), localization_mode_(0) {}
+	Localizer::Localizer() : spin_rate_(10.0),
+	                         score_upper_limit_(2.0),
+							 unreliable_message_upper_limit_(3),
+							 localization_mode_(0),
+							 ndt_unreliable_counter(0) {}
 
 	void Localizer::ndtPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
 	{
@@ -36,17 +40,71 @@ namespace localizer
 		br_.sendTransform(transformStamped);
 	}
 
+    void Localizer::publishPoseStamped(const geometry_msgs::PoseStampedConstPtr& msg)
+	{
+		pose_pub_.publish(msg);
+		ndtPoseCallback(msg);
+	}
+
+    void Localizer::ndtPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
+	{
+		if(localization_mode_ == LocalizerMode::NDT)
+		{
+			publishPoseStamped(msg);
+		} else if(localization_mode_ == LocalizerMode::AUTO)
+		{
+			if(ndt_unreliable_counter <= unreliable_message_upper_limit_)
+			{
+				publishPoseStamped(msg);
+			}
+		}
+	}
+    
+    void Localizer::ndtScoreCallback(const autoware_msgs::NDTStatConstPtr& msg)
+	{
+		if(msg->score > score_upper_limit_)
+		{
+			// only increase counter when it is smaller than or equal to the upper limit to avoid overflow
+			if(ndt_unreliable_counter <= unreliable_message_upper_limit_)
+			{
+				ndt_unreliable_counter++;
+			}
+		} else
+		{
+			ndt_unreliable_counter = 0;
+		}
+	}
+
+	void Localizer::gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
+	{
+		if(localization_mode_ == LocalizerMode::GNSS)
+		{
+			publishPoseStamped(msg);
+		} else if(localization_mode_ == LocalizerMode::AUTO)
+		{
+			if(ndt_unreliable_counter > unreliable_message_upper_limit_)
+			{
+				publishPoseStamped(msg);
+			}
+		}
+	}
+
 	void Localizer::run()
 	{
-		
+		// initialize node handles
 		nh_.reset(new ros::CARMANodeHandle());
 		pnh_.reset(new ros::CARMANodeHandle("~"));
+		// get params
 		pnh_->param<double>("spin_rate", spin_rate_, 10.0);
 		pnh_->param<double>("score_upper_limit", score_upper_limit_, 2.0);
 		pnh_->param<int>("unreliable_message_upper_limit", unreliable_message_upper_limit_, 3);
 		pnh_->param<int>("localization_mode", localization_mode_, 0);
-
-        
+		// initialize subscribers
+		ndt_pose_sub_ = nh_->subscribe("ndt_pose", 5, &Localizer::ndtPoseCallback, this);
+		ndt_score_sub_ = nh_->subscribe("ndt_stat", 5, &Localizer::ndtScoreCallback, this);
+		gnss_pose_sub_ = nh_->subscribe("gnss_pose", 5, &Localizer::gnssPoseCallback, this);
+		// initialize publishers
+		pose_pub_ = nh_->advertise<geometry_msgs::PoseStamped>("selected_pose", 5);
 	}
 }
 

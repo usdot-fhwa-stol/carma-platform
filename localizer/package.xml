@@ -31,4 +31,5 @@
   <depend>tf2_ros</depend>	
   <depend>tf2_geometry_msgs</depend>
   <depend>autoware_msgs</depend>
+  <depend>carma_utils</depend>
 </package>
