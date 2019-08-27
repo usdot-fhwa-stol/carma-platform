@@ -36,13 +36,12 @@ namespace gnss_to_map_convertor {
 
     return pose;
   }
-        
+
   geometry_msgs::PoseWithCovarianceStamped poseFromGnss(
     const tf2::Transform& baselink_in_sensor,
     const tf2::Transform& sensor_in_ned_heading,
-    const sensor_msgs::NavSatFixConstPtr& fix_msg,
-    const novatel_gps_msgs::NovatelDualAntennaHeadingConstPtr& heading_msg) {
-
+    const gps_common::GPSFixConstPtr& fix_msg
+  ) {
     const double lat = fix_msg->latitude * wgs84_utils::DEG2RAD;
     const double lon = fix_msg->longitude * wgs84_utils::DEG2RAD;
     const double alt = fix_msg->altitude;
@@ -53,8 +52,8 @@ namespace gnss_to_map_convertor {
 
     const tf2::Vector3 identity_trans(0,0,0);
     tf2::Quaternion heading_in_ned_quat;
-    //heading_in_ned_quat.setRPY(0, heading_msg->pitch * wgs84_utils::DEG2RAD, heading_msg->heading);
-    heading_in_ned_quat.setRPY(0, 0, heading_msg->heading * wgs84_utils::DEG2RAD);
+    //heading_in_ned_quat.setRPY(fix_msg->roll, heading_msg->pitch * wgs84_utils::DEG2RAD, fix_msg->track);
+    heading_in_ned_quat.setRPY(0, 0, fix_msg->track * wgs84_utils::DEG2RAD);
 
     const tf2::Transform T_n_h(heading_in_ned_quat, identity_trans);
 

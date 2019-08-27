@@ -24,7 +24,7 @@ namespace gnss_to_map_convertor {
 
   GNSSToMapNode::GNSSToMapNode() : tfListener_(tfBuffer_), p_cnh_("~") {}
 
-  void GNSSToMapNode::fixCb(const novatel_gps_msgs::NovatelPositionConstPtr& fix_msg, const novatel_gps_msgs::NovatelDualAntennaHeadingConstPtr& heading_msg) {
+  void GNSSToMapNode::fixCb(const gps_common::GPSFixConstPtr& fix_msg) {
     // Get sensor and base_link transforms if not yet loaded
     if (!baselink_in_sensor_set_) {
       try {
@@ -37,14 +37,14 @@ namespace gnss_to_map_convertor {
       baselink_in_sensor_set_ = true;
     }
 
-    sensor_msgs::NavSatFix nav_fix_msg;
-    nav_fix_msg.latitude = fix_msg->lat;
-    nav_fix_msg.longitude = fix_msg->lon;
-    nav_fix_msg.altitude = fix_msg->height;
-    sensor_msgs::NavSatFixConstPtr fix_ptr(new sensor_msgs::NavSatFix(nav_fix_msg));
+    gps_common::GPSFix nav_fix_msg;
+    nav_fix_msg.latitude = fix_msg->latitude;
+    nav_fix_msg.longitude = fix_msg->longitude;
+    nav_fix_msg.altitude = fix_msg->altitude;
+    gps_common::GPSFixConstPtr fix_ptr(new gps_common::GPSFix(nav_fix_msg));
 
     geometry_msgs::PoseWithCovarianceStamped ecef_pose = gnss_to_map_convertor::poseFromGnss(
-      baselink_in_sensor_, sensor_in_ned_, fix_ptr, heading_msg
+      baselink_in_sensor_, sensor_in_ned_, fix_ptr
     ); 
     ecef_pose.header.frame_id = earth_frame_; // Set correct frame id
 
@@ -84,22 +84,7 @@ namespace gnss_to_map_convertor {
     // Map pose publisher
     map_pose_pub_ = cnh_.advertise<geometry_msgs::PoseStamped>("gnss_pose", 10, true);
     // Fix Subscriber
-    fix_sub_.subscribe(cnh_, "bestpos", 1);
-    // Heading subscriber
-    heading_sub_.subscribe(cnh_, "dual_antenna_heading", 1);
-
-    // Heading pose synchronizer
-    message_filters::Synchronizer<SyncPolicy> sync(SyncPolicy(10), fix_sub_, heading_sub_);
-
-    sync.registerCallback(boost::bind<void>([this] (
-      const novatel_gps_msgs::NovatelPositionConstPtr& m0,
-      const novatel_gps_msgs::NovatelDualAntennaHeadingConstPtr& m1) -> void {
-        try {
-          this->fixCb(m0,m1);
-        } catch(const std::exception& e) {
-          ros::CARMANodeHandle::handleException(e);
-        }},
-      _1,_2));
+    fix_sub_ = cnh_.subscribe("gnss_fix_fused", 1, &GNSSToMapNode::fixCb, this);
 
     // Spin
     cnh_.setSpinRate(20);

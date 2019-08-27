@@ -23,6 +23,7 @@
 #include <novatel_gps_msgs/NovatelDualAntennaHeading.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/Pose.h>
+#include <gps_common/GPSFix.h>
 
 /**
  * \class GNSSToMapNode
@@ -33,13 +34,29 @@
  */
 namespace gnss_to_map_convertor
 {
+  /**
+   * \brief Generates a pose for a vehicle in a map from given the transform to that frame and the gnss fix and heading
+   * 
+   * \param baselink_in_sensor Transform describing the location of the base_link frame in the gnss sensor frame
+   * \param sensor_in_ned_heading Transform describing the location of the sensor frame in the frame in which that sensor reports its heading
+   * \param fix_msg The message containing gnss fix and heading information
+   * 
+   * \return The pose in the map frame
+   */ 
   geometry_msgs::PoseWithCovarianceStamped poseFromGnss(
     const tf2::Transform& baselink_in_sensor,
     const tf2::Transform& sensor_in_ned_heading,
-    const sensor_msgs::NavSatFixConstPtr& fix_msg, 
-    const novatel_gps_msgs::NovatelDualAntennaHeadingConstPtr& heading_msg
+    const gps_common::GPSFixConstPtr& fix_msg
   );
 
+  /**
+   * \brief Generates a pose message for a vehicle in the map frame when provided with that vehicles location in the earth frame and the maps location in the earth frame
+   * 
+   * \param baselink_in_earth Transform describing location of base_link frame in the earth frame
+   * \param map_in_earth Transform describing location of map frame in the earth frame
+   * 
+   * \return geometry_msgs::Pose containing the pose of the vehicle in the map frame
+   */ 
   geometry_msgs::Pose ecefTFToMapPose(const tf2::Transform& baselink_in_earth, const tf2::Transform& map_in_earth);
 
 };
