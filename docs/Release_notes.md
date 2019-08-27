@@ -92,7 +92,7 @@ CARMAPlatform pre-release version 3.0.0 is the first step to integrating Autowar
 -PR 13: Add a copy of the cruising widget to be usable with the Autoware plugin.  
 -PR 12: Remove IM for controller topics.  
 -PR 11: Refactoring the Docker versioning and image dependencies.  
-**Repository: CARMADriverUtils**  
+**Repository: CARMAUtils**  
 -PR 11: Update driver types for CARMA3.  
 -PR 9: Add code coverage metrics to Sonar Cloud.  
 -PR 8: Update comments.  
