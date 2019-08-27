@@ -19,6 +19,7 @@
 -->
 <launch>
 
+  <arg name="vehicle_calibration_dir" default="$(find carma)../../CARMAVehicleCalibration/development/vehicle" doc="The directory continaing vehicle calibration type parameters"/>
   <arg name="area" default="5x5" doc="Dimensions of the square of cells loaded at runtime using the download and arealist load types"/>
   <arg name="arealist_path" default="arealist.txt" doc="Path to the arealist.txt file which contains the paths and dimensions of each map cell to load"/>
   <arg name="load_type" default="noupdate" doc="Enum of the map loading approach to use. Can be 'download', 'noupdate', or 'arealist'"/> 
@@ -46,12 +47,12 @@
   <remap from="/time_ndt_matching" to="time_ndt_matching"/>
 
   <!-- Remap topics from external packages -->
-  <remap from="imu_raw" to="$(optenv INTR_NS)/imu/imu_raw"/>
+  <remap from="imu_raw" to="$(optenv CARMA_INTR_NS)/imu/imu_raw"/>
 
   <remap from="system_alert" to="/system_alert"/>
 
-  <remap from="bestpos" to="$(optenv INTR_NS)/bestpos"/>
-  <remap from="dual_antenna_heading" to="$(optenv INTR_NS)/gnss/dual_antenna_heading"/>
+  <remap from="bestpos" to="$(optenv CARMA_INTR_NS)/bestpos"/>
+  <remap from="dual_antenna_heading" to="$(optenv CARMA_INTR_NS)/gnss/dual_antenna_heading"/>
   
   <!-- <arg name="current_twist" default="current_twist" doc="Remapping of the twist topic used by the deadreckoner node"/>
   <arg name="current_odom" default="current_odom" doc="Remapping of the twist topic used by the deadreckoner node"/> -->
@@ -66,17 +67,9 @@
 
   <!-- NDT Matching-->
   <!-- This namesapce sets the parameters which are not set by default in the ndt_matching.launch file -->
-  <!-- These parameters are not in the ndt_matching node private namespace-->
-  <!-- TODO resolve code duplication. These parameters already exist in base_link->velodyne tf -->
+  <!-- These parameters are not in the ndt_matching node private namespace -->
 
-  <param name="localizer" value="velodyne" />
-  <param name="tf_x" value="1.02" />
-  <param name="tf_y" value="0.0" />
-  <param name="tf_z" value="2.23" />
-  <param name="tf_roll" value="0.0" />
-  <param name="tf_pitch" value="0.0" />
-  <param name="tf_yaw" value="0.0" />
-  
+  <rosparam command="load" file="$(arg vehicle_calibration_dir)/lidar_localizer/ndt_matching/params.yaml"/>
 
   <include file="$(find lidar_localizer)/launch/ndt_matching.launch">
     <arg name="get_height" value="true" />
@@ -89,15 +82,15 @@
 
   <!-- Deadreckoner -->
   <include file="$(find deadreckoner)/launch/deadreckoner.launch">
-    <arg name="current_twist" value="$(optenv INTR_NS)/vehicle/twist" />
+    <arg name="current_twist" value="$(optenv CARMA_INTR_NS)/vehicle/twist" />
     <arg name="current_odom" value="vehicle/odom" />
   </include>
 
   <!-- Voxel Grid Filter -->
   <group>
-  <node pkg="rostopic" type="rostopic" name="config_voxel_grid_filter_rostopic"
-	args="pub -l config/voxel_grid_filter autoware_config_msgs/ConfigVoxelGridFilter '{voxel_leaf_size: 4.0, measurement_range: 100.0}'"
-  />
+    <node pkg="rostopic" type="rostopic" name="config_voxel_grid_filter_rostopic"
+    args="pub -l config/voxel_grid_filter autoware_config_msgs/ConfigVoxelGridFilter '{voxel_leaf_size: 4.0, measurement_range: 100.0}'"
+    />
     <remap from="/points_raw" to="ray_ground_filter/points_no_ground"/>
     <include file="$(find points_downsampler)/launch/points_downsample_remappable.launch">
       <arg name="node_name" value="voxel_grid_filter" />
@@ -105,8 +98,9 @@
   </group>
 
   <!-- Ray Ground Filter -->
-  <remap from="/points_raw" to="$(optenv INTR_NS)/lidar/points_raw"/>
-  <include file="$(find points_preprocessor)/launch/ray_ground_filter.launch">
+  <remap from="/points_raw" to="$(optenv CARMA_INTR_NS)/lidar/points_raw"/>
+  <include file="$(find points_preprocessor)/launch/ray_ground_filter_file_config.launch">
+    <arg name="vehicle_clibration_params_file" value="$(arg vehicle_calibration_dir)/points_preprocessor/ray_ground_filter/calibration.yaml"/>
     <arg name="no_ground_point_topic" value="points_no_ground" />
     <arg name="ground_point_topic" value="points_ground" />
   </include>
