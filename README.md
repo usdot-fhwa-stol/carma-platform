@@ -77,7 +77,7 @@ The CARMA Platform is distributed as a set of multiple independent packages host
 ### General System Utilites
 * [CARMAWebUi](https://github.com/usdot-fhwa-stol/CARMAWebUi)
 * [CARMAMsgs](https://github.com/usdot-fhwa-stol/CARMAMsgs)
-* [CARMADriverUtils](https://github.com/usdot-fhwa-stol/CARMADriverUtils)
+* [CARMAUtils](https://github.com/usdot-fhwa-stol/CARMAUtils)
 
 A full list of available packages may be found at in the [USDOT FHWA STOL](https://github.com/usdot-fhwa-stol) Github organization.
 
