@@ -55,7 +55,6 @@ namespace localizer
 		{
                         if(ndt_unreliable_counter <= unreliable_message_upper_limit_)
 			{
-			    ROS_WARN_STREAM("source: NDT");
                             publishPoseStamped(msg);
 			}
 		}
@@ -77,7 +76,6 @@ namespace localizer
                             --ndt_unreliable_counter;
                         }
 		}
-                ROS_WARN_STREAM("counter: " << ndt_unreliable_counter);
 	}
 
 	void Localizer::gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
@@ -90,7 +88,6 @@ namespace localizer
                         if(ndt_unreliable_counter > unreliable_message_upper_limit_)
 			{
 				publishPoseStamped(msg);
-                                ROS_WARN_STREAM("source: GNSS");
 			}
 		}
 	}
