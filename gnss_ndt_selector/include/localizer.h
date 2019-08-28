@@ -72,6 +72,7 @@ namespace localizer
 
             // helper function
             void publishPoseStamped(const geometry_msgs::PoseStampedConstPtr& msg);
+            void publishTransform(const geometry_msgs::PoseStampedConstPtr& msg);
 
     };
 	

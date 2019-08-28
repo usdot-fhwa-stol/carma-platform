@@ -19,7 +19,7 @@
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "localizer");
+    ros::init(argc, argv, "gnss_ndt_selector");
     localizer::Localizer node;
     node.run();
     return 0;

@@ -20,11 +20,11 @@ namespace localizer
 {
 	Localizer::Localizer() : spin_rate_(10.0),
 	                         score_upper_limit_(2.0),
-							 unreliable_message_upper_limit_(3),
-							 localization_mode_(0),
-							 ndt_unreliable_counter(0) {}
+				 unreliable_message_upper_limit_(3),
+				 localization_mode_(0),
+				 ndt_unreliable_counter(0) {}
 
-	void Localizer::ndtPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
+	void Localizer::publishTransform(const geometry_msgs::PoseStampedConstPtr& msg)
 	{
 		geometry_msgs::TransformStamped transformStamped;
 		transformStamped.header.stamp = msg->header.stamp;
@@ -43,7 +43,7 @@ namespace localizer
     void Localizer::publishPoseStamped(const geometry_msgs::PoseStampedConstPtr& msg)
 	{
 		pose_pub_.publish(msg);
-		ndtPoseCallback(msg);
+		publishTransform(msg);
 	}
 
     void Localizer::ndtPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
@@ -53,9 +53,10 @@ namespace localizer
 			publishPoseStamped(msg);
 		} else if(localization_mode_ == LocalizerMode::AUTO)
 		{
-			if(ndt_unreliable_counter <= unreliable_message_upper_limit_)
+                        if(ndt_unreliable_counter <= unreliable_message_upper_limit_)
 			{
-				publishPoseStamped(msg);
+			    ROS_WARN_STREAM("source: NDT");
+                            publishPoseStamped(msg);
 			}
 		}
 	}
@@ -65,14 +66,18 @@ namespace localizer
 		if(msg->score > score_upper_limit_)
 		{
 			// only increase counter when it is smaller than or equal to the upper limit to avoid overflow
-			if(ndt_unreliable_counter <= unreliable_message_upper_limit_)
+			if(ndt_unreliable_counter <= unreliable_message_upper_limit_ * 2)
 			{
 				ndt_unreliable_counter++;
 			}
 		} else
 		{
-			ndt_unreliable_counter = 0;
+			if(ndt_unreliable_counter != 0)
+                        {
+                            --ndt_unreliable_counter;
+                        }
 		}
+                ROS_WARN_STREAM("counter: " << ndt_unreliable_counter);
 	}
 
 	void Localizer::gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
@@ -82,9 +87,10 @@ namespace localizer
 			publishPoseStamped(msg);
 		} else if(localization_mode_ == LocalizerMode::AUTO)
 		{
-			if(ndt_unreliable_counter > unreliable_message_upper_limit_)
+                        if(ndt_unreliable_counter > unreliable_message_upper_limit_)
 			{
 				publishPoseStamped(msg);
+                                ROS_WARN_STREAM("source: GNSS");
 			}
 		}
 	}
@@ -105,6 +111,9 @@ namespace localizer
 		gnss_pose_sub_ = nh_->subscribe("gnss_pose", 5, &Localizer::gnssPoseCallback, this);
 		// initialize publishers
 		pose_pub_ = nh_->advertise<geometry_msgs::PoseStamped>("selected_pose", 5);
+                // spin
+                nh_->setSpinRate(spin_rate_);
+                nh_->spin();
 	}
 }
 

@@ -11,8 +11,8 @@
   the License.
 -->
 
-<?xml version="1.0"?>
 <launch>
-    <rosparam command="load" file="$(find localizer)/config/parameters.yaml"/>
-    <node pkg="localizer" type="localizer" name="localizer" output="screen"/>
+    <node pkg="gnss_ndt_selector" type="gnss_ndt_selector" name="gnss_ndt_selector" output="screen">
+          <rosparam command="load" file="$(find gnss_ndt_selector)/config/parameters.yaml"/>
+    </node>
 </launch>

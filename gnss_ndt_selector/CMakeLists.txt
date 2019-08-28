@@ -15,7 +15,7 @@
 #
 
 cmake_minimum_required(VERSION 2.8.3)
-project(localizer)
+project(gnss_ndt_selector)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
@@ -30,6 +30,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_geometry_msgs
   autoware_msgs
   carma_utils
+  cav_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -40,7 +41,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS geometry_msgs roscpp std_msgs tf2 tf2_ros tf2_geometry_msgs autoware_msgs carma_utils
+  CATKIN_DEPENDS geometry_msgs roscpp std_msgs tf2 tf2_ros tf2_geometry_msgs autoware_msgs carma_utils cav_msgs
 )
 
 ###########
@@ -53,7 +54,6 @@ include_directories(
 )
 file(GLOB_RECURSE headers */*.hpp */*.h)
 add_executable( ${PROJECT_NAME}
-                ${headers}
                 src/localizer_node.cpp
                 src/main.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
