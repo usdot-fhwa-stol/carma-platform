@@ -31,8 +31,8 @@
 -->
 <launch>
   <!-- Directory of vehicle config parameters -->
-  <arg name="vehicle_config_dir" default="$(find carma)../../CARMAConfig/development" doc="The directory continaing vehicle config type parameters"/>
-  <arg name="vehicle_calibration_dir" default="$(find carma)../../CARMAVehicleCalibration/development/vehicle" doc="The directory continaing vehicle calibration type parameters"/>
+  <arg name="vehicle_config_dir" default="$(find carma)../../CARMAConfig/development/vehicle/config" doc="The directory continaing vehicle config type parameters"/>
+  <arg name="vehicle_calibration_dir" default="$(find carma)../../CARMAVehicleCalibration/development/vehicle/calibration" doc="The directory continaing vehicle calibration type parameters"/>
 
   <!-- Startup Drivers With Main CARMA System -->
   <arg name="launch_drivers" default="true" doc="True if drivers are to be launched with the CARMA Platform, overrides mock_drivers arg if false"/>
