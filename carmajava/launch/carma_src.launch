@@ -31,7 +31,7 @@
 -->
 <launch>
   <!-- Directory of vehicle config parameters -->
-  <arg name="vehicle_config_dir" default="$(find carma)../../CARMAConfig/development/vehicle/config" doc="The directory continaing vehicle config type parameters"/>
+  <arg name="vehicle_config_dir" default="$(find carma)../../CARMAConfig/development" doc="The directory continaing vehicle config type parameters"/>
   <arg name="vehicle_calibration_dir" default="$(find carma)../../CARMAVehicleCalibration/development/vehicle/calibration" doc="The directory continaing vehicle calibration type parameters"/>
 
   <!-- Startup Drivers With Main CARMA System -->
