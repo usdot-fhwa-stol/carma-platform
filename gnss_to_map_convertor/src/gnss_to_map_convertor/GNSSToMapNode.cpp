@@ -37,14 +37,8 @@ namespace gnss_to_map_convertor {
       baselink_in_sensor_set_ = true;
     }
 
-    gps_common::GPSFix nav_fix_msg;
-    nav_fix_msg.latitude = fix_msg->latitude;
-    nav_fix_msg.longitude = fix_msg->longitude;
-    nav_fix_msg.altitude = fix_msg->altitude;
-    gps_common::GPSFixConstPtr fix_ptr(new gps_common::GPSFix(nav_fix_msg));
-
     geometry_msgs::PoseWithCovarianceStamped ecef_pose = gnss_to_map_convertor::poseFromGnss(
-      baselink_in_sensor_, sensor_in_ned_, fix_ptr
+      baselink_in_sensor_, sensor_in_ned_, fix_msg
     ); 
     ecef_pose.header.frame_id = earth_frame_; // Set correct frame id
 
@@ -84,7 +78,7 @@ namespace gnss_to_map_convertor {
     // Map pose publisher
     map_pose_pub_ = cnh_.advertise<geometry_msgs::PoseStamped>("gnss_pose", 10, true);
     // Fix Subscriber
-    fix_sub_ = cnh_.subscribe("gnss_fix_fused", 1, &GNSSToMapNode::fixCb, this);
+    fix_sub_ = cnh_.subscribe("gnss_fix_fused", 2, &GNSSToMapNode::fixCb, this);
 
     // Spin
     cnh_.setSpinRate(20);
