@@ -55,7 +55,9 @@ include_directories(
 file(GLOB_RECURSE headers */*.hpp */*.h)
 add_executable( ${PROJECT_NAME}
                 src/localizer_node.cpp
+                src/ndt_reliability_counter.cpp
                 src/main.cpp)
+add_library(gnss_ndt_counter_library src/ndt_reliability_counter.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 if(catkin_EXPORTED_TARGETS)
   add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
@@ -82,3 +84,9 @@ install(TARGETS ${PROJECT_NAME}
 install(DIRECTORY launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
+#############
+## Testing ##
+#############
+catkin_add_gmock(${PROJECT_NAME}-test test/test_gnss_ndt_selector.cpp)
+target_link_libraries(${PROJECT_NAME}-test gnss_ndt_counter_library ${catkin_LIBRARIES})

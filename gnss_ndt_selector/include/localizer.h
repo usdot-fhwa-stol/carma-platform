@@ -22,6 +22,7 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <autoware_msgs/NDTStat.h>
+#include "ndt_reliability_counter.h"
 
 namespace localizer
 {
@@ -60,10 +61,16 @@ namespace localizer
 
             // member variables
             double spin_rate_;
-            double score_upper_limit_;
-            int unreliable_message_upper_limit_;
             int localization_mode_;
-            int ndt_unreliable_counter;
+
+            // local copy of ros params
+            // if above this number, this ndt msg is not reliable
+            double score_upper_limit_;
+            // if receiving this number of continuous unreliable score, current ndt matching result is not reliable
+            int unreliable_message_upper_limit_;
+
+            // reliability counter
+            NDTReliabilityCounter counter;
 
             // callbacks
             void ndtPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
