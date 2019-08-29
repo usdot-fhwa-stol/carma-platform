@@ -21,38 +21,38 @@
 
   <rosparam command="load" file="$(find carma)/ui/config/CommandAPIParams.yaml"/>
 
-  <remap from="get_available_routes" to="$(optenv GUIDE_NS)/get_available_routes"/>
-  <remap from="set_active_route" to="$(optenv GUIDE_NS)/set_active_route"/>
-  <remap from="start_active_route" to="$(optenv GUIDE_NS)/start_active_route"/>
-  <remap from="route_state" to="$(optenv GUIDE_NS)/route_state"/>
-  <remap from="route_event" to="$(optenv GUIDE_NS)/route_event"/>
-  <remap from="route" to="$(optenv GUIDE_NS)/route"/>
-  <remap from="get_system_version" to="$(optenv GUIDE_NS)/get_system_version"/>
-  <remap from="state" to="$(optenv GUIDE_NS)/state"/>
-  <remap from="ui_platoon_vehicle_info" to="$(optenv GUIDE_NS)/ui_platoon_vehicle_info"/>
-  <remap from="plugins/available_plugins" to="$(optenv GUIDE_NS)/plugins/available_plugins"/>
-  <remap from="plugins/get_registered_plugins" to="$(optenv GUIDE_NS)/plugins/get_registered_plugins"/>
-  <remap from="plugins/activate_plugin" to="$(optenv GUIDE_NS)/plugins/activate_plugin"/>
-  <remap from="set_guidance_active" to="$(optenv GUIDE_NS)/set_guidance_active"/>
-  <remap from="plugins/controlling_plugins" to="$(optenv GUIDE_NS)/plugins/controlling_plugins"/>
-  <remap from="traffic_signal_info" to="$(optenv GUIDE_NS)/traffic_signal_info"/>
-  <remap from="platooning_info" to="$(optenv GUIDE_NS)/platooning_info"/>
-  <remap from="traffic_signal_info" to="$(optenv GUIDE_NS)/traffic_signal_info"/>
+  <remap from="get_available_routes" to="$(optenv CARMA_GUIDE_NS)/get_available_routes"/>
+  <remap from="set_active_route" to="$(optenv CARMA_GUIDE_NS)/set_active_route"/>
+  <remap from="start_active_route" to="$(optenv CARMA_GUIDE_NS)/start_active_route"/>
+  <remap from="route_state" to="$(optenv CARMA_GUIDE_NS)/route_state"/>
+  <remap from="route_event" to="$(optenv CARMA_GUIDE_NS)/route_event"/>
+  <remap from="route" to="$(optenv CARMA_GUIDE_NS)/route"/>
+  <remap from="get_system_version" to="$(optenv CARMA_GUIDE_NS)/get_system_version"/>
+  <remap from="state" to="$(optenv CARMA_GUIDE_NS)/state"/>
+  <remap from="ui_platoon_vehicle_info" to="$(optenv CARMA_GUIDE_NS)/ui_platoon_vehicle_info"/>
+  <remap from="plugins/available_plugins" to="$(optenv CARMA_GUIDE_NS)/plugins/available_plugins"/>
+  <remap from="plugins/get_registered_plugins" to="$(optenv CARMA_GUIDE_NS)/plugins/get_registered_plugins"/>
+  <remap from="plugins/activate_plugin" to="$(optenv CARMA_GUIDE_NS)/plugins/activate_plugin"/>
+  <remap from="set_guidance_active" to="$(optenv CARMA_GUIDE_NS)/set_guidance_active"/>
+  <remap from="plugins/controlling_plugins" to="$(optenv CARMA_GUIDE_NS)/plugins/controlling_plugins"/>
+  <remap from="traffic_signal_info" to="$(optenv CARMA_GUIDE_NS)/traffic_signal_info"/>
+  <remap from="platooning_info" to="$(optenv CARMA_GUIDE_NS)/platooning_info"/>
+  <remap from="traffic_signal_info" to="$(optenv CARMA_GUIDE_NS)/traffic_signal_info"/>
   <remap from="system_alert" to="/system_alert"/>
 
-  <remap from="bsm" to="$(optenv MSG_NS)/incoming_bsm"/>
+  <remap from="bsm" to="$(optenv CARMA_MSG_NS)/incoming_bsm"/>
 
-  <remap from="nav_sat_fix" to="$(optenv INTR_NS)/gnss/nav_sat_fix"/>
-  <remap from="velocity" to="$(optenv INTR_NS)/vehicle/twist"/>
-  <remap from="driver_discovery" to="$(optenv INTR_NS)/driver_discovery"/>
-  <remap from="get_drivers_with_capabilities" to="$(optenv INTR_NS)/get_drivers_with_capabilities"/>
-  <remap from="controller/robotic_status" to="$(optenv INTR_NS)/controller/robot_status"/>
-  <remap from="controller/vehicle_cmd" to="$(optenv INTR_NS)/controller/vehicle_cmd"/>
-  <remap from="comms/outbound_binary_msg" to="$(optenv INTR_NS)/comms/outbound_binary_msg"/>
-  <remap from="comms/inbound_binary_msg" to="$(optenv INTR_NS)/comms/inbound_binary_msg"/>
-  <remap from="can/engine_speed" to="$(optenv INTR_NS)/can/engine_speed"/>
-  <remap from="can/speed" to="$(optenv INTR_NS)/can/speed"/>
-  <remap from="can/acc_engaged" to="$(optenv INTR_NS)/can/acc_engaged"/>
+  <remap from="nav_sat_fix" to="$(optenv CARMA_INTR_NS)/gnss/nav_sat_fix"/>
+  <remap from="velocity" to="$(optenv CARMA_INTR_NS)/vehicle/twist"/>
+  <remap from="driver_discovery" to="$(optenv CARMA_INTR_NS)/driver_discovery"/>
+  <remap from="get_drivers_with_capabilities" to="$(optenv CARMA_INTR_NS)/get_drivers_with_capabilities"/>
+  <remap from="controller/robotic_status" to="$(optenv CARMA_INTR_NS)/controller/robot_status"/>
+  <remap from="controller/vehicle_cmd" to="$(optenv CARMA_INTR_NS)/controller/vehicle_cmd"/>
+  <remap from="comms/outbound_binary_msg" to="$(optenv CARMA_INTR_NS)/comms/outbound_binary_msg"/>
+  <remap from="comms/inbound_binary_msg" to="$(optenv CARMA_INTR_NS)/comms/inbound_binary_msg"/>
+  <remap from="can/engine_speed" to="$(optenv CARMA_INTR_NS)/can/engine_speed"/>
+  <remap from="can/speed" to="$(optenv CARMA_INTR_NS)/can/speed"/>
+  <remap from="can/acc_engaged" to="$(optenv CARMA_INTR_NS)/can/acc_engaged"/>
 
   <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
     <arg name="port" value="9090"/>
