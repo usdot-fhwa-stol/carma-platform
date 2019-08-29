@@ -63,7 +63,7 @@
   <remap from="trajectory" to="plan_trajectory"/>
   <!-- TODO use arguments for top level namespace -->
   <remap from="trajectory_plan" to="/guidance/pure_pursuit/trajectory"/>
-  <remap from="current_pose" to="$(optenv LOCZ_NS)/ndt_pose"/>
+  <remap from="current_pose" to="$(optenv LOCZ_NS)/selected_pose"/>
   <remap from="current_velocity" to="$(optenv INTR_NS)/vehicle/twist"/>
   <remap from="controller/enable_robotic" to="$(optenv INTR_NS)/controller/enable_robotic"/>
 
