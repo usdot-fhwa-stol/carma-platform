@@ -32,7 +32,7 @@
 <launch>
   <!-- Directory of vehicle config parameters -->
   <arg name="vehicle_config_dir" default="$(find carma)../../CARMAConfig/development" doc="The directory continaing vehicle config type parameters"/>
-  <arg name="vehicle_calibration_dir" default="$(find carma)../../CARMAVehicleCalibration/development/vehicle" doc="The directory continaing vehicle calibration type parameters"/>
+  <arg name="vehicle_calibration_dir" default="$(find carma)../../CARMAVehicleCalibration/development/vehicle/calibration" doc="The directory continaing vehicle calibration type parameters"/>
 
   <!-- Startup Drivers With Main CARMA System -->
   <arg name="launch_drivers" default="true" doc="True if drivers are to be launched with the CARMA Platform, overrides mock_drivers arg if false"/>
@@ -65,7 +65,6 @@
   
   <!-- Map files to load -->
   <arg name="arealist_path" default="arealist.txt" doc="Path to the arealist.txt file which contains the paths and dimensions of each map cell to load"/>
-  <arg name="area" default="5x5" doc="Dimensions of the square of cells loaded at runtime using the download and arealist load types"/>
   <arg name="load_type" default="noupdate" doc="Enum of the map loading approach to use. Can be 'download', 'noupdate', or 'arealist'"/> 
   <arg name="single_pcd_path" default="$(find carma)/map/base_map.pcd" doc="Path to the map pcd file if using the noupdate load type"/>
   <arg name="area" default="1x1" doc="Dimensions of the square of cells loaded at runtime using the download and arealist load types"/>

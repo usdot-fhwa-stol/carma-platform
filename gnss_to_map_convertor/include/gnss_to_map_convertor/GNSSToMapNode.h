@@ -54,10 +54,7 @@ namespace gnss_to_map_convertor {
       ros::Publisher ecef_pose_pub_;
       ros::Publisher map_pose_pub_;
 
-      message_filters::Subscriber<novatel_gps_msgs::NovatelPosition> fix_sub_;
-      message_filters::Subscriber<novatel_gps_msgs::NovatelDualAntennaHeading> heading_sub_;
-
-      typedef message_filters::sync_policies::ApproximateTime<novatel_gps_msgs::NovatelPosition, novatel_gps_msgs::NovatelDualAntennaHeading> SyncPolicy;
+      ros::Subscriber fix_sub_;
 
       tf2::Transform baselink_in_sensor_; 
       tf2::Transform sensor_in_ned_; 
@@ -68,12 +65,11 @@ namespace gnss_to_map_convertor {
       std::string ned_heading_frame_ = "ned_heading";
 
       /**
-       * @brief Synchronized NavSatFix and Heading callback which publishes the updated ecef and map poses
+       * @brief GPSFix callback which publishes the updated ecef and map poses
        * 
-       * @param fix_msg The gnss fix providing a location
-       * @param heading_msg The gnss heading and pitch
+       * @param fix_msg The gnss fix message which must contain the position and heading information
        */ 
-      void fixCb(const novatel_gps_msgs::NovatelPositionConstPtr& fix_msg, const novatel_gps_msgs::NovatelDualAntennaHeadingConstPtr& heading_msg);
+      void fixCb(const gps_common::GPSFixConstPtr& fix_msg);
 
     public:
       /**
