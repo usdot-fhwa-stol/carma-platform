@@ -79,6 +79,9 @@
   <!-- GNSS To Map Convertor -->
   <include file="$(find gnss_to_map_convertor)/launch/gnss_to_map_convertor.launch"/>
 
+  <!-- GNSS/NDT selection localizer-->
+  <include file="$(find gnss_ndt_selector)/launch/gnss_ndt_selector.launch"/>
+
   <!-- Deadreckoner -->
   <include file="$(find deadreckoner)/launch/deadreckoner.launch">
     <arg name="current_twist" value="$(optenv CARMA_INTR_NS)/vehicle/twist" />

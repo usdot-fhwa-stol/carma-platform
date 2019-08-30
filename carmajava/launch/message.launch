@@ -30,7 +30,7 @@
 
     <remap from="velocity_accel" to="/hardware_interface/velocity_accel"/>
     <remap from="yaw_rate_rpt" to="/hardware_interface/pacmod/parsed_tx/yaw_rate_rpt"/>
-    <remap from="pose" to="/localization/ndt_pose"/>
+    <remap from="pose" to="/localization/selected_pose"/>
     <remap from="transmission_state" to="/hardware_interface/can/transmission_state"/>
     <remap from="vehicle_speed" to="/hardware_interface/pacmod/as_tx/vehicle_speed"/>
     <remap from="dual_antenna_heading" to="/hardware_interface/gnss/dual_antenna_heading"/>
