@@ -29,56 +29,6 @@ public class FakeInterfaceMgr implements IInterfaceMgr {
     private SaxtonLogger log = new SaxtonLogger(FakeInterfaceMgr.class.getSimpleName(), LogFactory.getLog(FakeInterfaceMgr.class));
     private boolean shutdownCalled_ = false;
 
-    public void bindWithDriver(String driverName){
-
-    }
-
-
-    public List<String> getDriverApi(String driverName){
-        List<String> chars = new ArrayList<String>(); //must contain fully qualified name of driver + capability
-
-        if (driverName.equals("position1")) {
-            chars.add("position1/latitude");
-            chars.add("position1/longitude");
-
-        }else if (driverName.equals("position3")) {
-            chars.add("position3/latitude");
-            chars.add("position3/longitude");
-            chars.add("position3/elevation");
-            chars.add("position3/acceleration");
-            
-        //the first couple tests are kinda arbitrary. the next ones are formatted more like what we will find
-        // in operation, with the category in the second-to-last position in the string.
-        }else if (driverName.charAt(driverName.length() - 1) == '4') {
-            chars.add(driverName + "/latitude");
-            chars.add(driverName + "/longitude");
-            chars.add(driverName + "/elevation");
-        }else if (driverName.equals("position/position5")) {
-            chars.add("position/position5/latitude");
-            chars.add("position/position5/longitude");
-            chars.add("position/position5/elevation");
-        }else if (driverName.equals("radar/typeR/sensor/R5")) {
-            chars.add("radar/typeR/sensor/R5/elevation");
-        }
-
-        return chars;
-    }
-
-
-    public void sendSystemAlert(AlertSeverity sev, String message){
-        String alert;
-
-        switch(sev) {
-            case FATAL:     alert = "FATAL: ";    break;
-            case WARNING:   alert = "WARN: ";     break;
-            case CAUTION:   alert = "CAUTION: ";  break;
-            default:        alert = "UNDEFINED SEVERITY: ";
-        }
-
-
-        log.debug("sendSystemAlert sending simulated message to system: " + alert + message);
-    }
-
     public void errorShutdown(String msg) {
         log.debug("errorShutdown received the following message: " + msg);
         shutdownCalled_ = true;
