@@ -47,12 +47,11 @@
   <remap from="/time_ndt_matching" to="time_ndt_matching"/>
 
   <!-- Remap topics from external packages -->
-  <remap from="imu_raw" to="$(optenv CARMA_INTR_NS)/imu/imu_raw"/>
+  <remap from="imu_raw" to="$(optenv CARMA_INTR_NS)/imu_raw"/>
 
   <remap from="system_alert" to="/system_alert"/>
 
-  <remap from="bestpos" to="$(optenv CARMA_INTR_NS)/bestpos"/>
-  <remap from="dual_antenna_heading" to="$(optenv CARMA_INTR_NS)/gnss/dual_antenna_heading"/>
+  <remap from="gnss_fix_fused" to="$(optenv CARMA_INTR_NS)/gnss_fix_fused"/>
   
   <!-- <arg name="current_twist" default="current_twist" doc="Remapping of the twist topic used by the deadreckoner node"/>
   <arg name="current_odom" default="current_odom" doc="Remapping of the twist topic used by the deadreckoner node"/> -->
@@ -79,6 +78,9 @@
 
   <!-- GNSS To Map Convertor -->
   <include file="$(find gnss_to_map_convertor)/launch/gnss_to_map_convertor.launch"/>
+
+  <!-- GNSS/NDT selection localizer-->
+  <include file="$(find gnss_ndt_selector)/launch/gnss_ndt_selector.launch"/>
 
   <!-- Deadreckoner -->
   <include file="$(find deadreckoner)/launch/deadreckoner.launch">

@@ -15,7 +15,7 @@
 #
 
 cmake_minimum_required(VERSION 2.8.3)
-project(ndt_pose_tf_wrapper)
+project(gnss_ndt_selector)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
@@ -28,14 +28,20 @@ find_package(catkin REQUIRED COMPONENTS
   tf2
   tf2_ros
   tf2_geometry_msgs
+  autoware_msgs
+  carma_utils
+  cav_msgs
 )
+
+## System dependencies are found with CMake's conventions
+find_package(Boost REQUIRED COMPONENTS system)
 
 ###################################
 ## catkin specific configuration ##
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS geometry_msgs roscpp std_msgs tf2 tf2_ros tf2_geometry_msgs
+  CATKIN_DEPENDS geometry_msgs roscpp std_msgs tf2 tf2_ros tf2_geometry_msgs autoware_msgs carma_utils cav_msgs
 )
 
 ###########
@@ -44,10 +50,14 @@ catkin_package(
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  include
 )
-
-add_executable( ${PROJECT_NAME} src/ndt_wrapper_node.cpp)
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+file(GLOB_RECURSE headers */*.hpp */*.h)
+add_executable( ${PROJECT_NAME}
+                src/localizer_node.cpp
+                src/main.cpp)
+add_library(gnss_ndt_counter_library src/ndt_reliability_counter.cpp)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} gnss_ndt_counter_library)
 if(catkin_EXPORTED_TARGETS)
   add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 endif()
@@ -73,3 +83,9 @@ install(TARGETS ${PROJECT_NAME}
 install(DIRECTORY launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
+#############
+## Testing ##
+#############
+catkin_add_gmock(${PROJECT_NAME}-test test/test_gnss_ndt_selector.cpp)
+target_link_libraries(${PROJECT_NAME}-test gnss_ndt_counter_library ${catkin_LIBRARIES})

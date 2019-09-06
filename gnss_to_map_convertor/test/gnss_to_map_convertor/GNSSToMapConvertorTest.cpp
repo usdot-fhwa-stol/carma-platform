@@ -63,22 +63,19 @@ TEST(GNSSToMapConvertor, poseFromGnss)
   sensor_in_ned_heading_quat.setRPY(wgs84_utils::pi, 0, 0); 
   sensor_in_ned_heading.setRotation(sensor_in_ned_heading_quat);
 
-  novatel_gps_msgs::NovatelDualAntennaHeading heading_msg;
-  sensor_msgs::NavSatFix fix_msg;
+  gps_common::GPSFix fix_msg;
 
   // Test point at prime meridian and equator with 0 heading
   fix_msg.latitude = 0;
   fix_msg.longitude = 0;
   fix_msg.altitude = 0;
 
-  heading_msg.heading = 0;
-  heading_msg.pitch = 0;
+  fix_msg.track = 0;
 
-  sensor_msgs::NavSatFixConstPtr fix_ptr(new sensor_msgs::NavSatFix(fix_msg));
-  novatel_gps_msgs::NovatelDualAntennaHeadingConstPtr heading_ptr(new novatel_gps_msgs::NovatelDualAntennaHeading(heading_msg));
+  gps_common::GPSFixConstPtr fix_ptr(new gps_common::GPSFix(fix_msg));
 
   geometry_msgs::PoseWithCovarianceStamped result;
-  result = gnss_to_map_convertor::poseFromGnss(baselink_in_sensor, sensor_in_ned_heading, fix_ptr, heading_ptr);
+  result = gnss_to_map_convertor::poseFromGnss(baselink_in_sensor, sensor_in_ned_heading, fix_ptr);
 
   tf2::Vector3 solTrans(6378137.0, 0, 0);
   tf2::Quaternion solRot;
@@ -94,13 +91,11 @@ TEST(GNSSToMapConvertor, poseFromGnss)
   fix_msg.longitude = 0;
   fix_msg.altitude = 0;
 
-  heading_msg.heading = 90.0;
-  heading_msg.pitch = 0;
+  fix_msg.track = 90.0;
 
-  fix_ptr = sensor_msgs::NavSatFixConstPtr(new sensor_msgs::NavSatFix(fix_msg));
-  heading_ptr = novatel_gps_msgs::NovatelDualAntennaHeadingConstPtr(new novatel_gps_msgs::NovatelDualAntennaHeading(heading_msg));
+  fix_ptr = gps_common::GPSFixConstPtr(new gps_common::GPSFix(fix_msg));
 
-  result = gnss_to_map_convertor::poseFromGnss(baselink_in_sensor, sensor_in_ned_heading, fix_ptr, heading_ptr);
+  result = gnss_to_map_convertor::poseFromGnss(baselink_in_sensor, sensor_in_ned_heading, fix_ptr);
 
   tf2::Vector3 solTrans2(6378137.0, 0, 0);
   tf2::Quaternion solRot2;
