@@ -15,9 +15,16 @@
 #  the License.
 
 # CARMA packages checkout script
+# Optional argument to set the root checkout directory with no ending '/' default is '~'
 
 set -ex
-cd ~/src
-git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAMsgs.git --branch Version_3.0.0
-git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMANovatelGpsDriver.git --branch Version_3.0.0
-git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAUtils.git --branch Version_3.0.0
+
+dir="~"
+if [[ -n ${1} ]]; then
+      dir=${1}
+fi
+
+cd ${dir}/src
+git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAMsgs.git --branch develop
+git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMANovatelGpsDriver.git --branch develop
+git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAUtils.git --branch develop

@@ -133,7 +133,9 @@ public class InterfaceWorker {
             //if wait timer has expired then
             long elapsed = System.currentTimeMillis() - startedWaiting_;
             if (elapsed > 1000*waitTime_) {
-
+                boolean haveController = controllerReady_.get();
+                boolean haveGnss = gnssReady_.get();
+                boolean haveLidar = lidarReady_.get();
                 //if we have the essential drivers registered then
                 if (controllerReady_.get()  &&  gnssReady_.get() && lidarReady_.get()) {
 
@@ -149,7 +151,17 @@ public class InterfaceWorker {
                 }else {
                     //log an error and shut down
                     log_.error("DRIVERS", "InterfaceWorker: missing one or more essential drivers - initiating system shutdown.");
-                    mgr_.errorShutdown("Unable to discover essential device drivers.  INITIATING SYSTEM SHUTDOWN.");
+                    String missingDrivers = "";
+                    if (!haveController) {
+                        missingDrivers += " controller, ";
+                    }
+                    if (!haveGnss) {
+                        missingDrivers += " gnss, ";
+                    }
+                    if (!haveLidar) {
+                        missingDrivers += " lidar, ";
+                    }
+                    mgr_.errorShutdown("Unable to discover essential device drivers. Missing drivers: " + missingDrivers + " INITIATING SYSTEM SHUTDOWN.");
                 }
             }
         }
