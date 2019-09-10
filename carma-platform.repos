@@ -43,10 +43,6 @@ repositories:
     type: git
     url: git@github.com:usdot-fhwa-stol/CARMANovatelGpsDriver.git
     version: develop
-  CARMAPacmod3CanDriverWrapper:
-    type: git
-    url: git@github.com:usdot-fhwa-stol/CARMAPacmod3CanDriverWrapper.git
-    version: develop
   CARMAPlatform:
     type: git
     url: git@github.com:usdot-fhwa-stol/CARMAPlatform.git
