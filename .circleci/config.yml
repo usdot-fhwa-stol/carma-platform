@@ -28,7 +28,7 @@ jobs:
     # Pull docker image from docker hub
     # XTERM used for better catkin_make output
     docker:
-      - image: usdotfhwastol/carma-base-ci:2.9.0
+      - image: usdotfhwastol/autoware.ai:3.1.0-Test
         user: carma
         environment:
           TERM: xterm
@@ -45,24 +45,28 @@ jobs:
             mkdir src
             cd src
             mkdir CARMAPlatform
-            mkdir CARMAMsgs
       # Checkout PR branch
       - checkout:
           path: src/CARMAPlatform
       - run: 
-          name: Pull CARMAMsgs
+          name: Pull Deps
           command: |
             source ${INIT_ENV}
-            git clone -b develop --depth 1 git@github.com:usdot-fhwa-stol/CARMAMsgs.git src/CARMAMsgs
+            ./src/CARMAPlatform/docker/checkout.sh ${PWD}
+            cd ${PWD}
+            rosdep update
+            rosdep install --from-paths src --ignore-src -y
       - run:
           name: Build CARMA
           command: |
             source ${INIT_ENV}
+            export ROS_PARALLEL_JOBS='-j1 -l1' # Try to reduce memory consumption on build
             build-wrapper-linux-x86-64 --out-dir /opt/carma/bw-output bash make_with_coverage.bash -m -e /opt/carma/ -o ./coverage_reports/gcov
       - run:
           name: Run C++ Tests
           command: |
             source ${INIT_ENV}
+            export ROS_PARALLEL_JOBS='-j1 -l1' # Try to reduce memory consumption on build
             bash make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
       - run:
           name: Run Java Tests

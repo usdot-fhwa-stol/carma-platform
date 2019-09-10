@@ -17,6 +17,8 @@ project(guidance)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -119,9 +121,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+   INCLUDE_DIRS include
 #  LIBRARIES ui_integration
-#  CATKIN_DEPENDS carma_util cav_msgs cav_srvs roscpp std_msgs
+   CATKIN_DEPENDS carma_utils cav_msgs cav_srvs roscpp std_msgs
 #  DEPENDS system_lib
 )
 
@@ -151,10 +153,10 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 file(GLOB_RECURSE headers */*.hpp */*.h)
 add_executable(${PROJECT_NAME}_node 
-  ${headers} 
   src/guidance/guidance_node.cpp
   src/guidance/guidance_worker.cpp
-  src/guidance/guidance_state_machine.cpp)
+  src/guidance/guidance_state_machine.cpp
+)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -166,8 +168,11 @@ add_executable(${PROJECT_NAME}_node
 ## same as for the library above
 add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_library(guidance_state_machine_library src/guidance/guidance_state_machine.cpp)
+add_dependencies(guidance_state_machine_library ${catkin_EXPORTED_TARGETS})
+
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
+  guidance_state_machine_library
   ${catkin_LIBRARIES}
 )
 
