@@ -77,6 +77,11 @@
         args="pub -l config/waypoint_follower autoware_config_msgs/ConfigWaypointFollower '{ header: auto, param_flag: 0, velocity: 5.0, lookahead_distance: 4.0, lookahead_ratio: 2.0, minimum_lookahead_distance: 6.0, displacement_threshold: 0.0, relative_angle_threshold: 0.0 }' "
   />
 
+  <!-- TODO Remove this logic when the autoware plugin supports plugin discovery -->
+  <node pkg="rostopic" type="rostopic" name="autoware_plugin_discovery"
+        args="pub -r 1  plugin_discovery cav_msgs/Plugin '{ name: Autoware Plugin, versionId: v1.0, available: true, activated: false, required: true }' "
+  />
+
   <!-- Trajectory Executor -->
   <include file="$(find trajectory_executor)/launch/trajectory_executor.launch" />
 

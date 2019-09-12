@@ -72,7 +72,7 @@ namespace guidance
         for(int i = 0; i < plugins.size(); ++i)
         {
             // Go through the plugin list to find the corresponding plugin that the user wants to activate
-            if(req.pluginName.compare(plugins[i].name) == 0 && req.pluginName.compare(plugins[i].versionId) == 0)
+            if(req.pluginName.compare(plugins[i].name) == 0 && req.pluginVersion.compare(plugins[i].versionId) == 0)
             {
                 plugins[i].activated = req.activated;
                 res.newState = plugins[i].activated;
