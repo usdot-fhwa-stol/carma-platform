@@ -68,7 +68,8 @@
   <arg name="load_type" default="noupdate" doc="Enum of the map loading approach to use. Can be 'download', 'noupdate', or 'arealist'"/> 
   <arg name="single_pcd_path" default="$(find carma)/map/base_map.pcd" doc="Path to the map pcd file if using the noupdate load type"/>
   <arg name="area" default="1x1" doc="Dimensions of the square of cells loaded at runtime using the download and arealist load types"/>
-
+  <arg name="area_paths" default="" doc="List of cell paths to load when using the arealist load type. If this is not filled all the cells will be loaded based on the arealist.txt file"/>
+	
   <!-- Route File Locations -->
   <arg name="route_file_folder" default="$(find carma)/routes/" doc="Path of folder containing routes to load"/>
 
