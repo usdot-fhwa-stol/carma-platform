@@ -101,6 +101,7 @@
       <arg name="area" value="$(arg area)"/>
       <arg name="load_type" value="$(arg load_type)"/>
       <arg name="single_pcd_path" value="$(arg single_pcd_path)"/>
+      <arg name="area_paths" value="$(arg area_paths)"/>
       <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
     </include>
   </group>
