@@ -24,6 +24,7 @@
   <arg name="arealist_path" default="arealist.txt" doc="Path to the arealist.txt file which contains the paths and dimensions of each map cell to load"/>
   <arg name="load_type" default="noupdate" doc="Enum of the map loading approach to use. Can be 'download', 'noupdate', or 'arealist'"/> 
   <arg name="single_pcd_path" default="pcd_map.pcd" doc="Path to the map pcd file if using the noupdate load type"/>
+  <arg name="area_paths" default="" doc="List of cell paths to load when using the arealist load type. If this is not filled all the cells will be loaded based on the arealist.txt file"/>
   
   <!-- Remap any absolute topics to be relative -->
   <remap from="/vehicle/odom" to="vehicle/odom"/>
@@ -62,6 +63,7 @@
    <arg name="single_pcd_path" value="$(arg single_pcd_path)"/>
    <arg name="area" value="$(arg area)"/>
    <arg name="arealist_path" value="$(arg arealist_path)"/>
+   <arg name="area_paths" value="$(arg area_paths)"/>
   </include>
 
   <!-- NDT Matching-->
