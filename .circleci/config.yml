@@ -54,6 +54,7 @@ jobs:
             source ${INIT_ENV}
             ./src/CARMAPlatform/docker/checkout.sh ${PWD}
             cd ${PWD}
+            sudo apt-get update
             rosdep update
             rosdep install --from-paths src --ignore-src -y
       - run:
