@@ -26,7 +26,7 @@ namespace guidance
 
     void GuidanceWorker::populate_plugin_list_response(cav_srvs::PluginListResponse& res)
     {
-        for(int i = i; i < plugins.size(); ++i)
+        for(int i = 0; i < plugins.size(); ++i)
         {
             res.plugins.push_back(plugins[i]);
         }
@@ -34,7 +34,7 @@ namespace guidance
 
     void GuidanceWorker::populate_active_plugin_list_response(cav_srvs::PluginListResponse& res)
     {
-        for(int i = i; i < plugins.size(); ++i)
+        for(int i = 0; i < plugins.size(); ++i)
         {
             if(plugins[i].activated)
             {
