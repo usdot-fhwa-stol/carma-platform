@@ -71,6 +71,13 @@ namespace guidance
              */
             uint8_t getCurrentState();
 
+            virtual void StartUpState(Signal signal) = 0;
+            virtual void DriversReadyState(Signal signal) = 0;
+            virtual void ActiveState(Signal signal) = 0;
+            virtual void EngagedState(Signal signal) = 0;
+            virtual void InactiveState(Signal signal) = 0;
+            virtual void OffState(Signal signal) = 0;
+
         private:
             /*!
              * \brief Actual state machine logic driven by signal enum
@@ -80,6 +87,36 @@ namespace guidance
             // a local variable keeps the current state machine state
             State currentGuidanceState;
 
+    };
+
+    class Cadilac : public GuidanceStateMachine {
+        public:
+            void StartUpState(Signal signal);
+            void DriversReadyState(Signal signal);
+            void ActiveState(Signal signal);
+            void EngagedState(Signal signal);
+            void InactiveState(Signal signal);
+            void OffState(Signal signal);
+    };
+
+    class Lexus : public GuidanceStateMachine {
+        public:
+            void StartUpState(Signal signal);
+            void DriversReadyState(Signal signal);
+            void ActiveState(Signal signal);
+            void EngagedState(Signal signal);
+            void InactiveState(Signal signal);
+            void OffState(Signal signal);
+    };
+
+    class Factory {
+        public:
+            GuidanceStateMachine* createCadilacInstance() {
+                return new Cadilac;
+            }
+            GuidanceStateMachine* createLexusInstance() {
+                return new Lexus;
+            }
     };
 
 }

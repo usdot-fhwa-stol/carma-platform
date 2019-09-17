@@ -23,60 +23,22 @@ namespace guidance
         switch(currentGuidanceState)
         {
             case State::STARTUP:
-                if(signal == Signal::INITIALIZED)
-                {
-                    currentGuidanceState = State::DRIVERS_READY;
-                } else if(signal == Signal::SHUTDOWN)
-                {
-                    currentGuidanceState = State::OFF;
-                }
+                StartUpState(signal);
                 break;
             case State::DRIVERS_READY:
-                if(signal == Signal::ACTIVATED)
-                {
-                    currentGuidanceState = State::ACTIVE;
-                } else if(signal == Signal::SHUTDOWN)
-                {
-                    currentGuidanceState = State::OFF;
-                }
+                DriversReadyState(signal);
                 break;
             case State::ACTIVE:
-                if(signal == Signal::ENGAGE)
-                {
-                    currentGuidanceState = State::ENGAGED;
-                } else if(signal == Signal::DISENGAGED)
-                {
-                    currentGuidanceState = State::DRIVERS_READY;
-                } else if(signal == Signal::SHUTDOWN)
-                {
-                    currentGuidanceState = State::OFF;
-                }
+                ActiveState(signal);
                 break;
             case State::ENGAGED:
-                if(signal == Signal::DISENGAGED)
-                {
-                    currentGuidanceState = State::DRIVERS_READY;
-                } else if(signal == Signal::OVERRIDE)
-                {
-                    currentGuidanceState = State::INACTIVE;
-                } else if(signal == Signal::SHUTDOWN)
-                {
-                    currentGuidanceState = State::OFF;
-                }
+                EngagedState(signal);
                 break;
             case State::INACTIVE:
-                if(signal == Signal::DISENGAGED)
-                {
-                    currentGuidanceState = State::DRIVERS_READY;
-                } else if(signal == Signal::ENGAGE)
-                {
-                    currentGuidanceState = State::ENGAGED;
-                } else if(signal == Signal::SHUTDOWN)
-                {
-                    currentGuidanceState = State::OFF;
-                }
+                InactiveState(signal);
                 break;
             case State::OFF:
+                OffState(signal);
                 break;
         }
     }
