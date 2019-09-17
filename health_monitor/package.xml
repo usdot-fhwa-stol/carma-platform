@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>plugin_driver_manager</name>
+  <version>1.0.0</version>
+  <description>The node is used to manage plugin and driver status</description>
+  <maintainer email="shuwei.qiang@leidos.com">qiangs</maintainer>
+  <license>Apache 2.0 License</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>carma_utils</depend>
+  <depend>cav_msgs</depend>
+  <depend>cav_srvs</depend>
+  <depend>roscpp</depend>
+  <depend>std_msgs</depend>
+</package>
