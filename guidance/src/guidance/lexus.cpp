@@ -42,7 +42,7 @@ namespace guidance
     void Lexus::ActiveState(Signal signal){
         if(signal == Signal::ENGAGE)
         {
-            currentGuidanceState = State::ENGAGED;
+            currentGuidanceState = State::DRIVERS_READY;
         } else if(signal == Signal::DISENGAGED)
         {
             currentGuidanceState = State::DRIVERS_READY;

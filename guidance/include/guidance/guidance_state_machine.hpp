@@ -109,7 +109,7 @@ namespace guidance
             void OffState(Signal signal);
     };
 
-    class Factory {
+    class GuidanceStateMachineFactory {
         public:
             GuidanceStateMachine* createCadilacInstance() {
                 return new Cadilac;
