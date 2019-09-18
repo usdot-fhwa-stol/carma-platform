@@ -84,7 +84,7 @@ namespace guidance
 
     void GuidanceWorker::system_alert_cb(const cav_msgs::SystemAlertConstPtr& msg)
     {
-        gsm.onSystemAlert(msg);
+        gsm->onSystemAlert(msg);
     }
 
     void GuidanceWorker::plugin_discovery_cb(cav_msgs::Plugin msg)
@@ -121,16 +121,16 @@ namespace guidance
 
     void GuidanceWorker::robot_status_cb(const cav_msgs::RobotEnabledConstPtr& msg)
     {
-        gsm.onRoboticStatus(msg);
+        gsm->onRoboticStatus(msg);
     }
 
     bool GuidanceWorker::guidance_acivation_cb(cav_srvs::SetGuidanceActiveRequest& req, cav_srvs::SetGuidanceActiveResponse& res)
     {
         // Translate message type from GuidanceActiveRequest to SetEnableRobotic
         ROS_INFO_STREAM("Request for guidance activation recv'd with status " << req.guidance_active);
-        gsm.onSetGuidanceActive(req.guidance_active);
+        gsm->onSetGuidanceActive(req.guidance_active);
         cav_srvs::SetEnableRobotic srv;
-        if (gsm.getCurrentState() == GuidanceStateMachine::ENGAGED) {
+        if (gsm->getCurrentState() == GuidanceStateMachine::ENGAGED) {
             srv.request.set = cav_srvs::SetEnableRobotic::Request::ENABLE;
             res.guidance_status = true;
         } else {
@@ -144,7 +144,7 @@ namespace guidance
     bool GuidanceWorker::spin_cb()
     {
         cav_msgs::GuidanceState state;
-        state.state = gsm.getCurrentState();
+        state.state = gsm->getCurrentState();
         state_publisher_.publish(state);
         return true;
     }
