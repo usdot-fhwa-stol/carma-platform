@@ -77,15 +77,14 @@ namespace guidance
             virtual void EngagedState(Signal signal) = 0;
             virtual void InactiveState(Signal signal) = 0;
             virtual void OffState(Signal signal) = 0;
+            // a local variable keeps the current state machine state
+            State currentGuidanceState;
 
         private:
             /*!
              * \brief Actual state machine logic driven by signal enum
              */
             void onGuidanceSignal(Signal signal);
-
-            // a local variable keeps the current state machine state
-            State currentGuidanceState;
 
     };
 
