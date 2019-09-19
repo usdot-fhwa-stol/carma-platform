@@ -16,6 +16,9 @@
  * the License.
  */
 
+#include <cav_msgs/DriverStatus.h>
+#include "entry_manager.h"
+
 namespace health_monitor
 {
     class DriverManager
@@ -25,6 +28,26 @@ namespace health_monitor
             /*!
              * \brief Default constructor for GuidanceWorker
              */
-            DriverManager();
+            DriverManager(std::vector<std::string> critical_driver_names, const long driver_timeout);
+
+            /*!
+             * \brief Update driver status
+             */
+            void update_driver_status(const cav_msgs::DriverStatusConstPtr& msg, long current_time);
+
+            /*!
+             * \brief Check if all critical drivers are operational
+             */
+            bool are_critical_drivers_operational(long current_time);
+
+
+        private:
+
+            EntryManager em_;
+            // timeout for critical driver timeout
+            long driver_timeout_;
+            // number of critical drivers
+            int critical_driver_number_;
+
     };
 }

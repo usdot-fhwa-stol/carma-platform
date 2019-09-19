@@ -26,12 +26,12 @@ namespace health_monitor
     {
         public:
             
-            /*!
+            /**
              * \brief Default constructor for PluginManager
              */
-            PluginManager(std::vector<std::string> require_plugin_names);
+            PluginManager(const std::vector<std::string> require_plugin_names);
 
-            /*!
+            /**
              * \brief Get a list of registered plugins
              */
             void get_registered_plugins(cav_srvs::PluginListResponse& res);
@@ -54,6 +54,6 @@ namespace health_monitor
         private:
 
             EntryManager em_;
-            std::vector<std::string> required_plugin_names_;
+
     };
 }

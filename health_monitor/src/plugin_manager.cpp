@@ -21,20 +21,20 @@ namespace health_monitor
 
     PluginManager::PluginManager(std::vector<std::string> require_plugin_names)
     {
-        this->required_plugin_names_ = require_plugin_names;
+        em_ = EntryManager(require_plugin_names);
     }
 
     void PluginManager::get_registered_plugins(cav_srvs::PluginListResponse& res)
     {
         std::vector<Entry> plugins = em_.get_entries();
-        for(size_t i = 0; i < plugins.size(); ++i)
+        // convert to plugin list
+        for(auto i = plugins.begin(); i < plugins.end(); ++i)
         {
             cav_msgs::Plugin plugin;
-            plugin.activated = plugins[i].active_;
-            plugin.available = plugins[i].available_;
-            plugin.name = plugins[i].name_;
-            plugin.required = plugins[i].required_;
-            plugin.type = plugins[i].type_;
+            plugin.activated = i->active_;
+            plugin.available = i->available_;
+            plugin.name = i->name_;
+            plugin.type = i->type_;
             res.plugins.push_back(plugin);
         }
     }
@@ -42,16 +42,16 @@ namespace health_monitor
     void PluginManager::get_active_plugins(cav_srvs::PluginListResponse& res)
     {
         std::vector<Entry> plugins = em_.get_entries();
-        for(size_t i = 0; i < plugins.size(); ++i)
+        // convert to plugin list
+        for(auto i = plugins.begin(); i < plugins.end(); ++i)
         {
-            if(plugins[i].active_)
+            if(i->active_)
             {
                 cav_msgs::Plugin plugin;
                 plugin.activated = true;
-                plugin.available = plugins[i].available_;
-                plugin.name = plugins[i].name_;
-                plugin.required = plugins[i].required_;
-                plugin.type = plugins[i].type_;
+                plugin.available = i->available_;
+                plugin.name = i->name_;
+                plugin.type = i->type_;
                 res.plugins.push_back(plugin);
             }
         }
@@ -59,27 +59,28 @@ namespace health_monitor
 
     bool PluginManager::activate_plugin(std::string name)
     {
-        Entry* plugin_pointer = em_.get_entry_by_name(name);
-        if(plugin_pointer != nullptr)
+        boost::optional<Entry> requested_plugin = em_.get_entry_by_name(name);
+        if(requested_plugin)
         {
-            return plugin_pointer->active_ = true;
+            // params: bool available, bool active, std::string name, long timestamp, uint8_t type
+            Entry updated_entry(requested_plugin->available_, true, requested_plugin->name_, 0, requested_plugin->type_);
+            em_.update_entry(updated_entry);
+            return true;
         }
         return false;
     }
 
     void PluginManager::update_plugin_status(const cav_msgs::PluginConstPtr& msg)
     {
-        Entry* plugin_pointer = em_.get_entry_by_name(msg->name);
-        // params: bool required, bool available, bool active, std::string name, long timestamp, uint8_t type
-        Entry plugin(msg->required, msg->available, msg->activated, msg->name, 0, msg->type);
+        boost::optional<Entry> requested_plugin = em_.get_entry_by_name(msg->name);
+        // params: bool available, bool active, std::string name, long timestamp, uint8_t type
+        Entry plugin(msg->available, false, msg->name, 0, msg->type);
         // if it already exists, we do not change its activation status
-        if(plugin_pointer != nullptr)
+        if(requested_plugin || em_.is_entry_required(msg->name))
         {
-            plugin.active_ = plugin_pointer->active_;
+            plugin.active_ = requested_plugin->active_;
         }
         em_.update_entry(plugin);
     }
-
-    //TODO: Think about how to handle require plugins!
 
 }

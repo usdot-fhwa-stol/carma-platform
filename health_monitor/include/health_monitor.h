@@ -66,5 +66,16 @@ namespace health_monitor
             bool activate_plugin_cb(cav_srvs::PluginActivationRequest& req, cav_srvs::PluginActivationResponse& res);
             void plugin_discovery_cb(cav_msgs::Plugin msg);
             void driver_discovery_cb(cav_msgs::DriverStatus msg);
+
+            // initialize method
+            void initialize();
+
+            // ROS params
+            double spin_rate_, driver_timeout_;
+            std::vector<std::string> required_drivers_;
+            std::vector<std::string> required_plugins_;
+
+            // spin callback function
+            bool spin_cb();
     };
 }

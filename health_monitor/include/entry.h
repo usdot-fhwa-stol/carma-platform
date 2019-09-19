@@ -23,11 +23,11 @@ namespace health_monitor
     struct Entry
     {
         /* data */
-        bool required_, available_, active_;
+        bool available_, active_;
         std::string name_;
         long timestamp_;
         uint8_t type_;
 
-        Entry(bool required, bool available, bool active_, std::string name, long timestamp_, uint8_t type);
+        Entry(bool available, bool active_, std::string name, long timestamp_, uint8_t type);
     };
 }

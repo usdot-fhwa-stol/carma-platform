@@ -17,6 +17,7 @@
  */
 
 #include <vector>
+#include <boost/optional.hpp>
 #include "entry.h"
 
 namespace health_monitor
@@ -31,29 +32,42 @@ namespace health_monitor
             EntryManager();
 
             /*!
+             * \brief Constructor for EntryManager to set required entries.
+             */
+            EntryManager(std::vector<std::string> required_entries);
+
+            /*!
              * \brief Add a new entry if the given name does not exist.
              * Update an existing entry if the given name exists.
              */
-            void update_entry(Entry entry);
+            void update_entry(const Entry entry);
 
             /*!
              * \brief Get all registed entries as a list.
              */
-            std::vector<Entry> get_entries();
+            std::vector<Entry> get_entries() const;
 
             /*!
              * \brief Get a entry using name as the key.
              */
-            Entry* get_entry_by_name(std::string name);
+            boost::optional<Entry> get_entry_by_name(const std::string name) const;
 
             /*!
              * \brief Delete an entry using the given name as the key.
              */
-            void delete_entry(std::string name);
+            void delete_entry(const std::string name);
+
+            /*!
+             * \brief Check if the entry is required
+             */
+            bool is_entry_required(const std::string name) const;
 
         private:
 
             // private list to keep track of all entries
             std::vector<Entry> entry_list_;
+
+            // list of required entries
+            std::vector<std::string> required_entries_;
     };
 }
