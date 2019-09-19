@@ -160,10 +160,10 @@ namespace guidance
     void GuidanceWorker::create_guidance_state_machine()
     {
         if(vehicle_type == "cadilac") {
-            gsm = createCadilacInstance()
+            gsm = GuidanceStateMachineFactory::createCadilacInstance();
         }
         else if (vehicle_type == "lexus") {
-            gsm = createLexusInstance()
+            gsm = GuidanceStateMachineFactory::createLexusInstance();
         }
         
     }
