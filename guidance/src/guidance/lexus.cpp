@@ -32,7 +32,7 @@ namespace guidance
     void Lexus::DriversReadyState(Signal signal){
         if(signal == Signal::ACTIVATED)
         {
-            currentGuidanceState = State::ACTIVE;
+            currentGuidanceState = State::ENGAGED;
         } else if(signal == Signal::SHUTDOWN)
         {
             currentGuidanceState = State::OFF;
@@ -42,7 +42,7 @@ namespace guidance
     void Lexus::ActiveState(Signal signal){
         if(signal == Signal::ENGAGE)
         {
-            currentGuidanceState = State::DRIVERS_READY;
+            currentGuidanceState = State::ENGAGED;
         } else if(signal == Signal::DISENGAGED)
         {
             currentGuidanceState = State::DRIVERS_READY;
