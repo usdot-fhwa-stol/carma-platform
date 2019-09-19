@@ -112,16 +112,15 @@ namespace guidance
         public:
             virtual GuidanceStateMachine* createCadilacInstance() = 0;
             virtual GuidanceStateMachine* createLexusInstance() = 0;
-
     };
 
     class GuidanceStateMachineFactory : public Factory {
         public:
             GuidanceStateMachine* createCadilacInstance() {
-            return new Cadilac;
+                return new Cadilac;
             }
             GuidanceStateMachine* createLexusInstance() {
-            return new Lexus;
+                return new Lexus;
             }
     };
 

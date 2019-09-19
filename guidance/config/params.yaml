@@ -20,3 +20,5 @@ spin_rate_hz: 10
 required_plugins:
   - Autoware Plugin 1.0.0
   - Pure Pursuit Plugin 1.0.0
+
+vehicle_type: cadilac # lexus or cadilac

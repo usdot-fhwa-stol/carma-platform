@@ -157,6 +157,17 @@ namespace guidance
         }
     }
 
+    void GuidanceWorker::create_guidance_state_machine()
+    {
+        if(vehicle_type == "cadilac") {
+            gsm = createCadilacInstance()
+        }
+        else if (vehicle_type == "lexus") {
+            gsm = createLexusInstance()
+        }
+        
+    }
+
     int GuidanceWorker::run()
     {
         ROS_INFO("Initalizing guidance node...");
@@ -179,6 +190,9 @@ namespace guidance
 
         pnh_.getParam("required_plugins", required_plugins);
         process_required_plugin_list(required_plugins);
+
+        pnh_.getParam("vehicle_type", vehicle_type);
+        create_guidance_state_machine();
 
         // Spin until system shutdown
         ROS_INFO_STREAM("Guidance node initialized, spinning at " << spin_rate << "hz...");

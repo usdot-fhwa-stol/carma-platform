@@ -82,11 +82,15 @@ namespace guidance
             std::vector<std::string> required_plugins;
 
             std::atomic<bool> guidance_activated_;
+
+            std::string vehicle_type;
+
+            void create_guidance_state_machine();
         
         private:
             GuidanceStateMachineFactory guidance_state_machine_factory;
             // Guidance state machine
-            GuidanceStateMachine* gsm = guidance_state_machine_factory.createCadilacInstance();
+            GuidanceStateMachine* gsm;
             // Helper functions
             void process_required_plugin_list(std::vector<std::string> list);
             void populate_plugin_list_response(cav_srvs::PluginListResponse& res);
