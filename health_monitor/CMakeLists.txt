@@ -13,7 +13,7 @@
 # the License.
 
 cmake_minimum_required(VERSION 2.8.3)
-project(plugin_driver_manager)
+project(health_monitor)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
@@ -29,6 +29,9 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
 )
 
+## System dependencies are found with CMake's conventions
+find_package(Boost REQUIRED COMPONENTS system)
+
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -40,9 +43,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
    INCLUDE_DIRS include
-#  LIBRARIES ui_integration
    CATKIN_DEPENDS carma_utils cav_msgs cav_srvs roscpp std_msgs
-#  DEPENDS system_lib
 )
 
 ###########
@@ -54,12 +55,8 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
 )
-
-## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/ui_integration.cpp
-# )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -70,13 +67,14 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 file(GLOB_RECURSE headers */*.hpp */*.h)
-add_executable(${PROJECT_NAME}_node 
-  src/guidance/main.cpp
-  src/guidance/plugin_driver_manager_node.cpp
-  src/guidance/plugin_manager.cpp
-  src/guidance/driver_manager.cpp
-  src/guidance/entry_manager.cpp
-  src/guidance/entry.cpp
+add_executable(${PROJECT_NAME}
+  ${headers}
+  src/main.cpp
+  src/health_monitor.cpp
+  src/plugin_manager.cpp
+  src/driver_manager.cpp
+  src/entry_manager.cpp
+  src/entry.cpp
 )
 
 ## Rename C++ executable without prefix
@@ -87,18 +85,20 @@ add_executable(${PROJECT_NAME}_node
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_library(plugin_driver_manager_library   src/guidance/plugin_manager.cpp
-  src/guidance/driver_manager.cpp
-  src/guidance/entry_manager.cpp
-  src/guidance/entry.cpp)
-add_dependencies(plugin_driver_manager_library ${catkin_EXPORTED_TARGETS})
+add_library(plugin_driver_manager_library
+  src/plugin_manager.cpp
+  src/driver_manager.cpp
+  src/entry_manager.cpp
+  src/entry.cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}_node
-  plugin_driver_manager_library
+target_link_libraries(${PROJECT_NAME}
+  ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
 )
+
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+add_dependencies(plugin_driver_manager_library ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##

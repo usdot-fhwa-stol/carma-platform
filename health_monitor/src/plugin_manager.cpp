@@ -57,13 +57,13 @@ namespace health_monitor
         }
     }
 
-    bool PluginManager::activate_plugin(std::string name)
+    bool PluginManager::activate_plugin(const std::string name, const bool activate)
     {
         boost::optional<Entry> requested_plugin = em_.get_entry_by_name(name);
         if(requested_plugin)
         {
             // params: bool available, bool active, std::string name, long timestamp, uint8_t type
-            Entry updated_entry(requested_plugin->available_, true, requested_plugin->name_, 0, requested_plugin->type_);
+            Entry updated_entry(requested_plugin->available_, activate, requested_plugin->name_, 0, requested_plugin->type_);
             em_.update_entry(updated_entry);
             return true;
         }
@@ -76,9 +76,12 @@ namespace health_monitor
         // params: bool available, bool active, std::string name, long timestamp, uint8_t type
         Entry plugin(msg->available, false, msg->name, 0, msg->type);
         // if it already exists, we do not change its activation status
-        if(requested_plugin || em_.is_entry_required(msg->name))
+        if(requested_plugin)
         {
             plugin.active_ = requested_plugin->active_;
+        } else if(em_.is_entry_required(msg->name))
+        {
+            plugin.active_ = true;
         }
         em_.update_entry(plugin);
     }

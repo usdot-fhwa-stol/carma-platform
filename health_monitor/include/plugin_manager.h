@@ -42,9 +42,9 @@ namespace health_monitor
             void get_active_plugins(cav_srvs::PluginListResponse& res);
 
             /**
-             * \brief Activate a certain plugin
+             * \brief Activate or deactivate a certain plugin
              */
-            bool activate_plugin(std::string name);
+            bool activate_plugin(const std::string name, const bool activate);
 
             /**
              * \brief Update the status of a certain plugin

@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>plugin_driver_manager</name>
+  <name>health_monitor</name>
   <version>1.0.0</version>
-  <description>The node is used to manage plugin and driver status</description>
+  <description>The node is used to manage and monitor plugin and driver status</description>
   <maintainer email="shuwei.qiang@leidos.com">qiangs</maintainer>
   <license>Apache 2.0 License</license>
   <buildtool_depend>catkin</buildtool_depend>

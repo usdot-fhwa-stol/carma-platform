@@ -51,8 +51,27 @@ namespace health_monitor
         ros::CARMANodeHandle::spin();
     }
 
-    
+    bool HealthMonitor::registered_plugin_cb(cav_srvs::PluginListRequest& req, cav_srvs::PluginListResponse& res)
+    {
+        plugin_manager_.get_registered_plugins(res);
+        return true;
+    }
 
     
+    bool HealthMonitor::activate_plugin_cb(cav_srvs::PluginActivationRequest& req, cav_srvs::PluginActivationResponse& res)
+    {
+        return plugin_manager_.activate_plugin(req.pluginName, req.activated);
+    }
+
+    void HealthMonitor::plugin_discovery_cb(const cav_msgs::PluginConstPtr& msg)
+    {
+        plugin_manager_.update_plugin_status(msg);
+    }
+
+    void HealthMonitor::driver_discovery_cb(const cav_msgs::DriverStatusConstPtr& msg)
+    {
+        // convert ros nanosecond to millisecond by the factor of 1/1e6
+        driver_manager_.update_driver_status(msg, ros::Time::now().toNSec() / 1e6);
+    }
 
 }

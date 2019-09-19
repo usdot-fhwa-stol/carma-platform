@@ -64,8 +64,8 @@ namespace health_monitor
             bool registered_plugin_cb(cav_srvs::PluginListRequest& req, cav_srvs::PluginListResponse& res);
             bool active_plugin_cb(cav_srvs::PluginListRequest& req, cav_srvs::PluginListResponse& res);
             bool activate_plugin_cb(cav_srvs::PluginActivationRequest& req, cav_srvs::PluginActivationResponse& res);
-            void plugin_discovery_cb(cav_msgs::Plugin msg);
-            void driver_discovery_cb(cav_msgs::DriverStatus msg);
+            void plugin_discovery_cb(const cav_msgs::PluginConstPtr& msg);
+            void driver_discovery_cb(const cav_msgs::DriverStatusConstPtr& msg);
 
             // initialize method
             void initialize();
