@@ -19,7 +19,7 @@
 
 TEST(GuidanceStateMachineTest, testStates)
 {
-    guidance::GuidanceStateMachine gsm;
+    guidance::GuidanceStateMachine gsm = guidance_state_machine_factory.createCadilacInstance();
     // test initial state
     EXPECT_EQ(1, static_cast<int>(gsm.getCurrentState()));
     cav_msgs::SystemAlert alert;
