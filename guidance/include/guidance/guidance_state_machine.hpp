@@ -134,18 +134,22 @@ namespace guidance
 
     class Factory {
         public:
-            virtual GuidanceStateMachine createCadilacInstance() = 0;
-            virtual GuidanceStateMachine createLexusInstance() = 0;
+            virtual std::unique_ptr<GuidanceStateMachine> createCadilacInstance() = 0;
+            virtual std::unique_ptr<GuidanceStateMachine> createLexusInstance() = 0;
     };
 
     class GuidanceStateMachineFactory : public Factory {
         public:
-            GuidanceStateMachine createCadilacInstance() {
-                return new Cadilac;
+            std::unique_ptr<GuidanceStateMachine> createCadilacInstance() {
+                std::unique_ptr<GuidanceStateMachine> GuidanceStateMachinePtr(new Cadilac);
+                return GuidanceStateMachinePtr;
             }
-            GuidanceStateMachine createLexusInstance() {
-                return new Lexus;
+
+            std::unique_ptr<GuidanceStateMachine> createLexusInstance() {
+                std::unique_ptr<GuidanceStateMachine> GuidanceStateMachinePtr(new Lexus);
+                return GuidanceStateMachinePtr;
             }
+
     };
 
 }
