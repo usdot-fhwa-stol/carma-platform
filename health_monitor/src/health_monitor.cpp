@@ -18,6 +18,12 @@
 
 namespace health_monitor
 {
+
+    HealthMonitor::HealthMonitor()
+    {
+        
+    }
+
     void HealthMonitor::initialize()
     {
         // init node handles
@@ -57,6 +63,11 @@ namespace health_monitor
         return true;
     }
 
+    bool HealthMonitor::active_plugin_cb(cav_srvs::PluginListRequest& req, cav_srvs::PluginListResponse& res)
+    {
+        plugin_manager_.get_active_plugins(res);
+        return true;
+    }
     
     bool HealthMonitor::activate_plugin_cb(cav_srvs::PluginActivationRequest& req, cav_srvs::PluginActivationResponse& res)
     {
@@ -72,6 +83,18 @@ namespace health_monitor
     {
         // convert ros nanosecond to millisecond by the factor of 1/1e6
         driver_manager_.update_driver_status(msg, ros::Time::now().toNSec() / 1e6);
+    }
+
+    bool HealthMonitor::spin_cb()
+    {
+        if(!driver_manager_.are_critical_drivers_operational(ros::Time::now().toNSec() / 1e6))
+        {
+            cav_msgs::SystemAlert alert;
+            alert.description = "Dtect disconnection from essential drivers";
+            alert.type = cav_msgs::SystemAlert::FATAL;
+            nh_.publishSystemAlert(alert);
+        }
+        return true;
     }
 
 }

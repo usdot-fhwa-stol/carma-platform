@@ -26,7 +26,12 @@ namespace health_monitor
         public:
             
             /*!
-             * \brief Default constructor for GuidanceWorker
+             * \brief Default constructor for DriverManager
+             */
+            DriverManager();
+            
+            /*!
+             * \brief Constructor for DriverManager takes in crtitical driver names and driver timeout
              */
             DriverManager(std::vector<std::string> critical_driver_names, const long driver_timeout);
 

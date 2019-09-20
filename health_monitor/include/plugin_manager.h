@@ -29,6 +29,11 @@ namespace health_monitor
             /**
              * \brief Default constructor for PluginManager
              */
+            PluginManager();
+            
+            /**
+             * \brief Constructor for PluginManager takes in require_plugin_names
+             */
             PluginManager(const std::vector<std::string> require_plugin_names);
 
             /**

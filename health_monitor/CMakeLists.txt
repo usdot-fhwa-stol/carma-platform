@@ -58,38 +58,24 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
 )
 
-## Add cmake target dependencies of the library
-## as an example, code may need to be generated before libraries
-## either from message generation or dynamic reconfigure
-# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-file(GLOB_RECURSE headers */*.hpp */*.h)
 add_executable(${PROJECT_NAME}
-  ${headers}
-  src/main.cpp
   src/health_monitor.cpp
   src/plugin_manager.cpp
   src/driver_manager.cpp
   src/entry_manager.cpp
   src/entry.cpp
+  src/main.cpp
 )
 
-## Rename C++ executable without prefix
-## The above recommended prefix causes long target names, the following renames the
-## target back to the shorter version for ease of user use
-## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
-
 ## Add cmake target dependencies of the executable
-## same as for the library above
-add_library(plugin_driver_manager_library
-  src/plugin_manager.cpp
-  src/driver_manager.cpp
-  src/entry_manager.cpp
-  src/entry.cpp)
+#add_library(plugin_driver_manager_library
+#  src/plugin_manager.cpp
+#  src/driver_manager.cpp
+#  src/entry_manager.cpp
+#  src/entry.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}
@@ -98,7 +84,7 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-add_dependencies(plugin_driver_manager_library ${catkin_EXPORTED_TARGETS})
+#add_dependencies(plugin_driver_manager_library ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##

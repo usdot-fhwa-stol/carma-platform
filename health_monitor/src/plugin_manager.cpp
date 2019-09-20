@@ -19,6 +19,8 @@
 namespace health_monitor
 {
 
+    PluginManager::PluginManager() {}
+
     PluginManager::PluginManager(std::vector<std::string> require_plugin_names)
     {
         em_ = EntryManager(require_plugin_names);

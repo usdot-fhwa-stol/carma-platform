@@ -19,6 +19,8 @@
 namespace health_monitor
 {
 
+    EntryManager::EntryManager() {}
+    
     EntryManager::EntryManager(const std::vector<std::string> required_entries)
     {
         this->required_entries_ = required_entries;

@@ -18,6 +18,8 @@
 
 namespace health_monitor
 {
+    DriverManager::DriverManager() : driver_timeout_(1000) {}
+    
     DriverManager::DriverManager(std::vector<std::string> critical_driver_names, const long driver_timeout)
     {
         em_ = EntryManager(critical_driver_names);
@@ -45,6 +47,7 @@ namespace health_monitor
                 // if a required driver is not optional or has been timeout
                 if((!i->available_) || (current_time - i->timestamp_ > driver_timeout_))
                 {
+                    // TODO: return the name of the non-functional driver
                     return false;
                 } else
                 {
