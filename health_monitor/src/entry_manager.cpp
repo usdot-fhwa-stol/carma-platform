@@ -15,13 +15,14 @@
  */
 
 #include "entry_manager.h"
+#include <iostream>
 
 namespace health_monitor
 {
 
     EntryManager::EntryManager() {}
     
-    EntryManager::EntryManager(const std::vector<std::string> required_entries)
+    EntryManager::EntryManager(std::vector<std::string> required_entries)
     {
         this->required_entries_ = required_entries;
     }

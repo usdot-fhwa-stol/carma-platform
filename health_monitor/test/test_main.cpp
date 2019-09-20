@@ -14,13 +14,7 @@
  * the License.
  */
 
-#include "guidance/guidance_state_machine.hpp"
 #include <gtest/gtest.h>
-
-TEST(GuidanceStateMachineTest, testStates)
-{
-
-}
 
 // Run all the tests
 int main(int argc, char **argv) {

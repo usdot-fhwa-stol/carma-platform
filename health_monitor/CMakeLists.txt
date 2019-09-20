@@ -71,11 +71,11 @@ add_executable(${PROJECT_NAME}
 )
 
 ## Add cmake target dependencies of the executable
-#add_library(plugin_driver_manager_library
-#  src/plugin_manager.cpp
-#  src/driver_manager.cpp
-#  src/entry_manager.cpp
-#  src/entry.cpp)
+add_library(plugin_driver_manager_library
+  src/plugin_manager.cpp
+  src/driver_manager.cpp
+  src/entry_manager.cpp
+  src/entry.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}
@@ -84,7 +84,7 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-#add_dependencies(plugin_driver_manager_library ${catkin_EXPORTED_TARGETS})
+add_dependencies(plugin_driver_manager_library ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
@@ -141,13 +141,13 @@ add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_ui_integration.cpp)
+catkin_add_gtest(${PROJECT_NAME}-test
+  test/test_driver_manager.cpp
+  test/test_entry_manager.cpp
+  test/test_plugin_manager.cpp
+  test/test_main.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
 
-#catkin_add_gmock(${PROJECT_NAME}-test test/test_guidance_state_machine.cpp)
-#target_link_libraries(${PROJECT_NAME}-test guidance_state_machine_library ${catkin_LIBRARIES})
-
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
+target_link_libraries(${PROJECT_NAME}-test plugin_driver_manager_library ${catkin_LIBRARIES})
