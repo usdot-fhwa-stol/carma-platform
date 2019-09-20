@@ -90,7 +90,7 @@ namespace guidance
         private:
             GuidanceStateMachineFactory guidance_state_machine_factory;
             // Guidance state machine
-            GuidanceStateMachine* gsm;
+            std::auto_ptr<GuidanceStateMachine> gsm;
             // Helper functions
             void process_required_plugin_list(std::vector<std::string> list);
             void populate_plugin_list_response(cav_srvs::PluginListResponse& res);

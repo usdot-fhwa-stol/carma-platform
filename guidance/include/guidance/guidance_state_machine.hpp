@@ -78,7 +78,7 @@ namespace guidance
             virtual void InactiveState(Signal signal) = 0;
             virtual void OffState(Signal signal) = 0;
             // a local variable keeps the current state machine state
-            State currentGuidanceState;
+            State current_guidance_state;
 
         private:
             /*!

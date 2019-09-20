@@ -20,7 +20,7 @@ namespace guidance
 {
     void GuidanceStateMachine::onGuidanceSignal(Signal signal)
     {
-        switch(currentGuidanceState)
+        switch(current_guidance_state)
         {
             case State::STARTUP:
                 StartUpState(signal);
@@ -79,9 +79,9 @@ namespace guidance
 
     uint8_t GuidanceStateMachine::getCurrentState()
     {
-        return static_cast<uint8_t>(currentGuidanceState);
+        return static_cast<uint8_t>(current_guidance_state);
     }
 
-    GuidanceStateMachine::GuidanceStateMachine() : currentGuidanceState(State::STARTUP) {}
+    GuidanceStateMachine::GuidanceStateMachine() : current_guidance_state(State::STARTUP) {}
 
 }

@@ -22,59 +22,59 @@ namespace guidance
     {
         if(signal == Signal::INITIALIZED)
         {
-            currentGuidanceState = State::DRIVERS_READY;
+            current_guidance_state = State::DRIVERS_READY;
         } else if(signal == Signal::SHUTDOWN)
         {
-            currentGuidanceState = State::OFF;
+            current_guidance_state = State::OFF;
         }
     }
 
     void Cadilac::DriversReadyState(Signal signal){
         if(signal == Signal::ACTIVATED)
         {
-            currentGuidanceState = State::ACTIVE;
+            current_guidance_state = State::ACTIVE;
         } else if(signal == Signal::SHUTDOWN)
         {
-            currentGuidanceState = State::OFF;
+            current_guidance_state = State::OFF;
         }
     }
 
     void Cadilac::ActiveState(Signal signal){
         if(signal == Signal::ENGAGE)
         {
-            currentGuidanceState = State::ENGAGED;
+            current_guidance_state = State::ENGAGED;
         } else if(signal == Signal::DISENGAGED)
         {
-            currentGuidanceState = State::DRIVERS_READY;
+            current_guidance_state = State::DRIVERS_READY;
         } else if(signal == Signal::SHUTDOWN)
         {
-            currentGuidanceState = State::OFF;
+            current_guidance_state = State::OFF;
         }
     }
 
     void Cadilac::EngagedState(Signal signal){
         if(signal == Signal::DISENGAGED)
         {
-            currentGuidanceState = State::DRIVERS_READY;
+            current_guidance_state = State::DRIVERS_READY;
         } else if(signal == Signal::OVERRIDE)
         {
-            currentGuidanceState = State::INACTIVE;
+            current_guidance_state = State::INACTIVE;
         } else if(signal == Signal::SHUTDOWN)
         {
-            currentGuidanceState = State::OFF;
+            current_guidance_state = State::OFF;
         }
     }
 
     void Cadilac::InactiveState(Signal signal){
         if(signal == Signal::DISENGAGED)
         {
-            currentGuidanceState = State::DRIVERS_READY;
+            current_guidance_state = State::DRIVERS_READY;
         } else if(signal == Signal::ENGAGE)
         {
-            currentGuidanceState = State::ENGAGED;
+            current_guidance_state = State::ENGAGED;
         } else if(signal == Signal::SHUTDOWN)
         {
-            currentGuidanceState = State::OFF;
+            current_guidance_state = State::OFF;
         }
     }
 
