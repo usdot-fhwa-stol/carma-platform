@@ -159,13 +159,12 @@ namespace guidance
 
     void GuidanceWorker::create_guidance_state_machine()
     {
-        if(vehicle_state_machine_type == "cadilac") {
-            gsm = guidance_state_machine_factory.createCadilacInstance();
+        try {
+            guidance_state_machine_factory.createStateMachineInstance(vehicle_state_machine_type);
         }
-        else if (vehicle_state_machine_type == "lexus") {
-            gsm = guidance_state_machine_factory.createLexusInstance();
+        catch (const std::exception& e) { 
+            std::cout << e.what();
         }
-        
     }
 
     int GuidanceWorker::run()

@@ -30,6 +30,11 @@ namespace guidance
              * \brief Create Guidance state machine for lexus
              */
             std::unique_ptr<GuidanceStateMachine> createLexusInstance();
+
+            /*!
+             * \brief Create Guidance state machine for lexus
+             */
+            std::unique_ptr<GuidanceStateMachine> createStateMachineInstance(std::string vehicle_state_machine_type);
     };
 
 }
