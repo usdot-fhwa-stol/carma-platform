@@ -157,8 +157,8 @@ add_executable(${PROJECT_NAME}_node
   src/guidance/guidance_worker.cpp
   src/guidance/guidance_state_machine.cpp
   src/guidance/guidance_state_machine_factory.cpp
-  src/guidance/cadilac.cpp
-  src/guidance/lexus.cpp
+  src/guidance/hardware_engaged_automation.cpp
+  src/guidance/software_only_engaged_state_machine.cpp
 )
 
 ## Rename C++ executable without prefix

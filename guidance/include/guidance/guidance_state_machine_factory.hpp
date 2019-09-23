@@ -22,17 +22,17 @@ namespace guidance
     class GuidanceStateMachineFactory {
         public:
             /*!
-             * \brief Create Guidance state machine for cadilac
+             * \brief Create Guidance state machine for HardwareEngagedAutomation
              */
-            std::unique_ptr<GuidanceStateMachine> createCadilacInstance();
+            std::unique_ptr<GuidanceStateMachine> createHardwareEngagedAutomationInstance();
 
             /*!
-             * \brief Create Guidance state machine for lexus
+             * \brief Create Guidance state machine for SoftwareOnlyEngagedStateMachine
              */
-            std::unique_ptr<GuidanceStateMachine> createLexusInstance();
+            std::unique_ptr<GuidanceStateMachine> createSoftwareOnlyEngagedStateMachineInstance();
 
             /*!
-             * \brief Create Guidance state machine for lexus
+             * \brief Create Guidance state machine for SoftwareOnlyEngagedStateMachine
              */
             std::unique_ptr<GuidanceStateMachine> createStateMachineInstance(std::string vehicle_state_machine_type);
     };

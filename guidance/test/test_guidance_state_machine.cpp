@@ -19,7 +19,7 @@
 
 TEST(GuidanceStateMachineTest, testStates)
 {
-    guidance::GuidanceStateMachine gsm = guidance_state_machine_factory.createCadilacInstance();
+    guidance::GuidanceStateMachine gsm = guidance_state_machine_factory.createHardwareEngagedAutomationInstance();
     // test initial state
     EXPECT_EQ(1, static_cast<int>(gsm.getCurrentState()));
     cav_msgs::SystemAlert alert;
@@ -59,7 +59,7 @@ TEST(GuidanceStateMachineTest, testStates)
 
 TEST(GuidanceStateMachineTest2, testStates)
 {
-    guidance::GuidanceStateMachine gsm = guidance_state_machine_factory.createLexusInstance();
+    guidance::GuidanceStateMachine gsm = guidance_state_machine_factory.createSoftwareOnlyEngagedStateMachineInstance();
     // test initial state
     EXPECT_EQ(1, static_cast<int>(gsm.getCurrentState()));
     cav_msgs::SystemAlert alert;

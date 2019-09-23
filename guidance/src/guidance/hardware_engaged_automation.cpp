@@ -18,7 +18,7 @@
 
 namespace guidance
 {
-    void Cadilac::StartUpState(Signal signal)
+    void HardwareEngagedAutomation::StartUpState(Signal signal)
     {
         if(signal == Signal::INITIALIZED)
         {
@@ -29,7 +29,7 @@ namespace guidance
         }
     }
 
-    void Cadilac::DriversReadyState(Signal signal){
+    void HardwareEngagedAutomation::DriversReadyState(Signal signal){
         if(signal == Signal::ACTIVATED)
         {
             current_guidance_state = State::ACTIVE;
@@ -39,7 +39,7 @@ namespace guidance
         }
     }
 
-    void Cadilac::ActiveState(Signal signal){
+    void HardwareEngagedAutomation::ActiveState(Signal signal){
         if(signal == Signal::ENGAGE)
         {
             current_guidance_state = State::ENGAGED;
@@ -52,7 +52,7 @@ namespace guidance
         }
     }
 
-    void Cadilac::EngagedState(Signal signal){
+    void HardwareEngagedAutomation::EngagedState(Signal signal){
         if(signal == Signal::DISENGAGED)
         {
             current_guidance_state = State::DRIVERS_READY;
@@ -65,7 +65,7 @@ namespace guidance
         }
     }
 
-    void Cadilac::InactiveState(Signal signal){
+    void HardwareEngagedAutomation::InactiveState(Signal signal){
         if(signal == Signal::DISENGAGED)
         {
             current_guidance_state = State::DRIVERS_READY;
@@ -78,7 +78,7 @@ namespace guidance
         }
     }
 
-    void Cadilac::OffState(Signal signal){
+    void HardwareEngagedAutomation::OffState(Signal signal){
     }
 
 }

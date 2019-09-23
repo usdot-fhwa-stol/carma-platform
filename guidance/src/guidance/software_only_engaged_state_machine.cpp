@@ -18,7 +18,7 @@
 
 namespace guidance
 {
-    void Lexus::StartUpState(Signal signal)
+    void SoftwareOnlyEngagedStateMachine::StartUpState(Signal signal)
     {
         if(signal == Signal::INITIALIZED)
         {
@@ -29,7 +29,7 @@ namespace guidance
         }
     }
 
-    void Lexus::DriversReadyState(Signal signal){
+    void SoftwareOnlyEngagedStateMachine::DriversReadyState(Signal signal){
         if(signal == Signal::ACTIVATED)
         {
             current_guidance_state = State::ENGAGED;
@@ -39,7 +39,7 @@ namespace guidance
         }
     }
 
-    void Lexus::ActiveState(Signal signal){
+    void SoftwareOnlyEngagedStateMachine::ActiveState(Signal signal){
         if(signal == Signal::ENGAGE)
         {
             current_guidance_state = State::ENGAGED;
@@ -52,7 +52,7 @@ namespace guidance
         }
     }
 
-    void Lexus::EngagedState(Signal signal){
+    void SoftwareOnlyEngagedStateMachine::EngagedState(Signal signal){
         if(signal == Signal::DISENGAGED)
         {
             current_guidance_state = State::DRIVERS_READY;
@@ -65,7 +65,7 @@ namespace guidance
         }
     }
 
-    void Lexus::InactiveState(Signal signal){
+    void SoftwareOnlyEngagedStateMachine::InactiveState(Signal signal){
         if(signal == Signal::DISENGAGED)
         {
             current_guidance_state = State::DRIVERS_READY;
@@ -78,7 +78,7 @@ namespace guidance
         }
     }
 
-    void Lexus::OffState(Signal signal){
+    void SoftwareOnlyEngagedStateMachine::OffState(Signal signal){
     }
 
 }

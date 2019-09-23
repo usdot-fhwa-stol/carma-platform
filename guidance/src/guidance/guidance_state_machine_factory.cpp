@@ -18,22 +18,22 @@
 
 namespace guidance
 {
-    std::unique_ptr<GuidanceStateMachine> GuidanceStateMachineFactory::createCadilacInstance() {
-        std::unique_ptr<GuidanceStateMachine> GuidanceStateMachinePtr(new Cadilac);
+    std::unique_ptr<GuidanceStateMachine> GuidanceStateMachineFactory::createHardwareEngagedAutomationInstance() {
+        std::unique_ptr<GuidanceStateMachine> GuidanceStateMachinePtr(new HardwareEngagedAutomation);
         return GuidanceStateMachinePtr;
     }
 
-    std::unique_ptr<GuidanceStateMachine> GuidanceStateMachineFactory::createLexusInstance() {
-        std::unique_ptr<GuidanceStateMachine> GuidanceStateMachinePtr(new Lexus);
+    std::unique_ptr<GuidanceStateMachine> GuidanceStateMachineFactory::createSoftwareOnlyEngagedStateMachineInstance() {
+        std::unique_ptr<GuidanceStateMachine> GuidanceStateMachinePtr(new SoftwareOnlyEngagedStateMachine);
         return GuidanceStateMachinePtr;
     }
 
     std::unique_ptr<GuidanceStateMachine> GuidanceStateMachineFactory::createStateMachineInstance(std::string vehicle_state_machine_type) {
-        if(vehicle_state_machine_type == "cadilac") {
-            return createCadilacInstance();
+        if(vehicle_state_machine_type == "HardwareEngagedAutomation") {
+            return createHardwareEngagedAutomationInstance();
         }
-        else if (vehicle_state_machine_type == "lexus") {
-            return createLexusInstance();
+        else if (vehicle_state_machine_type == "SoftwareOnlyEngagedStateMachine") {
+            return createSoftwareOnlyEngagedStateMachineInstance();
         }
         else {
             return nullptr;

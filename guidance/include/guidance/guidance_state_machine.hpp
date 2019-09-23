@@ -112,7 +112,7 @@ namespace guidance
 
     };
 
-    class Cadilac : public GuidanceStateMachine {
+    class HardwareEngagedAutomation : public GuidanceStateMachine {
         public:
             void StartUpState(Signal signal);
             void DriversReadyState(Signal signal);
@@ -122,7 +122,7 @@ namespace guidance
             void OffState(Signal signal);
     };
 
-    class Lexus : public GuidanceStateMachine {
+    class SoftwareOnlyEngagedStateMachine : public GuidanceStateMachine {
         public:
             void StartUpState(Signal signal);
             void DriversReadyState(Signal signal);
