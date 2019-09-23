@@ -132,24 +132,4 @@ namespace guidance
             void OffState(Signal signal);
     };
 
-    class Factory {
-        public:
-            virtual std::unique_ptr<GuidanceStateMachine> createCadilacInstance() = 0;
-            virtual std::unique_ptr<GuidanceStateMachine> createLexusInstance() = 0;
-    };
-
-    class GuidanceStateMachineFactory : public Factory {
-        public:
-            std::unique_ptr<GuidanceStateMachine> createCadilacInstance() {
-                std::unique_ptr<GuidanceStateMachine> GuidanceStateMachinePtr(new Cadilac);
-                return GuidanceStateMachinePtr;
-            }
-
-            std::unique_ptr<GuidanceStateMachine> createLexusInstance() {
-                std::unique_ptr<GuidanceStateMachine> GuidanceStateMachinePtr(new Lexus);
-                return GuidanceStateMachinePtr;
-            }
-
-    };
-
 }

@@ -29,6 +29,7 @@
 #include <cav_msgs/GuidanceState.h>
 #include <cav_msgs/RobotEnabled.h>
 #include "guidance/guidance_state_machine.hpp"
+#include "guidance/guidance_state_machine_factory.hpp"
 
 namespace guidance
 {
