@@ -32,7 +32,8 @@ namespace arbitrator
         INITIAL,
         PLANNING,
         WAITING,
-        PAUSED
+        PAUSED,
+        SHUTDOWN
     };
 
     /**
@@ -48,7 +49,8 @@ namespace arbitrator
         PLANNING_COMPLETE,
         PLANNING_TIMER_TRIGGER,
         ARBIRTATOR_PAUSED,
-        ARBITRATOR_RESUMED
+        ARBITRATOR_RESUMED,
+        SYSTEM_SHUTDOWN_INITIATED
     };
 
     /**
@@ -92,14 +94,21 @@ namespace arbitrator
              */
             const std::vector<ArbitratorStateTransition> ARBITRATOR_TRANSITIONS =
             {   
-            // Nominal arbitrator functionality
-            {INITIAL, SYSTEM_STARTUP_COMPLETE, PLANNING},
-            {PLANNING, PLANNING_COMPLETE, WAITING},
-            {WAITING, PLANNING_TIMER_TRIGGER, PLANNING},
+                // Nominal arbitrator functionality
+                {INITIAL, SYSTEM_STARTUP_COMPLETE, PLANNING},
+                {PLANNING, PLANNING_COMPLETE, WAITING},
+                {WAITING, PLANNING_TIMER_TRIGGER, PLANNING},
 
-            // Interrupt and resume
-            {WAITING, ARBIRTATOR_PAUSED, PAUSED},
-            {PAUSED, ARBITRATOR_RESUMED, PLANNING}
+                // Interrupt and resume
+                {PLANNING, ARBITRATOR_PAUSED, PAUSED},
+                {WAITING, ARBIRTATOR_PAUSED, PAUSED},
+                {PAUSED, ARBITRATOR_RESUMED, PLANNING},
+
+                // System shutdown procedures
+                {INITIAL, SYSTEM_SHUTDOWN_INITIATED, SHUTDOWN},
+                {PLANNING, SYSTEM_SHUTDOWN_INITIATED, SHUTDOWN},
+                {WAITING, SYSTEM_SHUTDOWN_INITIATED, SHUTDOWN},
+                {PAUSED, SYSTEM_SHUTDOWN_INITIATED, SHUTDOWN},
             };
 
             ArbitratorState current_state;

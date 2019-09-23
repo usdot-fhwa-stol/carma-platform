@@ -17,22 +17,32 @@
 #ifndef __ARBITRATOR_HPP__
 #define __ARBITRATOR_HPP__
 
+#include <ros/ros.h>
+#include <carma_utils/CARMAUtils.h>
 #include "arbitrator_state_machine.hpp"
+#include <cav_msgs/GuidanceState.h>
 
 namespace arbitrator 
 {
     class Arbitrator 
     {
         public:
-            Arbitrator(ArbitratorStateMachine sm):sm(sm) {};
+            Arbitrator(ArbitratorStateMachine sm):sm_(sm) {};
             void run();
+        protected:
+            void initial_state();
             void planning_state();
             void waiting_state();
-            void unarbitratred_planning_state();
-        protected:
+            void paused_state();
+            void shutdown_state();
             void plan_trajectory();
+            void guidance_state_cb(const cav_msgs::GuidanceState::ConstPtr& msg);
         private:
-            ArbitratorStateMachine sm;
+            ArbitratorStateMachine sm_;
+            ros::Publisher final_plan_pub_;
+            ros::Subscriber guidance_state_sub_;
+            ros::CARMANodeHandle nh_;
+            ros::CARMANodeHandle pnh_;
     };
 };
 
