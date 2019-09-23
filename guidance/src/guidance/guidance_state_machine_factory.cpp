@@ -38,7 +38,6 @@ namespace guidance
         else {
             return nullptr;
         }
-
     };
 
 }
