@@ -21,7 +21,14 @@ namespace guidance
 {
     class GuidanceStateMachineFactory {
         public:
+            /*!
+             * \brief Create Guidance state machine for cadilac
+             */
             std::unique_ptr<GuidanceStateMachine> createCadilacInstance();
+
+            /*!
+             * \brief Create Guidance state machine for lexus
+             */
             std::unique_ptr<GuidanceStateMachine> createLexusInstance();
     };
 
