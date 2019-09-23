@@ -15,8 +15,3 @@
 # Integer: The rate at which the Guidance Node will process message
 # Units: hz
 spin_rate_hz: 10
-
-# List of String: Required plugins for the platform to be functional
-required_plugins:
-  - Autoware Plugin 1.0.0
-  - Pure Pursuit Plugin 1.0.0
