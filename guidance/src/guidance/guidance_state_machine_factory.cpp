@@ -14,12 +14,6 @@
  * the License.
  */
 
-#pragma once
-
-#include <cav_msgs/SystemAlert.h>
-#include <cav_msgs/RobotEnabled.h>
-#include <cav_msgs/GuidanceState.h>
-#include "guidance/guidance_state_machine.hpp"
 #include "guidance/guidance_state_machine_factory.hpp"
 
 namespace guidance

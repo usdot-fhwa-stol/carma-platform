@@ -15,26 +15,14 @@
  */
 
 #pragma once
-
-#include <cav_msgs/SystemAlert.h>
-#include <cav_msgs/RobotEnabled.h>
-#include <cav_msgs/GuidanceState.h>
-#include "guidance_state_machine.hpp"
+#include "guidance/guidance_state_machine.hpp"
 
 namespace guidance
 {
     class GuidanceStateMachineFactory {
         public:
-            std::unique_ptr<GuidanceStateMachine> createCadilacInstance() {
-                std::unique_ptr<GuidanceStateMachine> GuidanceStateMachinePtr(new Cadilac);
-                return GuidanceStateMachinePtr;
-            }
-
-            std::unique_ptr<GuidanceStateMachine> createLexusInstance() {
-                std::unique_ptr<GuidanceStateMachine> GuidanceStateMachinePtr(new Lexus);
-                return GuidanceStateMachinePtr;
-            }
-
+            std::unique_ptr<GuidanceStateMachine> createCadilacInstance();
+            std::unique_ptr<GuidanceStateMachine> createLexusInstance();
     };
 
 }

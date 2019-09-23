@@ -156,6 +156,7 @@ add_executable(${PROJECT_NAME}_node
   src/guidance/guidance_node.cpp
   src/guidance/guidance_worker.cpp
   src/guidance/guidance_state_machine.cpp
+  src/guidance/guidance_state_machine_factory.cpp
   src/guidance/cadilac.cpp
   src/guidance/lexus.cpp
 )
