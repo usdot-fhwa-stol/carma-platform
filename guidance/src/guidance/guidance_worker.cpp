@@ -159,10 +159,10 @@ namespace guidance
 
     void GuidanceWorker::create_guidance_state_machine()
     {
-        if(vehicle_type == "cadilac") {
+        if(vehicle_state_machine_type == "cadilac") {
             gsm = guidance_state_machine_factory.createCadilacInstance();
         }
-        else if (vehicle_type == "lexus") {
+        else if (vehicle_state_machine_type == "lexus") {
             gsm = guidance_state_machine_factory.createLexusInstance();
         }
         
@@ -191,7 +191,7 @@ namespace guidance
         pnh_.getParam("required_plugins", required_plugins);
         process_required_plugin_list(required_plugins);
 
-        pnh_.getParam("vehicle_type", vehicle_type);
+        nh_.getParam("vehicle_state_machine_type", vehicle_state_machine_type);
         create_guidance_state_machine();
 
         // Spin until system shutdown

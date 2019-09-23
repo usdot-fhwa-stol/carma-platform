@@ -83,14 +83,15 @@ namespace guidance
 
             std::atomic<bool> guidance_activated_;
 
-            std::string vehicle_type;
+            std::string vehicle_state_machine_type;
 
             void create_guidance_state_machine();
         
         private:
+            // Guidance state machine factory
             GuidanceStateMachineFactory guidance_state_machine_factory;
             // Guidance state machine
-             std::unique_ptr<GuidanceStateMachine> gsm;
+            std::unique_ptr<GuidanceStateMachine> gsm;
             // Helper functions
             void process_required_plugin_list(std::vector<std::string> list);
             void populate_plugin_list_response(cav_srvs::PluginListResponse& res);
