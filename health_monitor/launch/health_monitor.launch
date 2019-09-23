@@ -16,12 +16,12 @@
 -->
 
 <!-- 
-Primary launch file for UI Integration node
-Loads parameters and configures logging for node
+Primary launch file for health monitor node
+Loads parameters and configures logging for the node
  -->
 <launch>
-    <!-- UI Integration Node -->
-    <node pkg="guidance" type="guidance_node" name="guidance_node">
-        <rosparam command="load" file="$(find guidance)/config/params.yaml" />
+    <!-- Health Monitor Node -->
+    <node pkg="health_monitor" type="health_monitor" name="health_monitor">
+        <rosparam command="load" file="$(find health_monitor)/config/params.yaml" />
     </node>
 </launch>

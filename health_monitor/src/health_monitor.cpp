@@ -41,12 +41,17 @@ namespace health_monitor
         // load params
         spin_rate_ = pnh_.param<double>("spin_rate_hz", 10.0);
         driver_timeout_ = pnh_.param<double>("required_driver_timeout", 500);
+        startup_duration_ = pnh_.param<double>("startup_duration", 25);
         pnh_.getParam("required_plugins", required_plugins_);
         pnh_.getParam("required_drivers", required_drivers_);
+        
 
         // initialize worker class
         plugin_manager_ = PluginManager(required_plugins_);
         driver_manager_ = DriverManager(required_drivers_, driver_timeout_);
+
+        // record starup time
+        start_up_timestamp_ = ros::Time::now();
     }
     
     void HealthMonitor::run()
@@ -87,13 +92,21 @@ namespace health_monitor
 
     bool HealthMonitor::spin_cb()
     {
-        if(!driver_manager_.are_critical_drivers_operational(ros::Time::now().toNSec() / 1e6))
+        cav_msgs::SystemAlert alert;
+        if(driver_manager_.are_critical_drivers_operational(ros::Time::now().toNSec() / 1e6))
         {
-            cav_msgs::SystemAlert alert;
-            alert.description = "Dtect disconnection from essential drivers";
+            alert.description = "All enssential drivers are ready";
+            alert.type = cav_msgs::SystemAlert::DRIVERS_READY;
+        } else if(start_up_timestamp_.isZero() || ros::Time::now() - start_up_timestamp_ <= ros::Duration(startup_duration_))
+        {
+            alert.description = "System is starting up...";
+            alert.type = cav_msgs::SystemAlert::NOT_READY;
+        } else if(!driver_manager_.are_critical_drivers_operational(ros::Time::now().toNSec() / 1e6))
+        {
+            alert.description = "Detect disconnection from essential drivers";
             alert.type = cav_msgs::SystemAlert::FATAL;
-            nh_.publishSystemAlert(alert);
         }
+        nh_.publishSystemAlert(alert);
         return true;
     }
 

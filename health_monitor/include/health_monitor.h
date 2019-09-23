@@ -71,9 +71,12 @@ namespace health_monitor
             void initialize();
 
             // ROS params
-            double spin_rate_, driver_timeout_;
+            double spin_rate_, driver_timeout_, startup_duration_;
             std::vector<std::string> required_drivers_;
             std::vector<std::string> required_plugins_;
+
+            // record of startup timestamp
+            ros::Time start_up_timestamp_;
 
             // spin callback function
             bool spin_cb();
