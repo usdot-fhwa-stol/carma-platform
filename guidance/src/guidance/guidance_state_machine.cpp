@@ -20,63 +20,25 @@ namespace guidance
 {
     void GuidanceStateMachine::onGuidanceSignal(Signal signal)
     {
-        switch(currentGuidanceState)
+        switch(current_guidance_state)
         {
             case State::STARTUP:
-                if(signal == Signal::INITIALIZED)
-                {
-                    currentGuidanceState = State::DRIVERS_READY;
-                } else if(signal == Signal::SHUTDOWN)
-                {
-                    currentGuidanceState = State::OFF;
-                }
+                StartUpState(signal);
                 break;
             case State::DRIVERS_READY:
-                if(signal == Signal::ACTIVATED)
-                {
-                    currentGuidanceState = State::ACTIVE;
-                } else if(signal == Signal::SHUTDOWN)
-                {
-                    currentGuidanceState = State::OFF;
-                }
+                DriversReadyState(signal);
                 break;
             case State::ACTIVE:
-                if(signal == Signal::ENGAGE)
-                {
-                    currentGuidanceState = State::ENGAGED;
-                } else if(signal == Signal::DISENGAGED)
-                {
-                    currentGuidanceState = State::DRIVERS_READY;
-                } else if(signal == Signal::SHUTDOWN)
-                {
-                    currentGuidanceState = State::OFF;
-                }
+                ActiveState(signal);
                 break;
             case State::ENGAGED:
-                if(signal == Signal::DISENGAGED)
-                {
-                    currentGuidanceState = State::DRIVERS_READY;
-                } else if(signal == Signal::OVERRIDE)
-                {
-                    currentGuidanceState = State::INACTIVE;
-                } else if(signal == Signal::SHUTDOWN)
-                {
-                    currentGuidanceState = State::OFF;
-                }
+                EngagedState(signal);
                 break;
             case State::INACTIVE:
-                if(signal == Signal::DISENGAGED)
-                {
-                    currentGuidanceState = State::DRIVERS_READY;
-                } else if(signal == Signal::ENGAGE)
-                {
-                    currentGuidanceState = State::ENGAGED;
-                } else if(signal == Signal::SHUTDOWN)
-                {
-                    currentGuidanceState = State::OFF;
-                }
+                InactiveState(signal);
                 break;
             case State::OFF:
+                OffState(signal);
                 break;
         }
     }
@@ -117,9 +79,9 @@ namespace guidance
 
     uint8_t GuidanceStateMachine::getCurrentState()
     {
-        return static_cast<uint8_t>(currentGuidanceState);
+        return static_cast<uint8_t>(current_guidance_state);
     }
 
-    GuidanceStateMachine::GuidanceStateMachine() : currentGuidanceState(State::STARTUP) {}
+    GuidanceStateMachine::GuidanceStateMachine() : current_guidance_state(State::STARTUP) {}
 
 }
