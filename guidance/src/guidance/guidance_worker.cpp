@@ -159,11 +159,9 @@ namespace guidance
 
     void GuidanceWorker::create_guidance_state_machine()
     {
-        try {
-            guidance_state_machine_factory.createStateMachineInstance(vehicle_state_machine_type);
-        }
-        catch (const std::exception& e) { 
-            std::cout << e.what();
+        gsm = guidance_state_machine_factory.createStateMachineInstance(vehicle_state_machine_type);
+        if(gsm == nullptr) {
+            nh_.handleException(std::invalid_argument("vehicle_state_machine_type not set correctly"));
         }
     }
 

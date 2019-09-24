@@ -32,7 +32,7 @@ namespace guidance
             std::unique_ptr<GuidanceStateMachine> createSoftwareOnlyEngagedStateMachineInstance();
 
             /*!
-             * \brief Create Guidance state machine for SoftwareOnlyEngagedStateMachine
+             * \brief Create Guidance state machine
              */
             std::unique_ptr<GuidanceStateMachine> createStateMachineInstance(std::string vehicle_state_machine_type);
     };
