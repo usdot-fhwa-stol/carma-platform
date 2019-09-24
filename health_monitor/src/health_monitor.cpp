@@ -27,7 +27,7 @@ namespace health_monitor
     void HealthMonitor::initialize()
     {
         // init node handles
-        ROS_INFO("Initalizing health_monitor node...");
+        ROS_INFO_STREAM("Initalizing health_monitor node...");
         nh_ = ros::CARMANodeHandle();
         pnh_ = ros::CARMANodeHandle("~");
 
@@ -76,7 +76,11 @@ namespace health_monitor
     
     bool HealthMonitor::activate_plugin_cb(cav_srvs::PluginActivationRequest& req, cav_srvs::PluginActivationResponse& res)
     {
-        return plugin_manager_.activate_plugin(req.pluginName, req.activated);
+        bool answer = plugin_manager_.activate_plugin(req.pluginName, req.activated);
+        if(answer) {
+            res.newState = req.activated;
+        }
+        return answer;
     }
 
     void HealthMonitor::plugin_discovery_cb(const cav_msgs::PluginConstPtr& msg)
