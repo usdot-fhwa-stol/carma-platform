@@ -52,12 +52,12 @@
   </group>
 
   <!-- Interface Manager Node -->
-  <arg name="debug_interface_mgr" value="$(eval arg('debug_node') == 'interface_mgr')"/>
+  <!--<arg name="debug_interface_mgr" value="$(eval arg('debug_node') == 'interface_mgr')"/>
   <node pkg="carma" type="interfacemgr" name="interface_mgr" args="gov.dot.fhwa.saxton.carma.interfacemgr.InterfaceMgr" required="true">
 
     <env if="$(arg debug_interface_mgr)" name="INTERFACEMGR_OPTS" value="$(env JVM_DEBUG_OPTS)"/>
 
     <rosparam command="load" file="$(find carma)/interfacemgr/config/InterfaceMgrParams.yaml"/>
-  </node>
+  </node>-->
 
 </launch>
