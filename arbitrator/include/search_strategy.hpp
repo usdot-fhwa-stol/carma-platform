@@ -14,12 +14,20 @@
  * the License.
  */
 
-#include "capabilities_interface.hpp"
+#ifndef __SEARCH_STRATEGY_HPP__
+#define __SEARCH_STRATEGY_HPP__
+
+#include <vector>
+#include <cav_msgs/ManeuverPlan.h>
 
 namespace arbitrator
 {
+    class SearchStrategy
+    {
+        public:
+            virtual std::vector<cav_msgs::ManeuverPlan> prioritize_plans(std::vector<cav_msgs::ManeuverPlan> plans) const = 0;
+    }; 
+} // namespace arbitrator
 
-    void CapabilitiesInterface::initialize() {
 
-    }
-}
+#endif //__SEARCH_STRATEGY_HPP__

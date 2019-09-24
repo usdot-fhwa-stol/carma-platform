@@ -14,12 +14,20 @@
  * the License.
  */
 
-#include "capabilities_interface.hpp"
+#ifndef __COST_FUNCTION_HPP__
+#define __COST_FUNCTION_HPP__
+
+#include <cav_msgs/ManeuverPlan.h>
+#include <cav_msgs/ManeuverPlan.h>
 
 namespace arbitrator
 {
+    class CostFunction
+    {
+        public:
+            virtual double compute_total_cost(cav_msgs::ManeuverPlan plan) const = 0;
+            virtual double compute_cost_per_unit_distance(cav_msgs::ManeuverPlan plan) const = 0;
+    };
+};
 
-    void CapabilitiesInterface::initialize() {
-
-    }
-}
+#endif //__COST_FUNCTION_HPP__

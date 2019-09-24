@@ -24,30 +24,30 @@
 
 namespace arbitrator 
 {
-            template<typename MReq, typename MRes>
-            std::map<std::string, MRes> CapabiltiesInterface::multiplex_service_call_for_capability(std::string query_string, MReq msg) 
-            {
-                std::vector<std::string> topics = get_topics_for_capability(query_string);
-                MRes response;
-                std::map<std::string, MRes> responses;
-                for (auto i = topics.begin(); i != topics.end(); i++) 
-                {
-                    service_clients_[*i].call(msg, &MRes);
-                    responses.emplace(*i, response);
-                }
+    template<typename MReq, typename MRes>
+    std::map<std::string, MRes> CapabiltiesInterface::multiplex_service_call_for_capability(std::string query_string, MReq msg) 
+    {
+        std::vector<std::string> topics = get_topics_for_capability(query_string);
+        MRes response;
+        std::map<std::string, MRes> responses;
+        for (auto i = topics.begin(); i != topics.end(); i++) 
+        {
+            service_clients_[*i].call(msg, &MRes);
+            responses.emplace(*i, response);
+        }
 
-                return responses;
-            }
+        return responses;
+    }
 
-            template<typename Mmsg>
-            void CapabiltiesInterface::multiplex_publication_for_capability(std::string query_string, Mmsg msg) 
-            {
-                std::vector<std::string> topics = get_topics_for_capability(query_string);
-                for (auto i = topics.begin(); i != topics.end(); i++) 
-                {
-                    publishers_[*i].publish(msg);
-                }
-            }
+    template<typename Mmsg>
+    void CapabiltiesInterface::multiplex_publication_for_capability(std::string query_string, Mmsg msg) 
+    {
+        std::vector<std::string> topics = get_topics_for_capability(query_string);
+        for (auto i = topics.begin(); i != topics.end(); i++) 
+        {
+            publishers_[*i].publish(msg);
+        }
+    }
 };
 
 #endif

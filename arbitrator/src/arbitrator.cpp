@@ -16,6 +16,7 @@
 
 #include "arbitrator.hpp"
 #include <cav_msgs/ManeuverPlan.h>
+#include <cav_srvs/PlanManeuvers.h>
 
 namespace arbitrator
 {
@@ -85,7 +86,16 @@ namespace arbitrator
 
     void Arbitrator::planning_state()
     {
-
+        cav_srvs::PlanManeuversRequest inital_plan_request;
+        std::map<std::string, cav_srvs::PlanManeuversResponse> responses = 
+            capabilities_interface_.multiplex_service_call_for_capability
+            <cav_srvs::PlanManeuversRequest, cav_srvs::PlanManeuversResponse>
+            ("strategic_plan", inital_plan_request);
+        
+        for (auto it = responses.begin(); it != responses.end(); it++)
+        {
+            it->
+        }
     }
 
     void Arbitrator::waiting_state()

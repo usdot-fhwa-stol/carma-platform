@@ -25,10 +25,10 @@
 
 namespace arbitrator
 {
-    class CapabiltiesInterface
+    class CapabilitiesInterface
     {
         public:
-            CapabiltiesInterface(ros::NodeHandle nh): nh_(nh) {};
+            CapabilitiesInterface(ros::NodeHandle nh): nh_(nh) {};
             void initialize();
             std::vector<std::string> get_topics_for_capability(std::string query_string);
 

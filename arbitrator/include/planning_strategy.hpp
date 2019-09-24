@@ -14,12 +14,18 @@
  * the License.
  */
 
-#include "capabilities_interface.hpp"
+#ifndef __PLANNING_STRATEGY_HPP__
+#define __PLANNING_STRATEGY_HPP__
+
+#include <cav_msgs/ManeuverPlan.h>
 
 namespace arbitrator
 {
+    class PlanningStrategy
+    {
+        public:
+            virtual cav_msgs::ManeuverPlan generate_plan() const = 0;
+    };
+};
 
-    void CapabilitiesInterface::initialize() {
-
-    }
-}
+#endif //__PLANNING_STRATEGY_HPP__

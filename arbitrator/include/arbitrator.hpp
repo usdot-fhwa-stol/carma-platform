@@ -20,6 +20,7 @@
 #include <ros/ros.h>
 #include <carma_utils/CARMAUtils.h>
 #include "arbitrator_state_machine.hpp"
+#include "capabilities_interface.hpp"
 #include <cav_msgs/GuidanceState.h>
 
 namespace arbitrator 
@@ -27,7 +28,9 @@ namespace arbitrator
     class Arbitrator 
     {
         public:
-            Arbitrator(ArbitratorStateMachine sm):sm_(sm) {};
+            Arbitrator(ArbitratorStateMachine sm, CapabilitiesInterface ci):
+                sm_(sm),
+                capabilities_interface_(ci) {};
             void run();
         protected:
             void initial_state();
@@ -35,7 +38,6 @@ namespace arbitrator
             void waiting_state();
             void paused_state();
             void shutdown_state();
-            void plan_trajectory();
             void guidance_state_cb(const cav_msgs::GuidanceState::ConstPtr& msg);
         private:
             ArbitratorStateMachine sm_;
@@ -43,6 +45,9 @@ namespace arbitrator
             ros::Subscriber guidance_state_sub_;
             ros::CARMANodeHandle nh_;
             ros::CARMANodeHandle pnh_;
+            double min_plan_duration_s;
+            double max_plan_duration_s;
+            CapabilitiesInterface capabilities_interface_;
     };
 };
 
