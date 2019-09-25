@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-# Double: The rate at which the Guidance Node will process message
+# Double: The rate at which the Health Monitor Node will process message
 # Units: hz
 spin_rate_hz: 10.0
 

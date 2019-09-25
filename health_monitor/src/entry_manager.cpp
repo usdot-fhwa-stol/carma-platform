@@ -71,7 +71,7 @@ namespace health_monitor
             }
         }
         // use boost::optional because requested entry might not exist
-        return boost::optional<Entry>();
+        return boost::none;
     }
 
     bool EntryManager::is_entry_required(const std::string name) const
