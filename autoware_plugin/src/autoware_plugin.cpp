@@ -32,6 +32,16 @@ namespace autoware_plugin
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
         trajectory_pub_ = nh_->advertise<cav_msgs::TrajectoryPlan>("plan_trajectory", 1);
+        
+        autoware_plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
+        cav_msgs::Plugin msg;
+        msg.name = "Autoware Plugin";
+        msg.versionId = "v1.0";
+        msg.available = true;
+        msg.activated = false;
+        msg.required = true;
+        autoware_plugin_discovery_pub_.publish(msg);
+
         waypoints_sub_ = nh_->subscribe("final_waypoints", 1, &AutowarePlugin::waypoints_cb, this);
         pose_sub_ = nh_->subscribe("current_pose", 1, &AutowarePlugin::pose_cb, this);
         twist_sub_ = nh_->subscribe("current_velocity", 1, &AutowarePlugin::twist_cd, this);

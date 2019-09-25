@@ -50,6 +50,7 @@
 
   <!-- TODO Look into if there is a better way for handling global prameters -->
   <remap from="~vehicle_id" to="/vehicle_id"/> 
+  <remap from="vehicle_state_machine_type" to="/vehicle_state_machine_type"/> 
   <remap from="vehicle_length" to="/vehicle_length"/> 
   <remap from="vehicle_width" to="/vehicle_width"/> 
 

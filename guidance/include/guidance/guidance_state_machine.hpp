@@ -71,15 +71,65 @@ namespace guidance
              */
             uint8_t getCurrentState();
 
+            /*!
+             * \brief handle the Start Up State.
+             */
+            virtual void StartUpState(Signal signal) = 0;
+
+            /*!
+             * \brief handle the drivers ready State.
+             */
+            virtual void DriversReadyState(Signal signal) = 0;
+            
+            /*!
+             * \brief handle the Active State.
+             */
+            virtual void ActiveState(Signal signal) = 0;
+            
+            /*!
+             * \brief handle the Engaged State.
+             */    
+            virtual void EngagedState(Signal signal) = 0;
+        
+            /*!
+             * \brief handle the Inactive State.
+             */
+            virtual void InactiveState(Signal signal) = 0;
+
+            /*!
+             * \brief handle the off State.
+             */
+            virtual void OffState(Signal signal) = 0;
+
+            // a local variable keeps the current state machine state
+            State current_guidance_state;
+
         private:
             /*!
              * \brief Actual state machine logic driven by signal enum
              */
             void onGuidanceSignal(Signal signal);
 
-            // a local variable keeps the current state machine state
-            State currentGuidanceState;
+    };
 
+    class HardwareEngagedAutomation : public GuidanceStateMachine {
+        public:
+            void StartUpState(Signal signal);
+            void DriversReadyState(Signal signal);
+            void ActiveState(Signal signal);
+            void EngagedState(Signal signal);
+            void InactiveState(Signal signal);
+            void OffState(Signal signal);
+    };
+
+    class SoftwareOnlyEngagedStateMachine : public GuidanceStateMachine {
+        public:
+            void StartUpState(Signal signal);
+            void DriversReadyState(Signal signal);
+            void ActiveState(Signal signal);
+            void EngagedState(Signal signal);
+            void InactiveState(Signal signal);
+            void OffState(Signal signal);
     };
 
 }

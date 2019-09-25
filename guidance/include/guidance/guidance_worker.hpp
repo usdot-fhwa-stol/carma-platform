@@ -26,6 +26,7 @@
 #include <cav_msgs/GuidanceState.h>
 #include <cav_msgs/RobotEnabled.h>
 #include "guidance/guidance_state_machine.hpp"
+#include "guidance/guidance_state_machine_factory.hpp"
 
 namespace guidance
 {
@@ -64,10 +65,16 @@ namespace guidance
             ros::CARMANodeHandle nh_, pnh_;
 
             std::atomic<bool> guidance_activated_;
+
+            std::string vehicle_state_machine_type;
+
+            void create_guidance_state_machine();
         
         private:
+            // Guidance state machine factory
+            GuidanceStateMachineFactory guidance_state_machine_factory;
             // Guidance state machine
-            GuidanceStateMachine gsm;
+            std::unique_ptr<GuidanceStateMachine> gsm;
             // spin callback function
             bool spin_cb();
     };

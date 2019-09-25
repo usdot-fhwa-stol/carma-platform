@@ -26,21 +26,21 @@ namespace guidance
 
     void GuidanceWorker::system_alert_cb(const cav_msgs::SystemAlertConstPtr& msg)
     {
-        gsm.onSystemAlert(msg);
+        gsm->onSystemAlert(msg);
     }
 
     void GuidanceWorker::robot_status_cb(const cav_msgs::RobotEnabledConstPtr& msg)
     {
-        gsm.onRoboticStatus(msg);
+        gsm->onRoboticStatus(msg);
     }
 
     bool GuidanceWorker::guidance_acivation_cb(cav_srvs::SetGuidanceActiveRequest& req, cav_srvs::SetGuidanceActiveResponse& res)
     {
         // Translate message type from GuidanceActiveRequest to SetEnableRobotic
         ROS_INFO_STREAM("Request for guidance activation recv'd with status " << req.guidance_active);
-        gsm.onSetGuidanceActive(req.guidance_active);
+        gsm->onSetGuidanceActive(req.guidance_active);
         cav_srvs::SetEnableRobotic srv;
-        if (gsm.getCurrentState() == GuidanceStateMachine::ENGAGED) {
+        if (gsm->getCurrentState() == GuidanceStateMachine::ENGAGED) {
             srv.request.set = cav_srvs::SetEnableRobotic::Request::ENABLE;
             res.guidance_status = true;
         } else {
@@ -54,9 +54,17 @@ namespace guidance
     bool GuidanceWorker::spin_cb()
     {
         cav_msgs::GuidanceState state;
-        state.state = gsm.getCurrentState();
+        state.state = gsm->getCurrentState();
         state_publisher_.publish(state);
         return true;
+    }
+
+    void GuidanceWorker::create_guidance_state_machine()
+    {
+        gsm = guidance_state_machine_factory.createStateMachineInstance(vehicle_state_machine_type);
+        if(gsm == nullptr) {
+            nh_.handleException(std::invalid_argument("vehicle_state_machine_type not set correctly"));
+        }
     }
 
     int GuidanceWorker::run()
@@ -73,6 +81,9 @@ namespace guidance
         // Load the spin rate param to determine how fast to process messages
         // Default rate 10.0 Hz
         double spin_rate = pnh_.param<double>("spin_rate_hz", 10.0);
+
+        nh_.getParam("vehicle_state_machine_type", vehicle_state_machine_type);
+        create_guidance_state_machine();
 
         // Spin until system shutdown
         ROS_INFO_STREAM("Guidance node initialized, spinning at " << spin_rate << "hz...");
