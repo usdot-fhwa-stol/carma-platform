@@ -70,10 +70,6 @@ install(DIRECTORY
         scripts
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 install(DIRECTORY
-        interfacemgr/build
-        interfacemgr/config
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/interfacemgr)
-install(DIRECTORY
         message/build
         message/config
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/message)
