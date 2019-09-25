@@ -39,7 +39,6 @@ namespace autoware_plugin
         msg.versionId = "v1.0";
         msg.available = true;
         msg.activated = false;
-        msg.required = true;
         autoware_plugin_discovery_pub_.publish(msg);
 
         waypoints_sub_ = nh_->subscribe("final_waypoints", 1, &AutowarePlugin::waypoints_cb, this);

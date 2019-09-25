@@ -1,7 +1,6 @@
 #!/bin/bash
 tests=(
      'geometry'
-     'interfacemgr'
      'lateral_control_driver'
      'message'
      'mock_drivers'

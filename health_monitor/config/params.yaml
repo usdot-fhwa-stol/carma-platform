@@ -12,6 +12,23 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-# Integer: The rate at which the Guidance Node will process message
+# Double: The rate at which the Health Monitor Node will process message
 # Units: hz
-spin_rate_hz: 10
+spin_rate_hz: 10.0
+
+# Double: The timeout threshold for essential drivers
+# Units: ms
+required_driver_timeout: 1500.0
+
+# Double: The time allocated for system startup
+# Units: s
+startup_duration: 30.0
+
+# List of String: Required plugins for the platform to be functional
+required_plugins:
+  - Autoware Plugin
+
+# List of String: Required drivers for the platform to be functional
+required_drivers:
+  - /hardware_interface/ssc_interface_wrapper
+  - /hardware_interface/velodyne_lidar_driver_wrapper
