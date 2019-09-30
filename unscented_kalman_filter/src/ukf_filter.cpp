@@ -14,21 +14,26 @@
  * the License.
  */
 
-#include "ukf_filter.h"
+#include "unscented_kalman_filter/ukf_filter.h"
 
 //Constructor
 UKFilter::UKFilter() {}
 //Destructor
 UKFilter::~UKFilter() {}
 
+void UKFilter::UnscentedKalmanFilter()
+{
+
+}
+
 //##################<Prediction Cycle>#####################################
-void UKFilter::Prediction(VectorXd &x, MatrixXd &P,double delta_t)
+inline void UKFilter::Prediction(VectorXd &x, MatrixXd &P,double delta_t_)
 {
 //UKFilter need the argument as state vector x, Covariance Matrix P and timestamp delta_t
 //Basically there are three steps
-//1) Generate Sigma Points with or without augmentation
-//2) Predict Sigma Points using a vehicle model
-//3) Convert back the sigma points into predicted mean and covariance
+//1) Generate Sigma Points with or without augmentation as required
+//2) Predict Sigma Points using nine dimension vehicle model
+//3) Convert the predicted sigma points into predicted mean and covariance
 
     // Set State space dimension
     n_x_ = x.size();
@@ -111,51 +116,59 @@ void UKFilter::Prediction(VectorXd &x, MatrixXd &P,double delta_t)
     // Set the predicted sigma points matrix dimensions
     Xsigma_pred_ = MatrixXd(n_x_, (2 * n_x_ + 1));
     //Generate here
-    vector<lib_vehicle_model::VehicleState> results = lib_vehicle_model::predict(state, "d_t", "d_t");
-    //use the delta_t from the timestamp (const,const)
+    for(int i=0;i<19;i++) {
+        vector <lib_vehicle_model::VehicleState> results = lib_vehicle_model::predict(Xsigma_.col(i), delta_t_, delta_t_);
+
+        Xsigma_pred_.col(i, 0)=results[0];
+        Xsigma_pred_.col(i, 1)=results[1];
+        Xsigma_pred_.col(i, 2)=results[2];
+        Xsigma_pred_.col(i, 3)=results[3];
+        Xsigma_pred_.col(i, 4)=results[4];
+        Xsigma_pred_.col(i, 5)=results[5];
+        Xsigma_pred_.col(i, 6)=results[6];
+        Xsigma_pred_.col(i, 7)=results[7];
+        Xsigma_pred_.col(i, 8)=results[8];
+    }
+    //Predicted sigma point is generated from the dynamic model.
 //######################################################################
 
-//##################<Predict Mean and Covariance>#######################
+//##################<Predict Mean and Covariance from Predicted Sigma Points>#######################
 
     // Weights of sigma points
-    weights_ = VectorXd(2 * n_x_ + 1);
+    weights_ = VectorXd((2 * n_x_) + 1);
     // Generate predicted state space vector
     x_pred_ = VectorXd(n_x_);
     x_pred_.fill(0.0);
     // Generate state covariance matrix
     P_pred_ = MatrixXd(n_x_, n_x_);
     P_pred_.fill(0.0);
-
+    // Weights
+    weight_ = (0.5/(n_x_+lambda_));
+    weights_.fill(weight_);
     // Weights formation based on equations
-    weight_0_ = (lambda_/(lambda_+n_x_)); // Weight equation of 1st column sigma point mean is different from rest
-    weights_(0) = weight_0_;
+    weights_(0) = (lambda_/(lambda_+n_x_)); // Weight equation of 1st column sigma point mean is different from rest
 
-    // Weights for rest sigma points
-    for (int i=1; i<(2*n_x_+1); i++) {
-        weight_ = 0.5/(n_x_+lambda_);
-        weights_(i) = weight_;
-    }
-
-    // Extracted predicted state vector
-    for (int i = 0; i < (2*n_x_+1); i++) {
-        x_pred_ = x_pred_ + (weights_(i) * Xsigma_pred_.col(i));
+     // Extracted predicted state vector
+    for (int i = 0; i < ((2*n_x_)+1); i++) {
+        x_pred_ = x_pred_ + (weights_(i) * Xsigma_pred_.col(i)); // x_pred_ is the state after time delta t
     }
 
     // Extracted predicted covariance matrix
-    for (int i = 0; i < (2*n_x_+1); i++) {
-        VectorXd x_dif = Xsigma_pred_.col(i) - x;
+    for (int i = 0; i < ((2*n_x_)+1); i++) {
+        //State difference of each sigma points
+        x_dif = Xsigma_pred_.col(i) - x_pred_;
         //Angle normalization due to difference calculation between angles which can lead to small angle + 360 degree.
         //Yaw
-        //    while (x_diff(2)> M_PI) x_diff(2)-=2.*M_PI;
-        //    while (x_diff(2)<-M_PI) x_diff(2)+=2.*M_PI;
+            while (x_diff(2)> M_PI) x_diff(2)-=2.*M_PI;
+            while (x_diff(2)<-M_PI) x_diff(2)+=2.*M_PI;
         //Angular rotation
-        //    while (x_diff(5)> M_PI) x_diff(5)-=2.*M_PI;
-        //    while (x_diff(5)<-M_PI) x_diff(5)+=2.*M_PI;
+            while (x_diff(5)> M_PI) x_diff(5)-=2.*M_PI;
+            while (x_diff(5)<-M_PI) x_diff(5)+=2.*M_PI;
         //Steering angle
-        //    while (x_diff(8)> M_PI) x_diff(8)-=2.*M_PI;
-        //    while (x_diff(8)<-M_PI) x_diff(8)+=2.*M_PI;
+            while (x_diff(8)> M_PI) x_diff(8)-=2.*M_PI;
+            while (x_diff(8)<-M_PI) x_diff(8)+=2.*M_PI;
 
-        P_pred_ = P_pred_ + (weights_(i) * x_dif * x_dif.transpose());
+        P_pred_ = P_pred_ + (weights_(i) * x_dif * x_dif.transpose());// P_pred_ is the state after time delta t
     }
     //Referencing it back
     x=x_pred_;
@@ -167,7 +180,7 @@ void UKFilter::Prediction(VectorXd &x, MatrixXd &P,double delta_t)
 
 
 //##################<Measurement Update Cycle>################################
-void UKFilter::Update(VectorXd &x_prime_,MatrixXd &P_prime_,MatrixXd H_,MatrixXd R_,VectorXd z_raw_)
+inline void UKFilter::Update(VectorXd &x_prime_,MatrixXd &P_prime_,MatrixXd H_,MatrixXd R_,VectorXd z_raw_)
 {
     // State space dimension
     x_size_ = x_prime_.size();
@@ -193,6 +206,6 @@ void UKFilter::Update(VectorXd &x_prime_,MatrixXd &P_prime_,MatrixXd H_,MatrixXd
     P_update_ = ((I_ - (K_ * H_)) * P_prime_);
 
     //Referencing it back
-    x_prime_=X_update;
+    x_prime_=X_update_;
     P_prime_=P_update_;
 }

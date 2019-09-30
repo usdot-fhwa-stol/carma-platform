@@ -67,19 +67,16 @@ private:
 //######################################################################*/
     // Predicted sigma points matrix
     MatrixXd Xsigma_pred_;
-
     // Weights of sigma points
     VectorXd weights_;
-
     //Weights
-    double weight_0_;
     double weight_;
-
     // Predicted state space vector
     VectorXd x_pred_;
-
     // Predicted State covariance matrix
     MatrixXd P_pred_;
+    //State difference
+    VectorXd x_dif;
 //########################################################################
     // Measurement function variable
     VectorXd z_mf_;
@@ -92,22 +89,36 @@ private:
     MatrixXd S_i_;
     // Kalman Gain
     MatrixXd K_ ;
-
     //Identity Matrix
     long x_size_;
     MatrixXd I_;
-
     //State Update
     VectorXd X_update_;
     //Covariance Update
     MatrixXd P_update_;
 
+    //time difference delta t between two instance
+    double delta_t_;
+
 public:
+
+    VectorXd X(9);  //State Space Vector
+    X.fill(0);      //Initialize with zero
+    MatrixXd P(9,9); // State Covariance Matrix
+    // Generate Identitiy matrix for the initial covariance
+    P = MatrixXd::Identity(X.size(), X.size());
+
+    enum SensorType{
+        LASER,
+        GPS
+    } sensortype;
     // Constructor
     UKFilter();
     //Destructor
 
     ~UKFilter();
+
+    void UnscentedKalmanFilter();
 
     void Prediction(VectorXd x, MatrixXd P,double delta_t);
 

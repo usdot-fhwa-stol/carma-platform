@@ -1,12 +1,14 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(unscented_kalman_filter)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+#Compile as C++11, supported in ROS Kinetic and newer
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+#list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   pacmod_msgs
@@ -16,6 +18,8 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   lib_vehicle_model
 )
+
+find_package(Eigen3 REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -120,9 +124,10 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+   include
   ${lib_vehicle_model_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -139,7 +144,8 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/unscented_kalman_filter_node.cpp)
-
+add_executable(ukf_fusion src/ukf_filter.cpp src/main.cpp src/ukf_node.cpp)
+target_link_libraries(ukf_fusion lib_vehicle_model ${catkin_LIBRARIES})
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -203,7 +209,6 @@ add_dependencies(ukf_fusion ${${PROJECT_NAME}_EXPORTED_TARGETS} lib_vehicle_mode
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-add_executable(ukf_fusion src/ukf_filter.cpp src/main.cpp)
-target_link_libraries(ukf_fusion lib_vehicle_model ${catkin_LIBRARIES})
+
 
 
