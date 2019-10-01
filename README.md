@@ -98,3 +98,20 @@ By contributing to the Federal Highway Administration (FHWA) Connected Automated
 ## Contact
 Please click on the CARMA logo below to visit the Federal Highway Adminstration(FHWA) CARMA website. For more information, contact CARMA@dot.gov.
 [![CARMA Image](docs/image/CARMA_icon2.png)](https://highways.dot.gov/research/research-programs/operations/CARMA)
+
+
+## Code.gov Registration Info
+
+Agency: DOT
+
+Short Description: Cooperative Automation Research Mobility Applications (CARMA) is an open source software (OSS) platform that runs on a computer inside of a vehicle, and the computer interacts with the vehicle's devices to enable cooperative automated vehicle research, development, and testing. The computer then gives the vehicle the information needed in order to interact and cooperate with infrastructure and other vehicles.Phase I of this project initiated the next generation of the CARMA fleet by developing a common platform infrastructure that will support the FHWA's strategic vision for Cooperative Automated Driving Systems (CADS). Phase I also developed the Integrated Highway Prototype (IHP) by integrating the existing applications and a new vehicle type, the heavy truck, into the CARMA fleet. The following five applications are major research areas: (1) Vehicle Platooning, (2) Signalized Intersection Approach and Departure, (3) Infrastructure guided Speed Harmonization, and (4) Cooperative Lane Change, and (5) Cooperative Ramp Merge.Phase II of this project will advance CADS, which was developed on the FHWA's CARMA research platform to allow testing of arbitration and negotiation strategies. Ultimately, this project will enhance infrastructure efficiency and reduce traffic congestion. One of the goals of this project is to accelerate the technology transfer and deployment of cooperative vehicle applications through open source collaboration with industry and stakeholders. This project will enable Society of Engineers (SAE) Level 2 and Level 3 (L2/3) light vehicle testing capabilities and develop a fleet of four SAE L2/3 heavy vehicles. The project will also develop a high-level concept for Transportation System Management and Operations (TSMO) around the use of automated driving technology. Furthermore, this project will identify Traffic Incident Management (TIM) scenarios that provide strategy improvements and new strategies for first responder use cases interacting with ADS and using ADS. The new FHWA fleet will be used to prototype a scenario for each of the following use case categories: (1) Basic Travel, (2) Work Zone, (3) Traffic Incident Management and (4) Weather. These tests will provide objective data to inform stakeholders about the impacts of ADS and possible strategies to use ADS to improve operations.
+
+Status: Beta
+
+Tags: transportation, cooperative driving automation, connected vehicles, intelligent transportation systems, C++, java, python, docker
+
+Labor hours: 200
+
+Contact Name: James Lieu
+
+Contact Phone: (202) 366-3000
