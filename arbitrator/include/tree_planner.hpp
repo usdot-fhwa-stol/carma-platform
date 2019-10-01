@@ -37,7 +37,7 @@ namespace arbitrator
             const CostFunction &cost_function_;
             const NeighborGenerator &neighbor_generator_;
             const SearchStrategy &search_strategy_;
-
+            ros::Duration target_plan_duration;
     };
 };
 
