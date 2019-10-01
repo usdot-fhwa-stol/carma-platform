@@ -20,6 +20,7 @@
 #include <ros/ros.h>
 #include <carma_utils/CARMAUtils.h>
 #include "arbitrator_state_machine.hpp"
+#include "planning_strategy.hpp"
 #include "capabilities_interface.hpp"
 #include <cav_msgs/GuidanceState.h>
 
@@ -45,9 +46,10 @@ namespace arbitrator
             ros::Subscriber guidance_state_sub_;
             ros::CARMANodeHandle nh_;
             ros::CARMANodeHandle pnh_;
-            double min_plan_duration_s;
-            double max_plan_duration_s;
+            ros::Duration min_plan_duration;
+            ros::Duration max_plan_duration;
             CapabilitiesInterface capabilities_interface_;
+            PlanningStrategy &planning_strategy_;
     };
 };
 

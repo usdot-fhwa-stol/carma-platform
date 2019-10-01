@@ -14,13 +14,19 @@
  * the License.
  */
 
-#include "capabilities_interface.hpp"
+#ifndef __ARBITRATOR_UTILS_HPP__
+#define __ARBITRATOR_UTILS_HPP__
+
+#include <ros/ros.h>
+#include <cav_msgs/ManeuverPlan.h>
 
 namespace arbitrator
 {
+    ros::Time get_plan_start_time(const cav_msgs::ManeuverPlan);
+    double get_plan_start_distance(const cav_msgs::ManeuverPlan);
+    ros::Time get_plan_end_time(const cav_msgs::ManeuverPlan);
+    double get_plan_end_distance(const cav_msgs::ManeuverPlan);
+} // namespace namearbitrator
 
-    void CapabilitiesInterface::initialize() 
-    {
 
-    }
-}
+#endif //__ARBITRATOR_UTILS_HPP__

@@ -17,6 +17,8 @@
 #include "arbitrator.hpp"
 #include <cav_msgs/ManeuverPlan.h>
 #include <cav_srvs/PlanManeuvers.h>
+#include "arbitrator_utils.hpp"
+#include <ros/ros.h>
 
 namespace arbitrator
 {
@@ -82,19 +84,25 @@ namespace arbitrator
     {
         final_plan_pub_ = nh_.advertise<cav_msgs::ManeuverPlan>("final_maneuver_plan", 5);
         guidance_state_sub_ = nh_.subscribe<cav_msgs::GuidanceState>("guidance_state", 5, &guidance_state_cb);
+        // TODO: load plan duration from parameters file
     }
 
     void Arbitrator::planning_state()
     {
-        cav_srvs::PlanManeuversRequest inital_plan_request;
-        std::map<std::string, cav_srvs::PlanManeuversResponse> responses = 
-            capabilities_interface_.multiplex_service_call_for_capability
-            <cav_srvs::PlanManeuversRequest, cav_srvs::PlanManeuversResponse>
-            ("strategic_plan", inital_plan_request);
-        
-        for (auto it = responses.begin(); it != responses.end(); it++)
+        cav_msgs::ManeuverPlan plan = planning_strategy_.generate_plan();
+        ros::Time plan_end_time = get_plan_end_time(plan);
+        ros::Time plan_start_time = get_plan_start_time(plan);
+        ros::Duration plan_duration = plan_end_time - plan_start_time;
+
+        if (plan_duration < min_plan_duration) 
         {
-            it->
+            ROS_FATAL_STREAM("Unable to generate a plan to minimum plan duration!");
+            throw std::runtime_error("Unable to generate plan to minimum plan duration");
+        } 
+        else 
+        {
+            ROS_INFO_STREAM("Publishing plan " << plan.maneuver_plan_id << " of duration " plan_duration << " as current maneuver plan");
+            final_plan_pub_.publish(plan);
         }
     }
 

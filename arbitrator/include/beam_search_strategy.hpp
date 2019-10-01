@@ -14,13 +14,22 @@
  * the License.
  */
 
-#include "capabilities_interface.hpp"
+#ifndef __BEAM_SEARCH_STRATEGY_HPP__
+#define __BEAM_SEARCH_STRATEGY_HPP__
 
-namespace arbitrator
+#include "search_strategy.hpp"
+
+namespace arbitrator 
 {
-
-    void CapabilitiesInterface::initialize() 
+    class BeamSearchStrategy : SearchStrategy
     {
-
-    }
+        public:
+            BeamSearchStrategy(int beam_width) : 
+                beam_width_(beam_width) {};
+            virtual std::vector<cav_msgs::ManeuverPlan> prioritize_plans(std::vector<cav_msgs::ManeuverPlan> plans) const;
+        private:
+            int beam_width_;
+    };
 }
+
+#endif //__BEAM_SEARCH_STRATEGY_HPP__

@@ -14,13 +14,23 @@
  * the License.
  */
 
+#ifndef __PLUGIN_NEIGHBOR_GENERATOR_HPP__
+#define __PLUGIN_NEIGHBOR_GENERATOR_HPP__
+
+#include "neighbor_generator.hpp"
 #include "capabilities_interface.hpp"
 
 namespace arbitrator
 {
-
-    void CapabilitiesInterface::initialize() 
+    class PluginNeighborGenerator : NeighborGenerator
     {
+        public:
+            PluginNeighborGenerator(CapabilitiesInterface ci) :
+                ci_(ci) {};
+            virtual std::vector<cav_msgs::ManeuverPlan> generate_neighbors(cav_msgs::ManeuverPlan plan) const;
+        private:
+            CapabilitiesInterface ci_;
+    };
+};
 
-    }
-}
+#endif //__PLUGIN_NEIGHBOR_GENERATOR_HPP__
