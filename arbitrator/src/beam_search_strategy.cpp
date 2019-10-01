@@ -14,20 +14,22 @@
  * the License.
  */
 
-#ifndef __SEARCH_STRATEGY_HPP__
-#define __SEARCH_STRATEGY_HPP__
-
-#include <map>
-#include <cav_msgs/ManeuverPlan.h>
+#include "beam_search_strategy.hpp"
 
 namespace arbitrator
 {
-    class SearchStrategy
+    std::vector<cav_msgs::ManeuverPlan, double> BeamSearchStrategy::prioritize_plans(std::map<cav_msgs::ManeuverPlan, double> plans) const
     {
-        public:
-            virtual std::map<cav_msgs::ManeuverPlan, double> prioritize_plans(std::map<cav_msgs::ManeuverPlan, double> plans) const = 0;
-    }; 
-} // namespace arbitrator
+        std::sort(plans.begin(), 
+            plans.end(), 
+            [this] (cav_msgs::ManeuverPlan a, cav_msgs::ManeuverPlan b) 
+            {
+                return cost_function_.compute_cost_per_unit_distance(a) < cost_function_.compute_cost_per_unit_distance(b); 
+            }
+        );
 
-
-#endif //__SEARCH_STRATEGY_HPP__
+        plans.resize(beam_width_);
+        
+        return plans;
+    }
+}

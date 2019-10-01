@@ -17,39 +17,53 @@
 #include "tree_planner.hpp"
 #include "arbitrator_utils.hpp"
 #include <vector>
+#include <map>
+#include <limits>
 
 namespace arbitrator
 {
     cav_msgs::ManeuverPlan TreePlanner::generate_plan()
     {
         cav_msgs::ManeuverPlan root;
-        std::vector<cav_msgs::ManeuverPlan> open_list;
-        open_list.push_back(root);
+        std::map<cav_msgs::ManeuverPlan, double> open_list;
+        const double INF = std::numeric_limits<double>::infinity();
+        open_list.emplace(root, INF);
 
         cav_msgs::ManeuverPlan longest_plan = root; // Track longest plan in case target length is never reached
         ros::Duration longest_plan_duration = ros::Duration(0);
 
         while (!open_list.empty())
         {
-            // Pop the first element off the open list
-            cav_msgs::ManeuverPlan cur_plan = open_list[0];
-            open_list.erase(open_list.begin());
-
-
-            // Evaluate terminal condition
-            ros::Duration plan_duration = get_plan_end_time(cur_plan) - get_plan_start_time(cur_plan);
-            if (plan_duration >= target_plan_duration) 
+            std::map<cav_msgs::ManeuverPlan, double> new_open_list;
+            for (auto it = open_list.begin(); it != open_list.end(); it++)
             {
-                return cur_plan;
-            } else if (plan_duration > longest_plan_duration) {
-                longest_plan_duration = plan_duration;
-                longest_plan = cur_plan;
-            }
+                // Pop the first element off the open list
+                cav_msgs::ManeuverPlan cur_plan = it->first;
 
-            // Expand it, and reprioritize
-            std::vector<cav_msgs::ManeuverPlan> children = neighbor_generator_.generate_neighbors(cur_plan);
-            std::vector<cav_msgs::ManeuverPlan> open_list = search_strategy_.prioritize_plans(children);
+                // Evaluate terminal condition
+                ros::Duration plan_duration = get_plan_end_time(cur_plan) - get_plan_start_time(cur_plan);
+                if (plan_duration >= target_plan_duration) 
+                {
+                    return cur_plan;
+                } else if (plan_duration > longest_plan_duration) {
+                    longest_plan_duration = plan_duration;
+                    longest_plan = cur_plan;
+                }
+
+                // Expand it, and reprioritize
+                std::vector<cav_msgs::ManeuverPlan> children = neighbor_generator_.generate_neighbors(cur_plan);
+                
+                // Compute cost for each child and store in open list
+                for (auto child = children.begin(); child != children.end(); child++)
+                {
+                    new_open_list.emplace(*child, cost_function_.compute_cost_per_unit_distance(*child));
+                }
+            }
+            
+            std::vector<cav_msgs::ManeuverPlan> new_open_list = search_strategy_.prioritize_plans(new_open_list);
+            open_list = new_open_list;
         }
+
 
         // If no perfect match is found, return the longest plan that fit the criteria
         return longest_plan;
