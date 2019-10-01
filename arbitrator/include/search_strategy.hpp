@@ -25,7 +25,7 @@ namespace arbitrator
     class SearchStrategy
     {
         public:
-            virtual std::map<cav_msgs::ManeuverPlan, double> prioritize_plans(std::map<cav_msgs::ManeuverPlan, double> plans) const = 0;
+            virtual std::vector<std::pair<cav_msgs::ManeuverPlan, double>> prioritize_plans(std::vector<std::pair<cav_msgs::ManeuverPlan, double>> plans) const = 0;
     }; 
 } // namespace arbitrator
 

@@ -18,20 +18,17 @@
 #define __BEAM_SEARCH_STRATEGY_HPP__
 
 #include "search_strategy.hpp"
-#include "cost_function.hpp"
 
 namespace arbitrator 
 {
     class BeamSearchStrategy : SearchStrategy
     {
         public:
-            BeamSearchStrategy(int beam_width, CostFunction &cost_function) : 
-                beam_width_(beam_width),
-                cost_function_(cost_function) {};
-            virtual std::map<cav_msgs::ManeuverPlan, double> prioritize_plans(std::map<cav_msgs::ManeuverPlan, double> plans) const;
+            BeamSearchStrategy(int beam_width) :
+                beam_width_(beam_width) {};
+            std::vector<std::pair<cav_msgs::ManeuverPlan, double>> prioritize_plans(std::vector<std::pair<cav_msgs::ManeuverPlan, double>> plans) const;
         private:
             int beam_width_;
-            CostFunction &cost_function_;
     };
 }
 

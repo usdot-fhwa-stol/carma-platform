@@ -18,13 +18,13 @@
 
 namespace arbitrator
 {
-    std::vector<cav_msgs::ManeuverPlan, double> BeamSearchStrategy::prioritize_plans(std::map<cav_msgs::ManeuverPlan, double> plans) const
+    std::vector<std::pair<cav_msgs::ManeuverPlan, double>> BeamSearchStrategy::prioritize_plans(std::vector<std::pair<cav_msgs::ManeuverPlan, double>> plans) const
     {
         std::sort(plans.begin(), 
             plans.end(), 
-            [this] (cav_msgs::ManeuverPlan a, cav_msgs::ManeuverPlan b) 
+            [this] (std::pair<cav_msgs::ManeuverPlan, double> a, std::pair<cav_msgs::ManeuverPlan, double> b) 
             {
-                return cost_function_.compute_cost_per_unit_distance(a) < cost_function_.compute_cost_per_unit_distance(b); 
+                return a < b;
             }
         );
 

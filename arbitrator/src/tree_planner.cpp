@@ -25,16 +25,16 @@ namespace arbitrator
     cav_msgs::ManeuverPlan TreePlanner::generate_plan()
     {
         cav_msgs::ManeuverPlan root;
-        std::map<cav_msgs::ManeuverPlan, double> open_list;
+        std::vector<std::pair<cav_msgs::ManeuverPlan, double>> open_list;
         const double INF = std::numeric_limits<double>::infinity();
-        open_list.emplace(root, INF);
+        open_list.push_back(std::make_pair(root, INF));
 
         cav_msgs::ManeuverPlan longest_plan = root; // Track longest plan in case target length is never reached
         ros::Duration longest_plan_duration = ros::Duration(0);
 
         while (!open_list.empty())
         {
-            std::map<cav_msgs::ManeuverPlan, double> new_open_list;
+            std::vector<std::pair<cav_msgs::ManeuverPlan, double>> new_open_list;
             for (auto it = open_list.begin(); it != open_list.end(); it++)
             {
                 // Pop the first element off the open list
@@ -56,11 +56,11 @@ namespace arbitrator
                 // Compute cost for each child and store in open list
                 for (auto child = children.begin(); child != children.end(); child++)
                 {
-                    new_open_list.emplace(*child, cost_function_.compute_cost_per_unit_distance(*child));
+                    new_open_list.push_back(std::make_pair(*child, cost_function_.compute_cost_per_unit_distance(*child)));
                 }
             }
             
-            std::vector<cav_msgs::ManeuverPlan> new_open_list = search_strategy_.prioritize_plans(new_open_list);
+            std::vector<std::pair<cav_msgs::ManeuverPlan, double>> new_open_list = search_strategy_.prioritize_plans(new_open_list);
             open_list = new_open_list;
         }
 
