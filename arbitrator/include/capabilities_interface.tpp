@@ -25,7 +25,7 @@
 namespace arbitrator 
 {
     template<typename MReq, typename MRes>
-    std::map<std::string, MRes> CapabiltiesInterface::multiplex_service_call_for_capability(std::string query_string, MReq msg) 
+    std::map<std::string, MRes> CapabilitiesInterface::multiplex_service_call_for_capability(std::string query_string, MReq msg) 
     {
         std::vector<std::string> topics = get_topics_for_capability(query_string);
         MRes response;
@@ -40,7 +40,7 @@ namespace arbitrator
     }
 
     template<typename Mmsg>
-    void CapabiltiesInterface::multiplex_publication_for_capability(std::string query_string, Mmsg msg) 
+    void CapabilitiesInterface::multiplex_publication_for_capability(std::string query_string, Mmsg msg) 
     {
         std::vector<std::string> topics = get_topics_for_capability(query_string);
         for (auto i = topics.begin(); i != topics.end(); i++) 

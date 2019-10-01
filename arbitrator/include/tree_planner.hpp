@@ -17,6 +17,7 @@
 #ifndef __TREE_PLANNER_HPP__
 #define __TREE_PLANNER_HPP__
 
+#include <memory>
 #include <cav_msgs/ManeuverPlan.h>
 #include "planning_strategy.hpp"
 #include "cost_function.hpp"
@@ -25,18 +26,18 @@
 
 namespace arbitrator
 {
-    class TreePlanner : PlanningStrategy
+    class TreePlanner : public PlanningStrategy
     {
         public:
-            TreePlanner(const CostFunction &cf, const NeighborGenerator &ng, const SearchStrategy &ss):
+            TreePlanner(CostFunction &cf, NeighborGenerator &ng, SearchStrategy &ss):
                 cost_function_(cf),
                 neighbor_generator_(ng),
                 search_strategy_(ss) {};
-            cav_msgs::ManeuverPlan generate_plan();
+            cav_msgs::ManeuverPlan generate_plan() const;
         protected:
-            const CostFunction &cost_function_;
-            const NeighborGenerator &neighbor_generator_;
-            const SearchStrategy &search_strategy_;
+            CostFunction &cost_function_;
+            NeighborGenerator &neighbor_generator_;
+            SearchStrategy &search_strategy_;
             ros::Duration target_plan_duration;
     };
 };

@@ -21,7 +21,7 @@
 
 namespace arbitrator 
 {
-    class BeamSearchStrategy : SearchStrategy
+    class BeamSearchStrategy : public SearchStrategy
     {
         public:
             BeamSearchStrategy(int beam_width) :

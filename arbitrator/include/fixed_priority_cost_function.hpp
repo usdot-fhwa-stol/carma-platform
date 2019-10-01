@@ -23,7 +23,7 @@
 
 namespace arbitrator
 {
-    class FixedPriorityCostFunction : CostFunction
+    class FixedPriorityCostFunction : public CostFunction
     {
         public:
             FixedPriorityCostFunction(std::map<std::string, double> plugin_priorities): 

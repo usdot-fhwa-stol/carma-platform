@@ -24,9 +24,6 @@ namespace arbitrator
 {
     void Arbitrator::run()
     {
-        nh_ = ros::CARMANodeHandle("arbitrator");
-        pnh_ = ros::CARMANodeHandle("~");
-
         while (!ros::isShuttingDown)
         {
             switch (sm_.get_state()) 

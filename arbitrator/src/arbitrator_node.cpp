@@ -15,16 +15,30 @@
  */
 
 #include <ros/ros.h>
+#include <memory>
 #include "arbitrator.hpp"
 #include "arbitrator_state_machine.hpp"
+#include "fixed_priority_cost_function.hpp"
+#include "plugin_neighbor_generator.hpp"
+#include "beam_search_strategy.hpp"
+#include "tree_planner.hpp"
 
 int main(int argc, char** argv) 
 {
     ros::init(argc, argv, "arbitrator");
-    arbitrator::ArbitratorStateMachine sm;
-    arbitrator::Arbitrator node{sm};
+    ros::CARMANodeHandle nh = ros::CARMANodeHandle("arbitrator");
+    ros::CARMANodeHandle pnh = ros::CARMANodeHandle("~");
 
-    node.run();
+    // Handle dependency injection
+    arbitrator::CapabilitiesInterface ci{nh};
+    arbitrator::ArbitratorStateMachine sm;
+    arbitrator::FixedPriorityCostFunction fpcf{std::map<std::string, double>()};
+    arbitrator::BeamSearchStrategy bss{3};
+    arbitrator::PluginNeighborGenerator png{ci};
+    arbitrator::TreePlanner tp{fpcf, png, bss};
+    arbitrator::Arbitrator arbitrator{nh, pnh, sm, ci, tp};
+
+    arbitrator.run();
 
     return 0;
 }

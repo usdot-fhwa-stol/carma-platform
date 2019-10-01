@@ -29,9 +29,12 @@ namespace arbitrator
     class Arbitrator 
     {
         public:
-            Arbitrator(ArbitratorStateMachine sm, CapabilitiesInterface ci):
+            Arbitrator(ros::CARMANodeHandle nh, ros::CARMANodeHandle pnh, ArbitratorStateMachine sm, CapabilitiesInterface ci, PlanningStrategy &planning_strategy):
+                nh_(nh),
+                pnh_(pnh),
                 sm_(sm),
-                capabilities_interface_(ci) {};
+                capabilities_interface_(ci),
+                planning_strategy_(planning_strategy) {};
             void run();
         protected:
             void initial_state();

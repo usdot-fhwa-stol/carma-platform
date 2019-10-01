@@ -22,7 +22,7 @@
 
 namespace arbitrator
 {
-    class PluginNeighborGenerator : NeighborGenerator
+    class PluginNeighborGenerator : public NeighborGenerator
     {
         public:
             PluginNeighborGenerator(CapabilitiesInterface ci) :
