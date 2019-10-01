@@ -28,7 +28,6 @@ namespace health_monitor
         msg1.name = "autoware";
         msg1.available = true;
         msg1.activated = false;
-        msg1.required = false;
         msg1.type = cav_msgs::Plugin::STRATEGIC;
         msg1.versionId = "1.0.1";
         cav_msgs::PluginConstPtr msg1_pointer(new cav_msgs::Plugin(msg1));
@@ -38,7 +37,6 @@ namespace health_monitor
         msg2.available = true;
         msg2.activated = true;
         // this field is not used by plugin manager
-        msg2.required = true;
         msg2.type = cav_msgs::Plugin::TACTICAL;
         msg2.versionId = "1.0.0";
         cav_msgs::PluginConstPtr msg2_pointer(new cav_msgs::Plugin(msg2));
