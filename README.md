@@ -95,11 +95,6 @@ The development team would like to acknowledge the people who have made direct c
 ## License
 By contributing to the Federal Highway Administration (FHWA) Connected Automated Research Mobility Applications (CARMA), you agree that your contributions will be licensed under its Apache License 2.0 license. [CARMA License](<docs/License.md>) 
 
-## Contact
-Please click on the CARMA logo below to visit the Federal Highway Adminstration(FHWA) CARMA website. For more information, contact CARMA@dot.gov.
-[![CARMA Image](docs/image/CARMA_icon2.png)](https://highways.dot.gov/research/research-programs/operations/CARMA)
-
-
 ## Code.gov Registration Info
 
 Agency: DOT
@@ -115,3 +110,9 @@ Labor hours: 200
 Contact Name: James Lieu
 
 Contact Phone: (202) 366-3000
+
+## Contact
+Please click on the CARMA logo below to visit the Federal Highway Adminstration(FHWA) CARMA website. For more information, contact CARMA@dot.gov.
+[![CARMA Image](docs/image/CARMA_icon2.png)](https://highways.dot.gov/research/research-programs/operations/CARMA)
+
+
