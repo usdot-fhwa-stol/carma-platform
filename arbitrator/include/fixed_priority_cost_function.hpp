@@ -17,6 +17,7 @@
 #ifndef __FIXED_PRIORITY_COST_FUNCTION_HPP__
 #define __FIXED_PRIORITY_COST_FUNCTION_HPP__
 
+#include <ros/ros.h>
 #include "cost_function.hpp"
 #include <map>
 #include <string>
@@ -26,12 +27,12 @@ namespace arbitrator
     class FixedPriorityCostFunction : public CostFunction
     {
         public:
-            FixedPriorityCostFunction(std::map<std::string, double> plugin_priorities): 
-                plugin_priorities_(plugin_priorities) {};
+            FixedPriorityCostFunction(ros::NodeHandle nh);
             double compute_total_cost(cav_msgs::ManeuverPlan plan) const;
             double compute_cost_per_unit_distance(cav_msgs::ManeuverPlan plan) const;
         private:
-            std::map<std::string, double> plugin_priorities_;
+            std::map<std::string, double> plugin_costs_;
+            ros::NodeHandle nh_;
     };
 };
 

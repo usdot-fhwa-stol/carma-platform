@@ -19,6 +19,7 @@
 #include <cav_srvs/PlanManeuvers.h>
 #include "arbitrator_utils.hpp"
 #include <ros/ros.h>
+#include <exception>
 
 namespace arbitrator
 {
@@ -41,7 +42,7 @@ namespace arbitrator
                     paused_state();
                     break;
                 default:
-                    // TODO: Throw exception or otherwise handle
+                    throw new std::invalid_argument("State machine attempting to process an illegal state value");
             }
         }
     }

@@ -32,7 +32,7 @@ int main(int argc, char** argv)
     // Handle dependency injection
     arbitrator::CapabilitiesInterface ci{nh};
     arbitrator::ArbitratorStateMachine sm;
-    arbitrator::FixedPriorityCostFunction fpcf{std::map<std::string, double>()};
+    arbitrator::FixedPriorityCostFunction fpcf{nh};
     arbitrator::BeamSearchStrategy bss{3};
     arbitrator::PluginNeighborGenerator png{ci};
     arbitrator::TreePlanner tp{fpcf, png, bss};

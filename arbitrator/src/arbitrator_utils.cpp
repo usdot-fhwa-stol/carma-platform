@@ -18,6 +18,7 @@
 #include <cav_msgs/Maneuver.h>
 #include <exception>
 
+
 namespace arbitrator
 {
     ros::Time get_plan_end_time(const cav_msgs::ManeuverPlan plan) 
@@ -28,26 +29,8 @@ namespace arbitrator
         }
 
         cav_msgs::Maneuver m = *plan.maneuvers.end();
-        switch (m.type)
-        {
-            case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
-                return m.intersection_transit_left_turn_maneuver.end_time;
-                break;
-            case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
-                return m.intersection_transit_right_turn_maneuver.end_time;
-                break;
-            case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
-                return m.intersection_transit_straight_maneuver.end_time;
-                break;
-            case cav_msgs::Maneuver::LANE_CHANGE:
-                return m.lane_change_maneuver.end_time;
-                break;
-            case cav_msgs::Maneuver::LANE_FOLLOWING:
-                return m.lane_following_maneuver.end_time;
-                break;
-            default:
-                throw new std::invalid_argument("arbitrator::get_plan_end_time called on maneuver list containing invalid maneuver type id");
-        }
+
+        return get_maneuver_end_time(m);
     }
 
     double get_plan_end_distance(const cav_msgs::ManeuverPlan plan)
@@ -58,26 +41,7 @@ namespace arbitrator
         }
 
         cav_msgs::Maneuver m = *plan.maneuvers.end();
-        switch (m.type)
-        {
-            case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
-                return m.intersection_transit_left_turn_maneuver.end_dist;
-                break;
-            case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
-                return m.intersection_transit_right_turn_maneuver.end_dist;
-                break;
-            case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
-                return m.intersection_transit_straight_maneuver.end_dist;
-                break;
-            case cav_msgs::Maneuver::LANE_CHANGE:
-                return m.lane_change_maneuver.end_dist;
-                break;
-            case cav_msgs::Maneuver::LANE_FOLLOWING:
-                return m.lane_following_maneuver.end_dist;
-                break;
-            default:
-                throw new std::invalid_argument("arbitrator::get_plan_end_dist called on maneuver list containing invalid maneuver type id");
-        }
+        return get_maneuver_end_distance(m);
     }
 
     ros::Time get_plan_start_time(const cav_msgs::ManeuverPlan plan) 
@@ -88,26 +52,7 @@ namespace arbitrator
         }
 
         cav_msgs::Maneuver m = *plan.maneuvers.begin();
-        switch (m.type)
-        {
-            case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
-                return m.intersection_transit_left_turn_maneuver.start_time;
-                break;
-            case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
-                return m.intersection_transit_right_turn_maneuver.start_time;
-                break;
-            case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
-                return m.intersection_transit_straight_maneuver.start_time;
-                break;
-            case cav_msgs::Maneuver::LANE_CHANGE:
-                return m.lane_change_maneuver.start_time;
-                break;
-            case cav_msgs::Maneuver::LANE_FOLLOWING:
-                return m.lane_following_maneuver.start_time;
-                break;
-            default:
-                throw new std::invalid_argument("arbitrator::get_plan_start_time called on maneuver list containing invalid maneuver type id");
-        }
+        return get_maneuver_start_time(m);
     }
 
     double get_plan_start_distance(const cav_msgs::ManeuverPlan plan)
@@ -118,25 +63,26 @@ namespace arbitrator
         }
 
         cav_msgs::Maneuver m = *plan.maneuvers.begin();
-        switch (m.type)
-        {
-            case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
-                return m.intersection_transit_left_turn_maneuver.start_dist;
-                break;
-            case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
-                return m.intersection_transit_right_turn_maneuver.start_dist;
-                break;
-            case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
-                return m.intersection_transit_straight_maneuver.start_dist;
-                break;
-            case cav_msgs::Maneuver::LANE_CHANGE:
-                return m.lane_change_maneuver.start_dist;
-                break;
-            case cav_msgs::Maneuver::LANE_FOLLOWING:
-                return m.lane_following_maneuver.start_dist;
-                break;
-            default:
-                throw new std::invalid_argument("arbitrator::get_plan_start_dist called on maneuver list containing invalid maneuver type id");
-        }
+        return get_maneuver_start_distance(m);
+    }
+
+    ros::Time get_maneuver_end_time(const cav_msgs::Maneuver mvr) 
+    {
+        return GET_MANEUVER_PROPERTY(mvr, end_time);
+    }
+
+    ros::Time get_maneuver_start_time(const cav_msgs::Maneuver mvr) 
+    {
+        return GET_MANEUVER_PROPERTY(mvr, start_time);
+    }
+
+    double get_maneuver_end_distance(const cav_msgs::Maneuver mvr) 
+    {
+        return GET_MANEUVER_PROPERTY(mvr, end_dist);
+    }
+
+    double get_maneuver_start_distance(const cav_msgs::Maneuver mvr) 
+    {
+        return GET_MANEUVER_PROPERTY(mvr, start_dist);
     }
 } // namespace arbitrator
