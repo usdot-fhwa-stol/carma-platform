@@ -26,6 +26,7 @@ namespace arbitrator
     {
         public:
             virtual std::vector<cav_msgs::ManeuverPlan> generate_neighbors(cav_msgs::ManeuverPlan plan) const = 0;
+            virtual ~NeighborGenerator();
     };
 }
 

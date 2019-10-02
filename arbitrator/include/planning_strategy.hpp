@@ -25,6 +25,7 @@ namespace arbitrator
     {
         public:
             virtual cav_msgs::ManeuverPlan generate_plan() const = 0;
+            virtual ~PlanningStrategy();
     };
 };
 
