@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 LEIDOS.
+ * Copyright (C) 2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,22 +14,10 @@
  * the License.
  */
 
-package gov.dot.fhwa.saxton.carma.interfacemgr;
+#include <gtest/gtest.h>
 
-import gov.dot.fhwa.saxton.carma.rosutils.AlertSeverity;
-import java.util.List;
-
-public interface IInterfaceMgr {
-
-    /**
-     * Sends a shutdown alert to the other nodes then shuts down this node
-     * @param msg - the message that is to be sent along with the fatal error alert to other nodes
-     */
-    void errorShutdown(String msg);
-
-
-    /**
-     * @return - true of node shutdown has been initiated, false otherwise
-     */
-    boolean isShutdownUnderway();
+// Run all the tests
+int main(int argc, char **argv) {
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

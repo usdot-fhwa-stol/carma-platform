@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 LEIDOS.
+ * Copyright (C) 2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,8 +14,17 @@
  * the License.
  */
 
-include 'message'
-include 'template'
-include 'mock_drivers'
-include 'geometry'
-include 'rosutils'
+#include "entry.h"
+
+namespace health_monitor
+{
+    Entry::Entry(bool available, bool active, std::string name, long timestamp, uint8_t type)
+    {
+        this->available_ = available;
+        this->active_ = active;
+        this->name_ = name;
+        this->timestamp_ = timestamp;
+        this->type_ = type;
+    }
+
+}

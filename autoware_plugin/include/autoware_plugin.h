@@ -19,6 +19,7 @@
 #include <vector>
 #include <cav_msgs/TrajectoryPlan.h>
 #include <cav_msgs/TrajectoryPlanPoint.h>
+#include <cav_msgs/Plugin.h>
 #include <autoware_msgs/Lane.h>
 #include <boost/shared_ptr.hpp>
 #include <carma_utils/CARMAUtils.h>
@@ -57,6 +58,7 @@ namespace autoware_plugin
 
         // publisher for CARMA trajectory
         ros::Publisher  trajectory_pub_;
+        ros::Publisher autoware_plugin_discovery_pub_;
 
         // subscriber for Autoware waypoints
         ros::Subscriber waypoints_sub_;

@@ -156,6 +156,9 @@ add_executable(${PROJECT_NAME}_node
   src/guidance/guidance_node.cpp
   src/guidance/guidance_worker.cpp
   src/guidance/guidance_state_machine.cpp
+  src/guidance/guidance_state_machine_factory.cpp
+  src/guidance/hardware_engaged_automation.cpp
+  src/guidance/software_only_engaged_state_machine.cpp
 )
 
 ## Rename C++ executable without prefix
@@ -167,7 +170,7 @@ add_executable(${PROJECT_NAME}_node
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_library(guidance_state_machine_library src/guidance/guidance_state_machine.cpp)
+add_library(guidance_state_machine_library src/guidance/guidance_state_machine.cpp src/guidance/guidance_state_machine_factory.cpp src/guidance/hardware_engaged_automation.cpp src/guidance/software_only_engaged_state_machine.cpp)
 add_dependencies(guidance_state_machine_library ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
