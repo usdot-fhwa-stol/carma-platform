@@ -27,7 +27,8 @@ namespace arbitrator
         public:
             PluginNeighborGenerator(CapabilitiesInterface ci) :
                 ci_(ci) {};
-            virtual std::vector<cav_msgs::ManeuverPlan> generate_neighbors(cav_msgs::ManeuverPlan plan) const;
+            void initalize();
+            std::vector<cav_msgs::ManeuverPlan> generate_neighbors(cav_msgs::ManeuverPlan plan) const;
         private:
             CapabilitiesInterface ci_;
     };

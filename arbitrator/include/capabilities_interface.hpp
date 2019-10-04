@@ -33,10 +33,10 @@ namespace arbitrator
             std::vector<std::string> get_topics_for_capability(std::string query_string);
 
             template<typename MReq, typename MRes>
-            std::map<std::string, MRes> multiplex_service_call_for_capability(std::string query_string, MReq msg);
+            std::map<std::string, MRes> multiplex_service_call_for_capability(std::string query_string, MReq msg) const;
 
             template<typename Mmsg>
-            void multiplex_publication_for_capability(std::string query_string, Mmsg msg);
+            void multiplex_publication_for_capability(std::string query_string, Mmsg msg) const;
             
         protected:
         private:
