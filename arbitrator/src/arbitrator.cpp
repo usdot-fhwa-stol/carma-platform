@@ -87,12 +87,13 @@ namespace arbitrator
 
     void Arbitrator::planning_state()
     {
+        ros::Time planning_process_start = ros::Time::now();
         cav_msgs::ManeuverPlan plan = planning_strategy_.generate_plan();
         ros::Time plan_end_time = get_plan_end_time(plan);
         ros::Time plan_start_time = get_plan_start_time(plan);
         ros::Duration plan_duration = plan_end_time - plan_start_time;
 
-        if (plan_duration < min_plan_duration) 
+        if (plan_duration < min_plan_duration_) 
         {
             ROS_FATAL_STREAM("Unable to generate a plan to minimum plan duration!");
             throw std::runtime_error("Unable to generate plan to minimum plan duration");
@@ -102,20 +103,26 @@ namespace arbitrator
             ROS_INFO_STREAM("Publishing plan " << plan.maneuver_plan_id << " of duration " << plan_duration << " as current maneuver plan");
             final_plan_pub_.publish(plan);
         }
+
+        last_planning_process_duration_ = ros::Time::now() - planning_process_start;
+        ROS_INFO_STREAM("Planning completed in " << last_planning_process_duration_);
     }
 
     void Arbitrator::waiting_state()
     {
-
+        (time_between_plans_ - last_planning_process_duration_).sleep();
+        sm_.submit_event(ArbitratorEvent::PLANNING_TIMER_TRIGGER);
     }
 
     void Arbitrator::paused_state()
     {
-
+        ros::Duration(0.1).sleep();
     }
 
     void Arbitrator::shutdown_state()
     {
-
+        ROS_INFO_STREAM("Arbitrator shutting down...");
+        ros::shutdown();
+        exit(0);
     }
 };

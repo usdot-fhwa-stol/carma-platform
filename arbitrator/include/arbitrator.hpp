@@ -49,8 +49,10 @@ namespace arbitrator
             ros::Subscriber guidance_state_sub_;
             ros::CARMANodeHandle nh_;
             ros::CARMANodeHandle pnh_;
-            ros::Duration min_plan_duration;
-            ros::Duration max_plan_duration;
+            ros::Duration min_plan_duration_;
+            ros::Duration max_plan_duration_;
+            ros::Duration time_between_plans_;
+            ros::Duration last_planning_process_duration_;
             CapabilitiesInterface capabilities_interface_;
             PlanningStrategy &planning_strategy_;
     };
