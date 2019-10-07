@@ -60,7 +60,7 @@ namespace arbitrator
                 }
             }
             
-            std::vector<std::pair<cav_msgs::ManeuverPlan, double>> new_open_list = search_strategy_.prioritize_plans(new_open_list);
+            new_open_list = search_strategy_.prioritize_plans(new_open_list);
             open_list = new_open_list;
         }
 

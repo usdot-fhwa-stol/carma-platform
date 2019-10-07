@@ -26,19 +26,19 @@ namespace arbitrator
 
     }
 
-    std::vector<cav_msgs::ManeuverPlan> PluginNeighborGenerator::generate_neighbors(cav_msgs::ManeuverPlan plan) const
+    std::vector<cav_msgs::ManeuverPlan> PluginNeighborGenerator::generate_neighbors(cav_msgs::ManeuverPlan plan)
     {
-        cav_srvs::PlanManeuversRequest req;
-        req.prior_plan = plan;
-        std::map<std::string, cav_srvs::PlanManeuversResponse> res = ci_.
-            multiplex_service_call_for_capability<cav_srvs::PlanManeuversRequest, 
-            cav_srvs::PlanManeuversResponse>("PLAN_STRATEGIC", req);
+        cav_srvs::PlanManeuvers msg;
+        msg.request.prior_plan = plan;
+        std::map<std::string, cav_srvs::PlanManeuvers> res = ci_
+            .multiplex_service_call_for_capability<cav_srvs::PlanManeuvers>
+            (STRATEGIC_PLAN_CAPABILITY, msg);
 
         // Convert map to vector of map values
         std::vector<cav_msgs::ManeuverPlan> out;
         for (auto it = res.begin(); it != res.end(); it++)
         {
-            out.push_back(it->second.new_plan);
+            out.push_back(it->second.response.new_plan);
         }
 
         return out;

@@ -48,7 +48,7 @@ namespace arbitrator
         SYSTEM_STARTUP_COMPLETE,
         PLANNING_COMPLETE,
         PLANNING_TIMER_TRIGGER,
-        ARBIRTATOR_PAUSED,
+        ARBITRATOR_PAUSED,
         ARBITRATOR_RESUMED,
         SYSTEM_SHUTDOWN_INITIATED
     };
@@ -101,7 +101,7 @@ namespace arbitrator
 
                 // Interrupt and resume
                 {PLANNING, ARBITRATOR_PAUSED, PAUSED},
-                {WAITING, ARBIRTATOR_PAUSED, PAUSED},
+                {WAITING, ARBITRATOR_PAUSED, PAUSED},
                 {PAUSED, ARBITRATOR_RESUMED, PLANNING},
 
                 // System shutdown procedures

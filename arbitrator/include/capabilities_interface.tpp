@@ -24,16 +24,16 @@
 
 namespace arbitrator 
 {
-    template<typename MReq, typename MRes>
-    std::map<std::string, MRes> CapabilitiesInterface::multiplex_service_call_for_capability(std::string query_string, MReq msg) const
+    template<typename MSrv>
+    std::map<std::string, MSrv> CapabilitiesInterface::multiplex_service_call_for_capability(std::string query_string, MSrv msg)
     {
         std::vector<std::string> topics = get_topics_for_capability(query_string);
-        MRes response;
-        std::map<std::string, MRes> responses;
+        std::map<std::string, MSrv> responses;
         for (auto i = topics.begin(); i != topics.end(); i++) 
         {
-            service_clients_[*i].call(msg, &MRes);
-            responses.emplace(*i, response);
+            if (service_clients_.at(*i).call(msg)) {
+                responses.emplace(*i, msg);
+            }
         }
 
         return responses;

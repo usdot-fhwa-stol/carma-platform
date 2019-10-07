@@ -25,15 +25,19 @@
 
 namespace arbitrator
 {
+    const std::string STRATEGIC_PLAN_CAPABILITY = "strategic_plan/plan_maneuvers";
+    const std::string TACTICAL_PLAN_CAPABILITY = "tactical_plan";
+    const std::string CONTROL_CAPABILITY = "control";
+
     class CapabilitiesInterface
     {
         public:
             CapabilitiesInterface(ros::NodeHandle nh): nh_(nh) {};
             void initialize();
-            std::vector<std::string> get_topics_for_capability(std::string query_string);
+            std::vector<std::string> get_topics_for_capability(std::string query_string) const;
 
-            template<typename MReq, typename MRes>
-            std::map<std::string, MRes> multiplex_service_call_for_capability(std::string query_string, MReq msg) const;
+            template<typename MSrv>
+            std::map<std::string, MSrv> multiplex_service_call_for_capability(std::string query_string, MSrv msg);
 
             /*template<typename Mmsg>
             void multiplex_publication_for_capability(std::string query_string, Mmsg msg) const; */
@@ -44,9 +48,6 @@ namespace arbitrator
             std::map<std::string, ros::ServiceClient> service_clients_;
             //std::map<std::string, ros::Publisher> publishers_;
             std::map<std::string, std::vector<std::string>> capabilities_;
-            const std::string STRATEGIC_PLAN_CAPABILITY = "strategic_plan/plan_maneuvers";
-            const std::string TACTICAL_PLAN_CAPABILITY = "tactical_plan";
-            const std::string CONTROL_CAPABILITY = "control";
     };
 };
 

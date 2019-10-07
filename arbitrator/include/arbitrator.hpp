@@ -30,9 +30,9 @@ namespace arbitrator
     {
         public:
             Arbitrator(ros::CARMANodeHandle nh, ros::CARMANodeHandle pnh, ArbitratorStateMachine sm, CapabilitiesInterface ci, PlanningStrategy &planning_strategy):
+                sm_(sm),
                 nh_(nh),
                 pnh_(pnh),
-                sm_(sm),
                 capabilities_interface_(ci),
                 planning_strategy_(planning_strategy) {};
             void run();

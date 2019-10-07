@@ -25,7 +25,7 @@ namespace arbitrator
 {
     void Arbitrator::run()
     {
-        while (!ros::isShuttingDown)
+        while (!ros::isShuttingDown())
         {
             switch (sm_.get_state()) 
             {
@@ -68,7 +68,7 @@ namespace arbitrator
                 }
                 break;
             case cav_msgs::GuidanceState::INACTIVE:
-                sm_.submit_event(ArbitratorEvent::ARBIRTATOR_PAUSED);
+                sm_.submit_event(ArbitratorEvent::ARBITRATOR_PAUSED);
                 break;
             case cav_msgs::GuidanceState::SHUTDOWN:
                 sm_.submit_event(ArbitratorEvent::SYSTEM_SHUTDOWN_INITIATED);
@@ -81,7 +81,7 @@ namespace arbitrator
     void Arbitrator::initial_state()
     {
         final_plan_pub_ = nh_.advertise<cav_msgs::ManeuverPlan>("final_maneuver_plan", 5);
-        guidance_state_sub_ = nh_.subscribe<cav_msgs::GuidanceState>("guidance_state", 5, &guidance_state_cb);
+        guidance_state_sub_ = nh_.subscribe<cav_msgs::GuidanceState>("guidance_state", 5, &Arbitrator::guidance_state_cb, this);
         // TODO: load plan duration from parameters file
     }
 
@@ -99,7 +99,7 @@ namespace arbitrator
         } 
         else 
         {
-            ROS_INFO_STREAM("Publishing plan " << plan.maneuver_plan_id << " of duration " plan_duration << " as current maneuver plan");
+            ROS_INFO_STREAM("Publishing plan " << plan.maneuver_plan_id << " of duration " << plan_duration << " as current maneuver plan");
             final_plan_pub_.publish(plan);
         }
     }

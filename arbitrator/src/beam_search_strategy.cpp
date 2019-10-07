@@ -20,7 +20,7 @@ namespace arbitrator
 {
     std::vector<std::pair<cav_msgs::ManeuverPlan, double>> BeamSearchStrategy::prioritize_plans(std::vector<std::pair<cav_msgs::ManeuverPlan, double>> plans) const
     {
-        std::sort(plans.begin(), 
+        /*std::sort(plans.begin(), 
             plans.end(), 
             [this] (std::pair<cav_msgs::ManeuverPlan, double> a, std::pair<cav_msgs::ManeuverPlan, double> b) 
             {
@@ -28,7 +28,7 @@ namespace arbitrator
             }
         );
 
-        plans.resize(beam_width_);
+        plans.resize(beam_width_); */
         
         return plans;
     }

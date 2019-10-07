@@ -35,6 +35,8 @@ namespace arbitrator
                 current_state = iter->final_state;
             }
         }
+
+        return current_state;
     }
 
 };

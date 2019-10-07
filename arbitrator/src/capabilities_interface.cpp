@@ -31,7 +31,6 @@ namespace arbitrator
             {
                 if (it->activated)
                 {
-                    std::string topic;
                     std::string capability;
                     switch (it->type)
                     {
@@ -74,7 +73,7 @@ namespace arbitrator
         }
     }
     
-    std::vector<std::string> CapabilitiesInterface::get_topics_for_capability(std::string query_string)
+    std::vector<std::string> CapabilitiesInterface::get_topics_for_capability(std::string query_string) const
     {
         auto it = capabilities_.find(query_string);
         if (it != capabilities_.end())

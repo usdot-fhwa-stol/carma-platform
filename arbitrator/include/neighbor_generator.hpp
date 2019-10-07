@@ -25,7 +25,7 @@ namespace arbitrator
     class NeighborGenerator
     {
         public:
-            virtual std::vector<cav_msgs::ManeuverPlan> generate_neighbors(cav_msgs::ManeuverPlan plan) const = 0;
+            virtual std::vector<cav_msgs::ManeuverPlan> generate_neighbors(cav_msgs::ManeuverPlan plan) = 0;
             virtual ~NeighborGenerator();
     };
 }
