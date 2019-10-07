@@ -27,7 +27,7 @@ namespace arbitrator
         public:
             virtual double compute_total_cost(cav_msgs::ManeuverPlan plan) const = 0;
             virtual double compute_cost_per_unit_distance(cav_msgs::ManeuverPlan plan) const = 0;
-            virtual ~CostFunction();
+            virtual ~CostFunction(){};
     };
 };
 
