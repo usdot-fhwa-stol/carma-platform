@@ -39,7 +39,7 @@ namespace arbitrator
         return responses;
     }
 
-    template<typename Mmsg>
+    /*template<typename Mmsg>
     void CapabilitiesInterface::multiplex_publication_for_capability(std::string query_string, Mmsg msg) const
     {
         std::vector<std::string> topics = get_topics_for_capability(query_string);
@@ -47,7 +47,7 @@ namespace arbitrator
         {
             publishers_[*i].publish(msg);
         }
-    }
+    }*/
 };
 
 #endif
