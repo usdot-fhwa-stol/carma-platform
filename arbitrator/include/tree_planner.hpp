@@ -26,13 +26,33 @@
 
 namespace arbitrator
 {
+    /**
+     * \brief Implementation of PlanningStrategy using a generic tree search 
+     *      algorithm
+     * 
+     * The fundamental components of this tree search are individually injected
+     * into this class at construction time to allow for fine-tuning of the
+     * algorithm and ensure better testability and separation of algorithmic 
+     * concerns
+     */
     class TreePlanner : public PlanningStrategy
     {
         public:
+            /**
+             * \brief Tree planner constructor
+             * \param cf A reference to a CostFunction implementation
+             * \param ng A reference to a NeighborGenerator implementation
+             * \param ss A reference to a SearchStrategy implementation
+             */
             TreePlanner(CostFunction &cf, NeighborGenerator &ng, SearchStrategy &ss):
                 cost_function_(cf),
                 neighbor_generator_(ng),
                 search_strategy_(ss) {};
+
+            /**
+             * \brief Utilize the configured cost function, neighbor generator, 
+             *      and search strategy, to generate a plan by means of tree search
+             */
             cav_msgs::ManeuverPlan generate_plan() const;
         protected:
             CostFunction &cost_function_;

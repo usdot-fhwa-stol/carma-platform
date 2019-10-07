@@ -22,10 +22,24 @@
 
 namespace arbitrator
 {
+    /**
+     * Generic interface representing computation of children or neighbor nodes 
+     * in a planning search graph
+     */
     class NeighborGenerator
     {
         public:
+            /**
+             * \brief Generate the list of neighbors/children that a given node in the search graph
+             *      expands to
+             * \param plan The maneuver plan to expand upon
+             * \return A vector containing the new plans generated from it, if any
+             */
             virtual std::vector<cav_msgs::ManeuverPlan> generate_neighbors(cav_msgs::ManeuverPlan plan) = 0;
+
+            /**
+             * \brief Virtual destructor provided for memory safety
+             */
             virtual ~NeighborGenerator(){};
     };
 }

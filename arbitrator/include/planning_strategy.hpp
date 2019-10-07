@@ -21,10 +21,22 @@
 
 namespace arbitrator
 {
+    /**
+     * \brief Generic interface representing a strategy for arriving at a maneuver
+     * plan
+     */
     class PlanningStrategy
     {
         public:
+            /**
+             * \brief Generate a plausible maneuver plan
+             * \return A maneuver plan from the vehicle's current state
+             */
             virtual cav_msgs::ManeuverPlan generate_plan() const = 0;
+
+            /**
+             * \brief Virtual destructor provided for memory safety
+             */
             virtual ~PlanningStrategy(){};
     };
 };

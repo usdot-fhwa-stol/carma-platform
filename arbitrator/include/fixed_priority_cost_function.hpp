@@ -24,11 +24,38 @@
 
 namespace arbitrator
 {
+    /**
+     * \brief Implementation of the CostFunction interface
+     * 
+     * Implements costs by associating a fixed priority number with each plugin
+     * (as specified by configuration). This priority is then normalized across
+     * all plugins, and then an inverse is computed to arrive at the cost per 
+     * unit distance for that plugins.
+     * 
+     * e.g. Three plugins with priority 20, 10, and 5 will respectively have
+     * costs 0, 0.5, 0.75 per unit distance.
+     */
     class FixedPriorityCostFunction : public CostFunction
     {
         public:
+            /**
+             * \brief Constructor for FixedPriorityCostFunction
+             * \param nh A publically namespaced ("/") ros::NodeHandle
+             */
             FixedPriorityCostFunction(ros::NodeHandle nh);
+
+            /**
+             * \brief Compute the unit cost over distance of a given maneuver plan
+             * \param plan The plan to evaluate
+             * \return double The total cost divided by the total distance of the plan
+             */
             double compute_total_cost(cav_msgs::ManeuverPlan plan) const;
+
+            /**
+             * \brief Compute the unit cost over distance of a given maneuver plan
+             * \param plan The plan to evaluate
+             * \return double The total cost divided by the total distance of the plan
+             */
             double compute_cost_per_unit_distance(cav_msgs::ManeuverPlan plan) const;
         private:
             std::map<std::string, double> plugin_costs_;

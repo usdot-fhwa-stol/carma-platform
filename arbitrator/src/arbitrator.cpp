@@ -27,6 +27,7 @@ namespace arbitrator
     {
         while (!ros::isShuttingDown())
         {
+            ros::spinOnce();
             switch (sm_.get_state()) 
             {
                 case INITIAL:
@@ -104,13 +105,17 @@ namespace arbitrator
             final_plan_pub_.publish(plan);
         }
 
-        last_planning_process_duration_ = ros::Time::now() - planning_process_start;
-        ROS_INFO_STREAM("Planning completed in " << last_planning_process_duration_);
+        next_planning_process_start_ = planning_process_start + time_between_plans_;
     }
 
     void Arbitrator::waiting_state()
     {
-        (time_between_plans_ - last_planning_process_duration_).sleep();
+        // Sleep in 100ms increments until our next planning cycle
+        // This ensures we spin() at least a few times
+        while (ros::Time::now() < next_planning_process_start_)
+        {
+            ros::Duration(0.1).sleep();
+        }
         sm_.submit_event(ArbitratorEvent::PLANNING_TIMER_TRIGGER);
     }
 

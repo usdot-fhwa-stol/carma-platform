@@ -21,11 +21,36 @@
 
 namespace arbitrator 
 {
+    /**
+     * \brief Implementation of SearchStrategy by usage of Beam Search
+     * 
+     * Beam Search is similar to breadth-first search with the exception that 
+     * only a certain number of nodes at each step are retained to the next. This
+     * is referred to as the "beam width" of the search and is applied to the
+     * sorted open list at the end of every search step. This provides a reasonable
+     * optimization by ensuring that not all nodes need to be expanded.
+     * 
+     * A beam width of n=1 is identical to naive greedy search.
+     * 
+     * A beam width of n=inf is identical to breadth-first search
+     */
     class BeamSearchStrategy : public SearchStrategy
     {
         public:
+            /**
+             * \brief Constructor for BeamSearchStrategy
+             * \param beam_width The number of nodes to include in the search beam during each depth of the search
+             *      an infinite value would be equivalent to breadth-first search. A value of 1 is equivalent to naive
+             *      greedy search.
+             */
             BeamSearchStrategy(int beam_width) :
                 beam_width_(beam_width) {};
+
+            /**
+             * \brief Prioritize the plans and eliminate those outside the beam width
+             * \param plans The plans to evaluate as (plan, cot ) pairs
+             * \return The sorted list of up to size beam_width
+             */
             std::vector<std::pair<cav_msgs::ManeuverPlan, double>> prioritize_plans(std::vector<std::pair<cav_msgs::ManeuverPlan, double>> plans) const;
         private:
             int beam_width_;

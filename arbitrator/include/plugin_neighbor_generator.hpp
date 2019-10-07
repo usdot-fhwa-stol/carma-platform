@@ -22,11 +22,28 @@
 
 namespace arbitrator
 {
+    /**
+     * \brief Implementation of the NeighborGenerator interface using plugins
+     * 
+     * Queries plugins via the CapabilitiesInterface to contribute additional
+     * maneuvers as the potential child/neighbor nodes of a plan in progress.
+     */
     class PluginNeighborGenerator : public NeighborGenerator
     {
         public:
+            /**
+             * Constructor for PluginNeighborGenerator
+             * \param ci A capabilties interface for accessing the plugins
+             */
             PluginNeighborGenerator(CapabilitiesInterface ci) :
                 ci_(ci) {};
+
+            /**
+             * \brief Initialize this PluginNeighborGenerator for use
+             * 
+             * Loads the plugins needed from the CapabilitiesInterface and prepares
+             * the service clients
+             */
             void initalize();
             std::vector<cav_msgs::ManeuverPlan> generate_neighbors(cav_msgs::ManeuverPlan plan);
         private:

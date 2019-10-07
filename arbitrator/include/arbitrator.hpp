@@ -26,22 +26,69 @@
 
 namespace arbitrator 
 {
+    /**
+     * Primary work class for the Arbitrator package
+     * 
+     * Governs the interactions of plugins during the maneuver planning phase of
+     * the CARMA planning process. Utilizes a generic planning interface to allow
+     * for reconfiguration with other paradigms in the future.
+     */
     class Arbitrator 
     {
         public:
+            /**
+             * \brief Constructor for arbitrator class taking in dependencies via dependency injection
+             * \param nh A CARMANodeHandle instance with a globally referenced ("/") path
+             * \param pnh A CARMANodeHandle instance with a privately referenced ("~") path
+             * \param sm An ArbitratorStateMachine instance for regulating the states of the Arbitrator
+             * \param ci A CapabilitiesInterface for querying plugins
+             * \param planning_strategy A planning strategy implementation for generating plans
+             */ 
             Arbitrator(ros::CARMANodeHandle nh, ros::CARMANodeHandle pnh, ArbitratorStateMachine sm, CapabilitiesInterface ci, PlanningStrategy &planning_strategy):
                 sm_(sm),
                 nh_(nh),
                 pnh_(pnh),
                 capabilities_interface_(ci),
                 planning_strategy_(planning_strategy) {};
+            
+            /**
+             * \brief Begin the operation of the arbitrator.
+             * 
+             * Loops internally via ros::Duration sleeps and spins
+             */
             void run();
         protected:
+            /**
+             * \brief Function to be executed during the initial state of the Arbitrator
+             */
             void initial_state();
+
+            /**
+             * \brief Function to be called when the Arbitrator begins planning
+             */
             void planning_state();
+
+            /**
+             * \brief Function to be executed when the Arbitrator has finished planning
+             * and is awaiting another planning cycle
+             */
             void waiting_state();
+
+            /**
+             * \brief Function to be executed when the Arbitrator is not planning but also
+             * not awaiting a new plan cycle
+             */
             void paused_state();
+
+            /**
+             * \brief Function to be executed when the Arbitrator is to clean up and shutdown
+             */
             void shutdown_state();
+
+            /**
+             * \brief Callback for receiving Guidance state machine updates
+             * \param msg The new GuidanceState message
+             */
             void guidance_state_cb(const cav_msgs::GuidanceState::ConstPtr& msg);
         private:
             ArbitratorStateMachine sm_;
@@ -52,7 +99,7 @@ namespace arbitrator
             ros::Duration min_plan_duration_;
             ros::Duration max_plan_duration_;
             ros::Duration time_between_plans_;
-            ros::Duration last_planning_process_duration_;
+            ros::Time next_planning_process_start_;
             CapabilitiesInterface capabilities_interface_;
             PlanningStrategy &planning_strategy_;
     };
