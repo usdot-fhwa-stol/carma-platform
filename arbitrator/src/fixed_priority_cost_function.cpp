@@ -21,14 +21,11 @@
 
 namespace arbitrator
 {
-    FixedPriorityCostFunction::FixedPriorityCostFunction(ros::NodeHandle nh) 
+    FixedPriorityCostFunction::FixedPriorityCostFunction(std::map<std::string, double> plugin_priorities) 
     {
-        std::map<std::string, double> initial_priorities;
-        nh.getParam("plugin_priorities", initial_priorities);
-
         // Identify the highest priority values present in the list
         double max_priority = std::numeric_limits<double>::lowest();
-        for (auto it = initial_priorities.begin(); it != initial_priorities.end(); it++)
+        for (auto it = plugin_priorities.begin(); it != plugin_priorities.end(); it++)
         {
             if (it->second > max_priority)
             {
@@ -37,7 +34,7 @@ namespace arbitrator
         }
 
         // Normalize the list and invert into costs
-        for (auto it = initial_priorities.begin(); it != initial_priorities.end(); it++)
+        for (auto it = plugin_priorities.begin(); it != plugin_priorities.end(); it++)
         {
             plugin_costs_[it->first] = 1.0 - (it->second / max_priority);
         }
@@ -58,6 +55,7 @@ namespace arbitrator
 
     double FixedPriorityCostFunction::compute_cost_per_unit_distance(cav_msgs::ManeuverPlan plan) const
     {
-        return compute_total_cost(plan) / (get_plan_end_distance(plan) - get_plan_start_distance(plan));
+        double plan_dist = get_plan_end_distance(plan) - get_plan_start_distance(plan);
+        return compute_total_cost(plan) / plan_dist;
     }
 }

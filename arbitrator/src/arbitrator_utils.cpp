@@ -25,10 +25,10 @@ namespace arbitrator
     {
         if (plan.maneuvers.empty())
         {
-            throw new std::invalid_argument("arbitrator::get_plan_end_time called on empty maneuver plan");
+            throw std::invalid_argument("arbitrator::get_plan_end_time called on empty maneuver plan");
         }
 
-        cav_msgs::Maneuver m = *plan.maneuvers.end();
+        cav_msgs::Maneuver m = plan.maneuvers.back();
 
         return get_maneuver_end_time(m);
     }
@@ -37,10 +37,10 @@ namespace arbitrator
     {
         if (plan.maneuvers.empty())
         {
-            throw new std::invalid_argument("arbitrator::get_plan_end_dist called on empty maneuver plan");
+            throw std::invalid_argument("arbitrator::get_plan_end_dist called on empty maneuver plan");
         }
 
-        cav_msgs::Maneuver m = *plan.maneuvers.end();
+        cav_msgs::Maneuver m = plan.maneuvers.back();
         return get_maneuver_end_distance(m);
     }
 
@@ -48,10 +48,10 @@ namespace arbitrator
     {
         if (plan.maneuvers.empty())
         {
-            throw new std::invalid_argument("arbitrator::get_plan_start_time called on empty maneuver plan");
+            throw std::invalid_argument("arbitrator::get_plan_start_time called on empty maneuver plan");
         }
 
-        cav_msgs::Maneuver m = *plan.maneuvers.begin();
+        cav_msgs::Maneuver m = plan.maneuvers.front();
         return get_maneuver_start_time(m);
     }
 
@@ -59,10 +59,10 @@ namespace arbitrator
     {
         if (plan.maneuvers.empty())
         {
-            throw new std::invalid_argument("arbitrator::get_plan_start_dist called on empty maneuver plan");
+            throw std::invalid_argument("arbitrator::get_plan_start_dist called on empty maneuver plan");
         }
 
-        cav_msgs::Maneuver m = *plan.maneuvers.begin();
+        cav_msgs::Maneuver m = plan.maneuvers.front();
         return get_maneuver_start_distance(m);
     }
 

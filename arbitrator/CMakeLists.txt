@@ -139,6 +139,7 @@ install(DIRECTORY
 
 catkin_add_gtest(${PROJECT_NAME}-test
   test/test_arbitrator_state_machine.cpp
+  test/test_fixed_priority_cost_function.cpp
   test/test_main.cpp)
 
 if(TARGET ${PROJECT_NAME}-test)

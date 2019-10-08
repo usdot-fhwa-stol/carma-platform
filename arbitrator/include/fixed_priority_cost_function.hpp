@@ -17,7 +17,6 @@
 #ifndef __FIXED_PRIORITY_COST_FUNCTION_HPP__
 #define __FIXED_PRIORITY_COST_FUNCTION_HPP__
 
-#include <ros/ros.h>
 #include "cost_function.hpp"
 #include <map>
 #include <string>
@@ -42,7 +41,7 @@ namespace arbitrator
              * \brief Constructor for FixedPriorityCostFunction
              * \param nh A publically namespaced ("/") ros::NodeHandle
              */
-            FixedPriorityCostFunction(ros::NodeHandle nh);
+            FixedPriorityCostFunction(std::map<std::string, double> plugin_priorities);
 
             /**
              * \brief Compute the unit cost over distance of a given maneuver plan
@@ -59,7 +58,6 @@ namespace arbitrator
             double compute_cost_per_unit_distance(cav_msgs::ManeuverPlan plan) const;
         private:
             std::map<std::string, double> plugin_costs_;
-            ros::NodeHandle nh_;
     };
 };
 

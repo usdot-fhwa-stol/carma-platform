@@ -16,6 +16,8 @@
 
 #include <ros/ros.h>
 #include <memory>
+#include <map>
+#include <string>
 #include "arbitrator.hpp"
 #include "arbitrator_state_machine.hpp"
 #include "fixed_priority_cost_function.hpp"
@@ -32,8 +34,15 @@ int main(int argc, char** argv)
     // Handle dependency injection
     arbitrator::CapabilitiesInterface ci{nh};
     arbitrator::ArbitratorStateMachine sm;
-    arbitrator::FixedPriorityCostFunction fpcf{nh};
-    arbitrator::BeamSearchStrategy bss{3};
+
+    std::map<std::string, double> plugin_priorites; 
+    pnh.getParam("plugin_priorities", plugin_priorites);
+    arbitrator::FixedPriorityCostFunction fpcf{plugin_priorites};
+
+    int beam_width;
+    pnh.param("beam_width", beam_width, 3);
+    arbitrator::BeamSearchStrategy bss{beam_width};
+
     arbitrator::PluginNeighborGenerator png{ci};
     arbitrator::TreePlanner tp{fpcf, png, bss};
     arbitrator::Arbitrator arbitrator{nh, pnh, sm, ci, tp};

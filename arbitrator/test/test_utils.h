@@ -9,12 +9,24 @@
 
 #include <gtest/gtest.h>
 #include "arbitrator_state_machine.hpp"
+#include "fixed_priority_cost_function.hpp"
 
 class ArbitratorStateMachineTest : public ::testing::Test 
 {
     public:
         ArbitratorStateMachineTest() {};
         arbitrator::ArbitratorStateMachine sm_;
+};
+
+class FixedPriorityCostFunctionTest : public ::testing::Test 
+{
+    public:
+        FixedPriorityCostFunctionTest():
+            fpcf{{
+                {"plugin_a", 10.0}, 
+                {"plugin_b", 5.0}, 
+                {"plugin_c", 15.0}}} {};
+        arbitrator::FixedPriorityCostFunction fpcf;
 };
 
 #endif //__TEST_UTILS_HPP__
