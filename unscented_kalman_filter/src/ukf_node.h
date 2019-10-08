@@ -1,8 +1,0 @@
-//
-// Created by aswath on 8/16/19.
-//
-
-#ifndef UNSCENTED_KALMAN_FILTER_UKF_NODE_H
-#define UNSCENTED_KALMAN_FILTER_UKF_NODE_H
-
-#endif //UNSCENTED_KALMAN_FILTER_UKF_NODE_H
