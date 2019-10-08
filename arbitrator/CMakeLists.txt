@@ -76,7 +76,10 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_node 
-  src/arbitrator_node.cpp
+  src/arbitrator_node.cpp)
+  
+## Add cmake target dependencies of the executable
+add_library(arbitrator_library
   src/arbitrator_state_machine.cpp
   src/arbitrator_utils.cpp
   src/arbitrator.cpp
@@ -85,6 +88,7 @@ add_executable(${PROJECT_NAME}_node
   src/fixed_priority_cost_function.cpp
   src/plugin_neighbor_generator.cpp
   src/tree_planner.cpp)
+
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -95,6 +99,7 @@ set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX ""
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(arbitrator_library ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
@@ -132,11 +137,10 @@ install(DIRECTORY
 ## Testing ##
 #############
 
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_arbitrator.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
+catkin_add_gtest(${PROJECT_NAME}-test
+  test/test_arbitrator_state_machine.cpp
+  test/test_main.cpp)
 
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
+if(TARGET ${PROJECT_NAME}-test)
+  target_link_libraries(${PROJECT_NAME}-test arbitrator_library ${catkin_LIBRARIES})
+endif()
