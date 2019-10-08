@@ -21,11 +21,6 @@ UKFilter::UKFilter() {}
 //Destructor
 UKFilter::~UKFilter() {}
 
-void UKFilter::UnscentedKalmanFilter()
-{
-
-}
-
 //##################<Prediction Cycle>#####################################
 inline void UKFilter::Prediction(VectorXd &x, MatrixXd &P,double delta_t_)
 {
@@ -119,15 +114,15 @@ inline void UKFilter::Prediction(VectorXd &x, MatrixXd &P,double delta_t_)
     for(int i=0;i<19;i++) {
         vector <lib_vehicle_model::VehicleState> results = lib_vehicle_model::predict(Xsigma_.col(i), delta_t_, delta_t_);
 
-        Xsigma_pred_.col(i, 0)=results[0];
-        Xsigma_pred_.col(i, 1)=results[1];
-        Xsigma_pred_.col(i, 2)=results[2];
-        Xsigma_pred_.col(i, 3)=results[3];
-        Xsigma_pred_.col(i, 4)=results[4];
-        Xsigma_pred_.col(i, 5)=results[5];
-        Xsigma_pred_.col(i, 6)=results[6];
-        Xsigma_pred_.col(i, 7)=results[7];
-        Xsigma_pred_.col(i, 8)=results[8];
+        Xsigma_pred_.col(i,0)=results[0].X_pos_global;
+        Xsigma_pred_.col(i,1)=results[0].Y_pos_global;
+        Xsigma_pred_.col(i,2)=results[0].orientation;
+        Xsigma_pred_.col(i,3)=results[0].longitudinal_vel;
+        Xsigma_pred_.col(i,4)=results[0].lateral_vel;
+        Xsigma_pred_.col(i,5)=results[0].yaw_rate;
+        Xsigma_pred_.col(i,6)=results[0].front_wheel_rotation_rate;
+        Xsigma_pred_.col(i,7)=results[0].rear_wheel_rotation_rate;
+        Xsigma_pred_.col(i,8)=results[0].steering_angle;
     }
     //Predicted sigma point is generated from the dynamic model.
 //######################################################################

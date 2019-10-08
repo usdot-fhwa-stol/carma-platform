@@ -118,8 +118,6 @@ public:
 
     ~UKFilter();
 
-    void UnscentedKalmanFilter();
-
     void Prediction(VectorXd x, MatrixXd P,double delta_t);
 
     void Update(VectorXd x_prime_,MatrixXd P_prime_,MatrixXd H_,MatrixXd R_,VectorXd z_raw_);

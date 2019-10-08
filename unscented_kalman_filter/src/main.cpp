@@ -28,10 +28,9 @@ int main(int argc, char** argv)
     lib_vehicle_model::init(nh_);
     //UKFNode class object instance
     UKFNode ukf_node(&nh_);
+
     //UKFilter class object instance
     UKFilter ukf_lib;
-
-    ros::Rate loop_rate(10);
 
     bool initialize=0; // Variable to check if initialized for the 1st time before entering into loop
 
@@ -95,7 +94,7 @@ int main(int argc, char** argv)
 
         uk.pose_pub_.publish(ukf_pose_msg);
         ros::spinOnce();
-        loop_rate.sleep();
+
     }
     return 0;
 }
