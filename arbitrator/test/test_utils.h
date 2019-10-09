@@ -10,6 +10,7 @@
 #include <gtest/gtest.h>
 #include "arbitrator_state_machine.hpp"
 #include "fixed_priority_cost_function.hpp"
+#include "beam_search_strategy.hpp"
 
 class ArbitratorStateMachineTest : public ::testing::Test 
 {
@@ -27,6 +28,13 @@ class FixedPriorityCostFunctionTest : public ::testing::Test
                 {"plugin_b", 5.0}, 
                 {"plugin_c", 15.0}}} {};
         arbitrator::FixedPriorityCostFunction fpcf;
+};
+
+class BeamSearchStrategyTest : public ::testing::Test 
+{
+    public:
+        BeamSearchStrategyTest() {};
+        arbitrator::BeamSearchStrategy bss{3};
 };
 
 #endif //__TEST_UTILS_HPP__

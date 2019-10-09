@@ -28,7 +28,10 @@ namespace arbitrator
             }
         );
 
-        plans.resize(beam_width_);
+        if (plans.size() > beam_width_)
+        {
+            plans.resize(beam_width_);
+        }
         
         return plans;
     }
