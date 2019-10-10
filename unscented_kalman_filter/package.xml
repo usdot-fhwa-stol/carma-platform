@@ -27,31 +27,16 @@
   <!-- Example: -->
   <!-- <author email="jane.doe@example.com">Jane Doe</author> -->
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>geometry_msgs</build_depend>
-  <build_depend>pacmod_msgs</build_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>rospy</build_depend>
-  <build_depend>sensor_msgs</build_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>lib_vehicle_model</build_depend>
-  <build_depend>Eigen</build_depend>
-  <build_export_depend>geometry_msgs</build_export_depend>
-  <build_export_depend>pacmod_msgs</build_export_depend>
-  <build_export_depend>roscpp</build_export_depend>
-  <build_export_depend>rospy</build_export_depend>
-  <build_export_depend>sensor_msgs</build_export_depend>
-  <build_export_depend>std_msgs</build_export_depend>
-  <build_export_depend>lib_vehicle_model</build_export_depend>
-  <build_export_depend>Eigen</build_export_depend>
-  <exec_depend>geometry_msgs</exec_depend>
-  <exec_depend>pacmod_msgs</exec_depend>
-  <exec_depend>roscpp</exec_depend>
-  <exec_depend>rospy</exec_depend>
-  <exec_depend>sensor_msgs</exec_depend>
-  <exec_depend>std_msgs</exec_depend>
-  <exec_depend>lib_vehicle_model</exec_depend>
-  <exec_depend>Eigen</exec_depend>
+  <depend>catkin</depend>
+  <depend>geometry_msgs</depend>
+  <depend>pacmod_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>rospy</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>lib_vehicle_model</depend>
+  <depend>Eigen</depend>
+
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

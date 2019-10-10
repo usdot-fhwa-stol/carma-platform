@@ -20,9 +20,15 @@ namespace ukfilter {
 //Constructor
     UKFilter::UKFilter() {}
 
+    /*
+    //Prediction()
+    //state vector x the first argument.
+    //Covariance Matrix P the second argument.
+    //timestamp delta_t third argument.
+    */
+
 //##################<Prediction Cycle>#####################################
-    void UKFilter::Prediction(VectorXd &x, MatrixXd &P, double delta_t_) {
-//UKFilter need the argument as state vector x, Covariance Matrix P and timestamp delta_t
+    void UKFilter::Prediction(VectorXd &x, MatrixXd &P,const double &delta_t_) {
 //Basically there are three steps
 //1) Generate Sigma Points with or without augmentation as required
 //2) Predict Sigma Points using nine dimension vehicle model
@@ -167,10 +173,17 @@ namespace ukfilter {
 //###########################################################################
     }
 
+    /*
+      //Update()
+      //predicted state vector x_prime_ the first argument.
+      //predicted  Covariance Matrix P_prime_ the second argument.
+      //measurement function the third argument.
+      //Sensor Covariance R_ the fourth argument.
+      //raw sensor value z_raw_ the fifth argument.
+    */
+
 //##################<Measurement Update Cycle>################################
-    void UKFilter::Update(VectorXd &x_prime_, MatrixXd &P_prime_, MatrixXd H_, MatrixXd R_, VectorXd z_raw_) {
-        //Update function arguments are predicted state vector x_prime_,predicted  Covariance Matrix P_prime_
-        // Sensor Covariance R_, raw sensor value z_raw_
+    void UKFilter::Update(VectorXd &x_prime_, MatrixXd &P_prime_,const MatrixXd &H_,const MatrixXd &R_,const VectorXd &z_raw_) {
         // State space dimension
         int x_size = x_prime_.size();
         // Measurement function which converts the state space to measurement space

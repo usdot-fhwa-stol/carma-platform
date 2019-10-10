@@ -46,20 +46,20 @@ namespace ukfilter {
         } sensortype;
 
         */
+
+        //Angle normalization due to difference calculation between angles which can lead to small angle + 360 degree.
+        void AngleNormalization(double);
     public:
 
         // Constructor
         UKFilter();
 
         //UKFilter need the argument as state vector x, Covariance Matrix P and timestamp delta_t
-        void Prediction(VectorXd x, MatrixXd P, double delta_t);
+        void Prediction(VectorXd &x, MatrixXd &P, const double &delta_t);
 
         //Update function arguments are predicted state vector x_prime_,predicted  Covariance Matrix P_prime_
         // Sensor Covariance R_, raw sensor value z_raw_
-        void Update(VectorXd &x_prime_, MatrixXd &P_prime_, MatrixXd H_, MatrixXd R_, VectorXd z_raw_);
-
-        //Angle normalization
-        void AngleNormalization(double);
+        void Update(VectorXd &x_prime_, MatrixXd &P_prime_, const MatrixXd &H_,const MatrixXd &R_, const VectorXd &z_raw_);
 
     };
 
