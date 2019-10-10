@@ -15,8 +15,8 @@
  */
 
 #include "ros/ros.h" //ros header
-#include "unscented_kalman_filter/ukf_filter.h" //ukf library
-#include "unscented_kalman_filter/ukf_node.h" //ros components
+#include "ukf_filter.h" //ukf library
+#include "ukf_node.h" //ros components
 
 int main(int argc, char** argv)
 {

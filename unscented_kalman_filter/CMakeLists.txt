@@ -4,11 +4,6 @@ project(unscented_kalman_filter)
 #Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-#list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   pacmod_msgs
@@ -111,10 +106,10 @@ find_package(Eigen3 REQUIRED)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES unscented_kalman_filter
+  INCLUDE_DIRS include
+  LIBRARIES unscented_kalman_filter
   CATKIN_DEPENDS geometry_msgs pacmod_msgs roscpp rospy sensor_msgs std_msgs lib_vehicle_model
-#  DEPENDS system_lib
+  DEPENDS Eigen3
 )
 
 ###########
