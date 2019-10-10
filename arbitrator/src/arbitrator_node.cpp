@@ -43,8 +43,12 @@ int main(int argc, char** argv)
     pnh.param("beam_width", beam_width, 3);
     arbitrator::BeamSearchStrategy bss{beam_width};
 
-    arbitrator::PluginNeighborGenerator png{ci};
-    arbitrator::TreePlanner tp{fpcf, png, bss};
+    arbitrator::PluginNeighborGenerator<arbitrator::CapabilitiesInterface> png{ci};
+
+    double target_plan;
+    pnh.param("target_duration", target_plan, 15.0);
+    arbitrator::TreePlanner tp{fpcf, png, bss, ros::Duration(target_plan)};
+
     arbitrator::Arbitrator arbitrator{nh, pnh, sm, ci, tp};
 
     arbitrator.run();

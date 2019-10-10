@@ -90,6 +90,7 @@ namespace arbitrator
              * \param msg The new GuidanceState message
              */
             void guidance_state_cb(const cav_msgs::GuidanceState::ConstPtr& msg);
+
         private:
             ArbitratorStateMachine sm_;
             ros::Publisher final_plan_pub_;

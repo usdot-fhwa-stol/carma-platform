@@ -42,7 +42,7 @@ namespace arbitrator
 
                 // Evaluate terminal condition
                 ros::Duration plan_duration = get_plan_end_time(cur_plan) - get_plan_start_time(cur_plan);
-                if (plan_duration >= target_plan_duration) 
+                if (plan_duration >= target_plan_duration_) 
                 {
                     return cur_plan;
                 } else if (plan_duration > longest_plan_duration) {

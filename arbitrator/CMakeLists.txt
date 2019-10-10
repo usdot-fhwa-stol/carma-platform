@@ -86,7 +86,6 @@ add_library(arbitrator_library
   src/beam_search_strategy.cpp
   src/capabilities_interface.cpp
   src/fixed_priority_cost_function.cpp
-  src/plugin_neighbor_generator.cpp
   src/tree_planner.cpp)
 
 
@@ -137,8 +136,9 @@ install(DIRECTORY
 ## Testing ##
 #############
 
-catkin_add_gtest(${PROJECT_NAME}-test
+catkin_add_gmock(${PROJECT_NAME}-test
   test/test_arbitrator_state_machine.cpp
+  test/test_plugin_neighbor_generator.cpp
   test/test_fixed_priority_cost_function.cpp
   test/test_beam_search_strategy.cpp
   test/test_main.cpp)

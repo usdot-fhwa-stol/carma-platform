@@ -43,11 +43,13 @@ namespace arbitrator
              * \param cf A reference to a CostFunction implementation
              * \param ng A reference to a NeighborGenerator implementation
              * \param ss A reference to a SearchStrategy implementation
+             * \param target The desired duration of finished plans
              */
-            TreePlanner(CostFunction &cf, NeighborGenerator &ng, SearchStrategy &ss):
+            TreePlanner(CostFunction &cf, NeighborGenerator &ng, SearchStrategy &ss, ros::Duration target):
                 cost_function_(cf),
                 neighbor_generator_(ng),
-                search_strategy_(ss) {};
+                search_strategy_(ss),
+                target_plan_duration_(target) {};
 
             /**
              * \brief Utilize the configured cost function, neighbor generator, 
@@ -58,7 +60,7 @@ namespace arbitrator
             CostFunction &cost_function_;
             NeighborGenerator &neighbor_generator_;
             SearchStrategy &search_strategy_;
-            ros::Duration target_plan_duration;
+            ros::Duration target_plan_duration_;
     };
 };
 

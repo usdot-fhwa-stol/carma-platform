@@ -14,6 +14,9 @@
  * the License.
  */
 
+#ifndef __PLUGIN_NEIGHBOR_GENERATOR_TPP__
+#define __PLUGIN_NEIGHBOR_GENERATOR_TPP__
+
 #include "capabilities_interface.hpp"
 #include "plugin_neighbor_generator.hpp"
 #include <cav_srvs/PlanManeuvers.h>
@@ -21,18 +24,18 @@
 
 namespace arbitrator
 {
-    void PluginNeighborGenerator::initalize() 
+    template <class T>
+    void PluginNeighborGenerator<T>::initalize() 
     {
 
     }
 
-    std::vector<cav_msgs::ManeuverPlan> PluginNeighborGenerator::generate_neighbors(cav_msgs::ManeuverPlan plan)
+    template <class T>
+    std::vector<cav_msgs::ManeuverPlan> PluginNeighborGenerator<T>::generate_neighbors(cav_msgs::ManeuverPlan plan)
     {
         cav_srvs::PlanManeuvers msg;
         msg.request.prior_plan = plan;
-        std::map<std::string, cav_srvs::PlanManeuvers> res = ci_
-            .multiplex_service_call_for_capability<cav_srvs::PlanManeuvers>
-            (STRATEGIC_PLAN_CAPABILITY, msg);
+        std::map<std::string, cav_srvs::PlanManeuvers> res = ci_.multiplex_service_call_for_capability(STRATEGIC_PLAN_CAPABILITY, msg);
 
         // Convert map to vector of map values
         std::vector<cav_msgs::ManeuverPlan> out;
@@ -44,3 +47,5 @@ namespace arbitrator
         return out;
     }
 }
+
+#endif //__PLUGIN_NEIGHBOR_GENERATOR_TPP__

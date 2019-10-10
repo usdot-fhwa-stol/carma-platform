@@ -8,9 +8,11 @@
 #define __TEST_UTILS_HPP__
 
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include "arbitrator_state_machine.hpp"
 #include "fixed_priority_cost_function.hpp"
 #include "beam_search_strategy.hpp"
+#include "capabilities_interface.hpp"
 
 class ArbitratorStateMachineTest : public ::testing::Test 
 {
