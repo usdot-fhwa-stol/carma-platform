@@ -25,7 +25,7 @@ namespace ukfilter {
     \param x The state space vector.
     \param P The covariance matrix of the state space.
     \param delta_t_ Time difference between previous and current state.
-*/
+    */
 
 //##################<Prediction Cycle>#####################################
     void UKFilter::Prediction(VectorXd &x, MatrixXd &P,double delta_t_) {
@@ -173,22 +173,14 @@ namespace ukfilter {
 //###########################################################################
     }
 
-    /*
-      //Update()
-      //predicted state vector x_prime_ the first argument.
-      //predicted  Covariance Matrix P_prime_ the second argument.
-      //measurement function the third argument.
-      //Sensor Covariance R_ the fourth argument.
-      //raw sensor value z_raw_ the fifth argument.
-    */
-    /*! \fn Update(VectorXd &x_prime_, MatrixXd &P_prime_,const MatrixXd &H_,const MatrixXd &R_,const VectorXd &z_raw_)
+   /*! \fn Update(VectorXd &x_prime_, MatrixXd &P_prime_,const MatrixXd &H_,const MatrixXd &R_,const VectorXd &z_raw_)
   \brief Update function uses predicted vehicle state and its covariance compared it with the raw sensor value and do the correction based on kalman gain.
   \param x_prime_ The predicted state space vector.
   \param P_prime_ The predicted covariance matrix of the state space.
   \param H_ The measurement function.
   \param R_ The covariance matrix of the raw sensor.
   \param z_raw_ The raw sensor vector.
-*/
+  */
 
 //##################<Measurement Update Cycle>################################
     void UKFilter::Update(VectorXd &x_prime_, MatrixXd &P_prime_,const MatrixXd &H_,const MatrixXd &R_,const VectorXd &z_raw_) {
@@ -216,7 +208,10 @@ namespace ukfilter {
         P_prime_ = ((I - (K * H)) * P_prime_);
 
     }
-
+        /*! \fn Prediction(VectorXd &x, MatrixXd &P,const double &delta_t_)
+       \brief Angle normalization due to difference calculation between angles which can lead to small angle + 360 degree.
+       \param ang The angle which needs to be normalized.
+       */
 //##################<Angle normalization>################################
     void UKFilter::AngleNormalization(double &ang) {
         while (ang > M_PI) ang -= 2.* M_PI;

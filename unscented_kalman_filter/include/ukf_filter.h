@@ -47,19 +47,33 @@ namespace ukfilter {
 
         */
 
-        //Angle normalization due to difference calculation between angles which can lead to small angle + 360 degree.
-        void AngleNormalization(double);
+       /*! \fn Prediction(VectorXd &x, MatrixXd &P,const double &delta_t_)
+       \brief Angle normalization due to difference calculation between angles which can lead to small angle + 360 degree.
+       \param ang The angle which needs to be normalized.
+       */
+        void AngleNormalization(double &ang);
     public:
 
-        // Constructor
+         // Constructor
         UKFilter();
 
-        //UKFilter need the argument as state vector x, Covariance Matrix P and timestamp delta_t
-        void Prediction(VectorXd &x, MatrixXd &P, double delta_t);
+        /*! \fn Prediction(VectorXd &x, MatrixXd &P,const double &delta_t_)
+        \brief Prediction function uses vehicle state and its covariance from its previous state and predict its future value based on delta t.
+        \param x The state space vector.
+        \param P The covariance matrix of the state space.
+        \param delta_t_ Time difference between previous and current state.
+        */
+    void Prediction(VectorXd &x, MatrixXd &P, double delta_t);
 
-        //Update function arguments are predicted state vector x_prime_,predicted  Covariance Matrix P_prime_
-        // Sensor Covariance R_, raw sensor value z_raw_
-        void Update(VectorXd &x_prime_, MatrixXd &P_prime_, const MatrixXd &H_,const MatrixXd &R_, const VectorXd &z_raw_);
+         /*! \fn Update(VectorXd &x_prime_, MatrixXd &P_prime_,const MatrixXd &H_,const MatrixXd &R_,const VectorXd &z_raw_)
+         \brief Update function uses predicted vehicle state and its covariance compared it with the raw sensor value and do the correction based on kalman gain.
+        \param x_prime_ The predicted state space vector.
+        \param P_prime_ The predicted covariance matrix of the state space.
+        \param H_ The measurement function.
+        \param R_ The covariance matrix of the raw sensor.
+        \param z_raw_ The raw sensor vector.
+        */
+    void Update(VectorXd &x_prime_, MatrixXd &P_prime_, const MatrixXd &H_,const MatrixXd &R_, const VectorXd &z_raw_);
 
     };
 
