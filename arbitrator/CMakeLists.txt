@@ -141,6 +141,7 @@ catkin_add_gmock(${PROJECT_NAME}-test
   test/test_plugin_neighbor_generator.cpp
   test/test_fixed_priority_cost_function.cpp
   test/test_beam_search_strategy.cpp
+  test/test_tree_planner.cpp
   test/test_main.cpp)
 
 if(TARGET ${PROJECT_NAME}-test)
