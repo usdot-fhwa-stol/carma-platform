@@ -20,15 +20,15 @@ namespace ukfilter {
 //Constructor
     UKFilter::UKFilter() {}
 
-    /*
-    //Prediction()
-    //state vector x the first argument.
-    //Covariance Matrix P the second argument.
-    //timestamp delta_t third argument.
-    */
+    /*! \fn Prediction(VectorXd &x, MatrixXd &P,const double &delta_t_)
+    \brief Prediction function uses vehicle state and its covariance from its previous state and predict its future value based on delta t.
+    \param x The state space vector.
+    \param P The covariance matrix of the state space.
+    \param delta_t_ Time difference between previous and current state.
+*/
 
 //##################<Prediction Cycle>#####################################
-    void UKFilter::Prediction(VectorXd &x, MatrixXd &P,const double &delta_t_) {
+    void UKFilter::Prediction(VectorXd &x, MatrixXd &P,double delta_t_) {
 //Basically there are three steps
 //1) Generate Sigma Points with or without augmentation as required
 //2) Predict Sigma Points using nine dimension vehicle model
@@ -115,7 +115,7 @@ namespace ukfilter {
         // Set the predicted sigma points matrix dimensions
         MatrixXd Xsigma_pred = MatrixXd(n_x, (2 * n_x + 1));
         //Generate here
-        for (int i = 0; i < 19; i++) {
+        for (int i = 0; i < (2 * n_x + 1); i++) {
             // Currently the model can only output VehicleState objects.
             //The model used can be implemented using fewer states but that is the final output.
             vector <lib_vehicle_model::VehicleState> results = lib_vehicle_model::predict(Xsigma.col(i), delta_t_,
@@ -181,6 +181,14 @@ namespace ukfilter {
       //Sensor Covariance R_ the fourth argument.
       //raw sensor value z_raw_ the fifth argument.
     */
+    /*! \fn Update(VectorXd &x_prime_, MatrixXd &P_prime_,const MatrixXd &H_,const MatrixXd &R_,const VectorXd &z_raw_)
+  \brief Update function uses predicted vehicle state and its covariance compared it with the raw sensor value and do the correction based on kalman gain.
+  \param x_prime_ The predicted state space vector.
+  \param P_prime_ The predicted covariance matrix of the state space.
+  \param H_ The measurement function.
+  \param R_ The covariance matrix of the raw sensor.
+  \param z_raw_ The raw sensor vector.
+*/
 
 //##################<Measurement Update Cycle>################################
     void UKFilter::Update(VectorXd &x_prime_, MatrixXd &P_prime_,const MatrixXd &H_,const MatrixXd &R_,const VectorXd &z_raw_) {

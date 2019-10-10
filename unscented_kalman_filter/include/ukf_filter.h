@@ -55,7 +55,7 @@ namespace ukfilter {
         UKFilter();
 
         //UKFilter need the argument as state vector x, Covariance Matrix P and timestamp delta_t
-        void Prediction(VectorXd &x, MatrixXd &P, const double &delta_t);
+        void Prediction(VectorXd &x, MatrixXd &P, double delta_t);
 
         //Update function arguments are predicted state vector x_prime_,predicted  Covariance Matrix P_prime_
         // Sensor Covariance R_, raw sensor value z_raw_
