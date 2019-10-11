@@ -1,0 +1,9 @@
+# String: Topic prefix to be prepended to plugin name to find trajectory planning
+# service. Only needed for minimal/mock plan delegator
+# Units: N/a
+planning_topic_prefix: /guidance/plugins/
+
+# String: Topic suffix to be appended to plugin name to find trajectory planning
+# service. Only needed for minimal/mock plan delegator
+# Units: N/a
+planning_topic_suffix: /plan_trajectory
