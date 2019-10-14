@@ -15,6 +15,6 @@
 -->
 <launch>
     <rosparam command="load" file="$(find arbitrator)/config/arbitrator_params.yaml"/>
-    <node name="arbitrator" pkg="arbitrator" type="arbitrator"/>
+    <node name="arbitrator" pkg="arbitrator" type="node"/>
 </launch>
 
