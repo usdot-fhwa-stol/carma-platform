@@ -15,7 +15,7 @@
 -->
 <launch>
     <rosparam command="load" file="$(find plan_delegator)/config/plan_delegator_params.yaml"/>
-    <node name="arbitrator" pkg="arbitrator" type="node"/>
+    <node name="plan_delegator" pkg="plan_delegator" type="node"/>
 </launch>
 
 
