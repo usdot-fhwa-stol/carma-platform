@@ -21,7 +21,7 @@
 
 namespace arbitrator
 {
-    FixedPriorityCostFunction::FixedPriorityCostFunction(std::map<std::string, double> plugin_priorities) 
+    FixedPriorityCostFunction::FixedPriorityCostFunction(const std::map<std::string, double> &plugin_priorities) 
     {
         // Identify the highest priority values present in the list
         double max_priority = std::numeric_limits<double>::lowest();
@@ -46,7 +46,7 @@ namespace arbitrator
         for (auto it = plan.maneuvers.begin(); it != plan.maneuvers.end(); it++)
         {
             std::string planning_plugin = GET_MANEUVER_PROPERTY(*it, parameters).planning_strategic_plugin;
-            total_cost += (get_maneuver_end_distance(*it) - get_maneuver_start_distance(*it)) *
+            total_cost += (arbitrator_utils::get_maneuver_end_distance(*it) - arbitrator_utils::get_maneuver_start_distance(*it)) *
                 plugin_costs_.at(planning_plugin);
         }
 
@@ -55,7 +55,7 @@ namespace arbitrator
 
     double FixedPriorityCostFunction::compute_cost_per_unit_distance(cav_msgs::ManeuverPlan plan) const
     {
-        double plan_dist = get_plan_end_distance(plan) - get_plan_start_distance(plan);
+        double plan_dist = arbitrator_utils::get_plan_end_distance(plan) - arbitrator_utils::get_plan_start_distance(plan);
         return compute_total_cost(plan) / plan_dist;
     }
 }

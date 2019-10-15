@@ -25,7 +25,7 @@
 namespace arbitrator
 {
     template <class T>
-    std::vector<cav_msgs::ManeuverPlan> PluginNeighborGenerator<T>::generate_neighbors(cav_msgs::ManeuverPlan plan)
+    std::vector<cav_msgs::ManeuverPlan> PluginNeighborGenerator<T>::generate_neighbors(cav_msgs::ManeuverPlan plan) const
     {
         cav_srvs::PlanManeuvers msg;
         msg.request.prior_plan = plan;

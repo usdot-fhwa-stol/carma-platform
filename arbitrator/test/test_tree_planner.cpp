@@ -33,6 +33,7 @@ namespace arbitrator
         public:
             using PlanAndCost = std::pair<cav_msgs::ManeuverPlan, double>;
             MOCK_CONST_METHOD1(prioritize_plans, std::vector<PlanAndCost>(std::vector<PlanAndCost>));
+            ~MockSearchStrategy(){};
     };
 
     class MockCostFunction : public CostFunction
@@ -40,13 +41,15 @@ namespace arbitrator
         public:
             MOCK_CONST_METHOD1(compute_total_cost, double(cav_msgs::ManeuverPlan));
             MOCK_CONST_METHOD1(compute_cost_per_unit_distance, double(cav_msgs::ManeuverPlan));
+            ~MockCostFunction(){};
 
     };
 
     class MockNeighborGenerator : public NeighborGenerator
     {
         public:
-            MOCK_METHOD1(generate_neighbors, std::vector<cav_msgs::ManeuverPlan>(cav_msgs::ManeuverPlan));
+            MOCK_CONST_METHOD1(generate_neighbors, std::vector<cav_msgs::ManeuverPlan>(cav_msgs::ManeuverPlan));
+            ~MockNeighborGenerator(){};
     };
 
     class TreePlannerTest : public ::testing::Test 

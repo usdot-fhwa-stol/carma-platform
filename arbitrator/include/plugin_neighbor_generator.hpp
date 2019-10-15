@@ -48,7 +48,7 @@ namespace arbitrator
              * \param plan The plan that is the current search state
              * \return A list of subsequent plans building on top of the input plan
              */
-            std::vector<cav_msgs::ManeuverPlan> generate_neighbors(cav_msgs::ManeuverPlan plan);
+            std::vector<cav_msgs::ManeuverPlan> generate_neighbors(cav_msgs::ManeuverPlan plan) const;
         private:
             T &ci_;
     };

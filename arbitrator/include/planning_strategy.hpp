@@ -37,7 +37,7 @@ namespace arbitrator
             /**
              * \brief Virtual destructor provided for memory safety
              */
-            virtual ~PlanningStrategy() = 0;
+            virtual ~PlanningStrategy(){};
     };
 };
 

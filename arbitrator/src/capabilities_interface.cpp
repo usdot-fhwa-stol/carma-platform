@@ -21,6 +21,9 @@
 
 namespace arbitrator
 {
+    const std::string CapabilitiesInterface::STRATEGIC_PLAN_CAPABILITY = "strategic_plan/plan_maneuvers";
+    const std::string CapabilitiesInterface::TACTICAL_PLAN_CAPABILITY = "tactical_plan";
+    const std::string CapabilitiesInterface::CONTROL_CAPABILITY = "control";
 
     void CapabilitiesInterface::initialize() 
     {

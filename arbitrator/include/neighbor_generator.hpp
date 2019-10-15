@@ -35,12 +35,12 @@ namespace arbitrator
              * \param plan The maneuver plan to expand upon
              * \return A vector containing the new plans generated from it, if any
              */
-            virtual std::vector<cav_msgs::ManeuverPlan> generate_neighbors(cav_msgs::ManeuverPlan plan) = 0;
+            virtual std::vector<cav_msgs::ManeuverPlan> generate_neighbors(cav_msgs::ManeuverPlan plan) const = 0;
 
             /**
              * \brief Virtual destructor provided for memory safety
              */
-            virtual ~NeighborGenerator() = 0;
+            virtual ~NeighborGenerator(){};
     };
 }
 

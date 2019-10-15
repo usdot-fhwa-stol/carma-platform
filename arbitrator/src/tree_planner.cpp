@@ -44,7 +44,7 @@ namespace arbitrator
                 if (!cur_plan.maneuvers.empty()) 
                 {
                     // Evaluate terminal condition
-                    ros::Duration plan_duration = get_plan_end_time(cur_plan) - get_plan_start_time(cur_plan);
+                    ros::Duration plan_duration = arbitrator_utils::get_plan_end_time(cur_plan) - arbitrator_utils::get_plan_start_time(cur_plan);
                     if (plan_duration >= target_plan_duration_) 
                     {
                         return cur_plan;

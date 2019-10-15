@@ -67,9 +67,9 @@ namespace arbitrator
             template<typename MSrv>
             std::map<std::string, MSrv> multiplex_service_call_for_capability(std::string query_string, MSrv msg);
 
-            const std::string STRATEGIC_PLAN_CAPABILITY = "strategic_plan/plan_maneuvers";
-            const std::string TACTICAL_PLAN_CAPABILITY = "tactical_plan";
-            const std::string CONTROL_CAPABILITY = "control";
+            const static std::string STRATEGIC_PLAN_CAPABILITY;
+            const static std::string TACTICAL_PLAN_CAPABILITY;
+            const static std::string CONTROL_CAPABILITY;
         protected:
         private:
             ros::NodeHandle *nh_;

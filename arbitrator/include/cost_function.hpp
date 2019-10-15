@@ -46,7 +46,7 @@ namespace arbitrator
             /**
              * \brief Virtual destructor provided for memory safety
              */
-            virtual ~CostFunction() = 0;
+            virtual ~CostFunction(){};
     };
 };
 

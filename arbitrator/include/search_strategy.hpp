@@ -47,7 +47,7 @@ namespace arbitrator
             /**
              * \brief Virtual destructor provided for memory safety
              */
-            virtual ~SearchStrategy() = 0;
+            virtual ~SearchStrategy(){};
     }; 
 } // namespace arbitrator
 
