@@ -4,8 +4,8 @@
  * State is reset between tests to ensure clean results.
  */
 
-#ifndef __TEST_UTILS_HPP__
-#define __TEST_UTILS_HPP__
+#ifndef __ARBITRATOR_INCLUDE_TEST_UTILS_HPP__
+#define __ARBITRATOR_INCLUDE_TEST_UTILS_HPP__
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -39,4 +39,4 @@ class BeamSearchStrategyTest : public ::testing::Test
         arbitrator::BeamSearchStrategy bss{3};
 };
 
-#endif //__TEST_UTILS_HPP__
+#endif //__ARBITRATOR_INCLUDE_TEST_UTILS_HPP__

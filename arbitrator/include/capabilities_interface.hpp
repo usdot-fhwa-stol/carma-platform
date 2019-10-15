@@ -14,8 +14,8 @@
  * the License.
  */
 
-#ifndef __CAPABILITIES_INTERFACE_HPP__
-#define __CAPABILITIES_INTERFACE_HPP__
+#ifndef __ARBITRATOR_INCLUDE_CAPABILITIES_INTERFACE_HPP__ARBITRATOR_INCLUDE_
+#define __ARBITRATOR_INCLUDE_CAPABILITIES_INTERFACE_HPP__ARBITRATOR_INCLUDE_
 
 #include <ros/ros.h>
 #include <carma_utils/CARMAUtils.h>
@@ -25,10 +25,6 @@
 
 namespace arbitrator
 {
-    const std::string STRATEGIC_PLAN_CAPABILITY = "strategic_plan/plan_maneuvers";
-    const std::string TACTICAL_PLAN_CAPABILITY = "tactical_plan";
-    const std::string CONTROL_CAPABILITY = "control";
-
     /**
      * \brief Generic interface for interacting with Plugins via their capabilities
      *      instead of directly by their topics.
@@ -40,7 +36,7 @@ namespace arbitrator
              * \brief Constructor for Capabilities interface
              * \param nh A publically addressesed ("/") ros::NodeHandle
              */
-            CapabilitiesInterface(ros::NodeHandle nh): nh_(nh) {};
+            CapabilitiesInterface(ros::NodeHandle *nh): nh_(nh) {};
 
             /**
              * \brief Initialize the Capabilities interface by querying the Health Monitor
@@ -71,12 +67,12 @@ namespace arbitrator
             template<typename MSrv>
             std::map<std::string, MSrv> multiplex_service_call_for_capability(std::string query_string, MSrv msg);
 
-            /*template<typename Mmsg>
-            void multiplex_publication_for_capability(std::string query_string, Mmsg msg) const; */
-            
+            const std::string STRATEGIC_PLAN_CAPABILITY = "strategic_plan/plan_maneuvers";
+            const std::string TACTICAL_PLAN_CAPABILITY = "tactical_plan";
+            const std::string CONTROL_CAPABILITY = "control";
         protected:
         private:
-            ros::NodeHandle nh_;
+            ros::NodeHandle *nh_;
             std::map<std::string, ros::ServiceClient> service_clients_;
             //std::map<std::string, ros::Publisher> publishers_;
             std::map<std::string, std::vector<std::string>> capabilities_;

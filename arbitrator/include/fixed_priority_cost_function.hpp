@@ -14,8 +14,8 @@
  * the License.
  */
 
-#ifndef __FIXED_PRIORITY_COST_FUNCTION_HPP__
-#define __FIXED_PRIORITY_COST_FUNCTION_HPP__
+#ifndef __ARBITRATOR_INCLUDE_FIXED_PRIORITY_COST_FUNCTION_HPP__
+#define __ARBITRATOR_INCLUDE_FIXED_PRIORITY_COST_FUNCTION_HPP__
 
 #include "cost_function.hpp"
 #include <map>
@@ -41,7 +41,7 @@ namespace arbitrator
              * \brief Constructor for FixedPriorityCostFunction
              * \param nh A publically namespaced ("/") ros::NodeHandle
              */
-            FixedPriorityCostFunction(std::map<std::string, double> plugin_priorities);
+            FixedPriorityCostFunction(const std::map<std::string, double> &plugin_priorities);
 
             /**
              * \brief Compute the unit cost over distance of a given maneuver plan
@@ -61,4 +61,4 @@ namespace arbitrator
     };
 };
 
-#endif //__FIXED_PRIORITY_COST_FUNCTION_HPP__
+#endif //__ARBITRATOR_INCLUDE_FIXED_PRIORITY_COST_FUNCTION_HPP__

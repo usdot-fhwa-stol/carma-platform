@@ -14,8 +14,8 @@
  * the License.
  */
 
-#ifndef __ARBITRATOR_HPP__
-#define __ARBITRATOR_HPP__
+#ifndef __ARBITRATOR_INCLUDE_ARBITRATOR_HPP__ARBITRATOR_INCLUDE_
+#define __ARBITRATOR_INCLUDE_ARBITRATOR_HPP__ARBITRATOR_INCLUDE_
 
 #include <ros/ros.h>
 #include <carma_utils/CARMAUtils.h>
@@ -44,7 +44,11 @@ namespace arbitrator
              * \param ci A CapabilitiesInterface for querying plugins
              * \param planning_strategy A planning strategy implementation for generating plans
              */ 
-            Arbitrator(ros::CARMANodeHandle nh, ros::CARMANodeHandle pnh, ArbitratorStateMachine sm, CapabilitiesInterface ci, PlanningStrategy &planning_strategy):
+            Arbitrator(ros::CARMANodeHandle *nh, 
+                ros::CARMANodeHandle *pnh, 
+                ArbitratorStateMachine *sm, 
+                CapabilitiesInterface *ci, 
+                const PlanningStrategy &planning_strategy):
                 sm_(sm),
                 nh_(nh),
                 pnh_(pnh),
@@ -92,17 +96,17 @@ namespace arbitrator
             void guidance_state_cb(const cav_msgs::GuidanceState::ConstPtr& msg);
 
         private:
-            ArbitratorStateMachine sm_;
+            ArbitratorStateMachine *sm_;
             ros::Publisher final_plan_pub_;
             ros::Subscriber guidance_state_sub_;
-            ros::CARMANodeHandle nh_;
-            ros::CARMANodeHandle pnh_;
+            ros::CARMANodeHandle *nh_;
+            ros::CARMANodeHandle *pnh_;
             ros::Duration min_plan_duration_;
             ros::Duration max_plan_duration_;
             ros::Duration time_between_plans_;
             ros::Time next_planning_process_start_;
-            CapabilitiesInterface capabilities_interface_;
-            PlanningStrategy &planning_strategy_;
+            CapabilitiesInterface *capabilities_interface_;
+            const PlanningStrategy &planning_strategy_;
     };
 };
 

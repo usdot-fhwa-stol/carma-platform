@@ -14,8 +14,8 @@
  * the License.
  */
 
-#ifndef __SEARCH_STRATEGY_HPP__
-#define __SEARCH_STRATEGY_HPP__
+#ifndef __ARBITRATOR_INCLUDE_SEARCH_STRATEGY_HPP__
+#define __ARBITRATOR_INCLUDE_SEARCH_STRATEGY_HPP__
 
 #include <map>
 #include <cav_msgs/ManeuverPlan.h>
@@ -47,9 +47,9 @@ namespace arbitrator
             /**
              * \brief Virtual destructor provided for memory safety
              */
-            virtual ~SearchStrategy(){};
+            virtual ~SearchStrategy() = 0;
     }; 
 } // namespace arbitrator
 
 
-#endif //__SEARCH_STRATEGY_HPP__
+#endif //__ARBITRATOR_INCLUDE_SEARCH_STRATEGY_HPP__

@@ -14,8 +14,8 @@
  * the License.
  */
 
-#ifndef __NEIGHBOR_GENERATOR_HPP__
-#define __NEIGHBOR_GENERATOR_HPP__
+#ifndef __ARBITRATOR_INCLUDE_NEIGHBOR_GENERATOR_HPP__
+#define __ARBITRATOR_INCLUDE_NEIGHBOR_GENERATOR_HPP__
 
 #include <vector>
 #include <cav_msgs/ManeuverPlan.h>
@@ -40,8 +40,8 @@ namespace arbitrator
             /**
              * \brief Virtual destructor provided for memory safety
              */
-            virtual ~NeighborGenerator(){};
+            virtual ~NeighborGenerator() = 0;
     };
 }
 
-#endif //__NEIGHBOR_GENERATOR_HPP__
+#endif //__ARBITRATOR_INCLUDE_NEIGHBOR_GENERATOR_HPP__

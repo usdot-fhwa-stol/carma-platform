@@ -14,8 +14,8 @@
  * the License.
  */
 
-#ifndef __CAPABILITIES_INTERFACE_TPP__
-#define __CAPABILITIES_INTERFACE_TPP__
+#ifndef __ARBITRATOR_INCLUDE_CAPABILITIES_INTERFACE_TPP__ARBITRATOR_INCLUDE_
+#define __ARBITRATOR_INCLUDE_CAPABILITIES_INTERFACE_TPP__ARBITRATOR_INCLUDE_
 
 #include <vector>
 #include <map>
@@ -38,16 +38,6 @@ namespace arbitrator
 
         return responses;
     }
-
-    /*template<typename Mmsg>
-    void CapabilitiesInterface::multiplex_publication_for_capability(std::string query_string, Mmsg msg) const
-    {
-        std::vector<std::string> topics = get_topics_for_capability(query_string);
-        for (auto i = topics.begin(); i != topics.end(); i++) 
-        {
-            publishers_[*i].publish(msg);
-        }
-    }*/
 };
 
 #endif

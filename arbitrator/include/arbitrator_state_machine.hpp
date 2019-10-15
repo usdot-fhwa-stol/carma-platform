@@ -14,8 +14,8 @@
  * the License.
  */
 
-#ifndef __ARBITRATOR_STATE_MACHINE_HPP__
-#define __ARBITRATOR_STATE_MACHINE_HPP__
+#ifndef __ARBITRATOR_INCLUDE_ARBITRATOR_STATE_MACHINE_HPP__
+#define __ARBITRATOR_INCLUDE_ARBITRATOR_STATE_MACHINE_HPP__
 
 #include <vector>
 
@@ -29,7 +29,7 @@ namespace arbitrator
      * PAUSED - Similar to waiting, but will ignore a timer trigger. Must be resumed externally.
      */
     enum ArbitratorState {
-        INITIAL,
+        INITIAL = 0,
         PLANNING,
         WAITING,
         PAUSED,
@@ -45,7 +45,7 @@ namespace arbitrator
      * ARBITRATOR_RESUMED - The Arbitrator has been resumed externally
      */
     enum ArbitratorEvent {
-        SYSTEM_STARTUP_COMPLETE,
+        SYSTEM_STARTUP_COMPLETE = 0,
         PLANNING_COMPLETE,
         PLANNING_TIMER_TRIGGER,
         ARBITRATOR_PAUSED,

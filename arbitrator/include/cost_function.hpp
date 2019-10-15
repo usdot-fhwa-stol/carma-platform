@@ -14,8 +14,8 @@
  * the License.
  */
 
-#ifndef __COST_FUNCTION_HPP__
-#define __COST_FUNCTION_HPP__
+#ifndef __ARBITRATOR_INCLUDE_COST_FUNCTION_HPP__
+#define __ARBITRATOR_INCLUDE_COST_FUNCTION_HPP__
 
 #include <cav_msgs/ManeuverPlan.h>
 #include <cav_msgs/ManeuverPlan.h>
@@ -46,8 +46,8 @@ namespace arbitrator
             /**
              * \brief Virtual destructor provided for memory safety
              */
-            virtual ~CostFunction(){};
+            virtual ~CostFunction() = 0;
     };
 };
 
-#endif //__COST_FUNCTION_HPP__
+#endif //__ARBITRATOR_INCLUDE_COST_FUNCTION_HPP__

@@ -14,8 +14,8 @@
  * the License.
  */
 
-#ifndef __BEAM_SEARCH_STRATEGY_HPP__
-#define __BEAM_SEARCH_STRATEGY_HPP__
+#ifndef __ARBITRATOR_INCLUDE_BEAM_SEARCH_STRATEGY_HPP__
+#define __ARBITRATOR_INCLUDE_BEAM_SEARCH_STRATEGY_HPP__
 
 #include "search_strategy.hpp"
 
@@ -57,4 +57,4 @@ namespace arbitrator
     };
 }
 
-#endif //__BEAM_SEARCH_STRATEGY_HPP__
+#endif //__ARBITRATOR_INCLUDE_BEAM_SEARCH_STRATEGY_HPP__

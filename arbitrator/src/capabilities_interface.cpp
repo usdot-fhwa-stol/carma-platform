@@ -24,7 +24,7 @@ namespace arbitrator
 
     void CapabilitiesInterface::initialize() 
     {
-        ros::ServiceClient sc = nh_.serviceClient<cav_srvs::PluginList>("get_registered_plugins");
+        ros::ServiceClient sc = nh_->serviceClient<cav_srvs::PluginList>("get_registered_plugins");
         cav_srvs::PluginList msg;
         if (sc.call(msg)) {
             for (auto it = msg.response.plugins.begin(); it != msg.response.plugins.end(); it++)
@@ -45,7 +45,7 @@ namespace arbitrator
                             break;
                         case cav_msgs::Plugin::UNKNOWN:
                         default:
-                            throw new std::invalid_argument("Activated plugin of unknown type discovered: " + it->name);
+                            throw std::invalid_argument("Activated plugin of unknown type discovered: " + it->name);
                     }
 
                     // NOTE: It is assumed for now (due to lack of true capabilties register),
@@ -65,7 +65,7 @@ namespace arbitrator
                     // TODO: Special cased for now due to lack of broader capabilities service
                     if (capability == STRATEGIC_PLAN_CAPABILITY)
                     {
-                        ros::ServiceClient sc = nh_.serviceClient<cav_srvs::PlanManeuvers>(topic);
+                        ros::ServiceClient sc = nh_->serviceClient<cav_srvs::PlanManeuvers>(topic);
                         service_clients_.emplace(topic, sc);
                     }
                 }

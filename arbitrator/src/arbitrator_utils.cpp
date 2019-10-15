@@ -19,9 +19,9 @@
 #include <exception>
 
 
-namespace arbitrator
+namespace arbitrator_utils
 {
-    ros::Time get_plan_end_time(const cav_msgs::ManeuverPlan plan) 
+    ros::Time get_plan_end_time(const cav_msgs::ManeuverPlan &plan) 
     {
         if (plan.maneuvers.empty())
         {
@@ -33,7 +33,7 @@ namespace arbitrator
         return get_maneuver_end_time(m);
     }
 
-    double get_plan_end_distance(const cav_msgs::ManeuverPlan plan)
+    double get_plan_end_distance(const cav_msgs::ManeuverPlan &plan)
     {
         if (plan.maneuvers.empty())
         {
@@ -44,7 +44,7 @@ namespace arbitrator
         return get_maneuver_end_distance(m);
     }
 
-    ros::Time get_plan_start_time(const cav_msgs::ManeuverPlan plan) 
+    ros::Time get_plan_start_time(const cav_msgs::ManeuverPlan &plan) 
     {
         if (plan.maneuvers.empty())
         {
@@ -55,7 +55,7 @@ namespace arbitrator
         return get_maneuver_start_time(m);
     }
 
-    double get_plan_start_distance(const cav_msgs::ManeuverPlan plan)
+    double get_plan_start_distance(const cav_msgs::ManeuverPlan &plan)
     {
         if (plan.maneuvers.empty())
         {
@@ -66,23 +66,23 @@ namespace arbitrator
         return get_maneuver_start_distance(m);
     }
 
-    ros::Time get_maneuver_end_time(const cav_msgs::Maneuver mvr) 
+    ros::Time get_maneuver_end_time(const cav_msgs::Maneuver &mvr) 
     {
         return GET_MANEUVER_PROPERTY(mvr, end_time);
     }
 
-    ros::Time get_maneuver_start_time(const cav_msgs::Maneuver mvr) 
+    ros::Time get_maneuver_start_time(const cav_msgs::Maneuver &mvr) 
     {
         return GET_MANEUVER_PROPERTY(mvr, start_time);
     }
 
-    double get_maneuver_end_distance(const cav_msgs::Maneuver mvr) 
+    double get_maneuver_end_distance(const cav_msgs::Maneuver &mvr) 
     {
         return GET_MANEUVER_PROPERTY(mvr, end_dist);
     }
 
-    double get_maneuver_start_distance(const cav_msgs::Maneuver mvr) 
+    double get_maneuver_start_distance(const cav_msgs::Maneuver &mvr) 
     {
         return GET_MANEUVER_PROPERTY(mvr, start_dist);
     }
-} // namespace arbitrator
+} // namespace arbitrator_utils

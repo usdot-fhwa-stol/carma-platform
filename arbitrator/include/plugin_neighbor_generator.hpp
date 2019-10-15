@@ -14,8 +14,8 @@
  * the License.
  */
 
-#ifndef __PLUGIN_NEIGHBOR_GENERATOR_HPP__
-#define __PLUGIN_NEIGHBOR_GENERATOR_HPP__
+#ifndef __ARBITRATOR_INCLUDE_PLUGIN_NEIGHBOR_GENERATOR_HPP__
+#define __ARBITRATOR_INCLUDE_PLUGIN_NEIGHBOR_GENERATOR_HPP__
 
 #include "neighbor_generator.hpp"
 #include "capabilities_interface.hpp"
@@ -43,12 +43,11 @@ namespace arbitrator
                 ci_(ci) {};
 
             /**
-             * \brief Initialize this PluginNeighborGenerator for use
-             * 
-             * Loads the plugins needed from the CapabilitiesInterface and prepares
-             * the service clients
+             * Generates a list of neighbor states for the given plan using 
+             * the plugins available to the system
+             * \param plan The plan that is the current search state
+             * \return A list of subsequent plans building on top of the input plan
              */
-            void initalize();
             std::vector<cav_msgs::ManeuverPlan> generate_neighbors(cav_msgs::ManeuverPlan plan);
         private:
             T &ci_;
@@ -57,4 +56,4 @@ namespace arbitrator
 
 #include "plugin_neighbor_generator.tpp"
 
-#endif //__PLUGIN_NEIGHBOR_GENERATOR_HPP__
+#endif //__ARBITRATOR_INCLUDE_PLUGIN_NEIGHBOR_GENERATOR_HPP__

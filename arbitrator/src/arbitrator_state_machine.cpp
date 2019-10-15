@@ -33,6 +33,7 @@ namespace arbitrator
                 // In the event of multiple legal transistions this will take the last transition,
                 // But ultimately this condition should never arise.
                 current_state = iter->final_state;
+                break;
             }
         }
 

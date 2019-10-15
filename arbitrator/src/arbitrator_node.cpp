@@ -32,7 +32,7 @@ int main(int argc, char** argv)
     ros::CARMANodeHandle pnh = ros::CARMANodeHandle("~");
 
     // Handle dependency injection
-    arbitrator::CapabilitiesInterface ci{nh};
+    arbitrator::CapabilitiesInterface ci{&nh};
     arbitrator::ArbitratorStateMachine sm;
 
     std::map<std::string, double> plugin_priorites; 
@@ -49,7 +49,7 @@ int main(int argc, char** argv)
     pnh.param("target_duration", target_plan, 15.0);
     arbitrator::TreePlanner tp{fpcf, png, bss, ros::Duration(target_plan)};
 
-    arbitrator::Arbitrator arbitrator{nh, pnh, sm, ci, tp};
+    arbitrator::Arbitrator arbitrator{&nh, &pnh, &sm, &ci, tp};
 
     arbitrator.run();
 

@@ -14,8 +14,8 @@
  * the License.
  */
 
-#ifndef __TREE_PLANNER_HPP__
-#define __TREE_PLANNER_HPP__
+#ifndef __ARBITRATOR_INCLUDE_TREE_PLANNER_HPP__
+#define __ARBITRATOR_INCLUDE_TREE_PLANNER_HPP__
 
 #include <memory>
 #include <cav_msgs/ManeuverPlan.h>
@@ -45,7 +45,10 @@ namespace arbitrator
              * \param ss A reference to a SearchStrategy implementation
              * \param target The desired duration of finished plans
              */
-            TreePlanner(CostFunction &cf, NeighborGenerator &ng, SearchStrategy &ss, ros::Duration target):
+            TreePlanner(const CostFunction &cf, 
+                const NeighborGenerator &ng, 
+                const SearchStrategy &ss, 
+                ros::Duration target):
                 cost_function_(cf),
                 neighbor_generator_(ng),
                 search_strategy_(ss),
@@ -57,11 +60,11 @@ namespace arbitrator
              */
             cav_msgs::ManeuverPlan generate_plan() const;
         protected:
-            CostFunction &cost_function_;
-            NeighborGenerator &neighbor_generator_;
-            SearchStrategy &search_strategy_;
+            const CostFunction &cost_function_;
+            const NeighborGenerator &neighbor_generator_;
+            const SearchStrategy &search_strategy_;
             ros::Duration target_plan_duration_;
     };
 };
 
-#endif //__TREE_PLANNER_HPP__
+#endif //__ARBITRATOR_INCLUDE_TREE_PLANNER_HPP__

@@ -8,7 +8,7 @@ min_plan_duration: 6.0
 # Unit: s
 target_plan_duration: 15.0
 
-# Float: The planning frequency for generation fo arbitrated plans
+# Float: The planning frequency for generation for arbitrated plans
 # Unit: Hz
 planning_frequency: 1.0
 

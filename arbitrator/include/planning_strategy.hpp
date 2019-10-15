@@ -14,8 +14,8 @@
  * the License.
  */
 
-#ifndef __PLANNING_STRATEGY_HPP__
-#define __PLANNING_STRATEGY_HPP__
+#ifndef __ARBITRATOR_INCLUDE_PLANNING_STRATEGY_HPP__
+#define __ARBITRATOR_INCLUDE_PLANNING_STRATEGY_HPP__
 
 #include <cav_msgs/ManeuverPlan.h>
 
@@ -37,8 +37,8 @@ namespace arbitrator
             /**
              * \brief Virtual destructor provided for memory safety
              */
-            virtual ~PlanningStrategy(){};
+            virtual ~PlanningStrategy() = 0;
     };
 };
 
-#endif //__PLANNING_STRATEGY_HPP__
+#endif //__ARBITRATOR_INCLUDE_PLANNING_STRATEGY_HPP__

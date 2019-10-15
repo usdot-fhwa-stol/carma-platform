@@ -20,6 +20,7 @@
 #include "arbitrator_utils.hpp"
 #include <ros/ros.h>
 #include <exception>
+#include <cstdlib>
 
 namespace arbitrator
 {
@@ -28,7 +29,7 @@ namespace arbitrator
         while (!ros::isShuttingDown())
         {
             ros::spinOnce();
-            switch (sm_.get_state()) 
+            switch (sm_->get_state()) 
             {
                 case INITIAL:
                     initial_state();
@@ -43,7 +44,7 @@ namespace arbitrator
                     paused_state();
                     break;
                 default:
-                    throw new std::invalid_argument("State machine attempting to process an illegal state value");
+                    throw std::invalid_argument("State machine attempting to process an illegal state value");
             }
         }
     }
@@ -62,17 +63,17 @@ namespace arbitrator
                 // NO-OP
                 break;
             case cav_msgs::GuidanceState::ENGAGED:
-                if (sm_.get_state() == ArbitratorState::INITIAL) {
-                    sm_.submit_event(ArbitratorEvent::SYSTEM_STARTUP_COMPLETE);
-                } else if (sm_.get_state() == ArbitratorState::PAUSED) {
-                    sm_.submit_event(ArbitratorEvent::ARBITRATOR_RESUMED);
+                if (sm_->get_state() == ArbitratorState::INITIAL) {
+                    sm_->submit_event(ArbitratorEvent::SYSTEM_STARTUP_COMPLETE);
+                } else if (sm_->get_state() == ArbitratorState::PAUSED) {
+                    sm_->submit_event(ArbitratorEvent::ARBITRATOR_RESUMED);
                 }
                 break;
             case cav_msgs::GuidanceState::INACTIVE:
-                sm_.submit_event(ArbitratorEvent::ARBITRATOR_PAUSED);
+                sm_->submit_event(ArbitratorEvent::ARBITRATOR_PAUSED);
                 break;
             case cav_msgs::GuidanceState::SHUTDOWN:
-                sm_.submit_event(ArbitratorEvent::SYSTEM_SHUTDOWN_INITIATED);
+                sm_->submit_event(ArbitratorEvent::SYSTEM_SHUTDOWN_INITIATED);
                 break;
             default:
                 break;
@@ -81,8 +82,8 @@ namespace arbitrator
 
     void Arbitrator::initial_state()
     {
-        final_plan_pub_ = nh_.advertise<cav_msgs::ManeuverPlan>("final_maneuver_plan", 5);
-        guidance_state_sub_ = nh_.subscribe<cav_msgs::GuidanceState>("guidance_state", 5, &Arbitrator::guidance_state_cb, this);
+        final_plan_pub_ = nh_->advertise<cav_msgs::ManeuverPlan>("final_maneuver_plan", 5);
+        guidance_state_sub_ = nh_->subscribe<cav_msgs::GuidanceState>("guidance_state", 5, &Arbitrator::guidance_state_cb, this);
         // TODO: load plan duration from parameters file
     }
 
@@ -90,20 +91,19 @@ namespace arbitrator
     {
         ros::Time planning_process_start = ros::Time::now();
         cav_msgs::ManeuverPlan plan = planning_strategy_.generate_plan();
-        ros::Time plan_end_time = get_plan_end_time(plan);
-        ros::Time plan_start_time = get_plan_start_time(plan);
+        ros::Time plan_end_time = arbitrator_utils::get_plan_end_time(plan);
+        ros::Time plan_start_time = arbitrator_utils::get_plan_start_time(plan);
         ros::Duration plan_duration = plan_end_time - plan_start_time;
 
         if (plan_duration < min_plan_duration_) 
         {
-            ROS_FATAL_STREAM("Unable to generate a plan to minimum plan duration!");
-            throw std::runtime_error("Unable to generate plan to minimum plan duration");
+            ROS_WARN_STREAM("Unable to generate a plan to minimum plan duration!");
         } 
         else 
         {
             ROS_INFO_STREAM("Publishing plan " << plan.maneuver_plan_id << " of duration " << plan_duration << " as current maneuver plan");
-            final_plan_pub_.publish(plan);
         }
+        final_plan_pub_.publish(plan);
 
         next_planning_process_start_ = planning_process_start + time_between_plans_;
     }
@@ -116,7 +116,7 @@ namespace arbitrator
         {
             ros::Duration(0.1).sleep();
         }
-        sm_.submit_event(ArbitratorEvent::PLANNING_TIMER_TRIGGER);
+        sm_->submit_event(ArbitratorEvent::PLANNING_TIMER_TRIGGER);
     }
 
     void Arbitrator::paused_state()
@@ -128,6 +128,6 @@ namespace arbitrator
     {
         ROS_INFO_STREAM("Arbitrator shutting down...");
         ros::shutdown();
-        exit(0);
+        std::exit(0);
     }
 };
