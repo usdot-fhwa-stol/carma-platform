@@ -127,7 +127,6 @@ namespace arbitrator
     void Arbitrator::shutdown_state()
     {
         ROS_INFO_STREAM("Arbitrator shutting down...");
-        ros::shutdown();
-        std::exit(0);
+        ros::shutdown(); // Will stop upper level spin and shutdown node
     }
 };
