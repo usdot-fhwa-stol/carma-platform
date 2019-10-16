@@ -1,14 +1,14 @@
 CARMA Platform Release Notes
 ----------------------------
 
-Skyline Release, Version 3.1.0, released 21 October 2019 
+Skyline Release, Version 3.1.0, released 16 October 2019 
 --------------------------------------------------------
+
 **Summary:**
 CARMAPlatform Skyline release version 3.1.0 main highlight is the new Docker configuration and deployment for all the repositories for CARMA3. The images are now available in DockerHub under the organization name of "usdotfhwastol". Docker provides better management of library dependencies, ease of deployment and scalability. Other highlights of this release are the new configurations for the 3 different controllers such as PACMod, NewEagle and DataSpeed, the basic vehicle kinematic model, the updates to the guidance state machine, the updates to the GNSS to map converter, and the new functionality to auto select between GNSS and NDT pose.  
 
 Below are the highlights of the issues and pull requests (PRs) that have been addressed in this release.  
 
-**Repository: CARMAPlatform**  
 - Issue 275: Novatel SPAN PwrPak7 and IMU-IGM-S1 report bad location when vehicle is moving on Lexus
 - Issue 309: Remove CARMA2 java packages that no longer applies to CARMA3
 - Issue 316: Update repo for conform with parameter standards
@@ -24,13 +24,14 @@ Below are the highlights of the issues and pull requests (PRs) that have been ad
 - Issue 370: CARMASscInterfaceWrapper Docker image build failing due to dbw_mkz_msgs 
 - Issue 375: SonarCloud does not report code coverage correctly
 - Issue 381: Fussion CAN topic names mismatch
+
+**Repository: CARMAPlatform**  
 - PR 325: Initial implementation of CARMA3 guidance node
 - PR 327: Fix environment variables in launch files.
 - PR 329: Fix argument name for ray_ground_filter 
 - PR 330: Remove utility packages and update checkout.sh to depend on CARMAUtils
 - PR 331: Updating CARMAUtils repo name
 - PR 322: GNSS/NDT auto selector
-- PR 334: Update gnss_to_map_convertor to use new gps api 
 - PR 338: Add enhanced warning flag output to catkin build process
 - PR 339: Update Circle CI for CARMA3
 - PR 371: Update test cases for guidance node
@@ -53,7 +54,6 @@ Below are the highlights of the issues and pull requests (PRs) that have been ad
 **Repository: CARMAWebUI**  
 - PR 17: Fix Docker image name 
 - PR 18: Update CircleCI For CARMA 3
-- PR 19: Show Route Name on UI
 
 **Repository: CARMAUtils**  
 - PR 14: Add carma_utils and wgs84_utils packages to repo 
@@ -89,12 +89,9 @@ Below are the highlights of the issues and pull requests (PRs) that have been ad
 - PR 19: Add SSC binaries to repo
 - PR 20: Add topic remapping for SSC
 - PR 21: Updating checkout.sh script and CARMAUtils repo name
-- PR 23: Add support for CI and fix unit tests for ssc_interface_wrapper
 - PR 25: Fix Lexus configuration 
 - PR 26: Update kvaser 
-- PR 27: Update SSC to work with new mkz message
 - PR 28: Fix Pacifica config
-- PR 29: Update Fusion driver
 
 **Repository: CARMAVehicleModelFramework** 
 - PR 8: Add -Wall flag to C/C++ build args
@@ -106,7 +103,6 @@ Below are the highlights of the issues and pull requests (PRs) that have been ad
 - PR 13: Fix topic names in LiDAR launch file
 - PR 15: Update carma3 circle 
 - PR 16: Add -Wall flag to C/C++ build args 
-- PR 17: Remove outdated relay nodes from LiDAR wrapper
 - PR 19: Update Docker file version numbers to target next release
 
 **Repository: CARMANovatelGpsDriver** 
