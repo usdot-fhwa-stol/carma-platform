@@ -1,7 +1,7 @@
 CARMA Platform Release Notes
 ----------------------------
 
-Skyline Release, Version 3.1.0, released 16 October 2019 
+Skyline Release, Version 3.1.0, released 18 October 2019 
 --------------------------------------------------------
 
 **Summary:**
@@ -23,7 +23,8 @@ Below are the highlights of the issues and pull requests (PRs) that have been ad
 - Issue 368: Unit test fails in GuidanceStateMachine
 - Issue 370: CARMASscInterfaceWrapper Docker image build failing due to dbw_mkz_msgs 
 - Issue 375: SonarCloud does not report code coverage correctly
-- Issue 381: Fussion CAN topic names mismatch
+- Issue 381: Fusion CAN topic names mismatch
+- Issue 385: Automatically launch RVIZ configuration file
 
 **Repository: CARMAPlatform**  
 - PR 325: Initial implementation of CARMA3 guidance node
