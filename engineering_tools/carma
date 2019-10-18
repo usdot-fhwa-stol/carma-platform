@@ -61,7 +61,7 @@ carma-config__set() {
 }
 
 carma__attach() {
-    local CARMA_DOCKER_FILE="`docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/docker-compose.yml'`"
+    local CARMA_DOCKER_FILE="`docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/config/docker-compose.yml'`"
 
     echo "Attaching to CARMA container STDOUT..."
     echo "$CARMA_DOCKER_FILE" | docker-compose -p carma -f - logs --follow --tail=10
@@ -146,8 +146,8 @@ carma-config__install() {
     fi
     docker run --name carma-config-tmp $IMAGE_NAME
 
-    local CARMA_DOCKER_FILE="`docker run --rm --volumes-from carma-config-tmp:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/docker-compose.yml' | sed s/carma-config/carma-config-tmp/g`"
-    local CARMA_BACKGROUND_DOCKER_FILE="`docker run --rm --volumes-from carma-config-tmp:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/docker-compose-background.yml' | sed s/carma-config/carma-config-tmp/g`"
+    local CARMA_DOCKER_FILE="`docker run --rm --volumes-from carma-config-tmp:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/config/docker-compose.yml' | sed s/carma-config/carma-config-tmp/g`"
+    local CARMA_BACKGROUND_DOCKER_FILE="`docker run --rm --volumes-from carma-config-tmp:ro --entrypoint sh busybox:latest -c 'cat /opt/carma/vehicle/config/docker-compose-background.yml' | sed s/carma-config/carma-config-tmp/g`"
 
     echo "Downloading $IMAGE_NAME dependencies..."
     echo "$CARMA_DOCKER_FILE" | docker-compose -f - pull
@@ -166,14 +166,14 @@ carma__start() {
 
     echo "Starting CARMA background processes..."
     docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
-    'cat /opt/carma/vehicle/docker-compose-background.yml' | \
+    'cat /opt/carma/vehicle/config/docker-compose-background.yml' | \
     docker-compose -f - -p carma-background up -d
 
     if [ "$1" = "all" ]; then 
         shift
         echo "Starting CARMA Platform foreground processes..."
         docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
-        'cat /opt/carma/vehicle/docker-compose.yml' | \
+        'cat /opt/carma/vehicle/config/docker-compose.yml' | \
         docker-compose -f - -p carma up $@
     elif [ ! -z "$1" ]; then
         echo "Unrecognized argument \"start $1\""
@@ -189,13 +189,13 @@ carma__stop() {
 
     echo "Shutting down CARMA processes..."
     docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
-    'cat /opt/carma/vehicle/docker-compose.yml' | \
+    'cat /opt/carma/vehicle/config/docker-compose.yml' | \
     docker-compose -f - -p carma down
 
     if [ "$1" = "all" ]; then 
         echo "Shutting down CARMA background processes..."
         docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
-        'cat /opt/carma/vehicle/docker-compose-background.yml' | \
+        'cat /opt/carma/vehicle/config/docker-compose-background.yml' | \
         docker-compose -f - -p carma-background down
     elif [ ! -z "$1" ]; then
         echo "Unrecognized argument \"stop $1\""
@@ -211,12 +211,12 @@ carma__ps() {
 
     echo "CARMA Background Processes:"
     docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
-    'cat /opt/carma/vehicle/docker-compose-background.yml' | \
+    'cat /opt/carma/vehicle/config/docker-compose-background.yml' | \
     docker-compose -f - -p carma-background ps
 
     echo "CARMA Foreground Processes:"
     docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
-    'cat /opt/carma/vehicle/docker-compose.yml' | \
+    'cat /opt/carma/vehicle/config/docker-compose.yml' | \
     docker-compose -f - -p carma ps
 }
 
@@ -233,22 +233,22 @@ carma-config__status() {
         echo ""
         echo "  -- docker-compose.yml:"
         docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
-        'cat /opt/carma/vehicle/docker-compose.yml'
+        'cat /opt/carma/vehicle/config/docker-compose.yml'
         echo "  -- docker-compose-background.yml:"
         docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
-        'cat /opt/carma/vehicle/docker-compose-background.yml'
+        'cat /opt/carma/vehicle/config/docker-compose-background.yml'
         echo "  -- carma.launch:"
         docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
-        'cat /opt/carma/vehicle/carma.launch'
+        'cat /opt/carma/vehicle/config/carma.launch'
         echo "  -- carma.config.js:"
         docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
-        'cat /opt/carma/vehicle/carma.config.js'
+        'cat /opt/carma/vehicle/config/carma.config.js'
         echo "  -- carma.urdf:"
         docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
-        'cat /opt/carma/vehicle/carma.urdf'
+        'cat /opt/carma/vehicle/config/carma.urdf'
     else
         docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
-        "cat /opt/carma/vehicle/$1"
+        "cat /opt/carma/vehicle/config/$1"
     fi
 }
 

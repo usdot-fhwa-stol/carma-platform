@@ -1,6 +1,6 @@
 ### Types of Issue
 
-<!--- What types of issue? Put an `x` in the boxes that apply: -->
+<!--- What types of issue? Replace the space with an `x` in the box that applies: -->
 
 - [ ] Anomaly report (something appears to not work correctly)
 - [ ] Enhancement request (describe the enhancement being requested)
@@ -9,6 +9,9 @@
 ### Descriptive summary
 
 ### Expected behavior
+
+### Software version this applies to
+<!--- what version are you running that you noticed this problem or deficiency? -->
 
 ### Actual behavior
 

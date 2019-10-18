@@ -33,7 +33,7 @@
 # Stage 1 - Acquire the CARMA source as well as any extra packages
 # /////////////////////////////////////////////////////////////////////////////
 
-FROM usdotfhwastol/carma-base:2.8.3 AS source-code
+FROM usdotfhwastol/autoware.ai:3.1.0 AS source-code
 
 RUN mkdir ~/src
 COPY --chown=carma . /home/carma/src/CARMAPlatform/
@@ -43,7 +43,7 @@ RUN ~/src/CARMAPlatform/docker/checkout.sh
 # Stage 2 - Build and install the software 
 # /////////////////////////////////////////////////////////////////////////////
 
-FROM usdotfhwastol/carma-base:2.8.3 AS install
+FROM usdotfhwastol/autoware.ai:3.1.0 AS install
 
 # Copy the source files from the previous stage and build/install
 RUN mkdir ~/carma_ws
@@ -54,7 +54,7 @@ RUN ~/carma_ws/src/CARMAPlatform/docker/install.sh
 # Stage 3 - Finalize deployment
 # /////////////////////////////////////////////////////////////////////////////
 
-FROM usdotfhwastol/carma-base:2.8.3
+FROM usdotfhwastol/autoware.ai:3.1.0
 
 ARG BUILD_DATE="NULL"
 ARG VCS_REF="NULL"
@@ -73,12 +73,5 @@ LABEL org.label-schema.build-date=${BUILD_DATE}
 # Migrate the files from the install stage
 COPY --from=install --chown=carma /opt/carma /opt/carma
 COPY --from=install --chown=carma /root/.bashrc /home/carma/.bashrc
-
-ADD carmajava/launch/* /opt/carma/vehicle/
-
-RUN sudo chown carma:carma -R /opt/carma/vehicle && \
-        ln -sf /opt/carma/vehicle/carma.urdf /opt/carma/urdf/carma.urdf && \
-        ln -sf /opt/carma/vehicle/carma.launch /opt/carma/launch/carma.launch && \
-        ln -sf /opt/carma/vehicle/drivers.launch /opt/carma/drivers/drivers.launch 
 
 CMD "roslaunch carma carma_docker.launch"

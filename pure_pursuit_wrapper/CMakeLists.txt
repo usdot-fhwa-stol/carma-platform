@@ -3,6 +3,8 @@ project(pure_pursuit_wrapper)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 add_definitions(-DBOOST_LOG_DYN_LINK=1)
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS "-lboost_system") 
@@ -115,7 +117,7 @@ add_dependencies(pure_pursuit_wrapper_worker_library ${catkin_EXPORTED_TARGETS})
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
  INCLUDE_DIRS include
-#  LIBRARIES pure_pursuit_wrapper
+ LIBRARIES pure_pursuit_wrapper_worker_library
  CATKIN_DEPENDS cav_msgs roscpp rospy std_msgs geometry_msgs autoware_msgs
 #  DEPENDS system_lib
  DEPENDS Boost
@@ -174,13 +176,13 @@ target_link_libraries(${PROJECT_NAME}_node
 
 # Mark executable scripts (Python etc.) for installation
 # in contrast to setup.py, you can choose the destination
-install(TARGETS ${PROJECT_NAME}_node
+install(TARGETS ${PROJECT_NAME}_node pure_pursuit_wrapper_worker_library
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-# Mark executables and/or libraries for installation
+# Mark executables for installation
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.h"
@@ -190,8 +192,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 # Mark other files for installation (e.g. launch and bag files, etc.)
 install(DIRECTORY
   launch
-  # myfile1
-  # myfile2
+  config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 

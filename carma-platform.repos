@@ -27,9 +27,9 @@ repositories:
     type: git
     url: git@github.com:usdot-fhwa-stol/CARMADelphiSrr2Driver.git
     version: develop
-  CARMADriverUtils:
+  CARMAUtils:
     type: git
-    url: git@github.com:usdot-fhwa-stol/CARMADriverUtils.git
+    url: git@github.com:usdot-fhwa-stol/CARMAUtils.git
     version: develop
   CARMAFreightliner2012ControllerDriver:
     type: git
@@ -42,10 +42,6 @@ repositories:
   CARMANovatelGpsDriver:
     type: git
     url: git@github.com:usdot-fhwa-stol/CARMANovatelGpsDriver.git
-    version: develop
-  CARMAPacmod3CanDriverWrapper:
-    type: git
-    url: git@github.com:usdot-fhwa-stol/CARMAPacmod3CanDriverWrapper.git
     version: develop
   CARMAPlatform:
     type: git

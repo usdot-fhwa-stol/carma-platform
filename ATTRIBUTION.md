@@ -1,10 +1,11 @@
-#### The following people have made direct and substantial contributions to the design and code in this repository, listed in alphabetical order:
+#### The following people have made direct and substantial contributions to the design and code in the CARMA Platform system, listed in alphabetical order:
 * David Ference - Software Engineer (Leidos)
 * Mae Fromm - Software Engineer (Leidos)
 * Michael McConnell - Software Engineer (Leidos)
 * Shuwei Qiang - Software Engineer (Leidos)
 * Kyle Rush - Software Engineer (Leidos) 
 * John Stark - Software Engineer & Principal Investigator (Leidos)
+* Samir Tabriz - Software Engineer (Leidos)
 
 #### Other significant contributions have been made by:
 * Philip Azeredo - System Test (Volpe) 
@@ -12,7 +13,11 @@
 * Michael Chang - Unit Testing & Verification (Leidos) 
 * Laura Dailey - Graphics, Communications & Publicity (Leidos)
 * Darrell Dorman - Site setup & Configuration Management (Leidos) 
+* Kenji Funaoka - Autoware Integration (Tier IV)
 * Ed Leslie - Vehicle hardware & project management (Leidos)
+* Iwao Makino - Autoware integration (Tier IV)
+* Matt Marchese - Systems engineering (Leidos)
+* Ryohsuke Mitsudome - Autoware integration (Tier IV)
 * Sudkahar Nallamothu - Project Management (Leidos)
 * Tim Tiernan - System Test Lead (Volpe) 
 * Thomas Watters - Driver Development (formerly of TORC Robotics)
@@ -22,6 +27,7 @@
 * Matt Barth – Traffic Signal Algorithm (University of California Riverside)
 * Dave Bevly – Heavy truck integration & testing (Auburn University)
 * Lowell Brown - Heavy truck integration & testing (Auburn University)
+* Pavle Bujonovic - Platooning algorithm and government oversight (FHWA)
 * Patrick Chuang –Test Coordination (Transurban)
 * Aaron Dalton – Device driver & hardware integration (TORC Robotics)
 * Valerie Garrison – Project Management (TORC Robotics)

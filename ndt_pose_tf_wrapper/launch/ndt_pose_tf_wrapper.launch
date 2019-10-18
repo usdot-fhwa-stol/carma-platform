@@ -1,5 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-        <node pkg="ndt_pose_tf_wrapper" type="ndt_pose_tf_wrapper" name="ndt_pose_tf_wrapper">
-        </node>
-</launch>

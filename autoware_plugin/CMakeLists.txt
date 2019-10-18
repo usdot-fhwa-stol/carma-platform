@@ -19,6 +19,8 @@ project(autoware_plugin)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
@@ -68,7 +70,7 @@ add_dependencies(autoware_plugin_library ${catkin_EXPORTED_TARGETS})
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.hpp"
+  FILES_MATCHING PATTERN "*.h"
   PATTERN ".svn" EXCLUDE
 )
 
@@ -80,7 +82,7 @@ install(TARGETS ${PROJECT_NAME}
 )
 
 ## Install Other Resources
-install(DIRECTORY launch
+install(DIRECTORY launch config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 

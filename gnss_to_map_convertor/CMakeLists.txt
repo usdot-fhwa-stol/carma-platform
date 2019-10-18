@@ -20,6 +20,8 @@ project(gnss_to_map_convertor)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -33,7 +35,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
   tf2_geometry_msgs
   tf2
-  sensor_fusion
+  wgs84_utils
   cav_msgs
   cav_srvs
   message_filters
@@ -133,7 +135,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES gnss_to_map_convertor
-  CATKIN_DEPENDS geometry_msgs roscpp rospy std_msgs tf2_msgs sensor_fusion message_filters novatel_gps_msgs carma_utils tf2_geometry_msgs
+  CATKIN_DEPENDS geometry_msgs roscpp rospy std_msgs tf2_msgs wgs84_utils message_filters novatel_gps_msgs carma_utils tf2_geometry_msgs
 #  DEPENDS system_lib
 )
 
@@ -218,12 +220,11 @@ install(DIRECTORY include/${PROJECT_NAME}/
   PATTERN ".svn" EXCLUDE
 )
 
-## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
+# Mark other files for installation (e.g. launch and bag files, etc.)
+install(DIRECTORY
+  launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 #############
 ## Testing ##
