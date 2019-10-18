@@ -1,7 +1,7 @@
 CARMA Platform Release Notes
 ----------------------------
 
-Skyline Release, Version 3.1.0, released 18 October 2019 
+Version 3.1.0, released 18 October 2019 
 --------------------------------------------------------
 
 **Summary:**
