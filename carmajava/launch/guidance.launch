@@ -68,8 +68,17 @@
   <remap from="current_velocity" to="$(optenv CARMA_INTR_NS)/vehicle/twist"/>
   <remap from="controller/enable_robotic" to="$(optenv CARMA_INTR_NS)/controller/enable_robotic"/>
 
+  <remap from="guidance_state" to="$(optenv CARMA_GUIDE_NS)/guidance_node/state"/>
+  <remap from="maneuver_plan" to="$(optenv CARMA_GUIDE_NS)/arbitrator/final_maneuver_plan"/>
+
   <!-- Launch Guidance Main -->
   <include file="$(find guidance)/launch/guidance_main.launch"/>
+
+  <!-- Launch Arbitrator -->
+  <include file="$(find arbitrator)/launch/arbitrator.launch"/>
+
+  <!-- Launch Plan Delegator -->
+  <include file="$(find plan_delegator)/launch/plan_delegator.launch"/>
 
   <!-- TODO Check topic remapping-->
   <!-- Control Stack -->
