@@ -69,6 +69,17 @@ include_directories(
 # add_executable(${PROJECT_NAME}_node src/unscented_kalman_filter_node.cpp)
 add_executable(ukf_fusion src/ukf_filter.cpp src/main.cpp src/ukf_node.cpp)
 target_link_libraries(ukf_fusion lib_vehicle_model ${catkin_LIBRARIES})
+
+#add_executable(${PROJECT_NAME}_node
+ #       src/${PROJECT_NAME}/main.cpp
+  #      src/${PROJECT_NAME}/MockVehicleModelUser.cpp
+   #     )
+
+#target_link_libraries(${PROJECT_NAME}_node
+ #       lib_vehicle_model
+  #      ${catkin_LIBRARIES}
+   #     )
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -78,7 +89,7 @@ target_link_libraries(ukf_fusion lib_vehicle_model ${catkin_LIBRARIES})
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(ukf_fusion ${${PROJECT_NAME}_EXPORTED_TARGETS} lib_vehicle_model ${catkin_EXPORTED_TARGETS})
-
+#add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}

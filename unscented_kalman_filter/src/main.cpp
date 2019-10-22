@@ -19,7 +19,7 @@
 #include "ukf_node.h" //ros components
 
 int main(int argc, char** argv)
-{
+{/*
     //ukf_fusion node initialization
     ros::init(argc, argv,"ukf_filter");
     //ros NodeHandle
@@ -95,7 +95,7 @@ int main(int argc, char** argv)
         uk.pose_pub_.publish(ukf_pose_msg);
         ros::spinOnce();
 
-    }
+    }*/
     return 0;
 }
 

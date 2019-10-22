@@ -12,30 +12,54 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
+ *
+ *MIT License
+ *
+ *Copyright (c) 2017 Darien
+ *
+ *     Permission is hereby granted, free of charge, to any person obtaining a copy
+ *of this software and associated documentation files (the "Software"), to deal
+ *in the Software without restriction, including without limitation the rights
+ *      to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *     copies of the Software, and to permit persons to whom the Software is
+ *furnished to do so, subject to the following conditions:
+ *
+ *The above copyright notice and this permission notice shall be included in all
+ *      copies or substantial portions of the Software.
+ *
+ *THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *       AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *SOFTWARE.
  */
 
 #include "ukf_filter.h"
+using namespace std;
+using namespace Eigen;
 
 namespace ukfilter {
-//Constructor
-    UKFilter::UKFilter() {}
+    //Constructor
+    //UKFilter::UKFilter() {}
 
-    /*! \fn Prediction(VectorXd &x, MatrixXd &P,const double &delta_t_)
+    /*! \fn Prediction(VectorXd &x, MatrixXd &P,const double &delta_t)
     \brief Prediction function uses vehicle state and its covariance from its previous state and predict its future value based on delta t.
     \param x The state space vector.
     \param P The covariance matrix of the state space.
-    \param delta_t_ Time difference between previous and current state.
+    \param delta_t Time difference between previous and current state.
     */
 
 //##################<Prediction Cycle>#####################################
-    void UKFilter::Prediction(VectorXd &x, MatrixXd &P,double delta_t_) {
+    void UKFilter::Prediction(VectorXd *x, MatrixXd *P,double delta_t) {
 //Basically there are three steps
 //1) Generate Sigma Points with or without augmentation as required
 //2) Predict Sigma Points using nine dimension vehicle model
 //3) Convert the predicted sigma points into predicted mean and covariance
 
         // Set State space dimension
-        int n_x = x.size();
+        int n_x = (*x).size();
         // Set lambda which is the spreading parameter of sigma points
         double lambda = (3 - n_x); //Note: The lambda value used here shows good result as per research.
 
@@ -44,16 +68,16 @@ namespace ukfilter {
         MatrixXd Xsigma = MatrixXd(n_x, (2 * n_x + 1));
 
         // Finding square root of P matrix using Cholesky decomposition
-        MatrixXd A = P.llt().matrixL(); //These functions in Eigen library help to find the square root of a matrix
+        MatrixXd A = (*P).llt().matrixL(); //These functions in Eigen library help to find the square root of a matrix
         MatrixXd B = (sqrt(lambda + n_x)) * A;
 
         // First column of sigma point matrix should be mean value
-        Xsigma.col(0) = x;
+        Xsigma.col(0) = (*x);
 
         // Calculating remaining sigma points
         for (int i = 0; i < n_x; i++) {
-            Xsigma.col(i + 1) = x + B.col(i);
-            Xsigma.col(i + n_x + 1) = x - B.col(i);
+            Xsigma.col(i + 1) = (*x) + B.col(i);
+            Xsigma.col(i + n_x + 1) = (*x) - B.col(i);
         }
         //Xsigma_ has the generated sigma point and do augmentation to add process noise.
 
@@ -118,8 +142,8 @@ namespace ukfilter {
         for (int i = 0; i < (2 * n_x + 1); i++) {
             // Currently the model can only output VehicleState objects.
             //The model used can be implemented using fewer states but that is the final output.
-            vector <lib_vehicle_model::VehicleState> results = lib_vehicle_model::predict(Xsigma.col(i), delta_t_,
-                                                                                          delta_t_);
+            vector <lib_vehicle_model::VehicleState> results = lib_vehicle_model::predict(Xsigma.col(i), delta_t,
+                                                                                          delta_t);
             Xsigma_pred.col(i, 0) = results[0].X_pos_global;
             Xsigma_pred.col(i, 1) = results[0].Y_pos_global;
             Xsigma_pred.col(i, 2) = results[0].orientation;
@@ -138,8 +162,8 @@ namespace ukfilter {
         // Weights of sigma points
         VectorXd weights = VectorXd((2 * n_x) + 1);
         // Generate predicted state space vector
-        VectorXd x_pred = VectorXd(n_x);
-        x_pred.fill(0.0);
+        // VectorXd x_pred = VectorXd(n_x);
+        //x_pred.fill(0.0);
         // Generate state covariance matrix
         MatrixXd P_pred = MatrixXd(n_x, n_x);
         P_pred.fill(0.0);
@@ -148,70 +172,71 @@ namespace ukfilter {
         weights.fill(weight);
         // Weights formation based on equations
         weights(0) = (lambda /(lambda + n_x)); // Weight equation of 1st column sigma point mean is different from rest
-
+        (*x).fill(0);
         // Extracted predicted state vector
         for (int i = 0; i < ((2 * n_x) + 1); i++) {
-            x_pred = x_pred + (weights(i) * Xsigma_pred.col(i)); // x_pred is the state after time delta t
+            *x = *x + (weights(i) * Xsigma_pred.col(i)); // x_pred is the state after time delta t
         }
-
+        (*P).fill(0);
+        VectorXd x_diff;
         // Extracted predicted covariance matrix
         for (int i = 0; i < ((2 * n_x) + 1); i++) {
             //State difference of each sigma points
-            x = Xsigma_pred.col(i) - x_pred;
+            x_diff = Xsigma_pred.col(i) - (*x);
             //Angle normalization due to difference calculation between angles which can lead to small angle + 360 degree.
             //Yaw
-            AngleNormalization(x(2));
+            AngleNormalization(x_diff(2));
             //Angular rotation
-            AngleNormalization(x(5));
+            AngleNormalization(x_diff(5));
             //Steering angle
-            AngleNormalization(x(8));
+            AngleNormalization(x_diff(8));
             // P_pred is the state after time delta t
-            P = P_pred + (weights(i) * x * x.transpose());
+            *P = *P + (weights(i) * x_diff * x_diff.transpose());
         }
 
         // Prediction cycle is complete with required prior state and covariance
 //###########################################################################
     }
 
-   /*! \fn Update(VectorXd &x_prime_, MatrixXd &P_prime_,const MatrixXd &H_,const MatrixXd &R_,const VectorXd &z_raw_)
-  \brief Update function uses predicted vehicle state and its covariance compared it with the raw sensor value and do the correction based on kalman gain.
-  \param x_prime_ The predicted state space vector.
-  \param P_prime_ The predicted covariance matrix of the state space.
-  \param H_ The measurement function.
-  \param R_ The covariance matrix of the raw sensor.
-  \param z_raw_ The raw sensor vector.
-  */
+    /*! \fn Update(VectorXd &x_prime, MatrixXd &P_prime,const MatrixXd &H,const MatrixXd &R,const VectorXd &z_raw)
+   \brief Update function uses predicted vehicle state and its covariance compared it with the raw sensor value and do the correction based on kalman gain.
+   \param x_prime The predicted state space vector.
+   \param P_prime The predicted covariance matrix of the state space.
+   \param H The measurement function.
+   \param R The covariance matrix of the raw sensor.
+   \param z_raw The raw sensor vector.
+   */
 
 //##################<Measurement Update Cycle>################################
-    void UKFilter::Update(VectorXd &x_prime_, MatrixXd &P_prime_,const MatrixXd &H_,const MatrixXd &R_,const VectorXd &z_raw_) {
+    void UKFilter::Update(VectorXd *x_prime, MatrixXd *P_prime,const MatrixXd &H,const MatrixXd &R,const VectorXd &z_raw) {
         // State space dimension
-        int x_size = x_prime_.size();
+        int x_size = (*x_prime).size();
         // Measurement function which converts the state space to measurement space
-        VectorXd z_mf = H_ * x_prime_;
+        VectorXd z_mf = H * (*x_prime);
         // Error comparison between raw sensor value and our state belief
-        VectorXd y_err = z_raw_ - z_mf;
+        VectorXd y_err = z_raw - z_mf;
         // Transpose of measurement space
-        MatrixXd H_t = H_.transpose();
+        MatrixXd H_t = H.transpose();
         // Kalman Gain calculations
-        MatrixXd S = (H_ * P_prime_ * H_t) + R_;
+        MatrixXd S = (H * (*P_prime) * H_t) + R;
         // Finding Inverse
         MatrixXd S_i = S.inverse();
         // Kalman Gain
-        MatrixXd K = (P_prime_ * H_t * S_i);
+        MatrixXd K = ((*P_prime) * H_t * S_i);
 
         // Generate Identitiy matrix
         MatrixXd I = MatrixXd::Identity(x_size, x_size);
 
         // State Vector update
-        x_prime_ = x_prime_ + (K * y_err);
+        *x_prime = (*x_prime) + (K * y_err);
         // Covariance Update
-        P_prime_ = ((I - (K * H)) * P_prime_);
+        *P_prime = ((I - (K * H)) * (*P_prime));
 
     }
-        /*! \fn Prediction(VectorXd &x, MatrixXd &P,const double &delta_t_)
-       \brief Angle normalization due to difference calculation between angles which can lead to small angle + 360 degree.
-       \param ang The angle which needs to be normalized.
-       */
+    /*! \fn AngleNormalization(double &ang)
+   \brief Angle normalization due to difference calculation between angles which can lead to small angle + 360 degree.
+   \param ang The angle which needs to be normalized.
+   */
 //##################<Angle normalization>################################
     void UKFilter::AngleNormalization(double &ang) {
         while (ang > M_PI) ang -= 2.* M_PI;
