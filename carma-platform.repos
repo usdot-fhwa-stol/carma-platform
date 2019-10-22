@@ -1,0 +1,77 @@
+repositories:
+  CARMAAvtVimbaDriver:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/CARMAAvtVimbaDriver.git
+    version: develop
+  CARMABase:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/CARMABase.git
+    version: develop
+  CARMACadillacSrx2013ControllerDriver:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/CARMACadillacSrx2013ControllerDriver.git
+    version: develop
+  CARMACohdaDsrcDriver:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/CARMACohdaDsrcDriver.git
+    version: develop
+  CARMAConfig:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/CARMAConfig.git
+    version: develop
+  CARMADelphiEsrDriver:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/CARMADelphiEsrDriver.git
+    version: develop
+  CARMADelphiSrr2Driver:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/CARMADelphiSrr2Driver.git
+    version: develop
+  CARMAUtils:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/CARMAUtils.git
+    version: develop
+  CARMAFreightliner2012ControllerDriver:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/CARMAFreightliner2012ControllerDriver.git
+    version: develop
+  CARMAMsgs:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/CARMAMsgs.git
+    version: develop
+  CARMANovatelGpsDriver:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/CARMANovatelGpsDriver.git
+    version: develop
+  CARMAPlatform:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/CARMAPlatform.git
+    version: develop
+  CARMASscInterfaceWrapper:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/CARMASscInterfaceWrapper.git
+    version: develop
+  CARMATorcPinpointDriver:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/CARMATorcPinpointDriver.git
+    version: develop
+  CARMATorcXgvControllerDriver:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/CARMATorcXgvControllerDriver.git
+    version: develop
+  CARMAVehicleModelFramework:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/CARMAVehicleModelFramework.git
+    version: develop
+  CARMAVelodyneLidarDriver:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/CARMAVelodyneLidarDriver.git
+    version: develop
+  CARMAWebUi:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/CARMAWebUi.git
+    version: develop
+  autoware.ai:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/autoware.ai.git
+    version: carma-develop

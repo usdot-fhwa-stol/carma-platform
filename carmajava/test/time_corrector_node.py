@@ -27,8 +27,8 @@ class TimeCorrectorNode(object):
         self.speed_limit = rospy.get_param('~speed_limit') * MPS_PER_MPH
         
         # Publishers
-        self.request_pub = rospy.Publisher('/saxton_cav/message/incoming_mobility_request', MobilityRequest, queue_size=10)
-        self.path_pub = rospy.Publisher('/saxton_cav/message/incoming_mobility_path', MobilityPath, queue_size=10)
+        self.request_pub = rospy.Publisher('/carma/message/incoming_mobility_request', MobilityRequest, queue_size=10)
+        self.path_pub = rospy.Publisher('/carma/message/incoming_mobility_path', MobilityPath, queue_size=10)
 
         # Subscribers
         self.request_sub = rospy.Subscriber("/rosbag/incoming_mobility_request", MobilityRequest, self.request_message_cb)

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=true
+Exec=bash -ci 'carma start all & rosrun rviz rviz -d /opt/carma/rviz/carma_default.rviz'
+Name=Sensor Visualization
+Comment=Sensor Visualization
+Icon=/usr/share/icons/Tango/32x32/actions/view-fullscreen.png
+Name[en_US]=CARMA 3 Demo
+Comment[en_US]=
