@@ -40,7 +40,9 @@ namespace guidance
     }
 
     // This state is not reachable. No need to have any implementations
-    void SoftwareOnlyEngagedStateMachine::ActiveState(Signal signal){ }
+    void SoftwareOnlyEngagedStateMachine::ActiveState(Signal signal){
+        //State machine does not implement this state
+    }
 
     void SoftwareOnlyEngagedStateMachine::EngagedState(Signal signal){
         if(signal == Signal::DISENGAGED)
@@ -59,7 +61,7 @@ namespace guidance
         if(signal == Signal::DISENGAGED)
         {
             current_guidance_state = State::DRIVERS_READY;
-        } else if(signal == Signal::ACTIVATED)
+        } else if(signal == Signal::ACTIVATED || signal == Signal::ENGAGE)
         {
             current_guidance_state = State::ENGAGED;
         } else if(signal == Signal::SHUTDOWN)
@@ -68,6 +70,8 @@ namespace guidance
         }
     }
 
-    void SoftwareOnlyEngagedStateMachine::OffState(Signal signal){ }
+    void SoftwareOnlyEngagedStateMachine::OffState(Signal signal){
+        // This is the end state of thie state machine
+    }
 
 }
