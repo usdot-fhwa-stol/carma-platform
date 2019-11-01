@@ -58,7 +58,7 @@ namespace guidance
     {
         if(msg)
         {
-            onGuidanceSignal(Signal::ENGAGE);
+            onGuidanceSignal(Signal::ACTIVATED);
         } else
         {
             onGuidanceSignal(Signal::DISENGAGED);

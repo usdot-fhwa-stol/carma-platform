@@ -30,7 +30,7 @@ namespace guidance
     }
 
     void SoftwareOnlyEngagedStateMachine::DriversReadyState(Signal signal){
-        if(signal == Signal::ENGAGE)
+        if(signal == Signal::ACTIVATED)
         {
             current_guidance_state = State::ENGAGED;
         } else if(signal == Signal::SHUTDOWN)
@@ -59,7 +59,7 @@ namespace guidance
         if(signal == Signal::DISENGAGED)
         {
             current_guidance_state = State::DRIVERS_READY;
-        } else if(signal == Signal::ENGAGE)
+        } else if(signal == Signal::ACTIVATED)
         {
             current_guidance_state = State::ENGAGED;
         } else if(signal == Signal::SHUTDOWN)
