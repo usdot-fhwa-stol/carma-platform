@@ -30,7 +30,7 @@ namespace guidance
     }
 
     void SoftwareOnlyEngagedStateMachine::DriversReadyState(Signal signal){
-        if(signal == Signal::ACTIVATED)
+        if(signal == Signal::ENGAGE)
         {
             current_guidance_state = State::ENGAGED;
         } else if(signal == Signal::SHUTDOWN)
@@ -39,18 +39,8 @@ namespace guidance
         }
     }
 
-    void SoftwareOnlyEngagedStateMachine::ActiveState(Signal signal){
-        if(signal == Signal::ENGAGE)
-        {
-            current_guidance_state = State::ENGAGED;
-        } else if(signal == Signal::DISENGAGED)
-        {
-            current_guidance_state = State::DRIVERS_READY;
-        } else if(signal == Signal::SHUTDOWN)
-        {
-            current_guidance_state = State::OFF;
-        }
-    }
+    // This state is not reachable. No need to have any implementations
+    void SoftwareOnlyEngagedStateMachine::ActiveState(Signal signal){ }
 
     void SoftwareOnlyEngagedStateMachine::EngagedState(Signal signal){
         if(signal == Signal::DISENGAGED)
@@ -78,7 +68,6 @@ namespace guidance
         }
     }
 
-    void SoftwareOnlyEngagedStateMachine::OffState(Signal signal){
-    }
+    void SoftwareOnlyEngagedStateMachine::OffState(Signal signal){ }
 
 }
