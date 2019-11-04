@@ -42,6 +42,9 @@ namespace guidance
                 if(signal == Signal::ENGAGE)
                 {
                     current_guidance_state_ = State::ENGAGED;
+                } else if(signal == Signal::DISENGAGED)
+                {
+                    current_guidance_state_ = State::DRIVERS_READY;
                 }
                 break;
             case State::ENGAGED:
@@ -98,6 +101,7 @@ namespace guidance
         // robotic status changes from true to false
         else if(robotic_active_status_ && !msg->robot_active)
         {
+            robotic_active_status_ = false;
             onGuidanceSignal(Signal::OVERRIDE);
         }
     }
