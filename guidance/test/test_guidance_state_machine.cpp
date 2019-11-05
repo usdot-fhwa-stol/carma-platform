@@ -23,6 +23,8 @@ TEST(GuidanceStateMachineTest, testStates)
     guidance::GuidanceStateMachine gsm;
     // test initial state
     EXPECT_EQ(1, static_cast<int>(gsm.getCurrentState()));
+    // test SetEnableRobotic call flag
+    EXPECT_TRUE(!gsm.shouldCallSetEnableRobotic());
     cav_msgs::SystemAlert alert;
     alert.type = alert.DRIVERS_READY;
     cav_msgs::SystemAlertConstPtr alert_pointer(new cav_msgs::SystemAlert(alert));
@@ -32,6 +34,8 @@ TEST(GuidanceStateMachineTest, testStates)
     gsm.onSetGuidanceActive(true);
     // test active state
     EXPECT_EQ(3, static_cast<int>(gsm.getCurrentState()));
+    EXPECT_TRUE(gsm.shouldCallSetEnableRobotic());
+    EXPECT_TRUE(!gsm.shouldCallSetEnableRobotic());
     cav_msgs::RobotEnabled engage_status;
     engage_status.robot_enabled = true;
     engage_status.robot_active = true;

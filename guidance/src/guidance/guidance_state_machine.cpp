@@ -111,6 +111,24 @@ namespace guidance
         return static_cast<uint8_t>(current_guidance_state_);
     }
 
-    GuidanceStateMachine::GuidanceStateMachine() : current_guidance_state_(State::STARTUP), robotic_active_status_(false) {}
+    bool GuidanceStateMachine::shouldCallSetEnableRobotic()
+    {
+        // call SetEnableRobotic service once when we enter ACTIVE state
+        if(current_guidance_state_ == GuidanceStateMachine::ACTIVE)
+        {
+            if(!called_robotic_engage_in_active_)
+            {
+                called_robotic_engage_in_active_ = true;
+                return true;
+            }
+        } else {
+            // Reset when we leave ACTIVE state 
+            called_robotic_engage_in_active_ = false;
+        }
+        return false;
+    }
+
+    GuidanceStateMachine::GuidanceStateMachine() :
+                          current_guidance_state_(State::STARTUP), robotic_active_status_(false), called_robotic_engage_in_active_(false) {}
 
 }

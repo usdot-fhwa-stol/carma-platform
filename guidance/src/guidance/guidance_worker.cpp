@@ -45,25 +45,16 @@ namespace guidance
             enable_client_.call(srv);
         }
         gsm_.onSetGuidanceActive(req.guidance_active);
-        res.guidance_status = req.guidance_active;
+        res.guidance_status = (gsm_.getCurrentState == GuidanceStateMachine::ACTIVE);
         return true;
     }
 
     bool GuidanceWorker::spin_cb()
     {
-        // call SetEnableRobotic service once when we enter ACTIVE state
-        if(gsm_.getCurrentState() == GuidanceStateMachine::ACTIVE)
-        {
-            if(!called_robotic_engage_in_active_)
-            {
-                called_robotic_engage_in_active_ = true;
-                cav_srvs::SetEnableRobotic srv;
-                srv.request.set = cav_srvs::SetEnableRobotic::Request::ENABLE;
-                enable_client_.call(srv);
-            }
-        } else {
-            // Reset when we leave ACTIVE state 
-            called_robotic_engage_in_active_ = false;
+        if(gsm_.shouldCallSetEnableRobotic()) {
+            cav_srvs::SetEnableRobotic srv;
+            srv.request.set = cav_srvs::SetEnableRobotic::Request::ENABLE;
+            enable_client_.call(srv);
         }
         cav_msgs::GuidanceState state;
         state.state = gsm_.getCurrentState();

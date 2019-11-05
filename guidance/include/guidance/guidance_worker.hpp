@@ -67,9 +67,6 @@ namespace guidance
             // Node handles
             ros::CARMANodeHandle nh_, pnh_;
 
-            // make one service call in ACTIVE state to engage
-            bool called_robotic_engage_in_active_;
-
             // Guidance state machine
             GuidanceStateMachine gsm_;
     };

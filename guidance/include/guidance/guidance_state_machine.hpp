@@ -67,6 +67,11 @@ namespace guidance
             void onRoboticStatus(const cav_msgs::RobotEnabledConstPtr& msg);
 
             /*!
+             * \brief Indicate if SetEnableRobotic needs to be called in ACTIVE state.
+             */
+            bool shouldCallSetEnableRobotic();
+
+            /*!
              * \brief Get current state machine status.
              */
             uint8_t getCurrentState();
@@ -84,6 +89,8 @@ namespace guidance
             // Previous robotic active status
             bool robotic_active_status_;
 
+            // make one service call in ACTIVE state to engage
+            bool called_robotic_engage_in_active_;
     };
 
 }
