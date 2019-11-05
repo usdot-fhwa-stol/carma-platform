@@ -18,7 +18,7 @@
 
 namespace guidance
 {
-    GuidanceWorker::GuidanceWorker() : called_robotic_engage_in_active_(false)
+    GuidanceWorker::GuidanceWorker()
     {
         nh_ = ros::CARMANodeHandle{};
         pnh_ = ros::CARMANodeHandle{"~"};
