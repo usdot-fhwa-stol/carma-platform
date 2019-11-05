@@ -45,7 +45,7 @@ namespace guidance
             enable_client_.call(srv);
         }
         gsm_.onSetGuidanceActive(req.guidance_active);
-        res.guidance_status = (gsm_.getCurrentState == GuidanceStateMachine::ACTIVE);
+        res.guidance_status = (gsm_.getCurrentState() == GuidanceStateMachine::ACTIVE);
         return true;
     }
 
