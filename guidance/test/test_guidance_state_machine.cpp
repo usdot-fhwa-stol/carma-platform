@@ -25,6 +25,9 @@ TEST(GuidanceStateMachineTest, testStates)
     EXPECT_EQ(1, static_cast<int>(gsm.getCurrentState()));
     // test SetEnableRobotic call flag
     EXPECT_TRUE(!gsm.shouldCallSetEnableRobotic());
+    gsm.onSetGuidanceActive(true);
+    // test engage on startup state, should not casue state change
+    EXPECT_EQ(1, static_cast<int>(gsm.getCurrentState()));
     cav_msgs::SystemAlert alert;
     alert.type = alert.DRIVERS_READY;
     cav_msgs::SystemAlertConstPtr alert_pointer(new cav_msgs::SystemAlert(alert));
@@ -36,6 +39,11 @@ TEST(GuidanceStateMachineTest, testStates)
     EXPECT_EQ(3, static_cast<int>(gsm.getCurrentState()));
     EXPECT_TRUE(gsm.shouldCallSetEnableRobotic());
     EXPECT_TRUE(!gsm.shouldCallSetEnableRobotic());
+    gsm.onSetGuidanceActive(false);
+    // test disengage on active
+    EXPECT_EQ(2, static_cast<int>(gsm.getCurrentState()));
+    gsm.onSetGuidanceActive(true);
+    EXPECT_EQ(3, static_cast<int>(gsm.getCurrentState()));
     cav_msgs::RobotEnabled engage_status;
     engage_status.robot_enabled = true;
     engage_status.robot_active = true;
@@ -44,8 +52,12 @@ TEST(GuidanceStateMachineTest, testStates)
     disengage_status.robot_active = false;
     cav_msgs::RobotEnabledConstPtr engage_status_pointer(new cav_msgs::RobotEnabled(engage_status));
     cav_msgs::RobotEnabledConstPtr disengage_status_pointer(new cav_msgs::RobotEnabled(disengage_status));
+    gsm.onRoboticStatus(disengage_status_pointer);
+    EXPECT_EQ(3, static_cast<int>(gsm.getCurrentState()));
     gsm.onRoboticStatus(engage_status_pointer);
     // test engaged state
+    EXPECT_EQ(4, static_cast<int>(gsm.getCurrentState()));
+    gsm.onRoboticStatus(engage_status_pointer);
     EXPECT_EQ(4, static_cast<int>(gsm.getCurrentState()));
     gsm.onSetGuidanceActive(false);
     gsm.onRoboticStatus(disengage_status_pointer);
@@ -66,6 +78,9 @@ TEST(GuidanceStateMachineTest, testStates)
     cav_msgs::SystemAlertConstPtr alert_pointer_2(new cav_msgs::SystemAlert(alert));
     gsm.onSystemAlert(alert_pointer_2);
     // test shut down state
+    EXPECT_EQ(0, static_cast<int>(gsm.getCurrentState()));
+    // Should not recover from OFF state
+    gsm.onSystemAlert(alert_pointer);
     EXPECT_EQ(0, static_cast<int>(gsm.getCurrentState()));
 }
 
