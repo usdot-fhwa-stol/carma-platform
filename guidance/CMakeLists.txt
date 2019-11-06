@@ -112,3 +112,9 @@ install(DIRECTORY
 catkin_add_gmock(${PROJECT_NAME}-test test/test_guidance_state_machine.cpp)
 target_link_libraries(${PROJECT_NAME}-test guidance_state_machine_library ${catkin_LIBRARIES})
 
+if (CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(guidance_test_1 test/guidance_launch.test test/guidance_node_test.cpp)
+  target_link_libraries(guidance_test_1 ${catkin_LIBRARIES})
+endif()
+
