@@ -114,7 +114,7 @@ target_link_libraries(${PROJECT_NAME}-test guidance_state_machine_library ${catk
 
 if (CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
-  add_rostest_gtest(guidance_test_1 test/guidance_launch.test test/guidance_node_test.cpp)
-  target_link_libraries(guidance_test_1 ${catkin_LIBRARIES})
+  add_rostest_gtest(guidance_test test/guidance_launch.test test/guidance_node_test.cpp)
+  target_link_libraries(guidance_test ${catkin_LIBRARIES})
 endif()
 

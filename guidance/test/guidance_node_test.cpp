@@ -14,10 +14,20 @@
  * the License.
  */
 
+#include <gtest/gtest.h>
+#include <ros/ros.h>
+#include <cav_msgs/GuidanceState.h>
+#include <thread>
+#include <chrono>
 
 TEST(GuidanceNodeTest, TestGuidanceLaunch) {
     ros::NodeHandle nh = ros::NodeHandle();
-
+    const cav_msgs::GuidanceState* state;
+    ros::Subscriber state_sub = nh.subscribe<cav_msgs::GuidanceState>("state", 10, [&](cav_msgs::GuidanceStateConstPtr msg){
+        state = msg.get();
+    });
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    EXPECT_EQ(cav_msgs::GuidanceState::STARTUP, state->state);
 }
 
 
