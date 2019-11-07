@@ -26,6 +26,10 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 
+#include <cav_srvs/PlanManeuvers.h>
+#include <cav_srvs/PlanTrajectory.h>
+
+
 namespace autoware_plugin
 {
 
@@ -57,13 +61,33 @@ namespace autoware_plugin
         std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
         // publisher for CARMA trajectory
-        ros::Publisher  trajectory_pub_;
+        // ros::Publisher  trajectory_pub_;
         ros::Publisher autoware_plugin_discovery_pub_;
 
         // subscriber for Autoware waypoints
         ros::Subscriber waypoints_sub_;
         ros::Subscriber pose_sub_;
         ros::Subscriber twist_sub_;
+
+
+
+        // ros service servers
+        ros::ServiceServer trajectory_srv_;
+        ros::ServiceServer maneuver_srv_;
+
+        // service callbacks
+        bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp);
+        bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
+
+
+        // generated trajectory plan
+        cav_msgs::TrajectoryPlan trajectory_msg;
+        // Array of waypoints
+        std::vector<autoware_msgs::Waypoint> waypoints_list;
+
+        // Length of maneuver
+        double mvr_length = 15;
+
 
         // ROS params
         double trajectory_time_length_;
