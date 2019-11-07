@@ -37,7 +37,7 @@ namespace autoware_plugin
 
         maneuver_srv_ = nh_->advertiseService("/plugins/AutowarePlugin/strategic_plan/plan_maneuvers", &AutowarePlugin::plan_maneuver_cb, this);
 
-        trajectory_srv_ = nh_->advertiseService("/guidance/plugins/AutowarePlugin/plan_trajectory", &AutowarePlugin::plan_trajectory_cb, this);
+        trajectory_srv_ = nh_->advertiseService("/plugins/AutowarePlugin/plan_trajectory", &AutowarePlugin::plan_trajectory_cb, this);
 
                 
         autoware_plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
