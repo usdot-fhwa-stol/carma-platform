@@ -28,3 +28,4 @@ cd ${dir}/src
 git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAMsgs.git --branch develop
 git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMANovatelGpsDriver.git --branch develop
 git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAUtils.git --branch develop
+
