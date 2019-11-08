@@ -25,7 +25,7 @@ if [[ -n ${1} ]]; then
 fi
 
 cd ${dir}/src
-git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAMsgs.git --branch CARMASystem_3.1.0
-git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMANovatelGpsDriver.git --branch CARMASystem_3.1.0
-git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAUtils.git --branch CARMASystem_3.1.0
+git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAMsgs.git --branch develop
+git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMANovatelGpsDriver.git --branch develop
+git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAUtils.git --branch develop
 
