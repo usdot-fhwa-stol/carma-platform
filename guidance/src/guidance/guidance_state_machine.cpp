@@ -20,25 +20,49 @@ namespace guidance
 {
     void GuidanceStateMachine::onGuidanceSignal(Signal signal)
     {
-        switch(current_guidance_state)
+        // Set to OFF state of SHUTDOWN signal received
+        if(signal == Signal::SHUTDOWN) {
+            current_guidance_state_ = State::OFF;
+            return;
+        }
+        switch(current_guidance_state_)
         {
             case State::STARTUP:
-                StartUpState(signal);
+                if(signal == Signal::INITIALIZED) {
+                    current_guidance_state_ = State::DRIVERS_READY;
+                }
                 break;
             case State::DRIVERS_READY:
-                DriversReadyState(signal);
+                if(signal == Signal::ACTIVATED)
+                {
+                    current_guidance_state_ = State::ACTIVE;
+                }
                 break;
             case State::ACTIVE:
-                ActiveState(signal);
+                if(signal == Signal::ENGAGE)
+                {
+                    current_guidance_state_ = State::ENGAGED;
+                } else if(signal == Signal::DISENGAGED)
+                {
+                    current_guidance_state_ = State::DRIVERS_READY;
+                }
                 break;
             case State::ENGAGED:
-                EngagedState(signal);
+                if(signal == Signal::DISENGAGED)
+                {
+                    current_guidance_state_ = State::DRIVERS_READY;
+                } else if(signal == Signal::OVERRIDE)
+                {
+                    current_guidance_state_ = State::INACTIVE;
+                }
                 break;
             case State::INACTIVE:
-                InactiveState(signal);
+                if(signal == Signal::ACTIVATED)
+                {
+                    current_guidance_state_ = State::ACTIVE;
+                }
                 break;
-            case State::OFF:
-                OffState(signal);
+            default:
                 break;
         }
     }
@@ -68,20 +92,43 @@ namespace guidance
 
     void GuidanceStateMachine::onRoboticStatus(const cav_msgs::RobotEnabledConstPtr& msg)
     {
-        if(msg->robot_enabled && msg->robot_active)
+        // robotic status changes from false to true
+        if(!robotic_active_status_ && msg->robot_active)
         {
+            robotic_active_status_ = true;
             onGuidanceSignal(Signal::ENGAGE);
-        } else if(msg->robot_enabled && !msg->robot_active)
+        }
+        // robotic status changes from true to false
+        else if(robotic_active_status_ && !msg->robot_active)
         {
+            robotic_active_status_ = false;
             onGuidanceSignal(Signal::OVERRIDE);
         }
     }
 
     uint8_t GuidanceStateMachine::getCurrentState()
     {
-        return static_cast<uint8_t>(current_guidance_state);
+        return static_cast<uint8_t>(current_guidance_state_);
     }
 
-    GuidanceStateMachine::GuidanceStateMachine() : current_guidance_state(State::STARTUP) {}
+    bool GuidanceStateMachine::shouldCallSetEnableRobotic()
+    {
+        // call SetEnableRobotic service once when we enter ACTIVE state
+        if(current_guidance_state_ == GuidanceStateMachine::ACTIVE)
+        {
+            if(!called_robotic_engage_in_active_)
+            {
+                called_robotic_engage_in_active_ = true;
+                return true;
+            }
+        } else {
+            // Reset when we leave ACTIVE state 
+            called_robotic_engage_in_active_ = false;
+        }
+        return false;
+    }
+
+    GuidanceStateMachine::GuidanceStateMachine() :
+                          current_guidance_state_(State::STARTUP), robotic_active_status_(false), called_robotic_engage_in_active_(false) {}
 
 }
