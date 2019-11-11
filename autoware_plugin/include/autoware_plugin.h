@@ -74,7 +74,7 @@ namespace autoware_plugin
         ros::ServiceServer trajectory_srv_;
         ros::ServiceServer maneuver_srv_;
 
-        // service callbacks for carma maneyver and trajectory planning
+        // service callbacks for carma maneuver and trajectory planning
         bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp);
         bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
 

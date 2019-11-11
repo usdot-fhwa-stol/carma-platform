@@ -33,8 +33,8 @@ namespace autoware_plugin
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
         
-        maneuver_srv_ = nh_->advertiseService("/plugins/AutowarePlugin/strategic_plan/plan_maneuvers", &AutowarePlugin::plan_maneuver_cb, this);
-        trajectory_srv_ = nh_->advertiseService("/plugins/AutowarePlugin/plan_trajectory", &AutowarePlugin::plan_trajectory_cb, this);
+        maneuver_srv_ = nh_->advertiseService("plugins/AutowarePlugin/strategic_plan/plan_maneuvers", &AutowarePlugin::plan_maneuver_cb, this);
+        trajectory_srv_ = nh_->advertiseService("plugins/AutowarePlugin/plan_trajectory", &AutowarePlugin::plan_trajectory_cb, this);
 
                 
         autoware_plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
@@ -77,12 +77,12 @@ namespace autoware_plugin
 
 
         maneuver_msg.lane_following_maneuver.start_dist = 0.0;
-        maneuver_msg.lane_following_maneuver.start_speed = waypoints_list[0].twist.twist.linear.x;
+        maneuver_msg.lane_following_maneuver.start_speed = ((waypoints_list.size() > 0) ? waypoints_list[0].twist.twist.linear.x : 0);
         maneuver_msg.lane_following_maneuver.start_time = ros::Time::now();
 
 
         maneuver_msg.lane_following_maneuver.end_dist = 20.0;
-        maneuver_msg.lane_following_maneuver.end_speed = waypoints_list[waypoints_list.size() - 1].twist.twist.linear.x;
+        maneuver_msg.lane_following_maneuver.end_speed = ((waypoints_list.size() > 0) ? waypoints_list[waypoints_list.size() - 1].twist.twist.linear.x : 0);
         maneuver_msg.lane_following_maneuver.end_time = ros::Time::now()+ros::Duration(mvr_length);
 
 
