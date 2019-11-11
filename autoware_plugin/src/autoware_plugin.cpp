@@ -77,12 +77,12 @@ namespace autoware_plugin
 
 
         maneuver_msg.lane_following_maneuver.start_dist = 0.0;
-        maneuver_msg.lane_following_maneuver.start_speed = ((waypoints_list.size() > 0) ? waypoints_list[0].twist.twist.linear.x : 0);
+        maneuver_msg.lane_following_maneuver.start_speed = ((waypoints_list.size() > 0) ? waypoints_list[0].twist.twist.linear.x : 0.0);
         maneuver_msg.lane_following_maneuver.start_time = ros::Time::now();
 
 
         maneuver_msg.lane_following_maneuver.end_dist = 20.0;
-        maneuver_msg.lane_following_maneuver.end_speed = ((waypoints_list.size() > 0) ? waypoints_list[waypoints_list.size() - 1].twist.twist.linear.x : 0);
+        maneuver_msg.lane_following_maneuver.end_speed = ((waypoints_list.size() > 0) ? waypoints_list[waypoints_list.size() - 1].twist.twist.linear.x : 0.0);
         maneuver_msg.lane_following_maneuver.end_time = ros::Time::now()+ros::Duration(mvr_length);
 
 
