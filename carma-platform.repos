@@ -71,6 +71,10 @@ repositories:
     type: git
     url: git@github.com:usdot-fhwa-stol/CARMAWebUi.git
     version: develop
+  CARMAPlatform:
+    type: git
+    url: https://github.com/usdot-fhwa-stol/CARMAPlatform.git
+    version: develop
   autoware.ai:
     type: git
     url: git@github.com:usdot-fhwa-stol/autoware.ai.git
