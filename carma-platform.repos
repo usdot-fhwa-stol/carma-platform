@@ -71,9 +71,9 @@ repositories:
     type: git
     url: git@github.com:usdot-fhwa-stol/CARMAWebUi.git
     version: develop
-  CARMAPlatform:
+  CARMAGarminLidarLiteV3DriverWrapper:
     type: git
-    url: https://github.com/usdot-fhwa-stol/CARMAPlatform.git
+    url: https://github.com/usdot-fhwa-stol/CARMAGarminLidarLiteV3DriverWrapper.git
     version: develop
   autoware.ai:
     type: git
