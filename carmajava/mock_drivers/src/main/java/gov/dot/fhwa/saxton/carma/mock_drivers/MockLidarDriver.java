@@ -62,7 +62,7 @@ public class MockLidarDriver extends AbstractMockDriver {
     // TODO use actual data from file
     sensor_msgs.PointCloud2 cloud = pointsPub.newMessage();
     // Set Header Data
-    cloud.getHeader().setFrameId("lidar");
+    cloud.getHeader().setFrameId("velodyne");
     cloud.getHeader().setStamp(connectedNode.getCurrentTime());
     pointsPub.publish(cloud);
 
