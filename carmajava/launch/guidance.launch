@@ -114,7 +114,7 @@
     <remap from="/emergency_stop" to="emergency_stop"/>
     <remap from="/state_cmd" to="state_cmd"/>
     <remap from="/vehicle_cmd" to="$(optenv CARMA_INTR_NS)/vehicle_cmd"/>
-    <include file="$(find waypoint_follower)/launch/twist_filter.launch"/>
+    <include file="$(find twist_filter)/launch/twist_filter.launch"/>
   </group>
 
   <!-- Planning Stack -->
