@@ -60,6 +60,7 @@ namespace plan_delegator
             ros::NodeHandle pnh_;
 
             ros::Publisher traj_pub_;
+            ros::Subscriber plan_sub_;
 
             std::string planning_topic_prefix_;
             std::string planning_topic_suffix_;

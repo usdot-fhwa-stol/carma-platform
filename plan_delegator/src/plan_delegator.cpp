@@ -21,14 +21,14 @@ namespace plan_delegator
 {
     void PlanDelegator::init()
     {
-        ros::CARMANodeHandle nh_ = ros::CARMANodeHandle();
-        ros::CARMANodeHandle pnh_ = ros::CARMANodeHandle("~");
+        nh_ = ros::CARMANodeHandle();
+        pnh_ = ros::CARMANodeHandle("~");
 
         pnh_.param<std::string>("planning_topic_prefix", planning_topic_prefix_, "/guidance/plugins/");        
         pnh_.param<std::string>("planning_topic_suffix", planning_topic_suffix_, "/plan_trajectory");
 
-        ros::Publisher traj_pub_ = nh_.advertise<cav_msgs::TrajectoryPlan>("trajectory_plan", 5);
-        ros::Subscriber plan_sub_ = nh_.subscribe("maneuver_plan", 5, &PlanDelegator::ManeuverPlanCallback, this);
+        traj_pub_ = nh_.advertise<cav_msgs::TrajectoryPlan>("trajectory_plan", 5);
+        plan_sub_ = nh_.subscribe("maneuver_plan", 5, &PlanDelegator::ManeuverPlanCallback, this);
     }
     
     void PlanDelegator::run() 
