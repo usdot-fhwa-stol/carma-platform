@@ -14,65 +14,66 @@
  * the License.
  */
 
-#include <ros/ros.h>
-#include <cav_msgs/ManeuverPlan.h>
-#include <cav_srvs/PlanTrajectory.h>
-#include <carma_utils/CARMAUtils.h>
+#include <stdexcept>
 #include "plan_delegator.hpp"
 
 namespace plan_delegator
 {
-    int PlanDelegator::run() 
+    void PlanDelegator::init()
     {
-        ros::NodeHandle nh = ros::CARMANodeHandle();
-        ros::NodeHandle pnh = ros::CARMANodeHandle("~");
+        ros::CARMANodeHandle nh_ = ros::CARMANodeHandle();
+        ros::CARMANodeHandle pnh_ = ros::CARMANodeHandle("~");
 
-        ros::Publisher traj_pub = nh.advertise<cav_msgs::TrajectoryPlan>("trajectory_plan", 1);
+        pnh_.param<std::string>("planning_topic_prefix", planning_topic_prefix_, "/guidance/plugins/");        
+        pnh_.param<std::string>("planning_topic_suffix", planning_topic_suffix_, "/plan_trajectory");
 
-        std::string planning_topic_prefix;
-        pnh.param<std::string>("planning_topic_prefix", planning_topic_prefix, "/guidance/plugins/");
-        std::string planning_topic_suffix;
-        pnh.param<std::string>("planning_topic_suffix", planning_topic_suffix, "/plan_trajectory");
+        ros::Publisher traj_pub_ = nh_.advertise<cav_msgs::TrajectoryPlan>("trajectory_plan", 5);
+        ros::Subscriber plan_sub_ = nh_.subscribe("maneuver_plan", 5, &PlanDelegator::ManeuverPlanCallback, this);
+    }
+    
+    void PlanDelegator::run() 
+    {
+        ros::CARMANodeHandle::spin();
+    }
 
-        std::map<std::string, ros::ServiceClient> trajectory_planners;
+    void PlanDelegator::ManeuverPlanCallback(const cav_msgs::ManeuverPlanConstPtr& plan)
+    {
+        ROS_INFO_STREAM("Received request to delegate plan ID " << plan->maneuver_plan_id);
+        // do basic check to see if input is valid
+        if (plan->maneuvers.empty())
+        {
+            ROS_WARN_STREAM("Received empty plan, no maneuvers found in plan ID " << plan->maneuver_plan_id);
+            return;
+        }
+        // get corresponding ros service client for plan trajectory
+        // TODO Before implement plugin capability interface, we use strategic plugin as target planner as default
+        std::string first_maneuver_planner = GET_MANEUVER_PROPERTY(plan->maneuvers.front(), parameters.planning_strategic_plugin);
+        auto client = GetPlannerClientByName(first_maneuver_planner);
+        // compose service request
+        auto plan_req = cav_srvs::PlanTrajectory{};
+        plan_req.request.maneuver_plan = *plan;
+        if (client.call(plan_req))
+        {
+            ROS_INFO_STREAM("Sucessful service call to trajctory planner: " << first_maneuver_planner << "for plan ID " << plan->maneuver_plan_id);
+            traj_pub_.publish(plan_req.response.trajectory_plan);
+        }
+        else
+        {
+            ROS_WARN_STREAM("Unsuccessful service call to trajectory planner:" << first_maneuver_planner << "for plan ID " << plan->maneuver_plan_id);
+        }
+    }
 
-        ros::Subscriber plan_sub = nh.subscribe<cav_msgs::ManeuverPlan>(
-            "maneuver_plan", 
-            5,
-            [planning_topic_prefix, planning_topic_suffix, &trajectory_planners, &traj_pub, &nh](cav_msgs::ManeuverPlan::ConstPtr plan){
-                ROS_INFO_STREAM("Received request to delegate plan ID " << plan->maneuver_plan_id);
-                if (plan->maneuvers.empty())
-                {
-                    ROS_WARN_STREAM("Received empty plan, no maneuvers found in plan ID " << plan->maneuver_plan_id);
-                    return;
-                }
-
-                std::string first_maneuver_planner = GET_MANEUVER_PROPERTY(plan->maneuvers.front(), parameters.planning_strategic_plugin);
-                auto it = trajectory_planners.find(first_maneuver_planner);
-                if (it == trajectory_planners.end())
-                {
-                    // If its not in the map, add it to the map
-                    ROS_INFO_STREAM("Discovered new trajectory planner: " << first_maneuver_planner);
-                    std::string topic = planning_topic_prefix + first_maneuver_planner + planning_topic_suffix;
-                    ros::ServiceClient client = nh.serviceClient<cav_srvs::PlanTrajectory>(topic);
-                    trajectory_planners.emplace(first_maneuver_planner, client);
-                }
-
-                cav_srvs::PlanTrajectory plan_req;
-                plan_req.request.maneuver_plan = *plan;
-                if (trajectory_planners[first_maneuver_planner].call(plan_req))
-                {
-                    ROS_INFO_STREAM("Sucessful service call to trajctory planner: " << first_maneuver_planner << "for plan ID " << plan->maneuver_plan_id);
-                    traj_pub.publish(plan_req.response.trajectory_plan);
-                }
-                else
-                {
-                    ROS_WARN_STREAM("Unsuccessful service call to trajectory planner:" << first_maneuver_planner << "for plan ID " << plan->maneuver_plan_id);
-                }
-            });
-
-        ros::spin();
-
-        return 0;
+    ros::ServiceClient& PlanDelegator::GetPlannerClientByName(const std::string& planner_name)
+    {
+        if(planner_name.size() == 0)
+        {
+            throw std::invalid_argument("Input maneuver planner name has zero length!");
+        }
+        if(trajectory_planners_.find(planner_name) == trajectory_planners_.end())
+        {
+            ROS_INFO_STREAM("Discovered new trajectory planner: " << planner_name);
+            trajectory_planners_.emplace(planner_name, nh_.serviceClient<cav_srvs::PlanTrajectory>(planning_topic_prefix_ + planner_name + planning_topic_suffix_));
+        }
+        return trajectory_planners_[planner_name];
     }
 }

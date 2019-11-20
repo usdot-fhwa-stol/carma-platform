@@ -14,9 +14,16 @@
  * the License.
  */
 
-#ifndef __PLAN_DELEGATOR_HPP__
-#define __PLAN_DELEGATOR_HPP__
+#ifndef PLAN_DELEGATOR_INCLUDE_PLAN_DELEGATOR_HPP_
+#define PLAN_DELEGATOR_INCLUDE_PLAN_DELEGATOR_HPP_
 
+#include <unordered_map>
+#include <ros/ros.h>
+#include <cav_msgs/ManeuverPlan.h>
+#include <cav_srvs/PlanTrajectory.h>
+#include <carma_utils/CARMAUtils.h>
+
+// TODO Replace this Macro if possible
 /**
  * \brief Macro definition to enable easier access to fields shared across the maneuver typees
  * \param mvr The maneuver object to invoke the accessors on
@@ -33,18 +40,36 @@
 
 namespace plan_delegator
 {
-    /**
-     * Mock plan delegator shell for initial testing.
-     */
     class PlanDelegator
     {
         public:
+
             /**
-             * \brief Initialize the plan delegator and run it
-             * \return Standard unix program exit code
+             * \brief Initialize the plan delegator
              */
-            int run();
+            void init();
+
+            /**
+             * \brief Run the main thread of plan delegator
+             */
+            void run();
+
+        private:
+
+            ros::NodeHandle nh_;
+            ros::NodeHandle pnh_;
+
+            ros::Publisher traj_pub_;
+
+            std::string planning_topic_prefix_;
+            std::string planning_topic_suffix_;
+
+            std::unordered_map<std::string, ros::ServiceClient> trajectory_planners_;
+
+            void ManeuverPlanCallback(const cav_msgs::ManeuverPlanConstPtr& plan);
+
+            ros::ServiceClient& GetPlannerClientByName(const std::string& planner_name);
+            
     };
 }
-
-#endif //__PLAN_DELEGATOR_HPP__
+#endif // PLAN_DELEGATOR_INCLUDE_PLAN_DELEGATOR_HPP_
