@@ -12,7 +12,7 @@ import xml.etree.ElementTree as xml
 import xml.dom.minidom as pxml
 from lxml import etree
 
-# class representing node in lanelet2
+# class representing node object in Way object 
 class Node:
     def __init__(self, id, lat, lon, local_x, local_y):
         self.id = id
@@ -28,7 +28,7 @@ class Node:
         xml.SubElement(node_element, "tag", {"k": "local_y", "v": str(self.local_y)})
         return node_element
 
-# class representing way in lanelet2
+# class representing Way object in Relation object
 class Way:
     def __init__(self, id, nodes):
         self.id = id
@@ -42,7 +42,7 @@ class Way:
 
         return way_element
 
-# class representing relation in lanelet2
+# class representing relation object in osm
 class Relation:
     def __init__(self, id, member_left_id, member_right_id, from_cad_id, to_cad_id, cad_id, relation_type):
         self.id = str(id)
@@ -73,7 +73,7 @@ class Relation:
 
         return relation_element
 
-# class used to convert opendrive map to lanelet2 map
+# class used to convert opendrive 2d objecets to lanelet2 object
 class Opendrive2Lanelet2Convertor:
     def __init__(self, fn):
         self.scenario, self.geoReference = self.open_drive_loader(fn)
@@ -99,7 +99,6 @@ class Opendrive2Lanelet2Convertor:
         tree = xml.ElementTree(self.root)
         fh = open(fn, "wb")
         tree.write(fh)
-
 
     # convert vertice from opendrive to a node in lanelet 
     def convert_vertice_to_node(self,node_id,vertice):
