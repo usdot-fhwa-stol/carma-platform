@@ -1,6 +1,6 @@
 # opendrive2lanlet2
 
-opendrive2lanlet2 is a Python script for converting opendrive maps to lanelet2 map readable by autoware. this scripts only converts 2d roads with no elevation.
+opendrive2lanlet2 is a Python script for converting opendrive maps to lanelet2 map readable by autoware. this scripts only converts 2d roads with no elevation. also auutoware turn directions are not supported and set to default value straight
 
 ## Installation
 
