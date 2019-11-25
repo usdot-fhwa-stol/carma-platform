@@ -4,7 +4,6 @@ import os
 import sys, getopt
 from pyproj import Proj, transform
 
-from commonroad.common.file_writer import CommonRoadFileWriter
 from opendrive2lanelet.opendriveparser.parser import parse_opendrive
 from opendrive2lanelet.network import Network
 
