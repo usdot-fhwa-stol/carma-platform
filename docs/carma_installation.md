@@ -35,6 +35,7 @@ containing a base-line configuration of this system are available upon request.
 `sudo apt-get update`
 `sudo apt-get install -y python-catkin-pkg python-rosdep ros-$ROS_DISTRO-catkin gksu`
 `sudo apt-get install -y python3-pip python3-colcon-common-extensions python3-setuptools python3-vcstool`
+`sudo apt-get install -y libgeographic-dev libpugixml-dev python-catkin-tools libboost-python-dev`
 `pip3 install -U setuptools`
 
 6-2- Clone CARMA Packages
