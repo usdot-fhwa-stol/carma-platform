@@ -166,6 +166,7 @@ namespace plan_delegator
 
     bool PlanDelegator::SpinCallback()
     {
+        ROS_INFO_STREAM("Plan delegator is spinning...");
         cav_msgs::TrajectoryPlan trajectory_plan = PlanTrajectory();
         // Check if planned trajectory is valid before send out
         if(IsTrajectoryValid(trajectory_plan))

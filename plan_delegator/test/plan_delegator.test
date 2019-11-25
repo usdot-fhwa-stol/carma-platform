@@ -13,9 +13,9 @@
 -->
 
 <launch>
-    <node name="plan_delegator" pkg="plan_delegator" type="node">
+    <node name="plan_delegator" pkg="plan_delegator" type="node" output="screen">
         <rosparam command="load" file="$(find plan_delegator)/config/plan_delegator_params.yaml" />
     </node>
 
-    <test test-name="test_plan_delegator" pkg="plan_delegator" type="test_plan_delegator"/>
+    <test test-name="test_plan_delegator" pkg="plan_delegator" type="test_plan_delegator" />
 </launch>
