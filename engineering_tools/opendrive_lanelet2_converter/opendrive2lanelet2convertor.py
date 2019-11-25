@@ -27,7 +27,7 @@ class Node:
         xml.SubElement(node_element, "tag", {"k": "local_y", "v": str(self.local_y)})
         return node_element
 
-# class representing Way object in Relation object
+# class representing Way object in Relation object members
 class Way:
     def __init__(self, id, nodes):
         self.id = id
