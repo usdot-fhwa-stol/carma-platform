@@ -50,6 +50,7 @@ class Relation:
         self.from_cad_id = from_cad_id
         self.to_cad_id = to_cad_id
         self.relation_type = relation_type
+        # Unique id for relations for example it is use to define processor and successor for lanelets.
         self.cad_id = cad_id
         self.turn_direction = "straight"
 
