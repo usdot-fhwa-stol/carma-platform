@@ -62,18 +62,32 @@ namespace plan_delegator
              */
             void run();
 
-        private:
+            /**
+             * \brief Callback function of maneuver plan subscriber
+             */
+            void ManeuverPlanCallback(const cav_msgs::ManeuverPlanConstPtr& plan);
 
-            // nodehandle and private nodehandle
-            ros::NodeHandle nh_;
-            ros::NodeHandle pnh_;
+            /**
+             * \brief Get PlanTrajectory service client by plugin name and
+             * create new PlanTrajectory service client if specified name does not exist
+             * \return a ServiceClient object which corresponse to the target planner
+             */
+            ros::ServiceClient& GetPlannerClientByName(const std::string& planner_name);
 
-            // ROS subscribers and publishers
-            ros::Publisher traj_pub_;
-            ros::Subscriber plan_sub_;
-            ros::Subscriber pose_sub_;
-            ros::Subscriber twist_sub_;
+            /**
+             * \brief Example if a maneuver end time has passed current system time
+             * \return if input maneuver is expires
+             */
+            bool IsManeuverExpired(const cav_msgs::Maneuver& maneuver, ros::Time current_time = ros::Time::now()) const;
 
+            /**
+             * \brief Generate new PlanTrajecory service request based on current planning progress
+             * \return a PlanTrajectory object which is ready to be used in the following service call
+             */
+            cav_srvs::PlanTrajectory ComposePlanTrajectoryRequest(const cav_msgs::TrajectoryPlan& latest_trajectory_plan) const;
+
+        protected:
+            
             // ROS params
             std::string planning_topic_prefix_;
             std::string planning_topic_suffix_;
@@ -86,22 +100,23 @@ namespace plan_delegator
             geometry_msgs::PoseStamped latest_pose_;
             geometry_msgs::TwistStamped latest_twist_;
 
-            /**
-             * \brief Callback function of maneuver plan subscriber
-             */
-            void ManeuverPlanCallback(const cav_msgs::ManeuverPlanConstPtr& plan);
+        private:
+
+            // nodehandle and private nodehandle
+            ros::NodeHandle nh_;
+            ros::NodeHandle pnh_;
+
+            // ROS subscribers and publishers
+            ros::Publisher traj_pub_;
+            ros::Subscriber plan_sub_;
+            ros::Subscriber pose_sub_;
+            ros::Subscriber twist_sub_;
 
             /**
              * \brief Callback function of node spin
              * \return if callback function runs successfully
              */
             bool SpinCallback();
-
-            /**
-             * \brief Example if a maneuver end time has passed current system time
-             * \return if input maneuver is expires
-             */
-            bool IsManeuverExpired(const cav_msgs::Maneuver& maneuver) const noexcept;
 
             /**
              * \brief Example if a maneuver plan contains at least one maneuver
@@ -122,23 +137,11 @@ namespace plan_delegator
             bool IsTrajectoryLongEnough(const cav_msgs::TrajectoryPlan& plan) const noexcept;
 
             /**
-             * \brief Generate new PlanTrajecory service request because current planning progress
-             * \return a PlanTrajectory object which is ready to be used in the following service call
-             */
-            cav_srvs::PlanTrajectory ComposePlanTrajectoryRequest(const cav_msgs::TrajectoryPlan& latest_trajectory_plan) const;
-
-            /**
              * \brief Plan trajectory based on latest maneuver plan via ROS service call to plugins
              * \return a TrajectoryPlan object which contains PlanTrajectory response from plugins
              */
             cav_msgs::TrajectoryPlan PlanTrajectory();
 
-            /**
-             * \brief Get PlanTrajectory service client by plugin name and
-             * create new PlanTrajectory service client if specified name does not exist
-             * \return a ServiceClient object which corresponse to the target planner
-             */
-            ros::ServiceClient& GetPlannerClientByName(const std::string& planner_name);
     };
 }
 #endif // PLAN_DELEGATOR_INCLUDE_PLAN_DELEGATOR_HPP_

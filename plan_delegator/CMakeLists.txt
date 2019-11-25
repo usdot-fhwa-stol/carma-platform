@@ -64,6 +64,8 @@ add_executable(${PROJECT_NAME}_node
   src/plan_delegator.cpp
   src/plan_delegator_node.cpp)
 
+add_library(${PROJECT_NAME}_lib src/plan_delegator.cpp)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -109,8 +111,11 @@ install(DIRECTORY
 #############
 ## Testing ##
 #############
-if (CATKIN_ENABLE_TESTING)
-  find_package(rostest REQUIRED)
-  add_rostest_gtest(test_plan_delegator test/plan_delegator.test test/test_plan_delegator.cpp)
-  target_link_libraries(test_plan_delegator ${catkin_LIBRARIES})
-endif()
+#catkin_add_gmock(${PROJECT_NAME}-test test/test_plan_delegator.cpp)
+add_rostest_gtest(test_plan_delegator test/plan_delegator.test test/test_plan_delegator.cpp)
+target_link_libraries(test_plan_delegator ${PROJECT_NAME}_lib ${catkin_LIBRARIES})
+##if(CATKIN_ENABLE_TESTING)
+##  find_package(rostest REQUIRED)
+##  add_rostest_gtest(test_plan_delegator test/plan_delegator.test test/test_plan_delegator.cpp)
+##  target_link_libraries(test_plan_delegator ${catkin_LIBRARIES})
+##endif()
