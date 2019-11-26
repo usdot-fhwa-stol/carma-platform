@@ -35,21 +35,23 @@ namespace autoware_plugin
         
         maneuver_srv_ = nh_->advertiseService("plugins/AutowarePlugin/strategic_plan/plan_maneuvers", &AutowarePlugin::plan_maneuver_cb, this);
         trajectory_srv_ = nh_->advertiseService("plugins/AutowarePlugin/plan_trajectory", &AutowarePlugin::plan_trajectory_cb, this);
-
                 
         autoware_plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
-        cav_msgs::Plugin msg;
-        msg.name = "AutowarePlugin";
-        msg.versionId = "v1.0";
-        msg.available = true;
-        msg.activated = false;
-        autoware_plugin_discovery_pub_.publish(msg);
+        plugin_discovery_msg.name = "AutowarePlugin";
+        plugin_discovery_msg.versionId = "v1.0";
+        plugin_discovery_msg.available = true;
+        plugin_discovery_msg.activated = false;
 
         waypoints_sub_ = nh_->subscribe("final_waypoints", 1, &AutowarePlugin::waypoints_cb, this);
         pose_sub_ = nh_->subscribe("current_pose", 1, &AutowarePlugin::pose_cb, this);
         twist_sub_ = nh_->subscribe("current_velocity", 1, &AutowarePlugin::twist_cd, this);
         pnh_->param<double>("trajectory_time_length", trajectory_time_length_, 6.0);
         pnh_->param<double>("trajectory_point_spacing", trajectory_point_spacing_, 0.1);
+
+        ros::CARMANodeHandle::setSpinCallback([this]() -> bool {
+            autoware_plugin_discovery_pub_.publish(plugin_discovery_msg);
+            return true;
+        });
     }
 
 

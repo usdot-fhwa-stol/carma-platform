@@ -60,15 +60,12 @@ namespace autoware_plugin
         // node handles
         std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
-
         ros::Publisher autoware_plugin_discovery_pub_;
 
         // subscriber for Autoware waypoints
         ros::Subscriber waypoints_sub_;
         ros::Subscriber pose_sub_;
         ros::Subscriber twist_sub_;
-
-
 
         // ros service servers
         ros::ServiceServer trajectory_srv_;
@@ -81,12 +78,15 @@ namespace autoware_plugin
 
         // generated trajectory plan
         cav_msgs::TrajectoryPlan trajectory_msg;
+        
+        // Plugin discovery message
+        cav_msgs::Plugin plugin_discovery_msg;
+
         // Array of waypoints
         std::vector<autoware_msgs::Waypoint> waypoints_list;
 
         // Length of maneuver
         double mvr_length = 15;
-
 
         // ROS params
         double trajectory_time_length_;
