@@ -58,33 +58,33 @@ namespace plan_delegator
             void init();
 
             /**
-             * \brief Run the main thread of plan delegator
+             * \brief Run the spin loop of plan delegator
              */
             void run();
 
             /**
              * \brief Callback function of maneuver plan subscriber
              */
-            void ManeuverPlanCallback(const cav_msgs::ManeuverPlanConstPtr& plan);
+            void maneuverPlanCallback(const cav_msgs::ManeuverPlanConstPtr& plan);
 
             /**
              * \brief Get PlanTrajectory service client by plugin name and
              * create new PlanTrajectory service client if specified name does not exist
              * \return a ServiceClient object which corresponse to the target planner
              */
-            ros::ServiceClient& GetPlannerClientByName(const std::string& planner_name);
+            ros::ServiceClient& getPlannerClientByName(const std::string& planner_name);
 
             /**
              * \brief Example if a maneuver end time has passed current system time
              * \return if input maneuver is expires
              */
-            bool IsManeuverExpired(const cav_msgs::Maneuver& maneuver, ros::Time current_time = ros::Time::now()) const;
+            bool isManeuverExpired(const cav_msgs::Maneuver& maneuver, ros::Time current_time = ros::Time::now()) const;
 
             /**
              * \brief Generate new PlanTrajecory service request based on current planning progress
              * \return a PlanTrajectory object which is ready to be used in the following service call
              */
-            cav_srvs::PlanTrajectory ComposePlanTrajectoryRequest(const cav_msgs::TrajectoryPlan& latest_trajectory_plan) const;
+            cav_srvs::PlanTrajectory composePlanTrajectoryRequest(const cav_msgs::TrajectoryPlan& latest_trajectory_plan) const;
 
         protected:
             
@@ -116,31 +116,31 @@ namespace plan_delegator
              * \brief Callback function of node spin
              * \return if callback function runs successfully
              */
-            bool SpinCallback();
+            bool spinCallback();
 
             /**
              * \brief Example if a maneuver plan contains at least one maneuver
              * \return if input maneuver plan is valid
              */
-            bool IsManeuverPlanValid(const cav_msgs::ManeuverPlanConstPtr& maneuver_plan) const noexcept;
+            bool isManeuverPlanValid(const cav_msgs::ManeuverPlanConstPtr& maneuver_plan) const noexcept;
 
             /**
              * \brief Example if a trajectory plan contains at least two trajectory points
              * \return if input trajectory plan is valid
              */
-            bool IsTrajectoryValid(const cav_msgs::TrajectoryPlan& trajectory_plan) const noexcept;
+            bool isTrajectoryValid(const cav_msgs::TrajectoryPlan& trajectory_plan) const noexcept;
 
             /**
              * \brief Example if a trajectory plan is longer than configured time thresheld
              * \return if input trajectory plan is long enough
              */
-            bool IsTrajectoryLongEnough(const cav_msgs::TrajectoryPlan& plan) const noexcept;
+            bool isTrajectoryLongEnough(const cav_msgs::TrajectoryPlan& plan) const noexcept;
 
             /**
              * \brief Plan trajectory based on latest maneuver plan via ROS service call to plugins
              * \return a TrajectoryPlan object which contains PlanTrajectory response from plugins
              */
-            cav_msgs::TrajectoryPlan PlanTrajectory();
+            cav_msgs::TrajectoryPlan planTrajectory();
 
     };
 }

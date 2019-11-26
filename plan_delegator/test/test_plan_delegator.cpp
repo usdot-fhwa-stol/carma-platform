@@ -27,42 +27,42 @@
         public:
 
             // Helper functions for unit test
-            std::string GetPlanningTopicPrefix()
+            std::string getPlanningTopicPrefix()
             {
                 return this->planning_topic_prefix_;
             }
 
-            void SetPlanningTopicPrefix(std::string prefix)
+            void setPlanningTopicPrefix(std::string prefix)
             {
                 this->planning_topic_prefix_ = prefix;
             }
 
-            std::string GetPlanningTopicSuffix()
+            std::string getPlanningTopicSuffix()
             {
                 return this->planning_topic_suffix_;
             }
 
-            void SetPlanningTopicSuffix(std::string suffix)
+            void setPlanningTopicSuffix(std::string suffix)
             {
                 this->planning_topic_suffix_ = suffix;
             }
 
-            double GetSpinRate()
+            double getSpinRate()
             {
                 return this->spin_rate_;
             }
 
-            double GetMaxTrajDuration()
+            double getMaxTrajDuration()
             {
                 return this->max_trajectory_duration_;
             }
 
-            cav_msgs::ManeuverPlan GetLatestManeuverPlan()
+            cav_msgs::ManeuverPlan getLatestManeuverPlan()
             {
                 return this->latest_maneuver_plan_;
             }
 
-            std::unordered_map<std::string, ros::ServiceClient> GetServiceMap()
+            std::unordered_map<std::string, ros::ServiceClient> getServiceMap()
             {
                 return this->trajectory_planners_;
             }
@@ -71,39 +71,39 @@
     TEST(TestPlanDelegator, UnitTestPlanDelegator) {
         PlanDelegatorTest pd;
         // test initialization
-        EXPECT_EQ(0, pd.GetPlanningTopicPrefix().compare(""));
-        EXPECT_EQ(0, pd.GetPlanningTopicSuffix().compare(""));
-        EXPECT_EQ(10.0, pd.GetSpinRate());
-        EXPECT_EQ(6.0, pd.GetMaxTrajDuration());
+        EXPECT_EQ(0, pd.getPlanningTopicPrefix().compare(""));
+        EXPECT_EQ(0, pd.getPlanningTopicSuffix().compare(""));
+        EXPECT_EQ(10.0, pd.getSpinRate());
+        EXPECT_EQ(6.0, pd.getMaxTrajDuration());
         // test maneuver plan callback
         cav_msgs::ManeuverPlan plan;
         cav_msgs::Maneuver maneuver;
         maneuver.type = maneuver.LANE_FOLLOWING;
         maneuver.lane_following_maneuver.parameters.planning_strategic_plugin = "plugin_A";
         plan.maneuvers.push_back(maneuver);
-        pd.ManeuverPlanCallback(cav_msgs::ManeuverPlanConstPtr(new cav_msgs::ManeuverPlan(plan)));
-        EXPECT_EQ("plugin_A", GET_MANEUVER_PROPERTY(pd.GetLatestManeuverPlan().maneuvers[0], parameters.planning_strategic_plugin));
+        pd.maneuverPlanCallback(cav_msgs::ManeuverPlanConstPtr(new cav_msgs::ManeuverPlan(plan)));
+        EXPECT_EQ("plugin_A", GET_MANEUVER_PROPERTY(pd.getLatestManeuverPlan().maneuvers[0], parameters.planning_strategic_plugin));
         cav_msgs::ManeuverPlan new_plan;
-        pd.ManeuverPlanCallback(cav_msgs::ManeuverPlanConstPtr(new cav_msgs::ManeuverPlan(new_plan)));
+        pd.maneuverPlanCallback(cav_msgs::ManeuverPlanConstPtr(new cav_msgs::ManeuverPlan(new_plan)));
         // empty plan should not be stored locally
-        EXPECT_EQ("plugin_A", GET_MANEUVER_PROPERTY(pd.GetLatestManeuverPlan().maneuvers[0], parameters.planning_strategic_plugin));
+        EXPECT_EQ("plugin_A", GET_MANEUVER_PROPERTY(pd.getLatestManeuverPlan().maneuvers[0], parameters.planning_strategic_plugin));
         // test create service client
-        EXPECT_THROW(pd.GetPlannerClientByName(""), std::invalid_argument);
-        pd.SetPlanningTopicPrefix("/guidance/plugins/");
-        pd.SetPlanningTopicSuffix("/plan_trajectory");
-        ros::ServiceClient plugin_A = pd.GetPlannerClientByName("plugin_A");
+        EXPECT_THROW(pd.getPlannerClientByName(""), std::invalid_argument);
+        pd.setPlanningTopicPrefix("/guidance/plugins/");
+        pd.setPlanningTopicSuffix("/plan_trajectory");
+        ros::ServiceClient plugin_A = pd.getPlannerClientByName("plugin_A");
         EXPECT_EQ("/guidance/plugins/plugin_A/plan_trajectory", plugin_A.getService());
-        EXPECT_EQ(1, pd.GetServiceMap().size());
-        ros::ServiceClient plugin_A_copy = pd.GetPlannerClientByName("plugin_A");
+        EXPECT_EQ(1, pd.getServiceMap().size());
+        ros::ServiceClient plugin_A_copy = pd.getPlannerClientByName("plugin_A");
         EXPECT_EQ(true, plugin_A == plugin_A_copy);
         // test expired maneuver
         ros::Time test_time(0, 1000);
         cav_msgs::Maneuver test_maneuver;
         test_maneuver.type = cav_msgs::Maneuver::LANE_FOLLOWING;
         test_maneuver.lane_following_maneuver.end_time = test_time;
-        EXPECT_EQ(true, pd.IsManeuverExpired(test_maneuver));
+        EXPECT_EQ(true, pd.isManeuverExpired(test_maneuver));
         ros::Time test_time_eariler(0, 500);
-        EXPECT_EQ(false, pd.IsManeuverExpired(test_maneuver, test_time_eariler));
+        EXPECT_EQ(false, pd.isManeuverExpired(test_maneuver, test_time_eariler));
         // test compose new plan trajectory request
         cav_msgs::TrajectoryPlan traj_plan;
         cav_msgs::TrajectoryPlanPoint point_1;
@@ -116,7 +116,7 @@
         point_2.target_time = 1.41421 / PlanDelegatorTest::MILLISECOND_TO_SECOND;
         traj_plan.trajectory_points.push_back(point_1);
         traj_plan.trajectory_points.push_back(point_2);
-        cav_srvs::PlanTrajectory req = pd.ComposePlanTrajectoryRequest(traj_plan);
+        cav_srvs::PlanTrajectory req = pd.composePlanTrajectoryRequest(traj_plan);
         EXPECT_NEAR(1.0, req.request.vehicle_state.X_pos_global, 0.01);
         EXPECT_NEAR(1.0, req.request.vehicle_state.Y_pos_global, 0.01);
         EXPECT_NEAR(1.0, req.request.vehicle_state.longitudinal_vel, 0.1);

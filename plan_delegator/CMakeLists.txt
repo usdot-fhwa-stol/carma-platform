@@ -17,7 +17,7 @@ project(plan_delegator)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pthread")
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 ## Find catkin macros and libraries
