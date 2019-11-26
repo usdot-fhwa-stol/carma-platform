@@ -95,7 +95,6 @@ namespace plan_delegator
 
     cav_srvs::PlanTrajectory PlanDelegator::ComposePlanTrajectoryRequest(const cav_msgs::TrajectoryPlan& latest_trajectory_plan) const
     {
-        ROS_ERROR_STREAM("ComposePlanTrajectoryRequest was called!");
         auto plan_req = cav_srvs::PlanTrajectory{};
         plan_req.request.maneuver_plan = latest_maneuver_plan_;
         // set current vehicle state if we have NOT planned any previous trajectories
@@ -108,21 +107,15 @@ namespace plan_delegator
         // set vehicle state based on last two planned trajectory points
         else
         {
-            ROS_ERROR_STREAM("It is not Empty!");
             cav_msgs::TrajectoryPlanPoint last_point = latest_trajectory_plan.trajectory_points.back();
-            ROS_ERROR_STREAM("assignment 1");
             cav_msgs::TrajectoryPlanPoint second_last_point = *(latest_trajectory_plan.trajectory_points.rbegin() + 1);
-            ROS_ERROR_STREAM("assignment 1");
             plan_req.request.vehicle_state.X_pos_global = last_point.x;
             plan_req.request.vehicle_state.Y_pos_global = last_point.y;
-            ROS_ERROR_STREAM("last point is valid!");
             auto distance_diff = std::sqrt(std::pow(last_point.x - second_last_point.x, 2) + std::pow(last_point.y - second_last_point.y, 2));
-            ROS_ERROR_STREAM("second_last_point is valid!");
             auto time_diff = (last_point.target_time - second_last_point.target_time) * MILLISECOND_TO_SECOND;
             // this assumes the vehicle does not have significant lateral velocity
             plan_req.request.vehicle_state.longitudinal_vel = distance_diff / time_diff;
         }
-        ROS_ERROR_STREAM("ComposePlanTrajectoryRequest was returned!");
         return plan_req;
     }
 

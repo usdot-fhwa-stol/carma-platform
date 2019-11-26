@@ -88,6 +88,7 @@
         // empty plan should not be stored locally
         EXPECT_EQ("plugin_A", GET_MANEUVER_PROPERTY(pd.GetLatestManeuverPlan().maneuvers[0], parameters.planning_strategic_plugin));
         // test create service client
+        EXPECT_THROW(pd.GetPlannerClientByName(""), std::invalid_argument);
         pd.SetPlanningTopicPrefix("/guidance/plugins/");
         pd.SetPlanningTopicSuffix("/plan_trajectory");
         ros::ServiceClient plugin_A = pd.GetPlannerClientByName("plugin_A");
