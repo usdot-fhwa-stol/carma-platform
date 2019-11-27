@@ -38,7 +38,7 @@ namespace autoware_plugin
         plugin_discovery_msg_.versionId = "v1.0";
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = false;
-        plugin_discovery_msg.type = cav_msgs::Plugin::STRATEGIC;
+        plugin_discovery_msg_.type = cav_msgs::Plugin::STRATEGIC;
 
         waypoints_sub_ = nh_->subscribe("final_waypoints", 1, &AutowarePlugin::waypoints_cb, this);
         pose_sub_ = nh_->subscribe("current_pose", 1, &AutowarePlugin::pose_cb, this);
