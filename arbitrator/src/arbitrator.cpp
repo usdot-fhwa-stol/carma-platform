@@ -82,9 +82,13 @@ namespace arbitrator
 
     void Arbitrator::initial_state()
     {
-        final_plan_pub_ = nh_->advertise<cav_msgs::ManeuverPlan>("final_maneuver_plan", 5);
-        guidance_state_sub_ = nh_->subscribe<cav_msgs::GuidanceState>("guidance_state", 5, &Arbitrator::guidance_state_cb, this);
-        // TODO: load plan duration from parameters file
+        if(!initialized_)
+        {
+            final_plan_pub_ = nh_->advertise<cav_msgs::ManeuverPlan>("final_maneuver_plan", 5);
+            guidance_state_sub_ = nh_->subscribe<cav_msgs::GuidanceState>("guidance_state", 5, &Arbitrator::guidance_state_cb, this);
+            initialized_ = true;
+            // TODO: load plan duration from parameters file
+        }
     }
 
     void Arbitrator::planning_state()

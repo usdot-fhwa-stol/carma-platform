@@ -68,8 +68,6 @@ namespace autoware_plugin
         ros::Subscriber pose_sub_;
         ros::Subscriber twist_sub_;
 
-
-
         // ros service servers
         ros::ServiceServer trajectory_srv_;
         ros::ServiceServer maneuver_srv_;
@@ -77,7 +75,6 @@ namespace autoware_plugin
         // service callbacks for carma maneuver and trajectory planning
         bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp);
         bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
-
 
         // generated trajectory plan
         cav_msgs::TrajectoryPlan trajectory_msg;
@@ -87,6 +84,8 @@ namespace autoware_plugin
         // Length of maneuver
         double mvr_length = 15;
 
+        // Plugin discovery message
+        cav_msgs::Plugin plugin_discovery_msg_;
 
         // ROS params
         double trajectory_time_length_;

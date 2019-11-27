@@ -53,7 +53,8 @@ namespace arbitrator
                 nh_(nh),
                 pnh_(pnh),
                 capabilities_interface_(ci),
-                planning_strategy_(planning_strategy) {};
+                planning_strategy_(planning_strategy),
+                initialized_(false) {};
             
             /**
              * \brief Begin the operation of the arbitrator.
@@ -107,6 +108,7 @@ namespace arbitrator
             ros::Time next_planning_process_start_;
             CapabilitiesInterface *capabilities_interface_;
             const PlanningStrategy &planning_strategy_;
+            bool initialized_;
     };
 };
 
