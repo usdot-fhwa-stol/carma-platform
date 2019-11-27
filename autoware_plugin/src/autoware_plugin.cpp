@@ -20,6 +20,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include "autoware_plugin.h"
 
+
 namespace autoware_plugin
 {
     AutowarePlugin::AutowarePlugin() :
@@ -31,8 +32,11 @@ namespace autoware_plugin
     {
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
-        trajectory_pub_ = nh_->advertise<cav_msgs::TrajectoryPlan>("plan_trajectory", 1);
         
+        maneuver_srv_ = nh_->advertiseService("plugins/AutowarePlugin/strategic_plan/plan_maneuvers", &AutowarePlugin::plan_maneuver_cb, this);
+        trajectory_srv_ = nh_->advertiseService("plugins/AutowarePlugin/plan_trajectory", &AutowarePlugin::plan_trajectory_cb, this);
+
+                
         autoware_plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
         plugin_discovery_msg_.name = "Autoware Plugin";
         plugin_discovery_msg_.versionId = "v1.0";
@@ -52,10 +56,43 @@ namespace autoware_plugin
         });
     }
 
+
     void AutowarePlugin::run()
     {
         initialize();
         ros::CARMANodeHandle::spin();
+    }
+
+
+
+    bool AutowarePlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp){
+        resp.trajectory_plan = trajectory_msg;
+        resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_FOLLOWING);
+        resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
+
+        return true;
+    }
+
+    bool AutowarePlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp){        
+
+        cav_msgs::Maneuver maneuver_msg;
+
+        maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;  
+
+
+        maneuver_msg.lane_following_maneuver.start_dist = 0.0;
+        maneuver_msg.lane_following_maneuver.start_speed = ((waypoints_list.size() > 0) ? waypoints_list[0].twist.twist.linear.x : 0.0);
+        maneuver_msg.lane_following_maneuver.start_time = ros::Time::now();
+
+
+        maneuver_msg.lane_following_maneuver.end_dist = 20.0;
+        maneuver_msg.lane_following_maneuver.end_speed = ((waypoints_list.size() > 0) ? waypoints_list[waypoints_list.size() - 1].twist.twist.linear.x : 0.0);
+        maneuver_msg.lane_following_maneuver.end_time = ros::Time::now()+ros::Duration(mvr_length);
+
+
+        resp.new_plan.maneuvers.push_back(maneuver_msg);
+       
+        return true;
     }
 
     void AutowarePlugin::waypoints_cb(const autoware_msgs::LaneConstPtr& msg)
@@ -71,7 +108,8 @@ namespace autoware_plugin
         trajectory.header.stamp = ros::Time::now();
         trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
         trajectory.trajectory_points = compose_trajectory_from_waypoints(msg->waypoints);
-        trajectory_pub_.publish(trajectory);
+        waypoints_list = msg->waypoints;
+        trajectory_msg = trajectory;
     }
 
     void AutowarePlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
