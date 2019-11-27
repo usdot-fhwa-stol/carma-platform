@@ -65,6 +65,9 @@ namespace autoware_plugin
         ros::Subscriber pose_sub_;
         ros::Subscriber twist_sub_;
 
+        // Plugin discovery message
+        cav_msgs::Plugin plugin_discovery_msg_;
+
         // ROS params
         double trajectory_time_length_;
         double trajectory_point_spacing_;
