@@ -35,9 +35,9 @@ int main(int argc, char** argv)
     arbitrator::CapabilitiesInterface ci{&nh};
     arbitrator::ArbitratorStateMachine sm;
 
-    std::map<std::string, double> plugin_priorites; 
-    pnh.getParam("plugin_priorities", plugin_priorites);
-    arbitrator::FixedPriorityCostFunction fpcf{plugin_priorites};
+    std::map<std::string, double> plugin_priorities;
+    pnh.getParam("plugin_priorities", plugin_priorities);
+    arbitrator::FixedPriorityCostFunction fpcf{plugin_priorities};
 
     int beam_width;
     pnh.param("beam_width", beam_width, 3);
