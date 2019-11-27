@@ -89,6 +89,7 @@ namespace arbitrator
             initialized_ = true;
             // TODO: load plan duration from parameters file
         }
+        capabilities_interface_->initialize();
     }
 
     void Arbitrator::planning_state()
