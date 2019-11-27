@@ -38,7 +38,7 @@ namespace autoware_plugin
 
                 
         autoware_plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
-        plugin_discovery_msg_.name = "Autoware Plugin";
+        plugin_discovery_msg_.name = "AutowarePlugin";
         plugin_discovery_msg_.versionId = "v1.0";
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = false;
