@@ -27,7 +27,7 @@ namespace plan_delegator
         nh_ = ros::CARMANodeHandle();
         pnh_ = ros::CARMANodeHandle("~");
 
-        pnh_.param<std::string>("planning_topic_prefix", planning_topic_prefix_, "/guidance/plugins/");        
+        pnh_.param<std::string>("planning_topic_prefix", planning_topic_prefix_, "/plugins/");        
         pnh_.param<std::string>("planning_topic_suffix", planning_topic_suffix_, "/plan_trajectory");
         pnh_.param<double>("spin_rate", spin_rate_, 10.0);
         pnh_.param<double>("trajectory_duration_threshold", max_trajectory_duration_, 6.0);
@@ -156,7 +156,7 @@ namespace plan_delegator
             }
             else
             {
-                ROS_ERROR_STREAM("Unsuccessful service call to trajectory planner:" << maneuver_planner << "for plan ID " << latest_maneuver_plan_.maneuver_plan_id);
+                ROS_ERROR_STREAM("Unsuccessful service call to trajectory planner:" << maneuver_planner << " for plan ID " << latest_maneuver_plan_.maneuver_plan_id);
                 // if one service call fails, it should end plan immediately because it is there is no point to generate plan with empty space
                 break;
             }
@@ -166,11 +166,11 @@ namespace plan_delegator
 
     bool PlanDelegator::spinCallback()
     {
-        ROS_INFO_STREAM("Plan delegator is spinning...");
         cav_msgs::TrajectoryPlan trajectory_plan = planTrajectory();
         // Check if planned trajectory is valid before send out
         if(isTrajectoryValid(trajectory_plan))
         {
+            ROS_INFO_STREAM("Planned trajectory is not empty. It will be published!");
             traj_pub_.publish(trajectory_plan);
         }
         else
