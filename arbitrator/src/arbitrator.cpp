@@ -102,11 +102,11 @@ namespace arbitrator
 
         if (plan_duration < min_plan_duration_) 
         {
-            ROS_WARN_STREAM("Unable to generate a plan to minimum plan duration!");
+            ROS_WARN_STREAM("Arbitrator is unable to generate a plan with minimum plan duration!");
         } 
         else 
         {
-            ROS_INFO_STREAM("Publishing plan " << plan.maneuver_plan_id << " of duration " << plan_duration << " as current maneuver plan");
+            ROS_INFO_STREAM("Arbitrator is publishing plan " << plan.maneuver_plan_id << " of duration " << plan_duration << " as current maneuver plan");
         }
         final_plan_pub_.publish(plan);
 

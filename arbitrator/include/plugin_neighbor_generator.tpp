@@ -37,7 +37,6 @@ namespace arbitrator
         {
             out.push_back(it->second.response.new_plan);
         }
-
         return out;
     }
 }

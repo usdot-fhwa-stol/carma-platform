@@ -32,11 +32,11 @@ namespace plan_delegator
         pnh_.param<double>("spin_rate", spin_rate_, 10.0);
         pnh_.param<double>("trajectory_duration_threshold", max_trajectory_duration_, 6.0);
 
-        traj_pub_ = nh_.advertise<cav_msgs::TrajectoryPlan>("trajectory_plan", 5);
-        plan_sub_ = nh_.subscribe("maneuver_plan", 5, &PlanDelegator::maneuverPlanCallback, this);
+        traj_pub_ = nh_.advertise<cav_msgs::TrajectoryPlan>("plan_trajectory", 5);
+        plan_sub_ = nh_.subscribe("final_maneuver_plan", 5, &PlanDelegator::maneuverPlanCallback, this);
         twist_sub_ = nh_.subscribe<geometry_msgs::TwistStamped>("current_velocity", 5,
             [&](const geometry_msgs::TwistStampedConstPtr& twist) {latest_twist_ = *twist;});
-        pose_sub_ = nh_.subscribe<geometry_msgs::PoseStamped>("selected_pose", 5,
+        pose_sub_ = nh_.subscribe<geometry_msgs::PoseStamped>("current_pose", 5,
             [&](const geometry_msgs::PoseStampedConstPtr& pose) {latest_pose_ = *pose;});
 
         ros::CARMANodeHandle::setSpinCallback(std::bind(&PlanDelegator::spinCallback, this));
@@ -131,7 +131,10 @@ namespace plan_delegator
         for(const auto& maneuver : latest_maneuver_plan_.maneuvers)
         {
             // ignore expired maneuvers
-            if(isManeuverExpired(maneuver)) continue;
+            if(isManeuverExpired(maneuver))
+            {
+                continue;
+            }
             // get corresponding ros service client for plan trajectory
             auto maneuver_planner = GET_MANEUVER_PROPERTY(maneuver, parameters.planning_strategic_plugin);
             auto client = getPlannerClientByName(maneuver_planner);
@@ -142,7 +145,6 @@ namespace plan_delegator
                 // validate trajectory before add to the plan
                 if(!isTrajectoryValid(plan_req.response.trajectory_plan))
                 {
-                    ROS_WARN_STREAM("Found invalid trajectory with less than 2 trajectory points for " << latest_maneuver_plan_.maneuver_plan_id);
                     break;
                 }
                 latest_trajectory_plan.trajectory_points.insert(latest_trajectory_plan.trajectory_points.end(),
@@ -156,7 +158,7 @@ namespace plan_delegator
             }
             else
             {
-                ROS_ERROR_STREAM("Unsuccessful service call to trajectory planner:" << maneuver_planner << " for plan ID " << latest_maneuver_plan_.maneuver_plan_id);
+                ROS_WARN_STREAM("Unsuccessful service call to trajectory planner:" << maneuver_planner << " for plan ID " << latest_maneuver_plan_.maneuver_plan_id);
                 // if one service call fails, it should end plan immediately because it is there is no point to generate plan with empty space
                 break;
             }
@@ -170,7 +172,6 @@ namespace plan_delegator
         // Check if planned trajectory is valid before send out
         if(isTrajectoryValid(trajectory_plan))
         {
-            ROS_INFO_STREAM("Planned trajectory is not empty. It will be published!");
             traj_pub_.publish(trajectory_plan);
         }
         else

@@ -27,7 +27,7 @@ namespace arbitrator
 
     void CapabilitiesInterface::initialize() 
     {
-        static ros::ServiceClient sc = nh_->serviceClient<cav_srvs::PluginList>("/plugins/get_registered_plugins");
+        static ros::ServiceClient sc = nh_->serviceClient<cav_srvs::PluginList>("/guidance/plugins/get_registered_plugins");
         cav_srvs::PluginList msg;
         if (sc.call(msg)) {
             for (auto it = msg.response.plugins.begin(); it != msg.response.plugins.end(); it++)
@@ -53,7 +53,7 @@ namespace arbitrator
                     // NOTE: It is assumed for now (due to lack of true capabilties register),
                     // That all plugins conform to the convention of providing a service for
                     // planning maneuvers at "/plugins/{PLUGIN_NAME}/strategic_plan/plan_maneuvers"
-                    std::string topic = "/plugins/" + it->name + "/" + capability;
+                    std::string topic = "/guidance/plugins/" + it->name + "/" + capability;
                     // Check if bucket for that capability already exists
                     if (capabilities_.find(capability) != capabilities_.end())
                     {
