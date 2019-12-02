@@ -17,10 +17,12 @@
 #include "ros/ros.h"
 #include "plan_delegator.hpp"
 
-// Main entry point for mock plan delegator
+// Main entry point for plan delegator
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "plan_delegator");
     plan_delegator::PlanDelegator pd;
-    return pd.run();
+    pd.init();
+    pd.run();
+    return 0;
 }

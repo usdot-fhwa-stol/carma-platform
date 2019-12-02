@@ -1,3 +1,17 @@
+# Copyright (C) 2018-2019 LEIDOS.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations under
+# the License.
+
 cmake_minimum_required(VERSION 2.8.3)
 project(plan_delegator)
 
@@ -16,16 +30,6 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   carma_utils
 )
-
-## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
-
-
-## Uncomment this if the package has a setup.py. This macro ensures
-## modules and global scripts declared therein get installed
-## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
-
 
 ###################################
 ## catkin specific configuration ##
@@ -60,6 +64,8 @@ add_executable(${PROJECT_NAME}_node
   src/plan_delegator.cpp
   src/plan_delegator_node.cpp)
 
+add_library(${PROJECT_NAME}_lib src/plan_delegator.cpp)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -69,6 +75,7 @@ set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX ""
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME}_lib ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
@@ -105,12 +112,11 @@ install(DIRECTORY
 #############
 ## Testing ##
 #############
-
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_plan_delegator.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
-
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
+#catkin_add_gmock(${PROJECT_NAME}-test test/test_plan_delegator.cpp)
+add_rostest_gtest(test_plan_delegator test/plan_delegator.test test/test_plan_delegator.cpp)
+target_link_libraries(test_plan_delegator ${PROJECT_NAME}_lib ${catkin_LIBRARIES})
+##if(CATKIN_ENABLE_TESTING)
+##  find_package(rostest REQUIRED)
+##  add_rostest_gtest(test_plan_delegator test/plan_delegator.test test/test_plan_delegator.cpp)
+##  target_link_libraries(test_plan_delegator ${catkin_LIBRARIES})
+##endif()
