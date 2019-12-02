@@ -47,7 +47,7 @@ TEST(BSMWorkerTest, testMsgId)
 TEST(BSMWorkerTest, fakeTest)
 {
     exit(1);
-}
+
 
 TEST(BSMWorkerTest, testSecMark)
 {
