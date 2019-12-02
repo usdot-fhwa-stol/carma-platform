@@ -102,7 +102,7 @@ namespace arbitrator
 
         if (plan_duration < min_plan_duration_) 
         {
-            ROS_WARN_STREAM("Arbitrator is unable to generate a plan with minimum plan duration!");
+            ROS_WARN_STREAM("Arbitrator is unable to generate a plan with minimum plan duration requirement!");
         } 
         else 
         {

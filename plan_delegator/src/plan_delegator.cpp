@@ -145,6 +145,7 @@ namespace plan_delegator
                 // validate trajectory before add to the plan
                 if(!isTrajectoryValid(plan_req.response.trajectory_plan))
                 {
+                    ROS_WARN_STREAM("Found invalid trajectory with less than 2 trajectory points for " << latest_maneuver_plan_.maneuver_plan_id);
                     break;
                 }
                 latest_trajectory_plan.trajectory_points.insert(latest_trajectory_plan.trajectory_points.end(),
