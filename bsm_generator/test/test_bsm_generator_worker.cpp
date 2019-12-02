@@ -44,7 +44,7 @@ TEST(BSMWorkerTest, testMsgId)
 }
 
 /* added as part of sonarqube bug fix */
-TEST(BSMWorkerTest, testSecMark)
+TEST(BSMWorkerTest, fakeTest)
 {
     EXIT_FAILURE;
 }
