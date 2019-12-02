@@ -43,6 +43,12 @@ TEST(BSMWorkerTest, testMsgId)
     EXPECT_TRUE(msgId2 != msgId3);
 }
 
+/* added as part of sonarqube bug fix */
+TEST(BSMWorkerTest, testSecMark)
+{
+    EXIT_FAILURE;
+}
+
 TEST(BSMWorkerTest, testSecMark)
 {
     bsm_generator::BSMGeneratorWorker worker;
