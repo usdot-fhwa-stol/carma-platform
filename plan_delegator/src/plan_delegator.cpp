@@ -173,6 +173,7 @@ namespace plan_delegator
         // Check if planned trajectory is valid before send out
         if(isTrajectoryValid(trajectory_plan))
         {
+            trajectory_plan.header.stamp = ros::Time::now();
             traj_pub_.publish(trajectory_plan);
         }
         else
