@@ -48,7 +48,9 @@ int main(int argc, char** argv)
     pnh.param("target_duration", target_plan, 15.0);
     arbitrator::TreePlanner tp{fpcf, png, bss, ros::Duration(target_plan)};
 
-    arbitrator::Arbitrator arbitrator{&nh, &pnh, &sm, &ci, tp};
+    double planning_frequency;
+    pnh.param("planning_frequency", planning_frequency, 1.0);
+    arbitrator::Arbitrator arbitrator{&nh, &pnh, &sm, &ci, tp, ros::Rate(planning_frequency)};
 
     arbitrator.run();
 
