@@ -1,8 +1,9 @@
+#!/usr/bin/env python3
+
 import os
 import sys, getopt
 from pyproj import Proj, transform
 import numpy as np
-from commonroad.common.file_writer import CommonRoadFileWriter
 from opendrive2lanelet.opendriveparser.parser import parse_opendrive
 from opendrive2lanelet.network import Network
 
@@ -10,7 +11,7 @@ import xml.etree.ElementTree as xml
 import xml.dom.minidom as pxml
 from lxml import etree
 
-# class representing node in lanelet2
+# class representing node object in Way object 
 class Node:
     def __init__(self, id, lat, lon, local_x, local_y):
         self.id = id
@@ -26,7 +27,7 @@ class Node:
         xml.SubElement(node_element, "tag", {"k": "local_y", "v": str(self.local_y)})
         return node_element
 
-# class representing way in lanelet2
+# class representing Way object in Relation object members
 class Way:
     def __init__(self, id, nodes):
         self.id = id
@@ -40,7 +41,7 @@ class Way:
         xml.SubElement(way_element, "tag", {"k": "type", "v": "linestring"})
         return way_element
 
-# class representing relation in lanelet2
+# class representing relation object in osm
 class Relation:
     def __init__(self, id, member_left, member_right, from_cad_id, to_cad_id, cad_id, relation_type):
         self.id = str(id)
@@ -51,6 +52,7 @@ class Relation:
         self.from_cad_id = from_cad_id
         self.to_cad_id = to_cad_id
         self.relation_type = relation_type
+        # Unique id for relations for example it is use to define processor and successor for lanelets.
         self.cad_id = cad_id
         self.turn_direction = "straight"
         self.set_turn_direction()
@@ -99,7 +101,7 @@ class Relation:
 
         self.turn_direction = turn_direction
 
-# class used to convert opendrive map to lanelet2 map
+# class used to convert opendrive 2d objecets to lanelet2 object
 class Opendrive2Lanelet2Convertor:
     def __init__(self, fn):
         self.scenario, self.geoReference = self.open_drive_loader(fn)
