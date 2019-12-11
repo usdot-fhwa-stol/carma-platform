@@ -82,7 +82,7 @@ namespace autoware_plugin
         std::vector<autoware_msgs::Waypoint> waypoints_list;
 
         // Length of maneuver
-        double mvr_length = 15;
+        double mvr_length = 16;
 
         // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
