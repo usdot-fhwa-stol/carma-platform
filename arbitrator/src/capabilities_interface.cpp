@@ -30,6 +30,7 @@ namespace arbitrator
         static ros::ServiceClient sc = nh_->serviceClient<cav_srvs::PluginList>("/guidance/plugins/get_registered_plugins");
         cav_srvs::PluginList msg;
         if (sc.call(msg)) {
+            capabilities_.clear();
             for (auto it = msg.response.plugins.begin(); it != msg.response.plugins.end(); it++)
             {
                 if (it->activated)

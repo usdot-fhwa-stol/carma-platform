@@ -43,18 +43,24 @@ namespace arbitrator
              * \param sm An ArbitratorStateMachine instance for regulating the states of the Arbitrator
              * \param ci A CapabilitiesInterface for querying plugins
              * \param planning_strategy A planning strategy implementation for generating plans
+             * \param min_plan_duration The minimum acceptable length of a plan
+             * \param planning_frequency The frequency at which to generate high-level plans when engaged
              */ 
             Arbitrator(ros::CARMANodeHandle *nh, 
                 ros::CARMANodeHandle *pnh, 
                 ArbitratorStateMachine *sm, 
                 CapabilitiesInterface *ci, 
-                const PlanningStrategy &planning_strategy):
+                const PlanningStrategy &planning_strategy,
+                ros::Duration min_plan_duration,
+                ros::Rate planning_frequency):
                 sm_(sm),
                 nh_(nh),
                 pnh_(pnh),
                 capabilities_interface_(ci),
                 planning_strategy_(planning_strategy),
-                initialized_(false) {};
+                initialized_(false),
+                min_plan_duration_(min_plan_duration),
+                time_between_plans_(planning_frequency.expectedCycleTime()) {};
             
             /**
              * \brief Begin the operation of the arbitrator.
@@ -103,7 +109,6 @@ namespace arbitrator
             ros::CARMANodeHandle *nh_;
             ros::CARMANodeHandle *pnh_;
             ros::Duration min_plan_duration_;
-            ros::Duration max_plan_duration_;
             ros::Duration time_between_plans_;
             ros::Time next_planning_process_start_;
             CapabilitiesInterface *capabilities_interface_;
