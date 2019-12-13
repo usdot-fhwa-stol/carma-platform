@@ -21,56 +21,52 @@
 
 namespace carma_wm
 {
-
-  /*! 
-   * \brief Backend logic class for WMListener
-   *
+/*!
+ * \brief Backend logic class for WMListener
+ *
+ */
+class WMListenerWorker
+{
+public:
+  /*!
+   * \brief Constructor
    */
-  class WMListenerWorker
-  {
+  WMListenerWorker();
 
-    public:
+  /*!
+   * \brief Constructor
+   */
+  WorldModelConstPtr getWorldModel() const;
 
-      /*! 
-      * \brief Constructor
-      */
-      WMListenerWorker();
-      
-      /*! 
-      * \brief Constructor
-      */
-      WorldModelConstPtr getWorldModel() const;
+  /*!
+   * \brief Callback for new map messages. Updates the underlying map
+   *
+   * \param map_msg The new map messaged to generate the map from
+   */
+  void mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr& map_msg);
 
-      /*!
-       * \brief Callback for new map messages. Updates the underlying map
-       * 
-       * \param map_msg The new map messaged to generate the map from
-       */ 
-      void mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr& map_msg);
+  /*!
+   * \brief Callback for route message. It is a TODO: To update function when route message spec is defined
+   */
+  void routeCallback();
 
-      /*!
-       * \brief Callback for route message. It is a TODO: To update function when route message spec is defined
-       */ 
-      void routeCallback();
+  /*!
+   * \brief Allows user to set a callback to be triggered when a map update is received
+   *
+   * \param callback A callback function that will be triggered after the world model receives a new map update
+   */
+  void setMapCallback(std::function<void()> callback);
 
-     /*!
-      * \brief Allows user to set a callback to be triggered when a map update is received
-      * 
-      * \param callback A callback function that will be triggered after the world model receives a new map update
-      */ 
-      void setMapCallback(std::function<void()> callback);
+  /*!
+   * \brief Allows user to set a callback to be triggered when a route update is received
+   *
+   * \param callback A callback function that will be triggered after the world model is updated with a new route
+   */
+  void setRouteCallback(std::function<void()> callback);
 
-      /*!
-       * \brief Allows user to set a callback to be triggered when a route update is received
-       * 
-       * \param callback A callback function that will be triggered after the world model is updated with a new route
-       */ 
-      void setRouteCallback(std::function<void()> callback);
-
-    private:
-
-      std::shared_ptr<CARMAWorldModel> world_model_;
-      std::function<void()> map_callback_;
-      std::function<void()> route_callback_;
-  };
-}
+private:
+  std::shared_ptr<CARMAWorldModel> world_model_;
+  std::function<void()> map_callback_;
+  std::function<void()> route_callback_;
+};
+}  // namespace carma_wm

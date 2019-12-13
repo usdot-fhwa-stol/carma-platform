@@ -27,77 +27,75 @@
 #include <string>
 #include "TestHelpers.h"
 
-using ::testing::A;
 using ::testing::_;
+using ::testing::A;
 using ::testing::DoAll;
+using ::testing::InSequence;
 using ::testing::Return;
 using ::testing::ReturnArg;
-using ::testing::InSequence;
 
 namespace carma_wm
 {
+TEST(WMListenerWorkerTest, constructor)
+{
+  WMListenerWorker wmlw;
 
-  TEST(WMListenerWorkerTest, constructor)
-  {
-    WMListenerWorker wmlw;
-
-    ASSERT_TRUE((bool) wmlw.getWorldModel());
-  }
-
-  TEST(WMListenerWorkerTest, mapCallback)
-  {
-    CARMAWorldModel cwm;
-
-    addStraightRoute(cwm);
-
-    ASSERT_TRUE((bool)cwm.getMap());
-    ASSERT_TRUE((bool)cwm.getRoute());
-    ASSERT_TRUE((bool)cwm.getMapRoutingGraph());
-
-    auto map_ptr = lanelet::utils::removeConst(cwm.getMap());
-
-    autoware_lanelet2_msgs::MapBin msg;
-    lanelet::utils::conversion::toBinMsg(map_ptr, &msg);
-
-    autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(msg));
-
-
-    WMListenerWorker wmlw;
-
-    ///// Test map not set
-    ASSERT_FALSE((bool)(wmlw.getWorldModel()->getMap()));
-
-    ///// Test Map callback without user callback
-    wmlw.mapCallback(map_msg_ptr);
-    ASSERT_TRUE((bool)(wmlw.getWorldModel()->getMap()));
-
-    ///// Test user defined callback
-    bool flag = false;
-    ASSERT_FALSE(flag);
-
-    wmlw.setMapCallback([&flag]() { flag = true; });
-
-    wmlw.mapCallback(map_msg_ptr);
-
-    ASSERT_TRUE(flag);
-  }
-
-  TEST(WMListenerWorkerTest, routeCallback)
-  {
-    WMListenerWorker wmlw;
-
-    bool flag = false;
-
-    ///// Test without user defined route callback
-    wmlw.routeCallback();
-
-    ASSERT_FALSE(flag);
-
-    ///// Test with user defined route callback
-    wmlw.setRouteCallback([&flag]() { flag = true; });
-
-    wmlw.routeCallback();
-
-    ASSERT_TRUE(flag);
-  }
+  ASSERT_TRUE((bool)wmlw.getWorldModel());
 }
+
+TEST(WMListenerWorkerTest, mapCallback)
+{
+  CARMAWorldModel cwm;
+
+  addStraightRoute(cwm);
+
+  ASSERT_TRUE((bool)cwm.getMap());
+  ASSERT_TRUE((bool)cwm.getRoute());
+  ASSERT_TRUE((bool)cwm.getMapRoutingGraph());
+
+  auto map_ptr = lanelet::utils::removeConst(cwm.getMap());
+
+  autoware_lanelet2_msgs::MapBin msg;
+  lanelet::utils::conversion::toBinMsg(map_ptr, &msg);
+
+  autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(msg));
+
+  WMListenerWorker wmlw;
+
+  ///// Test map not set
+  ASSERT_FALSE((bool)(wmlw.getWorldModel()->getMap()));
+
+  ///// Test Map callback without user callback
+  wmlw.mapCallback(map_msg_ptr);
+  ASSERT_TRUE((bool)(wmlw.getWorldModel()->getMap()));
+
+  ///// Test user defined callback
+  bool flag = false;
+  ASSERT_FALSE(flag);
+
+  wmlw.setMapCallback([&flag]() { flag = true; });
+
+  wmlw.mapCallback(map_msg_ptr);
+
+  ASSERT_TRUE(flag);
+}
+
+TEST(WMListenerWorkerTest, routeCallback)
+{
+  WMListenerWorker wmlw;
+
+  bool flag = false;
+
+  ///// Test without user defined route callback
+  wmlw.routeCallback();
+
+  ASSERT_FALSE(flag);
+
+  ///// Test with user defined route callback
+  wmlw.setRouteCallback([&flag]() { flag = true; });
+
+  wmlw.routeCallback();
+
+  ASSERT_TRUE(flag);
+}
+}  // namespace carma_wm

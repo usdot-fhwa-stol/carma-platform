@@ -19,43 +19,49 @@
 
 namespace carma_wm
 {
+WMListenerWorker::WMListenerWorker()
+{
+  world_model_.reset(new CARMAWorldModel);
+}
 
-  WMListenerWorker::WMListenerWorker() {
-    world_model_.reset(new CARMAWorldModel);
-  }
+WorldModelConstPtr WMListenerWorker::getWorldModel() const
+{
+  return std::static_pointer_cast<const WorldModel>(world_model_);  // Cast pointer to const variant
+}
 
-  WorldModelConstPtr WMListenerWorker::getWorldModel() const {
-    return std::static_pointer_cast< const WorldModel >(world_model_); // Cast pointer to const variant
-  }
+void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr& map_msg)
+{
+  lanelet::LaneletMapPtr new_map(new lanelet::LaneletMap);
 
-  void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr& map_msg) {
+  lanelet::utils::conversion::fromBinMsg(*map_msg, new_map);
 
-    lanelet::LaneletMapPtr new_map(new lanelet::LaneletMap);
+  world_model_->setMap(new_map);
 
-    lanelet::utils::conversion::fromBinMsg(*map_msg, new_map);
-
-    world_model_->setMap(new_map);
-
-    // Call user defined map callback
-    if (map_callback_) {
-      map_callback_();
-    }
-  }
-
-  void WMListenerWorker::routeCallback() {
-    // TODO Implement when route message has been defined
-    // world_model_->setRoute(route_obj);
-    // Call route_callback_;
-    if (route_callback_) {
-      route_callback_();
-    }
-  }
-
-  void WMListenerWorker::setMapCallback(std::function<void()> callback) {
-    map_callback_ = callback;
-  }
-
-  void WMListenerWorker::setRouteCallback(std::function<void()> callback) {
-    route_callback_ = callback;
+  // Call user defined map callback
+  if (map_callback_)
+  {
+    map_callback_();
   }
 }
+
+void WMListenerWorker::routeCallback()
+{
+  // TODO Implement when route message has been defined
+  // world_model_->setRoute(route_obj);
+  // Call route_callback_;
+  if (route_callback_)
+  {
+    route_callback_();
+  }
+}
+
+void WMListenerWorker::setMapCallback(std::function<void()> callback)
+{
+  map_callback_ = callback;
+}
+
+void WMListenerWorker::setRouteCallback(std::function<void()> callback)
+{
+  route_callback_ = callback;
+}
+}  // namespace carma_wm
