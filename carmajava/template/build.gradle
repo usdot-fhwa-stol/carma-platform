@@ -37,8 +37,8 @@ dependencies {
   /* An external maven artifact dependency */
   compile 'org.ros.rosjava_core:rosjava:[0.3,0.4)'
   compile 'org.ros.rosjava_messages:std_srvs:1.11.2'
-  compile 'org.ros.rosjava_messages:cav_msgs:1.0.0'
-  compile 'org.ros.rosjava_messages:cav_srvs:0.1.0'
+  compile 'org.ros.rosjava_messages:cav_msgs:1.1.0'
+  compile 'org.ros.rosjava_messages:cav_srvs:1.1.0'
   /* Local subproject dependency */
   compile project(':rosutils')
 }
