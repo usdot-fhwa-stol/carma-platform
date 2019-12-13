@@ -18,7 +18,7 @@
 
 <package format="2">
   <name>bsm_generator</name>
-  <version>1.0.0</version>
+  <version>3.2.0</version>
   <description>This generates BSM according to J2735 standard.</description>
   <maintainer email="carma@todo.todo">carma</maintainer>
   <license>Apache License 2.0</license>
