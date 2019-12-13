@@ -454,7 +454,7 @@ LaneletRoutingGraphConstPtr CARMAWorldModel::getMapRoutingGraph() const
                                                                                               // variant
 }
 
-// NOTE: See header file for details on source of logic in this function
+// NOTE: See WorldModel.h header file for details on source of logic in this function
 double CARMAWorldModel::computeCurvature(const lanelet::BasicPoint2d& p1, const lanelet::BasicPoint2d& p2,
                                          const lanelet::BasicPoint2d& p3) const
 {
