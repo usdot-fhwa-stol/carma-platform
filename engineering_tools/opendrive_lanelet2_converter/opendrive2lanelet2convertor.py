@@ -1,9 +1,8 @@
-#!/usr/bin/env python3
-
 import os
 import sys, getopt
 from pyproj import Proj, transform
 import numpy as np
+from commonroad.common.file_writer import CommonRoadFileWriter
 from opendrive2lanelet.opendriveparser.parser import parse_opendrive
 from opendrive2lanelet.network import Network
 
@@ -11,7 +10,7 @@ import xml.etree.ElementTree as xml
 import xml.dom.minidom as pxml
 from lxml import etree
 
-# class representing node object in Way object 
+# class representing node in lanelet2
 class Node:
     def __init__(self, id, lat, lon, local_x, local_y):
         self.id = id
@@ -23,11 +22,9 @@ class Node:
     def create_xml_node_object(self):
         node_element = xml.Element('node',{'id': str(self.id), 'lat': str(self.lat), 'lon': str(self.lon), 'version': str(1), 'visible': 'true'})
         xml.SubElement(node_element, "tag", {"k": "ele", "v": "0.0"})
-        xml.SubElement(node_element, "tag", {"k": "local_x", "v": str(self.local_x)})
-        xml.SubElement(node_element, "tag", {"k": "local_y", "v": str(self.local_y)})
         return node_element
 
-# class representing Way object in Relation object members
+# class representing way in lanelet2
 class Way:
     def __init__(self, id, nodes):
         self.id = id
@@ -37,11 +34,10 @@ class Way:
         way_element = xml.Element("way", {"id": self.id, "version": str(1), "visible": "true"})
         for i in self.nodes:
             xml.SubElement(way_element, "nd", {"ref": str(i.id)})
-        xml.SubElement(way_element, "tag", {"k": "level", "v": "0"})
-        xml.SubElement(way_element, "tag", {"k": "type", "v": "linestring"})
+        xml.SubElement(way_element, "tag", {"k": "type", "v": "road_border"})
         return way_element
 
-# class representing relation object in osm
+# class representing relation in lanelet2
 class Relation:
     def __init__(self, id, member_left, member_right, from_cad_id, to_cad_id, cad_id, relation_type):
         self.id = str(id)
@@ -52,7 +48,6 @@ class Relation:
         self.from_cad_id = from_cad_id
         self.to_cad_id = to_cad_id
         self.relation_type = relation_type
-        # Unique id for relations for example it is use to define processor and successor for lanelets.
         self.cad_id = cad_id
         self.turn_direction = "straight"
         self.set_turn_direction()
@@ -101,7 +96,7 @@ class Relation:
 
         self.turn_direction = turn_direction
 
-# class used to convert opendrive 2d objecets to lanelet2 object
+# class used to convert opendrive map to lanelet2 map
 class Opendrive2Lanelet2Convertor:
     def __init__(self, fn):
         self.scenario, self.geoReference = self.open_drive_loader(fn)
@@ -150,7 +145,6 @@ class Opendrive2Lanelet2Convertor:
         x = vertice[0]
         y = vertice[1]
         lon, lat = self.get_point_geo(x,y)
-        # local_x, local_y = self.get_point_utm(lon,lat)
         local_x, local_y = x, y
         return Node(node_id,lat,lon, local_x, local_y)
     
