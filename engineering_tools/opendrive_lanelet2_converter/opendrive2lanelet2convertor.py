@@ -72,12 +72,13 @@ class Relation:
     # start is the first point of lanelet
     # mid is the secound point of lanlelet
     # end is the last point of lanelet
+    # set_direction is used by set_turn direction to check if the lanelet is turning left or right
     def set_direction(self, start, mid, end):
         if(((b[0] - a[0])*(c[1] - a[1]) - (b[1] - a[1])*(c[0] - a[0])) > 0):
             return 1
         else:
             return 0
-
+    #set_turn_direction is used to set set the turn_direction tag in lanelet
     def set_turn_direction(self):
         turn_direction = "straight"
         if(len(self.from_cad_id) == 1 and len(self.to_cad_id) == 1):
