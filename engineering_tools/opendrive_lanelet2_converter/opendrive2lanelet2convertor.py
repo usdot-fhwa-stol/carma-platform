@@ -69,7 +69,10 @@ class Relation:
         xml.SubElement(relation_element, "tag", {"k": "turn_direction", "v": self.turn_direction})
         return relation_element
     
-    def set_direction(self, a, b, c):
+    # start is the first point of lanelet
+    # mid is the secound point of lanlelet
+    # end is the last point of lanelet
+    def set_direction(self, start, mid, end):
         if(((b[0] - a[0])*(c[1] - a[1]) - (b[1] - a[1])*(c[0] - a[0])) > 0):
             return 1
         else:
@@ -119,10 +122,6 @@ class Opendrive2Lanelet2Convertor:
         inProj = Proj(self.geoReference)
         outProj = Proj(init="epsg:4326")
         return transform(inProj,outProj,x,y)
-
-    def get_point_utm(self,lon,lat):
-        inProj = Proj("+proj=utm +zone=23K, +north +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
-        return inProj(lon,lat)
 
     def write_xml_to_file(self,fn):
                 
