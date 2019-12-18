@@ -2,7 +2,6 @@ import os
 import sys, getopt
 from pyproj import Proj, transform
 import numpy as np
-from commonroad.common.file_writer import CommonRoadFileWriter
 from opendrive2lanelet.opendriveparser.parser import parse_opendrive
 from opendrive2lanelet.network import Network
 
@@ -10,7 +9,7 @@ import xml.etree.ElementTree as xml
 import xml.dom.minidom as pxml
 from lxml import etree
 
-# class representing node in lanelet2
+# class representing node object in Way object 
 class Node:
     def __init__(self, id, lat, lon, local_x, local_y):
         self.id = id
@@ -24,7 +23,7 @@ class Node:
         xml.SubElement(node_element, "tag", {"k": "ele", "v": "0.0"})
         return node_element
 
-# class representing way in lanelet2
+# class representing Way object in Relation object members
 class Way:
     def __init__(self, id, nodes):
         self.id = id
@@ -207,4 +206,4 @@ def main(argv):
         open_drive2_lanelet2_convertor.convert(outputfile)
 
 if __name__== "__main__":
-  main(sys.argv[1:])
+    main(sys.argv[1:])

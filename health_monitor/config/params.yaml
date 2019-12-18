@@ -26,7 +26,7 @@ startup_duration: 30.0
 
 # List of String: Required plugins for the platform to be functional
 required_plugins:
-  - Autoware Plugin
+  - AutowarePlugin
 
 # List of String: Required drivers for the platform to be functional
 required_drivers:

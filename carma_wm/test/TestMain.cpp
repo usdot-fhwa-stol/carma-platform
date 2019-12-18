@@ -14,15 +14,11 @@
  * the License.
  */
 
-#include "ros/ros.h"
-#include "plan_delegator.hpp"
+#include <gtest/gtest.h>
 
-// Main entry point for plan delegator
+// Run all the tests
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "plan_delegator");
-    plan_delegator::PlanDelegator pd;
-    pd.init();
-    pd.run();
-    return 0;
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

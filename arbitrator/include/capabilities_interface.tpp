@@ -35,7 +35,6 @@ namespace arbitrator
                 responses.emplace(*i, msg);
             }
         }
-
         return responses;
     }
 };

@@ -6,7 +6,6 @@
  * the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
- *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -28,16 +27,16 @@
 int main(int argc, char** argv) 
 {
     ros::init(argc, argv, "arbitrator");
-    ros::CARMANodeHandle nh = ros::CARMANodeHandle("arbitrator");
+    ros::CARMANodeHandle nh = ros::CARMANodeHandle();
     ros::CARMANodeHandle pnh = ros::CARMANodeHandle("~");
 
     // Handle dependency injection
     arbitrator::CapabilitiesInterface ci{&nh};
     arbitrator::ArbitratorStateMachine sm;
 
-    std::map<std::string, double> plugin_priorites; 
-    pnh.getParam("plugin_priorities", plugin_priorites);
-    arbitrator::FixedPriorityCostFunction fpcf{plugin_priorites};
+    std::map<std::string, double> plugin_priorities;
+    pnh.getParam("plugin_priorities", plugin_priorities);
+    arbitrator::FixedPriorityCostFunction fpcf{plugin_priorities};
 
     int beam_width;
     pnh.param("beam_width", beam_width, 3);
@@ -49,7 +48,19 @@ int main(int argc, char** argv)
     pnh.param("target_duration", target_plan, 15.0);
     arbitrator::TreePlanner tp{fpcf, png, bss, ros::Duration(target_plan)};
 
-    arbitrator::Arbitrator arbitrator{&nh, &pnh, &sm, &ci, tp};
+    double min_plan_duration;
+    pnh.param("min_plan_duration", min_plan_duration, 6.0);
+
+    double planning_frequency;
+    pnh.param("planning_frequency", planning_frequency, 1.0);
+    arbitrator::Arbitrator arbitrator{
+        &nh, 
+        &pnh, 
+        &sm, 
+        &ci, 
+        tp, 
+        ros::Duration(min_plan_duration),
+        ros::Rate(planning_frequency)};
 
     arbitrator.run();
 

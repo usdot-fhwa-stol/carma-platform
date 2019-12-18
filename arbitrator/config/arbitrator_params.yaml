@@ -21,6 +21,4 @@ beam_width: 3
 # Map: The priorities/costs associated with each plugin during the planning 
 # process, values will be normalized at runtime
 # Unit: N/a
-plugin_priorities:
-    autoware_plugin: 10.0
-    glidepath_plugin: 5.0
+plugin_priorities: {AutowarePlugin: 10.0, GlidepathPlugin: 5.0}

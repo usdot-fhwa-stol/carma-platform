@@ -68,7 +68,7 @@
   <remap from="current_velocity" to="$(optenv CARMA_INTR_NS)/vehicle/twist"/>
   <remap from="controller/enable_robotic" to="$(optenv CARMA_INTR_NS)/controller/enable_robotic"/>
 
-  <remap from="guidance_state" to="$(optenv CARMA_GUIDE_NS)/guidance_node/state"/>
+  <remap from="guidance_state" to="$(optenv CARMA_GUIDE_NS)/state"/>
   <remap from="maneuver_plan" to="$(optenv CARMA_GUIDE_NS)/arbitrator/final_maneuver_plan"/>
 
   <!-- Launch Guidance Main -->
@@ -85,11 +85,6 @@
   <!-- Waypoint Follower Config-->
   <node pkg="rostopic" type="rostopic" name="config_waypoint_follower_rostopic"
         args="pub -l config/waypoint_follower autoware_config_msgs/ConfigWaypointFollower '{ header: auto, param_flag: 0, velocity: 5.0, lookahead_distance: 4.0, lookahead_ratio: 2.0, minimum_lookahead_distance: 6.0, displacement_threshold: 0.0, relative_angle_threshold: 0.0 }' "
-  />
-
-  <!-- TODO Remove this logic when the autoware plugin supports plugin discovery -->
-  <node pkg="rostopic" type="rostopic" name="autoware_plugin_discovery"
-        args="pub -r 1  plugin_discovery cav_msgs/Plugin '{ name: Autoware Plugin, versionId: v1.0, available: true, activated: false }' "
   />
 
   <!-- Trajectory Executor -->
