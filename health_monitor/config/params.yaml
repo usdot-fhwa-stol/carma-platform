@@ -32,3 +32,12 @@ required_plugins:
 required_drivers:
   - /hardware_interface/ssc_interface_wrapper
   - /hardware_interface/velodyne_lidar_driver_wrapper
+
+# String: Plugin service name prefix
+plugin_service_prefix: /guidance/plugin/
+
+# String: Strategic plugin service suffix
+strategic_plugin_service_suffix: /plan_maneuver
+
+# String: Tactical plugin service suffix
+tactical_plugin_service_suffix: /plan_trajectory
