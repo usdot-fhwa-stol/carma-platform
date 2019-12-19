@@ -61,7 +61,7 @@ namespace trajectory_executor {
 /*!
              * \brief Monitor the guidance state and set the current trajector as null_ptr 
              */
-            void guidanceStateMonitor(cav_msgs::GuidanceState msg)
+            void guidanceStateMonitor(cav_msgs::GuidanceState msg);
 
             /*!
              * \brief Initialize the TrajectoryExecutor instance by setting up 
