@@ -8,7 +8,7 @@ Version Testarossa, released December 23rd, 2019
 CARMAPlatform release version Testarossa includes the following four major updates. An initial converter has been developed to convert OpenDrive maps to LaneLet2's OSM format. The converter currently only covers lane geometry only. Autoware v1.13 pre-release has been integrated with CARMAPlatform. A guidance plan delegator has been developed to notify strategic plugins that the arbitrator has selected their maneuver plan, and request the correstponding trajectory plan for said plugin. Finally, a guidance re-engage capability has been added to the platform, which will allow for multiple runs to be made without restarting the software.  
 
 Enhancements in this release:  
-- Issue 416: Update Docker to use Autoware 1.12 build
+- Issue 416: Update Docker to use Autoware 1.13 build
 - Issue 419: Adde support for Lanelet2 to Docker images and upgrade to Autoware v1.123 pre-release
 - Issue 431: Develope MVP OpenDrive to LaneLet2 Converter
 - Issue 432: Develope world model for external objects (perception)
