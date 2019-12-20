@@ -100,7 +100,8 @@ namespace health_monitor
         {
             if(plugin.type_ == cav_msgs::Plugin::TACTICAL)
             {
-                if(req.capability.size() == 0 || plugin.capability_.compare(0, req.capability.size(), req.capability) == 0)
+                if(req.capability.size() == 0 ||
+                  (plugin.capability_.compare(0, req.capability.size(), req.capability) == 0 && plugin.active_ && plugin.available_))
                 {
                     res.plan_service.push_back(service_prefix_ + plugin.name_ + tactical_service_suffix_);
                 }
@@ -115,7 +116,8 @@ namespace health_monitor
         {
             if(plugin.type_ == cav_msgs::Plugin::STRATEGIC)
             {
-                if(req.capability.size() == 0 || plugin.capability_.compare(0, req.capability.size(), req.capability) == 0)
+                if(req.capability.size() == 0 ||
+                  (plugin.capability_.compare(0, req.capability.size(), req.capability) == 0 && plugin.active_ && plugin.available_))
                 {
                     res.plan_service.push_back(service_prefix_ + plugin.name_ + strategic_service_suffix_);
                 }
