@@ -117,7 +117,7 @@ namespace health_monitor
             {
                 if(req.capability.size() == 0 || plugin.capability_.compare(0, req.capability.size(), req.capability) == 0)
                 {
-                    res.plan_service.push_back(service_prefix_ + plugin.name_ + tactical_service_suffix_);
+                    res.plan_service.push_back(service_prefix_ + plugin.name_ + strategic_service_suffix_);
                 }
             }
         }
