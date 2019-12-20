@@ -154,7 +154,7 @@ namespace trajectory_executor
             << " and trajectory_publish_rate " << _min_traj_publish_tickrate_hz);
 
         this->_plan_sub = this->_public_nh->subscribe<cav_msgs::TrajectoryPlan>("trajectory", 5, &TrajectoryExecutor::onNewTrajectoryPlan, this);
-        this->_state_sub = this->_public_nh->subscribe<cav_msgs::GuidanceState>("guidance/state", 5, &TrajectoryExecutor::guidanceStateMonitor, this);
+        this->_state_sub = this->_public_nh->subscribe<cav_msgs::GuidanceState>("state", 5, &TrajectoryExecutor::guidanceStateMonitor, this);
         this->_cur_traj = std::unique_ptr<cav_msgs::TrajectoryPlan>();
         ROS_DEBUG("Subscribed to inbound trajectory plans.");
 
