@@ -80,6 +80,7 @@ namespace trajectory_executor
 
     void TrajectoryExecutor::guidanceStateMonitor(cav_msgs::GuidanceState msg)
     {
+        std::unique_lock<std::mutex> lock(_cur_traj_mutex); // Acquire lock until end of this function scope
         if(msg.state==cav_msgs::GuidanceState::INACTIVE)
         {
         	_cur_traj= nullptr;
