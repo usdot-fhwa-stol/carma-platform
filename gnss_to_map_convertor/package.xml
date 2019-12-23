@@ -16,7 +16,7 @@
 -->
 <package>
   <name>gnss_to_map_convertor</name>
-  <version>2.0.0</version>
+  <version>3.2.0</version>
   <description>The gnss_to_map_convertor converts incomping GNSS messages (NavSatFix) to poses in the ECEF and Map frames </description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
