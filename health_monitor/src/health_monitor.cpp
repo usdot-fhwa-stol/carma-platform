@@ -40,8 +40,8 @@ namespace health_monitor
         driver_timeout_ = pnh_.param<double>("required_driver_timeout", 500);
         startup_duration_ = pnh_.param<double>("startup_duration", 25);
         plugin_service_prefix_ = pnh_.param<std::string>("plugin_service_prefix", "");
-        strategic_plugin_service_suffix_ = pnh_.param<std::string>("strategic_plugin_service_suffix_", "");
-        tactical_plugin_service_suffix_ = pnh_.param<std::string>("tactical_plugin_service_suffix_", "");
+        strategic_plugin_service_suffix_ = pnh_.param<std::string>("strategic_plugin_service_suffix", "");
+        tactical_plugin_service_suffix_ = pnh_.param<std::string>("tactical_plugin_service_suffix", "");
         pnh_.getParam("required_plugins", required_plugins_);
         pnh_.getParam("required_drivers", required_drivers_);
         
