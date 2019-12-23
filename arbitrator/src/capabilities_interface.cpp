@@ -17,6 +17,7 @@
 #include "capabilities_interface.hpp"
 #include <cav_srvs/PluginList.h>
 #include <cav_srvs/PlanManeuvers.h>
+#include <cav_srvs/GetPluginApi.h>
 #include <exception>
 
 namespace arbitrator
@@ -54,23 +55,19 @@ namespace arbitrator
                     // NOTE: It is assumed for now (due to lack of true capabilties register),
                     // That all plugins conform to the convention of providing a service for
                     // planning maneuvers at "/plugins/{PLUGIN_NAME}/strategic_plan/plan_maneuvers"
-                    std::string topic = "/guidance/plugins/" + it->name + "/" + capability;
+                    // std::string topic = "/guidance/plugins/" + it->name + "/" + capability;
                     // Check if bucket for that capability already exists
-                    if (capabilities_.find(capability) != capabilities_.end())
+                    if (capabilities_.find(capability) == capabilities_.end())
                     {
-                        capabilities_[capability].push_back(topic);
-                    }
-                    else
-                    {
-                        capabilities_.emplace(capability, std::vector<std::string>{topic});
+                        capabilities_.insert(capability);
                     }
 
                     // TODO: Special cased for now due to lack of broader capabilities service
-                    if (capability == STRATEGIC_PLAN_CAPABILITY)
-                    {
-                        ros::ServiceClient sc = nh_->serviceClient<cav_srvs::PlanManeuvers>(topic);
-                        service_clients_.emplace(topic, sc);
-                    }
+                    // if (capability == STRATEGIC_PLAN_CAPABILITY)
+                    // {
+                    //     ros::ServiceClient sc = nh_->serviceClient<cav_srvs::PlanManeuvers>(topic);
+                    //     service_clients_.emplace(topic, sc);
+                    // }
                 }
             }
         }
@@ -78,15 +75,36 @@ namespace arbitrator
     
     std::vector<std::string> CapabilitiesInterface::get_topics_for_capability(std::string query_string) const
     {
+
+        ros::ServiceClient sc_s = nh_->serviceClient<cav_srvs::PluginList>("/plugins/get_strategic_plugin_by_capability");
+        ros::ServiceClient sc_t = nh_->serviceClient<cav_srvs::PluginList>("/plugins/get_tactical_plugin_by_capability");
+
         auto it = capabilities_.find(query_string);
-        if (it != capabilities_.end())
+        std::vector<std::string> topics = {};
+
+        cav_srvs::GetPluginApi srv;
+        srv.request.capability = "";
+
+
+        if (it != capabilities_.end() && query_string == STRATEGIC_PLAN_CAPABILITY)
         {
-            return it->second;
+            if (sc_s.call(srv))
+            {
+                topics = srv.response.plan_service;
+            }
         }
-        else
-        {
-            // Return an empty list to indicate failure
-            return std::vector<std::string>{};
-        }
+
+        
+
+        return topics;
+        // if (it != capabilities_.end())
+        // {
+        //     return it->second;
+        // }
+        // else
+        // {
+        //     // Return an empty list to indicate failure
+        //     return std::vector<std::string>{};
+        // }
     }
 }

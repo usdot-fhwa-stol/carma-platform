@@ -21,6 +21,7 @@
 #include <carma_utils/CARMAUtils.h>
 #include <vector>
 #include <map>
+#include <unordered_set>
 #include <string>
 
 namespace arbitrator
@@ -74,8 +75,13 @@ namespace arbitrator
         private:
             ros::NodeHandle *nh_;
             std::map<std::string, ros::ServiceClient> service_clients_;
+
             //std::map<std::string, ros::Publisher> publishers_;
-            std::map<std::string, std::vector<std::string>> capabilities_;
+            // std::map<std::string, std::vector<std::string>> capabilities_;
+            std::unordered_set <std::string> capabilities_ ; 
+
+
+            
     };
 };
 
