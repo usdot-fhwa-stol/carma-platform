@@ -23,6 +23,8 @@
 #include <map>
 #include <unordered_set>
 #include <string>
+#include <cav_srvs/PluginList.h>
+#include <cav_srvs/GetPluginApi.h>
 
 namespace arbitrator
 {
@@ -37,7 +39,9 @@ namespace arbitrator
              * \brief Constructor for Capabilities interface
              * \param nh A publically addressesed ("/") ros::NodeHandle
              */
-            CapabilitiesInterface(ros::NodeHandle *nh): nh_(nh) {};
+            CapabilitiesInterface(ros::NodeHandle *nh): nh_(nh) {
+                sc_s = nh_->serviceClient<cav_srvs::GetPluginApi>("plugins/get_strategic_plugin_by_capability");
+            };
 
             /**
              * \brief Initialize the Capabilities interface by querying the Health Monitor
@@ -76,6 +80,7 @@ namespace arbitrator
             ros::NodeHandle *nh_;
             std::map<std::string, ros::ServiceClient> service_clients_;
 
+            ros::ServiceClient sc_s;
             //std::map<std::string, ros::Publisher> publishers_;
             // std::map<std::string, std::vector<std::string>> capabilities_;
             std::unordered_set <std::string> capabilities_ ; 

@@ -15,9 +15,9 @@
  */
 
 #include "capabilities_interface.hpp"
-#include <cav_srvs/PluginList.h>
+// #include <cav_srvs/PluginList.h>
 #include <cav_srvs/PlanManeuvers.h>
-#include <cav_srvs/GetPluginApi.h>
+// #include <cav_srvs/GetPluginApi.h>
 #include <exception>
 
 namespace arbitrator
@@ -28,65 +28,65 @@ namespace arbitrator
 
     void CapabilitiesInterface::initialize() 
     {
-        static ros::ServiceClient sc = nh_->serviceClient<cav_srvs::PluginList>("/guidance/plugins/get_registered_plugins");
-        cav_srvs::PluginList msg;
-        if (sc.call(msg)) {
-            capabilities_.clear();
-            for (auto it = msg.response.plugins.begin(); it != msg.response.plugins.end(); it++)
-            {
-                if (it->activated)
-                {
-                    std::string capability;
-                    switch (it->type)
-                    {
-                        case cav_msgs::Plugin::STRATEGIC:
-                            capability = STRATEGIC_PLAN_CAPABILITY;
-                            break;
-                        case cav_msgs::Plugin::TACTICAL:
-                            capability = TACTICAL_PLAN_CAPABILITY;
-                            break;
-                        case cav_msgs::Plugin::CONTROL:
-                            capability = CONTROL_CAPABILITY;
-                            break;
-                        case cav_msgs::Plugin::UNKNOWN:
-                        default:
-                            throw std::invalid_argument("Activated plugin of unknown type discovered: " + it->name);
-                    }
-                    // NOTE: It is assumed for now (due to lack of true capabilties register),
-                    // That all plugins conform to the convention of providing a service for
-                    // planning maneuvers at "/plugins/{PLUGIN_NAME}/strategic_plan/plan_maneuvers"
-                    // std::string topic = "/guidance/plugins/" + it->name + "/" + capability;
-                    // Check if bucket for that capability already exists
-                    if (capabilities_.find(capability) == capabilities_.end())
-                    {
-                        capabilities_.insert(capability);
-                    }
+        // static ros::ServiceClient sc = nh_->serviceClient<cav_srvs::PluginList>("/guidance/plugins/get_registered_plugins");
+        // cav_srvs::PluginList msg;
+        // if (sc.call(msg)) {
+        //     capabilities_.clear();
+        //     for (auto it = msg.response.plugins.begin(); it != msg.response.plugins.end(); it++)
+        //     {
+        //         if (it->activated)
+        //         {
+        //             std::string capability;
+        //             switch (it->type)
+        //             {
+        //                 case cav_msgs::Plugin::STRATEGIC:
+        //                     capability = STRATEGIC_PLAN_CAPABILITY;
+        //                     break;
+        //                 case cav_msgs::Plugin::TACTICAL:
+        //                     capability = TACTICAL_PLAN_CAPABILITY;
+        //                     break;
+        //                 case cav_msgs::Plugin::CONTROL:
+        //                     capability = CONTROL_CAPABILITY;
+        //                     break;
+        //                 case cav_msgs::Plugin::UNKNOWN:
+        //                 default:
+        //                     throw std::invalid_argument("Activated plugin of unknown type discovered: " + it->name);
+        //             }
+        //             // NOTE: It is assumed for now (due to lack of true capabilties register),
+        //             // That all plugins conform to the convention of providing a service for
+        //             // planning maneuvers at "/plugins/{PLUGIN_NAME}/strategic_plan/plan_maneuvers"
+        //             // std::string topic = "/guidance/plugins/" + it->name + "/" + capability;
+        //             // Check if bucket for that capability already exists
+        //             if (capabilities_.find(capability) == capabilities_.end())
+        //             {
+        //                 capabilities_.insert(capability);
+        //             }
 
-                    // TODO: Special cased for now due to lack of broader capabilities service
-                    // if (capability == STRATEGIC_PLAN_CAPABILITY)
-                    // {
-                    //     ros::ServiceClient sc = nh_->serviceClient<cav_srvs::PlanManeuvers>(topic);
-                    //     service_clients_.emplace(topic, sc);
-                    // }
-                }
-            }
-        }
+        //             // TODO: Special cased for now due to lack of broader capabilities service
+        //             // if (capability == STRATEGIC_PLAN_CAPABILITY)
+        //             // {
+        //             //     ros::ServiceClient sc = nh_->serviceClient<cav_srvs::PlanManeuvers>(topic);
+        //             //     service_clients_.emplace(topic, sc);
+        //             // }
+        //         }
+        //     }
+        // }
     }
     
     std::vector<std::string> CapabilitiesInterface::get_topics_for_capability(std::string query_string) const
     {
 
-        ros::ServiceClient sc_s = nh_->serviceClient<cav_srvs::PluginList>("/plugins/get_strategic_plugin_by_capability");
-        ros::ServiceClient sc_t = nh_->serviceClient<cav_srvs::PluginList>("/plugins/get_tactical_plugin_by_capability");
+        // ros::ServiceClient sc_s = nh_->serviceClient<cav_srvs::PluginList>("/plugins/get_strategic_plugin_by_capability");
+        // ros::ServiceClient sc_t = nh_->serviceClient<cav_srvs::PluginList>("/plugins/get_tactical_plugin_by_capability");
 
-        auto it = capabilities_.find(query_string);
+        // auto it = capabilities_.find(query_string);
         std::vector<std::string> topics = {};
 
         cav_srvs::GetPluginApi srv;
         srv.request.capability = "";
 
 
-        if (it != capabilities_.end() && query_string == STRATEGIC_PLAN_CAPABILITY)
+        if (query_string == STRATEGIC_PLAN_CAPABILITY)
         {
             if (sc_s.call(srv))
             {
