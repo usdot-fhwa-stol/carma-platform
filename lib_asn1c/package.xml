@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
 	<name>asn1c</name>
-	<version>0.0.1</version>
+	<version>3.2.0</version>
 	<description>This is asn1c library for DSRC.</description>
 	<maintainer email="carma@xxx.xxx">carma</maintainer>
 	<license>BSD</license>

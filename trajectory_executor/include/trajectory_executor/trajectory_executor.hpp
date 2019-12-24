@@ -23,6 +23,7 @@
 #include <string>
 #include <mutex>
 #include <cav_msgs/TrajectoryPlan.h>
+#include <cav_msgs/GuidanceState.h>
 #include <ros/subscriber.h>
 #include <ros/publisher.h>
 #include <carma_utils/CARMAUtils.h>
@@ -57,6 +58,10 @@ namespace trajectory_executor {
              * \brief Constructor for TrajectoryExecutor. Uses default value for output tickrate.
              */
             TrajectoryExecutor();
+/*!
+             * \brief Monitor the guidance state and set the current trajector as null_ptr 
+             */
+            void guidanceStateMonitor(cav_msgs::GuidanceState msg);
 
             /*!
              * \brief Initialize the TrajectoryExecutor instance by setting up 
@@ -97,6 +102,7 @@ namespace trajectory_executor {
              * \param te The timer event that triggered this callback
              */
             void onTrajEmitTick(const ros::TimerEvent& te);
+
         private:
             // Node handles to separate callback queues
             std::unique_ptr<ros::CARMANodeHandle> _private_nh;
@@ -107,6 +113,7 @@ namespace trajectory_executor {
             ros::CallbackQueue _msg_callbacks;
 
             ros::Subscriber _plan_sub; // Inbound plan subscriber
+            ros::Subscriber _state_sub; // Guidance State subscriber
             std::map<std::string, ros::Publisher> _traj_publisher_map; // Outbound plan publishers
 
             // Trajectory plan tracking data. Synchronized on _cur_traj_mutex
