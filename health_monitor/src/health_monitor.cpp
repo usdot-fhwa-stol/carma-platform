@@ -19,11 +19,6 @@
 namespace health_monitor
 {
 
-    HealthMonitor::HealthMonitor()
-    {
-        
-    }
-
     void HealthMonitor::initialize()
     {
         // init node handles
@@ -35,6 +30,8 @@ namespace health_monitor
         registered_plugin_service_server_ = nh_.advertiseService("plugins/get_registered_plugins", &HealthMonitor::registered_plugin_cb, this);
         active_plugin_service_server_ = nh_.advertiseService("plugins/get_active_plugins", &HealthMonitor::active_plugin_cb, this);
         activate_plugin_service_server_ = nh_.advertiseService("plugins/activate_plugin", &HealthMonitor::activate_plugin_cb, this);
+        get_strategic_plugin_by_capability_server_ = nh_.advertiseService("plugins/get_strategic_plugin_by_capability", &PluginManager::get_strategic_plugins_by_capability, &plugin_manager_);
+        get_tactical_plugin_by_capability_server_ = nh_.advertiseService("plugins/get_tactical_plugin_by_capability", &PluginManager::get_tactical_plugins_by_capability, &plugin_manager_);
         plugin_discovery_subscriber_ = nh_.subscribe<cav_msgs::Plugin>("plugin_discovery", 5, &HealthMonitor::plugin_discovery_cb, this);
         driver_discovery_subscriber_ = nh_.subscribe<cav_msgs::DriverStatus>("driver_discovery", 5, &HealthMonitor::driver_discovery_cb, this);
 
@@ -42,12 +39,15 @@ namespace health_monitor
         spin_rate_ = pnh_.param<double>("spin_rate_hz", 10.0);
         driver_timeout_ = pnh_.param<double>("required_driver_timeout", 500);
         startup_duration_ = pnh_.param<double>("startup_duration", 25);
+        plugin_service_prefix_ = pnh_.param<std::string>("plugin_service_prefix", "");
+        strategic_plugin_service_suffix_ = pnh_.param<std::string>("strategic_plugin_service_suffix", "");
+        tactical_plugin_service_suffix_ = pnh_.param<std::string>("tactical_plugin_service_suffix", "");
         pnh_.getParam("required_plugins", required_plugins_);
         pnh_.getParam("required_drivers", required_drivers_);
         
 
         // initialize worker class
-        plugin_manager_ = PluginManager(required_plugins_);
+        plugin_manager_ = PluginManager(required_plugins_, plugin_service_prefix_, strategic_plugin_service_suffix_, tactical_plugin_service_suffix_);
         driver_manager_ = DriverManager(required_drivers_, driver_timeout_);
 
         // record starup time

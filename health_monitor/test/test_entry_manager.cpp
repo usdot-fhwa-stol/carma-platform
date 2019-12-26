@@ -25,7 +25,7 @@ namespace health_monitor
     {
         EntryManager em;
         // params: bool available, bool active, std::string name, long timestamp, uint8_t type
-        Entry entry(true, false, "autoware_plugin", 1000, 1);
+        Entry entry(true, false, "autoware_plugin", 1000, 1, "");
         em.update_entry(entry);
         std::vector<Entry> res = em.get_entries();
         EXPECT_EQ(1, res.size());
@@ -40,9 +40,9 @@ namespace health_monitor
     {
         EntryManager em;
         // params: bool available, bool active, std::string name, long timestamp, uint8_t type
-        Entry entry(true, false, "autoware_plugin", 1000, 1);
+        Entry entry(true, false, "autoware_plugin", 1000, 1, "");
         em.update_entry(entry);
-        Entry new_entry(false, true, "autoware_plugin", 2000, 3);
+        Entry new_entry(false, true, "autoware_plugin", 2000, 3, "");
         em.update_entry(new_entry);
         std::vector<Entry> res = em.get_entries();
         EXPECT_EQ(1, res.size());
@@ -58,9 +58,9 @@ namespace health_monitor
     {
         EntryManager em;
         // params: bool available, bool active, std::string name, long timestamp, uint8_t type
-        Entry entry(true, false, "autoware_plugin", 1000, 1);
+        Entry entry(true, false, "autoware_plugin", 1000, 1, "");
         em.update_entry(entry);
-        Entry new_entry(false, true, "autoware_plugin_2", 2000, 3);
+        Entry new_entry(false, true, "autoware_plugin_2", 2000, 3, "");
         em.update_entry(new_entry);
         em.delete_entry("autoware_plugin");
         std::vector<Entry> res = em.get_entries();
@@ -77,7 +77,7 @@ namespace health_monitor
     {
         EntryManager em;
         // params: bool available, bool active, std::string name, long timestamp, uint8_t type
-        Entry entry(true, false, "autoware_plugin", 1000, 1);
+        Entry entry(true, false, "autoware_plugin", 1000, 1, "");
         em.update_entry(entry);
         boost::optional<Entry> res = em.get_entry_by_name("autoware_plugin");
         EXPECT_EQ(true, res->available_);
@@ -91,7 +91,7 @@ namespace health_monitor
     {
         EntryManager em;
         // params: bool available, bool active, std::string name, long timestamp, uint8_t type
-        Entry entry(true, false, "autoware_plugin", 1000, 1);
+        Entry entry(true, false, "autoware_plugin", 1000, 1, "");
         em.update_entry(entry);
         boost::optional<Entry> res = em.get_entry_by_name("plugin");
         if(!res)
@@ -109,9 +109,9 @@ namespace health_monitor
         required_names.push_back("autoware");
         required_names.push_back("autoware_plugin");
         EntryManager em(required_names);
-        Entry entry(true, false, "autoware_plugin", 1000, 1);
+        Entry entry(true, false, "autoware_plugin", 1000, 1, "");
         em.update_entry(entry);
-        Entry new_entry(false, true, "autoware_plugin_2", 2000, 3);
+        Entry new_entry(false, true, "autoware_plugin_2", 2000, 3, "");
         em.update_entry(new_entry);
         EXPECT_EQ(true, em.is_entry_required("autoware_plugin"));
         EXPECT_EQ(true, em.is_entry_required("autoware"));
