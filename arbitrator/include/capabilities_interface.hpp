@@ -47,7 +47,7 @@ namespace arbitrator
              * \brief Initialize the Capabilities interface by querying the Health Monitor
              *      node and processing the plugins that are returned.
              */
-            void initialize();
+            // void initialize();
 
             /**
              * \brief Get the list of topics that respond to the capability specified by
@@ -56,7 +56,7 @@ namespace arbitrator
              * \param query_string The string name of the capability to look for
              * \return A list of all responding topics, if any are found.
              */
-            std::vector<std::string> get_topics_for_capability(std::string query_string) const;
+            std::vector<std::string> get_topics_for_capability(std::string query_string);
 
 
             /**
@@ -73,16 +73,11 @@ namespace arbitrator
             std::map<std::string, MSrv> multiplex_service_call_for_capability(std::string query_string, MSrv msg);
 
             const static std::string STRATEGIC_PLAN_CAPABILITY;
-            const static std::string TACTICAL_PLAN_CAPABILITY;
-            const static std::string CONTROL_CAPABILITY;
         protected:
         private:
             ros::NodeHandle *nh_;
-            std::map<std::string, ros::ServiceClient> service_clients_;
 
             ros::ServiceClient sc_s;
-            //std::map<std::string, ros::Publisher> publishers_;
-            // std::map<std::string, std::vector<std::string>> capabilities_;
             std::unordered_set <std::string> capabilities_ ; 
 
 
