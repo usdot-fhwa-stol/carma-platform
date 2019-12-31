@@ -1,6 +1,33 @@
 CARMA Platform Release Notes
 ----------------------------
 
+Version 3.2.0, released December 23rd, 2019
+--------------------------------------------------------
+
+**Summary:**
+CARMAPlatform release version 3.2.0 includes the following four major updates. An initial converter has been developed to convert OpenDrive maps to LaneLet2's OSM format. The converter currently only covers lane geometry only. Autoware v1.13 pre-release has been integrated with CARMAPlatform. A guidance plan delegator has been developed to notify strategic plugins that the arbitrator has selected their maneuver plan, and request the corresponding trajectory plan for said plugin. Finally, a guidance re-engage capability has been added to the platform, which will allow for multiple runs to be made without restarting the software.  
+
+Enhancements in this release:  
+- Issue 416: Update Docker to use Autoware 1.12 build
+- Issue 419: Add support for Lanelet2 to Docker images and upgrade to Autoware v1.13 pre-release
+- Issue 431: Develop OpenDrive to LaneLet2 Converter for Geometry
+- Issue 456: Create initial vehicle model
+- Issue 457: Add example vehicle calibration folder for CARMA users
+
+Fixes in this release:  
+- Issue 342: Fix UI, version number not showing up
+- Issue 378: Fix the Operator Override state for SSC Wrapper and Guidance
+- Issue 433: Autoware plugin publishes plugin discovery topic only once
+- Issue 436: Arbitrator Capabilities Interface is not initialized
+- Issue 437: Autoware Plugin discovery message does not contain plugin type
+- Issue 439: Abritrator node initialization function is called multiple times during INITIAL state
+- Issue 443: Autoware maneuver plan does not contain planner name
+- Issue 446: Arbitrator does not load plugin priorities correctly
+- Issue 450: Arbitrator public node handle is initialized with namespace
+- Issue 451: Arbitrator node publishes maneuver plan every 10 seconds
+- Issue 452: Pure pursuit wrapper does not convert trajectory into waypoints under new CARMA planning stack
+
+
 Version 3.1.0, released 18 October 2019 
 --------------------------------------------------------
 

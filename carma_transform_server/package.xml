@@ -16,7 +16,7 @@
 -->
 <package>
   <name>carma_transform_server</name>
-  <version>1.0.0</version>
+  <version>3.2.0</version>
   <description>The carma_transform_server package maintains a tf2 tree and makes this tree available via a service call</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
