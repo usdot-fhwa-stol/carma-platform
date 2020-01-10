@@ -21,6 +21,7 @@
 #include <map>
 #include <string>
 #include <functional>
+#include <cav_srvs/PlanManeuvers.h>
 
 namespace arbitrator 
 {
@@ -31,7 +32,8 @@ namespace arbitrator
         std::map<std::string, MSrv> responses;
         for (auto i = topics.begin(); i != topics.end(); i++) 
         {
-            if (service_clients_.at(*i).call(msg)) {
+            ros::ServiceClient sc = nh_->serviceClient<cav_srvs::PlanManeuvers>(*i);
+            if (sc.call(msg)) {
                 responses.emplace(*i, msg);
             }
         }
