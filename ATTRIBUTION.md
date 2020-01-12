@@ -22,7 +22,7 @@
 * Iwao Makino - Autoware integration (Tier IV)
 * Matt Marchese - Systems engineering (Leidos)
 * Ryohsuke Mitsudome - Autoware integration (Tier IV)
-* Sudkahar Nallamothu - Project Management (Leidos)
+* Sudhakar Nallamothu - Project Management (Leidos)
 * Tim Tiernan - System Test Lead (Volpe) 
 * Thomas Watters - Driver Development (formerly of TORC Robotics)
 
