@@ -29,4 +29,6 @@
   <depend>cav_srvs</depend>
   <depend>carma_utils</depend>
   <depend>autoware_msgs</depend>
+  <depend>wgs84_utils</depend>
+  <depend>carma_wm</depend>
 </package>

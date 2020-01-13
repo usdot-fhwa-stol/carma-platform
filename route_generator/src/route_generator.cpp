@@ -18,7 +18,7 @@
 
 #include "route_generator.h"
 
-RouteGenerator::RouteGenerator() : route_is_active_(false) {}
+RouteGenerator::RouteGenerator() : route_is_active_(false),  tfListener_(tfBuffer_) {}
 
 RouteGenerator::~RouteGenerator() {}
 
@@ -28,10 +28,12 @@ void RouteGenerator::initialize()
     pnh_.reset(new ros::CARMANodeHandle("~"));
     pnh_->getParam("route_file_path", route_file_path_);
     route_file_path_pub_ = nh_->advertise<std_msgs::String>("selected_route_path", 1);
+    route_bin_pub_ = nh_->advertise<cav_msgs::RoutePath>("selected_route_bin", 1);
     get_available_route_srv_ = nh_->advertiseService("get_available_routes", &RouteGenerator::get_available_route_cb, this);
-    set_active_route_srv_ = nh_->advertiseService("set_active_route", &RouteGenerator::set_active_route_cb, this);
+    set_active_route_srv_ = nh_->advertiseService("set_active_route", &RouteGenerator::set_active_route_cb_new, this);
     start_active_route_srv_ = nh_->advertiseService("start_active_route", &RouteGenerator::start_active_route_cb, this);
     abort_active_route_srv_ = nh_->advertiseService("abort_active_route", &RouteGenerator::abort_active_route_cb, this);
+    carma_wm::WorldModelConstPtr wm = wml.getWorldModel();
 }
 
 void RouteGenerator::run()
@@ -71,6 +73,68 @@ bool RouteGenerator::set_active_route_cb(cav_srvs::SetActiveRouteRequest &req, c
         resp.errorStatus = cav_srvs::SetActiveRouteResponse::ALREADY_FOLLOWING_ROUTE;
     }
     
+    return true;
+}
+
+bool RouteGenerator::set_active_route_cb_new(cav_srvs::SetActiveRouteRequest &req, cav_srvs::SetActiveRouteResponse &resp)
+{
+    std::string route_file_name = route_file_path_ + req.routeID.append(".csv");
+    std::ifstream fs(route_file_name);
+    std::string line;
+    std::vector<tf2::Vector3> destination_points;
+    while(std::getline(fs, line))
+    {
+        wgs84_utils::wgs84_coordinate coordinate;
+        auto comma = line.find(",");
+        coordinate.lon = std::stod(line.substr(0, comma));
+        line.erase(0, comma + 1);
+        comma = line.find(",");
+        coordinate.lat = std::stod(line.substr(0, comma));
+        coordinate.elevation = std::stod(line.substr(comma + 1));
+        destination_points.emplace_back(wgs84_utils::geodesic_to_ecef(coordinate, tf2::Transform()));
+    }
+    tf2::Transform map_in_earth;
+    try {
+      // The map_in_earth transform should only change occasionally so no need to lookup a specific time
+      tf2::convert(tfBuffer_.lookupTransform("earth", "map", ros::Time(0)).transform, map_in_earth);
+    } catch (tf2::TransformException &ex) {
+      ROS_ERROR_STREAM("Could not lookup transform with exception " << ex.what());
+      return false;
+    }
+    std::vector<tf2::Vector3> destination_points_in_map;
+    for(tf2::Vector3 point : destination_points) {
+        destination_points_in_map.push_back(map_in_earth * point);
+    }
+    lanelet::BasicPoint2d start_point(destination_points_in_map[0].getX(), destination_points_in_map[0].getY());
+    auto start_lanelet_vector = lanelet::geometry::findNearest(wm->getMap()->laneletLayer, start_point, 1);
+    if(start_lanelet_vector.size() != 1) {
+        return false;
+    }
+    lanelet::Lanelet start = start_lanelet_vector[0].second.constData();
+    std::vector<lanelet::Lanelet> via_lanelets_vector;
+    for(tf2::Vector3 point : destination_points_in_map) {
+        auto via_lanelet_vector = lanelet::geometry::findNearest(wm->getMap()->laneletLayer, lanelet::BasicPoint2d(point.getX(), point.getY()), 1);
+        if(via_lanelet_vector.size() != 1) {
+            return false;
+        } else {
+            via_lanelets_vector.push_back(via_lanelet_vector[0].second.constData());
+        }
+    }
+    lanelet::ConstLanelets via;
+    for(int i = 0; i < via_lanelets_vector.size() - 1; ++i) {
+        via.push_back(via_lanelets_vector[i]);
+    }
+    auto route = wm->getMapRoutingGraph()->getRouteVia(start, via, via_lanelets_vector.back());
+    if(!route) {
+        return false;
+        
+    }
+    cav_msgs::RoutePath msg;
+    msg.route_name = req.routeID;
+    for(const auto& ll : route.get().shortestPath()) {
+        msg.shortest_path_lanelet_ids.push_back(ll.id());
+    }
+    route_bin_pub_.publish(msg);
     return true;
 }
 
