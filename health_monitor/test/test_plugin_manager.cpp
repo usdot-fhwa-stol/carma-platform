@@ -23,13 +23,14 @@ namespace health_monitor
     TEST(PluginManagerTest, testRegisteredPlugins)
     {
         std::vector<std::string> required_plugins{"autoware", "pure_pursuit"};
-        PluginManager pm(required_plugins);
+        PluginManager pm(required_plugins, "/guidance/plugin/", "/plan_maneuver", "/plan_trajectory");
         cav_msgs::Plugin msg1;
         msg1.name = "autoware";
         msg1.available = true;
         msg1.activated = false;
         msg1.type = cav_msgs::Plugin::STRATEGIC;
         msg1.versionId = "1.0.1";
+        msg1.capability = "waypoint_following/autoware";
         cav_msgs::PluginConstPtr msg1_pointer(new cav_msgs::Plugin(msg1));
         pm.update_plugin_status(msg1_pointer);
         cav_msgs::Plugin msg2;
@@ -39,6 +40,7 @@ namespace health_monitor
         // this field is not used by plugin manager
         msg2.type = cav_msgs::Plugin::TACTICAL;
         msg2.versionId = "1.0.0";
+        msg2.capability = "lane_change";
         cav_msgs::PluginConstPtr msg2_pointer(new cav_msgs::Plugin(msg2));
         pm.update_plugin_status(msg2_pointer);
         cav_srvs::PluginListResponse res;
@@ -76,6 +78,25 @@ namespace health_monitor
         EXPECT_EQ(true, res4.plugins.begin()->activated);
         EXPECT_EQ(true, res4.plugins.begin()->available);
         EXPECT_EQ(0, res4.plugins.begin()->name.compare("autoware"));
+        cav_srvs::GetPluginApiRequest req;
+        req.capability = "";
+        cav_srvs::GetPluginApiResponse resp;
+        EXPECT_TRUE(pm.get_strategic_plugins_by_capability(req, resp));
+        EXPECT_EQ(1, resp.plan_service.size());
+        EXPECT_EQ("/guidance/plugin/autoware/plan_maneuver", resp.plan_service[0]);
+        resp = cav_srvs::GetPluginApiResponse();
+        EXPECT_TRUE(pm.get_tactical_plugins_by_capability(req, resp));
+        EXPECT_EQ(1, resp.plan_service.size());
+        EXPECT_EQ("/guidance/plugin/lane_change/plan_trajectory", resp.plan_service[0]);
+        resp = cav_srvs::GetPluginApiResponse();
+        req.capability = "waypoint_following";
+        EXPECT_TRUE(pm.get_strategic_plugins_by_capability(req, resp));
+        EXPECT_EQ(1, resp.plan_service.size());
+        EXPECT_EQ("/guidance/plugin/autoware/plan_maneuver", resp.plan_service[0]);
+        resp = cav_srvs::GetPluginApiResponse();
+        req.capability = "platooning";
+        EXPECT_TRUE(pm.get_strategic_plugins_by_capability(req, resp));
+        EXPECT_EQ(0, resp.plan_service.size());
     }
 
 }

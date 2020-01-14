@@ -21,7 +21,13 @@ namespace health_monitor
 
     PluginManager::PluginManager() {}
 
-    PluginManager::PluginManager(std::vector<std::string> require_plugin_names)
+    PluginManager::PluginManager(const std::vector<std::string>& require_plugin_names,
+                                 const std::string& service_prefix,
+                                 const std::string& strategic_service_suffix,
+                                 const std::string& tactical_service_suffix)
+                                 : service_prefix_(service_prefix),
+                                   strategic_service_suffix_(strategic_service_suffix),
+                                   tactical_service_suffix_(tactical_service_suffix)
     {
         em_ = EntryManager(require_plugin_names);
     }
@@ -65,7 +71,7 @@ namespace health_monitor
         if(requested_plugin)
         {
             // params: bool available, bool active, std::string name, long timestamp, uint8_t type
-            Entry updated_entry(requested_plugin->available_, activate, requested_plugin->name_, 0, requested_plugin->type_);
+            Entry updated_entry(requested_plugin->available_, activate, requested_plugin->name_, 0, requested_plugin->type_, requested_plugin->capability_);
             em_.update_entry(updated_entry);
             return true;
         }
@@ -76,7 +82,7 @@ namespace health_monitor
     {
         boost::optional<Entry> requested_plugin = em_.get_entry_by_name(msg->name);
         // params: bool available, bool active, std::string name, long timestamp, uint8_t type
-        Entry plugin(msg->available, false, msg->name, 0, msg->type);
+        Entry plugin(msg->available, false, msg->name, 0, msg->type, msg->capability);
         // if it already exists, we do not change its activation status
         if(requested_plugin)
         {
@@ -86,6 +92,38 @@ namespace health_monitor
             plugin.active_ = true;
         }
         em_.update_entry(plugin);
+    }
+
+    bool PluginManager::get_tactical_plugins_by_capability(cav_srvs::GetPluginApiRequest& req, cav_srvs::GetPluginApiResponse& res)
+    {
+        for(const auto& plugin : em_.get_entries())
+        {
+            if(plugin.type_ == cav_msgs::Plugin::TACTICAL)
+            {
+                if(req.capability.size() == 0 ||
+                  (plugin.capability_.compare(0, req.capability.size(), req.capability) == 0 && plugin.active_ && plugin.available_))
+                {
+                    res.plan_service.push_back(service_prefix_ + plugin.name_ + tactical_service_suffix_);
+                }
+            }
+        }
+        return true;
+    }
+
+    bool PluginManager::get_strategic_plugins_by_capability(cav_srvs::GetPluginApiRequest& req, cav_srvs::GetPluginApiResponse& res)
+    {
+        for(const auto& plugin : em_.get_entries())
+        {
+            if(plugin.type_ == cav_msgs::Plugin::STRATEGIC)
+            {
+                if(req.capability.size() == 0 ||
+                  (plugin.capability_.compare(0, req.capability.size(), req.capability) == 0 && plugin.active_ && plugin.available_))
+                {
+                    res.plan_service.push_back(service_prefix_ + plugin.name_ + strategic_service_suffix_);
+                }
+            }
+        }
+        return true;
     }
 
 }

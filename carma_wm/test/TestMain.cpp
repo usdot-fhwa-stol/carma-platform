@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,11 +14,11 @@
  * the License.
  */
 
-#include "entry.h"
+#include <gtest/gtest.h>
 
-namespace health_monitor
+// Run all the tests
+int main(int argc, char** argv)
 {
-    Entry::Entry(bool available, bool active, std::string name, long timestamp, uint8_t type, std::string capability) :
-        available_(available), active_(active), name_(name), timestamp_(timestamp), type_(type), capability_(capability) {}
-
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

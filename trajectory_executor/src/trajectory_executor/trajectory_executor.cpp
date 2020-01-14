@@ -78,6 +78,16 @@ namespace trajectory_executor
         ROS_DEBUG_STREAM("Successfully swapped trajectories!");
     }
 
+    void TrajectoryExecutor::guidanceStateMonitor(cav_msgs::GuidanceState msg)
+    {
+        std::unique_lock<std::mutex> lock(_cur_traj_mutex); // Acquire lock until end of this function scope
+        if(msg.state==cav_msgs::GuidanceState::INACTIVE)
+        {
+        	_cur_traj= nullptr;
+        }
+        
+    }
+
     void TrajectoryExecutor::onTrajEmitTick(const ros::TimerEvent& te)
     {
         std::unique_lock<std::mutex> lock(_cur_traj_mutex);
@@ -145,6 +155,7 @@ namespace trajectory_executor
             << " and trajectory_publish_rate " << _min_traj_publish_tickrate_hz);
 
         this->_plan_sub = this->_public_nh->subscribe<cav_msgs::TrajectoryPlan>("trajectory", 5, &TrajectoryExecutor::onNewTrajectoryPlan, this);
+        this->_state_sub = this->_public_nh->subscribe<cav_msgs::GuidanceState>("state", 5, &TrajectoryExecutor::guidanceStateMonitor, this);
         this->_cur_traj = std::unique_ptr<cav_msgs::TrajectoryPlan>();
         ROS_DEBUG("Subscribed to inbound trajectory plans.");
 

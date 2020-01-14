@@ -29,11 +29,6 @@ namespace health_monitor
     class HealthMonitor
     {
         public:
-            
-            /*!
-             * \brief Default constructor for HealthMonitor
-             */
-            HealthMonitor();
 
             /*!
              * \brief Begin normal execution of health monitor node. Will take over control flow of program and exit from here.
@@ -55,6 +50,8 @@ namespace health_monitor
             ros::ServiceServer registered_plugin_service_server_;
             ros::ServiceServer active_plugin_service_server_;
             ros::ServiceServer activate_plugin_service_server_;
+            ros::ServiceServer get_strategic_plugin_by_capability_server_;
+            ros::ServiceServer get_tactical_plugin_by_capability_server_;
 
             // topic subscribers
             ros::Subscriber plugin_discovery_subscriber_;
@@ -77,6 +74,11 @@ namespace health_monitor
 
             // record of startup timestamp
             ros::Time start_up_timestamp_;
+
+            // service name prefix and suffix
+            std::string plugin_service_prefix_;
+            std::string strategic_plugin_service_suffix_;
+            std::string tactical_plugin_service_suffix_;
 
             // spin callback function
             bool spin_cb();
