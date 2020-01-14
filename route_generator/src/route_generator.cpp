@@ -110,14 +110,14 @@ bool RouteGenerator::set_active_route_cb_new(cav_srvs::SetActiveRouteRequest &re
     if(start_lanelet_vector.size() != 1) {
         return false;
     }
-    lanelet::Lanelet start = start_lanelet_vector[0].second.constData();
-    std::vector<lanelet::Lanelet> via_lanelets_vector;
+    lanelet::ConstLanelet start = lanelet::ConstLanelet(start_lanelet_vector[0].second.constData());
+    std::vector<lanelet::ConstLanelet> via_lanelets_vector;
     for(tf2::Vector3 point : destination_points_in_map) {
         auto via_lanelet_vector = lanelet::geometry::findNearest(wm->getMap()->laneletLayer, lanelet::BasicPoint2d(point.getX(), point.getY()), 1);
         if(via_lanelet_vector.size() != 1) {
             return false;
         } else {
-            via_lanelets_vector.push_back(via_lanelet_vector[0].second.constData());
+            via_lanelets_vector.push_back(lanelet::ConstLanelet(via_lanelet_vector[0].second.constData()));
         }
     }
     lanelet::ConstLanelets via;
@@ -127,7 +127,6 @@ bool RouteGenerator::set_active_route_cb_new(cav_srvs::SetActiveRouteRequest &re
     auto route = wm->getMapRoutingGraph()->getRouteVia(start, via, via_lanelets_vector.back());
     if(!route) {
         return false;
-        
     }
     cav_msgs::RoutePath msg;
     msg.route_name = req.routeID;
