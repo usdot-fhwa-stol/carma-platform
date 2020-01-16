@@ -23,6 +23,8 @@
 
 #include <tf2_ros/transform_listener.h>
 #include <std_msgs/String.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/Transform.h>
 
 #include <cav_msgs/Route.h>
 #include <cav_msgs/RoutePath.h>
@@ -50,6 +52,13 @@ public:
 
     // read file names in the given route path
     static std::vector<std::string> read_route_names(std::string route_path);
+
+    // generate a route using Lanelet2 library
+    static lanelet::Optional<lanelet::routing::Route> routing(lanelet::BasicPoint2d start,
+                                                       std::vector<lanelet::BasicPoint2d> via,
+                                                       lanelet::BasicPoint2d end,
+                                                       lanelet::LaneletMapConstPtr map_pointer,
+                                                       carma_wm::LaneletRoutingGraphConstPtr graph_pointer);
 
 private:
 

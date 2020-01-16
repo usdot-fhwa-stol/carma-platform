@@ -93,38 +93,33 @@ bool RouteGenerator::set_active_route_cb_new(cav_srvs::SetActiveRouteRequest &re
         coordinate.elevation = std::stod(line.substr(comma + 1));
         destination_points.emplace_back(wgs84_utils::geodesic_to_ecef(coordinate, tf2::Transform()));
     }
-    tf2::Transform map_in_earth;
-    try {
-      // The map_in_earth transform should only change occasionally so no need to lookup a specific time
-      tf2::convert(tfBuffer_.lookupTransform("earth", "map", ros::Time(0)).transform, map_in_earth);
-    } catch (tf2::TransformException &ex) {
-      ROS_ERROR_STREAM("Could not lookup transform with exception " << ex.what());
-      return false;
+    tf2_ros::Buffer tfBuffer;
+    tf2_ros::TransformListener tfListener(tfBuffer);
+    geometry_msgs::TransformStamped map_in_earth;
+    tf2::Stamped<tf2::Transform> map_in_earth_tf;
+    try{
+        map_in_earth = tfBuffer.lookupTransform("earth", "map", ros::Time(0));
     }
-    std::vector<tf2::Vector3> destination_points_in_map;
+    catch (tf2::TransformException &ex) {
+        ROS_ERROR_STREAM("Could not lookup transform with exception " << ex.what());
+    }
+    //tf2::fromMsg(map_in_earth.transform, map_in_earth_tf);
+    //map_in_earth_tf = tf2::Transform(map_in_earth.transform.rotation, map_in_earth.transform.translation);
+    //tf2::convert(map_in_earth, map_in_earth_tf);
+    std::vector<lanelet::BasicPoint2d> destination_points_in_map;
     for(tf2::Vector3 point : destination_points) {
-        destination_points_in_map.push_back(map_in_earth * point);
+        auto point_in_map = map_in_earth_tf * point;
+        destination_points_in_map.push_back(lanelet::BasicPoint2d(point_in_map.getX(), point_in_map.getY()));
     }
-    lanelet::BasicPoint2d start_point(destination_points_in_map[0].getX(), destination_points_in_map[0].getY());
-    auto start_lanelet_vector = lanelet::geometry::findNearest(wm->getMap()->laneletLayer, start_point, 1);
-    if(start_lanelet_vector.size() != 1) {
+    carma_wm::LaneletRoutingGraphConstPtr p = wm->getMapRoutingGraph();
+    if(destination_points_in_map.size() < 2) {
         return false;
     }
-    lanelet::ConstLanelet start = lanelet::ConstLanelet(start_lanelet_vector[0].second.constData());
-    std::vector<lanelet::ConstLanelet> via_lanelets_vector;
-    for(tf2::Vector3 point : destination_points_in_map) {
-        auto via_lanelet_vector = lanelet::geometry::findNearest(wm->getMap()->laneletLayer, lanelet::BasicPoint2d(point.getX(), point.getY()), 1);
-        if(via_lanelet_vector.size() != 1) {
-            return false;
-        } else {
-            via_lanelets_vector.push_back(lanelet::ConstLanelet(via_lanelet_vector[0].second.constData()));
-        }
-    }
-    lanelet::ConstLanelets via;
-    for(int i = 0; i < via_lanelets_vector.size() - 1; ++i) {
-        via.push_back(via_lanelets_vector[i]);
-    }
-    auto route = wm->getMapRoutingGraph()->getRouteVia(start, via, via_lanelets_vector.back());
+    
+    auto route = routing(destination_points_in_map.front(),
+                         std::vector<lanelet::BasicPoint2d>(destination_points_in_map.begin() + 1, destination_points_in_map.end() - 1),
+                         destination_points_in_map.back(),
+                         wm->getMap(), wm->getMapRoutingGraph());
     if(!route) {
         return false;
     }
@@ -135,6 +130,46 @@ bool RouteGenerator::set_active_route_cb_new(cav_srvs::SetActiveRouteRequest &re
     }
     route_bin_pub_.publish(msg);
     return true;
+}
+
+lanelet::Optional<lanelet::routing::Route> RouteGenerator::routing(lanelet::BasicPoint2d start, std::vector<lanelet::BasicPoint2d> via, lanelet::BasicPoint2d end, lanelet::LaneletMapConstPtr map_pointer, carma_wm::LaneletRoutingGraphConstPtr graph_pointer)
+{
+    std::cerr << "start_loc: " << start.x() << " " << start.y() << "\n";
+    std::cerr << "end_loc: " << end.x() << " " << end.y() << "\n";
+    // find start lanelet
+    auto start_lanelet_vector = lanelet::geometry::findNearest(map_pointer->laneletLayer, start, 1);
+    // check if there are duplicate lanelets at starting point
+    if(start_lanelet_vector.size() != 1) {
+        ROS_ERROR_STREAM("Found duplicate lanelets at starting point. Routing cannot be done.");
+        return lanelet::Optional<lanelet::routing::Route>();
+    }
+    // extract starting lanelet
+    auto start_lanelet = lanelet::ConstLanelet(start_lanelet_vector[0].second.constData());
+    std::cerr << "start_id: " << start_lanelet.id() << "\n";
+    // find end lanelet
+    auto end_lanelet_vector = lanelet::geometry::findNearest(map_pointer->laneletLayer, end, 1);
+    // check if there are duplicate lanelets at end point
+    if(end_lanelet_vector.size() != 1) {
+        ROS_ERROR_STREAM("Found duplicate lanelet at ending point. Routing cannot be done.");
+        return lanelet::Optional<lanelet::routing::Route>();
+    }
+    // extract end lanelet
+    auto end_lanelet = lanelet::ConstLanelet(end_lanelet_vector[0].second.constData());
+    std::cerr << "end_id: " << end_lanelet.id() << "\n";
+    // find all via lanelets
+    lanelet::ConstLanelets via_lanelets_vector;
+    for(lanelet::BasicPoint2d point : via) {
+        auto via_lanelet_vector = lanelet::geometry::findNearest(map_pointer->laneletLayer, point, 1);
+        // check if there are duplicate lanelets at any via points
+        if(via_lanelet_vector.size() != 1) {
+            return lanelet::Optional<lanelet::routing::Route>();
+        } else {
+            via_lanelets_vector.push_back(lanelet::ConstLanelet(via_lanelet_vector[0].second.constData()));
+        }
+    }
+    for(auto& ll : via_lanelets_vector) std::cerr << "via: " << ll.id() << "\n";
+    auto route = graph_pointer->getRouteVia(start_lanelet, via_lanelets_vector, end_lanelet);
+    return route;
 }
 
 bool RouteGenerator::start_active_route_cb(cav_srvs::StartActiveRouteRequest &req, cav_srvs::StartActiveRouteResponse &resp)

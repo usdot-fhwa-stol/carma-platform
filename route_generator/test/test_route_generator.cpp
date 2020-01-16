@@ -15,6 +15,16 @@
  */
 
 #include "route_generator.h"
+#include <lanelet2_core/primitives/Lanelet.h>
+#include <lanelet2_io/Io.h>
+#include <lanelet2_io/io_handlers/Factory.h>
+#include <lanelet2_io/io_handlers/Writer.h>
+#include <lanelet2_projection/UTM.h>
+#include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
+#include <lanelet2_core/Attribute.h>
+#include <lanelet2_core/geometry/LineString.h>
+#include <lanelet2_core/primitives/Traits.h>
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 
@@ -27,6 +37,28 @@ TEST(RouteGeneratorTest, testReadFileFunction)
         EXPECT_EQ(file_names[i], expect_file_name);
     }
 
+}
+
+TEST(RouteGeneratorTest, testLaneletRouting)
+{
+    lanelet::LaneletMapPtr map = lanelet::load("/home/qswawrq/Desktop/TFHRC.osm", lanelet::Origin({0, 0}));
+    lanelet::LaneletMapConstPtr const_map(map);
+    lanelet::BasicPoint2d start(-170.5342802580526, 489.8732661522973);
+    std::vector<lanelet::BasicPoint2d> via;
+    via.emplace_back(lanelet::BasicPoint2d(-209.0, 421.5));
+    via.emplace_back(lanelet::BasicPoint2d(-17.5, 322.0));
+    lanelet::BasicPoint2d end(-161.0, 509.0);
+    lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
+    lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
+    auto route = RouteGenerator::routing(start, via, end, const_map, std::move(map_graph));
+    if(!route) {
+        ASSERT_FALSE(true);
+    } else {
+        std::cerr << "shortest path: \n";
+        for(const auto& ll : route.get().shortestPath()) {
+            std::cerr << ll.id() << " ";
+        }
+    }
 }
 
 // Run all the tests
