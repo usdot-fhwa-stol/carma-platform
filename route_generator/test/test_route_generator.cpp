@@ -25,6 +25,7 @@
 #include <lanelet2_core/Attribute.h>
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_core/primitives/Traits.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 
@@ -41,22 +42,26 @@ TEST(RouteGeneratorTest, testReadFileFunction)
 
 TEST(RouteGeneratorTest, testLaneletRouting)
 {
-    lanelet::LaneletMapPtr map = lanelet::load("/home/qswawrq/Desktop/TFHRC.osm", lanelet::Origin({0, 0}));
+    // lanelet::LaneletMapPtr map = lanelet::load("/home/qswawrq/Desktop/TFHRC.osm",
+    //     lanelet::projection::LocalFrameProjector("EPSG:4326", "+proj=tmerc +lat_0=38.95197911150576 +lon_0=-77.14835128349988 +k=1 +x_0=0 +y_0=0 +units=m +vunits=m"));
+    lanelet::LaneletMapPtr map = lanelet::load("/home/qswawrq/Desktop/TFHRC_3.osm", lanelet::Origin({0, 0}));
     lanelet::LaneletMapConstPtr const_map(map);
-    lanelet::BasicPoint2d start(-170.5342802580526, 489.8732661522973);
+    lanelet::BasicPoint2d start(0.5, 0.5);
     std::vector<lanelet::BasicPoint2d> via;
-    via.emplace_back(lanelet::BasicPoint2d(-209.0, 421.5));
-    via.emplace_back(lanelet::BasicPoint2d(-17.5, 322.0));
-    lanelet::BasicPoint2d end(-161.0, 509.0);
+    // via.emplace_back(lanelet::BasicPoint2d(-158.0, 533.5));
+    //via.emplace_back(lanelet::BasicPoint2d(-17.5, 322.0));
+    lanelet::BasicPoint2d end(0.5, 1.5);
     lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
     lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
+    // Output graph for debugging
+    // map_graph->exportGraphViz("/home/qswawrq/Desktop/routing.txt");
     auto route = RouteGenerator::routing(start, via, end, const_map, std::move(map_graph));
     if(!route) {
         ASSERT_FALSE(true);
     } else {
-        std::cerr << "shortest path: \n";
+        std::cout << "shortest path: \n";
         for(const auto& ll : route.get().shortestPath()) {
-            std::cerr << ll.id() << " ";
+            std::cout << ll.id() << " ";
         }
     }
 }
