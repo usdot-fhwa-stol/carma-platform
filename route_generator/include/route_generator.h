@@ -16,13 +16,9 @@
  * the License.
  */
 
-#include <string>
-#include <iostream>
-#include <vector>
-#include <fstream>
-
-#include <tf2_ros/transform_listener.h>
+#include <ros/ros.h>
 #include <std_msgs/String.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/Transform.h>
 
@@ -33,11 +29,8 @@
 #include <cav_srvs/StartActiveRoute.h>
 #include <cav_srvs/AbortActiveRoute.h>
 #include <carma_utils/CARMAUtils.h>
-#include <carma_wm/WMListener.h>
-#include <carma_wm/WorldModel.h>
 
-#include "boost/filesystem.hpp"
-#include "wgs84_utils/wgs84_utils.h"
+#include "route_generator_worker.h"
 
 class RouteGenerator
 {
@@ -50,39 +43,31 @@ public:
     // general starting point of this node
     void run();
 
-    // read file names in the given route path
-    static std::vector<std::string> read_route_names(std::string route_path);
-
-    // generate a route using Lanelet2 library
-    static lanelet::Optional<lanelet::routing::Route> routing(lanelet::BasicPoint2d start,
-                                                       std::vector<lanelet::BasicPoint2d> via,
-                                                       lanelet::BasicPoint2d end,
-                                                       lanelet::LaneletMapConstPtr map_pointer,
-                                                       carma_wm::LaneletRoutingGraphConstPtr graph_pointer);
-
 private:
 
     // node handles
     std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
     // wm listener and pointer
-    carma_wm::WMListener wml;
-    carma_wm::WorldModelConstPtr wm;
+    carma_wm::WMListener wml_;
+    carma_wm::WorldModelConstPtr wm_;
+
+    // route generator worker
+    RouteGeneratorWorker rg_worker_;
 
     // Buffer which holds the tree of transforms
-    tf2_ros::Buffer tfBuffer_;
+    tf2_ros::Buffer tf_buffer_;
     // tf2 listeners. Subscribes to the /tf and /tf_static topics
-    tf2_ros::TransformListener tfListener_;
+    tf2_ros::TransformListener tf_listener_;
 
     // status of the selected route file
     bool route_is_active_;
 
-    // directory of the routes path
+    // param for the directory of the routes path
     std::string route_file_path_;
 
-    // publisher for waypoint loader full file path
-    ros::Publisher route_file_path_pub_;
-    ros::Publisher route_bin_pub_;
+    // publisher for lanelet route
+    ros::Publisher route_pub_;
     
     // route service servers
     ros::ServiceServer get_available_route_srv_;
@@ -95,9 +80,6 @@ private:
     bool set_active_route_cb(cav_srvs::SetActiveRouteRequest &req, cav_srvs::SetActiveRouteResponse &resp);
     bool start_active_route_cb(cav_srvs::StartActiveRouteRequest &req, cav_srvs::StartActiveRouteResponse &resp);
     bool abort_active_route_cb(cav_srvs::AbortActiveRouteRequest &req, cav_srvs::AbortActiveRouteResponse &resp);
-
-    // new service callbacks, will replace old service call later
-    bool set_active_route_cb_new(cav_srvs::SetActiveRouteRequest &req, cav_srvs::SetActiveRouteResponse &resp);
 
     // initialize this node
     void initialize();

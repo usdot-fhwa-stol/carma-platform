@@ -14,7 +14,7 @@
  * the License.
  */
 
-#include "route_generator.h"
+#include "route_generator_worker.h"
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_io/Io.h>
 #include <lanelet2_io/io_handlers/Factory.h>
@@ -31,7 +31,8 @@
 
 TEST(RouteGeneratorTest, testReadFileFunction)
 {
-    std::vector<std::string> file_names = RouteGenerator::read_route_names("/home/qswawrq/CARMAWorkspace/src/route_generator/resource/");
+    RouteGeneratorWorker worker;
+    std::vector<std::string> file_names = worker.read_route_names("/home/qswawrq/CARMAWorkspace/src/route_generator/resource/");
     for(int i = 0; i < file_names.size(); ++i)
     {
         std::string expect_file_name = "route" + std::to_string(i + 1) + ".csv";
@@ -42,6 +43,7 @@ TEST(RouteGeneratorTest, testReadFileFunction)
 
 TEST(RouteGeneratorTest, testLaneletRouting)
 {
+    RouteGeneratorWorker worker;
     // lanelet::LaneletMapPtr map = lanelet::load("/home/qswawrq/Desktop/TFHRC.osm",
     //     lanelet::projection::LocalFrameProjector("EPSG:4326", "+proj=tmerc +lat_0=38.95197911150576 +lon_0=-77.14835128349988 +k=1 +x_0=0 +y_0=0 +units=m +vunits=m"));
     lanelet::LaneletMapPtr map = lanelet::load("/home/qswawrq/Desktop/TFHRC_3.osm", lanelet::Origin({0, 0}));
@@ -55,7 +57,7 @@ TEST(RouteGeneratorTest, testLaneletRouting)
     lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
     // Output graph for debugging
     // map_graph->exportGraphViz("/home/qswawrq/Desktop/routing.txt");
-    auto route = RouteGenerator::routing(start, via, end, const_map, std::move(map_graph));
+    auto route = worker.routing(start, via, end, const_map, std::move(map_graph));
     if(!route) {
         ASSERT_FALSE(true);
     } else {

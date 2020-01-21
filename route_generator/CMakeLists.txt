@@ -62,8 +62,9 @@ file(GLOB_RECURSE headers */*.hpp */*.h)
 add_executable( ${PROJECT_NAME}
   ${headers}
   src/route_generator.cpp
-  src/main.cpp)
-add_library(route_generator_library src/route_generator.cpp)
+  src/main.cpp
+  src/route_generator_worker.cpp)
+add_library(route_generator_library src/route_generator_worker.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} route_generator_library)
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 add_dependencies(route_generator_library ${catkin_EXPORTED_TARGETS})
