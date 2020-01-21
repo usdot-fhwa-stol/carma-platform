@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 LEIDOS.
+ * Copyright (C) 2019-2020 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@
 #include <map>
 #include <string>
 #include <functional>
+#include <cav_srvs/PlanManeuvers.h>
 
 namespace arbitrator 
 {
@@ -31,7 +32,8 @@ namespace arbitrator
         std::map<std::string, MSrv> responses;
         for (auto i = topics.begin(); i != topics.end(); i++) 
         {
-            if (service_clients_.at(*i).call(msg)) {
+            ros::ServiceClient sc = nh_->serviceClient<cav_srvs::PlanManeuvers>(*i);
+            if (sc.call(msg)) {
                 responses.emplace(*i, msg);
             }
         }

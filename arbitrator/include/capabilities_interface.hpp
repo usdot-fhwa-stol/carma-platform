@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 LEIDOS.
+ * Copyright (C) 2019-2020 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,10 @@
 #include <carma_utils/CARMAUtils.h>
 #include <vector>
 #include <map>
+#include <unordered_set>
 #include <string>
+#include <cav_srvs/PluginList.h>
+#include <cav_srvs/GetPluginApi.h>
 
 namespace arbitrator
 {
@@ -36,13 +39,15 @@ namespace arbitrator
              * \brief Constructor for Capabilities interface
              * \param nh A publically addressesed ("/") ros::NodeHandle
              */
-            CapabilitiesInterface(ros::NodeHandle *nh): nh_(nh) {};
+            CapabilitiesInterface(ros::NodeHandle *nh): nh_(nh) {
+                sc_s = nh_->serviceClient<cav_srvs::GetPluginApi>("plugins/get_strategic_plugin_by_capability");
+            };
 
             /**
              * \brief Initialize the Capabilities interface by querying the Health Monitor
              *      node and processing the plugins that are returned.
              */
-            void initialize();
+            // void initialize();
 
             /**
              * \brief Get the list of topics that respond to the capability specified by
@@ -51,7 +56,7 @@ namespace arbitrator
              * \param query_string The string name of the capability to look for
              * \return A list of all responding topics, if any are found.
              */
-            std::vector<std::string> get_topics_for_capability(std::string query_string) const;
+            std::vector<std::string> get_topics_for_capability(std::string query_string);
 
 
             /**
@@ -68,14 +73,15 @@ namespace arbitrator
             std::map<std::string, MSrv> multiplex_service_call_for_capability(std::string query_string, MSrv msg);
 
             const static std::string STRATEGIC_PLAN_CAPABILITY;
-            const static std::string TACTICAL_PLAN_CAPABILITY;
-            const static std::string CONTROL_CAPABILITY;
         protected:
         private:
             ros::NodeHandle *nh_;
-            std::map<std::string, ros::ServiceClient> service_clients_;
-            //std::map<std::string, ros::Publisher> publishers_;
-            std::map<std::string, std::vector<std::string>> capabilities_;
+
+            ros::ServiceClient sc_s;
+            std::unordered_set <std::string> capabilities_ ; 
+
+
+            
     };
 };
 
