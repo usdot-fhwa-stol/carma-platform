@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,13 +32,13 @@
 TEST(RouteGeneratorTest, testReadFileFunction)
 {
     RouteGeneratorWorker worker;
-    std::vector<std::string> file_names = worker.read_route_names("/home/qswawrq/CARMAWorkspace/src/route_generator/resource/");
+    std::vector<std::string> file_names = worker.read_route_names("../../src/route_generator/resource/route");
+    EXPECT_EQ(1, file_names.size());
     for(int i = 0; i < file_names.size(); ++i)
     {
-        std::string expect_file_name = "route" + std::to_string(i + 1) + ".csv";
+        std::string expect_file_name = "tfhrc_test_route.csv";
         EXPECT_EQ(file_names[i], expect_file_name);
     }
-
 }
 
 TEST(RouteGeneratorTest, testLaneletRouting)
@@ -46,7 +46,7 @@ TEST(RouteGeneratorTest, testLaneletRouting)
     RouteGeneratorWorker worker;
     // lanelet::LaneletMapPtr map = lanelet::load("/home/qswawrq/Desktop/TFHRC.osm",
     //     lanelet::projection::LocalFrameProjector("EPSG:4326", "+proj=tmerc +lat_0=38.95197911150576 +lon_0=-77.14835128349988 +k=1 +x_0=0 +y_0=0 +units=m +vunits=m"));
-    lanelet::LaneletMapPtr map = lanelet::load("/home/qswawrq/Desktop/TFHRC_3.osm", lanelet::Origin({0, 0}));
+    lanelet::LaneletMapPtr map = lanelet::load("../../src/route_generator/resource/map/test_vector_map.osm", lanelet::Origin({0, 0}));
     lanelet::LaneletMapConstPtr const_map(map);
     lanelet::BasicPoint2d start(0.5, 0.5);
     std::vector<lanelet::BasicPoint2d> via;

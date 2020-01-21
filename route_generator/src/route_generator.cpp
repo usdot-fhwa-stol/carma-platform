@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,7 @@ void RouteGenerator::initialize()
     nh_.reset(new ros::CARMANodeHandle());
     pnh_.reset(new ros::CARMANodeHandle("~"));
     pnh_->getParam("route_file_path", route_file_path_);
-    route_pub_ = nh_->advertise<cav_msgs::RoutePath>("route", 1);
+    route_pub_ = nh_->advertise<cav_msgs::Route>("route", 1);
     get_available_route_srv_ = nh_->advertiseService("get_available_routes", &RouteGenerator::get_available_route_cb, this);
     set_active_route_srv_ = nh_->advertiseService("set_active_route", &RouteGenerator::set_active_route_cb, this);
     start_active_route_srv_ = nh_->advertiseService("start_active_route", &RouteGenerator::start_active_route_cb, this);
@@ -46,9 +46,7 @@ bool RouteGenerator::get_available_route_cb(cav_srvs::GetAvailableRoutesRequest 
     {
         std::string route_name = route_ids[i].substr(0, route_ids[i].find(".csv"));
         cav_msgs::Route route_msg;
-        route_msg.routeID = route_name;
-        route_msg.routeName = route_name;
-        route_msg.valid = true;
+        route_msg.route_id = route_name;
         resp.availableRoutes.push_back(route_msg);
     }
     return true;
@@ -92,10 +90,13 @@ bool RouteGenerator::set_active_route_cb(cav_srvs::SetActiveRouteRequest &req, c
         return false;
     }
     // publish route to carma_wm
-    cav_msgs::RoutePath msg;
+    cav_msgs::Route msg;
     msg.route_name = req.routeID;
     for(const auto& ll : route.get().shortestPath()) {
         msg.shortest_path_lanelet_ids.push_back(ll.id());
+    }
+    for(const auto& ll : route.get().laneletMap()->laneletLayer) {
+        msg.route_path_lanelet_ids.push_back(ll.id());
     }
     route_pub_.publish(msg);
     return true;

@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2019 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,6 @@
 #include <geometry_msgs/Transform.h>
 
 #include <cav_msgs/Route.h>
-#include <cav_msgs/RoutePath.h>
 #include <cav_srvs/GetAvailableRoutes.h>
 #include <cav_srvs/SetActiveRoute.h>
 #include <cav_srvs/StartActiveRoute.h>
