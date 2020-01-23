@@ -42,7 +42,7 @@ namespace autoware_plugin
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = false;
         plugin_discovery_msg_.type = cav_msgs::Plugin::STRATEGIC;
-        plugin_discovery_msg_.capability = "waypoint_following/autoware";
+        plugin_discovery_msg_.capability = "strategic_plan/plan_maneuvers";
 
         waypoints_sub_ = nh_->subscribe("final_waypoints", 1, &AutowarePlugin::waypoints_cb, this);
         pose_sub_ = nh_->subscribe("current_pose", 1, &AutowarePlugin::pose_cb, this);
