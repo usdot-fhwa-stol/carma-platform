@@ -33,7 +33,8 @@ class Way:
         way_element = xml.Element("way", {"id": self.id, "version": str(1), "visible": "true"})
         for i in self.nodes:
             xml.SubElement(way_element, "nd", {"ref": str(i.id)})
-        xml.SubElement(way_element, "tag", {"k": "type", "v": "road_border"})
+        xml.SubElement(way_element, "tag", {"k": "type", "v": "line_thin"})
+        xml.SubElement(way_element, "tag", {"k": "subtype", "v": "solid"})
         return way_element
 
 # class representing relation in lanelet2
@@ -68,16 +69,17 @@ class Relation:
         xml.SubElement(relation_element, "tag", {"k": "near_spaces", "v": "[]"})
         xml.SubElement(relation_element, "tag", {"k": "turn_direction", "v": self.turn_direction})
         return relation_element
-    
+
     # start is the first point of lanelet
     # mid is the secound point of lanlelet
     # end is the last point of lanelet
     # set_direction is used by set_turn direction to check if the lanelet is turning left or right
     def set_direction(self, start, mid, end):
-        if(((b[0] - a[0])*(c[1] - a[1]) - (b[1] - a[1])*(c[0] - a[0])) > 0):
+        if(((mid[0] - start[0])*(end[1] - start[1]) - (mid[1] - start[1])*(end[0] - start[0])) > 0):
             return 1
         else:
             return 0
+
     #set_turn_direction is used to set set the turn_direction tag in lanelet
     def set_turn_direction(self):
         turn_direction = "straight"
@@ -121,8 +123,7 @@ class Opendrive2Lanelet2Convertor:
     # convert x,y values to geo points using the geo reference defined in the input file
     def get_point_geo(self,x,y):
         inProj = Proj(self.geoReference)
-        outProj = Proj(init="epsg:4326")
-        return transform(inProj,outProj,x,y)
+        return inProj(x,y,inverse=True)
 
     def write_xml_to_file(self,fn):
                 

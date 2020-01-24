@@ -28,11 +28,6 @@ startup_duration: 30.0
 required_plugins:
   - AutowarePlugin
 
-# List of String: Required drivers for the platform to be functional
-required_drivers:
-  - /hardware_interface/ssc_interface_wrapper
-  - /hardware_interface/velodyne_lidar_driver_wrapper
-
 # String: Plugin service name prefix
 plugin_service_prefix: /guidance/plugin/
 
