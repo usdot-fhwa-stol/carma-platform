@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>plan_delegator</name>
-  <version>3.2.0</version>
+  <version>3.3.0</version>
   <description>The plan_delegator package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
