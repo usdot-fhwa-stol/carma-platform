@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2020 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,17 +16,20 @@
  * the License.
  */
 
-#include <string>
-#include <iostream>
-#include <vector>
+#include <ros/ros.h>
 #include <std_msgs/String.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/Transform.h>
+
 #include <cav_msgs/Route.h>
 #include <cav_srvs/GetAvailableRoutes.h>
 #include <cav_srvs/SetActiveRoute.h>
 #include <cav_srvs/StartActiveRoute.h>
 #include <cav_srvs/AbortActiveRoute.h>
 #include <carma_utils/CARMAUtils.h>
-#include "boost/filesystem.hpp"
+
+#include "route_generator_worker.h"
 
 class RouteGenerator
 {
@@ -39,22 +42,31 @@ public:
     // general starting point of this node
     void run();
 
-    // read file names in the given route path
-    static std::vector<std::string> read_route_names(std::string route_path);
-
 private:
 
     // node handles
     std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
+    // wm listener and pointer
+    carma_wm::WMListener wml_;
+    carma_wm::WorldModelConstPtr wm_;
+
+    // route generator worker
+    RouteGeneratorWorker rg_worker_;
+
+    // Buffer which holds the tree of transforms
+    tf2_ros::Buffer tf_buffer_;
+    // tf2 listeners. Subscribes to the /tf and /tf_static topics
+    tf2_ros::TransformListener tf_listener_;
+
     // status of the selected route file
     bool route_is_active_;
 
-    // directory of the routes path
+    // param for the directory of the routes path
     std::string route_file_path_;
 
-    // publisher for waypoint loader full file path
-    ros::Publisher  route_file_path_pub_;
+    // publisher for lanelet route
+    ros::Publisher route_pub_;
     
     // route service servers
     ros::ServiceServer get_available_route_srv_;

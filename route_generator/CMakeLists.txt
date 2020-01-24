@@ -18,7 +18,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(route_generator)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++14)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
@@ -29,6 +29,11 @@ find_package(catkin REQUIRED COMPONENTS
   cav_srvs
   carma_utils
   autoware_msgs
+  wgs84_utils
+  carma_wm
+  tf2_geometry_msgs
+  tf2_ros
+  tf2
 )
 
 ## System dependencies are found with CMake's conventions
@@ -39,7 +44,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils autoware_msgs
+  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils autoware_msgs wgs84_utils carma_wm tf2_geometry_msgs tf2_ros tf2
 )
 
 ###########
@@ -57,8 +62,9 @@ file(GLOB_RECURSE headers */*.hpp */*.h)
 add_executable( ${PROJECT_NAME}
   ${headers}
   src/route_generator.cpp
-  src/main.cpp)
-add_library(route_generator_library src/route_generator.cpp)
+  src/main.cpp
+  src/route_generator_worker.cpp)
+add_library(route_generator_library src/route_generator_worker.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} route_generator_library)
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 add_dependencies(route_generator_library ${catkin_EXPORTED_TARGETS})
