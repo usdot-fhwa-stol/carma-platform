@@ -16,7 +16,7 @@
 -->
 <package>
   <name>carma</name>
-  <version>3.2.0</version>
+  <version>3.3.0</version>
   <description>The carma package.</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 

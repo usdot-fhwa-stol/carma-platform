@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>health_monitor</name>
-  <version>3.2.0</version>
+  <version>3.3.0</version>
   <description>The node is used to manage and monitor plugin and driver status</description>
   <maintainer email="shuwei.qiang@leidos.com">qiangs</maintainer>
   <license>Apache 2.0 License</license>

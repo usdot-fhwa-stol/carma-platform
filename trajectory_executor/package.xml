@@ -16,7 +16,7 @@
 -->
 <package format="2">
   <name>trajectory_executor</name>
-  <version>3.2.0</version>
+  <version>3.3.0</version>
   <description>CARMA Trajectory Executor pacakge</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
