@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>guidance_command_repeater</name>
-  <version>3.2.0</version>
+  <version>3.3.0</version>
   <description>The guidance_command_repeater package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
