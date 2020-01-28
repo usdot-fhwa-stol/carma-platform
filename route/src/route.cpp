@@ -46,13 +46,8 @@ namespace route {
     void Route::run()
     {
         initialize();
-        ros::CARMANodeHandle::setSpinCallback(std::bind(&Route::spin_callback, this));
+        ros::CARMANodeHandle::setSpinCallback(std::bind(&RouteGeneratorWorker::spin_ballback, &rg_worker_));
         ros::CARMANodeHandle::spin();
-    }
-
-    bool Route::spin_callback()
-    {
-        
     }
 
 }

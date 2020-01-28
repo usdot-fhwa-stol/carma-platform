@@ -74,6 +74,8 @@ namespace route {
 
         void set_ctdt_param(double ct_max_error, double dt_dest_range);
 
+        bool spin_ballback();
+
     private:
 
         // route state worker
@@ -86,13 +88,17 @@ namespace route {
 
         carma_wm::WorldModelConstPtr world_model_;
 
-        cav_msgs::Route route_msg_;
+        cav_msgs::Route      route_msg_;
         cav_msgs::RouteEvent route_event_msg_;
         cav_msgs::RouteState route_state_msg_;
 
         double cross_track_max_, down_track_target_range_;
 
+        double current_crosstrack_distance_, current_downtrack_distance_;
+
         ros::Publisher route_event_pub_, route_state_pub_, route_pub_;
+
+        void publish_route_event(uint8_t event_type);
 
     };
 }

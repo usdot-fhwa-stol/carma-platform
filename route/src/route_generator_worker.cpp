@@ -79,6 +79,7 @@ namespace route {
     {
         this->route_file_path_ = path;
         this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::LOAD_ROUTE_FILES);
+        publish_route_event(cav_msgs::RouteEvent::LOAD_ROUTE_FILES);
     }
 
     bool RouteGeneratorWorker::set_active_route_cb(cav_srvs::SetActiveRouteRequest &req, cav_srvs::SetActiveRouteResponse &resp)
@@ -86,12 +87,14 @@ namespace route {
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::ROUTE_SELECTION)
         {
             this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_SELECTED);
+            publish_route_event(cav_msgs::RouteEvent::ROUTE_SELECTED);
             auto destination_points = load_route_destinationsin_ecef(req.routeID);
             if(destination_points.size() < 2)
             {
                 ROS_ERROR_STREAM("Selected route file conatins 1 or less points. Routing cannot be completed.");
                 resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTE_FILE_ERROR;
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTING_FAILURE);
+                publish_route_event(cav_msgs::RouteEvent::ROUTING_FAILURE);
                 return false;
             }
             // transform to local map frame
@@ -105,6 +108,7 @@ namespace route {
                 ROS_ERROR_STREAM("Could not lookup transform with exception " << ex.what());
                 resp.errorStatus = cav_srvs::SetActiveRouteResponse::TRANSFORM_ERROR;
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTING_FAILURE);
+                publish_route_event(cav_msgs::RouteEvent::ROUTING_FAILURE);
                 return false;
             }
             // Compose routing function inputs
@@ -120,12 +124,17 @@ namespace route {
                 ROS_ERROR_STREAM("Cannot find a route passing all destinations.");
                 resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTING_FAILURE);
+                publish_route_event(cav_msgs::RouteEvent::ROUTING_FAILURE);
                 return false;
             }
             // publish route to carma_wm
+            route_msg_.header.stamp = ros::Time::now();
+            route_msg_.header.frame_id = "map";
             route_msg_ = compose_route_msg(route);
             route_msg_.route_name = req.routeID;
             this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTING_SUCCESS);
+            publish_route_event(cav_msgs::RouteEvent::ROUTE_STARTED);
+            route_pub_.publish(route_msg_);
             return true;
         }
         return false;
@@ -184,6 +193,8 @@ namespace route {
         {
             this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_ABORT);
             resp.error_status = cav_srvs::AbortActiveRouteResponse::NO_ERROR;
+            publish_route_event(cav_msgs::RouteEvent::ROUTE_ABORTED);
+            route_msg_ = cav_msgs::Route{};
             return true;
         }
         resp.error_status = cav_srvs::AbortActiveRouteResponse::NO_ACTIVE_ROUTE;
@@ -194,13 +205,17 @@ namespace route {
     {
         lanelet::BasicPoint2d current_loc(msg->pose.position.x, msg->pose.position.y);
         auto track = this->world_model_->routeTrackPos(current_loc);
-        if(track.crosstrack > cross_track_max_)
+        current_crosstrack_distance_ = track.crosstrack;
+        current_downtrack_distance_ = track.downtrack;
+        if(current_crosstrack_distance_ > cross_track_max_)
         {
             this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::LEFT_ROUTE);
+            publish_route_event(cav_msgs::RouteEvent::LEFT_ROUTE);
         }
-        if(track.downtrack > world_model_->getRoute()->length2d() - down_track_target_range_)
+        if(current_downtrack_distance_ > world_model_->getRoute()->length2d() - down_track_target_range_)
         {
             this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_COMPLETE);
+            publish_route_event(cav_msgs::RouteEvent::ROUTE_COMPLETED);
         }
     }
 
@@ -215,6 +230,25 @@ namespace route {
     {
         this->cross_track_max_ = ct_max_error;
         this->down_track_target_range_ = dt_dest_range;
+    }
+
+    void RouteGeneratorWorker::publish_route_event(uint8_t event_type)
+    {
+        route_event_msg_.event = event_type;
+        route_event_pub_.publish(route_event_msg_);
+    }
+    
+    bool RouteGeneratorWorker::spin_ballback()
+    {
+        if(route_msg_.route_name != "") {
+            cav_msgs::RouteState state_msg;
+            state_msg.header.stamp = ros::Time::now();
+            state_msg.routeID = route_msg_.route_name;
+            state_msg.cross_track = current_crosstrack_distance_;
+            state_msg.down_track = current_downtrack_distance_;
+            route_state_pub_.publish(state_msg);
+        }
+        return true;
     }
 }
 
