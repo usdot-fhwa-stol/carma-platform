@@ -18,6 +18,7 @@
 
 #include <string>
 #include <vector>
+#include <queue>
 #include <iostream>
 #include <fstream>
 #include <cav_msgs/Route.h>
@@ -97,6 +98,10 @@ namespace route {
         double current_crosstrack_distance_, current_downtrack_distance_;
 
         ros::Publisher route_event_pub_, route_state_pub_, route_pub_;
+
+        bool new_route_msg_generated_;
+
+        std::queue<uint8_t> route_event_queue;
 
         void publish_route_event(uint8_t event_type);
 

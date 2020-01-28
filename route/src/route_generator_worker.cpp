@@ -18,7 +18,8 @@
 
 namespace route {
 
-    RouteGeneratorWorker::RouteGeneratorWorker(tf2_ros::Buffer& tf_buffer, carma_wm::WorldModelConstPtr wm) : tf_tree_(tf_buffer), world_model_(wm) { }
+    RouteGeneratorWorker::RouteGeneratorWorker(tf2_ros::Buffer& tf_buffer, carma_wm::WorldModelConstPtr wm) :
+                                               tf_tree_(tf_buffer), world_model_(wm), new_route_msg_generated_(false) { }
     
     lanelet::Optional<lanelet::routing::Route> RouteGeneratorWorker::routing(const lanelet::BasicPoint2d start,
                                                                             const std::vector<lanelet::BasicPoint2d>& via,
@@ -65,7 +66,7 @@ namespace route {
                     {
                         auto full_file_name = itr->path().filename().generic_string();
                         cav_msgs::Route route_msg;
-                        route_msg.route_id = full_file_name.substr(0, full_file_name.find(".csv"));
+                        route_msg.route_name = full_file_name.substr(0, full_file_name.find(".csv"));
                         resp.availableRoutes.push_back(route_msg);
                     }
                 }
@@ -134,7 +135,7 @@ namespace route {
             route_msg_.route_name = req.routeID;
             this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTING_SUCCESS);
             publish_route_event(cav_msgs::RouteEvent::ROUTE_STARTED);
-            route_pub_.publish(route_msg_);
+            new_route_msg_generated_ = true;;
             return true;
         }
         return false;
@@ -150,12 +151,13 @@ namespace route {
         {
             wgs84_utils::wgs84_coordinate coordinate;
             auto comma = line.find(",");
-            coordinate.lon = std::stod(line.substr(0, comma));
+            coordinate.lon = (std::stod(line.substr(0, comma))) * 0.0174533;
             line.erase(0, comma + 1);
             comma = line.find(",");
-            coordinate.lat = std::stod(line.substr(0, comma));
+            coordinate.lat = (std::stod(line.substr(0, comma)) + 360.0) * 0.0174533;
             coordinate.elevation = std::stod(line.substr(comma + 1));
-            destination_points.emplace_back(wgs84_utils::geodesic_to_ecef(coordinate, tf2::Transform()));
+            tf2::Quaternion no_rotation(0, 0, 0, 1);
+            destination_points.emplace_back(wgs84_utils::geodesic_to_ecef(coordinate, tf2::Transform(no_rotation)));
         }
         return destination_points;
     }
@@ -234,13 +236,18 @@ namespace route {
 
     void RouteGeneratorWorker::publish_route_event(uint8_t event_type)
     {
-        route_event_msg_.event = event_type;
-        route_event_pub_.publish(route_event_msg_);
+        route_event_queue.push(event_type);
     }
     
     bool RouteGeneratorWorker::spin_ballback()
     {
-        if(route_msg_.route_name != "") {
+        if(new_route_msg_generated_)
+        {
+            route_pub_.publish(route_msg_);
+            new_route_msg_generated_ = false;
+        }
+        if(route_msg_.route_name != "")
+        {
             cav_msgs::RouteState state_msg;
             state_msg.header.stamp = ros::Time::now();
             state_msg.routeID = route_msg_.route_name;
@@ -248,6 +255,13 @@ namespace route {
             state_msg.down_track = current_downtrack_distance_;
             route_state_pub_.publish(state_msg);
         }
+        while(!route_event_queue.empty())
+        {
+            route_event_msg_.event = route_event_queue.front();
+            route_state_pub_.publish(route_event_msg_);
+            route_event_queue.pop();
+        }
+        
         return true;
     }
 }
