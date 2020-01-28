@@ -15,7 +15,7 @@
 #
 
 cmake_minimum_required(VERSION 2.8.3)
-project(route_generator)
+project(route)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++14)
@@ -61,13 +61,14 @@ file(GLOB_RECURSE headers */*.hpp */*.h)
 
 add_executable( ${PROJECT_NAME}
   ${headers}
-  src/route_generator.cpp
   src/main.cpp
-  src/route_generator_worker.cpp)
-add_library(route_generator_library src/route_generator_worker.cpp)
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} route_generator_library)
+  src/route.cpp
+  src/route_generator_worker.cpp
+  src/route_state_worker.cpp)
+add_library(route_library src/route_generator_worker.cpp src/route_state_worker.cpp)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} route_library)
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-add_dependencies(route_generator_library ${catkin_EXPORTED_TARGETS})
+add_dependencies(route_library ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
@@ -94,5 +95,5 @@ install(DIRECTORY launch
 #############
 ## Testing ##
 #############
-catkin_add_gmock(${PROJECT_NAME}-test test/test_route_generator.cpp)
-target_link_libraries(${PROJECT_NAME}-test route_generator_library ${catkin_LIBRARIES})
+catkin_add_gmock(${PROJECT_NAME}-test test/test_route_generator.cpp test/test_route_state.cpp)
+target_link_libraries(${PROJECT_NAME}-test route_library ${catkin_LIBRARIES})

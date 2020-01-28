@@ -16,14 +16,14 @@
 
 #include <ros/ros.h>
 
-#include "route_generator.h"
+#include "route.h"
 
 int main(int argc, char** argv)
 {
   
-    ros::init(argc, argv, "route_generator");
-    RouteGenerator rg;
-    rg.run();
+    ros::init(argc, argv, "route");
+    route::Route route_node;
+    route_node.run();
     return 0;
 
 };
