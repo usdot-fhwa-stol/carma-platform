@@ -4,10 +4,14 @@ from pyproj import Proj, transform
 import numpy as np
 from opendrive2lanelet.opendriveparser.parser import parse_opendrive
 from opendrive2lanelet.network import Network
-
+import math
 import xml.etree.ElementTree as xml
 import xml.dom.minidom as pxml
 from lxml import etree
+import matplotlib.pyplot as plt
+from numpy import exp, loadtxt, pi, sqrt
+from lmfit import Model
+from scipy.optimize import curve_fit
 
 # class representing node object in Way object 
 class Node:
@@ -109,6 +113,8 @@ class Opendrive2Lanelet2Convertor:
         self.nodes = xml.Element('nodes')
         self.ways = xml.Element('ways')
         self.relations = xml.Element('relations')
+        self.all_nodes = []
+        self.all_ways = []
 
     def open_drive_loader(self, fn):
         fi = open(fn.format(os.path.dirname(os.path.realpath(__file__))), "r")
@@ -139,6 +145,7 @@ class Opendrive2Lanelet2Convertor:
         tree = xml.ElementTree(self.root)
         fh = open(fn, "wb")
         tree.write(fh)
+    
 
     # convert vertice from opendrive to a node in lanelet 
     def convert_vertice_to_node(self,node_id,vertice):
@@ -155,33 +162,88 @@ class Opendrive2Lanelet2Convertor:
         for j in range(len(vertices)):
             node_id = relation_id + str(bound_id) + "{0:0=3d}".format(j)
             node = self.convert_vertice_to_node(node_id, vertices[j])
-            nodes.append(node)
-            self.nodes.append(node.create_xml_node_object())
+
+            duplicate_flag = False
+            for i in range(len(self.all_nodes)):
+                if(node.lat == self.all_nodes[i].lat and node.lon == self.all_nodes[i].lon):
+                    print("similar")
+                    print(node.lat, self.all_nodes[i].lat)
+                    print(node.lon, self.all_nodes[i].lon)
+                    nodes.append(self.all_nodes[i])
+                    duplicate_flag = True
+                    break
+
+            if(duplicate_flag==False):
+                print("appending")
+                nodes.append(node)
+                self.nodes.append(node.create_xml_node_object())
+                self.all_nodes.append(node)
         return nodes
 
     def convert(self, fn):
+        count = 200
+        c = [140, 135, 107]
         for i in self.scenario._id_set:
-            left_nodes = []
-            right_nodes = []
-            relation_id = str(i)
-            cad_id = str(i)
+            if(i in c):
+                left_nodes = []
+                right_nodes = []
+                relation_id = str(i)
+                cad_id = str(i)
 
-            left_nodes = self.process_vertices(self.scenario._lanelet_network._lanelets[i]._left_vertices, relation_id, 0)
-            right_nodes = self.process_vertices(self.scenario._lanelet_network._lanelets[i]._right_vertices, relation_id, 1)
+                left_nodes = self.process_vertices(self.scenario._lanelet_network._lanelets[i]._left_vertices, relation_id, 0)
+                right_nodes = self.process_vertices(self.scenario._lanelet_network._lanelets[i]._right_vertices, relation_id, 1)
 
-            left_way_id = relation_id + '0'
-            left_way = Way(left_way_id,left_nodes)
+                left_way_id = relation_id + '0'
+                left_way = Way(left_way_id,left_nodes)
 
-            right_way_id = relation_id + '1'
-            right_way = Way(right_way_id,right_nodes)
+                right_way_id = relation_id + '1'
+                right_way = Way(right_way_id,right_nodes)
 
-            self.ways.append(left_way.create_xml_way_object())
-            self.ways.append(right_way.create_xml_way_object())
+                for k in self.all_ways:
+                    test_x = [j.local_x for j in k.nodes]
+                    test_y = [j.local_y for j in k.nodes]
+                    x = [j.local_x for j in left_nodes]
+                    y = [j.local_y for j in left_nodes]
 
-            from_cad_id = self.scenario._lanelet_network._lanelets[i]._successor
-            to_cad_id = self.scenario._lanelet_network._lanelets[i]._predecessor
-            relation = Relation(relation_id, left_way, right_way, from_cad_id, to_cad_id, cad_id, "lanelet")
-            self.relations.append(relation.create_xml_relation_object())
+                    z = np.polyfit(x,y,3)
+                    z_test = np.polyfit(test_x,test_y,3)
+
+                    f = np.poly1d(z)
+                    f_test = np.poly1d(z_test)
+                    
+                    n = np.polyint((f_test - f))
+
+                    if(abs(n(1)) < 1):
+                        left_way = k
+
+                for k in self.all_ways:
+                    test_x = [j.local_x for j in k.nodes]
+                    test_y = [j.local_y for j in k.nodes]
+                    x = [j.local_x for j in right_nodes]
+                    y = [j.local_y for j in right_nodes]
+
+                    z = np.polyfit(x,y,3)
+                    z_test = np.polyfit(test_x,test_y,3)
+
+                    f = np.poly1d(z)
+                    f_test = np.poly1d(z_test)
+                    
+                    n = np.polyint((f_test - f))
+
+                    if(abs(n(1)) < 1):
+                        right_way = k
+
+                self.all_ways.append(left_way)
+                self.all_ways.append(right_way)
+
+                self.ways.append(left_way.create_xml_way_object())
+                self.ways.append(right_way.create_xml_way_object())
+
+                from_cad_id = self.scenario._lanelet_network._lanelets[i]._successor
+                to_cad_id = self.scenario._lanelet_network._lanelets[i]._predecessor
+                relation = Relation(relation_id, left_way, right_way, from_cad_id, to_cad_id, cad_id, "lanelet")
+                self.relations.append(relation.create_xml_relation_object())
+            count = count - 1
 
         self.write_xml_to_file(fn)
 
