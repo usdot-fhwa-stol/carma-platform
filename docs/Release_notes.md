@@ -5,7 +5,7 @@ Version 3.3.0, released TBD
 --------------------------------------------------------
 
 **Summary:**
-CARMAPlatform release version 3.3.0 is comprised of two key enhancements. The plugin manager is now able to return a list of services that match a user-requested capability. Added new configurations for the Freightliner Cascadia, including lidar configurations which allow autoware to combine the two lidar devices' data into a single stream. 
+CARMAPlatform release version 3.3.0 is comprised of two key enhancements. Firstly the plugin manager is now able to return a list of services that match a user-requested capability. Second, there are new configurations for the Freightliner Cascadia, including lidar configurations which allow autoware to combine the two lidar devices' data into a single stream. 
 
 Enhancements in this release:
 - Issue 478: Capability Interface Implementation
