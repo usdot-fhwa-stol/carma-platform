@@ -24,39 +24,50 @@
 
 namespace route {
 
+    /**
+     * The route package provides the following functionality:
+     * - Route generation which provides the list of available routes and provides vehicle travel route description and management.
+     * - Route state management which provides the current state of the route following,
+     *   including tracking vehicle cross track and down track distances along the active route
+     */
     class Route
     {
 
     public:
 
+        /**
+         * \brief Default constructor for arbitrator class
+         */
         Route();
 
-        // general starting point of this node
+        /**
+         * \brief General starting point to run this node
+         */
         void run();
 
     private:
 
-        // node handles
+        // public and private node handles
         std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
-        // wm listener and pointer
+        // wm listener and pointer to the actual wm object
         carma_wm::WMListener wml_;
         carma_wm::WorldModelConstPtr wm_;
 
         // route generator worker
         RouteGeneratorWorker rg_worker_;
 
-        // Buffer which holds the tree of transforms
+        // tf buffer holds the tree of transforms
         tf2_ros::Buffer tf_buffer_;
-        // tf2 listeners. Subscribes to the /tf and /tf_static topics
+        // tf2 listener subscribes to the /tf and /tf_static topics
         tf2_ros::TransformListener tf_listener_;
 
-        // route related publishers
+        // publishers for route file, current route state and route event
         ros::Publisher route_pub_;
         ros::Publisher route_state_pub_;
         ros::Publisher route_event_pub_;
 
-        // current pose subscriber
+        // subscriber to current pose in the map
         ros::Subscriber pose_sub_;
         
         // route service servers
@@ -64,11 +75,8 @@ namespace route {
         ros::ServiceServer set_active_route_srv_;
         ros::ServiceServer abort_active_route_srv_;
 
-        // initialize this node
+        // initialize this node before running
         void initialize();
-
-        // spin callback
-        bool spin_callback();
 
     };
 }
