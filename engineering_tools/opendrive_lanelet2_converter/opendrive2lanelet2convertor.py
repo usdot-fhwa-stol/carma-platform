@@ -146,7 +146,6 @@ class Opendrive2Lanelet2Convertor:
         fh = open(fn, "wb")
         tree.write(fh)
     
-
     # convert vertice from opendrive to a node in lanelet 
     def convert_vertice_to_node(self,node_id,vertice):
         x = vertice[0]
@@ -165,7 +164,16 @@ class Opendrive2Lanelet2Convertor:
 
             duplicate_flag = False
             for i in range(len(self.all_nodes)):
-                if(node.lat == self.all_nodes[i].lat and node.lon == self.all_nodes[i].lon):
+                if(abs(node.lat - self.all_nodes[i].lat) < 0.000000001 and abs(node.lon - self.all_nodes[i].lon) < 0.000000001):
+                    print("similar")
+                    print(node_id)
+                    print(node.lat, self.all_nodes[i].lat)
+                    print(node.lon, self.all_nodes[i].lon)
+                    nodes.append(self.all_nodes[i])
+                    duplicate_flag = True
+                    break
+
+                if(math.isclose(node.lat, self.all_nodes[i].lat, rel_tol=1e-10) and math.isclose(node.lon, self.all_nodes[i].lon, rel_tol=1e-10)):
                     print("similar")
                     print(node.lat, self.all_nodes[i].lat)
                     print(node.lon, self.all_nodes[i].lon)
@@ -174,7 +182,6 @@ class Opendrive2Lanelet2Convertor:
                     break
 
             if(duplicate_flag==False):
-                print("appending")
                 nodes.append(node)
                 self.nodes.append(node.create_xml_node_object())
                 self.all_nodes.append(node)
@@ -182,9 +189,9 @@ class Opendrive2Lanelet2Convertor:
 
     def convert(self, fn):
         count = 200
-        c = [140, 135, 107]
+        # c = [140, 135, 107]
         for i in self.scenario._id_set:
-            if(i in c):
+            if(count > 0):
                 left_nodes = []
                 right_nodes = []
                 relation_id = str(i)
