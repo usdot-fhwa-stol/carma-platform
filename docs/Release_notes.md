@@ -12,16 +12,18 @@ Enhancements in this release:
 - Issue 489: Create configuration of carma-platform capable of operating on the freightliner cascadia using two lidars
 
 Fixes in this release:
+- Issue 333: There is a behavior discrepancy between original autoware and CARMA pre-release
 - Issue 488: CARMAGarminLidarLiteV3DriverWrapper does not have functional docker image
 - Issue 490: The libproj.so cannot be found by vector_map loader
 - Issue 496: Update LanLet2 to version 0.9.0
 - Issue 497: PACMOD and/or SSC module status messages appear to have different semantics on truck
 - Issue 498: The Velodyne driver registration was not functional on the truck
-- Issue 499: Trailer angle sensor devices are not mapped on the host or in docker
+- Issue 499: Trailer angle sensor devices are not mapped on the host or in docker*
 - Issue 506: The carma_build script is broken on autoware.ai fork v1.13
 - Issue 514: Health Monitor param mismatch
 - Issue 517: Load vector map to be loaded when carma is launched
 
+*not tested on truck as of 1/31/2020
 
 Version 3.2.0, released December 23rd, 2019
 --------------------------------------------------------
