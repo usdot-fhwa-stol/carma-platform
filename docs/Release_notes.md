@@ -1,11 +1,11 @@
 CARMA Platform Release Notes
 ----------------------------
 
-Version 3.3.0, released TBD
+Version 3.3.0, released January 31st, 2020
 --------------------------------------------------------
 
 **Summary:**
-CARMAPlatform release version 3.3.0 is comprised of two key enhancements. Firstly the plugin manager is now able to return a list of services that match a user-requested capability. Second, there are new configurations for the Freightliner Cascadia, including lidar configurations which allow autoware to combine the two lidar devices' data into a single stream. 
+CARMAPlatform release version 3.3.0 is comprised of two key enhancements. First the plugin manager is now able to return a list of services that match a user-requested capability. Second, there are new configurations for the Freightliner Cascadia, including lidar configurations which allow autoware to combine the two lidar devices' data into a single stream. 
 
 Enhancements in this release:
 - Issue 478: Capability Interface Implementation
@@ -13,14 +13,14 @@ Enhancements in this release:
 
 Fixes in this release:
 - Issue 488: CARMAGarminLidarLiteV3DriverWrapper does not have functional docker image
-- Issue 490: libproj.so can not be found by vector_map loader
-- Issue 496: Update Lanlet2 to version 0.9.0
+- Issue 490: The libproj.so cannot be found by vector_map loader
+- Issue 496: Update LanLet2 to version 0.9.0
 - Issue 497: PACMOD and/or SSC module status messages appear to have different semantics on truck
-- Issue 498: Velodyne Driver Registration Not Functional on Truck
+- Issue 498: The Velodyne driver registration was not functional on the truck
 - Issue 499: Trailer angle sensor devices are not mapped on the host or in docker
-- Issue 506: carma_build script broken on autoware.ai fork v1.13
+- Issue 506: The carma_build script is broken on autoware.ai fork v1.13
 - Issue 514: Health Monitor param mismatch
-- Issue 517: vector map to be loaded when carma is launched
+- Issue 517: Load vector map to be loaded when carma is launched
 
 
 Version 3.2.0, released December 23rd, 2019
