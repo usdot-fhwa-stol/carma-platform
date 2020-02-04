@@ -117,7 +117,7 @@ class Opendrive2Lanelet2Convertor:
         self.all_ways = []
         self.projector_type = '1'
         self.base_frame = '+proj=geocent +ellps=WGS84 +datum=WGS84 +units=m +no_defs'
-        self.target_frame = '+proj=tmerc +lat_0=38.95197911150576 +lon_0=-77.14835128349988 +k=1 +x_0=0 +y_0=0 +units=m +vunits=m'
+        self.target_frame = self.geoReference
 
     def open_drive_loader(self, fn):
         fi = open(fn.format(os.path.dirname(os.path.realpath(__file__))), "r")
