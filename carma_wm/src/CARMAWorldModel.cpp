@@ -412,7 +412,8 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
       auto nextLanelet = shortest_path[next_index];
       lanelet::LineString3d nextCenterline = copyConstructLineString(nextLanelet.centerline());
 
-      size_t connectionCount = shortest_path_graph->possiblePaths(ll, 1, false).size();
+      size_t connectionCount = shortest_path_graph->possiblePaths(ll, (uint32_t) 2, false).size();
+
       if (connectionCount == 1)
       {  // Get list of connected lanelets without lanechanges. On the shortest path this should only return 1 or 0
         // No lane change
