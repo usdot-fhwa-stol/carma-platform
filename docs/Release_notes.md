@@ -1,6 +1,31 @@
 CARMA Platform Release Notes
 ----------------------------
 
+Version 3.3.0, released February 5th, 2020
+--------------------------------------------------------
+
+**Summary:**
+CARMAPlatform release version 3.3.0 is comprised of three key enhancements. First, the plugin manager is now able to return a list of services that match a user-requested capability. Second, there are new configurations for the Freightliner Cascadia, including lidar configurations which leverage the autoware points_concat_filter node to combine the two lidar devices' data into a single stream. Third, a trailer angle sensor has been added to the Freightliner Cascadia. This sensor creates a more realistic model of the truck, by providing the angle between the trailer and cab's center lines.
+
+Enhancements in this release:
+- Issue 478: Capability Interface Implementation
+- Issue 489: Create configuration of carma-platform capable of operating on the freightliner cascadia using two lidars
+- Issue 518: Add trailer angle sensor to CARMA trucks
+
+Fixes in this release:
+- Issue 333: There is a behavior discrepancy between original autoware and CARMA pre-release
+- Issue 488: CARMAGarminLidarLiteV3DriverWrapper does not have functional docker image
+- Issue 490: The libproj.so cannot be found by vector_map loader
+- Issue 496: Update LaneLet2 to version 0.9.0
+- Issue 497: PACMOD and/or SSC module status messages appear to have different semantics on truck
+- Issue 498: The Velodyne driver registration was not functional on the truck
+- Issue 499: Trailer angle sensor devices are not mapped on the host or in docker*
+- Issue 506: The carma_build script is broken on autoware.ai fork v1.13
+- Issue 514: Health Monitor param mismatch
+- Issue 517: Load vector map to be loaded when carma is launched
+
+*not tested on truck as of 2/5/2020
+
 Version 3.2.0, released December 23rd, 2019
 --------------------------------------------------------
 
