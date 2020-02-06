@@ -83,13 +83,13 @@ if [ "${skip_autoware}" = true ]; then
   echo "Skipping Autoware build due to -x option"
   source ${autoware_src}/ros/install/setup.bash
 else
-  cd ${autoware_src}/ros
+  cd ${autoware_src}/autoware/ros
   if [ -z "${autoware_build_args}" ]; then
      ./carma_autoware_build -a ${autoware_src}
   else
      ./carma_autoware_build -a ${autoware_src} -b ${autoware_build_args}
   fi
-  source ./install/setup.bash
+  source ${autoware_src}/ros/install/setup.bash
   echo "Autoware built successfuly. Binaries sourced from $(realpath ./install/setup.bash)"
 fi
 
