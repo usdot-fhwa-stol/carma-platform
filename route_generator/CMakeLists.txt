@@ -88,5 +88,8 @@ install(DIRECTORY launch
 #############
 ## Testing ##
 #############
-catkin_add_gmock(${PROJECT_NAME}-test test/test_route_generator.cpp)
+catkin_add_gmock(${PROJECT_NAME}-test 
+  test/test_route_generator.cpp
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
+)
 target_link_libraries(${PROJECT_NAME}-test route_generator_library ${catkin_LIBRARIES})
