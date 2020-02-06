@@ -1,7 +1,7 @@
 CARMA Platform Release Notes
 ----------------------------
 
-Version 3.3.0, released February 5th, 2020
+Version 3.3.0, released February 7th, 2020
 --------------------------------------------------------
 
 **Summary:**
