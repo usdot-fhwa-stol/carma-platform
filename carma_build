@@ -33,7 +33,7 @@ usage() {
 
 # Default environment variables
 carma_workspace="$(realpath ../..)"
-autoware_src="$(realpath ${carma_workspace}/src/autoware.ai)"
+autoware_src="$(realpath ${carma_workspace}/autoware.ai)"
 skip_autoware=false
 rebuild_carma=false
 carma_build_args=""
