@@ -26,6 +26,6 @@ fi
 
 cd ${dir}/src
 git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAMsgs.git --branch CARMAMsgs_1.2.1
-git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMANovatelGpsDriver.git --branch CARMANovatelGpsDriver_1.1.0
+git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMANovatelGpsDriver.git --branch CARMANovatelGpsDriver_1.2.0
 git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAUtils.git --branch CARMAUtils_1.3.0
 
