@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--  
- Copyright (C) 2018-2019 LEIDOS.
+ Copyright (C) 2018-2020 LEIDOS.
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@
 
 <package format="2">
   <name>bsm_generator</name>
-  <version>3.2.0</version>
+  <version>3.3.0</version>
   <description>This generates BSM according to J2735 standard.</description>
   <maintainer email="carma@todo.todo">carma</maintainer>
   <license>Apache License 2.0</license>

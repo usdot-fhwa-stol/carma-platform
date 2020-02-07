@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#  Copyright (C) 2018-2019 LEIDOS.
+#  Copyright (C) 2018-2020 LEIDOS.
 # 
 #  Licensed under the Apache License, Version 2.0 (the "License"); you may not
 #  use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,7 @@ if [[ -n ${1} ]]; then
 fi
 
 cd ${dir}/src
-git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAMsgs.git --branch CARMAMsgs_1.1.0
-git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMANovatelGpsDriver.git --branch CARMANovatelGpsDriver_1.1.0
+git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAMsgs.git --branch CARMAMsgs_1.2.1
+git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMANovatelGpsDriver.git --branch CARMANovatelGpsDriver_1.2.0
 git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAUtils.git --branch CARMAUtils_1.3.0
 

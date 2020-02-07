@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019 LEIDOS.
+ * Copyright (C) 2019-2020 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,9 @@
  */
 
 #include <cav_msgs/Plugin.h>
+#include <cav_srvs/PluginListRequest.h>
 #include <cav_srvs/PluginListResponse.h>
+#include <cav_srvs/GetPluginApi.h>
 #include "entry_manager.h"
 
 namespace health_monitor
@@ -30,11 +32,14 @@ namespace health_monitor
              * \brief Default constructor for PluginManager
              */
             PluginManager();
-            
+
             /**
-             * \brief Constructor for PluginManager takes in require_plugin_names
+             * \brief Constructor for PluginManager takes in require_plugin_names and service names
              */
-            PluginManager(const std::vector<std::string> require_plugin_names);
+            PluginManager(const std::vector<std::string>& require_plugin_names,
+                          const std::string& service_prefix,
+                          const std::string& strategic_service_suffix,
+                          const std::string& tactical_service_suffix);
 
             /**
              * \brief Get a list of registered plugins
@@ -56,9 +61,22 @@ namespace health_monitor
              */
             void update_plugin_status(const cav_msgs::PluginConstPtr& msg);
 
+            /**
+             * \brief Get strategic plugins by capability
+             */
+            bool get_strategic_plugins_by_capability(cav_srvs::GetPluginApiRequest& req, cav_srvs::GetPluginApiResponse& res);
+
+            /**
+             * \brief Get tactical plugins by capability
+             */
+            bool get_tactical_plugins_by_capability(cav_srvs::GetPluginApiRequest& req, cav_srvs::GetPluginApiResponse& res);
+
         private:
 
             EntryManager em_;
+            std::string service_prefix_;
+            std::string strategic_service_suffix_;
+            std::string tactical_service_suffix_;
 
     };
 }

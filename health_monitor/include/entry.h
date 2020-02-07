@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019 LEIDOS.
+ * Copyright (C) 2019-2020 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,11 +23,13 @@ namespace health_monitor
     struct Entry
     {
         /* data */
-        bool available_, active_;
+        bool available_;
+        bool active_;
         std::string name_;
         long timestamp_;
         uint8_t type_;
+        std::string capability_;
 
-        Entry(bool available, bool active_, std::string name, long timestamp_, uint8_t type);
+        Entry(bool available, bool active, std::string name, long timestamp, uint8_t type, std::string capability);
     };
 }

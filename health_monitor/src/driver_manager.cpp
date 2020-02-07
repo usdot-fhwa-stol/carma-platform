@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 LEIDOS.
+ * Copyright (C) 2019-2020 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,7 +33,7 @@ namespace health_monitor
     {
         // Params: bool available, bool active, std::string name, long timestamp, uint8_t type
         Entry driver_status(msg->status == cav_msgs::DriverStatus::OPERATIONAL || msg->status == cav_msgs::DriverStatus::DEGRADED,
-                            true, msg->name, current_time, 0);
+                            true, msg->name, current_time, 0, "");
         em_.update_entry(driver_status);
     }
 

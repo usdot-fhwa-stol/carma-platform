@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019 LEIDOS.
+ * Copyright (C) 2019-2020 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,11 +29,6 @@ namespace health_monitor
     class HealthMonitor
     {
         public:
-            
-            /*!
-             * \brief Default constructor for HealthMonitor
-             */
-            HealthMonitor();
 
             /*!
              * \brief Begin normal execution of health monitor node. Will take over control flow of program and exit from here.
@@ -55,6 +50,8 @@ namespace health_monitor
             ros::ServiceServer registered_plugin_service_server_;
             ros::ServiceServer active_plugin_service_server_;
             ros::ServiceServer activate_plugin_service_server_;
+            ros::ServiceServer get_strategic_plugin_by_capability_server_;
+            ros::ServiceServer get_tactical_plugin_by_capability_server_;
 
             // topic subscribers
             ros::Subscriber plugin_discovery_subscriber_;
@@ -77,6 +74,11 @@ namespace health_monitor
 
             // record of startup timestamp
             ros::Time start_up_timestamp_;
+
+            // service name prefix and suffix
+            std::string plugin_service_prefix_;
+            std::string strategic_plugin_service_suffix_;
+            std::string tactical_plugin_service_suffix_;
 
             // spin callback function
             bool spin_cb();

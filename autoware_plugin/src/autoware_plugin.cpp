@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 LEIDOS.
+ * Copyright (C) 2019-2020 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,9 +33,8 @@ namespace autoware_plugin
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
         
-        maneuver_srv_ = nh_->advertiseService("plugins/AutowarePlugin/strategic_plan/plan_maneuvers", &AutowarePlugin::plan_maneuver_cb, this);
+        maneuver_srv_ = nh_->advertiseService("plugins/AutowarePlugin/plan_maneuvers", &AutowarePlugin::plan_maneuver_cb, this);
         trajectory_srv_ = nh_->advertiseService("plugins/AutowarePlugin/plan_trajectory", &AutowarePlugin::plan_trajectory_cb, this);
-
                 
         autoware_plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
         plugin_discovery_msg_.name = "AutowarePlugin";
@@ -43,6 +42,7 @@ namespace autoware_plugin
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = false;
         plugin_discovery_msg_.type = cav_msgs::Plugin::STRATEGIC;
+        plugin_discovery_msg_.capability = "strategic_plan/plan_maneuvers";
 
         waypoints_sub_ = nh_->subscribe("final_waypoints", 1, &AutowarePlugin::waypoints_cb, this);
         pose_sub_ = nh_->subscribe("current_pose", 1, &AutowarePlugin::pose_cb, this);

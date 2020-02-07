@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-  Copyright (C) 2018-2019 LEIDOS.
+  Copyright (C) 2018-2020 LEIDOS.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,7 @@
 -->
 <package>
   <name>gnss_to_map_convertor</name>
-  <version>3.2.0</version>
+  <version>3.3.0</version>
   <description>The gnss_to_map_convertor converts incomping GNSS messages (NavSatFix) to poses in the ECEF and Map frames </description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->

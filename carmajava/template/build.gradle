@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 LEIDOS.
+ * Copyright (C) 2018-2020 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,8 +37,8 @@ dependencies {
   /* An external maven artifact dependency */
   compile 'org.ros.rosjava_core:rosjava:[0.3,0.4)'
   compile 'org.ros.rosjava_messages:std_srvs:1.11.2'
-  compile 'org.ros.rosjava_messages:cav_msgs:1.1.0'
-  compile 'org.ros.rosjava_messages:cav_srvs:1.1.0'
+  compile 'org.ros.rosjava_messages:cav_msgs:1.2.1'
+  compile 'org.ros.rosjava_messages:cav_srvs:1.2.1'
   /* Local subproject dependency */
   compile project(':rosutils')
 }

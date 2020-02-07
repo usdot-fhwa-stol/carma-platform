@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2019 LEIDOS.
+# Copyright (C) 2018-2020 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,11 @@ startup_duration: 30.0
 required_plugins:
   - AutowarePlugin
 
-# List of String: Required drivers for the platform to be functional
-required_drivers:
-  - /hardware_interface/ssc_interface_wrapper
-  - /hardware_interface/velodyne_lidar_driver_wrapper
+# String: Plugin service name prefix
+plugin_service_prefix: /guidance/plugins/
+
+# String: Strategic plugin service suffix
+strategic_plugin_service_suffix: /plan_maneuvers
+
+# String: Tactical plugin service suffix
+tactical_plugin_service_suffix: /plan_trajectory
