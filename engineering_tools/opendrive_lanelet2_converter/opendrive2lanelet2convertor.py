@@ -115,10 +115,7 @@ class Opendrive2Lanelet2Convertor:
         self.relations = xml.Element('relations')
         self.all_nodes = []
         self.all_ways = []
-        self.projector_type = '1'
-        self.base_frame = '+proj=geocent +ellps=WGS84 +datum=WGS84 +units=m +no_defs'
-        self.target_frame = self.geoReference
-
+        
     def open_drive_loader(self, fn):
         fi = open(fn.format(os.path.dirname(os.path.realpath(__file__))), "r")
         tree = etree.parse(fi)
@@ -136,10 +133,7 @@ class Opendrive2Lanelet2Convertor:
 
     def write_xml_to_file(self,fn):
                 
-        self.root.append(xml.Element('geoReference', {
-        	'projector_type': self.projector_type, 
-        	'base_frame': self.base_frame, 
-        	'target_frame': self.target_frame}))
+        self.root.append(xml.Element('geoReference', {self.geoReference}))
 
         for child in self.nodes.getchildren():
             self.root.append(child)
