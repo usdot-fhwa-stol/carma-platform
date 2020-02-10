@@ -103,6 +103,7 @@
       <arg name="load_type" value="$(arg load_type)"/>
       <arg name="single_pcd_path" value="$(arg single_pcd_path)"/>
       <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
+      <arg name="vector_map_file" value="$(arg vector_map_file)" />
     </include>
   </group>
 
