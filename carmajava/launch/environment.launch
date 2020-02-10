@@ -25,6 +25,116 @@
    <arg name="file_name" value="$(arg vector_map_file)"/>
   </include>
 
-  <!-- TODO Object Tracking and World Model go here -->
+  <!-- vision_darknet_detect -->
+
+  <include file="$(find vision_darknet_detect)/launch/vision_yolo3_detect.launch">
+  <arg name="gpu_device_id" default="0"/>
+  <arg name="score_threshold" default="0.30"/>
+  <arg name="nms_threshold" default="0.30"/>
+
+  <arg name="network_definition_file" default="$(find vision_darknet_detect)/darknet/cfg/yolov3.cfg"/>
+  <arg name="pretrained_model_file" default="$(find vision_darknet_detect)/darknet/data/yolov3.weights"/>
+  <arg name="names_file" default="$(find vision_darknet_detect)/darknet/cfg/coco.names"/>
+
+  <arg name="camera_id" default="/"/>
+  <arg name="image_src" default="/image_raw"/>
+  </include>
+
+<!-- vision_beyond_track -->
+
+    <include file="$(find vision_beyond_track)/launch/vision_beyond_track.launch">
+    <arg name="camera_info_src" default="/camera_info"/>
+    <arg name="objects_topic_src" default="/detection/image_detector/objects"/>
+    <arg name="camera_height" default="1.2"/>
+    </include>
+
+  <!-- lidar_euclidean_cluster_detect -->
+
+  <include file="$(find lidar_euclidean_cluster_detect)/launch/lidar_euclidean_cluster_detect.launch">
+  <arg name="points_node" default="/points_raw" /><!--CHANGE THIS TO READ WHETHER FROM VSCAN OR POINTS_RAW -->
+  <arg name="remove_ground" default="true" />
+  <arg name="downsample_cloud" default="false" /> <!-- Apply VoxelGrid Filter with the value given by "leaf_size"-->
+  <arg name="leaf_size" default="0.1" /><!-- Voxel Grid Filter leaf size-->
+  <arg name="cluster_size_min" default="20" /><!-- Minimum number of points to consider a cluster as valid-->
+  <arg name="cluster_size_max" default="100000" /><!-- Maximum number of points to allow inside a cluster-->
+  <arg name="sync" default="false" />
+  <arg name="use_diffnormals" default="false" />
+  <arg name="pose_estimation" default="true" />
+  <arg name="clip_min_height" default="-1.3" />
+  <arg name="clip_max_height" default="0.5" />
+
+  <arg name="keep_lanes" default="false" />
+  <arg name="keep_lane_left_distance" default="5" />
+  <arg name="keep_lane_right_distance" default="5" />
+  <arg name="cluster_merge_threshold" default="1.5" />
+  <arg name="clustering_distance" default="0.75" />
+
+  <arg name="use_vector_map" default="false" />
+  <arg name="wayarea_gridmap_layer" default="wayarea" />
+
+  <arg name="output_frame" default="velodyne" />
+
+  <arg name="remove_points_upto" default="0.0" />
+
+  <arg name="use_gpu" default="false" />
+
+  <arg name="use_multiple_thres" default="false"/>
+  <arg name="clustering_ranges" default="[15,30,45,60]"/><!-- Distances to segment pointcloud -->
+  <arg name="clustering_distances"
+       default="[0.5,1.1,1.6,2.1,2.6]"/><!-- Euclidean Clustering threshold distance for each segment -->
+
+  </include>
+
+  <!-- range_vision_fusion -->
+
+  <include file="$(find range_vision_fusion)/launch/range_vision_fusion.launch">
+  <arg name="detected_objects_range" default="/detection/lidar_detector/objects"/>
+  <arg name="detected_objects_vision" default="/detection/image_detector/objects"/>
+  <arg name="camera_info_src" default="/camera_info"/>
+  <arg name="min_car_dimensions" default="[3,2,2]"/>
+  <arg name="min_person_dimensions" default="[1,2,1]"/>
+  <arg name="min_truck_dimensions" default="[4,2,2]"/>
+  <arg name="sync_topics" default="false"/>
+  <arg name="overlap_threshold" default="0.6"/>
+  <arg name="use_vector_map" default="false"/>
+  <arg name="namespace" default="/detection/fusion_tools"/>
+
+  </include>
+
+  <!-- imm_ukf_pda_track -->
+
+  <include file="$(find imm_ukf_pda_track)/launch/imm_ukf_pda_track.launch">
+  <arg name="namespace" default="/detection/object_tracker"/>
+  <arg name="tracker_input_topic" default="/detection/fusion_tools/objects" />
+  <arg name="tracker_output_topic" default="/detection/object_tracker/objects" />
+
+  <arg name="tracking_frame" default="/world" />
+  <arg name="gating_threshold" default="9.22" />
+  <arg name="gate_probability" default="0.99" />
+  <arg name="detection_probability" default="0.9" />
+  <arg name="life_time_threshold" default="8" />
+  <arg name="static_velocity_threshold" default="0.5" />
+  <arg name="static_num_history_threshold" default="3" />
+  <arg name="prevent_explosion_threshold" default="1000" />
+  <arg name="merge_distance_threshold" default="0.5"/>
+  <arg name="use_sukf" default="false" />
+
+  <!-- Vectormap -->
+  <arg name="use_map_info" default="false" />
+  <arg name="lane_direction_chi_threshold" default="2.71" />
+  <arg name="nearest_lane_distance_threshold" default="1.0" />
+  <arg name="vectormap_frame" default="/map" />
+
+  </include>
+
+  <!-- naive_motion_predict -->
+
+    <include file="$(find naive_motion_predict)/launch/naive_motion_predict.launch">
+    <arg name="interval_sec" default="0.1"/>
+    <arg name="num_prediction" default="10"/>
+    <arg name="sensor_height" default="2.0"/>
+    <arg name="filter_out_close_object_threshold" default="1.5"/>
+    <arg name="input_topic" default="/detection/objects"/>
+    </include>
 
 </launch>
