@@ -64,40 +64,68 @@
    <arg name="arealist_path" value="$(arg arealist_path)"/>
   </include>
 
+  <!--EKF Localizer  Commend out to remove and change marked line in waypoint following.launch--> 
+  <group>
+    <remap from="/initialpose" to="initialpose"/>
+    <include file="$(find ekf_localizer)/launch/ekf_localizer.launch" >
+      <arg name="show_debug_info" default="false"/>
+      <arg name="enable_yaw_bias_estimation" default="True"/>
+      <arg name="predict_frequency" default="50.0"/>
+      <arg name="tf_rate" default="10.0"/>
+      <arg name="extend_state_step" default="50"/>
+      <arg name="input_twist_name" default="$(optenv CARMA_INTR_NS)/vehicle/twist"/>
+      <arg name="input_pose_name" default="ndt_pose"/>
+      <arg name="input_pose_with_cov_name" default="ndt_pose_with_covariance"/>
+      <arg name="use_pose_with_covariance" default="false"/>
+      <arg name="pose_additional_delay" default="0.0"/>
+      <arg name="pose_measure_uncertainty_time" default="0.01"/>
+      <arg name="pose_rate" default="10.0"/>
+      <arg name="pose_gate_dist" default="10000.0"/>
+      <arg name="pose_stddev_x" default="0.05"/>
+      <arg name="pose_stddev_y" default="0.05"/>
+      <arg name="pose_stddev_yaw" default="0.025"/>
+      <arg name="twist_additional_delay" default="0.0"/>
+      <arg name="twist_rate" default="10.0"/>
+      <arg name="twist_gate_dist" default="10000.0"/>
+      <arg name="twist_stddev_vx" default="0.2"/>
+      <arg name="twist_stddev_wz" default="0.03"/>
+      <arg name="proc_stddev_yaw_c" default="0.005"/>
+      <arg name="proc_stddev_yaw_bias_c" default="0.001"/>
+      <arg name="proc_stddev_vx_c" default="0.1"/>
+      <arg name="proc_stddev_wz_c" default="0.05"/>
+    </include>
+  </group>
+
   <!-- NDT Matching-->
   <!-- This namesapce sets the parameters which are not set by default in the ndt_matching.launch file -->
   <!-- These parameters are not in the ndt_matching node private namespace -->
 
   <rosparam command="load" file="$(arg vehicle_calibration_dir)/lidar_localizer/ndt_matching/params.yaml"/>
 
-  <include file="$(find lidar_localizer)/launch/ndt_matching.launch">
-    <arg name="get_height" value="true" />
-    <arg name="use_odom" value="true" />
-    <arg name="use_gnss" value="1"/>
-  </include>
+  <group>
+    <remap from="filtered_points" to="ray_ground_filter/points_no_ground"/>
+"
+    <include file="$(find lidar_localizer)/launch/ndt_matching.launch">
+      <arg name="get_height" value="true" />
+      <arg name="use_odom" value="true" />
+      <arg name="use_gnss" value="1"/>
+    </include>
+  </group>
 
   <!-- GNSS To Map Convertor -->
   <include file="$(find gnss_to_map_convertor)/launch/gnss_to_map_convertor.launch"/>
 
   <!-- GNSS/NDT selection localizer-->
-  <include file="$(find gnss_ndt_selector)/launch/gnss_ndt_selector.launch"/>
+  <group>
+    <remap from="ndt_pose" to="ekf_pose"/>
+    <include file="$(find gnss_ndt_selector)/launch/gnss_ndt_selector.launch"/>
+  </group>
 
   <!-- Deadreckoner -->
   <include file="$(find deadreckoner)/launch/deadreckoner.launch">
     <arg name="current_twist" value="$(optenv CARMA_INTR_NS)/vehicle/twist" />
     <arg name="current_odom" value="vehicle/odom" />
   </include>
-
-  <!-- Voxel Grid Filter -->
-  <group>
-    <node pkg="rostopic" type="rostopic" name="config_voxel_grid_filter_rostopic"
-    args="pub -l config/voxel_grid_filter autoware_config_msgs/ConfigVoxelGridFilter '{voxel_leaf_size: 4.0, measurement_range: 100.0}'"
-    />
-    <remap from="/points_raw" to="ray_ground_filter/points_no_ground"/>
-    <include file="$(find points_downsampler)/launch/points_downsample_remappable.launch">
-      <arg name="node_name" value="voxel_grid_filter" />
-    </include>
-  </group>
 
   <!-- Ray Ground Filter -->
   <remap from="/points_raw" to="$(optenv CARMA_INTR_NS)/lidar/points_raw"/>

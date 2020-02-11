@@ -18,7 +18,7 @@
 
 <package format="2">
   <name>autoware_plugin</name>
-  <version>3.2.0</version>
+  <version>3.3.0</version>
   <description>The autoware_plugin converts final waypoint plan from autoware to a CARMA trajectory</description>
   <maintainer email="carma@todo.todo">carma</maintainer>
   <license>Apache License 2.0</license>
