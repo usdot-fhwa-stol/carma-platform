@@ -89,8 +89,8 @@ else
   else
      ./carma_autoware_build -a ${autoware_src} -b ${autoware_build_args}
   fi
-source ${autoware_src}/ros/install/setup.bash
 
+  source ${autoware_src}/ros/install/setup.bash
   echo "Autoware built successfuly. Binaries sourced from $(realpath ./install/setup.bash)"
 fi
 
