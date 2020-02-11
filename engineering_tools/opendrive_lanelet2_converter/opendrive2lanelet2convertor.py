@@ -133,7 +133,9 @@ class Opendrive2Lanelet2Convertor:
 
     def write_xml_to_file(self,fn):
                 
-        self.root.append(xml.Element('geoReference', {self.geoReference}))
+        geoRefXml = xml.Element('geoReference')
+        geoRefXml.text = self.geoReference
+        self.root.append(geoRefXml)
 
         for child in self.nodes.getchildren():
             self.root.append(child)
