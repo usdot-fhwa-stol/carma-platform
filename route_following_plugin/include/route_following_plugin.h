@@ -40,6 +40,12 @@ namespace route_following_plugin
         // general starting point of this node
         void run();
 
+        int findLaneletIndexFromPath(int target_id, lanelet::routing::LaneletPath& path);
+
+        cav_msgs::Maneuver composeManeuverMessage(double current_dist, double end_dist, double current_speed, int lane_id, ros::Time current_time);
+
+        bool identifyLaneChange(lanelet::routing::LaneletRelations relations, int target_id);
+
     private:
 
         // node handles
@@ -66,7 +72,7 @@ namespace route_following_plugin
         geometry_msgs::PoseStamped pose_msg_;
 
         // wm listener and pointer to the actual wm object
-        carma_wm::WMListener wml_;
+        std::shared_ptr<carma_wm::WMListener> wml_;
         carma_wm::WorldModelConstPtr wm_;
 
         // initialize this node

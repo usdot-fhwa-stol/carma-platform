@@ -59,10 +59,12 @@ add_executable( ${PROJECT_NAME}
   ${headers}
   src/route_following_plugin.cpp
   src/main.cpp)
-add_library(route_following_plugin_library src/route_following_plugin.cpp)
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-add_dependencies(route_following_plugin_library ${catkin_EXPORTED_TARGETS})
+
+#add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+add_library(route_following_plugin_lib src/route_following_plugin.cpp)
+add_dependencies(route_following_plugin_lib ${catkin_EXPORTED_TARGETS})
+
+target_link_libraries(${PROJECT_NAME} route_following_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 #############
 ## Install ##
@@ -89,5 +91,7 @@ install(DIRECTORY launch config
 #############
 ## Testing ##
 #############
-catkin_add_gmock(${PROJECT_NAME}-test test/test_route_following_plugin.cpp)
-target_link_libraries(${PROJECT_NAME}-test route_following_plugin_library ${catkin_LIBRARIES})
+catkin_add_gmock(${PROJECT_NAME}-test
+  test/test_route_following_plugin.cpp
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+target_link_libraries(${PROJECT_NAME}-test route_following_plugin_lib ${catkin_LIBRARIES})
