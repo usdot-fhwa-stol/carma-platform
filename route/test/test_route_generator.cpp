@@ -25,7 +25,6 @@
 #include <lanelet2_core/Attribute.h>
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_core/primitives/Traits.h>
-#include <lanelet2_extension/projection/local_frame_projector.h>
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 
