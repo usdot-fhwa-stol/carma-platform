@@ -33,22 +33,50 @@ namespace route_following_plugin
 
     public:
 
+        // constant speed limit for test
+        // TODO Once world_model and vector map is ready, it should be removed
         static constexpr double TWENTY_FIVE_MPH_IN_MS = 11.176;
 
+        /**
+         * \brief Default constructor for RouteFollowingPlugin class
+         */
         RouteFollowingPlugin();
 
-        // general starting point of this node
+        /**
+         * \brief General entry point to begin the operation of this class
+         */
         void run();
 
+        /**
+         * \brief Given a LaneletPath object, find index of the lanelet which has target_id as its lanelet ID
+         * \param target_id The laenlet ID this function is looking for
+         * \param path A list of lanelet with different lanelet IDs
+         * \return Index of the target lanelet in the list
+         */
         int findLaneletIndexFromPath(int target_id, lanelet::routing::LaneletPath& path);
 
+        /**
+         * \brief Compose a lane keeping maneuver message based on input params
+         * \param current_dist Start downtrack distance of the current maneuver
+         * \param end_dist End downtrack distance of the current maneuver
+         * \param current_speed Start speed of the current maneuver
+         * \param lane_id Lanelet ID of the current maneuver
+         * \param current_time Start time of the current maneuver
+         * \return A lane keeping maneuver message which is ready to be published
+         */
         cav_msgs::Maneuver composeManeuverMessage(double current_dist, double end_dist, double current_speed, int lane_id, ros::Time current_time);
 
+        /**
+         * \brief Given a LaneletRelations and ID of the next lanelet in the shortest path
+         * \param relations LaneletRelations relative to the previous lanelet
+         * \param target_id ID of the next lanelet in the shortest path
+         * \return Whether we need a lanechange to reach to the next lanelet in the shortest path
+         */
         bool identifyLaneChange(lanelet::routing::LaneletRelations relations, int target_id);
 
     private:
 
-        // node handles
+        // CARMA ROS node handles
         std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
         // ROS publishers and subscribers
@@ -56,33 +84,48 @@ namespace route_following_plugin
         ros::Subscriber pose_sub_;
         ros::Subscriber twist_sub_;
 
-        // ros service servers
+        // ROS service servers
         ros::ServiceServer plan_maneuver_srv_;        
 
-        // minimal duration of maneuver
+        // Minimal duration of maneuver, loaded from config file
         double mvr_duration_;
 
-        // plugin discovery message
+        // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
 
-        // local copy of current vehicle speed
+        // Current vehicle forward speed
         double current_speed_;
 
-        // local copy of current vehicle pose
+        // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;
 
-        // wm listener and pointer to the actual wm object
+        // wm listener pointer and pointer to the actual wm object
         std::shared_ptr<carma_wm::WMListener> wml_;
         carma_wm::WorldModelConstPtr wm_;
 
-        // initialize this node
+        /**
+         * \brief Initialize ROS publishers, subscribers, service servers and service clients
+         */
         void initialize();
 
-        // callback for the subscribers
+        /**
+         * \brief Callback for the pose subscriber, which will store latest pose locally
+         * \param msg Latest pose message
+         */
         void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
-        void twist_cd(const geometry_msgs::TwistStampedConstPtr& msg);
 
-        // service callback for carma maneuver planning
+        /**
+         * \brief Callback for the twist subscriber, which will store latest twist locally
+         * \param msg Latest twist message
+         */
+        void twist_cd(const geometry_msgs::TwistStampedConstPtr& msg);
+ 
+        /**
+         * \brief Service callback for arbitrator maneuver planning
+         * \param req Plan maneuver request
+         * \param resp Plan maneuver response with a list of maneuver plan
+         * \return If service call successed
+         */
         bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
 
     };

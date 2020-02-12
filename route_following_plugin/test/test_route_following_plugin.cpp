@@ -20,7 +20,8 @@
 #include <thread>
 #include <chrono>
 
-namespace route_following_plugin {
+namespace route_following_plugin
+{
 
     TEST(RouteFollowingPluginTest, testFindLaneletIndexFromPath)
     {
@@ -48,7 +49,7 @@ namespace route_following_plugin {
         EXPECT_EQ(ros::Time(0), msg.lane_following_maneuver.start_time);
         EXPECT_NEAR(10.0, msg.lane_following_maneuver.end_dist, 0.01);
         EXPECT_NEAR(25 / 2.237, msg.lane_following_maneuver.end_speed, 0.01);
-        EXPECT_EQ(ros::Time(1.6), msg.lane_following_maneuver.end_time);
+        EXPECT_TRUE(msg.lane_following_maneuver.end_time - ros::Time(1.49) < ros::Duration(0.01));
         EXPECT_EQ("2", msg.lane_following_maneuver.lane_id);
     }
 
