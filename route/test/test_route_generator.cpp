@@ -68,7 +68,7 @@ TEST(RouteGeneratorTest, testReadRouteFile)
     ASSERT_TRUE(worker.get_available_route_cb(req, resp));
     ASSERT_EQ("tfhrc_test_route", resp.availableRoutes.front().route_name);
     ASSERT_EQ(1, resp.availableRoutes.size());
-    auto points = worker.load_route_destinationsin_ecef("tfhrc_test_route");
+    auto points = worker.load_route_destinations_in_ecef("tfhrc_test_route");
     ASSERT_EQ(5, points.size());
     ASSERT_NEAR(1106580, points[0].getX(), 5.0);
     ASSERT_NEAR(894697, points[0].getY(), 5.0);
