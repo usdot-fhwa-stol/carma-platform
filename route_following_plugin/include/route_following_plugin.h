@@ -60,11 +60,12 @@ namespace route_following_plugin
          * \param current_dist Start downtrack distance of the current maneuver
          * \param end_dist End downtrack distance of the current maneuver
          * \param current_speed Start speed of the current maneuver
+         * \param target_speed Target speed pf the current maneuver, usually it is the lanelet speed limit
          * \param lane_id Lanelet ID of the current maneuver
          * \param current_time Start time of the current maneuver
          * \return A lane keeping maneuver message which is ready to be published
          */
-        cav_msgs::Maneuver composeManeuverMessage(double current_dist, double end_dist, double current_speed, int lane_id, ros::Time current_time);
+        cav_msgs::Maneuver composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time current_time);
 
         /**
          * \brief Given a LaneletRelations and ID of the next lanelet in the shortest path

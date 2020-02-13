@@ -31,7 +31,7 @@ namespace route_following_plugin
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
         
-        plan_maneuver_srv_ = nh_->advertiseService("plugins/RouteFollowingPlugin/plan_maneuvers", &RouteFollowingPlugin::plan_maneuver_cb, this);
+        plan_maneuver_srv_ = nh_->advertiseService("strategic_plan/plan_maneuvers", &RouteFollowingPlugin::plan_maneuver_cb, this);
                 
         plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
         plugin_discovery_msg_.name = "RouteFollowingPlugin";
@@ -89,7 +89,10 @@ namespace route_following_plugin
             double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
             double dist_diff = end_dist - current_progress;
 
-            resp.new_plan.maneuvers.push_back(composeManeuverMessage(current_progress, end_dist, speed_progress, shortest_path[last_lanelet_index].id(), ros::Time::now()));
+            resp.new_plan.maneuvers.push_back(
+                composeManeuverMessage(current_progress, end_dist, 
+                                       speed_progress, RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS, 
+                                       shortest_path[last_lanelet_index].id(), ros::Time::now()));
 
             current_progress += dist_diff;
             speed_progress = RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
@@ -143,7 +146,7 @@ namespace route_following_plugin
         return -1;
     }
 
-    cav_msgs::Maneuver RouteFollowingPlugin::composeManeuverMessage(double current_dist, double end_dist, double current_speed, int lane_id, ros::Time current_time)
+    cav_msgs::Maneuver RouteFollowingPlugin::composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time current_time)
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
@@ -155,8 +158,9 @@ namespace route_following_plugin
         maneuver_msg.lane_following_maneuver.start_speed = current_speed;
         maneuver_msg.lane_following_maneuver.start_time = current_time;
         maneuver_msg.lane_following_maneuver.end_dist = end_dist;
-        maneuver_msg.lane_following_maneuver.end_speed = RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
-        maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration((end_dist - current_dist) / (0.5 * (current_speed + RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS)));
+        maneuver_msg.lane_following_maneuver.end_speed = target_speed;
+        // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
+        maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration((end_dist - current_dist) / (0.5 * (current_speed + target_speed)));
         maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
         return maneuver_msg;
     }
