@@ -19,6 +19,7 @@
 #include <cav_msgs/SystemAlert.h>
 #include <cav_msgs/RobotEnabled.h>
 #include <cav_msgs/GuidanceState.h>
+#include <cav_msgs/RouteEvent.h>
 
 namespace guidance
 {
@@ -65,6 +66,11 @@ namespace guidance
              * \brief Handle robotic_status message from ROS network.
              */
             void onRoboticStatus(const cav_msgs::RobotEnabledConstPtr& msg);
+
+            /*!
+             * \brief Handle route event message.
+             */
+            void onRouteEvent(const cav_msgs::RouteEventConstPtr& msg);
 
             /*!
              * \brief Indicate if SetEnableRobotic needs to be called in ACTIVE state.

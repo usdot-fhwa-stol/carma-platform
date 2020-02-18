@@ -58,10 +58,6 @@ namespace trajectory_executor {
              * \brief Constructor for TrajectoryExecutor. Uses default value for output tickrate.
              */
             TrajectoryExecutor();
-/*!
-             * \brief Monitor the guidance state and set the current trajector as null_ptr 
-             */
-            void guidanceStateMonitor(cav_msgs::GuidanceState msg);
 
             /*!
              * \brief Initialize the TrajectoryExecutor instance by setting up 
@@ -91,6 +87,11 @@ namespace trajectory_executor {
              * \param msg The new TrajectoryPlan message
              */
             void onNewTrajectoryPlan(cav_msgs::TrajectoryPlan msg);
+
+            /*!
+             * \brief Monitor the guidance state and set the current trajector as null_ptr 
+             */
+            void guidanceStateCb(const cav_msgs::GuidanceStateConstPtr& msg);
 
             /*!
              * \brief Timer callback to be invoked at our output tickrate.
