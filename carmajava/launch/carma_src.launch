@@ -68,7 +68,6 @@
   <arg name="load_type" default="noupdate" doc="Enum of the map loading approach to use. Can be 'download', 'noupdate', or 'arealist'"/> 
   <arg name="single_pcd_path" default="$(find carma)/map/base_map.pcd" doc="Path to the map pcd file if using the noupdate load type"/>
   <arg name="area" default="1x1" doc="Dimensions of the square of cells loaded at runtime using the download and arealist load types"/>
-
   <arg name="vector_map_file" default="vector_map.osm" doc="Path to the map osm file if using the noupdate load type"/>
 
   <!-- Route File Locations -->
@@ -103,6 +102,7 @@
       <arg name="load_type" value="$(arg load_type)"/>
       <arg name="single_pcd_path" value="$(arg single_pcd_path)"/>
       <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
+      <arg name="vector_map_file" value="$(arg vector_map_file)" />
     </include>
   </group>
 

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>carma_wm</name>
-  <version>1.0.0</version>
+  <version>3.3.0</version>
   <description>The carma_wm package</description>
   <maintainer email="carma@dot.gov">carma</maintainer>
   <license>Apache License 2.0</license>
