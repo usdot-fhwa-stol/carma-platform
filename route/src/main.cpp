@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2020 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,14 +16,14 @@
 
 #include <ros/ros.h>
 
-#include "route_generator.h"
+#include "route.h"
 
 int main(int argc, char** argv)
 {
   
-    ros::init(argc, argv, "route_generator");
-    RouteGenerator rg;
-    rg.run();
+    ros::init(argc, argv, "route");
+    route::Route route_node;
+    route_node.run();
     return 0;
 
 };

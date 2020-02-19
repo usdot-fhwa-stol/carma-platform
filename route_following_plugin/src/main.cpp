@@ -14,24 +14,16 @@
  * the License.
  */
 
-#include "route_generator.h"
-#include <gtest/gtest.h>
 #include <ros/ros.h>
 
-TEST(RouteGeneratorTest, testReadFileFunction)
-{
-    std::vector<std::string> file_names = RouteGenerator::read_route_names("/home/qswawrq/CARMAWorkspace/src/route_generator/resource/");
-    for(int i = 0; i < file_names.size(); ++i)
-    {
-        std::string expect_file_name = "route" + std::to_string(i + 1) + ".csv";
-        EXPECT_EQ(file_names[i], expect_file_name);
-    }
+#include "route_following_plugin.h"
 
-}
-
-// Run all the tests
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
+  
+    ros::init(argc, argv, "route_following_plugin");
+    route_following_plugin::RouteFollowingPlugin rfp;
+    rfp.run();
+    return 0;
+
+};
