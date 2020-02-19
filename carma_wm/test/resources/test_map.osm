@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<osm version="0.6" generator="lanelet2">
+  <node id="1339" visible="true" version="1" lat="0.00000898315" lon="0" />
+  <node id="1340" visible="true" version="1" lat="0.00001796631" lon="0" />
+  <node id="1342" visible="true" version="1" lat="0.00000898315" lon="0.00000898315" />
+  <node id="1343" visible="true" version="1" lat="0.00001796631" lon="0.00000898315" />
+
+  <!-- Lanlet Bounds -->
+  <!-- Left -->
+  <way id="1347" visible="true" version="1">
+    <nd ref="1339" />
+    <nd ref="1340" />
+    <tag k="subtype" v="solid_solid" />
+    <tag k="type" v="line_thin" />
+  </way>
+  <!-- Right -->
+  <way id="1348" visible="true" version="1">
+    <nd ref="1342" />
+    <nd ref="1343" />
+    <tag k="subtype" v="solid" />
+    <tag k="type" v="line_thin" />
+  </way>
+
+  <!-- Lanelet -->
+  <relation id="1349" visible="true" version="1">
+    <member type="way" ref="1347" role="left" />
+    <member type="way" ref="1348" role="right" />
+    <tag k="dynamic" v="no" />
+    <tag k="location" v="urban" />
+    <tag k="one_way" v="yes" />
+    <tag k="subtype" v="road" />
+    <tag k="type" v="lanelet" />
+
+    <!-- Speed Limit -->
+    <member type='relation' ref='45218' role='regulatory_element' />
+    <!-- Access Rule -->
+    <member type='relation' ref='45219' role='regulatory_element' />
+    <!-- Direction Of Travel -->
+    <member type='relation' ref='45220' role='regulatory_element' />
+    <!-- Control Line Left -->
+    <member type='relation' ref='45221' role='regulatory_element' />
+    <!-- Control Line Right -->
+    <member type='relation' ref='45222' role='regulatory_element' />
+  </relation>
+
+  <!-- Regulatory speed limit -->
+  <relation id='45218' visible='true' version='1'>
+    <member type='lanelet' ref='1349' role='refers' />
+    <tag k='limit' v='5 mph' /> <!-- Speed limit value must have units one of the following   m/s, mps, km/h, kmh, m/h, mph -->
+    <tag k='subtype' v='digital_speed_limit' />
+    <tag k='type' v='regulatory_element' />
+    <tag k='participant:vehicle' v='yes' />
+  </relation>
+
+  <!-- Regulatory Region Access Rule -->
+  <relation id='45219' visible='true' version='1'>
+    <member type='lanelet' ref='1349' role='refers' />
+    <tag k='subtype' v='region_access_rule' />
+    <tag k='type' v='regulatory_element' />
+    <tag k='participant:vehicle:car' v='yes' /> <!-- Allow cars but not trucks -->
+  </relation>
+
+  <!-- Regulatory Direction Of Travel -->
+  <relation id='45220' visible='true' version='1'>
+    <member type='lanelet' ref='1349' role='refers' />
+    <tag k='subtype' v='direction_of_travel' />
+    <tag k='type' v='regulatory_element' />
+    <tag k='direction' v='one_way' /> <!-- One Way -->
+    <tag k='participant:vehicle' v='yes' />
+  </relation>
+
+  <!-- Regulatory Control Line Left -->
+  <relation id='45221' visible='true' version='1'>
+    <member type="way" ref="1347" role="ref_line" />
+    <tag k='subtype' v='passing_control_line' />
+    <tag k='type' v='regulatory_element' />
+    <tag k='participant:vehicle' v='from_both' /> <!-- Both ways -->
+  </relation>
+
+  <!-- Regulatory Control Line Right -->
+  <relation id='45222' visible='true' version='1'>
+    <member type="way" ref="1348" role="ref_line" />
+    <tag k='subtype' v='passing_control_line' />
+    <tag k='type' v='regulatory_element' />
+    <!-- No crossing -->
+  </relation>
+</osm>

@@ -31,9 +31,9 @@ find_package(Eigen3 REQUIRED)
 ## Catkin export configuration
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES carma_wm
+  LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS ${PKG_CATKIN_DEPS}
-  DEPENDS Boost Eigen3
+  DEPENDS Boost EIGEN3
 )
 
 ###########
@@ -52,6 +52,11 @@ add_library(${PROJECT_NAME}
   src/CARMAWorldModel.cpp
   src/WMListener.cpp
   src/WMListenerWorker.cpp
+  src/lanelet/CarmaUSTrafficRules.cpp
+  src/lanelet/PassingControlLine.cpp
+  src/lanelet/DigitalSpeedLimit.cpp
+  src/lanelet/RegionAccessRule.cpp
+  src/lanelet/DirectionOfTravel.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -90,6 +95,12 @@ catkin_add_gmock(${PROJECT_NAME}-test
   test/CARMAWorldModleTest.cpp  
   test/IndexedDistanceMapTest.cpp
   test/WMListenerWorkerTest.cpp
+  test/lanelet/RegionAccessRuleTest.cpp
+  test/lanelet/PassingControlLineTest.cpp
+  test/lanelet/DirectionOfTravelTest.cpp
+  test/lanelet/DigitalSpeedLimitTest.cpp
+  test/lanelet/CarmaUSTrafficRulesTest.cpp
+  test/lanelet/MapLoadingTest.cpp
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 

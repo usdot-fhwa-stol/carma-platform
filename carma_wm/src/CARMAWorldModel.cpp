@@ -26,6 +26,7 @@
 #include <Eigen/Core>
 #include <Eigen/LU>
 #include <cmath>
+#include <carma_wm/lanelet/CarmaUSTrafficRules.h>
 
 namespace carma_wm
 {
@@ -351,8 +352,8 @@ void CARMAWorldModel::setMap(lanelet::LaneletMapPtr map)
 {
   semantic_map_ = map;
   // Build routing graph from map
-  lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(
-      lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
+  TrafficRulesConstPtr traffic_rules = *(getTrafficRules(lanelet::Participants::Vehicle));
+
   lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*semantic_map_, *traffic_rules);
   map_routing_graph_ = std::move(map_graph);
 }
@@ -387,8 +388,8 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
 
   lanelet::routing::LaneletPath shortest_path = route_->shortestPath();
   // Build shortest path routing graph
-  lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(
-      lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
+  TrafficRulesConstPtr traffic_rules = *(getTrafficRules(lanelet::Participants::Vehicle));
+
   lanelet::routing::RoutingGraphUPtr shortest_path_graph =
       lanelet::routing::RoutingGraph::build(*shortest_path_view_, *traffic_rules);
 
@@ -412,7 +413,7 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
       auto nextLanelet = shortest_path[next_index];
       lanelet::LineString3d nextCenterline = copyConstructLineString(nextLanelet.centerline());
 
-      size_t connectionCount = shortest_path_graph->possiblePaths(ll, (uint32_t) 2, false).size();
+      size_t connectionCount = shortest_path_graph->possiblePaths(ll, (uint32_t)2, false).size();
 
       if (connectionCount == 1)
       {  // Get list of connected lanelets without lanechanges. On the shortest path this should only return 1 or 0
@@ -453,6 +454,26 @@ LaneletRoutingGraphConstPtr CARMAWorldModel::getMapRoutingGraph() const
 {
   return std::static_pointer_cast<const lanelet::routing::RoutingGraph>(map_routing_graph_);  // Cast pointer to const
                                                                                               // variant
+}
+
+lanelet::Optional<TrafficRulesConstPtr> CARMAWorldModel::getTrafficRules(const std::string& participant) const
+{
+  lanelet::Optional<TrafficRulesConstPtr> optional_ptr;
+  // Create carma traffic rules object
+  try
+  {
+    lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(
+        lanelet::traffic_rules::CarmaUSTrafficRules::Location, participant);
+
+    optional_ptr = std::static_pointer_cast<const lanelet::traffic_rules::TrafficRules>(
+        lanelet::traffic_rules::TrafficRulesPtr(std::move(traffic_rules)));
+  }
+  catch (const lanelet::InvalidInputError& e)
+  {
+    return optional_ptr;
+  }
+
+  return optional_ptr;
 }
 
 // NOTE: See WorldModel.h header file for details on source of logic in this function
