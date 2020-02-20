@@ -47,7 +47,7 @@
 <!-- vision_beyond_track -->
   <group>
   <include file="$(find vision_beyond_track)/launch/vision_beyond_track.launch">
-  <arg name="camera_info_src" default="/camera_info"/>
+  <arg name="camera_info_src" default="$(optenv CARMA_INTR_NS)/camera_right/camera/camera_info"/>
   <arg name="objects_topic_src" default="/detection/image_detector/objects"/>
   <arg name="camera_height" default="1.2"/>
   </include>
@@ -56,7 +56,7 @@
   <!-- lidar_euclidean_cluster_detect -->
   <group>
   <include file="$(find lidar_euclidean_cluster_detect)/launch/lidar_euclidean_cluster_detect.launch">
-  <arg name="points_node" default="$(optenv CARMA_INTR_NS)/lidar/points_raw" /><!--CHANGE THIS TO READ WHETHER FROM VSCAN OR POINTS_RAW -->
+  <arg name="points_node" default="/localization/ray_ground_filter/points_no_ground" /><!--CHANGE THIS TO READ WHETHER FROM VSCAN OR POINTS_RAW -->
   <arg name="remove_ground" default="true" />
   <arg name="downsample_cloud" default="false" /> <!-- Apply VoxelGrid Filter with the value given by "leaf_size"-->
   <arg name="leaf_size" default="0.1" /><!-- Voxel Grid Filter leaf size-->
@@ -96,7 +96,7 @@
   <include file="$(find range_vision_fusion)/launch/range_vision_fusion.launch">
   <arg name="detected_objects_range" default="/detection/lidar_detector/objects"/>
   <arg name="detected_objects_vision" default="/detection/image_detector/objects"/>
-  <arg name="camera_info_src" default="/camera_info"/>
+  <arg name="camera_info_src" default="$(optenv CARMA_INTR_NS)/camera_right/camera/camera_info"/>
   <arg name="min_car_dimensions" default="[3,2,2]"/>
   <arg name="min_person_dimensions" default="[1,2,1]"/>
   <arg name="min_truck_dimensions" default="[4,2,2]"/>
