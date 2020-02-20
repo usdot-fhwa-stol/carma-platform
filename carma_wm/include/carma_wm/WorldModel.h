@@ -231,7 +231,7 @@ public:
    *
    * \return A list of continuous centerline segments and their respective curvatures
    */
-  virtual std::vector<std::tuple<size_t, std::vector<double>>>
+  virtual std::vector<double>
   getLocalCurvatures(const std::vector<lanelet::ConstLanelet>& lanelets) const = 0;
 
   /*! \brief Get a pointer to the current map. If the underlying map has changed the pointer will also need to be

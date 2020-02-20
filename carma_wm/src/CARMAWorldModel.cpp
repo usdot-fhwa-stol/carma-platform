@@ -264,77 +264,140 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double st
   return vec;
 }
 
-std::vector<std::tuple<size_t, std::vector<double>>>
+std::vector<double>
 CARMAWorldModel::getLocalCurvatures(const std::vector<lanelet::ConstLanelet>& lanelets) const
 {
-  std::vector<std::tuple<size_t, std::vector<double>>> vec;
-
-  lanelet::BasicPoint2d prevEndPoint;
-  lanelet::BasicPoint2d first_2d, second_2d, third_2d;
-
-  for (size_t n = 0; n < lanelets.size(); n++)
-  {
-    lanelet::ConstLanelet ll = lanelets[n];
-    auto mutableCenterLine = lanelet::utils::to2D(ll.centerline()).basicLineString();
-
-    if (mutableCenterLine.empty())
-    {
-      throw std::invalid_argument("Provided lanelet contains no centerline");
-    }
-
-    for (size_t i = 0; i < mutableCenterLine.size() - 1; i++)
-    {
-      // If the first lanelet initialize the 3 points needed for computing curvature
-      if (n == 0 && i <= 1)
-      {
-        if (i == 0)
-        {
-          std::vector<double> curvatures;
-          vec.push_back(std::make_tuple(n, curvatures));
-          continue;
-        }
-        else
-        {  // i == 1
-          first_2d = mutableCenterLine[i - 1];
-          second_2d = mutableCenterLine[i];
-          third_2d = mutableCenterLine[i + 1];
-          std::get<1>(vec.back()).push_back(computeCurvature(first_2d, second_2d, third_2d));
-          continue;
-        }
-      }
-      else if (n != 0 && i <= 1)
-      {
-        bool new_segment_needed = lanelet::geometry::distance2d(prevEndPoint, mutableCenterLine[i]) > 0.1;
-        if (new_segment_needed)
-        {
-          if (i == 0)
-          {
-            // Consider as disjoint lanelet
-            std::vector<double> curvatures;
-            vec.push_back(std::make_tuple(n, curvatures));
-            continue;
-          }
-          else
-          {  // i == 1
-            first_2d = mutableCenterLine[i - 1];
-            second_2d = mutableCenterLine[i];
-            third_2d = mutableCenterLine[i + 1];
-            std::get<1>(vec.back()).push_back(computeCurvature(first_2d, second_2d, third_2d));
-            continue;
-          }
-        }
-      }
-
-      first_2d = second_2d;
-      second_2d = third_2d;
-      third_2d = mutableCenterLine[i + 1];
-      std::get<1>(vec.back()).push_back(computeCurvature(first_2d, second_2d, third_2d));
-    }
-
-    prevEndPoint = mutableCenterLine.back();
+  lanelet::BasicLineString2d centerline_points;
+  for (auto lanelet : lanelets) {
+    centerline_points = concatenate_line_strings(centerline_points, lanelet.centerline2d);
   }
 
-  return vec;
+  std::vector<Eigen::Vector2d> spatial_derivative = compute_finite_differences(centerline_points);
+  std::vector<Eigen::Vector2d> normalized_tangent_vectors = normalize_vectors(spatial_derivative);
+
+  std::vector<double> arc_lengths = compute_arc_lengths(centerline_points);
+
+  std::vector<Eigen::Vector2d> tangent_derivative = 
+    compute_finite_differences(
+      normalized_tangent_vectors, 
+      arc_lengths);
+
+  std::vector<double> curvature = compute_magnitude_of_vectors(tangent_derivative);
+
+  return curvature;
+}
+
+lanelet::BasicLineString2d 
+CARMAWorldModel::concatenate_line_strings(const lanelet::BasicLineString2d& a, 
+                                          const lanelet::BasicLineString2d& b)
+                                          const
+{
+  lanelet::BasicLineString2d out;
+  out.insert(out.end(), a.begin(), a.end());
+  out.insert(out.end(), b.begin(), b.end());
+
+  return out;
+}
+
+std::vector<Eigen::Vector2d> 
+CARMAWorldModel::compute_finite_differences(const lanelet::BasicLineString2d& data) const
+{
+  std::vector<Eigen::Vector2d> out;
+  Eigen::Vector2d diff;
+  double delta_d;
+  Eigen::Vector2d vec_i_plus_1;
+  Eigen::Vector2d vec_i_minus_1;
+
+  for (int i = 0; i < data.size(); i++) {
+    if (i == 0) {
+      // Compute forward derivative
+      //delta_d = compute_euclidean_distance(data[i], data[i + 1]);
+      diff = (data[i + 1] - data[i]);
+      out.push_back(diff);
+    } else if (i == data.size() - 1) {
+      // Compute backward derivative
+      //delta_d = compute_euclidean_distance(data[i - 1], data[i]);
+      diff = (data[i] - data[i - 1]);
+      out.push_back(diff);
+    } else {
+      // Else, compute centered derivative
+      vec_i_plus_1 = data[i + 1];
+      vec_i_minus_1 = data[i - 1];
+      diff = (vec_i_plus_1 - vec_i_minus_1)/2.0;
+    }
+
+    out.push_back(diff);
+  }
+}
+
+std::vector<double> 
+CARMAWorldModel::compute_finite_differences(const std::vector<double>& data) const
+{
+  std::vector<double> out;
+  double diff;
+  for (int i = 0; i < data.size(); i++) {
+
+    if (i == 0) {
+      diff = data[i + 1] - data[i];
+    } else if (i == data.size() - 1) {
+      diff = data[i] - data[i - 1];
+    } else {
+      diff = (data[i + 1] - data[i - 1])/2.0;
+    }
+    
+    out.push_back(diff);
+  }
+
+  return out;
+}
+std::vector<Eigen::Vector2d> 
+CARMAWorldModel::compute_finite_differences(const std::vector<Eigen::Vector2d>& x,const std::vector<double>& y) const
+{
+  if (x.size() != y.size()) {
+    throw new std::invalid_argument("Attempting to differentiate two unequal sized lists!");
+  }
+
+  std::vector<Eigen::Vector2d> out;
+  Eigen::Vector2d diff;
+  for (int i = 0; i < x.size(); i++) {
+    if (i == 0) {
+      diff = (x[i + 1] - x[i])/(y[i + 1] - y[i]);
+    } else if (i == x.size() - 1) {
+      diff = x[i] - x[i - 1]/(y[i] - y[i - 1]);
+    } else {
+      diff = (x[i + 1] - x[i - 1])/(y[i + 1] - y[i - 1]);
+    }
+    
+    out.push_back(diff);
+}
+
+std::vector<double>
+CARMAWorldModel::compute_arc_lengths(const lanelet::BasicLineString2d& data) const
+{
+  std::vector<double> out;
+  for (int i =  0; i < data.size(); i++) {
+    if (i == 0) {
+      out.push_back(0);
+    } else {
+      out.push_back(compute_euclidean_distance(data[i - 1], data[i]));
+    }
+  }
+
+  return out;
+}
+
+std::vector<Eigen::Vector2d>
+CARMAWorldModel::normalize_vectors(const std::vector<Eigen::Vector2d>& vectors) const
+{
+  std::vector<Eigen::Vector2d> out;
+  return std::transform(vectors.begin(), vectors.end(), out.begin(), [](Eigen::Vector2d vec) {vec.normalized();});
+}
+
+std::vector<double> 
+CARMAWorldModel::compute_magnitude_of_vectors(const std::vector<Eigen::Vector2d>& vectors) const
+{
+  std::vector<Eigen::Vector2d> out;
+  return std::transform(vectors.begin(), vectors.end(), out.begin(), [](Eigen::Vector2d vec) {vec.magnitude();});
 }
 
 lanelet::LaneletMapConstPtr CARMAWorldModel::getMap() const

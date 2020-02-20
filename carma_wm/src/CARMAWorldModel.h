@@ -77,7 +77,7 @@ public:
 
   std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end) const override;
 
-  std::vector<std::tuple<size_t, std::vector<double>>>
+  std::vector<double>
   getLocalCurvatures(const std::vector<lanelet::ConstLanelet>& lanelets) const override;
 
   lanelet::LaneletMapConstPtr getMap() const override;
@@ -86,12 +86,74 @@ public:
 
   LaneletRoutingGraphConstPtr getMapRoutingGraph() const override;
 
+  [[deprecated("computeCurvature is deprecated in favor of using the finite differences-based computeLocalCurvature for large curves")]]
   double computeCurvature(const lanelet::BasicPoint2d& p1, const lanelet::BasicPoint2d& p2,
                           const lanelet::BasicPoint2d& p3) const override;
 
   double getAngleBetweenVectors(const Eigen::Vector2d& vec1, const Eigen::Vector2d& vec2) const override;
 
 private:
+
+  /*!
+   * \brief Helper function to concatenate 2 linestrings together and return the result. Neither LineString is modified in this function.
+   */
+  lanelet::BasicLineString2d concatenate_line_strings(const lanelet::BasicLineString2d& l1, const lanelet::BasicLineString2d& l2) const;
+
+  /*! 
+   * \brief Use finite differences methods to compute the derivative of the input data set with respect to index
+   * Compute the finite differences using the forward finite difference for the first point, centered finite differences
+   * for the middle points and backwards finite difference for the final point. This will result in the middle points 
+   * being a better approximation of the actual derivative than the endpoints.
+   * 
+   * \param data The data to differentiate over
+   * \return A vector containing the point-by-point derivatives in the same indices as the input data
+   */
+  std::vector<Eigen::Vector2d> compute_finite_differences(const lanelet::BasicLineString2d& data) const;
+  
+  /*! 
+   * \brief Use finite differences methods to compute the derivative of the input data set with respect to index
+   * Compute the finite differences using the forward finite difference for the first point, centered finite differences
+   * for the middle points and backwards finite difference for the final point. This will result in the middle points 
+   * being a better approximation of the actual derivative than the endpoints.
+   * 
+   * \param data The data to differentiate over
+   * \return A vector containing the point-by-point derivatives in the same indices as the input data
+   */
+  std::vector<double> compute_finite_differences(const std::vector<double>& data) const;
+
+  /*! 
+   * \brief Use finite differences methods to compute the derivative of the input data set with respect to the second paramter.
+   * 
+   * Input x and y must be the same length. Compute the finite differences using the forward finite difference for the first point, 
+   * centered finite differences for the middle points and backwards finite difference for the final point. This will result in 
+   * the middle points being a better approximation of the actual derivative than the endpoints.
+   * 
+   * \param x The x value of the derivative dx/dy
+   * \param y The y value of the derivative dx/dy
+   * \return A vector containing the point-by-point derivatives in the same indices as the input data
+   */
+  std::vector<Eigen::Vector2d> compute_finite_differences(const std::vector<Eigen::Vector2d>& x, const std::vector<double>& y) const;
+
+  /*!
+   * \brief Compute the arc length at each point around the curve
+   */
+  std::vector<double> compute_arc_lengths(const lanelet::BasicLineString2d& data) const;
+
+  /*!
+   * \brief Compute the Euclidean distance between the two points
+   */
+  double compute_euclidean_distance(const Eigen::Vector2d& a, const Eigen::Vector2d& b) const;
+
+  /*!
+   * \brief Normalize the vectors in the input list such that their magnitudes = 1
+   */
+  std::vector<Eigen::Vector2d> normalize_vectors(const std::vector<Eigen::Vector2d>& vectors) const;
+
+  /*!
+   * \brief Compute the magnitude of each vector in the input list
+   */
+  std::vector<double> compute_magnitude_of_vectors(const std::vector<Eigen::Vector2d>& vectors) const;
+
   /*! \brief Helper function to compute the geometry of the route downtrack/crosstrack reference line
    *         This function should generally only be called from inside the setRoute function as it uses member variables
    * set in that function
