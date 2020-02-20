@@ -36,9 +36,9 @@ mainClassName = 'org.ros.RosRun'
 dependencies {
   /* An external maven artifact dependency */
   compile 'org.ros.rosjava_core:rosjava:[0.3,0.4)'
-  compile 'org.ros.rosjava_messages:cav_msgs:1.1.0'
-  compile 'org.ros.rosjava_messages:cav_srvs:1.1.0'
-  compile 'org.ros.rosjava_messages:j2735_msgs:1.1.0'
+  compile 'org.ros.rosjava_messages:cav_msgs:1.2.1'
+  compile 'org.ros.rosjava_messages:cav_srvs:1.2.1'
+  compile 'org.ros.rosjava_messages:j2735_msgs:1.2.1'
   compile 'org.ros.rosjava_messages:bond:1.7.16'
   compile 'org.ros.rosjava_messages:diagnostic_msgs:1.12.5'
   compile 'org.ros.rosjava_messages:sensor_msgs:1.12.5'

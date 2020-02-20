@@ -18,8 +18,8 @@
 
 <package format="2">
   <name>route</name>
-  <version>3.2.0</version>
-  <description>The route package provides capabilities for loading different route files and route state mangement</description>
+  <version>3.3.0</version>
+  <description>The route package provides capabilities for selecting and loading different route files for CARMA</description>
   <maintainer email="carma@todo.todo">carma</maintainer>
   <license>Apache License 2.0</license>
   <author email="carma@todo.todo">carma</author>
