@@ -20,6 +20,7 @@
 #define EXTERNAL_OBJECT_H
 
 #include <ros/ros.h>
+#include <carma_utils/CARMAUtils.h>
 
 #include "object_detection_tracking_worker.h"
 
@@ -31,7 +32,7 @@ class ObjectDetectionTrackingNode
  private:
   
   //node handle
-  ros::NodeHandle nh_;
+  ros::CARMANodeHandle nh_;
    
   //subscriber
   ros::Subscriber sub_object_;
