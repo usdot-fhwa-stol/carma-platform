@@ -17,7 +17,7 @@
 
 namespace object{
 
-void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::DetectedObjectArray &obj_array);
+void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::DetectedObjectArray &obj_array)
 {	
 	
 	cav_msgs::ExternalObjectList msg;

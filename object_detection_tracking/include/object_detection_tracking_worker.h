@@ -19,7 +19,7 @@
 #ifndef EXTERNAL_OBJECT_WORKER_H
 #define EXTERNAL_OBJECT_WORKER_H
 
-
+#include <ros/ros.h>
 #include <cav_msgs/ExternalObject.h>
 #include <cav_msgs/ExternalObjectList.h>
 #include <autoware_msgs/DetectedObject.h>
@@ -32,10 +32,6 @@ class ObjectDetectionTrackingWorker
 private:
     // local copy of external object publihsers
     ros::Publisher pub_object_;
-
-    cav_msgs::DriverStatus status_;
-    cav_msgs::TrailerAngle tangle_;
- 
 
  public:
     /*! \fn detectedObjectCallback(const autoware_msgs::DetectedObjectArray &msg)
