@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   autoware_msgs
   cav_msgs
   roscpp
+  carma_utils
 )
 
 
@@ -24,9 +25,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+   INCLUDE_DIRS include
 #  LIBRARIES object_detection_tracking
- CATKIN_DEPENDS autoware_msgs cav_msgs roscpp
+ CATKIN_DEPENDS autoware_msgs cav_msgs roscpp carma_utils
 #  DEPENDS system_lib
 )
 
