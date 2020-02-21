@@ -29,6 +29,7 @@ namespace object{
   void ObjectDetectionTrackingNode::run()
   {
     initialize();
+    nh_.spin();
   }
 
 }
