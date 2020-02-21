@@ -1,0 +1,3 @@
+<launch>
+   <node name="external_object" pkg="object_detection_tracking" type="object_detection_tracking_node" output="screen" />
+</launch>
