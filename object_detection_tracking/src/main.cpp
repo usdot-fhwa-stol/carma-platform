@@ -20,6 +20,5 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "object_detection_tracking");
   object::ObjectDetectionTrackingNode node;
   node.run(); 
-  ros::spin();
   return 0;
 }
