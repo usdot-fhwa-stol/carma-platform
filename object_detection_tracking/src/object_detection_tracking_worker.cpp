@@ -21,72 +21,62 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
 {	
 	
 	cav_msgs::ExternalObjectList msg;
+	msg.header=obj_array.header;
 
-	for(int i=0;i<obj_array.size();i++)
+	for(int i=0;i<obj_array.objects.size();i++)
 	{
 		cav_msgs::ExternalObject obj;
 
 		//Header contains the frame rest of the fields will use
-		 obj.header=obj_array[i].header;
+		 obj.header=obj_array.objects[i].header;
 
 		//Presence vector message is used to describe objects coming from potentially
 		//different sources. The presence vector is used to determine what items are set
 		//by the producer
-		obj.presence_vector=obj.presence_vector || ID_PRESENCE_VECTOR;
-		obj.presence_vector=obj.presence_vector || POSE_PRESENCE_VECTOR;
-		obj.presence_vector=obj.presence_vector || VELOCITY_PRESENCE_VECTOR;
-		obj.presence_vector=obj.presence_vector || VELOCITY_INST_PRESENCE_VECTOR;
-		obj.presence_vector=obj.presence_vector || SIZE_PRESENCE_VECTOR;
-		obj.presence_vector=obj.presence_vector || CONFIDENCE_PRESENCE_VECTOR;
-		obj.presence_vector=obj.presence_vector || OBJECT_TYPE_PRESENCE_VECTOR;
-		obj.presence_vector=obj.presence_vector || BSM_ID_PRESENCE_VECTOR;
-		obj.presence_vector=obj.presence_vector || DYNAMIC_OBJ_PRESENCE;
-		obj.presence_vector=obj.presence_vector || PREDICTION_PRESENCE_VECTOR;
-
-
-
+		obj.presence_vector=obj.presence_vector | ID_PRESENCE_VECTOR;
+		obj.presence_vector=obj.presence_vector | POSE_PRESENCE_VECTOR;
+		obj.presence_vector=obj.presence_vector | VELOCITY_PRESENCE_VECTOR;
+		obj.presence_vector=obj.presence_vector | SIZE_PRESENCE_VECTOR;
+		obj.presence_vector=obj.presence_vector | OBJECT_TYPE_PRESENCE_VECTOR;
+		obj.presence_vector=obj.presence_vector | DYNAMIC_OBJ_PRESENCE;
+		
 		//Object id. Matching ids on a topic should refer to the same object within some time period, expanded
-		obj.id=obj_array[i].id;
-
-
+		obj.id=obj_array.objects[i].id;
 
 		//Pose of the object within the frame specified in header
-		obj.pose=obj_array[i].pose;
+		obj.pose.pose=obj_array.objects[i].pose;
+		obj.pose.covariance[0]=obj_array.objects[i].variance[0];
+		obj.pose.covariance[7]=obj_array.objects[i].variance[1];
+		obj.pose.covariance[17]=obj_array.objects[i].variance[2];
 
 		//Average velocity of the object within the frame specified in header
-		obj.velocity=obj_array[i].velocity;
-
+		obj.velocity.twist=obj_array.objects[i].velocity;
 
 		//The size of the object aligned along the axis of the object described by the orientation in pose
 		//Dimensions are specified in meters
-		//obj.size=
-
-		//Confidence [0,1]
-		//obj.confidence=
+		for(int j=0;j<obj_array.objects[i].dimensions.size();j++)
+		{
+		obj.size[j]=obj_array.objects[i].dimensions[j];
+	    }
 
 		//describes a general object type as defined in this message
-        object_type=UNKNOWN;
-/*
-#used for object type
-uint8 UNKNOWN = 0
-uint8 SMALL_VEHICLE = 1
-uint8 LARGE_VEHICLE = 2
-uint8 MOTORCYCLE = 3
-uint8 PEDESTRIAN = 4
+        obj.object_type=UNKNOWN;
 
-# Binary value to show if the object is static or dynamic (1: dynamic, 0: static)
-bool dynamic_obj
-
-#Predictions for the object
-cav_msgs/PredictedState[] prediction*/
-
-
-
+		// Binary value to show if the object is static or dynamic (1: dynamic, 0: static)
 		
-		msg.emplace_back(obj);
+        if( (abs(obj.velocity.twist.linear.x || obj.velocity.twist.linear.x || obj.velocity.twist.linear.x)) > 0 )
+        {
+		  obj.dynamic_obj=1;
+		}
+		else
+		{
+		  obj.dynamic_obj=0;
+		}
+		
+		msg.objects.emplace_back(obj);
 	}
 
-	pub_object_.publish(msg);
+		pub_object_.publish(msg);
 }
 
 void set_publishers(ros::Publisher pub_object)
