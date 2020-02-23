@@ -57,6 +57,9 @@ containing a base-line configuration of this system are available upon request.
 `./carma_build –a ~/carma_ws/autoware.ai`
 9-1- In case of missing dependencies  install with the command:
 `sudo apt-get install ros-kinetic-XXX`
+apt-get install libfftw3-3
+apt-get install libfftw3-dev
+sudo apt-get install libproj-dev
 
 
 10- Source CARMA
