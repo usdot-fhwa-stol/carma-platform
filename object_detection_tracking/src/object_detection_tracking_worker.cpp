@@ -75,7 +75,7 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
 		msg.objects.emplace_back(obj);
 	}
 
-		obj_pub_.publish(msg);
+		obj_pub_(msg);
 }
 
 }//object
