@@ -29,12 +29,6 @@ namespace object{
 class ObjectDetectionTrackingWorker
 {
 
- private:
-
-    // local copy of external object publihsers
-
-    PublishObjectCallback obj_pub_;
-
  public:
 
   using PublishObjectCallback = std::function<void(const cav_msgs::ExternalObjectList&)>;
@@ -51,6 +45,12 @@ class ObjectDetectionTrackingWorker
     */
 
   void detectedObjectCallback(const autoware_msgs::DetectedObjectArray &msg);
+ 
+ private:
+
+    // local copy of external object publihsers
+
+    PublishObjectCallback obj_pub_;
   
 };
 
