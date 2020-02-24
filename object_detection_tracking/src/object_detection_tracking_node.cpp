@@ -19,7 +19,7 @@ namespace object{
 
   using std::placeholders::_1;
 
-  ObjectDetectionTrackingNode::ObjectDetectionTrackingNode(): object_worker_(std::bind(&ObjectDetectionTrackingNode::publishObject, this, _1){}
+  ObjectDetectionTrackingNode::ObjectDetectionTrackingNode(): object_worker_(std::bind(&ObjectDetectionTrackingNode::publishObject, this, _1)){}
 
   void ObjectDetectionTrackingNode::initialize()
   {
