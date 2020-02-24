@@ -1,5 +1,3 @@
-#pragma once
-
 /*
  * Copyright (C) 2019-2020 LEIDOS.
  *
@@ -35,9 +33,9 @@ class ObjectDetectionTrackingNode
   ros::CARMANodeHandle nh_;
    
   //subscriber
-  ros::Subscriber sub_object_;
+  ros::Subscriber autoware_obj_sub_;
   //publisher
-  ros::Publisher pub_object_;
+  ros::Publisher carma_obj_pub_;
   
   //ObjectDetectionTrackingWorker class object
   ObjectDetectionTrackingWorker object_worker_;
