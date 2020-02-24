@@ -38,16 +38,12 @@ namespace trajectory_executor
     }
 
     TrajectoryExecutor::TrajectoryExecutor(int traj_frequency) :
-        _min_traj_publish_tickrate_hz(traj_frequency),
-        _timesteps_since_last_traj(0)
-    {
-    }
+        _timesteps_since_last_traj(0),
+        _min_traj_publish_tickrate_hz(traj_frequency) { }
 
     TrajectoryExecutor::TrajectoryExecutor() :
-        _min_traj_publish_tickrate_hz(10),
-        _timesteps_since_last_traj(0)
-    {
-    }
+        _timesteps_since_last_traj(0),
+        _min_traj_publish_tickrate_hz(10) { }
 
     std::map<std::string, std::string> TrajectoryExecutor::queryControlPlugins()
     {
@@ -78,14 +74,14 @@ namespace trajectory_executor
         ROS_DEBUG_STREAM("Successfully swapped trajectories!");
     }
 
-    void TrajectoryExecutor::guidanceStateMonitor(cav_msgs::GuidanceState msg)
+    void TrajectoryExecutor::guidanceStateCb(const cav_msgs::GuidanceStateConstPtr& msg)
     {
-        std::unique_lock<std::mutex> lock(_cur_traj_mutex); // Acquire lock until end of this function scope
-        if(msg.state==cav_msgs::GuidanceState::INACTIVE)
+        std::unique_lock<std::mutex> lock(_cur_traj_mutex);
+        // TODO need to handle control handover once alernative planner system is finished
+        if(msg->state != cav_msgs::GuidanceState::ENGAGED)
         {
         	_cur_traj= nullptr;
         }
-        
     }
 
     void TrajectoryExecutor::onTrajEmitTick(const ros::TimerEvent& te)
@@ -155,7 +151,7 @@ namespace trajectory_executor
             << " and trajectory_publish_rate " << _min_traj_publish_tickrate_hz);
 
         this->_plan_sub = this->_public_nh->subscribe<cav_msgs::TrajectoryPlan>("trajectory", 5, &TrajectoryExecutor::onNewTrajectoryPlan, this);
-        this->_state_sub = this->_public_nh->subscribe<cav_msgs::GuidanceState>("state", 5, &TrajectoryExecutor::guidanceStateMonitor, this);
+        this->_state_sub = this->_public_nh->subscribe<cav_msgs::GuidanceState>("state", 5, &TrajectoryExecutor::guidanceStateCb, this);
         this->_cur_traj = std::unique_ptr<cav_msgs::TrajectoryPlan>();
         ROS_DEBUG("Subscribed to inbound trajectory plans.");
 
