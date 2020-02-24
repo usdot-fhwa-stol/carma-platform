@@ -71,6 +71,8 @@
   <remap from="guidance_state" to="$(optenv CARMA_GUIDE_NS)/state"/>
   <remap from="maneuver_plan" to="$(optenv CARMA_GUIDE_NS)/arbitrator/final_maneuver_plan"/>
 
+  <remap from="semantic_map" to="$(optenv CARMA_ENV_NS)/semantic_map"/>
+
   <!-- Launch Guidance Main -->
   <include file="$(find guidance)/launch/guidance_main.launch"/>
 
