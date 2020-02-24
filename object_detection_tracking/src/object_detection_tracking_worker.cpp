@@ -17,6 +17,8 @@
 
 namespace object{
 
+ObjectDetectionTrackingWorker::ObjectDetectionTrackingWorker(PublishObjectCallback obj_pub):obj_pub_(obj_pub) { };
+
 void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::DetectedObjectArray &obj_array)
 {	
 	
@@ -73,12 +75,7 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
 		msg.objects.emplace_back(obj);
 	}
 
-		pub_object_.publish(msg);
+		obj_pub_.publish(msg);
 }
 
-void ObjectDetectionTrackingWorker::set_publishers(ros::Publisher pub_object)
-{
-	pub_object_=pub_object;
-}
-
-}
+}//object

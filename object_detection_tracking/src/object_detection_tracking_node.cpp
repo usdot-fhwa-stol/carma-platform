@@ -17,19 +17,26 @@
 
 namespace object{
 
- ObjectDetectionTrackingNode::ObjectDetectionTrackingNode() {}
+  using std::placeholders::_1;
+
+  ObjectDetectionTrackingNode::ObjectDetectionTrackingNode(): object_worker_(std::bind(&ObjectDetectionTrackingNode::publishObject, this, _1){}
 
   void ObjectDetectionTrackingNode::initialize()
   {
     autoware_obj_sub_=nh_.subscribe("detected_objects",10,&ObjectDetectionTrackingWorker::detectedObjectCallback,&object_worker_);
     carma_obj_pub_=nh_.advertise<cav_msgs::ExternalObjectList>("external_objects", 10);
-    object_worker_.set_publishers(pub_object_);
+  }
+
+  void ObjectDetectionTrackingNode::publishObject(const cav_msgs::ExternalObjectList& obj_msg)
+  {
+  carma_obj_pub_.publish(obj_msg);
   }
 
   void ObjectDetectionTrackingNode::run()
   {
     initialize();
+    nh_.setSpinRate(20);
     nh_.spin();
   }
 
-}
+}//object

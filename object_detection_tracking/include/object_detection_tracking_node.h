@@ -1,5 +1,3 @@
-#pragma pack
-
 /*
  * Copyright (C) 2019-2020 LEIDOS.
  *
@@ -21,6 +19,7 @@
 
 #include <ros/ros.h>
 #include <carma_utils/CARMAUtils.h>
+#include <functional>
 
 #include "object_detection_tracking_worker.h"
 
@@ -36,6 +35,7 @@ class ObjectDetectionTrackingNode
    
   //subscriber
   ros::Subscriber autoware_obj_sub_;
+
   //publisher
   ros::Publisher carma_obj_pub_;
   
@@ -49,10 +49,15 @@ class ObjectDetectionTrackingNode
 
  public:
   
-   /*! \fn LidarLiteNode()
-    \brief LidarLiteNode constructor 
+   /*! \fn ObjectDetectionTrackingNode()
+    \brief ObjectDetectionTrackingNode constructor 
    */
   ObjectDetectionTrackingNode();
+
+     /*! \fn publishObject()
+    \brief Callback to publish ObjectList
+   */
+  void publishObject(const cav_msgs::ExternalObjectList& obj_msg);
 
   /*!fn run()
   \brief General starting point to run this node
@@ -61,6 +66,6 @@ class ObjectDetectionTrackingNode
   
 };
 
-}
+}//object
 
 #endif /* EXTERNAL_OBJECT_H */
