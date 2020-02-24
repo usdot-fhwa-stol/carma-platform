@@ -21,7 +21,7 @@ namespace object{
 
   void ObjectDetectionTrackingNode::initialize()
   {
-    autoware_obj_sub_=nh_.subscribe("/detected_objects",10,&ObjectDetectionTrackingWorker::detectedObjectCallback,&object_worker_);
+    autoware_obj_sub_=nh_.subscribe("detected_objects",10,&ObjectDetectionTrackingWorker::detectedObjectCallback,&object_worker_);
     carma_obj_pub_=nh_.advertise<cav_msgs::ExternalObjectList>("external_objects", 10);
     object_worker_.set_publishers(pub_object_);
   }
