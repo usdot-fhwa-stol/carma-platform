@@ -55,8 +55,6 @@
 
   <remap from="gnss_fix_fused" to="$(optenv CARMA_INTR_NS)/gnss_fix_fused"/>
   
-  <!-- <arg name="current_twist" default="current_twist" doc="Remapping of the twist topic used by the deadreckoner node"/>
-  <arg name="current_odom" default="current_odom" doc="Remapping of the twist topic used by the deadreckoner node"/> -->
   <!-- Localization Package -->
   <!-- Point Cloud Map file location and parameter loading process -->
 
@@ -76,6 +74,7 @@
   <!--EKF Localizer  Commend out to remove and change marked line in waypoint following.launch--> 
   <group>
     <remap from="/initialpose" to="initialpose"/>
+    <remap from="/ekf_twist" to="ekf_twist"/>
     <include file="$(find ekf_localizer)/launch/ekf_localizer.launch" >
       <arg name="show_debug_info" default="false"/>
       <arg name="enable_yaw_bias_estimation" default="True"/>
@@ -83,8 +82,8 @@
       <arg name="tf_rate" default="10.0"/>
       <arg name="extend_state_step" default="50"/>
       <arg name="input_twist_name" default="$(optenv CARMA_INTR_NS)/vehicle/twist"/>
-      <arg name="input_pose_name" default="ndt_pose"/>
-      <arg name="input_pose_with_cov_name" default="ndt_pose_with_covariance"/>
+      <arg name="input_pose_name" default="selected_pose"/>
+      <arg name="input_pose_with_cov_name" default="selected_pose_with_covariance"/>
       <arg name="use_pose_with_covariance" default="false"/>
       <arg name="pose_additional_delay" default="0.0"/>
       <arg name="pose_measure_uncertainty_time" default="0.01"/>
@@ -105,19 +104,24 @@
     </include>
   </group>
 
-  <!-- NDT Matching-->
-  <!-- This namesapce sets the parameters which are not set by default in the ndt_matching.launch file -->
-  <!-- These parameters are not in the ndt_matching node private namespace -->
-
-  <rosparam command="load" file="$(arg vehicle_calibration_dir)/lidar_localizer/ndt_matching/params.yaml"/>
-
   <group>
-    <remap from="filtered_points" to="ray_ground_filter/points_no_ground"/>
-"
+    <!-- TODO This is currently set to default values. Investigate if voxel_grid_filter leaf size needs to match resolution of ndt matching-->
+    <!-- NDT Matching-->
+    <!-- This namesapce sets the parameters which are not set by default in the ndt_matching.launch file -->
+    <!-- These parameters are not in the ndt_matching node private namespace -->
+
+    <rosparam command="load" file="$(arg vehicle_calibration_dir)/lidar_localizer/ndt_matching/params.yaml"/>
+
+
+    <remap from="/config/ndt" to="config/ndt"/>
+
     <include file="$(find lidar_localizer)/launch/ndt_matching.launch">
       <arg name="get_height" value="true" />
       <arg name="use_odom" value="true" />
+      <arg name="use_imu" value="true" />
       <arg name="use_gnss" value="1"/>
+      <arg name="imu_topic" default="$(optenv CARMA_INTR_NS)/imu_raw" />
+      <arg name="gnss_reinit_fitness" default="10000.0" /> <!-- Set to unreasonably high value to ensure no reinitialization occurs as it rarely works -->
     </include>
   </group>
 
@@ -126,20 +130,26 @@
 
   <!-- GNSS/NDT selection localizer-->
   <group>
-    <remap from="ndt_pose" to="ekf_pose"/>
     <include file="$(find gnss_ndt_selector)/launch/gnss_ndt_selector.launch"/>
   </group>
 
   <!-- Deadreckoner -->
   <include file="$(find deadreckoner)/launch/deadreckoner.launch">
-    <arg name="current_twist" value="$(optenv CARMA_INTR_NS)/vehicle/twist" />
+    <arg name="current_twist" value="ekf_twist"/> <!-- Use twist feedback from EKF as input to NDT -->
     <arg name="current_odom" value="vehicle/odom" />
   </include>
 
-  <!-- Ray Ground Filter -->
-  <remap from="/points_raw" to="$(optenv CARMA_INTR_NS)/lidar/points_raw"/>
-  <include file="$(find points_preprocessor)/launch/ray_ground_filter.launch">
-    <arg name="no_ground_point_topic" value="points_no_ground" />
-    <arg name="ground_point_topic" value="points_ground" />
-  </include>
+  <!-- Voxel Grid Filter -->
+  <group>
+    <node pkg="rostopic" type="rostopic" name="config_voxel_grid_filter"
+      args="pub --latch /config/voxel_grid_filter autoware_config_msgs/ConfigVoxelGridFilter '{
+        voxel_leaf_size: 3,
+        measurement_range: 200
+    }'"/>
+    <include file="$(find points_downsampler)/launch/points_downsample.launch">
+      <arg name="node_name" default="voxel_grid_filter" />
+      <arg name="points_topic" default="$(optenv CARMA_INTR_NS)/lidar/points_raw" />
+      <arg name="output_log" default="false" />
+    </include>
+  </group>
 </launch>

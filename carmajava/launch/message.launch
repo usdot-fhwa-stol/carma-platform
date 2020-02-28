@@ -28,14 +28,14 @@
 
   <remap from="system_alert" to="/system_alert"/>
 
-    <remap from="velocity_accel" to="/hardware_interface/velocity_accel"/>
-    <remap from="yaw_rate_rpt" to="/hardware_interface/pacmod/parsed_tx/yaw_rate_rpt"/>
-    <remap from="pose" to="/localization/selected_pose"/>
-    <remap from="transmission_state" to="/hardware_interface/can/transmission_state"/>
-    <remap from="vehicle_speed" to="/hardware_interface/pacmod/as_tx/vehicle_speed"/>
-    <remap from="dual_antenna_heading" to="/hardware_interface/gnss/dual_antenna_heading"/>
-    <remap from="steering_wheel_angle" to="/hardware_interface/can/steering_wheel_angle"/>
-    <remap from="brake_position" to="/hardware_interface/can/brake_position"/>
+  <remap from="velocity_accel" to="$(optenv CARMA_INTR_NS)/velocity_accel"/>
+  <remap from="yaw_rate_rpt" to="$(optenv CARMA_INTR_NS)/pacmod/parsed_tx/yaw_rate_rpt"/>
+  <remap from="pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>
+  <remap from="transmission_state" to="$(optenv CARMA_INTR_NS)/can/transmission_state"/>
+  <remap from="vehicle_speed" to="$(optenv CARMA_INTR_NS)/pacmod/as_tx/vehicle_speed"/>
+  <remap from="dual_antenna_heading" to="$(optenv CARMA_INTR_NS)/gnss/dual_antenna_heading"/>
+  <remap from="steering_wheel_angle" to="$(optenv CARMA_INTR_NS)/can/steering_wheel_angle"/>
+  <remap from="brake_position" to="$(optenv CARMA_INTR_NS)/can/brake_position"/>
 
   <!-- j2735 Convertor Node -->
   <node pkg="j2735_convertor" type="j2735_convertor_node" name="j2735_convertor">
