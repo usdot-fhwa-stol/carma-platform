@@ -25,8 +25,8 @@
   <arg name="load_type" default="noupdate" doc="Enum of the map loading approach to use. Can be 'download', 'noupdate', or 'arealist'"/> 
   <arg name="single_pcd_path" default="pcd_map.pcd" doc="Path to the map pcd file if using the noupdate load type"/>
   <arg name="vector_map_file" default="vector_map.osm" doc="Path to the map osm file if using the noupdate load type"/>
-  
-  
+
+
   <!-- Remap any absolute topics to be relative -->
   <remap from="/vehicle/odom" to="vehicle/odom"/>
   <remap from="/estimate_twist" to="estimate_twist"/>
@@ -54,7 +54,7 @@
   <remap from="system_alert" to="/system_alert"/>
 
   <remap from="gnss_fix_fused" to="$(optenv CARMA_INTR_NS)/gnss_fix_fused"/>
-  
+
   <!-- Localization Package -->
   <!-- Point Cloud Map file location and parameter loading process -->
 
@@ -62,7 +62,7 @@
   <include file="$(find map_file)/launch/map_param_loader.launch">
     <arg name="file_name" value="$(arg vector_map_file)"/>
    </include>
-   
+
   <!-- Point Cloud map file loading process> -->
   <include file="$(find map_file)/launch/map_loader.launch">
    <arg name="load_type" value="$(arg load_type)"/>
@@ -110,12 +110,12 @@
     <!-- NDT Matching-->
     <!-- This namesapce sets the parameters which are not set by default in the ndt_matching.launch file -->
     <!-- These parameters are not in the ndt_matching node private namespace -->
-
+    
     <rosparam command="load" file="$(arg vehicle_calibration_dir)/lidar_localizer/ndt_matching/params.yaml"/>
-
+    
 
     <remap from="/config/ndt" to="config/ndt"/>
-
+   
     <include file="$(find lidar_localizer)/launch/ndt_matching.launch">
       <arg name="get_height" value="true" />
       <arg name="use_odom" value="true" />
@@ -133,19 +133,20 @@
   <group>
     <include file="$(find gnss_ndt_selector)/launch/gnss_ndt_selector.launch"/>
   </group>
-
+  
   <!-- Deadreckoner -->
   <include file="$(find deadreckoner)/launch/deadreckoner.launch">
     <arg name="current_twist" value="ekf_twist"/> <!-- Use twist feedback from EKF as input to NDT -->
     <arg name="current_odom" value="vehicle/odom" />
   </include>
 
-  <!-- Voxel Grid Filter -->
+  <!-- Voxel Grid Filter TODO the measurement range needs to be moved to vehicle calibration. Actually this range does not need to match the sensor range so it would be considered and algorithm enhancement -->
   <group>
+    <remap from="/config/voxel_grid_filter" to="config/voxel_grid_filter"/>
     <node pkg="rostopic" type="rostopic" name="config_voxel_grid_filter"
       args="pub --latch /config/voxel_grid_filter autoware_config_msgs/ConfigVoxelGridFilter '{
-        voxel_leaf_size: 3,
-        measurement_range: 200
+        voxel_leaf_size: 4,
+        measurement_range: 150
     }'"/>
     <include file="$(find points_downsampler)/launch/points_downsample.launch">
       <arg name="node_name" default="voxel_grid_filter" />
