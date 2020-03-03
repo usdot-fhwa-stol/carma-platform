@@ -47,14 +47,14 @@
   <arg name="names_file" default="$(find vision_darknet_detect)/darknet/cfg/coco.names"/>
 
   <arg name="camera_id" default="/"/>
-  <arg name="image_src" default="$(optenv CARMA_INTR_NS)/camera_right/camera/image_raw"/>
+  <arg name="image_src" default="$(optenv CARMA_INTR_NS)/camera/image_raw"/>
   </include>
   </group>
 
 <!-- vision_beyond_track -->
   <group>
   <include file="$(find vision_beyond_track)/launch/vision_beyond_track.launch">
-  <arg name="camera_info_src" default="$(optenv CARMA_INTR_NS)/camera_right/camera/camera_info"/>
+  <arg name="camera_info_src" default="$(optenv CARMA_INTR_NS)/camera/camera_info"/>
   <arg name="objects_topic_src" default="/detection/image_detector/objects"/>
   <arg name="camera_height" default="1.2"/>
   </include>
@@ -103,7 +103,7 @@
   <include file="$(find range_vision_fusion)/launch/range_vision_fusion.launch">
   <arg name="detected_objects_range" default="/detection/lidar_detector/objects"/>
   <arg name="detected_objects_vision" default="/detection/image_detector/objects"/>
-  <arg name="camera_info_src" default="$(optenv CARMA_INTR_NS)/camera_right/camera/camera_info"/>
+  <arg name="camera_info_src" default="$(optenv CARMA_INTR_NS)/camera/camera_info"/>
   <arg name="min_car_dimensions" default="[3,2,2]"/>
   <arg name="min_person_dimensions" default="[1,2,1]"/>
   <arg name="min_truck_dimensions" default="[4,2,2]"/>
@@ -122,7 +122,7 @@
   <arg name="tracker_input_topic" default="/detection/fusion_tools/objects" />
   	<arg name="tracker_output_topic" default="/detection/object_tracker/objects" />
 
-  <arg name="tracking_frame" default="/world" />
+  <arg name="tracking_frame" default="/map" />
   <arg name="gating_threshold" default="9.22" />
   <arg name="gate_probability" default="0.99" />
   <arg name="detection_probability" default="0.9" />
