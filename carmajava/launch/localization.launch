@@ -102,6 +102,8 @@
       <arg name="proc_stddev_yaw_bias_c" default="0.001"/>
       <arg name="proc_stddev_vx_c" default="0.1"/>
       <arg name="proc_stddev_wz_c" default="0.05"/>
+      <arg name="pose_frame_id" default="map"/>
+      <arg name="child_frame_id" default="base_link"/>
     </include>
   </group>
 
@@ -121,8 +123,9 @@
       <arg name="use_odom" value="true" />
       <arg name="use_imu" value="true" />
       <arg name="use_gnss" value="1"/>
-      <arg name="imu_topic" default="$(optenv CARMA_INTR_NS)/imu_raw" />
-      <arg name="gnss_reinit_fitness" default="10000.0" /> <!-- Set to unreasonably high value to ensure no reinitialization occurs as it rarely works -->
+      <arg name="imu_topic" value="$(optenv CARMA_INTR_NS)/imu_raw" />
+      <arg name="gnss_reinit_fitness" value="10000.0" /> <!-- Set to unreasonably high value to ensure no reinitialization occurs as it rarely works -->
+      <arg name="base_frame" value="base_link"/>
     </include>
   </group>
 
