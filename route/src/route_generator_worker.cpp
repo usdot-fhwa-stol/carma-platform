@@ -69,7 +69,23 @@ namespace route {
                         auto full_file_name = itr->path().filename().generic_string();
                         cav_msgs::Route route_msg;
                         // assume route files ending with ".csv", before that is the actual route name
-                        route_msg.route_name = full_file_name.substr(0, full_file_name.find(".csv"));
+                        route_msg.route_id = full_file_name.substr(0, full_file_name.find(".csv"));
+                        std::ifstream fin;
+                        fin.open(full_file_name);
+                        fin.seekg(-1, std::ios_base::end);
+                        std::string dest_name;
+                        while(true) {
+                            char ch;
+                            fin.get(ch);
+                            if(ch != ',') {
+                                fin.unget();
+                                fin.unget();
+                            } else {
+                                std::getline(fin, dest_name);
+                                break;
+                            }
+                        }
+                        route_msg.route_name = dest_name;
                         resp.availableRoutes.push_back(route_msg);
                     }
                 }
@@ -85,7 +101,7 @@ namespace route {
         this->route_file_path_ = path;
         // after route path is set, worker will able to transit state and provide route selection service
         this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::LOAD_ROUTE_FILES);
-        publish_route_event(cav_msgs::RouteEvent::LOAD_ROUTE_FILES);
+        publish_route_event(cav_msgs::RouteEvent::ROUTE_LOADED);
     }
 
     bool RouteGeneratorWorker::set_active_route_cb(cav_srvs::SetActiveRouteRequest &req, cav_srvs::SetActiveRouteResponse &resp)
@@ -176,7 +192,9 @@ namespace route {
             coordinate.lat =
                 (std::stod(line.substr(0, comma)) < 0 ? std::stod(line.substr(0, comma)) + 360.0 : std::stod(line.substr(0, comma))) * DEG_TO_RAD;
             // elevation is in meters
-            coordinate.elevation = std::stod(line.substr(comma + 1));
+            line.erase(0, comma + 1);
+            comma = line.find(",");
+            coordinate.elevation = std::stod(line.substr(0, comma));
             // no rotation needed since it only represents a point
             tf2::Quaternion no_rotation(0, 0, 0, 1);
             destination_points.emplace_back(wgs84_utils::geodesic_to_ecef(coordinate, tf2::Transform(no_rotation)));
@@ -237,13 +255,19 @@ namespace route {
         lanelet::BasicPoint2d current_loc(msg->pose.position.x, msg->pose.position.y);
         // get dt ct from world model
         auto track = this->world_model_->routeTrackPos(current_loc);
+        auto via_lanelet_vector = lanelet::geometry::findNearest(world_model_->getMap()->laneletLayer, current_loc, 1);
+        auto current_lanelet = lanelet::ConstLanelet(via_lanelet_vector[0].second.constData());
+        auto lanelet_track = world_model_->trackPos(current_lanelet, current_loc);
+        ll_id_ = current_lanelet.id();
+        ll_crosstrack_distance_ = lanelet_track.crosstrack;
+        ll_downtrack_distance_ = lanelet_track.downtrack;
         current_crosstrack_distance_ = track.crosstrack;
         current_downtrack_distance_ = track.downtrack;
         // check if we left the seleted route by cross track error
         if(std::fabs(current_crosstrack_distance_) > cross_track_max_)
         {
             this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::LEFT_ROUTE);
-            publish_route_event(cav_msgs::RouteEvent::LEFT_ROUTE);
+            publish_route_event(cav_msgs::RouteEvent::ROUTE_DEPARTURE);
         }
         // check if we reached our destination be remaining down track distance
         if(current_downtrack_distance_ > world_model_->getRoute()->length2d() - down_track_target_range_)
@@ -287,6 +311,8 @@ namespace route {
             state_msg.routeID = route_msg_.route_name;
             state_msg.cross_track = current_crosstrack_distance_;
             state_msg.down_track = current_downtrack_distance_;
+            state_msg.lanelet_downtrack = ll_downtrack_distance_;
+            state_msg.lanelet_id = ll_id_;
             route_state_pub_.publish(state_msg);
         }
         // publish route event in order if any
