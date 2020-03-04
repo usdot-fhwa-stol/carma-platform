@@ -70,22 +70,23 @@ namespace route {
                         cav_msgs::Route route_msg;
                         // assume route files ending with ".csv", before that is the actual route name
                         route_msg.route_id = full_file_name.substr(0, full_file_name.find(".csv"));
-                        std::ifstream fin;
-                        fin.open(full_file_name);
-                        fin.seekg(-1, std::ios_base::end);
+                        std::ifstream fin(itr->path().generic_string());
                         std::string dest_name;
-                        while(true) {
-                            char ch;
-                            fin.get(ch);
-                            if(ch != ',') {
-                                fin.unget();
-                                fin.unget();
-                            } else {
-                                std::getline(fin, dest_name);
-                                break;
+                        if(fin.is_open())
+                        {
+                            while (!fin.eof())
+                            {
+                                std::string temp;
+                                std::getline(fin, temp);
+                                if(temp != "") dest_name = temp;
                             }
+                            fin.close();
+                        } else
+                        {
+                            ROS_ERROR_STREAM("Fild open failed...");
                         }
-                        route_msg.route_name = dest_name;
+                        auto last_comma = dest_name.find_last_of(',');
+                        route_msg.route_name = dest_name.substr(last_comma + 1);
                         resp.availableRoutes.push_back(route_msg);
                     }
                 }
@@ -172,6 +173,7 @@ namespace route {
 
     std::vector<tf2::Vector3> RouteGeneratorWorker::load_route_destinations_in_ecef(const std::string& route_id) const
     {
+        std::cerr << "load_route_destinations_in_ecef\n";
         // compose full path of the route file
         std::string route_file_name = route_file_path_ + route_id + ".csv";
         std::ifstream fs(route_file_name);
@@ -194,6 +196,7 @@ namespace route {
             // elevation is in meters
             line.erase(0, comma + 1);
             comma = line.find(",");
+            std::cerr << "here!";
             coordinate.elevation = std::stod(line.substr(0, comma));
             // no rotation needed since it only represents a point
             tf2::Quaternion no_rotation(0, 0, 0, 1);
