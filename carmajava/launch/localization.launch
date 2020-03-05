@@ -141,7 +141,7 @@
   
   <!-- Deadreckoner -->
   <include file="$(find deadreckoner)/launch/deadreckoner.launch">
-    <arg name="current_twist" value="ekf_twist"/> <!-- Use twist feedback from EKF as input to NDT -->
+    <arg name="current_twist" value="ekf_twist_fake"/> <!-- Use twist feedback from EKF as input to NDT -->
     <arg name="current_odom" value="vehicle/odom" />
   </include>
 
