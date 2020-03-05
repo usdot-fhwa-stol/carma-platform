@@ -117,13 +117,15 @@
     
 
     <remap from="/config/ndt" to="config/ndt"/>
+    <remap from="estimated_pose" to="current_pose"/>
    
     <include file="$(find lidar_localizer)/launch/ndt_matching.launch">
       <arg name="get_height" value="true" />
-      <arg name="use_odom" value="true" />
-      <arg name="use_imu" value="true" />
+      <arg name="use_odom" value="false" />
+      <arg name="use_imu" value="false" />
       <arg name="use_gnss" value="1"/>
-      <arg name="imu_topic" value="$(optenv CARMA_INTR_NS)/imu_raw" />
+      <arg name="use_estimated_pose" value="true"/>
+      <arg name="imu_topic" value="$(optenv CARMA_INTR_NS)/imu_raw_off" />
       <arg name="gnss_reinit_fitness" value="10000.0" /> <!-- Set to unreasonably high value to ensure no reinitialization occurs as it rarely works -->
       <arg name="base_frame" value="base_link"/>
     </include>
