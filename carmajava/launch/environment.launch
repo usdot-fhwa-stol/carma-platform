@@ -55,7 +55,7 @@
   <group>
   <include file="$(find vision_beyond_track)/launch/vision_beyond_track.launch">
   <arg name="camera_info_src" default="$(optenv CARMA_INTR_NS)/camera/camera_info"/>
-  <arg name="objects_topic_src" default="/detection/image_detector/objects"/>
+  <arg name="objects_topic_src" default="detection/image_detector/objects"/>
   <arg name="camera_height" default="1.2"/>
   </include>
   </group>
@@ -63,7 +63,7 @@
   <!-- lidar_euclidean_cluster_detect -->
   <group>
   <include file="$(find lidar_euclidean_cluster_detect)/launch/lidar_euclidean_cluster_detect.launch">
-  <arg name="points_node" default="/localization/ray_ground_filter/points_no_ground" /><!--CHANGE THIS TO READ WHETHER FROM VSCAN OR POINTS_RAW -->
+  <arg name="points_node" default="$(optenv CARMA_LOCZ_NS)/ray_ground_filter/points_no_ground" /><!--CHANGE THIS TO READ WHETHER FROM VSCAN OR POINTS_RAW -->
   <arg name="remove_ground" default="true" />
   <arg name="downsample_cloud" default="false" /> <!-- Apply VoxelGrid Filter with the value given by "leaf_size"-->
   <arg name="leaf_size" default="0.1" /><!-- Voxel Grid Filter leaf size-->
@@ -101,8 +101,8 @@
   <!-- range_vision_fusion -->
   <group>
   <include file="$(find range_vision_fusion)/launch/range_vision_fusion.launch">
-  <arg name="detected_objects_range" default="/detection/lidar_detector/objects"/>
-  <arg name="detected_objects_vision" default="/detection/image_detector/objects"/>
+  <arg name="detected_objects_range" default="detection/lidar_detector/objects"/>
+  <arg name="detected_objects_vision" default="detection/image_detector/objects"/>
   <arg name="camera_info_src" default="$(optenv CARMA_INTR_NS)/camera/camera_info"/>
   <arg name="min_car_dimensions" default="[3,2,2]"/>
   <arg name="min_person_dimensions" default="[1,2,1]"/>
@@ -110,7 +110,7 @@
   <arg name="sync_topics" default="false"/>
   <arg name="overlap_threshold" default="0.6"/>
   <arg name="use_vector_map" default="false"/>
-  <arg name="namespace" default="/detection/fusion_tools"/>
+  <arg name="namespace" default="detection/fusion_tools"/>
 
   </include>
   </group>
@@ -118,9 +118,9 @@
   <!-- imm_ukf_pda_track -->
   <group>
   <include file="$(find imm_ukf_pda_track)/launch/imm_ukf_pda_track_lanelet2.launch">
-  	 <arg name="namespace" default="/detection/object_tracker"/>
-  <arg name="tracker_input_topic" default="/detection/fusion_tools/objects" />
-  	<arg name="tracker_output_topic" default="/detection/object_tracker/objects" />
+  	 <arg name="namespace" default="detection/object_tracker"/>
+  <arg name="tracker_input_topic" default="detection/fusion_tools/objects" />
+  	<arg name="tracker_output_topic" default="detection/object_tracker/objects" />
 
   <arg name="tracking_frame" default="/map" />
   <arg name="gating_threshold" default="9.22" />
@@ -149,7 +149,7 @@
   <arg name="num_prediction" default="10"/>
   <arg name="sensor_height" default="2.0"/>
   <arg name="filter_out_close_object_threshold" default="1.5"/>
-  <arg name="input_topic" default="/detection/objects"/>
+  <arg name="input_topic" default="detection/objects"/>
   </include>
   </group>
 
