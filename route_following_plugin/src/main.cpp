@@ -15,7 +15,6 @@
  */
 
 #include <ros/ros.h>
-
 #include "route_following_plugin.h"
 
 int main(int argc, char** argv)

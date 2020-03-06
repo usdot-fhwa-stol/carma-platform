@@ -2,10 +2,13 @@
 <launch>
     <remap from="final_waypoints" to="carma_final_waypoints"/>
     <!-- Pure Pursuit Node -->
-    <include file="$(find pure_pursuit)/launch/pure_pursuit.launch">
-        <arg name="is_linear_interpolation" value="True"/>
-        <arg name="publishes_for_steering_robot" value="True"/>
-    </include>
+    <group>
+        <remap from="vehicle_info/wheel_base" to="/vehicle_wheel_base"/>
+        <include file="$(find pure_pursuit)/launch/pure_pursuit.launch">
+            <arg name="is_linear_interpolation" value="True"/>
+            <arg name="publishes_for_steering_robot" value="True"/>
+        </include>
+    </group>
     <!-- Pure Pursuit Wrapper Node -->
     <node pkg="pure_pursuit_wrapper" type="pure_pursuit_wrapper_node" name="pure_pursuit_wrapper_node" output="screen">
         <rosparam command="load" file="$(find pure_pursuit_wrapper)/config/default.yaml" />
