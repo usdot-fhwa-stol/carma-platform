@@ -18,7 +18,7 @@
 
 namespace route {
 
-    RouteStateWorker::RouteStateWorker() : state_(RouteState::ROUTE_LOADING) { }
+    RouteStateWorker::RouteStateWorker() : state_(RouteState::LOADING) { }
 
     RouteStateWorker::RouteState RouteStateWorker::get_route_state() {
         return state_;
@@ -27,31 +27,31 @@ namespace route {
     void RouteStateWorker::on_route_event(RouteEvent event) {
         switch (state_)
         {
-        case RouteState::ROUTE_LOADING:
-            if(event == RouteEvent::LOAD_ROUTE_FILES)
+        case RouteState::LOADING:
+            if(event == RouteEvent::ROUTE_LOADED)
             {
-                state_ = RouteState::ROUTE_SELECTION;
+                state_ = RouteState::SELECTION;
             }
             break;
-        case RouteState::ROUTE_SELECTION:
+        case RouteState::SELECTION:
             if(event == RouteEvent::ROUTE_SELECTED)
             {
                 state_ = RouteState::ROUTING;
             }
             break;
         case RouteState::ROUTING:
-            if(event == RouteEvent::ROUTING_SUCCESS)
+            if(event == RouteEvent::ROUTE_STARTED)
             {
-                state_ = RouteState::ROUTE_FOLLOWING;
-            } else if(event == RouteEvent::ROUTING_FAILURE)
+                state_ = RouteState::FOLLOWING;
+            } else if(event == RouteEvent::ROUTE_GEN_FAILED)
             {
-                state_ = RouteState::ROUTE_SELECTION;
+                state_ = RouteState::SELECTION;
             }
             break;
-        case RouteState::ROUTE_FOLLOWING:
-            if(event == RouteEvent::ROUTE_COMPLETE || event == RouteEvent::LEFT_ROUTE || event == RouteEvent::ROUTE_ABORT)
+        case RouteState::FOLLOWING:
+            if(event == RouteEvent::ROUTE_COMPLETED || event == RouteEvent::ROUTE_DEPARTED || event == RouteEvent::ROUTE_ABORTED)
             {
-                state_ = RouteState::ROUTE_LOADING;
+                state_ = RouteState::LOADING;
             }
             break;
         default:

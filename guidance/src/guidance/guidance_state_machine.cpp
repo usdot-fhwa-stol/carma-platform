@@ -108,7 +108,7 @@ namespace guidance
 
     void GuidanceStateMachine::onRouteEvent(const cav_msgs::RouteEventConstPtr& msg)
     {
-        if(msg->event == cav_msgs::RouteEvent::ROUTE_DEPARTURE ||
+        if(msg->event == cav_msgs::RouteEvent::ROUTE_DEPARTED ||
            msg->event == cav_msgs::RouteEvent::ROUTE_COMPLETED ||
            msg->event == cav_msgs::RouteEvent::ROUTE_ABORTED) {
                onGuidanceSignal(Signal::DISENGAGED);

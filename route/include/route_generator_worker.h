@@ -26,7 +26,6 @@
 #include <cav_msgs/RouteState.h>
 #include <cav_srvs/GetAvailableRoutes.h>
 #include <cav_srvs/SetActiveRoute.h>
-#include <cav_srvs/StartActiveRoute.h>
 #include <cav_srvs/AbortActiveRoute.h>
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
