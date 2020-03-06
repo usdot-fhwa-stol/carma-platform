@@ -26,7 +26,6 @@
 #include <cav_msgs/RouteState.h>
 #include <cav_srvs/GetAvailableRoutes.h>
 #include <cav_srvs/SetActiveRoute.h>
-#include <cav_srvs/StartActiveRoute.h>
 #include <cav_srvs/AbortActiveRoute.h>
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
@@ -169,6 +168,10 @@ namespace route {
 
         // current cross track and down track distance relative to the route
         double current_crosstrack_distance_, current_downtrack_distance_;
+
+        // current lanelet down track and cross track distance
+        double ll_crosstrack_distance_, ll_downtrack_distance_;
+        unsigned int ll_id_;
 
         // local copy of Route publihsers
         ros::Publisher route_event_pub_, route_state_pub_, route_pub_;

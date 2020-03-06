@@ -66,7 +66,8 @@ TEST(RouteGeneratorTest, testReadRouteFile)
     cav_srvs::GetAvailableRoutesRequest req;
     cav_srvs::GetAvailableRoutesResponse resp;
     ASSERT_TRUE(worker.get_available_route_cb(req, resp));
-    ASSERT_EQ("tfhrc_test_route", resp.availableRoutes.front().route_name);
+    ASSERT_EQ("tfhrc_test_route", resp.availableRoutes.front().route_id);
+    ASSERT_EQ("C-HUB", resp.availableRoutes.front().route_name);
     ASSERT_EQ(1, resp.availableRoutes.size());
     auto points = worker.load_route_destinations_in_ecef("tfhrc_test_route");
     ASSERT_EQ(5, points.size());

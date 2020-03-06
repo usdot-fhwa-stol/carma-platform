@@ -21,22 +21,22 @@
 TEST(RouteStateTest, testStateTransitions)
 {
     route::RouteStateWorker worker;
-    ASSERT_EQ(route::RouteStateWorker::RouteState::ROUTE_LOADING, worker.get_route_state());
-    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_ABORT);
-    ASSERT_EQ(route::RouteStateWorker::RouteState::ROUTE_LOADING, worker.get_route_state());
-    worker.on_route_event(route::RouteStateWorker::RouteEvent::LOAD_ROUTE_FILES);
-    ASSERT_EQ(route::RouteStateWorker::RouteState::ROUTE_SELECTION, worker.get_route_state());
+    ASSERT_EQ(route::RouteStateWorker::RouteState::LOADING, worker.get_route_state());
+    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_ABORTED);
+    ASSERT_EQ(route::RouteStateWorker::RouteState::LOADING, worker.get_route_state());
+    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_LOADED);
+    ASSERT_EQ(route::RouteStateWorker::RouteState::SELECTION, worker.get_route_state());
     worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_SELECTED);
     ASSERT_EQ(route::RouteStateWorker::RouteState::ROUTING, worker.get_route_state());
-    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTING_SUCCESS);
-    ASSERT_EQ(route::RouteStateWorker::RouteState::ROUTE_FOLLOWING, worker.get_route_state());
-    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_COMPLETE);
-    ASSERT_EQ(route::RouteStateWorker::RouteState::ROUTE_LOADING, worker.get_route_state());
-    worker.on_route_event(route::RouteStateWorker::RouteEvent::LEFT_ROUTE);
-    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_COMPLETE);
-    ASSERT_EQ(route::RouteStateWorker::RouteState::ROUTE_LOADING, worker.get_route_state());
-    worker.on_route_event(route::RouteStateWorker::RouteEvent::LOAD_ROUTE_FILES);
+    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_STARTED);
+    ASSERT_EQ(route::RouteStateWorker::RouteState::FOLLOWING, worker.get_route_state());
+    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_COMPLETED);
+    ASSERT_EQ(route::RouteStateWorker::RouteState::LOADING, worker.get_route_state());
+    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_DEPARTED);
+    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_COMPLETED);
+    ASSERT_EQ(route::RouteStateWorker::RouteState::LOADING, worker.get_route_state());
+    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_LOADED);
     worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_SELECTED);
-    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTING_FAILURE);
-    ASSERT_EQ(route::RouteStateWorker::RouteState::ROUTE_SELECTION, worker.get_route_state());
+    worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+    ASSERT_EQ(route::RouteStateWorker::RouteState::SELECTION, worker.get_route_state());
 }
