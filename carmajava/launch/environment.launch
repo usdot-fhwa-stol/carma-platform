@@ -56,7 +56,7 @@
   <include file="$(find vision_beyond_track)/launch/vision_beyond_track.launch">
   <arg name="camera_info_src" default="$(optenv CARMA_INTR_NS)/camera/camera_info"/>
   <arg name="objects_topic_src" default="detection/image_detector/objects"/>
-  <arg name="camera_height" default="1.2"/>
+  <arg name="camera_height_calibration_params_file" default="$(find vehicle_calibration_dir)/vision_beyond_track/calibration.yaml"/>
   </include>
   </group>
   
@@ -147,7 +147,7 @@
   <include file="$(find naive_motion_predict)/launch/naive_motion_predict.launch">
   <arg name="interval_sec" default="0.1"/>
   <arg name="num_prediction" default="10"/>
-  <arg name="sensor_height" default="2.0"/>
+  <arg name="sensor_height_calibration_params_file" default="$(find vehicle_calibration_dir)/naive_motion_predict/calibration.yaml"/>
   <arg name="filter_out_close_object_threshold" default="1.5"/>
   <arg name="input_topic" default="detection/objects"/>
   </include>
