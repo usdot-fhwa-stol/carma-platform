@@ -18,9 +18,14 @@
 
 namespace route {
 
-    RouteGeneratorWorker::RouteGeneratorWorker(tf2_ros::Buffer& tf_buffer, carma_wm::WorldModelConstPtr wm) :
-                                               tf_tree_(tf_buffer), world_model_(wm), new_route_msg_generated_(false) { }
+    RouteGeneratorWorker::RouteGeneratorWorker(tf2_ros::Buffer& tf_buffer) :
+                                               tf_tree_(tf_buffer), new_route_msg_generated_(false) { }
     
+    void RouteGeneratorWorker::setWorldModelPtr(carma_wm::WorldModelConstPtr wm)
+    {
+        this->world_model_ = wm;
+    }
+
     lanelet::Optional<lanelet::routing::Route> RouteGeneratorWorker::routing(const lanelet::BasicPoint2d start,
                                                                              const std::vector<lanelet::BasicPoint2d>& via,
                                                                              const lanelet::BasicPoint2d end,
@@ -173,7 +178,6 @@ namespace route {
 
     std::vector<tf2::Vector3> RouteGeneratorWorker::load_route_destinations_in_ecef(const std::string& route_id) const
     {
-        std::cerr << "load_route_destinations_in_ecef\n";
         // compose full path of the route file
         std::string route_file_name = route_file_path_ + route_id + ".csv";
         std::ifstream fs(route_file_name);
@@ -196,7 +200,6 @@ namespace route {
             // elevation is in meters
             line.erase(0, comma + 1);
             comma = line.find(",");
-            std::cerr << "here!";
             coordinate.elevation = std::stod(line.substr(0, comma));
             // no rotation needed since it only represents a point
             tf2::Quaternion no_rotation(0, 0, 0, 1);
@@ -254,29 +257,31 @@ namespace route {
 
     void RouteGeneratorWorker::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
-        // convert from pose stamp into lanelet basic 2D point
-        lanelet::BasicPoint2d current_loc(msg->pose.position.x, msg->pose.position.y);
-        // get dt ct from world model
-        auto track = this->world_model_->routeTrackPos(current_loc);
-        auto via_lanelet_vector = lanelet::geometry::findNearest(world_model_->getMap()->laneletLayer, current_loc, 1);
-        auto current_lanelet = lanelet::ConstLanelet(via_lanelet_vector[0].second.constData());
-        auto lanelet_track = world_model_->trackPos(current_lanelet, current_loc);
-        ll_id_ = current_lanelet.id();
-        ll_crosstrack_distance_ = lanelet_track.crosstrack;
-        ll_downtrack_distance_ = lanelet_track.downtrack;
-        current_crosstrack_distance_ = track.crosstrack;
-        current_downtrack_distance_ = track.downtrack;
-        // check if we left the seleted route by cross track error
-        if(std::fabs(current_crosstrack_distance_) > cross_track_max_)
-        {
-            this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
-            publish_route_event(cav_msgs::RouteEvent::ROUTE_DEPARTED);
-        }
-        // check if we reached our destination be remaining down track distance
-        if(current_downtrack_distance_ > world_model_->getRoute()->length2d() - down_track_target_range_)
-        {
-            this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_COMPLETED);
-            publish_route_event(cav_msgs::RouteEvent::ROUTE_COMPLETED);
+        if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING) {
+            // convert from pose stamp into lanelet basic 2D point
+            lanelet::BasicPoint2d current_loc(msg->pose.position.x, msg->pose.position.y);
+            // get dt ct from world model
+            auto track = this->world_model_->routeTrackPos(current_loc);
+            auto via_lanelet_vector = lanelet::geometry::findNearest(world_model_->getMap()->laneletLayer, current_loc, 1);
+            auto current_lanelet = lanelet::ConstLanelet(via_lanelet_vector[0].second.constData());
+            auto lanelet_track = world_model_->trackPos(current_lanelet, current_loc);
+            ll_id_ = current_lanelet.id();
+            ll_crosstrack_distance_ = lanelet_track.crosstrack;
+            ll_downtrack_distance_ = lanelet_track.downtrack;
+            current_crosstrack_distance_ = track.crosstrack;
+            current_downtrack_distance_ = track.downtrack;
+            // check if we left the seleted route by cross track error
+            if(std::fabs(current_crosstrack_distance_) > cross_track_max_)
+            {
+                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+                publish_route_event(cav_msgs::RouteEvent::ROUTE_DEPARTED);
+            }
+            // check if we reached our destination be remaining down track distance
+            if(current_downtrack_distance_ > world_model_->getRoute()->length2d() - down_track_target_range_)
+            {
+                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_COMPLETED);
+                publish_route_event(cav_msgs::RouteEvent::ROUTE_COMPLETED);
+            }
         }
     }
 

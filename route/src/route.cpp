@@ -18,7 +18,7 @@
 
 namespace route {
 
-    Route::Route() : tf_listener_(tf_buffer_), rg_worker_(tf_buffer_, wm_) {}
+    Route::Route() : tf_listener_(tf_buffer_), rg_worker_(tf_buffer_) {}
 
     void Route::initialize()
     {
@@ -37,6 +37,7 @@ namespace route {
         abort_active_route_srv_ = nh_->advertiseService("abort_active_route", &RouteGeneratorWorker::abort_active_route_cb, &rg_worker_);
         // set world model point form wm listener
         wm_ = wml_.getWorldModel();
+        rg_worker_.setWorldModelPtr(wm_);
         // load params and pass to route generator worker
         double ct_error, dt_range;
         pnh_->getParam("max_crosstrack_error", ct_error);

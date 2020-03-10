@@ -49,10 +49,15 @@ namespace route {
         /**
          * \brief Constructor for RouteGeneratorWorker class taking in dependencies via dependency injection
          * \param tf_buffer ROS tf tree buffer for getting latest tf between any two available frames
+         */
+        RouteGeneratorWorker(tf2_ros::Buffer& tf_buffer);
+        
+        /**
+         * \brief Dependency injection for world model pointer.
          * \param wm CARMA world model object providing lanelet vector map and traffic regulations
          */
-        RouteGeneratorWorker(tf2_ros::Buffer& tf_buffer, carma_wm::WorldModelConstPtr wm);
-        
+        void setWorldModelPtr(carma_wm::WorldModelConstPtr wm);
+
         /**
          * \brief Generate Lanelet2 route based on input destinations
          * \param start Lanelet 2D point in map frame indicates the starting point of selected route
