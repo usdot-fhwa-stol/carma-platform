@@ -322,7 +322,7 @@ namespace route {
         while(!route_event_queue.empty())
         {
             route_event_msg_.event = route_event_queue.front();
-            route_state_pub_.publish(route_event_msg_);
+            route_event_pub_.publish(route_event_msg_);
             route_event_queue.pop();
         }
         return true;
