@@ -133,7 +133,6 @@
 
   <!-- GNSS/NDT selection localizer-->
   <group>
-    <remap from="ndt_pose" to="ekf_pose"/>
     <include file="$(find gnss_ndt_selector)/launch/gnss_ndt_selector.launch"/>
   </group>
 
@@ -148,7 +147,7 @@
     <remap from="/config/voxel_grid_filter" to="config/voxel_grid_filter"/>
 
     <node pkg="rostopic" type="rostopic" name="config_voxel_grid_filter"
-      args="pub --latch /config/voxel_grid_filter autoware_config_msgs/ConfigVoxelGridFilter '{
+      args="pub --latch config/voxel_grid_filter autoware_config_msgs/ConfigVoxelGridFilter '{
         voxel_leaf_size: 4,
         measurement_range: 150
       }'"/>
