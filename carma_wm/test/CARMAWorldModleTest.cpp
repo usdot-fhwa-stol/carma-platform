@@ -19,6 +19,7 @@
 #include <../src/CARMAWorldModel.h>
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
+#include <lanelet2_extension/utility/utilities.h>
 #include <lanelet2_core/Attribute.h>
 #include "TestHelpers.h"
 
@@ -152,6 +153,40 @@ TEST(CARMAWorldModelTest, getSetRoute)
   ASSERT_TRUE((bool)cmw.getMapRoutingGraph());
 }
 
+/*!
+ * \brief Test utility function to generate a lanelet of fixed curvature
+ * 
+ * \param center_of_curvature The center of the circle that will generate the lanelet
+ * \param radius_of_curvature The radius size of the circle that describes
+ * \param arc_radians The number of radians to traverse the sweep of the circle
+ * \param sample_count  How many points to sample evenly spaced across the arc
+ * \return A lanelet matching the input geometry description
+ */
+std::vector<lanelet::Point3d> 
+generate_const_curvature_linestring(
+  lanelet::BasicPoint2d center_of_curvature,
+  double radius_of_curvature,
+  double arc_radians,
+  double sample_count
+)
+{
+  std::vector<lanelet::Point3d> out;
+
+  double x, y;
+  for (int i = 0; i < sample_count; i++) {
+    x = center_of_curvature[0] 
+      + radius_of_curvature 
+      * std::cos(arc_radians / sample_count * i);
+    y = center_of_curvature[1]
+      + radius_of_curvature
+      * std::sin(arc_radians / sample_count * i);
+    
+    out.push_back(getPoint(x, y, 0.0));
+  }
+
+  return out;
+}
+
 TEST(CARMAWorldModelTest, getLocalCurvatures)
 {
   CARMAWorldModel cmw;
@@ -168,97 +203,86 @@ TEST(CARMAWorldModelTest, getLocalCurvatures)
   std::vector<lanelet::ConstLanelet> lanelets = { lanelet::utils::toConst(ll_1) };
 
   ///// Compute single lanelet 0 curvature
+  std::vector<double> curvatures = cmw.getLocalCurvatures(lanelets);
+  ASSERT_EQ(lanelets[0].centerline2d().size(), curvatures.size());
+  ASSERT_NEAR(0.0, curvatures[0], 0.0000001);
+  ASSERT_NEAR(0.0, curvatures[1], 0.0000001);
+  ASSERT_NEAR(0.0, curvatures[2], 0.0000001);
 
-  std::vector<std::tuple<size_t, std::vector<double>>> curvatures = cmw.getLocalCurvatures(lanelets);
-  ASSERT_EQ(1, curvatures.size());
-  ASSERT_EQ(0, std::get<0>(curvatures[0]));
-  ASSERT_EQ(ll_1.centerline().size() - 2, std::get<1>(curvatures[0]).size());
-  ASSERT_NEAR(0.0, std::get<1>(curvatures[0])[0], 0.0000001);
-  ASSERT_NEAR(0.0, std::get<1>(curvatures[0])[1], 0.0000001);
-  ASSERT_NEAR(0.0, std::get<1>(curvatures[0])[2], 0.0000001);
-
-  ///// Compute two continuos lanelets with 0 curvature
-
-  std::vector<lanelet::Point3d> left_2 = { pl1, pl2 };
-  std::vector<lanelet::Point3d> right_2 = { pr1, pr2 };
+  // Test single lanelet constant curvature
+  lanelet::BasicPoint2d origin = getBasicPoint(0.0, 0.0);
+  // Curve with centerline at radius 10, curvature 1/10
+  std::vector<lanelet::Point3d> left_2 = generate_const_curvature_linestring(origin, 5, M_PI / 2.0, 20); 
+  std::vector<lanelet::Point3d> right_2 = generate_const_curvature_linestring(origin, 15, M_PI / 2.0, 20);
   auto ll_2 = getLanelet(left_2, right_2);
+  std::vector<lanelet::ConstLanelet> lanelets2 = { lanelet::utils::toConst(ll_2) };
 
-  std::vector<lanelet::Point3d> left_3 = { pl2, pl3 };
-  std::vector<lanelet::Point3d> right_3 = { pr2, pr3 };
+  std::vector<double> curvatures2 = cmw.getLocalCurvatures(lanelets2);
+  ASSERT_EQ(lanelets2[0].centerline2d().size(), curvatures2.size());
+
+  double total = 0;
+  for (double k : curvatures2) {
+    total += k;
+  }
+  double avg = total/curvatures2.size();
+  ASSERT_NEAR(0.1, avg, 0.05);
+
+  // Test single lanelet constant curvature 2
+  // Curve with centerline at radius 20, curvature 1/20
+  std::vector<lanelet::Point3d> left_3 = generate_const_curvature_linestring(origin, 10, M_PI / 2.0, 10); 
+  std::vector<lanelet::Point3d> right_3 = generate_const_curvature_linestring(origin, 30, M_PI / 2.0, 10);
   auto ll_3 = getLanelet(left_3, right_3);
+  //lanelet::LineString3d center_ls3(lanelet::utils::getId(), center_3);
 
-  std::vector<lanelet::ConstLanelet> lanelets_2 = { lanelet::utils::toConst(ll_2), lanelet::utils::toConst(ll_3) };
+  lanelet::LaneletMapPtr map = std::move(lanelet::utils::createMap({ ll_3 }, {}));
+  lanelet::utils::overwriteLaneletsCenterline(map);
 
-  curvatures = cmw.getLocalCurvatures(lanelets_2);
-  ASSERT_EQ(1, curvatures.size());
-  ASSERT_EQ(0, std::get<0>(curvatures[0]));
-  ASSERT_EQ(ll_2.centerline().size() + ll_3.centerline().size() - 3, std::get<1>(curvatures[0]).size());
-  ASSERT_NEAR(0.0, std::get<1>(curvatures[0])[0], 0.0000001);
-  ASSERT_NEAR(0.0, std::get<1>(curvatures[0])[1], 0.0000001);
-  ASSERT_NEAR(0.0, std::get<1>(curvatures[0])[2], 0.0000001);
+  std::vector<lanelet::ConstLanelet> lanelets3 = { lanelet::utils::toConst(ll_3) };
+  std::vector<double> curvatures3 = cmw.getLocalCurvatures(lanelets3);
+  ASSERT_EQ(lanelets3[0].centerline2d().size(), curvatures3.size());
 
-  ///// Compute two disjoint lanelets with 0 curvature
+  total = 0;
+  for (double k : curvatures3) {
+    total += k;
+  }
+  avg = total/(curvatures3.size());
+  ASSERT_NEAR(0.05, avg, 0.05);
 
-  auto p_l1 = getPoint(-1, 0, 0);
-  auto p_l2 = getPoint(-1, 1, 0);
-  auto p_l3 = getPoint(-1, 2, 0);
-
-  auto p_l4 = getPoint(1, 2, 0);
-  auto p_l5 = getPoint(1, 3, 0);
-  auto p_l6 = getPoint(1, 4, 0);
-
-  auto p_r1 = getPoint(1, 0, 0);
-  auto p_r2 = getPoint(1, 1, 0);
-  auto p_r3 = getPoint(1, 2, 0);
-
-  auto p_r4 = getPoint(2, 2, 0);
-  auto p_r5 = getPoint(2, 3, 0);
-  auto p_r6 = getPoint(2, 4, 0);
-  std::vector<lanelet::Point3d> left_4 = { p_l1, p_l2, p_l3 };
-  std::vector<lanelet::Point3d> right_4 = { p_r1, p_r2, p_r3 };
-
-  std::vector<lanelet::Point3d> left_5 = { p_l4, p_l5, p_l6 };
-  std::vector<lanelet::Point3d> right_5 = { p_r4, p_r5, p_r6 };
+  // Test single lanelet constant curvature 3
+  // Curve with centerline at radius 1, curvature 1
+  std::vector<lanelet::Point3d> left_4 = generate_const_curvature_linestring(origin, 0.5, M_PI / 2.0, 5); 
+  std::vector<lanelet::Point3d> right_4 = generate_const_curvature_linestring(origin, 1.5, M_PI / 2.0, 5);
   auto ll_4 = getLanelet(left_4, right_4);
-  auto ll_5 = getLanelet(left_5, right_5);
 
-  std::vector<lanelet::ConstLanelet> lanelets_3 = { lanelet::utils::toConst(ll_4), lanelet::utils::toConst(ll_5) };
+  lanelet::LaneletMapPtr map2 = std::move(lanelet::utils::createMap({ ll_4 }, {}));
+  std::cout << "LEFT" << std::endl;
+  for (auto pt : ll_4.leftBound3d()) {
+    std::cout << pt << std::endl;
+  }
+  std::cout << "RIGHT" << std::endl;
+  for (auto pt : ll_4.rightBound3d()) {
+    std::cout << pt << std::endl;
+  }
+  std::cout << "CENTER" << std::endl;
+  for (auto pt : ll_4.centerline2d()) {
+    std::cout << pt << std::endl;
+  }
+  lanelet::utils::overwriteLaneletsCenterline(map2);
+  std::cout << "AFTER" << std::endl;
+  for (auto pt : ll_4.centerline2d()) {
+    std::cout << pt << std::endl;
+  }
 
-  curvatures = cmw.getLocalCurvatures(lanelets_3);
+  std::vector<lanelet::ConstLanelet> lanelets4 = { lanelet::utils::toConst(ll_4) };
+  std::vector<double> curvatures4 = cmw.getLocalCurvatures(lanelets4);
+  ASSERT_EQ(lanelets4[0].centerline2d().size(), curvatures4.size());
 
-  ASSERT_EQ(2, curvatures.size());
-  ASSERT_EQ(0, std::get<0>(curvatures[0]));
-  ASSERT_EQ(1, std::get<0>(curvatures[1]));
-  ASSERT_EQ(ll_4.centerline().size() - 2, std::get<1>(curvatures[0]).size());
-  ASSERT_EQ(ll_5.centerline().size() - 2, std::get<1>(curvatures[1]).size());
-  ASSERT_NEAR(0.0, std::get<1>(curvatures[0])[0], 0.0000001);
-  ASSERT_NEAR(0.0, std::get<1>(curvatures[0])[1], 0.0000001);
-  ASSERT_NEAR(0.0, std::get<1>(curvatures[0])[2], 0.0000001);
-  ASSERT_NEAR(0.0, std::get<1>(curvatures[1])[0], 0.0000001);
-  ASSERT_NEAR(0.0, std::get<1>(curvatures[1])[1], 0.0000001);
-  ASSERT_NEAR(0.0, std::get<1>(curvatures[1])[2], 0.0000001);
-
-  ///// curved lanelets
-
-  auto pl6_1 = getPoint(0, 0, 0);
-  auto pl6_2 = getPoint(-1, 2, 0);
-  auto pl6_3 = getPoint(0, 5, 0);
-  auto pr6_1 = getPoint(2, 0, 0);
-  auto pr6_2 = getPoint(1, 2, 0);
-  auto pr6_3 = getPoint(2, 5, 0);
-  std::vector<lanelet::Point3d> left_6 = { pl6_1, pl6_2, pl6_3 };
-  std::vector<lanelet::Point3d> right_6 = { pr6_1, pr6_2, pr6_3 };
-  auto ll_6 = getLanelet(left_6, right_6);
-  std::vector<lanelet::ConstLanelet> lanelets_4 = { lanelet::utils::toConst(ll_6) };
-
-  curvatures = cmw.getLocalCurvatures(lanelets_4);
-
-  ASSERT_EQ(1, curvatures.size());
-  ASSERT_EQ(0, std::get<0>(curvatures[0]));
-  ASSERT_EQ(ll_6.centerline().size() - 2, std::get<1>(curvatures[0]).size());
-  ASSERT_NEAR(0.0, std::get<1>(curvatures[0])[0], 0.0000001);
-  ASSERT_NEAR(-0.64, std::get<1>(curvatures[0])[1], 0.0000001);
-  ASSERT_NEAR(0.0, std::get<1>(curvatures[0])[2], 0.0000001);
+  // Values calculated by hand using same method
+  ASSERT_NEAR(0.501551, curvatures4[0], 0.00001);
+  ASSERT_NEAR(0.746148, curvatures4[1], 0.00001);
+  ASSERT_NEAR(0.987687, curvatures4[2], 0.00001);
+  ASSERT_NEAR(0.746139, curvatures4[3], 0.00001);
+  ASSERT_NEAR(0.501544, curvatures4[4], 0.00001);
 
   ///// Test exception
   lanelet::Lanelet ll_empty;
