@@ -41,9 +41,14 @@
   
   <group>
   <include file="$(find calibration_publisher)/launch/calibration_publisher.launch">
-  <arg name="register_lidar2camera_tf" default="True" />
+  <arg name="register_lidar2camera_tf" default="true" />
+  <arg name="publish_extrinsic_mat" default="true"/>
+  <arg name="publish_camera_info" default="true"/>  
   <arg name="target_frame" default="velodyne" />
   <arg name="camera_frame" default="left_optical" />
+  <arg name="image_topic_src" default="/hardware_interface/camera/image_color"/>
+  <arg name="camera_info_topic" default="/hardware_interface/camera/camera_info"/>
+  <arg name="projection_matrix_topic" default="/hardware_interface/camera/projection_matrix"/>
   <arg name="calibration_file" default="$(find calibration_publisher)/config/lidar_camera_fl_calibration.yaml"/>
   </include>
   </group>
