@@ -18,6 +18,8 @@
 	Launch file for launching the nodes in the CARMA environmental perception stack
 -->
 <launch>
+  <arg name="vehicle_calibration_dir" default="$(find carma)../../CARMAVehicleCalibration/development/vehicle" doc="The directory continaing vehicle calibration type parameters"/>	
+
   <arg name="vector_map_file" default="vector_map.osm" doc="Path to the map osm file if using the noupdate load type"/>
 
   <!-- vector map loader -->
@@ -34,6 +36,17 @@
   <include file="$(find carma_wm_ctrl)/launch/carma_wm_broadcaster.launch"/>
 
   <!-- Object Tracking and World Model -->
+
+  <!-- calibration_publisher -->
+  
+  <group>
+  <include file="$(find calibration_publisher)/launch/calibration_publisher.launch">
+  <arg name="register_lidar2camera_tf" default="True" />
+  <arg name="target_frame" default="velodyne" />
+  <arg name="camera_frame" default="left_optical" />
+  <arg name="calibration_file" default="$(find calibration_publisher)/config/lidar_camera_fl_calibration.yaml"/>
+  </include>
+  </group>
 
   <!-- vision_darknet_detect -->
   <group>
@@ -63,7 +76,8 @@
   <!-- lidar_euclidean_cluster_detect -->
   <group>
   <include file="$(find lidar_euclidean_cluster_detect)/launch/lidar_euclidean_cluster_detect.launch">
-  <arg name="points_node" default="$(optenv CARMA_LOCZ_NS)/ray_ground_filter/points_no_ground" /><!--CHANGE THIS TO READ WHETHER FROM VSCAN OR POINTS_RAW -->
+  <arg name="points_node" default="$(optenv CARMA_LOCZ_NS)/ray_ground_filter/points_no_ground" />
+
   <arg name="remove_ground" default="true" />
   <arg name="downsample_cloud" default="false" /> <!-- Apply VoxelGrid Filter with the value given by "leaf_size"-->
   <arg name="leaf_size" default="0.1" /><!-- Voxel Grid Filter leaf size-->
@@ -72,24 +86,16 @@
   <arg name="sync" default="false" />
   <arg name="use_diffnormals" default="false" />
   <arg name="pose_estimation" default="true" />
-  <arg name="clip_min_height" default="-1.3" />
-  <arg name="clip_max_height" default="0.5" />
-
+  <arg name="calibration_params_file" default="$(find vehicle_calibration_dir)/lidar_euclidean_cluster_detect/calibration.yaml"/>
   <arg name="keep_lanes" default="false" />
   <arg name="keep_lane_left_distance" default="5" />
   <arg name="keep_lane_right_distance" default="5" />
   <arg name="cluster_merge_threshold" default="1.5" />
   <arg name="clustering_distance" default="0.75" />
-
   <arg name="use_vector_map" default="false" />
   <arg name="wayarea_gridmap_layer" default="wayarea" />
-
-  <arg name="output_frame" default="velodyne" />
-
   <arg name="remove_points_upto" default="0.0" />
-
   <arg name="use_gpu" default="false" />
-
   <arg name="use_multiple_thres" default="false"/>
   <arg name="clustering_ranges" default="[15,30,45,60]"/><!-- Distances to segment pointcloud -->
   <arg name="clustering_distances"
