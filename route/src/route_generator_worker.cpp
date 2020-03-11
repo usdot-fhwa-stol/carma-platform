@@ -261,7 +261,13 @@ namespace route {
             // convert from pose stamp into lanelet basic 2D point
             lanelet::BasicPoint2d current_loc(msg->pose.position.x, msg->pose.position.y);
             // get dt ct from world model
-            auto track = this->world_model_->routeTrackPos(current_loc);
+            carma_wm::TrackPos track(0.0, 0.0);
+            try {
+                track = this->world_model_->routeTrackPos(current_loc);
+            } catch (std::invalid_argument ex) {
+                ROS_WARN_STREAM("Routing has finished but carma_wm has not receive it!");
+                return;
+            }
             auto via_lanelet_vector = lanelet::geometry::findNearest(world_model_->getMap()->laneletLayer, current_loc, 1);
             auto current_lanelet = lanelet::ConstLanelet(via_lanelet_vector[0].second.constData());
             auto lanelet_track = world_model_->trackPos(current_lanelet, current_loc);
