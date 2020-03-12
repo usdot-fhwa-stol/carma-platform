@@ -1,25 +1,12 @@
 <?xml version="1.0"?>
 <launch>
-    <remap from="final_waypoints" to="carma_final_waypoints"/>
+    <remap from="final_waypoints" to="/guidance/carma_final_waypoints"/>
     <!-- Pure Pursuit Node -->
     <group>
         <!--<remap from="vehicle_info/wheel_base" to="/vehicle_wheel_base"/>-->
         <include file="$(find mpc_follower)/launch/mpc_follower.launch">
-                <arg name="ns" default="/"/>
-                <arg name="show_debug_info" value="true"/>
-                <arg name="ctrl_period" value="0.03"/>
-                <arg name="traj_resample_dist" value="0.1"/>
-                <arg name="enable_yaw_recalculation" value="true"/>
-                <arg name="admisible_position_error" value="5.0"/>
-                <arg name="admisible_yaw_error_deg" value="90.0"/>
-                <arg name="enable_path_smoothing" value="true"/>
-                <arg name="path_smoothing_times" value="1"/>
-                <arg name="path_filter_moving_ave_num" value="35"/>
-                <arg name="curvature_smoothing_num" value="35"/>
-                <arg name="steering_lpf_cutoff_hz" value="3.0"/>
-                <arg name="qp_solver_type" value="qpoases_hotstart"/>
-                <arg name="qpoases_max_iter" value="500"/>
-                <arg name="vehicle_model_type" value="kinematics"/>
+                <arg name="qp_solver_type" default="unconstraint_fast" doc="optimization solver type. option is unconstraint_fast, unconstraint, and qpoases_hotstart"/>
+		<arg name="vehicle_model_type" default="kinematics" doc="vehicle model type for mpc prediction. option is kinematics, kinematics_no_delay, and dynamics"/>
         </include>
     </group>
     <!-- Pure Pursuit Wrapper Node -->

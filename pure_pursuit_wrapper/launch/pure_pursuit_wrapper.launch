@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-    <remap from="final_waypoints" to="carma_final_waypoints"/>
+    <remap from="final_waypoints" to="/guidance/carma_final_waypoints"/>
     <!-- Pure Pursuit Node -->
     <group>
         <remap from="vehicle_info/wheel_base" to="/vehicle_wheel_base"/>
