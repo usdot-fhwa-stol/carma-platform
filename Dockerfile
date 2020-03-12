@@ -33,11 +33,7 @@
 # Stage 1 - Acquire the CARMA source as well as any extra packages
 # /////////////////////////////////////////////////////////////////////////////
 
-<<<<<<< HEAD
-FROM usdotfhwastol/autoware.ai:latest AS source-code
-=======
 FROM usdotfhwastol/autoware.ai:3.7.0 AS source-code
->>>>>>> develop
 
 RUN mkdir ~/src
 COPY --chown=carma . /home/carma/src/CARMAPlatform/
@@ -47,11 +43,9 @@ RUN ~/src/CARMAPlatform/docker/checkout.sh
 # Stage 2 - Build and install the software 
 # /////////////////////////////////////////////////////////////////////////////
 
-<<<<<<< HEAD
-FROM usdotfhwastol/autoware.ai:latest AS install
-=======
+
 FROM usdotfhwastol/autoware.ai:3.7.0 AS install
->>>>>>> develop
+
 
 # Copy the source files from the previous stage and build/install
 RUN mkdir ~/carma_ws
@@ -62,11 +56,8 @@ RUN ~/carma_ws/src/CARMAPlatform/docker/install.sh
 # Stage 3 - Finalize deployment
 # /////////////////////////////////////////////////////////////////////////////
 
-<<<<<<< HEAD
-FROM usdotfhwastol/autoware.ai:latest
-=======
+
 FROM usdotfhwastol/autoware.ai:3.7.0
->>>>>>> develop
 
 ARG BUILD_DATE="NULL"
 ARG VCS_REF="NULL"

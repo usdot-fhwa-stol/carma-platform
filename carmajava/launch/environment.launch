@@ -18,7 +18,7 @@
 	Launch file for launching the nodes in the CARMA environmental perception stack
 -->
 <launch>
-  <arg name="vehicle_calibration_dir" default="$(find carma)../../CARMAVehicleCalibration/development/vehicle" doc="The directory continaing vehicle calibration type parameters"/>	
+  <arg name="vehicle_calibration_dir" default="/opt/carma/vehicle/calibration" doc="The directory continaing vehicle calibration type parameters"/>	
 
   <arg name="vector_map_file" default="vector_map.osm" doc="Path to the map osm file if using the noupdate load type"/>
 
@@ -46,10 +46,11 @@
   <arg name="publish_camera_info" default="true"/>  
   <arg name="target_frame" default="velodyne" />
   <arg name="camera_frame" default="left_optical" />
-  <arg name="image_topic_src" default="/hardware_interface/camera/image_color"/>
-  <arg name="camera_info_topic" default="/hardware_interface/camera/camera_info"/>
-  <arg name="projection_matrix_topic" default="/hardware_interface/camera/projection_matrix"/>
-  <arg name="calibration_file" default="$(find calibration_publisher)/config/lidar_camera_fl_calibration.yaml"/>
+  <arg name="image_topic_src" default="$(optenv CARMA_INTR_NS)/camera/image_raw"/>
+  <arg name="camera_info_topic" default="$(optenv CARMA_INTR_NS)/camera/camera_info"/>
+  <arg name="projection_matrix_topic" default="$(optenv CARMA_INTR_NS)/camera/projection_matrix"/>
+  
+  <arg name="calibration_file" default="$(find calibration_publisher)/config/lidar_camera_fl_calibration.yaml"/>  
   </include>
   </group>
 
@@ -74,7 +75,7 @@
   <include file="$(find vision_beyond_track)/launch/vision_beyond_track.launch">
   <arg name="camera_info_src" default="$(optenv CARMA_INTR_NS)/camera/camera_info"/>
   <arg name="objects_topic_src" default="detection/image_detector/objects"/>
-  <arg name="camera_height_calibration_params_file" default="$(find vehicle_calibration_dir)/vision_beyond_track/calibration.yaml"/>
+  <arg name="camera_height_calibration_params_file" value="$(arg vehicle_calibration_dir)/vision_beyond_track/calibration.yaml"/>
   </include>
   </group>
   
@@ -91,7 +92,7 @@
   <arg name="sync" default="false" />
   <arg name="use_diffnormals" default="false" />
   <arg name="pose_estimation" default="true" />
-  <arg name="calibration_params_file" default="$(find vehicle_calibration_dir)/lidar_euclidean_cluster_detect/calibration.yaml"/>
+  <arg name="calibration_params_file" value="$(arg vehicle_calibration_dir)/lidar_euclidean_cluster_detect/calibration.yaml"/>
   <arg name="keep_lanes" default="false" />
   <arg name="keep_lane_left_distance" default="5" />
   <arg name="keep_lane_right_distance" default="5" />
@@ -158,7 +159,7 @@
   <include file="$(find naive_motion_predict)/launch/naive_motion_predict.launch">
   <arg name="interval_sec" default="0.1"/>
   <arg name="num_prediction" default="10"/>
-  <arg name="sensor_height_calibration_params_file" default="$(find vehicle_calibration_dir)/naive_motion_predict/calibration.yaml"/>
+  <arg name="sensor_height_calibration_params_file" value="$(arg vehicle_calibration_dir)/naive_motion_predict/calibration.yaml"/>
   <arg name="filter_out_close_object_threshold" default="1.5"/>
   <arg name="input_topic" default="detection/objects"/>
   </include>

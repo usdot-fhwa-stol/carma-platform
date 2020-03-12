@@ -117,6 +117,7 @@
   <group ns="$(env CARMA_ENV_NS)">
     <include file="$(find carma)/launch/environment.launch">
       <arg name="vector_map_file" value="$(arg vector_map_file)" />
+      <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
     </include>
   </group>
 
