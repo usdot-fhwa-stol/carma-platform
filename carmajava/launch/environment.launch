@@ -46,11 +46,12 @@
   <arg name="publish_camera_info" default="true"/>  
   <arg name="target_frame" default="velodyne" />
   <arg name="camera_frame" default="left_optical" />
-  <arg name="image_topic_src" default="$(optenv CARMA_INTR_NS)/camera/image_raw"/>
-  <arg name="camera_info_topic" default="$(optenv CARMA_INTR_NS)/camera/camera_info"/>
-  <arg name="projection_matrix_topic" default="$(optenv CARMA_INTR_NS)/camera/projection_matrix"/>
+  <arg name="image_topic_src" default="/hardware_interface/camera/image_raw"/>
+  <arg name="camera_info_topic" default="/hardware_interface/camera/camera_info"/>
+  <arg name="projection_matrix_topic" default="/hardware_interface/camera/projection_matrix"/>
   
   <arg name="calibration_file" default="$(find calibration_publisher)/config/lidar_camera_fl_calibration.yaml"/>  
+
   </include>
   </group>
 
@@ -84,7 +85,7 @@
   <include file="$(find lidar_euclidean_cluster_detect)/launch/lidar_euclidean_cluster_detect.launch">
   <arg name="points_node" default="$(optenv CARMA_LOCZ_NS)/ray_ground_filter/points_no_ground" />
 
-  <arg name="remove_ground" default="true" />
+  <arg name="remove_ground" default="false" />
   <arg name="downsample_cloud" default="false" /> <!-- Apply VoxelGrid Filter with the value given by "leaf_size"-->
   <arg name="leaf_size" default="0.1" /><!-- Voxel Grid Filter leaf size-->
   <arg name="cluster_size_min" default="20" /><!-- Minimum number of points to consider a cluster as valid-->
@@ -92,7 +93,7 @@
   <arg name="sync" default="false" />
   <arg name="use_diffnormals" default="false" />
   <arg name="pose_estimation" default="true" />
-  <arg name="calibration_params_file" value="$(arg vehicle_calibration_dir)/lidar_euclidean_cluster_detect/calibration.yaml"/>
+  <arg name="calibration_params_file" value="$(arg vehicle_calibration_dir)/lidar_euclidean_cluster_detect/calibration.yaml"/> <!-- clip_max_height,clip_min_height and output_frame-->
   <arg name="keep_lanes" default="false" />
   <arg name="keep_lane_left_distance" default="5" />
   <arg name="keep_lane_right_distance" default="5" />
@@ -115,7 +116,7 @@
   <include file="$(find range_vision_fusion)/launch/range_vision_fusion.launch">
   <arg name="detected_objects_range" default="detection/lidar_detector/objects"/>
   <arg name="detected_objects_vision" default="detection/image_detector/objects"/>
-  <arg name="camera_info_src" default="$(optenv CARMA_INTR_NS)/camera/camera_info"/>
+  <arg name="camera_info_src" default="/hardware_interface/camera/camera_info"/>
   <arg name="min_car_dimensions" default="[3,2,2]"/>
   <arg name="min_person_dimensions" default="[1,2,1]"/>
   <arg name="min_truck_dimensions" default="[4,2,2]"/>
@@ -134,7 +135,7 @@
   <arg name="tracker_input_topic" default="detection/fusion_tools/objects" />
   	<arg name="tracker_output_topic" default="detection/object_tracker/objects" />
 
-  <arg name="tracking_frame" default="/map" />
+  <arg name="tracking_frame" default="map" />
   <arg name="gating_threshold" default="9.22" />
   <arg name="gate_probability" default="0.99" />
   <arg name="detection_probability" default="0.9" />
@@ -149,7 +150,7 @@
   <arg name="use_map_info" default="false"/>
   <arg name="lane_direction_chi_threshold" default="2.71" />
   <arg name="nearest_lane_distance_threshold" default="1.0" />
-  <arg name="map_frame" default="/map" />
+  <arg name="map_frame" default="map" />
 
   </include>
   </group>
