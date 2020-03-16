@@ -35,6 +35,8 @@ namespace waypoint_generator
     TEST(WaypointGeneratorTest, TestComputeConstantCurvatureRegions)
     {
         WaypointGenerator wpg;
+        wpg.initialize();
+
         std::vector<double> case_a = {0.0, 0.0, 0.0, 0.0, 0.0, 
                                       0.0, 0.0, 0.0, 0.0, 0.0};
         std::vector<int> out_a = wpg.compute_constant_curvature_regions(case_a, 0.1, 1);
@@ -83,6 +85,8 @@ namespace waypoint_generator
     TEST(WaypointGeneratorTest, TestComputeIdealSpeeds)
     {
         WaypointGenerator wpg;
+        wpg.initialize();
+
         std::vector<double> curvatures_1 = {1.0, 1.0, 1.0, 1.0, 1.0, 
                                       1.0, 1.0, 1.0, 1.0, 1.0};
         std::vector<double> out_1 = wpg.compute_ideal_speeds(curvatures_1, 1.0);
@@ -119,6 +123,7 @@ namespace waypoint_generator
     TEST(WaypointGeneratorTest, TestComputeSpeedForCurvature)
     {
         WaypointGenerator wpg;
+        wpg.initialize();
 
         double speed1 = wpg.compute_speed_for_curvature(1.0, 1.0);
         ASSERT_NEAR(1.0, speed1, 0.005);
@@ -138,6 +143,8 @@ namespace waypoint_generator
 
     TEST(WaypointGeneratorTest, TestNormalizeCurvatureRegions) {
         WaypointGenerator wpg;
+        wpg.initialize();
+
         std::vector<double> case_a = {0.0, 1.0, 0.0, 1.0, 0.0, 
                                       0.0, 1.0, 0.0, 1.0, 0.0};
         std::vector<int> regions_a = {9};
@@ -172,5 +179,33 @@ namespace waypoint_generator
         ASSERT_NEAR(2.0, out_b[7], 0.001);
         ASSERT_NEAR(2.0, out_b[8], 0.001);
         ASSERT_NEAR(2.0, out_b[9], 0.001);
+    }
+
+    TEST(WaypointGenerator, TestApplyAccelLimits) {
+        WaypointGenerator wpg;
+        wpg.initialize();
+
+        std::vector<double> speeds_a = {0.0, 0.0, 0.0, 0.0, 0.0, 
+                                      5.0, 5.0, 5.0, 5.0, 5.0};
+        std::vector<int> regions_a = {4, 9};
+
+        lanelet::BasicPoint2d point1{0, 0};
+        lanelet::BasicPoint2d point2{1, 0};
+        lanelet::BasicPoint2d point3{2, 0};
+        lanelet::BasicPoint2d point4{3, 0};
+        lanelet::BasicPoint2d point5{4, 0};
+        lanelet::BasicPoint2d point6{5, 0};
+        lanelet::BasicPoint2d point7{6, 0};
+        lanelet::BasicPoint2d point8{7, 0};
+        lanelet::BasicPoint2d point9{8, 0};
+        lanelet::BasicPoint2d point10{9, 0};
+        lanelet::BasicLineString2d centerline_a{
+            point1, point2, point3, point4,
+            point5, point6, point7, point8,
+            point9, point10};
+        
+        std::vector<double> limited_a;
+        limited_a = wpg.apply_accel_limits(speeds_a, 
+            regions_a, centerline_a, 3.0, 3.0);
     }
 }

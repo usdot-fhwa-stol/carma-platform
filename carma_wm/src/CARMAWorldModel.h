@@ -77,9 +77,6 @@ public:
 
   std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end) const override;
 
-  std::vector<double>
-  getLocalCurvatures(const std::vector<lanelet::ConstLanelet>& lanelets) const override;
-
   lanelet::LaneletMapConstPtr getMap() const override;
 
   LaneletRouteConstPtr getRoute() const override;
@@ -92,67 +89,6 @@ public:
 
   double getAngleBetweenVectors(const Eigen::Vector2d& vec1, const Eigen::Vector2d& vec2) const override;
 
-  /*!
-   * \brief Helper function to concatenate 2 linestrings together and return the result. Neither LineString is modified in this function.
-   */
-  lanelet::BasicLineString2d concatenate_line_strings(const lanelet::BasicLineString2d& l1, const lanelet::BasicLineString2d& l2) const override;
-
-  lanelet::BasicLineString2d concatenate_lanelets(const std::vector<lanelet::ConstLanelet>& lanelets) const override;
-
-  /*! 
-   * \brief Use finite differences methods to compute the derivative of the input data set with respect to index
-   * Compute the finite differences using the forward finite difference for the first point, centered finite differences
-   * for the middle points and backwards finite difference for the final point. This will result in the middle points 
-   * being a better approximation of the actual derivative than the endpoints.
-   * 
-   * \param data The data to differentiate over
-   * \return A vector containing the point-by-point derivatives in the same indices as the input data
-   */
-  std::vector<Eigen::Vector2d> compute_finite_differences(const lanelet::BasicLineString2d& data) const override;
-  
-  /*! 
-   * \brief Use finite differences methods to compute the derivative of the input data set with respect to index
-   * Compute the finite differences using the forward finite difference for the first point, centered finite differences
-   * for the middle points and backwards finite difference for the final point. This will result in the middle points 
-   * being a better approximation of the actual derivative than the endpoints.
-   * 
-   * \param data The data to differentiate over
-   * \return A vector containing the point-by-point derivatives in the same indices as the input data
-   */
-  std::vector<double> compute_finite_differences(const std::vector<double>& data) const override;
-
-  /*! 
-   * \brief Use finite differences methods to compute the derivative of the input data set with respect to the second paramter.
-   * 
-   * Input x and y must be the same length. Compute the finite differences using the forward finite difference for the first point, 
-   * centered finite differences for the middle points and backwards finite difference for the final point. This will result in 
-   * the middle points being a better approximation of the actual derivative than the endpoints.
-   * 
-   * \param x The x value of the derivative dx/dy
-   * \param y The y value of the derivative dx/dy
-   * \return A vector containing the point-by-point derivatives in the same indices as the input data
-   */
-  std::vector<Eigen::Vector2d> compute_finite_differences(const std::vector<Eigen::Vector2d>& x, const std::vector<double>& y) const override;
-
-  /*!
-   * \brief Compute the arc length at each point around the curve
-   */
-  std::vector<double> compute_arc_lengths(const lanelet::BasicLineString2d& data) const override;
-
-  /*!
-   * \brief Compute the Euclidean distance between the two points
-   */
-  double compute_euclidean_distance(const Eigen::Vector2d& a, const Eigen::Vector2d& b) const override;
-
-  /*!
-   * \brief Normalize the vectors in the input list such that their magnitudes = 1
-   */
-  std::vector<Eigen::Vector2d> normalize_vectors(const std::vector<Eigen::Vector2d>& vectors) const override;
-
-  /*!
-   * \brief Compute the magnitude of each vector in the input list
-   */
-  std::vector<double> compute_magnitude_of_vectors(const std::vector<Eigen::Vector2d>& vectors) const override;
 private:
 
   /*! \brief Helper function to compute the geometry of the route downtrack/crosstrack reference line

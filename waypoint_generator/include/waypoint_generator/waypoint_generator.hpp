@@ -20,6 +20,7 @@
 #include <ros/ros.h>
 #include <cav_msgs/Route.h>
 #include <autoware_msgs/LaneArray.h>
+#include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
 #include <vector>
 #include <tf/transform_datatypes.h>
@@ -80,6 +81,7 @@ namespace waypoint_generator
         protected:
         private:
             autoware_msgs::LaneArray _waypoints;
+            carma_wm::WMListener _wml;
             carma_wm::WorldModelConstPtr _wm;
             //ros::NodeHandle _pnh, _nh;
     };

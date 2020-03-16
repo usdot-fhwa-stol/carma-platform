@@ -50,6 +50,7 @@ include_directories(
 ## Declare C++ library
 add_library(${PROJECT_NAME}
   src/CARMAWorldModel.cpp
+  src/WorldModel.cpp
   src/WMListener.cpp
   src/WMListenerWorker.cpp
 )

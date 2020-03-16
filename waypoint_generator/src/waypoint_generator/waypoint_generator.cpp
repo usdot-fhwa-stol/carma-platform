@@ -20,7 +20,7 @@ namespace waypoint_generator
 {
 void WaypointGenerator::initialize()
 {
-
+    _wm = _wml.getWorldModel();
 }
 
 void WaypointGenerator::process_route(cav_msgs::Route route_msg)
@@ -144,8 +144,8 @@ std::vector<double> WaypointGenerator::apply_accel_limits(std::vector<double> sp
 
     for (int i = 0; i < regions.size() - 1; i++) {
         int idx = regions[i];
-        double initial_v = speeds[i];
-        double final_v = speeds[i + 1];
+        double initial_v = speeds[idx];
+        double final_v = speeds[idx + 1];
         if (final_v < initial_v) {
             // Slowing down
 
@@ -181,7 +181,7 @@ std::vector<double> WaypointGenerator::apply_accel_limits(std::vector<double> sp
 
         if (final_v > initial_v) {
             // Speeding up
-            double delta_v = speeds[i + 1] - speeds[i];
+            double delta_v = speeds[idx + 1] - speeds[idx];
             double avg_v = delta_v/2.0;
             double delta_t = delta_v/accel_limit;
             double delta_d = avg_v * delta_t;
@@ -205,9 +205,9 @@ std::vector<double> WaypointGenerator::apply_accel_limits(std::vector<double> sp
                     }
                 }
 
-                dist_accum += _wm->compute_euclidean_distance(
-                    centerline[j], 
-                    centerline[j + 1]);
+                auto a = centerline[j];
+                auto b = centerline[j + 1];
+                dist_accum += _wm->compute_euclidean_distance(a, b);
             }
         }
     }
