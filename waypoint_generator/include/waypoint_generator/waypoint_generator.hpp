@@ -22,6 +22,7 @@
 #include <autoware_msgs/LaneArray.h>
 #include <carma_wm/WorldModel.h>
 #include <vector>
+#include <tf/transform_datatypes.h>
 
 namespace waypoint_generator 
 {
@@ -69,12 +70,16 @@ namespace waypoint_generator
                 std::vector<int> regions,
                 double accel_limit,
                 double decel_limit);
+            std::vector<geometry_msgs::Quaternion> compute_orientations(
+                std::vector<lanelet::ConstLanelet> lanelets);
             autoware_msgs::LaneArray generate_lane_array_message(
                 std::vector<double> speeds, 
+                std::vector<geometry_msgs::Quaternion> orientations, 
                 std::vector<lanelet::ConstLanelet> lanelets);
         protected:
         private:
             autoware_msgs::LaneArray _waypoints;
+            carma_wm::WorldModelConstPtr _wm;
             //ros::NodeHandle _pnh, _nh;
     };
 };

@@ -138,12 +138,82 @@ std::vector<double> WaypointGenerator::apply_accel_limits(std::vector<double> sp
     return speeds; // NO-OP for now
 }
 
-autoware_msgs::LaneArray WaypointGenerator::generate_lane_array_message(std::vector<double> speeds, std::vector<lanelet::ConstLanelet> lanelets)
+std::vector<geometry_msgs::Quaternion> WaypointGenerator::compute_orientations(
+    const std::vector<lanelet::ConstLanelet> lanelets)
+{
+    std::vector<geometry_msgs::Quaternion> out;
+
+    lanelet::BasicLineString2d centerline = _wm->concatenate_lanelets(lanelets);
+
+    std::vector<Eigen::Vector2d> tangents = _wm->compute_finite_differences(centerline);
+
+    Eigen::Vector2d x_axis = {1, 0};
+    for (int i = 0; i < tangents.size(); i++) {
+        geometry_msgs::Quaternion q;
+
+        // Derive angle by cos theta = (u . v)/(||u| * ||v||)
+        // TODO: std::acos is in radians, verify if this needs to be in degrees
+        double yaw = std::acos(tangents[i].dot(x_axis)/(tangents[i].norm() * x_axis.norm()));
+
+        q = tf::createQuaternionMsgFromYaw(yaw);
+    }
+
+    return out;
+}
+
+autoware_msgs::LaneArray WaypointGenerator::generate_lane_array_message(
+    std::vector<double> speeds, 
+    std::vector<geometry_msgs::Quaternion> orientations, 
+    std::vector<lanelet::ConstLanelet> lanelets)
 {
     autoware_msgs::LaneArray out;
 
+    int centerline_point_idx = 0;
     for (int i = 0; i < lanelets.size(); i++) {
-        
+        autoware_msgs::Lane lane;
+        lane.lane_id = i;
+
+        std_msgs::Header header;
+        header.frame_id = "/map";
+        header.seq = 0;
+        header.stamp = ros::Time::now();
+        lane.header = header;
+
+        std::vector<autoware_msgs::Waypoint> waypoints;
+        for (int j = 0; j < lanelets[j].centerline3d().size(); j++) {
+            autoware_msgs::Waypoint wp;
+            wp.lane_id = i;
+            
+            geometry_msgs::Pose p;
+            p.position.x = lanelets[i].centerline3d()[j].x();
+            p.position.y = lanelets[i].centerline3d()[j].y();
+            p.position.z = lanelets[i].centerline3d()[j].z();
+            p.orientation = orientations[centerline_point_idx];
+
+            geometry_msgs::Twist t;
+            t.linear.x = speeds[centerline_point_idx]; // Vehicle's forward velocity corresponds to x
+
+            wp.change_flag = 0; 
+            wp.direction = 0;
+            wp.cost = 0;
+            wp.time_cost = 0;
+
+            /* 
+            // left undefined until we understand what we need
+            wp.wpstate;
+            wp.dtlane;
+            wp.gid;
+            wp.lid;
+            wp.right_lane_id;
+            wp.stop_line_id;
+            wp.lid;
+            */
+
+            waypoints.push_back(wp);
+            centerline_point_idx++;
+        }
+
+        lane.waypoints = waypoints;
     }
 }
 };

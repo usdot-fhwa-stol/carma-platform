@@ -271,13 +271,7 @@ CARMAWorldModel::getLocalCurvatures(const std::vector<lanelet::ConstLanelet>& la
     throw std::invalid_argument("Attempted to call getLocalCurvatures on empty lanelet list");
   }
 
-
-  lanelet::BasicLineString2d centerline_points = lanelets[0].centerline2d().basicLineString();
-  lanelet::BasicLineString2d new_points;
-  for (int i = 1; i < lanelets.size(); i++) {
-    new_points = lanelets[i].centerline2d().basicLineString();
-    centerline_points = concatenate_line_strings(centerline_points, new_points);
-  }
+  lanelet::BasicLineString2d centerline_points = concatenate_lanelets(lanelets);
 
   if (centerline_points.empty()) {
     throw std::invalid_argument("No points in lanelet centerline for curvature calculation");
@@ -296,6 +290,18 @@ CARMAWorldModel::getLocalCurvatures(const std::vector<lanelet::ConstLanelet>& la
   std::vector<double> curvature = compute_magnitude_of_vectors(tangent_derivative);
 
   return curvature;
+}
+
+lanelet::BasicLineString2d CARMAWorldModel::concatenate_lanelets(const std::vector<lanelet::ConstLanelet>& lanelets) const
+{
+  lanelet::BasicLineString2d centerline_points = lanelets[0].centerline2d().basicLineString();
+  lanelet::BasicLineString2d new_points;
+  for (int i = 1; i < lanelets.size(); i++) {
+    new_points = lanelets[i].centerline2d().basicLineString();
+    centerline_points = concatenate_line_strings(centerline_points, new_points);
+  }
+
+  return centerline_points;
 }
 
 lanelet::BasicLineString2d 
