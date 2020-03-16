@@ -132,10 +132,87 @@ std::vector<double> WaypointGenerator::compute_ideal_speeds(std::vector<double> 
 
 std::vector<double> WaypointGenerator::apply_accel_limits(std::vector<double> speeds, 
     std::vector<int> regions,
+    lanelet::BasicLineString2d centerline,
     double accel_limit,
     double decel_limit)
 {
-    return speeds; // NO-OP for now
+    if (speeds.size() != centerline.size()){
+        throw std::invalid_argument("Speeds and geometry do not match");
+    }
+
+    std::vector<double> out{speeds};
+
+    for (int i = 0; i < regions.size() - 1; i++) {
+        int idx = regions[i];
+        double initial_v = speeds[i];
+        double final_v = speeds[i + 1];
+        if (final_v < initial_v) {
+            // Slowing down
+
+            double delta_v = speeds[i] - speeds[i + 1];
+            double avg_v = delta_v/2.0;
+            double delta_t = delta_v/decel_limit;
+            double delta_d = avg_v * delta_t;
+
+            double dist_accum = 0;
+            for (int j = idx; j >= 0; j--) {
+                // Iterate until we find a point that gives us enough delta_d to
+                // slow down in time
+                if (dist_accum >= delta_d) {
+                    for (int k = j; k < idx; k++) {
+                        // Linearly interpolate between speeds starting at that
+                        // point
+                        double dist = 
+                            _wm->compute_euclidean_distance(
+                                centerline[k], 
+                                centerline[idx]);
+                        out[k] = 
+                            initial_v - 
+                            (1.0 - std::min(dist/dist_accum, 1.0)) *  
+                            delta_v;
+                    }
+                }
+
+                dist_accum += _wm->compute_euclidean_distance(
+                    centerline[j], 
+                    centerline[j + 1]);
+            }
+        }
+
+        if (final_v > initial_v) {
+            // Speeding up
+            double delta_v = speeds[i + 1] - speeds[i];
+            double avg_v = delta_v/2.0;
+            double delta_t = delta_v/accel_limit;
+            double delta_d = avg_v * delta_t;
+
+            double dist_accum = 0;
+            for (int j = idx; j < speeds.size(); j++) {
+                // Iterate until we find a point that gives us enough delta_d to
+                // slow down in time
+                if (dist_accum >= delta_d) {
+                    for (int k = idx; k < j; k++) {
+                        // Linearly interpolate between speeds starting at that
+                        // point
+                        double dist = 
+                            _wm->compute_euclidean_distance(
+                                centerline[k], 
+                                centerline[idx]);
+                        out[k] = 
+                            initial_v + 
+                            (1.0 - std::min(dist/dist_accum, 1.0)) *  
+                            delta_v;
+                    }
+                }
+
+                dist_accum += _wm->compute_euclidean_distance(
+                    centerline[j], 
+                    centerline[j + 1]);
+            }
+        }
+    }
+
+    return speeds;
 }
 
 std::vector<geometry_msgs::Quaternion> WaypointGenerator::compute_orientations(

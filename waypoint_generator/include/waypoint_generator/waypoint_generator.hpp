@@ -68,6 +68,7 @@ namespace waypoint_generator
                 double lateral_accel_limit);
             std::vector<double> apply_accel_limits(std::vector<double> speeds, 
                 std::vector<int> regions,
+                lanelet::BasicLineString2d centerline,
                 double accel_limit,
                 double decel_limit);
             std::vector<geometry_msgs::Quaternion> compute_orientations(
