@@ -83,18 +83,22 @@ TEST(WMListenerWorkerTest, mapCallback)
 TEST(WMListenerWorkerTest, routeCallback)
 {
   WMListenerWorker wmlw;
+  cav_msgs::Route route_msg;
+  route_msg.shortest_path_lanelet_ids.push_back(130);
+  route_msg.shortest_path_lanelet_ids.push_back(111);
+  cav_msgs::RouteConstPtr rpt(new cav_msgs::Route(route_msg));
 
   bool flag = false;
-
+  
   ///// Test without user defined route callback
-  wmlw.routeCallback();
+  wmlw.routeCallback(rpt);
 
   ASSERT_FALSE(flag);
 
   ///// Test with user defined route callback
   wmlw.setRouteCallback([&flag]() { flag = true; });
 
-  wmlw.routeCallback();
+  wmlw.routeCallback(rpt);
 
   ASSERT_TRUE(flag);
 }
