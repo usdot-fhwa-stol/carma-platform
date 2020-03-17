@@ -62,8 +62,7 @@
   <remap from="/red_waypoints_array" to="red_waypoints_array"/>
   <remap from="/green_waypoints_array" to="green_waypoints_array"/>
   <remap from="trajectory" to="plan_trajectory"/>
-<remap from="trajectory_plan" to="/guidance/pure_pursuit/trajectory"/>
-<remap from="trajectory_plan" to="/guidance/mpc_follower/trajectory"/>
+
   <!-- TODO use arguments for top level namespace -->
   <remap from="current_pose" to="$(optenv CARMA_LOCZ_NS)/selected_pose"/>
   <remap from="current_velocity" to="$(optenv CARMA_INTR_NS)/vehicle/twist"/>
@@ -93,6 +92,8 @@
   <!-- Trajectory Executor -->
   <include file="$(find trajectory_executor)/launch/trajectory_executor.launch" />
 
+
+  <rosparam command="load" file="$(arg vehicle_calibration_dir)/mpc_follower/params.yaml"/>
   <!-- MPC Follower Wrapper -->
   <include file="$(find mpc_follower_wrapper)/launch/mpc_follower_wrapper.launch" />
 
