@@ -63,7 +63,7 @@ void MPCFollowerWrapper::TrajectoryPlanPoseHandler(const geometry_msgs::PoseStam
 
         cav_msgs::TrajectoryPlanPoint t1 = tp->trajectory_points[i];
         cav_msgs::TrajectoryPlanPoint t2 = tp->trajectory_points[i + 1];
-        autoware_msgs::Waypoint waypoint = ppww.TrajectoryPlanPointToWaypointConverter(current_time, *pose,t1, t2);
+        autoware_msgs::Waypoint waypoint = mpcww.TrajectoryPlanPointToWaypointConverter(current_time, *pose,t1, t2);
         waypoints.push_back(waypoint);
       }
 

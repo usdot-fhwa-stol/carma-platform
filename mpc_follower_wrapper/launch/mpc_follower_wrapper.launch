@@ -5,8 +5,10 @@
     <group>
         <!--<remap from="vehicle_info/wheel_base" to="/vehicle_wheel_base"/>-->
         <include file="$(find mpc_follower)/launch/mpc_follower.launch">
-                <arg name="qp_solver_type" default="unconstraint_fast" doc="optimization solver type. option is unconstraint_fast, unconstraint, and qpoases_hotstart"/>
-		<arg name="vehicle_model_type" default="kinematics" doc="vehicle model type for mpc prediction. option is kinematics, kinematics_no_delay, and dynamics"/>
+                <arg name="qp_solver_type" value="qpoases_hotstart"/>
+                <arg name="mpc_prediction_sampling_time" value="0.05"/>
+                <arg name="mpc_weight_lat_error" value="0.2"/>
+                <arg name="mpc_weight_terminal_lat_error" value="1.0"/>
         </include>
     </group>
     <!-- Pure Pursuit Wrapper Node -->

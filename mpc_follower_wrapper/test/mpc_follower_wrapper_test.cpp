@@ -26,7 +26,7 @@ TEST(TrajectoryPlanPointToWaypointConverterTest, test1)
     geometry_msgs::PoseStamped current_pose;
     cav_msgs::TrajectoryPlanPoint tpp;
     cav_msgs::TrajectoryPlanPoint tpp2;
-    mpc_follower_wrapper::MPCFollowerWrapperWorker ppww;
+    mpc_follower_wrapper::MPCFollowerWrapperWorker mpcww;
     autoware_msgs::Waypoint waypoint;
     double current_time = 0;
 
@@ -38,7 +38,7 @@ TEST(TrajectoryPlanPointToWaypointConverterTest, test1)
     tpp2.y = 12;
     tpp2.target_time = 2e8;
 
-    waypoint = ppww.TrajectoryPlanPointToWaypointConverter(current_time, current_pose, tpp, tpp2);
+    waypoint = mpcww.TrajectoryPlanPointToWaypointConverter(current_time, current_pose, tpp, tpp2);
 
     double v_x = waypoint.twist.twist.linear.x;
     double correct_v_x = 28.28;

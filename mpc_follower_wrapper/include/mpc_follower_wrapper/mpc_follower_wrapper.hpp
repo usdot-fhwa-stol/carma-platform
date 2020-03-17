@@ -85,7 +85,7 @@ class MPCFollowerWrapper {
         ros::Publisher way_points_pub_;
         ros::Publisher system_alert_pub_;
 
-        MPCFollowerWrapperWorker ppww;
+        MPCFollowerWrapperWorker mpcww;
 
         /*!
         * Reads and verifies the ROS parameters.
