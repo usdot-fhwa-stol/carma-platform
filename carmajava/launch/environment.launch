@@ -46,9 +46,9 @@
   <arg name="publish_camera_info" default="true"/>  
   <arg name="target_frame" default="velodyne" />
   <arg name="camera_frame" default="left_optical" />
-  <arg name="image_topic_src" default="/hardware_interface/camera/image_raw"/>
-  <arg name="camera_info_topic" default="/hardware_interface/camera/camera_info"/>
-  <arg name="projection_matrix_topic" default="/hardware_interface/camera/projection_matrix"/>
+  <arg name="image_topic_src" default="$(optenv CARMA_INTR_NS)/camera/image_raw"/>
+  <arg name="camera_info_topic" default="$(optenv CARMA_INTR_NS)/camera/camera_info"/>
+  <arg name="projection_matrix_topic" default="$(optenv CARMA_INTR_NS)/camera/projection_matrix"/>
   
   <arg name="calibration_file" default="$(find calibration_publisher)/config/lidar_camera_fl_calibration.yaml"/>  
 
@@ -116,7 +116,7 @@
   <include file="$(find range_vision_fusion)/launch/range_vision_fusion.launch">
   <arg name="detected_objects_range" default="detection/lidar_detector/objects"/>
   <arg name="detected_objects_vision" default="detection/image_detector/objects"/>
-  <arg name="camera_info_src" default="/hardware_interface/camera/camera_info"/>
+  <arg name="camera_info_src" default="$(optenv CARMA_INTR_NS)/camera/camera_info"/>
   <arg name="min_car_dimensions" default="[3,2,2]"/>
   <arg name="min_person_dimensions" default="[1,2,1]"/>
   <arg name="min_truck_dimensions" default="[4,2,2]"/>
