@@ -27,9 +27,9 @@ namespace carma_wm
  *
  *  Proper usage of this class dictates that the Map and Route object be kept in sync
  *
- * NOTE: This class relies on some lanelet::routing::RoutingGraph objects these have to be initialized using
- * TrafficRules which by default are only defined for Germany. The default traffic participant used is a car. Changing
- * this is a TODO:
+ * NOTE: This class uses the CarmaUSTrafficRules class internally to interpret routes.
+ *       So routes which are set on this model should use the getTrafficRules() method to build using the correct rule
+ * set
  */
 class CARMAWorldModel : public WorldModel
 {
@@ -90,6 +90,9 @@ public:
                           const lanelet::BasicPoint2d& p3) const override;
 
   double getAngleBetweenVectors(const Eigen::Vector2d& vec1, const Eigen::Vector2d& vec2) const override;
+
+  lanelet::Optional<TrafficRulesConstPtr>
+  getTrafficRules(const std::string& participant = lanelet::Participants::Vehicle) const override;
 
 private:
   /*! \brief Helper function to compute the geometry of the route downtrack/crosstrack reference line
