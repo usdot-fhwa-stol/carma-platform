@@ -26,7 +26,7 @@
 #include <Eigen/Core>
 #include <Eigen/LU>
 #include <cmath>
-#include <carma_wm/lanelet/CarmaUSTrafficRules.h>
+#include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 
 namespace carma_wm
 {
