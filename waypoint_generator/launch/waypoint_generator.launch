@@ -22,7 +22,7 @@ Loads parameters and configures logging for node, defaults to screen output.
 
 <launch>
     <!-- Trajectory Executor Node -->
-    <node pkg="waypoint_generator" type="waypoint_generato_node" name="waypoint_generator_node">
+    <node pkg="waypoint_generator" type="node" name="waypoint_generator">
         <rosparam command="load" file="$(find waypoint_generator)/config/params.yaml" />
     </node>
 </launch>
