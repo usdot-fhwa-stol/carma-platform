@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(carma_wm)
+project(carma_wm_ctrl)
 
 ## Compile as C++14, as it is required by lanelet2
 add_compile_options(-std=c++14)
@@ -15,6 +15,7 @@ set ( PKG_CATKIN_DEPS
   lanelet2_traffic_rules
   lanelet2_extension
   carma_utils
+  carma_wm
   cav_msgs
   roscpp
 )
@@ -49,10 +50,12 @@ include_directories(
 
 ## Declare C++ library
 add_library(${PROJECT_NAME}
-  src/CARMAWorldModel.cpp
-  src/WorldModel.cpp
-  src/WMListener.cpp
-  src/WMListenerWorker.cpp
+  src/WMBroadcaster.cpp
+  src/MapConformer.cpp
+  src/GeofenceSchedule.cpp
+  src/GeofenceScheduler.cpp
+  src/ROSTimer.cpp
+  src/ROSTimerFactory.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -63,16 +66,31 @@ target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 
+message(INFO "LIBS: " ${catkin_LIBRARIES})
+
+## Create C++ Node Executable
+add_executable(${PROJECT_NAME}_node 
+  src/main.cpp 
+  src/WMBroadcasterNode.cpp
+)
+
+target_link_libraries(${PROJECT_NAME}_node
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+
+add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+
 #############
 ## Install ##
 #############
 
 # Mark libraries for installation
 # See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME}_node ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 # Mark cpp header files for installation
@@ -82,18 +100,25 @@ install(DIRECTORY include/${PROJECT_NAME}/
   PATTERN ".svn" EXCLUDE
 )
 
+## Install Other Resources
+install(DIRECTORY launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
 #############
 ## Testing ##
 #############
 
 catkin_add_gmock(${PROJECT_NAME}-test
-  test/TestMain.cpp
-  test/CARMAWorldModleTest.cpp  
-  test/IndexedDistanceMapTest.cpp
-  test/WMListenerWorkerTest.cpp
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
+ test/TestMain.cpp
+ test/GeofenceScheduleTest.cpp
+ test/GeofenceSchedulerTest.cpp
+ test/MapConformerTest.cpp
+ test/TestTimer.cpp
+ test/WMBroadcasterTest.cpp
+ WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 
 if(TARGET ${PROJECT_NAME}-test)
-  target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
+ target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
 endif()

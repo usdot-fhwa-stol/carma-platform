@@ -25,6 +25,8 @@
 #include <lanelet2_core/primitives/Point.h>
 #include <lanelet2_routing/Route.h>
 #include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_traffic_rules/TrafficRules.h>
+#include <lanelet2_core/utility/Optional.h>
 
 namespace carma_wm
 {
@@ -38,6 +40,9 @@ using LaneletRoutingGraphPtr = std::shared_ptr<lanelet::routing::RoutingGraph>;
 using LaneletRoutingGraphConstPtr = std::shared_ptr<const lanelet::routing::RoutingGraph>;
 using LaneletRoutingGraphUPtr = std::unique_ptr<lanelet::routing::RoutingGraph>;
 using LaneletRoutingGraphConstUPtr = std::unique_ptr<const lanelet::routing::RoutingGraph>;
+
+using TrafficRulesConstPtr = std::shared_ptr<const lanelet::traffic_rules::TrafficRules>;
+using TrafficRulesUConstPtr = std::unique_ptr<const lanelet::traffic_rules::TrafficRules>;
 
 /*! \brief Position in a track based coordinate system where the axis are downtrack and crosstrack.
  *         Positive crosstrack is to the left of the reference line
@@ -113,8 +118,9 @@ public:
   /*! \brief Returns a pair of TrackPos, computed in 2d, of the provided area relative to the current route.
    *        The distance is based on the Area vertex with the smallest and largest downtrack distance
    *        This method overload is the most expensive of the routeTrackPos methods
-   * 
-   * NOTE: The route definition used in this class contains discontinuities in the reference line at lane changes. It is important to consider that when using route related functions. 
+   *
+   * NOTE: The route definition used in this class contains discontinuities in the reference line at lane changes. It is
+   * important to consider that when using route related functions.
    *
    * \param area The lanelet2 area which will have its distance computed
    *
@@ -127,8 +133,9 @@ public:
 
   /*! \brief Returns the TrackPos, computed in 2d, of the provided lanelet relative to the current route.
    *        The distance is based on the first point in the lanelet centerline
-   * 
-   * NOTE: The route definition used in this class contains discontinuities in the reference line at lane changes. It is important to consider that when using route related functions. 
+   *
+   * NOTE: The route definition used in this class contains discontinuities in the reference line at lane changes. It is
+   * important to consider that when using route related functions.
    *
    * \param lanelet The lanelet2 lanelet which will have its distance computed
    *
@@ -140,7 +147,8 @@ public:
 
   /*! \brief Returns the TrackPos, computed in 2d, of the provided point relative to the current route
    *
-   * NOTE: The route definition used in this class contains discontinuities in the reference line at lane changes. It is important to consider that when using route related functions. 
+   * NOTE: The route definition used in this class contains discontinuities in the reference line at lane changes. It is
+   * important to consider that when using route related functions.
    *
    * \param point The lanelet2 point which will have its distance computed
    *
@@ -256,6 +264,17 @@ public:
    * loaded
    */
   virtual LaneletRoutingGraphConstPtr getMapRoutingGraph() const = 0;
+
+  /*! \brief Get a pointer to the traffic rules object used internally by the world model and considered the carma
+   * system default
+   *
+   * \param participant The lanelet participant to return the traffic rules object for. Defaults to a generic vehicle
+   *
+   * \return Optional Shared pointer to an intialized traffic rules object which is used by carma. Optional is false if
+   * no rule set is available for the requested participant.
+   */
+  virtual lanelet::Optional<TrafficRulesConstPtr>
+  getTrafficRules(const std::string& participant = lanelet::Participants::Vehicle) const = 0;
 
   /*! \brief Function for computing curvature from 3 points.
    *

@@ -64,12 +64,14 @@
   <remap from="trajectory" to="plan_trajectory"/>
   <!-- TODO use arguments for top level namespace -->
   <remap from="trajectory_plan" to="/guidance/pure_pursuit/trajectory"/>
-  <remap from="current_pose" to="$(optenv CARMA_LOCZ_NS)/selected_pose"/>
+  <remap from="current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>
   <remap from="current_velocity" to="$(optenv CARMA_INTR_NS)/vehicle/twist"/>
   <remap from="controller/enable_robotic" to="$(optenv CARMA_INTR_NS)/controller/enable_robotic"/>
 
   <remap from="guidance_state" to="$(optenv CARMA_GUIDE_NS)/state"/>
   <remap from="maneuver_plan" to="$(optenv CARMA_GUIDE_NS)/arbitrator/final_maneuver_plan"/>
+
+  <remap from="semantic_map" to="$(optenv CARMA_ENV_NS)/semantic_map"/>
 
   <!-- Launch Guidance Main -->
   <include file="$(find guidance)/launch/guidance_main.launch"/>
