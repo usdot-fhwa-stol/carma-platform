@@ -35,7 +35,6 @@ namespace waypoint_generator
     TEST(WaypointGeneratorTest, TestComputeConstantCurvatureRegions)
     {
         WaypointGenerator wpg;
-        wpg.initialize();
 
         std::vector<double> case_a = {0.0, 0.0, 0.0, 0.0, 0.0, 
                                       0.0, 0.0, 0.0, 0.0, 0.0};
@@ -85,7 +84,6 @@ namespace waypoint_generator
     TEST(WaypointGeneratorTest, TestComputeIdealSpeeds)
     {
         WaypointGenerator wpg;
-        wpg.initialize();
 
         std::vector<double> curvatures_1 = {1.0, 1.0, 1.0, 1.0, 1.0, 
                                       1.0, 1.0, 1.0, 1.0, 1.0};
@@ -123,7 +121,6 @@ namespace waypoint_generator
     TEST(WaypointGeneratorTest, TestComputeSpeedForCurvature)
     {
         WaypointGenerator wpg;
-        wpg.initialize();
 
         double speed1 = wpg.compute_speed_for_curvature(1.0, 1.0);
         ASSERT_NEAR(1.0, speed1, 0.005);
@@ -143,7 +140,6 @@ namespace waypoint_generator
 
     TEST(WaypointGeneratorTest, TestNormalizeCurvatureRegions) {
         WaypointGenerator wpg;
-        wpg.initialize();
 
         std::vector<double> case_a = {0.0, 1.0, 0.0, 1.0, 0.0, 
                                       0.0, 1.0, 0.0, 1.0, 0.0};
@@ -181,9 +177,8 @@ namespace waypoint_generator
         ASSERT_NEAR(2.0, out_b[9], 0.001);
     }
 
-    TEST(WaypointGenerator, TestApplyAccelLimits) {
+    TEST(WaypointGeneratorTest, TestApplyAccelLimits) {
         WaypointGenerator wpg;
-        wpg.initialize();
 
         std::vector<double> speeds_a = {0.0, 0.0, 0.0, 0.0, 0.0, 
                                       5.0, 5.0, 5.0, 5.0, 5.0};
@@ -207,5 +202,50 @@ namespace waypoint_generator
         std::vector<double> limited_a;
         limited_a = wpg.apply_accel_limits(speeds_a, 
             regions_a, centerline_a, 3.0, 3.0);
+
+        ASSERT_EQ(10, limited_a.size());
+        ASSERT_NEAR(0.0, limited_a[0], 0.01);
+        ASSERT_NEAR(0.0, limited_a[1], 0.01);
+        ASSERT_NEAR(0.0, limited_a[2], 0.01);
+        ASSERT_NEAR(0.0, limited_a[3], 0.01);
+        ASSERT_NEAR(0.0, limited_a[4], 0.01);
+        ASSERT_NEAR(1.0, limited_a[5], 0.01);
+        ASSERT_NEAR(2.0, limited_a[6], 0.01);
+        ASSERT_NEAR(3.0, limited_a[7], 0.01);
+        ASSERT_NEAR(4.0, limited_a[8], 0.01);
+        ASSERT_NEAR(5.0, limited_a[9], 0.01);
+
+        // Test slowdown case
+        std::vector<double> speeds_b = {5.0, 5.0, 5.0, 5.0, 5.0, 
+                                      0.0, 0.0, 0.0, 0.0, 0.0};
+        std::vector<double> limited_b;
+        limited_b = wpg.apply_accel_limits(speeds_b, 
+            regions_a, centerline_a, 3.0, 3.0);
+
+        ASSERT_EQ(10, limited_b.size());
+        ASSERT_NEAR(5.0, limited_b[0], 0.01);
+        ASSERT_NEAR(4.0, limited_b[1], 0.01);
+        ASSERT_NEAR(3.0, limited_b[2], 0.01);
+        ASSERT_NEAR(2.0, limited_b[3], 0.01);
+        ASSERT_NEAR(1.0, limited_b[4], 0.01);
+        ASSERT_NEAR(0.0, limited_b[5], 0.01);
+        ASSERT_NEAR(0.0, limited_b[6], 0.01);
+        ASSERT_NEAR(0.0, limited_b[7], 0.01);
+        ASSERT_NEAR(0.0, limited_b[8], 0.01);
+        ASSERT_NEAR(0.0, limited_b[9], 0.01);
+    }
+
+    TEST(WaypointGeneratorTest, TestApplySpeedLimits) {
+        WaypointGenerator wpg;
+
+        std::vector<double> speeds_a = {0.0, 0.0, 0.0, 0.0, 0.0, 
+                                      5.0, 5.0, 5.0, 5.0, 5.0};
+        double limit_a = 3.0;
+        std::vector<double> out_a = wpg.apply_speed_limits(speeds_a, limit_a);
+
+        ASSERT_EQ(10, out_a.size());
+        for (double v : out_a) {
+            ASSERT_LE(v, limit_a);
+        }
     }
 }

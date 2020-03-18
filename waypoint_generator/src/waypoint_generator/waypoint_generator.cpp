@@ -18,30 +18,11 @@
 
 namespace waypoint_generator
 {
-void WaypointGenerator::initialize()
-{
-    _wm = _wml.getWorldModel();
-}
-
-void WaypointGenerator::process_route(cav_msgs::Route route_msg)
-{
-
-}
-
-void WaypointGenerator::publish_waypoints(autoware_msgs::LaneArray waypoints)
-{
-
-}
-
-void WaypointGenerator::run()
-{
-
-}
 
 std::vector<int> WaypointGenerator::compute_constant_curvature_regions(
     std::vector<double> curvatures, 
     double epsilon,
-    int linearity_constraint)
+    int linearity_constraint) const
 {
     std::vector<int> regions;
     double cur_min = 0;
@@ -75,8 +56,9 @@ std::vector<int> WaypointGenerator::compute_constant_curvature_regions(
     return out;
 }
 
-std::vector<double> WaypointGenerator::normalize_curvature_regions(std::vector<double> curvatures, 
-    std::vector<int> regions)
+std::vector<double> WaypointGenerator::normalize_curvature_regions(
+    std::vector<double> curvatures, 
+    std::vector<int> regions) const
 {
 
     int region = 0;
@@ -111,7 +93,7 @@ std::vector<double> WaypointGenerator::normalize_curvature_regions(std::vector<d
     return processed_curvatures;
 }
 
-double WaypointGenerator::compute_speed_for_curvature(double curvature, double lateral_accel_limit)
+double WaypointGenerator::compute_speed_for_curvature(double curvature, double lateral_accel_limit) const
 {
     // Solve a = v^2/r (k = 1/r) for v
     // a = v^2 * k
@@ -120,7 +102,7 @@ double WaypointGenerator::compute_speed_for_curvature(double curvature, double l
     return std::sqrt(lateral_accel_limit * curvature);
 }
 std::vector<double> WaypointGenerator::compute_ideal_speeds(std::vector<double> curvatures, 
-    double lateral_accel_limit)
+    double lateral_accel_limit) const
 {
     std::vector<double> out;
     for (double k : curvatures) {
@@ -130,11 +112,23 @@ std::vector<double> WaypointGenerator::compute_ideal_speeds(std::vector<double> 
     return out;
 }
 
+std::vector<double> WaypointGenerator::apply_speed_limits(
+    const std::vector<double> speeds, 
+    const double max_speed) const
+{
+    std::vector<double> out;
+    for (double v : speeds) {
+        out.push_back(std::min(v, max_speed));
+    }
+
+    return out;
+}
+
 std::vector<double> WaypointGenerator::apply_accel_limits(std::vector<double> speeds, 
     std::vector<int> regions,
     lanelet::BasicLineString2d centerline,
     double accel_limit,
-    double decel_limit)
+    double decel_limit) const
 {
     if (speeds.size() != centerline.size()){
         throw std::invalid_argument("Speeds and geometry do not match");
@@ -149,7 +143,7 @@ std::vector<double> WaypointGenerator::apply_accel_limits(std::vector<double> sp
         if (final_v < initial_v) {
             // Slowing down
 
-            double delta_v = speeds[i] - speeds[i + 1];
+            double delta_v = speeds[idx] - speeds[idx + 1];
             double avg_v = delta_v/2.0;
             double delta_t = delta_v/decel_limit;
             double delta_d = avg_v * delta_t;
@@ -158,14 +152,18 @@ std::vector<double> WaypointGenerator::apply_accel_limits(std::vector<double> sp
             for (int j = idx; j >= 0; j--) {
                 // Iterate until we find a point that gives us enough delta_d to
                 // slow down in time
+                dist_accum += carma_wm::WorldModel::compute_euclidean_distance(
+                    centerline[j], 
+                    centerline[j + 1]);
+
                 if (dist_accum >= delta_d) {
-                    for (int k = j; k < idx; k++) {
+                    for (int k = j; k <= idx; k++) {
                         // Linearly interpolate between speeds starting at that
                         // point
                         double dist = 
-                            _wm->compute_euclidean_distance(
+                            carma_wm::WorldModel::compute_euclidean_distance(
                                 centerline[k], 
-                                centerline[idx]);
+                                centerline[idx + 1]);
                         out[k] = 
                             initial_v - 
                             (1.0 - std::min(dist/dist_accum, 1.0)) *  
@@ -173,9 +171,6 @@ std::vector<double> WaypointGenerator::apply_accel_limits(std::vector<double> sp
                     }
                 }
 
-                dist_accum += _wm->compute_euclidean_distance(
-                    centerline[j], 
-                    centerline[j + 1]);
             }
         }
 
@@ -189,15 +184,15 @@ std::vector<double> WaypointGenerator::apply_accel_limits(std::vector<double> sp
             double dist_accum = 0;
             for (int j = idx; j < speeds.size(); j++) {
                 // Iterate until we find a point that gives us enough delta_d to
-                // slow down in time
+                // speed up acceptably
                 if (dist_accum >= delta_d) {
                     for (int k = idx; k < j; k++) {
                         // Linearly interpolate between speeds starting at that
                         // point
                         double dist = 
-                            _wm->compute_euclidean_distance(
+                            carma_wm::WorldModel::compute_euclidean_distance(
                                 centerline[k], 
-                                centerline[idx]);
+                                centerline[j]);
                         out[k] = 
                             initial_v + 
                             (1.0 - std::min(dist/dist_accum, 1.0)) *  
@@ -207,22 +202,22 @@ std::vector<double> WaypointGenerator::apply_accel_limits(std::vector<double> sp
 
                 auto a = centerline[j];
                 auto b = centerline[j + 1];
-                dist_accum += _wm->compute_euclidean_distance(a, b);
+                dist_accum += carma_wm::WorldModel::compute_euclidean_distance(a, b);
             }
         }
     }
 
-    return speeds;
+    return out;
 }
 
 std::vector<geometry_msgs::Quaternion> WaypointGenerator::compute_orientations(
-    const std::vector<lanelet::ConstLanelet> lanelets)
+    const std::vector<lanelet::ConstLanelet> lanelets) const
 {
     std::vector<geometry_msgs::Quaternion> out;
 
-    lanelet::BasicLineString2d centerline = _wm->concatenate_lanelets(lanelets);
+    lanelet::BasicLineString2d centerline = carma_wm::WorldModel::concatenate_lanelets(lanelets);
 
-    std::vector<Eigen::Vector2d> tangents = _wm->compute_finite_differences(centerline);
+    std::vector<Eigen::Vector2d> tangents = carma_wm::WorldModel::compute_finite_differences(centerline);
 
     Eigen::Vector2d x_axis = {1, 0};
     for (int i = 0; i < tangents.size(); i++) {
@@ -241,7 +236,7 @@ std::vector<geometry_msgs::Quaternion> WaypointGenerator::compute_orientations(
 autoware_msgs::LaneArray WaypointGenerator::generate_lane_array_message(
     std::vector<double> speeds, 
     std::vector<geometry_msgs::Quaternion> orientations, 
-    std::vector<lanelet::ConstLanelet> lanelets)
+    std::vector<lanelet::ConstLanelet> lanelets) const
 {
     autoware_msgs::LaneArray out;
 
