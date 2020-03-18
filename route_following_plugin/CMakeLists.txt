@@ -15,7 +15,7 @@
 #
 
 cmake_minimum_required(VERSION 2.8.3)
-project(route)
+project(route_following_plugin)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++14)
@@ -26,14 +26,10 @@ set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
+  cav_msgs
   cav_srvs
   carma_utils
-  autoware_msgs
-  wgs84_utils
   carma_wm
-  tf2_geometry_msgs
-  tf2_ros
-  tf2
 )
 
 ## System dependencies are found with CMake's conventions
@@ -44,7 +40,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils autoware_msgs wgs84_utils carma_wm tf2_geometry_msgs tf2_ros tf2
+  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils cav_msgs carma_wm
 )
 
 ###########
@@ -61,20 +57,20 @@ file(GLOB_RECURSE headers */*.hpp */*.h)
 
 add_executable( ${PROJECT_NAME}
   ${headers}
-  src/main.cpp
-  src/route.cpp
-  src/route_generator_worker.cpp
-  src/route_state_worker.cpp)
-add_library(route_library src/route_generator_worker.cpp src/route_state_worker.cpp)
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} route_library)
-add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-add_dependencies(route_library ${catkin_EXPORTED_TARGETS})
+  src/route_following_plugin.cpp
+  src/main.cpp)
+
+#add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+add_library(route_following_plugin_lib src/route_following_plugin.cpp)
+add_dependencies(route_following_plugin_lib ${catkin_EXPORTED_TARGETS})
+
+target_link_libraries(${PROJECT_NAME} route_following_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 #############
 ## Install ##
 #############
 
-install(DIRECTORY include
+install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.h"
   PATTERN ".svn" EXCLUDE
@@ -88,16 +84,14 @@ install(TARGETS ${PROJECT_NAME}
 )
 
 ## Install Other Resources
-install(DIRECTORY launch
+install(DIRECTORY launch config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
 #############
 ## Testing ##
 #############
-catkin_add_gmock(${PROJECT_NAME}-test 
-  test/test_route_generator.cpp
-  test/test_route_state.cpp
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
-)
-target_link_libraries(${PROJECT_NAME}-test route_library ${catkin_LIBRARIES})
+catkin_add_gmock(${PROJECT_NAME}-test
+  test/test_route_following_plugin.cpp
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+target_link_libraries(${PROJECT_NAME}-test route_following_plugin_lib ${catkin_LIBRARIES})

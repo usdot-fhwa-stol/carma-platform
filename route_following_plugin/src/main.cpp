@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 LEIDOS.
+ * Copyright (C) 2019-2020 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,11 +14,15 @@
  * the License.
  */
 
-#include <gtest/gtest.h>
+#include <ros/ros.h>
+#include "route_following_plugin.h"
 
-// Run all the tests
 int main(int argc, char** argv)
 {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}
+  
+    ros::init(argc, argv, "route_following_plugin");
+    route_following_plugin::RouteFollowingPlugin rfp;
+    rfp.run();
+    return 0;
+
+};

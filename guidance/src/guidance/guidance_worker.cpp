@@ -34,6 +34,11 @@ namespace guidance
         gsm_.onRoboticStatus(msg);
     }
 
+    void GuidanceWorker::route_event_cb(const cav_msgs::RouteEventConstPtr& msg)
+    {
+        gsm_.onRouteEvent(msg);
+    }
+
     bool GuidanceWorker::guidance_acivation_cb(cav_srvs::SetGuidanceActiveRequest& req, cav_srvs::SetGuidanceActiveResponse& res)
     {
         // Translate message type from GuidanceActiveRequest to SetEnableRobotic
@@ -70,6 +75,7 @@ namespace guidance
         guidance_activate_service_server_ = nh_.advertiseService("set_guidance_active", &GuidanceWorker::guidance_acivation_cb, this);
         state_publisher_ = nh_.advertise<cav_msgs::GuidanceState>("state", 5);
         robot_status_subscriber_ = nh_.subscribe<cav_msgs::RobotEnabled>("robot_status", 5, &GuidanceWorker::robot_status_cb, this);
+        route_event_subscriber_ = nh_.subscribe<cav_msgs::RouteEvent>("route_event", 5, &GuidanceWorker::route_event_cb, this);
         enable_client_ = nh_.serviceClient<cav_srvs::SetEnableRobotic>("controller/enable_robotic");
 
         // Load the spin rate param to determine how fast to process messages

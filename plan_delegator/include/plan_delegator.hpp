@@ -21,6 +21,7 @@
 #include <math.h>
 #include <ros/ros.h>
 #include <cav_msgs/ManeuverPlan.h>
+#include <cav_msgs/GuidanceState.h>
 #include <cav_srvs/PlanTrajectory.h>
 #include <carma_utils/CARMAUtils.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -68,6 +69,11 @@ namespace plan_delegator
             void maneuverPlanCallback(const cav_msgs::ManeuverPlanConstPtr& plan);
 
             /**
+             * \brief Callback function of guidance state subscriber
+             */
+            void guidanceStateCallback(const cav_msgs::GuidanceStateConstPtr& plan);
+
+            /**
              * \brief Get PlanTrajectory service client by plugin name and
              * create new PlanTrajectory service client if specified name does not exist
              * \return a ServiceClient object which corresponse to the target planner
@@ -111,6 +117,9 @@ namespace plan_delegator
             ros::Subscriber plan_sub_;
             ros::Subscriber pose_sub_;
             ros::Subscriber twist_sub_;
+            ros::Subscriber guidance_state_sub_;
+
+            bool guidance_engaged;
 
             /**
              * \brief Callback function of node spin

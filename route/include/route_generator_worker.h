@@ -26,7 +26,6 @@
 #include <cav_msgs/RouteState.h>
 #include <cav_srvs/GetAvailableRoutes.h>
 #include <cav_srvs/SetActiveRoute.h>
-#include <cav_srvs/StartActiveRoute.h>
 #include <cav_srvs/AbortActiveRoute.h>
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
@@ -50,10 +49,15 @@ namespace route {
         /**
          * \brief Constructor for RouteGeneratorWorker class taking in dependencies via dependency injection
          * \param tf_buffer ROS tf tree buffer for getting latest tf between any two available frames
+         */
+        RouteGeneratorWorker(tf2_ros::Buffer& tf_buffer);
+        
+        /**
+         * \brief Dependency injection for world model pointer.
          * \param wm CARMA world model object providing lanelet vector map and traffic regulations
          */
-        RouteGeneratorWorker(tf2_ros::Buffer& tf_buffer, carma_wm::WorldModelConstPtr wm);
-        
+        void setWorldModelPtr(carma_wm::WorldModelConstPtr wm);
+
         /**
          * \brief Generate Lanelet2 route based on input destinations
          * \param start Lanelet 2D point in map frame indicates the starting point of selected route
@@ -169,6 +173,10 @@ namespace route {
 
         // current cross track and down track distance relative to the route
         double current_crosstrack_distance_, current_downtrack_distance_;
+
+        // current lanelet down track and cross track distance
+        double ll_crosstrack_distance_, ll_downtrack_distance_;
+        unsigned int ll_id_;
 
         // local copy of Route publihsers
         ros::Publisher route_event_pub_, route_state_pub_, route_pub_;

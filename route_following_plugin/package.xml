@@ -17,21 +17,17 @@
 -->
 
 <package format="2">
-  <name>route</name>
-  <version>3.3.0</version>
-  <description>The route package provides capabilities for loading different route files and route state mangement</description>
-  <maintainer email="carma@todo.todo">carma</maintainer>
+  <name>route_following_plugin</name>
+  <version>3.2.0</version>
+  <description>The strategic plugin generates maneuvers to make the vehicle follow the route. </description>
+  <maintainer email="carma@dot.gov">carma</maintainer>
   <license>Apache License 2.0</license>
-  <author email="carma@todo.todo">carma</author>
+  <author email="carma@dot.gov">carma</author>
   <buildtool_depend>catkin</buildtool_depend>
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
   <depend>cav_srvs</depend>
+  <depend>cav_msgs</depend>
   <depend>carma_utils</depend>
-  <depend>autoware_msgs</depend>
-  <depend>wgs84_utils</depend>
   <depend>carma_wm</depend>
-  <depend>tf2_geometry_msgs</depend>
-  <depend>tf2_ros</depend>
-  <depend>tf2</depend>
 </package>

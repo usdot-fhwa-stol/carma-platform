@@ -18,9 +18,14 @@
 
 namespace route {
 
-    RouteGeneratorWorker::RouteGeneratorWorker(tf2_ros::Buffer& tf_buffer, carma_wm::WorldModelConstPtr wm) :
-                                               tf_tree_(tf_buffer), world_model_(wm), new_route_msg_generated_(false) { }
+    RouteGeneratorWorker::RouteGeneratorWorker(tf2_ros::Buffer& tf_buffer) :
+                                               tf_tree_(tf_buffer), new_route_msg_generated_(false) { }
     
+    void RouteGeneratorWorker::setWorldModelPtr(carma_wm::WorldModelConstPtr wm)
+    {
+        this->world_model_ = wm;
+    }
+
     lanelet::Optional<lanelet::routing::Route> RouteGeneratorWorker::routing(const lanelet::BasicPoint2d start,
                                                                              const std::vector<lanelet::BasicPoint2d>& via,
                                                                              const lanelet::BasicPoint2d end,
@@ -55,7 +60,7 @@ namespace route {
     bool RouteGeneratorWorker::get_available_route_cb(cav_srvs::GetAvailableRoutesRequest& req, cav_srvs::GetAvailableRoutesResponse& resp)
     {
         // only allow to get route names after entering route selection state
-        if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::ROUTE_SELECTION)
+        if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::SELECTION)
         {
             boost::filesystem::path route_path_object(this->route_file_path_);
             if(boost::filesystem::exists(route_path_object))
@@ -69,7 +74,24 @@ namespace route {
                         auto full_file_name = itr->path().filename().generic_string();
                         cav_msgs::Route route_msg;
                         // assume route files ending with ".csv", before that is the actual route name
-                        route_msg.route_name = full_file_name.substr(0, full_file_name.find(".csv"));
+                        route_msg.route_id = full_file_name.substr(0, full_file_name.find(".csv"));
+                        std::ifstream fin(itr->path().generic_string());
+                        std::string dest_name;
+                        if(fin.is_open())
+                        {
+                            while (!fin.eof())
+                            {
+                                std::string temp;
+                                std::getline(fin, temp);
+                                if(temp != "") dest_name = temp;
+                            }
+                            fin.close();
+                        } else
+                        {
+                            ROS_ERROR_STREAM("File open failed...");
+                        }
+                        auto last_comma = dest_name.find_last_of(',');
+                        route_msg.route_name = dest_name.substr(last_comma + 1);
                         resp.availableRoutes.push_back(route_msg);
                     }
                 }
@@ -84,14 +106,14 @@ namespace route {
     {
         this->route_file_path_ = path;
         // after route path is set, worker will able to transit state and provide route selection service
-        this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::LOAD_ROUTE_FILES);
-        publish_route_event(cav_msgs::RouteEvent::LOAD_ROUTE_FILES);
+        this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_LOADED);
+        publish_route_event(cav_msgs::RouteEvent::ROUTE_LOADED);
     }
 
     bool RouteGeneratorWorker::set_active_route_cb(cav_srvs::SetActiveRouteRequest &req, cav_srvs::SetActiveRouteResponse &resp)
     {
         // only allow activate a new route in route selection state
-        if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::ROUTE_SELECTION)
+        if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::SELECTION)
         {
             // entering to routing state once destinations are picked
             this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_SELECTED);
@@ -103,8 +125,8 @@ namespace route {
             {
                 ROS_ERROR_STREAM("Selected route file conatins 1 or less points. Routing cannot be completed.");
                 resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTE_FILE_ERROR;
-                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTING_FAILURE);
-                publish_route_event(cav_msgs::RouteEvent::ROUTING_FAILURE);
+                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+                publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
                 return false;
             }
             // get transform from ECEF(earth) to local map frame
@@ -117,8 +139,8 @@ namespace route {
             {
                 ROS_ERROR_STREAM("Could not lookup transform with exception " << ex.what());
                 resp.errorStatus = cav_srvs::SetActiveRouteResponse::TRANSFORM_ERROR;
-                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTING_FAILURE);
-                publish_route_event(cav_msgs::RouteEvent::ROUTING_FAILURE);
+                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+                publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
                 return false;
             }
             // convert points in ECEF to map frame
@@ -135,8 +157,8 @@ namespace route {
             {
                 ROS_ERROR_STREAM("Cannot find a route passing all destinations.");
                 resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
-                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTING_FAILURE);
-                publish_route_event(cav_msgs::RouteEvent::ROUTING_FAILURE);
+                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+                publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
                 return false;
             }
             // update route message
@@ -145,7 +167,7 @@ namespace route {
             route_msg_.header.frame_id = "map";
             route_msg_.route_name = req.routeID;
             // since routing is done correctly, transit to route following state
-            this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTING_SUCCESS);
+            this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_STARTED);
             publish_route_event(cav_msgs::RouteEvent::ROUTE_STARTED);
             // set publish flag such that updated msg will be published in the next spin
             new_route_msg_generated_ = true;
@@ -176,7 +198,9 @@ namespace route {
             coordinate.lat =
                 (std::stod(line.substr(0, comma)) < 0 ? std::stod(line.substr(0, comma)) + 360.0 : std::stod(line.substr(0, comma))) * DEG_TO_RAD;
             // elevation is in meters
-            coordinate.elevation = std::stod(line.substr(comma + 1));
+            line.erase(0, comma + 1);
+            comma = line.find(",");
+            coordinate.elevation = std::stod(line.substr(0, comma));
             // no rotation needed since it only represents a point
             tf2::Quaternion no_rotation(0, 0, 0, 1);
             destination_points.emplace_back(wgs84_utils::geodesic_to_ecef(coordinate, tf2::Transform(no_rotation)));
@@ -218,9 +242,9 @@ namespace route {
     bool RouteGeneratorWorker::abort_active_route_cb(cav_srvs::AbortActiveRouteRequest &req, cav_srvs::AbortActiveRouteResponse &resp)
     {
         // only make sense to abort when it is in route following state
-        if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::ROUTE_FOLLOWING)
+        if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING)
         {
-            this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_ABORT);
+            this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_ABORTED);
             resp.error_status = cav_srvs::AbortActiveRouteResponse::NO_ERROR;
             publish_route_event(cav_msgs::RouteEvent::ROUTE_ABORTED);
             route_msg_ = cav_msgs::Route{};
@@ -233,23 +257,37 @@ namespace route {
 
     void RouteGeneratorWorker::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
-        // convert from pose stamp into lanelet basic 2D point
-        lanelet::BasicPoint2d current_loc(msg->pose.position.x, msg->pose.position.y);
-        // get dt ct from world model
-        auto track = this->world_model_->routeTrackPos(current_loc);
-        current_crosstrack_distance_ = track.crosstrack;
-        current_downtrack_distance_ = track.downtrack;
-        // check if we left the seleted route by cross track error
-        if(std::fabs(current_crosstrack_distance_) > cross_track_max_)
-        {
-            this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::LEFT_ROUTE);
-            publish_route_event(cav_msgs::RouteEvent::LEFT_ROUTE);
-        }
-        // check if we reached our destination be remaining down track distance
-        if(current_downtrack_distance_ > world_model_->getRoute()->length2d() - down_track_target_range_)
-        {
-            this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_COMPLETE);
-            publish_route_event(cav_msgs::RouteEvent::ROUTE_COMPLETED);
+        if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING) {
+            // convert from pose stamp into lanelet basic 2D point
+            lanelet::BasicPoint2d current_loc(msg->pose.position.x, msg->pose.position.y);
+            // get dt ct from world model
+            carma_wm::TrackPos track(0.0, 0.0);
+            try {
+                track = this->world_model_->routeTrackPos(current_loc);
+            } catch (std::invalid_argument ex) {
+                ROS_WARN_STREAM("Routing has finished but carma_wm has not receive it!");
+                return;
+            }
+            auto via_lanelet_vector = lanelet::geometry::findNearest(world_model_->getMap()->laneletLayer, current_loc, 1);
+            auto current_lanelet = lanelet::ConstLanelet(via_lanelet_vector[0].second.constData());
+            auto lanelet_track = world_model_->trackPos(current_lanelet, current_loc);
+            ll_id_ = current_lanelet.id();
+            ll_crosstrack_distance_ = lanelet_track.crosstrack;
+            ll_downtrack_distance_ = lanelet_track.downtrack;
+            current_crosstrack_distance_ = track.crosstrack;
+            current_downtrack_distance_ = track.downtrack;
+            // check if we left the seleted route by cross track error
+            if(std::fabs(current_crosstrack_distance_) > cross_track_max_)
+            {
+                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+                publish_route_event(cav_msgs::RouteEvent::ROUTE_DEPARTED);
+            }
+            // check if we reached our destination be remaining down track distance
+            if(current_downtrack_distance_ > world_model_->getRoute()->length2d() - down_track_target_range_)
+            {
+                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_COMPLETED);
+                publish_route_event(cav_msgs::RouteEvent::ROUTE_COMPLETED);
+            }
         }
     }
 
@@ -287,13 +325,15 @@ namespace route {
             state_msg.routeID = route_msg_.route_name;
             state_msg.cross_track = current_crosstrack_distance_;
             state_msg.down_track = current_downtrack_distance_;
+            state_msg.lanelet_downtrack = ll_downtrack_distance_;
+            state_msg.lanelet_id = ll_id_;
             route_state_pub_.publish(state_msg);
         }
         // publish route event in order if any
         while(!route_event_queue.empty())
         {
             route_event_msg_.event = route_event_queue.front();
-            route_state_pub_.publish(route_event_msg_);
+            route_event_pub_.publish(route_event_msg_);
             route_event_queue.pop();
         }
         return true;

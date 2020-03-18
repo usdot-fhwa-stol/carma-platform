@@ -62,13 +62,17 @@ namespace arbitrator
                 // NO-OP
                 break;
             case cav_msgs::GuidanceState::DRIVERS_READY:
-                // NO-OP
+                if(sm_->get_state() == ArbitratorState::PLANNING || sm_->get_state() == ArbitratorState::WAITING)
+                {
+                    ROS_INFO("Received notice that guidance has been restarted, pausing arbitrator.");
+                    sm_->submit_event(ArbitratorEvent::ARBITRATOR_PAUSED);
+                }
                 break;
             case cav_msgs::GuidanceState::ACTIVE:
                 // NO-OP
                 break;
             case cav_msgs::GuidanceState::ENGAGED:
-                ROS_INFO("Received notiace that guidance has been engaged!");
+                ROS_INFO("Received notice that guidance has been engaged!");
                 if (sm_->get_state() == ArbitratorState::INITIAL) {
                     sm_->submit_event(ArbitratorEvent::SYSTEM_STARTUP_COMPLETE);
                 } else if (sm_->get_state() == ArbitratorState::PAUSED) {
@@ -76,11 +80,11 @@ namespace arbitrator
                 }
                 break;
             case cav_msgs::GuidanceState::INACTIVE:
-                ROS_INFO("Received notiace that guidance has been disengaged, pausing arbitrator.");
+                ROS_INFO("Received notice that guidance has been disengaged, pausing arbitrator.");
                 sm_->submit_event(ArbitratorEvent::ARBITRATOR_PAUSED);
                 break;
             case cav_msgs::GuidanceState::SHUTDOWN:
-                ROS_INFO("Received notiace that guidance has been shutdown, shutting down arbitrator.");
+                ROS_INFO("Received notice that guidance has been shutdown, shutting down arbitrator.");
                 sm_->submit_event(ArbitratorEvent::SYSTEM_SHUTDOWN_INITIATED);
                 break;
             default:
