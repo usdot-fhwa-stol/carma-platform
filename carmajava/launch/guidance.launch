@@ -93,7 +93,9 @@
   <include file="$(find trajectory_executor)/launch/trajectory_executor.launch" />
 
 
-  <rosparam command="load" file="$(arg vehicle_calibration_dir)/mpc_follower/params.yaml"/>
+  <remap from="/vehicle_status" to="/hardware_interface/vehicle_status"/>
+  <remap from="/current_pose" to="/localization/current_pose"/>
+  
   <!-- MPC Follower Wrapper -->
   <include file="$(find mpc_follower_wrapper)/launch/mpc_follower_wrapper.launch" />
 

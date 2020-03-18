@@ -58,7 +58,7 @@ class MPCFollowerWrapper {
         void Initialize();
         
         // runs publish at a desired frequency
-        int rate;
+        int rate = 10;
 
         // Shutdown flags and mutex
         std::mutex shutdown_mutex_;
@@ -76,7 +76,7 @@ class MPCFollowerWrapper {
     private:
 
         //@brief ROS node handle.
-        ros::NodeHandle& nh_;
+        ros::CARMANodeHandle& nh_;
 
         //@brief ROS subscribers.
         ros::Subscriber system_alert_sub_;

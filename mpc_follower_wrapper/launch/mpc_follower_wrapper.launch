@@ -1,9 +1,13 @@
 <?xml version="1.0"?>
 <launch>
     <remap from="final_waypoints" to="/guidance/carma_final_waypoints"/>
-    <!-- Pure Pursuit Node -->
+    <!-- MPC Follower Node -->
     <group>
-        <!--<remap from="vehicle_info/wheel_base" to="/vehicle_wheel_base"/>-->
+        <remap from="vehicle_model_steer_tau" to="/vehicle_steer_tau"/>
+        <remap from="vehicle_model_wheelbase" to="/vehicle_wheel_base"/>
+        <remap from="steer_lim_deg" to="/vehicle_steer_lim_deg"/>
+        <remap from="steering_gear_ratio" to="/vehicle_steering_gear_ratio"/>
+
         <include file="$(find mpc_follower)/launch/mpc_follower.launch">
                 <arg name="qp_solver_type" value="qpoases_hotstart"/>
                 <arg name="mpc_prediction_sampling_time" value="0.05"/>
@@ -11,7 +15,7 @@
                 <arg name="mpc_weight_terminal_lat_error" value="1.0"/>
         </include>
     </group>
-    <!-- Pure Pursuit Wrapper Node -->
+    <!-- MPC Follower Wrapper Node -->
     <node pkg="mpc_follower_wrapper" type="mpc_follower_wrapper_node" name="mpc_follower_wrapper_node" output="screen">
         <rosparam command="load" file="$(find mpc_follower_wrapper)/config/default.yaml" />
     </node>

@@ -71,52 +71,15 @@ void MPCFollowerWrapper::TrajectoryPlanPoseHandler(const geometry_msgs::PoseStam
       PublisherForWayPoints(lane);
     }
     catch(const std::exception& e) {
-      HandleException(e);
+      CARMANodeHandle::handleException(e);
     }
 
 };
 
-void MPCFollowerWrapper::SystemAlertHandler(const cav_msgs::SystemAlert::ConstPtr& msg) {
-    try {
-      ROS_INFO_STREAM("Received SystemAlert message of type: " << msg->type);
-      switch(msg->type) {
-        case cav_msgs::SystemAlert::SHUTDOWN: 
-          Shutdown(); 
-          break;
-      }
-    }
-    catch(const std::exception& e) {
-      HandleException(e);
-    }
-};
 
 void MPCFollowerWrapper::PublisherForWayPoints(autoware_msgs::Lane& msg){
-  try {
-    ROS_DEBUG_STREAM("Sending WayPoints message.");
-    way_points_pub_.publish(msg);
-  }
-  catch(const std::exception& e) {
-    HandleException(e);
-  }
+  way_points_pub_.publish(msg);
 };
 
-void MPCFollowerWrapper::HandleException(const std::exception& e) {
-  ROS_DEBUG("Sending SystemAlert Message");
-  cav_msgs::SystemAlert alert_msg;
-  alert_msg.type = cav_msgs::SystemAlert::FATAL;
-  alert_msg.description = "Uncaught Exception in " + ros::this_node::getName() + " exception: " + e.what();
- 
-  ROS_ERROR_STREAM(alert_msg.description);
-  system_alert_pub_.publish(alert_msg);
-
-  ros::Duration(0.05).sleep();
-  Shutdown();
-}
-
-void MPCFollowerWrapper::Shutdown() {
-  std::lock_guard<std::mutex> lock(shutdown_mutex_);
-  ROS_WARN_STREAM("Node shutting down");
-  shutting_down_ = true;
-}
 
 }  // namespace mpc_follower_wrapper
