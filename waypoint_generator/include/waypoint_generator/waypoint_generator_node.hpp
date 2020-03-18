@@ -50,7 +50,7 @@ namespace waypoint_generator
             double _lateral_accel_limit = 1.5;
             double _longitudinal_accel_limit = 1.5;
             double _longitudinal_decel_limit = 1.5;
-            double _max_speed = 35.0;
+            double _max_speed = 10.0;
             autoware_msgs::LaneArray _cur_waypoints;
             WaypointGenerator _wpg;
             carma_wm::WMListener _wml;

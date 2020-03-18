@@ -32,7 +32,7 @@ namespace waypoint_generator
         _pnh->param<double>("lateral_accel_limit", _lateral_accel_limit, 1.5);
         _pnh->param<double>("longitudinal_accel_limit", _longitudinal_accel_limit, 1.5);
         _pnh->param<double>("longitudinal_decel_limit", _longitudinal_decel_limit, 1.5);
-        _pnh->param<double>("max_speed", _max_speed, 35.0);
+        _pnh->param<double>("max_speed", _max_speed, 10.0);
         ROS_DEBUG_STREAM("Parameters loaded!" << std::endl
             << "curvature_epsilon: " << _curvature_epsilon << std::endl
             << "linearity_constraint" << _linearity_constraint << std::endl
