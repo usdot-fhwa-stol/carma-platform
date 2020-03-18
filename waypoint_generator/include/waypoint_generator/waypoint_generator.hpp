@@ -174,7 +174,6 @@ namespace waypoint_generator
                 const std::vector<double> speeds, 
                 const double max_speed) const;
         private:
-            autoware_msgs::LaneArray _waypoints;
             carma_wm::WorldModelConstPtr _wm;
     };
 };

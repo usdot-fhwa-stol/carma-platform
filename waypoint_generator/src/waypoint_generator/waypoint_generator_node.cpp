@@ -26,6 +26,20 @@ namespace waypoint_generator
         _pnh.reset(new ros::CARMANodeHandle("~"));
         _wm = _wml.getWorldModel();
         ROS_DEBUG("Initialized all node handles");
+
+        _pnh->param<double>("curvature_epsilon", _curvature_epsilon, 3.0);
+        _pnh->param<int>("linearity_constraint", _linearity_constraint, 2);
+        _pnh->param<double>("lateral_accel_limit", _lateral_accel_limit, 1.5);
+        _pnh->param<double>("longitudinal_accel_limit", _longitudinal_accel_limit, 1.5);
+        _pnh->param<double>("longitudinal_decel_limit", _longitudinal_decel_limit, 1.5);
+        _pnh->param<double>("max_speed", _max_speed, 35.0);
+        ROS_DEBUG_STREAM("Parameters loaded!" << std::endl
+            << "curvature_epsilon: " << _curvature_epsilon << std::endl
+            << "linearity_constraint" << _linearity_constraint << std::endl
+            << "lateral_accel_limit: " << _lateral_accel_limit << std::endl
+            << "longitudinal_accel_limit: " << _longitudinal_accel_limit << std::endl
+            << "longitudinal_decel_limit: " << _longitudinal_decel_limit << std::endl
+            << "max_speed: " << _max_speed);
     }
 
     void WaypointGeneratorNode::run()
@@ -63,8 +77,8 @@ namespace waypoint_generator
         std::vector<int> constant_curvature_regions = 
             _wpg.compute_constant_curvature_regions(
                 curvatures, 
-                curvature_epsilon, 
-                linearity_constraint);
+                _curvature_epsilon, 
+                _linearity_constraint);
 
         std::vector<double> processed_curvatures = 
             _wpg.normalize_curvature_regions(
@@ -74,18 +88,18 @@ namespace waypoint_generator
         ROS_DEBUG("Processing speeds...");
         std::vector<double> ideal_speeds = _wpg.compute_ideal_speeds(
             processed_curvatures, 
-            lateral_accel_limit);
+            _lateral_accel_limit);
 
         std::vector<double> accel_limited_speeds = _wpg.apply_accel_limits(
             ideal_speeds, 
             constant_curvature_regions, 
             route_geometry,
-            longitudinal_accel_limit,
-            longitudinal_decel_limit);
+            _longitudinal_accel_limit,
+            _longitudinal_decel_limit);
 
         std::vector<double> final_speeds = _wpg.apply_speed_limits(
             accel_limited_speeds, 
-            max_speed);
+            _max_speed);
 
         ROS_DEBUG("Processing orientations...");
         std::vector<geometry_msgs::Quaternion> orientations = 
@@ -93,14 +107,14 @@ namespace waypoint_generator
 
         // Update current waypoints
         ROS_DEBUG("Generating final waypoint message.");
-        cur_waypoints = _wpg.generate_lane_array_message(
+        _cur_waypoints = _wpg.generate_lane_array_message(
             final_speeds,
             orientations,
             tmp);
 
         ROS_DEBUG_STREAM("Finished processing route.");
 
-        _waypoints_pub.publish(cur_waypoints);
+        _waypoints_pub.publish(_cur_waypoints);
         ROS_DEBUG_STREAM("Published waypoints list!");
     }
 }
