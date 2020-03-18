@@ -44,7 +44,7 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr&
   }
 }
 
-void WMListenerWorker::routeCallback()
+void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
 {
   auto path = lanelet::ConstLanelets();
   for(auto id : route_msg->shortest_path_lanelet_ids)
