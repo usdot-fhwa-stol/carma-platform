@@ -33,8 +33,9 @@
   <!-- Directory of vehicle config parameters -->
   <arg name="vehicle_config_dir" default="$(find carma)../../CARMAConfig/development" doc="The directory continaing vehicle config type parameters"/>
   <arg name="vehicle_calibration_dir" default="$(find carma)../../CARMAVehicleCalibration/development/vehicle/calibration" doc="The directory continaing vehicle calibration type parameters"/>
-
-  <!-- Startup Drivers With Main CARMA System -->
+  <arg name="yolo_dir" default="/opt/carma/yolo" doc="The directory continaing yolo weights files for the perception stack"/>
+  
+	<!-- Startup Drivers With Main CARMA System -->
   <arg name="launch_drivers" default="true" doc="True if drivers are to be launched with the CARMA Platform, overrides mock_drivers arg if false"/>
 
   <!-- Simulation Usage -->
@@ -118,6 +119,7 @@
     <include file="$(find carma)/launch/environment.launch">
       <arg name="vector_map_file" value="$(arg vector_map_file)" />
       <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
+      <arg name="yolo_dir" value="$(arg yolo_dir)"/>
     </include>
   </group>
 
