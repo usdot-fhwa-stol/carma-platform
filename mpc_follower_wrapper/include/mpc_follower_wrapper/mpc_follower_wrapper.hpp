@@ -14,7 +14,6 @@
  * the License.
  */
 
-#include <mutex>
 
 // ROS
 #include <ros/ros.h>
@@ -33,6 +32,8 @@
 #include "autoware_config_msgs/ConfigWaypointFollower.h"
 #include "autoware_msgs/ControlCommandStamped.h"
 
+#include <carma_utils/CARMAUtils.h>
+
 #include "mpc_follower_wrapper_worker.hpp"
 
 namespace mpc_follower_wrapper {
@@ -47,7 +48,7 @@ class MPCFollowerWrapper {
         * Constructor.
         * @param nodeHandle the ROS node handle.
         */
-        MPCFollowerWrapper(ros::NodeHandle& nodeHandle);
+        MPCFollowerWrapper(ros::CARMANodeHandle& nodeHandle);
 
         /*!
         * Destructor.
@@ -57,12 +58,7 @@ class MPCFollowerWrapper {
         // @brief ROS initialize.
         void Initialize();
         
-        // runs publish at a desired frequency
-        int rate = 10;
 
-        // Shutdown flags and mutex
-        std::mutex shutdown_mutex_;
-        bool shutting_down_ = false;
 
         // message filter subscribers
         message_filters::Subscriber<geometry_msgs::PoseStamped> pose_sub;
@@ -78,39 +74,17 @@ class MPCFollowerWrapper {
         //@brief ROS node handle.
         ros::CARMANodeHandle& nh_;
 
-        //@brief ROS subscribers.
-        ros::Subscriber system_alert_sub_;
 
         // @brief ROS publishers.
         ros::Publisher way_points_pub_;
-        ros::Publisher system_alert_pub_;
+
 
         MPCFollowerWrapperWorker mpcww;
 
-        /*!
-        * Reads and verifies the ROS parameters.
-        * @return true if successful.
-        */
-        bool ReadParameters();
-
-        // @brief ROS subscriber handlers.
-        void SystemAlertHandler(const cav_msgs::SystemAlert::ConstPtr& msg);
 
         // @brief ROS pusblishers.
         void PublisherForWayPoints(autoware_msgs::Lane& msg);
-          
-        /*
-         * @brief Handles caught exceptions which have reached the top level of this node
-         * 
-         * @param message The exception to handle
-         * 
-         * If an exception reaches the top level of this node it should be passed to this function.
-         * The function will try to log the exception and publish a FATAL message to system_alert before shutting itself down.
-         */
-        void HandleException(const std::exception& e);
 
-        // @brief Shutsdown this node
-        void Shutdown();
 
 };
 

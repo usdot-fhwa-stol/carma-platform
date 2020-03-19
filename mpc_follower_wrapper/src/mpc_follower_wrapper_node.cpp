@@ -25,7 +25,7 @@
 int main(int argc, char** argv) {
 
   ros::init(argc, argv, "mpc_follower_wrapper_node");
-  ros::NodeHandle nh("");
+  ros::CARMANodeHandle nh("");
 
   mpc_follower_wrapper::MPCFollowerWrapper MPCFollowerWrapper(nh);
 
@@ -33,8 +33,8 @@ int main(int argc, char** argv) {
   message_filters::Synchronizer<mpc_follower_wrapper::MPCFollowerWrapper::SyncPolicy> sync(mpc_follower_wrapper::MPCFollowerWrapper::SyncPolicy(100), MPCFollowerWrapper.pose_sub, MPCFollowerWrapper.trajectory_plan_sub);
   sync.registerCallback(boost::bind(&mpc_follower_wrapper::MPCFollowerWrapper::TrajectoryPlanPoseHandler, &MPCFollowerWrapper, _1, _2));
 
-  CARMANodeHandle::setSpinRate(rate);
-  CARMANodeHandle::spin();
+  ros::CARMANodeHandle::setSpinRate(10);
+  ros::CARMANodeHandle::spin();
 
   ROS_INFO("Node Exiting");
   return 0;

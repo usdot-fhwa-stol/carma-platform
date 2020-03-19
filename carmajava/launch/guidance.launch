@@ -93,9 +93,8 @@
   <include file="$(find trajectory_executor)/launch/trajectory_executor.launch" />
 
 
-  <remap from="/vehicle_status" to="/hardware_interface/vehicle_status"/>
-  <remap from="/current_pose" to="/localization/current_pose"/>
-  
+  <remap from="/vehicle_status" to="$(optenv CARMA_INTR_NS)/vehicle_status"/>
+  <remap from="/current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>  
   <!-- MPC Follower Wrapper -->
   <include file="$(find mpc_follower_wrapper)/launch/mpc_follower_wrapper.launch" />
 

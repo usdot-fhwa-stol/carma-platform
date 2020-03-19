@@ -18,12 +18,8 @@
 
 namespace mpc_follower_wrapper {
 
-MPCFollowerWrapper::MPCFollowerWrapper(ros::NodeHandle &nodeHandle): nh_(nodeHandle)
+MPCFollowerWrapper::MPCFollowerWrapper(ros::CARMANodeHandle &nodeHandle): nh_(nodeHandle)
 {
-  if (!ReadParameters())
-  {
-    ROS_ERROR("Could not read parameters.");
-  }
 
   Initialize();
 
@@ -34,10 +30,7 @@ MPCFollowerWrapper::~MPCFollowerWrapper() {
 }
 
 void MPCFollowerWrapper::Initialize() {
-  // SystemAlert Subscriber
-  system_alert_sub_ = nh_.subscribe("system_alert", 10, &MPCFollowerWrapper::SystemAlertHandler, this);
-  // SystemAlert Publisher
-  system_alert_pub_ = nh_.advertise<cav_msgs::SystemAlert>("system_alert", 10, true);
+
 
   // Pose Subscriber
   pose_sub.subscribe(nh_, "current_pose", 1);
@@ -48,9 +41,6 @@ void MPCFollowerWrapper::Initialize() {
   way_points_pub_ = nh_.advertise<autoware_msgs::Lane>("final_waypoints", 10, true);
 }
 
-bool MPCFollowerWrapper::ReadParameters() {
-  return true;
-}
 
 void MPCFollowerWrapper::TrajectoryPlanPoseHandler(const geometry_msgs::PoseStamped::ConstPtr& pose, const cav_msgs::TrajectoryPlan::ConstPtr& tp){
   ROS_DEBUG_STREAM("Received TrajectoryPlanCurrentPosecallback message");
@@ -71,7 +61,7 @@ void MPCFollowerWrapper::TrajectoryPlanPoseHandler(const geometry_msgs::PoseStam
       PublisherForWayPoints(lane);
     }
     catch(const std::exception& e) {
-      CARMANodeHandle::handleException(e);
+      ros::CARMANodeHandle::handleException(e);
     }
 
 };

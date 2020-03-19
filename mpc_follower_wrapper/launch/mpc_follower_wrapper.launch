@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-    <remap from="final_waypoints" to="/guidance/carma_final_waypoints"/>
+    <remap from="final_waypoints" to="carma_final_waypoints"/>
     <!-- MPC Follower Node -->
     <group>
         <remap from="vehicle_model_steer_tau" to="/vehicle_steer_tau"/>

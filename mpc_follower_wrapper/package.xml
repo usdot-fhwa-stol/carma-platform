@@ -18,22 +18,37 @@
   <author email="CARMA@dot.gov">carma</author>
 
   <buildtool_depend>catkin</buildtool_depend>
+  <depend>carma_utils</depend>
+  <depend>cav_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>rospy</depend>
+  <depend>autoware_msgs</depend>
+  <depend>message_filters</depend>
+  <depend>geometry_msgs</depend>
+  <depend>autoware_config_msgs</depend>
+
+<!--   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>cav_msgs</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>rospy</build_depend>
   <build_depend>autoware_msgs</build_depend>
+  <build_depend>message_filters</build_depend>
   <build_depend>geometry_msgs</build_depend>
+  <build_depend>autoware_config_msgs</build_depend>
   <build_export_depend>cav_msgs</build_export_depend>
   <build_export_depend>roscpp</build_export_depend>
   <build_export_depend>rospy</build_export_depend>
   <build_export_depend>autoware_msgs</build_export_depend>
+  <build_export_depend>message_filters</build_export_depend>
   <build_export_depend>geometry_msgs</build_export_depend>
+  <build_export_depend>autoware_config_msgs</build_export_depend>
   <exec_depend>cav_msgs</exec_depend>
   <exec_depend>roscpp</exec_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>autoware_msgs</exec_depend>
+  <exec_depend>message_filters</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
-
+  <build_export_depend>autoware_config_msgs</build_export_depend> -->
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

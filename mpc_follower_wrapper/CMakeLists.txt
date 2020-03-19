@@ -5,9 +5,7 @@ project(mpc_follower_wrapper)
 add_compile_options(-std=c++11)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
-add_definitions(-DBOOST_LOG_DYN_LINK=1)
-set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_FLAGS "-lboost_system") 
+
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -19,6 +17,8 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   autoware_msgs
   message_filters
+  autoware_config_msgs
+  carma_utils
 )
 
 ## System dependencies are found with CMake's conventions
@@ -67,7 +67,7 @@ add_dependencies(mpc_follower_wrapper_worker_library ${catkin_EXPORTED_TARGETS})
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES mpc_follower_wrapper_worker_library
- CATKIN_DEPENDS cav_msgs roscpp rospy geometry_msgs autoware_msgs message_filters
+ CATKIN_DEPENDS cav_msgs roscpp rospy geometry_msgs autoware_msgs message_filters autoware_config_msgs carma_utils
 #  DEPENDS system_lib
  DEPENDS Boost
 )
