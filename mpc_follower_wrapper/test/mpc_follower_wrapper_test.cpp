@@ -53,7 +53,7 @@ TEST(TrajectoryPlanPointToWaypointConverterTest, test1)
     tpp2.y = -1;
     tpp2.target_time = 1e8;
 
-    waypoint = ppww.TrajectoryPlanPointToWaypointConverter(current_time, current_pose, tpp, tpp2);
+    waypoint = mpcww.TrajectoryPlanPointToWaypointConverter(current_time, current_pose, tpp, tpp2);
 
     v_x = waypoint.twist.twist.linear.x;
     correct_v_x = 14.14;
