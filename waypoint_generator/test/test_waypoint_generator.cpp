@@ -240,12 +240,13 @@ namespace waypoint_generator
 
         std::vector<double> speeds_a = {0.0, 0.0, 0.0, 0.0, 0.0, 
                                       5.0, 5.0, 5.0, 5.0, 5.0};
-        double limit_a = 3.0;
-        std::vector<double> out_a = wpg.apply_speed_limits(speeds_a, limit_a);
+        std::vector<double> limits_a = {3.0, 3.0, 3.0, 3.0, 3.0,
+                                        3.0, 3.0, 3.0, 3.0, 3.0};
+        std::vector<double> out_a = wpg.apply_speed_limits(speeds_a, limits_a);
 
         ASSERT_EQ(10, out_a.size());
-        for (double v : out_a) {
-            ASSERT_LE(v, limit_a);
+        for (int i = 0; i < speeds_a.size(); i++) {
+            ASSERT_LE(out_a[i], limits_a[i]);
         }
     }
 }

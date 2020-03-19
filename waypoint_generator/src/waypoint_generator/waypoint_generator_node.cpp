@@ -32,14 +32,12 @@ namespace waypoint_generator
         _pnh->param<double>("lateral_accel_limit", _lateral_accel_limit, 1.5);
         _pnh->param<double>("longitudinal_accel_limit", _longitudinal_accel_limit, 1.5);
         _pnh->param<double>("longitudinal_decel_limit", _longitudinal_decel_limit, 1.5);
-        _pnh->param<double>("max_speed", _max_speed, 10.0);
         ROS_DEBUG_STREAM("Parameters loaded!" << std::endl
             << "curvature_epsilon: " << _curvature_epsilon << std::endl
             << "linearity_constraint" << _linearity_constraint << std::endl
             << "lateral_accel_limit: " << _lateral_accel_limit << std::endl
             << "longitudinal_accel_limit: " << _longitudinal_accel_limit << std::endl
-            << "longitudinal_decel_limit: " << _longitudinal_decel_limit << std::endl
-            << "max_speed: " << _max_speed);
+            << "longitudinal_decel_limit: " << _longitudinal_decel_limit << std::endl);
     }
 
     void WaypointGeneratorNode::run()
@@ -97,9 +95,10 @@ namespace waypoint_generator
             _longitudinal_accel_limit,
             _longitudinal_decel_limit);
 
+        std::vector<double> speed_limits = _wpg.get_speed_limits(tmp);
         std::vector<double> final_speeds = _wpg.apply_speed_limits(
             accel_limited_speeds, 
-            _max_speed);
+            speed_limits);
 
         ROS_DEBUG("Processing orientations...");
         std::vector<geometry_msgs::Quaternion> orientations = 

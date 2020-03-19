@@ -59,6 +59,15 @@ namespace waypoint_generator
                 int linearity_constraint) const;
 
             /**!
+             * \brief Get a list of speed limits at each point of the centerline
+             * for each lanelet
+             * \param lanelets The lanelets to get speed limits from
+             * \return A vector where the i-th element is the speed limit for
+             * the i-th centerline point amongst all input lanelets
+             */
+            std::vector<double> get_speed_limits(std::vector<lanelet::ConstLanelet> lanelets) const;
+
+            /**!
              * \brief Normalize the curvature within curvature regions to an
              * average value.
              * 
@@ -164,15 +173,15 @@ namespace waypoint_generator
             /**!
              * \brief Apply a basic speed limiter to all speeds in the input list
              * 
-             * \param speeds The list of speeds
-             * \param max_speed The maximum allowable speed
+             * \param speeds The list of speeds at each point
+             * \param max_speed The maximum allowable speed at each point
              * 
              * \return A copy of the input list with any speeds larger than the
              * limit capped at the limit
              */
             std::vector<double> apply_speed_limits(
                 const std::vector<double> speeds, 
-                const double max_speed) const;
+                const std::vector<double> speed_limits) const;
         private:
             carma_wm::WorldModelConstPtr _wm;
     };

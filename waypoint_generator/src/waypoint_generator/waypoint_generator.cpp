@@ -42,8 +42,7 @@ std::vector<int> WaypointGenerator::compute_constant_curvature_regions(
     // Post-process for linearly increasing/decreasing regions
     // It is assumed that the underyling dataset is itself linearly increasing
     // or decreasing and that is is just sampling it down to the endpoint
-    std::vector<int> out;
-    for (int i = 0; i < regions.size() - 1; i++) {
+    std::vector<int> out; for (int i = 0; i < regions.size() - 1; i++) {
         if (regions[i + 1] - regions[i] < linearity_constraint) {
             continue;
         } else {
@@ -114,11 +113,14 @@ std::vector<double> WaypointGenerator::compute_ideal_speeds(std::vector<double> 
 
 std::vector<double> WaypointGenerator::apply_speed_limits(
     const std::vector<double> speeds, 
-    const double max_speed) const
+    const std::vector<double> speed_limits) const
 {
+    if (speeds.size() != speed_limits.size()){
+        throw std::invalid_argument("Speeds and speed limit lists not same size");
+    }
     std::vector<double> out;
-    for (double v : speeds) {
-        out.push_back(std::min(v, max_speed));
+    for (int i = 0; i < speeds.size(); i++) {
+        out.push_back(std::min(speeds[i], speed_limits[i]));
     }
 
     return out;
@@ -286,6 +288,20 @@ autoware_msgs::LaneArray WaypointGenerator::generate_lane_array_message(
         }
 
         lane.waypoints = waypoints;
+    }
+
+}
+std::vector<double> WaypointGenerator::get_speed_limits(
+    std::vector<lanelet::ConstLanelet> lanelets) const
+{
+    std::vector<double> out;
+    for (int i = 0; i < lanelets.size(); i++) {
+        lanelet::traffic_rules::SpeedLimitInformation sli = 
+            _wm->getTrafficRules()->get()->speedLimit(lanelets[i]);
+
+        for (int j = 0; j < lanelets[i].centerline2d().size(); i++) {
+            out.push_back(sli.speedLimit.value());
+        }
     }
 }
 };
