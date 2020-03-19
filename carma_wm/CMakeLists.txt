@@ -31,9 +31,9 @@ find_package(Eigen3 REQUIRED)
 ## Catkin export configuration
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES carma_wm
+  LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS ${PKG_CATKIN_DEPS}
-  DEPENDS Boost Eigen3
+  DEPENDS Boost EIGEN3
 )
 
 ###########

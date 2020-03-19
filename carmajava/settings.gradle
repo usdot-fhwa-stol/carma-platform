@@ -15,7 +15,5 @@
  */
 
 include 'message'
-include 'template'
 include 'mock_drivers'
-include 'geometry'
 include 'rosutils'
