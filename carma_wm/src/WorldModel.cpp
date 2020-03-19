@@ -122,7 +122,7 @@ std::vector<Eigen::Vector2d>
 WorldModel::compute_finite_differences(const std::vector<Eigen::Vector2d>& x,const std::vector<double>& y)
 {
   if (x.size() != y.size()) {
-    throw new std::invalid_argument("Attempting to differentiate two unequal sized lists!");
+    throw std::invalid_argument("Attempting to differentiate two unequal sized lists!");
   }
 
   std::vector<Eigen::Vector2d> out;

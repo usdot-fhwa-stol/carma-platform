@@ -299,7 +299,7 @@ std::vector<double> WaypointGenerator::get_speed_limits(
         lanelet::traffic_rules::SpeedLimitInformation sli = 
             _wm->getTrafficRules()->get()->speedLimit(lanelets[i]);
 
-        for (int j = 0; j < lanelets[i].centerline2d().size(); i++) {
+        for (int j = 0; j < lanelets[i].centerline2d().size(); j++) {
             out.push_back(sli.speedLimit.value());
         }
     }
