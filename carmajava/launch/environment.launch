@@ -41,16 +41,16 @@
   
   <group>
   <include file="$(find calibration_publisher)/launch/calibration_publisher.launch">
-  <arg name="register_lidar2camera_tf" default="true" />
-  <arg name="publish_extrinsic_mat" default="true"/>
-  <arg name="publish_camera_info" default="true"/>  
-  <arg name="target_frame" default="velodyne" />
-  <arg name="camera_frame" default="left_optical" />
-  <arg name="image_topic_src" default="$(optenv CARMA_INTR_NS)/camera/image_raw"/>
-  <arg name="camera_info_topic" default="$(optenv CARMA_INTR_NS)/camera/camera_info"/>
-  <arg name="projection_matrix_topic" default="$(optenv CARMA_INTR_NS)/camera/projection_matrix"/>
+  <arg name="register_lidar2camera_tf" value="true" />
+  <arg name="publish_extrinsic_mat" value="true"/>
+  <arg name="publish_camera_info" value="true"/>  
+  <arg name="target_frame" value="velodyne" />
+  <arg name="camera_frame" value="left_optical" />
+  <arg name="image_topic_src" value="$(optenv CARMA_INTR_NS)/camera/image_raw"/>
+  <arg name="camera_info_topic" value="$(optenv CARMA_INTR_NS)/camera/camera_info"/>
+  <arg name="projection_matrix_topic" value="$(optenv CARMA_INTR_NS)/camera/projection_matrix"/>
   
-  <arg name="calibration_file" default="$(find calibration_publisher)/config/lidar_camera_fl_calibration.yaml"/>  
+  <arg name="calibration_file" value="$(arg vehicle_calibration_dir)/range_vision_fusion/lidar_camera_fl_extrinsics.yaml"/>  
 
   </include>
   </group>
@@ -58,24 +58,24 @@
   <!-- vision_darknet_detect -->
   <group>
   <include file="$(find vision_darknet_detect)/launch/vision_yolo3_detect.launch">
-  <arg name="gpu_device_id" default="0"/>
-  <arg name="score_threshold" default="0.30"/>
-  <arg name="nms_threshold" default="0.30"/>
+  <arg name="gpu_device_id" value="0"/>
+  <arg name="score_threshold" value="0.30"/>
+  <arg name="nms_threshold" value="0.30"/>
 
-  <arg name="network_definition_file" default="$(find vision_darknet_detect)/darknet/cfg/yolov3.cfg"/>
-  <arg name="pretrained_model_file" default="$(find vision_darknet_detect)/darknet/data/yolov3.weights"/>
-  <arg name="names_file" default="$(find vision_darknet_detect)/darknet/cfg/coco.names"/>
+  <arg name="network_definition_file" value="$(find vision_darknet_detect)/darknet/cfg/yolov3.cfg"/>
+  <arg name="pretrained_model_file" value="$(find vision_darknet_detect)/darknet/data/yolov3.weights"/>
+  <arg name="names_file" value="$(find vision_darknet_detect)/darknet/cfg/coco.names"/>
 
-  <arg name="camera_id" default="/"/>
-  <arg name="image_src" default="$(optenv CARMA_INTR_NS)/camera/image_raw"/>
+  <arg name="camera_id" value="/"/>
+  <arg name="image_src" value="$(optenv CARMA_INTR_NS)/camera/image_raw"/>
   </include>
   </group>
 
 <!-- vision_beyond_track -->
   <group>
   <include file="$(find vision_beyond_track)/launch/vision_beyond_track.launch">
-  <arg name="camera_info_src" default="$(optenv CARMA_INTR_NS)/camera/camera_info"/>
-  <arg name="objects_topic_src" default="detection/image_detector/objects"/>
+  <arg name="camera_info_src" value="$(optenv CARMA_INTR_NS)/camera/camera_info"/>
+  <arg name="objects_topic_src" value="detection/image_detector/objects"/>
   <arg name="camera_height_calibration_params_file" value="$(arg vehicle_calibration_dir)/vision_beyond_track/calibration.yaml"/>
   </include>
   </group>
@@ -83,30 +83,30 @@
   <!-- lidar_euclidean_cluster_detect -->
   <group>
   <include file="$(find lidar_euclidean_cluster_detect)/launch/lidar_euclidean_cluster_detect.launch">
-  <arg name="points_node" default="$(optenv CARMA_LOCZ_NS)/ray_ground_filter/points_no_ground" />
+  <arg name="points_node" value="$(optenv CARMA_LOCZ_NS)/ray_ground_filter/points_no_ground" />
 
-  <arg name="remove_ground" default="false" />
-  <arg name="downsample_cloud" default="false" /> <!-- Apply VoxelGrid Filter with the value given by "leaf_size"-->
-  <arg name="leaf_size" default="0.1" /><!-- Voxel Grid Filter leaf size-->
-  <arg name="cluster_size_min" default="20" /><!-- Minimum number of points to consider a cluster as valid-->
-  <arg name="cluster_size_max" default="100000" /><!-- Maximum number of points to allow inside a cluster-->
-  <arg name="sync" default="false" />
-  <arg name="use_diffnormals" default="false" />
-  <arg name="pose_estimation" default="true" />
+  <arg name="remove_ground" value="false" />
+  <arg name="downsample_cloud" value="false" /> <!-- Apply VoxelGrid Filter with the value given by "leaf_size"-->
+  <arg name="leaf_size" value="0.1" /><!-- Voxel Grid Filter leaf size-->
+  <arg name="cluster_size_min" value="20" /><!-- Minimum number of points to consider a cluster as valid-->
+  <arg name="cluster_size_max" value="100000" /><!-- Maximum number of points to allow inside a cluster-->
+  <arg name="sync" value="false" />
+  <arg name="use_diffnormals" value="false" />
+  <arg name="pose_estimation" value="true" />
   <arg name="calibration_params_file" value="$(arg vehicle_calibration_dir)/lidar_euclidean_cluster_detect/calibration.yaml"/> <!-- clip_max_height,clip_min_height and output_frame-->
-  <arg name="keep_lanes" default="false" />
-  <arg name="keep_lane_left_distance" default="5" />
-  <arg name="keep_lane_right_distance" default="5" />
-  <arg name="cluster_merge_threshold" default="1.5" />
-  <arg name="clustering_distance" default="0.75" />
-  <arg name="use_vector_map" default="false" />
-  <arg name="wayarea_gridmap_layer" default="wayarea" />
-  <arg name="remove_points_upto" default="0.0" />
-  <arg name="use_gpu" default="false" />
-  <arg name="use_multiple_thres" default="false"/>
-  <arg name="clustering_ranges" default="[15,30,45,60]"/><!-- Distances to segment pointcloud -->
+  <arg name="keep_lanes" value="false" />
+  <arg name="keep_lane_left_distance" value="5" />
+  <arg name="keep_lane_right_distance" value="5" />
+  <arg name="cluster_merge_threshold" value="1.5" />
+  <arg name="clustering_distance" value="0.75" />
+  <arg name="use_vector_map" value="false" />
+  <arg name="wayarea_gridmap_layer" value="wayarea" />
+  <arg name="remove_points_upto" value="0.0" />
+  <arg name="use_gpu" value="false" />
+  <arg name="use_multiple_thres" value="false"/>
+  <arg name="clustering_ranges" value="[15,30,45,60]"/><!-- Distances to segment pointcloud -->
   <arg name="clustering_distances"
-       default="[0.5,1.1,1.6,2.1,2.6]"/><!-- Euclidean Clustering threshold distance for each segment -->
+       value="[0.5,1.1,1.6,2.1,2.6]"/><!-- Euclidean Clustering threshold distance for each segment -->
 
   </include>
   </group>
@@ -114,16 +114,16 @@
   <!-- range_vision_fusion -->
   <group>
   <include file="$(find range_vision_fusion)/launch/range_vision_fusion.launch">
-  <arg name="detected_objects_range" default="detection/lidar_detector/objects"/>
-  <arg name="detected_objects_vision" default="detection/image_detector/objects"/>
-  <arg name="camera_info_src" default="$(optenv CARMA_INTR_NS)/camera/camera_info"/>
-  <arg name="min_car_dimensions" default="[3,2,2]"/>
-  <arg name="min_person_dimensions" default="[1,2,1]"/>
-  <arg name="min_truck_dimensions" default="[4,2,2]"/>
-  <arg name="sync_topics" default="false"/>
-  <arg name="overlap_threshold" default="0.6"/>
-  <arg name="use_vector_map" default="false"/>
-  <arg name="namespace" default="detection/fusion_tools"/>
+  <arg name="detected_objects_range" value="detection/lidar_detector/objects"/>
+  <arg name="detected_objects_vision" value="detection/image_detector/objects"/>
+  <arg name="camera_info_src" value="$(optenv CARMA_INTR_NS)/camera/camera_info"/>
+  <arg name="min_car_dimensions" value="[3,2,2]"/>
+  <arg name="min_person_dimensions" value="[1,2,1]"/>
+  <arg name="min_truck_dimensions" value="[4,2,2]"/>
+  <arg name="sync_topics" value="false"/>
+  <arg name="overlap_threshold" value="0.6"/>
+  <arg name="use_vector_map" value="false"/>
+  <arg name="namespace" value="detection/fusion_tools"/>
 
   </include>
   </group>
@@ -131,26 +131,26 @@
   <!-- imm_ukf_pda_track -->
   <group>
   <include file="$(find imm_ukf_pda_track)/launch/imm_ukf_pda_track_lanelet2.launch">
-  	 <arg name="namespace" default="detection/object_tracker"/>
-  <arg name="tracker_input_topic" default="detection/fusion_tools/objects" />
-  	<arg name="tracker_output_topic" default="detection/object_tracker/objects" />
+  	 <arg name="namespace" value="detection/object_tracker"/>
+  <arg name="tracker_input_topic" value="detection/fusion_tools/objects" />
+  	<arg name="tracker_output_topic" value="detection/object_tracker/objects" />
 
-  <arg name="tracking_frame" default="map" />
-  <arg name="gating_threshold" default="9.22" />
-  <arg name="gate_probability" default="0.99" />
-  <arg name="detection_probability" default="0.9" />
-  <arg name="life_time_threshold" default="8" />
-  <arg name="static_velocity_threshold" default="0.5" />
-  <arg name="static_num_history_threshold" default="3" />
-  <arg name="prevent_explosion_threshold" default="1000" />
-  <arg name="merge_distance_threshold" default="0.5"/>
-  <arg name="use_sukf" default="false" />
+  <arg name="tracking_frame" value="map" />
+  <arg name="gating_threshold" value="9.22" />
+  <arg name="gate_probability" value="0.99" />
+  <arg name="detection_probability" value="0.9" />
+  <arg name="life_time_threshold" value="8" />
+  <arg name="static_velocity_threshold" value="0.5" />
+  <arg name="static_num_history_threshold" value="3" />
+  <arg name="prevent_explosion_threshold" value="1000" />
+  <arg name="merge_distance_threshold" value="0.5"/>
+  <arg name="use_sukf" value="false" />
 
   <!-- Vectormap -->
-  <arg name="use_map_info" default="false"/>
-  <arg name="lane_direction_chi_threshold" default="2.71" />
-  <arg name="nearest_lane_distance_threshold" default="1.0" />
-  <arg name="map_frame" default="map" />
+  <arg name="use_map_info" value="false"/>
+  <arg name="lane_direction_chi_threshold" value="2.71" />
+  <arg name="nearest_lane_distance_threshold" value="1.0" />
+  <arg name="map_frame" value="map" />
 
   </include>
   </group>
@@ -158,11 +158,11 @@
   <!-- naive_motion_predict -->
   <group>
   <include file="$(find naive_motion_predict)/launch/naive_motion_predict.launch">
-  <arg name="interval_sec" default="0.1"/>
-  <arg name="num_prediction" default="10"/>
+  <arg name="interval_sec" value="0.1"/>
+  <arg name="num_prediction" value="10"/>
   <arg name="sensor_height_calibration_params_file" value="$(arg vehicle_calibration_dir)/naive_motion_predict/calibration.yaml"/>
-  <arg name="filter_out_close_object_threshold" default="1.5"/>
-  <arg name="input_topic" default="detection/objects"/>
+  <arg name="filter_out_close_object_threshold" value="1.5"/>
+  <arg name="input_topic" value="detection/objects"/>
   </include>
   </group>
 
