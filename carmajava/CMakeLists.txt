@@ -70,10 +70,6 @@ install(DIRECTORY
         scripts
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 install(DIRECTORY
-        message/build
-        message/config
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/message)
-install(DIRECTORY
         mock_drivers/build
         mock_drivers/config
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/mock_drivers)
