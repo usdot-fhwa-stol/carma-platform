@@ -11,7 +11,7 @@
   the License.
 -->
 <!--
-  This file is used to launch a ros wrapper of Autoware planner as a CARMA strategic plugin.
+  This file is used to launch truck inspection plugin client.
 -->
 <launch>
     <rosparam command="load" file="$(find truck_inspection_client)/config/parameters.yaml"/>
