@@ -14,6 +14,6 @@
   This file is used to launch a ros wrapper of Autoware planner as a CARMA strategic plugin.
 -->
 <launch>
-    <rosparam command="load" file="$(find bsm_generator)/config/parameters.yaml"/>
-    <node name="bsm_generator" pkg="bsm_generator" type="bsm_generator"/>
+    <rosparam command="load" file="$(find truck_inspection_client)/config/parameters.yaml"/>
+    <node name="truck_inspection_client" pkg="truck_inspection_client" type="truck_inspection_client"/>
 </launch>
