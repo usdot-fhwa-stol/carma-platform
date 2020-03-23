@@ -79,7 +79,9 @@ jobs:
           name: Save Java Test results
           command: |
             source ${INIT_ENV}
-            if [ -d "src/CARMAPlatform/carmajava/build/reports/allTests" ]; then
+            if [ -z "$(ls -A src/CARMAPlatform/carmajava/build/reports/allTests)" ]; then
+              echo "No java unit test results to collect"
+            else
               mkdir -p ~/junit/ 
               sudo mkdir -p /reports/tests
               sudo mv src/CARMAPlatform/carmajava/build/reports/allTests/* /reports/tests/
