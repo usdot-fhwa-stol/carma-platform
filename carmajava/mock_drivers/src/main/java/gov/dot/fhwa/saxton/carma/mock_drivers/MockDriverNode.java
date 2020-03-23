@@ -45,7 +45,7 @@ public class MockDriverNode extends SaxtonBaseNode {
     final ParameterTree params = connectedNode.getParameterTree();
     final IMockDriver simulatedDriver;
     String switchValue = params.getString("~/simulated_driver");
-    switch (params.getString("~/simulated_driver")) {
+    switch (switchValue) {
       case "can":
         simulatedDriver = new MockCANDriver(connectedNode);
         break;
