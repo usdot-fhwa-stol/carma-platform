@@ -17,11 +17,11 @@
 
 // ROS
 #include <ros/ros.h>
-#include <geometry_msgs/PoseStamped.h>
+// #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
-#include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
-#include <message_filters/sync_policies/approximate_time.h>
+// #include <message_filters/subscriber.h>
+// #include <message_filters/time_synchronizer.h>
+// #include <message_filters/sync_policies/approximate_time.h>
 
 // msgs
 #include <cav_msgs/SystemAlert.h>
@@ -57,17 +57,12 @@ class MPCFollowerWrapper {
 
         // @brief ROS initialize.
         void Initialize();
-        
+
+        // @brief ROS subscriber
+        ros::Subscriber trajectory_plan_sub;
 
 
-        // message filter subscribers
-        message_filters::Subscriber<geometry_msgs::PoseStamped> pose_sub;
-        message_filters::Subscriber<cav_msgs::TrajectoryPlan> trajectory_plan_sub;
-        
-        // SyncPolicy
-        typedef message_filters::sync_policies::ApproximateTime<geometry_msgs::PoseStamped, cav_msgs::TrajectoryPlan> SyncPolicy;
-
-        void TrajectoryPlanPoseHandler(const geometry_msgs::PoseStamped::ConstPtr& pose, const cav_msgs::TrajectoryPlan::ConstPtr& tp);
+        void TrajectoryPlanPoseHandler(const cav_msgs::TrajectoryPlan::ConstPtr& tp);
 
     private:
 

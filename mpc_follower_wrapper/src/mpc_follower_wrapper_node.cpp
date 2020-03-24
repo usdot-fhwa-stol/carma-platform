@@ -18,9 +18,9 @@
 #include <ros/ros.h>
 #include <ros/console.h>
 
-#include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
-#include <message_filters/sync_policies/approximate_time.h>
+// #include <message_filters/subscriber.h>
+// #include <message_filters/time_synchronizer.h>
+// #include <message_filters/sync_policies/approximate_time.h>
 
 int main(int argc, char** argv) {
 
@@ -28,11 +28,7 @@ int main(int argc, char** argv) {
   ros::CARMANodeHandle nh("");
 
   mpc_follower_wrapper::MPCFollowerWrapper MPCFollowerWrapper(nh);
-
-  // Approximate time of 100ms used because NDT outputs at 10Hz
-  message_filters::Synchronizer<mpc_follower_wrapper::MPCFollowerWrapper::SyncPolicy> sync(mpc_follower_wrapper::MPCFollowerWrapper::SyncPolicy(100), MPCFollowerWrapper.pose_sub, MPCFollowerWrapper.trajectory_plan_sub);
-  sync.registerCallback(boost::bind(&mpc_follower_wrapper::MPCFollowerWrapper::TrajectoryPlanPoseHandler, &MPCFollowerWrapper, _1, _2));
-
+  
   ros::CARMANodeHandle::setSpinRate(10);
   ros::CARMANodeHandle::spin();
 

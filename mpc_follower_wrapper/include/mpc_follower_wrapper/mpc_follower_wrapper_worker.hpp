@@ -17,7 +17,6 @@
 #include "autoware_msgs/Lane.h"
 #include "autoware_config_msgs/ConfigWaypointFollower.h"
 #include "autoware_msgs/ControlCommandStamped.h"
-#include <geometry_msgs/PoseStamped.h>
 #include <cav_msgs/TrajectoryPlan.h>
 
 namespace mpc_follower_wrapper {
@@ -25,6 +24,6 @@ namespace mpc_follower_wrapper {
 class MPCFollowerWrapperWorker {
     public:
         // Convert TrajectoryPlanPoint to Waypoint. This is used by TrajectoryPlanHandler.
-        autoware_msgs::Waypoint TrajectoryPlanPointToWaypointConverter(double current_time, geometry_msgs::PoseStamped pose, cav_msgs::TrajectoryPlanPoint tpp, cav_msgs::TrajectoryPlanPoint tpp2);
+        autoware_msgs::Waypoint TrajectoryPlanPointToWaypointConverter(cav_msgs::TrajectoryPlanPoint tpp, cav_msgs::TrajectoryPlanPoint tpp2);
 };
 }

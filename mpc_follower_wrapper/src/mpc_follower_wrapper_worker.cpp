@@ -18,7 +18,7 @@
 
 namespace mpc_follower_wrapper {
 
-autoware_msgs::Waypoint MPCFollowerWrapperWorker::TrajectoryPlanPointToWaypointConverter(double current_time, geometry_msgs::PoseStamped pose, cav_msgs::TrajectoryPlanPoint tpp, cav_msgs::TrajectoryPlanPoint tpp2) {
+autoware_msgs::Waypoint MPCFollowerWrapperWorker::TrajectoryPlanPointToWaypointConverter(cav_msgs::TrajectoryPlanPoint tpp, cav_msgs::TrajectoryPlanPoint tpp2) {
 
   autoware_msgs::Waypoint waypoint;
 

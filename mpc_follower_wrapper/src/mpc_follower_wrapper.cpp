@@ -32,17 +32,16 @@ MPCFollowerWrapper::~MPCFollowerWrapper() {
 void MPCFollowerWrapper::Initialize() {
 
 
-  // Pose Subscriber
-  pose_sub.subscribe(nh_, "current_pose", 1);
   // Trajectory Plan Subscriber
-  trajectory_plan_sub.subscribe(nh_, "trajectory_plan", 1);
+  
+  trajectory_plan_sub = nh_.subscribe<cav_msgs::TrajectoryPlan>("trajectory_plan", 1, &MPCFollowerWrapper::TrajectoryPlanPoseHandler, this);
 
   // WayPoints Publisher
   way_points_pub_ = nh_.advertise<autoware_msgs::Lane>("final_waypoints", 10, true);
 }
 
 
-void MPCFollowerWrapper::TrajectoryPlanPoseHandler(const geometry_msgs::PoseStamped::ConstPtr& pose, const cav_msgs::TrajectoryPlan::ConstPtr& tp){
+void MPCFollowerWrapper::TrajectoryPlanPoseHandler(const cav_msgs::TrajectoryPlan::ConstPtr& tp){
   ROS_DEBUG_STREAM("Received TrajectoryPlanCurrentPosecallback message");
     try {
       autoware_msgs::Lane lane;
@@ -53,7 +52,7 @@ void MPCFollowerWrapper::TrajectoryPlanPoseHandler(const geometry_msgs::PoseStam
 
         cav_msgs::TrajectoryPlanPoint t1 = tp->trajectory_points[i];
         cav_msgs::TrajectoryPlanPoint t2 = tp->trajectory_points[i + 1];
-        autoware_msgs::Waypoint waypoint = mpcww.TrajectoryPlanPointToWaypointConverter(current_time, *pose,t1, t2);
+        autoware_msgs::Waypoint waypoint = mpcww.TrajectoryPlanPointToWaypointConverter(t1, t2);
         waypoints.push_back(waypoint);
       }
 
