@@ -79,10 +79,14 @@ jobs:
           name: Save Java Test results
           command: |
             source ${INIT_ENV}
-            mkdir -p ~/junit/ 
-            sudo mkdir -p /reports/tests
-            sudo mv src/CARMAPlatform/carmajava/build/reports/allTests/* /reports/tests/
-            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/junit/ \;
+            if [ -z "$(ls -A src/CARMAPlatform/carmajava/build/reports/allTests)" ]; then
+              echo "No java unit test results to collect"
+            else
+              mkdir -p ~/junit/ 
+              sudo mkdir -p /reports/tests
+              sudo mv src/CARMAPlatform/carmajava/build/reports/allTests/* /reports/tests/
+              find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/junit/ \;
+            fi
           when: always
       # Run SonarCloud analysis
       # PR Branchs and number extracted from Circle variables and github api
