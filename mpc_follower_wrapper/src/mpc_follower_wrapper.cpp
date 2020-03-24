@@ -66,7 +66,7 @@ void MPCFollowerWrapper::TrajectoryPlanPoseHandler(const cav_msgs::TrajectoryPla
 };
 
 
-void MPCFollowerWrapper::PublisherForWayPoints(autoware_msgs::Lane& msg){
+void MPCFollowerWrapper::PublisherForWayPoints(const autoware_msgs::Lane& msg){
   way_points_pub_.publish(msg);
 };
 

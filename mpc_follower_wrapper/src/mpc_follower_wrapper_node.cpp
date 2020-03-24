@@ -18,10 +18,6 @@
 #include <ros/ros.h>
 #include <ros/console.h>
 
-// #include <message_filters/subscriber.h>
-// #include <message_filters/time_synchronizer.h>
-// #include <message_filters/sync_policies/approximate_time.h>
-
 int main(int argc, char** argv) {
 
   ros::init(argc, argv, "mpc_follower_wrapper_node");

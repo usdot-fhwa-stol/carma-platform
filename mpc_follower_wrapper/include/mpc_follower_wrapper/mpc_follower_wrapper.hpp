@@ -78,7 +78,7 @@ class MPCFollowerWrapper {
 
 
         // @brief ROS pusblishers.
-        void PublisherForWayPoints(autoware_msgs::Lane& msg);
+        void PublisherForWayPoints(const autoware_msgs::Lane& msg);
 
 
 };

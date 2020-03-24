@@ -24,6 +24,6 @@ namespace mpc_follower_wrapper {
 class MPCFollowerWrapperWorker {
     public:
         // Convert TrajectoryPlanPoint to Waypoint. This is used by TrajectoryPlanHandler.
-        autoware_msgs::Waypoint TrajectoryPlanPointToWaypointConverter(cav_msgs::TrajectoryPlanPoint tpp, cav_msgs::TrajectoryPlanPoint tpp2);
+        autoware_msgs::Waypoint TrajectoryPlanPointToWaypointConverter(const cav_msgs::TrajectoryPlanPoint& tpp, const cav_msgs::TrajectoryPlanPoint& tpp2);
 };
 }
