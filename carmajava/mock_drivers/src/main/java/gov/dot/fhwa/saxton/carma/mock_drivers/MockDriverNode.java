@@ -16,7 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.mock_drivers;
 
-import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
+import gov.dot.fhwa.saxton.carma.rosjava_utils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.node.ConnectedNode;
