@@ -47,7 +47,6 @@ void MPCFollowerWrapper::TrajectoryPlanPoseHandler(const cav_msgs::TrajectoryPla
       autoware_msgs::Lane lane;
       lane.header = tp->header;
       std::vector <autoware_msgs::Waypoint> waypoints;
-      double current_time = ros::Time::now().toSec();
       for(int i = 0; i < tp->trajectory_points.size() - 1; i++ ) {
 
         cav_msgs::TrajectoryPlanPoint t1 = tp->trajectory_points[i];
