@@ -1,4 +1,33 @@
-# The vehicle VIN number
-vin_number: 11111111111111111
+# Vehicle VIN number - 17 alphanumeric char
+vin_number: 1FUJGHDV0CLBP8834
 
-# Need add more params based on what info are needed
+# License plate number - 8 alphanumeric char
+license_plate: DOT-10003
+
+# Carrier Name - 20 alphanumeric char
+carrier_name: Silver Truck FHWA TFHRC
+
+# Carrier ID - (USDOT + space + 7digits)
+carrier_id: USDOT 0000001
+
+# Weight: ###,### lbs. (6 number format)
+weight: 100000
+
+# ADS Software Version: CARMA Platform v#.#.# (25characters)
+ads_software_version: CARMA Platform v3.3.0
+
+# Date of Last State Inspection: YYYY-MM-DD
+date_of_last_state_inspection: YYYY-MM-DD
+
+# Date of Last ADS Calibration: YYYY-MM-DD
+date_of_last_ads_calibration: YYYY-MM-DD
+
+#ISS Score: ### (number format + font color)
+#Color coding on the # only. 
+#1-49 (Green font) (Pass - Inspection Not Warranted)
+#50-74 (Yellow font) (Optional- Inspection Warranted – Next Level Priority)
+#75-100 (Red font) - (Inspect – Inspection warranted – top priority)
+iss_score: 49
+
+#Permit Required: (Yes/No)  
+permit_required: false

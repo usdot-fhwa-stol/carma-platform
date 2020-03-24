@@ -11,9 +11,11 @@
   the License.
 -->
 <!--
-  This file is used to launch truck inspection plugin client.
+  This file is used to launch a truck inspection client node.
 -->
 <launch>
-    <rosparam command="load" file="$(find truck_inspection_client)/config/parameters.yaml"/>
-    <node name="truck_inspection_client" pkg="truck_inspection_client" type="truck_inspection_client"/>
+    
+    <node name="truck_inspection_client" pkg="truck_inspection_client" type="truck_inspection_client" output="screen">
+      <rosparam command="load" file="$(find truck_inspection_client)/config/parameters.yaml"/>
+    </node>
 </launch>

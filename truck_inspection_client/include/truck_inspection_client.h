@@ -20,6 +20,7 @@
 #include <carma_utils/CARMAUtils.h>
 #include <cav_msgs/MobilityOperation.h>
 #include <cav_msgs/MobilityRequest.h>
+#include "boost/format.hpp"
 
 namespace truck_inspection_client
 {
@@ -45,15 +46,24 @@ namespace truck_inspection_client
         // subscriber for Mobility Request messages
         ros::Subscriber request_sub_;
 
-        // vehicle VIN number
-        std::string vin_number_;
-
         // initialize this node
         void initialize();
 
         // callbacks for the subscriber
         void requestCallback(const cav_msgs::MobilityRequestConstPtr& msg);
 
+        // truck info
+        std::string vin_number_;
+        std::string license_plate_;
+        std::string carrier_name_;
+        std::string carrier_id_;
+        std::string weight_;
+        std::string ads_software_version_;
+        std::string date_of_last_state_inspection_;
+        std::string date_of_last_ads_calibration_;
+        int iss_score_;
+        bool permit_required_;
+        
     };
 
 }
