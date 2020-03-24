@@ -33,7 +33,9 @@
 # Stage 1 - Acquire the CARMA source as well as any extra packages
 # /////////////////////////////////////////////////////////////////////////////
 
+
 FROM usdotfhwastol/autoware.ai:3.8.0 AS source-code
+
 
 RUN mkdir ~/src
 COPY --chown=carma . /home/carma/src/CARMAPlatform/
