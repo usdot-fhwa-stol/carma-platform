@@ -12,6 +12,11 @@ set(DEPS
   roscpp
   carma_utils
   carma_wm
+  lanelet2_core
+  lanelet2_routing
+  lanelet2_traffic_rules
+  tf2
+  tf2_geometry_msgs
 )
 find_package(catkin REQUIRED COMPONENTS
   ${DEPS}

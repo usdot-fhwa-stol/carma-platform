@@ -38,20 +38,22 @@ class RoadwayObjectsWorker
   /*!
    * \brief Constructor
    */
-  RoadwayObjectsWorker(PublishObstaclesCallback obj_pub);
+  RoadwayObjectsWorker(carma_wm::WorldModelConstPtr wm, PublishObstaclesCallback obj_pub);
     
   /*!
     \brief Converts the provided ExternalObjectList in a RoadwayObstacleList and republishes it
 
     \param msg array of detected objects.
   */
-void externalObjectsCallback(const cav_msgs::ExternalObjectList &msg);
+  void externalObjectsCallback(const cav_msgs::ExternalObjectListConstPtr& msg);
  
  private:
 
-    // local copy of external object publihsers
+  // local copy of external object publihsers
 
-    PublishObstaclesCallback obj_pub_;
+  PublishObstaclesCallback obj_pub_;
+
+  carma_wm::WorldModelConstPtr wm_;
   
 };
 

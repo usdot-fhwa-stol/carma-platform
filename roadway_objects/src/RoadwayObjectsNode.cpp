@@ -21,7 +21,7 @@ namespace objects {
 
   using std::placeholders::_1;
 
-  RoadwayObjectsNode::RoadwayObjectsNode(): object_worker_(std::bind(&RoadwayObjectsNode::publishObstacles, this, _1))
+  RoadwayObjectsNode::RoadwayObjectsNode(): object_worker_(wm_listener_.getWorldModel(), std::bind(&RoadwayObjectsNode::publishObstacles, this, _1))
   {
     external_objects_sub_ = nh_.subscribe("external_objects", 10, &RoadwayObjectsWorker::externalObjectsCallback, &object_worker_);
     roadway_obs_pub_ = nh_.advertise<cav_msgs::RoadwayObstacleList>("roadway_objects", 10);
