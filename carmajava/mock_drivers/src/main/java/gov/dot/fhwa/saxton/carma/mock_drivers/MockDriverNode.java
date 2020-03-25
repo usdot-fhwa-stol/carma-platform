@@ -44,7 +44,8 @@ public class MockDriverNode extends SaxtonBaseNode {
     final Log log = connectedNode.getLog();
     final ParameterTree params = connectedNode.getParameterTree();
     final IMockDriver simulatedDriver;
-    switch (params.getString("~/simulated_driver")) {
+    String switchValue = params.getString("~/simulated_driver");
+    switch (switchValue) {
       case "can":
         simulatedDriver = new MockCANDriver(connectedNode);
         break;
@@ -72,9 +73,11 @@ public class MockDriverNode extends SaxtonBaseNode {
       case "camera":
         simulatedDriver = new MockCameraDriver(connectedNode);
         break;
+      case "lightbar":
+        simulatedDriver = new MockLightBarDriver(connectedNode);
+        break;
       default:
-        log.warn(
-          "No valid driver name specified on the simulated_driver parameter. Defaulting to CAN driver");
+        log.warn("==== No valid driver name specified on the simulated_driver parameter. Defaulting to CAN driver \n The simulated_driver value received is: " + switchValue +  " ...");
         simulatedDriver = new MockCANDriver(connectedNode);
         break;
     }
