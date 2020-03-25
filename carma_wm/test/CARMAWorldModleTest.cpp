@@ -874,14 +874,6 @@ TEST(CARMAWorldModelTest, getTrafficRules)
   ASSERT_FALSE(!!default_participant);
 }
 
-/*
- virtual lanelet::Optional<cav_msgs::RoadwayObstacle>
-  toRoadwayObstacle(const cav_msgs::ExternalObject& object) const = 0;
-
-  virtual lanelet::BasicPolygon2d objectToMapPolygon(const geometry_msgs::Pose& pose,
-                                                     const geometry_msgs::Vector3& size) const = 0;
-*/
-
 TEST(CARMAWorldModelTest, objectToMapPolygon)
 {
   CARMAWorldModel cmw;
@@ -917,5 +909,104 @@ TEST(CARMAWorldModelTest, objectToMapPolygon)
 
   ASSERT_NEAR(result[3][0], 5.0, 0.00001);
   ASSERT_NEAR(result[3][1], 3.0, 0.00001);
+}
+/*
+ virtual lanelet::Optional<cav_msgs::RoadwayObstacle>
+  toRoadwayObstacle(const cav_msgs::ExternalObject& object) const = 0;
+*/
+TEST(CARMAWorldModelTest, toRoadwayObstacle)
+{
+  CARMAWorldModel cmw;
+  // Build map
+  auto p1 = getPoint(9, 0, 0);
+  auto p2 = getPoint(9, 9, 0);
+  auto p3 = getPoint(2, 0, 0);
+  auto p4 = getPoint(2, 9, 0);
+  lanelet::LineString3d right_ls_1(lanelet::utils::getId(), { p1, p2 });
+  lanelet::LineString3d left_ls_1(lanelet::utils::getId(), { p3, p4 });
+  auto ll_1 = getLanelet(left_ls_1, right_ls_1);
+  lanelet::LaneletMapPtr map = lanelet::utils::createMap({ ll_1 }, {});
+
+  geometry_msgs::Pose pose;
+  pose.position.x = 6;
+  pose.position.y = 5;
+  pose.position.z = 0;
+
+  tf2::Quaternion tf_orientation;
+  tf_orientation.setRPY( 0, 0, 1.5708 );
+
+  pose.orientation.x = tf_orientation.getX();
+  pose.orientation.y = tf_orientation.getY();
+  pose.orientation.z = tf_orientation.getZ();
+  pose.orientation.w = tf_orientation.getW();
+
+  geometry_msgs::Vector3 size;
+  size.x = 4;
+  size.y = 2;
+  size.z = 1;
+
+  cav_msgs::ExternalObject obj;
+  obj.id = 1;
+  obj.object_type = cav_msgs::ExternalObject::SMALL_VEHICLE;
+  obj.pose.pose = pose;
+  obj.velocity.twist.linear.x = 1.0;
+
+  cav_msgs::PredictedState pred;
+  auto pred_pose = obj.pose.pose;
+  pred_pose.position.y += 1;
+  pred.predicted_position = pred_pose;
+  pred.predicted_position_confidence = 1.0;
+
+  obj.predictions.push_back(pred);
+
+  // Test with no map set
+  ASSERT_THROW(cmw.toRoadwayObstacle(obj), std::invalid_argument);
+
+  // Set map
+  cmw.setMap(map);
+
+  // Test object on lanelet
+  lanelet::Optional<cav_msgs::RoadwayObstacle> result = cmw.toRoadwayObstacle(obj);
+
+  ASSERT_TRUE(!!result);
+  cav_msgs::RoadwayObstacle obs = result.get();
+
+  ASSERT_EQ(obs.object.id, obj.id); // Check that the object was coppied
+
+  ASSERT_EQ(obs.lanelet_id, ll_1.id());
+
+  ASSERT_EQ(obs.connected_vehicle_type.type, cav_msgs::ConnectedVehicleType::NOT_CONNECTED);
+
+  ASSERT_NEAR(obs.cross_track, 0.5, 0.00001);
+
+  ASSERT_NEAR(obs.down_track, 5.0, 0.00001);
+
+  ASSERT_EQ(obs.predicted_lanelet_ids.size(), 1);
+  ASSERT_EQ(obs.predicted_lanelet_ids[0], ll_1.id());
+
+  ASSERT_EQ(obs.predicted_lanelet_id_confidences.size(), 1);
+  ASSERT_NEAR(obs.predicted_lanelet_id_confidences[0], 0.9, 0.00001);
+
+  ASSERT_EQ(obs.predicted_cross_tracks.size(), 1);
+  ASSERT_NEAR(obs.predicted_cross_tracks[0], 0.5, 0.00001);
+
+  ASSERT_EQ(obs.predicted_cross_track_confidences.size(), 1);
+  ASSERT_NEAR(obs.predicted_cross_track_confidences[0], 0.9, 0.00001);
+
+  ASSERT_EQ(obs.predicted_down_tracks.size(), 1);
+  ASSERT_NEAR(obs.predicted_down_tracks[0], 6.0, 0.00001);
+
+  ASSERT_EQ(obs.predicted_down_track_confidences.size(), 1);
+  ASSERT_NEAR(obs.predicted_down_track_confidences[0], 0.9, 0.00001);
+
+  // Alternate object off the roadway
+  obj.pose.pose.position.x = 6;
+  obj.pose.pose.position.y = 20;
+  obj.pose.pose.position.z = 0;
+
+  result = cmw.toRoadwayObstacle(obj);
+
+  ASSERT_FALSE(!!result);
+
 }
 }  // namespace carma_wm

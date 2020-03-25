@@ -737,7 +737,7 @@ CARMAWorldModel::toRoadwayObstacle(const cav_msgs::ExternalObject& object) const
 
     auto predNearestLanelet = semantic_map_->laneletLayer.nearest(prediction_center, 1)[0];
 
-    carma_wm::TrackPos pred_track_pos = trackPos(predNearestLanelet, object_center);
+    carma_wm::TrackPos pred_track_pos = trackPos(predNearestLanelet, prediction_center);
 
     obs.predicted_lanelet_ids.emplace_back(predNearestLanelet.id());
     obs.predicted_cross_tracks.emplace_back(pred_track_pos.crosstrack);
