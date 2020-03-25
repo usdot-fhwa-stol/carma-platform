@@ -37,12 +37,12 @@ namespace waypoint_generator
             void initialize();
             void run();
             void new_route_callback();
-            ~WaypointGeneratorNode();
         private:
             int argc;
             char** argv;
             std::string node_name;
-            std::shared_ptr<ros::CARMANodeHandle> _nh, _pnh;
+            std::shared_ptr<ros::CARMANodeHandle> _nh{nullptr}; 
+            std::shared_ptr<ros::CARMANodeHandle> _pnh{nullptr};
             ros::Subscriber _route_sub;
             ros::Publisher _waypoints_pub;
             double _curvature_epsilon = 3.0;
@@ -53,7 +53,7 @@ namespace waypoint_generator
             double _max_speed = 10.0;
             autoware_msgs::LaneArray _cur_waypoints;
             WaypointGenerator _wpg;
-            carma_wm::WMListener _wml;
+            std::shared_ptr<carma_wm::WMListener> _wml{nullptr};
             carma_wm::WorldModelConstPtr _wm;
     };
 }

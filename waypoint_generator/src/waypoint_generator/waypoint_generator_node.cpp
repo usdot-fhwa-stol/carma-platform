@@ -24,7 +24,8 @@ namespace waypoint_generator
         ros::init(argc, argv, node_name);
         _nh.reset(new ros::CARMANodeHandle());
         _pnh.reset(new ros::CARMANodeHandle("~"));
-        _wm = _wml.getWorldModel();
+        _wml.reset(new carma_wm::WMListener());
+        _wm = _wml->getWorldModel();
         ROS_DEBUG("Initialized all node handles");
 
         _pnh->param<double>("curvature_epsilon", _curvature_epsilon, 3.0);
@@ -47,7 +48,7 @@ namespace waypoint_generator
         _waypoints_pub = _nh->advertise<autoware_msgs::LaneArray>("carma_waypoints", 5);
 
         std::function<void()> cb = std::bind(&WaypointGeneratorNode::new_route_callback, this);
-        _wml.setRouteCallback(cb);
+        _wml->setRouteCallback(cb);
 
         ROS_DEBUG("Subscribers and publishers initialized.");
 
