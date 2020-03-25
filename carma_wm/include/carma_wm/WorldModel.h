@@ -224,14 +224,18 @@ public:
    */
   virtual std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end) const = 0;
 
-  /*! \brief Returns a list of lists of local (3-point) curvatures, computed in 2d. Each continuous segment of the
-   * lanelets' centerlines is one elemtent in the first list. Where each lane change occurs along the list of lanelets a
-   * new list of curvatures is started.
-   *
-   * Each elemnent in the first list contains a tuple where the first element is the index of the lanelet which is the
-   * starting point of that segment. The second element of the tuple contains the list of local curvatures for that
-   * segment. These map to the points on the lanlet centerlines excluding first and last point of the continuous
-   * centerline segments
+  /*! \brief Returns a list of lists of local (computed by discrete derivative)
+   * curvatures for the input lanelets. The list of returned curvatures matches
+   * 1-to-1 with with list of points in the input lanelet's centerlines. 
+   * 
+   * The numerical accuracy of this method is greatly increased by using larger
+   * collections of points as inputs as the first 2 and final 2 points in the
+   * list must be computed using alternative differentiation methods from all 
+   * the others resulting in greater error. It is also important for this function
+   * to yield useful results that all points in the input lanelet's centerline
+   * are actually on the centerline of the lanelet (i.e. none to minimal linear
+   * interpolation of points) as this results in "flat" spots on an otherwise
+   * smooth curve that causes 0 curvature to be computed.
    *
    * \param lanelets The list of lanelets to compute curvatures for
    *
