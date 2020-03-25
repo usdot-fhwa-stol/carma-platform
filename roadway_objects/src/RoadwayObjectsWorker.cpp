@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include "RoadwayObjectsWorker.h"
+#include "roadway_objects/RoadwayObjectsWorker.h"
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/primitives/Area.h>
 #include <lanelet2_core/primitives/Lanelet.h>

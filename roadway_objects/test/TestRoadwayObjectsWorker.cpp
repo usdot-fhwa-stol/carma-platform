@@ -13,12 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include "roadway_objects/RoadwayObjectsNode.h"
 
-int main(int argc, char** argv)
+#include <roadway_objects/RoadwayObjectsWorker.h>
+#include <gtest/gtest.h>
+
+namespace objects
 {
-  ros::init(argc, argv, "roadway_objects");
-  objects::RoadwayObjectsNode node;
-  node.run();
-  return 0;
+    
+    TEST(RoadwayObjectsWorkerTest, testExternalObjectCallback)
+    {
+        
+    }
+
 }

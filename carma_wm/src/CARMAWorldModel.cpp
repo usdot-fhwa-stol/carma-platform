@@ -679,8 +679,8 @@ lanelet::BasicPolygon2d CARMAWorldModel::objectToMapPolygon(const geometry_msgs:
   double half_y_bound = size.y / 2;
 
   // 4 corners of the object starting with upper left and moving in clockwise direction in pose frame
-  tf2::Vector3 obj_p1(half_x_bound, -half_y_bound, 0);
-  tf2::Vector3 obj_p2(half_x_bound, half_y_bound, 0);
+  tf2::Vector3 obj_p1(half_x_bound, half_y_bound, 0);
+  tf2::Vector3 obj_p2(half_x_bound, -half_y_bound, 0);
   tf2::Vector3 obj_p3(-half_x_bound, -half_y_bound, 0);
   tf2::Vector3 obj_p4(-half_x_bound, half_y_bound, 0);
 
