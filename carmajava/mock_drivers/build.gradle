@@ -46,7 +46,6 @@ dependencies {
   compile 'org.ros.rosjava_messages:autoware_msgs:1.12.0'
   compile 'org.ros.rosjava_messages:derived_object_msgs:3.0.1'
   compile 'org.ros.rosjava_messages:radar_msgs:3.0.1'
-  /* Local subproject dependency */
-  compile project(':rosutils')
+  compile 'gov.dot.fhwa.saxton.carma:rosjava_utils:1.0.0'
 }
 
