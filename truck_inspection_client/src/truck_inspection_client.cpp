@@ -34,8 +34,11 @@ namespace truck_inspection_client
         pnh_->getParam("date_of_last_ads_calibration", date_of_last_ads_calibration_);
         pnh_->getParam("iss_score", iss_score_);
         pnh_->getParam("permit_required", permit_required_);
+        pnh_->getParam("pre_trip_ads_health_check", pre_trip_ads_health_check_);
         mo_pub_ = nh_->advertise<cav_msgs::MobilityOperation>("mobility_operation_outbound", 5);
         request_sub_ = nh_->subscribe("mobility_request_inbound", 1, &TruckInspectionClient::requestCallback, this);
+        ads_state_sub_ = nh_->subscribe("guidance_state", 1, &TruckInspectionClient::guidanceStatesCallback, this);
+        this->ads_engaged_ = false;
         ROS_INFO_STREAM("Truck inspection plugin is initialized...");
     }
 
@@ -45,14 +48,19 @@ namespace truck_inspection_client
         ros::CARMANodeHandle::spin();
     }
 
+    void TruckInspectionClient::guidanceStatesCallback(const cav_msgs::GuidanceStateConstPtr& msg)
+    {
+        this->ads_engaged_ = (msg->state == cav_msgs::GuidanceState::ENGAGED);
+    }
 
     void TruckInspectionClient::requestCallback(const cav_msgs::MobilityRequestConstPtr& msg)
     {
         if(msg->strategy == this->INSPECTION_STRATEGY) {
             cav_msgs::MobilityOperation mo_msg;
             mo_msg.strategy = this->INSPECTION_STRATEGY;
-            std::string params = boost::str(boost::format("vin_number:%s,license_plate:%s,carrier_name:%s,carrier_id:%s,weight:%s,ads_software_version:%s,date_of_last_state_inspection:%s,date_of_last_ads_calibration:%s,iss_score:%d,permit_required:%s")
-                                                         % vin_number_ % license_plate_ % carrier_name_ % carrier_id_ % weight_ % ads_software_version_ % date_of_last_state_inspection_ % date_of_last_ads_calibration_ % iss_score_ % permit_required_);
+            std::string ads_status = this->ads_engaged_ ? "Green" : "Red";
+            std::string params = boost::str(boost::format("vin_number:%s,license_plate:%s,carrier_name:%s,carrier_id:%s,weight:%s,ads_software_version:%s,date_of_last_state_inspection:%s,date_of_last_ads_calibration:%s,pre_trip_ads_health_check:%s,ads_status:%s,iss_score:%d,permit_required:%s")
+                                                         % vin_number_ % license_plate_ % carrier_name_ % carrier_id_ % weight_ % ads_software_version_ % date_of_last_state_inspection_ % date_of_last_ads_calibration_ % pre_trip_ads_health_check_ % ads_status %  iss_score_ % permit_required_);
             mo_msg.strategy_params = params;
             mo_pub_.publish(mo_msg);
         }

@@ -22,6 +22,10 @@ date_of_last_state_inspection: YYYY-MM-DD
 # Date of Last ADS Calibration: YYYY-MM-DD
 date_of_last_ads_calibration: YYYY-MM-DD
 
+# Pre-Trip/ADS Health Check: : (Green/Red icon)
+# This is a self check and startup sequence performed by the driver in the morning
+pre_trip_ads_health_check: Green
+
 #ISS Score: ### (number format + font color)
 #Color coding on the # only. 
 #1-49 (Green font) (Pass - Inspection Not Warranted)
