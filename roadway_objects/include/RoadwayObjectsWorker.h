@@ -26,35 +26,31 @@
 #include <cav_msgs/RoadwayObstacle.h>
 #include <functional>
 
-namespace objects {
-
+namespace objects
+{
 class RoadwayObjectsWorker
 {
-
- public:
-
+public:
   using PublishObstaclesCallback = std::function<void(const cav_msgs::RoadwayObstacleList&)>;
 
   /*!
    * \brief Constructor
    */
   RoadwayObjectsWorker(carma_wm::WorldModelConstPtr wm, PublishObstaclesCallback obj_pub);
-    
+
   /*!
     \brief Converts the provided ExternalObjectList in a RoadwayObstacleList and republishes it
 
     \param msg array of detected objects.
   */
   void externalObjectsCallback(const cav_msgs::ExternalObjectListConstPtr& msg);
- 
- private:
 
+private:
   // local copy of external object publihsers
 
   PublishObstaclesCallback obj_pub_;
 
   carma_wm::WorldModelConstPtr wm_;
-  
 };
 
-}//object
+}  // namespace objects

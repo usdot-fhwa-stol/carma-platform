@@ -27,32 +27,29 @@
 
 #include "RoadwayObjectsWorker.h"
 
-namespace objects {
-
+namespace objects
+{
 class RoadwayObjectsNode
 {
-
- private:
-  
-  //node handle
+private:
+  // node handle
   ros::CARMANodeHandle nh_;
-   
-  //subscriber
+
+  // subscriber
   ros::Subscriber external_objects_sub_;
 
-  //publisher
+  // publisher
   ros::Publisher roadway_obs_pub_;
-  
-  //Worker class object
+
+  // Worker class object
   RoadwayObjectsWorker object_worker_;
 
   // World Model Listener
   carma_wm::WMListener wm_listener_;
 
- public:
-  
+public:
   /*!
-    \brief RoadwayObjectsNode constructor 
+    \brief RoadwayObjectsNode constructor
   */
   RoadwayObjectsNode();
 
@@ -65,7 +62,6 @@ class RoadwayObjectsNode
     \brief General starting point to run this node
   */
   void run();
-  
 };
 
-}//object
+}  // namespace objects

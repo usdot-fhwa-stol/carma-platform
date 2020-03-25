@@ -27,6 +27,11 @@
 #include <Eigen/LU>
 #include <cmath>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
+#include <lanelet2_core/geometry/Polygon.h>
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/polygon.hpp>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 namespace carma_wm
 {
@@ -662,5 +667,89 @@ CARMAWorldModel::matchSegment(const lanelet::BasicPoint2d& p, const lanelet::Bas
   // couldn't find a matching segment, so use the first segment within the downtrack range of.
   // Or the starting segment assuming we are before the route
   return std::make_tuple(best_pos, best_segment);
+}
+
+lanelet::BasicPolygon2d CARMAWorldModel::objectToMapPolygon(const geometry_msgs::Pose& pose,
+                                                            const geometry_msgs::Vector3& size) const
+{
+  tf2::Transform object_tf;
+  tf2::fromMsg(pose, object_tf);
+
+  double half_x_bound = size.x / 2;
+  double half_y_bound = size.y / 2;
+
+  // 4 corners of the object starting with upper left and moving in clockwise direction in pose frame
+  tf2::Vector3 obj_p1(half_x_bound, -half_y_bound, 0);
+  tf2::Vector3 obj_p2(half_x_bound, half_y_bound, 0);
+  tf2::Vector3 obj_p3(-half_x_bound, -half_y_bound, 0);
+  tf2::Vector3 obj_p4(-half_x_bound, half_y_bound, 0);
+
+  tf2::Vector3 obj_p1_map = object_tf * obj_p1;
+  tf2::Vector3 obj_p2_map = object_tf * obj_p2;
+  tf2::Vector3 obj_p3_map = object_tf * obj_p3;
+  tf2::Vector3 obj_p4_map = object_tf * obj_p4;
+
+  lanelet::BasicPoint2d p1(obj_p1_map.getX(), obj_p1_map.getY());
+  lanelet::BasicPoint2d p2(obj_p2_map.getX(), obj_p2_map.getY());
+  lanelet::BasicPoint2d p3(obj_p3_map.getX(), obj_p3_map.getY());
+  lanelet::BasicPoint2d p4(obj_p4_map.getX(), obj_p4_map.getY());
+
+  return { p1, p2, p3, p4 };
+}
+
+lanelet::Optional<cav_msgs::RoadwayObstacle>
+CARMAWorldModel::toRoadwayObstacle(const cav_msgs::ExternalObject& object) const
+{
+  if (!semantic_map_ || semantic_map_->laneletLayer.size() == 0)
+  {
+    throw std::invalid_argument("Map is not set or does not contain lanelets");
+  }
+
+  lanelet::BasicPoint2d object_center(object.pose.pose.position.x, object.pose.pose.position.y);
+  lanelet::BasicPolygon2d object_polygon = objectToMapPolygon(object.pose.pose, object.size);
+
+  auto nearestLanelet = semantic_map_->laneletLayer.nearest(
+      object_center, 1)[0];  // Since the map contains lanelets there should always be at least 1 element
+
+  // Check if the object is inside or intersecting this lanelet
+  // If no intersection then the object can be considered off the road and does not need to processed
+  if (!boost::geometry::intersects(nearestLanelet.polygon2d().basicPolygon(), object_polygon))
+  {
+    return boost::none;
+  }
+
+  cav_msgs::RoadwayObstacle obs;
+  obs.object = object;
+  obs.connected_vehicle_type.type =
+      cav_msgs::ConnectedVehicleType::NOT_CONNECTED;  // TODO should we remove this? How could it be determined?
+  obs.lanelet_id = nearestLanelet.id();
+
+  carma_wm::TrackPos obj_track_pos = trackPos(nearestLanelet, object_center);
+  obs.down_track = obj_track_pos.downtrack;
+  obs.cross_track = obj_track_pos.crosstrack;
+
+  for (auto prediction : object.predictions)
+  {
+    // Compute prediction polygon
+    lanelet::BasicPolygon2d prediction_polygon = objectToMapPolygon(prediction.predicted_position, object.size);
+    lanelet::BasicPoint2d prediction_center(prediction.predicted_position.position.x,
+                                            prediction.predicted_position.position.y);
+
+    auto predNearestLanelet = semantic_map_->laneletLayer.nearest(prediction_center, 1)[0];
+
+    carma_wm::TrackPos pred_track_pos = trackPos(predNearestLanelet, object_center);
+
+    obs.predicted_lanelet_ids.emplace_back(predNearestLanelet.id());
+    obs.predicted_cross_tracks.emplace_back(pred_track_pos.crosstrack);
+    obs.predicted_down_tracks.emplace_back(pred_track_pos.downtrack);
+
+    // Since the predictions are having their lanelet ids matched based on the nearest nounding box search rather than
+    // checking for intersection The id confidence will be set to 90% of the position confidence
+    obs.predicted_lanelet_id_confidences.emplace_back(0.9 * prediction.predicted_position_confidence);
+    obs.predicted_cross_track_confidences.emplace_back(0.9 * prediction.predicted_position_confidence);
+    obs.predicted_down_track_confidences.emplace_back(0.9 * prediction.predicted_position_confidence);
+  }
+
+  return obs;
 }
 }  // namespace carma_wm

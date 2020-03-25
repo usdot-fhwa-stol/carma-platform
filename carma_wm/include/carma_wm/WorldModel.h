@@ -27,6 +27,10 @@
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_traffic_rules/TrafficRules.h>
 #include <lanelet2_core/utility/Optional.h>
+#include <cav_msgs/RoadwayObstacle.h>
+#include <cav_msgs/RoadwayObstacleList.h>
+#include <cav_msgs/ExternalObject.h>
+#include <cav_msgs/ExternalObjectList.h>
 
 namespace carma_wm
 {
@@ -302,6 +306,33 @@ public:
    * \return The angle in rad between the two vectors
    */
   virtual double getAngleBetweenVectors(const Eigen::Vector2d& vec1, const Eigen::Vector2d& vec2) const = 0;
+
+  /**
+   * \brief Converts an ExternalObject in a RoadwayObstacle by mapping its position onto the semantic map. Can also be
+   * used to determine if the object is on the roadway
+   *
+   * \param object the external object to convert
+   *
+   * \throw std::invalid_argument if the map is not set or contains no lanelets
+   *
+   * \return An optional RoadwayObstacle message created from the provided object. If the external object is not on the
+   * roadway then the optional will be empty.
+   */
+  virtual lanelet::Optional<cav_msgs::RoadwayObstacle>
+  toRoadwayObstacle(const cav_msgs::ExternalObject& object) const = 0;
+
+  /**
+   * \brief Uses the provided pose and size vector of an ExternalObject to compute what the polygon would be of that
+   * object would be if viewed from the same frame as the pose is defined relative to.
+   *
+   * \param pose the pose of an external object
+   * \param size The size vector of an external object
+   *
+   * \return A polygon of 4 points describing the object aligned bounds starting with the upper left point in the object
+   * frame and moving clockwise
+   */
+  virtual lanelet::BasicPolygon2d objectToMapPolygon(const geometry_msgs::Pose& pose,
+                                                     const geometry_msgs::Vector3& size) const = 0;
 };
 
 // Helpful using declarations for carma_wm classes

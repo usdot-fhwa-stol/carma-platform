@@ -15,10 +15,10 @@
  */
 #include "RoadwayObjectsNode.h"
 
-int main(int argc, char **argv) 
+int main(int argc, char** argv)
 {
   ros::init(argc, argv, "roadway_objects");
   objects::RoadwayObjectsNode node;
-  node.run(); 
+  node.run();
   return 0;
 }
