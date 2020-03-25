@@ -113,7 +113,14 @@
     <remap from="/emergency_stop" to="emergency_stop"/>
     <remap from="/state_cmd" to="state_cmd"/>
     <remap from="/vehicle_cmd" to="$(optenv CARMA_INTR_NS)/vehicle_cmd"/>
-    <include file="$(find twist_filter)/launch/twist_filter.launch"/>
+    <remap from="vehicle_model_wheelbase" to="/vehicle_wheel_base"/>
+
+    <include file="$(find twist_filter)/launch/twist_filter.launch">
+        <arg name="lateral_accel_limit" value="2.5"/>
+        <arg name="lateral_jerk_limit" value="2.0"/>
+        <arg name="lowpass_gain_linear_x" value="0.1"/>
+        <arg name="lowpass_gain_steering_angle" value="0.1"/>
+    </include>
   </group>
 
   <!-- Planning Stack -->
