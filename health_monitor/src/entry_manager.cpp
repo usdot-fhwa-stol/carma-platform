@@ -22,9 +22,10 @@ namespace health_monitor
 
     EntryManager::EntryManager() {}
     
-    EntryManager::EntryManager(std::vector<std::string> required_entries)
+    EntryManager::EntryManager(std::vector<std::string> required_entries,std::vector<std::string> lidar_gps_entries) //add
     {
-        this->required_entries_ = required_entries;
+        this->required_entries_  = required_entries;
+        this->lidar_gps_entries_ = lidar_gps_entries; //add //This has the string from the vehicle config
     }
 
     void EntryManager::update_entry(Entry entry)
@@ -85,5 +86,17 @@ namespace health_monitor
         }
         return false;
     }
+
+    bool EntryManager::is_lidar_gps_entry_required(const std::string name) const
+    {
+        
+        for(int i=0;i<lidar_gps_entries_.size();i++)
+        {
+            if(lidar_gps_entries_[i]==name)
+            {
+                return i;
+            }
+
+        }
 
 }

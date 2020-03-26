@@ -44,11 +44,11 @@ namespace health_monitor
         tactical_plugin_service_suffix_ = pnh_.param<std::string>("tactical_plugin_service_suffix", "");
         pnh_.getParam("required_plugins", required_plugins_);
         pnh_.getParam("required_drivers", required_drivers_);
-        
+        pnh_.getParam("lidar_gps_drivers", lidar_gps_drivers_); //add
 
         // initialize worker class
         plugin_manager_ = PluginManager(required_plugins_, plugin_service_prefix_, strategic_plugin_service_suffix_, tactical_plugin_service_suffix_);
-        driver_manager_ = DriverManager(required_drivers_, driver_timeout_);
+        driver_manager_ = DriverManager(required_drivers_, driver_timeout_,lidar_gps_drivers_); //add
 
         // record starup time
         start_up_timestamp_ = ros::Time::now();
@@ -97,7 +97,7 @@ namespace health_monitor
     bool HealthMonitor::spin_cb()
     {
         cav_msgs::SystemAlert alert;
-        if(driver_manager_.are_critical_drivers_operational(ros::Time::now().toNSec() / 1e6))
+        if(driver_manager_.are_critical_drivers_operational(ros::Time::now().toNSec() / 1e6)=="s_1_l1_1_l2_1_g_1")
         {
             alert.description = "All enssential drivers are ready";
             alert.type = cav_msgs::SystemAlert::DRIVERS_READY;
@@ -105,11 +105,28 @@ namespace health_monitor
         {
             alert.description = "System is starting up...";
             alert.type = cav_msgs::SystemAlert::NOT_READY;
-        } else if(!driver_manager_.are_critical_drivers_operational(ros::Time::now().toNSec() / 1e6))
+        } else if((driver_manager_.are_critical_drivers_operational(ros::Time::now().toNSec() / 1e6)=="s_1_l1_0_l2_1_g_0") ||(driver_manager_.are_critical_drivers_operational(ros::Time::now().toNSec() / 1e6)=="s_1_l1_0_l2_1_g_1") || (driver_manager_.are_critical_drivers_operational(ros::Time::now().toNSec() / 1e6)=="s_1_l1_1_l2_0_g_0") || (driver_manager_.are_critical_drivers_operational(ros::Time::now().toNSec() / 1e6)=="s_1_l1_1_l2_0_g_1"))
         {
-            alert.description = "Detect disconnection from essential drivers";
+            
+            alert.description = "Only one lidar is currently working";
+            alert.type = cav_msgs::SystemAlert::CAUTION;
+
+        } else if((driver_manager_.are_critical_drivers_operational(ros::Time::now().toNSec() / 1e6)=="s_1_l1_0_l2_0_g_1"))
+        {
+            alert.description = "Both lidars are not running but gps is still running";
+            alert.type = cav_msgs::SystemAlert::WARNING;
+        }else if((driver_manager_.are_critical_drivers_operational(ros::Time::now().toNSec() / 1e6)=="s_1_l1_0_l2_0_g_0"))
+        {
+ 
+            alert.description = "All lidars and gps are not running, but ssc is working";
+            alert.type = cav_msgs::SystemAlert::FATAL;
+        }else if((driver_manager_.are_critical_drivers_operational(ros::Time::now().toNSec() / 1e6)=="s0") $$ (driver_manager_.are_critical_drivers_operational(ros::Time::now().toNSec() / 1e6)=="s_1_l1_0_l2_0_g_0"))
+        {
+ 
+            alert.description = "SSC, Lidars and GPS are not running";
             alert.type = cav_msgs::SystemAlert::FATAL;
         }
+
         nh_.publishSystemAlert(alert);
         return true;
     }

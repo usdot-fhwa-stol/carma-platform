@@ -33,7 +33,7 @@ namespace health_monitor
             /*!
              * \brief Constructor for DriverManager takes in crtitical driver names and driver timeout
              */
-            DriverManager(std::vector<std::string> critical_driver_names, const long driver_timeout);
+            DriverManager(std::vector<std::string> critical_driver_names, const long driver_timeout,std::vector<std::string> lidar_gps_driver_names);
 
             /*!
              * \brief Update driver status
@@ -43,7 +43,7 @@ namespace health_monitor
             /*!
              * \brief Check if all critical drivers are operational
              */
-            bool are_critical_drivers_operational(long current_time);
+            string are_critical_drivers_operational(long current_time);
 
 
         private:
@@ -53,6 +53,8 @@ namespace health_monitor
             long driver_timeout_;
             // number of critical drivers
             int critical_driver_number_;
+            // number of critical drivers //add
+            int lidar_gps_driver_names_;  //add
 
     };
 }
