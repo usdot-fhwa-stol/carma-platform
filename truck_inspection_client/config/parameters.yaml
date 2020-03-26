@@ -1,10 +1,10 @@
 # Vehicle VIN number - 17 alphanumeric char
 vin_number: 1FUJGHDV0CLBP8834
 
-# License plate number - 8 alphanumeric char
+# License plate number - 9 alphanumeric char
 license_plate: DOT-10003
 
-# Carrier Name - 20 alphanumeric char
+# Carrier Name - 25 alphanumeric char
 carrier_name: Silver Truck FHWA TFHRC
 
 # Carrier ID - (USDOT + space + 7digits)
