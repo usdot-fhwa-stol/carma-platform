@@ -13,9 +13,6 @@ carrier_id: USDOT 0000001
 # Weight: ###,### lbs. (6 number format)
 weight: 100000
 
-# ADS Software Version: CARMA Platform v#.#.# (25characters)
-ads_software_version: CARMA Platform v3.3.0
-
 # Date of Last State Inspection: YYYY-MM-DD
 date_of_last_state_inspection: YYYY-MM-DD
 

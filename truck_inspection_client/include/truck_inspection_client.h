@@ -21,6 +21,7 @@
 #include <cav_msgs/GuidanceState.h>
 #include <cav_msgs/MobilityOperation.h>
 #include <cav_msgs/MobilityRequest.h>
+#include <std_msgs/String.h>
 #include "boost/format.hpp"
 
 namespace truck_inspection_client
@@ -47,6 +48,7 @@ namespace truck_inspection_client
         // subscriber for Mobility Request messages
         ros::Subscriber request_sub_;
         ros::Subscriber ads_state_sub_;
+        ros::Subscriber version_sub_;
 
         // initialize this node
         void initialize();
@@ -54,6 +56,7 @@ namespace truck_inspection_client
         // callbacks for the subscriber
         void requestCallback(const cav_msgs::MobilityRequestConstPtr& msg);
         void guidanceStatesCallback(const cav_msgs::GuidanceStateConstPtr& msg);
+        void versionCallback(const std_msgs::StringConstPtr& msg);
 
         // truck info
         std::string vin_number_;

@@ -29,7 +29,6 @@ namespace truck_inspection_client
         pnh_->getParam("carrier_name", carrier_name_);
         pnh_->getParam("carrier_id", carrier_id_);
         pnh_->getParam("weight", weight_);
-        pnh_->getParam("ads_software_version", ads_software_version_);
         pnh_->getParam("date_of_last_state_inspection", date_of_last_state_inspection_);
         pnh_->getParam("date_of_last_ads_calibration", date_of_last_ads_calibration_);
         pnh_->getParam("iss_score", iss_score_);
@@ -38,7 +37,9 @@ namespace truck_inspection_client
         mo_pub_ = nh_->advertise<cav_msgs::MobilityOperation>("mobility_operation_outbound", 5);
         request_sub_ = nh_->subscribe("mobility_request_inbound", 1, &TruckInspectionClient::requestCallback, this);
         ads_state_sub_ = nh_->subscribe("guidance_state", 1, &TruckInspectionClient::guidanceStatesCallback, this);
+        version_sub_ = nh_->subscribe("/carma_system_version", 1, &TruckInspectionClient::versionCallback, this);
         this->ads_engaged_ = false;
+        this->ads_software_version_ = "System Version Unknown";
         ROS_INFO_STREAM("Truck inspection plugin is initialized...");
     }
 
@@ -64,6 +65,11 @@ namespace truck_inspection_client
             mo_msg.strategy_params = params;
             mo_pub_.publish(mo_msg);
         }
+    }
+
+    void TruckInspectionClient::versionCallback(const std_msgs::StringConstPtr& msg)
+    {
+        this->ads_software_version_ = msg->data;
     }
 
 }
