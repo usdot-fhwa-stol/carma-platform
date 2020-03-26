@@ -27,7 +27,8 @@
 namespace carma_wm
 {
 /*!
- * \brief O(1) distance lookup structure for quickly accessing route distance information
+ * \brief O(1) distance lookup structure for quickly accessing route distance information. 
+ *        NOTE: This structure is used internally in the world model and is not intended for use by WorldModel users.
  *
  * This class is meant to be used when a route update occurs to precompute distances along the route to support rapid
  * queries later on Insertion is O(n) where n is the number of points in the linestring This structure does not support
@@ -61,28 +62,7 @@ public:
    *
    * \param ls The linestring to add
    */
-  void pushBack(const lanelet::LineString2d& ls)
-  {
-    if (id_index_map.find(ls.id()) != id_index_map.end())
-    {
-      throw std::invalid_argument("IndexedDistanceMap already contains this ls");
-    }
-    std::vector<double> accumulated_dist;
-    accumulated_dist.reserve(ls.size());
-    accumulated_dist.push_back(0);
-    size_t ls_i = accum_lengths.size();
-    id_index_map[ls.front().id()] = std::make_pair(ls_i, 0);  // Add first point to id map
-    for (size_t i = 0; i < ls.numSegments(); i++)
-    {
-      auto segment = ls.segment(i);
-      double dist = lanelet::geometry::distance2d(segment.first, segment.second);  // length of line string
-      accumulated_dist.push_back(dist + accumulated_dist.back());                  // Distance along linestring
-      id_index_map[segment.second.id()] = std::make_pair(ls_i, i + 1);             // Add point id and index to map
-    }
-    auto tuple = std::make_tuple(accumulated_dist, totalLength());
-    accum_lengths.push_back(tuple);
-    id_index_map[ls.id()] = std::make_pair(ls_i, 0);  // Add linestirng id
-  }
+  void pushBack(const lanelet::LineString2d& ls);
 
   /*!
    * \brief Get the length of the linestring located at the provided index
@@ -93,10 +73,7 @@ public:
    *
    * \return The length of the linestring
    */
-  double elementLength(size_t index) const
-  {
-    return std::get<0>(accum_lengths[index]).back();
-  }
+  double elementLength(size_t index) const;
 
   /*!
    * \brief Get the distance to the start of the linestring at the specified index
@@ -107,10 +84,7 @@ public:
    *
    * \return The along-line distance to the start of the linestring at index
    */
-  double distanceToElement(size_t index) const
-  {
-    return std::get<1>(accum_lengths[index]);
-  }
+  double distanceToElement(size_t index) const;
 
   /*!
    * \brief Get the distance between two points on the same linestring
@@ -123,10 +97,7 @@ public:
    *
    * \return The along-line distance between the two provided points on the same linestring
    */
-  double distanceBetween(size_t index, size_t p1_index, size_t p2_index) const
-  {
-    return fabs(distanceToPointAlongElement(index, p2_index) - distanceToPointAlongElement(index, p1_index));
-  }
+  double distanceBetween(size_t index, size_t p1_index, size_t p2_index) const;
 
   /*!
    * \brief Get the along-line distance to the point on the provided linestring
@@ -138,24 +109,14 @@ public:
    *
    * \return The along-line distance to the point from the start of the requested linestring
    */
-  double distanceToPointAlongElement(size_t index, size_t point_index) const
-  {
-    return std::get<0>(accum_lengths[index])[point_index];
-  }
+  double distanceToPointAlongElement(size_t index, size_t point_index) const;
 
   /*!
    * \brief Returns the total along-line length of this structure
    *
    * \return The length
    */
-  double totalLength() const
-  {
-    if (accum_lengths.size() == 0)
-    {
-      return 0.0;
-    }
-    return distanceToElement(accum_lengths.size() - 1) + elementLength(accum_lengths.size() - 1);
-  }
+  double totalLength() const;
 
   /*!
    * \brief Returns the indexes of the element identified by the provided Id
@@ -167,29 +128,20 @@ public:
    * \return An std::pair of the matched index where the first element is the linestring index and the second is the
    * point index in that linestring
    */
-  std::pair<size_t, size_t> getIndexFromId(const lanelet::Id& id) const
-  {
-    return id_index_map.at(id);
-  }
+  std::pair<size_t, size_t> getIndexFromId(const lanelet::Id& id) const;
 
   /*!
    * \brief Returns number of linestrings in this structure
    *
    * \return The element count
    */
-  size_t size() const
-  {
-    return accum_lengths.size();
-  }
+  size_t size() const;
 
   /*!
    * \brief Returns the size of the linestring at the specified index
    *
    * \return The linestring point count
    */
-  size_t size(size_t index) const
-  {
-    return std::get<0>(accum_lengths[index]).size();
-  }
+  size_t size(size_t index) const;
 };
 }  // namespace carma_wm

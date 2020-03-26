@@ -54,6 +54,8 @@ add_library(${PROJECT_NAME}
   src/CARMAWorldModel.cpp
   src/WMListener.cpp
   src/WMListenerWorker.cpp
+  src/Geometry.cpp
+  src/IndexedDistanceMap.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -92,6 +94,7 @@ catkin_add_gmock(${PROJECT_NAME}-test
   test/CARMAWorldModleTest.cpp  
   test/IndexedDistanceMapTest.cpp
   test/WMListenerWorkerTest.cpp
+  test/GeometryTest.cpp
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 

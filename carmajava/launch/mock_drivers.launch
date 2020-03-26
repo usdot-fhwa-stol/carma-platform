@@ -39,7 +39,7 @@
   <arg name="debug_node" default="" doc="Set to the java node base name to enable debugging on that node"/>
 
   <!-- Simulation Usage -->
-  <arg name="mock_drivers" default="controller can comms gnss radar lidar camera roadway_sensor imu" doc="List of driver node base names which will be launched as mock drivers"/>
+  <arg name="mock_drivers" default="controller can comms gnss radar lidar camera roadway_sensor imu lightbar" doc="List of driver node base names which will be launched as mock drivers"/>
 
   <arg name="mock_can"            value="$(eval 'can' in arg('mock_drivers').split())"/>
   <arg name="mock_comms"          value="$(eval 'comms' in arg('mock_drivers').split())"/>
@@ -50,7 +50,8 @@
   <arg name="mock_lidar"          value="$(eval 'lidar' in arg('mock_drivers').split())"/>
   <arg name="mock_camera"         value="$(eval 'camera' in arg('mock_drivers').split())"/>
   <arg name="mock_roadway_sensor" value="$(eval 'roadway_sensor' in arg('mock_drivers').split())"/>
-
+  <arg name="mock_lightbar" 	    value="$(eval 'lightbar' in arg('mock_drivers').split())"/>
+	
   <!-- Remappings for external packages -->
   <remap from="system_alert" to="/system_alert"/>
 
@@ -125,6 +126,13 @@
     <arg name="data_file"   value="$(arg radar_data_file)"/><!-- TODO -->
     <arg name="debug_driver"     value="$(eval arg('debug_node') == 'mock_roadway_sensor')"/>
   </include>
-	
+
+  <!-- Simulated Lightbar Driver Node -->
+  <include if="$(arg mock_lightbar)" file="$(arg mock_driver_launch_file)">
+    <arg name="node_name"        value="mock_lightbar"/>
+    <arg name="simulated_driver" value="lightbar"/>
+    <arg name="data_file"        value="$(arg radar_data_file)"/><!-- TODO -->
+    <arg name="debug_driver"     value="$(eval arg('debug_node') == 'mock_lightbar')"/>
+  </include>
 
 </launch>
