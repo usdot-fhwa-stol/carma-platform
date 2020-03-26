@@ -15,20 +15,12 @@
  */
 #include "roadway_objects/RoadwayObjectsWorker.h"
 #include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_core/primitives/Area.h>
 #include <lanelet2_core/primitives/Lanelet.h>
-#include <lanelet2_core/primitives/Point.h>
-#include <lanelet2_routing/Route.h>
-#include <lanelet2_routing/RoutingGraph.h>
-#include <lanelet2_traffic_rules/TrafficRules.h>
 #include <lanelet2_core/utility/Optional.h>
-#include <lanelet2_core/geometry/Polygon.h>
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/polygon.hpp>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-
-// TODO whole file
 
 namespace objects
 {

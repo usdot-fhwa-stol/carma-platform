@@ -16,8 +16,6 @@
 
 #pragma once
 
-// TODO whole file
-
 #include <ros/ros.h>
 #include <carma_utils/CARMAUtils.h>
 #include <carma_wm/WMListener.h>

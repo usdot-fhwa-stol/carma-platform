@@ -86,5 +86,5 @@ install(DIRECTORY
 #############
 
 ## Add gtest based cpp test target and link libraries
-catkin_add_gmock(${PROJECT_NAME}-test test/TestRoadwayObjectsWorker.cpp)
+catkin_add_gmock(${PROJECT_NAME}-test test/TestRoadwayObjectsWorker.cpp test/TestMain.cpp)
 target_link_libraries(${PROJECT_NAME}-test roadway_objects_worker ${catkin_LIBRARIES})

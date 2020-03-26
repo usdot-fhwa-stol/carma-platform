@@ -15,8 +15,6 @@
  */
 #include "roadway_objects/RoadwayObjectsNode.h"
 
-// TODO whole file
-
 namespace objects
 {
 using std::placeholders::_1;

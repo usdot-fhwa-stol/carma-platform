@@ -419,7 +419,7 @@ CARMAWorldModel::toRoadwayObstacle(const cav_msgs::ExternalObject& object) const
   cav_msgs::RoadwayObstacle obs;
   obs.object = object;
   obs.connected_vehicle_type.type =
-      cav_msgs::ConnectedVehicleType::NOT_CONNECTED;  // TODO should we remove this? How could it be determined?
+      cav_msgs::ConnectedVehicleType::NOT_CONNECTED;  // TODO No clear way to determine automation state at this time
   obs.lanelet_id = nearestLanelet.id();
 
   carma_wm::TrackPos obj_track_pos = geometry::trackPos(nearestLanelet, object_center);
