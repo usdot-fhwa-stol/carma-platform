@@ -16,12 +16,13 @@
 
 #include <carma_wm/Geometry.h>
 #include <lanelet2_core/geometry/Point.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 namespace carma_wm
 {
 namespace geometry
 {
-
 double getAngleBetweenVectors(const Eigen::Vector2d& vec1, const Eigen::Vector2d& vec2)
 {
   double vec1Mag = vec1.norm();
@@ -316,6 +317,33 @@ getLocalCurvatures(const std::vector<lanelet::ConstLanelet>& lanelets)
   }
 
   return vec;
+}
+
+lanelet::BasicPolygon2d objectToMapPolygon(const geometry_msgs::Pose& pose, const geometry_msgs::Vector3& size)
+{
+  tf2::Transform object_tf;
+  tf2::fromMsg(pose, object_tf);
+
+  double half_x_bound = size.x / 2;
+  double half_y_bound = size.y / 2;
+
+  // 4 corners of the object starting with upper left and moving in clockwise direction in pose frame
+  tf2::Vector3 obj_p1(half_x_bound, half_y_bound, 0);
+  tf2::Vector3 obj_p2(half_x_bound, -half_y_bound, 0);
+  tf2::Vector3 obj_p3(-half_x_bound, -half_y_bound, 0);
+  tf2::Vector3 obj_p4(-half_x_bound, half_y_bound, 0);
+
+  tf2::Vector3 obj_p1_map = object_tf * obj_p1;
+  tf2::Vector3 obj_p2_map = object_tf * obj_p2;
+  tf2::Vector3 obj_p3_map = object_tf * obj_p3;
+  tf2::Vector3 obj_p4_map = object_tf * obj_p4;
+
+  lanelet::BasicPoint2d p1(obj_p1_map.getX(), obj_p1_map.getY());
+  lanelet::BasicPoint2d p2(obj_p2_map.getX(), obj_p2_map.getY());
+  lanelet::BasicPoint2d p3(obj_p3_map.getX(), obj_p3_map.getY());
+  lanelet::BasicPoint2d p4(obj_p4_map.getX(), obj_p4_map.getY());
+
+  return { p1, p2, p3, p4 };
 }
 
 }  // namespace geometry

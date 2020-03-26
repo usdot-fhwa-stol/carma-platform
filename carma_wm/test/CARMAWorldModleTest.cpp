@@ -32,7 +32,6 @@ using ::testing::ReturnArg;
 
 namespace carma_wm
 {
-
 TEST(CARMAWorldModelTest, getSetMap)
 {
   CARMAWorldModel cmw;
@@ -366,46 +365,6 @@ TEST(CARMAWorldModelTest, getTrafficRules)
   ASSERT_FALSE(!!default_participant);
 }
 
-TEST(CARMAWorldModelTest, objectToMapPolygon)
-{
-  CARMAWorldModel cmw;
-
-  geometry_msgs::Pose pose;
-  pose.position.x = 6;
-  pose.position.y = 5;
-  pose.position.z = 0;
-
-  tf2::Quaternion tf_orientation;
-  tf_orientation.setRPY( 0, 0, 1.5708 );
-
-  pose.orientation.x = tf_orientation.getX();
-  pose.orientation.y = tf_orientation.getY();
-  pose.orientation.z = tf_orientation.getZ();
-  pose.orientation.w = tf_orientation.getW();
-
-  geometry_msgs::Vector3 size;
-  size.x = 4;
-  size.y = 2;
-  size.z = 1;
-
-  lanelet::BasicPolygon2d result = cmw.objectToMapPolygon(pose, size);
-
-  ASSERT_NEAR(result[0][0], 5.0, 0.00001);
-  ASSERT_NEAR(result[0][1], 7.0, 0.00001);
-
-  ASSERT_NEAR(result[1][0], 7.0, 0.00001);
-  ASSERT_NEAR(result[1][1], 7.0, 0.00001);
-
-  ASSERT_NEAR(result[2][0], 7.0, 0.00001);
-  ASSERT_NEAR(result[2][1], 3.0, 0.00001);
-
-  ASSERT_NEAR(result[3][0], 5.0, 0.00001);
-  ASSERT_NEAR(result[3][1], 3.0, 0.00001);
-}
-/*
- virtual lanelet::Optional<cav_msgs::RoadwayObstacle>
-  toRoadwayObstacle(const cav_msgs::ExternalObject& object) const = 0;
-*/
 TEST(CARMAWorldModelTest, toRoadwayObstacle)
 {
   CARMAWorldModel cmw;
@@ -425,7 +384,7 @@ TEST(CARMAWorldModelTest, toRoadwayObstacle)
   pose.position.z = 0;
 
   tf2::Quaternion tf_orientation;
-  tf_orientation.setRPY( 0, 0, 1.5708 );
+  tf_orientation.setRPY(0, 0, 1.5708);
 
   pose.orientation.x = tf_orientation.getX();
   pose.orientation.y = tf_orientation.getY();
@@ -463,7 +422,7 @@ TEST(CARMAWorldModelTest, toRoadwayObstacle)
   ASSERT_TRUE(!!result);
   cav_msgs::RoadwayObstacle obs = result.get();
 
-  ASSERT_EQ(obs.object.id, obj.id); // Check that the object was coppied
+  ASSERT_EQ(obs.object.id, obj.id);  // Check that the object was coppied
 
   ASSERT_EQ(obs.lanelet_id, ll_1.id());
 
@@ -499,6 +458,5 @@ TEST(CARMAWorldModelTest, toRoadwayObstacle)
   result = cmw.toRoadwayObstacle(obj);
 
   ASSERT_FALSE(!!result);
-
 }
 }  // namespace carma_wm

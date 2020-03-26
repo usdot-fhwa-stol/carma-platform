@@ -168,19 +168,6 @@ public:
    */
   virtual lanelet::Optional<cav_msgs::RoadwayObstacle>
   toRoadwayObstacle(const cav_msgs::ExternalObject& object) const = 0;
-
-  /**
-   * \brief Uses the provided pose and size vector of an ExternalObject to compute what the polygon would be of that
-   * object would be if viewed from the same frame as the pose is defined relative to.
-   *
-   * \param pose the pose of an external object
-   * \param size The size vector of an external object
-   *
-   * \return A polygon of 4 points describing the object aligned bounds starting with the upper left point in the object
-   * frame and moving clockwise
-   */
-  virtual lanelet::BasicPolygon2d objectToMapPolygon(const geometry_msgs::Pose& pose,
-                                                     const geometry_msgs::Vector3& size) const = 0;
 };
 
 // Helpful using declarations for carma_wm classes

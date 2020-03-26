@@ -81,9 +81,6 @@ public:
 
   lanelet::Optional<cav_msgs::RoadwayObstacle> toRoadwayObstacle(const cav_msgs::ExternalObject& object) const override;
 
-  lanelet::BasicPolygon2d objectToMapPolygon(const geometry_msgs::Pose& pose,
-                                             const geometry_msgs::Vector3& size) const override;
-
 private:
   /*! \brief Helper function to compute the geometry of the route downtrack/crosstrack reference line
    *         This function should generally only be called from inside the setRoute function as it uses member variables
