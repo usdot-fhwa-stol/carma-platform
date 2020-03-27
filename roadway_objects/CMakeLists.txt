@@ -63,7 +63,7 @@ target_link_libraries(roadway_objects_node roadway_objects_worker ${catkin_LIBRA
 #############
 
 ## Mark executables for installation
-install(TARGETS roadway_objects_node
+install(TARGETS roadway_objects_node roadway_objects_worker
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

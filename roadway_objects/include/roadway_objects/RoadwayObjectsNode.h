@@ -39,12 +39,11 @@ private:
   // publisher
   ros::Publisher roadway_obs_pub_;
 
-  // Worker class object
-  RoadwayObjectsWorker object_worker_;
-
-  // World Model Listener
+  // World Model Listener. Must be declared before object_worker_ for proper initialization.
   carma_wm::WMListener wm_listener_;
 
+  // Worker class object
+  RoadwayObjectsWorker object_worker_;
 public:
   /*!
     \brief RoadwayObjectsNode constructor
