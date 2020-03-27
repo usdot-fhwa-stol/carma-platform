@@ -50,6 +50,7 @@ void RoadwayObjectsWorker::externalObjectsCallback(const cav_msgs::ExternalObjec
     lanelet::Optional<cav_msgs::RoadwayObstacle> obs = wm_->toRoadwayObstacle(object);
     if (!obs)
     {
+      ROS_DEBUG_STREAM("roadway_objects dropping detected object with id: " << object.id << " as it is off the road.");
       continue;
     }
 
