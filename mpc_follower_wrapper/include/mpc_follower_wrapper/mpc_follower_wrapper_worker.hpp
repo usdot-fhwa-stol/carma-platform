@@ -14,4 +14,16 @@
  * the License.
  */
 
-include 'mock_drivers'
+#include "autoware_msgs/Lane.h"
+#include "autoware_config_msgs/ConfigWaypointFollower.h"
+#include "autoware_msgs/ControlCommandStamped.h"
+#include <cav_msgs/TrajectoryPlan.h>
+
+namespace mpc_follower_wrapper {
+
+class MPCFollowerWrapperWorker {
+    public:
+        // Convert TrajectoryPlanPoint to Waypoint. This is used by TrajectoryPlanHandler.
+        autoware_msgs::Waypoint TrajectoryPlanPointToWaypointConverter(const cav_msgs::TrajectoryPlanPoint& tpp, const cav_msgs::TrajectoryPlanPoint& tpp2);
+};
+}

@@ -13,5 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+#include "mpc_follower_wrapper/mpc_follower_wrapper.hpp"
 
-include 'mock_drivers'
+#include <ros/ros.h>
+#include <ros/console.h>
+
+int main(int argc, char** argv) {
+
+  ros::init(argc, argv, "mpc_follower_wrapper_node");
+  ros::CARMANodeHandle nh("");
+
+  mpc_follower_wrapper::MPCFollowerWrapper MPCFollowerWrapper(nh);
+  
+  ros::CARMANodeHandle::setSpinRate(10);
+  ros::CARMANodeHandle::spin();
+
+  ROS_INFO("Node Exiting");
+  return 0;
+}
