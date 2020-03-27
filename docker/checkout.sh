@@ -25,7 +25,7 @@ if [[ -n ${1} ]]; then
 fi
 
 cd ${dir}/src
-git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAMsgs.git --branch feature/roadway_obstacle_list
+git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAMsgs.git --branch develop
 git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMANovatelGpsDriver.git --branch CARMANovatelGpsDriver_1.2.0
 git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAUtils.git --branch develop
 git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch develop
