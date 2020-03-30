@@ -123,16 +123,16 @@ namespace health_monitor
             alert.description = "GPS stopped running but one LIDAR is still working";
             alert.type = cav_msgs::SystemAlert::CAUTION;
 
-        }else if((driver_manager_.are_critical_drivers_operational_truck(ros::Time::now().toNSec() / 1e6)=="s_1_l1_0_l2_0_g_1"))
+        }else if(driver_manager_.are_critical_drivers_operational_truck(ros::Time::now().toNSec() / 1e6)=="s_1_l1_0_l2_0_g_1")
         {
             alert.description = "Both LIDARS are not running but GPS is still working";
             alert.type = cav_msgs::SystemAlert::WARNING;
-        }else if((driver_manager_.are_critical_drivers_operational_truck(ros::Time::now().toNSec() / 1e6)=="s_1_l1_0_l2_0_g_0"))
+        }else if(driver_manager_.are_critical_drivers_operational_truck(ros::Time::now().toNSec() / 1e6)=="s_1_l1_0_l2_0_g_0")
         {
  
             alert.description = "All LIDARS and GPS stopped running, but SSC is working";
             alert.type = cav_msgs::SystemAlert::FATAL;
-        }else if((driver_manager_.are_critical_drivers_operational_truck(ros::Time::now().toNSec() / 1e6)=="s_0"))
+        }else if(driver_manager_.are_critical_drivers_operational_truck(ros::Time::now().toNSec() / 1e6)=="s_0")
         {
  
             alert.description = "SSC stopped working";
@@ -153,22 +153,22 @@ namespace health_monitor
         {
             alert.description = "System is starting up...";
             alert.type = cav_msgs::SystemAlert::NOT_READY;
-        } else if((driver_manager_.are_critical_drivers_operational_car(ros::Time::now().toNSec() / 1e6)=="s_1_l_1_g_0"))
+        } else if(driver_manager_.are_critical_drivers_operational_car(ros::Time::now().toNSec() / 1e6)=="s_1_l_1_g_0")
         {
             
             alert.description = "GPS stopped working but SSC and LIDAR  is still running";
             alert.type = cav_msgs::SystemAlert::CAUTION;
 
-        } else if((driver_manager_.are_critical_drivers_operational_car(ros::Time::now().toNSec() / 1e6)=="s_1_l_0_g_1"))
+        } else if(driver_manager_.are_critical_drivers_operational_car(ros::Time::now().toNSec() / 1e6)=="s_1_l_0_g_1")
         {
             alert.description = "LIDAR stopped working but SSC and GPS is still running";
             alert.type = cav_msgs::SystemAlert::WARNING;
-        }else if((driver_manager_.are_critical_drivers_operational_car(ros::Time::now().toNSec() / 1e6)=="s_1_l_0_g_0"))
+        }else if(driver_manager_.are_critical_drivers_operational_car(ros::Time::now().toNSec() / 1e6)=="s_1_l_0_g_0")
         {
  
             alert.description = "LIDAR, GPS stopped working but SSC is still running";
             alert.type = cav_msgs::SystemAlert::FATAL;
-        }else if((driver_manager_.are_critical_drivers_operational_car(ros::Time::now().toNSec() / 1e6)=="s_0"))
+        }else if(driver_manager_.are_critical_drivers_operational_car(ros::Time::now().toNSec() / 1e6)=="s_0")
         {
  
             alert.description = "SSC stopped working";

@@ -68,7 +68,7 @@ namespace health_monitor
             /*!
              * \brief Check if the entry is required
              */
-           int is_lidar_gps_entry_required(const std::string name) const;
+           int is_lidar_gps_entry_required(const std::string &name) const;
 
         private:
 

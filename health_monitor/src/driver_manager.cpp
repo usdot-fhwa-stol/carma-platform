@@ -37,7 +37,10 @@ namespace health_monitor
 
     std::string DriverManager::are_critical_drivers_operational_truck(long current_time)
     {
-        int ssc=0,lidar1=0,lidar2=0,gps=0;
+        int ssc=0;
+        int lidar1=0;
+        int lidar2=0;
+        int gps=0;
         std::vector<Entry> driver_list = em_.get_entries(); //Real time driver list from driver status
         for(auto i = driver_list.begin(); i < driver_list.end(); ++i)
         {
@@ -144,7 +147,9 @@ namespace health_monitor
 
     std::string DriverManager::are_critical_drivers_operational_car(long current_time)
     {
-        int ssc=0,lidar=0,gps=0;
+        int ssc=0;
+        int lidar=0;
+        int gps=0;
         std::vector<Entry> driver_list = em_.get_entries(); //Real time driver list from driver status
         for(auto i = driver_list.begin(); i < driver_list.end(); ++i)
         {
