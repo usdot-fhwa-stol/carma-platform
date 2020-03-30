@@ -19,6 +19,10 @@
 #include <carma_wm/Geometry.h>
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_core/Attribute.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 #include "TestHelpers.h"
 
 using ::testing::_;
@@ -529,5 +533,40 @@ TEST(GeometryTest, trackPos_line_string)
   ASSERT_NEAR(0.245967, std::get<0>(result).crosstrack, 0.000001);
   ASSERT_EQ(pb, std::get<1>(result).first);
   ASSERT_EQ(pc, std::get<1>(result).second);
+}
+
+TEST(CARMAWorldModelTest, objectToMapPolygon)
+{
+  geometry_msgs::Pose pose;
+  pose.position.x = 6;
+  pose.position.y = 5;
+  pose.position.z = 0;
+
+  tf2::Quaternion tf_orientation;
+  tf_orientation.setRPY(0, 0, 1.5708);
+
+  pose.orientation.x = tf_orientation.getX();
+  pose.orientation.y = tf_orientation.getY();
+  pose.orientation.z = tf_orientation.getZ();
+  pose.orientation.w = tf_orientation.getW();
+
+  geometry_msgs::Vector3 size;
+  size.x = 4;
+  size.y = 2;
+  size.z = 1;
+
+  lanelet::BasicPolygon2d result = geometry::objectToMapPolygon(pose, size);
+
+  ASSERT_NEAR(result[0][0], 5.0, 0.00001);
+  ASSERT_NEAR(result[0][1], 7.0, 0.00001);
+
+  ASSERT_NEAR(result[1][0], 7.0, 0.00001);
+  ASSERT_NEAR(result[1][1], 7.0, 0.00001);
+
+  ASSERT_NEAR(result[2][0], 7.0, 0.00001);
+  ASSERT_NEAR(result[2][1], 3.0, 0.00001);
+
+  ASSERT_NEAR(result[3][0], 5.0, 0.00001);
+  ASSERT_NEAR(result[3][1], 3.0, 0.00001);
 }
 }  // namespace carma_wm
