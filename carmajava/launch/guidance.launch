@@ -160,4 +160,8 @@
   <include file="$(find health_monitor)/launch/health_monitor.launch" >
   </include>
 
+  <!-- LightBar Manager -->
+  <include file="$(find lightbar_manager)/launch/lightbar_manager.launch">
+  </include>
+
 </launch>
