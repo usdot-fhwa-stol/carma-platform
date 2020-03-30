@@ -17,7 +17,7 @@
  */
 
 #include <autoware_lanelet2_msgs/MapBin.h>
-#include "CARMAWorldModel.h"
+#include <carma_wm/CARMAWorldModel.h>
 
 namespace carma_wm
 {
