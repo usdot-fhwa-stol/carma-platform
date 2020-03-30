@@ -168,6 +168,7 @@ public:
    */
   virtual lanelet::Optional<cav_msgs::RoadwayObstacle>
   toRoadwayObstacle(const cav_msgs::ExternalObject& object) const = 0;
+
 };
 
 // Helpful using declarations for carma_wm classes

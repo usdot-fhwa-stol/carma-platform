@@ -141,7 +141,7 @@ double getAngleBetweenVectors(const Eigen::Vector2d& vec1, const Eigen::Vector2d
  * frame and moving clockwise
  */
 lanelet::BasicPolygon2d objectToMapPolygon(const geometry_msgs::Pose& pose, const geometry_msgs::Vector3& size);
-
+  
 }  // namespace geometry
 
 }  // namespace carma_wm

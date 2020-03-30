@@ -32,6 +32,7 @@ using ::testing::ReturnArg;
 
 namespace carma_wm
 {
+
 TEST(CARMAWorldModelTest, getSetMap)
 {
   CARMAWorldModel cmw;

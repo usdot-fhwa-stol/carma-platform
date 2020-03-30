@@ -23,6 +23,7 @@ namespace carma_wm
 {
 namespace geometry
 {
+
 double getAngleBetweenVectors(const Eigen::Vector2d& vec1, const Eigen::Vector2d& vec2)
 {
   double vec1Mag = vec1.norm();
