@@ -27,6 +27,10 @@
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_traffic_rules/TrafficRules.h>
 #include <lanelet2_core/utility/Optional.h>
+#include <cav_msgs/RoadwayObstacle.h>
+#include <cav_msgs/RoadwayObstacleList.h>
+#include <cav_msgs/ExternalObject.h>
+#include <cav_msgs/ExternalObjectList.h>
 #include "TrackPos.h"
 
 namespace carma_wm
@@ -150,6 +154,20 @@ public:
    */
   virtual lanelet::Optional<TrafficRulesConstPtr>
   getTrafficRules(const std::string& participant = lanelet::Participants::Vehicle) const = 0;
+
+  /**
+   * \brief Converts an ExternalObject in a RoadwayObstacle by mapping its position onto the semantic map. Can also be
+   * used to determine if the object is on the roadway
+   *
+   * \param object the external object to convert
+   *
+   * \throw std::invalid_argument if the map is not set or contains no lanelets
+   *
+   * \return An optional RoadwayObstacle message created from the provided object. If the external object is not on the
+   * roadway then the optional will be empty.
+   */
+  virtual lanelet::Optional<cav_msgs::RoadwayObstacle>
+  toRoadwayObstacle(const cav_msgs::ExternalObject& object) const = 0;
 
 };
 

@@ -20,7 +20,10 @@
 #include <tuple>
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/primitives/Point.h>
+#include <lanelet2_core/primitives/Polygon.h>
 #include <lanelet2_core/utility/Optional.h>
+#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/Vector3.h>
 #include "TrackPos.h"
 
 namespace carma_wm
@@ -127,6 +130,18 @@ double computeCurvature(const lanelet::BasicPoint2d& p1, const lanelet::BasicPoi
  */
 double getAngleBetweenVectors(const Eigen::Vector2d& vec1, const Eigen::Vector2d& vec2);
 
+/**
+ * \brief Uses the provided pose and size vector of an ExternalObject to compute what the polygon would be of that
+ * object would be if viewed from the same frame as the pose is defined relative to.
+ *
+ * \param pose the pose of an external object
+ * \param size The size vector of an external object
+ *
+ * \return A polygon of 4 points describing the object aligned bounds starting with the upper left point in the object
+ * frame and moving clockwise
+ */
+lanelet::BasicPolygon2d objectToMapPolygon(const geometry_msgs::Pose& pose, const geometry_msgs::Vector3& size);
+  
 }  // namespace geometry
 
 }  // namespace carma_wm
