@@ -141,6 +141,11 @@ namespace health_monitor
                 alert.description = "SSC stopped working";
                 alert.type = cav_msgs::SystemAlert::FATAL;
             }
+            else
+            {
+                alert.description = "UNKNOWN";
+                alert.type = cav_msgs::SystemAlert::FATAL;  
+            }
             nh_.publishSystemAlert(alert);
             return true;
         }
@@ -177,6 +182,11 @@ namespace health_monitor
             {
                 alert.description = "SSC stopped working";
                 alert.type = cav_msgs::SystemAlert::FATAL;
+            }
+            else
+            {
+                alert.description = "UNKNOWN";
+                alert.type = cav_msgs::SystemAlert::FATAL;  
             }
             nh_.publishSystemAlert(alert);
             return true;
