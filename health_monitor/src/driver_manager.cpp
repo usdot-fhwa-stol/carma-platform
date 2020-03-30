@@ -35,6 +35,19 @@ namespace health_monitor
         em_.update_entry(driver_status);
     }
 
+    void DriverManager::evaluate_sensor(int &sensor_input,bool available,long current_time,long timestamp,long driver_timeout)
+    {
+               if((!available) || (current_time-timestamp > driver_timeout))
+                {
+             
+                    sensor_input=0;
+                }
+                else
+                {
+                    sensor_input=1;
+                }
+    }
+
     std::string DriverManager::are_critical_drivers_operational_truck(long current_time)
     {
         int ssc=0;
@@ -46,55 +59,20 @@ namespace health_monitor
         {
             if(em_.is_entry_required(i->name_))
             {
-               if((!i->available_) || (current_time - i->timestamp_ > driver_timeout_))
-                {
-                    
-                    ssc=0;
-                }
-                else
-                {
-
-                    ssc=1;
-                }
-
+              evaluate_sensor(ssc,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
 
             if(em_.is_lidar_gps_entry_required(i->name_)==0) //Lidar1
             {
-                if((!i->available_) || (current_time - i->timestamp_ > driver_timeout_))
-                {
-                    
-                    lidar1=0;
-                }
-                else
-                {
-                    lidar1=1;
-                }
-
+               evaluate_sensor(lidar1,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
             else if(em_.is_lidar_gps_entry_required(i->name_)==1) //Lidar2
             {
-                if((!i->available_) || (current_time - i->timestamp_ > driver_timeout_))
-                {
-                   
-                    lidar2=0;
-                }
-                else
-                {
-                    lidar2=1;
-                }
+              evaluate_sensor(lidar2,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
             else if(em_.is_lidar_gps_entry_required(i->name_)==2) //GPS
             {
-                if((!i->available_) || (current_time - i->timestamp_ > driver_timeout_))
-                {
-                    
-                    gps=0;
-                }
-                else
-                {
-                    gps=1;
-                }
+              evaluate_sensor(gps,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
         }
 
@@ -155,43 +133,16 @@ namespace health_monitor
         {
             if(em_.is_entry_required(i->name_))
             {
-                if((!i->available_) || (current_time - i->timestamp_ > driver_timeout_))
-                {
-                    
-                    ssc=0;
-                }
-                else
-                {
-
-                    ssc=1;
-                }
-
+                evaluate_sensor(ssc,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
 
             if(em_.is_lidar_gps_entry_required(i->name_)==0) //Lidar
             {
-                if((!i->available_) || (current_time - i->timestamp_ > driver_timeout_))
-                {
-                    
-                    lidar=0;
-                }
-                else
-                {
-                    lidar=1;
-                }
-
+                evaluate_sensor(lidar,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
             else if(em_.is_lidar_gps_entry_required(i->name_)==1) //GPS
             {
-                if((!i->available_) || (current_time - i->timestamp_ > driver_timeout_))
-                {
-                    
-                    gps=0;
-                }
-                else
-                {
-                    gps=1;
-                }
+                evaluate_sensor(gps,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
         }
 
@@ -201,19 +152,19 @@ namespace health_monitor
         {
             if((lidar==0) && (gps==0))
             {
-                return "s_1_l_0_g_0";//
+                return "s_1_l_0_g_0";
             }
             else if((lidar==0) && (gps==1))
             {
-                return "s_1_l_0_g_1";//
+                return "s_1_l_0_g_1";
             }
             else if((lidar==1) && (gps==0))
             {
-                return "s_1_l_1_g_0";//
+                return "s_1_l_1_g_0";
             }
             else if((lidar==1) && (gps==1))
             {
-                return "s_1_l_1_g_1";//
+                return "s_1_l_1_g_1";
             }
         }
         else

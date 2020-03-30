@@ -50,6 +50,10 @@ namespace health_monitor
              * \brief Check if all critical drivers are operational for car
              */
             std::string are_critical_drivers_operational_car(long current_time);
+            /*!
+             * \brief Evaluate if the sensor is available
+             */
+            void evaluate_sensor(int &sensor_input,bool available,long current_time,long timestamp,long driver_timeout);
 
 
         private:
