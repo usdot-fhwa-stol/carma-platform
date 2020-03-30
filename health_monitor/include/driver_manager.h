@@ -18,6 +18,7 @@
 
 #include <cav_msgs/DriverStatus.h>
 #include "entry_manager.h"
+#include <iostream>
 
 namespace health_monitor
 {
@@ -41,9 +42,14 @@ namespace health_monitor
             void update_driver_status(const cav_msgs::DriverStatusConstPtr& msg, long current_time);
 
             /*!
-             * \brief Check if all critical drivers are operational
+             * \brief Check if all critical drivers are operational for truck
              */
-            string are_critical_drivers_operational(long current_time);
+            std::string are_critical_drivers_operational_truck(long current_time);
+
+            /*!
+             * \brief Check if all critical drivers are operational for car
+             */
+            std::string are_critical_drivers_operational_car(long current_time);
 
 
         private:
@@ -51,10 +57,6 @@ namespace health_monitor
             EntryManager em_;
             // timeout for critical driver timeout
             long driver_timeout_;
-            // number of critical drivers
-            int critical_driver_number_;
-            // number of critical drivers //add
-            int lidar_gps_driver_names_;  //add
 
     };
 }

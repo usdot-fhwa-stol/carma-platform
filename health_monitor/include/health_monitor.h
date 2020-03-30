@@ -70,8 +70,10 @@ namespace health_monitor
             // ROS params
             double spin_rate_, driver_timeout_, startup_duration_;
             std::vector<std::string> required_drivers_;
-            std::vector<std::string> lidar_gps_drivers_; //add
+            std::vector<std::string> lidar_gps_drivers_; 
             std::vector<std::string> required_plugins_;
+            bool truck_;
+            bool car_;
 
             // record of startup timestamp
             ros::Time start_up_timestamp_;

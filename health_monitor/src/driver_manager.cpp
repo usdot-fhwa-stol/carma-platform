@@ -21,65 +21,31 @@ namespace health_monitor
 
     DriverManager::DriverManager() : driver_timeout_(1000) {}
 
-    DriverManager::DriverManager(std::vector<std::string> critical_driver_names, const long driver_timeout, std::vector<std::string> lidar_gps_driver_names) //add
+    DriverManager::DriverManager(std::vector<std::string> critical_driver_names, const long driver_timeout, std::vector<std::string> lidar_gps_driver_names) 
     {
-        em_ = EntryManager(critical_driver_names,lidar_gps_driver_names);//add
+        em_ = EntryManager(critical_driver_names,lidar_gps_driver_names);
         driver_timeout_ = driver_timeout;
-        critical_driver_number_ = critical_driver_names.size();
-        lidar_gps_driver_names_ = lidar_gps_driver_names.size(); //add
     }
 
 
     void DriverManager::update_driver_status(const cav_msgs::DriverStatusConstPtr& msg, long current_time)
     {
         // Params: bool available, bool active, std::string name, long timestamp, uint8_t type
-        Entry driver_status(msg->status == cav_msgs::DriverStatus::OPERATIONAL || msg->status == cav_msgs::DriverStatus::DEGRADED,
-                            true, msg->name, current_time, 0, "");
+        Entry driver_status(msg->status == cav_msgs::DriverStatus::OPERATIONAL || msg->status == cav_msgs::DriverStatus::DEGRADED,true, msg->name, current_time, 0, "");
         em_.update_entry(driver_status);
     }
 
-    /*   bool DriverManager::are_critical_drivers_operational(long current_time)
-       {
-           int critical_driver_counter = 0;
-           std::vector<Entry> driver_list = em_.get_entries(); //Real time driver list from driver status
-           for(auto i = driver_list.begin(); i < driver_list.end(); ++i)
-           {
-               if(em_.is_entry_required(i->name_))
-               {
-                   // if a required driver is not optional or has been timeout
-                   if((!i->available_) || (current_time - i->timestamp_ > driver_timeout_))
-                   {
-                       // TODO: return the name of the non-functional driver for easy debugging
-                       return false;
-                   } else
-                   {
-   
-                       ++critical_driver_counter;
-                   }
-                   
-               }
-           }
-           // all criticial driver in the driver_list are operational, but the number of critical driver does not match the desired number
-           if(critical_driver_counter != critical_driver_number_)
-           {
-               return false;
-           }
-           return true;
-       }*/
-
-    string DriverManager::are_critical_drivers_operational(long current_time)
+    std::string DriverManager::are_critical_drivers_operational_truck(long current_time)
     {
-        int critical_driver_counter = 0;
         int ssc=0,lidar1=0,lidar2=0,gps=0;
         std::vector<Entry> driver_list = em_.get_entries(); //Real time driver list from driver status
         for(auto i = driver_list.begin(); i < driver_list.end(); ++i)
         {
             if(em_.is_entry_required(i->name_))
             {
-                // if a required driver is not optional or has been timeout
-                if((!i->available_) || (current_time - i->timestamp_ > driver_timeout_))
+               if((!i->available_) || (current_time - i->timestamp_ > driver_timeout_))
                 {
-                    // TODO: return the name of the non-functional driver for easy debugging
+                    
                     ssc=0;
                 }
                 else
@@ -94,7 +60,7 @@ namespace health_monitor
             {
                 if((!i->available_) || (current_time - i->timestamp_ > driver_timeout_))
                 {
-                    // TODO: return the name of the non-functional driver for easy debugging
+                    
                     lidar1=0;
                 }
                 else
@@ -107,9 +73,8 @@ namespace health_monitor
             {
                 if((!i->available_) || (current_time - i->timestamp_ > driver_timeout_))
                 {
-                    // TODO: return the name of the non-functional driver for easy debugging
+                   
                     lidar2=0;
-                    return "s0";
                 }
                 else
                 {
@@ -120,7 +85,7 @@ namespace health_monitor
             {
                 if((!i->available_) || (current_time - i->timestamp_ > driver_timeout_))
                 {
-                    // TODO: return the name of the non-functional driver for easy debugging
+                    
                     gps=0;
                 }
                 else
@@ -130,7 +95,8 @@ namespace health_monitor
             }
         }
 
-        // all criticial driver in the driver_list are operational, but the number of critical driver does not match the desired number
+       //Decision making 
+
         if(ssc==1)
         {
 
@@ -170,9 +136,87 @@ namespace health_monitor
         else
         {
 
-            return "s0";
+            return "s_0";
         }
 
     }
+
+
+    std::string DriverManager::are_critical_drivers_operational_car(long current_time)
+    {
+        int ssc=0,lidar=0,gps=0;
+        std::vector<Entry> driver_list = em_.get_entries(); //Real time driver list from driver status
+        for(auto i = driver_list.begin(); i < driver_list.end(); ++i)
+        {
+            if(em_.is_entry_required(i->name_))
+            {
+                if((!i->available_) || (current_time - i->timestamp_ > driver_timeout_))
+                {
+                    
+                    ssc=0;
+                }
+                else
+                {
+
+                    ssc=1;
+                }
+
+            }
+
+            if(em_.is_lidar_gps_entry_required(i->name_)==0) //Lidar
+            {
+                if((!i->available_) || (current_time - i->timestamp_ > driver_timeout_))
+                {
+                    
+                    lidar=0;
+                }
+                else
+                {
+                    lidar=1;
+                }
+
+            }
+            else if(em_.is_lidar_gps_entry_required(i->name_)==1) //GPS
+            {
+                if((!i->available_) || (current_time - i->timestamp_ > driver_timeout_))
+                {
+                    
+                    gps=0;
+                }
+                else
+                {
+                    gps=1;
+                }
+            }
+        }
+
+        //Decision making 
+
+        if(ssc==1)
+        {
+            if((lidar==0) && (gps==0))
+            {
+                return "s_1_l_0_g_0";//
+            }
+            else if((lidar==0) && (gps==1))
+            {
+                return "s_1_l_0_g_1";//
+            }
+            else if((lidar==1) && (gps==0))
+            {
+                return "s_1_l_1_g_0";//
+            }
+            else if((lidar==1) && (gps==1))
+            {
+                return "s_1_l_1_g_1";//
+            }
+        }
+        else
+        {
+            return "s_0";
+        }
+
+    }
+
 }
 
