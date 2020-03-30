@@ -37,15 +37,14 @@ namespace health_monitor
 
     void DriverManager::evaluate_sensor(int &sensor_input,bool available,long current_time,long timestamp,long driver_timeout)
     {
-               if((!available) || (current_time-timestamp > driver_timeout))
-                {
-             
-                    sensor_input=0;
-                }
-                else
-                {
-                    sensor_input=1;
-                }
+        if((!available) || (current_time-timestamp > driver_timeout))
+           {
+            sensor_input=0;
+           }
+           else
+           {
+            sensor_input=1;
+           }
     }
 
     std::string DriverManager::are_critical_drivers_operational_truck(long current_time)
