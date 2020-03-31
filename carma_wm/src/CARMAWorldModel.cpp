@@ -27,6 +27,9 @@
 #include <Eigen/LU>
 #include <cmath>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
+#include <lanelet2_core/geometry/Polygon.h>
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/polygon.hpp>
 #include <carma_wm/Geometry.h>
 
 namespace carma_wm
@@ -390,5 +393,61 @@ lanelet::Optional<TrafficRulesConstPtr> CARMAWorldModel::getTrafficRules(const s
   }
 
   return optional_ptr;
+}
+
+lanelet::Optional<cav_msgs::RoadwayObstacle>
+CARMAWorldModel::toRoadwayObstacle(const cav_msgs::ExternalObject& object) const
+{
+  if (!semantic_map_ || semantic_map_->laneletLayer.size() == 0)
+  {
+    throw std::invalid_argument("Map is not set or does not contain lanelets");
+  }
+
+  lanelet::BasicPoint2d object_center(object.pose.pose.position.x, object.pose.pose.position.y);
+  lanelet::BasicPolygon2d object_polygon = geometry::objectToMapPolygon(object.pose.pose, object.size);
+
+  auto nearestLanelet = semantic_map_->laneletLayer.nearest(
+      object_center, 1)[0];  // Since the map contains lanelets there should always be at least 1 element
+
+  // Check if the object is inside or intersecting this lanelet
+  // If no intersection then the object can be considered off the road and does not need to processed
+  if (!boost::geometry::intersects(nearestLanelet.polygon2d().basicPolygon(), object_polygon))
+  {
+    return boost::none;
+  }
+
+  cav_msgs::RoadwayObstacle obs;
+  obs.object = object;
+  obs.connected_vehicle_type.type =
+      cav_msgs::ConnectedVehicleType::NOT_CONNECTED;  // TODO No clear way to determine automation state at this time
+  obs.lanelet_id = nearestLanelet.id();
+
+  carma_wm::TrackPos obj_track_pos = geometry::trackPos(nearestLanelet, object_center);
+  obs.down_track = obj_track_pos.downtrack;
+  obs.cross_track = obj_track_pos.crosstrack;
+
+  for (auto prediction : object.predictions)
+  {
+    // Compute prediction polygon
+    lanelet::BasicPolygon2d prediction_polygon = geometry::objectToMapPolygon(prediction.predicted_position, object.size);
+    lanelet::BasicPoint2d prediction_center(prediction.predicted_position.position.x,
+                                            prediction.predicted_position.position.y);
+
+    auto predNearestLanelet = semantic_map_->laneletLayer.nearest(prediction_center, 1)[0];
+
+    carma_wm::TrackPos pred_track_pos = geometry::trackPos(predNearestLanelet, prediction_center);
+
+    obs.predicted_lanelet_ids.emplace_back(predNearestLanelet.id());
+    obs.predicted_cross_tracks.emplace_back(pred_track_pos.crosstrack);
+    obs.predicted_down_tracks.emplace_back(pred_track_pos.downtrack);
+
+    // Since the predictions are having their lanelet ids matched based on the nearest nounding box search rather than
+    // checking for intersection The id confidence will be set to 90% of the position confidence
+    obs.predicted_lanelet_id_confidences.emplace_back(0.9 * prediction.predicted_position_confidence);
+    obs.predicted_cross_track_confidences.emplace_back(0.9 * prediction.predicted_position_confidence);
+    obs.predicted_down_track_confidences.emplace_back(0.9 * prediction.predicted_position_confidence);
+  }
+
+  return obs;
 }
 }  // namespace carma_wm

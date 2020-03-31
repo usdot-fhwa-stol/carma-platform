@@ -17,6 +17,8 @@ set ( PKG_CATKIN_DEPS
   carma_utils
   cav_msgs
   roscpp
+  tf2
+  tf2_geometry_msgs
 )
 
 ## Find required catkin packages
