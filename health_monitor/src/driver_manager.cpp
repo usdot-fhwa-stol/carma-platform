@@ -173,7 +173,7 @@ namespace health_monitor
 
     }
     
-    cav_msgs::SystemAlert DriverManager::handleSpin(bool truck,bool car,long time_now,long start_up_timestamp,long start_duration,long int is_zero)
+    cav_msgs::SystemAlert DriverManager::handleSpin(bool truck,bool car,long time_now,long start_up_timestamp,long start_duration,bool is_zero)
     {
          cav_msgs::SystemAlert alert;
 
