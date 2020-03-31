@@ -28,19 +28,20 @@ LightBarManager::LightBarManager(std::string node_name) : lbm_(node_name)
 
 void LightBarManager::turnOffAll()
 {
-    // Since lightbar_manager is guaranteed to have the highest priority, the manager is guaranteed to get all the control upon request
-    std::vector<LightBarIndicator> all_indicators, denied_list;
+    // All components lose controls and turn the indicators off by giving lightbarmanar the control
+    std::vector<LightBarIndicator> all_indicators;
 
     ROS_INFO_STREAM("LightBarManager was commanded to turn off all indicators!");
 
     for (std::pair <LightBarIndicator, std::string> element : lbm_.getIndicatorControllers())
         all_indicators.push_back(element.first);
     
-    denied_list = lbm_.requestControl(all_indicators, node_name_);
-
-    if (denied_list.size() != 0 )
-        ROS_WARN_STREAM ("In Function " << __FUNCTION__ << ": LightBarManager was not able to take all indicator's control");
-
+    // Reset all controls
+    lbm_.setIndicatorControllers();
+    
+    // Give lightbar manager the control which is guaranteed to succeed
+    lbm_.requestControl(all_indicators, node_name_);
+        
     int response_code = 0;
     for (auto indicator : all_indicators)
     {
@@ -49,8 +50,8 @@ void LightBarManager::turnOffAll()
             ROS_WARN_STREAM ("In Function " << __FUNCTION__ << ": LightBarManager was not able to turn off indicator ID:" 
                 << indicator << ". Response code: " << response_code);
     }
-    
-    // Once forced them off, release controls in case carma still is running; otherwise, lightbar_manager will hog the control
+
+    // Once forced them off, release controls in case carma is still running so that lightbar_manager does not hog the control
     all_indicators.erase(std::remove(all_indicators.begin(), all_indicators.end(), GREEN_FLASH), all_indicators.end());
     all_indicators.erase(std::remove(all_indicators.begin(), all_indicators.end(), GREEN_SOLID), all_indicators.end());
     lbm_.releaseControl(all_indicators, node_name_);
@@ -67,7 +68,7 @@ bool LightBarManager::requestControlCallBack(cav_srvs::RequestIndicatorControlRe
         for (auto cda_type : req.cda_list) 
         {
             // return false if invalid cda_type number
-            if (static_cast<int>(cda_type.type) >= INDICATOR_COUNT)
+            if (static_cast<uint8_t>(cda_type.type) >= INDICATOR_COUNT)
                 return false; 
             ind_list.push_back(lbm_.getIndicatorFromCDAType(static_cast<LightBarCDAType>(cda_type.type)));
         }
@@ -77,7 +78,7 @@ bool LightBarManager::requestControlCallBack(cav_srvs::RequestIndicatorControlRe
         for (auto indicator : req.ind_list) 
         {
             // return false if invalid indicator number
-            if (static_cast<int>(indicator.indicator) >= INDICATOR_COUNT)
+            if (static_cast<uint8_t>(indicator.indicator) >= INDICATOR_COUNT)
                 return false;
             ind_list.push_back(static_cast<LightBarIndicator>(indicator.indicator));
         }
@@ -95,6 +96,7 @@ bool LightBarManager::requestControlCallBack(cav_srvs::RequestIndicatorControlRe
         }
         catch(INDICATOR_NOT_MAPPED)
         {
+            // 4 out of 8 does not have mapping, so skip
             continue;
         }
     }
@@ -115,7 +117,7 @@ bool LightBarManager::releaseControlCallBack(cav_srvs::ReleaseIndicatorControlRe
         for (auto cda_type : req.cda_list) 
         {
             // return false if invalid indicator number
-            if (static_cast<int>(cda_type.type) >= INDICATOR_COUNT)
+            if (static_cast<uint8_t>(cda_type.type) >= INDICATOR_COUNT)
                 return false; 
             ind_list.push_back(lbm_.getIndicatorFromCDAType(static_cast<LightBarCDAType>(cda_type.type)));
         }
@@ -125,7 +127,7 @@ bool LightBarManager::releaseControlCallBack(cav_srvs::ReleaseIndicatorControlRe
         for (auto indicator : req.ind_list)
         {
             // return false if invalid cda_type number
-            if (static_cast<int>(indicator.indicator) >= INDICATOR_COUNT)
+            if (static_cast<uint8_t>(indicator.indicator) >= INDICATOR_COUNT)
                 return false; 
             ind_list.push_back(static_cast<LightBarIndicator>(indicator.indicator));
         }
@@ -176,7 +178,7 @@ int LightBarManager::setIndicator(LightBarIndicator ind, IndicatorStatus ind_sta
 {
     // Handle the msg/service translation
     int response_code = 0;
-    if (static_cast<int>(ind) >= INDICATOR_COUNT || static_cast<int>(ind_status) > 1)
+    if (static_cast<uint8_t>(ind) >= INDICATOR_COUNT || static_cast<uint8_t>(ind_status) > 1)
     {
         // Invalid indicator ID or ind_status
         response_code = 1;
@@ -237,8 +239,8 @@ void LightBarManager::init(std::string mode)
     // Load the spin rate param to determine how fast to process messages
     // Default rate 10.0 Hz
     spin_rate_ = pnh_.param<double>("spin_rate_hz", 10.0);
-    std::string lightbar_driver_service_name= pnh_.param<std::string>("lightbar_driver_service_name", "/hardware_interface/lightbar/set_lights");
-    std::string guidance_state_topic_name = pnh_.param<std::string>("guidance_state_topic_name", "/guidance/state");
+    std::string lightbar_driver_service_name= pnh_.param<std::string>("lightbar_driver_service_name", "set_lights");
+    std::string guidance_state_topic_name = pnh_.param<std::string>("guidance_state_topic_name", "state");
 
     // Init our ROS objects
     request_control_server_= nh_.advertiseService("request_control", &LightBarManager::requestControlCallBack, this);
@@ -275,19 +277,17 @@ void LightBarManager::init(std::string mode)
     {
         if (normal_operation)
         {
-            ROS_ERROR_STREAM("In fuction " << __FUNCTION__ << ", LightBarManager were not able to take control of all green indicators."
+            ROS_ERROR_STREAM("In fuction " << __FUNCTION__ << ", LightBarManager was not able to take control of all green indicators."
                 << ".\n Please check priority list rosparameter, and ensure " << node_name_ << " has the highest priority."
                 << ".\n If this is intended, pass false to normal_operation argument. Exiting...");
             throw INVALID_LIGHTBAR_MANAGER_PRIORITY();
         }
         else
         {
-            ROS_WARN_STREAM("In fuction " << __FUNCTION__ << ", LightBarManager were not able to take control of all green indicators."
+            ROS_WARN_STREAM("In fuction " << __FUNCTION__ << ", LightBarManager was not able to take control of all green indicators."
                 << ".\n Resuming...");   
         }
     }
-
-
     return;
 }
 

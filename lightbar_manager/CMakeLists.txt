@@ -28,7 +28,6 @@ find_package(catkin REQUIRED COMPONENTS
   cav_msgs
   cav_srvs
   roscpp
-  #lightbar_driver
 )
 
 ###################################
@@ -61,12 +60,8 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-file(GLOB_RECURSE headers */*.hpp */*.h)
 add_executable(${PROJECT_NAME}_node 
   src/lightbar_manager/main.cpp
-  src/lightbar_manager/lightbar_manager_node.cpp
-  src/lightbar_manager/lightbar_manager_worker.cpp
-  src/lightbar_manager/lightbar_manager_sm.cpp
 )
 
 ## Add cmake target dependencies of the executable
@@ -95,7 +90,7 @@ target_link_libraries(${PROJECT_NAME}_node
 #############
 
 ## Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME}_node
+install(TARGETS ${PROJECT_NAME}_node ${PROJECT_NAME}_lib
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -104,8 +99,6 @@ install(TARGETS ${PROJECT_NAME}_node
 # Mark cpp header files for installation
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.hpp"
-  PATTERN ".svn" EXCLUDE
 )
 
 # Mark other files for installation (e.g. launch and bag files, etc.)

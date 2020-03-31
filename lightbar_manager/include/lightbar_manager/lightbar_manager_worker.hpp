@@ -79,7 +79,7 @@ class LightBarManagerWorker
 
         /*!
         * \brief Requests the control of the given list of indicators to the requester.
-        * This function handles successful transitioning of next ownership and illocal requests such as mutually exclusive indicators
+        * This function handles successful transitioning of next ownership and illogical requests such as mutually exclusive indicators
         * \return Returns the list of the indicators that were denied for the requester
         */
         std::vector<LightBarIndicator> requestControl(std::vector<LightBarIndicator> ind_list, std::string requester_name);
@@ -98,7 +98,7 @@ class LightBarManagerWorker
         LightBarIndicator getIndicatorFromCDAType(LightBarCDAType cda_type);
 
         /*!
-        * \brief Helper functions that translates an CDA msg type to its corresponding indicator  
+        * \brief Helper functions that translates a CDA msg type to its corresponding indicator  
         * The mapping between indicators and CDA types are configured through ROS params.
         * \return Returns the CDA msg type that the indicator represents
         */
@@ -110,12 +110,6 @@ class LightBarManagerWorker
         */
         std::map<LightBarCDAType, LightBarIndicator> setIndicatorCDAMap(std::map<std::string, std::string> raw_map);
 
-        /*!
-        * \brief Helper function that gets internal indicator to CDA mapping
-        * \return return the mapping
-        check if it still works without it
-        std::map<LightBarCDAType, LightBarIndicator> getIndicatorCDAMap();
-        */
         /*!
         * \brief Helper function that gets all current owners of the indicator.
         * \return return the mapping of indicators to their owners

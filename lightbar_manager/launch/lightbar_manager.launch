@@ -18,9 +18,9 @@
 <launch>
     <arg name="normal_operation" default="true" doc = "When this is true, `lightbar_manager` should have the highest priority in the params file"/>
     <arg name="spin_rate_hz" default="10" doc="ROS spin rate" />
-    <arg name="lightbar_driver_service_name" default="/hardware_interface/lightbar/set_lights" doc= "LightBarDriver's set_lights service name" />
-    <arg name="guidance_state_topic_name" default= "/guidance/state" doc= "GuidanceState topic name that LightBarManager listens to for changing its own state" />
-    <node pkg="lightbar_manager" type="lightbar_manager_node" name="lightbar_manager" output="screen">
+    <arg name="lightbar_driver_service_name" default="set_lights" doc= "LightBarDriver's set_lights service name" />
+    <arg name="guidance_state_topic_name" default= "state" doc= "GuidanceState topic name that LightBarManager listens to for changing its own state" />
+    <node pkg="lightbar_manager" type="lightbar_manager_node" name="lightbar_manager">
         <param name="normal_operation" value="$(arg normal_operation)" />
         <param name="spin_rate_hz" value="$(arg spin_rate_hz)"/>
         <param name="lightbar_driver_service_name" value = "$(arg lightbar_driver_service_name)" />

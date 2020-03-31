@@ -84,12 +84,7 @@ namespace lightbar_manager
     {
         return ind_ctrl_map_;
     }
-    /*
-    std::map<LightBarCDAType, LightBarIndicator> LightBarManagerWorker::getIndicatorCDAMap()
-    {
-        return cda_ind_map_;
-    }
-    */
+
     std::map<LightBarCDAType, LightBarIndicator> LightBarManagerWorker::setIndicatorCDAMap(std::map<std::string, std::string> raw_map)
     {
         // In case if the parameter is not loaded corretly and there is an error, return this`1
@@ -348,7 +343,7 @@ namespace lightbar_manager
         {
             LightBarIndicator indicator = static_cast<LightBarIndicator>(i);
             // initialize the owner as empty string
-            ind_ctrl_map_[indicator];
+            ind_ctrl_map_[indicator] = "";
         }
         return;
     }
