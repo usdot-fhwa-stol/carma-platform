@@ -103,7 +103,7 @@ namespace health_monitor
         long time_now=(ros::Time::now().toNSec() / 1e6);
         ros::Duration sd(startup_duration_);
         long start_duration=sd.toNSec() / 1e6;
-        bool is_zero=start_up_timestamp_.isZero();
+        long int is_zero=start_up_timestamp_.isZero();
        // nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,start_up_timestamp_,startup_duration_));
         nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,is_zero));
         return true;
