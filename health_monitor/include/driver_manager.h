@@ -1,5 +1,4 @@
 #pragma once
-
 /*
  * Copyright (C) 2019-2020 LEIDOS.
  *
@@ -17,6 +16,7 @@
  */
 
 #include <cav_msgs/DriverStatus.h>
+#include <cav_msgs/SystemAlert.h>
 #include "entry_manager.h"
 #include <iostream>
 
@@ -30,22 +30,18 @@ namespace health_monitor
              * \brief Default constructor for DriverManager
              */
             DriverManager();
-            
             /*!
              * \brief Constructor for DriverManager takes in crtitical driver names and driver timeout
              */
             DriverManager(std::vector<std::string> critical_driver_names, const long driver_timeout,std::vector<std::string> lidar_gps_driver_names);
-
             /*!
              * \brief Update driver status
              */
             void update_driver_status(const cav_msgs::DriverStatusConstPtr& msg, long current_time);
-
             /*!
              * \brief Check if all critical drivers are operational for truck
              */
             std::string are_critical_drivers_operational_truck(long current_time);
-
             /*!
              * \brief Check if all critical drivers are operational for car
              */
@@ -54,7 +50,10 @@ namespace health_monitor
              * \brief Evaluate if the sensor is available
              */
             void evaluate_sensor(int &sensor_input,bool available,long current_time,long timestamp,long driver_timeout);
-
+            /*!
+             * \brief Handle the spin and publisher
+             */
+            cav_msgs::SystemAlert handleSpin(bool truck,bool car,long time_now,long start_up_timestamp,long startup_duration,bool is_zero);
 
         private:
 

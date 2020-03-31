@@ -76,7 +76,7 @@ namespace health_monitor
             bool car_;
 
             // record of startup timestamp
-            ros::Time start_up_timestamp_;
+            long start_up_timestamp_;
 
             // service name prefix and suffix
             std::string plugin_service_prefix_;

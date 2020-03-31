@@ -172,6 +172,116 @@ namespace health_monitor
         }
 
     }
+    
+    cav_msgs::SystemAlert DriverManager::handleSpin(bool truck,bool car,long time_now,long start_up_timestamp,long start_duration,bool is_zero)
+    {
+         cav_msgs::SystemAlert alert;
+
+         if(truck==true)
+        {
+            if(are_critical_drivers_operational_truck(time_now)=="s_1_l1_1_l2_1_g_1")
+            {
+                alert.description = "All enssential drivers are ready(SSC,LIDAR1,LIDAR2 and GPS)";
+                alert.type = cav_msgs::SystemAlert::DRIVERS_READY;
+                return alert;
+            } 
+           else if(is_zero || time_now - start_up_timestamp <= start_duration)
+            {
+                alert.description = "System is starting up...";
+                alert.type = cav_msgs::SystemAlert::NOT_READY;
+                return alert;
+            }
+            else if((are_critical_drivers_operational_truck(time_now)=="s_1_l1_0_l2_1_g_1") || (are_critical_drivers_operational_truck(time_now)=="s_1_l1_1_l2_0_g_1"))
+            {
+            
+                alert.description = "Only one LIDAR, GPS and SSC is currently working";
+                alert.type = cav_msgs::SystemAlert::CAUTION;
+                return alert;
+            }
+            else if((are_critical_drivers_operational_truck(time_now)=="s_1_l1_0_l2_1_g_0") || (are_critical_drivers_operational_truck(time_now)=="s_1_l1_1_l2_0_g_0"))
+            {   
+                alert.description = "GPS stopped running but one LIDAR and SSC is still working";
+                alert.type = cav_msgs::SystemAlert::CAUTION;
+                return alert;
+            }
+            else if(are_critical_drivers_operational_truck(time_now)=="s_1_l1_0_l2_0_g_1")
+            {
+                alert.description = "Both LIDARS are not running but GPS and SSC is still working";
+                alert.type = cav_msgs::SystemAlert::WARNING;
+                return alert;
+            }
+            else if(are_critical_drivers_operational_truck(time_now)=="s_1_l1_0_l2_0_g_0")
+            {
+                alert.description = "All LIDARS and GPS stopped running, but SSC is working";
+                alert.type = cav_msgs::SystemAlert::FATAL;
+                return alert;
+            }
+            else if(are_critical_drivers_operational_truck(time_now)=="s_0")
+            {
+                alert.description = "SSC stopped working";
+                alert.type = cav_msgs::SystemAlert::FATAL;
+                return alert;
+            }
+            else
+            {
+                alert.description = "UNKNOWN";
+                alert.type = cav_msgs::SystemAlert::FATAL;
+                return alert;  
+            }
+ 
+        }
+        else if(car==true)
+        {
+            if(are_critical_drivers_operational_car(time_now)=="s_1_l_1_g_1")
+            {
+                alert.description = "All enssential drivers are ready(SSC,LIDAR and GPS)";
+                alert.type = cav_msgs::SystemAlert::DRIVERS_READY;
+                return alert; 
+            }
+            else if(is_zero || time_now - start_up_timestamp <= start_duration)
+            {
+                alert.description = "System is starting up...";
+                alert.type = cav_msgs::SystemAlert::NOT_READY;
+                return alert; 
+            } 
+            else if(are_critical_drivers_operational_car(time_now)=="s_1_l_1_g_0")
+            {
+                alert.description = "GPS stopped working but SSC and LIDAR  is still running";
+                alert.type = cav_msgs::SystemAlert::CAUTION;
+                return alert; 
+            }
+            else if(are_critical_drivers_operational_car(time_now)=="s_1_l_0_g_1")
+            {
+                alert.description = "LIDAR stopped working but SSC and GPS is still running";
+                alert.type = cav_msgs::SystemAlert::WARNING;
+                return alert; 
+            }
+            else if(are_critical_drivers_operational_car(time_now)=="s_1_l_0_g_0")
+            {
+                alert.description = "LIDAR, GPS stopped working but SSC is still running";
+                alert.type = cav_msgs::SystemAlert::FATAL;
+                return alert; 
+            }
+            else if(are_critical_drivers_operational_car(time_now)=="s_0")
+            {
+                alert.description = "SSC stopped working";
+                alert.type = cav_msgs::SystemAlert::FATAL;
+                return alert; 
+            }
+            else
+            {
+                alert.description = "UNKNOWN";
+                alert.type = cav_msgs::SystemAlert::FATAL;
+                return alert;  
+            }
+        }
+        else
+        {
+            alert.description = "UNKNOWN";
+            alert.type = cav_msgs::SystemAlert::FATAL;
+            return alert; 
+        }
+    }
 
 }
 

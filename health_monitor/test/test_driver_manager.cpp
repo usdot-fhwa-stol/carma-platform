@@ -20,7 +20,7 @@
 namespace health_monitor
 {
 
-// Unit test for car part
+//////////////////// Unit test for car part///////////////////////////////////////////////
 
     TEST(DriverManagerTest, testCarNormalDriverStatus)
     {
@@ -207,8 +207,323 @@ namespace health_monitor
 
         EXPECT_EQ("s_0", dm.are_critical_drivers_operational_car(2100));
     }
+ //////////////////////////////////////////////////////////////////////////////////////////
+ 
+    TEST(DriverManagerTest, testCarHandleSpinDriversReady)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
 
-// Unit test for truck part
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar";
+        msg2.status = cav_msgs::DriverStatus::DEGRADED;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.gnss = true;
+        msg3.name = "gps";
+        msg3.status = cav_msgs::DriverStatus::DEGRADED;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        bool truck=false;
+        bool car=true;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,1500,150,750,0);
+
+        EXPECT_EQ(5, alert.type);
+    }   
+
+    TEST(DriverManagerTest, testCarHandleSpinCautionGpsNotWorkingLidarWorking)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar";
+        msg2.status = cav_msgs::DriverStatus::DEGRADED;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.gnss = true;
+        msg3.name = "gps";
+        msg3.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        bool truck=false;
+        bool car=true;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,1500,150,750,0);
+
+        EXPECT_EQ(1, alert.type);
+    }   
+
+    TEST(DriverManagerTest, testCarHandleSpinWarningLidarNotWorkingGpsWorking)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar";
+        msg2.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.gnss = true;
+        msg3.name = "gps";
+        msg3.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        bool truck=false;
+        bool car=true;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,1500,150,750,0);
+
+        EXPECT_EQ(2, alert.type);
+    }   
+
+    TEST(DriverManagerTest, testCarHandleSpinFatalLidarNotWorkingGpsNotWorkingSscWorking)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar";
+        msg2.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.gnss = true;
+        msg3.name = "gps";
+        msg3.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        bool truck=false;
+        bool car=true;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,1500,150,750,0);
+
+        EXPECT_EQ(3, alert.type);
+    } 
+
+    TEST(DriverManagerTest, testCarHandleSpinFatalSscWorking)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar";
+        msg2.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.gnss = true;
+        msg3.name = "gps";
+        msg3.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        bool truck=false;
+        bool car=true;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,1500,150,750,0);
+
+        EXPECT_EQ(3, alert.type);
+    } 
+
+    TEST(DriverManagerTest, testCarHandleSpinFatalUnknownInside)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        bool truck=false;
+        bool car=true;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,1500,150,750,0);
+
+        EXPECT_EQ(3, alert.type);
+    } 
+
+        TEST(DriverManagerTest, testCarHandleSpinNotReadyCase1)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar";
+        msg2.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.gnss = true;
+        msg3.name = "gps";
+        msg3.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        bool truck=false;
+        bool car=true;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,1500,1000,750,1);
+
+        EXPECT_EQ(4, alert.type);
+    } 
+
+        TEST(DriverManagerTest, testCarHandleSpinNotReadyCase2)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar";
+        msg2.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.gnss = true;
+        msg3.name = "gps";
+        msg3.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        bool truck=false;
+        bool car=true;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,1500,5000,750,0);
+
+        EXPECT_EQ(4, alert.type);
+    } 
+
+
+    TEST(DriverManagerTest, testCarTruckHandleSpinFatalUnknown)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar";
+        msg2.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.gnss = true;
+        msg3.name = "gps";
+        msg3.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        bool truck=false;
+        bool car=false;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,1500,150,750,0);
+
+        EXPECT_EQ(3, alert.type);
+    } 
+
+
+////////////////////////// Unit test for truck part////////////////////////////////////////
     
     TEST(DriverManagerTest, testTruckNormalDriverStatus)
     {
@@ -588,6 +903,465 @@ namespace health_monitor
         dm.update_driver_status(msg4_pointer, 1000);
 
         EXPECT_EQ("s_0", dm.are_critical_drivers_operational_truck(2001));
+    }
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////    
+
+    TEST(DriverManagerTest, testHandleSpinDriverReady)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar1", "lidar2","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar1";
+        msg2.status = cav_msgs::DriverStatus::DEGRADED;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.lidar = true;
+        msg3.name = "lidar2";
+        msg3.status = cav_msgs::DriverStatus::DEGRADED;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        cav_msgs::DriverStatus msg4;
+        msg4.gnss = true;
+        msg4.name = "gps";
+        msg4.status = cav_msgs::DriverStatus::DEGRADED;
+        cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
+        dm.update_driver_status(msg4_pointer, 1000);
+
+        bool truck=true;
+        bool car=false;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,1500,150,750,0);
+
+        EXPECT_EQ(5, alert.type);
+    }
+
+    TEST(DriverManagerTest, testHandleSpinCautionOneLidar1WorkingGpsWorkingSscWorking)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar1", "lidar2","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar1";
+        msg2.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.lidar = true;
+        msg3.name = "lidar2";
+        msg3.status = cav_msgs::DriverStatus::DEGRADED;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        cav_msgs::DriverStatus msg4;
+        msg4.gnss = true;
+        msg4.name = "gps";
+        msg4.status = cav_msgs::DriverStatus::DEGRADED;
+        cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
+        dm.update_driver_status(msg4_pointer, 1000);
+
+        bool truck=true;
+        bool car=false;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,1500,150,750,0);
+
+        EXPECT_EQ(1, alert.type);
+    }
+
+    TEST(DriverManagerTest, testHandleSpinCautionOneLidar2WorkingGpsWorkingSscWorking)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar1", "lidar2","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar1";
+        msg2.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.lidar = true;
+        msg3.name = "lidar2";
+        msg3.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        cav_msgs::DriverStatus msg4;
+        msg4.gnss = true;
+        msg4.name = "gps";
+        msg4.status = cav_msgs::DriverStatus::DEGRADED;
+        cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
+        dm.update_driver_status(msg4_pointer, 1000);
+
+        bool truck=true;
+        bool car=false;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,1500,150,750,0);
+
+        EXPECT_EQ(1, alert.type);
+    }
+
+        TEST(DriverManagerTest, testHandleSpinCautionOneLidar1WorkingGpsNotWorkingSscWorking)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar1", "lidar2","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar1";
+        msg2.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.lidar = true;
+        msg3.name = "lidar2";
+        msg3.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        cav_msgs::DriverStatus msg4;
+        msg4.gnss = true;
+        msg4.name = "gps";
+        msg4.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
+        dm.update_driver_status(msg4_pointer, 1000);
+
+        bool truck=true;
+        bool car=false;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,1500,150,750,0);
+
+        EXPECT_EQ(1, alert.type);
+    }
+
+
+        TEST(DriverManagerTest, testHandleSpinCautionOneLidar2WorkingGpsNotWorkingSscWorking)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar1", "lidar2","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar1";
+        msg2.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.lidar = true;
+        msg3.name = "lidar2";
+        msg3.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        cav_msgs::DriverStatus msg4;
+        msg4.gnss = true;
+        msg4.name = "gps";
+        msg4.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
+        dm.update_driver_status(msg4_pointer, 1000);
+
+        bool truck=true;
+        bool car=false;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,1500,150,750,0);
+
+        EXPECT_EQ(1, alert.type);
+    }
+
+    TEST(DriverManagerTest, testHandleSpinWarningLidarNotWorkingGpsWorkingSscWorking)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar1", "lidar2","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar1";
+        msg2.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.lidar = true;
+        msg3.name = "lidar2";
+        msg3.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        cav_msgs::DriverStatus msg4;
+        msg4.gnss = true;
+        msg4.name = "gps";
+        msg4.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
+        dm.update_driver_status(msg4_pointer, 1000);
+
+        bool truck=true;
+        bool car=false;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,1500,150,750,0);
+
+        EXPECT_EQ(2, alert.type);
+    }
+
+    TEST(DriverManagerTest, testHandleSpinFatalLidarNotWorkingGpsNotWorkingSscWorking)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar1", "lidar2","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar1";
+        msg2.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.lidar = true;
+        msg3.name = "lidar2";
+        msg3.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        cav_msgs::DriverStatus msg4;
+        msg4.gnss = true;
+        msg4.name = "gps";
+        msg4.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
+        dm.update_driver_status(msg4_pointer, 1000);
+
+        bool truck=true;
+        bool car=false;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,1500,150,750,0);
+
+        EXPECT_EQ(3, alert.type);
+    }
+
+    TEST(DriverManagerTest, testHandleSpinFatalSscNotWorking)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar1", "lidar2","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar1";
+        msg2.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.lidar = true;
+        msg3.name = "lidar2";
+        msg3.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        cav_msgs::DriverStatus msg4;
+        msg4.gnss = true;
+        msg4.name = "gps";
+        msg4.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
+        dm.update_driver_status(msg4_pointer, 1000);
+
+        bool truck=true;
+        bool car=false;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,1500,150,750,0);
+
+        EXPECT_EQ(3, alert.type);
+    }
+
+        TEST(DriverManagerTest, testHandleSpinFatalUnknownInsideTruck)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar1", "lidar2","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        bool truck=true;
+        bool car=false;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,1500,150,750,0);
+
+        EXPECT_EQ(3, alert.type);
+    }
+
+
+    TEST(DriverManagerTest, testHandleSpinNotReadyCase1)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar1", "lidar2","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar1";
+        msg2.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.lidar = true;
+        msg3.name = "lidar2";
+        msg3.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        cav_msgs::DriverStatus msg4;
+        msg4.gnss = true;
+        msg4.name = "gps";
+        msg4.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
+        dm.update_driver_status(msg4_pointer, 1000);
+
+        bool truck=true;
+        bool car=false;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,1500,1000,750,1);
+
+        EXPECT_EQ(4, alert.type);
+    }
+
+    TEST(DriverManagerTest, testHandleSpinNotReadyCase2)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar1", "lidar2","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar1";
+        msg2.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.lidar = true;
+        msg3.name = "lidar2";
+        msg3.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        cav_msgs::DriverStatus msg4;
+        msg4.gnss = true;
+        msg4.name = "gps";
+        msg4.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
+        dm.update_driver_status(msg4_pointer, 1000);
+
+        bool truck=true;
+        bool car=false;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,1500,5000,750,0);
+
+        EXPECT_EQ(4, alert.type);
     }
 
 }
