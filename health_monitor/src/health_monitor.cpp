@@ -44,14 +44,18 @@ namespace health_monitor
         tactical_plugin_service_suffix_ = pnh_.param<std::string>("tactical_plugin_service_suffix", "");
         pnh_.getParam("required_plugins", required_plugins_);
         pnh_.getParam("required_drivers", required_drivers_);
-        
+        pnh_.getParam("lidar_gps_drivers", lidar_gps_drivers_); 
+        truck_=false;
+        car_=false;
+        pnh_.getParam("truck", truck_);
+        pnh_.getParam("car", car_);
 
         // initialize worker class
         plugin_manager_ = PluginManager(required_plugins_, plugin_service_prefix_, strategic_plugin_service_suffix_, tactical_plugin_service_suffix_);
-        driver_manager_ = DriverManager(required_drivers_, driver_timeout_);
+        driver_manager_ = DriverManager(required_drivers_, driver_timeout_,lidar_gps_drivers_); 
 
         // record starup time
-        start_up_timestamp_ = ros::Time::now();
+        start_up_timestamp_ = ros::Time::now().toNSec() / 1e6;
     }
     
     void HealthMonitor::run()
@@ -96,21 +100,12 @@ namespace health_monitor
 
     bool HealthMonitor::spin_cb()
     {
-        cav_msgs::SystemAlert alert;
-        if(driver_manager_.are_critical_drivers_operational(ros::Time::now().toNSec() / 1e6))
-        {
-            alert.description = "All enssential drivers are ready";
-            alert.type = cav_msgs::SystemAlert::DRIVERS_READY;
-        } else if(start_up_timestamp_.isZero() || ros::Time::now() - start_up_timestamp_ <= ros::Duration(startup_duration_))
-        {
-            alert.description = "System is starting up...";
-            alert.type = cav_msgs::SystemAlert::NOT_READY;
-        } else if(!driver_manager_.are_critical_drivers_operational(ros::Time::now().toNSec() / 1e6))
-        {
-            alert.description = "Detect disconnection from essential drivers";
-            alert.type = cav_msgs::SystemAlert::FATAL;
-        }
-        nh_.publishSystemAlert(alert);
+        long time_now=(ros::Time::now().toNSec() / 1e6);
+        ros::Duration sd(startup_duration_);
+        long start_duration=sd.toNSec() / 1e6;
+        bool is_zero=start_up_timestamp_.isZero();
+       // nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,start_up_timestamp_,startup_duration_));
+        nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,is_zero));
         return true;
     }
 

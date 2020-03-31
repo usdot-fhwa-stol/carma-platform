@@ -118,4 +118,36 @@ namespace health_monitor
         EXPECT_EQ(false, em.is_entry_required("autoware_plugin_2"));
     }
 
+        TEST(EntryManagerTest, testTruckLidarGpsEntryCheck)
+    {   
+        std::vector<std::string> required_entries;
+        required_entries.push_back("ssc");
+ 
+        std::vector<std::string> lidar_gps_entries;
+        lidar_gps_entries.push_back("lidar1");
+        lidar_gps_entries.push_back("lidar2");
+        lidar_gps_entries.push_back("gps");
+
+        EntryManager em(required_entries,lidar_gps_entries);
+
+        EXPECT_EQ(0, em.is_lidar_gps_entry_required("lidar1"));
+        EXPECT_EQ(1, em.is_lidar_gps_entry_required("lidar2"));
+        EXPECT_EQ(2, em.is_lidar_gps_entry_required("gps"));
+    }
+
+        TEST(EntryManagerTest, testCarLidarGpsEntryCheck)
+    {   
+        std::vector<std::string> required_entries;
+        required_entries.push_back("ssc");
+ 
+        std::vector<std::string> lidar_gps_entries;
+        lidar_gps_entries.push_back("lidar");
+        lidar_gps_entries.push_back("gps");
+
+        EntryManager em(required_entries,lidar_gps_entries);
+
+        EXPECT_EQ(0, em.is_lidar_gps_entry_required("lidar"));
+        EXPECT_EQ(1, em.is_lidar_gps_entry_required("gps"));
+    }
+    
 }
