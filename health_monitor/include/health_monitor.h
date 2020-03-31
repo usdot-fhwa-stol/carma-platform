@@ -82,6 +82,8 @@ namespace health_monitor
             std::string plugin_service_prefix_;
             std::string strategic_plugin_service_suffix_;
             std::string tactical_plugin_service_suffix_;
+            ros::Time start_time_flag_; //Bool for start up time
+
 
             // spin callback function
             bool spin_cb();
