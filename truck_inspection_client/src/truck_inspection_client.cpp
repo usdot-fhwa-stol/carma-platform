@@ -70,7 +70,7 @@ namespace truck_inspection_client
             std::string ads_status = this->ads_engaged_ ? "Green" : "Red";
             std::string params = boost::str(boost::format("vin_number:%s,license_plate:%s,carrier_name:%s,carrier_id:%s,weight:%s,ads_software_version:%s,date_of_last_state_inspection:%s,date_of_last_ads_calibration:%s,pre_trip_ads_health_check:%s,ads_status:%s,iss_score:%d,permit_required:%s")
                                                          % vin_number_ % license_plate_ % carrier_name_ % carrier_id_ % weight_ % ads_software_version_ % date_of_last_state_inspection_ % date_of_last_ads_calibration_ % pre_trip_ads_health_check_ % ads_status %  iss_score_ % permit_required_);
-            params += ",timestamp:" + std::to_string(ros::Time::now().nsec / pow(10, 6));
+            params += ",timestamp:" + std::to_string((int)(ros::Time::now().nsec / pow(10, 6)));
             mo_msg.strategy_params = params;
             mo_pub_.publish(mo_msg);
         }
