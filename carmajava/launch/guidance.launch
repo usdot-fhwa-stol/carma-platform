@@ -159,5 +159,4 @@
   <remap from="~required_drivers" to="/required_drivers"/>
   <include file="$(find health_monitor)/launch/health_monitor.launch" >
   </include>
-
 </launch>
