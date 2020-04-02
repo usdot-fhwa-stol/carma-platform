@@ -66,12 +66,12 @@ namespace truck_inspection_client
         std::string license_plate_;
         std::string carrier_name_;
         std::string carrier_id_;
-        std::string weight_;
         std::string ads_software_version_;
         std::string date_of_last_state_inspection_;
         std::string date_of_last_ads_calibration_;
         std::string pre_trip_ads_health_check_;
         std::string bsm_id_;
+        int weight_;
         int iss_score_;
         bool permit_required_;
         bool ads_engaged_;        

@@ -38,6 +38,7 @@ namespace truck_inspection_client
         request_sub_ = nh_->subscribe("mobility_request_inbound", 1, &TruckInspectionClient::requestCallback, this);
         ads_state_sub_ = nh_->subscribe("guidance_state", 1, &TruckInspectionClient::guidanceStatesCallback, this);
         version_sub_ = nh_->subscribe("/carma_system_version", 1, &TruckInspectionClient::versionCallback, this);
+        bsm_sub_ = nh_->subscribe("bsm_outbound", 1, &TruckInspectionClient::bsmCallback, this);
         this->ads_engaged_ = false;
         this->ads_software_version_ = "System Version Unknown";
         // set vin publisher
@@ -77,7 +78,7 @@ namespace truck_inspection_client
             mo_msg.header.sender_bsm_id = bsm_id_;
             mo_msg.strategy = this->INSPECTION_STRATEGY;
             std::string ads_status = this->ads_engaged_ ? "Green" : "Red";
-            std::string params = boost::str(boost::format("vin_number:%s,license_plate:%s,carrier_name:%s,carrier_id:%s,weight:%s,ads_software_version:%s,date_of_last_state_inspection:%s,date_of_last_ads_calibration:%s,pre_trip_ads_health_check:%s,ads_status:%s,iss_score:%d,permit_required:%s")
+            std::string params = boost::str(boost::format("vin_number:%s,license_plate:%s,carrier_name:%s,carrier_id:%s,weight:%d,ads_software_version:%s,date_of_last_state_inspection:%s,date_of_last_ads_calibration:%s,pre_trip_ads_health_check:%s,ads_status:%s,iss_score:%d,permit_required:%s")
                                                          % vin_number_ % license_plate_ % carrier_name_ % carrier_id_ % weight_ % ads_software_version_ % date_of_last_state_inspection_ % date_of_last_ads_calibration_ % pre_trip_ads_health_check_ % ads_status %  iss_score_ % permit_required_);
             long time = (long)(ros::Time::now().toNSec() / pow(10, 6));
             mo_msg.header.timestamp = time;
