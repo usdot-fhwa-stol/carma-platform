@@ -41,6 +41,9 @@
   <!-- CARMA External Object Node -->
   <include file="$(find object_detection_tracking)/launch/external_object.launch"/>
 
+  <!-- CARMA Roadway Objects Node -->
+  <include file="$(find roadway_objects)/launch/roadway_objects.launch"/>
+
 
   <!-- calibration_publisher -->
   
