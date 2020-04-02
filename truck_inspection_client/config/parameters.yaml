@@ -14,10 +14,10 @@ carrier_id: USDOT 0000001
 weight: 100000
 
 # Date of Last State Inspection: YYYY-MM-DD
-date_of_last_state_inspection: YYYY-MM-DD
+date_of_last_state_inspection: 2020-01-01
 
 # Date of Last ADS Calibration: YYYY-MM-DD
-date_of_last_ads_calibration: YYYY-MM-DD
+date_of_last_ads_calibration: 2020-02-01
 
 # Pre-Trip/ADS Health Check: : (Green/Red icon)
 # This is a self check and startup sequence performed by the driver in the morning
@@ -28,7 +28,7 @@ pre_trip_ads_health_check: Green
 #1-49 (Green font) (Pass - Inspection Not Warranted)
 #50-74 (Yellow font) (Optional- Inspection Warranted – Next Level Priority)
 #75-100 (Red font) - (Inspect – Inspection warranted – top priority)
-iss_score: 49
+iss_score: 25
 
 #Permit Required: (Yes/No)  
 permit_required: false
