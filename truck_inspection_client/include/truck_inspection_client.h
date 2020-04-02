@@ -21,6 +21,7 @@
 #include <cav_msgs/GuidanceState.h>
 #include <cav_msgs/MobilityOperation.h>
 #include <cav_msgs/MobilityRequest.h>
+#include <cav_msgs/BSM.h>
 #include <std_msgs/String.h>
 #include "boost/format.hpp"
 
@@ -49,6 +50,7 @@ namespace truck_inspection_client
         ros::Subscriber request_sub_;
         ros::Subscriber ads_state_sub_;
         ros::Subscriber version_sub_;
+        ros::Subscriber bsm_sub_;
 
         // initialize this node
         void initialize();
@@ -57,6 +59,7 @@ namespace truck_inspection_client
         void requestCallback(const cav_msgs::MobilityRequestConstPtr& msg);
         void guidanceStatesCallback(const cav_msgs::GuidanceStateConstPtr& msg);
         void versionCallback(const std_msgs::StringConstPtr& msg);
+        void bsmCallback(const cav_msgs::BSMConstPtr& msg);
 
         // truck info
         std::string vin_number_;
@@ -68,6 +71,7 @@ namespace truck_inspection_client
         std::string date_of_last_state_inspection_;
         std::string date_of_last_ads_calibration_;
         std::string pre_trip_ads_health_check_;
+        std::string bsm_id_;
         int iss_score_;
         bool permit_required_;
         bool ads_engaged_;        
