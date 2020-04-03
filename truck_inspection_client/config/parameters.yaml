@@ -8,10 +8,10 @@ license_plate: DOT-10003
 carrier_name: FMCSA Tech Division
 
 # Carrier ID - (USDOT + space + 7digits)
-carrier_id: USDOT 1
+carrier_id: DOT 1
 
 # Weight: ###,### lbs. (6 number format)
-weight: 100000
+weight: 16639
 
 # Date of Last State Inspection: YYYY-MM-DD
 date_of_last_state_inspection: YYYY-MM-DD
