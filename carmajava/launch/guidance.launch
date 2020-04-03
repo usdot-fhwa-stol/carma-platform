@@ -19,6 +19,7 @@
 -->
 <launch>
 
+
   <!-- Arguments -->
   <arg name="route_file_folder" default="$(find carma)/routes" doc="Path of folder containing routes to load"/>
   
@@ -53,8 +54,6 @@
   <remap from="vehicle_state_machine_type" to="/vehicle_state_machine_type"/> 
   <remap from="vehicle_length" to="/vehicle_length"/> 
   <remap from="vehicle_width" to="/vehicle_width"/> 
-
-  <remap from="system_alert" to="/system_alert"/>
 
   <remap from="/base/lane_waypoints_raw" to="base/lane_waypoints_raw"/>       
   <remap from="/lane_waypoints_array" to="lane_waypoints_array"/>
@@ -155,8 +154,5 @@
     <arg name="route_file_folder" value="$(arg route_file_folder)"/>
   </include>
 
-  <!-- Health Monitor -->
   <remap from="~required_drivers" to="/required_drivers"/>
-  <include file="$(find health_monitor)/launch/health_monitor.launch" >
-  </include>
 </launch>

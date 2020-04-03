@@ -19,6 +19,8 @@
 -->
 
 <launch>
+  <remap from="system_alert" to="/system_alert"/>
+  <node pkg="driver_shutdown" type="driver_shutdown" name="$(anon driver_shutdown)" required="true"/>
 
   <!-- Simulated Driver Arguments -->
   <!-- Directory of Simulation Files -->
