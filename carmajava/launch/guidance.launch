@@ -19,6 +19,7 @@
 -->
 <launch>
 
+
   <!-- Arguments -->
   <arg name="route_file_folder" default="$(find carma)/routes" doc="Path of folder containing routes to load"/>
   
@@ -155,8 +156,4 @@
     <arg name="route_file_folder" value="$(arg route_file_folder)"/>
   </include>
 
-  <!-- Health Monitor -->
-  <remap from="~required_drivers" to="/required_drivers"/>
-  <include file="$(find health_monitor)/launch/health_monitor.launch" >
-  </include>
 </launch>

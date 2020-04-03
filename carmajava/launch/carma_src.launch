@@ -30,6 +30,7 @@
   roslaunch carma carma.launch mock_drivers="can"
 -->
 <launch>
+
   <!-- Directory of vehicle config parameters -->
   <arg name="vehicle_config_dir" default="$(find carma)../../CARMAConfig/development" doc="The directory continaing vehicle config type parameters"/>
   <arg name="vehicle_calibration_dir" default="$(find carma)../../CARMAVehicleCalibration/development/vehicle/calibration" doc="The directory continaing vehicle calibration type parameters"/>
@@ -125,6 +126,13 @@
 
   <!-- Guidance Stack -->
   <group ns="$(env CARMA_GUIDE_NS)">
+    <!-- Health Monitor -->
+
+    <node pkg="health_monitor" type="health_monitor" name="health_monitor" required="true">
+      <remap from="system_alert" to="/system_alert"/>
+      <remap from="~required_drivers" to="/required_drivers"/>
+      <rosparam command="load" file="$(find health_monitor)/config/params.yaml"/>
+    </node>
     <include file="$(find carma)/launch/guidance.launch">
       <arg name="route_file_folder" value="$(arg route_file_folder)"/>
     </include>
