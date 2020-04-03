@@ -144,6 +144,12 @@ public:
    */
   virtual LaneletRoutingGraphConstPtr getMapRoutingGraph() const = 0;
 
+  /*! \brief Get most recent roadway objects - all objects on the road detected by the camera fusion.
+   *
+   * \return Vector list of RoadwayObstacle which are lanelet compatible. Empty vector if no object found.
+   */
+  virtual std::vector<cav_msgs::RoadwayObstacle> getRoadwayObjects() const = 0;
+
   /*! \brief Get a pointer to the traffic rules object used internally by the world model and considered the carma
    * system default
    *
@@ -169,6 +175,46 @@ public:
   virtual lanelet::Optional<cav_msgs::RoadwayObstacle>
   toRoadwayObstacle(const cav_msgs::ExternalObject& object) const = 0;
 
+  /**
+   * \brief Gets the a lanelet the object is currently on determined by its position on the semantic map. If it's
+   * across multiple lanelets, get the closest one
+   *
+   * \param object the external object to get the lanelet of 
+   *
+   * \throw std::invalid_argument if the map is not set or contains no lanelets
+   *
+   * \return An optional lanelet primitive that is on the semantic map. If the external object is not on the
+   * roadway then the optional will be empty.
+   */
+
+  virtual lanelet::Optional<lanelet::Lanelet> 
+  getIntersectingLanelet (const cav_msgs::ExternalObject& object) const = 0;
+
+  /**
+   * \brief Gets all roadway objects currently in the same lane as the given lanelet
+   *
+   * \param lanelet the lanelet that is part of the continuous lane
+   *
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or if the given
+   * lanelet is not on the current semantic map
+   *
+   * \return A vector of RoadwayObstacle objects that is on the current lane. 
+   * Return empty vector if there is no objects on current lane or the road
+   */
+
+  virtual std::vector<cav_msgs::RoadwayObstacle> getInLaneObjects(const lanelet::ConstLanelet& lanelet) const = 0;
+  
+    /**
+   * \brief Gets distance to the closest object on the same lane as the given point
+   *
+   * \param object_center the point to measure the distance from
+   *
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or the given point
+   * is not on the current semantic map
+   *
+   * \return A distance to the closest in lane object. Return -1 if there is no objects on current lane or the road
+   */
+  virtual double getDistToNearestObjInLane(const lanelet::BasicPoint2d& object_center) const = 0;
 };
 
 // Helpful using declarations for carma_wm classes

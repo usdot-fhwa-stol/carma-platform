@@ -94,6 +94,7 @@ public:
   std::unique_lock<std::mutex> getLock(bool pre_locked = true);
 
 private:
+  ros::Subscriber roadway_objects_sub_;
   std::unique_ptr<WMListenerWorker> worker_;
   ros::CARMANodeHandle nh_;
   ros::CallbackQueue async_queue_;
