@@ -14,10 +14,10 @@ carrier_id: DOT 1
 weight: 16639
 
 # Date of Last State Inspection: YYYY-MM-DD
-date_of_last_state_inspection: 2020-01-01
+date_of_last_state_inspection: 2020.01.01
 
 # Date of Last ADS Calibration: YYYY-MM-DD
-date_of_last_ads_calibration: 2020-02-01
+date_of_last_ads_calibration: 2020.02.01
 
 # Pre-Trip/ADS Health Check: : (Green/Red icon)
 # This is a self check and startup sequence performed by the driver in the morning
