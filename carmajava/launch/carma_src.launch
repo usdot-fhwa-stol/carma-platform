@@ -126,8 +126,9 @@
 
   <!-- Guidance Stack -->
   <group ns="$(env CARMA_GUIDE_NS)">
-    <remap from="system_alert" to="/system_alert"/>
+    <!-- Health Monitor -->
     <node pkg="health_monitor" type="health_monitor" name="health_monitor" required="true">
+      <remap from="system_alert" to="/system_alert"/>
       <rosparam command="load" file="$(find health_monitor)/config/params.yaml"/>
     </node>
     <include file="$(find carma)/launch/guidance.launch">

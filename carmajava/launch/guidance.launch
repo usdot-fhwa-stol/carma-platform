@@ -55,6 +55,8 @@
   <remap from="vehicle_length" to="/vehicle_length"/> 
   <remap from="vehicle_width" to="/vehicle_width"/> 
 
+  <remap from="system_alert" to="/system_alert"/>
+
   <remap from="/base/lane_waypoints_raw" to="base/lane_waypoints_raw"/>       
   <remap from="/lane_waypoints_array" to="lane_waypoints_array"/>
   <remap from="/traffic_waypoints_array" to="traffic_waypoints_array"/>

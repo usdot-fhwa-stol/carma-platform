@@ -19,8 +19,8 @@
 -->
 
 <launch>
-  <remap from="system_alert" to="/system_alert"/>
-  <node pkg="driver_shutdown" type="driver_shutdown" name="$(anon driver_shutdown)" required="true"/>
+
+
 
   <!-- Simulated Driver Arguments -->
   <!-- Directory of Simulation Files -->
@@ -56,6 +56,9 @@
 	
   <!-- Remappings for external packages -->
   <remap from="system_alert" to="/system_alert"/>
+
+  <!-- Shutdown node for Drivers -->
+  <node pkg="driver_shutdown" type="driver_shutdown" name="$(anon driver_shutdown)" required="true"/>
 
   <!-- Simulated Comms Driver Node -->
   <include if="$(arg mock_comms)" file="$(arg mock_driver_launch_file)">
