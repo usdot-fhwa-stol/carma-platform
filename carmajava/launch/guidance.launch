@@ -156,5 +156,4 @@
     <arg name="route_file_folder" value="$(arg route_file_folder)"/>
   </include>
 
-  <remap from="~required_drivers" to="/required_drivers"/>
 </launch>
