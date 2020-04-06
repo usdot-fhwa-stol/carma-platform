@@ -48,7 +48,6 @@ void WMListenerWorker::roadwayObjectListCallback(const cav_msgs::RoadwayObstacle
 {
   // this topic publishes only the objects that are on the road
   world_model_->setRoadwayObjects(msg.roadway_obstacles);
-  return;
 }
 
 void WMListenerWorker::routeCallback()

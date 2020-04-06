@@ -144,7 +144,7 @@ public:
    */
   virtual LaneletRoutingGraphConstPtr getMapRoutingGraph() const = 0;
 
-  /*! \brief Get most recent roadway objects - all objects on the road detected by the camera fusion.
+  /*! \brief Get most recent roadway objects - all objects on the road detected by perception stack.
    *
    * \return Vector list of RoadwayObstacle which are lanelet compatible. Empty vector if no object found.
    */
@@ -205,16 +205,16 @@ public:
   virtual std::vector<cav_msgs::RoadwayObstacle> getInLaneObjects(const lanelet::ConstLanelet& lanelet) const = 0;
   
     /**
-   * \brief Gets distance to the closest object on the same lane as the given point
+   * \brief Gets Cartesian distance to the closest object on the same lane as the given point
    *
    * \param object_center the point to measure the distance from
    *
    * \throw std::invalid_argument if the map is not set, contains no lanelets, or the given point
    * is not on the current semantic map
    *
-   * \return A distance to the closest in lane object. Return -1 if there is no objects on current lane or the road
+   * \return An optional Cartesian distance in double to the closest in lane object. Return empty if there is no objects on current lane or the road
    */
-  virtual double getDistToNearestObjInLane(const lanelet::BasicPoint2d& object_center) const = 0;
+  virtual lanelet::Optional<double>  getDistToNearestObjInLane(const lanelet::BasicPoint2d& object_center) const = 0;
 };
 
 // Helpful using declarations for carma_wm classes

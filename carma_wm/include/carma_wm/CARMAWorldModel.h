@@ -28,8 +28,9 @@ namespace carma_wm
 {
 /*! \brief Class which implements the WorldModel interface. In addition this class provides write access to the world
  * model. Write access is achieved through setters for the Map and Route.
- *
- *  Proper usage of this class dictates that the Map and Route object be kept in sync
+ *  
+ * NOTE: This class should NOT be used in runtime code by users and is exposed solely for use in unit tests where the WMListener class cannot be instantiated. 
+ *  Proper usage of this class dictates that the Map and Route object be kept in sync. For this reason normal WorldModel users should not try to construct this class directly unless in unit tests.
  *
  * NOTE: This class uses the CarmaUSTrafficRules class internally to interpret routes.
  *       So routes which are set on this model should use the getTrafficRules() method to build using the correct rule
@@ -96,7 +97,7 @@ public:
 
   lanelet::Optional<cav_msgs::RoadwayObstacle> toRoadwayObstacle(const cav_msgs::ExternalObject& object) const override;
 
-  double getDistToNearestObjInLane(const lanelet::BasicPoint2d& object_center) const override;
+  lanelet::Optional<double> getDistToNearestObjInLane(const lanelet::BasicPoint2d& object_center) const override;
 private:
 
   /*! \brief Helper function to compute the geometry of the route downtrack/crosstrack reference line
@@ -107,31 +108,6 @@ private:
    * shortest_path_filtered_centerline_view_ member variables
    */
   void computeDowntrackReferenceLine();
-
-  /*! \brief Helper function to identify whether to select the preceeding or succeeding segment of a linstring point
-   * that is nearest an external point when trying to find the TrackPos of the external point. Of the 3 points
-   * comprising the 2 segment linestirng the external point must be closest to the midpoint for this function to be
-   * valid
-   *
-   * ASSUMPTION: Of the 3 points comprising the 2 segment linestirng the external point is closest to the midpoint
-   *
-   * Meant to be called in the matchSegment method. Logic is as follows
-   * If the external point is within the downtrack bounds of one segment but not the other then use the one it is within
-   * If the external point is within the downtrack bounds of both segments then use the one with the smallest crosstrack
-   * distance If the external point is within the downtrack bounds of both segments and has exactly equal crosstrack
-   * bounds with each segment then use the preceeding segment If the external point is outside the downtrack bounds of
-   * both segments then assign to the first segment as it will always have positive downtrack in this case while the
-   * second segment will always have negative downtrack
-   *
-   * \param first_seg_trackPos The TrackPos of the external point relative to the preceeding segment
-   * \param second_seg_trackPos The TrackPos of the succeeding segment
-   * \param first_seg_length The length of the preceeding segment
-   * \param second_seg_length The length of the succeeding segment
-   *
-   * \return True if the preceeding segment is the better choice. False if the succeeding segment is the better choice.
-   */
-  bool selectFirstSegment(const TrackPos& first_seg_trackPos, const TrackPos& second_seg_trackPos,
-                          double first_seg_length, double second_seg_length) const;
 
   /*! \brief Helper function to perform a deep copy of a LineString and assign new ids to all the elements. Used during
    * route centerline construction
@@ -155,6 +131,4 @@ private:
                                                                     // only
   std::vector<cav_msgs::RoadwayObstacle> roadway_objects_; // 
 };
-
-// Custom exceptions for 
 }  // namespace carma_wm

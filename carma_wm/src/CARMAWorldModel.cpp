@@ -417,7 +417,7 @@ CARMAWorldModel::toRoadwayObstacle(const cav_msgs::ExternalObject& object) const
   obs.object = object;
   obs.connected_vehicle_type.type =
       cav_msgs::ConnectedVehicleType::NOT_CONNECTED;  // TODO No clear way to determine automation state at this time
-  obs.lanelet_id = lanelet::utils::getId();
+  obs.lanelet_id = nearestLanelet.id();
 
   carma_wm::TrackPos obj_track_pos = geometry::trackPos(nearestLanelet, object_center);
   obs.down_track = obj_track_pos.downtrack;
@@ -434,7 +434,7 @@ CARMAWorldModel::toRoadwayObstacle(const cav_msgs::ExternalObject& object) const
 
     carma_wm::TrackPos pred_track_pos = geometry::trackPos(predNearestLanelet, prediction_center);
 
-    obs.predicted_lanelet_ids.emplace_back(obs.lanelet_id);
+    obs.predicted_lanelet_ids.emplace_back(predNearestLanelet.id());
     obs.predicted_cross_tracks.emplace_back(pred_track_pos.crosstrack);
     obs.predicted_down_tracks.emplace_back(pred_track_pos.downtrack);
 
@@ -451,7 +451,6 @@ CARMAWorldModel::toRoadwayObstacle(const cav_msgs::ExternalObject& object) const
 void CARMAWorldModel::setRoadwayObjects(const std::vector<cav_msgs::RoadwayObstacle>& rw_objs)
 {
   roadway_objects_ = rw_objs;
-  return;
 }
 
 std::vector<cav_msgs::RoadwayObstacle> CARMAWorldModel::getRoadwayObjects() const
@@ -556,7 +555,7 @@ lanelet::Optional<lanelet::Lanelet> CARMAWorldModel::getIntersectingLanelet (con
   return nearestLanelet;
 }
 
-double CARMAWorldModel::getDistToNearestObjInLane(const lanelet::BasicPoint2d& object_center) const
+lanelet::Optional<double> CARMAWorldModel::getDistToNearestObjInLane(const lanelet::BasicPoint2d& object_center) const
 {
    // Check if the map is loaded yet
   if (!semantic_map_ || semantic_map_->laneletLayer.size() == 0)
@@ -564,9 +563,9 @@ double CARMAWorldModel::getDistToNearestObjInLane(const lanelet::BasicPoint2d& o
     throw std::invalid_argument("Map is not set or does not contain lanelets");
   }
 
-  // return -1 if there is no object nearby
+  // return empty if there is no object nearby
   if (roadway_objects_.size() == 0)
-    return -1;
+    return boost::none;
   
   // Get the lanelet of this point
   auto curr_lanelet = semantic_map_->laneletLayer.nearest(object_center, 1)[0];
@@ -577,9 +576,9 @@ double CARMAWorldModel::getDistToNearestObjInLane(const lanelet::BasicPoint2d& o
 
   std::vector<cav_msgs::RoadwayObstacle> lane_objects = getInLaneObjects(curr_lanelet);
 
-  // return -1 if there is no object in the lane
+  // return empty if there is no object in the lane
   if (lane_objects.size() == 0)
-    return -1;
+    return boost::none;
 
   // Record the closest distance out of all polygons, 4 points each
   double min_dist = INFINITY;

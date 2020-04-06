@@ -232,7 +232,7 @@ TEST(CARMAWorldModelTest, getDistToNearestObjInLane)
   }
 
   // Test with no roadway objects set
-  ASSERT_EQ(cmw.getDistToNearestObjInLane(car_pose), -1);
+  ASSERT_FALSE(!!cmw.getDistToNearestObjInLane(car_pose));
  
   // Set roadway objects
   cmw.setRoadwayObjects(roadway_objects);
@@ -241,26 +241,24 @@ TEST(CARMAWorldModelTest, getDistToNearestObjInLane)
   ASSERT_THROW(cmw.getDistToNearestObjInLane({20, 1}), std::invalid_argument);
   
   // Test closest object
-  double result = cmw.getDistToNearestObjInLane(car_pose);
+  double result = cmw.getDistToNearestObjInLane(car_pose).get();
   ASSERT_EQ(result, 4);
 
   // remove the closest point to get a new closest dist, the 45deg obj
   cmw.setRoadwayObjects(std::vector<cav_msgs::RoadwayObstacle>{roadway_objects.begin() + 1, roadway_objects.end()});
-  result = cmw.getDistToNearestObjInLane(car_pose);
+  result = cmw.getDistToNearestObjInLane(car_pose).get();
   ASSERT_NEAR(result, 4.5, 0.00001);
 
   // Check an object on a different lane
   car_pose = {12.6, 7}; 
-  result = cmw.getDistToNearestObjInLane(car_pose);
+  result = cmw.getDistToNearestObjInLane(car_pose).get();
   ASSERT_EQ(result, 2);
 
   // Check if no object is on current lane
   cmw.setRoadwayObjects(std::vector<cav_msgs::RoadwayObstacle>
                         {roadway_objects[roadway_objects.size() - 1]});
   car_pose = {5,4};
-  result = cmw.getDistToNearestObjInLane(car_pose);
-  ASSERT_EQ(result, -1);
-
+  ASSERT_FALSE(!!cmw.getDistToNearestObjInLane(car_pose));
 }
 
 TEST(CARMAWorldModelTest, getIntersectingLanelet)
@@ -728,7 +726,7 @@ TEST(CARMAWorldModelTest, toRoadwayObstacle)
 
   ASSERT_EQ(obs.object.id, obj.id);  // Check that the object was coppied
 
-  ASSERT_FALSE(obs.lanelet_id == ll_1.id()); // lanelet ID should be unique
+  ASSERT_EQ(obs.lanelet_id, ll_1.id());
 
   ASSERT_EQ(obs.connected_vehicle_type.type, cav_msgs::ConnectedVehicleType::NOT_CONNECTED);
 
@@ -737,7 +735,7 @@ TEST(CARMAWorldModelTest, toRoadwayObstacle)
   ASSERT_NEAR(obs.down_track, 5.0, 0.00001);
 
   ASSERT_EQ(obs.predicted_lanelet_ids.size(), 1);
-  ASSERT_EQ(obs.predicted_lanelet_ids[0], obs.lanelet_id); // same object should not change id
+  ASSERT_EQ(obs.predicted_lanelet_ids[0], ll_1.id());
 
   ASSERT_EQ(obs.predicted_lanelet_id_confidences.size(), 1);
   ASSERT_NEAR(obs.predicted_lanelet_id_confidences[0], 0.9, 0.00001);
