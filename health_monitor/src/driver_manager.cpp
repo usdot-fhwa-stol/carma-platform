@@ -113,7 +113,7 @@ namespace health_monitor
                 return "s_1_l1_1_l2_1_g_1";
             }
         }
-        else
+        else if(ssc==0)
         {
 
             return "s_0";
@@ -200,7 +200,7 @@ namespace health_monitor
             }
             else if((are_critical_drivers_operational_truck(time_now)=="s_1_l1_0_l2_1_g_0") || (are_critical_drivers_operational_truck(time_now)=="s_1_l1_1_l2_0_g_0"))
             {   
-                alert.description = "GPS Failed";
+                alert.description = "One Lidar and GPS Failed";
                 alert.type = cav_msgs::SystemAlert::CAUTION;
                 return alert;
             }
@@ -224,7 +224,7 @@ namespace health_monitor
             }
             else
             {
-                alert.description = "Missing unknown essential driver";
+                alert.description = "Unknown problem assessing essential driver availability";
                 alert.type = cav_msgs::SystemAlert::FATAL;
                 return alert;  
             }
@@ -270,14 +270,14 @@ namespace health_monitor
             }
             else
             {
-                alert.description = "Missing unknown essential driver";
+                alert.description = "Unknown problem assessing essential driver availability";
                 alert.type = cav_msgs::SystemAlert::FATAL;
                 return alert;  
             }
         }
         else
         {
-            alert.description = "Wrong params";
+            alert.description = "Need to set either truck, car or dev flag";
             alert.type = cav_msgs::SystemAlert::FATAL;
             return alert; 
         }

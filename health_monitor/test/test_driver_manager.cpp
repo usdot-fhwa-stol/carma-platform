@@ -245,6 +245,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(5, alert.type);
+        EXPECT_EQ("All enssential drivers are ready", alert.description);
     }   
 
     TEST(DriverManagerTest, testCarHandleSpinCautionGpsNotWorkingLidarWorking)
@@ -283,6 +284,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(1, alert.type);
+        EXPECT_EQ("GPS Failed", alert.description);
     }   
 
     TEST(DriverManagerTest, testCarHandleSpinWarningLidarNotWorkingGpsWorking)
@@ -321,6 +323,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(2, alert.type);
+        EXPECT_EQ("LIDAR Failed", alert.description);
     }   
 
     TEST(DriverManagerTest, testCarHandleSpinFatalLidarNotWorkingGpsNotWorkingSscWorking)
@@ -359,6 +362,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(3, alert.type);
+        EXPECT_EQ("LIDAR, GPS Failed", alert.description);
     } 
 
     TEST(DriverManagerTest, testCarHandleSpinFatalSscWorking)
@@ -397,6 +401,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(3, alert.type);
+        EXPECT_EQ("SSC Failed", alert.description);
     } 
 
     TEST(DriverManagerTest, testCarHandleSpinFatalUnknownInside)
@@ -414,6 +419,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(3, alert.type);
+        EXPECT_EQ("SSC Failed", alert.description);
     } 
 
         TEST(DriverManagerTest, testCarHandleSpinNotReadyCase1)
@@ -452,6 +458,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,1000,750,1);
 
         EXPECT_EQ(4, alert.type);
+        EXPECT_EQ("System is starting up...", alert.description);
     } 
 
         TEST(DriverManagerTest, testCarHandleSpinNotReadyCase2)
@@ -490,6 +497,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,5000,750,0);
 
         EXPECT_EQ(4, alert.type);
+        EXPECT_EQ("System is starting up...", alert.description);
     } 
 
 
@@ -529,6 +537,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(3, alert.type);
+        EXPECT_EQ("Need to set either truck, car or dev flag", alert.description);
     } 
 ////////////////////////// Unit test for dev part////////////////////////////////////////
 
@@ -568,6 +577,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(5, alert.type);
+        EXPECT_EQ("All enssential drivers are ready", alert.description);
     }   
 
     TEST(DriverManagerTest, testDevHandleSpinCautionGpsNotWorkingLidarWorking)
@@ -606,6 +616,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(1, alert.type);
+        EXPECT_EQ("GPS Failed", alert.description);
     }   
 
     TEST(DriverManagerTest, testDevHandleSpinWarningLidarNotWorkingGpsWorking)
@@ -644,6 +655,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(2, alert.type);
+        EXPECT_EQ("LIDAR Failed", alert.description);
     }   
 
     TEST(DriverManagerTest, testDevHandleSpinFatalLidarNotWorkingGpsNotWorkingSscWorking)
@@ -682,6 +694,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(3, alert.type);
+        EXPECT_EQ("LIDAR, GPS Failed", alert.description);
     } 
 
     TEST(DriverManagerTest, testDevHandleSpinFatalSscWorking)
@@ -720,6 +733,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(3, alert.type);
+        EXPECT_EQ("SSC Failed", alert.description);
     } 
 
     TEST(DriverManagerTest, testDevHandleSpinFatalUnknownInside)
@@ -737,6 +751,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(3, alert.type);
+        EXPECT_EQ("SSC Failed", alert.description);
     } 
 
         TEST(DriverManagerTest, testDevHandleSpinNotReadyCase1)
@@ -775,6 +790,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,1000,750,1);
 
         EXPECT_EQ(4, alert.type);
+        EXPECT_EQ("System is starting up...", alert.description);
     } 
 
         TEST(DriverManagerTest, testDevHandleSpinNotReadyCase2)
@@ -813,6 +829,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,5000,750,0);
 
         EXPECT_EQ(4, alert.type);
+        EXPECT_EQ("System is starting up...", alert.description);
     } 
 
 ////////////////////////// Unit test for truck part////////////////////////////////////////
@@ -1241,6 +1258,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(5, alert.type);
+        EXPECT_EQ("All enssential drivers are ready",alert.description);
     }
 
     TEST(DriverManagerTest, testHandleSpinCautionOneLidar1WorkingGpsWorkingSscWorking)
@@ -1286,6 +1304,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(1, alert.type);
+        EXPECT_EQ("One LIDAR Failed",alert.description);
     }
 
     TEST(DriverManagerTest, testHandleSpinCautionOneLidar2WorkingGpsWorkingSscWorking)
@@ -1331,6 +1350,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(1, alert.type);
+        EXPECT_EQ("One LIDAR Failed",alert.description);
     }
 
         TEST(DriverManagerTest, testHandleSpinCautionOneLidar1WorkingGpsNotWorkingSscWorking)
@@ -1376,6 +1396,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(1, alert.type);
+        EXPECT_EQ("One Lidar and GPS Failed",alert.description);
     }
 
 
@@ -1422,6 +1443,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(1, alert.type);
+        EXPECT_EQ("One Lidar and GPS Failed",alert.description);
     }
 
     TEST(DriverManagerTest, testHandleSpinWarningLidarNotWorkingGpsWorkingSscWorking)
@@ -1467,6 +1489,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(2, alert.type);
+        EXPECT_EQ("Both LIDARS Failed",alert.description);
     }
 
     TEST(DriverManagerTest, testHandleSpinFatalLidarNotWorkingGpsNotWorkingSscWorking)
@@ -1512,6 +1535,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(3, alert.type);
+        EXPECT_EQ("LIDARS and GPS Failed",alert.description);
     }
 
     TEST(DriverManagerTest, testHandleSpinFatalSscNotWorking)
@@ -1557,6 +1581,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(3, alert.type);
+        EXPECT_EQ("SSC Failed",alert.description);
     }
 
         TEST(DriverManagerTest, testHandleSpinFatalUnknownInsideTruck)
@@ -1566,6 +1591,13 @@ namespace health_monitor
 
         DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
 
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = 5;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+
         bool truck=true;
         bool car=false;
         bool dev=false;
@@ -1574,6 +1606,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(3, alert.type);
+        EXPECT_EQ("SSC Failed", alert.description);
     }
 
 
@@ -1620,6 +1653,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,1000,750,1);
 
         EXPECT_EQ(4, alert.type);
+        EXPECT_EQ("System is starting up...", alert.description);
     }
 
     TEST(DriverManagerTest, testHandleSpinNotReadyCase2)
@@ -1665,6 +1699,7 @@ namespace health_monitor
         alert=dm.handleSpin(truck,car,dev,1500,5000,750,0);
 
         EXPECT_EQ(4, alert.type);
+        EXPECT_EQ("System is starting up...", alert.description);
     }
 
 }
