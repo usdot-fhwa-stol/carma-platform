@@ -217,7 +217,10 @@ public:
   virtual lanelet::Optional<double>  getDistToNearestObjInLane(const lanelet::BasicPoint2d& object_center) const = 0;
   
   /**
-   * \brief Gets Downtrack distance to the closest object on the same lane as the given point
+   * \brief Gets Downtrack distance to the closest object on the same lane as the given point. Also returns crosstrack
+   * distance relative to that object. Plus downtrack if the object is ahead along the lane, and also plus crosstrack
+   * if the object is to the right relative to the reference line that crosses given object_center and is parallel to the
+   * centerline of the lane.
    *
    * \param object_center the point to measure the distance from
    *
