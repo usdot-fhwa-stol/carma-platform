@@ -74,6 +74,7 @@ namespace health_monitor
             std::vector<std::string> required_plugins_;
             bool truck_;
             bool car_;
+            bool dev_;
 
             // record of startup timestamp
             long start_up_timestamp_;

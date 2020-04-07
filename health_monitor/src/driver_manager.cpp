@@ -173,7 +173,7 @@ namespace health_monitor
 
     }
     
-    cav_msgs::SystemAlert DriverManager::handleSpin(bool truck,bool car,long time_now,long start_up_timestamp,long start_duration,bool is_zero)
+    cav_msgs::SystemAlert DriverManager::handleSpin(bool truck,bool car,bool dev,long time_now,long start_up_timestamp,long start_duration,bool is_zero)
     {
          cav_msgs::SystemAlert alert;
 
@@ -181,7 +181,7 @@ namespace health_monitor
         {
             if(are_critical_drivers_operational_truck(time_now)=="s_1_l1_1_l2_1_g_1")
             {
-                alert.description = "All enssential drivers are ready(SSC,LIDAR1,LIDAR2 and GPS)";
+                alert.description = "All enssential drivers are ready";
                 alert.type = cav_msgs::SystemAlert::DRIVERS_READY;
                 return alert;
             } 
@@ -224,17 +224,17 @@ namespace health_monitor
             }
             else
             {
-                alert.description = "UNKNOWN";
+                alert.description = "Missing unknown essential driver";
                 alert.type = cav_msgs::SystemAlert::FATAL;
                 return alert;  
             }
  
         }
-        else if(car==true)
+        else if(car==true || dev==true)
         {
             if(are_critical_drivers_operational_car(time_now)=="s_1_l_1_g_1")
             {
-                alert.description = "All enssential drivers are ready(SSC,LIDAR and GPS)";
+                alert.description = "All enssential drivers are ready";
                 alert.type = cav_msgs::SystemAlert::DRIVERS_READY;
                 return alert; 
             }
@@ -270,14 +270,14 @@ namespace health_monitor
             }
             else
             {
-                alert.description = "UNKNOWN";
+                alert.description = "Missing unknown essential driver";
                 alert.type = cav_msgs::SystemAlert::FATAL;
                 return alert;  
             }
         }
         else
         {
-            alert.description = "UNKNOWN";
+            alert.description = "Wrong params";
             alert.type = cav_msgs::SystemAlert::FATAL;
             return alert; 
         }

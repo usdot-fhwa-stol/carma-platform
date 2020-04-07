@@ -239,9 +239,10 @@ namespace health_monitor
 
         bool truck=false;
         bool car=true;
+        bool dev=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(5, alert.type);
     }   
@@ -276,9 +277,10 @@ namespace health_monitor
 
         bool truck=false;
         bool car=true;
+        bool dev=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(1, alert.type);
     }   
@@ -313,9 +315,10 @@ namespace health_monitor
 
         bool truck=false;
         bool car=true;
+        bool dev=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(2, alert.type);
     }   
@@ -350,9 +353,10 @@ namespace health_monitor
 
         bool truck=false;
         bool car=true;
+        bool dev=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(3, alert.type);
     } 
@@ -387,9 +391,10 @@ namespace health_monitor
 
         bool truck=false;
         bool car=true;
+        bool dev=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(3, alert.type);
     } 
@@ -403,9 +408,10 @@ namespace health_monitor
 
         bool truck=false;
         bool car=true;
+        bool dev=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(3, alert.type);
     } 
@@ -440,9 +446,10 @@ namespace health_monitor
 
         bool truck=false;
         bool car=true;
+        bool dev=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,1000,750,1);
+        alert=dm.handleSpin(truck,car,dev,1500,1000,750,1);
 
         EXPECT_EQ(4, alert.type);
     } 
@@ -477,9 +484,10 @@ namespace health_monitor
 
         bool truck=false;
         bool car=true;
+        bool dev=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,5000,750,0);
+        alert=dm.handleSpin(truck,car,dev,1500,5000,750,0);
 
         EXPECT_EQ(4, alert.type);
     } 
@@ -515,13 +523,297 @@ namespace health_monitor
 
         bool truck=false;
         bool car=false;
+        bool dev=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
+
+        EXPECT_EQ(3, alert.type);
+    } 
+////////////////////////// Unit test for dev part////////////////////////////////////////
+
+    TEST(DriverManagerTest, testDevHandleSpinDriversReady)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar";
+        msg2.status = cav_msgs::DriverStatus::DEGRADED;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.gnss = true;
+        msg3.name = "gps";
+        msg3.status = cav_msgs::DriverStatus::DEGRADED;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        bool truck=false;
+        bool car=false;
+        bool dev=true;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
+
+        EXPECT_EQ(5, alert.type);
+    }   
+
+    TEST(DriverManagerTest, testDevHandleSpinCautionGpsNotWorkingLidarWorking)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar";
+        msg2.status = cav_msgs::DriverStatus::DEGRADED;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.gnss = true;
+        msg3.name = "gps";
+        msg3.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        bool truck=false;
+        bool car=false;
+        bool dev=true;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
+
+        EXPECT_EQ(1, alert.type);
+    }   
+
+    TEST(DriverManagerTest, testDevHandleSpinWarningLidarNotWorkingGpsWorking)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar";
+        msg2.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.gnss = true;
+        msg3.name = "gps";
+        msg3.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        bool truck=false;
+        bool car=false;
+        bool dev=true;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
+
+        EXPECT_EQ(2, alert.type);
+    }   
+
+    TEST(DriverManagerTest, testDevHandleSpinFatalLidarNotWorkingGpsNotWorkingSscWorking)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar";
+        msg2.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.gnss = true;
+        msg3.name = "gps";
+        msg3.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        bool truck=false;
+        bool car=false;
+        bool dev=true;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(3, alert.type);
     } 
 
+    TEST(DriverManagerTest, testDevHandleSpinFatalSscWorking)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar";
+        msg2.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.gnss = true;
+        msg3.name = "gps";
+        msg3.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        bool truck=false;
+        bool car=false;
+        bool dev=true;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
+
+        EXPECT_EQ(3, alert.type);
+    } 
+
+    TEST(DriverManagerTest, testDevHandleSpinFatalUnknownInside)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        bool truck=false;
+        bool car=false;
+        bool dev=true;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
+
+        EXPECT_EQ(3, alert.type);
+    } 
+
+        TEST(DriverManagerTest, testDevHandleSpinNotReadyCase1)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar";
+        msg2.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.gnss = true;
+        msg3.name = "gps";
+        msg3.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        bool truck=false;
+        bool car=false;
+        bool dev=true;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,dev,1500,1000,750,1);
+
+        EXPECT_EQ(4, alert.type);
+    } 
+
+        TEST(DriverManagerTest, testDevHandleSpinNotReadyCase2)
+    {
+        std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
+
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+
+        cav_msgs::DriverStatus msg1;
+        msg1.controller = true;
+        msg1.name = "controller";
+        msg1.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg1_pointer(new cav_msgs::DriverStatus(msg1));
+        dm.update_driver_status(msg1_pointer, 1000);
+        
+        cav_msgs::DriverStatus msg2;
+        msg2.lidar = true;
+        msg2.name = "lidar";
+        msg2.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
+        dm.update_driver_status(msg2_pointer, 1000);
+
+        cav_msgs::DriverStatus msg3;
+        msg3.gnss = true;
+        msg3.name = "gps";
+        msg3.status = cav_msgs::DriverStatus::OFF;
+        cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
+        dm.update_driver_status(msg3_pointer, 1000);
+
+        bool truck=false;
+        bool car=false;
+        bool dev=true;
+        
+        cav_msgs::SystemAlert alert;
+        alert=dm.handleSpin(truck,car,dev,1500,5000,750,0);
+
+        EXPECT_EQ(4, alert.type);
+    } 
 
 ////////////////////////// Unit test for truck part////////////////////////////////////////
     
@@ -943,9 +1235,10 @@ namespace health_monitor
 
         bool truck=true;
         bool car=false;
+        bool dev=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(5, alert.type);
     }
@@ -987,9 +1280,10 @@ namespace health_monitor
 
         bool truck=true;
         bool car=false;
+        bool dev=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(1, alert.type);
     }
@@ -1031,9 +1325,10 @@ namespace health_monitor
 
         bool truck=true;
         bool car=false;
+        bool dev=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(1, alert.type);
     }
@@ -1075,9 +1370,10 @@ namespace health_monitor
 
         bool truck=true;
         bool car=false;
+        bool dev=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(1, alert.type);
     }
@@ -1120,9 +1416,10 @@ namespace health_monitor
 
         bool truck=true;
         bool car=false;
+        bool dev=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(1, alert.type);
     }
@@ -1164,9 +1461,10 @@ namespace health_monitor
 
         bool truck=true;
         bool car=false;
+        bool dev=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(2, alert.type);
     }
@@ -1208,9 +1506,10 @@ namespace health_monitor
 
         bool truck=true;
         bool car=false;
+        bool dev=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(3, alert.type);
     }
@@ -1252,9 +1551,10 @@ namespace health_monitor
 
         bool truck=true;
         bool car=false;
+        bool dev=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(3, alert.type);
     }
@@ -1268,9 +1568,10 @@ namespace health_monitor
 
         bool truck=true;
         bool car=false;
+        bool dev=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,dev,1500,150,750,0);
 
         EXPECT_EQ(3, alert.type);
     }
@@ -1313,9 +1614,10 @@ namespace health_monitor
 
         bool truck=true;
         bool car=false;
+        bool dev=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,1000,750,1);
+        alert=dm.handleSpin(truck,car,dev,1500,1000,750,1);
 
         EXPECT_EQ(4, alert.type);
     }
@@ -1357,9 +1659,10 @@ namespace health_monitor
 
         bool truck=true;
         bool car=false;
+        bool dev=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,5000,750,0);
+        alert=dm.handleSpin(truck,car,dev,1500,5000,750,0);
 
         EXPECT_EQ(4, alert.type);
     }

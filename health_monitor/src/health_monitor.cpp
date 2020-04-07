@@ -47,8 +47,10 @@ namespace health_monitor
         pnh_.getParam("lidar_gps_drivers", lidar_gps_drivers_); 
         truck_=false;
         car_=false;
+        dev_=false;
         pnh_.getParam("truck", truck_);
         pnh_.getParam("car", car_);
+        pnh_.getParam("dev", dev_);
 
         // initialize worker class
         plugin_manager_ = PluginManager(required_plugins_, plugin_service_prefix_, strategic_plugin_service_suffix_, tactical_plugin_service_suffix_);
@@ -105,7 +107,7 @@ namespace health_monitor
         ros::Duration sd(startup_duration_);
         long start_duration=sd.toNSec() / 1e6;
 
-        nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,start_time_flag_.isZero()));
+        nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,dev_,time_now,start_up_timestamp_,start_duration,start_time_flag_.isZero()));
         return true;
     }
 

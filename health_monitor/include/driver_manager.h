@@ -53,7 +53,7 @@ namespace health_monitor
             /*!
              * \brief Handle the spin and publisher
              */
-            cav_msgs::SystemAlert handleSpin(bool truck,bool car,long time_now,long start_up_timestamp,long startup_duration,bool is_zero);
+            cav_msgs::SystemAlert handleSpin(bool truck,bool car,bool dev,long time_now,long start_up_timestamp,long startup_duration,bool is_zero);
 
         private:
 
