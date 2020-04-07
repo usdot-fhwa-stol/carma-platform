@@ -282,8 +282,8 @@ namespace route {
             if (traffic_rules) 
             {
                 auto laneletIterator = world_model_->getMap()->laneletLayer.find(ll_id_);
-                if (laneletIterator != laneletLayer.end()) {
-                    speed_limit_ = traffic_rules->speedLimit(*laneletIterator).speedLimit.value();
+                if (laneletIterator != world_model_->getMap()->laneletLayer.end()) {
+                    speed_limit_ = (*traffic_rules)->speedLimit(*laneletIterator).speedLimit.value();
                 } 
                 else 
                 {
