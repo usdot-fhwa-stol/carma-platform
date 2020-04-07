@@ -14,6 +14,7 @@
  * the License.
  */
 
+#include <string>
 #include <ros/ros.h>
 #include <cav_msgs/ManeuverPlan.h>
 
@@ -117,4 +118,20 @@ namespace cost_utils
      * \throws An invalid argument exception if the maneuver is poorly constructed
      */
     double get_maneuver_end_speed(const cav_msgs::Maneuver&);
+
+    /**
+     * \brief Get the starting lane of the specified maneuver
+     * \param mvr The maneuver to examine
+     * \return The string-valued starting lane id of the maneuver
+     * \throws An invalid argument exception if the maneuver is poorly constructed
+     */
+    std::string get_maneuver_starting_lane_id(const cav_msgs::Maneuver&);
+
+    /**
+     * \brief Get the ending lane of the specified maneuver
+     * \param mvr The maneuver to examine
+     * \return The string-valued ending lane id of the maneuver
+     * \throws An invalid argument exception if the maneuver is poorly constructed
+     */
+    std::string get_maneuver_ending_lane_id(const cav_msgs::Maneuver&);
 } // namespace arbitrator

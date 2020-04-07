@@ -27,11 +27,12 @@ double CostofFuel::compute_cost(cav_msgs::ManeuverPlan plan) const
     double cost = 0.0;
     for (auto it = plan.maneuvers.begin(); it != plan.maneuvers.end(); it++)
     {
-        double average_speed = (cost_utils::get_maneuver_end_distance(*it) - cost_utils::get_maneuver_start_distance(*it)) /
-                               (cost_utils::get_maneuver_end_time(*it) - cost_utils::get_maneuver_start_time(*it));
-        cost += 1 / average_speed;
+        double average_speed = (cost_utils::get_maneuver_start_speed*it) + cost_utils::get_maneuver_end_speed(*it)) / 2;
+        double average_acceleration = (cost_utils::get_maneuver_end_speed(*it) - cost_utils::get_maneuver_start_speed(*it)) /
+                                      (cost_utils::get_maneuver_end_time(*it) - cost_utils::get_maneuver_start_time(*it));
+        cost += pow(average_speed, 2.0) + pow(average_acceleration, 2.0);
     }
     return cost;
 }
 
-}
+} // namespace cost_plugin_system

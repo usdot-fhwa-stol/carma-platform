@@ -33,8 +33,7 @@ double CostofEfficiency::compute_cost(cav_msgs::ManeuverPlan plan) const
     double cost = 0.0;
     for (auto it = plan.maneuvers.begin(); it != plan.maneuvers.end(); it++)
     {
-        double average_speed = (cost_utils::get_maneuver_end_distance(*it) - cost_utils::get_maneuver_start_distance(*it)) /
-                               (cost_utils::get_maneuver_end_time(*it) - cost_utils::get_maneuver_start_time(*it));
+        double average_speed = (cost_utils::get_maneuver_start_speed*it) + cost_utils::get_maneuver_end_speed(*it)) / 2;
         if (average_speed < speed_buffer_)
         {
             cost += 1 - 1 / speed_buffer_ * average_speed;

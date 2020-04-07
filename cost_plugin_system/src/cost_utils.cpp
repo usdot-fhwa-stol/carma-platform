@@ -94,4 +94,15 @@ double get_maneuver_end_speed(const cav_msgs::Maneuver &mvr)
 {
     return GET_MANEUVER_PROPERTY(mvr, end_speed);
 }
+
+std::string get_maneuver_starting_lane_id(const cav_msgs::Maneuver &mvr)
+{
+    return GET_MANEUVER_PROPERTY(mvr, starting_lane_id);
+}
+
+std::string get_maneuver_ending_lane_id(const cav_msgs::Maneuver &mvr)
+{
+    return GET_MANEUVER_PROPERTY(mvr, ending_lane_id);
+}
+
 } // namespace cost_utils
