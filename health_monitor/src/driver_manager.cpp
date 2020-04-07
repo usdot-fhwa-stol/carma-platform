@@ -277,7 +277,7 @@ namespace health_monitor
         }
         else
         {
-            alert.description = "Need to set either truck, car or dev flag";
+            alert.description = "Need to set either truck or car flag";
             alert.type = cav_msgs::SystemAlert::FATAL;
             return alert; 
         }
