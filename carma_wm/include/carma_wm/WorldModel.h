@@ -204,7 +204,7 @@ public:
 
   virtual std::vector<cav_msgs::RoadwayObstacle> getInLaneObjects(const lanelet::ConstLanelet& lanelet) const = 0;
   
-    /**
+  /**
    * \brief Gets Cartesian distance to the closest object on the same lane as the given point
    *
    * \param object_center the point to measure the distance from
@@ -215,6 +215,30 @@ public:
    * \return An optional Cartesian distance in double to the closest in lane object. Return empty if there is no objects on current lane or the road
    */
   virtual lanelet::Optional<double>  getDistToNearestObjInLane(const lanelet::BasicPoint2d& object_center) const = 0;
+  
+  /**
+   * \brief Gets Downtrack distance to the closest object on the same lane as the given point
+   *
+   * \param object_center the point to measure the distance from
+   *
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or the given point
+   * is not on the current semantic map
+   *
+   * \return An optional TrackPos to the closest in lane object. Return empty if there is no objects on current lane or the road
+   */
+  virtual lanelet::Optional<TrackPos> getTrackPosToNearestObjInLane(const lanelet::BasicPoint2d& object_center) const = 0;
+
+  /**
+   * \brief Gets the entire lane achievable without lane change, sorted from the start, that includes the given lanelet 
+   *
+   * \param lanelet the lanelet to get the full lane of
+   *
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or the given lanelet
+   * is not on the current semantic map
+   *
+   * \return An optional vector of ConstLanalet. Returns at least the vector of given lanelet if no other is found
+   */
+  virtual std::vector<lanelet::ConstLanelet> getFullLane(const lanelet::ConstLanelet& lanelet) const = 0;
 };
 
 // Helpful using declarations for carma_wm classes

@@ -23,14 +23,15 @@
 #include <cav_msgs/ExternalObjectList.h>
 #include <cav_msgs/RoadwayObstacle.h>
 #include <cav_msgs/RoadwayObstacleList.h>
+#include "TrackPos.h"
 
 namespace carma_wm
 {
 /*! \brief Class which implements the WorldModel interface. In addition this class provides write access to the world
  * model. Write access is achieved through setters for the Map and Route.
- *  
+ *
  * NOTE: This class should NOT be used in runtime code by users and is exposed solely for use in unit tests where the WMListener class cannot be instantiated. 
- *  Proper usage of this class dictates that the Map and Route object be kept in sync. For this reason normal WorldModel users should not try to construct this class directly unless in unit tests.
+ *  Proper usage of this class dictates that the Map and Route object be kept in sync. For this reason normal WorldModel users should not try to construct this class directly unless in unit tests. 
  *
  * NOTE: This class uses the CarmaUSTrafficRules class internally to interpret routes.
  *       So routes which are set on this model should use the getTrafficRules() method to build using the correct rule
@@ -98,6 +99,11 @@ public:
   lanelet::Optional<cav_msgs::RoadwayObstacle> toRoadwayObstacle(const cav_msgs::ExternalObject& object) const override;
 
   lanelet::Optional<double> getDistToNearestObjInLane(const lanelet::BasicPoint2d& object_center) const override;
+
+  lanelet::Optional<TrackPos> getTrackPosToNearestObjInLane(const lanelet::BasicPoint2d& object_center) const override;
+
+  std::vector<lanelet::ConstLanelet> getFullLane(const lanelet::ConstLanelet& lanelet) const override;
+
 private:
 
   /*! \brief Helper function to compute the geometry of the route downtrack/crosstrack reference line
