@@ -681,18 +681,6 @@ lanelet::Optional<TrackPos> CARMAWorldModel::getTrackPosToNearestObjInLane(const
         // the object is not in the lanelet if above conditions do not meet
         obj_idxs_queue.push(curr_idx);
       }
-      auto llt_left = map_routing_graph_->left(llt);
-      if (llt_left)
-      {
-        std::cout<< "Left: ";
-        std::cout<< llt_left.get().id() <<std::endl;      
-      }
-      auto llt_right = map_routing_graph_->right(llt);
-      if (llt_right)
-      {
-         std::cout<< "Right: ";
-         std::cout<< llt_right.get().id() <<std::endl;
-      }
     }
     // try to update object_center's downtrack
     if (curr_lanelet.id() == llt.id())

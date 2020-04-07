@@ -28,10 +28,10 @@
 namespace carma_wm
 {
 /*! \brief Class which implements the WorldModel interface. In addition this class provides write access to the world
- * model. Write access is achieved through setters for the Map and Route.
+ *         model. Write access is achieved through setters for the Map and Route.
+ *         NOTE: This class should NOT be used in runtime code by users and is exposed solely for use in unit tests where the WMListener class cannot be instantiated. 
  *
- * NOTE: This class should NOT be used in runtime code by users and is exposed solely for use in unit tests where the WMListener class cannot be instantiated. 
- *  Proper usage of this class dictates that the Map and Route object be kept in sync. For this reason normal WorldModel users should not try to construct this class directly unless in unit tests. 
+ *  Proper usage of this class dictates that the Map and Route object be kept in sync. For this reason normal WorldModel users should not try to construct this class directly unless in unit tests.
  *
  * NOTE: This class uses the CarmaUSTrafficRules class internally to interpret routes.
  *       So routes which are set on this model should use the getTrafficRules() method to build using the correct rule
