@@ -178,6 +178,9 @@ namespace route {
         double ll_crosstrack_distance_, ll_downtrack_distance_;
         unsigned int ll_id_;
 
+        // current speed limit on current lanelet
+        double speed_limit_ = 0;
+
         // local copy of Route publihsers
         ros::Publisher route_event_pub_, route_state_pub_, route_pub_;
 
