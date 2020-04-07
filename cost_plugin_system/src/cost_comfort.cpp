@@ -21,17 +21,32 @@
 namespace cost_plugin_system
 {
 
+CostofComfort::CostofComfort(double max_deceleration)
+{
+    max_deceleration_ = max_deceleration;
+}
+
 double CostofComfort::compute_cost(cav_msgs::ManeuverPlan plan) const
 {
     double cost = 0.0;
+    int maneuver_size = sizeof(plan.maneuvers);
     for (auto it = plan.maneuvers.begin(); it != plan.maneuvers.end(); it++)
     {
         double average_acceleration = abs((cost_utils::get_maneuver_start_speed(*it) - cost_utils::get_maneuver_end_speed(*it)) /
                                           (cost_utils::get_maneuver_end_time(*it) - cost_utils::get_maneuver_start_time(*it)));
-
         cost += average_acceleration;
+
+        // If there is a lane change, add 1.0 as the cost
+        if (cost_utils::get_maneuver_starting_lane_id.compare(cost_utils::get_maneuver_ending_lane_id) != 0)
+        {
+            cost += 1.0;
+        }
     }
-    return cost;
+    return normalize_cost(cost, maneuver_size);
 }
 
+double normalize_cost(double cost, double size) const
+{
+    return cost / ((abs(max_deceleration_) + 1.0) * size);
 }
+} // namespace cost_plugin_system

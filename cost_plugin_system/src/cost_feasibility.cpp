@@ -28,8 +28,8 @@ CostofFeasibility::CostofFeasibility(double max_accelaration, double max_deceler
 }
 double CostofFeasibility::compute_cost(cav_msgs::ManeuverPlan plan) const
 {
-
     double cost = 0.0;
+    int maneuver_size = sizeof(plan.maneuvers);
     for (auto it = plan.maneuvers.begin(); it != plan.maneuvers.end(); it++)
     {
         double average_acceleration = (cost_utils::get_maneuver_end_speed(*it) - cost_utils::get_maneuver_start_speed(*it)) /
@@ -37,7 +37,11 @@ double CostofFeasibility::compute_cost(cav_msgs::ManeuverPlan plan) const
 
         cost += (average_acceleration > max_accelaration_) ? 1 : 0 + (average_acceleration < max_deceleration_) ? 1 : 0;
     }
-    return cost;
+    return normalize_cost(cost, maneuver_size);
 }
 
+double normalize_cost(double cost, double size) const
+{
+    return cost / (2 * size);
 }
+} // namespace cost_plugin_system

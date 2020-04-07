@@ -25,5 +25,6 @@ class CostofLegality : public CostPlugins
     CostofLegality();
 
     double compute_cost(cav_msgs::ManeuverPlan plan) const;
+    double normalize_cost(double cost, double size) const;
 };
 }

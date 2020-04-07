@@ -29,8 +29,8 @@ CostofEfficiency::CostofEfficiency(double speed_limit, double speed_buffer)
 
 double CostofEfficiency::compute_cost(cav_msgs::ManeuverPlan plan) const
 {
-
     double cost = 0.0;
+    int maneuver_size = sizeof(plan.maneuvers);
     for (auto it = plan.maneuvers.begin(); it != plan.maneuvers.end(); it++)
     {
         double average_speed = (cost_utils::get_maneuver_start_speed*it) + cost_utils::get_maneuver_end_speed(*it)) / 2;
@@ -47,8 +47,12 @@ double CostofEfficiency::compute_cost(cav_msgs::ManeuverPlan plan) const
             cost += 1 / (speed_limit_ - speed_buffer_) * average_speed - speed_buffer_ / (speed_limit_ - speed_buffer_);
         }
     }
+    return normalize_cost(cost, maneuver_size);
+}
 
-    return cost;
+double normalize_cost(double cost, double size) const
+{
+    return cost / size;
 }
 
 } // namespace cost_plugin_system

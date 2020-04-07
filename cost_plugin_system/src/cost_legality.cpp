@@ -21,6 +21,9 @@
 namespace cost_plugin_system
 {
 
+// TODO: There is no environment/infrastructure data to
+//       this cost_plugin_system node now, so the compute_cost is empty.
+//       This needs to be done later.
 double CostofLegality::compute_cost(cav_msgs::ManeuverPlan plan) const
 {
 
@@ -29,4 +32,8 @@ double CostofLegality::compute_cost(cav_msgs::ManeuverPlan plan) const
     return cost;
 }
 
+double normalize_cost(double cost, double size) const
+{
+    return cost / size;
+}
 } 

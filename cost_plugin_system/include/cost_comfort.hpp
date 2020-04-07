@@ -21,8 +21,12 @@ namespace cost_plugin_system
 class CostofComfort : public CostPlugins
 {
 public:
-    CostofComfort();
+    CostofComfort(double max_deceleration);
 
     double compute_cost(cav_msgs::ManeuverPlan plan) const;
+    double normalize_cost(double cost, double size) const;
+
+private:
+    double max_deceleration_;
 };
 } // namespace cost_plugin_system
