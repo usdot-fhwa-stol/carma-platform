@@ -24,21 +24,19 @@ namespace cost_plugin_system
 double CostofFuel::compute_cost(cav_msgs::ManeuverPlan plan) const
 {
     double cost = 0.0;
-    int maneuver_size = sizeof(plan.maneuvers);
+    int maneuver_size = plan.maneuvers.size();
     for (auto it = plan.maneuvers.begin(); it != plan.maneuvers.end(); it++)
     {
-        double average_speed = (cost_utils::get_maneuver_start_speed*it) + cost_utils::get_maneuver_end_speed(*it)) / 2;
+        double average_speed = (cost_utils::get_maneuver_start_speed(*it) + cost_utils::get_maneuver_end_speed(*it)) / 2;
         double average_acceleration = (cost_utils::get_maneuver_end_speed(*it) - cost_utils::get_maneuver_start_speed(*it)) /
-                                      (cost_utils::get_maneuver_end_time(*it) - cost_utils::get_maneuver_start_time(*it));
+                                      (cost_utils::get_maneuver_end_time(*it).toSec() - cost_utils::get_maneuver_start_time(*it).toSec());
         cost += pow(average_speed, 2.0) + pow(average_acceleration, 2.0);
     }
-    return normalize_cost(cost, maneuver_size);
-}
 
-double normalize_cost(double cost, double size) const
-{
-    // This is a number that needs to be callibrated and adjusted later
+    // Normalize the cost
     double coefficient = 1000;
-    return cost / (coefficient * size);
+    cost = cost / (coefficient * maneuver_size);
+
+    return cost;
 }
 } // namespace cost_plugin_system

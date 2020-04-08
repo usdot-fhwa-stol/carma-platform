@@ -24,7 +24,6 @@ public:
     CostofEfficiency(double speed_limit, double speed_buffer);
 
     double compute_cost(cav_msgs::ManeuverPlan plan) const;
-    double normalize_cost(double cost, double size) const;
 private:
     double speed_limit_;
     double speed_buffer_;

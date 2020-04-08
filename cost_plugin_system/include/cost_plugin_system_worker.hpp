@@ -20,18 +20,19 @@
 #include <ros/ros.h>
 #include <atomic>
 #include <carma_utils/CARMAUtils.h>
+#include <cav_srvs/ComputePlanCost.h>
 
 namespace cost_plugin_system
 {
-class CostPluginWorker
+class CostPluginSystemWorker
 {
 public:
     /*!
-     * \brief Default constructor for CostPluginWorker
+     * \brief Default constructor for CostPluginSystemWorker
      */
-    CostPluginWorker();
+    CostPluginSystemWorker();
 
-    double run();
+    int run();
 
 private:
     // Node handles

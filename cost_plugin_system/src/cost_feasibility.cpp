@@ -33,15 +33,14 @@ double CostofFeasibility::compute_cost(cav_msgs::ManeuverPlan plan) const
     for (auto it = plan.maneuvers.begin(); it != plan.maneuvers.end(); it++)
     {
         double average_acceleration = (cost_utils::get_maneuver_end_speed(*it) - cost_utils::get_maneuver_start_speed(*it)) /
-                                      (cost_utils::get_maneuver_end_time(*it) - cost_utils::get_maneuver_start_time(*it));
+                                      (cost_utils::get_maneuver_end_time(*it).toSec() - cost_utils::get_maneuver_start_time(*it).toSec());
 
         cost += (average_acceleration > max_accelaration_) ? 1 : 0 + (average_acceleration < max_deceleration_) ? 1 : 0;
     }
-    return normalize_cost(cost, maneuver_size);
-}
 
-double normalize_cost(double cost, double size) const
-{
-    return cost / (2 * size);
+    // Normalize the cost
+    cost = cost / (maneuver_size * 2);
+
+    return cost;
 }
 } // namespace cost_plugin_system

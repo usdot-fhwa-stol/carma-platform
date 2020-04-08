@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(cost_plugin)
+project(cost_plugin_system)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
@@ -56,16 +56,16 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_node 
-  src/cost_plugin_node.cpp)
+  src/cost_plugin_system_node.cpp)
   
 ## Add cmake target dependencies of the executable
-add_library(cost_plugin_library
+add_library(cost_plugin_system_library
   src/cost_comfort.cpp
   src/cost_efficiency.cpp
   src/cost_feasibility.cpp
   src/cost_fuel.cpp
   src/cost_safety.cpp
-  src/cost_plugin_worker.cpp
+  src/cost_plugin_system_worker.cpp
   src/cost_utils.cpp)
 
 
@@ -78,11 +78,11 @@ set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX ""
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(cost_plugin_library ${catkin_EXPORTED_TARGETS})
+add_dependencies(cost_plugin_system_library ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
-cost_plugin_library
+cost_plugin_system_library
   ${catkin_LIBRARIES}
 )
 
@@ -95,7 +95,7 @@ cost_plugin_library
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-install(TARGETS ${PROJECT_NAME}_node cost_plugin_library
+install(TARGETS ${PROJECT_NAME}_node cost_plugin_system_library
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -120,8 +120,9 @@ install(DIRECTORY
 #############
 
 catkin_add_gmock(${PROJECT_NAME}-test
+  test/cost_plugin_node_test.cpp
 )
 
 if(TARGET ${PROJECT_NAME}-test)
-  target_link_libraries(${PROJECT_NAME}-test cost_plugin_library ${catkin_LIBRARIES})
+  target_link_libraries(${PROJECT_NAME}-test cost_plugin_system_library ${catkin_LIBRARIES})
 endif()

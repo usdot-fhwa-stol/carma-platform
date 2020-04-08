@@ -21,7 +21,7 @@ namespace cost_plugin_system
 class CostofSafety : public CostPlugins
 {
 public:
-    CostofSafety(double speed_limit, double speed_buffer);
+    CostofSafety(double speed_limit);
 
     double compute_cost(cav_msgs::ManeuverPlan plan) const;
 

@@ -32,14 +32,13 @@ double CostofSafety::compute_cost(cav_msgs::ManeuverPlan plan) const
     int maneuver_size = sizeof(plan.maneuvers);
     for (auto it = plan.maneuvers.begin(); it != plan.maneuvers.end(); it++)
     {
-        double average_speed = (cost_utils::get_maneuver_start_speed*it) + cost_utils::get_maneuver_end_speed(*it)) / 2;
-        cost += pow(average_speed, 2.0) - (1 + pow(speed_limit_, 2.0)) / pow(speed_limit_, 2.0) * average_speed + 1
+        double average_speed = (cost_utils::get_maneuver_start_speed(*it) + cost_utils::get_maneuver_end_speed(*it)) / 2;
+        cost += pow(average_speed, 2.0) - (1 + pow(speed_limit_, 2.0)) / pow(speed_limit_, 2.0) * average_speed + 1;
     }
-    return normalize_cost(cost, maneuver_size);
-}
 
-double normalize_cost(double cost, double size) const
-{
-    return cost / size;
+    // Normalize the cost
+    cost = cost / maneuver_size;
+
+    return cost;
 }
 } // namespace cost_plugin_system

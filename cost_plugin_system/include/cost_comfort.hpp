@@ -24,7 +24,6 @@ public:
     CostofComfort(double max_deceleration);
 
     double compute_cost(cav_msgs::ManeuverPlan plan) const;
-    double normalize_cost(double cost, double size) const;
 
 private:
     double max_deceleration_;

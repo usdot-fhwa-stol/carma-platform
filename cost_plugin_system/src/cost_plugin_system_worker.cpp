@@ -13,36 +13,35 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 #include "cost_safety.hpp"
 #include "cost_fuel.hpp"
 #include "cost_legality.hpp"
 #include "cost_comfort.hpp"
 #include "cost_efficiency.hpp"
 #include "cost_feasibility.hpp"
-#include "cost_plugin_worker.hpp"
+#include "cost_plugin_system_worker.hpp"
 
 namespace cost_plugin_system
 {
 
-CostPluginWorker::CostPluginWorker()
+CostPluginSystemWorker::CostPluginSystemWorker()
 {
     nh_ = ros::CARMANodeHandle{};
     pnh_ = ros::CARMANodeHandle{"~"};
 }
 
-int CostPluginWorker::run()
+int CostPluginSystemWorker::run()
 {
     ROS_INFO("Initalizing cost_plugin_system node...");
     // Init our ROS objects
-    compute_plan_cost_service_server_ = nh_.advertiseService("compute_plan_cost", &CostPluginWorker::get_score, this);
+    compute_plan_cost_service_server_ = nh_.advertiseService("compute_plan_cost", &CostPluginSystemWorker::get_score, this);
     ROS_INFO("Ready to compute the total cost");
     ros::spin();
 
     return 0;
 }
 
-bool get_score(cav_srvs::ComputePlanCostRequest &req, cav_srvs::ComputePlanCostREsponse &res)
+bool get_score(cav_srvs::ComputePlanCostRequest& req, cav_srvs::ComputePlanCostREsponse& res)
 {
     cav_msgs::ManeuverPlan plan = req.maneuverPlan;
 
@@ -78,7 +77,7 @@ double compute_final_score(cav_msgs::ManeuverPlan plan)
         double cost_of_comfort = coc.compute_cost(plan);
         double cost_of_efficiency = coe.compute_cost(plan);
         double cost_of_feasibility = cofe.compute_cost(plan);
-        double cost_of_feul = cof.compute_cost(plan);
+        double cost_of_fuel = cof.compute_cost(plan);
         double cost_of_safety = cos.compute_cost(plan);
 
         total_cost = weight_of_comfort * cost_of_comfort + weight_of_efficiency * cost_of_efficiency +

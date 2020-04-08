@@ -16,12 +16,12 @@
 
 #include <ros/ros.h>
 #include <string>
-#include "cost_plugin_worker.hpp"
+#include "cost_plugin_system_worker.hpp"
 
 int main(int argc, char **argv)
 {
 
     ros::init(argc, argv, "cost_plugin_system");
-    cost_plugin_system::CostPluginWorker cpw;
+    cost_plugin_system::CostPluginSystemWorker cpw;
     return cpw.run();
 }

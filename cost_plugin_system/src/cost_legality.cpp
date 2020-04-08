@@ -14,7 +14,6 @@
  * the License.
  */
 
-#include <cmath>
 #include "cost_utils.hpp"
 #include "cost_legality.hpp"
 
@@ -32,8 +31,4 @@ double CostofLegality::compute_cost(cav_msgs::ManeuverPlan plan) const
     return cost;
 }
 
-double normalize_cost(double cost, double size) const
-{
-    return cost / size;
-}
 } 

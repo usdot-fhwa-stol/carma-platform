@@ -29,24 +29,23 @@ CostofComfort::CostofComfort(double max_deceleration)
 double CostofComfort::compute_cost(cav_msgs::ManeuverPlan plan) const
 {
     double cost = 0.0;
-    int maneuver_size = sizeof(plan.maneuvers);
+    int maneuver_size = plan.maneuvers.size();
     for (auto it = plan.maneuvers.begin(); it != plan.maneuvers.end(); it++)
     {
         double average_acceleration = abs((cost_utils::get_maneuver_start_speed(*it) - cost_utils::get_maneuver_end_speed(*it)) /
-                                          (cost_utils::get_maneuver_end_time(*it) - cost_utils::get_maneuver_start_time(*it)));
+                                          (cost_utils::get_maneuver_end_time(*it).toSec() - cost_utils::get_maneuver_start_time(*it).toSec()));
         cost += average_acceleration;
 
         // If there is a lane change, add 1.0 as the cost
-        if (cost_utils::get_maneuver_starting_lane_id.compare(cost_utils::get_maneuver_ending_lane_id) != 0)
+        if (cost_utils::get_maneuver_starting_lane_id(*it).compare(cost_utils::get_maneuver_ending_lane_id(*it)) != 0)
         {
             cost += 1.0;
         }
     }
-    return normalize_cost(cost, maneuver_size);
-}
 
-double normalize_cost(double cost, double size) const
-{
-    return cost / ((abs(max_deceleration_) + 1.0) * size);
+    // Normalize the cost to 0-1
+    cost = cost / ((abs(max_deceleration_) + 1.0) * maneuver_size);
+
+    return cost;
 }
 } // namespace cost_plugin_system

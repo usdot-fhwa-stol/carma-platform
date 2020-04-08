@@ -24,6 +24,5 @@ public:
     CostofFuel();
 
     double compute_cost(cav_msgs::ManeuverPlan plan) const;
-    double normalize_cost(double cost, double size) const;
 };
 } // namespace cost_plugin_system

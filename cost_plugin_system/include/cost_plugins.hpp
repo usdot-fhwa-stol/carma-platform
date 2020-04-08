@@ -30,14 +30,6 @@ public:
     virtual double compute_cost(cav_msgs::ManeuverPlan plan) const = 0;
 
     /**
-     * \brief Normalize the cost to 0-1
-     * \param cost The cost of a maneuver plan
-     * \param size The size of maneuvers in a maneuver plan
-     * \return double The normalized total cost
-     */
-    virtual double normalize_cost(double cost, double size) const = 0;
-
-    /**
      * \brief Virtual destructor provided for memory safety
      */
     virtual ~CostPlugins(){};
