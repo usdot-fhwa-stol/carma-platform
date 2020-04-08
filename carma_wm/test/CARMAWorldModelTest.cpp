@@ -37,118 +37,118 @@ namespace carma_wm
 void createTestingWorld(carma_wm::CARMAWorldModel& cmw, std::vector<lanelet::Lanelet>& llts,
                                           lanelet::LaneletMapPtr& map,  std::vector<cav_msgs::ExternalObject>& obstacles)
 {
-    /*
-    * Create 2x2 lanelets map by hand
-    */
+  /*
+  * Create 2x2 lanelets map by hand
+  */
 
-    // Linestring points
-    std::vector<lanelet::Point3d> pl, pm, pr;
-    pl.push_back (carma_wm::getPoint(1, 0 , 0));
-    pl.push_back (carma_wm::getPoint(1, 9, 0));
-    pl.push_back (carma_wm::getPoint(1, 18, 0));
-    pl.push_back (carma_wm::getPoint(10, 27, 0)); //45deg diag ll
-    pm.push_back (carma_wm::getPoint(9, 0, 0));
-    pm.push_back (carma_wm::getPoint(9, 9, 0));
-    pm.push_back (carma_wm::getPoint(9, 18, 0));
-    pm.push_back (carma_wm::getPoint(18, 27, 0)); //45deg diag ll
-    pr.push_back (carma_wm::getPoint(17, 0, 0));
-    pr.push_back (carma_wm::getPoint(17, 9 , 0));
-    pr.push_back (carma_wm::getPoint(17, 18, 0));
-    pr.push_back (carma_wm::getPoint(26, 27, 0)); //45deg diag ll
+  // Linestring points
+  std::vector<lanelet::Point3d> pl, pm, pr;
+  pl.push_back (carma_wm::getPoint(1, 0 , 0));
+  pl.push_back (carma_wm::getPoint(1, 9, 0));
+  pl.push_back (carma_wm::getPoint(1, 18, 0));
+  pl.push_back (carma_wm::getPoint(10, 27, 0)); //45deg diag ll
+  pm.push_back (carma_wm::getPoint(9, 0, 0));
+  pm.push_back (carma_wm::getPoint(9, 9, 0));
+  pm.push_back (carma_wm::getPoint(9, 18, 0));
+  pm.push_back (carma_wm::getPoint(18, 27, 0)); //45deg diag ll
+  pr.push_back (carma_wm::getPoint(17, 0, 0));
+  pr.push_back (carma_wm::getPoint(17, 9 , 0));
+  pr.push_back (carma_wm::getPoint(17, 18, 0));
+  pr.push_back (carma_wm::getPoint(26, 27, 0)); //45deg diag ll
 
-    // Unique ids for line strings
-    std::vector<lanelet::Id> unique_ids;
-    for (int i = 0; i < 9; i ++)
-        unique_ids.push_back(lanelet::utils::getId());
+  // Unique ids for line strings
+  std::vector<lanelet::Id> unique_ids;
+  for (int i = 0; i < 9; i ++)
+      unique_ids.push_back(lanelet::utils::getId());
 
-    // Create linestrings
-    lanelet::LineString3d left_1(unique_ids[0], { pl[0], pl[1] });
-    lanelet::LineString3d left_2(unique_ids[2], { pl[1], pl[2] });
-    lanelet::LineString3d left_3(unique_ids[6], { pl[2], pl[3] });
-    lanelet::LineString3d mid_1(unique_ids[1], { pm[0], pm[1]});
-    lanelet::LineString3d mid_2(unique_ids[3], { pm[1], pm[2]});
-    lanelet::LineString3d mid_3(unique_ids[7], { pm[2], pm[3]});
-    lanelet::LineString3d right_1(unique_ids[4], { pr[0], pr[1]});
-    lanelet::LineString3d right_2(unique_ids[5], { pr[1], pr[2]});
-    lanelet::LineString3d right_3(unique_ids[8], { pr[2], pr[3]});
+  // Create linestrings
+  lanelet::LineString3d left_1(unique_ids[0], { pl[0], pl[1] });
+  lanelet::LineString3d left_2(unique_ids[2], { pl[1], pl[2] });
+  lanelet::LineString3d left_3(unique_ids[6], { pl[2], pl[3] });
+  lanelet::LineString3d mid_1(unique_ids[1], { pm[0], pm[1]});
+  lanelet::LineString3d mid_2(unique_ids[3], { pm[1], pm[2]});
+  lanelet::LineString3d mid_3(unique_ids[7], { pm[2], pm[3]});
+  lanelet::LineString3d right_1(unique_ids[4], { pr[0], pr[1]});
+  lanelet::LineString3d right_2(unique_ids[5], { pr[1], pr[2]});
+  lanelet::LineString3d right_3(unique_ids[8], { pr[2], pr[3]});
 
-    // Create Lanelets
-    llts.push_back(carma_wm::getLanelet(left_1, mid_1, lanelet::AttributeValueString::SolidSolid, lanelet::AttributeValueString::Dashed));
-    llts.push_back(carma_wm::getLanelet(left_2, mid_2, lanelet::AttributeValueString::SolidSolid, lanelet::AttributeValueString::Dashed));
-    llts.push_back(carma_wm::getLanelet(left_3, mid_3, lanelet::AttributeValueString::SolidSolid, lanelet::AttributeValueString::Dashed));
-    llts.push_back(carma_wm::getLanelet(mid_1, right_1, lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::SolidSolid));
-    llts.push_back(carma_wm::getLanelet(mid_2, right_2, lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::SolidSolid));
-    llts.push_back(carma_wm::getLanelet(mid_3, right_3, lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::SolidSolid));
+  // Create Lanelets
+  llts.push_back(carma_wm::getLanelet(left_1, mid_1, lanelet::AttributeValueString::SolidSolid, lanelet::AttributeValueString::Dashed));
+  llts.push_back(carma_wm::getLanelet(left_2, mid_2, lanelet::AttributeValueString::SolidSolid, lanelet::AttributeValueString::Dashed));
+  llts.push_back(carma_wm::getLanelet(left_3, mid_3, lanelet::AttributeValueString::SolidSolid, lanelet::AttributeValueString::Dashed));
+  llts.push_back(carma_wm::getLanelet(mid_1, right_1, lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::SolidSolid));
+  llts.push_back(carma_wm::getLanelet(mid_2, right_2, lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::SolidSolid));
+  llts.push_back(carma_wm::getLanelet(mid_3, right_3, lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::SolidSolid));
 
-    // Add regualtory element - Passing Control Line
-    for (int i = 0; i < 3; i++)
-    {
-        std::shared_ptr<lanelet::PassingControlLine> pcl(new lanelet::PassingControlLine(lanelet::PassingControlLine::buildData(
-            lanelet::utils::getId(), { llts.back().rightBound() }, {lanelet::Participants::Vehicle}, { lanelet::Participants::Vehicle })));
-        llts.back().addRegulatoryElement(pcl);
-    }
+  // Add regualtory element - Passing Control Line
+  for (int i = 0; i < 3; i++)
+  {
+      std::shared_ptr<lanelet::PassingControlLine> pcl(new lanelet::PassingControlLine(lanelet::PassingControlLine::buildData(
+          lanelet::utils::getId(), { llts.back().rightBound() }, {lanelet::Participants::Vehicle}, { lanelet::Participants::Vehicle })));
+      llts.back().addRegulatoryElement(pcl);
+  }
 
-    for (int i = 0; i < 3; i ++)
-    {
-        std::shared_ptr<lanelet::PassingControlLine> pcl(new lanelet::PassingControlLine(lanelet::PassingControlLine::buildData(
-            lanelet::utils::getId(), { llts.back().leftBound() }, {lanelet::Participants::Vehicle}, { lanelet::Participants::Vehicle })));
-        llts.back().addRegulatoryElement(pcl);
-    }
+  for (int i = 0; i < 3; i ++)
+  {
+      std::shared_ptr<lanelet::PassingControlLine> pcl(new lanelet::PassingControlLine(lanelet::PassingControlLine::buildData(
+          lanelet::utils::getId(), { llts.back().leftBound() }, {lanelet::Participants::Vehicle}, { lanelet::Participants::Vehicle })));
+      llts.back().addRegulatoryElement(pcl);
+  }
 
-    // Create lanelet map
-    map = lanelet::utils::createMap(llts, {});
+  // Create lanelet map
+  map = lanelet::utils::createMap(llts, {});
 
-    /*
-    * Populate the map with external obstacles
-    */
+  /*
+  * Populate the map with external obstacles
+  */
 
-    // Offsets are added to x,y = 0,0 origin currently
-    // obstacles[0][1] are in lane[0], obstacles[1][2][3][4] are in lane[1]:
-    std::vector<double> x_offsets = {5, 10.3033, 12.6, 10.01, 17};
-    std::vector<double> y_offsets = {9,  9.3033,    4,    14, 20};
-    std::vector<double> orients = {0, 0.785, 0, 1.5708}; // 0, 45, 0, 90 degs
-    // all objects are same sizes
-    geometry_msgs::Vector3 size;
-    size.x = 6;
-    size.y = 2;
-    size.z = 1;
+  // Offsets are added to x,y = 0,0 origin currently
+  // obstacles[0][1][3] are in lane left, obstacles[1][2][3][4] are in lane right:
+  std::vector<double> x_offsets = {5, 10.3033, 12.6, 10.01, 17};
+  std::vector<double> y_offsets = {9,  9.3033,    4,    14, 20};
+  std::vector<double> orients = {0, 0.785, 0, 1.5708, 0}; // 0, 45, 0, 90 degs
+  // all objects are same sizes
+  geometry_msgs::Vector3 size;
+  size.x = 6;
+  size.y = 2;
+  size.z = 1;
 
-    for (int i = 0; i < x_offsets.size(); i++)
-    {
-        geometry_msgs::Pose pose;
-        pose.position.x = x_offsets[i];
-        pose.position.y = y_offsets[i];
-        pose.position.z = 0;
+  for (int i = 0; i < x_offsets.size(); i++)
+  {
+      geometry_msgs::Pose pose;
+      pose.position.x = x_offsets[i];
+      pose.position.y = y_offsets[i];
+      pose.position.z = 0;
 
-        tf2::Quaternion tf_orientation;
-        tf_orientation.setRPY(0, 0, orients[i]);
+      tf2::Quaternion tf_orientation;
+      tf_orientation.setRPY(0, 0, orients[i]);
 
-        pose.orientation.x = tf_orientation.getX();
-        pose.orientation.y = tf_orientation.getY();
-        pose.orientation.z = tf_orientation.getZ();
-        pose.orientation.w = tf_orientation.getW();
+      pose.orientation.x = tf_orientation.getX();
+      pose.orientation.y = tf_orientation.getY();
+      pose.orientation.z = tf_orientation.getZ();
+      pose.orientation.w = tf_orientation.getW();
 
-        cav_msgs::ExternalObject obj;
-        obj.id = i;
-        obj.object_type = cav_msgs::ExternalObject::SMALL_VEHICLE;
-        obj.pose.pose = pose;
-        obj.velocity.twist.linear.x = 1.0;
-        obj.size = size;
+      cav_msgs::ExternalObject obj;
+      obj.id = i;
+      obj.object_type = cav_msgs::ExternalObject::SMALL_VEHICLE;
+      obj.pose.pose = pose;
+      obj.velocity.twist.linear.x = 1.0;
+      obj.size = size;
 
-        cav_msgs::PredictedState pred;
-        auto pred_pose = obj.pose.pose;
-        pred_pose.position.y += 1;
-        pred.predicted_position = pred_pose;
-        pred.predicted_position_confidence = 1.0;
+      cav_msgs::PredictedState pred;
+      auto pred_pose = obj.pose.pose;
+      pred_pose.position.y += 1;
+      pred.predicted_position = pred_pose;
+      pred.predicted_position_confidence = 1.0;
 
-        obj.predictions.push_back(pred);
+      obj.predictions.push_back(pred);
 
-        obstacles.push_back(obj);
-    }
+      obstacles.push_back(obj);
+  }
 
 }
 
-TEST(CARMAWorldModelTest, getTrackPosToNearestObjInLane)
+TEST(CARMAWorldModelTest, getLane)
 {
   /*
   * PREPARE THE TESTING ENVIRONMENT
@@ -165,7 +165,50 @@ TEST(CARMAWorldModelTest, getTrackPosToNearestObjInLane)
   * TEST
   */
   // Test no map set
-  ASSERT_THROW(cmw.getTrackPosToNearestObjInLane({5,4}), std::invalid_argument);
+  ASSERT_THROW(cmw.getLane(llts[0]), std::invalid_argument);
+
+  // Set map
+  cmw.setMap(map); 
+
+  // Convert to RoadwayObstacle format
+  std::vector<cav_msgs::RoadwayObstacle> roadway_objects;
+  for (auto obj : obstacles)
+  {
+    roadway_objects.push_back(cmw.toRoadwayObstacle(obj).get());
+  }
+
+  // Test left lane
+  ASSERT_EQ(cmw.getLane(llts[0], LANE_FULL).size(), 3);
+
+  // Test right lane
+  ASSERT_EQ(cmw.getLane(llts[3], LANE_FULL).size(), 3);
+
+  // Test lane ahead (always inclde itself)
+  ASSERT_EQ(cmw.getLane(llts[2], LANE_AHEAD).size(), 1);
+
+  // Test lane behind
+  ASSERT_EQ(cmw.getLane(llts[5], LANE_BEHIND).size(), 3);
+
+}
+
+TEST(CARMAWorldModelTest, getNearestObjInLane)
+{
+  /*
+  * PREPARE THE TESTING ENVIRONMENT
+  */
+
+  carma_wm::CARMAWorldModel cmw;
+  std::vector<lanelet::Lanelet> llts;
+  lanelet::LaneletMapPtr map;
+  std::vector<cav_msgs::ExternalObject> obstacles;
+
+  createTestingWorld(cmw, llts, map, obstacles);
+
+  /*
+  * TEST
+  */
+  // Test no map set
+  ASSERT_THROW(cmw.getNearestObjInLane({5,4}), std::invalid_argument);
 
   // Set map
   cmw.setMap(map); 
@@ -178,27 +221,128 @@ TEST(CARMAWorldModelTest, getTrackPosToNearestObjInLane)
   }
 
   // Test with no roadway objects set
-  ASSERT_FALSE(!!cmw.getTrackPosToNearestObjInLane({5,4}));
+  ASSERT_FALSE(!!cmw.getNearestObjInLane({5,4}));
+
+  // Set roadway objects
+  cmw.setRoadwayObjects(roadway_objects);
+
+ // Test with a point that is not on the map
+  ASSERT_THROW(cmw.getNearestObjInLane({100,205}, LANE_FULL), std::invalid_argument);
+
+  // get closest object's downtrack on left lane, where object is front
+  auto tp = cmw.getNearestObjInLane({5,4}, LANE_FULL).get();
+  ASSERT_EQ(std::get<0>(tp).downtrack, 5);
+  ASSERT_EQ(std::get<1>(tp).lanelet_id, roadway_objects[0].lanelet_id);
+
+  // get closest object's downtrack on left lane, where object is lane changing
+  tp = cmw.getNearestObjInLane({5,9.2}, LANE_FULL).get();
+  ASSERT_NEAR(std::get<0>(tp).downtrack, 0.1033, 0.001);
+  ASSERT_EQ(std::get<1>(tp).lanelet_id, roadway_objects[1].lanelet_id);
+
+  // get closest object's downtrack on right lane, but behind
+  tp = cmw.getNearestObjInLane({10.01,16}).get();
+  ASSERT_EQ(std::get<0>(tp).downtrack, -2);
+  ASSERT_EQ(std::get<1>(tp).lanelet_id, roadway_objects[3].lanelet_id);
+
+  // get closest object's downtrack that is on a lane with an angle
+  cmw.setRoadwayObjects({roadway_objects[roadway_objects.size() - 1]});
+  tp = cmw.getNearestObjInLane({15,17}, LANE_FULL).get();
+  ASSERT_NEAR(std::get<0>(tp).downtrack, 5.242, 0.001);
+  ASSERT_EQ(std::get<1>(tp).lanelet_id, roadway_objects[4].lanelet_id);
+}
+
+TEST(CARMAWorldModelTest, nearestObjectBehindInLane)
+{
+  /*
+  * PREPARE THE TESTING ENVIRONMENT
+  */
+
+  carma_wm::CARMAWorldModel cmw;
+  std::vector<lanelet::Lanelet> llts;
+  lanelet::LaneletMapPtr map;
+  std::vector<cav_msgs::ExternalObject> obstacles;
+  createTestingWorld(cmw, llts, map, obstacles);
+
+  /*
+  * TEST
+  */
+  // Test no map set
+  ASSERT_THROW(cmw.nearestObjectBehindInLane({5,4}), std::invalid_argument);
+
+  // Set map
+  cmw.setMap(map); 
+
+  // Convert to RoadwayObstacle format
+  std::vector<cav_msgs::RoadwayObstacle> roadway_objects;
+  for (auto obj : obstacles)
+  {
+    roadway_objects.push_back(cmw.toRoadwayObstacle(obj).get());
+  }
+
+  // Test with no roadway objects set
+  ASSERT_FALSE(!!cmw.nearestObjectBehindInLane({5,4}));
 
   // Set roadway objects
   cmw.setRoadwayObjects(roadway_objects);
 
   // Test with a point that is not on the map
-  ASSERT_THROW(cmw.getTrackPosToNearestObjInLane({100,205}), std::invalid_argument);
-  
+  ASSERT_THROW(cmw.nearestObjectBehindInLane({100,205}), std::invalid_argument);
+
+  auto tp = cmw.nearestObjectBehindInLane({10.01,16}).get();
+
+  // get closest object's downtrack on right lane, but behind
+  ASSERT_EQ(std::get<0>(tp).downtrack, -2);
+  ASSERT_EQ(std::get<1>(tp).lanelet_id, roadway_objects[3].lanelet_id);
+
+}
+
+TEST(CARMAWorldModelTest, nearestObjectAheadInLane)
+{
+  /*
+  * PREPARE THE TESTING ENVIRONMENT
+  */
+
+  carma_wm::CARMAWorldModel cmw;
+  std::vector<lanelet::Lanelet> llts;
+  lanelet::LaneletMapPtr map;
+  std::vector<cav_msgs::ExternalObject> obstacles;
+
+  createTestingWorld(cmw, llts, map, obstacles);
+
+  /*
+  * TEST
+  */
+  // Test no map set
+  ASSERT_THROW(cmw.nearestObjectAheadInLane({5,4}), std::invalid_argument);
+
+  // Set map
+  cmw.setMap(map); 
+
+  // Convert to RoadwayObstacle format
+  std::vector<cav_msgs::RoadwayObstacle> roadway_objects;
+  for (auto obj : obstacles)
+  {
+    roadway_objects.push_back(cmw.toRoadwayObstacle(obj).get());
+  }
+
+  // Test with no roadway objects set
+  ASSERT_FALSE(!!cmw.nearestObjectAheadInLane({5,4}));
+
+  // Set roadway objects
+  cmw.setRoadwayObjects(roadway_objects);
+
+  // Test with a point that is not on the map
+  ASSERT_THROW(cmw.nearestObjectAheadInLane({100,205}), std::invalid_argument);
+
   // get closest object's downtrack on left lane, where object is front
-  ASSERT_EQ(cmw.getTrackPosToNearestObjInLane({5,4}).get().downtrack, 5);
+  auto tp = cmw.nearestObjectAheadInLane({5,4}).get();
+  ASSERT_EQ(std::get<0>(tp).downtrack, 5);
+  ASSERT_EQ(std::get<1>(tp).lanelet_id, roadway_objects[0].lanelet_id);
 
   // get closest object's downtrack on left lane, where object is lane changing
-  ASSERT_NEAR(cmw.getTrackPosToNearestObjInLane({5,9.2}).get().downtrack, 0.1033, 0.001);
-  
-  // get closest object's downtrack on right lane, but behind
-  ASSERT_EQ(cmw.getTrackPosToNearestObjInLane({10.01,16}).get().downtrack, -2);
-
-  // get closest object's downtrack that is on a lane with an angle
-  cmw.setRoadwayObjects({roadway_objects[roadway_objects.size() - 1]});
-  ASSERT_NEAR(cmw.getTrackPosToNearestObjInLane({15,17}).get().downtrack, 5.242, 0.001);
-
+  tp = cmw.nearestObjectAheadInLane({5,9.2}).get();
+  ASSERT_NEAR(std::get<0>(tp).downtrack, 0.1033, 0.001);
+  ASSERT_EQ(std::get<1>(tp).lanelet_id, roadway_objects[1].lanelet_id);
 }
 
 TEST(CARMAWorldModelTest, getInLaneObjects)
@@ -233,7 +377,7 @@ TEST(CARMAWorldModelTest, getInLaneObjects)
 
   // Test with no roadway objects set
   std::vector<cav_msgs::RoadwayObstacle> in_lane_objects;
-  in_lane_objects = cmw.getInLaneObjects(llts[0]);
+  in_lane_objects = cmw.getInLaneObjects(llts[0], LANE_FULL);
 
   ASSERT_EQ(in_lane_objects.size(), 0);
 
@@ -254,18 +398,22 @@ TEST(CARMAWorldModelTest, getInLaneObjects)
   // check left lane, all should return 2 objects as they are on one lane
   for (int i = 0; i < 3; i++)
   {
-    ASSERT_EQ(cmw.getInLaneObjects(llts[i]).size(), 2);
+    ASSERT_EQ(cmw.getInLaneObjects(llts[i], LANE_FULL).size(), 2);
   }
   // check right lane, all should return 3 objects as 1 is across linestring
   for (int i = 3; i < 6; i++)
   {
-    ASSERT_EQ(cmw.getInLaneObjects(llts[i]).size(), 4);
+    ASSERT_EQ(cmw.getInLaneObjects(llts[i], LANE_FULL).size(), 4);
   }
+  // check right lane ahead of middle section
+  ASSERT_EQ(cmw.getInLaneObjects(llts[4], LANE_AHEAD).size(), 3);
+
+  // check right lane behind of middle section
+  ASSERT_EQ(cmw.getInLaneObjects(llts[4], LANE_BEHIND).size(), 3);
 
 }
 
-
-TEST(CARMAWorldModelTest, getDistToNearestObjInLane)
+TEST(CARMAWorldModelTest, distToNearestObjInLane)
 {
    /*
   * PREPARE THE TESTING ENVIRONMENT
@@ -285,7 +433,7 @@ TEST(CARMAWorldModelTest, getDistToNearestObjInLane)
   lanelet::BasicPoint2d car_pose = {5,4};
 
   // Test with no map set
-  ASSERT_THROW(cmw.getDistToNearestObjInLane(car_pose), std::invalid_argument);
+  ASSERT_THROW(cmw.distToNearestObjInLane(car_pose), std::invalid_argument);
 
   // Set map
   cmw.setMap(map);
@@ -298,33 +446,32 @@ TEST(CARMAWorldModelTest, getDistToNearestObjInLane)
   }
 
   // Test with no roadway objects set
-  ASSERT_FALSE(!!cmw.getDistToNearestObjInLane(car_pose));
+  ASSERT_FALSE(!!cmw.distToNearestObjInLane(car_pose));
  
   // Set roadway objects
   cmw.setRoadwayObjects(roadway_objects);
   
   // Test with pose that is not on any lane
-  ASSERT_THROW(cmw.getDistToNearestObjInLane({20, 1}), std::invalid_argument);
+  ASSERT_THROW(cmw.distToNearestObjInLane({20, 1}), std::invalid_argument);
   
   // Test closest object
-  double result = cmw.getDistToNearestObjInLane(car_pose).get();
+  double result = cmw.distToNearestObjInLane(car_pose).get();
   ASSERT_EQ(result, 4);
 
   // remove the closest point to get a new closest dist, the 45deg obj
   cmw.setRoadwayObjects(std::vector<cav_msgs::RoadwayObstacle>{roadway_objects.begin() + 1, roadway_objects.end()});
-  result = cmw.getDistToNearestObjInLane(car_pose).get();
+  result = cmw.distToNearestObjInLane(car_pose).get();
   ASSERT_NEAR(result, 4.5, 0.00001);
 
   // Check an object on a different lane
   car_pose = {12.6, 7}; 
-  result = cmw.getDistToNearestObjInLane(car_pose).get();
+  result = cmw.distToNearestObjInLane(car_pose).get();
   ASSERT_EQ(result, 2);
 
   // Check if no object is on current lane
-  cmw.setRoadwayObjects(std::vector<cav_msgs::RoadwayObstacle>
-                        {roadway_objects[roadway_objects.size() - 1]});
+  cmw.setRoadwayObjects(std::vector<cav_msgs::RoadwayObstacle>{roadway_objects[roadway_objects.size() - 1]});
   car_pose = {5,4};
-  ASSERT_FALSE(!! cmw.getDistToNearestObjInLane(car_pose));
+  ASSERT_FALSE(!! cmw.distToNearestObjInLane(car_pose));
 
 }
 

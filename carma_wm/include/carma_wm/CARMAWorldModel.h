@@ -70,6 +70,23 @@ public:
    */
   void setRoadwayObjects(const std::vector<cav_msgs::RoadwayObstacle>& rw_objs);
 
+  /**
+   * \brief This function is called by distanceToObjectBehindInLane or distanceToObjectAheadInLane. 
+   * Gets Downtrack distance to AND copy of the closest object on the same lane as the given point. Also returns crosstrack
+   * distance relative to that object. Plus downtrack if the object is ahead along the lane, and also plus crosstrack
+   * if the object is to the right relative to the reference line that crosses given object_center and is parallel to the
+   * centerline of the lane. 
+   *
+   * \param object_center the point to measure the distance from
+   * \param section either of LANE_AHEAD, LANE_BEHIND, LANE_FULL each including the current lanelet
+   *
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or the given point
+   * is not on the current semantic map
+   *
+   * \return An optional tuple of <TrackPos, cav_msgs::RoadwayObstacle> to the closest in lane object. Return empty if there is no objects on current lane or the road
+   */
+  lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> getNearestObjInLane(const lanelet::BasicPoint2d& object_center, const LaneSection& section = LANE_AHEAD) const;
+
   ////
   // Overrides
   ////
@@ -92,17 +109,19 @@ public:
 
   std::vector<cav_msgs::RoadwayObstacle> getRoadwayObjects() const override;
 
-  std::vector<cav_msgs::RoadwayObstacle> getInLaneObjects(const lanelet::ConstLanelet& lanelet) const override;
+  std::vector<cav_msgs::RoadwayObstacle> getInLaneObjects(const lanelet::ConstLanelet& lanelet, const LaneSection& section = LANE_AHEAD) const override;
 
   lanelet::Optional<lanelet::Lanelet> getIntersectingLanelet (const cav_msgs::ExternalObject& object) const override;
 
   lanelet::Optional<cav_msgs::RoadwayObstacle> toRoadwayObstacle(const cav_msgs::ExternalObject& object) const override;
 
-  lanelet::Optional<double> getDistToNearestObjInLane(const lanelet::BasicPoint2d& object_center) const override;
+  lanelet::Optional<double> distToNearestObjInLane(const lanelet::BasicPoint2d& object_center) const override;
 
-  lanelet::Optional<TrackPos> getTrackPosToNearestObjInLane(const lanelet::BasicPoint2d& object_center) const override;
+  lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> nearestObjectAheadInLane(const lanelet::BasicPoint2d& object_center) const override;
 
-  std::vector<lanelet::ConstLanelet> getFullLane(const lanelet::ConstLanelet& lanelet) const override;
+  lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> nearestObjectBehindInLane(const lanelet::BasicPoint2d& object_center) const override;
+
+  std::vector<lanelet::ConstLanelet> getLane(const lanelet::ConstLanelet& lanelet, const LaneSection& section = LANE_AHEAD) const override;
 
 private:
 
