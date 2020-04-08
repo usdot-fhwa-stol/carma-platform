@@ -49,6 +49,9 @@ using LaneletRoutingGraphConstUPtr = std::unique_ptr<const lanelet::routing::Rou
 using TrafficRulesConstPtr = std::shared_ptr<const lanelet::traffic_rules::TrafficRules>;
 using TrafficRulesUConstPtr = std::unique_ptr<const lanelet::traffic_rules::TrafficRules>;
 
+// Helpful enums for dividing lane into sections of interest.
+enum LaneSection{LANE_AHEAD, LANE_BEHIND, LANE_FULL};
+
 /*! \brief An interface which provides read access to the semantic map and route.
  *         This class is not thread safe. All units of distance are in meters
  *
@@ -144,6 +147,12 @@ public:
    */
   virtual LaneletRoutingGraphConstPtr getMapRoutingGraph() const = 0;
 
+  /*! \brief Get most recent roadway objects - all objects on the road detected by perception stack.
+   *
+   * \return Vector list of RoadwayObstacle which are lanelet compatible. Empty vector if no object found.
+   */
+  virtual std::vector<cav_msgs::RoadwayObstacle> getRoadwayObjects() const = 0;
+
   /*! \brief Get a pointer to the traffic rules object used internally by the world model and considered the carma
    * system default
    *
@@ -169,6 +178,90 @@ public:
   virtual lanelet::Optional<cav_msgs::RoadwayObstacle>
   toRoadwayObstacle(const cav_msgs::ExternalObject& object) const = 0;
 
+  /**
+   * \brief Gets the a lanelet the object is currently on determined by its position on the semantic map. If it's
+   * across multiple lanelets, get the closest one
+   *
+   * \param object the external object to get the lanelet of 
+   *
+   * \throw std::invalid_argument if the map is not set or contains no lanelets
+   *
+   * \return An optional lanelet primitive that is on the semantic map. If the external object is not on the
+   * roadway then the optional will be empty.
+   */
+
+  virtual lanelet::Optional<lanelet::Lanelet> 
+  getIntersectingLanelet (const cav_msgs::ExternalObject& object) const = 0;
+
+  /**
+   * \brief Gets all roadway objects currently in the same lane as the given lanelet
+   *
+   * \param lanelet the lanelet that is part of the continuous lane
+   * \param section either of LANE_AHEAD, LANE_BEHIND, LANE_FULL each including the current lanelet
+   * 
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or if the given
+   * lanelet is not on the current semantic map, or lane section input is not of the three
+   *
+   * \return A vector of RoadwayObstacle objects that is on the current lane. 
+   * Return empty vector if there is no objects on current lane or the road
+   */
+
+  virtual std::vector<cav_msgs::RoadwayObstacle> getInLaneObjects(const lanelet::ConstLanelet& lanelet, const LaneSection& section = LANE_AHEAD) const = 0;
+  
+  /**
+   * \brief Gets Cartesian distance to the closest object on the same lane as the given point
+   *
+   * \param object_center the point to measure the distance from
+   * 
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or the given point
+   * is not on the current semantic map
+   *
+   * \return An optional Cartesian distance in double to the closest in lane object. Return empty if there is no objects on current lane or the road
+   */
+  virtual lanelet::Optional<double> distToNearestObjInLane(const lanelet::BasicPoint2d& object_center) const = 0;
+  
+  /**
+   * \brief Gets Downtrack distance to AND copy of the closest object AHEAD on the same lane as the given point. Also returns crosstrack
+   * distance relative to that object. Plus downtrack if the object is ahead along the lane, and also plus crosstrack
+   * if the object is to the right relative to the reference line that crosses given object_center and is parallel to the
+   * centerline of the lane.
+   *
+   * \param object_center the point to measure the distance from
+   *
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or the given point
+   * is not on the current semantic map
+   *
+   * \return An optional tuple of <TrackPos, cav_msgs::RoadwayObstacle> to the closest in lane object AHEAD. Return empty if there is no objects on current lane or the road
+   */
+  virtual lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> nearestObjectAheadInLane(const lanelet::BasicPoint2d& object_center) const = 0;
+
+  /**
+   * \brief Gets Downtrack distance to AND copy of the closest object BEHIND on the same lane as the given point. Also returns crosstrack
+   * distance relative to that object. Plus downtrack if the object is ahead along the lane, and also plus crosstrack
+   * if the object is to the right relative to the reference line that crosses given object_center and is parallel to the
+   * centerline of the lane.
+   *
+   * \param object_center the point to measure the distance from
+   *
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or the given point
+   * is not on the current semantic map
+   *
+   * \return An optional tuple of <TrackPos, cav_msgs::RoadwayObstacle> to the closest in lane object BEHIND. Return empty if there is no objects on current lane or the road
+   */
+  virtual lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> nearestObjectBehindInLane(const lanelet::BasicPoint2d& object_center) const = 0;
+
+  /**
+   * \brief Gets the specified lane section achievable without lane change, sorted from the start, that includes the given lanelet 
+   *
+   * \param lanelet the lanelet to get the full lane of
+   * \param section either of LANE_AHEAD, LANE_BEHIND, LANE_FULL each including the current lanelet
+   *
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or the given lanelet
+   * is not on the current semantic map, or lane section input is not of the three
+   *
+   * \return An optional vector of ConstLanalet. Returns at least the vector of given lanelet if no other is found
+   */
+  virtual std::vector<lanelet::ConstLanelet> getLane(const lanelet::ConstLanelet& lanelet, const LaneSection& section = LANE_AHEAD) const = 0;
 };
 
 // Helpful using declarations for carma_wm classes
