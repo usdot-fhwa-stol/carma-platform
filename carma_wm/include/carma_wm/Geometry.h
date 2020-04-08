@@ -138,10 +138,12 @@ double getAngleBetweenVectors(const Eigen::Vector2d& vec1, const Eigen::Vector2d
  * \param size The size vector of an external object
  *
  * \return A polygon of 4 points describing the object aligned bounds starting with the upper left point in the object
- * frame and moving clockwise
+ * frame and moving clockwise.
  */
 lanelet::BasicPolygon2d objectToMapPolygon(const geometry_msgs::Pose& pose, const geometry_msgs::Vector3& size);
-  
+
+
+
 }  // namespace geometry
 
 }  // namespace carma_wm
