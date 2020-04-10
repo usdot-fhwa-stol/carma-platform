@@ -1,3 +1,5 @@
+## NOTICE: ALL CARMA REPOSITORIES WILL BE UNDERGOING A NAME CHANGE EFFECTIVE THURSDAY, MARCH 16TH. REMINDER EMAILS WILL BE SENT OUT PRECEDING AND IMMEDIATELY FOLLOWING THE CHANGE. PLEASE PLAN ACCORDINGLY.
+
 | CicleCI Build Status | Sonar Code Quality |
 |----------------------|---------------------|
 [![CircleCI](https://circleci.com/gh/usdot-fhwa-stol/CARMAPlatform.svg?style=svg)](https://circleci.com/gh/usdot-fhwa-stol/CARMAPlatform) | [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=usdot-fhwa-stol_CARMAPlatform&metric=alert_status)](https://sonarcloud.io/dashboard?id=usdot-fhwa-stol_CARMAPlatform) |
