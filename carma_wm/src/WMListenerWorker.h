@@ -17,7 +17,7 @@
  */
 
 #include <autoware_lanelet2_msgs/MapBin.h>
-#include "CARMAWorldModel.h"
+#include <carma_wm/CARMAWorldModel.h>
 
 namespace carma_wm
 {
@@ -49,6 +49,11 @@ public:
    * \brief Callback for route message. It is a TODO: To update function when route message spec is defined
    */
   void routeCallback();
+
+  /*!
+   * \brief Callback for roadway objects msg
+   */
+  void roadwayObjectListCallback(const cav_msgs::RoadwayObstacleList& msg);
 
   /*!
    * \brief Allows user to set a callback to be triggered when a map update is received

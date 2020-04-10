@@ -25,6 +25,13 @@
 #include <lanelet2_core/primitives/Point.h>
 #include <lanelet2_routing/Route.h>
 #include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_traffic_rules/TrafficRules.h>
+#include <lanelet2_core/utility/Optional.h>
+#include <cav_msgs/RoadwayObstacle.h>
+#include <cav_msgs/RoadwayObstacleList.h>
+#include <cav_msgs/ExternalObject.h>
+#include <cav_msgs/ExternalObjectList.h>
+#include "TrackPos.h"
 
 namespace carma_wm
 {
@@ -39,61 +46,11 @@ using LaneletRoutingGraphConstPtr = std::shared_ptr<const lanelet::routing::Rout
 using LaneletRoutingGraphUPtr = std::unique_ptr<lanelet::routing::RoutingGraph>;
 using LaneletRoutingGraphConstUPtr = std::unique_ptr<const lanelet::routing::RoutingGraph>;
 
-/*! \brief Position in a track based coordinate system where the axis are downtrack and crosstrack.
- *         Positive crosstrack is to the left of the reference line
- *
- * The position of a point relative to a reference line. The perpendicular distance from the point to the reference line
- * is the crosstrack The distance to the intersection of the perpendicular from the start of the line is the downtrack
- * distance If an x,y point would be located to the right of the reference line then the crosstrack is positive. It is
- * negative if on the left side of the line. NOTE: The positive/negative crosstrack side is flipped relative to a
- * lanelet::ArcCoordinate Most utility functions will assume that the downtrack/crosstrack values are specified in
- * meters
- */
-class TrackPos
-{
-public:
-  double downtrack = 0;
-  double crosstrack = 0;
+using TrafficRulesConstPtr = std::shared_ptr<const lanelet::traffic_rules::TrafficRules>;
+using TrafficRulesUConstPtr = std::unique_ptr<const lanelet::traffic_rules::TrafficRules>;
 
-  /*! \brief Constructor
-   *
-   * \param down_track The downtrack distance
-   * \param cross_track The crosstrack distance
-   */
-  TrackPos(double down_track, double cross_track) : downtrack(down_track), crosstrack(cross_track)
-  {
-  }
-  /*! \brief Constructor from lanelet ArcCoordinates
-   *         which are converted to TrackPos where downtrack = ArcCoordinates.length and crosstrack =
-   * -ArcCoordinates.distance
-   *
-   * \param arc_coord ArcCoordinate to copy
-   */
-  TrackPos(const lanelet::ArcCoordinates& arc_coord) : downtrack(arc_coord.length), crosstrack(-arc_coord.distance)
-  {
-  }
-
-  /*! \brief Returns a lanelet ArcCoordinate built from this TrackPos
-   *        where downtrack = ArcCoordinates.length and crosstrack = -ArcCoordinates.distance
-   *
-   * \return lanelet::ArcCoordinates with values copied from this object
-   */
-  inline lanelet::ArcCoordinates toArcCoordinates()
-  {
-    return lanelet::ArcCoordinates{ downtrack, -crosstrack };
-  }
-
-  // Overload == and != operators
-  bool operator==(const TrackPos& other) const
-  {
-    return this == &other || (this->downtrack == other.downtrack && this->crosstrack == other.crosstrack);
-  }
-
-  bool operator!=(const TrackPos& other) const
-  {
-    return !(*this == other);
-  }
-};
+// Helpful enums for dividing lane into sections of interest.
+enum LaneSection{LANE_AHEAD, LANE_BEHIND, LANE_FULL};
 
 /*! \brief An interface which provides read access to the semantic map and route.
  *         This class is not thread safe. All units of distance are in meters
@@ -113,8 +70,9 @@ public:
   /*! \brief Returns a pair of TrackPos, computed in 2d, of the provided area relative to the current route.
    *        The distance is based on the Area vertex with the smallest and largest downtrack distance
    *        This method overload is the most expensive of the routeTrackPos methods
-   * 
-   * NOTE: The route definition used in this class contains discontinuities in the reference line at lane changes. It is important to consider that when using route related functions. 
+   *
+   * NOTE: The route definition used in this class contains discontinuities in the reference line at lane changes. It is
+   * important to consider that when using route related functions.
    *
    * \param area The lanelet2 area which will have its distance computed
    *
@@ -127,8 +85,9 @@ public:
 
   /*! \brief Returns the TrackPos, computed in 2d, of the provided lanelet relative to the current route.
    *        The distance is based on the first point in the lanelet centerline
-   * 
-   * NOTE: The route definition used in this class contains discontinuities in the reference line at lane changes. It is important to consider that when using route related functions. 
+   *
+   * NOTE: The route definition used in this class contains discontinuities in the reference line at lane changes. It is
+   * important to consider that when using route related functions.
    *
    * \param lanelet The lanelet2 lanelet which will have its distance computed
    *
@@ -140,7 +99,8 @@ public:
 
   /*! \brief Returns the TrackPos, computed in 2d, of the provided point relative to the current route
    *
-   * NOTE: The route definition used in this class contains discontinuities in the reference line at lane changes. It is important to consider that when using route related functions. 
+   * NOTE: The route definition used in this class contains discontinuities in the reference line at lane changes. It is
+   * important to consider that when using route related functions.
    *
    * \param point The lanelet2 point which will have its distance computed
    *
@@ -149,58 +109,6 @@ public:
    * \return The TrackPos of the point
    */
   virtual TrackPos routeTrackPos(const lanelet::BasicPoint2d& point) const = 0;
-
-  /*! \brief Returns the TrackPos, computed in 2d, of the provided point relative to the centerline of the provided
-   * lanelet. Positive crosstrack will be to the right. Points occuring before the segment will have negative downtrack.
-   *        See the matchSegment function for a description of the edge cases associated with the max_crosstrack
-   * parameter
-   *
-   * \param lanelet The lanelet whose centerline will serve as the TrackPos reference line
-   * \param point The lanelet2 point which will have its distance computed
-   * \param max_crosstrack The maximum crosstrack distance allowed for a perfect centerline segment match. See the
-   * matchSegment function for details
-   *
-   * \throws std::invalid_argument If the lanelet centerline cannot be found
-   *
-   * \return The TrackPos of the point relative to the lanelet centerline
-   */
-  virtual TrackPos trackPos(const lanelet::ConstLanelet& lanelet, const lanelet::BasicPoint2d& point) const = 0;
-
-  /*! \brief Return the track position of a point relative to a line segment defined by two other points.
-   *         Positive crosstrack will be to the right. Points occuring before the segment will have negative downtrack
-   *
-   *  \param p The point to find the TrackPos of
-   *  \param seg_start The starting point of a line segment
-   *  \param seg_end The ending point of a line segment
-   *
-   *  \return The TrackPos of point p relative to the line defined by seg_start and seg_end
-   */
-  virtual TrackPos trackPos(const lanelet::BasicPoint2d& p, const lanelet::BasicPoint2d& seg_start,
-                            const lanelet::BasicPoint2d& seg_end) const = 0;
-
-  /**
-   * \brief Get the TrackPos of the provided point along the linestring and the segment of the line string which the
-   * provided point should be considered in.
-   *
-   * This function iterates over the provided linestring from front to back.
-   * First the nearest vertex point on the linestring to the external point is found
-   * Once the nearest point has been found next step is to determine which segment it should go with using the following
-   * rules. If the minimum point is the first point then use the first segment If the minimum point is the last point
-   * then use the last segment If the minimum point is within the downtrack bounds of one segment but not the other then
-   * use the one it is within If the minimum point is within the downtrack bounds of both segments then use the one with
-   * the smallest crosstrack distance If the minimum point is within the downtrack bounds of both segments and has
-   * exactly equal crosstrack bounds with each segment then use the first one
-   *
-   * \param point The 2d point to match with a segment
-   * \param line_string The line_string to match against
-   *
-   * \throws std::invalid_argument if line string contains only one point
-   *
-   * \return An std::tuple where the first element is the TrackPos of the point and the second element is the matched
-   * segment
-   */
-  virtual std::tuple<TrackPos, lanelet::BasicSegment2d>
-  matchSegment(const lanelet::BasicPoint2d& p, const lanelet::BasicLineString2d& line_string) const = 0;
 
   /*! \brief Returns a list of lanelets which are part of the route and whose downtrack bounds exist within the provided
    * start and end distances The bounds are included so areas which end exactly at start or start exactly at end are
@@ -215,24 +123,6 @@ public:
    * not return lanelets which are not part of the route
    */
   virtual std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end) const = 0;
-
-  /*! \brief Returns a list of lists of local (3-point) curvatures, computed in 2d. Each continuous segment of the
-   * lanelets' centerlines is one elemtent in the first list. Where each lane change occurs along the list of lanelets a
-   * new list of curvatures is started.
-   *
-   * Each elemnent in the first list contains a tuple where the first element is the index of the lanelet which is the
-   * starting point of that segment. The second element of the tuple contains the list of local curvatures for that
-   * segment. These map to the points on the lanlet centerlines excluding first and last point of the continuous
-   * centerline segments
-   *
-   * \param lanelets The list of lanelets to compute curvatures for
-   *
-   * \throws std::invalid_argument If one of the provided lanelets cannot have its centerline computed
-   *
-   * \return A list of continuous centerline segments and their respective curvatures
-   */
-  virtual std::vector<std::tuple<size_t, std::vector<double>>>
-  getLocalCurvatures(const std::vector<lanelet::ConstLanelet>& lanelets) const = 0;
 
   /*! \brief Get a pointer to the current map. If the underlying map has changed the pointer will also need to be
    * reacquired
@@ -257,32 +147,121 @@ public:
    */
   virtual LaneletRoutingGraphConstPtr getMapRoutingGraph() const = 0;
 
-  /*! \brief Function for computing curvature from 3 points.
+  /*! \brief Get most recent roadway objects - all objects on the road detected by perception stack.
    *
-   * This function is a direct copy of the function by the same name found in the lanelet2_validation package which was
-   * not exposed for use The origianal function can be found here
-   * https://github.com/fzi-forschungszentrum-informatik/Lanelet2/blob/master/lanelet2_validation/src/validators/CurvatureTooBig.cpp
-   * The source function is copyrighted under BSD 3-Clause "New" or "Revised" License a copy of that notice has been
-   * included with this package
-   *
-   * \param p1 The first point
-   * \param p2 The second point
-   * \param p3 The third point
-   *
-   * \return The computed curvature in 1/m units.
+   * \return Vector list of RoadwayObstacle which are lanelet compatible. Empty vector if no object found.
    */
-  virtual double computeCurvature(const lanelet::BasicPoint2d& p1, const lanelet::BasicPoint2d& p2,
-                                  const lanelet::BasicPoint2d& p3) const = 0;
+  virtual std::vector<cav_msgs::RoadwayObstacle> getRoadwayObjects() const = 0;
+
+  /*! \brief Get a pointer to the traffic rules object used internally by the world model and considered the carma
+   * system default
+   *
+   * \param participant The lanelet participant to return the traffic rules object for. Defaults to a generic vehicle
+   *
+   * \return Optional Shared pointer to an intialized traffic rules object which is used by carma. Optional is false if
+   * no rule set is available for the requested participant.
+   */
+  virtual lanelet::Optional<TrafficRulesConstPtr>
+  getTrafficRules(const std::string& participant = lanelet::Participants::Vehicle) const = 0;
 
   /**
-   * \brief Calculates the angle between two vectors.
+   * \brief Converts an ExternalObject in a RoadwayObstacle by mapping its position onto the semantic map. Can also be
+   * used to determine if the object is on the roadway
    *
-   * \param vec1 the first vector
-   * \param vec2 the second vector
+   * \param object the external object to convert
    *
-   * \return The angle in rad between the two vectors
+   * \throw std::invalid_argument if the map is not set or contains no lanelets
+   *
+   * \return An optional RoadwayObstacle message created from the provided object. If the external object is not on the
+   * roadway then the optional will be empty.
    */
-  virtual double getAngleBetweenVectors(const Eigen::Vector2d& vec1, const Eigen::Vector2d& vec2) const = 0;
+  virtual lanelet::Optional<cav_msgs::RoadwayObstacle>
+  toRoadwayObstacle(const cav_msgs::ExternalObject& object) const = 0;
+
+  /**
+   * \brief Gets the a lanelet the object is currently on determined by its position on the semantic map. If it's
+   * across multiple lanelets, get the closest one
+   *
+   * \param object the external object to get the lanelet of 
+   *
+   * \throw std::invalid_argument if the map is not set or contains no lanelets
+   *
+   * \return An optional lanelet primitive that is on the semantic map. If the external object is not on the
+   * roadway then the optional will be empty.
+   */
+
+  virtual lanelet::Optional<lanelet::Lanelet> 
+  getIntersectingLanelet (const cav_msgs::ExternalObject& object) const = 0;
+
+  /**
+   * \brief Gets all roadway objects currently in the same lane as the given lanelet
+   *
+   * \param lanelet the lanelet that is part of the continuous lane
+   * \param section either of LANE_AHEAD, LANE_BEHIND, LANE_FULL each including the current lanelet
+   * 
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or if the given
+   * lanelet is not on the current semantic map, or lane section input is not of the three
+   *
+   * \return A vector of RoadwayObstacle objects that is on the current lane. 
+   * Return empty vector if there is no objects on current lane or the road
+   */
+
+  virtual std::vector<cav_msgs::RoadwayObstacle> getInLaneObjects(const lanelet::ConstLanelet& lanelet, const LaneSection& section = LANE_AHEAD) const = 0;
+  
+  /**
+   * \brief Gets Cartesian distance to the closest object on the same lane as the given point
+   *
+   * \param object_center the point to measure the distance from
+   * 
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or the given point
+   * is not on the current semantic map
+   *
+   * \return An optional Cartesian distance in double to the closest in lane object. Return empty if there is no objects on current lane or the road
+   */
+  virtual lanelet::Optional<double> distToNearestObjInLane(const lanelet::BasicPoint2d& object_center) const = 0;
+  
+  /**
+   * \brief Gets Downtrack distance to AND copy of the closest object AHEAD on the same lane as the given point. Also returns crosstrack
+   * distance relative to that object. Plus downtrack if the object is ahead along the lane, and also plus crosstrack
+   * if the object is to the right relative to the reference line that crosses given object_center and is parallel to the
+   * centerline of the lane.
+   *
+   * \param object_center the point to measure the distance from
+   *
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or the given point
+   * is not on the current semantic map
+   *
+   * \return An optional tuple of <TrackPos, cav_msgs::RoadwayObstacle> to the closest in lane object AHEAD. Return empty if there is no objects on current lane or the road
+   */
+  virtual lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> nearestObjectAheadInLane(const lanelet::BasicPoint2d& object_center) const = 0;
+
+  /**
+   * \brief Gets Downtrack distance to AND copy of the closest object BEHIND on the same lane as the given point. Also returns crosstrack
+   * distance relative to that object. Plus downtrack if the object is ahead along the lane, and also plus crosstrack
+   * if the object is to the right relative to the reference line that crosses given object_center and is parallel to the
+   * centerline of the lane.
+   *
+   * \param object_center the point to measure the distance from
+   *
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or the given point
+   * is not on the current semantic map
+   *
+   * \return An optional tuple of <TrackPos, cav_msgs::RoadwayObstacle> to the closest in lane object BEHIND. Return empty if there is no objects on current lane or the road
+   */
+  virtual lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> nearestObjectBehindInLane(const lanelet::BasicPoint2d& object_center) const = 0;
+
+  /**
+   * \brief Gets the specified lane section achievable without lane change, sorted from the start, that includes the given lanelet 
+   *
+   * \param lanelet the lanelet to get the full lane of
+   * \param section either of LANE_AHEAD, LANE_BEHIND, LANE_FULL each including the current lanelet
+   *
+   * \throw std::invalid_argument if the map is not set, contains no lanelets, or the given lanelet
+   * is not on the current semantic map, or lane section input is not of the three
+   *
+   * \return An optional vector of ConstLanalet. Returns at least the vector of given lanelet if no other is found
+   */
+  virtual std::vector<lanelet::ConstLanelet> getLane(const lanelet::ConstLanelet& lanelet, const LaneSection& section = LANE_AHEAD) const = 0;
 };
 
 // Helpful using declarations for carma_wm classes

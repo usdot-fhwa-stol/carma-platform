@@ -30,11 +30,15 @@ namespace health_monitor
              * \brief Default constructor for EntryManager.
              */
             EntryManager();
-
             /*!
              * \brief Constructor for EntryManager to set required entries.
              */
             EntryManager(std::vector<std::string> required_entries);
+
+            /*!
+             * \brief Constructor for EntryManager to set required entries and lidar gps entires.
+             */
+            EntryManager(std::vector<std::string> required_entries,std::vector<std::string> lidar_gps_entries); 
 
             /*!
              * \brief Add a new entry if the given name does not exist.
@@ -61,6 +65,10 @@ namespace health_monitor
              * \brief Check if the entry is required
              */
             bool is_entry_required(const std::string name) const;
+            /*!
+             * \brief Check if the entry is required
+             */
+           int is_lidar_gps_entry_required(const std::string &name) const;
 
         private:
 
@@ -69,5 +77,8 @@ namespace health_monitor
 
             // list of required entries
             std::vector<std::string> required_entries_;
+
+            // list of lidar and gps entries 
+            std::vector<std::string> lidar_gps_entries_; 
     };
 }

@@ -20,8 +20,9 @@
 
 TEST(RouteGeneratorTest, testReadFileFunction)
 {
-    std::vector<std::string> file_names = RouteGenerator::read_route_names("/home/qswawrq/CARMAWorkspace/src/route_generator/resource/");
-    for(int i = 0; i < file_names.size(); ++i)
+    std::vector<std::string> file_names = RouteGenerator::read_route_names("../resource/");
+    sort(file_names.begin(),file_names.end()); // Ensure names are in alphabetical order
+    for(size_t i = 0; i < file_names.size(); ++i)
     {
         std::string expect_file_name = "route" + std::to_string(i + 1) + ".csv";
         EXPECT_EQ(file_names[i], expect_file_name);

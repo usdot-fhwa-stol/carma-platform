@@ -207,6 +207,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
     driverStatusMsg.setComms(false);
     driverStatusMsg.setController(false);
     driverStatusMsg.setCamera(false);
+    driverStatusMsg.setLightbar(false);
 
     for (String driverType: getDriverTypesList()) {
       switch (driverType) {
@@ -236,6 +237,9 @@ public abstract class AbstractMockDriver implements IMockDriver {
           break;
         case "camera":
           driverStatusMsg.setCamera(true);
+          break;
+        case "lightbar":
+          driverStatusMsg.setLightbar(true);
           break;
       }
     }

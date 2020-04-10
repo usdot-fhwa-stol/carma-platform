@@ -30,11 +30,13 @@
   roslaunch carma carma.launch mock_drivers="can"
 -->
 <launch>
+
   <!-- Directory of vehicle config parameters -->
   <arg name="vehicle_config_dir" default="$(find carma)../../CARMAConfig/development" doc="The directory continaing vehicle config type parameters"/>
   <arg name="vehicle_calibration_dir" default="$(find carma)../../CARMAVehicleCalibration/development/vehicle/calibration" doc="The directory continaing vehicle calibration type parameters"/>
-
-  <!-- Startup Drivers With Main CARMA System -->
+  <arg name="yolo_dir" default="/opt/carma/yolo" doc="The directory continaing yolo weights files for the perception stack"/>
+  
+	<!-- Startup Drivers With Main CARMA System -->
   <arg name="launch_drivers" default="true" doc="True if drivers are to be launched with the CARMA Platform, overrides mock_drivers arg if false"/>
 
   <!-- Simulation Usage -->
@@ -68,7 +70,6 @@
   <arg name="load_type" default="noupdate" doc="Enum of the map loading approach to use. Can be 'download', 'noupdate', or 'arealist'"/> 
   <arg name="single_pcd_path" default="$(find carma)/map/base_map.pcd" doc="Path to the map pcd file if using the noupdate load type"/>
   <arg name="area" default="1x1" doc="Dimensions of the square of cells loaded at runtime using the download and arealist load types"/>
-
   <arg name="vector_map_file" default="vector_map.osm" doc="Path to the map osm file if using the noupdate load type"/>
 
   <!-- Route File Locations -->
@@ -103,6 +104,7 @@
       <arg name="load_type" value="$(arg load_type)"/>
       <arg name="single_pcd_path" value="$(arg single_pcd_path)"/>
       <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
+      <arg name="vector_map_file" value="$(arg vector_map_file)" />
     </include>
   </group>
 
@@ -117,11 +119,20 @@
   <group ns="$(env CARMA_ENV_NS)">
     <include file="$(find carma)/launch/environment.launch">
       <arg name="vector_map_file" value="$(arg vector_map_file)" />
+      <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
+      <arg name="yolo_dir" value="$(arg yolo_dir)"/>
     </include>
   </group>
 
   <!-- Guidance Stack -->
   <group ns="$(env CARMA_GUIDE_NS)">
+    <!-- Health Monitor -->
+
+    <node pkg="health_monitor" type="health_monitor" name="health_monitor" required="true">
+      <remap from="system_alert" to="/system_alert"/>
+      <remap from="~required_drivers" to="/required_drivers"/>
+      <rosparam command="load" file="$(find health_monitor)/config/params.yaml"/>
+    </node>
     <include file="$(find carma)/launch/guidance.launch">
       <arg name="route_file_folder" value="$(arg route_file_folder)"/>
     </include>
