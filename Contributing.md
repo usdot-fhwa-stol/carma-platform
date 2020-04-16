@@ -16,7 +16,7 @@ Welcome to the CARMAPlatform contributing guide. There are a few guidelines that
 ### Reporting Issues
 
 * Make sure you have a [GitHub account](https://github.com/signup/free).
-* Ensure the issue was not already reported by searching CARMA Platform [Issues](https://github.com/usdot-fhwa-stol/CARMAPlatform/issues)
+* Ensure the issue was not already reported by searching CARMA Platform [Issues](https://github.com/usdot-fhwa-stol/carma-platform/issues)
 * If you're unable to find an open issue addressing the problem, open a new one.
 * Submit a [CARMAPlatform issue](<docs/ISSUE_TEMPLATE.md>).
   * Clearly describing the issue

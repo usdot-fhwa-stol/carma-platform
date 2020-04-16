@@ -38,13 +38,13 @@ done
 cd ${dir}/src
 
 if [[ "$BRANCH" = "develop" ]]; then
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAMsgs.git --branch $BRANCH
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMANovatelGpsDriver.git --branch $BRANCH
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAUtils.git --branch $BRANCH
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch $BRANCH
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch $BRANCH
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch $BRANCH
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch $BRANCH
 else
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAMsgs.git --branch develop
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMANovatelGpsDriver.git --branch CARMANovatelGpsDriver_1.2.0
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/CARMAUtils.git --branch develop
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch develop
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch CARMANovatelGpsDriver_1.2.0
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch develop
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch develop
 fi
