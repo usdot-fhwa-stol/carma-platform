@@ -14,7 +14,7 @@
 #  License for the specific language governing permissions and limitations under
 #  the License.
 
-SYSTEM_TAG_PREFIX="CARMASystem"
+SYSTEM_TAG_PREFIX="carma-system"
 
 git describe --all --match="$SYSTEM_TAG_PREFIX*" --always --dirty="-SNAPSHOT" | awk -F "/" '{print $NF}'
 

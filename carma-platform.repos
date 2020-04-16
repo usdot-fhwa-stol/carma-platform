@@ -1,7 +1,7 @@
 repositories:
   CARMAAvtVimbaDriver:
     type: git
-    url: git@github.com:usdot-fhwa-stol/avt_vimba_driver.git
+    url: git@github.com:usdot-fhwa-stol/avt_vimba_camera.git
     version: develop
   CARMABase:
     type: git
