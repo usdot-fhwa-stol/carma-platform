@@ -279,22 +279,19 @@ getLocalCurvatures(const std::vector<lanelet::ConstLanelet>& lanelets)
         new_segment_needed = lanelet::geometry::distance2d(prevEndPoint, mutableCenterLine[i]) > 0.1;
       }
 
-      if (new_segment_needed)
+      if (new_segment_needed && i == 0)
       {
-        if (i == 0)
-        {
-          std::vector<double> curvatures;
-          vec.push_back(std::make_tuple(n, curvatures));
-          continue;
-        }
-        else
-        {  // i == 1
-          first_2d = mutableCenterLine[i - 1];
-          second_2d = mutableCenterLine[i];
-          third_2d = mutableCenterLine[i + 1];
-          std::get<1>(vec.back()).push_back(computeCurvature(first_2d, second_2d, third_2d));
-          continue;
-        }
+        std::vector<double> curvatures;
+        vec.push_back(std::make_tuple(n, curvatures));
+        continue;
+      }
+      else if (new_segment_needed && i == 1)
+      {
+        first_2d = mutableCenterLine[i - 1];
+        second_2d = mutableCenterLine[i];
+        third_2d = mutableCenterLine[i + 1];
+        std::get<1>(vec.back()).push_back(computeCurvature(first_2d, second_2d, third_2d));
+        continue;
       }
 
       first_2d = second_2d;
@@ -302,7 +299,7 @@ getLocalCurvatures(const std::vector<lanelet::ConstLanelet>& lanelets)
       third_2d = mutableCenterLine[i + 1];
       std::get<1>(vec.back()).push_back(computeCurvature(first_2d, second_2d, third_2d));
     }
-
+    
     prevEndPoint = mutableCenterLine.back();
   }
 
