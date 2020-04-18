@@ -76,49 +76,43 @@ namespace health_monitor
         }
 
        //Decision making 
-
-        if(ssc==1)
+        if(ssc==0)
         {
-
-            if((lidar1==0) && (lidar2==0) && (gps==0))
-            {
-                return "s_1_l1_0_l2_0_g_0";
-            }
-            else if((lidar1==0) && (lidar2==0) && (gps==1))
-            {
-                return "s_1_l1_0_l2_0_g_1";
-            }
-            else if((lidar1==0) && (lidar2==1) && (gps==0))
-            {
-                return "s_1_l1_0_l2_1_g_0";
-            }
-            else if((lidar1==0) && (lidar2==1) && (gps==1))
-            {
-                return "s_1_l1_0_l2_1_g_1";
-            }
-            else if((lidar1==1) && (lidar2==0) && (gps==0))
-            {
-                return "s_1_l1_1_l2_0_g_0";
-            }
-            else if((lidar1==1) && (lidar2==0) && (gps==1))
-            {
-                return "s_1_l1_1_l2_0_g_1";
-            }
-            else if((lidar1==1) && (lidar2==1) && (gps==0))
-            {
-                return "s_1_l1_1_l2_1_g_0";
-            }
-            else if((lidar1==1) && (lidar2==1) && (gps==1))
-            {
-                return "s_1_l1_1_l2_1_g_1";
-            }
-        }
-        else
-        {
-
             return "s_0";
         }
-
+        // if ssc = 1
+        if((lidar1==0) && (lidar2==0) && (gps==0))
+        {
+            return "s_1_l1_0_l2_0_g_0";
+        }
+        else if((lidar1==0) && (lidar2==0) && (gps==1))
+        {
+            return "s_1_l1_0_l2_0_g_1";
+        }
+        else if((lidar1==0) && (lidar2==1) && (gps==0))
+        {
+            return "s_1_l1_0_l2_1_g_0";
+        }
+        else if((lidar1==0) && (lidar2==1) && (gps==1))
+        {
+            return "s_1_l1_0_l2_1_g_1";
+        }
+        else if((lidar1==1) && (lidar2==0) && (gps==0))
+        {
+            return "s_1_l1_1_l2_0_g_0";
+        }
+        else if((lidar1==1) && (lidar2==0) && (gps==1))
+        {
+            return "s_1_l1_1_l2_0_g_1";
+        }
+        else if((lidar1==1) && (lidar2==1) && (gps==0))
+        {
+            return "s_1_l1_1_l2_1_g_0";
+        }
+        else if((lidar1==1) && (lidar2==1) && (gps==1))
+        {
+            return "s_1_l1_1_l2_1_g_1";
+        }
     }
 
 
