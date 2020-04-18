@@ -17,6 +17,7 @@
 #include "bsm_generator_worker.h"
 #include <stdlib.h>
 #include <ros/ros.h>
+#include <random>
 
 namespace bsm_generator
 {
@@ -37,9 +38,13 @@ namespace bsm_generator
         std::vector<uint8_t> id(4);
         // need to change ID every 5 mins
         ros::Duration id_timeout(60 * 5);
+
+        std::default_random_engine generator;
+        std::uniform_int_distribution<int> dis(0,INT_MAX);
+
         if(now - last_id_generation_time >= id_timeout)
         {
-            random_id = rand();
+            random_id = dis(generator);
             last_id_generation_time = now;
         }
         for(int i = 0; i < id.size(); ++i)
