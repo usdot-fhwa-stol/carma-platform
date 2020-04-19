@@ -54,7 +54,7 @@ namespace health_monitor
             /**
              * \brief Activate or deactivate a certain plugin
              */
-            bool activate_plugin(const std::string name, const bool activate);
+            bool activate_plugin(const std::string& name, const bool activate);
 
             /**
              * \brief Update the status of a certain plugin

@@ -44,7 +44,7 @@ namespace health_monitor
              * \brief Add a new entry if the given name does not exist.
              * Update an existing entry if the given name exists.
              */
-            void update_entry(const Entry entry);
+            void update_entry(const Entry& entry);
 
             /*!
              * \brief Get all registed entries as a list.
@@ -54,21 +54,21 @@ namespace health_monitor
             /*!
              * \brief Get a entry using name as the key.
              */
-            boost::optional<Entry> get_entry_by_name(const std::string name) const;
+            boost::optional<Entry> get_entry_by_name(const std::string& name) const;
 
             /*!
              * \brief Delete an entry using the given name as the key.
              */
-            void delete_entry(const std::string name);
+            void delete_entry(const std::string& name);
 
             /*!
              * \brief Check if the entry is required
              */
-            bool is_entry_required(const std::string name) const;
+            bool is_entry_required(const std::string& name) const;
             /*!
              * \brief Check if the entry is required
              */
-           int is_lidar_gps_entry_required(const std::string &name) const;
+            int is_lidar_gps_entry_required(const std::string& name) const;
 
         private:
 

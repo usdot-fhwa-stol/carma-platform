@@ -40,7 +40,7 @@ public:
     void run();
 
     // read file names in the given route path
-    static std::vector<std::string> read_route_names(std::string route_path);
+    static std::vector<std::string> read_route_names(const std::string& route_path);
 
 private:
 
@@ -48,7 +48,7 @@ private:
     std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
     // status of the selected route file
-    bool route_is_active_;
+    bool route_is_active_{false};
 
     // directory of the routes path
     std::string route_file_path_;

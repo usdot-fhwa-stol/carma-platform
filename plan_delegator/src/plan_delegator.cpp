@@ -128,8 +128,14 @@ namespace plan_delegator
     {
         cav_msgs::TrajectoryPlan latest_trajectory_plan;
         // iterate through maneuver list to make service call
+        bool cont_iteration = true;
         for(const auto& maneuver : latest_maneuver_plan_.maneuvers)
         {
+            if (!cont_iteration)
+            {
+                // centralized break point of the loop
+                break;
+            }
             // ignore expired maneuvers
             if(isManeuverExpired(maneuver))
             {
@@ -146,7 +152,8 @@ namespace plan_delegator
                 if(!isTrajectoryValid(plan_req.response.trajectory_plan))
                 {
                     ROS_WARN_STREAM("Found invalid trajectory with less than 2 trajectory points for " << latest_maneuver_plan_.maneuver_plan_id);
-                    break;
+                    cont_iteration = false;
+                    continue;
                 }
                 latest_trajectory_plan.trajectory_points.insert(latest_trajectory_plan.trajectory_points.end(),
                                                                 plan_req.response.trajectory_plan.trajectory_points.begin(),
@@ -154,14 +161,16 @@ namespace plan_delegator
                 if(isTrajectoryLongEnough(latest_trajectory_plan))
                 {
                     ROS_INFO_STREAM("Plan Trajectory completed for " << latest_maneuver_plan_.maneuver_plan_id);
-                    break;
+                    cont_iteration = false;
+                    continue;
                 }
             }
             else
             {
                 ROS_WARN_STREAM("Unsuccessful service call to trajectory planner:" << maneuver_planner << " for plan ID " << latest_maneuver_plan_.maneuver_plan_id);
                 // if one service call fails, it should end plan immediately because it is there is no point to generate plan with empty space
-                break;
+                cont_iteration = false;
+                continue;
             }
         }
         return latest_trajectory_plan;

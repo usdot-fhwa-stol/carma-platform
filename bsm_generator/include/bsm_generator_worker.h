@@ -26,9 +26,9 @@ namespace bsm_generator
     class BSMGeneratorWorker
     {
         public:
-
+            
             BSMGeneratorWorker();
-
+            BSMGeneratorWorker(uint8_t msg_count);
             uint8_t getNextMsgCount();
             std::vector<uint8_t> getMsgId(const ros::Time now);
             uint16_t getSecMark(const ros::Time now);

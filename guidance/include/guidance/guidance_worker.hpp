@@ -42,7 +42,7 @@ namespace guidance
              * \param CARMANodeHandle Normal
              * \param CARMANodeHandle Private
              */
-            GuidanceWorker(ros::CARMANodeHandle nh, ros::CARMANodeHandle pnh);
+            GuidanceWorker(const ros::CARMANodeHandle& nh, const ros::CARMANodeHandle& pnh);
 
             /*!
              * \brief Begin normal execution of Guidance worker. Will take over control flow of program and exit from here.
