@@ -56,7 +56,7 @@ public:
    *
    * @param geofence The geofence to be added
    */
-  void addGeofence(Geofence geofence);
+  void addGeofence(const Geofence& geofence);
 
   /**
    * @brief Method which allows the user to set a callback which will be triggered when a geofence becomes active

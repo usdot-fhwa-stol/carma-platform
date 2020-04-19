@@ -21,14 +21,15 @@
 
 namespace bsm_generator
 {
-    BSMGeneratorWorker::BSMGeneratorWorker() : msg_count(0) {}
+    BSMGeneratorWorker::BSMGeneratorWorker() : msg_count_(0) {}
     
     uint8_t BSMGeneratorWorker::getNextMsgCount()
     {
-        uint8_t old_msg_count = msg_count++;
-        if(msg_count == 128)
+        uint8_t old_msg_count = msg_count_;
+        msg_count_++;
+        if(msg_count_ == 128)
         {
-            msg_count = 0;
+            msg_count_ = 0;
         }
         return old_msg_count;
     }
@@ -42,14 +43,14 @@ namespace bsm_generator
         std::default_random_engine generator;
         std::uniform_int_distribution<int> dis(0,INT_MAX);
 
-        if(now - last_id_generation_time >= id_timeout)
+        if(now - last_id_generation_time_ >= id_timeout)
         {
-            random_id = dis(generator);
-            last_id_generation_time = now;
+            random_id_ = dis(generator);
+            last_id_generation_time_ = now;
         }
         for(int i = 0; i < id.size(); ++i)
         {
-            id[i] = random_id >> (8 * i);
+            id[i] = random_id_ >> (8 * i);
         }
         return id;
     }

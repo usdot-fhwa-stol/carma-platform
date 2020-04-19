@@ -18,10 +18,7 @@
 
 namespace localizer
 {
-    NDTReliabilityCounter::NDTReliabilityCounter()
-    {
-        NDTReliabilityCounter(2.0, 3);
-    }
+    NDTReliabilityCounter::NDTReliabilityCounter() : NDTReliabilityCounter(2.0, 3) {}
     
     NDTReliabilityCounter::NDTReliabilityCounter(double score_upper_limit, int message_upper_limit) : ndt_reliability_counter(0)
     {

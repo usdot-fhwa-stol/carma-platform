@@ -39,6 +39,7 @@ namespace localizer
         public:
 
             Localizer();
+            Localizer(double spin_rate, int localization_mode);
 
             // general starting point of this node
             void run();

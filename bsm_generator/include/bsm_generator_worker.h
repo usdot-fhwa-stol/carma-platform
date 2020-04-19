@@ -42,8 +42,8 @@ namespace bsm_generator
         private:
 
             // variables for BSM generation
-            uint8_t msg_count;
-            int random_id;
-            ros::Time last_id_generation_time;
+            uint8_t msg_count_;
+            int random_id_;
+            ros::Time last_id_generation_time_;
     };
 }

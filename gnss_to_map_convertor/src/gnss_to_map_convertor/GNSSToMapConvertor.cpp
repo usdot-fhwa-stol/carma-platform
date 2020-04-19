@@ -52,7 +52,7 @@ namespace gnss_to_map_convertor {
 
     const tf2::Vector3 identity_trans(0,0,0);
     tf2::Quaternion heading_in_ned_quat;
-    //heading_in_ned_quat.setRPY(fix_msg->roll, heading_msg->pitch * wgs84_utils::DEG2RAD, fix_msg->track);
+    
     heading_in_ned_quat.setRPY(0, 0, fix_msg->track * wgs84_utils::DEG2RAD);
 
     const tf2::Transform T_n_h(heading_in_ned_quat, identity_trans);

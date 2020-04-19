@@ -38,6 +38,13 @@ namespace guidance
             GuidanceWorker();
 
             /*!
+             * \brief Constructor for GuidanceWorker
+             * \param CARMANodeHandle Normal
+             * \param CARMANodeHandle Private
+             */
+            GuidanceWorker(ros::CARMANodeHandle nh, ros::CARMANodeHandle pnh);
+
+            /*!
              * \brief Begin normal execution of Guidance worker. Will take over control flow of program and exit from here.
              * 
              * \return The exit status of this program

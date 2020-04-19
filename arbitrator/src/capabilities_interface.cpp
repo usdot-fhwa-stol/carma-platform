@@ -22,25 +22,18 @@ namespace arbitrator
 {
     const std::string CapabilitiesInterface::STRATEGIC_PLAN_CAPABILITY = "strategic_plan/plan_maneuvers";
     
-    std::vector<std::string> CapabilitiesInterface::get_topics_for_capability(std::string query_string)
+    std::vector<std::string> CapabilitiesInterface::get_topics_for_capability(const std::string& query_string)
     {
-
         std::vector<std::string> topics = {};
 
         cav_srvs::GetPluginApi srv;
         srv.request.capability = "";
 
-
-        if (query_string == STRATEGIC_PLAN_CAPABILITY)
+        if (query_string == STRATEGIC_PLAN_CAPABILITY && sc_s.call(srv))
         {
-            if (sc_s.call(srv))
-            {
-                topics = srv.response.plan_service;
-                ROS_INFO_STREAM("Received Topic: " << topics.front());
-            }
+            topics = srv.response.plan_service;
+            ROS_INFO_STREAM("Received Topic: " << topics.front());
         }
-
-        
 
         return topics;
 

@@ -73,9 +73,15 @@ namespace gnss_to_map_convertor {
 
     public:
       /**
-       * @brief Constructor
+       * @brief Default onstructor
        */
       GNSSToMapNode();
+
+      /**
+       * @brief Constructor
+       * @param CARMAPrivateNodehandle
+       */
+      GNSSToMapNode(ros::CARMANodeHandle p_cnh);
 
       /**
        * @brief Starts the Node
