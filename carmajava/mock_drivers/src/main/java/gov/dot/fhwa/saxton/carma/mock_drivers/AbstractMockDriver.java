@@ -133,15 +133,8 @@ public abstract class AbstractMockDriver implements IMockDriver {
   }
 
   @Override protected void finalize() throws Throwable {
-    try {
-      closeDataFile();
-    }
-    catch (Throwable t){
-      throw t;
-    }
-    finally{
-      super.finalize();
-    }
+    closeDataFile();
+    super.finalize();
   }
 
   @Override public void readAndPublishData() {
