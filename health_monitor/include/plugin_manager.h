@@ -72,11 +72,11 @@ namespace health_monitor
             bool get_tactical_plugins_by_capability(cav_srvs::GetPluginApiRequest& req, cav_srvs::GetPluginApiResponse& res);
 
         private:
-        
+
+            EntryManager em_;
             std::string service_prefix_;
             std::string strategic_service_suffix_;
             std::string tactical_service_suffix_;
-            EntryManager em_;
 
     };
 }

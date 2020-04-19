@@ -21,8 +21,7 @@
 
 namespace bsm_generator
 {
-    BSMGeneratorWorker::BSMGeneratorWorker() : BSMGeneratorWorker(0) {}
-    BSMGeneratorWorker::BSMGeneratorWorker(uint8_t msg_count) : msg_count_(msg_count) {}
+    BSMGeneratorWorker::BSMGeneratorWorker() {}
     
     uint8_t BSMGeneratorWorker::getNextMsgCount()
     {

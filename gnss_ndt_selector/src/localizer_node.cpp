@@ -18,9 +18,7 @@
 
 namespace localizer
 {
-	Localizer::Localizer() : Localizer (10.0, 0) {}
-	Localizer::Localizer(double spin_rate, int localization_mode) : spin_rate_(spin_rate),
-				             localization_mode_(localization_mode) {}
+	Localizer::Localizer(){}
 
 	void Localizer::publishTransform(const geometry_msgs::PoseStampedConstPtr& msg)
 	{

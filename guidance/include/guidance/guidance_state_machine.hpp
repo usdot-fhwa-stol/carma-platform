@@ -52,14 +52,6 @@ namespace guidance
             GuidanceStateMachine();
 
             /*!
-             * \brief Constructor for GuidanceStateMachine
-             * \param current_guidance_state, state::STARTUP by default
-             * \param robotic_active_status, false by default
-             * \param called_robotic_engage_in_active, false by default
-             */
-            GuidanceStateMachine(State current_guidance_state, bool robotic_active_status, bool called_robotic_engage_in_active);
-
-            /*!
              * \brief Handle system_alert message from ROS network.
              */
             void onSystemAlert(const cav_msgs::SystemAlertConstPtr& msg);
@@ -92,13 +84,13 @@ namespace guidance
             void onGuidanceSignal(Signal signal);
 
             // a local variable keeps the current state machine state
-            State current_guidance_state_;
+            State current_guidance_state_ {State::STARTUP};
 
             // Previous robotic active status
-            bool robotic_active_status_;
+            bool robotic_active_status_{false};
 
             // make one service call in ACTIVE state to engage
-            bool called_robotic_engage_in_active_;
+            bool called_robotic_engage_in_active_{false};
     };
 
 }

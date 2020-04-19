@@ -110,9 +110,9 @@ class LightBarManager
         ros::Subscriber guidance_state_subscriber_;
 
         // Node handles
-        ros::CARMANodeHandle nh_, pnh_;
+        ros::CARMANodeHandle nh_{"lightbar_manager"}, pnh_{"~"};
 
-        // LightBarManager state machine
+        // LightBarManager Worker
         LightBarManagerWorker lbm_;
 
 }; //class LightBarManagerNode

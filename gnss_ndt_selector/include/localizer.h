@@ -39,7 +39,6 @@ namespace localizer
         public:
 
             Localizer();
-            Localizer(double spin_rate, int localization_mode);
 
             // general starting point of this node
             void run();
@@ -61,8 +60,8 @@ namespace localizer
             ros::Publisher pose_pub_;
 
             // member variables
-            double spin_rate_;
-            int localization_mode_;
+            double spin_rate_ {10};
+            int localization_mode_ {0};
 
             // local copy of ros params
             // if above this number, this ndt msg is not reliable

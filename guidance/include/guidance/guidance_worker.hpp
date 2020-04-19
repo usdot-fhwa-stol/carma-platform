@@ -38,13 +38,6 @@ namespace guidance
             GuidanceWorker();
 
             /*!
-             * \brief Constructor for GuidanceWorker
-             * \param CARMANodeHandle Normal
-             * \param CARMANodeHandle Private
-             */
-            GuidanceWorker(const ros::CARMANodeHandle& nh, const ros::CARMANodeHandle& pnh);
-
-            /*!
              * \brief Begin normal execution of Guidance worker. Will take over control flow of program and exit from here.
              * 
              * \return The exit status of this program
@@ -72,7 +65,7 @@ namespace guidance
             ros::Subscriber robot_status_subscriber_;
 
             // Node handles
-            ros::CARMANodeHandle nh_, pnh_;
+            ros::CARMANodeHandle nh_{}, pnh_{"~"};
 
             // Guidance state machine
             GuidanceStateMachine gsm_;

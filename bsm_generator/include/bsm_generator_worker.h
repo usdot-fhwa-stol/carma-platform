@@ -28,7 +28,6 @@ namespace bsm_generator
         public:
             
             BSMGeneratorWorker();
-            BSMGeneratorWorker(uint8_t msg_count);
             uint8_t getNextMsgCount();
             std::vector<uint8_t> getMsgId(const ros::Time now);
             uint16_t getSecMark(const ros::Time now);
@@ -42,7 +41,7 @@ namespace bsm_generator
         private:
 
             // variables for BSM generation
-            uint8_t msg_count_;
+            uint8_t msg_count_ = 0;
             int random_id_;
             ros::Time last_id_generation_time_;
     };

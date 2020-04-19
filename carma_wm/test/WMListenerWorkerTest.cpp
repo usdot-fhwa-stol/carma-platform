@@ -17,7 +17,7 @@
 #include <gmock/gmock.h>
 #include <iostream>
 #include <lanelet2_extension/utility/message_conversion.h>
-#include <../src/WMListenerWorker.h>
+#include <carma_wm/WMListenerWorker.h>
 #include <carma_wm/CARMAWorldModel.h>
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
