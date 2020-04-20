@@ -20,7 +20,7 @@
 
 namespace carma_wm
 {
-WMListener::WMListener(bool multi_thread) : multi_threaded_(multi_thread), worker_(std::unique_ptr<WMListenerWorker>(new WMListenerWorker))
+WMListener::WMListener(bool multi_thread) : worker_(std::unique_ptr<WMListenerWorker>(new WMListenerWorker)), multi_threaded_(multi_thread)
 {
 
   ROS_DEBUG_STREAM("WMListener: Creating world model listener");
