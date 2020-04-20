@@ -39,8 +39,8 @@ namespace arbitrator
     class MockCostFunction : public CostFunction
     {
         public:
-            MOCK_CONST_METHOD1(compute_total_cost, double(cav_msgs::ManeuverPlan));
-            MOCK_CONST_METHOD1(compute_cost_per_unit_distance, double(cav_msgs::ManeuverPlan));
+            MOCK_CONST_METHOD1(compute_total_cost, double(const cav_msgs::ManeuverPlan&));
+            MOCK_CONST_METHOD1(compute_cost_per_unit_distance, double(const cav_msgs::ManeuverPlan&));
             ~MockCostFunction(){};
 
     };

@@ -19,12 +19,9 @@
 
 namespace lightbar_manager
 {
-LightBarManager::LightBarManager(std::string node_name) : lbm_(node_name)
-{
-    nh_ = ros::CARMANodeHandle{"lightbar_manager"};
-    pnh_ = ros::CARMANodeHandle{"~"};
-    node_name_ = node_name;
-}
+LightBarManager::LightBarManager(std::string node_name) : 
+    lbm_(node_name),
+    node_name_ (node_name) {}
 
 void LightBarManager::turnOffAll()
 {

@@ -19,10 +19,7 @@
 #include <ros/console.h>
 namespace lightbar_manager
 {
-    LightBarManagerWorker::LightBarManagerWorker(std::string node_name)
-    {
-        node_name_ = node_name;
-    }
+    LightBarManagerWorker::LightBarManagerWorker(std::string node_name) : node_name_(node_name){};
 
     void LightBarManagerWorker::next(const LightBarEvent& event)
     {

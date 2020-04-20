@@ -32,7 +32,7 @@ namespace localizer
         private:
             
             // counter used to measure ndt matching reliability
-            int ndt_reliability_counter;
+            int ndt_reliability_counter {0};
             // if above this number, this ndt msg is not reliable
             double score_upper_limit_;
             // if receiving this number of continuous unreliable score, current ndt matching result is not reliable

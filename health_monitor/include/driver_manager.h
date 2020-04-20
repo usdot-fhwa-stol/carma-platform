@@ -27,7 +27,7 @@ namespace health_monitor
         public:
             
             /*!
-             * \brief Default constructor for DriverManager
+             * \brief Default constructor for DriverManager with driver_timeout_ = 1000
              */
             DriverManager();
             /*!
@@ -59,7 +59,7 @@ namespace health_monitor
 
             EntryManager em_;
             // timeout for critical driver timeout
-            long driver_timeout_;
+            long driver_timeout_ {1000};
 
     };
 }
