@@ -40,7 +40,7 @@ namespace arbitrator
         }
     }
 
-    double FixedPriorityCostFunction::compute_total_cost(cav_msgs::ManeuverPlan plan) const
+    double FixedPriorityCostFunction::compute_total_cost(const cav_msgs::ManeuverPlan& plan) const
     {
         double total_cost = 0.0;
         for (auto it = plan.maneuvers.begin(); it != plan.maneuvers.end(); it++)
@@ -53,7 +53,7 @@ namespace arbitrator
         return total_cost;
     }
 
-    double FixedPriorityCostFunction::compute_cost_per_unit_distance(cav_msgs::ManeuverPlan plan) const
+    double FixedPriorityCostFunction::compute_cost_per_unit_distance(const cav_msgs::ManeuverPlan& plan) const
     {
         double plan_dist = arbitrator_utils::get_plan_end_distance(plan) - arbitrator_utils::get_plan_start_distance(plan);
         return compute_total_cost(plan) / plan_dist;

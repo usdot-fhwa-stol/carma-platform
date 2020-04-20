@@ -19,14 +19,10 @@
 namespace health_monitor
 {
 
-    DriverManager::DriverManager() : driver_timeout_(1000) {}
+    DriverManager::DriverManager() {}
 
-    DriverManager::DriverManager(std::vector<std::string> critical_driver_names, const long driver_timeout, std::vector<std::string> lidar_gps_driver_names) 
-    {
-        em_ = EntryManager(critical_driver_names,lidar_gps_driver_names);
-        driver_timeout_ = driver_timeout;
-    }
-
+    DriverManager::DriverManager(std::vector<std::string> critical_driver_names, const long driver_timeout, std::vector<std::string> lidar_gps_driver_names):
+                                em_(EntryManager(critical_driver_names,lidar_gps_driver_names)), driver_timeout_(driver_timeout) {}
 
     void DriverManager::update_driver_status(const cav_msgs::DriverStatusConstPtr& msg, long current_time)
     {
@@ -76,49 +72,43 @@ namespace health_monitor
         }
 
        //Decision making 
-
-        if(ssc==1)
+        if(ssc==0)
         {
-
-            if((lidar1==0) && (lidar2==0) && (gps==0))
-            {
-                return "s_1_l1_0_l2_0_g_0";
-            }
-            else if((lidar1==0) && (lidar2==0) && (gps==1))
-            {
-                return "s_1_l1_0_l2_0_g_1";
-            }
-            else if((lidar1==0) && (lidar2==1) && (gps==0))
-            {
-                return "s_1_l1_0_l2_1_g_0";
-            }
-            else if((lidar1==0) && (lidar2==1) && (gps==1))
-            {
-                return "s_1_l1_0_l2_1_g_1";
-            }
-            else if((lidar1==1) && (lidar2==0) && (gps==0))
-            {
-                return "s_1_l1_1_l2_0_g_0";
-            }
-            else if((lidar1==1) && (lidar2==0) && (gps==1))
-            {
-                return "s_1_l1_1_l2_0_g_1";
-            }
-            else if((lidar1==1) && (lidar2==1) && (gps==0))
-            {
-                return "s_1_l1_1_l2_1_g_0";
-            }
-            else if((lidar1==1) && (lidar2==1) && (gps==1))
-            {
-                return "s_1_l1_1_l2_1_g_1";
-            }
-        }
-        else
-        {
-
             return "s_0";
         }
-
+        // if ssc = 1
+        if((lidar1==0) && (lidar2==0) && (gps==0))
+        {
+            return "s_1_l1_0_l2_0_g_0";
+        }
+        else if((lidar1==0) && (lidar2==0) && (gps==1))
+        {
+            return "s_1_l1_0_l2_0_g_1";
+        }
+        else if((lidar1==0) && (lidar2==1) && (gps==0))
+        {
+            return "s_1_l1_0_l2_1_g_0";
+        }
+        else if((lidar1==0) && (lidar2==1) && (gps==1))
+        {
+            return "s_1_l1_0_l2_1_g_1";
+        }
+        else if((lidar1==1) && (lidar2==0) && (gps==0))
+        {
+            return "s_1_l1_1_l2_0_g_0";
+        }
+        else if((lidar1==1) && (lidar2==0) && (gps==1))
+        {
+            return "s_1_l1_1_l2_0_g_1";
+        }
+        else if((lidar1==1) && (lidar2==1) && (gps==0))
+        {
+            return "s_1_l1_1_l2_1_g_0";
+        }
+        else if((lidar1==1) && (lidar2==1) && (gps==1))
+        {
+            return "s_1_l1_1_l2_1_g_1";
+        }
     }
 
 

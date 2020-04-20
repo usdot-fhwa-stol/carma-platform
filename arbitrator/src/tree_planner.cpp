@@ -39,19 +39,21 @@ namespace arbitrator
             {
                 // Pop the first element off the open list
                 cav_msgs::ManeuverPlan cur_plan = it->first;
+                ros::Duration plan_duration; // zero duration
 
-                // If we're not at the root (our plan should have maneuvers)
+                // If we're not at the root, plan_duration is nonzero (our plan should have maneuvers)
                 if (!cur_plan.maneuvers.empty()) 
                 {
-                    // Evaluate terminal condition
-                    ros::Duration plan_duration = arbitrator_utils::get_plan_end_time(cur_plan) - arbitrator_utils::get_plan_start_time(cur_plan);
-                    if (plan_duration >= target_plan_duration_) 
-                    {
-                        return cur_plan;
-                    } else if (plan_duration > longest_plan_duration) {
-                        longest_plan_duration = plan_duration;
-                        longest_plan = cur_plan;
-                    }
+                    // get plan duration
+                    plan_duration = arbitrator_utils::get_plan_end_time(cur_plan) - arbitrator_utils::get_plan_start_time(cur_plan); 
+                }
+                // Evaluate terminal condition
+                if (plan_duration >= target_plan_duration_) 
+                {
+                    return cur_plan;
+                } else if (plan_duration > longest_plan_duration) {
+                    longest_plan_duration = plan_duration;
+                    longest_plan = cur_plan;
                 }
 
                 // Expand it, and reprioritize

@@ -27,10 +27,9 @@ namespace health_monitor
                                  const std::string& tactical_service_suffix)
                                  : service_prefix_(service_prefix),
                                    strategic_service_suffix_(strategic_service_suffix),
-                                   tactical_service_suffix_(tactical_service_suffix)
-    {
-        em_ = EntryManager(require_plugin_names);
-    }
+                                   tactical_service_suffix_(tactical_service_suffix),
+                                   em_(EntryManager(require_plugin_names))
+    {}
 
     void PluginManager::get_registered_plugins(cav_srvs::PluginListResponse& res)
     {
@@ -65,7 +64,7 @@ namespace health_monitor
         }
     }
 
-    bool PluginManager::activate_plugin(const std::string name, const bool activate)
+    bool PluginManager::activate_plugin(const std::string& name, const bool activate)
     {
         boost::optional<Entry> requested_plugin = em_.get_entry_by_name(name);
         if(requested_plugin)
@@ -98,13 +97,10 @@ namespace health_monitor
     {
         for(const auto& plugin : em_.get_entries())
         {
-            if(plugin.type_ == cav_msgs::Plugin::TACTICAL)
+            if(plugin.type_ == cav_msgs::Plugin::TACTICAL &&
+               (req.capability.size() == 0 || (plugin.capability_.compare(0, req.capability.size(), req.capability) == 0 && plugin.active_ && plugin.available_)))
             {
-                if(req.capability.size() == 0 ||
-                  (plugin.capability_.compare(0, req.capability.size(), req.capability) == 0 && plugin.active_ && plugin.available_))
-                {
-                    res.plan_service.push_back(service_prefix_ + plugin.name_ + tactical_service_suffix_);
-                }
+                res.plan_service.push_back(service_prefix_ + plugin.name_ + tactical_service_suffix_);
             }
         }
         return true;
@@ -114,13 +110,10 @@ namespace health_monitor
     {
         for(const auto& plugin : em_.get_entries())
         {
-            if(plugin.type_ == cav_msgs::Plugin::STRATEGIC)
+            if(plugin.type_ == cav_msgs::Plugin::STRATEGIC && 
+                (req.capability.size() == 0 || (plugin.capability_.compare(0, req.capability.size(), req.capability) == 0 && plugin.active_ && plugin.available_)))
             {
-                if(req.capability.size() == 0 ||
-                  (plugin.capability_.compare(0, req.capability.size(), req.capability) == 0 && plugin.active_ && plugin.available_))
-                {
-                    res.plan_service.push_back(service_prefix_ + plugin.name_ + strategic_service_suffix_);
-                }
+                res.plan_service.push_back(service_prefix_ + plugin.name_ + strategic_service_suffix_);
             }
         }
         return true;
