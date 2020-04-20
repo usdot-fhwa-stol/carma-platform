@@ -44,7 +44,7 @@ namespace gnss_to_map_convertor {
       // Buffer which holds the tree of transforms
       tf2_ros::Buffer tfBuffer_;
       // tf2 listeners. Subscribes to the /tf and /tf_static topics
-      tf2_ros::TransformListener tfListener_ = tfBuffer_;
+      tf2_ros::TransformListener tfListener_ {tfBuffer_};
       
       // Ros node handle
       ros::CARMANodeHandle cnh_;
