@@ -16,6 +16,11 @@
 
 # Script generates an SSH Key using the provided email.
 
+if [ -z "$1" ]; then
+    echo "An email address must be provided."
+    exit -1
+fi
+
 ssh-keygen -t rsa -b 4096 -C "$1"
 eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/id_rsa
