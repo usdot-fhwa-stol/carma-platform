@@ -48,14 +48,14 @@ namespace arbitrator
              * \param plan The plan to evaluate
              * \return double The total cost divided by the total distance of the plan
              */
-            double compute_total_cost(cav_msgs::ManeuverPlan plan) const;
+            double compute_total_cost(const cav_msgs::ManeuverPlan& plan) const;
 
             /**
              * \brief Compute the unit cost over distance of a given maneuver plan
              * \param plan The plan to evaluate
              * \return double The total cost divided by the total distance of the plan
              */
-            double compute_cost_per_unit_distance(cav_msgs::ManeuverPlan plan) const;
+            double compute_cost_per_unit_distance(const cav_msgs::ManeuverPlan& plan) const;
         private:
             std::map<std::string, double> plugin_costs_;
     };

@@ -41,15 +41,14 @@ namespace gnss_to_map_convertor {
   class GNSSToMapNode {
 
     private:
-      // Ros node handle
-      ros::CARMANodeHandle cnh_;
-      
-      ros::CARMANodeHandle p_cnh_; // Private node handle initialized in constructor
-
       // Buffer which holds the tree of transforms
       tf2_ros::Buffer tfBuffer_;
       // tf2 listeners. Subscribes to the /tf and /tf_static topics
-      tf2_ros::TransformListener tfListener_;
+      tf2_ros::TransformListener tfListener_ {tfBuffer_};
+      
+      // Ros node handle
+      ros::CARMANodeHandle cnh_;
+      ros::CARMANodeHandle p_cnh_ {"~"}; // Private node handle initialized in constructor
 
       ros::Publisher ecef_pose_pub_;
       ros::Publisher map_pose_pub_;
@@ -73,7 +72,7 @@ namespace gnss_to_map_convertor {
 
     public:
       /**
-       * @brief Constructor
+       * @brief Default Constructor
        */
       GNSSToMapNode();
 

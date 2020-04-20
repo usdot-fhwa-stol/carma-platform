@@ -29,7 +29,11 @@ TEST(RouteGeneratorTest, testReadFileFunction)
     }
 
 }
-
+TEST(RouteGeneratorTest, testRouteGenerator)
+{
+    RouteGenerator rg;
+    EXPECT_FALSE(rg.is_route_active());
+}
 // Run all the tests
 int main(int argc, char **argv)
 {
