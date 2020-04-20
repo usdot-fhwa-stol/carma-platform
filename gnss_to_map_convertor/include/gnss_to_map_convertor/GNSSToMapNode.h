@@ -72,7 +72,7 @@ namespace gnss_to_map_convertor {
 
     public:
       /**
-       * @brief Default onstructor
+       * @brief Default Constructor
        */
       GNSSToMapNode();
 

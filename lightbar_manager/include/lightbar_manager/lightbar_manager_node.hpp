@@ -46,7 +46,7 @@ class LightBarManager
         /*!
         * \brief Default constructor for LightBarManager node
         */
-        LightBarManager(std::string node_name);
+        LightBarManager(const std::string& node_name);
 
         /*!
         * \brief Initiliaze ROS related functions. Pass "test" to setup ROS parameters for unit testing
@@ -75,7 +75,7 @@ class LightBarManager
         * \brief Try to turn the given indicator ON or OFF (comm with hardware) upon the given component's request
         * \return Returns the status code whether if the request was successful or not
         */
-        int setIndicator(LightBarIndicator ind, IndicatorStatus ind_status, std::string requester_name);
+        int setIndicator(LightBarIndicator ind, IndicatorStatus ind_status, const std::string& requester_name);
 
     private:
         /*!

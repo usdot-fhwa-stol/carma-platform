@@ -22,7 +22,6 @@
 #include <ros/callback_queue.h>
 #include <carma_wm/WorldModel.h>
 #include <carma_utils/CARMAUtils.h>
-#include "WMListenerWorker.h"
 
 namespace carma_wm
 {
@@ -96,7 +95,7 @@ public:
 
 private:
   ros::Subscriber roadway_objects_sub_;
-  std::unique_ptr<WMListenerWorker> worker_ {new WMListenerWorker};
+  std::unique_ptr<WMListenerWorker> worker_;
   ros::CARMANodeHandle nh_;
   ros::CallbackQueue async_queue_;
   std::unique_ptr<ros::AsyncSpinner> wm_spinner_;

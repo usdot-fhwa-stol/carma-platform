@@ -82,7 +82,7 @@ std::vector<lanelet::traffic_rules::TrafficRulesUPtr> getAllGermanTrafficRules()
     catch (const lanelet::InvalidInputError& e)
     {
       // Ignore participants which there is no generic rules for
-      ROS_INFO ("Ignoring participants which there is no generic rule for...");
+      ROS_INFO_STREAM ("Ignoring participant: " << participant_types[i] <<  ", which there is no generic rule for...");
     }
   }
 
@@ -344,19 +344,15 @@ void addInferredPassingControlLine(Lanelet& lanelet, lanelet::LaneletMapPtr map)
       if (left_bound.id() == sub_line.id() && !foundLeft)
       {
         foundLeft = true;
-        shouldAdd = true;
+        shouldAdd = !lanelet::utils::contains(local_control_lines, pcl);
       }
       else if (right_bound.id() == sub_line.id() && !foundRight)
       {
         foundRight = true;
-        shouldAdd = true;
+        shouldAdd = !lanelet::utils::contains(local_control_lines, pcl);
       }
       // Check if our lanelet contains this control line
       // If it does not then add it
-      if (shouldAdd)
-      {
-        shouldAdd = !lanelet::utils::contains(local_control_lines, pcl);
-      }
       if (shouldAdd)
       {
         lanelet.addRegulatoryElement(pcl);

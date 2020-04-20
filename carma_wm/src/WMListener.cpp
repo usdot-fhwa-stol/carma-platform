@@ -16,11 +16,11 @@
 
 #include <new>
 #include <carma_wm/WMListener.h>
-#include <carma_wm/WMListenerWorker.h>
+#include "WMListenerWorker.h"
 
 namespace carma_wm
 {
-WMListener::WMListener(bool multi_thread) : multi_threaded_(multi_thread)
+WMListener::WMListener(bool multi_thread) : multi_threaded_(multi_thread), worker_(std::unique_ptr<WMListenerWorker>(new WMListenerWorker))
 {
 
   ROS_DEBUG_STREAM("WMListener: Creating world model listener");
