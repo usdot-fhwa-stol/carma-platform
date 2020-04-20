@@ -57,12 +57,12 @@ For a description of the functionality specific to CARMA2 on the Cadillac SRX, s
 ## Administrator Guide
 An administrator guide for CARMA3 will be coming soon.
 
-For administrative information on CARMA2, including vehicle and developer PC configuration, build, deployment and testing steps necessary to install and run the CARMA platform, please see [Administrator Guide](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29196388/CARMA%20Administrator%20Guide.docx)
+For administrative information on CARMA2, including vehicle and developer PC configuration, build, deployment and testing steps necessary to install and run CARMA Platform, please see [Administrator Guide](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29196388/CARMA%20Administrator%20Guide.docx)
 
 ## Other CARMA Packages
 CARMA Platform<sup>SM</sup> is a downloadable, open source software (OSS) platform architected to be extensible and reusable for a wide variety of research purposes to advance innovation for cooperative driving automation. It enables communication between vehicles, road users such as pedestrians, bicyclists, and scooters, and infrastructure devices capable of communication. It promotes collaboration between a community of engineers and researchers to accelerate the development, testing, and evaluation of cooperative driving automation while advancing the safety, security, data, and use of artificial intelligence in automated driving technology. 
 
-The CARMA Platform is distributed as a set of multiple independent packages hosted in separate Github repositories. These packages facilitate operation of the CARMA platform with different hardware configurations or allow it to support different modes of operation. To include one of these packages in your build of the CARMAPlatform system please clone the Github repository into the same Catkin workspace `src/` folder as this repository. The Catkin build system will verify that dependencies are resolved appropriately and build the newly included package when you next run `catkin_make`. An incomplete listing of available packages for CARMA2 includes:
+The CARMA Platform is distributed as a set of multiple independent packages hosted in separate Github repositories. These packages facilitate operation of the CARMA Platform with different hardware configurations or allow it to support different modes of operation. To include one of these packages in your build of the CARMA Platform system please clone the Github repository into the same Catkin workspace `src/` folder as this repository. The Catkin build system will verify that dependencies are resolved appropriately and build the newly included package when you next run `catkin_make`. An incomplete listing of available packages for CARMA2 includes:
 
 ### Vehicle Controller Interface Drivers
 * [CARMACadillacSrx2013ControllerDriver](https://github.com/usdot-fhwa-stol/carma-cadillac-srx-2013-controller-driver)
@@ -115,4 +115,5 @@ Contact Phone: (202) 366-3000
 Please click on the CARMA logo below to visit the Federal Highway Adminstration(FHWA) CARMA website. For more information, contact CARMA@dot.gov.
 [![CARMA Image](docs/image/CARMA_icon2.png)](https://highways.dot.gov/research/research-programs/operations/CARMA)
 
-
+## Support
+For technical support from the CARMA team, please contact the CARMA help desk at CARMASupport@dot.gov.
