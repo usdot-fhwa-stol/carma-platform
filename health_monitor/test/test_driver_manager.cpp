@@ -24,11 +24,21 @@ namespace health_monitor
 
     TEST(DriverManagerTest, testCarNormalDriverStatus)
     {
+        // inordinary case where no critical drivers are specified
+        DriverManager dm0;
+        cav_msgs::DriverStatus msg0;
+        msg0.controller = true;
+        msg0.name = "controller";
+        msg0.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg0_pointer(new cav_msgs::DriverStatus(msg0));
+        dm0.update_driver_status(msg0_pointer, 1000);
+        EXPECT_EQ("s_0", dm0.are_critical_drivers_operational_car(1500));
+        
         std::vector<std::string> required_drivers{"controller"};
         std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
 
         DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
-
+        
         cav_msgs::DriverStatus msg1;
         msg1.controller = true;
         msg1.name = "controller";

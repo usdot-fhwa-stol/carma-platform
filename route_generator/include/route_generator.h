@@ -42,6 +42,9 @@ public:
     // read file names in the given route path
     static std::vector<std::string> read_route_names(const std::string& route_path);
 
+    // check the status of the selected route file
+    bool is_route_active ();
+
 private:
 
     // node handles

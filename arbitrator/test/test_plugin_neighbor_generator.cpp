@@ -27,7 +27,7 @@ namespace arbitrator
         public:
             using PluginResponses = std::map<std::string, cav_srvs::PlanManeuvers>;
             MOCK_METHOD2(get_plans, PluginResponses(std::string, cav_srvs::PlanManeuvers));
-            MOCK_METHOD1(get_topics_for_capability, std::vector<std::string>(std::string));
+            MOCK_METHOD1(get_topics_for_capability, std::vector<std::string>(const std::string&));
 
             template<typename MSrv>
             std::map<std::string, MSrv> multiplex_service_call_for_capability(std::string query_string, MSrv msg);

@@ -133,3 +133,8 @@ std::vector<std::string> RouteGenerator::read_route_names(const std::string& rou
     }
     return route_names;
 }
+
+bool RouteGenerator::is_route_active ()
+{
+    return route_is_active_;
+}
