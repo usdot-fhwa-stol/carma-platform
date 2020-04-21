@@ -252,6 +252,77 @@ carma-config__status() {
     fi
 }
 
+carma__exec() {
+    local TARGET_IMAGE="usdotfhwastol/carma-platform:latest"
+    local COMMAND="bash"
+
+    # Check if the -i argument was provided
+    # If the image was specified then use that
+    if [ "$1" = "-i" ]; then 
+
+        if [ -z "$2" ]; then
+            echo " When -i is specified you must enter a carma docker image and tag."
+            exit -1
+        fi
+
+        local TARGET_IMAGE="$2"
+
+        shift
+        shift
+
+    # If the image was not specified use what was in the carma config
+    elif [ docker container inspect carma-config > /dev/null 2>&1 ]; then
+
+        local IMAGE_BACKUP=$TARGET_IMAGE
+        local SUPPORTED_ORANIZATIONS="usdotfhwastol\|usdotfhwastoldev"
+        local SUPPORTED_IMAGES="carma-platform:\|carma-messenger:"
+
+        # sed command finds the first instance of an image which is part of the set defined in SUPPORTED_ORGANIZATIONS and SUPPORTED_IMAGES.
+        # then returns the name of the image.  
+        local TARGET_IMAGE=$(docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
+            "sed -n -e '/image:\s*\($SUPPORTED_ORANIZATIONS\)\/\($SUPPORTED_IMAGES\)/ s/.*\image: *//p' docker-compose.yml | grep -m 1 '.*'")
+            
+
+        # If the sed resulted in an empty string then reset the tag
+        if [ -z "$TARGET_IMAGE" ]; then
+            local TARGET_IMAGE=$IMAGE_BACKUP
+        fi
+    
+    fi
+
+    # Verify target image exists
+    if [ -z "$(docker images -q $TARGET_IMAGE 2> /dev/null)" ]; then
+        echo "Specified image could not be found. carma exec attempted to use image $TARGET_IMAGE but it was not found."
+        echo "If an alternative image is available, please specify it using the -i option."
+        exit -1
+    fi
+
+    # If a command was specified then assign it
+    if [ -n "$1" ]; then
+        local COMMAND="$@"
+    fi
+
+    # Docker setup here is based on Pierre Killy's docker-ros-box https://github.com/pierrekilly/docker-ros-box located here.
+    # Docker ROS Box is licensed under the MIT licesne a copy of which can be found in the carma-platform repository here https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/docs/License.md
+
+    local XSOCK=/tmp/.X11-unix
+    local XAUTH=/tmp/.docker.xauth
+    touch $XAUTH
+    xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f $XAUTH nmerge -
+
+    echo "Trying to open shell inside image: $TARGET_IMAGE"
+
+    docker run \
+        -e DISPLAY=$DISPLAY \
+        --group-add video \
+        --volume=$XSOCK:$XSOCK:rw \
+        --volume=$XAUTH:$XAUTH:rw \
+        --env="XAUTHORITY=${XAUTH}" \
+        --device=/dev/dri:/dev/dri \
+        --network=host \
+        -it $TARGET_IMAGE "$COMMAND"
+}
+
 carma__help() {
     cat <<HELP
 -------------------------------------------------------------------------------
@@ -291,6 +362,10 @@ Please enter one of the following commands:
         - Stop the CARMA platform's foreground processes. If all, stop 
           everything.
         - Accepts the same flags as "docker-compose down"
+    exec <optional bash command>
+        - Opens a new container with GUI support from the carma-platform or carma-messenger image with the version specified in docker compose. If no version is found it will use latest.
+          This container can be used to interact with CARMA using ROS tooling such as Rviz and RQT.
+        - If the -i <image> argument is provided then the target image will be used instead
     ps
         - List all running CARMA docker containers
     attach
