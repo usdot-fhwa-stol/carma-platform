@@ -1,85 +1,73 @@
 repositories:
-  CARMAAvtVimbaDriver:
+  carma/src/avt_vimba_camera:
     type: git
     url: git@github.com:usdot-fhwa-stol/avt_vimba_camera.git
     version: develop
-  CARMABase:
+  carma/src/carma-base:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-base.git
     version: develop
-  CARMACadillacSrx2013ControllerDriver:
-    type: git
-    url: git@github.com:usdot-fhwa-stol/carma-cadillac-srx-2013-controller-driver.git
-    version: develop
-  CARMACohdaDsrcDriver:
+  carma/src/carma-cohda-dsrc-driver:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-cohda-dsrc-driver.git
     version: develop
-  CARMAConfig:
+  carma/src/carma-config:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-config.git
     version: develop
-  CARMADelphiEsrDriver:
+  carma/src/carma-delphi-esr-driver:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-delphi-esr-driver.git
     version: develop
-  CARMADelphiSrr2Driver:
+  carma/src/carma-delphi-srr2-driver:
     type: git
-    url: git@github.com:usdot-fhwa-stol/carma-delphi-srr-2d-driver.git
+    url: git@github.com:usdot-fhwa-stol/carma-delphi-srr2-driver.git
     version: develop
-  CARMAUtils:
+  carma/src/carma-utils:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-utils.git
     version: develop
-  CARMAFreightliner2012ControllerDriver:
-    type: git
-    url: git@github.com:usdot-fhwa-stol/carma-freightliner-2012-controller-driver.git
-    version: develop
-  CARMAMsgs:
+  carma/src/carma-msgs:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-msgs.git
     version: develop
-  CARMANovatelGpsDriver:
+  carma/src/novatel_gps_driver:
     type: git
     url: git@github.com:usdot-fhwa-stol/novatel_gps_driver.git
     version: develop
-  CARMAPlatform:
+  carma/src/carma-platform:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-platform.git
     version: develop
-  CARMASscInterfaceWrapper:
+  carma/src/carma-ssc-interface-wrapper:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-ssc-interface-wrapper.git
     version: develop
-  CARMATorcPinpointDriver:
-    type: git
-    url: git@github.com:usdot-fhwa-stol/carma-torc-pinpoint-driver.git
-    version: develop
-  CARMATorcXgvControllerDriver:
-    type: git
-    url: git@github.com:usdot-fhwa-stol/carma-torc-xgv-controller-driver.git
-    version: develop
-  CARMAVehicleModelFramework:
+  carma/src/carma-vehicle-model-framework:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-vehicle-model-framework.git
     version: develop
-  CARMAVelodyneLidarDriver:
+  carma/src/carma-velodyne-lidar-driver:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-velodyne-lidar-driver.git
     version: develop
-  CARMAWebUi:
+  carma/src/carma-web-ui:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-web-ui.git
     version: develop
-  CARMAGarminLidarLiteV3DriverWrapper:
+  carma/src/carma-garmin-lidar-lite-v3-driver-wrapper:
     type: git
     url: https://github.com/usdot-fhwa-stol/carma-garmin-lidar-lite-v3-driver-wrapper.git
+    version: develop
+  carma/src/carma-messenger:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/carma-messenger.git
+    version: develop
+  carma/src/opendrive2lanelet:
+    type: git
+    url: git@github.com:usdot-fhwa-stol/opendrive2lanelet.git
     version: develop
   autoware.ai:
     type: git
     url: git@github.com:usdot-fhwa-stol/autoware.ai.git
     version: carma-develop
-  carma-messenger:
-    type: git
-    url: git@github.com:usdot-fhwa-stol/carma-messenger.git
-    version: develop
