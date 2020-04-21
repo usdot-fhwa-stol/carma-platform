@@ -290,6 +290,13 @@ carma__exec() {
     
     fi
 
+    # Verify target image exists
+    if [ -z "$(docker images -q $TARGET_IMAGE 2> /dev/null)" ]; then
+        echo "Specified image could not be found. carma exec attempted to use image $TARGET_IMAGE but it was not found."
+        echo "If an alternative image is available, please specify it using the -i option."
+        exit -1
+    fi
+
     # If a command was specified then assign it
     if [ -n "$1" ]; then
         local COMMAND="$@"
