@@ -38,3 +38,10 @@ strategic_plugin_service_suffix: /plan_maneuvers
 tactical_plugin_service_suffix: /plan_trajectory
 
 car: true # to bypass the fact that health_monitor cannot read parameters from VehicelConfigParam.yaml loaded file through carma_src.launch
+
+# Required drivers for the vehicle to be functional
+required_drivers:
+  - /hardware_interface/mock_controller
+lidar_gps_drivers:
+  - /hardware_interface/mock_lidar
+  - /hardware_interface/mock_gnss

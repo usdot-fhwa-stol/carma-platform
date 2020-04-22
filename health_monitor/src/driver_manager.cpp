@@ -27,8 +27,8 @@ namespace health_monitor
     void DriverManager::update_driver_status(const cav_msgs::DriverStatusConstPtr& msg, long current_time)
     {
         // Params: bool available, bool active, std::string name, long timestamp, uint8_t type
-        ROS_WARN_STREAM("=======================ROS Msg name received: " << msg->name << ": End=========================\n");
-        ROS_WARN_STREAM("=======================ROS Msg status received: " << msg->status << ": End=========================\n");
+        //ROS_WARN_STREAM("=======================ROS Msg name received: " << msg->name << ": End=========================\n");
+        //ROS_WARN_STREAM("=======================ROS Msg status received: " << msg->status << ": End=========================\n");
         Entry driver_status(msg->status == cav_msgs::DriverStatus::OPERATIONAL || msg->status == cav_msgs::DriverStatus::DEGRADED,true, msg->name, current_time, 0, "");
         em_.update_entry(driver_status);
     }
