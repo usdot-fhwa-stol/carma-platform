@@ -128,11 +128,8 @@
   <group ns="$(env CARMA_GUIDE_NS)">
     <!-- Health Monitor -->
 
-    <include file="$(find health_monitor)/launch/health_monitor.launch">
-      <remap from="system_alert" to="/system_alert"/>
-      <remap from="~required_drivers" to="/required_drivers"/>
-      <remap from="~lidar_gps_drivers" to="/lidar_gps_drivers"/>
-    </include>
+    <include file="$(find health_monitor)/launch/health_monitor.launch" />
+    
     <include file="$(find carma)/launch/guidance.launch">
       <arg name="route_file_folder" value="$(arg route_file_folder)"/>
     </include>
