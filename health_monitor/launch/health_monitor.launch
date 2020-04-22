@@ -21,7 +21,7 @@ Loads parameters and configures logging for the node
  -->
 <launch>
     <!-- Health Monitor Node -->
-    <node pkg="health_monitor" type="health_monitor" name="health_monitor" output="screen">
+    <node pkg="health_monitor" type="health_monitor" name="health_monitor" output="screen" required="true">
         <rosparam command="load" file="$(find health_monitor)/config/params.yaml" />
         <remap from="driver_discovery" to="/hardware_interface/driver_discovery"/>
         <remap from="system_alert" to="/system_alert"/>
