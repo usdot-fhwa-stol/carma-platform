@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<osm version="0.6" generator="lanelet2">
+  <node id="1338" visible="true" version="1" lat="0" lon="0" />
+  <node id="1339" visible="true" version="1" lat="0.00000898315" lon="0" />
+  <node id="1340" visible="true" version="1" lat="0.00001796631" lon="0" />
+  <node id="1341" visible="true" version="1" lat="0" lon="0.00000898315" />
+  <node id="1342" visible="true" version="1" lat="0.00000898315" lon="0.00000898315" />
+  <node id="1343" visible="true" version="1" lat="0.00001796631" lon="0.00000898315" />
+  <way id="1344" visible="true" version="1">
+    <nd ref="1338" />
+    <nd ref="1339" />
+    <tag k="subtype" v="solid_solid" />
+    <tag k="type" v="line_thin" />
+  </way>
+  <way id="1345" visible="true" version="1">
+    <nd ref="1341" />
+    <nd ref="1342" />
+    <tag k="subtype" v="solid" />
+    <tag k="type" v="line_thin" />
+  </way>
+  <way id="1347" visible="true" version="1">
+    <nd ref="1339" />
+    <nd ref="1340" />
+    <tag k="subtype" v="solid_solid" />
+    <tag k="type" v="line_thin" />
+  </way>
+  <way id="1348" visible="true" version="1">
+    <nd ref="1342" />
+    <nd ref="1343" />
+    <tag k="subtype" v="solid" />
+    <tag k="type" v="line_thin" />
+  </way>
+  <relation id="1346" visible="true" version="1">
+    <member type="way" ref="1344" role="left" />
+    <member type="way" ref="1345" role="right" />
+    <tag k="dynamic" v="no" />
+    <tag k="location" v="urban" />
+    <tag k="one_way" v="yes" />
+    <tag k="subtype" v="road" />
+    <tag k="type" v="lanelet" />
+    <!-- Speed Limit -->
+    <member type='relation' ref='45218' role='regulatory_element' />
+  </relation>
+  <relation id="1349" visible="true" version="1">
+    <member type="way" ref="1347" role="left" />
+    <member type="way" ref="1348" role="right" />
+    <tag k="dynamic" v="no" />
+    <tag k="location" v="urban" />
+    <tag k="one_way" v="yes" />
+    <tag k="subtype" v="road" />
+    <tag k="type" v="lanelet" />
+    <!-- Speed Limit -->
+    <member type='relation' ref='45218' role='regulatory_element' />
+  </relation>
+
+  <!-- Regulatory speed limit -->
+  <relation id='45218' visible='true' version='1'>
+    <member type='lanelet' ref='1349' role='refers' />
+    <member type='lanelet' ref='1346' role='refers' />
+    <tag k='limit' v='5 mph' /> <!-- Speed limit value must have units one of the following   m/s, mps, km/h, kmh, m/h, mph -->
+    <tag k='subtype' v='digital_speed_limit' />
+    <tag k='type' v='regulatory_element' />
+    <tag k='participant:vehicle' v='yes' />
+  </relation>
+</osm>
