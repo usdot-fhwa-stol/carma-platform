@@ -36,3 +36,5 @@ strategic_plugin_service_suffix: /plan_maneuvers
 
 # String: Tactical plugin service suffix
 tactical_plugin_service_suffix: /plan_trajectory
+
+car: true # to bypass the fact that health_monitor cannot read parameters from VehicelConfigParam.yaml loaded file through carma_src.launch

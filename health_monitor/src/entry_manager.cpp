@@ -16,6 +16,7 @@
 
 #include "entry_manager.h"
 #include <iostream>
+#include <ros/ros.h>
 
 namespace health_monitor
 {
@@ -30,6 +31,7 @@ namespace health_monitor
     {
         for(auto i = entry_list_.begin(); i < entry_list_.end(); ++i)
         {
+            ROS_WARN_STREAM("Entry name received: " << entry.name_ << ": End\n");
             if(i->name_.compare(entry.name_) == 0)
             {
                 // name and type of the entry wont change
