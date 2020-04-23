@@ -18,7 +18,7 @@
 # Takes in one argument which is the path to the vehicle calibration folder to use
 
 if [ ! -d "$1" ]; then
-    echo "Please specify a path to the location of your vehicle calibration folder. Such as carma-config/example_calibration_folder/vehcle/"
+    echo "Please specify a path to the location of your vehicle calibration folder. Such as carma-config/example_calibration_folder/vehicle/"
     exit -1
 fi
 
