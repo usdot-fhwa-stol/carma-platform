@@ -26,22 +26,21 @@ namespace health_monitor
 
     void DriverManager::update_driver_status(const cav_msgs::DriverStatusConstPtr& msg, long current_time)
     {
+        // Params: bool available, bool active, std::string name, long timestamp, uint8_t type
         Entry driver_status(msg->status == cav_msgs::DriverStatus::OPERATIONAL || msg->status == cav_msgs::DriverStatus::DEGRADED,true, msg->name, current_time, 0, "");
         em_.update_entry(driver_status);
     }
 
     void DriverManager::evaluate_sensor(int &sensor_input,bool available,long current_time,long timestamp,long driver_timeout)
     {
-        
         if((!available) || (current_time-timestamp > driver_timeout))
-        {
+           {
             sensor_input=0;
-
-        }
-        else
-        {
+           }
+           else
+           {
             sensor_input=1;
-        }
+           }
     }
 
     std::string DriverManager::are_critical_drivers_operational_truck(long current_time)
@@ -72,12 +71,12 @@ namespace health_monitor
             }
         }
 
-        //Decision making 
-        if (ssc == 0)
+       //Decision making 
+        if(ssc==0)
         {
             return "s_0";
         }
-        // if ssc= 1
+        // if ssc = 1
         if((lidar1==0) && (lidar2==0) && (gps==0))
         {
             return "s_1_l1_0_l2_0_g_0";
@@ -125,6 +124,7 @@ namespace health_monitor
             {
                 evaluate_sensor(ssc,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
+
             if(em_.is_lidar_gps_entry_required(i->name_)==0) //Lidar
             {
                 evaluate_sensor(lidar,i->available_,current_time,i->timestamp_,driver_timeout_);
@@ -136,6 +136,7 @@ namespace health_monitor
         }
 
         //Decision making 
+
         if(ssc==1)
         {
             if((lidar==0) && (gps==0))
@@ -166,11 +167,11 @@ namespace health_monitor
     {
          cav_msgs::SystemAlert alert;
 
-        if(truck==true)
+         if(truck==true)
         {
             if(are_critical_drivers_operational_truck(time_now)=="s_1_l1_1_l2_1_g_1")
             {
-                alert.description = "All essential drivers are ready";
+                alert.description = "All enssential drivers are ready";
                 alert.type = cav_msgs::SystemAlert::DRIVERS_READY;
                 return alert;
             } 

@@ -42,7 +42,6 @@ namespace health_monitor
         entry_list_.push_back(entry);
     }
 
-
     std::vector<Entry> EntryManager::get_entries() const
     {
         // returns the copy of the original list
