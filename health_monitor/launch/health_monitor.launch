@@ -16,8 +16,12 @@
 -->
 
 <!-- 
-Primary launch file for health monitor node
+Example launch file for health monitor node
 Loads parameters and configures logging for the node
+
+This launch file is not used in CARMA to start health_monitor 
+as it needs to be at the top level in carma_src.launch to be
+able to shut down other nodes.
  -->
 <launch>
 

@@ -32,11 +32,9 @@ namespace health_monitor
 
     void DriverManager::evaluate_sensor(int &sensor_input,bool available,long current_time,long timestamp,long driver_timeout)
     {
-        
         if((!available) || (current_time-timestamp > driver_timeout))
         {
             sensor_input=0;
-
         }
         else
         {
@@ -223,7 +221,7 @@ namespace health_monitor
         {
             if(are_critical_drivers_operational_car(time_now)=="s_1_l_1_g_1")
             {
-                alert.description = "All enssential drivers are ready";
+                alert.description = "All essential drivers are ready";
                 alert.type = cav_msgs::SystemAlert::DRIVERS_READY;
                 return alert; 
             }
