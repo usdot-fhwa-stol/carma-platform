@@ -16,7 +16,6 @@
 
 #include "entry_manager.h"
 #include <iostream>
-#include <ros/ros.h>
 
 namespace health_monitor
 {

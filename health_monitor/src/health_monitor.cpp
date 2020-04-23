@@ -49,8 +49,9 @@ namespace health_monitor
 
         truck_=false;
         car_=false;
+        pnh_.getParam("truck", truck_);
         pnh_.getParam("car", car_);
-        pnh_.getParam("truck", truck_); 
+         
 
         // initialize worker class
         plugin_manager_ = PluginManager(required_plugins_, plugin_service_prefix_, strategic_plugin_service_suffix_, tactical_plugin_service_suffix_);

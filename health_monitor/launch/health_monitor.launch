@@ -32,7 +32,7 @@ Loads parameters and configures logging for the node
     <remap from="~car" to="/car"/> 
     
     <!-- Health Monitor Node -->
-    <node pkg="health_monitor" type="health_monitor" name="health_monitor" output="screen" required="true">
+    <node pkg="health_monitor" type="health_monitor" name="health_monitor" required="true">
         <rosparam command="load" file="$(find health_monitor)/config/params.yaml" />
     </node>
 </launch>

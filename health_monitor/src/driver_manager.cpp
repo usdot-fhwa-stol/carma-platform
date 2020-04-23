@@ -15,7 +15,7 @@
  */
 
 #include "driver_manager.h"
-#include <ros/ros.h>
+
 namespace health_monitor
 {
 
