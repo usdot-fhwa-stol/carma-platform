@@ -67,8 +67,8 @@ install(DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_GLOBAL_MAVEN_DESTINATION}/gov/
 install(DIRECTORY
         launch
         routes
-        map
         scripts
+        rviz
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 install(DIRECTORY
         mock_drivers/build
