@@ -20,9 +20,19 @@ Primary launch file for health monitor node
 Loads parameters and configures logging for the node
  -->
 <launch>
+
+    <!-- Handle global parameters for topics -->
+    <remap from="driver_discovery" to="$(optenv CARMA_INTR_NS)/driver_discovery"/>
+    <remap from="system_alert" to="/system_alert"/>
+
+    <!-- Handle global parameters for variables-->
+    <remap from="~required_drivers" to="/required_drivers"/> 
+    <remap from="~lidar_gps_drivers" to="/lidar_gps_drivers"/>
+    <remap from="~truck" to="/truck"/>
+    <remap from="~car" to="/car"/> 
+    
     <!-- Health Monitor Node -->
-    <node pkg="health_monitor" type="health_monitor" name="health_monitor">
+    <node pkg="health_monitor" type="health_monitor" name="health_monitor" required="true">
         <rosparam command="load" file="$(find health_monitor)/config/params.yaml" />
-        <remap from="driver_discovery" to="/hardware_interface/driver_discovery"/>
     </node>
 </launch>

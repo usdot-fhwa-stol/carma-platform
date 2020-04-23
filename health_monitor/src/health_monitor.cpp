@@ -42,13 +42,16 @@ namespace health_monitor
         plugin_service_prefix_ = pnh_.param<std::string>("plugin_service_prefix", "");
         strategic_plugin_service_suffix_ = pnh_.param<std::string>("strategic_plugin_service_suffix", "");
         tactical_plugin_service_suffix_ = pnh_.param<std::string>("tactical_plugin_service_suffix", "");
+        
         pnh_.getParam("required_plugins", required_plugins_);
         pnh_.getParam("required_drivers", required_drivers_);
         pnh_.getParam("lidar_gps_drivers", lidar_gps_drivers_); 
+
         truck_=false;
         car_=false;
         pnh_.getParam("truck", truck_);
         pnh_.getParam("car", car_);
+         
 
         // initialize worker class
         plugin_manager_ = PluginManager(required_plugins_, plugin_service_prefix_, strategic_plugin_service_suffix_, tactical_plugin_service_suffix_);
@@ -57,6 +60,7 @@ namespace health_monitor
         // record starup time
         start_up_timestamp_ = ros::Time::now().toNSec() / 1e6;
         start_time_flag_=ros::Time::now();
+        
     }
     
     void HealthMonitor::run()
