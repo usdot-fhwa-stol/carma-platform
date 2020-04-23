@@ -31,7 +31,6 @@ namespace health_monitor
     {
         for(auto i = entry_list_.begin(); i < entry_list_.end(); ++i)
         {
-            //ROS_WARN_STREAM("Entry name received: " << entry.name_ << ": End\n");
             if(i->name_.compare(entry.name_) == 0)
             {
                 // name and type of the entry wont change
@@ -43,6 +42,7 @@ namespace health_monitor
         }
         entry_list_.push_back(entry);
     }
+
 
     std::vector<Entry> EntryManager::get_entries() const
     {
@@ -79,8 +79,6 @@ namespace health_monitor
     {
         for(auto i = required_entries_.begin(); i < required_entries_.end(); ++i)
         {
-            ROS_WARN_STREAM("Entry name received: " << name << ": End\n");
-            ROS_WARN_STREAM("Entry name existing: " << *i << ": End\n");
             if(i->compare(name) == 0)
             {
                 return true;

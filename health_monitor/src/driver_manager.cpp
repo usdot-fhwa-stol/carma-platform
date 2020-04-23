@@ -26,23 +26,22 @@ namespace health_monitor
 
     void DriverManager::update_driver_status(const cav_msgs::DriverStatusConstPtr& msg, long current_time)
     {
-        // Params: bool available, bool active, std::string name, long timestamp, uint8_t type
-        //ROS_WARN_STREAM("=======================ROS Msg name received: " << msg->name << ": End=========================\n");
-        //ROS_WARN_STREAM("=======================ROS Msg status received: " << msg->status << ": End=========================\n");
         Entry driver_status(msg->status == cav_msgs::DriverStatus::OPERATIONAL || msg->status == cav_msgs::DriverStatus::DEGRADED,true, msg->name, current_time, 0, "");
         em_.update_entry(driver_status);
     }
 
     void DriverManager::evaluate_sensor(int &sensor_input,bool available,long current_time,long timestamp,long driver_timeout)
     {
+        
         if((!available) || (current_time-timestamp > driver_timeout))
-           {
+        {
             sensor_input=0;
-           }
-           else
-           {
+
+        }
+        else
+        {
             sensor_input=1;
-           }
+        }
     }
 
     std::string DriverManager::are_critical_drivers_operational_truck(long current_time)
@@ -74,46 +73,43 @@ namespace health_monitor
         }
 
         //Decision making 
-        if (ssc == 1)
-        {
-            if((lidar1==0) && (lidar2==0) && (gps==0))
-            {
-                return "s_1_l1_0_l2_0_g_0";
-            }
-            else if((lidar1==0) && (lidar2==0) && (gps==1))
-            {
-                return "s_1_l1_0_l2_0_g_1";
-            }
-            else if((lidar1==0) && (lidar2==1) && (gps==0))
-            {
-                return "s_1_l1_0_l2_1_g_0";
-            }
-            else if((lidar1==0) && (lidar2==1) && (gps==1))
-            {
-                return "s_1_l1_0_l2_1_g_1";
-            }
-            else if((lidar1==1) && (lidar2==0) && (gps==0))
-            {
-                return "s_1_l1_1_l2_0_g_0";
-            }
-            else if((lidar1==1) && (lidar2==0) && (gps==1))
-            {
-                return "s_1_l1_1_l2_0_g_1";
-            }
-            else if((lidar1==1) && (lidar2==1) && (gps==0))
-            {
-                return "s_1_l1_1_l2_1_g_0";
-            }
-            else if((lidar1==1) && (lidar2==1) && (gps==1))
-            {
-                return "s_1_l1_1_l2_1_g_1";
-            }
-        }
-        else 
+        if (ssc == 0)
         {
             return "s_0";
         }
-       
+        // if ssc= 1
+        if((lidar1==0) && (lidar2==0) && (gps==0))
+        {
+            return "s_1_l1_0_l2_0_g_0";
+        }
+        else if((lidar1==0) && (lidar2==0) && (gps==1))
+        {
+            return "s_1_l1_0_l2_0_g_1";
+        }
+        else if((lidar1==0) && (lidar2==1) && (gps==0))
+        {
+            return "s_1_l1_0_l2_1_g_0";
+        }
+        else if((lidar1==0) && (lidar2==1) && (gps==1))
+        {
+            return "s_1_l1_0_l2_1_g_1";
+        }
+        else if((lidar1==1) && (lidar2==0) && (gps==0))
+        {
+            return "s_1_l1_1_l2_0_g_0";
+        }
+        else if((lidar1==1) && (lidar2==0) && (gps==1))
+        {
+            return "s_1_l1_1_l2_0_g_1";
+        }
+        else if((lidar1==1) && (lidar2==1) && (gps==0))
+        {
+            return "s_1_l1_1_l2_1_g_0";
+        }
+        else if((lidar1==1) && (lidar2==1) && (gps==1))
+        {
+            return "s_1_l1_1_l2_1_g_1";
+        }
     }
 
 
@@ -140,7 +136,6 @@ namespace health_monitor
         }
 
         //Decision making 
-
         if(ssc==1)
         {
             if((lidar==0) && (gps==0))
@@ -171,7 +166,7 @@ namespace health_monitor
     {
          cav_msgs::SystemAlert alert;
 
-         if(truck==true)
+        if(truck==true)
         {
             if(are_critical_drivers_operational_truck(time_now)=="s_1_l1_1_l2_1_g_1")
             {

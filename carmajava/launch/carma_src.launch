@@ -127,8 +127,8 @@
   <!-- Guidance Stack -->
   <group ns="$(env CARMA_GUIDE_NS)">
     <!-- Health Monitor -->
-
-    <include file="$(find health_monitor)/launch/health_monitor.launch" />
+    
+    <include file="$(find health_monitor)/launch/health_monitor.launch"/>
     
     <include file="$(find carma)/launch/guidance.launch">
       <arg name="route_file_folder" value="$(arg route_file_folder)"/>
