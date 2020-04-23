@@ -170,7 +170,7 @@ namespace health_monitor
         {
             if(are_critical_drivers_operational_truck(time_now)=="s_1_l1_1_l2_1_g_1")
             {
-                alert.description = "All enssential drivers are ready";
+                alert.description = "All essential drivers are ready";
                 alert.type = cav_msgs::SystemAlert::DRIVERS_READY;
                 return alert;
             } 
