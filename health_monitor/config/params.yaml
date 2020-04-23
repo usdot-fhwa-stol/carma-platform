@@ -18,7 +18,7 @@ spin_rate_hz: 10.0
 
 # Double: The timeout threshold for essential drivers
 # Units: ms
-required_driver_timeout: 1500.0
+required_driver_timeout: 50000.0
 
 # Double: The time allocated for system startup
 # Units: s
