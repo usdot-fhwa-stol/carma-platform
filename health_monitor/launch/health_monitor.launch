@@ -18,8 +18,6 @@
 <!-- 
 Primary launch file for health monitor node
 Loads parameters and configures logging for the node
-EYYYYYYYY
-    My name is Misheel
  -->
 <launch>
 
