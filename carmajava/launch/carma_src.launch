@@ -126,9 +126,18 @@
 
   <!-- Guidance Stack -->
   <group ns="$(env CARMA_GUIDE_NS)">
-    <!-- Health Monitor -->
-    
-    <include file="$(find health_monitor)/launch/health_monitor.launch"/>
+    <!-- Health Monitor.
+    Health monitor is required to launch with node tag here to correctly shut down
+    other nodes through its required=true attribute-->
+    <node pkg="health_monitor" type="health_monitor" name="health_monitor" required="true">
+      <remap from="driver_discovery" to="$(optenv CARMA_INTR_NS)/driver_discovery"/>
+      <remap from="system_alert" to="/system_alert"/>
+      <remap from="~required_drivers" to="/required_drivers"/> 
+      <remap from="~lidar_gps_drivers" to="/lidar_gps_drivers"/>
+      <remap from="~truck" to="/truck"/>
+      <remap from="~car" to="/car"/> 
+      <rosparam command="load" file="$(find health_monitor)/config/params.yaml"/>
+    </node>
     
     <include file="$(find carma)/launch/guidance.launch">
       <arg name="route_file_folder" value="$(arg route_file_folder)"/>
