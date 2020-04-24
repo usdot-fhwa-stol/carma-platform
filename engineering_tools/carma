@@ -321,6 +321,12 @@ carma__exec() {
             --group-add video \
             --volume=$XSOCK:$XSOCK:rw \
             --volume=$XAUTH:$XAUTH:rw \
+            --volume=/opt/carma/logs:/opt/carma/logs \
+            --volume=/opt/carma/.ros:/opt/carma/.ros \
+            --volume=/opt/carma/vehicle/calibration:/opt/carma/vehicle/calibration \
+            --volume=/opt/carma/yolo:/opt/carma/yolo \
+            --volume=/opt/carma/maps:/opt/carma/maps \
+            --volume=/opt/carma/routes:/opt/carma/routes \
             --env="XAUTHORITY=${XAUTH}" \
             --device=/dev/dri:/dev/dri \
             --network=host \
@@ -332,6 +338,12 @@ carma__exec() {
             --group-add video \
             --volume=$XSOCK:$XSOCK:rw \
             --volume=$XAUTH:$XAUTH:rw \
+            --volume=/opt/carma/logs:/opt/carma/logs \
+            --volume=/opt/carma/.ros:/opt/carma/.ros \
+            --volume=/opt/carma/vehicle/calibration:/opt/carma/vehicle/calibration \
+            --volume=/opt/carma/yolo:/opt/carma/yolo \
+            --volume=/opt/carma/maps:/opt/carma/maps \
+            --volume=/opt/carma/routes:/opt/carma/routes \
             --env="XAUTHORITY=${XAUTH}" \
             --device=/dev/dri:/dev/dri \
             --network=host \
