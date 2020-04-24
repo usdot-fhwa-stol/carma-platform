@@ -254,7 +254,6 @@ carma-config__status() {
 
 carma__exec() {
     local TARGET_IMAGE="usdotfhwastol/carma-platform:latest"
-    local COMMAND="bash"
 
     # Check if the -i argument was provided
     # If the image was specified then use that
@@ -297,11 +296,6 @@ carma__exec() {
         exit -1
     fi
 
-    # If a command was specified then assign it
-    if [ -n "$1" ]; then
-        local COMMAND="$@"
-    fi
-
     # Docker setup here is based on Pierre Killy's docker-ros-box https://github.com/pierrekilly/docker-ros-box located here.
     # Docker ROS Box is licensed under the MIT licesne a copy of which can be found in the carma-platform repository here https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/docs/License.md
 
@@ -312,15 +306,36 @@ carma__exec() {
 
     echo "Trying to open shell inside image: $TARGET_IMAGE"
 
-    docker run \
-        -e DISPLAY=$DISPLAY \
-        --group-add video \
-        --volume=$XSOCK:$XSOCK:rw \
-        --volume=$XAUTH:$XAUTH:rw \
-        --env="XAUTHORITY=${XAUTH}" \
-        --device=/dev/dri:/dev/dri \
-        --network=host \
-        -it $TARGET_IMAGE "$COMMAND"
+    # If a command was specified then assign it otherwise use bash
+    local entrypoint="/bin/bash"
+    local INIT_FILE="/home/carma/.base-image/init-env.sh"
+
+    if [ -n "$1" ]; then
+
+        local COMMAND="source $INIT_FILE && ${@}"
+
+        docker run \
+            -e DISPLAY=$DISPLAY \
+            --group-add video \
+            --volume=$XSOCK:$XSOCK:rw \
+            --volume=$XAUTH:$XAUTH:rw \
+            --env="XAUTHORITY=${XAUTH}" \
+            --device=/dev/dri:/dev/dri \
+            --network=host \
+            --entrypoint="$entrypoint" \
+            -it $TARGET_IMAGE -c "$COMMAND"
+    else
+        docker run \
+            -e DISPLAY=$DISPLAY \
+            --group-add video \
+            --volume=$XSOCK:$XSOCK:rw \
+            --volume=$XAUTH:$XAUTH:rw \
+            --env="XAUTHORITY=${XAUTH}" \
+            --device=/dev/dri:/dev/dri \
+            --network=host \
+            --entrypoint="$entrypoint" \
+            -it $TARGET_IMAGE --init-file "$INIT_FILE"
+    fi
 }
 
 carma__help() {
