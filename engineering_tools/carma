@@ -270,7 +270,7 @@ carma__exec() {
         shift
 
     # If the image was not specified use what was in the carma config
-    elif [ docker container inspect carma-config > /dev/null 2>&1 ]; then
+    elif docker container inspect carma-config > /dev/null 2>&1; then
 
         local IMAGE_BACKUP=$TARGET_IMAGE
         local SUPPORTED_ORANIZATIONS="usdotfhwastol\|usdotfhwastoldev"
@@ -279,13 +279,15 @@ carma__exec() {
         # sed command finds the first instance of an image which is part of the set defined in SUPPORTED_ORGANIZATIONS and SUPPORTED_IMAGES.
         # then returns the name of the image.  
         local TARGET_IMAGE=$(docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
-            "sed -n -e '/image:\s*\($SUPPORTED_ORANIZATIONS\)\/\($SUPPORTED_IMAGES\)/ s/.*\image: *//p' docker-compose.yml | grep -m 1 '.*'")
+            "sed -n -e '/image:\s*\($SUPPORTED_ORANIZATIONS\)\/\($SUPPORTED_IMAGES\)/ s/.*\image: *//p' /opt/carma/vehicle/config/docker-compose.yml | grep -m 1 '.*'")
             
 
         # If the sed resulted in an empty string then reset the tag
         if [ -z "$TARGET_IMAGE" ]; then
             local TARGET_IMAGE=$IMAGE_BACKUP
         fi
+    else
+        echo "No config detected or target image specified so using default: $TARGET_IMAGE"
     
     fi
 
