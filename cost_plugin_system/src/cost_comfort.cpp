@@ -32,8 +32,8 @@ double CostofComfort::compute_cost(cav_msgs::ManeuverPlan plan) const
     int maneuver_size = plan.maneuvers.size();
     for (auto it = plan.maneuvers.begin(); it != plan.maneuvers.end(); it++)
     {
-        double average_acceleration = abs((cost_utils::get_maneuver_start_speed(*it) - cost_utils::get_maneuver_end_speed(*it)) /
-                                          (cost_utils::get_maneuver_end_time(*it).toSec() - cost_utils::get_maneuver_start_time(*it).toSec()));
+        double average_acceleration = fabs((cost_utils::get_maneuver_start_speed(*it) - cost_utils::get_maneuver_end_speed(*it)) /
+                                           (cost_utils::get_maneuver_end_time(*it).toSec() - cost_utils::get_maneuver_start_time(*it).toSec()));
         cost += average_acceleration;
 
         // If there is a lane change, add 1.0 as the cost

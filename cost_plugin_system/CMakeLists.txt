@@ -65,7 +65,7 @@ add_library(cost_plugin_system_library
   src/cost_feasibility.cpp
   src/cost_fuel.cpp
   src/cost_safety.cpp
-  src/cost_plugin_system_worker.cpp
+  src/cost_plugin_worker.cpp
   src/cost_utils.cpp)
 
 
