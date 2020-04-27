@@ -22,6 +22,12 @@ CARMA provides the navigation and guidance functions for its host vehicle, as we
 
 ![CARMA Demo](docs/image/CARMA2_Platooning_from_Office.jpg)
 
+Documentation of the setup and operation of the CARMA Platform can be found on the project [Confluence](https://usdot-carma.atlassian.net/wiki/spaces/CAR/overview?homepageId=1212636) pages. Some key pages are:
+
+* [CARMA Development Resources](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/64946377/CARMA+Development+Resources)
+* [CARMA Platform Roadmap](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/240844801/CARMA+Platform+Roadmap)
+* [Development Environment Setup](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/486178827/Development+Environment+Setup)
+
 <!-- We would like to publish this section, but are not ready to at this time:
 ## System Specifications
 The current CARMA requirements specification: [CARMA Platform Requirements](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/56786945/Platform+Requirements+Document?preview=/56786945/56852481/CAV%20Platform%20Requirements.docx)
