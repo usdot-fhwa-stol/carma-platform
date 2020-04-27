@@ -4,6 +4,9 @@ vin_number: 1FUJGHDV0CLBP8896
 # License plate number - 9 alphanumeric char
 license_plate: DOT-10003
 
+# State short name - 2 alphabet char
+state_short_name: VA
+
 # Carrier Name - 25 alphanumeric char
 carrier_name: FMCSA Tech Division
 
