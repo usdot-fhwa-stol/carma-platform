@@ -120,7 +120,7 @@ install(DIRECTORY
 #############
 
 catkin_add_gmock(${PROJECT_NAME}-test
-  test/cost_plugin_node_test.cpp
+  test/cost_plugin_system_launch.cpp
 )
 
 if(TARGET ${PROJECT_NAME}-test)
