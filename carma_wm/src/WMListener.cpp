@@ -20,9 +20,8 @@
 
 namespace carma_wm
 {
-WMListener::WMListener(bool multi_thread) : multi_threaded_(multi_thread)
+WMListener::WMListener(bool multi_thread) : worker_(std::unique_ptr<WMListenerWorker>(new WMListenerWorker)), multi_threaded_(multi_thread)
 {
-  worker_ = std::unique_ptr<WMListenerWorker>(new WMListenerWorker);
 
   ROS_DEBUG_STREAM("WMListener: Creating world model listener");
 
@@ -35,7 +34,7 @@ WMListener::WMListener(bool multi_thread) : multi_threaded_(multi_thread)
   map_sub_ = nh_.subscribe("semantic_map", 1, &WMListenerWorker::mapCallback, worker_.get());
   // route_sub_ = nh_.subscribe("route", 1, &WMListenerWorker::routeCallback, worker_.get()); // TODO uncomment when
   // route message is defined
-
+  roadway_objects_sub_ = nh_.subscribe("roadway_objects", 1, &WMListenerWorker::roadwayObjectListCallback, worker_.get());
   // Set up AsyncSpinner for multi-threaded use case
   if (multi_threaded_)
   {

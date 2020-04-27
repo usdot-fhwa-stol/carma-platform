@@ -14,12 +14,16 @@
 #  License for the specific language governing permissions and limitations under
 #  the License.
 
-cd "$(dirname "$0")"
-REPO_NAME="$(./get-repo-name.sh)"
+# Script generates an SSH Key using the provided email.
 
-# This sed command based on Stack Overflow answer: https://stackoverflow.com/questions/28795479/awk-sed-script-to-convert-a-file-from-camelcase-to-underscores
-# Asked by Corentin Peuvrel: https://stackoverflow.com/users/4608146/corentin-peuvrel
-# Answered by pachopepe: https://stackoverflow.com/users/641896/pachopepe
-# Credited in accordance with Stack Overflow's CC-BY license
-echo $REPO_NAME | sed -r 's/CARMA/carma/' | sed -r 's/([A-Z])/-\L\1/g' | sed 's/^_//'
+if [ -z "$1" ]; then
+    echo "An email address must be provided."
+    exit -1
+fi
 
+ssh-keygen -t rsa -b 4096 -C "$1"
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_rsa
+sudo apt-get install xclip
+xclip -sel clip < ~/.ssh/id_rsa.pub
+gnome-terminal & firefox https://help.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-to-your-github-account

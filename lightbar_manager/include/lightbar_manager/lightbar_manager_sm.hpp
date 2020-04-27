@@ -88,7 +88,7 @@ class LightBarManagerStateMachine
     ros::ServiceClient set_indicator_client_;
     
     // a local variable keeps the current state machine state
-    LightBarState current_state_;
+    LightBarState current_state_ = DISENGAGED;
     
 };
 

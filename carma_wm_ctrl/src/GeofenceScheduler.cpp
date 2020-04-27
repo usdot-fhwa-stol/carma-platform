@@ -56,7 +56,7 @@ void GeofenceScheduler::clearTimers()
   }
 }
 
-void GeofenceScheduler::addGeofence(Geofence geofence)
+void GeofenceScheduler::addGeofence(const Geofence& geofence)
 {
   std::lock_guard<std::mutex> guard(mutex_);
 

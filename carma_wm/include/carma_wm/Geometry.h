@@ -106,7 +106,7 @@ getLocalCurvatures(const std::vector<lanelet::ConstLanelet>& lanelets);
 /*! \brief Function for computing curvature from 3 points.
  *
  * This function is a direct copy of the function by the same name found in the lanelet2_validation package which was
- * not exposed for use The origianal function can be found here
+ * not exposed for use The original function can be found here
  * https://github.com/fzi-forschungszentrum-informatik/Lanelet2/blob/master/lanelet2_validation/src/validators/CurvatureTooBig.cpp
  * The source function is copyrighted under BSD 3-Clause "New" or "Revised" License a copy of that notice has been
  * included with this package
@@ -138,10 +138,12 @@ double getAngleBetweenVectors(const Eigen::Vector2d& vec1, const Eigen::Vector2d
  * \param size The size vector of an external object
  *
  * \return A polygon of 4 points describing the object aligned bounds starting with the upper left point in the object
- * frame and moving clockwise
+ * frame and moving clockwise.
  */
 lanelet::BasicPolygon2d objectToMapPolygon(const geometry_msgs::Pose& pose, const geometry_msgs::Vector3& size);
-  
+
+
+
 }  // namespace geometry
 
 }  // namespace carma_wm

@@ -93,27 +93,28 @@ TrackPos trackPos(const lanelet::ConstLanelet& lanelet, const lanelet::BasicPoin
 }
 
 /*! \brief Helper function to identify whether to select the preceeding or succeeding segment of a linstring point
- * that is nearest an external point when trying to find the TrackPos of the external point. Of the 3 points
- * comprising the 2 segment linestirng the external point must be closest to the midpoint for this function to be
- * valid
- *
- * ASSUMPTION: Of the 3 points comprising the 2 segment linestirng the external point is closest to the midpoint
- *
- * Meant to be called in the matchSegment method. Logic is as follows
- * If the external point is within the downtrack bounds of one segment but not the other then use the one it is within
- * If the external point is within the downtrack bounds of both segments then use the one with the smallest crosstrack
- * distance If the external point is within the downtrack bounds of both segments and has exactly equal crosstrack
- * bounds with each segment then use the preceeding segment If the external point is outside the downtrack bounds of
- * both segments then assign to the first segment as it will always have positive downtrack in this case while the
- * second segment will always have negative downtrack
- *
- * \param first_seg_trackPos The TrackPos of the external point relative to the preceeding segment
- * \param second_seg_trackPos The TrackPos of the succeeding segment
- * \param first_seg_length The length of the preceeding segment
- * \param second_seg_length The length of the succeeding segment
- *
- * \return True if the preceeding segment is the better choice. False if the succeeding segment is the better choice.
- */
+   * that is nearest an external point when trying to find the TrackPos of the external point. Of the 3 points
+   * comprising the 2 segment linestirng the external point must be closest to the midpoint for this function to be
+   * valid
+   *
+   * ASSUMPTION: Of the 3 points comprising the 2 segment linestirng the external point is closest to the midpoint
+   *
+   * Meant to be called in the matchSegment method. Logic is as follows
+   * If the external point is within the downtrack bounds of one segment but not the other then use the one it is within
+   * If the external point is within the downtrack bounds of both segments then use the one with the smallest crosstrack
+   * distance If the external point is within the downtrack bounds of both segments and has exactly equal crosstrack
+   * bounds with each segment then use the preceeding segment If the external point is outside the downtrack bounds of
+   * both segments then assign to the first segment as it will always have positive downtrack in this case while the
+   * second segment will always have negative downtrack
+   *
+   * \param first_seg_trackPos The TrackPos of the external point relative to the preceeding segment
+   * \param second_seg_trackPos The TrackPos of the succeeding segment
+   * \param first_seg_length The length of the preceeding segment
+   * \param second_seg_length The length of the succeeding segment
+   *
+   * \return True if the preceeding segment is the better choice. False if the succeeding segment is the better choice.
+   */
+  
 bool selectFirstSegment(const TrackPos& first_seg_trackPos, const TrackPos& second_seg_trackPos,
                         double first_seg_length, double second_seg_length)
 {
@@ -267,45 +268,30 @@ getLocalCurvatures(const std::vector<lanelet::ConstLanelet>& lanelets)
 
     for (size_t i = 0; i < mutableCenterLine.size() - 1; i++)
     {
+      bool new_segment_needed = false;
       // If the first lanelet initialize the 3 points needed for computing curvature
       if (n == 0 && i <= 1)
       {
-        if (i == 0)
-        {
-          std::vector<double> curvatures;
-          vec.push_back(std::make_tuple(n, curvatures));
-          continue;
-        }
-        else
-        {  // i == 1
-          first_2d = mutableCenterLine[i - 1];
-          second_2d = mutableCenterLine[i];
-          third_2d = mutableCenterLine[i + 1];
-          std::get<1>(vec.back()).push_back(computeCurvature(first_2d, second_2d, third_2d));
-          continue;
-        }
+        new_segment_needed = true;
       }
       else if (n != 0 && i <= 1)
       {
-        bool new_segment_needed = lanelet::geometry::distance2d(prevEndPoint, mutableCenterLine[i]) > 0.1;
-        if (new_segment_needed)
-        {
-          if (i == 0)
-          {
-            // Consider as disjoint lanelet
-            std::vector<double> curvatures;
-            vec.push_back(std::make_tuple(n, curvatures));
-            continue;
-          }
-          else
-          {  // i == 1
-            first_2d = mutableCenterLine[i - 1];
-            second_2d = mutableCenterLine[i];
-            third_2d = mutableCenterLine[i + 1];
-            std::get<1>(vec.back()).push_back(computeCurvature(first_2d, second_2d, third_2d));
-            continue;
-          }
-        }
+        new_segment_needed = lanelet::geometry::distance2d(prevEndPoint, mutableCenterLine[i]) > 0.1;
+      }
+
+      if (new_segment_needed && i == 0)
+      {
+        std::vector<double> curvatures;
+        vec.push_back(std::make_tuple(n, curvatures));
+        continue;
+      }
+      else if (new_segment_needed && i == 1)
+      {
+        first_2d = mutableCenterLine[i - 1];
+        second_2d = mutableCenterLine[i];
+        third_2d = mutableCenterLine[i + 1];
+        std::get<1>(vec.back()).push_back(computeCurvature(first_2d, second_2d, third_2d));
+        continue;
       }
 
       first_2d = second_2d;
@@ -313,7 +299,7 @@ getLocalCurvatures(const std::vector<lanelet::ConstLanelet>& lanelets)
       third_2d = mutableCenterLine[i + 1];
       std::get<1>(vec.back()).push_back(computeCurvature(first_2d, second_2d, third_2d));
     }
-
+    
     prevEndPoint = mutableCenterLine.back();
   }
 

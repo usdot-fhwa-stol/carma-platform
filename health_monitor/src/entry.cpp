@@ -18,7 +18,7 @@
 
 namespace health_monitor
 {
-    Entry::Entry(bool available, bool active, std::string name, long timestamp, uint8_t type, std::string capability) :
+    Entry::Entry(bool available, bool active, const std::string& name, long timestamp, uint8_t type, const std::string& capability) :
         available_(available), active_(active), name_(name), timestamp_(timestamp), type_(type), capability_(capability) {}
 
 }

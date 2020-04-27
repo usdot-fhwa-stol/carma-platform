@@ -50,7 +50,8 @@ include_directories(
 )
 
 ## Declare C++ library
-add_library(${PROJECT_NAME}
+add_library(
+  ${PROJECT_NAME}
   src/CARMAWorldModel.cpp
   src/WMListener.cpp
   src/WMListenerWorker.cpp
@@ -59,10 +60,15 @@ add_library(${PROJECT_NAME}
 )
 
 ## Add cmake target dependencies of the library
-add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(
+  ${PROJECT_NAME} 
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 
@@ -81,8 +87,6 @@ install(TARGETS ${PROJECT_NAME}
 # Mark cpp header files for installation
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
 )
 
 #############
@@ -91,7 +95,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 catkin_add_gmock(${PROJECT_NAME}-test
   test/TestMain.cpp
-  test/CARMAWorldModleTest.cpp  
+  test/CARMAWorldModelTest.cpp  
   test/IndexedDistanceMapTest.cpp
   test/WMListenerWorkerTest.cpp
   test/GeometryTest.cpp

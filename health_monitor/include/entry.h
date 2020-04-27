@@ -30,6 +30,6 @@ namespace health_monitor
         uint8_t type_;
         std::string capability_;
 
-        Entry(bool available, bool active, std::string name, long timestamp, uint8_t type, std::string capability);
+        Entry(bool available, bool active, const std::string& name, long timestamp, uint8_t type, const std::string& capability);
     };
 }

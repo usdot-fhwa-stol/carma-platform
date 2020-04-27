@@ -26,7 +26,7 @@ namespace health_monitor
     
     EntryManager::EntryManager(std::vector<std::string> required_entries,std::vector<std::string> lidar_gps_entries) :required_entries_(required_entries),lidar_gps_entries_(lidar_gps_entries){}
 
-    void EntryManager::update_entry(Entry entry)
+    void EntryManager::update_entry(const Entry& entry)
     {
         for(auto i = entry_list_.begin(); i < entry_list_.end(); ++i)
         {
@@ -42,13 +42,14 @@ namespace health_monitor
         entry_list_.push_back(entry);
     }
 
+
     std::vector<Entry> EntryManager::get_entries() const
     {
         // returns the copy of the original list
         return std::vector<Entry>(entry_list_);
     }
 
-    void EntryManager::delete_entry(std::string name)
+    void EntryManager::delete_entry(const std::string& name)
     {
         for(auto i = entry_list_.begin(); i < entry_list_.end(); ++i)
         {
@@ -60,7 +61,7 @@ namespace health_monitor
         }
     }
 
-    boost::optional<Entry> EntryManager::get_entry_by_name(std::string name) const
+    boost::optional<Entry> EntryManager::get_entry_by_name(const std::string&  name) const
     {
         for(auto i = entry_list_.begin(); i < entry_list_.end(); ++i)
         {
@@ -73,7 +74,7 @@ namespace health_monitor
         return boost::none;
     }
 
-    bool EntryManager::is_entry_required(const std::string name) const
+    bool EntryManager::is_entry_required(const std::string&  name) const
     {
         for(auto i = required_entries_.begin(); i < required_entries_.end(); ++i)
         {
@@ -85,7 +86,7 @@ namespace health_monitor
         return false;
     }
 
-    int EntryManager::is_lidar_gps_entry_required(const std::string &name) const
+    int EntryManager::is_lidar_gps_entry_required(const std::string& name) const
     {
         
         for(int i=0;i<lidar_gps_entries_.size();i++)

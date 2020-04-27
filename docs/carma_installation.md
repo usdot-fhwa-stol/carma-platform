@@ -45,9 +45,9 @@ containing a base-line configuration of this system are available upon request.
 `mkdir src`
 `cd src` 
 
-`git clone https://github.com/usdot-fhwa-stol/CARMAPlatform.git`
-`git clone https://github.com/usdot-fhwa-stol/CARMAMsgs.git`
-`git clone https://github.com/usdot-fhwa-stol/CARMAUtils.git`
+`git clone https://github.com/usdot-fhwa-stol/carma-platform.git`
+`git clone https://github.com/usdot-fhwa-stol/carma-msgs.git`
+`git clone https://github.com/usdot-fhwa-stol/carma-utils.git`
 
 6-2-1- Install dependencies
 `rosdep install -y --from-paths src --ignore-src  --rosdistro $ROS_DISTRO`

@@ -38,16 +38,9 @@ namespace trajectory_executor
     }
 
     TrajectoryExecutor::TrajectoryExecutor(int traj_frequency) :
-        _min_traj_publish_tickrate_hz(traj_frequency),
-        _timesteps_since_last_traj(0)
-    {
-    }
+        _min_traj_publish_tickrate_hz(traj_frequency) {}
 
-    TrajectoryExecutor::TrajectoryExecutor() :
-        _min_traj_publish_tickrate_hz(10),
-        _timesteps_since_last_traj(0)
-    {
-    }
+    TrajectoryExecutor::TrajectoryExecutor() {}
 
     std::map<std::string, std::string> TrajectoryExecutor::queryControlPlugins()
     {
@@ -66,7 +59,7 @@ namespace trajectory_executor
         return out;
     }
     
-    void TrajectoryExecutor::onNewTrajectoryPlan(cav_msgs::TrajectoryPlan msg)
+    void TrajectoryExecutor::onNewTrajectoryPlan(const cav_msgs::TrajectoryPlan& msg)
     {
         std::unique_lock<std::mutex> lock(_cur_traj_mutex); // Acquire lock until end of this function scope
         ROS_DEBUG("Received new trajectory plan!");
@@ -154,7 +147,7 @@ namespace trajectory_executor
         ROS_DEBUG_STREAM("Initalized params with default_spin_rate " << _default_spin_rate 
             << " and trajectory_publish_rate " << _min_traj_publish_tickrate_hz);
 
-        this->_plan_sub = this->_public_nh->subscribe<cav_msgs::TrajectoryPlan>("trajectory", 5, &TrajectoryExecutor::onNewTrajectoryPlan, this);
+        this->_plan_sub = this->_public_nh->subscribe<const cav_msgs::TrajectoryPlan&>("trajectory", 5, &TrajectoryExecutor::onNewTrajectoryPlan, this);
         this->_state_sub = this->_public_nh->subscribe<cav_msgs::GuidanceState>("state", 5, &TrajectoryExecutor::guidanceStateMonitor, this);
         this->_cur_traj = std::unique_ptr<cav_msgs::TrajectoryPlan>();
         ROS_DEBUG("Subscribed to inbound trajectory plans.");

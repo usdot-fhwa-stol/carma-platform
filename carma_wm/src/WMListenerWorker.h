@@ -51,6 +51,11 @@ public:
   void routeCallback();
 
   /*!
+   * \brief Callback for roadway objects msg
+   */
+  void roadwayObjectListCallback(const cav_msgs::RoadwayObstacleList& msg);
+
+  /*!
    * \brief Allows user to set a callback to be triggered when a map update is received
    *
    * \param callback A callback function that will be triggered after the world model receives a new map update

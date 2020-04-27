@@ -19,7 +19,7 @@
 namespace lightbar_manager
 {
 // Default constructor
-LightBarManagerStateMachine::LightBarManagerStateMachine(): current_state_(DISENGAGED) {}
+LightBarManagerStateMachine::LightBarManagerStateMachine() {}
 
 
 void LightBarManagerStateMachine::next(const LightBarEvent& event)
