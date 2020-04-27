@@ -49,6 +49,7 @@ namespace truck_inspection_client
         // subscriber for Mobility Request messages
         ros::Subscriber request_sub_;
         ros::Subscriber ads_state_sub_;
+        ros::Subscriber ads_system_alert_sub_;
         ros::Subscriber version_sub_;
         ros::Subscriber bsm_sub_;
 
@@ -58,12 +59,14 @@ namespace truck_inspection_client
         // callbacks for the subscriber
         void requestCallback(const cav_msgs::MobilityRequestConstPtr& msg);
         void guidanceStatesCallback(const cav_msgs::GuidanceStateConstPtr& msg);
+        void systemAlertsCallback(const cav_msgs::SystemAlertConstPtr& msg);
         void versionCallback(const std_msgs::StringConstPtr& msg);
         void bsmCallback(const cav_msgs::BSMConstPtr& msg);
 
         // truck info
         std::string vin_number_;
         std::string license_plate_;
+        std::string state_short_name_;
         std::string carrier_name_;
         std::string carrier_id_;
         std::string ads_software_version_;
@@ -74,7 +77,8 @@ namespace truck_inspection_client
         int weight_;
         int iss_score_;
         bool permit_required_;
-        bool ads_engaged_;        
+        bool ads_engaged_;  
+        std::string ads_system_alert_type_;  
     };
 
 }
