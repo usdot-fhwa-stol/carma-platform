@@ -25,6 +25,7 @@
 #include <lanelet2_core/Attribute.h>
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_core/primitives/Traits.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 
@@ -32,20 +33,20 @@ TEST(RouteGeneratorTest, testLaneletRouting)
 {
     tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
-    route::RouteGeneratorWorker worker(tf_buffer, wm);
-    // lanelet::LaneletMapPtr map = lanelet::load("/home/qswawrq/Desktop/TFHRC.osm",
-    //     lanelet::projection::LocalFrameProjector("EPSG:4326", "+proj=tmerc +lat_0=38.95197911150576 +lon_0=-77.14835128349988 +k=1 +x_0=0 +y_0=0 +units=m +vunits=m"));
-    lanelet::LaneletMapPtr map = lanelet::load("../../src/route/resource/map/test_vector_map.osm", lanelet::Origin({0, 0}));
+    route::RouteGeneratorWorker worker(tf_buffer);
+    //lanelet::LaneletMapPtr map = lanelet::load("/home/qswawrq/Desktop/ATEF_pretty.osm",
+    //    lanelet::projection::LocalFrameProjector("+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +units=m +vunits=m"));
+    lanelet::LaneletMapPtr map = lanelet::load("/home/qswawrq/Desktop/ATEF_pretty.osm", lanelet::Origin({0, 0}));
     lanelet::LaneletMapConstPtr const_map(map);
-    lanelet::BasicPoint2d start(0.5, 0.5);
+    lanelet::BasicPoint2d start(-1056.75, -70.6);
     std::vector<lanelet::BasicPoint2d> via;
     // via.emplace_back(lanelet::BasicPoint2d(-158.0, 533.5));
     //via.emplace_back(lanelet::BasicPoint2d(-17.5, 322.0));
-    lanelet::BasicPoint2d end(0.5, 1.5);
+    lanelet::BasicPoint2d end(1052.35, 771.24);
     lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
     lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
     // Output graph for debugging
-    // map_graph->exportGraphViz("/home/qswawrq/Desktop/routing.txt");
+    map_graph->exportGraphViz("/home/qswawrq/Desktop/routing.txt");
     auto route = worker.routing(start, via, end, const_map, std::move(map_graph));
     if(!route) {
         ASSERT_FALSE(true);
@@ -61,7 +62,7 @@ TEST(RouteGeneratorTest, testReadRouteFile)
 {
     tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
-    route::RouteGeneratorWorker worker(tf_buffer, wm);
+    route::RouteGeneratorWorker worker(tf_buffer);
     worker.set_route_file_path("../../src/route/resource/route/");
     cav_srvs::GetAvailableRoutesRequest req;
     cav_srvs::GetAvailableRoutesResponse resp;
