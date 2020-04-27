@@ -190,6 +190,12 @@ namespace health_monitor
                 alert.description = "One Lidar and GPS Failed";
                 alert.type = cav_msgs::SystemAlert::CAUTION;
                 return alert;
+            } 
+            else if(are_critical_drivers_operational_truck(time_now)=="s_1_l1_1_l2_1_g_0")
+            {
+                alert.description = "GPS Failed";
+                alert.type = cav_msgs::SystemAlert::CAUTION;
+                return alert;
             }
             else if(are_critical_drivers_operational_truck(time_now)=="s_1_l1_0_l2_0_g_1")
             {
