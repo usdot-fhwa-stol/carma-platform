@@ -3,8 +3,6 @@
 #include <thread>
 #include <chrono>
 
-#include <cav_msgs/MobilityOperation.h>
-#include <cav_msgs/MobilityHeader.h>
 #include "truck_inspection_client.h"
 
 class TestInOutBoundSubscriber
@@ -44,7 +42,7 @@ TEST(TruckInspectionClientTest,TestMobilityOperationOutbound){
     //ASSERTION
     EXPECT_EQ(1, mobility_operation_outbound_sub.getNumPublishers()); 
     EXPECT_TRUE(subscriber_OutBound.receivedMessage);
-    
+
     //mobility_request_inbound publish data 
     if(mobility_request_inbound_sub.getNumPublishers() > 0 && subscriber_InBound.receivedMessage){
         EXPECT_EQ("vin_number:1FUJGHDV0CLBP8896,license_plate:DOT-10003,carrier_name:FMCSA Tech Division,carrier_id:DOT 12,weight:16639,ads_software_version:System Version Unknown,date_of_last_state_inspection:2020.01.01,date_of_last_ads_calibration:2020.02.01,pre_trip_ads_health_check:Green,ads_health_status:6,ads_auto_status:Not Engaged,iss_score:25,permit_required:0",subscriber_OutBound.OutBoundMessage->strategy_params);
