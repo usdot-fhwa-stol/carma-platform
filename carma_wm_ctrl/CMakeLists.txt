@@ -116,9 +116,20 @@ catkin_add_gmock(${PROJECT_NAME}-test
  test/MapConformerTest.cpp
  test/TestTimer.cpp
  test/WMBroadcasterTest.cpp
+ test/MapToolsTest.cpp
+ WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
+)
+
+catkin_add_gmock(map-tools
+ test/TestMain.cpp
+ test/MapToolsTest.cpp
  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 
 if(TARGET ${PROJECT_NAME}-test)
  target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
+endif()
+
+if(TARGET map-tools)
+ target_link_libraries(map-tools ${PROJECT_NAME} ${catkin_LIBRARIES})
 endif()
