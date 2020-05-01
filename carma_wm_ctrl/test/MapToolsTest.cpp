@@ -46,8 +46,8 @@ namespace carma_wm_ctrl
  * This script will take in a lanelet2 osm map and then try to merge the specified lanelet with its left or right
  * neighbors until either it forms a loop, it reaches an intersection where there are multiple possible directions to
  * travel, or the neighbor relationship changes. Since the update is done by assigning the bounds, routing should still
- * work, but not every edge case is covered.
- *
+ * work, but not every edge case is covered. If the map is not a loop, it is likely there might be orphaned lanelets.
+ * 
  * See the UNIT TEST ARGUMENTS section below to configure this unit test.
  * The unit test is normally disabled. To enable it, removed the "DISABLED_" from the test name.
  * To run the unit test call
@@ -201,7 +201,7 @@ TEST(MapTools, DISABLED_combine_lanes)  // Remove DISABLED_ to enable unit test
   new_routing_graph->exportGraphViz("resource/final_routing_graph.viz");
 
   // Write new map to file
-  std::string new_file = file + "combined.osm";
+  std::string new_file = file + ".combined.osm";
   lanelet::ErrorMessages write_errors;
 
   lanelet::write(new_file, *new_map, local_projector, &write_errors);
@@ -218,6 +218,19 @@ TEST(MapTools, DISABLED_combine_lanes)  // Remove DISABLED_ to enable unit test
   {
     std::cerr << "Write Error: " << msg << std::endl;
   }
+
+  // Copy over georeference tag
+  pugi::xml_document doc;
+  auto result = doc.load_file(new_file.c_str());
+  if (!result)
+  {
+    std::cerr << "Failed to update georeference tag you may need to manually" << std::endl;
+  }
+  auto osm_node = doc.child("osm");
+  auto first_osm_child = osm_node.first_child();
+  auto geo_ref_node = osm_node.insert_child_before("geoReference", first_osm_child);
+  geo_ref_node.text().set(target_frame.c_str());
+  doc.save_file(new_file.c_str());
 }
 
 }  // namespace carma_wm_ctrl
