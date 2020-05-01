@@ -1,6 +1,6 @@
 | CicleCI Build Status | Sonar Code Quality |
 |----------------------|---------------------|
-[![CircleCI](https://circleci.com/gh/usdot-fhwa-stol/CARMAPlatform.svg?style=svg)](https://circleci.com/gh/usdot-fhwa-stol/CARMAPlatform) | [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=usdot-fhwa-stol_CARMAPlatform&metric=alert_status)](https://sonarcloud.io/dashboard?id=usdot-fhwa-stol_CARMAPlatform) |
+[![CircleCI](https://circleci.com/gh/usdot-fhwa-stol/carma-platform.svg?style=svg)](https://circleci.com/gh/usdot-fhwa-stol/carma-platform) | [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=usdot-fhwa-stol_CARMAPlatform&metric=alert_status)](https://sonarcloud.io/dashboard?id=usdot-fhwa-stol_CARMAPlatform) |
 
 # CARMA
 ![CARMA Arch](docs/image/CARMA3_Vehicles.jpg)
@@ -21,6 +21,8 @@ CARMA provides the navigation and guidance functions for its host vehicle, as we
 ## Documentation
 
 ![CARMA Demo](docs/image/CARMA2_Platooning_from_Office.jpg)
+
+Documentation of the setup, operation, and design of the CARMA Platform can be found on the project [Confluence](https://usdot-carma.atlassian.net/wiki/spaces/CAR/overview?homepageId=1212636) pages.
 
 <!-- We would like to publish this section, but are not ready to at this time:
 ## System Specifications
@@ -44,7 +46,13 @@ For information on the CARMA2 architecture, please see [CARMA2 System Architectu
 Please see the Detail Design document page for detailed design specification for CARMA and other additional information.
 [Detail Design Page](Detail_Design.md)
 
-## Developers Guide 
+## Developers Guide  
+
+Useful development documentation and instructions for the setup of a development environment for CARMA Platform can be found at the following pages:
+
+* [CARMA Development Resources](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/64946377/CARMA+Development+Resources)
+* [Development Environment Setup](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/486178827/Development+Environment+Setup)
+
 A plug-in developers guide for CARMA3 will be coming soon.
 
 For a description of the approach to develop a plug-in for CARMA2, please see [CARMA 2.7 Developers Guide](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29556796/CARMA%202.7%20Developers%20Guide.docx)
@@ -60,24 +68,27 @@ An administrator guide for CARMA3 will be coming soon.
 For administrative information on CARMA2, including vehicle and developer PC configuration, build, deployment and testing steps necessary to install and run CARMA Platform, please see [Administrator Guide](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29196388/CARMA%20Administrator%20Guide.docx)
 
 ## Other CARMA Packages
-CARMA Platform<sup>SM</sup> is a downloadable, open source software (OSS) platform architected to be extensible and reusable for a wide variety of research purposes to advance innovation for cooperative driving automation. It enables communication between vehicles, road users such as pedestrians, bicyclists, and scooters, and infrastructure devices capable of communication. It promotes collaboration between a community of engineers and researchers to accelerate the development, testing, and evaluation of cooperative driving automation while advancing the safety, security, data, and use of artificial intelligence in automated driving technology. 
+CARMA Platform<sup>SM</sup> is a downloadable, open source software (OSS) platform architected to be extensible and reusable for a wide variety of research purposes to advance innovation for cooperative driving automation. It enables communication between vehicles, road users such as pedestrians, bicyclists, and scooters, and infrastructure devices capable of communication. It promotes collaboration between a community of engineers and researchers to accelerate the development, testing, and evaluation of cooperative driving automation while advancing the safety, security, data, and use of artificial intelligence in automated driving technology.  
 
 The CARMA Platform is distributed as a set of multiple independent packages hosted in separate Github repositories. These packages facilitate operation of the CARMA Platform with different hardware configurations or allow it to support different modes of operation. To include one of these packages in your build of the CARMA Platform system please clone the Github repository into the same Catkin workspace `src/` folder as this repository. The Catkin build system will verify that dependencies are resolved appropriately and build the newly included package when you next run `catkin_make`. An incomplete listing of available packages for CARMA2 includes:
 
 ### Vehicle Controller Interface Drivers
-* [CARMACadillacSrx2013ControllerDriver](https://github.com/usdot-fhwa-stol/carma-cadillac-srx-2013-controller-driver)
-* [CARMAFreightliner2012ControllerDriver](https://github.com/usdot-fhwa-stol/carma-freightliner-2012-controller-driver)
-* [CARMATorcXgvControllerDriver](https://github.com/usdot-fhwa-stol/carma-torc-xgv-controller-driver)
+* [carma-ssc-interface-wrapper](https://github.com/usdot-fhwa-stol/carma-ssc-interface-wrapper)
 
 ### Sensor Drivers
-* [CARMATorcPinpointDriver](https://github.com/usdot-fhwa-stol/carma-torc-pinpoint-driver)
-* [CARMADelphiEsrDriver](https://github.com/usdot-fhwa-stol/carma-delphi-esr-driver)
-* [CARMACohdaDsrcDriver](https://github.com/usdot-fhwa-stol/carma-cohda-dsrc-driver)
+* [carma-cohda-dsrc-driver](https://github.com/usdot-fhwa-stol/carma-cohda-dsrc-driver)
+* [carma-velodyne-lidar-driver](https://github.com/usdot-fhwa-stol/carma-velodyne-lidar-driver)
+* [avt_vimba_camera](https://github.com/usdot-fhwa-stol/avt_vimba_camera)
+* [carma-delphi-srr2-driver](https://github.com/usdot-fhwa-stol/carma-delphi-srr2-driver)
+* [novatel_gps_driver](https://github.com/usdot-fhwa-stol/novatel_gps_driver)
 
 ### General System Utilites
-* [CARMAWebUi](https://github.com/usdot-fhwa-stol/carma-web-ui)
-* [CARMAMsgs](https://github.com/usdot-fhwa-stol/carma-msgs)
-* [CARMAUtils](https://github.com/usdot-fhwa-stol/carma-utils)
+* [carma-web-ui](https://github.com/usdot-fhwa-stol/carma-web-ui)
+* [carma-msgs](https://github.com/usdot-fhwa-stol/carma-msgs)
+* [carma-utils](https://github.com/usdot-fhwa-stol/carma-utils)
+
+### Vehicle Configurations
+* [carma-config](https://github.com/usdot-fhwa-stol/carma-config)
 
 A full list of available packages may be found at in the [USDOT FHWA STOL](https://github.com/usdot-fhwa-stol) Github organization.
 
