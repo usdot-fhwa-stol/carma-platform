@@ -14,7 +14,7 @@ carrier_name: FMCSA Tech Division
 carrier_id: DOT 1
 
 # Weight: ###,### lbs. (6 number format)
-weight: 16639
+weight: 65000
 
 # Date of Last State Inspection: YYYY-MM-DD
 date_of_last_state_inspection: 2020.01.01
