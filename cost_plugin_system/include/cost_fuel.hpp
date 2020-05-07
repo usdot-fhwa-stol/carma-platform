@@ -22,7 +22,7 @@ namespace cost_plugin_system
 class CostofFuel : public CostPlugins
 {
 public:
-    CostofFuel();
+    CostofFuel() {};
 
     double compute_cost(cav_msgs::ManeuverPlan plan) const;
 };

@@ -66,6 +66,7 @@ add_library(cost_plugin_system_library
   src/cost_fuel.cpp
   src/cost_safety.cpp
   src/cost_plugin_worker.cpp
+  src/cost_legality.cpp
   src/cost_utils.cpp)
 
 
@@ -120,7 +121,7 @@ install(DIRECTORY
 #############
 
 catkin_add_gmock(${PROJECT_NAME}-test
-  test/cost_plugin_system_launch.cpp
+  test/cost_plugin_worker_test.cpp
 )
 
 if(TARGET ${PROJECT_NAME}-test)

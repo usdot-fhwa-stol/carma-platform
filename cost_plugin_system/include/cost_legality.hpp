@@ -23,7 +23,7 @@ class CostofLegality : public CostPlugins
 {
     public:
 
-    CostofLegality();
+    CostofLegality() {};
 
     double compute_cost(cav_msgs::ManeuverPlan plan) const;
 };

@@ -98,19 +98,35 @@ double get_maneuver_end_speed(const cav_msgs::Maneuver &mvr)
 std::string get_maneuver_starting_lane_id(const cav_msgs::Maneuver &mvr)
 {
     if (mvr.type == cav_msgs::Maneuver::LANE_FOLLOWING){
-        return GET_MANEUVER_PROPERTY(mvr, lane_id);
-    } else {
-        return GET_MANEUVER_PROPERTY(mvr, starting_lane_id);
-    }
+        return mvr.lane_following_maneuver.lane_id;
+    } else if (mvr.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN) {
+        return mvr.intersection_transit_left_turn_maneuver.starting_lane_id;
+    } else if (mvr.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN) {
+        return mvr.intersection_transit_right_turn_maneuver.starting_lane_id;
+    } else if (mvr.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT) {
+        return mvr.intersection_transit_straight_maneuver.starting_lane_id;
+    } else if (mvr.type == cav_msgs::Maneuver::LANE_CHANGE) {
+        return mvr.lane_change_maneuver.starting_lane_id;
+    } 
+
+    throw std::invalid_argument("Trying to get starting_lane_id of maneuver with invalid type.");
 }
 
 std::string get_maneuver_ending_lane_id(const cav_msgs::Maneuver &mvr)
 {
     if (mvr.type == cav_msgs::Maneuver::LANE_FOLLOWING){
-        return GET_MANEUVER_PROPERTY(mvr, lane_id);
-    } else {
-        return GET_MANEUVER_PROPERTY(mvr, ending_lane_id);
-    }
+        return mvr.lane_following_maneuver.lane_id;
+    } else if (mvr.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN) {
+        return mvr.intersection_transit_left_turn_maneuver.ending_lane_id;
+    } else if (mvr.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN) {
+        return mvr.intersection_transit_right_turn_maneuver.ending_lane_id;
+    } else if (mvr.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT) {
+        return mvr.intersection_transit_straight_maneuver.ending_lane_id;
+    } else if (mvr.type == cav_msgs::Maneuver::LANE_CHANGE) {
+        return mvr.lane_change_maneuver.ending_lane_id;
+    } 
+
+    throw std::invalid_argument("Trying to get ending_lane_id of maneuver with invalid type.");
 }
 
 } // namespace cost_utils
