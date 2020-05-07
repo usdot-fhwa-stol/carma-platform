@@ -121,6 +121,7 @@ install(DIRECTORY
 #############
 
 catkin_add_gmock(${PROJECT_NAME}-test
+  test/test_main.cpp
   test/cost_plugin_worker_test.cpp
 )
 

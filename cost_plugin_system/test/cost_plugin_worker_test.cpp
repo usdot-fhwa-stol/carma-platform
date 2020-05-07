@@ -14,11 +14,12 @@
  * the License.
  */
 
-#include "cost_plugin_worker.cpp"
+#include <gtest/gtest.h>
+#include "cost_plugin_worker.hpp"
 
 namespace cost_plugin_system
 {
-TEST_F(CostPluginWorkerTest, testSingleManeuver)
+TEST(CostPluginWorkerTest, testSingleManeuver)
 {
     cost_plugin_system::CostPluginWorker cpw;
     ros::Time::init();
@@ -40,7 +41,7 @@ TEST_F(CostPluginWorkerTest, testSingleManeuver)
     ASSERT_NEAR(2.959, cost, 0.01);
 }
 
-TEST_F(CostPluginWorkerTest, testMixedPlanners)
+TEST(CostPluginWorkerTest, testMixedPlanners)
 {
     cost_plugin_system::CostPluginWorker cpw;
     ros::Time::init();

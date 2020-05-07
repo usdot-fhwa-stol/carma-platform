@@ -23,20 +23,20 @@ namespace cost_plugin_system
 
 void CostPluginWorker::init()
 {
-    nh_ = ros::CARMANodeHandle();
-    pnh_ = ros::CARMANodeHandle("~");
+    nh_.reset(new ros::CARMANodeHandle());
+    pnh_.reset(new ros::CARMANodeHandle("~"));
 
-    pnh_.param<double>("max_accelaration", max_accelaration_, 5.0);
-    pnh_.param<double>("max_decelaration", max_decelaration_, 8.0);
+    pnh_->param<double>("max_accelaration", max_accelaration_, 5.0);
+    pnh_->param<double>("max_decelaration", max_decelaration_, 8.0);
 
-    pnh_.param<double>("speed_limit", speed_limit_, 27.0);
-    pnh_.param<double>("speed_buffer", speed_buffer_, 25.0);
+    pnh_->param<double>("speed_limit", speed_limit_, 27.0);
+    pnh_->param<double>("speed_buffer", speed_buffer_, 25.0);
 
-    pnh_.param<double>("weight_of_comfort", weight_of_comfort_, 1.0);
-    pnh_.param<double>("weight_of_efficiency", weight_of_efficiency_, 1.0);
-    pnh_.param<double>("weight_of_feasibility", weight_of_feasibility_, 1.0);
-    pnh_.param<double>("weight_of_fuel", weight_of_fuel_, 1.0);
-    pnh_.param<double>("weight_of_safety", weight_of_safety_, 1.0);
+    pnh_->param<double>("weight_of_comfort", weight_of_comfort_, 1.0);
+    pnh_->param<double>("weight_of_efficiency", weight_of_efficiency_, 1.0);
+    pnh_->param<double>("weight_of_feasibility", weight_of_feasibility_, 1.0);
+    pnh_->param<double>("weight_of_fuel", weight_of_fuel_, 1.0);
+    pnh_->param<double>("weight_of_safety", weight_of_safety_, 1.0);
 }
 
 bool CostPluginWorker::get_score(cav_srvs::ComputePlanCostRequest& req, cav_srvs::ComputePlanCostResponse& res)
@@ -83,7 +83,7 @@ void CostPluginWorker::run()
 
     ROS_INFO("Initalizing cost_plugin_system node...");
     // Init our ROS objects
-    compute_plan_cost_service_server_ = nh_.advertiseService("compute_plan_cost", &CostPluginWorker::get_score, this);
+    compute_plan_cost_service_server_ = nh_->advertiseService("compute_plan_cost", &CostPluginWorker::get_score, this);
     ROS_INFO("Ready to compute the total cost");
     ros::spin();
 }

@@ -50,12 +50,13 @@ public:
     void run();
 
     // Node handles
-    ros::CARMANodeHandle nh_;
-    ros::CARMANodeHandle pnh_;
+    std::unique_ptr<ros::CARMANodeHandle> nh_;
+    std::unique_ptr<ros::CARMANodeHandle> pnh_;
 
     // Service servers
     ros::ServiceServer compute_plan_cost_service_server_;
 
+    double compute_final_score(cav_msgs::ManeuverPlan plan);
 private:
     double max_accelaration_;
     double max_decelaration_;
@@ -68,7 +69,5 @@ private:
     double weight_of_safety_;
 
     bool get_score(cav_srvs::ComputePlanCostRequest& req, cav_srvs::ComputePlanCostResponse& res);
-
-    double compute_final_score(cav_msgs::ManeuverPlan plan);
 };
 } // namespace cost_plugin_system
