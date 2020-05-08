@@ -66,6 +66,7 @@ add_library(arbitrator_library
   src/beam_search_strategy.cpp
   src/capabilities_interface.cpp
   src/fixed_priority_cost_function.cpp
+  src/cost_system_cost_function.cpp
   src/tree_planner.cpp)
 
 

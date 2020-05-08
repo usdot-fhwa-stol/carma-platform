@@ -14,9 +14,10 @@
  * the License.
  */
 
-#ifndef __ARBITRATOR_INCLUDE_FIXED_PRIORITY_COST_FUNCTION_HPP__
-#define __ARBITRATOR_INCLUDE_FIXED_PRIORITY_COST_FUNCTION_HPP__
+#ifndef __ARBITRATOR_INCLUDE_COST_SYSTEM_COST_FUNCTION_HPP__
+#define __ARBITRATOR_INCLUDE_COST_SYSTEM_COST_FUNCTION_HPP__
 
+#include <ros/ros.h>
 #include "cost_function.hpp"
 #include <map>
 #include <string>
@@ -26,27 +27,34 @@ namespace arbitrator
     /**
      * \brief Implementation of the CostFunction interface
      * 
-     * Implements costs by associating a fixed priority number with each plugin
-     * (as specified by configuration). This priority is then normalized across
-     * all plugins, and then an inverse is computed to arrive at the cost per 
-     * unit distance for that plugins.
-     * 
-     * e.g. Three plugins with priority 20, 10, and 5 will respectively have
-     * costs 0, 0.5, 0.75 per unit distance.
+     * Implements costs by utilizing a ROS service call to the CARMA cost plugin
+     * system. Passes on the input maneuver plan to the Cost Plugin System for 
+     * computation of the actual cost and cost per unit distance.
      */
-    class FixedPriorityCostFunction : public CostFunction
+    class CostSystemCostFunction : public CostFunction
     {
         public:
             /**
              * \brief Constructor for FixedPriorityCostFunction
-             * \param nh A publically namespaced ("/") ros::NodeHandle
              */
-            FixedPriorityCostFunction(const std::map<std::string, double> &plugin_priorities);
+            CostSystemCostFunction() {};
+
+            /**
+             * Initialize the CostSystemCostFunction to communicate over the network.
+             * Sets up any ROS service clients needed to interact with the cost plugin system.
+             * 
+             * Must be called before using this cost function implementation.
+             * 
+             * \param nh A publicly namespaced nodehandle
+             */
+            void init(ros::NodeHandle &nh);
 
             /**
              * \brief Compute the unit cost over distance of a given maneuver plan
              * \param plan The plan to evaluate
              * \return double The total cost divided by the total distance of the plan
+             * 
+             * \throws std::logic_error if not initialized
              */
             double compute_total_cost(const cav_msgs::ManeuverPlan& plan);
 
@@ -54,11 +62,14 @@ namespace arbitrator
              * \brief Compute the unit cost over distance of a given maneuver plan
              * \param plan The plan to evaluate
              * \return double The total cost divided by the total distance of the plan
+             * \throws std::logic_error if not initialized
              */
             double compute_cost_per_unit_distance(const cav_msgs::ManeuverPlan& plan);
         private:
-            std::map<std::string, double> plugin_costs_;
+            ros::ServiceClient cost_system_sc_;
+            bool initialized_ = false;
     };
 };
 
-#endif //__ARBITRATOR_INCLUDE_FIXED_PRIORITY_COST_FUNCTION_HPP__
+#endif //__ARBITRATOR_INCLUDE_COST_SYSTEM_COST_FUNCTION_HPP__
+

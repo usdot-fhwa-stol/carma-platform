@@ -32,7 +32,7 @@ namespace arbitrator
              * \brief Generate a plausible maneuver plan
              * \return A maneuver plan from the vehicle's current state
              */
-            virtual cav_msgs::ManeuverPlan generate_plan() const = 0;
+            virtual cav_msgs::ManeuverPlan generate_plan() = 0;
 
             /**
              * \brief Virtual destructor provided for memory safety
