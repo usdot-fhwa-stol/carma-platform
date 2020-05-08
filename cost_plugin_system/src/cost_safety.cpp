@@ -37,7 +37,7 @@ double CostofSafety::compute_cost(cav_msgs::ManeuverPlan plan) const
     }
 
     // Normalize the cost
-    cost = cost / maneuver_size;
+    cost = cost / (pow(speed_limit_, 2.0)* maneuver_size);
 
     return cost;
 }

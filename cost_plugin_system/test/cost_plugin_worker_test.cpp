@@ -38,7 +38,7 @@ TEST(CostPluginWorkerTest, testSingleManeuver)
     plan.maneuvers.push_back(mvr1);
     double cost = cpw.compute_final_score(plan);
 
-    ASSERT_NEAR(2.959, cost, 0.01);
+    ASSERT_NEAR(0.824, cost, 0.01);
 }
 
 TEST(CostPluginWorkerTest, testMixedPlanners)
@@ -73,6 +73,6 @@ TEST(CostPluginWorkerTest, testMixedPlanners)
     plan.maneuvers.push_back(mvr2);
     double cost = cpw.compute_final_score(plan);
 
-    ASSERT_NEAR(8.418, cost, 0.01);
+    ASSERT_NEAR(0.981, cost, 0.01);
 }
 } // namespace cost_plugin_system

@@ -13,7 +13,7 @@
 -->
 <launch>
     <node pkg="cost_plugin_system" type="cost_plugin_system_node" name="cost_plugin_system_node">
-        <rosparam command="load" file="$(find cost_plugin_system)/config/para,eters.yaml" />
+        <rosparam command="load" file="$(find cost_plugin_system)/config/parameters.yaml" />
     </node>
 
     <test test-name="cost_plugin_system_test" pkg="cost_plugin_system" type="cost_plugin_system_test" />
