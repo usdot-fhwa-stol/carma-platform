@@ -19,10 +19,33 @@ namespace object{
 
   using std::placeholders::_1;
 
-  ObjectDetectionTrackingNode::ObjectDetectionTrackingNode(): object_worker_(std::bind(&ObjectDetectionTrackingNode::publishObject, this, _1)){}
+  ObjectDetectionTrackingNode::ObjectDetectionTrackingNode(): pnh_("~"), object_worker_(std::bind(&ObjectDetectionTrackingNode::publishObject, this, _1)){}
 
   void ObjectDetectionTrackingNode::initialize()
   {
+    // Load parameters
+    double step = 0.1;
+    double period = 2.0;
+    double ax = 9.0;
+    double ay = 9.0;
+    double process_noise_max = 1000.0;
+    double drop_rate = 0.9;
+
+    pnh_.param<double>("prediction_time_step", step, step);
+    pnh_.param<double>("prediction_period", period, period);
+    pnh_.param<double>("cv_x_accel_noise", ax, ax);
+    pnh_.param<double>("cv_y_accel_noise", ay, ay);
+    pnh_.param<double>("prediction_process_noise_max", process_noise_max, process_noise_max);
+    pnh_.param<double>("prediction_confidence_drop_rate", drop_rate, drop_rate);
+
+    object_worker_.setPredictionTimeStep(step);
+    object_worker_.setPredictionPeriod(period);
+    object_worker_.setXAccelerationNoise(ax);
+    object_worker_.setYAccelerationNoise(ay);
+    object_worker_.setProcessNoiseMax(process_noise_max);
+    object_worker_.setConfidenceDropRate(drop_rate);
+
+    // Setup pub/sub
     autoware_obj_sub_=nh_.subscribe("detected_objects",10,&ObjectDetectionTrackingWorker::detectedObjectCallback,&object_worker_);
     carma_obj_pub_=nh_.advertise<cav_msgs::ExternalObjectList>("external_objects", 10);
   }
