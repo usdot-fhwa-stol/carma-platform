@@ -45,9 +45,9 @@ namespace arbitrator
              * \param ss A reference to a SearchStrategy implementation
              * \param target The desired duration of finished plans
              */
-            TreePlanner(const CostFunction &cf, 
-                const NeighborGenerator &ng, 
-                const SearchStrategy &ss, 
+            TreePlanner(CostFunction &cf, 
+                NeighborGenerator &ng, 
+                SearchStrategy &ss, 
                 ros::Duration target):
                 cost_function_(cf),
                 neighbor_generator_(ng),
@@ -58,11 +58,11 @@ namespace arbitrator
              * \brief Utilize the configured cost function, neighbor generator, 
              *      and search strategy, to generate a plan by means of tree search
              */
-            cav_msgs::ManeuverPlan generate_plan() const;
+            cav_msgs::ManeuverPlan generate_plan();
         protected:
-            const CostFunction &cost_function_;
-            const NeighborGenerator &neighbor_generator_;
-            const SearchStrategy &search_strategy_;
+            CostFunction &cost_function_;
+            NeighborGenerator &neighbor_generator_;
+            SearchStrategy &search_strategy_;
             ros::Duration target_plan_duration_;
     };
 };

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(arbitrator)
+project(cost_plugin_system)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
@@ -36,7 +36,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
    INCLUDE_DIRS include
-#  LIBRARIES arbitrator
+#  LIBRARIES cost_plugin_system
    CATKIN_DEPENDS carma_utils cav_msgs cav_srvs roscpp
 #  DEPENDS system_lib
 )
@@ -56,18 +56,18 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_node 
-  src/arbitrator_node.cpp)
+  src/cost_plugin_system_node.cpp)
   
 ## Add cmake target dependencies of the executable
-add_library(arbitrator_library
-  src/arbitrator_state_machine.cpp
-  src/arbitrator_utils.cpp
-  src/arbitrator.cpp
-  src/beam_search_strategy.cpp
-  src/capabilities_interface.cpp
-  src/fixed_priority_cost_function.cpp
-  src/cost_system_cost_function.cpp
-  src/tree_planner.cpp)
+add_library(cost_plugin_system_library
+  src/cost_comfort.cpp
+  src/cost_efficiency.cpp
+  src/cost_feasibility.cpp
+  src/cost_fuel.cpp
+  src/cost_safety.cpp
+  src/cost_plugin_worker.cpp
+  src/cost_legality.cpp
+  src/cost_utils.cpp)
 
 
 ## Rename C++ executable without prefix
@@ -79,11 +79,11 @@ set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX ""
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(arbitrator_library ${catkin_EXPORTED_TARGETS})
+add_dependencies(cost_plugin_system_library ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
-  arbitrator_library
+cost_plugin_system_library
   ${catkin_LIBRARIES}
 )
 
@@ -96,7 +96,7 @@ target_link_libraries(${PROJECT_NAME}_node
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-install(TARGETS ${PROJECT_NAME}_node arbitrator_library
+install(TARGETS ${PROJECT_NAME}_node cost_plugin_system_library
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -121,13 +121,10 @@ install(DIRECTORY
 #############
 
 catkin_add_gmock(${PROJECT_NAME}-test
-  test/test_arbitrator_state_machine.cpp
-  test/test_plugin_neighbor_generator.cpp
-  test/test_fixed_priority_cost_function.cpp
-  test/test_beam_search_strategy.cpp
-  test/test_tree_planner.cpp
-  test/test_main.cpp)
+  test/test_main.cpp
+  test/cost_plugin_worker_test.cpp
+)
 
 if(TARGET ${PROJECT_NAME}-test)
-  target_link_libraries(${PROJECT_NAME}-test arbitrator_library ${catkin_LIBRARIES})
+  target_link_libraries(${PROJECT_NAME}-test cost_plugin_system_library ${catkin_LIBRARIES})
 endif()

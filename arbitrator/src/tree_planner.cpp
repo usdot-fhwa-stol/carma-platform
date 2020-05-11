@@ -22,7 +22,7 @@
 
 namespace arbitrator
 {
-    cav_msgs::ManeuverPlan TreePlanner::generate_plan() const
+    cav_msgs::ManeuverPlan TreePlanner::generate_plan() 
     {
         cav_msgs::ManeuverPlan root;
         std::vector<std::pair<cav_msgs::ManeuverPlan, double>> open_list;
