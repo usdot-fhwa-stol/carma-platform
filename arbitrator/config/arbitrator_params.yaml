@@ -18,6 +18,11 @@ planning_frequency: 1.0
 # Unit: N/a
 beam_width: 3
 
+# Bool: Use fixed priority cost function over using the cost system for 
+# evaluating maneuver plans
+# Unit: N/a
+use_fixed_costs: false
+
 # Map: The priorities/costs associated with each plugin during the planning 
 # process, values will be normalized at runtime
 # Unit: N/a
