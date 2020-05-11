@@ -42,7 +42,7 @@ namespace arbitrator
         if (cost_system_sc_.call(service_message)){
             total_cost = service_message.response.plan_cost;
         } else {
-            ROS_WARN("Unable to get cost for plan from CostPluginSystem due to service call failure.");
+            ROS_WARN_STREAM("Unable to get cost for plan from CostPluginSystem due to service call failure.");
         }
 
         return total_cost;
