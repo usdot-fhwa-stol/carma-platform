@@ -39,7 +39,7 @@ FROM usdotfhwastol/autoware.ai:3.8.2 AS source-code
 
 RUN mkdir ~/src
 COPY --chown=carma . /home/carma/src/CARMAPlatform/
-RUN ~/src/CARMAPlatform/docker/checkout.sh
+RUN ~/src/CARMAPlatform/docker/checkout.bash
 
 # /////////////////////////////////////////////////////////////////////////////
 # Stage 2 - Build and install the software 
