@@ -8,6 +8,6 @@ elif [[ "$SOURCE_BRANCH" =~ ^release/.*$ ]]; then
     # swap checkout branch in checkout.bash to release branch
     sed -i "s|usdotfhwastol|usdotfhwastolcandidate|g; s|:[0-9]*\.[0-9]*\.[0-9]*|:candidate|g; s|CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|candidate|g; s|carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|candidate|g" \
         Dockerfile
-    sed -i "s|CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|$SOURCE_BRANCH|g; s|carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|$SOURCE_BRANCH|g" \
+    sed -i "s|--branch .*|--branch $SOURCE_BRANCH|g" \
         docker/checkout.bash
 fi
