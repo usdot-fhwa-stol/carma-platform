@@ -26,6 +26,12 @@ cd ~/carma_ws
 sudo apt-get update
 rosdep update
 rosdep install --from-paths src --ignore-src -y
+echo "printing pwd"
+pwd
+echo "src contents:"
+ls src
+echo "CARMAPlatform contents:"
+ls src/CARMAPlatform
 ./src/CARMAPlatform/carma_build -c ~/carma_ws -a /opt/autoware.ai/ -x
 
 # Copy the installed files
