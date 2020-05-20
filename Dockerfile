@@ -37,9 +37,9 @@
 FROM usdotfhwastol/autoware.ai:3.8.2 AS source-code
 
 
-RUN mkdir ~/src && ls .
+RUN mkdir ~/src
 COPY --chown=carma . /home/carma/src/carma-platform/
-RUN ~/src/carma-platform/docker/checkout.bash && ls ~/src/carma-platform
+RUN ~/src/carma-platform/docker/checkout.bash && ls -ltra ~/src/carma-platform
 
 # /////////////////////////////////////////////////////////////////////////////
 # Stage 2 - Build and install the software 
@@ -52,7 +52,7 @@ FROM usdotfhwastol/autoware.ai:3.8.2 AS install
 # Copy the source files from the previous stage and build/install
 RUN mkdir ~/carma_ws
 COPY --from=source-code --chown=carma /home/carma/src /home/carma/carma_ws/src
-RUN ls ~/carma_ws/src/carma-platform && ~/carma_ws/src/carma-platform/docker/install.sh
+RUN ls -ltra ~/carma_ws/src/carma-platform && ~/carma_ws/src/carma-platform/docker/install.sh
 
 # /////////////////////////////////////////////////////////////////////////////
 # Stage 3 - Finalize deployment
