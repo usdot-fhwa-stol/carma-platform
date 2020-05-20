@@ -31,8 +31,8 @@ pwd
 echo "src contents:"
 ls src
 echo "CARMAPlatform contents:"
-ls src/CARMAPlatform
-./src/CARMAPlatform/carma_build -c ~/carma_ws -a /opt/autoware.ai/ -x
+ls src/carma-platform
+./src/carma-platform/carma_build -c ~/carma_ws -a /opt/autoware.ai/ -x
 
 # Copy the installed files
 cd ~/carma_ws 
