@@ -19,6 +19,11 @@
 
 set -ex
 
+echo "src contents:"
+ls ~/carma_ws/src
+echo "CARMAPlatform contents:"
+ls ~/carma_ws/src/carma-platform
+
 source /opt/ros/kinetic/setup.bash
 source /opt/autoware.ai/ros/install/setup.bash --extend
 
