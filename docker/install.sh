@@ -19,11 +19,6 @@
 
 set -ex
 
-echo "src contents:"
-ls ~/carma_ws/src
-echo "CARMAPlatform contents:"
-ls ~/carma_ws/src/carma-platform
-
 source /opt/ros/kinetic/setup.bash
 source /opt/autoware.ai/ros/install/setup.bash --extend
 
@@ -31,16 +26,9 @@ cd ~/carma_ws
 sudo apt-get update
 rosdep update
 rosdep install --from-paths src --ignore-src -y
-echo "printing pwd"
-pwd
-echo "src contents:"
-ls src
-echo "CARMAPlatform contents:"
-ls src/carma-platform
 ./src/carma-platform/carma_build.bash -c ~/carma_ws -a /opt/autoware.ai/ -x
 
 # Copy the installed files
 cd ~/carma_ws 
-ls
 cp -r install/. /opt/carma/install
 chmod -R +x /opt/carma/install 
