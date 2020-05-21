@@ -39,7 +39,6 @@ FROM usdotfhwastol/autoware.ai:3.8.2 AS source-code
 
 RUN mkdir ~/src
 COPY --chown=carma . /home/carma/src/carma-platform/
-COPY --chown=carma ./carma_build /home/carma/src/carma-platform/
 RUN ~/src/carma-platform/docker/checkout.bash && ls -ltra ~/src/carma-platform
 
 # /////////////////////////////////////////////////////////////////////////////
