@@ -41,5 +41,6 @@ ls src/carma-platform
 
 # Copy the installed files
 cd ~/carma_ws 
+ls
 cp -r install/. /opt/carma/install
 chmod -R +x /opt/carma/install 
