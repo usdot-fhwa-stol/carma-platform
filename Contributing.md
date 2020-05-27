@@ -56,14 +56,14 @@ Welcome to the CARMAPlatform contributing guide. There are a few guidelines that
 * When you have finished making your changes, you'll need to push up your changes to a topic branch in your fork of the repository.  Read the article ["Committing and reviewing changes to your project"](https://help.github.com/desktop/guides/contributing-to-projects/committing-and-reviewing-changes-to-your-project/) on GitHub. 
 * With them all committed, push them, this pushes everything in that branch up. 
 
-### Submitting Changes
+#### Submit Changes
 **Let you tell others about changes you've pushed to a GitHub branch.**
 * A Pull Request is the way to notify the project maintainers that you have some work that they should review and add to the project. 
 * You’re requesting that they pull your changes in. Read the article ["Using Pull Requests"](https://help.github.com/articles/using-pull-requests) on GitHub.
 * Then you can go back to your forked branch and issue a pull request to the repository and choose the correct original branch (should be **`develop`**).
 * To create one, go to your fork of the project, click on the Pull Requests tab, and click the big green “New Pull Request” button.
 
-### Merging Changes
+#### Merge Changes
 **We want your help to make CARMAPlatform Project great.**
 * All pull requests will be reviewed by the CARMAPlatform team. 
 * During the review of your pull request the team member will either merge it, request changes to it, or close it with an explanation. 
@@ -71,7 +71,7 @@ Welcome to the CARMAPlatform contributing guide. There are a few guidelines that
 * We'll do our best to provide updates and feedback throughout the process. 
 * Feel free to open pull requests, and the CARMAPlatform team will communicate through it with any comments.
 
-### Become a Collaborator
+#### Become a Collaborator
 **Please fill out this [form](url) to be added to the CARMA Collaborative.**
 
 Four Contribution Levels
