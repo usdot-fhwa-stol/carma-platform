@@ -1,6 +1,9 @@
-# Cooperative Automation Research Mobility Applications (CARMA) Collaboration Opportunities
+# CARMA Collaboration Opportunities
 
-The Cooperative Automation Research Mobility Applications (CARMA) software platform is designed to be open source to enable collaboration with industry, academia, infrastructure owner operators (IOOs), and other public agencies on cooperative automation applications. Developed on a Robot Operating System (ROS), a flexible framework for writing software, CARMA has an innovative approach to collaboration for automated vehicle development.
+Developed on a Robot Operating System (ROS), a flexible framework for writing software, the CARMA initiative will transform transportation, improving efficiency and safety through automated vehicles (AVs) working together.
+
+To academic transportation researchers, public agencies, original equipment manufacturers (OEMs), and infrastructure owner operators (IOOs), CARMA is the Federal Highway Administration’s (FHWA’s) multimodal initiative using open source software (OSS) for the collaborative research and development (R&D) of cooperative driving automation (CDA) to advance the safety, efficiency, and capacity of the entire transportation system. The FHWA developed technology agnostic software for CARMA to enable flexibility and interoperability across original equipment manufacturers (OEMs) and infrastructure owner operators (IOOs) as well as to enable continuous improvement, productivity and greater quality.
+The CARMA Collaborative was established in 2019 to create an active community of users advancing CDA. Through a growing community of CARMA users, prospective users, and other stakeholders, the CARMA Collaborative facilitates the application of CARMA OSS and features to accelerate R&D and encourage industry adoption. 
 
 # How to Contribute 
 
@@ -67,6 +70,20 @@ Welcome to the CARMAPlatform contributing guide. There are a few guidelines that
 * For major changes the reviewer may require additional support from the team, which could cause some delay. 
 * We'll do our best to provide updates and feedback throughout the process. 
 * Feel free to open pull requests, and the CARMAPlatform team will communicate through it with any comments.
+
+### Become a Collaborator
+**Please fill out this [form](url) to be added to the CARMA Collaborative.**
+
+Four Contribution Levels
+1.	Informative Group Contributor.
+This level is for stakeholders interested at an informational level to keep up-to-date on CARMA activities advancing CDA. This level receives CARMA news, product updates, and first access to public CARMA events.
+2.	Prospective User.
+This level is for stakeholders who are interested in contributing to CARMA research, development, and testing in the future. This level receives the benefits of Informative Group Contributors, and additionally, this level may request support to prepare to contribute to CARMA and will receive first access to select CARMA group events.
+3.	User.
+This level is for contributors who have contributed code and/or have a vehicle capable of utilizing CARMA. These contributors will also likely be using ROS Discourse for advancing CDA through open and active collaboration. This level receives the benefits of Prospective Users as well as advanced support and access to technical working groups.
+4.	Accelerator.
+This level is for contributors who are committed to using CARMA, active contributors to GitHub code, provide questions and feedback using ROS Discourse for advancing CDA, and have an automated vehicle with CARMA installed for research, development, and testing. This level receives the benefits of Users as well as dedicated one-on-one support and the ability to work closely with CARMA product development partners.
+
 
 ## Branching Model
 Vincent Driessen’s  ["git flow"](https://nvie.com/posts/a-successful-git-branching-model/) branching model is a git branching and release management workflow that helps developers keep track of features, hotfixes and releases in a software projects. We will follow this model and mainly use five branches - master, develop, feature, release, and hotfix. 
