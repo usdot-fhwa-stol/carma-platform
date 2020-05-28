@@ -64,7 +64,7 @@ Welcome to the CARMAPlatform contributing guide. There are a few guidelines that
 * To create one, go to your fork of the project, click on the Pull Requests tab, and click the big green “New Pull Request” button.
 
 #### Merge Changes
-**We want your help to make CARMAPlatform Project great.**
+**We want your help to make CARMA Platform Project great.**
 * All pull requests will be reviewed by the CARMAPlatform team. 
 * During the review of your pull request the team member will either merge it, request changes to it, or close it with an explanation. 
 * For major changes the reviewer may require additional support from the team, which could cause some delay. 
@@ -80,7 +80,7 @@ This level is for stakeholders interested at an informational level to keep up-t
 2.	Prospective User.
 This level is for stakeholders who are interested in contributing to CARMA research, development, and testing in the future. This level receives the benefits of Informative Group Contributors, and additionally, this level may request support to prepare to contribute to CARMA and will receive first access to select CARMA group events.
 3.	User.
-This level is for contributors who have contributed code and/or have a vehicle capable of utilizing CARMA. These contributors will also likely be using ROS Discourse for advancing CDA through open and active collaboration. This level receives the benefits of Prospective Users as well as advanced support and access to technical working groups.
+This level is for contributors who have contributed code and/or have a vehicle capable of utilizing CARMA. These contributors will also likely be using [ROS Discourse](https://discourse.ros.org/c/carma) for advancing CDA through open and active collaboration. This level receives the benefits of Prospective Users as well as advanced support and access to technical working groups.
 4.	Accelerator.
 This level is for contributors who are committed to using CARMA, active contributors to GitHub code, provide questions and feedback using ROS Discourse for advancing CDA, and have an automated vehicle with CARMA installed for research, development, and testing. This level receives the benefits of Users as well as dedicated one-on-one support and the ability to work closely with CARMA product development partners.
 
