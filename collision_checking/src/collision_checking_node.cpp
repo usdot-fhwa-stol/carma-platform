@@ -24,13 +24,12 @@ int main(int argc, char** argv)
 
   ros::init(argc, argv, "collision_checking");
   ros::NodeHandle nodeHandle("~");
-//   guidance_command_repeater::GuidanceCommandRepeater GuidanceCommandRepeater(nodeHandle);
+  collision_checking::CollisionChecking CollisionChecking(nodeHandle);
 
   ros::Rate rate(10);
 
   while (ros::ok())
   {
-    // GuidanceCommandRepeater.publisher();
     rate.sleep();
     ros::spinOnce();
   }
