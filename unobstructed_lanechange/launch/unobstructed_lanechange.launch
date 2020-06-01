@@ -22,5 +22,7 @@ Loads parameters and configures logging for the node
 -->
 <launch>
 <!-- Driver Shutdown Node -->
-<node pkg="unobstructed_lanechange" type="unobstructed_lanechange" name="unobstructed_lanechange"/>
+<node pkg="unobstructed_lanechange" type="unobstructed_lanechange" name="unobstructed_lanechange">
+        <rosparam command="load" file="$(find unobstructed_lanechange)/config/parameters.yaml" />
+    </node>
 </launch>

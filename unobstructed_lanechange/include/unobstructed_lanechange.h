@@ -21,7 +21,6 @@
 #include <cav_msgs/TrajectoryPlan.h>
 #include <cav_msgs/TrajectoryPlanPoint.h>
 #include <cav_msgs/Plugin.h>
-// #include <autoware_msgs/Lane.h>
 #include <boost/shared_ptr.hpp>
 #include <carma_utils/CARMAUtils.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -29,7 +28,7 @@
 #include <cav_srvs/PlanTrajectory.h>
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
-#include "spline.h"
+#include "third_party_library/spline.h"
 
 
 
@@ -93,9 +92,13 @@ namespace unobstructed_lanechange
             // Plugin discovery message
             cav_msgs::Plugin plugin_discovery_msg_;
 
+            // trajectory frequency
+            double traj_freq = 10;
+
             // ROS params
             double trajectory_time_length_;
-            double trajectory_point_spacing_;
+            std::string control_plugin_name_;
+            
 
             // start vehicle speed
             double start_speed_;
@@ -103,7 +106,7 @@ namespace unobstructed_lanechange
             double target_speed_;
 
 
-            int num_points = 60;
+            int num_points = traj_freq * trajectory_time_length_;
 
             // initialize this node
             void initialize();

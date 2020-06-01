@@ -27,8 +27,16 @@ TEST(UnobstructedLaneChangePluginTest, testCreateLaneChangeTrajectory1)
     unobstructed_lanechange::UnobstructedLaneChangePlugin lc;
     std::vector<cav_msgs::TrajectoryPlanPoint> res = lc.create_lanechange_trajectory(start_point, end_point);
     EXPECT_EQ(60, res.size());
-    EXPECT_NEAR(5.0, res[30].x, 0.01);
-    EXPECT_NEAR(1.5, res[30].y, 0.01);
+    EXPECT_NEAR(0.0, res[0].x, 0.05);
+    EXPECT_NEAR(0.0, res[0].y, 0.05);
+    EXPECT_NEAR(2.5, res[15].x, 0.05);
+    EXPECT_NEAR(0.75, res[15].y, 0.05);
+    EXPECT_NEAR(5.0, res[30].x, 0.05);
+    EXPECT_NEAR(1.5, res[30].y, 0.05);
+    EXPECT_NEAR(7.5, res[45].x, 0.05);
+    EXPECT_NEAR(2.25, res[45].y, 0.05);
+    EXPECT_NEAR(9.85, res[59].x, 0.05);
+    EXPECT_NEAR(2.95, res[59].y, 0.05);
 }
 
 
