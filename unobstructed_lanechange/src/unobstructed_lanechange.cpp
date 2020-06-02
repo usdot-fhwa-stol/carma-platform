@@ -22,9 +22,8 @@
 
 namespace unobstructed_lanechange
 {
-    UnobstructedLaneChangePlugin::UnobstructedLaneChangePlugin():
-                                    trajectory_time_length_(6.0),
-                                    control_plugin_name_("mpc_follower") {}
+    UnobstructedLaneChangePlugin::UnobstructedLaneChangePlugin(){}
+    
 
     void UnobstructedLaneChangePlugin::initialize()
     {
@@ -42,7 +41,7 @@ namespace unobstructed_lanechange
         plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
         
         pnh_->param<double>("trajectory_time_length", trajectory_time_length_, 6.0);
-        pnh_->param<std::string>("control_plugin_name", control_plugin_name_, "NULL");
+        pnh_->param<std::string>("control_plugin_name", control_plugin_name_, "mpc_follower");
 
         ros::CARMANodeHandle::setSpinCallback([this]() -> bool {
             ubobstructed_lanechange_plugin_discovery_pub_.publish(plugin_discovery_msg_);
@@ -88,7 +87,7 @@ namespace unobstructed_lanechange
     }
 
 
-    std::vector<cav_msgs::TrajectoryPlanPoint> UnobstructedLaneChangePlugin::compose_lanechange_trajectory(std::string start_id, double start_downtrack, std::string end_id, double end_downtrack){
+    std::vector<cav_msgs::TrajectoryPlanPoint> UnobstructedLaneChangePlugin::compose_lanechange_trajectory(const std::string& start_id, double start_downtrack, const std::string& end_id, double end_downtrack){
         std::vector<double> start_point = extract_point_from_lanelet(start_id, start_downtrack);
         std::vector<double> end_point = extract_point_from_lanelet(end_id, end_downtrack);
         std::vector<cav_msgs::TrajectoryPlanPoint> tmp_trajectory = create_lanechange_trajectory(start_point, end_point);
@@ -184,7 +183,7 @@ namespace unobstructed_lanechange
     }
     
 
-    std::vector<double> UnobstructedLaneChangePlugin::extract_point_from_lanelet(std::string lanelet_id, double downtrack){
+    std::vector<double> UnobstructedLaneChangePlugin::extract_point_from_lanelet(const std::string& lanelet_id, double downtrack){
 
         std::vector<double> point;
         auto shortest_path = _wm->getRoute()->shortestPath();

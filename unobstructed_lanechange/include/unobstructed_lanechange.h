@@ -63,7 +63,7 @@ namespace unobstructed_lanechange
                 * \param end_downtrack Lanechange ending point downtrack
                 * \return vector of trajectory points
             */
-            std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanechange_trajectory(std::string start_id, double start_downtrack, std::string end_id, double end_downtrack);
+            std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanechange_trajectory(const std::string& start_id, double start_downtrack, const std::string& end_id, double end_downtrack);
 
             /**
                 * \brief Given Lanelet id and downtrack, find the corresponding point coordinates on the lanelet's centerline
@@ -71,7 +71,7 @@ namespace unobstructed_lanechange
                 * \param downtrack downtrack value
                 * \return Vector of x and y coordinates
             */
-            std::vector<double> extract_point_from_lanelet(std::string lanelet_id, double downtrack);
+            std::vector<double> extract_point_from_lanelet(const std::string& lanelet_id, double downtrack);
         
         private:
 
