@@ -123,7 +123,6 @@ namespace unobstructed_lanechange
         // Calculate how to break up spline points so that we travel at our desired reference velocity
         double target_x = end[0];
         double start_x = start[0];
-        double target_y = spl(target_x);
         double delta_v = (target_speed_ - start_speed_)/num_points;
         double delta_x = (target_x - start_x)/num_points;
 
