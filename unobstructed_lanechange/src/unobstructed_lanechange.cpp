@@ -22,11 +22,8 @@
 
 namespace unobstructed_lanechange
 {
-    UnobstructedLaneChangePlugin::UnobstructedLaneChangePlugin():
-                                    start_speed_(5.0),
-                                    target_speed_(6.0),
-                                    trajectory_time_length_(6.0),
-                                    control_plugin_name_("mpc_follower") {}
+    UnobstructedLaneChangePlugin::UnobstructedLaneChangePlugin(){}
+                                    
 
     void UnobstructedLaneChangePlugin::initialize()
     {

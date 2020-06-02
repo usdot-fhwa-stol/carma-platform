@@ -38,7 +38,6 @@ TEST(UnobstructedLaneChangePluginTest, testCreateLaneChangeTrajectory1)
     EXPECT_NEAR(2.25, res[45].y, 0.05);
     EXPECT_NEAR(9.85, res[59].x, 0.05);
     EXPECT_NEAR(2.95, res[59].y, 0.05);
-    EXPECT_NEAR(1.0, res[59].target_time, 0.01);
 }
 
 

@@ -96,8 +96,8 @@ namespace unobstructed_lanechange
             double traj_freq = 10;
 
             // ROS params
-            double trajectory_time_length_;
-            std::string control_plugin_name_;
+            double trajectory_time_length_ = 6;
+            std::string control_plugin_name_ = "mpc_follower";
             
 
             // start vehicle speed
