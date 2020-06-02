@@ -22,8 +22,11 @@
 
 namespace unobstructed_lanechange
 {
-    UnobstructedLaneChangePlugin::UnobstructedLaneChangePlugin(){}
-    
+    UnobstructedLaneChangePlugin::UnobstructedLaneChangePlugin():
+                                    start_speed_(5.0),
+                                    target_speed_(6.0),
+                                    trajectory_time_length_(6.0),
+                                    control_plugin_name_("mpc_follower") {}
 
     void UnobstructedLaneChangePlugin::initialize()
     {
@@ -41,7 +44,7 @@ namespace unobstructed_lanechange
         plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
         
         pnh_->param<double>("trajectory_time_length", trajectory_time_length_, 6.0);
-        pnh_->param<std::string>("control_plugin_name", control_plugin_name_, "mpc_follower");
+        pnh_->param<std::string>("control_plugin_name", control_plugin_name_, "NULL");
 
         ros::CARMANodeHandle::setSpinCallback([this]() -> bool {
             ubobstructed_lanechange_plugin_discovery_pub_.publish(plugin_discovery_msg_);
