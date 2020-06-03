@@ -95,6 +95,9 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::ControlMessage& geofence_ms
   // Get affected lanelet or areas by converting the georeference and querying the map using points in the geofence
   gf.affected_parts_ = getAffectedLaneletOrAreas(geofence_msg);
 
+  // Get schedule
+  // TODO dev
+  
   //TODO: Uncomment once gf is fully defined
   scheduler_.addGeofence(gf);  // Add the geofence to the scheduler
   ROS_INFO_STREAM("New geofence message received by WMBroadcaster with id" << gf.id_);

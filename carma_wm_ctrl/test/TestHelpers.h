@@ -34,7 +34,8 @@
 namespace carma_wm
 {
 // Helper function which waits until the provided atomic matches the expected value or the timeout expires
-inline bool waitForEqOrTimeout(double timeout_s, uint32_t expected, std::atomic<uint32_t>& actual)
+template <class T>
+inline bool waitForEqOrTimeout(double timeout_s, T expected, std::atomic<T>& actual)
 {
   auto start = std::chrono::system_clock::now();
   std::chrono::duration<double, std::ratio<1, 1>> sec(timeout_s);
