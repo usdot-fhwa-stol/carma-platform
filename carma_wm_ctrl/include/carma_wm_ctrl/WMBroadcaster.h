@@ -29,6 +29,8 @@
 
 #include "MapConformer.h"
 
+#include <cav_msgs/ControlMessage.h>
+
 namespace carma_wm_ctrl
 {
 /*!
@@ -60,9 +62,9 @@ public:
   /*!
    * \brief Callback to add a geofence to the map
    *
-   * \param geofence_msg The geofence to add. TODO replace with actual message type once defined
+   * \param geofence_msg The ros msg of the geofence to add. 
    */
-  void geofenceCallback(const Geofence& gf);
+  void geofenceCallback(const cav_msgs::ControlMessage& geofence_msg);
 
   /*!
    * \brief Adds a geofence to the current map
@@ -73,6 +75,12 @@ public:
    * \brief Removes a geofence from the current map
    */
   void removeGeofence(const Geofence& gf);
+
+  /*!
+   * \brief Gets the affected lanelet or areas based on the geofence_msg
+   * NOTE: Currently only checks lanelets
+   */
+  lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const cav_msgs::ControlMessage& geofence_msg);
 
 private:
   lanelet::LaneletMapPtr base_map_;

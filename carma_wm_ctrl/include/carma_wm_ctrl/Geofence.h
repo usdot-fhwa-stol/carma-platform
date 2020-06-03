@@ -17,8 +17,15 @@
 #include <lanelet2_core/primitives/Point.h>
 #include "GeofenceSchedule.h"
 
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
+#include <lanelet2_core/primitives/LaneletOrArea.h>
+
 namespace carma_wm_ctrl
 {
+using namespace lanelet::units::literals;
 /**
  * @brief An object representing a geofence use for communications with CARMA Cloud
  *
@@ -27,10 +34,15 @@ namespace carma_wm_ctrl
 class Geofence
 {
 public:
-  uint32_t id_;  // Unique id of this geofence. TODO use id matching geofence standard
+  boost::uuids::uuid id_;  // Unique id of this geofence. TODO use id matching geofence standard
 
   GeofenceSchedule schedule;  // The schedule this geofence operates with
 
   //// TODO Add attributes provided by geofences
+  lanelet::DigitalSpeedLimitPtr min_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_kmh, {}, {},
+                                                     { lanelet::Participants::VehicleCar }));
+  lanelet::DigitalSpeedLimitPtr max_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_kmh, {}, {},
+                                                     { lanelet::Participants::VehicleCar }));
+  lanelet::ConstLaneletOrAreas affected_parts_;
 };
 }  // namespace carma_wm_ctrl
