@@ -25,26 +25,50 @@
 
 
 __pull_newest_carma_base() {
-    local remote_image=$(wget -q https://registry.hub.docker.com/v1/repositories/usdotfhwastol/carma-base/tags -O -  | \
+    if [ "$1" = "-d" ]; then
+        local remote_image=$(wget -q https://registry.hub.docker.com/v1/repositories/usdotfhwastoldev/carma-base/tags -O -  | \
+        sed -e 's/[][]//g' -e 's/"//g' -e 's/ //g' | tr '}' '\n'  | \
+        awk -F: '{print "usdotfhwastoldev/carma-base:"$3}' | tail -n 1)
+    elif [ "$1" = "-c" ]; then
+        local remote_image=$(wget -q https://registry.hub.docker.com/v1/repositories/usdotfhwastolcandidate/carma-base/tags -O -  | \
+        sed -e 's/[][]//g' -e 's/"//g' -e 's/ //g' | tr '}' '\n'  | \
+        awk -F: '{print "usdotfhwastolcandidate/carma-base:"$3}' | tail -n 1)
+    else
+        local remote_image=$(wget -q https://registry.hub.docker.com/v1/repositories/usdotfhwastol/carma-base/tags -O -  | \
         sed -e 's/[][]//g' -e 's/"//g' -e 's/ //g' | tr '}' '\n'  | \
         awk -F: '{print "usdotfhwastol/carma-base:"$3}' | tail -n 1)
+    fi
     
     echo "No local carma-base image found, pulling down the most recent from Dockerhub..."
     docker pull $remote_image
 }
 
 __get_most_recent_carma_base() {
-    docker image ls --format "{{.Repository}}:{{.Tag}}" "usdotfhwastol/carma-base" | grep -v "<none>$" | head -n 1
+    if [ "$1" = "-d" ]; then
+        local USERNAME=usdotfhwastoldev
+    elif [ "$1" = "-c" ]; then
+        local USERNAME=usdotfhwastolcandidate
+    else
+        local USERNAME=usdotfhwastol
+    fi
+    docker image ls --format "{{.Repository}}:{{.Tag}}" "$USERNAME/carma-base" | grep -v "<none>$" | head -n 1
 }
 
 carma-config__set() {
+    if [ "$1" = "-d" ]; then
+        local USERNAME=usdotfhwastoldev
+    elif [ "$1" = "-c" ]; then
+        local USERNAME=usdotfhwastolcandidate
+    else
+        local USERNAME=usdotfhwastol
+    fi
     if [[ -z $1 ]]; then
         echo "Please specify a tag string for carma-config to set."
         echo "Done."
         exit -1
     fi
 
-    local IMAGE_NAME="usdotfhwastol/carma-config:$1"
+    local IMAGE_NAME="$USERNAME/carma-config:$1"
     if [ ! -z "$(echo $1 | grep :)" ]; then
         IMAGE_NAME=$1
     fi
@@ -75,11 +99,16 @@ carma-config__edit() {
     fi
 
     echo "Opening shell inside carma-config container with read/write privileges..."
+    if [ "$1" = "-d" ]; then
+        local OPTION="-d"
+    elif [ "$1" = "-c" ]; then
+        local OPTION="-c"
+    fi
 
-    local carma_base=$(__get_most_recent_carma_base)
+    local carma_base=$(__get_most_recent_carma_base $OPTION)
     if [[ -z $carma_base ]]; then
-        __pull_newest_carma_base
-        carma_base=$(__get_most_recent_carma_base)
+        __pull_newest_carma_base $OPTION
+        carma_base=$(__get_most_recent_carma_base $OPTION)
     fi
 
     docker run -it --rm --volumes-from carma-config $carma_base bash
@@ -94,10 +123,16 @@ carma-config__inspect() {
 
     echo "Opening shell inside carma-config container with read-only privileges..."
 
-    local carma_base=$(__get_most_recent_carma_base)
+    if [ "$1" = "-d" ]; then
+        local OPTION="-d"
+    elif [ "$1" = "-c" ]; then
+        local OPTION="-c"
+    fi
+
+    local carma_base=$(__get_most_recent_carma_base $OPTION)
     if [[ -z $carma_base ]]; then
-        __pull_newest_carma_base
-        carma_base=$(__get_most_recent_carma_base)
+        __pull_newest_carma_base $OPTION
+        carma_base=$(__get_most_recent_carma_base $OPTION)
     fi
 
     docker run -it --rm --volumes-from carma-config:ro $carma_base bash
@@ -116,22 +151,44 @@ carma-config__reset() {
 }
 
 carma-config__list_local() {
+    if [ "$1" = "-d" ]; then
+        local USERNAME=usdotfhwastoldev
+    else
+        local USERNAME=usdotfhwastol
+    fi
     echo "Locally installed images: "
     echo ""
-    docker images usdotfhwastol/carma-config
+    docker images $USERNAME/carma-config
 }
 
 carma-config__list_remote() {
-    echo "Remotely available images from usdotfhwastol Dockerhub: "
-    echo ""
-    echo "IMAGE                           TAG"
-    wget -q https://registry.hub.docker.com/v1/repositories/usdotfhwastol/carma-config/tags -O -  | \
-    sed -e 's/[][]//g' -e 's/"//g' -e 's/ //g' | tr '}' '\n'  | \
-    awk -F: '{print "usdotfhwastol/carma-config\t"$3}'
+    if [ "$1" = "-d" ]; then
+        wget -q https://registry.hub.docker.com/v1/repositories/usdotfhwastoldev/carma-config/tags -O -  | \
+        sed -e 's/[][]//g' -e 's/"//g' -e 's/ //g' | tr '}' '\n'  | \
+        awk -F: 'BEGIN {print "Remotely available images from usdotfhwastoldev Dockerhub:\nIMAGE\t\t\t\tTAG"} {print "usdotfhwastoldev/carma-config\t"$3}'
+    elif [ "$1" = "-c" ]; then
+        wget -q https://registry.hub.docker.com/v1/repositories/usdotfhwastolcandidate/carma-config/tags -O -  | \
+        sed -e 's/[][]//g' -e 's/"//g' -e 's/ //g' | tr '}' '\n'  | \
+        awk -F: 'BEGIN {print "Remotely available images from usdotfhwastolcandidate Dockerhub:\nIMAGE\t\t\t\tTAG"} {print "usdotfhwastolcandidate/carma-config\t"$3}' 
+    else
+        wget -q https://registry.hub.docker.com/v1/repositories/usdotfhwastol/carma-config/tags -O -  | \
+        sed -e 's/[][]//g' -e 's/"//g' -e 's/ //g' | tr '}' '\n'  | \
+        awk -F: 'BEGIN {print "Remotely available images from usdotfhwastol Dockerhub:\nIMAGE\t\t\t\tTAG"} {print "usdotfhwastol/carma-config\t"$3}'    
+    fi
 }
 
 carma-config__install() {
-    local IMAGE_NAME="usdotfhwastol/carma-config:$1"
+    if [ "$1" = "-d" ]; then
+        local USERNAME=usdotfhwastoldev
+        shift
+    elif [ "$1" = "-c" ]; then
+        local USERNAME=usdotfhwastolcandidate
+        shift
+    else
+        local USERNAME=usdotfhwastol
+    fi
+
+    local IMAGE_NAME="$USERNAME/carma-config:$1"
     if [ ! -z "$(echo $1 | grep :)" ]; then
         IMAGE_NAME=$1
     fi
@@ -253,7 +310,20 @@ carma-config__status() {
 }
 
 carma__exec() {
-    local TARGET_IMAGE="usdotfhwastol/carma-platform:latest"
+    if [ "$1" = "-d" ]; then
+        local USERNAME=usdotfhwastoldev
+        local TAG=develop
+        shift
+    elif [ "$1" = "-c" ]; then
+        local USERNAME=usdotfhwastolcandidate
+        local TAG=candidate
+        shift
+    else
+        local USERNAME=usdotfhwastol
+        local TAG=latest
+    fi
+
+    local TARGET_IMAGE="$USERNAME/carma-platform:$TAG"
 
     # Check if the -i argument was provided
     # If the image was specified then use that
@@ -364,13 +434,25 @@ Please enter one of the following commands:
             - Report the current configuration status in total or for the
               specified file
         list_local
-            - List available configurations on the host machine
+            - List available usdotfhwastol configurations on the host machine
+            -d 
+                - List available usdotfhwastoldev configurations on the host machine
+            -c
+                - List available usdotfhwastolcandidate configurations on the host machine
         list_remote 
-            - List available configurations on Dockerhub
+            - List available usdotfhwastol configurations on Dockerhub
+            -d
+                - List available usdotfhwastoldev configurations on Dockerhub
+            -c
+                - List available usdotfhwastolcandidate configurations on Dockerhub
         install <tag/image> 
             - Install a configuration identified by <tag> and download 
               dependencies. If <tag> is bare (no :), it is assumed to be a
               usdotfhwastol/carma-config tag.
+            -d
+                - tag organization is assumed to be usdotfhwastoldev
+            -c
+                - tag organization is assumed to be usdotfhwastolcandidate
         set <tag/image> 
             - Set the configuration to the version identified by <tag>. If 
               <tag> is bare (no :), it is assumed to be a 
@@ -378,9 +460,17 @@ Please enter one of the following commands:
         edit 
             - Open a shell inside the current configuration storage with r/w 
               permissions
+            -d
+                - uses a usdotfhwastoldev/carma-base image
+            -c
+                - uses a usdotfhwastolcandidate/carma-base image
         inspect 
             - Open a shell inside the current configuration storage with r/o
               permissions
+            -d
+                - uses a usdotfhwastoldev/carma-base image
+            -c
+                - uses a usdotfhwastolcandidate/carma-base image
         reset 
             - Restore a configuration to its default state
     start (all (docker-compose up args)) 
@@ -395,6 +485,10 @@ Please enter one of the following commands:
         - Opens a new container with GUI support from the carma-platform or carma-messenger image with the version specified in docker compose. If no version is found it will use latest.
           This container can be used to interact with CARMA using ROS tooling such as Rviz and RQT.
         - If the -i <image> argument is provided then the target image will be used instead
+        -d
+            - uses a usdotfhwastoldev image
+        -c
+            - uses a usdotfwhastolcandidate image
     ps
         - List all running CARMA docker containers
     attach
