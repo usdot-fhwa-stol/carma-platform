@@ -72,7 +72,7 @@ Welcome to the CARMAPlatform contributing guide. There are a few guidelines that
 * Feel free to open pull requests, and the CARMAPlatform team will communicate through it with any comments.
 
 #### Become a Collaborator
-**Please fill out this [form](https://docs.google.com/forms/d/e/1FAIpQLSdjEh0OPBVw-jaqfZ6gbyoPV0RetMOirvzp5NpE_whdrnhLdg/viewform) to be added to the CARMA Collaborative.**
+**Please fill out this [form](https://forms.gle/2Rd6ii4BgCLCmRpi7) to be added to the CARMA Collaborative.**
 
 Four Contribution Levels
 1.	Informative Group Contributor.
