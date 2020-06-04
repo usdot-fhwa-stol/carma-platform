@@ -100,7 +100,7 @@ TEST(WMBroadcaster, geofenceCallback)
                                  ros::Duration(2));
 
   cav_msgs::ControlMessage gf_msg;
-  std::copy( gf.id_.begin(),  gf.id_.end(), gf_msg.id.begin());
+  std::copy(gf.id_.begin(),  gf.id_.end(), gf_msg.id.begin());
   gf_msg.schedule.start = gf.schedule.schedule_start_;
   gf_msg.schedule.end = gf.schedule.schedule_end_;
   gf_msg.schedule.between.start =  gf.schedule.control_start_;
@@ -118,14 +118,13 @@ TEST(WMBroadcaster, geofenceCallback)
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
 
         ASSERT_EQ(4, map->laneletLayer.size());  // Verify the map can be decoded
-
         base_map_call_count++;
       },
       std::make_unique<TestTimerFactory>());
 
   // Get and convert map to binary message
   auto map = carma_wm::getDisjointRouteMap();
-
+  
   autoware_lanelet2_msgs::MapBin msg;
   lanelet::utils::conversion::toBinMsg(map, &msg);
 
@@ -133,13 +132,13 @@ TEST(WMBroadcaster, geofenceCallback)
 
   // Trigger basemap callback
   wmb.baseMapCallback(map_msg_ptr);
-
+  wmb.geoReferenceCallback("sample_proj_string");
   ASSERT_EQ(1, base_map_call_count);
 
   // Verify adding geofence call
   // TODO: dev uncomment when geofence schedule part is finished
 
-  wmb.geofenceCallback(gf_msg);
+  wmb.geofenceCallback(gf_msg); 
 
   ros::Time::setNow(ros::Time(2.1));  // Set current time
 

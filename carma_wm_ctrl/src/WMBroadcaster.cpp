@@ -64,7 +64,8 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
   lanelet::utils::conversion::fromBinMsg(*map_msg, new_map);
 
   base_map_ = new_map;  // Store map
-
+  //TODO dev
+  // We dont have the georeference...
   lanelet::MapConformer::ensureCompliance(base_map_);  // Update map to ensure it complies with expectations
 
   // Publish map
@@ -108,6 +109,13 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::ControlMessage& geofence_ms
   ROS_INFO_STREAM("New geofence message received by WMBroadcaster with id" << gf.id_);
 };
 
+void WMBroadcaster::geoReferenceCallback(std::string geo_ref)
+{
+  // TODO: dev make this base_map_georef into loading from map_param_loader, and reverse the change in LaneletMap.h
+  base_map_georef_ = geo_ref;
+}
+
+
 // TODO dev
 lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_msgs::ControlMessage& geofence_msg)
 {
@@ -118,12 +126,12 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
 
   // REVIEW: current approach sort of codes it barebone, and not depend on lanelet2_extension/projection
   // get projector from geofence's local coordinates to base map's coordinates using their respective georeferences
-  std::string base_map_georef = base_map_->getGeoreference();
-  if (base_map_georef == "")
+
+  if (base_map_georef_ == "")
     throw lanelet::InvalidObjectStateError(std::string("Base lanelet map has empty proj string loaded as georeference. Therefore, WMBroadcaster failed to\n ") +
                                           std::string("get transformation between the geofence and the map"));
 
-  static PJ* geofence_in_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, geofence_msg.proj.c_str(), base_map_georef.c_str(), NULL);
+  static PJ* geofence_in_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, geofence_msg.proj.c_str(), base_map_georef_.c_str(), NULL);
   
   // convert all geofence points into our map's frame
   std::vector<lanelet::Point3d> gf_pts_in_base_map;
@@ -137,6 +145,7 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
 
   // Logic to detect which part is affected
   // basically should use boost geometry stuff
+  // TODO dev
   lanelet::ConstLaneletOrAreas affected_parts;
   
   return affected_parts;

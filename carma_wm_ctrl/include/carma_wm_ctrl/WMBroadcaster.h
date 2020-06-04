@@ -55,9 +55,15 @@ public:
    * \brief Callback to set the base map when it has been loaded
    *
    * \param map_msg The map message to use as the base map
-   *
    */
   void baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr& map_msg);
+
+  /*!
+   * \brief Callback to set the base map georeference (proj string)
+   *
+   * \param georef_msg TODO: change to actual georef msg type when it is defined
+   */
+  void geoReferenceCallback(std::string geo_ref);
 
   /*!
    * \brief Callback to add a geofence to the map
@@ -89,5 +95,6 @@ private:
   std::mutex map_mutex_;
   PublishMapCallback map_pub_;
   GeofenceScheduler scheduler_;
+  std::string base_map_georef_;
 };
 }  // namespace carma_wm_ctrl
