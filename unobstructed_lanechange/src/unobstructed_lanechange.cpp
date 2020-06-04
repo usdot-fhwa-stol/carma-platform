@@ -53,6 +53,7 @@ namespace unobstructed_lanechange
 
     }
 
+
     void UnobstructedLaneChangePlugin::run()
     {
     	initialize();
@@ -77,7 +78,7 @@ namespace unobstructed_lanechange
         
         trajectory.header.stamp = ros::Time::now();
         trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
-        trajectory.trajectory_points = compose_lanechange_trajectory(start_lanelet_id, start_downtrack, end_lanelet_id, end_downtrack);
+        trajectory.trajectory_points = compose_lanechange_trajectory(_wm, start_lanelet_id, start_downtrack, end_lanelet_id, end_downtrack);
 
         resp.trajectory_plan = trajectory;
         resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_CHANGE);
@@ -87,9 +88,9 @@ namespace unobstructed_lanechange
     }
 
 
-    std::vector<cav_msgs::TrajectoryPlanPoint> UnobstructedLaneChangePlugin::compose_lanechange_trajectory(const std::string& start_id, double start_downtrack, const std::string& end_id, double end_downtrack){
-        std::vector<double> start_point = extract_point_from_lanelet(start_id, start_downtrack);
-        std::vector<double> end_point = extract_point_from_lanelet(end_id, end_downtrack);
+    std::vector<cav_msgs::TrajectoryPlanPoint> UnobstructedLaneChangePlugin::compose_lanechange_trajectory(carma_wm::WorldModelConstPtr wm, const std::string& start_id, double start_downtrack, const std::string& end_id, double end_downtrack){
+        std::vector<double> start_point = extract_point_from_lanelet(wm, start_id, start_downtrack);
+        std::vector<double> end_point = extract_point_from_lanelet(wm, end_id, end_downtrack);
         std::vector<cav_msgs::TrajectoryPlanPoint> tmp_trajectory = create_lanechange_trajectory(start_point, end_point);
         std::vector<cav_msgs::TrajectoryPlanPoint> final_trajectory = post_process_traj_points(tmp_trajectory);
         return final_trajectory;
@@ -182,12 +183,15 @@ namespace unobstructed_lanechange
     }
     
 
-    std::vector<double> UnobstructedLaneChangePlugin::extract_point_from_lanelet(const std::string& lanelet_id, double downtrack){
+    std::vector<double> UnobstructedLaneChangePlugin::extract_point_from_lanelet(carma_wm::WorldModelConstPtr wm, const std::string& lanelet_id, double downtrack){
 
         std::vector<double> point;
-        auto shortest_path = _wm->getRoute()->shortestPath();
+        auto shortest_path = wm->getRoute()->shortestPath();
         std::vector<lanelet::ConstLanelet> tmp;
         lanelet::ConstLanelet start_lanelet;
+
+
+        double min_downtrack = 0.5;
 
         int lanelet_id_ = std::stoi(lanelet_id);
 
@@ -200,15 +204,24 @@ namespace unobstructed_lanechange
             if (l.id()==lanelet_id_) start_lanelet = l;
         }
 
-        for (auto centerline_point:start_lanelet.centerline2d()){
-            double dt = _wm->routeTrackPos(centerline_point).downtrack;
-            if (dt - downtrack <= 1.0){
-                double px = centerline_point.x();
-                double py = centerline_point.y();
-                point.push_back(px);
-                point.push_back(py);
+        if (downtrack < min_downtrack){
+            point.push_back(start_lanelet.centerline2d()[0].x());
+            point.push_back(start_lanelet.centerline2d()[0].y());
+        }
+        else{
+            for (auto centerline_point:start_lanelet.centerline2d()){
+                double dt = wm->routeTrackPos(centerline_point).downtrack;
+                if (dt - downtrack <= min_downtrack){
+                    double px = centerline_point.x();
+                    double py = centerline_point.y();
+                    point.push_back(px);
+                    point.push_back(py);
+                    break;
+                }
             }
         }
+
+        
 
         if(point.size() < 2)
         {
