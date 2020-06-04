@@ -118,13 +118,13 @@ TEST(GeofenceScheduler, addGeofence)
 
   ros::Time::setNow(ros::Time(4.2));  // Set current time
 
-  ASSERT_TRUE(carma_wm::waitForEqOrTimeout(10.0, unsigned(2), active_call_count));
+  ASSERT_TRUE(carma_wm::waitForEqOrTimeout(10.0, 2, active_call_count));
   ASSERT_EQ(1, inactive_call_count.load());
   ASSERT_EQ(first_id_hashed, last_active_gf.load());
 
   ros::Time::setNow(ros::Time(5.5));  // Set current time
 
-  ASSERT_TRUE(carma_wm::waitForEqOrTimeout(10.0, unsigned(2), inactive_call_count));
+  ASSERT_TRUE(carma_wm::waitForEqOrTimeout(10.0, 2, inactive_call_count));
   ASSERT_EQ(2, active_call_count.load());
   ASSERT_EQ(first_id_hashed, last_active_gf.load());
 
@@ -143,7 +143,7 @@ TEST(GeofenceScheduler, addGeofence)
 
   ros::Time::setNow(ros::Time(11.0));  // Set current time
 
-  carma_wm::waitForEqOrTimeout(3.0, unsigned(10), inactive_call_count);  // Let some time pass just in case
+  carma_wm::waitForEqOrTimeout(3.0, 10, inactive_call_count);  // Let some time pass just in case
   ASSERT_EQ(2, inactive_call_count.load());
   ASSERT_EQ(2, active_call_count.load());
   ASSERT_EQ(first_id_hashed, last_active_gf.load());

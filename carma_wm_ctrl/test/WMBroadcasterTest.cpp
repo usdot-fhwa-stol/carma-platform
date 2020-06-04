@@ -29,6 +29,12 @@
 #include "TestTimer.h"
 #include "TestTimerFactory.h"
 
+
+#include <cav_msgs/ControlMessage.h>
+#include <cav_msgs/DaySchedule.h>
+#include <cav_msgs/Schedule.h>
+#include <cav_msgs/ScheduleParams.h>
+
 using ::testing::_;
 using ::testing::A;
 using ::testing::DoAll;
@@ -88,10 +94,20 @@ TEST(WMBroadcaster, geofenceCallback)
   gf.id_ = boost::uuids::random_generator()();
   gf.schedule = GeofenceSchedule(ros::Time(1),  // Schedule between 1 and 8
                                  ros::Time(8),
-                                 ros::Duration(2),    // Start's at 2
+                                 ros::Duration(2),    // Starts at 2
                                  ros::Duration(3.1),  // Ends at by 3.1
                                  ros::Duration(1),    // Duration of 1 and interval of two so active durations are (2-3)
                                  ros::Duration(2));
+
+  cav_msgs::ControlMessage gf_msg;
+  std::copy( gf.id_.begin(),  gf.id_.end(), gf_msg.id.begin());
+  gf_msg.schedule.start = gf.schedule.schedule_start_;
+  gf_msg.schedule.end = gf.schedule.schedule_end_;
+  gf_msg.schedule.between.start =  gf.schedule.control_start_;
+  gf_msg.schedule.between.end =  gf.schedule.control_end_;
+  gf_msg.schedule.repeat.duration =  gf.schedule.control_duration_;
+  gf_msg.schedule.repeat.interval =  gf.schedule.control_interval_;
+  
   ros::Time::setNow(ros::Time(0));  // Set current time
 
   size_t base_map_call_count = 0;
@@ -122,18 +138,17 @@ TEST(WMBroadcaster, geofenceCallback)
 
   // Verify adding geofence call
   // TODO: dev uncomment when geofence schedule part is finished
-  /*
-  wmb.geofenceCallback(gf);
+
+  wmb.geofenceCallback(gf_msg);
 
   ros::Time::setNow(ros::Time(2.1));  // Set current time
 
-  std::atomic<uint32_t> temp(0);
+  std::atomic<std::size_t> temp(0);
   carma_wm::waitForEqOrTimeout(3.0, 1, temp);
 
   ros::Time::setNow(ros::Time(3.1));  // Set current time
 
   carma_wm::waitForEqOrTimeout(3.0, 1, temp);
-  */
 }
 
 }  // namespace carma_wm_ctrl

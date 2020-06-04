@@ -77,7 +77,7 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::ControlMessage& geofence_ms
 {
   std::lock_guard<std::mutex> guard(map_mutex_);
   Geofence gf;
-
+  // Get ID
   std::copy(geofence_msg.id.begin(), geofence_msg.id.end(), gf.id_.begin());
 
   // TODO: logic to determine what type of geofence goes here
@@ -96,9 +96,14 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::ControlMessage& geofence_ms
   gf.affected_parts_ = getAffectedLaneletOrAreas(geofence_msg);
 
   // Get schedule
-  // TODO dev
+  // TODO dev DOW and UTC offset left
+  gf.schedule = GeofenceSchedule(geofence_msg.schedule.start,  
+                                 geofence_msg.schedule.end,
+                                 geofence_msg.schedule.between.start,     
+                                 geofence_msg.schedule.between.end, 
+                                 geofence_msg.schedule.repeat.duration,   
+                                 geofence_msg.schedule.repeat.interval);
   
-  //TODO: Uncomment once gf is fully defined
   scheduler_.addGeofence(gf);  // Add the geofence to the scheduler
   ROS_INFO_STREAM("New geofence message received by WMBroadcaster with id" << gf.id_);
 };
@@ -106,19 +111,10 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::ControlMessage& geofence_ms
 // TODO dev
 lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_msgs::ControlMessage& geofence_msg)
 {
-  // Convert the points x,y,z to our local frame's x,y,z
-  // 1. we might need to get tf between geofence_msg.proj to our map's georeference
-  // 2. convert all geofence_msg.points
-
   // We need to query the affected lanelets or areas
-  // - currently assuming only lanelet is affected (will change in the future)
-  // - points fell within the boundaries are considered to point that lanelet
+  // - currently assuming only lanelet is affected (will add area in the future)
+  // - points fell within the boundaries are considered as pointing to that lanelet
   // - if the points exactly match the the boundary, it is considered to not relate to that lanelet
-
-  // input: map georeference, and gf georeference
-  // coordinates in lat/lon as well as xyz
-  // msg proj and datum should convert from lat/lon to xyz
-  // need to convert form msj map's xyz to map's georeference xyz
 
   // REVIEW: current approach sort of codes it barebone, and not depend on lanelet2_extension/projection
   // get projector from geofence's local coordinates to base map's coordinates using their respective georeferences
@@ -130,18 +126,19 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
   static PJ* geofence_in_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, geofence_msg.proj.c_str(), base_map_georef.c_str(), NULL);
   
   // convert all geofence points into our map's frame
-  std::vector<lanelet::Point3d> gf_pts_base_map;
+  std::vector<lanelet::Point3d> gf_pts_in_base_map;
   for (auto pt : geofence_msg.points)
   {
     PJ_COORD c{{pt.x, pt.y, pt.z, 0}};
     PJ_COORD c_out;
     c_out = proj_trans(geofence_in_map_proj, PJ_FWD, c);
-    gf_pts_base_map.push_back(lanelet::Point3d{c_out.xyz.x, c_out.xyz.y, c_out.xyz.z});
+    gf_pts_in_base_map.push_back(lanelet::Point3d{c_out.xyz.x, c_out.xyz.y, c_out.xyz.z});
   }
 
   // Logic to detect which part is affected
+  // basically should use boost geometry stuff
   lanelet::ConstLaneletOrAreas affected_parts;
-
+  
   return affected_parts;
 }
 
