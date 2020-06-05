@@ -61,6 +61,8 @@ private:
 
   ros::Subscriber base_map_sub_;
 
+  ros::Subscriber georef_sub_;
+
   WMBroadcaster wmb_;
 };
 }  // namespace carma_wm_ctrl

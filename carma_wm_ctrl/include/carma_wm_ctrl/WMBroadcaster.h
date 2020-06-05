@@ -30,6 +30,7 @@
 #include "MapConformer.h"
 
 #include <cav_msgs/ControlMessage.h>
+#include <std_msgs/String.h>
 
 namespace carma_wm_ctrl
 {
@@ -61,9 +62,10 @@ public:
   /*!
    * \brief Callback to set the base map georeference (proj string)
    *
-   * \param georef_msg TODO: change to actual georef msg type when it is defined
+   * \param georef_msg Proj string that specifies the georeference of the map. 
+   * It is used for transfering frames between that of geofence and that of the vehicle
    */
-  void geoReferenceCallback(std::string geo_ref);
+  void geoReferenceCallback(const std_msgs::String& geo_ref);
 
   /*!
    * \brief Callback to add a geofence to the map

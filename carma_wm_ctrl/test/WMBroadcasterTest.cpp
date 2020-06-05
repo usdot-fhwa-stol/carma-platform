@@ -132,7 +132,9 @@ TEST(WMBroadcaster, geofenceCallback)
 
   // Trigger basemap callback
   wmb.baseMapCallback(map_msg_ptr);
-  wmb.geoReferenceCallback("sample_proj_string");
+  std_msgs::String sample_proj_string;
+  sample_proj_string.data = "sample_proj_string";
+  wmb.geoReferenceCallback(sample_proj_string);
   ASSERT_EQ(1, base_map_call_count);
 
   // Verify adding geofence call

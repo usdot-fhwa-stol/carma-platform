@@ -24,6 +24,7 @@
 #include <type_traits>
 
 
+
 // Misheel's additional include files
 #include <proj.h>
 #include <lanelet2_io/Projection.h>
@@ -109,10 +110,9 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::ControlMessage& geofence_ms
   ROS_INFO_STREAM("New geofence message received by WMBroadcaster with id" << gf.id_);
 };
 
-void WMBroadcaster::geoReferenceCallback(std::string geo_ref)
+void WMBroadcaster::geoReferenceCallback(const std_msgs::String& geo_ref)
 {
-  // TODO: dev make this base_map_georef into loading from map_param_loader, and reverse the change in LaneletMap.h
-  base_map_georef_ = geo_ref;
+  base_map_georef_ = geo_ref.data;
 }
 
 

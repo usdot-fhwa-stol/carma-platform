@@ -12,5 +12,8 @@
 -->
 
 <launch>
-  <node name="carma_wm_broadcaster" pkg="carma_wm_ctrl" type="carma_wm_ctrl_node"/>
+  <arg name="georeference_topic" default="georeference" doc="The topic name of the georeference that is published by map_param_loader form the vector_map.osm"/>
+  <node name="carma_wm_broadcaster" pkg="carma_wm_ctrl" type="carma_wm_ctrl_node">
+    <remap from="georeference" to="$(arg georeference_topic)"/>
+  </node>
 </launch>

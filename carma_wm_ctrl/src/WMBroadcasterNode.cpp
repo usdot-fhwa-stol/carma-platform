@@ -36,7 +36,8 @@ int WMBroadcasterNode::run()
   map_pub_ = cnh_.advertise<autoware_lanelet2_msgs::MapBin>("semantic_map", 1, true);
   // Base Map Sub
   base_map_sub_ = cnh_.subscribe("base_map", 1, &WMBroadcaster::baseMapCallback, &wmb_);
-
+  // Base Map Georeference Sub
+  georef_sub_ = cnh_.subscribe("georeference", 1, &WMBroadcaster::geoReferenceCallback, &wmb_);
   // Spin
   cnh_.setSpinRate(10);
   cnh_.spin();
