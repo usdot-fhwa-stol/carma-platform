@@ -43,6 +43,8 @@ public:
                                                      { lanelet::Participants::VehicleCar }));
   lanelet::DigitalSpeedLimitPtr max_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_kmh, {}, {},
                                                      { lanelet::Participants::VehicleCar }));
-  lanelet::ConstLaneletOrAreas affected_parts_;
+  std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> prev_regems_;
+
+  lanelet::Lanelets affected_parts_;
 };
 }  // namespace carma_wm_ctrl

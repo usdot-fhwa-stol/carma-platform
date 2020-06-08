@@ -98,7 +98,7 @@ TEST(WMBroadcaster, geofenceCallback)
                                  ros::Duration(3.1),  // Ends at by 3.1
                                  ros::Duration(1),    // Duration of 1 and interval of two so active durations are (2-3)
                                  ros::Duration(2));
-
+  // convert to ros msg
   cav_msgs::ControlMessage gf_msg;
   std::copy(gf.id_.begin(),  gf.id_.end(), gf_msg.id.begin());
   gf_msg.schedule.start = gf.schedule.schedule_start_;
@@ -132,14 +132,14 @@ TEST(WMBroadcaster, geofenceCallback)
 
   // Trigger basemap callback
   wmb.baseMapCallback(map_msg_ptr);
-  std_msgs::String sample_proj_string;
-  sample_proj_string.data = "sample_proj_string";
-  wmb.geoReferenceCallback(sample_proj_string);
   ASSERT_EQ(1, base_map_call_count);
 
-  // Verify adding geofence call
-  // TODO: dev uncomment when geofence schedule part is finished
+  // Setting georefernce otherwise, geofenceCallback will throw exception
+  std_msgs::String sample_proj_string;
+  sample_proj_string.data = "sample_proj_string"; // it doesn't have to be set correctly for this test
+  wmb.geoReferenceCallback(sample_proj_string);
 
+  // Verify adding geofence call
   wmb.geofenceCallback(gf_msg); 
 
   ros::Time::setNow(ros::Time(2.1));  // Set current time

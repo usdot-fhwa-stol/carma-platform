@@ -77,18 +77,18 @@ public:
   /*!
    * \brief Adds a geofence to the current map
    */
-  void addGeofence(const Geofence& gf);
+  void addGeofence(Geofence& gf);
 
   /*!
    * \brief Removes a geofence from the current map
    */
-  void removeGeofence(const Geofence& gf);
+  void removeGeofence(Geofence& gf);
 
   /*!
    * \brief Gets the affected lanelet or areas based on the geofence_msg
    * NOTE: Currently only checks lanelets
    */
-  lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const cav_msgs::ControlMessage& geofence_msg);
+  lanelet::Lanelets getAffectedLaneletOrAreas(const cav_msgs::ControlMessage& geofence_msg);
 
 private:
   lanelet::LaneletMapPtr base_map_;
