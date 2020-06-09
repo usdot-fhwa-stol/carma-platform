@@ -24,8 +24,6 @@
 #include <type_traits>
 
 #include <lanelet2_core/primitives/Polygon.h>
-
-// Misheel's additional include files
 #include <proj.h>
 #include <lanelet2_io/Projection.h>
 #include <j2735_msgs/ControlType.h>

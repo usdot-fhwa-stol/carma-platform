@@ -29,21 +29,10 @@
 #include "TestTimer.h"
 #include "TestTimerFactory.h"
 
-
 #include <cav_msgs/ControlMessage.h>
 #include <cav_msgs/DaySchedule.h>
 #include <cav_msgs/Schedule.h>
 #include <cav_msgs/ScheduleParams.h>
-
-////// ALL TEMPS UNDER
-#include <lanelet2_core/geometry/Polygon.h>
-#include <lanelet2_core/primitives/Polygon.h>
-#include <lanelet2_core/Forward.h>
-#include <cav_msgs/ExternalObject.h> //temp
-#include <cav_msgs/RoadwayObstacle.h> //temp
-#include <geometry_msgs/PoseWithCovariance.h> //temp
-#include <boost/geometry.hpp>
-#include <boost/geometry/geometries/geometries.hpp>
 
 using ::testing::_;
 using ::testing::A;
