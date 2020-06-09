@@ -87,6 +87,7 @@ public:
   /*!
    * \brief Gets the affected lanelet or areas based on the geofence_msg
    * NOTE: Currently only checks lanelets
+   * TODO add throws and whatnot
    */
   lanelet::Lanelets getAffectedLaneletOrAreas(const cav_msgs::ControlMessage& geofence_msg);
 

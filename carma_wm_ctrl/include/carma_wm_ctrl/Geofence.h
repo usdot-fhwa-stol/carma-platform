@@ -34,17 +34,19 @@ using namespace lanelet::units::literals;
 class Geofence
 {
 public:
-  boost::uuids::uuid id_;  // Unique id of this geofence. TODO use id matching geofence standard
+  boost::uuids::uuid id_;  // Unique id of this geofence
 
   GeofenceSchedule schedule;  // The schedule this geofence operates with
 
-  //// TODO Add attributes provided by geofences
+  // TODO Add rest of the attributes provided by geofences in the future
   lanelet::DigitalSpeedLimitPtr min_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_kmh, {}, {},
                                                      { lanelet::Participants::VehicleCar }));
   lanelet::DigitalSpeedLimitPtr max_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_kmh, {}, {},
                                                      { lanelet::Participants::VehicleCar }));
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> prev_regems_;
 
+  std::string proj;
+  
   lanelet::Lanelets affected_parts_;
 };
 }  // namespace carma_wm_ctrl

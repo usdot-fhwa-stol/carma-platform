@@ -66,8 +66,6 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
   lanelet::utils::conversion::fromBinMsg(*map_msg, new_map);
 
   base_map_ = new_map;  // Store map
-  //TODO dev
-  // We dont have the georeference...
   lanelet::MapConformer::ensureCompliance(base_map_);  // Update map to ensure it complies with expectations
 
   // Publish map
@@ -101,8 +99,7 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::ControlMessage& geofence_ms
   // Get affected lanelet or areas by converting the georeference and querying the map using points in the geofence
   gf.affected_parts_ = getAffectedLaneletOrAreas(geofence_msg);
 
-  // Get schedule
-  // TODO dev DOW and UTC offset left
+  // Get schedule (assuming everything is in UTC currently)
   gf.schedule = GeofenceSchedule(geofence_msg.schedule.start,  
                                  geofence_msg.schedule.end,
                                  geofence_msg.schedule.between.start,     
@@ -117,23 +114,21 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::ControlMessage& geofence_ms
 
 void WMBroadcaster::geoReferenceCallback(const std_msgs::String& geo_ref)
 {
+  std::lock_guard<std::mutex> guard(map_mutex_);
   base_map_georef_ = geo_ref.data;
 }
 
-// TODO dev
 lanelet::Lanelets WMBroadcaster::getAffectedLaneletOrAreas(const cav_msgs::ControlMessage& geofence_msg)
 {
+  if (!base_map_)
+  {
+    throw lanelet::InvalidObjectStateError(std::string("Base lanelet map is not loaded to the WMBroadcaster"));
+  }
   if (base_map_georef_ == "")
     throw lanelet::InvalidObjectStateError(std::string("Base lanelet map has empty proj string loaded as georeference. Therefore, WMBroadcaster failed to\n ") +
                                           std::string("get transformation between the geofence and the map"));
 
-  if (!base_map_)
-  {
-    ROS_ERROR_STREAM("In function " << __FUNCTION__ << ": the lanelet map is not set in carma_wm_broadcaster");
-    return {};
-  }
-  
-  static PJ* geofence_in_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, geofence_msg.proj.c_str(), base_map_georef_.c_str(), NULL);
+  PJ* geofence_in_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, geofence_msg.proj.c_str(), base_map_georef_.c_str(), NULL);
   
   // convert all geofence points into our map's frame
   std::vector<lanelet::Point3d> gf_pts_in_base_map;
@@ -146,9 +141,7 @@ lanelet::Lanelets WMBroadcaster::getAffectedLaneletOrAreas(const cav_msgs::Contr
   }
 
   // Logic to detect which part is affected
-  // REVIEW: dev Currently assuming that there would be at least 1 control message point on the lanelet it is affecting.
   int nearest_element_num = 5;
-  // TODO improve the algorithm using the previous example
   std::unordered_set<lanelet::Lanelet> affected_lanelets;
   for (lanelet::Point3d pt : gf_pts_in_base_map)
   {
@@ -160,6 +153,7 @@ lanelet::Lanelets WMBroadcaster::getAffectedLaneletOrAreas(const cav_msgs::Contr
         affected_lanelets.insert(llt);
     }
   }
+  
   // Currently only returning lanelet, but this could be expanded to LanelerOrArea compound object 
   // by implementing non-const version of that LaneletOrArea
   std::vector<lanelet::Lanelet> affected_parts;
@@ -167,7 +161,6 @@ lanelet::Lanelets WMBroadcaster::getAffectedLaneletOrAreas(const cav_msgs::Contr
   return affected_parts;
 }
 
-// TODO dev
 void WMBroadcaster::addGeofence(Geofence& gf)
 {
   std::lock_guard<std::mutex> guard(map_mutex_);
@@ -176,55 +169,62 @@ void WMBroadcaster::addGeofence(Geofence& gf)
   // TODO: Logic to determine what type of geofence goes here in the future
   // currently only speedchange is available, so it is assumed that
 
-  // First, store the previous limits so that when we are iterating 
-  // again to remove it we don't lose the relation between lanelets and limits
+  // First loop is to save the relation between element and regulatory element
+  // so that we can add back the old one after geofence deactivates
   for (auto el: gf.affected_parts_)
   {
     for (auto regem : el.regulatoryElements())
     {
-      if (regem->RuleName == "digital_speed_limit") 
+      if (regem->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName)
         gf.prev_regems_.push_back(std::make_pair(el.id(), regem));
     }
   }
-
+  
+  // this is loop is kept separately because removing while iterating 
+  // can lose some relation where one regem affects multiple elements
   for (auto pair : gf.prev_regems_)
   {
-    if (pair.second->RuleName == "digital_speed_limit") 
+    if (pair.second->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName)
       base_map_->remove(pair.second);
-    
-    // update it with new regem
-    if (gf.max_speed_limit_->id() != lanelet::InvalId)  
-      base_map_->update(*(base_map_->laneletLayer.find(pair.first)), gf.max_speed_limit_);
-    if (gf.min_speed_limit_->id() != lanelet::InvalId) 
-      base_map_->update(*(base_map_->laneletLayer.find(pair.first)), gf.min_speed_limit_);
   }
-    
+
+  // this loop is also kept separately because previously we assumed 
+  // there was existing regem, but this handles changes to all of the elements
+  for (auto el: gf.affected_parts_)
+  {
+    // update it with new regem
+    if (gf.max_speed_limit_->id() != lanelet::InvalId)
+      base_map_->update(base_map_->laneletLayer.get(el.id()), gf.max_speed_limit_); 
+    if (gf.min_speed_limit_->id() != lanelet::InvalId)
+      base_map_->update(base_map_->laneletLayer.get(el.id()), gf.min_speed_limit_);
+  }
+
 };
 
-// TODO dev
 void WMBroadcaster::removeGeofence(Geofence& gf)
 {
   std::lock_guard<std::mutex> guard(map_mutex_);
   ROS_INFO_STREAM("Removing inactive geofence to the map with geofence id: " << gf.id_);
   
-  // as this gf received is the first gf that was sent in through addGeofence,
+  // As this gf received is the first gf that was sent in through addGeofence,
   // we have prev speed limit information inside it
   for (auto el: gf.affected_parts_)
   {
     for (auto regem : el.regulatoryElements())
     {
       // removing speed limit added by this geofence
-      if (regem->RuleName == "digital_speed_limit") 
+      if (regem->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName)
         base_map_->remove(regem);
     }
   }
   // put back old speed limits
   for (auto pair : gf.prev_regems_)
   {
-    if (pair.second->RuleName == "digital_speed_limit") 
-      base_map_->update(*(base_map_->laneletLayer.find(pair.first)), pair.second);
+    if (pair.second->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName) 
+      base_map_->update(base_map_->laneletLayer.get(pair.first), pair.second);
   }
-
+  // as all changes are reverted back, we no longer need prev_regems
+  gf.prev_regems_ = {};
 };
 
 }  // namespace carma_wm_ctrl
