@@ -356,15 +356,13 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   ASSERT_EQ(gf.prev_regems_[0].second->id(), old_speed_limit->id());
 
   // now suppose the geofence is finished being used, we have to revert the changes
-  /*
-  wmb.removeGeofence(gf); // REVIEW: currently assumed that the same object will be passed again
+  wmb.removeGeofence(gf);
   ASSERT_EQ(gf.prev_regems_.size(), 0);
   // we can check if the removeGeofence worked, by using addGeofence again and if the original is there again
   wmb.addGeofence(gf);
   ASSERT_EQ(gf.prev_regems_.size(), 1);
   ASSERT_EQ(gf.prev_regems_[0].first, 10000);
   ASSERT_EQ(gf.prev_regems_[0].second->id(), old_speed_limit->id());
-  */
-  
+
 }
 }  // namespace carma_wm_ctrl
