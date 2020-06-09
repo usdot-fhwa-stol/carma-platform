@@ -131,7 +131,7 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasWithTransform)
   pt.x = -8.5; pt.y = -8.5; pt.z = 0;
   gf_msg.points.push_back(pt);
   
-  lanelet::Lanelets affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
+  lanelet::ConstLaneletOrAreas affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
   ASSERT_EQ(affected_parts.size(), 2);
   ASSERT_EQ(affected_parts[0].id(), 10002);
   ASSERT_EQ(affected_parts[1].id(), 10000);
@@ -267,7 +267,7 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
   pt.x = 1.5; pt.y = 1.5; pt.z = 0;
   gf_msg.points.push_back(pt);
 
-  lanelet::Lanelets affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
+  lanelet::ConstLaneletOrAreas affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
   ASSERT_EQ(affected_parts.size(), 2);
   ASSERT_EQ(affected_parts[0].id(), 10002);
   ASSERT_EQ(affected_parts[1].id(), 10000);
@@ -343,6 +343,7 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   // check points that are inside lanelets
   pt.x = 0.5; pt.y = 0.5; pt.z = 0;
   gf_msg.points.push_back(pt);
+  
   gf.affected_parts_ = wmb.getAffectedLaneletOrAreas(gf_msg);
 
   ASSERT_EQ(gf.affected_parts_.size(), 1);
@@ -350,6 +351,7 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
                                                                         //with 10041, 10042, 10043
   // process the geofence and change the map
   wmb.addGeofence(gf);
+
   // we can see that the gf now would have the prev speed limit of 5_kmh that affected llt 10000
   ASSERT_EQ(gf.prev_regems_.size(), 1);
   ASSERT_EQ(gf.prev_regems_[0].first, 10000);
@@ -358,6 +360,7 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   // now suppose the geofence is finished being used, we have to revert the changes
   wmb.removeGeofence(gf);
   ASSERT_EQ(gf.prev_regems_.size(), 0);
+
   // we can check if the removeGeofence worked, by using addGeofence again and if the original is there again
   wmb.addGeofence(gf);
   ASSERT_EQ(gf.prev_regems_.size(), 1);

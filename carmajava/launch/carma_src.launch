@@ -121,7 +121,6 @@
       <arg name="vector_map_file" value="$(arg vector_map_file)" />
       <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
       <arg name="yolo_dir" value="$(arg yolo_dir)"/>
-      <arg name="georeference_topic" value="$(optenv CARMA_LOCZ_NS)/map_param_loader/georeference"/>
     </include>
   </group>
 

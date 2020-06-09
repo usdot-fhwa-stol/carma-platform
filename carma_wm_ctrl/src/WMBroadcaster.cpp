@@ -116,7 +116,7 @@ void WMBroadcaster::geoReferenceCallback(const std_msgs::String& geo_ref)
   base_map_georef_ = geo_ref.data;
 }
 
-lanelet::Lanelets WMBroadcaster::getAffectedLaneletOrAreas(const cav_msgs::ControlMessage& geofence_msg)
+lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_msgs::ControlMessage& geofence_msg)
 {
   if (!base_map_)
   {
@@ -154,7 +154,7 @@ lanelet::Lanelets WMBroadcaster::getAffectedLaneletOrAreas(const cav_msgs::Contr
   
   // Currently only returning lanelet, but this could be expanded to LanelerOrArea compound object 
   // by implementing non-const version of that LaneletOrArea
-  std::vector<lanelet::Lanelet> affected_parts;
+  lanelet::ConstLaneletOrAreas affected_parts;
   affected_parts.insert(affected_parts.end(), affected_lanelets.begin(), affected_lanelets.end());
   return affected_parts;
 }
@@ -174,7 +174,7 @@ void WMBroadcaster::addGeofence(Geofence& gf)
     for (auto regem : el.regulatoryElements())
     {
       if (regem->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName)
-        gf.prev_regems_.push_back(std::make_pair(el.id(), regem));
+        gf.prev_regems_.push_back(std::make_pair(el.id(), base_map_->regulatoryElementLayer.get(regem->id())));
     }
   }
   
@@ -183,7 +183,10 @@ void WMBroadcaster::addGeofence(Geofence& gf)
   for (auto pair : gf.prev_regems_)
   {
     if (pair.second->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName)
-      base_map_->remove(pair.second);
+    {
+      // we have been using Const primitive so far, as remove requires non-const, we do following:
+      base_map_->remove(base_map_->regulatoryElementLayer.get(pair.second->id()));
+    }
   }
 
   // this loop is also kept separately because previously we assumed 
@@ -212,7 +215,7 @@ void WMBroadcaster::removeGeofence(Geofence& gf)
     {
       // removing speed limit added by this geofence
       if (regem->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName)
-        base_map_->remove(regem);
+        base_map_->remove(base_map_->regulatoryElementLayer.get(regem->id()));
     }
   }
   // put back old speed limits

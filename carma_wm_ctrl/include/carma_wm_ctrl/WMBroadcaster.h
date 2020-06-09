@@ -70,7 +70,7 @@ public:
   /*!
    * \brief Callback to add a geofence to the map
    *
-   * \param geofence_msg The ros msg of the geofence to add. 
+   * \param geofence_msg The ROS msg of the geofence to add. 
    */
   void geofenceCallback(const cav_msgs::ControlMessage& geofence_msg);
 
@@ -86,10 +86,12 @@ public:
 
   /*!
    * \brief Gets the affected lanelet or areas based on the geofence_msg
-   * NOTE: Currently only checks lanelets
-   * TODO add throws and whatnot
+   * \param geofence_msg The ROS msg that contains proj and any point that lie on the target lanelet or area
+   * \throw InvalidObjectStateError if base_map is not set or the base_map's georeference is empty
+   * NOTE:Currently this function only checks lanelets and will be expanded 
+   * to areas in the future.
    */
-  lanelet::Lanelets getAffectedLaneletOrAreas(const cav_msgs::ControlMessage& geofence_msg);
+  lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const cav_msgs::ControlMessage& geofence_msg);
 
 private:
   lanelet::LaneletMapPtr base_map_;
