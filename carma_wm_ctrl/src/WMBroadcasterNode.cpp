@@ -38,6 +38,8 @@ int WMBroadcasterNode::run()
   base_map_sub_ = cnh_.subscribe("base_map", 1, &WMBroadcaster::baseMapCallback, &wmb_);
   // Base Map Georeference Sub
   georef_sub_ = cnh_.subscribe("georeference", 1, &WMBroadcaster::geoReferenceCallback, &wmb_);
+  // Geofence Sub
+  geofence_sub_ = cnh_.subscribe("geofence", 1, &WMBroadcaster::geofenceCallback, &wmb_);
   // Spin
   cnh_.setSpinRate(10);
   cnh_.spin();

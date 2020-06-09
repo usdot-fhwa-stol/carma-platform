@@ -62,6 +62,7 @@ private:
   ros::Subscriber base_map_sub_;
 
   ros::Subscriber georef_sub_;
+  ros::Subscriber geofence_sub_;
 
   WMBroadcaster wmb_;
 };
