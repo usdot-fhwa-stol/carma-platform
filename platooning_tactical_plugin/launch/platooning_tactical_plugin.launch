@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- New Guidance Commands Node -->
+        <node pkg="platooning_tactical_plugin" type="platooning_tactical_plugin" name="platooning_tactical_plugin" output="screen">
+        </node>
+</launch>

@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.osm": "xml",
+        "iostream": "cpp"
+    }
+}
