@@ -4,6 +4,11 @@ project(platooning_tactical_plugin)
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
 
+## Compile as C++11, supported in ROS Kinetic and newer
+add_compile_options(-std=c++11)
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -13,6 +18,8 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   autoware_msgs
+  carma_utils
+  cav_srvs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -107,7 +114,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES platooning_tactical_plugin
- CATKIN_DEPENDS cav_msgs roscpp rospy std_msgs autoware_msgs
+ CATKIN_DEPENDS cav_msgs roscpp rospy std_msgs autoware_msgs cav_srvs
  DEPENDS system_lib
 )
 
@@ -126,6 +133,8 @@ include_directories(
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/platooning_tactical_plugin.cpp
 # )
+
+add_library(${PROJECT_NAME}_library src/${PROJECT_NAME}/platooning_tactical_plugin.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -198,11 +207,8 @@ target_link_libraries(${PROJECT_NAME}_node
 ## Testing ##
 #############
 
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_platooning_tactical_plugin.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
-
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
+#############
+## Testing ##
+#############
+catkin_add_gmock(${PROJECT_NAME}-test test/test_${PROJECT_NAME}.cpp)
+target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME}_library ${catkin_LIBRARIES})

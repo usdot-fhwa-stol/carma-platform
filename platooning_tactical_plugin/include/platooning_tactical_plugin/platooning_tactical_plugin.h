@@ -7,8 +7,21 @@
 #include <vector>
 #include <boost/assign/std/vector.hpp>
 
-#include <iostream>
-#include <fstream>
+#include <vector>
+#include <cav_msgs/TrajectoryPlan.h>
+#include <cav_msgs/TrajectoryPlanPoint.h>
+#include <cav_msgs/Plugin.h>
+#include <autoware_msgs/Lane.h>
+#include <boost/shared_ptr.hpp>
+#include <carma_utils/CARMAUtils.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TwistStamped.h>
+
+#include <cav_srvs/PlanManeuvers.h>
+#include <cav_srvs/PlanTrajectory.h>
+
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 namespace platooning_tactical_plugin {
 
@@ -24,11 +37,17 @@ namespace platooning_tactical_plugin {
             */
             PlatooningTacticalPlugin(ros::NodeHandle& nodeHandle);
 
+            // create uneven trajectory from waypoints
+            std::vector<cav_msgs::TrajectoryPlanPoint> create_uneven_trajectory_from_waypoints(std::vector<autoware_msgs::Waypoint> waypoints);
 
-            // final waypoint subscriber
-            // service call plan trajectory request respose
+            // get a sublist of waypoints marked by desired time span
+            std::vector<autoware_msgs::Waypoint> get_waypoints_in_time_boundary(std::vector<autoware_msgs::Waypoint> waypoints, double time_span);
 
-            // waypoint to trajectory convertor
+            // postprocess traj to add plugin names and shift time origin to the current ROS time
+            std::vector<cav_msgs::TrajectoryPlanPoint> post_process_traj_points(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory);
+
+            // local copy of pose
+            boost::shared_ptr<geometry_msgs::PoseStamped const> pose_msg_;
 
             /*!
             * Destructor.
@@ -46,12 +65,38 @@ namespace platooning_tactical_plugin {
             */
             bool readParameters();
 
-            //! ROS speedAccel subscriber.
+            //! ROS subscribers.
             ros::Subscriber waypoint_subscriber_;
+            ros::Subscriber pose_subscriber_;
+            ros::Subscriber twist_subscriber_;
 
-            void waypoint_subscriber_callback(const autoware_msgs::Lane::ConstPtr& msg);
+            // ros service servers
+            ros::ServiceServer trajectory_srv_;
 
-            bool serviceCallback(std_srvs::Trigger::Request& request, std_srvs::Trigger::Response& response);
+            // generated trajectory plan
+            cav_msgs::TrajectoryPlan trajectory_msg;
+            // Array of waypoints
+            std::vector<autoware_msgs::Waypoint> waypoints_list;
+
+            void waypoints_cb(const autoware_msgs::LaneConstPtr& msg);
+            void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
+            void twist_cd(const geometry_msgs::TwistStampedConstPtr& msg);
+
+            bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp);
+
+            // Plugin discovery message
+            cav_msgs::Plugin plugin_discovery_msg_;
+            ros::Publisher platooning_tactical_plugin_discovery_pub_;
+
+            // ROS params
+            double trajectory_time_length_;
+            double trajectory_point_spacing_;
+
+            // current vehicle speed
+            double current_speed_;
+
+            // convert waypoints to a trajectory
+            std::vector<cav_msgs::TrajectoryPlanPoint> compose_trajectory_from_waypoints(std::vector<autoware_msgs::Waypoint> waypoints);
 
     };
 }
