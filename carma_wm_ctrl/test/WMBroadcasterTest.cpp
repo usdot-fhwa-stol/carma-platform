@@ -227,7 +227,6 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
   gf_msg.points.push_back(pt);
   pt.x = 1.5; pt.y = 2.1; pt.z = 0;
   gf_msg.points.push_back(pt);
-  //ASSERT_EQ((ll_1.leftBound2d().end() - 1)->basicPoint2d().x(), 23.0);
 
 
   lanelet::ConstLaneletOrAreas affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
@@ -235,18 +234,16 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
   ASSERT_EQ(affected_parts[0].id(), 10003);
   ASSERT_EQ(affected_parts[1].id(), 10006);
   ASSERT_EQ(affected_parts[2].id(), 10000);
-  /*
   // check points that are outside, on the edge, and on the point that makes up the lanelets
   pt.x = 0.5; pt.y = 0; pt.z = 0;
   gf_msg.points.push_back(pt);
-  pt.x = 1.5; pt.y = 1.5; pt.z = 0;
+  pt.x = 1.0; pt.y = 0; pt.z = 0;
   gf_msg.points.push_back(pt);
   pt.x = 10; pt.y = 10; pt.z = 0;
   gf_msg.points.push_back(pt);
   
   affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
   ASSERT_EQ(affected_parts.size(), 2); // they should not be considered to be on the lanelet
-  */
 }
 
 // Since the actual logic for adding geofences to the map has not yet been added
