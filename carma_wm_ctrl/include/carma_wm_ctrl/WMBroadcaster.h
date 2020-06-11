@@ -77,12 +77,12 @@ public:
   /*!
    * \brief Adds a geofence to the current map
    */
-  void addGeofence(Geofence& gf);
+  void addGeofence(const std::shared_ptr<Geofence>& gf_ptr);
 
   /*!
    * \brief Removes a geofence from the current map
    */
-  void removeGeofence(Geofence& gf);
+  void removeGeofence(const std::shared_ptr<Geofence>& gf_ptr);
 
   /*!
    * \brief Gets the affected lanelet or areas based on the geofence_msg
@@ -94,6 +94,8 @@ public:
   lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const cav_msgs::ControlMessage& geofence_msg);
 
 private:
+  void addSpeedLimit(const std::shared_ptr<Geofence>& gf_ptr);
+  const std::shared_ptr<Geofence> geofenceFromMsg(const cav_msgs::ControlMessage& geofence_msg);
   lanelet::LaneletMapPtr base_map_;
   lanelet::LaneletMapPtr current_map_;
   std::vector<lanelet::LaneletMapPtr> cached_maps_;

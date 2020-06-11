@@ -82,9 +82,8 @@ TEST(WMBroadcaster, baseMapCallback)
   ASSERT_EQ(1, base_map_call_count);
 }
 
-
 // here test the proj string transform test
-TEST(WMBroadcaster, getAffectedLaneletOrAreasWithTransform)
+TEST(WMBroadcaster, getAffectedLaneletOrAreasFrameTransform)
 {
   using namespace lanelet::units::literals;
   size_t base_map_call_count = 0;
@@ -126,7 +125,7 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasWithTransform)
   // set the points
   cav_msgs::Point pt;
   // check points that are inside lanelets
-  pt.x = -9.5; pt.y = -9.5; pt.z = 0;
+  pt.x = -8.5; pt.y = -9.5; pt.z = 0; // straight geofence line across 2 lanelets
   gf_msg.points.push_back(pt);
   pt.x = -8.5; pt.y = -8.5; pt.z = 0;
   gf_msg.points.push_back(pt);
@@ -134,17 +133,120 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasWithTransform)
   lanelet::ConstLaneletOrAreas affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
   ASSERT_EQ(affected_parts.size(), 2);
   ASSERT_EQ(affected_parts[0].id(), 10002);
-  ASSERT_EQ(affected_parts[1].id(), 10000);
+  ASSERT_EQ(affected_parts[1].id(), 10001);
   // check points that are outside, on the edge, and on the point that makes up the lanelets
-  pt.x = -9.5; pt.y = -10; pt.z = 0;
+  pt.x = -20; pt.y = -10; pt.z = 0;
   gf_msg.points.push_back(pt);
-  pt.x = -8.5; pt.y = -8.5; pt.z = 0;
+  pt.x = -9; pt.y = -8.5; pt.z = 0;
   gf_msg.points.push_back(pt);
   pt.x = 0; pt.y = 0; pt.z = 0;
   gf_msg.points.push_back(pt);
   
   affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
+  ASSERT_EQ(affected_parts.size(), 2); // newly added ones should not be considered to be on the lanelet
+}
+
+// here test assuming the georeference proj strings are the same
+TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
+{
+  using namespace lanelet::units::literals;
+  // Set the environment  
+  size_t base_map_call_count = 0;
+  WMBroadcaster wmb(
+      [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
+        // Publish map callback
+        lanelet::LaneletMapPtr map(new lanelet::LaneletMap);
+        lanelet::utils::conversion::fromBinMsg(map_bin, map);
+
+        ASSERT_EQ(7, map->laneletLayer.size());  // Verify the map can be decoded
+        base_map_call_count++;
+      },
+      std::make_unique<TestTimerFactory>());
+
+  //////
+  // Get and convert map to binary message
+  /////
+  auto map = carma_wm::getDisjointRouteMap();
+
+  // We will modify the map here to include 
+  // opposite lanelet
+  auto p1 = carma_wm::getPoint(0, 0, 0);
+  auto p2 = carma_wm::getPoint(0, 1, 0);
+  auto p3 = carma_wm::getPoint(1, 1, 0);
+  auto p5 = carma_wm::getPoint(1, 0, 0);
+  lanelet::LineString3d left_ls_inv(lanelet::utils::getId(), { p2, p1 });
+  lanelet::LineString3d right_ls_inv(lanelet::utils::getId(), { p3, p5 });
+  auto ll_1_inv = carma_wm::getLanelet(10005, left_ls_inv, right_ls_inv, lanelet::AttributeValueString::SolidSolid,
+                         lanelet::AttributeValueString::Dashed);
+
+  map->add(ll_1_inv);
+  // 2 different direction lanelets
+  auto p6 = carma_wm::getPoint(1, 2, 0);
+  auto p7 = carma_wm::getPoint(2, 2, 0);
+  auto p8 = carma_wm::getPoint(0, 2, 0);
+  auto p9 = carma_wm::getPoint(1, 2, 0);
+  lanelet::LineString3d left_ls_1(lanelet::utils::getId(), { p2, p6 });
+  lanelet::LineString3d right_ls_1(lanelet::utils::getId(), { p3, p7 });
+  auto ll_1 = carma_wm::getLanelet(10006, left_ls_1, right_ls_1, lanelet::AttributeValueString::SolidSolid,
+                         lanelet::AttributeValueString::Dashed);
+  lanelet::LineString3d left_ls_2(lanelet::utils::getId(), { p2, p8 });
+  lanelet::LineString3d right_ls_2(lanelet::utils::getId(), { p3, p9 });
+  auto ll_2 = carma_wm::getLanelet(10007, left_ls_2, right_ls_2, lanelet::AttributeValueString::SolidSolid,
+                         lanelet::AttributeValueString::Dashed);
+
+  map->add(ll_1);
+  map->add(ll_2);
+
+  autoware_lanelet2_msgs::MapBin msg;
+  lanelet::utils::conversion::toBinMsg(map, &msg);
+  autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(msg));
+
+  cav_msgs::ControlMessage gf_msg;
+  // Check if error are correctly being thrown
+  EXPECT_THROW(wmb.getAffectedLaneletOrAreas(gf_msg), lanelet::InvalidObjectStateError);
+  // Set the map
+  wmb.baseMapCallback(map_msg_ptr);
+  ASSERT_EQ(1, base_map_call_count);
+  
+  EXPECT_THROW(wmb.getAffectedLaneletOrAreas(gf_msg), lanelet::InvalidObjectStateError);
+  
+  // Setting georeference otherwise, geofenceCallback will throw exception
+  std_msgs::String sample_proj_string;
+  std::string proj_string = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+  sample_proj_string.data = proj_string;
+  wmb.geoReferenceCallback(sample_proj_string);
+
+  // create the control message's relevant parts
+  gf_msg.proj = proj_string;
+  // set the points
+  cav_msgs::Point pt;
+  // check points that are inside lanelets
+  pt.x = 0.5; pt.y = 0.5; pt.z = 0;
+  gf_msg.points.push_back(pt);
+  pt.x = 0.5; pt.y = 1.1; pt.z = 0;
+  gf_msg.points.push_back(pt);
+  pt.x = 1.5; pt.y = 2.1; pt.z = 0;
+  gf_msg.points.push_back(pt);
+  //ASSERT_EQ((ll_1.leftBound2d().end() - 1)->basicPoint2d().x(), 23.0);
+
+
+  lanelet::ConstLaneletOrAreas affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
+  ASSERT_EQ(affected_parts.size(), 3);
+  ASSERT_EQ(affected_parts[0].id(), 10003);
+  ASSERT_EQ(affected_parts[1].id(), 10006);
+  ASSERT_EQ(affected_parts[2].id(), 10000);
+  /*
+  // check points that are outside, on the edge, and on the point that makes up the lanelets
+  pt.x = 0.5; pt.y = 0; pt.z = 0;
+  gf_msg.points.push_back(pt);
+  pt.x = 1.5; pt.y = 1.5; pt.z = 0;
+  gf_msg.points.push_back(pt);
+  pt.x = 10; pt.y = 10; pt.z = 0;
+  gf_msg.points.push_back(pt);
+  
+  affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
   ASSERT_EQ(affected_parts.size(), 2); // they should not be considered to be on the lanelet
+  */
 }
 
 // Since the actual logic for adding geofences to the map has not yet been added
@@ -217,73 +319,6 @@ TEST(WMBroadcaster, geofenceCallback)
   carma_wm::waitForEqOrTimeout(3.0, 1, temp);
 }
 
-// here test assuming the georeference proj strings are the same
-TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
-{
-  using namespace lanelet::units::literals;
-  // Set the environment  
-  size_t base_map_call_count = 0;
-  WMBroadcaster wmb(
-      [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
-        // Publish map callback
-        lanelet::LaneletMapPtr map(new lanelet::LaneletMap);
-        lanelet::utils::conversion::fromBinMsg(map_bin, map);
-
-        ASSERT_EQ(4, map->laneletLayer.size());  // Verify the map can be decoded
-        base_map_call_count++;
-      },
-      std::make_unique<TestTimerFactory>());
-
-  //////
-  // Get and convert map to binary message
-  /////
-  auto map = carma_wm::getDisjointRouteMap();
-
-  autoware_lanelet2_msgs::MapBin msg;
-  lanelet::utils::conversion::toBinMsg(map, &msg);
-  autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(msg));
-
-  cav_msgs::ControlMessage gf_msg;
-  // Check if error are correctly being thrown
-  EXPECT_THROW(wmb.getAffectedLaneletOrAreas(gf_msg), lanelet::InvalidObjectStateError);
-  // Set the map
-  wmb.baseMapCallback(map_msg_ptr);
-  ASSERT_EQ(1, base_map_call_count);
-  EXPECT_THROW(wmb.getAffectedLaneletOrAreas(gf_msg), lanelet::InvalidObjectStateError);
-
-  // Setting georeference otherwise, geofenceCallback will throw exception
-  std_msgs::String sample_proj_string;
-  std::string proj_string = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
-  sample_proj_string.data = proj_string;
-  wmb.geoReferenceCallback(sample_proj_string);
-
-  // create the control message's relevant parts
-  gf_msg.proj = proj_string;
-  // set the points
-  cav_msgs::Point pt;
-  // check points that are inside lanelets
-  pt.x = 0.5; pt.y = 0.5; pt.z = 0;
-  gf_msg.points.push_back(pt);
-  pt.x = 1.5; pt.y = 1.5; pt.z = 0;
-  gf_msg.points.push_back(pt);
-
-  lanelet::ConstLaneletOrAreas affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
-  ASSERT_EQ(affected_parts.size(), 2);
-  ASSERT_EQ(affected_parts[0].id(), 10002);
-  ASSERT_EQ(affected_parts[1].id(), 10000);
-  // check points that are outside, on the edge, and on the point that makes up the lanelets
-  pt.x = 0.5; pt.y = 0; pt.z = 0;
-  gf_msg.points.push_back(pt);
-  pt.x = 1.5; pt.y = 1.5; pt.z = 0;
-  gf_msg.points.push_back(pt);
-  pt.x = 10; pt.y = 10; pt.z = 0;
-  gf_msg.points.push_back(pt);
-  
-  affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
-  ASSERT_EQ(affected_parts.size(), 2); // they should not be considered to be on the lanelet
-  
-}
-
 TEST(WMBroadcaster, addAndRemoveGeofence)
 {
   using namespace lanelet::units::literals;
@@ -330,12 +365,12 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   wmb.geoReferenceCallback(sample_proj_string);
 
   // Create the geofence object
-  Geofence gf;
-  gf.id_ = boost::uuids::random_generator()();
+  auto gf_ptr = std::make_shared<Geofence>(Geofence());
+  gf_ptr->id_ = boost::uuids::random_generator()();
   cav_msgs::ControlMessage gf_msg;
   lanelet::DigitalSpeedLimitPtr new_speed_limit = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(map->regulatoryElementLayer.uniqueId(), 10_kmh, {}, {},
                                                      { lanelet::Participants::VehicleCar }));
-  gf.min_speed_limit_ = new_speed_limit;
+  gf_ptr->min_speed_limit_ = new_speed_limit;
   // create the control message's relevant parts to fill the object
   gf_msg.proj = proj_string;
   // set the points
@@ -344,28 +379,29 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   pt.x = 0.5; pt.y = 0.5; pt.z = 0;
   gf_msg.points.push_back(pt);
   
-  gf.affected_parts_ = wmb.getAffectedLaneletOrAreas(gf_msg);
+  gf_ptr->affected_parts_ = wmb.getAffectedLaneletOrAreas(gf_msg);
 
-  ASSERT_EQ(gf.affected_parts_.size(), 1);
-  ASSERT_EQ(gf.affected_parts_.front().regulatoryElements().size(), 4); //others are 2 pcls, 1 region access rule
-                                                                        //with 10041, 10042, 10043
+  ASSERT_EQ(gf_ptr->affected_parts_.size(), 1);
+  ASSERT_EQ(gf_ptr->affected_parts_.front().id(), 10000);
+  
+  ASSERT_EQ(gf_ptr->affected_parts_.front().regulatoryElements().size(), 1); 
   // process the geofence and change the map
-  wmb.addGeofence(gf);
+  wmb.addGeofence(gf_ptr);
 
-  // we can see that the gf now would have the prev speed limit of 5_kmh that affected llt 10000
-  ASSERT_EQ(gf.prev_regems_.size(), 1);
-  ASSERT_EQ(gf.prev_regems_[0].first, 10000);
-  ASSERT_EQ(gf.prev_regems_[0].second->id(), old_speed_limit->id());
+  // we can see that the gf_ptr->now would have the prev speed limit of 5_kmh that affected llt 10000
+  ASSERT_EQ(gf_ptr->prev_regems_.size(), 1);
+  ASSERT_EQ(gf_ptr->prev_regems_[0].first, 10000);
+  ASSERT_EQ(gf_ptr->prev_regems_[0].second->id(), old_speed_limit->id());
 
   // now suppose the geofence is finished being used, we have to revert the changes
-  wmb.removeGeofence(gf);
-  ASSERT_EQ(gf.prev_regems_.size(), 0);
+  wmb.removeGeofence(gf_ptr);
+  ASSERT_EQ(gf_ptr->prev_regems_.size(), 0);
 
   // we can check if the removeGeofence worked, by using addGeofence again and if the original is there again
-  wmb.addGeofence(gf);
-  ASSERT_EQ(gf.prev_regems_.size(), 1);
-  ASSERT_EQ(gf.prev_regems_[0].first, 10000);
-  ASSERT_EQ(gf.prev_regems_[0].second->id(), old_speed_limit->id());
+  wmb.addGeofence(gf_ptr);
+  ASSERT_EQ(gf_ptr->prev_regems_.size(), 1);
+  ASSERT_EQ(gf_ptr->prev_regems_[0].first, 10000);
+  ASSERT_EQ(gf_ptr->prev_regems_[0].second->id(), old_speed_limit->id());
 
 }
 }  // namespace carma_wm_ctrl

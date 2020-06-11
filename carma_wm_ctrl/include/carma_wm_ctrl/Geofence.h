@@ -43,6 +43,7 @@ public:
                                                      { lanelet::Participants::VehicleCar }));
   lanelet::DigitalSpeedLimitPtr max_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_kmh, {}, {},
                                                      { lanelet::Participants::VehicleCar }));
+  
   // we need mutable elements saved here as they will be added back through update function which only accepts mutable objects
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> prev_regems_;
 

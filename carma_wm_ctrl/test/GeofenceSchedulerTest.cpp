@@ -50,12 +50,13 @@ TEST(GeofenceScheduler, addGeofence)
 {
   // Test adding then evaulate if the calls to active and inactive are done correctly
   // Finally test cleaing the timers
-  Geofence gf;
+  auto gf_ptr = std::make_shared<Geofence>(Geofence());
+  
   boost::uuids::uuid first_id = boost::uuids::random_generator()(); 
   std::size_t first_id_hashed = boost::hash<boost::uuids::uuid>()(first_id);
-  gf.id_ = first_id;
+  gf_ptr->id_ = first_id;
 
-  gf.schedule =
+  gf_ptr->schedule =
       GeofenceSchedule(ros::Time(1),  // Schedule between 1 and 6
                        ros::Time(8),
                        ros::Duration(2),    // Start's at 2
@@ -69,16 +70,16 @@ TEST(GeofenceScheduler, addGeofence)
   std::atomic<uint32_t> inactive_call_count(0);
   std::atomic<std::size_t> last_active_gf(0);
   std::atomic<std::size_t> last_inactive_gf(0);
-  scheduler.onGeofenceActive([&](Geofence& gf) {
+  scheduler.onGeofenceActive([&](const std::shared_ptr<Geofence>& gf_ptr) {
     active_call_count.store(active_call_count.load() + 1);
     // atomic is not working for boost::uuids::uuid, so hash it
-    last_active_gf.store(boost::hash<boost::uuids::uuid>()(gf.id_));
+    last_active_gf.store(boost::hash<boost::uuids::uuid>()(gf_ptr->id_));
   });
 
-  scheduler.onGeofenceInactive([&](Geofence& gf) {
+  scheduler.onGeofenceInactive([&](const std::shared_ptr<Geofence>& gf_ptr) {
     inactive_call_count.store(inactive_call_count.load() + 1);
     // atomic is not working for boost::uuids::uuid, so hash it
-    last_inactive_gf.store(boost::hash<boost::uuids::uuid>()(gf.id_));
+    last_inactive_gf.store(boost::hash<boost::uuids::uuid>()(gf_ptr->id_));
   });
 
   ASSERT_EQ(0, active_call_count.load());
@@ -86,7 +87,7 @@ TEST(GeofenceScheduler, addGeofence)
   ASSERT_EQ(0, last_active_gf.load());
   ASSERT_EQ(0, last_inactive_gf.load());
 
-  scheduler.addGeofence(gf);
+  scheduler.addGeofence(gf_ptr);
 
   ros::Time::setNow(ros::Time(1.0));  // Set current time
 
@@ -136,10 +137,9 @@ TEST(GeofenceScheduler, addGeofence)
   ASSERT_EQ(first_id_hashed, last_inactive_gf.load());
 
   // Basic check that expired geofence is not added
-  Geofence gf2 = gf;
   boost::uuids::uuid second_id = boost::uuids::random_generator()();
-  gf2.id_ = second_id;
-  scheduler.addGeofence(gf2);
+  gf_ptr->id_ = second_id;
+  scheduler.addGeofence(gf_ptr);
 
   ros::Time::setNow(ros::Time(11.0));  // Set current time
 

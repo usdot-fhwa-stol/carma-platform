@@ -37,8 +37,8 @@ class GeofenceScheduler
   std::unique_ptr<TimerFactory> timerFactory_;
   std::unordered_map<uint32_t, std::pair<TimerPtr, bool>> timers_;  // Pairing of timers with their Id and valid status
   std::unique_ptr<Timer> deletion_timer_;
-  std::function<void(Geofence&)> active_callback_;
-  std::function<void(Geofence&)> inactive_callback_;
+  std::function<void(const std::shared_ptr<Geofence>&)> active_callback_;
+  std::function<void(const std::shared_ptr<Geofence>&)> inactive_callback_;
   uint32_t next_id_ = 0;  // Timer id counter
 
 public:
@@ -56,20 +56,20 @@ public:
    *
    * @param geofence The geofence to be added
    */
-  void addGeofence(Geofence& geofence);
+  void addGeofence(const std::shared_ptr<Geofence>& gf_ptr);
 
   /**
    * @brief Method which allows the user to set a callback which will be triggered when a geofence becomes active
    *
    * @param active_callback The callback which will be triggered
    */
-  void onGeofenceActive(std::function<void(Geofence&)> active_callback);
+  void onGeofenceActive(std::function<void(const std::shared_ptr<Geofence>&)> active_callback);
   /**
    * @brief Method which allows the user to set a callback which will be triggered when a geofence becomes in-active
    *
    * @param inactive_callback The callback which will be triggered
    */
-  void onGeofenceInactive(std::function<void(Geofence&)> inactive_callback);
+  void onGeofenceInactive(std::function<void(const std::shared_ptr<Geofence>&)> inactive_callback);
 
   /**
    * @brief Clears the expired timers from the memory of this scheduler
@@ -92,7 +92,7 @@ private:
    * @param gf The geofence which is being activated
    * @param timer_id The id of the timer which caused this callback to occur
    */
-  void startGeofenceCallback(const ros::TimerEvent& event, Geofence& gf, const int32_t timer_id);
+  void startGeofenceCallback(const ros::TimerEvent& event, const std::shared_ptr<Geofence>& gf_ptr, const int32_t timer_id);
   /**
    * @brief The callback which is triggered when a geofence becomes in-active
    *        This will call the user set inactive_callback set from the onGeofenceInactive function
@@ -101,6 +101,6 @@ private:
    * @param gf The geofence which is being un-activated
    * @param timer_id The id of the timer which caused this callback to occur
    */
-  void endGeofenceCallback(const ros::TimerEvent& event, Geofence& gf, const int32_t timer_id);
+  void endGeofenceCallback(const ros::TimerEvent& event, const std::shared_ptr<Geofence>& gf_ptr, const int32_t timer_id);
 };
 }  // namespace carma_wm_ctrl
