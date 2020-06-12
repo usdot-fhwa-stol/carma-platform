@@ -56,6 +56,7 @@ public:
 
 private:
   ros::CARMANodeHandle cnh_;
+  ros::CARMANodeHandle pnh_{"~"};
 
   ros::Publisher map_pub_;
 
