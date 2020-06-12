@@ -26,14 +26,17 @@
 #include <unordered_set>
 #include "ros/ros.h"
 #include <carma_wm_ctrl/GeofenceScheduler.h>
+#include <lanelet2_routing/RoutingGraph.h>
 
 #include "MapConformer.h"
 
+#include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <cav_msgs/ControlMessage.h>
 #include <std_msgs/String.h>
 
 namespace carma_wm_ctrl
 {
+
 /*!
  * \brief Class which provies exposes map publication and carma_wm update logic
  *
@@ -77,12 +80,12 @@ public:
   /*!
    * \brief Adds a geofence to the current map
    */
-  void addGeofence(const std::shared_ptr<Geofence>& gf_ptr);
+  void addGeofence(std::shared_ptr<Geofence> gf_ptr);
 
   /*!
    * \brief Removes a geofence from the current map
    */
-  void removeGeofence(const std::shared_ptr<Geofence>& gf_ptr);
+  void removeGeofence(std::shared_ptr<Geofence> gf_ptr);
 
   /*!
    * \brief Gets the affected lanelet or areas based on the geofence_msg
@@ -93,8 +96,14 @@ public:
    */
   lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const cav_msgs::ControlMessage& geofence_msg);
 
+  /*!
+   * \brief Sets the max lane width in meters. Geofence points are associated to a lanelet if they are 
+   *        within this distance to a lanelet as geofence points are guaranteed to apply to a single lane
+   */
+  void setMaxLaneWidth(double max_lane_width);
+
 private:
-  void addSpeedLimit(const std::shared_ptr<Geofence>& gf_ptr);
+  void addSpeedLimit(std::shared_ptr<Geofence> gf_ptr);
   const std::shared_ptr<Geofence> geofenceFromMsg(const cav_msgs::ControlMessage& geofence_msg);
   lanelet::LaneletMapPtr base_map_;
   lanelet::LaneletMapPtr current_map_;
@@ -103,5 +112,6 @@ private:
   PublishMapCallback map_pub_;
   GeofenceScheduler scheduler_;
   std::string base_map_georef_;
+  double max_lane_width_;
 };
 }  // namespace carma_wm_ctrl

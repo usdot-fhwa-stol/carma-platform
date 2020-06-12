@@ -56,7 +56,7 @@ void GeofenceScheduler::clearTimers()
   }
 }
 
-void GeofenceScheduler::addGeofence(const std::shared_ptr<Geofence>& gf_ptr)
+void GeofenceScheduler::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 {
   std::lock_guard<std::mutex> guard(mutex_);
 
@@ -88,7 +88,7 @@ void GeofenceScheduler::addGeofence(const std::shared_ptr<Geofence>& gf_ptr)
   timers_[timer_id] = std::make_pair(std::move(timer), false);  // Add start timer to map by Id
 }
 
-void GeofenceScheduler::startGeofenceCallback(const ros::TimerEvent& event, const std::shared_ptr<Geofence>& gf_ptr, const int32_t timer_id)
+void GeofenceScheduler::startGeofenceCallback(const ros::TimerEvent& event, std::shared_ptr<Geofence> gf_ptr, const int32_t timer_id)
 {
   std::lock_guard<std::mutex> guard(mutex_);
 
@@ -108,7 +108,7 @@ void GeofenceScheduler::startGeofenceCallback(const ros::TimerEvent& event, cons
   timers_[timer_id].second = true;  // Mark start timer for deletion
 }
 
-void GeofenceScheduler::endGeofenceCallback(const ros::TimerEvent& event, const std::shared_ptr<Geofence>& gf_ptr, const int32_t timer_id)
+void GeofenceScheduler::endGeofenceCallback(const ros::TimerEvent& event, std::shared_ptr<Geofence> gf_ptr, const int32_t timer_id)
 {
   std::lock_guard<std::mutex> guard(mutex_);
 
@@ -143,13 +143,13 @@ void GeofenceScheduler::endGeofenceCallback(const ros::TimerEvent& event, const 
   timers_[start_timer_id] = std::make_pair(std::move(timer), false);  // Add start timer to map by Id
 }
 
-void GeofenceScheduler::onGeofenceActive(std::function<void(const std::shared_ptr<Geofence>&)> active_callback)
+void GeofenceScheduler::onGeofenceActive(std::function<void(std::shared_ptr<Geofence>)> active_callback)
 {
   std::lock_guard<std::mutex> guard(mutex_);
   active_callback_ = active_callback;
 }
 
-void GeofenceScheduler::onGeofenceInactive(std::function<void(const std::shared_ptr<Geofence>&)> inactive_callback)
+void GeofenceScheduler::onGeofenceInactive(std::function<void(std::shared_ptr<Geofence>)> inactive_callback)
 {
   std::lock_guard<std::mutex> guard(mutex_);
   inactive_callback_ = inactive_callback;

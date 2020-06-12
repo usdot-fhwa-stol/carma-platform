@@ -70,13 +70,13 @@ TEST(GeofenceScheduler, addGeofence)
   std::atomic<uint32_t> inactive_call_count(0);
   std::atomic<std::size_t> last_active_gf(0);
   std::atomic<std::size_t> last_inactive_gf(0);
-  scheduler.onGeofenceActive([&](const std::shared_ptr<Geofence>& gf_ptr) {
+  scheduler.onGeofenceActive([&](std::shared_ptr<Geofence> gf_ptr) {
     active_call_count.store(active_call_count.load() + 1);
     // atomic is not working for boost::uuids::uuid, so hash it
     last_active_gf.store(boost::hash<boost::uuids::uuid>()(gf_ptr->id_));
   });
 
-  scheduler.onGeofenceInactive([&](const std::shared_ptr<Geofence>& gf_ptr) {
+  scheduler.onGeofenceInactive([&](std::shared_ptr<Geofence> gf_ptr) {
     inactive_call_count.store(inactive_call_count.load() + 1);
     // atomic is not working for boost::uuids::uuid, so hash it
     last_inactive_gf.store(boost::hash<boost::uuids::uuid>()(gf_ptr->id_));

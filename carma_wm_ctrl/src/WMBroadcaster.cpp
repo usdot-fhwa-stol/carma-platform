@@ -30,6 +30,7 @@
 #include <lanelet2_core/utility/Units.h>
 #include <lanelet2_core/Forward.h>
 #include <lanelet2_extension/utility/utilities.h>
+#include <algorithm>
 
 
 namespace carma_wm_ctrl
@@ -151,32 +152,47 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
   }
 
   // Logic to detect which part is affected
-  double lane_max_width = 4;
-  
+
   std::unordered_set<lanelet::Lanelet> affected_lanelets;
   for (int idx = 0; idx < gf_pts.size(); idx ++)
   {
     std::unordered_set<lanelet::Lanelet> possible_lanelets;
-    // get nearest few nearest llts within lane_max_width
+    // get nearest few nearest llts within max_lane_width_
     // which actually house this geofence_point
     auto searchFunc = [&](const lanelet::BoundingBox2d& lltBox, const lanelet::Lanelet& llt) 
     {
-      bool should_stop = boost::geometry::distance(gf_pts[idx].basicPoint2d(), llt.polygon2d()) > lane_max_width;
-      if (!should_stop && boost::geometry::within(gf_pts[idx].basicPoint2d(), llt.polygon2d()))
+      bool should_stop_searching = boost::geometry::distance(gf_pts[idx].basicPoint2d(), llt.polygon2d()) > max_lane_width_;
+      if (!should_stop_searching && boost::geometry::within(gf_pts[idx].basicPoint2d(), llt.polygon2d()))
       {
         possible_lanelets.insert(llt);
       }
-      return should_stop;
+      return should_stop_searching;
     };
-   
+
+    // this call updates possible_lanelets
     current_map_->laneletLayer.nearestUntil(gf_pts[idx], searchFunc);
+
+    // we utilize routes to filter llts that are overlapping but not connected
+    lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(
+      lanelet::traffic_rules::CarmaUSTrafficRules::Location, lanelet::Participants::VehicleCar);
+    lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
 
     // among these llts, filter the ones that are on same direction as the geofence
     if (idx + 1 == gf_pts.size()) // break if this is the last gf_pt after saving everything
     {
-      for (auto llt: possible_lanelets)
+      // as this is the last lanelet 
+      // we have to filter the llts that are only geometrically overlapping yet not connected to prev llts
+      for (auto recorded_llt: affected_lanelets)
       {
-        affected_lanelets.insert(llt);
+        for (auto following_llt: map_graph->following(recorded_llt, false))
+        {
+          auto mutable_llt = current_map_->laneletLayer.get(following_llt.id());
+          auto it = possible_lanelets.find(mutable_llt);
+          if (it != possible_lanelets.end())
+          {
+            affected_lanelets.insert(mutable_llt);
+          }
+        }
       }
       break;
     } 
@@ -202,7 +218,7 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
   return affected_parts;
 }
 
-void WMBroadcaster::addSpeedLimit(const std::shared_ptr<Geofence>& gf_ptr)
+void WMBroadcaster::addSpeedLimit(std::shared_ptr<Geofence> gf_ptr)
 {
   // First loop is to save the relation between element and regulatory element
   // so that we can add back the old one after geofence deactivates
@@ -238,7 +254,7 @@ void WMBroadcaster::addSpeedLimit(const std::shared_ptr<Geofence>& gf_ptr)
   }
 }
 
-void WMBroadcaster::addGeofence(const std::shared_ptr<Geofence>& gf_ptr)
+void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 {
   std::lock_guard<std::mutex> guard(map_mutex_);
   ROS_INFO_STREAM("Adding active geofence to the map with geofence id: " << gf_ptr->id_);
@@ -249,10 +265,10 @@ void WMBroadcaster::addGeofence(const std::shared_ptr<Geofence>& gf_ptr)
 
 };
 
-void WMBroadcaster::removeGeofence(const std::shared_ptr<Geofence>& gf_ptr)
+void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
 {
   std::lock_guard<std::mutex> guard(map_mutex_);
-  ROS_INFO_STREAM("Removing inactive geofence to the map with geofence id: " << gf_ptr->id_);
+  ROS_INFO_STREAM("Removing inactive geofence from the map with geofence id: " << gf_ptr->id_);
   
   // As this gf received is the first gf that was sent in through addGeofence,
   // we have prev speed limit information inside it
@@ -275,4 +291,8 @@ void WMBroadcaster::removeGeofence(const std::shared_ptr<Geofence>& gf_ptr)
   gf_ptr->prev_regems_ = {};
 };
 
+void WMBroadcaster::setMaxLaneWidth(double max_lane_width)
+{
+  max_lane_width_ = max_lane_width;
+}
 }  // namespace carma_wm_ctrl

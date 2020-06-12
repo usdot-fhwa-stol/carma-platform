@@ -44,6 +44,95 @@ using ::testing::ReturnArg;
 namespace carma_wm_ctrl
 
 {
+
+inline lanelet::LaneletMapPtr getTestMap()
+{
+  
+  using namespace carma_wm;
+  // 1. Construct map
+  auto p1 = getPoint(0, 0, 0);
+  auto p2 = getPoint(0, 1, 0);
+  auto p3 = getPoint(1, 1, 0);
+  auto p4 = getPoint(1, 2, 0);
+  auto p5 = getPoint(1, 0, 0);
+  auto p6 = getPoint(2, 0, 0);
+  auto p7 = getPoint(2, 1, 0);
+  auto p8 = getPoint(2, 2, 0);
+  auto p9 = getPoint(1, 3, 0);
+  auto p10 = getPoint(2, 3, 0);
+  auto p11 = getPoint(1, 4, 0);  // Points for areas
+  auto p12 = getPoint(2, 4, 0);
+  lanelet::LineString3d left_ls_1(lanelet::utils::getId(), { p1, p2 });
+  lanelet::LineString3d right_ls_1(lanelet::utils::getId(), { p5, p3 });
+  auto ll_1 = getLanelet(10000, left_ls_1, right_ls_1, lanelet::AttributeValueString::SolidSolid,
+                         lanelet::AttributeValueString::Dashed);
+
+  lanelet::LineString3d right_ls_2(lanelet::utils::getId(), { p6, p7 });
+  auto ll_2 = getLanelet(10001, right_ls_1, right_ls_2, lanelet::AttributeValueString::Dashed,
+                         lanelet::AttributeValueString::Solid);
+
+  lanelet::LineString3d left_ls_3(lanelet::utils::getId(), { p3, p4 });
+  lanelet::LineString3d right_ls_3(lanelet::utils::getId(), { p7, p8 });
+  auto ll_3 = getLanelet(10002, left_ls_3, right_ls_3, lanelet::AttributeValueString::Solid,
+                         lanelet::AttributeValueString::Solid);
+
+  // Add two way linestring
+  lanelet::LineString3d left_ls_4(lanelet::utils::getId(), { p4, p9 });
+  lanelet::LineString3d right_ls_4(lanelet::utils::getId(), { p8, p10 });
+  auto ll_4 = getLanelet(10003, left_ls_4, right_ls_4, lanelet::AttributeValueString::Solid,
+                         lanelet::AttributeValueString::Solid);
+  ll_4.attributes()[lanelet::AttributeName::OneWay] = "no";
+
+  // We will modify the map here to include 
+  // opposite lanelet
+  lanelet::LineString3d left_ls_inv(lanelet::utils::getId(), { p2, p1 });
+  lanelet::LineString3d right_ls_inv(lanelet::utils::getId(), { p3, p5 });
+  auto ll_1_inv = carma_wm::getLanelet(10005, left_ls_inv, right_ls_inv, lanelet::AttributeValueString::SolidSolid,
+                         lanelet::AttributeValueString::Dashed);
+
+  // 2 different direction lanelets
+  auto p13 = carma_wm::getPoint(0, 2, 0);
+  lanelet::LineString3d left_ls_5(lanelet::utils::getId(), { p2, p4 });
+  lanelet::LineString3d right_ls_5(lanelet::utils::getId(), { p3, p8 });
+  auto ll_6 = carma_wm::getLanelet(10006, left_ls_5, right_ls_5, lanelet::AttributeValueString::SolidSolid,
+                         lanelet::AttributeValueString::Dashed);
+  lanelet::LineString3d left_ls_6(lanelet::utils::getId(), { p2, p13 });
+  auto ll_5 = carma_wm::getLanelet(10007, left_ls_6, left_ls_3, lanelet::AttributeValueString::SolidSolid,
+                         lanelet::AttributeValueString::Dashed);
+
+  // Add an area
+  lanelet::LineString3d area_loop(lanelet::utils::getId(), { p9, p11, p12, p10 });
+
+  area_loop.attributes()[lanelet::AttributeName::Type] = lanelet::AttributeValueString::LineThin;
+  area_loop.attributes()[lanelet::AttributeName::Subtype] = lanelet::AttributeValueString::Dashed;
+
+  lanelet::Area area(10004, { area_loop });
+
+  area.attributes()[lanelet::AttributeName::Type] = lanelet::AttributeValueString::Multipolygon;
+  area.attributes()[lanelet::AttributeName::Subtype] = lanelet::AttributeValueString::Road;
+  area.attributes()[lanelet::AttributeName::Location] = lanelet::AttributeValueString::Urban;
+  area.attributes()[lanelet::AttributeNamesString::ParticipantVehicle] = "yes";
+
+  // Create basic map
+  lanelet::LaneletMapPtr map = lanelet::utils::createMap({ ll_1, ll_2, ll_3, ll_4 }, { area });
+
+  // create disjoint lanelet, created last to not affect other ids
+  auto p1_unreg = getPoint(0, 1, 0); // lanelet pointing to right, perpendicular direction from others
+  auto p2_unreg = getPoint(0, 2, 0);
+  auto p3_unreg = getPoint(2, 1, 0);
+  auto p4_unreg = getPoint(2, 2, 0);
+  lanelet::LineString3d right_ls_unreg(lanelet::utils::getId(), { p1_unreg, p3_unreg });
+  lanelet::LineString3d left_ls_unreg(lanelet::utils::getId(), { p2_unreg, p4_unreg });
+  auto ll_unreg = getLanelet(10008, left_ls_unreg, right_ls_unreg, lanelet::AttributeValueString::SolidSolid,
+                         lanelet::AttributeValueString::Dashed);
+
+  map->add(ll_1_inv);
+  map->add(ll_6);
+  map->add(ll_5);
+  map->add(ll_unreg);
+  return map;
+}
+
 TEST(WMBroadcaster, Constructor)
 {
   WMBroadcaster([](const autoware_lanelet2_msgs::MapBin& map_bin) {},
@@ -83,7 +172,7 @@ TEST(WMBroadcaster, baseMapCallback)
 }
 
 // here test the proj string transform test
-TEST(WMBroadcaster, getAffectedLaneletOrAreasFrameTransform)
+TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
 {
   using namespace lanelet::units::literals;
   size_t base_map_call_count = 0;
@@ -157,8 +246,6 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
         // Publish map callback
         lanelet::LaneletMapPtr map(new lanelet::LaneletMap);
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
-
-        ASSERT_EQ(7, map->laneletLayer.size());  // Verify the map can be decoded
         base_map_call_count++;
       },
       std::make_unique<TestTimerFactory>());
@@ -166,36 +253,7 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
   //////
   // Get and convert map to binary message
   /////
-  auto map = carma_wm::getDisjointRouteMap();
-
-  // We will modify the map here to include 
-  // opposite lanelet
-  auto p1 = carma_wm::getPoint(0, 0, 0);
-  auto p2 = carma_wm::getPoint(0, 1, 0);
-  auto p3 = carma_wm::getPoint(1, 1, 0);
-  auto p5 = carma_wm::getPoint(1, 0, 0);
-  lanelet::LineString3d left_ls_inv(lanelet::utils::getId(), { p2, p1 });
-  lanelet::LineString3d right_ls_inv(lanelet::utils::getId(), { p3, p5 });
-  auto ll_1_inv = carma_wm::getLanelet(10005, left_ls_inv, right_ls_inv, lanelet::AttributeValueString::SolidSolid,
-                         lanelet::AttributeValueString::Dashed);
-
-  map->add(ll_1_inv);
-  // 2 different direction lanelets
-  auto p6 = carma_wm::getPoint(1, 2, 0);
-  auto p7 = carma_wm::getPoint(2, 2, 0);
-  auto p8 = carma_wm::getPoint(0, 2, 0);
-  auto p9 = carma_wm::getPoint(1, 2, 0);
-  lanelet::LineString3d left_ls_1(lanelet::utils::getId(), { p2, p6 });
-  lanelet::LineString3d right_ls_1(lanelet::utils::getId(), { p3, p7 });
-  auto ll_1 = carma_wm::getLanelet(10006, left_ls_1, right_ls_1, lanelet::AttributeValueString::SolidSolid,
-                         lanelet::AttributeValueString::Dashed);
-  lanelet::LineString3d left_ls_2(lanelet::utils::getId(), { p2, p8 });
-  lanelet::LineString3d right_ls_2(lanelet::utils::getId(), { p3, p9 });
-  auto ll_2 = carma_wm::getLanelet(10007, left_ls_2, right_ls_2, lanelet::AttributeValueString::SolidSolid,
-                         lanelet::AttributeValueString::Dashed);
-
-  map->add(ll_1);
-  map->add(ll_2);
+  auto map = getTestMap();
 
   autoware_lanelet2_msgs::MapBin msg;
   lanelet::utils::conversion::toBinMsg(map, &msg);
@@ -223,17 +281,24 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
   // check points that are inside lanelets
   pt.x = 0.5; pt.y = 0.5; pt.z = 0;
   gf_msg.points.push_back(pt);
+  lanelet::ConstLaneletOrAreas affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
+  ASSERT_EQ(affected_parts.size(), 0); // this is 0 because there will never be geofence with only 1 pt
+                                       // if there is, it won't apply to the map as it doesn't have any direction information, 
+                                       // which makes it confusing for overlapping lanelets
   pt.x = 0.5; pt.y = 1.1; pt.z = 0;
   gf_msg.points.push_back(pt);
-  pt.x = 1.5; pt.y = 2.1; pt.z = 0;
+
+  affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg); 
+  ASSERT_EQ(affected_parts.size(), 3);    // although (0.5,1.1) is in another overlapping lanelet (llt_unreg)
+                                          // that lanelet is disjoint/doesnt have same direction/not successor of the any lanelet
+  pt.x = 1.5; pt.y = 2.1; pt.z = 0; 
   gf_msg.points.push_back(pt);
-
-
-  lanelet::ConstLaneletOrAreas affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
-  ASSERT_EQ(affected_parts.size(), 3);
+  affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
+  ASSERT_EQ(affected_parts.size(), 3);    // now they are actually 3 different lanelets because we changed direction
   ASSERT_EQ(affected_parts[0].id(), 10003);
   ASSERT_EQ(affected_parts[1].id(), 10006);
   ASSERT_EQ(affected_parts[2].id(), 10000);
+
   // check points that are outside, on the edge, and on the point that makes up the lanelets
   pt.x = 0.5; pt.y = 0; pt.z = 0;
   gf_msg.points.push_back(pt);
@@ -326,8 +391,6 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
         // Publish map callback
         lanelet::LaneletMapPtr map(new lanelet::LaneletMap);
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
-
-        ASSERT_EQ(4, map->laneletLayer.size());  // Verify the map can be decoded
         base_map_call_count++;
       },
       std::make_unique<TestTimerFactory>());
@@ -335,19 +398,20 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   //////
   // Set up the map (add relevant regulatory elements)
   /////
-  auto map = carma_wm::getDisjointRouteMap();
+  auto map = getTestMap();
   ASSERT_EQ(map->regulatoryElementLayer.size(), 0);
   // add regems
-  lanelet::DigitalSpeedLimitPtr old_speed_limit = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_kmh, {}, {},
+  lanelet::DigitalSpeedLimitPtr old_speed_limit = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_mph, {}, {},
                                                      { lanelet::Participants::VehicleCar }));
   ASSERT_EQ(old_speed_limit->attribute(lanelet::AttributeName::Subtype).value(), lanelet::DigitalSpeedLimit::RuleName);
   ASSERT_EQ(map->laneletLayer.get(10000).regulatoryElements().size(), 0);
   map->update(map->laneletLayer.get(10000), old_speed_limit); // added a speed limit to first llt
+  
   ASSERT_EQ(map->laneletLayer.get(10000).regulatoryElements().size(), 1);
   ASSERT_TRUE(map->regulatoryElementLayer.exists(old_speed_limit->id()));
   ASSERT_EQ(map->regulatoryElementLayer.size(), 1);
   ASSERT_EQ(map->laneletLayer.findUsages(old_speed_limit).size(), 1);
-  ASSERT_EQ(map->laneletLayer.find(10000)->regulatoryElements().front()->id(), old_speed_limit->id());
+  ASSERT_EQ(map->laneletLayer.find(10000)->regulatoryElements().front()->id(), old_speed_limit->id());//should be 10045 old speed limit's id
   
   
   autoware_lanelet2_msgs::MapBin msg;
@@ -365,7 +429,7 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   auto gf_ptr = std::make_shared<Geofence>(Geofence());
   gf_ptr->id_ = boost::uuids::random_generator()();
   cav_msgs::ControlMessage gf_msg;
-  lanelet::DigitalSpeedLimitPtr new_speed_limit = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(map->regulatoryElementLayer.uniqueId(), 10_kmh, {}, {},
+  lanelet::DigitalSpeedLimitPtr new_speed_limit = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(map->regulatoryElementLayer.uniqueId(), 10_mph, {}, {},
                                                      { lanelet::Participants::VehicleCar }));
   gf_ptr->min_speed_limit_ = new_speed_limit;
   // create the control message's relevant parts to fill the object
@@ -375,17 +439,18 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   // check points that are inside lanelets
   pt.x = 0.5; pt.y = 0.5; pt.z = 0;
   gf_msg.points.push_back(pt);
-  
+  pt.x = 0.5; pt.y = 1.5; pt.z = 0;
+  gf_msg.points.push_back(pt);
   gf_ptr->affected_parts_ = wmb.getAffectedLaneletOrAreas(gf_msg);
 
-  ASSERT_EQ(gf_ptr->affected_parts_.size(), 1);
-  ASSERT_EQ(gf_ptr->affected_parts_.front().id(), 10000);
-  
-  ASSERT_EQ(gf_ptr->affected_parts_.front().regulatoryElements().size(), 1); 
+  ASSERT_EQ(gf_ptr->affected_parts_.size(), 2);
+  ASSERT_EQ(gf_ptr->affected_parts_[1].id(), 10000);
+  ASSERT_EQ(gf_ptr->affected_parts_[1].regulatoryElements()[0]->id(), old_speed_limit->id()); // old speed limit
+  ASSERT_EQ(gf_ptr->affected_parts_[1].regulatoryElements().size(), 1); // old speed limit
   // process the geofence and change the map
-  wmb.addGeofence(gf_ptr);
 
-  // we can see that the gf_ptr->now would have the prev speed limit of 5_kmh that affected llt 10000
+  wmb.addGeofence(gf_ptr);
+  // we can see that the gf_ptr->now would have the prev speed limit of 5_mph that affected llt 10000
   ASSERT_EQ(gf_ptr->prev_regems_.size(), 1);
   ASSERT_EQ(gf_ptr->prev_regems_[0].first, 10000);
   ASSERT_EQ(gf_ptr->prev_regems_[0].second->id(), old_speed_limit->id());

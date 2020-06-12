@@ -40,6 +40,11 @@ int WMBroadcasterNode::run()
   georef_sub_ = cnh_.subscribe("georeference", 1, &WMBroadcaster::geoReferenceCallback, &wmb_);
   // Geofence Sub
   geofence_sub_ = cnh_.subscribe("geofence", 1, &WMBroadcaster::geofenceCallback, &wmb_);
+  
+  double lane_max_width;
+  cnh_.getParam("lane_max_width", lane_max_width);
+  wmb_.setMaxLaneWidth(lane_max_width);
+
   // Spin
   cnh_.setSpinRate(10);
   cnh_.spin();
