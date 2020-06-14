@@ -84,13 +84,14 @@ inline lanelet::LaneletMapPtr getTestMap()
   ll_4.attributes()[lanelet::AttributeName::OneWay] = "no";
 
   // We will modify the map here to include 
-  // opposite lanelet
+  // opposite lanelet for id 10000
   lanelet::LineString3d left_ls_inv(lanelet::utils::getId(), { p2, p1 });
   lanelet::LineString3d right_ls_inv(lanelet::utils::getId(), { p3, p5 });
   auto ll_1_inv = carma_wm::getLanelet(10005, left_ls_inv, right_ls_inv, lanelet::AttributeValueString::SolidSolid,
                          lanelet::AttributeValueString::Dashed);
 
-  // 2 different direction lanelets
+  // 2 different direction lanelets -> |/ (directions)
+  // both successors of id 10000
   auto p13 = carma_wm::getPoint(0, 2, 0);
   lanelet::LineString3d left_ls_5(lanelet::utils::getId(), { p2, p4 });
   lanelet::LineString3d right_ls_5(lanelet::utils::getId(), { p3, p8 });
@@ -117,9 +118,9 @@ inline lanelet::LaneletMapPtr getTestMap()
   lanelet::LaneletMapPtr map = lanelet::utils::createMap({ ll_1, ll_2, ll_3, ll_4 }, { area });
 
   // create disjoint lanelet, created last to not affect other ids
-  auto p1_unreg = getPoint(0, 1, 0); // lanelet pointing to right, perpendicular direction from others
-  auto p2_unreg = getPoint(0, 2, 0);
-  auto p3_unreg = getPoint(2, 1, 0);
+  auto p1_unreg = getPoint(0, 1, 0); // overlapping lanelet pointing to right, perpendicular direction from others
+  auto p2_unreg = getPoint(0, 2, 0); 
+  auto p3_unreg = getPoint(2, 1, 0); // notice that this lanelet is long, not connecting to any of those in right lane
   auto p4_unreg = getPoint(2, 2, 0);
   lanelet::LineString3d right_ls_unreg(lanelet::utils::getId(), { p1_unreg, p3_unreg });
   lanelet::LineString3d left_ls_unreg(lanelet::utils::getId(), { p2_unreg, p4_unreg });
@@ -279,19 +280,35 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
   // set the points
   cav_msgs::Point pt;
   // check points that are inside lanelets
-  pt.x = 0.5; pt.y = 0.5; pt.z = 0;
+  pt.x = 1.75; pt.y = 0.5; pt.z = 0;
   gf_msg.points.push_back(pt);
   lanelet::ConstLaneletOrAreas affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
   ASSERT_EQ(affected_parts.size(), 0); // this is 0 because there will never be geofence with only 1 pt
                                        // if there is, it won't apply to the map as it doesn't have any direction information, 
                                        // which makes it confusing for overlapping lanelets
-  pt.x = 0.5; pt.y = 1.1; pt.z = 0;
+  pt.x = 1.75; pt.y = 0.45; pt.z = 0;
   gf_msg.points.push_back(pt);
+  affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
+  ASSERT_EQ(affected_parts.size(), 0); // although there are two points in the same lanelet,
+                                       // lanelet and the two points are not in the same direction
 
+  gf_msg.points.pop_back();
+  pt.x = 1.75; pt.y = 0.55; pt.z = 0;
+  gf_msg.points.push_back(pt);
+  affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
+  ASSERT_EQ(affected_parts.size(), 1); // because two points are in one geofence, it will be recorded now
+  gf_msg.points.pop_back();
+  gf_msg.points.pop_back();
+
+  pt.x = 0.5; pt.y = 0.5; pt.z = 0;    // first of series geofence points across multiple lanelets
+  gf_msg.points.push_back(pt);
+  pt.x = 0.5; pt.y = 1.1; pt.z = 0;    // adding point in the next lanelet
+  gf_msg.points.push_back(pt);
   affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg); 
   ASSERT_EQ(affected_parts.size(), 3);    // although (0.5,1.1) is in another overlapping lanelet (llt_unreg)
                                           // that lanelet is disjoint/doesnt have same direction/not successor of the any lanelet
-  pt.x = 1.5; pt.y = 2.1; pt.z = 0; 
+  
+  pt.x = 1.5; pt.y = 2.1; pt.z = 0;    // adding further points in different lanelet narrowing down our direction
   gf_msg.points.push_back(pt);
   affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
   ASSERT_EQ(affected_parts.size(), 3);    // now they are actually 3 different lanelets because we changed direction

@@ -105,6 +105,7 @@ public:
 private:
   void addSpeedLimit(std::shared_ptr<Geofence> gf_ptr);
   std::shared_ptr<Geofence> geofenceFromMsg(const cav_msgs::ControlMessage& geofence_msg);
+  std::unordered_set<lanelet::Lanelet> filterSuccessorLanelets(const std::unordered_set<lanelet::Lanelet>& possible_lanelets, const std::unordered_set<lanelet::Lanelet>& root_lanelets);
   lanelet::LaneletMapPtr base_map_;
   lanelet::LaneletMapPtr current_map_;
   std::vector<lanelet::LaneletMapPtr> cached_maps_;

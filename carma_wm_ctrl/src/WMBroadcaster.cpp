@@ -31,7 +31,8 @@
 #include <lanelet2_core/Forward.h>
 #include <lanelet2_extension/utility/utilities.h>
 #include <algorithm>
-
+#include <carma_wm/Geometry.h>
+#include <math.h>
 
 namespace carma_wm_ctrl
 {
@@ -172,41 +173,46 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
     // this call updates possible_lanelets
     current_map_->laneletLayer.nearestUntil(gf_pts[idx], searchFunc);
 
-    // we utilize routes to filter llts that are overlapping but not connected
-    lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(
-      lanelet::traffic_rules::CarmaUSTrafficRules::Location, lanelet::Participants::VehicleCar);
-    lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
-
-    // among these llts, filter the ones that are on same direction as the geofence
-    if (idx + 1 == gf_pts.size()) // break if this is the last gf_pt after saving everything
+    // among these llts, filter the ones that are on same direction as the geofence using routing
+    if (idx + 1 == gf_pts.size()) // we only check this for the last gf_pt after saving everything
     {
-      // as this is the last lanelet 
-      // we have to filter the llts that are only geometrically overlapping yet not connected to prev llts
-      for (auto recorded_llt: affected_lanelets)
-      {
-        for (auto following_llt: map_graph->following(recorded_llt, false))
-        {
-          auto mutable_llt = current_map_->laneletLayer.get(following_llt.id());
-          auto it = possible_lanelets.find(mutable_llt);
-          if (it != possible_lanelets.end())
-          {
-            affected_lanelets.insert(mutable_llt);
-          }
-        }
-      }
+      std::unordered_set<lanelet::Lanelet> filtered = filterSuccessorLanelets(possible_lanelets, affected_lanelets);
+      affected_lanelets.insert(filtered.begin(), filtered.end());
       break;
     } 
-  
+
     // check if each lines connecting end points of the llt is crossing with the line connecting current and next gf_pts
     for (auto llt: possible_lanelets)
     {
-    
       lanelet::BasicLineString2d gf_dir_line({gf_pts[idx].basicPoint2d(), gf_pts[idx+1].basicPoint2d()});
       lanelet::BasicLineString2d llt_boundary({(llt.leftBound2d().end() -1)->basicPoint2d(), (llt.rightBound2d().end() - 1)->basicPoint2d()});
+      
+      // record the llts that are on the same dir
       if (boost::geometry::intersects(llt_boundary, gf_dir_line))
       {
-        // record the llts that are on the same dir
         affected_lanelets.insert(llt);
+      }
+      // check condition if two geofence points are in one lanelet then check matching direction and record it also
+      else if (boost::geometry::within(gf_pts[idx+1].basicPoint2d(), llt.polygon2d()) && 
+              affected_lanelets.find(llt) == affected_lanelets.end())
+      { 
+        lanelet::BasicPoint2d median({((llt.leftBound2d().end() - 1)->basicPoint2d().x() + (llt.rightBound2d().end() - 1)->basicPoint2d().x())/2 , 
+                                      ((llt.leftBound2d().end() - 1)->basicPoint2d().y() + (llt.rightBound2d().end() - 1)->basicPoint2d().y())/2});
+        // turn into vectors
+        Eigen::Vector2d vec_to_median(median);
+        Eigen::Vector2d vec_to_gf_start(gf_pts[idx].basicPoint2d());
+        Eigen::Vector2d vec_to_gf_end(gf_pts[idx + 1].basicPoint2d());
+
+        // Get vector from start to external point
+        Eigen::Vector2d start_to_median = vec_to_median - vec_to_gf_start;
+
+        // Get vector from start to end point
+        Eigen::Vector2d start_to_end = vec_to_gf_end - vec_to_gf_start;
+
+        // Get angle between both vectors
+        double interior_angle = carma_wm::geometry::getAngleBetweenVectors(start_to_median, start_to_end);
+        // Save the lanelet if the direction of two points inside aligns with that of the lanelet
+        if (interior_angle < M_PI_2 && interior_angle >= 0) affected_lanelets.insert(llt);
       }
     }
   }
@@ -217,6 +223,34 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
   affected_parts.insert(affected_parts.end(), affected_lanelets.begin(), affected_lanelets.end());
   return affected_parts;
 }
+
+
+// helper function that filters successor lanelets of root_lanelets from possible_lanelets
+std::unordered_set<lanelet::Lanelet> WMBroadcaster::filterSuccessorLanelets(const std::unordered_set<lanelet::Lanelet>& possible_lanelets, const std::unordered_set<lanelet::Lanelet>& root_lanelets)
+{
+  std::unordered_set<lanelet::Lanelet> filtered_lanelets;
+  // we utilize routes to filter llts that are overlapping but not connected
+  lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(
+  lanelet::traffic_rules::CarmaUSTrafficRules::Location, lanelet::Participants::VehicleCar);
+  lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
+  
+  // as this is the last lanelet 
+  // we have to filter the llts that are only geometrically overlapping yet not connected to prev llts
+  for (auto recorded_llt: root_lanelets)
+  {
+    for (auto following_llt: map_graph->following(recorded_llt, false))
+    {
+      auto mutable_llt = current_map_->laneletLayer.get(following_llt.id());
+      auto it = possible_lanelets.find(mutable_llt);
+      if (it != possible_lanelets.end())
+      {
+        filtered_lanelets.insert(mutable_llt);
+      }
+    }
+  }
+  return filtered_lanelets;
+}
+
 
 void WMBroadcaster::addSpeedLimit(std::shared_ptr<Geofence> gf_ptr)
 {
