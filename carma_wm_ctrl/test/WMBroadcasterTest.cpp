@@ -463,7 +463,7 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   ASSERT_EQ(gf_ptr->affected_parts_.size(), 2);
   ASSERT_EQ(gf_ptr->affected_parts_[1].id(), 10000);
   ASSERT_EQ(gf_ptr->affected_parts_[1].regulatoryElements()[0]->id(), old_speed_limit->id()); // old speed limit
-  ASSERT_EQ(gf_ptr->affected_parts_[1].regulatoryElements().size(), 1); // old speed limit
+  ASSERT_EQ(gf_ptr->affected_parts_[1].regulatoryElements().size(), 4); // old speed limit and other map conforming regulations
   // process the geofence and change the map
 
   wmb.addGeofence(gf_ptr);

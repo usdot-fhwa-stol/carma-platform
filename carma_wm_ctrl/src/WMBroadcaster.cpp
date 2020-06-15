@@ -71,8 +71,8 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
   current_map_ = new_map_to_change; // broadcaster makes changes to this
                                     // TODO publication of this modified map will be handled in the future
 
-  lanelet::MapConformer::ensureCompliance(base_map_);  // Update map to ensure it complies with expectations
-                                                       // base_map current_map_ are same here, so only 1 compliance needed
+  lanelet::MapConformer::ensureCompliance(base_map_);     // Update map to ensure it complies with expectations
+  lanelet::MapConformer::ensureCompliance(current_map_);
 
   // Publish map
   autoware_lanelet2_msgs::MapBin compliant_map_msg;
@@ -299,11 +299,8 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 
 };
 
-void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
+void WMBroadcaster::addBackSpeedLimit(std::shared_ptr<Geofence> gf_ptr)
 {
-  std::lock_guard<std::mutex> guard(map_mutex_);
-  ROS_INFO_STREAM("Removing inactive geofence from the map with geofence id: " << gf_ptr->id_);
-  
   // As this gf received is the first gf that was sent in through addGeofence,
   // we have prev speed limit information inside it
   for (auto el: gf_ptr->affected_parts_)
@@ -321,6 +318,14 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
     if (pair.second->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName) 
       current_map_->update(current_map_->laneletLayer.get(pair.first), pair.second);
   }
+}
+
+void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
+{
+  std::lock_guard<std::mutex> guard(map_mutex_);
+  ROS_INFO_STREAM("Removing inactive geofence from the map with geofence id: " << gf_ptr->id_);
+  // again, TODO: Logic to determine what type of geofence goes here in the future
+  addBackSpeedLimit(gf_ptr);
   // as all changes are reverted back, we no longer need prev_regems
   gf_ptr->prev_regems_ = {};
 };
