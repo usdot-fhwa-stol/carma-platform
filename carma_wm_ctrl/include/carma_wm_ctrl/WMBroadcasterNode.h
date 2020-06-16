@@ -56,10 +56,14 @@ public:
 
 private:
   ros::CARMANodeHandle cnh_;
+  ros::CARMANodeHandle pnh_{"~"};
 
   ros::Publisher map_pub_;
 
   ros::Subscriber base_map_sub_;
+
+  ros::Subscriber georef_sub_;
+  ros::Subscriber geofence_sub_;
 
   WMBroadcaster wmb_;
 };
