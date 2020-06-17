@@ -60,10 +60,10 @@ TEST(RouteGeneratorTest, testLaneletRouting)
     // <geoReference>+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs</geoReference>
 
     // File location of osm file
-    std::string file = "/workspaces/carma_ws/carma/src/Town02_pretty.osm";
+    std::string file = "../resource/map/test_vector_map.osm";
     // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
-    lanelet::Id start_id = 111;
-    lanelet::Id end_id = 144;
+    lanelet::Id start_id = 1346;
+    lanelet::Id end_id = 1349;
 
     // The parsing in this file was copied from https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/carma_wm_ctrl/test/MapToolsTest.cpp
     lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
@@ -90,7 +90,7 @@ TEST(RouteGeneratorTest, testLaneletRouting)
     lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
     lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
     // Output graph for debugging
-    map_graph->exportGraphViz("/workspaces/carma_ws/carma/src/routing.txt");
+    map_graph->exportGraphViz("../routing.txt");
 
     // Computes the shortest path and prints the list of lanelet IDs to get from the start to the end. Can be manually confirmed in JOSM
     auto route = map_graph->getRoute(start_lanelet, end_lanelet);
