@@ -73,18 +73,6 @@ namespace route {
                                                         const carma_wm::LaneletRoutingGraphConstPtr graph_pointer) const;
 
         /**
-         * \brief Generate Lanelet2 route based on input destinations
-         * \param start ID of the starting Lanelet of selected route
-         * \param end ID of the target Lanelet of selected route
-         * \param map_pointer A constant pointer to lanelet vector map
-         * \param graph_pointer A constant pointer to lanelet vector map routing graph
-         */
-        lanelet::Optional<lanelet::routing::Route> routing_from_lanelets(const lanelet::Lanelet start_lanelet,
-                                                        const lanelet::Lanelet end_lanelet,
-                                                        const lanelet::LaneletMapConstPtr map_pointer,
-                                                        const carma_wm::LaneletRoutingGraphConstPtr graph_pointer) const;
-
-        /**
          * \brief Get_available_route service callback. Call this service will response with a list of route names for user to select
          * \param req A empty cav_srvs::GetAvailableRoutesRequest
          * \param resp A cav_srvs::GetAvailableRoutesResponse msg contains a list of empty Route messages with only route name populated

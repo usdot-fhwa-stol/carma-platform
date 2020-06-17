@@ -42,12 +42,10 @@ namespace route {
         }
         // extract starting lanelet
         auto start_lanelet = lanelet::ConstLanelet(start_lanelet_vector[0].second.constData());
-        std::cout << start_lanelet.id() << "\n";
         // find end lanelet
         auto end_lanelet_vector = lanelet::geometry::findNearest(map_pointer->laneletLayer, end, 1);
         // extract end lanelet
         auto end_lanelet = lanelet::ConstLanelet(end_lanelet_vector[0].second.constData());
-        std::cout << end_lanelet.id() << "\n";
         // find all via lanelets
         lanelet::ConstLanelets via_lanelets_vector;
         for(lanelet::BasicPoint2d point : via)
@@ -57,65 +55,6 @@ namespace route {
         }
         // routing
         return graph_pointer->getRouteVia(start_lanelet, via_lanelets_vector, end_lanelet);
-    }
-
-    lanelet::Optional<lanelet::routing::Route> RouteGeneratorWorker::routing_from_lanelets(const lanelet::Lanelet start_lanelet,
-                                                                             const lanelet::Lanelet end_lanelet,
-                                                                             const lanelet::LaneletMapConstPtr map_pointer,
-                                                                             const carma_wm::LaneletRoutingGraphConstPtr graph_pointer) const
-    {
-        /*// find start lanelet
-        auto start_lanelet_vector = lanelet::geometry::findNearest(map_pointer->laneletLayer, start, 1);
-        // check if there are any lanelets in the map
-        if(start_lanelet_vector.size() == 0)
-        {
-            ROS_ERROR_STREAM("Found no lanelets in the map. Routing cannot be done.");
-            return lanelet::Optional<lanelet::routing::Route>();
-        }
-        // extract starting lanelet
-        auto start_lanelet = lanelet::ConstLanelet(start_lanelet_vector[0].second.constData());
-        std::cout << start_lanelet.id() << "\n";
-        // find end lanelet
-        auto end_lanelet_vector = lanelet::geometry::findNearest(map_pointer->laneletLayer, end, 1);
-        // extract end lanelet
-        auto end_lanelet = lanelet::ConstLanelet(end_lanelet_vector[0].second.constData());
-        std::cout << end_lanelet.id() << "\n";
-        // find all via lanelets
-        lanelet::ConstLanelets via_lanelets_vector;
-        for(lanelet::BasicPoint2d point : via)
-        {
-            auto via_lanelet_vector = lanelet::geometry::findNearest(map_pointer->laneletLayer, point, 1);
-            via_lanelets_vector.push_back(lanelet::ConstLanelet(via_lanelet_vector[0].second.constData()));
-        }*/
-        // routing
-
-        // Find lanelet with id start_id
-        /*auto start_lanelet;
-        try
-        {
-            start_lanelet = map_pointer->laneletLayer.get(start_id);
-        }
-        catch (const lanelet::NoSuchPrimitiveError& e)
-        {
-            ROS_ERROR_STREAM("The specified starting lanelet Id of " << start_id << " does not exist in the provided map.");
-            return lanelet::Optional<lanelet::routing::Route>();
-            //FAIL() << "The specified starting lanelet Id of " << start_id << " does not exist in the provided map.";
-        }
-
-        // find lanelet with id end_id
-        auto end_lanelet;
-        try
-        {
-            end_lanelet = map_pointer->laneletLayer.get(end_id);
-        }
-        catch (const lanelet::NoSuchPrimitiveError& e)
-        {
-            ROS_ERROR_STREAM("The specified starting lanelet Id of " << start_id << " does not exist in the provided map.");
-            return lanelet::Optional<lanelet::routing::Route>();
-            //FAIL() << "The specified starting lanelet Id of " << end_id << " does not exist in the provided map.";
-        }*/
-
-        return graph_pointer->getRoute(start_lanelet, end_lanelet);
     }
 
     bool RouteGeneratorWorker::get_available_route_cb(cav_srvs::GetAvailableRoutesRequest& req, cav_srvs::GetAvailableRoutesResponse& resp)

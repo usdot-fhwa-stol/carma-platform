@@ -73,20 +73,16 @@ TEST(RouteGeneratorTest, testLaneletRouting)
     // Grabs lanelet elements from the start and end IDs. Fails the unit test if there is no lanelet with the matching ID
     lanelet::Lanelet start_lanelet;
     lanelet::Lanelet end_lanelet;
-    try
-    {
+    try {
         start_lanelet = map->laneletLayer.get(start_id);
     }
-    catch (const lanelet::NoSuchPrimitiveError& e)
-    {
+    catch (const lanelet::NoSuchPrimitiveError& e) {
         FAIL() << "The specified starting lanelet Id of " << start_id << " does not exist in the provided map.";
     }
-    try
-    {
+    try {
         end_lanelet = map->laneletLayer.get(end_id);
     }
-    catch (const lanelet::NoSuchPrimitiveError& e)
-    {
+    catch (const lanelet::NoSuchPrimitiveError& e) {
         FAIL() << "The specified ending lanelet Id of " << end_id << " does not exist in the provided map.";
     }
 
@@ -97,7 +93,7 @@ TEST(RouteGeneratorTest, testLaneletRouting)
     map_graph->exportGraphViz("/workspaces/carma_ws/carma/src/routing.txt");
 
     // Computes the shortest path and prints the list of lanelet IDs to get from the start to the end. Can be manually confirmed in JOSM
-    auto route = worker.routing_from_lanelets(start_lanelet, end_lanelet, const_map, std::move(map_graph));
+    auto route = map_graph->getRoute(start_lanelet, end_lanelet);
     if(!route) {
         ASSERT_FALSE(true);
     } else {
@@ -105,6 +101,7 @@ TEST(RouteGeneratorTest, testLaneletRouting)
         for(const auto& ll : route.get().shortestPath()) {
             std::cout << ll.id() << " ";
         }
+        std::cout << "\n";
     }
 }
 
