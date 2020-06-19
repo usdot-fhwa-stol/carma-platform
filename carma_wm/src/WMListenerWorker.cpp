@@ -44,6 +44,26 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr&
   }
 }
 
+void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg)
+{
+  // convert ros msg to geofence object
+  auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
+  carma_wm::fromGeofenceBinMsg(*geofence_msg, gf_ptr);
+
+  // update the map
+  for (auto pair : gf_ptr->remove_list_)
+  {
+    world_model_->getMutableMap()->remove(world_model_->getMutableMap()->laneletLayer.get(pair.first), pair.second);
+  }
+  for (auto pair : gf_ptr->update_list_)
+  {
+    world_model_->getMutableMap()->update(world_model_->getMutableMap()->laneletLayer.get(pair.first), pair.second);
+  }
+  
+  // set the map to set a new routing
+  world_model_->setMap(world_model_->getMutableMap());
+}
+
 void WMListenerWorker::roadwayObjectListCallback(const cav_msgs::RoadwayObstacleList& msg)
 {
   // this topic publishes only the objects that are on the road
