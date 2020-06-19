@@ -50,6 +50,7 @@ include_directories(
 
 ## Declare C++ library
 add_library(${PROJECT_NAME}
+  src/Geofence.cpp
   src/WMBroadcaster.cpp
   src/MapConformer.cpp
   src/GeofenceSchedule.cpp
@@ -117,6 +118,7 @@ catkin_add_gmock(${PROJECT_NAME}-test
  test/TestTimer.cpp
  test/WMBroadcasterTest.cpp
  test/MapToolsTest.cpp
+ test/GeofenceTest.cpp
  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 

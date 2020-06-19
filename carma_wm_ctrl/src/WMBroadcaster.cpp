@@ -38,6 +38,7 @@ namespace carma_wm_ctrl
 {
 using std::placeholders::_1;
 
+
 WMBroadcaster::WMBroadcaster(PublishMapCallback map_pub, std::unique_ptr<TimerFactory> timer_factory)
   : map_pub_(map_pub), scheduler_(std::move(timer_factory))
 {
@@ -272,7 +273,9 @@ void WMBroadcaster::addSpeedLimit(std::shared_ptr<Geofence> gf_ptr)
     if (pair.second->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName)
     {
       // we have been using Const primitive so far, as remove requires non-const, we do following:
-      current_map_->remove(current_map_->regulatoryElementLayer.get(pair.second->id()));
+      auto el = current_map_->regulatoryElementLayer.get(pair.second->id());
+      current_map_->remove(el);
+      gf_ptr->remove_list_.push_back(el);
     }
   }
 
@@ -281,28 +284,49 @@ void WMBroadcaster::addSpeedLimit(std::shared_ptr<Geofence> gf_ptr)
   for (auto el: gf_ptr->affected_parts_)
   {
     // update it with new regem
+    // TODO DEV this can just change to one speed regem
     if (gf_ptr->max_speed_limit_->id() != lanelet::InvalId)
+    {
       current_map_->update(current_map_->laneletLayer.get(el.id()), gf_ptr->max_speed_limit_); 
+      gf_ptr->update_list_.push_back(std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>(el.id(), gf_ptr->max_speed_limit_));
+    }
     if (gf_ptr->min_speed_limit_->id() != lanelet::InvalId)
+    {
       current_map_->update(current_map_->laneletLayer.get(el.id()), gf_ptr->min_speed_limit_);
+      gf_ptr->update_list_.push_back(std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>(el.id(), gf_ptr->min_speed_limit_));
+    }
   }
+  
 }
 
 void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 {
   std::lock_guard<std::mutex> guard(map_mutex_);
   ROS_INFO_STREAM("Adding active geofence to the map with geofence id: " << gf_ptr->id_);
-  
+  // resetting the information inside geofence
+  gf_ptr->remove_list_ = {};
+  gf_ptr->update_list_ = {};
+
   // TODO: Logic to determine what type of geofence goes here in the future
   // currently only speedchange is available, so it is assumed that
   addSpeedLimit(gf_ptr);
-
+  gf_ptr->is_reverse_geofence = false;
 };
 
 void WMBroadcaster::addBackSpeedLimit(std::shared_ptr<Geofence> gf_ptr)
 {
-  // As this gf received is the first gf that was sent in through addGeofence,
-  // we have prev speed limit information inside it
+  // First loop is to save the relation between element and regulatory element
+  // so that we can add back the old one after geofence deactivates
+  for (auto el: gf_ptr->affected_parts_)
+  {
+    for (auto regem : el.regulatoryElements())
+    {
+      if (regem->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName)
+        gf_ptr->remove_list_.push_back(current_map_->regulatoryElementLayer.get(regem->id()));
+    }
+  }
+  
+  // now we can remove the regems
   for (auto el: gf_ptr->affected_parts_)
   {
     for (auto regem : el.regulatoryElements())
@@ -312,12 +336,19 @@ void WMBroadcaster::addBackSpeedLimit(std::shared_ptr<Geofence> gf_ptr)
         current_map_->remove(current_map_->regulatoryElementLayer.get(regem->id()));
     }
   }
+
+  // As this gf received is the first gf that was sent in through addGeofence,
+  // we have prev speed limit information inside it
   // put back old speed limits
   for (auto pair : gf_ptr->prev_regems_)
   {
-    if (pair.second->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName) 
+    if (pair.second->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName)
+    {
       current_map_->update(current_map_->laneletLayer.get(pair.first), pair.second);
+      gf_ptr->update_list_.push_back(pair);
+    } 
   }
+  
 }
 
 void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
@@ -325,8 +356,12 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   std::lock_guard<std::mutex> guard(map_mutex_);
   ROS_INFO_STREAM("Removing inactive geofence from the map with geofence id: " << gf_ptr->id_);
   // again, TODO: Logic to determine what type of geofence goes here in the future
+  // reset the info inside geofence
+  gf_ptr->remove_list_ = {};
+  gf_ptr->update_list_ = {};
   addBackSpeedLimit(gf_ptr);
   // as all changes are reverted back, we no longer need prev_regems
+  gf_ptr->is_reverse_geofence = true;
   gf_ptr->prev_regems_ = {};
 };
 
@@ -334,4 +369,6 @@ void WMBroadcaster::setMaxLaneWidth(double max_lane_width)
 {
   max_lane_width_ = max_lane_width;
 }
+
+
 }  // namespace carma_wm_ctrl
