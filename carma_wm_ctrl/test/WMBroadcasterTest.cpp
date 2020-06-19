@@ -45,14 +45,14 @@ namespace carma_wm_ctrl
 
 {
 
-TEST(WMBroadcaster, Constructor)
+TEST(WMBroadcaster, DISABLED_Constructor)
 {
   WMBroadcaster([](const autoware_lanelet2_msgs::MapBin& map_bin) {},
                 std::make_unique<TestTimerFactory>());  // Create broadcaster with test timers. Having this check helps
                                                         // verify that the timers do not crash on destruction
 }
 
-TEST(WMBroadcaster, baseMapCallback)
+TEST(WMBroadcaster, DISABLED_baseMapCallback)
 {
   ros::Time::setNow(ros::Time(0));  // Set current time
 
@@ -84,7 +84,7 @@ TEST(WMBroadcaster, baseMapCallback)
 }
 
 // here test the proj string transform test
-TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
+TEST(WMBroadcaster, DISABLED_getAffectedLaneletOrAreasFromTransform)
 {
   using namespace lanelet::units::literals;
   size_t base_map_call_count = 0;
@@ -148,7 +148,7 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
 }
 
 // here test assuming the georeference proj strings are the same
-TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
+TEST(WMBroadcaster, DISABLED_getAffectedLaneletOrAreasOnlyLogic)
 {
   using namespace lanelet::units::literals;
   // Set the environment  
@@ -244,7 +244,7 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
 // First "Adding active geofence to the map with geofence id: 1"
 // Second "Removing inactive geofence to the map with geofence id: 1"
 // Once said logic is added this unit test should be updated
-TEST(WMBroadcaster, geofenceCallback)
+TEST(WMBroadcaster, DISABLED_geofenceCallback)
 {
   // Test adding then evaluate if the calls to active and inactive are done correctly
   Geofence gf;
@@ -309,7 +309,7 @@ TEST(WMBroadcaster, geofenceCallback)
   carma_wm::waitForEqOrTimeout(3.0, 1, temp);
 }
 
-TEST(WMBroadcaster, addAndRemoveGeofence)
+TEST(WMBroadcaster, DISABLED_addAndRemoveGeofence)
 {
   using namespace lanelet::units::literals;
   // Set the environment  

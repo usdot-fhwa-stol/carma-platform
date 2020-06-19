@@ -262,23 +262,15 @@ void WMBroadcaster::addSpeedLimit(std::shared_ptr<Geofence> gf_ptr)
     for (auto regem : el.regulatoryElements())
     {
       if (regem->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName)
-        gf_ptr->prev_regems_.push_back(std::make_pair(el.id(), current_map_->regulatoryElementLayer.get(regem->id())));
+      {
+        lanelet::RegulatoryElementPtr nonconst_regem = current_map_->regulatoryElementLayer.get(regem->id()); // TODO DEV revert back if doesn't work
+        gf_ptr->prev_regems_.push_back(std::make_pair(el.id(), nonconst_regem));
+        gf_ptr->remove_list_.push_back(std::make_pair(el.id(), nonconst_regem));
+        current_map_->remove(current_map_->laneletLayer.get(el.lanelet()->id()), nonconst_regem);
+      }
     }
   }
   
-  // this is loop is kept separately because removing while iterating 
-  // can lose some relation where one regem affects multiple elements
-  for (auto pair : gf_ptr->prev_regems_)
-  {
-    if (pair.second->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName)
-    {
-      // we have been using Const primitive so far, as remove requires non-const, we do following:
-      auto el = current_map_->regulatoryElementLayer.get(pair.second->id());
-      current_map_->remove(el);
-      gf_ptr->remove_list_.push_back(el);
-    }
-  }
-
   // this loop is also kept separately because previously we assumed 
   // there was existing regem, but this handles changes to all of the elements
   for (auto el: gf_ptr->affected_parts_)
@@ -315,31 +307,22 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 
 void WMBroadcaster::addBackSpeedLimit(std::shared_ptr<Geofence> gf_ptr)
 {
-  // First loop is to save the relation between element and regulatory element
-  // so that we can add back the old one after geofence deactivates
+  // First loop is to remove the relation between element and regulatory element that this geofence added initially
   for (auto el: gf_ptr->affected_parts_)
   {
     for (auto regem : el.regulatoryElements())
     {
       if (regem->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName)
-        gf_ptr->remove_list_.push_back(current_map_->regulatoryElementLayer.get(regem->id()));
-    }
-  }
-  
-  // now we can remove the regems
-  for (auto el: gf_ptr->affected_parts_)
-  {
-    for (auto regem : el.regulatoryElements())
-    {
-      // removing speed limit added by this geofence
-      if (regem->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName)
-        current_map_->remove(current_map_->regulatoryElementLayer.get(regem->id()));
+      {
+        auto nonconst_regem = current_map_->regulatoryElementLayer.get(regem->id());
+        gf_ptr->remove_list_.push_back(std::make_pair(el.id(), nonconst_regem));
+        current_map_->remove(current_map_->laneletLayer.get(el.lanelet()->id()), nonconst_regem);
+      }
     }
   }
 
   // As this gf received is the first gf that was sent in through addGeofence,
-  // we have prev speed limit information inside it
-  // put back old speed limits
+  // we have prev speed limit information inside it to put them back
   for (auto pair : gf_ptr->prev_regems_)
   {
     if (pair.second->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName)

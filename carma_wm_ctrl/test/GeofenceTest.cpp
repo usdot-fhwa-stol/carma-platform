@@ -121,7 +121,7 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   ASSERT_EQ(gf_received->id_, gf_ptr->id_);
   ASSERT_EQ(gf_ptr->remove_list_.size(), 1);
   ASSERT_EQ(gf_received->remove_list_.size(), 1); // old_speed_limit
-  ASSERT_EQ(gf_received->remove_list_[0]->attribute(lanelet::AttributeName::Subtype).value(), lanelet::DigitalSpeedLimit::RuleName );
+  ASSERT_EQ(gf_received->remove_list_[0].second->attribute(lanelet::AttributeName::Subtype).value(), lanelet::DigitalSpeedLimit::RuleName );
   ASSERT_EQ(gf_received->update_list_.size(), 2); // geofence tags 2 lanelets
   ASSERT_EQ(gf_received->update_list_[1].first, 10000);
 
@@ -141,8 +141,10 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   carma_wm_ctrl::fromGeofenceBinMsg(gf_msg_revert, gf_rec_revert);
 
   // previously added update_list_ should be tagged for removal, vice versa
+  ASSERT_EQ(gf_rec_revert->remove_list_.size(), 2);
   ASSERT_EQ(gf_rec_revert->remove_list_.size(), gf_received->update_list_.size());
   ASSERT_EQ(gf_rec_revert->update_list_.size(), gf_received->remove_list_.size());
+  ASSERT_EQ(gf_rec_revert->update_list_.size(), 1);
   ASSERT_EQ(gf_rec_revert->update_list_[0].first, 10000);
   ASSERT_EQ(gf_rec_revert->update_list_[0].second->id(), old_speed_limit->id());
   

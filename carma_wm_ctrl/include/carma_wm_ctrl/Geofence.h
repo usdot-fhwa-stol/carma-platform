@@ -51,11 +51,12 @@ public:
   lanelet::DigitalSpeedLimitPtr max_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_kmh, {}, {},
                                                      { lanelet::Participants::VehicleCar }));
   
-  // elements needed for querying and broadcasting to the rest of map users
+  // elements needed for broadcasting to the rest of map users
+  std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list_;
+  std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> remove_list_;
+  // elements needed for querying and 
   // we need mutable elements saved here as they will be added back through update function which only accepts mutable objects
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> prev_regems_;
-  std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list_;
-  std::vector<lanelet::RegulatoryElementPtr> remove_list_;
   lanelet::ConstLaneletOrAreas affected_parts_;
   bool is_reverse_geofence = false;
   
@@ -97,7 +98,9 @@ inline void save(Archive& ar, const carma_wm_ctrl::Geofence& gf, unsigned int /*
   ar << string_id << gfnc.is_reverse_geofence;
 
   // convert the regems that need to be removed
-  lanelet::impl::saveRegelems(ar, gfnc.remove_list_);
+  size_t remove_list_size = gfnc.remove_list_.size();
+  ar << remove_list_size;
+  for (auto pair : gf.remove_list_) ar << pair;
 
   // convert id, regem pairs that need to be updated
   size_t update_list_size = gfnc.update_list_.size();
@@ -115,11 +118,18 @@ inline void load(Archive& ar, carma_wm_ctrl::Geofence& gf, unsigned int /*versio
   gf.id_ = gen(id);
 
   // save regems to remove
-  lanelet::impl::loadRegelems(ar, gf.remove_list_);
+  size_t remove_list_size;
+  ar >> remove_list_size;
+  for (auto i = 0u; i < remove_list_size; ++i) 
+  {
+    std::pair<lanelet::Id, lanelet::RegulatoryElementPtr> remove_item;
+    ar >> remove_item;
+    gf.remove_list_.push_back(remove_item);
+  }
 
+  // save parts that need to be updated
   size_t update_list_size;
   ar >> update_list_size;
-
   for (auto i = 0u; i < update_list_size; ++i) 
   {
     std::pair<lanelet::Id, lanelet::RegulatoryElementPtr> update_item;
