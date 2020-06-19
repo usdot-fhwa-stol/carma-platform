@@ -266,7 +266,7 @@ void WMBroadcaster::addSpeedLimit(std::shared_ptr<Geofence> gf_ptr)
     {
       if (regem->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName)
       {
-        lanelet::RegulatoryElementPtr nonconst_regem = current_map_->regulatoryElementLayer.get(regem->id()); // TODO DEV revert back if doesn't work
+        lanelet::RegulatoryElementPtr nonconst_regem = current_map_->regulatoryElementLayer.get(regem->id());
         gf_ptr->prev_regems_.push_back(std::make_pair(el.id(), nonconst_regem));
         gf_ptr->remove_list_.push_back(std::make_pair(el.id(), nonconst_regem));
         current_map_->remove(current_map_->laneletLayer.get(el.lanelet()->id()), nonconst_regem);
@@ -279,7 +279,6 @@ void WMBroadcaster::addSpeedLimit(std::shared_ptr<Geofence> gf_ptr)
   for (auto el: gf_ptr->affected_parts_)
   {
     // update it with new regem
-    // TODO DEV this can just change to one speed regem
     if (gf_ptr->max_speed_limit_->id() != lanelet::InvalId)
     {
       current_map_->update(current_map_->laneletLayer.get(el.id()), gf_ptr->max_speed_limit_); 
@@ -333,7 +332,9 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 
   // publish
   autoware_lanelet2_msgs::MapBin gf_msg;
-  carma_wm_ctrl::toGeofenceBinMsg(gf_ptr, &gf_msg);
+  auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
+  
+  carma_wm::toGeofenceBinMsg(send_data, &gf_msg);
   map_update_pub_(gf_msg);
 };
 
@@ -347,7 +348,9 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   
   // publish
   autoware_lanelet2_msgs::MapBin gf_msg_revert;
-  carma_wm_ctrl::toGeofenceBinMsg(gf_ptr, &gf_msg_revert);
+  auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
+
+  carma_wm::toGeofenceBinMsg(send_data, &gf_msg_revert);
   map_update_pub_(gf_msg_revert);
 };
 

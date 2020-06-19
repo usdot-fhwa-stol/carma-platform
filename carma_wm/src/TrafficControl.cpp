@@ -13,14 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include <carma_wm_ctrl/WMBroadcaster.h>
+
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
+#include <carma_wm/TrafficControl.h>
 
-namespace carma_wm_ctrl
+namespace carma_wm
 {
 
-void toGeofenceBinMsg(std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr, autoware_lanelet2_msgs::MapBin* msg)
+void toGeofenceBinMsg(std::shared_ptr<carma_wm::TrafficControl> gf_ptr, autoware_lanelet2_msgs::MapBin* msg)
 {
   if (msg == nullptr)
   {
@@ -36,7 +37,7 @@ void toGeofenceBinMsg(std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr, autoware_
   msg->data.assign(data_str.begin(), data_str.end());
 }
 
-void fromGeofenceBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr)
+void fromGeofenceBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma_wm::TrafficControl> gf_ptr)
 {
   if (!gf_ptr)
   {
@@ -53,4 +54,4 @@ void fromGeofenceBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_p
   oa >> *gf_ptr;
 }
 
-}  // namespace carma_wm_ctrl
+}  // namespace carma_wm

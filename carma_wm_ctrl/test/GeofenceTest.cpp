@@ -115,16 +115,18 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   wmb.addGeofenceHelper(gf_ptr);
   // from broadcaster
   autoware_lanelet2_msgs::MapBin gf_obj_msg;
-  carma_wm_ctrl::toGeofenceBinMsg(gf_ptr, &gf_obj_msg);
+
+  auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
+  carma_wm::toGeofenceBinMsg(send_data, &gf_obj_msg);
   // at map users
-  auto gf_received = std::make_shared<Geofence>(Geofence());
-  carma_wm_ctrl::fromGeofenceBinMsg(gf_obj_msg, gf_received);
-  ASSERT_EQ(gf_received->id_, gf_ptr->id_);
+  auto data_received = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
+  carma_wm::fromGeofenceBinMsg(gf_obj_msg, data_received);
+  ASSERT_EQ(data_received->id_, gf_ptr->id_);
   ASSERT_EQ(gf_ptr->remove_list_.size(), 1);
-  ASSERT_EQ(gf_received->remove_list_.size(), 1); // old_speed_limit
-  ASSERT_EQ(gf_received->remove_list_[0].second->attribute(lanelet::AttributeName::Subtype).value(), lanelet::DigitalSpeedLimit::RuleName );
-  ASSERT_EQ(gf_received->update_list_.size(), 2); // geofence tags 2 lanelets
-  ASSERT_EQ(gf_received->update_list_[1].first, 10000);
+  ASSERT_EQ(data_received->remove_list_.size(), 1); // old_speed_limit
+  ASSERT_EQ(data_received->remove_list_[0].second->attribute(lanelet::AttributeName::Subtype).value(), lanelet::DigitalSpeedLimit::RuleName );
+  ASSERT_EQ(data_received->update_list_.size(), 2); // geofence tags 2 lanelets
+  ASSERT_EQ(data_received->update_list_[1].first, 10000);
 
   // we can see that the gf_ptr->now would have the prev speed limit of 5_mph that affected llt 10000
   ASSERT_EQ(gf_ptr->prev_regems_.size(), 1);
@@ -136,18 +138,19 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   ASSERT_EQ(gf_ptr->prev_regems_.size(), 0); // should be reset
   // from broadcaster
   autoware_lanelet2_msgs::MapBin gf_msg_revert;
-  carma_wm_ctrl::toGeofenceBinMsg(gf_ptr, &gf_msg_revert);
+  auto send_data_revert = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
+  carma_wm::toGeofenceBinMsg(send_data_revert, &gf_msg_revert);
   // at map users
-  auto gf_rec_revert = std::make_shared<Geofence>(Geofence());
-  carma_wm_ctrl::fromGeofenceBinMsg(gf_msg_revert, gf_rec_revert);
+  auto rec_data_revert = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
+  carma_wm::fromGeofenceBinMsg(gf_msg_revert, rec_data_revert);
 
   // previously added update_list_ should be tagged for removal, vice versa
-  ASSERT_EQ(gf_rec_revert->remove_list_.size(), 2);
-  ASSERT_EQ(gf_rec_revert->remove_list_.size(), gf_received->update_list_.size());
-  ASSERT_EQ(gf_rec_revert->update_list_.size(), gf_received->remove_list_.size());
-  ASSERT_EQ(gf_rec_revert->update_list_.size(), 1);
-  ASSERT_EQ(gf_rec_revert->update_list_[0].first, 10000);
-  ASSERT_EQ(gf_rec_revert->update_list_[0].second->id(), old_speed_limit->id());
+  ASSERT_EQ(rec_data_revert->remove_list_.size(), 2);
+  ASSERT_EQ(rec_data_revert->remove_list_.size(), data_received->update_list_.size());
+  ASSERT_EQ(rec_data_revert->update_list_.size(), data_received->remove_list_.size());
+  ASSERT_EQ(rec_data_revert->update_list_.size(), 1);
+  ASSERT_EQ(rec_data_revert->update_list_[0].first, 10000);
+  ASSERT_EQ(rec_data_revert->update_list_[0].second->id(), old_speed_limit->id());
   
 }
 

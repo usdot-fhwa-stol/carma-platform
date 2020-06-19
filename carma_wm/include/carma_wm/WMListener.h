@@ -22,6 +22,7 @@
 #include <ros/callback_queue.h>
 #include <carma_wm/WorldModel.h>
 #include <carma_utils/CARMAUtils.h>
+#include <autoware_lanelet2_msgs/MapBin.h>
 
 namespace carma_wm
 {

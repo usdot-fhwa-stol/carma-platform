@@ -22,10 +22,10 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
 #include <lanelet2_core/primitives/LaneletOrArea.h>
-#include <lanelet2_io/io_handlers/Serialize.h>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <autoware_lanelet2_msgs/MapBin.h>
+#include <carma_wm/TrafficControl.h>
 
 
 namespace carma_wm_ctrl
@@ -59,90 +59,4 @@ public:
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> prev_regems_;
   lanelet::ConstLaneletOrAreas affected_parts_;
 };
-
-/**
- * [Converts carma_wm_ctrl::Geofence object to ROS message. Similar implementation to 
- * lanelet2_extension::utility::message_conversion::toBinMsg]
- * @param gf_ptr [Ptr to Geofence data]
- * @param msg [converted ROS message. Only "data" field is filled]
- * NOTE: When converting the geofence object, the converter fills its relevant map update
- * fields (update_list, remove_list) to be read once at received at the user
- */
-void toGeofenceBinMsg(std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr, autoware_lanelet2_msgs::MapBin* msg);
-
-/**
- * [Converts Geofence binary ROS message to carma_wm_ctrl::Geofence object. Similar implementation to 
- * lanelet2_extension::utility::message_conversion::fromBinMsg]
- * @param msg [ROS message for geofence]
- * @param gf_ptr [Ptr to converted Geofence object]
- * NOTE: When converting the geofence object, the converter only fills its relevant map update
- * fields (update_list, remove_list) as the ROS msg doesn't hold any other data field in the object.
- */
-void fromGeofenceBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr);
-
 }  // namespace carma_wm_ctrl
-
-
-// used for converting geofence into ROS msg binary
-namespace boost {
-namespace serialization {
-
-template <class Archive>
-// NOLINTNEXTLINE
-inline void save(Archive& ar, const carma_wm_ctrl::Geofence& gf, unsigned int /*version*/) 
-{
-  std::string string_id = boost::uuids::to_string(gf.id_);
-  ar << string_id;
-
-  // convert the regems that need to be removed
-  size_t remove_list_size = gf.remove_list_.size();
-  ar << remove_list_size;
-  for (auto pair : gf.remove_list_) ar << pair;
-
-  // convert id, regem pairs that need to be updated
-  size_t update_list_size = gf.update_list_.size();
-  ar << update_list_size;
-  for (auto pair : gf.update_list_) ar << pair;
-}
-
-template <class Archive>
-// NOLINTNEXTLINE
-inline void load(Archive& ar, carma_wm_ctrl::Geofence& gf, unsigned int /*version*/) 
-{
-  boost::uuids::string_generator gen;
-  std::string id;
-  ar >> id;
-  gf.id_ = gen(id);
-
-  // save regems to remove
-  size_t remove_list_size;
-  ar >> remove_list_size;
-  for (auto i = 0u; i < remove_list_size; ++i) 
-  {
-    std::pair<lanelet::Id, lanelet::RegulatoryElementPtr> remove_item;
-    ar >> remove_item;
-    gf.remove_list_.push_back(remove_item);
-  }
-
-  // save parts that need to be updated
-  size_t update_list_size;
-  ar >> update_list_size;
-  for (auto i = 0u; i < update_list_size; ++i) 
-  {
-    std::pair<lanelet::Id, lanelet::RegulatoryElementPtr> update_item;
-    ar >> update_item;
-    gf.update_list_.push_back(update_item);
-  }
-}
-
-template <typename Archive>
-void serialize(Archive& ar, std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>& p, unsigned int /*version*/) 
-{
-  ar& p.first;
-  ar& p.second;
-}
-
-} // namespace serialization
-} // namespace boost
-
-BOOST_SERIALIZATION_SPLIT_FREE(carma_wm_ctrl::Geofence);

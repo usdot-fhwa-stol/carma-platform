@@ -47,8 +47,8 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr&
 void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg)
 {
   // convert ros msg to geofence object
-  auto gf_ptr = std::make_shared<carma_wm_ctrl::Geofence>(carma_wm_ctrl::Geofence());
-  carma_wm_ctrl::fromGeofenceBinMsg(*geofence_msg, gf_ptr);
+  auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
+  carma_wm::fromGeofenceBinMsg(*geofence_msg, gf_ptr);
 
   // update the map
   for (auto pair : gf_ptr->remove_list_)

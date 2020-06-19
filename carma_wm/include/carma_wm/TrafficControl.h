@@ -15,62 +15,118 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+#include <ros/ros.h>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+
+#include <lanelet2_core/LaneletMap.h>
+#include <autoware_lanelet2_msgs/MapBin.h>
+#include <lanelet2_io/io_handlers/Serialize.h>
 
 namespace carma_wm
 {
-/*! \brief Position in a track based coordinate system where the axis are downtrack and crosstrack.
- *         Positive crosstrack is to the left of the reference line
- *
- * The position of a point relative to a reference line. The perpendicular distance from the point to the reference line
- * is the crosstrack The distance to the intersection of the perpendicular from the start of the line is the downtrack
- * distance If an x,y point would be located to the right of the reference line then the crosstrack is positive. It is
- * negative if on the left side of the line. NOTE: The positive/negative crosstrack side is flipped relative to a
- * lanelet::ArcCoordinate Most utility functions will assume that the downtrack/crosstrack values are specified in
- * meters
+/*! \brief This class if just a miniature or carma_wm compatible version of Geofence class in carma_wm_ctrl
+           It holds essential update_list and remove_list data of Geofence class and can be converted to ROS msg in binary
  */
 class TrafficControl
 {
 public:
-  double downtrack = 0;
-  double crosstrack = 0;
-
-  /*! \brief Constructor
-   *
-   * \param down_track The downtrack distance
-   * \param cross_track The crosstrack distance
-   */
-  TrackPos(double down_track, double cross_track) : downtrack(down_track), crosstrack(cross_track)
-  {
-  }
-  /*! \brief Constructor from lanelet ArcCoordinates
-   *         which are converted to TrackPos where downtrack = ArcCoordinates.length and crosstrack =
-   * -ArcCoordinates.distance
-   *
-   * \param arc_coord ArcCoordinate to copy
-   */
-  TrackPos(const lanelet::ArcCoordinates& arc_coord) : downtrack(arc_coord.length), crosstrack(-arc_coord.distance)
-  {
-  }
-
-  /*! \brief Returns a lanelet ArcCoordinate built from this TrackPos
-   *        where downtrack = ArcCoordinates.length and crosstrack = -ArcCoordinates.distance
-   *
-   * \return lanelet::ArcCoordinates with values copied from this object
-   */
-  inline lanelet::ArcCoordinates toArcCoordinates()
-  {
-    return lanelet::ArcCoordinates{ downtrack, -crosstrack };
-  }
-
-  // Overload == and != operators
-  bool operator==(const TrackPos& other) const
-  {
-    return this == &other || (this->downtrack == other.downtrack && this->crosstrack == other.crosstrack);
-  }
-
-  bool operator!=(const TrackPos& other) const
-  {
-    return !(*this == other);
-  }
+   // elements needed for broadcasting to the rest of map users
+  boost::uuids::uuid id_;
+  std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list_;
+  std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> remove_list_;
+  TrafficControl(){}
+  TrafficControl(boost::uuids::uuid id,
+                 std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list, 
+                 std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> remove_list):
+                 id_(id), update_list_(update_list), remove_list_(remove_list){}  
 };
-}  // namespace carma
+
+/**
+ * [Converts carma_wm::TrafficControl object to ROS message. Similar implementation to 
+ * lanelet2_extension::utility::message_conversion::toBinMsg]
+ * @param gf_ptr [Ptr to Geofence data]
+ * @param msg [converted ROS message. Only "data" field is filled]
+ * NOTE: When converting the geofence object, the converter fills its relevant map update
+ * fields (update_list, remove_list) to be read once at received at the user
+ */
+void toGeofenceBinMsg(std::shared_ptr<carma_wm::TrafficControl> gf_ptr, autoware_lanelet2_msgs::MapBin* msg);
+
+/**
+ * [Converts Geofence binary ROS message to carma_wm::TrafficControl object. Similar implementation to 
+ * lanelet2_extension::utility::message_conversion::fromBinMsg]
+ * @param msg [ROS message for geofence]
+ * @param gf_ptr [Ptr to converted Geofence object]
+ * NOTE: When converting the geofence object, the converter only fills its relevant map update
+ * fields (update_list, remove_list) as the ROS msg doesn't hold any other data field in the object.
+ */
+void fromGeofenceBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma_wm::TrafficControl> gf_ptr);
+
+
+}  // namespace carma_wm
+
+
+// used for converting geofence into ROS msg binary
+namespace boost {
+namespace serialization {
+
+template <class Archive>
+// NOLINTNEXTLINE
+inline void save(Archive& ar, const carma_wm::TrafficControl& gf, unsigned int /*version*/) 
+{
+  std::string string_id = boost::uuids::to_string(gf.id_);
+  ar << string_id;
+
+  // convert the regems that need to be removed
+  size_t remove_list_size = gf.remove_list_.size();
+  ar << remove_list_size;
+  for (auto pair : gf.remove_list_) ar << pair;
+
+  // convert id, regem pairs that need to be updated
+  size_t update_list_size = gf.update_list_.size();
+  ar << update_list_size;
+  for (auto pair : gf.update_list_) ar << pair;
+}
+
+template <class Archive>
+// NOLINTNEXTLINE
+inline void load(Archive& ar, carma_wm::TrafficControl& gf, unsigned int /*version*/) 
+{
+  boost::uuids::string_generator gen;
+  std::string id;
+  ar >> id;
+  gf.id_ = gen(id);
+
+  // save regems to remove
+  size_t remove_list_size;
+  ar >> remove_list_size;
+  for (auto i = 0u; i < remove_list_size; ++i) 
+  {
+    std::pair<lanelet::Id, lanelet::RegulatoryElementPtr> remove_item;
+    ar >> remove_item;
+    gf.remove_list_.push_back(remove_item);
+  }
+
+  // save parts that need to be updated
+  size_t update_list_size;
+  ar >> update_list_size;
+  for (auto i = 0u; i < update_list_size; ++i) 
+  {
+    std::pair<lanelet::Id, lanelet::RegulatoryElementPtr> update_item;
+    ar >> update_item;
+    gf.update_list_.push_back(update_item);
+  }
+}
+
+template <typename Archive>
+void serialize(Archive& ar, std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>& p, unsigned int /*version*/) 
+{
+  ar& p.first;
+  ar& p.second;
+}
+
+} // namespace serialization
+} // namespace boost
+
+BOOST_SERIALIZATION_SPLIT_FREE(carma_wm::TrafficControl);

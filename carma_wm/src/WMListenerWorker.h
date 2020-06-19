@@ -18,7 +18,7 @@
 
 #include <autoware_lanelet2_msgs/MapBin.h>
 #include <carma_wm/CARMAWorldModel.h>
-#include <carma_wm_ctrl/Geofence.h>
+#include <carma_wm/TrafficControl.h>
 
 namespace carma_wm
 {

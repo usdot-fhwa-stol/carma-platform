@@ -56,6 +56,7 @@ add_library(
   src/WMListener.cpp
   src/WMListenerWorker.cpp
   src/Geometry.cpp
+  src/TrafficControl.cpp
   src/IndexedDistanceMap.cpp
 )
 

@@ -50,7 +50,6 @@ include_directories(
 
 ## Declare C++ library
 add_library(${PROJECT_NAME}
-  src/Geofence.cpp
   src/WMBroadcaster.cpp
   src/MapConformer.cpp
   src/GeofenceSchedule.cpp
