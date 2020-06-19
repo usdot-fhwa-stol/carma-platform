@@ -92,8 +92,8 @@ namespace platooning_tactical_plugin {
             double trajectory_point_spacing_;
 
 
-            double start_speed;
-            double end_speed;
+            double start_speed = 0;
+            double end_speed = 0;
 
             // current vehicle speed
             double current_speed_;
