@@ -39,14 +39,14 @@ using ::testing::ReturnArg;
 
 namespace carma_wm_ctrl
 {
-TEST(GeofenceScheduler, DISABLED_Constructor)
+TEST(GeofenceScheduler, Constructor)
 {
   GeofenceScheduler scheduler(std::make_unique<TestTimerFactory>());  // Create scheduler with test timers. Having this
                                                                       // check helps verify that the timers do not crash
                                                                       // on destruction
 }
 
-TEST(GeofenceScheduler, DISABLED_addGeofence)
+TEST(GeofenceScheduler, addGeofence)
 {
   // Test adding then evaulate if the calls to active and inactive are done correctly
   // Finally test cleaing the timers

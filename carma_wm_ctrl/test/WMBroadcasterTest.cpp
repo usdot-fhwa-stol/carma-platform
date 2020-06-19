@@ -45,14 +45,13 @@ namespace carma_wm_ctrl
 
 {
 
-TEST(WMBroadcaster, DISABLED_Constructor)
+TEST(WMBroadcaster, Constructor)
 {
-  WMBroadcaster([](const autoware_lanelet2_msgs::MapBin& map_bin) {},
+  WMBroadcaster([](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
                 std::make_unique<TestTimerFactory>());  // Create broadcaster with test timers. Having this check helps
                                                         // verify that the timers do not crash on destruction
 }
-
-TEST(WMBroadcaster, DISABLED_baseMapCallback)
+TEST(WMBroadcaster, baseMapCallback)
 {
   ros::Time::setNow(ros::Time(0));  // Set current time
 
@@ -66,7 +65,7 @@ TEST(WMBroadcaster, DISABLED_baseMapCallback)
         ASSERT_EQ(4, map->laneletLayer.size());  // Verify the map can be decoded
 
         base_map_call_count++;
-      },
+      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, 
       std::make_unique<TestTimerFactory>());
 
   // Get and convert map to binary message
@@ -84,7 +83,7 @@ TEST(WMBroadcaster, DISABLED_baseMapCallback)
 }
 
 // here test the proj string transform test
-TEST(WMBroadcaster, DISABLED_getAffectedLaneletOrAreasFromTransform)
+TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
 {
   using namespace lanelet::units::literals;
   size_t base_map_call_count = 0;
@@ -96,7 +95,8 @@ TEST(WMBroadcaster, DISABLED_getAffectedLaneletOrAreasFromTransform)
 
         ASSERT_EQ(4, map->laneletLayer.size());  // Verify the map can be decoded
         base_map_call_count++;
-      },
+      }, 
+      [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
       std::make_unique<TestTimerFactory>());
 
   //////
@@ -148,7 +148,7 @@ TEST(WMBroadcaster, DISABLED_getAffectedLaneletOrAreasFromTransform)
 }
 
 // here test assuming the georeference proj strings are the same
-TEST(WMBroadcaster, DISABLED_getAffectedLaneletOrAreasOnlyLogic)
+TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
 {
   using namespace lanelet::units::literals;
   // Set the environment  
@@ -160,6 +160,7 @@ TEST(WMBroadcaster, DISABLED_getAffectedLaneletOrAreasOnlyLogic)
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
         base_map_call_count++;
       },
+      [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
       std::make_unique<TestTimerFactory>());
 
   //////
@@ -244,7 +245,7 @@ TEST(WMBroadcaster, DISABLED_getAffectedLaneletOrAreasOnlyLogic)
 // First "Adding active geofence to the map with geofence id: 1"
 // Second "Removing inactive geofence to the map with geofence id: 1"
 // Once said logic is added this unit test should be updated
-TEST(WMBroadcaster, DISABLED_geofenceCallback)
+TEST(WMBroadcaster, geofenceCallback)
 {
   // Test adding then evaluate if the calls to active and inactive are done correctly
   Geofence gf;
@@ -277,6 +278,7 @@ TEST(WMBroadcaster, DISABLED_geofenceCallback)
         ASSERT_EQ(4, map->laneletLayer.size());  // Verify the map can be decoded
         base_map_call_count++;
       },
+      [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
       std::make_unique<TestTimerFactory>());
 
   // Get and convert map to binary message
@@ -294,6 +296,7 @@ TEST(WMBroadcaster, DISABLED_geofenceCallback)
   // Setting georefernce otherwise, geofenceCallback will throw exception
   std_msgs::String sample_proj_string;
   sample_proj_string.data = "sample_proj_string"; // it doesn't have to be set correctly for this test
+  ROS_INFO_STREAM("Below proj_create: unrecognized format is expected");
   wmb.geoReferenceCallback(sample_proj_string);
 
   // Verify adding geofence call
@@ -309,17 +312,22 @@ TEST(WMBroadcaster, DISABLED_geofenceCallback)
   carma_wm::waitForEqOrTimeout(3.0, 1, temp);
 }
 
-TEST(WMBroadcaster, DISABLED_addAndRemoveGeofence)
+TEST(WMBroadcaster, addAndRemoveGeofence)
 {
   using namespace lanelet::units::literals;
   // Set the environment  
   size_t base_map_call_count = 0;
+  size_t map_update_call_count = 0;
   WMBroadcaster wmb(
       [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
         // Publish map callback
         lanelet::LaneletMapPtr map(new lanelet::LaneletMap);
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
         base_map_call_count++;
+      }, 
+      [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
+        // Publish map update callback
+        map_update_call_count++;
       },
       std::make_unique<TestTimerFactory>());
 
@@ -378,6 +386,7 @@ TEST(WMBroadcaster, DISABLED_addAndRemoveGeofence)
   // process the geofence and change the map
 
   wmb.addGeofence(gf_ptr);
+  ASSERT_EQ(map_update_call_count, 1);
   // we can see that the gf_ptr->now would have the prev speed limit of 5_mph that affected llt 10000
   ASSERT_EQ(gf_ptr->prev_regems_.size(), 1);
   ASSERT_EQ(gf_ptr->prev_regems_[0].first, 10000);
@@ -385,10 +394,12 @@ TEST(WMBroadcaster, DISABLED_addAndRemoveGeofence)
 
   // now suppose the geofence is finished being used, we have to revert the changes
   wmb.removeGeofence(gf_ptr);
+  ASSERT_EQ(map_update_call_count, 2);
   ASSERT_EQ(gf_ptr->prev_regems_.size(), 0);
 
   // we can check if the removeGeofence worked, by using addGeofence again and if the original is there again
   wmb.addGeofence(gf_ptr);
+  ASSERT_EQ(map_update_call_count, 3);
   ASSERT_EQ(gf_ptr->prev_regems_.size(), 1);
   ASSERT_EQ(gf_ptr->prev_regems_[0].first, 10000);
   ASSERT_EQ(gf_ptr->prev_regems_[0].second->id(), old_speed_limit->id());

@@ -58,8 +58,6 @@ public:
   // we need mutable elements saved here as they will be added back through update function which only accepts mutable objects
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> prev_regems_;
   lanelet::ConstLaneletOrAreas affected_parts_;
-  bool is_reverse_geofence = false;
-  
 };
 
 /**
@@ -93,17 +91,16 @@ template <class Archive>
 // NOLINTNEXTLINE
 inline void save(Archive& ar, const carma_wm_ctrl::Geofence& gf, unsigned int /*version*/) 
 {
-  auto& gfnc = const_cast<carma_wm_ctrl::Geofence&>(gf);
-  std::string string_id = boost::uuids::to_string(gfnc.id_);
-  ar << string_id << gfnc.is_reverse_geofence;
+  std::string string_id = boost::uuids::to_string(gf.id_);
+  ar << string_id;
 
   // convert the regems that need to be removed
-  size_t remove_list_size = gfnc.remove_list_.size();
+  size_t remove_list_size = gf.remove_list_.size();
   ar << remove_list_size;
   for (auto pair : gf.remove_list_) ar << pair;
 
   // convert id, regem pairs that need to be updated
-  size_t update_list_size = gfnc.update_list_.size();
+  size_t update_list_size = gf.update_list_.size();
   ar << update_list_size;
   for (auto pair : gf.update_list_) ar << pair;
 }
@@ -114,7 +111,7 @@ inline void load(Archive& ar, carma_wm_ctrl::Geofence& gf, unsigned int /*versio
 {
   boost::uuids::string_generator gen;
   std::string id;
-  ar >> id >> gf.is_reverse_geofence;
+  ar >> id;
   gf.id_ = gen(id);
 
   // save regems to remove

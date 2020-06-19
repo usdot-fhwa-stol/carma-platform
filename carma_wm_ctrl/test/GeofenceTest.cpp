@@ -55,6 +55,7 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
         base_map_call_count++;
       },
+      [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
       std::make_unique<TestTimerFactory>());
   
   //////
@@ -111,7 +112,7 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   // process the geofence and change the map
 
   // flow for adding geofence to the map
-  wmb.addGeofence(gf_ptr);
+  wmb.addGeofenceHelper(gf_ptr);
   // from broadcaster
   autoware_lanelet2_msgs::MapBin gf_obj_msg;
   carma_wm_ctrl::toGeofenceBinMsg(gf_ptr, &gf_obj_msg);
@@ -131,7 +132,7 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   ASSERT_EQ(gf_ptr->prev_regems_[0].second->id(), old_speed_limit->id());
 
   // now suppose the geofence is finished being used, we have to revert the changes
-  wmb.removeGeofence(gf_ptr);
+  wmb.removeGeofenceHelper(gf_ptr);
   ASSERT_EQ(gf_ptr->prev_regems_.size(), 0); // should be reset
   // from broadcaster
   autoware_lanelet2_msgs::MapBin gf_msg_revert;

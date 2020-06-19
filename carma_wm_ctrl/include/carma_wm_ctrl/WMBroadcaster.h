@@ -49,11 +49,12 @@ class WMBroadcaster
 {
 public:
   using PublishMapCallback = std::function<void(const autoware_lanelet2_msgs::MapBin&)>;
+  using PublishMapUpdateCallback = std::function<void(const autoware_lanelet2_msgs::MapBin&)>;
 
   /*!
    * \brief Constructor
    */
-  WMBroadcaster(PublishMapCallback map_pub, std::unique_ptr<TimerFactory> timer_factory);
+  WMBroadcaster(PublishMapCallback map_pub, PublishMapUpdateCallback map_update_pub, std::unique_ptr<TimerFactory> timer_factory);
 
   /*!
    * \brief Callback to set the base map when it has been loaded
@@ -78,14 +79,24 @@ public:
   void geofenceCallback(const cav_msgs::ControlMessage& geofence_msg);
 
   /*!
-   * \brief Adds a geofence to the current map
+   * \brief Adds a geofence to the current map and publishes the ROS msg
    */
   void addGeofence(std::shared_ptr<Geofence> gf_ptr);
 
   /*!
-   * \brief Removes a geofence from the current map
+   * \brief Determines the type of geofence and adds it to the current map 
+   */
+  void addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr);
+
+  /*!
+   * \brief Removes a geofence from the current map and publishes the ROS msg
    */
   void removeGeofence(std::shared_ptr<Geofence> gf_ptr);
+
+    /*!
+   * \brief Determines the type of geofence and removes it from the current map 
+   */
+  void removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr);
 
   /*!
    * \brief Gets the affected lanelet or areas based on the geofence_msg
@@ -112,6 +123,7 @@ private:
   std::vector<lanelet::LaneletMapPtr> cached_maps_;
   std::mutex map_mutex_;
   PublishMapCallback map_pub_;
+  PublishMapUpdateCallback map_update_pub_;
   GeofenceScheduler scheduler_;
   std::string base_map_georef_;
   double max_lane_width_;
