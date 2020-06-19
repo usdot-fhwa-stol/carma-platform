@@ -44,6 +44,8 @@ TEST(PlatooningTacticalPluginTest, testGetWaypointsInTimeBoundary1)
     waypoints.push_back(wp_5);
 
     platooning_tactical_plugin::PlatooningTacticalPlugin tp;
+    tp.start_speed = 2.0;
+    tp.end_speed = 8.0;
     std::vector<autoware_msgs::Waypoint> res = tp.get_waypoints_in_time_boundary(waypoints, 6.0);
     EXPECT_EQ(4, res.size());
     EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
@@ -69,6 +71,9 @@ TEST(PlatooningTacticalPluginTest, testGetWaypointsInTimeBoundary2)
     waypoints.push_back(wp_1);
     waypoints.push_back(wp_2);
     platooning_tactical_plugin::PlatooningTacticalPlugin tp;
+    tp.start_speed = 2.0;
+    tp.end_speed = 8.0;
+
     std::vector<autoware_msgs::Waypoint> res = tp.get_waypoints_in_time_boundary(waypoints, 6.0);
     EXPECT_EQ(2, res.size());
     EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
@@ -94,6 +99,9 @@ TEST(PlatooningTacticalPluginTest, testGetWaypointsInTimeBoundary3)
     waypoints.push_back(wp_2);
     waypoints.push_back(wp_3);
     platooning_tactical_plugin::PlatooningTacticalPlugin tp;
+    tp.start_speed = 2.0;
+    tp.end_speed = 8.0;
+
     std::vector<autoware_msgs::Waypoint> res = tp.get_waypoints_in_time_boundary(waypoints, 5.0);
     EXPECT_EQ(3, res.size());
     EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
@@ -129,6 +137,10 @@ TEST(PlatooningTacticalPluginTest, testCreateUnevenTrajectory1)
     waypoints.push_back(wp_4);
     waypoints.push_back(wp_5);
     platooning_tactical_plugin::PlatooningTacticalPlugin tp;
+
+    tp.start_speed = 2.0;
+    tp.end_speed = 8.0;
+
     // create pose message to indicate that the current location is on top of the starting waypoint
     tp.pose_msg_.reset(new geometry_msgs::PoseStamped());
     std::vector<cav_msgs::TrajectoryPlanPoint> traj = tp.create_uneven_trajectory_from_waypoints(waypoints);
@@ -137,11 +149,11 @@ TEST(PlatooningTacticalPluginTest, testCreateUnevenTrajectory1)
     EXPECT_NEAR(0.0, traj[0].x, 0.01);
     EXPECT_NEAR(0.25, traj[1].target_time / 1e9, 0.01);
     EXPECT_NEAR(0.5, traj[1].x, 0.01);
-    EXPECT_NEAR(0.01, traj[2].target_time / 1e9, 0.01);
+    EXPECT_NEAR(0.45, traj[2].target_time / 1e9, 0.01);
     EXPECT_NEAR(1.3, traj[2].x, 0.01);
-    EXPECT_NEAR(0.0, traj[3].target_time / 1e9, 0.01);
+    EXPECT_NEAR(0.5, traj[3].target_time / 1e9, 0.01);
     EXPECT_NEAR(1.4, traj[3].x, 0.01);
-    EXPECT_NEAR(0.65, traj[4].target_time / 1e9, 0.01);
+    EXPECT_NEAR(0.64, traj[4].target_time / 1e9, 0.01);
     EXPECT_NEAR(2.0, traj[4].x, 0.01);
 }
 
@@ -170,6 +182,9 @@ TEST(PlatooningTacticalPluginTest, testCreateUnevenTrajectory2)
     waypoints.push_back(wp_4);
     waypoints.push_back(wp_5);
     platooning_tactical_plugin::PlatooningTacticalPlugin tp;
+    tp.start_speed = 2.0;
+    tp.end_speed = 8.0;
+
     // create pose message to indicate that the current location is not near the starting waypoint
     geometry_msgs::PoseStamped pose;
     pose.pose.position.x = -1.0;

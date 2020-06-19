@@ -41,6 +41,9 @@ namespace platooning_tactical_plugin {
             // initialize this node
             void initialize();
 
+            
+            double start_speed = 0;
+            double end_speed = 0;
 
             // create uneven trajectory from waypoints
             std::vector<cav_msgs::TrajectoryPlanPoint> create_uneven_trajectory_from_waypoints(std::vector<autoware_msgs::Waypoint> waypoints);
@@ -90,10 +93,6 @@ namespace platooning_tactical_plugin {
             // ROS params
             double trajectory_time_length_;
             double trajectory_point_spacing_;
-
-
-            double start_speed = 0;
-            double end_speed = 0;
 
             // current vehicle speed
             double current_speed_;
