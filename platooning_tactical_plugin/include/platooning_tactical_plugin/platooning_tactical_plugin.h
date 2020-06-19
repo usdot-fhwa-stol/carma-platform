@@ -33,9 +33,14 @@ namespace platooning_tactical_plugin {
         public:
             /*!
             * Constructor.
-            * @param nodeHandle the ROS node handle.
             */
-            PlatooningTacticalPlugin(ros::NodeHandle& nodeHandle);
+            PlatooningTacticalPlugin();
+
+            void run();
+
+            // initialize this node
+            void initialize();
+
 
             // create uneven trajectory from waypoints
             std::vector<cav_msgs::TrajectoryPlanPoint> create_uneven_trajectory_from_waypoints(std::vector<autoware_msgs::Waypoint> waypoints);
@@ -56,14 +61,8 @@ namespace platooning_tactical_plugin {
 
         private:
 
-            //! ROS node handle.
-            ros::NodeHandle& nodeHandle_;
-
-            /*!
-            * Reads and verifies the ROS parameters.
-            * @return true if successful.
-            */
-            bool readParameters();
+            // node handles
+            std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
             //! ROS subscribers.
             ros::Subscriber waypoint_subscriber_;
@@ -91,6 +90,10 @@ namespace platooning_tactical_plugin {
             // ROS params
             double trajectory_time_length_;
             double trajectory_point_spacing_;
+
+
+            double start_speed;
+            double end_speed;
 
             // current vehicle speed
             double current_speed_;

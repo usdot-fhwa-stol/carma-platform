@@ -23,16 +23,8 @@ int main(int argc, char** argv)
 {
 
   ros::init(argc, argv, "platooning_tactical_plugin");
-  ros::NodeHandle nodeHandle("~");
-  platooning_tactical_plugin::PlatooningTacticalPlugin platooning_tactical_plugin(nodeHandle);
-
-  ros::Rate rate(10);
-
-  while (ros::ok())
-  {
-    rate.sleep();
-    ros::spinOnce();
-  }
+  platooning_tactical_plugin::PlatooningTacticalPlugin platooning_tactical_plugin;
+  platooning_tactical_plugin.run();
 
   return 0;
 }

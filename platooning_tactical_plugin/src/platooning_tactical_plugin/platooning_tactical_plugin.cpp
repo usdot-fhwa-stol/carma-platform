@@ -2,19 +2,19 @@
 
 namespace platooning_tactical_plugin {
 
-    PlatooningTacticalPlugin::PlatooningTacticalPlugin(ros::NodeHandle &nodeHandle) : nodeHandle_(nodeHandle) {
+    PlatooningTacticalPlugin::PlatooningTacticalPlugin() :
+                current_speed_(0.0),
+                trajectory_time_length_(6.0),
+                trajectory_point_spacing_(0.1) {}
 
-        if (!readParameters())
-        {
-            ROS_ERROR("Could not read parameters.");
-        }
+    void PlatooningTacticalPlugin::initialize()
+    {
+        nh_.reset(new ros::CARMANodeHandle());
+        pnh_.reset(new ros::CARMANodeHandle("~"));
 
-        waypoint_subscriber_ = nodeHandle_.subscribe("final_waypoint", 1, &PlatooningTacticalPlugin::waypoints_cb, this);
-        pose_subscriber_ = nodeHandle_.subscribe("current_pose", 1, &PlatooningTacticalPlugin::pose_cb, this);
-        twist_subscriber_ = nodeHandle_.subscribe("current_velocity", 1, &PlatooningTacticalPlugin::twist_cd, this);
-
-
-        platooning_tactical_plugin_discovery_pub_ = nodeHandle_.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
+        trajectory_srv_ = nh_->advertiseService("plugins/PlatooningTacticalPlugin/plan_trajectory", &PlatooningTacticalPlugin::plan_trajectory_cb, this);
+                
+        platooning_tactical_plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
         plugin_discovery_msg_.name = "PlatooningTacticalPlugin";
         plugin_discovery_msg_.versionId = "v1.0";
         plugin_discovery_msg_.available = true;
@@ -22,43 +22,56 @@ namespace platooning_tactical_plugin {
         plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
         plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
 
+        waypoint_subscriber_ = nh_->subscribe("final_waypoint", 1, &PlatooningTacticalPlugin::waypoints_cb, this);
+        pose_subscriber_ = nh_->subscribe("current_pose", 1, &PlatooningTacticalPlugin::pose_cb, this);
+        twist_subscriber_ = nh_->subscribe("current_velocity", 1, &PlatooningTacticalPlugin::twist_cd, this);
+        pnh_->param<double>("trajectory_time_length", trajectory_time_length_, 6.0);
+        pnh_->param<double>("trajectory_point_spacing", trajectory_point_spacing_, 0.1);
+
         ros::CARMANodeHandle::setSpinCallback([this]() -> bool {
             platooning_tactical_plugin_discovery_pub_.publish(plugin_discovery_msg_);
             return true;
         });
 
-        trajectory_srv_ = nodeHandle_.advertiseService("plugins/PlatooningTachticalPlugin/plan_trajectory", &PlatooningTacticalPlugin::plan_trajectory_cb, this);
+        trajectory_srv_ = nh_->advertiseService("plugins/PlatooningTachticalPlugin/plan_trajectory", &PlatooningTacticalPlugin::plan_trajectory_cb, this);
 
-        ROS_INFO("Successfully launched node.");
+        ROS_INFO("Successfully launched Platooning Tactical Plugin node.");
     }
 
     PlatooningTacticalPlugin::~PlatooningTacticalPlugin()
     {
     }
 
-    bool PlatooningTacticalPlugin::readParameters()
+    void PlatooningTacticalPlugin::run()
     {
-        nodeHandle_.param("trajectory_time_length", trajectory_time_length_, 6.0);
-        nodeHandle_.param("trajectory_point_spacing", trajectory_point_spacing_, 0.1);
-        return true;
+        initialize();
+        ros::CARMANodeHandle::spin();
     }
 
     bool PlatooningTacticalPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp){
         if(req.maneuver_plan.maneuvers[0].lane_following_maneuver.parameters.planning_strategic_plugin == "PlatooningStrategicPlugin") {
 
-            if(req.maneuver_plan.maneuvers[0].lane_following_maneuver.parameters.neogition_type == 2 ){
+            if(req.maneuver_plan.maneuvers[0].lane_following_maneuver.parameters.neogition_type == cav_msgs::ManeuverParameters::PLATOONING ){
                 if(req.maneuver_plan.maneuvers[0].lane_following_maneuver.start_speed == req.maneuver_plan.maneuvers[0].lane_following_maneuver.end_speed ) {
                     resp.trajectory_plan = trajectory_msg;
                     resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_FOLLOWING);
                     resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
                 }
+                else {
+                    ROS_WARN_STREAM("speed does not match!");
+                }
             }
-            else if(req.maneuver_plan.maneuvers[0].lane_following_maneuver.parameters.neogition_type == 1) {
+            else if(req.maneuver_plan.maneuvers[0].lane_following_maneuver.parameters.neogition_type == cav_msgs::ManeuverParameters::GENERAL_NEGOTIATION) {
                 resp.trajectory_plan = trajectory_msg;
                 resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_FOLLOWING);
                 resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
             }
-
+            else {
+                ROS_WARN_STREAM("neogition_type does not match!");
+            }
+        }
+        else {
+            ROS_WARN_STREAM("planning_strategic_plugin does not match!");
         }
 
         return true;
@@ -131,7 +144,11 @@ namespace platooning_tactical_plugin {
             }
             cav_msgs::TrajectoryPlanPoint traj_point;
             // assume the vehicle is starting from stationary state because it is the same assumption made by pure pursuit wrapper node
-            double average_speed = previous_wp_v;
+
+            double traj_speed = (start_speed+end_speed)/2;
+
+            double average_speed = std::min(previous_wp_v ,traj_speed);
+
             double delta_d = sqrt(pow(waypoints[i].pose.pose.position.x - previous_wp_x, 2) + pow(waypoints[i].pose.pose.position.y - previous_wp_y, 2));
             traj_point.target_time = (delta_d / average_speed) * 1e9 + previous_wp_t;
             traj_point.x = waypoints[i].pose.pose.position.x;
