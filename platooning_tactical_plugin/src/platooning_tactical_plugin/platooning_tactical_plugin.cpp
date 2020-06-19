@@ -45,8 +45,8 @@ namespace platooning_tactical_plugin {
 
     bool PlatooningTacticalPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp){
 
-        if(req.maneuver_plan.maneuver.lane_following_maneuver.parameters.neogition_type == 2 && req.maneuver_plan.maneuver.lane_following_maneuver.parameters.planning_strategic_plugin == "PlatooningStrategicPlugin" ){
-            if(req.maneuver_plan.maneuver.lane_following_maneuver.start_speed == req.maneuver_plan.maneuver.lane_following_maneuver.end_speed ) {
+        if(req.maneuver_plan.maneuvers[0].lane_following_maneuver.parameters.neogition_type == 2 && req.maneuver_plan.maneuvers[0].lane_following_maneuver.parameters.planning_strategic_plugin == "PlatooningStrategicPlugin" ){
+            if(req.maneuver_plan.maneuvers[0].lane_following_maneuver.start_speed == req.maneuver_plan.maneuvers[0].lane_following_maneuver.end_speed ) {
                 resp.trajectory_plan = trajectory_msg;
                 resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_FOLLOWING);
                 resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
