@@ -157,7 +157,7 @@ namespace platooning_tactical_plugin {
             double average_speed = std::min(previous_wp_v ,traj_speed);
 
             double delta_d = sqrt(pow(waypoints[i].pose.pose.position.x - previous_wp_x, 2) + pow(waypoints[i].pose.pose.position.y - previous_wp_y, 2));
-            traj_point.target_time = (double)((delta_d / average_speed) * 1e9 + previous_wp_t);
+            traj_point.target_time = (unsigned long)((delta_d / average_speed) * 1e9 + previous_wp_t);
             traj_point.x = waypoints[i].pose.pose.position.x;
             traj_point.y = waypoints[i].pose.pose.position.y;
             uneven_traj.push_back(traj_point);
