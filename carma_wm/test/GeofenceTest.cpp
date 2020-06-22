@@ -15,7 +15,7 @@
  */
 
 #include <gmock/gmock.h>
-#include <carma_wm_ctrl/Geofence.h>
+#include <carma_wm/TrafficControl.h>
 #include <carma_wm_ctrl/ROSTimerFactory.h>
 #include <carma_wm_ctrl/WMBroadcaster.h>
 #include <lanelet2_extension/utility/message_conversion.h>
@@ -24,6 +24,7 @@
 #include <ctime>
 #include <atomic>
 #include "TestHelpers.h"
+#include <carma_wm_ctrl/test/TestHelpers.h>
 #include "TestTimer.h"
 #include "TestTimerFactory.h"
 
@@ -88,7 +89,7 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   wmb.geoReferenceCallback(sample_proj_string);
 
   // Create the geofence object
-  auto gf_ptr = std::make_shared<Geofence>(Geofence());
+  auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
   gf_ptr->id_ = boost::uuids::random_generator()();
   cav_msgs::ControlMessage gf_msg;
   lanelet::DigitalSpeedLimitPtr new_speed_limit = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(map->regulatoryElementLayer.uniqueId(), 10_mph, {}, {},

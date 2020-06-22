@@ -81,9 +81,9 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
   map_pub_(compliant_map_msg);
 };
 
-std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::ControlMessage& geofence_msg)
+std::shared_ptr<carma_wm::TrafficControl> WMBroadcaster::geofenceFromMsg(const cav_msgs::ControlMessage& geofence_msg)
 {
-  auto gf_ptr = std::make_shared<Geofence>(Geofence());
+  auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
   // Get ID
   std::copy(geofence_msg.id.begin(), geofence_msg.id.end(), gf_ptr->id_.begin());
 
@@ -91,22 +91,33 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Control
   // currently only converting portion of control message that is relevant to digital speed limit geofence
   // Convert from double to Velocity
 
+  // Get affected lanelet or areas by converting the georeference and querying the map using points in the geofence
+  gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(geofence_msg);
+  std::vector<lanelet::Lanelet> affected_llts;
+  std::vector<lanelet::Area> affected_areas;
+
+  // used for assigning them to the regem as parameters
+  for (auto llt_or_area : gf_ptr->affected_parts_)
+  {
+    if (llt_or_area.isLanelet()) affected_llts.push_back(current_map_->laneletLayer.get(llt_or_area.lanelet()->id()));
+    if (llt_or_area.isArea()) affected_areas.push_back(current_map_->areaLayer.get(llt_or_area.area()->id()));
+  }
+
   if (geofence_msg.control_type.control_type == j2735_msgs::ControlType::MAXSPEED) 
   {
-    gf_ptr->max_speed_limit_->speed_limit_ = lanelet::Velocity(geofence_msg.control_value.value * lanelet::units::MPH());
-    gf_ptr->max_speed_limit_->setId(current_map_->regulatoryElementLayer.uniqueId());
+    gf_ptr->max_speed_limit_->buildData(lanelet::utils::getId(), 
+                                        lanelet::Velocity(geofence_msg.control_value.value * lanelet::units::MPH()),
+                                        affected_llts, affected_areas, { lanelet::Participants::VehicleCar });
   }
   if (geofence_msg.control_type.control_type == j2735_msgs::ControlType::MINSPEED) 
   {
-    gf_ptr->min_speed_limit_->speed_limit_ = lanelet::Velocity(geofence_msg.control_value.value * lanelet::units::MPH());
-    gf_ptr->max_speed_limit_->setId(current_map_->regulatoryElementLayer.uniqueId());
+    gf_ptr->min_speed_limit_->buildData(lanelet::utils::getId(), 
+                                        lanelet::Velocity(geofence_msg.control_value.value * lanelet::units::MPH()),
+                                        affected_llts, affected_areas, { lanelet::Participants::VehicleCar });
   }
-
-  // Get affected lanelet or areas by converting the georeference and querying the map using points in the geofence
-  gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(geofence_msg);
-
+  
   // Get schedule (assuming everything is in UTC currently)
-  gf_ptr->schedule = GeofenceSchedule(geofence_msg.schedule.start,  
+  gf_ptr->schedule = carma_wm::GeofenceSchedule(geofence_msg.schedule.start,  
                                  geofence_msg.schedule.end,
                                  geofence_msg.schedule.between.start,     
                                  geofence_msg.schedule.between.end, 
@@ -256,7 +267,7 @@ std::unordered_set<lanelet::Lanelet> WMBroadcaster::filterSuccessorLanelets(cons
   return filtered_lanelets;
 }
 
-void WMBroadcaster::addSpeedLimit(std::shared_ptr<Geofence> gf_ptr)
+void WMBroadcaster::addSpeedLimit(std::shared_ptr<carma_wm::TrafficControl> gf_ptr)
 {
   // First loop is to save the relation between element and regulatory element
   // so that we can add back the old one after geofence deactivates
@@ -293,7 +304,7 @@ void WMBroadcaster::addSpeedLimit(std::shared_ptr<Geofence> gf_ptr)
   
 }
 
-void WMBroadcaster::addBackSpeedLimit(std::shared_ptr<Geofence> gf_ptr)
+void WMBroadcaster::addBackSpeedLimit(std::shared_ptr<carma_wm::TrafficControl> gf_ptr)
 {
   // First loop is to remove the relation between element and regulatory element that this geofence added initially
   for (auto el: gf_ptr->affected_parts_)
@@ -322,7 +333,7 @@ void WMBroadcaster::addBackSpeedLimit(std::shared_ptr<Geofence> gf_ptr)
   
 }
 
-void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
+void WMBroadcaster::addGeofence(std::shared_ptr<carma_wm::TrafficControl> gf_ptr)
 {
   std::lock_guard<std::mutex> guard(map_mutex_);
   ROS_INFO_STREAM("Adding active geofence to the map with geofence id: " << gf_ptr->id_);
@@ -332,13 +343,12 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 
   // publish
   autoware_lanelet2_msgs::MapBin gf_msg;
-  auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
-  
-  carma_wm::toGeofenceBinMsg(send_data, &gf_msg);
+
+  carma_wm::toGeofenceBinMsg(gf_ptr, &gf_msg);
   map_update_pub_(gf_msg);
 };
 
-void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
+void WMBroadcaster::removeGeofence(std::shared_ptr<carma_wm::TrafficControl> gf_ptr)
 {
   std::lock_guard<std::mutex> guard(map_mutex_);
   ROS_INFO_STREAM("Removing inactive geofence from the map with geofence id: " << gf_ptr->id_);
@@ -348,14 +358,13 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   
   // publish
   autoware_lanelet2_msgs::MapBin gf_msg_revert;
-  auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
 
-  carma_wm::toGeofenceBinMsg(send_data, &gf_msg_revert);
+  carma_wm::toGeofenceBinMsg(gf_ptr, &gf_msg_revert);
   map_update_pub_(gf_msg_revert);
 };
 
 // helper function that detects the type of geofence and delegates
-void WMBroadcaster::addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr)
+void WMBroadcaster::addGeofenceHelper(std::shared_ptr<carma_wm::TrafficControl> gf_ptr)
 {
   // resetting the information inside geofence
   gf_ptr->remove_list_ = {};
@@ -367,7 +376,7 @@ void WMBroadcaster::addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr)
 }
 
 // helper function that detects the type of geofence and delegates
-void WMBroadcaster::removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr)
+void WMBroadcaster::removeGeofenceHelper(std::shared_ptr<carma_wm::TrafficControl> gf_ptr)
 {
   // again, TODO: Logic to determine what type of geofence goes here in the future
   // reset the info inside geofence

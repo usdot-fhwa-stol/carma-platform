@@ -15,32 +15,52 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 #include <ros/ros.h>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/uuid/uuid_generators.hpp>
-
 #include <lanelet2_core/LaneletMap.h>
 #include <autoware_lanelet2_msgs/MapBin.h>
 #include <lanelet2_io/io_handlers/Serialize.h>
+#include <lanelet2_core/primitives/Point.h>
+#include "GeofenceSchedule.h"
+#include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
+#include <lanelet2_core/primitives/LaneletOrArea.h>
+
 
 namespace carma_wm
 {
-/*! \brief This class if just a miniature or carma_wm compatible version of Geofence class in carma_wm_ctrl
-           It holds essential update_list and remove_list data of Geofence class and can be converted to ROS msg in binary
+/*! \brief This class is referred as either TrafficControl or Geofence (due to previous convention) in the rest of the system
  */
+using namespace lanelet::units::literals;
+
 class TrafficControl
 {
 public:
-   // elements needed for broadcasting to the rest of map users
-  boost::uuids::uuid id_;
-  std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list_;
-  std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> remove_list_;
   TrafficControl(){}
   TrafficControl(boost::uuids::uuid id,
                  std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list, 
                  std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> remove_list):
                  id_(id), update_list_(update_list), remove_list_(remove_list){}  
+
+  boost::uuids::uuid id_;  // Unique id of this geofence
+  GeofenceSchedule schedule;  // The schedule this geofence operates with
+  // TODO Add rest of the attributes provided by geofences in the future
+  std::string proj;
+  lanelet::DigitalSpeedLimitPtr min_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_kmh, {}, {},
+                                                     { lanelet::Participants::VehicleCar }));
+  lanelet::DigitalSpeedLimitPtr max_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_kmh, {}, {},
+                                                     { lanelet::Participants::VehicleCar }));
+  
+   // elements needed for broadcasting to the rest of map users
+  std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list_;
+  std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> remove_list_;
+  
+  // we need mutable elements saved here as they will be added back through update function which only accepts mutable objects
+  std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> prev_regems_;
+  lanelet::ConstLaneletOrAreas affected_parts_;
+
 };
 
 /**
