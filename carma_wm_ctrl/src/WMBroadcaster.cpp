@@ -87,23 +87,37 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Control
   // Get ID
   std::copy(geofence_msg.id.begin(), geofence_msg.id.end(), gf_ptr->id_.begin());
 
+  // Get affected lanelet or areas by converting the georeference and querying the map using points in the geofence
+  gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(geofence_msg);
+
   // TODO: logic to determine what type of geofence goes here
   // currently only converting portion of control message that is relevant to digital speed limit geofence
   // Convert from double to Velocity
 
+  std::vector<lanelet::Lanelet> affected_llts;
+  std::vector<lanelet::Area> affected_areas;
+  // used for assigning them to the regem as parameters
+  for (auto llt_or_area : gf_ptr->affected_parts_)
+  {
+    if (llt_or_area.isLanelet()) affected_llts.push_back(current_map_->laneletLayer.get(llt_or_area.lanelet()->id()));
+    if (llt_or_area.isArea()) affected_areas.push_back(current_map_->areaLayer.get(llt_or_area.area()->id()));
+  }
+
   if (geofence_msg.control_type.control_type == j2735_msgs::ControlType::MAXSPEED) 
   {
-    gf_ptr->max_speed_limit_->speed_limit_ = lanelet::Velocity(geofence_msg.control_value.value * lanelet::units::MPH());
-    gf_ptr->max_speed_limit_->setId(current_map_->regulatoryElementLayer.uniqueId());
+    gf_ptr->max_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
+                                        lanelet::Velocity(geofence_msg.control_value.value * lanelet::units::MPH()),
+                                        affected_llts, affected_areas, { lanelet::Participants::VehicleCar }));
   }
   if (geofence_msg.control_type.control_type == j2735_msgs::ControlType::MINSPEED) 
   {
-    gf_ptr->min_speed_limit_->speed_limit_ = lanelet::Velocity(geofence_msg.control_value.value * lanelet::units::MPH());
+    gf_ptr->min_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
+                                        lanelet::Velocity(geofence_msg.control_value.value * lanelet::units::MPH()),
+                                        affected_llts, affected_areas, { lanelet::Participants::VehicleCar }));lanelet::units::MPH());
     gf_ptr->max_speed_limit_->setId(current_map_->regulatoryElementLayer.uniqueId());
   }
 
-  // Get affected lanelet or areas by converting the georeference and querying the map using points in the geofence
-  gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(geofence_msg);
+
 
   // Get schedule (assuming everything is in UTC currently)
   gf_ptr->schedule = GeofenceSchedule(geofence_msg.schedule.start,  
