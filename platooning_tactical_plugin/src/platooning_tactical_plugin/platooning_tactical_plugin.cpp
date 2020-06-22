@@ -102,7 +102,6 @@ namespace platooning_tactical_plugin {
         ROS_DEBUG("I heard waypoints");
     };
 
-// SONAR_START
 
     std::vector<cav_msgs::TrajectoryPlanPoint> PlatooningTacticalPlugin::compose_trajectory_from_waypoints(std::vector<autoware_msgs::Waypoint> waypoints)
     {
@@ -111,6 +110,8 @@ namespace platooning_tactical_plugin {
         std::vector<cav_msgs::TrajectoryPlanPoint> final_trajectory = post_process_traj_points(tmp_trajectory);
         return final_trajectory;
     }
+
+// SONAR_START
 
     std::vector<cav_msgs::TrajectoryPlanPoint> PlatooningTacticalPlugin::create_uneven_trajectory_from_waypoints(std::vector<autoware_msgs::Waypoint> waypoints)
     {
@@ -204,6 +205,7 @@ namespace platooning_tactical_plugin {
 
         return trajectory;
     }
+// SONAR_STOP
 
     void PlatooningTacticalPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
@@ -214,5 +216,6 @@ namespace platooning_tactical_plugin {
     {
         current_speed_ = msg->twist.linear.x;
     }
+// SONAR_START
 
 }
