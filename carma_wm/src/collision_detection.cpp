@@ -73,7 +73,13 @@ namespace carma_wm {
                 geometry_msgs::Pose pose;
                 pose.position.x = i.x;
                 pose.position.y = i.y;
-                // v.future_poses.push_back(pose);
+
+
+                pose.orientation.x = tf_orientation.getX();
+                pose.orientation.y = tf_orientation.getY();
+                pose.orientation.z = tf_orientation.getZ();
+                pose.orientation.w = tf_orientation.getW();
+
                 v.future_polygons.push_back(CollisionChecking::ObjectToBoostPolygon<polygon_t>(pose, size));
             }
 
@@ -81,7 +87,7 @@ namespace carma_wm {
         };
 
         bool CollisionChecking::DetectCollision(collision_detection::MovingObject ob_1, collision_detection::MovingObject ob_2, int target_time) {            
-            std::cout << "DetectCollision" << boost::geometry::wkt(ob_1.object_polygon) << std::endl;
+            std::cout << "DetectCollision vehicle" << boost::geometry::wkt(ob_1.object_polygon) << std::endl;
             std::cout << "DetectCollision" << boost::geometry::wkt(ob_2.object_polygon) << std::endl;
 
             collision_detection::MovingObject ob_1_after = CollisionChecking::PredictObjectPosition(ob_1,target_time);
@@ -99,7 +105,7 @@ namespace carma_wm {
 
 
                 std::deque<polygon_t> output;
-                std::cout << "CheckPolygonIntersection" << boost::geometry::wkt(ob_1.object_polygon) << std::endl;
+                std::cout << "CheckPolygonIntersection vehicle" << boost::geometry::wkt(ob_1.object_polygon) << std::endl;
                 std::cout << "CheckPolygonIntersection" << boost::geometry::wkt(ob_2.object_polygon) << std::endl;
 
                 boost::geometry::intersection(ob_1.object_polygon, ob_2.object_polygon, output); 

@@ -57,6 +57,7 @@ add_library(
   src/WMListenerWorker.cpp
   src/Geometry.cpp
   src/IndexedDistanceMap.cpp
+  src/collision_detection.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -99,6 +100,7 @@ catkin_add_gmock(${PROJECT_NAME}-test
   test/IndexedDistanceMapTest.cpp
   test/WMListenerWorkerTest.cpp
   test/GeometryTest.cpp
+  test/CollisionDetectionTest.cpp
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 
