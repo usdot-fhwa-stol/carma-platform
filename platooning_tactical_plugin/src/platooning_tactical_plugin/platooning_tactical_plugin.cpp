@@ -129,7 +129,7 @@ namespace platooning_tactical_plugin {
         double previous_wp_v = waypoints[0].twist.twist.linear.x;
         double previous_wp_x = pose_msg_->pose.position.x;
         double previous_wp_y = pose_msg_->pose.position.y;
-        unsigned long previous_wp_t = 0.0;
+        double previous_wp_t = 0.0;
         for(int i = 0; i < waypoints.size(); ++i)
         {
             if(i != 0)
@@ -153,10 +153,10 @@ namespace platooning_tactical_plugin {
 
             double traj_speed = (start_speed+end_speed)/2;
 
-            unsigned long average_speed = std::min(previous_wp_v ,traj_speed);
+            double average_speed = std::min(previous_wp_v ,traj_speed);
 
-            unsigned long delta_d = sqrt(pow(waypoints[i].pose.pose.position.x - previous_wp_x, 2) + pow(waypoints[i].pose.pose.position.y - previous_wp_y, 2));
-            traj_point.target_time = (delta_d / average_speed) * 1e9 + previous_wp_t;
+            double delta_d = sqrt(pow(waypoints[i].pose.pose.position.x - previous_wp_x, 2) + pow(waypoints[i].pose.pose.position.y - previous_wp_y, 2));
+            traj_point.target_time = (double)((delta_d / average_speed) * 1e9 + previous_wp_t);
             traj_point.x = waypoints[i].pose.pose.position.x;
             traj_point.y = waypoints[i].pose.pose.position.y;
             uneven_traj.push_back(traj_point);
