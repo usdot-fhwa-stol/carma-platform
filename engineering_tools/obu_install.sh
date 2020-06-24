@@ -50,26 +50,25 @@ done
 /mnt/rw/rc.local standby
 
 
-snmpset -v3 -lauthPriv -uleidos -Apassword -Xpassword -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 iso.0.15628.4.1.7.1.2.1 x 0x20 x 0x000000000000000000000000c0a8580A i 5398 i 2 i 1
+snmpset -v3 -lauthPriv -uleidos -Apassword -Xpassword -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 iso.0.15628.4.1.7.1.2.1 x 0x20 iso.0.15628.4.1.7.1.3.1 x 0x000000000000000000000000c0a8580A iso.0.15628.4.1.7.1.4.1 i 5398 iso.0.15628.4.1.7.1.5.1 i 2 iso.0.15628.4.1.7.1.10.1 i 1
 
-# Vehicle specific
-snmpset -v3 -lauthPriv -uleidos -Apassword -Xpassword -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 iso.0.15628.4.1.7.1.2.1 x 0x20 x ${HEX_IP} i 5398 i 2 i 1
+# Selected vehicle
+snmpset -v3 -lauthPriv -uleidos -Apassword -Xpassword -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 iso.0.15628.4.1.7.1.2.1 x 0x20 iso.0.15628.4.1.7.1.3.1 x ${HEX_IP} iso.0.15628.4.1.7.1.4.1 i 5398 iso.0.15628.4.1.7.1.5.1 i 2 iso.0.15628.4.1.7.1.10.1 i 1
 
 
 # Step 9:
 # Copy the following 7 lines together
-snmpset -v3 -lauthPriv -uleidos -Apassword -Xpassword -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 iso.0.15628.4.1.7.1.11.2 i 4 x 0xBFEE x 0x000000000000000000000000c0a8580A i 5398 i 2 i 1
+snmpset -v3 -lauthPriv -uleidos -Apassword -Xpassword -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 iso.0.15628.4.1.7.1.11.2 i 4 iso.0.15628.4.1.7.1.2.2 x 0xBFEE iso.0.15628.4.1.7.1.3.2 x 0x000000000000000000000000c0a8580A iso.0.15628.4.1.7.1.4.2 i 5398 iso.0.15628.4.1.7.1.5.2 i 2 iso.0.15628.4.1.7.1.10.2 i 1
 
-#Vehicle specific
-snmpset -v3 -lauthPriv -uleidos -Apassword -Xpassword -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 iso.0.15628.4.1.7.1.11.2 i 4 x 0xBFEE x ${HEX_IP} i 5398 i 2 i 1
+#Selected vehicle
+snmpset -v3 -lauthPriv -uleidos -Apassword -Xpassword -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 iso.0.15628.4.1.7.1.11.2 i 4 iso.0.15628.4.1.7.1.2.2 x 0xBFEE iso.0.15628.4.1.7.1.3.2 x ${HEX_IP} iso.0.15628.4.1.7.1.4.2 i 5398 iso.0.15628.4.1.7.1.5.2 i 2 iso.0.15628.4.1.7.1.10.2 i 1
 
 # Step 10:
 # Copy the following 7 lines together
-snmpset -v3 -lauthPriv -uleidos -Apassword -Xpassword -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 iso.0.15628.4.1.7.1.11.3 i 4 x 0x8002 x 0x000000000000000000000000c0a8580A i 5398 i 2 i 1 i 4
+snmpset -v3 -lauthPriv -uleidos -Apassword -Xpassword -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 iso.0.15628.4.1.7.1.11.3 i 4 iso.0.15628.4.1.7.1.2.3 x 0x8002 iso.0.15628.4.1.7.1.3.3 x 0x000000000000000000000000c0a8580A iso.0.15628.4.1.7.1.4.3 i 5398 iso.0.15628.4.1.7.1.5.3 i 2 iso.0.15628.4.1.7.1.10.3 i 1 iso.0.15628.4.1.99.0 i 4
 
-#Lexus
-snmpset -v3 -lauthPriv -uleidos -Apassword -Xpassword -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 iso.0.15628.4.1.7.1.11.3 i 4 x 0x8002 x ${HEX_IP} i 5398 i 2 i 1 i 4
-
+#Selected vehicle
+snmpset -v3 -lauthPriv -uleidos -Apassword -Xpassword -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 iso.0.15628.4.1.7.1.11.3 i 4 iso.0.15628.4.1.7.1.2.3 x 0x8002 iso.0.15628.4.1.7.1.3.3 x ${HEX_IP} iso.0.15628.4.1.7.1.4.3 i 5398 iso.0.15628.4.1.7.1.5.3 i 2 iso.0.15628.4.1.7.1.10.3 i 1 iso.0.15628.4.1.99.0 i 4
 # Step 11: verify the result
 snmpwalk -v3 -lauthPriv -uleidos -Apassword -Xpassword -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 iso.0.15628.4.1.7
 
