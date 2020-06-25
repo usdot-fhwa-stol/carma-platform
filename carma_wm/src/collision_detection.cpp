@@ -6,26 +6,17 @@ namespace carma_wm {
 
         std::vector<cav_msgs::RoadwayObstacle> CollisionChecking::WorldCollisionDetection(cav_msgs::RoadwayObstacleList rwol, cav_msgs::TrajectoryPlan tp, geometry_msgs::Vector3& size, geometry_msgs::Twist veloctiy, int target_time){
 
-            std::cout << "start function" << std::endl;
-
             std::vector<cav_msgs::RoadwayObstacle> rwo_collison;
 
             collision_detection::MovingObject vehicle_object = CollisionChecking::ConvertVehicleToMovingObject(tp, size, veloctiy);
 
-            std::cout << "after ConvertVehicleToMovingObjects" << rwol.roadway_obstacles.size() << std::endl;
-
             for (int i = 0; i < rwol.roadway_obstacles.size(); i++) {
 
-                std::cout << "start ConvertRoadwayObstacleToMovingObject" << std::endl;
-
                 collision_detection::MovingObject rwo = CollisionChecking::ConvertRoadwayObstacleToMovingObject(rwol.roadway_obstacles[i]);
-                std::cout << "after ConvertRoadwayObstacleToMovingObject" << std::endl;
 
                 bool collision = CollisionChecking::DetectCollision(vehicle_object, rwo, target_time);
-                std::cout << "after DetectCollision" << std::endl;
 
                 if(collision) {
-                    std::cout << "after rwo_collison" << std::endl;
                     rwo_collison.push_back(rwol.roadway_obstacles[i]);
                 }
             }
@@ -41,7 +32,6 @@ namespace carma_wm {
 
             for (auto i : rwo.object.predictions){
                 ro.future_polygons.push_back(CollisionChecking::ObjectToBoostPolygon<polygon_t>(i.predicted_position, rwo.object.size));
-                // ro.future_poses.push_back(i.predicted_position);
             }
 
             ro.linear_velocity = rwo.object.velocity.twist.linear;
@@ -57,28 +47,39 @@ namespace carma_wm {
             pose.position.x = tp.trajectory_points[0].x;
             pose.position.y = tp.trajectory_points[0].y;
 
-            tf2::Quaternion tf_orientation;
-            tf_orientation.setRPY(0, 0, 1.5708);
+            Eigen::Vector2d vehicle_vector = {tp.trajectory_points[0].x - tp.trajectory_points[1].x , tp.trajectory_points[0].y - tp.trajectory_points[1].y};
 
-            pose.orientation.x = tf_orientation.getX();
-            pose.orientation.y = tf_orientation.getY();
-            pose.orientation.z = tf_orientation.getZ();
-            pose.orientation.w = tf_orientation.getW();
+            Eigen::Vector2d x_axis = {1, 0};
 
+            double yaw = std::acos(vehicle_vector.dot(x_axis)/(vehicle_vector.norm() * x_axis.norm()));
+
+            tf2::Quaternion vehicle_orientation;
+            vehicle_orientation.setRPY(0, 0, yaw);
+
+            pose.orientation.x = vehicle_orientation.getX();
+            pose.orientation.y = vehicle_orientation.getY();
+            pose.orientation.z = vehicle_orientation.getZ();
+            pose.orientation.w = vehicle_orientation.getW();
 
             v.object_polygon = CollisionChecking::ObjectToBoostPolygon<polygon_t>(pose, size);
             v.linear_velocity = veloctiy.linear;
 
-            for (auto i : tp.trajectory_points){
+            for(int i=0; i < tp.trajectory_points.size() - 1; i++){
+
+                vehicle_vector = {tp.trajectory_points[i + 1].x - tp.trajectory_points[i].x , tp.trajectory_points[i+1].y - tp.trajectory_points[i].y};
+                yaw = std::acos(vehicle_vector.dot(x_axis)/(vehicle_vector.norm() * x_axis.norm()));
+
+                tf2::Quaternion orientation;
+                orientation.setRPY(0, 0, yaw);
+
                 geometry_msgs::Pose pose;
-                pose.position.x = i.x;
-                pose.position.y = i.y;
+                pose.position.x = tp.trajectory_points[i].x;
+                pose.position.y = tp.trajectory_points[i].y;
 
-
-                pose.orientation.x = tf_orientation.getX();
-                pose.orientation.y = tf_orientation.getY();
-                pose.orientation.z = tf_orientation.getZ();
-                pose.orientation.w = tf_orientation.getW();
+                pose.orientation.x = orientation.getX();
+                pose.orientation.y = orientation.getY();
+                pose.orientation.z = orientation.getZ();
+                pose.orientation.w = orientation.getW();
 
                 v.future_polygons.push_back(CollisionChecking::ObjectToBoostPolygon<polygon_t>(pose, size));
             }
@@ -87,8 +88,6 @@ namespace carma_wm {
         };
 
         bool CollisionChecking::DetectCollision(collision_detection::MovingObject ob_1, collision_detection::MovingObject ob_2, int target_time) {            
-            std::cout << "DetectCollision vehicle" << boost::geometry::wkt(ob_1.object_polygon) << std::endl;
-            std::cout << "DetectCollision" << boost::geometry::wkt(ob_2.object_polygon) << std::endl;
 
             collision_detection::MovingObject ob_1_after = CollisionChecking::PredictObjectPosition(ob_1,target_time);
             collision_detection::MovingObject ob_2_after = CollisionChecking::PredictObjectPosition(ob_2,target_time);
@@ -102,11 +101,7 @@ namespace carma_wm {
 
         bool CollisionChecking::CheckPolygonIntersection(collision_detection::MovingObject ob_1, collision_detection::MovingObject ob_2) {    
 
-
-
                 std::deque<polygon_t> output;
-                std::cout << "CheckPolygonIntersection vehicle" << boost::geometry::wkt(ob_1.object_polygon) << std::endl;
-                std::cout << "CheckPolygonIntersection" << boost::geometry::wkt(ob_2.object_polygon) << std::endl;
 
                 boost::geometry::intersection(ob_1.object_polygon, ob_2.object_polygon, output); 
 
@@ -143,9 +138,6 @@ namespace carma_wm {
 
             collision_detection::MovingObject output_object = {hull_polygon, op.linear_velocity};
             
-            
-            std::cout << "PredictObjectPosition" << boost::geometry::wkt(op.future_polygons[0]) << std::endl;
-
             return output_object;
         };
 
@@ -173,7 +165,6 @@ namespace carma_wm {
             point_t p2(obj_p2_map.getX(), obj_p2_map.getY());
             point_t p3(obj_p3_map.getX(), obj_p3_map.getY());
             point_t p4(obj_p4_map.getX(), obj_p4_map.getY());
-
 
             P p;
             p.outer().push_back(p1);

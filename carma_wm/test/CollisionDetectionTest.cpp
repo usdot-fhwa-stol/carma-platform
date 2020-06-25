@@ -352,123 +352,117 @@ namespace carma_wm
 
     std::vector<cav_msgs::RoadwayObstacle> result = CollisionChecking.WorldCollisionDetection(rwol, tp, size, veloctiy, target_time);
 
-    ASSERT_EQ(result.size(),0);
+    ASSERT_EQ(result.size(),1);
 
   }
 
 
-  //   TEST(CollisionDetectionTrueTest, WorldCollisionDetection)
-  // {
+  TEST(CollisionDetectionTrueTest, WorldCollisionDetection)
+  {
 
-  //   cav_msgs::RoadwayObstacleList rwol;
-  //   cav_msgs::TrajectoryPlan tp;
+    cav_msgs::RoadwayObstacleList rwol;
+    cav_msgs::TrajectoryPlan tp;
 
-    
-  //   geometry_msgs::Twist veloctiy;
-  //   int target_time = 3;
+    geometry_msgs::Twist veloctiy;
+    int target_time = 3;
 
-  //   geometry_msgs::Vector3 linear_velocity;
-  //   linear_velocity.x = 1;
-  //   linear_velocity.y = 1;
+    geometry_msgs::Vector3 linear_velocity;
+    linear_velocity.x = 1;
+    linear_velocity.y = 1;
 
-  //   veloctiy.linear = linear_velocity;
+    veloctiy.linear = linear_velocity;
 
-    
-  //   geometry_msgs::Vector3 size;
-  //   size.x = 5;
-  //   size.y = 5;
-  //   size.z = 1;
+    geometry_msgs::Vector3 size;
+    size.x = 1;
+    size.y = 1;
+    size.z = 1;
 
+    geometry_msgs::Pose pose;
+    pose.position.x = 6;
+    pose.position.y = 5;
+    pose.position.z = 0;
 
-  //   geometry_msgs::Pose pose;
-  //   pose.position.x = 6;
-  //   pose.position.y = 5;
-  //   pose.position.z = 0;
+    tf2::Quaternion tf_orientation;
+    tf_orientation.setRPY(0, 0, 1.5708);
 
-  //   tf2::Quaternion tf_orientation;
-  //   tf_orientation.setRPY(0, 0, 1.5708);
+    pose.orientation.x = tf_orientation.getX();
+    pose.orientation.y = tf_orientation.getY();
+    pose.orientation.z = tf_orientation.getZ();
+    pose.orientation.w = tf_orientation.getW();
 
-  //   pose.orientation.x = tf_orientation.getX();
-  //   pose.orientation.y = tf_orientation.getY();
-  //   pose.orientation.z = tf_orientation.getZ();
-  //   pose.orientation.w = tf_orientation.getW();
+    cav_msgs::TrajectoryPlanPoint trajectory_point_1;
+    cav_msgs::TrajectoryPlanPoint trajectory_point_2;
+    cav_msgs::TrajectoryPlanPoint trajectory_point_3;
+    cav_msgs::TrajectoryPlanPoint trajectory_point_4;
+    cav_msgs::TrajectoryPlanPoint trajectory_point_5;
 
+    trajectory_point_1.x = 1.0;
+    trajectory_point_1.y = 1.0;
+    trajectory_point_1.target_time = 0.0;
 
+    trajectory_point_2.x = 1.0;
+    trajectory_point_2.y = 2.0;
+    trajectory_point_2.target_time = 1.0;
 
-  //   cav_msgs::TrajectoryPlanPoint trajectory_point_1;
-  //   cav_msgs::TrajectoryPlanPoint trajectory_point_2;
-  //   cav_msgs::TrajectoryPlanPoint trajectory_point_3;
-  //   cav_msgs::TrajectoryPlanPoint trajectory_point_4;
-  //   cav_msgs::TrajectoryPlanPoint trajectory_point_5;
+    trajectory_point_3.x = 1.0;
+    trajectory_point_3.y = 3.0;
+    trajectory_point_3.target_time = 2.0;
 
-  //   trajectory_point_1.x = 1.0;
-  //   trajectory_point_1.y = 1.0;
-  //   trajectory_point_1.target_time = 0.0;
+    trajectory_point_4.x = 1.0;
+    trajectory_point_4.y = 4.0;
+    trajectory_point_4.target_time = 3.0;
 
-  //   trajectory_point_2.x = 1.0;
-  //   trajectory_point_2.y = 2.0;
-  //   trajectory_point_2.target_time = 1.0;
+    trajectory_point_5.x = 1.0;
+    trajectory_point_5.y = 5.0;
+    trajectory_point_5.target_time = 4.0;
 
-  //   trajectory_point_3.x = 1.0;
-  //   trajectory_point_3.y = 3.0;
-  //   trajectory_point_3.target_time = 2.0;
+    tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4, trajectory_point_5};
 
-  //   trajectory_point_4.x = 1.0;
-  //   trajectory_point_4.y = 4.0;
-  //   trajectory_point_4.target_time = 3.0;
+    cav_msgs::RoadwayObstacle rwo_1;
+    cav_msgs::RoadwayObstacle rwo_2;
+    cav_msgs::RoadwayObstacle rwo_3;
+    cav_msgs::RoadwayObstacle rwo_4;
+    cav_msgs::RoadwayObstacle rwo_5;
 
-  //   trajectory_point_5.x = 1.0;
-  //   trajectory_point_5.y = 5.0;
-  //   trajectory_point_5.target_time = 4.0;
+    rwo_1.object.pose.pose.position.x = 1;
+    rwo_1.object.pose.pose.position.y = 1;
+    rwo_1.object.pose.pose.position.z = 0;
 
-  //   tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4, trajectory_point_5};
+    rwo_1.object.pose.pose.orientation.x = tf_orientation.getX();
+    rwo_1.object.pose.pose.orientation.y = tf_orientation.getY();
+    rwo_1.object.pose.pose.orientation.z = tf_orientation.getZ();
+    rwo_1.object.pose.pose.orientation.w = tf_orientation.getW();
 
-  //   cav_msgs::RoadwayObstacle rwo_1;
-  //   cav_msgs::RoadwayObstacle rwo_2;
-  //   cav_msgs::RoadwayObstacle rwo_3;
-  //   cav_msgs::RoadwayObstacle rwo_4;
-  //   cav_msgs::RoadwayObstacle rwo_5;
+    rwo_1.object.size.x = 5;
+    rwo_1.object.size.y = 5;
+    rwo_1.object.size.z = 5;
 
-  //   rwo_1.object.pose.pose.position.x = 1;
-  //   rwo_1.object.pose.pose.position.y = 1;
-  //   rwo_1.object.pose.pose.position.z = 0;
+    cav_msgs::PredictedState ps_1;
 
-  //   rwo_1.object.pose.pose.orientation.x = tf_orientation.getX();
-  //   rwo_1.object.pose.pose.orientation.y = tf_orientation.getY();
-  //   rwo_1.object.pose.pose.orientation.z = tf_orientation.getZ();
-  //   rwo_1.object.pose.pose.orientation.w = tf_orientation.getW();
+    ps_1.predicted_position.position.x = 1;
+    ps_1.predicted_position.position.y = 1;
+    ps_1.predicted_position.position.z = 0;
 
-  //   rwo_1.object.size.x = 5;
-  //   rwo_1.object.size.y = 5;
-  //   rwo_1.object.size.z = 5;
+    cav_msgs::PredictedState ps_2;
 
-  //   cav_msgs::PredictedState ps_1;
+    ps_1.predicted_position.position.x = 1;
+    ps_1.predicted_position.position.y = 2;
+    ps_1.predicted_position.position.z = 0;
 
-  //   ps_1.predicted_position.position.x = 1;
-  //   ps_1.predicted_position.position.y = 1;
-  //   ps_1.predicted_position.position.z = 0;
+    cav_msgs::PredictedState ps_3;
 
-  //   cav_msgs::PredictedState ps_2;
+    ps_1.predicted_position.position.x = 1;
+    ps_1.predicted_position.position.y = 3;
+    ps_1.predicted_position.position.z = 0;
 
-  //   ps_1.predicted_position.position.x = 1;
-  //   ps_1.predicted_position.position.y = 2;
-  //   ps_1.predicted_position.position.z = 0;
+    rwo_1.object.predictions = {ps_1,ps_2,ps_3};
 
-  //   cav_msgs::PredictedState ps_3;
+    rwol.roadway_obstacles = {rwo_1};
 
-  //   ps_1.predicted_position.position.x = 1;
-  //   ps_1.predicted_position.position.y = 3;
-  //   ps_1.predicted_position.position.z = 0;
+    std::vector<cav_msgs::RoadwayObstacle> result = CollisionChecking.WorldCollisionDetection(rwol, tp, size, veloctiy, target_time);
 
-  //   rwo_1.object.predictions = {ps_1,ps_2,ps_3};
-
-  //   rwol.roadway_obstacles = {rwo_1};
-
-  //   std::vector<cav_msgs::RoadwayObstacle> result = CollisionChecking.WorldCollisionDetection(rwol, tp, size, veloctiy, target_time);
-
-  //   ASSERT_EQ(result.size(),1);
-
-  // }
+    ASSERT_EQ(result.size(),0);
+  }
 
 
 }  // namespace carma_wm
