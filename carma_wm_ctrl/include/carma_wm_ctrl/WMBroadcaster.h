@@ -33,6 +33,7 @@
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <cav_msgs/ControlMessage.h>
 #include <std_msgs/String.h>
+#include <unordered_set>
 
 namespace carma_wm_ctrl
 {
@@ -120,6 +121,7 @@ private:
   std::unordered_set<lanelet::Lanelet> filterSuccessorLanelets(const std::unordered_set<lanelet::Lanelet>& possible_lanelets, const std::unordered_set<lanelet::Lanelet>& root_lanelets);
   lanelet::LaneletMapPtr base_map_;
   lanelet::LaneletMapPtr current_map_;
+  std::unordered_set<std::string>  checked_geofence_ids_;
   std::vector<lanelet::LaneletMapPtr> cached_maps_;
   std::mutex map_mutex_;
   PublishMapCallback map_pub_;

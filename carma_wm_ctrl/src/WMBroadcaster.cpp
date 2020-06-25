@@ -105,15 +105,15 @@ std::shared_ptr<carma_wm::TrafficControl> WMBroadcaster::geofenceFromMsg(const c
 
   if (geofence_msg.control_type.control_type == j2735_msgs::ControlType::MAXSPEED) 
   {
-    gf_ptr->max_speed_limit_->buildData(lanelet::utils::getId(), 
+    gf_ptr->max_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
                                         lanelet::Velocity(geofence_msg.control_value.value * lanelet::units::MPH()),
-                                        affected_llts, affected_areas, { lanelet::Participants::VehicleCar });
+                                        affected_llts, affected_areas, { lanelet::Participants::VehicleCar }));
   }
   if (geofence_msg.control_type.control_type == j2735_msgs::ControlType::MINSPEED) 
   {
-    gf_ptr->min_speed_limit_->buildData(lanelet::utils::getId(), 
+    gf_ptr->min_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
                                         lanelet::Velocity(geofence_msg.control_value.value * lanelet::units::MPH()),
-                                        affected_llts, affected_areas, { lanelet::Participants::VehicleCar });
+                                        affected_llts, affected_areas, { lanelet::Participants::VehicleCar }));
   }
   
   // Get schedule (assuming everything is in UTC currently)
@@ -130,6 +130,13 @@ std::shared_ptr<carma_wm::TrafficControl> WMBroadcaster::geofenceFromMsg(const c
 void WMBroadcaster::geofenceCallback(const cav_msgs::ControlMessage& geofence_msg)
 {
   std::lock_guard<std::mutex> guard(map_mutex_);
+  // quickly check if the id has been added
+  boost::uuids::uuid id;
+  std::copy(geofence_msg.id.begin(), geofence_msg.id.end(), id.begin());
+  if (checked_geofence_ids_.find(boost::uuids::to_string(id)) != checked_geofence_ids_.end())
+    return;
+  
+  checked_geofence_ids_.insert(boost::uuids::to_string(id));
   auto gf_ptr = geofenceFromMsg(geofence_msg);
   scheduler_.addGeofence(gf_ptr);  // Add the geofence to the scheduler
   ROS_INFO_STREAM("New geofence message received by WMBroadcaster with id" << gf_ptr->id_);
@@ -340,7 +347,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<carma_wm::TrafficControl> gf_ptr
   
   // Process the geofence object
   addGeofenceHelper(gf_ptr);
-
+  
   // publish
   autoware_lanelet2_msgs::MapBin gf_msg;
 
@@ -355,7 +362,7 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<carma_wm::TrafficControl> gf_
   
   // Process the geofence object
   removeGeofenceHelper(gf_ptr);
-  
+
   // publish
   autoware_lanelet2_msgs::MapBin gf_msg_revert;
 
