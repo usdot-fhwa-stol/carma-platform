@@ -4,7 +4,7 @@ namespace carma_wm {
 
     namespace collision_detection {
 
-        std::vector<cav_msgs::RoadwayObstacle> CollisionChecking::WorldCollisionDetection(cav_msgs::RoadwayObstacleList rwol, cav_msgs::TrajectoryPlan tp, geometry_msgs::Vector3& size, geometry_msgs::Twist veloctiy, int target_time){
+        std::vector<cav_msgs::RoadwayObstacle> CollisionChecking::WorldCollisionDetection(cav_msgs::RoadwayObstacleList& rwol, cav_msgs::TrajectoryPlan& tp, geometry_msgs::Vector3& size, geometry_msgs::Twist& veloctiy, int target_time){
 
             std::vector<cav_msgs::RoadwayObstacle> rwo_collison;
 
@@ -24,7 +24,7 @@ namespace carma_wm {
             return rwo_collison;
         };
 
-        collision_detection::MovingObject CollisionChecking::ConvertRoadwayObstacleToMovingObject(cav_msgs::RoadwayObstacle rwo){
+        collision_detection::MovingObject CollisionChecking::ConvertRoadwayObstacleToMovingObject(cav_msgs::RoadwayObstacle& rwo){
 
             collision_detection::MovingObject ro;
             
@@ -39,7 +39,7 @@ namespace carma_wm {
             return ro;
         };
 
-        collision_detection::MovingObject CollisionChecking::ConvertVehicleToMovingObject(cav_msgs::TrajectoryPlan tp, geometry_msgs::Vector3 size, geometry_msgs::Twist veloctiy){
+        collision_detection::MovingObject CollisionChecking::ConvertVehicleToMovingObject(cav_msgs::TrajectoryPlan& tp, geometry_msgs::Vector3& size, geometry_msgs::Twist& veloctiy){
             
             collision_detection::MovingObject v;
 
