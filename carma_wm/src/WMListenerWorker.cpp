@@ -44,78 +44,46 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr&
     map_callback_();
   }
 }
-
 void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg)
 {
   // convert ros msg to geofence object
   auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
   carma_wm::fromGeofenceBinMsg(*geofence_msg, gf_ptr);
+  ROS_INFO_STREAM("New Map Update Received with Geofence Id:" << gf_ptr->id_);
 
-  ROS_WARN_STREAM("MAP REMOVE REQUEST RECEIVED AT WMLISTENER! OF SIZE " << gf_ptr->remove_list_.size());
-  // update the map
+  ROS_INFO_STREAM("Geofence id" << gf_ptr->id_ << "requests removal of size: " << gf_ptr->remove_list_.size());
   for (auto pair : gf_ptr->remove_list_)
   {
-    ROS_WARN_STREAM("look at it regem size: " << world_model_->getMutableMap()->laneletLayer.get(pair.first).regulatoryElements().size());
-    for (auto regem : world_model_->getMutableMap()->laneletLayer.get(pair.first).regulatoryElements())
-    {
-      ROS_WARN_STREAM("The llt with id: "<< pair.first << " for this pair has regem id: " << regem->id());
-    }
-    ROS_WARN_STREAM("Before Using findUsage");
-    ROS_WARN_STREAM("lanelet layer ID:" << world_model_->getMutableMap()->laneletLayer.findUsages(pair.second).size());
-    ROS_WARN_STREAM("regem layer if exists:" << world_model_->getMutableMap()->regulatoryElementLayer.exists(pair.second->id()));
-  }
-
-  for (auto pair : gf_ptr->remove_list_)
-  {
-    ROS_WARN_STREAM("REMOVE LLT ID: " << pair.first << " REMOVE REGEM ID: " << pair.second->id());
-    ROS_WARN_STREAM("Before Using findUsage");
     auto parent_llt = world_model_->getMutableMap()->laneletLayer.get(pair.first);
     // we can only check by id, if the element is there
     // this is only for speed optimization, as world model here should blindly accept the map update received
     for (auto regem: parent_llt.regulatoryElements())
     {
-      if (pair.second->id() == regem->id()) 
-      {
-        world_model_->getMutableMap()->remove(parent_llt, regem);
-        break;
-      }
+      if (pair.second->id() == regem->id()) world_model_->getMutableMap()->remove(parent_llt, regem);
     }
   }
 
-  ROS_WARN_STREAM("MAP UPDATE REQUEST RECEIVED AT WMLISTENER! OF SIZE:" << gf_ptr->update_list_.size());
+  ROS_INFO_STREAM("Geofence id" << gf_ptr->id_ << "requests update of size: " << gf_ptr->update_list_.size());
   for (auto pair : gf_ptr->update_list_)
   {
-    ROS_WARN_STREAM("UPDATE LLT ID: " << pair.first << " UPDATE REGEM ID: " << pair.second->id());
     auto parent_llt = world_model_->getMutableMap()->laneletLayer.get(pair.first);
-    
-    for (auto regem: parent_llt.regulatoryElements())
+    auto regemptr_it = world_model_->getMutableMap()->regulatoryElementLayer.find(pair.second->id());
+    // if this regem is already in the map
+    if (regemptr_it != world_model_->getMutableMap()->regulatoryElementLayer.end())
     {
-      //we first need to remove it to update if it exists
-      //so that we can insert the regem with updated data
-      if (pair.second->id() == regem->id()) 
-      {
-        world_model_->getMutableMap()->remove(parent_llt, regem);
-        world_model_->getMutableMap()->update(parent_llt, pair.second);
-        break;
-      }
+      world_model_->getMutableMap()->update(parent_llt, *regemptr_it);
     }
-    
+    else
+    {
+      world_model_->getMutableMap()->update(parent_llt, pair.second);
+    }
   }
   
   // set the map to set a new routing
-  //world_model_->setMap(world_model_->getMutableMap());
-  ROS_WARN_STREAM("MAP SET SUCCESSFULLY");
-  ROS_WARN_STREAM("OR DID IT?:");
-  for (auto pair : gf_ptr->update_list_)
-  {
-    ROS_WARN_STREAM("look at its regem size: " << world_model_->getMutableMap()->laneletLayer.get(pair.first).regulatoryElements().size());
-    ROS_WARN_STREAM("Before Using findUsage");
-    if (world_model_->getMutableMap()->laneletLayer.findUsages(lanelet::utils::toConst(pair.second)).size() != 0)
-      ROS_WARN_STREAM("lanelet layer ID:" << world_model_->getMutableMap()->laneletLayer.findUsages(pair.second)[0].id());
-    else
-      ROS_WARN_STREAM("No llt is using this shit...");
-  }
+  world_model_->setMap(world_model_->getMutableMap());
+  ROS_INFO_STREAM("Finished Applying the Map Update with Geofence Id:" << gf_ptr->id_);
 }
+
 
 void WMListenerWorker::roadwayObjectListCallback(const cav_msgs::RoadwayObstacleList& msg)
 {
