@@ -33,7 +33,7 @@ void WMBroadcasterNode::publishMapUpdate(const autoware_lanelet2_msgs::MapBin& g
 }
 
 WMBroadcasterNode::WMBroadcasterNode()
-  : wmb_(std::bind(&WMBroadcasterNode::publishMap, this, _1), std::bind(&WMBroadcasterNode::publishMap, this, _1), 
+  : wmb_(std::bind(&WMBroadcasterNode::publishMap, this, _1), std::bind(&WMBroadcasterNode::publishMapUpdate, this, _1), 
     std::make_unique<ROSTimerFactory>()){};
 
 int WMBroadcasterNode::run()

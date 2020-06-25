@@ -87,10 +87,6 @@ std::shared_ptr<carma_wm::TrafficControl> WMBroadcaster::geofenceFromMsg(const c
   // Get ID
   std::copy(geofence_msg.id.begin(), geofence_msg.id.end(), gf_ptr->id_.begin());
 
-  // TODO: logic to determine what type of geofence goes here
-  // currently only converting portion of control message that is relevant to digital speed limit geofence
-  // Convert from double to Velocity
-
   // Get affected lanelet or areas by converting the georeference and querying the map using points in the geofence
   gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(geofence_msg);
   std::vector<lanelet::Lanelet> affected_llts;
@@ -102,6 +98,10 @@ std::shared_ptr<carma_wm::TrafficControl> WMBroadcaster::geofenceFromMsg(const c
     if (llt_or_area.isLanelet()) affected_llts.push_back(current_map_->laneletLayer.get(llt_or_area.lanelet()->id()));
     if (llt_or_area.isArea()) affected_areas.push_back(current_map_->areaLayer.get(llt_or_area.area()->id()));
   }
+
+  // TODO: logic to determine what type of geofence goes here
+  // currently only converting portion of control message that is relevant to digital speed limit geofence
+  // Convert from double to Velocity
 
   if (geofence_msg.control_type.control_type == j2735_msgs::ControlType::MAXSPEED) 
   {
