@@ -10,7 +10,7 @@ namespace carma_wm {
 
             collision_detection::MovingObject vehicle_object = CollisionChecking::ConvertVehicleToMovingObject(tp, size, veloctiy);
 
-            for (int i = 0; i < rwol.roadway_obstacles.size(); i++) {
+            for (size_t i = 0; i < rwol.roadway_obstacles.size(); i++) {
 
                 collision_detection::MovingObject rwo = CollisionChecking::ConvertRoadwayObstacleToMovingObject(rwol.roadway_obstacles[i]);
 
@@ -47,7 +47,7 @@ namespace carma_wm {
             pose.position.x = tp.trajectory_points[0].x;
             pose.position.y = tp.trajectory_points[0].y;
 
-            Eigen::Vector2d vehicle_vector = {tp.trajectory_points[0].x - tp.trajectory_points[1].x , tp.trajectory_points[0].y - tp.trajectory_points[1].y};
+            Eigen::Vector2d vehicle_vector = {tp.trajectory_points[1].x - tp.trajectory_points[0].x , tp.trajectory_points[1].y - tp.trajectory_points[0].y};
 
             Eigen::Vector2d x_axis = {1, 0};
 
@@ -64,7 +64,7 @@ namespace carma_wm {
             v.object_polygon = CollisionChecking::ObjectToBoostPolygon<polygon_t>(pose, size);
             v.linear_velocity = veloctiy.linear;
 
-            for(int i=0; i < tp.trajectory_points.size() - 1; i++){
+            for(size_t i=0; i < tp.trajectory_points.size() - 1; i++){
 
                 vehicle_vector = {tp.trajectory_points[i + 1].x - tp.trajectory_points[i].x , tp.trajectory_points[i+1].y - tp.trajectory_points[i].y};
                 yaw = std::acos(vehicle_vector.dot(x_axis)/(vehicle_vector.norm() * x_axis.norm()));
@@ -105,11 +105,8 @@ namespace carma_wm {
 
                 boost::geometry::intersection(ob_1.object_polygon, ob_2.object_polygon, output); 
 
-                BOOST_FOREACH(polygon_t const& p, output)
-                {
-                    if(boost::geometry::area(p) > 0){
-                        return true;
-                    }
+                if(output.size() > 0){
+                    return true;
                 }
 
             return false;
@@ -118,7 +115,7 @@ namespace carma_wm {
         collision_detection::MovingObject CollisionChecking::PredictObjectPosition(collision_detection::MovingObject op, int target_time){
 
             int size = 0;
-            for(int i = 0; i< target_time; i++){
+            for(size_t i = 0; i< target_time; i++){
                 size = size + op.future_polygons[i].outer().size();
             }
 
@@ -126,7 +123,7 @@ namespace carma_wm {
 
             unioin_polygon_points.reserve(size); 
 
-            for(int i = 0; i< target_time; i++){
+            for(size_t i = 0; i< target_time; i++){
                 unioin_polygon_points.insert( unioin_polygon_points.end(), op.future_polygons[i].outer().begin(), op.future_polygons[i].outer().end());
             }
 

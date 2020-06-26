@@ -55,20 +55,33 @@ namespace carma_wm {
             public:
                 /*! \brief Main collision detection function to be called when needed to check for collision detection of the vehicle with 
                 * the current trajectory plan and the current world objects
+                * \param size The size of the host vehicle defined in meters
+                * \param rwol The list of Roadway Obstacle
+                * \param tp The TrajectoryPlan of the host vehicle
+                * \param size The size of the host vehicle defined in meters
+                * \param veloctiy of the host vehicle
+                * \param target_time amount of unit of time in future to look for collision
+                * \return A list of obstacles the provided trajectory plan collides with
                 */
                 std::vector<cav_msgs::RoadwayObstacle> WorldCollisionDetection(cav_msgs::RoadwayObstacleList& rwol, cav_msgs::TrajectoryPlan& tp, geometry_msgs::Vector3& size, geometry_msgs::Twist& veloctiy, int target_time);
                 
                 /*! \brief Convert RodwayObstable object to the collision_detection::MovingObject 
+                 * \param rwo A RoadwayObstacle
                 */
  
                 collision_detection::MovingObject ConvertRoadwayObstacleToMovingObject(cav_msgs::RoadwayObstacle& rwo);
                 
                 /*! \brief Creates collision_detection::MovingObject for the host vehicle using the veloctiy, size, TrajectoryPlan.
+                * \param tp The TrajectoryPlan of the host vehicle
+                * \param size The size of the host vehicle defined in meters
+                * \param veloctiy of the host vehicle
                 */
 
                 collision_detection::MovingObject ConvertVehicleToMovingObject(cav_msgs::TrajectoryPlan& tp, geometry_msgs::Vector3& size, geometry_msgs::Twist& veloctiy);                
 
                 /*! \brief .function is to create a monving object with a polygon that represents area that object is going to allocated until a given time
+                * by creating a convex hull around the future polygons
+                * \param op a MovingObject
                 */
 
                 collision_detection::MovingObject PredictObjectPosition(collision_detection::MovingObject op, int target_time);
