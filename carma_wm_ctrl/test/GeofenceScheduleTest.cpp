@@ -91,4 +91,4 @@ TEST(GeofenceSchedule, getNextInterval)
   ASSERT_NEAR(0.0, sch.getNextInterval(ros::Time(7.0)).second.toSec(), 0.00001);
   ASSERT_FALSE(sch.getNextInterval(ros::Time(7.0)).first);
 }
-}  // namespace carma_wm
+}  // namespace carma_wm_ctrl
