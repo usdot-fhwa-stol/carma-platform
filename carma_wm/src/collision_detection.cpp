@@ -64,7 +64,7 @@ namespace carma_wm {
             v.object_polygon = CollisionChecking::ObjectToBoostPolygon<polygon_t>(pose, size);
             v.linear_velocity = veloctiy.linear;
 
-            for(size_t i=0; i < tp.trajectory_points.size() - 1; i++){
+            for(size_t i=1; i < tp.trajectory_points.size() - 1; i++){
 
                 vehicle_vector = {tp.trajectory_points[i + 1].x - tp.trajectory_points[i].x , tp.trajectory_points[i+1].y - tp.trajectory_points[i].y};
                 yaw = std::acos(vehicle_vector.dot(x_axis)/(vehicle_vector.norm() * x_axis.norm()));
