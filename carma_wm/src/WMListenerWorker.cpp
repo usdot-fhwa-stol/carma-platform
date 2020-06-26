@@ -59,7 +59,6 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinCon
     // this is only for speed optimization, as world model here should blindly accept the map update received
     for (auto regem: parent_llt.regulatoryElements())
     {
-      // we can't use the deserialized element as its data address conflicts the one in this node
       if (pair.second->id() == regem->id()) world_model_->getMutableMap()->remove(parent_llt, regem);
     }
   }
@@ -72,7 +71,6 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinCon
     // if this regem is already in the map
     if (regemptr_it != world_model_->getMutableMap()->regulatoryElementLayer.end())
     {
-      // again we should use the element with correct data address to be consistent
       world_model_->getMutableMap()->update(parent_llt, *regemptr_it);
     }
     else
