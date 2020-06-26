@@ -37,8 +37,6 @@ using ::testing::ReturnArg;
 namespace carma_wm
 {
 
-  collision_detection::CollisionChecking CollisionChecking;
-
   TEST(CollisionDetectionTest, CheckPolygonIntersection)
   {
 
@@ -57,7 +55,7 @@ namespace carma_wm
     collision_detection::MovingObject mo1 = {ob1, linear_velocity};
     collision_detection::MovingObject mo2 = {ob2, linear_velocity};
 
-    ASSERT_TRUE(CollisionChecking.CheckPolygonIntersection(mo1, mo2));
+    ASSERT_TRUE(collision_detection::CheckPolygonIntersection(mo1, mo2));
 
     boost::geometry::clear(ob1);
     boost::geometry::clear(ob2);
@@ -71,7 +69,7 @@ namespace carma_wm
     mo1 = {ob1, linear_velocity};
     mo2 = {ob2, linear_velocity};
 
-    ASSERT_FALSE(CollisionChecking.CheckPolygonIntersection(mo1, mo2));
+    ASSERT_FALSE(collision_detection::CheckPolygonIntersection(mo1, mo2));
 
   }
 
@@ -96,7 +94,7 @@ namespace carma_wm
     size.y = 2;
     size.z = 1;
 
-    collision_detection::polygon_t result = CollisionChecking.ObjectToBoostPolygon<collision_detection::polygon_t>(pose, size);
+    collision_detection::polygon_t result = collision_detection::ObjectToBoostPolygon<collision_detection::polygon_t>(pose, size);
 
     std::vector<collision_detection::point_t> points = result.outer();
 
@@ -147,7 +145,7 @@ namespace carma_wm
 
     collision_detection::MovingObject mo1 = {ob1, linear_velocity, future_polygons};
     
-    collision_detection::MovingObject result = CollisionChecking.PredictObjectPosition(mo1,3);
+    collision_detection::MovingObject result = collision_detection::PredictObjectPosition(mo1,3);
 
     std::vector<collision_detection::point_t> points = result.object_polygon.outer();
 
@@ -231,7 +229,7 @@ namespace carma_wm
     collision_detection::MovingObject mo2 = {ob5, linear_velocity, future_polygons_2};
 
 
-    bool result = CollisionChecking.DetectCollision(mo1, mo2,3);
+    bool result = collision_detection::DetectCollision(mo1, mo2,3);
 
     ASSERT_TRUE(result);
 
@@ -350,7 +348,7 @@ namespace carma_wm
 
     rwol.roadway_obstacles = {rwo_1};
 
-    std::vector<cav_msgs::RoadwayObstacle> result = CollisionChecking.WorldCollisionDetection(rwol, tp, size, veloctiy, target_time);
+    std::vector<cav_msgs::RoadwayObstacle> result = collision_detection::WorldCollisionDetection(rwol, tp, size, veloctiy, target_time);
 
     ASSERT_EQ(result.size(),1);
 
@@ -459,7 +457,7 @@ namespace carma_wm
 
     rwol.roadway_obstacles = {rwo_1};
 
-    std::vector<cav_msgs::RoadwayObstacle> result = CollisionChecking.WorldCollisionDetection(rwol, tp, size, veloctiy, target_time);
+    std::vector<cav_msgs::RoadwayObstacle> result = collision_detection::WorldCollisionDetection(rwol, tp, size, veloctiy, target_time);
 
     ASSERT_EQ(result.size(),0);
   }

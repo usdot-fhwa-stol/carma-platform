@@ -4,17 +4,17 @@ namespace carma_wm {
 
     namespace collision_detection {
 
-        std::vector<cav_msgs::RoadwayObstacle> CollisionChecking::WorldCollisionDetection(cav_msgs::RoadwayObstacleList& rwol, cav_msgs::TrajectoryPlan& tp, geometry_msgs::Vector3& size, geometry_msgs::Twist& veloctiy, int target_time){
+        std::vector<cav_msgs::RoadwayObstacle> WorldCollisionDetection(cav_msgs::RoadwayObstacleList& rwol, cav_msgs::TrajectoryPlan& tp, geometry_msgs::Vector3& size, geometry_msgs::Twist& veloctiy, int target_time){
 
             std::vector<cav_msgs::RoadwayObstacle> rwo_collison;
 
-            collision_detection::MovingObject vehicle_object = CollisionChecking::ConvertVehicleToMovingObject(tp, size, veloctiy);
+            collision_detection::MovingObject vehicle_object = ConvertVehicleToMovingObject(tp, size, veloctiy);
 
             for (size_t i = 0; i < rwol.roadway_obstacles.size(); i++) {
 
-                collision_detection::MovingObject rwo = CollisionChecking::ConvertRoadwayObstacleToMovingObject(rwol.roadway_obstacles[i]);
+                collision_detection::MovingObject rwo = ConvertRoadwayObstacleToMovingObject(rwol.roadway_obstacles[i]);
 
-                bool collision = CollisionChecking::DetectCollision(vehicle_object, rwo, target_time);
+                bool collision = DetectCollision(vehicle_object, rwo, target_time);
 
                 if(collision) {
                     rwo_collison.push_back(rwol.roadway_obstacles[i]);
@@ -24,14 +24,14 @@ namespace carma_wm {
             return rwo_collison;
         };
 
-        collision_detection::MovingObject CollisionChecking::ConvertRoadwayObstacleToMovingObject(cav_msgs::RoadwayObstacle& rwo){
+        collision_detection::MovingObject ConvertRoadwayObstacleToMovingObject(cav_msgs::RoadwayObstacle& rwo){
 
             collision_detection::MovingObject ro;
             
-            ro.object_polygon = CollisionChecking::ObjectToBoostPolygon<polygon_t>(rwo.object.pose.pose, rwo.object.size);
+            ro.object_polygon = ObjectToBoostPolygon<polygon_t>(rwo.object.pose.pose, rwo.object.size);
 
             for (auto i : rwo.object.predictions){
-                ro.future_polygons.push_back(CollisionChecking::ObjectToBoostPolygon<polygon_t>(i.predicted_position, rwo.object.size));
+                ro.future_polygons.push_back(ObjectToBoostPolygon<polygon_t>(i.predicted_position, rwo.object.size));
             }
 
             ro.linear_velocity = rwo.object.velocity.twist.linear;
@@ -39,7 +39,7 @@ namespace carma_wm {
             return ro;
         };
 
-        collision_detection::MovingObject CollisionChecking::ConvertVehicleToMovingObject(cav_msgs::TrajectoryPlan& tp, geometry_msgs::Vector3& size, geometry_msgs::Twist& veloctiy){
+        collision_detection::MovingObject ConvertVehicleToMovingObject(cav_msgs::TrajectoryPlan& tp, geometry_msgs::Vector3& size, geometry_msgs::Twist& veloctiy){
             
             collision_detection::MovingObject v;
 
@@ -61,7 +61,7 @@ namespace carma_wm {
             pose.orientation.z = vehicle_orientation.getZ();
             pose.orientation.w = vehicle_orientation.getW();
 
-            v.object_polygon = CollisionChecking::ObjectToBoostPolygon<polygon_t>(pose, size);
+            v.object_polygon = ObjectToBoostPolygon<polygon_t>(pose, size);
             v.linear_velocity = veloctiy.linear;
 
             for(size_t i=1; i < tp.trajectory_points.size() - 1; i++){
@@ -81,25 +81,25 @@ namespace carma_wm {
                 pose.orientation.z = orientation.getZ();
                 pose.orientation.w = orientation.getW();
 
-                v.future_polygons.push_back(CollisionChecking::ObjectToBoostPolygon<polygon_t>(pose, size));
+                v.future_polygons.push_back(ObjectToBoostPolygon<polygon_t>(pose, size));
             }
 
             return v;
         };
 
-        bool CollisionChecking::DetectCollision(collision_detection::MovingObject ob_1, collision_detection::MovingObject ob_2, int target_time) {            
+        bool DetectCollision(collision_detection::MovingObject ob_1, collision_detection::MovingObject ob_2, int target_time) {            
 
-            collision_detection::MovingObject ob_1_after = CollisionChecking::PredictObjectPosition(ob_1,target_time);
-            collision_detection::MovingObject ob_2_after = CollisionChecking::PredictObjectPosition(ob_2,target_time);
+            collision_detection::MovingObject ob_1_after = PredictObjectPosition(ob_1,target_time);
+            collision_detection::MovingObject ob_2_after = PredictObjectPosition(ob_2,target_time);
 
-            if(CollisionChecking::CheckPolygonIntersection(ob_1_after, ob_2_after)){
+            if(CheckPolygonIntersection(ob_1_after, ob_2_after)){
                 return true;
             }
             
             return false;
         };
 
-        bool CollisionChecking::CheckPolygonIntersection(collision_detection::MovingObject ob_1, collision_detection::MovingObject ob_2) {    
+        bool CheckPolygonIntersection(collision_detection::MovingObject ob_1, collision_detection::MovingObject ob_2) {    
 
                 std::deque<polygon_t> output;
 
@@ -112,7 +112,7 @@ namespace carma_wm {
             return false;
         };
 
-        collision_detection::MovingObject CollisionChecking::PredictObjectPosition(collision_detection::MovingObject op, int target_time){
+        collision_detection::MovingObject PredictObjectPosition(collision_detection::MovingObject op, int target_time){
 
             int size = 0;
             for(size_t i = 0; i< target_time; i++){
@@ -139,7 +139,7 @@ namespace carma_wm {
         };
 
         template <class P>
-        P CollisionChecking::ObjectToBoostPolygon(const geometry_msgs::Pose& pose, const geometry_msgs::Vector3& size) {
+        P ObjectToBoostPolygon(const geometry_msgs::Pose& pose, const geometry_msgs::Vector3& size) {
 
             tf2::Transform object_tf;
             tf2::fromMsg(pose, object_tf);

@@ -48,59 +48,56 @@ namespace carma_wm {
         };
 
         /*!
-        * Main class for the CollisionChecking interfacing.
+        * Main Function for the CollisionChecking interfacing.
         */
 
-        class CollisionChecking {
-            public:
-                /*! \brief Main collision detection function to be called when needed to check for collision detection of the vehicle with 
-                * the current trajectory plan and the current world objects
-                * \param size The size of the host vehicle defined in meters
-                * \param rwol The list of Roadway Obstacle
-                * \param tp The TrajectoryPlan of the host vehicle
-                * \param size The size of the host vehicle defined in meters
-                * \param veloctiy of the host vehicle
-                * \param target_time amount of unit of time in future to look for collision
-                * \return A list of obstacles the provided trajectory plan collides with
-                */
-                std::vector<cav_msgs::RoadwayObstacle> WorldCollisionDetection(cav_msgs::RoadwayObstacleList& rwol, cav_msgs::TrajectoryPlan& tp, geometry_msgs::Vector3& size, geometry_msgs::Twist& veloctiy, int target_time);
-                
-                /*! \brief Convert RodwayObstable object to the collision_detection::MovingObject 
-                 * \param rwo A RoadwayObstacle
-                */
- 
-                collision_detection::MovingObject ConvertRoadwayObstacleToMovingObject(cav_msgs::RoadwayObstacle& rwo);
-                
-                /*! \brief Creates collision_detection::MovingObject for the host vehicle using the veloctiy, size, TrajectoryPlan.
-                * \param tp The TrajectoryPlan of the host vehicle
-                * \param size The size of the host vehicle defined in meters
-                * \param veloctiy of the host vehicle
-                */
+        /*! \brief Main collision detection function to be called when needed to check for collision detection of the vehicle with 
+        * the current trajectory plan and the current world objects
+        * \param size The size of the host vehicle defined in meters
+        * \param rwol The list of Roadway Obstacle
+        * \param tp The TrajectoryPlan of the host vehicle
+        * \param size The size of the host vehicle defined in meters
+        * \param veloctiy of the host vehicle
+        * \param target_time amount of unit of time in future to look for collision
+        * \return A list of obstacles the provided trajectory plan collides with
+        */
+        std::vector<cav_msgs::RoadwayObstacle> WorldCollisionDetection(cav_msgs::RoadwayObstacleList& rwol, cav_msgs::TrajectoryPlan& tp, geometry_msgs::Vector3& size, geometry_msgs::Twist& veloctiy, int target_time);
+        
+        /*! \brief Convert RodwayObstable object to the collision_detection::MovingObject 
+            * \param rwo A RoadwayObstacle
+        */
 
-                collision_detection::MovingObject ConvertVehicleToMovingObject(cav_msgs::TrajectoryPlan& tp, geometry_msgs::Vector3& size, geometry_msgs::Twist& veloctiy);                
+        collision_detection::MovingObject ConvertRoadwayObstacleToMovingObject(cav_msgs::RoadwayObstacle& rwo);
+        
+        /*! \brief Creates collision_detection::MovingObject for the host vehicle using the veloctiy, size, TrajectoryPlan.
+        * \param tp The TrajectoryPlan of the host vehicle
+        * \param size The size of the host vehicle defined in meters
+        * \param veloctiy of the host vehicle
+        */
 
-                /*! \brief .function is to create a monving object with a polygon that represents area that object is going to allocated until a given time
-                * by creating a convex hull around the future polygons
-                * \param op a MovingObject
-                */
+        collision_detection::MovingObject ConvertVehicleToMovingObject(cav_msgs::TrajectoryPlan& tp, geometry_msgs::Vector3& size, geometry_msgs::Twist& veloctiy);                
 
-                collision_detection::MovingObject PredictObjectPosition(collision_detection::MovingObject op, int target_time);
-                
-                /*! \brief .check Intersection between polygons
-                */
+        /*! \brief .function is to create a monving object with a polygon that represents area that object is going to allocated until a given time
+        * by creating a convex hull around the future polygons
+        * \param op a MovingObject
+        */
 
-                bool CheckPolygonIntersection(collision_detection::MovingObject ob1, collision_detection::MovingObject ob2);
-                
-                /*! \brief .function is used in WorldCollisionDetection to detection collision between two Moving Object
-                */
+        collision_detection::MovingObject PredictObjectPosition(collision_detection::MovingObject op, int target_time);
+        
+        /*! \brief .check Intersection between polygons
+        */
 
-                bool DetectCollision(collision_detection::MovingObject ob1, collision_detection::MovingObject ob2, int target_time);
-                
-                /*! \brief function to create a polygon representing and object
-                */
+        bool CheckPolygonIntersection(collision_detection::MovingObject ob1, collision_detection::MovingObject ob2);
+        
+        /*! \brief .function is used in WorldCollisionDetection to detection collision between two Moving Object
+        */
 
-                template <class P>
-                P ObjectToBoostPolygon(const geometry_msgs::Pose& pose, const geometry_msgs::Vector3& size);
-        };
+        bool DetectCollision(collision_detection::MovingObject ob1, collision_detection::MovingObject ob2, int target_time);
+        
+        /*! \brief function to create a polygon representing and object
+        */
+
+        template <class P>
+        P ObjectToBoostPolygon(const geometry_msgs::Pose& pose, const geometry_msgs::Vector3& size);
     }
 }
