@@ -66,7 +66,7 @@ public:
 
   /*! \brief Get a mutable version of the current map
    * 
-   *  NOTE: the user must make sure to setMap() after any edit to the map to set valid route.
+   *  NOTE: the user must make sure to setMap() after any edit to the map and to set a valid route
    */
   lanelet::LaneletMapPtr getMutableMap();
 
@@ -105,8 +105,6 @@ public:
   std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end) const override;
 
   lanelet::LaneletMapConstPtr getMap() const override;
-
-
 
   LaneletRouteConstPtr getRoute() const override;
 

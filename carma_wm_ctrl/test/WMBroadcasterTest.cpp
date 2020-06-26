@@ -476,15 +476,15 @@ using namespace lanelet::units::literals;
   // process the geofence and change the map
 
   // flow for adding geofence to the map
-  wmb.addGeofenceHelper(gf_ptr);
+  wmb.addGeofence(gf_ptr);
   // from broadcaster
   autoware_lanelet2_msgs::MapBin gf_obj_msg;
 
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
-  carma_wm::toGeofenceBinMsg(send_data, &gf_obj_msg);
+  carma_wm::toBinMsg(send_data, &gf_obj_msg);
   // at map users
   auto data_received = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
-  carma_wm::fromGeofenceBinMsg(gf_obj_msg, data_received);
+  carma_wm::fromBinMsg(gf_obj_msg, data_received);
   ASSERT_EQ(data_received->id_, gf_ptr->id_);
   ASSERT_EQ(gf_ptr->remove_list_.size(), 1);
   ASSERT_EQ(data_received->remove_list_.size(), 1); // old_speed_limit
@@ -498,15 +498,15 @@ using namespace lanelet::units::literals;
   ASSERT_EQ(gf_ptr->prev_regems_[0].second->id(), old_speed_limit->id());
 
   // now suppose the geofence is finished being used, we have to revert the changes
-  wmb.removeGeofenceHelper(gf_ptr);
+  wmb.removeGeofence(gf_ptr);
   ASSERT_EQ(gf_ptr->prev_regems_.size(), 0); // should be reset
   // from broadcaster
   autoware_lanelet2_msgs::MapBin gf_msg_revert;
   auto send_data_revert = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
-  carma_wm::toGeofenceBinMsg(send_data_revert, &gf_msg_revert);
+  carma_wm::toBinMsg(send_data_revert, &gf_msg_revert);
   // at map users
   auto rec_data_revert = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
-  carma_wm::fromGeofenceBinMsg(gf_msg_revert, rec_data_revert);
+  carma_wm::fromBinMsg(gf_msg_revert, rec_data_revert);
 
   // previously added update_list_ should be tagged for removal, vice versa
   ASSERT_EQ(rec_data_revert->remove_list_.size(), 2);

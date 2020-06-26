@@ -21,7 +21,7 @@
 namespace carma_wm
 {
 
-void toGeofenceBinMsg(std::shared_ptr<carma_wm::TrafficControl> gf_ptr, autoware_lanelet2_msgs::MapBin* msg)
+void toBinMsg(std::shared_ptr<carma_wm::TrafficControl> gf_ptr, autoware_lanelet2_msgs::MapBin* msg)
 {
   if (msg == nullptr)
   {
@@ -37,7 +37,7 @@ void toGeofenceBinMsg(std::shared_ptr<carma_wm::TrafficControl> gf_ptr, autoware
   msg->data.assign(data_str.begin(), data_str.end());
 }
 
-void fromGeofenceBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma_wm::TrafficControl> gf_ptr)
+void fromBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma_wm::TrafficControl> gf_ptr)
 {
   if (!gf_ptr)
   {

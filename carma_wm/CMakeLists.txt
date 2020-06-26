@@ -58,7 +58,6 @@ add_library(
   src/Geometry.cpp
   src/TrafficControl.cpp
   src/IndexedDistanceMap.cpp
-  
 )
 
 ## Add cmake target dependencies of the library

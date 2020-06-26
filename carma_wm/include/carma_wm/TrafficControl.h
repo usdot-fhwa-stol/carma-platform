@@ -30,7 +30,8 @@
 
 namespace carma_wm
 {
-/*! \brief This class is duplicate of Geofence's subset parts that are compatible for sending/receiving over ROS network in a binary ROS msg format.
+/*! \brief This class defines an update to traffic regulations received from carma_wm_broadcaster.
+           This class can be sent/received over ROS network in a binary ROS msg format.
  */
 using namespace lanelet::units::literals;
 
@@ -56,9 +57,9 @@ public:
  * @param gf_ptr [Ptr to Geofence data]
  * @param msg [converted ROS message. Only "data" field is filled]
  * NOTE: When converting the geofence object, the converter fills its relevant map update
- * fields (update_list, remove_list) to be read once at received at the user
+ * fields (update_list, remove_list) to be read once received at the user
  */
-void toGeofenceBinMsg(std::shared_ptr<carma_wm::TrafficControl> gf_ptr, autoware_lanelet2_msgs::MapBin* msg);
+void toBinMsg(std::shared_ptr<carma_wm::TrafficControl> gf_ptr, autoware_lanelet2_msgs::MapBin* msg);
 
 /**
  * [Converts Geofence binary ROS message to carma_wm::TrafficControl object. Similar implementation to 
@@ -68,7 +69,7 @@ void toGeofenceBinMsg(std::shared_ptr<carma_wm::TrafficControl> gf_ptr, autoware
  * NOTE: When converting the geofence object, the converter only fills its relevant map update
  * fields (update_list, remove_list) as the ROS msg doesn't hold any other data field in the object.
  */
-void fromGeofenceBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma_wm::TrafficControl> gf_ptr);
+void fromBinMsg(const autoware_lanelet2_msgs::MapBin& msg, std::shared_ptr<carma_wm::TrafficControl> gf_ptr);
 
 
 }  // namespace carma_wm

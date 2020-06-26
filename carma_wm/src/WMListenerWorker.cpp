@@ -47,7 +47,7 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinCon
 {
   // convert ros msg to geofence object
   auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
-  carma_wm::fromGeofenceBinMsg(*geofence_msg, gf_ptr);
+  carma_wm::fromBinMsg(*geofence_msg, gf_ptr);
   ROS_INFO_STREAM("New Map Update Received with Geofence Id:" << gf_ptr->id_);
 
   ROS_INFO_STREAM("Geofence id" << gf_ptr->id_ << "requests removal of size: " << gf_ptr->remove_list_.size());

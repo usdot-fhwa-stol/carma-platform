@@ -86,19 +86,9 @@ public:
   void addGeofence(std::shared_ptr<Geofence> gf_ptr);
 
   /*!
-   * \brief Determines the type of geofence and adds it to the current map 
-   */
-  void addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr);
-
-  /*!
    * \brief Removes a geofence from the current map and publishes the ROS msg
    */
   void removeGeofence(std::shared_ptr<Geofence> gf_ptr);
-
-    /*!
-   * \brief Determines the type of geofence and removes it from the current map 
-   */
-  void removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr);
 
   /*!
    * \brief Gets the affected lanelet or areas based on the geofence_msg
@@ -118,6 +108,8 @@ public:
 private:
   void addSpeedLimit(std::shared_ptr<Geofence> gf_ptr);
   void addBackSpeedLimit(std::shared_ptr<Geofence> gf_ptr);
+  void removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr);
+  void addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr);
   std::shared_ptr<Geofence> geofenceFromMsg(const cav_msgs::ControlMessage& geofence_msg);
   std::unordered_set<lanelet::Lanelet> filterSuccessorLanelets(const std::unordered_set<lanelet::Lanelet>& possible_lanelets, const std::unordered_set<lanelet::Lanelet>& root_lanelets);
   lanelet::LaneletMapPtr base_map_;

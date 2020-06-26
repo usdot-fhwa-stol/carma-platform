@@ -70,10 +70,10 @@ TEST(TrafficControl, TrafficControlBinMsgTest)
   // from broadcaster
   autoware_lanelet2_msgs::MapBin gf_obj_msg;
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
-  carma_wm::toGeofenceBinMsg(send_data, &gf_obj_msg);
+  carma_wm::toBinMsg(send_data, &gf_obj_msg);
   // at map users
   auto data_received = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
-  carma_wm::fromGeofenceBinMsg(gf_obj_msg, data_received);
+  carma_wm::fromBinMsg(gf_obj_msg, data_received);
   ASSERT_EQ(data_received->id_, gf_ptr->id_);
   ASSERT_EQ(gf_ptr->remove_list_.size(), 1);
   ASSERT_EQ(data_received->remove_list_.size(), 1); // old_speed_limit

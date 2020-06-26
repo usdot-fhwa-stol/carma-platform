@@ -350,7 +350,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   // publish
   autoware_lanelet2_msgs::MapBin gf_msg;
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
-  carma_wm::toGeofenceBinMsg(send_data, &gf_msg);
+  carma_wm::toBinMsg(send_data, &gf_msg);
   map_update_pub_(gf_msg);
 };
 
@@ -366,7 +366,7 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   autoware_lanelet2_msgs::MapBin gf_msg_revert;
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
   
-  carma_wm::toGeofenceBinMsg(send_data, &gf_msg_revert);
+  carma_wm::toBinMsg(send_data, &gf_msg_revert);
   map_update_pub_(gf_msg_revert);
 };
 
