@@ -39,7 +39,7 @@ namespace carma_wm
 
 {
 
-TEST(TrafficControl, GeofenceBinMsgTest)
+TEST(TrafficControl, TrafficControlBinMsgTest)
 {
   using namespace lanelet::units::literals;
 // add a lanelet

@@ -81,9 +81,9 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
   map_pub_(compliant_map_msg);
 };
 
-std::shared_ptr<carma_wm::TrafficControl> WMBroadcaster::geofenceFromMsg(const cav_msgs::ControlMessage& geofence_msg)
+std::shared_ptr<carma_wm_ctrl::Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::ControlMessage& geofence_msg)
 {
-  auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
+  auto gf_ptr = std::make_shared<carma_wm_ctrl::Geofence>(carma_wm_ctrl::Geofence());
   // Get ID
   std::copy(geofence_msg.id.begin(), geofence_msg.id.end(), gf_ptr->id_.begin());
 
@@ -117,7 +117,7 @@ std::shared_ptr<carma_wm::TrafficControl> WMBroadcaster::geofenceFromMsg(const c
   }
   
   // Get schedule (assuming everything is in UTC currently)
-  gf_ptr->schedule = carma_wm::GeofenceSchedule(geofence_msg.schedule.start,  
+  gf_ptr->schedule = carma_wm_ctrl::GeofenceSchedule(geofence_msg.schedule.start,  
                                  geofence_msg.schedule.end,
                                  geofence_msg.schedule.between.start,     
                                  geofence_msg.schedule.between.end, 
@@ -125,7 +125,6 @@ std::shared_ptr<carma_wm::TrafficControl> WMBroadcaster::geofenceFromMsg(const c
                                  geofence_msg.schedule.repeat.interval);
   return gf_ptr;
 }
-
 
 void WMBroadcaster::geofenceCallback(const cav_msgs::ControlMessage& geofence_msg)
 {
@@ -274,7 +273,7 @@ std::unordered_set<lanelet::Lanelet> WMBroadcaster::filterSuccessorLanelets(cons
   return filtered_lanelets;
 }
 
-void WMBroadcaster::addSpeedLimit(std::shared_ptr<carma_wm::TrafficControl> gf_ptr)
+void WMBroadcaster::addSpeedLimit(std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr)
 {
   // First loop is to save the relation between element and regulatory element
   // so that we can add back the old one after geofence deactivates
@@ -311,7 +310,7 @@ void WMBroadcaster::addSpeedLimit(std::shared_ptr<carma_wm::TrafficControl> gf_p
   
 }
 
-void WMBroadcaster::addBackSpeedLimit(std::shared_ptr<carma_wm::TrafficControl> gf_ptr)
+void WMBroadcaster::addBackSpeedLimit(std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr)
 {
   // First loop is to remove the relation between element and regulatory element that this geofence added initially
   for (auto el: gf_ptr->affected_parts_)
@@ -340,7 +339,7 @@ void WMBroadcaster::addBackSpeedLimit(std::shared_ptr<carma_wm::TrafficControl> 
   
 }
 
-void WMBroadcaster::addGeofence(std::shared_ptr<carma_wm::TrafficControl> gf_ptr)
+void WMBroadcaster::addGeofence(std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr)
 {
   std::lock_guard<std::mutex> guard(map_mutex_);
   ROS_INFO_STREAM("Adding active geofence to the map with geofence id: " << gf_ptr->id_);
@@ -350,12 +349,12 @@ void WMBroadcaster::addGeofence(std::shared_ptr<carma_wm::TrafficControl> gf_ptr
   
   // publish
   autoware_lanelet2_msgs::MapBin gf_msg;
-
-  carma_wm::toGeofenceBinMsg(gf_ptr, &gf_msg);
+  auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
+  carma_wm::toGeofenceBinMsg(send_data, &gf_msg);
   map_update_pub_(gf_msg);
 };
 
-void WMBroadcaster::removeGeofence(std::shared_ptr<carma_wm::TrafficControl> gf_ptr)
+void WMBroadcaster::removeGeofence(std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr)
 {
   std::lock_guard<std::mutex> guard(map_mutex_);
   ROS_INFO_STREAM("Removing inactive geofence from the map with geofence id: " << gf_ptr->id_);
@@ -365,13 +364,14 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<carma_wm::TrafficControl> gf_
 
   // publish
   autoware_lanelet2_msgs::MapBin gf_msg_revert;
-
-  carma_wm::toGeofenceBinMsg(gf_ptr, &gf_msg_revert);
+  auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
+  
+  carma_wm::toGeofenceBinMsg(send_data, &gf_msg_revert);
   map_update_pub_(gf_msg_revert);
 };
 
 // helper function that detects the type of geofence and delegates
-void WMBroadcaster::addGeofenceHelper(std::shared_ptr<carma_wm::TrafficControl> gf_ptr)
+void WMBroadcaster::addGeofenceHelper(std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr)
 {
   // resetting the information inside geofence
   gf_ptr->remove_list_ = {};
@@ -383,7 +383,7 @@ void WMBroadcaster::addGeofenceHelper(std::shared_ptr<carma_wm::TrafficControl> 
 }
 
 // helper function that detects the type of geofence and delegates
-void WMBroadcaster::removeGeofenceHelper(std::shared_ptr<carma_wm::TrafficControl> gf_ptr)
+void WMBroadcaster::removeGeofenceHelper(std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr)
 {
   // again, TODO: Logic to determine what type of geofence goes here in the future
   // reset the info inside geofence

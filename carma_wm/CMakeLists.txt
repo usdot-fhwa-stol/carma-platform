@@ -58,7 +58,6 @@ add_library(
   src/Geometry.cpp
   src/TrafficControl.cpp
   src/IndexedDistanceMap.cpp
-  src/GeofenceSchedule.cpp
   
 )
 
@@ -102,8 +101,7 @@ catkin_add_gmock(${PROJECT_NAME}-test
   test/IndexedDistanceMapTest.cpp
   test/WMListenerWorkerTest.cpp
   test/GeometryTest.cpp
-  test/GeofenceScheduleTest.cpp
-  test/GeofenceTest.cpp
+  test/TrafficControlTest.cpp
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 

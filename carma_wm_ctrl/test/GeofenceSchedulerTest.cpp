@@ -15,8 +15,8 @@
  */
 
 #include <gmock/gmock.h>
-#include <carma_wm/GeofenceSchedule.h>
-#include <carma_wm/TrafficControl.h>
+#include <carma_wm_ctrl/GeofenceSchedule.h>
+#include <carma_wm_ctrl/Geofence.h>
 #include <carma_wm_ctrl/GeofenceScheduler.h>
 #include <carma_wm_ctrl/ROSTimerFactory.h>
 #include <memory>
@@ -50,14 +50,14 @@ TEST(GeofenceScheduler, addGeofence)
 {
   // Test adding then evaulate if the calls to active and inactive are done correctly
   // Finally test cleaing the timers
-  auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
+  auto gf_ptr = std::make_shared<carma_wm_ctrl::Geofence>(carma_wm_ctrl::Geofence());
   
   boost::uuids::uuid first_id = boost::uuids::random_generator()(); 
   std::size_t first_id_hashed = boost::hash<boost::uuids::uuid>()(first_id);
   gf_ptr->id_ = first_id;
 
   gf_ptr->schedule =
-      carma_wm::GeofenceSchedule(ros::Time(1),  // Schedule between 1 and 6
+      carma_wm_ctrl::GeofenceSchedule(ros::Time(1),  // Schedule between 1 and 6
                        ros::Time(8),
                        ros::Duration(2),    // Start's at 2
                        ros::Duration(5.5),  // Ends at by 5.5
@@ -70,13 +70,13 @@ TEST(GeofenceScheduler, addGeofence)
   std::atomic<uint32_t> inactive_call_count(0);
   std::atomic<std::size_t> last_active_gf(0);
   std::atomic<std::size_t> last_inactive_gf(0);
-  scheduler.onGeofenceActive([&](std::shared_ptr<carma_wm::TrafficControl> gf_ptr) {
+  scheduler.onGeofenceActive([&](std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr) {
     active_call_count.store(active_call_count.load() + 1);
     // atomic is not working for boost::uuids::uuid, so hash it
     last_active_gf.store(boost::hash<boost::uuids::uuid>()(gf_ptr->id_));
   });
 
-  scheduler.onGeofenceInactive([&](std::shared_ptr<carma_wm::TrafficControl> gf_ptr) {
+  scheduler.onGeofenceInactive([&](std::shared_ptr<carma_wm_ctrl::Geofence> gf_ptr) {
     inactive_call_count.store(inactive_call_count.load() + 1);
     // atomic is not working for boost::uuids::uuid, so hash it
     last_inactive_gf.store(boost::hash<boost::uuids::uuid>()(gf_ptr->id_));

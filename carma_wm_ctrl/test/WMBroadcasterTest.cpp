@@ -15,7 +15,8 @@
  */
 
 #include <gmock/gmock.h>
-#include <carma_wm/GeofenceSchedule.h>
+#include <carma_wm_ctrl/GeofenceSchedule.h>
+#include <carma_wm_ctrl/Geofence.h>
 #include <carma_wm/TrafficControl.h>
 #include <carma_wm_ctrl/GeofenceScheduler.h>
 #include <carma_wm_ctrl/ROSTimerFactory.h>
@@ -248,9 +249,9 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
 TEST(WMBroadcaster, geofenceCallback)
 {
   // Test adding then evaluate if the calls to active and inactive are done correctly
-  carma_wm::TrafficControl gf;
+  carma_wm_ctrl::Geofence gf;
   gf.id_ = boost::uuids::random_generator()();
-  gf.schedule = carma_wm::GeofenceSchedule(ros::Time(1),  // Schedule between 1 and 8
+  gf.schedule = carma_wm_ctrl::GeofenceSchedule(ros::Time(1),  // Schedule between 1 and 8
                                  ros::Time(8),
                                  ros::Duration(2),    // Starts at 2
                                  ros::Duration(3.1),  // Ends at by 3.1
@@ -362,7 +363,7 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   wmb.geoReferenceCallback(sample_proj_string);
 
   // Create the geofence object
-  auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
+  auto gf_ptr = std::make_shared<carma_wm_ctrl::Geofence>(carma_wm_ctrl::Geofence());
   gf_ptr->id_ = boost::uuids::random_generator()();
   cav_msgs::ControlMessage gf_msg;
   lanelet::DigitalSpeedLimitPtr new_speed_limit = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(map->regulatoryElementLayer.uniqueId(), 10_mph, {}, {},
@@ -405,7 +406,6 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   ASSERT_EQ(gf_ptr->prev_regems_[0].second->id(), old_speed_limit->id());
 
 }
-
 
 TEST(WMBroadcaster, GeofenceBinMsgTest)
 {
@@ -452,7 +452,7 @@ using namespace lanelet::units::literals;
   wmb.geoReferenceCallback(sample_proj_string);
 
   // Create the geofence object
-  auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
+  auto gf_ptr = std::make_shared<carma_wm_ctrl::Geofence>(carma_wm_ctrl::Geofence());
   gf_ptr->id_ = boost::uuids::random_generator()();
   cav_msgs::ControlMessage gf_msg;
   lanelet::DigitalSpeedLimitPtr new_speed_limit = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(map->regulatoryElementLayer.uniqueId(), 10_mph, {}, {},

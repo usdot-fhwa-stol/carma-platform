@@ -24,7 +24,6 @@
 #include <autoware_lanelet2_msgs/MapBin.h>
 #include <lanelet2_io/io_handlers/Serialize.h>
 #include <lanelet2_core/primitives/Point.h>
-#include "GeofenceSchedule.h"
 #include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
 #include <lanelet2_core/primitives/LaneletOrArea.h>
 
@@ -45,9 +44,6 @@ public:
                  id_(id), update_list_(update_list), remove_list_(remove_list){}  
 
   boost::uuids::uuid id_;  // Unique id of this geofence
-  GeofenceSchedule schedule;  // The schedule this geofence operates with
-  // TODO Add rest of the attributes provided by geofences in the future
-  std::string proj;
   lanelet::DigitalSpeedLimitPtr min_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_mph, {}, {},
                                                      { lanelet::Participants::VehicleCar }));
   lanelet::DigitalSpeedLimitPtr max_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_mph, {}, {},
@@ -56,11 +52,6 @@ public:
    // elements needed for broadcasting to the rest of map users
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list_;
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> remove_list_;
-  
-  // we need mutable elements saved here as they will be added back through update function which only accepts mutable objects
-  std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> prev_regems_;
-  lanelet::ConstLaneletOrAreas affected_parts_;
-
 };
 
 /**
