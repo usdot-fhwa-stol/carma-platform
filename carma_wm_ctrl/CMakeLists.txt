@@ -112,6 +112,7 @@ install(DIRECTORY launch
 catkin_add_gmock(${PROJECT_NAME}-test
  test/TestMain.cpp
  test/GeofenceSchedulerTest.cpp
+ test/GeofenceScheduleTest.cpp
  test/MapConformerTest.cpp
  test/TestTimer.cpp
  test/WMBroadcasterTest.cpp

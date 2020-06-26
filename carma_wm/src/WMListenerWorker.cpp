@@ -16,7 +16,6 @@
 
 #include <lanelet2_extension/utility/message_conversion.h>
 #include "WMListenerWorker.h"
-#include <algorithm>
 
 namespace carma_wm
 {

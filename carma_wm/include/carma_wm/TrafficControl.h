@@ -30,7 +30,7 @@
 
 namespace carma_wm
 {
-/*! \brief This class is referred as either TrafficControl or Geofence (due to previous convention) in the rest of the system
+/*! \brief This class is duplicate of Geofence's subset parts that are compatible for sending/receiving over ROS network in a binary ROS msg format.
  */
 using namespace lanelet::units::literals;
 
@@ -44,10 +44,6 @@ public:
                  id_(id), update_list_(update_list), remove_list_(remove_list){}  
 
   boost::uuids::uuid id_;  // Unique id of this geofence
-  lanelet::DigitalSpeedLimitPtr min_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_mph, {}, {},
-                                                     { lanelet::Participants::VehicleCar }));
-  lanelet::DigitalSpeedLimitPtr max_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_mph, {}, {},
-                                                     { lanelet::Participants::VehicleCar }));
   
    // elements needed for broadcasting to the rest of map users
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list_;
