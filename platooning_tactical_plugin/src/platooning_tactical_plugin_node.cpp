@@ -17,7 +17,7 @@
 #include <sstream>
 
 #include <ros/ros.h>
-#include "platooning_tactical_plugin/platooning_tactical_plugin.cpp"
+#include "platooning_tactical_plugin/platooning_tactical_plugin.h"
 
 int main(int argc, char** argv)
 {
