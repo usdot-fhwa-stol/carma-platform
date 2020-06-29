@@ -70,15 +70,20 @@ namespace health_monitor
             // ROS params
             double spin_rate_, driver_timeout_, startup_duration_;
             std::vector<std::string> required_drivers_;
+            std::vector<std::string> lidar_gps_drivers_; 
             std::vector<std::string> required_plugins_;
+            bool truck_;
+            bool car_;
 
             // record of startup timestamp
-            ros::Time start_up_timestamp_;
+            long start_up_timestamp_;
 
             // service name prefix and suffix
             std::string plugin_service_prefix_;
             std::string strategic_plugin_service_suffix_;
             std::string tactical_plugin_service_suffix_;
+            ros::Time start_time_flag_; //Bool for start up time
+
 
             // spin callback function
             bool spin_cb();

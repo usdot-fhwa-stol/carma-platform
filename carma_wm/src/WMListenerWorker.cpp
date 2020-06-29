@@ -44,6 +44,12 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr&
   }
 }
 
+void WMListenerWorker::roadwayObjectListCallback(const cav_msgs::RoadwayObstacleList& msg)
+{
+  // this topic publishes only the objects that are on the road
+  world_model_->setRoadwayObjects(msg.roadway_obstacles);
+}
+
 void WMListenerWorker::routeCallback()
 {
   // TODO Implement when route message has been defined

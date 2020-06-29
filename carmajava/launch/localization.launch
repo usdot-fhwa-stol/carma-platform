@@ -61,9 +61,9 @@
   <!-- map param/tf loader -->
   <include file="$(find map_file)/launch/map_param_loader.launch">
     <arg name="file_name" value="$(arg vector_map_file)"/>
-   </include>
-
-  <!-- Point Cloud map file loading process> -->
+  </include>
+   
+   <!-- Point Cloud map file loading process -->
   <include file="$(find map_file)/launch/map_loader.launch">
    <arg name="load_type" value="$(arg load_type)"/>
    <arg name="single_pcd_path" value="$(arg single_pcd_path)"/>

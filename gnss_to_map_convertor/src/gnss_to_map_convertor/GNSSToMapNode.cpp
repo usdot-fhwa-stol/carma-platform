@@ -22,7 +22,7 @@
 
 namespace gnss_to_map_convertor {
 
-  GNSSToMapNode::GNSSToMapNode() : tfListener_(tfBuffer_), p_cnh_("~") {}
+  GNSSToMapNode::GNSSToMapNode(){}
 
   void GNSSToMapNode::fixCb(const gps_common::GPSFixConstPtr& fix_msg) {
     // Get sensor and base_link transforms if not yet loaded

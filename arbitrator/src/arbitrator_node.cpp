@@ -19,6 +19,7 @@
 #include <string>
 #include "arbitrator.hpp"
 #include "arbitrator_state_machine.hpp"
+#include "cost_system_cost_function.hpp"
 #include "fixed_priority_cost_function.hpp"
 #include "plugin_neighbor_generator.hpp"
 #include "beam_search_strategy.hpp"
@@ -34,9 +35,20 @@ int main(int argc, char** argv)
     arbitrator::CapabilitiesInterface ci{&nh};
     arbitrator::ArbitratorStateMachine sm;
 
+    bool use_fixed_costs = false; 
+    pnh.getParam("use_fixed_costs", use_fixed_costs);
+
+    arbitrator::CostFunction *cf = nullptr;
+    arbitrator::CostSystemCostFunction cscf = arbitrator::CostSystemCostFunction{};
     std::map<std::string, double> plugin_priorities;
     pnh.getParam("plugin_priorities", plugin_priorities);
     arbitrator::FixedPriorityCostFunction fpcf{plugin_priorities};
+    if (use_fixed_costs) {
+        cf = &fpcf;
+    } else {
+        cscf.init(nh);
+        cf = &cscf;
+    }
 
     int beam_width;
     pnh.param("beam_width", beam_width, 3);
@@ -46,7 +58,7 @@ int main(int argc, char** argv)
 
     double target_plan;
     pnh.param("target_duration", target_plan, 15.0);
-    arbitrator::TreePlanner tp{fpcf, png, bss, ros::Duration(target_plan)};
+    arbitrator::TreePlanner tp{*cf, png, bss, ros::Duration(target_plan)};
 
     double min_plan_duration;
     pnh.param("min_plan_duration", min_plan_duration, 6.0);
