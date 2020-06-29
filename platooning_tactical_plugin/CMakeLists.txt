@@ -115,7 +115,6 @@ catkin_package(
  INCLUDE_DIRS include
  LIBRARIES platooning_tactical_plugin
  CATKIN_DEPENDS cav_msgs roscpp rospy std_msgs autoware_msgs cav_srvs
- DEPENDS system_lib
 )
 
 ###########
