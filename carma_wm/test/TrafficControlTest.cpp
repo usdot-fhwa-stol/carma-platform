@@ -42,7 +42,7 @@ namespace carma_wm
 TEST(TrafficControl, TrafficControlBinMsgTest)
 {
   using namespace lanelet::units::literals;
-// add a lanelet
+  // add a lanelet
   auto p1 = getPoint(0, 0, 0);
   auto p2 = getPoint(0, 1, 0);
   auto p3 = getPoint(1, 1, 0);
@@ -69,11 +69,21 @@ TEST(TrafficControl, TrafficControlBinMsgTest)
 
   // from broadcaster
   autoware_lanelet2_msgs::MapBin gf_obj_msg;
+  
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
+  ROS_INFO("Below null pointer error message is expected");
+  auto null = nullptr;
+  carma_wm::toBinMsg(send_data, null);
+  ASSERT_EQ(null, nullptr);
   carma_wm::toBinMsg(send_data, &gf_obj_msg);
+  
   // at map users
   auto data_received = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
+  ROS_INFO("Below null pointer error message is expected");
+  carma_wm::fromBinMsg(gf_obj_msg, null);
+  ASSERT_EQ(null, nullptr);
   carma_wm::fromBinMsg(gf_obj_msg, data_received);
+
   ASSERT_EQ(data_received->id_, gf_ptr->id_); // same element
   ASSERT_EQ(gf_ptr->remove_list_.size(), 1);
   ASSERT_EQ(data_received->remove_list_.size(), 1); // old_speed_limit

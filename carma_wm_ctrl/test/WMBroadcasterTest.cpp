@@ -266,7 +266,7 @@ TEST(WMBroadcaster, geofenceCallback)
   gf_msg.schedule.between.end =  gf.schedule.control_end_;
   gf_msg.schedule.repeat.duration =  gf.schedule.control_duration_;
   gf_msg.schedule.repeat.interval =  gf.schedule.control_interval_;
-  
+
   ros::Time::setNow(ros::Time(0));  // Set current time
 
   size_t base_map_call_count = 0;
@@ -279,7 +279,13 @@ TEST(WMBroadcaster, geofenceCallback)
         ASSERT_EQ(4, map->laneletLayer.size());  // Verify the map can be decoded
         base_map_call_count++;
       },
-      [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
+      [&](const autoware_lanelet2_msgs::MapBin& geofence_bin) {
+        auto data_received = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
+        carma_wm::fromBinMsg(geofence_bin, data_received);
+        ASSERT_EQ(data_received->id_, gf.id_);
+        ASSERT_EQ(data_received->remove_list_.size(), 0);
+        ASSERT_EQ(data_received->update_list_.size(), 0);
+      },
       std::make_unique<TestTimerFactory>());
 
   // Get and convert map to binary message
