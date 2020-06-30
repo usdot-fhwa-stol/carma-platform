@@ -166,10 +166,12 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   auto new_regem_correct_data = wmlw.getWorldModel()->getMap()->regulatoryElementLayer.get(speed_limit_new->id());
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(new_regem_correct_data).size(), 1); // now queryable here because of same element with correct data address
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(new_regem_correct_data)[0].id(), ll_1.id());
-  // but old regem should still be there as the updater doesn't completely delete old regems, but sever the connections
+  // but old regem should still be there as the updater doesn't completely delete old regems, but only sever the connections
+  auto regem_old_correct_data = wmlw.getWorldModel()->getMap()->regulatoryElementLayer.get(speed_limit_old->id());
   ASSERT_NE(wmlw.getWorldModel()->getMap()->regulatoryElementLayer.find(speed_limit_old->id()), 
             wmlw.getWorldModel()->getMap()->regulatoryElementLayer.end());
-
+  ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(regem_old_correct_data).size(), 0);
+  ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(speed_limit_old).size(), 0);
 
   // now the change should be reversable
   gf_ptr->update_list_ = {};
@@ -195,9 +197,8 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   ASSERT_NE(wmlw.getWorldModel()->getMap()->regulatoryElementLayer.find(speed_limit_old->id()), 
             wmlw.getWorldModel()->getMap()->regulatoryElementLayer.end());
 
-  // old_speed_limit's data is also stored at a different address from the one we created because
+  // old_speed_limit's data is also stored at a different address from the one we created locally because
   // we serialized the whole map and deserialized before setting the map.
-  auto regem_old_correct_data = wmlw.getWorldModel()->getMap()->regulatoryElementLayer.get(speed_limit_old->id());
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->regulatoryElementLayer.get(speed_limit_old->id()), regem_old_correct_data);
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(regem_old_correct_data).size(), 1);
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(regem_old_correct_data)[0].id(), ll_1.id());
