@@ -61,7 +61,7 @@ namespace carma_wm {
         * \param target_time amount of unit of time in future to look for collision
         * \return A list of obstacles the provided trajectory plan collides with
         */
-        std::vector<cav_msgs::RoadwayObstacle> WorldCollisionDetection(cav_msgs::RoadwayObstacleList& rwol, cav_msgs::TrajectoryPlan& tp, geometry_msgs::Vector3& size, geometry_msgs::Twist& veloctiy, int target_time);
+        std::vector<cav_msgs::RoadwayObstacle> WorldCollisionDetection(cav_msgs::RoadwayObstacleList& rwol, cav_msgs::TrajectoryPlan& tp, geometry_msgs::Vector3& size, geometry_msgs::Twist& veloctiy,unsigned int target_time);
         
         /*! \brief Convert RodwayObstable object to the collision_detection::MovingObject 
             * \param rwo A RoadwayObstacle
@@ -82,7 +82,7 @@ namespace carma_wm {
         * \param op a MovingObject
         */
 
-        collision_detection::MovingObject PredictObjectPosition(collision_detection::MovingObject op, int target_time);
+        collision_detection::MovingObject PredictObjectPosition(collision_detection::MovingObject op,unsigned int target_time);
         
         /*! \brief .check Intersection between polygons
         */
@@ -92,7 +92,7 @@ namespace carma_wm {
         /*! \brief .function is used in WorldCollisionDetection to detection collision between two Moving Object
         */
 
-        bool DetectCollision(collision_detection::MovingObject ob1, collision_detection::MovingObject ob2, int target_time);
+        bool DetectCollision(collision_detection::MovingObject ob1, collision_detection::MovingObject ob2,unsigned int target_time);
         
         /*! \brief function to create a polygon representing and object
         */

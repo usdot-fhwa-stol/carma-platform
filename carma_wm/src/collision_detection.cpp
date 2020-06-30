@@ -4,7 +4,7 @@ namespace carma_wm {
 
     namespace collision_detection {
 
-        std::vector<cav_msgs::RoadwayObstacle> WorldCollisionDetection(cav_msgs::RoadwayObstacleList& rwol, cav_msgs::TrajectoryPlan& tp, geometry_msgs::Vector3& size, geometry_msgs::Twist& veloctiy, int target_time){
+        std::vector<cav_msgs::RoadwayObstacle> WorldCollisionDetection(cav_msgs::RoadwayObstacleList& rwol, cav_msgs::TrajectoryPlan& tp, geometry_msgs::Vector3& size, geometry_msgs::Twist& veloctiy, unsigned int target_time){
 
             std::vector<cav_msgs::RoadwayObstacle> rwo_collison;
 
@@ -87,7 +87,7 @@ namespace carma_wm {
             return v;
         };
 
-        bool DetectCollision(collision_detection::MovingObject ob_1, collision_detection::MovingObject ob_2, int target_time) {            
+        bool DetectCollision(collision_detection::MovingObject ob_1, collision_detection::MovingObject ob_2, unsigned int target_time) {            
 
             collision_detection::MovingObject ob_1_after = PredictObjectPosition(ob_1,target_time);
             collision_detection::MovingObject ob_2_after = PredictObjectPosition(ob_2,target_time);
@@ -112,7 +112,7 @@ namespace carma_wm {
             return false;
         };
 
-        collision_detection::MovingObject PredictObjectPosition(collision_detection::MovingObject op, int target_time){
+        collision_detection::MovingObject PredictObjectPosition(collision_detection::MovingObject op, unsigned int target_time){
 
             int size = 0;
             for(size_t i = 0; i< target_time; i++){
