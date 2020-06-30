@@ -278,7 +278,7 @@ void CARMAWorldModel::setMap(lanelet::LaneletMapPtr map)
   map_routing_graph_ = std::move(map_graph);
 }
 
-lanelet::LaneletMapPtr CARMAWorldModel::getMutableMap()
+lanelet::LaneletMapPtr CARMAWorldModel::getMutableMap() const
 {
   return semantic_map_;
 }

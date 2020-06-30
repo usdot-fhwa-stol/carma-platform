@@ -68,7 +68,7 @@ public:
    * 
    *  NOTE: the user must make sure to setMap() after any edit to the map and to set a valid route
    */
-  lanelet::LaneletMapPtr getMutableMap();
+  lanelet::LaneletMapPtr getMutableMap() const;
 
   /*! \brief Update internal records of roadway objects. These objects MUST be guaranteed to be on the road. 
    * 

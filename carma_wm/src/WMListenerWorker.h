@@ -51,7 +51,7 @@ public:
    *
    * \param geofence_msg The new map update messages to generate the map edits from
    */
-  void mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg);
+  void mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg) const;
 
   /*!
    * \brief Callback for route message. It is a TODO: To update function when route message spec is defined

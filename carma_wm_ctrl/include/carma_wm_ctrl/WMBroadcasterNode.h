@@ -59,7 +59,7 @@ public:
    *
    * @param geofence_msg The geofence message to publish
    */
-  void publishMapUpdate(const autoware_lanelet2_msgs::MapBin& geofence_msg);
+  void publishMapUpdate(const autoware_lanelet2_msgs::MapBin& geofence_msg) const;
 
 private:
   ros::CARMANodeHandle cnh_;

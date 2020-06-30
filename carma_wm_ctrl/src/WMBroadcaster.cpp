@@ -39,7 +39,7 @@ namespace carma_wm_ctrl
 using std::placeholders::_1;
 
 
-WMBroadcaster::WMBroadcaster(PublishMapCallback map_pub, PublishMapUpdateCallback map_update_pub, std::unique_ptr<TimerFactory> timer_factory)
+WMBroadcaster::WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, std::unique_ptr<TimerFactory> timer_factory)
   : map_pub_(map_pub), map_update_pub_(map_update_pub), scheduler_(std::move(timer_factory))
 {
   scheduler_.onGeofenceActive(std::bind(&WMBroadcaster::addGeofence, this, _1));

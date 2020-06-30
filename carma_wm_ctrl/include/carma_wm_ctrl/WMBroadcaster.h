@@ -56,7 +56,7 @@ public:
   /*!
    * \brief Constructor
    */
-  WMBroadcaster(PublishMapCallback map_pub, PublishMapUpdateCallback map_update_pub, std::unique_ptr<TimerFactory> timer_factory);
+  WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, std::unique_ptr<TimerFactory> timer_factory);
 
   /*!
    * \brief Callback to set the base map when it has been loaded

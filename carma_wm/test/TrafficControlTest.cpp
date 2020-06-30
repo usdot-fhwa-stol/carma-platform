@@ -74,12 +74,14 @@ TEST(TrafficControl, TrafficControlBinMsgTest)
   // at map users
   auto data_received = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
   carma_wm::fromBinMsg(gf_obj_msg, data_received);
-  ASSERT_EQ(data_received->id_, gf_ptr->id_);
+  ASSERT_EQ(data_received->id_, gf_ptr->id_); // same element
   ASSERT_EQ(gf_ptr->remove_list_.size(), 1);
   ASSERT_EQ(data_received->remove_list_.size(), 1); // old_speed_limit
   ASSERT_EQ(data_received->remove_list_[0].second->attribute(lanelet::AttributeName::Subtype).value(), lanelet::DigitalSpeedLimit::RuleName );
   ASSERT_EQ(data_received->update_list_.size(), 1); // new_speed_limit
   ASSERT_EQ(data_received->update_list_[0].first, gf_ptr->update_list_[0].first);
+  ASSERT_NE(data_received->update_list_[0].second, gf_ptr->update_list_[0].second); // they are now not same because of serialization, the data address is different
+                                                                                    // but again, they are same elements
 }
 
 }  // namespace carma_wm_ctrl
