@@ -32,7 +32,9 @@
 
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <cav_msgs/ControlMessage.h>
+#include <carma_wm/TrafficControl.h>
 #include <std_msgs/String.h>
+#include <unordered_set>
 
 namespace carma_wm_ctrl
 {
@@ -49,11 +51,12 @@ class WMBroadcaster
 {
 public:
   using PublishMapCallback = std::function<void(const autoware_lanelet2_msgs::MapBin&)>;
+  using PublishMapUpdateCallback = std::function<void(const autoware_lanelet2_msgs::MapBin&)>;
 
   /*!
    * \brief Constructor
    */
-  WMBroadcaster(PublishMapCallback map_pub, std::unique_ptr<TimerFactory> timer_factory);
+  WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, std::unique_ptr<TimerFactory> timer_factory);
 
   /*!
    * \brief Callback to set the base map when it has been loaded
@@ -78,12 +81,12 @@ public:
   void geofenceCallback(const cav_msgs::ControlMessage& geofence_msg);
 
   /*!
-   * \brief Adds a geofence to the current map
+   * \brief Adds a geofence to the current map and publishes the ROS msg
    */
   void addGeofence(std::shared_ptr<Geofence> gf_ptr);
 
   /*!
-   * \brief Removes a geofence from the current map
+   * \brief Removes a geofence from the current map and publishes the ROS msg
    */
   void removeGeofence(std::shared_ptr<Geofence> gf_ptr);
 
@@ -105,15 +108,22 @@ public:
 private:
   void addSpeedLimit(std::shared_ptr<Geofence> gf_ptr);
   void addBackSpeedLimit(std::shared_ptr<Geofence> gf_ptr);
+  void removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr);
+  void addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr);
   std::shared_ptr<Geofence> geofenceFromMsg(const cav_msgs::ControlMessage& geofence_msg);
   std::unordered_set<lanelet::Lanelet> filterSuccessorLanelets(const std::unordered_set<lanelet::Lanelet>& possible_lanelets, const std::unordered_set<lanelet::Lanelet>& root_lanelets);
   lanelet::LaneletMapPtr base_map_;
   lanelet::LaneletMapPtr current_map_;
+  std::unordered_set<std::string>  checked_geofence_ids_;
   std::vector<lanelet::LaneletMapPtr> cached_maps_;
   std::mutex map_mutex_;
   PublishMapCallback map_pub_;
+  PublishMapUpdateCallback map_update_pub_;
   GeofenceScheduler scheduler_;
   std::string base_map_georef_;
   double max_lane_width_;
 };
 }  // namespace carma_wm_ctrl
+
+
+

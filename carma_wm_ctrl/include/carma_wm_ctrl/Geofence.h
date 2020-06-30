@@ -38,17 +38,21 @@ public:
 
   GeofenceSchedule schedule;  // The schedule this geofence operates with
 
+  std::string proj;
+
   // TODO Add rest of the attributes provided by geofences in the future
   lanelet::DigitalSpeedLimitPtr min_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_kmh, {}, {},
                                                      { lanelet::Participants::VehicleCar }));
   lanelet::DigitalSpeedLimitPtr max_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_kmh, {}, {},
                                                      { lanelet::Participants::VehicleCar }));
   
+  // elements needed for broadcasting to the rest of map users
+  std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list_;
+  std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> remove_list_;
+  
   // we need mutable elements saved here as they will be added back through update function which only accepts mutable objects
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> prev_regems_;
-
-  std::string proj;
-  
   lanelet::ConstLaneletOrAreas affected_parts_;
+  
 };
 }  // namespace carma_wm_ctrl
