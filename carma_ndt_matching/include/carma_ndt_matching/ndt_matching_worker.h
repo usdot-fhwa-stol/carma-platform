@@ -18,8 +18,8 @@
 #include <pcl_ros/transforms.h>
 #include "ndt_matching_config.h"
 
-using LookupTransform = std::function<geometry_msgs::TransformStamped(const std::string &target_frame, const std::string &source_frame, const ros::Time &time)>;
-using PosePublisher = std::function<geometry_msgs::PoseStamped(const geometry_msgs::PoseStamped&)>;
+using LookupTransform = std::function<geometry_msgs::TransformStamped(const std::string&, const std::string&, const ros::Time&)>;
+using PosePublisher = std::function<void(const geometry_msgs::PoseStamped&)>;
 
 struct KinematicState {
   ros::Time stamp;
@@ -48,8 +48,9 @@ class NDTMatchingWorker {
   bool baselink_in_sensor_set_ = false;
   Eigen::Matrix4f baselink_in_sensor_;  
 
-  boost::circular_buffer<KinematicState> state_buffer_(10); // TODO make size configurable or computed based on parameter rate differences
+  boost::circular_buffer<KinematicState> state_buffer_{10}; // TODO make size configurable or computed based on parameter rate differences
 
+  public:
   NDTMatchingWorker(NDTConfig config, LookupTransform lookup_tf_function, PosePublisher pose_pub) : config_(config), lookup_transform_(lookup_tf_function), pose_pub_(pose_pub) {
 
   }
@@ -87,9 +88,11 @@ class NDTMatchingWorker {
   Eigen::Matrix4f baselinkPoseToEigenSensor(const geometry_msgs::Pose& pose) {
 
     Eigen::Affine3d pose_as_affine;
-    Eigen::fromMsg(pose, pose_as_affine);
+    tf2::fromMsg(pose, pose_as_affine);
 
-    return pose_as_affine * baselink_in_sensor_.inverse();
+    Eigen::Matrix4f pose_as_mat = pose_as_affine.matrix().cast<float>();
+
+    return pose_as_mat * baselink_in_sensor_.inverse();
   }
 
   void scanCallback(const sensor_msgs::PointCloud2ConstPtr& scan) {
@@ -97,7 +100,9 @@ class NDTMatchingWorker {
     // Get the transform to the lidar scan
     if (!baselink_in_sensor_set_) {
       try {
-        tf2::convert(lookup_transform_(scan->header.frame_id, config_.baselink_frame_id_, ros::Time(0)), baselink_in_sensor_);
+        Eigen::Affine3d pose_as_affine;
+        pose_as_affine = tf2::transformToEigen(lookup_transform_(scan->header.frame_id, config_.baselink_frame_id_, ros::Time(0)));
+        baselink_in_sensor_ = pose_as_affine.matrix().cast<float>();
         baselink_in_sensor_set_ = true;
       } catch (tf2::TransformException &ex) {
         ROS_WARN_STREAM("NDT Ignoring scan message: Could not locate static transforms with exception " << ex.what());
@@ -159,7 +164,11 @@ class NDTMatchingWorker {
   
     Eigen::Matrix4f map_to_baselink = map_to_sensor * baselink_in_sensor_;  // T_map_baselink = T_map_lidar * T_lidar_baselink
 
-    tf2::convert(map_to_baselink, result.pose); // Convert to pose type
+    Eigen::Affine3d tf_as_affine;
+    tf_as_affine.matrix() = map_to_baselink.cast<double>();
+
+    //result.pose = Eigen::toMsg(tf_as_affine)
+    tf2::convert(tf_as_affine, result.pose); // Convert to pose type
 
     return result;
   }
@@ -168,7 +177,7 @@ class NDTMatchingWorker {
 
     // Finds the lower bound in at most log(last - first) + 1 comparisons
     // Find the first state which is more recent than our time
-    auto state_after_time = std::lower_bound(state_buffer_.begin(), state_buffer.end(), time, 
+    auto state_after_time = std::lower_bound(state_buffer_.begin(), state_buffer_.end(), time, 
       [] (const KinematicState& state, const ros::Time& target_time) -> bool {
         return state.stamp < target_time;
     });
@@ -176,7 +185,7 @@ class NDTMatchingWorker {
     if (state_after_time == state_buffer_.end()) { // If the most recent state is still older than our time
       return state_buffer_.back(); // Return the most recent state
 
-    } else if (state_after_time == state_buffer.start()) { // If the oldest state is more recent than our time
+    } else if (state_after_time == state_buffer_.begin()) { // If the oldest state is more recent than our time
       return state_buffer_.front(); // Try to use the most recent state without prediction
     }
 
@@ -219,19 +228,19 @@ class NDTMatchingWorker {
     pose_pub_(pose_msg);
 
     // TODO publish other metrics
-
+    return true;
   }
 
-  void prevStateCallback(const geometry_msgs::PoseStampedConstPtr& pose, const geometry_msgs::TwistStamped& twist) {
-    if (pose.header.stamp != twist.header.stamp) {
+  void prevStateCallback(const geometry_msgs::PoseStampedConstPtr& pose, const geometry_msgs::TwistStampedConstPtr& twist) {
+    if (pose->header.stamp != twist->header.stamp) {
       ROS_ERROR_STREAM("Received pose and twist with differing timestamps");
       // TODO This should never occur should an exception be thrown?
     }
 
     KinematicState state;
-    state.stamp = pose.header.stamp;
-    state.pose = pose.pose;
-    state.twist = twist.twist;
+    state.stamp = pose->header.stamp;
+    state.pose = pose->pose;
+    state.twist = twist->twist;
 
     if (state_buffer_.back().stamp > state.stamp) {
       ROS_ERROR_STREAM("Received pose and twist messages older than previous message.");

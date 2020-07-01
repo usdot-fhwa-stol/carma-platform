@@ -1,9 +1,10 @@
+#pragma once
 #include <string>
 
 struct NDTConfig {
     // Constant Parameters
     int max_iter = 30;        // Maximum iterations
-    float resolution = 1.0;      // Resolution
+    double resolution = 1.0;      // Resolution
     double step_size = 0.1;   // Step size
     double trans_eps = 0.01;  // Transformation epsilon
 
