@@ -10,14 +10,13 @@ namespace carma_wm {
 
             collision_detection::MovingObject vehicle_object = ConvertVehicleToMovingObject(tp, size, veloctiy);
 
-            for (size_t i = 0; i < rwol.roadway_obstacles.size(); i++) {
-
-                collision_detection::MovingObject rwo = ConvertRoadwayObstacleToMovingObject(rwol.roadway_obstacles[i]);
+            for (auto i : rwol.roadway_obstacles){
+                collision_detection::MovingObject rwo = ConvertRoadwayObstacleToMovingObject(i);
 
                 bool collision = DetectCollision(vehicle_object, rwo, target_time);
 
                 if(collision) {
-                    rwo_collison.push_back(rwol.roadway_obstacles[i]);
+                    rwo_collison.push_back(i);
                 }
             }
 
@@ -72,16 +71,16 @@ namespace carma_wm {
                 tf2::Quaternion orientation;
                 orientation.setRPY(0, 0, yaw);
 
-                geometry_msgs::Pose pose;
-                pose.position.x = tp.trajectory_points[i].x;
-                pose.position.y = tp.trajectory_points[i].y;
+                geometry_msgs::Pose trajectory_pose;
+                trajectory_pose.position.x = tp.trajectory_points[i].x;
+                trajectory_pose.position.y = tp.trajectory_points[i].y;
 
-                pose.orientation.x = orientation.getX();
-                pose.orientation.y = orientation.getY();
-                pose.orientation.z = orientation.getZ();
-                pose.orientation.w = orientation.getW();
+                trajectory_pose.orientation.x = orientation.getX();
+                trajectory_pose.orientation.y = orientation.getY();
+                trajectory_pose.orientation.z = orientation.getZ();
+                trajectory_pose.orientation.w = orientation.getW();
 
-                v.future_polygons.push_back(ObjectToBoostPolygon<polygon_t>(pose, size));
+                v.future_polygons.push_back(ObjectToBoostPolygon<polygon_t>(trajectory_pose, size));
             }
 
             return v;
