@@ -38,7 +38,7 @@ namespace carma_wm {
             return ro;
         };
 
-        collision_detection::MovingObject ConvertVehicleToMovingObject(cav_msgs::TrajectoryPlan& tp, const geometry_msgs::Vector3& size, geometry_msgs::Twist& veloctiy){
+        collision_detection::MovingObject ConvertVehicleToMovingObject(const cav_msgs::TrajectoryPlan& tp, const geometry_msgs::Vector3& size, const geometry_msgs::Twist& veloctiy){
             
             collision_detection::MovingObject v;
 
