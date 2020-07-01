@@ -1,0 +1,10 @@
+<!-- 
+Primary launch file for UI Integration node
+Loads parameters and configures logging for node
+ -->
+<launch>
+    <!-- UI Integration Node -->
+    <node pkg="translated_mock_driver_testing" type="translated_mock_driver_testing_node" name="MockLighBarDriver">
+    </node>
+    <test test-name="test_mock_light_bar_driver" pkg="translated_mock_driver_testing" type="MockLightBarDriver_Test_node" /> 
+</launch>
