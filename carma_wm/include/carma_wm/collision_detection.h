@@ -82,7 +82,7 @@ namespace carma_wm {
         * \param op a MovingObject
         */
 
-        collision_detection::MovingObject PredictObjectPosition(collision_detection::MovingObject op,unsigned int target_time);
+        collision_detection::MovingObject PredictObjectPosition(collision_detection::MovingObject const &op,unsigned int target_time);
         
         /*! \brief .check Intersection between polygons
         */

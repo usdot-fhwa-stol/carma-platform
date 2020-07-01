@@ -111,7 +111,7 @@ namespace carma_wm {
             return false;
         };
 
-        collision_detection::MovingObject PredictObjectPosition(collision_detection::MovingObject op, unsigned int target_time){
+        collision_detection::MovingObject PredictObjectPosition(collision_detection::MovingObject const &op, unsigned int target_time){
 
             int size = 0;
             for(size_t i = 0; i< target_time; i++){
