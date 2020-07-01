@@ -16,6 +16,7 @@
 #include <pcl/registration/ndt.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl_ros/transforms.h>
+#include <limits>
 #include "ndt_matching_config.h"
 
 struct KinematicState {
@@ -39,6 +40,8 @@ using LookupTransform = std::function<geometry_msgs::TransformStamped(const std:
 using ResultPublisher = std::function<void(const NDTResult&)>;
 
 class NDTMatchingWorker {
+  bool base_map_set_ = false;
+  pcl::PointCloud<pcl::PointXYZ> map_;
   pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ> ndt_solver_;
   sensor_msgs::PointCloud2ConstPtr prev_scan_msg_ptr_;
 
@@ -68,9 +71,8 @@ class NDTMatchingWorker {
   void baseMapCallback(const sensor_msgs::PointCloud2::ConstPtr& map_msg) {
     // Store map
 
-    pcl::PointCloud<pcl::PointXYZ> map;
-    pcl::fromROSMsg(*map_msg, map);
-    pcl::PointCloud<pcl::PointXYZ>::Ptr map_ptr(new pcl::PointCloud<pcl::PointXYZ>(map));
+    pcl::fromROSMsg(*map_msg, map_);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr map_ptr(new pcl::PointCloud<pcl::PointXYZ>(map_));
 
     // Setting point cloud to be aligned to.
     pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ> new_ndt;
@@ -84,6 +86,7 @@ class NDTMatchingWorker {
     new_ndt.align(*output_cloud, Eigen::Matrix4f::Identity());
 
     ndt_solver_ = new_ndt;
+    base_map_set_ = true;
 
   }
 
@@ -203,6 +206,11 @@ class NDTMatchingWorker {
         // TODO how to synchronize the point cloud.
     // I am thinking it might make sense to store a buffer of twist results. Then use the one nearest the point cloud as the prev state
     // After computing the result we apply a basic motion prediction to the output to get the newest prediction
+    if (!prev_scan_msg_ptr_ || !base_map_set_ || state_buffer_.empty()) {
+      return true;
+    }
+
+    ros::Time start = ros::Time::now();
 
     KinematicState prev_state = findPrevState(prev_scan_msg_ptr_->header.stamp);
 
@@ -215,26 +223,90 @@ class NDTMatchingWorker {
       predicted_state = predictCurrentState(prev_state, prev_scan_msg_ptr_->header.stamp);
     }
 
+    // TODO remove block
+    ROS_ERROR_STREAM("PrevState [ " << prev_state.pose.position.x << ", " << prev_state.pose.position.y << ", " << prev_state.pose.position.z << " ]");
+    ROS_ERROR_STREAM("predicted_state [ " << predicted_state.pose.position.x << ", " << predicted_state.pose.position.y << ", " << predicted_state.pose.position.z << " ]");
+
+    Eigen::Affine3d pose_as_affine;
+    Eigen::Matrix4f pose_as_mat = baselinkPoseToEigenSensor(predicted_state.pose);
+    pose_as_affine.matrix() = pose_as_mat.cast<double>();
+    geometry_msgs::Pose tempPose;
+    tf2::convert(pose_as_affine, tempPose);
+
+    ROS_ERROR_STREAM("tempPose [ " << tempPose.position.x << ", " << tempPose.position.y << ", " << tempPose.position.z << " ]");
+
+    // TODO end remove block
+
+    ros::Time pred_end = ros::Time::now();
+    ROS_ERROR_STREAM("Prediction Time: " << (pred_end - start).toSec());
+
+    ros::Time point_conv_start = ros::Time::now();
     // Convert the scan to pcl data type and store pointer to it
     pcl::PointCloud<pcl::PointXYZ> filtered_scan;
     pcl::fromROSMsg(*prev_scan_msg_ptr_, filtered_scan);
     pcl::PointCloud<pcl::PointXYZ>::Ptr prev_scan_ptr(new pcl::PointCloud<pcl::PointXYZ>(filtered_scan));
 
-    NDTResult optimized_state = optimizePredictedState(baselinkPoseToEigenSensor(predicted_state.pose), prev_scan_ptr);
+    ros::Time point_conv_end = ros::Time::now();
+    ROS_ERROR_STREAM("Conversion Time: " << (point_conv_end - point_conv_start).toSec());
 
+    ros::Time op_start = ros::Time::now();
+    NDTResult optimized_state = optimizePredictedState(baselinkPoseToEigenSensor(predicted_state.pose), prev_scan_ptr);
+    ros::Time op_end = ros::Time::now();
+    ROS_ERROR_STREAM("Optimization Time: " << (op_end - op_start).toSec());
     optimized_state.stamp = prev_scan_msg_ptr_->header.stamp;
     optimized_state.frame_id = config_.map_frame_id_;
 
     result_pub_(optimized_state);
 
+    ros::Time end = ros::Time::now();
+
+    ROS_ERROR_STREAM("CB Time: " << (end - start).toSec());
     // TODO publish other metrics
     return true;
   }
+
+  void initialPoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg) {
+    if (!prev_scan_msg_ptr_ || !base_map_set_) {
+      ROS_WARN("Initial Pose not processed due to missing point scan or map data");
+      return;
+    }
+
+     geometry_msgs::PoseStamped initial_pose;
+     initial_pose.header = msg->header;
+     initial_pose.pose = msg->pose.pose;
+
+    geometry_msgs::TwistStamped initial_twist;
+    initial_twist.header = initial_pose.header;
+    initial_twist.header.frame_id = config_.baselink_frame_id_;
+
+    double min_distance = std::numeric_limits<double>::max();
+    double nearest_z = initial_pose.pose.position.z;
+    for (const auto& p : map_)
+    {
+      double distance = hypot(initial_pose.pose.position.x - p.x, initial_pose.pose.position.y - p.y);
+      if (distance < min_distance)
+      {
+        min_distance = distance;
+        nearest_z = p.z;
+      }
+    }
+    initial_pose.pose.position.z = nearest_z;
+
+    geometry_msgs::TwistStampedConstPtr twist_ptr(new geometry_msgs::TwistStamped(initial_twist));
+    geometry_msgs::PoseStampedConstPtr pose_ptr(new geometry_msgs::PoseStamped(initial_pose));
+
+    ROS_ERROR_STREAM("Found initial pose z of " << initial_pose.pose.position.z);
+    state_buffer_.clear();
+    prevStateCallback(pose_ptr, twist_ptr);
+
+  }
+   
 
   void prevStateCallback(const geometry_msgs::PoseStampedConstPtr& pose, const geometry_msgs::TwistStampedConstPtr& twist) {
     if (pose->header.stamp != twist->header.stamp) {
       ROS_ERROR_STREAM("Received pose and twist with differing timestamps");
       // TODO This should never occur should an exception be thrown?
+      return;
     }
 
     KinematicState state;
@@ -242,9 +314,10 @@ class NDTMatchingWorker {
     state.pose = pose->pose;
     state.twist = twist->twist;
 
-    if (state_buffer_.back().stamp > state.stamp) {
+    if (!state_buffer_.empty() && state_buffer_.back().stamp > state.stamp) {
       ROS_ERROR_STREAM("Received pose and twist messages older than previous message.");
       // TODO throw exception or find way to insert
+      return;
     }
 
     state_buffer_.push_back(state);

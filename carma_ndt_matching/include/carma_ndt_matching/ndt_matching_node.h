@@ -94,7 +94,7 @@ class NDTMatchingNode {
     // Points subscriber 
     ros::Subscriber points_sub = nh_.subscribe("filtered_points", 1, &NDTMatchingWorker::scanCallback, worker_.get());
     ros::Subscriber map_sub = nh_.subscribe("points_map", 1, &NDTMatchingWorker::baseMapCallback, worker_.get());
-
+    ros::Subscriber initial_pose_sub = nh_.subscribe("initialpose", 1, &NDTMatchingWorker::initialPoseCallback, worker_.get());
 
     // Spin
     nh_.setSpinRate(10);
