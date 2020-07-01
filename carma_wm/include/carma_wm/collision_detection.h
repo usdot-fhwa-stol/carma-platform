@@ -75,7 +75,7 @@ namespace carma_wm {
         * \param veloctiy of the host vehicle
         */
 
-        collision_detection::MovingObject ConvertVehicleToMovingObject(cav_msgs::TrajectoryPlan& tp, geometry_msgs::Vector3& size, geometry_msgs::Twist& veloctiy);                
+        collision_detection::MovingObject ConvertVehicleToMovingObject(const cav_msgs::TrajectoryPlan& tp, const geometry_msgs::Vector3& size, const geometry_msgs::Twist& veloctiy);                
 
         /*! \brief .function is to create a monving object with a polygon that represents area that object is going to allocated until a given time
         * by creating a convex hull around the future polygons
