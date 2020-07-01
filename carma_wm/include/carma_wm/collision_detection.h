@@ -58,7 +58,7 @@ namespace carma_wm {
         * \param tp The TrajectoryPlan of the host vehicle
         * \param size The size of the host vehicle defined in meters
         * \param veloctiy of the host vehicle m/s
-        * \param target_time amount of unit of time in future to look for collision
+        * \param target_time amount of unit of time in future to look for collision in seconds
         * \return A list of obstacles the provided trajectory plan collides with
         */
         std::vector<cav_msgs::RoadwayObstacle> WorldCollisionDetection(cav_msgs::RoadwayObstacleList& rwol, cav_msgs::TrajectoryPlan& tp, geometry_msgs::Vector3& size, geometry_msgs::Twist& veloctiy,unsigned int target_time);
