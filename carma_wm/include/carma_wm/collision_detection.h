@@ -87,12 +87,12 @@ namespace carma_wm {
         /*! \brief .check Intersection between polygons
         */
 
-        bool CheckPolygonIntersection(collision_detection::MovingObject ob1, collision_detection::MovingObject ob2);
+        bool CheckPolygonIntersection(collision_detection::MovingObject const &ob_1, collision_detection::MovingObject const &ob_2);
         
         /*! \brief .function is used in WorldCollisionDetection to detection collision between two Moving Object
         */
 
-        bool DetectCollision(collision_detection::MovingObject ob1, collision_detection::MovingObject ob2,unsigned int target_time);
+        bool DetectCollision(collision_detection::MovingObject const &ob_1, collision_detection::MovingObject const &ob_2, unsigned int target_time);
         
         /*! \brief function to create a polygon representing and object
         */

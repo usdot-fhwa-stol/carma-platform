@@ -86,7 +86,7 @@ namespace carma_wm {
             return v;
         };
 
-        bool DetectCollision(collision_detection::MovingObject ob_1, collision_detection::MovingObject ob_2, unsigned int target_time) {            
+        bool DetectCollision(collision_detection::MovingObject const &ob_1, collision_detection::MovingObject const &ob_2, unsigned int target_time) {            
 
             collision_detection::MovingObject ob_1_after = PredictObjectPosition(ob_1,target_time);
             collision_detection::MovingObject ob_2_after = PredictObjectPosition(ob_2,target_time);
@@ -98,7 +98,7 @@ namespace carma_wm {
             return false;
         };
 
-        bool CheckPolygonIntersection(collision_detection::MovingObject ob_1, collision_detection::MovingObject ob_2) {    
+        bool CheckPolygonIntersection(collision_detection::MovingObject const &ob_1, collision_detection::MovingObject const &ob_2) {    
 
                 std::deque<polygon_t> output;
 
