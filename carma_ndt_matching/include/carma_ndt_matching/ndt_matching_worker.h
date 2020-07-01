@@ -18,9 +18,6 @@
 #include <pcl_ros/transforms.h>
 #include "ndt_matching_config.h"
 
-using LookupTransform = std::function<geometry_msgs::TransformStamped(const std::string&, const std::string&, const ros::Time&)>;
-using PosePublisher = std::function<void(const geometry_msgs::PoseStamped&)>;
-
 struct KinematicState {
   ros::Time stamp;
   geometry_msgs::Pose pose;
@@ -34,7 +31,12 @@ struct NDTResult {
   double transform_probability = 0.0;
   double align_time = 0.0; // ms
   geometry_msgs::Pose pose;
+  ros::Time stamp;
+  std::string frame_id;
 };
+
+using LookupTransform = std::function<geometry_msgs::TransformStamped(const std::string&, const std::string&, const ros::Time&)>;
+using ResultPublisher = std::function<void(const NDTResult&)>;
 
 class NDTMatchingWorker {
   pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ> ndt_solver_;
@@ -43,7 +45,7 @@ class NDTMatchingWorker {
   NDTConfig config_;
 
   LookupTransform lookup_transform_;
-  PosePublisher pose_pub_;
+  ResultPublisher result_pub_;
 
   bool baselink_in_sensor_set_ = false;
   Eigen::Matrix4f baselink_in_sensor_;  
@@ -51,7 +53,7 @@ class NDTMatchingWorker {
   boost::circular_buffer<KinematicState> state_buffer_{10}; // TODO make size configurable or computed based on parameter rate differences
 
   public:
-  NDTMatchingWorker(NDTConfig config, LookupTransform lookup_tf_function, PosePublisher pose_pub) : config_(config), lookup_transform_(lookup_tf_function), pose_pub_(pose_pub) {
+  NDTMatchingWorker(NDTConfig config, LookupTransform lookup_tf_function, ResultPublisher pose_pub) : config_(config), lookup_transform_(lookup_tf_function), result_pub_(pose_pub) {
 
   }
 
@@ -220,12 +222,10 @@ class NDTMatchingWorker {
 
     NDTResult optimized_state = optimizePredictedState(baselinkPoseToEigenSensor(predicted_state.pose), prev_scan_ptr);
 
-    geometry_msgs::PoseStamped pose_msg;
-    pose_msg.header.stamp = prev_scan_msg_ptr_->header.stamp;
-    pose_msg.header.frame_id = config_.map_frame_id_;
-    pose_msg.pose = optimized_state.pose;
+    optimized_state.stamp = prev_scan_msg_ptr_->header.stamp;
+    optimized_state.frame_id = config_.map_frame_id_;
 
-    pose_pub_(pose_msg);
+    result_pub_(optimized_state);
 
     // TODO publish other metrics
     return true;

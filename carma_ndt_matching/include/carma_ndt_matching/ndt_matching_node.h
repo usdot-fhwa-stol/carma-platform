@@ -9,7 +9,7 @@
 #include <tf2_ros/buffer.h>
 #include <carma_utils/CARMAUtils.h>
 #include <geometry_msgs/TransformStamped.h>
-
+#include <std_msgs/Float32.h>
 #include "ndt_matching_worker.h"
 #include "ndt_matching_config.h"
 
@@ -28,6 +28,7 @@ class NDTMatchingNode {
   tf2_ros::TransformListener tfListener_{tfBuffer_};
 
   ros::Publisher ndt_pose_pub_;
+  ros::Publisher matching_time_pub_;
 
   typedef message_filters::sync_policies::ExactTime <geometry_msgs::PoseStamped, geometry_msgs::TwistStamped> StateSyncPolicy;
   typedef message_filters::Synchronizer<StateSyncPolicy> StateSynchronizer;
@@ -45,14 +46,23 @@ class NDTMatchingNode {
     return tfBuffer_.lookupTransform(target_frame, source_frame, time);
   }
 
-  void publishPose(const geometry_msgs::PoseStamped& msg) {
-    ndt_pose_pub_.publish(msg);
+  void publishResults(const NDTResult& results) {
+    geometry_msgs::PoseStamped pose_msg;
+    pose_msg.pose = results.pose;
+    pose_msg.header.stamp = results.stamp;
+    pose_msg.header.frame_id = results.frame_id;
+    ndt_pose_pub_.publish(pose_msg);
+
+    std_msgs::Float32 msg;
+    msg.data = results.align_time;
+    matching_time_pub_.publish(msg);
   }
 //using LookupTransform = std::function<geometry_msgs::TransformStamped(const std::string &target_frame, const std::string &source_frame, const ros::Time &time)>;
 
   void run() {
 
     ndt_pose_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("ndt_pose", 10);
+    matching_time_pub_ = nh_.advertise<std_msgs::Float32>("carma_ndt_matching_time", 10);
 
     NDTConfig worker_config;
 
@@ -68,7 +78,7 @@ class NDTMatchingNode {
 
     worker_.reset(new NDTMatchingWorker(worker_config, 
         std::bind(&NDTMatchingNode::lookupTransform, this, ph::_1,ph::_2, ph::_3),
-        std::bind(&NDTMatchingNode::publishPose, this, ph::_1))
+        std::bind(&NDTMatchingNode::publishResults, this, ph::_1))
     );
 //std::bind(static_cast<void(ros::Publisher::*)(const geometry_msgs::PoseStamped&)(&ros::Publisher::publish), &ndt_pose_pub, ph::_1))
 //        std::bind(static_cast<geometry_msgs::TransformStamped(tf2_ros::Buffer::*)(const std::string&,const std::string&,const ros::Time&)>(&tf2_ros::Buffer::lookupTransform), &tfBuffer_, ph::_1,ph::_2, ph::_3),
