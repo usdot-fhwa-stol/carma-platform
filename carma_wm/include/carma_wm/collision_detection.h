@@ -80,6 +80,7 @@ namespace carma_wm {
         /*! \brief .function is to create a monving object with a polygon that represents area that object is going to allocated until a given time
         * by creating a convex hull around the future polygons
         * \param op a MovingObject
+        * TODO this function can be optimize due the fact that in large target_time returning the entire volum for path will result in false positive. 
         */
 
         collision_detection::MovingObject PredictObjectPosition(collision_detection::MovingObject const &op,unsigned int target_time);
