@@ -70,6 +70,7 @@ class NDTMatchingWorker {
 
   void baseMapCallback(const sensor_msgs::PointCloud2::ConstPtr& map_msg) {
     // Store map
+    ROS_ERROR_STREAM("Processing Map Message");
 
     pcl::fromROSMsg(*map_msg, map_);
     pcl::PointCloud<pcl::PointXYZ>::Ptr map_ptr(new pcl::PointCloud<pcl::PointXYZ>(map_));
@@ -87,6 +88,8 @@ class NDTMatchingWorker {
 
     ndt_solver_ = new_ndt;
     base_map_set_ = true;
+
+    ROS_ERROR_STREAM("Done Processing Map Message");
 
   }
 
@@ -109,6 +112,7 @@ class NDTMatchingWorker {
         pose_as_affine = tf2::transformToEigen(lookup_transform_(scan->header.frame_id, config_.baselink_frame_id_, ros::Time(0)));
         baselink_in_sensor_ = pose_as_affine.matrix().cast<float>();
         baselink_in_sensor_set_ = true;
+        ROS_ERROR_STREAM("GOT baselink_lidar transform");
       } catch (tf2::TransformException &ex) {
         ROS_WARN_STREAM("NDT Ignoring scan message: Could not locate static transforms with exception " << ex.what());
         return;
@@ -141,7 +145,7 @@ class NDTMatchingWorker {
   }
 
   NDTResult optimizePredictedState(const Eigen::Matrix4f& pose, pcl::PointCloud<pcl::PointXYZ>::Ptr scanPtr) {
-    
+    ROS_ERROR_STREAM("Optimizing");
     NDTResult result;
 
     ndt_solver_.setInputSource(scanPtr);
@@ -174,18 +178,19 @@ class NDTMatchingWorker {
 
     //result.pose = Eigen::toMsg(tf_as_affine)
     tf2::convert(tf_as_affine, result.pose); // Convert to pose type
-
+    ROS_ERROR_STREAM("Done Optimizing");
     return result;
   }
 
   KinematicState findPrevState(const ros::Time& time) {
-
+    ROS_ERROR_STREAM("Finding previous state for time: " << time.toSec());
     // Finds the lower bound in at most log(last - first) + 1 comparisons
     // Find the first state which is more recent than our time
     auto state_after_time = std::lower_bound(state_buffer_.begin(), state_buffer_.end(), time, 
       [] (const KinematicState& state, const ros::Time& target_time) -> bool {
         return state.stamp < target_time;
     });
+
 
     if (state_after_time == state_buffer_.end()) { // If the most recent state is still older than our time
       return state_buffer_.back(); // Return the most recent state
@@ -195,6 +200,8 @@ class NDTMatchingWorker {
     }
 
     auto state_before_time = state_after_time - 1;
+
+    ROS_ERROR_STREAM("Found state with time: " << (*state_after_time).stamp.toSec());
 
     return *state_before_time;
     
@@ -207,6 +214,7 @@ class NDTMatchingWorker {
     // I am thinking it might make sense to store a buffer of twist results. Then use the one nearest the point cloud as the prev state
     // After computing the result we apply a basic motion prediction to the output to get the newest prediction
     if (!prev_scan_msg_ptr_ || !base_map_set_ || state_buffer_.empty()) {
+      ROS_ERROR_STREAM("Waiting for data ");
       return true;
     }
 

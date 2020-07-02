@@ -76,6 +76,8 @@ class NDTMatchingNode {
     pnh_.param<std::string>("baselink_frame_id_", worker_config.baselink_frame_id_, worker_config.baselink_frame_id_);
     pnh_.param<std::string>("map_frame_id_", worker_config.map_frame_id_, worker_config.map_frame_id_);
 
+    ROS_ERROR_STREAM("Worker Config: " << worker_config);
+
     worker_.reset(new NDTMatchingWorker(worker_config, 
         std::bind(&NDTMatchingNode::lookupTransform, this, ph::_1,ph::_2, ph::_3),
         std::bind(&NDTMatchingNode::publishResults, this, ph::_1))
