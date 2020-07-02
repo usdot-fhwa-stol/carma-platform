@@ -8,6 +8,10 @@
 #include <cav_srvs/PlanManeuvers.h>
 #include <cav_msgs/PlanType.h>
 #include <mutex>
+#include <boost/format.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 namespace platoon_strategic
 {
@@ -42,14 +46,50 @@ namespace platoon_strategic
     class PlatooningStateMachine
     {
     public:
-        virtual MobilityRequestResponse onMobilityRequestMessage(cav_msgs::MobilityRequest &msg) = 0;
-        virtual void onMobilityResponseMessage(cav_msgs::MobilityResponse &msg) = 0;
-        virtual void onMobilityOperationMessage(cav_msgs::MobilityOperation &msg) = 0;
-        virtual cav_msgs::Maneuver planManeuver(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time current_time) = 0;
+        MobilityRequestResponse onMobilityRequestMessage(cav_msgs::MobilityRequest &msg);
+        void onMobilityResponseMessage(cav_msgs::MobilityResponse &msg);
+        void onMobilityOperationMessage(cav_msgs::MobilityOperation &msg);
+        cav_msgs::Maneuver planManeuver(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time current_time);
+        
         PlatoonState current_platoon_state;
+        std::string applicantID;
+        PlatoonPlan current_plan;
 
-    // protected:
-    //     std::string applicantID;
+
+    private:
+    
+        MobilityRequestResponse onMobilityRequestMessageFollower(cav_msgs::MobilityRequest &msg);
+        void onMobilityResponseMessageFollower(cav_msgs::MobilityResponse &msg);
+        void onMobilityOperationMessageFollower(cav_msgs::MobilityOperation &msg);
+
+        MobilityRequestResponse onMobilityRequestMessageLeader(cav_msgs::MobilityRequest &msg);
+        void onMobilityResponseMessageLeader(cav_msgs::MobilityResponse &msg);
+        void onMobilityOperationMessageLeader(cav_msgs::MobilityOperation &msg);
+
+        MobilityRequestResponse onMobilityRequestMessageLeaderWaiting(cav_msgs::MobilityRequest &msg);
+        void onMobilityResponseMessageLeaderWaiting(cav_msgs::MobilityResponse &msg);
+        void onMobilityOperationMessageLeaderWaiting(cav_msgs::MobilityOperation &msg);
+
+        MobilityRequestResponse onMobilityRequestMessageCandidateFollower(cav_msgs::MobilityRequest &msg);
+        void onMobilityResponseMessageCandidateFollower(cav_msgs::MobilityResponse &msg);
+        void onMobilityOperationMessageCandidateFollower(cav_msgs::MobilityOperation &msg);
+
+
+        MobilityRequestResponse onMobilityRequestMessageStandby(cav_msgs::MobilityRequest &msg);
+        void onMobilityResponseMessageStandby(cav_msgs::MobilityResponse &msg);
+        void onMobilityOperationMessageStandby(cav_msgs::MobilityOperation &msg);
+
+
+
+        
+        bool isVehicleRightInFront(std::string rearVehicleBsmId, double downtrack);
+        double maxAllowedJoinTimeGap = 15.0;
+        double maxAllowedJoinGap = 90;
+        int maxPlatoonSize = 10;
+        double vehicleLength = 5.0;
+        std::mutex plan_mutex_;
+        int infoMessageInterval;
+        std::string targetLeaderId;
     };
 }
 

@@ -64,18 +64,32 @@ namespace platoon_strategic
         
         private:
 
-            
+            PlatooningStateMachine *psm_;
             // node handles
             std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
+            long waitingStartTime;
+            long candidatestateStartTime;
+
 
             ros::Publisher platoon_strategic_plugin_discovery_pub_;
+            ros::Publisher mob_op_pub_;
+
             ros::Subscriber pose_sub_;
+            
+            ros::Subscriber mob_req_sub_;
+            ros::Subscriber mob_resp_sub_;
+            ros::Subscriber mob_op_sub_;
+
 
             // service callbacks for carma trajectory planning
             bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp);
 
             void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
+
+            void mob_req_cb(const cav_msgs::MobilityRequest& msg);
+            void mob_resp_cb(const cav_msgs::MobilityResponse& msg);
+            void mob_op_cb(const cav_msgs::MobilityOperation& msg);
 
             // ros service servers
             ros::ServiceServer trajectory_srv_;
@@ -106,7 +120,30 @@ namespace platoon_strategic
             // generated trajectory plan
             cav_msgs::TrajectoryPlan trajectory_msg;
 
-            PlatooningStateMachine *psm_;
+
+
+            cav_msgs::MobilityRequest mobility_req_msg_;
+            cav_msgs::MobilityResponse mobility_resp_msg_;
+            cav_msgs::MobilityOperation mobility_op_msg_;
+
+
+            void composeMobilityOperationLeader(cav_msgs::MobilityOperation &msg, std::string type);
+            void composeMobilityOperationFollower(cav_msgs::MobilityOperation &msg);
+            void composeMobilityOperationLeaderWaiting(cav_msgs::MobilityOperation &msg);
+
+
+            double maxAllowedJoinTimeGap = 15.0;
+            double maxAllowedJoinGap = 90;
+            int maxPlatoonSize = 10;
+            double vehicleLength = 5.0;
+            std::mutex plan_mutex_;
+            int infoMessageInterval;
+            long lastHeartBeatTime = 0.0;
+            int statusMessageInterval = 100;
+            int NEGOTIATION_TIMEOUT = 5000;  // ms
+            int noLeaderUpdatesCounter = 0;
+            int LEADER_TIMEOUT_COUNTER_LIMIT = 5;
+            double waitingStateTimeout   = 25.0; // s
 
     
     };

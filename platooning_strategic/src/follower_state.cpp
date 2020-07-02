@@ -1,4 +1,5 @@
 #include "follower_state.hpp"
+#include <boost/format.hpp>
 #include <ros/ros.h>
 
 namespace platoon_strategic
@@ -77,7 +78,16 @@ namespace platoon_strategic
         std::string MOBILITY_STRATEGY;
         msg.strategy = MOBILITY_STRATEGY;
         double cmdSpeed; // = plugin.getLastSpeedCmd();
-        std::string statusParams;// = String.format(PlatooningPlugin.OPERATION_STATUS_PARAMS,
+
+        std::string OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%1%,DTD:%2%,SPEED:%3%";
+        double current_speed, current_downtrack;
+
+        boost::format fmter(OPERATION_STATUS_PARAMS);
+        fmter %cmdSpeed;
+        fmter %current_downtrack;
+        fmter %current_speed;
+                    
+        std::string statusParams = fmter.str();// = String.format(PlatooningPlugin.OPERATION_STATUS_PARAMS,
                                             // cmdSpeed, pluginServiceLocator.getRouteService().getCurrentDowntrackDistance(),
                                             // pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed());
         msg.strategy_params = statusParams;

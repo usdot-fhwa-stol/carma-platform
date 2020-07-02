@@ -3,6 +3,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <boost/format.hpp>
 
 
 
@@ -122,9 +123,16 @@ namespace platoon_strategic
                     request.location = location;
                     request.plan_type.type = cav_msgs::PlanType::JOIN_PLATOON_AT_REAR;
                     // request.strategy; = MOBILITY_STRATEGY?????????????
-                    std::string strategyParamsString; // = String.format(PlatooningPlugin.JOIN_AT_REAR_PARAMS,
-                    //                                       plugin.platoonManager.getTotalPlatooningSize(),
-                    //                                       plugin.getManeuverInputs().getCurrentSpeed(), pluginServiceLocator.getRouteService().getCurrentDowntrackDistance());
+                    std::string JOIN_AT_REAR_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";//"SIZE:%d,SPEED:%.2f,DTD:%.2f";
+
+                    double total_platoon_size, current_speed, current_downtrack;
+
+                    boost::format fmter(JOIN_AT_REAR_PARAMS);
+                    fmter %total_platoon_size;
+                    fmter %current_speed;
+                    fmter %current_downtrack;
+ 
+                    std::string strategyParamsString = fmter.str(); 
                     request.strategy_params = strategyParamsString;
                     request.urgency = 50;
                     // this.currentPlan = new PlatoonPlan(System.currentTimeMillis(), request.getHeader().getPlanId(), senderId);

@@ -5,10 +5,12 @@
 #include <cav_msgs/MobilityRequest.h>
 #include <cav_msgs/MobilityResponse.h>
 #include <cav_msgs/PlanType.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TwistStamped.h>
+#include <carma_wm/WMListener.h>
+#include <carma_wm/WorldModel.h>
 
 
-
-///////////////EVERY FUNC SYNCRONIZED ??????
 
 namespace platoon_strategic
 {
@@ -25,6 +27,7 @@ namespace platoon_strategic
             double vehiclePosition;
             // The local time stamp when the host vehicle update any informations of this member
             long   timestamp;
+
             PlatoonMember(std::string staticId, std::string bsmId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp): staticId(staticId),
             bsmId(bsmId), commandSpeed(commandSpeed), vehicleSpeed(vehicleSpeed), timestamp(timestamp) {}
         };
@@ -35,6 +38,21 @@ namespace platoon_strategic
     public:
 
         std::vector<PlatoonMember> platoon;
+
+        PlatoonManager();
+
+        PlatoonManager(ros::NodeHandle *nh);
+
+        ros::Subscriber twist_sub_;
+        ros::Subscriber pose_sub_;
+
+        // Current vehicle pose in map
+        geometry_msgs::PoseStamped pose_msg_;
+
+        // wm listener pointer and pointer to the actual wm object
+        std::shared_ptr<carma_wm::WMListener> wml_;
+        carma_wm::WorldModelConstPtr wm_;
+
 
 
         void memberUpdates(std::string senderId, std::string platoonId, std::string senderBsmId, std::string params);
@@ -57,12 +75,67 @@ namespace platoon_strategic
 
         PlatoonMember getLeader();
 
+        /**
+         * This is the implementation of all predecessor following (APF) algorithm for leader
+         * selection in a platoon. This function will recognize who is acting as the current leader
+         * of the subject vehicle. The current leader of the subject vehicle will be any ONE of
+         * the vehicles in front of it. Having a vehicle further downstream function as the leader
+         * is more efficient and more stable; however, having a vehicle closer to the subject vehicle
+         * function as the leader is safer. For this reason, the subject vehicle will monitor
+         * all time headways between every single set of consecutive vehicles starting from itself
+         * to the leader. If the time headways are within some safe thresholds then vehicles further
+         * downstream may function as the leader. Otherwise, for the sake of safety, vehicles closer
+         * to the subject vehicle, potentially even the predecessor, will function as the leader.
+         * @return the index of the leader in the platoon list
+         */
+
+        int allPredecessorFollowing();
+
+        int platoonSize;
+        std::string leaderID;
+        std::string currentPlatoonID;
+        bool isFollower;
+
 
     private:
-    int platoonSize;
-    std::string leaderID;
-    std::string currentPlatoonID;
-    bool isFollower;
+    
+
+    ros::NodeHandle *nh_;
+
+    double current_speed_;
+
+    double minGap = 22.0;
+    double maxGap = 32.0;
+    std::string previousFunctionalLeaderID = "";
+    int previousFunctionalLeaderIndex = -1;
+
+    double maxSpacing = 4.0;
+    double minSpacing = 3.9;
+    double lowerBoundary = 1.6;
+    double upperBoundary = 1.7 ;
+
+
+    std::string algorithmType = "APF_ALGORITHM";
+
+    bool insufficientGapWithPredecessor(double distanceToFrontVehicle);
+    std::vector<double> calculateTimeHeadway(std::vector<double> downtrackDistance, std::vector<double> speed);
+    int determineLeaderBasedOnViolation(std::vector<double> timeHeadways);
+
+    // helper method for APF algorithm
+    int findLowerBoundaryViolationClosestToTheHostVehicle(std::vector<double> timeHeadways);
+
+    // helper method for APF algorithm
+    int findMaximumSpacingViolationClosestToTheHostVehicle(std::vector<double> timeHeadways);
+
+    std::vector<double> getTimeHeadwayFromIndex(std::vector<double> timeHeadways, int start);
+
+    double getDistanceFromRouteStart();
+    double getCurrentSpeed();
+    double getCurrentDowntrackDistance();
+
+    void twist_cd(const geometry_msgs::TwistStampedConstPtr& msg);
+    void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
+
 
     
 

@@ -26,6 +26,7 @@ find_package(catkin REQUIRED COMPONENTS
   cav_msgs
   roscpp
   std_msgs
+  carma_wm
 )
 
 ## System dependencies are found with CMake's conventions
@@ -38,7 +39,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 
 catkin_package(
    INCLUDE_DIRS include
-   CATKIN_DEPENDS carma_utils cav_msgs roscpp std_msgs
+   CATKIN_DEPENDS carma_utils cav_msgs roscpp std_msgs carma_wm
 )
 
 ###########
@@ -58,17 +59,14 @@ file(GLOB_RECURSE headers */*.hpp */*.h)
 add_executable( ${PROJECT_NAME}
   ${headers}
   src/platoon_strategic.cpp
+  src/platoon_manager.cpp
   src/main.cpp)
 
 
 add_library(platoon_strategic_plugin_lib
  src/platoon_strategic.cpp
- src/standby_state.cpp
- src/leader_waiting_state.cpp
- src/leader_state.cpp
- src/follower_state.cpp
- src/candidate_follower_state.cpp
- src/platoon_manager)
+ src/state_machine.cpp
+ src/platoon_manager.cpp)
 
 add_dependencies(platoon_strategic_plugin_lib ${catkin_EXPORTED_TARGETS})
 
@@ -99,5 +97,13 @@ install(DIRECTORY
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
+
+#############
+## Testing ##
+#############
+catkin_add_gmock(${PROJECT_NAME}-test
+  test/test_platoon_manager.cpp
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+target_link_libraries(${PROJECT_NAME}-test platoon_strategic_plugin_lib ${catkin_LIBRARIES})
 
 
