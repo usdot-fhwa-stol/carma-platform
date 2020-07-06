@@ -26,14 +26,11 @@ GeofenceSchedule::GeofenceSchedule()
 
 GeofenceSchedule::GeofenceSchedule(ros::Time schedule_start, ros::Time schedule_end, ros::Duration control_start,
                                    ros::Duration control_end, ros::Duration control_duration,
-                                   ros::Duration control_interval, DayOfTheWeekSet week_day_set)
-{
-  schedule_start_ = schedule_start;
-  schedule_end_ = schedule_end;
-  control_start_ = control_start, control_end_ = control_end, control_duration_ = control_duration;
-  control_interval_ = control_interval;
-  week_day_set_ = week_day_set;
-}
+                                   ros::Duration control_interval, DayOfTheWeekSet week_day_set):
+                                   schedule_start_(schedule_start), schedule_end_(schedule_end),
+                                   control_start_(control_start), control_end_(control_end),
+                                   control_duration_(control_duration), control_interval_(control_interval), week_day_set_(week_day_set)
+{}
 
 bool GeofenceSchedule::scheduleExpired(const ros::Time& time) const
 {

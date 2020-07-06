@@ -35,9 +35,9 @@ namespace plan_delegator
         traj_pub_ = nh_.advertise<cav_msgs::TrajectoryPlan>("plan_trajectory", 5);
         plan_sub_ = nh_.subscribe("final_maneuver_plan", 5, &PlanDelegator::maneuverPlanCallback, this);
         twist_sub_ = nh_.subscribe<geometry_msgs::TwistStamped>("current_velocity", 5,
-            [&](const geometry_msgs::TwistStampedConstPtr& twist) {latest_twist_ = *twist;});
+            [this](const geometry_msgs::TwistStampedConstPtr& twist) {this->latest_twist_ = *twist;});
         pose_sub_ = nh_.subscribe<geometry_msgs::PoseStamped>("current_pose", 5,
-            [&](const geometry_msgs::PoseStampedConstPtr& pose) {latest_pose_ = *pose;});
+            [this](const geometry_msgs::PoseStampedConstPtr& pose) {this->latest_pose_ = *pose;});
         guidance_state_sub_ = nh_.subscribe<cav_msgs::GuidanceState>("guidance_state", 5, &PlanDelegator::guidanceStateCallback, this);
 
         ros::CARMANodeHandle::setSpinCallback(std::bind(&PlanDelegator::spinCallback, this));
@@ -139,6 +139,7 @@ namespace plan_delegator
             return latest_trajectory_plan;
         }
         // iterate through maneuver list to make service call
+    
         for(const auto& maneuver : latest_maneuver_plan_.maneuvers)
         {
             // ignore expired maneuvers

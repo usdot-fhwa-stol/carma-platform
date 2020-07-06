@@ -20,6 +20,25 @@
 
 TEST(GnssNdtSelectorTest, testReliabilityCounter)
 {
+    //default 
+    localizer::NDTReliabilityCounter counter_default;
+    EXPECT_EQ(0, counter_default.getNDTReliabilityCounter());
+    counter_default.onNDTScore(1.5);
+    EXPECT_EQ(0, counter_default.getNDTReliabilityCounter());
+    counter_default.onNDTScore(3);
+    EXPECT_EQ(1, counter_default.getNDTReliabilityCounter());
+    counter_default.onNDTScore(-1);
+    EXPECT_EQ(2, counter_default.getNDTReliabilityCounter());
+    counter_default.onNDTScore(3);
+    counter_default.onNDTScore(3);
+    counter_default.onNDTScore(3);
+    counter_default.onNDTScore(3);
+    EXPECT_EQ(6, counter_default.getNDTReliabilityCounter());
+    counter_default.onNDTScore(100);
+    EXPECT_EQ(7, counter_default.getNDTReliabilityCounter());
+    counter_default.onNDTScore(100);
+    EXPECT_EQ(7, counter_default.getNDTReliabilityCounter());
+    // other case
     localizer::NDTReliabilityCounter counter(2.0, 2);
     EXPECT_EQ(0, counter.getNDTReliabilityCounter());
     counter.onNDTScore(1.5);

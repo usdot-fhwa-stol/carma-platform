@@ -56,7 +56,7 @@ namespace arbitrator
              * \param query_string The string name of the capability to look for
              * \return A list of all responding topics, if any are found.
              */
-            std::vector<std::string> get_topics_for_capability(std::string query_string);
+            std::vector<std::string> get_topics_for_capability(const std::string& query_string);
 
 
             /**

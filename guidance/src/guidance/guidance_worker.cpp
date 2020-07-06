@@ -18,11 +18,7 @@
 
 namespace guidance
 {
-    GuidanceWorker::GuidanceWorker()
-    {
-        nh_ = ros::CARMANodeHandle{};
-        pnh_ = ros::CARMANodeHandle{"~"};
-    }
+    GuidanceWorker::GuidanceWorker(){}
 
     void GuidanceWorker::system_alert_cb(const cav_msgs::SystemAlertConstPtr& msg)
     {
