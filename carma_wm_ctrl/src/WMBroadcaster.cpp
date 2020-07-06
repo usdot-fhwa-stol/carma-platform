@@ -86,5 +86,74 @@ void WMBroadcaster::removeGeofence(const Geofence& gf)
   ROS_INFO_STREAM("Removing inactive geofence to the map with geofence id: " << gf.id_);
   // TODO Add implementation for removing a geofence
 };
+  
+void  routeCallbackMessage(cavs_msg::RouteCostPtr& route_msg)
+{
+  auto path = lanelet::ConstLanelets(); 
+  for(auto id : route_msg->route_path_lanelet_ids) 
+  {
+    auto laneLayer = world_model_->getMap()->laneletLayer.get(id);
+    path.push_back(laneLayer);
+  }
+  if(path.size() == 0) return;
+  
+ /*logic to determine route bounds*/
+std::vector<lanelet::Lanelet> llt; 
+std::vector<BoundingBox> pathBox; 
+float minX = 99999;
+float minY = 99999;
+float minZ = 99999;
+float maxX = 0;
+float maxY = 0;
+float maxZ = 0;
+
+while (path.size() != 0) //Continue until there are no more lanelet elements in path
+{
+    llt.push_back(path.back); //Add a lanelet to the vector
+    pathBox.push_back(geometry::boundingBox2d(llt.back)); //Create a bounding box of the added lanelet and add it to the vector
+
+    if (pathBox.back().BottomLeft.x() < minX) 
+        minX = pathBox.back().BottomLeft.x(); //minimum x-value
+    
+    if (pathBox.back().BottomLeft.y() < minY) 
+        minY = pathBox.back().BottomLeft.y(); //minimum y-value
+  
+    if (pathBox.back().BottomLeft.z() < minZ) 
+        minZ = pathBox.back().BottomLeft.z(); //minimum z-value
+
+    if (pathBox.back().TopRight.x() > maxX)
+        maxX = pathBox.back().TopRight.x(); //maximum x-value
+
+    if (pathBox.back().TopRight.y() > maxY)
+        maxY = pathBox.back().TopRight.y(); //maximum y-value
+  
+    if (pathBox.back().TopRight.z() > maxZ)
+        maxZ = pathBox.back().TopRight.z(); //maximum Z-value
+
+
+    path.pop_back(); //remove the added lanelet from path an reduce pack.size() by 1
+}
+
+
+lanelet::projection::MGRSProjector projector;
+lanelet::BasicPoint3d localRoute;
+
+localRoute.x()= minX;
+localRoute.y()= minY;
+localRoute.z()= minZ; 
+
+lanelet::GPSPoint gpsRoute = projector.reverse(localRoute); //If the appropriate library is included, the reverse() function can be used instead of making a new one
+
+cavs_msg::ControlRequest cR; /*Fill the latitude value in message cB with the value of lat */
+cavs_msg::ControlBounds cB; /*Fill the longitude value in message cB with the value of lon*/
+
+cB.latitude = gpsRoute.lat;
+cB.longitude = gpsRoute.lon;
+
+msg_callBack.publish(cR); /*Publish the message containing the route info (latitude & longitude) this line is a placeholder since 
+                            publishing is handled by WMBroadcasterNode.h*/
+
+ros::Timer timer = nh.createTimer(ros::Duration(0.1), routeCallbackMessage);/*Sleep for 10 seconds before making another request*/
+}
 
 }  // namespace carma_wm_ctrl
