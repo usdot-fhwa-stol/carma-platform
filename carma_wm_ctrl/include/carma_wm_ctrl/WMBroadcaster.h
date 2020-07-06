@@ -73,6 +73,14 @@ public:
    * \brief Removes a geofence from the current map
    */
   void removeGeofence(const Geofence& gf);
+  
+  /*!
+  * \brief Pulls vehicle information from CARMA Cloud at startup by providing its selected route in a ControlRequest message that is published after a route is selected.
+  * During operation at ~10s intervals the vehicle will make another control request for the remainder of its route.
+  * \param route_msg The message containing route information
+  */
+  void routeCallbackMessage(cavs_msg::RouteCostPtr& route_msg);
+
 
 private:
   lanelet::LaneletMapPtr base_map_;
