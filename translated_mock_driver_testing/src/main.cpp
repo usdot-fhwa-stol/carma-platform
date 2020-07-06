@@ -17,5 +17,6 @@ int main(int argc, char** argv){
     ROS_INFO("running");
     //client.call(light);
         f.publishData();
+        f.publishDriverStatus();
         ros::spin();
 }

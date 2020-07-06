@@ -42,9 +42,9 @@ namespace translated_mock_driver_testing{
                 lbPub = node.advertise<cav_msgs::LightBarStatus>(lbStatusTopic, 100);
                 discoveryPub = node.advertise<cav_msgs::DriverStatus>("driver_discovery",100);  
                 //service server
-                getApiService = node.advertiseService("/get_driver_api",&MockLightBarDriver::getApiService_cb, this);
-                bindService = node.advertiseService("/bind",&MockLightBarDriver::bind_cb, this);
-                getDriverStatusService = node.advertiseService("/get_status",&MockLightBarDriver::getDriverStatus_cb,this);
+                getApiService = node.advertiseService("get_driver_api",&MockLightBarDriver::getApiService_cb, this);
+                bindService = node.advertiseService("okok",&MockLightBarDriver::bind_cb, this);
+                getDriverStatusService = node.advertiseService("get_status",&MockLightBarDriver::getDriverStatus_cb,this);
                 setLightsService = node.advertiseService(lbSetLightService, &MockLightBarDriver::setLightService_cb, this);
                 getLightsService = node.advertiseService(lbGetLightService, &MockLightBarDriver::getLightService_cb, this);
 

@@ -9,7 +9,6 @@ using namespace translated_mock_driver_testing;
     
 
     TEST(GetLightsBasicTest,test){
-        
         ros::NodeHandle n = ros::NodeHandle();
         ros::ServiceClient client = n.serviceClient<cav_srvs::GetLights>("lightbar/get_lights");
         cav_srvs::GetLights light;
