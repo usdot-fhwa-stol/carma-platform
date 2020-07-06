@@ -270,7 +270,7 @@ namespace route {
             }
             auto via_lanelet_vector = lanelet::geometry::findNearest(world_model_->getMap()->laneletLayer, current_loc, 1);
             auto current_lanelet = lanelet::ConstLanelet(via_lanelet_vector[0].second.constData());
-            auto lanelet_track = world_model_->trackPos(current_lanelet, current_loc);
+            auto lanelet_track = carma_wm::geometry::trackPos(current_lanelet, current_loc);
             ll_id_ = current_lanelet.id();
             ll_crosstrack_distance_ = lanelet_track.crosstrack;
             ll_downtrack_distance_ = lanelet_track.downtrack;
