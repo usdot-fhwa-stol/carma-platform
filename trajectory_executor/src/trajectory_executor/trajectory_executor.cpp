@@ -150,13 +150,9 @@ namespace trajectory_executor
         ROS_DEBUG_STREAM("Initalized params with default_spin_rate " << _default_spin_rate 
             << " and trajectory_publish_rate " << _min_traj_publish_tickrate_hz);
 
-<<<<<<< HEAD
         this->_plan_sub = this->_public_nh->subscribe<cav_msgs::TrajectoryPlan>("trajectory", 5, &TrajectoryExecutor::onNewTrajectoryPlan, this);
-        this->_state_sub = this->_public_nh->subscribe<cav_msgs::GuidanceState>("state", 5, &TrajectoryExecutor::guidanceStateCb, this);
-=======
-        this->_plan_sub = this->_public_nh->subscribe<const cav_msgs::TrajectoryPlan&>("trajectory", 5, &TrajectoryExecutor::onNewTrajectoryPlan, this);
         this->_state_sub = this->_public_nh->subscribe<cav_msgs::GuidanceState>("state", 5, &TrajectoryExecutor::guidanceStateMonitor, this);
->>>>>>> develop
+
         this->_cur_traj = std::unique_ptr<cav_msgs::TrajectoryPlan>();
         ROS_DEBUG("Subscribed to inbound trajectory plans.");
 
