@@ -32,7 +32,8 @@
 #include <cav_msgs/MobilityResponse.h>
 #include <cav_msgs/PlanType.h>
 #include <state_machine.hpp>
-#include <leader_state.hpp>
+#include <platoon_manager.hpp>
+// #include <leader_state.hpp>
 
 
 
@@ -51,7 +52,7 @@ namespace platoon_strategic
             // local copy of pose
             boost::shared_ptr<geometry_msgs::PoseStamped const> pose_msg_;
 
-            void states();
+            void run_states();
 
         protected:
 
@@ -65,6 +66,9 @@ namespace platoon_strategic
         private:
 
             PlatooningStateMachine *psm_;
+
+            PlatoonManager *pm_;
+
             // node handles
             std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
@@ -130,6 +134,7 @@ namespace platoon_strategic
             void composeMobilityOperationLeader(cav_msgs::MobilityOperation &msg, std::string type);
             void composeMobilityOperationFollower(cav_msgs::MobilityOperation &msg);
             void composeMobilityOperationLeaderWaiting(cav_msgs::MobilityOperation &msg);
+            void composeMobilityOperationCandidateFollower(cav_msgs::MobilityOperation &msg);
 
 
             double maxAllowedJoinTimeGap = 15.0;
@@ -143,7 +148,10 @@ namespace platoon_strategic
             int NEGOTIATION_TIMEOUT = 5000;  // ms
             int noLeaderUpdatesCounter = 0;
             int LEADER_TIMEOUT_COUNTER_LIMIT = 5;
-            double waitingStateTimeout   = 25.0; // s
+            double waitingStateTimeout = 25.0; // s
+            double desiredJoinGap = 30.0; // m
+            double desiredJoinTimeGap = 4.0; // s
+
 
     
     };
