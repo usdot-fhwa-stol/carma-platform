@@ -326,6 +326,30 @@ namespace platoon_strategic
         return -1;
     }
 
+    void PlatoonManager::changeFromFollowerToLeader() {
+        isFollower = false;
+        platoon = {};
+        leaderID = "";//psl.getMobilityRouter().getHostMobilityId();
+        currentPlatoonID = boost::uuids::to_string(boost::uuids::random_generator()());
+        previousFunctionalLeaderID = "";
+        previousFunctionalLeaderIndex = -1;
+        ROS_DEBUG("The platoon manager is changed from follower state to leader state.");
+    }
+
+    void PlatoonManager::changeFromLeaderToFollower(std::string newPlatoonId) {
+        isFollower = true;
+        currentPlatoonID = newPlatoonId;
+        platoon = {};
+        ROS_DEBUG("The platoon manager is changed from leader state to follower state.");
+    }
+
+    int PlatoonManager::getNumberOfVehicleInFront() {
+        if(isFollower) {
+            return platoon.size();
+        }
+        return 0;
+    }
+
     
 
     double PlatoonManager::getDistanceFromRouteStart(){

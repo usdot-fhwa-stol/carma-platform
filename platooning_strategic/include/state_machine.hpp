@@ -12,6 +12,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <platoon_manager.hpp>
 
 namespace platoon_strategic
 {
@@ -55,6 +56,8 @@ namespace platoon_strategic
         std::string applicantID;
         PlatoonPlan current_plan;
 
+        PlatoonManager *pm_;
+
 
     private:
     
@@ -90,6 +93,9 @@ namespace platoon_strategic
         std::mutex plan_mutex_;
         int infoMessageInterval;
         std::string targetLeaderId;
+        std::string targetPlatoonId;
+        std::string OPERATION_INFO_TYPE = "INFO";
+        std::string OPERATION_STATUS_TYPE = "STATUS";
     };
 }
 

@@ -16,8 +16,6 @@
  */
 #include <ros/ros.h>
 #include <string>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
 #include "platoon_strategic.hpp"
 
 namespace platoon_strategic
@@ -164,7 +162,7 @@ namespace platoon_strategic
             }
 
             // Task 4
-            bool hasFollower = (pm_->getTotalPlatooningSize() > 1);// ????
+            bool hasFollower = (psm_->pm_->getTotalPlatooningSize() > 1);
             if(hasFollower) {
                 cav_msgs::MobilityOperation statusOperation;
                 composeMobilityOperationLeader(statusOperation, "STATUS");
@@ -185,12 +183,12 @@ namespace platoon_strategic
             mob_op_pub_.publish(status);
             // Job 2
             // Get the number of vehicles in this platoon who is in front of us
-            int vehicleInFront;// = plugin.platoonManager.getNumberOfVehicleInFront(); ????
+            int vehicleInFront = psm_->pm_->getNumberOfVehicleInFront();
                 if(vehicleInFront == 0) {
                     noLeaderUpdatesCounter++;
                     if(noLeaderUpdatesCounter >= LEADER_TIMEOUT_COUNTER_LIMIT) {
                         ROS_DEBUG("noLeaderUpdatesCounter = " , noLeaderUpdatesCounter , " and change to leader state");
-                        // plugin.platoonManager.changeFromFollowerToLeader();
+                        psm_->pm_->changeFromFollowerToLeader();
                         psm_->current_platoon_state = PlatoonState::LEADER;
                         
                     }
@@ -273,7 +271,7 @@ namespace platoon_strategic
                 }
         
          //Task 4
-                if(pm_->getTotalPlatooningSize() > 1) {
+                if(psm_->pm_->getTotalPlatooningSize() > 1) {
                     cav_msgs::MobilityOperation status;
                     composeMobilityOperationCandidateFollower(status);
                     mob_op_pub_.publish(status);
@@ -329,7 +327,7 @@ namespace platoon_strategic
     }
 
     void PlatoonStrategicPlugin::composeMobilityOperationFollower(cav_msgs::MobilityOperation &msg){
-        msg.header.plan_id = pm_->currentPlatoonID;
+        msg.header.plan_id = psm_->pm_->currentPlatoonID;
         // All platoon mobility operation message is just for broadcast
         msg.header.recipient_id = "";
         msg.header.sender_bsm_id = "";

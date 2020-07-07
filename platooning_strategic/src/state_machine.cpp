@@ -110,26 +110,32 @@ namespace platoon_strategic
     {
         std::string strategyParams = msg.strategy_params;
         // In the current state, we care about the STATUS message
-        std::string OPERATION_STATUS_TYPE, OPERATION_INFO_TYPE;
-        bool isPlatoonStatusMsg = (strategyParams.find(OPERATION_STATUS_TYPE) == 0);// = strategyParams.startsWith(PlatooningPlugin.OPERATION_STATUS_TYPE);
-        bool isPlatoonInfoMsg = (strategyParams.find(OPERATION_INFO_TYPE) == 0);// = strategyParams.startsWith(PlatooningPlugin.OPERATION_INFO_TYPE);
+        bool isPlatoonStatusMsg = (strategyParams.find(OPERATION_STATUS_TYPE) == 0);
+        bool isPlatoonInfoMsg = (strategyParams.find(OPERATION_INFO_TYPE) == 0);
         // If it is platoon status message, the params string is in format:
         // STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx
         if(isPlatoonStatusMsg) {
             std::string vehicleID = msg.header.sender_id;
             std::string platoonID = msg.header.plan_id;
-            std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size()+1);// = strategyParams.substring(PlatooningPlugin.OPERATION_STATUS_TYPE.length() + 1);
+            std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size()+1);
             ROS_DEBUG("Receive operation message from vehicle: " , vehicleID);
-        //     plugin.platoonManager.memberUpdates(vehicleID, platoonID, msg.getHeader().getSenderBsmId(), statusParams);
+            std::string SenderBsmId = msg.header.sender_bsm_id;
+            pm_->memberUpdates(vehicleID, platoonID, SenderBsmId, statusParams);
         } else if(isPlatoonInfoMsg) {
-        //         if(msg.getHeader().getSenderId().equals(plugin.platoonManager.leaderID)) {
-        //         String infoParams = strategyParams.substring(PlatooningPlugin.OPERATION_INFO_TYPE.length() + 1);
-        //         plugin.platoonManager.platoonSize = Integer.parseInt(infoParams.split(",")[3].split(":")[1]);
-        //         ROS_DEBUG("Update from the lead: the current platoon size is " , plugin.platoonManager.getTotalPlatooningSize());
-        }
-        else{
-            ROS_DEBUG("Ignore other operation messages with params: " , strategyParams);
+                if(msg.header.sender_id == pm_->leaderID) {
+                    std::string infoParams = strategyParams.substr(OPERATION_INFO_TYPE.size()+1);
 
+                    std::vector<std::string> parsed_params;
+                    boost::algorithm::split(parsed_params, infoParams, boost::is_any_of(","));
+                    std::vector<std::string> parsed_size;
+                    boost::algorithm::split(parsed_size, parsed_params[3], boost::is_any_of(":"));
+
+                    pm_->platoonSize = std::stoi(parsed_size[1]);
+
+                    ROS_DEBUG("Update from the lead: the current platoon size is " , pm_->getTotalPlatooningSize());
+                }
+        }else{
+            ROS_DEBUG("Ignore other operation messages with params: " , strategyParams);
         }
     }
 
@@ -165,11 +171,11 @@ namespace platoon_strategic
             double applicantCurrentDtd = std::stod(parsed_size[1]);
 
             // Check if we have enough room for that applicant
-            int currentPlatoonSize;// = plugin.platoonManager.getTotalPlatooningSize();
+            int currentPlatoonSize = pm_->getTotalPlatooningSize();
             bool hasEnoughRoomInPlatoon = applicantSize + currentPlatoonSize <= maxPlatoonSize;
             if(hasEnoughRoomInPlatoon) {
                 ROS_DEBUG("The current platoon has enough room for the applicant with size " , applicantSize);
-                double currentRearDtd;// = plugin.platoonManager.getPlatoonRearDowntrackDistance();
+                double currentRearDtd = pm_->getPlatoonRearDowntrackDistance();
                 ROS_DEBUG("The current platoon rear dtd is " , currentRearDtd);
                 double currentGap = currentRearDtd - applicantCurrentDtd - vehicleLength;
                 double currentTimeGap = currentGap / applicantCurrentSpeed;
@@ -185,7 +191,6 @@ namespace platoon_strategic
                     ROS_DEBUG("Change to LeaderWaitingState and waiting for " , msg.header.sender_id , " to join");
                     current_platoon_state = PlatoonState::LEADERWAITING;
                     // applicantID = applicantId;
-                    // plugin.setState(new LeaderWaitingState(plugin, log, pluginServiceLocator, applicantId));
                     return MobilityRequestResponse::ACK;
                 }
                 else {
@@ -222,7 +227,6 @@ namespace platoon_strategic
                     } else{
                         ROS_DEBUG("Received negative response for plan id = " , current_plan.planId);
                         // Forget about the previous plan totally
-        //                 this.currentPlan = null;
                             current_plan.valid = false;
                     }
                 } else{
@@ -304,7 +308,8 @@ namespace platoon_strategic
                 // If it is platoon status message, the params string is in format: STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx
                 std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size()+1);// = strategyParams.substring(PlatooningPlugin.OPERATION_STATUS_TYPE.length() + 1);
                 ROS_DEBUG("Receive operation status message from vehicle: " , senderId , " with params: " , statusParams);
-                // plugin.platoonManager.memberUpdates(senderId, platoonId, msg.getHeader().getSenderBsmId(), statusParams);
+                std::string SenderBsmId = msg.header.sender_bsm_id;
+                pm_->memberUpdates(senderId, platoonId, SenderBsmId, statusParams);
             }
             else {
                 ROS_DEBUG("Receive operation message but ignore it because isPlatoonInfoMsg = " , isPlatoonInfoMsg 
@@ -322,7 +327,6 @@ namespace platoon_strategic
             ROS_DEBUG("Target vehicle " , applicantID , " is actually joining.");
             ROS_DEBUG("Changing to PlatoonLeaderState and send ACK to target vehicle");
             current_platoon_state = PlatoonState::LEADER;
-            // plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
             return MobilityRequestResponse::ACK;
         }
         else{
@@ -342,12 +346,13 @@ namespace platoon_strategic
         // We still need to handle STATUS operation message from our platoon
         std::string strategyParams = msg.strategy_params;
         std::string OPERATION_STATUS_TYPE;
-        bool isPlatoonStatusMsg = (strategyParams.find(OPERATION_STATUS_TYPE) == 0); //= strategyParams.startsWith(PlatooningPlugin.OPERATION_STATUS_TYPE);
+        bool isPlatoonStatusMsg = (strategyParams.find(OPERATION_STATUS_TYPE) == 0); 
         if (isPlatoonStatusMsg){
             std::string vehicleID = msg.header.sender_id;
             std::string platoonID = msg.header.plan_id;
-            std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size()+1); //statusParams = strategyParams.substring(PlatooningPlugin.OPERATION_STATUS_TYPE.length() + 1);
-        //     plugin.platoonManager.memberUpdates(vehicleID, platoonId, msg.getHeader().getSenderBsmId(), statusParams);
+            std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size()+1); 
+            std::string SenderBsmId = msg.header.sender_bsm_id;
+            pm_->memberUpdates(vehicleID, platoonID, SenderBsmId, statusParams);
             ROS_DEBUG("Received platoon status message from " , msg.header.sender_id);
         }
         else
@@ -375,7 +380,7 @@ namespace platoon_strategic
                         // We change to follower state and start to actually follow that leader
                         // The platoon manager also need to change the platoon Id to the one that the target leader is using 
                         ROS_DEBUG("The leader " , msg.header.sender_id , " agreed on our join. Change to follower state.");
-                        // plugin.platoonManager.changeFromLeaderToFollower(targetPlatoonId);
+                        pm_->changeFromLeaderToFollower(targetPlatoonId);
                         current_platoon_state = PlatoonState::FOLLOWER;
                         // plugin.setState(new FollowerState(plugin, log, pluginServiceLocator));
                         // pluginServiceLocator.getArbitratorService().requestNewPlan(this.trajectoryEndLocation);
@@ -402,12 +407,13 @@ namespace platoon_strategic
         // We still need to handle STATUS operAtion message from our platoon
         std::string strategyParams = msg.strategy_params;
         std::string OPERATION_STATUS_TYPE;
-        bool isPlatoonStatusMsg = (strategyParams.find(OPERATION_STATUS_TYPE) == 0);// = strategyParams.startsWith(PlatooningPlugin.OPERATION_STATUS_TYPE);
+        bool isPlatoonStatusMsg = (strategyParams.find(OPERATION_STATUS_TYPE) == 0);
         if (isPlatoonStatusMsg){
             std::string vehicleId = msg.header.sender_id;
             std::string platoonId = msg.header.plan_id;
-            std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size()+1);// = strategyParams.substring(PlatooningPlugin.OPERATION_STATUS_TYPE.length() + 1);
-            //     plugin.platoonManager.memberUpdates(vehicleID, platoonId, msg.getHeader().getSenderBsmId(), statusParams);
+            std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size()+1);
+            std::string SenderBsmId = msg.header.sender_bsm_id;
+            pm_->memberUpdates(vehicleId, platoonId, SenderBsmId, statusParams);
             ROS_DEBUG("Received platoon status message from " , vehicleId);
         }
         else {
@@ -431,7 +437,7 @@ namespace platoon_strategic
     }
 
     bool PlatooningStateMachine::isVehicleRightInFront(std::string rearVehicleBsmId, double downtrack) {
-        double currentDtd;// = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
+        double currentDtd;// = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();????
         if(downtrack > currentDtd) {
             std::clog << "Found a platoon in front. We are able to join" << std::endl;
             return true;

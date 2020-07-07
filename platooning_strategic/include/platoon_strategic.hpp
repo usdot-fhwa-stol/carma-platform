@@ -32,7 +32,7 @@
 #include <cav_msgs/MobilityResponse.h>
 #include <cav_msgs/PlanType.h>
 #include <state_machine.hpp>
-#include <platoon_manager.hpp>
+
 // #include <leader_state.hpp>
 
 
@@ -67,7 +67,7 @@ namespace platoon_strategic
 
             PlatooningStateMachine *psm_;
 
-            PlatoonManager *pm_;
+            // PlatoonManager *pm_;
 
             // node handles
             std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;

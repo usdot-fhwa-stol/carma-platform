@@ -9,6 +9,8 @@
 #include <geometry_msgs/TwistStamped.h>
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 
 
@@ -90,6 +92,10 @@ namespace platoon_strategic
          */
 
         int allPredecessorFollowing();
+
+        void changeFromFollowerToLeader();
+        void changeFromLeaderToFollower(std::string newPlatoonId);
+        int getNumberOfVehicleInFront();
 
         int platoonSize;
         std::string leaderID;
