@@ -61,7 +61,7 @@ namespace platoon_strategic
 
     }
 
-    void PlatoonStrategicPlugin::states(){
+    void PlatoonStrategicPlugin::run_states(){
         switch (psm_->current_platoon_state)
         {
         case PlatoonState::STANDBY:
@@ -96,6 +96,7 @@ namespace platoon_strategic
     void PlatoonStrategicPlugin::run()
     {
     	initialize();
+        run_states();
         ros::CARMANodeHandle::setSpinRate(10.0);
         ros::CARMANodeHandle::spin();
 
@@ -130,7 +131,7 @@ namespace platoon_strategic
                 composeMobilityOperationLeaderWaiting(status);
                 mob_op_pub_.publish(status);
                 long tsEnd = ros::Time::now().toSec()*1000;
-                long sleepDuration;// = Math.max(plugin.statusMessageInterval - (tsEnd - tsStart), 0);
+                int sleepDuration = std::max(int(statusMessageInterval - (tsEnd - tsStart)), 0);
                 ros::Duration(sleepDuration/1000).sleep();
     }
 
@@ -163,7 +164,7 @@ namespace platoon_strategic
             }
 
             // Task 4
-            bool hasFollower;// = plugin.platoonManager.getTotalPlatooningSize() > 1; ????
+            bool hasFollower = (pm_->getTotalPlatooningSize() > 1);// ????
             if(hasFollower) {
                 cav_msgs::MobilityOperation statusOperation;
                 composeMobilityOperationLeader(statusOperation, "STATUS");
@@ -171,7 +172,7 @@ namespace platoon_strategic
                 ROS_DEBUG("Published platoon STATUS operation message");
             }
             long tsEnd =  ros::Time::now().toSec()*1000;
-            long sleepDuration;// = std::max(statusMessageInterval - (tsEnd - tsStart), 0);????????
+            long sleepDuration = std::max(int(statusMessageInterval - (tsEnd - tsStart)), 0);
             ros::Duration(sleepDuration/1000).sleep();
         
     }
@@ -198,7 +199,7 @@ namespace platoon_strategic
                     noLeaderUpdatesCounter = 0;
                 }
                 long tsEnd = ros::Time::now().toSec()*1000.0;
-                long sleepDuration;// = Math.max(plugin.statusMessageInterval - (tsEnd - tsStart), 0);
+                long sleepDuration = std::max(int(statusMessageInterval - (tsEnd - tsStart)), 0);
                 ros::Duration(sleepDuration/1000).sleep();
         
     }
@@ -228,61 +229,59 @@ namespace platoon_strategic
         }
 
         // Task 3
-                // double desiredJoinGap;// = plugin.desiredJoinTimeGap * plugin.getManeuverInputs().getCurrentSpeed();
-                // double maxJoinGap;// = Math.max(plugin.desiredJoinGap, desiredJoinGap);
-                // double currentGap;// = plugin.getManeuverInputs().getDistanceToFrontVehicle();
-                // ROS_DEBUG("Based on desired join time gap, the desired join distance gap is " , desiredJoinGap , " ms");
-                // ROS_DEBUG("Since we have max allowed gap as " , plugin.desiredJoinGap , " m then max join gap became " , maxJoinGap , " m");
-                // ROS_DEBUG("The current gap from radar is " , currentGap , " m");
-                // if(currentGap <= maxJoinGap && current_plan.valid == null) {
-                //     cav_msgs::MobilityRequest request;
-                //     std::string planId = std::string planId = boost::uuids::to_string(boost::uuids::random_generator()());
-                //     long currentTime = ros::Time::now().toSec()*1000.0; 
-                //     request.header.plan_id = planId;
-                //     request.header.recipient_id = targetLeaderId;
-                //     request.header.sender_bsm_id = "";
-                //     request.header.sender_id = "";
-                //     request.header.timestamp = currentTime;
-                //     // request.getHeader().setRecipientId(targetLeaderId);
-                //     // request.getHeader().setSenderBsmId(pluginServiceLocator.getTrackingService().getCurrentBSMId());
-                //     // request.getHeader().setSenderId(pluginServiceLocator.getMobilityRouter().getHostMobilityId());
-                //     // request.getHeader().setTimestamp(currentTime);
-                //     cav_msgs::LocationECEF loc;
-                //     request.location = loc;
+                double desiredJoinGap2 = desiredJoinTimeGap;// * plugin.getManeuverInputs().getCurrentSpeed();?????
+                double maxJoinGap = std::max(desiredJoinGap, desiredJoinGap2);
+                double currentGap;// = plugin.getManeuverInputs().getDistanceToFrontVehicle();????????
+                ROS_DEBUG("Based on desired join time gap, the desired join distance gap is " , desiredJoinGap2 , " ms");
+                ROS_DEBUG("Since we have max allowed gap as " , desiredJoinGap , " m then max join gap became " , maxJoinGap , " m");
+                ROS_DEBUG("The current gap from radar is " , currentGap , " m");
+                if(currentGap <= maxJoinGap && psm_->current_plan.valid == false) {
+                    cav_msgs::MobilityRequest request;
+                    std::string planId = boost::uuids::to_string(boost::uuids::random_generator()());
+                    long currentTime = ros::Time::now().toSec()*1000.0; 
+                    request.header.plan_id = planId;
+                    request.header.recipient_id = "";//????? targetLeaderId;
+                    request.header.sender_bsm_id = "";//????????
+                    request.header.sender_id = "";//?????????
+                    request.header.timestamp = currentTime;
+                    // request.getHeader().setRecipientId(targetLeaderId);
+                    // request.getHeader().setSenderBsmId(pluginServiceLocator.getTrackingService().getCurrentBSMId());
+                    // request.getHeader().setSenderId(pluginServiceLocator.getMobilityRouter().getHostMobilityId());
+                    // request.getHeader().setTimestamp(currentTime);
+                    cav_msgs::LocationECEF loc;
+                    request.location = loc;
                     
-                //     // RoutePointStamped currentLocation = new RoutePointStamped(plugin.getManeuverInputs().getDistanceFromRouteStart(),
-                //     // plugin.getManeuverInputs().getCrosstrackDistance(), currentTime / 1000.0);
-                //     // cav_msgs.Trajectory currentLocationMsg = pluginServiceLocator.getTrajectoryConverter().pathToMessage(Arrays.asList(currentLocation));
-                //     // request.setLocation(currentLocationMsg.getLocation());
-                //     request.plan_type = cav_msgs::PlanType::PLATOON_FOLLOWER_JOIN;
-                //     std::string MOBILITY_STRATEGY;
-                //     request.strategy = MOBILITY_STRATEGY;
-                //     request.strategy_params = "";
-                //     request.urgency = 50;
-                //     plugin.mobilityRequestPublisher.publish(request);
-
-
-                //     request.getPlanType().setType(PlanType.PLATOON_FOLLOWER_JOIN);
-                //     request.setStrategy(PlatooningPlugin.MOBILITY_STRATEGY);
-                //     request.setStrategyParams("");
-                //     // TODO Maybe need to add some params (vehicle IDs) into strategy string
-                //     // TODO Maybe need to populate the urgency later
-                //     request.setUrgency((short) 50);
-                //     plugin.mobilityRequestPublisher.publish(request);
-                //     ROS_DEBUG("Published Mobility Candidate-Join request to the leader");
-                //     // this.currentPlan = new PlatoonPlan(System.currentTimeMillis(), planId, targetLeaderId);
-                // }
+                    // RoutePointStamped currentLocation = new RoutePointStamped(plugin.getManeuverInputs().getDistanceFromRouteStart(),
+                    // plugin.getManeuverInputs().getCrosstrackDistance(), currentTime / 1000.0);
+                    // cav_msgs.Trajectory currentLocationMsg = pluginServiceLocator.getTrajectoryConverter().pathToMessage(Arrays.asList(currentLocation));
+                    // request.setLocation(currentLocationMsg.getLocation());
+                    request.plan_type.type = cav_msgs::PlanType::PLATOON_FOLLOWER_JOIN;
+                    std::string MOBILITY_STRATEGY;
+                    request.strategy = MOBILITY_STRATEGY;
+                    request.strategy_params = "";
+                    request.urgency = 50;
+                    // plugin.mobilityRequestPublisher.publish(request);
+                    // request.getPlanType().setType(PlanType.PLATOON_FOLLOWER_JOIN);
+                    // request.setStrategy(PlatooningPlugin.MOBILITY_STRATEGY);
+                    // request.setStrategyParams("");
+                    // // TODO Maybe need to add some params (vehicle IDs) into strategy string
+                    // // TODO Maybe need to populate the urgency later
+                    // request.setUrgency((short) 50);
+                    // plugin.mobilityRequestPublisher.publish(request);
+                    // ROS_DEBUG("Published Mobility Candidate-Join request to the leader");
+                    // // this.currentPlan = new PlatoonPlan(System.currentTimeMillis(), planId, targetLeaderId);????????
+                }
         
          //Task 4
-        //         if(plugin.platoonManager.getTotalPlatooningSize() > 1) {
-        //             MobilityOperation status = plugin.mobilityOperationPublisher.newMessage();
-        //             composeMobilityOperationStatus(status);
-        //             plugin.mobilityOperationPublisher.publish(status);
-        //         }
-        //         long tsEnd =  ros::Time::now().toSec()*1000;
-        // //      long sleepDuration = Math.max(plugin.statusMessageInterval - (tsEnd - tsStart), 0);
-        //         // Thread.sleep(sleepDuration);
-        //         ros::Duration(sleepDuration/1000).sleep();
+                if(pm_->getTotalPlatooningSize() > 1) {
+                    cav_msgs::MobilityOperation status;
+                    composeMobilityOperationCandidateFollower(status);
+                    mob_op_pub_.publish(status);
+                    ROS_DEBUG("Published platoon STATUS operation message");
+                }
+                long tsEnd =  ros::Time::now().toSec()*1000;
+                long sleepDuration = std::max(int(statusMessageInterval - (tsEnd - tsStart)), 0);
+                ros::Duration(sleepDuration/1000).sleep();
         
     }
 
@@ -290,17 +289,17 @@ namespace platoon_strategic
 
     void PlatoonStrategicPlugin::mob_req_cb(const cav_msgs::MobilityRequest& msg)
     {
-        mobility_req_msg_ = msg;// cav_msgs::MobilityRequest(*msg.get());
+        mobility_req_msg_ = msg;
     }
 
     void PlatoonStrategicPlugin::mob_resp_cb(const cav_msgs::MobilityResponse& msg)
     {
-        mobility_resp_msg_ = msg;// cav_msgs::MobilityResponse(*msg.get());
+        mobility_resp_msg_ = msg;
     }
 
     void PlatoonStrategicPlugin::mob_op_cb(const cav_msgs::MobilityOperation& msg)
     {
-        mobility_op_msg_ = msg;//cav_msgs::MobilityOperation(*msg.get());
+        mobility_op_msg_ = msg;
     }
 
 
@@ -330,7 +329,7 @@ namespace platoon_strategic
     }
 
     void PlatoonStrategicPlugin::composeMobilityOperationFollower(cav_msgs::MobilityOperation &msg){
-        msg.header.plan_id = ""; //plugin.platoonManager.currentPlatoonID
+        msg.header.plan_id = pm_->currentPlatoonID;
         // All platoon mobility operation message is just for broadcast
         msg.header.recipient_id = "";
         msg.header.sender_bsm_id = "";
@@ -374,6 +373,25 @@ namespace platoon_strategic
         double currentSpeed; // = ????????
         std::string params; //= ????????????
         msg.strategy_params = params;
+    }
+
+
+    void PlatoonStrategicPlugin::composeMobilityOperationCandidateFollower(cav_msgs::MobilityOperation &msg)
+    {
+        msg.header.plan_id = "";//?????????
+        // All platoon mobility operation message is just for broadcast
+        msg.header.recipient_id = "";
+        msg.header.sender_bsm_id = "";//????????
+        std::string hostStaticId; // = ????????
+        msg.header.sender_id = hostStaticId;
+        msg.header.timestamp = ros::Time::now().toSec()*1000.0; 
+        std::string MOBILITY_STRATEGY;
+        msg.strategy = MOBILITY_STRATEGY;
+        double cmdSpeed;// = plugin.getLastSpeedCmd();????????
+        // // For STATUS params, the string format is "STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx"
+        std::string statusParams;//????????????????
+        msg.strategy_params = statusParams;
+        ROS_DEBUG("Composed a mobility operation message with params " , msg.strategy_params);
     }
 
 
