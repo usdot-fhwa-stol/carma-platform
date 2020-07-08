@@ -136,21 +136,6 @@ namespace carma_wm {
                 }
             }
 
-
-
-            // int size = 0;
-            // for(size_t i = 0; i< target_time; i++){
-            //     size = size + op.future_polygons[i].outer().size();
-            // }
-
-            // std::vector<point_t> unioin_polygon_points;
-
-            // unioin_polygon_points.reserve(size); 
-
-            // for(size_t i = 0; i< target_time; i++){
-            //     unioin_polygon_points.insert( unioin_polygon_points.end(), op.future_polygons[i].outer().begin(), op.future_polygons[i].outer().end());
-            // }
-
             polygon_t union_polygon;  
             boost::geometry::assign_points(union_polygon, unioin_future_polygon_points);
 
