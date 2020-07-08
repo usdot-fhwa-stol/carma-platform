@@ -56,7 +56,7 @@ namespace platoon_strategic
 
         protected:
 
-            void run_standby();
+            void run_standby() const;
             void run_leader();
             void run_leader_waiting();
             void run_candidate_follower();
@@ -130,9 +130,9 @@ namespace platoon_strategic
             cav_msgs::MobilityOperation mobility_op_msg_;
 
 
-            void composeMobilityOperationLeader(cav_msgs::MobilityOperation &msg, std::string type);
-            void composeMobilityOperationFollower(cav_msgs::MobilityOperation &msg);
-            void composeMobilityOperationLeaderWaiting(cav_msgs::MobilityOperation &msg);
+            void composeMobilityOperationLeader(cav_msgs::MobilityOperation &msg, const std::string& type);
+            void composeMobilityOperationFollower(cav_msgs::MobilityOperation &msg) const;
+            void composeMobilityOperationLeaderWaiting(cav_msgs::MobilityOperation &msg) const;
             void composeMobilityOperationCandidateFollower(cav_msgs::MobilityOperation &msg);
 
 

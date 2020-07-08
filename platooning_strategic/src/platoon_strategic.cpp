@@ -110,6 +110,7 @@ namespace platoon_strategic
         pose_msg_ = msg;
     }
 
+    // TODO: fill this function
     bool PlatoonStrategicPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp){
         
 
@@ -117,7 +118,7 @@ namespace platoon_strategic
     }
 
 
-    void PlatoonStrategicPlugin::run_standby(){
+    void PlatoonStrategicPlugin::run_standby() const {
 
     }
 
@@ -299,7 +300,7 @@ namespace platoon_strategic
     }
 
 
-    void PlatoonStrategicPlugin::composeMobilityOperationLeader(cav_msgs::MobilityOperation &msg, std::string type){
+    void PlatoonStrategicPlugin::composeMobilityOperationLeader(cav_msgs::MobilityOperation &msg, const std::string& type){
         msg.header.plan_id = psm_->pm_->currentPlatoonID;
         msg.header.recipient_id = "";
         msg.header.sender_bsm_id = BSMID;
@@ -345,7 +346,7 @@ namespace platoon_strategic
     
     }
 
-    void PlatoonStrategicPlugin::composeMobilityOperationFollower(cav_msgs::MobilityOperation &msg){
+    void PlatoonStrategicPlugin::composeMobilityOperationFollower(cav_msgs::MobilityOperation &msg) const{
         msg.header.plan_id = psm_->pm_->currentPlatoonID;
         // All platoon mobility operation message is just for broadcast
         msg.header.recipient_id = "";
@@ -368,7 +369,7 @@ namespace platoon_strategic
     }
 
 
-    void PlatoonStrategicPlugin::composeMobilityOperationLeaderWaiting(cav_msgs::MobilityOperation &msg)
+    void PlatoonStrategicPlugin::composeMobilityOperationLeaderWaiting(cav_msgs::MobilityOperation &msg) const
     {
         msg.header.plan_id = psm_->pm_->currentPlatoonID;
         // This message is for broadcast

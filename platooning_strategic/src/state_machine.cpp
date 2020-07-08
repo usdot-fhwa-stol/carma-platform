@@ -99,14 +99,14 @@ namespace platoon_strategic
 
 
 
-    MobilityRequestResponse PlatooningStateMachine::onMobilityRequestMessageFollower(cav_msgs::MobilityRequest &msg)
+    MobilityRequestResponse PlatooningStateMachine::onMobilityRequestMessageFollower(cav_msgs::MobilityRequest &msg) const
     {
         ROS_DEBUG("Initialized all node handles");
         return MobilityRequestResponse::NO_RESPONSE;
     }
 
 
-    void PlatooningStateMachine::onMobilityResponseMessageFollower(cav_msgs::MobilityResponse &msg)
+    void PlatooningStateMachine::onMobilityResponseMessageFollower(cav_msgs::MobilityResponse &msg) const
     {
 
     }
@@ -253,8 +253,7 @@ namespace platoon_strategic
         std::string platoonId = msg.header.plan_id;
         // In the current state, we care about the INFO heart-beat operation message if we are not currently in
         // a negotiation, and also we need to care about operation from members in our current platoon
-        std::string OPERATION_INFO_TYPE;
-        std::string OPERATION_STATUS_TYPE;
+
         bool isPlatoonInfoMsg = (strategyParams.find(OPERATION_INFO_TYPE) == 0);// = strategyParams.startsWith(PlatooningPlugin.OPERATION_INFO_TYPE);
         bool isPlatoonStatusMsg = (strategyParams.find(OPERATION_STATUS_TYPE) == 0);;// = strategyParams.startsWith(PlatooningPlugin.OPERATION_STATUS_TYPE);
         {
@@ -340,7 +339,7 @@ namespace platoon_strategic
         }
     }
 
-    void PlatooningStateMachine::onMobilityResponseMessageLeaderWaiting(cav_msgs::MobilityResponse &msg)
+    void PlatooningStateMachine::onMobilityResponseMessageLeaderWaiting(cav_msgs::MobilityResponse &msg) const
     {
 
     }
@@ -365,7 +364,7 @@ namespace platoon_strategic
         }
     }
 
-    MobilityRequestResponse PlatooningStateMachine::onMobilityRequestMessageCandidateFollower(cav_msgs::MobilityRequest &msg)
+    MobilityRequestResponse PlatooningStateMachine::onMobilityRequestMessageCandidateFollower(cav_msgs::MobilityRequest &msg) const
     {
         // No need to response as a follower
         return MobilityRequestResponse::NO_RESPONSE;
@@ -424,22 +423,22 @@ namespace platoon_strategic
     }
 
 
-    MobilityRequestResponse PlatooningStateMachine::onMobilityRequestMessageStandby(cav_msgs::MobilityRequest &msg)
+    MobilityRequestResponse PlatooningStateMachine::onMobilityRequestMessageStandby(cav_msgs::MobilityRequest &msg) const
     {
         // In standby state, the plugin is not responsible for replying to any request messages
         return MobilityRequestResponse::NO_RESPONSE;
     }
-    void PlatooningStateMachine::onMobilityResponseMessageStandby(cav_msgs::MobilityResponse &msg)
+    void PlatooningStateMachine::onMobilityResponseMessageStandby(cav_msgs::MobilityResponse &msg) const
     {
 
     }
-    void PlatooningStateMachine::onMobilityOperationMessageStandby(cav_msgs::MobilityOperation &msg)
+    void PlatooningStateMachine::onMobilityOperationMessageStandby(cav_msgs::MobilityOperation &msg) const
     {
 
     }
 
-    bool PlatooningStateMachine::isVehicleRightInFront(std::string rearVehicleBsmId, double downtrack) {
-        double currentDtd;// = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();????
+    bool PlatooningStateMachine::isVehicleRightInFront(std::string rearVehicleBsmId, double downtrack) const {
+        double currentDtd = pm_->getCurrentDowntrackDistance();
         if(downtrack > currentDtd) {
             std::clog << "Found a platoon in front. We are able to join" << std::endl;
             return true;

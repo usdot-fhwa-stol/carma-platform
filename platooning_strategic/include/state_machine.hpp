@@ -73,8 +73,8 @@ namespace platoon_strategic
     
         ros::NodeHandle *nh_;
         
-        MobilityRequestResponse onMobilityRequestMessageFollower(cav_msgs::MobilityRequest &msg);
-        void onMobilityResponseMessageFollower(cav_msgs::MobilityResponse &msg);
+        MobilityRequestResponse onMobilityRequestMessageFollower(cav_msgs::MobilityRequest &msg) const;
+        void onMobilityResponseMessageFollower(cav_msgs::MobilityResponse &msg) const;
         void onMobilityOperationMessageFollower(cav_msgs::MobilityOperation &msg);
 
         MobilityRequestResponse onMobilityRequestMessageLeader(cav_msgs::MobilityRequest &msg);
@@ -82,22 +82,22 @@ namespace platoon_strategic
         void onMobilityOperationMessageLeader(cav_msgs::MobilityOperation &msg);
 
         MobilityRequestResponse onMobilityRequestMessageLeaderWaiting(cav_msgs::MobilityRequest &msg);
-        void onMobilityResponseMessageLeaderWaiting(cav_msgs::MobilityResponse &msg);
+        void onMobilityResponseMessageLeaderWaiting(cav_msgs::MobilityResponse &msg) const;
         void onMobilityOperationMessageLeaderWaiting(cav_msgs::MobilityOperation &msg);
 
-        MobilityRequestResponse onMobilityRequestMessageCandidateFollower(cav_msgs::MobilityRequest &msg);
+        MobilityRequestResponse onMobilityRequestMessageCandidateFollower(cav_msgs::MobilityRequest &msg) const;
         void onMobilityResponseMessageCandidateFollower(cav_msgs::MobilityResponse &msg);
         void onMobilityOperationMessageCandidateFollower(cav_msgs::MobilityOperation &msg);
 
 
-        MobilityRequestResponse onMobilityRequestMessageStandby(cav_msgs::MobilityRequest &msg);
-        void onMobilityResponseMessageStandby(cav_msgs::MobilityResponse &msg);
-        void onMobilityOperationMessageStandby(cav_msgs::MobilityOperation &msg);
+        MobilityRequestResponse onMobilityRequestMessageStandby(cav_msgs::MobilityRequest &msg) const;
+        void onMobilityResponseMessageStandby(cav_msgs::MobilityResponse &msg) const;
+        void onMobilityOperationMessageStandby(cav_msgs::MobilityOperation &msg) const;
 
 
 
         
-        bool isVehicleRightInFront(std::string rearVehicleBsmId, double downtrack);
+        bool isVehicleRightInFront(std::string rearVehicleBsmId, double downtrack) const;
         double maxAllowedJoinTimeGap = 15.0;
         double maxAllowedJoinGap = 90;
         int maxPlatoonSize = 10;
