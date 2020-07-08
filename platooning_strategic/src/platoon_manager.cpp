@@ -10,6 +10,7 @@ namespace platoon_strategic
 
     PlatoonManager::PlatoonManager(ros::NodeHandle *nh): nh_(nh) {
                 twist_sub_ = nh_->subscribe("current_velocity", 1, &PlatoonManager::twist_cd, this);
+                cmd_sub_ = nh_->subscribe("command_velocity", 1, &PlatoonManager::cmd_cd, this);
                 pose_sub_ = nh_->subscribe("current_pose", 1, &PlatoonManager::pose_cb, this);
         };
 
@@ -115,7 +116,8 @@ namespace platoon_strategic
         
     double PlatoonManager::getPlatoonRearDowntrackDistance(){
         if(platoon.size() == 0) {
-            return getCurrentDowntrackDistance();
+            double dist = getCurrentDowntrackDistance();
+            return dist;
         }
         return platoon[platoon.size() - 1].vehiclePosition;
     }
@@ -360,6 +362,10 @@ namespace platoon_strategic
         return current_speed_;
     }
 
+    double PlatoonManager::getCommandSpeed(){
+        return command_speed_;
+    }
+
     double PlatoonManager::getCurrentDowntrackDistance(){
         
         lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
@@ -375,6 +381,19 @@ namespace platoon_strategic
         return current_progress;
     }
 
+    double PlatoonManager::getCurrentPlatoonLength() {
+        if(platoon.size() == 0) {
+            return vehicleLength;
+        } else {
+            return getCurrentDowntrackDistance() - platoon[platoon.size() - 1].vehiclePosition + vehicleLength; 
+        }
+    }
+
+
+    void PlatoonManager::cmd_cd(const autoware_msgs::ControlCommandStampedPtr& msg)
+    {
+        command_speed_ = msg->cmd.linear_velocity;
+    }
 
     void PlatoonManager::twist_cd(const geometry_msgs::TwistStampedConstPtr& msg)
     {

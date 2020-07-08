@@ -21,6 +21,8 @@ namespace platoon_strategic
         long planStartTime;
         std::string planId;
         std::string peerId;
+        PlatoonPlan(bool valid, long planStartTime, std::string planId, std::string peerId): 
+            valid(valid), planStartTime(planStartTime), planId(planId), peerId(peerId) {}  
     };
 
     /**
@@ -47,6 +49,12 @@ namespace platoon_strategic
     class PlatooningStateMachine
     {
     public:
+
+        // PlatooningStateMachine();
+
+        // PlatooningStateMachine(ros::NodeHandle *nh);
+
+
         MobilityRequestResponse onMobilityRequestMessage(cav_msgs::MobilityRequest &msg);
         void onMobilityResponseMessage(cav_msgs::MobilityResponse &msg);
         void onMobilityOperationMessage(cav_msgs::MobilityOperation &msg);
@@ -56,11 +64,15 @@ namespace platoon_strategic
         std::string applicantID;
         PlatoonPlan current_plan;
 
+        std::string targetLeaderId = "";
+
         PlatoonManager *pm_;
 
 
     private:
     
+        ros::NodeHandle *nh_;
+        
         MobilityRequestResponse onMobilityRequestMessageFollower(cav_msgs::MobilityRequest &msg);
         void onMobilityResponseMessageFollower(cav_msgs::MobilityResponse &msg);
         void onMobilityOperationMessageFollower(cav_msgs::MobilityOperation &msg);
@@ -92,10 +104,11 @@ namespace platoon_strategic
         double vehicleLength = 5.0;
         std::mutex plan_mutex_;
         int infoMessageInterval;
-        std::string targetLeaderId;
         std::string targetPlatoonId;
         std::string OPERATION_INFO_TYPE = "INFO";
         std::string OPERATION_STATUS_TYPE = "STATUS";
+        std::string JOIN_AT_REAR_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";
+        std::string  MOBILITY_STRATEGY = "Carma/Platooning";
     };
 }
 

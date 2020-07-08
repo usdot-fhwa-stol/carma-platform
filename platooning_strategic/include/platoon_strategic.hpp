@@ -67,8 +67,6 @@ namespace platoon_strategic
 
             PlatooningStateMachine *psm_;
 
-            // PlatoonManager *pm_;
-
             // node handles
             std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
@@ -78,6 +76,7 @@ namespace platoon_strategic
 
             ros::Publisher platoon_strategic_plugin_discovery_pub_;
             ros::Publisher mob_op_pub_;
+            ros::Publisher mob_req_pub_;
 
             ros::Subscriber pose_sub_;
             
@@ -151,6 +150,19 @@ namespace platoon_strategic
             double waitingStateTimeout = 25.0; // s
             double desiredJoinGap = 30.0; // m
             double desiredJoinTimeGap = 4.0; // s
+
+
+            std::string MOBILITY_STRATEGY = "Carma/Platooning";
+            std::string OPERATION_INFO_TYPE = "INFO";
+            std::string OPERATION_STATUS_TYPE = "STATUS";
+            std::string OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%1%,DTD:%2%,SPEED:%3%";
+
+
+            // Check these values
+            std::string HostMobilityId = "hostid";
+            std::string BSMID = "BSM";
+            std::string MobilityId = "mobilityid";
+            
 
 
     

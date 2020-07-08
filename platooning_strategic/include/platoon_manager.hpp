@@ -11,6 +11,8 @@
 #include <carma_wm/WorldModel.h>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <autoware_msgs/ControlCommandStamped.h>
+
 
 
 
@@ -46,6 +48,7 @@ namespace platoon_strategic
         PlatoonManager(ros::NodeHandle *nh);
 
         ros::Subscriber twist_sub_;
+        ros::Subscriber cmd_sub_;
         ros::Subscriber pose_sub_;
 
         // Current vehicle pose in map
@@ -72,8 +75,7 @@ namespace platoon_strategic
         void updatesOrAddMemberInfo(std::string senderId, std::string senderBsmId, double cmdSpeed, double dtDistance, double curSpeed);
 
         int getTotalPlatooningSize();
-        
-        double getPlatoonRearDowntrackDistance();
+
 
         PlatoonMember getLeader();
 
@@ -96,6 +98,15 @@ namespace platoon_strategic
         void changeFromFollowerToLeader();
         void changeFromLeaderToFollower(std::string newPlatoonId);
         int getNumberOfVehicleInFront();
+        double getCurrentPlatoonLength();
+        double getPlatoonRearDowntrackDistance();
+
+
+        double getDistanceFromRouteStart();
+        double getCurrentSpeed();
+        double getCommandSpeed();
+        double getCurrentDowntrackDistance();
+
 
         int platoonSize;
         std::string leaderID;
@@ -109,6 +120,7 @@ namespace platoon_strategic
     ros::NodeHandle *nh_;
 
     double current_speed_;
+    double command_speed_;
 
     double minGap = 22.0;
     double maxGap = 32.0;
@@ -119,6 +131,8 @@ namespace platoon_strategic
     double minSpacing = 3.9;
     double lowerBoundary = 1.6;
     double upperBoundary = 1.7 ;
+
+    double vehicleLength = 5.0;  // m
 
 
     std::string algorithmType = "APF_ALGORITHM";
@@ -135,11 +149,9 @@ namespace platoon_strategic
 
     std::vector<double> getTimeHeadwayFromIndex(std::vector<double> timeHeadways, int start);
 
-    double getDistanceFromRouteStart();
-    double getCurrentSpeed();
-    double getCurrentDowntrackDistance();
 
     void twist_cd(const geometry_msgs::TwistStampedConstPtr& msg);
+    void cmd_cd(const autoware_msgs::ControlCommandStampedPtr& msg);
     void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
 
 

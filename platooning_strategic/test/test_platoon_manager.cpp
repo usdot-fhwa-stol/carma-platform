@@ -11,7 +11,6 @@
 
 TEST(PlatoonManagerTest, test1)
 {
-    // platoon_strategic::PlatoonMember* pm = new PlatoonMember(senderId, senderBsmId, cmdSpeed, curSpeed, dtDistance, cur_t);
     std::vector<platoon_strategic::PlatoonMember> cur_pl;
 
 

@@ -2,6 +2,11 @@
 
 namespace platoon_strategic
 {
+
+    // PlatooningStateMachine::PlatooningStateMachine(){} ???????????
+
+    // PlatooningStateMachine::PlatooningStateMachine(ros::NodeHandle *nh): nh_(nh) {};
+
     MobilityRequestResponse PlatooningStateMachine::onMobilityRequestMessage(cav_msgs::MobilityRequest &msg){
         switch (current_platoon_state)
         {
@@ -222,6 +227,7 @@ namespace platoon_strategic
                         ROS_DEBUG("Change to CandidateFollower state and notify trajectory failure in order to replan");
         //                 // Change to candidate follower state and request a new plan to catch up with the front platoon
                         current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
+                        targetLeaderId = current_plan.peerId;
         //                 plugin.setState(new CandidateFollowerState(plugin, log, pluginServiceLocator, currentPlan.peerId, potentialNewPlatoonId, this.trajectoryEndLocation));
         //                 pluginServiceLocator.getArbitratorService().requestNewPlan(this.trajectoryEndLocation);
                     } else{
@@ -276,15 +282,11 @@ namespace platoon_strategic
                     long currentTime = ros::Time::now().toSec();
                     request.header.plan_id = planId;
                     request.header.recipient_id = senderId;
-                    cav_msgs::LocationECEF location;
-                    // location.x; ??????????????
-                    // location.y;
-                    // location.z;
-                    // location.timestamp;
+                    cav_msgs::LocationECEF location; //from GPS?
                     request.location = location;
                     request.plan_type.type = cav_msgs::PlanType::JOIN_PLATOON_AT_REAR;
-                    // request.strategy; = MOBILITY_STRATEGY?????????????
-                    std::string JOIN_AT_REAR_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";//"SIZE:%d,SPEED:%.2f,DTD:%.2f";
+                    request.strategy = MOBILITY_STRATEGY;
+
 
                     double total_platoon_size, current_speed, current_downtrack;
 
@@ -296,7 +298,9 @@ namespace platoon_strategic
                     std::string strategyParamsString = fmter.str(); 
                     request.strategy_params = strategyParamsString;
                     request.urgency = 50;
-                    // this.currentPlan = new PlatoonPlan(System.currentTimeMillis(), request.getHeader().getPlanId(), senderId);
+                    PlatoonPlan* new_plan = new PlatoonPlan(true, currentTime, planId, senderId);
+                    current_plan = *new_plan;
+
                     // plugin.mobilityRequestPublisher.publish(request);
                     ROS_DEBUG("Publishing request to leader " , senderId , " with params " , request.strategy_params , " and plan id = " , request.header.plan_id);
                     // this.potentialNewPlatoonId = platoonId;
@@ -382,14 +386,12 @@ namespace platoon_strategic
                         ROS_DEBUG("The leader " , msg.header.sender_id , " agreed on our join. Change to follower state.");
                         pm_->changeFromLeaderToFollower(targetPlatoonId);
                         current_platoon_state = PlatoonState::FOLLOWER;
-                        // plugin.setState(new FollowerState(plugin, log, pluginServiceLocator));
                         // pluginServiceLocator.getArbitratorService().requestNewPlan(this.trajectoryEndLocation);
                         }
                         else{
                             // We change back to normal leader state and try to join other platoons
                             ROS_DEBUG("The leader " , msg.header.sender_id , " does not agree on our join. Change back to leader state.");
                             current_platoon_state = PlatoonState::LEADER;
-                            // plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
                         }
                     }
                     else{
