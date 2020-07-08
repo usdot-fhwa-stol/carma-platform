@@ -56,6 +56,7 @@ add_library(
   src/WMListener.cpp
   src/WMListenerWorker.cpp
   src/Geometry.cpp
+  src/TrafficControl.cpp
   src/IndexedDistanceMap.cpp
 )
 
@@ -99,6 +100,7 @@ catkin_add_gmock(${PROJECT_NAME}-test
   test/IndexedDistanceMapTest.cpp
   test/WMListenerWorkerTest.cpp
   test/GeometryTest.cpp
+  test/TrafficControlTest.cpp
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 
