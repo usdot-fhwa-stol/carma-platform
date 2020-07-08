@@ -99,16 +99,11 @@ carma-config__edit() {
     fi
 
     echo "Opening shell inside carma-config container with read/write privileges..."
-    if [ "$1" = "-d" ]; then
-        local OPTION="-d"
-    elif [ "$1" = "-c" ]; then
-        local OPTION="-c"
-    fi
 
-    local carma_base=$(__get_most_recent_carma_base $OPTION)
+    local carma_base=$(__get_most_recent_carma_base)
     if [[ -z $carma_base ]]; then
-        __pull_newest_carma_base $OPTION
-        carma_base=$(__get_most_recent_carma_base $OPTION)
+        __pull_newest_carma_base
+        carma_base=$(__get_most_recent_carma_base)
     fi
 
     docker run -it --rm --volumes-from carma-config $carma_base bash
@@ -123,16 +118,10 @@ carma-config__inspect() {
 
     echo "Opening shell inside carma-config container with read-only privileges..."
 
-    if [ "$1" = "-d" ]; then
-        local OPTION="-d"
-    elif [ "$1" = "-c" ]; then
-        local OPTION="-c"
-    fi
-
-    local carma_base=$(__get_most_recent_carma_base $OPTION)
+    local carma_base=$(__get_most_recent_carma_base)
     if [[ -z $carma_base ]]; then
-        __pull_newest_carma_base $OPTION
-        carma_base=$(__get_most_recent_carma_base $OPTION)
+        __pull_newest_carma_base
+        carma_base=$(__get_most_recent_carma_base)
     fi
 
     docker run -it --rm --volumes-from carma-config:ro $carma_base bash
@@ -151,14 +140,16 @@ carma-config__reset() {
 }
 
 carma-config__list_local() {
-    if [ "$1" = "-d" ]; then
-        local USERNAME=usdotfhwastoldev
-    else
-        local USERNAME=usdotfhwastol
-    fi
     echo "Locally installed images: "
     echo ""
-    docker images $USERNAME/carma-config
+    echo "usdotfhwastol images:"
+    docker images usdotfhwastol/carma-config
+    echo ""
+    echo "usdotfhwastoldev images:"
+    docker images usdotfhwastoldev/carma-config
+    echo ""
+    echo "usdotfhwastolcandidate images:"
+    docker images usdotfwhastolcandidate/carma-config
 }
 
 carma-config__list_remote() {
@@ -310,19 +301,9 @@ carma-config__status() {
 }
 
 carma__exec() {
-    if [ "$1" = "-d" ]; then
-        local USERNAME=usdotfhwastoldev
-        local TAG=develop
-        shift
-    elif [ "$1" = "-c" ]; then
-        local USERNAME=usdotfhwastolcandidate
-        local TAG=candidate
-        shift
-    else
-        local USERNAME=usdotfhwastol
-        local TAG=latest
-    fi
-
+    local USERNAME=usdotfhwastol
+    local TAG=latest
+    
     local TARGET_IMAGE="$USERNAME/carma-platform:$TAG"
 
     # Check if the -i argument was provided
