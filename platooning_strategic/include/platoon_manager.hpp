@@ -60,7 +60,7 @@ namespace platoon_strategic
 
 
 
-        void memberUpdates(std::string senderId, std::string platoonId, std::string senderBsmId, std::string params);
+        void memberUpdates(const std::string& senderId,const std::string& platoonId,const std::string& senderBsmId,const std::string& params);
 
         /**
          * Given any valid platooning mobility STATUS operation parameters and sender staticId,
@@ -74,7 +74,7 @@ namespace platoon_strategic
          **/
         void updatesOrAddMemberInfo(std::string senderId, std::string senderBsmId, double cmdSpeed, double dtDistance, double curSpeed);
 
-        int getTotalPlatooningSize();
+        int getTotalPlatooningSize() const;
 
 
         PlatoonMember getLeader();
@@ -102,10 +102,10 @@ namespace platoon_strategic
         double getPlatoonRearDowntrackDistance();
 
 
-        double getDistanceFromRouteStart();
-        double getCurrentSpeed();
+        double getDistanceFromRouteStart() const;
+        double getCurrentSpeed() const;
         double getCommandSpeed();
-        double getCurrentDowntrackDistance();
+        double getCurrentDowntrackDistance() const;
 
 
         int platoonSize;
@@ -138,22 +138,23 @@ namespace platoon_strategic
     std::string algorithmType = "APF_ALGORITHM";
 
     bool insufficientGapWithPredecessor(double distanceToFrontVehicle);
-    std::vector<double> calculateTimeHeadway(std::vector<double> downtrackDistance, std::vector<double> speed);
+    std::vector<double> calculateTimeHeadway(std::vector<double> downtrackDistance, std::vector<double> speed) const;
     int determineLeaderBasedOnViolation(std::vector<double> timeHeadways);
 
     // helper method for APF algorithm
-    int findLowerBoundaryViolationClosestToTheHostVehicle(std::vector<double> timeHeadways);
+    int findLowerBoundaryViolationClosestToTheHostVehicle(std::vector<double> timeHeadways) const;
 
     // helper method for APF algorithm
-    int findMaximumSpacingViolationClosestToTheHostVehicle(std::vector<double> timeHeadways);
+    int findMaximumSpacingViolationClosestToTheHostVehicle(std::vector<double> timeHeadways) const;
 
-    std::vector<double> getTimeHeadwayFromIndex(std::vector<double> timeHeadways, int start);
+    std::vector<double> getTimeHeadwayFromIndex(std::vector<double> timeHeadways, int start) const;
 
 
     void twist_cd(const geometry_msgs::TwistStampedConstPtr& msg);
     void cmd_cd(const autoware_msgs::ControlCommandStampedPtr& msg);
     void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
 
+    std::string HostMobilityId = "hostid";
 
     
 

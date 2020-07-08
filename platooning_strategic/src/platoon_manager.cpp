@@ -14,7 +14,7 @@ namespace platoon_strategic
                 pose_sub_ = nh_->subscribe("current_pose", 1, &PlatoonManager::pose_cb, this);
         };
 
-    void PlatoonManager::memberUpdates(std::string senderId, std::string platoonId, std::string senderBsmId, std::string params){
+    void PlatoonManager::memberUpdates(const std::string& senderId,const std::string& platoonId,const std::string& senderBsmId,const std::string& params){
 
         std::vector<std::string> inputsParams;
         boost::algorithm::split(inputsParams, params, boost::is_any_of(","));
@@ -54,7 +54,7 @@ namespace platoon_strategic
             } else if((currentPlatoonID == platoonId) && isVehicleInFrontOf) {
                 ROS_DEBUG("This STATUS messages is from our platoon in front of us. Updating the info...");
                 updatesOrAddMemberInfo(senderId, senderBsmId, cmdSpeed, dtDistance, curSpeed);
-                leaderID;// = platoon.isEmpty() ? psl.getMobilityRouter().getHostMobilityId() : platoon.get(0).staticId;
+                leaderID = (platoon.size()==0) ? HostMobilityId : platoon[0].staticId;
                 ROS_DEBUG("The first vehicle in our list is now " , leaderID);
 
             } else{
@@ -107,7 +107,7 @@ namespace platoon_strategic
 
 
 
-    int PlatoonManager::getTotalPlatooningSize(){
+    int PlatoonManager::getTotalPlatooningSize() const{
         if(isFollower) {
             return platoonSize;
         }
@@ -151,7 +151,6 @@ namespace platoon_strategic
             ROS_DEBUG("As the second vehicle in the platoon, it will always follow the leader. Case Zero");
             return 0;
         }
-        std::cerr<<"1";
         ///***** Case One *****///
         // If we do not have a leader in the previous time step, we follow the first vehicle as default 
         if(previousFunctionalLeaderID == "") {
@@ -266,7 +265,7 @@ namespace platoon_strategic
         }
     }
 
-    std::vector<double> PlatoonManager::getTimeHeadwayFromIndex(std::vector<double> timeHeadways, int start) {
+    std::vector<double> PlatoonManager::getTimeHeadwayFromIndex(std::vector<double> timeHeadways, int start) const {
         std::vector<double> result(timeHeadways.begin() + start-1, timeHeadways.end());
         return result;
     }
@@ -279,7 +278,7 @@ namespace platoon_strategic
         return (frontGapIsTooSmall || frontGapIsNotLargeEnough);
     }
 
-    std::vector<double> PlatoonManager::calculateTimeHeadway(std::vector<double> downtrackDistance, std::vector<double> speed){
+    std::vector<double> PlatoonManager::calculateTimeHeadway(std::vector<double> downtrackDistance, std::vector<double> speed) const{
         std::vector<double> timeHeadways(downtrackDistance.size() - 1);
         for (int i=0; i<timeHeadways.size(); i++){
             if (speed[i+1]!=0){
@@ -309,7 +308,7 @@ namespace platoon_strategic
     }
 
         // helper method for APF algorithm
-    int PlatoonManager::findLowerBoundaryViolationClosestToTheHostVehicle(std::vector<double> timeHeadways) {
+    int PlatoonManager::findLowerBoundaryViolationClosestToTheHostVehicle(std::vector<double> timeHeadways) const{
         for(int i = timeHeadways.size() - 1; i >= 0; i--) {
             if(timeHeadways[i] < lowerBoundary) {
                 return i;
@@ -319,7 +318,7 @@ namespace platoon_strategic
     }
     
     // helper method for APF algorithm
-    int PlatoonManager::findMaximumSpacingViolationClosestToTheHostVehicle(std::vector<double> timeHeadways) {
+    int PlatoonManager::findMaximumSpacingViolationClosestToTheHostVehicle(std::vector<double> timeHeadways) const {
         for(int i = timeHeadways.size() - 1; i >= 0; i--) {
             if(timeHeadways[i] > maxSpacing) {
                 return i;
@@ -331,7 +330,7 @@ namespace platoon_strategic
     void PlatoonManager::changeFromFollowerToLeader() {
         isFollower = false;
         platoon = {};
-        leaderID = "";//psl.getMobilityRouter().getHostMobilityId();
+        leaderID = HostMobilityId;
         currentPlatoonID = boost::uuids::to_string(boost::uuids::random_generator()());
         previousFunctionalLeaderID = "";
         previousFunctionalLeaderIndex = -1;
@@ -354,11 +353,11 @@ namespace platoon_strategic
 
     
 
-    double PlatoonManager::getDistanceFromRouteStart(){
+    double PlatoonManager::getDistanceFromRouteStart() const{
         return 0.0;
     }
 
-    double PlatoonManager::getCurrentSpeed(){
+    double PlatoonManager::getCurrentSpeed() const {
         return current_speed_;
     }
 
@@ -366,7 +365,7 @@ namespace platoon_strategic
         return command_speed_;
     }
 
-    double PlatoonManager::getCurrentDowntrackDistance(){
+    double PlatoonManager::getCurrentDowntrackDistance() const{
         
         lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
         auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc, 1);
