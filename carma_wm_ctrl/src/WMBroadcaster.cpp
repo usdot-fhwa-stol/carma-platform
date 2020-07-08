@@ -88,7 +88,7 @@ void WMBroadcaster::removeGeofence(const Geofence& gf)
   // TODO Add implementation for removing a geofence
 };
   
-void  WMBroadcaster::routeCallbackMessage(const cav_msgs::RouteCostPtr& route_msg)
+void  WMBroadcaster::routeCallbackMessage(const cav_msgs::RouteConstPtr& route_msg)
 {
   auto path = lanelet::ConstLanelets(); 
   for(auto id : route_msg->route_path_lanelet_ids) 
