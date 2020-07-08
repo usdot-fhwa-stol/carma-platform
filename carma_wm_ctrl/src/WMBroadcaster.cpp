@@ -88,7 +88,7 @@ void WMBroadcaster::removeGeofence(const Geofence& gf)
   // TODO Add implementation for removing a geofence
 };
   
-void  WMBroadcaster::routeCallbackMessage(const cavs_msg::RouteCostPtr& route_msg)
+void  WMBroadcaster::routeCallbackMessage(const cav_msgs::RouteCostPtr& route_msg)
 {
   auto path = lanelet::ConstLanelets(); 
   for(auto id : route_msg->route_path_lanelet_ids) 
@@ -144,8 +144,8 @@ void  WMBroadcaster::routeCallbackMessage(const cavs_msg::RouteCostPtr& route_ms
 
   lanelet::GPSPoint gpsRoute = projector.reverse(localRoute); //If the appropriate library is included, the reverse() function can be used instead of making a new one
 
-  cavs_msg::ControlRequest cR; /*Fill the latitude value in message cB with the value of lat */
-  cavs_msg::ControlBounds cB; /*Fill the longitude value in message cB with the value of lon*/
+  cav_msgs::ControlRequest cR; /*Fill the latitude value in message cB with the value of lat */
+  cav_msgs::ControlBounds cB; /*Fill the longitude value in message cB with the value of lon*/
 
   cB.latitude = gpsRoute.lat;
   cB.longitude = gpsRoute.lon;
