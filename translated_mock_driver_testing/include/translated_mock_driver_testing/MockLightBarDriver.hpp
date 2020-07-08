@@ -27,7 +27,7 @@ namespace translated_mock_driver_testing{
         
 
 
-          public:
+          private:
 
               cav_msgs::DriverStatus driverStatus;
                //topics published
@@ -57,9 +57,6 @@ namespace translated_mock_driver_testing{
               bool takedown;
 
 
-            MockLightBarDriver(ros::NodeHandle node);
-
-
             //get driver status call back
             bool getDriverStatus_cb(cav_srvs::GetDriverStatusRequest& req, cav_srvs::GetDriverStatusResponse& resp);
 
@@ -85,16 +82,18 @@ namespace translated_mock_driver_testing{
             cav_msgs::DriverStatus getDriverStatus();
 
             vector<string> getDriverApi();
-        
+
+          public:
+             MockLightBarDriver(ros::NodeHandle node);
+
+            //publishes lightbar status
             void publishData();
             
+            //publishes driver status
             void publishDriverStatus();
             
+            //name of node
             string getNodeName();
-
-            short getExpectedColCount();
-
-            short getSampleIdIdx();
 
             vector<string> getDriverTypesList();
     };
