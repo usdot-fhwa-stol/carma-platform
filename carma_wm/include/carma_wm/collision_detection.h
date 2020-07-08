@@ -44,7 +44,7 @@ namespace carma_wm {
         struct MovingObject {
             polygon_t object_polygon;
             geometry_msgs::Vector3 linear_velocity;
-            std::vector<polygon_t> future_polygons;
+            std::vector<std::tuple <__uint32_t,polygon_t>> fp;
         };
 
         /*!

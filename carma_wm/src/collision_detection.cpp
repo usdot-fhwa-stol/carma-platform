@@ -11,6 +11,7 @@ namespace carma_wm {
             collision_detection::MovingObject vehicle_object = ConvertVehicleToMovingObject(tp, size, veloctiy);
 
             for (auto i : rwol.roadway_obstacles){
+
                 collision_detection::MovingObject rwo = ConvertRoadwayObstacleToMovingObject(i);
 
                 bool collision = DetectCollision(vehicle_object, rwo, target_time);
@@ -25,17 +26,20 @@ namespace carma_wm {
 
         collision_detection::MovingObject ConvertRoadwayObstacleToMovingObject(const cav_msgs::RoadwayObstacle& rwo){
 
-            collision_detection::MovingObject ro;
+            collision_detection::MovingObject mo;
             
-            ro.object_polygon = ObjectToBoostPolygon<polygon_t>(rwo.object.pose.pose, rwo.object.size);
+            mo.object_polygon = ObjectToBoostPolygon<polygon_t>(rwo.object.pose.pose, rwo.object.size);
 
+            // Add future polygons for roadway obstacle
             for (auto i : rwo.object.predictions){
-                ro.future_polygons.push_back(ObjectToBoostPolygon<polygon_t>(i.predicted_position, rwo.object.size));
+                std::tuple <__uint32_t,polygon_t> future_object(i.header.stamp.nsec/1000,ObjectToBoostPolygon<polygon_t>(i.predicted_position, rwo.object.size));
+                
+                mo.fp.push_back(future_object);
             }
 
-            ro.linear_velocity = rwo.object.velocity.twist.linear;
+            mo.linear_velocity = rwo.object.velocity.twist.linear;
 
-            return ro;
+            return mo;
         };
 
         collision_detection::MovingObject ConvertVehicleToMovingObject(const cav_msgs::TrajectoryPlan& tp, const geometry_msgs::Vector3& size, const geometry_msgs::Twist& veloctiy){
@@ -80,15 +84,18 @@ namespace carma_wm {
                 trajectory_pose.orientation.z = orientation.getZ();
                 trajectory_pose.orientation.w = orientation.getW();
 
-                v.future_polygons.push_back(ObjectToBoostPolygon<polygon_t>(trajectory_pose, size));
+                std::tuple <__uint32_t,polygon_t> future_object(tp.trajectory_points[i].target_time,ObjectToBoostPolygon<polygon_t>(trajectory_pose, size));
+
+                v.fp.push_back(future_object);
             }
 
             return v;
         };
 
         bool DetectCollision(collision_detection::MovingObject const &ob_1, collision_detection::MovingObject const &ob_2, double  target_time) {            
-
+            
             collision_detection::MovingObject ob_1_after = PredictObjectPosition(ob_1,target_time);
+
             collision_detection::MovingObject ob_2_after = PredictObjectPosition(ob_2,target_time);
 
             if(CheckPolygonIntersection(ob_1_after, ob_2_after)){
@@ -111,23 +118,41 @@ namespace carma_wm {
             return false;
         };
 
-        collision_detection::MovingObject PredictObjectPosition(collision_detection::MovingObject const &op, double  target_time){
-
-            int size = 0;
-            for(size_t i = 0; i< target_time; i++){
-                size = size + op.future_polygons[i].outer().size();
+        collision_detection::MovingObject PredictObjectPosition(collision_detection::MovingObject const &op, double target_time){
+            
+            int union_polygon_size = 0;
+            for (auto i : op.fp){
+                if( std::get<0>(i) <= target_time) {
+                    union_polygon_size = union_polygon_size + std::get<1>(i).outer().size();
+                }
             }
 
-            std::vector<point_t> unioin_polygon_points;
+            std::vector<point_t> unioin_future_polygon_points;
+            unioin_future_polygon_points.reserve(union_polygon_size);
 
-            unioin_polygon_points.reserve(size); 
-
-            for(size_t i = 0; i< target_time; i++){
-                unioin_polygon_points.insert( unioin_polygon_points.end(), op.future_polygons[i].outer().begin(), op.future_polygons[i].outer().end());
+            for (auto i : op.fp){
+                if( std::get<0>(i) <= target_time) {
+                    unioin_future_polygon_points.insert( unioin_future_polygon_points.end(), std::get<1>(i).outer().begin(), std::get<1>(i).outer().end());
+                }
             }
+
+
+
+            // int size = 0;
+            // for(size_t i = 0; i< target_time; i++){
+            //     size = size + op.future_polygons[i].outer().size();
+            // }
+
+            // std::vector<point_t> unioin_polygon_points;
+
+            // unioin_polygon_points.reserve(size); 
+
+            // for(size_t i = 0; i< target_time; i++){
+            //     unioin_polygon_points.insert( unioin_polygon_points.end(), op.future_polygons[i].outer().begin(), op.future_polygons[i].outer().end());
+            // }
 
             polygon_t union_polygon;  
-            boost::geometry::assign_points(union_polygon, unioin_polygon_points);
+            boost::geometry::assign_points(union_polygon, unioin_future_polygon_points);
 
             polygon_t hull_polygon;
             boost::geometry::convex_hull(union_polygon, hull_polygon);

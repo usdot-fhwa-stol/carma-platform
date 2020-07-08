@@ -143,7 +143,17 @@ namespace carma_wm
     future_polygons.push_back(ob3);
     future_polygons.push_back(ob4);
 
-    collision_detection::MovingObject mo1 = {ob1, linear_velocity, future_polygons};
+    std::tuple <__uint32_t,collision_detection::polygon_t> fo1(1.0,ob2);
+    std::tuple <__uint32_t,collision_detection::polygon_t> fo2(2.0,ob3);
+    std::tuple <__uint32_t,collision_detection::polygon_t> fo3(3.0,ob4);
+
+    std::vector<std::tuple <__uint32_t,collision_detection::polygon_t>> future_polygons_tuple;
+    future_polygons_tuple.push_back(fo1);
+    future_polygons_tuple.push_back(fo2);
+    future_polygons_tuple.push_back(fo3);
+
+
+    collision_detection::MovingObject mo1 = {ob1, linear_velocity, future_polygons_tuple};
     
     collision_detection::MovingObject result = collision_detection::PredictObjectPosition(mo1,3);
 
@@ -198,7 +208,18 @@ namespace carma_wm
     future_polygons_1.push_back(ob3);
     future_polygons_1.push_back(ob4);
 
-    collision_detection::MovingObject mo1 = {ob1, linear_velocity, future_polygons_1};
+
+    std::tuple <__uint32_t,collision_detection::polygon_t> fo1(1.0,ob2);
+    std::tuple <__uint32_t,collision_detection::polygon_t> fo2(2.0,ob3);
+    std::tuple <__uint32_t,collision_detection::polygon_t> fo3(3.0,ob4);
+
+    std::vector<std::tuple <__uint32_t,collision_detection::polygon_t>> future_polygons_tuple_1;
+    future_polygons_tuple_1.push_back(fo1);
+    future_polygons_tuple_1.push_back(fo2);
+    future_polygons_tuple_1.push_back(fo3);
+
+
+    collision_detection::MovingObject mo1 = {ob1, linear_velocity, future_polygons_tuple_1};
 
 
     collision_detection::polygon_t ob5;
@@ -226,7 +247,17 @@ namespace carma_wm
     future_polygons_2.push_back(ob7);
     future_polygons_2.push_back(ob8);
 
-    collision_detection::MovingObject mo2 = {ob5, linear_velocity, future_polygons_2};
+
+    std::tuple <__uint32_t,collision_detection::polygon_t> fo6(1.0,ob6);
+    std::tuple <__uint32_t,collision_detection::polygon_t> fo7(2.0,ob7);
+    std::tuple <__uint32_t,collision_detection::polygon_t> fo8(3.0,ob8);
+
+    std::vector<std::tuple <__uint32_t,collision_detection::polygon_t>> future_polygons_tuple_2;
+    future_polygons_tuple_2.push_back(fo6);
+    future_polygons_tuple_2.push_back(fo7);
+    future_polygons_tuple_2.push_back(fo8);
+
+    collision_detection::MovingObject mo2 = {ob5, linear_velocity, future_polygons_tuple_2};
 
 
     bool result = collision_detection::DetectCollision(mo1, mo2,3);
@@ -312,6 +343,7 @@ namespace carma_wm
     rwo_1.object.size.z = 1;
 
     cav_msgs::PredictedState ps_1;
+    ps_1.header.stamp.nsec = 1000;
 
     ps_1.predicted_position.position.x = 1;
     ps_1.predicted_position.position.y = 1;
@@ -323,6 +355,7 @@ namespace carma_wm
     ps_1.predicted_position.orientation.w = tf_orientation.getW();
 
     cav_msgs::PredictedState ps_2;
+    ps_2.header.stamp.nsec = 2000;
 
     ps_2.predicted_position.position.x = 1;
     ps_2.predicted_position.position.y = 2;
@@ -334,6 +367,7 @@ namespace carma_wm
     ps_2.predicted_position.orientation.w = tf_orientation.getW();
 
     cav_msgs::PredictedState ps_3;
+    ps_3.header.stamp.nsec = 3000;
 
     ps_3.predicted_position.position.x = 1;
     ps_3.predicted_position.position.y = 3;
@@ -354,8 +388,7 @@ namespace carma_wm
 
   }
 
-
-  TEST(CollisionDetectionTrueTest, WorldCollisionDetection)
+  TEST(CollisionDetectionFalseTest, WorldCollisionDetection)
   {
 
     cav_msgs::RoadwayObstacleList rwol;
@@ -365,28 +398,15 @@ namespace carma_wm
     int target_time = 3;
 
     geometry_msgs::Vector3 linear_velocity;
-    linear_velocity.x = 1;
+    linear_velocity.x = 0;
     linear_velocity.y = 1;
 
     veloctiy.linear = linear_velocity;
 
     geometry_msgs::Vector3 size;
     size.x = 1;
-    size.y = 1;
+    size.y = 2;
     size.z = 1;
-
-    geometry_msgs::Pose pose;
-    pose.position.x = 6;
-    pose.position.y = 5;
-    pose.position.z = 0;
-
-    tf2::Quaternion tf_orientation;
-    tf_orientation.setRPY(0, 0, 1.5708);
-
-    pose.orientation.x = tf_orientation.getX();
-    pose.orientation.y = tf_orientation.getY();
-    pose.orientation.z = tf_orientation.getZ();
-    pose.orientation.w = tf_orientation.getW();
 
     cav_msgs::TrajectoryPlanPoint trajectory_point_1;
     cav_msgs::TrajectoryPlanPoint trajectory_point_2;
@@ -422,8 +442,10 @@ namespace carma_wm
     cav_msgs::RoadwayObstacle rwo_4;
     cav_msgs::RoadwayObstacle rwo_5;
 
-    rwo_1.object.pose.pose.position.x = 1;
-    rwo_1.object.pose.pose.position.y = 1;
+    tf2::Quaternion tf_orientation;
+    tf_orientation.setRPY(0, 0, 1.5708);
+    rwo_1.object.pose.pose.position.x = 6;
+    rwo_1.object.pose.pose.position.y = 5;
     rwo_1.object.pose.pose.position.z = 0;
 
     rwo_1.object.pose.pose.orientation.x = tf_orientation.getX();
@@ -431,27 +453,45 @@ namespace carma_wm
     rwo_1.object.pose.pose.orientation.z = tf_orientation.getZ();
     rwo_1.object.pose.pose.orientation.w = tf_orientation.getW();
 
-    rwo_1.object.size.x = 5;
-    rwo_1.object.size.y = 5;
-    rwo_1.object.size.z = 5;
+    rwo_1.object.size.x = 1;
+    rwo_1.object.size.y = 1;
+    rwo_1.object.size.z = 1;
 
     cav_msgs::PredictedState ps_1;
+    ps_1.header.stamp.nsec = 1000;
 
-    ps_1.predicted_position.position.x = 1;
-    ps_1.predicted_position.position.y = 1;
+    ps_1.predicted_position.position.x = 7;
+    ps_1.predicted_position.position.y = 8;
     ps_1.predicted_position.position.z = 0;
+
+    ps_1.predicted_position.orientation.x = tf_orientation.getX();
+    ps_1.predicted_position.orientation.y = tf_orientation.getY();
+    ps_1.predicted_position.orientation.z = tf_orientation.getZ();
+    ps_1.predicted_position.orientation.w = tf_orientation.getW();
 
     cav_msgs::PredictedState ps_2;
+    ps_2.header.stamp.nsec = 2000;
 
-    ps_1.predicted_position.position.x = 1;
-    ps_1.predicted_position.position.y = 2;
-    ps_1.predicted_position.position.z = 0;
+    ps_2.predicted_position.position.x = 9;
+    ps_2.predicted_position.position.y = 10;
+    ps_2.predicted_position.position.z = 0;
+
+    ps_2.predicted_position.orientation.x = tf_orientation.getX();
+    ps_2.predicted_position.orientation.y = tf_orientation.getY();
+    ps_2.predicted_position.orientation.z = tf_orientation.getZ();
+    ps_2.predicted_position.orientation.w = tf_orientation.getW();
 
     cav_msgs::PredictedState ps_3;
+    ps_3.header.stamp.nsec = 3000;
 
-    ps_1.predicted_position.position.x = 1;
-    ps_1.predicted_position.position.y = 3;
-    ps_1.predicted_position.position.z = 0;
+    ps_3.predicted_position.position.x = 11;
+    ps_3.predicted_position.position.y = 12;
+    ps_3.predicted_position.position.z = 0;
+
+    ps_3.predicted_position.orientation.x = tf_orientation.getX();
+    ps_3.predicted_position.orientation.y = tf_orientation.getY();
+    ps_3.predicted_position.orientation.z = tf_orientation.getZ();
+    ps_3.predicted_position.orientation.w = tf_orientation.getW();
 
     rwo_1.object.predictions = {ps_1,ps_2,ps_3};
 
@@ -460,6 +500,7 @@ namespace carma_wm
     std::vector<cav_msgs::RoadwayObstacle> result = collision_detection::WorldCollisionDetection(rwol, tp, size, veloctiy, target_time);
 
     ASSERT_EQ(result.size(),0);
+
   }
 
 
