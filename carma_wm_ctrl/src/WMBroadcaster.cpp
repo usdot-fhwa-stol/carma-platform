@@ -114,26 +114,32 @@ void  WMBroadcaster::routeCallbackMessage(const cav_msgs::RouteConstPtr& route_m
   {
       llt.push_back(path.back()); //Add a lanelet to the vector
 
-
       pathBox.push_back(lanelet::BoundingBox2d(llt.back())); //Create a bounding box of the added lanelet and add it to the vector
 
-      if (pathBox.back().BottomLeft.x() < minX) 
-         minX = pathBox.back().BottomLeft.x(); //minimum x-value
-    
-      if (pathBox.back().BottomLeft.y() < minY) 
-         minY = pathBox.back().BottomLeft.y(); //minimum y-value
-  
-      if (pathBox.back().BottomLeft.z() < minZ) 
-         minZ = pathBox.back().BottomLeft.z(); //minimum z-value
 
-      if (pathBox.back().TopRight.x() > maxX)
-         maxX = pathBox.back().TopRight.x(); //maximum x-value
+      if (pathBox.back().corner(lanelet::BoundingBox2d::BottomLeft).x() < minX)
+        minX = pathBox.back().corner(lanelet::BoundingBox2d::BottomLeft).x(); //minimum x-value
 
-      if (pathBox.back().TopRight.y() > maxY)
-         maxY = pathBox.back().TopRight.y(); //maximum y-value
-  
-      if (pathBox.back().TopRight.z() > maxZ)
-         maxZ = pathBox.back().TopRight.z(); //maximum Z-value
+
+      if (pathBox.back().corner(lanelet::BoundingBox2d::BottomLeft).y() < minY)
+        minY = pathBox.back().corner(lanelet::BoundingBox2d::BottomLeft).y(); //minimum y-value
+
+
+
+      if (pathBox.back().corner(lanelet::BoundingBox2d::BottomLeft).z() < minZ)
+        minZ = pathBox.back().corner(lanelet::BoundingBox2d::BottomLeft).z(); //minimum z-value
+
+
+      if (pathBox.back().corner(lanelet::BoundingBox2d::TopRight).x() > maxX)
+        maxX = pathBox.back().corner(lanelet::BoundingBox2d::TopRight).x(); //maximum x-value
+
+
+        if (pathBox.back().corner(lanelet::BoundingBox2d::TopRight).y() > maxY)
+        maxY = pathBox.back().corner(lanelet::BoundingBox2d::TopRight).y(); //maximum y-value
+
+        if (pathBox.back().corner(lanelet::BoundingBox2d::TopRight).z() > maxZ)
+        maxZ = pathBox.back().corner(lanelet::BoundingBox2d::TopRight).z(); //maximum z-value
+
 
       path.pop_back(); //remove the added lanelet from path an reduce pack.size() by 1
   }
@@ -161,5 +167,4 @@ void  WMBroadcaster::routeCallbackMessage(const cav_msgs::RouteConstPtr& route_m
 
   ros::Timer timer = nh.createTimer(ros::Duration(0.1), routeCallbackMessage);/*Sleep for 10 seconds before making another request*/
 }
-
 }  // namespace carma_wm_ctrl
