@@ -1,9 +1,27 @@
+/*
+ * Copyright (C) 2019-2020 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+
+
 #include <ros/ros.h>
 #include <ros/node_handle.h>
 #include <iostream>
 #include <ros/service_client.h>
 #include <ros/service_server.h>
-#include "translated_mock_driver_testing/MockLightBarDriver.hpp"
+#include "mock_lightbar_driver/MockLightBarDriver.hpp"
 #include <cav_srvs/GetLights.h>
 #include <cav_srvs/GetLightsRequest.h>
 #include <cav_srvs/GetLightsResponse.h>
@@ -13,10 +31,10 @@
 #include <cav_msgs/LightBarStatus.h>
 using namespace std;
 
-namespace translated_mock_driver_testing{
+namespace mock_drivers{
       
         
-            MockLightBarDriver::MockLightBarDriver(ros::NodeHandle node)  {
+            MockLightBarDriver::MockLightBarDriver(ros::CARMANodeHandle node)  {
                 
                 
                 lbStatusTopic = "lightbar/light_bar_status";

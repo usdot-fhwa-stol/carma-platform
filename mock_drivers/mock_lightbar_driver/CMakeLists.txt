@@ -13,7 +13,7 @@
 # the License.
 
 cmake_minimum_required(VERSION 2.8.3)
-project(translated_mock_driver_testing)
+project(mock_lightbar_driver)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
@@ -27,6 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
   cav_msgs
   cav_srvs
   roscpp
+  carma_utils
 )
 
 ###################################
@@ -40,7 +41,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  LIBRARIES ui_integration
-   CATKIN_DEPENDS cav_msgs cav_srvs roscpp 
+   CATKIN_DEPENDS cav_msgs cav_srvs roscpp carma_utils
 )
 #  DEPENDS system_lib
 
@@ -60,15 +61,13 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-file(GLOB_RECURSE headers */*.hpp */*.h)
+
 add_executable(${PROJECT_NAME}_node
   src/main.cpp
-  src/MockLightBarDriver.cpp
 )
 
 add_library(${PROJECT_NAME}_lib
-                src/main.cpp
-                src/MockLightBarDriver.cpp
+  src/MockLightBarDriver.cpp
                 
 )
 
@@ -86,12 +85,11 @@ add_dependencies(${PROJECT_NAME}_lib
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
+  ${PROJECT_NAME}_lib
   ${catkin_LIBRARIES}
 )
 
-target_link_libraries(${PROJECT_NAME}_lib
-  ${catkin_LIBRARIES}
-)
+
 
 
 #############
@@ -106,7 +104,7 @@ PATTERN ".svn" EXCLUDE
 )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME}_node
+install(TARGETS ${PROJECT_NAME}_node ${PROJECT_NAME}_lib
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -127,13 +125,10 @@ install(DIRECTORY launch/
 ## Testing ##
 #############
 
-## Add gtest based cpp test target and link libraries
-catkin_add_gtest(${PROJECT_NAME}-test 
-  test/test_mock_light_bar_driver.cpp
-)
 
-if(TARGET ${PROJECT_NAME}-test)
-  target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME}_lib ${catkin_LIBRARIES})
+if (CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(test_mock_light_bar_driver test/mock_lightbar.test test/test_mock_light_bar_driver.cpp)
+  target_link_libraries(test_mock_light_bar_driver  ${PROJECT_NAME}_lib ${catkin_LIBRARIES})
 endif()
-
 

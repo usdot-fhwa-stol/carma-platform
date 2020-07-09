@@ -133,7 +133,7 @@
   </include>
 
   <!-- Simulated Lightbar Driver Node -->
-  <include if="$(arg mock_lightbar)" file="$(find translated_mock_driver_testing)/launch/mock_lightbar_driver_testing.launch"/>
+  <include if="$(arg mock_lightbar)" file="$(find mock_lightbar_driver)/launch/mock_lightbar_driver_testing.launch"/>
 
   
 
