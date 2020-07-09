@@ -22,6 +22,8 @@
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/geometry/BoundingBox.h>
+#include <lanelet2_core/primitives/BoundingBox.h>
 #include <type_traits>
 
 namespace carma_wm_ctrl
@@ -93,14 +95,14 @@ void  WMBroadcaster::routeCallbackMessage(const cav_msgs::RouteConstPtr& route_m
   auto path = lanelet::ConstLanelets(); 
   for(auto id : route_msg->route_path_lanelet_ids) 
   {
-    auto laneLayer = world_model_->getMap()->laneletLayer.get(id);
+    auto laneLayer = current_map_->laneletLayer.get(id);
     path.push_back(laneLayer);
   }
   if(path.size() == 0) return;
   
    /*logic to determine route bounds*/
   std::vector<lanelet::Lanelet> llt; 
-  std::vector<BoundingBox> pathBox; 
+  std::vector<lanelet::BoundingBox2d> pathBox; 
   float minX = 99999;
   float minY = 99999;
   float minZ = 99999;
@@ -110,8 +112,10 @@ void  WMBroadcaster::routeCallbackMessage(const cav_msgs::RouteConstPtr& route_m
 
   while (path.size() != 0) //Continue until there are no more lanelet elements in path
   {
-      llt.push_back(path.back); //Add a lanelet to the vector
-      pathBox.push_back(geometry::boundingBox2d(llt.back)); //Create a bounding box of the added lanelet and add it to the vector
+      llt.push_back(path.back()); //Add a lanelet to the vector
+
+
+      pathBox.push_back(lanelet::BoundingBox2d(llt.back())); //Create a bounding box of the added lanelet and add it to the vector
 
       if (pathBox.back().BottomLeft.x() < minX) 
          minX = pathBox.back().BottomLeft.x(); //minimum x-value
@@ -152,6 +156,8 @@ void  WMBroadcaster::routeCallbackMessage(const cav_msgs::RouteConstPtr& route_m
 
   msg_callBack.publish(cR); /*Publish the message containing the route info (latitude & longitude) this line is a placeholder since 
                             publishing is handled by WMBroadcasterNode.h*/
+
+  auto nh = new WMBroadcasterNode();
 
   ros::Timer timer = nh.createTimer(ros::Duration(0.1), routeCallbackMessage);/*Sleep for 10 seconds before making another request*/
 }
