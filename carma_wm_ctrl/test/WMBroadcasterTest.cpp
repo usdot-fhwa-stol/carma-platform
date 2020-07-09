@@ -136,6 +136,13 @@ TEST(WMBroadcaster, geofenceCallback)
   
 TEST(WMBroadcaster, routeCallbackMessage) 
 {
+  cav_msgs::Route route_msg;
+  cav_msgs::RouteConstPtr rpt(new cav_msgs::Route(route_msg));
+  
+  route_msg.route_path_lanelet_ids.push_back(220); //Add ids to the route_path_lanelet_ids array
+  route_msg.route_path_lanelet_ids.push_back(232);
+  route_msg.route_path_lanelet_ids.push_back(248);
+
   WMBroadcaster wmb(
       [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
         // Publish map callback
@@ -144,15 +151,10 @@ TEST(WMBroadcaster, routeCallbackMessage)
 
         ASSERT_EQ(4, map->laneletLayer.size());  // Verify the map can be decoded
 
-        base_map_call_count++;
+        
       }, std::make_unique<TestTimerFactory>());
       
-        cav_msgs::Route route_msg;
-    route_msg.route_path_lanelet_ids.push_back(220); //Add ids to the route_path_lanelet_ids array
-    route_msg.route_path_lanelet_ids.push_back(232);
-    route_msg.route_path_lanelet_ids.push_back(248);
-
-  cav_msgs::RouteConstPtr rpt(new cav_msgs::Route(route_msg));
+ 
 
   bool flag = false;
   
@@ -160,8 +162,7 @@ TEST(WMBroadcaster, routeCallbackMessage)
   wmb.routeCallbackMessage(rpt);
 
   ASSERT_FALSE(flag);
-
-  
 }
+
 
 }  // namespace carma_wm_ctrl
