@@ -4,7 +4,7 @@ namespace carma_wm {
 
     namespace collision_detection {
 
-        std::vector<cav_msgs::RoadwayObstacle> WorldCollisionDetection(const cav_msgs::RoadwayObstacleList& rwol, const cav_msgs::TrajectoryPlan& tp, const geometry_msgs::Vector3& size, const geometry_msgs::Twist& veloctiy, const double  target_time){
+        std::vector<cav_msgs::RoadwayObstacle> WorldCollisionDetection(const cav_msgs::RoadwayObstacleList& rwol, const cav_msgs::TrajectoryPlan& tp, const geometry_msgs::Vector3& size, const geometry_msgs::Twist& veloctiy, const __uint64_t target_time){
 
             std::vector<cav_msgs::RoadwayObstacle> rwo_collison;
 
@@ -32,7 +32,7 @@ namespace carma_wm {
 
             // Add future polygons for roadway obstacle
             for (auto i : rwo.object.predictions){
-                std::tuple <__uint32_t,polygon_t> future_object(i.header.stamp.nsec/1000,ObjectToBoostPolygon<polygon_t>(i.predicted_position, rwo.object.size));
+                std::tuple <__uint64_t,polygon_t> future_object(i.header.stamp.toNSec() / 1000,ObjectToBoostPolygon<polygon_t>(i.predicted_position, rwo.object.size));
                 
                 mo.fp.push_back(future_object);
             }
@@ -84,7 +84,7 @@ namespace carma_wm {
                 trajectory_pose.orientation.z = orientation.getZ();
                 trajectory_pose.orientation.w = orientation.getW();
 
-                std::tuple <__uint32_t,polygon_t> future_object(tp.trajectory_points[i].target_time,ObjectToBoostPolygon<polygon_t>(trajectory_pose, size));
+                std::tuple <__uint64_t,polygon_t> future_object(tp.trajectory_points[i].target_time,ObjectToBoostPolygon<polygon_t>(trajectory_pose, size));
 
                 v.fp.push_back(future_object);
             }
@@ -92,7 +92,7 @@ namespace carma_wm {
             return v;
         };
 
-        bool DetectCollision(collision_detection::MovingObject const &ob_1, collision_detection::MovingObject const &ob_2, double  target_time) {            
+        bool DetectCollision(collision_detection::MovingObject const &ob_1, collision_detection::MovingObject const &ob_2, __uint64_t target_time) {            
             
             collision_detection::MovingObject ob_1_after = PredictObjectPosition(ob_1,target_time);
 
@@ -118,7 +118,7 @@ namespace carma_wm {
             return false;
         };
 
-        collision_detection::MovingObject PredictObjectPosition(collision_detection::MovingObject const &op, double target_time){
+        collision_detection::MovingObject PredictObjectPosition(collision_detection::MovingObject const &op, __uint64_t target_time){
             
             int union_polygon_size = 0;
             for (auto i : op.fp){

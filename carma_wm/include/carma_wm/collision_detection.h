@@ -44,7 +44,7 @@ namespace carma_wm {
         struct MovingObject {
             polygon_t object_polygon;
             geometry_msgs::Vector3 linear_velocity;
-            std::vector<std::tuple <__uint32_t,polygon_t>> fp;
+            std::vector<std::tuple <__uint64_t,polygon_t>> fp;
         };
 
         /*!
@@ -61,7 +61,7 @@ namespace carma_wm {
         * \param target_time amount of unit of time in future to look for collision in seconds
         * \return A list of obstacles the provided trajectory plan collides with
         */
-        std::vector<cav_msgs::RoadwayObstacle> WorldCollisionDetection(const cav_msgs::RoadwayObstacleList& rwol, const cav_msgs::TrajectoryPlan& tp, const geometry_msgs::Vector3& size, const geometry_msgs::Twist& veloctiy,const double  target_time);
+        std::vector<cav_msgs::RoadwayObstacle> WorldCollisionDetection(const cav_msgs::RoadwayObstacleList& rwol, const cav_msgs::TrajectoryPlan& tp, const geometry_msgs::Vector3& size, const geometry_msgs::Twist& veloctiy,const __uint64_t target_time);
         
         /*! \brief Convert RodwayObstable object to the collision_detection::MovingObject 
         * \param rwo A RoadwayObstacle
@@ -83,7 +83,7 @@ namespace carma_wm {
         * TODO this function can be optimize due the fact that in large target_time returning the entire volum for path will result in false positive. 
         */
 
-        collision_detection::MovingObject PredictObjectPosition(collision_detection::MovingObject const &op,double  target_time);
+        collision_detection::MovingObject PredictObjectPosition(collision_detection::MovingObject const &op,__uint64_t target_time);
         
         /*! \brief .check Intersection between polygons
         */
@@ -93,7 +93,7 @@ namespace carma_wm {
         /*! \brief .function is used in WorldCollisionDetection to detection collision between two Moving Object
         */
 
-        bool DetectCollision(collision_detection::MovingObject const &ob_1, collision_detection::MovingObject const &ob_2, double  target_time);
+        bool DetectCollision(collision_detection::MovingObject const &ob_1, collision_detection::MovingObject const &ob_2, __uint64_t target_time);
         
         /*! \brief function to create a polygon representing and object
         */

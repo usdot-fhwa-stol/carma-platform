@@ -70,7 +70,6 @@ namespace carma_wm
     mo2 = {ob2, linear_velocity};
 
     ASSERT_FALSE(collision_detection::CheckPolygonIntersection(mo1, mo2));
-
   }
 
 
@@ -143,19 +142,21 @@ namespace carma_wm
     future_polygons.push_back(ob3);
     future_polygons.push_back(ob4);
 
-    std::tuple <__uint32_t,collision_detection::polygon_t> fo1(1.0,ob2);
-    std::tuple <__uint32_t,collision_detection::polygon_t> fo2(2.0,ob3);
-    std::tuple <__uint32_t,collision_detection::polygon_t> fo3(3.0,ob4);
+    std::tuple <__uint64_t,collision_detection::polygon_t> fo1(1.0,ob2);
+    std::tuple <__uint64_t,collision_detection::polygon_t> fo2(2.0,ob3);
+    std::tuple <__uint64_t,collision_detection::polygon_t> fo3(3.0,ob4);
 
-    std::vector<std::tuple <__uint32_t,collision_detection::polygon_t>> future_polygons_tuple;
+    std::vector<std::tuple <__uint64_t,collision_detection::polygon_t>> future_polygons_tuple;
     future_polygons_tuple.push_back(fo1);
     future_polygons_tuple.push_back(fo2);
     future_polygons_tuple.push_back(fo3);
 
 
     collision_detection::MovingObject mo1 = {ob1, linear_velocity, future_polygons_tuple};
+
+    __uint64_t target_time = 3;
     
-    collision_detection::MovingObject result = collision_detection::PredictObjectPosition(mo1,3);
+    collision_detection::MovingObject result = collision_detection::PredictObjectPosition(mo1,target_time);
 
     std::vector<collision_detection::point_t> points = result.object_polygon.outer();
 
@@ -209,18 +210,17 @@ namespace carma_wm
     future_polygons_1.push_back(ob4);
 
 
-    std::tuple <__uint32_t,collision_detection::polygon_t> fo1(1.0,ob2);
-    std::tuple <__uint32_t,collision_detection::polygon_t> fo2(2.0,ob3);
-    std::tuple <__uint32_t,collision_detection::polygon_t> fo3(3.0,ob4);
+    std::tuple <__uint64_t,collision_detection::polygon_t> fo1(1.0,ob2);
+    std::tuple <__uint64_t,collision_detection::polygon_t> fo2(2.0,ob3);
+    std::tuple <__uint64_t,collision_detection::polygon_t> fo3(3.0,ob4);
 
-    std::vector<std::tuple <__uint32_t,collision_detection::polygon_t>> future_polygons_tuple_1;
+    std::vector<std::tuple <__uint64_t,collision_detection::polygon_t>> future_polygons_tuple_1;
     future_polygons_tuple_1.push_back(fo1);
     future_polygons_tuple_1.push_back(fo2);
     future_polygons_tuple_1.push_back(fo3);
 
 
     collision_detection::MovingObject mo1 = {ob1, linear_velocity, future_polygons_tuple_1};
-
 
     collision_detection::polygon_t ob5;
     collision_detection::polygon_t ob6;
@@ -247,12 +247,11 @@ namespace carma_wm
     future_polygons_2.push_back(ob7);
     future_polygons_2.push_back(ob8);
 
+    std::tuple <__uint64_t,collision_detection::polygon_t> fo6(1.0,ob6);
+    std::tuple <__uint64_t,collision_detection::polygon_t> fo7(2.0,ob7);
+    std::tuple <__uint64_t,collision_detection::polygon_t> fo8(3.0,ob8);
 
-    std::tuple <__uint32_t,collision_detection::polygon_t> fo6(1.0,ob6);
-    std::tuple <__uint32_t,collision_detection::polygon_t> fo7(2.0,ob7);
-    std::tuple <__uint32_t,collision_detection::polygon_t> fo8(3.0,ob8);
-
-    std::vector<std::tuple <__uint32_t,collision_detection::polygon_t>> future_polygons_tuple_2;
+    std::vector<std::tuple <__uint64_t,collision_detection::polygon_t>> future_polygons_tuple_2;
     future_polygons_tuple_2.push_back(fo6);
     future_polygons_tuple_2.push_back(fo7);
     future_polygons_tuple_2.push_back(fo8);
@@ -274,7 +273,7 @@ namespace carma_wm
 
     
     geometry_msgs::Twist veloctiy;
-    int target_time = 3;
+    __uint64_t target_time = 3;
 
     geometry_msgs::Vector3 linear_velocity;
     linear_velocity.x = 0;
@@ -395,7 +394,7 @@ namespace carma_wm
     cav_msgs::TrajectoryPlan tp;
 
     geometry_msgs::Twist veloctiy;
-    int target_time = 3;
+    const __uint64_t target_time = 3;
 
     geometry_msgs::Vector3 linear_velocity;
     linear_velocity.x = 0;
@@ -502,6 +501,5 @@ namespace carma_wm
     ASSERT_EQ(result.size(),0);
 
   }
-
 
 }  // namespace carma_wm
