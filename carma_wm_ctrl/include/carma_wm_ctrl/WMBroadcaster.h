@@ -25,8 +25,22 @@
 #include <boost/icl/interval_set.hpp>
 #include <unordered_set>
 #include "ros/ros.h"
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/primitives/Lanelet.h>
+#include <autoware_lanelet2_msgs/MapBin.h>
+#include <lanelet2_extension/utility/message_conversion.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
 #include <carma_wm_ctrl/GeofenceScheduler.h>
-
+#include <lanelet2_core/geometry/BoundingBox.h>
+#include <lanelet2_core/primitives/BoundingBox.h>
+#include <carma_wm/WMListener.h>
+#include <carma_wm/WorldModel.h>
+#include <cav_msgs/Route.h>
+#include <cav_msgs/ControlRequest.h>
+#include <cav_msgs/ControlBounds.h>
+#include <lanelet2_extension/projection/mgrs_projector.h>
+#include <autoware_lanelet2_msgs/MapBin.h>
 #include "MapConformer.h"
 
 namespace carma_wm_ctrl
