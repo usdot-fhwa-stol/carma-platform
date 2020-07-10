@@ -248,11 +248,11 @@ class MobilityMessages{
             return op1;
         }
 
-        cav_msgs::MobilityOperation getOperation1(){
+        cav_msgs::MobilityOperation getOperation2(){
             return op2;
         }
 
-        cav_msgs::MobilityOperation getOperation1(){
+        cav_msgs::MobilityOperation getOperation3(){
             return op3;
         }
 
