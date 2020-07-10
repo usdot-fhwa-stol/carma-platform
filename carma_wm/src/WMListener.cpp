@@ -30,7 +30,7 @@ WMListener::WMListener(bool multi_thread) : worker_(std::unique_ptr<WMListenerWo
     ROS_DEBUG_STREAM("WMListener: Using multi-threaded subscription");
     nh_.setCallbackQueue(&async_queue_);
   }
-
+  map_update_sub_= nh_.subscribe("map_update", 1, &WMListener::mapUpdateCallback, this);
   map_sub_ = nh_.subscribe("semantic_map", 1, &WMListenerWorker::mapCallback, worker_.get());
   // route_sub_ = nh_.subscribe("route", 1, &WMListenerWorker::routeCallback, worker_.get()); // TODO uncomment when
   // route message is defined
@@ -55,6 +55,12 @@ WorldModelConstPtr WMListener::getWorldModel()
 {
   const std::lock_guard<std::mutex> lock(mw_mutex_);
   return worker_->getWorldModel();
+}
+
+void WMListener::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg)
+{
+  const std::lock_guard<std::mutex> lock(mw_mutex_);
+  worker_->mapUpdateCallback(geofence_msg);
 }
 
 void WMListener::setMapCallback(std::function<void()> callback)

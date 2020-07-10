@@ -19,7 +19,7 @@
 #include <mutex>
 #include <memory>
 #include <unordered_map>
-#include "Geofence.h"
+#include <carma_wm_ctrl/Geofence.h>
 #include "Timer.h"
 #include "TimerFactory.h"
 

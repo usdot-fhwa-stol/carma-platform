@@ -159,4 +159,5 @@ inline void addDisjointRoute(CARMAWorldModel& cmw)
   cmw.setRoute(route_ptr);
   cmw.setMap(map);
 }
+
 }  // namespace carma_wm
