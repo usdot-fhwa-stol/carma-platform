@@ -29,9 +29,11 @@ int main(int argc, char** argv){
     ros::CARMANodeHandle n;
     MockLightBarDriver f (n);
     ROS_INFO("running"); 
+    ros::Rate loop_rate(10);
     while (ros::ok()){
         f.publishData();
         f.publishDriverStatus();
         ros::spinOnce();
+        loop_rate.sleep();
     }
 }
