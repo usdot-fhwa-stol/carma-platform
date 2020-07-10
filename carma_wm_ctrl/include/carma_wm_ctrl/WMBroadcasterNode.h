@@ -60,6 +60,9 @@ private:
   ros::Publisher map_pub_;
 
   ros::Subscriber base_map_sub_;
+  
+  ros::Subscriber routeCallMsg_sub_;
+
 
   WMBroadcaster wmb_;
 };
