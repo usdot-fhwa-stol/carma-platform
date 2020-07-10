@@ -6,7 +6,7 @@ namespace platooning_tactical_plugin {
                 current_speed_(0.0),
                 trajectory_time_length_(6.0),
                 trajectory_point_spacing_(0.1) {}
-// @SONAR_STOP
+// @SONAR_STOP@
     void PlatooningTacticalPlugin::initialize()
     {
         nh_.reset(new ros::CARMANodeHandle());
@@ -47,7 +47,7 @@ namespace platooning_tactical_plugin {
         initialize();
         ros::CARMANodeHandle::spin();
     }
-// @SONAR_START
+// @SONAR_START@
     bool PlatooningTacticalPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp){
         if(req.maneuver_plan.maneuvers[0].lane_following_maneuver.parameters.planning_strategic_plugin == "PlatooningStrategicPlugin") {
 
