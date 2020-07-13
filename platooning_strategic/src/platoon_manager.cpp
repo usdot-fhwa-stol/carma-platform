@@ -374,7 +374,7 @@ namespace platoon_strategic
     }
 
     
-
+     //Currently not used in implementation
     double PlatoonManager::getDistanceFromRouteStart() const{
         return 0.0;
     }
