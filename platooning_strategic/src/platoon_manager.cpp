@@ -205,6 +205,7 @@ namespace platoon_strategic
         // according to the "min_gap" and "max_gap" thresholds, then it should follow its predecessor
         // The following line will not throw exception because the length of downtrack array is larger than two in this case
         double timeHeadwayWithPredecessor = downtrackDistance[downtrackDistance.size() - 2] - downtrackDistance[downtrackDistance.size() - 1];
+        gapWithFront = timeHeadwayWithPredecessor;
         if(insufficientGapWithPredecessor(timeHeadwayWithPredecessor)) {
             ROS_DEBUG("APF algorithm decides there is an issue with the gap with preceding vehicle: " , timeHeadwayWithPredecessor , ". Case Two");
             return platoon.size() - 1;
@@ -382,6 +383,10 @@ namespace platoon_strategic
         return 0.0;
     }
 
+    double PlatoonManager::getDistanceToFrontVehicle() {
+        return gapWithFront;
+    }
+
     double PlatoonManager::getCurrentSpeed() const {
         return current_speed_;
     }
@@ -405,6 +410,8 @@ namespace platoon_strategic
         return current_progress;
     }
 
+    
+
     double PlatoonManager::getCurrentPlatoonLength() {
         if(platoon.size() == 0) {
             return vehicleLength;
@@ -414,9 +421,9 @@ namespace platoon_strategic
     }
 
 
-    void PlatoonManager::cmd_cd(const autoware_msgs::ControlCommandStampedPtr& msg)
+    void PlatoonManager::cmd_cd(const geometry_msgs::TwistStampedConstPtr& msg)
     {
-        command_speed_ = msg->cmd.linear_velocity;
+        command_speed_ = msg->twist.linear.x;
     }
 
     void PlatoonManager::twist_cd(const geometry_msgs::TwistStampedConstPtr& msg)

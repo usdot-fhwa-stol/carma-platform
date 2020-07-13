@@ -30,18 +30,18 @@ namespace platoon_strategic
 
         
         
-        trajectory_srv_ = nh_->advertiseService("plugins/PlatoonStrategicPlugin/plan_trajectory", &PlatoonStrategicPlugin::plan_trajectory_cb, this);
+        maneuver_srv_ = nh_->advertiseService("strategic_plan/plan_maneuvers", &PlatoonStrategicPlugin::plan_maneuver_cb, this);
 
         mob_op_pub_ = nh_->advertise<cav_msgs::MobilityOperation>("mobility_operation_message", 5);
         mob_req_pub_ = nh_->advertise<cav_msgs::MobilityRequest>("mobility_request_message", 5);
                 
         platoon_strategic_plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
-        plugin_discovery_msg_.name = "PlatoonStrategicPlugin";
+        plugin_discovery_msg_.name = "PlatooningStrategicPlugin";
         plugin_discovery_msg_.versionId = "v1.0";
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = false;
-        plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
-        plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
+        plugin_discovery_msg_.type = cav_msgs::Plugin::STRATEGIC;
+        plugin_discovery_msg_.capability = "strategic_plan/plan_maneuvers";
         
         pose_sub_ = nh_->subscribe("current_pose", 1, &PlatoonStrategicPlugin::pose_cb, this);
 
@@ -49,8 +49,6 @@ namespace platoon_strategic
         mob_resp_sub_ = nh_->subscribe("incoming_mobility_response_message", 1, &PlatoonStrategicPlugin::mob_resp_cb, this);
         mob_op_sub_ = nh_->subscribe("incoming_mobility_operation_message", 1, &PlatoonStrategicPlugin::mob_op_cb, this);
 
-        pnh_->param<double>("trajectory_time_length", trajectory_time_length_, 6.0);
-        pnh_->param<std::string>("control_plugin_name", control_plugin_name_, "NULL");
 
         ros::CARMANodeHandle::setSpinCallback([this]() -> bool {
             platoon_strategic_plugin_discovery_pub_.publish(plugin_discovery_msg_);
@@ -110,10 +108,10 @@ namespace platoon_strategic
         pose_msg_ = msg;
     }
 
-    // TODO: fill this function
-    bool PlatoonStrategicPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp){
+    bool PlatoonStrategicPlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp){
         
-
+        cav_msgs::Maneuver new_maneuver = psm_->composeManeuver();
+        resp.new_plan.maneuvers.push_back(new_maneuver);
         return true;
     }
 
@@ -239,9 +237,9 @@ namespace platoon_strategic
         }
 
         // Task 3
-                double desiredJoinGap2 = desiredJoinTimeGap;// * plugin.getManeuverInputs().getCurrentSpeed();?????
+                double desiredJoinGap2 = desiredJoinTimeGap;
                 double maxJoinGap = std::max(desiredJoinGap, desiredJoinGap2);
-                double currentGap;// = plugin.getManeuverInputs().getDistanceToFrontVehicle();????????
+                double currentGap = psm_->pm_->getDistanceToFrontVehicle();
                 ROS_DEBUG("Based on desired join time gap, the desired join distance gap is " , desiredJoinGap2 , " ms");
                 ROS_DEBUG("Since we have max allowed gap as " , desiredJoinGap , " m then max join gap became " , maxJoinGap , " m");
                 ROS_DEBUG("The current gap from radar is " , currentGap , " m");

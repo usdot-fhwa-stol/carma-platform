@@ -53,16 +53,30 @@ namespace platoon_strategic
     public:
 
         PlatooningStateMachine();
-        // PlatooningStateMachine::PlatooningStateMachine(): 
-        //     current_platoon_state(PlatoonState::STANDBY),
-        //     current_plan(PlatoonPlan()){};// ???????????
-        // PlatooningStateMachine(ros::NodeHandle *nh);
+        
+        PlatooningStateMachine(std::shared_ptr<ros::NodeHandle> nh);
 
-
+        /**
+         * Callback method to handle mobility requests which may result in
+         * state changing, trajectory re-plan and platooning info updates. 
+         * @param msg the detailed proposal from other vehicles
+         * @return simple yes/no response to the incoming proposal
+         */
         MobilityRequestResponse onMobilityRequestMessage(cav_msgs::MobilityRequest &msg);
+
+        /**
+         * Callback method to handle mobility response.
+         * @param msg response for the current plan from other vehicles
+         */
         void onMobilityResponseMessage(cav_msgs::MobilityResponse &msg);
+
+        /**
+         * Callback method to handle mobility operation.
+         * @param msg the necessary operational info from other vehicles
+         */
         void onMobilityOperationMessage(cav_msgs::MobilityOperation &msg);
-        cav_msgs::Maneuver planManeuver(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time current_time);
+
+        cav_msgs::Maneuver composeManeuver();
         
         PlatoonState current_platoon_state;
         std::string applicantID = "";
@@ -70,12 +84,16 @@ namespace platoon_strategic
 
         std::string targetLeaderId = "";
 
-        PlatoonManager *pm_;
+        PlatoonManager *pm_;//{nh_};
 
 
     private:
     
-        ros::NodeHandle *nh_;
+        std::shared_ptr<ros::NodeHandle> nh_;
+
+        ros::Publisher mob_req_pub_;
+
+        double mvr_duration_ = 16.0;
         
         MobilityRequestResponse onMobilityRequestMessageFollower(cav_msgs::MobilityRequest &msg) const;
         void onMobilityResponseMessageFollower(cav_msgs::MobilityResponse &msg) const;

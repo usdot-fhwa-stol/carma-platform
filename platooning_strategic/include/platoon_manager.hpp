@@ -103,6 +103,7 @@ namespace platoon_strategic
 
 
         double getDistanceFromRouteStart() const;
+        double getDistanceToFrontVehicle();
         double getCurrentSpeed() const;
         double getCommandSpeed();
         double getCurrentDowntrackDistance() const;
@@ -122,7 +123,6 @@ namespace platoon_strategic
 
     std::shared_ptr<ros::NodeHandle> nh_;
 
-    
 
     double minGap = 22.0;
     double maxGap = 32.0;
@@ -135,6 +135,8 @@ namespace platoon_strategic
     double upperBoundary = 1.7 ;
 
     double vehicleLength = 5.0;  // m
+
+    double gapWithFront = 0.0;
 
 
     std::string algorithmType = "APF_ALGORITHM";
@@ -153,7 +155,7 @@ namespace platoon_strategic
 
 
     void twist_cd(const geometry_msgs::TwistStampedConstPtr& msg);
-    void cmd_cd(const autoware_msgs::ControlCommandStampedPtr& msg);
+    void cmd_cd(const geometry_msgs::TwistStampedConstPtr& msg);
     void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
 
     std::string HostMobilityId = "hostid";

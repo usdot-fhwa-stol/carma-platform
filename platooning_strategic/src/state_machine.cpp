@@ -18,9 +18,13 @@
 namespace platoon_strategic
 {
 
-    PlatooningStateMachine::PlatooningStateMachine(): current_platoon_state(PlatoonState::STANDBY){};// ???????????
+    PlatooningStateMachine::PlatooningStateMachine(): current_platoon_state(PlatoonState::STANDBY){};
 
-    // PlatooningStateMachine::PlatooningStateMachine(ros::NodeHandle *nh): nh_(nh) {};
+    PlatooningStateMachine::PlatooningStateMachine(std::shared_ptr<ros::NodeHandle> nh): 
+        nh_(nh),
+        current_platoon_state(PlatoonState::STANDBY) {
+            mob_req_pub_ = nh_->advertise<cav_msgs::MobilityRequest>("mobility_request_message", 5);
+        };
 
     MobilityRequestResponse PlatooningStateMachine::onMobilityRequestMessage(cav_msgs::MobilityRequest &msg){
         switch (current_platoon_state)
@@ -106,8 +110,29 @@ namespace platoon_strategic
         
     }
 
-    cav_msgs::Maneuver PlatooningStateMachine::planManeuver(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time current_time){
+    cav_msgs::Maneuver PlatooningStateMachine::composeManeuver(){
+        cav_msgs::Maneuver maneuver_msg;
         
+
+        if (current_platoon_state == PlatoonState::FOLLOWER){
+            ros::Time current_time = ros::Time::now();
+            maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+            double start_dist = pm_->getCurrentDowntrackDistance();
+            maneuver_msg.lane_following_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::PLATOONING;
+            maneuver_msg.lane_following_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
+            maneuver_msg.lane_following_maneuver.parameters.planning_tactical_plugin = "PlatooningTacticalPlugin";
+            maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin = "PlatooningStrategicPlugin";
+            maneuver_msg.lane_following_maneuver.start_dist = start_dist;
+            maneuver_msg.lane_following_maneuver.start_speed = pm_->command_speed_;
+            maneuver_msg.lane_following_maneuver.start_time = current_time;
+            maneuver_msg.lane_following_maneuver.end_dist = start_dist + (mvr_duration_*pm_->command_speed_);
+            maneuver_msg.lane_following_maneuver.end_speed = pm_->command_speed_;
+            // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
+            maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration(mvr_duration_);
+            maneuver_msg.lane_following_maneuver.lane_id = "";
+        }
+        
+        return maneuver_msg;
     }
 
 
@@ -241,8 +266,7 @@ namespace platoon_strategic
         //                 // Change to candidate follower state and request a new plan to catch up with the front platoon
                         current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
                         targetLeaderId = current_plan.peerId;
-        //                 plugin.setState(new CandidateFollowerState(plugin, log, pluginServiceLocator, currentPlan.peerId, potentialNewPlatoonId, this.trajectoryEndLocation));
-        //                 pluginServiceLocator.getArbitratorService().requestNewPlan(this.trajectoryEndLocation);
+                        
                     } else{
                         ROS_DEBUG("Received negative response for plan id = " , current_plan.planId);
                         // Forget about the previous plan totally
@@ -289,7 +313,7 @@ namespace platoon_strategic
                 // We are trying to validate is the platoon rear is right in front of the host vehicle
                 if(isVehicleRightInFront(rearVehicleBsmId, rearVehicleDtd)) {
                     ROS_DEBUG("Found a platoon with id = " , platoonId , " in front of us.");
-                    cav_msgs::MobilityRequest request;// = plugin.mobilityRequestPublisher.newMessage();
+                    cav_msgs::MobilityRequest request;
                     std::string planId = boost::uuids::to_string(boost::uuids::random_generator()());
                     long currentTime = ros::Time::now().toSec();
                     request.header.plan_id = planId;
@@ -312,10 +336,11 @@ namespace platoon_strategic
                     std::string strategyParamsString = fmter.str(); 
                     request.strategy_params = strategyParamsString;
                     request.urgency = 50;
+                    mob_req_pub_.publish(request);
                     PlatoonPlan* new_plan = new PlatoonPlan(true, currentTime, planId, senderId);
                     current_plan = *new_plan;
 
-                    // plugin.mobilityRequestPublisher.publish(request);
+                    
                     ROS_DEBUG("Publishing request to leader " , senderId , " with params " , request.strategy_params , " and plan id = " , request.header.plan_id);
                     // this.potentialNewPlatoonId = platoonId;
                 } else{

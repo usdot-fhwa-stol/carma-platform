@@ -1,4 +1,4 @@
-#pragma once
+
 
 /*
  * Copyright (C) 2019-2020 LEIDOS.
@@ -15,6 +15,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
+#pragma once
 
 #include <vector>
 #include <math.h>
@@ -86,7 +88,7 @@ namespace platoon_strategic
 
 
             // service callbacks for carma trajectory planning
-            bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp);
+            bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
 
             void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
 
@@ -95,7 +97,6 @@ namespace platoon_strategic
             void mob_op_cb(const cav_msgs::MobilityOperation& msg);
 
             // ros service servers
-            ros::ServiceServer trajectory_srv_;
             ros::ServiceServer maneuver_srv_;
 
             // Plugin discovery message
