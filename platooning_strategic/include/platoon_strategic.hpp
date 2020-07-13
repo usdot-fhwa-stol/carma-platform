@@ -152,10 +152,10 @@ namespace platoon_strategic
             double desiredJoinTimeGap = 4.0; // s
 
 
-            std::string MOBILITY_STRATEGY = "Carma/Platooning";
-            std::string OPERATION_INFO_TYPE = "INFO";
-            std::string OPERATION_STATUS_TYPE = "STATUS";
-            std::string OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%1%,DTD:%2%,SPEED:%3%";
+            const std::string MOBILITY_STRATEGY = "Carma/Platooning";
+            const std::string OPERATION_INFO_TYPE = "INFO";
+            const std::string OPERATION_STATUS_TYPE = "STATUS";
+            const std::string OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%1%,DTD:%2%,SPEED:%3%";
 
 
             // Check these values

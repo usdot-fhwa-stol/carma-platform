@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2019-2020 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 #include "platoon_manager.hpp"
 #include <boost/algorithm/string.hpp>
 #include <ros/ros.h>
@@ -8,7 +23,7 @@ namespace platoon_strategic
 {
     PlatoonManager::PlatoonManager(){}
 
-    PlatoonManager::PlatoonManager(ros::NodeHandle *nh): nh_(nh) {
+    PlatoonManager::PlatoonManager(std::shared_ptr<ros::NodeHandle> nh): nh_(nh) {
                 twist_sub_ = nh_->subscribe("current_velocity", 1, &PlatoonManager::twist_cd, this);
                 cmd_sub_ = nh_->subscribe("command_velocity", 1, &PlatoonManager::cmd_cd, this);
                 pose_sub_ = nh_->subscribe("current_pose", 1, &PlatoonManager::pose_cb, this);
@@ -128,13 +143,23 @@ namespace platoon_strategic
             // return the first vehicle in the platoon as default if no valid algorithm applied
             *leader = platoon[0];
             if (algorithmType == "APF_ALGORITHM"){
-                while (!ros::isShuttingDown()){
                     int newLeaderIndex = allPredecessorFollowing();
+                    
                     if(newLeaderIndex < platoon.size() && newLeaderIndex >= 0) {
-
+                        *leader = platoon[newLeaderIndex];
+                        ROS_DEBUG("APF output: " , leader->staticId);
+                        previousFunctionalLeaderIndex = newLeaderIndex;
+                        previousFunctionalLeaderID = leader->staticId;
+                    }
+                    else {
+                        // it might happened when the subject vehicle gets far away from the preceding vehicle so we follow the one in front
+                        *leader = platoon[platoon.size() - 1];
+                        previousFunctionalLeaderIndex = platoon.size() - 1;
+                        previousFunctionalLeaderID = leader->staticId;
+                        ROS_DEBUG("Based on the output of APF algorithm we start to follow our predecessor.");
                     }
 
-                }
+
 
                 return *leader;
             }
@@ -231,7 +256,7 @@ namespace platoon_strategic
                     } else {
                         ///***** Case Five *****///
                         // We may not switch leadership to another vehicle further downstream because some criteria are not satisfied
-                        ROS_DEBUG("APF found two conditions for assigning leadership further downstream are noy satisfied. Case Five.");
+                        ROS_DEBUG("APF found two conditions for assigning leadership further downstream are not satisfied. Case Five.");
                         ROS_DEBUG("condition1: " , condition1 , " & condition2: " , condition2);
                         return previousFunctionalLeaderIndex;
                     }

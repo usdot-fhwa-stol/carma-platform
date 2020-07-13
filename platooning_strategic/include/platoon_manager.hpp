@@ -45,7 +45,7 @@ namespace platoon_strategic
 
         PlatoonManager();
 
-        PlatoonManager(ros::NodeHandle *nh);
+        PlatoonManager(std::shared_ptr<ros::NodeHandle> nh);
 
         ros::Subscriber twist_sub_;
         ros::Subscriber cmd_sub_;
@@ -113,14 +113,16 @@ namespace platoon_strategic
         std::string currentPlatoonID;
         bool isFollower;
 
+        double current_speed_;
+        double command_speed_;
+
 
     private:
     
 
-    ros::NodeHandle *nh_;
+    std::shared_ptr<ros::NodeHandle> nh_;
 
-    double current_speed_;
-    double command_speed_;
+    
 
     double minGap = 22.0;
     double maxGap = 32.0;

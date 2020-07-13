@@ -1,3 +1,4 @@
+ 
 #include <cav_msgs/MobilityRequest.h>
 #include <cav_msgs/MobilityResponse.h>
 #include <cav_msgs/MobilityOperation.h>
@@ -85,7 +86,7 @@ class MobilityMessages{
             plan.type = 2;
             
             //set up header
-            header.sender_id = "sender_id5";
+            header.sender_id = "11";
             header.sender_bsm_id = "sender_bsm_id5";
             header.recipient_id = "recipient_id5";
             header.plan_id = "plan_id5";
@@ -93,8 +94,8 @@ class MobilityMessages{
             
             //set up mobility request
             req2.header = header;
-            req2.strategy = "CARMA/platooning2";
-            req2.plan_type = plan;
+            req2.strategy = "CARMA/platooning";
+            req2.plan_type.type = cav_msgs::PlanType::PLATOON_FOLLOWER_JOIN;
             req2.urgency = 1000;
             req2.location = location;
             req2.strategy_params = "param1 param2 param3 param4";
@@ -191,8 +192,8 @@ class MobilityMessages{
             header.timestamp = 44444444;
 
             op1.header = header;
-            op1.strategy = "strategy1";
-            op1.strategy_params = "param1 param2 param3";
+            op1.strategy = "STATUS";
+            op1.strategy_params = "CMDSPEED:1.0,DTD:1.0,SPEED:1.0";
 
             //set up header
             header.sender_id = "sender_id12";

@@ -101,9 +101,13 @@ install(DIRECTORY
 #############
 ## Testing ##
 #############
+
 catkin_add_gmock(${PROJECT_NAME}-test
   test/test_platoon_manager.cpp
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
-target_link_libraries(${PROJECT_NAME}-test platoon_strategic_plugin_lib ${catkin_LIBRARIES})
+  test/test_state_machine.cpp
+  test/mobility_messages.cpp
+  test/main_test.cpp)
 
-
+if(TARGET ${PROJECT_NAME}-test)
+  target_link_libraries(${PROJECT_NAME}-test platoon_strategic_plugin_lib ${catkin_LIBRARIES})
+endif()

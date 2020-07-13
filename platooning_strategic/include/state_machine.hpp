@@ -17,10 +17,12 @@
 namespace platoon_strategic
 {
     struct PlatoonPlan {
+        
         bool valid;
         long planStartTime;
         std::string planId;
         std::string peerId;
+        PlatoonPlan():valid(""), planStartTime(0), planId(""), peerId("") {} ;
         PlatoonPlan(bool valid, long planStartTime, std::string planId, std::string peerId): 
             valid(valid), planStartTime(planStartTime), planId(planId), peerId(peerId) {}  
     };
@@ -50,8 +52,10 @@ namespace platoon_strategic
     {
     public:
 
-        // PlatooningStateMachine();
-
+        PlatooningStateMachine();
+        // PlatooningStateMachine::PlatooningStateMachine(): 
+        //     current_platoon_state(PlatoonState::STANDBY),
+        //     current_plan(PlatoonPlan()){};// ???????????
         // PlatooningStateMachine(ros::NodeHandle *nh);
 
 
@@ -61,7 +65,7 @@ namespace platoon_strategic
         cav_msgs::Maneuver planManeuver(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time current_time);
         
         PlatoonState current_platoon_state;
-        std::string applicantID;
+        std::string applicantID = "";
         PlatoonPlan current_plan;
 
         std::string targetLeaderId = "";
@@ -98,17 +102,19 @@ namespace platoon_strategic
 
         
         bool isVehicleRightInFront(std::string rearVehicleBsmId, double downtrack) const;
+
+        std::mutex plan_mutex_;
+
         double maxAllowedJoinTimeGap = 15.0;
         double maxAllowedJoinGap = 90;
         int maxPlatoonSize = 10;
         double vehicleLength = 5.0;
-        std::mutex plan_mutex_;
         int infoMessageInterval;
-        std::string targetPlatoonId;
-        std::string OPERATION_INFO_TYPE = "INFO";
-        std::string OPERATION_STATUS_TYPE = "STATUS";
-        std::string JOIN_AT_REAR_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";
-        std::string  MOBILITY_STRATEGY = "Carma/Platooning";
+        const std::string targetPlatoonId;
+        const std::string OPERATION_INFO_TYPE = "INFO";
+        const std::string OPERATION_STATUS_TYPE = "STATUS";
+        const std::string JOIN_AT_REAR_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";
+        const std::string  MOBILITY_STRATEGY = "Carma/Platooning";
     };
 }
 
