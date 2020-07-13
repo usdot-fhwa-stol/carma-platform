@@ -56,6 +56,8 @@ namespace platoon_strategic
 
             void run_states();
 
+            PlatooningStateMachine psm_{nh_};
+
         protected:
 
             void run_standby() const;
@@ -67,10 +69,12 @@ namespace platoon_strategic
         
         private:
 
-            PlatooningStateMachine *psm_;
+            
 
-            // node handles
+            // CARMA ROS node handles
             std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
+
+            
 
             long waitingStartTime;
             long candidatestateStartTime;

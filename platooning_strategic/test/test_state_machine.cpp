@@ -15,17 +15,11 @@ TEST(PlatooningStateMachineTest, test1)
     std::vector<platoon_strategic::PlatoonMember> cur_pl;
     
     platoon_strategic::PlatooningStateMachine psm;
-    platoon_strategic::PlatoonManager *pm;
+    platoon_strategic::PlatoonManager pm;
     
-    // pm->platoon = cur_pl;
-    // pm->isFollower = true;
-    // pm->platoonSize = 1;
-    // pm->leaderID = "0";
-    // pm->currentPlatoonID = "a";
 
     psm.pm_ = pm;
 
-    // psm.pm_->platoon = cur_pl;
 
     psm.current_platoon_state = platoon_strategic::PlatoonState::FOLLOWER;
 
@@ -34,14 +28,6 @@ TEST(PlatooningStateMachineTest, test1)
 
     psm.onMobilityOperationMessage(res1);
 
-    // cav_msgs::MobilityRequest r1;
-    // psm.onMobilityRequestMessage(r1);
-
-    // cav_msgs::MobilityResponse r1;
-    // psm.onMobilityResponseMessage(r1);
-
-
-    // EXPECT_EQ(1, psm.pm_->platoonSize);
 
     
 }
@@ -51,11 +37,10 @@ TEST(PlatooningStateMachineTest, test2)
     std::vector<platoon_strategic::PlatoonMember> cur_pl;
     
     platoon_strategic::PlatooningStateMachine psm;
-    platoon_strategic::PlatoonManager *pm;
+    platoon_strategic::PlatoonManager pm;
 
     psm.pm_ = pm;
 
-    // psm.pm_->platoon = cur_pl;
 
     psm.current_platoon_state = platoon_strategic::PlatoonState::LEADER;
 
@@ -64,11 +49,6 @@ TEST(PlatooningStateMachineTest, test2)
 
     platoon_strategic::MobilityRequestResponse out = psm.onMobilityRequestMessage(r1);
 
-    // cav_msgs::MobilityRequest r1;
-    // psm.onMobilityRequestMessage(r1);
-
-    // cav_msgs::MobilityResponse r1;
-    // psm.onMobilityResponseMessage(r1);
 
 
     EXPECT_EQ(2, out);
@@ -81,11 +61,10 @@ TEST(PlatooningStateMachineTest, test3)
     std::vector<platoon_strategic::PlatoonMember> cur_pl;
     
     platoon_strategic::PlatooningStateMachine psm;
-    platoon_strategic::PlatoonManager *pm;
+    platoon_strategic::PlatoonManager pm;
 
     psm.pm_ = pm;
     psm.applicantID = "11";
-    // psm.pm_->platoon = cur_pl;
 
     psm.current_platoon_state = platoon_strategic::PlatoonState::LEADERWAITING;
 
@@ -94,11 +73,6 @@ TEST(PlatooningStateMachineTest, test3)
 
     platoon_strategic::MobilityRequestResponse out = psm.onMobilityRequestMessage(r1);
 
-    // cav_msgs::MobilityRequest r1;
-    // psm.onMobilityRequestMessage(r1);
-
-    // cav_msgs::MobilityResponse r1;
-    // psm.onMobilityResponseMessage(r1);
 
     EXPECT_EQ(2, psm.current_platoon_state);
     EXPECT_EQ(0, out);
@@ -111,11 +85,10 @@ TEST(PlatooningStateMachineTest, test4)
     std::vector<platoon_strategic::PlatoonMember> cur_pl;
     
     platoon_strategic::PlatooningStateMachine psm;
-    platoon_strategic::PlatoonManager *pm;
+    platoon_strategic::PlatoonManager pm;
 
     psm.pm_ = pm;
     psm.applicantID = "11";
-    // psm.pm_->platoon = cur_pl;
 
     psm.current_platoon_state = platoon_strategic::PlatoonState::CANDIDATEFOLLOWER;
 

@@ -54,7 +54,7 @@ namespace platoon_strategic
 
         PlatooningStateMachine();
         
-        PlatooningStateMachine(std::shared_ptr<ros::NodeHandle> nh);
+        PlatooningStateMachine(std::shared_ptr<ros::CARMANodeHandle> nh);
 
         /**
          * Callback method to handle mobility requests which may result in
@@ -84,12 +84,12 @@ namespace platoon_strategic
 
         std::string targetLeaderId = "";
 
-        PlatoonManager *pm_;//{nh_};
+        PlatoonManager pm_{nh_};
 
 
     private:
     
-        std::shared_ptr<ros::NodeHandle> nh_;
+        std::shared_ptr<ros::CARMANodeHandle> nh_;
 
         ros::Publisher mob_req_pub_;
 

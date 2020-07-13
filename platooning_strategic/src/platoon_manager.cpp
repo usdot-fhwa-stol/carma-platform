@@ -110,12 +110,12 @@ namespace platoon_strategic
 
         if(!isExisted) {
             long cur_t = ros::Time::now().toSec()*1000;
-            PlatoonMember* newMember = new PlatoonMember(senderId, senderBsmId, cmdSpeed, curSpeed, dtDistance, cur_t);
-            platoon.push_back(*newMember);
+            PlatoonMember newMember;// = new PlatoonMember(senderId, senderBsmId, cmdSpeed, curSpeed, dtDistance, cur_t);
+            platoon.push_back(newMember);
 
             std::sort(std::begin(platoon), std::end(platoon), [](const PlatoonMember &a, const PlatoonMember &b){return a.vehiclePosition < b.vehiclePosition;});
 
-            ROS_DEBUG("Add a new vehicle into our platoon list " , newMember->staticId);
+            ROS_DEBUG("Add a new vehicle into our platoon list " , newMember.staticId);
         }
 
     }
@@ -138,34 +138,30 @@ namespace platoon_strategic
     }
 
     PlatoonMember PlatoonManager::getLeader(){
-        PlatoonMember* leader = new PlatoonMember("", "", 0.0, 0.0, 0.0, 0.0);
+        PlatoonMember leader ;
         if(isFollower && platoon.size() != 0) {
             // return the first vehicle in the platoon as default if no valid algorithm applied
-            *leader = platoon[0];
+            leader = platoon[0];
             if (algorithmType == "APF_ALGORITHM"){
                     int newLeaderIndex = allPredecessorFollowing();
                     
                     if(newLeaderIndex < platoon.size() && newLeaderIndex >= 0) {
-                        *leader = platoon[newLeaderIndex];
-                        ROS_DEBUG("APF output: " , leader->staticId);
+                        leader = platoon[newLeaderIndex];
+                        ROS_DEBUG("APF output: " , leader.staticId);
                         previousFunctionalLeaderIndex = newLeaderIndex;
-                        previousFunctionalLeaderID = leader->staticId;
+                        previousFunctionalLeaderID = leader.staticId;
                     }
                     else {
                         // it might happened when the subject vehicle gets far away from the preceding vehicle so we follow the one in front
-                        *leader = platoon[platoon.size() - 1];
+                        leader = platoon[platoon.size() - 1];
                         previousFunctionalLeaderIndex = platoon.size() - 1;
-                        previousFunctionalLeaderID = leader->staticId;
+                        previousFunctionalLeaderID = leader.staticId;
                         ROS_DEBUG("Based on the output of APF algorithm we start to follow our predecessor.");
                     }
-
-
-
-                return *leader;
             }
         }
 
-        return PlatoonMember("", "", 0.0, 0.0, 0.0, 0.0);//NULL struct
+        return leader;
 
     }
 

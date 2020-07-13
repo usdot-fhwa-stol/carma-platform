@@ -31,7 +31,7 @@ namespace platoon_strategic
             double vehiclePosition;
             // The local time stamp when the host vehicle update any informations of this member
             long   timestamp;
-
+            PlatoonMember(): staticId(""), bsmId(""), commandSpeed(0.0), vehicleSpeed(0.0), timestamp(0) {} 
             PlatoonMember(std::string staticId, std::string bsmId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp): staticId(staticId),
             bsmId(bsmId), commandSpeed(commandSpeed), vehicleSpeed(vehicleSpeed), timestamp(timestamp) {}
         };

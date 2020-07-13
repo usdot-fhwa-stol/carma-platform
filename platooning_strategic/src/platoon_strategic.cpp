@@ -60,7 +60,7 @@ namespace platoon_strategic
 
     void PlatoonStrategicPlugin::run_states(){
         
-        switch (psm_->current_platoon_state)
+        switch (psm_.current_platoon_state)
         {
         case PlatoonState::STANDBY:
             run_standby();
@@ -94,9 +94,9 @@ namespace platoon_strategic
     void PlatoonStrategicPlugin::run()
     {
     	initialize();
-        psm_->onMobilityRequestMessage(mobility_req_msg_);
-        psm_->onMobilityOperationMessage(mobility_op_msg_);
-        psm_->onMobilityResponseMessage(mobility_resp_msg_);
+        psm_.onMobilityRequestMessage(mobility_req_msg_);
+        psm_.onMobilityOperationMessage(mobility_op_msg_);
+        psm_.onMobilityResponseMessage(mobility_resp_msg_);
         run_states();
         ros::CARMANodeHandle::setSpinRate(10.0);
         ros::CARMANodeHandle::spin();
@@ -110,7 +110,7 @@ namespace platoon_strategic
 
     bool PlatoonStrategicPlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp){
         
-        cav_msgs::Maneuver new_maneuver = psm_->composeManeuver();
+        cav_msgs::Maneuver new_maneuver = psm_.composeManeuver();
         resp.new_plan.maneuvers.push_back(new_maneuver);
         return true;
     }
@@ -126,7 +126,7 @@ namespace platoon_strategic
                 if(tsStart - waitingStartTime > waitingStateTimeout * 1000) {
                     //TODO if the current state timeouts, we need to have a kind of ABORT message to inform the applicant
                     ROS_DEBUG("LeaderWaitingState is timeout, changing back to PlatoonLeaderState.");
-                    psm_->current_platoon_state = PlatoonState::LEADER;
+                    psm_.current_platoon_state = PlatoonState::LEADER;
                 }
                 // Task 2
                 cav_msgs::MobilityOperation status;
@@ -156,17 +156,17 @@ namespace platoon_strategic
             // Task 3
             {
                 std::lock_guard<std::mutex> lock(plan_mutex_);
-                if(psm_->current_plan.valid) {
-                    bool isCurrentPlanTimeout = ((ros::Time::now().toSec()*1000 - psm_->current_plan.planStartTime) > NEGOTIATION_TIMEOUT);
+                if(psm_.current_plan.valid) {
+                    bool isCurrentPlanTimeout = ((ros::Time::now().toSec()*1000 - psm_.current_plan.planStartTime) > NEGOTIATION_TIMEOUT);
                     if(isCurrentPlanTimeout) {
-                        ROS_DEBUG("Give up current on waiting plan with planId: " , psm_->current_plan.planId);
-                        psm_->current_plan.valid = false;
+                        ROS_DEBUG("Give up current on waiting plan with planId: " , psm_.current_plan.planId);
+                        psm_.current_plan.valid = false;
                     }    
                 }
             }
 
             // Task 4
-            bool hasFollower = (psm_->pm_->getTotalPlatooningSize() > 1);
+            bool hasFollower = (psm_.pm_.getTotalPlatooningSize() > 1);
             if(hasFollower) {
                 cav_msgs::MobilityOperation statusOperation;
                 composeMobilityOperationLeader(statusOperation, "STATUS");
@@ -193,13 +193,13 @@ namespace platoon_strategic
             mob_op_pub_.publish(status);
             // Job 2
             // Get the number of vehicles in this platoon who is in front of us
-            int vehicleInFront = psm_->pm_->getNumberOfVehicleInFront();
+            int vehicleInFront = psm_.pm_.getNumberOfVehicleInFront();
                 if(vehicleInFront == 0) {
                     noLeaderUpdatesCounter++;
                     if(noLeaderUpdatesCounter >= LEADER_TIMEOUT_COUNTER_LIMIT) {
                         ROS_DEBUG("noLeaderUpdatesCounter = " , noLeaderUpdatesCounter , " and change to leader state");
-                        psm_->pm_->changeFromFollowerToLeader();
-                        psm_->current_platoon_state = PlatoonState::LEADER;
+                        psm_.pm_.changeFromFollowerToLeader();
+                        psm_.current_platoon_state = PlatoonState::LEADER;
                         
                     }
                 } else {
@@ -218,19 +218,19 @@ namespace platoon_strategic
         bool isCurrentStateTimeout = (tsStart - candidatestateStartTime) > waitingStateTimeout * 1000;
         if(isCurrentStateTimeout) {
             ROS_DEBUG("The current candidate follower state is timeout. Change back to leader state.");
-            psm_->current_platoon_state = PlatoonState::LEADER;
+            psm_.current_platoon_state = PlatoonState::LEADER;
         }
         // Task 2
 
-        if(psm_->current_plan.valid) {
+        if(psm_.current_plan.valid) {
             {
                 std::lock_guard<std::mutex> lock(plan_mutex_);
-                if(psm_->current_plan.valid) {
-                    bool isPlanTimeout = (tsStart - psm_->current_plan.planStartTime) > NEGOTIATION_TIMEOUT;
+                if(psm_.current_plan.valid) {
+                    bool isPlanTimeout = (tsStart - psm_.current_plan.planStartTime) > NEGOTIATION_TIMEOUT;
                     if(isPlanTimeout) {
-                        psm_->current_plan.valid = false;
+                        psm_.current_plan.valid = false;
                         ROS_DEBUG("The current plan did not receive any response. Abort and change to leader state.");
-                        psm_->current_platoon_state = PlatoonState::LEADER;
+                        psm_.current_platoon_state = PlatoonState::LEADER;
                     }    
                 }
             }
@@ -239,16 +239,16 @@ namespace platoon_strategic
         // Task 3
                 double desiredJoinGap2 = desiredJoinTimeGap;
                 double maxJoinGap = std::max(desiredJoinGap, desiredJoinGap2);
-                double currentGap = psm_->pm_->getDistanceToFrontVehicle();
+                double currentGap = psm_.pm_.getDistanceToFrontVehicle();
                 ROS_DEBUG("Based on desired join time gap, the desired join distance gap is " , desiredJoinGap2 , " ms");
                 ROS_DEBUG("Since we have max allowed gap as " , desiredJoinGap , " m then max join gap became " , maxJoinGap , " m");
                 ROS_DEBUG("The current gap from radar is " , currentGap , " m");
-                if(currentGap <= maxJoinGap && psm_->current_plan.valid == false) {
+                if(currentGap <= maxJoinGap && psm_.current_plan.valid == false) {
                     cav_msgs::MobilityRequest request;
                     std::string planId = boost::uuids::to_string(boost::uuids::random_generator()());
                     long currentTime = ros::Time::now().toSec()*1000.0; 
                     request.header.plan_id = planId;
-                    request.header.recipient_id = psm_->targetLeaderId;
+                    request.header.recipient_id = psm_.targetLeaderId;
                     request.header.sender_bsm_id = BSMID;
                     request.header.sender_id = MobilityId;
                     request.header.timestamp = currentTime;
@@ -262,13 +262,13 @@ namespace platoon_strategic
                     mob_req_pub_.publish(request);
                     ROS_DEBUG("Published Mobility Candidate-Join request to the leader");
                     
-                    PlatoonPlan* new_plan = new PlatoonPlan(true, currentTime, planId, psm_->targetLeaderId);
+                    PlatoonPlan* new_plan = new PlatoonPlan(true, currentTime, planId, psm_.targetLeaderId);
 
-                    psm_->current_plan = *new_plan;
+                    psm_.current_plan = *new_plan;
                 }
         
          //Task 4
-                if(psm_->pm_->getTotalPlatooningSize() > 1) {
+                if(psm_.pm_.getTotalPlatooningSize() > 1) {
                     cav_msgs::MobilityOperation status;
                     composeMobilityOperationCandidateFollower(status);
                     mob_op_pub_.publish(status);
@@ -299,7 +299,7 @@ namespace platoon_strategic
 
 
     void PlatoonStrategicPlugin::composeMobilityOperationLeader(cav_msgs::MobilityOperation &msg, const std::string& type){
-        msg.header.plan_id = psm_->pm_->currentPlatoonID;
+        msg.header.plan_id = psm_.pm_.currentPlatoonID;
         msg.header.recipient_id = "";
         msg.header.sender_bsm_id = BSMID;
         std::string hostStaticId = HostMobilityId;
@@ -311,10 +311,10 @@ namespace platoon_strategic
             // For INFO params, the string format is INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d
 
             std::string PlatoonRearBsmId = BSMID;
-            int CurrentPlatoonLength = psm_->pm_->getCurrentPlatoonLength();
-            double current_speed = psm_->pm_->getCurrentSpeed();
-            int PlatoonSize = psm_->pm_->getTotalPlatooningSize();
-            double PlatoonRearDowntrackDistance = psm_->pm_->getPlatoonRearDowntrackDistance();
+            int CurrentPlatoonLength = psm_.pm_.getCurrentPlatoonLength();
+            double current_speed = psm_.pm_.getCurrentSpeed();
+            int PlatoonSize = psm_.pm_.getTotalPlatooningSize();
+            double PlatoonRearDowntrackDistance = psm_.pm_.getPlatoonRearDowntrackDistance();
 
             boost::format fmter(OPERATION_INFO_TYPE);
             fmter %PlatoonRearBsmId;
@@ -345,7 +345,7 @@ namespace platoon_strategic
     }
 
     void PlatoonStrategicPlugin::composeMobilityOperationFollower(cav_msgs::MobilityOperation &msg) const{
-        msg.header.plan_id = psm_->pm_->currentPlatoonID;
+        msg.header.plan_id = psm_.pm_.currentPlatoonID;
         // All platoon mobility operation message is just for broadcast
         msg.header.recipient_id = "";
         msg.header.sender_bsm_id = BSMID;
@@ -369,7 +369,7 @@ namespace platoon_strategic
 
     void PlatoonStrategicPlugin::composeMobilityOperationLeaderWaiting(cav_msgs::MobilityOperation &msg) const
     {
-        msg.header.plan_id = psm_->pm_->currentPlatoonID;
+        msg.header.plan_id = psm_.pm_.currentPlatoonID;
         // This message is for broadcast
         msg.header.recipient_id = "";
         msg.header.sender_bsm_id = BSMID;
@@ -392,7 +392,7 @@ namespace platoon_strategic
 
     void PlatoonStrategicPlugin::composeMobilityOperationCandidateFollower(cav_msgs::MobilityOperation &msg)
     {
-        msg.header.plan_id = psm_->pm_->currentPlatoonID;
+        msg.header.plan_id = psm_.pm_.currentPlatoonID;
         // All platoon mobility operation message is just for broadcast
         msg.header.recipient_id = "";
         msg.header.sender_bsm_id = BSMID;

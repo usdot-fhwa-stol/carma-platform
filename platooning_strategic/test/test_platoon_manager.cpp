@@ -55,7 +55,7 @@ TEST(PlatoonManagerTest, test2)
     // updatesOrAddMemberInfo(std::string senderId, std::string senderBsmId, double cmdSpeed, double dtDistance, double curSpeed)
 
     EXPECT_EQ(2, pm.platoon.size());
-    EXPECT_EQ("2", pm.platoon[0].staticId);
+    EXPECT_EQ("1", pm.platoon[0].staticId);
 
 }
 

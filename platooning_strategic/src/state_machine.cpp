@@ -20,7 +20,9 @@ namespace platoon_strategic
 
     PlatooningStateMachine::PlatooningStateMachine(): current_platoon_state(PlatoonState::STANDBY){};
 
-    PlatooningStateMachine::PlatooningStateMachine(std::shared_ptr<ros::NodeHandle> nh): 
+
+
+    PlatooningStateMachine::PlatooningStateMachine(std::shared_ptr<ros::CARMANodeHandle> nh): 
         nh_(nh),
         current_platoon_state(PlatoonState::STANDBY) {
             mob_req_pub_ = nh_->advertise<cav_msgs::MobilityRequest>("mobility_request_message", 5);
@@ -117,16 +119,16 @@ namespace platoon_strategic
         if (current_platoon_state == PlatoonState::FOLLOWER){
             ros::Time current_time = ros::Time::now();
             maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
-            double start_dist = pm_->getCurrentDowntrackDistance();
+            double start_dist = pm_.getCurrentDowntrackDistance();
             maneuver_msg.lane_following_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::PLATOONING;
             maneuver_msg.lane_following_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
             maneuver_msg.lane_following_maneuver.parameters.planning_tactical_plugin = "PlatooningTacticalPlugin";
             maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin = "PlatooningStrategicPlugin";
             maneuver_msg.lane_following_maneuver.start_dist = start_dist;
-            maneuver_msg.lane_following_maneuver.start_speed = pm_->command_speed_;
+            maneuver_msg.lane_following_maneuver.start_speed = pm_.command_speed_;
             maneuver_msg.lane_following_maneuver.start_time = current_time;
-            maneuver_msg.lane_following_maneuver.end_dist = start_dist + (mvr_duration_*pm_->command_speed_);
-            maneuver_msg.lane_following_maneuver.end_speed = pm_->command_speed_;
+            maneuver_msg.lane_following_maneuver.end_dist = start_dist + (mvr_duration_*pm_.command_speed_);
+            maneuver_msg.lane_following_maneuver.end_speed = pm_.command_speed_;
             // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
             maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration(mvr_duration_);
             maneuver_msg.lane_following_maneuver.lane_id = "";
@@ -163,9 +165,9 @@ namespace platoon_strategic
             std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size()+1);
             ROS_DEBUG("Receive operation message from vehicle: " , vehicleID);
             std::string SenderBsmId = msg.header.sender_bsm_id;
-            pm_->memberUpdates(vehicleID, platoonID, SenderBsmId, statusParams);
+            pm_.memberUpdates(vehicleID, platoonID, SenderBsmId, statusParams);
         } else if(isPlatoonInfoMsg) {
-                if(msg.header.sender_id == pm_->leaderID) {
+                if(msg.header.sender_id == pm_.leaderID) {
                     std::string infoParams = strategyParams.substr(OPERATION_INFO_TYPE.size()+1);
 
                     std::vector<std::string> parsed_params;
@@ -173,9 +175,9 @@ namespace platoon_strategic
                     std::vector<std::string> parsed_size;
                     boost::algorithm::split(parsed_size, parsed_params[3], boost::is_any_of(":"));
 
-                    pm_->platoonSize = std::stoi(parsed_size[1]);
+                    pm_.platoonSize = std::stoi(parsed_size[1]);
 
-                    ROS_DEBUG("Update from the lead: the current platoon size is " , pm_->getTotalPlatooningSize());
+                    ROS_DEBUG("Update from the lead: the current platoon size is " , pm_.getTotalPlatooningSize());
                 }
         }else{
             ROS_DEBUG("Ignore other operation messages with params: " , strategyParams);
@@ -214,11 +216,11 @@ namespace platoon_strategic
             double applicantCurrentDtd = std::stod(parsed_size[1]);
 
             // Check if we have enough room for that applicant
-            int currentPlatoonSize = pm_->getTotalPlatooningSize();
+            int currentPlatoonSize = pm_.getTotalPlatooningSize();
             bool hasEnoughRoomInPlatoon = applicantSize + currentPlatoonSize <= maxPlatoonSize;
             if(hasEnoughRoomInPlatoon) {
                 ROS_DEBUG("The current platoon has enough room for the applicant with size " , applicantSize);
-                double currentRearDtd = pm_->getPlatoonRearDowntrackDistance();
+                double currentRearDtd = pm_.getPlatoonRearDowntrackDistance();
                 ROS_DEBUG("The current platoon rear dtd is " , currentRearDtd);
                 double currentGap = currentRearDtd - applicantCurrentDtd - vehicleLength;
                 double currentTimeGap = currentGap / applicantCurrentSpeed;
@@ -324,9 +326,9 @@ namespace platoon_strategic
                     request.strategy = MOBILITY_STRATEGY;
 
 
-                    double total_platoon_size = pm_->getTotalPlatooningSize();
-                    double current_speed = pm_->current_speed_;
-                    double current_downtrack = pm_->getCurrentDowntrackDistance();
+                    double total_platoon_size = pm_.getTotalPlatooningSize();
+                    double current_speed = pm_.current_speed_;
+                    double current_downtrack = pm_.getCurrentDowntrackDistance();
 
                     boost::format fmter(JOIN_AT_REAR_PARAMS);
                     fmter %total_platoon_size;
@@ -352,7 +354,7 @@ namespace platoon_strategic
                 std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size()+1);// = strategyParams.substring(PlatooningPlugin.OPERATION_STATUS_TYPE.length() + 1);
                 ROS_DEBUG("Receive operation status message from vehicle: " , senderId , " with params: " , statusParams);
                 std::string SenderBsmId = msg.header.sender_bsm_id;
-                pm_->memberUpdates(senderId, platoonId, SenderBsmId, statusParams);
+                pm_.memberUpdates(senderId, platoonId, SenderBsmId, statusParams);
             }
             else {
                 ROS_DEBUG("Receive operation message but ignore it because isPlatoonInfoMsg = " , isPlatoonInfoMsg 
@@ -381,7 +383,7 @@ namespace platoon_strategic
 
     void PlatooningStateMachine::onMobilityResponseMessageLeaderWaiting(cav_msgs::MobilityResponse &msg) const
     {
-
+        // Do Nothing
     }
 
     void PlatooningStateMachine::onMobilityOperationMessageLeaderWaiting(cav_msgs::MobilityOperation &msg)
@@ -395,7 +397,7 @@ namespace platoon_strategic
             std::string platoonID = msg.header.plan_id;
             std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size()+1); 
             std::string SenderBsmId = msg.header.sender_bsm_id;
-            pm_->memberUpdates(vehicleID, platoonID, SenderBsmId, statusParams);
+            pm_.memberUpdates(vehicleID, platoonID, SenderBsmId, statusParams);
             ROS_DEBUG("Received platoon status message from " , msg.header.sender_id);
         }
         else
@@ -423,7 +425,7 @@ namespace platoon_strategic
                         // We change to follower state and start to actually follow that leader
                         // The platoon manager also need to change the platoon Id to the one that the target leader is using 
                         ROS_DEBUG("The leader " , msg.header.sender_id , " agreed on our join. Change to follower state.");
-                        pm_->changeFromLeaderToFollower(targetPlatoonId);
+                        pm_.changeFromLeaderToFollower(targetPlatoonId);
                         current_platoon_state = PlatoonState::FOLLOWER;
                         // pluginServiceLocator.getArbitratorService().requestNewPlan(this.trajectoryEndLocation);
                         }
@@ -454,7 +456,7 @@ namespace platoon_strategic
             std::string platoonId = msg.header.plan_id;
             std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size()+1);
             std::string SenderBsmId = msg.header.sender_bsm_id;
-            pm_->memberUpdates(vehicleId, platoonId, SenderBsmId, statusParams);
+            pm_.memberUpdates(vehicleId, platoonId, SenderBsmId, statusParams);
             ROS_DEBUG("Received platoon status message from " , vehicleId);
         }
         else {
@@ -470,15 +472,15 @@ namespace platoon_strategic
     }
     void PlatooningStateMachine::onMobilityResponseMessageStandby(cav_msgs::MobilityResponse &msg) const
     {
-
+        // Do Nothing
     }
     void PlatooningStateMachine::onMobilityOperationMessageStandby(cav_msgs::MobilityOperation &msg) const
     {
-
+        // Do Nothing
     }
 
     bool PlatooningStateMachine::isVehicleRightInFront(std::string rearVehicleBsmId, double downtrack) const {
-        double currentDtd = pm_->getCurrentDowntrackDistance();
+        double currentDtd = pm_.getCurrentDowntrackDistance();
         if(downtrack > currentDtd) {
             std::clog << "Found a platoon in front. We are able to join" << std::endl;
             return true;
