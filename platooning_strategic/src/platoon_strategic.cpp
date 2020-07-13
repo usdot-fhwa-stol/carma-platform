@@ -63,7 +63,6 @@ namespace platoon_strategic
         switch (psm_.current_platoon_state)
         {
         case PlatoonState::STANDBY:
-            run_standby();
             break;
         case PlatoonState::LEADERWAITING:
             waitingStartTime = ros::Time::now().toSec()*1000;
@@ -116,9 +115,6 @@ namespace platoon_strategic
     }
 
 
-    void PlatoonStrategicPlugin::run_standby() const {
-
-    }
 
     void PlatoonStrategicPlugin::run_leader_waiting(){
         long tsStart = ros::Time::now().toSec()*1000;

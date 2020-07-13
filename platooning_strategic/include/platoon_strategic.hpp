@@ -60,7 +60,6 @@ namespace platoon_strategic
 
         protected:
 
-            void run_standby() const;
             void run_leader();
             void run_leader_waiting();
             void run_candidate_follower();
