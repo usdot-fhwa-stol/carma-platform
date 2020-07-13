@@ -47,44 +47,37 @@ while [[ $# -gt 0 ]]; do
       esac
 done
 
-/mnt/rw/rc.local stop
-
-net-snmp-config --create-snmpv3-user -A password -X password -a SHA -x AES leidos
-
-/mnt/rw/rc.local start
+/opt/cohda/application/rc.local stop
 
 sleep 8
 
-#/mnt/rw/rc.local standby
+net-snmp-config --create-snmpv3-user -A rsuadmin -X rsuadmin -a SHA -x AES rsu
 
-snmpset -v3 -lauthPriv -uleidos -Apassword -Xpassword -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 iso.0.15628.4.1.99.0 i 2
+/opt/cohda/application/rc.local start
 
 sleep 8
 
-#standby before running the commands below
-/mnt/rw/rc.local standby
+snmpset -v3 -lauthPriv -ursu -Arsuadmin -Xrsuadmin -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 iso.0.15628.4.1.99.0 i 2
+
+sleep 8
+
+#Enable Logging
+snmpset -v3 -lauthPriv -ursu -Arsuadmin -Xrsuadmin -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 \
+1.0.15628.4.1.9.1.2.2 i 1 \
+1.0.15628.4.1.9.1.2.3 i 1 \
+1.0.15628.4.1.9.1.2.4 i 1 \
+1.0.15628.4.1.9.1.2.5 i 1 \
+iso.0.15628.4.1.99.0 i 4
+
+#Forward BSMs (0x20) to IP
+snmpset -v3 -lauthPriv -ursu -Arsuadmin -Xrsuadmin -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 \
+iso.0.15628.4.1.7.1.11.1 i 4 \
+iso.0.15628.4.1.7.1.2.1 x 0x20 \
+iso.0.15628.4.1.7.1.3.1 x $HEX_IP \
+iso.0.15628.4.1.7.1.4.1 i 2020 \
+iso.0.15628.4.1.7.1.5.1 i 2 \
+iso.0.15628.4.1.7.1.10.1 i 1 \
+iso.0.15628.4.1.99.0 i 4
 
 
-#snmpset -v3 -lauthPriv -uleidos -Apassword -Xpassword -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 iso.0.15628.4.1.7.1.2.1 x 0x20 iso.0.15628.4.1.7.1.3.1 x 0x000000000000000000000000c0a8580A iso.0.15628.4.1.7.1.4.1 i 5398 iso.0.15628.4.1.7.1.5.1 i 2 iso.0.15628.4.1.7.1.10.1 i 1
 
-# Selected vehicle
-snmpset -v3 -lauthPriv -uleidos -Apassword -Xpassword -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 iso.0.15628.4.1.7.1.2.1 x 0x20 iso.0.15628.4.1.7.1.3.1 x ${HEX_IP} iso.0.15628.4.1.7.1.4.1 i 5398 iso.0.15628.4.1.7.1.5.1 i 2 iso.0.15628.4.1.7.1.10.1 i 1
-
-
-# Step 9:
-# Copy the following 7 lines together
-#snmpset -v3 -lauthPriv -uleidos -Apassword -Xpassword -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 iso.0.15628.4.1.7.1.11.2 i 4 iso.0.15628.4.1.7.1.2.2 x 0xBFEE iso.0.15628.4.1.7.1.3.2 x 0x000000000000000000000000c0a8580A iso.0.15628.4.1.7.1.4.2 i 5398 iso.0.15628.4.1.7.1.5.2 i 2 iso.0.15628.4.1.7.1.10.2 i 1
-
-#Selected vehicle
-snmpset -v3 -lauthPriv -uleidos -Apassword -Xpassword -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 iso.0.15628.4.1.7.1.11.2 i 4 iso.0.15628.4.1.7.1.2.2 x 0xBFEE iso.0.15628.4.1.7.1.3.2 x ${HEX_IP} iso.0.15628.4.1.7.1.4.2 i 5398 iso.0.15628.4.1.7.1.5.2 i 2 iso.0.15628.4.1.7.1.10.2 i 1
-
-# Step 10:
-# Copy the following 7 lines together
-#snmpset -v3 -lauthPriv -uleidos -Apassword -Xpassword -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 iso.0.15628.4.1.7.1.11.3 i 4 iso.0.15628.4.1.7.1.2.3 x 0x8002 iso.0.15628.4.1.7.1.3.3 x 0x000000000000000000000000c0a8580A iso.0.15628.4.1.7.1.4.3 i 5398 iso.0.15628.4.1.7.1.5.3 i 2 iso.0.15628.4.1.7.1.10.3 i 1 iso.0.15628.4.1.99.0 i 4
-
-#Selected vehicle
-snmpset -v3 -lauthPriv -uleidos -Apassword -Xpassword -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 iso.0.15628.4.1.7.1.11.3 i 4 iso.0.15628.4.1.7.1.2.3 x 0x8002 iso.0.15628.4.1.7.1.3.3 x ${HEX_IP} iso.0.15628.4.1.7.1.4.3 i 5398 iso.0.15628.4.1.7.1.5.3 i 2 iso.0.15628.4.1.7.1.10.3 i 1 iso.0.15628.4.1.99.0 i 4
-# Step 11: verify the result
-snmpwalk -v3 -lauthPriv -uleidos -Apassword -Xpassword -aSHA -xAES -mRSU-MIB -M/mnt/rw/rsu1609/snmp/mibs -O T 127.0.0.1 iso.0.15628.4.1.7
-
-sed -i 's|SecurityEnable         = [0-9]|SecurityEnable         = 0|g' /mnt/rw/rsu1609/conf/stack.conf
