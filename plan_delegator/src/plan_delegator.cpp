@@ -40,6 +40,7 @@ namespace plan_delegator
             [this](const geometry_msgs::PoseStampedConstPtr& pose) {this->latest_pose_ = *pose;});
         guidance_state_sub_ = nh_.subscribe<cav_msgs::GuidanceState>("guidance_state", 5, &PlanDelegator::guidanceStateCallback, this);
 
+
         ros::CARMANodeHandle::setSpinCallback(std::bind(&PlanDelegator::spinCallback, this));
         ros::CARMANodeHandle::setSpinRate(spin_rate_);
     }

@@ -133,11 +133,17 @@
   </include>
 
   <!-- Simulated Lightbar Driver Node -->
+<<<<<<< HEAD
   <include if="$(arg mock_lightbar)" file="$(arg mock_driver_launch_file)">
     <arg name="node_name"        value="mock_lightbar"/>
     <arg name="simulated_driver" value="lightbar"/>
     <arg name="data_file"        value="$(arg radar_data_file)"/><!-- TODO -->
     <arg name="debug_driver"     value="$(eval arg('debug_node') == 'mock_lightbar')"/>
   </include>
+=======
+  <include if="$(arg mock_lightbar)" file="$(find mock_lightbar_driver)/launch/mock_lightbar_driver_testing.launch"/>
+
+  
+>>>>>>> develop
 
 </launch>

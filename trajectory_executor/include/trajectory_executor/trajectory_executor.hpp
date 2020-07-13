@@ -98,6 +98,7 @@ namespace trajectory_executor {
              */
             void guidanceStateCb(const cav_msgs::GuidanceStateConstPtr& msg);
 
+
             /*!
              * \brief Timer callback to be invoked at our output tickrate.
              * Outputs current trajectory plan to the first control plugin in
