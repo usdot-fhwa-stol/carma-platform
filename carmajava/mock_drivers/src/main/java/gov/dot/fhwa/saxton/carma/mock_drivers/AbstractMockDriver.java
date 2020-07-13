@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2020 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -98,7 +98,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
             cav_srvs.GetDriverApiResponse response) {
             List<String> FQNs = new LinkedList<>();
             for (String apiElement: getDriverAPI()) {
-              FQNs.add(getGraphName() + "/" + apiElement);
+              FQNs.add("/" + apiElement);
             }
             response.setApiList(FQNs);
           }
@@ -122,9 +122,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
       reader = new RandomAccessFile(dataFilePath, "r");
       driverStatus = cav_msgs.DriverStatus.OPERATIONAL;
     } catch (FileNotFoundException e) {
-      e.printStackTrace();
-      log
-        .warn(getGraphName() + " could not find file " + dataFilePath + ".No data published");
+      log.warn(getGraphName() + " could not find file " + dataFilePath + ".No data published " + e.getMessage());
       driverStatus = cav_msgs.DriverStatus.DEGRADED;
     }
   }
@@ -134,62 +132,64 @@ public abstract class AbstractMockDriver implements IMockDriver {
     closeDataFile();
   }
 
-  @Override public void finalize(){
+  @Override protected void finalize() throws Throwable{
     closeDataFile();
+    super.finalize();
   }
 
   @Override public void readAndPublishData() {
-    if (reader != null) {
-      try {
-        List<String[]> data = new LinkedList<>();
-        String dataLine;
-        String[] elements;
-        boolean exitBeforeEOF = false;
-        int prevSampleIndex = -1;
-        int currentSampleIndex;
-        long prevLineIndex = reader.getFilePointer();
+    
+    if (reader == null) {
+      return;
+    }
+    try {
+      List<String[]> data = new LinkedList<>();
+      String dataLine;
+      String[] elements;
+      boolean exitBeforeEOF = false;
+      int prevSampleIndex = -1;
+      int currentSampleIndex;
+      long prevLineIndex = reader.getFilePointer();
 
-        while((dataLine = reader.readLine()) != null) {
-          // Skip the header line of all data files
-          if (prevLineIndex == 0) {
-            prevLineIndex = reader.getFilePointer();
-            continue;
-          }
-          // separate on delimiter
-          elements = dataLine.split(delimiter);
-          // Update sample index
-          if (elements.length != getExpectedColCount()) {
-            log.warn(
-              "Publish data requested for " + getGraphName() + " with incorrect number of data elements. "
-                + "The required number of data elements is " + getExpectedColCount());
-            continue; // Skip this invalid line
-          }
-
-          currentSampleIndex = Integer.parseInt(elements[getSampleIdIdx()]);
-          //If this is the first sample
-          if (prevSampleIndex == -1) {
-            prevSampleIndex = currentSampleIndex;
-          }
-          // If the end of this sample set then exit the loop
-          if (currentSampleIndex != prevSampleIndex) {
-            exitBeforeEOF = true;
-            break;
-          }
-          data.add(elements);
+      while((dataLine = reader.readLine()) != null) {
+        // Skip the header line of all data files
+        if (prevLineIndex == 0) {
+          prevLineIndex = reader.getFilePointer();
+          continue;
         }
-        if (!exitBeforeEOF) {
-          reader.seek(0);
+        // separate on delimiter
+        elements = dataLine.split(delimiter);
+        // Update sample index
+        if (elements.length != getExpectedColCount()) {
+          log.warn(
+            "Publish data requested for " + getGraphName() + " with incorrect number of data elements. "
+              + "The required number of data elements is " + getExpectedColCount());
+          continue; // Skip this invalid line
         }
-        publishData(data);
 
-      } catch (IOException e) {
-        e.printStackTrace();
-        closeDataFile();
-        reader = null;
-        // Log warning if the node failed to read data in the file. All publishing will be stopped in this case as the file may be corrupt.
-        log.warn(getGraphName() + " failed to read data file. No data will be published");
-        driverStatus = cav_msgs.DriverStatus.FAULT;
+        currentSampleIndex = Integer.parseInt(elements[getSampleIdIdx()]);
+        //If this is the first sample
+        if (prevSampleIndex == -1) {
+          prevSampleIndex = currentSampleIndex;
+        }
+        // If the end of this sample set then exit the loop
+        if (currentSampleIndex != prevSampleIndex) {
+          exitBeforeEOF = true;
+          break;
+        }
+        data.add(elements);
       }
+      if (!exitBeforeEOF) {
+        reader.seek(0);
+      }
+      publishData(data);
+
+    } catch (IOException e) {
+      closeDataFile();
+      reader = null;
+      // Log warning if the node failed to read data in the file. All publishing will be stopped in this case as the file may be corrupt.
+      log.warn(getGraphName() + " failed to read data file. No data will be published " + e.getMessage());
+      driverStatus = cav_msgs.DriverStatus.FAULT;
     }
   }
 
@@ -201,32 +201,51 @@ public abstract class AbstractMockDriver implements IMockDriver {
     cav_msgs.DriverStatus driverStatusMsg = discoveryPub.newMessage();
     driverStatusMsg.setName(getGraphName().toString());
     driverStatusMsg.setStatus(driverStatus);
-    driverStatusMsg.setCanBus(false);
-    driverStatusMsg.setSensor(false);
-    driverStatusMsg.setPosition(false);
+    driverStatusMsg.setCan(false);
+    driverStatusMsg.setRadar(false);
+    driverStatusMsg.setGnss(false);
+    driverStatusMsg.setImu(false);
+    driverStatusMsg.setLidar(false);
+    driverStatusMsg.setRoadwaySensor(false);
     driverStatusMsg.setComms(false);
-    driverStatusMsg.setLonController(false);
-    driverStatusMsg.setLatController(false);
+    driverStatusMsg.setController(false);
+    driverStatusMsg.setCamera(false);
+    driverStatusMsg.setLightbar(false);
 
     for (String driverType: getDriverTypesList()) {
       switch (driverType) {
         case "can":
-          driverStatusMsg.setCanBus(true);
+          driverStatusMsg.setCan(true);
           break;
-        case "sensor":
-          driverStatusMsg.setSensor(true);
+        case "radar":
+          driverStatusMsg.setRadar(true);
           break;
-        case "position":
-          driverStatusMsg.setPosition(true);
+        case "gnss":
+          driverStatusMsg.setGnss(true);
+          break;
+        case "imu":
+          driverStatusMsg.setImu(true);
+          break;
+        case "lidar":
+          driverStatusMsg.setLidar(true);
+          break;
+        case "roadway_sensor":
+          driverStatusMsg.setRoadwaySensor(true);
           break;
         case "comms":
           driverStatusMsg.setComms(true);
           break;
-        case "lon_controller":
-          driverStatusMsg.setLonController(true);
+        case "controller":
+          driverStatusMsg.setController(true);
           break;
-        case "lat_controller":
-          driverStatusMsg.setLatController(true);
+        case "camera":
+          driverStatusMsg.setCamera(true);
+          break;
+        case "lightbar":
+          driverStatusMsg.setLightbar(true);
+          break;
+        default:
+          log.warn("Function getDriverStatus received an unrecognized driver type: " + driverType);
           break;
       }
     }
@@ -245,7 +264,7 @@ public abstract class AbstractMockDriver implements IMockDriver {
       try {
         reader.close();
       } catch (IOException ex) {
-        ex.printStackTrace();
+    	  log.warn(getGraphName() + " failed to close data reader. " + ex.getMessage());
       }
     }
   }

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 
 #
-# Copyright (C) 2018 LEIDOS.
+# Copyright (C) 2018-2020 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,9 @@ cmake_minimum_required(VERSION 2.8.3)
 project(carma_transform_server)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)

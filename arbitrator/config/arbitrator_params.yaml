@@ -1,0 +1,29 @@
+# Float: The minimum amount of time that an arbitrated plan must cover for the 
+# system to proceed with execution
+# Unit: s
+min_plan_duration: 6.0
+
+# Float: The nominal amount of time that an arbitrated plan should cover for the 
+# system to operate at best performance
+# Unit: s
+target_plan_duration: 15.0
+
+# Float: The planning frequency for generation for arbitrated plans
+# Unit: Hz
+planning_frequency: 1.0
+
+# Integer: The width of the search beam to use for arbitrator planning, 1 = 
+# greedy search, as it approaches infinity the search approaches breadth-first 
+# search
+# Unit: N/a
+beam_width: 3
+
+# Bool: Use fixed priority cost function over using the cost system for 
+# evaluating maneuver plans
+# Unit: N/a
+use_fixed_costs: false
+
+# Map: The priorities/costs associated with each plugin during the planning 
+# process, values will be normalized at runtime
+# Unit: N/a
+plugin_priorities: {AutowarePlugin: 10.0, GlidepathPlugin: 5.0}

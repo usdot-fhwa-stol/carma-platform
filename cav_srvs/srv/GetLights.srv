@@ -1,7 +1,0 @@
-# GetLights.srv
-
-# Request - no arguments
-
----
-
-cav_msgs/LightBarStatus status

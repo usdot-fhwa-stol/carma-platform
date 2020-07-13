@@ -1,0 +1,18 @@
+# String: Topic prefix to be prepended to plugin name to find trajectory planning
+# service. Only needed for minimal/mock plan delegator
+# Units: N/a
+planning_topic_prefix: /guidance/plugins/
+
+# String: Topic suffix to be appended to plugin name to find trajectory planning
+# service. Only needed for minimal/mock plan delegator
+# Units: N/a
+planning_topic_suffix: /plan_trajectory
+
+# Double: Spin rate of plan delegator, it is also the trajectory planning frequency
+# Units: Hz
+spin_rate: 10.0
+
+# Double: Plan delegator will stop generating new trajectories
+# if the current plan is already over this threshold
+# Units: Second
+trajectory_duration_threshold: 6.0

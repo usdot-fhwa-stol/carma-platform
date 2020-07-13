@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 LEIDOS.
+ * Copyright (C) 2018-2020 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,7 @@
 
 package gov.dot.fhwa.saxton.carma.mock_drivers;
 
-import gov.dot.fhwa.saxton.carma.rosutils.SaxtonBaseNode;
+import gov.dot.fhwa.saxton.carma.rosjava_utils.SaxtonBaseNode;
 import org.apache.commons.logging.Log;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.node.ConnectedNode;
@@ -41,35 +41,43 @@ public class MockDriverNode extends SaxtonBaseNode {
   }
 
   @Override public void onSaxtonStart(final ConnectedNode connectedNode) {
-
     final Log log = connectedNode.getLog();
     final ParameterTree params = connectedNode.getParameterTree();
     final IMockDriver simulatedDriver;
-    switch (params.getString("~/simulated_driver")) {
+    String switchValue = params.getString("~/simulated_driver");
+    switch (switchValue) {
       case "can":
         simulatedDriver = new MockCANDriver(connectedNode);
         break;
-      case "dsrc":
-        simulatedDriver = new MockDSRCDriver(connectedNode);
+      case "comms":
+        simulatedDriver = new MockCommsDriver(connectedNode);
         break;
-      case "srx_controller":
-        simulatedDriver = new MockSRXControllerDriver(connectedNode);
+      case "controller":
+        simulatedDriver = new MockControllerDriver(connectedNode);
         break;
       case "radar":
         simulatedDriver = new MockRadarDriver(connectedNode);
         break;
-      case "cellular":
-        simulatedDriver = new MockCellularDriver(connectedNode);
+      case "imu":
+        simulatedDriver = new MockImuDriver(connectedNode);
         break;
-      case "pinpoint":
-        simulatedDriver = new MockPinPointDriver(connectedNode);
+      case "gnss":
+        simulatedDriver = new MockGnssDriver(connectedNode);
         break;
-      case "truck_controller":
-        simulatedDriver = new MockTruckControllerDriver(connectedNode);
+      case "lidar":
+        simulatedDriver = new MockLidarDriver(connectedNode);
+        break;
+      case "roadway_sensor":
+        simulatedDriver = new MockRoadwaySensorDriver(connectedNode);
+        break;
+      case "camera":
+        simulatedDriver = new MockCameraDriver(connectedNode);
+        break;
+      case "lightbar":
+        simulatedDriver = new MockLightBarDriver(connectedNode);
         break;
       default:
-        log.warn(
-          "No valid driver name specified on the simulated_driver parameter. Defaulting to CAN driver");
+        log.warn("==== No valid driver name specified on the simulated_driver parameter. Defaulting to CAN driver \n The simulated_driver value received is: " + switchValue +  " ...");
         simulatedDriver = new MockCANDriver(connectedNode);
         break;
     }

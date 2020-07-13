@@ -1,0 +1,5 @@
+
+<launch>
+    <node pkg="mock_lightbar_driver" type="mock_lightbar_driver_node" name="mock_lightbar">
+    </node>
+</launch>
