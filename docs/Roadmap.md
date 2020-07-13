@@ -1,7 +1,5 @@
 # CARMA Roadmap
 
-*[Updated 10 Jan 2020]*
-
 This page presents the current vision for future release activity of the CARMA platform.  It is focused on version 3 (CARMA3) since that is a major upgrade.
 Beyond that we will definitely be pushing the system toward SAE level 4 autonomy while continuing to extend the sophistication of the V2x communication capabilities and resultant cooperative behavior.
 

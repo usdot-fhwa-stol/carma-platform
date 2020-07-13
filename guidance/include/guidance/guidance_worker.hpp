@@ -68,7 +68,7 @@ namespace guidance
             ros::Subscriber route_event_subscriber_;
 
             // Node handles
-            ros::CARMANodeHandle nh_, pnh_;
+            ros::CARMANodeHandle nh_{}, pnh_{"~"};
 
             // Guidance state machine
             GuidanceStateMachine gsm_;

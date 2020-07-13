@@ -15,5 +15,7 @@
 -->
 
 <launch>
-   <node name="external_object" pkg="object_detection_tracking" type="object_detection_tracking_node" output="screen" />
+  <node name="external_object" pkg="object_detection_tracking" type="object_detection_tracking_node">
+    <rosparam command="load" file="$(find object_detection_tracking)/config/parameters.yaml"/>
+  </node>
 </launch>

@@ -18,8 +18,7 @@
 
 namespace localizer
 {
-	Localizer::Localizer() : spin_rate_(10.0),
-				             localization_mode_(0) {}
+	Localizer::Localizer(){}
 
 	void Localizer::publishTransform(const geometry_msgs::PoseStampedConstPtr& msg)
 	{
@@ -48,12 +47,10 @@ namespace localizer
         if(localization_mode_ == LocalizerMode::NDT)
         {
             publishPoseStamped(msg);
-        } else if(localization_mode_ == LocalizerMode::AUTO)
+        } else if(localization_mode_ == LocalizerMode::AUTO &&
+					counter.getNDTReliabilityCounter() <= unreliable_message_upper_limit_)
         {
-            if(counter.getNDTReliabilityCounter() <= unreliable_message_upper_limit_)
-            {
-                publishPoseStamped(msg);
-            }
+			publishPoseStamped(msg);
         }
 	}
     
@@ -67,12 +64,10 @@ namespace localizer
 		if(localization_mode_ == LocalizerMode::GNSS)
 		{
 			publishPoseStamped(msg);
-		} else if(localization_mode_ == LocalizerMode::AUTO)
+		} else if(localization_mode_ == LocalizerMode::AUTO &&
+					counter.getNDTReliabilityCounter() > unreliable_message_upper_limit_)
 		{
-            if(counter.getNDTReliabilityCounter() > unreliable_message_upper_limit_)
-			{
-				publishPoseStamped(msg);
-			}
+			publishPoseStamped(msg);
 		}
 	}
 

@@ -33,28 +33,31 @@
 # Stage 1 - Acquire the CARMA source as well as any extra packages
 # /////////////////////////////////////////////////////////////////////////////
 
-FROM usdotfhwastol/autoware.ai:3.8.0 AS source-code
+
+FROM usdotfhwastol/autoware.ai:3.8.2 AS source-code
 
 RUN mkdir ~/src
-COPY --chown=carma . /home/carma/src/CARMAPlatform/
-RUN ~/src/CARMAPlatform/docker/checkout.sh
+COPY --chown=carma . /home/carma/src/carma-platform/
+RUN ~/src/carma-platform/docker/checkout.bash
 
 # /////////////////////////////////////////////////////////////////////////////
 # Stage 2 - Build and install the software 
 # /////////////////////////////////////////////////////////////////////////////
 
-FROM usdotfhwastol/autoware.ai:3.8.0 AS install
+
+FROM usdotfhwastol/autoware.ai:3.8.2 AS install
 
 # Copy the source files from the previous stage and build/install
 RUN mkdir ~/carma_ws
 COPY --from=source-code --chown=carma /home/carma/src /home/carma/carma_ws/src
-RUN ~/carma_ws/src/CARMAPlatform/docker/install.sh
+RUN ~/carma_ws/src/carma-platform/docker/install.sh
 
 # /////////////////////////////////////////////////////////////////////////////
 # Stage 3 - Finalize deployment
 # /////////////////////////////////////////////////////////////////////////////
 
-FROM usdotfhwastol/autoware.ai:3.8.0
+
+FROM usdotfhwastol/autoware.ai:3.8.2
 
 ARG BUILD_DATE="NULL"
 ARG VCS_REF="NULL"
@@ -66,7 +69,7 @@ LABEL org.label-schema.description="Binary application for the CARMA Platform"
 LABEL org.label-schema.vendor="Leidos"
 LABEL org.label-schema.version=${VERSION}
 LABEL org.label-schema.url="https://highways.dot.gov/research/research-programs/operations/CARMA"
-LABEL org.label-schema.vcs-url="https://github.com/usdot-fhwa-stol/CARMAPlatform"
+LABEL org.label-schema.vcs-url="https://github.com/usdot-fhwa-stol/carma-platform"
 LABEL org.label-schema.vcs-ref=${VCS_REF}
 LABEL org.label-schema.build-date=${BUILD_DATE}
 

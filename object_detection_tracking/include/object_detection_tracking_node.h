@@ -32,6 +32,7 @@ class ObjectDetectionTrackingNode
   
   //node handle
   ros::CARMANodeHandle nh_;
+  ros::CARMANodeHandle pnh_;
    
   //subscriber
   ros::Subscriber autoware_obj_sub_;
@@ -41,7 +42,7 @@ class ObjectDetectionTrackingNode
   
   //ObjectDetectionTrackingWorker class object
   ObjectDetectionTrackingWorker object_worker_;
-
+  
     /*!fn initialize()
   \brief initialize this node before running
   */
