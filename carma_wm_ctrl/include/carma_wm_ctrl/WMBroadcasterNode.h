@@ -53,6 +53,13 @@ public:
    * @param map_msg The map message to publish
    */
   void publishMap(const autoware_lanelet2_msgs::MapBin& map_msg);
+  
+  /**
+   * @brief Callback to publish route messages
+   *
+   * @param route_msg The route message to publish
+   */
+  void publishRouteMsg(const cav_msgs::RouteConstPtr route_msg);
 
 private:
   ros::CARMANodeHandle cnh_;
