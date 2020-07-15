@@ -68,13 +68,6 @@ public:
    */
   void publishMapUpdate(const autoware_lanelet2_msgs::MapBin& geofence_msg) const;
 
-  /**
-   * @brief Callback to publish route messages
-   *
-   * @param route_msg The route message to publish
-   */
-  void publishRouteMsg(const cav_msgs::RouteConstPtr route_msg);
-
 private:
   ros::CARMANodeHandle cnh_;
   ros::CARMANodeHandle pnh_{"~"};

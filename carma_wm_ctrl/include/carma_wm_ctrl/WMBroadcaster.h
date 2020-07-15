@@ -103,7 +103,7 @@ public:
   /*!
    * \brief Removes a geofence from the current map and publishes the ROS msg
    */
-  void removeGeofence(const Geofence& gf);
+  void removeGeofence(std::shared_ptr<Geofence> gf_ptr);
   
   /*!
   * \brief Pulls vehicle information from CARMA Cloud at startup by providing its selected route in a ControlRequest message that is published after a route is selected.
@@ -111,8 +111,6 @@ public:
   * \param route_msg The message containing route information
   */
   void routeCallbackMessage(const cav_msgs::RouteConstPtr& route_msg);
-
-  void removeGeofence(std::shared_ptr<Geofence> gf_ptr);
 
   /*!
    * \brief Gets the affected lanelet or areas based on the geofence_msg
