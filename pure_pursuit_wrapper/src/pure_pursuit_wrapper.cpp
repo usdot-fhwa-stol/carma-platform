@@ -83,6 +83,8 @@ void PurePursuitWrapper::SystemAlertHandler(const cav_msgs::SystemAlert::ConstPt
         case cav_msgs::SystemAlert::SHUTDOWN: 
           Shutdown(); 
           break;
+        default:
+          break;
       }
     }
     catch(const std::exception& e) {

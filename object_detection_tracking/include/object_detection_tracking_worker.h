@@ -45,12 +45,28 @@ class ObjectDetectionTrackingWorker
     */
 
   void detectedObjectCallback(const autoware_msgs::DetectedObjectArray &msg);
+
+  // Setters for the prediction parameters
+  void setPredictionTimeStep(double time_step);
+  void setPredictionPeriod(double period);
+  void setXAccelerationNoise(double noise);
+  void setYAccelerationNoise(double noise);
+  void setProcessNoiseMax(double noise_max);
+  void setConfidenceDropRate(double drop_rate);
  
  private:
 
-    // local copy of external object publihsers
+  // local copy of external object publihsers
 
-    PublishObjectCallback obj_pub_;
+  PublishObjectCallback obj_pub_;
+
+  // Prediction parameters
+  double prediction_time_step_ = 0.1;
+  double prediction_period_ = 2.0;
+  double cv_x_accel_noise_ = 9.0;
+  double cv_y_accel_noise_ = 9.0;
+  double prediction_process_noise_max_ = 1000.0;
+  double prediction_confidence_drop_rate_ = 0.9;
   
 };
 

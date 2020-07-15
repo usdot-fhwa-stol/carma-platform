@@ -192,8 +192,8 @@ namespace autoware_plugin
             }
             double delta_x_square = pow(waypoints[i].pose.pose.position.x - waypoints[i - 1].pose.pose.position.x, 2);
             double delta_y_square = pow(waypoints[i].pose.pose.position.y - waypoints[i - 1].pose.pose.position.y, 2);
-            //double delta_z_square = waypoints[i].pose.pose.position.z - waypoints[i - 1].pose.pose.position.z;
             // Here we ignore z attribute because it is not used by Autoware
+            
             double delta_d = sqrt(delta_x_square + delta_y_square);
             double average_v = 0.5 * (waypoints[i].twist.twist.linear.x + waypoints[i - 1].twist.twist.linear.x);
             double delta_t = delta_d / average_v;
@@ -211,7 +211,7 @@ namespace autoware_plugin
         uint64_t current_nsec = ros::Time::now().toNSec();
         for(int i = 0; i < trajectory.size(); ++i)
         {
-            trajectory[i].controller_plugin_name = "pure_pursuit";
+            trajectory[i].controller_plugin_name = "mpc_follower";
             trajectory[i].planner_plugin_name = "autoware";
             trajectory[i].target_time += current_nsec;
         }

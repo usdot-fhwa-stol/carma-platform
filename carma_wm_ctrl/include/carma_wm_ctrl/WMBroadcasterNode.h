@@ -54,15 +54,35 @@ public:
    */
   void publishMap(const autoware_lanelet2_msgs::MapBin& map_msg);
 
+  /**
+   * @brief Callback to publish map updates (geofences)
+   *
+   * @param geofence_msg The geofence message to publish
+   */
+  void publishMapUpdate(const autoware_lanelet2_msgs::MapBin& geofence_msg) const;
+
+  /**
+   * @brief Callback to publish route messages
+   *
+   * @param route_msg The route message to publish
+   */
+  void publishRouteMsg(const cav_msgs::RouteConstPtr route_msg);
+
 private:
   ros::CARMANodeHandle cnh_;
+  ros::CARMANodeHandle pnh_{"~"};
 
   ros::Publisher map_pub_;
+  ros::Publisher map_update_pub_;
+  ros::Publisher route_callmsg_pub_;
 
   ros::Subscriber base_map_sub_;
   
-  ros::Subscriber routeCallMsg_sub_;
+  ros::Subscriber route_callmsg_sub_;
 
+
+  ros::Subscriber georef_sub_;
+  ros::Subscriber geofence_sub_;
 
   WMBroadcaster wmb_;
 };

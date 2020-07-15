@@ -137,7 +137,6 @@ namespace guidance
         return false;
     }
 
-    GuidanceStateMachine::GuidanceStateMachine() :
-                          current_guidance_state_(State::STARTUP), robotic_active_status_(false), called_robotic_engage_in_active_(false) {}
+    GuidanceStateMachine::GuidanceStateMachine() {}
 
 }

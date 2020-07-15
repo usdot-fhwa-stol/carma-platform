@@ -27,16 +27,41 @@ void WMBroadcasterNode::publishMap(const autoware_lanelet2_msgs::MapBin& map_msg
   map_pub_.publish(map_msg);
 }
 
+void WMBroadcasterNode::publishMapUpdate(const autoware_lanelet2_msgs::MapBin& geofence_msg) const
+{
+  map_update_pub_.publish(geofence_msg);
+}
+
+void WMBroadcasterNode::publishRouteMsg(const cav_msgs::RouteConstPtr route_msg)
+{
+  route_callmsg_pub_.publish(route_msg);
+}
 WMBroadcasterNode::WMBroadcasterNode()
-  : wmb_(std::bind(&WMBroadcasterNode::publishMap, this, _1), std::make_unique<ROSTimerFactory>()){};
+  : wmb_(std::bind(&WMBroadcasterNode::publishMap, this, _1), std::bind(&WMBroadcasterNode::publishMapUpdate, this, _1), 
+  std::bind(&WMBroadcasterNode::publishRouteMsg, this, _1),
+    std::make_unique<ROSTimerFactory>()){};
 
 int WMBroadcasterNode::run()
 {
   // Map Publisher
   map_pub_ = cnh_.advertise<autoware_lanelet2_msgs::MapBin>("semantic_map", 1, true);
+  // Map Update Publisher
+  map_update_pub_ = cnh_.advertise<autoware_lanelet2_msgs::MapBin>("map_update", 1, true);
+  //Route Message Publisher
+  route_callmsg_pub_= <const cav_msgs::RouteConstPtr>("route", 1, true);
   // Base Map Sub
   base_map_sub_ = cnh_.subscribe("base_map", 1, &WMBroadcaster::baseMapCallback, &wmb_);
-
+  // Base Map Georeference Sub
+  georef_sub_ = cnh_.subscribe("georeference", 1, &WMBroadcaster::geoReferenceCallback, &wmb_);
+  // Geofence Sub
+  geofence_sub_ = cnh_.subscribe("geofence", 1, &WMBroadcaster::geofenceCallback, &wmb_);
+  //Route Message Sub
+  route_callmsg_sub_ = cnh_.subscribe("route", 1, &WMBroadcaster::routeCallbackMessage, &wmb_);
+  
+  double lane_max_width;
+  pnh_.getParam("max_lane_width", lane_max_width);
+  wmb_.setMaxLaneWidth(lane_max_width);
+  
   // Spin
   cnh_.setSpinRate(10);
   cnh_.spin();
