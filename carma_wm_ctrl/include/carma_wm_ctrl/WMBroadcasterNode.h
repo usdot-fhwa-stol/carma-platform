@@ -58,11 +58,11 @@ private:
   ros::CARMANodeHandle cnh_;
 
   ros::Publisher map_pub_;
+  ros::Publisher route_callmsg_pub_;
 
   ros::Subscriber base_map_sub_;
   
-  ros::Subscriber routeCallMsg_sub_;
-
+  ros::Subscriber route_callmsg_sub_;
 
   WMBroadcaster wmb_;
 };
