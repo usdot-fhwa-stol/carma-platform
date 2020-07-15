@@ -37,6 +37,8 @@ void WMBroadcasterNode::publishRouteMsg(const cav_msgs::RouteConstPtr route_msg)
 {
   route_callmsg_pub_.publish(route_msg);
 }
+
+// TODO: ERROR here. root cause is in WMBroadcaster.cpp
 WMBroadcasterNode::WMBroadcasterNode()
   : wmb_(std::bind(&WMBroadcasterNode::publishMap, this, _1), std::bind(&WMBroadcasterNode::publishMapUpdate, this, _1), 
   std::bind(&WMBroadcasterNode::publishRouteMsg, this, _1),

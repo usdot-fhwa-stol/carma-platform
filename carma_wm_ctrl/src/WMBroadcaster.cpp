@@ -41,7 +41,8 @@ namespace carma_wm_ctrl
 {
 using std::placeholders::_1;
 
-
+// TODO: Error here. There is no routecallback function
+// see the header file to see how it is renaming the functions here.
 WMBroadcaster::WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, std::unique_ptr<TimerFactory> timer_factory)
   : map_pub_(map_pub), map_update_pub_(map_update_pub), scheduler_(std::move(timer_factory))
 {
