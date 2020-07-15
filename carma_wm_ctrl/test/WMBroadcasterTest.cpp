@@ -66,7 +66,7 @@ TEST(WMBroadcaster, baseMapCallback)
         ASSERT_EQ(4, map->laneletLayer.size());  // Verify the map can be decoded
 
         base_map_call_count++;
-      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, 
+      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::RouteConstPtr& route_callmsg_pub_){},
       std::make_unique<TestTimerFactory>());
 
   // Get and convert map to binary message
@@ -337,9 +337,9 @@ TEST(WMBroadcaster, routeCallbackMessage)
 
         ASSERT_EQ(4, map->laneletLayer.size());  // Verify the map can be decoded
 
-        
-      }, std::make_unique<TestTimerFactory>());
-      
+        base_map_call_count++;
+      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::RouteConstPtr& route_callmsg_pub_){},
+      std::make_unique<TestTimerFactory>());
  
 
   bool flag = false;

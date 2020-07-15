@@ -67,11 +67,13 @@ class WMBroadcaster
 public:
   using PublishMapCallback = std::function<void(const autoware_lanelet2_msgs::MapBin&)>;
   using PublishMapUpdateCallback = std::function<void(const autoware_lanelet2_msgs::MapBin&)>;
+  using RouteMsgCallback = std::function<void(const cav_msgs::RouteConstPtr&)>;
 
   /*!
    * \brief Constructor
    */
-  WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, std::unique_ptr<TimerFactory> timer_factory);
+  WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, const RouteMsgCallback& route_callmsg_pub_,
+   std::unique_ptr<TimerFactory> timer_factory);
 
   /*!
    * \brief Callback to set the base map when it has been loaded
