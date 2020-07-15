@@ -33,7 +33,7 @@ void WMBroadcasterNode::publishRouteMsg(const cav_msgs::RouteConstPtr route_msg)
 }
   
 WMBroadcasterNode::WMBroadcasterNode()
-  : wmb_(std::bind(&WMBroadcasterNode::publishMap, this, _1), std::make_unique<ROSTimerFactory>()){};
+  : wmb_(std::bind(&WMBroadcasterNode::publishMap, this, _1), std::bind(&WMBroadcasterNode::publishRouteMsg, this, _1), std::make_unique<ROSTimerFactory>()){};
 
 int WMBroadcasterNode::run()
 {
