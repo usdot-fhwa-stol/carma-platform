@@ -384,7 +384,7 @@ void  WMBroadcaster::routeCallbackMessage(const cav_msgs::RouteConstPtr& route_m
   if(path.size() == 0) return;
   
    /*logic to determine route bounds*/
-  std::vector<lanelet::Lanelet> llt; 
+  std::vector<lanelet::ConstLanelet> llt; 
   std::vector<lanelet::BoundingBox2d> pathBox; 
   float minX = 99999;
   float minY = 99999;
@@ -397,7 +397,7 @@ void  WMBroadcaster::routeCallbackMessage(const cav_msgs::RouteConstPtr& route_m
   {
       llt.push_back(path.back()); //Add a lanelet to the vector
 
-      pathBox.push_back(lanelet::BoundingBox2d(llt.back())); //Create a bounding box of the added lanelet and add it to the vector
+      pathBox.push_back(lanelet::geometry::boundingBox2d(llt.back())); //Create a bounding box of the added lanelet and add it to the vector
 
 
       if (pathBox.back().corner(lanelet::BoundingBox2d::BottomLeft).x() < minX)
