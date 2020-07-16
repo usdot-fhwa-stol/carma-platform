@@ -333,7 +333,7 @@ TEST(WMBroadcaster, routeCallbackMessage)
   size_t base_map_call_count = 0;
   WMBroadcaster wmb(
       [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
-        // Publish map callback
+        // Publish map callback  
         lanelet::LaneletMapPtr map(new lanelet::LaneletMap);
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
 
