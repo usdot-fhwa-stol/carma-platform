@@ -49,7 +49,7 @@ namespace carma_wm_ctrl
 TEST(WMBroadcaster, Constructor)
 {
   WMBroadcaster([](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
-                std::make_unique<TestTimerFactory>());  // Create broadcaster with test timers. Having this check helps
+   [](const cav_msgs::RouteConstPtr& route_callmsg_pub_){}, std::make_unique<TestTimerFactory>());  // Create broadcaster with test timers. Having this check helps
                                                         // verify that the timers do not crash on destruction
 }
 TEST(WMBroadcaster, baseMapCallback)
