@@ -81,7 +81,7 @@ Below are the highlights of the issues and pull requests (PRs) that have been ad
 - PR 325: Initial implementation of CARMA3 guidance node
 - PR 327: Fix environment variables in launch files.
 - PR 329: Fix argument name for ray_ground_filter 
-- PR 330: Remove utility packages and update checkout.sh to depend on CARMAUtils
+- PR 330: Remove utility packages and update checkout.bash to depend on CARMAUtils
 - PR 331: Updating CARMAUtils repo name
 - PR 322: GNSS/NDT auto selector
 - PR 338: Add enhanced warning flag output to catkin build process
@@ -109,7 +109,7 @@ Below are the highlights of the issues and pull requests (PRs) that have been ad
 
 **Repository: CARMAUtils**  
 - PR 14: Add carma_utils and wgs84_utils packages to repo 
-- PR 15: Update checkout.sh script and CARMAUtils repo name
+- PR 15: Update checkout.bash script and CARMAUtils repo name
 - PR 16: Add uncertainty_tools package
 - PR 17: Update CircleCI For CARMA 3
 - PR 18: Feature/enhanced build warnings 
@@ -140,7 +140,7 @@ Below are the highlights of the issues and pull requests (PRs) that have been ad
 - PR 17: Update to match parameter standards
 - PR 19: Add SSC binaries to repo
 - PR 20: Add topic remapping for SSC
-- PR 21: Updating checkout.sh script and CARMAUtils repo name
+- PR 21: Updating checkout.bash script and CARMAUtils repo name
 - PR 25: Fix Lexus configuration 
 - PR 26: Update kvaser 
 - PR 28: Fix Pacifica config

@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <osm version="0.6" generator="lanelet2">
+  <geoReference>+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs</geoReference>
   <node id="1338" visible="true" version="1" lat="0" lon="0" />
   <node id="1339" visible="true" version="1" lat="0.00000898315" lon="0" />
   <node id="1340" visible="true" version="1" lat="0.00001796631" lon="0" />

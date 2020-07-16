@@ -270,12 +270,34 @@ namespace route {
             }
             auto via_lanelet_vector = lanelet::geometry::findNearest(world_model_->getMap()->laneletLayer, current_loc, 1);
             auto current_lanelet = lanelet::ConstLanelet(via_lanelet_vector[0].second.constData());
-            auto lanelet_track = world_model_->trackPos(current_lanelet, current_loc);
+            auto lanelet_track = carma_wm::geometry::trackPos(current_lanelet, current_loc);
             ll_id_ = current_lanelet.id();
             ll_crosstrack_distance_ = lanelet_track.crosstrack;
             ll_downtrack_distance_ = lanelet_track.downtrack;
             current_crosstrack_distance_ = track.crosstrack;
             current_downtrack_distance_ = track.downtrack;
+            // Determine speed limit
+            lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = world_model_->getTrafficRules();
+            
+            if (traffic_rules) 
+            {
+                auto laneletIterator = world_model_->getMap()->laneletLayer.find(ll_id_);
+                if (laneletIterator != world_model_->getMap()->laneletLayer.end()) {
+                    speed_limit_ = (*traffic_rules)->speedLimit(*laneletIterator).speedLimit.value();
+                } 
+                else 
+                {
+                    ROS_ERROR_STREAM("Failed to set the current speed limit. The lanelet_id: "
+                        << ll_id_ << " could not be matched with a lanelet in the map. The previous speed limit of "
+                        << speed_limit_ << " will be used.");
+                }
+                
+            } 
+            else 
+            {
+                ROS_ERROR_STREAM("Failed to set the current speed limit. Valid traffic rules object could not be built.");
+            }
+
             // check if we left the seleted route by cross track error
             if(std::fabs(current_crosstrack_distance_) > cross_track_max_)
             {
@@ -327,6 +349,7 @@ namespace route {
             state_msg.down_track = current_downtrack_distance_;
             state_msg.lanelet_downtrack = ll_downtrack_distance_;
             state_msg.lanelet_id = ll_id_;
+            state_msg.speed_limit = speed_limit_;
             route_state_pub_.publish(state_msg);
         }
         // publish route event in order if any

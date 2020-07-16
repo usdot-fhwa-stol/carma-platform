@@ -75,6 +75,7 @@ int main(int argc, char **argv)
 
 ```c++
 #include <ros/ros.h>
+#include <atomic>
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
 int main(int argc, char **argv)
@@ -87,9 +88,9 @@ int main(int argc, char **argv)
 
   carma_wm::WorldModelConstPtr wm = wml.getWorldModel(); // Get pointer to WorldModel
 
-  bool routeReady = false;
+  std::atomic<bool> routeReady(false);
   wml.setRouteCallback([&]() { // User can set callback to trigger when a new route or map is received. Works in single threaded case as well
-   routeReady = true;
+   routeReady.store(true);
   });
 
   ros::Rate loop_rate(10);
@@ -107,6 +108,37 @@ int main(int argc, char **argv)
   }
 
   return 0;
+}
+
+```
+
+#### Unit Test Example Pseudo Code
+
+To better support unit testing, the user should define their classes or functions to take in the pointer to the world model provided by WMListener.
+In the unit test, they can then intialize an instance of CARMAWorldModel, and set the map and route manually. NOTE: CARMAWorldModel should not be used in runtime code as the map route synchronization will need to be manually maintained. 
+
+```c++
+TEST(UserTest, someTest)
+{
+  CARMAWorldModel cmw; // Instantiate writeable world model
+
+  // Build map
+  std::vector<lanelet::Point3d> left = {
+    getPoint(0, 0, 0), // user created helper function to make lanelet points
+    getPoint(0, 1, 0),
+  };
+  std::vector<lanelet::Point3d> right = {
+    getPoint(1, 0, 0),
+    getPoint(1, 1, 0),
+  };
+
+  auto ll = getLanelet(left, right); // user created helper function to make lanelets
+  auto map = lanelet::utils::createMap({ ll }, {});
+
+  cmw.setMap(std::move(map));
+
+  // User can now pass a shared pointer of cmw to whatever they wish to test
+
 }
 
 ```

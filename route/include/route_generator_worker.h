@@ -29,6 +29,7 @@
 #include <cav_srvs/AbortActiveRoute.h>
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
+#include <carma_wm/Geometry.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -177,6 +178,9 @@ namespace route {
         // current lanelet down track and cross track distance
         double ll_crosstrack_distance_, ll_downtrack_distance_;
         unsigned int ll_id_;
+
+        // current speed limit on current lanelet
+        double speed_limit_ = 0;
 
         // local copy of Route publihsers
         ros::Publisher route_event_pub_, route_state_pub_, route_pub_;

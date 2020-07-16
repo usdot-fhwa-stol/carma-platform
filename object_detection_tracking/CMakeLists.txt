@@ -12,8 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
   cav_msgs
   roscpp
   carma_utils
+  motion_predict
 )
-
 
 ###################################
 ## catkin specific configuration ##
@@ -27,7 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES object_detection_tracking
- CATKIN_DEPENDS autoware_msgs cav_msgs roscpp carma_utils
+ CATKIN_DEPENDS autoware_msgs cav_msgs roscpp carma_utils motion_predict
 #  DEPENDS system_lib
 )
 
@@ -73,7 +73,7 @@ install(DIRECTORY include/
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 install(DIRECTORY
         launch
-      ##config
+        config
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
