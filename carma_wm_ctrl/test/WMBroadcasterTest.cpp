@@ -95,9 +95,9 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
 
         ASSERT_EQ(4, map->laneletLayer.size());  // Verify the map can be decoded
+
         base_map_call_count++;
-      }, 
-      [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
+      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::RouteConstPtr& route_callmsg_pub_){},
       std::make_unique<TestTimerFactory>());
 
   //////
@@ -159,9 +159,11 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
         // Publish map callback
         lanelet::LaneletMapPtr map(new lanelet::LaneletMap);
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
+
+        ASSERT_EQ(4, map->laneletLayer.size());  // Verify the map can be decoded
+
         base_map_call_count++;
-      },
-      [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
+      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::RouteConstPtr& route_callmsg_pub_){},
       std::make_unique<TestTimerFactory>());
 
   //////
@@ -285,7 +287,7 @@ TEST(WMBroadcaster, geofenceCallback)
         ASSERT_EQ(data_received->id_, gf.id_);
         ASSERT_EQ(data_received->remove_list_.size(), 0);
         ASSERT_EQ(data_received->update_list_.size(), 0);
-      },
+      }, [](const cav_msgs::RouteConstPtr& route_callmsg_pub_){},
       std::make_unique<TestTimerFactory>());
 
   // Get and convert map to binary message
@@ -328,7 +330,7 @@ TEST(WMBroadcaster, routeCallbackMessage)
   route_msg.route_path_lanelet_ids.push_back(220); //Add ids to the route_path_lanelet_ids array
   route_msg.route_path_lanelet_ids.push_back(232);
   route_msg.route_path_lanelet_ids.push_back(248);
-
+  size_t base_map_call_count = 0;
   WMBroadcaster wmb(
       [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
         // Publish map callback
@@ -351,7 +353,6 @@ TEST(WMBroadcaster, routeCallbackMessage)
 }
 
 
-}  // namespace carma_wm_ctrl
 TEST(WMBroadcaster, addAndRemoveGeofence)
 {
   using namespace lanelet::units::literals;
@@ -368,7 +369,7 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
       [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
         // Publish map update callback
         map_update_call_count++;
-      },
+      }, [](const cav_msgs::RouteConstPtr& route_callmsg_pub_){},
       std::make_unique<TestTimerFactory>());
 
   //////
@@ -458,7 +459,7 @@ using namespace lanelet::units::literals;
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
         base_map_call_count++;
       },
-      [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
+      [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::RouteConstPtr& route_callmsg_pub_){},
       std::make_unique<TestTimerFactory>());
   
   /////
