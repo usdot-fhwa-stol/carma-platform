@@ -159,9 +159,7 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
         // Publish map callback
         lanelet::LaneletMapPtr map(new lanelet::LaneletMap);
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
-
-        ASSERT_EQ(4, map->laneletLayer.size());  // Verify the map can be decoded
-
+        
         base_map_call_count++;
       }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::RouteConstPtr& route_callmsg_pub_){},
       std::make_unique<TestTimerFactory>());
