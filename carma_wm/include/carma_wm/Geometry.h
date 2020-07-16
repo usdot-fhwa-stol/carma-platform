@@ -104,7 +104,7 @@ std::tuple<TrackPos, lanelet::BasicSegment2d> matchSegment(const lanelet::BasicP
 *
 * \return A list of continuous centerline segments and their respective curvatures
 */
-static std::vector<double>
+std::vector<double>
 getLocalCurvatures(const std::vector<lanelet::ConstLanelet>& lanelets);
 
 /*!

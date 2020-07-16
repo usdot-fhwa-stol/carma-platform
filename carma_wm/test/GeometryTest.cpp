@@ -102,7 +102,7 @@ generate_const_curvature_linestring(
   return out;
 }
 
-TEST(CARMAWorldModelTest, getLocalCurvatures)
+TEST(Geometry, getLocalCurvatures)
 {
   CARMAWorldModel cmw;
 
@@ -118,7 +118,7 @@ TEST(CARMAWorldModelTest, getLocalCurvatures)
   std::vector<lanelet::ConstLanelet> lanelets = { lanelet::utils::toConst(ll_1) };
 
   ///// Compute single lanelet 0 curvature
-  std::vector<double> curvatures = cmw.getLocalCurvatures(lanelets);
+  std::vector<double> curvatures = geometry::getLocalCurvatures(lanelets);
   ASSERT_EQ(lanelets[0].centerline2d().size(), curvatures.size());
   ASSERT_NEAR(0.0, curvatures[0], 0.0000001);
   ASSERT_NEAR(0.0, curvatures[1], 0.0000001);
@@ -132,7 +132,7 @@ TEST(CARMAWorldModelTest, getLocalCurvatures)
   auto ll_2 = getLanelet(left_2, right_2);
   std::vector<lanelet::ConstLanelet> lanelets2 = { lanelet::utils::toConst(ll_2) };
 
-  std::vector<double> curvatures2 = cmw.getLocalCurvatures(lanelets2);
+  std::vector<double> curvatures2 = geometry::getLocalCurvatures(lanelets2);
   ASSERT_EQ(lanelets2[0].centerline2d().size(), curvatures2.size());
 
   double total = 0;
@@ -153,7 +153,7 @@ TEST(CARMAWorldModelTest, getLocalCurvatures)
   lanelet::utils::overwriteLaneletsCenterline(map);
 
   std::vector<lanelet::ConstLanelet> lanelets3 = { lanelet::utils::toConst(ll_3) };
-  std::vector<double> curvatures3 = cmw.getLocalCurvatures(lanelets3);
+  std::vector<double> curvatures3 = geometry::getLocalCurvatures(lanelets3);
   ASSERT_EQ(lanelets3[0].centerline2d().size(), curvatures3.size());
 
   total = 0;
@@ -189,7 +189,7 @@ TEST(CARMAWorldModelTest, getLocalCurvatures)
   }
 
   std::vector<lanelet::ConstLanelet> lanelets4 = { lanelet::utils::toConst(ll_4) };
-  std::vector<double> curvatures4 = cmw.getLocalCurvatures(lanelets4);
+  std::vector<double> curvatures4 = geometry::getLocalCurvatures(lanelets4);
   ASSERT_EQ(lanelets4[0].centerline2d().size(), curvatures4.size());
 
   // Values calculated by hand using same method
@@ -202,7 +202,7 @@ TEST(CARMAWorldModelTest, getLocalCurvatures)
   ///// Test exception
   lanelet::Lanelet ll_empty;
   std::vector<lanelet::ConstLanelet> lanelets_5 = { lanelet::utils::toConst(ll_empty) };
-  ASSERT_THROW(cmw.getLocalCurvatures(lanelets_5), std::invalid_argument);
+  ASSERT_THROW(geometry::getLocalCurvatures(lanelets_5), std::invalid_argument);
 }
 
 TEST(GeometryTest, trackPos)
@@ -561,7 +561,7 @@ TEST(GeometryTest, trackPos_line_string)
   ASSERT_EQ(pc, std::get<1>(result).second);
 }
 
-TEST(CARMAWorldModelTest, objectToMapPolygon)
+TEST(Geometry, objectToMapPolygon)
 {
   geometry_msgs::Pose pose;
   pose.position.x = 6;
