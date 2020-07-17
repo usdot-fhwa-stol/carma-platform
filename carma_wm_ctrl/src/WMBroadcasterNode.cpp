@@ -33,7 +33,7 @@ void WMBroadcasterNode::publishMapUpdate(const autoware_lanelet2_msgs::MapBin& g
 }
 
   
-void WMBroadcasterNode::publishRouteMsg(const cav_msgs::RouteConstPtr route_msg)
+void WMBroadcasterNode::publishRouteMsg(const cav_msgs::Route route_msg)
 {
   route_callmsg_pub_.publish(route_msg);
 }
@@ -66,8 +66,6 @@ int WMBroadcasterNode::run()
   wmb_.setMaxLaneWidth(lane_max_width);
   
  
-   //Route Message Sub
-  route_callmsg_sub_ = cnh_.subscribe("route", 1, &WMBroadcaster::routeCallbackMessage, &wmb_);
   // Spin
   cnh_.setSpinRate(10);
   cnh_.spin();
