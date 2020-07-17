@@ -94,6 +94,11 @@ void WMListenerWorker::roadwayObjectListCallback(const cav_msgs::RoadwayObstacle
 
 void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
 {
+  if (!world_model_->getMap()) {
+    ROS_ERROR_STREAM("WMListener received a route before a map was available. Dropping route message.");
+    return;
+  }
+
   auto path = lanelet::ConstLanelets();
   for(auto id : route_msg->shortest_path_lanelet_ids)
   {
