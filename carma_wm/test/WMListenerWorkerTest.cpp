@@ -122,16 +122,13 @@ TEST(WMListenerWorkerTest, routeCallback)
   ///// Test with user defined route callback
   wmlw.setRouteCallback([&flag]() { flag = true; });
 
-  std::cerr << "C" << std::endl;
   wmlw.routeCallback(rpt);
 
   ASSERT_TRUE(flag);
-  std::cerr << "B" << std::endl;
 }
 
 TEST(WMListenerWorkerTest, mapUpdateCallback)
 {
-  std::cerr << "A" << std::endl;
   // build the geofence msg to test the mapUpdateCallback
   using namespace lanelet::units::literals;
   // add a lanelet
@@ -139,7 +136,6 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   auto p2 = getPoint(0, 1, 0);
   auto p3 = getPoint(1, 1, 0);
   auto p4 = getPoint(1, 0, 0);
-  std::cerr << "1" << std::endl;
   lanelet::LineString3d left_ls_1(lanelet::utils::getId(), { p1, p2 });
   lanelet::LineString3d right_ls_1(lanelet::utils::getId(), { p4, p3 });
 
@@ -155,7 +151,6 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   // Create the geofence object
   auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
   gf_ptr->id_ = boost::uuids::random_generator()();
-std::cerr << "2" << std::endl;
   gf_ptr->remove_list_.push_back(std::make_pair(ll_1.id(), speed_limit_old));
   gf_ptr->update_list_.push_back(std::make_pair(ll_1.id(), speed_limit_new));
 
@@ -164,7 +159,6 @@ std::cerr << "2" << std::endl;
   auto received_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
   carma_wm::toBinMsg(received_data, &gf_obj_msg);
 
-  std::cerr << "3" << std::endl;
   // create a listener
   WMListenerWorker wmlw; 
   // create basic map
@@ -175,7 +169,6 @@ std::cerr << "2" << std::endl;
   autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(map_msg));
   wmlw.mapCallback(map_msg_ptr);
 
-std::cerr << "4" << std::endl;
   // make sure it had old speed limit before
   auto regems = wmlw.getWorldModel()->getMap()->laneletLayer.get(ll_1.id()).regulatoryElements();
   ASSERT_EQ(regems.size(), 1);
@@ -206,7 +199,6 @@ std::cerr << "4" << std::endl;
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(regem_old_correct_data).size(), 0);
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(speed_limit_old).size(), 0);
 
-std::cerr << "5" << std::endl;
   // now the change should be reversable
   gf_ptr->update_list_ = {};
   gf_ptr->remove_list_ = {};
@@ -231,13 +223,11 @@ std::cerr << "5" << std::endl;
   ASSERT_NE(wmlw.getWorldModel()->getMap()->regulatoryElementLayer.find(speed_limit_old->id()), 
             wmlw.getWorldModel()->getMap()->regulatoryElementLayer.end());
 
-  std::cerr << "6" << std::endl;
   // old_speed_limit's data is also stored at a different address from the one we created locally because
   // we serialized the whole map and deserialized before setting the map.
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->regulatoryElementLayer.get(speed_limit_old->id()), regem_old_correct_data);
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(regem_old_correct_data).size(), 1);
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(regem_old_correct_data)[0].id(), ll_1.id());
-  std::cerr << "7" << std::endl;
 }
 
 
