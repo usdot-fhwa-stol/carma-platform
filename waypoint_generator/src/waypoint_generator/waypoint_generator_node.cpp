@@ -16,6 +16,7 @@
 
 #include <waypoint_generator/waypoint_generator_node.hpp>
 #include <waypoint_generator/waypoint_generator.hpp>
+#include <carma_wm/Geometry.h>
 
 namespace waypoint_generator
 {
@@ -68,10 +69,10 @@ namespace waypoint_generator
         }
 
         lanelet::BasicLineString2d route_geometry = 
-            carma_wm::WorldModel::concatenate_lanelets(tmp);
+            carma_wm::geometry::concatenate_lanelets(tmp);
         ROS_DEBUG("Processing curvatures...");
         std::vector<double> curvatures = 
-            carma_wm::WorldModel::getLocalCurvatures(tmp);
+            carma_wm::geometry::getLocalCurvatures(tmp);
 
         std::vector<int> constant_curvature_regions = 
             _wpg.compute_constant_curvature_regions(

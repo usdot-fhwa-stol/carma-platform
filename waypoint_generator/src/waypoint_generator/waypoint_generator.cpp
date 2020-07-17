@@ -15,6 +15,7 @@
 */
 
 #include <waypoint_generator/waypoint_generator.hpp>
+#include <carma_wm/Geometry.h>
 
 namespace waypoint_generator
 {
@@ -154,7 +155,7 @@ std::vector<double> WaypointGenerator::apply_accel_limits(std::vector<double> sp
             for (int j = idx; j >= 0; j--) {
                 // Iterate until we find a point that gives us enough delta_d to
                 // slow down in time
-                dist_accum += carma_wm::WorldModel::compute_euclidean_distance(
+                dist_accum += carma_wm::geometry::compute_euclidean_distance(
                     centerline[j], 
                     centerline[j + 1]);
 
@@ -163,7 +164,7 @@ std::vector<double> WaypointGenerator::apply_accel_limits(std::vector<double> sp
                         // Linearly interpolate between speeds starting at that
                         // point
                         double dist = 
-                            carma_wm::WorldModel::compute_euclidean_distance(
+                            carma_wm::geometry::compute_euclidean_distance(
                                 centerline[k], 
                                 centerline[idx + 1]);
                         out[k] = 
@@ -192,7 +193,7 @@ std::vector<double> WaypointGenerator::apply_accel_limits(std::vector<double> sp
                         // Linearly interpolate between speeds starting at that
                         // point
                         double dist = 
-                            carma_wm::WorldModel::compute_euclidean_distance(
+                            carma_wm::geometry::compute_euclidean_distance(
                                 centerline[k], 
                                 centerline[j]);
                         out[k] = 
@@ -204,7 +205,7 @@ std::vector<double> WaypointGenerator::apply_accel_limits(std::vector<double> sp
 
                 auto a = centerline[j];
                 auto b = centerline[j + 1];
-                dist_accum += carma_wm::WorldModel::compute_euclidean_distance(a, b);
+                dist_accum += carma_wm::geometry::compute_euclidean_distance(a, b);
             }
         }
     }
@@ -217,9 +218,9 @@ std::vector<geometry_msgs::Quaternion> WaypointGenerator::compute_orientations(
 {
     std::vector<geometry_msgs::Quaternion> out;
 
-    lanelet::BasicLineString2d centerline = carma_wm::WorldModel::concatenate_lanelets(lanelets);
+    lanelet::BasicLineString2d centerline = carma_wm::geometry::concatenate_lanelets(lanelets);
 
-    std::vector<Eigen::Vector2d> tangents = carma_wm::WorldModel::compute_finite_differences(centerline);
+    std::vector<Eigen::Vector2d> tangents = carma_wm::geometry::compute_finite_differences(centerline);
 
     Eigen::Vector2d x_axis = {1, 0};
     for (int i = 0; i < tangents.size(); i++) {
