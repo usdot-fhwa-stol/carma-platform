@@ -21,6 +21,7 @@
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 #include <lanelet2_extension/utility/utilities.h>
 #include <lanelet2_core/Attribute.h>
+#include <carma_wm/Geometry.h>
 #include "TestHelpers.h"
 
 using ::testing::_;
