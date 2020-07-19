@@ -169,7 +169,7 @@ class NDTMatchingWorker {
 
     result.transform_probability = ndt_solver_.getTransformationProbability();
 
-    result.align_time = std::chrono::duration_cast<std::chrono::microseconds>(align_end - align_start).count() / 1000.0;
+    result.align_time = std::chrono::duration_cast<std::chrono::milliseconds>(align_end - align_start).count();
   
     Eigen::Matrix4f map_to_baselink = map_to_sensor * baselink_in_sensor_;  // T_map_baselink = T_map_lidar * T_lidar_baselink
 
