@@ -32,7 +32,7 @@ using ::testing::Return;
 using ::testing::ReturnArg;
 
 using namespace waypoint_generator;
-
+namespace {
 TEST(WaypointGeneratorTest, TestComputeConstantCurvatureRegions)
 {
     WaypointGenerator wpg;
@@ -250,3 +250,4 @@ TEST(WaypointGeneratorTest, TestApplySpeedLimits) {
         ASSERT_LE(out_a[i], limits_a[i]);
     }
 }
+} // namespace
