@@ -33,7 +33,7 @@ void WMBroadcasterNode::publishMapUpdate(const autoware_lanelet2_msgs::MapBin& g
 }
 
   
-void WMBroadcasterNode::publishRouteMsg(const cav_msgs::RouteConstPtr route_msg)
+void WMBroadcasterNode::publishRouteMsg(const cav_msgs::ControlRequest route_msg)
 {
   route_callmsg_pub_.publish(route_msg);
 }
@@ -51,7 +51,7 @@ int WMBroadcasterNode::run()
   // Map Update Publisher
   map_update_pub_ = cnh_.advertise<autoware_lanelet2_msgs::MapBin>("map_update", 1, true);
   //Route Message Publisher
-  route_callmsg_pub_= cnh_.advertise<cav_msgs::Route>("route", 1, true);
+  route_callmsg_pub_= cnh_.advertise<cav_msgs::ControlRequest>("route", 1, true);
   // Base Map Sub
   base_map_sub_ = cnh_.subscribe("base_map", 1, &WMBroadcaster::baseMapCallback, &wmb_);
   // Base Map Georeference Sub

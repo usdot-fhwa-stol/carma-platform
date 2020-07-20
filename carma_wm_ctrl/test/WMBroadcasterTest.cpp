@@ -49,7 +49,7 @@ namespace carma_wm_ctrl
 TEST(WMBroadcaster, Constructor)
 {
   WMBroadcaster([](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
-   [](const cav_msgs::RouteConstPtr& route_callmsg_pub_){}, std::make_unique<TestTimerFactory>());  // Create broadcaster with test timers. Having this check helps
+   [](const cav_msgs::ControlRequest& route_callmsg_pub_){}, std::make_unique<TestTimerFactory>());  // Create broadcaster with test timers. Having this check helps
                                                         // verify that the timers do not crash on destruction
 }
 TEST(WMBroadcaster, baseMapCallback)
@@ -66,7 +66,7 @@ TEST(WMBroadcaster, baseMapCallback)
         ASSERT_EQ(4, map->laneletLayer.size());  // Verify the map can be decoded
 
         base_map_call_count++;
-      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::RouteConstPtr& route_callmsg_pub_){},
+      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::ControlRequest& route_callmsg_pub_){},
       std::make_unique<TestTimerFactory>());
 
   // Get and convert map to binary message
@@ -97,7 +97,7 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
         ASSERT_EQ(4, map->laneletLayer.size());  // Verify the map can be decoded
 
         base_map_call_count++;
-      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::RouteConstPtr& route_callmsg_pub_){},
+      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::ControlRequest& route_callmsg_pub_){},
       std::make_unique<TestTimerFactory>());
 
   //////
@@ -161,7 +161,7 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
         
         base_map_call_count++;
-      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::RouteConstPtr& route_callmsg_pub_){},
+      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::ControlRequest& route_callmsg_pub_){},
       std::make_unique<TestTimerFactory>());
 
   //////
@@ -285,7 +285,7 @@ TEST(WMBroadcaster, geofenceCallback)
         ASSERT_EQ(data_received->id_, gf.id_);
         ASSERT_EQ(data_received->remove_list_.size(), 0);
         ASSERT_EQ(data_received->update_list_.size(), 0);
-      }, [](const cav_msgs::RouteConstPtr& route_callmsg_pub_){},
+      }, [](const cav_msgs::ControlRequest& route_callmsg_pub_){},
       std::make_unique<TestTimerFactory>());
 
   // Get and convert map to binary message
@@ -338,7 +338,7 @@ TEST(WMBroadcaster, routeCallbackMessage)
         ASSERT_EQ(4, map->laneletLayer.size());  // Verify the map can be decoded
 
         base_map_call_count++;
-      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::RouteConstPtr& route_callmsg_pub_){},
+      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::ControlRequest& route_callmsg_pub_){},
       std::make_unique<TestTimerFactory>());
  
 
@@ -367,7 +367,7 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
       [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
         // Publish map update callback
         map_update_call_count++;
-      }, [](const cav_msgs::RouteConstPtr& route_callmsg_pub_){},
+      }, [](const cav_msgs::ControlRequest& route_callmsg_pub_){},
       std::make_unique<TestTimerFactory>());
 
   //////
@@ -457,7 +457,7 @@ using namespace lanelet::units::literals;
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
         base_map_call_count++;
       },
-      [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::RouteConstPtr& route_callmsg_pub_){},
+      [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::ControlRequest& route_callmsg_pub_){},
       std::make_unique<TestTimerFactory>());
   
   /////

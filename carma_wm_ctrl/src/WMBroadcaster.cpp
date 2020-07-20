@@ -42,9 +42,9 @@ namespace carma_wm_ctrl
 using std::placeholders::_1;
 
 
-WMBroadcaster::WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, const RouteMsgCallback& route_callmsg_pub_,
+WMBroadcaster::WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, const RouteMsgCallback& route_callmsg_pub,
 std::unique_ptr<TimerFactory> timer_factory)
-  : map_pub_(map_pub), map_update_pub_(map_update_pub), scheduler_(std::move(timer_factory))
+  : map_pub_(map_pub), map_update_pub_(map_update_pub), route_callmsg_pub_(route_callmsg_pub), scheduler_(std::move(timer_factory))
 {
   scheduler_.onGeofenceActive(std::bind(&WMBroadcaster::addGeofence, this, _1));
   scheduler_.onGeofenceInactive(std::bind(&WMBroadcaster::removeGeofence, this, _1));
@@ -445,7 +445,9 @@ void  WMBroadcaster::routeCallbackMessage(const cav_msgs::RouteConstPtr& route_m
   cB.latitude = gpsRoute.lat;
   cB.longitude = gpsRoute.lon;
 
- 
+  cR.bounds[0] = cB;
+
+ route_callmsg_pub_(cR);
 
 }
 // helper function that detects the type of geofence and delegates

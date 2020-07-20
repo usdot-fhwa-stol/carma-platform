@@ -67,12 +67,12 @@ class WMBroadcaster
 public:
   using PublishMapCallback = std::function<void(const autoware_lanelet2_msgs::MapBin&)>;
   using PublishMapUpdateCallback = std::function<void(const autoware_lanelet2_msgs::MapBin&)>;
-  using RouteMsgCallback = std::function<void(const cav_msgs::RouteConstPtr&)>;
+  using RouteMsgCallback = std::function<void(const cav_msgs::ControlRequest&)>;
 
   /*!
    * \brief Constructor
    */
-  WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, const RouteMsgCallback& route_callmsg_pub_,
+  WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, const RouteMsgCallback& route_callmsg_pub,
    std::unique_ptr<TimerFactory> timer_factory);
 
   /*!
@@ -143,6 +143,7 @@ private:
   std::mutex map_mutex_;
   PublishMapCallback map_pub_;
   PublishMapUpdateCallback map_update_pub_;
+  RouteMsgCallback route_callmsg_pub_;
   GeofenceScheduler scheduler_;
   std::string base_map_georef_;
   double max_lane_width_;
