@@ -24,6 +24,7 @@ set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 find_package(catkin REQUIRED COMPONENTS
   carma_utils
   cav_msgs
+  cav_srvs
   roscpp
   std_msgs
   carma_wm
@@ -39,7 +40,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 
 catkin_package(
    INCLUDE_DIRS include
-   CATKIN_DEPENDS carma_utils cav_msgs roscpp std_msgs carma_wm
+   CATKIN_DEPENDS carma_utils cav_msgs roscpp std_msgs carma_wm cav_srvs
 )
 
 ###########
