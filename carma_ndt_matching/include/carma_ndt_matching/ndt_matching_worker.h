@@ -83,7 +83,6 @@ class NDTMatchingWorker {
     new_ndt.setMaximumIterations(config_.max_iter);
     new_ndt.setStepSize(config_.step_size);
     new_ndt.setTransformationEpsilon(config_.trans_eps);
-    new_ndt.setTransformationRotationEpsilon(config_.rot_eps);
 
     new_ndt.align(*output_cloud, Eigen::Matrix4f::Identity());
 
@@ -148,6 +147,8 @@ class NDTMatchingWorker {
   NDTResult optimizePredictedState(const Eigen::Matrix4f& pose, pcl::PointCloud<pcl::PointXYZ>::Ptr scanPtr) {
     ROS_ERROR_STREAM("Optimizing");
     NDTResult result;
+
+    ROS_ERROR_STREAM("Scan Contains: " << scanPtr->size() << " points");
 
     ndt_solver_.setInputSource(scanPtr);
 

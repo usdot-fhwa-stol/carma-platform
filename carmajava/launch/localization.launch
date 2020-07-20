@@ -157,7 +157,7 @@
 
     <node pkg="rostopic" type="rostopic" name="config_voxel_grid_filter"
       args="pub --latch config/voxel_grid_filter autoware_config_msgs/ConfigVoxelGridFilter '{
-        voxel_leaf_size: 4,
+        voxel_leaf_size: 6,
         measurement_range: 150
       }'"/>
 

@@ -71,7 +71,6 @@ class NDTMatchingNode {
     pnh_.param<double>("ndt_resolution", worker_config.resolution, worker_config.resolution);
     pnh_.param<double>("ndt_step_size", worker_config.step_size, worker_config.step_size);
     pnh_.param<double>("ndt_trans_eps", worker_config.trans_eps, worker_config.trans_eps);
-    pnh_.param<double>("ndt_rot_eps", worker_config.rot_eps, worker_config.rot_eps);
 
     // Load architecture params
     pnh_.param<std::string>("baselink_frame_id_", worker_config.baselink_frame_id_, worker_config.baselink_frame_id_);
