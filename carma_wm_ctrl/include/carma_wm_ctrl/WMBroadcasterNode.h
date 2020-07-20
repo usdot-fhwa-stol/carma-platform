@@ -18,6 +18,7 @@
 
 #include <functional>
 #include <autoware_lanelet2_msgs/MapBin.h>
+#include <cav_msgs/ControlRequest.h>
 #include <carma_utils/CARMAUtils.h>
 #include <carma_wm_ctrl/WMBroadcaster.h>
 #include <ros/ros.h>
