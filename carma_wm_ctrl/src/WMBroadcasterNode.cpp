@@ -38,7 +38,6 @@ void WMBroadcasterNode::publishRouteMsg(const cav_msgs::ControlRequest route_msg
   route_callmsg_pub_.publish(route_msg);
 }
 
-// TODO: ERROR here. root cause is in WMBroadcaster.cpp
 WMBroadcasterNode::WMBroadcasterNode()
   : wmb_(std::bind(&WMBroadcasterNode::publishMap, this, _1), std::bind(&WMBroadcasterNode::publishMapUpdate, this, _1), 
   std::bind(&WMBroadcasterNode::publishRouteMsg, this, _1),
@@ -51,7 +50,7 @@ int WMBroadcasterNode::run()
   // Map Update Publisher
   map_update_pub_ = cnh_.advertise<autoware_lanelet2_msgs::MapBin>("map_update", 1, true);
   //Route Message Publisher
-  route_callmsg_pub_= cnh_.advertise<cav_msgs::ControlRequest>("route", 1, true);
+  route_callmsg_pub_= cnh_.advertise<cav_msgs::ControlRequest>("outgoing_geofence_request", 1, true);
   // Base Map Sub
   base_map_sub_ = cnh_.subscribe("base_map", 1, &WMBroadcaster::baseMapCallback, &wmb_);
   // Base Map Georeference Sub
