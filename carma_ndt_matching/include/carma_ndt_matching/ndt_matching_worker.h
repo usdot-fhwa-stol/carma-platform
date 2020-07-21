@@ -167,13 +167,20 @@ class NDTMatchingWorker {
     align_end = std::chrono::system_clock::now();
 
     result.has_converged = ndt_solver_.hasConverged();
+    ROS_ERROR_STREAM("Convergence: " << result.has_converged);
 
     map_to_sensor = ndt_solver_.getFinalTransformation();
     result.iteration_count = ndt_solver_.getFinalNumIteration();
 
+    ROS_ERROR_STREAM("IterationCount: " << result.iteration_count);
+
     result.fitness_score = ndt_solver_.getFitnessScore();
 
+    ROS_ERROR_STREAM("Fitness: " << result.fitness_score);
+
     result.transform_probability = ndt_solver_.getTransformationProbability();
+
+     ROS_ERROR_STREAM("Probability: " << result.transform_probability);
 
     result.align_time = std::chrono::duration_cast<std::chrono::milliseconds>(align_end - align_start).count();
   
@@ -267,6 +274,7 @@ class NDTMatchingWorker {
 
     ros::Time op_start = ros::Time::now();
     NDTResult optimized_state = optimizePredictedState(baselinkPoseToEigenSensor(predicted_state.pose), prev_scan_ptr);
+    optimized_state.stamp = predicted_state.stamp;
     ros::Time op_end = ros::Time::now();
     ROS_ERROR_STREAM("Optimization Time: " << (op_end - op_start).toSec());
 
@@ -280,7 +288,7 @@ class NDTMatchingWorker {
     ROS_ERROR_STREAM("FinalBaselinkPose [ " << now_state.pose.position.x << ", " << now_state.pose.position.y << ", " << now_state.pose.position.z << " ]");
 
     
-    ros::Time delta = now_state.stamp - optimized_state.stamp;
+    ros::Duration delta = now_state.stamp - optimized_state.stamp;
     ROS_ERROR_STREAM("NDT vs final delta: " << delta.toSec());
     optimized_state.pose = now_state.pose;
     optimized_state.stamp = now_state.stamp;
