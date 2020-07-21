@@ -59,11 +59,11 @@ namespace platoon_control
 
         	void TrajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp);
 
-			void currentTwist_cb(geometry_msgs::TwistStamped twist);
+			void currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist);
 
-        	geometry_msgs::TwistStamped composeTwist(cav_msgs::TrajectoryPlanPoint point);
+        	geometry_msgs::TwistStamped composeTwist(const cav_msgs::TrajectoryPlanPoint& point);
 
-        	void publishTwist(const geometry_msgs::TwistStamped& twist);
+        	void publishTwist(const geometry_msgs::TwistStamped& twist) const;
 
         	// Plugin discovery message
         	cav_msgs::Plugin plugin_discovery_msg_;

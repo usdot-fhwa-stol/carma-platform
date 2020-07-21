@@ -4,15 +4,7 @@
 
 namespace platoon_control
 {
-	PurePursuit::PurePursuit():
-	RADIUS_MAX_(9e10), 
-	KAPPA_MIN_(1 / RADIUS_MAX_), 
-	is_linear_interpolation_(false), 
-  	next_point_number_(-1), 
-  	lookahead_distance_(0), 
-  	minimum_lookahead_distance_(6), 
-  	current_linear_velocity_(0)
-	{}
+	PurePursuit::PurePursuit(){}
 
 
 	double PurePursuit::calcCurvature(geometry_msgs::Point target)
@@ -41,7 +33,7 @@ namespace platoon_control
 	}
 
 	// calculation relative coordinate of point from current_pose frame
-	geometry_msgs::Point PurePursuit::calcRelativeCoordinate(geometry_msgs::Point point_msg, geometry_msgs::Pose current_pose)
+	geometry_msgs::Point PurePursuit::calcRelativeCoordinate(const geometry_msgs::Point& point_msg, const geometry_msgs::Pose& current_pose) const
 	{
 		tf::Transform inverse;
 		tf::poseMsgToTF(current_pose, inverse);
@@ -356,58 +348,6 @@ namespace platoon_control
 
 		return unit_w1;
 	}
-
-
-
-
-
-
-	double PurePursuit::apply(){
-
-		double angularVelocity = 0;
-
-		geometry_msgs::PoseStamped pose;
-		double _velocity;
-
-		double lookAheadDistance = getLookAheadDistance(pose);
-        double lookAheadAngle = getLookAheadAngle(pose);
-
-        if (std::abs(std::sin(lookAheadAngle)) >= _epsilon) {
-        	double radius = 0.5*(lookAheadDistance/std::sin(lookAheadAngle));
-
-          	double linearVelocity = _velocity;
-          	if (std::abs(radius) >= _epsilon)
-          		angularVelocity = linearVelocity/radius; 
-        }
- 		
- 		return angularVelocity;
-
-	}
-
-
-	double PurePursuit::getLookAheadDistance(const geometry_msgs::PoseStamped& pose) const
-	{    
-	    return 0.0;
-  	}
-  
-  	double PurePursuit::getLookAheadAngle(const geometry_msgs::PoseStamped& pose) const 
-  	{
-  		return 0.0;
-  	}
-  
-  	double PurePursuit::getLookAheadThreshold() const {
-    	return _lookAheadRatio*_currentVelocity;
-  	}
-
-  	double PurePursuit::getArcDistance(const geometry_msgs::PoseStamped& pose) const {
-	    double lookAheadDistance = getLookAheadDistance(pose);
-	    double lookAheadAngle = getLookAheadAngle(pose);
-
-	    if (std::abs(std::sin(lookAheadAngle)) >= _epsilon)
-	    	return lookAheadDistance/sin(lookAheadAngle)*lookAheadAngle;
-	    else
-	      	return lookAheadDistance;
-  	}
 
 	
 

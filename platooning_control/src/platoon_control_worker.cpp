@@ -10,7 +10,7 @@ namespace platoon_control
         return lastCmdSpeed;
     }
 
-    void PlatoonControlWorker::generateSpeed(cav_msgs::TrajectoryPlanPoint point) {
+    void PlatoonControlWorker::generateSpeed(const cav_msgs::TrajectoryPlanPoint& point) {
     	PlatoonMember leader = platoon_leader;
     	if(leader.staticId != "") {
             double controllerOutput = 0.0;
@@ -18,7 +18,7 @@ namespace platoon_control
 
 	        double leaderCurrentPosition = leader.vehiclePosition;
 	        ROS_DEBUG("The current leader position is " , leaderCurrentPosition);
-	        double hostVehiclePosition = getCurrentDowntrackDistance();
+	        double hostVehiclePosition = getCurrentDowntrackDistance(point);
 	        double hostVehicleSpeed = currentSpeed;
 
 	        ROS_DEBUG("The host vehicle speed is + " , hostVehicleSpeed , " and its position is " , hostVehiclePosition);
@@ -38,8 +38,6 @@ namespace platoon_control
 	        // The summation of the leader vehicle command speed and the output of PD controller will be used as speed commands
 	        // The command speed of leader vehicle will act as the baseline for our speed control
 	        
-	        // distanceGapController_.changeSetpoint(desiredHostPosition);
-	        // Signal<Double> signal = new Signal<Double>(hostVehiclePosition, timeStamp);
 	        controllerOutput = pid_ctrl_.calculate(desiredHostPosition, hostVehiclePosition);//; = speedController_.apply(signal).get().getData();
 
 		    double adjSpeedCmd = controllerOutput + leader.commandSpeed;
@@ -84,7 +82,7 @@ namespace platoon_control
 
     }
 
-    void PlatoonControlWorker::generateSteer(cav_msgs::TrajectoryPlanPoint point){
+    void PlatoonControlWorker::generateSteer(const cav_msgs::TrajectoryPlanPoint& point){
     	
         pp_.setLookaheadDistance(const_lookahead_distance_);
         pp_.setMinimumLookaheadDistance(minimum_lookahead_distance_);
@@ -97,7 +95,7 @@ namespace platoon_control
     }
 
     // TODO get the actual leader from strategic plugin
-    void PlatoonControlWorker::setLeader(PlatoonMember leader){
+    void PlatoonControlWorker::setLeader(const PlatoonMember& leader){
     	platoon_leader = leader;
     }
 
@@ -105,7 +103,8 @@ namespace platoon_control
     	currentSpeed = speed;
     }
 
-    double PlatoonControlWorker::getCurrentDowntrackDistance(){
+    double PlatoonControlWorker::getCurrentDowntrackDistance(const cav_msgs::TrajectoryPlanPoint& point) const{
+        // TOTO: get downtrack from traj point
     	return currentDTD;
     }
 

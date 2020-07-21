@@ -16,8 +16,12 @@ namespace platoon_control
 
 	    // Integral term
 	    _integral += error * _dt;
-		if (_integral > integratorMax) _integral = integratorMax;
-		else if (_integral < integratorMin) _integral = integratorMin;
+		if (_integral > integratorMax){
+			 _integral = integratorMax;
+		}
+		else if (_integral < integratorMin){
+			_integral = integratorMin;
+		}
 	    double Iout = _Ki * _integral;
 
 	    // Derivative term

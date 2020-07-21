@@ -70,15 +70,15 @@ namespace platoon_control
 
     }
 
-    void PlatoonControlPlugin::currentTwist_cb(geometry_msgs::TwistStamped twist){
-        current_speed_ = twist.twist.linear.x;
+    void PlatoonControlPlugin::currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist){
+        current_speed_ = twist->twist.linear.x;
     }
 
-    void PlatoonControlPlugin::publishTwist(const geometry_msgs::TwistStamped& twist){
+    void PlatoonControlPlugin::publishTwist(const geometry_msgs::TwistStamped& twist) const {
     	twist_pub_.publish(twist);
     }
 
-    geometry_msgs::TwistStamped PlatoonControlPlugin::composeTwist(cav_msgs::TrajectoryPlanPoint point){
+    geometry_msgs::TwistStamped PlatoonControlPlugin::composeTwist(const cav_msgs::TrajectoryPlanPoint& point){
     	geometry_msgs::TwistStamped current_twist;
         pcw_.setCurrentSpeed(current_speed_);
         pcw_.setLeader(leader);

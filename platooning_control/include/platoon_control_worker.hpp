@@ -48,10 +48,10 @@ namespace platoon_control
         double getLastSpeedCommand();
 
         // Update speed commands based on the list of platoon members
-        void generateSpeed(cav_msgs::TrajectoryPlanPoint point);
-        void generateSteer(cav_msgs::TrajectoryPlanPoint point);
+        void generateSpeed(const cav_msgs::TrajectoryPlanPoint& point);
+        void generateSteer(const cav_msgs::TrajectoryPlanPoint& point);
 
-        void setLeader(PlatoonMember leader);
+        void setLeader(const PlatoonMember& leader);
         void setCurrentSpeed(double speed);
 
         double speedCmd;
@@ -90,7 +90,7 @@ namespace platoon_control
 
     	
 
-        double getCurrentDowntrackDistance();
+        double getCurrentDowntrackDistance(const cav_msgs::TrajectoryPlanPoint& point) const;
 
         // double getDistanceToFrontVehicle();
 

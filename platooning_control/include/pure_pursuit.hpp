@@ -18,6 +18,7 @@ namespace platoon_control
     class PurePursuit
     {
 
+
     public:
     	PurePursuit();
 
@@ -36,23 +37,21 @@ namespace platoon_control
 
 		bool interpolateNextTarget(int next_point, geometry_msgs::Point* next_target) const;
 
-
-        double apply();
     private:
 
     	// constant
   		const double RADIUS_MAX_ = 9e10;
   		const double KAPPA_MIN_ = 1/RADIUS_MAX_;
-		
+
 
   		  // variables
-		bool is_linear_interpolation_;
-		int next_point_number_;
+		bool is_linear_interpolation_ = false;
+		int next_point_number_ = -1;
 		geometry_msgs::Point next_target_position_;
-		double lookahead_distance_;
-		double minimum_lookahead_distance_;
+		double lookahead_distance_ = 0.0;
+		double minimum_lookahead_distance_ = 6.0;
 		geometry_msgs::Pose current_pose_;
-		double current_linear_velocity_;
+		double current_linear_velocity_ = 0.0;
     	std::vector<cav_msgs::TrajectoryPlanPoint> current_traj_points_;
 
 		geometry_msgs::Point trajPointToPoint(cav_msgs::TrajectoryPlanPoint tp) const;
@@ -62,7 +61,7 @@ namespace platoon_control
 
 		bool getLinearEquation(geometry_msgs::Point start, geometry_msgs::Point end, double *a, double *b, double *c) const;
 
-    	geometry_msgs::Point calcRelativeCoordinate(geometry_msgs::Point point_msg, geometry_msgs::Pose current_pose);
+    	geometry_msgs::Point calcRelativeCoordinate(const geometry_msgs::Point& point_msg, const geometry_msgs::Pose& current_pose) const;
 
     	double getPlaneDistance(geometry_msgs::Point target1, geometry_msgs::Point target2) const;
 
@@ -83,29 +82,6 @@ namespace platoon_control
 		{
 			return deg * M_PI / 180;
 		}  // convert degree to radian
-
-
-
-
-
-
-
-
-
-    	double getLookAheadDistance(const geometry_msgs::PoseStamped& pose) const;
-
-    	double getLookAheadAngle(const geometry_msgs::PoseStamped& pose) const;
-
-    	double getLookAheadThreshold() const;
-
-    	double getArcDistance(const geometry_msgs::PoseStamped& pose) const;
-
-    	double getArcDistance();
-
-    	double _epsilon = 1e-6;
-
-    	double _lookAheadRatio;
-    	double _currentVelocity;
 
 
     };
