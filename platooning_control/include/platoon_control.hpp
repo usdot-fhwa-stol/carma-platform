@@ -48,13 +48,18 @@ namespace platoon_control
         
         private:
 
+
         	// CARMA ROS node handles
         	std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
         	PlatoonControlWorker pcw_;
 
+			double current_speed_ = 0.0;
+
 
         	void TrajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp);
+
+			void currentTwist_cb(geometry_msgs::TwistStamped twist);
 
         	geometry_msgs::TwistStamped composeTwist(cav_msgs::TrajectoryPlanPoint point);
 
@@ -66,9 +71,10 @@ namespace platoon_control
 
         	// ROS Subscriber
         	ros::Subscriber trajectory_plan_sub;
+			ros::Subscriber current_twist_sub_;
         	// ROS Publisher
         	ros::Publisher twist_pub_;
-        	ros::Publisher current_twist_pub_;
+        	
         	ros::Publisher plugin_discovery_pub_;
 
 			// TODO: add communication to receive leader

@@ -28,10 +28,13 @@ namespace platoon_control
 
 	  	// Trajectory Plan Subscriber
 		trajectory_plan_sub = nh_->subscribe<cav_msgs::TrajectoryPlan>("trajectory_plan", 1, &PlatoonControlPlugin::TrajectoryPlan_cb, this);
+        
+        // Current Twist Subscriber
+        current_twist_sub_ = nh_->subscribe<geometry_msgs::TwistStamped>("localization/ekf_twist", 1, &PlatoonControlPlugin::currentTwist_cb, this);
 
 		// Control Publisher
 		twist_pub_ = nh_->advertise<geometry_msgs::TwistStamped>("twist_raw", 10, true);
-		current_twist_pub_ = nh_->advertise<geometry_msgs::TwistStamped>("localization/ekf_twist", 10, true);
+		
 
 		plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
         plugin_discovery_msg_.name = "PlatooningControlPlugin";
@@ -67,13 +70,17 @@ namespace platoon_control
 
     }
 
+    void PlatoonControlPlugin::currentTwist_cb(geometry_msgs::TwistStamped twist){
+        current_speed_ = twist.twist.linear.x;
+    }
+
     void PlatoonControlPlugin::publishTwist(const geometry_msgs::TwistStamped& twist){
     	twist_pub_.publish(twist);
     }
 
     geometry_msgs::TwistStamped PlatoonControlPlugin::composeTwist(cav_msgs::TrajectoryPlanPoint point){
     	geometry_msgs::TwistStamped current_twist;
-        pcw_.setCurrentSpeed(1.0);
+        pcw_.setCurrentSpeed(current_speed_);
         pcw_.setLeader(leader);
 
     	pcw_.generateSpeed(point);

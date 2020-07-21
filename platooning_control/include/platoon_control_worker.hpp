@@ -55,7 +55,7 @@ namespace platoon_control
         void setCurrentSpeed(double speed);
 
         double speedCmd;
-        double currentSpeed; //???
+        double currentSpeed;
         double adjustmentCap = 10.0;
         double lastCmdSpeed = 0.0;
 
