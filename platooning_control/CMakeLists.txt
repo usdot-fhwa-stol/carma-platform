@@ -101,7 +101,14 @@ install(DIRECTORY
 #############
 ## Testing ##
 #############
+
 catkin_add_gmock(${PROJECT_NAME}-test
   test/test_pid.cpp
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
-target_link_libraries(${PROJECT_NAME}-test platoon_control_plugin_lib ${catkin_LIBRARIES})
+  test/test_pure.cpp
+  test/test_worker.cpp
+  test/test_main.cpp)
+
+if(TARGET ${PROJECT_NAME}-test)
+  target_link_libraries(${PROJECT_NAME}-test platoon_control_plugin_lib ${catkin_LIBRARIES})
+endif()
+
