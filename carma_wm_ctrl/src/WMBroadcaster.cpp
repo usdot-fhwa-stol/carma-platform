@@ -445,7 +445,7 @@ void  WMBroadcaster::routeCallbackMessage(const cav_msgs::RouteConstPtr& route_m
   cB.latitude = gpsRoute.lat;
   cB.longitude = gpsRoute.lon;
 
-  cR.bounds[0] = cB;
+  cR.bounds.push_back(cB);
 
  route_callmsg_pub_(cR);
 
