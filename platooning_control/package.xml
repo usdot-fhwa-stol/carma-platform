@@ -2,7 +2,7 @@
 <package format="2">
   <name>platoon_control</name>
   <version>3.3.0</version>
-  <description>The node is to plan a platooning maneuver</description>
+  <description>The node is to control a platooning maneuver</description>
   <maintainer email="CARMA@dot.gov">carma</maintainer>
   <license>Apache 2.0 License</license>
   <buildtool_depend>catkin</buildtool_depend>
@@ -10,4 +10,5 @@
   <depend>cav_msgs</depend>
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
+  
 </package>

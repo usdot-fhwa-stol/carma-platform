@@ -48,15 +48,16 @@ namespace platoon_control
         double getLastSpeedCommand();
 
         // Update speed commands based on the list of platoon members
-        void generateSpeed(double timeStamp);
-        void generateSteer(double timeStamp);
+        void generateSpeed(cav_msgs::TrajectoryPlanPoint point);
+        void generateSteer(cav_msgs::TrajectoryPlanPoint point);
 
-        PlatoonMember getLeader();
+        void setLeader(PlatoonMember leader);
+        void setCurrentSpeed(double speed);
 
         double speedCmd;
         double currentSpeed; //???
         double adjustmentCap = 10.0;
-        double lastCmdSpeed;
+        double lastCmdSpeed = 0.0;
 
         double speedCmd_ = 0;
         double steerCmd_ = 0;
@@ -68,8 +69,12 @@ namespace platoon_control
 
     private:
 
-        PIDController *pid_ctrl_;
-        PurePursuit *pp_;
+        PIDController pid_ctrl_;
+        PurePursuit pp_;
+
+        const double const_lookahead_distance_ = 4.0;
+
+        double minimum_lookahead_distance_ = 6.0;
 
 
     	double maxAccel = 2.5; // m/s/s
@@ -83,11 +88,11 @@ namespace platoon_control
 
         double currentDTD;
 
-    	double getCurrentSpeed();
+    	
 
         double getCurrentDowntrackDistance();
 
-        double getDistanceToFrontVehicle();//????????????/*/*/**/*/*/
+        // double getDistanceToFrontVehicle();
 
         // platooning_desired_time_headway"
         double timeHeadway = 2.0;

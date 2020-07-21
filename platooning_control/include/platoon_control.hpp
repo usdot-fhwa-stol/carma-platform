@@ -30,6 +30,7 @@
 
 
 
+
 namespace platoon_control
 {
     class PlatoonControlPlugin
@@ -55,7 +56,7 @@ namespace platoon_control
 
         	void TrajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp);
 
-        	geometry_msgs::TwistStamped composeTwist(double timestamp);
+        	geometry_msgs::TwistStamped composeTwist(cav_msgs::TrajectoryPlanPoint point);
 
         	void publishTwist(const geometry_msgs::TwistStamped& twist);
 
@@ -69,6 +70,10 @@ namespace platoon_control
         	ros::Publisher twist_pub_;
         	ros::Publisher current_twist_pub_;
         	ros::Publisher plugin_discovery_pub_;
+
+			// TODO: add communication to receive leader
+			PlatoonMember leader;
+
 
 
 

@@ -30,6 +30,7 @@ namespace platoon_control
         double calculate( double setpoint, double pv );
         // ~PID();
 
+        void reset();
 
         
 

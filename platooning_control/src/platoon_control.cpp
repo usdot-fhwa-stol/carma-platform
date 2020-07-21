@@ -60,13 +60,10 @@ namespace platoon_control
     		
     		cav_msgs::TrajectoryPlanPoint t1 = tp->trajectory_points[i];
 
-    		geometry_msgs::TwistStamped twist_msg = composeTwist(t1.target_time);
+    		geometry_msgs::TwistStamped twist_msg = composeTwist(t1);
 
     		publishTwist(twist_msg);
     	}
-
-    	
-
 
     }
 
@@ -74,10 +71,13 @@ namespace platoon_control
     	twist_pub_.publish(twist);
     }
 
-    geometry_msgs::TwistStamped PlatoonControlPlugin::composeTwist(double timestamp){
+    geometry_msgs::TwistStamped PlatoonControlPlugin::composeTwist(cav_msgs::TrajectoryPlanPoint point){
     	geometry_msgs::TwistStamped current_twist;
-    	pcw_.generateSpeed(timestamp);
-    	pcw_.generateSteer(timestamp);
+        pcw_.setCurrentSpeed(1.0);
+        pcw_.setLeader(leader);
+
+    	pcw_.generateSpeed(point);
+    	pcw_.generateSteer(point);
     	current_twist.twist.linear.x = pcw_.speedCmd_;
     	current_twist.twist.angular.z = pcw_.steerCmd_;
     	return current_twist;

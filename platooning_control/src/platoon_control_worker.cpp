@@ -10,8 +10,8 @@ namespace platoon_control
         return lastCmdSpeed;
     }
 
-    void PlatoonControlWorker::generateSpeed(double timeStamp) {
-    	PlatoonMember leader = getLeader();
+    void PlatoonControlWorker::generateSpeed(cav_msgs::TrajectoryPlanPoint point) {
+    	PlatoonMember leader = platoon_leader;
     	if(leader.staticId != "") {
             double controllerOutput = 0.0;
 
@@ -19,17 +19,17 @@ namespace platoon_control
 	        double leaderCurrentPosition = leader.vehiclePosition;
 	        ROS_DEBUG("The current leader position is " , leaderCurrentPosition);
 	        double hostVehiclePosition = getCurrentDowntrackDistance();
-	        double hostVehicleSpeed = getCurrentSpeed();
+	        double hostVehicleSpeed = currentSpeed;
 
 	        ROS_DEBUG("The host vehicle speed is + " , hostVehicleSpeed , " and its position is " , hostVehiclePosition);
 	        // If the host vehicle is the fifth vehicle and it is following the third vehicle, the leader index here is 2
 	        // vehiclesInFront should be 2, because number of vehicles in front is 4, then numOfVehiclesGaps = VehicleInFront - leaderIndex   
-	        int leaderIndex;//????? = plugin_.platoonManager.getIndexOf(leader);
-	        int numOfVehiclesGaps;//??????? = plugin_.platoonManager.getNumberOfVehicleInFront() - leaderIndex;
+	        int leaderIndex;////TODO: Communicate leader index in the platoon (plugin_.platoonManager.getIndexOf(leader);)
+	        int numOfVehiclesGaps;////TODO: Communicate behicles ahead in the platoon (plugin_.platoonManager.getNumberOfVehicleInFront() - leaderIndex;)
 	        ROS_DEBUG("The host vehicle have " , numOfVehiclesGaps ," vehicles between itself and its leader (includes the leader)");
 	        desiredGap_ = std::max(hostVehicleSpeed * timeHeadway * numOfVehiclesGaps, standStillHeadway * numOfVehiclesGaps);
 	        ROS_DEBUG("The desired gap with the leader is " , desiredGap_);
-	        ROS_DEBUG("Based on raw radar, the current gap with the front vehicle is " , getDistanceToFrontVehicle());
+	        // ROS_DEBUG("Based on raw radar, the current gap with the front vehicle is " , getDistanceToFrontVehicle());
 	        double desiredHostPosition = leaderCurrentPosition - desiredGap_;
 	        ROS_DEBUG("The desired host position and the setpoint for pid controller is " , desiredHostPosition);
 	        // PD controller is used to adjust the speed to maintain the distance gap between the subject vehicle and leader vehicle
@@ -40,7 +40,7 @@ namespace platoon_control
 	        
 	        // distanceGapController_.changeSetpoint(desiredHostPosition);
 	        // Signal<Double> signal = new Signal<Double>(hostVehiclePosition, timeStamp);
-	        controllerOutput = pid_ctrl_->calculate(desiredHostPosition, hostVehiclePosition);//; = speedController_.apply(signal).get().getData();
+	        controllerOutput = pid_ctrl_.calculate(desiredHostPosition, hostVehiclePosition);//; = speedController_.apply(signal).get().getData();
 
 		    double adjSpeedCmd = controllerOutput + leader.commandSpeed;
 	        ROS_DEBUG("Adjusted Speed Cmd = " , adjSpeedCmd , "; Controller Output = " , controllerOutput
@@ -55,24 +55,10 @@ namespace platoon_control
                 }
                 ROS_DEBUG("The adjusted cmd speed after max adjustment cap is " , adjSpeedCmd , " m/s");
             }
-            // Second: we do not exceed the local speed limit
-            if(enableLocalSpeedLimitFilter) {
-                // SpeedLimit limit  = pluginServiceLocator_.getRouteService().getSpeedLimitAtLocation(pluginServiceLocator_.getRouteService().getCurrentDowntrackDistance());???
-                double localSpeedLimit = adjSpeedCmd;
-                // if(limit != null) {??
-                //     localSpeedLimit = limit.getLimit();
-                //     ROS_DEBUG("The local speed limit is " , localSpeedLimit , ", cap adjusted speed to speed limit if necessary");
-                // } else {
-                //     ROS_WARN("Cannot find local speed limit in current location" , getCurrentDowntrackDistance());
-                // }
-                adjSpeedCmd = std::min(std::max(adjSpeedCmd, 0.0), localSpeedLimit);
-                ROS_DEBUG("The speed command after local limit cap is: " , adjSpeedCmd , " m/s");
-            }
+        
             // Third: we allow do not a large gap between two consecutive speed commands
             if(enableMaxAccelFilter) {
-                // if(!lastCmdSpeed.isPresent()) {
-                //     lastCmdSpeed = Optional.of(plugin_.getLastSpeedCmd());
-                // }
+                
                 double max = lastCmdSpeed + (maxAccel * (CMD_TIMESTEP / 1000.0));
                 double min = lastCmdSpeed - (maxAccel * (CMD_TIMESTEP / 1000.0));
                 if(adjSpeedCmd > max) {
@@ -90,38 +76,43 @@ namespace platoon_control
 
         else {
             // TODO if there is no leader available, we should change back to Leader State and re-join other platoon later
-            // speedCmd_.set(plugin_.getManeuverInputs().getCurrentSpeed());
-            // distanceGapController_.reset();
+            ROS_DEBUG("There is no leader available");
+            speedCmd_ = currentSpeed;
+            pid_ctrl_.reset();
         }
 
 
     }
 
-    void PlatoonControlWorker::generateSteer(double timeStamp){
+    void PlatoonControlWorker::generateSteer(cav_msgs::TrajectoryPlanPoint point){
     	
-    	double steerCmd = 0;
-    	steerCmd = pp_->apply();
+        pp_.setLookaheadDistance(const_lookahead_distance_);
+        pp_.setMinimumLookaheadDistance(minimum_lookahead_distance_);
 
+        double kappa = 0;
+        bool can_get_curvature = pp_.canGetCurvature(&kappa);
 
+        steerCmd_ = can_get_curvature ? kappa * currentSpeed : 0;
 
     }
 
-    // ???????????????
-    PlatoonMember PlatoonControlWorker::getLeader(){
-    	return platoon_leader;
+    // TODO get the actual leader from strategic plugin
+    void PlatoonControlWorker::setLeader(PlatoonMember leader){
+    	platoon_leader = leader;
     }
 
-    double PlatoonControlWorker::getCurrentSpeed(){
-    	return currentSpeed;
+    void  PlatoonControlWorker::setCurrentSpeed(double speed){
+    	currentSpeed = speed;
     }
 
     double PlatoonControlWorker::getCurrentDowntrackDistance(){
     	return currentDTD;
     }
 
-    double PlatoonControlWorker::getDistanceToFrontVehicle(){
-    	return dist_to_front_vehicle;
-    }
+    // TODO Get information about front vehicle from world model (if needed)
+    // double PlatoonControlWorker::getDistanceToFrontVehicle(){
+    // 	return dist_to_front_vehicle;
+    // }
 
 
 

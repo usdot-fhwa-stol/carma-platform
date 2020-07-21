@@ -22,14 +22,28 @@ namespace platoon_control
     	PurePursuit();
 
     	double calcCurvature(geometry_msgs::Point target);
+		bool canGetCurvature(double* output_kappa);
+		// for setting data
+		void setLookaheadDistance(const double& ld)
+		{
+			lookahead_distance_ = ld;
+		}
+
+		void setMinimumLookaheadDistance(const double& minld)
+		{
+			minimum_lookahead_distance_ = minld;
+		}
+
+		bool interpolateNextTarget(int next_point, geometry_msgs::Point* next_target) const;
 
 
         double apply();
     private:
 
     	// constant
-  		const double RADIUS_MAX_;
-  		const double KAPPA_MIN_;
+  		const double RADIUS_MAX_ = 9e10;
+  		const double KAPPA_MIN_ = 1/RADIUS_MAX_;
+		
 
   		  // variables
 		bool is_linear_interpolation_;
@@ -41,14 +55,36 @@ namespace platoon_control
 		double current_linear_velocity_;
     	std::vector<cav_msgs::TrajectoryPlanPoint> current_traj_points_;
 
-
+		geometry_msgs::Point trajPointToPoint(cav_msgs::TrajectoryPlanPoint tp) const;
     	void getNextWaypoint();
+
+		double getDistanceBetweenLineAndPoint(geometry_msgs::Point point, double a, double b, double c) const;
+
+		bool getLinearEquation(geometry_msgs::Point start, geometry_msgs::Point end, double *a, double *b, double *c) const;
 
     	geometry_msgs::Point calcRelativeCoordinate(geometry_msgs::Point point_msg, geometry_msgs::Pose current_pose);
 
-    	double getPlaneDistance(geometry_msgs::Point target1, geometry_msgs::Point target2);
+    	double getPlaneDistance(geometry_msgs::Point target1, geometry_msgs::Point target2) const;
 
-    	tf::Vector3 point2vector(geometry_msgs::Point point);
+    	tf::Vector3 point2vector(geometry_msgs::Point point) const;
+
+		tf::Vector3 rotateUnitVector(tf::Vector3 unit_vector, double degree) const;
+
+		// inline function (less than 10 lines )
+		inline double kmph2mps(double velocity_kmph) 
+		{
+			return (velocity_kmph * 1000) / (60 * 60);
+		}
+		inline double mps2kmph(double velocity_mps)
+		{
+			return (velocity_mps * 60 * 60) / 1000;
+		}
+		inline double deg2rad(double deg) const
+		{
+			return deg * M_PI / 180;
+		}  // convert degree to radian
+
+
 
 
 

@@ -16,6 +16,8 @@ namespace platoon_control
 
 	    // Integral term
 	    _integral += error * _dt;
+		if (_integral > integratorMax) _integral = integratorMax;
+		else if (_integral < integratorMin) _integral = integratorMin;
 	    double Iout = _Ki * _integral;
 
 	    // Derivative term
@@ -38,18 +40,11 @@ namespace platoon_control
 
 	}
 
-	// void PIDController::setIntegratorRange(double min, double max) {
- //        integratorMax = max;
- //        integratorMin = min;
- //    }
 
- //    void PIDController::changeSetpoint(double setpoint) {
- //        setpoint = point;
- //    }
 
- //    void reset() {
- //        integrator = 0;
- //        lastError = Optional.empty();
- //    }
+    void PIDController::reset() {
+        _integral = 0.0;
+        _pre_error = 0.0;
+    }
 
 }
