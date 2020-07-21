@@ -79,12 +79,11 @@ class NDTMatchingWorker {
     pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ> new_ndt;
     pcl::PointCloud<pcl::PointXYZ>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZ>);
     new_ndt.setResolution(config_.resolution);
-    new_ndt.setInputTarget(map_ptr);
     new_ndt.setMaximumIterations(config_.max_iter);
     new_ndt.setStepSize(config_.step_size);
     new_ndt.setTransformationEpsilon(config_.trans_eps);
+    new_ndt.setInputTarget(map_ptr);
 
-    new_ndt.align(*output_cloud, Eigen::Matrix4f::Identity());
 
     ndt_solver_ = new_ndt;
     base_map_set_ = true;
@@ -112,6 +111,11 @@ class NDTMatchingWorker {
         pose_as_affine = tf2::transformToEigen(lookup_transform_(scan->header.frame_id, config_.baselink_frame_id_, ros::Time(0)));
         baselink_in_sensor_ = pose_as_affine.matrix().cast<float>();
         baselink_in_sensor_set_ = true;
+        
+        geometry_msgs::Pose tempPose;
+        tf2::convert(pose_as_affine, tempPose);
+
+        ROS_ERROR_STREAM("base_link_in_sensor [ " << tempPose.position.x << ", " << tempPose.position.y << ", " << tempPose.position.z << " ]");
         ROS_ERROR_STREAM("GOT baselink_lidar transform");
       } catch (tf2::TransformException &ex) {
         ROS_WARN_STREAM("NDT Ignoring scan message: Could not locate static transforms with exception " << ex.what());
@@ -180,6 +184,8 @@ class NDTMatchingWorker {
 
     //result.pose = Eigen::toMsg(tf_as_affine)
     tf2::convert(tf_as_affine, result.pose); // Convert to pose type
+
+    ROS_ERROR_STREAM("FinalNDTBaselinkPose [ " << result.pose.position.x << ", " << result.pose.position.y << ", " << result.pose.position.z << " ]");
     ROS_ERROR_STREAM("Done Optimizing");
     return result;
   }
@@ -243,7 +249,7 @@ class NDTMatchingWorker {
     geometry_msgs::Pose tempPose;
     tf2::convert(pose_as_affine, tempPose);
 
-    ROS_ERROR_STREAM("tempPose [ " << tempPose.position.x << ", " << tempPose.position.y << ", " << tempPose.position.z << " ]");
+    ROS_ERROR_STREAM("sensorPose [ " << tempPose.position.x << ", " << tempPose.position.y << ", " << tempPose.position.z << " ]");
 
     // TODO end remove block
 
@@ -263,7 +269,21 @@ class NDTMatchingWorker {
     NDTResult optimized_state = optimizePredictedState(baselinkPoseToEigenSensor(predicted_state.pose), prev_scan_ptr);
     ros::Time op_end = ros::Time::now();
     ROS_ERROR_STREAM("Optimization Time: " << (op_end - op_start).toSec());
-    optimized_state.stamp = prev_scan_msg_ptr_->header.stamp;
+
+    // Update position to current time
+    ros::Time now = ros::Time::now();
+    KinematicState ndt_state;
+    ndt_state.stamp = optimized_state.stamp;
+    ndt_state.pose = optimized_state.pose;
+    ndt_state.twist = predicted_state.twist;
+    KinematicState now_state = predictCurrentState(ndt_state, now);
+    ROS_ERROR_STREAM("FinalBaselinkPose [ " << now_state.pose.position.x << ", " << now_state.pose.position.y << ", " << now_state.pose.position.z << " ]");
+
+    
+    ros::Time delta = now_state.stamp - optimized_state.stamp;
+    ROS_ERROR_STREAM("NDT vs final delta: " << delta.toSec());
+    optimized_state.pose = now_state.pose;
+    optimized_state.stamp = now_state.stamp;
     optimized_state.frame_id = config_.map_frame_id_;
 
     result_pub_(optimized_state);
@@ -306,6 +326,8 @@ class NDTMatchingWorker {
     geometry_msgs::PoseStampedConstPtr pose_ptr(new geometry_msgs::PoseStamped(initial_pose));
 
     ROS_ERROR_STREAM("Found initial pose z of " << initial_pose.pose.position.z);
+    ROS_ERROR_STREAM("InitialPose [ " << initial_pose.pose.position.x << ", " << initial_pose.pose.position.y << ", " << initial_pose.pose.position.z << " ]");
+
     state_buffer_.clear();
     prevStateCallback(pose_ptr, twist_ptr);
 
