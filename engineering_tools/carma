@@ -316,7 +316,9 @@ carma__exec() {
 
         local COMMAND="source $INIT_FILE && ${@}"
 
+        xhost + && \
         docker run \
+            --runtime=nvidia \
             -e DISPLAY=$DISPLAY \
             --group-add video \
             --volume=$XSOCK:$XSOCK:rw \
@@ -327,13 +329,17 @@ carma__exec() {
             --volume=/opt/carma/yolo:/opt/carma/yolo \
             --volume=/opt/carma/maps:/opt/carma/maps \
             --volume=/opt/carma/routes:/opt/carma/routes \
+            --volume=/tmp/.X11-unix:/tmp/.X11-unix \
             --env="XAUTHORITY=${XAUTH}" \
+            --env QT_X11_NO_MITSHM=1 \
             --device=/dev/dri:/dev/dri \
             --network=host \
             --entrypoint="$entrypoint" \
             -it $TARGET_IMAGE -c "$COMMAND"
     else
+        xhost + && \
         docker run \
+            --runtime=nvidia \
             -e DISPLAY=$DISPLAY \
             --group-add video \
             --volume=$XSOCK:$XSOCK:rw \
@@ -344,7 +350,9 @@ carma__exec() {
             --volume=/opt/carma/yolo:/opt/carma/yolo \
             --volume=/opt/carma/maps:/opt/carma/maps \
             --volume=/opt/carma/routes:/opt/carma/routes \
+            --volume=/tmp/.X11-unix:/tmp/.X11-unix \
             --env="XAUTHORITY=${XAUTH}" \
+            --env QT_X11_NO_MITSHM=1 \
             --device=/dev/dri:/dev/dri \
             --network=host \
             --entrypoint="$entrypoint" \
