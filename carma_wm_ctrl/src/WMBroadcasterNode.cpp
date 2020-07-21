@@ -33,7 +33,7 @@ void WMBroadcasterNode::publishMapUpdate(const autoware_lanelet2_msgs::MapBin& g
 }
 
   
-void WMBroadcasterNode::publishRouteMsg(const cav_msgs::ControlRequest route_msg)
+void WMBroadcasterNode::publishRouteMsg(const cav_msgs::ControlRequest& route_msg)
 {
   route_callmsg_pub_.publish(route_msg);
 }
