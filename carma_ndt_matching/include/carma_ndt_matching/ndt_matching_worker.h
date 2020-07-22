@@ -199,6 +199,9 @@ class NDTMatchingWorker {
 
   KinematicState findPrevState(const ros::Time& time) {
     ROS_ERROR_STREAM("Finding previous state for time: " << time.toSec());
+    for (auto ks : state_buffer_) { // TODO remove
+      ROS_ERROR_STREAM("Stamp: " << ks.stamp.toSec());
+    }
     // Finds the lower bound in at most log(last - first) + 1 comparisons
     // Find the first state which is more recent than our time
     auto state_after_time = std::lower_bound(state_buffer_.begin(), state_buffer_.end(), time, 
