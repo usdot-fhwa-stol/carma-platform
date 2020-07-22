@@ -73,9 +73,6 @@ public class MockDriverNode extends SaxtonBaseNode {
       case "camera":
         simulatedDriver = new MockCameraDriver(connectedNode);
         break;
-      case "lightbar":
-        simulatedDriver = new MockLightBarDriver(connectedNode);
-        break;
       default:
         log.warn("==== No valid driver name specified on the simulated_driver parameter. Defaulting to CAN driver \n The simulated_driver value received is: " + switchValue +  " ...");
         simulatedDriver = new MockCANDriver(connectedNode);

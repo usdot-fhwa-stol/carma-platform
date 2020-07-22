@@ -22,6 +22,7 @@
 #include <ros/callback_queue.h>
 #include <carma_wm/WorldModel.h>
 #include <carma_utils/CARMAUtils.h>
+#include <autoware_lanelet2_msgs/MapBin.h>
 
 namespace carma_wm
 {
@@ -94,7 +95,10 @@ public:
   std::unique_lock<std::mutex> getLock(bool pre_locked = true);
 
 private:
+  // Callback function that uses lock to edit the map
+  void mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg);
   ros::Subscriber roadway_objects_sub_;
+  ros::Subscriber map_update_sub_;
   std::unique_ptr<WMListenerWorker> worker_;
   ros::CARMANodeHandle nh_;
   ros::CallbackQueue async_queue_;

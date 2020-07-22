@@ -52,8 +52,8 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/WMBroadcaster.cpp
   src/MapConformer.cpp
-  src/GeofenceSchedule.cpp
   src/GeofenceScheduler.cpp
+  src/GeofenceSchedule.cpp
   src/ROSTimer.cpp
   src/ROSTimerFactory.cpp
 )
@@ -111,8 +111,8 @@ install(DIRECTORY launch
 
 catkin_add_gmock(${PROJECT_NAME}-test
  test/TestMain.cpp
- test/GeofenceScheduleTest.cpp
  test/GeofenceSchedulerTest.cpp
+ test/GeofenceScheduleTest.cpp
  test/MapConformerTest.cpp
  test/TestTimer.cpp
  test/WMBroadcasterTest.cpp
