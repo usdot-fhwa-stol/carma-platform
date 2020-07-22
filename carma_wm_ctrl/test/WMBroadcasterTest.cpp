@@ -345,6 +345,8 @@ TEST(WMBroadcaster, routeCallbackMessage)
 
 
   cav_msgs::ControlRequest coRe;
+      ROS_INFO_STREAM("This works. ");
+
   ///// Test without user defined route callback
   coRe = wmb.routeCallbackMessageLogic(route_msg);
     ROS_INFO_STREAM("This is yet another test: ");

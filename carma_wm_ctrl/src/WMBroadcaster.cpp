@@ -390,6 +390,7 @@ cav_msgs::ControlRequest WMBroadcaster::routeCallbackMessageLogic(const cav_msgs
 
 
   auto path = lanelet::ConstLanelets(); 
+ // std::vector<lanelet::ConstLanelet> path;
   auto id = route_msg.route_path_lanelet_ids.back(); 
   
   auto laneLayer = current_map_->laneletLayer.get(id);
