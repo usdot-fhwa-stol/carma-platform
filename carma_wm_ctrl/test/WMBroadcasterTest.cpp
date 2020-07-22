@@ -34,6 +34,7 @@
 #include <cav_msgs/DaySchedule.h>
 #include <cav_msgs/Schedule.h>
 #include <cav_msgs/ScheduleParams.h>
+#include <cav_msgs/Route.h>
 
 using ::testing::_;
 using ::testing::A;
@@ -323,11 +324,7 @@ TEST(WMBroadcaster, geofenceCallback)
 TEST(WMBroadcaster, routeCallbackMessage) 
 {
   cav_msgs::Route route_msg;
-  cav_msgs::RouteConstPtr rpt(new cav_msgs::Route(route_msg));
   
-  route_msg.route_path_lanelet_ids.push_back(220); //Add ids to the route_path_lanelet_ids array
-  route_msg.route_path_lanelet_ids.push_back(232);
-  route_msg.route_path_lanelet_ids.push_back(248);
   size_t base_map_call_count = 0;
   WMBroadcaster wmb(
       [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
@@ -341,11 +338,10 @@ TEST(WMBroadcaster, routeCallbackMessage)
       }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::ControlRequest& route_callmsg_pub_){},
       std::make_unique<TestTimerFactory>());
  
-
   bool flag = false;
   
   ///// Test without user defined route callback
-  wmb.routeCallbackMessage(rpt);
+  wmb.routeCallbackMessage(route_msg);
 
   ASSERT_FALSE(flag);
 }

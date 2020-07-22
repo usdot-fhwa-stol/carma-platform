@@ -375,10 +375,10 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   map_update_pub_(gf_msg_revert);
 };
   
-void  WMBroadcaster::routeCallbackMessage(const cav_msgs::RouteConstPtr& route_msg)
+void  WMBroadcaster::routeCallbackMessage(const cav_msgs::Route& route_msg)
 {
   auto path = lanelet::ConstLanelets(); 
-  for(auto id : route_msg->route_path_lanelet_ids) 
+  for(auto id : route_msg.route_path_lanelet_ids) 
   {
     auto laneLayer = current_map_->laneletLayer.get(id);
     path.push_back(laneLayer);

@@ -112,7 +112,7 @@ public:
   * During operation at ~10s intervals the vehicle will make another control request for the remainder of its route.
   * \param route_msg The message containing route information
   */
-  void routeCallbackMessage(const cav_msgs::RouteConstPtr& route_msg);
+  void routeCallbackMessage(const cav_msgs::Route& route_msg);
 
   /*!
    * \brief Gets the affected lanelet or areas based on the geofence_msg
