@@ -377,13 +377,25 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   
 void  WMBroadcaster::routeCallbackMessage(const cav_msgs::Route& route_msg)
 {
+
+ cav_msgs::ControlRequest cR; 
+ cR =  routeCallbackMessageLogic(route_msg);
+ route_callmsg_pub_(cR);
+
+}
+
+
+cav_msgs::ControlRequest WMBroadcaster::routeCallbackMessageLogic(const cav_msgs::Route& route_msg) 
+{
+
+
   auto path = lanelet::ConstLanelets(); 
-  for(auto id : route_msg.route_path_lanelet_ids) 
-  {
-    auto laneLayer = current_map_->laneletLayer.get(id);
-    path.push_back(laneLayer);
-  }
-  if(path.size() == 0) return;
+  auto id = route_msg.route_path_lanelet_ids.back(); 
+  
+  auto laneLayer = current_map_->laneletLayer.get(id);
+  path.push_back(laneLayer);
+  
+  if(path.size() == 0) exit(0);
   
    /*logic to determine route bounds*/
   std::vector<lanelet::ConstLanelet> llt; 
@@ -447,9 +459,12 @@ void  WMBroadcaster::routeCallbackMessage(const cav_msgs::Route& route_msg)
 
   cR.bounds.push_back(cB);
 
- route_callmsg_pub_(cR);
+  
+  return (cR);
 
 }
+
+
 // helper function that detects the type of geofence and delegates
 void WMBroadcaster::addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr)
 {
@@ -474,4 +489,9 @@ void WMBroadcaster::removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr)
   gf_ptr->prev_regems_ = {};
 }
 
+
+
 }  // namespace carma_wm_ctrl
+
+
+

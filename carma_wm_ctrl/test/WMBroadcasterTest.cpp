@@ -325,6 +325,10 @@ TEST(WMBroadcaster, routeCallbackMessage)
 {
   cav_msgs::Route route_msg;
   
+  route_msg.route_path_lanelet_ids.push_back(1349);
+
+  ROS_INFO_STREAM("This is a test: ");
+  
   size_t base_map_call_count = 0;
   WMBroadcaster wmb(
       [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
@@ -338,13 +342,26 @@ TEST(WMBroadcaster, routeCallbackMessage)
       }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::ControlRequest& route_callmsg_pub_){},
       std::make_unique<TestTimerFactory>());
  
-  bool flag = false;
-  
-  ///// Test without user defined route callback
-  wmb.routeCallbackMessage(route_msg);
 
-  ASSERT_FALSE(flag);
+
+  cav_msgs::ControlRequest coRe;
+  ///// Test without user defined route callback
+  coRe = wmb.routeCallbackMessageLogic(route_msg);
+    ROS_INFO_STREAM("This is yet another test: ");
+
+
+ ASSERT_TRUE(coRe.bounds.size() > 0);
+
+
+
 }
+
+
+
+
+
+
+
 
 
 TEST(WMBroadcaster, addAndRemoveGeofence)

@@ -114,6 +114,10 @@ public:
   */
   void routeCallbackMessage(const cav_msgs::Route& route_msg);
 
+
+  cav_msgs::ControlRequest routeCallbackMessageLogic(const cav_msgs::Route& route_msg); 
+
+
   /*!
    * \brief Gets the affected lanelet or areas based on the geofence_msg
    * \param geofence_msg The ROS msg that contains proj and any point that lie on the target lanelet or area
