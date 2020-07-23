@@ -18,10 +18,14 @@
 #include <carma_wm_ctrl/GeofenceSchedule.h>
 #include <carma_wm_ctrl/Geofence.h>
 #include <carma_wm/TrafficControl.h>
+#include <lanelet2_io/Io.h>
+#include <lanelet2_io/io_handlers/Factory.h>
+#include <lanelet2_io/io_handlers/Writer.h>
 #include <carma_wm_ctrl/GeofenceScheduler.h>
 #include <carma_wm_ctrl/ROSTimerFactory.h>
 #include <carma_wm_ctrl/WMBroadcaster.h>
 #include <lanelet2_extension/utility/message_conversion.h>
+#include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <memory>
 #include <chrono>
 #include <ctime>
@@ -336,13 +340,38 @@ TEST(WMBroadcaster, routeCallbackMessage)
         lanelet::LaneletMapPtr map(new lanelet::LaneletMap);
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
 
-        ASSERT_EQ(4, map->laneletLayer.size());  // Verify the map can be decoded
+        ASSERT_EQ(2, map->laneletLayer.size());  // Verify the map can be decoded
 
         base_map_call_count++;
       }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::ControlRequest& route_callmsg_pub_){},
       std::make_unique<TestTimerFactory>());
  
+  // Load vector map from a file start
+  std::string file = "resource/test_vector_map1.osm";
+  int projector_type = 0;
+  std::string target_frame;
+  lanelet::ErrorMessages load_errors;
+  // Parse geo reference info from the original lanelet map (.osm)
+  lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
 
+  lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+
+  lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+
+  if (map->laneletLayer.size() == 0)
+  {
+    FAIL() << "Input map does not contain any lanelets";
+  }
+  // apply loaded map to WMBroadcaster
+  autoware_lanelet2_msgs::MapBin msg;
+  lanelet::utils::conversion::toBinMsg(map, &msg);
+  autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(msg));
+
+  // Trigger basemap callback
+  wmb.baseMapCallback(map_msg_ptr);
+  ASSERT_EQ(1, base_map_call_count);
+
+  // loading end
 
   cav_msgs::ControlRequest coRe;
       ROS_INFO_STREAM("This works. ");
