@@ -390,9 +390,19 @@ cav_msgs::ControlRequest WMBroadcaster::routeCallbackMessageLogic(const cav_msgs
 
 
   auto path = lanelet::ConstLanelets(); 
- // std::vector<lanelet::ConstLanelet> path;
   auto id = route_msg.route_path_lanelet_ids.back(); 
   
+  //TODO: Initialize current_map_
+
+
+
+  if (!current_map_) {
+// Return / log warning etc.
+  ROS_INFO_STREAM("Value 'current_map_' does not exist.");
+  throw lanelet::InvalidObjectStateError(std::string("Base lanelet map is not loaded to the WMBroadcaster"));
+
+  exit(0);
+}
   auto laneLayer = current_map_->laneletLayer.get(id);
   path.push_back(laneLayer);
   
