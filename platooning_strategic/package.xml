@@ -11,4 +11,5 @@
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
   <depend>carma_wm</depend>
+  <depend>cav_srvs</depend>
 </package>
