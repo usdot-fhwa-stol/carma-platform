@@ -413,52 +413,48 @@ cav_msgs::ControlRequest WMBroadcaster::routeCallbackMessageLogic(const cav_msgs
   std::vector<lanelet::BoundingBox2d> pathBox; 
   float minX = 99999;
   float minY = 99999;
-  float minZ = 99999;
   float maxX = 0;
   float maxY = 0;
-  float maxZ = 0;
+  ROS_WARN_STREAM("Got to this point safely");
 
   while (path.size() != 0) //Continue until there are no more lanelet elements in path
   {
       llt.push_back(path.back()); //Add a lanelet to the vector
+    ROS_WARN_STREAM("Got to this next point safely");
 
       pathBox.push_back(lanelet::geometry::boundingBox2d(llt.back())); //Create a bounding box of the added lanelet and add it to the vector
 
 
       if (pathBox.back().corner(lanelet::BoundingBox2d::BottomLeft).x() < minX)
         minX = pathBox.back().corner(lanelet::BoundingBox2d::BottomLeft).x(); //minimum x-value
+    ROS_WARN_STREAM("Got to this next point safely 2");
 
 
       if (pathBox.back().corner(lanelet::BoundingBox2d::BottomLeft).y() < minY)
         minY = pathBox.back().corner(lanelet::BoundingBox2d::BottomLeft).y(); //minimum y-value
 
 
+    ROS_WARN_STREAM("Got to this next point safely 3");
 
-      if (pathBox.back().corner(lanelet::BoundingBox2d::BottomLeft).z() < minZ)
-        minZ = pathBox.back().corner(lanelet::BoundingBox2d::BottomLeft).z(); //minimum z-value
-
-
-      if (pathBox.back().corner(lanelet::BoundingBox2d::TopRight).x() > maxX)
+     if (pathBox.back().corner(lanelet::BoundingBox2d::TopRight).x() > maxX)
         maxX = pathBox.back().corner(lanelet::BoundingBox2d::TopRight).x(); //maximum x-value
 
+    ROS_WARN_STREAM("Got to this next point safely 4");
 
         if (pathBox.back().corner(lanelet::BoundingBox2d::TopRight).y() > maxY)
         maxY = pathBox.back().corner(lanelet::BoundingBox2d::TopRight).y(); //maximum y-value
 
-        if (pathBox.back().corner(lanelet::BoundingBox2d::TopRight).z() > maxZ)
-        maxZ = pathBox.back().corner(lanelet::BoundingBox2d::TopRight).z(); //maximum z-value
 
 
       path.pop_back(); //remove the added lanelet from path an reduce pack.size() by 1
-  }
+  } //end of while loop
 
-  ROS_WARN_STREAM("Got here safely");
+  ROS_WARN_STREAM("Got here safely finally");
   lanelet::projection::MGRSProjector projector;
   lanelet::BasicPoint3d localRoute;
 
   localRoute.x()= minX;
   localRoute.y()= minY;
-  localRoute.z()= minZ; 
 
   lanelet::GPSPoint gpsRoute = projector.reverse(localRoute); //If the appropriate library is included, the reverse() function can be used instead of making a new one
 
