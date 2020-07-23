@@ -2,4 +2,4 @@
 trajectory_time_length: 6.0
 
 # The default control plugin name
-control_plugin_name: "mpc_follower"
+control_plugin_name: "platoon_control"

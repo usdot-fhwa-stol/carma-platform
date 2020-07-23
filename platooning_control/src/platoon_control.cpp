@@ -20,8 +20,9 @@
 namespace platoon_control
 {
     PlatoonControlPlugin::PlatoonControlPlugin(){}
-
+    
     void PlatoonControlPlugin::initialize(){
+    // @SONAR_STOP
 
     	nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
@@ -49,7 +50,7 @@ namespace platoon_control
             plugin_discovery_pub_.publish(plugin_discovery_msg_);
             return true;
         });
-
+    // @SONAR_START
     }
 
                                     
@@ -87,6 +88,7 @@ namespace platoon_control
     	pcw_.generateSteer(point);
     	current_twist.twist.linear.x = pcw_.speedCmd_;
     	current_twist.twist.angular.z = pcw_.steerCmd_;
+        current_twist.header.stamp = ros::Time::now();
     	return current_twist;
     }
 
