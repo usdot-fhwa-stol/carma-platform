@@ -16,7 +16,7 @@
  the License.
 -->
 
-<package format="2">
+<package format="3">
   <name>route_generator</name>
   <version>3.3.0</version>
   <description>The route_generator package provides capabilities for selecting and loading different route files for CARMA</description>
