@@ -73,14 +73,14 @@
 
   <!--EKF Localizer  Commend out to remove and change marked line in waypoint following.launch--> 
   <group>
-    <remap from="/initialpose" to="initialpose"/>
+    <remap from="initialpose" to="ndt_initial_pose"/>
     <!-- <remap from="initialpose" to="initialpose_fake"/> -->
     <remap from="ekf_pose" to="current_pose"/>
 
     <include file="$(find ekf_localizer)/launch/ekf_localizer.launch" >
       <arg name="show_debug_info" default="false"/>
       <arg name="enable_yaw_bias_estimation" default="True"/>
-      <arg name="predict_frequency" default="20.0"/>
+      <arg name="predict_frequency" default="50.0"/>
       <arg name="tf_rate" default="10.0"/>
       <arg name="extend_state_step" default="50"/>
       <arg name="input_twist_name" default="$(optenv CARMA_INTR_NS)/vehicle/twist"/>
@@ -134,7 +134,8 @@
 
   <node name="carma_ndt_matching" pkg="carma_ndt_matching" type="carma_ndt_matching_node">
     <remap from="ekf_pose" to="current_pose"/>
-    <remap from="ekf_twist" to="ekf_twist"/>
+    <remap from="ekf_twist" to="$(optenv CARMA_INTR_NS)/vehicle/twist"/>
+    <remap from="filter_initial_pose" to="ekf_initial_pose"/>
     <remap from="filtered_points" to="random_points"/>
   </node>
 
@@ -156,8 +157,8 @@
   <group>
     <node pkg="rostopic" type="rostopic" name="config_random_filter"
       args="pub --latch config/random_filter autoware_config_msgs/ConfigRandomFilter '{
-        sample_num: 500,
-        measurement_range: 50
+        sample_num: 1000,
+        measurement_range: 150
       }'"/>
     <remap from="/filtered_points" to="random_points"/>
     <include file="$(find points_downsampler)/launch/points_downsample.launch">
@@ -174,7 +175,7 @@
     <node pkg="rostopic" type="rostopic" name="config_voxel_grid_filter"
       args="pub --latch config/voxel_grid_filter autoware_config_msgs/ConfigVoxelGridFilter '{
         voxel_leaf_size: 2.0,
-        measurement_range: 50
+        measurement_range: 150
       }'"/>
 
     <include file="$(find points_downsampler)/launch/points_downsample.launch">

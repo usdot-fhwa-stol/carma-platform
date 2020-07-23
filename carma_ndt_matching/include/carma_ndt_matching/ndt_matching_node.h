@@ -5,6 +5,7 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/exact_time.h>
+#include <message_filters/sync_policies/approximate_time.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
 #include <carma_utils/CARMAUtils.h>
@@ -29,8 +30,9 @@ class NDTMatchingNode {
 
   ros::Publisher ndt_pose_pub_;
   ros::Publisher matching_time_pub_;
+  ros::Publisher initial_pose_forward_pub_;
 
-  typedef message_filters::sync_policies::ExactTime <geometry_msgs::PoseStamped, geometry_msgs::TwistStamped> StateSyncPolicy;
+  typedef message_filters::sync_policies::ApproximateTime <geometry_msgs::PoseStamped, geometry_msgs::TwistStamped> StateSyncPolicy;
   typedef message_filters::Synchronizer<StateSyncPolicy> StateSynchronizer;
 
   // Since the CARMANodeHandle cannot wrap the message filter's subscribers this function serves as an intermediate for exception handling
@@ -40,6 +42,10 @@ class NDTMatchingNode {
     } catch (const std::exception& e) {
       ros::CARMANodeHandle::handleException(e);
     }
+  }
+
+  void publishInitialPose(const geometry_msgs::PoseWithCovarianceStamped& msg) {
+    initial_pose_forward_pub_.publish(msg);
   }
 
   geometry_msgs::TransformStamped lookupTransform(const std::string& target_frame,const std::string& source_frame,const ros::Time& time) {
@@ -61,8 +67,9 @@ class NDTMatchingNode {
 
   void run() {
 
-    ndt_pose_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("ndt_pose", 10);
-    matching_time_pub_ = nh_.advertise<std_msgs::Float32>("carma_ndt_matching_time", 10);
+    ndt_pose_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("ndt_pose", 1);
+    matching_time_pub_ = nh_.advertise<std_msgs::Float32>("carma_ndt_matching_time", 1);
+    initial_pose_forward_pub_ = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>("ndt_initial_pose", 10);
 
     NDTConfig worker_config;
 
@@ -80,7 +87,8 @@ class NDTMatchingNode {
 
     worker_.reset(new NDTMatchingWorker(worker_config, 
         std::bind(&NDTMatchingNode::lookupTransform, this, ph::_1,ph::_2, ph::_3),
-        std::bind(&NDTMatchingNode::publishResults, this, ph::_1))
+        std::bind(&NDTMatchingNode::publishResults, this, ph::_1),
+        std::bind(&NDTMatchingNode::publishInitialPose, this, ph::_1))
     );
 //std::bind(static_cast<void(ros::Publisher::*)(const geometry_msgs::PoseStamped&)(&ros::Publisher::publish), &ndt_pose_pub, ph::_1))
 //        std::bind(static_cast<geometry_msgs::TransformStamped(tf2_ros::Buffer::*)(const std::string&,const std::string&,const ros::Time&)>(&tf2_ros::Buffer::lookupTransform), &tfBuffer_, ph::_1,ph::_2, ph::_3),
@@ -97,6 +105,7 @@ class NDTMatchingNode {
     ros::Subscriber points_sub = nh_.subscribe("filtered_points", 1, &NDTMatchingWorker::scanCallback, worker_.get());
     ros::Subscriber map_sub = nh_.subscribe("points_map", 1, &NDTMatchingWorker::baseMapCallback, worker_.get());
     ros::Subscriber initial_pose_sub = nh_.subscribe("initialpose", 1, &NDTMatchingWorker::initialPoseCallback, worker_.get());
+    ros::Subscriber filter_initial_pose_sub = nh_.subscribe("filter_initial_pose", 1, &NDTMatchingWorker::filterInitialPoseCallback, worker_.get());
 
     // Spin
     nh_.setSpinRate(10);

@@ -38,6 +38,7 @@ struct NDTResult {
 
 using LookupTransform = std::function<geometry_msgs::TransformStamped(const std::string&, const std::string&, const ros::Time&)>;
 using ResultPublisher = std::function<void(const NDTResult&)>;
+using InitialPosePublisher = std::function<void(const geometry_msgs::PoseWithCovarianceStamped&)>;
 
 class NDTMatchingWorker {
   bool base_map_set_ = false;
@@ -49,14 +50,18 @@ class NDTMatchingWorker {
 
   LookupTransform lookup_transform_;
   ResultPublisher result_pub_;
+  InitialPosePublisher initial_pose_pub_;
 
   bool baselink_in_sensor_set_ = false;
   Eigen::Matrix4f baselink_in_sensor_;  
+  bool initialpose_reset_ = false;
+  bool reseting_ = false;
 
   boost::circular_buffer<KinematicState> state_buffer_{10}; // TODO make size configurable or computed based on parameter rate differences
 
   public:
-  NDTMatchingWorker(NDTConfig config, LookupTransform lookup_tf_function, ResultPublisher pose_pub) : config_(config), lookup_transform_(lookup_tf_function), result_pub_(pose_pub) {
+  NDTMatchingWorker(NDTConfig config, LookupTransform lookup_tf_function, ResultPublisher pose_pub, InitialPosePublisher initial_pose_pub)
+   : config_(config), lookup_transform_(lookup_tf_function), result_pub_(pose_pub), initial_pose_pub_(initial_pose_pub){
 
   }
 
@@ -198,9 +203,9 @@ class NDTMatchingWorker {
   }
 
   KinematicState findPrevState(const ros::Time& time) {
-    ROS_ERROR_STREAM("Finding previous state for time: " << time.toSec());
+    ROS_ERROR_STREAM("Finding previous state for time: " << time << "  buffer has size: " << state_buffer_.size());
     for (auto ks : state_buffer_) { // TODO remove
-      ROS_ERROR_STREAM("Stamp: " << ks.stamp.toSec());
+      ROS_ERROR_STREAM("Stamp: " << ks.stamp);
     }
     // Finds the lower bound in at most log(last - first) + 1 comparisons
     // Find the first state which is more recent than our time
@@ -219,7 +224,7 @@ class NDTMatchingWorker {
 
     auto state_before_time = state_after_time - 1;
 
-    ROS_ERROR_STREAM("Found state with time: " << (*state_after_time).stamp.toSec());
+    ROS_ERROR_STREAM("Found state with time: " << (*state_before_time).stamp);
 
     return *state_before_time;
     
@@ -232,7 +237,7 @@ class NDTMatchingWorker {
     // I am thinking it might make sense to store a buffer of twist results. Then use the one nearest the point cloud as the prev state
     // After computing the result we apply a basic motion prediction to the output to get the newest prediction
     if (!prev_scan_msg_ptr_ || !base_map_set_ || state_buffer_.empty()) {
-      ROS_ERROR_STREAM("Waiting for data ");
+      ROS_DEBUG_STREAM("Waiting for data (map, lidar points, pose, twist)");
       return true;
     }
 
@@ -302,8 +307,17 @@ class NDTMatchingWorker {
     ros::Time end = ros::Time::now();
 
     ROS_ERROR_STREAM("CB Time: " << (end - start).toSec());
+
+    if (initialpose_reset_) { // If we have just reinitialized then allow the buffer to be filled again
+      initialpose_reset_ = false;
+    }
     // TODO publish other metrics
     return true;
+  }
+
+  
+  void filterInitialPoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg) {
+    reseting_ = false;
   }
 
   void initialPoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg) {
@@ -341,14 +355,21 @@ class NDTMatchingWorker {
 
     state_buffer_.clear();
     prevStateCallback(pose_ptr, twist_ptr);
-
+    initialpose_reset_ = true;
+    reseting_=true;
+    geometry_msgs::PoseWithCovarianceStamped frd_msg = *msg;
+    initial_pose_pub_(frd_msg);
   }
    
 
   void prevStateCallback(const geometry_msgs::PoseStampedConstPtr& pose, const geometry_msgs::TwistStampedConstPtr& twist) {
-    if (pose->header.stamp != twist->header.stamp) {
-      ROS_ERROR_STREAM("Received pose and twist with differing timestamps");
-      // TODO This should never occur should an exception be thrown?
+    // if (pose->header.stamp != twist->header.stamp) {
+    //   ROS_ERROR_STREAM("Received pose and twist with differing timestamps");
+    //   // TODO This should never occur should an exception be thrown?
+    //   return;
+    // }
+
+    if (initialpose_reset_ || reseting_) { // Do not update buffer while initial pose is reseting
       return;
     }
 
@@ -362,6 +383,8 @@ class NDTMatchingWorker {
       // TODO throw exception or find way to insert
       return;
     }
+
+    ROS_ERROR_STREAM("Buffer Size: " << state_buffer_.size());
 
     state_buffer_.push_back(state);
   }
