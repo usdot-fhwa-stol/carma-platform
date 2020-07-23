@@ -407,7 +407,7 @@ cav_msgs::ControlRequest WMBroadcaster::routeCallbackMessageLogic(const cav_msgs
   path.push_back(laneLayer);
   
   if(path.size() == 0) exit(0);
-  
+  ROS_WARN_STREAM("Got here safely");
    /*logic to determine route bounds*/
   std::vector<lanelet::ConstLanelet> llt; 
   std::vector<lanelet::BoundingBox2d> pathBox; 
@@ -452,7 +452,7 @@ cav_msgs::ControlRequest WMBroadcaster::routeCallbackMessageLogic(const cav_msgs
       path.pop_back(); //remove the added lanelet from path an reduce pack.size() by 1
   }
 
-
+  ROS_WARN_STREAM("Got here safely");
   lanelet::projection::MGRSProjector projector;
   lanelet::BasicPoint3d localRoute;
 
@@ -464,12 +464,12 @@ cav_msgs::ControlRequest WMBroadcaster::routeCallbackMessageLogic(const cav_msgs
 
   cav_msgs::ControlRequest cR; /*Fill the latitude value in message cB with the value of lat */
   cav_msgs::ControlBounds cB; /*Fill the longitude value in message cB with the value of lon*/
-
+  ROS_WARN_STREAM("Got here safely");
   cB.latitude = gpsRoute.lat;
   cB.longitude = gpsRoute.lon;
 
   cR.bounds.push_back(cB);
-
+  ROS_WARN_STREAM("Got here safely");
   
   return (cR);
 
