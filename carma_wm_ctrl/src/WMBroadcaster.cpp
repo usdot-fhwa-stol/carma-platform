@@ -450,13 +450,18 @@ cav_msgs::ControlRequest WMBroadcaster::routeCallbackMessageLogic(const cav_msgs
   } //end of while loop
 
   ROS_WARN_STREAM("Got here safely finally");
-  lanelet::projection::MGRSProjector projector;
+
+  /*lanelet::projection::MGRSProjector projector;
+  lanelet::BasicPoint3d localRoute;*/
+
+  std::string target_frame = base_map_georef_;
+  lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
   lanelet::BasicPoint3d localRoute;
 
   localRoute.x()= minX;
   localRoute.y()= minY;
 
-  lanelet::GPSPoint gpsRoute = projector.reverse(localRoute); //If the appropriate library is included, the reverse() function can be used instead of making a new one
+  lanelet::GPSPoint gpsRoute = local_projector.reverse(localRoute); //If the appropriate library is included, the reverse() function can be used instead of making a new one
 
   cav_msgs::ControlRequest cR; /*Fill the latitude value in message cB with the value of lat */
   cav_msgs::ControlBounds cB; /*Fill the longitude value in message cB with the value of lon*/
