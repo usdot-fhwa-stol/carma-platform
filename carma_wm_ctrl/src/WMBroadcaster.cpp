@@ -414,8 +414,8 @@ cav_msgs::ControlRequest WMBroadcaster::routeCallbackMessageLogic(const cav_msgs
   float minX = 99999;
   float minY = 99999;
   float minZ = 99999;
-  float maxX = 0;
-  float maxY = 0;
+  float maxX = -99999;
+  float maxY = -99999;
   float maxZ = 0;
   ROS_WARN_STREAM("Got to this point safely");
 
@@ -475,6 +475,10 @@ cav_msgs::ControlRequest WMBroadcaster::routeCallbackMessageLogic(const cav_msgs
   ROS_WARN_STREAM("Got here safely");
   cB.latitude = gpsRoute.lat;
   cB.longitude = gpsRoute.lon;
+
+  cB.offsets[0] = maxX;
+  cB.offsets[1] = maxY;
+  cB.offsets[2] = maxZ;
 
   cR.bounds.push_back(cB);
   ROS_WARN_STREAM("Got here safely");
