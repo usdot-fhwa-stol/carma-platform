@@ -390,10 +390,6 @@ cav_msgs::ControlRequest WMBroadcaster::routeCallbackMessageLogic(const cav_msgs
 
 
   auto path = lanelet::ConstLanelets(); 
- // auto id = route_msg.route_path_lanelet_ids.back(); 
-  
-  //TODO: Initialize current_map_
-
 
 
   if (!current_map_) {
@@ -409,8 +405,7 @@ cav_msgs::ControlRequest WMBroadcaster::routeCallbackMessageLogic(const cav_msgs
     auto laneLayer = current_map_->laneletLayer.get(id);
     path.push_back(laneLayer);
   }
-  /*auto laneLayer = current_map_->laneletLayer.get(id);
-  path.push_back(laneLayer);*/
+ 
   
   if(path.size() == 0) exit(0);
   ROS_WARN_STREAM("Got here safely");
@@ -422,20 +417,19 @@ cav_msgs::ControlRequest WMBroadcaster::routeCallbackMessageLogic(const cav_msgs
   float minZ = 99999;
   float maxX = -99999;
   float maxY = -99999;
-  float maxZ = 0;
+  float maxZ = -99999;
   ROS_WARN_STREAM("Got to this point safely");
 
   while (path.size() != 0) //Continue until there are no more lanelet elements in path
   {
       llt.push_back(path.back()); //Add a lanelet to the vector
-    ROS_WARN_STREAM("Got to this next point safely");
+    
 
       pathBox.push_back(lanelet::geometry::boundingBox3d(llt.back())); //Create a bounding box of the added lanelet and add it to the vector
 
 
       if (pathBox.back().corner(lanelet::BoundingBox3d::BottomLeft).x() < minX)
         minX = pathBox.back().corner(lanelet::BoundingBox3d::BottomLeft).x(); //minimum x-value
-    ROS_WARN_STREAM("Got to this next point safely 2");
 
 
       if (pathBox.back().corner(lanelet::BoundingBox3d::BottomLeft).y() < minY)
@@ -444,12 +438,10 @@ cav_msgs::ControlRequest WMBroadcaster::routeCallbackMessageLogic(const cav_msgs
     if (pathBox.back().corner(lanelet::BoundingBox3d::BottomLeft).z() < minZ)
         minZ = pathBox.back().corner(lanelet::BoundingBox3d::BottomLeft).z(); //minimum z-value
 
-    ROS_WARN_STREAM("Got to this next point safely 3");
 
      if (pathBox.back().corner(lanelet::BoundingBox3d::TopRight).x() > maxX)
         maxX = pathBox.back().corner(lanelet::BoundingBox3d::TopRight).x(); //maximum x-value
 
-    ROS_WARN_STREAM("Got to this next point safely 4");
 
         if (pathBox.back().corner(lanelet::BoundingBox3d::TopRight).y() > maxY)
         maxY = pathBox.back().corner(lanelet::BoundingBox3d::TopRight).y(); //maximum y-value
@@ -461,10 +453,9 @@ cav_msgs::ControlRequest WMBroadcaster::routeCallbackMessageLogic(const cav_msgs
       path.pop_back(); //remove the added lanelet from path an reduce pack.size() by 1
   } //end of while loop
 
-  ROS_WARN_STREAM("Got here safely finally");
+  ROS_WARN_STREAM("Successfully exited");
 
-  /*lanelet::projection::MGRSProjector projector;
-  lanelet::BasicPoint3d localRoute;*/
+  
 
   std::string target_frame = base_map_georef_;
   lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
@@ -474,11 +465,10 @@ cav_msgs::ControlRequest WMBroadcaster::routeCallbackMessageLogic(const cav_msgs
   localRoute.y()= minY;
   localRoute.z()= minZ; 
 
-  lanelet::GPSPoint gpsRoute = local_projector.reverse(localRoute); //If the appropriate library is included, the reverse() function can be used instead of making a new one
+  lanelet::GPSPoint gpsRoute = local_projector.reverse(localRoute); //If the appropriate library is included, the reverse() function can be used to convert from local xyz to lat/lon
 
   cav_msgs::ControlRequest cR; /*Fill the latitude value in message cB with the value of lat */
   cav_msgs::ControlBounds cB; /*Fill the longitude value in message cB with the value of lon*/
-  ROS_WARN_STREAM("Got here safely");
   cB.latitude = gpsRoute.lat;
   cB.longitude = gpsRoute.lon;
 

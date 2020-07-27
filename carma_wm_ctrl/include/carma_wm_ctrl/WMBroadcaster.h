@@ -108,13 +108,16 @@ public:
   void removeGeofence(std::shared_ptr<Geofence> gf_ptr);
   
   /*!
-  * \brief Pulls vehicle information from CARMA Cloud at startup by providing its selected route in a ControlRequest message that is published after a route is selected.
-  * During operation at ~10s intervals the vehicle will make another control request for the remainder of its route.
+  * \brief Calls routeCallbackMessageLogic() and publishes the ControlRequest Message returned after the completed operations
   * \param route_msg The message containing route information
   */
   void routeCallbackMessage(const cav_msgs::Route& route_msg);
 
-
+ /*!
+  * \brief Pulls vehicle information from CARMA Cloud at startup by providing its selected route in a ControlRequest message that is published after a route is selected.
+  * During operation at ~10s intervals the vehicle will make another control request for the remainder of its route.
+  * \param route_msg The message containing route information pulled from routeCallbackMessage()
+  */
   cav_msgs::ControlRequest routeCallbackMessageLogic(const cav_msgs::Route& route_msg); 
 
 
