@@ -329,6 +329,7 @@ TEST(WMBroadcaster, routeCallbackMessage)
 {
   cav_msgs::Route route_msg;
   
+  route_msg.route_path_lanelet_ids.push_back(1346);
   route_msg.route_path_lanelet_ids.push_back(1349);
 
   ROS_INFO_STREAM("This is a test: ");

@@ -390,7 +390,7 @@ cav_msgs::ControlRequest WMBroadcaster::routeCallbackMessageLogic(const cav_msgs
 
 
   auto path = lanelet::ConstLanelets(); 
-  auto id = route_msg.route_path_lanelet_ids.back(); 
+ // auto id = route_msg.route_path_lanelet_ids.back(); 
   
   //TODO: Initialize current_map_
 
@@ -403,8 +403,14 @@ cav_msgs::ControlRequest WMBroadcaster::routeCallbackMessageLogic(const cav_msgs
 
   exit(0);
 }
-  auto laneLayer = current_map_->laneletLayer.get(id);
-  path.push_back(laneLayer);
+
+  for(auto id : route_msg.route_path_lanelet_ids) 
+  {
+    auto laneLayer = current_map_->laneletLayer.get(id);
+    path.push_back(laneLayer);
+  }
+  /*auto laneLayer = current_map_->laneletLayer.get(id);
+  path.push_back(laneLayer);*/
   
   if(path.size() == 0) exit(0);
   ROS_WARN_STREAM("Got here safely");
@@ -476,9 +482,9 @@ cav_msgs::ControlRequest WMBroadcaster::routeCallbackMessageLogic(const cav_msgs
   cB.latitude = gpsRoute.lat;
   cB.longitude = gpsRoute.lon;
 
-  cB.offsets[0] = maxX;
-  cB.offsets[1] = maxY;
-  cB.offsets[2] = maxZ;
+  cB.offsets[0] = maxX - minX;
+  cB.offsets[1] = maxY - minY;
+  cB.offsets[2] = maxZ - minZ;
 
   cR.bounds.push_back(cB);
   ROS_WARN_STREAM("Got here safely");
