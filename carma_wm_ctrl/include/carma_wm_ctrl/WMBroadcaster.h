@@ -67,12 +67,12 @@ class WMBroadcaster
 public:
   using PublishMapCallback = std::function<void(const autoware_lanelet2_msgs::MapBin&)>;
   using PublishMapUpdateCallback = std::function<void(const autoware_lanelet2_msgs::MapBin&)>;
-  using RouteMsgCallback = std::function<void(const cav_msgs::ControlRequest&)>;
+  using PublishCtrlRequestCallback = std::function<void(const cav_msgs::ControlRequest&)>;
 
   /*!
    * \brief Constructor
    */
-  WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, const RouteMsgCallback& route_callmsg_pub,
+  WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, const PublishCtrlRequestCallback& control_msg_pub,
    std::unique_ptr<TimerFactory> timer_factory);
 
   /*!
@@ -108,7 +108,7 @@ public:
   void removeGeofence(std::shared_ptr<Geofence> gf_ptr);
   
   /*!
-  * \brief Calls routeCallbackMessageLogic() and publishes the ControlRequest Message returned after the completed operations
+  * \brief Calls controlRequestFromRoute() and publishes the ControlRequest Message returned after the completed operations
   * \param route_msg The message containing route information
   */
   void routeCallbackMessage(const cav_msgs::Route& route_msg);
@@ -118,7 +118,7 @@ public:
   * During operation at ~10s intervals the vehicle will make another control request for the remainder of its route.
   * \param route_msg The message containing route information pulled from routeCallbackMessage()
   */
-  cav_msgs::ControlRequest routeCallbackMessageLogic(const cav_msgs::Route& route_msg); 
+  cav_msgs::ControlRequest controlRequestFromRoute(const cav_msgs::Route& route_msg); 
 
 
   /*!
@@ -150,7 +150,7 @@ private:
   std::mutex map_mutex_;
   PublishMapCallback map_pub_;
   PublishMapUpdateCallback map_update_pub_;
-  RouteMsgCallback route_callmsg_pub_;
+  PublishCtrlRequestCallback control_msg_pub_;
   GeofenceScheduler scheduler_;
   std::string base_map_georef_;
   double max_lane_width_;

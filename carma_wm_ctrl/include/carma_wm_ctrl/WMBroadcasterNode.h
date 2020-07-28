@@ -56,11 +56,11 @@ public:
   void publishMap(const autoware_lanelet2_msgs::MapBin& map_msg);
   
   /**
-   * @brief Callback to publish route messages
+   * @brief Callback to publish ControlRequest Messages
    *
-   * @param route_msg The route message to publish
+   * @param route_msg The ControlRequest message to publish
    */
-  void publishRouteMsg(const cav_msgs::ControlRequest& route_msg);
+  void publishCtrlReq(const cav_msgs::ControlRequest& ctrlreq_msg);
 
   /**
    * @brief Callback to publish map updates (geofences)
@@ -75,7 +75,7 @@ private:
 
   ros::Publisher map_pub_;
   ros::Publisher map_update_pub_;
-  ros::Publisher route_callmsg_pub_;
+  ros::Publisher control_msg_pub_;
 
   ros::Subscriber base_map_sub_;
   
