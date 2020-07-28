@@ -35,11 +35,9 @@
 #include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_core/primitives/BoundingBox.h>
 #include <carma_wm/WMListener.h>
-#include <carma_wm/WorldModel.h>
 #include <cav_msgs/Route.h>
 #include <cav_msgs/ControlRequest.h>
 #include <cav_msgs/ControlBounds.h>
-#include <lanelet2_extension/projection/mgrs_projector.h>
 #include <autoware_lanelet2_msgs/MapBin.h>
 #include <lanelet2_routing/RoutingGraph.h>
 
