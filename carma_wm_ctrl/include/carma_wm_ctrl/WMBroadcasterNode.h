@@ -60,7 +60,7 @@ public:
    *
    * @param route_msg The ControlRequest message to publish
    */
-  void publishCtrlReq(const cav_msgs::ControlRequest& ctrlreq_msg);
+  void publishCtrlReq(const cav_msgs::ControlRequest& ctrlreq_msg) const;
 
   /**
    * @brief Callback to publish map updates (geofences)

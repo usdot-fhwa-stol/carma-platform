@@ -386,7 +386,7 @@ void  WMBroadcaster::routeCallbackMessage(const cav_msgs::Route& route_msg)
 }
 
 
-cav_msgs::ControlRequest WMBroadcaster::controlRequestFromRoute(const cav_msgs::Route& route_msg) 
+cav_msgs::ControlRequest WMBroadcaster::controlRequestFromRoute(const cav_msgs::Route& route_msg) const
 {
 
 
@@ -475,7 +475,7 @@ cav_msgs::ControlRequest WMBroadcaster::controlRequestFromRoute(const cav_msgs::
   cR.bounds.push_back(cB);
   ROS_WARN_STREAM("Got here safely");
   
-  return (cR);
+  return cR;
 
 }
 

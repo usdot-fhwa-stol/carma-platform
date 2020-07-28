@@ -116,7 +116,7 @@ public:
   * During operation at ~10s intervals the vehicle will make another control request for the remainder of its route.
   * \param route_msg The message containing route information pulled from routeCallbackMessage()
   */
-  cav_msgs::ControlRequest controlRequestFromRoute(const cav_msgs::Route& route_msg); 
+  cav_msgs::ControlRequest controlRequestFromRoute(const cav_msgs::Route& route_msg) const; 
 
 
   /*!
