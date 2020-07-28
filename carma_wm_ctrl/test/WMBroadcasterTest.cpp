@@ -372,6 +372,10 @@ TEST(WMBroadcaster, routeCallbackMessage)
   wmb.baseMapCallback(map_msg_ptr);
   ASSERT_EQ(1, base_map_call_count);
 
+  std_msgs::String target;
+  target.data = target_frame;
+  wmb.geoReferenceCallback(target);
+  ASSERT_FALSE(target_frame.empty());
   // loading end
 
   cav_msgs::ControlRequest coRe;

@@ -393,13 +393,13 @@ cav_msgs::ControlRequest WMBroadcaster::controlRequestFromRoute(const cav_msgs::
   auto path = lanelet::ConstLanelets(); 
 
 
-  if (!current_map_) {
-  // Return / log warning etc.
-  ROS_INFO_STREAM("Value 'current_map_' does not exist.");
-  throw lanelet::InvalidObjectStateError(std::string("Base lanelet map is not loaded to the WMBroadcaster"));
+  if (!current_map_) 
+  {
+   // Return / log warning etc.
+    ROS_INFO_STREAM("Value 'current_map_' does not exist.");
+    throw lanelet::InvalidObjectStateError(std::string("Base lanelet map is not loaded to the WMBroadcaster"));
 
-  exit(0);
-}
+  }
 
   for(auto id : route_msg.route_path_lanelet_ids) 
   {
@@ -407,7 +407,7 @@ cav_msgs::ControlRequest WMBroadcaster::controlRequestFromRoute(const cav_msgs::
     path.push_back(laneLayer);
   }
   
-  if(path.size() == 0) exit(0);
+  if(path.size() == 0) throw lanelet::InvalidObjectStateError(std::string("No lanelets available in path."));
 
    /*logic to determine route bounds*/
   std::vector<lanelet::ConstLanelet> llt; 
@@ -447,6 +447,14 @@ cav_msgs::ControlRequest WMBroadcaster::controlRequestFromRoute(const cav_msgs::
   
 
   std::string target_frame = base_map_georef_;
+  if (target_frame.empty()) 
+  {
+   // Return / log warning etc.
+    ROS_INFO_STREAM("Value 'target_frame' is empty.");
+    throw lanelet::InvalidObjectStateError(std::string("Base georeference map may not be loaded to the WMBroadcaster"));
+
+  }
+
   lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
   lanelet::BasicPoint3d localPoint;
 
