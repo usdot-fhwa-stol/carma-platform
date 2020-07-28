@@ -19,8 +19,11 @@
 #include <carma_wm_ctrl/WMBroadcaster.h>
 #include <carma_wm_ctrl/MapConformer.h>
 #include <lanelet2_extension/utility/message_conversion.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/geometry/BoundingBox.h>
+#include <lanelet2_core/primitives/BoundingBox.h>
 #include <type_traits>
 
 #include <lanelet2_core/primitives/Polygon.h>
@@ -31,6 +34,7 @@
 #include <lanelet2_core/Forward.h>
 #include <lanelet2_extension/utility/utilities.h>
 #include <algorithm>
+#include <limits>
 #include <carma_wm/Geometry.h>
 #include <math.h>
 
@@ -39,11 +43,13 @@ namespace carma_wm_ctrl
 using std::placeholders::_1;
 
 
-WMBroadcaster::WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, std::unique_ptr<TimerFactory> timer_factory)
-  : map_pub_(map_pub), map_update_pub_(map_update_pub), scheduler_(std::move(timer_factory))
+WMBroadcaster::WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, const PublishCtrlRequestCallback& control_msg_pub,
+std::unique_ptr<TimerFactory> timer_factory)
+  : map_pub_(map_pub), map_update_pub_(map_update_pub), control_msg_pub_(control_msg_pub), scheduler_(std::move(timer_factory))
 {
   scheduler_.onGeofenceActive(std::bind(&WMBroadcaster::addGeofence, this, _1));
   scheduler_.onGeofenceInactive(std::bind(&WMBroadcaster::removeGeofence, this, _1));
+  std::bind(&WMBroadcaster::routeCallbackMessage, this, _1);
 };
 
 void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr& map_msg)
@@ -347,7 +353,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   // Process the geofence object
   addGeofenceHelper(gf_ptr);
   
-  // publish
+  // Publish
   autoware_lanelet2_msgs::MapBin gf_msg;
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
   carma_wm::toBinMsg(send_data, &gf_msg);
@@ -369,6 +375,110 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   carma_wm::toBinMsg(send_data, &gf_msg_revert);
   map_update_pub_(gf_msg_revert);
 };
+  
+void  WMBroadcaster::routeCallbackMessage(const cav_msgs::Route& route_msg) const
+{
+
+ cav_msgs::ControlRequest cR; 
+ cR =  controlRequestFromRoute(route_msg);
+ control_msg_pub_(cR);
+
+}
+
+
+cav_msgs::ControlRequest WMBroadcaster::controlRequestFromRoute(const cav_msgs::Route& route_msg) const
+{
+
+
+  auto path = lanelet::ConstLanelets(); 
+
+
+  if (!current_map_) 
+  {
+   // Return / log warning etc.
+    ROS_INFO_STREAM("Value 'current_map_' does not exist.");
+    throw lanelet::InvalidObjectStateError(std::string("Base lanelet map is not loaded to the WMBroadcaster"));
+
+  }
+
+  for(auto id : route_msg.route_path_lanelet_ids) 
+  {
+    auto laneLayer = current_map_->laneletLayer.get(id);
+    path.push_back(laneLayer);
+  }
+  
+  if(path.size() == 0) throw lanelet::InvalidObjectStateError(std::string("No lanelets available in path."));
+
+   /*logic to determine route bounds*/
+  std::vector<lanelet::ConstLanelet> llt; 
+  std::vector<lanelet::BoundingBox2d> pathBox; 
+  double minX = std::numeric_limits<double>::max();
+  double minY = std::numeric_limits<double>::max();
+  double maxX = std::numeric_limits<double>::lowest();
+  double maxY = std::numeric_limits<double>::lowest();
+
+  while (path.size() != 0) //Continue until there are no more lanelet elements in path
+  {
+      llt.push_back(path.back()); //Add a lanelet to the vector
+    
+
+      pathBox.push_back(lanelet::geometry::boundingBox2d(llt.back())); //Create a bounding box of the added lanelet and add it to the vector
+
+
+      if (pathBox.back().corner(lanelet::BoundingBox2d::BottomLeft).x() < minX)
+        minX = pathBox.back().corner(lanelet::BoundingBox2d::BottomLeft).x(); //minimum x-value
+
+
+      if (pathBox.back().corner(lanelet::BoundingBox2d::BottomLeft).y() < minY)
+        minY = pathBox.back().corner(lanelet::BoundingBox2d::BottomLeft).y(); //minimum y-value
+
+
+
+     if (pathBox.back().corner(lanelet::BoundingBox2d::TopRight).x() > maxX)
+        maxX = pathBox.back().corner(lanelet::BoundingBox2d::TopRight).x(); //maximum x-value
+
+
+     if (pathBox.back().corner(lanelet::BoundingBox2d::TopRight).y() > maxY)
+        maxY = pathBox.back().corner(lanelet::BoundingBox2d::TopRight).y(); //maximum y-value
+
+
+      path.pop_back(); //remove the added lanelet from path an reduce pack.size() by 1
+  } //end of while loop
+  
+
+  std::string target_frame = base_map_georef_;
+  if (target_frame.empty()) 
+  {
+   // Return / log warning etc.
+    ROS_INFO_STREAM("Value 'target_frame' is empty.");
+    throw lanelet::InvalidObjectStateError(std::string("Base georeference map may not be loaded to the WMBroadcaster"));
+
+  }
+
+  lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+  lanelet::BasicPoint3d localPoint;
+
+  localPoint.x()= minX;
+  localPoint.y()= minY;
+
+  lanelet::GPSPoint gpsRoute = local_projector.reverse(localPoint); //If the appropriate library is included, the reverse() function can be used to convert from local xyz to lat/lon
+
+  cav_msgs::ControlRequest cR; /*Fill the latitude value in message cB with the value of lat */
+  cav_msgs::ControlBounds cB; /*Fill the longitude value in message cB with the value of lon*/
+  cB.latitude = gpsRoute.lat;
+  cB.longitude = gpsRoute.lon;
+
+//TODO: Update for new geofence spec
+  cB.offsets[0] = maxX - minX;
+  cB.offsets[1] = maxY - minY;
+
+  cR.bounds.push_back(cB);
+  ROS_WARN_STREAM("Got here safely");
+  
+  return cR;
+
+}
+
 
 // helper function that detects the type of geofence and delegates
 void WMBroadcaster::addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr)
@@ -394,4 +504,9 @@ void WMBroadcaster::removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr)
   gf_ptr->prev_regems_ = {};
 }
 
+
+
 }  // namespace carma_wm_ctrl
+
+
+

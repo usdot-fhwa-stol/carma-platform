@@ -18,10 +18,14 @@
 #include <carma_wm_ctrl/GeofenceSchedule.h>
 #include <carma_wm_ctrl/Geofence.h>
 #include <carma_wm/TrafficControl.h>
+#include <lanelet2_io/Io.h>
+#include <lanelet2_io/io_handlers/Factory.h>
+#include <lanelet2_io/io_handlers/Writer.h>
 #include <carma_wm_ctrl/GeofenceScheduler.h>
 #include <carma_wm_ctrl/ROSTimerFactory.h>
 #include <carma_wm_ctrl/WMBroadcaster.h>
 #include <lanelet2_extension/utility/message_conversion.h>
+#include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <memory>
 #include <chrono>
 #include <ctime>
@@ -34,6 +38,7 @@
 #include <cav_msgs/DaySchedule.h>
 #include <cav_msgs/Schedule.h>
 #include <cav_msgs/ScheduleParams.h>
+#include <cav_msgs/Route.h>
 
 using ::testing::_;
 using ::testing::A;
@@ -49,7 +54,7 @@ namespace carma_wm_ctrl
 TEST(WMBroadcaster, Constructor)
 {
   WMBroadcaster([](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
-                std::make_unique<TestTimerFactory>());  // Create broadcaster with test timers. Having this check helps
+   [](const cav_msgs::ControlRequest& control_msg_pub_){}, std::make_unique<TestTimerFactory>());  // Create broadcaster with test timers. Having this check helps
                                                         // verify that the timers do not crash on destruction
 }
 TEST(WMBroadcaster, baseMapCallback)
@@ -66,7 +71,7 @@ TEST(WMBroadcaster, baseMapCallback)
         ASSERT_EQ(4, map->laneletLayer.size());  // Verify the map can be decoded
 
         base_map_call_count++;
-      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, 
+      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::ControlRequest& control_msg_pub_){},
       std::make_unique<TestTimerFactory>());
 
   // Get and convert map to binary message
@@ -95,9 +100,9 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
 
         ASSERT_EQ(4, map->laneletLayer.size());  // Verify the map can be decoded
+
         base_map_call_count++;
-      }, 
-      [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
+      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::ControlRequest& control_msg_pub_){},
       std::make_unique<TestTimerFactory>());
 
   //////
@@ -159,9 +164,9 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
         // Publish map callback
         lanelet::LaneletMapPtr map(new lanelet::LaneletMap);
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
+        
         base_map_call_count++;
-      },
-      [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
+      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::ControlRequest& control_msg_pub_){},
       std::make_unique<TestTimerFactory>());
 
   //////
@@ -285,7 +290,7 @@ TEST(WMBroadcaster, geofenceCallback)
         ASSERT_EQ(data_received->id_, gf.id_);
         ASSERT_EQ(data_received->remove_list_.size(), 0);
         ASSERT_EQ(data_received->update_list_.size(), 0);
-      },
+      }, [](const cav_msgs::ControlRequest& control_msg_pub_){},
       std::make_unique<TestTimerFactory>());
 
   // Get and convert map to binary message
@@ -318,6 +323,91 @@ TEST(WMBroadcaster, geofenceCallback)
 
   carma_wm::waitForEqOrTimeout(3.0, 1, temp);
 }
+  
+  
+TEST(WMBroadcaster, routeCallbackMessage) 
+{
+  cav_msgs::Route route_msg;
+  
+  route_msg.route_path_lanelet_ids.push_back(1346);
+  route_msg.route_path_lanelet_ids.push_back(1349);
+
+  ROS_INFO_STREAM("This is a test: ");
+  
+  size_t base_map_call_count = 0;
+  WMBroadcaster wmb(
+      [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
+        // Publish map callback  
+        lanelet::LaneletMapPtr map(new lanelet::LaneletMap);
+        lanelet::utils::conversion::fromBinMsg(map_bin, map);
+
+        ASSERT_EQ(2, map->laneletLayer.size());  // Verify the map can be decoded
+
+        base_map_call_count++;
+      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::ControlRequest& control_msg_pub_){},
+      std::make_unique<TestTimerFactory>());
+ 
+  
+  //Test throw exceptions
+  ASSERT_THROW(wmb.routeCallbackMessage(route_msg), lanelet::InvalidObjectStateError);
+  ROS_INFO_STREAM("Throw Exceptions Test Passed.");
+  
+  // Load vector map from a file start 
+  std::string file = "resource/test_vector_map1.osm";
+  int projector_type = 0;
+  std::string target_frame;
+  lanelet::ErrorMessages load_errors;
+  // Parse geo reference info from the original lanelet map (.osm)
+  lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+
+  lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+
+  lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+
+  if (map->laneletLayer.size() == 0)
+  {
+    FAIL() << "Input map does not contain any lanelets";
+  }
+  // apply loaded map to WMBroadcaster
+  autoware_lanelet2_msgs::MapBin msg;
+  lanelet::utils::conversion::toBinMsg(map, &msg);
+  autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(msg));
+
+  // Trigger basemap callback
+  wmb.baseMapCallback(map_msg_ptr);
+  ASSERT_EQ(1, base_map_call_count);
+
+  //Test target_frame value
+  std_msgs::String target;
+  target.data = target_frame;
+  wmb.geoReferenceCallback(target);
+  ASSERT_FALSE(target_frame.empty());
+  // loading end
+  
+  cav_msgs::ControlRequest coRe;
+      ROS_INFO_STREAM("This works. ");
+
+ 
+
+  ///// Test without user defined route callback
+  coRe = wmb.controlRequestFromRoute(route_msg);
+  ROS_INFO_STREAM("This is yet another test: ");
+
+
+
+ ASSERT_TRUE(coRe.bounds.size() > 0);
+
+
+
+}
+
+
+
+
+
+
+
+
 
 TEST(WMBroadcaster, addAndRemoveGeofence)
 {
@@ -335,7 +425,7 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
       [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
         // Publish map update callback
         map_update_call_count++;
-      },
+      }, [](const cav_msgs::ControlRequest& control_msg_pub_){},
       std::make_unique<TestTimerFactory>());
 
   //////
@@ -425,7 +515,7 @@ using namespace lanelet::units::literals;
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
         base_map_call_count++;
       },
-      [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
+      [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::ControlRequest& control_msg_pub_){},
       std::make_unique<TestTimerFactory>());
   
   /////
