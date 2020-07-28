@@ -347,7 +347,12 @@ TEST(WMBroadcaster, routeCallbackMessage)
       }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::ControlRequest& control_msg_pub_){},
       std::make_unique<TestTimerFactory>());
  
-  // Load vector map from a file start
+  
+  //Test throw exceptions
+  ASSERT_THROW(wmb.routeCallbackMessage(route_msg), lanelet::InvalidObjectStateError);
+  ROS_INFO_STREAM("Throw Exceptions Test Passed.");
+  
+  // Load vector map from a file start 
   std::string file = "resource/test_vector_map1.osm";
   int projector_type = 0;
   std::string target_frame;
@@ -372,18 +377,22 @@ TEST(WMBroadcaster, routeCallbackMessage)
   wmb.baseMapCallback(map_msg_ptr);
   ASSERT_EQ(1, base_map_call_count);
 
+  //Test target_frame value
   std_msgs::String target;
   target.data = target_frame;
   wmb.geoReferenceCallback(target);
   ASSERT_FALSE(target_frame.empty());
   // loading end
-
+  
   cav_msgs::ControlRequest coRe;
       ROS_INFO_STREAM("This works. ");
+
+ 
 
   ///// Test without user defined route callback
   coRe = wmb.controlRequestFromRoute(route_msg);
   ROS_INFO_STREAM("This is yet another test: ");
+
 
 
  ASSERT_TRUE(coRe.bounds.size() > 0);

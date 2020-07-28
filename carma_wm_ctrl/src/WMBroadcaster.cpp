@@ -376,7 +376,7 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   map_update_pub_(gf_msg_revert);
 };
   
-void  WMBroadcaster::routeCallbackMessage(const cav_msgs::Route& route_msg)
+void  WMBroadcaster::routeCallbackMessage(const cav_msgs::Route& route_msg) const
 {
 
  cav_msgs::ControlRequest cR; 

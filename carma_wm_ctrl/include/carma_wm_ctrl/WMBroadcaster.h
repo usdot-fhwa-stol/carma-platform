@@ -109,7 +109,7 @@ public:
   * \brief Calls controlRequestFromRoute() and publishes the ControlRequest Message returned after the completed operations
   * \param route_msg The message containing route information
   */
-  void routeCallbackMessage(const cav_msgs::Route& route_msg);
+  void routeCallbackMessage(const cav_msgs::Route& route_msg) const;
 
  /*!
   * \brief Pulls vehicle information from CARMA Cloud at startup by providing its selected route in a ControlRequest message that is published after a route is selected.
