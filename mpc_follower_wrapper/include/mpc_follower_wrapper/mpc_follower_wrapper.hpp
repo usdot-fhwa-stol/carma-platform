@@ -31,7 +31,7 @@
 #include "autoware_msgs/Lane.h"
 #include "autoware_config_msgs/ConfigWaypointFollower.h"
 #include "autoware_msgs/ControlCommandStamped.h"
-
+#include <cav_msgs/Plugin.h>
 #include <carma_utils/CARMAUtils.h>
 
 #include "mpc_follower_wrapper_worker.hpp"
