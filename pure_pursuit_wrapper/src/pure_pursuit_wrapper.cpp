@@ -46,6 +46,19 @@ void PurePursuitWrapper::Initialize() {
 
   // WayPoints Publisher
   way_points_pub_ = nh_.advertise<autoware_msgs::Lane>("final_waypoints", 10, true);
+
+  pure_pursuit_plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
+  plugin_discovery_msg_.name = "PurePursuit";
+  plugin_discovery_msg_.versionId = "v1.0";
+  plugin_discovery_msg_.available = true;
+  plugin_discovery_msg_.activated = false;
+  plugin_discovery_msg_.type = cav_msgs::Plugin::CONTROL;
+  plugin_discovery_msg_.capability = "control_pure_pursuit_plan/plan_controls";
+
+  ros::CARMANodeHandle::setSpinCallback([this]() -> bool {
+  pure_pursuit_plugin_discovery_pub_.publish(plugin_discovery_msg_);
+  return true;
+  });
 }
 
 bool PurePursuitWrapper::ReadParameters() {

@@ -50,9 +50,9 @@ namespace route_following_plugin
         // set world model point form wm listener
         wm_ = wml_->getWorldModel();
 
-        ros::CARMANodeHandle::setSpinCallback([this]()
+        ros::CARMANodeHandle::setSpinCallback([this]() -> bool 
         {
-            plugin_discovery_pub_.publish(plugin_discovery_msg_);
+           plugin_discovery_pub_.publish(plugin_discovery_msg_);
             return true;
         });
     }
