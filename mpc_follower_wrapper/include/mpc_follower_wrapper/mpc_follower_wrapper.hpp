@@ -69,6 +69,11 @@ class MPCFollowerWrapper {
         //@brief ROS node handle.
         ros::CARMANodeHandle& nh_;
 
+        ros::Publisher mpc_plugin_discovery_pub_; 
+
+        // Plugin discovery message
+        cav_msgs::Plugin plugin_discovery_msg_;
+
 
         // @brief ROS publishers.
         ros::Publisher way_points_pub_;

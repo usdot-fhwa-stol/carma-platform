@@ -84,8 +84,12 @@ class PurePursuitWrapper {
         // @brief ROS publishers.
         ros::Publisher way_points_pub_;
         ros::Publisher system_alert_pub_;
+        ros::Publisher pure_pursuit_plugin_discovery_pub_;
 
         PurePursuitWrapperWorker ppww;
+
+        // Plugin discovery message
+        cav_msgs::Plugin plugin_discovery_msg_;
 
         /*!
         * Reads and verifies the ROS parameters.
