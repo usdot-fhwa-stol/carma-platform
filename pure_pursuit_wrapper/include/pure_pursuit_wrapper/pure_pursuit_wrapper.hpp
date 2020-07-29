@@ -24,6 +24,7 @@
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <cav_msgs/Plugin.h>
+#include <carma_utils/CARMAUtils.h>
 // msgs
 #include <cav_msgs/SystemAlert.h>
 #include <cav_msgs/TrajectoryPlan.h>
