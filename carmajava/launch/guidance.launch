@@ -98,6 +98,12 @@
   <!-- MPC Follower Wrapper -->
   <include file="$(find mpc_follower_wrapper)/launch/mpc_follower_wrapper.launch" />
 
+    <!-- Pure Pursuit Wrapper -->
+  <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch" />
+
+    <!-- Route Following Plugin -->
+  <include file="$(find route_following_plugin)/launch/route_following_plugin.launch" />
+
   <!-- Twist Filter -->
   <group>
     <remap from="/accel_cmd" to="accel_cmd"/>

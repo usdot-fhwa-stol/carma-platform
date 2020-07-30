@@ -48,7 +48,7 @@ void PurePursuitWrapper::Initialize() {
   way_points_pub_ = nh_.advertise<autoware_msgs::Lane>("final_waypoints", 10, true);
 
   pure_pursuit_plugin_discovery_pub_ = nh_.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
-  plugin_discovery_msg_.name = "PurePursuit";
+  plugin_discovery_msg_.name = "Pure Pursuit";
   plugin_discovery_msg_.versionId = "v1.0";
   plugin_discovery_msg_.available = true;
   plugin_discovery_msg_.activated = false;

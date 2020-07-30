@@ -40,7 +40,7 @@ void MPCFollowerWrapper::Initialize() {
   way_points_pub_ = nh_.advertise<autoware_msgs::Lane>("final_waypoints", 10, true);
 
   mpc_plugin_discovery_pub_ = nh_.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
-  plugin_discovery_msg_.name = "MpcFollower";
+  plugin_discovery_msg_.name = "MPC";
   plugin_discovery_msg_.versionId = "v1.0";
   plugin_discovery_msg_.available = true;
   plugin_discovery_msg_.activated = false;
