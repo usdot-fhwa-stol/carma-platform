@@ -36,7 +36,7 @@ class Geofence
 public:
   boost::uuids::uuid id_;  // Unique id of this geofence
 
-  GeofenceSchedule schedule;  // The schedule this geofence operates with
+  std::vector<GeofenceSchedule> schedules;  // The schedules this geofence operates with
 
   std::string proj;
 

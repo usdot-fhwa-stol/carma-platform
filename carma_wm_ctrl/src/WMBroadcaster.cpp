@@ -81,14 +81,14 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
   map_pub_(compliant_map_msg);
 };
 
-std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::ControlMessage& geofence_msg)
+std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::TrafficControlMessageV01& msg_v01)
 {
   auto gf_ptr = std::make_shared<Geofence>(Geofence());
   // Get ID
-  std::copy(geofence_msg.id.begin(), geofence_msg.id.end(), gf_ptr->id_.begin());
+  std::copy(msg_v01.id.id.begin(), msg_v01.id.id.end(), gf_ptr->id_.begin());
 
   // Get affected lanelet or areas by converting the georeference and querying the map using points in the geofence
-  gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(geofence_msg);
+  gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(msg_v01);
   std::vector<lanelet::Lanelet> affected_llts;
   std::vector<lanelet::Area> affected_areas;
 
@@ -102,41 +102,55 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Control
   // TODO: logic to determine what type of geofence goes here
   // currently only converting portion of control message that is relevant to digital speed limit geofence
   // Convert from double to Velocity
+  if (!msg_v01.params_exists)
+    return gf_ptr;
+  
+  cav_msgs::TrafficControlDetail msg_detail = msg_v01.params.detail;
 
-  if (geofence_msg.control_type.control_type == j2735_msgs::ControlType::MAXSPEED) 
+  if (msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE) 
   {
     gf_ptr->max_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
-                                        lanelet::Velocity(geofence_msg.control_value.value * lanelet::units::MPH()),
+                                        lanelet::Velocity(msg_detail.maxspeed * lanelet::units::MPH()),
                                         affected_llts, affected_areas, { lanelet::Participants::VehicleCar }));
   }
-  if (geofence_msg.control_type.control_type == j2735_msgs::ControlType::MINSPEED) 
+  if (msg_detail.choice == cav_msgs::TrafficControlDetail::MINSPEED_CHOICE) 
   {
     gf_ptr->min_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
-                                        lanelet::Velocity(geofence_msg.control_value.value * lanelet::units::MPH()),
+                                        lanelet::Velocity(msg_detail.minspeed * lanelet::units::MPH()),
                                         affected_llts, affected_areas, { lanelet::Participants::VehicleCar }));
   }
   
+  cav_msgs::TrafficControlSchedule msg_schedule = msg_v01.params.schedule;
   // Get schedule (assuming everything is in UTC currently)
-  gf_ptr->schedule = GeofenceSchedule(geofence_msg.schedule.start,  
-                                 geofence_msg.schedule.end,
-                                 geofence_msg.schedule.between.start,     
-                                 geofence_msg.schedule.between.end, 
-                                 geofence_msg.schedule.repeat.duration,   
-                                 geofence_msg.schedule.repeat.interval);
+  // TODO: FIGURE OUT BETWEEN
+  for (auto daily_schedule : msg_schedule.between)
+  {
+    gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
+                                 msg_schedule.end,
+                                 daily_schedule.begin,     
+                                 daily_schedule.duration, //GeofenceSchedule accepts end_time
+                                 msg_schedule.repeat.span,   
+                                 msg_schedule.repeat.period));
+  }
+  
   return gf_ptr;
 }
 
-void WMBroadcaster::geofenceCallback(const cav_msgs::ControlMessage& geofence_msg)
+// currently only supports geofence message version 1: TrafficControlMessageV01 
+void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geofence_msg)
 {
   std::lock_guard<std::mutex> guard(map_mutex_);
   // quickly check if the id has been added
+  if (geofence_msg.choice != cav_msgs::TrafficControlMessage::TCMV01)
+    return;
+
   boost::uuids::uuid id;
-  std::copy(geofence_msg.id.begin(), geofence_msg.id.end(), id.begin());
+  std::copy(geofence_msg.tcmV01.id.id.begin(), geofence_msg.tcmV01.id.id.end(), id.begin());
   if (checked_geofence_ids_.find(boost::uuids::to_string(id)) != checked_geofence_ids_.end())
     return;
   
   checked_geofence_ids_.insert(boost::uuids::to_string(id));
-  auto gf_ptr = geofenceFromMsg(geofence_msg);
+  auto gf_ptr = geofenceFromMsg(geofence_msg.tcmV01);
   scheduler_.addGeofence(gf_ptr);  // Add the geofence to the scheduler
   ROS_INFO_STREAM("New geofence message received by WMBroadcaster with id" << gf_ptr->id_);
   
@@ -153,7 +167,8 @@ void WMBroadcaster::setMaxLaneWidth(double max_lane_width)
   max_lane_width_ = max_lane_width;
 }
 
-lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_msgs::ControlMessage& geofence_msg)
+// currently only supports geofence message version 1: TrafficControlMessageV01 
+lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_msgs::TrafficControlMessageV01& tcmV01)
 {
   if (!current_map_)
   {
@@ -163,13 +178,15 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
     throw lanelet::InvalidObjectStateError(std::string("Base lanelet map has empty proj string loaded as georeference. Therefore, WMBroadcaster failed to\n ") +
                                           std::string("get transformation between the geofence and the map"));
 
-  PJ* geofence_in_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, geofence_msg.proj.c_str(), base_map_georef_.c_str(), NULL);
+  cav_msgs::TrafficControlGeometry msg_geometry = tcmV01.geometry;
+
+  PJ* geofence_in_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, msg_geometry.proj.c_str(), base_map_georef_.c_str(), NULL);
   
   // convert all geofence points into our map's frame
   std::vector<lanelet::Point3d> gf_pts;
-  for (auto pt : geofence_msg.points)
+  for (auto pt : msg_geometry.nodes)
   {
-    PJ_COORD c{{pt.x, pt.y, pt.z, 0}};
+    PJ_COORD c {{pt.x, pt.y, 0, 0}}; // z is not currently used
     PJ_COORD c_out;
     c_out = proj_trans(geofence_in_map_proj, PJ_FWD, c);
     gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), c_out.xyz.x, c_out.xyz.y});
