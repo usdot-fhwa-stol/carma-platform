@@ -39,12 +39,12 @@ class MotionComputationWorker
 
   MotionComputationWorker(PublishObjectCallback obj_pub);
     
-    /*! \fn detectedObjectCallback(const autoware_msgs::DetectedObjectArray &msg)
-    \brief detectedObjectCallback populates detected object along with its velocity,yaw, yaw_rate and static/dynamic class to DetectedObject message.
+    /*! \fn motionPredictionCallback(const autoware_msgs::DetectedObjectArray &msg)
+    \brief motionPredictionCallback populates duplicated detected object along with its velocity,yaw, yaw_rate and static/dynamic class to DetectedObject message.
     \param  msg array of detected objects.
     */
 
-  void detectedObjectCallback(const autoware_msgs::DetectedObjectArray &msg);
+  void motionPredictionCallback(const autoware_msgs::DetectedObjectArray &msg);
 
   // Setters for the prediction parameters
   void setPredictionTimeStep(double time_step);
