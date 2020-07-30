@@ -308,6 +308,13 @@ carma__exec() {
 
     # Check if the -i argument was provided
     # If the image was specified then use that
+
+    if [ "$1" = "--gui" ]; then 
+        local RUNTIME=nvidia
+        echo "setting docker runtime to $RUNTIME"
+        shift
+    fi
+
     if [ "$1" = "-i" ]; then 
 
         if [ -z "$2" ]; then
@@ -365,45 +372,26 @@ carma__exec() {
     if [ -n "$1" ]; then
 
         local COMMAND="source $INIT_FILE && ${@}"
+        
+        docker run \
+            -e DISPLAY=$DISPLAY \
+            --runtime=$RUNTIME \
+            --group-add video \
+            --volume=$XSOCK:$XSOCK:rw \
+            --volume=$XAUTH:$XAUTH:rw \
+            --volume=/opt/carma/logs:/opt/carma/logs \
+            --volume=/opt/carma/.ros:/opt/carma/.ros \
+            --volume=/opt/carma/vehicle/calibration:/opt/carma/vehicle/calibration \
+            --volume=/opt/carma/yolo:/opt/carma/yolo \
+            --volume=/opt/carma/maps:/opt/carma/maps \
+            --volume=/opt/carma/routes:/opt/carma/routes \
+            --env="XAUTHORITY=${XAUTH}" \
+            --env QT_X11_NO_MITSHM=1 \
+            --device=/dev/dri:/dev/dri \
+            --network=host \
+            --entrypoint="$entrypoint" \
+            -it $TARGET_IMAGE -c "$COMMAND"
 
-        if [[ ${@} == *"rviz"* ]]; then
-            docker run \
-                -e DISPLAY=$DISPLAY \
-                --runtime=nvidia \
-                --group-add video \
-                --volume=$XSOCK:$XSOCK:rw \
-                --volume=$XAUTH:$XAUTH:rw \
-                --volume=/opt/carma/logs:/opt/carma/logs \
-                --volume=/opt/carma/.ros:/opt/carma/.ros \
-                --volume=/opt/carma/vehicle/calibration:/opt/carma/vehicle/calibration \
-                --volume=/opt/carma/yolo:/opt/carma/yolo \
-                --volume=/opt/carma/maps:/opt/carma/maps \
-                --volume=/opt/carma/routes:/opt/carma/routes \
-                --env="XAUTHORITY=${XAUTH}" \
-                --env QT_X11_NO_MITSHM=1 \
-                --device=/dev/dri:/dev/dri \
-                --network=host \
-                --entrypoint="$entrypoint" \
-                -it $TARGET_IMAGE -c "$COMMAND"
-        else
-            docker run \
-                -e DISPLAY=$DISPLAY \
-                --group-add video \
-                --volume=$XSOCK:$XSOCK:rw \
-                --volume=$XAUTH:$XAUTH:rw \
-                --volume=/opt/carma/logs:/opt/carma/logs \
-                --volume=/opt/carma/.ros:/opt/carma/.ros \
-                --volume=/opt/carma/vehicle/calibration:/opt/carma/vehicle/calibration \
-                --volume=/opt/carma/yolo:/opt/carma/yolo \
-                --volume=/opt/carma/maps:/opt/carma/maps \
-                --volume=/opt/carma/routes:/opt/carma/routes \
-                --env="XAUTHORITY=${XAUTH}" \
-                --env QT_X11_NO_MITSHM=1 \
-                --device=/dev/dri:/dev/dri \
-                --network=host \
-                --entrypoint="$entrypoint" \
-                -it $TARGET_IMAGE -c "$COMMAND"
-        fi
     else
         docker run \
             -e DISPLAY=$DISPLAY \
