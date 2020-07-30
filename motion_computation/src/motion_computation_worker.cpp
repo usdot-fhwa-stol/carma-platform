@@ -19,9 +19,9 @@
 
 namespace object
 {
-ObjectDetectionTrackingWorker::ObjectDetectionTrackingWorker(PublishObjectCallback obj_pub) : obj_pub_(obj_pub){};
+MotionComputationWorker::MotionComputationWorker(PublishObjectCallback obj_pub) : obj_pub_(obj_pub){};
 
-void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::DetectedObjectArray& obj_array)
+void MotionComputationWorker::detectedObjectCallback(const autoware_msgs::DetectedObjectArray& obj_array)
 {
   cav_msgs::ExternalObjectList msg;
   msg.header = obj_array.header;
@@ -63,27 +63,7 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
 		// If the object is a bicycle or motor vehicle use CTRV otherwise use CV.
     bool use_ctrv_model = true;
 
-    if (obj_array.objects[i].label.compare("bicycle") == 0)
-    {
-      obj.object_type = obj.UNKNOWN;
-    }
-    else if (obj_array.objects[i].label.compare("motorbike") == 0)
-    {
-      obj.object_type = obj.MOTORCYCLE;
-    }
-    else if (obj_array.objects[i].label.compare("car") == 0)
-    {
-      obj.object_type = obj.SMALL_VEHICLE;
-    }
-    else if (obj_array.objects[i].label.compare("bus") == 0)
-    {
-      obj.object_type = obj.LARGE_VEHICLE;
-    }
-    else if (obj_array.objects[i].label.compare("truck") == 0)
-    {
-      obj.object_type = obj.LARGE_VEHICLE;
-    }
-    else if (obj_array.objects[i].label.compare("person"))
+    if (obj_array.objects[i].label.compare("person"))
     {
       obj.object_type = obj.PEDESTRIAN;
       use_ctrv_model = false;
@@ -124,34 +104,5 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
   obj_pub_(msg);
 }
 
-void ObjectDetectionTrackingWorker::setPredictionTimeStep(double time_step)
-{
-  prediction_time_step_ = time_step;
-}
-
-void ObjectDetectionTrackingWorker::setPredictionPeriod(double period)
-{
-  prediction_period_ = period;
-}
-
-void ObjectDetectionTrackingWorker::setXAccelerationNoise(double noise)
-{
-  cv_x_accel_noise_ = noise;
-}
-
-void ObjectDetectionTrackingWorker::setYAccelerationNoise(double noise)
-{
-  cv_y_accel_noise_ = noise;
-}
-
-void ObjectDetectionTrackingWorker::setProcessNoiseMax(double noise_max)
-{
-  prediction_process_noise_max_ = noise_max;
-}
-
-void ObjectDetectionTrackingWorker::setConfidenceDropRate(double drop_rate)
-{
-  prediction_confidence_drop_rate_ = drop_rate;
-}
 
 }  // namespace object
