@@ -31,9 +31,6 @@
 #include "TestTimerFactory.h"
 
 #include <cav_msgs/TrafficControlMessage.h>
-#include <cav_msgs/DaySchedule.h>
-#include <cav_msgs/Schedule.h>
-#include <cav_msgs/ScheduleParams.h>
 
 using ::testing::_;
 using ::testing::A;
