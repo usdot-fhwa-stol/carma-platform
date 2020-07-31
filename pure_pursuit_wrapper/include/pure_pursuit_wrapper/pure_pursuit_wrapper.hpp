@@ -115,7 +115,7 @@ class PurePursuitWrapper {
         void HandleException(const std::exception& e);
 
         // @brief Shutsdown this node
-        void Shutdown();
+        //void Shutdown();
 
 };
 
