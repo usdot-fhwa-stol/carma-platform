@@ -94,7 +94,7 @@ void PurePursuitWrapper::SystemAlertHandler(const cav_msgs::SystemAlert::ConstPt
       ROS_INFO_STREAM("Received SystemAlert message of type: " << msg->type);
       switch(msg->type) {
         case cav_msgs::SystemAlert::SHUTDOWN: 
-          ros::CARMANodeHandle::shutdown(); 
+          Shutdown(); 
           break;
         default:
           break;
@@ -125,13 +125,13 @@ void PurePursuitWrapper::HandleException(const std::exception& e) {
   system_alert_pub_.publish(alert_msg);
 
   ros::Duration(0.05).sleep();
-  ros::CARMANodeHandle::shutdown();
+  Shutdown();
 }
 
-/*void PurePursuitWrapper::Shutdown() {
+void PurePursuitWrapper::Shutdown() {
   std::lock_guard<std::mutex> lock(shutdown_mutex_);
   ROS_WARN_STREAM("Node shutting down");
   shutting_down_ = true;
-}*/
+}
 
 }  // namespace pure_pursuit_wrapper
