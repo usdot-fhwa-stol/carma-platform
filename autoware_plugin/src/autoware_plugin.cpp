@@ -40,7 +40,7 @@ namespace autoware_plugin
         plugin_discovery_msg_.name = "In-Lane Cruising";
         plugin_discovery_msg_.versionId = "v1.0";
         plugin_discovery_msg_.available = true;
-        plugin_discovery_msg_.activated = false;
+        plugin_discovery_msg_.activated = true;
         plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
         plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
 

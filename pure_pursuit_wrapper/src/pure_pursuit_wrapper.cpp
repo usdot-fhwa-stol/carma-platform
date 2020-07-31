@@ -35,9 +35,9 @@ PurePursuitWrapper::~PurePursuitWrapper() {
 
 void PurePursuitWrapper::Initialize() {
   // SystemAlert Subscriber
-  system_alert_sub_ = nh_.subscribe("system_alert", 10, &PurePursuitWrapper::SystemAlertHandler, this);
+ // system_alert_sub_ = nh_.subscribe("system_alert", 10, &PurePursuitWrapper::SystemAlertHandler, this);
   // SystemAlert Publisher
-  system_alert_pub_ = nh_.advertise<cav_msgs::SystemAlert>("system_alert", 10, true);
+ // system_alert_pub_ = nh_.advertise<cav_msgs::SystemAlert>("system_alert", 10, true);
 
   // Pose Subscriber
   pose_sub.subscribe(nh_, "current_pose", 1);
@@ -51,7 +51,7 @@ void PurePursuitWrapper::Initialize() {
   plugin_discovery_msg_.name = "Pure Pursuit";
   plugin_discovery_msg_.versionId = "v1.0";
   plugin_discovery_msg_.available = true;
-  plugin_discovery_msg_.activated = false;
+  plugin_discovery_msg_.activated = true;
   plugin_discovery_msg_.type = cav_msgs::Plugin::CONTROL;
   plugin_discovery_msg_.capability = "control_pure_pursuit_plan/plan_controls";
 
