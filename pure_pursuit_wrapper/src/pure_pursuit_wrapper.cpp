@@ -35,9 +35,9 @@ PurePursuitWrapper::~PurePursuitWrapper() {
 
 void PurePursuitWrapper::Initialize() {
   // SystemAlert Subscriber
- // system_alert_sub_ = nh_.subscribe("system_alert", 10, &PurePursuitWrapper::SystemAlertHandler, this);
+  system_alert_sub_ = nh_.subscribe("system_alert", 10, &PurePursuitWrapper::SystemAlertHandler, this);
   // SystemAlert Publisher
- // system_alert_pub_ = nh_.advertise<cav_msgs::SystemAlert>("system_alert", 10, true);
+  system_alert_pub_ = nh_.advertise<cav_msgs::SystemAlert>("system_alert", 10, true);
 
   // Pose Subscriber
   pose_sub.subscribe(nh_, "current_pose", 1);

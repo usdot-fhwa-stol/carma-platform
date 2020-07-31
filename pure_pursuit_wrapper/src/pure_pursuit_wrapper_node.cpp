@@ -34,6 +34,7 @@ int main(int argc, char** argv) {
   sync.registerCallback(boost::bind(&pure_pursuit_wrapper::PurePursuitWrapper::TrajectoryPlanPoseHandler, &PurePursuitWrapper, _1, _2));
 
   while (ros::ok() && !PurePursuitWrapper.shutting_down_) {
+    ros::CARMANodeHandle::setSpinRate(10);
     ros::spinOnce();
   }
 
