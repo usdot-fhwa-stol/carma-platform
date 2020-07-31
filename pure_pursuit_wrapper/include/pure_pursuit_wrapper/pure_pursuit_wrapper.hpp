@@ -57,6 +57,9 @@ class PurePursuitWrapper {
 
         // @brief ROS initialize.
         void Initialize();
+
+        // @brief Publish plugin info to plugin discovery
+        void PublishPluginDiscovery();
         
         // runs publish at a desired frequency
         int rate;

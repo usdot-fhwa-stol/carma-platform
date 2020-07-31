@@ -54,11 +54,12 @@ void PurePursuitWrapper::Initialize() {
   plugin_discovery_msg_.activated = true;
   plugin_discovery_msg_.type = cav_msgs::Plugin::CONTROL;
   plugin_discovery_msg_.capability = "control_pure_pursuit_plan/plan_controls";
+  
+}
 
-  ros::CARMANodeHandle::setSpinCallback([this]() -> bool {
+void PurePursuitWrapper::PublishPluginDiscovery()
+{
   pure_pursuit_plugin_discovery_pub_.publish(plugin_discovery_msg_);
-  return true;
-  });
 }
 
 bool PurePursuitWrapper::ReadParameters() {
