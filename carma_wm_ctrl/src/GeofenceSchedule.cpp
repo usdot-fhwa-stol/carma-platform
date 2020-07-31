@@ -66,7 +66,7 @@ std::pair<bool, ros::Time> GeofenceSchedule::getNextInterval(const ros::Time& ti
 
   ros::Time ros_time_of_day = ros::Time::fromBoost(time_of_day);
   ros::Time abs_day_start = ros::Time::fromBoost(ptime_start_of_day);
-  ros::Duration cur_start = std::min(control_start_, control_offset_);
+  ros::Duration cur_start = control_start_ + control_offset_; // accounting for the shift of repetition start
 
   // Check if current time is after end of control
   if (ros_time_of_day > ros::Time((control_start_ + control_duration_).toSec()))
@@ -78,20 +78,17 @@ std::pair<bool, ros::Time> GeofenceSchedule::getNextInterval(const ros::Time& ti
   // Iterate over the day to find the next control interval
   constexpr int num_sec_in_day = 86400;
   const ros::Duration full_day(num_sec_in_day);
-  bool time_in_active_period = false;  // Flag indicating if the requested time is within an active control period
-
-  // figure out start time assignemtn correctly
-
+  bool time_in_active_period = false;  // Flag indicating if the requested time is within an active control span
 
   while (cur_start < full_day && ros_time_of_day > ros::Time(cur_start.toSec()))
   {
     // Check if the requested time is within the control period being evaluated
     if (ros::Time(cur_start.toSec()) < ros_time_of_day &&
-        ros_time_of_day < ros::Time((cur_start + control_duration_).toSec()))
+        ros_time_of_day < ros::Time((cur_start + control_span_).toSec()))
     {
       time_in_active_period = true;
     }
-    cur_start += control_span_;
+    cur_start += control_period_;
   }
 
   // check if the only next interval is after the schedule end or past the end of the day
@@ -103,5 +100,5 @@ std::pair<bool, ros::Time> GeofenceSchedule::getNextInterval(const ros::Time& ti
   // At this point we should have the next start time which is still within the schedule and day
   return std::make_pair(time_in_active_period, abs_day_start + cur_start);
 }
-// TODO the UTC offset is provided in the geofence spec but for now we will ignore and assume all times are UTC
+
 }  // namespace carma_wm_ctrl

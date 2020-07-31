@@ -121,14 +121,15 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
   }
   
   cav_msgs::TrafficControlSchedule msg_schedule = msg_v01.params.schedule;
-  // Get schedule (assuming everything is in UTC currently)
-  // TODO: FIGURE OUT BETWEEN
+  
+  // Get schedule
   for (auto daily_schedule : msg_schedule.between)
   {
     gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
                                  msg_schedule.end,
                                  daily_schedule.begin,     
-                                 daily_schedule.duration, //GeofenceSchedule accepts end_time
+                                 daily_schedule.duration,
+                                 msg_schedule.repeat.offset,
                                  msg_schedule.repeat.span,   
                                  msg_schedule.repeat.period));
   }

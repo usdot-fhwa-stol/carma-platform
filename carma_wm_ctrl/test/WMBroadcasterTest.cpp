@@ -254,7 +254,8 @@ TEST(WMBroadcaster, geofenceCallback)
   gf.schedules.push_back(carma_wm_ctrl::GeofenceSchedule(ros::Time(1),  // Schedule between 1 and 8
                                  ros::Time(8),
                                  ros::Duration(2),    // Starts at 2
-                                 ros::Duration(3.1),  // Ends at by 3.1
+                                 ros::Duration(1.1),  // Ends at by 3.1
+                                 ros::Duration(0),    // 0 offset for repetition start, so still starts at 2
                                  ros::Duration(1),    // Duration of 1 and interval of two so active durations are (2-3)
                                  ros::Duration(2)));
   // convert to ros msg
