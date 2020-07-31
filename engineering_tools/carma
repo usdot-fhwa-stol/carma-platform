@@ -474,6 +474,7 @@ Please enter one of the following commands:
     exec <optional bash command>
         - Opens a new container with GUI support from the carma-platform or carma-messenger image with the version specified in docker compose. If no version is found it will use latest.
           This container can be used to interact with CARMA using ROS tooling such as Rviz and RQT.
+        - If --gui argument is provided it will start docker using nvidia runtime. this flag should be provided as the first flag to work.
         - If the -i <image> argument is provided then the target image will be used instead
         -d
             - uses a usdotfhwastoldev image
