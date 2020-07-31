@@ -31,7 +31,6 @@
 #include "MapConformer.h"
 
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
-#include <cav_msgs/ControlMessage.h>
 #include <cav_msgs/TrafficControlMessage.h>
 #include <carma_wm/TrafficControl.h>
 #include <std_msgs/String.h>
