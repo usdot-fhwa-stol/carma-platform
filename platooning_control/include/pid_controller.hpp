@@ -39,17 +39,17 @@ namespace platoon_control
 
     private:
 
-    	double _dt = 1.0;
-        double _max = 1.0;
-        double _min = 1.0;
+    	double _dt = 0.1;
+        double _max = 100.0;
+        double _min = -100.0;
         double _Kp = 1.0;
-        double _Kd = 1.0;
-        double _Ki = 1.0;
-        double _pre_error = 1.0;
-        double _integral = 1.0;
+        double _Kd = -0.5;
+        double _Ki = 0.0;
+        double _pre_error = 0.0;
+        double _integral = 0.0;
 
-        double integratorMax;
-        double integratorMin;
+        double integratorMax = 1000;
+        double integratorMin = -1000;
 
 
 

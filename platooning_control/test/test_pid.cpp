@@ -6,8 +6,8 @@
 TEST(PIDControllerTest, test1)
 {
     platoon_control::PIDController pid;
-    double res = pid.calculate(12, 14);
-    EXPECT_EQ(1, res);
+    double res = pid.calculate(40, 38);
+    EXPECT_EQ(-8, res);
 
     
 }

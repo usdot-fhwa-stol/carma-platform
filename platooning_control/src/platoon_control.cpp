@@ -22,7 +22,6 @@ namespace platoon_control
     PlatoonControlPlugin::PlatoonControlPlugin(){}
     
     void PlatoonControlPlugin::initialize(){
-    // @SONAR_STOP
 
     	nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
@@ -50,7 +49,6 @@ namespace platoon_control
             plugin_discovery_pub_.publish(plugin_discovery_msg_);
             return true;
         });
-    // @SONAR_START
     }
 
                                     

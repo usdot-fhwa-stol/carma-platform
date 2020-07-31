@@ -78,7 +78,7 @@ namespace platoon_control
         	ros::Publisher plugin_discovery_pub_;
 
 			// TODO: add communication to receive leader
-			PlatoonMember leader;
+			PlatoonLeaderInfo leader;
 
 
 

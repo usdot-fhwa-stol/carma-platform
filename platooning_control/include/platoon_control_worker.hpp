@@ -7,6 +7,7 @@
 #include <cav_msgs/PlanType.h>
 #include "pid_controller.hpp"
 #include "pure_pursuit.hpp"
+#include <boost/optional.hpp>
 
 
 
@@ -17,7 +18,7 @@
 namespace platoon_control
 {
 
-	struct PlatoonMember{
+	struct PlatoonLeaderInfo{
             // Static ID is permanent ID for each vehicle
             std::string staticId;
             // Current BSM Id for each CAV
@@ -30,6 +31,10 @@ namespace platoon_control
             double vehiclePosition;
             // The local time stamp when the host vehicle update any informations of this member
             long   timestamp;
+            // leader index in the platoon
+            int leaderIndex;
+            // Number of vehicles in front
+            int NumberOfVehicleInFront;
 
             // PlatoonMember(std::string staticId, std::string bsmId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp): staticId(staticId),
             // bsmId(bsmId), commandSpeed(commandSpeed), vehicleSpeed(vehicleSpeed), timestamp(timestamp) {}
@@ -51,18 +56,26 @@ namespace platoon_control
         void generateSpeed(const cav_msgs::TrajectoryPlanPoint& point);
         void generateSteer(const cav_msgs::TrajectoryPlanPoint& point);
 
-        void setLeader(const PlatoonMember& leader);
+        void setLeader(const PlatoonLeaderInfo& leader);
         void setCurrentSpeed(double speed);
 
         double speedCmd;
         double currentSpeed;
+        double currentDTD;
         double adjustmentCap = 10.0;
         double lastCmdSpeed = 0.0;
+
 
         double speedCmd_ = 0;
         double steerCmd_ = 0;
 
-        PlatoonMember platoon_leader;
+        PlatoonLeaderInfo platoon_leader;
+
+
+        // platooning_desired_time_headway"
+        double timeHeadway = 2.0;
+        // platooning standstillheadway"
+        double standStillHeadway = 12.0;
 
 
 
@@ -81,12 +94,12 @@ namespace platoon_control
 
     	double desiredTimeGap = 1.0; // s
 
+
         double desiredGap_ = 0.0;
 
 
         long CMD_TIMESTEP = 100;
 
-        double currentDTD;
 
     	
 
@@ -94,11 +107,9 @@ namespace platoon_control
 
         // double getDistanceToFrontVehicle();
 
-        // platooning_desired_time_headway"
-        double timeHeadway = 2.0;
 
-        // platooning standstillheadway"
-        double standStillHeadway = 12.0;
+
+
 
         double dist_to_front_vehicle;
 

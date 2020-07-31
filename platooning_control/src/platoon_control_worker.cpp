@@ -7,11 +7,11 @@ namespace platoon_control
 	PlatoonControlWorker::PlatoonControlWorker(){}
 
 	double PlatoonControlWorker::getLastSpeedCommand() {
-        return lastCmdSpeed;
+        return speedCmd_;
     }
 
     void PlatoonControlWorker::generateSpeed(const cav_msgs::TrajectoryPlanPoint& point) {
-    	PlatoonMember leader = platoon_leader;
+    	PlatoonLeaderInfo leader = platoon_leader;
     	if(leader.staticId != "") {
             double controllerOutput = 0.0;
 
@@ -24,8 +24,8 @@ namespace platoon_control
 	        ROS_DEBUG("The host vehicle speed is + " , hostVehicleSpeed , " and its position is " , hostVehiclePosition);
 	        // If the host vehicle is the fifth vehicle and it is following the third vehicle, the leader index here is 2
 	        // vehiclesInFront should be 2, because number of vehicles in front is 4, then numOfVehiclesGaps = VehicleInFront - leaderIndex   
-	        int leaderIndex;////TODO: Communicate leader index in the platoon (plugin_.platoonManager.getIndexOf(leader);)
-	        int numOfVehiclesGaps;////TODO: Communicate behicles ahead in the platoon (plugin_.platoonManager.getNumberOfVehicleInFront() - leaderIndex;)
+	        int leaderIndex = leader.leaderIndex;////TODO: Communicate leader index in the platoon (plugin_.platoonManager.getIndexOf(leader);)
+	        int numOfVehiclesGaps = leader.NumberOfVehicleInFront - leaderIndex;////TODO: Communicate behicles ahead in the platoon (plugin_.platoonManager.getNumberOfVehicleInFront() - leaderIndex;)
 	        ROS_DEBUG("The host vehicle have " , numOfVehiclesGaps ," vehicles between itself and its leader (includes the leader)");
 	        desiredGap_ = std::max(hostVehicleSpeed * timeHeadway * numOfVehiclesGaps, standStillHeadway * numOfVehiclesGaps);
 	        ROS_DEBUG("The desired gap with the leader is " , desiredGap_);
@@ -95,7 +95,7 @@ namespace platoon_control
     }
 
     // TODO get the actual leader from strategic plugin
-    void PlatoonControlWorker::setLeader(const PlatoonMember& leader){
+    void PlatoonControlWorker::setLeader(const PlatoonLeaderInfo& leader){
     	platoon_leader = leader;
     }
 
