@@ -14,9 +14,9 @@
 -->
 
 <package format="3">
-  <name>object_detection_tracking</name>
+  <name>motion_computation</name>
   <version>0.0.0</version>
-  <description>The object_detection_tracking package</description>
+  <description>The motion_computation package</description>
 
   <maintainer email="carma@dot.gov">carma</maintainer>
 

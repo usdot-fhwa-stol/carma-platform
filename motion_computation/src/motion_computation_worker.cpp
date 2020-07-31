@@ -21,7 +21,7 @@ namespace object
 {
 MotionComputationWorker::MotionComputationWorker(PublishObjectCallback obj_pub) : obj_pub_(obj_pub){};
 
-void MotionComputationWorker::motionPrediction(const autoware_msgs::DetectedObjectArray& dup_obj_array)//Duplicate input message
+void MotionComputationWorker::motionPredictionCallback(const autoware_msgs::DetectedObjectArray& dup_obj_array)//Duplicate input message
 {
   cav_msgs::ExternalObjectList msg;
   msg.header = dup_obj_array.header;

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(object_detection_tracking)
+project(motion_computation)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
@@ -26,7 +26,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
    INCLUDE_DIRS include
-#  LIBRARIES object_detection_tracking
+#  LIBRARIES motion_computation
  CATKIN_DEPENDS autoware_msgs cav_msgs roscpp carma_utils motion_predict
 #  DEPENDS system_lib
 )
@@ -43,13 +43,13 @@ include_directories(
 )
 
 
-add_executable(object_detection_tracking_node src/main.cpp src/object_detection_tracking_node.cpp src/object_detection_tracking_worker.cpp)
+add_executable(motion_computation_node src/main.cpp src/motion_computation_node.cpp src/motion_computation_worker.cpp)
 
-add_library(object_detection_tracking_worker_lib src/object_detection_tracking_worker.cpp)
-add_dependencies(object_detection_tracking_worker_lib ${catkin_EXPORTED_TARGETS})
+add_library(motion_computation_worker_lib src/motion_computation_worker.cpp)
+add_dependencies(motion_computation_worker_lib ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(object_detection_tracking_node object_detection_tracking_worker_lib ${catkin_LIBRARIES})
+target_link_libraries(motion_computation_node motion_computation_worker_lib ${catkin_LIBRARIES})
 
 
 #############
@@ -57,7 +57,7 @@ target_link_libraries(object_detection_tracking_node object_detection_tracking_w
 #############
 
 ## Mark executables for installation
-install(TARGETS object_detection_tracking_node
+install(TARGETS motion_computation_node
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -84,4 +84,4 @@ install(DIRECTORY
 
 ## Add gtest based cpp test target and link libraries
 ##catkin_add_gmock(${PROJECT_NAME}-test test/test_object.cpp)
-##target_link_libraries(${PROJECT_NAME}-test object_detection_tracking_worker_lib ${catkin_LIBRARIES})
+##target_link_libraries(${PROJECT_NAME}-test motion_computation_worker_lib ${catkin_LIBRARIES})

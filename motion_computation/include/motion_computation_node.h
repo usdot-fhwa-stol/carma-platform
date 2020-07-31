@@ -20,7 +20,6 @@
 #include <ros/ros.h>
 #include <carma_utils/CARMAUtils.h>
 #include <functional>
-
 #include "motion_computation_worker.h"
 
 namespace object{
@@ -35,7 +34,7 @@ class MotionComputationNode
   ros::CARMANodeHandle pnh_;
    
   //subscriber
-  ros::Subscriber autoware_obj_sub_;
+  ros::Subscriber motion_comp_sub_;
 
   //publisher
   ros::Publisher carma_obj_pub_;
@@ -50,10 +49,10 @@ class MotionComputationNode
 
  public:
   
-   /*! \fn ObjectDetectionTrackingNode()
-    \brief ObjectDetectionTrackingNode constructor 
+   /*! \fn MotionComputationNode()
+    \brief MotionComputationNode constructor 
    */
-  ObjectDetectionTrackingNode();
+  MotionComputationNode();
 
      /*! \fn publishObject()
     \brief Callback to publish ObjectList

@@ -13,15 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include "object_detection_tracking_node.h"
+#include <motion_computation_node.h>
+#include <motion_computation_worker.h>
 
 namespace object{
 
   using std::placeholders::_1;
 
-  ObjectDetectionTrackingNode::ObjectDetectionTrackingNode(): pnh_("~"), object_worker_(std::bind(&ObjectDetectionTrackingNode::publishObject, this, _1)){}
+  MotionComputationNode::MotionComputationNode(): pnh_("~"), motion_worker_(std::bind(&MotionComputationNode::publishObject, this, _1)){};
 
-  void ObjectDetectionTrackingNode::initialize()
+  void MotionComputationNode::initialize()
   {
     // Load parameters
     double step = 0.1;
@@ -38,24 +39,24 @@ namespace object{
     pnh_.param<double>("prediction_process_noise_max", process_noise_max, process_noise_max);
     pnh_.param<double>("prediction_confidence_drop_rate", drop_rate, drop_rate);
 
-    object_worker_.setPredictionTimeStep(step);
-    object_worker_.setPredictionPeriod(period);
-    object_worker_.setXAccelerationNoise(ax);
-    object_worker_.setYAccelerationNoise(ay);
-    object_worker_.setProcessNoiseMax(process_noise_max);
-    object_worker_.setConfidenceDropRate(drop_rate);
+  /*  motion_worker_.setPredictionTimeStep(step);
+    motion_worker_.setPredictionPeriod(period);
+    motion_worker_.setXAccelerationNoise(ax);
+    motion_worker_.setYAccelerationNoise(ay);
+    motion_worker_.setProcessNoiseMax(process_noise_max);
+    motion_worker_.setConfidenceDropRate(drop_rate);*/
 
     // Setup pub/sub
-    autoware_obj_sub_=nh_.subscribe("detected_objects",10,&ObjectDetectionTrackingWorker::detectedObjectCallback,&object_worker_);
+    motion_comp_sub_=nh_.subscribe("detected_objects",10,&MotionComputationWorker::motionPredictionCallback,&motion_worker_);
     carma_obj_pub_=nh_.advertise<cav_msgs::ExternalObjectList>("external_objects", 10);
   }
 
-  void ObjectDetectionTrackingNode::publishObject(const cav_msgs::ExternalObjectList& obj_msg)
+  void MotionComputationNode::publishObject(const cav_msgs::ExternalObjectList& obj_msg)
   {
   carma_obj_pub_.publish(obj_msg);
   }
 
-  void ObjectDetectionTrackingNode::run()
+  void MotionComputationNode::run()
   {
     initialize();
     nh_.setSpinRate(20);

@@ -13,12 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include "object_detection_tracking_node.h"
+#include "motion_computation_node.h"
 
 int main(int argc, char **argv) 
 {
-  ros::init(argc, argv, "object_detection_tracking");
-  object::ObjectDetectionTrackingNode node;
+  ros::init(argc, argv, "motion_computation");
+  object::MotionComputationNode node;
   node.run(); 
   return 0;
 }

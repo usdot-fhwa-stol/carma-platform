@@ -16,7 +16,6 @@
 #include "object_detection_tracking_worker.h"
 #include <motion_predict/motion_predict.h>
 #include <motion_predict/predict_ctrv.h>
-#include <motion_computation_worker.h>
 
 namespace object
 {
@@ -84,15 +83,6 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
       obj.object_type = obj.LARGE_VEHICLE;
     }
    
-    //Motion Prediction/Computation Callback
-      else 
-          motionPredictionCallback(obj_array);
-    
-    
-
-
-
-
     // Binary value to show if the object is static or dynamic (1: dynamic, 0: static)
 
     if ((abs(obj.velocity.twist.linear.x || obj.velocity.twist.linear.y || obj.velocity.twist.linear.z)) > 0.75)
