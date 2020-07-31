@@ -38,18 +38,65 @@ void MotionComputationWorker::motionPredictionCallback(const autoware_msgs::Dete
 
     // Update the object type and generate predictions using CV or CTRV vehicle models.
 		// If the object is a bicycle or motor vehicle use CTRV otherwise use CV.
-    bool use_ctrv_model = true;
 
-    if (dup_obj_array.objects[i].label.compare("person"))
+    bool use_ctrv_model;
+
+    /*if (  obj.object_type == obj.UNKNOWN)
     {
-      obj.object_type = obj.PEDESTRIAN;
+      use_ctrv_model = true;
+
+    }
+    else if (obj.object_type == obj.MOTORCYCLE)
+    {
+      use_ctrv_model = true;
+
+    }
+    else if (obj.object_type == obj.SMALL_VEHICLE)
+    {
+      use_ctrv_model = true;
+
+    }
+    else if (obj.object_type == obj.LARGE_VEHICLE;)
+    {
+      use_ctrv_model = true;
+
+    }
+
+    else if ( obj.object_type == obj.PEDESTRIAN)
+    {
       use_ctrv_model = false;
     }
     else
     {
-      obj.object_type = obj.UNKNOWN;
+      //obj.object_type = obj.UNKNOWN;
       use_ctrv_model = false;
+    }//end if-else */
+
+    //Switch Statement Test
+    switch(obj.object_type)
+    {
+      case obj.UNKNOWN:
+        use_ctrv_model = true;
+
+      case obj.MOTORCYCLE:
+        use_ctrv_model = true;
+
+      case obj.SMALL_VEHICLE:
+        use_ctrv_model = true;
+      
+      case obj.LARGE_VEHICLE:
+        use_ctrv_model = true;
+      
+      case obj.PEDESTRIAN:
+        use_ctrv_model = false;
+
+      default:
+        use_ctrv_model = false;
+
     }
+
+
+
 
     if (use_ctrv_model)
     {
