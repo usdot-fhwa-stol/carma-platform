@@ -265,9 +265,10 @@ TEST(WMBroadcaster, geofenceCallback)
   msg_v01.params.schedule.end = gf.schedules[0].schedule_end_;
   cav_msgs::DailySchedule daily_schedule;
   daily_schedule.begin = gf.schedules[0].control_start_;
-  daily_schedule.duration = gf.schedules[0].control_end_;
-  msg_v01.params.schedule.repeat.span =  gf.schedules[0].control_duration_;
-  msg_v01.params.schedule.repeat.period =  gf.schedules[0].control_interval_;
+  daily_schedule.duration = gf.schedules[0].control_duration_;
+  msg_v01.params.schedule.repeat.offset =  gf.schedules[0].control_offset_;
+  msg_v01.params.schedule.repeat.span =  gf.schedules[0].control_span_;
+  msg_v01.params.schedule.repeat.period =  gf.schedules[0].control_period_;
 
   ros::Time::setNow(ros::Time(0));  // Set current time
 

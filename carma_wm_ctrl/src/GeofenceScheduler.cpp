@@ -94,7 +94,7 @@ void GeofenceScheduler::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 void GeofenceScheduler::startGeofenceCallback(const ros::TimerEvent& event, std::shared_ptr<Geofence> gf_ptr, const unsigned int schedule_id, const int32_t timer_id)
 {
   std::lock_guard<std::mutex> guard(mutex_);
-  ros::Time endTime = ros::Time::now() + gf_ptr->schedules[schedule_id].control_duration_;
+  ros::Time endTime = ros::Time::now() + gf_ptr->schedules[schedule_id].control_span_;
 
   ROS_INFO_STREAM("Activating Geofence with Id: " << gf_ptr->id_);
 
