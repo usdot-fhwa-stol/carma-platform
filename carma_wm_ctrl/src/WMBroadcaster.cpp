@@ -26,7 +26,6 @@
 #include <lanelet2_core/primitives/Polygon.h>
 #include <proj.h>
 #include <lanelet2_io/Projection.h>
-#include <j2735_msgs/ControlType.h>
 #include <lanelet2_core/utility/Units.h>
 #include <lanelet2_core/Forward.h>
 #include <lanelet2_extension/utility/utilities.h>
