@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>port_drayage_plugin</name>
+  <version>1.0.0</version>
+  <description>CARMA plugin to support port drayage applications for CARMA Freight</description>
+  <maintainer email="caram@dot.gov">CARMA Team</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>carma_utils</depend>
+  <depend>cav_msgs</depend>
+  <depend>cav_srvs</depend>
+  <depend>roscpp</depend>
+  <depend>std_msgs</depend>
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+  </export>
+</package>
