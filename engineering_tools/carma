@@ -308,6 +308,13 @@ carma__exec() {
 
     # Check if the -i argument was provided
     # If the image was specified then use that
+
+    if [ "$1" = "--gui" ]; then 
+        local RUNTIME=nvidia
+        echo "setting docker runtime to $RUNTIME"
+        shift
+    fi
+
     if [ "$1" = "-i" ]; then 
 
         if [ -z "$2" ]; then
@@ -319,7 +326,6 @@ carma__exec() {
 
         shift
         shift
-
     # If the image was not specified use what was in the carma config
     elif docker container inspect carma-config > /dev/null 2>&1; then
 
@@ -366,9 +372,10 @@ carma__exec() {
     if [ -n "$1" ]; then
 
         local COMMAND="source $INIT_FILE && ${@}"
-
+        
         docker run \
             -e DISPLAY=$DISPLAY \
+            --runtime=$RUNTIME \
             --group-add video \
             --volume=$XSOCK:$XSOCK:rw \
             --volume=$XAUTH:$XAUTH:rw \
@@ -379,10 +386,12 @@ carma__exec() {
             --volume=/opt/carma/maps:/opt/carma/maps \
             --volume=/opt/carma/routes:/opt/carma/routes \
             --env="XAUTHORITY=${XAUTH}" \
+            --env QT_X11_NO_MITSHM=1 \
             --device=/dev/dri:/dev/dri \
             --network=host \
             --entrypoint="$entrypoint" \
             -it $TARGET_IMAGE -c "$COMMAND"
+
     else
         docker run \
             -e DISPLAY=$DISPLAY \
@@ -465,6 +474,7 @@ Please enter one of the following commands:
     exec <optional bash command>
         - Opens a new container with GUI support from the carma-platform or carma-messenger image with the version specified in docker compose. If no version is found it will use latest.
           This container can be used to interact with CARMA using ROS tooling such as Rviz and RQT.
+        - If --gui argument is provided it will start docker using nvidia runtime. this flag should be provided as the first flag to work.
         - If the -i <image> argument is provided then the target image will be used instead
         -d
             - uses a usdotfhwastoldev image
