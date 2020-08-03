@@ -18,7 +18,7 @@
 
 #include <functional>
 #include <autoware_lanelet2_msgs/MapBin.h>
-#include <cav_msgs/ControlRequest.h>
+#include <cav_msgs/TrafficControlRequest.h>
 #include <carma_utils/CARMAUtils.h>
 #include <carma_wm_ctrl/WMBroadcaster.h>
 #include <ros/ros.h>
@@ -56,11 +56,11 @@ public:
   void publishMap(const autoware_lanelet2_msgs::MapBin& map_msg);
   
   /**
-   * @brief Callback to publish ControlRequest Messages
+   * @brief Callback to publish TrafficControlRequest Messages
    *
-   * @param route_msg The ControlRequest message to publish
+   * @param route_msg The TrafficControlRequest message to publish
    */
-  void publishCtrlReq(const cav_msgs::ControlRequest& ctrlreq_msg) const;
+  void publishCtrlReq(const cav_msgs::TrafficControlRequest& ctrlreq_msg) const;
 
   /**
    * @brief Callback to publish map updates (geofences)

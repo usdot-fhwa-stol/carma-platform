@@ -13,7 +13,7 @@
  the License.
 -->
 
-<package format="2">
+<package format="3">
   <name>object_detection_tracking</name>
   <version>0.0.0</version>
   <description>The object_detection_tracking package</description>
