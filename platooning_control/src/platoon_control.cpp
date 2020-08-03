@@ -21,7 +21,7 @@ namespace platoon_control
 {
     PlatoonControlPlugin::PlatoonControlPlugin(){}
     
-    // @SONAR_STOP@
+// @SONAR_STOP@
     void PlatoonControlPlugin::initialize(){
 
     	nh_.reset(new ros::CARMANodeHandle());
@@ -60,6 +60,7 @@ namespace platoon_control
         ros::CARMANodeHandle::spin();
     }
 
+
     void  PlatoonControlPlugin::TrajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp){
     	for(int i = 0; i < tp->trajectory_points.size() - 1; i++ ) {
     		
@@ -86,7 +87,7 @@ namespace platoon_control
     	twist_pub_.publish(twist);
     }
 
-    // @SONAR_START@
+// @SONAR_START@
     geometry_msgs::TwistStamped PlatoonControlPlugin::composeTwist(const cav_msgs::TrajectoryPlanPoint& point){
     	geometry_msgs::TwistStamped current_twist;
         pcw_.setCurrentSpeed(current_speed_);
