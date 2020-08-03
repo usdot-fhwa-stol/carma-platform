@@ -156,7 +156,11 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   std::copy(geofence_msg.tcmV01.reqid.id.begin(), geofence_msg.tcmV01.reqid.id.end(), std::back_inserter(reqid));
   // drop if the req has never been sent
   if (generated_geofence_reqids_.find(reqid) == generated_geofence_reqids_.end())
+  {
+    ROS_WARN_STREAM("CARMA_WM_CTRL received a TrafficControllMessage with unknown TrafficControlRequest ID (reqid): " << reqid);
     return;
+  }
+    
 
   checked_geofence_ids_.insert(boost::uuids::to_string(id));
   auto gf_ptr = geofenceFromMsg(geofence_msg.tcmV01);
@@ -489,8 +493,12 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
   offsetX.deltax = maxX - minX;
   cav_msgs::OffsetPoint offsetY;
   offsetY.deltay = maxY - minY;
-  cB.offsets[0] = offsetX;
-  cB.offsets[1] = offsetY;
+  cB.offsets[0].deltax = minX;
+  cB.offsets[0].deltay = maxY;
+  cB.offsets[1].deltax = maxX;
+  cB.offsets[1].deltay = minY;
+  cB.offsets[2].deltax = maxX;
+  cB.offsets[2].deltay = maxY;
   cB.oldest =ros::Time::now();
   
   cR.choice = cav_msgs::TrafficControlRequest::TCRV01;
