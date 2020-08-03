@@ -151,7 +151,13 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   std::copy(geofence_msg.tcmV01.id.id.begin(), geofence_msg.tcmV01.id.id.end(), id.begin());
   if (checked_geofence_ids_.find(boost::uuids::to_string(id)) != checked_geofence_ids_.end())
     return;
-  
+
+  std::string reqid;
+  std::copy(geofence_msg.tcmV01.reqid.id.begin(), geofence_msg.tcmV01.reqid.id.end(), std::back_inserter(reqid));
+  // drop if the req has never been sent
+  if (generated_geofence_reqids_.find(reqid) == generated_geofence_reqids_.end())
+    return;
+
   checked_geofence_ids_.insert(boost::uuids::to_string(id));
   auto gf_ptr = geofenceFromMsg(geofence_msg.tcmV01);
   scheduler_.addGeofence(gf_ptr);  // Add the geofence to the scheduler
@@ -389,22 +395,19 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   map_update_pub_(gf_msg_revert);
 };
   
-void  WMBroadcaster::routeCallbackMessage(const cav_msgs::Route& route_msg) const
+void  WMBroadcaster::routeCallbackMessage(const cav_msgs::Route& route_msg)
 {
 
- cav_msgs::ControlRequest cR; 
+ cav_msgs::TrafficControlRequest cR; 
  cR =  controlRequestFromRoute(route_msg);
  control_msg_pub_(cR);
 
 }
 
 
-cav_msgs::ControlRequest WMBroadcaster::controlRequestFromRoute(const cav_msgs::Route& route_msg) const
+cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav_msgs::Route& route_msg)
 {
-
-
-  auto path = lanelet::ConstLanelets(); 
-
+  lanelet::ConstLanelets path; 
 
   if (!current_map_) 
   {
@@ -476,17 +479,36 @@ cav_msgs::ControlRequest WMBroadcaster::controlRequestFromRoute(const cav_msgs::
 
   lanelet::GPSPoint gpsRoute = local_projector.reverse(localPoint); //If the appropriate library is included, the reverse() function can be used to convert from local xyz to lat/lon
 
-  cav_msgs::ControlRequest cR; /*Fill the latitude value in message cB with the value of lat */
-  cav_msgs::ControlBounds cB; /*Fill the longitude value in message cB with the value of lon*/
-  cB.latitude = gpsRoute.lat;
-  cB.longitude = gpsRoute.lon;
+  cav_msgs::TrafficControlRequest cR; /*Fill the latitude value in message cB with the value of lat */
+  cav_msgs::TrafficControlBounds cB; /*Fill the longitude value in message cB with the value of lon*/
+  
+  cB.reflat = gpsRoute.lat;
+  cB.reflon = gpsRoute.lon;
 
-//TODO: Update for new geofence spec
-  cB.offsets[0] = maxX - minX;
-  cB.offsets[1] = maxY - minY;
+  cav_msgs::OffsetPoint offsetX;
+  offsetX.deltax = maxX - minX;
+  cav_msgs::OffsetPoint offsetY;
+  offsetY.deltay = maxY - minY;
+  cB.offsets[0] = offsetX;
+  cB.offsets[1] = offsetY;
+  cB.oldest =ros::Time::now();
+  
+  cR.choice = cav_msgs::TrafficControlRequest::TCRV01;
+  
+  // create 16 byte uuid
+  boost::uuids::uuid uuid_id = boost::uuids::random_generator()(); 
+  // take half as string
+  std::string reqid = boost::uuids::to_string(uuid_id).substr(0, 8);
+  generated_geofence_reqids_.insert(reqid);
 
-  cR.bounds.push_back(cB);
-  ROS_WARN_STREAM("Got here safely");
+  // copy to reqid array
+  boost::array<uint8_t, 16UL> req_id;
+  std::copy(uuid_id.begin(),uuid_id.end(), req_id.begin());
+  for (auto i = 0; i < 8; i ++)
+  {
+    cR.tcrV01.reqid.id[i] = req_id[i];
+  }
+  cR.tcrV01.bounds.push_back(cB);
   
   return cR;
 

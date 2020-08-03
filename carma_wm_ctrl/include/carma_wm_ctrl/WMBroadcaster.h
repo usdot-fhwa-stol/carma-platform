@@ -36,8 +36,8 @@
 #include <lanelet2_core/primitives/BoundingBox.h>
 #include <carma_wm/WMListener.h>
 #include <cav_msgs/Route.h>
-#include <cav_msgs/ControlRequest.h>
-#include <cav_msgs/ControlBounds.h>
+#include <cav_msgs/TrafficControlRequest.h>
+#include <cav_msgs/TrafficControlBounds.h>
 #include <autoware_lanelet2_msgs/MapBin.h>
 #include <lanelet2_routing/RoutingGraph.h>
 
@@ -65,7 +65,7 @@ class WMBroadcaster
 public:
   using PublishMapCallback = std::function<void(const autoware_lanelet2_msgs::MapBin&)>;
   using PublishMapUpdateCallback = std::function<void(const autoware_lanelet2_msgs::MapBin&)>;
-  using PublishCtrlRequestCallback = std::function<void(const cav_msgs::ControlRequest&)>;
+  using PublishCtrlRequestCallback = std::function<void(const cav_msgs::TrafficControlRequest&)>;
 
   /*!
    * \brief Constructor
@@ -106,17 +106,17 @@ public:
   void removeGeofence(std::shared_ptr<Geofence> gf_ptr);
   
   /*!
-  * \brief Calls controlRequestFromRoute() and publishes the ControlRequest Message returned after the completed operations
+  * \brief Calls controlRequestFromRoute() and publishes the TrafficControlRequest Message returned after the completed operations
   * \param route_msg The message containing route information
   */
-  void routeCallbackMessage(const cav_msgs::Route& route_msg) const;
+  void routeCallbackMessage(const cav_msgs::Route& route_msg);
 
  /*!
-  * \brief Pulls vehicle information from CARMA Cloud at startup by providing its selected route in a ControlRequest message that is published after a route is selected.
+  * \brief Pulls vehicle information from CARMA Cloud at startup by providing its selected route in a TrafficControlRequest message that is published after a route is selected.
   * During operation at ~10s intervals the vehicle will make another control request for the remainder of its route.
   * \param route_msg The message containing route information pulled from routeCallbackMessage()
   */
-  cav_msgs::ControlRequest controlRequestFromRoute(const cav_msgs::Route& route_msg) const; 
+  cav_msgs::TrafficControlRequest controlRequestFromRoute(const cav_msgs::Route& route_msg); 
 
 
   /*!
@@ -144,6 +144,7 @@ private:
   lanelet::LaneletMapPtr base_map_;
   lanelet::LaneletMapPtr current_map_;
   std::unordered_set<std::string>  checked_geofence_ids_;
+  std::unordered_set<std::string>  generated_geofence_reqids_;
   std::vector<lanelet::LaneletMapPtr> cached_maps_;
   std::mutex map_mutex_;
   PublishMapCallback map_pub_;
@@ -152,6 +153,7 @@ private:
   GeofenceScheduler scheduler_;
   std::string base_map_georef_;
   double max_lane_width_;
+
 };
 }  // namespace carma_wm_ctrl
 
