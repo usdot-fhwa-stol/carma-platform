@@ -34,12 +34,20 @@ int main(int argc, char** argv) {
   message_filters::Synchronizer<pure_pursuit_wrapper::PurePursuitWrapper::SyncPolicy> sync(pure_pursuit_wrapper::PurePursuitWrapper::SyncPolicy(100), PurePursuitWrapper.pose_sub, PurePursuitWrapper.trajectory_plan_sub);
   sync.registerCallback(boost::bind(&pure_pursuit_wrapper::PurePursuitWrapper::TrajectoryPlanPoseHandler, &PurePursuitWrapper, _1, _2));
 
-  ros::Rate r(10);
-  while (ros::ok() && !PurePursuitWrapper.shutting_down_) {
-    PurePursuitWrapper.PublishPluginDiscovery();
-    ros::spinOnce();
-    r.sleep();
-  }
+  //ros::Rate r(10);
+  //while (ros::ok() && !PurePursuitWrapper.shutting_down_) {
+  //  PurePursuitWrapper.PublishPluginDiscovery();
+  //  ros::spinOnce();
+  //  r.sleep();
+ // }
+
+  ros::CARMANodeHandle::setSpinCallback([this]() -> bool
+  {
+  if (!PurePursuitWrapper.shutting_down_)
+  {PurePursuitWrapper.PublishPluginDiscovery();}
+  return !PurePursuitWrapper.shutting_down_;
+  });
+  ros::CARMANodeHandle::spin();
 
   ROS_INFO("Successfully launched node.");
   return 0;
