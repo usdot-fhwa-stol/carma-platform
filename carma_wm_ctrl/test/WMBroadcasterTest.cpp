@@ -40,8 +40,6 @@ using ::testing::InSequence;
 using ::testing::Return;
 using ::testing::ReturnArg;
 
-#include <boost/functional/hash.hpp>
-
 namespace carma_wm_ctrl
 
 {
@@ -331,6 +329,15 @@ TEST(WMBroadcaster, geofenceCallback)
   // check how many times map_update is called so far
   // calling again with same id should not have an effect
   wmb.geofenceCallback(gf_msg);
+
+  ros::Time::setNow(ros::Time(2.1));  // Set current time
+
+  std::atomic<std::size_t> temp(0);
+  carma_wm::waitForEqOrTimeout(3.0, 1, temp);
+
+  ros::Time::setNow(ros::Time(3.1));  // Set current time
+
+  carma_wm::waitForEqOrTimeout(3.0, 1, temp);
 }
 
 TEST(WMBroadcaster, addAndRemoveGeofence)
