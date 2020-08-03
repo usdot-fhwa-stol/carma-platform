@@ -247,6 +247,7 @@ TEST(WMBroadcaster, geofenceCallback)
 {
   // Test adding then evaluate if the calls to active and inactive are done correctly
   carma_wm_ctrl::Geofence gf;
+  bool is_reserved = true;
   gf.id_ = boost::uuids::random_generator()();
   gf.schedules.push_back(carma_wm_ctrl::GeofenceSchedule(ros::Time(1),  // Schedule between 1 and 8
                                  ros::Time(8),
@@ -282,7 +283,10 @@ TEST(WMBroadcaster, geofenceCallback)
       [&](const autoware_lanelet2_msgs::MapBin& geofence_bin) {
         auto data_received = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
         carma_wm::fromBinMsg(geofence_bin, data_received);
-        ASSERT_EQ(data_received->id_, gf.id_);
+        if (!is_reserved)
+          ASSERT_EQ(data_received->id_, gf.id_);
+        else
+          ASSERT_NE(data_received->id_, gf.id_);
         ASSERT_EQ(data_received->remove_list_.size(), 0);
         ASSERT_EQ(data_received->update_list_.size(), 0);
       },
@@ -307,6 +311,12 @@ TEST(WMBroadcaster, geofenceCallback)
   wmb.geoReferenceCallback(sample_proj_string);
 
   cav_msgs::TrafficControlMessage gf_msg;
+
+  gf_msg.choice = cav_msgs::TrafficControlMessage::RESERVED;
+  // Verify that nothing is happening when reserved
+  wmb.geofenceCallback(gf_msg); 
+  is_reserved = false;
+
   gf_msg.choice = cav_msgs::TrafficControlMessage::TCMV01;
   gf_msg.tcmV01 = msg_v01;
   // Verify adding geofence call
