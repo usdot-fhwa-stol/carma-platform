@@ -16,7 +16,7 @@
  the License.
 -->
 
-<package format="2">
+<package format="3">
   <name>route</name>
   <version>3.3.0</version>
   <description>The route package provides capabilities for loading different route files and route state mangement</description>

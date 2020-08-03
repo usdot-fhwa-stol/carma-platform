@@ -14,7 +14,7 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<package>
+<package format = "3">
   <name>gnss_to_map_convertor</name>
   <version>3.3.0</version>
   <description>The gnss_to_map_convertor converts incomping GNSS messages (NavSatFix) to poses in the ECEF and Map frames </description>
@@ -46,8 +46,8 @@
   <!-- The *_depend tags are used to specify dependencies -->
   <!-- Dependencies can be catkin packages or system dependencies -->
   <!-- Examples: -->
-  <!-- Use build_depend for packages you need at compile time: -->
-  <!--   <build_depend>message_generation</build_depend> -->
+  <!-- Use depend for packages you need at compile time: -->
+  <!--   <depend>message_generation</depend> -->
   <!-- Use buildtool_depend for build tool packages: -->
   <!--   <buildtool_depend>catkin</buildtool_depend> -->
   <!-- Use run_depend for packages you need at runtime: -->
@@ -55,30 +55,19 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>geometry_msgs</build_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>rospy</build_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>tf2_msgs</build_depend>
-  <build_depend>cav_msgs</build_depend>
-  <build_depend>cav_srvs</build_depend>
-  <build_depend>wgs84_utils</build_depend>
-  <build_depend>message_filters</build_depend>
-  <build_depend>novatel_gps_msgs</build_depend>
-  <build_depend>carma_utils</build_depend>
-  <build_depend>tf2_geometry_msgs</build_depend>
-  <run_depend>geometry_msgs</run_depend>
-  <run_depend>roscpp</run_depend>
-  <run_depend>rospy</run_depend>
-  <run_depend>std_msgs</run_depend>
-  <run_depend>tf2_msgs</run_depend>
-  <run_depend>cav_msgs</run_depend>
-  <run_depend>cav_srvs</run_depend>
-  <run_depend>wgs84_utils</run_depend>
-  <run_depend>message_filters</run_depend>
-  <run_depend>novatel_gps_msgs</run_depend>
-  <run_depend>carma_utils</run_depend>
-  <run_depend>tf2_geometry_msgs</run_depend>
+  <depend>geometry_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>rospy</depend>
+  <depend>std_msgs</depend>
+  <depend>tf2_msgs</depend>
+  <depend>cav_msgs</depend>
+  <depend>cav_srvs</depend>
+  <depend>wgs84_utils</depend>
+  <depend>message_filters</depend>
+  <depend>novatel_gps_msgs</depend>
+  <depend>carma_utils</depend>
+  <depend>tf2_geometry_msgs</depend>
+  
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

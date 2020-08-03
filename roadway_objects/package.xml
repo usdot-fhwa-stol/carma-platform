@@ -13,7 +13,7 @@
  the License.
 -->
 
-<package format="2">
+<package format="3">
   <name>roadway_objects</name>
   <version>0.0.0</version>
   <description>The roadway_objects package</description>

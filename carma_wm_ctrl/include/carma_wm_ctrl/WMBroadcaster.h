@@ -44,7 +44,7 @@
 #include "MapConformer.h"
 
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
-#include <cav_msgs/ControlMessage.h>
+#include <cav_msgs/TrafficControlMessage.h>
 #include <carma_wm/TrafficControl.h>
 #include <std_msgs/String.h>
 #include <unordered_set>
@@ -89,11 +89,11 @@ public:
   void geoReferenceCallback(const std_msgs::String& geo_ref);
 
   /*!
-   * \brief Callback to add a geofence to the map
+   * \brief Callback to add a geofence to the map. Currently only supports version 1 TrafficControlMessage
    *
    * \param geofence_msg The ROS msg of the geofence to add. 
    */
-  void geofenceCallback(const cav_msgs::ControlMessage& geofence_msg);
+  void geofenceCallback(const cav_msgs::TrafficControlMessage& geofence_msg);
 
   /*!
    * \brief Adds a geofence to the current map and publishes the ROS msg
@@ -126,7 +126,7 @@ public:
    * NOTE:Currently this function only checks lanelets and will be expanded 
    * to areas in the future.
    */
-  lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const cav_msgs::ControlMessage& geofence_msg);
+  lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const cav_msgs::TrafficControlMessageV01& geofence_msg);
 
   /*!
    * \brief Sets the max lane width in meters. Geofence points are associated to a lanelet if they are 
@@ -139,7 +139,7 @@ private:
   void addBackSpeedLimit(std::shared_ptr<Geofence> gf_ptr);
   void removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr);
   void addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr);
-  std::shared_ptr<Geofence> geofenceFromMsg(const cav_msgs::ControlMessage& geofence_msg);
+  std::shared_ptr<Geofence> geofenceFromMsg(const cav_msgs::TrafficControlMessageV01& geofence_msg);
   std::unordered_set<lanelet::Lanelet> filterSuccessorLanelets(const std::unordered_set<lanelet::Lanelet>& possible_lanelets, const std::unordered_set<lanelet::Lanelet>& root_lanelets);
   lanelet::LaneletMapPtr base_map_;
   lanelet::LaneletMapPtr current_map_;

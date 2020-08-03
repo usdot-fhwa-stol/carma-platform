@@ -33,12 +33,10 @@
 #include "TestHelpers.h"
 #include "TestTimer.h"
 #include "TestTimerFactory.h"
+#include <algorithm>
 
-#include <cav_msgs/ControlMessage.h>
-#include <cav_msgs/DaySchedule.h>
-#include <cav_msgs/Schedule.h>
-#include <cav_msgs/ScheduleParams.h>
 #include <cav_msgs/Route.h>
+#include <cav_msgs/TrafficControlMessage.h>
 
 using ::testing::_;
 using ::testing::A;
@@ -127,15 +125,15 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
   wmb.geoReferenceCallback(base_map_proj);
 
   // create the geofence request
-  cav_msgs::ControlMessage gf_msg;
-  gf_msg.proj = geofence_proj_string;
+  cav_msgs::TrafficControlMessageV01 gf_msg;
+  gf_msg.geometry.proj = geofence_proj_string;
   // set the points
-  cav_msgs::Point pt;
+  cav_msgs::PathNode pt;
   // check points that are inside lanelets
   pt.x = -8.5; pt.y = -9.5; pt.z = 0; // straight geofence line across 2 lanelets
-  gf_msg.points.push_back(pt);
+  gf_msg.geometry.nodes.push_back(pt);
   pt.x = -8.5; pt.y = -8.5; pt.z = 0;
-  gf_msg.points.push_back(pt);
+  gf_msg.geometry.nodes.push_back(pt);
   
   lanelet::ConstLaneletOrAreas affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
   ASSERT_EQ(affected_parts.size(), 2);
@@ -143,11 +141,11 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
   ASSERT_EQ(affected_parts[1].id(), 10001);
   // check points that are outside, on the edge, and on the point that makes up the lanelets
   pt.x = -20; pt.y = -10; pt.z = 0;
-  gf_msg.points.push_back(pt);
+  gf_msg.geometry.nodes.push_back(pt);
   pt.x = -9; pt.y = -8.5; pt.z = 0;
-  gf_msg.points.push_back(pt);
+  gf_msg.geometry.nodes.push_back(pt);
   pt.x = 0; pt.y = 0; pt.z = 0;
-  gf_msg.points.push_back(pt);
+  gf_msg.geometry.nodes.push_back(pt);
   
   affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
   ASSERT_EQ(affected_parts.size(), 2); // newly added ones should not be considered to be on the lanelet
@@ -178,7 +176,7 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
   lanelet::utils::conversion::toBinMsg(map, &msg);
   autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(msg));
 
-  cav_msgs::ControlMessage gf_msg;
+  cav_msgs::TrafficControlMessageV01 gf_msg;
   // Check if error are correctly being thrown
   EXPECT_THROW(wmb.getAffectedLaneletOrAreas(gf_msg), lanelet::InvalidObjectStateError);
   // Set the map
@@ -194,53 +192,58 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
   wmb.geoReferenceCallback(sample_proj_string);
 
   // create the control message's relevant parts
-  gf_msg.proj = proj_string;
+  gf_msg.geometry.proj = proj_string;
   // set the points
-  cav_msgs::Point pt;
+  cav_msgs::PathNode pt;
   // check points that are inside lanelets
   pt.x = 1.75; pt.y = 0.5; pt.z = 0;
-  gf_msg.points.push_back(pt);
+  gf_msg.geometry.nodes.push_back(pt);
   lanelet::ConstLaneletOrAreas affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
   ASSERT_EQ(affected_parts.size(), 0); // this is 0 because there will never be geofence with only 1 pt
                                        // if there is, it won't apply to the map as it doesn't have any direction information, 
                                        // which makes it confusing for overlapping lanelets
   pt.x = 1.75; pt.y = 0.45; pt.z = 0;
-  gf_msg.points.push_back(pt);
+  gf_msg.geometry.nodes.push_back(pt);
   affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
   ASSERT_EQ(affected_parts.size(), 0); // although there are two points in the same lanelet,
                                        // lanelet and the two points are not in the same direction
 
-  gf_msg.points.pop_back();
+  gf_msg.geometry.nodes.pop_back();
   pt.x = 1.75; pt.y = 0.55; pt.z = 0;
-  gf_msg.points.push_back(pt);
+  gf_msg.geometry.nodes.push_back(pt);
   affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
   ASSERT_EQ(affected_parts.size(), 1); // because two points are in one geofence, it will be recorded now
-  gf_msg.points.pop_back();
-  gf_msg.points.pop_back();
+  gf_msg.geometry.nodes.pop_back();
+  gf_msg.geometry.nodes.pop_back();
 
   pt.x = 0.5; pt.y = 0.5; pt.z = 0;    // first of series geofence points across multiple lanelets
-  gf_msg.points.push_back(pt);
+  gf_msg.geometry.nodes.push_back(pt);
   pt.x = 0.5; pt.y = 1.1; pt.z = 0;    // adding point in the next lanelet
-  gf_msg.points.push_back(pt);
+  gf_msg.geometry.nodes.push_back(pt);
   affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg); 
   ASSERT_EQ(affected_parts.size(), 3);    // although (0.5,1.1) is in another overlapping lanelet (llt_unreg)
                                           // that lanelet is disjoint/doesnt have same direction/not successor of the any lanelet
   
   pt.x = 1.5; pt.y = 2.1; pt.z = 0;    // adding further points in different lanelet narrowing down our direction
-  gf_msg.points.push_back(pt);
+  gf_msg.geometry.nodes.push_back(pt);
   affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
   ASSERT_EQ(affected_parts.size(), 3);    // now they are actually 3 different lanelets because we changed direction
-  ASSERT_EQ(affected_parts[0].id(), 10003);
-  ASSERT_EQ(affected_parts[1].id(), 10006);
-  ASSERT_EQ(affected_parts[2].id(), 10000);
+  std::vector<lanelet::Id> affected_parts_ids;
+  for (auto i = 0; i < affected_parts.size(); i ++)
+  {
+    affected_parts_ids.push_back(affected_parts[i].id());
+  }
+  ASSERT_TRUE(std::find(affected_parts_ids.begin(), affected_parts_ids.end(), 10003) != affected_parts_ids.end()); //due to race condition
+  ASSERT_TRUE(std::find(affected_parts_ids.begin(), affected_parts_ids.end(), 10000) != affected_parts_ids.end());
+  ASSERT_TRUE(std::find(affected_parts_ids.begin(), affected_parts_ids.end(), 10006) != affected_parts_ids.end());
 
   // check points that are outside, on the edge, and on the point that makes up the lanelets
   pt.x = 0.5; pt.y = 0; pt.z = 0;
-  gf_msg.points.push_back(pt);
+  gf_msg.geometry.nodes.push_back(pt);
   pt.x = 1.0; pt.y = 0; pt.z = 0;
-  gf_msg.points.push_back(pt);
+  gf_msg.geometry.nodes.push_back(pt);
   pt.x = 10; pt.y = 10; pt.z = 0;
-  gf_msg.points.push_back(pt);
+  gf_msg.geometry.nodes.push_back(pt);
   
   affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
   ASSERT_EQ(affected_parts.size(), 2); // they should not be considered to be on the lanelet
@@ -255,26 +258,31 @@ TEST(WMBroadcaster, geofenceCallback)
 {
   // Test adding then evaluate if the calls to active and inactive are done correctly
   carma_wm_ctrl::Geofence gf;
-  gf.id_ = boost::uuids::random_generator()();
-  gf.schedule = carma_wm_ctrl::GeofenceSchedule(ros::Time(1),  // Schedule between 1 and 8
+
+  gf.schedules.push_back(carma_wm_ctrl::GeofenceSchedule(ros::Time(1),  // Schedule between 1 and 8
                                  ros::Time(8),
                                  ros::Duration(2),    // Starts at 2
-                                 ros::Duration(3.1),  // Ends at by 3.1
+                                 ros::Duration(1.1),  // Ends at by 3.1
+                                 ros::Duration(0),    // 0 offset for repetition start, so still starts at 2
                                  ros::Duration(1),    // Duration of 1 and interval of two so active durations are (2-3)
-                                 ros::Duration(2));
+                                 ros::Duration(2)));
   // convert to ros msg
-  cav_msgs::ControlMessage gf_msg;
-  std::copy(gf.id_.begin(),  gf.id_.end(), gf_msg.id.begin());
-  gf_msg.schedule.start = gf.schedule.schedule_start_;
-  gf_msg.schedule.end = gf.schedule.schedule_end_;
-  gf_msg.schedule.between.start =  gf.schedule.control_start_;
-  gf_msg.schedule.between.end =  gf.schedule.control_end_;
-  gf_msg.schedule.repeat.duration =  gf.schedule.control_duration_;
-  gf_msg.schedule.repeat.interval =  gf.schedule.control_interval_;
+  cav_msgs::TrafficControlMessageV01 msg_v01;
+  std::copy(gf.id_.begin(),  gf.id_.end(), msg_v01.id.id.begin());
+  msg_v01.params.schedule.start = gf.schedules[0].schedule_start_;
+  msg_v01.params.schedule.end = gf.schedules[0].schedule_end_;
+  cav_msgs::DailySchedule daily_schedule;
+  daily_schedule.begin = gf.schedules[0].control_start_;
+  daily_schedule.duration = gf.schedules[0].control_duration_;
+  msg_v01.params.schedule.repeat.offset =  gf.schedules[0].control_offset_;
+  msg_v01.params.schedule.repeat.span =  gf.schedules[0].control_span_;
+  msg_v01.params.schedule.repeat.period =  gf.schedules[0].control_period_;
 
   ros::Time::setNow(ros::Time(0));  // Set current time
 
+  // variables needed to test
   size_t base_map_call_count = 0;
+
   WMBroadcaster wmb(
       [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
         // Publish map callback
@@ -311,8 +319,21 @@ TEST(WMBroadcaster, geofenceCallback)
   ROS_INFO_STREAM("Below proj_create: unrecognized format is expected");
   wmb.geoReferenceCallback(sample_proj_string);
 
-  // Verify adding geofence call
+  cav_msgs::TrafficControlMessage gf_msg;
+
+  gf_msg.choice = cav_msgs::TrafficControlMessage::RESERVED;
+  // Verify that nothing is happening when reserved
   wmb.geofenceCallback(gf_msg); 
+  ros::Time::setNow(ros::Time(2.1));// Geofence should have started by now
+
+  gf_msg.choice = cav_msgs::TrafficControlMessage::TCMV01;
+  gf_msg.tcmV01 = msg_v01;
+  // Verify adding geofence call
+  wmb.geofenceCallback(gf_msg); // This calls should immediately work contrary to before
+
+  // check how many times map_update is called so far
+  // calling again with same id should not have an effect
+  wmb.geofenceCallback(gf_msg);
 
   ros::Time::setNow(ros::Time(2.1));  // Set current time
 
@@ -461,19 +482,20 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   // Create the geofence object
   auto gf_ptr = std::make_shared<carma_wm_ctrl::Geofence>(carma_wm_ctrl::Geofence());
   gf_ptr->id_ = boost::uuids::random_generator()();
-  cav_msgs::ControlMessage gf_msg;
+  
+  cav_msgs::TrafficControlMessageV01 gf_msg;
   lanelet::DigitalSpeedLimitPtr new_speed_limit = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(map->regulatoryElementLayer.uniqueId(), 10_mph, {}, {},
                                                      { lanelet::Participants::VehicleCar }));
   gf_ptr->min_speed_limit_ = new_speed_limit;
   // create the control message's relevant parts to fill the object
-  gf_msg.proj = proj_string;
+  gf_msg.geometry.proj = proj_string;
   // set the points
-  cav_msgs::Point pt;
+  cav_msgs::PathNode pt;
   // check points that are inside lanelets
   pt.x = 0.5; pt.y = 0.5; pt.z = 0;
-  gf_msg.points.push_back(pt);
+  gf_msg.geometry.nodes.push_back(pt);
   pt.x = 0.5; pt.y = 1.5; pt.z = 0;
-  gf_msg.points.push_back(pt);
+  gf_msg.geometry.nodes.push_back(pt);
   gf_ptr->affected_parts_ = wmb.getAffectedLaneletOrAreas(gf_msg);
 
   ASSERT_EQ(gf_ptr->affected_parts_.size(), 2);
@@ -550,19 +572,20 @@ using namespace lanelet::units::literals;
   // Create the geofence object
   auto gf_ptr = std::make_shared<carma_wm_ctrl::Geofence>(carma_wm_ctrl::Geofence());
   gf_ptr->id_ = boost::uuids::random_generator()();
-  cav_msgs::ControlMessage gf_msg;
+  
+  cav_msgs::TrafficControlMessageV01 gf_msg;
   lanelet::DigitalSpeedLimitPtr new_speed_limit = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(map->regulatoryElementLayer.uniqueId(), 10_mph, {}, {},
                                                      { lanelet::Participants::VehicleCar }));
   gf_ptr->min_speed_limit_ = new_speed_limit;
   // create the control message's relevant parts to fill the object
-  gf_msg.proj = proj_string;
+  gf_msg.geometry.proj = proj_string;
   // set the points
-  cav_msgs::Point pt;
+  cav_msgs::PathNode pt;
   // check points that are inside lanelets
   pt.x = 0.5; pt.y = 0.5; pt.z = 0;
-  gf_msg.points.push_back(pt);
+  gf_msg.geometry.nodes.push_back(pt);
   pt.x = 0.5; pt.y = 1.5; pt.z = 0;
-  gf_msg.points.push_back(pt);
+  gf_msg.geometry.nodes.push_back(pt);
   gf_ptr->affected_parts_ = wmb.getAffectedLaneletOrAreas(gf_msg);
 
   ASSERT_EQ(gf_ptr->affected_parts_.size(), 2);
