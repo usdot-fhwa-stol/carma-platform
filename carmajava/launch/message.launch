@@ -51,6 +51,9 @@
 
   </node>
 
-  <include file="$(find bsm_generator)/launch/bsm_generator.launch">
-  </include>
+  <include file="$(find bsm_generator)/launch/bsm_generator.launch"/>
+
+  <!-- Message Encoder/Decoder Node -->
+  <include file="$(find cpp_message)/launch/cpp_message.launch"/>
+
 </launch>

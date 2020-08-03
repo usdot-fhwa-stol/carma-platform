@@ -33,7 +33,7 @@ void WMBroadcasterNode::publishMapUpdate(const autoware_lanelet2_msgs::MapBin& g
 }
 
   
-void WMBroadcasterNode::publishCtrlReq(const cav_msgs::ControlRequest& ctrlreq_msg) const
+void WMBroadcasterNode::publishCtrlReq(const cav_msgs::TrafficControlRequest& ctrlreq_msg) const
 {
   control_msg_pub_.publish(ctrlreq_msg);
 }
@@ -50,7 +50,7 @@ int WMBroadcasterNode::run()
   // Map Update Publisher
   map_update_pub_ = cnh_.advertise<autoware_lanelet2_msgs::MapBin>("map_update", 1, true);
   //Route Message Publisher
-  control_msg_pub_= cnh_.advertise<cav_msgs::ControlRequest>("outgoing_geofence_request", 1, true);
+  control_msg_pub_= cnh_.advertise<cav_msgs::TrafficControlRequest>("outgoing_geofence_request", 1, true);
   // Base Map Sub
   base_map_sub_ = cnh_.subscribe("base_map", 1, &WMBroadcaster::baseMapCallback, &wmb_);
   // Base Map Georeference Sub
