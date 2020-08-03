@@ -16,7 +16,7 @@
  the License.
 -->
 
-<package format="2">
+<package format="3">
   <name>cost_plugin_system</name>
   <version>3.2.0</version>
   <description>The Cost Plugin System</description>

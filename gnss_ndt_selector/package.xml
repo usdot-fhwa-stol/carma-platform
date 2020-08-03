@@ -16,7 +16,7 @@
  the License.
 -->
 
-<package format="2">
+<package format="3">
   <name>gnss_ndt_selector</name>
   <version>3.3.0</version>
   <description>The localizer package provides ndt or GNSS localization selection and publishes pose info as tf2 transformation messages</description>
