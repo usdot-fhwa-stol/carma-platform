@@ -51,7 +51,7 @@ namespace platoon_control
         PlatoonControlWorker();
 
 
-        double getLastSpeedCommand();
+        double getLastSpeedCommand() const;
 
         // Update speed commands based on the list of platoon members
         void generateSpeed(const cav_msgs::TrajectoryPlanPoint& point);

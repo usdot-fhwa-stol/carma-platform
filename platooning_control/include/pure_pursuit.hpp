@@ -27,7 +27,7 @@ namespace platoon_control
     public:
     	PurePursuit();
 
-    	double calculateSteer(cav_msgs::TrajectoryPlanPoint tp);
+    	double calculateSteer(const cav_msgs::TrajectoryPlanPoint& tp);
 
 		// geometry pose
 		geometry_msgs::Pose current_pose_;
@@ -35,19 +35,19 @@ namespace platoon_control
     private:
 
 		// calculate the lookahead distance from next trajectory point
-		double getLookaheadDist(cav_msgs::TrajectoryPlanPoint tp);
+		double getLookaheadDist(const cav_msgs::TrajectoryPlanPoint& tp) const;
 
 		// calculate yaw angle of the vehicle
-		double getYaw();
+		double getYaw() const;
 
 		// calculate alpha angle
-		double getAlpha(double lookahead, std::vector<double> v1, std::vector<double> v2);
+		double getAlpha(double lookahead, std::vector<double> v1, std::vector<double> v2) const;
 
 		// calculate steering direction
-		int getSteeringDirection(std::vector<double> v1, std::vector<double> v2);
+		int getSteeringDirection(std::vector<double> v1, std::vector<double> v2) const;
 
 		// calculate command velocity from trajecoty point
-		double getVelocity(cav_msgs::TrajectoryPlanPoint tp, double delta_pos);
+		double getVelocity(const cav_msgs::TrajectoryPlanPoint& tp, double delta_pos) const;
 		
 		// vehicle wheel base
 		double wheelbase_ = 2.7;

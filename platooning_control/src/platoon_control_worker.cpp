@@ -6,7 +6,7 @@ namespace platoon_control
    
 	PlatoonControlWorker::PlatoonControlWorker(){}
 
-	double PlatoonControlWorker::getLastSpeedCommand() {
+	double PlatoonControlWorker::getLastSpeedCommand() const {
         return speedCmd_;
     }
 
@@ -64,10 +64,10 @@ namespace platoon_control
                 } else if (adjSpeedCmd < min) {
                     adjSpeedCmd = min;
                 }
-                lastCmdSpeed = adjSpeedCmd;//Optional.of(adjSpeedCmd);
+                lastCmdSpeed = adjSpeedCmd;
                 ROS_DEBUG("The speed command after max accel cap is: " , adjSpeedCmd , " m/s");
             }
-            speedCmd_ = adjSpeedCmd;//speedCmd_.set(adjSpeedCmd);
+            speedCmd_ = adjSpeedCmd;
             ROS_DEBUG("A speed command is generated from command generator: " , speedCmd_ , " m/s");
 
         }
