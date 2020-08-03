@@ -53,7 +53,6 @@ namespace platoon_control
 			tp0 = tp;
 			return 0.0;
 		}
-
 		double lookahead = getLookaheadDist(tp);
 		double v = getVelocity(tp, lookahead);
 		double yaw = getYaw();
@@ -67,7 +66,4 @@ namespace platoon_control
 		prev_steering = steering;
 		return steering;
 	}
-
-	
-
 }
