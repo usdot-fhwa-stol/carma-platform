@@ -57,7 +57,7 @@ class MotionComputationNode
      /*! \fn publishObject()
     \brief Callback to publish ObjectList
    */
-  void publishObject(const cav_msgs::ExternalObjectList& obj_msg);
+  void publishObject(const cav_msgs::ExternalObjectList& obj_pred_msg);
 
   /*!fn run()
   \brief General starting point to run this node

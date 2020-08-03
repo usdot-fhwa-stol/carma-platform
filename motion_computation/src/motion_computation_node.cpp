@@ -25,7 +25,7 @@ namespace object{
   void MotionComputationNode::initialize()
   {
     // Load parameters
-    double step = 0.1;
+   /* double step = 0.1;
     double period = 2.0;
     double ax = 9.0;
     double ay = 9.0;
@@ -51,9 +51,9 @@ namespace object{
     carma_obj_pub_=nh_.advertise<cav_msgs::ExternalObjectList>("external_objects", 10);
   }
 
-  void MotionComputationNode::publishObject(const cav_msgs::ExternalObjectList& obj_msg)
+  void MotionComputationNode::publishObject(const cav_msgs::ExternalObjectList& obj_pred_msg)
   {
-  carma_obj_pub_.publish(obj_msg);
+  carma_obj_pub_.publish(obj_pred_msg);
   }
 
   void MotionComputationNode::run()
