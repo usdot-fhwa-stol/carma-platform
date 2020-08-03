@@ -17,6 +17,7 @@
  */
 
 #include <autoware_lanelet2_msgs/MapBin.h>
+#include <cav_msgs/Route.h>
 #include <carma_wm/CARMAWorldModel.h>
 #include <carma_wm/TrafficControl.h>
 
@@ -56,7 +57,7 @@ public:
   /*!
    * \brief Callback for route message. It is a TODO: To update function when route message spec is defined
    */
-  void routeCallback();
+  void routeCallback(const cav_msgs::RouteConstPtr& route_msg);
 
   /*!
    * \brief Callback for roadway objects msg

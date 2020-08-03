@@ -15,15 +15,15 @@
  */
 
 #include <ros/ros.h>
-
-#include "route_generator.h"
+#include "route_following_plugin.h"
 
 int main(int argc, char** argv)
 {
   
-    ros::init(argc, argv, "route_generator");
-    RouteGenerator rg;
-    rg.run();
+    ros::init(argc, argv, "route_following_plugin");
+    route_following_plugin::RouteFollowingPlugin rfp;
+    rfp.run();
     return 0;
+
 
 };

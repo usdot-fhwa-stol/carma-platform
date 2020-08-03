@@ -20,7 +20,7 @@
 namespace plan_delegator
 {
     PlanDelegator::PlanDelegator() : 
-        planning_topic_prefix_(""), planning_topic_suffix_(""), spin_rate_(10.0), max_trajectory_duration_(6.0) { }
+        guidance_engaged(false), planning_topic_prefix_(""), planning_topic_suffix_(""), spin_rate_(10.0), max_trajectory_duration_(6.0) { }
     
     void PlanDelegator::init()
     {
@@ -38,6 +38,8 @@ namespace plan_delegator
             [this](const geometry_msgs::TwistStampedConstPtr& twist) {this->latest_twist_ = *twist;});
         pose_sub_ = nh_.subscribe<geometry_msgs::PoseStamped>("current_pose", 5,
             [this](const geometry_msgs::PoseStampedConstPtr& pose) {this->latest_pose_ = *pose;});
+        guidance_state_sub_ = nh_.subscribe<cav_msgs::GuidanceState>("guidance_state", 5, &PlanDelegator::guidanceStateCallback, this);
+
 
         ros::CARMANodeHandle::setSpinCallback(std::bind(&PlanDelegator::spinCallback, this));
         ros::CARMANodeHandle::setSpinRate(spin_rate_);
@@ -46,6 +48,11 @@ namespace plan_delegator
     void PlanDelegator::run() 
     {
         ros::CARMANodeHandle::spin();
+    }
+
+    void PlanDelegator::guidanceStateCallback(const cav_msgs::GuidanceStateConstPtr& msg)
+    {
+        guidance_engaged = (msg->state == cav_msgs::GuidanceState::ENGAGED);
     }
 
     void PlanDelegator::maneuverPlanCallback(const cav_msgs::ManeuverPlanConstPtr& plan)
@@ -127,6 +134,11 @@ namespace plan_delegator
     cav_msgs::TrajectoryPlan PlanDelegator::planTrajectory()
     {
         cav_msgs::TrajectoryPlan latest_trajectory_plan;
+        if(!guidance_engaged)
+        {
+            ROS_INFO_STREAM("Guidance is not engaged. Plan delegator will not plan trajectory.");
+            return latest_trajectory_plan;
+        }
         // iterate through maneuver list to make service call
     
         for(const auto& maneuver : latest_maneuver_plan_.maneuvers)

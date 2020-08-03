@@ -32,8 +32,7 @@ WMListener::WMListener(bool multi_thread) : worker_(std::unique_ptr<WMListenerWo
   }
   map_update_sub_= nh_.subscribe("map_update", 1, &WMListener::mapUpdateCallback, this);
   map_sub_ = nh_.subscribe("semantic_map", 1, &WMListenerWorker::mapCallback, worker_.get());
-  // route_sub_ = nh_.subscribe("route", 1, &WMListenerWorker::routeCallback, worker_.get()); // TODO uncomment when
-  // route message is defined
+  route_sub_ = nh_.subscribe("route", 1, &WMListenerWorker::routeCallback, worker_.get());
   roadway_objects_sub_ = nh_.subscribe("roadway_objects", 1, &WMListenerWorker::roadwayObjectListCallback, worker_.get());
   // Set up AsyncSpinner for multi-threaded use case
   if (multi_threaded_)

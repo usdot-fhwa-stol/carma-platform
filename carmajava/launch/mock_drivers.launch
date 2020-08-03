@@ -134,7 +134,4 @@
 
   <!-- Simulated Lightbar Driver Node -->
   <include if="$(arg mock_lightbar)" file="$(find mock_lightbar_driver)/launch/mock_lightbar_driver_testing.launch"/>
-
-  
-
 </launch>

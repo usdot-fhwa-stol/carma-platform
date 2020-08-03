@@ -151,8 +151,8 @@
   <!-- Autoware Plugin -->
   <include file="$(find autoware_plugin)/launch/autoware_plugin.launch" />
 
-  <!-- Route Generator -->
-  <include file="$(find route_generator)/launch/route_generator.launch">
+  <!-- Route Node -->
+  <include file="$(find route)/launch/route.launch">
     <arg name="route_file_folder" value="$(arg route_file_folder)"/>
   </include>
 

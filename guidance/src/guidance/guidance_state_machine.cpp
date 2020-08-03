@@ -106,6 +106,15 @@ namespace guidance
         }
     }
 
+    void GuidanceStateMachine::onRouteEvent(const cav_msgs::RouteEventConstPtr& msg)
+    {
+        if(msg->event == cav_msgs::RouteEvent::ROUTE_DEPARTED ||
+           msg->event == cav_msgs::RouteEvent::ROUTE_COMPLETED ||
+           msg->event == cav_msgs::RouteEvent::ROUTE_ABORTED) {
+               onGuidanceSignal(Signal::DISENGAGED);
+           }
+    }
+
     uint8_t GuidanceStateMachine::getCurrentState()
     {
         return static_cast<uint8_t>(current_guidance_state_);

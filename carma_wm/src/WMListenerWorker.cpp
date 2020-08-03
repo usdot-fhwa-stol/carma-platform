@@ -92,10 +92,26 @@ void WMListenerWorker::roadwayObjectListCallback(const cav_msgs::RoadwayObstacle
   world_model_->setRoadwayObjects(msg.roadway_obstacles);
 }
 
-void WMListenerWorker::routeCallback()
+void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
 {
-  // TODO Implement when route message has been defined
-  // world_model_->setRoute(route_obj);
+  if (!world_model_->getMap()) {
+    ROS_ERROR_STREAM("WMListener received a route before a map was available. Dropping route message.");
+    return;
+  }
+
+  auto path = lanelet::ConstLanelets();
+  for(auto id : route_msg->shortest_path_lanelet_ids)
+  {
+    auto ll = world_model_->getMap()->laneletLayer.get(id);
+    path.push_back(ll);
+  }
+  if(path.size() == 0) return;
+  auto route_opt = path.size() == 1 ? world_model_->getMapRoutingGraph()->getRoute(path.front(), path.back())
+                               : world_model_->getMapRoutingGraph()->getRouteVia(path.front(), lanelet::ConstLanelets(path.begin() + 1, path.end() - 1), path.back());
+  if(route_opt.is_initialized()) {
+    auto ptr = std::make_shared<lanelet::routing::Route>(std::move(route_opt.get()));
+    world_model_->setRoute(ptr);
+  }
   // Call route_callback_;
   if (route_callback_)
   {

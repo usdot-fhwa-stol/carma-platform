@@ -94,6 +94,12 @@ namespace trajectory_executor {
             void onNewTrajectoryPlan(const cav_msgs::TrajectoryPlan& msg);
 
             /*!
+             * \brief Monitor the guidance state and set the current trajector as null_ptr 
+             */
+            void guidanceStateCb(const cav_msgs::GuidanceStateConstPtr& msg);
+
+
+            /*!
              * \brief Timer callback to be invoked at our output tickrate.
              * Outputs current trajectory plan to the first control plugin in
              * it's point list. If this is our second or later timestep on the
