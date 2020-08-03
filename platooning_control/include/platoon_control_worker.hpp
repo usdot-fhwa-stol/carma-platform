@@ -63,7 +63,6 @@ namespace platoon_control
 
         double speedCmd;
         double currentSpeed;
-        double currentDTD;
         double adjustmentCap = 10.0;
         double lastCmdSpeed = 0.0;
 
@@ -106,7 +105,6 @@ namespace platoon_control
 
         long CMD_TIMESTEP = 100;
 
-        cav_msgs::TrajectoryPlanPoint point0;
 
         double getCurrentDowntrackDistance(const cav_msgs::TrajectoryPlanPoint& point);
 

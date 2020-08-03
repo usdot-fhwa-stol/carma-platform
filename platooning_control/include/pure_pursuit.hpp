@@ -55,6 +55,8 @@ namespace platoon_control
 		// coefficient for smooth steering
 		double Kdd_ = 4.5;
 
+		double prev_steering = 0.0;
+
 		
 		// previous trajectory point
 		cav_msgs::TrajectoryPlanPoint tp0;

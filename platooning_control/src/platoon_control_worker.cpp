@@ -11,7 +11,8 @@ namespace platoon_control
     }
 
     void PlatoonControlWorker::generateSpeed(const cav_msgs::TrajectoryPlanPoint& point) {
-    	PlatoonLeaderInfo leader = platoon_leader;
+        
+        PlatoonLeaderInfo leader = platoon_leader;
     	if(leader.staticId != "") {
             double controllerOutput = 0.0;
 
@@ -79,6 +80,7 @@ namespace platoon_control
             pid_ctrl_.reset();
         }
 
+        lastCmdSpeed = speedCmd_;
 
     }
 
@@ -97,10 +99,11 @@ namespace platoon_control
     }
 
     double PlatoonControlWorker::getCurrentDowntrackDistance(const cav_msgs::TrajectoryPlanPoint& point) {
-        double x_diff = (point.x-point0.x);
-		double y_diff = (point.y-point0.y);
+        
+        double x_diff = (point.x-current_pose.position.x);
+		double y_diff = (point.y-current_pose.position.y);
 		double dist = std::sqrt(x_diff * x_diff + y_diff * y_diff);
-    	return currentDTD;
+    	return dist;
     }
 
     // TODO Get information about front vehicle from world model (if needed)

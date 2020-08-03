@@ -60,7 +60,6 @@ namespace platoon_control
         ros::CARMANodeHandle::spin();
     }
 
-    // @SONAR_START@
     void  PlatoonControlPlugin::TrajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp){
     	for(int i = 0; i < tp->trajectory_points.size() - 1; i++ ) {
     		
@@ -73,7 +72,6 @@ namespace platoon_control
 
     }
 
-    // @SONAR_STOP@
     void PlatoonControlPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
         pose_msg_ = msg;

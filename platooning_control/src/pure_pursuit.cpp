@@ -47,9 +47,6 @@ namespace platoon_control
         return 1;
 	}
 
-	
-
-
 	double PurePursuit::calculateSteer(const cav_msgs::TrajectoryPlanPoint& tp){
 		// skip the first trajectory point
 		if (tp0.x == 0 && tp0.y == 0){
@@ -66,6 +63,8 @@ namespace platoon_control
 		int direction = getSteeringDirection(v1, v2);
 		double steering = direction* atan((2 * wheelbase_ * sin(alpha))/(lookahead));// change (lookahead) to (Kdd_*v) if steering is bad
 		tp0 = tp;
+		if (std::isnan(steering)) return prev_steering;
+		prev_steering = steering;
 		return steering;
 	}
 
