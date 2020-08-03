@@ -20,6 +20,7 @@
 #include <ros/ros.h>
 #include <string>
 #include <geometry_msgs/TwistStamped.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <cav_msgs/TrajectoryPlan.h>
 #include <cav_msgs/Plugin.h>
 #include <boost/uuid/uuid_generators.hpp>
@@ -45,6 +46,9 @@ namespace platoon_control
             // general starting point of this node
             void run();
 
+			// local copy of pose
+        	boost::shared_ptr<geometry_msgs::PoseStamped const> pose_msg_;
+
         
         private:
 
@@ -56,6 +60,7 @@ namespace platoon_control
 
 			double current_speed_ = 0.0;
 
+			void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
 
         	void TrajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp);
 
@@ -72,6 +77,7 @@ namespace platoon_control
         	// ROS Subscriber
         	ros::Subscriber trajectory_plan_sub;
 			ros::Subscriber current_twist_sub_;
+			ros::Subscriber pose_sub_;
         	// ROS Publisher
         	ros::Publisher twist_pub_;
         	

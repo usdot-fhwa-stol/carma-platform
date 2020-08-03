@@ -50,12 +50,14 @@ namespace platoon_control
 
         PlatoonControlWorker();
 
+
         double getLastSpeedCommand();
 
         // Update speed commands based on the list of platoon members
         void generateSpeed(const cav_msgs::TrajectoryPlanPoint& point);
         void generateSteer(const cav_msgs::TrajectoryPlanPoint& point);
 
+        // set platoon leader
         void setLeader(const PlatoonLeaderInfo& leader);
         void setCurrentSpeed(double speed);
 
@@ -77,18 +79,22 @@ namespace platoon_control
         // platooning standstillheadway"
         double standStillHeadway = 12.0;
 
+        void setCurrentPose(const geometry_msgs::PoseStampedConstPtr& msg)
+		{
+			current_pose = msg->pose;
+		}
 
+		// geometry pose
+		geometry_msgs::Pose current_pose;
 
 
     private:
 
+        // pid controller object
         PIDController pid_ctrl_;
+
+        // pure pursuit controller object
         PurePursuit pp_;
-
-        const double const_lookahead_distance_ = 4.0;
-
-        double minimum_lookahead_distance_ = 6.0;
-
 
     	double maxAccel = 2.5; // m/s/s
 
@@ -100,16 +106,9 @@ namespace platoon_control
 
         long CMD_TIMESTEP = 100;
 
+        cav_msgs::TrajectoryPlanPoint point0;
 
-    	
-
-        double getCurrentDowntrackDistance(const cav_msgs::TrajectoryPlanPoint& point) const;
-
-        // double getDistanceToFrontVehicle();
-
-
-
-
+        double getCurrentDowntrackDistance(const cav_msgs::TrajectoryPlanPoint& point);
 
         double dist_to_front_vehicle;
 

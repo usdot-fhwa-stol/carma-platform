@@ -51,12 +51,5 @@ namespace platoon_control
         double integratorMax = 1000;
         double integratorMin = -1000;
 
-
-
-    	
-    
-
-    
-
     };
 }

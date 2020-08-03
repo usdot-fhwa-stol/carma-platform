@@ -83,15 +83,8 @@ namespace platoon_control
     }
 
     void PlatoonControlWorker::generateSteer(const cav_msgs::TrajectoryPlanPoint& point){
-    	
-        pp_.setLookaheadDistance(const_lookahead_distance_);
-        pp_.setMinimumLookaheadDistance(minimum_lookahead_distance_);
-
-        double kappa = 0;
-        bool can_get_curvature = pp_.canGetCurvature(&kappa);
-
-        steerCmd_ = can_get_curvature ? kappa * currentSpeed : 0;
-
+        pp_.current_pose_ = current_pose;
+    	steerCmd_ = pp_.calculateSteer(point);
     }
 
     // TODO get the actual leader from strategic plugin
@@ -103,8 +96,10 @@ namespace platoon_control
     	currentSpeed = speed;
     }
 
-    double PlatoonControlWorker::getCurrentDowntrackDistance(const cav_msgs::TrajectoryPlanPoint& point) const{
-        // TOTO: get downtrack from traj point
+    double PlatoonControlWorker::getCurrentDowntrackDistance(const cav_msgs::TrajectoryPlanPoint& point) {
+        double x_diff = (point.x-point0.x);
+		double y_diff = (point.y-point0.y);
+		double dist = std::sqrt(x_diff * x_diff + y_diff * y_diff);
     	return currentDTD;
     }
 

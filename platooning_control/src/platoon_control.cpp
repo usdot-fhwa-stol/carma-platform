@@ -34,13 +34,15 @@ namespace platoon_control
 
 		// Control Publisher
 		twist_pub_ = nh_->advertise<geometry_msgs::TwistStamped>("twist_raw", 10, true);
+
+        pose_sub_ = nh_->subscribe("current_pose", 1, &PlatoonControlPlugin::pose_cb, this);
 		
 
 		plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
-        plugin_discovery_msg_.name = "PlatooningControlPlugin";
+        plugin_discovery_msg_.name = "Platooning";
         plugin_discovery_msg_.versionId = "v1.0";
         plugin_discovery_msg_.available = true;
-        plugin_discovery_msg_.activated = false;
+        plugin_discovery_msg_.activated = true;
         plugin_discovery_msg_.type = cav_msgs::Plugin::CONTROL;
         plugin_discovery_msg_.capability = "control/trajectory_control";
 
@@ -69,6 +71,12 @@ namespace platoon_control
 
     }
 
+    void PlatoonControlPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
+    {
+        pose_msg_ = msg;
+    }
+
+
     void PlatoonControlPlugin::currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist){
         current_speed_ = twist->twist.linear.x;
     }
@@ -81,7 +89,7 @@ namespace platoon_control
     	geometry_msgs::TwistStamped current_twist;
         pcw_.setCurrentSpeed(current_speed_);
         pcw_.setLeader(leader);
-
+        pcw_.setCurrentPose(pose_msg_);
     	pcw_.generateSpeed(point);
     	pcw_.generateSteer(point);
     	current_twist.twist.linear.x = pcw_.speedCmd_;
