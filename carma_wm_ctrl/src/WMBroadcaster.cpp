@@ -69,7 +69,6 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
 
   base_map_ = new_map;  // Store map
   current_map_ = new_map_to_change; // broadcaster makes changes to this
-                                    // TODO publication of this modified map will be handled in the future
 
   lanelet::MapConformer::ensureCompliance(base_map_);     // Update map to ensure it complies with expectations
   lanelet::MapConformer::ensureCompliance(current_map_);
@@ -178,13 +177,11 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
     throw lanelet::InvalidObjectStateError(std::string("Base lanelet map has empty proj string loaded as georeference. Therefore, WMBroadcaster failed to\n ") +
                                           std::string("get transformation between the geofence and the map"));
 
-  cav_msgs::TrafficControlGeometry msg_geometry = tcmV01.geometry;
-
-  PJ* geofence_in_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, msg_geometry.proj.c_str(), base_map_georef_.c_str(), NULL);
+  PJ* geofence_in_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, tcmV01.geometry.proj.c_str(), base_map_georef_.c_str(), NULL);
   
   // convert all geofence points into our map's frame
   std::vector<lanelet::Point3d> gf_pts;
-  for (auto pt : msg_geometry.nodes)
+  for (auto pt : tcmV01.geometry.nodes)
   {
     PJ_COORD c {{pt.x, pt.y, 0, 0}}; // z is not currently used
     PJ_COORD c_out;
@@ -369,6 +366,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
   carma_wm::toBinMsg(send_data, &gf_msg);
   map_update_pub_(gf_msg);
+  
 };
 
 void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)

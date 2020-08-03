@@ -29,6 +29,7 @@
 #include "TestHelpers.h"
 #include "TestTimer.h"
 #include "TestTimerFactory.h"
+#include <algorithm>
 
 #include <cav_msgs/TrafficControlMessage.h>
 
@@ -38,6 +39,8 @@ using ::testing::DoAll;
 using ::testing::InSequence;
 using ::testing::Return;
 using ::testing::ReturnArg;
+
+#include <boost/functional/hash.hpp>
 
 namespace carma_wm_ctrl
 
@@ -222,9 +225,14 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
   gf_msg.geometry.nodes.push_back(pt);
   affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
   ASSERT_EQ(affected_parts.size(), 3);    // now they are actually 3 different lanelets because we changed direction
-  ASSERT_EQ(affected_parts[0].id(), 10003);
-  ASSERT_EQ(affected_parts[1].id(), 10006);
-  ASSERT_EQ(affected_parts[2].id(), 10000);
+  std::vector<lanelet::Id> affected_parts_ids;
+  for (auto i = 0; i < affected_parts.size(); i ++)
+  {
+    affected_parts_ids.push_back(affected_parts[i].id());
+  }
+  ASSERT_TRUE(std::find(affected_parts_ids.begin(), affected_parts_ids.end(), 10003) != affected_parts_ids.end()); //due to race condition
+  ASSERT_TRUE(std::find(affected_parts_ids.begin(), affected_parts_ids.end(), 10000) != affected_parts_ids.end());
+  ASSERT_TRUE(std::find(affected_parts_ids.begin(), affected_parts_ids.end(), 10006) != affected_parts_ids.end());
 
   // check points that are outside, on the edge, and on the point that makes up the lanelets
   pt.x = 0.5; pt.y = 0; pt.z = 0;
@@ -247,8 +255,7 @@ TEST(WMBroadcaster, geofenceCallback)
 {
   // Test adding then evaluate if the calls to active and inactive are done correctly
   carma_wm_ctrl::Geofence gf;
-  bool is_reserved = true;
-  gf.id_ = boost::uuids::random_generator()();
+
   gf.schedules.push_back(carma_wm_ctrl::GeofenceSchedule(ros::Time(1),  // Schedule between 1 and 8
                                  ros::Time(8),
                                  ros::Duration(2),    // Starts at 2
@@ -270,7 +277,9 @@ TEST(WMBroadcaster, geofenceCallback)
 
   ros::Time::setNow(ros::Time(0));  // Set current time
 
+  // variables needed to test
   size_t base_map_call_count = 0;
+
   WMBroadcaster wmb(
       [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
         // Publish map callback
@@ -283,10 +292,7 @@ TEST(WMBroadcaster, geofenceCallback)
       [&](const autoware_lanelet2_msgs::MapBin& geofence_bin) {
         auto data_received = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
         carma_wm::fromBinMsg(geofence_bin, data_received);
-        if (!is_reserved)
-          ASSERT_EQ(data_received->id_, gf.id_);
-        else
-          ASSERT_NE(data_received->id_, gf.id_);
+        ASSERT_EQ(data_received->id_, gf.id_);
         ASSERT_EQ(data_received->remove_list_.size(), 0);
         ASSERT_EQ(data_received->update_list_.size(), 0);
       },
@@ -315,21 +321,16 @@ TEST(WMBroadcaster, geofenceCallback)
   gf_msg.choice = cav_msgs::TrafficControlMessage::RESERVED;
   // Verify that nothing is happening when reserved
   wmb.geofenceCallback(gf_msg); 
-  is_reserved = false;
+  ros::Time::setNow(ros::Time(2.1));// Geofence should have started by now
 
   gf_msg.choice = cav_msgs::TrafficControlMessage::TCMV01;
   gf_msg.tcmV01 = msg_v01;
   // Verify adding geofence call
-  wmb.geofenceCallback(gf_msg); 
+  wmb.geofenceCallback(gf_msg); // This calls should immediately work contrary to before
 
-  ros::Time::setNow(ros::Time(2.1));  // Set current time
-
-  std::atomic<std::size_t> temp(0);
-  carma_wm::waitForEqOrTimeout(3.0, 1, temp);
-
-  ros::Time::setNow(ros::Time(3.1));  // Set current time
-
-  carma_wm::waitForEqOrTimeout(3.0, 1, temp);
+  // check how many times map_update is called so far
+  // calling again with same id should not have an effect
+  wmb.geofenceCallback(gf_msg);
 }
 
 TEST(WMBroadcaster, addAndRemoveGeofence)
