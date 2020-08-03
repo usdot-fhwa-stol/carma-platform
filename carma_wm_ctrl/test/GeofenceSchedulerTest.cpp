@@ -56,13 +56,14 @@ TEST(GeofenceScheduler, addGeofence)
   std::size_t first_id_hashed = boost::hash<boost::uuids::uuid>()(first_id);
   gf_ptr->id_ = first_id;
 
-  gf_ptr->schedule =
-      GeofenceSchedule(ros::Time(1),  // Schedule between 1 and 6
+  gf_ptr->schedules.push_back(
+      GeofenceSchedule(ros::Time(1),  // Schedule between 1 and 8
                        ros::Time(8),
-                       ros::Duration(2),    // Start's at 2
-                       ros::Duration(5.5),  // Ends at by 5.5
-                       ros::Duration(1),    // Duration of 1 and interval of two so active durations are (2-3 and 4-5)
-                       ros::Duration(2));
+                       ros::Duration(2),    // Starts at 2
+                       ros::Duration(3.5),  // Ends at by 5.5
+                       ros::Duration(0),    // repetition start 0 offset, so still start at 2
+                       ros::Duration(1),    // Duration of 1 and interval of 2 so active durations are (2-3 and 4-5)
+                       ros::Duration(2)));
   ros::Time::setNow(ros::Time(0));  // Set current time
 
   GeofenceScheduler scheduler(std::make_unique<TestTimerFactory>());  // Create scheduler
