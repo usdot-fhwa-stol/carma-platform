@@ -100,8 +100,6 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
   // TODO: logic to determine what type of geofence goes here
   // currently only converting portion of control message that is relevant to digital speed limit geofence
   // Convert from double to Velocity
-  if (!msg_v01.params_exists)
-    return gf_ptr;
   
   cav_msgs::TrafficControlDetail msg_detail = msg_v01.params.detail;
 
