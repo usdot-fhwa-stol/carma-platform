@@ -106,6 +106,7 @@ catkin_add_gmock(${PROJECT_NAME}-test
   test/test_pid.cpp
   test/test_pure.cpp
   test/test_worker.cpp
+  test/test_control.cpp
   test/test_main.cpp)
 
 if(TARGET ${PROJECT_NAME}-test)
