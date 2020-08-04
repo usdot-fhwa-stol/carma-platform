@@ -30,6 +30,8 @@ TEST(PIDControllerTest, test4)
     platoon_control::PIDController pid;
     pid.reset();
     double res = pid.calculate(200, 20);
-    res = pid.calculate(500,25);
-    EXPECT_EQ(-100, res);
+    double res2 = pid.calculate(500,25);
+    EXPECT_EQ(-100, res2);
+    double res3 = pid.calculate(25,500);
+    EXPECT_EQ(100, res3);
 }
