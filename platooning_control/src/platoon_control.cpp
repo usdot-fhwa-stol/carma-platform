@@ -34,7 +34,7 @@ namespace platoon_control
         current_twist_sub_ = nh_->subscribe<geometry_msgs::TwistStamped>("localization/ekf_twist", 1, &PlatoonControlPlugin::currentTwist_cb, this);
 
 		// Control Publisher
-		twist_pub_ = nh_->advertise<geometry_msgs::TwistStamped>("twist_raw", 10, true);
+		twist_pub_ = nh_->advertise<geometry_msgs::TwistStamped>("twist_stamped", 10, true);
 
         pose_sub_ = nh_->subscribe("current_pose", 1, &PlatoonControlPlugin::pose_cb, this);
 		

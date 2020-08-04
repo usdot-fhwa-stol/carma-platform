@@ -113,5 +113,10 @@ if(TARGET ${PROJECT_NAME}-test)
   target_link_libraries(${PROJECT_NAME}-test platoon_control_plugin_lib ${catkin_LIBRARIES})
 endif()
 
+if(CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(test_platoon_control test/mynode.test test/test_mynode.cpp)
+  target_link_libraries(test_platoon_control ${catkin_LIBRARIES})
+endif()
 
 
