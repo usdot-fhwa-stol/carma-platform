@@ -62,10 +62,13 @@ namespace platoon_control
 
 			double current_speed_ = 0.0;
 
+			// callback function for pose
 			void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
 
+			// callback function for trajectory plan
         	void TrajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp);
 
+			// callback function for current twist
 			void currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist);
 
         	void publishTwist(const geometry_msgs::TwistStamped& twist) const;

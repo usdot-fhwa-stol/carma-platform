@@ -48,8 +48,8 @@ namespace platoon_control
         double _pre_error = 0.0;
         double _integral = 0.0;
 
-        double integratorMax = 1000;
-        double integratorMin = -1000;
+        double integratorMax = 100;
+        double integratorMin = -100;
 
     };
 }

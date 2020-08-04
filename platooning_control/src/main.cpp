@@ -2,7 +2,6 @@
 #include <ros/ros.h>
 #include "platoon_control.hpp"
 
-//@SONAR_STOP@
 int main(int argc, char** argv)
 {
     
@@ -11,6 +10,5 @@ int main(int argc, char** argv)
     node.run();
     return 0;
 };
-//@SONAR_START@
 
 

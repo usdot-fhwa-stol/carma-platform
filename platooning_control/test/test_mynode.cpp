@@ -2,6 +2,7 @@
 #include <ros/ros.h>
 #include <cav_msgs/TrajectoryPlan.h>
 #include <geometry_msgs/TwistStamped.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <thread>
 #include <chrono>
 #include "platoon_control.hpp"
@@ -34,6 +35,7 @@ TEST(TestSuite, testCase2)
     EXPECT_EQ(1, num);
 
 }
+
 
 
 

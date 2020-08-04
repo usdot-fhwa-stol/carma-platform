@@ -12,11 +12,32 @@ TEST(PlatoonControlWorkerTest, test1)
     EXPECT_NEAR(0, pcw.speedCmd_, 0.1);
 }
 
+TEST(PlatoonControlWorkerTest, test11)
+{
+    platoon_control::PlatoonLeaderInfo leader;
+    platoon_control::PlatoonControlWorker pcw;
+    leader.staticId = "";
+    leader.leaderIndex = 0;
+    leader.NumberOfVehicleInFront = 1;
+    pcw.setLeader(leader);
+
+    pcw.timeHeadway = 1;
+    pcw.standStillHeadway = 5;
+
+    cav_msgs::TrajectoryPlanPoint point;
+    point.x = 30.0;
+    point.y = 20.0;
+    pcw.currentSpeed = 10.0;
+    pcw.lastCmdSpeed = 10;
+    pcw.generateSpeed(point);
+    EXPECT_NEAR(10.0, pcw.getLastSpeedCommand(), 0.1);
+}
+
 TEST(PlatoonControlWorkerTest, test2)
 {
 
     platoon_control::PlatoonControlWorker pcw;
-    platoon_control::PlatoonLeaderInfo leader;// = PlatoonMember(std::string staticId, std::string bsmId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp)
+    platoon_control::PlatoonLeaderInfo leader;
     leader.commandSpeed = 10;
     leader.vehicleSpeed = 10;
     leader.vehiclePosition = 50;

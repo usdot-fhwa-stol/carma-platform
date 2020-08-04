@@ -19,9 +19,10 @@
 
 namespace platoon_control
 {
+// @SONAR_STOP@
     PlatoonControlPlugin::PlatoonControlPlugin(){}
     
-// @SONAR_STOP@
+
     void PlatoonControlPlugin::initialize(){
 
     	nh_.reset(new ros::CARMANodeHandle());
