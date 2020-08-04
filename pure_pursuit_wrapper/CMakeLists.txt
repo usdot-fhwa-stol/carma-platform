@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
   autoware_msgs
   autoware_config_msgs
   message_filters
+  carma_utils
 )
 
 ## System dependencies are found with CMake's conventions
@@ -118,7 +119,7 @@ add_dependencies(pure_pursuit_wrapper_worker_library ${catkin_EXPORTED_TARGETS})
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES pure_pursuit_wrapper_worker_library
- CATKIN_DEPENDS cav_msgs roscpp rospy std_msgs geometry_msgs autoware_msgs
+ CATKIN_DEPENDS cav_msgs roscpp rospy std_msgs geometry_msgs autoware_msgs carma_utils
 #  DEPENDS system_lib
  DEPENDS Boost
 )

@@ -25,18 +25,24 @@
 int main(int argc, char** argv) {
 
   ros::init(argc, argv, "pure_pursuit_wrapper_node");
-  ros::NodeHandle nh("");
+  ros::CARMANodeHandle nh("");
 
   pure_pursuit_wrapper::PurePursuitWrapper PurePursuitWrapper(nh);
+  ros::CARMANodeHandle::setSpinRate(10);
 
   // Approximate time of 100ms used because NDT outputs at 10Hz
   message_filters::Synchronizer<pure_pursuit_wrapper::PurePursuitWrapper::SyncPolicy> sync(pure_pursuit_wrapper::PurePursuitWrapper::SyncPolicy(100), PurePursuitWrapper.pose_sub, PurePursuitWrapper.trajectory_plan_sub);
   sync.registerCallback(boost::bind(&pure_pursuit_wrapper::PurePursuitWrapper::TrajectoryPlanPoseHandler, &PurePursuitWrapper, _1, _2));
 
-  while (ros::ok() && !PurePursuitWrapper.shutting_down_) {
-    ros::spinOnce();
-  }
+  ros::CARMANodeHandle::setSpinCallback([&]() -> bool
+  {
+  if (!PurePursuitWrapper.shutting_down_)
+  {PurePursuitWrapper.PublishPluginDiscovery();}
+  return !PurePursuitWrapper.shutting_down_;
+  });
 
   ROS_INFO("Successfully launched node.");
+  ros::CARMANodeHandle::spin();
+
   return 0;
 }

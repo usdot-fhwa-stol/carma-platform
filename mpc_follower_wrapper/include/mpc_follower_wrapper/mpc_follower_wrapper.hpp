@@ -31,7 +31,7 @@
 #include "autoware_msgs/Lane.h"
 #include "autoware_config_msgs/ConfigWaypointFollower.h"
 #include "autoware_msgs/ControlCommandStamped.h"
-
+#include <cav_msgs/Plugin.h>
 #include <carma_utils/CARMAUtils.h>
 
 #include "mpc_follower_wrapper_worker.hpp"
@@ -68,6 +68,11 @@ class MPCFollowerWrapper {
 
         //@brief ROS node handle.
         ros::CARMANodeHandle& nh_;
+
+        ros::Publisher mpc_plugin_discovery_pub_; 
+
+        // Plugin discovery message
+        cav_msgs::Plugin plugin_discovery_msg_;
 
 
         // @brief ROS publishers.
