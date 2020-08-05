@@ -24,8 +24,20 @@ MotionComputationWorker::MotionComputationWorker(PublishObjectCallback obj_pub) 
 void MotionComputationWorker::motionPredictionCallback(const cav_msgs::ExternalObjectList obj_list)//Duplicate input message
 {
 
+    cav_msgs::ExternalObjectList msg;
 
-  for (int i = 0; i < obj_list.objects.size(); i++)
+    msg = predictionLogic(obj_list);
+ 
+  
+   obj_pub_(msg);
+
+}
+
+cav_msgs::ExternalObjectList MotionComputationWorker::predictionLogic(cav_msgs::ExternalObjectList obj_list)
+{
+  cav_msgs::ExternalObjectList list;
+
+ for (int i = 0; i < obj_list.objects.size(); i++)
   {
     cav_msgs::ExternalObject obj;
 
@@ -110,13 +122,15 @@ void MotionComputationWorker::motionPredictionCallback(const cav_msgs::ExternalO
           prediction_process_noise_max_, prediction_confidence_drop_rate_);
     }
 
-     msg.objects.emplace_back(obj);
+     list.objects.emplace_back(obj);
 
    
-  }
-  
-   obj_pub_(msg);
+  }//end for-loop
+
+  return list;
 
 }
+
+
 
 }  // namespace object

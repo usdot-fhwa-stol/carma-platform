@@ -83,12 +83,14 @@ TEST(MotionComputationWorker, motionPredictionCallback)
     ASSERT_EQ(otValid, true);
 
     /*Test ExternalObjectList*/
-    cav_msgs::ExternalObjectList& obj_list;
+    cav_msgs::ExternalObjectList obj_list, test_list;
     obj_list.objects.push_back(msg);
     ASSERT_TRUE(obj_list.objects.size > 0);
 
+    test_list = mcw.predictionLogic(obj_list);
+    ASSERT_TRUE(test_list.objects[0].prediction.size() > 0);    //Create Assertion Statement to test whether object.prediction is empty
+
     mcw.motionPredictionCallback(obj_list);
-    //TODO: Create Assertion Statement to test whether object.prediction is empty
 
 }
 

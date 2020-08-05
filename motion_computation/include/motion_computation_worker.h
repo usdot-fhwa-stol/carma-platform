@@ -44,7 +44,9 @@ class MotionComputationWorker
     \param  msg array of detected objects.
     */
 
-  void motionPredictionCallback(const cav_msgs::ExternalObjectList &msg);
+  void motionPredictionCallback(const cav_msgs::ExternalObjectList obj_list);
+
+  cav_msgs::ExternalObjectList predictionLogic(cav_msgs::ExternalObjectList obj_list);
 
   // Setters for the prediction parameters
   void setPredictionTimeStep(double time_step);
