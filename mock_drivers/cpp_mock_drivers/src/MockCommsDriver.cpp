@@ -1,5 +1,5 @@
-#include "MockDriver.h"
-#include "MockDriverNode.h"
+#include "cpp_mock_drivers/MockDriver.h"
+#include "cpp_mock_drivers/MockDriverNode.h"
 // #include <carma_utils/CARMAUtils.h>
 #include <cav_msgs/ByteArray.h>
 
@@ -19,7 +19,6 @@ namespace mock_drivers{
             public:
 
             MockCommsDriver(){
-                name_ = "comms";
                 MockDriverNode mock_driver_node_();
 
                 // mock_drivers::ROSComms<std_msgs::String, const std_msgs::String::ConstPtr&> test_comms(fcnPtr, ct, false, 10, "ooga_booga");

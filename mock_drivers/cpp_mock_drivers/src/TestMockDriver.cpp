@@ -14,9 +14,9 @@
  * the License.
  */
 
-#include "TestMockDriver.h"
+#include "cpp_mock_drivers/TestMockDriver.h"
 #include "std_msgs/String.h"
-
+#include <boost/shared_ptr.hpp>
 
 namespace mock_drivers{
 

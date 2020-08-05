@@ -21,8 +21,6 @@
 #include "comm_types.h"
 #include "std_msgs/String.h"
 
-using namespace std;
-
 namespace mock_drivers{
 
     class IComms
@@ -31,12 +29,12 @@ namespace mock_drivers{
             CommTypes comm_type_;
             bool latch_;
             int queue_size_;
-            string topic_;
+            std::string topic_;
         
         public:
             bool getLatch(){return latch_;}
             int getQueueSize(){return queue_size_;}
-            string getTopic(){return topic_;}
+            std::string getTopic(){return topic_;}
             CommTypes getCommType(){return comm_type_;}
     };
 
@@ -56,8 +54,8 @@ namespace mock_drivers{
             void callback(T msg);
             T getTemplateType();
             ROSComms();
-            ROSComms(CommTypes ct, bool latch, int qs, string t);
-            ROSComms(std::function<void(T)> cbf, CommTypes ct, bool latch, int qs, string t);
+            ROSComms(CommTypes ct, bool latch, int qs, std::string t);
+            ROSComms(std::function<void(T)> cbf, CommTypes ct, bool latch, int qs, std::string t);
 
     };
 
@@ -76,8 +74,8 @@ namespace mock_drivers{
             M getMessageType();
             T getParamType();
             ROSComms();
-            ROSComms(std::function<void(T)> cbf, CommTypes ct, bool latch, int qs, string t);
-            ROSComms(CommTypes ct, bool latch, int qs, string t);
+            ROSComms(std::function<void(T)> cbf, CommTypes ct, bool latch, int qs, std::string t);
+            ROSComms(CommTypes ct, bool latch, int qs, std::string t);
 
     };
 }

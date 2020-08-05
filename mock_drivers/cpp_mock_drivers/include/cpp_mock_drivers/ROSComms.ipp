@@ -15,12 +15,10 @@
  */
 #pragma once
 
-#include "ROSComms.h"
-
 namespace mock_drivers{
 
     template <typename M, typename T>
-    ROSComms<M, T>::ROSComms(std::function<void(T)> cbf, CommTypes ct, bool latch, int qs, string t){
+    ROSComms<M, T>::ROSComms(std::function<void(T)> cbf, CommTypes ct, bool latch, int qs, std::string t){
         callback_function_ = cbf;
         comm_type_ = ct;
         latch_ = latch;
@@ -29,7 +27,7 @@ namespace mock_drivers{
     }
 
     template <typename T>
-    ROSComms<T>::ROSComms(CommTypes ct, bool latch, int qs, string t){
+    ROSComms<T>::ROSComms(CommTypes ct, bool latch, int qs, std::string t){
         comm_type_ = ct;
         latch_ = latch;
         queue_size_ = qs;
@@ -37,7 +35,7 @@ namespace mock_drivers{
     };
 
     template <typename T>
-    ROSComms<T>::ROSComms(std::function<void(T)> cbf, CommTypes ct, bool latch, int qs, string t){
+    ROSComms<T>::ROSComms(std::function<void(T)> cbf, CommTypes ct, bool latch, int qs, std::string t){
         callback_function_ = cbf;
         comm_type_ = ct;
         latch_ = latch;

@@ -19,11 +19,9 @@
 #include <string>
 #include <vector>
 
-#include "ROSComms.h"
-#include "MockDriverNode.h"
-#include "comm_types.h"
-
-using namespace std;
+#include "cpp_mock_drivers/ROSComms.h"
+#include "cpp_mock_drivers/MockDriverNode.h"
+#include "cpp_mock_drivers/comm_types.h"
 
 namespace mock_drivers{
 
@@ -31,7 +29,6 @@ namespace mock_drivers{
 
         protected:
 
-        string name_;
         MockDriverNode mock_driver_node_;
         // vector<ROSComms<class message>> ros_api_;
 

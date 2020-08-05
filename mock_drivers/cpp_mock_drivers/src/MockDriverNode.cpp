@@ -14,7 +14,7 @@
  * the License.
  */
 
-#include "MockDriverNode.h"
+#include "cpp_mock_drivers/MockDriverNode.h"
 
 /*! \brief The template node for the mock drivers that will handle all ros communication
  *

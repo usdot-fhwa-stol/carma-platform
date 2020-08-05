@@ -1,9 +1,9 @@
 #include <ros/ros.h>
 #include "std_msgs/String.h"
 
-#include "ROSComms.h"
-#include "comm_types.h"
-#include "MockDriverNode.h"
+#include "cpp_mock_drivers/ROSComms.h"
+#include "cpp_mock_drivers/comm_types.h"
+#include "cpp_mock_drivers/MockDriverNode.h"
 
 #include <sstream>
 
@@ -45,7 +45,7 @@ int main(int argc, char **argv)
 
   // mock_drivers::ROSComms<std_msgs::String> test_comms(test_cb, ct, false, 10, "ooga_booga");
 
-  std::cout << "test message" << endl;
+  std::cout << "test message" << std::endl;
 
   //-------------------------
 
