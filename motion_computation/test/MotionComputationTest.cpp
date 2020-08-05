@@ -18,8 +18,6 @@
 #include <gmock/gmock.h>
 #include <cav_msgs/ExternalObject.h>
 #include <cav_msgs/ExternalObjectList.h>
-#include <autoware_msgs/DetectedObject.h>
-#include <autoware_msgs/DetectedObjectArray.h>
 #include <motion_computation_worker.h>  
 #include <functional>
 
@@ -27,9 +25,7 @@
 #include <chrono>
 #include <ctime>
 #include <atomic>
-#include "TestHelpers.h"
-#include "TestTimer.h"
-#include "TestTimerFactory.h"
+
 
 using ::testing::_;
 using ::testing::A;
@@ -38,90 +34,62 @@ using ::testing::InSequence;
 using ::testing::Return;
 using ::testing::ReturnArg;
 
-namespace object{
+//using PublishObjectCallback = std::function<void(const cav_msgs::ExternalObjectList&)>;
 
 
-TEST(MotionComputationWorker, Constructor)
-{   
-      MotionComputationWorker(PublishObjectCallback obj_pub);
-
-}
-
-TEST(MotionComputationWorker, motionPredictionCallback)
-{    
-    MotionComputationWorker mcw(PublishObjectCallback obj_pub);
-
-    cav_msgs::ExternalObject msg;
-
-    /*Create test message*/
-    msg.presence_vector = 16;
-    msg.object_type = 3;
-
-    ASSERT_FALSE(!msg);
-    ASSERT_TRUE(msg.header.size() > 0);
+namespace object
+{
 
 
-    /*Test ExternalObject Presence Vector Values*/
-    ASSERT_TRUE(msg.presence_vector > 0);
-    
-    //uint16_t pv_Values[10] ={1, 2, 4, 8, 16, 32, 64, 128, 256, 512};
-    bool pvValid = false;
-    for(auto i= 0; i<10; i++) //Test whether presence vector values in ExternalObject are valid
-    {
-        if (msg.presence_vector == pow(2,i))//presence vector is valid if it matches binary value between 1-512
-            pvValid = true;
+    TEST(MotionComputationWorker, Constructor)
+    {   
+        MotionComputationWorker([](const cav_msgs::ExternalObjectList& obj_pub){});
+
     }
-    ASSERT_EQ(pvValid, true);
+
+    TEST(MotionComputationWorker, motionPredictionCallback)
+    {    
+        object::MotionComputationWorker mcw([&](const cav_msgs::ExternalObjectList& obj_pub){});
+
+
+        cav_msgs::ExternalObject msg;
+
+        /*Create test message*/
+        msg.presence_vector = 16;
+        msg.object_type = 3;
+
+        /*Test ExternalObject Presence Vector Values*/
+        ASSERT_TRUE(msg.presence_vector > 0);
     
-    /*Test ExternalObject Object Type Values*/
-    bool otValid = false;
-    for(int i =0; i<=4; i++)
-    {
-        if(msg.object_type == i)
-            otValid = true;
+        //uint16_t pv_Values[10] ={1, 2, 4, 8, 16, 32, 64, 128, 256, 512};
+        bool pvValid = false;
+        for(auto i= 0; i<10; i++) //Test whether presence vector values in ExternalObject are valid
+        {
+            if (msg.presence_vector == pow(2,i))//presence vector is valid if it matches binary value between 1-512
+                pvValid = true;
+        }
+        ASSERT_EQ(pvValid, true);
+    
+        /*Test ExternalObject Object Type Values*/
+        bool otValid = false;
+        for(int i =0; i<=4; i++)
+        {
+            if(msg.object_type == i)
+                otValid = true;
+        }
+        ASSERT_EQ(otValid, true);
+
+        /*Test ExternalObjectList*/
+        cav_msgs::ExternalObjectList obj_list, test_list;
+        obj_list.objects.push_back(msg);
+        ASSERT_TRUE(obj_list.objects.size() > 0);
+
+        test_list = mcw.predictionLogic(obj_list);
+        ASSERT_TRUE(test_list.objects[0].predictions.size() > 0);    //Create Assertion Statement to test whether object.prediction is empty
+
+        mcw.motionPredictionCallback(obj_list);
+
     }
-    ASSERT_EQ(otValid, true);
-
-    /*Test ExternalObjectList*/
-    cav_msgs::ExternalObjectList obj_list, test_list;
-    obj_list.objects.push_back(msg);
-    ASSERT_TRUE(obj_list.objects.size > 0);
-
-    test_list = mcw.predictionLogic(obj_list);
-    ASSERT_TRUE(test_list.objects[0].prediction.size() > 0);    //Create Assertion Statement to test whether object.prediction is empty
-
-    mcw.motionPredictionCallback(obj_list);
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

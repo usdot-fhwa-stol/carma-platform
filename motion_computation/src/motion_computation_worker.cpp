@@ -19,7 +19,7 @@
 
 namespace object
 {
-MotionComputationWorker::MotionComputationWorker(PublishObjectCallback obj_pub) : obj_pub_(obj_pub){};
+MotionComputationWorker::MotionComputationWorker(const PublishObjectCallback& obj_pub) : obj_pub_(obj_pub){};
 
 void MotionComputationWorker::motionPredictionCallback(const cav_msgs::ExternalObjectList obj_list)//Duplicate input message
 {
