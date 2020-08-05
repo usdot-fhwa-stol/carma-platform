@@ -52,11 +52,14 @@ TEST(MotionComputationWorker, motionPredictionCallback)
     MotionComputationWorker mcw(PublishObjectCallback obj_pub);
 
     cav_msgs::ExternalObject msg;
+
+    /*Create test message*/
+    msg.presence_vector = 16;
+    msg.object_type = 3;
+
     ASSERT_FALSE(!msg);
     ASSERT_TRUE(msg.header.size() > 0);
 
-    ASSERT_EQ(msg.valid, true);
-    ROS_INFO_STREAM("ExternalObject is valid.");
 
     /*Test ExternalObject Presence Vector Values*/
     ASSERT_TRUE(msg.presence_vector > 0);
