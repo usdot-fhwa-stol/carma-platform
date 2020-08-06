@@ -13,8 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include <motion_computation_node.h>
-#include <motion_computation_worker.h>
+#include "motion_computation_node.h"
+#include "motion_computation_worker.h"
 
 namespace object{
 

@@ -18,7 +18,7 @@
 #include <gmock/gmock.h>
 #include <cav_msgs/ExternalObject.h>
 #include <cav_msgs/ExternalObjectList.h>
-#include <motion_computation_worker.h>  
+#include "motion_computation_worker.h"  
 #include <functional>
 
 #include <memory>

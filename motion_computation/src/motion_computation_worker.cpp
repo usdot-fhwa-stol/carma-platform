@@ -16,6 +16,13 @@
 #include "motion_computation_worker.h"
 #include <motion_predict/motion_predict.h>
 #include <motion_predict/predict_ctrv.h>
+#include <ros/ros.h>
+#include <cav_msgs/ExternalObject.h>
+#include <cav_msgs/ExternalObjectList.h>
+#include <autoware_msgs/DetectedObject.h>
+#include <autoware_msgs/DetectedObjectArray.h>  
+#include <functional>
+
 
 namespace object
 {

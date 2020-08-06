@@ -42,14 +42,23 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+add_library(motion_computation_worker_lib
+ src/motion_computation_worker.cpp
+ src/main.cpp
+ src/motion_computation_node.cpp
+ )
 
-add_executable(motion_computation_node src/main.cpp src/motion_computation_node.cpp src/motion_computation_worker.cpp)
+add_dependencies(motion_computation_worker_lib ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_library(motion_computation_worker_lib src/motion_computation_worker.cpp)
-add_dependencies(motion_computation_worker_lib ${catkin_EXPORTED_TARGETS})
+add_executable(${PROJECT_NAME}_node
+ src/main.cpp 
+ src/motion_computation_node.cpp
+ src/motion_computation_worker.cpp
+)
+
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(motion_computation_node motion_computation_worker_lib ${catkin_LIBRARIES})
+target_link_libraries(motion_computation_node motion_computation_worker_lib ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_LIBRARIES})
 
 
 #############
@@ -84,17 +93,30 @@ install(DIRECTORY
 
 
 ## Add gtest based cpp test target and link libraries
-##catkin_add_gmock(${PROJECT_NAME}-test test/test_object.cpp)
-##target_link_libraries(${PROJECT_NAME}-test motion_computation_worker_lib ${catkin_LIBRARIES})
+#catkin_add_gmock(${PROJECT_NAME}-test test/test_object.cpp)
+
 
 catkin_add_gmock(${PROJECT_NAME}-test
+ test/TestMain.cpp
  test/MotionComputationTest.cpp
  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 
 catkin_add_gmock(motion_computation
+ test/TestMain.cpp
  test/MotionComputationTest.cpp
  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 
+if(TARGET ${PROJECT_NAME}-test)
+ target_link_libraries(${PROJECT_NAME}-test motion_computation_worker_lib ${catkin_LIBRARIES})
+endif()
 
+if(TARGET motion_computation)
+ target_link_libraries(motion_computation motion_computation_worker_lib ${catkin_LIBRARIES})
+endif()
+
+target_link_libraries(${PROJECT_NAME}-test 
+ motion_computation_worker_lib
+${${PROJECT_NAME}_EXPORTED_TARGETS}
+ ${catkin_LIBRARIES})

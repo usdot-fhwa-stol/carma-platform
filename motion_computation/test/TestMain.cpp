@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2020 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,14 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include "motion_computation_node.h"
-#include "motion_computation_worker.h"
 
+#include <gtest/gtest.h>
+#include <ros/ros.h>
 
-int main(int argc, char **argv) 
+// Run all the tests
+int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "motion_computation");
-  object::MotionComputationNode node;
-  node.run(); 
-  return 0;
+  testing::InitGoogleTest(&argc, argv);
+  ros::Time::init();
+  return RUN_ALL_TESTS();
 }
