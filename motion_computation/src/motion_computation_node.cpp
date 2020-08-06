@@ -47,8 +47,8 @@ namespace object{
     motion_worker_.setConfidenceDropRate(drop_rate);*/
 
     // Setup pub/sub
-    motion_comp_sub_=nh_.subscribe("detected_objects",10,&MotionComputationWorker::motionPredictionCallback,&motion_worker_);
-    carma_obj_pub_=nh_.advertise<cav_msgs::ExternalObjectList>("external_objects", 10);
+    motion_comp_sub_=nh_.subscribe("external_objects",10,&MotionComputationWorker::motionPredictionCallback,&motion_worker_);
+    carma_obj_pub_=nh_.advertise<cav_msgs::ExternalObjectList>("external_objects_predictions", 10);
   }
 
   void MotionComputationNode::publishObject(const cav_msgs::ExternalObjectList& obj_pred_msg)
