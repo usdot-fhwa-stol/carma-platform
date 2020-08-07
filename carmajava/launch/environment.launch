@@ -40,8 +40,8 @@
 
   <!-- CARMA Motion Computation Node -->
 
-  <group> <!-- Scope include to prevent remapping side affects on following includes -->
-  <remap from="external_objects" to="$(optenv CARMA_MSG_NS)/external_objects"  />
+  <group>
+    <remap from="external_objects" to="$(optenv CARMA_MSG_NS)/external_objects"  />
     <include file = "$(find motion_computation)/launch/external_object.launch"/>
   </group>
 
