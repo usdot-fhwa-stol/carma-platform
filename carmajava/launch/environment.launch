@@ -39,9 +39,7 @@
   <!-- Object Tracking and World Model -->
 
   <!-- CARMA Motion Computation Node -->
-
   <group>
-    <remap from="external_objects" to="$(optenv CARMA_MSG_NS)/external_objects"  />
     <include file = "$(find motion_computation)/launch/external_object.launch"/>
   </group>
 
@@ -51,7 +49,7 @@
 
   <!-- CARMA Roadway Objects Node -->
  <group>
-  <remap from= "external_objects" to= "$(optenv CARMA_MSG_NS)/external_objects_predictions">
+  <remap from= "external_objects" to= "/external_objects_predictions">
   <include file="$(find roadway_objects)/launch/roadway_objects.launch"/>
 </group>
 
