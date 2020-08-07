@@ -54,10 +54,12 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   include
 )
-file(GLOB_RECURSE headers */*.hpp */*.h)
+
 add_executable( ${PROJECT_NAME}
                 src/localizer_node.cpp
+                src/LocalizationManager.cpp
                 src/main.cpp)
+
 add_library(gnss_ndt_counter_library src/ndt_reliability_counter.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} gnss_ndt_counter_library)
 if(catkin_EXPORTED_TARGETS)

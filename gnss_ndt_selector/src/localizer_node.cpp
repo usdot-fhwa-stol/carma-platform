@@ -18,80 +18,46 @@
 
 namespace localizer
 {
+	using std::placeholders::_1;
 	Localizer::Localizer(){}
 
-	void Localizer::publishTransform(const geometry_msgs::PoseStampedConstPtr& msg)
+	void Localizer::publishTransform(const geometry_msgs::TransformStamped& msg)
 	{
-		geometry_msgs::TransformStamped transformStamped;
-		transformStamped.header.stamp = msg->header.stamp;
-		transformStamped.header.frame_id = "map";
-		transformStamped.child_frame_id = "base_link";
-		transformStamped.transform.translation.x = msg->pose.position.x;
-		transformStamped.transform.translation.y = msg->pose.position.y;
-		transformStamped.transform.translation.z = msg->pose.position.z;
-		transformStamped.transform.rotation.x = msg->pose.orientation.x;
-		transformStamped.transform.rotation.y = msg->pose.orientation.y;
-		transformStamped.transform.rotation.z = msg->pose.orientation.z;
-		transformStamped.transform.rotation.w = msg->pose.orientation.w;
-		br_.sendTransform(transformStamped);
+		br_.sendTransform(msg);
 	}
 
-    void Localizer::publishPoseStamped(const geometry_msgs::PoseStampedConstPtr& msg)
+	void Localizer::publishPoseStamped(const geometry_msgs::PoseStamped& msg)
 	{
 		pose_pub_.publish(msg);
-		publishTransform(msg);
-	}
-
-    void Localizer::ndtPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
-	{
-        if(localization_mode_ == LocalizerMode::NDT)
-        {
-            publishPoseStamped(msg);
-        } else if(localization_mode_ == LocalizerMode::AUTO &&
-					counter.getNDTReliabilityCounter() <= unreliable_message_upper_limit_)
-        {
-			publishPoseStamped(msg);
-        }
-	}
-    
-    void Localizer::ndtScoreCallback(const autoware_msgs::NDTStatConstPtr& msg)
-	{
-		counter.onNDTScore(msg->score);
-	}
-
-	void Localizer::gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
-	{
-		if(localization_mode_ == LocalizerMode::GNSS)
-		{
-			publishPoseStamped(msg);
-		} else if(localization_mode_ == LocalizerMode::AUTO &&
-					counter.getNDTReliabilityCounter() > unreliable_message_upper_limit_)
-		{
-			publishPoseStamped(msg);
-		}
 	}
 
 	void Localizer::run()
 	{
 		// initialize node handles
-		nh_.reset(new ros::CARMANodeHandle());
-		pnh_.reset(new ros::CARMANodeHandle("~"));
+		nh_ = ros::CARMANodeHandle();
+		pnh_ = ros::CARMANodeHandle("~");
 		// get params
-		pnh_->param<double>("spin_rate", spin_rate_, 10.0);
-		pnh_->param<double>("score_upper_limit", score_upper_limit_, 2.0);
-		pnh_->param<int>("unreliable_message_upper_limit", unreliable_message_upper_limit_, 3);
-		pnh_->param<int>("localization_mode", localization_mode_, 0);
-		// initialize counter
-		counter = NDTReliabilityCounter(score_upper_limit_, unreliable_message_upper_limit_);
+		LocalizationManagerConfig config;
+
+		pnh_.param<double>("spin_rate", spin_rate_, 10.0);
+		pnh_.param<double>("score_upper_limit", config.score_upper_limit, 2.0);
+		pnh_.param<int>("unreliable_message_upper_limit", config.unreliable_message_upper_limit, 3);
+		int localization_mode;
+		pnh_.param<int>("localization_mode", localization_mode, 0);
+		config.localization_mode = static_cast<LocalizerMode>(localization_mode);
+
+		LocalizationManager manager(std::bind(&Localizer::publishPoseStamped, this, _1),
+			std::bind(&Localizer::publishTransform, this, _1), config);
+
 		// initialize subscribers
-		ndt_pose_sub_ = nh_->subscribe("ndt_pose", 5, &Localizer::ndtPoseCallback, this);
-		ndt_score_sub_ = nh_->subscribe("ndt_stat", 5, &Localizer::ndtScoreCallback, this);
-		gnss_pose_sub_ = nh_->subscribe("gnss_pose", 5, &Localizer::gnssPoseCallback, this);
+		ndt_pose_sub_ = nh_.subscribe("ndt_pose", 5, &LocalizationManager::ndtPoseCallback, &manager);
+		ndt_score_sub_ = nh_.subscribe("ndt_stat", 5, &LocalizationManager::ndtScoreCallback, &manager);
+		gnss_pose_sub_ = nh_.subscribe("gnss_pose", 5, &LocalizationManager::gnssPoseCallback, &manager);
 		// initialize publishers
-		pose_pub_ = nh_->advertise<geometry_msgs::PoseStamped>("selected_pose", 5);
-        // spin
-        nh_->setSpinRate(spin_rate_);
-        nh_->spin();
+		pose_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("selected_pose", 5);
+		// spin
+		nh_.setSpinRate(spin_rate_);
+		nh_.spin();
 	}
 }
 

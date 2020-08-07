@@ -17,53 +17,44 @@
 
 #include <ros/ros.h>
 #include <boost/shared_ptr.hpp>
-#include <carma_utils/CARMAUtils.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <autoware_msgs/NDTStat.h>
 #include "ndt_reliability_counter.h"
+#include <functional>
 #include "LocalizerMode.h"
 #include "LocalizationManagerConfig.h"
-#include "LocalizationManager.h"
 
 namespace localizer
 {
 
-    class Localizer
+    class LocalizationManager
     {
 
         public:
+            using PosePublisher = std::function<void(const geometry_msgs::PoseStamped&)>;
+            using TransformPublisher = std::function<void(const geometry_msgs::TransformStamped&)>;
 
-            Localizer();
+            LocalizationManager(PosePublisher pose_pub, TransformPublisher transform_pub, LocalizationManagerConfig config);
 
-            // general starting point of this node
-            void run();
-
-            // Publication callbacks
-            void publishPoseStamped(const geometry_msgs::PoseStamped& msg);
-            void publishTransform(const geometry_msgs::TransformStamped& msg);
+            void ndtPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
+            void gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
+            void ndtScoreCallback(const autoware_msgs::NDTStatConstPtr& msg);
 
         private:
 
-            // node handles
-            ros::CARMANodeHandle nh_, pnh_;
+            PosePublisher pose_pub_;
+            TransformPublisher transform_pub_;
 
-            // transform broadcaster
-            tf2_ros::TransformBroadcaster br_;
+            LocalizationManagerConfig config_;
 
-            // subscribers
-            ros::Subscriber ndt_pose_sub_;
-            ros::Subscriber ndt_score_sub_;
-            ros::Subscriber gnss_pose_sub_;
+            // reliability counter
+            NDTReliabilityCounter counter_;
 
-            // publisher
-            ros::Publisher pose_pub_;
+            void publishPoseStamped(const geometry_msgs::PoseStamped& pose);
 
-            // member variables
-            double spin_rate_ {10};
- 
 
     };
 	
