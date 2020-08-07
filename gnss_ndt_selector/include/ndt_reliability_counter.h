@@ -17,26 +17,24 @@
 
 namespace localizer
 {
-    class NDTReliabilityCounter
-    {
-        public:
+class NDTReliabilityCounter
+{
+public:
+  NDTReliabilityCounter();
+  NDTReliabilityCounter(double score_upper_limit, int message_upper_limit);
 
-            NDTReliabilityCounter();
-            NDTReliabilityCounter(double score_upper_limit, int message_upper_limit);
+  // Create public getter function for a private variable
+  int getNDTReliabilityCounter();
 
-            // Create public getter function for a private variable
-            int getNDTReliabilityCounter();
+  // function to handle new ndt score
+  void onNDTScore(float score);
 
-            // function to handle new ndt score
-            void onNDTScore(float score);
-
-        private:
-            
-            // counter used to measure ndt matching reliability
-            int ndt_reliability_counter {0};
-            // if above this number, this ndt msg is not reliable
-            double score_upper_limit_;
-            // if receiving this number of continuous unreliable score, current ndt matching result is not reliable
-            int unreliable_message_upper_limit_;
-    };
-}
+private:
+  // counter used to measure ndt matching reliability
+  int ndt_reliability_counter{ 0 };
+  // if above this number, this ndt msg is not reliable
+  double score_upper_limit_;
+  // if receiving this number of continuous unreliable score, current ndt matching result is not reliable
+  int unreliable_message_upper_limit_;
+};
+}  // namespace localizer

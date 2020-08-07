@@ -30,41 +30,35 @@
 
 namespace localizer
 {
+class Localizer
+{
+public:
+  Localizer();
 
-    class Localizer
-    {
+  // general starting point of this node
+  void run();
 
-        public:
+  // Publication callbacks
+  void publishPoseStamped(const geometry_msgs::PoseStamped& msg);
+  void publishTransform(const geometry_msgs::TransformStamped& msg);
 
-            Localizer();
+private:
+  // node handles
+  ros::CARMANodeHandle nh_, pnh_;
 
-            // general starting point of this node
-            void run();
+  // transform broadcaster
+  tf2_ros::TransformBroadcaster br_;
 
-            // Publication callbacks
-            void publishPoseStamped(const geometry_msgs::PoseStamped& msg);
-            void publishTransform(const geometry_msgs::TransformStamped& msg);
+  // subscribers
+  ros::Subscriber ndt_pose_sub_;
+  ros::Subscriber ndt_score_sub_;
+  ros::Subscriber gnss_pose_sub_;
 
-        private:
+  // publisher
+  ros::Publisher pose_pub_;
 
-            // node handles
-            ros::CARMANodeHandle nh_, pnh_;
+  // member variables
+  double spin_rate_{ 10 };
+};
 
-            // transform broadcaster
-            tf2_ros::TransformBroadcaster br_;
-
-            // subscribers
-            ros::Subscriber ndt_pose_sub_;
-            ros::Subscriber ndt_score_sub_;
-            ros::Subscriber gnss_pose_sub_;
-
-            // publisher
-            ros::Publisher pose_pub_;
-
-            // member variables
-            double spin_rate_ {10};
- 
-
-    };
-	
-}
+}  // namespace localizer

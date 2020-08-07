@@ -29,33 +29,28 @@
 
 namespace localizer
 {
+class LocalizationManager
+{
+public:
+  using PosePublisher = std::function<void(const geometry_msgs::PoseStamped&)>;
+  using TransformPublisher = std::function<void(const geometry_msgs::TransformStamped&)>;
 
-    class LocalizationManager
-    {
+  LocalizationManager(PosePublisher pose_pub, TransformPublisher transform_pub, LocalizationManagerConfig config);
 
-        public:
-            using PosePublisher = std::function<void(const geometry_msgs::PoseStamped&)>;
-            using TransformPublisher = std::function<void(const geometry_msgs::TransformStamped&)>;
+  void ndtPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
+  void gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
+  void ndtScoreCallback(const autoware_msgs::NDTStatConstPtr& msg);
 
-            LocalizationManager(PosePublisher pose_pub, TransformPublisher transform_pub, LocalizationManagerConfig config);
+private:
+  PosePublisher pose_pub_;
+  TransformPublisher transform_pub_;
 
-            void ndtPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
-            void gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
-            void ndtScoreCallback(const autoware_msgs::NDTStatConstPtr& msg);
+  LocalizationManagerConfig config_;
 
-        private:
+  // reliability counter
+  NDTReliabilityCounter counter_;
 
-            PosePublisher pose_pub_;
-            TransformPublisher transform_pub_;
+  void publishPoseStamped(const geometry_msgs::PoseStamped& pose);
+};
 
-            LocalizationManagerConfig config_;
-
-            // reliability counter
-            NDTReliabilityCounter counter_;
-
-            void publishPoseStamped(const geometry_msgs::PoseStamped& pose);
-
-
-    };
-	
-}
+}  // namespace localizer

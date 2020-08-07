@@ -17,9 +17,10 @@
 
 namespace localizer
 {
-     enum LocalizerMode {
-        NDT = 0,
-        GNSS = 1,
-        AUTO = 2,
-    };
+enum LocalizerMode
+{
+  NDT = 0,
+  GNSS = 1,
+  AUTO = 2,
+};
 }

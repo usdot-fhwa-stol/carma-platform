@@ -18,14 +18,23 @@
 
 namespace localizer
 {
-    // TODO comment
-     struct LocalizationManagerConfig {
-        // local copy of ros params
-        // if above this number, this ndt msg is not reliable
-        double score_upper_limit = 0;
-        // if receiving this number of continuous unreliable score, current ndt matching result is not reliable
-        int unreliable_message_upper_limit = 0;
-
-        LocalizerMode localization_mode = LocalizerMode::NDT;
-    };
-}
+//! @brief Struct to store the configuration settings for the LocalizationManager class
+struct LocalizationManagerConfig
+{
+  //! NDT Fitness score above which the localization is considered in a degraded state
+  double fitness_score_degraded_threshold = 1.0;
+  //! NDT Fitness score above which the localization is considered in a fault state and NDT matching can no longer be
+  //! used.
+  double fitness_score_fault_threshold = 2.0;
+  //! NDT solution frequency below which the localization is considered in a degraded state
+  double ndt_frequency_degraded_threshold = 9;
+  //! NDT solution frequency below which the localization is considered in a fault state and NDT matching can no longer
+  //! be used.
+  double ndt_frequency_fault_threshold = 5;
+  //! Timeout in ms for auto initialization.
+  //! If initialization cannot be completed in this time user action will be requested.
+  unsigned long auto_initialization_timeout = 30000;
+  //! Localization mode to use
+  LocalizerMode localization_mode = LocalizerMode::NDT;
+};
+}  // namespace localizer

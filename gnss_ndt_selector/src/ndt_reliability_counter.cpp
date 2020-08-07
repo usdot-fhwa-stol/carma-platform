@@ -18,35 +18,38 @@
 
 namespace localizer
 {
-    NDTReliabilityCounter::NDTReliabilityCounter() : NDTReliabilityCounter(2.0, 3) {}
-    
-    NDTReliabilityCounter::NDTReliabilityCounter(double score_upper_limit, int message_upper_limit) : 
-                                                score_upper_limit_(score_upper_limit),
-                                                unreliable_message_upper_limit_(message_upper_limit) {}
-
-    void NDTReliabilityCounter::onNDTScore(float score)
-    {
-        // check smaller than 0 to handle overflow
-        if(score > score_upper_limit_ || score < 0.0)
-		{
-			// only increase counter when it is smaller than or equal to the upper limit to avoid overflow
-			if(ndt_reliability_counter <= unreliable_message_upper_limit_ * 2)
-			{
-				ndt_reliability_counter++;
-			}
-		} else
-		{
-			if(ndt_reliability_counter != 0)
-            {
-                --ndt_reliability_counter;
-            }
-		}
-    }
-
-    int NDTReliabilityCounter::getNDTReliabilityCounter()
-    {
-        return ndt_reliability_counter;
-    }
-
-
+NDTReliabilityCounter::NDTReliabilityCounter() : NDTReliabilityCounter(2.0, 3)
+{
 }
+
+NDTReliabilityCounter::NDTReliabilityCounter(double score_upper_limit, int message_upper_limit)
+  : score_upper_limit_(score_upper_limit), unreliable_message_upper_limit_(message_upper_limit)
+{
+}
+
+void NDTReliabilityCounter::onNDTScore(float score)
+{
+  // check smaller than 0 to handle overflow
+  if (score > score_upper_limit_ || score < 0.0)
+  {
+    // only increase counter when it is smaller than or equal to the upper limit to avoid overflow
+    if (ndt_reliability_counter <= unreliable_message_upper_limit_ * 2)
+    {
+      ndt_reliability_counter++;
+    }
+  }
+  else
+  {
+    if (ndt_reliability_counter != 0)
+    {
+      --ndt_reliability_counter;
+    }
+  }
+}
+
+int NDTReliabilityCounter::getNDTReliabilityCounter()
+{
+  return ndt_reliability_counter;
+}
+
+}  // namespace localizer
