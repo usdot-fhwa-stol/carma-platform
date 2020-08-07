@@ -23,33 +23,27 @@
 
 namespace mock_drivers{
 
-    class IComms
-    {
-        protected:
-            CommTypes comm_type_;
-            bool latch_;
-            int queue_size_;
-            std::string topic_;
-        
-        public:
-            bool getLatch(){return latch_;}
-            int getQueueSize(){return queue_size_;}
-            std::string getTopic(){return topic_;}
-            CommTypes getCommType(){return comm_type_;}
-    };
-
     template<typename...> class ROSComms;
 
     template <typename T>
     // M is message type
-    class ROSComms<T> : public IComms{
+    class ROSComms<T>{
 
         private:
 
             // std::function<void(const std_msgs::String::ConstPtr&)> callback_function_;
             std::function<void(T)> callback_function_;
+            CommTypes comm_type_;
+            bool latch_;
+            int queue_size_;
+            std::string topic_;
 
         public:
+
+            bool getLatch(){return latch_;}
+            int getQueueSize(){return queue_size_;}
+            std::string getTopic(){return topic_;}
+            CommTypes getCommType(){return comm_type_;}
 
             void callback(T msg);
             T getTemplateType();
@@ -61,14 +55,23 @@ namespace mock_drivers{
 
     template <typename M, typename T>
     // M is message type, T is callback function parameter type
-    class ROSComms<M,T> : public IComms{
+    class ROSComms<M,T>{
 
         private:
 
             // std::function<void(const std_msgs::String::ConstPtr&)> callback_function_;
             std::function<void(T)> callback_function_;
+            CommTypes comm_type_;
+            bool latch_;
+            int queue_size_;
+            std::string topic_;
         
         public:
+
+            bool getLatch(){return latch_;}
+            int getQueueSize(){return queue_size_;}
+            std::string getTopic(){return topic_;}
+            CommTypes getCommType(){return comm_type_;}
 
             void callback(T msg);
             M getMessageType();

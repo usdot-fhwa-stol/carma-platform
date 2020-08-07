@@ -7,6 +7,8 @@ add_compile_options(-std=c++14)
 set ( PKG_CATKIN_DEPENDS 
   roscpp
   std_msgs
+  carma_utils
+  cav_msgs
 )
 
 ## Find catkin macros and libraries

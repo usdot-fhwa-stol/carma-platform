@@ -37,13 +37,9 @@ int main(int argc, char **argv)
 
   //-------------------------
   // ROSComms::ROSComms r_c(fptr cbf, CommTypes ct, bool latch, M M_type, int qs, string t);
-  CommTypes ct = sub;
-  int egg = 2;
   // ROSComms<int> test_comms = ROSComms<typename int>(test_cb, ct, false, egg, 10, "ooga_booga");
 
-  mock_drivers::MockDriverNode mdn(egg);
-
-  // mock_drivers::ROSComms<std_msgs::String> test_comms(test_cb, ct, false, 10, "ooga_booga");
+  mock_drivers::ROSComms<std_msgs::String> test_comms(CommTypes::pub, false, 1000, "ooga_booga");
 
   std::cout << "test message" << std::endl;
 
@@ -51,9 +47,9 @@ int main(int argc, char **argv)
 
   // std::cout << test_comms.getCallback() << endl;
 
-  // ros::Publisher chatter_pub = n.advertise<decltype(test_comms.getMessageType())>(test_comms.getTopic(), 1000);
+  ros::Publisher chatter_pub = n.advertise<decltype(test_comms.getTemplateType())>(test_comms.getTopic(), test_comms.getQueueSize());
 
-  ros::Publisher chatter_pub = n.advertise<std_msgs::String>("ooga_booga", 1000);
+  // ros::Publisher chatter_pub = n.advertise<std_msgs::String>("ooga_booga", 1000);
 
   ros::Rate loop_rate(10);
 

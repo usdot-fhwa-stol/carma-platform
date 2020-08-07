@@ -27,6 +27,11 @@ namespace mock_drivers{
     }
 
     template <typename T>
+    ROSComms<T>::ROSComms(){
+        
+    }
+
+    template <typename T>
     ROSComms<T>::ROSComms(CommTypes ct, bool latch, int qs, std::string t){
         comm_type_ = ct;
         latch_ = latch;
@@ -72,8 +77,6 @@ namespace mock_drivers{
         // call the callback_function_ function
         this->callback_function_(msg);
     }
-
-
 
     
 }

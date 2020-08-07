@@ -26,27 +26,40 @@ namespace mock_drivers{
     }
 
     TestMockDriver::TestMockDriver(){
-        MockDriverNode mock_driver_node_();
+
+        // TODO (maybe): Initializer list
 
             // ROSComms<std_msgs::String> test_pub_;
             // ROSComms<std_msgs::String, const std_msgs::String::ConstPtr&> test_sub_;
             // CommTypes ct, bool latch, int qs, string t
 
-        ROSComms<std_msgs::String> test_pub_(CommTypes::pub, false, 100, "mock_pub");
+        test_pub_ = ROSComms<std_msgs::String>(CommTypes::pub, false, 100, "mock_pub");
+
+        // boost::shared_ptr<ROSComms<std_msgs::String>> pub_ptr(new ROSComms<std_msgs::String>(CommTypes::pub, false, 100, "mock_pub"));
         
-        // std::function<void(const std_msgs::String::ConstPtr&)> mock_ptr = std::bind(&TestMockDriver::chatterCallback, this, std::placeholders::_1);
-        // ROSComms<const std_msgs::String::ConstPtr&> test_sub_(mock_ptr, CommTypes::sub, false, 100, "mock_sub");
+        std::function<void(const std_msgs::String::ConstPtr&)> mock_ptr = std::bind(&TestMockDriver::chatterCallback, this, std::placeholders::_1);
+        test_sub_ = ROSComms<const std_msgs::String::ConstPtr&>(mock_ptr, CommTypes::sub, false, 100, "mock_pub");
     }
 
     int TestMockDriver::run(){
         
-        boost::shared_ptr<ROSComms<std_msgs::String>> pub_ptr(&test_pub_);
-        // boost::shared_ptr<ROSComms<const std_msgs::String::ConstPtr&>> sub_ptr(&test_sub_);
+        boost::shared_ptr<ROSComms<std_msgs::String>> pub_ptr = boost::make_shared<ROSComms<std_msgs::String>>(test_pub_);
+        boost::shared_ptr<ROSComms<const std_msgs::String::ConstPtr&>> sub_ptr = boost::make_shared<ROSComms<const std_msgs::String::ConstPtr&>>(test_sub_);
 
-        mock_driver_node_.addComms<boost::shared_ptr<ROSComms<std_msgs::String>>>(pub_ptr);
-        // mock_driver_node_.addComms<boost::shared_ptr<ROSComms<const std_msgs::String::ConstPtr&>>>(sub_ptr);
+        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::String>>>(pub_ptr);
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const std_msgs::String::ConstPtr&>>>(sub_ptr);
 
-        // mock_driver_node_.spin(2);
-        return 0;
+        ros::Rate loop_rate(5);
+        int count = 0;
+
+        for (int i = 0; i < 100; i ++){
+
+            mock_driver_node_.publishData(count);
+
+            loop_rate.sleep();
+            ++count;
+        }
+
     }
+
 }

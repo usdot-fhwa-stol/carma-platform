@@ -16,9 +16,11 @@
 #pragma once
 
 #include <ros/ros.h>
-// #include <carma_utils/CARMAUtils.h>
+#include <carma_utils/CARMAUtils.h>
 #include "comm_types.h"
 #include "ROSComms.h"
+#include "iostream"
+#include <std_msgs/String.h>
 
 namespace mock_drivers{
 
@@ -30,27 +32,27 @@ namespace mock_drivers{
             ros::Publisher publishers_;
             ros::Subscriber subscribers_;
 
-            int test_;
-
         public:
-            MockDriverNode();
-            MockDriverNode(int val);
 
 // ros::Publisher chatter_pub = n.advertise<decltype(test_comms.getMessageType())>(test_comms.getTopic(), 1000);
 
             template<typename T>
-            void addComms(T comm){
-                if (comm->getCommType() == CommTypes::pub){
-                    publishers_ = nh_.advertise<decltype(comm->getTemplateType())>(comm->getTopic(), comm->getQueueSize());
-                } else if (comm->getCommType() == CommTypes::sub){
-                    // ros::Subscriber sub = n.subscribe("ooga_booga", 1000, &mock_drivers::ROSComms<std_msgs::String, const std_msgs::String::ConstPtr&>::callback, &test_comms);
-                    subscribers_ = nh_.subscribe(comm->getTopic(), comm->getQueueSize(), &ROSComms<decltype(comm->getTemplateType())>::callback, comm);
-                }
+            void addPub(T comm){
+                std::cout << "test1" << std::endl;
+                publishers_ = nh_.advertise<decltype(comm->getTemplateType())>(comm->getTopic(), comm->getQueueSize());
+            }
+
+            template<typename T>
+            void addSub(T comm){
+                std::cout << "test4" << std::endl;
+                std::cout << comm->getTopic() << std::endl;
+                // ros::Subscriber sub = n.subscribe("ooga_booga", 1000, &mock_drivers::ROSComms<std_msgs::String, const std_msgs::String::ConstPtr&>::callback, &test_comms);
+                subscribers_ = nh_.subscribe<const std_msgs::String::ConstPtr&>(comm->getTopic(), comm->getQueueSize(), &ROSComms<decltype(comm->getTemplateType())>::callback, comm);
             }
 
             void spin(int rate);
 
-            int GetVal() {return test_;}
+            void publishData(int data);
 
     };
     

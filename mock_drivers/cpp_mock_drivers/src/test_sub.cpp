@@ -4,7 +4,7 @@
 #include "cpp_mock_drivers/ROSComms.h"
 #include <iostream>
 #include <boost/shared_ptr.hpp>
-// #include 
+#include <carma_utils/CARMAUtils.h>
 
 
 #include <type_traits>
@@ -77,6 +77,8 @@ int main(int argc, char **argv)
    */
   ros::init(argc, argv, "listener");
 
+  ros::CARMANodeHandle cnh;
+
   /**
    * NodeHandle is the main access point to communications with the ROS system.
    * The first NodeHandle constructed will fully initialize this node, and the last
@@ -106,7 +108,7 @@ int main(int argc, char **argv)
 
   std::function<void(const std_msgs::String::ConstPtr&)> fcnPtr = std::bind(&TestCB::test_call, &tcb, std::placeholders::_1);
 
-  CommTypes ct = sub;
+  CommTypes ct = CommTypes::sub;
   mock_drivers::ROSComms<const std_msgs::String::ConstPtr&> test_comms(fcnPtr, ct, false, 10, "ooga_booga");
   mock_drivers::ROSComms<std_msgs::String, const std_msgs::String::ConstPtr&> test_comms2(fcnPtr, ct, false, 10, "unga_bunga");
 

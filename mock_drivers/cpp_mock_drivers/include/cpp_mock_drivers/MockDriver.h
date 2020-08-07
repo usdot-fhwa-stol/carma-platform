@@ -30,15 +30,10 @@ namespace mock_drivers{
         protected:
 
         MockDriverNode mock_driver_node_;
-        // vector<ROSComms<class message>> ros_api_;
-
-        ROSComms<std_msgs::String> test_pub_;
-        ROSComms<const std_msgs::String::ConstPtr&> test_sub_;
 
 
         public:
 
-        // vector<ROSComms<class message>> getAPI() {return ros_api_;} 
         virtual int run() = 0;
 
     };
