@@ -24,7 +24,6 @@ LocalizationManager::LocalizationManager(PosePublisher pose_pub, TransformPublis
   : pose_pub_(pose_pub)
   , transform_pub_(transform_pub)
   , config_(config)
-  , counter_(config.score_upper_limit, config.unreliable_message_upper_limit)
 {
 }
 
@@ -48,34 +47,34 @@ void LocalizationManager::publishPoseStamped(const geometry_msgs::PoseStamped& p
 }
 
 // callbacks
-void LocalizationManager::ndtPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
-{
-  if (config_.localization_mode == LocalizerMode::NDT)
-  {
-    publishPoseStamped(*msg);
-  }
-  else if (config_.localization_mode == LocalizerMode::AUTO &&
-           counter_.getNDTReliabilityCounter() <= config_.unreliable_message_upper_limit)
-  {
-    publishPoseStamped(*msg);
-  }
+void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedConstPtr& pose, const autoware_msgs::NDTStatConstPtr& stats) {
+  /*
+    if (config_.localization_mode == LocalizerMode::NDT)
+    {
+      publishPoseStamped(*msg);
+    }
+    else if (config_.localization_mode == LocalizerMode::AUTO &&
+            counter_.getNDTReliabilityCounter() <= config_.unreliable_message_upper_limit)
+    {
+      publishPoseStamped(*msg);
+    }
+  */
+ //  counter_.onNDTScore(msg->score);
+
 }
 
 void LocalizationManager::gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
 {
-  if (config_.localization_mode == LocalizerMode::GNSS)
-  {
-    publishPoseStamped(*msg);
-  }
-  else if (config_.localization_mode == LocalizerMode::AUTO &&
-           counter_.getNDTReliabilityCounter() > config_.unreliable_message_upper_limit)
-  {
-    publishPoseStamped(*msg);
-  }
+  // TODO
+  // if (config_.localization_mode == LocalizerMode::GNSS)
+  // {
+  //   publishPoseStamped(*msg);
+  // }
+  // else if (config_.localization_mode == LocalizerMode::AUTO &&
+  //          counter_.getNDTReliabilityCounter() > config_.unreliable_message_upper_limit)
+  // {
+  //   publishPoseStamped(*msg);
+  // }
 }
 
-void LocalizationManager::ndtScoreCallback(const autoware_msgs::NDTStatConstPtr& msg)
-{
-  counter_.onNDTScore(msg->score);
-}
 }  // namespace localizer

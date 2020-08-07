@@ -37,9 +37,9 @@ public:
 
   LocalizationManager(PosePublisher pose_pub, TransformPublisher transform_pub, LocalizationManagerConfig config);
 
-  void ndtPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
   void gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
-  void ndtScoreCallback(const autoware_msgs::NDTStatConstPtr& msg);
+
+  void poseAndStatsCallback(const geometry_msgs::PoseStampedConstPtr& pose, const autoware_msgs::NDTStatConstPtr& stats);
 
 private:
   PosePublisher pose_pub_;

@@ -33,7 +33,7 @@ struct LocalizationManagerConfig
   double ndt_frequency_fault_threshold = 5;
   //! Timeout in ms for auto initialization.
   //! If initialization cannot be completed in this time user action will be requested.
-  unsigned long auto_initialization_timeout = 30000;
+  int auto_initialization_timeout = 30000;
   //! Localization mode to use
   LocalizerMode localization_mode = LocalizerMode::NDT;
 };

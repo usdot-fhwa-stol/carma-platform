@@ -23,6 +23,9 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <autoware_msgs/NDTStat.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
+#include <message_filters/sync_policies/exact_time.h>
 #include "ndt_reliability_counter.h"
 #include "LocalizerMode.h"
 #include "LocalizationManagerConfig.h"
@@ -42,6 +45,8 @@ public:
   void publishPoseStamped(const geometry_msgs::PoseStamped& msg);
   void publishTransform(const geometry_msgs::TransformStamped& msg);
 
+  void poseAndStatsCallback(const geometry_msgs::PoseStampedConstPtr& pose, const autoware_msgs::NDTStatConstPtr& stats);
+
 private:
   // node handles
   ros::CARMANodeHandle nh_, pnh_;
@@ -59,6 +64,11 @@ private:
 
   // member variables
   double spin_rate_{ 10 };
+
+  std::unique_ptr<LocalizationManager> manager_;
+
+  typedef message_filters::sync_policies::ExactTime <geometry_msgs::PoseStamped, autoware_msgs::NDTStat> PoseStatsSyncPolicy;
+  typedef message_filters::Synchronizer<PoseStatsSyncPolicy> PoseStatsSynchronizer;
 };
 
 }  // namespace localizer
