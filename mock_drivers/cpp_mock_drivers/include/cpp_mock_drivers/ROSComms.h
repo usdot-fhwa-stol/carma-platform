@@ -26,7 +26,7 @@ namespace mock_drivers{
     template<typename...> class ROSComms;
 
     template <typename T>
-    // M is message type
+    // T is message type
     class ROSComms<T>{
 
         private:
@@ -54,31 +54,24 @@ namespace mock_drivers{
     };
 
     template <typename M, typename T>
-    // M is message type, T is callback function parameter type
     class ROSComms<M,T>{
 
         private:
 
-            // std::function<void(const std_msgs::String::ConstPtr&)> callback_function_;
-            std::function<void(T)> callback_function_;
+            std::function<void(M, T)> callback_function_;
             CommTypes comm_type_;
-            bool latch_;
-            int queue_size_;
             std::string topic_;
         
         public:
 
-            bool getLatch(){return latch_;}
-            int getQueueSize(){return queue_size_;}
             std::string getTopic(){return topic_;}
             CommTypes getCommType(){return comm_type_;}
 
-            void callback(T msg);
-            M getMessageType();
-            T getParamType();
+            bool callback(M req, T res);
+            M getReqType();
+            T getResType();
             ROSComms();
-            ROSComms(std::function<void(T)> cbf, CommTypes ct, bool latch, int qs, std::string t);
-            ROSComms(CommTypes ct, bool latch, int qs, std::string t);
+            ROSComms(std::function<bool(M, T)> cbf, CommTypes ct, std::string t);
 
     };
 }

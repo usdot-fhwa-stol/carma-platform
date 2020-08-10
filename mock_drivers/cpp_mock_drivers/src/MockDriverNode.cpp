@@ -28,21 +28,8 @@
 namespace mock_drivers{
 
     void MockDriverNode::spin(int rate){
-        // cnh_.setSpinRate(rate);
-        // cnh_.spin();
+        cnh_.setSpinRate(rate);
+        cnh_.spin();
     }
-
-    void MockDriverNode::publishData(int data){
-        std_msgs::String msg;
-
-        std::stringstream ss;
-        ss << "hello world " << data;
-        msg.data = ss.str();
-        
-        ROS_INFO("%s", msg.data.c_str());
-
-        publishers_.publish(msg);
-    }
-
 
 }

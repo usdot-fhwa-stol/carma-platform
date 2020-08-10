@@ -17,19 +17,10 @@
 
 namespace mock_drivers{
 
-    template <typename M, typename T>
-    ROSComms<M, T>::ROSComms(std::function<void(T)> cbf, CommTypes ct, bool latch, int qs, std::string t){
-        callback_function_ = cbf;
-        comm_type_ = ct;
-        latch_ = latch;
-        queue_size_ = qs;
-        topic_ = t;
-    }
-
     template <typename T>
     ROSComms<T>::ROSComms(){
         
-    }
+    };
 
     template <typename T>
     ROSComms<T>::ROSComms(CommTypes ct, bool latch, int qs, std::string t){
@@ -47,18 +38,6 @@ namespace mock_drivers{
         queue_size_ = qs;
         topic_ = t;
     };
-    
-    template <typename M, typename T>
-    M ROSComms<M, T>::getMessageType(){
-        M element;
-        return element;
-    }
-
-    template <typename M, typename T>
-    T ROSComms<M, T>::getParamType(){
-        T element;
-        return element;
-    }
 
     template <typename M>
     M ROSComms<M>::getTemplateType(){
@@ -66,16 +45,37 @@ namespace mock_drivers{
         return element;
     }
 
-    template <typename M, typename T>
-    void ROSComms<M, T>::callback(T msg){
-        // call the callback_function_ function
-        this->callback_function_(msg);
-    }
-
     template <typename T>
     void ROSComms<T>::callback(T msg){
         // call the callback_function_ function
         this->callback_function_(msg);
+    }
+
+s
+
+    template <typename M, typename T>
+    ROSComms<M, T>::ROSComms(std::function<bool(M, T)> cbf, CommTypes ct, std::string t){
+        callback_function_ = cbf;
+        comm_type_ = ct;
+        topic_ = t;
+    }
+
+    template <typename M, typename T>
+    bool ROSComms<M, T>::callback(M req, T res){
+        // call the callback_function_ function
+        this->callback_function_(req, res);
+    }
+
+    template <typename M, typename T>
+    T ROSComms<M, T>::getResType(){
+        T element;
+        return element;
+    }
+
+    template <typename M, typename T>
+    M ROSComms<M, T>::getReqType(){
+        M element;
+        return element;
     }
 
     

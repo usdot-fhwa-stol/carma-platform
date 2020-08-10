@@ -27,10 +27,10 @@ namespace mock_drivers{
         private:
 
             ROSComms<std_msgs::String> test_pub_;
-            // boost::shared_ptr<ROSComms<std_msgs::String>> pub_ptr(new ROSComms<std_msgs::String>(CommTypes::pub, false, 100, "mock_pub"));
             ROSComms<const std_msgs::String::ConstPtr&> test_sub_;
 
             void chatterCallback(const std_msgs::String::ConstPtr& msg);
+            void parserCB(const cav_msgs::BagParserMsg::ConstPtr& msg);
 
         public:
 

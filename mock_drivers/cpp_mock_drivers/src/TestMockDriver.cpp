@@ -16,13 +16,16 @@
 
 #include "cpp_mock_drivers/TestMockDriver.h"
 #include "std_msgs/String.h"
-#include <boost/shared_ptr.hpp>
 
 namespace mock_drivers{
 
     void TestMockDriver::chatterCallback(const std_msgs::String::ConstPtr& msg)
     {
         ROS_INFO("I heard: [%s]", msg->data.c_str());
+    }
+
+    void TestMockDriver::parserCB(const cav_msgs::BagParserMsg::ConstPtr& msg){
+        // ROS_INFO("I heard: [%s]", msg->data.c_str());
     }
 
     TestMockDriver::TestMockDriver(){
@@ -39,6 +42,8 @@ namespace mock_drivers{
         
         std::function<void(const std_msgs::String::ConstPtr&)> mock_ptr = std::bind(&TestMockDriver::chatterCallback, this, std::placeholders::_1);
         test_sub_ = ROSComms<const std_msgs::String::ConstPtr&>(mock_ptr, CommTypes::sub, false, 100, "mock_pub");
+
+        // mock_driver_node_.addPub<boost::shared_ptr<ROSComms<radar_msgs::RadarTrackArray>>>(tracks_raw_pub_ptr_);
     }
 
     int TestMockDriver::run(){
@@ -49,17 +54,11 @@ namespace mock_drivers{
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::String>>>(pub_ptr);
         mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const std_msgs::String::ConstPtr&>>>(sub_ptr);
 
-        ros::Rate loop_rate(5);
-        int count = 0;
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagParserMsg::ConstPtr&>>>(bag_parser_sub_ptr_);
 
-        for (int i = 0; i < 100; i ++){
+        mock_driver_node_.spin(10);
 
-            mock_driver_node_.publishData(count);
-
-            loop_rate.sleep();
-            ++count;
-        }
-
+        return 0;
     }
 
 }

@@ -1,37 +1,49 @@
-#include "cpp_mock_drivers/MockDriver.h"
-#include "cpp_mock_drivers/MockDriverNode.h"
-// #include <carma_utils/CARMAUtils.h>
-#include <cav_msgs/ByteArray.h>
+/*
+ * Copyright (C) 2019-2020 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+#include "cpp_mock_drivers/MockCommsDriver.h"
 
 namespace mock_drivers{
 
-    class MockCommsDriver : public MockDriver{
-
-            private:
-
-                ROSComms<cav_msgs::ByteArray> inbound_pub_;
-                ROSComms<cav_msgs::ByteArray, const cav_msgs::ByteArray::ConstPtr&> outbound_pub_;
-
-                void outbound_callback(const cav_msgs::ByteArray::ConstPtr& msg){
-
-                };
-
-            public:
-
-            MockCommsDriver(){
-                MockDriverNode mock_driver_node_();
-
-                // mock_drivers::ROSComms<std_msgs::String, const std_msgs::String::ConstPtr&> test_comms(fcnPtr, ct, false, 10, "ooga_booga");
-
-                ROSComms<cav_msgs::ByteArray> inbound_pub_(CommTypes::pub, false, 10, "inbound_binary_msg");
-                
-                // std::function<void(const std_msgs::String::ConstPtr&)> fcnPtr = std::bind(&TestCB::test_call, &tcb, std::placeholders::_1);
-                std::function<void(const cav_msgs::ByteArray::ConstPtr&)> outbound_ptr = std::bind(&MockCommsDriver::outbound_callback, this, std::placeholders::_1);
-                ROSComms<cav_msgs::ByteArray, const cav_msgs::ByteArray::ConstPtr&> outbound_pub_(outbound_ptr, CommTypes::sub, false, 10, "outbound_binary_msg");
-
-                // mock_driver_node_.addComms() (x2)
-            }
+    void MockCommsDriver::parserCB(const cav_msgs::BagParserMsg::ConstPtr& msg){
+        
+    }
+    
+    void MockCommsDriver::outboundCallback(const cav_msgs::ByteArray::ConstPtr& msg){
 
     };
+
+    MockCommsDriver::MockCommsDriver(){
+
+        inbound_pub_ptr_ = boost::make_shared<ROSComms<cav_msgs::ByteArray>>(ROSComms<cav_msgs::ByteArray>(CommTypes::pub, false, 10, "inbound_binary_msg"));
+        
+        std::function<void(const cav_msgs::ByteArray::ConstPtr&)> outbound_ptr = std::bind(&MockCommsDriver::outboundCallback, this, std::placeholders::_1);
+        outbound_sub_ptr_ = boost::make_shared<ROSComms<const cav_msgs::ByteArray::ConstPtr&>>(ROSComms<const cav_msgs::ByteArray::ConstPtr&>(outbound_ptr, CommTypes::sub, false, 10, "outbound_binary_msg"));
+    }
+
+    int MockCommsDriver::run(){
+
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagParserMsg::ConstPtr&>>>(bag_parser_sub_ptr_);
+
+        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::ByteArray>>>(inbound_pub_ptr_);
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::ByteArray::ConstPtr&>>>(outbound_sub_ptr_);
+
+        mock_driver_node_.spin(10);
+
+        return 0;
+    }
 
 }

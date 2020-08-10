@@ -20,39 +20,58 @@
 #include "comm_types.h"
 #include "ROSComms.h"
 #include "iostream"
-#include <std_msgs/String.h>
+#include <vector>
+#include <cav_srvs/SetEnableRobotic.h>
 
 namespace mock_drivers{
 
     class MockDriverNode {
 
         private:
-            // ros::CARMANodeHandle cnh_;
-            ros::NodeHandle nh_;
-            ros::Publisher publishers_;
-            ros::Subscriber subscribers_;
+            ros::CARMANodeHandle cnh_;
+            // ros::NodeHandle nh_;
+            std::vector<ros::Publisher> publishers_;
+            std::vector<ros::Subscriber> subscribers_;
+            std::vector<ros::ServiceServer> services_;
 
         public:
 
-// ros::Publisher chatter_pub = n.advertise<decltype(test_comms.getMessageType())>(test_comms.getTopic(), 1000);
-
             template<typename T>
             void addPub(T comm){
-                std::cout << "test1" << std::endl;
-                publishers_ = nh_.advertise<decltype(comm->getTemplateType())>(comm->getTopic(), comm->getQueueSize());
+                publishers_.push_back(cnh_.advertise<decltype(comm->getTemplateType())>(comm->getTopic(), comm->getQueueSize()));
             }
 
             template<typename T>
             void addSub(T comm){
-                std::cout << "test4" << std::endl;
-                std::cout << comm->getTopic() << std::endl;
-                // ros::Subscriber sub = n.subscribe("ooga_booga", 1000, &mock_drivers::ROSComms<std_msgs::String, const std_msgs::String::ConstPtr&>::callback, &test_comms);
-                subscribers_ = nh_.subscribe<const std_msgs::String::ConstPtr&>(comm->getTopic(), comm->getQueueSize(), &ROSComms<decltype(comm->getTemplateType())>::callback, comm);
+                subscribers_.push_back(cnh_.subscribe<decltype(comm->getTemplateType())>(comm->getTopic(), comm->getQueueSize(), &ROSComms<decltype(comm->getTemplateType())>::callback, comm));
             }
+
+            template<typename T>
+            void addSrv(T comm){
+                services_.push_back(cnh_.advertiseService(comm->getTopic(), &ROSComms<decltype(comm->getReqType()), decltype(comm->getResType())>::callback, comm));
+            }
+
+            // TODO (needs at least C++ 17): use a constexpr if statement to an addComms function so you don't need different add functions
+            // template<typename T>
+            // void addComms(T comm) {
+            //     if constexpr(comm->getCommType() == CommTypes::pub){
+            //         std::cout << "Attaching publisher" << std::endl;
+            //         publishers_ = cnh_.advertise<decltype(comm->getTemplateType())>(comm->getTopic(), comm->getQueueSize());
+            //     } else if constexpr(comm->getCommType() == CommTypes::sub){
+            //         std::cout << "Attaching subscriber" << std::endl;
+            //         std::cout << comm->getTopic() << std::endl;
+            //         // ros::Subscriber sub = n.subscribe("ooga_booga", 1000, &mock_drivers::ROSComms<std_msgs::String, const std_msgs::String::ConstPtr&>::callback, &test_comms);
+            //         subscribers_ = cnh_.subscribe<const std_msgs::String::ConstPtr&>(comm->getTopic(), comm->getQueueSize(), &ROSComms<decltype(comm->getTemplateType())>::callback, comm);
+            //     }
+            // }            
 
             void spin(int rate);
 
-            void publishData(int data);
+            template<typename T>
+            void publishData(std::string topic, T msg){
+                std::vector<ros::Publisher>::iterator pub = std::find_if(publishers_.begin(), publishers_.end(), [&](ros::Publisher p){return (p.getTopic()) == topic;});
+                pub->publish(msg);
+            };
 
     };
     

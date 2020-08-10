@@ -51,8 +51,7 @@ find_package(Boost REQUIRED)
 ## Generate messages in the 'msg' folder
 # add_message_files(
 #   FILES
-#   Message1.msg
-#   Message2.msg
+#   include/msg/BagParserMsg.msg
 # )
 
 ## Generate services in the 'srv' folder
@@ -73,6 +72,7 @@ find_package(Boost REQUIRED)
 # generate_messages(
 #   DEPENDENCIES
 #   std_msgs
+#   radar_msgs
 # )
 
 ################################################
@@ -126,8 +126,6 @@ include_directories(
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
   src/MockDriverNode.cpp
-  # include/cpp_mock_drivers/ROSComms.h
-  # include/cpp_mock_drivers/ROSComms.ipp
   # src/${PROJECT_NAME}/cpp_mock_drivers.cpp
 )
 
@@ -140,17 +138,28 @@ add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/cpp_mock_drivers_node.cpp)
-add_executable(talker 
-  src/test_node.cpp 
-)
 
-add_executable(listener
-  src/test_sub.cpp
-)
+# add_executable(talker 
+#   src/test_node.cpp 
+# )
+
+# add_executable(listener
+#   src/test_sub.cpp
+# )
 
 add_executable(mock_driver_test
   src/main.cpp
   src/TestMockDriver.cpp
+  src/MockCameraDriver.cpp
+  src/MockCANDriver.cpp
+  src/MockCommsDriver.cpp
+  src/MockControllerDriver.cpp
+  src/MockDataDriver.cpp
+  src/MockGNSSDriver.cpp
+  src/MockIMUDriver.cpp
+  src/MockLidarDriver.cpp
+  src/MockRadarDriver.cpp
+  src/MockRoadwaySensorDriver.cpp
 )
 
 ## Rename C++ executable without prefix
@@ -168,15 +177,15 @@ add_dependencies(mock_driver_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${PROJECT_
 #   ${catkin_LIBRARIES}
 # )
 
-target_link_libraries(talker
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+# target_link_libraries(talker
+#   ${PROJECT_NAME}
+#   ${catkin_LIBRARIES}
+# )
 
-target_link_libraries(listener
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+# target_link_libraries(listener
+#   ${PROJECT_NAME}
+#   ${catkin_LIBRARIES}
+# )
 
 target_link_libraries(mock_driver_test
   ${PROJECT_NAME}

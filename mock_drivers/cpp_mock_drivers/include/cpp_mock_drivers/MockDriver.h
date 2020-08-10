@@ -18,10 +18,13 @@
 #include <ros/ros.h>
 #include <string>
 #include <vector>
+#include <boost/shared_ptr.hpp>
+#include <cav_msgs/BagParserMsg.h>
 
 #include "cpp_mock_drivers/ROSComms.h"
 #include "cpp_mock_drivers/MockDriverNode.h"
 #include "cpp_mock_drivers/comm_types.h"
+
 
 namespace mock_drivers{
 
@@ -30,11 +33,15 @@ namespace mock_drivers{
         protected:
 
         MockDriverNode mock_driver_node_;
-
+        
+        std::function<void(const cav_msgs::BagParserMsg::ConstPtr&)> bag_parser_cb_ptr_ = std::bind(&MockDriver::parserCB, this, std::placeholders::_1);
+        boost::shared_ptr<ROSComms<const cav_msgs::BagParserMsg::ConstPtr&>> bag_parser_sub_ptr_ = boost::make_shared<ROSComms<const cav_msgs::BagParserMsg::ConstPtr&>>(ROSComms<const cav_msgs::BagParserMsg::ConstPtr&>(bag_parser_cb_ptr_, CommTypes::sub, false, 10, "bag_parser"));
 
         public:
 
         virtual int run() = 0;
+
+        virtual void parserCB(const cav_msgs::BagParserMsg::ConstPtr& msg) = 0;
 
     };
     
