@@ -22,11 +22,12 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
 #include <lanelet2_core/primitives/LaneletOrArea.h>
+#include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
 
 namespace carma_wm_ctrl
 {
 using namespace lanelet::units::literals;
-/**
+/**RegulatoryElementPtr
  * @brief An object representing a geofence use for communications with CARMA Cloud
  *
  * TODO: This is currently a place holder class which needs to be updated based on the final geofence specification
@@ -41,11 +42,9 @@ public:
   std::string proj;
 
   // TODO Add rest of the attributes provided by geofences in the future
-  lanelet::DigitalSpeedLimitPtr min_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_kmh, {}, {},
+  lanelet::RegulatoryElementPtr regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_kmh, {}, {},
                                                      { lanelet::Participants::VehicleCar }));
-  lanelet::DigitalSpeedLimitPtr max_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_kmh, {}, {},
-                                                     { lanelet::Participants::VehicleCar }));
-  
+
   // elements needed for broadcasting to the rest of map users
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list_;
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> remove_list_;

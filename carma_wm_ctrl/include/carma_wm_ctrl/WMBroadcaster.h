@@ -106,8 +106,8 @@ public:
   void setMaxLaneWidth(double max_lane_width);
 
 private:
-  void addSpeedLimit(std::shared_ptr<Geofence> gf_ptr);
-  void addBackSpeedLimit(std::shared_ptr<Geofence> gf_ptr);
+  void addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr);
+  void addBackRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr);
   void removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr);
   void addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr);
   std::shared_ptr<Geofence> geofenceFromMsg(const cav_msgs::TrafficControlMessageV01& geofence_msg);
