@@ -27,6 +27,7 @@ Documentation of the setup, operation, and design of the CARMA Platform can be f
 <!-- We would like to publish this section, but are not ready to at this time:
 ## System Specifications
 The current CARMA requirements specification: [CARMA Platform Requirements](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/56786945/Platform+Requirements+Document?preview=/56786945/56852481/CAV%20Platform%20Requirements.docx)
+
 -->
 
 ## Release Notes

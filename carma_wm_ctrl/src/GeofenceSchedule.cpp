@@ -25,11 +25,11 @@ GeofenceSchedule::GeofenceSchedule()
 }
 
 GeofenceSchedule::GeofenceSchedule(ros::Time schedule_start, ros::Time schedule_end, ros::Duration control_start,
-                                   ros::Duration control_end, ros::Duration control_duration,
-                                   ros::Duration control_interval, DayOfTheWeekSet week_day_set):
+                                   ros::Duration control_duration, ros::Duration control_offset,
+                                   ros::Duration control_span, ros::Duration control_period, DayOfTheWeekSet week_day_set):
                                    schedule_start_(schedule_start), schedule_end_(schedule_end),
-                                   control_start_(control_start), control_end_(control_end),
-                                   control_duration_(control_duration), control_interval_(control_interval), week_day_set_(week_day_set)
+                                   control_start_ (control_start), control_duration_ (control_duration),
+                                   control_offset_ (control_offset), control_span_ (control_span), control_period_ (control_period), week_day_set_(week_day_set)
 {}
 
 bool GeofenceSchedule::scheduleExpired(const ros::Time& time) const
@@ -66,10 +66,10 @@ std::pair<bool, ros::Time> GeofenceSchedule::getNextInterval(const ros::Time& ti
 
   ros::Time ros_time_of_day = ros::Time::fromBoost(time_of_day);
   ros::Time abs_day_start = ros::Time::fromBoost(ptime_start_of_day);
-  ros::Duration cur_start = control_start_;
+  ros::Duration cur_start = control_start_ + control_offset_; // accounting for the shift of repetition start
 
   // Check if current time is after end of control
-  if (ros_time_of_day > ros::Time(control_end_.toSec()))
+  if (ros_time_of_day > ros::Time((control_start_ + control_duration_).toSec()))
   {
     // The requested time is after control end so there will not be another interval
     return std::make_pair(false, ros::Time(0));
@@ -78,21 +78,21 @@ std::pair<bool, ros::Time> GeofenceSchedule::getNextInterval(const ros::Time& ti
   // Iterate over the day to find the next control interval
   constexpr int num_sec_in_day = 86400;
   const ros::Duration full_day(num_sec_in_day);
-  bool time_in_active_period = false;  // Flag indicating if the requested time is within an active control period
+  bool time_in_active_period = false;  // Flag indicating if the requested time is within an active control span
 
   while (cur_start < full_day && ros_time_of_day > ros::Time(cur_start.toSec()))
   {
     // Check if the requested time is within the control period being evaluated
     if (ros::Time(cur_start.toSec()) < ros_time_of_day &&
-        ros_time_of_day < ros::Time((cur_start + control_duration_).toSec()))
+        ros_time_of_day < ros::Time((cur_start + control_span_).toSec()))
     {
       time_in_active_period = true;
     }
-    cur_start += control_interval_;
+    cur_start += control_period_;
   }
 
   // check if the only next interval is after the schedule end or past the end of the day
-  if (abs_day_start + cur_start > schedule_end_ || cur_start > full_day || cur_start > control_end_)
+  if (abs_day_start + cur_start > schedule_end_ || cur_start > full_day || cur_start > (control_start_ + control_duration_))
   {
     return std::make_pair(time_in_active_period, ros::Time(0));
   }
@@ -100,5 +100,5 @@ std::pair<bool, ros::Time> GeofenceSchedule::getNextInterval(const ros::Time& ti
   // At this point we should have the next start time which is still within the schedule and day
   return std::make_pair(time_in_active_period, abs_day_start + cur_start);
 }
-// TODO the UTC offset is provided in the geofence spec but for now we will ignore and assume all times are UTC
+
 }  // namespace carma_wm_ctrl
