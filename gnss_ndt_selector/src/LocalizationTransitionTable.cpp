@@ -15,34 +15,48 @@
  */
 
 #include <ros/ros.h>
-#include "LocalizationStateMachine.h"
+#include "LocalizationTransitionTable.h"
 
 namespace localizer
 {
-LocalizationState LocalizationStateMachine::getState()
+LocalizationTransitionTable(LocalizerMode mode) : mode_(mode)
+{
+}
+LocalizationState LocalizationTransitionTable::getState()
 {
   return state_;
 }
 
-void LocalizationStateMachine::logDebugSignal(LocalizationSignal signal)
+void LocalizationTransitionTable::logDebugSignal(LocalizationSignal signal)
 {
-  ROS_DEBUG_LOG_STREAM("LocalizationStateMachine received unsupported signal of " << signal << " while in state "
-                                                                                  << state_);
+  ROS_DEBUG_LOG_STREAM("LocalizationTransitionTable received unsupported signal of " << signal << " while in state "
+                                                                                     << state_);
 }
 
-void LocalizationStateMachine::setAndLogState(LocalizationState new_state, LocalizationSignal source_signal)
+void LocalizationTransitionTable::setAndLogState(LocalizationState new_state, LocalizationSignal source_signal)
 {
-  ROS_INFO_STREAM("LocalizationStateMachine changed localization state from "
-                  << state_ << " to " << new_state << " because of signal " << source_signal);
+  if (new_state == state_) {
+    return; // State was unchanged no need to log or trigger callbacks
+  }
+  ROS_INFO_STREAM("LocalizationTransitionTable changed localization state from "
+                  << state_ << " to " << new_state << " because of signal " << source_signal " while in mode " << mode_);
+  LocalizationState prev_state = state_;
   state_ = new_state;
+  if (transition_callback_) {
+    transition_callback_(prev_state, state_, source_signal);
+  }
 }
 
-void LocalizationStateMachine::signalWhenUNINITIALIZED(LocalizationSignal signal)
+void LocalizationTransitionTable::signalWhenUNINITIALIZED(LocalizationSignal signal)
 {
   switch (signal)
   {
     case INITIAL_POSE:
-      setAndLogState(INITIALIZING, signal);
+      if (mode_ == LocalizerMode::GNSS) {
+        setAndLogState(DEGRADED_NO_LIDAR_FIX, signal);
+      } else {
+        setAndLogState(INITIALIZING, signal);
+      }
       break;
     default:
       logDebugSignal(signal);
@@ -50,7 +64,7 @@ void LocalizationStateMachine::signalWhenUNINITIALIZED(LocalizationSignal signal
   }
 }
 
-void LocalizationStateMachine::signalWhenINITIALIZING(LocalizationSignal signal)
+void LocalizationTransitionTable::signalWhenINITIALIZING(LocalizationSignal signal)
 {
   switch (signal)
   {
@@ -72,7 +86,7 @@ void LocalizationStateMachine::signalWhenINITIALIZING(LocalizationSignal signal)
       break;
   }
 }
-void LocalizationStateMachine::signalWhenOPERATIONAL(LocalizationSignal signal)
+void LocalizationTransitionTable::signalWhenOPERATIONAL(LocalizationSignal signal)
 {
   switch (signal)
   {
@@ -93,7 +107,7 @@ void LocalizationStateMachine::signalWhenOPERATIONAL(LocalizationSignal signal)
       break;
   }
 }
-void LocalizationStateMachine::signalWhenDEGRADED(LocalizationSignal signal)
+void LocalizationTransitionTable::signalWhenDEGRADED(LocalizationSignal signal)
 {
   switch (signal)
   {
@@ -104,7 +118,11 @@ void LocalizationStateMachine::signalWhenDEGRADED(LocalizationSignal signal)
       setAndLogState(OPERATIONAL, signal);
       break;
     case LIDAR_SENSOR_FAILURE:
-      setAndLogState(DEGRADED_NO_LIDAR_FIX, signal);
+      if (mode_ == LocalizerMode::AUTO) {
+        setAndLogState(DEGRADED_NO_LIDAR_FIX, signal);
+      } else {
+        setAndLogState(AWAIT_MANUAL_INITIALIZATION, signal);
+      }
       break;
     case UNUSABLE_NDT_FREQ_OR_FITNESS_SCORE:
       setAndLogState(DEGRADED_NO_LIDAR_FIX, signal);
@@ -114,7 +132,7 @@ void LocalizationStateMachine::signalWhenDEGRADED(LocalizationSignal signal)
       break;
   }
 }
-void LocalizationStateMachine::signalWhenDEGRADED_NO_LIDAR_FIX(LocalizationSignal signal)
+void LocalizationTransitionTable::signalWhenDEGRADED_NO_LIDAR_FIX(LocalizationSignal signal)
 {
   switch (signal)
   {
@@ -122,14 +140,16 @@ void LocalizationStateMachine::signalWhenDEGRADED_NO_LIDAR_FIX(LocalizationSigna
       setAndLogState(INITIALIZING, signal);
       break;
     case TIMEOUT:
-      setAndLogState(AWAIT_MANUAL_INITIALIZATION, signal);
+      if (mode_ != LocalizerMode::GNSS) {
+        setAndLogState(AWAIT_MANUAL_INITIALIZATION, signal);
+      }
       break;
     default:
       logDebugSignal(signal);
       break;
   }
 }
-void LocalizationStateMachine::signalWhenAWAIT_MANUAL_INITIALIZATION(LocalizationSignal signal)
+void LocalizationTransitionTable::signalWhenAWAIT_MANUAL_INITIALIZATION(LocalizationSignal signal)
 {
   switch (signal)
   {
@@ -142,7 +162,7 @@ void LocalizationStateMachine::signalWhenAWAIT_MANUAL_INITIALIZATION(Localizatio
   }
 }
 
-void LocalizationStateMachine::signal(LocalizationSignal signal)
+void LocalizationTransitionTable::signal(LocalizationSignal signal)
 {
   switch (state_)
   {

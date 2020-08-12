@@ -26,6 +26,7 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/exact_time.h>
+#include <cav_msgs/LocalizationStatusReport.h>
 #include "ndt_reliability_counter.h"
 #include "LocalizerMode.h"
 #include "LocalizationManagerConfig.h"
@@ -44,6 +45,7 @@ public:
   // Publication callbacks
   void publishPoseStamped(const geometry_msgs::PoseStamped& msg);
   void publishTransform(const geometry_msgs::TransformStamped& msg);
+  void publishStatus(const cav_msgs::LocalizationStatusReport& msg);
 
   void poseAndStatsCallback(const geometry_msgs::PoseStampedConstPtr& pose, const autoware_msgs::NDTStatConstPtr& stats);
 
@@ -58,9 +60,11 @@ private:
   ros::Subscriber ndt_pose_sub_;
   ros::Subscriber ndt_score_sub_;
   ros::Subscriber gnss_pose_sub_;
+  ros::Subscriber initialpose_sub_;
 
   // publisher
   ros::Publisher pose_pub_;
+  ros::Publisher state_pub_;
 
   // member variables
   double spin_rate_{ 10 };

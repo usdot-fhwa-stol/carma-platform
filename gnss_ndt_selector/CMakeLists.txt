@@ -44,6 +44,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 
 catkin_package(
   CATKIN_DEPENDS geometry_msgs roscpp std_msgs tf2 tf2_ros tf2_geometry_msgs autoware_msgs carma_utils cav_msgs
+  DEPENDS Boost
 )
 
 ###########
@@ -61,7 +62,7 @@ add_executable( ${PROJECT_NAME}
                 src/main.cpp)
 
 add_library(gnss_ndt_counter_library src/ndt_reliability_counter.cpp)
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} gnss_ndt_counter_library)
+target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${catkin_LIBRARIES} gnss_ndt_counter_library)
 if(catkin_EXPORTED_TARGETS)
   add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 endif()

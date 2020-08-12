@@ -40,10 +40,21 @@ enum LocalizationSignal
   LIDAR_SENSOR_FAILURE,
 };
 
-class LocalizationStateMachine
+class LocalizationTransitionTable
 {
+public:
+  using TransitionCallback =
+      std::function<void(LocalizationState prev_state, LocalizationState new_state, LocalizationSignal signal)>;
+  LocalizationTransitionTable(LocalizerMode mode);
+  LocalizationState getState();
+  void signal(LocalizationSignal signal);
+  void setTransitionCallback(TransitionCallback cb);
+
 private:
   LocalizationState state_ = LocalizationState::UNINITIALIZED;
+  LocalizerMode mode_ = LocalizerMode::AUTO;
+
+  TransitionCallback transition_callback_;
 
   void signalWhenUNINITIALIZED(LocalizationSignal signal);
   void signalWhenINITIALIZING(LocalizationSignal signal);
@@ -55,9 +66,5 @@ private:
   void logDebugSignal(LocalizationSignal signal);
 
   void setAndLogState(LocalizationState new_state, LocalizationSignal source_signal);
-
-public:
-  LocalizationState getState();
-  void signal(LocalizationSignal signal);
 };
 }  // namespace localizer
