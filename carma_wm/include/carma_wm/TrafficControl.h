@@ -101,7 +101,7 @@ template <class Archive>
 inline void load(Archive& ar, carma_wm::TrafficControl& gf, unsigned int /*version*/) 
 {
   boost::uuids::string_generator gen;
-  std::string id, geofence_type;
+  std::string id;
   ar >> id;
   gf.id_ = gen(id);
   // save regems to remove
