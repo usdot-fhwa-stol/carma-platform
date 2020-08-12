@@ -24,19 +24,11 @@ int main(int argc, char **argv)
     // Initialize a mock driver
     // success?
 
-    ros::init(argc, argv, "mock_drivers");
+    ros::init(argc, argv, "bag_parser");
 
-    mock_drivers::MockCommsDriver node;
-    mock_drivers::MockRadarDriver node2;
-    mock_drivers::MockLidarDriver node3;
-    mock_drivers::MockCANDriver node4;
-    mock_drivers::MockControllerDriver node5;
+    mock_drivers::BagParser parser_node;
 
-    mock_drivers::TestMockDriver test_node;
-
-    // mock_drivers::BagParser parser_node;
-
-    test_node.run();
+    parser_node.run();
     // node.publishData();
     
     return 0;

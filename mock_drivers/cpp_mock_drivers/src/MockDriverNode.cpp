@@ -27,9 +27,13 @@
 
 namespace mock_drivers{
 
-    void MockDriverNode::spin(int rate){
+    void MockDriverNode::spin(double rate){
         cnh_.setSpinRate(rate);
         cnh_.spin();
+    }
+
+    void MockDriverNode::setSpinCallback(std::function<bool()> cb){
+        cnh_.setSpinCallback(cb);
     }
 
 }

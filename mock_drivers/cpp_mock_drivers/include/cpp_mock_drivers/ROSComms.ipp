@@ -51,7 +51,7 @@ namespace mock_drivers{
         this->callback_function_(msg);
     }
 
-s
+
 
     template <typename M, typename T>
     ROSComms<M, T>::ROSComms(std::function<bool(M, T)> cbf, CommTypes ct, std::string t){

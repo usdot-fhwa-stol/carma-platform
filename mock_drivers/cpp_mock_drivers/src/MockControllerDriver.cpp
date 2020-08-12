@@ -18,7 +18,7 @@
 
 namespace mock_drivers{
 
-    void MockControllerDriver::parserCB(const cav_msgs::BagParserMsg::ConstPtr& msg){
+    void MockControllerDriver::parserCB(const cav_msgs::BagData::ConstPtr& msg){
         
     }
 
@@ -43,7 +43,7 @@ namespace mock_drivers{
 
     int MockControllerDriver::run(){
 
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagParserMsg::ConstPtr&>>>(bag_parser_sub_ptr_);
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::RobotEnabled>>>(robot_status_ptr_);
         mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const autoware_msgs::VehicleCmd::ConstPtr&>>>(vehicle_cmd_ptr_);

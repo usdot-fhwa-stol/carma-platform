@@ -19,9 +19,7 @@
 #include <carma_utils/CARMAUtils.h>
 #include "comm_types.h"
 #include "ROSComms.h"
-#include "iostream"
 #include <vector>
-#include <cav_srvs/SetEnableRobotic.h>
 
 namespace mock_drivers{
 
@@ -29,7 +27,6 @@ namespace mock_drivers{
 
         private:
             ros::CARMANodeHandle cnh_;
-            // ros::NodeHandle nh_;
             std::vector<ros::Publisher> publishers_;
             std::vector<ros::Subscriber> subscribers_;
             std::vector<ros::ServiceServer> services_;
@@ -65,7 +62,9 @@ namespace mock_drivers{
             //     }
             // }            
 
-            void spin(int rate);
+            void spin(double rate);
+
+            void setSpinCallback(std::function<bool()> cb);
 
             template<typename T>
             void publishData(std::string topic, T msg){

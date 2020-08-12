@@ -18,7 +18,7 @@
 
 namespace mock_drivers{
 
-    void MockIMUDriver::parserCB(const cav_msgs::BagParserMsg::ConstPtr& msg){
+    void MockIMUDriver::parserCB(const cav_msgs::BagData::ConstPtr& msg){
         
     }
     
@@ -30,7 +30,7 @@ namespace mock_drivers{
 
     int MockIMUDriver::run(){
 
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagParserMsg::ConstPtr&>>>(bag_parser_sub_ptr_);
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<sensor_msgs::Imu>>>(imu_pub_ptr_);
         mock_driver_node_.spin(10);

@@ -24,7 +24,7 @@ namespace mock_drivers{
         ROS_INFO("I heard: [%s]", msg->data.c_str());
     }
 
-    void TestMockDriver::parserCB(const cav_msgs::BagParserMsg::ConstPtr& msg){
+    void TestMockDriver::parserCB(const cav_msgs::BagData::ConstPtr& msg){
         // ROS_INFO("I heard: [%s]", msg->data.c_str());
     }
 
@@ -54,7 +54,7 @@ namespace mock_drivers{
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::String>>>(pub_ptr);
         mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const std_msgs::String::ConstPtr&>>>(sub_ptr);
 
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagParserMsg::ConstPtr&>>>(bag_parser_sub_ptr_);
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         mock_driver_node_.spin(10);
 

@@ -31,7 +31,7 @@ namespace mock_drivers{
 
             MockIMUDriver();
             int run();
-            void parserCB(const cav_msgs::BagParserMsg::ConstPtr& msg);
+            void parserCB(const cav_msgs::BagData::ConstPtr& msg);
 
     };
 

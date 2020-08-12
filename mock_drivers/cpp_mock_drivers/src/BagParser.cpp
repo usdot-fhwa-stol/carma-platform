@@ -14,6 +14,109 @@
  * the License.
  */
 
+#include "cpp_mock_drivers/BagParser.h"
+
 namespace mock_drivers{
+
+    BagParser::BagParser(){
+
+        bag_data_pub_ptr_ = boost::make_shared<ROSComms<cav_msgs::BagData>>(ROSComms<cav_msgs::BagData>(CommTypes::pub, false, 10, "bag_data"));
+        // bag_data_pub_ptr_ = boost::make_shared<ROSComms<std_msgs::String>>(ROSComms<std_msgs::String>(CommTypes::pub, false, 10, "mock_pub"));
+
+    }
+
+    bool BagParser::publishCallback() {
+        static ros::Time startTime;
+        static ros::Duration timeFrame = ros::Duration(1.0/rate_);
+        cav_msgs::BagData message;
+        
+        bag_.open("/workspaces/carma_ws/carma/src/carma-platform/mock_drivers/cpp_mock_drivers/src/bagfiles/hello_test_bag.bag", rosbag::bagmode::Read);
+
+        if (startTime.isZero()){
+            startTime = rosbag::View(bag_).getBeginTime();
+        }
+
+        for(rosbag::MessageInstance const m: rosbag::View(bag_, startTime, (startTime + timeFrame))){
+            // if (m.getTopic() == "/mock_pub"){
+            //     std_msgs::String::ConstPtr i = m.instantiate<std_msgs::String>();
+            //     message.data = i->data;
+            // }
+
+            // camera
+            if (m.getTopic() == "/hardware_interface/camera/1/camera_info"){message.camera_info_1 = *m.instantiate<sensor_msgs::CameraInfo>();}
+            if (m.getTopic() == "/hardware_interface/camera/1/image_raw"){message.image_raw_1 = *m.instantiate<sensor_msgs::Image>();}
+            if (m.getTopic() == "/hardware_interface/camera/camera_info"){message.camera_info = *m.instantiate<sensor_msgs::CameraInfo>();}
+            if (m.getTopic() == "/hardware_interface/camera/image_raw"){message.image_raw = *m.instantiate<sensor_msgs::Image>();}
+            if (m.getTopic() == "/hardware_interface/camera/image_rects"){message.image_rects = *m.instantiate<sensor_msgs::Image>();}
+            if (m.getTopic() == "/hardware_interface/camera/projection_matrix"){message.projection_matrix = *m.instantiate<autoware_msgs::ProjectionMatrix>();}
+            
+            // can
+            if (m.getTopic() == "/hardware_interface/can/acc_engaged"){message.acc_engaged = *m.instantiate<std_msgs::Bool>();}
+            if (m.getTopic() == "/hardware_interface/can/acceleration"){message.acceleration = *m.instantiate<std_msgs::Float64>();}
+            if (m.getTopic() == "/hardware_interface/can/antilock_brakes_active"){message.antilock_brakes_active = *m.instantiate<std_msgs::Bool>();}
+            if (m.getTopic() == "/hardware_interface/can/brake_lights"){message.brake_lights = *m.instantiate<std_msgs::Bool>();}
+            if (m.getTopic() == "/hardware_interface/can/brake_position"){message.brake_position = *m.instantiate<std_msgs::Float64>();}
+            if (m.getTopic() == "/hardware_interface/can/engine_speed"){message.engine_speed = *m.instantiate<std_msgs::Float64>();}
+            if (m.getTopic() == "/hardware_interface/can/fuel_flow"){message.fuel_flow = *m.instantiate<std_msgs::Float64>();}
+            if (m.getTopic() == "/hardware_interface/can/odometer"){message.odometer = *m.instantiate<std_msgs::Float64>();}
+            if (m.getTopic() == "/hardware_interface/can/parking_brake"){message.parking_brake = *m.instantiate<std_msgs::Bool>();}
+            if (m.getTopic() == "/hardware_interface/can/speed"){message.speed = *m.instantiate<std_msgs::Float64>();}
+            if (m.getTopic() == "/hardware_interface/can/stability_ctrl_active"){message.stability_ctrl_active = *m.instantiate<std_msgs::Bool>();}
+            if (m.getTopic() == "/hardware_interface/can/stability_ctrl_enabled"){message.stability_ctrl_enabled = *m.instantiate<std_msgs::Bool>();}
+            if (m.getTopic() == "/hardware_interface/can/steering_wheel_angle"){message.steering_wheel_angle = *m.instantiate<std_msgs::Float64>();}
+            if (m.getTopic() == "/hardware_interface/can/throttle_position"){message.throttle_position = *m.instantiate<std_msgs::Float64>();}
+            if (m.getTopic() == "/hardware_interface/can/traction_ctrl_active"){message.traction_ctrl_active = *m.instantiate<std_msgs::Bool>();}
+            if (m.getTopic() == "/hardware_interface/can/traction_ctrl_enabled"){message.traction_ctrl_enabled = *m.instantiate<std_msgs::Bool>();}
+            if (m.getTopic() == "/hardware_interface/can/transmission_state"){message.transmission_state = *m.instantiate<j2735_msgs::TransmissionState>();}
+            if (m.getTopic() == "/hardware_interface/can/turn_signal_state"){message.turn_signal_state = *m.instantiate<cav_msgs::TurnSignal>();}
+            if (m.getTopic() == "/hardware_interface/can/vehicle/twist"){message.vehicle_twist = *m.instantiate<geometry_msgs::TwistStamped>();}
+            if (m.getTopic() == "/hardware_interface/can/vehicle_status"){message.vehicle_status = *m.instantiate<autoware_msgs::VehicleStatus>();}
+            if (m.getTopic() == "/hardware_interface/can/velocity_accel"){message.velocity_accel = *m.instantiate<automotive_platform_msgs::VelocityAccel>();}
+            
+            // comms
+            if (m.getTopic() == "/hardware_interface/comms/inbound_binary_msg"){message.inbound_binary_msg = *m.instantiate<cav_msgs::ByteArray>();}
+            
+            // controller
+            if (m.getTopic() == "/hardware_interface/controller/robot_status"){message.robot_status = *m.instantiate<cav_msgs::RobotEnabled>();}
+            
+            // gnss
+            if (m.getTopic() == "/hardware_interface/gnss/gnss_fixed_fused"){message.gnss_fixed_fused = *m.instantiate<gps_common::GPSFix>();}
+            
+            // imu
+            if (m.getTopic() == "/hardware_interface/imu/raw_data"){message.raw_data = *m.instantiate<sensor_msgs::Imu>();}
+            
+            // lidar
+            if (m.getTopic() == "/hardware_interface/lidar/points_raw"){message.points_raw = *m.instantiate<sensor_msgs::PointCloud2>();}
+            
+            // radar
+            if (m.getTopic() == "/hardware_interface/radar/status"){message.status = *m.instantiate<radar_msgs::RadarStatus>();}
+            if (m.getTopic() == "/hardware_interface/radar/tracks_raw"){message.tracks_raw = *m.instantiate<radar_msgs::RadarTrackArray>();}
+            
+            // roadway_sensor
+            if (m.getTopic() == "/hardware_interface/roadway_sensor/detected_objects"){message.detected_objects = *m.instantiate<derived_object_msgs::ObjectWithCovariance>();}
+            if (m.getTopic() == "/hardware_interface/roadway_sensor/lane_models"){message.lane_models = *m.instantiate<derived_object_msgs::LaneModels>();}
+
+        }
+
+        startTime += timeFrame;
+
+        mock_driver_node_.publishData<cav_msgs::BagData>("/bag_data", message);
+
+        bag_.close();
+
+        return true;
+
+    }
     
+    int BagParser::run(){
+
+        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::BagData>>>(bag_data_pub_ptr_);
+        // mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::String>>>(bag_data_pub_ptr_);
+
+        mock_driver_node_.setSpinCallback(std::bind(&BagParser::publishCallback, this));
+
+        mock_driver_node_.spin(rate_);
+
+        return 0;
+    }
 }

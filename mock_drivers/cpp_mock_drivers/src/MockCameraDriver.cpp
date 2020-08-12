@@ -18,7 +18,7 @@
 
 namespace mock_drivers{
 
-    void MockCameraDriver::parserCB(const cav_msgs::BagParserMsg::ConstPtr& msg){
+    void MockCameraDriver::parserCB(const cav_msgs::BagData::ConstPtr& msg){
         
     }
 
@@ -35,7 +35,7 @@ namespace mock_drivers{
 
     int MockCameraDriver::run(){
 
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagParserMsg::ConstPtr&>>>(bag_parser_sub_ptr_);
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<sensor_msgs::CameraInfo>>>(camera_info_ptr_);
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<sensor_msgs::Image>>>(image_raw_ptr_);

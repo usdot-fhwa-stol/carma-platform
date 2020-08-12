@@ -14,28 +14,11 @@
  * the License.
  */
 
-#pragma once
+#include <gtest/gtest.h>
+#include <ros/ros.h>
 
-#include "cpp_mock_drivers/MockDriver.h"
-#include <radar_msgs/RadarStatus.h>
-#include <radar_msgs/RadarTrackArray.h>
-
-
-namespace mock_drivers{
-
-    class MockRadarDriver : public MockDriver {
-
-        private:
-
-            boost::shared_ptr<ROSComms<radar_msgs::RadarStatus>> status_pub_ptr_;
-            boost::shared_ptr<ROSComms<radar_msgs::RadarTrackArray>> tracks_raw_pub_ptr_;
-
-        public:
-
-            MockRadarDriver();
-            int run();
-            void parserCB(const cav_msgs::BagData::ConstPtr& msg);
-
-    };
-
+// Run all tests
+int main(int argc, char** argv) {
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

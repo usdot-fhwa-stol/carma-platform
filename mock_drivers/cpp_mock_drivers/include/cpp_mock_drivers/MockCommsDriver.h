@@ -35,7 +35,7 @@ namespace mock_drivers{
 
             MockCommsDriver();
             int run();
-            void parserCB(const cav_msgs::BagParserMsg::ConstPtr& msg);
+            void parserCB(const cav_msgs::BagData::ConstPtr& msg);
 
     };
 

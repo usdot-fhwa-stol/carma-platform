@@ -18,7 +18,7 @@
 
 namespace mock_drivers{
 
-    void MockGNSSDriver::parserCB(const cav_msgs::BagParserMsg::ConstPtr& msg){
+    void MockGNSSDriver::parserCB(const cav_msgs::BagData::ConstPtr& msg){
         
     }
 
@@ -30,7 +30,7 @@ namespace mock_drivers{
 
     int MockGNSSDriver::run(){
 
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagParserMsg::ConstPtr&>>>(bag_parser_sub_ptr_);
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<gps_common::GPSFix>>>(GPS_fix_ptr_);
 

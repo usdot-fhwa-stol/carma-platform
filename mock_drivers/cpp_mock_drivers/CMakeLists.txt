@@ -9,6 +9,7 @@ set ( PKG_CATKIN_DEPENDS
   std_msgs
   carma_utils
   cav_msgs
+  rosbag
 )
 
 ## Find catkin macros and libraries
@@ -51,7 +52,7 @@ find_package(Boost REQUIRED)
 ## Generate messages in the 'msg' folder
 # add_message_files(
 #   FILES
-#   include/msg/BagParserMsg.msg
+#   include/msg/BagData.msg
 # )
 
 ## Generate services in the 'srv' folder
@@ -160,6 +161,12 @@ add_executable(mock_driver_test
   src/MockLidarDriver.cpp
   src/MockRadarDriver.cpp
   src/MockRoadwaySensorDriver.cpp
+  src/BagParser.cpp
+)
+
+add_executable(bag_parser
+  src/parser_main.cpp
+  src/BagParser.cpp
 )
 
 ## Rename C++ executable without prefix
@@ -171,6 +178,7 @@ add_executable(mock_driver_test
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(mock_driver_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+add_dependencies(bag_parser ${${PROJECT_NAME}_EXPORTED_TARGETS} ${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
@@ -188,6 +196,11 @@ add_dependencies(mock_driver_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${PROJECT_
 # )
 
 target_link_libraries(mock_driver_test
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(bag_parser
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
