@@ -46,13 +46,13 @@ namespace carma_wm_ctrl
 
 {
 
-TEST(WMBroadcaster, DISABLED_Constructor)
+TEST(WMBroadcaster, Constructor)
 {
   WMBroadcaster([](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
                 std::make_unique<TestTimerFactory>());  // Create broadcaster with test timers. Having this check helps
                                                         // verify that the timers do not crash on destruction
 }
-TEST(WMBroadcaster, DISABLED_baseMapCallback)
+TEST(WMBroadcaster, baseMapCallback)
 {
   ros::Time::setNow(ros::Time(0));  // Set current time
 
@@ -84,7 +84,7 @@ TEST(WMBroadcaster, DISABLED_baseMapCallback)
 }
 
 // here test the proj string transform test
-TEST(WMBroadcaster, DISABLED_getAffectedLaneletOrAreasFromTransform)
+TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
 {
   using namespace lanelet::units::literals;
   size_t base_map_call_count = 0;
@@ -149,7 +149,7 @@ TEST(WMBroadcaster, DISABLED_getAffectedLaneletOrAreasFromTransform)
 }
 
 // here test assuming the georeference proj strings are the same
-TEST(WMBroadcaster, DISABLED_getAffectedLaneletOrAreasOnlyLogic)
+TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
 {
   using namespace lanelet::units::literals;
   // Set the environment  
@@ -246,7 +246,7 @@ TEST(WMBroadcaster, DISABLED_getAffectedLaneletOrAreasOnlyLogic)
   ASSERT_EQ(affected_parts.size(), 2); // they should not be considered to be on the lanelet
 }
 
-TEST(WMBroadcaster, DISABLED_geofenceCallback)
+TEST(WMBroadcaster, geofenceCallback)
 {
   // Test adding then evaluate if the calls to active and inactive are done correctly
   auto gf = std::make_shared<Geofence>(Geofence());
@@ -305,21 +305,22 @@ TEST(WMBroadcaster, DISABLED_geofenceCallback)
 
   // Get and convert map to binary message
   auto map = carma_wm::getDisjointRouteMap();
-  
   autoware_lanelet2_msgs::MapBin msg;
   lanelet::utils::conversion::toBinMsg(map, &msg);
-
   autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(msg));
 
   // Trigger basemap callback
   wmb.baseMapCallback(map_msg_ptr);
   ASSERT_EQ(1, base_map_call_count);
 
-  // Setting georefernce otherwise, geofenceCallback will throw exception
-  std_msgs::String sample_proj_string;
-  sample_proj_string.data = "sample_proj_string"; // it doesn't have to be set correctly for this test
-  ROS_INFO_STREAM("Below proj_create: unrecognized format is expected");
-  wmb.geoReferenceCallback(sample_proj_string);
+  // Setting georeferences
+  // geofence's origin (0,0) is at base_map's (10,10)
+  std::string base_map_proj_string, geofence_proj_string;
+  std_msgs::String base_map_proj;
+  base_map_proj_string = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+  geofence_proj_string = "+proj=tmerc +lat_0=39.46645851394806215 +lon_0=-76.16907903057393980 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+  base_map_proj.data = base_map_proj_string;
+  wmb.geoReferenceCallback(base_map_proj);
 
   cav_msgs::TrafficControlMessage gf_msg;
   gf_msg.choice = cav_msgs::TrafficControlMessage::RESERVED;
@@ -342,12 +343,20 @@ TEST(WMBroadcaster, DISABLED_geofenceCallback)
   ASSERT_EQ(0, last_active_gf.load());
   
   gf_msg.choice = cav_msgs::TrafficControlMessage::TCMV01;
+  // create the geofence request
+  msg_v01.geometry.proj = geofence_proj_string;
+  // set the points
+  cav_msgs::PathNode pt;
+  // check points that are inside lanelets
+  pt.x = -8.5; pt.y = -9.5; pt.z = 0; // straight geofence line across 2 lanelets
+  msg_v01.geometry.nodes.push_back(pt);
+  pt.x = -8.5; pt.y = -8.5; pt.z = 0;
+  msg_v01.geometry.nodes.push_back(pt);
   gf_msg.tcmV01 = msg_v01;
+
   // Verify adding geofence call
   ros::Time::setNow(ros::Time(0));
-
   wmb.geofenceCallback(gf_msg);
-
   ros::Time::setNow(ros::Time(2.1));  // Set current time
 
   ASSERT_TRUE(carma_wm::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
@@ -375,7 +384,7 @@ TEST(WMBroadcaster, DISABLED_geofenceCallback)
 
 }
 
-TEST(WMBroadcaster, DISABLED_addAndRemoveGeofence)
+TEST(WMBroadcaster, addAndRemoveGeofence)
 {
   using namespace lanelet::units::literals;
   // Set the environment  
@@ -470,7 +479,7 @@ TEST(WMBroadcaster, DISABLED_addAndRemoveGeofence)
 
 }
 
-TEST(WMBroadcaster, DISABLED_GeofenceBinMsgTest)
+TEST(WMBroadcaster, GeofenceBinMsgTest)
 {
   using namespace lanelet::units::literals;
   // Set the environment  
@@ -499,7 +508,6 @@ TEST(WMBroadcaster, DISABLED_GeofenceBinMsgTest)
   
   ASSERT_EQ(map->laneletLayer.get(10000).regulatoryElements().size(), 1);
   ASSERT_TRUE(map->regulatoryElementLayer.exists(old_speed_limit->id()));
-  ROS_WARN_STREAM("======ACTUAL SPEED" << old_speed_limit->speed_limit_.value());
   ASSERT_EQ(map->regulatoryElementLayer.size(), 1);
   ASSERT_EQ(map->laneletLayer.findUsages(old_speed_limit).size(), 1);
   ASSERT_EQ(map->laneletLayer.find(10000)->regulatoryElements().front()->id(), old_speed_limit->id());//should be 10045 old speed limit's id
@@ -650,14 +658,12 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
         carma_wm::fromBinMsg(geofence_bin, data_received);
 
         ASSERT_EQ(data_received->id_, curr_id);
-        //ASSERT_EQ(data_received->remove_list_.size(), 1);
-        //ASSERT_EQ(data_received->remove_list_[0].second->attribute(lanelet::AttributeName::Subtype).value(), lanelet::PassingControlLine::RuleName);
         
         // gather the new control lines from update list to test
         std::vector<lanelet::PassingControlLinePtr> control_lines;
         for (auto pair : data_received->update_list_)
         {
-          auto factory_pcl = lanelet::RegulatoryElementFactory::create((data_received->update_list_.end() - 1)->second.get()->attribute(lanelet::AttributeName::Subtype).value(),
+          auto factory_pcl = lanelet::RegulatoryElementFactory::create(pair.second.get()->attribute(lanelet::AttributeName::Subtype).value(),
                                                             std::const_pointer_cast<lanelet::RegulatoryElementData>(pair.second.get()->constData()));
           lanelet::PassingControlLinePtr control_line = std::dynamic_pointer_cast<lanelet::PassingControlLine>(factory_pcl);
           control_lines.push_back(control_line);
@@ -681,7 +687,6 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
         active_call_count.store(active_call_count.load() + 1);
         // atomic is not working for boost::uuids::uuid, so hash it
         last_active_gf.store(boost::hash<boost::uuids::uuid>()(data_received->id_));
-        ROS_WARN_STREAM("ENDED");
       },
       std::make_unique<TestTimerFactory>());
 

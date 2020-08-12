@@ -124,10 +124,12 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
     if (msg_detail.lataffinity == cav_msgs::TrafficControlDetail::LEFT)
     {
       for (auto llt : affected_llts) pcl_bounds.push_back(llt.leftBound());
+      gf_ptr->pcl_affects_left_ = true;
     }
     else //right
     {
       for (auto llt : affected_llts) pcl_bounds.push_back(llt.rightBound());
+      gf_ptr->pcl_affects_right_ = true;
     }
 
     // Get specified participants
@@ -370,22 +372,42 @@ void WMBroadcaster::addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr)
 {
   // First loop is to save the relation between element and regulatory element
   // so that we can add back the old one after geofence deactivates
-  /*
   for (auto el: gf_ptr->affected_parts_)
   {
     for (auto regem : el.regulatoryElements())
     {
+      ROS_WARN_STREAM("remove: looking at regem: " << regem->id() << " type: "<< regem->attribute(lanelet::AttributeName::Subtype).value() << ", el: " << el.id());
+      // extra condition for PassingControlLine
+      if (regem->attribute(lanelet::AttributeName::Subtype).value() == lanelet::PassingControlLine::RuleName && el.isLanelet())
+      {
+        lanelet::PassingControlLinePtr pcl =  std::dynamic_pointer_cast<lanelet::PassingControlLine>(current_map_->regulatoryElementLayer.get(regem->id()));
+        // if this geofence's pcl doesn't match with the lanelets current bound side
+        bool should_process_this_regem = false;
+        for (auto control_line : pcl->controlLine())
+        {
+          if (control_line.id() == el.lanelet()->leftBound2d().id() && gf_ptr->pcl_affects_left_ ||
+          control_line.id() == el.lanelet()->rightBound2d().id() && gf_ptr->pcl_affects_right_)
+          {
+            ROS_WARN_STREAM("Found a regem ought to process");
+            should_process_this_regem = true;
+            break;
+          }
+        }
+        if (!should_process_this_regem) continue;
+      }
+
       if (regem->attribute(lanelet::AttributeName::Subtype).value() == gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value())
       {
-        ROS_WARN_STREAM("removing ll:" << el.id() << " regem:" << regem->id());
         lanelet::RegulatoryElementPtr nonconst_regem = current_map_->regulatoryElementLayer.get(regem->id());
         gf_ptr->prev_regems_.push_back(std::make_pair(el.id(), nonconst_regem));
         gf_ptr->remove_list_.push_back(std::make_pair(el.id(), nonconst_regem));
         current_map_->remove(current_map_->laneletLayer.get(el.lanelet()->id()), nonconst_regem);
+        ROS_WARN_STREAM("remove: JUST REMOVED at regem: " << nonconst_regem->id() << " type: "<< nonconst_regem->attribute(lanelet::AttributeName::Subtype).value() << ", el: " << el.id());
+        
       }
     }
   }
-  */
+  
   // this loop is also kept separately because previously we assumed 
   // there was existing regem, but this handles changes to all of the elements
   for (auto el: gf_ptr->affected_parts_)
@@ -395,13 +417,6 @@ void WMBroadcaster::addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr)
     {
       current_map_->update(current_map_->laneletLayer.get(el.id()), gf_ptr->regulatory_element_);
       gf_ptr->update_list_.push_back(std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>(el.id(), gf_ptr->regulatory_element_));
-      // DEBUG
-      if (gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName)
-      {
-        ROS_WARN_STREAM("INSIDE!");
-        lanelet::DigitalSpeedLimitPtr speedo =  std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(gf_ptr->regulatory_element_);
-        ROS_WARN_STREAM("SPEED->" << speedo->speed_limit_.value());
-      }
     }
   }
   
@@ -410,11 +425,31 @@ void WMBroadcaster::addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr)
 void WMBroadcaster::addBackRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr)
 {
   // First loop is to remove the relation between element and regulatory element that this geofence added initially
-  /*
+  
   for (auto el: gf_ptr->affected_parts_)
   {
     for (auto regem : el.regulatoryElements())
     {
+      ROS_WARN_STREAM("remove: looking at regem: " << regem->id() << " type: "<< regem->attribute(lanelet::AttributeName::Subtype).value() << ", el: " << el.id());
+      // extra condition for PassingControlLine
+      if (regem->attribute(lanelet::AttributeName::Subtype).value() == lanelet::PassingControlLine::RuleName && el.isLanelet())
+      {
+        lanelet::PassingControlLinePtr pcl =  std::dynamic_pointer_cast<lanelet::PassingControlLine>(current_map_->regulatoryElementLayer.get(regem->id()));
+        // if this geofence's pcl doesn't match with the lanelets current bound side
+        bool should_process_this_regem = false;
+        for (auto control_line : pcl->controlLine())
+        {
+          if (control_line.id() == el.lanelet()->leftBound2d().id() && gf_ptr->pcl_affects_left_ ||
+          control_line.id() == el.lanelet()->rightBound2d().id() && gf_ptr->pcl_affects_right_)
+          {
+            ROS_WARN_STREAM("Found a regem ought to process");
+            should_process_this_regem = true;
+            break;
+          }
+        }
+        if (!should_process_this_regem) continue;
+      }
+
       if (regem->attribute(lanelet::AttributeName::Subtype).value() ==  gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value())
       {
         auto nonconst_regem = current_map_->regulatoryElementLayer.get(regem->id());
@@ -423,7 +458,7 @@ void WMBroadcaster::addBackRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr)
       }
     }
   }
-  */
+  
   // As this gf received is the first gf that was sent in through addGeofence,
   // we have prev speed limit information inside it to put them back
   for (auto pair : gf_ptr->prev_regems_)

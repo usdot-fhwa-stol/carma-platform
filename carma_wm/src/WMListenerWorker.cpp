@@ -64,6 +64,8 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinCon
   }
 
   ROS_INFO_STREAM("Geofence id" << gf_ptr->id_ << " requests update of size: " << gf_ptr->update_list_.size());
+  // we should extract general regem to specific type of regem the geofence specifies
+  
   for (auto pair : gf_ptr->update_list_)
   {
     auto parent_llt = world_model_->getMutableMap()->laneletLayer.get(pair.first);
@@ -76,7 +78,21 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinCon
     }
     else
     {
-      world_model_->getMutableMap()->update(parent_llt, pair.second);
+      auto factory_pcl = lanelet::RegulatoryElementFactory::create(pair.second.get()->attribute(lanelet::AttributeName::Subtype).value(),
+                                                            std::const_pointer_cast<lanelet::RegulatoryElementData>(pair.second.get()->constData()));
+      
+      // we should extract general regem to specific type of regem the geofence specifies
+      if (pair.second.get()->attribute(lanelet::AttributeName::Subtype).value() == lanelet::PassingControlLine::RuleName)
+      {
+        lanelet::PassingControlLinePtr control_line = std::dynamic_pointer_cast<lanelet::PassingControlLine>(factory_pcl);
+        world_model_->getMutableMap()->update(parent_llt, control_line);
+      }
+      else if (pair.second.get()->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName)
+      {
+        
+        lanelet::DigitalSpeedLimitPtr speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(factory_pcl);
+        world_model_->getMutableMap()->update(parent_llt, speed);
+      }
     }
   }
   
