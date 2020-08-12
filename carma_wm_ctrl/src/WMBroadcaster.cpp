@@ -376,7 +376,6 @@ void WMBroadcaster::addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr)
   {
     for (auto regem : el.regulatoryElements())
     {
-      ROS_WARN_STREAM("remove: looking at regem: " << regem->id() << " type: "<< regem->attribute(lanelet::AttributeName::Subtype).value() << ", el: " << el.id());
       // extra condition for PassingControlLine
       if (regem->attribute(lanelet::AttributeName::Subtype).value() == lanelet::PassingControlLine::RuleName && el.isLanelet())
       {
@@ -388,7 +387,6 @@ void WMBroadcaster::addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr)
           if (control_line.id() == el.lanelet()->leftBound2d().id() && gf_ptr->pcl_affects_left_ ||
           control_line.id() == el.lanelet()->rightBound2d().id() && gf_ptr->pcl_affects_right_)
           {
-            ROS_WARN_STREAM("Found a regem ought to process");
             should_process_this_regem = true;
             break;
           }
@@ -402,8 +400,6 @@ void WMBroadcaster::addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr)
         gf_ptr->prev_regems_.push_back(std::make_pair(el.id(), nonconst_regem));
         gf_ptr->remove_list_.push_back(std::make_pair(el.id(), nonconst_regem));
         current_map_->remove(current_map_->laneletLayer.get(el.lanelet()->id()), nonconst_regem);
-        ROS_WARN_STREAM("remove: JUST REMOVED at regem: " << nonconst_regem->id() << " type: "<< nonconst_regem->attribute(lanelet::AttributeName::Subtype).value() << ", el: " << el.id());
-        
       }
     }
   }
@@ -430,7 +426,6 @@ void WMBroadcaster::addBackRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr)
   {
     for (auto regem : el.regulatoryElements())
     {
-      ROS_WARN_STREAM("remove: looking at regem: " << regem->id() << " type: "<< regem->attribute(lanelet::AttributeName::Subtype).value() << ", el: " << el.id());
       // extra condition for PassingControlLine
       if (regem->attribute(lanelet::AttributeName::Subtype).value() == lanelet::PassingControlLine::RuleName && el.isLanelet())
       {
@@ -442,7 +437,6 @@ void WMBroadcaster::addBackRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr)
           if (control_line.id() == el.lanelet()->leftBound2d().id() && gf_ptr->pcl_affects_left_ ||
           control_line.id() == el.lanelet()->rightBound2d().id() && gf_ptr->pcl_affects_right_)
           {
-            ROS_WARN_STREAM("Found a regem ought to process");
             should_process_this_regem = true;
             break;
           }
