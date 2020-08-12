@@ -27,7 +27,7 @@
 namespace carma_wm_ctrl
 {
 using namespace lanelet::units::literals;
-/**RegulatoryElementPtr
+/**
  * @brief An object representing a geofence use for communications with CARMA Cloud
  *
  * TODO: This is currently a place holder class which needs to be updated based on the final geofence specification
