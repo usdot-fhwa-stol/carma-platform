@@ -55,6 +55,8 @@ public:
 
   void stateTransitionCallback(LocalizationState prev_state, LocalizationState new_state, LocalizationSignal signal);
 
+  boost::optional<std::pair<LocalizationState, ros::Timer>> current_timer_;
+
 private:
   PosePublisher pose_pub_;
   TransformPublisher transform_pub_;

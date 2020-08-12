@@ -100,7 +100,8 @@ void LocalizationManager::gnssPoseCallback(const geometry_msgs::PoseStampedConst
   }
 }
 
-void LocalizationManager::initialPoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg) {
+void LocalizationManager::initialPoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg)
+{
   transition_table_.signal(LocalizationSignal::INITIAL_POSE);
 }
 
@@ -142,16 +143,47 @@ cav_msgs::LocalizationStatusReport LocalizationManager::stateToMsg(LocalizationS
   msg.header.stamp = ros::Time::now();
 }
 
+void &LocalizationManager::timerCallback(const ros::TimerEvent& event, const LocalizationState origin_state)
+{
+  if (origin_state != transition_table_.getState())
+    return;  // If the sate has changed then return
+
+  transition_table_.signal(LocalizationSignal::TIMEOUT);
+}
+
 void LocalizationManager::stateTransitionCallback(LocalizationState prev_state, LocalizationState new_state,
                                                   LocalizationSignal signal)
 {
+
   switch (new_state)
   {
     case LocalizationState::INITIALIZING:
       // TODO create timer. Do we need to check the mode?
+      // Create timer and add to map of timer with state. This should clear any existing timers
+      // When A time expires first check if we are still in the same state
+      // If in the same state then send the timeout signal. If not then do nothing
+      // TODO given that we are in one state at a time could we just use a single timer object?
+      if (current_timer_)
+      {  // If there is currently a timer then clear it as we are in a new state
+        current_timer_->second.stop();
+      }
+
+      auto callback = std::bind(&LocalizationManager::timerCallback, this, _1, new_state);
+
+      current_timer_ = ros::NodeHandle::createTimer(
+          ros::Duraction((double)config_.auto_initialization_timeout / 1000.0), callback, true); // TODO update to use abstracted timer class
       break;
     case LocalizationState::DEGRADED_NO_LIDAR_FIX:
       // TODO create timer. Do we need to check the mode?
+      if (current_timer_)
+      {  // If there is currently a timer then clear it as we are in a new state
+        current_timer_->second.stop();
+      }
+
+      auto callback = std::bind(&LocalizationManager::timerCallback, this, _1, new_state);
+
+      current_timer_ = ros::NodeHandle::createTimer(
+          ros::Duraction((double)config_.gnss_initialization_timeout / 1000.0), callback, true); // TODO update to use abstracted timer class
       break;
     default:
       break;
