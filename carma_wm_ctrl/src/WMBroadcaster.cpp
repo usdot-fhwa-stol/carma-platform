@@ -387,7 +387,7 @@ std::unordered_set<lanelet::Lanelet> WMBroadcaster::filterSuccessorLanelets(cons
 bool WMBroadcaster::shouldChangeControlLine(const lanelet::ConstLaneletOrArea& el,const lanelet::RegulatoryElementConstPtr& regem, std::shared_ptr<Geofence> gf_ptr) const
 {
   // should change if if the regem is not a passing control line or area, which is not supported by this logic
-  if (regem->attribute(lanelet::AttributeName::Subtype).value() != lanelet::PassingControlLine::RuleName || !el.isLanelet())
+  if (regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::PassingControlLine::RuleName) != 0 || !el.isLanelet())
   {
     return true;
   }

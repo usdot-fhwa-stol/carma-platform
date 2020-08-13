@@ -86,7 +86,7 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinCon
     }
     else
     {
-      
+      newRegemUpdateHelper(parent_llt, pair.second.get());
     }
   }
   
@@ -99,10 +99,10 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinCon
   * \brief This is a helper function updates the parent_llt with specified regem. This function is needed
   *        as we need to dynamic_cast from general regem to specific type of regem based on the geofence
   * \param parent_llt The Lanelet that need to register the regem
-  * \param regem The regulatoryElement that needs to be checked
+  * \param regem lanelet::RegulatoryElement* which is the type that the serializer decodes from binary
   * NOTE: Currently this function supports digital speed limit and passing control line geofence type
   */
-void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElementPtr regem)
+void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const
 {
   auto factory_pcl = lanelet::RegulatoryElementFactory::create(regem->attribute(lanelet::AttributeName::Subtype).value(),
                                                             std::const_pointer_cast<lanelet::RegulatoryElementData>(regem->constData()));

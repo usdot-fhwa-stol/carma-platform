@@ -418,7 +418,7 @@ TEST(WMBroadcaster, DISABLED_addAndRemoveGeofence)
   // add regems
   lanelet::DigitalSpeedLimitPtr old_speed_limit = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_mph, {}, {},
                                                      { lanelet::Participants::VehicleCar }));
-  ASSERT_EQ(old_speed_limit->attribute(lanelet::AttributeName::Subtype).value(), lanelet::DigitalSpeedLimit::RuleName);
+  ASSERT_TRUE(old_speed_limit->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
   ASSERT_EQ(map->laneletLayer.get(10000).regulatoryElements().size(), 0);
   map->update(map->laneletLayer.get(10000), old_speed_limit); // added a speed limit to first llt
   
@@ -509,7 +509,7 @@ TEST(WMBroadcaster, DISABLED_GeofenceBinMsgTest)
   // add regems
   lanelet::DigitalSpeedLimitPtr old_speed_limit = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_mph, {}, {},
                                                      { lanelet::Participants::VehicleCar }));
-  ASSERT_EQ(old_speed_limit->attribute(lanelet::AttributeName::Subtype).value(), lanelet::DigitalSpeedLimit::RuleName);
+  ASSERT_TRUE(old_speed_limit->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
   ASSERT_EQ(map->laneletLayer.get(10000).regulatoryElements().size(), 0);
   map->update(map->laneletLayer.get(10000), old_speed_limit); // added a speed limit to first llt
   
@@ -568,7 +568,7 @@ TEST(WMBroadcaster, DISABLED_GeofenceBinMsgTest)
   ASSERT_EQ(data_received->id_, gf_ptr->id_);
   ASSERT_EQ(gf_ptr->remove_list_.size(), 1);
   ASSERT_EQ(data_received->remove_list_.size(), 1); // old_speed_limit
-  ASSERT_EQ(data_received->remove_list_[0].second->attribute(lanelet::AttributeName::Subtype).value(), lanelet::DigitalSpeedLimit::RuleName );
+  ASSERT_TRUE(data_received->remove_list_[0].second->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) ==0 );
   ASSERT_EQ(data_received->update_list_.size(), 2); // geofence tags 2 lanelets
   ASSERT_EQ(data_received->update_list_[1].first, 10000);
 
@@ -643,7 +643,7 @@ TEST(WMBroadcaster, DISABLED_RegulatoryPCLTest)
   // add regems
   lanelet::PassingControlLinePtr old_pcl = std::make_shared<lanelet::PassingControlLine>(lanelet::PassingControlLine::buildData(10082, {map->laneletLayer.get(10000).leftBound()}, {},
                                                      { lanelet::Participants::VehicleCar }));
-  ASSERT_EQ(old_pcl->attribute(lanelet::AttributeName::Subtype).value(), lanelet::PassingControlLine::RuleName);
+  ASSERT_TRUE(old_pcl->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::PassingControlLine::RuleName) == 0);
   ASSERT_EQ(map->laneletLayer.get(10000).regulatoryElements().size(), 0);
   map->update(map->laneletLayer.get(10000), old_pcl); // added a passing control line
   map->update(map->laneletLayer.get(10007), old_pcl);
@@ -818,6 +818,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   msg_v01.params.detail.choice = cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
   msg_v01.params.detail.maxspeed = 50;
   auto gf_ptr = wmb.geofenceFromMsg(msg_v01);
+  ASSERT_TRUE(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
   lanelet::DigitalSpeedLimitPtr max_speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(gf_ptr->regulatory_element_);
   ASSERT_NEAR(max_speed->speed_limit_.value(), 22.352, 0.00001);
 
@@ -825,6 +826,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   msg_v01.params.detail.choice = cav_msgs::TrafficControlDetail::MINSPEED_CHOICE;
   msg_v01.params.detail.minspeed = 50;
   gf_ptr = wmb.geofenceFromMsg(msg_v01);
+  ASSERT_TRUE(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
   lanelet::DigitalSpeedLimitPtr min_speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(gf_ptr->regulatory_element_);
   ASSERT_NEAR(min_speed->speed_limit_.value(), 22.352,  0.00001);
 
@@ -833,6 +835,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   msg_v01.params.detail.choice = cav_msgs::TrafficControlDetail::LATAFFINITY_CHOICE;
   msg_v01.params.detail.lataffinity = cav_msgs::TrafficControlDetail::LEFT; // applies to the left boundaries of the 
   gf_ptr = wmb.geofenceFromMsg(msg_v01);
+  ASSERT_TRUE(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::PassingControlLine::RuleName) == 0);
   ASSERT_TRUE(gf_ptr->pcl_affects_left_);
 
   msg_v01.params.detail.lataffinity = cav_msgs::TrafficControlDetail::RIGHT; // applies to the right boundaries of the 
@@ -877,6 +880,13 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   gf_ptr = wmb.geofenceFromMsg(msg_v01);
   pcl = std::dynamic_pointer_cast<lanelet::PassingControlLine>(gf_ptr->regulatory_element_);
   ASSERT_TRUE(strcmp(pcl->right_participants_.begin()->data(), lanelet::Participants::VehicleBus) == 0);
+
+  msg_v01.params.vclasses = {};
+  veh_class.vehicle_class = j2735_msgs::TrafficControlVehClass::LIGHT_TRUCK_VAN;
+  msg_v01.params.vclasses.push_back(veh_class);
+  gf_ptr = wmb.geofenceFromMsg(msg_v01);
+  pcl = std::dynamic_pointer_cast<lanelet::PassingControlLine>(gf_ptr->regulatory_element_);
+  ASSERT_TRUE(strcmp(pcl->right_participants_.begin()->data(), lanelet::Participants::VehicleCar) == 0);
 
   msg_v01.params.vclasses = {};
   veh_class.vehicle_class = j2735_msgs::TrafficControlVehClass::THREE_AXLE_SINGLE_UNIT_TRUCK;
