@@ -81,5 +81,6 @@ private:
   std::shared_ptr<CARMAWorldModel> world_model_;
   std::function<void()> map_callback_;
   std::function<void()> route_callback_;
+  void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElementPtr regem);
 };
 }  // namespace carma_wm

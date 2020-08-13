@@ -139,7 +139,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
   return gf_ptr;
 }
 
-void WMBroadcaster::passingControlLineFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts)
+void WMBroadcaster::passingControlLineFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const
 {
   cav_msgs::TrafficControlDetail msg_detail;
   msg_detail = msg_v01.params.detail;
@@ -505,7 +505,7 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
 };
 
 // helper function that detects the type of geofence and delegates
-void WMBroadcaster::addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr)
+void WMBroadcaster::addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr) const
 {
   // resetting the information inside geofence
   gf_ptr->remove_list_ = {};
@@ -517,7 +517,7 @@ void WMBroadcaster::addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr)
 }
 
 // helper function that detects the type of geofence and delegates
-void WMBroadcaster::removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr)
+void WMBroadcaster::removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr) const
 {
   // again, TODO: Logic to determine what type of geofence goes here in the future
   // reset the info inside geofence

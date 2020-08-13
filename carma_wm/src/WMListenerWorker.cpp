@@ -21,7 +21,7 @@ namespace carma_wm
 {
 enum GeofenceType{ INVALID, DIGITAL_SPEED_LIMIT, PASSING_CONTROL_LINE, /* ... others */ };
 // helper function that return geofence type as an enum, which makes it cleaner by allowing switch statement
-GeofenceType resolveGeofenceType(std::string rule_name)
+GeofenceType resolveGeofenceType(const std::string& rule_name)
 {
   if (rule_name.compare(lanelet::PassingControlLine::RuleName) == 0) return PASSING_CONTROL_LINE;
   if (rule_name.compare(lanelet::DigitalSpeedLimit::RuleName) == 0) return DIGITAL_SPEED_LIMIT;
@@ -86,27 +86,7 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinCon
     }
     else
     {
-      auto factory_pcl = lanelet::RegulatoryElementFactory::create(pair.second->attribute(lanelet::AttributeName::Subtype).value(),
-                                                            std::const_pointer_cast<lanelet::RegulatoryElementData>(pair.second->constData()));
       
-      // we should extract general regem to specific type of regem the geofence specifies
-      switch(resolveGeofenceType(pair.second->attribute(lanelet::AttributeName::Subtype).value()))
-      {
-        case PASSING_CONTROL_LINE:
-        {
-          lanelet::PassingControlLinePtr control_line = std::dynamic_pointer_cast<lanelet::PassingControlLine>(factory_pcl);
-          world_model_->getMutableMap()->update(parent_llt, control_line);
-          break;
-        }
-        case DIGITAL_SPEED_LIMIT:
-        {
-          lanelet::DigitalSpeedLimitPtr speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(factory_pcl);
-          world_model_->getMutableMap()->update(parent_llt, speed);
-          break;
-        }
-        default:
-          break;
-      }
     }
   }
   
@@ -115,6 +95,37 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinCon
   ROS_INFO_STREAM("Finished Applying the Map Update with Geofence Id:" << gf_ptr->id_);
 }
 
+/*!
+  * \brief This is a helper function updates the parent_llt with specified regem. This function is needed
+  *        as we need to dynamic_cast from general regem to specific type of regem based on the geofence
+  * \param parent_llt The Lanelet that need to register the regem
+  * \param regem The regulatoryElement that needs to be checked
+  * NOTE: Currently this function supports digital speed limit and passing control line geofence type
+  */
+void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElementPtr regem)
+{
+  auto factory_pcl = lanelet::RegulatoryElementFactory::create(regem->attribute(lanelet::AttributeName::Subtype).value(),
+                                                            std::const_pointer_cast<lanelet::RegulatoryElementData>(regem->constData()));
+      
+  // we should extract general regem to specific type of regem the geofence specifies
+  switch(resolveGeofenceType(regem->attribute(lanelet::AttributeName::Subtype).value()))
+  {
+    case PASSING_CONTROL_LINE:
+    {
+      lanelet::PassingControlLinePtr control_line = std::dynamic_pointer_cast<lanelet::PassingControlLine>(factory_pcl);
+      world_model_->getMutableMap()->update(parent_llt, control_line);
+      break;
+    }
+    case DIGITAL_SPEED_LIMIT:
+    {
+      lanelet::DigitalSpeedLimitPtr speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(factory_pcl);
+      world_model_->getMutableMap()->update(parent_llt, speed);
+      break;
+    }
+    default:
+      break;
+  }
+}
 
 void WMListenerWorker::roadwayObjectListCallback(const cav_msgs::RoadwayObstacleList& msg)
 {
