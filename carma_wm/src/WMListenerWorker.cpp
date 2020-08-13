@@ -123,6 +123,7 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
       break;
     }
     default:
+      ROS_WARN_STREAM("World Model instance received an unsupported geofence type in its map update callback!");
       break;
   }
 }

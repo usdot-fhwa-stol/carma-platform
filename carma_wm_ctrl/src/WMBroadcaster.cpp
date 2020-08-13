@@ -119,7 +119,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
   }
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::LATPERM_CHOICE || msg_detail.choice == cav_msgs::TrafficControlDetail::LATAFFINITY_CHOICE)
   {
-    passingControlLineFromMsg(gf_ptr, msg_v01, affected_llts);
+    addPassingControlLineFromMsg(gf_ptr, msg_v01, affected_llts);
   }
 
   cav_msgs::TrafficControlSchedule msg_schedule = msg_v01.params.schedule;
@@ -139,7 +139,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
   return gf_ptr;
 }
 
-void WMBroadcaster::passingControlLineFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const
+void WMBroadcaster::addPassingControlLineFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const
 {
   cav_msgs::TrafficControlDetail msg_detail;
   msg_detail = msg_v01.params.detail;
