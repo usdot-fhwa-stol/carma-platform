@@ -25,6 +25,7 @@
 #include <lanelet2_io/io_handlers/Serialize.h>
 #include <lanelet2_core/primitives/Point.h>
 #include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
+#include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
 #include <lanelet2_core/primitives/LaneletOrArea.h>
 
 
@@ -45,8 +46,7 @@ public:
                  id_(id), update_list_(update_list), remove_list_(remove_list){}  
 
   boost::uuids::uuid id_;  // Unique id of this geofence
-  
-   // elements needed for broadcasting to the rest of map users
+  // elements needed for broadcasting to the rest of map users
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list_;
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> remove_list_;
 };
@@ -85,7 +85,6 @@ inline void save(Archive& ar, const carma_wm::TrafficControl& gf, unsigned int /
 {
   std::string string_id = boost::uuids::to_string(gf.id_);
   ar << string_id;
-
   // convert the regems that need to be removed
   size_t remove_list_size = gf.remove_list_.size();
   ar << remove_list_size;
@@ -105,7 +104,6 @@ inline void load(Archive& ar, carma_wm::TrafficControl& gf, unsigned int /*versi
   std::string id;
   ar >> id;
   gf.id_ = gen(id);
-
   // save regems to remove
   size_t remove_list_size;
   ar >> remove_list_size;
