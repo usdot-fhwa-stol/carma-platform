@@ -19,6 +19,14 @@
 
 namespace carma_wm
 {
+enum GeofenceType{ INVALID, DIGITAL_SPEED_LIMIT, PASSING_CONTROL_LINE, /* ... others */ };
+// helper function that return geofence type as an enum, which makes it cleaner by allowing switch statement
+GeofenceType resolveGeofenceType(std::string rule_name)
+{
+  if (rule_name.compare(lanelet::PassingControlLine::RuleName) == 0) return PASSING_CONTROL_LINE;
+  if (rule_name.compare(lanelet::DigitalSpeedLimit::RuleName) == 0) return DIGITAL_SPEED_LIMIT;
+}
+
 WMListenerWorker::WMListenerWorker()
 {
   world_model_.reset(new CARMAWorldModel);
@@ -78,20 +86,26 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinCon
     }
     else
     {
-      auto factory_pcl = lanelet::RegulatoryElementFactory::create(pair.second.get()->attribute(lanelet::AttributeName::Subtype).value(),
-                                                            std::const_pointer_cast<lanelet::RegulatoryElementData>(pair.second.get()->constData()));
+      auto factory_pcl = lanelet::RegulatoryElementFactory::create(pair.second->attribute(lanelet::AttributeName::Subtype).value(),
+                                                            std::const_pointer_cast<lanelet::RegulatoryElementData>(pair.second->constData()));
       
       // we should extract general regem to specific type of regem the geofence specifies
-      if (pair.second.get()->attribute(lanelet::AttributeName::Subtype).value() == lanelet::PassingControlLine::RuleName)
+      switch(resolveGeofenceType(pair.second->attribute(lanelet::AttributeName::Subtype).value()))
       {
-        lanelet::PassingControlLinePtr control_line = std::dynamic_pointer_cast<lanelet::PassingControlLine>(factory_pcl);
-        world_model_->getMutableMap()->update(parent_llt, control_line);
-      }
-      else if (pair.second.get()->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName)
-      {
-        
-        lanelet::DigitalSpeedLimitPtr speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(factory_pcl);
-        world_model_->getMutableMap()->update(parent_llt, speed);
+        case PASSING_CONTROL_LINE:
+        {
+          lanelet::PassingControlLinePtr control_line = std::dynamic_pointer_cast<lanelet::PassingControlLine>(factory_pcl);
+          world_model_->getMutableMap()->update(parent_llt, control_line);
+          break;
+        }
+        case DIGITAL_SPEED_LIMIT:
+        {
+          lanelet::DigitalSpeedLimitPtr speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(factory_pcl);
+          world_model_->getMutableMap()->update(parent_llt, speed);
+          break;
+        }
+        default:
+          break;
       }
     }
   }
