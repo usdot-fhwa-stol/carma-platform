@@ -298,7 +298,6 @@ TEST(WMBroadcaster, geofenceCallback)
         ASSERT_EQ(data_received->remove_list_.size(), 0);
         ASSERT_EQ(data_received->update_list_.size(), 0);
         active_call_count.store(active_call_count.load() + 1);
-        ROS_WARN_STREAM("we reached!");
         // atomic is not working for boost::uuids::uuid, so hash it
         last_active_gf.store(boost::hash<boost::uuids::uuid>()(data_received->id_));
       },
