@@ -46,13 +46,13 @@ namespace carma_wm_ctrl
 
 {
 
-TEST(WMBroadcaster, DISABLED_Constructor)
+TEST(WMBroadcaster, Constructor)
 {
   WMBroadcaster([](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
                 std::make_unique<TestTimerFactory>());  // Create broadcaster with test timers. Having this check helps
                                                         // verify that the timers do not crash on destruction
 }
-TEST(WMBroadcaster, DISABLED_baseMapCallback)
+TEST(WMBroadcaster, baseMapCallback)
 {
   ros::Time::setNow(ros::Time(0));  // Set current time
 
@@ -84,7 +84,7 @@ TEST(WMBroadcaster, DISABLED_baseMapCallback)
 }
 
 // here test the proj string transform test
-TEST(WMBroadcaster, DISABLED_getAffectedLaneletOrAreasFromTransform)
+TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
 {
   using namespace lanelet::units::literals;
   size_t base_map_call_count = 0;
@@ -149,7 +149,7 @@ TEST(WMBroadcaster, DISABLED_getAffectedLaneletOrAreasFromTransform)
 }
 
 // here test assuming the georeference proj strings are the same
-TEST(WMBroadcaster, DISABLED_getAffectedLaneletOrAreasOnlyLogic)
+TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
 {
   using namespace lanelet::units::literals;
   // Set the environment  
@@ -246,7 +246,7 @@ TEST(WMBroadcaster, DISABLED_getAffectedLaneletOrAreasOnlyLogic)
   ASSERT_EQ(affected_parts.size(), 2); // they should not be considered to be on the lanelet
 }
 
-TEST(WMBroadcaster, DISABLED_geofenceCallback)
+TEST(WMBroadcaster, geofenceCallback)
 {
   // Test adding then evaluate if the calls to active and inactive are done correctly
   auto gf = std::make_shared<Geofence>(Geofence());
@@ -298,6 +298,7 @@ TEST(WMBroadcaster, DISABLED_geofenceCallback)
         ASSERT_EQ(data_received->remove_list_.size(), 0);
         ASSERT_EQ(data_received->update_list_.size(), 0);
         active_call_count.store(active_call_count.load() + 1);
+        ROS_WARN_STREAM("we reached!");
         // atomic is not working for boost::uuids::uuid, so hash it
         last_active_gf.store(boost::hash<boost::uuids::uuid>()(data_received->id_));
       },
@@ -345,6 +346,7 @@ TEST(WMBroadcaster, DISABLED_geofenceCallback)
   gf_msg.choice = cav_msgs::TrafficControlMessage::TCMV01;
   // create the geofence request
   msg_v01.geometry.proj = geofence_proj_string;
+  gf_msg.tcmV01 = msg_v01;
   // check geofence with no applicable points
   ros::Time::setNow(ros::Time(0));
   wmb.geofenceCallback(gf_msg);
@@ -359,15 +361,11 @@ TEST(WMBroadcaster, DISABLED_geofenceCallback)
   msg_v01.geometry.nodes.push_back(pt);
   pt.x = -8.5; pt.y = -8.5; pt.z = 0;
   msg_v01.geometry.nodes.push_back(pt);
+  // update id to continue testing
+  curr_id = boost::uuids::random_generator()(); 
+  curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
+  std::copy(curr_id.begin(),  curr_id.end(), msg_v01.id.id.begin());
   gf_msg.tcmV01 = msg_v01;
-
-  // Verify adding geofence call
-  ros::Time::setNow(ros::Time(0));
-  wmb.geofenceCallback(gf_msg);
-  ros::Time::setNow(ros::Time(2.1));  // Set current time
-
-  ASSERT_TRUE(carma_wm::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
-  ASSERT_EQ(1, active_call_count.load());
 
   ros::Time::setNow(ros::Time(0));
   // check how many times map_update is called so far
@@ -391,7 +389,7 @@ TEST(WMBroadcaster, DISABLED_geofenceCallback)
 
 }
 
-TEST(WMBroadcaster, DISABLED_addAndRemoveGeofence)
+TEST(WMBroadcaster, addAndRemoveGeofence)
 {
   using namespace lanelet::units::literals;
   // Set the environment  
@@ -486,7 +484,7 @@ TEST(WMBroadcaster, DISABLED_addAndRemoveGeofence)
 
 }
 
-TEST(WMBroadcaster, DISABLED_GeofenceBinMsgTest)
+TEST(WMBroadcaster, GeofenceBinMsgTest)
 {
   using namespace lanelet::units::literals;
   // Set the environment  
@@ -598,7 +596,7 @@ TEST(WMBroadcaster, DISABLED_GeofenceBinMsgTest)
   
 }
 
-TEST(WMBroadcaster, DISABLED_RegulatoryPCLTest)
+TEST(WMBroadcaster, RegulatoryPCLTest)
 {
   // Test adding then evaluate if the calls to active and inactive are done correctly
   auto gf_ptr = std::make_shared<Geofence>(Geofence());
