@@ -59,7 +59,7 @@ cav_msgs::ExternalObjectList MotionComputationWorker::predictionLogic(cav_msgs::
 
     bool use_ctrv_model;
 
-    /*if (  obj.object_type == obj.UNKNOWN)
+    if (  obj.object_type == obj.UNKNOWN)
     {
       use_ctrv_model = true;
 
@@ -74,23 +74,22 @@ cav_msgs::ExternalObjectList MotionComputationWorker::predictionLogic(cav_msgs::
       use_ctrv_model = true;
 
     }
-    else if (obj.object_type == obj.LARGE_VEHICLE;)
+    else if (obj.object_type == obj.LARGE_VEHICLE)
     {
       use_ctrv_model = true;
 
     }
-
     else if ( obj.object_type == obj.PEDESTRIAN)
     {
       use_ctrv_model = false;
     }
     else
     {
-      //obj.object_type = obj.UNKNOWN;
+      obj.object_type = obj.UNKNOWN;
       use_ctrv_model = false;
     }//end if-else */
 
-    //Switch Statement Test
+    /*/Switch Statement Test
     switch(obj.object_type)
     {
       case obj.UNKNOWN:
@@ -111,12 +110,12 @@ cav_msgs::ExternalObjectList MotionComputationWorker::predictionLogic(cav_msgs::
       default:
         use_ctrv_model = false;
 
-    }
+    }*/
 
 
 
 
-    if (use_ctrv_model)
+    if (use_ctrv_model == true)
     {
       obj.predictions =
           motion_predict::ctrv::predictPeriod(obj, prediction_time_step_, prediction_period_,
