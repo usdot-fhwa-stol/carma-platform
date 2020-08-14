@@ -28,17 +28,6 @@ namespace object
 {
 MotionComputationWorker::MotionComputationWorker(const PublishObjectCallback& obj_pub) : obj_pub_(obj_pub){};
 
-void MotionComputationWorker::motionPredictionCallback(cav_msgs::ExternalObjectListPtr obj_list)//Duplicate input message
-{
-
-    //cav_msgs::ExternalObjectList msg;
-
-    predictionLogic(obj_list);
- 
-  
-   //obj_pub_(msg);
-
-}
 
 void MotionComputationWorker::predictionLogic(cav_msgs::ExternalObjectListPtr obj_list)
 {
@@ -89,32 +78,7 @@ void MotionComputationWorker::predictionLogic(cav_msgs::ExternalObjectListPtr ob
       use_ctrv_model = false;
     }//end if-else */
 
-    /*/Switch Statement Test
-    switch(obj.object_type)
-    {
-      case obj.UNKNOWN:
-        use_ctrv_model = false;
-
-      case obj.MOTORCYCLE:
-        use_ctrv_model = true;
-
-      case obj.SMALL_VEHICLE:
-        use_ctrv_model = true;
-      
-      case obj.LARGE_VEHICLE:
-        use_ctrv_model = true;
-      
-      case obj.PEDESTRIAN:
-        use_ctrv_model = false;
-
-      default:
-        use_ctrv_model = false;
-
-    }*/
-
-
-
-
+    
     if (use_ctrv_model == true)
     {
       obj.predictions =

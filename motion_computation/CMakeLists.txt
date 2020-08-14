@@ -70,7 +70,7 @@ target_link_libraries(${PROJECT_NAME}_node
 
 ## Mark executables for installation
 install(TARGETS 
-	motion_computation_node 
+	${PROJECT_NAME}_node 
 	${PROJECT_NAME}
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
@@ -106,17 +106,9 @@ catkin_add_gmock(${PROJECT_NAME}-test
  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 
-catkin_add_gmock(motion-computation
- test/TestMain.cpp
- test/MotionComputationTest.cpp
- WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
-)
 
 if(TARGET ${PROJECT_NAME}-test)
  target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
 endif()
 
-if(TARGET motion-computation)
- target_link_libraries(motion-computation ${PROJECT_NAME} ${catkin_LIBRARIES})
-endif()
 

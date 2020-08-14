@@ -47,7 +47,7 @@ namespace object{
     motion_worker_.setConfidenceDropRate(drop_rate);
 
     // Setup pub/sub
-    motion_comp_sub_=nh_.subscribe("external_objects",1,&MotionComputationWorker::motionPredictionCallback,&motion_worker_);
+    motion_comp_sub_=nh_.subscribe("external_objects",1,&MotionComputationWorker::predictionLogic,&motion_worker_);
     carma_obj_pub_=nh_.advertise<cav_msgs::ExternalObjectList>("external_object_predictions", 2);
   }
 

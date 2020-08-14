@@ -49,7 +49,8 @@ namespace object
 
     TEST(MotionComputationWorker, motionPredictionCallback)
     {    
-        object::MotionComputationWorker mcw([&](const cav_msgs::ExternalObjectList& obj_pub){});
+        bool published_data = false;
+        object::MotionComputationWorker mcw([&](const cav_msgs::ExternalObjectList& obj_pub){published_data = true;});
 
 
         cav_msgs::ExternalObject msg;
@@ -61,7 +62,7 @@ namespace object
         /*Test ExternalObject Presence Vector Values*/
         ASSERT_TRUE(msg.presence_vector > 0);
     
-        //uint16_t pv_Values[10] ={1, 2, 4, 8, 16, 32, 64, 128, 256, 512};
+        
         bool pvValid = false;
         for(auto i= 0; i<10; i++) //Test whether presence vector values in ExternalObject are valid
         {
@@ -90,7 +91,10 @@ namespace object
 
         cav_msgs::ExternalObjectListPtr obj_list(new cav_msgs::ExternalObjectList(obj));
 
+        //call predictionLogic function
         mcw.predictionLogic(obj_list);
+        //assert published_data is true
+        ASSERT_EQ(published_data, true);
         bool isFilled = false;
         for(auto item : obj_list->objects)
         {
@@ -98,9 +102,8 @@ namespace object
                 isFilled = true;
         }
         ROS_INFO_STREAM("Test Predictions");
-        //ASSERT_TRUE(obj_list.get()->objects[0].predictions.size() > 0);    //Create Assertion Statement to test whether object.prediction is empty
+        
         ASSERT_EQ(isFilled, true);
-        mcw.motionPredictionCallback(obj_list);
 
     }
 
