@@ -155,34 +155,26 @@ void LocalizationManager::stateTransitionCallback(LocalizationState prev_state, 
                                                   LocalizationSignal signal)
 {
 
+  // We are in a new state so clear any existing timers
+  if (current_timer_ && current_timer_->second)
+  { 
+    current_timer_->second->stop();
+  }
+
   switch (new_state)
   {
     case LocalizationState::INITIALIZING:
-      // TODO create timer. Do we need to check the mode?
-      // Create timer and add to map of timer with state. This should clear any existing timers
-      // When A time expires first check if we are still in the same state
-      // If in the same state then send the timeout signal. If not then do nothing
-      // TODO given that we are in one state at a time could we just use a single timer object?
-      if (current_timer_)
-      {  // If there is currently a timer then clear it as we are in a new state
-        current_timer_->second.stop();
-      }
 
       auto callback = std::bind(&LocalizationManager::timerCallback, this, _1, new_state);
 
-      current_timer_ = ros::NodeHandle::createTimer(
+      current_timer_ = timer_factory_->buildTimer(
           ros::Duraction((double)config_.auto_initialization_timeout / 1000.0), callback, true); // TODO update to use abstracted timer class
       break;
     case LocalizationState::DEGRADED_NO_LIDAR_FIX:
-      // TODO create timer. Do we need to check the mode?
-      if (current_timer_)
-      {  // If there is currently a timer then clear it as we are in a new state
-        current_timer_->second.stop();
-      }
 
       auto callback = std::bind(&LocalizationManager::timerCallback, this, _1, new_state);
 
-      current_timer_ = ros::NodeHandle::createTimer(
+      current_timer_ = timer_factory_->buildTimer(
           ros::Duraction((double)config_.gnss_initialization_timeout / 1000.0), callback, true); // TODO update to use abstracted timer class
       break;
     default:

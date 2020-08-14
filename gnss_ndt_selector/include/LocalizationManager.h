@@ -26,6 +26,8 @@
 #include "ndt_reliability_counter.h"
 #include <functional>
 #include <unordered_set>
+#include <carma_utils/timers/Timer.h>
+#include <carma_utils/timers/TimerFactory.h>
 #include "LocalizerMode.h"
 #include "LocalizationManagerConfig.h"
 #include "LocalizationTransitionTable.h"
@@ -40,7 +42,7 @@ public:
   using StatePublisher = std::function<void(const cav_msgs::LocalizationStatusReport&)>;
 
   LocalizationManager(PosePublisher pose_pub, TransformPublisher transform_pub, StatePublisher state_pub,
-                      LocalizationManagerConfig config);
+                      LocalizationManagerConfig config); // TODO add ingestion of factory
 
   void gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
 
@@ -54,8 +56,6 @@ public:
   bool onSpin();
 
   void stateTransitionCallback(LocalizationState prev_state, LocalizationState new_state, LocalizationSignal signal);
-
-  boost::optional<std::pair<LocalizationState, ros::Timer>> current_timer_;
 
 private:
   PosePublisher pose_pub_;
@@ -72,6 +72,9 @@ private:
   constexpr std::unordered_set<std::string> LIDAR_FAILURE_STRINGS({ "One LIDAR Failed", "Both LIDARS Failed" });
 
   ros::Time prev_ndt_stamp_ = ros::Time(0);
+
+  boost::optional<std::unique_ptr<carma_utils::timers::Timer>> current_timer_;
+  std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory_;
 
   void publishPoseStamped(const geometry_msgs::PoseStamped& pose);
 
