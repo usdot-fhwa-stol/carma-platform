@@ -33,28 +33,6 @@
  */
 namespace carma_wm
 {
-// Helper function which waits until the provided atomic matches the expected value or the timeout expires
-template <class T1, class T2>
-inline bool waitForEqOrTimeout(double timeout_s, T1 expected, std::atomic<T2>& actual)
-{
-  auto start = std::chrono::system_clock::now();
-  std::chrono::duration<double, std::ratio<1, 1>> sec(timeout_s);
-  auto elapsed_seconds = std::chrono::duration<double>(std::chrono::system_clock::now() - start);
-
-  while (elapsed_seconds < sec)
-  {
-    if (actual.load() == expected)
-    {
-      return true;
-    }
-    elapsed_seconds = std::chrono::system_clock::now() - start;
-    auto period = std::chrono::milliseconds(10);
-    std::this_thread::sleep_for(period);
-  }
-
-  return false;
-}
-
 inline lanelet::Point3d getPoint(double x, double y, double z)
 {
   return lanelet::Point3d(lanelet::utils::getId(), x, y, z);
