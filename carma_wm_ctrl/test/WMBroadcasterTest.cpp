@@ -19,21 +19,22 @@
 #include <carma_wm_ctrl/Geofence.h>
 #include <carma_wm/TrafficControl.h>
 #include <carma_wm_ctrl/GeofenceScheduler.h>
-#include <carma_wm_ctrl/ROSTimerFactory.h>
 #include <carma_wm_ctrl/WMBroadcaster.h>
 #include <lanelet2_extension/utility/message_conversion.h>
 #include <memory>
 #include <chrono>
 #include <ctime>
 #include <atomic>
-#include "TestHelpers.h"
-#include "TestTimer.h"
-#include "TestTimerFactory.h"
+#include <carma_utils/testing/TestHelpers.h>
+#include <carma_utils/timers/testing/TestTimer.h>
+#include <carma_utils/timers/testing/TestTimerFactory.h>
 #include <algorithm>
 
 #include <cav_msgs/TrafficControlMessage.h>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/functional/hash.hpp>
+
+#include "TestHelpers.h"
 
 using ::testing::_;
 using ::testing::A;
@@ -41,6 +42,9 @@ using ::testing::DoAll;
 using ::testing::InSequence;
 using ::testing::Return;
 using ::testing::ReturnArg;
+
+using carma_utils::timers::testing::TestTimer;
+using carma_utils::timers::testing::TestTimerFactory;
 
 namespace carma_wm_ctrl
 
@@ -350,7 +354,7 @@ TEST(WMBroadcaster, geofenceCallback)
   ros::Time::setNow(ros::Time(0));
   wmb.geofenceCallback(gf_msg);
   ros::Time::setNow(ros::Time(2.1));  // Set current time
-  ASSERT_FALSE(carma_wm::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
+  ASSERT_FALSE(carma_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
   ASSERT_EQ(0, active_call_count.load());
 
   // set the points
@@ -371,7 +375,7 @@ TEST(WMBroadcaster, geofenceCallback)
   // calling again with same id should not have an effect
   wmb.geofenceCallback(gf_msg);
   ros::Time::setNow(ros::Time(2.1));  // Set current time
-  ASSERT_TRUE(carma_wm::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
+  ASSERT_TRUE(carma_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
   ASSERT_EQ(1, active_call_count.load());
 
   // update id to continue testing
@@ -383,7 +387,7 @@ TEST(WMBroadcaster, geofenceCallback)
 
   // check if different geofence id is working
   ros::Time::setNow(ros::Time(3.0)); // right before finishing at 3.1
-  ASSERT_TRUE(carma_wm::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
+  ASSERT_TRUE(carma_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
   ASSERT_EQ(2, active_call_count.load());
 
 }
@@ -732,7 +736,7 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
   
   wmb.geofenceCallback(gf_msg);
   ros::Time::setNow(ros::Time(2.1));  // Set current time
-  ASSERT_TRUE(carma_wm::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
+  ASSERT_TRUE(carma_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
   ASSERT_EQ(1, active_call_count.load());
 
   testing_forward_direction = false;
@@ -753,7 +757,7 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
   wmb.geofenceCallback(gf_msg);
   ros::Time::setNow(ros::Time(2.1));  // Set current time
   
-  ASSERT_TRUE(carma_wm::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
+  ASSERT_TRUE(carma_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
   ASSERT_EQ(2, active_call_count.load());
 }
 
