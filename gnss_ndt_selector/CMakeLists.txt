@@ -52,21 +52,21 @@ catkin_package(
 ###########
 
 include_directories(
-  ${catkin_INCLUDE_DIRS}
   include
+  ${catkin_INCLUDE_DIRS}
 )
 
 add_executable( ${PROJECT_NAME}
                 src/localizer_node.cpp
                 src/LocalizationManager.cpp
                 src/LocalizationTransitionTable.cpp
+                src/LocalizationTypes.cpp
                 src/main.cpp)
 
-add_library(gnss_ndt_counter_library src/ndt_reliability_counter.cpp)
-target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${catkin_LIBRARIES} gnss_ndt_counter_library)
-if(catkin_EXPORTED_TARGETS)
-  add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-endif()
+#add_library(gnss_ndt_counter_library src/ndt_reliability_counter.cpp)
+target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${catkin_LIBRARIES})
+
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
@@ -79,7 +79,7 @@ PATTERN ".svn" EXCLUDE
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME} gnss_ndt_counter_library
+install(TARGETS ${PROJECT_NAME} 
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -93,5 +93,5 @@ install(DIRECTORY launch config
 #############
 ## Testing ##
 #############
-catkin_add_gmock(${PROJECT_NAME}-test test/test_gnss_ndt_selector.cpp)
-target_link_libraries(${PROJECT_NAME}-test gnss_ndt_counter_library ${catkin_LIBRARIES})
+# catkin_add_gmock(${PROJECT_NAME}-test test/test_gnss_ndt_selector.cpp)
+# target_link_libraries(${PROJECT_NAME}-test gnss_ndt_counter_library ${catkin_LIBRARIES})

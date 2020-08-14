@@ -14,12 +14,12 @@
  * the License.
  */
 
-#include <ros/ros.h>
+#include <ros/console.h>
 #include "LocalizationTransitionTable.h"
 
 namespace localizer
 {
-LocalizationTransitionTable(LocalizerMode mode) : mode_(mode)
+LocalizationTransitionTable::LocalizationTransitionTable(LocalizerMode mode) : mode_(mode)
 {
 }
 LocalizationState LocalizationTransitionTable::getState()
@@ -29,20 +29,23 @@ LocalizationState LocalizationTransitionTable::getState()
 
 void LocalizationTransitionTable::logDebugSignal(LocalizationSignal signal)
 {
-  ROS_DEBUG_LOG_STREAM("LocalizationTransitionTable received unsupported signal of " << signal << " while in state "
-                                                                                     << state_);
+  ROS_DEBUG_STREAM("LocalizationTransitionTable received unsupported signal of " << signal << " while in state "
+                                                                                 << state_);
 }
 
 void LocalizationTransitionTable::setAndLogState(LocalizationState new_state, LocalizationSignal source_signal)
 {
-  if (new_state == state_) {
-    return; // State was unchanged no need to log or trigger callbacks
+  if (new_state == state_)
+  {
+    return;  // State was unchanged no need to log or trigger callbacks
   }
   ROS_INFO_STREAM("LocalizationTransitionTable changed localization state from "
-                  << state_ << " to " << new_state << " because of signal " << source_signal " while in mode " << mode_);
+                  << state_ << " to " << new_state << " because of signal " << source_signal << " while in mode "
+                  << mode_);
   LocalizationState prev_state = state_;
   state_ = new_state;
-  if (transition_callback_) {
+  if (transition_callback_)
+  {
     transition_callback_(prev_state, state_, source_signal);
   }
 }
@@ -51,11 +54,14 @@ void LocalizationTransitionTable::signalWhenUNINITIALIZED(LocalizationSignal sig
 {
   switch (signal)
   {
-    case INITIAL_POSE:
-      if (mode_ == LocalizerMode::GNSS) {
-        setAndLogState(DEGRADED_NO_LIDAR_FIX, signal);
-      } else {
-        setAndLogState(INITIALIZING, signal);
+    case LocalizationSignal::INITIAL_POSE:
+      if (mode_ == LocalizerMode::GNSS)
+      {
+        setAndLogState(LocalizationState::DEGRADED_NO_LIDAR_FIX, signal);
+      }
+      else
+      {
+        setAndLogState(LocalizationState::INITIALIZING, signal);
       }
       break;
     default:
@@ -69,17 +75,17 @@ void LocalizationTransitionTable::signalWhenINITIALIZING(LocalizationSignal sign
   switch (signal)
   {
     // How to handle the combined conditions?
-    case GOOD_NDT_FREQ_AND_FITNESS_SCORE:
-      setAndLogState(OPERATIONAL, signal);
+    case LocalizationSignal::GOOD_NDT_FREQ_AND_FITNESS_SCORE:
+      setAndLogState(LocalizationState::OPERATIONAL, signal);
       break;
-    case POOR_NDT_FREQ_OR_FITNESS_SCORE:
-      setAndLogState(DEGRADED, signal);
+    case LocalizationSignal::POOR_NDT_FREQ_OR_FITNESS_SCORE:
+      setAndLogState(LocalizationState::DEGRADED, signal);
       break;
-    case LIDAR_SENSOR_FAILURE:  // TODO should we support this in the initialization phase?
-      setAndLogState(DEGRADED_NO_LIDAR_FIX, signal);
+    case LocalizationSignal::LIDAR_SENSOR_FAILURE:  // TODO should we support this in the initialization phase?
+      setAndLogState(LocalizationState::DEGRADED_NO_LIDAR_FIX, signal);
       break;
-    case TIMEOUT:
-      setAndLogState(AWAIT_MANUAL_INITIALIZATION, signal);
+    case LocalizationSignal::TIMEOUT:
+      setAndLogState(LocalizationState::AWAIT_MANUAL_INITIALIZATION, signal);
       break;
     default:
       logDebugSignal(signal);
@@ -90,17 +96,17 @@ void LocalizationTransitionTable::signalWhenOPERATIONAL(LocalizationSignal signa
 {
   switch (signal)
   {
-    case INITIAL_POSE:
-      setAndLogState(INITIALIZING, signal);
+    case LocalizationSignal::INITIAL_POSE:
+      setAndLogState(LocalizationState::INITIALIZING, signal);
       break;
-    case POOR_NDT_FREQ_OR_FITNESS_SCORE:
-      setAndLogState(DEGRADED, signal);
+    case LocalizationSignal::POOR_NDT_FREQ_OR_FITNESS_SCORE:
+      setAndLogState(LocalizationState::DEGRADED, signal);
       break;
-    case LIDAR_SENSOR_FAILURE:
-      setAndLogState(DEGRADED_NO_LIDAR_FIX, signal);
+    case LocalizationSignal::LIDAR_SENSOR_FAILURE:
+      setAndLogState(LocalizationState::DEGRADED_NO_LIDAR_FIX, signal);
       break;
-    case UNUSABLE_NDT_FREQ_OR_FITNESS_SCORE:
-      setAndLogState(DEGRADED_NO_LIDAR_FIX, signal);
+    case LocalizationSignal::UNUSABLE_NDT_FREQ_OR_FITNESS_SCORE:
+      setAndLogState(LocalizationState::DEGRADED_NO_LIDAR_FIX, signal);
       break;
     default:
       logDebugSignal(signal);
@@ -111,21 +117,24 @@ void LocalizationTransitionTable::signalWhenDEGRADED(LocalizationSignal signal)
 {
   switch (signal)
   {
-    case INITIAL_POSE:
-      setAndLogState(INITIALIZING, signal);
+    case LocalizationSignal::INITIAL_POSE:
+      setAndLogState(LocalizationState::INITIALIZING, signal);
       break;
-    case GOOD_NDT_FREQ_AND_FITNESS_SCORE:
-      setAndLogState(OPERATIONAL, signal);
+    case LocalizationSignal::GOOD_NDT_FREQ_AND_FITNESS_SCORE:
+      setAndLogState(LocalizationState::OPERATIONAL, signal);
       break;
-    case LIDAR_SENSOR_FAILURE:
-      if (mode_ == LocalizerMode::AUTO) {
-        setAndLogState(DEGRADED_NO_LIDAR_FIX, signal);
-      } else {
-        setAndLogState(AWAIT_MANUAL_INITIALIZATION, signal);
+    case LocalizationSignal::LIDAR_SENSOR_FAILURE:
+      if (mode_ == LocalizerMode::AUTO)
+      {
+        setAndLogState(LocalizationState::DEGRADED_NO_LIDAR_FIX, signal);
+      }
+      else
+      {
+        setAndLogState(LocalizationState::AWAIT_MANUAL_INITIALIZATION, signal);
       }
       break;
-    case UNUSABLE_NDT_FREQ_OR_FITNESS_SCORE:
-      setAndLogState(DEGRADED_NO_LIDAR_FIX, signal);
+    case LocalizationSignal::UNUSABLE_NDT_FREQ_OR_FITNESS_SCORE:
+      setAndLogState(LocalizationState::DEGRADED_NO_LIDAR_FIX, signal);
       break;
     default:
       logDebugSignal(signal);
@@ -136,12 +145,13 @@ void LocalizationTransitionTable::signalWhenDEGRADED_NO_LIDAR_FIX(LocalizationSi
 {
   switch (signal)
   {
-    case INITIAL_POSE:
-      setAndLogState(INITIALIZING, signal);
+    case LocalizationSignal::INITIAL_POSE:
+      setAndLogState(LocalizationState::INITIALIZING, signal);
       break;
-    case TIMEOUT:
-      if (mode_ != LocalizerMode::GNSS) {
-        setAndLogState(AWAIT_MANUAL_INITIALIZATION, signal);
+    case LocalizationSignal::TIMEOUT:
+      if (mode_ != LocalizerMode::GNSS)
+      {
+        setAndLogState(LocalizationState::AWAIT_MANUAL_INITIALIZATION, signal);
       }
       break;
     default:
@@ -153,8 +163,8 @@ void LocalizationTransitionTable::signalWhenAWAIT_MANUAL_INITIALIZATION(Localiza
 {
   switch (signal)
   {
-    case INITIAL_POSE:
-      setAndLogState(INITIALIZING, signal);
+    case LocalizationSignal::INITIAL_POSE:
+      setAndLogState(LocalizationState::INITIALIZING, signal);
       break;
     default:
       logDebugSignal(signal);
@@ -166,27 +176,31 @@ void LocalizationTransitionTable::signal(LocalizationSignal signal)
 {
   switch (state_)
   {
-    case UNINITIALIZED:
+    case LocalizationState::UNINITIALIZED:
       signalWhenUNINITIALIZED(signal);
       break;
-    case INITIALIZING:
+    case LocalizationState::INITIALIZING:
       signalWhenINITIALIZING(signal);
       break;
-    case OPERATIONAL:
+    case LocalizationState::OPERATIONAL:
       signalWhenOPERATIONAL(signal);
       break;
-    case DEGRADED:
+    case LocalizationState::DEGRADED:
       signalWhenDEGRADED(signal);
       break;
-    case DEGRADED_NO_LIDAR_FIX:
+    case LocalizationState::DEGRADED_NO_LIDAR_FIX:
       signalWhenDEGRADED_NO_LIDAR_FIX(signal);
       break;
-    case AWAIT_MANUAL_INITIALIZATION:
+    case LocalizationState::AWAIT_MANUAL_INITIALIZATION:
       signalWhenAWAIT_MANUAL_INITIALIZATION(signal);
       break;
     default:
       // TODO throw error
       break;
   }
+}
+void LocalizationTransitionTable::setTransitionCallback(TransitionCallback cb)
+{
+  transition_callback_ = cb;
 }
 }  // namespace localizer

@@ -34,6 +34,10 @@ void Localizer::publishPoseStamped(const geometry_msgs::PoseStamped& msg)
   pose_pub_.publish(msg);
 }
 
+void Localizer::publishStatus(const cav_msgs::LocalizationStatusReport& msg) {
+  state_pub_.publish(msg);
+}
+
 void Localizer::poseAndStatsCallback(const geometry_msgs::PoseStampedConstPtr& pose,
                                      const autoware_msgs::NDTStatConstPtr& stats)
 {
@@ -76,11 +80,11 @@ void Localizer::run()
   manager_.reset(new LocalizationManager(std::bind(&Localizer::publishPoseStamped, this, std_ph::_1),
                                          std::bind(&Localizer::publishTransform, this, std_ph::_1),
                                          std::bind(&Localizer::publishStatus, this, std_ph::_1), config,
-                                         std::make_unique<carma_utils::timers::TimerFactory>()));
+                                         std::make_unique<carma_utils::timers::ROSTimerFactory>()));
 
   // initialize subscribers
   gnss_pose_sub_ = nh_.subscribe("gnss_pose", 5, &LocalizationManager::gnssPoseCallback, manager_.get());
-  initialpose_sub_ = nh.subscribe("initialpose", 1, &LocalizationManager::initialPoseCallback, manager_.get());
+  initialpose_sub_ = nh_.subscribe("initialpose", 1, &LocalizationManager::initialPoseCallback, manager_.get());
 
   // TODO fix comments
   message_filters::Subscriber<geometry_msgs::PoseStamped> pose_sub(nh_, "ndt_pose", 5);
@@ -91,7 +95,7 @@ void Localizer::run()
   pose_stats_synchronizer.registerCallback(boost::bind(&Localizer::poseAndStatsCallback, this, _1, _2));
 
   nh_.setSystemAlertCallback(std::bind(&LocalizationManager::systemAlertCallback, manager_.get(), std_ph::_1));
-  nh_.setSpinCallback(std::bind(&LocalizationManager::onSpin, manager_.get(), std_ph::_1));
+  nh_.setSpinCallback(std::bind(&LocalizationManager::onSpin, manager_.get()));
 
   // initialize publishers
   pose_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("selected_pose", 5);

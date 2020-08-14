@@ -27,8 +27,7 @@
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/exact_time.h>
 #include <cav_msgs/LocalizationStatusReport.h>
-#include "ndt_reliability_counter.h"
-#include "LocalizerMode.h"
+#include "LocalizationTypes.h"
 #include "LocalizationManagerConfig.h"
 #include "LocalizationManager.h"
 

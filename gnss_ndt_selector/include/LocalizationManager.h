@@ -21,14 +21,15 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <autoware_msgs/NDTStat.h>
+#include <cav_msgs/SystemAlert.h>
 #include <cav_msgs/LocalizationStatusReport.h>
-#include "ndt_reliability_counter.h"
 #include <functional>
 #include <unordered_set>
 #include <carma_utils/timers/Timer.h>
 #include <carma_utils/timers/TimerFactory.h>
-#include "LocalizerMode.h"
+#include "LocalizationTypes.h"
 #include "LocalizationManagerConfig.h"
 #include "LocalizationTransitionTable.h"
 
@@ -58,8 +59,10 @@ public:
 
   void stateTransitionCallback(LocalizationState prev_state, LocalizationState new_state, LocalizationSignal signal);
 
+  void timerCallback(const ros::TimerEvent& event, const LocalizationState origin_state);
+
 private:
-  constexpr std::unordered_set<std::string> LIDAR_FAILURE_STRINGS({ "One LIDAR Failed", "Both LIDARS Failed" });
+  static const std::unordered_set<std::string> LIDAR_FAILURE_STRINGS; // Static const container defined in cpp file 
 
   PosePublisher pose_pub_;
   TransformPublisher transform_pub_;
@@ -85,36 +88,3 @@ private:
 }  // namespace localizer
 
 // TODO how to handle GPS failure
-// else if((are_critical_drivers_operational_truck(time_now)=="s_1_l1_0_l2_1_g_1") ||
-// (are_critical_drivers_operational_truck(time_now)=="s_1_l1_1_l2_0_g_1"))
-//             {
-
-//                 alert.description = "One LIDAR Failed";
-//                 alert.type = cav_msgs::SystemAlert::CAUTION;
-//                 return alert;
-//             }
-//             else if((are_critical_drivers_operational_truck(time_now)=="s_1_l1_0_l2_1_g_0") ||
-//             (are_critical_drivers_operational_truck(time_now)=="s_1_l1_1_l2_0_g_0"))
-//             {
-//                 alert.description = "One Lidar and GPS Failed";
-//                 alert.type = cav_msgs::SystemAlert::CAUTION;
-//                 return alert;
-//             }
-//             else if(are_critical_drivers_operational_truck(time_now)=="s_1_l1_1_l2_1_g_0")
-//             {
-//                 alert.description = "GPS Failed";
-//                 alert.type = cav_msgs::SystemAlert::CAUTION;
-//                 return alert;
-//             }
-//             else if(are_critical_drivers_operational_truck(time_now)=="s_1_l1_0_l2_0_g_1")
-//             {
-//                 alert.description = "Both LIDARS Failed";
-//                 alert.type = cav_msgs::SystemAlert::WARNING;
-//                 return alert;
-//             }
-//             else if(are_critical_drivers_operational_truck(time_now)=="s_1_l1_0_l2_0_g_0")
-//             {
-//                 alert.description = "LIDARS and GPS Failed";
-//                 alert.type = cav_msgs::SystemAlert::FATAL;
-//                 return alert;
-//             }

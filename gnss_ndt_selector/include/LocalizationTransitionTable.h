@@ -14,31 +14,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include "LocalizerMode.h"
+#include "LocalizationTypes.h"
 
 namespace localizer
 {
-//! @brief Enum describing the possible states of the localization system
-enum LocalizationState
-{
-  UNINITIALIZED,
-  INITIALIZING,
-  OPERATIONAL,
-  DEGRADED,
-  DEGRADED_NO_LIDAR_FIX,
-  AWAIT_MANUAL_INITIALIZATION,
-};
-
-//! @brief Enum describing the possible signals to change the current LocalizationState
-enum LocalizationSignal
-{
-  INITIAL_POSE,
-  GOOD_NDT_FREQ_AND_FITNESS_SCORE,
-  POOR_NDT_FREQ_OR_FITNESS_SCORE,
-  UNUSABLE_NDT_FREQ_OR_FITNESS_SCORE,
-  TIMEOUT,
-  LIDAR_SENSOR_FAILURE,
-};
 
 class LocalizationTransitionTable
 {

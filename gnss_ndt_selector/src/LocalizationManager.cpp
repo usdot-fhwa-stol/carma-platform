@@ -20,6 +20,10 @@
 
 namespace localizer
 {
+// Initialize static values
+const std::unordered_set<std::string> LocalizationManager::LIDAR_FAILURE_STRINGS({ "One LIDAR Failed", "Both LIDARS "
+                                                                                                       "Failed" });
+
 // TODO timeout logic
 LocalizationManager::LocalizationManager(PosePublisher pose_pub, TransformPublisher transform_pub,
                                          StatePublisher state_pub, LocalizationManagerConfig config,
@@ -28,11 +32,12 @@ LocalizationManager::LocalizationManager(PosePublisher pose_pub, TransformPublis
   , transform_pub_(transform_pub)
   , state_pub_(state_pub)
   , config_(config)
-  , timer_factory_(timer_factory)
+  , timer_factory_(std::move(timer_factory))
   , transition_table_(config_.localization_mode)
 {
-  transition_table_.setTransitionCallback(
-      std::bind(&LocalizationManager::stateTransitionCallback, this, std::placeholders::_1))
+  transition_table_.setTransitionCallback(std::bind(&LocalizationManager::stateTransitionCallback, this,
+                                                    std::placeholders::_1, std::placeholders::_2,
+                                                    std::placeholders::_3));
 }
 
 void LocalizationManager::publishPoseStamped(const geometry_msgs::PoseStamped& pose)
@@ -78,12 +83,12 @@ double LocalizationManager::computeNDTFreq(const ros::Time& new_stamp)
 void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedConstPtr& pose,
                                                const autoware_msgs::NDTStatConstPtr& stats)
 {
-  double ndt_freq = computeNDTFreq(pose.stamp);  // TODO create function
-  if (stats.score >= config_.fitness_score_fault_threshold || ndt_freq <= config_.ndt_frequency_fault_threshold)
+  double ndt_freq = computeNDTFreq(pose->header.stamp);
+  if (stats->score >= config_.fitness_score_fault_threshold || ndt_freq <= config_.ndt_frequency_fault_threshold)
   {
     transition_table_.signal(LocalizationSignal::UNUSABLE_NDT_FREQ_OR_FITNESS_SCORE);
   }
-  else if (stats.score >= config_.fitness_score_degraded_threshold ||
+  else if (stats->score >= config_.fitness_score_degraded_threshold ||
            ndt_freq <= config_.ndt_frequency_degraded_threshold)
   {
     transition_table_.signal(LocalizationSignal::POOR_NDT_FREQ_OR_FITNESS_SCORE);
@@ -109,7 +114,7 @@ void LocalizationManager::initialPoseCallback(const geometry_msgs::PoseWithCovar
 
 void LocalizationManager::systemAlertCallback(const cav_msgs::SystemAlertConstPtr& alert)
 {
-  if (LIDAR_FAILURE_STRINGS.find(alert.description) != LIDAR_FAILURE_STRINGS.end())
+  if (LIDAR_FAILURE_STRINGS.find(alert->description) != LIDAR_FAILURE_STRINGS.end())
   {
     transition_table_.signal(LocalizationSignal::LIDAR_SENSOR_FAILURE);
   }
@@ -120,32 +125,35 @@ cav_msgs::LocalizationStatusReport LocalizationManager::stateToMsg(LocalizationS
   cav_msgs::LocalizationStatusReport msg;
   switch (state)
   {
-    case UNINITIALIZED:
+    case LocalizationState::UNINITIALIZED:
       msg.status = cav_msgs::LocalizationStatusReport::UNINITIALIZED;
       break;
-    case INITIALIZING:
+    case LocalizationState::INITIALIZING:
       msg.status = cav_msgs::LocalizationStatusReport::INITIALIZING;
       break;
-    case OPERATIONAL:
+    case LocalizationState::OPERATIONAL:
       msg.status = cav_msgs::LocalizationStatusReport::OPERATIONAL;
       break;
-    case DEGRADED:
+    case LocalizationState::DEGRADED:
       msg.status = cav_msgs::LocalizationStatusReport::DEGRADED;
       break;
-    case DEGRADED_NO_LIDAR_FIX:
+    case LocalizationState::DEGRADED_NO_LIDAR_FIX:
       msg.status = cav_msgs::LocalizationStatusReport::DEGRADED_NO_LIDAR_FIX;
       break;
-    case AWAIT_MANUAL_INITIALIZATION:
+    case LocalizationState::AWAIT_MANUAL_INITIALIZATION:
       msg.status = cav_msgs::LocalizationStatusReport::AWAIT_MANUAL_INITIALIZATION;
       break;
     default:
       throw std::invalid_argument("LocalizationManager states do not match cav_msgs::LocalizationStatusReport "
-                                  "states") break;
+                                  "states");
+      break;
   }
   msg.header.stamp = ros::Time::now();
+
+  return msg;
 }
 
-void& LocalizationManager::timerCallback(const ros::TimerEvent& event, const LocalizationState origin_state)
+void LocalizationManager::timerCallback(const ros::TimerEvent& event, const LocalizationState origin_state)
 {
   if (origin_state != transition_table_.getState())
     return;  // If the sate has changed then return
@@ -157,26 +165,26 @@ void LocalizationManager::stateTransitionCallback(LocalizationState prev_state, 
                                                   LocalizationSignal signal)
 {
   // We are in a new state so clear any existing timers
-  if (current_timer_ && current_timer_->second)
+  if (current_timer_ && current_timer_.get())
   {
-    current_timer_->second->stop();
+    current_timer_.get()->stop();
   }
 
   switch (new_state)
   {
     case LocalizationState::INITIALIZING:
 
-      auto callback = std::bind(&LocalizationManager::timerCallback, this, _1, new_state);
+      current_timer_ = timer_factory_->buildTimer(
+          1, ros::Duration((double)config_.auto_initialization_timeout / 1000.0),
+          std::bind(&LocalizationManager::timerCallback, this, std::placeholders::_1, new_state), true);
 
-      current_timer_ = timer_factory_->buildTimer(ros::Duraction((double)config_.auto_initialization_timeout / 1000.0),
-                                                  callback, true);
       break;
     case LocalizationState::DEGRADED_NO_LIDAR_FIX:
 
-      auto callback = std::bind(&LocalizationManager::timerCallback, this, _1, new_state);
+      current_timer_ = timer_factory_->buildTimer(
+          1, ros::Duration((double)config_.gnss_initialization_timeout / 1000.0),
+          std::bind(&LocalizationManager::timerCallback, this, std::placeholders::_1, new_state), true);
 
-      current_timer_ = timer_factory_->buildTimer(ros::Duraction((double)config_.gnss_initialization_timeout / 1000.0),
-                                                  callback, true);
       break;
     default:
       break;
@@ -188,6 +196,8 @@ bool LocalizationManager::onSpin()
   // Create and publish status report message
   cav_msgs::LocalizationStatusReport msg = stateToMsg(transition_table_.getState());
   state_pub_(msg);
+
+  return true;
 }
 
 }  // namespace localizer
