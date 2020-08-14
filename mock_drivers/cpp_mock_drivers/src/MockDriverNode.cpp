@@ -27,13 +27,31 @@
 
 namespace mock_drivers{
 
+    MockDriverNode::MockDriverNode(){
+        dummy_ = false;
+    }
+
+    MockDriverNode::MockDriverNode(bool dummy){
+        dummy_ = dummy;
+    }
+    
     void MockDriverNode::spin(double rate){
-        cnh_.setSpinRate(rate);
-        cnh_.spin();
+        if(!dummy_){
+            cnh_->setSpinRate(rate);
+            cnh_->spin();
+        }
     }
 
     void MockDriverNode::setSpinCallback(std::function<bool()> cb){
-        cnh_.setSpinCallback(cb);
+        if(!dummy_){
+            cnh_->setSpinCallback(cb);
+        }
+    }
+
+    void MockDriverNode::init(){
+        if(!dummy_){
+            cnh_ = boost::make_shared<ros::CARMANodeHandle>(ros::CARMANodeHandle());
+        }
     }
 
 }

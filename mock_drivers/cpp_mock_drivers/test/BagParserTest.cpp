@@ -14,25 +14,32 @@
  * the License.
  */
 
-#pragma once
+#include <gmock/gmock.h>
+#include "cpp_mock_drivers/BagParser.h"
+#include <cav_msgs/BagData.h>
 
-#include "cpp_mock_drivers/MockDriver.h"
-#include <sensor_msgs/PointCloud2.h>
 
 namespace mock_drivers{
 
-    class MockLidarDriver : public MockDriver {
+    TEST(BagParser, Constructor){
+        BagParser d1;
+        BagParser d2(false);
+        BagParser d3(true);
 
-        private:
+        ASSERT_EQ(d1.getMockDriverNode().isDummy(), false);
+        ASSERT_EQ(d2.getMockDriverNode().isDummy(), false);
+        ASSERT_EQ(d3.getMockDriverNode().isDummy(), true);
+    }
 
-            boost::shared_ptr<ROSComms<sensor_msgs::PointCloud2>> points_raw_ptr_;
+    TEST(BagParser, publishCallback){
+        BagParser d(true);
 
-        public:
+        EXPECT_TRUE(d.publishCallback());
+    }
 
-            MockLidarDriver(bool dummy = false);
-            int run();
-            void parserCB(const cav_msgs::BagData::ConstPtr& msg);
-
-    };
+    TEST(BagParser, run){
+        BagParser d(true);
+        ASSERT_EQ(d.run(), 0);
+    }
 
 }

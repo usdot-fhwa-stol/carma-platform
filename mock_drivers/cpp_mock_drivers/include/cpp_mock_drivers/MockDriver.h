@@ -40,8 +40,12 @@ namespace mock_drivers{
         public:
 
         virtual int run() = 0;
-
         virtual void parserCB(const cav_msgs::BagData::ConstPtr& msg) = 0;
+
+        boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>> getBagComms() {return bag_parser_sub_ptr_;};
+
+        MockDriverNode getMockDriverNode() {return mock_driver_node_;}
+        
 
     };
     

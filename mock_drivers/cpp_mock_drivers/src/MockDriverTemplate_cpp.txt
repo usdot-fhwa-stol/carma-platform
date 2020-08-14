@@ -34,6 +34,17 @@ namespace mock_drivers{
         name_2_ptr_ = boost::make_shared<ROSComms<insert_sub_msg_1>>(ROSComms<insert_sub_msg_1>(callback_ptr_1, CommTypes::sub, false, 10, "insert_sub_topic_1"));
     }
 
+    InsertDriverName::InsertDriverName(bool dummy){
+
+        mock_driver_node_ = MockDriverNode(dummy);
+
+        name_1_ptr_ = boost::make_shared<ROSComms<insert_pub_msg_1>>(ROSComms<insert_pub_msg_1>(CommTypes::pub, false, 10, "insert_pub_topic_1"));
+        
+        std::function<void(insert_sub_msg_1)> callback_ptr_1 = std::bind(&InsertDriverName::insertCallback1, this, std::placeholders::_1);
+        name_2_ptr_ = boost::make_shared<ROSComms<insert_sub_msg_1>>(ROSComms<insert_sub_msg_1>(callback_ptr_1, CommTypes::sub, false, 10, "insert_sub_topic_1"));
+    }
+
+
     int InsertDriverName::run(){
 
         mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);

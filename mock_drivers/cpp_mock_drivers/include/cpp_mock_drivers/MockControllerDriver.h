@@ -31,15 +31,13 @@ namespace mock_drivers{
             boost::shared_ptr<ROSComms<const autoware_msgs::VehicleCmd::ConstPtr&>> vehicle_cmd_ptr_;
             boost::shared_ptr<ROSComms<cav_srvs::SetEnableRobotic::Request&, cav_srvs::SetEnableRobotic::Response&>> enable_robotic_ptr_;
 
-            void vehicleCmdCallback(const autoware_msgs::VehicleCmd::ConstPtr& msg);
-
-            bool enableRoboticSrv(cav_srvs::SetEnableRobotic::Request& req, cav_srvs::SetEnableRobotic::Response& res);
-
         public:
 
-            MockControllerDriver();
+            MockControllerDriver(bool dummy = false);
             int run();
             void parserCB(const cav_msgs::BagData::ConstPtr& msg);
+            void vehicleCmdCallback(const autoware_msgs::VehicleCmd::ConstPtr& msg);
+            bool enableRoboticSrv(cav_srvs::SetEnableRobotic::Request& req, cav_srvs::SetEnableRobotic::Response& res);
 
     };
 

@@ -29,7 +29,7 @@ namespace mock_drivers{
 
         public:
 
-            MockGNSSDriver();
+            MockGNSSDriver(bool dummy = false);
             int run();
             void parserCB(const cav_msgs::BagData::ConstPtr& msg);
 

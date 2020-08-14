@@ -24,7 +24,9 @@ namespace mock_drivers{
         mock_driver_node_.publishData<sensor_msgs::PointCloud2>("points_raw", updated_msg);
     }
 
-    MockLidarDriver::MockLidarDriver(){
+    MockLidarDriver::MockLidarDriver(bool dummy){
+
+        mock_driver_node_ = MockDriverNode(dummy);
 
         points_raw_ptr_ = boost::make_shared<ROSComms<sensor_msgs::PointCloud2>>(ROSComms<sensor_msgs::PointCloud2>(CommTypes::pub, false, 10, "lidar/points_raw"));
         
@@ -32,12 +34,13 @@ namespace mock_drivers{
 
     int MockLidarDriver::run(){
 
+        mock_driver_node_.init();
+
         mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<sensor_msgs::PointCloud2>>>(points_raw_ptr_);
 
         mock_driver_node_.spin(10);
-
         return 0;
     }
 

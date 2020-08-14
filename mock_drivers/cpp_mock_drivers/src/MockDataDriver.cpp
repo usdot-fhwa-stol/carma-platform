@@ -19,10 +19,16 @@
 namespace mock_drivers{
 
     void MockDataDriver::parserCB(const cav_msgs::BagData::ConstPtr& msg){
-        
+        tf2_msgs::TFMessage tf = msg->tf;
+        tf2_msgs::TFMessage tf_static = msg->tf_static;
+
+        mock_driver_node_.publishDataNoHeader<tf2_msgs::TFMessage>("tf", tf);
+        mock_driver_node_.publishDataNoHeader<tf2_msgs::TFMessage>("tf_static", tf_static);
     }
 
-    MockDataDriver::MockDataDriver(){
+    MockDataDriver::MockDataDriver(bool dummy){
+
+        mock_driver_node_ = MockDriverNode(dummy);
 
         tf_ptr_ = boost::make_shared<ROSComms<tf2_msgs::TFMessage>>(ROSComms<tf2_msgs::TFMessage>(CommTypes::pub, false, 10, "tf"));
         tf_static_ptr_ = boost::make_shared<ROSComms<tf2_msgs::TFMessage>>(ROSComms<tf2_msgs::TFMessage>(CommTypes::pub, false, 10, "tf_static"));
@@ -30,6 +36,8 @@ namespace mock_drivers{
     }
 
     int MockDataDriver::run(){
+
+        mock_driver_node_.init();
 
         mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 

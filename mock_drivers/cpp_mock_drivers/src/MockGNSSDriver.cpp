@@ -19,16 +19,26 @@
 namespace mock_drivers{
 
     void MockGNSSDriver::parserCB(const cav_msgs::BagData::ConstPtr& msg){
-        
+        gps_common::GPSFix gnss_fixed_fused = msg->gnss_fixed_fused;
+
+        ros::Time curr_time = ros::Time::now();
+      
+        gnss_fixed_fused.header.stamp = curr_time;
+
+        mock_driver_node_.publishData<gps_common::GPSFix>("gnss_fixed_fused", gnss_fixed_fused);
     }
 
-    MockGNSSDriver::MockGNSSDriver(){
+    MockGNSSDriver::MockGNSSDriver(bool dummy){
+
+        mock_driver_node_ = MockDriverNode(dummy);
 
         GPS_fix_ptr_ = boost::make_shared<ROSComms<gps_common::GPSFix>>(ROSComms<gps_common::GPSFix>(CommTypes::pub, false, 10, "gnss_fixed_fused"));
     
     }
 
     int MockGNSSDriver::run(){
+
+        mock_driver_node_.init();
 
         mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 

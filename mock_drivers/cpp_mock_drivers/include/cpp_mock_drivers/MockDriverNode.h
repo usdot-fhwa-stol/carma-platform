@@ -26,26 +26,36 @@ namespace mock_drivers{
     class MockDriverNode {
 
         private:
-            ros::CARMANodeHandle cnh_;
+            boost::shared_ptr<ros::CARMANodeHandle> cnh_;
             std::vector<ros::Publisher> publishers_;
             std::vector<ros::Subscriber> subscribers_;
             std::vector<ros::ServiceServer> services_;
+            
+            bool dummy_;
+            std::vector<std::string> topics_;
+            std::vector<ros::Time> time_stamps_;
 
         public:
 
             template<typename T>
             void addPub(T comm){
-                publishers_.push_back(cnh_.advertise<decltype(comm->getTemplateType())>(comm->getTopic(), comm->getQueueSize()));
+                if(!dummy_){
+                    publishers_.push_back(cnh_->advertise<decltype(comm->getTemplateType())>(comm->getTopic(), comm->getQueueSize()));
+                }
             }
 
             template<typename T>
             void addSub(T comm){
-                subscribers_.push_back(cnh_.subscribe<decltype(comm->getTemplateType())>(comm->getTopic(), comm->getQueueSize(), &ROSComms<decltype(comm->getTemplateType())>::callback, comm));
+                if(!dummy_){
+                    subscribers_.push_back(cnh_->subscribe<decltype(comm->getTemplateType())>(comm->getTopic(), comm->getQueueSize(), &ROSComms<decltype(comm->getTemplateType())>::callback, comm));
+                }
             }
 
             template<typename T>
             void addSrv(T comm){
-                services_.push_back(cnh_.advertiseService(comm->getTopic(), &ROSComms<decltype(comm->getReqType()), decltype(comm->getResType())>::callback, comm));
+                if(!dummy_){
+                    services_.push_back(cnh_->advertiseService(comm->getTopic(), &ROSComms<decltype(comm->getReqType()), decltype(comm->getResType())>::callback, comm));
+                }
             }
 
             // TODO (needs at least C++ 17): use a constexpr if statement to an addComms function so you don't need different add functions
@@ -53,12 +63,12 @@ namespace mock_drivers{
             // void addComms(T comm) {
             //     if constexpr(comm->getCommType() == CommTypes::pub){
             //         std::cout << "Attaching publisher" << std::endl;
-            //         publishers_ = cnh_.advertise<decltype(comm->getTemplateType())>(comm->getTopic(), comm->getQueueSize());
+            //         publishers_ = cnh_->advertise<decltype(comm->getTemplateType())>(comm->getTopic(), comm->getQueueSize());
             //     } else if constexpr(comm->getCommType() == CommTypes::sub){
             //         std::cout << "Attaching subscriber" << std::endl;
             //         std::cout << comm->getTopic() << std::endl;
             //         // ros::Subscriber sub = n.subscribe("ooga_booga", 1000, &mock_drivers::ROSComms<std_msgs::String, const std_msgs::String::ConstPtr&>::callback, &test_comms);
-            //         subscribers_ = cnh_.subscribe<const std_msgs::String::ConstPtr&>(comm->getTopic(), comm->getQueueSize(), &ROSComms<decltype(comm->getTemplateType())>::callback, comm);
+            //         subscribers_ = cnh_->subscribe<const std_msgs::String::ConstPtr&>(comm->getTopic(), comm->getQueueSize(), &ROSComms<decltype(comm->getTemplateType())>::callback, comm);
             //     }
             // }            
 
@@ -66,11 +76,35 @@ namespace mock_drivers{
 
             void setSpinCallback(std::function<bool()> cb);
 
+            void init();
+
             template<typename T>
-            void publishData(std::string topic, T msg){
-                std::vector<ros::Publisher>::iterator pub = std::find_if(publishers_.begin(), publishers_.end(), [&](ros::Publisher p){return (p.getTopic()) == topic;});
-                pub->publish(msg);
+            void publishData(std::string topic, T msg, bool header = true){
+                if(!dummy_){
+                    std::vector<ros::Publisher>::iterator pub = std::find_if(publishers_.begin(), publishers_.end(), [&](ros::Publisher p){return (p.getTopic()) == topic;});
+                    pub->publish(msg);
+                } else {
+                    topics_.push_back(topic);
+                    time_stamps_.push_back(msg.header.stamp);
+                }
             };
+
+            template<typename T>
+            void publishDataNoHeader(std::string topic, T msg){
+                if(!dummy_){
+                    std::vector<ros::Publisher>::iterator pub = std::find_if(publishers_.begin(), publishers_.end(), [&](ros::Publisher p){return (p.getTopic()) == topic;});
+                    pub->publish(msg);
+                } else {
+                    topics_.push_back(topic);
+                }
+            };
+
+            MockDriverNode();
+            MockDriverNode(bool dummy);
+
+            std::vector<std::string> getTopics(){return topics_;}
+            std::vector<ros::Time> getTimeStamps(){return time_stamps_;}
+            bool isDummy(){return dummy_;}
 
     };
     

@@ -33,7 +33,7 @@ namespace mock_drivers{
 
         public:
 
-            MockCommsDriver();
+            MockCommsDriver(bool dummy = false);
             int run();
             void parserCB(const cav_msgs::BagData::ConstPtr& msg);
 

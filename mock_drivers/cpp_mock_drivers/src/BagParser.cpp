@@ -18,11 +18,9 @@
 
 namespace mock_drivers{
 
-    BagParser::BagParser(){
-
+    BagParser::BagParser(bool dummy){
+        mock_driver_node_ = MockDriverNode(dummy);
         bag_data_pub_ptr_ = boost::make_shared<ROSComms<cav_msgs::BagData>>(ROSComms<cav_msgs::BagData>(CommTypes::pub, false, 10, "bag_data"));
-        // bag_data_pub_ptr_ = boost::make_shared<ROSComms<std_msgs::String>>(ROSComms<std_msgs::String>(CommTypes::pub, false, 10, "mock_pub"));
-
     }
 
     bool BagParser::publishCallback() {
@@ -37,14 +35,10 @@ namespace mock_drivers{
         }
 
         for(rosbag::MessageInstance const m: rosbag::View(bag_, startTime, (startTime + timeFrame))){
-            // if (m.getTopic() == "/mock_pub"){
-            //     std_msgs::String::ConstPtr i = m.instantiate<std_msgs::String>();
-            //     message.data = i->data;
-            // }
 
             // camera
-            if (m.getTopic() == "/hardware_interface/camera/1/camera_info"){message.camera_info_1 = *m.instantiate<sensor_msgs::CameraInfo>();}
-            if (m.getTopic() == "/hardware_interface/camera/1/image_raw"){message.image_raw_1 = *m.instantiate<sensor_msgs::Image>();}
+            // if (m.getTopic() == "/hardware_interface/camera/1/camera_info"){message.camera_info_1 = *m.instantiate<sensor_msgs::CameraInfo>();}
+            // if (m.getTopic() == "/hardware_interface/camera/1/image_raw"){message.image_raw_1 = *m.instantiate<sensor_msgs::Image>();}
             if (m.getTopic() == "/hardware_interface/camera/camera_info"){message.camera_info = *m.instantiate<sensor_msgs::CameraInfo>();}
             if (m.getTopic() == "/hardware_interface/camera/image_raw"){message.image_raw = *m.instantiate<sensor_msgs::Image>();}
             if (m.getTopic() == "/hardware_interface/camera/image_rects"){message.image_rects = *m.instantiate<sensor_msgs::Image>();}
@@ -111,7 +105,6 @@ namespace mock_drivers{
     int BagParser::run(){
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::BagData>>>(bag_data_pub_ptr_);
-        // mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::String>>>(bag_data_pub_ptr_);
 
         mock_driver_node_.setSpinCallback(std::bind(&BagParser::publishCallback, this));
 

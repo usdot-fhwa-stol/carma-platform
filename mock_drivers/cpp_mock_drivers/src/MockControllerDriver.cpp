@@ -19,6 +19,13 @@
 namespace mock_drivers{
 
     void MockControllerDriver::parserCB(const cav_msgs::BagData::ConstPtr& msg){
+        cav_msgs::RobotEnabled robot_status = msg->robot_status;
+
+        // ros::Time curr_time = ros::Time::now();
+      
+        // robot_status.header.stamp = curr_time;
+
+        mock_driver_node_.publishDataNoHeader<cav_msgs::RobotEnabled>("robot_status", robot_status);
         
     }
 
@@ -27,10 +34,12 @@ namespace mock_drivers{
     }
 
     bool MockControllerDriver::enableRoboticSrv(cav_srvs::SetEnableRobotic::Request& req, cav_srvs::SetEnableRobotic::Response& res){
-
+        return true;
     }
 
-    MockControllerDriver::MockControllerDriver(){
+    MockControllerDriver::MockControllerDriver(bool dummy){
+
+        mock_driver_node_ = MockDriverNode(dummy);
 
         robot_status_ptr_ = boost::make_shared<ROSComms<cav_msgs::RobotEnabled>>(ROSComms<cav_msgs::RobotEnabled>(CommTypes::pub, false, 10, "robot_status"));
         
@@ -42,6 +51,8 @@ namespace mock_drivers{
     }
 
     int MockControllerDriver::run(){
+
+        mock_driver_node_.init();
 
         mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 

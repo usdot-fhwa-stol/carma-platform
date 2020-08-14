@@ -15,24 +15,24 @@
  */
 
 #include <gmock/gmock.h>
-#include "cpp_mock_drivers/MockRadarDriver.h"
+#include "cpp_mock_drivers/MockCameraDriver.h"
 #include <cav_msgs/BagData.h>
 
 
 namespace mock_drivers{
 
-    TEST(MockRadarDriver, Constructor){
-        MockRadarDriver d1;
-        MockRadarDriver d2(false);
-        MockRadarDriver d3(true);
+    TEST(MockCameraDriver, Constructor){
+        MockCameraDriver d1;
+        MockCameraDriver d2(false);
+        MockCameraDriver d3(true);
 
         ASSERT_EQ(d1.getMockDriverNode().isDummy(), false);
         ASSERT_EQ(d2.getMockDriverNode().isDummy(), false);
         ASSERT_EQ(d3.getMockDriverNode().isDummy(), true);
     }
 
-    TEST(MockRadarDriver, pubCallbacks){
-        MockRadarDriver d(true);
+    TEST(MockCameraDriver, pubCallbacks){
+        MockCameraDriver d(true);
 
         cav_msgs::BagData::ConstPtr test_msg_ptr(new cav_msgs::BagData());
         ASSERT_TRUE((*test_msg_ptr).header.stamp.isZero());
@@ -42,18 +42,26 @@ namespace mock_drivers{
         std::vector<std::string> test_str_vector = d.getMockDriverNode().getTopics();
         std::vector<ros::Time> test_time_vector = d.getMockDriverNode().getTimeStamps();
 
-        ASSERT_EQ(test_str_vector[0], "status");
-        ASSERT_EQ(test_str_vector[1], "tracks_raw");
+        ASSERT_EQ(test_str_vector[0], "camera_info");
+        ASSERT_EQ(test_str_vector[1], "image_raw");
+        // ASSERT_EQ(test_str_vector[2], "1/camera_info");
+        // ASSERT_EQ(test_str_vector[3], "1/image_raw");
+        ASSERT_EQ(test_str_vector[2], "image_rects");
+        ASSERT_EQ(test_str_vector[3], "projection_matrix");
 
         // Give a range because the nanoseconds go too fast for the test to pass if its assert equal
-        ros::Duration range(0.0001);
+        ros::Duration range(0.001);
         
         EXPECT_TRUE((test_time_vector[0] > ros::Time::now() - range) && (test_time_vector[0] < ros::Time::now() + range));
         EXPECT_TRUE((test_time_vector[1] > ros::Time::now() - range) && (test_time_vector[1] < ros::Time::now() + range));
+        EXPECT_TRUE((test_time_vector[2] > ros::Time::now() - range) && (test_time_vector[2] < ros::Time::now() + range));
+        EXPECT_TRUE((test_time_vector[3] > ros::Time::now() - range) && (test_time_vector[3] < ros::Time::now() + range));
+        // EXPECT_TRUE((test_time_vector[4] > ros::Time::now() - range) && (test_time_vector[4] < ros::Time::now() + range));
+        // EXPECT_TRUE((test_time_vector[5] > ros::Time::now() - range) && (test_time_vector[5] < ros::Time::now() + range));
     }
 
-    TEST(MockRadarDriver, run){
-        MockRadarDriver d(true);
+    TEST(MockCameraDriver, run){
+        MockCameraDriver d(true);
 
         ASSERT_EQ(d.run(), 0);
     }

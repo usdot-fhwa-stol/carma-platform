@@ -20,24 +20,58 @@
 
 int main(int argc, char **argv)
 {
-    //TODO:
-    // Initialize a mock driver
-    // success?
 
     ros::init(argc, argv, "mock_drivers");
 
-    mock_drivers::MockCommsDriver node;
-    mock_drivers::MockRadarDriver node2;
-    mock_drivers::MockLidarDriver node3;
-    mock_drivers::MockCANDriver node4;
-    mock_drivers::MockControllerDriver node5;
+    if (strcmp("camera", argv[1]) == 0){
+        mock_drivers::MockCameraDriver node;
+        node.run();
+    }
+    
+    else if (strcmp("can", argv[1]) == 0){
+        mock_drivers::MockCANDriver node;
+        node.run();
+    }
+    
+    else if (strcmp("comms", argv[1]) == 0){
+        mock_drivers::MockCommsDriver node;
+        node.run();
+    }
+    
+    else if (strcmp("controller", argv[1]) == 0){
+        mock_drivers::MockControllerDriver node;
+        node.run();
+    }
+    
+    else if (strcmp("data", argv[1]) == 0){
+        mock_drivers::MockDataDriver node;
+        node.run();
+    }
+    
+    else if (strcmp("gnss", argv[1]) == 0){
+        mock_drivers::MockGNSSDriver node;
+        node.run();
+    }
 
-    mock_drivers::TestMockDriver test_node;
+    else if (strcmp("imu", argv[1]) == 0){
+        mock_drivers::MockIMUDriver node;
+        node.run();
+    }
 
-    // mock_drivers::BagParser parser_node;
+    else if (strcmp("lidar", argv[1]) == 0){
+        mock_drivers::MockLidarDriver node;
+        node.run();
+    }
 
-    test_node.run();
-    // node.publishData();
+    else if (strcmp("radar", argv[1]) == 0){
+        mock_drivers::MockRadarDriver node;
+        node.run();
+    }
+
+    else if (strcmp("roadway_sensor", argv[1]) == 0){
+        mock_drivers::MockRoadwaySensorDriver node;
+        node.run();
+    }
     
     return 0;
 }

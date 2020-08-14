@@ -19,16 +19,26 @@
 namespace mock_drivers{
 
     void MockIMUDriver::parserCB(const cav_msgs::BagData::ConstPtr& msg){
-        
+        sensor_msgs::Imu raw_data = msg->raw_data;
+
+        ros::Time curr_time = ros::Time::now();
+      
+        raw_data.header.stamp = curr_time;
+
+        mock_driver_node_.publishData<sensor_msgs::Imu>("raw_data", raw_data);
     }
     
-    MockIMUDriver::MockIMUDriver(){
+    MockIMUDriver::MockIMUDriver(bool dummy){
+
+        mock_driver_node_ = MockDriverNode(dummy);
 
         imu_pub_ptr_ = boost::make_shared<ROSComms<sensor_msgs::Imu>>(ROSComms<sensor_msgs::Imu>(CommTypes::pub, false, 10, "imu/raw_data"));
         
     }
 
     int MockIMUDriver::run(){
+
+        mock_driver_node_.init();
 
         mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 

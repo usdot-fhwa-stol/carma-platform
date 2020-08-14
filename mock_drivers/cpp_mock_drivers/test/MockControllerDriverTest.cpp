@@ -15,24 +15,24 @@
  */
 
 #include <gmock/gmock.h>
-#include "cpp_mock_drivers/MockRadarDriver.h"
+#include "cpp_mock_drivers/MockControllerDriver.h"
 #include <cav_msgs/BagData.h>
 
 
 namespace mock_drivers{
 
-    TEST(MockRadarDriver, Constructor){
-        MockRadarDriver d1;
-        MockRadarDriver d2(false);
-        MockRadarDriver d3(true);
+    TEST(MockControllerDriver, Constructor){
+        MockControllerDriver d1;
+        MockControllerDriver d2(false);
+        MockControllerDriver d3(true);
 
         ASSERT_EQ(d1.getMockDriverNode().isDummy(), false);
         ASSERT_EQ(d2.getMockDriverNode().isDummy(), false);
         ASSERT_EQ(d3.getMockDriverNode().isDummy(), true);
     }
 
-    TEST(MockRadarDriver, pubCallbacks){
-        MockRadarDriver d(true);
+    TEST(MockControllerDriver, pubCallbacks){
+        MockControllerDriver d(true);
 
         cav_msgs::BagData::ConstPtr test_msg_ptr(new cav_msgs::BagData());
         ASSERT_TRUE((*test_msg_ptr).header.stamp.isZero());
@@ -42,19 +42,18 @@ namespace mock_drivers{
         std::vector<std::string> test_str_vector = d.getMockDriverNode().getTopics();
         std::vector<ros::Time> test_time_vector = d.getMockDriverNode().getTimeStamps();
 
-        ASSERT_EQ(test_str_vector[0], "status");
-        ASSERT_EQ(test_str_vector[1], "tracks_raw");
-
-        // Give a range because the nanoseconds go too fast for the test to pass if its assert equal
-        ros::Duration range(0.0001);
-        
-        EXPECT_TRUE((test_time_vector[0] > ros::Time::now() - range) && (test_time_vector[0] < ros::Time::now() + range));
-        EXPECT_TRUE((test_time_vector[1] > ros::Time::now() - range) && (test_time_vector[1] < ros::Time::now() + range));
+        ASSERT_EQ(test_str_vector[0], "robot_status");
     }
 
-    TEST(MockRadarDriver, run){
-        MockRadarDriver d(true);
+    TEST(MockControllerDriver, srvCallbacks){
+        MockControllerDriver d(true);
+        cav_srvs::SetEnableRobotic srv;
 
+        EXPECT_TRUE(d.enableRoboticSrv(srv.request, srv.response));
+    }
+
+    TEST(MockControllerDriver, run){
+        MockControllerDriver d(true);
         ASSERT_EQ(d.run(), 0);
     }
 }

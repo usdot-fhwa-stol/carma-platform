@@ -19,17 +19,30 @@
 namespace mock_drivers{
 
     void MockRoadwaySensorDriver::parserCB(const cav_msgs::BagData::ConstPtr& msg){
-        
+        derived_object_msgs::ObjectWithCovariance detected_objects = msg->detected_objects;
+        derived_object_msgs::LaneModels lane_models = msg->lane_models;
+
+        ros::Time curr_time = ros::Time::now();
+      
+        detected_objects.header.stamp = curr_time;
+        lane_models.header.stamp = curr_time;
+
+        mock_driver_node_.publishData<derived_object_msgs::ObjectWithCovariance>("detected_objects", detected_objects);
+        mock_driver_node_.publishData<derived_object_msgs::LaneModels>("lane_models", lane_models);  
     }
 
 
-    MockRoadwaySensorDriver::MockRoadwaySensorDriver(){
+    MockRoadwaySensorDriver::MockRoadwaySensorDriver(bool dummy){
+
+        mock_driver_node_ = MockDriverNode(dummy);
 
         object_with_covariance_ptr_ = boost::make_shared<ROSComms<derived_object_msgs::ObjectWithCovariance>>(ROSComms<derived_object_msgs::ObjectWithCovariance>(CommTypes::pub, false, 10, "detected_objects"));
         lane_models_ptr_ = boost::make_shared<ROSComms<derived_object_msgs::LaneModels>>(ROSComms<derived_object_msgs::LaneModels>(CommTypes::pub, false, 10, "lane_models"));
     }
 
     int MockRoadwaySensorDriver::run(){
+
+        mock_driver_node_.init();
 
         mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
