@@ -61,8 +61,6 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
 
     // Update the object type and generate predictions using CV or CTRV vehicle models.
 		// If the object is a bicycle or motor vehicle use CTRV otherwise use CV.
-    bool use_ctrv_model = true;
-
     if (obj_array.objects[i].label.compare("bicycle") == 0)
     {
       obj.object_type = obj.UNKNOWN;
@@ -86,25 +84,10 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
     else if (obj_array.objects[i].label.compare("person"))
     {
       obj.object_type = obj.PEDESTRIAN;
-      use_ctrv_model = false;
     }
     else
     {
       obj.object_type = obj.UNKNOWN;
-      use_ctrv_model = false;
-    }
-
-    if (use_ctrv_model)
-    {
-      obj.predictions =
-          motion_predict::ctrv::predictPeriod(obj, prediction_time_step_, prediction_period_,
-                                              prediction_process_noise_max_, prediction_confidence_drop_rate_);
-    }
-    else
-    {
-      obj.predictions = motion_predict::cv::predictPeriod(
-          obj, prediction_time_step_, prediction_period_, cv_x_accel_noise_, cv_y_accel_noise_,
-          prediction_process_noise_max_, prediction_confidence_drop_rate_);
     }
 
     // Binary value to show if the object is static or dynamic (1: dynamic, 0: static)
@@ -120,6 +103,7 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
 
     msg.objects.emplace_back(obj);
   }
+
 
   obj_pub_(msg);
 }
