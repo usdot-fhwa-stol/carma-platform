@@ -39,7 +39,7 @@ class MotionComputationNode
   //publisher
   ros::Publisher carma_obj_pub_;
   
-  //ObjectDetectionTrackingWorker class object
+  //MotionComputationWorker class object
   MotionComputationWorker motion_worker_;
   
     /*!fn initialize()

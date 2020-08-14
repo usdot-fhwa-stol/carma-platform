@@ -80,13 +80,26 @@ namespace object
         ASSERT_EQ(otValid, true);
 
         /*Test ExternalObjectList*/
-        cav_msgs::ExternalObjectList obj_list, test_list;
-        obj_list.objects.push_back(msg);
-        ASSERT_TRUE(obj_list.objects.size() > 0);
+        cav_msgs::ExternalObjectList obj;
+        
 
-        test_list = mcw.predictionLogic(obj_list);
-        ASSERT_TRUE(test_list.objects[0].predictions.size() > 0);    //Create Assertion Statement to test whether object.prediction is empty
+        ROS_INFO_STREAM("Before push back");
+        obj.objects.push_back(msg);
+        ROS_INFO_STREAM("Push back successful");
+        ASSERT_TRUE(obj.objects.size() > 0);
 
+        cav_msgs::ExternalObjectListPtr obj_list(new cav_msgs::ExternalObjectList(obj));
+
+        mcw.predictionLogic(obj_list);
+        bool isFilled = false;
+        for(auto item : obj_list->objects)
+        {
+            if(item.predictions.size() > 0);
+                isFilled = true;
+        }
+        ROS_INFO_STREAM("Test Predictions");
+        //ASSERT_TRUE(obj_list.get()->objects[0].predictions.size() > 0);    //Create Assertion Statement to test whether object.prediction is empty
+        ASSERT_EQ(isFilled, true);
         mcw.motionPredictionCallback(obj_list);
 
     }

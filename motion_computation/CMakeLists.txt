@@ -8,7 +8,6 @@ add_compile_options(-std=c++11)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  autoware_msgs
   cav_msgs
   roscpp
   carma_utils
@@ -26,8 +25,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
    INCLUDE_DIRS include
-#  LIBRARIES motion_computation
- CATKIN_DEPENDS autoware_msgs cav_msgs roscpp carma_utils motion_predict
+  LIBRARIES ${PROJECT_NAME}
+ CATKIN_DEPENDS cav_msgs roscpp carma_utils motion_predict
 #  DEPENDS system_lib
 )
 
@@ -42,38 +41,44 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_library(motion_computation_worker_lib
+add_library(${PROJECT_NAME}
  src/motion_computation_worker.cpp
- src/main.cpp
- src/motion_computation_node.cpp
  )
 
-add_dependencies(motion_computation_worker_lib ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_executable(${PROJECT_NAME}_node
+## Specify libraries to link a library or executable target against
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+
+add_library(${PROJECT_NAME}_node
  src/main.cpp 
  src/motion_computation_node.cpp
- src/motion_computation_worker.cpp
 )
 
 
-## Specify libraries to link a library or executable target against
-target_link_libraries(motion_computation_node motion_computation_worker_lib ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_LIBRARIES})
+add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
+target_link_libraries(${PROJECT_NAME}_node
+ ${PROJECT_NAME}
+ ${catkin_LIBRARIES})
 
 #############
 ## Install ##
 #############
 
 ## Mark executables for installation
-install(TARGETS motion_computation_node
+install(TARGETS 
+	motion_computation_node 
+	${PROJECT_NAME}
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 ## Mark cpp header files for installation
-install(DIRECTORY include/
+install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
         FILES_MATCHING PATTERN "*.h"
         PATTERN ".svn" EXCLUDE
@@ -93,7 +98,6 @@ install(DIRECTORY
 
 
 ## Add gtest based cpp test target and link libraries
-#catkin_add_gmock(${PROJECT_NAME}-test test/test_object.cpp)
 
 
 catkin_add_gmock(${PROJECT_NAME}-test
@@ -102,21 +106,17 @@ catkin_add_gmock(${PROJECT_NAME}-test
  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 
-catkin_add_gmock(motion_computation
+catkin_add_gmock(motion-computation
  test/TestMain.cpp
  test/MotionComputationTest.cpp
  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 
 if(TARGET ${PROJECT_NAME}-test)
- target_link_libraries(${PROJECT_NAME}-test motion_computation_worker_lib ${catkin_LIBRARIES})
+ target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
 endif()
 
-if(TARGET motion_computation)
- target_link_libraries(motion_computation motion_computation_worker_lib ${catkin_LIBRARIES})
+if(TARGET motion-computation)
+ target_link_libraries(motion-computation ${PROJECT_NAME} ${catkin_LIBRARIES})
 endif()
 
-target_link_libraries(${PROJECT_NAME}-test 
- motion_computation_worker_lib
-${${PROJECT_NAME}_EXPORTED_TARGETS}
- ${catkin_LIBRARIES})

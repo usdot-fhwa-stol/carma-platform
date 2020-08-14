@@ -13,8 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include "motion_computation_node.h"
-#include "motion_computation_worker.h"
+#include <motion_computation_node.h>
+#include <motion_computation_worker.h>
 
 namespace object{
 
@@ -25,7 +25,7 @@ namespace object{
   void MotionComputationNode::initialize()
   {
     // Load parameters
-   /* double step = 0.1;
+    double step = 0.1;
     double period = 2.0;
     double ax = 9.0;
     double ay = 9.0;
@@ -39,16 +39,16 @@ namespace object{
     pnh_.param<double>("prediction_process_noise_max", process_noise_max, process_noise_max);
     pnh_.param<double>("prediction_confidence_drop_rate", drop_rate, drop_rate);
 
-  /*  motion_worker_.setPredictionTimeStep(step);
+    motion_worker_.setPredictionTimeStep(step);
     motion_worker_.setPredictionPeriod(period);
     motion_worker_.setXAccelerationNoise(ax);
     motion_worker_.setYAccelerationNoise(ay);
     motion_worker_.setProcessNoiseMax(process_noise_max);
-    motion_worker_.setConfidenceDropRate(drop_rate);*/
+    motion_worker_.setConfidenceDropRate(drop_rate);
 
     // Setup pub/sub
-    motion_comp_sub_=nh_.subscribe("external_objects",10,&MotionComputationWorker::motionPredictionCallback,&motion_worker_);
-    carma_obj_pub_=nh_.advertise<cav_msgs::ExternalObjectList>("external_object_predictions", 10);
+    motion_comp_sub_=nh_.subscribe("external_objects",1,&MotionComputationWorker::motionPredictionCallback,&motion_worker_);
+    carma_obj_pub_=nh_.advertise<cav_msgs::ExternalObjectList>("external_object_predictions", 2);
   }
 
   void MotionComputationNode::publishObject(const cav_msgs::ExternalObjectList& obj_pred_msg)

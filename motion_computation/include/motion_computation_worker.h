@@ -39,14 +39,17 @@ class MotionComputationWorker
 
   MotionComputationWorker(const PublishObjectCallback& obj_pub);
     
-    /*! \fn motionPredictionCallback(const autoware_msgs::DetectedObjectArray &msg)
+    /*! \fn motionPredictionCallback(cav_msgs::ExternalObjectListPtr obj_list)
     \brief motionPredictionCallback populates duplicated detected object along with its velocity,yaw, yaw_rate and static/dynamic class to ExternalObject message.
     \param  msg array of detected objects.
     */
 
-  void motionPredictionCallback(const cav_msgs::ExternalObjectList obj_list);
-
-  cav_msgs::ExternalObjectList predictionLogic(cav_msgs::ExternalObjectList obj_list);
+  void motionPredictionCallback(cav_msgs::ExternalObjectListPtr obj_list);
+    /*! \fn predictionLogic(cav_msgs::ExternalObjectListPtr obj_list)
+    \brief predictionLogic populates duplicated detected object along with its velocity,yaw, yaw_rate and static/dynamic class to ExternalObject message.
+    \param  msg array of detected objects.
+    */
+  void predictionLogic(cav_msgs::ExternalObjectListPtr obj_list);
 
   // Setters for the prediction parameters
   void setPredictionTimeStep(double time_step);

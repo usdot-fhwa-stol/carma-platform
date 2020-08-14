@@ -28,31 +28,31 @@ namespace object
 {
 MotionComputationWorker::MotionComputationWorker(const PublishObjectCallback& obj_pub) : obj_pub_(obj_pub){};
 
-void MotionComputationWorker::motionPredictionCallback(const cav_msgs::ExternalObjectList obj_list)//Duplicate input message
+void MotionComputationWorker::motionPredictionCallback(cav_msgs::ExternalObjectListPtr obj_list)//Duplicate input message
 {
 
-    cav_msgs::ExternalObjectList msg;
+    //cav_msgs::ExternalObjectList msg;
 
-    msg = predictionLogic(obj_list);
+    predictionLogic(obj_list);
  
   
-   obj_pub_(msg);
+   //obj_pub_(msg);
 
 }
 
-cav_msgs::ExternalObjectList MotionComputationWorker::predictionLogic(cav_msgs::ExternalObjectList obj_list)
+void MotionComputationWorker::predictionLogic(cav_msgs::ExternalObjectListPtr obj_list)
 {
   cav_msgs::ExternalObjectList list;
 
- for (int i = 0; i < obj_list.objects.size(); i++)
+ for (auto obj : obj_list->objects)
   {
-    cav_msgs::ExternalObject obj;
+    
 
     // Header contains the frame rest of the fields will use
-    obj.header = obj_list.objects[i].header;
+   // obj.header = obj_list.objects[i].header;
 
     // Object id. Matching ids on a topic should refer to the same object within some time period, expanded
-    obj.id = obj_list.objects[i].id;
+   // obj.id = obj_list.objects[i].id;
 
     // Update the object type and generate predictions using CV or CTRV vehicle models.
 		// If the object is a bicycle or motor vehicle use CTRV otherwise use CV.
@@ -93,7 +93,7 @@ cav_msgs::ExternalObjectList MotionComputationWorker::predictionLogic(cav_msgs::
     switch(obj.object_type)
     {
       case obj.UNKNOWN:
-        use_ctrv_model = true;
+        use_ctrv_model = false;
 
       case obj.MOTORCYCLE:
         use_ctrv_model = true;
@@ -133,7 +133,7 @@ cav_msgs::ExternalObjectList MotionComputationWorker::predictionLogic(cav_msgs::
    
   }//end for-loop
 
-  return list;
+  obj_pub_(list);
 
 }
 
