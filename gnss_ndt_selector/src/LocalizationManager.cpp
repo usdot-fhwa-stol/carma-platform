@@ -22,11 +22,13 @@ namespace localizer
 {
 // TODO timeout logic
 LocalizationManager::LocalizationManager(PosePublisher pose_pub, TransformPublisher transform_pub,
-                                         StatePublisher state_pub, LocalizationManagerConfig config)
+                                         StatePublisher state_pub, LocalizationManagerConfig config,
+                                         std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory)
   : pose_pub_(pose_pub)
   , transform_pub_(transform_pub)
   , state_pub_(state_pub)
   , config_(config)
+  , timer_factory_(timer_factory)
   , transition_table_(config_.localization_mode)
 {
   transition_table_.setTransitionCallback(
@@ -143,7 +145,7 @@ cav_msgs::LocalizationStatusReport LocalizationManager::stateToMsg(LocalizationS
   msg.header.stamp = ros::Time::now();
 }
 
-void &LocalizationManager::timerCallback(const ros::TimerEvent& event, const LocalizationState origin_state)
+void& LocalizationManager::timerCallback(const ros::TimerEvent& event, const LocalizationState origin_state)
 {
   if (origin_state != transition_table_.getState())
     return;  // If the sate has changed then return
@@ -154,10 +156,9 @@ void &LocalizationManager::timerCallback(const ros::TimerEvent& event, const Loc
 void LocalizationManager::stateTransitionCallback(LocalizationState prev_state, LocalizationState new_state,
                                                   LocalizationSignal signal)
 {
-
   // We are in a new state so clear any existing timers
   if (current_timer_ && current_timer_->second)
-  { 
+  {
     current_timer_->second->stop();
   }
 
@@ -167,15 +168,15 @@ void LocalizationManager::stateTransitionCallback(LocalizationState prev_state, 
 
       auto callback = std::bind(&LocalizationManager::timerCallback, this, _1, new_state);
 
-      current_timer_ = timer_factory_->buildTimer(
-          ros::Duraction((double)config_.auto_initialization_timeout / 1000.0), callback, true); // TODO update to use abstracted timer class
+      current_timer_ = timer_factory_->buildTimer(ros::Duraction((double)config_.auto_initialization_timeout / 1000.0),
+                                                  callback, true);
       break;
     case LocalizationState::DEGRADED_NO_LIDAR_FIX:
 
       auto callback = std::bind(&LocalizationManager::timerCallback, this, _1, new_state);
 
-      current_timer_ = timer_factory_->buildTimer(
-          ros::Duraction((double)config_.gnss_initialization_timeout / 1000.0), callback, true); // TODO update to use abstracted timer class
+      current_timer_ = timer_factory_->buildTimer(ros::Duraction((double)config_.gnss_initialization_timeout / 1000.0),
+                                                  callback, true);
       break;
     default:
       break;
@@ -184,11 +185,6 @@ void LocalizationManager::stateTransitionCallback(LocalizationState prev_state, 
 
 bool LocalizationManager::onSpin()
 {
-  // Evaluate Timeouts
-  if (transition_table_.getState() == INITIALIZING)
-  {
-  }
-
   // Create and publish status report message
   cav_msgs::LocalizationStatusReport msg = stateToMsg(transition_table_.getState());
   state_pub_(msg);

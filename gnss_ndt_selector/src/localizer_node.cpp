@@ -75,7 +75,8 @@ void Localizer::run()
 
   manager_.reset(new LocalizationManager(std::bind(&Localizer::publishPoseStamped, this, std_ph::_1),
                                          std::bind(&Localizer::publishTransform, this, std_ph::_1),
-                                         std::bind(&Localizer::publishStatus, this, std_ph::_1), config));
+                                         std::bind(&Localizer::publishStatus, this, std_ph::_1), config,
+                                         std::make_unique<carma_utils::timers::TimerFactory>()));
 
   // initialize subscribers
   gnss_pose_sub_ = nh_.subscribe("gnss_pose", 5, &LocalizationManager::gnssPoseCallback, manager_.get());

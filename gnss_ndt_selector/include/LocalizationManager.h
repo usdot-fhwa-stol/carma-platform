@@ -42,7 +42,8 @@ public:
   using StatePublisher = std::function<void(const cav_msgs::LocalizationStatusReport&)>;
 
   LocalizationManager(PosePublisher pose_pub, TransformPublisher transform_pub, StatePublisher state_pub,
-                      LocalizationManagerConfig config); // TODO add ingestion of factory
+                      LocalizationManagerConfig config,
+                      std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory);
 
   void gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
 
@@ -58,29 +59,27 @@ public:
   void stateTransitionCallback(LocalizationState prev_state, LocalizationState new_state, LocalizationSignal signal);
 
 private:
+  constexpr std::unordered_set<std::string> LIDAR_FAILURE_STRINGS({ "One LIDAR Failed", "Both LIDARS Failed" });
+
   PosePublisher pose_pub_;
   TransformPublisher transform_pub_;
   StatePublisher state_pub_;
 
   LocalizationManagerConfig config_;
 
+  std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory_;
+
   LocalizationTransitionTable transition_table_;
-
-  // reliability counter
-  NDTReliabilityCounter counter_;
-
-  constexpr std::unordered_set<std::string> LIDAR_FAILURE_STRINGS({ "One LIDAR Failed", "Both LIDARS Failed" });
 
   ros::Time prev_ndt_stamp_ = ros::Time(0);
 
   boost::optional<std::unique_ptr<carma_utils::timers::Timer>> current_timer_;
-  std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory_;
+
+  cav_msgs::LocalizationStatusReport stateToMsg(LocalizationState state);
 
   void publishPoseStamped(const geometry_msgs::PoseStamped& pose);
 
   double computeNDTFreq(const ros::Time& new_stamp);
-
-  cav_msgs::LocalizationStatusReport stateToMsg(LocalizationState state);
 };
 
 }  // namespace localizer
