@@ -20,8 +20,8 @@
 #include <memory>
 #include <unordered_map>
 #include <carma_wm_ctrl/Geofence.h>
-#include "Timer.h"
-#include "TimerFactory.h"
+#include <carma_utils/timers/Timer.h>
+#include <carma_utils/timers/TimerFactory.h>
 
 namespace carma_wm_ctrl
 {
@@ -31,6 +31,8 @@ namespace carma_wm_ctrl
  */
 class GeofenceScheduler
 {
+  using Timer = carma_utils::timers::Timer;
+  using TimerFactory = carma_utils::timers::TimerFactory;
   using TimerPtr = std::unique_ptr<Timer>;
 
   std::mutex mutex_;
