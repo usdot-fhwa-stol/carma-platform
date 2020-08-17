@@ -56,17 +56,19 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable( ${PROJECT_NAME}
-                src/localizer_node.cpp
+add_library( ${PROJECT_NAME}
                 src/LocalizationManager.cpp
                 src/LocalizationTransitionTable.cpp
-                src/LocalizationTypes.cpp
-                src/main.cpp)
+                src/LocalizationTypes.cpp)
 
-#add_library(gnss_ndt_counter_library src/ndt_reliability_counter.cpp)
 target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${catkin_LIBRARIES})
 
-add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+
+add_executable( ${PROJECT_NAME}_node
+                src/localizer_node.cpp
+                src/main.cpp)
+
+target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME} ${Boost_LIBRARIES} ${catkin_LIBRARIES})
 
 #############
 ## Install ##
@@ -79,7 +81,7 @@ PATTERN ".svn" EXCLUDE
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME} 
+install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -93,5 +95,9 @@ install(DIRECTORY launch config
 #############
 ## Testing ##
 #############
-# catkin_add_gmock(${PROJECT_NAME}-test test/test_gnss_ndt_selector.cpp)
-# target_link_libraries(${PROJECT_NAME}-test gnss_ndt_counter_library ${catkin_LIBRARIES})
+catkin_add_gmock(${PROJECT_NAME}-test test/TestMain.cpp 
+  test/TestLocalizationTransitionTable.cpp
+  test/TestLocalizationManager.cpp
+  test/TestLocalizationTypes.cpp
+)
+target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})

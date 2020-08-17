@@ -120,39 +120,6 @@ void LocalizationManager::systemAlertCallback(const cav_msgs::SystemAlertConstPt
   }
 }
 
-cav_msgs::LocalizationStatusReport LocalizationManager::stateToMsg(LocalizationState state)
-{
-  cav_msgs::LocalizationStatusReport msg;
-  switch (state)
-  {
-    case LocalizationState::UNINITIALIZED:
-      msg.status = cav_msgs::LocalizationStatusReport::UNINITIALIZED;
-      break;
-    case LocalizationState::INITIALIZING:
-      msg.status = cav_msgs::LocalizationStatusReport::INITIALIZING;
-      break;
-    case LocalizationState::OPERATIONAL:
-      msg.status = cav_msgs::LocalizationStatusReport::OPERATIONAL;
-      break;
-    case LocalizationState::DEGRADED:
-      msg.status = cav_msgs::LocalizationStatusReport::DEGRADED;
-      break;
-    case LocalizationState::DEGRADED_NO_LIDAR_FIX:
-      msg.status = cav_msgs::LocalizationStatusReport::DEGRADED_NO_LIDAR_FIX;
-      break;
-    case LocalizationState::AWAIT_MANUAL_INITIALIZATION:
-      msg.status = cav_msgs::LocalizationStatusReport::AWAIT_MANUAL_INITIALIZATION;
-      break;
-    default:
-      throw std::invalid_argument("LocalizationManager states do not match cav_msgs::LocalizationStatusReport "
-                                  "states");
-      break;
-  }
-  msg.header.stamp = ros::Time::now();
-
-  return msg;
-}
-
 void LocalizationManager::timerCallback(const ros::TimerEvent& event, const LocalizationState origin_state)
 {
   if (origin_state != transition_table_.getState())
@@ -167,7 +134,9 @@ void LocalizationManager::stateTransitionCallback(LocalizationState prev_state, 
   // We are in a new state so clear any existing timers
   if (current_timer_ && current_timer_.get())
   {
+    ROS_INFO_STREAM("STOPPING TIMER");
     current_timer_.get()->stop();
+    ROS_INFO_STREAM("TIMER STOPPED");
   }
 
   switch (new_state)
@@ -194,10 +163,14 @@ void LocalizationManager::stateTransitionCallback(LocalizationState prev_state, 
 bool LocalizationManager::onSpin()
 {
   // Create and publish status report message
-  cav_msgs::LocalizationStatusReport msg = stateToMsg(transition_table_.getState());
+  cav_msgs::LocalizationStatusReport msg = stateToMsg(transition_table_.getState(), ros::Time::now());
   state_pub_(msg);
 
   return true;
+}
+
+LocalizationState LocalizationManager::getState() {
+  return transition_table_.getState();
 }
 
 }  // namespace localizer

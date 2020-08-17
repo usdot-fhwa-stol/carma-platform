@@ -16,6 +16,7 @@
  */
 
 #include <iostream>
+#include <cav_msgs/LocalizationStatusReport.h>
 
 namespace localizer
 {
@@ -45,6 +46,16 @@ enum class LocalizationState
  * \brief Stream operator for LocalizationState enum.
  */
 std::ostream& operator<<(std::ostream& os, LocalizationState s);
+/**
+ * \brief Helper function to convert LocalizationState objects into LocalizationStatusReport ROS messages
+ * 
+ * \param state The state to convert
+ * \param stamp The timestamp to set for the message header
+ * 
+ * \return The initialized report message
+ */ 
+cav_msgs::LocalizationStatusReport stateToMsg(LocalizationState state, const ros::Time& stamp);
+
 
 //! @brief Enum describing the possible signals to change the current LocalizationState
 enum class LocalizationSignal

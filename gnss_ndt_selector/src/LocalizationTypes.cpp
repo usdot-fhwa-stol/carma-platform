@@ -1,4 +1,3 @@
-#pragma once
 /*
  * Copyright (C) 2019-2020 LEIDOS.
  *
@@ -59,6 +58,39 @@ std::ostream& operator<<(std::ostream& os, LocalizationSignal s)
     default: os.setstate(std::ios_base::failbit);
   }  // clang-format on
   return os;
+}
+
+cav_msgs::LocalizationStatusReport stateToMsg(LocalizationState state, const ros::Time& stamp)
+{
+  cav_msgs::LocalizationStatusReport msg;
+  switch (state)
+  {
+    case LocalizationState::UNINITIALIZED:
+      msg.status = cav_msgs::LocalizationStatusReport::UNINITIALIZED;
+      break;
+    case LocalizationState::INITIALIZING:
+      msg.status = cav_msgs::LocalizationStatusReport::INITIALIZING;
+      break;
+    case LocalizationState::OPERATIONAL:
+      msg.status = cav_msgs::LocalizationStatusReport::OPERATIONAL;
+      break;
+    case LocalizationState::DEGRADED:
+      msg.status = cav_msgs::LocalizationStatusReport::DEGRADED;
+      break;
+    case LocalizationState::DEGRADED_NO_LIDAR_FIX:
+      msg.status = cav_msgs::LocalizationStatusReport::DEGRADED_NO_LIDAR_FIX;
+      break;
+    case LocalizationState::AWAIT_MANUAL_INITIALIZATION:
+      msg.status = cav_msgs::LocalizationStatusReport::AWAIT_MANUAL_INITIALIZATION;
+      break;
+    default:
+      throw std::invalid_argument("LocalizationStates do not match cav_msgs::LocalizationStatusReport "
+                                  "states");
+      break;
+  }
+  msg.header.stamp = stamp;
+
+  return msg;
 }
 
 }  // namespace localizer
