@@ -104,10 +104,11 @@ namespace mock_drivers{
     
     int BagParser::run(){
 
+        mock_driver_node_.init();
+
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::BagData>>>(bag_data_pub_ptr_);
 
         mock_driver_node_.setSpinCallback(std::bind(&BagParser::publishCallback, this));
-
         mock_driver_node_.spin(rate_);
 
         return 0;

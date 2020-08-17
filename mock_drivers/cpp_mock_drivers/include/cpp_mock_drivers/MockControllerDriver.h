@@ -38,6 +38,7 @@ namespace mock_drivers{
             void parserCB(const cav_msgs::BagData::ConstPtr& msg);
             void vehicleCmdCallback(const autoware_msgs::VehicleCmd::ConstPtr& msg);
             bool enableRoboticSrv(cav_srvs::SetEnableRobotic::Request& req, cav_srvs::SetEnableRobotic::Response& res);
+            bool driverDiscovery();
 
     };
 

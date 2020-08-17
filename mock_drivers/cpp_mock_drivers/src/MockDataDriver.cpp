@@ -18,6 +18,10 @@
 
 namespace mock_drivers{
 
+    bool MockDataDriver::driverDiscovery(){
+        return true;
+    }
+
     void MockDataDriver::parserCB(const cav_msgs::BagData::ConstPtr& msg){
         tf2_msgs::TFMessage tf = msg->tf;
         tf2_msgs::TFMessage tf_static = msg->tf_static;

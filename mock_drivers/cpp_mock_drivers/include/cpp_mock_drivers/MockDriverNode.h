@@ -93,6 +93,7 @@ namespace mock_drivers{
             void publishDataNoHeader(std::string topic, T msg){
                 if(!dummy_){
                     std::vector<ros::Publisher>::iterator pub = std::find_if(publishers_.begin(), publishers_.end(), [&](ros::Publisher p){return (p.getTopic()) == topic;});
+
                     pub->publish(msg);
                 } else {
                     topics_.push_back(topic);

@@ -18,6 +18,29 @@
 
 namespace mock_drivers{
 
+    bool MockRadarDriver::driverDiscovery(){
+        cav_msgs::DriverStatus discovery_msg;
+        
+        discovery_msg.name = "MockCANDriver";
+        discovery_msg.status = 1;
+
+        discovery_msg.can = false;
+        discovery_msg.radar = true;
+        discovery_msg.gnss = false;
+        discovery_msg.lidar = false;
+        discovery_msg.roadway_sensor = false;
+        discovery_msg.comms = false;
+        discovery_msg.controller = false;
+        discovery_msg.camera = false;
+        discovery_msg.imu = false;
+        discovery_msg.trailer_angle_sensor = false;
+        discovery_msg.lightbar = false;
+
+        mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("/hardware_interface/driver_discovery", discovery_msg);
+
+        return true;
+    }
+
     void MockRadarDriver::parserCB(const cav_msgs::BagData::ConstPtr& msg){
         radar_msgs::RadarStatus status_msg = msg->status;
         radar_msgs::RadarTrackArray tracks_raw_msg = msg->tracks_raw;
@@ -47,7 +70,10 @@ namespace mock_drivers{
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<radar_msgs::RadarStatus>>>(status_pub_ptr_);
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<radar_msgs::RadarTrackArray>>>(tracks_raw_pub_ptr_);
 
-        mock_driver_node_.spin(10);
+        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>>>(driver_discovery_pub_ptr_);
+        mock_driver_node_.setSpinCallback(std::bind(&MockRadarDriver::driverDiscovery, this));
+
+        mock_driver_node_.spin(1);
 
         return 0;
     }

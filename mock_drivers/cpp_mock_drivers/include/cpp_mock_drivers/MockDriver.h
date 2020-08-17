@@ -20,6 +20,7 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include <cav_msgs/BagData.h>
+#include <cav_msgs/DriverStatus.h>
 
 #include "cpp_mock_drivers/ROSComms.h"
 #include "cpp_mock_drivers/MockDriverNode.h"
@@ -36,11 +37,14 @@ namespace mock_drivers{
         
         std::function<void(const cav_msgs::BagData::ConstPtr&)> bag_parser_cb_ptr_ = std::bind(&MockDriver::parserCB, this, std::placeholders::_1);
         boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>> bag_parser_sub_ptr_ = boost::make_shared<ROSComms<const cav_msgs::BagData::ConstPtr&>>(ROSComms<const cav_msgs::BagData::ConstPtr&>(bag_parser_cb_ptr_, CommTypes::sub, false, 10, "bag_data"));
+        
+        boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>> driver_discovery_pub_ptr_ = boost::make_shared<ROSComms<cav_msgs::DriverStatus>>(ROSComms<cav_msgs::DriverStatus>(CommTypes::pub, false, 10, "driver_discovery"));
 
         public:
 
         virtual int run() = 0;
         virtual void parserCB(const cav_msgs::BagData::ConstPtr& msg) = 0;
+        virtual bool driverDiscovery() = 0;
 
         boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>> getBagComms() {return bag_parser_sub_ptr_;};
 

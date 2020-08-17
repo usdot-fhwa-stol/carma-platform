@@ -18,6 +18,29 @@
 
 namespace mock_drivers{
 
+    bool MockLidarDriver::driverDiscovery(){
+        cav_msgs::DriverStatus discovery_msg;
+        
+        discovery_msg.name = "MockLidarDriver";
+        discovery_msg.status = 1;
+
+        discovery_msg.can = false;
+        discovery_msg.radar = false;
+        discovery_msg.gnss = false;
+        discovery_msg.lidar = true;
+        discovery_msg.roadway_sensor = false;
+        discovery_msg.comms = false;
+        discovery_msg.controller = false;
+        discovery_msg.camera = false;
+        discovery_msg.imu = false;
+        discovery_msg.trailer_angle_sensor = false;
+        discovery_msg.lightbar = false;
+
+        mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("/hardware_interface/driver_discovery", discovery_msg);
+
+        return true;
+    }
+    
     void MockLidarDriver::parserCB(const cav_msgs::BagData::ConstPtr& msg){
         sensor_msgs::PointCloud2 updated_msg = msg->points_raw;
         updated_msg.header.stamp = ros::Time::now();
@@ -40,7 +63,10 @@ namespace mock_drivers{
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<sensor_msgs::PointCloud2>>>(points_raw_ptr_);
 
-        mock_driver_node_.spin(10);
+        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>>>(driver_discovery_pub_ptr_);
+        mock_driver_node_.setSpinCallback(std::bind(&MockLidarDriver::driverDiscovery, this));
+
+        mock_driver_node_.spin(1);
         return 0;
     }
 

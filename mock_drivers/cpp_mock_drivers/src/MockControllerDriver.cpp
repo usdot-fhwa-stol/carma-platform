@@ -18,6 +18,29 @@
 
 namespace mock_drivers{
 
+    bool MockControllerDriver::driverDiscovery(){
+        cav_msgs::DriverStatus discovery_msg;
+        
+        discovery_msg.name = "MockControllerDriver";
+        discovery_msg.status = 1;
+
+        discovery_msg.can = false;
+        discovery_msg.radar = false;
+        discovery_msg.gnss = false;
+        discovery_msg.lidar = false;
+        discovery_msg.roadway_sensor = false;
+        discovery_msg.comms = false;
+        discovery_msg.controller = true;
+        discovery_msg.camera = false;
+        discovery_msg.imu = false;
+        discovery_msg.trailer_angle_sensor = false;
+        discovery_msg.lightbar = false;
+
+        mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("/hardware_interface/driver_discovery", discovery_msg);
+
+        return true;
+    }
+
     void MockControllerDriver::parserCB(const cav_msgs::BagData::ConstPtr& msg){
         cav_msgs::RobotEnabled robot_status = msg->robot_status;
 
@@ -60,7 +83,10 @@ namespace mock_drivers{
         mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const autoware_msgs::VehicleCmd::ConstPtr&>>>(vehicle_cmd_ptr_);
         mock_driver_node_.addSrv<boost::shared_ptr<ROSComms<cav_srvs::SetEnableRobotic::Request&, cav_srvs::SetEnableRobotic::Response&>>>(enable_robotic_ptr_);
 
-        mock_driver_node_.spin(10);
+        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>>>(driver_discovery_pub_ptr_);
+        mock_driver_node_.setSpinCallback(std::bind(&MockControllerDriver::driverDiscovery, this));
+
+        mock_driver_node_.spin(1);
 
         return 0;
     }

@@ -14,6 +14,7 @@
 <launch>
     <arg name="driver"/>
     <group ns="hardware_interface">
-        <node pkg="cpp_mock_drivers" type="mock_driver" name="$(arg driver)" args="$(arg driver)" ns="$(arg driver)"/>
+      <remap from="/hardware_interface/$(arg driver)/driver_discovery" to="/hardware_interface/driver_discovery"/>
+      <node pkg="cpp_mock_drivers" type="mock_driver" name="$(arg driver)" args="$(arg driver)" ns="$(arg driver)"/>
     </group>
 </launch>

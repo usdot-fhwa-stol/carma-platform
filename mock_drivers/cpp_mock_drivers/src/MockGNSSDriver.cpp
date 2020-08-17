@@ -18,6 +18,29 @@
 
 namespace mock_drivers{
 
+    bool MockGNSSDriver::driverDiscovery(){
+        cav_msgs::DriverStatus discovery_msg;
+        
+        discovery_msg.name = "MockGNSSDriver";
+        discovery_msg.status = 1;
+
+        discovery_msg.can = false;
+        discovery_msg.radar = false;
+        discovery_msg.gnss = true;
+        discovery_msg.lidar = false;
+        discovery_msg.roadway_sensor = false;
+        discovery_msg.comms = false;
+        discovery_msg.controller = false;
+        discovery_msg.camera = false;
+        discovery_msg.imu = false;
+        discovery_msg.trailer_angle_sensor = false;
+        discovery_msg.lightbar = false;
+
+        mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("/hardware_interface/driver_discovery", discovery_msg);
+
+        return true;
+    }
+
     void MockGNSSDriver::parserCB(const cav_msgs::BagData::ConstPtr& msg){
         gps_common::GPSFix gnss_fixed_fused = msg->gnss_fixed_fused;
 
@@ -44,7 +67,10 @@ namespace mock_drivers{
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<gps_common::GPSFix>>>(GPS_fix_ptr_);
 
-        mock_driver_node_.spin(10);
+        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>>>(driver_discovery_pub_ptr_);
+        mock_driver_node_.setSpinCallback(std::bind(&MockGNSSDriver::driverDiscovery, this));
+
+        mock_driver_node_.spin(1);
 
         return 0;
     }

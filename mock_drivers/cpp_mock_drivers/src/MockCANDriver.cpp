@@ -18,6 +18,29 @@
 
 namespace mock_drivers{
 
+    bool MockCANDriver::driverDiscovery(){
+        cav_msgs::DriverStatus discovery_msg;
+        
+        discovery_msg.name = "MockCANDriver";
+        discovery_msg.status = 1;
+
+        discovery_msg.can = true;
+        discovery_msg.radar = false;
+        discovery_msg.gnss = false;
+        discovery_msg.lidar = false;
+        discovery_msg.roadway_sensor = false;
+        discovery_msg.comms = false;
+        discovery_msg.controller = false;
+        discovery_msg.camera = false;
+        discovery_msg.imu = false;
+        discovery_msg.trailer_angle_sensor = false;
+        discovery_msg.lightbar = false;
+
+        mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("/hardware_interface/driver_discovery", discovery_msg);
+
+        return true;
+    }
+    
     void MockCANDriver::parserCB(const cav_msgs::BagData::ConstPtr& msg){
         std_msgs::Bool acc_engaged = msg->acc_engaged;
         std_msgs::Float64 acceleration = msg->acceleration;
@@ -115,7 +138,6 @@ namespace mock_drivers{
         vehicle_status_ptr_ = boost::make_shared<ROSComms<autoware_msgs::VehicleStatus>>(ROSComms<autoware_msgs::VehicleStatus>(CommTypes::pub, false, 10, "vehicle_status"));
         velocity_accel_ptr_ = boost::make_shared<ROSComms<automotive_platform_msgs::VelocityAccel>>(ROSComms<automotive_platform_msgs::VelocityAccel>(CommTypes::pub, false, 10, "velocity_accel"));
 
-
     }
 
     int MockCANDriver::run(){
@@ -146,7 +168,10 @@ namespace mock_drivers{
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<autoware_msgs::VehicleStatus>>>(vehicle_status_ptr_);
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<automotive_platform_msgs::VelocityAccel>>>(velocity_accel_ptr_);
 
-        mock_driver_node_.spin(10);
+        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>>>(driver_discovery_pub_ptr_);
+        mock_driver_node_.setSpinCallback(std::bind(&MockCANDriver::driverDiscovery, this));
+
+        mock_driver_node_.spin(1);
 
         return 0;
     }
