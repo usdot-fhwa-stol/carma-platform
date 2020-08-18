@@ -133,8 +133,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES gnss_to_map_convertor
+  INCLUDE_DIRS include
+  LIBRARIES gnss_to_map_convertor
   CATKIN_DEPENDS geometry_msgs roscpp rospy std_msgs tf2_msgs wgs84_utils message_filters novatel_gps_msgs carma_utils tf2_geometry_msgs
 #  DEPENDS system_lib
 )
@@ -159,9 +159,9 @@ add_library(${PROJECT_NAME}
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME}
-  wgs84_utils_library
+  #wgs84_utils_library
   ${catkin_LIBRARIES}
 )
 
@@ -182,8 +182,8 @@ add_executable(${PROJECT_NAME}_node src/gnss_to_map_convertor/main.cpp src/${PRO
 
  target_link_libraries(${PROJECT_NAME}_node
  ${PROJECT_NAME}
-  wgs84_utils_library
-  carma_utils
+  #wgs84_utils_library
+  #carma_utils
   ${catkin_LIBRARIES}
  )
 

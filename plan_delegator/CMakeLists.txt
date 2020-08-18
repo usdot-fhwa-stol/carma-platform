@@ -113,8 +113,17 @@ install(DIRECTORY
 ## Testing ##
 #############
 #catkin_add_gmock(${PROJECT_NAME}-test test/test_plan_delegator.cpp)
-add_rostest_gtest(test_plan_delegator test/plan_delegator.test test/test_plan_delegator.cpp)
-target_link_libraries(test_plan_delegator ${PROJECT_NAME}_lib ${catkin_LIBRARIES})
+
+if(CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(test_plan_delegator test/plan_delegator.test test/test_plan_delegator.cpp)
+  target_link_libraries(test_plan_delegator ${PROJECT_NAME}_lib ${catkin_LIBRARIES})
+endif()
+
+
+
+#add_rostest_gtest(test_plan_delegator test/plan_delegator.test test/test_plan_delegator.cpp)
+#target_link_libraries(test_plan_delegator ${PROJECT_NAME}_lib ${catkin_LIBRARIES})
 ##if(CATKIN_ENABLE_TESTING)
 ##  find_package(rostest REQUIRED)
 ##  add_rostest_gtest(test_plan_delegator test/plan_delegator.test test/test_plan_delegator.cpp)

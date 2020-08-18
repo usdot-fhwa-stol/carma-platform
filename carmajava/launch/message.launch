@@ -42,14 +42,7 @@
     <remap from="outgoing_bsm" to="bsm_outbound"/>
   </node>
   
-  <!-- Message Consumer Node -->
-  <node pkg="message" type="message" name="message_consumer" args="gov.dot.fhwa.saxton.carma.message.MessageConsumer">
-
-    <env if="$(arg debug_msg_consumer)" name="MESSAGE_OPTS" value="$(env JVM_DEBUG_OPTS)"/>
-
-    <rosparam command="load" file="$(find message)/message/config/MessageParams.yaml"/>
-
-  </node>
+  
 
   <include file="$(find bsm_generator)/launch/bsm_generator.launch"/>
 
