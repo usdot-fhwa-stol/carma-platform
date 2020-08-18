@@ -23,10 +23,7 @@
 #include <atomic>
 #include "TestHelpers.h"
 
-#include <cav_msgs/ControlMessage.h>
-#include <cav_msgs/DaySchedule.h>
-#include <cav_msgs/Schedule.h>
-#include <cav_msgs/ScheduleParams.h>
+#include <cav_msgs/TrafficControlMessage.h>
 
 using ::testing::_;
 using ::testing::A;

@@ -13,27 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include <carma_wm_ctrl/ROSTimer.h>
 
-namespace carma_wm_ctrl
-{
-ROSTimer::~ROSTimer(){};
+#include <gtest/gtest.h>
+#include <ros/ros.h>
 
-void ROSTimer::initializeTimer(ros::Duration duration, std::function<void(const ros::TimerEvent&)> callback,
-                               bool oneshot, bool autostart)
+// Run all the tests
+int main(int argc, char** argv)
 {
-  timer_.stop();
-  timer_ = nh_.createTimer(duration, callback, oneshot, autostart);
+  testing::InitGoogleTest(&argc, argv);
+  ros::Time::init();
+  return RUN_ALL_TESTS();
 }
-
-void ROSTimer::start()
-{
-  timer_.start();
-}
-
-void ROSTimer::stop()
-{
-  timer_.stop();
-}
-
-}  // namespace carma_wm_ctrl

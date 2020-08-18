@@ -26,7 +26,6 @@
 #include <lanelet2_core/primitives/Polygon.h>
 #include <proj.h>
 #include <lanelet2_io/Projection.h>
-#include <j2735_msgs/ControlType.h>
 #include <lanelet2_core/utility/Units.h>
 #include <lanelet2_core/Forward.h>
 #include <lanelet2_extension/utility/utilities.h>
@@ -39,7 +38,7 @@ namespace carma_wm_ctrl
 using std::placeholders::_1;
 
 
-WMBroadcaster::WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, std::unique_ptr<TimerFactory> timer_factory)
+WMBroadcaster::WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory)
   : map_pub_(map_pub), map_update_pub_(map_update_pub), scheduler_(std::move(timer_factory))
 {
   scheduler_.onGeofenceActive(std::bind(&WMBroadcaster::addGeofence, this, _1));
@@ -70,7 +69,6 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
 
   base_map_ = new_map;  // Store map
   current_map_ = new_map_to_change; // broadcaster makes changes to this
-                                    // TODO publication of this modified map will be handled in the future
 
   lanelet::MapConformer::ensureCompliance(base_map_);     // Update map to ensure it complies with expectations
   lanelet::MapConformer::ensureCompliance(current_map_);
@@ -81,14 +79,15 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
   map_pub_(compliant_map_msg);
 };
 
-std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::ControlMessage& geofence_msg)
+std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::TrafficControlMessageV01& msg_v01)
 {
   auto gf_ptr = std::make_shared<Geofence>(Geofence());
   // Get ID
-  std::copy(geofence_msg.id.begin(), geofence_msg.id.end(), gf_ptr->id_.begin());
+  std::copy(msg_v01.id.id.begin(), msg_v01.id.id.end(), gf_ptr->id_.begin());
 
   // Get affected lanelet or areas by converting the georeference and querying the map using points in the geofence
-  gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(geofence_msg);
+  gf_ptr->affected_parts_ = getAffectedLaneletOrAreas(msg_v01);
+
   std::vector<lanelet::Lanelet> affected_llts;
   std::vector<lanelet::Area> affected_areas;
 
@@ -100,45 +99,148 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Control
   }
 
   // TODO: logic to determine what type of geofence goes here
-  // currently only converting portion of control message that is relevant to digital speed limit geofence
-  // Convert from double to Velocity
+  // currently only converting portion of control message that is relevant to:
+  // - digital speed limit, passing control line
 
-  if (geofence_msg.control_type.control_type == j2735_msgs::ControlType::MAXSPEED) 
+  cav_msgs::TrafficControlDetail msg_detail = msg_v01.params.detail;
+  
+  if (msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE) 
   {
-    gf_ptr->max_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
-                                        lanelet::Velocity(geofence_msg.control_value.value * lanelet::units::MPH()),
-                                        affected_llts, affected_areas, { lanelet::Participants::VehicleCar }));
-  }
-  if (geofence_msg.control_type.control_type == j2735_msgs::ControlType::MINSPEED) 
-  {
-    gf_ptr->min_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
-                                        lanelet::Velocity(geofence_msg.control_value.value * lanelet::units::MPH()),
+    gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
+                                        lanelet::Velocity(msg_detail.maxspeed * lanelet::units::MPH()),
                                         affected_llts, affected_areas, { lanelet::Participants::VehicleCar }));
   }
   
-  // Get schedule (assuming everything is in UTC currently)
-  gf_ptr->schedule = GeofenceSchedule(geofence_msg.schedule.start,  
-                                 geofence_msg.schedule.end,
-                                 geofence_msg.schedule.between.start,     
-                                 geofence_msg.schedule.between.end, 
-                                 geofence_msg.schedule.repeat.duration,   
-                                 geofence_msg.schedule.repeat.interval);
+  if (msg_detail.choice == cav_msgs::TrafficControlDetail::MINSPEED_CHOICE) 
+  {
+    gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
+                                        lanelet::Velocity(msg_detail.minspeed * lanelet::units::MPH()),
+                                        affected_llts, affected_areas, { lanelet::Participants::VehicleCar }));
+  }
+  if (msg_detail.choice == cav_msgs::TrafficControlDetail::LATPERM_CHOICE || msg_detail.choice == cav_msgs::TrafficControlDetail::LATAFFINITY_CHOICE)
+  {
+    addPassingControlLineFromMsg(gf_ptr, msg_v01, affected_llts);
+  }
+
+  cav_msgs::TrafficControlSchedule msg_schedule = msg_v01.params.schedule;
+  
+  // Get schedule
+  for (auto daily_schedule : msg_schedule.between)
+  {
+    gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
+                                 msg_schedule.end,
+                                 daily_schedule.begin,     
+                                 daily_schedule.duration,
+                                 msg_schedule.repeat.offset,
+                                 msg_schedule.repeat.span,   
+                                 msg_schedule.repeat.period));
+  }
+  
   return gf_ptr;
 }
 
-void WMBroadcaster::geofenceCallback(const cav_msgs::ControlMessage& geofence_msg)
+void WMBroadcaster::addPassingControlLineFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const
+{
+  cav_msgs::TrafficControlDetail msg_detail;
+  msg_detail = msg_v01.params.detail;
+  // Get affected bounds
+  lanelet::LineStrings3d pcl_bounds;
+  if (msg_detail.lataffinity == cav_msgs::TrafficControlDetail::LEFT)
+  {
+    for (auto llt : affected_llts) pcl_bounds.push_back(llt.leftBound());
+    gf_ptr->pcl_affects_left_ = true;
+  }
+  else //right
+  {
+    for (auto llt : affected_llts) pcl_bounds.push_back(llt.rightBound());
+    gf_ptr->pcl_affects_right_ = true;
+  }
+
+  // Get specified participants
+  ros::V_string left_participants;
+  ros::V_string right_participants;
+  ros::V_string participants;
+  for (j2735_msgs::TrafficControlVehClass participant : msg_v01.params.vclasses)
+  {
+    // Currently j2735_msgs::TrafficControlVehClass::RAIL is not supported
+    if (participant.vehicle_class == j2735_msgs::TrafficControlVehClass::ANY)
+    {
+      participants = {lanelet::Participants::Vehicle, lanelet::Participants::Pedestrian, lanelet::Participants::Bicycle};
+      break;
+    }
+    else if (participant.vehicle_class == j2735_msgs::TrafficControlVehClass::PEDESTRIAN)
+    {
+      participants.push_back(lanelet::Participants::Pedestrian);
+    }
+    else if (participant.vehicle_class == j2735_msgs::TrafficControlVehClass::BICYCLE)
+    {
+      participants.push_back(lanelet::Participants::Bicycle);
+    }
+    else if (participant.vehicle_class == j2735_msgs::TrafficControlVehClass::MICROMOBILE ||
+              participant.vehicle_class == j2735_msgs::TrafficControlVehClass::MOTORCYCLE)
+    {
+      participants.push_back(lanelet::Participants::VehicleMotorcycle);
+    }
+    else if (participant.vehicle_class == j2735_msgs::TrafficControlVehClass::BUS)
+    {
+      participants.push_back(lanelet::Participants::VehicleBus);
+    }
+    else if (participant.vehicle_class == j2735_msgs::TrafficControlVehClass::LIGHT_TRUCK_VAN ||
+            participant.vehicle_class == j2735_msgs::TrafficControlVehClass::PASSENGER_CAR)
+    {
+      participants.push_back(lanelet::Participants::VehicleCar);
+    }
+    else if (8<= participant.vehicle_class && participant.vehicle_class <= 16) // Truck enum definition range from 8-16 currently
+    {
+      participants.push_back(lanelet::Participants::VehicleTruck);
+    }
+  }
+
+  // Create the pcl depending on the allowed passing control direction, left, right, or both
+  if (msg_detail.latperm[0] == cav_msgs::TrafficControlDetail::PERMITTED ||
+      msg_detail.latperm[0] == cav_msgs::TrafficControlDetail::PASSINGONLY)
+  {
+    left_participants = participants; 
+  }
+  else if (msg_detail.latperm[0] == cav_msgs::TrafficControlDetail::EMERGENCYONLY)
+  {
+    left_participants.push_back(lanelet::Participants::VehicleEmergency);
+  }
+  if (msg_detail.latperm[1] == cav_msgs::TrafficControlDetail::PERMITTED ||
+      msg_detail.latperm[1] == cav_msgs::TrafficControlDetail::PASSINGONLY)
+  {
+    right_participants = participants; 
+  }
+  else if (msg_detail.latperm[1] == cav_msgs::TrafficControlDetail::EMERGENCYONLY)
+  {
+    right_participants.push_back(lanelet::Participants::VehicleEmergency);
+  }
+
+  gf_ptr->regulatory_element_ = std::make_shared<lanelet::PassingControlLine>(lanelet::PassingControlLine::buildData(
+    lanelet::utils::getId(), pcl_bounds, left_participants, right_participants));
+}
+// currently only supports geofence message version 1: TrafficControlMessageV01 
+void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geofence_msg)
 {
   std::lock_guard<std::mutex> guard(map_mutex_);
   // quickly check if the id has been added
+  if (geofence_msg.choice != cav_msgs::TrafficControlMessage::TCMV01)
+    return;
+
   boost::uuids::uuid id;
-  std::copy(geofence_msg.id.begin(), geofence_msg.id.end(), id.begin());
+  std::copy(geofence_msg.tcmV01.id.id.begin(), geofence_msg.tcmV01.id.id.end(), id.begin());
   if (checked_geofence_ids_.find(boost::uuids::to_string(id)) != checked_geofence_ids_.end())
     return;
   
   checked_geofence_ids_.insert(boost::uuids::to_string(id));
-  auto gf_ptr = geofenceFromMsg(geofence_msg);
+  auto gf_ptr = geofenceFromMsg(geofence_msg.tcmV01);
+  if (gf_ptr->affected_parts_.size() == 0)
+  {
+    ROS_WARN_STREAM("There is no applicable component in map for the new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
+    return;
+  }
   scheduler_.addGeofence(gf_ptr);  // Add the geofence to the scheduler
-  ROS_INFO_STREAM("New geofence message received by WMBroadcaster with id" << gf_ptr->id_);
+  ROS_INFO_STREAM("New geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
   
 };
 
@@ -153,7 +255,8 @@ void WMBroadcaster::setMaxLaneWidth(double max_lane_width)
   max_lane_width_ = max_lane_width;
 }
 
-lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_msgs::ControlMessage& geofence_msg)
+// currently only supports geofence message version 1: TrafficControlMessageV01 
+lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_msgs::TrafficControlMessageV01& tcmV01)
 {
   if (!current_map_)
   {
@@ -163,13 +266,13 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
     throw lanelet::InvalidObjectStateError(std::string("Base lanelet map has empty proj string loaded as georeference. Therefore, WMBroadcaster failed to\n ") +
                                           std::string("get transformation between the geofence and the map"));
 
-  PJ* geofence_in_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, geofence_msg.proj.c_str(), base_map_georef_.c_str(), NULL);
+  PJ* geofence_in_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, tcmV01.geometry.proj.c_str(), base_map_georef_.c_str(), NULL);
   
   // convert all geofence points into our map's frame
   std::vector<lanelet::Point3d> gf_pts;
-  for (auto pt : geofence_msg.points)
+  for (auto pt : tcmV01.geometry.nodes)
   {
-    PJ_COORD c{{pt.x, pt.y, pt.z, 0}};
+    PJ_COORD c {{pt.x, pt.y, 0, 0}}; // z is not currently used
     PJ_COORD c_out;
     c_out = proj_trans(geofence_in_map_proj, PJ_FWD, c);
     gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), c_out.xyz.x, c_out.xyz.y});
@@ -273,7 +376,38 @@ std::unordered_set<lanelet::Lanelet> WMBroadcaster::filterSuccessorLanelets(cons
   return filtered_lanelets;
 }
 
-void WMBroadcaster::addSpeedLimit(std::shared_ptr<Geofence> gf_ptr)
+/*!
+  * \brief This is a helper function that returns true if the provided regem is marked to be changed by the geofence as there are
+  *  usually multiple passing control lines are in the lanelet.
+  * \param geofence_msg The ROS msg that contains geofence information
+  * \param el The LaneletOrArea that houses the regem
+  * \param regem The regulatoryElement that needs to be checked
+  * NOTE: Currently this function only works on lanelets. It returns true if the regem is not passingControlLine or if the pcl should be changed.
+  */
+bool WMBroadcaster::shouldChangeControlLine(const lanelet::ConstLaneletOrArea& el,const lanelet::RegulatoryElementConstPtr& regem, std::shared_ptr<Geofence> gf_ptr) const
+{
+  // should change if if the regem is not a passing control line or area, which is not supported by this logic
+  if (regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::PassingControlLine::RuleName) != 0 || !el.isLanelet())
+  {
+    return true;
+  }
+  
+  lanelet::PassingControlLinePtr pcl =  std::dynamic_pointer_cast<lanelet::PassingControlLine>(current_map_->regulatoryElementLayer.get(regem->id()));
+  // if this geofence's pcl doesn't match with the lanelets current bound side, return false as we shouldn't change
+  bool should_change_pcl = false;
+  for (auto control_line : pcl->controlLine())
+  {
+    if (control_line.id() == el.lanelet()->leftBound2d().id() && gf_ptr->pcl_affects_left_ ||
+    control_line.id() == el.lanelet()->rightBound2d().id() && gf_ptr->pcl_affects_right_)
+    {
+      should_change_pcl = true;
+      break;
+    }
+  }
+  return should_change_pcl;
+}
+
+void WMBroadcaster::addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const
 {
   // First loop is to save the relation between element and regulatory element
   // so that we can add back the old one after geofence deactivates
@@ -281,7 +415,9 @@ void WMBroadcaster::addSpeedLimit(std::shared_ptr<Geofence> gf_ptr)
   {
     for (auto regem : el.regulatoryElements())
     {
-      if (regem->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName)
+      if (!shouldChangeControlLine(el, regem, gf_ptr)) continue;
+
+      if (regem->attribute(lanelet::AttributeName::Subtype).value() == gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value())
       {
         lanelet::RegulatoryElementPtr nonconst_regem = current_map_->regulatoryElementLayer.get(regem->id());
         gf_ptr->prev_regems_.push_back(std::make_pair(el.id(), nonconst_regem));
@@ -296,28 +432,26 @@ void WMBroadcaster::addSpeedLimit(std::shared_ptr<Geofence> gf_ptr)
   for (auto el: gf_ptr->affected_parts_)
   {
     // update it with new regem
-    if (gf_ptr->max_speed_limit_->id() != lanelet::InvalId)
+    if (gf_ptr->regulatory_element_->id() != lanelet::InvalId)
     {
-      current_map_->update(current_map_->laneletLayer.get(el.id()), gf_ptr->max_speed_limit_); 
-      gf_ptr->update_list_.push_back(std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>(el.id(), gf_ptr->max_speed_limit_));
-    }
-    if (gf_ptr->min_speed_limit_->id() != lanelet::InvalId)
-    {
-      current_map_->update(current_map_->laneletLayer.get(el.id()), gf_ptr->min_speed_limit_);
-      gf_ptr->update_list_.push_back(std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>(el.id(), gf_ptr->min_speed_limit_));
+      current_map_->update(current_map_->laneletLayer.get(el.id()), gf_ptr->regulatory_element_);
+      gf_ptr->update_list_.push_back(std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>(el.id(), gf_ptr->regulatory_element_));
     }
   }
   
 }
 
-void WMBroadcaster::addBackSpeedLimit(std::shared_ptr<Geofence> gf_ptr)
+void WMBroadcaster::addBackRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const
 {
   // First loop is to remove the relation between element and regulatory element that this geofence added initially
+  
   for (auto el: gf_ptr->affected_parts_)
   {
     for (auto regem : el.regulatoryElements())
     {
-      if (regem->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName)
+      if (!shouldChangeControlLine(el, regem, gf_ptr)) continue;
+
+      if (regem->attribute(lanelet::AttributeName::Subtype).value() ==  gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value())
       {
         auto nonconst_regem = current_map_->regulatoryElementLayer.get(regem->id());
         gf_ptr->remove_list_.push_back(std::make_pair(el.id(), nonconst_regem));
@@ -325,18 +459,17 @@ void WMBroadcaster::addBackSpeedLimit(std::shared_ptr<Geofence> gf_ptr)
       }
     }
   }
-
+  
   // As this gf received is the first gf that was sent in through addGeofence,
   // we have prev speed limit information inside it to put them back
   for (auto pair : gf_ptr->prev_regems_)
   {
-    if (pair.second->attribute(lanelet::AttributeName::Subtype).value() == lanelet::DigitalSpeedLimit::RuleName)
+    if (pair.second->attribute(lanelet::AttributeName::Subtype).value() ==  gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value())
     {
       current_map_->update(current_map_->laneletLayer.get(pair.first), pair.second);
       gf_ptr->update_list_.push_back(pair);
     } 
   }
-  
 }
 
 void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
@@ -344,7 +477,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   std::lock_guard<std::mutex> guard(map_mutex_);
   ROS_INFO_STREAM("Adding active geofence to the map with geofence id: " << gf_ptr->id_);
   
-  // Process the geofence object
+  // Process the geofence object to populate update remove lists
   addGeofenceHelper(gf_ptr);
   
   // publish
@@ -352,6 +485,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
   carma_wm::toBinMsg(send_data, &gf_msg);
   map_update_pub_(gf_msg);
+  
 };
 
 void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
@@ -359,7 +493,7 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   std::lock_guard<std::mutex> guard(map_mutex_);
   ROS_INFO_STREAM("Removing inactive geofence from the map with geofence id: " << gf_ptr->id_);
   
-  // Process the geofence object
+  // Process the geofence object to populate update remove lists
   removeGeofenceHelper(gf_ptr);
 
   // publish
@@ -371,7 +505,7 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
 };
 
 // helper function that detects the type of geofence and delegates
-void WMBroadcaster::addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr)
+void WMBroadcaster::addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr) const
 {
   // resetting the information inside geofence
   gf_ptr->remove_list_ = {};
@@ -379,17 +513,17 @@ void WMBroadcaster::addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr)
 
   // TODO: Logic to determine what type of geofence goes here in the future
   // currently only speedchange is available, so it is assumed that
-  addSpeedLimit(gf_ptr);
+  addRegulatoryComponent(gf_ptr);
 }
 
 // helper function that detects the type of geofence and delegates
-void WMBroadcaster::removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr)
+void WMBroadcaster::removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr) const
 {
   // again, TODO: Logic to determine what type of geofence goes here in the future
   // reset the info inside geofence
   gf_ptr->remove_list_ = {};
   gf_ptr->update_list_ = {};
-  addBackSpeedLimit(gf_ptr);
+  addBackRegulatoryComponent(gf_ptr);
   // as all changes are reverted back, we no longer need prev_regems
   gf_ptr->prev_regems_ = {};
 }
