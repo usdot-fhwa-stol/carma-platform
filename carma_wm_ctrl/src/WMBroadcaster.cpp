@@ -673,6 +673,52 @@ void WMBroadcaster::removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr) const
   gf_ptr->prev_regems_ = {};
 }
 
+void WMBroadcaster::currentLocationCallback(std::shared_ptr<Geofence> gf_ptr)
+{
+  bool isOnActiveGeofence = false; //Create Boolean value
+  cav_msgs::CheckActiveGeofence outgoing_geof; //message to publish
+  double next_distance; //Distance to next geofence
+
+  // Get ID
+  std::copy(msg_v01.id.id.begin(), msg_v01.id.id.end(), gf_ptr->id_.begin()); //Not sure if this line is needed
+
+  // Get affected lanelet or areas by converting the georeference and querying the map using points in the geofence
+   gf_ptr->update_list_ = getAffectedLaneletOrAreas(msg_v01); //Get affected lanelets from TrafficControlMessageV01
+  std::vector<lanelet::Lanelet> affected_llts; //Create a lanelet vector
+
+  // used for assigning them to the regem as parameters
+  for (auto llt_or_area :  gf_ptr->update_list_)
+  {
+    if (llt_or_area.isLanelet()) affected_llts.push_back(current_map_->laneletLayer.get(llt_or_area.lanelet()->id())); //Push back affected lanelets
+  }
+
+  auto interval_status =  gf_ptr->schedules[schedule_idx].getNextInterval(ros::Time::now()); //To be used for getting geofence status
+
+  for(auto gfence: affected_llts)
+    {
+      if(interval_status.first)//Check if geofence is currently active
+        {
+          if(current_geof > gfence.leftBound && current_geof < gfence.rightBound) //Check if the value is on active geofence (between left and right bound)
+            isOnActiveGeofence = true;
+        }
+    }
+
+  cav_msgs::TrafficControlSchedule msg_schedule = msg_v01.params.schedule;
+  /*Acquire Scheduling Information*/
+
+  if (isOnActiveGeofence == true)
+  {
+      //next_distance = ;
+      outgoing_geof.type = 1;
+      outgoing_geof.is_on_active_geofence = true;
+     // outgoing_geof.distance_to_next_geofence = next_distance;
+
+      status_pub_(outgoing_geof);//Publish 
+  }
+
+
+
+}
 
 
 }  // namespace carma_wm_ctrl
