@@ -48,7 +48,7 @@ namespace mock_drivers{
       
         // robot_status.header.stamp = curr_time;
 
-        mock_driver_node_.publishDataNoHeader<cav_msgs::RobotEnabled>("robot_status", robot_status);
+        mock_driver_node_.publishDataNoHeader<cav_msgs::RobotEnabled>("/hardware_interface/controller/robot_status", robot_status);
         
     }
 
@@ -77,10 +77,10 @@ namespace mock_drivers{
 
         mock_driver_node_.init();
 
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::RobotEnabled>>>(robot_status_ptr_);
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const autoware_msgs::VehicleCmd::ConstPtr&>>>(vehicle_cmd_ptr_);
+        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const autoware_msgs::VehicleCmd::ConstPtr&>>>(vehicle_cmd_ptr_);
         mock_driver_node_.addSrv<boost::shared_ptr<ROSComms<cav_srvs::SetEnableRobotic::Request&, cav_srvs::SetEnableRobotic::Response&>>>(enable_robotic_ptr_);
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>>>(driver_discovery_pub_ptr_);

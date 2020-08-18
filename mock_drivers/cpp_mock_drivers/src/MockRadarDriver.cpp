@@ -49,8 +49,8 @@ namespace mock_drivers{
         status_msg.header.stamp = curr_time;
         tracks_raw_msg.header.stamp = curr_time;
 
-        mock_driver_node_.publishData<radar_msgs::RadarStatus>("status", status_msg);
-        mock_driver_node_.publishData<radar_msgs::RadarTrackArray>("tracks_raw", tracks_raw_msg);
+        mock_driver_node_.publishData<radar_msgs::RadarStatus>("/hardware_interface/radar/status", status_msg);
+        mock_driver_node_.publishData<radar_msgs::RadarTrackArray>("/hardware_interface/radar/tracks_raw", tracks_raw_msg);
     }
 
     MockRadarDriver::MockRadarDriver(bool dummy){
@@ -65,7 +65,7 @@ namespace mock_drivers{
 
         mock_driver_node_.init();
         
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<radar_msgs::RadarStatus>>>(status_pub_ptr_);
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<radar_msgs::RadarTrackArray>>>(tracks_raw_pub_ptr_);

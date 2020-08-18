@@ -44,7 +44,7 @@ namespace mock_drivers{
     void MockLidarDriver::parserCB(const cav_msgs::BagData::ConstPtr& msg){
         sensor_msgs::PointCloud2 updated_msg = msg->points_raw;
         updated_msg.header.stamp = ros::Time::now();
-        mock_driver_node_.publishData<sensor_msgs::PointCloud2>("points_raw", updated_msg);
+        mock_driver_node_.publishData<sensor_msgs::PointCloud2>("/hardware_interface/lidar/points_raw", updated_msg);
     }
 
     MockLidarDriver::MockLidarDriver(bool dummy){
@@ -59,7 +59,7 @@ namespace mock_drivers{
 
         mock_driver_node_.init();
 
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<sensor_msgs::PointCloud2>>>(points_raw_ptr_);
 

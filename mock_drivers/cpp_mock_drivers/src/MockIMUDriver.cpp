@@ -48,7 +48,7 @@ namespace mock_drivers{
       
         raw_data.header.stamp = curr_time;
 
-        mock_driver_node_.publishData<sensor_msgs::Imu>("raw_data", raw_data);
+        mock_driver_node_.publishData<sensor_msgs::Imu>("/hardware_interface/imu/raw_data", raw_data);
     }
     
     MockIMUDriver::MockIMUDriver(bool dummy){
@@ -63,7 +63,7 @@ namespace mock_drivers{
 
         mock_driver_node_.init();
 
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<sensor_msgs::Imu>>>(imu_pub_ptr_);
 

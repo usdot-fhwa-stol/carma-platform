@@ -48,7 +48,7 @@ namespace mock_drivers{
       
         inbound_binary_msg.header.stamp = curr_time;
 
-        mock_driver_node_.publishData<cav_msgs::ByteArray>("inbound_binary_msg", inbound_binary_msg);  
+        mock_driver_node_.publishData<cav_msgs::ByteArray>("/hardware_interface/comms/inbound_binary_msg", inbound_binary_msg);  
     }
     
     void MockCommsDriver::outboundCallback(const cav_msgs::ByteArray::ConstPtr& msg){
@@ -69,10 +69,10 @@ namespace mock_drivers{
 
         mock_driver_node_.init();
 
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::ByteArray>>>(inbound_pub_ptr_);
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::ByteArray::ConstPtr&>>>(outbound_sub_ptr_);
+        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::ByteArray::ConstPtr&>>>(outbound_sub_ptr_);
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>>>(driver_discovery_pub_ptr_);
         mock_driver_node_.setSpinCallback(std::bind(&MockCommsDriver::driverDiscovery, this));

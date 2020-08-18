@@ -89,27 +89,27 @@ namespace mock_drivers{
         velocity_accel.header.stamp = curr_time;
 
 
-        mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("acc_engaged", acc_engaged);
-        mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("acceleration", acceleration);
-        mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("antilock_brakes_active", antilock_brakes_active);
-        mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("brake_lights", brake_lights);
-        mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("brake_position", brake_position);
-        mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("engine_speed", engine_speed);
-        mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("fuel_flow", fuel_flow);
-        mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("odometer", odometer);
-        mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("parking_brake", parking_brake);
-        mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("speed", speed);
-        mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("stability_ctrl_active", stability_ctrl_active);
-        mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("stability_ctrl_enabled", stability_ctrl_enabled);
-        mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("steering_wheel_angle", steering_wheel_angle);
-        mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("throttle_position", throttle_position);
-        mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("traction_ctrl_active", traction_ctrl_active);
-        mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("traction_ctrl_enabled", traction_ctrl_enabled);
-        mock_driver_node_.publishDataNoHeader<j2735_msgs::TransmissionState>("transmission_state", transmission_state);
-        mock_driver_node_.publishDataNoHeader<cav_msgs::TurnSignal>("turn_signal_state", turn_signal_state);
-        mock_driver_node_.publishData<geometry_msgs::TwistStamped>("vehicle/twist", vehicle_twist);
-        mock_driver_node_.publishData<autoware_msgs::VehicleStatus>("vehicle_status", vehicle_status);
-        mock_driver_node_.publishData<automotive_platform_msgs::VelocityAccel>("velocity_accel", velocity_accel);
+        mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("/hardware_interface/can/acc_engaged", acc_engaged);
+        mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("/hardware_interface/can/acceleration", acceleration);
+        mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("/hardware_interface/can/antilock_brakes_active", antilock_brakes_active);
+        mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("/hardware_interface/can/brake_lights", brake_lights);
+        mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("/hardware_interface/can/brake_position", brake_position);
+        mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("/hardware_interface/can/engine_speed", engine_speed);
+        mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("/hardware_interface/can/fuel_flow", fuel_flow);
+        mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("/hardware_interface/can/odometer", odometer);
+        mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("/hardware_interface/can/parking_brake", parking_brake);
+        mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("/hardware_interface/can/speed", speed);
+        mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("/hardware_interface/can/stability_ctrl_active", stability_ctrl_active);
+        mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("/hardware_interface/can/stability_ctrl_enabled", stability_ctrl_enabled);
+        mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("/hardware_interface/can/steering_wheel_angle", steering_wheel_angle);
+        mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("/hardware_interface/can/throttle_position", throttle_position);
+        mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("/hardware_interface/can/traction_ctrl_active", traction_ctrl_active);
+        mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("/hardware_interface/can/traction_ctrl_enabled", traction_ctrl_enabled);
+        mock_driver_node_.publishDataNoHeader<j2735_msgs::TransmissionState>("/hardware_interface/can/transmission_state", transmission_state);
+        mock_driver_node_.publishDataNoHeader<cav_msgs::TurnSignal>("/hardware_interface/can/turn_signal_state", turn_signal_state);
+        mock_driver_node_.publishData<geometry_msgs::TwistStamped>("/hardware_interface/can/vehicle/twist", vehicle_twist);
+        mock_driver_node_.publishData<autoware_msgs::VehicleStatus>("/hardware_interface/can/vehicle_status", vehicle_status);
+        mock_driver_node_.publishData<automotive_platform_msgs::VelocityAccel>("/hardware_interface/can/velocity_accel", velocity_accel);
     }
 
     MockCANDriver::MockCANDriver(bool dummy){
@@ -144,7 +144,7 @@ namespace mock_drivers{
 
         mock_driver_node_.init();
 
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::Bool>>>(acc_engaged_ptr_);
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::Float64>>>(acceleration_ptr_);

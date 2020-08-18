@@ -23,12 +23,17 @@ namespace mock_drivers{
         bag_data_pub_ptr_ = boost::make_shared<ROSComms<cav_msgs::BagData>>(ROSComms<cav_msgs::BagData>(CommTypes::pub, false, 10, "bag_data"));
     }
 
+    BagParser::BagParser(std::string file_path){
+        file_path_ = file_path;
+        bag_data_pub_ptr_ = boost::make_shared<ROSComms<cav_msgs::BagData>>(ROSComms<cav_msgs::BagData>(CommTypes::pub, false, 10, "bag_data"));
+    }
+
     bool BagParser::publishCallback() {
         static ros::Time startTime;
         static ros::Duration timeFrame = ros::Duration(1.0/rate_);
         cav_msgs::BagData message;
         
-        bag_.open("/workspaces/carma_ws/carma/src/carma-platform/mock_drivers/cpp_mock_drivers/src/bagfiles/hello_test_bag.bag", rosbag::bagmode::Read);
+        bag_.open(file_path_, rosbag::bagmode::Read);
 
         if (startTime.isZero()){
             startTime = rosbag::View(bag_).getBeginTime();

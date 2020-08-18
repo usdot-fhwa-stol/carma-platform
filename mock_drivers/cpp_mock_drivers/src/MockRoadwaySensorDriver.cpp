@@ -50,8 +50,8 @@ namespace mock_drivers{
         detected_objects.header.stamp = curr_time;
         lane_models.header.stamp = curr_time;
 
-        mock_driver_node_.publishData<derived_object_msgs::ObjectWithCovariance>("detected_objects", detected_objects);
-        mock_driver_node_.publishData<derived_object_msgs::LaneModels>("lane_models", lane_models);  
+        mock_driver_node_.publishData<derived_object_msgs::ObjectWithCovariance>("/hardware_interface/roadway_sensor/detected_objects", detected_objects);
+        mock_driver_node_.publishData<derived_object_msgs::LaneModels>("/hardware_interface/roadway_sensor/lane_models", lane_models);  
     }
 
 
@@ -67,7 +67,7 @@ namespace mock_drivers{
 
         mock_driver_node_.init();
 
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<derived_object_msgs::ObjectWithCovariance>>>(object_with_covariance_ptr_);
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<derived_object_msgs::LaneModels>>>(lane_models_ptr_);

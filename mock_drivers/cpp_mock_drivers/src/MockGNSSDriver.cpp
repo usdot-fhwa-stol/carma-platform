@@ -48,7 +48,7 @@ namespace mock_drivers{
       
         gnss_fixed_fused.header.stamp = curr_time;
 
-        mock_driver_node_.publishData<gps_common::GPSFix>("gnss_fixed_fused", gnss_fixed_fused);
+        mock_driver_node_.publishData<gps_common::GPSFix>("/hardware_interface/gnss/gnss_fixed_fused", gnss_fixed_fused);
     }
 
     MockGNSSDriver::MockGNSSDriver(bool dummy){
@@ -63,7 +63,7 @@ namespace mock_drivers{
 
         mock_driver_node_.init();
 
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<gps_common::GPSFix>>>(GPS_fix_ptr_);
 

@@ -53,11 +53,13 @@ namespace mock_drivers{
             boost::shared_ptr<ROSComms<cav_msgs::BagData>> bag_data_pub_ptr_;
             MockDriverNode mock_driver_node_;
             rosbag::Bag bag_;
+            std::string file_path_;
             double rate_ = 10.0;
 
         public:
 
             BagParser(bool dummy = false);
+            BagParser(std::string file_path);
             bool publishCallback();
             int run();
 
