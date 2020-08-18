@@ -41,7 +41,7 @@ namespace mock_drivers{
         return true;
     }
 
-    void MockIMUDriver::parserCB(const cav_msgs::BagData::ConstPtr& msg){
+    void MockIMUDriver::parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg){
         sensor_msgs::Imu raw_data = msg->raw_data;
 
         ros::Time curr_time = ros::Time::now();
@@ -63,7 +63,7 @@ namespace mock_drivers{
 
         mock_driver_node_.init();
 
-        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<sensor_msgs::Imu>>>(imu_pub_ptr_);
 

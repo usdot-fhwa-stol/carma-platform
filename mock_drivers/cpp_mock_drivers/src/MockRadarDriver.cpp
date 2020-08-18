@@ -41,7 +41,7 @@ namespace mock_drivers{
         return true;
     }
 
-    void MockRadarDriver::parserCB(const cav_msgs::BagData::ConstPtr& msg){
+    void MockRadarDriver::parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg){
         radar_msgs::RadarStatus status_msg = msg->status;
         radar_msgs::RadarTrackArray tracks_raw_msg = msg->tracks_raw;
         ros::Time curr_time = ros::Time::now();
@@ -65,7 +65,7 @@ namespace mock_drivers{
 
         mock_driver_node_.init();
         
-        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<radar_msgs::RadarStatus>>>(status_pub_ptr_);
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<radar_msgs::RadarTrackArray>>>(tracks_raw_pub_ptr_);

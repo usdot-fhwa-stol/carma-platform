@@ -16,7 +16,7 @@
 
 #include <gmock/gmock.h>
 #include "cpp_mock_drivers/BagParser.h"
-#include <cav_msgs/BagData.h>
+#include <carma_simulation_msgs/BagData.h>
 
 
 namespace mock_drivers{

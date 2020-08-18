@@ -35,7 +35,7 @@ namespace mock_drivers{
             InsertDriverName();
             InsertDriverName(bool true);
             int run();
-            void parserCB(const cav_msgs::BagData::ConstPtr& msg);
+            void parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg);
 
     };
 

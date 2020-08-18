@@ -16,7 +16,7 @@
 
 #include <gmock/gmock.h>
 #include "cpp_mock_drivers/MockRoadwaySensorDriver.h"
-#include <cav_msgs/BagData.h>
+#include <carma_simulation_msgs/BagData.h>
 
 
 namespace mock_drivers{
@@ -34,7 +34,7 @@ namespace mock_drivers{
     TEST(MockRoadwaySensorDriver, pubCallbacks){
         MockRoadwaySensorDriver d(true);
 
-        cav_msgs::BagData::ConstPtr test_msg_ptr(new cav_msgs::BagData());
+        carma_simulation_msgs::BagData::ConstPtr test_msg_ptr(new carma_simulation_msgs::BagData());
         ASSERT_TRUE((*test_msg_ptr).header.stamp.isZero());
 
         d.parserCB(test_msg_ptr);

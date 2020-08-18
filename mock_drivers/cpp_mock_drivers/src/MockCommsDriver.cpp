@@ -41,7 +41,7 @@ namespace mock_drivers{
         return true;
     }
 
-    void MockCommsDriver::parserCB(const cav_msgs::BagData::ConstPtr& msg){
+    void MockCommsDriver::parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg){
         cav_msgs::ByteArray inbound_binary_msg = msg->inbound_binary_msg;
 
         ros::Time curr_time = ros::Time::now();
@@ -69,7 +69,7 @@ namespace mock_drivers{
 
         mock_driver_node_.init();
 
-        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::ByteArray>>>(inbound_pub_ptr_);
         // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::ByteArray::ConstPtr&>>>(outbound_sub_ptr_);

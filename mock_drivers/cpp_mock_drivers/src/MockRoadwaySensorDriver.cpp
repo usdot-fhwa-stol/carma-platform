@@ -41,7 +41,7 @@ namespace mock_drivers{
         return true;
     }
 
-    void MockRoadwaySensorDriver::parserCB(const cav_msgs::BagData::ConstPtr& msg){
+    void MockRoadwaySensorDriver::parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg){
         derived_object_msgs::ObjectWithCovariance detected_objects = msg->detected_objects;
         derived_object_msgs::LaneModels lane_models = msg->lane_models;
 
@@ -67,7 +67,7 @@ namespace mock_drivers{
 
         mock_driver_node_.init();
 
-        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<derived_object_msgs::ObjectWithCovariance>>>(object_with_covariance_ptr_);
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<derived_object_msgs::LaneModels>>>(lane_models_ptr_);

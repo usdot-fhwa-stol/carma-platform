@@ -58,6 +58,7 @@
 
   <depend>carma_utils</depend>
   <depend>cav_msgs</depend>
+  <depend>carma_simulation_msgs</depend>
   <depend>rosbag</depend>
 
 

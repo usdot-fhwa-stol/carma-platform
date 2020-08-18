@@ -41,7 +41,7 @@ namespace mock_drivers{
         return true;
     }
     
-    void MockCANDriver::parserCB(const cav_msgs::BagData::ConstPtr& msg){
+    void MockCANDriver::parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg){
         std_msgs::Bool acc_engaged = msg->acc_engaged;
         std_msgs::Float64 acceleration = msg->acceleration;
         std_msgs::Bool antilock_brakes_active = msg->antilock_brakes_active;
@@ -144,7 +144,7 @@ namespace mock_drivers{
 
         mock_driver_node_.init();
 
-        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::Bool>>>(acc_engaged_ptr_);
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::Float64>>>(acceleration_ptr_);

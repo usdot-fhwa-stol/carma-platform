@@ -22,7 +22,7 @@ namespace mock_drivers{
         return true;
     }
 
-    void MockDataDriver::parserCB(const cav_msgs::BagData::ConstPtr& msg){
+    void MockDataDriver::parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg){
         tf2_msgs::TFMessage tf = msg->tf;
         tf2_msgs::TFMessage tf_static = msg->tf_static;
 
@@ -43,7 +43,7 @@ namespace mock_drivers{
 
         mock_driver_node_.init();
 
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<tf2_msgs::TFMessage>>>(tf_ptr_);
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<tf2_msgs::TFMessage>>>(tf_static_ptr_);

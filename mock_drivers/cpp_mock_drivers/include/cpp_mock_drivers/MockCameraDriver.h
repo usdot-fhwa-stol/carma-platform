@@ -38,7 +38,7 @@ namespace mock_drivers{
 
             MockCameraDriver(bool dummy = false);
             int run();
-            void parserCB(const cav_msgs::BagData::ConstPtr& msg);
+            void parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg);
             bool driverDiscovery();
 
     };

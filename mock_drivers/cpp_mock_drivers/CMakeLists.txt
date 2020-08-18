@@ -10,6 +10,7 @@ set ( PKG_CATKIN_DEPENDS
   carma_utils
   cav_msgs
   rosbag
+  carma_simulation_msgs
 )
 
 ## Find catkin macros and libraries
