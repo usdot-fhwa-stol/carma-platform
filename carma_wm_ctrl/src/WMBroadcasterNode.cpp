@@ -15,7 +15,7 @@
  */
 
 #include <carma_wm_ctrl/WMBroadcaster.h>
-#include <carma_wm_ctrl/ROSTimerFactory.h>
+#include <carma_utils/timers/ROSTimerFactory.h>
 #include <carma_wm_ctrl/WMBroadcasterNode.h>
 
 namespace carma_wm_ctrl
@@ -41,7 +41,7 @@ void WMBroadcasterNode::publishCtrlReq(const cav_msgs::TrafficControlRequest& ct
 WMBroadcasterNode::WMBroadcasterNode()
   : wmb_(std::bind(&WMBroadcasterNode::publishMap, this, _1), std::bind(&WMBroadcasterNode::publishMapUpdate, this, _1), 
   std::bind(&WMBroadcasterNode::publishCtrlReq, this, _1),
-    std::make_unique<ROSTimerFactory>()){};
+    std::make_unique<carma_utils::timers::ROSTimerFactory>()){};
 
 int WMBroadcasterNode::run()
 {

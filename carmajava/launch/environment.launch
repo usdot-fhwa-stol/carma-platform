@@ -41,12 +41,20 @@
   </group>
   <!-- Object Tracking and World Model -->
 
+  <!-- CARMA Motion Computation Node -->
+  <group>
+    <include file = "$(find motion_computation)/launch/external_object_predictions.launch"/>
+  </group>
+
+
   <!-- CARMA External Object Node -->
   <include file="$(find object_detection_tracking)/launch/external_object.launch"/>
 
   <!-- CARMA Roadway Objects Node -->
+ <group>
+  <remap from= "external_objects" to= "external_object_predictions"/>
   <include file="$(find roadway_objects)/launch/roadway_objects.launch"/>
-
+</group>
 
   <!-- calibration_publisher -->
   
