@@ -14,7 +14,7 @@
  * the License.
  */
 
-#include "localizer.h"
+#include "localization_manager/localizer_node.h"
 #include <boost/bind/placeholders.hpp>
 
 namespace localizer
@@ -70,8 +70,8 @@ void Localizer::run()
                      config.ndt_frequency_fault_threshold);
   pnh_.param<int>("auto_initialization_timeout", config.auto_initialization_timeout,
                   config.auto_initialization_timeout);
-  pnh_.param<int>("gnss_initialization_timeout", config.gnss_initialization_timeout,
-                  config.gnss_initialization_timeout);
+  pnh_.param<int>("gnss_only_operation_timeout", config.gnss_only_operation_timeout,
+                  config.gnss_only_operation_timeout);
 
   int localization_mode;
   pnh_.param<int>("localization_mode", localization_mode, 0);
@@ -88,7 +88,7 @@ void Localizer::run()
 
   // TODO fix comments
   message_filters::Subscriber<geometry_msgs::PoseStamped> pose_sub(nh_, "ndt_pose", 5);
-  message_filters::Subscriber<autoware_msgs::NDTStat> stats_sub(nh_, "ndt_stats", 5);
+  message_filters::Subscriber<autoware_msgs::NDTStat> stats_sub(nh_, "ndt_stat", 5);
 
   PoseStatsSynchronizer pose_stats_synchronizer(PoseStatsSyncPolicy(5), pose_sub, stats_sub);
 

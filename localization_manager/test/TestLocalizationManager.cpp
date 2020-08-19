@@ -20,7 +20,7 @@
 #include <carma_utils/timers/testing/TestTimer.h>
 #include <carma_utils/timers/testing/TestTimerFactory.h>
 #include <carma_utils/testing/TestHelpers.h>
-#include "LocalizationManager.h"
+#include "localization_manager/LocalizationManager.h"
 
 using namespace localizer;
 
@@ -62,7 +62,7 @@ TEST(LocalizationManager, testSignals)
   LocalizationManagerConfig config;
   config.localization_mode = LocalizerMode::AUTO;
   config.auto_initialization_timeout = 1000;
-  config.gnss_initialization_timeout = 2000;
+  config.gnss_only_operation_timeout = 2000;
 
   boost::optional<geometry_msgs::PoseStamped> published_pose;
   boost::optional<geometry_msgs::TransformStamped> published_transform;

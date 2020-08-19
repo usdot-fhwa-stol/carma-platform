@@ -14,7 +14,7 @@
  * the License.
  */
 
-#include "LocalizationTypes.h"
+#include "localization_manager/LocalizationTypes.h"
 
 namespace localizer
 {

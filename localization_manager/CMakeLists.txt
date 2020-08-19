@@ -15,7 +15,7 @@
 #
 
 cmake_minimum_required(VERSION 2.8.3)
-project(gnss_ndt_selector)
+project(localization_manager)
 
 ## Compile as C++14
 add_compile_options(-std=c++14)
@@ -74,10 +74,8 @@ target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME} ${Boost_LIBRARIES} ${
 ## Install ##
 #############
 
-install(DIRECTORY include/${PROJECT_NAME}/
-DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-FILES_MATCHING PATTERN "*.hpp"
-PATTERN ".svn" EXCLUDE
+install(DIRECTORY include
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
 ## Install C++

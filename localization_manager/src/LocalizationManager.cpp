@@ -16,7 +16,7 @@
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <algorithm>
-#include "LocalizationManager.h"
+#include "localization_manager/LocalizationManager.h"
 
 namespace localizer
 {
@@ -159,7 +159,7 @@ void LocalizationManager::stateTransitionCallback(LocalizationState prev_state, 
     case LocalizationState::DEGRADED_NO_LIDAR_FIX:
 
       current_timer_ = timer_factory_->buildTimer(
-          1, ros::Duration((double)config_.gnss_initialization_timeout / 1000.0),
+          1, ros::Duration((double)config_.gnss_only_operation_timeout / 1000.0),
           std::bind(&LocalizationManager::timerCallback, this, std::placeholders::_1, new_state), true);
 
       break;

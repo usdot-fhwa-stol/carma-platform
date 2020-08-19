@@ -17,7 +17,7 @@
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 #include <boost/optional.hpp>
-#include "LocalizationTransitionTable.h"
+#include "localization_manager/LocalizationTransitionTable.h"
 
 using namespace localizer;
 

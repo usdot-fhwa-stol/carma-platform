@@ -35,7 +35,7 @@ struct LocalizationManagerConfig
   //! If initialization cannot be completed in this time user action will be requested.
   int auto_initialization_timeout = 30000;
   //! Timeout in ms for GNSS only operation. Ignored when in GNSS mode.
-  int gnss_initialization_timeout = 6000;
+  int gnss_only_operation_timeout = 6000;
   //! Localization mode to use
   LocalizerMode localization_mode = LocalizerMode::NDT;
 };

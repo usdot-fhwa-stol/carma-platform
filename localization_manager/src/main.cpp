@@ -15,7 +15,7 @@
  */
 
 #include <ros/ros.h>
-#include "localizer.h"
+#include "localization_manager/localizer_node.h"
 
 int main(int argc, char** argv)
 {

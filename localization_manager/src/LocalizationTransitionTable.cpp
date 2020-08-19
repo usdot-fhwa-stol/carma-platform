@@ -15,7 +15,7 @@
  */
 
 #include <ros/console.h>
-#include "LocalizationTransitionTable.h"
+#include "localization_manager/LocalizationTransitionTable.h"
 
 namespace localizer
 {

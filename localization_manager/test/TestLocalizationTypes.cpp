@@ -16,7 +16,7 @@
 
 #include <gtest/gtest.h>
 #include <sstream>
-#include "LocalizationTypes.h"
+#include "localization_manager/LocalizationTypes.h"
 
 using namespace localizer;
 
