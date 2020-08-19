@@ -56,7 +56,7 @@ public:
   /*!
    * \brief Constructor
    */
-  WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, std::unique_ptr<TimerFactory> timer_factory);
+  WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory);
 
   /*!
    * \brief Callback to set the base map when it has been loaded
@@ -105,12 +105,21 @@ public:
    */
   void setMaxLaneWidth(double max_lane_width);
 
-private:
-  void addSpeedLimit(std::shared_ptr<Geofence> gf_ptr);
-  void addBackSpeedLimit(std::shared_ptr<Geofence> gf_ptr);
-  void removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr);
-  void addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr);
+  /*!
+   * \brief Returns geofence object from TrafficControlMessageV01 ROS Msg
+   * \param geofence_msg The ROS msg that contains geofence information
+   * \throw InvalidObjectStateError if base_map is not set or the base_map's georeference is empty
+   * NOTE:Currently this function populates digitalSpeedLimit and passingControlLine instructions
+   */
   std::shared_ptr<Geofence> geofenceFromMsg(const cav_msgs::TrafficControlMessageV01& geofence_msg);
+
+private:
+  void addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const;
+  void addBackRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const;
+  void removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr) const;
+  void addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr) const;
+  bool shouldChangeControlLine(const lanelet::ConstLaneletOrArea& el,const lanelet::RegulatoryElementConstPtr& regem, std::shared_ptr<Geofence> gf_ptr) const;
+  void addPassingControlLineFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const; 
   std::unordered_set<lanelet::Lanelet> filterSuccessorLanelets(const std::unordered_set<lanelet::Lanelet>& possible_lanelets, const std::unordered_set<lanelet::Lanelet>& root_lanelets);
   lanelet::LaneletMapPtr base_map_;
   lanelet::LaneletMapPtr current_map_;
