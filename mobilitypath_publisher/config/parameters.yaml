@@ -1,0 +1,3 @@
+# uncertainty threshould for updating the mobility path trajectory
+x_threshold: 20.0; #m
+y_threshold: 3; #m (width of a lane)
