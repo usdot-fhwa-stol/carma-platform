@@ -61,6 +61,7 @@ void LocalizationManager::publishPoseStamped(const geometry_msgs::PoseStamped& p
 
 double LocalizationManager::computeNDTFreq(const ros::Time& new_stamp)
 {
+  // TODO should this be receipt time? 
   if (prev_ndt_stamp_ == ros::Time(0))
   {  // Check if this is the first data point
     prev_ndt_stamp_ = new_stamp;
@@ -68,7 +69,7 @@ double LocalizationManager::computeNDTFreq(const ros::Time& new_stamp)
     return config_.ndt_frequency_degraded_threshold * 2;
   }
 
-  if (new_stamp < prev_ndt_stamp_)
+  if (new_stamp <= prev_ndt_stamp_)
   {
     ROS_ERROR_STREAM("LocalizationManager received NDT data out of order. Prev stamp was "
                      << prev_ndt_stamp_ << " new stamp is " << new_stamp);
@@ -79,11 +80,12 @@ double LocalizationManager::computeNDTFreq(const ros::Time& new_stamp)
   return 1.0 / (new_stamp - prev_ndt_stamp_).toSec();  // Convert delta to frequency (Hz = 1/s)
 }
 
-// callbacks
 void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedConstPtr& pose,
                                                const autoware_msgs::NDTStatConstPtr& stats)
 {
   double ndt_freq = computeNDTFreq(pose->header.stamp);
+  ROS_DEBUG_STREAM("Received pose resulting in frequency value of " << ndt_freq << " with score of " << stats->score);
+
   if (stats->score >= config_.fitness_score_fault_threshold || ndt_freq <= config_.ndt_frequency_fault_threshold)
   {
     transition_table_.signal(LocalizationSignal::UNUSABLE_NDT_FREQ_OR_FITNESS_SCORE);
@@ -97,6 +99,8 @@ void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedC
   {
     transition_table_.signal(LocalizationSignal::GOOD_NDT_FREQ_AND_FITNESS_SCORE);
   }
+
+  prev_ndt_stamp_ = pose->header.stamp;
 }
 
 void LocalizationManager::gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
@@ -122,8 +126,9 @@ void LocalizationManager::systemAlertCallback(const cav_msgs::SystemAlertConstPt
 
 void LocalizationManager::timerCallback(const ros::TimerEvent& event, const LocalizationState origin_state)
 {
+  // If there is already a timer callback in progress or the expected state has changed then return
   if (origin_state != transition_table_.getState())
-    return;  // If the sate has changed then return
+    return;
 
   transition_table_.signal(LocalizationSignal::TIMEOUT);
 }
@@ -131,12 +136,12 @@ void LocalizationManager::timerCallback(const ros::TimerEvent& event, const Loca
 void LocalizationManager::stateTransitionCallback(LocalizationState prev_state, LocalizationState new_state,
                                                   LocalizationSignal signal)
 {
-  // We are in a new state so clear any existing timers
-  if (current_timer_ && current_timer_.get())
+
+  // Mark the existing timer as expired if any
+  if (current_timer_)
   {
-    ROS_INFO_STREAM("STOPPING TIMER");
-    current_timer_.get()->stop();
-    ROS_INFO_STREAM("TIMER STOPPED");
+    // NOTE unit testing of current algorithm depends on all timers being one-shot timers. 
+    expired_timers_.push_back(std::move(current_timer_));
   }
 
   switch (new_state)
@@ -158,10 +163,14 @@ void LocalizationManager::stateTransitionCallback(LocalizationState prev_state, 
     default:
       break;
   }
+
 }
 
 bool LocalizationManager::onSpin()
 {
+  // Clear any expired timers
+  expired_timers_.clear();
+
   // Create and publish status report message
   cav_msgs::LocalizationStatusReport msg = stateToMsg(transition_table_.getState(), ros::Time::now());
   state_pub_(msg);
