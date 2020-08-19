@@ -21,12 +21,12 @@
 #include <cav_msgs/ExternalObject.h>
 #include <cav_msgs/ExternalObjectList.h>
 #include <autoware_msgs/DetectedObject.h>
-#include <autoware_msgs/DetectedObjectArray.h>
+#include <autoware_msgs/DetectedObjectArray.h>  
 #include <functional>
 
 namespace object{
 
-class ObjectDetectionTrackingWorker
+class MotionComputationWorker
 {
 
  public:
@@ -37,14 +37,13 @@ class ObjectDetectionTrackingWorker
    * \brief Constructor
    */
 
-  ObjectDetectionTrackingWorker(PublishObjectCallback obj_pub);
+  MotionComputationWorker(const PublishObjectCallback& obj_pub);
     
-    /*! \fn detectedObjectCallback(const autoware_msgs::DetectedObjectArray &msg)
-    \brief detectedObjectCallback populates detected object along with its velocity,yaw, yaw_rate and static/dynamic class to DetectedObject message.
+    /*! \fn predictionLogic(cav_msgs::ExternalObjectListPtr obj_list)
+    \brief predictionLogic populates duplicated detected object along with its velocity,yaw, yaw_rate and static/dynamic class to ExternalObject message.
     \param  msg array of detected objects.
     */
-
-  void detectedObjectCallback(const autoware_msgs::DetectedObjectArray &msg);
+  void predictionLogic(cav_msgs::ExternalObjectListPtr obj_list);
 
   // Setters for the prediction parameters
   void setPredictionTimeStep(double time_step);
