@@ -17,8 +17,6 @@
 
 #include <ros/ros.h>
 #include <boost/shared_ptr.hpp>
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2_ros/transform_broadcaster.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
@@ -35,6 +33,9 @@
 
 namespace localizer
 {
+/**
+ * \brief Primary logic class for the localization manager node.
+ */
 class LocalizationManager
 {
 public:
@@ -118,6 +119,7 @@ public:
   LocalizationState getState();
 
 private:
+  //! The set of strings which mark a lidar failure in a system alert message
   static const std::unordered_set<std::string> LIDAR_FAILURE_STRINGS;  // Static const container defined in cpp file
 
   PosePublisher pose_pub_;
@@ -135,14 +137,31 @@ private:
   TimerUniquePtr current_timer_;
   std::vector<TimerUniquePtr> expired_timers_;
 
+  /**
+   * \brief Helper function to publish both the pose and transform at the same time
+   *
+   * \param pose The pose to publish
+   */
   void publishPoseStamped(const geometry_msgs::PoseStamped& pose);
 
+  /**
+   * \brief Helper function to both compute the NDT Frequency and update the previous pose timestamp
+   *
+   * \param new_stamp The new pose timestamp
+   *
+   * \return The computed instantaneous frequency in Hz
+   */
   double computeNDTFreq(const ros::Time& new_stamp);
 
+  /**
+   * \brief Helper function to compute the instantaneous frequency between two times
+   *
+   * \param old_stamp The old timestamp
+   * \param new_stamp The new timestamp
+   *
+   * \return The computed instantaneous frequency in Hz
+   */
   double computeFreq(const ros::Time& old_stamp, const ros::Time& new_stamp) const;
-
 };
 
 }  // namespace localizer
-
-// TODO how to handle GPS failure

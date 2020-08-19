@@ -33,20 +33,46 @@
 
 namespace localizer
 {
+/**
+ * \brief Node class for this package
+ */
 class Localizer
 {
 public:
+  /**
+   * \brief Default constructor
+   */
   Localizer();
 
-  // general starting point of this node
+  /**
+   * \brief Primary entry function for node execution. Will not exist until node shutdown.
+   */
   void run();
 
-  // Publication callbacks
+  /**
+   * \brief Callback to publish the selected pose
+   * \param msg The pose to publish
+   */
   void publishPoseStamped(const geometry_msgs::PoseStamped& msg);
+  /**
+   * \brief Callback to publish the provided transform
+   * \param msg The transform to publish
+   */
   void publishTransform(const geometry_msgs::TransformStamped& msg);
+  /**
+   * \brief Callback to publish the provided localization status report
+   * \param msg The report to publish
+   */
   void publishStatus(const cav_msgs::LocalizationStatusReport& msg);
 
-  void poseAndStatsCallback(const geometry_msgs::PoseStampedConstPtr& pose, const autoware_msgs::NDTStatConstPtr& stats);
+  /**
+   * \brief Synchronized callback for pose and stats data for usage with message_filters.
+   *        Provides exception handling. 
+   * \param pose The received pose message
+   * \param stats The received stats message
+   */ 
+  void poseAndStatsCallback(const geometry_msgs::PoseStampedConstPtr& pose,
+                            const autoware_msgs::NDTStatConstPtr& stats);
 
 private:
   // node handles
@@ -65,12 +91,13 @@ private:
   ros::Publisher pose_pub_;
   ros::Publisher state_pub_;
 
-  // member variables
   double spin_rate_{ 10 };
 
-  std::unique_ptr<LocalizationManager> manager_;
+  std::unique_ptr<LocalizationManager> manager_; // Worker object
 
-  typedef message_filters::sync_policies::ExactTime <geometry_msgs::PoseStamped, autoware_msgs::NDTStat> PoseStatsSyncPolicy;
+  // Message filters policies
+  typedef message_filters::sync_policies::ExactTime<geometry_msgs::PoseStamped, autoware_msgs::NDTStat>
+      PoseStatsSyncPolicy;
   typedef message_filters::Synchronizer<PoseStatsSyncPolicy> PoseStatsSynchronizer;
 };
 

@@ -138,8 +138,7 @@ TEST(LocalizationTransitionTable, testTransitionsNDTMode)
 
   testNonTransitionSignals(ltt, {
                                     LocalizationSignal::UNUSABLE_NDT_FREQ_OR_FITNESS_SCORE,
-                                    LocalizationSignal::INITIAL_POSE,  // TODO we need to reset the timeout when this is
-                                                                       // received in initial pose
+                                    LocalizationSignal::INITIAL_POSE,  
                                 });
 
   ltt.signal(LocalizationSignal::TIMEOUT);
@@ -240,8 +239,7 @@ TEST(LocalizationTransitionTable, testTransitionsAUTOMode)
 
   testNonTransitionSignals(ltt, {
                                     LocalizationSignal::UNUSABLE_NDT_FREQ_OR_FITNESS_SCORE,
-                                    LocalizationSignal::INITIAL_POSE,  // TODO we need to reset the timeout when this is
-                                                                       // received in initial pose
+                                    LocalizationSignal::INITIAL_POSE,  
                                 });
 
   ltt.signal(LocalizationSignal::TIMEOUT);

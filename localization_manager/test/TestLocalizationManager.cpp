@@ -83,8 +83,7 @@ TEST(LocalizationManager, testSignals)
 
   ros::Time::setNow(ros::Time(2.1));
 
-  // TODO see if we can cleanup wait mechanism
-  auto period = std::chrono::milliseconds(1000);
+  auto period = std::chrono::milliseconds(2000);
   std::this_thread::sleep_for(period);
 
   ASSERT_EQ(LocalizationState::AWAIT_MANUAL_INITIALIZATION, manager.getState());

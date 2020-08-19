@@ -34,7 +34,8 @@ void Localizer::publishPoseStamped(const geometry_msgs::PoseStamped& msg)
   pose_pub_.publish(msg);
 }
 
-void Localizer::publishStatus(const cav_msgs::LocalizationStatusReport& msg) {
+void Localizer::publishStatus(const cav_msgs::LocalizationStatusReport& msg)
+{
   state_pub_.publish(msg);
 }
 
@@ -77,6 +78,7 @@ void Localizer::run()
   pnh_.param<int>("localization_mode", localization_mode, 0);
   config.localization_mode = static_cast<LocalizerMode>(localization_mode);
 
+  // Initialize worker object
   manager_.reset(new LocalizationManager(std::bind(&Localizer::publishPoseStamped, this, std_ph::_1),
                                          std::bind(&Localizer::publishTransform, this, std_ph::_1),
                                          std::bind(&Localizer::publishStatus, this, std_ph::_1), config,
@@ -86,7 +88,7 @@ void Localizer::run()
   gnss_pose_sub_ = nh_.subscribe("gnss_pose", 5, &LocalizationManager::gnssPoseCallback, manager_.get());
   initialpose_sub_ = nh_.subscribe("initialpose", 1, &LocalizationManager::initialPoseCallback, manager_.get());
 
-  // TODO fix comments
+  // Setup synchronized message_filters subscribers
   message_filters::Subscriber<geometry_msgs::PoseStamped> pose_sub(nh_, "ndt_pose", 5);
   message_filters::Subscriber<autoware_msgs::NDTStat> stats_sub(nh_, "ndt_stat", 5);
 

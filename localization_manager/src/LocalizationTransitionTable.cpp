@@ -81,7 +81,7 @@ void LocalizationTransitionTable::signalWhenINITIALIZING(LocalizationSignal sign
     case LocalizationSignal::POOR_NDT_FREQ_OR_FITNESS_SCORE:
       setAndLogState(LocalizationState::DEGRADED, signal);
       break;
-    case LocalizationSignal::LIDAR_SENSOR_FAILURE:  // TODO should we support this in the initialization phase?
+    case LocalizationSignal::LIDAR_SENSOR_FAILURE:
       setAndLogState(LocalizationState::DEGRADED_NO_LIDAR_FIX, signal);
       break;
     case LocalizationSignal::TIMEOUT:
@@ -219,7 +219,7 @@ void LocalizationTransitionTable::signal(LocalizationSignal signal)
       signalWhenAWAIT_MANUAL_INITIALIZATION(signal);
       break;
     default:
-      // TODO throw error
+      throw std::invalid_argument("Invalid signal passed to LocalizationTransitionTable::signal");
       break;
   }
 }

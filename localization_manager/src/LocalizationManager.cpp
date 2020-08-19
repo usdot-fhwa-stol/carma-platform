@@ -24,7 +24,6 @@ namespace localizer
 const std::unordered_set<std::string> LocalizationManager::LIDAR_FAILURE_STRINGS({ "One LIDAR Failed", "Both LIDARS "
                                                                                                        "Failed" });
 
-// TODO timeout logic
 LocalizationManager::LocalizationManager(PosePublisher pose_pub, TransformPublisher transform_pub,
                                          StatePublisher state_pub, LocalizationManagerConfig config,
                                          std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory)
