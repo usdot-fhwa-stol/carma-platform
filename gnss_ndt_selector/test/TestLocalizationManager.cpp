@@ -175,6 +175,56 @@ TEST(LocalizationManager, testSignals)
   std::this_thread::sleep_for(period);
 
   ASSERT_EQ(LocalizationState::AWAIT_MANUAL_INITIALIZATION, manager.getState());
+
+  ros::Time::setNow(ros::Time(6.0));
+
+  manager.initialPoseCallback(msg_ptr);
+
+  ASSERT_EQ(LocalizationState::INITIALIZING, manager.getState());
+
+  pose_msg.header.stamp = ros::Time::now();
+  pose_msg_ptr = geometry_msgs::PoseStampedConstPtr(new geometry_msgs::PoseStamped(pose_msg));
+
+  manager.poseAndStatsCallback(pose_msg_ptr, stat_msg_ptr);
+
+  ros::Time::setNow(ros::Time(6.1));
+
+  pose_msg.header.stamp = ros::Time::now();
+  pose_msg_ptr = geometry_msgs::PoseStampedConstPtr(new geometry_msgs::PoseStamped(pose_msg));
+
+  manager.poseAndStatsCallback(pose_msg_ptr, stat_msg_ptr);
+
+  ASSERT_EQ(LocalizationState::OPERATIONAL, manager.getState());
+
+  ros::Time::setNow(ros::Time(6.215));
+
+  manager.onSpin();
+
+  ASSERT_EQ(LocalizationState::DEGRADED, manager.getState());
+
+  manager.initialPoseCallback(msg_ptr);
+
+  ASSERT_EQ(LocalizationState::INITIALIZING, manager.getState());
+
+  ros::Time::setNow(ros::Time(6.3));
+  pose_msg.header.stamp = ros::Time::now();
+  pose_msg_ptr = geometry_msgs::PoseStampedConstPtr(new geometry_msgs::PoseStamped(pose_msg));
+
+  manager.poseAndStatsCallback(pose_msg_ptr, stat_msg_ptr);
+
+  ros::Time::setNow(ros::Time(6.4));
+
+  pose_msg.header.stamp = ros::Time::now();
+  pose_msg_ptr = geometry_msgs::PoseStampedConstPtr(new geometry_msgs::PoseStamped(pose_msg));
+
+  manager.poseAndStatsCallback(pose_msg_ptr, stat_msg_ptr);
+
+  ASSERT_EQ(LocalizationState::OPERATIONAL, manager.getState());
+
+  ros::Time::setNow(ros::Time(6.6));
   
+  manager.onSpin();
+
+  ASSERT_EQ(LocalizationState::DEGRADED_NO_LIDAR_FIX, manager.getState());
   
 }

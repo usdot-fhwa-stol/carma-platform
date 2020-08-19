@@ -130,7 +130,7 @@ private:
 
   LocalizationTransitionTable transition_table_;
 
-  ros::Time prev_ndt_stamp_ = ros::Time(0);
+  boost::optional<ros::Time> prev_ndt_stamp_;
 
   TimerUniquePtr current_timer_;
   std::vector<TimerUniquePtr> expired_timers_;
@@ -138,6 +138,9 @@ private:
   void publishPoseStamped(const geometry_msgs::PoseStamped& pose);
 
   double computeNDTFreq(const ros::Time& new_stamp);
+
+  double computeFreq(const ros::Time& old_stamp, const ros::Time& new_stamp) const;
+
 };
 
 }  // namespace localizer

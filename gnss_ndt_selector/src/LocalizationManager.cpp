@@ -59,10 +59,13 @@ void LocalizationManager::publishPoseStamped(const geometry_msgs::PoseStamped& p
   transform_pub_(tf_msg);
 }
 
+double LocalizationManager::computeFreq(const ros::Time& old_stamp, const ros::Time& new_stamp) const {
+  return 1.0 / (new_stamp - old_stamp).toSec();  // Convert delta to frequency (Hz = 1/s)
+}
+
 double LocalizationManager::computeNDTFreq(const ros::Time& new_stamp)
 {
-  // TODO should this be receipt time? 
-  if (prev_ndt_stamp_ == ros::Time(0))
+  if (!prev_ndt_stamp_)
   {  // Check if this is the first data point
     prev_ndt_stamp_ = new_stamp;
     // When no historic data is available force the frequency into the operational range
@@ -72,19 +75,19 @@ double LocalizationManager::computeNDTFreq(const ros::Time& new_stamp)
   if (new_stamp <= prev_ndt_stamp_)
   {
     ROS_ERROR_STREAM("LocalizationManager received NDT data out of order. Prev stamp was "
-                     << prev_ndt_stamp_ << " new stamp is " << new_stamp);
+                     << prev_ndt_stamp_.get() << " new stamp is " << new_stamp);
     // When invalid data is received from NDT force the frequency into the fault range
     return config_.ndt_frequency_fault_threshold / 2;
   }
 
-  return 1.0 / (new_stamp - prev_ndt_stamp_).toSec();  // Convert delta to frequency (Hz = 1/s)
+  return computeFreq(prev_ndt_stamp_.get(), new_stamp);  // Convert delta to frequency (Hz = 1/s)
 }
 
 void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedConstPtr& pose,
                                                const autoware_msgs::NDTStatConstPtr& stats)
 {
   double ndt_freq = computeNDTFreq(pose->header.stamp);
-  ROS_DEBUG_STREAM("Received pose resulting in frequency value of " << ndt_freq << " with score of " << stats->score);
+  ROS_INFO_STREAM("Received pose resulting in frequency value of " << ndt_freq << " with score of " << stats->score);
 
   if (stats->score >= config_.fitness_score_fault_threshold || ndt_freq <= config_.ndt_frequency_fault_threshold)
   {
@@ -170,6 +173,20 @@ bool LocalizationManager::onSpin()
 {
   // Clear any expired timers
   expired_timers_.clear();
+
+  // Evaluate NDT Frequency if we have started receiving messages
+  // This check provides protection against excessively long NDT computation times that do not trigger the callback
+  if (prev_ndt_stamp_) {
+    double freq = computeFreq(prev_ndt_stamp_.get(), ros::Time::now());
+    if (freq <= config_.ndt_frequency_fault_threshold)
+    {
+      transition_table_.signal(LocalizationSignal::UNUSABLE_NDT_FREQ_OR_FITNESS_SCORE);
+    }
+    else if (freq <= config_.ndt_frequency_degraded_threshold)
+    {
+      transition_table_.signal(LocalizationSignal::POOR_NDT_FREQ_OR_FITNESS_SCORE);
+    }
+  }
 
   // Create and publish status report message
   cav_msgs::LocalizationStatusReport msg = stateToMsg(transition_table_.getState(), ros::Time::now());
