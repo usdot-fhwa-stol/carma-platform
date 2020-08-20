@@ -19,7 +19,7 @@
 
 namespace mobilitypath_publisher
 {
-    // @SONAR_STOP@
+// @SONAR_STOP@
     MobilityPathPublication::MobilityPathPublication():
                             spin_rate_(10.0) {}
 
@@ -77,7 +77,8 @@ namespace mobilitypath_publisher
         bsm_core_ = msg->core_data;
         
     }
-    // @SONAR_START@
+    
+// @SONAR_START@
     cav_msgs::MobilityPath MobilityPathPublication::mobilityPathMessageGenerator(const cav_msgs::TrajectoryPlan &trajectory_plan, geometry_msgs::TransformStamped tf)
     {
         cav_msgs::MobilityPath mobility_path_msg;
