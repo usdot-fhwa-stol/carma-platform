@@ -47,6 +47,30 @@ TEST(MobilityPathPublicationTest, test1)
     EXPECT_EQ(9, res.trajectory.offsets[2].offset_z);
 }
 
+TEST(MobilityPathPublicationTest, test2)
+{
+    ros::Time::init();
+    cav_msgs::TrajectoryPlan plan;
+    cav_msgs::TrajectoryPlanPoint point;
+    point.x = 1;
+    point.y = 1;
+    point.target_time = 1;
+    plan.trajectory_points.push_back(point);
+    mobilitypath_publisher::MobilityPathPublication worker;
+    geometry_msgs::PoseStamped pose;
+    pose.pose.position.x = -1.0;
+    worker.current_pose_.reset(new geometry_msgs::PoseStamped(pose));
+    geometry_msgs::TransformStamped tf;
+    tf.transform.translation.x = 1;
+    tf.transform.translation.y = 2;
+
+    auto res = worker.mobilityPathMessageGenerator(plan, tf);
+    EXPECT_EQ(0, res.trajectory.offsets.size());
+    EXPECT_EQ(1, res.trajectory.location.ecef_x);
+    EXPECT_EQ(2, res.trajectory.location.ecef_y);
+    
+}
+
 
 // Run all the tests
 int main(int argc, char **argv)

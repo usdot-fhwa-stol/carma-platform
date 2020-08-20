@@ -79,7 +79,7 @@ namespace mobilitypath_publisher
     }
     
 // @SONAR_START@
-    cav_msgs::MobilityPath MobilityPathPublication::mobilityPathMessageGenerator(const cav_msgs::TrajectoryPlan &trajectory_plan, geometry_msgs::TransformStamped tf)
+    cav_msgs::MobilityPath MobilityPathPublication::mobilityPathMessageGenerator(const cav_msgs::TrajectoryPlan& trajectory_plan, const geometry_msgs::TransformStamped& tf)
     {
         cav_msgs::MobilityPath mobility_path_msg;
         uint64_t millisecs =trajectory_plan.header.stamp.toNSec()/1000;
@@ -95,15 +95,15 @@ namespace mobilitypath_publisher
         cav_msgs::MobilityHeader header;
         header.sender_id = sender_id;
         header.recipient_id = recipient_id;
-        header.sender_bsm_id = sender_bsm_id = bsmIDtoString(bsm_core_);// sender_bsm_id;
+        header.sender_bsm_id = bsmIDtoString(bsm_core_);
         // random GUID that identifies this particular plan for future reference
         header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
-        header.timestamp = time;//ros::Time::now().toNSec()/1000; //time in millisecond
+        header.timestamp = time; //time in millisecond
         
         return header;
     }
 
-    cav_msgs::Trajectory MobilityPathPublication::TrajectoryPlantoTrajectory(std::vector<cav_msgs::TrajectoryPlanPoint> traj_points, geometry_msgs::TransformStamped tf){
+    cav_msgs::Trajectory MobilityPathPublication::TrajectoryPlantoTrajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points, const geometry_msgs::TransformStamped& tf){
         cav_msgs::Trajectory traj;
         cav_msgs::LocationECEF ecef_location = TrajectoryPointtoECEF(traj_points[0], tf);
 
@@ -131,7 +131,7 @@ namespace mobilitypath_publisher
 
 
 
-    cav_msgs::LocationECEF MobilityPathPublication::TrajectoryPointtoECEF(cav_msgs::TrajectoryPlanPoint traj_point, geometry_msgs::TransformStamped tf){
+    const cav_msgs::LocationECEF MobilityPathPublication::TrajectoryPointtoECEF(const cav_msgs::TrajectoryPlanPoint& traj_point, const geometry_msgs::TransformStamped& tf){
         cav_msgs::LocationECEF ecef_point;    
 
         ecef_point.ecef_x = traj_point.x * tf.transform.translation.x;

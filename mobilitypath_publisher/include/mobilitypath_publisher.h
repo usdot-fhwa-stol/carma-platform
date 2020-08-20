@@ -43,7 +43,7 @@ namespace mobilitypath_publisher
         // local copy of pose
         boost::shared_ptr<geometry_msgs::PoseStamped const> current_pose_;
 
-        cav_msgs::MobilityPath mobilityPathMessageGenerator(const cav_msgs::TrajectoryPlan &trajectory_plan, geometry_msgs::TransformStamped tf);
+        cav_msgs::MobilityPath mobilityPathMessageGenerator(const cav_msgs::TrajectoryPlan& trajectory_plan, const geometry_msgs::TransformStamped& tf);
         
 
     private:
@@ -89,11 +89,11 @@ namespace mobilitypath_publisher
         cav_msgs::MobilityHeader composeMobilityHeader(uint64_t time);
 
         // Convert Trajectory Plan to (Mobility) Trajectory
-        cav_msgs::Trajectory TrajectoryPlantoTrajectory(std::vector<cav_msgs::TrajectoryPlanPoint> traj_points, geometry_msgs::TransformStamped tf);
+        cav_msgs::Trajectory TrajectoryPlantoTrajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points, const geometry_msgs::TransformStamped& tf);
 
     
         // Convert Trajectory Point to ECEF Transform
-        cav_msgs::LocationECEF TrajectoryPointtoECEF(cav_msgs::TrajectoryPlanPoint traj_point,  geometry_msgs::TransformStamped tf);
+        const cav_msgs::LocationECEF TrajectoryPointtoECEF(const cav_msgs::TrajectoryPlanPoint& traj_point, const geometry_msgs::TransformStamped& tf);
 
         // sender's static ID which is its license plate
         std::string sender_id = "USDOT-49096";

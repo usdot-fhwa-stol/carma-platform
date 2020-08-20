@@ -17,6 +17,7 @@
 #include <ros/ros.h>
 #include "mobilitypath_publisher.h"
 
+// @SONAR_STOP@
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "mobilitypath_publisher");
@@ -24,3 +25,4 @@ int main(int argc, char** argv)
     mp.run();
     return 0;
 };
+// @SONAR_START@
