@@ -43,8 +43,8 @@ TEST(MobilityPathPublicationTest, test1)
     EXPECT_EQ(1, res.trajectory.offsets[0].offset_x);
     EXPECT_EQ(2, res.trajectory.location.ecef_y);
     EXPECT_EQ(4, res.trajectory.offsets[1].offset_y);
-    EXPECT_EQ(3, res.trajectory.location.ecef_z);
-    EXPECT_EQ(9, res.trajectory.offsets[2].offset_z);
+    EXPECT_EQ(0, res.trajectory.location.ecef_z);
+    EXPECT_EQ(0, res.trajectory.offsets[2].offset_z);
 }
 
 TEST(MobilityPathPublicationTest, test2)

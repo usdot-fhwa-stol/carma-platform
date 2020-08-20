@@ -82,7 +82,7 @@ namespace mobilitypath_publisher
     cav_msgs::MobilityPath MobilityPathPublication::mobilityPathMessageGenerator(const cav_msgs::TrajectoryPlan& trajectory_plan, const geometry_msgs::TransformStamped& tf)
     {
         cav_msgs::MobilityPath mobility_path_msg;
-        uint64_t millisecs =trajectory_plan.header.stamp.toNSec()/1000;
+        uint64_t millisecs =trajectory_plan.header.stamp.toNSec()/1000000;
         mobility_path_msg.header = composeMobilityHeader(millisecs);
         
         cav_msgs::Trajectory mob_path_traj = TrajectoryPlantoTrajectory(trajectory_plan.trajectory_points, tf);
@@ -135,8 +135,8 @@ namespace mobilitypath_publisher
         cav_msgs::LocationECEF ecef_point;    
 
         ecef_point.ecef_x = traj_point.x * tf.transform.translation.x;
-        ecef_point.ecef_y = traj_point.x * tf.transform.translation.y;
-        ecef_point.ecef_z = traj_point.x * tf.transform.translation.z;
+        ecef_point.ecef_y = traj_point.y * tf.transform.translation.y;
+        ecef_point.ecef_z = 0.0 * tf.transform.translation.z;
        
         return ecef_point;
     } 
