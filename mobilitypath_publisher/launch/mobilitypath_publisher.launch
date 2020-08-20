@@ -14,6 +14,7 @@
   This file is used to launch a the Mobility Path Publication Node
 -->
 <launch>
-    <rosparam command="load" file="$(find mobilitypath_publisher)/config/parameters.yaml"/>
-    <node name="mobilitypath_publisher" pkg="mobilitypath_publisher" type="mobilitypath_publisher"/>
+    <node name="mobilitypath_publisher" pkg="mobilitypath_publisher" type="mobilitypath_publisher">
+      <rosparam command="load" file="$(find mobilitypath_publisher)/config/parameters.yaml"/>
+    </node>
 </launch>

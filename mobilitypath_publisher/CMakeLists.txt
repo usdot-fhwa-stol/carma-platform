@@ -52,10 +52,7 @@ include_directories(
   include
 )
 
-file(GLOB_RECURSE headers */*.hpp */*.h)
-
 add_executable( ${PROJECT_NAME}
-  ${headers}
   src/mobilitypath_publisher.cpp
   src/main.cpp)
 
@@ -70,11 +67,11 @@ add_dependencies(mobilitypath_publisher_lib ${catkin_EXPORTED_TARGETS})
 ## Install ##
 #############
 
+
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.hpp"
-  PATTERN ".svn" EXCLUDE
-)
+  )
 
 ## Install C++
 install(TARGETS ${PROJECT_NAME}

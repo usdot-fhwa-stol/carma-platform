@@ -24,6 +24,7 @@
 #include <carma_utils/CARMAUtils.h>
 #include <cav_msgs/TrajectoryPlan.h>
 #include <cav_msgs/MobilityPath.h>
+#include <cav_msgs/BSM.h>
 #include <geometry_msgs/PoseStamped.h>
 
 namespace mobilitypath_publisher
@@ -42,7 +43,7 @@ namespace mobilitypath_publisher
         // local copy of pose
         boost::shared_ptr<geometry_msgs::PoseStamped const> current_pose_;
 
-        cav_msgs::MobilityPath mobilityPathMessageGenerator(cav_msgs::TrajectoryPlan trajectory_plan);
+        cav_msgs::MobilityPath mobilityPathMessageGenerator(const cav_msgs::TrajectoryPlan &trajectory_plan, geometry_msgs::TransformStamped tf);
         
 
     private:
@@ -50,6 +51,9 @@ namespace mobilitypath_publisher
         // node handles
         std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
+        double spin_rate_;
+
+        bool spinCallback();
 
         // ROS publisher
         ros::Publisher  path_pub_;
@@ -58,40 +62,38 @@ namespace mobilitypath_publisher
         ros::Subscriber traj_sub_;
         ros::Subscriber pose_sub_;
         ros::Subscriber accel_sub_;
+        ros::Subscriber bsm_sub_;
 
         // ROS publishers
         ros::Publisher mob_path_pub_;
 
-        cav_msgs::TrajectoryPlan latest_trajectory;
+        cav_msgs::TrajectoryPlan latest_trajectory_;
 
         // TF listenser
         tf2_ros::Buffer tf2_buffer_;
         std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
 
-        // size of the vehicle
-        double vehicle_length_, vehicle_width_;
+        // BSM Message
+        cav_msgs::BSMCoreData bsm_core_;
 
-        // uncertainty threshould for updating the mobility path trajectory
-        double x_threshold , y_threshold; //m (width of a lane)
-
+        
         // initialize this node
         void initialize();
 
         // callbacks for the subscribers
         void currentpose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
         void trajectory_cb(const cav_msgs::TrajectoryPlanConstPtr& msg);
+        void bsm_cb(const cav_msgs::BSMConstPtr& msg);
 
-        // Compise Mobility Header
-        cav_msgs::MobilityHeader composeMobilityHeader();
+        // Compose Mobility Header
+        cav_msgs::MobilityHeader composeMobilityHeader(uint64_t time);
 
         // Convert Trajectory Plan to (Mobility) Trajectory
-        cav_msgs::Trajectory TrajectoryPlantoTrajectory(std::vector<cav_msgs::TrajectoryPlanPoint> traj_points);
+        cav_msgs::Trajectory TrajectoryPlantoTrajectory(std::vector<cav_msgs::TrajectoryPlanPoint> traj_points, geometry_msgs::TransformStamped tf);
 
-        // Check for distance between current position and trajectory point
-        bool trajectoryPoseCheck(cav_msgs::TrajectoryPlanPoint point);
-        
+    
         // Convert Trajectory Point to ECEF Transform
-        cav_msgs::LocationECEF TrajectoryPointtoECEF(cav_msgs::TrajectoryPlanPoint traj_point);
+        cav_msgs::LocationECEF TrajectoryPointtoECEF(cav_msgs::TrajectoryPlanPoint traj_point,  geometry_msgs::TransformStamped tf);
 
         // sender's static ID which is its license plate
         std::string sender_id = "USDOT-49096";
@@ -101,7 +103,15 @@ namespace mobilitypath_publisher
         std::string recipient_id = "";
 
         // sender's dynamic ID which is its BSM id in hex string
-        std::string sender_bsm_id = "FFFFFFFF";
+        std::string sender_bsm_id = "FFFF";
+
+        std::string bsmIDtoString(cav_msgs::BSMCoreData bsm_core){
+            std::string res = "";
+            for (size_t i=0; i<bsm_core.id.size(); i++){
+                res+=std::to_string(bsm_core.id[i]);
+            }
+            return res;
+        }
 
         
     };
