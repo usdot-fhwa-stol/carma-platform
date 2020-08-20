@@ -74,7 +74,8 @@ namespace route_following_plugin
          * \return Whether we need a lanechange to reach to the next lanelet in the shortest path
          */
         bool identifyLaneChange(lanelet::routing::LaneletRelations relations, int target_id);
-
+ 
+        cav_msgs::Maneuver composeManeuverMessage_lanechange(double current_dist, double end_dist,double current_speed, double target_speed, int curr_lane_id, int target_lane_id, ros::Time current_time);
     private:
 
         // CARMA ROS node handles

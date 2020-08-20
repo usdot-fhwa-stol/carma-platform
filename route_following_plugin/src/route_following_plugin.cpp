@@ -109,6 +109,10 @@ namespace route_following_plugin
             }
             if(identifyLaneChange(following_lanelets, shortest_path[last_lanelet_index + 1].id()))
             {
+                resp.new_plan.maneuvers.push_back(
+                composeManeuverMessage_lanechange(current_progress, end_dist, 
+                                       speed_progress, RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS, 
+                                       shortest_path[last_lanelet_index].id(),shortest_path[last_lanelet_index + 1].id(), ros::Time::now()));
                 ++last_lanelet_index;
             }
             else
@@ -162,6 +166,25 @@ namespace route_following_plugin
         // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
         maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration((end_dist - current_dist) / (0.5 * (current_speed + target_speed)));
         maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
+        return maneuver_msg;
+    }
+
+        cav_msgs::Maneuver RouteFollowingPlugin::composeManeuverMessage_lanechange(double current_dist, double end_dist,double current_speed, double target_speed, int curr_lane_id, int target_lane_id, ros::Time current_time)
+    {
+        cav_msgs::Maneuver maneuver_msg;
+        maneuver_msg.type=cav_msgs::Maneuver::LANE_CHANGE;
+        maneuver_msg.lane_change_maneuver.parameters.neogition_type= cav_msgs::ManeuverParameters::NO_NEGOTIATION;
+        maneuver_msg.lane_change_maneuver.parameters.presence_vector=cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
+        maneuver_msg.lane_change_maneuver.parameters.planning_tactical_plugin="unobstructed_lanechange";
+        maneuver_msg.lane_change_maneuver.parameters.planning_strategic_plugin="RouteFollowingPlugin";
+        maneuver_msg.lane_change_maneuver.start_dist=current_dist;
+        maneuver_msg.lane_change_maneuver.start_speed=current_speed;
+        maneuver_msg.lane_change_maneuver.start_time=current_time;
+        maneuver_msg.lane_change_maneuver.end_dist=end_dist;
+        maneuver_msg.lane_change_maneuver.end_speed=target_speed;
+        maneuver_msg.lane_change_maneuver.end_time=current_time+ros::Duration((end_dist-current_dist)/(0.5*(current_speed+target_speed)));
+        maneuver_msg.lane_change_maneuver.starting_lane_id=std::to_string(curr_lane_id);
+        maneuver_msg.lane_change_maneuver.ending_lane_id=std::to_string(target_lane_id);
         return maneuver_msg;
     }
 
