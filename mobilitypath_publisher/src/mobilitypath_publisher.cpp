@@ -131,7 +131,7 @@ namespace mobilitypath_publisher
 
 
 
-    const cav_msgs::LocationECEF MobilityPathPublication::TrajectoryPointtoECEF(const cav_msgs::TrajectoryPlanPoint& traj_point, const geometry_msgs::TransformStamped& tf){
+    cav_msgs::LocationECEF MobilityPathPublication::TrajectoryPointtoECEF(const cav_msgs::TrajectoryPlanPoint& traj_point, const geometry_msgs::TransformStamped& tf) const{
         cav_msgs::LocationECEF ecef_point;    
 
         ecef_point.ecef_x = traj_point.x * tf.transform.translation.x;
