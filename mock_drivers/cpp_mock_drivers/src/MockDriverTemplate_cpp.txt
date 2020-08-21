@@ -16,8 +16,18 @@
 
 #include "cpp_mock_drivers/InsertDriverName.h"
 
+/!* To make a new mock driver, just replace all of the "insert" variables with the names that you want
+* you may also want to add more publishers and subscribers, to do that just copy and paste the type that you want and follow the 
+* example on how to do it.
+* Also, be sure to add functionality to the driverDiscovery and parserCB functions!
+*/ 
+
 namespace mock_drivers{
 
+    bool InsertDriverName::driverDiscovery(){
+
+    }
+    
     void InsertDriverName::parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg){
         
     }
@@ -47,12 +57,18 @@ namespace mock_drivers{
 
     int InsertDriverName::run(){
 
+        // bag parser subscriber
         mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
+        // driver publishers and subscribers
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<insert_pub_msg_1>>>(name_1_ptr_);
         mock_driver_node_.addSub<boost::shared_ptr<ROSComms<insert_sub_msg_1>>>(name_2_ptr_);
 
-        mock_driver_node_.spin(10);
+        // driver discovery publisher
+        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>>>(driver_discovery_pub_ptr_);
+        mock_driver_node_.setSpinCallback(std::bind(&InsertDriverName::driverDiscovery, this));
+
+        mock_driver_node_.spin(1);
 
         return 0;
     }

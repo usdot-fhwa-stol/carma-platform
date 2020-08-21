@@ -22,9 +22,9 @@
 namespace mock_drivers{
 
     TEST(BagParser, Constructor){
-        BagParser d1;
-        BagParser d2(false);
-        BagParser d3(true);
+        BagParser d1("");
+        BagParser d2("", false);
+        BagParser d3("", true);
 
         ASSERT_EQ(d1.getMockDriverNode().isDummy(), false);
         ASSERT_EQ(d2.getMockDriverNode().isDummy(), false);
@@ -32,13 +32,13 @@ namespace mock_drivers{
     }
 
     TEST(BagParser, publishCallback){
-        BagParser d(true);
+        BagParser d("/workspaces/carma_ws/carma/src/carma-platform/mock_drivers/cpp_mock_drivers/test/resource/hello_test_bag.bag", true);
 
         EXPECT_TRUE(d.publishCallback());
     }
 
     TEST(BagParser, run){
-        BagParser d(true);
+        BagParser d("", true);
         ASSERT_EQ(d.run(), 0);
     }
 

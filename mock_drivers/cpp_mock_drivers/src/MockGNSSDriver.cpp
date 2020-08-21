@@ -42,13 +42,14 @@ namespace mock_drivers{
     }
 
     void MockGNSSDriver::parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg){
-        gps_common::GPSFix gnss_fixed_fused = msg->gnss_fixed_fused;
-
-        ros::Time curr_time = ros::Time::now();
-      
-        gnss_fixed_fused.header.stamp = curr_time;
-
-        mock_driver_node_.publishData<gps_common::GPSFix>("/hardware_interface/gnss/gnss_fixed_fused", gnss_fixed_fused);
+        // generate messages from bag data
+        if(msg->gnss_fixed_fused_bool.data){
+            gps_common::GPSFix gnss_fixed_fused = msg->gnss_fixed_fused;
+            // update time stamps
+            gnss_fixed_fused.header.stamp = ros::Time::now();
+            // publish the data
+            mock_driver_node_.publishData<gps_common::GPSFix>("/hardware_interface/gnss/gnss_fixed_fused", gnss_fixed_fused);
+        }
     }
 
     MockGNSSDriver::MockGNSSDriver(bool dummy){
@@ -63,10 +64,13 @@ namespace mock_drivers{
 
         mock_driver_node_.init();
 
-        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        // bag parser subscriber
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
+        // driver publisher and subscriber
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<gps_common::GPSFix>>>(GPS_fix_ptr_);
 
+        // driver discovery publisher
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>>>(driver_discovery_pub_ptr_);
         mock_driver_node_.setSpinCallback(std::bind(&MockGNSSDriver::driverDiscovery, this));
 

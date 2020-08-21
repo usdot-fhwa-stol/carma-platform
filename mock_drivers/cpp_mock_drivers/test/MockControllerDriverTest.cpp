@@ -42,7 +42,13 @@ namespace mock_drivers{
         std::vector<std::string> test_str_vector = d.getMockDriverNode().getTopics();
         std::vector<ros::Time> test_time_vector = d.getMockDriverNode().getTimeStamps();
 
-        ASSERT_EQ(test_str_vector[0], "robot_status");
+        ASSERT_EQ(test_str_vector[0], "/hardware_interface/controller/robot_status");
+    }
+
+    TEST(MockControllerDriver, driver_discovery){
+        MockControllerDriver d(true);
+
+        ASSERT_TRUE(d.driverDiscovery());
     }
 
     TEST(MockControllerDriver, srvCallbacks){

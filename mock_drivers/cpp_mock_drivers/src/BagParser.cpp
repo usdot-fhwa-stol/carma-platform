@@ -18,21 +18,19 @@
 
 namespace mock_drivers{
 
-    BagParser::BagParser(bool dummy){
-        mock_driver_node_ = MockDriverNode(dummy);
-        bag_data_pub_ptr_ = boost::make_shared<ROSComms<carma_simulation_msgs::BagData>>(ROSComms<carma_simulation_msgs::BagData>(CommTypes::pub, false, 10, "bag_data"));
-    }
-
-    BagParser::BagParser(std::string file_path){
+    BagParser::BagParser(std::string file_path, bool dummy){
         file_path_ = file_path;
-        bag_data_pub_ptr_ = boost::make_shared<ROSComms<carma_simulation_msgs::BagData>>(ROSComms<carma_simulation_msgs::BagData>(CommTypes::pub, false, 10, "bag_data"));
+        mock_driver_node_ = MockDriverNode(dummy);
+        bag_data_pub_ptr_ = boost::make_shared<ROSComms<carma_simulation_msgs::BagData>>(ROSComms<carma_simulation_msgs::BagData>(CommTypes::pub, false, 10, "/hardware_interface/bag_data"));
     }
 
     bool BagParser::publishCallback() {
+
+        // open the bag file for a specific time frame (the rate should be set to be faster than the fastest topic)
         static ros::Time startTime;
         static ros::Duration timeFrame = ros::Duration(1.0/rate_);
         carma_simulation_msgs::BagData message;
-        
+
         bag_.open(file_path_, rosbag::bagmode::Read);
 
         if (startTime.isZero()){
@@ -41,13 +39,17 @@ namespace mock_drivers{
 
         for(rosbag::MessageInstance const m: rosbag::View(bag_, startTime, (startTime + timeFrame))){
 
+            // assign the bag data topics to the specific parts of the bag_data message
+
             // camera
-            // if (m.getTopic() == "/hardware_interface/camera/1/camera_info"){message.camera_info_1 = *m.instantiate<sensor_msgs::CameraInfo>();}
-            // if (m.getTopic() == "/hardware_interface/camera/1/image_raw"){message.image_raw_1 = *m.instantiate<sensor_msgs::Image>();}
-            if (m.getTopic() == "/hardware_interface/camera/camera_info"){message.camera_info = *m.instantiate<sensor_msgs::CameraInfo>();}
-            if (m.getTopic() == "/hardware_interface/camera/image_raw"){message.image_raw = *m.instantiate<sensor_msgs::Image>();}
-            if (m.getTopic() == "/hardware_interface/camera/image_rects"){message.image_rects = *m.instantiate<sensor_msgs::Image>();}
-            if (m.getTopic() == "/hardware_interface/camera/projection_matrix"){message.projection_matrix = *m.instantiate<autoware_msgs::ProjectionMatrix>();}
+            if (m.getTopic() == "/hardware_interface/camera/camera_info"){message.camera_info = *m.instantiate<sensor_msgs::CameraInfo>();
+                message.camera_info_bool.data = true;}
+            if (m.getTopic() == "/hardware_interface/camera/image_raw"){message.image_raw = *m.instantiate<sensor_msgs::Image>();
+                message.image_raw_bool.data = true;}
+            if (m.getTopic() == "/hardware_interface/camera/image_rects"){message.image_rects = *m.instantiate<sensor_msgs::Image>();
+                message.image_rects_bool.data = true;}
+            if (m.getTopic() == "/hardware_interface/camera/projection_matrix"){message.projection_matrix = *m.instantiate<autoware_msgs::ProjectionMatrix>();
+                message.projection_matrix_bool.data = true;}
             
             // can
             if (m.getTopic() == "/hardware_interface/can/acc_engaged"){message.acc_engaged = *m.instantiate<std_msgs::Bool>();}
@@ -99,12 +101,11 @@ namespace mock_drivers{
 
         startTime += timeFrame;
 
-        mock_driver_node_.publishData<carma_simulation_msgs::BagData>("/bag_data", message);
+        mock_driver_node_.publishData<carma_simulation_msgs::BagData>("/hardware_interface/bag_data", message);
 
         bag_.close();
 
         return true;
-
     }
     
     int BagParser::run(){
@@ -114,6 +115,7 @@ namespace mock_drivers{
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<carma_simulation_msgs::BagData>>>(bag_data_pub_ptr_);
 
         mock_driver_node_.setSpinCallback(std::bind(&BagParser::publishCallback, this));
+
         mock_driver_node_.spin(rate_);
 
         return 0;

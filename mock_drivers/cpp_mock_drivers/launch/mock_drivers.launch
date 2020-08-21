@@ -12,9 +12,13 @@
 -->
 
 <launch>
-    <arg name="driver"/>
-    <group ns="hardware_interface">
-      <remap from="/hardware_interface/$(arg driver)/driver_discovery" to="/hardware_interface/driver_discovery"/>
-      <node pkg="cpp_mock_drivers" type="mock_driver" name="$(arg driver)" args="$(arg driver)" ns="$(arg driver)"/>
+  <arg name="driver"/>
+  <arg name="bag_parser" default="false"/>
+  <arg name="bag_path"/>
+    <group if="$(arg bag_parser)">
+      <node pkg="cpp_mock_drivers" type="bag_parser" name="bag_parser" args="$(arg bag_path)"/>
     </group>
+    <remap from="/hardware_interface/$(arg driver)/driver_discovery" to="/hardware_interface/driver_discovery"/>
+    <remap from="/hardware_interface/$(arg driver)/bag_data" to="/hardware_interface/bag_data"/>
+    <node pkg="cpp_mock_drivers" type="mock_driver" name="$(arg driver)" args="$(arg driver)" ns="$(arg driver)"/>
 </launch>

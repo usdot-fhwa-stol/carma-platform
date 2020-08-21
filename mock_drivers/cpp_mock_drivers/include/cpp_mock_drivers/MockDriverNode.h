@@ -31,12 +31,14 @@ namespace mock_drivers{
             std::vector<ros::Subscriber> subscribers_;
             std::vector<ros::ServiceServer> services_;
             
-            bool dummy_;
+            // used for testing
+            bool dummy_; // if the mock driver node is a dummy then it wont initialize a CARMANodeHandle and its functions wont do anything
             std::vector<std::string> topics_;
             std::vector<ros::Time> time_stamps_;
 
         public:
 
+            /*! \brief Function to add a publisher from a ROSComms object */
             template<typename T>
             void addPub(T comm){
                 if(!dummy_){
@@ -44,6 +46,7 @@ namespace mock_drivers{
                 }
             }
 
+            /*! \brief Function to add a subscriber from a ROSComms object */
             template<typename T>
             void addSub(T comm){
                 if(!dummy_){
@@ -51,6 +54,7 @@ namespace mock_drivers{
                 }
             }
 
+            /*! \brief Function to add a service from a ROSComms object */
             template<typename T>
             void addSrv(T comm){
                 if(!dummy_){
@@ -62,22 +66,28 @@ namespace mock_drivers{
             // template<typename T>
             // void addComms(T comm) {
             //     if constexpr(comm->getCommType() == CommTypes::pub){
-            //         std::cout << "Attaching publisher" << std::endl;
             //         publishers_ = cnh_->advertise<decltype(comm->getTemplateType())>(comm->getTopic(), comm->getQueueSize());
             //     } else if constexpr(comm->getCommType() == CommTypes::sub){
-            //         std::cout << "Attaching subscriber" << std::endl;
-            //         std::cout << comm->getTopic() << std::endl;
-            //         // ros::Subscriber sub = n.subscribe("ooga_booga", 1000, &mock_drivers::ROSComms<std_msgs::String, const std_msgs::String::ConstPtr&>::callback, &test_comms);
             //         subscribers_ = cnh_->subscribe<const std_msgs::String::ConstPtr&>(comm->getTopic(), comm->getQueueSize(), &ROSComms<decltype(comm->getTemplateType())>::callback, comm);
+            //     } else if constexpr(comm->getCommType() == CommTypes::srv){
+            //         services_.push_back(cnh_->advertiseService(comm->getTopic(), &ROSComms<decltype(comm->getReqType()), decltype(comm->getResType())>::callback, comm));
             //     }
             // }            
 
+            /*! \brief Begin the ros node*/
             void spin(double rate);
 
+            /*! \brief Set the spin callback for the ros node*/
             void setSpinCallback(std::function<bool()> cb);
 
+            /*! \brief Initialize the CARMA Node Handle pointer for the MockDriverNode (must be called before spin)*/
             void init();
 
+            /*! \brief Publish data on a desired topic
+            * 
+            * This function must take in the full name of topic that will be published including the namespaces and leading /.
+            * This can probably be made to take that information in on construction of the node but we can add that once it breaks :)
+            */
             template<typename T>
             void publishData(std::string topic, T msg, bool header = true){
                 if(!dummy_){
@@ -89,6 +99,11 @@ namespace mock_drivers{
                 }
             };
 
+            /*! \brief Publish data with no header on a desired topic
+            * 
+            * Same as the publishData function, except this is used when the data doesn't have a header. This exists to allow for testing of the code.
+            * This can be combined with publishData once we are in c++ 17 and can use constexpr if statement.  
+            */
             template<typename T>
             void publishDataNoHeader(std::string topic, T msg){
                 if(!dummy_){
@@ -103,8 +118,11 @@ namespace mock_drivers{
             MockDriverNode();
             MockDriverNode(bool dummy);
 
+            /*! \brief Returns a vector of all the topics that the node would publish to (only when it is a dummy node). Used for testing*/
             std::vector<std::string> getTopics(){return topics_;}
+            /*! \brief Returns a vector of all the time stamps of the data that would be published (only when it is a dummy node). Used for testing*/
             std::vector<ros::Time> getTimeStamps(){return time_stamps_;}
+            /*! \brief Returns if the node is a dummy node. Used for testing*/
             bool isDummy(){return dummy_;}
 
     };

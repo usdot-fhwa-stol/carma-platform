@@ -42,29 +42,34 @@ namespace mock_drivers{
     }
 
     void MockCameraDriver::parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg){
-        sensor_msgs::CameraInfo camera_info = msg->camera_info;
-        sensor_msgs::Image image_raw = msg->image_raw;
-        // sensor_msgs::CameraInfo camera_info_1 = msg->camera_info_1;
-        // sensor_msgs::Image image_raw_1 = msg->image_raw_1;
-        sensor_msgs::Image image_rects = msg->image_rects;
-        autoware_msgs::ProjectionMatrix projection_matrix = msg->projection_matrix;
-
+        
         ros::Time curr_time = ros::Time::now();
         
-        camera_info.header.stamp = curr_time;
-        image_raw.header.stamp = curr_time;
-        // camera_info_1.header.stamp = curr_time;
-        // image_raw_1.header.stamp = curr_time;
-        image_rects.header.stamp = curr_time;
-        projection_matrix.header.stamp = curr_time;
+        // generate messages from bag data
+       if(msg->camera_info_bool.data){
+            sensor_msgs::CameraInfo camera_info = msg->camera_info;
+            camera_info.header.stamp = curr_time;
+            mock_driver_node_.publishData<sensor_msgs::CameraInfo>("/hardware_interface/camera/camera_info", camera_info);
+        }
 
-        mock_driver_node_.publishData<sensor_msgs::CameraInfo>("/hardware_interface/camera/camera_info", camera_info);
-        mock_driver_node_.publishData<sensor_msgs::Image>("/hardware_interface/camera/image_raw", image_raw);
-        // mock_driver_node_.publishData<sensor_msgs::CameraInfo>("/1/camera_info", camera_info_1);
-        // mock_driver_node_.publishData<sensor_msgs::Image>("/1/image_raw", image_raw_1);
-        mock_driver_node_.publishData<sensor_msgs::Image>("/hardware_interface/camera/image_rects", image_rects);
-        mock_driver_node_.publishData<autoware_msgs::ProjectionMatrix>("/hardware_interface/camera/projection_matrix", projection_matrix);
-    }
+        if(msg->image_raw_bool.data){
+            sensor_msgs::Image image_raw = msg->image_raw;
+            image_raw.header.stamp = curr_time;
+            mock_driver_node_.publishData<sensor_msgs::Image>("/hardware_interface/camera/image_raw", image_raw);
+        }
+
+        if(msg->image_rects_bool.data){
+            sensor_msgs::Image image_rects = msg->image_rects;
+            image_rects.header.stamp = curr_time;
+            mock_driver_node_.publishData<sensor_msgs::Image>("/hardware_interface/camera/image_rects", image_rects);
+        }
+
+        if(msg->projection_matrix_bool.data){
+            autoware_msgs::ProjectionMatrix projection_matrix = msg->projection_matrix;
+            projection_matrix.header.stamp = curr_time;
+            mock_driver_node_.publishData<autoware_msgs::ProjectionMatrix>("/hardware_interface/camera/projection_matrix", projection_matrix);
+        }
+    } 
 
     MockCameraDriver::MockCameraDriver(bool dummy){
 
@@ -72,8 +77,6 @@ namespace mock_drivers{
 
         camera_info_ptr_ = boost::make_shared<ROSComms<sensor_msgs::CameraInfo>>(ROSComms<sensor_msgs::CameraInfo>(CommTypes::pub, false, 10, "camera_info"));
         image_raw_ptr_ = boost::make_shared<ROSComms<sensor_msgs::Image>>(ROSComms<sensor_msgs::Image>(CommTypes::pub, false, 10, "image_raw"));
-        // camera_info_1_ptr_ = boost::make_shared<ROSComms<sensor_msgs::CameraInfo>>(ROSComms<sensor_msgs::CameraInfo>(CommTypes::pub, false, 10, "1/camera_info"));
-        // image_raw_1_ptr_ = boost::make_shared<ROSComms<sensor_msgs::Image>>(ROSComms<sensor_msgs::Image>(CommTypes::pub, false, 10, "1/image_raw"));
         image_rects_ptr_ = boost::make_shared<ROSComms<sensor_msgs::Image>>(ROSComms<sensor_msgs::Image>(CommTypes::pub, false, 10, "image_rects"));
         projection_matrix_ptr_ = boost::make_shared<ROSComms<autoware_msgs::ProjectionMatrix>>(ROSComms<autoware_msgs::ProjectionMatrix>(CommTypes::pub, false, 10, "projection_matrix"));
         
@@ -83,15 +86,16 @@ namespace mock_drivers{
 
         mock_driver_node_.init();
 
-        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        // bag_parser subscriber
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
+        // data topic publishers
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<sensor_msgs::CameraInfo>>>(camera_info_ptr_);
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<sensor_msgs::Image>>>(image_raw_ptr_);
-        // mock_driver_node_.addPub<boost::shared_ptr<ROSComms<sensor_msgs::CameraInfo>>>(camera_info_1_ptr_);
-        // mock_driver_node_.addPub<boost::shared_ptr<ROSComms<sensor_msgs::Image>>>(image_raw_1_ptr_);
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<sensor_msgs::Image>>>(image_rects_ptr_);
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<autoware_msgs::ProjectionMatrix>>>(projection_matrix_ptr_);
 
+        // driver discovery publisher
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>>>(driver_discovery_pub_ptr_);
         mock_driver_node_.setSpinCallback(std::bind(&MockCameraDriver::driverDiscovery, this));
 

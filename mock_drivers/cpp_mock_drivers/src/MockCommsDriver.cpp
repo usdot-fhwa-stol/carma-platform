@@ -42,17 +42,19 @@ namespace mock_drivers{
     }
 
     void MockCommsDriver::parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg){
-        cav_msgs::ByteArray inbound_binary_msg = msg->inbound_binary_msg;
-
-        ros::Time curr_time = ros::Time::now();
-      
-        inbound_binary_msg.header.stamp = curr_time;
-
-        mock_driver_node_.publishData<cav_msgs::ByteArray>("/hardware_interface/comms/inbound_binary_msg", inbound_binary_msg);  
+        // generate messages from bag data
+        if(msg->inbound_binary_msg_bool.data){
+            cav_msgs::ByteArray inbound_binary_msg = msg->inbound_binary_msg;
+            // update time stamps
+            inbound_binary_msg.header.stamp = ros::Time::now();
+            // publish the data
+            mock_driver_node_.publishData<cav_msgs::ByteArray>("/hardware_interface/comms/inbound_binary_msg", inbound_binary_msg);  
+        }
     }
+
     
     void MockCommsDriver::outboundCallback(const cav_msgs::ByteArray::ConstPtr& msg){
-
+        // TODO: add outbound callback (if necessary).
     };
 
     MockCommsDriver::MockCommsDriver(bool dummy){
@@ -69,11 +71,14 @@ namespace mock_drivers{
 
         mock_driver_node_.init();
 
-        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        // bag parser subscriber
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
+        // driver publisher and subscriber
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::ByteArray>>>(inbound_pub_ptr_);
-        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::ByteArray::ConstPtr&>>>(outbound_sub_ptr_);
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_msgs::ByteArray::ConstPtr&>>>(outbound_sub_ptr_);
 
+        // driver discovery publisher
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>>>(driver_discovery_pub_ptr_);
         mock_driver_node_.setSpinCallback(std::bind(&MockCommsDriver::driverDiscovery, this));
 

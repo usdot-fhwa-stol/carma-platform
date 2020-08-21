@@ -16,15 +16,6 @@
 
 #include "cpp_mock_drivers/MockDriverNode.h"
 
-/*! \brief The template node for the mock drivers that will handle all ros communication
- *
- * This node will have a constructor that will define which topics it subscribes/published to,
- * as well as what services it will support.
- * 
- * It will also have all default mock driver functionality baked in, e.g. driver discovery and
- * logger services
- */
-
 namespace mock_drivers{
 
     MockDriverNode::MockDriverNode(){
@@ -38,6 +29,7 @@ namespace mock_drivers{
     void MockDriverNode::spin(double rate){
         if(!dummy_){
             cnh_->setSpinRate(rate);
+            std::cout << "here7" << std::endl;
             cnh_->spin();
         }
     }

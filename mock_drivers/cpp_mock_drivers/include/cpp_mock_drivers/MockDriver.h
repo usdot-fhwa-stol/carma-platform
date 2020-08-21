@@ -26,8 +26,16 @@
 #include "cpp_mock_drivers/MockDriverNode.h"
 #include "cpp_mock_drivers/comm_types.h"
 
-
 namespace mock_drivers{
+
+    /*! \brief The template node for the mock drivers that will handle all of the driver logic
+    *
+    * This class will have virtual functions that define what to do when the mock driver is run,
+    * as well as a callback function for when the driver gets a message from the bag parser node.
+    * 
+    * It will also have build in default mock driver publishers and subscribers baked in, such
+    * as the driver discovery publisher.
+    */
 
     class MockDriver{
 
@@ -42,12 +50,18 @@ namespace mock_drivers{
 
         public:
 
+        /*! \brief A function to initialize the publishers and subsricers and start the node */        
         virtual int run() = 0;
+        
+        /*! \brief A function to support the bag_parser callback that all mock drivers support */      
         virtual void parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg) = 0;
+        
+        /*! \brief A function to call at 1 Hz to publish to the driver discovery topic */                
         virtual bool driverDiscovery() = 0;
 
         boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>> getBagComms() {return bag_parser_sub_ptr_;};
 
+        /*! \brief Returns the mock driver node for the mock driver (used for testing) */        
         MockDriverNode getMockDriverNode() {return mock_driver_node_;}
         
 

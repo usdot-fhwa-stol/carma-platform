@@ -23,15 +23,18 @@
 
 namespace mock_drivers{
 
+    /*! \brief This class is used to transfer all the information required to initialize ros topics/services
+    *
+    * The template type is the type of the message that is being published/subscribed to, all the other parameters just need to be filled in as desired
+    */
     template<typename...> class ROSComms;
 
     template <typename T>
-    // T is message type
+    // T is the message type
     class ROSComms<T>{
 
         private:
 
-            // std::function<void(const std_msgs::String::ConstPtr&)> callback_function_;
             std::function<void(T)> callback_function_;
             CommTypes comm_type_;
             bool latch_;

@@ -19,10 +19,11 @@
 
 int main(int argc, char **argv)
 {
-
     ros::init(argc, argv, "bag_parser");
 
     mock_drivers::BagParser parser_node(argv[1]);
+
+    ros::Time::init();
 
     parser_node.run();
     

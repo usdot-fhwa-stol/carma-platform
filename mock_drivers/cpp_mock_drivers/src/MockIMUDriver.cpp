@@ -42,13 +42,14 @@ namespace mock_drivers{
     }
 
     void MockIMUDriver::parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg){
-        sensor_msgs::Imu raw_data = msg->raw_data;
-
-        ros::Time curr_time = ros::Time::now();
-      
-        raw_data.header.stamp = curr_time;
-
-        mock_driver_node_.publishData<sensor_msgs::Imu>("/hardware_interface/imu/raw_data", raw_data);
+        // generate messages from bag data
+        if(msg->raw_data_bool.data){
+            sensor_msgs::Imu raw_data = msg->raw_data;
+            // update time stamps
+            raw_data.header.stamp = ros::Time::now();
+            // publish the data
+            mock_driver_node_.publishData<sensor_msgs::Imu>("/hardware_interface/imu/raw_data", raw_data);
+        }
     }
     
     MockIMUDriver::MockIMUDriver(bool dummy){
@@ -63,11 +64,13 @@ namespace mock_drivers{
 
         mock_driver_node_.init();
 
-        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        // bag parser subscriber
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
+        // main driver publisher
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<sensor_msgs::Imu>>>(imu_pub_ptr_);
 
-
+        // driver discovery publisher
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>>>(driver_discovery_pub_ptr_);
         mock_driver_node_.setSpinCallback(std::bind(&MockIMUDriver::driverDiscovery, this));
 

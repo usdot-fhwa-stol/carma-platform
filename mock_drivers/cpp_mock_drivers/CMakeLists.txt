@@ -162,7 +162,6 @@ add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 
 add_executable(mock_driver
   src/main.cpp
-  src/TestMockDriver.cpp
 )
 
 add_executable(bag_parser

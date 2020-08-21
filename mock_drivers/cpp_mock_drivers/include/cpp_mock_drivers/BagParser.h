@@ -58,8 +58,7 @@ namespace mock_drivers{
 
         public:
 
-            BagParser(bool dummy = false);
-            BagParser(std::string file_path);
+            BagParser(std::string file_path, bool dummy = false);
             bool publishCallback();
             int run();
 

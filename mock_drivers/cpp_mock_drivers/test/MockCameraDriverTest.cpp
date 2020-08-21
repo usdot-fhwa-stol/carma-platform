@@ -42,12 +42,10 @@ namespace mock_drivers{
         std::vector<std::string> test_str_vector = d.getMockDriverNode().getTopics();
         std::vector<ros::Time> test_time_vector = d.getMockDriverNode().getTimeStamps();
 
-        ASSERT_EQ(test_str_vector[0], "camera_info");
-        ASSERT_EQ(test_str_vector[1], "image_raw");
-        // ASSERT_EQ(test_str_vector[2], "1/camera_info");
-        // ASSERT_EQ(test_str_vector[3], "1/image_raw");
-        ASSERT_EQ(test_str_vector[2], "image_rects");
-        ASSERT_EQ(test_str_vector[3], "projection_matrix");
+        ASSERT_EQ(test_str_vector[0], "/hardware_interface/camera/camera_info");
+        ASSERT_EQ(test_str_vector[1], "/hardware_interface/camera/image_raw");
+        ASSERT_EQ(test_str_vector[2], "/hardware_interface/camera/image_rects");
+        ASSERT_EQ(test_str_vector[3], "/hardware_interface/camera/projection_matrix");
 
         // Give a range because the nanoseconds go too fast for the test to pass if its assert equal
         ros::Duration range(0.001);
@@ -56,8 +54,12 @@ namespace mock_drivers{
         EXPECT_TRUE((test_time_vector[1] > ros::Time::now() - range) && (test_time_vector[1] < ros::Time::now() + range));
         EXPECT_TRUE((test_time_vector[2] > ros::Time::now() - range) && (test_time_vector[2] < ros::Time::now() + range));
         EXPECT_TRUE((test_time_vector[3] > ros::Time::now() - range) && (test_time_vector[3] < ros::Time::now() + range));
-        // EXPECT_TRUE((test_time_vector[4] > ros::Time::now() - range) && (test_time_vector[4] < ros::Time::now() + range));
-        // EXPECT_TRUE((test_time_vector[5] > ros::Time::now() - range) && (test_time_vector[5] < ros::Time::now() + range));
+    }
+
+    TEST(MockCameraDriver, driver_discovery){
+        MockCameraDriver d(true);
+
+        ASSERT_TRUE(d.driverDiscovery());
     }
 
     TEST(MockCameraDriver, run){

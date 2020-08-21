@@ -17,11 +17,13 @@
 
 namespace mock_drivers{
 
+    // this verstion of the ROSComms object is used for publishers and subscribers
     template <typename T>
     ROSComms<T>::ROSComms(){
         
     };
 
+    /*! \brief Constructor for a publisher ROSComms */
     template <typename T>
     ROSComms<T>::ROSComms(CommTypes ct, bool latch, int qs, std::string t){
         comm_type_ = ct;
@@ -30,6 +32,7 @@ namespace mock_drivers{
         topic_ = t;
     };
 
+    /*! \brief Constructor for a subscriber ROSComms */
     template <typename T>
     ROSComms<T>::ROSComms(std::function<void(T)> cbf, CommTypes ct, bool latch, int qs, std::string t){
         callback_function_ = cbf;
@@ -39,12 +42,14 @@ namespace mock_drivers{
         topic_ = t;
     };
 
+    /*! \brief Used to get an object of the message type that can then be decltyped */
     template <typename M>
     M ROSComms<M>::getTemplateType(){
         M element;
         return element;
     }
 
+    /*! \brief Used to call the ROSComms callback function*/
     template <typename T>
     void ROSComms<T>::callback(T msg){
         // call the callback_function_ function
@@ -52,7 +57,7 @@ namespace mock_drivers{
     }
 
 
-
+    /*! \brief This version of the ROSComms object is used for services*/
     template <typename M, typename T>
     ROSComms<M, T>::ROSComms(std::function<bool(M, T)> cbf, CommTypes ct, std::string t){
         callback_function_ = cbf;
@@ -60,18 +65,21 @@ namespace mock_drivers{
         topic_ = t;
     }
 
+    /*! \brief Used to call the ROSComms callback function*/
     template <typename M, typename T>
     bool ROSComms<M, T>::callback(M req, T res){
         // call the callback_function_ function
         this->callback_function_(req, res);
     }
 
+    /*! \brief Used to get an object of the service response type that can then be decltyped */
     template <typename M, typename T>
     T ROSComms<M, T>::getResType(){
         T element;
         return element;
     }
 
+    /*! \brief Used to get an object of the service request type that can then be decltyped */
     template <typename M, typename T>
     M ROSComms<M, T>::getReqType(){
         M element;

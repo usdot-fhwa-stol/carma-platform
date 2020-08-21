@@ -42,9 +42,15 @@ namespace mock_drivers{
     }
     
     void MockLidarDriver::parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg){
-        sensor_msgs::PointCloud2 updated_msg = msg->points_raw;
-        updated_msg.header.stamp = ros::Time::now();
-        mock_driver_node_.publishData<sensor_msgs::PointCloud2>("/hardware_interface/lidar/points_raw", updated_msg);
+        // generate messages from bag data
+        if(msg->points_raw_bool.data){
+            sensor_msgs::PointCloud2 updated_msg = msg->points_raw;
+            // update time stamps
+            updated_msg.header.stamp = ros::Time::now();
+            // publish the data
+            mock_driver_node_.publishData<sensor_msgs::PointCloud2>("/hardware_interface/lidar/points_raw", updated_msg);
+        }
+        
     }
 
     MockLidarDriver::MockLidarDriver(bool dummy){
@@ -59,10 +65,13 @@ namespace mock_drivers{
 
         mock_driver_node_.init();
 
-        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        // bag parser subscriber
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
+        // driver publisher and subscriber
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<sensor_msgs::PointCloud2>>>(points_raw_ptr_);
 
+        // driver discovery publisher
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>>>(driver_discovery_pub_ptr_);
         mock_driver_node_.setSpinCallback(std::bind(&MockLidarDriver::driverDiscovery, this));
 

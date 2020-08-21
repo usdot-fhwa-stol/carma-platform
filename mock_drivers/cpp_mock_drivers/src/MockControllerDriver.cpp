@@ -42,21 +42,20 @@ namespace mock_drivers{
     }
 
     void MockControllerDriver::parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg){
-        cav_msgs::RobotEnabled robot_status = msg->robot_status;
-
-        // ros::Time curr_time = ros::Time::now();
-      
-        // robot_status.header.stamp = curr_time;
-
-        mock_driver_node_.publishDataNoHeader<cav_msgs::RobotEnabled>("/hardware_interface/controller/robot_status", robot_status);
-        
+        // generate messages from bag data
+        if(msg->robot_status_bool.data){
+            cav_msgs::RobotEnabled robot_status = msg->robot_status;
+            // publish the data
+            mock_driver_node_.publishDataNoHeader<cav_msgs::RobotEnabled>("/hardware_interface/controller/robot_status", robot_status);
+        }
     }
 
     void MockControllerDriver::vehicleCmdCallback(const autoware_msgs::VehicleCmd::ConstPtr& msg){
-
+        // TODO: add function for vehicle command callback (if necessary)
     }
 
     bool MockControllerDriver::enableRoboticSrv(cav_srvs::SetEnableRobotic::Request& req, cav_srvs::SetEnableRobotic::Response& res){
+        // TODO: add function for the enable robotic service (if necessary)
         return true;
     }
 
@@ -77,12 +76,15 @@ namespace mock_drivers{
 
         mock_driver_node_.init();
 
-        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        // bag parser subscriber
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
+        // driver publisher, subscriber, and service
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::RobotEnabled>>>(robot_status_ptr_);
-        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const autoware_msgs::VehicleCmd::ConstPtr&>>>(vehicle_cmd_ptr_);
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const autoware_msgs::VehicleCmd::ConstPtr&>>>(vehicle_cmd_ptr_);
         mock_driver_node_.addSrv<boost::shared_ptr<ROSComms<cav_srvs::SetEnableRobotic::Request&, cav_srvs::SetEnableRobotic::Response&>>>(enable_robotic_ptr_);
 
+        // driver discovery publisher
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>>>(driver_discovery_pub_ptr_);
         mock_driver_node_.setSpinCallback(std::bind(&MockControllerDriver::driverDiscovery, this));
 

@@ -21,7 +21,7 @@ namespace mock_drivers{
     bool MockRoadwaySensorDriver::driverDiscovery(){
         cav_msgs::DriverStatus discovery_msg;
         
-        discovery_msg.name = "MockCANDriver";
+        discovery_msg.name = "MockRoadwaySensorDriver";
         discovery_msg.status = 1;
 
         discovery_msg.can = false;
@@ -42,16 +42,21 @@ namespace mock_drivers{
     }
 
     void MockRoadwaySensorDriver::parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg){
-        derived_object_msgs::ObjectWithCovariance detected_objects = msg->detected_objects;
-        derived_object_msgs::LaneModels lane_models = msg->lane_models;
+        // generate messages from bag data
 
         ros::Time curr_time = ros::Time::now();
-      
-        detected_objects.header.stamp = curr_time;
-        lane_models.header.stamp = curr_time;
 
-        mock_driver_node_.publishData<derived_object_msgs::ObjectWithCovariance>("/hardware_interface/roadway_sensor/detected_objects", detected_objects);
-        mock_driver_node_.publishData<derived_object_msgs::LaneModels>("/hardware_interface/roadway_sensor/lane_models", lane_models);  
+        if(msg->detected_objects_bool.data){
+            derived_object_msgs::ObjectWithCovariance detected_objects = msg->detected_objects;
+            detected_objects.header.stamp = curr_time;
+            mock_driver_node_.publishData<derived_object_msgs::ObjectWithCovariance>("/hardware_interface/roadway_sensor/detected_objects", detected_objects);
+        }
+        
+        if(msg->lane_models_bool.data){
+            derived_object_msgs::LaneModels lane_models = msg->lane_models;
+            lane_models.header.stamp = curr_time;
+            mock_driver_node_.publishData<derived_object_msgs::LaneModels>("/hardware_interface/roadway_sensor/lane_models", lane_models);  
+        }
     }
 
 
@@ -67,11 +72,14 @@ namespace mock_drivers{
 
         mock_driver_node_.init();
 
-        // mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        // bag parser subscriber
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
+        // driver publishers
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<derived_object_msgs::ObjectWithCovariance>>>(object_with_covariance_ptr_);
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<derived_object_msgs::LaneModels>>>(lane_models_ptr_);
 
+        // driver discovery publisher
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>>>(driver_discovery_pub_ptr_);
         mock_driver_node_.setSpinCallback(std::bind(&MockRoadwaySensorDriver::driverDiscovery, this));
 
