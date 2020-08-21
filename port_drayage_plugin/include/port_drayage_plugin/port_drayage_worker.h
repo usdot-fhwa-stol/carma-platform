@@ -35,10 +35,10 @@ namespace port_drayage_plugin
     class PortDrayageWorker
     {
         private:
-            std::shared_ptr<cav_msgs::ManeuverPlan> _cur_plan;
-            std::shared_ptr<geometry_msgs::TwistStamped> _cur_speed;
+            cav_msgs::ManeuverPlanConstPtr _cur_plan;
+            geometry_msgs::TwistStampedConstPtr _cur_speed;
             double _stop_speed_epsilon;
-            bool check_for_stop(std::shared_ptr<cav_msgs::ManeuverPlan> plan, std::shared_ptr<geometry_msgs::TwistStamped> speed);
+            bool check_for_stop(const cav_msgs::ManeuverPlanConstPtr& plan, const geometry_msgs::TwistStampedConstPtr& speed);
             PortDrayageStateMachine _pdsm;
             std::string _host_id;
             std::string _host_bsm_id;
@@ -102,12 +102,12 @@ namespace port_drayage_plugin
             /**
              * \brief Set the current plan from the arbitrator
              */
-            void set_maneuver_plan(std::shared_ptr<cav_msgs::ManeuverPlan> plan);
+            void set_maneuver_plan(const cav_msgs::ManeuverPlanConstPtr& plan);
 
             /**
              * \brief Set the current speed as measured by the vehicle's sensors
              */
-            void set_current_speed(std::shared_ptr<geometry_msgs::TwistStamped> speed);
+            void set_current_speed(const geometry_msgs::TwistStampedConstPtr& speed);
 
             /**
              * \brief Spin and process data

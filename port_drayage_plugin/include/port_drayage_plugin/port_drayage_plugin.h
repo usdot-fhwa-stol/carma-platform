@@ -31,11 +31,11 @@ namespace port_drayage_plugin
     class PortDrayagePlugin
     {
         private:
-            std::shared_ptr<ros::CARMANodeHandle> _nh{nullptr};
-            std::shared_ptr<ros::CARMANodeHandle> _pnh{nullptr};
-            std::shared_ptr<ros::Subscriber> _maneuver_plan_subscriber{nullptr};
-            std::shared_ptr<ros::Subscriber> _cur_speed_subscriber{nullptr};
-            std::shared_ptr<ros::Publisher> _outbound_mobility_operations_publisher{nullptr};
+            std::shared_ptr<ros::CARMANodeHandle> _nh = nullptr;
+            std::shared_ptr<ros::CARMANodeHandle> _pnh = nullptr;
+            std::shared_ptr<ros::Subscriber> _maneuver_plan_subscriber = nullptr;
+            std::shared_ptr<ros::Subscriber> _cur_speed_subscriber = nullptr;
+            std::shared_ptr<ros::Publisher> _outbound_mobility_operations_publisher = nullptr;
         public:
             /**
              * \brief Basic constructor for initializing the Port Drayage Plugin

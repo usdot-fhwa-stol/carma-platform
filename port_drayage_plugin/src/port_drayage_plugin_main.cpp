@@ -23,8 +23,8 @@
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "port_drayage_plugin");
-    std::shared_ptr<ros::CARMANodeHandle> nh("");
-    std::shared_ptr<ros::CARMANodeHandle> pnh("~");
+    std::shared_ptr<ros::CARMANodeHandle> nh = std::make_shared<ros::CARMANodeHandle>("");
+    std::shared_ptr<ros::CARMANodeHandle> pnh = std::make_shared<ros::CARMANodeHandle>("~");
     port_drayage_plugin::PortDrayagePlugin pdp{nh, pnh};
     return pdp.run();
 }

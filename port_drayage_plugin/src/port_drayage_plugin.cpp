@@ -27,10 +27,13 @@ namespace port_drayage_plugin
         }
 
         double speed_epsilon = _pnh->param("stop_speed_epsilon", 1.0);
-        std::string cmv_id = _pnh->param("cmv_id", "");
-        std::string cargo_id = _pnh->("cargo_id", "");
+        std::string cmv_id;
+        _pnh->param<std::string>("cmv_id", cmv_id, "");
+        std::string cargo_id;
+        _pnh->param<std::string>("cargo_id", cargo_id, "");
 
-        _outbound_mobility_operations_publisher = std::make_shared<ros::Publisher>("outbound_mobility_operation");
+        ros::Publisher outbound_mob_op = _nh->advertise<cav_msgs::MobilityOperation>("outbound_mobility_operation", 5);
+        _outbound_mobility_operations_publisher = std::make_shared<ros::Publisher>(outbound_mob_op);
         PortDrayageWorker pdw{
             cmv_id,
             cargo_id,
@@ -40,18 +43,18 @@ namespace port_drayage_plugin
             },
             speed_epsilon
         };
+        
+        ros::Subscriber maneuver_sub = _nh->subscribe<cav_msgs::ManeuverPlan>("final_Maneuver_plan", 5, 
+            [&](const cav_msgs::ManeuverPlanConstPtr& plan) {
+                pdw.set_maneuver_plan(plan);
+        });
+        _maneuver_plan_subscriber = std::make_shared<ros::Subscriber>(maneuver_sub);
 
-        _maneuver_plan_subscriber = std::make_shared<ros::Subscriber>(
-            _nh->subscribe<cav_msgs::ManeuverPlan>("final_Maneuver_plan", 5, 
-            &PortDrayageWorker::set_maneuver_plan, 
-            &pdw);
-        );
-
-        _cur_speed_subscriber = std::make_shared<ros::Subscriber>(
-            _nh->subscribe<geometry_msgs::TwistStamped>("speed", 5, 
-            &PortDrayageWorker::set_current_speed, 
-            &pdw);
-        );
+        ros::Subscriber twist_sub = _nh->subscribe<geometry_msgs::TwistStamped>("speed", 5, 
+            [&](const geometry_msgs::TwistStampedConstPtr& speed) {
+                pdw.set_current_speed(speed);
+        });
+        _cur_speed_subscriber = std::make_shared<ros::Subscriber>(twist_sub);
 
         ros::CARMANodeHandle::spin();
 

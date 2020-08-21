@@ -21,7 +21,7 @@
 
 namespace port_drayage_plugin
 {
-    bool PortDrayageWorker::check_for_stop(std::shared_ptr<cav_msgs::ManeuverPlan> plan, std::shared_ptr<geometry_msgs::TwistStamped> speed) {
+    bool PortDrayageWorker::check_for_stop(const cav_msgs::ManeuverPlanConstPtr& plan, const geometry_msgs::TwistStampedConstPtr& speed) {
         if (plan == nullptr || speed == nullptr) {
             ROS_WARN("Checking for stop when PortDrayagePlugin not properly initialized. Speed or plan is null");
             return false;
@@ -48,16 +48,16 @@ namespace port_drayage_plugin
         }
     }
 
-    void PortDrayageWorker::set_maneuver_plan(std::shared_ptr<cav_msgs::ManeuverPlan> plan) {
+    void PortDrayageWorker::set_maneuver_plan(const cav_msgs::ManeuverPlanConstPtr& plan) {
         _cur_plan = plan;
     }
 
-    void PortDrayageWorker::set_current_speed(std::shared_ptr<geometry_msgs::TwistStamped> speed) {
+    void PortDrayageWorker::set_current_speed(const geometry_msgs::TwistStampedConstPtr& speed) {
         _cur_speed = speed;
     }
 
     void PortDrayageWorker::initialize() {
-        _pdsm.set_on_arrived_at_destination_callback(std::bind(PortDrayageWorker::on_arrived_at_destination, this));
+        _pdsm.set_on_arrived_at_destination_callback(std::bind(&PortDrayageWorker::on_arrived_at_destination, this));
     }
 
     void PortDrayageWorker::on_arrived_at_destination() {
@@ -72,7 +72,7 @@ namespace port_drayage_plugin
         msg.header.sender_id = _host_id;
         msg.header.sender_bsm_id = _host_bsm_id;
         msg.header.recipient_id = "";
-        msg.header.timestamp = ros::Time::now().toNSec;
+        msg.header.timestamp = ros::Time::now().toNSec();
 
         msg.strategy = PORT_DRAYAGE_STRATEGY_ID;
 
