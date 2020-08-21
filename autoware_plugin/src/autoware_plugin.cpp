@@ -264,32 +264,31 @@ namespace autoware_plugin
             std::cout << "here 258" << std::endl;
 
             // use trajectory utiles to update trajectory plan points
-            
+
+            carma_wm::TrackPos track_pose = wm_->routeTrackPos(lanelet::BasicPoint2d(original_tp.trajectory_points[0].x, original_tp.trajectory_points[0].y));
+ 
             // lead vehicle trjactory
-            double x_lead = rwol_collision[0].object.pose.pose.position.x;
+            double x_lead = rwol_collision[0].down_track;
 
             // roadway object position
             double gap_time = (x_lead - x_gap)/current_speed_;
 
-            double collision_time = 0; //\TODO comming from carma_wm collision detection
+            double vt = rwol_collision[0].object.velocity.twist.linear.x;
 
-            double goal_velocity = rwol_collision[0].object.velocity.twist.linear.x;
+            double xt = rwol_collision[0].down_track - vt * gap_time;
+            double x0 = track_pose.downtrack;
 
-            double goal_pos = rwol_collision[0].object.pose.pose.position.x - goal_velocity * gap_time;
+            double a0 = 0;
+            double at = 0;
 
-            double initial_time = 0;
-            double initial_pos = original_tp.trajectory_points[0].x;
+            double collision_time = (x_lead - x0)/(current_speed_ - vt); //\TODO comming from carma_wm collision detection
 
-            double initial_accel = 0;
-            double goal_accel = 0;
-
-            double delta_v_max = rwol_collision[0].object.velocity.twist.linear.x - max_trajectory_speed(original_tp.trajectory_points);
-            
-            double t_ref = original_tp.trajectory_points[0].target_time - original_tp.trajectory_points[original_tp.trajectory_points.size() - 1].target_time;
-
-            double t_ph = 4 * delta_v_max / maximum_deceleration_value;
+            double t0 = 0;
 
             double tp = 0;
+            double delta_v_max = rwol_collision[0].object.velocity.twist.linear.x - max_trajectory_speed(original_tp.trajectory_points);
+            double t_ref = original_tp.trajectory_points[0].target_time - original_tp.trajectory_points[original_tp.trajectory_points.size() - 1].target_time;
+            double t_ph = 4 * delta_v_max / maximum_deceleration_value;
 
             if(t_ph > tpmin && t_ref < t_ph){
                 tp = t_ph;
@@ -301,13 +300,13 @@ namespace autoware_plugin
                 tp = t_ref;
             }
 
-            std::vector<double> values = quintic_coefficient_calculator::quintic_coefficient_calculator(initial_pos, 
-                                                                                                        goal_pos, 
+            std::vector<double> values = quintic_coefficient_calculator::quintic_coefficient_calculator(x0, 
+                                                                                                        xt, 
                                                                                                         current_speed_, 
-                                                                                                        goal_velocity, 
-                                                                                                        initial_accel, 
-                                                                                                        goal_accel, 
-                                                                                                        initial_time, 
+                                                                                                        vt, 
+                                                                                                        a0, 
+                                                                                                        at, 
+                                                                                                        t0, 
                                                                                                         tp);
 
             std::vector<cav_msgs::TrajectoryPlanPoint> new_trajectory_points;
@@ -329,14 +328,16 @@ namespace autoware_plugin
 
                 cav_msgs::TrajectoryPlanPoint new_tpp;
                 new_tpp.target_time = i * tp / original_tp.trajectory_points.size();
-                new_tpp.x = polynomial_calc(values,new_tpp.target_time);
+
+                double down_track_ = polynomial_calc(values,new_tpp.target_time);
+
                 new_tpp.lane_id = original_tp.trajectory_points[i].lane_id;
                 new_tpp.controller_plugin_name = original_tp.trajectory_points[i].controller_plugin_name;
                 new_tpp.planner_plugin_name = original_tp.trajectory_points[i].planner_plugin_name;
 
                 for (auto centerline_point:start_lanelet.centerline2d()) {
                     double dt = wm_->routeTrackPos(centerline_point).downtrack;
-                    if (dt - new_tpp.x <= min_downtrack){
+                    if (dt - down_track_ <= min_downtrack){
                         new_tpp.x = centerline_point.x();
                         new_tpp.y = centerline_point.y();
                         break;
@@ -353,13 +354,14 @@ namespace autoware_plugin
                 double v_original = x_original/t_original;
 
                 if(v_new > v_original){
-                    values = quintic_coefficient_calculator::quintic_coefficient_calculator(original_tp.trajectory_points[i].x, 
-                                                                                            goal_pos, 
+                    carma_wm::TrackPos track_pose = wm_->routeTrackPos(lanelet::BasicPoint2d(original_tp.trajectory_points[i].x, original_tp.trajectory_points[i].y));
+                    values = quintic_coefficient_calculator::quintic_coefficient_calculator(track_pose.downtrack, 
+                                                                                            xt, 
                                                                                             current_speed_, 
-                                                                                            goal_velocity, 
-                                                                                            initial_accel, 
-                                                                                            goal_accel, 
-                                                                                            initial_time, 
+                                                                                            vt, 
+                                                                                            a0, 
+                                                                                            at, 
+                                                                                            t0, 
                                                                                             tp);
                 }
 
