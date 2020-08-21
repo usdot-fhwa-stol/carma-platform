@@ -4,13 +4,13 @@ namespace carma_wm {
 
     namespace collision_detection {
 
-        std::vector<cav_msgs::RoadwayObstacle> WorldCollisionDetection(const cav_msgs::RoadwayObstacleList& rwol, const cav_msgs::TrajectoryPlan& tp, const geometry_msgs::Vector3& size, const geometry_msgs::Twist& veloctiy, const __uint64_t target_time){
+        std::vector<cav_msgs::RoadwayObstacle> WorldCollisionDetection(const std::vector<cav_msgs::RoadwayObstacle>& rwol, const cav_msgs::TrajectoryPlan& tp, const geometry_msgs::Vector3& size, const geometry_msgs::Twist& veloctiy, const __uint64_t target_time){
 
             std::vector<cav_msgs::RoadwayObstacle> rwo_collison;
 
             collision_detection::MovingObject vehicle_object = ConvertVehicleToMovingObject(tp, size, veloctiy);
 
-            for (auto i : rwol.roadway_obstacles){
+            for (auto i : rwol){
 
                 collision_detection::MovingObject rwo = ConvertRoadwayObstacleToMovingObject(i);
 
