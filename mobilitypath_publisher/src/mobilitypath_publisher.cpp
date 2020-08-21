@@ -103,7 +103,7 @@ namespace mobilitypath_publisher
         return header;
     }
 
-    cav_msgs::Trajectory MobilityPathPublication::TrajectoryPlantoTrajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points, const geometry_msgs::TransformStamped& tf){
+    cav_msgs::Trajectory MobilityPathPublication::TrajectoryPlantoTrajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points, const geometry_msgs::TransformStamped& tf) const{
         cav_msgs::Trajectory traj;
         cav_msgs::LocationECEF ecef_location = TrajectoryPointtoECEF(traj_points[0], tf);
 

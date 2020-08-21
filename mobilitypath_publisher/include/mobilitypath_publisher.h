@@ -89,7 +89,7 @@ namespace mobilitypath_publisher
         cav_msgs::MobilityHeader composeMobilityHeader(uint64_t time);
 
         // Convert Trajectory Plan to (Mobility) Trajectory
-        cav_msgs::Trajectory TrajectoryPlantoTrajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points, const geometry_msgs::TransformStamped& tf);
+        cav_msgs::Trajectory TrajectoryPlantoTrajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points, const geometry_msgs::TransformStamped& tf) const;
 
     
         // Convert Trajectory Point to ECEF Transform
