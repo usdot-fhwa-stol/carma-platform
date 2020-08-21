@@ -3,3 +3,13 @@ trajectory_time_length: 6.0
 
 # The spacing between two consecutive trajectory points, in seconds
 trajectory_point_spacing: 0.1
+
+
+
+# new
+# 𝑇𝑝𝑚𝑖𝑛 = 𝑇ℎ𝑒 𝑚𝑖𝑛𝑖𝑚𝑢𝑚 𝑡𝑖𝑚𝑒 𝑎𝑙𝑙𝑜𝑤𝑒𝑑 𝑓𝑜𝑟 𝑎 𝑡𝑟𝑎𝑗𝑒𝑐𝑡𝑜𝑟𝑦 𝑡𝑜 𝑎𝑐𝑐𝑜𝑢𝑛𝑡 𝑓𝑜𝑟 𝑟𝑒𝑠𝑝𝑜𝑛𝑠𝑒 𝑙𝑎𝑔
+
+tpmin: 0.0
+maximum_deceleration_value: 0.0
+min_downtrack: 1.0
+x_gap: 10.0
