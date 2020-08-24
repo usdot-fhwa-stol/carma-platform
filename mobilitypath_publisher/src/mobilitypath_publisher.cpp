@@ -59,7 +59,7 @@ namespace mobilitypath_publisher
         try
         {
             geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("earth", "map", ros::Time(0));
-            mobility_path_ = mobilityPathMessageGenerator(latest_trajectory_, tf);
+            latest_mobility_path_ = mobilityPathMessageGenerator(latest_trajectory_, tf);
         }
         catch (tf2::TransformException &ex)
         {
