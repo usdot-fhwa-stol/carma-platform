@@ -40,7 +40,12 @@ namespace port_drayage_plugin
                 }
                 break;
             case PortDrayageState::AWAITING_DIRECTION:
-                ROS_WARN("No activities implemented in Port Drayage Plugin for state AWAITING_DIRECTION.");
+                if (event == PortDrayageEvent::RECEIVED_NEW_DESTINATION) {
+                    _state = PortDrayageState::EN_ROUTE;
+                    if (_on_received_new_destination) {
+                        _on_received_new_destination();
+                    }
+                }
                 break;
             default:
                 ROS_ERROR_STREAM("Unhandled port drayage state: " << _state << "!");

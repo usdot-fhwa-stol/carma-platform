@@ -38,7 +38,6 @@ namespace port_drayage_plugin
             cav_msgs::ManeuverPlanConstPtr _cur_plan;
             geometry_msgs::TwistStampedConstPtr _cur_speed;
             double _stop_speed_epsilon;
-            bool check_for_stop(const cav_msgs::ManeuverPlanConstPtr& plan, const geometry_msgs::TwistStampedConstPtr& speed);
             PortDrayageStateMachine _pdsm;
             std::string _host_id;
             std::string _host_bsm_id;
@@ -78,6 +77,9 @@ namespace port_drayage_plugin
                 std::string host_id,
                 std::function<void(cav_msgs::MobilityOperation)> mobility_operations_publisher, 
                 double stop_speed_epsilon) :
+                _cmv_id(cmv_id),
+                _cargo_id(cargo_id),
+                _host_id(host_id),
                 _publish_mobility_operation(mobility_operations_publisher),
                 _stop_speed_epsilon(stop_speed_epsilon) {};
 
@@ -113,5 +115,16 @@ namespace port_drayage_plugin
              * \brief Spin and process data
              */
             void spin();
+            
+            /**
+             * Check to see if the vehicle has stopped under the command of the 
+             * Port Drayage Plugin.
+             * 
+             * \param plan The current maneuver plan
+             * \param speed The current vehicle speed
+             * 
+             * \return True if the vehicle has been stopped by the PDP, false o.w.
+             */
+            bool check_for_stop(const cav_msgs::ManeuverPlanConstPtr& plan, const geometry_msgs::TwistStampedConstPtr& speed);
     };
 } // namespace port_drayage_plugin
