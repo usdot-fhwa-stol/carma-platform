@@ -389,7 +389,7 @@ namespace autoware_plugin
         return result;
     }
 
-    double AutowarePlugin::max_trajectory_speed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points) 
+    double AutowarePlugin::max_trajectory_speed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points) const
     {
         double max_speed = 0;
 
