@@ -102,6 +102,13 @@ void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedC
     transition_table_.signal(LocalizationSignal::GOOD_NDT_FREQ_AND_FITNESS_SCORE);
   }
 
+  const LocalizationState state =  transition_table_.getState();
+  if (state == LocalizationState::INITIALIZING
+      || state == LocalizationState::OPERATIONAL
+      || state == LocalizationState::DEGRADED) {
+     publishPoseStamped(*pose);
+  }
+
   prev_ndt_stamp_ = pose->header.stamp;
 }
 

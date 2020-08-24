@@ -106,6 +106,9 @@ TEST(LocalizationManager, testSignals)
 
   ASSERT_EQ(LocalizationState::OPERATIONAL, manager.getState());
 
+  ASSERT_TRUE(!!published_pose);
+  ASSERT_TRUE(!!published_transform);
+
   ros::Time::setNow(ros::Time(3.2));
   pose_msg.header.stamp = ros::Time::now();
   pose_msg_ptr = geometry_msgs::PoseStampedConstPtr(new geometry_msgs::PoseStamped(pose_msg));
@@ -150,6 +153,18 @@ TEST(LocalizationManager, testSignals)
 
   ASSERT_EQ(LocalizationState::DEGRADED_NO_LIDAR_FIX, manager.getState());
 
+  published_transform = boost::none;
+  published_pose = boost::none;
+
+  manager.poseAndStatsCallback(pose_msg_ptr, stat_msg_ptr);
+
+  ASSERT_FALSE(!!published_transform);
+  ASSERT_FALSE(!!published_pose);
+
+  manager.gnssPoseCallback(pose_msg_ptr);
+
+  ASSERT_TRUE(!!published_transform);
+  ASSERT_TRUE(!!published_pose);
 
   ros::Time::setNow(ros::Time(3.7));
 
