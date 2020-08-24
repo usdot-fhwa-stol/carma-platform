@@ -242,9 +242,7 @@ namespace autoware_plugin
         
         cav_msgs::TrajectoryPlan update_tpp_vector;
 
-        std::cout << "here 244" << std::endl;
-
-        // // TODO get roadway object
+        // get roadway object
         std::vector<cav_msgs::RoadwayObstacle> rwol = wm_->getRoadwayObjects();
 
         std::vector<cav_msgs::RoadwayObstacle> rwol_collision = carma_wm::collision_detection::WorldCollisionDetection(rwol, original_tp, host_vehicle_size, velocity, 10.0);
@@ -270,7 +268,7 @@ namespace autoware_plugin
             double a0 = 0;
             double at = 0;
 
-            double collision_time = (x_lead - x0)/(vt - current_speed_); // comming from carma_wm collision detection
+            double collision_time = abs((x_lead - x0)/(vt - current_speed_));
 
             double t0 = 0;
 
@@ -287,6 +285,10 @@ namespace autoware_plugin
             }
             else {
                 tp = t_ref;
+            }
+
+            if(tp > collision_time) {
+                ROS_WARN_STREAM("trajectory can not be modified!");
             }
 
             std::vector<double> values = quintic_coefficient_calculator::quintic_coefficient_calculator(x0, 
@@ -385,7 +387,6 @@ namespace autoware_plugin
         return result;
     }
 
-    // TODO
     double AutowarePlugin::max_trajectory_speed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points) 
     {
         double max_speed = 0;
