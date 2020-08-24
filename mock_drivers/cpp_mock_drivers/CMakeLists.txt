@@ -9,6 +9,7 @@ set ( PKG_CATKIN_DEPENDS
   std_msgs
   carma_utils
   cav_msgs
+  cav_srvs
   rosbag
   carma_simulation_msgs
 )
