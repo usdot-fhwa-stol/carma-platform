@@ -40,11 +40,13 @@
 #include <cav_msgs/TrafficControlBounds.h>
 #include <autoware_lanelet2_msgs/MapBin.h>
 #include <lanelet2_routing/RoutingGraph.h>
+#include <geometry_msgs/PoseStamped.h>
 
 #include "MapConformer.h"
 
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <cav_msgs/TrafficControlMessage.h>
+#include <cav_msgs/CheckActiveGeofence.h>
 #include <carma_wm/TrafficControl.h>
 #include <std_msgs/String.h>
 #include <unordered_set>
@@ -144,7 +146,10 @@ public:
    */
   std::shared_ptr<Geofence> geofenceFromMsg(const cav_msgs::TrafficControlMessageV01& geofence_msg);
 
-  void currentLocationCallback(std::shared_ptr<Geofence> gf_ptr);
+  void currentLocationCallback(geometry_msgs::PoseStamped current_pos);
+  cav_msgs::CheckActiveGeofence checkActiveGeofenceLogic(geometry_msgs::PoseStamped current_pos);
+
+
 
 private:
   void addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const;
@@ -166,6 +171,7 @@ private:
   GeofenceScheduler scheduler_;
   std::string base_map_georef_;
   double max_lane_width_;
+  std::unordered_set<lanelet::Id> active_geofence_llt_ids;
 
 };
 }  // namespace carma_wm_ctrl
