@@ -27,7 +27,7 @@ namespace autoware_plugin
                     current_speed_(0.0),
                     trajectory_time_length_(6.0),
                     trajectory_point_spacing_(0.1) {}
-
+//@SONAR_STOP@
     void AutowarePlugin::initialize()
     {
         nh_.reset(new ros::CARMANodeHandle());
@@ -35,7 +35,9 @@ namespace autoware_plugin
 
 
         // get vehicle size
-        double x,y,z;
+        double x;
+        double y;
+        double z;
         nh_->getParam("vehicle_length", x);
         nh_->getParam("vehicle_width", y);
         nh_->getParam("vehicle_height", z);
@@ -139,6 +141,8 @@ namespace autoware_plugin
         current_speed_ = msg->twist.linear.x;
         velocity = msg->twist;
     }
+
+//@SONAR_START@
 
     std::vector<cav_msgs::TrajectoryPlanPoint> AutowarePlugin::compose_trajectory_from_waypoints(std::vector<autoware_msgs::Waypoint> waypoints)
     {
@@ -266,7 +270,7 @@ namespace autoware_plugin
             double a0 = 0;
             double at = 0;
 
-            double collision_time = abs((x_lead - x0)/(vt - current_speed_));
+            int collision_time = abs((x_lead - x0)/(vt - current_speed_));
 
             double t0 = 0;
 
@@ -377,7 +381,7 @@ namespace autoware_plugin
 
         for (size_t i = 0; i < coeff.size(); i++) {
 
-            __uint64_t value = coeff[i] * pow(x, (__uint64_t)(coeff.size() - 1 - i));
+            __uint64_t value = coeff[i] * pow(x, (coeff.size() - 1 - i));
             
             result = result + value;
         }
