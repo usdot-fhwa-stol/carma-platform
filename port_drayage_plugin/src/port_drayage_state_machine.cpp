@@ -53,22 +53,22 @@ namespace port_drayage_plugin
         }
     }
 
-    PortDrayageState PortDrayageStateMachine::get_state() {
+    const PortDrayageState PortDrayageStateMachine::get_state() {
         return _state;
     }
 
-    void PortDrayageStateMachine::set_on_system_startup_callback(std::function<void()> cb) {
+    void PortDrayageStateMachine::set_on_system_startup_callback(const std::function<void()> &cb) {
         _on_system_startup = cb;
     }
 
-    void PortDrayageStateMachine::set_on_received_new_destination_callback(std::function<void()> cb) {
+    void PortDrayageStateMachine::set_on_received_new_destination_callback(const std::function<void()> &cb) {
         _on_received_new_destination = cb;
     }
-    void PortDrayageStateMachine::set_on_arrived_at_destination_callback(std::function<void()> cb) {
+    void PortDrayageStateMachine::set_on_arrived_at_destination_callback(const std::function<void()> &cb) {
         _on_arrived_at_destination = cb;
     }
 
-    void PortDrayageStateMachine::set_on_drayage_completed_callback(std::function<void()> cb) {
+    void PortDrayageStateMachine::set_on_drayage_completed_callback(const std::function<void()> &cb) {
         _on_drayage_completed = cb;
     }
 }

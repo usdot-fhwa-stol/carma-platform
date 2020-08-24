@@ -98,7 +98,7 @@ namespace port_drayage_plugin
              * \brief Assemble the current dataset into a MobilityOperations
              * message with a JSON formatted body containing CMV ID and cargo ID
              */
-            cav_msgs::MobilityOperation compose_arrival_message();
+            cav_msgs::MobilityOperation compose_arrival_message() const;
 
             /**
              * \brief Set the current plan from the arbitrator
@@ -124,6 +124,6 @@ namespace port_drayage_plugin
              * 
              * \return True if the vehicle has been stopped by the PDP, false o.w.
              */
-            bool check_for_stop(const cav_msgs::ManeuverPlanConstPtr& plan, const geometry_msgs::TwistStampedConstPtr& speed);
+            bool check_for_stop(const cav_msgs::ManeuverPlanConstPtr& plan, const geometry_msgs::TwistStampedConstPtr& speed) const;
     };
 } // namespace port_drayage_plugin

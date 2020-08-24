@@ -21,20 +21,18 @@
 
 namespace port_drayage_plugin
 {
-    bool PortDrayageWorker::check_for_stop(const cav_msgs::ManeuverPlanConstPtr& plan, const geometry_msgs::TwistStampedConstPtr& speed) {
+    bool PortDrayageWorker::check_for_stop(const cav_msgs::ManeuverPlanConstPtr& plan, const geometry_msgs::TwistStampedConstPtr& speed) const {
         if (plan == nullptr || speed == nullptr) {
             ROS_WARN("Checking for stop when PortDrayagePlugin not properly initialized. Speed or plan is null");
             return false;
         }
 
-        if (plan->maneuvers.size() > 0) {
-            if (plan->maneuvers[0].type == cav_msgs::Maneuver::STOP_AND_WAIT) {
-                cav_msgs::Maneuver stop_maneuver = _cur_plan->maneuvers[0];
-                if (stop_maneuver.stop_and_wait_maneuver.parameters.planning_strategic_plugin == PORT_DRAYAGE_PLUGIN_ID) {
-                    double longitudinal_speed = speed->twist.linear.x; 
-                    if (longitudinal_speed <= _stop_speed_epsilon) {
-                        return true;
-                    }
+        if (plan->maneuvers.size() > 0 && plan->maneuvers[0].type == cav_msgs::Maneuver::STOP_AND_WAIT) {
+            cav_msgs::Maneuver stop_maneuver = _cur_plan->maneuvers[0];
+            if (stop_maneuver.stop_and_wait_maneuver.parameters.planning_strategic_plugin == PORT_DRAYAGE_PLUGIN_ID) {
+                double longitudinal_speed = speed->twist.linear.x; 
+                if (longitudinal_speed <= _stop_speed_epsilon) {
+                    return true;
                 }
             }
         }
@@ -69,7 +67,7 @@ namespace port_drayage_plugin
         _publish_mobility_operation(msg);
     }
 
-    cav_msgs::MobilityOperation PortDrayageWorker::compose_arrival_message() {
+    cav_msgs::MobilityOperation PortDrayageWorker::compose_arrival_message() const {
         cav_msgs::MobilityOperation msg;
 
         msg.header.plan_id = "";

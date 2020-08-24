@@ -94,35 +94,35 @@ namespace port_drayage_plugin
              * \brief Get the current state of the state machine
              * \return The current state value
              */
-            PortDrayageState get_state();
+            const PortDrayageState get_state();
 
             /**
              * \brief Set the callback to be invoked upon transitioning out of the
              * inactive state.
              * \param cb The std::function callback object
              */
-            void set_on_system_startup_callback(std::function<void()> cb);
+            void set_on_system_startup_callback(const std::function<void()> &cb);
 
             /**
              * \brief Set the callback to be invoked upon transitioning into the 
              * EN_ROUTE state
              * \param cb The std::function callback object
              */
-            void set_on_received_new_destination_callback(std::function<void()> cb);
+            void set_on_received_new_destination_callback(const std::function<void()> &cb);
 
             /**
              * \brief Set the callback to be invoked upon transitioning into the 
              * AWAITING_DESTINATION state
              * \param cb The std::function callback object
              */
-            void set_on_arrived_at_destination_callback(std::function<void()> cb);
+            void set_on_arrived_at_destination_callback(const std::function<void()> &cb);
 
             /**
              * \brief Set the callback to be invoked upon transitioning into the
              * inactive state.
              * \param cb The std::function callback object
              */
-            void set_on_drayage_completed_callback(std::function<void()> cb);
+            void set_on_drayage_completed_callback(const std::function<void()> &cb);
     };
 } // namespace port_drayage_plugin
 
