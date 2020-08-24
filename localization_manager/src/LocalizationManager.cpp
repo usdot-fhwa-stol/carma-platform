@@ -58,7 +58,8 @@ void LocalizationManager::publishPoseStamped(const geometry_msgs::PoseStamped& p
   transform_pub_(tf_msg);
 }
 
-double LocalizationManager::computeFreq(const ros::Time& old_stamp, const ros::Time& new_stamp) const {
+double LocalizationManager::computeFreq(const ros::Time& old_stamp, const ros::Time& new_stamp) const
+{
   return 1.0 / (new_stamp - old_stamp).toSec();  // Convert delta to frequency (Hz = 1/s)
 }
 
@@ -102,17 +103,17 @@ void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedC
     transition_table_.signal(LocalizationSignal::GOOD_NDT_FREQ_AND_FITNESS_SCORE);
   }
 
-  const LocalizationState state =  transition_table_.getState();
-  if (state == LocalizationState::INITIALIZING
-      || state == LocalizationState::OPERATIONAL
-      || state == LocalizationState::DEGRADED) {
-     publishPoseStamped(*pose);
+  const LocalizationState state = transition_table_.getState();
+  if (state == LocalizationState::INITIALIZING || state == LocalizationState::OPERATIONAL ||
+      state == LocalizationState::DEGRADED)
+  {
+    publishPoseStamped(*pose);
   }
 
   prev_ndt_stamp_ = pose->header.stamp;
 }
 
-void LocalizationManager::gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
+void LocalizationManager::gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg) const
 {
   if (transition_table_.getState() == LocalizationState::DEGRADED_NO_LIDAR_FIX)
   {
@@ -145,11 +146,10 @@ void LocalizationManager::timerCallback(const ros::TimerEvent& event, const Loca
 void LocalizationManager::stateTransitionCallback(LocalizationState prev_state, LocalizationState new_state,
                                                   LocalizationSignal signal)
 {
-
   // Mark the existing timer as expired if any
   if (current_timer_)
   {
-    // NOTE unit testing of current algorithm depends on all timers being one-shot timers. 
+    // NOTE unit testing of current algorithm depends on all timers being one-shot timers.
     expired_timers_.push_back(std::move(current_timer_));
   }
 
@@ -172,7 +172,6 @@ void LocalizationManager::stateTransitionCallback(LocalizationState prev_state, 
     default:
       break;
   }
-
 }
 
 bool LocalizationManager::onSpin()
@@ -182,7 +181,8 @@ bool LocalizationManager::onSpin()
 
   // Evaluate NDT Frequency if we have started receiving messages
   // This check provides protection against excessively long NDT computation times that do not trigger the callback
-  if (prev_ndt_stamp_) {
+  if (prev_ndt_stamp_)
+  {
     double freq = computeFreq(prev_ndt_stamp_.get(), ros::Time::now());
     if (freq <= config_.ndt_frequency_fault_threshold)
     {
@@ -201,7 +201,8 @@ bool LocalizationManager::onSpin()
   return true;
 }
 
-LocalizationState LocalizationManager::getState() {
+LocalizationState LocalizationManager::getState() const
+{
   return transition_table_.getState();
 }
 

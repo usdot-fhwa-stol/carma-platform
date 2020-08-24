@@ -62,7 +62,7 @@ public:
    *
    * \param msg The pose of vehicle in map frame provided by GNSS
    */
-  void gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
+  void gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg) const;
 
   /**
    * \brief Synced callback for the NDT reported pose and status messages
@@ -116,7 +116,7 @@ public:
    *
    * \return The current localization state
    */
-  LocalizationState getState();
+  LocalizationState getState() const;
 
 private:
   //! The set of strings which mark a lidar failure in a system alert message
