@@ -132,7 +132,7 @@
 
   <!-- GNSS/NDT selection localizer-->
   <group>
-    <include file="$(find gnss_ndt_selector)/launch/gnss_ndt_selector.launch"/>
+    <include file="$(find localization_manager)/launch/localization_manager.launch"/>
   </group>
 
   <!-- Deadreckoner -->
