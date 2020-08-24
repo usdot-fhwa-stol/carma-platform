@@ -15,10 +15,10 @@
 #
 
 cmake_minimum_required(VERSION 2.8.3)
-project(gnss_ndt_selector)
+project(localization_manager)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+## Compile as C++14
+add_compile_options(-std=c++14)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
@@ -44,6 +44,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 
 catkin_package(
   CATKIN_DEPENDS geometry_msgs roscpp std_msgs tf2 tf2_ros tf2_geometry_msgs autoware_msgs carma_utils cav_msgs
+  DEPENDS Boost
 )
 
 ###########
@@ -51,31 +52,34 @@ catkin_package(
 ###########
 
 include_directories(
-  ${catkin_INCLUDE_DIRS}
   include
+  ${catkin_INCLUDE_DIRS}
 )
-file(GLOB_RECURSE headers */*.hpp */*.h)
-add_executable( ${PROJECT_NAME}
+
+add_library( ${PROJECT_NAME}
+                src/LocalizationManager.cpp
+                src/LocalizationTransitionTable.cpp
+                src/LocalizationTypes.cpp)
+
+target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${catkin_LIBRARIES})
+
+
+add_executable( ${PROJECT_NAME}_node
                 src/localizer_node.cpp
                 src/main.cpp)
-add_library(gnss_ndt_counter_library src/ndt_reliability_counter.cpp)
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} gnss_ndt_counter_library)
-if(catkin_EXPORTED_TARGETS)
-  add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-endif()
+
+target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME} ${Boost_LIBRARIES} ${catkin_LIBRARIES})
 
 #############
 ## Install ##
 #############
 
-install(DIRECTORY include/${PROJECT_NAME}/
-DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-FILES_MATCHING PATTERN "*.hpp"
-PATTERN ".svn" EXCLUDE
+install(DIRECTORY include
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME} gnss_ndt_counter_library
+install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -89,5 +93,9 @@ install(DIRECTORY launch config
 #############
 ## Testing ##
 #############
-catkin_add_gmock(${PROJECT_NAME}-test test/test_gnss_ndt_selector.cpp)
-target_link_libraries(${PROJECT_NAME}-test gnss_ndt_counter_library ${catkin_LIBRARIES})
+catkin_add_gmock(${PROJECT_NAME}-test test/TestMain.cpp 
+  test/TestLocalizationTransitionTable.cpp
+  test/TestLocalizationManager.cpp
+  test/TestLocalizationTypes.cpp
+)
+target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
