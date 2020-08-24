@@ -281,7 +281,7 @@ namespace autoware_plugin
             double a0 = 0;
             double at = 0;
 
-            double collision_time = (x_lead - x0)/(current_speed_ - vt); //\TODO comming from carma_wm collision detection
+            double collision_time = (x_lead - x0)/(vt - current_speed_); // comming from carma_wm collision detection
 
             double t0 = 0;
 
