@@ -20,8 +20,8 @@
 #include <memory>
 #include <unordered_map>
 #include <carma_wm_ctrl/Geofence.h>
-#include "Timer.h"
-#include "TimerFactory.h"
+#include <carma_utils/timers/Timer.h>
+#include <carma_utils/timers/TimerFactory.h>
 
 namespace carma_wm_ctrl
 {
@@ -31,6 +31,8 @@ namespace carma_wm_ctrl
  */
 class GeofenceScheduler
 {
+  using Timer = carma_utils::timers::Timer;
+  using TimerFactory = carma_utils::timers::TimerFactory;
   using TimerPtr = std::unique_ptr<Timer>;
 
   std::mutex mutex_;
@@ -90,17 +92,19 @@ private:
    *
    * @param event The record of the timer event causing this to trigger
    * @param gf The geofence which is being activated
+   * @param schedule_id index number of the schedule being used corresponding to this geofence
    * @param timer_id The id of the timer which caused this callback to occur
    */
-  void startGeofenceCallback(const ros::TimerEvent& event, std::shared_ptr<Geofence> gf_ptr, const int32_t timer_id);
+  void startGeofenceCallback(const ros::TimerEvent& event, std::shared_ptr<Geofence> gf_ptr, const unsigned int schedule_id, const int32_t timer_id);
   /**
    * @brief The callback which is triggered when a geofence becomes in-active
    *        This will call the user set inactive_callback set from the onGeofenceInactive function
    *
    * @param event The record of the timer event causing this to trigger
    * @param gf The geofence which is being un-activated
+   * @param schedule_id index number of the schedule being used corresponding to this geofence
    * @param timer_id The id of the timer which caused this callback to occur
    */
-  void endGeofenceCallback(const ros::TimerEvent& event, std::shared_ptr<Geofence> gf_ptr, const int32_t timer_id);
+  void endGeofenceCallback(const ros::TimerEvent& event, std::shared_ptr<Geofence> gf_ptr, const unsigned int schedule_id, const int32_t timer_id);
 };
 }  // namespace carma_wm_ctrl

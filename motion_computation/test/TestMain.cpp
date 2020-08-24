@@ -13,18 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include <carma_wm_ctrl/ROSTimerFactory.h>
 
-namespace carma_wm_ctrl
+#include <gtest/gtest.h>
+#include <ros/ros.h>
+
+// Run all the tests
+int main(int argc, char** argv)
 {
-ROSTimerFactory::~ROSTimerFactory(){};
-std::unique_ptr<Timer> ROSTimerFactory::buildTimer(uint32_t id, ros::Duration duration,
-                                                   std::function<void(const ros::TimerEvent&)> callback,
-                                                   bool oneshot, bool autostart)
-{
-  std::unique_ptr<Timer> timer_ptr = std::make_unique<ROSTimer>();
-  timer_ptr->initializeTimer(duration, callback, oneshot, autostart);
-  timer_ptr->setId(id);
-  return timer_ptr;
+  testing::InitGoogleTest(&argc, argv);
+  ros::Time::init();
+  return RUN_ALL_TESTS();
 }
-}  // namespace carma_wm_ctrl

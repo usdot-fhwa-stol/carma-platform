@@ -1,6 +1,5 @@
-#pragma once
 /*
- * Copyright (C) 2020 LEIDOS.
+ * Copyright (C) 2019-2020 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,27 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include <ros/node_handle.h>
-#include <ros/timer.h>
-#include <ros/time.h>
-#include "Timer.h"
+#include "motion_computation_node.h"
+#include "motion_computation_worker.h"
 
-namespace carma_wm_ctrl
+
+int main(int argc, char **argv) 
 {
-class ROSTimer : public Timer
-{
-  ros::Timer timer_;
-  ros::NodeHandle nh_;
-
-public:
-  ~ROSTimer();
-
-  //// Overrides
-  void initializeTimer(ros::Duration duration, std::function<void(const ros::TimerEvent&)> callback,
-                       bool oneshot = false, bool autostart = true) override;
-
-  void start() override;
-
-  void stop() override;
-};
-}  // namespace carma_wm_ctrl
+  ros::init(argc, argv, "motion_computation");
+  object::MotionComputationNode node;
+  node.run(); 
+  return 0;
+}
