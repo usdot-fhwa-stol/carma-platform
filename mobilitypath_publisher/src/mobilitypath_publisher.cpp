@@ -46,24 +46,25 @@ namespace mobilitypath_publisher
 
     bool MobilityPathPublication::spinCallback()
     {
-        cav_msgs::MobilityPath mobility_path;
-        try
-        {
-            geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("earth", "map", ros::Time(0));
-            mobility_path = mobilityPathMessageGenerator(latest_trajectory_, tf);
-        }
-        catch (tf2::TransformException &ex)
-        {
-            ROS_WARN("%s", ex.what());
-        }
+        
 
-        mob_path_pub_.publish(mobility_path); 
+        mob_path_pub_.publish(latest_mobility_path_); 
         return true;
     }
 
     void MobilityPathPublication::trajectory_cb(const cav_msgs::TrajectoryPlanConstPtr& msg)
     {
         latest_trajectory_ = *msg;
+
+        try
+        {
+            geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("earth", "map", ros::Time(0));
+            latest_mobility_path_ = mobilityPathMessageGenerator(latest_trajectory_, tf);
+        }
+        catch (tf2::TransformException &ex)
+        {
+            ROS_WARN("%s", ex.what());
+        }
 
     }
 
