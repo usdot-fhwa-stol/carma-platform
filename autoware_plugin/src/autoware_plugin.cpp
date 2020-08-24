@@ -358,7 +358,16 @@ namespace autoware_plugin
                                                                                             tp);
                 }
 
-                new_tpp.x = polynomial_calc(values,new_tpp.target_time);
+                down_track_ = polynomial_calc(values,new_tpp.target_time);
+
+                for (auto centerline_point:start_lanelet.centerline2d()) {
+                    double dt = wm_->routeTrackPos(centerline_point).downtrack;
+                    if (dt - down_track_ <= min_downtrack){
+                        new_tpp.x = centerline_point.x();
+                        new_tpp.y = centerline_point.y();
+                        break;
+                    }
+                }
 
                 new_trajectory_points.push_back(new_tpp);
             }
@@ -375,7 +384,7 @@ namespace autoware_plugin
         return original_tp;
     } 
 
-    double AutowarePlugin::polynomial_calc(std::vector<double> coeff, double x)
+    double AutowarePlugin::polynomial_calc(std::vector<double> coeff, double x) const
     {
         double result = 0;
 

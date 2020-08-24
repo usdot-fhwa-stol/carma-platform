@@ -67,7 +67,7 @@ namespace autoware_plugin
         geometry_msgs::Vector3 host_vehicle_size;
 
         cav_msgs::TrajectoryPlan update_traj_for_object(cav_msgs::TrajectoryPlan& tp);
-        double polynomial_calc(std::vector<double> coeff, double x);
+        double polynomial_calc(std::vector<double> coeff, double x) const;
         double max_trajectory_speed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points) const;
         geometry_msgs::Twist velocity;
 
