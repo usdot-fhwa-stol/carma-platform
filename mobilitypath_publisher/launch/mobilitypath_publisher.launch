@@ -14,6 +14,9 @@
   This file is used to launch a the Mobility Path Publication Node
 -->
 <launch>
+
+	<!-- Remap global parameters for variable -->
+    <remap from="vehicle_id" to="/vehicle_id"/> 
     <node name="mobilitypath_publisher" pkg="mobilitypath_publisher" type="mobilitypath_publisher">
       <rosparam command="load" file="$(find mobilitypath_publisher)/config/parameters.yaml"/>
     </node>
