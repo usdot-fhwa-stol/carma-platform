@@ -247,21 +247,10 @@ namespace autoware_plugin
         // // TODO get roadway object
         std::vector<cav_msgs::RoadwayObstacle> rwol = wm_->getRoadwayObjects();
 
-        std::cout << "here 249" << std::endl;
-        std::cout << "velocity" << velocity << std::endl;
-        std::cout << "host_vehicle_size" << host_vehicle_size.x << std::endl;
-
         std::vector<cav_msgs::RoadwayObstacle> rwol_collision = carma_wm::collision_detection::WorldCollisionDetection(rwol, original_tp, host_vehicle_size, velocity, 10.0);
-        std::cout << "rwol_collision" << rwol_collision.size() << std::endl;
-        std::cout << "rwol" << rwol.size() << std::endl;
-
-
-        std::cout << "here 253" << std::endl;
 
         // correct the input types
         if(rwol_collision.size() > 0) {
-
-            std::cout << "here 258" << std::endl;
 
             // use trajectory utiles to update trajectory plan points
 
