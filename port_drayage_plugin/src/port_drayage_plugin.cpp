@@ -50,11 +50,16 @@ namespace port_drayage_plugin
         });
         _maneuver_plan_subscriber = std::make_shared<ros::Subscriber>(maneuver_sub);
 
-        ros::Subscriber twist_sub = _nh->subscribe<geometry_msgs::TwistStamped>("speed", 5, 
+        ros::Subscriber twist_sub = _nh->subscribe<geometry_msgs::TwistStamped>("localization/ekf_twist", 5, 
             [&](const geometry_msgs::TwistStampedConstPtr& speed) {
                 pdw.set_current_speed(speed);
         });
         _cur_speed_subscriber = std::make_shared<ros::Subscriber>(twist_sub);
+
+        std::function<bool()> spin_cb = [&]() {
+            return pdw.spin();
+        };
+        _nh->setSpinCallback(spin_cb);
 
         ros::CARMANodeHandle::spin();
 

@@ -27,8 +27,7 @@ namespace port_drayage_plugin
      * Implementation class for all the business logic of the PortDrayagePlugin
      * 
      * Should not contain any reference to ROS publishing/subscribing or params
-     * and all of that data (as needed) should be pushed into it via methods. 
-     * This implementation uses lambdas and std::function to give it the ability
+     * and all of that data (as needed) should be pushed into it via methods. * This implementation uses lambdas and std::function to give it the ability
      * to publish the outbound MobilityOperation message w/o the need for it
      * to know about the ROS underlying implementation.
      */
@@ -114,7 +113,7 @@ namespace port_drayage_plugin
             /**
              * \brief Spin and process data
              */
-            void spin();
+            bool spin();
             
             /**
              * Check to see if the vehicle has stopped under the command of the 

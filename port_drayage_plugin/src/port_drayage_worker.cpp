@@ -31,7 +31,7 @@ namespace port_drayage_plugin
             if (plan->maneuvers[0].type == cav_msgs::Maneuver::STOP_AND_WAIT) {
                 cav_msgs::Maneuver stop_maneuver = _cur_plan->maneuvers[0];
                 if (stop_maneuver.stop_and_wait_maneuver.parameters.planning_strategic_plugin == PORT_DRAYAGE_PLUGIN_ID) {
-                    double longitudinal_speed = speed->twist.linear.x; // TODO: Verify that X is longitudinal speed of vehicle
+                    double longitudinal_speed = speed->twist.linear.x; 
                     if (longitudinal_speed <= _stop_speed_epsilon) {
                         return true;
                     }
@@ -42,10 +42,12 @@ namespace port_drayage_plugin
         return false;
     }
 
-    void PortDrayageWorker::spin() {
+    bool PortDrayageWorker::spin() {
         if (check_for_stop(_cur_plan, _cur_speed)) {
             _pdsm.process_event(PortDrayageEvent::ARRIVED_AT_DESTINATION);
         }
+
+        return true;
     }
 
     void PortDrayageWorker::set_maneuver_plan(const cav_msgs::ManeuverPlanConstPtr& plan) {
