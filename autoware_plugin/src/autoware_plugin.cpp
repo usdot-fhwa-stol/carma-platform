@@ -247,11 +247,9 @@ namespace autoware_plugin
 
         std::vector<cav_msgs::RoadwayObstacle> rwol_collision = carma_wm::collision_detection::WorldCollisionDetection(rwol, original_tp, host_vehicle_size, velocity, 10.0);
 
-        // correct the input types
         if(rwol_collision.size() > 0) {
 
             // use trajectory utiles to update trajectory plan points
-
             carma_wm::TrackPos track_pose = wm_->routeTrackPos(lanelet::BasicPoint2d(original_tp.trajectory_points[0].x, original_tp.trajectory_points[0].y));
  
             // lead vehicle trjactory

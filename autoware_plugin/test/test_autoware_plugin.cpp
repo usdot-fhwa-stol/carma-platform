@@ -287,22 +287,22 @@ TEST(AutowarePluginTest, testUpdateTrajForObject)
     trajectory_point_1.target_time = 0.0;
 
     trajectory_point_2.x = 1.0;
-    trajectory_point_2.y = 2.0;
+    trajectory_point_2.y = 3.0;
     trajectory_point_2.target_time = 1.0;
     trajectory_point_2.lane_id = "1";
 
     trajectory_point_3.x = 1.0;
-    trajectory_point_3.y = 3.0;
+    trajectory_point_3.y = 4.0;
     trajectory_point_3.target_time = 2.0;
     trajectory_point_3.lane_id = "1";
 
     trajectory_point_4.x = 1.0;
-    trajectory_point_4.y = 4.0;
+    trajectory_point_4.y = 6.0;
     trajectory_point_4.target_time = 3.0;
     trajectory_point_4.lane_id = "1";
 
     trajectory_point_5.x = 1.0;
-    trajectory_point_5.y = 5.0;
+    trajectory_point_5.y = 7.0;
     trajectory_point_5.target_time = 4.0;
     trajectory_point_5.lane_id = "1";
 
@@ -313,8 +313,8 @@ TEST(AutowarePluginTest, testUpdateTrajForObject)
     tf2::Quaternion tf_orientation;
     tf_orientation.setRPY(0, 0, 1.5708);
 
-    rwo_1.object.pose.pose.position.x = 6;
-    rwo_1.object.pose.pose.position.y = 5;
+    rwo_1.object.pose.pose.position.x = 1;
+    rwo_1.object.pose.pose.position.y = 2;
     rwo_1.object.pose.pose.position.z = 0;
 
     rwo_1.object.pose.pose.orientation.x = tf_orientation.getX();
@@ -363,9 +363,7 @@ TEST(AutowarePluginTest, testUpdateTrajForObject)
     ps_3.predicted_position.orientation.w = tf_orientation.getW();
 
     rwo_1.object.predictions = {ps_1,ps_2,ps_3};
-
-
-
+    rwo_1.down_track = 2;
 
     std::vector<cav_msgs::RoadwayObstacle> rw_objs;
 
@@ -380,63 +378,6 @@ TEST(AutowarePluginTest, testUpdateTrajForObject)
 
     ap.wm_ = cmw;
 
-
-    // cav_msgs::TrajectoryPlan tp;
-
-    // std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points;
-
-    // cav_msgs::TrajectoryPlanPoint point_1;
-    // point_1.x = 0.0;
-    // point_1.y = 0.0;
-    // point_1.target_time = 0.0;
-    // point_1.lane_id = "1";
-    // trajectory_points.push_back(point_1);
-
-    // cav_msgs::TrajectoryPlanPoint point_2;
-    // point_2.x = 5.0;
-    // point_2.y = 0.0;
-    // point_2.target_time = 1.0;
-    // point_2.lane_id = "1";
-    // trajectory_points.push_back(point_2);
-
-    // cav_msgs::TrajectoryPlanPoint point_3;
-    // point_3.x = 10.0;
-    // point_3.y = 0.0;
-    // point_3.target_time = 2.0;
-    // point_3.lane_id = "1";
-    // trajectory_points.push_back(point_3);
-
-    // cav_msgs::TrajectoryPlanPoint point_4;
-    // point_4.x = 15.0;
-    // point_4.y = 0.0;
-    // point_4.target_time = 3.0;
-    // point_4.lane_id = "1";
-    // trajectory_points.push_back(point_4);
-
-    // cav_msgs::TrajectoryPlanPoint point_5;
-    // point_5.x = 20.0;
-    // point_5.y = 0.0;
-    // point_5.target_time = 4.0;
-    // point_5.lane_id = "1";
-    // trajectory_points.push_back(point_5);
-
-    // cav_msgs::TrajectoryPlanPoint point_6;
-    // point_6.x = 25.0;
-    // point_6.y = 0.0;
-    // point_6.target_time = 5.0;
-    // point_6.lane_id = "1";
-    // trajectory_points.push_back(point_6);
-
-
-    // cav_msgs::TrajectoryPlanPoint point_7;
-    // point_7.x = 30.0;
-    // point_7.y = 0.0;
-    // point_7.target_time = 6.0;
-    // point_7.lane_id = "1";
-    // trajectory_points.push_back(point_7);
-
-    // tp.trajectory_points = trajectory_points;
-
     ros::Time now;
     now.sec = 1.0;
     now.nsec = 0.0;
@@ -445,13 +386,8 @@ TEST(AutowarePluginTest, testUpdateTrajForObject)
     tp.header.stamp = now;
     tp.trajectory_id = 1;
 
-
     cav_msgs::TrajectoryPlan tp_new = ap.update_traj_for_object(tp);
-
-    for (size_t i = 0; i < tp_new.trajectory_points.size(); i++) {
-        std::cout << tp_new.trajectory_points[i] << std::endl;
-    }
-
+    EXPECT_EQ(tp_new.trajectory_points.size(), 4);
 
 }
 
