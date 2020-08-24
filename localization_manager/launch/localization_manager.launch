@@ -12,7 +12,7 @@
 -->
 
 <launch>
-    <node pkg="gnss_ndt_selector" type="gnss_ndt_selector" name="gnss_ndt_selector" output="screen">
-          <rosparam command="load" file="$(find gnss_ndt_selector)/config/parameters.yaml"/>
+    <node pkg="localization_manager" type="localization_manager_node" name="localization_manager">
+          <rosparam command="load" file="$(find localization_manager)/config/parameters.yaml"/>
     </node>
 </launch>
