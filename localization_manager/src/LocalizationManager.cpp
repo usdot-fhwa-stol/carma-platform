@@ -25,7 +25,7 @@ const std::unordered_set<std::string> LocalizationManager::LIDAR_FAILURE_STRINGS
                                                                                                        "Failed" });
 
 LocalizationManager::LocalizationManager(PosePublisher pose_pub, TransformPublisher transform_pub,
-                                         StatePublisher state_pub, LocalizationManagerConfig config,
+                                         StatePublisher state_pub, const LocalizationManagerConfig& config,
                                          std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory)
   : pose_pub_(pose_pub)
   , transform_pub_(transform_pub)
@@ -39,7 +39,7 @@ LocalizationManager::LocalizationManager(PosePublisher pose_pub, TransformPublis
                                                     std::placeholders::_3));
 }
 
-void LocalizationManager::publishPoseStamped(const geometry_msgs::PoseStamped& pose)
+void LocalizationManager::publishPoseStamped(const geometry_msgs::PoseStamped& pose) const
 {
   geometry_msgs::TransformStamped tf_msg;
 

@@ -54,7 +54,7 @@ public:
    * in unit testing
    */
   LocalizationManager(PosePublisher pose_pub, TransformPublisher transform_pub, StatePublisher state_pub,
-                      LocalizationManagerConfig config,
+                      const LocalizationManagerConfig& config,
                       std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory);
 
   /**
@@ -142,7 +142,7 @@ private:
    *
    * \param pose The pose to publish
    */
-  void publishPoseStamped(const geometry_msgs::PoseStamped& pose);
+  void publishPoseStamped(const geometry_msgs::PoseStamped& pose) const;
 
   /**
    * \brief Helper function to both compute the NDT Frequency and update the previous pose timestamp

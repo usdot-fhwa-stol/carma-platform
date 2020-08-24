@@ -29,18 +29,18 @@ void Localizer::publishTransform(const geometry_msgs::TransformStamped& msg)
   br_.sendTransform(msg);
 }
 
-void Localizer::publishPoseStamped(const geometry_msgs::PoseStamped& msg)
+void Localizer::publishPoseStamped(const geometry_msgs::PoseStamped& msg) const
 {
   pose_pub_.publish(msg);
 }
 
-void Localizer::publishStatus(const cav_msgs::LocalizationStatusReport& msg)
+void Localizer::publishStatus(const cav_msgs::LocalizationStatusReport& msg) const
 {
   state_pub_.publish(msg);
 }
 
 void Localizer::poseAndStatsCallback(const geometry_msgs::PoseStampedConstPtr& pose,
-                                     const autoware_msgs::NDTStatConstPtr& stats)
+                                     const autoware_msgs::NDTStatConstPtr& stats) const
 {
   try
   {
@@ -96,15 +96,15 @@ void Localizer::run()
 
   pose_stats_synchronizer.registerCallback(boost::bind(&Localizer::poseAndStatsCallback, this, _1, _2));
 
-  nh_.setSystemAlertCallback(std::bind(&LocalizationManager::systemAlertCallback, manager_.get(), std_ph::_1));
-  nh_.setSpinCallback(std::bind(&LocalizationManager::onSpin, manager_.get()));
+  ros::CARMANodeHandle::setSystemAlertCallback(std::bind(&LocalizationManager::systemAlertCallback, manager_.get(), std_ph::_1));
+  ros::CARMANodeHandle::setSpinCallback(std::bind(&LocalizationManager::onSpin, manager_.get()));
 
   // initialize publishers
   pose_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("selected_pose", 5);
   state_pub_ = nh_.advertise<cav_msgs::LocalizationStatusReport>("localization_status", 1);
 
   // spin
-  nh_.setSpinRate(spin_rate_);
-  nh_.spin();
+  ros::CARMANodeHandle::setSpinRate(spin_rate_);
+  ros::CARMANodeHandle::spin();
 }
 }  // namespace localizer

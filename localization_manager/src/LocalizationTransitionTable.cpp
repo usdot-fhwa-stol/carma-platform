@@ -22,12 +22,12 @@ namespace localizer
 LocalizationTransitionTable::LocalizationTransitionTable(LocalizerMode mode) : mode_(mode)
 {
 }
-LocalizationState LocalizationTransitionTable::getState()
+LocalizationState LocalizationTransitionTable::getState() const
 {
   return state_;
 }
 
-void LocalizationTransitionTable::logDebugSignal(LocalizationSignal signal)
+void LocalizationTransitionTable::logDebugSignal(LocalizationSignal signal) const
 {
   ROS_DEBUG_STREAM("LocalizationTransitionTable received unsupported signal of " << signal << " while in state "
                                                                                  << state_);

@@ -53,7 +53,7 @@ public:
    * \brief Callback to publish the selected pose
    * \param msg The pose to publish
    */
-  void publishPoseStamped(const geometry_msgs::PoseStamped& msg);
+  void publishPoseStamped(const geometry_msgs::PoseStamped& msg) const;
   /**
    * \brief Callback to publish the provided transform
    * \param msg The transform to publish
@@ -63,7 +63,7 @@ public:
    * \brief Callback to publish the provided localization status report
    * \param msg The report to publish
    */
-  void publishStatus(const cav_msgs::LocalizationStatusReport& msg);
+  void publishStatus(const cav_msgs::LocalizationStatusReport& msg) const;
 
   /**
    * \brief Synchronized callback for pose and stats data for usage with message_filters.
@@ -72,7 +72,7 @@ public:
    * \param stats The received stats message
    */ 
   void poseAndStatsCallback(const geometry_msgs::PoseStampedConstPtr& pose,
-                            const autoware_msgs::NDTStatConstPtr& stats);
+                            const autoware_msgs::NDTStatConstPtr& stats) const;
 
 private:
   // node handles

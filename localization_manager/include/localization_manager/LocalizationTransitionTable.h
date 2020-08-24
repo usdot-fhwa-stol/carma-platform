@@ -38,7 +38,7 @@ public:
    * \brief Returns the current state
    * \return Current state
    */
-  LocalizationState getState();
+  LocalizationState getState() const;
 
   /**
    * \brief Trigger signal for the transition table.
@@ -76,7 +76,7 @@ private:
    * \brief Helper function for logging the provide signal
    * \param signal The signal to be logged
    */
-  void logDebugSignal(LocalizationSignal signal);
+  void logDebugSignal(LocalizationSignal signal) const;
 
   /**
    * \brief Function to change the current state and log the details of the transition.
