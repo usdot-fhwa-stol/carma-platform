@@ -20,6 +20,7 @@
 namespace port_drayage_plugin
 {
 
+    // @SONAR_STOP@
     int PortDrayagePlugin::run() {
         if (_nh == nullptr || _pnh == nullptr) {
             ROS_ERROR("Port Drayage Plugin not properly initialized, node handles are null!");
@@ -65,4 +66,5 @@ namespace port_drayage_plugin
 
         return 0;
     }
+    // @SONAR_START@
 } // namespace port_drayage_plugin

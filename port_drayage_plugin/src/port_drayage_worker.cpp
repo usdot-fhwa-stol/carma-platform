@@ -42,6 +42,7 @@ namespace port_drayage_plugin
         return false;
     }
 
+    // @SONAR_STOP@
     bool PortDrayageWorker::spin() {
         if (check_for_stop(_cur_plan, _cur_speed)) {
             _pdsm.process_event(PortDrayageEvent::ARRIVED_AT_DESTINATION);
@@ -61,6 +62,7 @@ namespace port_drayage_plugin
     void PortDrayageWorker::initialize() {
         _pdsm.set_on_arrived_at_destination_callback(std::bind(&PortDrayageWorker::on_arrived_at_destination, this));
     }
+    // @SONAR_START@
 
     void PortDrayageWorker::on_arrived_at_destination() {
         cav_msgs::MobilityOperation msg = compose_arrival_message();

@@ -14,7 +14,7 @@
  * the License.
  */
 
-
+// @SONAR_STOP@
 #include <ros/ros.h>
 #include <carma_utils/CARMAUtils.h>
 #include <memory>
@@ -28,3 +28,5 @@ int main(int argc, char** argv)
     port_drayage_plugin::PortDrayagePlugin pdp{nh, pnh};
     return pdp.run();
 }
+
+// @SONAR_START
