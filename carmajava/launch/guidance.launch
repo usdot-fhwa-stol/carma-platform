@@ -151,6 +151,9 @@
   <!-- Autoware Plugin -->
   <include file="$(find autoware_plugin)/launch/autoware_plugin.launch" />
 
+   <!-- Mobility Path Publisher -->
+  <include file="$(find mobilitypath_publisher)/launch/mobilitypath_publisher.launch" />
+
   <!-- Route Generator -->
   <include file="$(find route_generator)/launch/route_generator.launch">
     <arg name="route_file_folder" value="$(arg route_file_folder)"/>
