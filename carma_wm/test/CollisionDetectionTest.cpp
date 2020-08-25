@@ -268,7 +268,7 @@ namespace carma_wm
   TEST(CollisionDetectionTest, WorldCollisionDetection)
   {
 
-    cav_msgs::RoadwayObstacleList rwol;
+    std::vector <cav_msgs::RoadwayObstacle> rwol;
     cav_msgs::TrajectoryPlan tp;
 
     
@@ -295,6 +295,7 @@ namespace carma_wm
     cav_msgs::TrajectoryPlanPoint trajectory_point_5;
 
     trajectory_point_1.x = 1.0;
+    trajectory_point_1.y = 1.0;
     trajectory_point_1.y = 1.0;
     trajectory_point_1.target_time = 0.0;
 
@@ -379,7 +380,7 @@ namespace carma_wm
 
     rwo_1.object.predictions = {ps_1,ps_2,ps_3};
 
-    rwol.roadway_obstacles = {rwo_1};
+    rwol.push_back(rwo_1);
 
     std::vector<cav_msgs::RoadwayObstacle> result = collision_detection::WorldCollisionDetection(rwol, tp, size, veloctiy, target_time);
 
@@ -390,7 +391,7 @@ namespace carma_wm
   TEST(CollisionDetectionFalseTest, WorldCollisionDetection)
   {
 
-    cav_msgs::RoadwayObstacleList rwol;
+    std::vector<cav_msgs::RoadwayObstacle> rwol;
     cav_msgs::TrajectoryPlan tp;
 
     geometry_msgs::Twist veloctiy;
@@ -494,7 +495,7 @@ namespace carma_wm
 
     rwo_1.object.predictions = {ps_1,ps_2,ps_3};
 
-    rwol.roadway_obstacles = {rwo_1};
+    rwol.push_back(rwo_1);
 
     std::vector<cav_msgs::RoadwayObstacle> result = collision_detection::WorldCollisionDetection(rwol, tp, size, veloctiy, target_time);
 
