@@ -36,7 +36,7 @@ namespace mock_drivers{
         discovery_msg.trailer_angle_sensor = false;
         discovery_msg.lightbar = false;
 
-        mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("/hardware_interface/driver_discovery", discovery_msg);
+        mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("driver_discovery", discovery_msg);
 
         return true;
     }
@@ -49,13 +49,13 @@ namespace mock_drivers{
         if(msg->detected_objects_bool.data){
             derived_object_msgs::ObjectWithCovariance detected_objects = msg->detected_objects;
             detected_objects.header.stamp = curr_time;
-            mock_driver_node_.publishData<derived_object_msgs::ObjectWithCovariance>("/hardware_interface/roadway_sensor/detected_objects", detected_objects);
+            mock_driver_node_.publishData<derived_object_msgs::ObjectWithCovariance>("roadway_sensor/detected_objects", detected_objects);
         }
         
         if(msg->lane_models_bool.data){
             derived_object_msgs::LaneModels lane_models = msg->lane_models;
             lane_models.header.stamp = curr_time;
-            mock_driver_node_.publishData<derived_object_msgs::LaneModels>("/hardware_interface/roadway_sensor/lane_models", lane_models);  
+            mock_driver_node_.publishData<derived_object_msgs::LaneModels>("roadway_sensor/lane_models", lane_models);  
         }
     }
 

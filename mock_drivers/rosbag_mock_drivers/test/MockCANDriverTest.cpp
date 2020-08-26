@@ -42,27 +42,27 @@ namespace mock_drivers{
         std::vector<std::string> test_str_vector = d.getMockDriverNode().getTopics();
         std::vector<ros::Time> test_time_vector = d.getMockDriverNode().getTimeStamps();
 
-        ASSERT_EQ(test_str_vector[0], "/hardware_interface/can/acc_engaged");
-        ASSERT_EQ(test_str_vector[1], "/hardware_interface/can/acceleration");
-        ASSERT_EQ(test_str_vector[2], "/hardware_interface/can/antilock_brakes_active");
-        ASSERT_EQ(test_str_vector[3], "/hardware_interface/can/brake_lights");
-        ASSERT_EQ(test_str_vector[4], "/hardware_interface/can/brake_position");
-        ASSERT_EQ(test_str_vector[5], "/hardware_interface/can/engine_speed");
-        ASSERT_EQ(test_str_vector[6], "/hardware_interface/can/fuel_flow");
-        ASSERT_EQ(test_str_vector[7], "/hardware_interface/can/odometer");
-        ASSERT_EQ(test_str_vector[8], "/hardware_interface/can/parking_brake");
-        ASSERT_EQ(test_str_vector[9], "/hardware_interface/can/speed");
-        ASSERT_EQ(test_str_vector[10], "/hardware_interface/can/stability_ctrl_active");
-        ASSERT_EQ(test_str_vector[11], "/hardware_interface/can/stability_ctrl_enabled");
-        ASSERT_EQ(test_str_vector[12], "/hardware_interface/can/steering_wheel_angle");
-        ASSERT_EQ(test_str_vector[13], "/hardware_interface/can/throttle_position");
-        ASSERT_EQ(test_str_vector[14], "/hardware_interface/can/traction_ctrl_active");
-        ASSERT_EQ(test_str_vector[15], "/hardware_interface/can/traction_ctrl_enabled");
-        ASSERT_EQ(test_str_vector[16], "/hardware_interface/can/transmission_state");
-        ASSERT_EQ(test_str_vector[17], "/hardware_interface/can/turn_signal_state");
-        ASSERT_EQ(test_str_vector[18], "/hardware_interface/can/vehicle/twist");
-        ASSERT_EQ(test_str_vector[19], "/hardware_interface/can/vehicle_status");
-        ASSERT_EQ(test_str_vector[20], "/hardware_interface/can/velocity_accel");
+        ASSERT_EQ(test_str_vector[0], "can/acc_engaged");
+        ASSERT_EQ(test_str_vector[1], "can/acceleration");
+        ASSERT_EQ(test_str_vector[2], "can/antilock_brakes_active");
+        ASSERT_EQ(test_str_vector[3], "can/brake_lights");
+        ASSERT_EQ(test_str_vector[4], "can/brake_position");
+        ASSERT_EQ(test_str_vector[5], "can/engine_speed");
+        ASSERT_EQ(test_str_vector[6], "can/fuel_flow");
+        ASSERT_EQ(test_str_vector[7], "can/odometer");
+        ASSERT_EQ(test_str_vector[8], "can/parking_brake");
+        ASSERT_EQ(test_str_vector[9], "can/speed");
+        ASSERT_EQ(test_str_vector[10], "can/stability_ctrl_active");
+        ASSERT_EQ(test_str_vector[11], "can/stability_ctrl_enabled");
+        ASSERT_EQ(test_str_vector[12], "can/steering_wheel_angle");
+        ASSERT_EQ(test_str_vector[13], "can/throttle_position");
+        ASSERT_EQ(test_str_vector[14], "can/traction_ctrl_active");
+        ASSERT_EQ(test_str_vector[15], "can/traction_ctrl_enabled");
+        ASSERT_EQ(test_str_vector[16], "can/transmission_state");
+        ASSERT_EQ(test_str_vector[17], "can/turn_signal_state");
+        ASSERT_EQ(test_str_vector[18], "can/vehicle/twist");
+        ASSERT_EQ(test_str_vector[19], "can/vehicle_status");
+        ASSERT_EQ(test_str_vector[20], "can/velocity_accel");
 
         // Give a range because the nanoseconds go too fast for the test to pass if its assert equal
         ros::Duration range(0.0001);

@@ -36,7 +36,7 @@ namespace mock_drivers{
         discovery_msg.trailer_angle_sensor = false;
         discovery_msg.lightbar = false;
 
-        mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("/hardware_interface/driver_discovery", discovery_msg);
+        mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("driver_discovery", discovery_msg);
 
         return true;
     }
@@ -49,25 +49,25 @@ namespace mock_drivers{
        if(msg->camera_info_bool.data){
             sensor_msgs::CameraInfo camera_info = msg->camera_info;
             camera_info.header.stamp = curr_time;
-            mock_driver_node_.publishData<sensor_msgs::CameraInfo>("/hardware_interface/camera/camera_info", camera_info);
+            mock_driver_node_.publishData<sensor_msgs::CameraInfo>("camera/camera_info", camera_info);
         }
 
         if(msg->image_raw_bool.data){
             sensor_msgs::Image image_raw = msg->image_raw;
             image_raw.header.stamp = curr_time;
-            mock_driver_node_.publishData<sensor_msgs::Image>("/hardware_interface/camera/image_raw", image_raw);
+            mock_driver_node_.publishData<sensor_msgs::Image>("camera/image_raw", image_raw);
         }
 
         if(msg->image_rects_bool.data){
             sensor_msgs::Image image_rects = msg->image_rects;
             image_rects.header.stamp = curr_time;
-            mock_driver_node_.publishData<sensor_msgs::Image>("/hardware_interface/camera/image_rects", image_rects);
+            mock_driver_node_.publishData<sensor_msgs::Image>("camera/image_rects", image_rects);
         }
 
         if(msg->projection_matrix_bool.data){
             autoware_msgs::ProjectionMatrix projection_matrix = msg->projection_matrix;
             projection_matrix.header.stamp = curr_time;
-            mock_driver_node_.publishData<autoware_msgs::ProjectionMatrix>("/hardware_interface/camera/projection_matrix", projection_matrix);
+            mock_driver_node_.publishData<autoware_msgs::ProjectionMatrix>("camera/projection_matrix", projection_matrix);
         }
     } 
 

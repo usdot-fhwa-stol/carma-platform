@@ -36,7 +36,7 @@ namespace mock_drivers{
         discovery_msg.trailer_angle_sensor = false;
         discovery_msg.lightbar = false;
 
-        mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("/hardware_interface/driver_discovery", discovery_msg);
+        mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("driver_discovery", discovery_msg);
 
         return true;
     }
@@ -49,13 +49,13 @@ namespace mock_drivers{
         if(msg->status_bool.data){
             radar_msgs::RadarStatus status_msg = msg->status;
             status_msg.header.stamp = curr_time;
-            mock_driver_node_.publishData<radar_msgs::RadarStatus>("/hardware_interface/radar/status", status_msg);
+            mock_driver_node_.publishData<radar_msgs::RadarStatus>("radar/status", status_msg);
         }
         
         if(msg->tracks_raw_bool.data){
             radar_msgs::RadarTrackArray tracks_raw_msg = msg->tracks_raw;
             tracks_raw_msg.header.stamp = curr_time;
-            mock_driver_node_.publishData<radar_msgs::RadarTrackArray>("/hardware_interface/radar/tracks_raw", tracks_raw_msg);
+            mock_driver_node_.publishData<radar_msgs::RadarTrackArray>("radar/tracks_raw", tracks_raw_msg);
         }
     }
 

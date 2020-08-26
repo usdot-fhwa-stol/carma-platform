@@ -42,8 +42,8 @@ namespace mock_drivers{
         std::vector<std::string> test_str_vector = d.getMockDriverNode().getTopics();
         std::vector<ros::Time> test_time_vector = d.getMockDriverNode().getTimeStamps();
 
-        ASSERT_EQ(test_str_vector[0], "/hardware_interface/data/tf");
-        ASSERT_EQ(test_str_vector[1], "/hardware_interface/data/tf_static");
+        ASSERT_EQ(test_str_vector[0], "data/tf");
+        ASSERT_EQ(test_str_vector[1], "data/tf_static");
     }
 
     TEST(MockDataDriver, run){

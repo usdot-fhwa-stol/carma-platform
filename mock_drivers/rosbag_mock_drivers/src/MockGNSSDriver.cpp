@@ -36,7 +36,7 @@ namespace mock_drivers{
         discovery_msg.trailer_angle_sensor = false;
         discovery_msg.lightbar = false;
 
-        mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("/hardware_interface/driver_discovery", discovery_msg);
+        mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("driver_discovery", discovery_msg);
 
         return true;
     }
@@ -48,7 +48,7 @@ namespace mock_drivers{
             // update time stamps
             gnss_fixed_fused.header.stamp = ros::Time::now();
             // publish the data
-            mock_driver_node_.publishData<gps_common::GPSFix>("/hardware_interface/gnss/gnss_fixed_fused", gnss_fixed_fused);
+            mock_driver_node_.publishData<gps_common::GPSFix>("gnss/gnss_fixed_fused", gnss_fixed_fused);
         }
     }
 

@@ -36,7 +36,7 @@ namespace mock_drivers{
         discovery_msg.trailer_angle_sensor = false;
         discovery_msg.lightbar = false;
 
-        mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("/hardware_interface/driver_discovery", discovery_msg);
+        mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("driver_discovery", discovery_msg);
 
         return true;
     }
@@ -46,7 +46,7 @@ namespace mock_drivers{
         if(msg->robot_status_bool.data){
             cav_msgs::RobotEnabled robot_status = msg->robot_status;
             // publish the data
-            mock_driver_node_.publishDataNoHeader<cav_msgs::RobotEnabled>("/hardware_interface/controller/robot_status", robot_status);
+            mock_driver_node_.publishDataNoHeader<cav_msgs::RobotEnabled>("controller/robot_status", robot_status);
         }
     }
 

@@ -25,12 +25,12 @@ namespace mock_drivers{
     void MockDataDriver::parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg){
         if(msg->tf_bool.data){
             tf2_msgs::TFMessage tf = msg->tf;
-            mock_driver_node_.publishDataNoHeader<tf2_msgs::TFMessage>("/hardware_interface/data/tf", tf);
+            mock_driver_node_.publishDataNoHeader<tf2_msgs::TFMessage>("data/tf", tf);
         }
 
         if(msg->tf_static_bool.data){
             tf2_msgs::TFMessage tf_static = msg->tf_static;
-            mock_driver_node_.publishDataNoHeader<tf2_msgs::TFMessage>("/hardware_interface/data/tf_static", tf_static);
+            mock_driver_node_.publishDataNoHeader<tf2_msgs::TFMessage>("data/tf_static", tf_static);
         }
         
     }

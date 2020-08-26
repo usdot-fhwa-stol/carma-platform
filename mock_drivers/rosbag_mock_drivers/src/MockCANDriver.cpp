@@ -36,7 +36,7 @@ namespace mock_drivers{
         discovery_msg.trailer_angle_sensor = false;
         discovery_msg.lightbar = false;
 
-        mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("/hardware_interface/driver_discovery", discovery_msg);
+        mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("driver_discovery", discovery_msg);
 
         return true;
     }
@@ -48,110 +48,110 @@ namespace mock_drivers{
         
         if(msg->acc_engaged_bool.data){
             std_msgs::Bool acc_engaged = msg->acc_engaged;
-            mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("/hardware_interface/can/acc_engaged", acc_engaged);
+            mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("can/acc_engaged", acc_engaged);
         }
         
         if(msg->acceleration_bool.data){
             std_msgs::Float64 acceleration = msg->acceleration;
-            mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("/hardware_interface/can/acceleration", acceleration);
+            mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("can/acceleration", acceleration);
         }
         
         if(msg->antilock_brakes_active_bool.data){
             std_msgs::Bool antilock_brakes_active = msg->antilock_brakes_active;
-            mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("/hardware_interface/can/antilock_brakes_active", antilock_brakes_active);
+            mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("can/antilock_brakes_active", antilock_brakes_active);
         }
         
         if(msg->brake_lights_bool.data){
             std_msgs::Bool brake_lights = msg->brake_lights;
-            mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("/hardware_interface/can/brake_lights", brake_lights);
+            mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("can/brake_lights", brake_lights);
         }
         
         if(msg->brake_position_bool.data){
             std_msgs::Float64 brake_position = msg->brake_position;
-            mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("/hardware_interface/can/brake_position", brake_position);
+            mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("can/brake_position", brake_position);
         }
         
         if(msg->engine_speed_bool.data){
             std_msgs::Float64 engine_speed = msg->engine_speed;
-            mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("/hardware_interface/can/engine_speed", engine_speed);
+            mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("can/engine_speed", engine_speed);
         }
         
         if(msg->fuel_flow_bool.data){
             std_msgs::Float64 fuel_flow = msg->fuel_flow;
-            mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("/hardware_interface/can/fuel_flow", fuel_flow);
+            mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("can/fuel_flow", fuel_flow);
         }
         
         if(msg->odometer_bool.data){
             std_msgs::Float64 odometer = msg->odometer;
-            mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("/hardware_interface/can/odometer", odometer);
+            mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("can/odometer", odometer);
         }
         
         if(msg->parking_brake_bool.data){
             std_msgs::Bool parking_brake = msg->parking_brake;
-            mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("/hardware_interface/can/parking_brake", parking_brake);
+            mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("can/parking_brake", parking_brake);
         }
         
         if(msg->speed_bool.data){
             std_msgs::Float64 speed = msg->speed;
-            mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("/hardware_interface/can/speed", speed);
+            mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("can/speed", speed);
         }
         
         if(msg->stability_ctrl_active_bool.data){
             std_msgs::Bool stability_ctrl_active = msg->stability_ctrl_active;
-            mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("/hardware_interface/can/stability_ctrl_active", stability_ctrl_active);
+            mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("can/stability_ctrl_active", stability_ctrl_active);
         }
         
         if(msg->stability_ctrl_enabled_bool.data){
             std_msgs::Bool stability_ctrl_enabled = msg->stability_ctrl_enabled;
-            mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("/hardware_interface/can/stability_ctrl_enabled", stability_ctrl_enabled);
+            mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("can/stability_ctrl_enabled", stability_ctrl_enabled);
         }
         
         if(msg->steering_wheel_angle_bool.data){
             std_msgs::Float64 steering_wheel_angle = msg->steering_wheel_angle;
-            mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("/hardware_interface/can/steering_wheel_angle", steering_wheel_angle);
+            mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("can/steering_wheel_angle", steering_wheel_angle);
         }
         
         if(msg->throttle_position_bool.data){
             std_msgs::Float64 throttle_position = msg->throttle_position;
-            mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("/hardware_interface/can/throttle_position", throttle_position);
+            mock_driver_node_.publishDataNoHeader<std_msgs::Float64>("can/throttle_position", throttle_position);
         }
         
         if(msg->traction_ctrl_active_bool.data){
             std_msgs::Bool traction_ctrl_active = msg->traction_ctrl_active;
-            mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("/hardware_interface/can/traction_ctrl_active", traction_ctrl_active);
+            mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("can/traction_ctrl_active", traction_ctrl_active);
         }
         
         if(msg->traction_ctrl_enabled_bool.data){
             std_msgs::Bool traction_ctrl_enabled = msg->traction_ctrl_enabled;
-            mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("/hardware_interface/can/traction_ctrl_enabled", traction_ctrl_enabled);
+            mock_driver_node_.publishDataNoHeader<std_msgs::Bool>("can/traction_ctrl_enabled", traction_ctrl_enabled);
         }
         
         if(msg->transmission_state_bool.data){
             j2735_msgs::TransmissionState transmission_state = msg->transmission_state;
-            mock_driver_node_.publishDataNoHeader<j2735_msgs::TransmissionState>("/hardware_interface/can/transmission_state", transmission_state);
+            mock_driver_node_.publishDataNoHeader<j2735_msgs::TransmissionState>("can/transmission_state", transmission_state);
         }
         
         if(msg->turn_signal_state_bool.data){
             cav_msgs::TurnSignal turn_signal_state = msg->turn_signal_state;
-            mock_driver_node_.publishDataNoHeader<cav_msgs::TurnSignal>("/hardware_interface/can/turn_signal_state", turn_signal_state);
+            mock_driver_node_.publishDataNoHeader<cav_msgs::TurnSignal>("can/turn_signal_state", turn_signal_state);
         }
         
         if(msg->vehicle_twist_bool.data){
             geometry_msgs::TwistStamped vehicle_twist = msg->vehicle_twist;
             vehicle_twist.header.stamp = curr_time;
-            mock_driver_node_.publishData<geometry_msgs::TwistStamped>("/hardware_interface/can/vehicle/twist", vehicle_twist);
+            mock_driver_node_.publishData<geometry_msgs::TwistStamped>("can/vehicle/twist", vehicle_twist);
         }
         
         if(msg->vehicle_status_bool.data){
             autoware_msgs::VehicleStatus vehicle_status = msg->vehicle_status;
             vehicle_status.header.stamp = curr_time;
-            mock_driver_node_.publishData<autoware_msgs::VehicleStatus>("/hardware_interface/can/vehicle_status", vehicle_status);
+            mock_driver_node_.publishData<autoware_msgs::VehicleStatus>("can/vehicle_status", vehicle_status);
         }
         
         if(msg->velocity_accel_bool.data){
             automotive_platform_msgs::VelocityAccel velocity_accel = msg->velocity_accel;
             velocity_accel.header.stamp = curr_time;
-            mock_driver_node_.publishData<automotive_platform_msgs::VelocityAccel>("/hardware_interface/can/velocity_accel", velocity_accel);
+            mock_driver_node_.publishData<automotive_platform_msgs::VelocityAccel>("can/velocity_accel", velocity_accel);
         }
     }
 
