@@ -43,8 +43,8 @@ using std::placeholders::_1;
 
 
 WMBroadcaster::WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, const PublishCtrlRequestCallback& control_msg_pub,
- std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory)
-  : map_pub_(map_pub), map_update_pub_(map_update_pub), control_msg_pub_(control_msg_pub), scheduler_(std::move(timer_factory))
+const PublishActiveGeofCallback& active_pub, std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory)
+  : map_pub_(map_pub), map_update_pub_(map_update_pub), control_msg_pub_(control_msg_pub), active_pub_(active_pub), scheduler_(std::move(timer_factory))
 {
   scheduler_.onGeofenceActive(std::bind(&WMBroadcaster::addGeofence, this, _1));
   scheduler_.onGeofenceInactive(std::bind(&WMBroadcaster::removeGeofence, this, _1));
@@ -689,6 +689,7 @@ void WMBroadcaster::currentLocationCallback( geometry_msgs::PoseStamped current_
 {
  
    cav_msgs::CheckActiveGeofence check = checkActiveGeofenceLogic(current_pos);
+   active_pub_(check);//Publish
 
 }
 
@@ -706,19 +707,23 @@ lanelet::BasicPoint2d curr_pos;
   curr_pos.x() = current_pos_x;
   curr_pos.y() = current_pos_y;
   
+  ROS_INFO_STREAM("Check 1");
+
   auto current_llt = current_map_->laneletLayer.nearest(curr_pos, 1)[0];
   bool isOnActiveGeofence = false; //Create Boolean value
   cav_msgs::CheckActiveGeofence outgoing_geof; //message to publish
   double next_distance; //Distance to next geofence
 
+  ROS_INFO_STREAM("Check 2");
 
-  /*Get IDs
-  std::copy(active_geofence_llt_ids.begin(), active_geofence_llt_ids.end(), gf_ptr->id_.begin());*/
   
   std::vector<double> route_distances;
+    ROS_INFO_STREAM("Check 3");
 
-  for(auto id : active_geofence_llt_ids)
+  for(auto id = active_geofence_llt_ids.begin(); id != active_geofence_llt_ids.end(); id++)
   {
+
+    ROS_INFO_STREAM("Check for loop");
     /* determine whether or not the vehicle's current position is within an active geofence */
      if (boost::geometry::within(curr_pos, current_llt.polygon2d().basicPolygon()))
       {   
@@ -727,9 +732,9 @@ lanelet::BasicPoint2d curr_pos;
         outgoing_geof.is_on_active_geofence = true;
       }
 
-      carma_wm::TrackPos tp = carma_wm::geometry::trackPos(current_map_->laneletLayer.get(id), curr_pos);
+      carma_wm::TrackPos tp = carma_wm::geometry::trackPos(current_map_->laneletLayer.get(*id), curr_pos);
       auto curr_lanelet = current_map_->laneletLayer.nearest(curr_pos, 1)[0]; //guaranteed to at least return 1 lanelet
-      if (tp.downtrack < 0 && id != curr_lanelet.id())
+      if (tp.downtrack < 0 && *id != curr_lanelet.id())
        {
          next_distance = fabs(tp.downtrack) + fabs(tp.crosstrack);
          route_distances.push_back(next_distance);
@@ -737,8 +742,9 @@ lanelet::BasicPoint2d curr_pos;
        }
 
   }//end for loop
-      //status_pub_(outgoing_geof);//Publish 
-    
+    //active_pub_(outgoing_geof);//Publish 
+    return outgoing_geof;
+    ROS_INFO_STREAM("Check 4");
 
 }
 

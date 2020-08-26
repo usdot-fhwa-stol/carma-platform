@@ -68,13 +68,15 @@ public:
   using PublishMapCallback = std::function<void(const autoware_lanelet2_msgs::MapBin&)>;
   using PublishMapUpdateCallback = std::function<void(const autoware_lanelet2_msgs::MapBin&)>;
   using PublishCtrlRequestCallback = std::function<void(const cav_msgs::TrafficControlRequest&)>;
+  using PublishActiveGeofCallback = std::function<void(cav_msgs::CheckActiveGeofence&)>;
+
 
   /*!
    * \brief Constructor
    */
 
   WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, const PublishCtrlRequestCallback& control_msg_pub,
-   std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory);
+  const PublishActiveGeofCallback& active_pub, std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory);
 
   /*!
    * \brief Callback to set the base map when it has been loaded
@@ -168,6 +170,7 @@ private:
   PublishMapCallback map_pub_;
   PublishMapUpdateCallback map_update_pub_;
   PublishCtrlRequestCallback control_msg_pub_;
+  PublishActiveGeofCallback active_pub_;
   GeofenceScheduler scheduler_;
   std::string base_map_georef_;
   double max_lane_width_;
