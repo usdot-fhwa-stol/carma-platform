@@ -102,10 +102,8 @@
   <include if="$(arg mock_lightbar)" file="$(find mock_lightbar_driver)/launch/mock_lightbar_driver_testing.launch"/>
 
   <!-- Launch Bag Parser -->
-  <include if="$(arg mock_comms)" file="$(arg mock_driver_launch_file)">
-    <arg name="driver" value="bag_parser"/>
-    <arg name="bag_parser" value="true"/>
-    <arg name="bag_path" value="$(arg DATA_DIR)/mock_drivers/drivers.bag"/>
+  <include if="$(arg bag_parser)" file="$(find rosbag_mock_drivers)/launch/bag_parser.launch">
+      <arg name="file_path" value="$(arg DATA_DIR)/mock_drivers/drivers.bag"/>
   </include>
 
 </launch>

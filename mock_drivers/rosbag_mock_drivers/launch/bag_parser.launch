@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <!--
   Copyright (C) 2018-2020 LEIDOS.
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,6 +13,6 @@
 -->
 
 <launch>
-    <arg name="file_path"/>
+    <arg name="file_path" doc="Path to rosbag file"/>
     <node pkg="rosbag_mock_drivers" type="bag_parser" name="bag_parser" args="$(arg file_path)"/>
 </launch>
