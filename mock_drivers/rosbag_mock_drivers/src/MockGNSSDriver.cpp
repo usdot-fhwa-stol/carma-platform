@@ -41,7 +41,7 @@ namespace mock_drivers{
         return true;
     }
 
-    void MockGNSSDriver::parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg){
+    void MockGNSSDriver::parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg){
         // generate messages from bag data
         if(msg->gnss_fixed_fused_bool.data){
             gps_common::GPSFix gnss_fixed_fused = msg->gnss_fixed_fused;
@@ -65,7 +65,7 @@ namespace mock_drivers{
         mock_driver_node_.init();
 
         // bag parser subscriber
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         // driver publisher and subscriber
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<gps_common::GPSFix>>>(GPS_fix_ptr_);

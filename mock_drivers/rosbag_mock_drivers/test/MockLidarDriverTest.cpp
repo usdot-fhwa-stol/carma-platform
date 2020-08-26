@@ -16,7 +16,7 @@
 
 #include <gmock/gmock.h>
 #include "rosbag_mock_drivers/MockLidarDriver.h"
-#include <carma_simulation_msgs/BagData.h>
+#include <cav_simulation_msgs/BagData.h>
 
 
 namespace mock_drivers{
@@ -34,7 +34,7 @@ namespace mock_drivers{
     TEST(MockLidarDriver, pubCallbacks){
         MockLidarDriver d(true);
 
-        carma_simulation_msgs::BagData::ConstPtr test_msg_ptr(new carma_simulation_msgs::BagData());
+        cav_simulation_msgs::BagData::ConstPtr test_msg_ptr(new cav_simulation_msgs::BagData());
         ASSERT_TRUE((*test_msg_ptr).header.stamp.isZero());
 
         d.parserCB(test_msg_ptr);

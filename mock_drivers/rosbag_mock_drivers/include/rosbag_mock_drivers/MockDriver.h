@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 #include <boost/shared_ptr.hpp>
-#include <carma_simulation_msgs/BagData.h>
+#include <cav_simulation_msgs/BagData.h>
 #include <cav_msgs/DriverStatus.h>
 
 #include "rosbag_mock_drivers/ROSComms.h"
@@ -43,8 +43,8 @@ namespace mock_drivers{
 
         MockDriverNode mock_driver_node_;
         
-        std::function<void(const carma_simulation_msgs::BagData::ConstPtr&)> bag_parser_cb_ptr_ = std::bind(&MockDriver::parserCB, this, std::placeholders::_1);
-        boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>> bag_parser_sub_ptr_ = boost::make_shared<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>(ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>(bag_parser_cb_ptr_, CommTypes::sub, false, 10, "bag_data"));
+        std::function<void(const cav_simulation_msgs::BagData::ConstPtr&)> bag_parser_cb_ptr_ = std::bind(&MockDriver::parserCB, this, std::placeholders::_1);
+        boost::shared_ptr<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>> bag_parser_sub_ptr_ = boost::make_shared<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>>(ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>(bag_parser_cb_ptr_, CommTypes::sub, false, 10, "bag_data"));
         
         boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>> driver_discovery_pub_ptr_ = boost::make_shared<ROSComms<cav_msgs::DriverStatus>>(ROSComms<cav_msgs::DriverStatus>(CommTypes::pub, false, 10, "driver_discovery"));
 
@@ -54,12 +54,12 @@ namespace mock_drivers{
         virtual int run() = 0;
         
         /*! \brief A function to support the bag_parser callback that all mock drivers support */      
-        virtual void parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg) = 0;
+        virtual void parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg) = 0;
         
         /*! \brief A function to call at 1 Hz to publish to the driver discovery topic */                
         virtual bool driverDiscovery() = 0;
 
-        boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>> getBagComms() {return bag_parser_sub_ptr_;};
+        boost::shared_ptr<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>> getBagComms() {return bag_parser_sub_ptr_;};
 
         /*! \brief Returns the mock driver node for the mock driver (used for testing) */        
         MockDriverNode getMockDriverNode() {return mock_driver_node_;}

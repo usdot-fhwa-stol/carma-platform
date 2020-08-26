@@ -41,7 +41,7 @@ namespace mock_drivers{
         return true;
     }
 
-    void MockCameraDriver::parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg){
+    void MockCameraDriver::parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg){
         
         ros::Time curr_time = ros::Time::now();
         
@@ -87,7 +87,7 @@ namespace mock_drivers{
         mock_driver_node_.init();
 
         // bag_parser subscriber
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         // data topic publishers
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<sensor_msgs::CameraInfo>>>(camera_info_ptr_);

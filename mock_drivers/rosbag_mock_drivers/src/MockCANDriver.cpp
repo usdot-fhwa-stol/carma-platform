@@ -41,7 +41,7 @@ namespace mock_drivers{
         return true;
     }
     
-    void MockCANDriver::parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg){
+    void MockCANDriver::parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg){
 
         // generate messages from bag data
         ros::Time curr_time = ros::Time::now();
@@ -188,7 +188,7 @@ namespace mock_drivers{
         mock_driver_node_.init();
 
         // bar parser subscriber
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         // data topic publishers
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::Bool>>>(acc_engaged_ptr_);

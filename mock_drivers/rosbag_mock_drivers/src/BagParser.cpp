@@ -21,7 +21,7 @@ namespace mock_drivers{
     BagParser::BagParser(std::string file_path, bool dummy){
         file_path_ = file_path;
         mock_driver_node_ = MockDriverNode(dummy);
-        bag_data_pub_ptr_ = boost::make_shared<ROSComms<carma_simulation_msgs::BagData>>(ROSComms<carma_simulation_msgs::BagData>(CommTypes::pub, false, 10, "bag_data"));
+        bag_data_pub_ptr_ = boost::make_shared<ROSComms<cav_simulation_msgs::BagData>>(ROSComms<cav_simulation_msgs::BagData>(CommTypes::pub, false, 10, "bag_data"));
     }
 
     bool BagParser::publishCallback() {
@@ -29,7 +29,7 @@ namespace mock_drivers{
         // open the bag file for a specific time frame (the rate should be set to be faster than the fastest topic)
         static ros::Time startTime;
         static ros::Duration timeFrame = ros::Duration(1.0/rate_);
-        carma_simulation_msgs::BagData message;
+        cav_simulation_msgs::BagData message;
 
         bag_.open(file_path_, rosbag::bagmode::Read);
 
@@ -130,7 +130,7 @@ namespace mock_drivers{
 
         startTime += timeFrame;
 
-        mock_driver_node_.publishData<carma_simulation_msgs::BagData>("bag_data", message);
+        mock_driver_node_.publishData<cav_simulation_msgs::BagData>("bag_data", message);
 
         bag_.close();
 
@@ -141,7 +141,7 @@ namespace mock_drivers{
 
         mock_driver_node_.init();
 
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<carma_simulation_msgs::BagData>>>(bag_data_pub_ptr_);
+        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_simulation_msgs::BagData>>>(bag_data_pub_ptr_);
 
         mock_driver_node_.setSpinCallback(std::bind(&BagParser::publishCallback, this));
 

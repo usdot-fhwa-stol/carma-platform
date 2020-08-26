@@ -41,7 +41,7 @@ namespace mock_drivers{
         return true;
     }
     
-    void MockLidarDriver::parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg){
+    void MockLidarDriver::parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg){
         // generate messages from bag data
         if(msg->points_raw_bool.data){
             sensor_msgs::PointCloud2 updated_msg = msg->points_raw;
@@ -66,7 +66,7 @@ namespace mock_drivers{
         mock_driver_node_.init();
 
         // bag parser subscriber
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         // driver publisher and subscriber
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<sensor_msgs::PointCloud2>>>(points_raw_ptr_);

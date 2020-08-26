@@ -41,7 +41,7 @@ namespace mock_drivers{
         return true;
     }
 
-    void MockIMUDriver::parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg){
+    void MockIMUDriver::parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg){
         // generate messages from bag data
         if(msg->raw_data_bool.data){
             sensor_msgs::Imu raw_data = msg->raw_data;
@@ -65,7 +65,7 @@ namespace mock_drivers{
         mock_driver_node_.init();
 
         // bag parser subscriber
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         // main driver publisher
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<sensor_msgs::Imu>>>(imu_pub_ptr_);

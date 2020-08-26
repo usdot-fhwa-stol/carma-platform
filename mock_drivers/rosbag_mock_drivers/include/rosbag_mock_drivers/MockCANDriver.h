@@ -57,7 +57,7 @@ namespace mock_drivers{
 
             MockCANDriver(bool dummy = false);
             int run();
-            void parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg);
+            void parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg);
             bool driverDiscovery();
 
     };

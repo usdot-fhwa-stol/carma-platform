@@ -30,7 +30,7 @@ namespace mock_drivers{
             ROSComms<const std_msgs::String::ConstPtr&> test_sub_;
 
             void chatterCallback(const std_msgs::String::ConstPtr& msg);
-            void parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg);
+            void parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg);
 
         public:
 

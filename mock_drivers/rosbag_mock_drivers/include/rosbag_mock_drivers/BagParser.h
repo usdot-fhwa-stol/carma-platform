@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <carma_simulation_msgs/BagData.h>
+#include <cav_simulation_msgs/BagData.h>
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
 #include <std_msgs/Bool.h>
@@ -50,7 +50,7 @@ namespace mock_drivers{
 
         private:
 
-            boost::shared_ptr<ROSComms<carma_simulation_msgs::BagData>> bag_data_pub_ptr_;
+            boost::shared_ptr<ROSComms<cav_simulation_msgs::BagData>> bag_data_pub_ptr_;
             MockDriverNode mock_driver_node_;
             rosbag::Bag bag_;
             std::string file_path_;

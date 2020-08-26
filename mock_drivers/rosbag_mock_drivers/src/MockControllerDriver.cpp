@@ -41,7 +41,7 @@ namespace mock_drivers{
         return true;
     }
 
-    void MockControllerDriver::parserCB(const carma_simulation_msgs::BagData::ConstPtr& msg){
+    void MockControllerDriver::parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg){
         // generate messages from bag data
         if(msg->robot_status_bool.data){
             cav_msgs::RobotEnabled robot_status = msg->robot_status;
@@ -77,7 +77,7 @@ namespace mock_drivers{
         mock_driver_node_.init();
 
         // bag parser subscriber
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const carma_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
+        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         // driver publisher, subscriber, and service
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::RobotEnabled>>>(robot_status_ptr_);
