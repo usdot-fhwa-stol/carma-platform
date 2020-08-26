@@ -32,7 +32,7 @@ namespace mock_drivers{
     }
 
     TEST(BagParser, publishCallback){
-        BagParser d("/workspaces/carma_ws/carma/src/carma-platform/mock_drivers/rosbag_mock_drivers/test/resource/hello_test_bag.bag", true);
+        BagParser d("resource/hello_test_bag.bag", true);
 
         EXPECT_TRUE(d.publishCallback());
     }
