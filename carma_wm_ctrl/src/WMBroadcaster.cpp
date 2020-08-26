@@ -18,6 +18,7 @@
 #include <mutex>
 #include <carma_wm_ctrl/WMBroadcaster.h>
 #include <carma_wm_ctrl/MapConformer.h>
+#include <carma_wm/Geometry.h>
 #include <lanelet2_extension/utility/message_conversion.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_core/primitives/Lanelet.h>
@@ -500,11 +501,8 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   // Process the geofence object to populate update remove lists
   addGeofenceHelper(gf_ptr);
   
-  //Add id to set of active geofences
-  for (auto list : gf_ptr->update_list_) 
-  active_geofence_llt_ids.insert(list.first);
-
-  //active_geofence_llt_ids.insert(gf_ptr->id_);
+  for (auto pair : gf_ptr->update_list_) active_geofence_llt_ids_.insert(pair.first);
+  
 
   // Publish
   autoware_lanelet2_msgs::MapBin gf_msg;
@@ -522,10 +520,7 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   // Process the geofence object to populate update remove lists
   removeGeofenceHelper(gf_ptr);
 
-  //Remove active geofence id from set when the geofence is removed
-  for (auto list : gf_ptr->remove_list_) active_geofence_llt_ids.erase(list.first);
-
-  
+  for (auto pair : gf_ptr->remove_list_) active_geofence_llt_ids_.erase(pair.first);
 
   // publish
   autoware_lanelet2_msgs::MapBin gf_msg_revert;
@@ -544,7 +539,6 @@ void  WMBroadcaster::routeCallbackMessage(const cav_msgs::Route& route_msg)
 
 }
 
-
 cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav_msgs::Route& route_msg, std::shared_ptr<j2735_msgs::Id64b> req_id_for_testing)
 {
   lanelet::ConstLanelets path; 
@@ -562,6 +556,9 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
     auto laneLayer = current_map_->laneletLayer.get(id);
     path.push_back(laneLayer);
   }
+
+  // update local copy
+  route_path_ = path;
   
   if(path.size() == 0) throw lanelet::InvalidObjectStateError(std::string("No lanelets available in path."));
 
@@ -660,7 +657,50 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
 
 }
 
+double WMBroadcaster::distToNearestActiveGeofence(const lanelet::BasicPoint2d& curr_pos)
+{
+  std::lock_guard<std::mutex> guard(map_mutex_);
 
+  if (!current_map_ || current_map_->laneletLayer.size() == 0) 
+  {
+    throw lanelet::InvalidObjectStateError(std::string("Lanelet map (current_map_) is not loaded to the WMBroadcaster"));
+  }
+
+  // filter only the lanelets in the route
+  std::vector<lanelet::Id> active_geofence_on_route;
+  for (auto llt : route_path_)
+  {
+    if (active_geofence_llt_ids_.find(llt.id()) != active_geofence_llt_ids_.end()) 
+      active_geofence_on_route.push_back(llt.id());
+  }
+  
+  // Get the lanelet of this point
+  auto curr_lanelet = current_map_->laneletLayer.nearest(curr_pos, 1)[0]; //guaranteed to at least return 1 lanelet
+
+  // Check if this point at least is actually within this lanelets
+  if (!boost::geometry::within(curr_pos, curr_lanelet.polygon2d().basicPolygon()))
+    throw std::invalid_argument("Given point is not within any lanelet");
+
+  // get route distance (downtrack + cross_track) distances to every lanelets by their ids
+  std::vector<double> route_distances;
+  // and take abs of cross_track to add them to get route distance
+  for (auto id: active_geofence_on_route)
+  {
+    carma_wm::TrackPos tp = carma_wm::geometry::trackPos(current_map_->laneletLayer.get(id), curr_pos);
+    // downtrack needs to be negative for lanelet to be in front of the point, 
+    // also we don't account for the lanelet that the vehicle is on
+    if (tp.downtrack < 0 && id != curr_lanelet.id())
+    {
+      double dist = fabs(tp.downtrack) + fabs(tp.crosstrack);
+      route_distances.push_back(dist);
+    }
+  }
+  std::sort(route_distances.begin(), route_distances.end());
+
+  if (route_distances.size() != 0 ) return route_distances[0];
+  else return 0.0;
+
+}
 // helper function that detects the type of geofence and delegates
 void WMBroadcaster::addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr) const
 {
@@ -720,6 +760,12 @@ lanelet::BasicPoint2d curr_pos;
   std::vector<double> route_distances;
     ROS_INFO_STREAM("Check 3");
 
+  if (active_geofence_llt_ids.size() <= 0 ) 
+  {
+    throw lanelet::InvalidObjectStateError(std::string("No active geofence llt ids are loaded to the WMBroadcaster"));
+  }
+
+
   for(auto id = active_geofence_llt_ids.begin(); id != active_geofence_llt_ids.end(); id++)
   {
 
@@ -732,17 +778,9 @@ lanelet::BasicPoint2d curr_pos;
         outgoing_geof.is_on_active_geofence = true;
       }
 
-      carma_wm::TrackPos tp = carma_wm::geometry::trackPos(current_map_->laneletLayer.get(*id), curr_pos);
-      auto curr_lanelet = current_map_->laneletLayer.nearest(curr_pos, 1)[0]; //guaranteed to at least return 1 lanelet
-      if (tp.downtrack < 0 && *id != curr_lanelet.id())
-       {
-         next_distance = fabs(tp.downtrack) + fabs(tp.crosstrack);
-         route_distances.push_back(next_distance);
-         outgoing_geof.distance_to_next_geofence.push_back(next_distance);
-       }
-
+      next_distance = distToNearestActiveGeofence(curr_pos);
+      outgoing_geof.distance_to_next_geofence.push_back(next_distance);
   }//end for loop
-    //active_pub_(outgoing_geof);//Publish 
     return outgoing_geof;
     ROS_INFO_STREAM("Check 4");
 

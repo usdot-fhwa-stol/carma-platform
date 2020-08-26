@@ -152,8 +152,18 @@ public:
   cav_msgs::CheckActiveGeofence checkActiveGeofenceLogic(geometry_msgs::PoseStamped current_pos);
 
 
+  /*!
+   * \brief Returns the route distance (downtrack or crosstrack in meters) to the nearest active geofence lanelet
+   * \param curr_pos Current position in local coordinates
+   * \throw InvalidObjectStateError if base_map is not set
+   * \throw std::invalid_argument if curr_pos is not on the road
+   * \return 0 if there is no active geofence on the vehicle's route 
+   */
+  double distToNearestActiveGeofence(const lanelet::BasicPoint2d& curr_pos);
 
 private:
+  lanelet::ConstLanelets route_path_;
+  std::unordered_set<lanelet::Id> active_geofence_llt_ids_; 
   void addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const;
   void addBackRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const;
   void removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr) const;
