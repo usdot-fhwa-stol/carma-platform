@@ -1202,9 +1202,9 @@ TEST(WMBroadcaster, currentLocationCallback)
   geometry_msgs::PoseStamped input_msg;
 
   //Input message coordinates
-  input_msg.pose.position.x = 12.0;
-  input_msg.pose.position.y = 24.0;
-  input_msg.pose.position.z = 36.0;
+  input_msg.pose.position.x = 0.5;
+  input_msg.pose.position.y = 0.5;
+  input_msg.pose.position.z = 0.0;
 
 
 
@@ -1289,7 +1289,7 @@ TEST(WMBroadcaster, currentLocationCallback)
   ASSERT_TRUE(carma_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
   ASSERT_EQ(1, map_update_call_count.load());
 
-  wmb.addGeofence(gf);
+ // wmb.addGeofence(gf);
 
   std::unordered_set<lanelet::Id> active_geofence_llt_ids;
  // active_geofence_llt_ids.insert(gf->id_);
