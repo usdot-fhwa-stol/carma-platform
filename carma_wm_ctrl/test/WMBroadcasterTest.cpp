@@ -1198,6 +1198,16 @@ TEST(WMBroadcaster, currentLocationCallback)
   std::atomic<std::size_t> last_inactive_gf(0);
   bool activated = false;
 
+//Create input message
+  geometry_msgs::PoseStamped input_msg;
+
+  //Input message coordinates
+  input_msg.pose.position.x = 12.0;
+  input_msg.pose.position.y = 24.0;
+  input_msg.pose.position.z = 36.0;
+
+
+
  size_t base_map_call_count = 0;
   WMBroadcaster wmb(
       [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
@@ -1217,6 +1227,10 @@ TEST(WMBroadcaster, currentLocationCallback)
       }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
       [](cav_msgs::CheckActiveGeofence& active_pub_){},
       std::make_unique<TestTimerFactory>());
+
+   //Test throw exceptions
+  ASSERT_THROW(wmb.currentLocationCallback(input_msg), lanelet::InvalidObjectStateError);
+  ROS_INFO_STREAM("Throw Exceptions Test Passed.");
 
   // Get and convert map to binary message
   auto map = carma_wm::getDisjointRouteMap();
@@ -1275,17 +1289,10 @@ TEST(WMBroadcaster, currentLocationCallback)
   ASSERT_TRUE(carma_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
   ASSERT_EQ(1, map_update_call_count.load());
 
-  //Create input message
-  geometry_msgs::PoseStamped input_msg;
-
-  //Input message coordinates
-  input_msg.pose.position.x = 12.0;
-  input_msg.pose.position.y = 24.0;
-  input_msg.pose.position.z = 36.0;
-
+  wmb.addGeofence(gf);
 
   std::unordered_set<lanelet::Id> active_geofence_llt_ids;
-  active_geofence_llt_ids.insert(11111);
+ // active_geofence_llt_ids.insert(gf->id_);
 
   cav_msgs::CheckActiveGeofence check = wmb.checkActiveGeofenceLogic(input_msg);
   ASSERT_GE(check.distance_to_next_geofence.front(), 0);
@@ -1296,7 +1303,6 @@ TEST(WMBroadcaster, currentLocationCallback)
   ros::Time::setNow(ros::Time(3.2));  // Geofences deactivate now
   ASSERT_TRUE(carma_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed, last_inactive_gf));
   ASSERT_EQ(2, map_update_call_count.load());
-
 
 
 }

@@ -760,13 +760,13 @@ lanelet::BasicPoint2d curr_pos;
   std::vector<double> route_distances;
     ROS_INFO_STREAM("Check 3");
 
-  if (active_geofence_llt_ids.size() <= 0 ) 
+  if (active_geofence_llt_ids_.size() <= 0 ) 
   {
     throw lanelet::InvalidObjectStateError(std::string("No active geofence llt ids are loaded to the WMBroadcaster"));
   }
 
 
-  for(auto id = active_geofence_llt_ids.begin(); id != active_geofence_llt_ids.end(); id++)
+  for(auto id = active_geofence_llt_ids_.begin(); id != active_geofence_llt_ids_.end(); id++)
   {
 
     ROS_INFO_STREAM("Check for loop");
