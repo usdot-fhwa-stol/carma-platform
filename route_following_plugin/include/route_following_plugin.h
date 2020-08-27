@@ -105,6 +105,10 @@ namespace route_following_plugin
         std::shared_ptr<carma_wm::WMListener> wml_;
         carma_wm::WorldModelConstPtr wm_;
 
+        //lane change constant
+        double LATERAL_ACCELERATION_LIMIT=2;
+        int MAX_LANE_WIDTH=12;
+        double LANE_CHANGE_TIME_MAX=sqrt(2*MAX_LANE_WIDTH/LATERAL_ACCELERATION_LIMIT);
         /**
          * \brief Initialize ROS publishers, subscribers, service servers and service clients
          */

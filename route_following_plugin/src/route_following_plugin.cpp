@@ -109,10 +109,19 @@ namespace route_following_plugin
             }
             if(identifyLaneChange(following_lanelets, shortest_path[last_lanelet_index + 1].id()))
             {
+                //calculate start distance
+                double start_dist=(end_dist-current_progress)-(speed_progress*LANE_CHANGE_TIME_MAX)-0.5*(LATERAL_ACCELERATION_LIMIT)*pow(LANE_CHANGE_TIME_MAX,2);
+                double start_time=start_dist/speed_progress;
+                //lane following till start_distance
                 resp.new_plan.maneuvers.push_back(
-                composeManeuverMessage_lanechange(current_progress, end_dist, 
+                composeManeuverMessage(current_progress, start_dist, 
+                                       speed_progress, speed_progress, 
+                                       shortest_path[last_lanelet_index].id(), ros::Time::now()));
+                //lane change
+                resp.new_plan.maneuvers.push_back(
+                composeManeuverMessage_lanechange(start_dist, end_dist, 
                                        speed_progress, RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS, 
-                                       shortest_path[last_lanelet_index].id(),shortest_path[last_lanelet_index + 1].id(), ros::Time::now()));
+                                       shortest_path[last_lanelet_index].id(),shortest_path[last_lanelet_index + 1].id(), ros::Time(start_time)));
                 ++last_lanelet_index;
             }
             else
@@ -169,7 +178,7 @@ namespace route_following_plugin
         return maneuver_msg;
     }
 
-        cav_msgs::Maneuver RouteFollowingPlugin::composeManeuverMessage_lanechange(double current_dist, double end_dist,double current_speed, double target_speed, int curr_lane_id, int target_lane_id, ros::Time current_time)
+    cav_msgs::Maneuver RouteFollowingPlugin::composeManeuverMessage_lanechange(double current_dist, double end_dist,double current_speed, double target_speed, int curr_lane_id, int target_lane_id, ros::Time current_time)
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type=cav_msgs::Maneuver::LANE_CHANGE;
