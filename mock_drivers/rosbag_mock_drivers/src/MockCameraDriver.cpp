@@ -46,25 +46,25 @@ namespace mock_drivers{
         ros::Time curr_time = ros::Time::now();
         
         // generate messages from bag data
-       if(msg->camera_info_bool.data){
+       if(msg->camera_info_flag){
             sensor_msgs::CameraInfo camera_info = msg->camera_info;
             camera_info.header.stamp = curr_time;
             mock_driver_node_.publishData<sensor_msgs::CameraInfo>("camera/camera_info", camera_info);
         }
 
-        if(msg->image_raw_bool.data){
+        if(msg->image_raw_flag){
             sensor_msgs::Image image_raw = msg->image_raw;
             image_raw.header.stamp = curr_time;
             mock_driver_node_.publishData<sensor_msgs::Image>("camera/image_raw", image_raw);
         }
 
-        if(msg->image_rects_bool.data){
+        if(msg->image_rects_flag){
             sensor_msgs::Image image_rects = msg->image_rects;
             image_rects.header.stamp = curr_time;
             mock_driver_node_.publishData<sensor_msgs::Image>("camera/image_rects", image_rects);
         }
 
-        if(msg->projection_matrix_bool.data){
+        if(msg->projection_matrix_flag){
             autoware_msgs::ProjectionMatrix projection_matrix = msg->projection_matrix;
             projection_matrix.header.stamp = curr_time;
             mock_driver_node_.publishData<autoware_msgs::ProjectionMatrix>("camera/projection_matrix", projection_matrix);

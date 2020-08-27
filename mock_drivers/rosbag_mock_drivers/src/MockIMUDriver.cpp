@@ -43,7 +43,7 @@ namespace mock_drivers{
 
     void MockIMUDriver::parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg){
         // generate messages from bag data
-        if(msg->raw_data_bool.data){
+        if(msg->raw_data_flag){
             sensor_msgs::Imu raw_data = msg->raw_data;
             // update time stamps
             raw_data.header.stamp = ros::Time::now();

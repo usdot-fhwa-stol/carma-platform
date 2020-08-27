@@ -43,7 +43,7 @@ namespace mock_drivers{
 
     void MockCommsDriver::parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg){
         // generate messages from bag data
-        if(msg->inbound_binary_msg_bool.data){
+        if(msg->inbound_binary_msg_flag){
             cav_msgs::ByteArray inbound_binary_msg = msg->inbound_binary_msg;
             // update time stamps
             inbound_binary_msg.header.stamp = ros::Time::now();

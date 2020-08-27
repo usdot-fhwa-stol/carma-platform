@@ -43,7 +43,7 @@ namespace mock_drivers{
     
     void MockLidarDriver::parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg){
         // generate messages from bag data
-        if(msg->points_raw_bool.data){
+        if(msg->points_raw_flag){
             sensor_msgs::PointCloud2 updated_msg = msg->points_raw;
             // update time stamps
             updated_msg.header.stamp = ros::Time::now();

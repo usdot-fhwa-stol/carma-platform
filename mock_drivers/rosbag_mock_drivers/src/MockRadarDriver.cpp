@@ -46,13 +46,13 @@ namespace mock_drivers{
         
         // generate messages from bag data
 
-        if(msg->status_bool.data){
+        if(msg->status_flag){
             radar_msgs::RadarStatus status_msg = msg->status;
             status_msg.header.stamp = curr_time;
             mock_driver_node_.publishData<radar_msgs::RadarStatus>("radar/status", status_msg);
         }
         
-        if(msg->tracks_raw_bool.data){
+        if(msg->tracks_raw_flag){
             radar_msgs::RadarTrackArray tracks_raw_msg = msg->tracks_raw;
             tracks_raw_msg.header.stamp = curr_time;
             mock_driver_node_.publishData<radar_msgs::RadarTrackArray>("radar/tracks_raw", tracks_raw_msg);

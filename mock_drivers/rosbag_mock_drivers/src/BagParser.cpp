@@ -43,89 +43,89 @@ namespace mock_drivers{
 
             // camera
             if (m.getTopic() == "camera/camera_info"){message.camera_info = *m.instantiate<sensor_msgs::CameraInfo>();
-                message.camera_info_bool.data = true;}
+                message.camera_info_flag = true;}
             if (m.getTopic() == "camera/image_raw"){message.image_raw = *m.instantiate<sensor_msgs::Image>();
-                message.image_raw_bool.data = true;}
+                message.image_raw_flag = true;}
             if (m.getTopic() == "camera/image_rects"){message.image_rects = *m.instantiate<sensor_msgs::Image>();
-                message.image_rects_bool.data = true;}
+                message.image_rects_flag = true;}
             if (m.getTopic() == "camera/projection_matrix"){message.projection_matrix = *m.instantiate<autoware_msgs::ProjectionMatrix>();
-                message.projection_matrix_bool.data = true;}
+                message.projection_matrix_flag = true;}
             
             // can
             if (m.getTopic() == "can/acc_engaged"){message.acc_engaged = *m.instantiate<std_msgs::Bool>();
-                message.acc_engaged_bool.data = true;}
+                message.acc_engaged_flag = true;}
             if (m.getTopic() == "can/acceleration"){message.acceleration = *m.instantiate<std_msgs::Float64>();
-                message.acceleration_bool.data = true;}
+                message.acceleration_flag = true;}
             if (m.getTopic() == "can/antilock_brakes_active"){message.antilock_brakes_active = *m.instantiate<std_msgs::Bool>();
-                message.antilock_brakes_active_bool.data = true;}
+                message.antilock_brakes_active_flag = true;}
             if (m.getTopic() == "can/brake_lights"){message.brake_lights = *m.instantiate<std_msgs::Bool>();
-                message.brake_lights_bool.data = true;}
+                message.brake_lights_flag = true;}
             if (m.getTopic() == "can/brake_position"){message.brake_position = *m.instantiate<std_msgs::Float64>();
-                message.brake_position_bool.data = true;}
+                message.brake_position_flag = true;}
             if (m.getTopic() == "can/engine_speed"){message.engine_speed = *m.instantiate<std_msgs::Float64>();
-                message.engine_speed_bool.data = true;}
+                message.engine_speed_flag = true;}
             if (m.getTopic() == "can/fuel_flow"){message.fuel_flow = *m.instantiate<std_msgs::Float64>();
-                message.fuel_flow_bool.data = true;}
+                message.fuel_flow_flag = true;}
             if (m.getTopic() == "can/odometer"){message.odometer = *m.instantiate<std_msgs::Float64>();
-                message.odometer_bool.data = true;}
+                message.odometer_flag = true;}
             if (m.getTopic() == "can/parking_brake"){message.parking_brake = *m.instantiate<std_msgs::Bool>();
-                message.parking_brake_bool.data = true;}
+                message.parking_brake_flag = true;}
             if (m.getTopic() == "can/speed"){message.speed = *m.instantiate<std_msgs::Float64>();
-                message.speed_bool.data = true;}
+                message.speed_flag = true;}
             if (m.getTopic() == "can/stability_ctrl_active"){message.stability_ctrl_active = *m.instantiate<std_msgs::Bool>();
-                message.stability_ctrl_active_bool.data = true;}
+                message.stability_ctrl_active_flag = true;}
             if (m.getTopic() == "can/stability_ctrl_enabled"){message.stability_ctrl_enabled = *m.instantiate<std_msgs::Bool>();
-                message.stability_ctrl_enabled_bool.data = true;}
+                message.stability_ctrl_enabled_flag = true;}
             if (m.getTopic() == "can/steering_wheel_angle"){message.steering_wheel_angle = *m.instantiate<std_msgs::Float64>();
-                message.steering_wheel_angle_bool.data = true;}
+                message.steering_wheel_angle_flag = true;}
             if (m.getTopic() == "can/throttle_position"){message.throttle_position = *m.instantiate<std_msgs::Float64>();
-                message.throttle_position_bool.data = true;}
+                message.throttle_position_flag = true;}
             if (m.getTopic() == "can/traction_ctrl_active"){message.traction_ctrl_active = *m.instantiate<std_msgs::Bool>();
-                message.traction_ctrl_active_bool.data = true;}
+                message.traction_ctrl_active_flag = true;}
             if (m.getTopic() == "can/traction_ctrl_enabled"){message.traction_ctrl_enabled = *m.instantiate<std_msgs::Bool>();
-                message.traction_ctrl_enabled_bool.data = true;}
+                message.traction_ctrl_enabled_flag = true;}
             if (m.getTopic() == "can/transmission_state"){message.transmission_state = *m.instantiate<j2735_msgs::TransmissionState>();
-                message.transmission_state_bool.data = true;}
+                message.transmission_state_flag = true;}
             if (m.getTopic() == "can/turn_signal_state"){message.turn_signal_state = *m.instantiate<cav_msgs::TurnSignal>();
-                message.turn_signal_state_bool.data = true;}
+                message.turn_signal_state_flag = true;}
             if (m.getTopic() == "can/vehicle/twist"){message.vehicle_twist = *m.instantiate<geometry_msgs::TwistStamped>();
-                message.vehicle_twist_bool.data = true;}
+                message.vehicle_twist_flag = true;}
             if (m.getTopic() == "can/vehicle_status"){message.vehicle_status = *m.instantiate<autoware_msgs::VehicleStatus>();
-                message.vehicle_status_bool.data = true;}
+                message.vehicle_status_flag = true;}
             if (m.getTopic() == "can/velocity_accel"){message.velocity_accel = *m.instantiate<automotive_platform_msgs::VelocityAccel>();
-                message.velocity_accel_bool.data = true;}
+                message.velocity_accel_flag = true;}
             
             // comms
             if (m.getTopic() == "comms/inbound_binary_msg"){message.inbound_binary_msg = *m.instantiate<cav_msgs::ByteArray>();
-                message.inbound_binary_msg_bool.data = true;}
+                message.inbound_binary_msg_flag = true;}
             
             // controller
             if (m.getTopic() == "controller/robot_status"){message.robot_status = *m.instantiate<cav_msgs::RobotEnabled>();
-                message.robot_status_bool.data = true;}
+                message.robot_status_flag = true;}
             
             // gnss
             if (m.getTopic() == "gnss/gnss_fixed_fused"){message.gnss_fixed_fused = *m.instantiate<gps_common::GPSFix>();
-                message.gnss_fixed_fused_bool.data = true;}
+                message.gnss_fixed_fused_flag = true;}
             
             // imu
             if (m.getTopic() == "imu/raw_data"){message.raw_data = *m.instantiate<sensor_msgs::Imu>();
-                message.raw_data_bool.data = true;}
+                message.raw_data_flag = true;}
             
             // lidar
             if (m.getTopic() == "lidar/points_raw"){message.points_raw = *m.instantiate<sensor_msgs::PointCloud2>();
-                message.points_raw_bool.data = true;}
+                message.points_raw_flag = true;}
             
             // radar
             if (m.getTopic() == "radar/status"){message.status = *m.instantiate<radar_msgs::RadarStatus>();
-                message.status_bool.data = true;}
+                message.status_flag = true;}
             if (m.getTopic() == "radar/tracks_raw"){message.tracks_raw = *m.instantiate<radar_msgs::RadarTrackArray>();
-                message.tracks_raw_bool.data = true;}
+                message.tracks_raw_flag = true;}
             
             // roadway_sensor
             if (m.getTopic() == "roadway_sensor/detected_objects"){message.detected_objects = *m.instantiate<derived_object_msgs::ObjectWithCovariance>();
-                message.detected_objects_bool.data = true;}
+                message.detected_objects_flag = true;}
             if (m.getTopic() == "roadway_sensor/lane_models"){message.lane_models = *m.instantiate<derived_object_msgs::LaneModels>();
-                message.lane_models_bool.data = true;}
+                message.lane_models_flag = true;}
         }
 
         startTime += timeFrame;

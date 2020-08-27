@@ -23,12 +23,12 @@ namespace mock_drivers{
     }
 
     void MockDataDriver::parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg){
-        if(msg->tf_bool.data){
+        if(msg->tf_flag){
             tf2_msgs::TFMessage tf = msg->tf;
             mock_driver_node_.publishDataNoHeader<tf2_msgs::TFMessage>("data/tf", tf);
         }
 
-        if(msg->tf_static_bool.data){
+        if(msg->tf_static_flag){
             tf2_msgs::TFMessage tf_static = msg->tf_static;
             mock_driver_node_.publishDataNoHeader<tf2_msgs::TFMessage>("data/tf_static", tf_static);
         }

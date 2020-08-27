@@ -43,7 +43,7 @@ namespace mock_drivers{
 
     void MockControllerDriver::parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg){
         // generate messages from bag data
-        if(msg->robot_status_bool.data){
+        if(msg->robot_status_flag){
             cav_msgs::RobotEnabled robot_status = msg->robot_status;
             // publish the data
             mock_driver_node_.publishDataNoHeader<cav_msgs::RobotEnabled>("controller/robot_status", robot_status);

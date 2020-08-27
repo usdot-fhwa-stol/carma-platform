@@ -42,6 +42,7 @@ namespace mock_drivers{
         std::vector<std::string> test_str_vector = d.getMockDriverNode().getTopics();
         std::vector<ros::Time> test_time_vector = d.getMockDriverNode().getTimeStamps();
 
+        ASSERT_EQ(test_str_vector.size(), 4);
         ASSERT_EQ(test_str_vector[0], "camera/camera_info");
         ASSERT_EQ(test_str_vector[1], "camera/image_raw");
         ASSERT_EQ(test_str_vector[2], "camera/image_rects");
@@ -50,6 +51,7 @@ namespace mock_drivers{
         // Give a range because the nanoseconds go too fast for the test to pass if its assert equal
         ros::Duration range(0.001);
         
+        ASSERT_EQ(test_time_vector.size(), 4);
         EXPECT_TRUE((test_time_vector[0] > ros::Time::now() - range) && (test_time_vector[0] < ros::Time::now() + range));
         EXPECT_TRUE((test_time_vector[1] > ros::Time::now() - range) && (test_time_vector[1] < ros::Time::now() + range));
         EXPECT_TRUE((test_time_vector[2] > ros::Time::now() - range) && (test_time_vector[2] < ros::Time::now() + range));
