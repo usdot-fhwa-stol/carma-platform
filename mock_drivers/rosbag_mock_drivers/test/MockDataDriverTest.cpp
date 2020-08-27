@@ -34,14 +34,35 @@ namespace mock_drivers{
     TEST(MockDataDriver, pubCallbacks){
         MockDataDriver d(true);
 
+        // Check for no data behavior
+        ros::Time::setNow(ros::Time(0.0));
         cav_simulation_msgs::BagData::ConstPtr test_msg_ptr(new cav_simulation_msgs::BagData());
-        ASSERT_TRUE((*test_msg_ptr).header.stamp.isZero());
+        ASSERT_TRUE(test_msg_ptr->header.stamp.isZero());
 
         d.parserCB(test_msg_ptr);
 
         std::vector<std::string> test_str_vector = d.getMockDriverNode().getTopics();
         std::vector<ros::Time> test_time_vector = d.getMockDriverNode().getTimeStamps();
 
+        ASSERT_EQ(test_str_vector.size(), 0);
+        ASSERT_EQ(test_time_vector.size(), 0);
+
+        // Check for nominal data behavior
+
+        ros::Time::setNow(ros::Time(1.0));
+        cav_simulation_msgs::BagData msg;
+        msg.header.stamp = ros::Time::now();
+        msg.tf_flag = true;
+        msg.tf_static_flag = true;
+        test_msg_ptr = cav_simulation_msgs::BagData::ConstPtr(new cav_simulation_msgs::BagData(msg));
+        ASSERT_EQ(test_msg_ptr->header.stamp, ros::Time(1.0));
+
+        d.parserCB(test_msg_ptr);
+
+        test_str_vector = d.getMockDriverNode().getTopics();
+        test_time_vector = d.getMockDriverNode().getTimeStamps();
+
+        ASSERT_EQ(test_str_vector.size(), 2);
         ASSERT_EQ(test_str_vector[0], "data/tf");
         ASSERT_EQ(test_str_vector[1], "data/tf_static");
     }
