@@ -295,6 +295,8 @@ TEST(WMBroadcaster, geofenceCallback)
   std::atomic<uint32_t> active_call_count(0);
   std::atomic<std::size_t> last_active_gf(0);
 
+
+
   WMBroadcaster wmb(
       [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
         // Publish map callback
@@ -317,7 +319,7 @@ TEST(WMBroadcaster, geofenceCallback)
       [](cav_msgs::CheckActiveGeofence& active_pub_){},
       std::make_unique<TestTimerFactory>());
 
-  // Get and convert map to binary message
+ // Get and convert map to binary message
   auto map = carma_wm::getDisjointRouteMap();
   autoware_lanelet2_msgs::MapBin msg;
   lanelet::utils::conversion::toBinMsg(map, &msg);
@@ -689,7 +691,7 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   
 }
 
-TEST(WMBroadcaster, RegulatoryPCLTest)
+TEST(WMBroadcaster, DISABLED_RegulatoryPCLTest)
 {
   // Test adding then evaluate if the calls to active and inactive are done correctly
   auto gf_ptr = std::make_shared<Geofence>(Geofence());
@@ -788,7 +790,7 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
       [](cav_msgs::CheckActiveGeofence& active_pub_){},
       std::make_unique<TestTimerFactory>());
 
-  autoware_lanelet2_msgs::MapBin msg;
+ autoware_lanelet2_msgs::MapBin msg;
   lanelet::utils::conversion::toBinMsg(map, &msg);
   autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(msg));
   // Set the map
@@ -1235,10 +1237,6 @@ TEST(WMBroadcaster, currentLocationCallback)
   ASSERT_GE(check.distance_to_next_geofence.front(), 0);
   ASSERT_TRUE(check.type != 0);
   EXPECT_TRUE(check.is_on_active_geofence);
-
-
-
-
 
 
 }
