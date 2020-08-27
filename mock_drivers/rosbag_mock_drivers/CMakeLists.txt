@@ -100,7 +100,7 @@ target_link_libraries(bag_parser
 #############
 
 ## Mark executables for installation
-install(TARGETS mock_driver
+install(TARGETS mock_driver bag_parser
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

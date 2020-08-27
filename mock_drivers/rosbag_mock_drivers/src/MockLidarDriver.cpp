@@ -19,6 +19,7 @@
 namespace mock_drivers{
 
     bool MockLidarDriver::driverDiscovery(){
+        ROS_ERROR_STREAM("1");
         cav_msgs::DriverStatus discovery_msg;
         
         discovery_msg.name = "MockLidarDriver";
@@ -35,20 +36,25 @@ namespace mock_drivers{
         discovery_msg.imu = false;
         discovery_msg.trailer_angle_sensor = false;
         discovery_msg.lightbar = false;
-
+        ROS_ERROR_STREAM("2");
         mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("driver_discovery", discovery_msg);
-
+        ROS_ERROR_STREAM("3");
         return true;
     }
     
     void MockLidarDriver::parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg){
         // generate messages from bag data
+        ROS_ERROR_STREAM("4");
         if(msg->points_raw_flag){
+            ROS_ERROR_STREAM("5");
             sensor_msgs::PointCloud2 updated_msg = msg->points_raw;
             // update time stamps
+            ROS_ERROR_STREAM("6");
             updated_msg.header.stamp = ros::Time::now();
+            ROS_ERROR_STREAM("7");
             // publish the data
             mock_driver_node_.publishData<sensor_msgs::PointCloud2>("lidar/points_raw", updated_msg);
+            ROS_ERROR_STREAM("8");
         }
         
     }

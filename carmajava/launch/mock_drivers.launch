@@ -45,7 +45,7 @@
   <arg name="mock_camera"         value="$(eval 'camera' in arg('mock_drivers').split())"/>
   <arg name="mock_roadway_sensor" value="$(eval 'roadway_sensor' in arg('mock_drivers').split())"/>
   <arg name="mock_lightbar" 	    value="$(eval 'lightbar' in arg('mock_drivers').split())"/>
-  <arg name="bag_parser" 	        value="$(eval arg('mock_drivers') != '')"/> <!-- Launch the bag parser if any mock drivers are running -->
+  <arg name="bag_parser" 	        value="$(eval 'bag_parser' in arg('mock_drivers').split())"/> <!-- Launch the bag parser if any mock drivers are running -->
 	
   <!-- Remappings for external packages -->
   <remap from="system_alert" to="/system_alert"/>

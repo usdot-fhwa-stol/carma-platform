@@ -23,11 +23,16 @@
 
 namespace mock_drivers{
 
+    struct PublisherWapper {
+        ros::Publisher pub;
+        std::string base_topic_name;
+    };
+
     class MockDriverNode {
 
         private:
             boost::shared_ptr<ros::CARMANodeHandle> cnh_;
-            std::vector<ros::Publisher> publishers_;
+            std::vector<PublisherWapper> publishers_;
             std::vector<ros::Subscriber> subscribers_;
             std::vector<ros::ServiceServer> services_;
             
@@ -41,24 +46,36 @@ namespace mock_drivers{
             /*! \brief Function to add a publisher from a ROSComms object */
             template<typename T>
             void addPub(T comm){
+                ROS_ERROR_STREAM("9");
                 if(!dummy_){
-                    publishers_.push_back(cnh_->advertise<decltype(comm->getTemplateType())>(comm->getTopic(), comm->getQueueSize()));
+                    ROS_ERROR_STREAM("10");
+                    PublisherWapper pub;
+                    pub.pub = cnh_->advertise<decltype(comm->getTemplateType())>(comm->getTopic(), comm->getQueueSize());
+                    pub.base_topic_name = comm->getTopic();
+                    publishers_.push_back(pub);
+                    ROS_ERROR_STREAM("11");
                 }
             }
 
             /*! \brief Function to add a subscriber from a ROSComms object */
             template<typename T>
             void addSub(T comm){
+                ROS_ERROR_STREAM("12");
                 if(!dummy_){
+                    ROS_ERROR_STREAM("13");
                     subscribers_.push_back(cnh_->subscribe<decltype(comm->getTemplateType())>(comm->getTopic(), comm->getQueueSize(), &ROSComms<decltype(comm->getTemplateType())>::callback, comm));
+                    ROS_ERROR_STREAM("14");
                 }
             }
 
             /*! \brief Function to add a service from a ROSComms object */
             template<typename T>
             void addSrv(T comm){
+                ROS_ERROR_STREAM("15");
                 if(!dummy_){
+                    ROS_ERROR_STREAM("16");
                     services_.push_back(cnh_->advertiseService(comm->getTopic(), &ROSComms<decltype(comm->getReqType()), decltype(comm->getResType())>::callback, comm));
+                    ROS_ERROR_STREAM("17");
                 }
             }
 
@@ -90,12 +107,21 @@ namespace mock_drivers{
             */
             template<typename T>
             void publishData(std::string topic, T msg, bool header = true){
+                ROS_ERROR_STREAM("18");
                 if(!dummy_){
-                    std::vector<ros::Publisher>::iterator pub = std::find_if(publishers_.begin(), publishers_.end(), [&](ros::Publisher p){return (p.getTopic()) == topic;});
-                    pub->publish(msg);
+                    ROS_ERROR_STREAM("19");
+                    auto pub = std::find_if(publishers_.begin(), publishers_.end(), [&](PublisherWapper p){return p.base_topic_name == topic;});
+                    ROS_ERROR_STREAM("20");
+                    if (pub == publishers_.end())
+                        throw std::invalid_argument("Attempted to publish to topic " + topic + " but no publisher was found");
+                    pub->pub.publish(msg);
+                    ROS_ERROR_STREAM("21");
                 } else {
+                    ROS_ERROR_STREAM("22");
                     topics_.push_back(topic);
+                    ROS_ERROR_STREAM("23");
                     time_stamps_.push_back(msg.header.stamp);
+                    ROS_ERROR_STREAM("24");
                 }
             };
 
@@ -106,12 +132,19 @@ namespace mock_drivers{
             */
             template<typename T>
             void publishDataNoHeader(std::string topic, T msg){
+                ROS_ERROR_STREAM("25");
                 if(!dummy_){
-                    std::vector<ros::Publisher>::iterator pub = std::find_if(publishers_.begin(), publishers_.end(), [&](ros::Publisher p){return (p.getTopic()) == topic;});
-
-                    pub->publish(msg);
+                    ROS_ERROR_STREAM("26");
+                    auto pub = std::find_if(publishers_.begin(), publishers_.end(), [&](PublisherWapper p){return p.base_topic_name == topic;});
+                    if (pub == publishers_.end())
+                        throw std::invalid_argument("Attempted to publish to topic " + topic + " but no publisher was found");
+                    ROS_ERROR_STREAM("27");
+                    pub->pub.publish(msg);
+                    ROS_ERROR_STREAM("28");
                 } else {
+                    ROS_ERROR_STREAM("29");
                     topics_.push_back(topic);
+                    ROS_ERROR_STREAM("30");
                 }
             };
 
