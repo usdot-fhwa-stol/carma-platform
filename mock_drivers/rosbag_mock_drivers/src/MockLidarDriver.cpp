@@ -20,7 +20,6 @@ namespace mock_drivers
 {
 bool MockLidarDriver::driverDiscovery()
 {
-  ROS_ERROR_STREAM("1");
   cav_msgs::DriverStatus discovery_msg;
 
   discovery_msg.name = "MockLidarDriver";
@@ -37,9 +36,7 @@ bool MockLidarDriver::driverDiscovery()
   discovery_msg.imu = false;
   discovery_msg.trailer_angle_sensor = false;
   discovery_msg.lightbar = false;
-  ROS_ERROR_STREAM("2");
   mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("driver_discovery", discovery_msg);
-  ROS_ERROR_STREAM("3");
   return true;
 }
 
