@@ -16,50 +16,51 @@
 
 #include "rosbag_mock_drivers/MockGNSSDriver.h"
 
-namespace mock_drivers{
+namespace mock_drivers
+{
+bool MockGNSSDriver::driverDiscovery()
+{
+  cav_msgs::DriverStatus discovery_msg;
 
-    bool MockGNSSDriver::driverDiscovery(){
-        cav_msgs::DriverStatus discovery_msg;
-        
-        discovery_msg.name = "MockGNSSDriver";
-        discovery_msg.status = 1;
+  discovery_msg.name = "MockGNSSDriver";
+  discovery_msg.status = 1;
 
-        discovery_msg.can = false;
-        discovery_msg.radar = false;
-        discovery_msg.gnss = true;
-        discovery_msg.lidar = false;
-        discovery_msg.roadway_sensor = false;
-        discovery_msg.comms = false;
-        discovery_msg.controller = false;
-        discovery_msg.camera = false;
-        discovery_msg.imu = false;
-        discovery_msg.trailer_angle_sensor = false;
-        discovery_msg.lightbar = false;
+  discovery_msg.can = false;
+  discovery_msg.radar = false;
+  discovery_msg.gnss = true;
+  discovery_msg.lidar = false;
+  discovery_msg.roadway_sensor = false;
+  discovery_msg.comms = false;
+  discovery_msg.controller = false;
+  discovery_msg.camera = false;
+  discovery_msg.imu = false;
+  discovery_msg.trailer_angle_sensor = false;
+  discovery_msg.lightbar = false;
 
-        mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("driver_discovery", discovery_msg);
+  mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("driver_discovery", discovery_msg);
 
-        return true;
-    }
-
-    MockGNSSDriver::MockGNSSDriver(bool dummy){
-
-        mock_driver_node_ = MockDriverNode(dummy);    
-    }
-
-    int MockGNSSDriver::run(){
-
-        mock_driver_node_.init();
-
-        // driver publisher and subscriber
-        addPassthroughPub<gps_common::GPSFix>(bag_prefix_ + gnss_fix_fuxed_topic_, gnss_fix_fuxed_topic_, false, 10);
-
-        // driver discovery publisher
-        mock_driver_node_.addPub(driver_discovery_pub_ptr_);
-        mock_driver_node_.setSpinCallback(std::bind(&MockGNSSDriver::driverDiscovery, this));
-
-        mock_driver_node_.spin(20);
-
-        return 0;
-    }
-
+  return true;
 }
+
+MockGNSSDriver::MockGNSSDriver(bool dummy)
+{
+  mock_driver_node_ = MockDriverNode(dummy);
+}
+
+int MockGNSSDriver::run()
+{
+  mock_driver_node_.init();
+
+  // driver publisher and subscriber
+  addPassthroughPub<gps_common::GPSFix>(bag_prefix_ + gnss_fix_fuxed_topic_, gnss_fix_fuxed_topic_, false, 10);
+
+  // driver discovery publisher
+  mock_driver_node_.addPub(driver_discovery_pub_ptr_);
+  mock_driver_node_.setSpinCallback(std::bind(&MockGNSSDriver::driverDiscovery, this));
+
+  mock_driver_node_.spin(20);
+
+  return 0;
+}
+
+}  // namespace mock_drivers

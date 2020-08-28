@@ -14,7 +14,6 @@
  * the License.
  */
 
-
 #include <ros/ros.h>
 #include <rosbag_mock_drivers/TestMockDriver.h>
 
@@ -29,57 +28,63 @@
 #include <rosbag_mock_drivers/MockRoadwaySensorDriver.h>
 #include <rosbag_mock_drivers/BagParser.h>
 
-
-
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
+  ros::init(argc, argv, "mock_driver");
 
-    ros::init(argc, argv, "mock_driver");
+  if (strcmp("camera", argv[1]) == 0)
+  {
+    mock_drivers::MockCameraDriver node;
+    node.run();
+  }
 
-    if (strcmp("camera", argv[1]) == 0){
-        mock_drivers::MockCameraDriver node;
-        node.run();
-    }
-    
-    else if (strcmp("can", argv[1]) == 0){
-        mock_drivers::MockCANDriver node;
-        node.run();
-    }
-    
-    else if (strcmp("comms", argv[1]) == 0){
-        mock_drivers::MockCommsDriver node;
-        node.run();
-    }
-    
-    else if (strcmp("controller", argv[1]) == 0){
-        mock_drivers::MockControllerDriver node;
-        node.run();
-    }
-    
-    else if (strcmp("gnss", argv[1]) == 0){
-        mock_drivers::MockGNSSDriver node;
-        node.run();
-    }
+  else if (strcmp("can", argv[1]) == 0)
+  {
+    mock_drivers::MockCANDriver node;
+    node.run();
+  }
 
-    else if (strcmp("imu", argv[1]) == 0){
-        mock_drivers::MockIMUDriver node;
-        node.run();
-    }
+  else if (strcmp("comms", argv[1]) == 0)
+  {
+    mock_drivers::MockCommsDriver node;
+    node.run();
+  }
 
-    else if (strcmp("lidar", argv[1]) == 0){
-        mock_drivers::MockLidarDriver node;
-        node.run();
-    }
+  else if (strcmp("controller", argv[1]) == 0)
+  {
+    mock_drivers::MockControllerDriver node;
+    node.run();
+  }
 
-    else if (strcmp("radar", argv[1]) == 0){
-        mock_drivers::MockRadarDriver node;
-        node.run();
-    }
+  else if (strcmp("gnss", argv[1]) == 0)
+  {
+    mock_drivers::MockGNSSDriver node;
+    node.run();
+  }
 
-    else if (strcmp("roadway_sensor", argv[1]) == 0){
-        mock_drivers::MockRoadwaySensorDriver node;
-        node.run();
-    }
-    
-    return 0;
+  else if (strcmp("imu", argv[1]) == 0)
+  {
+    mock_drivers::MockIMUDriver node;
+    node.run();
+  }
+
+  else if (strcmp("lidar", argv[1]) == 0)
+  {
+    mock_drivers::MockLidarDriver node;
+    node.run();
+  }
+
+  else if (strcmp("radar", argv[1]) == 0)
+  {
+    mock_drivers::MockRadarDriver node;
+    node.run();
+  }
+
+  else if (strcmp("roadway_sensor", argv[1]) == 0)
+  {
+    mock_drivers::MockRoadwaySensorDriver node;
+    node.run();
+  }
+
+  return 0;
 }

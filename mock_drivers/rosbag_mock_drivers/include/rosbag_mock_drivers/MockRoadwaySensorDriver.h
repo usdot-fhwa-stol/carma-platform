@@ -20,21 +20,18 @@
 #include <derived_object_msgs/ObjectWithCovariance.h>
 #include <derived_object_msgs/LaneModels.h>
 
-namespace mock_drivers{
+namespace mock_drivers
+{
+class MockRoadwaySensorDriver : public MockDriver
+{
+private:
+  const std::string detected_objects_topic_ = "roadway_sensor/detected_objects";
+  const std::string lane_models_topics_ = "roadway_sensor/lane_models";
 
-    class MockRoadwaySensorDriver : public MockDriver {
+public:
+  MockRoadwaySensorDriver(bool dummy = false);
+  int run();
+  bool driverDiscovery();
+};
 
-        private:
-
-            const std::string detected_objects_topic_ = "roadway_sensor/detected_objects";
-            const std::string lane_models_topics_ = "roadway_sensor/lane_models";
-
-        public:
-
-            MockRoadwaySensorDriver(bool dummy = false);
-            int run();
-            bool driverDiscovery();
-
-    };
-
-}
+}  // namespace mock_drivers

@@ -19,19 +19,17 @@
 #include "rosbag_mock_drivers/MockDriver.h"
 #include <sensor_msgs/PointCloud2.h>
 
-namespace mock_drivers{
+namespace mock_drivers
+{
+class MockLidarDriver : public MockDriver
+{
+private:
+  const std::string points_raw_topic_ = "points_raw";
 
-    class MockLidarDriver : public MockDriver {
+public:
+  MockLidarDriver(bool dummy = false);
+  int run();
+  bool driverDiscovery();
+};
 
-        private:
-
-            const std::string points_raw_topic_ = "points_raw";
-        public:
-
-            MockLidarDriver(bool dummy = false);
-            int run();
-            bool driverDiscovery();
-
-    };
-
-}
+}  // namespace mock_drivers

@@ -16,34 +16,41 @@
 
 #include "rosbag_mock_drivers/MockDriverNode.h"
 
-namespace mock_drivers{
-
-    MockDriverNode::MockDriverNode(){
-        dummy_ = false;
-    }
-
-    MockDriverNode::MockDriverNode(bool dummy){
-        dummy_ = dummy;
-    }
-    
-    void MockDriverNode::spin(double rate){
-        if(!dummy_){
-            cnh_->setSpinRate(rate);
-            std::cout << "here7" << std::endl;
-            cnh_->spin();
-        }
-    }
-
-    void MockDriverNode::setSpinCallback(std::function<bool()> cb){
-        if(!dummy_){
-            cnh_->setSpinCallback(cb);
-        }
-    }
-
-    void MockDriverNode::init(){
-        if(!dummy_){
-            cnh_ = boost::make_shared<ros::CARMANodeHandle>(ros::CARMANodeHandle());
-        }
-    }
-
+namespace mock_drivers
+{
+MockDriverNode::MockDriverNode()
+{
+  dummy_ = false;
 }
+
+MockDriverNode::MockDriverNode(bool dummy)
+{
+  dummy_ = dummy;
+}
+
+void MockDriverNode::spin(double rate)
+{
+  if (!dummy_)
+  {
+    cnh_->setSpinRate(rate);
+    cnh_->spin();
+  }
+}
+
+void MockDriverNode::setSpinCallback(std::function<bool()> cb)
+{
+  if (!dummy_)
+  {
+    cnh_->setSpinCallback(cb);
+  }
+}
+
+void MockDriverNode::init()
+{
+  if (!dummy_)
+  {
+    cnh_ = boost::make_shared<ros::CARMANodeHandle>(ros::CARMANodeHandle());
+  }
+}
+
+}  // namespace mock_drivers

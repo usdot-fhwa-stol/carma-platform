@@ -20,23 +20,18 @@
 #include <radar_msgs/RadarStatus.h>
 #include <radar_msgs/RadarTrackArray.h>
 
+namespace mock_drivers
+{
+class MockRadarDriver : public MockDriver
+{
+private:
+  const std::string radar_status_topic_ = "radar/status";
+  const std::string radar_tracks_raw_topic_ = "radar/tracks_raw";
 
-namespace mock_drivers{
+public:
+  MockRadarDriver(bool dummy = false);
+  int run();
+  bool driverDiscovery();
+};
 
-    class MockRadarDriver : public MockDriver {
-
-        private:
-
-        const std::string radar_status_topic_ = "radar/status";
-        const std::string radar_tracks_raw_topic_ = "radar/tracks_raw";
-
-
-        public:
-
-            MockRadarDriver(bool dummy = false);
-            int run();
-            bool driverDiscovery();
-
-    };
-
-}
+}  // namespace mock_drivers

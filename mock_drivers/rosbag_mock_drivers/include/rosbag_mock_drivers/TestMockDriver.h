@@ -19,24 +19,20 @@
 #include "rosbag_mock_drivers/MockDriver.h"
 #include "std_msgs/String.h"
 
+namespace mock_drivers
+{
+class TestMockDriver : public MockDriver
+{
+private:
+  ROSComms<std_msgs::String> test_pub_;
+  ROSComms<const std_msgs::String::ConstPtr&> test_sub_;
 
-namespace mock_drivers{
+  void chatterCallback(const std_msgs::String::ConstPtr& msg);
+  void parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg);
 
-    class TestMockDriver : public MockDriver {
+public:
+  TestMockDriver();
+  int run();
+};
 
-        private:
-
-            ROSComms<std_msgs::String> test_pub_;
-            ROSComms<const std_msgs::String::ConstPtr&> test_sub_;
-
-            void chatterCallback(const std_msgs::String::ConstPtr& msg);
-            void parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg);
-
-        public:
-
-            TestMockDriver();
-            int run();
-
-    };
-
-}
+}  // namespace mock_drivers

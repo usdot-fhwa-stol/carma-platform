@@ -16,50 +16,51 @@
 
 #include "rosbag_mock_drivers/MockLidarDriver.h"
 
-namespace mock_drivers{
+namespace mock_drivers
+{
+bool MockLidarDriver::driverDiscovery()
+{
+  ROS_ERROR_STREAM("1");
+  cav_msgs::DriverStatus discovery_msg;
 
-    bool MockLidarDriver::driverDiscovery(){
-        ROS_ERROR_STREAM("1");
-        cav_msgs::DriverStatus discovery_msg;
-        
-        discovery_msg.name = "MockLidarDriver";
-        discovery_msg.status = 1;
+  discovery_msg.name = "MockLidarDriver";
+  discovery_msg.status = 1;
 
-        discovery_msg.can = false;
-        discovery_msg.radar = false;
-        discovery_msg.gnss = false;
-        discovery_msg.lidar = true;
-        discovery_msg.roadway_sensor = false;
-        discovery_msg.comms = false;
-        discovery_msg.controller = false;
-        discovery_msg.camera = false;
-        discovery_msg.imu = false;
-        discovery_msg.trailer_angle_sensor = false;
-        discovery_msg.lightbar = false;
-        ROS_ERROR_STREAM("2");
-        mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("driver_discovery", discovery_msg);
-        ROS_ERROR_STREAM("3");
-        return true;
-    }
-
-    MockLidarDriver::MockLidarDriver(bool dummy){
-
-        mock_driver_node_ = MockDriverNode(dummy);        
-    }
-
-    int MockLidarDriver::run(){
-
-        mock_driver_node_.init();
-
-        // driver publisher and subscriber
-        addPassthroughPub<sensor_msgs::PointCloud2>(bag_prefix_ + points_raw_topic_, points_raw_topic_, false, 10);
-
-        // driver discovery publisher
-        mock_driver_node_.addPub(driver_discovery_pub_ptr_);
-        mock_driver_node_.setSpinCallback(std::bind(&MockLidarDriver::driverDiscovery, this));
-
-        mock_driver_node_.spin(20);
-        return 0;
-    }
-
+  discovery_msg.can = false;
+  discovery_msg.radar = false;
+  discovery_msg.gnss = false;
+  discovery_msg.lidar = true;
+  discovery_msg.roadway_sensor = false;
+  discovery_msg.comms = false;
+  discovery_msg.controller = false;
+  discovery_msg.camera = false;
+  discovery_msg.imu = false;
+  discovery_msg.trailer_angle_sensor = false;
+  discovery_msg.lightbar = false;
+  ROS_ERROR_STREAM("2");
+  mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("driver_discovery", discovery_msg);
+  ROS_ERROR_STREAM("3");
+  return true;
 }
+
+MockLidarDriver::MockLidarDriver(bool dummy)
+{
+  mock_driver_node_ = MockDriverNode(dummy);
+}
+
+int MockLidarDriver::run()
+{
+  mock_driver_node_.init();
+
+  // driver publisher and subscriber
+  addPassthroughPub<sensor_msgs::PointCloud2>(bag_prefix_ + points_raw_topic_, points_raw_topic_, false, 10);
+
+  // driver discovery publisher
+  mock_driver_node_.addPub(driver_discovery_pub_ptr_);
+  mock_driver_node_.setSpinCallback(std::bind(&MockLidarDriver::driverDiscovery, this));
+
+  mock_driver_node_.spin(20);
+  return 0;
+}
+
+}  // namespace mock_drivers

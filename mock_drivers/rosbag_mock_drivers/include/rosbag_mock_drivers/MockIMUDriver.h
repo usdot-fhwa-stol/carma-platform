@@ -19,20 +19,17 @@
 #include "rosbag_mock_drivers/MockDriver.h"
 #include <sensor_msgs/Imu.h>
 
-namespace mock_drivers{
+namespace mock_drivers
+{
+class MockIMUDriver : public MockDriver
+{
+private:
+  const std::string raw_data_topic_ = "raw_data";
 
-    class MockIMUDriver : public MockDriver {
+public:
+  MockIMUDriver(bool dummy = false);
+  int run();
+  bool driverDiscovery();
+};
 
-        private:
-
-            const std::string raw_data_topic_ = "raw_data";
-
-        public:
-
-            MockIMUDriver(bool dummy = false);
-            int run();
-            bool driverDiscovery();
-
-    };
-
-}
+}  // namespace mock_drivers

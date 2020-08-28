@@ -19,20 +19,17 @@
 #include "rosbag_mock_drivers/MockDriver.h"
 #include <gps_common/GPSFix.h>
 
-namespace mock_drivers{
+namespace mock_drivers
+{
+class MockGNSSDriver : public MockDriver
+{
+private:
+  const std::string gnss_fix_fuxed_topic_ = "gnss_fixed_fused";
 
-    class MockGNSSDriver : public MockDriver {
+public:
+  MockGNSSDriver(bool dummy = false);
+  int run();
+  bool driverDiscovery();
+};
 
-        private:
-
-            const std::string gnss_fix_fuxed_topic_ = "gnss_fixed_fused";    
-
-        public:
-
-            MockGNSSDriver(bool dummy = false);
-            int run();
-            bool driverDiscovery();
-
-    };
-
-}
+}  // namespace mock_drivers

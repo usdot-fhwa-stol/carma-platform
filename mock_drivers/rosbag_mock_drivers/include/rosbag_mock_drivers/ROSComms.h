@@ -21,62 +21,76 @@
 #include "comm_types.h"
 #include "std_msgs/String.h"
 
-namespace mock_drivers{
+namespace mock_drivers
+{
+/*! \brief This class is used to transfer all the information required to initialize ros topics/services
+ *
+ * The template type is the type of the message that is being published/subscribed to, all the other parameters just
+ * need to be filled in as desired
+ */
+template <typename...>
+class ROSComms;
 
-    /*! \brief This class is used to transfer all the information required to initialize ros topics/services
-    *
-    * The template type is the type of the message that is being published/subscribed to, all the other parameters just need to be filled in as desired
-    */
-    template<typename...> class ROSComms;
+template <typename T>
+// T is the message type
+class ROSComms<T>
+{
+private:
+  std::function<void(T)> callback_function_;
+  CommTypes comm_type_;
+  bool latch_;
+  int queue_size_;
+  std::string topic_;
 
-    template <typename T>
-    // T is the message type
-    class ROSComms<T>{
+public:
+  bool getLatch()
+  {
+    return latch_;
+  }
+  int getQueueSize()
+  {
+    return queue_size_;
+  }
+  std::string getTopic()
+  {
+    return topic_;
+  }
+  CommTypes getCommType()
+  {
+    return comm_type_;
+  }
 
-        private:
+  void callback(T msg);
+  T getTemplateType();
+  ROSComms();
+  ROSComms(CommTypes ct, bool latch, int qs, std::string t);
+  ROSComms(std::function<void(T)> cbf, CommTypes ct, bool latch, int qs, std::string t);
+};
 
-            std::function<void(T)> callback_function_;
-            CommTypes comm_type_;
-            bool latch_;
-            int queue_size_;
-            std::string topic_;
+template <typename M, typename T>
+class ROSComms<M, T>
+{
+private:
+  std::function<void(M, T)> callback_function_;
+  CommTypes comm_type_;
+  std::string topic_;
 
-        public:
+public:
+  std::string getTopic()
+  {
+    return topic_;
+  }
+  CommTypes getCommType()
+  {
+    return comm_type_;
+  }
 
-            bool getLatch(){return latch_;}
-            int getQueueSize(){return queue_size_;}
-            std::string getTopic(){return topic_;}
-            CommTypes getCommType(){return comm_type_;}
-
-            void callback(T msg);
-            T getTemplateType();
-            ROSComms();
-            ROSComms(CommTypes ct, bool latch, int qs, std::string t);
-            ROSComms(std::function<void(T)> cbf, CommTypes ct, bool latch, int qs, std::string t);
-
-    };
-
-    template <typename M, typename T>
-    class ROSComms<M,T>{
-
-        private:
-
-            std::function<void(M, T)> callback_function_;
-            CommTypes comm_type_;
-            std::string topic_;
-        
-        public:
-
-            std::string getTopic(){return topic_;}
-            CommTypes getCommType(){return comm_type_;}
-
-            bool callback(M req, T res);
-            M getReqType();
-            T getResType();
-            ROSComms();
-            ROSComms(std::function<bool(M, T)> cbf, CommTypes ct, std::string t);
-
-    };
-}
+  bool callback(M req, T res);
+  M getReqType();
+  T getResType();
+  ROSComms();
+  ROSComms(std::function<bool(M, T)> cbf, CommTypes ct, std::string t);
+};
+}  // namespace mock_drivers
 
 #include "ROSComms.ipp"

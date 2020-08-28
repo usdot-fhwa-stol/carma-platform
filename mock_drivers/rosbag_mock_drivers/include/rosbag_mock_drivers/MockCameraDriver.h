@@ -25,9 +25,7 @@ namespace mock_drivers
 {
 class MockCameraDriver : public MockDriver
 {
-
 private:
-
   const std::string camera_info_topic_ = "camera/camera_info";
   const std::string image_raw_topic_ = "camera/image_raw";
   const std::string image_rects_topic_ = "camera/image_rects";

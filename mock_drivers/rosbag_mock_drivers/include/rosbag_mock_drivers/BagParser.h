@@ -43,29 +43,27 @@
 #include "rosbag_mock_drivers/ROSComms.h"
 #include "rosbag_mock_drivers/MockDriverNode.h"
 
+namespace mock_drivers
+{
+class BagParser
+{
+private:
+  boost::shared_ptr<ROSComms<cav_simulation_msgs::BagData>> bag_data_pub_ptr_;
+  MockDriverNode mock_driver_node_;
+  rosbag::Bag bag_;
+  std::string file_path_;
+  double rate_ = 100.0;
 
-namespace mock_drivers{
+public:
+  BagParser(std::string file_path, bool dummy = false);
+  bool publishCallback();
+  int run();
+  bool getTopics();
 
-    class BagParser {
+  MockDriverNode getMockDriverNode()
+  {
+    return mock_driver_node_;
+  }
+};
 
-        private:
-
-            boost::shared_ptr<ROSComms<cav_simulation_msgs::BagData>> bag_data_pub_ptr_;
-            MockDriverNode mock_driver_node_;
-            rosbag::Bag bag_;
-            std::string file_path_;
-            double rate_ = 100.0;
-
-        public:
-
-            BagParser(std::string file_path, bool dummy = false);
-            bool publishCallback();
-            int run();
-            bool getTopics();
-
-            MockDriverNode getMockDriverNode() {return mock_driver_node_;}
-
-
-    };
-    
-}
+}  // namespace mock_drivers

@@ -18,28 +18,30 @@
 #include "rosbag_mock_drivers/BagParser.h"
 #include <cav_simulation_msgs/BagData.h>
 
+namespace mock_drivers
+{
+TEST(BagParser, Constructor)
+{
+  BagParser d1("");
+  BagParser d2("", false);
+  BagParser d3("", true);
 
-namespace mock_drivers{
-
-    TEST(BagParser, Constructor){
-        BagParser d1("");
-        BagParser d2("", false);
-        BagParser d3("", true);
-
-        ASSERT_EQ(d1.getMockDriverNode().isDummy(), false);
-        ASSERT_EQ(d2.getMockDriverNode().isDummy(), false);
-        ASSERT_EQ(d3.getMockDriverNode().isDummy(), true);
-    }
-
-    TEST(BagParser, publishCallback){
-        BagParser d("resource/hello_test_bag.bag", true);
-
-        EXPECT_TRUE(d.publishCallback());
-    }
-
-    TEST(BagParser, run){
-        BagParser d("", true);
-        ASSERT_EQ(d.run(), 0);
-    }
-
+  ASSERT_EQ(d1.getMockDriverNode().isDummy(), false);
+  ASSERT_EQ(d2.getMockDriverNode().isDummy(), false);
+  ASSERT_EQ(d3.getMockDriverNode().isDummy(), true);
 }
+
+TEST(BagParser, publishCallback)
+{
+  BagParser d("resource/hello_test_bag.bag", true);
+
+  EXPECT_TRUE(d.publishCallback());
+}
+
+TEST(BagParser, run)
+{
+  BagParser d("", true);
+  ASSERT_EQ(d.run(), 0);
+}
+
+}  // namespace mock_drivers

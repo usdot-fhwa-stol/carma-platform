@@ -17,15 +17,15 @@
 #include <ros/ros.h>
 #include <rosbag_mock_drivers/BagParser.h>
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "bag_parser");
+  ros::init(argc, argv, "bag_parser");
 
-    mock_drivers::BagParser parser_node(argv[1]);
+  mock_drivers::BagParser parser_node(argv[1]);
 
-    ros::Time::init();
+  ros::Time::init();
 
-    parser_node.run();
-    
-    return 0;
+  parser_node.run();
+
+  return 0;
 }

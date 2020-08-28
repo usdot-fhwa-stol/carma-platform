@@ -19,26 +19,22 @@
 #include "rosbag_mock_drivers/MockDriver.h"
 #include <cav_msgs/ByteArray.h>
 
+namespace mock_drivers
+{
+class MockCommsDriver : public MockDriver
+{
+private:
+  ConstPtrRefROSCommsPtr<cav_msgs::ByteArray> outbound_sub_ptr_;
 
-namespace mock_drivers{
+  const std::string inbound_binary_topic_ = "inbound_binary_msg";
+  const std::string outbound_binary_topic_ = "outbound_binary_msg";
 
-    class MockCommsDriver : public MockDriver {
+  void outboundCallback(const cav_msgs::ByteArray::ConstPtr& msg);
 
-        private:
+public:
+  MockCommsDriver(bool dummy = false);
+  int run();
+  bool driverDiscovery();
+};
 
-            ConstPtrRefROSCommsPtr<cav_msgs::ByteArray> outbound_sub_ptr_;
-
-            const std::string inbound_binary_topic_ = "inbound_binary_msg";
-            const std::string outbound_binary_topic_ = "outbound_binary_msg";
-
-            void outboundCallback(const cav_msgs::ByteArray::ConstPtr& msg);
-
-        public:
-
-            MockCommsDriver(bool dummy = false);
-            int run();
-            bool driverDiscovery();
-
-    };
-
-}
+}  // namespace mock_drivers

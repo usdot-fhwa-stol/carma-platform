@@ -1,2 +1,7 @@
 #pragma once
-enum class CommTypes {pub, sub, srv};
+enum class CommTypes
+{
+  pub,
+  sub,
+  srv
+};
