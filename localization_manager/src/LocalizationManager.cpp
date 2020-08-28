@@ -45,7 +45,7 @@ void LocalizationManager::publishPoseStamped(const geometry_msgs::PoseStamped& p
 
   tf_msg.header.stamp = pose.header.stamp;
   tf_msg.header.frame_id = "map";
-  tf_msg.child_frame_id = pose.header.frame_id;
+  tf_msg.child_frame_id = "base_link";
   tf_msg.transform.translation.x = pose.pose.position.x;
   tf_msg.transform.translation.y = pose.pose.position.y;
   tf_msg.transform.translation.z = pose.pose.position.z;
