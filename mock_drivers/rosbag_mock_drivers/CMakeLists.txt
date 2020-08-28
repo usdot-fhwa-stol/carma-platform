@@ -64,7 +64,6 @@ add_library(${PROJECT_NAME}
   src/MockLidarDriver.cpp
   src/MockRadarDriver.cpp
   src/MockRoadwaySensorDriver.cpp
-  src/BagParser.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -75,31 +74,22 @@ add_executable(mock_driver
   src/main.cpp
 )
 
-add_executable(bag_parser
-  src/parser_main.cpp
-  src/BagParser.cpp
-)
 
 ## Add cmake target dependencies of the executable
 add_dependencies(mock_driver ${${PROJECT_NAME}_EXPORTED_TARGETS} ${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-add_dependencies(bag_parser ${${PROJECT_NAME}_EXPORTED_TARGETS} ${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(mock_driver
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 
-target_link_libraries(bag_parser
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
 
 #############
 ## Install ##
 #############
 
 ## Mark executables for installation
-install(TARGETS mock_driver bag_parser
+install(TARGETS mock_driver
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
@@ -139,16 +129,6 @@ catkin_add_gmock(${PROJECT_NAME}-test
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test
 )
 
-catkin_add_gmock(bag_parser-test
-  test/TestMain.cpp
-  test/BagParserTest.cpp
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test
-)
-
 if(TARGET ${PROJECT_NAME}-test)
   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
-endif()
-
-if(TARGET bag_parser-test)
-  target_link_libraries(bag_parser-test ${PROJECT_NAME} ${catkin_LIBRARIES})
 endif()

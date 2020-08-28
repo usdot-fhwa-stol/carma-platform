@@ -26,7 +26,6 @@
 #include <rosbag_mock_drivers/MockLidarDriver.h>
 #include <rosbag_mock_drivers/MockRadarDriver.h>
 #include <rosbag_mock_drivers/MockRoadwaySensorDriver.h>
-#include <rosbag_mock_drivers/BagParser.h>
 
 int main(int argc, char** argv)
 {
