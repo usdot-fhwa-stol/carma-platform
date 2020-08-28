@@ -115,20 +115,26 @@ install(DIRECTORY launch
 #############
 
 ## Add gtest based cpp test target and link libraries
-catkin_add_gmock(${PROJECT_NAME}-test
-  test/TestMain.cpp
-  test/MockCameraDriverTest.cpp
-  test/MockCANDriverTest.cpp
-  test/MockCommsDriverTest.cpp
-  test/MockControllerDriverTest.cpp
-  test/MockGNSSDriverTest.cpp
-  test/MockIMUDriverTest.cpp
-  test/MockLidarDriverTest.cpp
-  test/MockRadarDriverTest.cpp
-  test/MockRoadwaySensorDriverTest.cpp
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test
-)
+# catkin_add_gmock(${PROJECT_NAME}-test
+#   test/TestMain.cpp
+#   test/MockCameraDriverTest.cpp
+#   test/MockCANDriverTest.cpp
+#   test/MockCommsDriverTest.cpp
+#   test/MockControllerDriverTest.cpp
+#   test/MockGNSSDriverTest.cpp
+#   test/MockIMUDriverTest.cpp
+#   test/MockLidarDriverTest.cpp
+#   test/MockRadarDriverTest.cpp
+#   test/MockRoadwaySensorDriverTest.cpp
+#   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test
+# )
 
-if(TARGET ${PROJECT_NAME}-test)
-  target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
+# if(TARGET ${PROJECT_NAME}-test)
+#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
+# endif()
+
+if (CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(mock_lidar_test test/mock_lidar.test test/MockLidarDriverROSTest.cpp)
+  target_link_libraries(mock_lidar_test ${catkin_LIBRARIES})
 endif()
