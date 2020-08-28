@@ -89,18 +89,6 @@ namespace route_following_plugin
             double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
             double dist_diff = end_dist - current_progress;
 
-            resp.new_plan.maneuvers.push_back(
-                composeManeuverMessage(current_progress, end_dist, 
-                                       speed_progress, RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS, 
-                                       shortest_path[last_lanelet_index].id(), ros::Time::now()));
-
-            current_progress += dist_diff;
-            speed_progress = RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
-            if(current_progress >= total_maneuver_length || last_lanelet_index == shortest_path.size() - 1)
-            {
-                break;
-            }
-
             auto following_lanelets = wm_->getRoute()->followingRelations(shortest_path[last_lanelet_index]);
             if(following_lanelets.size() == 0)
             {
@@ -110,8 +98,9 @@ namespace route_following_plugin
             if(identifyLaneChange(following_lanelets, shortest_path[last_lanelet_index + 1].id()))
             {
                 //calculate start distance
-                double acc_long=(RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS-speed_progress)/LANE_CHANGE_TIME_MAX;
-                double start_dist=(end_dist-current_progress)-(speed_progress*LANE_CHANGE_TIME_MAX)-0.5*(acc_long)*pow(LANE_CHANGE_TIME_MAX,2);
+                double longl_acceleration=(RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS-speed_progress)/LANE_CHANGE_TIME_MAX;
+                double lane_change_dist=(speed_progress*LANE_CHANGE_TIME_MAX)+0.5*(longl_acceleration)*pow(LANE_CHANGE_TIME_MAX,2);
+                double start_dist=end_dist-current_progress-lane_change_dist;
                 double start_time=start_dist/speed_progress;
                 //lane following till start_distance
                 resp.new_plan.maneuvers.push_back(
@@ -123,13 +112,21 @@ namespace route_following_plugin
                 composeManeuverMessage_lanechange(start_dist, end_dist, 
                                        speed_progress, RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS, 
                                        shortest_path[last_lanelet_index].id(),shortest_path[last_lanelet_index + 1].id(), ros::Time(start_time)));
-                ++last_lanelet_index;
             }
             else
             {
-                ROS_WARN_STREAM("Cannot find the next lanelet in the current lanelet's successor list!");
-                return true;
+                resp.new_plan.maneuvers.push_back(
+                composeManeuverMessage(current_progress, end_dist, 
+                                       speed_progress, RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS, 
+                                       shortest_path[last_lanelet_index].id(), ros::Time::now()));
+                //ROS_WARN_STREAM("Cannot find the next lanelet in the current lanelet's successor list!");
+                //return true;
             }
+            ++last_lanelet_index;
+
+            current_progress += dist_diff;
+            speed_progress = RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
+            
         }
         if(resp.new_plan.maneuvers.size() == 0)
         {
