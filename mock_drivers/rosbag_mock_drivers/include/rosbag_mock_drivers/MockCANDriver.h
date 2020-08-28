@@ -30,29 +30,10 @@ namespace mock_drivers
 class MockCANDriver : public MockDriver
 {
 private:
-    steering_wheel_angle_pub_ = nh_->advertise<std_msgs::Float64>("can/steering_wheel_angle", 1);
-    brake_position_pub_ = nh_->advertise<std_msgs::Float64>("can/brake_position", 1);
-    transmission_pub_ = nh_->advertise<j2735_msgs::TransmissionState>("can/transmission_state", 1);
-  const std::string acc_engaged_topic_ = "acc_engaged";
-  const std::string acceleration_topic_ = "acceleration";
-  const std::string antilock_brakes_topic_ = "antilock_brakes_active";
   const std::string brake_position_topic_ = "can/brake_position";
-  const std::string engine_speed_topic_ = "engine_speed";
-  const std::string fuel_flow_topic_ = "fuel_flow";
-  const std::string odometer_topic_ = "odometer";
-  const std::string parking_brake_topic_ = "parking_brake";
-  const std::string speed_topic_ = "speed";
-  const std::string stability_ctrl_active_topic_ = "stability_ctrl_active";
-  const std::string stability_ctrl_enabled_topic_ = "stability_ctrl_enabled";
   const std::string steering_wheel_angle_topic_ = "can/steering_wheel_angle";
-  const std::string throttle_position_topic_ = "throttle_position";
-  const std::string traction_ctrl_active_topic_ = "traction_ctrl_active";
-  const std::string traction_ctrl_enabled_topic_ = "traction_ctrl_enabled";
   const std::string transmission_state_topic_ = "can/transmission_state";
-  const std::string turn_signal_state_topic_ = "turn_signal_state";
   const std::string vehicle_twist = "vehicle/twist";
-  const std::string vehicle_status_topic_ = "vehicle_status";
-  const std::string velocity_accel_topic_ = "velocity_accel";
 
 public:
   MockCANDriver(bool dummy = false);
