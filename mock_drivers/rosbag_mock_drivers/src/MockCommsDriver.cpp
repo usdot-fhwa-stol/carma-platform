@@ -40,18 +40,6 @@ namespace mock_drivers{
 
         return true;
     }
-
-    void MockCommsDriver::parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg){
-        // generate messages from bag data
-        if(msg->inbound_binary_msg_flag){
-            cav_msgs::ByteArray inbound_binary_msg = msg->inbound_binary_msg;
-            // update time stamps
-            inbound_binary_msg.header.stamp = ros::Time::now();
-            // publish the data
-            mock_driver_node_.publishData<cav_msgs::ByteArray>("comms/inbound_binary_msg", inbound_binary_msg);  
-        }
-    }
-
     
     void MockCommsDriver::outboundCallback(const cav_msgs::ByteArray::ConstPtr& msg){
         ROS_DEBUG_STREAM("Received Byte Array of type: " << msg->messageType);
@@ -70,9 +58,6 @@ namespace mock_drivers{
 
         mock_driver_node_.init();
 
-        // bag parser subscriber
-        mock_driver_node_.addSub(bag_parser_sub_ptr_);
-
         // driver publisher and subscriber
         addPassthroughPub<cav_msgs::ByteArray>(bag_prefix_ + inbound_binary_topic_, inbound_binary_topic_, false, 10);
 
@@ -82,7 +67,7 @@ namespace mock_drivers{
         mock_driver_node_.addPub(driver_discovery_pub_ptr_);
         mock_driver_node_.setSpinCallback(std::bind(&MockCommsDriver::driverDiscovery, this));
 
-        mock_driver_node_.spin(100);
+        mock_driver_node_.spin(20);
 
         return 0;
     }

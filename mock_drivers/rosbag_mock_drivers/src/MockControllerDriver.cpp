@@ -48,17 +48,6 @@ bool MockControllerDriver::driverDiscovery()
   return true;
 }
 
-void MockControllerDriver::parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg)
-{
-  // generate messages from bag data
-  if (msg->robot_status_flag)
-  {
-    cav_msgs::RobotEnabled robot_status = msg->robot_status;
-    // publish the data
-    mock_driver_node_.publishDataNoHeader<cav_msgs::RobotEnabled>("controller/robot_status", robot_status);
-  }
-}
-
 void MockControllerDriver::vehicleCmdCallback(const autoware_msgs::VehicleCmd::ConstPtr& msg)
 {
   robot_enabled_ = true;  // If a command was received set the robot enabled status to true;

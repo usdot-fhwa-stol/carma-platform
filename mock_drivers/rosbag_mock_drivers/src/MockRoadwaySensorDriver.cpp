@@ -41,24 +41,6 @@ namespace mock_drivers{
         return true;
     }
 
-    void MockRoadwaySensorDriver::parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg){
-        // generate messages from bag data
-
-        ros::Time curr_time = ros::Time::now();
-
-        if(msg->detected_objects_flag){
-            derived_object_msgs::ObjectWithCovariance detected_objects = msg->detected_objects;
-            detected_objects.header.stamp = curr_time;
-            mock_driver_node_.publishData<derived_object_msgs::ObjectWithCovariance>("roadway_sensor/detected_objects", detected_objects);
-        }
-        
-        if(msg->lane_models_flag){
-            derived_object_msgs::LaneModels lane_models = msg->lane_models;
-            lane_models.header.stamp = curr_time;
-            mock_driver_node_.publishData<derived_object_msgs::LaneModels>("roadway_sensor/lane_models", lane_models);  
-        }
-    }
-
 
     MockRoadwaySensorDriver::MockRoadwaySensorDriver(bool dummy){
 

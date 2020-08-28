@@ -41,17 +41,6 @@ namespace mock_drivers{
         return true;
     }
 
-    void MockGNSSDriver::parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg){
-        // generate messages from bag data
-        if(msg->gnss_fixed_fused_flag){
-            gps_common::GPSFix gnss_fixed_fused = msg->gnss_fixed_fused;
-            // update time stamps
-            gnss_fixed_fused.header.stamp = ros::Time::now();
-            // publish the data
-            mock_driver_node_.publishData<gps_common::GPSFix>("gnss/gnss_fixed_fused", gnss_fixed_fused);
-        }
-    }
-
     MockGNSSDriver::MockGNSSDriver(bool dummy){
 
         mock_driver_node_ = MockDriverNode(dummy);    

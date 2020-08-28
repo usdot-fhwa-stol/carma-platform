@@ -31,7 +31,6 @@ namespace mock_drivers{
 
             MockIMUDriver(bool dummy = false);
             int run();
-            void parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg);
             bool driverDiscovery();
 
     };

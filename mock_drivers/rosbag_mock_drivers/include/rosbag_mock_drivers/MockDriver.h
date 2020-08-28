@@ -43,13 +43,6 @@ protected:
   MockDriverNode mock_driver_node_;
   const std::string bag_prefix_ = "/bag/hardware_interface/";
 
-  std::function<void(const cav_simulation_msgs::BagData::ConstPtr&)> bag_parser_cb_ptr_ =
-      std::bind(&MockDriver::parserCB, this, std::placeholders::_1);
-  boost::shared_ptr<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>> bag_parser_sub_ptr_ =
-      boost::make_shared<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>>(
-          ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>(bag_parser_cb_ptr_, CommTypes::sub, false, 10,
-                                                                  "bag_data"));
-
   boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>> driver_discovery_pub_ptr_ =
       boost::make_shared<ROSComms<cav_msgs::DriverStatus>>(
           ROSComms<cav_msgs::DriverStatus>(CommTypes::pub, false, 10, "driver_discovery"));
@@ -73,16 +66,8 @@ public:
   /*! \brief A function to initialize the publishers and subsricers and start the node */
   virtual int run() = 0;
 
-  /*! \brief A function to support the bag_parser callback that all mock drivers support */
-  virtual void parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg) = 0;
-
   /*! \brief A function to call at 1 Hz to publish to the driver discovery topic */
   virtual bool driverDiscovery() = 0;
-
-  boost::shared_ptr<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>> getBagComms()
-  {
-    return bag_parser_sub_ptr_;
-  };
 
   /*! \brief Returns the mock driver node for the mock driver (used for testing) */
   MockDriverNode getMockDriverNode()

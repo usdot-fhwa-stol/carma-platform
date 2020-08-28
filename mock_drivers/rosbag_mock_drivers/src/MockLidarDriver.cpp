@@ -41,23 +41,6 @@ namespace mock_drivers{
         ROS_ERROR_STREAM("3");
         return true;
     }
-    
-    void MockLidarDriver::parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg){
-        // generate messages from bag data
-        ROS_ERROR_STREAM("4");
-        if(msg->points_raw_flag){
-            ROS_ERROR_STREAM("5");
-            sensor_msgs::PointCloud2 updated_msg = msg->points_raw;
-            // update time stamps
-            ROS_ERROR_STREAM("6");
-            updated_msg.header.stamp = ros::Time::now();
-            ROS_ERROR_STREAM("7");
-            // publish the data
-            mock_driver_node_.publishData<sensor_msgs::PointCloud2>("lidar/points_raw", updated_msg);
-            ROS_ERROR_STREAM("8");
-        }
-        
-    }
 
     MockLidarDriver::MockLidarDriver(bool dummy){
 

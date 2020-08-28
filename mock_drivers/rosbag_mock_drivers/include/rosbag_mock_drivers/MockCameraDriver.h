@@ -36,11 +36,7 @@ private:
 public:
   MockCameraDriver(bool dummy = false);
   int run();
-  void parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg);
   bool driverDiscovery();
-
-  //            void addPassthroughPub(const std::string& sub_topic, ConstPtrRefROSCommsPtr<T>& sub_ptr, const
-  //            std::string& pub_topic, ROSCommsPtr<T>& pub_ptr, bool latch, size_t queue_size) {
 };
 
 }  // namespace mock_drivers
