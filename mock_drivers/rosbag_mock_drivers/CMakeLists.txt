@@ -114,27 +114,36 @@ install(DIRECTORY launch
 ## Testing ##
 #############
 
-## Add gtest based cpp test target and link libraries
-# catkin_add_gmock(${PROJECT_NAME}-test
-#   test/TestMain.cpp
-#   test/MockCameraDriverTest.cpp
-#   test/MockCANDriverTest.cpp
-#   test/MockCommsDriverTest.cpp
-#   test/MockControllerDriverTest.cpp
-#   test/MockGNSSDriverTest.cpp
-#   test/MockIMUDriverTest.cpp
-#   test/MockLidarDriverTest.cpp
-#   test/MockRadarDriverTest.cpp
-#   test/MockRoadwaySensorDriverTest.cpp
-#   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test
-# )
-
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
-# endif()
-
 if (CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
   add_rostest_gtest(mock_lidar_test test/mock_lidar.test test/MockLidarDriverROSTest.cpp)
   target_link_libraries(mock_lidar_test ${catkin_LIBRARIES})
+
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(mock_gnss_test test/mock_gnss.test test/MockGNSSDriverROSTest.cpp)
+  target_link_libraries(mock_gnss_test ${catkin_LIBRARIES})
+
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(mock_imu_test test/mock_imu.test test/MockIMUDriverROSTest.cpp)
+  target_link_libraries(mock_imu_test ${catkin_LIBRARIES})
+
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(mock_camera_test test/mock_camera.test test/MockCameraDriverROSTest.cpp)
+  target_link_libraries(mock_camera_test ${catkin_LIBRARIES})
+
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(mock_can_test test/mock_can.test test/MockCANDriverROSTest.cpp)
+  target_link_libraries(mock_can_test ${catkin_LIBRARIES})
+
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(mock_radar_test test/mock_radar.test test/MockRadarDriverROSTest.cpp)
+  target_link_libraries(mock_radar_test ${catkin_LIBRARIES})
+
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(mock_roadway_sensor_test test/mock_roadway_sensor.test test/MockRoadwaySensorDriverROSTest.cpp)
+  target_link_libraries(mock_roadway_sensor_test ${catkin_LIBRARIES})
+
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(mock_controller_test test/mock_controller.test test/MockControllerDriverROSTest.cpp)
+  target_link_libraries(mock_controller_test ${catkin_LIBRARIES})
 endif()

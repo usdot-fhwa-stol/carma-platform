@@ -16,38 +16,38 @@
 
 #include <gmock/gmock.h>
 #include <ros/ros.h>
-#include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/Imu.h>
 #include "test_utils.h"
 
 namespace mock_drivers
 {
-TEST(MockLidarDriver, points_raw_topic)
+TEST(MockImuDriver, imu_topic)
 {
   ros::NodeHandle nh;
 
-  bool got_points = false;
+  bool got_imu = false;
 
-  ros::Publisher bag_points_pub =
-      nh.advertise<sensor_msgs::PointCloud2>("/bag/hardware_interface/lidar/points_raw", 5);
+  ros::Publisher pub =
+      nh.advertise<sensor_msgs::Imu>("/bag/hardware_interface/imu", 5);
 
-  ros::Subscriber points_sub = nh.subscribe<sensor_msgs::PointCloud2>(
-      "/hardware_interface/lidar/points_raw", 5,
-      [&](const sensor_msgs::PointCloud2ConstPtr& msg) -> void { got_points = true; });
+  ros::Subscriber sub = nh.subscribe<sensor_msgs::Imu>(
+      "/hardware_interface/imu", 5,
+      [&](const sensor_msgs::ImuConstPtr& msg) -> void { got_imu = true; });
 
-  ASSERT_TRUE(testing::waitForSubscribers(bag_points_pub, 2, 10000));
+  ASSERT_TRUE(testing::waitForSubscribers(pub, 2, 10000));
 
-  sensor_msgs::PointCloud2 points;
-  bag_points_pub.publish(points);
+  sensor_msgs::Imu msg;
+  pub.publish(msg);
 
   ros::Rate r(10);  // 10 hz
   ros::WallTime endTime = ros::WallTime::now() + ros::WallDuration(10.0);
-  while (ros::ok() && endTime > ros::WallTime::now() && !got_points)
+  while (ros::ok() && endTime > ros::WallTime::now() && !got_imu)
   {
     ros::spinOnce();
     r.sleep();
   }
 
-  ASSERT_TRUE(got_points);
+  ASSERT_TRUE(got_imu);
 }
 
 }  // namespace mock_drivers
@@ -58,7 +58,7 @@ TEST(MockLidarDriver, points_raw_topic)
 int main(int argc, char** argv)
 {
   testing::InitGoogleTest(&argc, argv);
-  ros::init(argc, argv, "mock_lidar_test");
+  ros::init(argc, argv, "mock_gnss_test");
 
   auto res = RUN_ALL_TESTS();
 

@@ -61,7 +61,7 @@ int MockCANDriver::run()
   addPassthroughPub<geometry_msgs::TwistStamped>(bag_prefix_ + vehicle_twist, vehicle_twist, false, 10);
 
   // driver discovery publisher
-  mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>>>(driver_discovery_pub_ptr_);
+  mock_driver_node_.addPub(driver_discovery_pub_ptr_);
   mock_driver_node_.setSpinCallback(std::bind(&MockCANDriver::driverDiscovery, this));
 
   mock_driver_node_.spin(50);

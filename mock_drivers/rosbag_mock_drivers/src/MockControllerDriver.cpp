@@ -56,9 +56,11 @@ void MockControllerDriver::vehicleCmdCallback(const autoware_msgs::VehicleCmd::C
 bool MockControllerDriver::enableRoboticSrv(cav_srvs::SetEnableRobotic::Request& req,
                                             cav_srvs::SetEnableRobotic::Response& res)
 {
-  if (robot_enabled_)
+  if (robot_enabled_ && req.set == cav_srvs::SetEnableRobotic::Request::ENABLE)
   {
     robot_active_ = true;
+  } else {
+    robot_active_ = false;
   }
 
   return true;
