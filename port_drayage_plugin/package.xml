@@ -12,6 +12,7 @@
   <depend>cav_srvs</depend>
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
+  <depend>carma_wm</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

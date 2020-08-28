@@ -19,6 +19,7 @@
 #include <ros/ros.h>
 #include <carma_utils/CARMAUtils.h>
 #include <memory>
+#include <cav_srvs/PlanManeuvers.h>
 
 namespace port_drayage_plugin
 {
@@ -36,6 +37,10 @@ namespace port_drayage_plugin
             std::shared_ptr<ros::Subscriber> _maneuver_plan_subscriber = nullptr;
             std::shared_ptr<ros::Subscriber> _cur_speed_subscriber = nullptr;
             std::shared_ptr<ros::Publisher> _outbound_mobility_operations_publisher = nullptr;
+            
+            // ROS service servers
+            ros::ServiceServer plan_maneuver_srv_;        
+
         public:
             /**
              * \brief Basic constructor for initializing the Port Drayage Plugin
@@ -63,5 +68,13 @@ namespace port_drayage_plugin
              * \return The exit code of the application
              */
             int run();
+
+            /**
+             * \brief Service callback for arbitrator maneuver planning
+             * \param req Plan maneuver request
+             * \param resp Plan maneuver response with a list of maneuver plan
+             * \return If service call successed
+             */
+            bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
     };
 } // namespace port_drayage_plugin

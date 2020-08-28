@@ -90,4 +90,48 @@ namespace port_drayage_plugin
 
         return msg;
     }
+
+    geometry_msgs::PoseStampedConstPtr PortDrayageWorker::lookup_stop_pose(geometry_msgs::PoseStampedConstPtr pose_msg_) const {
+        lanelet::BasicPoint2d current_loc(pose_msg_->pose.position.x, pose_msg_->pose.position.y);
+        auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc, 1);
+
+        if(current_lanelets.size() == 0) {
+            ROS_WARN_STREAM("Cannot find any lanelet in map!");
+            return NULL;
+        }
+        else {
+            auto current_lanelet = current_lanelets[0];
+            // auto access_rules = current_lanelet.second.regulatoryElementsAs<RegionAccessRule>();
+            // if(access_rules.empty()){
+            //     return NULL;
+            // } else{
+            //     RegionAccessRule::Ptr stopRegelem = access_rules.front();
+            //     // TODO get stopRegelem position and return the pose
+            //     geometry_msgs::PoseStampedConstPtr pose;
+            //     return pose;
+            // }
+
+            geometry_msgs::PoseStampedConstPtr pose;
+            return pose;   // place holder remove after uncommenting above
+        }
+    }
+
+    cav_msgs::Maneuver PortDrayageWorker::composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time current_time)
+    {
+        cav_msgs::Maneuver maneuver_msg;
+        maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+        maneuver_msg.lane_following_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
+        maneuver_msg.lane_following_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
+        maneuver_msg.lane_following_maneuver.parameters.planning_tactical_plugin = "StopAndWaitPlugin";
+        maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin = "PortDrayageWorkerPlugin";
+        maneuver_msg.lane_following_maneuver.start_dist = current_dist;
+        maneuver_msg.lane_following_maneuver.start_speed = current_speed;
+        maneuver_msg.lane_following_maneuver.start_time = current_time;
+        maneuver_msg.lane_following_maneuver.end_dist = end_dist;
+        maneuver_msg.lane_following_maneuver.end_speed = target_speed;
+        maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration((end_dist - current_dist) / (0.5 * (current_speed + target_speed)));
+        maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
+        return maneuver_msg;
+    }
+
 } // namespace port_drayage_plugin

@@ -57,6 +57,9 @@ namespace port_drayage_plugin
         });
         _cur_speed_subscriber = std::make_shared<ros::Subscriber>(twist_sub);
 
+
+        plan_maneuver_srv_ = _nh->advertiseService("strategic_plan/plan_maneuvers", &PortDrayagePlugin::plan_maneuver_cb, this);
+
         std::function<bool()> spin_cb = [&]() {
             return pdw.spin();
         };
@@ -66,5 +69,9 @@ namespace port_drayage_plugin
 
         return 0;
     }
+
+    bool PortDrayagePlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp){
+
+    };
     // @SONAR_START@
 } // namespace port_drayage_plugin
