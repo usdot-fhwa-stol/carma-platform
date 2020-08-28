@@ -110,7 +110,7 @@ namespace route_following_plugin
             if(identifyLaneChange(following_lanelets, shortest_path[last_lanelet_index + 1].id()))
             {
                 //calculate start distance
-                double acc_long=(target_speed-speed_progress)/LANE_CHANGE_TIME_MAX;
+                double acc_long=(RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS-speed_progress)/LANE_CHANGE_TIME_MAX;
                 double start_dist=(end_dist-current_progress)-(speed_progress*LANE_CHANGE_TIME_MAX)-0.5*(acc_long)*pow(LANE_CHANGE_TIME_MAX,2);
                 double start_time=start_dist/speed_progress;
                 //lane following till start_distance
