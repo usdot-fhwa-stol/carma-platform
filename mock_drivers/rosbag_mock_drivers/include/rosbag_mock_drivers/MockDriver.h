@@ -26,45 +26,116 @@
 #include "rosbag_mock_drivers/MockDriverNode.h"
 #include "rosbag_mock_drivers/comm_types.h"
 
-namespace mock_drivers{
+namespace mock_drivers
+{
+/*! \brief The template node for the mock drivers that will handle all of the driver logic
+ *
+ * This class will have virtual functions that define what to do when the mock driver is run,
+ * as well as a callback function for when the driver gets a message from the bag parser node.
+ *
+ * It will also have build in default mock driver publishers and subscribers baked in, such
+ * as the driver discovery publisher.
+ */
 
-    /*! \brief The template node for the mock drivers that will handle all of the driver logic
-    *
-    * This class will have virtual functions that define what to do when the mock driver is run,
-    * as well as a callback function for when the driver gets a message from the bag parser node.
-    * 
-    * It will also have build in default mock driver publishers and subscribers baked in, such
-    * as the driver discovery publisher.
-    */
+class MockDriver
+{
+protected:
+  MockDriverNode mock_driver_node_;
+  const std::string bag_prefix_ = "/bag/hardware_interface/";
 
-    class MockDriver{
+  std::function<void(const cav_simulation_msgs::BagData::ConstPtr&)> bag_parser_cb_ptr_ =
+      std::bind(&MockDriver::parserCB, this, std::placeholders::_1);
+  boost::shared_ptr<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>> bag_parser_sub_ptr_ =
+      boost::make_shared<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>>(
+          ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>(bag_parser_cb_ptr_, CommTypes::sub, false, 10,
+                                                                  "bag_data"));
 
-        protected:
+  boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>> driver_discovery_pub_ptr_ =
+      boost::make_shared<ROSComms<cav_msgs::DriverStatus>>(
+          ROSComms<cav_msgs::DriverStatus>(CommTypes::pub, false, 10, "driver_discovery"));
 
-        MockDriverNode mock_driver_node_;
-        
-        std::function<void(const cav_simulation_msgs::BagData::ConstPtr&)> bag_parser_cb_ptr_ = std::bind(&MockDriver::parserCB, this, std::placeholders::_1);
-        boost::shared_ptr<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>> bag_parser_sub_ptr_ = boost::make_shared<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>>(ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>(bag_parser_cb_ptr_, CommTypes::sub, false, 10, "bag_data"));
-        
-        boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>> driver_discovery_pub_ptr_ = boost::make_shared<ROSComms<cav_msgs::DriverStatus>>(ROSComms<cav_msgs::DriverStatus>(CommTypes::pub, false, 10, "driver_discovery"));
+public:
+  template <class T>
+  using ConstPtr = boost::shared_ptr<const T>;
 
-        public:
+  template <class T>
+  using ConstPtrRef = const ConstPtr<T>&;
 
-        /*! \brief A function to initialize the publishers and subsricers and start the node */        
-        virtual int run() = 0;
-        
-        /*! \brief A function to support the bag_parser callback that all mock drivers support */      
-        virtual void parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg) = 0;
-        
-        /*! \brief A function to call at 1 Hz to publish to the driver discovery topic */                
-        virtual bool driverDiscovery() = 0;
+  template <class T>
+  using ROSCommsPtr = boost::shared_ptr<ROSComms<T>>;
 
-        boost::shared_ptr<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>> getBagComms() {return bag_parser_sub_ptr_;};
+  template <class T>
+  using ConstPtrRefROSComms = ROSComms<ConstPtrRef<T>>;
 
-        /*! \brief Returns the mock driver node for the mock driver (used for testing) */        
-        MockDriverNode getMockDriverNode() {return mock_driver_node_;}
-        
+  template <class T>
+  using ConstPtrRefROSCommsPtr = ROSCommsPtr<ConstPtrRef<T>>;
 
-    };
-    
-}
+  /*! \brief A function to initialize the publishers and subsricers and start the node */
+  virtual int run() = 0;
+
+  /*! \brief A function to support the bag_parser callback that all mock drivers support */
+  virtual void parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg) = 0;
+
+  /*! \brief A function to call at 1 Hz to publish to the driver discovery topic */
+  virtual bool driverDiscovery() = 0;
+
+  boost::shared_ptr<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>> getBagComms()
+  {
+    return bag_parser_sub_ptr_;
+  };
+
+  /*! \brief Returns the mock driver node for the mock driver (used for testing) */
+  MockDriverNode getMockDriverNode()
+  {
+    return mock_driver_node_;
+  }
+
+  /*! \brief Function adds both a publisher and subscriber */
+  // TODO: This function can be simplified using C++ 17
+  template <typename T>
+  void addPassthroughPub(const std::string& sub_topic, const std::string& pub_topic, bool latch, size_t queue_size)
+  {
+    // Create pointers for publishers
+    ROSCommsPtr<T> pub_ptr = boost::make_shared<ROSComms<T>>(CommTypes::pub, latch, queue_size, pub_topic);
+
+    mock_driver_node_.addPub(pub_ptr);
+
+    std::function<void(ConstPtrRef<T>)> callback = std::bind(
+        [&](ConstPtrRef<T> in) {
+          T out;
+          out.header.stamp = ros::Time::now();
+          mock_driver_node_.publishData<const T&>(pub_topic, out);
+        },
+        std::placeholders::_1);
+
+    ConstPtrRefROSCommsPtr<T> outbound_sub_ptr_ =
+        boost::make_shared<ConstPtrRefROSComms<T>>(callback, CommTypes::sub, false, queue_size, sub_topic);
+
+    mock_driver_node_.addSub(outbound_sub_ptr_);
+  }
+
+  /*! \brief Function adds both a publisher and subscriber */  // void (*sub_cb)(ConstPtrRef<T>)
+  template <typename T>
+  void addPassthroughPubNoHeader(const std::string& sub_topic, const std::string& pub_topic, bool latch,
+                                 size_t queue_size)
+  {
+    // Create pointers for publishers
+    ROSCommsPtr<T> pub_ptr = boost::make_shared<ROSComms<T>>(CommTypes::pub, latch, queue_size, pub_topic);
+
+    mock_driver_node_.addPub(pub_ptr);
+
+    std::function<void(ConstPtrRef<T>)> callback = std::bind(
+        [&](ConstPtrRef<T> in) {
+          T out;
+          mock_driver_node_.publishDataNoHeader<const T&>(pub_topic, out);
+        },
+        std::placeholders::_1);
+
+    ConstPtrRefROSCommsPtr<T> outbound_sub_ptr_ =
+        boost::make_shared<ConstPtrRefROSComms<T>>(callback, CommTypes::sub, false, queue_size, sub_topic);
+
+    mock_driver_node_.addSub(outbound_sub_ptr_);
+  }
+};
+
+}  // namespace mock_drivers

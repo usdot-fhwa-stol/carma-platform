@@ -61,27 +61,21 @@ namespace mock_drivers{
 
     MockLidarDriver::MockLidarDriver(bool dummy){
 
-        mock_driver_node_ = MockDriverNode(dummy);
-
-        points_raw_ptr_ = boost::make_shared<ROSComms<sensor_msgs::PointCloud2>>(ROSComms<sensor_msgs::PointCloud2>(CommTypes::pub, false, 10, "lidar/points_raw"));
-        
+        mock_driver_node_ = MockDriverNode(dummy);        
     }
 
     int MockLidarDriver::run(){
 
         mock_driver_node_.init();
 
-        // bag parser subscriber
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
-
         // driver publisher and subscriber
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<sensor_msgs::PointCloud2>>>(points_raw_ptr_);
+        addPassthroughPub<sensor_msgs::PointCloud2>(bag_prefix_ + points_raw_topic_, points_raw_topic_, false, 10);
 
         // driver discovery publisher
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>>>(driver_discovery_pub_ptr_);
+        mock_driver_node_.addPub(driver_discovery_pub_ptr_);
         mock_driver_node_.setSpinCallback(std::bind(&MockLidarDriver::driverDiscovery, this));
 
-        mock_driver_node_.spin(100);
+        mock_driver_node_.spin(20);
         return 0;
     }
 

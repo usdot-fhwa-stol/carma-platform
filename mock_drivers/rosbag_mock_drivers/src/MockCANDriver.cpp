@@ -159,59 +159,36 @@ namespace mock_drivers{
 
         mock_driver_node_ = MockDriverNode(dummy);
 
-        acc_engaged_ptr_ = boost::make_shared<ROSComms<std_msgs::Bool>>(ROSComms<std_msgs::Bool>(CommTypes::pub, false, 10, "acc_engaged"));
-        acceleration_ptr_ = boost::make_shared<ROSComms<std_msgs::Float64>>(ROSComms<std_msgs::Float64>(CommTypes::pub, false, 10, "acceleration"));
-        antilock_brakes_active_ptr_ = boost::make_shared<ROSComms<std_msgs::Bool>>(ROSComms<std_msgs::Bool>(CommTypes::pub, false, 10, "antilock_brakes_active"));
-        brake_lights_ptr_ = boost::make_shared<ROSComms<std_msgs::Bool>>(ROSComms<std_msgs::Bool>(CommTypes::pub, false, 10, "brake_lights"));
-        brake_position_ptr_ = boost::make_shared<ROSComms<std_msgs::Float64>>(ROSComms<std_msgs::Float64>(CommTypes::pub, false, 10, "brake_position"));
-        engine_speed_ptr_ = boost::make_shared<ROSComms<std_msgs::Float64>>(ROSComms<std_msgs::Float64>(CommTypes::pub, false, 10, "engine_speed"));
-        fuel_flow_ptr_ = boost::make_shared<ROSComms<std_msgs::Float64>>(ROSComms<std_msgs::Float64>(CommTypes::pub, false, 10, "fuel_flow"));
-        odometer_ptr_ = boost::make_shared<ROSComms<std_msgs::Float64>>(ROSComms<std_msgs::Float64>(CommTypes::pub, false, 10, "odometer"));
-        parking_brake_ptr_ = boost::make_shared<ROSComms<std_msgs::Bool>>(ROSComms<std_msgs::Bool>(CommTypes::pub, false, 10, "parking_brake"));
-        speed_ptr_ = boost::make_shared<ROSComms<std_msgs::Float64>>(ROSComms<std_msgs::Float64>(CommTypes::pub, false, 10, "speed"));
-        stability_ctrl_active_ptr_ = boost::make_shared<ROSComms<std_msgs::Bool>>(ROSComms<std_msgs::Bool>(CommTypes::pub, false, 10, "stability_ctrl_active"));
-        stability_ctrl_enabled_ptr_ = boost::make_shared<ROSComms<std_msgs::Bool>>(ROSComms<std_msgs::Bool>(CommTypes::pub, false, 10, "stability_ctrl_enabled"));
-        steering_wheel_angle_ptr_ = boost::make_shared<ROSComms<std_msgs::Float64>>(ROSComms<std_msgs::Float64>(CommTypes::pub, false, 10, "steering_wheel_angle"));
-        throttle_position_ptr_ = boost::make_shared<ROSComms<std_msgs::Float64>>(ROSComms<std_msgs::Float64>(CommTypes::pub, false, 10, "throttle_position"));
-        traction_ctrl_active_ptr_ = boost::make_shared<ROSComms<std_msgs::Bool>>(ROSComms<std_msgs::Bool>(CommTypes::pub, false, 10, "traction_ctrl_active"));
-        traction_ctrl_enabled_ptr_ = boost::make_shared<ROSComms<std_msgs::Bool>>(ROSComms<std_msgs::Bool>(CommTypes::pub, false, 10, "traction_ctrl_enabled"));
-        transmission_state_ptr_ = boost::make_shared<ROSComms<j2735_msgs::TransmissionState>>(ROSComms<j2735_msgs::TransmissionState>(CommTypes::pub, false, 10, "transmission_state"));
-        turn_signal_state_ptr_ = boost::make_shared<ROSComms<cav_msgs::TurnSignal>>(ROSComms<cav_msgs::TurnSignal>(CommTypes::pub, false, 10, "turn_signal_state"));
-        vehicle_twist_ptr_ = boost::make_shared<ROSComms<geometry_msgs::TwistStamped>>(ROSComms<geometry_msgs::TwistStamped>(CommTypes::pub, false, 10, "vehicle/twist"));
-        vehicle_status_ptr_ = boost::make_shared<ROSComms<autoware_msgs::VehicleStatus>>(ROSComms<autoware_msgs::VehicleStatus>(CommTypes::pub, false, 10, "vehicle_status"));
-        velocity_accel_ptr_ = boost::make_shared<ROSComms<automotive_platform_msgs::VelocityAccel>>(ROSComms<automotive_platform_msgs::VelocityAccel>(CommTypes::pub, false, 10, "velocity_accel"));
-
     }
 
     int MockCANDriver::run(){
 
         mock_driver_node_.init();
 
-        // bar parser subscriber
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
-
         // data topic publishers
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::Bool>>>(acc_engaged_ptr_);
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::Float64>>>(acceleration_ptr_);
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::Bool>>>(antilock_brakes_active_ptr_);
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::Bool>>>(brake_lights_ptr_);
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::Float64>>>(brake_position_ptr_);
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::Float64>>>(engine_speed_ptr_);
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::Float64>>>(fuel_flow_ptr_);
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::Float64>>>(odometer_ptr_);
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::Bool>>>(parking_brake_ptr_);
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::Float64>>>(speed_ptr_);
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::Bool>>>(stability_ctrl_active_ptr_);
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::Bool>>>(stability_ctrl_enabled_ptr_);
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::Float64>>>(steering_wheel_angle_ptr_);
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::Float64>>>(throttle_position_ptr_);
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::Bool>>>(traction_ctrl_active_ptr_);
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<std_msgs::Bool>>>(traction_ctrl_enabled_ptr_);
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<j2735_msgs::TransmissionState>>>(transmission_state_ptr_);
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::TurnSignal>>>(turn_signal_state_ptr_);
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<geometry_msgs::TwistStamped>>>(vehicle_twist_ptr_);
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<autoware_msgs::VehicleStatus>>>(vehicle_status_ptr_);
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<automotive_platform_msgs::VelocityAccel>>>(velocity_accel_ptr_);
+
+            addPassthroughPubNoHeader<std_msgs::Bool>(bag_prefix_ + acc_engaged_topic_, acc_engaged_topic_, false, 10);
+            addPassthroughPubNoHeader<std_msgs::Float64>(bag_prefix_ + acceleration_topic_, acceleration_topic_, false, 10);
+            addPassthroughPubNoHeader<std_msgs::Bool>(bag_prefix_ + antilock_brakes_topic_, antilock_brakes_topic_, false, 10);
+            addPassthroughPubNoHeader<std_msgs::Float64>(bag_prefix_ + brake_position_topic_, brake_position_topic_, false, 10);
+            addPassthroughPubNoHeader<std_msgs::Float64>(bag_prefix_ + engine_speed_topic_, engine_speed_topic_, false, 10);
+            addPassthroughPubNoHeader<std_msgs::Float64>(bag_prefix_ + fuel_flow_topic_, fuel_flow_topic_, false, 10);
+            addPassthroughPubNoHeader<std_msgs::Float64>(bag_prefix_ + odometer_topic_, odometer_topic_, false, 10);
+            addPassthroughPubNoHeader<std_msgs::Bool>(bag_prefix_ + parking_brake_topic_, parking_brake_topic_, false, 10);
+            addPassthroughPubNoHeader<std_msgs::Float64>(bag_prefix_ + speed_topic_, speed_topic_, false, 10);
+            addPassthroughPubNoHeader<std_msgs::Bool>(bag_prefix_ + stability_ctrl_active_topic_, stability_ctrl_active_topic_, false, 10);
+            addPassthroughPubNoHeader<std_msgs::Bool>(bag_prefix_ + stability_ctrl_enabled_topic_, stability_ctrl_enabled_topic_, false, 10);
+            addPassthroughPubNoHeader<std_msgs::Float64>(bag_prefix_ + steering_wheel_angle_topic_, steering_wheel_angle_topic_, false, 10);
+            addPassthroughPubNoHeader<std_msgs::Float64>(bag_prefix_ + throttle_position_topic_, throttle_position_topic_, false, 10);
+            addPassthroughPubNoHeader<std_msgs::Bool>(bag_prefix_ + traction_ctrl_active_topic_, traction_ctrl_active_topic_, false, 10);
+            addPassthroughPubNoHeader<std_msgs::Bool>(bag_prefix_ + traction_ctrl_enabled_topic_, traction_ctrl_enabled_topic_, false, 10);
+            addPassthroughPubNoHeader<j2735_msgs::TransmissionState>(bag_prefix_ + transmission_state_topic_, transmission_state_topic_, false, 10);
+            addPassthroughPubNoHeader<cav_msgs::TurnSignal>(bag_prefix_ + turn_signal_state_topic_, turn_signal_state_topic_, false, 10);
+
+            addPassthroughPub<geometry_msgs::TwistStamped>(bag_prefix_ + vehicle_twist, vehicle_twist, false, 10);
+            addPassthroughPub<autoware_msgs::VehicleStatus>(bag_prefix_ + vehicle_status_topic_, vehicle_status_topic_, false, 10);
+            addPassthroughPub<automotive_platform_msgs::VelocityAccel>(bag_prefix_ + velocity_accel_topic_, velocity_accel_topic_, false, 10);
+
 
         // driver discovery publisher
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>>>(driver_discovery_pub_ptr_);

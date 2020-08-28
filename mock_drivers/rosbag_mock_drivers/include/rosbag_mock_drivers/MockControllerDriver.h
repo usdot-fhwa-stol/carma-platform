@@ -28,9 +28,20 @@ namespace mock_drivers{
         private:
 
             boost::shared_ptr<ROSComms<cav_msgs::RobotEnabled>> robot_status_ptr_;
-            boost::shared_ptr<ROSComms<const autoware_msgs::VehicleCmd::ConstPtr&>> vehicle_cmd_ptr_;
+            ConstPtrRefROSCommsPtr<autoware_msgs::VehicleCmd> vehicle_cmd_ptr_;
             boost::shared_ptr<ROSComms<cav_srvs::SetEnableRobotic::Request&, cav_srvs::SetEnableRobotic::Response&>> enable_robotic_ptr_;
 
+            // Pub
+            const std::string robot_status_topic_ = "robot_status";
+
+            // Sub
+            const std::string vehicle_cmd_topic_ = "vehicle_cmd";
+            const std::string enable_robotic_srv_ = "enable_robotic";
+
+            // Robot Status flags
+            bool robot_active_ = false;
+            bool robot_enabled_ = false;
+        
         public:
 
             MockControllerDriver(bool dummy = false);

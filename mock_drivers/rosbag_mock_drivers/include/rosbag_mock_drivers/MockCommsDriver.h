@@ -26,8 +26,10 @@ namespace mock_drivers{
 
         private:
 
-            boost::shared_ptr<ROSComms<cav_msgs::ByteArray>> inbound_pub_ptr_;
-            boost::shared_ptr<ROSComms<const cav_msgs::ByteArray::ConstPtr&>> outbound_sub_ptr_;
+            ConstPtrRefROSCommsPtr<cav_msgs::ByteArray> outbound_sub_ptr_;
+
+            const std::string inbound_binary_topic_ = "inbound_binary_msg";
+            const std::string outbound_binary_topic_ = "outbound_binary_msg";
 
             void outboundCallback(const cav_msgs::ByteArray::ConstPtr& msg);
 

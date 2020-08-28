@@ -25,7 +25,7 @@ namespace mock_drivers{
 
         private:
 
-            boost::shared_ptr<ROSComms<sensor_msgs::Imu>> imu_pub_ptr_;
+            const std::string raw_data_topic_ = "raw_data";
 
         public:
 

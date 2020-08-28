@@ -54,27 +54,21 @@ namespace mock_drivers{
 
     MockGNSSDriver::MockGNSSDriver(bool dummy){
 
-        mock_driver_node_ = MockDriverNode(dummy);
-
-        GPS_fix_ptr_ = boost::make_shared<ROSComms<gps_common::GPSFix>>(ROSComms<gps_common::GPSFix>(CommTypes::pub, false, 10, "gnss_fixed_fused"));
-    
+        mock_driver_node_ = MockDriverNode(dummy);    
     }
 
     int MockGNSSDriver::run(){
 
         mock_driver_node_.init();
 
-        // bag parser subscriber
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
-
         // driver publisher and subscriber
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<gps_common::GPSFix>>>(GPS_fix_ptr_);
+        addPassthroughPub<gps_common::GPSFix>(bag_prefix_ + gnss_fix_fuxed_topic_, gnss_fix_fuxed_topic_, false, 10);
 
         // driver discovery publisher
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>>>(driver_discovery_pub_ptr_);
+        mock_driver_node_.addPub(driver_discovery_pub_ptr_);
         mock_driver_node_.setSpinCallback(std::bind(&MockGNSSDriver::driverDiscovery, this));
 
-        mock_driver_node_.spin(100);
+        mock_driver_node_.spin(20);
 
         return 0;
     }

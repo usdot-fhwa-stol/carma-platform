@@ -59,7 +59,6 @@ add_library(${PROJECT_NAME}
   src/MockCANDriver.cpp
   src/MockCommsDriver.cpp
   src/MockControllerDriver.cpp
-  src/MockDataDriver.cpp
   src/MockGNSSDriver.cpp
   src/MockIMUDriver.cpp
   src/MockLidarDriver.cpp
@@ -132,7 +131,6 @@ catkin_add_gmock(${PROJECT_NAME}-test
   test/MockCANDriverTest.cpp
   test/MockCommsDriverTest.cpp
   test/MockControllerDriverTest.cpp
-  test/MockDataDriverTest.cpp
   test/MockGNSSDriverTest.cpp
   test/MockIMUDriverTest.cpp
   test/MockLidarDriverTest.cpp

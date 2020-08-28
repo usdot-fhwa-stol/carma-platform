@@ -25,7 +25,7 @@ namespace mock_drivers{
 
         private:
 
-            boost::shared_ptr<ROSComms<gps_common::GPSFix>> GPS_fix_ptr_;
+            const std::string gnss_fix_fuxed_topic_ = "gnss_fixed_fused";    
 
         public:
 

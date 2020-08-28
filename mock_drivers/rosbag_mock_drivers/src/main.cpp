@@ -22,7 +22,6 @@
 #include <rosbag_mock_drivers/MockCANDriver.h>
 #include <rosbag_mock_drivers/MockCommsDriver.h>
 #include <rosbag_mock_drivers/MockControllerDriver.h>
-#include <rosbag_mock_drivers/MockDataDriver.h>
 #include <rosbag_mock_drivers/MockGNSSDriver.h>
 #include <rosbag_mock_drivers/MockIMUDriver.h>
 #include <rosbag_mock_drivers/MockLidarDriver.h>
@@ -54,11 +53,6 @@ int main(int argc, char **argv)
     
     else if (strcmp("controller", argv[1]) == 0){
         mock_drivers::MockControllerDriver node;
-        node.run();
-    }
-    
-    else if (strcmp("data", argv[1]) == 0){
-        mock_drivers::MockDataDriver node;
         node.run();
     }
     

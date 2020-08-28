@@ -26,8 +26,8 @@ namespace mock_drivers{
 
         private:
 
-            boost::shared_ptr<ROSComms<derived_object_msgs::ObjectWithCovariance>> object_with_covariance_ptr_;
-            boost::shared_ptr<ROSComms<derived_object_msgs::LaneModels>> lane_models_ptr_;
+            const std::string detected_objects_topic_ = "roadway_sensor/detected_objects";
+            const std::string lane_models_topics_ = "roadway_sensor/lane_models";
 
         public:
 

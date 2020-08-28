@@ -25,8 +25,7 @@ namespace mock_drivers{
 
         private:
 
-            boost::shared_ptr<ROSComms<sensor_msgs::PointCloud2>> points_raw_ptr_;
-
+            const std::string points_raw_topic_ = "points_raw";
         public:
 
             MockLidarDriver(bool dummy = false);

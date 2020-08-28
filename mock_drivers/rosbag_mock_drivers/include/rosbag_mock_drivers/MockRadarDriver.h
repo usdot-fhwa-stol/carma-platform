@@ -27,8 +27,9 @@ namespace mock_drivers{
 
         private:
 
-            boost::shared_ptr<ROSComms<radar_msgs::RadarStatus>> status_pub_ptr_;
-            boost::shared_ptr<ROSComms<radar_msgs::RadarTrackArray>> tracks_raw_pub_ptr_;
+        const std::string radar_status_topic_ = "radar/status";
+        const std::string radar_tracks_raw_topic_ = "radar/tracks_raw";
+
 
         public:
 

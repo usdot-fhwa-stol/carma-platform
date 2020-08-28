@@ -64,26 +64,22 @@ namespace mock_drivers{
 
         mock_driver_node_ = MockDriverNode(dummy);
 
-        object_with_covariance_ptr_ = boost::make_shared<ROSComms<derived_object_msgs::ObjectWithCovariance>>(ROSComms<derived_object_msgs::ObjectWithCovariance>(CommTypes::pub, false, 10, "detected_objects"));
-        lane_models_ptr_ = boost::make_shared<ROSComms<derived_object_msgs::LaneModels>>(ROSComms<derived_object_msgs::LaneModels>(CommTypes::pub, false, 10, "lane_models"));
     }
 
     int MockRoadwaySensorDriver::run(){
 
         mock_driver_node_.init();
 
-        // bag parser subscriber
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
-
         // driver publishers
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<derived_object_msgs::ObjectWithCovariance>>>(object_with_covariance_ptr_);
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<derived_object_msgs::LaneModels>>>(lane_models_ptr_);
+        addPassthroughPub<derived_object_msgs::ObjectWithCovariance>(bag_prefix_ + detected_objects_topic_, detected_objects_topic_, false, 10);
+        addPassthroughPub<derived_object_msgs::LaneModels>(bag_prefix_ + lane_models_topics_, lane_models_topics_, false, 10);
+
 
         // driver discovery publisher
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>>>(driver_discovery_pub_ptr_);
+        mock_driver_node_.addPub(driver_discovery_pub_ptr_);
         mock_driver_node_.setSpinCallback(std::bind(&MockRoadwaySensorDriver::driverDiscovery, this));
 
-        mock_driver_node_.spin(100);
+        mock_driver_node_.spin(20);
 
         return 0;
     }

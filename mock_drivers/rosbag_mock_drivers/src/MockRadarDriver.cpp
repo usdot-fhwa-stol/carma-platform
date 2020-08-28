@@ -63,23 +63,18 @@ namespace mock_drivers{
 
         mock_driver_node_ = MockDriverNode(dummy);
 
-        status_pub_ptr_ = boost::make_shared<ROSComms<radar_msgs::RadarStatus>>(ROSComms<radar_msgs::RadarStatus>(CommTypes::pub, false, 10, "radar/status"));
-        tracks_raw_pub_ptr_ = boost::make_shared<ROSComms<radar_msgs::RadarTrackArray>>(ROSComms<radar_msgs::RadarTrackArray>(CommTypes::pub, false, 10, "radar/tracks_raw"));
     }
 
     int MockRadarDriver::run(){
 
         mock_driver_node_.init();
         
-        // bag parser subscriber
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
-
         // driver publisher and subscriber
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<radar_msgs::RadarStatus>>>(status_pub_ptr_);
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<radar_msgs::RadarTrackArray>>>(tracks_raw_pub_ptr_);
+        addPassthroughPub<radar_msgs::RadarStatus>(bag_prefix_ + radar_status_topic_, radar_status_topic_, false, 10);
+        addPassthroughPub<radar_msgs::RadarTrackArray>(bag_prefix_ + radar_tracks_raw_topic_, radar_tracks_raw_topic_, false, 10);
 
         // driver discovery publisher
-        mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>>>(driver_discovery_pub_ptr_);
+        mock_driver_node_.addPub(driver_discovery_pub_ptr_);
         mock_driver_node_.setSpinCallback(std::bind(&MockRadarDriver::driverDiscovery, this));
 
         mock_driver_node_.spin(100);
