@@ -24,7 +24,7 @@ namespace mock_drivers
 class MockLidarDriver : public MockDriver
 {
 private:
-  const std::string points_raw_topic_ = "points_raw";
+  const std::string points_raw_topic_ = "lidar/points_raw";
 
 public:
   MockLidarDriver(bool dummy = false);

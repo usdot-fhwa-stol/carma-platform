@@ -24,7 +24,7 @@ namespace mock_drivers
 class MockGNSSDriver : public MockDriver
 {
 private:
-  const std::string gnss_fix_fuxed_topic_ = "gnss_fixed_fused";
+  const std::string gnss_fix_fuxed_topic_ = "gnss_fix_fused";
 
 public:
   MockGNSSDriver(bool dummy = false);

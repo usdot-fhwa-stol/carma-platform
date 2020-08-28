@@ -24,7 +24,7 @@ namespace mock_drivers
 class MockIMUDriver : public MockDriver
 {
 private:
-  const std::string raw_data_topic_ = "raw_data";
+  const std::string raw_data_topic_ = "imu";
 
 public:
   MockIMUDriver(bool dummy = false);

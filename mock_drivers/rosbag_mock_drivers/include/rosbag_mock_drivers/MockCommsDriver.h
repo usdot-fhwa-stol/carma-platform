@@ -26,8 +26,8 @@ class MockCommsDriver : public MockDriver
 private:
   ConstPtrRefROSCommsPtr<cav_msgs::ByteArray> outbound_sub_ptr_;
 
-  const std::string inbound_binary_topic_ = "inbound_binary_msg";
-  const std::string outbound_binary_topic_ = "outbound_binary_msg";
+  const std::string inbound_binary_topic_ = "comms/inbound_binary_msg";
+  const std::string outbound_binary_topic_ = "comms/outbound_binary_msg";
 
   void outboundCallback(const cav_msgs::ByteArray::ConstPtr& msg);
 

@@ -32,11 +32,11 @@ private:
       enable_robotic_ptr_;
 
   // Pub
-  const std::string robot_status_topic_ = "robot_status";
+  const std::string robot_status_topic_ = "controller/robot_status";
 
   // Sub
-  const std::string vehicle_cmd_topic_ = "vehicle_cmd";
-  const std::string enable_robotic_srv_ = "enable_robotic";
+  const std::string vehicle_cmd_topic_ = "controller/vehicle_cmd";
+  const std::string enable_robotic_srv_ = "controller/enable_robotic";
 
   // Robot Status flags
   bool robot_active_ = false;
