@@ -54,13 +54,14 @@ namespace mock_drivers{
             MockDriverNode mock_driver_node_;
             rosbag::Bag bag_;
             std::string file_path_;
-            double rate_ = 10.0;
+            double rate_ = 100.0;
 
         public:
 
             BagParser(std::string file_path, bool dummy = false);
             bool publishCallback();
             int run();
+            bool getTopics();
 
             MockDriverNode getMockDriverNode() {return mock_driver_node_;}
 

@@ -49,6 +49,8 @@
 	
   <!-- Remappings for external packages -->
   <remap from="system_alert" to="/system_alert"/>
+  <remap from="driver_discovery" to="$(optenv CARMA_INTR_NS)/driver_discovery"/>
+  <remap from="bag_data" to="$(optenv CARMA_INTR_NS)/bag_data"/>
 
   <!-- Shutdown node for Drivers -->
   <node pkg="driver_shutdown" type="driver_shutdown" name="$(anon driver_shutdown)" required="true"/>

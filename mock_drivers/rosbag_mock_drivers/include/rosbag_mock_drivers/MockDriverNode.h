@@ -105,8 +105,8 @@ namespace mock_drivers{
             * This function must take in the full name of topic that will be published including the namespaces and leading /.
             * This can probably be made to take that information in on construction of the node but we can add that once it breaks :)
             */
-            template<typename T>
-            void publishData(std::string topic, T msg, bool header = true){
+            template<typename T, bool has_header = true>
+            void publishData(std::string topic, T msg){
                 ROS_ERROR_STREAM("18");
                 if(!dummy_){
                     ROS_ERROR_STREAM("19");
@@ -120,7 +120,9 @@ namespace mock_drivers{
                     ROS_ERROR_STREAM("22");
                     topics_.push_back(topic);
                     ROS_ERROR_STREAM("23");
-                    time_stamps_.push_back(msg.header.stamp);
+                    if (has_header) {
+                        time_stamps_.push_back(msg.header.stamp);
+                    }
                     ROS_ERROR_STREAM("24");
                 }
             };
@@ -130,7 +132,7 @@ namespace mock_drivers{
             * Same as the publishData function, except this is used when the data doesn't have a header. This exists to allow for testing of the code.
             * This can be combined with publishData once we are in c++ 17 and can use constexpr if statement.  
             */
-            template<typename T>
+            template<typename T> // TODO remove
             void publishDataNoHeader(std::string topic, T msg){
                 ROS_ERROR_STREAM("25");
                 if(!dummy_){

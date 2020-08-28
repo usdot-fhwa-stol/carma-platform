@@ -14,5 +14,6 @@
 
 <launch>
     <arg name="file_path" doc="Path to rosbag file"/>
-    <node pkg="rosbag_mock_drivers" type="bag_parser" name="bag_parser" args="$(arg file_path)"/>
+    <!-- <node pkg="rosbag_mock_drivers" type="bag_parser" name="bag_parser" args="$(arg file_path)"/> -->
+    <node pkg="rosbag" type="play" name="driver_rosbag_player" args="-p /bag $(arg file_path)"/>
 </launch>

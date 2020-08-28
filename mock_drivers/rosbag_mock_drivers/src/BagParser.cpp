@@ -15,6 +15,7 @@
  */
 
 #include "rosbag_mock_drivers/BagParser.h"
+#include <unordered_map>
 
 namespace mock_drivers{
 
@@ -22,6 +23,22 @@ namespace mock_drivers{
         file_path_ = file_path;
         mock_driver_node_ = MockDriverNode(dummy);
         bag_data_pub_ptr_ = boost::make_shared<ROSComms<cav_simulation_msgs::BagData>>(ROSComms<cav_simulation_msgs::BagData>(CommTypes::pub, false, 10, "bag_data"));
+    }
+
+    bool BagParser::getTopics() {
+        bag_.open(file_path_, rosbag::bagmode::Read);
+        rosbag::View view(bag_); // Open view of whole bag
+        std::unordered_map<std::string, std::string> topics_and_types;
+        for (auto connection : view.getConnections()) {
+            auto topic = topics_and_types.find(connection->topic);
+            if (topic != topics_and_types.end())
+                continue;
+            topics_and_types[connection->topic] = connection->datatype;
+        }
+        for (auto pair : topics_and_types) { // TODO remove
+            ROS_ERROR_STREAM("Bag contains topic " << std::get<0>(pair) << " with type " << std::get<1>(pair));
+        }
+        bag_.close();
     }
 
     bool BagParser::publishCallback() {
@@ -132,7 +149,7 @@ namespace mock_drivers{
 
         mock_driver_node_.publishData<cav_simulation_msgs::BagData>("bag_data", message);
 
-        bag_.close();
+        bag_.close(); // TODO we cannot be opening and closing the bag repeatedly. We need to open once then read continuously and publish the data as fast as possible
 
         return true;
     }
@@ -144,6 +161,8 @@ namespace mock_drivers{
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_simulation_msgs::BagData>>>(bag_data_pub_ptr_);
 
         mock_driver_node_.setSpinCallback(std::bind(&BagParser::publishCallback, this));
+
+        getTopics();
 
         mock_driver_node_.spin(rate_);
 

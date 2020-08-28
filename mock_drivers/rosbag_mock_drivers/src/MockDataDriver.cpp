@@ -53,7 +53,7 @@ namespace mock_drivers{
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<tf2_msgs::TFMessage>>>(tf_ptr_);
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<tf2_msgs::TFMessage>>>(tf_static_ptr_);
 
-        mock_driver_node_.spin(10);
+        mock_driver_node_.spin(100);
 
         return 0;
     }

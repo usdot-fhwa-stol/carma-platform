@@ -21,26 +21,67 @@
 #include <sensor_msgs/Image.h>
 #include <autoware_msgs/ProjectionMatrix.h>
 
-namespace mock_drivers{
+namespace mock_drivers
+{
+class MockCameraDriver : public MockDriver
+{
+  template <class T>
+  using ConstPtr = boost::shared_ptr<const T>;
 
-    class MockCameraDriver : public MockDriver {
+  template <class T>
+  using ConstPtrRef = const ConstPtr<T>&;
 
-        private:
+  template <class T>
+  using ROSCommsPtr = boost::shared_ptr<ROSComms<T>>;
 
-            boost::shared_ptr<ROSComms<sensor_msgs::CameraInfo>> camera_info_ptr_;
-            boost::shared_ptr<ROSComms<sensor_msgs::Image>> image_raw_ptr_;
-            boost::shared_ptr<ROSComms<sensor_msgs::CameraInfo>> camera_info_1_ptr_;
-            boost::shared_ptr<ROSComms<sensor_msgs::Image>> image_raw_1_ptr_;
-            boost::shared_ptr<ROSComms<sensor_msgs::Image>> image_rects_ptr_;
-            boost::shared_ptr<ROSComms<autoware_msgs::ProjectionMatrix>> projection_matrix_ptr_;
+  template <class T>
+  using ConstPtrRefROSComms = ROSComms<ConstPtrRef<T>>;
 
-        public:
+  template <class T>
+  using ConstPtrRefROSCommsPtr = ROSCommsPtr<ConstPtrRef<T>>;
 
-            MockCameraDriver(bool dummy = false);
-            int run();
-            void parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg);
-            bool driverDiscovery();
+private:
 
-    };
+  const std::string bag_prefix_ = "/bag/hardware_interface/";
+  const std::string camera_info_topic_ = "camera/camera_info";
+  const std::string image_raw_topic_ = "camera/image_raw";
+  const std::string image_rects_topic_ = "camera/image_rects";
+  const std::string projection_matrix_topic_ = "camera/projection_matrix";
 
-}
+public:
+  MockCameraDriver(bool dummy = false);
+  int run();
+  void parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg);
+  bool driverDiscovery();
+
+  //            void addPassthroughPub(const std::string& sub_topic, ConstPtrRefROSCommsPtr<T>& sub_ptr, const
+  //            std::string& pub_topic, ROSCommsPtr<T>& pub_ptr, bool latch, size_t queue_size) {
+
+  /*! \brief Function adds both a publisher and subscriber */  // void (*sub_cb)(ConstPtrRef<T>)
+  template <typename T, bool has_header = true>
+  void addPassthroughPub(const std::string& sub_topic, const std::string& pub_topic, bool latch, size_t queue_size)
+  {
+    // Create pointers for publishers
+    ROSCommsPtr<T> pub_ptr = boost::make_shared<ROSComms<T>>(CommTypes::pub, latch, queue_size, pub_topic);
+
+    mock_driver_node_.addPub(pub_ptr);
+
+    std::function<void(ConstPtrRef<T>)> callback = std::bind(
+        [&](ConstPtrRef<T> in) {
+          T out;
+          if (has_header)
+          {
+            out.header.stamp = ros::Time::now();
+          }
+          mock_driver_node_.publishData<const T&, has_header>(pub_topic, out);
+        },
+        std::placeholders::_1);
+
+    ConstPtrRefROSCommsPtr<T> outbound_sub_ptr_ =
+        boost::make_shared<ConstPtrRefROSComms<T>>(callback, CommTypes::sub, false, queue_size, sub_topic);
+
+    mock_driver_node_.addSub(outbound_sub_ptr_);
+  }
+};
+
+}  // namespace mock_drivers

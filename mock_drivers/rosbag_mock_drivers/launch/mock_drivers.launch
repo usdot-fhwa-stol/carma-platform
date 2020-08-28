@@ -26,5 +26,5 @@
   </group>
 
   <!-- Launch Mock Driver -->
-  <node pkg="rosbag_mock_drivers" type="mock_driver" name="$(arg driver)" args="$(arg driver)" ns="$(arg driver)"/>
+  <node pkg="rosbag_mock_drivers" type="mock_driver" name="$(arg driver)" args="$(arg driver)"/>
 </launch>

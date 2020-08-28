@@ -82,7 +82,7 @@ namespace mock_drivers{
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<cav_msgs::DriverStatus>>>(driver_discovery_pub_ptr_);
         mock_driver_node_.setSpinCallback(std::bind(&MockRadarDriver::driverDiscovery, this));
 
-        mock_driver_node_.spin(1);
+        mock_driver_node_.spin(100);
 
         return 0;
     }
