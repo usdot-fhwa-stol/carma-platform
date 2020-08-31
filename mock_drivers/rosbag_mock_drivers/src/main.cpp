@@ -15,7 +15,6 @@
  */
 
 #include <ros/ros.h>
-#include <rosbag_mock_drivers/TestMockDriver.h>
 
 #include <rosbag_mock_drivers/MockCameraDriver.h>
 #include <rosbag_mock_drivers/MockCANDriver.h>
