@@ -54,11 +54,18 @@ namespace port_drayage_plugin
         ros::Subscriber twist_sub = _nh->subscribe<geometry_msgs::TwistStamped>("localization/ekf_twist", 5, 
             [&](const geometry_msgs::TwistStampedConstPtr& speed) {
                 pdw.set_current_speed(speed);
+                _cur_speed = speed;
         });
         _cur_speed_subscriber = std::make_shared<ros::Subscriber>(twist_sub);
 
-
         plan_maneuver_srv_ = _nh->advertiseService("strategic_plan/plan_maneuvers", &PortDrayagePlugin::plan_maneuver_cb, this);
+
+        ros::Subscriber pose_sub = _nh->subscribe<geometry_msgs::PoseStamped>("current_pose", 5, 
+            [&](const geometry_msgs::PoseStampedConstPtr& pose) {
+                curr_pose_ = std::make_shared<geometry_msgs::PoseStamped>(*pose);
+        });
+
+        _pose_subscriber = std::make_shared<ros::Subscriber>(pose_sub);
 
         std::function<bool()> spin_cb = [&]() {
             return pdw.spin();
@@ -70,8 +77,104 @@ namespace port_drayage_plugin
         return 0;
     }
 
-    bool PortDrayagePlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp){
+    // geometry_msgs::PoseStampedConstPtr PortDrayagePlugin::lookup_stop_pose(geometry_msgs::PoseStampedConstPtr pose_msg_) const {
+    //     lanelet::BasicPoint2d current_loc(pose_msg_->pose.position.x, pose_msg_->pose.position.y);
+    //     auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc, 1);
 
+    //     if(current_lanelets.size() == 0) {
+    //         ROS_WARN_STREAM("Cannot find any lanelet in map!");
+    //         return NULL;
+    //     }
+    //     else {
+    //         auto current_lanelet = current_lanelets[0];
+    //         // uncomment after StopRule add.
+
+    //         // auto access_rules = current_lanelet.second.regulatoryElementsAs<StopRule>();
+    //         // if(access_rules.empty()){
+    //         //     return NULL;
+    //         // } else{
+    //         //     StopRule::Ptr stopRegelem = access_rules.front();
+    //         //     // TODO get stopRegelem position and return the pose
+    //         //     geometry_msgs::PoseStampedConstPtr pose;
+    //         //     return pose;
+    //         // }
+
+    //         geometry_msgs::PoseStampedConstPtr pose;
+    //         return pose;   // place holder remove after uncommenting above
+    //     }
+    // }
+
+    bool PortDrayagePlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp){
+        
+        geometry_msgs::PoseStamped stop_loc;
+
+        lanelet::BasicPoint2d current_loc(curr_pose_->pose.position.x, curr_pose_->pose.position.y);
+        auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc, 1);
+
+        if(current_lanelets.size() == 0) {
+            ROS_WARN_STREAM("Cannot find any lanelet in map!");
+            return false;
+        }
+
+        auto current_lanelet = current_lanelets[0];
+        // uncomment after StopRule add.
+
+        // auto access_rules = current_lanelet.second.regulatoryElementsAs<StopRule>();
+        // if(access_rules.empty()){
+        //     return NULL;
+        // } else{
+        //     StopRule::Ptr stopRegelem = access_rules.front();
+        //     // TODO get stopRegelem position and return the pose
+        //     stop_loc = geometry_msgs::PoseStampedConstPtr pose;
+        // }
+
+        // TODO
+        double stop_loc_downtrack = 0;
+        double current_loc_downtrack = wm_->routeTrackPos(current_loc).downtrack;
+
+        double speed_progress = _cur_speed->twist.linear.x;
+
+        double current_progress = current_loc_downtrack;
+
+        while(current_loc_downtrack < stop_loc_downtrack)
+        {
+            double end_dist = stop_loc_downtrack;
+            double dist_diff = end_dist - current_progress;
+
+            resp.new_plan.maneuvers.push_back(
+                composeManeuverMessage(current_progress, 
+                                       end_dist, 
+                                       speed_progress, 
+                                       0.0, 
+                                       current_lanelet.second.id(), 
+                                       ros::Time::now()));
+        }
+
+        if(resp.new_plan.maneuvers.size() == 0)
+        {
+            ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
+        }
+
+        return true;
     };
+
+    cav_msgs::Maneuver PortDrayagePlugin::composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time current_time)
+    {
+        cav_msgs::Maneuver maneuver_msg;
+        maneuver_msg.type = cav_msgs::Maneuver::STOP_AND_WAIT;
+        maneuver_msg.stop_and_wait_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
+        maneuver_msg.stop_and_wait_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
+        maneuver_msg.stop_and_wait_maneuver.parameters.planning_tactical_plugin = "StopAndWaitPlugin";
+        maneuver_msg.stop_and_wait_maneuver.parameters.planning_strategic_plugin = "PortDrayageWorkerPlugin";
+        maneuver_msg.stop_and_wait_maneuver.start_dist = current_dist;
+        maneuver_msg.stop_and_wait_maneuver.start_speed = current_speed;
+        maneuver_msg.stop_and_wait_maneuver.start_time = current_time;
+        maneuver_msg.stop_and_wait_maneuver.end_dist = end_dist;
+        // maneuver_msg.stop_and_wait_maneuver.end_speed = target_speed;
+        maneuver_msg.stop_and_wait_maneuver.end_time = current_time + ros::Duration((end_dist - current_dist) / (0.5 * (current_speed + target_speed)));
+        maneuver_msg.stop_and_wait_maneuver.starting_lane_id = std::to_string(lane_id);
+        maneuver_msg.stop_and_wait_maneuver.ending_lane_id = std::to_string(lane_id);
+        return maneuver_msg;
+    }
     // @SONAR_START@
 } // namespace port_drayage_plugin

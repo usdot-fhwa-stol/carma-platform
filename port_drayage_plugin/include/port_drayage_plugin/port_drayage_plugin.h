@@ -20,6 +20,12 @@
 #include <carma_utils/CARMAUtils.h>
 #include <memory>
 #include <cav_srvs/PlanManeuvers.h>
+#include <cav_msgs/ManeuverPlan.h>
+#include <geometry_msgs/TwistStamped.h>
+
+#include <carma_wm/WorldModel.h>
+#include <carma_wm/WMListener.h>
+#include <geometry_msgs/PoseStamped.h>
 
 namespace port_drayage_plugin
 {
@@ -35,11 +41,20 @@ namespace port_drayage_plugin
             std::shared_ptr<ros::CARMANodeHandle> _nh = nullptr;
             std::shared_ptr<ros::CARMANodeHandle> _pnh = nullptr;
             std::shared_ptr<ros::Subscriber> _maneuver_plan_subscriber = nullptr;
+            std::shared_ptr<ros::Subscriber> _pose_subscriber = nullptr;
             std::shared_ptr<ros::Subscriber> _cur_speed_subscriber = nullptr;
             std::shared_ptr<ros::Publisher> _outbound_mobility_operations_publisher = nullptr;
             
             // ROS service servers
-            ros::ServiceServer plan_maneuver_srv_;        
+            ros::ServiceServer plan_maneuver_srv_;  
+
+            // wm listener pointer and pointer to the actual wm object
+            std::shared_ptr<carma_wm::WMListener> wml_;
+            carma_wm::WorldModelConstPtr wm_;
+
+            std::shared_ptr<geometry_msgs::PoseStamped> curr_pose_ = nullptr;
+
+            geometry_msgs::TwistStampedConstPtr _cur_speed;
 
         public:
             /**
@@ -76,5 +91,31 @@ namespace port_drayage_plugin
              * \return If service call successed
              */
             bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
+
+            // /**
+            //  * \brief Check to see if there is stop element exists on the lanelet.
+            //  * 
+            //  * \param l current lanelet
+            //  * \return NULL if the lanlet does not have stop regelem, false o.w.
+            //  */
+            // geometry_msgs::PoseStampedConstPtr lookup_stop_pose(geometry_msgs::PoseStampedConstPtr pose_msg_) const;
+
+            /**
+             * \brief compose Maneuver Message to send to tactical plugin.
+            * \param current_dist Start downtrack distance of the current maneuver
+            * \param end_dist End downtrack distance of the current maneuver
+            * \param current_speed Start speed of the current maneuver
+            * \param target_speed Target speed pf the current maneuver, usually it is the lanelet speed limit
+            * \param lane_id Lanelet ID of the current maneuver
+            * \param current_time Start time of the current maneuver
+            * \return A stop wait maneuver message which is ready to be published
+            */           
+            cav_msgs::Maneuver composeManeuverMessage(double current_dist, 
+                                                      double end_dist, 
+                                                      double current_speed, 
+                                                      double target_speed, 
+                                                      int lane_id, 
+                                                      ros::Time current_time);
+
     };
 } // namespace port_drayage_plugin

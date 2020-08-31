@@ -20,8 +20,6 @@
 #include <cav_msgs/MobilityOperation.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <carma_wm/WorldModel.h>
-#include <carma_wm/WMListener.h>
 
 #include "port_drayage_plugin/port_drayage_state_machine.h"
 
@@ -53,9 +51,6 @@ namespace port_drayage_plugin
             const std::string PORT_DRAYAGE_STRATEGY_ID = "carma/port_drayage";
             const std::string PORT_DRAYAGE_ARRIVAL_OPERATION_ID = "ARRIVED_AT_DESTINATION";
 
-            // wm listener pointer and pointer to the actual wm object
-            std::shared_ptr<carma_wm::WMListener> wml_;
-            carma_wm::WorldModelConstPtr wm_;
         public:
 
             /**
@@ -134,25 +129,6 @@ namespace port_drayage_plugin
              */
             bool check_for_stop(const cav_msgs::ManeuverPlanConstPtr& plan, const geometry_msgs::TwistStampedConstPtr& speed) const;
 
-            /**
-             * \brief Check to see if there is stop element exists on the lanelet.
-             * 
-             * \param l current lanelet
-             * \return NULL if the lanlet does not have stop regelem, false o.w.
-             */
-            geometry_msgs::PoseStampedConstPtr lookup_stop_pose(geometry_msgs::PoseStampedConstPtr pose_msg_) const;
-
-            /**
-             * \brief compose Maneuver Message to send to tactical plugin.
-            * \param current_dist Start downtrack distance of the current maneuver
-            * \param end_dist End downtrack distance of the current maneuver
-            * \param current_speed Start speed of the current maneuver
-            * \param target_speed Target speed pf the current maneuver, usually it is the lanelet speed limit
-            * \param lane_id Lanelet ID of the current maneuver
-            * \param current_time Start time of the current maneuver
-            * \return A stop wait maneuver message which is ready to be published
-            */           
-            cav_msgs::Maneuver composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time current_time);
 
     };
 } // namespace port_drayage_plugin
