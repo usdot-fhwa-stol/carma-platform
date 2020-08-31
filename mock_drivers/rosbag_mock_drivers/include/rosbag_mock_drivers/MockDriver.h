@@ -86,7 +86,7 @@ public:
 
     std::function<void(ConstPtrRef<T>)> callback = std::bind(
         [&](ConstPtrRef<T> in) {
-          T out;
+          T out = *in;
           out.header.stamp = ros::Time::now();
           mock_driver_node_.publishData<const T&>(pub_topic, out);
         },
@@ -110,7 +110,7 @@ public:
 
     std::function<void(ConstPtrRef<T>)> callback = std::bind(
         [&](ConstPtrRef<T> in) {
-          T out;
+          T out = *in;
           mock_driver_node_.publishDataNoHeader<const T&>(pub_topic, out);
         },
         std::placeholders::_1);
