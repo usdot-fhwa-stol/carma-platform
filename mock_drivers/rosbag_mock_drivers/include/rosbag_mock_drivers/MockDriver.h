@@ -19,7 +19,6 @@
 #include <string>
 #include <vector>
 #include <boost/shared_ptr.hpp>
-#include <cav_simulation_msgs/BagData.h>
 #include <cav_msgs/DriverStatus.h>
 
 #include "rosbag_mock_drivers/ROSComms.h"

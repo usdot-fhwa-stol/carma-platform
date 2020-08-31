@@ -27,10 +27,6 @@ namespace mock_drivers{
     bool InsertDriverName::driverDiscovery(){
 
     }
-    
-    void InsertDriverName::parserCB(const cav_simulation_msgs::BagData::ConstPtr& msg){
-        
-    }
 
     void InsertDriverName::insertCallback1(insert_sub_msg_1 msg){
 
@@ -56,9 +52,6 @@ namespace mock_drivers{
 
 
     int InsertDriverName::run(){
-
-        // bag parser subscriber
-        mock_driver_node_.addSub<boost::shared_ptr<ROSComms<const cav_simulation_msgs::BagData::ConstPtr&>>>(bag_parser_sub_ptr_);
 
         // driver publishers and subscribers
         mock_driver_node_.addPub<boost::shared_ptr<ROSComms<insert_pub_msg_1>>>(name_1_ptr_);

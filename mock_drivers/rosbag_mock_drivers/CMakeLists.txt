@@ -15,7 +15,6 @@ set ( PKG_CATKIN_DEPENDS
   cav_msgs
   cav_srvs
   rosbag
-  cav_simulation_msgs
 )
 
 find_package(catkin REQUIRED COMPONENTS

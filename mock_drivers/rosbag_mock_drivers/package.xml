@@ -19,7 +19,6 @@
   <depend>carma_utils</depend>
   <depend>cav_msgs</depend>
   <depend>cav_srvs</depend>
-  <depend>cav_simulation_msgs</depend>
   <depend>rosbag</depend>
 
 
