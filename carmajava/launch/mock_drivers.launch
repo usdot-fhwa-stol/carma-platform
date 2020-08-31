@@ -55,6 +55,11 @@
   <!-- Shutdown node for Drivers -->
   <node pkg="driver_shutdown" type="driver_shutdown" name="$(anon driver_shutdown)" required="true"/>
 
+  <!-- Launch Bag Parser -->
+  <include if="$(arg bag_parser)" file="$(find rosbag_mock_drivers)/launch/bag_parser.launch">
+      <arg name="file_path" value="$(arg DATA_DIR)/mock_drivers/drivers.bag"/>
+  </include>
+
   <!-- Simulated Comms Driver Node -->
   <include if="$(arg mock_comms)" file="$(arg mock_driver_launch_file)">
     <arg name="driver" value="comms"/>
@@ -102,10 +107,5 @@
 
   <!-- Simulated Lightbar Driver Node -->
   <include if="$(arg mock_lightbar)" file="$(find mock_lightbar_driver)/launch/mock_lightbar_driver_testing.launch"/>
-
-  <!-- Launch Bag Parser -->
-  <include if="$(arg bag_parser)" file="$(find rosbag_mock_drivers)/launch/bag_parser.launch">
-      <arg name="file_path" value="$(arg DATA_DIR)/mock_drivers/drivers.bag"/>
-  </include>
 
 </launch>
