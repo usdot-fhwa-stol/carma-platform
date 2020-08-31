@@ -28,6 +28,14 @@ MockDriverNode::MockDriverNode(bool dummy)
   dummy_ = dummy;
 }
 
+std::string MockDriverNode::getGraphName() const {
+  if (dummy_) {
+    return "dummy_mock_driver";
+  }
+
+  return ros::this_node::getName();
+}
+
 void MockDriverNode::spin(double rate)
 {
   if (!dummy_)

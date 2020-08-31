@@ -22,8 +22,8 @@ bool MockControllerDriver::driverDiscovery()
 {
   cav_msgs::DriverStatus discovery_msg;  // TODO only publish driver discovery every second.
 
-  discovery_msg.name = "MockControllerDriver";
-  discovery_msg.status = 1;
+  discovery_msg.name = mock_driver_node_.getGraphName();
+  discovery_msg.status = cav_msgs::DriverStatus::OPERATIONAL;
 
   discovery_msg.can = false;
   discovery_msg.radar = false;

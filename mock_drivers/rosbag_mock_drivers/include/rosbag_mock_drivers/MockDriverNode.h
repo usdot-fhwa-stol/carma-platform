@@ -44,6 +44,9 @@ private:
   std::vector<ros::Time> time_stamps_;
 
 public:
+
+  std::string getGraphName() const;
+
   /*! \brief Function to add a publisher from a ROSComms object */
   template <typename T>
   void addPub(T comm)

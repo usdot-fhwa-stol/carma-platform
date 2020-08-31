@@ -22,8 +22,8 @@ bool MockRadarDriver::driverDiscovery()
 {
   cav_msgs::DriverStatus discovery_msg;
 
-  discovery_msg.name = "MockRadarDriver";
-  discovery_msg.status = 1;
+  discovery_msg.name = mock_driver_node_.getGraphName();
+  discovery_msg.status = cav_msgs::DriverStatus::OPERATIONAL;
 
   discovery_msg.can = false;
   discovery_msg.radar = true;
