@@ -772,8 +772,7 @@ lanelet::BasicPoint2d curr_pos;
   auto current_llt = current_map_->laneletLayer.nearest(curr_pos, 1)[0];
   bool isOnActiveGeofence = false; //Create Boolean value
   cav_msgs::CheckActiveGeofence outgoing_geof; //message to publish
-  double next_distance; //Distance to next geofence
-
+  double next_distance = 0 ; //Distance to next geofence
   ROS_INFO_STREAM("Check 2");
 
   
@@ -787,21 +786,26 @@ lanelet::BasicPoint2d curr_pos;
   }
 
 
-  for(auto id = active_geofence_llt_ids_.begin(); id != active_geofence_llt_ids_.end(); id++)
-  {
-
+  
     ROS_INFO_STREAM("Check for loop");
     /* determine whether or not the vehicle's current position is within an active geofence */
      if (boost::geometry::within(curr_pos, current_llt.polygon2d().basicPolygon()))
-      {   
-       //next_distance = ;
-        outgoing_geof.type = 1;
-        outgoing_geof.is_on_active_geofence = true;
+      {         
+        next_distance = distToNearestActiveGeofence(curr_pos);
+        for(auto id = active_geofence_llt_ids_.begin(); id != active_geofence_llt_ids_.end(); id++) 
+        {
+          ROS_ERROR_STREAM(" current llt id = " << current_llt.id());
+          ROS_ERROR_STREAM("active geofence id = "<< *id);
+          if (*id == current_llt.id())
+          {
+            outgoing_geof.type = 1;
+            outgoing_geof.is_on_active_geofence = true;
+          }
+        }
       }
 
-      next_distance = distToNearestActiveGeofence(curr_pos);
       outgoing_geof.distance_to_next_geofence.push_back(next_distance);
-  }//end for loop
+  //end for loop
     return outgoing_geof;
     ROS_INFO_STREAM("Check 4");
 
