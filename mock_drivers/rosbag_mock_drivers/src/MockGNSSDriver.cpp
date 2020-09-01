@@ -18,28 +18,14 @@
 
 namespace mock_drivers
 {
-bool MockGNSSDriver::driverDiscovery()
+std::vector<DriverType> MockGNSSDriver::getDriverTypes()
 {
-  cav_msgs::DriverStatus discovery_msg;
+  return { DriverType::GNSS };
+}
 
-  discovery_msg.name = mock_driver_node_.getGraphName();
-  discovery_msg.status = cav_msgs::DriverStatus::OPERATIONAL;
-
-  discovery_msg.can = false;
-  discovery_msg.radar = false;
-  discovery_msg.gnss = true;
-  discovery_msg.lidar = false;
-  discovery_msg.roadway_sensor = false;
-  discovery_msg.comms = false;
-  discovery_msg.controller = false;
-  discovery_msg.camera = false;
-  discovery_msg.imu = false;
-  discovery_msg.trailer_angle_sensor = false;
-  discovery_msg.lightbar = false;
-
-  mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("driver_discovery", discovery_msg);
-
-  return true;
+uint8_t MockGNSSDriver::getDriverStatus()
+{
+  return cav_msgs::DriverStatus::OPERATIONAL;
 }
 
 MockGNSSDriver::MockGNSSDriver(bool dummy)
@@ -56,7 +42,7 @@ int MockGNSSDriver::run()
 
   // driver discovery publisher
   mock_driver_node_.addPub(driver_discovery_pub_ptr_);
-  mock_driver_node_.setSpinCallback(std::bind(&MockGNSSDriver::driverDiscovery, this));
+  mock_driver_node_.setSpinCallback(std::bind(&MockGNSSDriver::spinCallback, this));
 
   mock_driver_node_.spin(20);
 

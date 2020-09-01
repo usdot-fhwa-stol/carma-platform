@@ -38,7 +38,7 @@ private:
   std::vector<ros::ServiceServer> services_;
 
   // used for testing
-  bool dummy_;  // if the mock driver node is a dummy then it wont initialize a CARMANodeHandle and its functions wont
+  bool dummy_ = false;  // if the mock driver node is a dummy then it wont initialize a CARMANodeHandle and its functions wont
                 // do anything
   std::vector<std::string> topics_;
   std::vector<ros::Time> time_stamps_;
@@ -96,10 +96,10 @@ public:
   // }
 
   /*! \brief Begin the ros node*/
-  void spin(double rate);
+  void spin(double rate) const;
 
   /*! \brief Set the spin callback for the ros node*/
-  void setSpinCallback(std::function<bool()> cb);
+  void setSpinCallback(std::function<bool()> cb) const;
 
   /*! \brief Initialize the CARMA Node Handle pointer for the MockDriverNode (must be called before spin)*/
   void init();
@@ -151,7 +151,6 @@ public:
     }
   };
 
-  MockDriverNode();
   MockDriverNode(bool dummy);
 
   /*! \brief Returns a vector of all the topics that the node would publish to (only when it is a dummy node). Used for

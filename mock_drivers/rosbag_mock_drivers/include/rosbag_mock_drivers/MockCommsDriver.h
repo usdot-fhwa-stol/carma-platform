@@ -29,12 +29,13 @@ private:
   const std::string inbound_binary_topic_ = "comms/inbound_binary_msg";
   const std::string outbound_binary_topic_ = "comms/outbound_binary_msg";
 
-  void outboundCallback(const cav_msgs::ByteArray::ConstPtr& msg);
+  void outboundCallback(const cav_msgs::ByteArray::ConstPtr& msg) const;
 
 public:
   MockCommsDriver(bool dummy = false);
   int run();
-  bool driverDiscovery();
+  std::vector<DriverType> getDriverTypes();
+  uint8_t getDriverStatus();
 };
 
 }  // namespace mock_drivers

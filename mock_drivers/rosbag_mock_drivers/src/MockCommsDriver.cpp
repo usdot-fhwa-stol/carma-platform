@@ -18,31 +18,17 @@
 
 namespace mock_drivers
 {
-bool MockCommsDriver::driverDiscovery()
+std::vector<DriverType> MockCommsDriver::getDriverTypes()
 {
-  cav_msgs::DriverStatus discovery_msg;
-
-  discovery_msg.name = mock_driver_node_.getGraphName();
-  discovery_msg.status = cav_msgs::DriverStatus::OPERATIONAL;
-
-  discovery_msg.can = false;
-  discovery_msg.radar = false;
-  discovery_msg.gnss = false;
-  discovery_msg.lidar = false;
-  discovery_msg.roadway_sensor = false;
-  discovery_msg.comms = true;
-  discovery_msg.controller = false;
-  discovery_msg.camera = false;
-  discovery_msg.imu = false;
-  discovery_msg.trailer_angle_sensor = false;
-  discovery_msg.lightbar = false;
-
-  mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("driver_discovery", discovery_msg);
-
-  return true;
+  return { DriverType::COMMS };
 }
 
-void MockCommsDriver::outboundCallback(const cav_msgs::ByteArray::ConstPtr& msg)
+uint8_t MockCommsDriver::getDriverStatus()
+{
+  return cav_msgs::DriverStatus::OPERATIONAL;
+}
+
+void MockCommsDriver::outboundCallback(const cav_msgs::ByteArray::ConstPtr& msg) const
 {
   ROS_DEBUG_STREAM("Received Byte Array of type: " << msg->messageType);
 };
@@ -68,7 +54,7 @@ int MockCommsDriver::run()
 
   // driver discovery publisher
   mock_driver_node_.addPub(driver_discovery_pub_ptr_);
-  mock_driver_node_.setSpinCallback(std::bind(&MockCommsDriver::driverDiscovery, this));
+  mock_driver_node_.setSpinCallback(std::bind(&MockCommsDriver::spinCallback, this));
 
   mock_driver_node_.spin(20);
 

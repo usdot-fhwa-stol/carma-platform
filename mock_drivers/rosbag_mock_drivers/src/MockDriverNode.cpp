@@ -18,38 +18,34 @@
 
 namespace mock_drivers
 {
-MockDriverNode::MockDriverNode()
+MockDriverNode::MockDriverNode(bool dummy) : dummy_(dummy)
 {
-  dummy_ = false;
 }
 
-MockDriverNode::MockDriverNode(bool dummy)
+std::string MockDriverNode::getGraphName() const
 {
-  dummy_ = dummy;
-}
-
-std::string MockDriverNode::getGraphName() const {
-  if (dummy_) {
+  if (dummy_)
+  {
     return "dummy_mock_driver";
   }
 
   return ros::this_node::getName();
 }
 
-void MockDriverNode::spin(double rate)
+void MockDriverNode::spin(double rate) const
 {
   if (!dummy_)
   {
-    cnh_->setSpinRate(rate);
-    cnh_->spin();
+    ros::CARMANodeHandle::setSpinRate(rate);
+    ros::CARMANodeHandle::spin();
   }
 }
 
-void MockDriverNode::setSpinCallback(std::function<bool()> cb)
+void MockDriverNode::setSpinCallback(std::function<bool()> cb) const
 {
   if (!dummy_)
   {
-    cnh_->setSpinCallback(cb);
+    ros::CARMANodeHandle::setSpinCallback(cb);
   }
 }
 

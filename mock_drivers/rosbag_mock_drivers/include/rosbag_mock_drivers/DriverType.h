@@ -1,3 +1,4 @@
+#pragma once
 /*
  * Copyright (C) 2019-2020 LEIDOS.
  *
@@ -14,23 +15,20 @@
  * the License.
  */
 
-#pragma once
-
-#include "rosbag_mock_drivers/MockDriver.h"
-#include <gps_common/GPSFix.h>
-
-namespace mock_drivers
+/**
+ * \brief Enum defining the different possible types of drivers
+ */ 
+enum class DriverType
 {
-class MockGNSSDriver : public MockDriver
-{
-private:
-  const std::string gnss_fix_fuxed_topic_ = "gnss_fix_fused";
-
-public:
-  MockGNSSDriver(bool dummy = false);
-  int run();
-  std::vector<DriverType> getDriverTypes();
-  uint8_t getDriverStatus();
+  CAN,
+  RADAR,
+  GNSS,
+  LIDAR,
+  ROADWAY_SENSOR,
+  COMMS,
+  CONTROLLER,
+  CAMERA,
+  IMU,
+  TRAILER_ANGLE_SENSOR,
+  LIGHTBAR
 };
-
-}  // namespace mock_drivers

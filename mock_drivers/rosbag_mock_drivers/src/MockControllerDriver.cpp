@@ -18,42 +18,22 @@
 
 namespace mock_drivers
 {
-bool MockControllerDriver::driverDiscovery()
+std::vector<DriverType> MockControllerDriver::getDriverTypes()
 {
-  cav_msgs::DriverStatus discovery_msg;  // TODO only publish driver discovery every second.
+  return { DriverType::CONTROLLER };
+}
 
-  discovery_msg.name = mock_driver_node_.getGraphName();
-  discovery_msg.status = cav_msgs::DriverStatus::OPERATIONAL;
-
-  discovery_msg.can = false;
-  discovery_msg.radar = false;
-  discovery_msg.gnss = false;
-  discovery_msg.lidar = false;
-  discovery_msg.roadway_sensor = false;
-  discovery_msg.comms = false;
-  discovery_msg.controller = true;
-  discovery_msg.camera = false;
-  discovery_msg.imu = false;
-  discovery_msg.trailer_angle_sensor = false;
-  discovery_msg.lightbar = false;
-
-  mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>("driver_discovery", discovery_msg);
-
-  cav_msgs::RobotEnabled robot_status;
-  robot_status.robot_active = robot_active_;
-  robot_status.robot_enabled = robot_enabled_;
-
-  mock_driver_node_.publishDataNoHeader<cav_msgs::RobotEnabled>(robot_status_topic_, robot_status);
-
-  return true;
+uint8_t MockControllerDriver::getDriverStatus()
+{
+  return cav_msgs::DriverStatus::OPERATIONAL;
 }
 
 void MockControllerDriver::vehicleCmdCallback(const autoware_msgs::VehicleCmd::ConstPtr& msg)
 {
-  robot_enabled_ = true;  // If a command was received set the robot enabled status to true;
+  robot_enabled_ = true;  // If a command was received set the robot enabled status to true
 }
 
-bool MockControllerDriver::enableRoboticSrv(cav_srvs::SetEnableRobotic::Request& req,
+bool MockControllerDriver::enableRoboticSrv(const cav_srvs::SetEnableRobotic::Request& req,
                                             cav_srvs::SetEnableRobotic::Response& res)
 {
   if (robot_enabled_ && req.set == cav_srvs::SetEnableRobotic::Request::ENABLE)
@@ -94,7 +74,7 @@ int MockControllerDriver::run()
 
   // driver discovery publisher
   mock_driver_node_.addPub(driver_discovery_pub_ptr_);
-  mock_driver_node_.setSpinCallback(std::bind(&MockControllerDriver::driverDiscovery, this));
+  mock_driver_node_.setSpinCallback(std::bind(&MockControllerDriver::spinCallback, this));
 
   mock_driver_node_.spin(20);
 
