@@ -26,6 +26,6 @@ fi
 
 # Mount the Windows shared folder
 echo "Windows shared folder mount successful: $now\n" >> /home/autoware/WindowsMountStatus.txt
-sudo mount -t cifs -o username=CarmaWFusion,password=Carma18225,uid=1000,gid=1000 //192.168.0.64/WindowsSharedFolder /home/autoware/WindowsSharedFolder
+sudo mount -t cifs -o username=CarmaWFusion,password=Carma18225,uid=1000,gid=1000,forceuid,forcegid //192.168.0.64/WindowsSharedFolder /home/autoware/WindowsSharedFolder
 
 exit 0
