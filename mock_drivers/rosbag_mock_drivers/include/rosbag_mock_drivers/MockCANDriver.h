@@ -37,6 +37,7 @@ private:
 
 public:
   MockCANDriver(bool dummy = false);
+  ~MockCANDriver() {};
   int run();
   std::vector<DriverType> getDriverTypes();
   uint8_t getDriverStatus();

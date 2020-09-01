@@ -44,6 +44,7 @@ private:
 
 public:
   MockControllerDriver(bool dummy = false);
+  ~MockControllerDriver() {};
   int run();
   void vehicleCmdCallback(const autoware_msgs::VehicleCmd::ConstPtr& msg);
   bool enableRoboticSrv(const cav_srvs::SetEnableRobotic::Request& req, cav_srvs::SetEnableRobotic::Response& res);

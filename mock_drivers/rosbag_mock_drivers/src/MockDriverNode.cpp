@@ -18,6 +18,9 @@
 
 namespace mock_drivers
 {
+MockDriverNode::MockDriverNode()
+{
+}
 MockDriverNode::MockDriverNode(bool dummy) : dummy_(dummy)
 {
 }

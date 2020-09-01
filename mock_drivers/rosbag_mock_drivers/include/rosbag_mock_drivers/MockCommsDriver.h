@@ -33,6 +33,7 @@ private:
 
 public:
   MockCommsDriver(bool dummy = false);
+  ~MockCommsDriver() {};
   int run();
   std::vector<DriverType> getDriverTypes();
   uint8_t getDriverStatus();

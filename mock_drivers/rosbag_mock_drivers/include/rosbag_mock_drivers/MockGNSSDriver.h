@@ -28,6 +28,7 @@ private:
 
 public:
   MockGNSSDriver(bool dummy = false);
+  ~MockGNSSDriver() {};
   int run();
   std::vector<DriverType> getDriverTypes();
   uint8_t getDriverStatus();

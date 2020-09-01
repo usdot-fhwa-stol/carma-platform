@@ -30,6 +30,7 @@ private:
 
 public:
   MockRoadwaySensorDriver(bool dummy = false);
+  ~MockRoadwaySensorDriver() {};
   int run();
   std::vector<DriverType> getDriverTypes();
   uint8_t getDriverStatus();

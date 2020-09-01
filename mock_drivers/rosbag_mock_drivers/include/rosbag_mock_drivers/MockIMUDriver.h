@@ -28,6 +28,7 @@ private:
 
 public:
   MockIMUDriver(bool dummy = false);
+  ~MockIMUDriver() {};
   int run();
   std::vector<DriverType> getDriverTypes();
   uint8_t getDriverStatus();

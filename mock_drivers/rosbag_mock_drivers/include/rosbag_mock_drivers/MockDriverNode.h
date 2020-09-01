@@ -151,6 +151,7 @@ public:
     }
   };
 
+  MockDriverNode();
   MockDriverNode(bool dummy);
 
   /*! \brief Returns a vector of all the topics that the node would publish to (only when it is a dummy node). Used for

@@ -78,119 +78,24 @@ public:
   virtual uint8_t getDriverStatus() = 0;
 
 
-  void spinCallback() {
-    if (last_discovery_pub_ == ros::Time(0) || (ros::Time::now() - last_discovery_pub_).toSec() > 0.95) {
-      driverDiscovery();
-      last_discovery_pub_ = ros::Time::now();
-    }
-  }
+  bool spinCallback();
 
-  void driverDiscovery()
-  {
-    cav_msgs::DriverStatus discovery_msg;
-
-    discovery_msg.name = mock_driver_node_.getGraphName();
-    discovery_msg.status = getDriverStatus();
-
-    for (DriverType type : getDriverTypes())
-    {
-      switch (type)
-      {
-        case DriverType::CAN:
-          discovery_msg.can = true;
-          break;
-        case DriverType::RADAR:
-          discovery_msg.radar = true;
-          break;
-        case DriverType::GNSS:
-          discovery_msg.gnss = true;
-          break;
-        case DriverType::LIDAR:
-          discovery_msg.lidar = true;
-          break;
-        case DriverType::ROADWAY_SENSOR:
-          discovery_msg.roadway_sensor = true;
-          break;
-        case DriverType::COMMS:
-          discovery_msg.comms = true;
-          break;
-        case DriverType::CONTROLLER:
-          discovery_msg.controller = true;
-          break;
-        case DriverType::CAMERA:
-          discovery_msg.camera = true;
-          break;
-        case DriverType::IMU:
-          discovery_msg.imu = true;
-          break;
-        case DriverType::TRAILER_ANGLE_SENSOR:
-          discovery_msg.trailer_angle_sensor = true;
-          break;
-        case DriverType::LIGHTBAR:
-          discovery_msg.lightbar = true;
-          break;
-
-        default:
-          std::invalid_argument("Unsupported DriverType provided by getDriverTypes");
-          break;
-      }
-    }
-
-    mock_driver_node_.publishDataNoHeader<cav_msgs::DriverStatus>(driver_discovery_topic_, discovery_msg);
-  }
+  void driverDiscovery();
 
   /*! \brief Returns the mock driver node for the mock driver (used for testing) */
-  MockDriverNode getMockDriverNode()
-  {
-    return mock_driver_node_;
-  }
+  MockDriverNode getMockDriverNode();
 
   /*! \brief Function adds both a publisher and subscriber */
   // TODO: This function can be simplified using C++ 17
   template <typename T>
-  void addPassthroughPub(const std::string& sub_topic, const std::string& pub_topic, bool latch, size_t queue_size)
-  {
-    // Create pointers for publishers
-    ROSCommsPtr<T> pub_ptr = boost::make_shared<ROSComms<T>>(CommTypes::pub, latch, queue_size, pub_topic);
-
-    mock_driver_node_.addPub(pub_ptr);
-
-    std::function<void(ConstPtrRef<T>)> callback = std::bind(
-        [&](ConstPtrRef<T> in) {
-          T out = *in;
-          out.header.stamp = ros::Time::now();
-          mock_driver_node_.publishData<const T&>(pub_topic, out);
-        },
-        std::placeholders::_1);
-
-    ConstPtrRefROSCommsPtr<T> outbound_sub_ptr_ =
-        boost::make_shared<ConstPtrRefROSComms<T>>(callback, CommTypes::sub, false, queue_size, sub_topic);
-
-    mock_driver_node_.addSub(outbound_sub_ptr_);
-  }
+  void addPassthroughPub(const std::string& sub_topic, const std::string& pub_topic, bool latch, size_t queue_size);
 
   /*! \brief Function adds both a publisher and subscriber */  // void (*sub_cb)(ConstPtrRef<T>)
   template <typename T>
   void addPassthroughPubNoHeader(const std::string& sub_topic, const std::string& pub_topic, bool latch,
-                                 size_t queue_size)
-  {
-    // Create pointers for publishers
-    ROSCommsPtr<T> pub_ptr = boost::make_shared<ROSComms<T>>(CommTypes::pub, latch, queue_size, pub_topic);
-
-    mock_driver_node_.addPub(pub_ptr);
-
-    std::function<void(ConstPtrRef<T>)> callback = std::bind(
-        [&](ConstPtrRef<T> in) {
-          T out = *in;
-          mock_driver_node_.publishDataNoHeader<const T&>(pub_topic, out);
-        },
-        std::placeholders::_1);
-
-    ConstPtrRefROSCommsPtr<T> outbound_sub_ptr_ =
-        boost::make_shared<ConstPtrRefROSComms<T>>(callback, CommTypes::sub, false, queue_size, sub_topic);
-
-    mock_driver_node_.addSub(outbound_sub_ptr_);
-  }
+                                 size_t queue_size);
 };
 
 }  // namespace mock_drivers
+
+#include "impl/MockDriver.tpp"

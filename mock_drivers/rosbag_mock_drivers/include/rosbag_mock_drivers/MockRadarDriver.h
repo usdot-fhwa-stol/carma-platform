@@ -30,6 +30,7 @@ private:
 
 public:
   MockRadarDriver(bool dummy = false);
+  ~MockRadarDriver() {};
   int run();
   std::vector<DriverType> getDriverTypes();
   uint8_t getDriverStatus();

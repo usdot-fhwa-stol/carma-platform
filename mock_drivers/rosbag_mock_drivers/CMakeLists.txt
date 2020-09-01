@@ -53,6 +53,7 @@ include_directories(
 
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
+  src/MockDriver.cpp
   src/MockDriverNode.cpp
   src/MockCameraDriver.cpp
   src/MockCANDriver.cpp
