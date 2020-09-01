@@ -32,9 +32,10 @@ TEST(GeofenceSchedule, scheduleStarted)
   sch.schedule_start_ = ros::Time(0);
   sch.schedule_end_ = ros::Time(1);
   sch.control_start_ = ros::Duration(0);
-  sch.control_end_ = ros::Duration(1);
   sch.control_duration_ = ros::Duration(1);
-  sch.control_interval_ = ros::Duration(2);
+  sch.control_offset_ = ros::Duration(0);
+  sch.control_span_ = ros::Duration(1);
+  sch.control_period_ = ros::Duration(2);
 
   ASSERT_TRUE(sch.scheduleStarted(ros::Time(0)));
   ASSERT_TRUE(sch.scheduleStarted(ros::Time(0.9)));
@@ -55,7 +56,7 @@ TEST(GeofenceSchedule, getNextInterval)
 {
   // Test before start
 
-  GeofenceSchedule sch(ros::Time(1), ros::Time(6), ros::Duration(2), ros::Duration(3), ros::Duration(1),
+  GeofenceSchedule sch(ros::Time(1), ros::Time(6), ros::Duration(2), ros::Duration(1), ros::Duration(0), ros::Duration(1),
                        ros::Duration(2)  // This means the next schedule is a 4 (2+2)
   );
 
@@ -72,7 +73,7 @@ TEST(GeofenceSchedule, getNextInterval)
   ASSERT_NEAR(0.0, sch.getNextInterval(ros::Time(3.5)).second.toSec(), 0.00001);
   ASSERT_FALSE(sch.getNextInterval(ros::Time(3.5)).first);
 
-  sch = GeofenceSchedule(ros::Time(1), ros::Time(6), ros::Duration(2), ros::Duration(5), ros::Duration(1),
+  sch = GeofenceSchedule(ros::Time(1), ros::Time(6), ros::Duration(2), ros::Duration(3), ros::Duration(0), ros::Duration(1),
                          ros::Duration(2)  // This means the next schedule is a 4 (2+2)
   );
   // Test between end of first control and start of second

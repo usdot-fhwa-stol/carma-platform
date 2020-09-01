@@ -1,3 +1,0 @@
-This directory contains the file base_map.pcd which is an example file that can be used to run CARMA locally. However, the file is not meant to be used for simulation.
-The base_map.pcd file is a renamed copy of room_scan1.pcd located at https://github.com/PointCloudLibrary/data/tree/master/tutorials/room_scan1.pcd
-The license for this file can be found at the LICENSE file located in this directory

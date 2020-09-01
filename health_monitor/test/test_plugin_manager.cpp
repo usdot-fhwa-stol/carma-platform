@@ -18,8 +18,7 @@
 #include <gtest/gtest.h>
 
 namespace health_monitor
-{
-    
+{    
     TEST(PluginManagerTest, testRegisteredPlugins)
     {
         std::vector<std::string> required_plugins{"autoware", "pure_pursuit"};

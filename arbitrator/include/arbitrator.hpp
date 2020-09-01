@@ -50,7 +50,7 @@ namespace arbitrator
                 ros::CARMANodeHandle *pnh, 
                 ArbitratorStateMachine *sm, 
                 CapabilitiesInterface *ci, 
-                const PlanningStrategy &planning_strategy,
+                PlanningStrategy &planning_strategy,
                 ros::Duration min_plan_duration,
                 ros::Rate planning_frequency):
                 sm_(sm),
@@ -112,7 +112,7 @@ namespace arbitrator
             ros::Duration time_between_plans_;
             ros::Time next_planning_process_start_;
             CapabilitiesInterface *capabilities_interface_;
-            const PlanningStrategy &planning_strategy_;
+            PlanningStrategy &planning_strategy_;
             bool initialized_;
     };
 };

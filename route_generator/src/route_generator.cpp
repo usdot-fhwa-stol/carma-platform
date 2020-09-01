@@ -18,7 +18,7 @@
 
 #include "route_generator.h"
 
-RouteGenerator::RouteGenerator() : route_is_active_(false) {}
+RouteGenerator::RouteGenerator(){}
 
 RouteGenerator::~RouteGenerator() {}
 
@@ -116,7 +116,7 @@ bool RouteGenerator::abort_active_route_cb(cav_srvs::AbortActiveRouteRequest &re
     return true;
 }
 
-std::vector<std::string> RouteGenerator::read_route_names(std::string route_path)
+std::vector<std::string> RouteGenerator::read_route_names(const std::string& route_path)
 {
     boost::filesystem::path route_path_object(route_path);
     std::vector<std::string> route_names;
@@ -132,4 +132,9 @@ std::vector<std::string> RouteGenerator::read_route_names(std::string route_path
         }
     }
     return route_names;
+}
+
+bool RouteGenerator::is_route_active ()
+{
+    return route_is_active_;
 }

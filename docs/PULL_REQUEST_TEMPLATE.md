@@ -39,6 +39,6 @@
 - [ ] My change requires a change to the documentation.
 - [ ] I have updated the documentation accordingly.
 - [ ] I have read the **CONTRIBUTING** document.
-[CARMA Contributing Guide](Contributing.md) 
+[CARMA Contributing Guide](https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/Contributing.md) 
 - [ ] I have added tests to cover my changes.
 - [ ] All new and existing tests passed.

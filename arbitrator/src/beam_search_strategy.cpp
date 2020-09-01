@@ -22,7 +22,7 @@ namespace arbitrator
     {
         std::sort(plans.begin(), 
             plans.end(), 
-            [] (std::pair<cav_msgs::ManeuverPlan, double> a, std::pair<cav_msgs::ManeuverPlan, double> b) 
+            [] (const std::pair<cav_msgs::ManeuverPlan, double>& a, const std::pair<cav_msgs::ManeuverPlan, double>& b) 
             {
                 return a.second < b.second;
             }

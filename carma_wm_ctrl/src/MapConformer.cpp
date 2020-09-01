@@ -21,6 +21,7 @@
 #include <lanelet2_extension/regulatory_elements/RegionAccessRule.h>
 #include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
 #include <carma_wm_ctrl/MapConformer.h>
+#include <ros/ros.h>
 
 namespace lanelet
 {
@@ -81,6 +82,7 @@ std::vector<lanelet::traffic_rules::TrafficRulesUPtr> getAllGermanTrafficRules()
     catch (const lanelet::InvalidInputError& e)
     {
       // Ignore participants which there is no generic rules for
+      ROS_INFO_STREAM ("Ignoring participant: " << participant_types[i] <<  ", which there is no generic rule for...");
     }
   }
 
@@ -329,34 +331,34 @@ void addInferredPassingControlLine(Lanelet& lanelet, lanelet::LaneletMapPtr map)
   // lanelet's bounds
   for (auto reg_elem : map->regulatoryElementLayer)
   {
-    if (reg_elem->attribute(AttributeName::Subtype).value() == PassingControlLine::RuleName)
+    if (reg_elem->attribute(AttributeName::Subtype).value() != PassingControlLine::RuleName)
     {
-      auto pcl = std::static_pointer_cast<PassingControlLine>(reg_elem);
-      for (auto sub_line : pcl->controlLine())
-      {
-        if (left_bound.id() == sub_line.id() && !foundLeft)
-        {
-          foundLeft = true;
+      continue;
+    }
 
-          bool alreadyAdded = lanelet::utils::contains(local_control_lines, pcl);
-          if (!alreadyAdded)
-          {
-            lanelet.addRegulatoryElement(pcl);
-          }
-        }
-        else if (right_bound.id() == sub_line.id() && !foundRight)
-        {
-          foundRight = true;
-          // Check if our lanelet contains this control line
-          // If it does not then add it
-          bool alreadyAdded = lanelet::utils::contains(local_control_lines, pcl);
-          if (!alreadyAdded)
-          {
-            lanelet.addRegulatoryElement(pcl);
-          }
-        }
+    auto pcl = std::static_pointer_cast<PassingControlLine>(reg_elem);
+    for (auto sub_line : pcl->controlLine())
+    {
+      bool shouldAdd = false;
+      
+      if (left_bound.id() == sub_line.id() && !foundLeft)
+      {
+        foundLeft = true;
+        shouldAdd = !lanelet::utils::contains(local_control_lines, pcl);
+      }
+      else if (right_bound.id() == sub_line.id() && !foundRight)
+      {
+        foundRight = true;
+        shouldAdd = !lanelet::utils::contains(local_control_lines, pcl);
+      }
+      // Check if our lanelet contains this control line
+      // If it does not then add it
+      if (shouldAdd)
+      {
+        lanelet.addRegulatoryElement(pcl);
       }
     }
+    
   }
 
   // If no existing regulation was found for this lanelet's right or left bound then create a new one and add it to

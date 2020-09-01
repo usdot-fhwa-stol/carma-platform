@@ -15,7 +15,7 @@
  */
 
 #include <carma_wm_ctrl/WMBroadcaster.h>
-#include <carma_wm_ctrl/ROSTimerFactory.h>
+#include <carma_utils/timers/ROSTimerFactory.h>
 #include <carma_wm_ctrl/WMBroadcasterNode.h>
 
 namespace carma_wm_ctrl
@@ -27,16 +27,32 @@ void WMBroadcasterNode::publishMap(const autoware_lanelet2_msgs::MapBin& map_msg
   map_pub_.publish(map_msg);
 }
 
+void WMBroadcasterNode::publishMapUpdate(const autoware_lanelet2_msgs::MapBin& geofence_msg) const
+{
+  map_update_pub_.publish(geofence_msg);
+}
+
 WMBroadcasterNode::WMBroadcasterNode()
-  : wmb_(std::bind(&WMBroadcasterNode::publishMap, this, _1), std::make_unique<ROSTimerFactory>()){};
+  : wmb_(std::bind(&WMBroadcasterNode::publishMap, this, _1), std::bind(&WMBroadcasterNode::publishMapUpdate, this, _1), 
+    std::make_unique<carma_utils::timers::ROSTimerFactory>()){};
 
 int WMBroadcasterNode::run()
 {
   // Map Publisher
   map_pub_ = cnh_.advertise<autoware_lanelet2_msgs::MapBin>("semantic_map", 1, true);
+  // Map Update Publisher
+  map_update_pub_ = cnh_.advertise<autoware_lanelet2_msgs::MapBin>("map_update", 1, true);
   // Base Map Sub
   base_map_sub_ = cnh_.subscribe("base_map", 1, &WMBroadcaster::baseMapCallback, &wmb_);
-
+  // Base Map Georeference Sub
+  georef_sub_ = cnh_.subscribe("georeference", 1, &WMBroadcaster::geoReferenceCallback, &wmb_);
+  // Geofence Sub
+  geofence_sub_ = cnh_.subscribe("geofence", 1, &WMBroadcaster::geofenceCallback, &wmb_);
+  
+  double lane_max_width;
+  pnh_.getParam("max_lane_width", lane_max_width);
+  wmb_.setMaxLaneWidth(lane_max_width);
+  
   // Spin
   cnh_.setSpinRate(10);
   cnh_.spin();

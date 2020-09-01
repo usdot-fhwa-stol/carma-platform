@@ -17,8 +17,16 @@
 #include <lanelet2_core/primitives/Point.h>
 #include "GeofenceSchedule.h"
 
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
+#include <lanelet2_core/primitives/LaneletOrArea.h>
+#include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
+
 namespace carma_wm_ctrl
 {
+using namespace lanelet::units::literals;
 /**
  * @brief An object representing a geofence use for communications with CARMA Cloud
  *
@@ -27,10 +35,25 @@ namespace carma_wm_ctrl
 class Geofence
 {
 public:
-  uint32_t id_;  // Unique id of this geofence. TODO use id matching geofence standard
+  boost::uuids::uuid id_;  // Unique id of this geofence
 
-  GeofenceSchedule schedule;  // The schedule this geofence operates with
+  std::vector<GeofenceSchedule> schedules;  // The schedules this geofence operates with
 
-  //// TODO Add attributes provided by geofences
+  std::string proj;
+
+  // TODO Add rest of the attributes provided by geofences in the future
+  lanelet::RegulatoryElementPtr regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_kmh, {}, {},
+                                                     { lanelet::Participants::VehicleCar }));
+  // elements needed for broadcasting to the rest of map users
+  std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list_;
+  std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> remove_list_;
+  
+  // we need mutable elements saved here as they will be added back through update function which only accepts mutable objects
+  std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> prev_regems_;
+  lanelet::ConstLaneletOrAreas affected_parts_;
+  
+  // Helper member for PassingControlLine type regulatory geofence
+  bool pcl_affects_left_ = false;
+  bool pcl_affects_right_ = false;
 };
 }  // namespace carma_wm_ctrl

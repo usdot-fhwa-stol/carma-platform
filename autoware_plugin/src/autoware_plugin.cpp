@@ -27,11 +27,25 @@ namespace autoware_plugin
                     current_speed_(0.0),
                     trajectory_time_length_(6.0),
                     trajectory_point_spacing_(0.1) {}
-
+//@SONAR_STOP@
     void AutowarePlugin::initialize()
     {
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
+
+
+        // get vehicle size
+        double x;
+        double y;
+        double z;
+        nh_->getParam("vehicle_length", x);
+        nh_->getParam("vehicle_width", y);
+        nh_->getParam("vehicle_height", z);
+
+        host_vehicle_size.x = x;
+        host_vehicle_size.y = y;
+        host_vehicle_size.z = z;
+
         
         maneuver_srv_ = nh_->advertiseService("plugins/AutowarePlugin/plan_maneuvers", &AutowarePlugin::plan_maneuver_cb, this);
         trajectory_srv_ = nh_->advertiseService("plugins/AutowarePlugin/plan_trajectory", &AutowarePlugin::plan_trajectory_cb, this);
@@ -49,6 +63,10 @@ namespace autoware_plugin
         twist_sub_ = nh_->subscribe("current_velocity", 1, &AutowarePlugin::twist_cd, this);
         pnh_->param<double>("trajectory_time_length", trajectory_time_length_, 6.0);
         pnh_->param<double>("trajectory_point_spacing", trajectory_point_spacing_, 0.1);
+        pnh_->param<double>("tpmin", tpmin, 0.0);
+        pnh_->param<double>("maximum_deceleration_value", maximum_deceleration_value, 0.0);
+        pnh_->param<double>("min_downtrack", min_downtrack, 0.0);
+        pnh_->param<double>("x_gap", x_gap, 0.0);
 
         ros::CARMANodeHandle::setSpinCallback([this]() -> bool {
             autoware_plugin_discovery_pub_.publish(plugin_discovery_msg_);
@@ -109,7 +127,8 @@ namespace autoware_plugin
         trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
         trajectory.trajectory_points = compose_trajectory_from_waypoints(msg->waypoints);
         waypoints_list = msg->waypoints;
-        trajectory_msg = trajectory;
+
+        trajectory_msg = update_traj_for_object(trajectory);
     }
 
     void AutowarePlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
@@ -120,7 +139,10 @@ namespace autoware_plugin
     void AutowarePlugin::twist_cd(const geometry_msgs::TwistStampedConstPtr& msg)
     {
         current_speed_ = msg->twist.linear.x;
+        velocity = msg->twist;
     }
+
+//@SONAR_START@
 
     std::vector<cav_msgs::TrajectoryPlanPoint> AutowarePlugin::compose_trajectory_from_waypoints(std::vector<autoware_msgs::Waypoint> waypoints)
     {
@@ -192,8 +214,8 @@ namespace autoware_plugin
             }
             double delta_x_square = pow(waypoints[i].pose.pose.position.x - waypoints[i - 1].pose.pose.position.x, 2);
             double delta_y_square = pow(waypoints[i].pose.pose.position.y - waypoints[i - 1].pose.pose.position.y, 2);
-            //double delta_z_square = waypoints[i].pose.pose.position.z - waypoints[i - 1].pose.pose.position.z;
             // Here we ignore z attribute because it is not used by Autoware
+            
             double delta_d = sqrt(delta_x_square + delta_y_square);
             double average_v = 0.5 * (waypoints[i].twist.twist.linear.x + waypoints[i - 1].twist.twist.linear.x);
             double delta_t = delta_d / average_v;
@@ -211,11 +233,187 @@ namespace autoware_plugin
         uint64_t current_nsec = ros::Time::now().toNSec();
         for(int i = 0; i < trajectory.size(); ++i)
         {
-            trajectory[i].controller_plugin_name = "pure_pursuit";
+            trajectory[i].controller_plugin_name = "mpc_follower";
             trajectory[i].planner_plugin_name = "autoware";
             trajectory[i].target_time += current_nsec;
         }
 
         return trajectory;
+    }
+
+    cav_msgs::TrajectoryPlan AutowarePlugin::update_traj_for_object(cav_msgs::TrajectoryPlan& original_tp) 
+    {
+        
+        cav_msgs::TrajectoryPlan update_tpp_vector;
+
+        // get roadway object
+        std::vector<cav_msgs::RoadwayObstacle> rwol = wm_->getRoadwayObjects();
+
+        std::vector<cav_msgs::RoadwayObstacle> rwol_collision = carma_wm::collision_detection::WorldCollisionDetection(rwol, original_tp, host_vehicle_size, velocity, 10.0);
+
+        if(rwol_collision.size() > 0) {
+
+            // use trajectory utiles to update trajectory plan points
+            carma_wm::TrackPos track_pose = wm_->routeTrackPos(lanelet::BasicPoint2d(original_tp.trajectory_points[0].x, original_tp.trajectory_points[0].y));
+ 
+            // lead vehicle trjactory
+            double x_lead = rwol_collision[0].down_track;
+
+            // roadway object position
+            double gap_time = (x_lead - x_gap)/current_speed_;
+
+            double vt = rwol_collision[0].object.velocity.twist.linear.x;
+
+            double xt = rwol_collision[0].down_track - vt * gap_time;
+            double x0 = track_pose.downtrack;
+
+            double a0 = 0;
+            double at = 0;
+
+            int collision_time = abs((x_lead - x0)/(vt - current_speed_));
+
+            double t0 = 0;
+
+            double tp = 0;
+            double delta_v_max = rwol_collision[0].object.velocity.twist.linear.x - max_trajectory_speed(original_tp.trajectory_points);
+            double t_ref = original_tp.trajectory_points[0].target_time - original_tp.trajectory_points[original_tp.trajectory_points.size() - 1].target_time;
+            double t_ph = 4 * delta_v_max / maximum_deceleration_value;
+
+            if(t_ph > tpmin && t_ref < t_ph){
+                tp = t_ph;
+            }
+            else if(t_ph < tpmin){
+                tp = tpmin;
+            }
+            else {
+                tp = t_ref;
+            }
+
+            if(tp > collision_time) {
+                ROS_WARN_STREAM("trajectory can not be modified!");
+            }
+
+            std::vector<double> values = quintic_coefficient_calculator::quintic_coefficient_calculator(x0, 
+                                                                                                        xt, 
+                                                                                                        current_speed_, 
+                                                                                                        vt, 
+                                                                                                        a0, 
+                                                                                                        at, 
+                                                                                                        t0, 
+                                                                                                        tp);
+
+            std::vector<cav_msgs::TrajectoryPlanPoint> new_trajectory_points;
+
+            new_trajectory_points.push_back(original_tp.trajectory_points[0]);
+
+            auto shortest_path = wm_->getRoute()->shortestPath();
+            std::vector<lanelet::ConstLanelet> tmp;
+            lanelet::ConstLanelet start_lanelet;
+
+            for(int i = 1; i < original_tp.trajectory_points.size() - 1; i++ )
+            {            
+                for (lanelet::ConstLanelet l : shortest_path) {
+
+                    if (l.id()== std::stoi(original_tp.trajectory_points[i].lane_id)) {
+                        start_lanelet = l;
+                    }
+                }
+
+                cav_msgs::TrajectoryPlanPoint new_tpp;
+                new_tpp.target_time = i * tp / original_tp.trajectory_points.size();
+
+                double down_track_ = polynomial_calc(values,new_tpp.target_time);
+
+                new_tpp.lane_id = original_tp.trajectory_points[i].lane_id;
+                new_tpp.controller_plugin_name = original_tp.trajectory_points[i].controller_plugin_name;
+                new_tpp.planner_plugin_name = original_tp.trajectory_points[i].planner_plugin_name;
+
+                for (auto centerline_point:start_lanelet.centerline2d()) {
+                    double dt = wm_->routeTrackPos(centerline_point).downtrack;
+                    if (dt - down_track_ <= min_downtrack){
+                        new_tpp.x = centerline_point.x();
+                        new_tpp.y = centerline_point.y();
+                        break;
+                    }
+                }
+
+                double x_original = original_tp.trajectory_points[i].x - original_tp.trajectory_points[i - 1].x;
+                double t_original = original_tp.trajectory_points[i].target_time - original_tp.trajectory_points[i - 1].target_time;
+
+                double x_new = new_trajectory_points[i].x - new_trajectory_points[i - 1].x;
+                double t_new = new_trajectory_points[i].target_time - new_trajectory_points[i - 1].target_time;
+
+                double v_new = x_new/t_new;
+                double v_original = x_original/t_original;
+
+                if(v_new > v_original){
+                    carma_wm::TrackPos track_pose = wm_->routeTrackPos(lanelet::BasicPoint2d(original_tp.trajectory_points[i].x, original_tp.trajectory_points[i].y));
+                    values = quintic_coefficient_calculator::quintic_coefficient_calculator(track_pose.downtrack, 
+                                                                                            xt, 
+                                                                                            current_speed_, 
+                                                                                            vt, 
+                                                                                            a0, 
+                                                                                            at, 
+                                                                                            t0, 
+                                                                                            tp);
+                }
+
+                down_track_ = polynomial_calc(values,new_tpp.target_time);
+
+                for (auto centerline_point:start_lanelet.centerline2d()) {
+                    double dt = wm_->routeTrackPos(centerline_point).downtrack;
+                    if (dt - down_track_ <= min_downtrack){
+                        new_tpp.x = centerline_point.x();
+                        new_tpp.y = centerline_point.y();
+                        break;
+                    }
+                }
+
+                new_trajectory_points.push_back(new_tpp);
+            }
+
+            update_tpp_vector.header = original_tp.header;
+
+            update_tpp_vector.trajectory_id = original_tp.trajectory_id;
+
+            update_tpp_vector.trajectory_points = new_trajectory_points;
+
+            return update_tpp_vector;
+        }
+
+        return original_tp;
+    } 
+
+    double AutowarePlugin::polynomial_calc(std::vector<double> coeff, double x) const
+    {
+        double result = 0;
+
+        for (size_t i = 0; i < coeff.size(); i++) {
+
+            __uint64_t value = coeff[i] * pow(x, (coeff.size() - 1 - i));
+            
+            result = result + value;
+        }
+    
+        return result;
+    }
+
+    double AutowarePlugin::max_trajectory_speed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points) const
+    {
+        double max_speed = 0;
+
+        for(int i = 0; i < trajectory_points.size() - 2; i++ )
+        {
+            double x = trajectory_points[i + 1].x - trajectory_points[i].x;
+            double t = trajectory_points[i + 1].target_time - trajectory_points[i].target_time;
+            double v = x/t;
+
+            if(v > max_speed){
+                max_speed = v;
+            }
+
+        }
+
+        return max_speed;
     }
 }
