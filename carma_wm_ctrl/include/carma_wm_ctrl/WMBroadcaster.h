@@ -148,8 +148,8 @@ public:
    */
   std::shared_ptr<Geofence> geofenceFromMsg(const cav_msgs::TrafficControlMessageV01& geofence_msg);
 
-  void currentLocationCallback(geometry_msgs::PoseStamped current_pos);
-  cav_msgs::CheckActiveGeofence checkActiveGeofenceLogic(geometry_msgs::PoseStamped current_pos);
+  void currentLocationCallback(const geometry_msgs::PoseStamped current_pos);
+  cav_msgs::CheckActiveGeofence checkActiveGeofenceLogic(const geometry_msgs::PoseStamped current_pos);
 
 
   /*!

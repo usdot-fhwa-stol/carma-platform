@@ -229,6 +229,9 @@ void WMBroadcaster::addPassingControlLineFromMsg(std::shared_ptr<Geofence> gf_pt
 // currently only supports geofence message version 1: TrafficControlMessageV01 
 void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geofence_msg)
 {
+  //ROS_ERROR_STREAM
+  ROS_ERROR_STREAM("Geofence Callback Start");
+
   std::lock_guard<std::mutex> guard(map_mutex_);
   // quickly check if the id has been added
   if (geofence_msg.choice != cav_msgs::TrafficControlMessage::TCMV01)
@@ -246,11 +249,11 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   std::copy(req_id.begin(),req_id.end(), uuid_id.begin());
   std::string reqid = boost::uuids::to_string(uuid_id).substr(0, 8);
   // drop if the req has never been sent
-  if (generated_geofence_reqids_.find(reqid) == generated_geofence_reqids_.end())
+  /*if (generated_geofence_reqids_.find(reqid) == generated_geofence_reqids_.end())
   {
     ROS_WARN_STREAM("CARMA_WM_CTRL received a TrafficControlMessage with unknown TrafficControlRequest ID (reqid): " << reqid);
     return;
-  }
+  }*/
     
   checked_geofence_ids_.insert(boost::uuids::to_string(id));
   auto gf_ptr = geofenceFromMsg(geofence_msg.tcmV01);
@@ -262,6 +265,9 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   scheduler_.addGeofence(gf_ptr);  // Add the geofence to the scheduler
   ROS_INFO_STREAM("New geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
   
+
+  //Check values in affected_parts_
+  ROS_ERROR_STREAM("gf_ptr->affected_parts_ = "<< gf_ptr->affected_parts_.back() );
 };
 
 void WMBroadcaster::geoReferenceCallback(const std_msgs::String& geo_ref)
@@ -494,6 +500,9 @@ void WMBroadcaster::addBackRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr)
 
 void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 {
+   //Ensure this function has been called 
+  ROS_ERROR_STREAM("addGeofence has been called");
+
   std::lock_guard<std::mutex> guard(map_mutex_);
   ROS_INFO_STREAM("Adding active geofence to the map with geofence id: " << gf_ptr->id_);
   
@@ -640,7 +649,8 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
   boost::uuids::uuid uuid_id = boost::uuids::random_generator()(); 
   // take half as string
   std::string reqid = boost::uuids::to_string(uuid_id).substr(0, 8);
-  generated_geofence_reqids_.insert(reqid);
+  std::string req_id_test = "12345678";
+  generated_geofence_reqids_.insert(req_id_test);
 
   // copy to reqid array
   boost::array<uint8_t, 16UL> req_id;
@@ -725,24 +735,34 @@ void WMBroadcaster::removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr) const
   gf_ptr->prev_regems_ = {};
 }
 
-void WMBroadcaster::currentLocationCallback( geometry_msgs::PoseStamped current_pos)
+void WMBroadcaster::currentLocationCallback(const geometry_msgs::PoseStamped current_pos)
 {
- 
+ //Ensure this function has been called 
+ ROS_ERROR_STREAM("currentLocationCallback has been called.");
    cav_msgs::CheckActiveGeofence check = checkActiveGeofenceLogic(current_pos);
    active_pub_(check);//Publish
 
 }
 
-cav_msgs::CheckActiveGeofence WMBroadcaster::checkActiveGeofenceLogic(geometry_msgs::PoseStamped current_pos)
+cav_msgs::CheckActiveGeofence WMBroadcaster::checkActiveGeofenceLogic(const geometry_msgs::PoseStamped current_pos)
 {
+  ROS_ERROR_STREAM("checkActiveGeofenceLogic has been called");
+
   if (!current_map_ || current_map_->laneletLayer.size() == 0) 
   {
     throw lanelet::InvalidObjectStateError(std::string("Lanelet map 'current_map_' is not loaded to the WMBroadcaster"));
   }
+
+  ROS_ERROR_STREAM("checkActiveGeofenceLogic has officially started");
 //Store current position values to be compared to geofence boundary values
   float current_pos_x = current_pos.pose.position.x;
   float current_pos_y = current_pos.pose.position.y;
   //float current_pos_z = current_pos.pose.position.z;
+
+//Check values of the current position
+  ROS_ERROR_STREAM("Position x = " << current_pos_x);
+  ROS_ERROR_STREAM("Position y = "<< current_pos_y);
+
 lanelet::BasicPoint2d curr_pos;
   curr_pos.x() = current_pos_x;
   curr_pos.y() = current_pos_y;
@@ -762,7 +782,8 @@ lanelet::BasicPoint2d curr_pos;
 
   if (active_geofence_llt_ids_.size() <= 0 ) 
   {
-    throw lanelet::InvalidObjectStateError(std::string("No active geofence llt ids are loaded to the WMBroadcaster"));
+    ROS_INFO_STREAM("No active geofence llt ids are loaded to the WMBroadcaster");
+    return outgoing_geof;
   }
 
 

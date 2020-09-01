@@ -58,7 +58,7 @@ int WMBroadcasterNode::run()
   //Route Message Publisher
   control_msg_pub_= cnh_.advertise<cav_msgs::TrafficControlRequest>("outgoing_geofence_request", 1, true);
   //Check Active Geofence Publisher
-  active_pub_ = cnh_.advertise<cav_msgs::CheckActiveGeofence>("active_geofence", 1, true);
+  active_pub_ = cnh_.advertise<cav_msgs::CheckActiveGeofence>("active_geofence", 1000, true);
   // Base Map Sub
   base_map_sub_ = cnh_.subscribe("base_map", 1, &WMBroadcaster::baseMapCallback, &wmb_);
   // Base Map Georeference Sub

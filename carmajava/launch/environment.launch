@@ -36,6 +36,7 @@
   <!-- World Model Updater -->
   <group>
     <remap from="outgoing_geofence_request" to="$(optenv CARMA_MSG_NS)/outgoing_geofence_request"/>
+    <remap from="active_geofence" to="$(optenv CARMA_MSG_NS)/active_geofence"/>
     <remap from="route" to="$(optenv CARMA_GUIDE_NS)/route"/>
   <include file="$(find carma_wm_ctrl)/launch/carma_wm_broadcaster.launch"/>
   </group>
@@ -186,6 +187,5 @@
   </include>
   </group>
 
- 
 
 </launch>

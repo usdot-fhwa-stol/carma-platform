@@ -59,7 +59,7 @@ namespace carma_wm_ctrl
 TEST(WMBroadcaster, Constructor)
 {
   WMBroadcaster([](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
-   [](const cav_msgs::TrafficControlRequest& control_msg_pub_){}, [](cav_msgs::CheckActiveGeofence& active_pub_){}, std::make_unique<TestTimerFactory>());  // Create broadcaster with test timers. Having this check helps
+   [](const cav_msgs::TrafficControlRequest& control_msg_pub_){}, [](const cav_msgs::CheckActiveGeofence& active_pub_){}, std::make_unique<TestTimerFactory>());  // Create broadcaster with test timers. Having this check helps
                                                         // verify that the timers do not crash on destruction
 }
 TEST(WMBroadcaster, baseMapCallback)
@@ -77,7 +77,7 @@ TEST(WMBroadcaster, baseMapCallback)
 
         base_map_call_count++;
       }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
-      [](cav_msgs::CheckActiveGeofence& active_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
       std::make_unique<TestTimerFactory>());
 
   // Get and convert map to binary message
@@ -109,7 +109,7 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
 
         base_map_call_count++;
       }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
-      [](cav_msgs::CheckActiveGeofence& active_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
       std::make_unique<TestTimerFactory>());
 
   //////
@@ -174,7 +174,7 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
         
         base_map_call_count++;
       }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
-      [](cav_msgs::CheckActiveGeofence& active_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
       std::make_unique<TestTimerFactory>());
 
   //////
@@ -316,7 +316,7 @@ TEST(WMBroadcaster, geofenceCallback)
         // atomic is not working for boost::uuids::uuid, so hash it
         last_active_gf.store(boost::hash<boost::uuids::uuid>()(data_received->id_));
       }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
-      [](cav_msgs::CheckActiveGeofence& active_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
       std::make_unique<TestTimerFactory>());
 
  // Get and convert map to binary message
@@ -433,7 +433,7 @@ TEST(WMBroadcaster, routeCallbackMessage)
 
         base_map_call_count++;
       }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
-      [](cav_msgs::CheckActiveGeofence& active_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
       std::make_unique<TestTimerFactory>());
  
   
@@ -499,7 +499,7 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
         // Publish map update callback
         map_update_call_count++;
       }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
-      [](cav_msgs::CheckActiveGeofence& active_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
       std::make_unique<TestTimerFactory>());
 
   //////
@@ -591,7 +591,7 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
         base_map_call_count++;
       },
       [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
-      [](cav_msgs::CheckActiveGeofence& active_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
       std::make_unique<TestTimerFactory>());
   
   /////
@@ -787,7 +787,7 @@ TEST(WMBroadcaster, DISABLED_RegulatoryPCLTest)
         // atomic is not working for boost::uuids::uuid, so hash it
         last_active_gf.store(boost::hash<boost::uuids::uuid>()(data_received->id_));
       }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
-      [](cav_msgs::CheckActiveGeofence& active_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
       std::make_unique<TestTimerFactory>());
 
  autoware_lanelet2_msgs::MapBin msg;
@@ -893,7 +893,7 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
         base_map_call_count++;
       },
       [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
-      [](cav_msgs::CheckActiveGeofence& active_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
       std::make_unique<TestTimerFactory>());
 
   autoware_lanelet2_msgs::MapBin msg;
@@ -1070,7 +1070,7 @@ TEST(WMBroadcaster, distToNearestActiveGeofence)
         if (!activated)
           last_inactive_gf.store(boost::hash<boost::uuids::uuid>()(data_received->id_));
       }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
-      [](cav_msgs::CheckActiveGeofence& active_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
       std::make_unique<TestTimerFactory>());
 
   // Get and convert map to binary message
@@ -1225,7 +1225,7 @@ TEST(WMBroadcaster, currentLocationCallback)
         if (!activated)
           last_inactive_gf.store(boost::hash<boost::uuids::uuid>()(data_received->id_));
       }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
-      [](cav_msgs::CheckActiveGeofence& active_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
       std::make_unique<TestTimerFactory>());
 
    //Test throw exceptions
