@@ -103,7 +103,6 @@ namespace route_following_plugin
                     //Longitudinal Distance covered in LANE_CHANGE_TIME_MAX
                 double longl_dist_covered=(speed_progress*LANE_CHANGE_TIME_MAX)+0.5*(longl_acceleration)*pow(LANE_CHANGE_TIME_MAX,2);
                 double start_dist=end_dist-current_progress-longl_dist_covered;
-                double start_time=start_dist/speed_progress;
                 //lane following till start_distance
                 resp.new_plan.maneuvers.push_back(
                 composeManeuverMessage(current_progress, start_dist, 
@@ -157,7 +156,7 @@ namespace route_following_plugin
         return -1;
     }
 
-    cav_msgs::Maneuver RouteFollowingPlugin::composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time& current_time)
+    cav_msgs::Maneuver RouteFollowingPlugin::composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, long lane_id, ros::Time& current_time)
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
@@ -174,11 +173,11 @@ namespace route_following_plugin
         maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration((end_dist - current_dist) / (0.5 * (current_speed + target_speed)));
         maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
         double end_time=maneuver_msg.lane_following_maneuver.end_time.toSec();
-        current_time+=ros::Duration(end_time);
+        current_time=ros::Time(end_time);
         return maneuver_msg;
     }
 
-    cav_msgs::Maneuver RouteFollowingPlugin::composeManeuverMessage_lanechange(double current_dist, double end_dist,double current_speed, double target_speed, int curr_lane_id, int target_lane_id, ros::Time& current_time)
+    cav_msgs::Maneuver RouteFollowingPlugin::composeManeuverMessage_lanechange(double current_dist, double end_dist,double current_speed, double target_speed, long curr_lane_id, long target_lane_id, ros::Time& current_time)
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type=cav_msgs::Maneuver::LANE_CHANGE;
@@ -191,10 +190,10 @@ namespace route_following_plugin
         maneuver_msg.lane_change_maneuver.start_time=current_time;
         maneuver_msg.lane_change_maneuver.end_dist=end_dist;
         maneuver_msg.lane_change_maneuver.end_speed=target_speed;
-        maneuver_msg.lane_change_maneuver.end_time=ros::Time(LANE_CHANGE_TIME_MAX);
+        maneuver_msg.lane_change_maneuver.end_time=current_time+ros::Duration(LANE_CHANGE_TIME_MAX);
         maneuver_msg.lane_change_maneuver.starting_lane_id=std::to_string(curr_lane_id);
         maneuver_msg.lane_change_maneuver.ending_lane_id=std::to_string(target_lane_id);
-        current_time += ros::Duration(LANE_CHANGE_TIME_MAX);
+        current_time = ros::Time(LANE_CHANGE_TIME_MAX);
         return maneuver_msg;
     }
 
