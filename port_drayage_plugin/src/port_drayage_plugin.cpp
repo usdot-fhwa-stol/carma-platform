@@ -77,33 +77,6 @@ namespace port_drayage_plugin
         return 0;
     }
 
-    // geometry_msgs::PoseStampedConstPtr PortDrayagePlugin::lookup_stop_pose(geometry_msgs::PoseStampedConstPtr pose_msg_) const {
-    //     lanelet::BasicPoint2d current_loc(pose_msg_->pose.position.x, pose_msg_->pose.position.y);
-    //     auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc, 1);
-
-    //     if(current_lanelets.size() == 0) {
-    //         ROS_WARN_STREAM("Cannot find any lanelet in map!");
-    //         return NULL;
-    //     }
-    //     else {
-    //         auto current_lanelet = current_lanelets[0];
-    //         // uncomment after StopRule add.
-
-    //         // auto access_rules = current_lanelet.second.regulatoryElementsAs<StopRule>();
-    //         // if(access_rules.empty()){
-    //         //     return NULL;
-    //         // } else{
-    //         //     StopRule::Ptr stopRegelem = access_rules.front();
-    //         //     // TODO get stopRegelem position and return the pose
-    //         //     geometry_msgs::PoseStampedConstPtr pose;
-    //         //     return pose;
-    //         // }
-
-    //         geometry_msgs::PoseStampedConstPtr pose;
-    //         return pose;   // place holder remove after uncommenting above
-    //     }
-    // }
-
     bool PortDrayagePlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp){
         
         geometry_msgs::PoseStamped stop_loc;
@@ -119,12 +92,12 @@ namespace port_drayage_plugin
         auto current_lanelet = current_lanelets[0];
         // uncomment after StopRule add.
 
-        // auto access_rules = current_lanelet.second.regulatoryElementsAs<StopRule>();
-        // if(access_rules.empty()){
+        // auto stop_rules = current_lanelet.second.regulatoryElementsAs<StopRule>();
+        // if(stop_rules.empty()){
         //     return NULL;
         // } else{
-        //     StopRule::Ptr stopRegelem = access_rules.front();
-        //     // TODO get stopRegelem position and return the pose
+        //     StopRule::Ptr stopRegelem = stop_rules.front();
+        //     // TODO get stopRegelem position and return the object with downtrack
         //     stop_loc = geometry_msgs::PoseStampedConstPtr pose;
         // }
 
@@ -147,7 +120,7 @@ namespace port_drayage_plugin
                                        speed_progress, 
                                        0.0, 
                                        current_lanelet.second.id(), 
-                                       ros::Time::now()));
+                                       req->prior_plan.planning_completion_time));
         }
 
         if(resp.new_plan.maneuvers.size() == 0)
@@ -158,7 +131,7 @@ namespace port_drayage_plugin
         return true;
     };
 
-    cav_msgs::Maneuver PortDrayagePlugin::composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time current_time)
+    cav_msgs::Maneuver PortDrayagePlugin::composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time time)
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::STOP_AND_WAIT;
@@ -168,10 +141,10 @@ namespace port_drayage_plugin
         maneuver_msg.stop_and_wait_maneuver.parameters.planning_strategic_plugin = "PortDrayageWorkerPlugin";
         maneuver_msg.stop_and_wait_maneuver.start_dist = current_dist;
         maneuver_msg.stop_and_wait_maneuver.start_speed = current_speed;
-        maneuver_msg.stop_and_wait_maneuver.start_time = current_time;
+        maneuver_msg.stop_and_wait_maneuver.start_time = time;
         maneuver_msg.stop_and_wait_maneuver.end_dist = end_dist;
         // maneuver_msg.stop_and_wait_maneuver.end_speed = target_speed;
-        maneuver_msg.stop_and_wait_maneuver.end_time = current_time + ros::Duration((end_dist - current_dist) / (0.5 * (current_speed + target_speed)));
+        maneuver_msg.stop_and_wait_maneuver.end_time = time + ros::Duration((end_dist - current_dist) / (0.5 * (current_speed + target_speed)));
         maneuver_msg.stop_and_wait_maneuver.starting_lane_id = std::to_string(lane_id);
         maneuver_msg.stop_and_wait_maneuver.ending_lane_id = std::to_string(lane_id);
         return maneuver_msg;

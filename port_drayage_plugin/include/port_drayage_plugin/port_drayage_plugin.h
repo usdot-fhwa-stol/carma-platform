@@ -92,14 +92,6 @@ namespace port_drayage_plugin
              */
             bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
 
-            // /**
-            //  * \brief Check to see if there is stop element exists on the lanelet.
-            //  * 
-            //  * \param l current lanelet
-            //  * \return NULL if the lanlet does not have stop regelem, false o.w.
-            //  */
-            // geometry_msgs::PoseStampedConstPtr lookup_stop_pose(geometry_msgs::PoseStampedConstPtr pose_msg_) const;
-
             /**
              * \brief compose Maneuver Message to send to tactical plugin.
             * \param current_dist Start downtrack distance of the current maneuver
@@ -115,7 +107,7 @@ namespace port_drayage_plugin
                                                       double current_speed, 
                                                       double target_speed, 
                                                       int lane_id, 
-                                                      ros::Time current_time);
+                                                      ros::Time time);
 
     };
 } // namespace port_drayage_plugin
