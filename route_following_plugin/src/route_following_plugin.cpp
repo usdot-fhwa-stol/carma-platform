@@ -98,6 +98,7 @@ namespace route_following_plugin
             }
             if(identifyLaneChange(following_lanelets, shortest_path[last_lanelet_index + 1].id()))
             {
+                // @SONAR_START@
                 //calculate start distance
                 double longl_acceleration=(RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS-speed_progress)/LANE_CHANGE_TIME_MAX;
                     //Longitudinal Distance covered in LANE_CHANGE_TIME_MAX
@@ -125,7 +126,7 @@ namespace route_following_plugin
 
             current_progress += dist_diff;
             speed_progress = RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
-            
+            // @SONAR_STOP@   
         }
         if(resp.new_plan.maneuvers.size() == 0)
         {
@@ -156,7 +157,7 @@ namespace route_following_plugin
         return -1;
     }
 
-    cav_msgs::Maneuver RouteFollowingPlugin::composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, long lane_id, ros::Time& current_time)
+    cav_msgs::Maneuver RouteFollowingPlugin::composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, long lane_id, ros::Time& current_time) const
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
@@ -177,7 +178,7 @@ namespace route_following_plugin
         return maneuver_msg;
     }
 
-    cav_msgs::Maneuver RouteFollowingPlugin::composeManeuverMessage_lanechange(double current_dist, double end_dist,double current_speed, double target_speed, long curr_lane_id, long target_lane_id, ros::Time& current_time)
+    cav_msgs::Maneuver RouteFollowingPlugin::composeManeuverMessage_lanechange(double current_dist, double end_dist,double current_speed, double target_speed, long curr_lane_id, long target_lane_id, ros::Time& current_time) const
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type=cav_msgs::Maneuver::LANE_CHANGE;

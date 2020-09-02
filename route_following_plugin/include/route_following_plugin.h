@@ -65,7 +65,7 @@ namespace route_following_plugin
          * \param current_time Start time of the current maneuver
          * \return A lane keeping maneuver message which is ready to be published
          */
-        cav_msgs::Maneuver composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, long lane_id, ros::Time &current_time);
+        cav_msgs::Maneuver composeManeuverMessage (double current_dist, double end_dist, double current_speed, double target_speed, long lane_id, ros::Time &current_time)const;
 
         /**
          * \brief Given a LaneletRelations and ID of the next lanelet in the shortest path
@@ -75,7 +75,7 @@ namespace route_following_plugin
          */
         bool identifyLaneChange(lanelet::routing::LaneletRelations relations, int target_id);
  
-        cav_msgs::Maneuver composeManeuverMessage_lanechange(double current_dist, double end_dist,double current_speed, double target_speed, long curr_lane_id, long target_lane_id, ros::Time &current_time);
+        cav_msgs::Maneuver composeManeuverMessage_lanechange (double current_dist, double end_dist,double current_speed, double target_speed, long curr_lane_id, long target_lane_id, ros::Time &current_time) const;
     private:
 
         // CARMA ROS node handles
