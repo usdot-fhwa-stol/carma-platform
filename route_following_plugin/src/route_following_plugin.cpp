@@ -131,9 +131,8 @@ namespace route_following_plugin
         if(resp.new_plan.maneuvers.size() == 0)
         {
             ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
-            return true;
         }
-        
+        return true;
     }
 
     void RouteFollowingPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
