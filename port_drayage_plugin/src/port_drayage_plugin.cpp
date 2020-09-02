@@ -120,7 +120,7 @@ namespace port_drayage_plugin
                                        speed_progress, 
                                        0.0, 
                                        current_lanelet.second.id(), 
-                                       req->prior_plan.planning_completion_time));
+                                       req.prior_plan.planning_completion_time));
         }
 
         if(resp.new_plan.maneuvers.size() == 0)
