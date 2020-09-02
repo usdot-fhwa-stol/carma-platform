@@ -98,7 +98,7 @@ namespace route_following_plugin
             }
             if(identifyLaneChange(following_lanelets, shortest_path[last_lanelet_index + 1].id()))
             {
-                // @SONAR_START@
+                // @SONAR_STOP@
                 //calculate start distance
                 double longl_acceleration=(RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS-speed_progress)/LANE_CHANGE_TIME_MAX;
                     //Longitudinal Distance covered in LANE_CHANGE_TIME_MAX
@@ -126,7 +126,7 @@ namespace route_following_plugin
 
             current_progress += dist_diff;
             speed_progress = RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
-            // @SONAR_STOP@   
+            // @SONAR_START@   
         }
         if(resp.new_plan.maneuvers.size() == 0)
         {
