@@ -35,7 +35,7 @@ private:
   const std::string robot_status_topic_ = "controller/robot_status";
 
   // Sub
-  const std::string vehicle_cmd_topic_ = "controller/vehicle_cmd";
+  const std::string vehicle_cmd_topic_ = "vehicle_cmd";
   const std::string enable_robotic_srv_ = "controller/enable_robotic";
 
   // Robot Status flags
