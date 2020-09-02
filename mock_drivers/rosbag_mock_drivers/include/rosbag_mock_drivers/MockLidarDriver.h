@@ -26,12 +26,15 @@ class MockLidarDriver : public MockDriver
 private:
   const std::string points_raw_topic_ = "lidar/points_raw";
 
+protected:
+  int onRun();
+
 public:
   MockLidarDriver(bool dummy = false);
   ~MockLidarDriver() {};
-  int run();
   std::vector<DriverType> getDriverTypes();
   uint8_t getDriverStatus();
+  unsigned int getRate();
 };
 
 }  // namespace mock_drivers

@@ -65,22 +65,10 @@ protected:
 
   ros::Time last_discovery_pub_ = ros::Time(0);
 
-public:
-
-  virtual ~MockDriver() = 0;
-
-  /*! \brief A function to initialize the publishers and subsricers and start the node */
-  virtual int run() = 0;
-
-  /*! \brief A function to call at 1 Hz to publish to the driver discovery topic */
-
-  virtual std::vector<DriverType> getDriverTypes() = 0;
-  virtual uint8_t getDriverStatus() = 0;
-
-
-  bool spinCallback();
 
   virtual bool onSpin();
+
+  virtual int onRun() = 0;
 
   void driverDiscovery();
 
@@ -96,6 +84,22 @@ public:
   template <typename T>
   void addPassthroughPubNoHeader(const std::string& sub_topic, const std::string& pub_topic, bool latch,
                                  size_t queue_size);
+
+public:
+
+  virtual ~MockDriver() = 0;
+
+  /*! \brief A function to initialize the publishers and subsricers and start the node */
+  int run();
+
+  /*! \brief A function to call at 1 Hz to publish to the driver discovery topic */
+
+  virtual std::vector<DriverType> getDriverTypes() = 0;
+  virtual uint8_t getDriverStatus() = 0;
+  virtual unsigned int getRate() = 0;
+
+
+  bool spinCallback();
 };
 
 }  // namespace mock_drivers

@@ -32,6 +32,24 @@ bool MockDriver::onSpin()
   return true;
 }
 
+int MockDriver::run() {
+  mock_driver_node_.init();
+
+  // driver discovery publisher
+  mock_driver_node_.addPub(driver_discovery_pub_ptr_);
+  mock_driver_node_.setSpinCallback(std::bind(&MockDriver::spinCallback, this));
+
+  int return_val = onRun();
+  
+  if (return_val != 0) {
+    return return_val;
+  }
+
+  mock_driver_node_.spin(getRate());
+
+  return 0;
+}
+
 bool MockDriver::spinCallback()
 {
   if (last_discovery_pub_ == ros::Time(0) || (ros::Time::now() - last_discovery_pub_).toSec() > 0.95)

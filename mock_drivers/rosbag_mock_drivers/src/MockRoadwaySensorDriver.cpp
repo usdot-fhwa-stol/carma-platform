@@ -33,20 +33,17 @@ MockRoadwaySensorDriver::MockRoadwaySensorDriver(bool dummy)
   mock_driver_node_ = MockDriverNode(dummy);
 }
 
-int MockRoadwaySensorDriver::run()
+unsigned int MockRoadwaySensorDriver::getRate()
 {
-  mock_driver_node_.init();
+  return 20;
+}
 
+int MockRoadwaySensorDriver::onRun()
+{
   // driver publishers
   addPassthroughPub<derived_object_msgs::ObjectWithCovariance>(bag_prefix_ + detected_objects_topic_,
                                                                detected_objects_topic_, false, 10);
   addPassthroughPub<derived_object_msgs::LaneModels>(bag_prefix_ + lane_models_topics_, lane_models_topics_, false, 10);
-
-  // driver discovery publisher
-  mock_driver_node_.addPub(driver_discovery_pub_ptr_);
-  mock_driver_node_.setSpinCallback(std::bind(&MockRoadwaySensorDriver::spinCallback, this));
-
-  mock_driver_node_.spin(20);
 
   return 0;
 }

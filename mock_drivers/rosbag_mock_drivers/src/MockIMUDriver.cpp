@@ -33,18 +33,15 @@ MockIMUDriver::MockIMUDriver(bool dummy)
   mock_driver_node_ = MockDriverNode(dummy);
 }
 
-int MockIMUDriver::run()
+unsigned int MockIMUDriver::getRate()
 {
-  mock_driver_node_.init();
+  return 100;
+}
 
+int MockIMUDriver::onRun()
+{
   // main driver publisher
   addPassthroughPub<sensor_msgs::Imu>(bag_prefix_ + raw_data_topic_, raw_data_topic_, false, 10);
-
-  // driver discovery publisher
-  mock_driver_node_.addPub(driver_discovery_pub_ptr_);
-  mock_driver_node_.setSpinCallback(std::bind(&MockIMUDriver::spinCallback, this));
-
-  mock_driver_node_.spin(100);
 
   return 0;
 }

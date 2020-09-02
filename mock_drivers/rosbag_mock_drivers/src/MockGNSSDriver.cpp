@@ -33,18 +33,15 @@ MockGNSSDriver::MockGNSSDriver(bool dummy)
   mock_driver_node_ = MockDriverNode(dummy);
 }
 
-int MockGNSSDriver::run()
+unsigned int MockGNSSDriver::getRate()
 {
-  mock_driver_node_.init();
+  return 20;
+}
 
+int MockGNSSDriver::onRun()
+{
   // driver publisher and subscriber
   addPassthroughPub<gps_common::GPSFix>(bag_prefix_ + gnss_fix_fuxed_topic_, gnss_fix_fuxed_topic_, false, 10);
-
-  // driver discovery publisher
-  mock_driver_node_.addPub(driver_discovery_pub_ptr_);
-  mock_driver_node_.setSpinCallback(std::bind(&MockGNSSDriver::spinCallback, this));
-
-  mock_driver_node_.spin(20);
 
   return 0;
 }

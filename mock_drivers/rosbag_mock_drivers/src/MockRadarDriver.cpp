@@ -33,20 +33,18 @@ MockRadarDriver::MockRadarDriver(bool dummy)
   mock_driver_node_ = MockDriverNode(dummy);
 }
 
-int MockRadarDriver::run()
+unsigned int MockRadarDriver::getRate()
 {
-  mock_driver_node_.init();
+  return 20;
+}
+
+int MockRadarDriver::onRun()
+{
 
   // driver publisher and subscriber
   addPassthroughPub<radar_msgs::RadarStatus>(bag_prefix_ + radar_status_topic_, radar_status_topic_, false, 10);
   addPassthroughPub<radar_msgs::RadarTrackArray>(bag_prefix_ + radar_tracks_raw_topic_, radar_tracks_raw_topic_, false,
                                                  10);
-
-  // driver discovery publisher
-  mock_driver_node_.addPub(driver_discovery_pub_ptr_);
-  mock_driver_node_.setSpinCallback(std::bind(&MockRadarDriver::spinCallback, this));
-
-  mock_driver_node_.spin(100);
 
   return 0;
 }

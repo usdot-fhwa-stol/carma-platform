@@ -28,12 +28,15 @@ private:
   const std::string radar_status_topic_ = "radar/status";
   const std::string radar_tracks_raw_topic_ = "radar/tracks_raw";
 
+protected:
+  int onRun();
+
 public:
   MockRadarDriver(bool dummy = false);
   ~MockRadarDriver() {};
-  int run();
   std::vector<DriverType> getDriverTypes();
   uint8_t getDriverStatus();
+  unsigned int getRate();
 };
 
 }  // namespace mock_drivers

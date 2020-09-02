@@ -42,15 +42,18 @@ private:
   bool robot_active_ = false;
   bool robot_enabled_ = false;
 
+protected:
+  int onRun();
+
 public:
   MockControllerDriver(bool dummy = false);
   ~MockControllerDriver() {};
-  int run();
   bool onSpin();
   void vehicleCmdCallback(const autoware_msgs::VehicleCmd::ConstPtr& msg);
   bool enableRoboticSrv(const cav_srvs::SetEnableRobotic::Request& req, cav_srvs::SetEnableRobotic::Response& res);
   std::vector<DriverType> getDriverTypes();
   uint8_t getDriverStatus();
+  unsigned int getRate();
 };
 
 }  // namespace mock_drivers

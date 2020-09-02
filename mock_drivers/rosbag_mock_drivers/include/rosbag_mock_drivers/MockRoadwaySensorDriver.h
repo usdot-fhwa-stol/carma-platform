@@ -28,12 +28,15 @@ private:
   const std::string detected_objects_topic_ = "roadway_sensor/detected_objects";
   const std::string lane_models_topics_ = "roadway_sensor/lane_models";
 
+protected:
+  int onRun();
+
 public:
   MockRoadwaySensorDriver(bool dummy = false);
   ~MockRoadwaySensorDriver() {};
-  int run();
   std::vector<DriverType> getDriverTypes();
   uint8_t getDriverStatus();
+  unsigned int getRate();
 };
 
 }  // namespace mock_drivers

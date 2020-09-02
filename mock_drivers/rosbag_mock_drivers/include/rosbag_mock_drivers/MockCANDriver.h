@@ -35,12 +35,15 @@ private:
   const std::string transmission_state_topic_ = "can/transmission_state";
   const std::string vehicle_twist = "vehicle/twist";
 
+protected:
+  int onRun();
+
 public:
   MockCANDriver(bool dummy = false);
   ~MockCANDriver() {};
-  int run();
   std::vector<DriverType> getDriverTypes();
   uint8_t getDriverStatus();
+  unsigned int getRate();
 };
 
 }  // namespace mock_drivers

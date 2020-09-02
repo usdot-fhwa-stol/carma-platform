@@ -33,18 +33,16 @@ MockLidarDriver::MockLidarDriver(bool dummy)
   mock_driver_node_ = MockDriverNode(dummy);
 }
 
-int MockLidarDriver::run()
+unsigned int MockLidarDriver::getRate()
 {
-  mock_driver_node_.init();
+  return 20;
+}
 
+int MockLidarDriver::onRun()
+{
   // driver publisher and subscriber
   addPassthroughPub<sensor_msgs::PointCloud2>(bag_prefix_ + points_raw_topic_, points_raw_topic_, false, 10);
 
-  // driver discovery publisher
-  mock_driver_node_.addPub(driver_discovery_pub_ptr_);
-  mock_driver_node_.setSpinCallback(std::bind(&MockLidarDriver::spinCallback, this));
-
-  mock_driver_node_.spin(20);
   return 0;
 }
 

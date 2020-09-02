@@ -31,12 +31,15 @@ private:
 
   void outboundCallback(const cav_msgs::ByteArray::ConstPtr& msg) const;
 
+protected:
+  int onRun();
+
 public:
   MockCommsDriver(bool dummy = false);
   ~MockCommsDriver() {};
-  int run();
   std::vector<DriverType> getDriverTypes();
   uint8_t getDriverStatus();
+  unsigned int getRate();
 };
 
 }  // namespace mock_drivers

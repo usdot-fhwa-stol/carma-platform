@@ -26,12 +26,15 @@ class MockIMUDriver : public MockDriver
 private:
   const std::string raw_data_topic_ = "imu";
 
+protected:
+  int onRun();
+  
 public:
   MockIMUDriver(bool dummy = false);
   ~MockIMUDriver() {};
-  int run();
   std::vector<DriverType> getDriverTypes();
   uint8_t getDriverStatus();
+  unsigned int getRate();
 };
 
 }  // namespace mock_drivers

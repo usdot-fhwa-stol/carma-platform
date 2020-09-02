@@ -33,21 +33,18 @@ MockCameraDriver::MockCameraDriver(bool dummy)
   mock_driver_node_ = MockDriverNode(dummy);
 }
 
-int MockCameraDriver::run()
+unsigned int MockCameraDriver::getRate()
 {
-  mock_driver_node_.init();
+  return 20;
+}
 
+int MockCameraDriver::onRun()
+{
   addPassthroughPub<sensor_msgs::CameraInfo>(bag_prefix_ + camera_info_topic_, camera_info_topic_, false, 10);
   addPassthroughPub<sensor_msgs::Image>(bag_prefix_ + image_raw_topic_, image_raw_topic_, false, 10);
   addPassthroughPub<sensor_msgs::Image>(bag_prefix_ + image_rects_topic_, image_rects_topic_, false, 10);
   addPassthroughPub<autoware_msgs::ProjectionMatrix>(bag_prefix_ + projection_matrix_topic_, projection_matrix_topic_,
                                                      false, 10);
-
-  // driver discovery publisher
-  mock_driver_node_.addPub(driver_discovery_pub_ptr_);
-  mock_driver_node_.setSpinCallback(std::bind(&MockCameraDriver::spinCallback, this));
-
-  mock_driver_node_.spin(20);
 
   return 0;
 }

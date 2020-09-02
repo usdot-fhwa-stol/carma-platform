@@ -31,12 +31,15 @@ private:
   const std::string image_rects_topic_ = "camera/image_rect";
   const std::string projection_matrix_topic_ = "camera/projection_matrix";
 
+protected:
+  int onRun();
 public:
   MockCameraDriver(bool dummy = false);
   ~MockCameraDriver() {};
-  int run();
   std::vector<DriverType> getDriverTypes();
   uint8_t getDriverStatus();
+  unsigned int getRate();
+
 };
 
 }  // namespace mock_drivers

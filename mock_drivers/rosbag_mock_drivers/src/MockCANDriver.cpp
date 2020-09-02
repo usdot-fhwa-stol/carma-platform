@@ -33,10 +33,13 @@ MockCANDriver::MockCANDriver(bool dummy)
   mock_driver_node_ = MockDriverNode(dummy);
 }
 
-int MockCANDriver::run()
+unsigned int MockCANDriver::getRate()
 {
-  mock_driver_node_.init();
+  return 50;
+}
 
+int MockCANDriver::onRun()
+{
   // data topic publishers
   addPassthroughPubNoHeader<std_msgs::Float64>(bag_prefix_ + brake_position_topic_, brake_position_topic_, false, 10);
   addPassthroughPubNoHeader<std_msgs::Float64>(bag_prefix_ + steering_wheel_angle_topic_, steering_wheel_angle_topic_,
@@ -45,12 +48,6 @@ int MockCANDriver::run()
                                                            transmission_state_topic_, false, 10);
 
   addPassthroughPub<geometry_msgs::TwistStamped>(bag_prefix_ + vehicle_twist, vehicle_twist, false, 10);
-
-  // driver discovery publisher
-  mock_driver_node_.addPub(driver_discovery_pub_ptr_);
-  mock_driver_node_.setSpinCallback(std::bind(&MockCANDriver::spinCallback, this));
-
-  mock_driver_node_.spin(50);
 
   return 0;
 }

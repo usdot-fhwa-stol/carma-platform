@@ -76,20 +76,17 @@ bool MockControllerDriver::onSpin()
   return true;
 }
 
-int MockControllerDriver::run()
+unsigned int MockControllerDriver::getRate()
 {
-  mock_driver_node_.init();
+  return 20;
+}
 
+int MockControllerDriver::onRun()
+{
   // driver publisher, subscriber, and service
   mock_driver_node_.addPub(robot_status_ptr_);
   mock_driver_node_.addSub(vehicle_cmd_ptr_);
   mock_driver_node_.addSrv(enable_robotic_ptr_);
-
-  // driver discovery publisher
-  mock_driver_node_.addPub(driver_discovery_pub_ptr_);
-  mock_driver_node_.setSpinCallback(std::bind(&MockControllerDriver::spinCallback, this));
-
-  mock_driver_node_.spin(20);
 
   return 0;
 }

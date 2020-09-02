@@ -43,20 +43,17 @@ MockCommsDriver::MockCommsDriver(bool dummy)
                                                                                    10, outbound_binary_topic_);
 }
 
-int MockCommsDriver::run()
+unsigned int MockCommsDriver::getRate()
 {
-  mock_driver_node_.init();
+  return 20;
+}
 
+int MockCommsDriver::onRun()
+{
   // driver publisher and subscriber
   addPassthroughPub<cav_msgs::ByteArray>(bag_prefix_ + inbound_binary_topic_, inbound_binary_topic_, false, 10);
 
   mock_driver_node_.addSub(outbound_sub_ptr_);
-
-  // driver discovery publisher
-  mock_driver_node_.addPub(driver_discovery_pub_ptr_);
-  mock_driver_node_.setSpinCallback(std::bind(&MockCommsDriver::spinCallback, this));
-
-  mock_driver_node_.spin(20);
 
   return 0;
 }
