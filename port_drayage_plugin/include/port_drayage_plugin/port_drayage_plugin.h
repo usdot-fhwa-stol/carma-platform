@@ -22,7 +22,6 @@
 #include <cav_srvs/PlanManeuvers.h>
 #include <cav_msgs/ManeuverPlan.h>
 #include <geometry_msgs/TwistStamped.h>
-
 #include <carma_wm/WorldModel.h>
 #include <carma_wm/WMListener.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -55,6 +54,8 @@ namespace port_drayage_plugin
             std::shared_ptr<geometry_msgs::PoseStamped> curr_pose_ = nullptr;
 
             geometry_msgs::TwistStampedConstPtr _cur_speed;
+
+            double declaration;
 
         public:
             /**
@@ -108,6 +109,9 @@ namespace port_drayage_plugin
                                                       double target_speed, 
                                                       int lane_id, 
                                                       ros::Time time);
+            
+
+            double estimate_time_to_stop(double v, double x, double a);
 
     };
 } // namespace port_drayage_plugin

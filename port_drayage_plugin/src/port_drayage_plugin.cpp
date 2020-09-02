@@ -28,6 +28,7 @@ namespace port_drayage_plugin
         }
 
         double speed_epsilon = _pnh->param("stop_speed_epsilon", 1.0);
+        declaration = _pnh->param("declaration", 1.0);
         std::string cmv_id;
         _pnh->param<std::string>("cmv_id", cmv_id, "");
         std::string cargo_id;
@@ -114,13 +115,29 @@ namespace port_drayage_plugin
             double end_dist = stop_loc_downtrack;
             double dist_diff = end_dist - current_progress;
 
+            ros::Time start_time;
+            switch(req.prior_plan.maneuvers.back().type) {
+                case cav_msgs::Maneuver::LANE_FOLLOWING : start_time = req.prior_plan.maneuvers.back().lane_following_maneuver.end_time;
+                    break;
+                case cav_msgs::Maneuver::LANE_CHANGE : start_time = req.prior_plan.maneuvers.back().lane_change_maneuver.end_time;
+                    break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT : start_time = req.prior_plan.maneuvers.back().intersection_transit_straight_maneuver.end_time;
+                    break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN : start_time = req.prior_plan.maneuvers.back().intersection_transit_left_turn_maneuver.end_time;
+                    break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN : start_time = req.prior_plan.maneuvers.back().intersection_transit_right_turn_maneuver.end_time;
+                    break;
+                case cav_msgs::Maneuver::STOP_AND_WAIT : start_time = req.prior_plan.maneuvers.back().stop_and_wait_maneuver.end_time;
+                    break;
+            }
+
             resp.new_plan.maneuvers.push_back(
                 composeManeuverMessage(current_progress, 
                                        end_dist, 
                                        speed_progress, 
                                        0.0, 
                                        current_lanelet.second.id(), 
-                                       req.prior_plan.planning_completion_time));
+                                       start_time));
         }
 
         if(resp.new_plan.maneuvers.size() == 0)
@@ -143,11 +160,17 @@ namespace port_drayage_plugin
         maneuver_msg.stop_and_wait_maneuver.start_speed = current_speed;
         maneuver_msg.stop_and_wait_maneuver.start_time = time;
         maneuver_msg.stop_and_wait_maneuver.end_dist = end_dist;
-        // maneuver_msg.stop_and_wait_maneuver.end_speed = target_speed;
-        maneuver_msg.stop_and_wait_maneuver.end_time = time + ros::Duration((end_dist - current_dist) / (0.5 * (current_speed + target_speed)));
+        double time_to_stop = estimate_time_to_stop(current_speed, end_dist - current_dist, declaration);
+        if (time_to_stop<15) time_to_stop = 15;
+        maneuver_msg.stop_and_wait_maneuver.end_time = time + ros::Duration(time_to_stop);
         maneuver_msg.stop_and_wait_maneuver.starting_lane_id = std::to_string(lane_id);
         maneuver_msg.stop_and_wait_maneuver.ending_lane_id = std::to_string(lane_id);
         return maneuver_msg;
     }
     // @SONAR_START@
+
+    double PortDrayagePlugin::estimate_time_to_stop(double v, double x, double a) {
+        return (v*v)/2*a*x;
+    }
+
 } // namespace port_drayage_plugin
