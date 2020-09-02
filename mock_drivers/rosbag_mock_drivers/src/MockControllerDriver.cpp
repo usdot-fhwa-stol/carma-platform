@@ -39,7 +39,9 @@ bool MockControllerDriver::enableRoboticSrv(const cav_srvs::SetEnableRobotic::Re
   if (robot_enabled_ && req.set == cav_srvs::SetEnableRobotic::Request::ENABLE)
   {
     robot_active_ = true;
-  } else {
+  }
+  else
+  {
     robot_active_ = false;
   }
 
@@ -61,6 +63,17 @@ MockControllerDriver::MockControllerDriver(bool dummy)
       boost::make_shared<ROSComms<cav_srvs::SetEnableRobotic::Request&, cav_srvs::SetEnableRobotic::Response&>>(
           std::bind(&MockControllerDriver::enableRoboticSrv, this, std::placeholders::_1, std::placeholders::_2),
           CommTypes::srv, enable_robotic_srv_);
+}
+
+bool onSpin()
+{
+  cav_msgs::RobotEnabled robot_status;
+  robot_status.robot_active = robot_active_;
+  robot_status.robot_enabled = robot_enabled_;
+  
+  mock_driver_node_.publishDataNoHeader<cav_msgs::RobotEnabled>(robot_status_topic_, robot_status);
+
+  return true;
 }
 
 int MockControllerDriver::run()

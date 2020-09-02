@@ -46,6 +46,7 @@ public:
   MockControllerDriver(bool dummy = false);
   ~MockControllerDriver() {};
   int run();
+  bool onSpin();
   void vehicleCmdCallback(const autoware_msgs::VehicleCmd::ConstPtr& msg);
   bool enableRoboticSrv(const cav_srvs::SetEnableRobotic::Request& req, cav_srvs::SetEnableRobotic::Response& res);
   std::vector<DriverType> getDriverTypes();

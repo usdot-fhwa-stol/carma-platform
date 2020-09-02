@@ -80,6 +80,8 @@ public:
 
   bool spinCallback();
 
+  virtual bool onSpin();
+
   void driverDiscovery();
 
   /*! \brief Returns the mock driver node for the mock driver (used for testing) */

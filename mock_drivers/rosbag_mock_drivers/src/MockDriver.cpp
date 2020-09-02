@@ -27,6 +27,11 @@ MockDriverNode MockDriver::getMockDriverNode()
   return mock_driver_node_;
 }
 
+bool MockDriver::onSpin()
+{
+  return true;
+}
+
 bool MockDriver::spinCallback()
 {
   if (last_discovery_pub_ == ros::Time(0) || (ros::Time::now() - last_discovery_pub_).toSec() > 0.95)
@@ -34,7 +39,7 @@ bool MockDriver::spinCallback()
     driverDiscovery();
     last_discovery_pub_ = ros::Time::now();
   }
-  return true;
+  return onSpin();
 }
 
 void MockDriver::driverDiscovery()
