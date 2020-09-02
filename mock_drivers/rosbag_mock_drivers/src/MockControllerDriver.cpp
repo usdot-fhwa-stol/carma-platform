@@ -65,12 +65,12 @@ MockControllerDriver::MockControllerDriver(bool dummy)
           CommTypes::srv, enable_robotic_srv_);
 }
 
-bool onSpin()
+bool MockControllerDriver::onSpin()
 {
   cav_msgs::RobotEnabled robot_status;
   robot_status.robot_active = robot_active_;
   robot_status.robot_enabled = robot_enabled_;
-  
+
   mock_driver_node_.publishDataNoHeader<cav_msgs::RobotEnabled>(robot_status_topic_, robot_status);
 
   return true;
