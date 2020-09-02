@@ -65,7 +65,7 @@ namespace route_following_plugin
          * \param current_time Start time of the current maneuver
          * \return A lane keeping maneuver message which is ready to be published
          */
-        cav_msgs::Maneuver composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time current_time);
+        cav_msgs::Maneuver composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time &current_time);
 
         /**
          * \brief Given a LaneletRelations and ID of the next lanelet in the shortest path
@@ -75,7 +75,7 @@ namespace route_following_plugin
          */
         bool identifyLaneChange(lanelet::routing::LaneletRelations relations, int target_id);
  
-        cav_msgs::Maneuver composeManeuverMessage_lanechange(double current_dist, double end_dist,double current_speed, double target_speed, int curr_lane_id, int target_lane_id, ros::Time current_time);
+        cav_msgs::Maneuver composeManeuverMessage_lanechange(double current_dist, double end_dist,double current_speed, double target_speed, int curr_lane_id, int target_lane_id, ros::Time &current_time);
     private:
 
         // CARMA ROS node handles
@@ -106,9 +106,9 @@ namespace route_following_plugin
         carma_wm::WorldModelConstPtr wm_;
 
         //lane change constant
-        double LATERAL_ACCELERATION_LIMIT=2;
-        int MAX_LANE_WIDTH=12;
-        double LANE_CHANGE_TIME_MAX=sqrt(2*MAX_LANE_WIDTH/LATERAL_ACCELERATION_LIMIT);
+        static constexpr double LATERAL_ACCELERATION_LIMIT_IN_MS=2.00;
+        static const int MAX_LANE_WIDTH=3.70;
+        static constexpr double LANE_CHANGE_TIME_MAX=sqrt(2*MAX_LANE_WIDTH/LATERAL_ACCELERATION_LIMIT_IN_MS);
         /**
          * \brief Initialize ROS publishers, subscribers, service servers and service clients
          */

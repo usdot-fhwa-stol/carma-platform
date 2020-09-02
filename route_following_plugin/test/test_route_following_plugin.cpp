@@ -38,7 +38,8 @@ namespace route_following_plugin
     TEST(RouteFollowingPluginTest, testComposeManeuverMessage)
     {
         RouteFollowingPlugin rfp;
-        auto msg = rfp.composeManeuverMessage(1.0, 10.0, 0.9, RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS, 2, ros::Time(0, 0));
+        ros::Time current_time=ros::Time(0,0);
+        auto msg = rfp.composeManeuverMessage(1.0, 10.0, 0.9, RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS, 2, current_time);
         EXPECT_EQ(cav_msgs::Maneuver::LANE_FOLLOWING, msg.type);
         EXPECT_EQ(cav_msgs::ManeuverParameters::NO_NEGOTIATION, msg.lane_following_maneuver.parameters.neogition_type);
         EXPECT_EQ(cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN, msg.lane_following_maneuver.parameters.presence_vector);
@@ -70,7 +71,8 @@ namespace route_following_plugin
                 EXPECT_TRUE(i==1);
                 //std::cout<<"Changing Lanes"<<std::endl;
                 //Generate lane change message
-                auto msg = rfp.composeManeuverMessage_lanechange(1.0, 10.0, 0.9, RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS, 2,3, ros::Time(0, 0));
+                ros::Time current_time=ros::Time(0,0);
+                auto msg = rfp.composeManeuverMessage_lanechange(1.0, 10.0, 0.9, RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS, 2,3, current_time);
                 EXPECT_EQ(cav_msgs::Maneuver::LANE_CHANGE, msg.type);
                 EXPECT_EQ(cav_msgs::ManeuverParameters::NO_NEGOTIATION, msg.lane_change_maneuver.parameters.neogition_type);
                 EXPECT_EQ(cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN, msg.lane_change_maneuver.parameters.presence_vector);
@@ -81,7 +83,7 @@ namespace route_following_plugin
                 EXPECT_EQ(ros::Time(0), msg.lane_change_maneuver.start_time);
                 EXPECT_NEAR(10.0, msg.lane_change_maneuver.end_dist, 0.01);
                 EXPECT_NEAR(25 / 2.237, msg.lane_change_maneuver.end_speed, 0.01);
-                EXPECT_TRUE(msg.lane_change_maneuver.end_time - ros::Time(1.49) < ros::Duration(0.01));
+                EXPECT_TRUE(msg.lane_change_maneuver.end_time - ros::Time(1.73) < ros::Duration(0.01));
                 EXPECT_EQ("2", msg.lane_change_maneuver.starting_lane_id);
                 EXPECT_EQ("3", msg.lane_change_maneuver.ending_lane_id);
             }
