@@ -143,8 +143,22 @@ namespace route {
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
                 return false;
             }
+            //BEFORE CONVERSION
+           // std::vector<lanelet::BasicPoint2d> destination_points_in_map;
+            for (auto point: destination_points)
+            {
+                 ROS_ERROR_STREAM("destination_points:  " << point[0] << ", "<<point[1]);
+                // destination_points_in_map.push_back(lanelet::BasicPoint2d(point[0], point[1]));
+            }
+
             // convert points in ECEF to map frame
             auto destination_points_in_map = transform_to_map_frame(destination_points, map_in_earth);
+            // AFTER CONVERSION
+            for (auto point: destination_points_in_map)
+            {
+                 ROS_ERROR_STREAM("destination_points_in_map:  " << point[0] << ", "<<point[1]);
+            }
+            ROS_ERROR_STREAM("destination_points_in_map begin () + 1:  " << (destination_points_in_map.begin() + 1)[0]);
             // get route graph from world model object
             auto p = world_model_->getMapRoutingGraph();
             // generate a route
@@ -171,6 +185,7 @@ namespace route {
             publish_route_event(cav_msgs::RouteEvent::ROUTE_STARTED);
             // set publish flag such that updated msg will be published in the next spin
             new_route_msg_generated_ = true;
+             ROS_ERROR_STREAM("Routed success!");
             return true;
         }
         return false;
@@ -230,11 +245,13 @@ namespace route {
         for(const auto& ll : route.get().shortestPath())
         {
             msg.shortest_path_lanelet_ids.push_back(ll.id());
+              ROS_ERROR_STREAM("Shortest path " << ll.id() << "\n");
         }
         // iterate thought the all lanelet in the route to populat route_path_lanelet_ids
-        for(const auto& ll : route.get().laneletMap()->laneletLayer)
+        for(const auto& ll : route.get().laneletSubmap()->laneletLayer)
         {
             msg.route_path_lanelet_ids.push_back(ll.id());
+             ROS_ERROR_STREAM("laneletSubmap " << ll.id() << "\n");
         }
         return msg;
     }
@@ -258,24 +275,32 @@ namespace route {
     void RouteGeneratorWorker::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING) {
-            // convert from pose stamp into lanelet basic 2D point
-            lanelet::BasicPoint2d current_loc(msg->pose.position.x, msg->pose.position.y);
+            // convert from pose stamp into lanelet basic 2D point           
+            ROS_WARN_STREAM("car position... ");
+           // auto first_ll = world_model_->getRoute()->shortestPath()[0];
+            //lanelet::BasicPoint2d current_loc(msg->pose.position.x, msg->pose.position.y);
+            //lanelet::BasicPoint2d current_loc(4.14406e+06,  4.76698e+06); //destination (x,y) points
+            lanelet::BasicPoint2d current_loc(4.14385e+06,  -2.99795e+06); //destination (x,y) points in map 
             // get dt ct from world model
             carma_wm::TrackPos track(0.0, 0.0);
             try {
-                track = this->world_model_->routeTrackPos(current_loc);
+                 track = this->world_model_->routeTrackPos(current_loc);
+                 //track = this->world_model_->routeTrackPos(first_ll);
             } catch (std::invalid_argument ex) {
-                ROS_WARN_STREAM("Routing has finished but carma_wm has not receive it!");
+                ROS_ERROR_STREAM("Routing has finished but carma_wm has not receive it !");
                 return;
             }
             auto via_lanelet_vector = lanelet::geometry::findNearest(world_model_->getMap()->laneletLayer, current_loc, 1);
             auto current_lanelet = lanelet::ConstLanelet(via_lanelet_vector[0].second.constData());
             auto lanelet_track = carma_wm::geometry::trackPos(current_lanelet, current_loc);
             ll_id_ = current_lanelet.id();
+            ROS_ERROR_STREAM("current lanelet id: " << ll_id_);
             ll_crosstrack_distance_ = lanelet_track.crosstrack;
             ll_downtrack_distance_ = lanelet_track.downtrack;
             current_crosstrack_distance_ = track.crosstrack;
             current_downtrack_distance_ = track.downtrack;
+           ROS_ERROR_STREAM("current_crosstrack_distance_: " << current_crosstrack_distance_);
+            ROS_ERROR_STREAM("current_downtrack_distance_: " << current_downtrack_distance_);
             // Determine speed limit
             lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = world_model_->getTrafficRules();
             
@@ -333,9 +358,17 @@ namespace route {
     
     bool RouteGeneratorWorker::spin_callback()
     {
+        ROS_ERROR_STREAM("new_route_msg_generated_" <<new_route_msg_generated_<<"\n");
+        if( new_route_msg_generated_ )
+        {
+            ROS_ERROR_STREAM("Route Name: " << route_msg_.route_name<<"\n");
+            ROS_ERROR_STREAM("Route shorttest Path Lanelet: " << route_msg_.shortest_path_lanelet_ids.front()<<"\n");
+            ROS_ERROR_STREAM("Route Path Lanelet: " << route_msg_.route_path_lanelet_ids.front()<<"\n");
+        }
+        
         // publish new route and set new route flag back to false
         if(new_route_msg_generated_)
-        {
+        {            
             route_pub_.publish(route_msg_);
             new_route_msg_generated_ = false;
         }
