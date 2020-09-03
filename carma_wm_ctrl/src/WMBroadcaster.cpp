@@ -26,7 +26,7 @@
 #include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_core/primitives/BoundingBox.h>
 #include <type_traits>
-
+#include <cav_msgs/CheckActiveGeofence.h>
 #include <lanelet2_core/primitives/Polygon.h>
 #include <proj.h>
 #include <lanelet2_io/Projection.h>
@@ -229,8 +229,8 @@ void WMBroadcaster::addPassingControlLineFromMsg(std::shared_ptr<Geofence> gf_pt
 // currently only supports geofence message version 1: TrafficControlMessageV01 
 void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geofence_msg)
 {
-  //ROS_ERROR_STREAM
-  ROS_ERROR_STREAM("Geofence Callback Start");
+  
+  ROS_WARN_STREAM("Geofence Callback Start");
 
   std::lock_guard<std::mutex> guard(map_mutex_);
   // quickly check if the id has been added
@@ -267,7 +267,7 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   
 
   //Check values in affected_parts_
-  ROS_ERROR_STREAM("gf_ptr->affected_parts_ = "<< gf_ptr->affected_parts_.back() );
+  ROS_WARN_STREAM("gf_ptr->affected_parts_ = "<< gf_ptr->affected_parts_.back() );
 };
 
 void WMBroadcaster::geoReferenceCallback(const std_msgs::String& geo_ref)
@@ -435,7 +435,7 @@ bool WMBroadcaster::shouldChangeControlLine(const lanelet::ConstLaneletOrArea& e
 
 void WMBroadcaster::addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const
 {
-    ROS_ERROR_STREAM("addRegulatoryComponent has been called");
+    ROS_WARN_STREAM("addRegulatoryComponent has been called");
 
   // First loop is to save the relation between element and regulatory element
   // so that we can add back the old one after geofence deactivates
@@ -450,14 +450,13 @@ void WMBroadcaster::addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) con
         lanelet::RegulatoryElementPtr nonconst_regem = current_map_->regulatoryElementLayer.get(regem->id());
         gf_ptr->prev_regems_.push_back(std::make_pair(el.id(), nonconst_regem));
         gf_ptr->remove_list_.push_back(std::make_pair(el.id(), nonconst_regem));
-          ROS_ERROR_STREAM("Lanelet id: "<< el.lanelet()->id() << " Regulatory element id: " << nonconst_regem->id());
+          ROS_WARN_STREAM("Lanelet id: "<< el.lanelet()->id() << " Regulatory element id: " << nonconst_regem->id());
 
         current_map_->remove(current_map_->laneletLayer.get(el.lanelet()->id()), nonconst_regem);
       }
     }
   }
-    ROS_ERROR_STREAM("addReg in progress");
-    //  ROS_ERROR_STREAM("Regulatory element id:" << );
+    ROS_WARN_STREAM("addReg in progress");
 
 
   // this loop is also kept separately because previously we assumed 
@@ -472,7 +471,7 @@ void WMBroadcaster::addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) con
     }
   }
   
-  ROS_ERROR_STREAM("addReg has ended");
+  ROS_WARN_STREAM("addReg has ended");
 
 
 }
@@ -511,7 +510,7 @@ void WMBroadcaster::addBackRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr)
 void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
 {
    //Ensure this function has been called 
-  ROS_ERROR_STREAM("addGeofence has been called");
+  ROS_WARN_STREAM("addGeofence has been called");
 
   std::lock_guard<std::mutex> guard(map_mutex_);
   ROS_INFO_STREAM("Adding active geofence to the map with geofence id: " << gf_ptr->id_);
@@ -529,13 +528,13 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   carma_wm::toBinMsg(send_data, &gf_msg);
   map_update_pub_(gf_msg);
   
-    ROS_ERROR_STREAM("addGeofence has ended.");
+    ROS_WARN_STREAM("addGeofence has ended.");
 
 };
 
 void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
 {
-  ROS_ERROR_STREAM("removeGeofence has been called.");
+  ROS_WARN_STREAM("removeGeofence has been called.");
   std::lock_guard<std::mutex> guard(map_mutex_);
   ROS_INFO_STREAM("Removing inactive geofence from the map with geofence id: " << gf_ptr->id_);
   
@@ -551,7 +550,7 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   carma_wm::toBinMsg(send_data, &gf_msg_revert);
   map_update_pub_(gf_msg_revert);
 
-    ROS_ERROR_STREAM("removeGeofence has ended.");
+    ROS_WARN_STREAM("removeGeofence has ended.");
 
 };
   
@@ -751,33 +750,32 @@ void WMBroadcaster::removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr) const
   gf_ptr->prev_regems_ = {};
 }
 
-void WMBroadcaster::currentLocationCallback(const geometry_msgs::PoseStamped current_pos)
+void WMBroadcaster::currentLocationCallback(geometry_msgs::PoseStamped const& current_pos)
 {
  //Ensure this function has been called 
- ROS_ERROR_STREAM("currentLocationCallback has been called.");
+ ROS_WARN_STREAM("currentLocationCallback has been called.");
    cav_msgs::CheckActiveGeofence check = checkActiveGeofenceLogic(current_pos);
    active_pub_(check);//Publish
 
 }
 
-cav_msgs::CheckActiveGeofence WMBroadcaster::checkActiveGeofenceLogic(const geometry_msgs::PoseStamped current_pos)
+cav_msgs::CheckActiveGeofence WMBroadcaster::checkActiveGeofenceLogic(geometry_msgs::PoseStamped const& current_pos)
 {
-  ROS_ERROR_STREAM("checkActiveGeofenceLogic has been called");
+  ROS_WARN_STREAM("checkActiveGeofenceLogic has been called");
 
   if (!current_map_ || current_map_->laneletLayer.size() == 0) 
   {
     throw lanelet::InvalidObjectStateError(std::string("Lanelet map 'current_map_' is not loaded to the WMBroadcaster"));
   }
 
-  ROS_ERROR_STREAM("checkActiveGeofenceLogic has officially started");
+  ROS_WARN_STREAM("checkActiveGeofenceLogic has officially started");
 //Store current position values to be compared to geofence boundary values
-  float current_pos_x = current_pos.pose.position.x;
-  float current_pos_y = current_pos.pose.position.y;
-  //float current_pos_z = current_pos.pose.position.z;
+  double current_pos_x = current_pos.pose.position.x;
+  double current_pos_y = current_pos.pose.position.y;
 
 //Check values of the current position
-  ROS_ERROR_STREAM("Position x = " << current_pos_x);
-  ROS_ERROR_STREAM("Position y = "<< current_pos_y);
+  ROS_WARN_STREAM("Position x = " << current_pos_x);
+  ROS_WARN_STREAM("Position y = "<< current_pos_y);
 
 lanelet::BasicPoint2d curr_pos;
   curr_pos.x() = current_pos_x;
@@ -786,7 +784,6 @@ lanelet::BasicPoint2d curr_pos;
   ROS_INFO_STREAM("Check 1");
 
   auto current_llt = current_map_->laneletLayer.nearest(curr_pos, 1)[0];
-  bool isOnActiveGeofence = false; //Create Boolean value
   cav_msgs::CheckActiveGeofence outgoing_geof; //message to publish
   double next_distance = 0 ; //Distance to next geofence
   ROS_INFO_STREAM("Check 2");
@@ -808,11 +805,11 @@ lanelet::BasicPoint2d curr_pos;
      if (boost::geometry::within(curr_pos, current_llt.polygon2d().basicPolygon()))
       {         
         next_distance = distToNearestActiveGeofence(curr_pos);
-        for(auto id = active_geofence_llt_ids_.begin(); id != active_geofence_llt_ids_.end(); id++) 
+        for(auto id : active_geofence_llt_ids_) 
         {
-          ROS_ERROR_STREAM(" current llt id = " << current_llt.id());
-          ROS_ERROR_STREAM("active geofence id = "<< *id);
-          if (*id == current_llt.id())
+          ROS_WARN_STREAM(" current llt id = " << current_llt.id());
+          ROS_WARN_STREAM("active geofence id = "<< id);
+          if (id == current_llt.id())
           {
             outgoing_geof.type = 1;
             outgoing_geof.is_on_active_geofence = true;
@@ -821,6 +818,7 @@ lanelet::BasicPoint2d curr_pos;
       }
 
       outgoing_geof.distance_to_next_geofence = next_distance;
+
   //end for loop
     return outgoing_geof;
     ROS_INFO_STREAM("Check 4");
