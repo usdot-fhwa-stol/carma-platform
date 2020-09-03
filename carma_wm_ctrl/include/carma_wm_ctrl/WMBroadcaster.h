@@ -158,13 +158,13 @@ public:
   double distToNearestActiveGeofence(const lanelet::BasicPoint2d& curr_pos);
 
 
-  void currentLocationCallback(geometry_msgs::PoseStamped const& current_pos);
+  void currentLocationCallback(const geometry_msgs::PoseStamped& current_pos);
   /*!
    * \brief Returns a message indicating whether or not the vehicle is inside of an active geofence lanelet
    * \param current_pos Current position of the vehicle
    * \return 0 if vehicle is not on an active geofence 
    */
-  cav_msgs::CheckActiveGeofence checkActiveGeofenceLogic(geometry_msgs::PoseStamped const& current_pos);
+  cav_msgs::CheckActiveGeofence checkActiveGeofenceLogic(const geometry_msgs::PoseStamped& current_pos);
 
 
 
