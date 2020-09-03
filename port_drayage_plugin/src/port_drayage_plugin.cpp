@@ -108,31 +108,62 @@ namespace port_drayage_plugin
 
         double speed_progress = _cur_speed->twist.linear.x;
 
-        double current_progress = current_loc_downtrack;
+        double current_progress = 0;
 
         while(current_loc_downtrack < stop_loc_downtrack)
         {
-            double end_dist = stop_loc_downtrack;
-            double dist_diff = end_dist - current_progress;
-
             ros::Time start_time;
-            switch(req.prior_plan.maneuvers.back().type) {
-                case cav_msgs::Maneuver::LANE_FOLLOWING : start_time = req.prior_plan.maneuvers.back().lane_following_maneuver.end_time;
-                    break;
-                case cav_msgs::Maneuver::LANE_CHANGE : start_time = req.prior_plan.maneuvers.back().lane_change_maneuver.end_time;
-                    break;
-                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT : start_time = req.prior_plan.maneuvers.back().intersection_transit_straight_maneuver.end_time;
-                    break;
-                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN : start_time = req.prior_plan.maneuvers.back().intersection_transit_left_turn_maneuver.end_time;
-                    break;
-                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN : start_time = req.prior_plan.maneuvers.back().intersection_transit_right_turn_maneuver.end_time;
-                    break;
-                case cav_msgs::Maneuver::STOP_AND_WAIT : start_time = req.prior_plan.maneuvers.back().stop_and_wait_maneuver.end_time;
-                    break;
+
+            if(req.prior_plan.maneuvers.size() > 0) {
+                switch(req.prior_plan.maneuvers.back().type) {
+                    case cav_msgs::Maneuver::LANE_FOLLOWING : 
+                        start_time = req.prior_plan.maneuvers.back().lane_following_maneuver.end_time;
+                        current_progress = req.prior_plan.maneuvers.back().lane_following_maneuver.end_dist;
+                        break;
+                    case cav_msgs::Maneuver::LANE_CHANGE : 
+                        start_time = req.prior_plan.maneuvers.back().lane_change_maneuver.end_time;
+                        current_progress = req.prior_plan.maneuvers.back().lane_change_maneuver.end_dist;
+                        break;
+                    case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT : 
+                        start_time = req.prior_plan.maneuvers.back().intersection_transit_straight_maneuver.end_time;
+                        current_progress = req.prior_plan.maneuvers.back().intersection_transit_straight_maneuver.end_dist;
+                        break;
+                    case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN : 
+                        start_time = req.prior_plan.maneuvers.back().intersection_transit_left_turn_maneuver.end_time;
+                        current_progress = req.prior_plan.maneuvers.back().intersection_transit_left_turn_maneuver.end_dist;
+                        break;
+                    case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN : 
+                        start_time = req.prior_plan.maneuvers.back().intersection_transit_right_turn_maneuver.end_time;
+                        current_progress = req.prior_plan.maneuvers.back().intersection_transit_right_turn_maneuver.end_dist;
+                        break;
+                    case cav_msgs::Maneuver::STOP_AND_WAIT : 
+                        start_time = req.prior_plan.maneuvers.back().stop_and_wait_maneuver.end_time;
+                        current_progress = req.prior_plan.maneuvers.back().stop_and_wait_maneuver.end_dist;
+                        break;
+                }
+            } else {
+                start_time = ros::Time::now();
+                current_progress = current_loc_downtrack;
             }
 
+            double end_dist = stop_loc_downtrack;
+
+            double estimated_distance_to_stop = estimate_distance_to_stop(speed_progress,declaration);
+            double estimated_time_to_stop = estimate_time_to_stop(estimated_distance_to_stop,speed_progress);
+
+            double lane_following_distance = stop_loc_downtrack - estimated_distance_to_stop;
+            double stop_and_wait_distance = estimated_distance_to_stop;
+
             resp.new_plan.maneuvers.push_back(
-                composeManeuverMessage(current_progress, 
+                compose_lane_following_maneuver_message(current_progress, 
+                                       current_progress + lane_following_distance, 
+                                       speed_progress, 
+                                       speed_progress, 
+                                       current_lanelet.second.id(), 
+                                       start_time));
+
+            resp.new_plan.maneuvers.push_back(
+                compose_stop_and_wait_maneuver_message(current_progress + lane_following_distance, 
                                        end_dist, 
                                        speed_progress, 
                                        0.0, 
@@ -148,7 +179,7 @@ namespace port_drayage_plugin
         return true;
     };
 
-    cav_msgs::Maneuver PortDrayagePlugin::composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time time)
+    cav_msgs::Maneuver PortDrayagePlugin::compose_stop_and_wait_maneuver_message(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time time)
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::STOP_AND_WAIT;
@@ -160,16 +191,39 @@ namespace port_drayage_plugin
         maneuver_msg.stop_and_wait_maneuver.start_speed = current_speed;
         maneuver_msg.stop_and_wait_maneuver.start_time = time;
         maneuver_msg.stop_and_wait_maneuver.end_dist = end_dist;
-        double time_to_stop = std::max(estimate_time_to_stop(current_speed, end_dist - current_dist, declaration), 15.0);
+        double time_to_stop = std::max(estimate_time_to_stop(end_dist - current_dist, current_speed), 15.0);
         maneuver_msg.stop_and_wait_maneuver.end_time = time + ros::Duration(time_to_stop);
         maneuver_msg.stop_and_wait_maneuver.starting_lane_id = std::to_string(lane_id);
         maneuver_msg.stop_and_wait_maneuver.ending_lane_id = std::to_string(lane_id);
         return maneuver_msg;
     }
+
+    cav_msgs::Maneuver PortDrayagePlugin::compose_lane_following_maneuver_message(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time time)
+    {
+        cav_msgs::Maneuver maneuver_msg;
+        maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+        maneuver_msg.lane_following_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
+        maneuver_msg.lane_following_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
+        maneuver_msg.lane_following_maneuver.parameters.planning_tactical_plugin = "InlaneCruisingPlugin";
+        maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin = "RouteFollowingPlugin";
+        maneuver_msg.lane_following_maneuver.start_dist = current_dist;
+        maneuver_msg.lane_following_maneuver.start_speed = current_speed;
+        maneuver_msg.lane_following_maneuver.start_time = time;
+        maneuver_msg.lane_following_maneuver.end_dist = end_dist;
+        maneuver_msg.lane_following_maneuver.end_speed = target_speed;
+        // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
+        maneuver_msg.lane_following_maneuver.end_time = time + ros::Duration((end_dist - current_dist) / (0.5 * (current_speed + target_speed)));
+        maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
+        return maneuver_msg;
+    }
     // @SONAR_START@
 
-    double PortDrayagePlugin::estimate_time_to_stop(double v, double x, double a) {
-        return (v*v)/2*a*x;
+    const double PortDrayagePlugin::estimate_distance_to_stop(double v, double a) {
+        return (v*v)/2*a;
     }
+
+    const double PortDrayagePlugin::estimate_time_to_stop(double d, double v) {
+        return 2*d/v;
+    };
 
 } // namespace port_drayage_plugin

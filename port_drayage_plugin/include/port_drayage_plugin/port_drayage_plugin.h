@@ -103,15 +103,32 @@ namespace port_drayage_plugin
             * \param current_time Start time of the current maneuver
             * \return A stop wait maneuver message which is ready to be published
             */           
-            cav_msgs::Maneuver composeManeuverMessage(double current_dist, 
+            cav_msgs::Maneuver compose_stop_and_wait_maneuver_message(double current_dist, 
                                                       double end_dist, 
                                                       double current_speed, 
                                                       double target_speed, 
                                                       int lane_id, 
                                                       ros::Time time);
-            
 
-            double estimate_time_to_stop(double v, double x, double a);
+            /**
+             * \brief compose Maneuver Message to send to tactical plugin.
+            * \param current_dist Start downtrack distance of the current maneuver
+            * \param end_dist End downtrack distance of the current maneuver
+            * \param current_speed Start speed of the current maneuver
+            * \param target_speed Target speed pf the current maneuver, usually it is the lanelet speed limit
+            * \param lane_id Lanelet ID of the current maneuver
+            * \param current_time Start time of the current maneuver
+            * \return A stop wait maneuver message which is ready to be published
+            */
+            cav_msgs::Maneuver compose_lane_following_maneuver_message(double current_dist, 
+                                                                                        double end_dist, 
+                                                                                        double current_speed, 
+                                                                                        double target_speed, 
+                                                                                        int lane_id, 
+                                                                                        ros::Time current_time);
+
+            const double estimate_distance_to_stop(double v, double a);
+            const double estimate_time_to_stop(double d, double v);
 
     };
 } // namespace port_drayage_plugin
