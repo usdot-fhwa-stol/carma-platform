@@ -1295,7 +1295,7 @@ TEST(WMBroadcaster, currentLocationCallback)
  // active_geofence_llt_ids.insert(gf->id_);
 
   cav_msgs::CheckActiveGeofence check = wmb.checkActiveGeofenceLogic(input_msg);
-  ASSERT_GE(check.distance_to_next_geofence.front(), 0);
+  ASSERT_GE(check.distance_to_next_geofence, 0);
   EXPECT_TRUE(check.type > 0);
   EXPECT_TRUE(check.is_on_active_geofence);
 

@@ -148,10 +148,6 @@ public:
    */
   std::shared_ptr<Geofence> geofenceFromMsg(const cav_msgs::TrafficControlMessageV01& geofence_msg);
 
-  void currentLocationCallback(const geometry_msgs::PoseStamped current_pos);
-  cav_msgs::CheckActiveGeofence checkActiveGeofenceLogic(const geometry_msgs::PoseStamped current_pos);
-
-
   /*!
    * \brief Returns the route distance (downtrack or crosstrack in meters) to the nearest active geofence lanelet
    * \param curr_pos Current position in local coordinates
@@ -160,6 +156,18 @@ public:
    * \return 0 if there is no active geofence on the vehicle's route 
    */
   double distToNearestActiveGeofence(const lanelet::BasicPoint2d& curr_pos);
+
+
+  void currentLocationCallback(const geometry_msgs::PoseStamped current_pos);
+  /*!
+   * \brief Returns a message indicating whether or not the vehicle is inside of an active geofence lanelet
+   * \param current_pos Current position of the vehicle
+   * \return 0 if vehicle is not on an active geofence 
+   */
+  cav_msgs::CheckActiveGeofence checkActiveGeofenceLogic(const geometry_msgs::PoseStamped current_pos);
+
+
+
 
 private:
   lanelet::ConstLanelets route_path_;

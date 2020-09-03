@@ -435,6 +435,8 @@ bool WMBroadcaster::shouldChangeControlLine(const lanelet::ConstLaneletOrArea& e
 
 void WMBroadcaster::addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const
 {
+    ROS_ERROR_STREAM("addRegulatoryComponent has been called");
+
   // First loop is to save the relation between element and regulatory element
   // so that we can add back the old one after geofence deactivates
   for (auto el: gf_ptr->affected_parts_)
@@ -448,11 +450,16 @@ void WMBroadcaster::addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) con
         lanelet::RegulatoryElementPtr nonconst_regem = current_map_->regulatoryElementLayer.get(regem->id());
         gf_ptr->prev_regems_.push_back(std::make_pair(el.id(), nonconst_regem));
         gf_ptr->remove_list_.push_back(std::make_pair(el.id(), nonconst_regem));
+          ROS_ERROR_STREAM("Lanelet id: "<< el.lanelet()->id() << " Regulatory element id: " << nonconst_regem->id());
+
         current_map_->remove(current_map_->laneletLayer.get(el.lanelet()->id()), nonconst_regem);
       }
     }
   }
-  
+    ROS_ERROR_STREAM("addReg in progress");
+    //  ROS_ERROR_STREAM("Regulatory element id:" << );
+
+
   // this loop is also kept separately because previously we assumed 
   // there was existing regem, but this handles changes to all of the elements
   for (auto el: gf_ptr->affected_parts_)
@@ -465,6 +472,9 @@ void WMBroadcaster::addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) con
     }
   }
   
+  ROS_ERROR_STREAM("addReg has ended");
+
+
 }
 
 void WMBroadcaster::addBackRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const
@@ -519,10 +529,13 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   carma_wm::toBinMsg(send_data, &gf_msg);
   map_update_pub_(gf_msg);
   
+    ROS_ERROR_STREAM("addGeofence has ended.");
+
 };
 
 void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
 {
+  ROS_ERROR_STREAM("removeGeofence has been called.");
   std::lock_guard<std::mutex> guard(map_mutex_);
   ROS_INFO_STREAM("Removing inactive geofence from the map with geofence id: " << gf_ptr->id_);
   
@@ -537,6 +550,9 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   
   carma_wm::toBinMsg(send_data, &gf_msg_revert);
   map_update_pub_(gf_msg_revert);
+
+    ROS_ERROR_STREAM("removeGeofence has ended.");
+
 };
   
 void  WMBroadcaster::routeCallbackMessage(const cav_msgs::Route& route_msg)
@@ -804,7 +820,7 @@ lanelet::BasicPoint2d curr_pos;
         }
       }
 
-      outgoing_geof.distance_to_next_geofence.push_back(next_distance);
+      outgoing_geof.distance_to_next_geofence = next_distance;
   //end for loop
     return outgoing_geof;
     ROS_INFO_STREAM("Check 4");
