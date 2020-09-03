@@ -89,54 +89,54 @@ namespace route_following_plugin
        if(req.prior_plan.maneuvers.size()!=0){
             current_time=req.prior_plan.planning_completion_time;
             double dist_covered=0.0;
+            size_t maneuver_size=req.prior_plan.maneuvers.size();
             // find current progress, current_lanelet and total maneuver length
-            for(auto i=0;i<req.prior_plan.maneuvers.size();i++){
-               auto type= req.prior_plan.maneuvers[i].type;
-               cav_msgs::Maneuver maneuver_msg=req.prior_plan.maneuvers[i];
-                switch(type)
-                {
-                    case 0:
-                    dist_covered+=maneuver_msg.lane_following_maneuver.end_dist-maneuver_msg.lane_following_maneuver.start_dist;
-                    current_time=maneuver_msg.lane_following_maneuver.end_time;
-                    speed_progress=maneuver_msg.lane_following_maneuver.end_speed;
-                    last_lanelet_index=findLaneletIndexFromPath(stoi(maneuver_msg.lane_following_maneuver.lane_id), shortest_path);
-                    break;
-                    case 1:
-                    dist_covered+=maneuver_msg.lane_change_maneuver.end_dist-maneuver_msg.lane_change_maneuver.start_dist;
-                    current_time=maneuver_msg.lane_change_maneuver.end_time;
-                    speed_progress=maneuver_msg.lane_change_maneuver.end_speed;
-                    last_lanelet_index=findLaneletIndexFromPath(stoi(maneuver_msg.lane_change_maneuver.ending_lane_id),shortest_path);
-                    break;
-                    case 2:
-                    dist_covered+=maneuver_msg.intersection_transit_straight_maneuver.end_dist-maneuver_msg.intersection_transit_straight_maneuver.start_dist;
-                    current_time=maneuver_msg.intersection_transit_straight_maneuver.end_time;
-                    speed_progress=maneuver_msg.intersection_transit_straight_maneuver.end_speed;
-                    last_lanelet_index=findLaneletIndexFromPath(stoi(maneuver_msg.intersection_transit_straight_maneuver.ending_lane_id),shortest_path);
-                    break;
-                    case 3:
-                    dist_covered+=maneuver_msg.intersection_transit_left_turn_maneuver.end_dist-maneuver_msg.intersection_transit_left_turn_maneuver.start_dist;
-                    current_time=maneuver_msg.intersection_transit_left_turn_maneuver.end_time;
-                    speed_progress=maneuver_msg.intersection_transit_left_turn_maneuver.end_speed;
-                    last_lanelet_index=findLaneletIndexFromPath(stoi(maneuver_msg.intersection_transit_left_turn_maneuver.ending_lane_id),shortest_path);
-                    break;
-                    case 4:
-                    dist_covered+=maneuver_msg.intersection_transit_right_turn_maneuver.end_dist-maneuver_msg.intersection_transit_right_turn_maneuver.start_dist;
-                    current_time=maneuver_msg.intersection_transit_right_turn_maneuver.end_time;
-                    speed_progress=maneuver_msg.intersection_transit_right_turn_maneuver.end_speed;
-                    last_lanelet_index=findLaneletIndexFromPath(stoi(maneuver_msg.intersection_transit_right_turn_maneuver.ending_lane_id),shortest_path);
-                    break;
-                    case 5:
-                    dist_covered+=maneuver_msg.stop_and_wait_maneuver.end_dist-maneuver_msg.stop_and_wait_maneuver.start_dist;
-                    current_time=maneuver_msg.stop_and_wait_maneuver.end_time;
-                    speed_progress=0;
-                    last_lanelet_index=findLaneletIndexFromPath(stoi(maneuver_msg.stop_and_wait_maneuver.ending_lane_id),shortest_path);
-                    break;
-                }
-                if(i==req.prior_plan.maneuvers.size()-1){
-                    total_maneuver_length -=dist_covered;
-                    current_progress +=dist_covered;
-                }
-            } 
+            //auto type= req.prior_plan.maneuvers[maneuver_size-1].type;
+            cav_msgs::Maneuver maneuver_msg=req.prior_plan.maneuvers[maneuver_size-1];
+            switch(req.prior_plan.maneuvers[maneuver_size-1].type)
+            {
+                case cav_msgs::Maneuver::LANE_FOLLOWING:
+                dist_covered+=maneuver_msg.lane_following_maneuver.end_dist;
+                current_time=maneuver_msg.lane_following_maneuver.end_time;
+                speed_progress=maneuver_msg.lane_following_maneuver.end_speed;
+                last_lanelet_index=findLaneletIndexFromPath(stoi(maneuver_msg.lane_following_maneuver.lane_id), shortest_path);
+                break;
+                case cav_msgs::Maneuver::LANE_CHANGE:
+                dist_covered+=maneuver_msg.lane_change_maneuver.end_dist;
+                current_time=maneuver_msg.lane_change_maneuver.end_time;
+                speed_progress=maneuver_msg.lane_change_maneuver.end_speed;
+                last_lanelet_index=findLaneletIndexFromPath(stoi(maneuver_msg.lane_change_maneuver.ending_lane_id),shortest_path);
+                break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
+                dist_covered+=maneuver_msg.intersection_transit_straight_maneuver.end_dist;
+                current_time=maneuver_msg.intersection_transit_straight_maneuver.end_time;
+                speed_progress=maneuver_msg.intersection_transit_straight_maneuver.end_speed;
+                last_lanelet_index=findLaneletIndexFromPath(stoi(maneuver_msg.intersection_transit_straight_maneuver.ending_lane_id),shortest_path);
+                break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
+                dist_covered+=maneuver_msg.intersection_transit_left_turn_maneuver.end_dist;
+                current_time=maneuver_msg.intersection_transit_left_turn_maneuver.end_time;
+                speed_progress=maneuver_msg.intersection_transit_left_turn_maneuver.end_speed;
+                last_lanelet_index=findLaneletIndexFromPath(stoi(maneuver_msg.intersection_transit_left_turn_maneuver.ending_lane_id),shortest_path);
+                break;
+                case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
+                dist_covered+=maneuver_msg.intersection_transit_right_turn_maneuver.end_dist;
+                current_time=maneuver_msg.intersection_transit_right_turn_maneuver.end_time;
+                speed_progress=maneuver_msg.intersection_transit_right_turn_maneuver.end_speed;
+                last_lanelet_index=findLaneletIndexFromPath(stoi(maneuver_msg.intersection_transit_right_turn_maneuver.ending_lane_id),shortest_path);
+                break;
+                case cav_msgs::Maneuver::STOP_AND_WAIT:
+                dist_covered+=maneuver_msg.stop_and_wait_maneuver.end_dist;
+                current_time=maneuver_msg.stop_and_wait_maneuver.end_time;
+                speed_progress=0;
+                last_lanelet_index=findLaneletIndexFromPath(stoi(maneuver_msg.stop_and_wait_maneuver.ending_lane_id),shortest_path);
+                break;
+                default:
+                break;
+            }
+            
+            total_maneuver_length -=dist_covered;
+            current_progress +=dist_covered;
         }
         while(current_progress < total_maneuver_length && last_lanelet_index < shortest_path.size())
         {
@@ -178,7 +178,7 @@ namespace route_following_plugin
 
             current_progress += dist_diff;
             speed_progress = RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
-            //@SONAR_START@   
+  
         }
         if(resp.new_plan.maneuvers.size() == 0)
         {
