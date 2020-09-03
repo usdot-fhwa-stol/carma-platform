@@ -56,8 +56,8 @@
 
   <!-- Regulatory speed limit -->
   <relation id='45218' visible='true' version='1'>
-    <member type='lanelet' ref='1349' role='refers' />
-    <member type='lanelet' ref='1346' role='refers' />
+    <member type='lanelet' ref='1349' role='left' />
+    <member type='lanelet' ref='1346' role='right' />
     <tag k='limit' v='5 mph' /> <!-- Speed limit value must have units one of the following   m/s, mps, km/h, kmh, m/h, mph -->
     <tag k='subtype' v='digital_speed_limit' />
     <tag k='type' v='regulatory_element' />
