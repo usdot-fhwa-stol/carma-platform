@@ -259,7 +259,8 @@ namespace route {
     {
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING) {
             // convert from pose stamp into lanelet basic 2D point
-           lanelet::BasicPoint2d current_loc(msg->pose.position.x, msg->pose.position.y);
+           //lanelet::BasicPoint2d current_loc(msg->pose.position.x, msg->pose.position.y);
+             lanelet::BasicPoint2d current_loc( 193.7078, -142.049 ); //close to destination (x,y) points in map lanelet 111
             // get dt ct from world model
             carma_wm::TrackPos track(0.0, 0.0);
             try {
@@ -347,7 +348,8 @@ namespace route {
             state_msg.routeID = route_msg_.route_name;
             state_msg.cross_track = current_crosstrack_distance_;
             state_msg.down_track = current_downtrack_distance_;
-            state_msg.lanelet_downtrack = ll_downtrack_distance_;
+            state_msg.lanelet_downtrack = ll_downtrack_distance_;            
+            state_msg.state = convertRouteStateToInt(this->rs_worker_.get_route_state());
             state_msg.lanelet_id = ll_id_;
             state_msg.speed_limit = speed_limit_;
             route_state_pub_.publish(state_msg);
@@ -360,6 +362,28 @@ namespace route {
             route_event_queue.pop();
         }
         return true;
+    }
+
+    uint8_t RouteGeneratorWorker::convertRouteStateToInt ( RouteStateWorker::RouteState state )
+    {
+        switch (state)
+        {
+            case RouteStateWorker::RouteState::LOADING:
+                return 0;
+                break;
+            case RouteStateWorker::RouteState::SELECTION:
+                return 1;
+                break;
+            case RouteStateWorker::RouteState::ROUTING:
+                return 2;
+                break;
+            case RouteStateWorker::RouteState::FOLLOWING:
+                return 3;
+                break;
+        default:
+            return 0;
+            break;
+        } 
     }
 }
 
