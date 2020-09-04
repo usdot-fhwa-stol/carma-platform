@@ -41,6 +41,9 @@ public:
 
   std::string proj;
 
+  std::string type_;
+  
+
   // TODO Add rest of the attributes provided by geofences in the future
   lanelet::RegulatoryElementPtr regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_kmh, {}, {},
                                                      { lanelet::Participants::VehicleCar }));
