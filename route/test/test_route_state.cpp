@@ -47,5 +47,6 @@ TEST(RouteStateTest, testConvertRouteStateToInt)
     ASSERT_EQ(0, worker.convertRouteStateToInt(route::RouteStateWorker::RouteState::LOADING));
     ASSERT_EQ(1, worker.convertRouteStateToInt(route::RouteStateWorker::RouteState::SELECTION));
     ASSERT_EQ(2, worker.convertRouteStateToInt(route::RouteStateWorker::RouteState::ROUTING));
-    ASSERT_EQ(3, worker.convertRouteStateToInt(route::RouteStateWorker::RouteState::FOLLOWING));
+    ASSERT_EQ(3, worker.convertRouteStateToInt(route::RouteStateWorker::RouteState::FOLLOWING));  
+    ASSERT_THROW(worker.convertRouteStateToInt(route::RouteStateWorker::RouteState(4)), std::invalid_argument); //default case
 }
