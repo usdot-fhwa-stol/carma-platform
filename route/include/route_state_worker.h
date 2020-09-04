@@ -71,6 +71,9 @@ namespace route {
              */
             RouteState get_route_state();
 
+            //convert RouteState state field to unit8_t
+            uint8_t convertRouteStateToInt ( RouteStateWorker::RouteState state );
+
         private:
 
             // private local variable tracks the current route satte

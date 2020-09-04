@@ -348,7 +348,7 @@ namespace route {
             state_msg.cross_track = current_crosstrack_distance_;
             state_msg.down_track = current_downtrack_distance_;
             state_msg.lanelet_downtrack = ll_downtrack_distance_;            
-            state_msg.state = convertRouteStateToInt(this->rs_worker_.get_route_state());
+            state_msg.state = this->rs_worker_.convertRouteStateToInt(this->rs_worker_.get_route_state());
             state_msg.lanelet_id = ll_id_;
             state_msg.speed_limit = speed_limit_;
             route_state_pub_.publish(state_msg);
@@ -363,26 +363,5 @@ namespace route {
         return true;
     }
 
-    uint8_t RouteGeneratorWorker::convertRouteStateToInt ( RouteStateWorker::RouteState state )
-    {
-        switch (state)
-        {
-            case RouteStateWorker::RouteState::LOADING:
-                return 0;
-                break;
-            case RouteStateWorker::RouteState::SELECTION:
-                return 1;
-                break;
-            case RouteStateWorker::RouteState::ROUTING:
-                return 2;
-                break;
-            case RouteStateWorker::RouteState::FOLLOWING:
-                return 3;
-                break;
-        default:
-            return 0;
-            break;
-        } 
-    }
 }
 

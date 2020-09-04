@@ -40,3 +40,12 @@ TEST(RouteStateTest, testStateTransitions)
     worker.on_route_event(route::RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
     ASSERT_EQ(route::RouteStateWorker::RouteState::SELECTION, worker.get_route_state());
 }
+
+TEST(RouteStateTest, testConvertRouteStateToInt)
+{
+    route::RouteStateWorker worker; 
+    ASSERT_EQ(0, worker.convertRouteStateToInt(route::RouteStateWorker::RouteState::LOADING));
+    ASSERT_EQ(1, worker.convertRouteStateToInt(route::RouteStateWorker::RouteState::SELECTION));
+    ASSERT_EQ(2, worker.convertRouteStateToInt(route::RouteStateWorker::RouteState::ROUTING));
+    ASSERT_EQ(3, worker.convertRouteStateToInt(route::RouteStateWorker::RouteState::FOLLOWING));
+}

@@ -60,4 +60,25 @@ namespace route {
         }
     }
 
+      uint8_t RouteStateWorker::convertRouteStateToInt ( RouteStateWorker::RouteState state )
+    {
+        switch (state)
+        {
+            case RouteStateWorker::RouteState::LOADING:
+                return 0;
+                break;
+            case RouteStateWorker::RouteState::SELECTION:
+                return 1;
+                break;
+            case RouteStateWorker::RouteState::ROUTING:
+                return 2;
+                break;
+            case RouteStateWorker::RouteState::FOLLOWING:
+                return 3;
+                break;
+        default:
+            return 0;
+            break;
+        } 
+    }
 }
