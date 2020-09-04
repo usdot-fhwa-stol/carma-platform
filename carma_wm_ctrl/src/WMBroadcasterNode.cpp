@@ -68,7 +68,7 @@ int WMBroadcasterNode::run()
   //Route Message Sub
   route_callmsg_sub_ = cnh_.subscribe("route", 1, &WMBroadcaster::routeCallbackMessage, &wmb_);
   //Current Location Sub
-  curr_location_sub_ = cnh_.subscribe("current_pose_test", 1,&WMBroadcaster::currentLocationCallback, &wmb_);
+  curr_location_sub_ = cnh_.subscribe("current_pose", 1,&WMBroadcaster::currentLocationCallback, &wmb_);
   
   double lane_max_width;
   pnh_.getParam("max_lane_width", lane_max_width);
