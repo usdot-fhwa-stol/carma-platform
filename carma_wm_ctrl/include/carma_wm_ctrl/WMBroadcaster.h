@@ -40,11 +40,13 @@
 #include <cav_msgs/TrafficControlBounds.h>
 #include <autoware_lanelet2_msgs/MapBin.h>
 #include <lanelet2_routing/RoutingGraph.h>
+#include <geometry_msgs/PoseStamped.h>
 
 #include "MapConformer.h"
 
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <cav_msgs/TrafficControlMessage.h>
+#include <cav_msgs/CheckActiveGeofence.h>
 #include <carma_wm/TrafficControl.h>
 #include <std_msgs/String.h>
 #include <unordered_set>
@@ -66,13 +68,15 @@ public:
   using PublishMapCallback = std::function<void(const autoware_lanelet2_msgs::MapBin&)>;
   using PublishMapUpdateCallback = std::function<void(const autoware_lanelet2_msgs::MapBin&)>;
   using PublishCtrlRequestCallback = std::function<void(const cav_msgs::TrafficControlRequest&)>;
+  using PublishActiveGeofCallback = std::function<void(const cav_msgs::CheckActiveGeofence&)>;
+
 
   /*!
    * \brief Constructor
    */
 
   WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, const PublishCtrlRequestCallback& control_msg_pub,
-   std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory);
+  const PublishActiveGeofCallback& active_pub, std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory);
 
   /*!
    * \brief Callback to set the base map when it has been loaded
@@ -153,6 +157,18 @@ public:
    */
   double distToNearestActiveGeofence(const lanelet::BasicPoint2d& curr_pos);
 
+
+  void currentLocationCallback(const geometry_msgs::PoseStamped& current_pos);
+  /*!
+   * \brief Returns a message indicating whether or not the vehicle is inside of an active geofence lanelet
+   * \param current_pos Current position of the vehicle
+   * \return 0 if vehicle is not on an active geofence 
+   */
+  cav_msgs::CheckActiveGeofence checkActiveGeofenceLogic(const geometry_msgs::PoseStamped& current_pos);
+
+
+
+
 private:
   lanelet::ConstLanelets route_path_;
   std::unordered_set<lanelet::Id> active_geofence_llt_ids_; 
@@ -172,9 +188,11 @@ private:
   PublishMapCallback map_pub_;
   PublishMapUpdateCallback map_update_pub_;
   PublishCtrlRequestCallback control_msg_pub_;
+  PublishActiveGeofCallback active_pub_;
   GeofenceScheduler scheduler_;
   std::string base_map_georef_;
   double max_lane_width_;
+  
 
 };
 }  // namespace carma_wm_ctrl
