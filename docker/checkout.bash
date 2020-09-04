@@ -37,7 +37,7 @@ done
 
 cd ${dir}/src
 
-if [[ "$BRANCH" = "feature/report_current_geofences" ]]; then
+if [[ "$BRANCH" = "develop" ]]; then
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch integration/routing
       git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch $BRANCH
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch $BRANCH
