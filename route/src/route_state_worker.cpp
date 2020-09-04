@@ -66,16 +66,12 @@ namespace route {
         {
             case RouteStateWorker::RouteState::LOADING:
                 return 0;
-                break;
             case RouteStateWorker::RouteState::SELECTION:
                 return 1;
-                break;
             case RouteStateWorker::RouteState::ROUTING:
                 return 2;
-                break;
             case RouteStateWorker::RouteState::FOLLOWING:
                 return 3;
-                break;
             default:                
                 // should not reach here
                 throw std::invalid_argument("Current state is illegal: " + std::to_string(state));
