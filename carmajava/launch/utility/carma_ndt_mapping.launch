@@ -16,10 +16,23 @@
 <!-- Utility Launch file for generating PCD map files using the ndt_mapping node-->
 <launch>
 
-  <remap from="points_raw" to="/hardware_interface/lidar/points_raw"/>
-  <remap from="/vehicle/odom" to="/localization/vehicle/odom"/>
-  <include file="$(find lidar_localizer)/launch/ndt_mapping.launch">
-    <arg name="use_odom" value="true" />
+  <arg name="vehicle_calibration_dir" default="/opt/carma/vehicle/calibration"/>
+
+  <!-- Static Transforms -->
+  <include file="$(find carma)/launch/transforms.launch">
+    <arg name="URDF_FILE" value="$(arg vehicle_calibration_dir)/urdf/carma.urdf"/>
   </include>
+
+  <!-- NDT Mapping Node -->
+  <group>
+    <rosparam command="load" file="$(arg vehicle_calibration_dir)/lidar_localizer/ndt_matching/params.yaml"/>
+
+    <remap from="points_raw" to="/hardware_interface/lidar/points_raw"/>
+    <remap from="/vehicle/odom" to="/localization/vehicle/odom"/>
+
+    <include file="$(find lidar_localizer)/launch/ndt_mapping.launch">
+      <arg name="use_odom" value="true" />
+    </include>
+  </group>
 
 </launch>
