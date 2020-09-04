@@ -691,7 +691,7 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   
 }
 
-TEST(WMBroadcaster, DISABLED_RegulatoryPCLTest)
+TEST(WMBroadcaster, RegulatoryPCLTest)
 {
   // Test adding then evaluate if the calls to active and inactive are done correctly
   auto gf_ptr = std::make_shared<Geofence>(Geofence());

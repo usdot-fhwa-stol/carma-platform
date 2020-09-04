@@ -247,11 +247,11 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   std::copy(req_id.begin(),req_id.end(), uuid_id.begin());
   std::string reqid = boost::uuids::to_string(uuid_id).substr(0, 8);
   // drop if the req has never been sent
-  /*if (generated_geofence_reqids_.find(reqid) == generated_geofence_reqids_.end())
+  if (generated_geofence_reqids_.find(reqid) == generated_geofence_reqids_.end())
   {
     ROS_WARN_STREAM("CARMA_WM_CTRL received a TrafficControlMessage with unknown TrafficControlRequest ID (reqid): " << reqid);
     return;
-  }*/
+  }
     
   checked_geofence_ids_.insert(boost::uuids::to_string(id));
   auto gf_ptr = geofenceFromMsg(geofence_msg.tcmV01);
@@ -654,6 +654,8 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
   std::string reqid = boost::uuids::to_string(uuid_id).substr(0, 8);
   std::string req_id_test = "12345678";
   generated_geofence_reqids_.insert(req_id_test);
+  generated_geofence_reqids_.insert(reqid);
+
 
   // copy to reqid array
   boost::array<uint8_t, 16UL> req_id;
@@ -790,6 +792,17 @@ lanelet::BasicPoint2d curr_pos;
           {
             outgoing_geof.type = 1;
             outgoing_geof.is_on_active_geofence = true;
+            for (auto regem: current_llt.regulatoryElements())
+              {
+                  if (regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0)
+                  {
+                    lanelet::DigitalSpeedLimitPtr speed =  std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>
+                    (current_map_->regulatoryElementLayer.get(regem->id()));
+                   outgoing_geof.value = speed->speed_limit_.value();
+                 }
+              }
+
+
           }
         }
       }

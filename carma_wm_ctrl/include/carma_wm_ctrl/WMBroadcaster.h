@@ -68,7 +68,7 @@ public:
   using PublishMapCallback = std::function<void(const autoware_lanelet2_msgs::MapBin&)>;
   using PublishMapUpdateCallback = std::function<void(const autoware_lanelet2_msgs::MapBin&)>;
   using PublishCtrlRequestCallback = std::function<void(const cav_msgs::TrafficControlRequest&)>;
-  using PublishActiveGeofCallback = std::function<void(cav_msgs::CheckActiveGeofence&)>;
+  using PublishActiveGeofCallback = std::function<void(const cav_msgs::CheckActiveGeofence&)>;
 
 
   /*!
