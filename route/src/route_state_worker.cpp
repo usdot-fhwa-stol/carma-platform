@@ -76,9 +76,8 @@ namespace route {
             case RouteStateWorker::RouteState::FOLLOWING:
                 return 3;
                 break;
-        default:
-            return 0;
-            break;
+            default:
+                break;
         } 
     }
 }
