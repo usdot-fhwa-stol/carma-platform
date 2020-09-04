@@ -23,6 +23,7 @@
 
 namespace mock_drivers
 {
+/*! \brief Mock camera driver. Operates as a passthrough for bag data which updates the timestamps on received messages */
 class MockCameraDriver : public MockDriver
 {
 private:
@@ -32,13 +33,13 @@ private:
   const std::string projection_matrix_topic_ = "camera/projection_matrix";
 
 protected:
-  int onRun();
+  int onRun() override;
 public:
   MockCameraDriver(bool dummy = false);
   ~MockCameraDriver() {};
-  std::vector<DriverType> getDriverTypes();
-  uint8_t getDriverStatus();
-  unsigned int getRate();
+  std::vector<DriverType> getDriverTypes() override;
+  uint8_t getDriverStatus() override;
+  unsigned int getRate() override;
 
 };
 

@@ -27,14 +27,14 @@ private:
   const std::string raw_data_topic_ = "imu";
 
 protected:
-  int onRun();
+  int onRun() override;
   
 public:
   MockIMUDriver(bool dummy = false);
   ~MockIMUDriver() {};
-  std::vector<DriverType> getDriverTypes();
-  uint8_t getDriverStatus();
-  unsigned int getRate();
+  std::vector<DriverType> getDriverTypes() override;
+  uint8_t getDriverStatus() override;
+  unsigned int getRate() override;
 };
 
 }  // namespace mock_drivers

@@ -29,14 +29,14 @@ private:
   const std::string lane_models_topics_ = "roadway_sensor/lane_models";
 
 protected:
-  int onRun();
+  int onRun() override;
 
 public:
   MockRoadwaySensorDriver(bool dummy = false);
   ~MockRoadwaySensorDriver() {};
-  std::vector<DriverType> getDriverTypes();
-  uint8_t getDriverStatus();
-  unsigned int getRate();
+  std::vector<DriverType> getDriverTypes() override;
+  uint8_t getDriverStatus() override;
+  unsigned int getRate() override;
 };
 
 }  // namespace mock_drivers

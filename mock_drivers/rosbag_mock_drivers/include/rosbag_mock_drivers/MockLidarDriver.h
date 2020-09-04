@@ -27,14 +27,14 @@ private:
   const std::string points_raw_topic_ = "lidar/points_raw";
 
 protected:
-  int onRun();
+  int onRun() override;
 
 public:
   MockLidarDriver(bool dummy = false);
   ~MockLidarDriver() {};
-  std::vector<DriverType> getDriverTypes();
-  uint8_t getDriverStatus();
-  unsigned int getRate();
+  std::vector<DriverType> getDriverTypes() override;
+  uint8_t getDriverStatus() override;
+  unsigned int getRate() override;
 };
 
 }  // namespace mock_drivers

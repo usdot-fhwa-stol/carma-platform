@@ -27,6 +27,7 @@
 
 namespace mock_drivers
 {
+/*! \brief Mock CAN driver. Operates as a passthrough for bag data which updates the timestamps on received messages */
 class MockCANDriver : public MockDriver
 {
 private:
@@ -36,14 +37,14 @@ private:
   const std::string vehicle_twist = "vehicle/twist";
 
 protected:
-  int onRun();
+  int onRun() override;
 
 public:
   MockCANDriver(bool dummy = false);
   ~MockCANDriver() {};
-  std::vector<DriverType> getDriverTypes();
-  uint8_t getDriverStatus();
-  unsigned int getRate();
+  std::vector<DriverType> getDriverTypes() override;
+  uint8_t getDriverStatus() override;
+  unsigned int getRate() override;
 };
 
 }  // namespace mock_drivers

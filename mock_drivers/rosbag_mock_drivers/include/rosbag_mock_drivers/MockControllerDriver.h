@@ -23,6 +23,7 @@
 
 namespace mock_drivers
 {
+/*! \brief Mock Controller driver. Implements controller service and feedback logic to support CARMA Platform Guidance State Machine */
 class MockControllerDriver : public MockDriver
 {
 private:
@@ -43,17 +44,34 @@ private:
   bool robot_enabled_ = false;
 
 protected:
-  int onRun();
+  int onRun() override;
 
 public:
+
+  /**
+   * \brief Callback for the vehicle command topic. This callback must be triggered at least once before the enable robotic service is called.
+   * 
+   * \param msg The vehicle command to receive
+   */ 
+  void vehicleCmdCallback(const autoware_msgs::VehicleCmd::ConstPtr& msg);
+
+  /**
+   * \brief Callback for the enable robotic service. Triggering this callback will modify the RobotEnabled message output by this driver.
+   * 
+   * \param req The service request in message
+   * \param res The service response out message
+   * 
+   * \return Flag idicating if the service was processed successfully. 
+   */ 
+  bool enableRoboticSrv(const cav_srvs::SetEnableRobotic::Request& req, cav_srvs::SetEnableRobotic::Response& res);
+
+  // Overrides
   MockControllerDriver(bool dummy = false);
   ~MockControllerDriver() {};
-  bool onSpin();
-  void vehicleCmdCallback(const autoware_msgs::VehicleCmd::ConstPtr& msg);
-  bool enableRoboticSrv(const cav_srvs::SetEnableRobotic::Request& req, cav_srvs::SetEnableRobotic::Response& res);
-  std::vector<DriverType> getDriverTypes();
-  uint8_t getDriverStatus();
-  unsigned int getRate();
+  bool onSpin() override;
+  std::vector<DriverType> getDriverTypes() override;
+  uint8_t getDriverStatus() override;
+  unsigned int getRate() override;
 };
 
 }  // namespace mock_drivers

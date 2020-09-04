@@ -27,14 +27,14 @@ private:
   const std::string gnss_fix_fuxed_topic_ = "gnss_fix_fused";
 
 protected:
-  int onRun();
+  int onRun() override;
 
 public:
   MockGNSSDriver(bool dummy = false);
   ~MockGNSSDriver() {};
-  std::vector<DriverType> getDriverTypes();
-  uint8_t getDriverStatus();
-  unsigned int getRate();
+  std::vector<DriverType> getDriverTypes() override;
+  uint8_t getDriverStatus() override;
+  unsigned int getRate() override;
 };
 
 }  // namespace mock_drivers

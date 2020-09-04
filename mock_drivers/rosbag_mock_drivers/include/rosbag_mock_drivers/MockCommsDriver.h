@@ -21,6 +21,7 @@
 
 namespace mock_drivers
 {
+/*! \brief Mock Comms driver. Operates as a passthrough for bag data which updates the timestamps on received messages */
 class MockCommsDriver : public MockDriver
 {
 private:
@@ -32,14 +33,14 @@ private:
   void outboundCallback(const cav_msgs::ByteArray::ConstPtr& msg) const;
 
 protected:
-  int onRun();
+  int onRun() override;
 
 public:
   MockCommsDriver(bool dummy = false);
   ~MockCommsDriver() {};
-  std::vector<DriverType> getDriverTypes();
-  uint8_t getDriverStatus();
-  unsigned int getRate();
+  std::vector<DriverType> getDriverTypes() override;
+  uint8_t getDriverStatus() override;
+  unsigned int getRate() override;
 };
 
 }  // namespace mock_drivers
