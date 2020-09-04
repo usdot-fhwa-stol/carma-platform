@@ -19,8 +19,6 @@
 
 namespace mock_drivers
 {
-/*! \brief Function adds both a publisher and subscriber */
-// TODO: This function can be simplified using C++ 17
 template <typename T>
 void MockDriver::addPassthroughPub(const std::string& sub_topic, const std::string& pub_topic, bool latch,
                                    size_t queue_size)
@@ -33,7 +31,7 @@ void MockDriver::addPassthroughPub(const std::string& sub_topic, const std::stri
   std::function<void(ConstPtrRef<T>)> callback = std::bind(
       [&](ConstPtrRef<T> in) {
         T out = *in;
-        out.header.stamp = ros::Time::now();
+        out.header.stamp = ros::Time::now(); // Update message timestamp
         mock_driver_node_.publishData<const T&>(pub_topic, out);
       },
       std::placeholders::_1);
@@ -44,7 +42,6 @@ void MockDriver::addPassthroughPub(const std::string& sub_topic, const std::stri
   mock_driver_node_.addSub(outbound_sub_ptr_);
 }
 
-/*! \brief Function adds both a publisher and subscriber */  // void (*sub_cb)(ConstPtrRef<T>)
 template <typename T>
 void MockDriver::addPassthroughPubNoHeader(const std::string& sub_topic, const std::string& pub_topic, bool latch,
                                            size_t queue_size)

@@ -21,6 +21,7 @@
 
 namespace mock_drivers
 {
+/// \brief Mock GNSS driver. Operates as a passthrough for bag data which updates the timestamps on received messages */
 class MockGNSSDriver : public MockDriver
 {
 private:

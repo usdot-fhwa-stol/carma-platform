@@ -21,6 +21,8 @@
 
 namespace mock_drivers
 {
+
+/// \brief Mock Lidar driver. Operates as a passthrough for bag data which updates the timestamps on received messages */
 class MockLidarDriver : public MockDriver
 {
 private:

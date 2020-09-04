@@ -22,6 +22,7 @@
 
 namespace mock_drivers
 {
+/// \brief Mock Radar driver. Operates as a passthrough for bag data which updates the timestamps on received messages */
 class MockRadarDriver : public MockDriver
 {
 private:

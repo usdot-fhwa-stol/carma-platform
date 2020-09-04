@@ -23,12 +23,14 @@
 
 namespace mock_drivers
 {
+/// \brief Wrapper for publishers which allow their base topic name to be extracted
 struct PublisherWapper
 {
   ros::Publisher pub;
   std::string base_topic_name;
 };
 
+/// \brief Node class which connects to the ROS network
 class MockDriverNode
 {
 private:
@@ -45,6 +47,11 @@ private:
 
 public:
 
+  /**
+   * \brief Returns the fully qualified name of this node in the ROS network graph
+   * 
+   * \return The fully specified name
+   */ 
   std::string getGraphName() const;
 
   /*! \brief Function to add a publisher from a ROSComms object */

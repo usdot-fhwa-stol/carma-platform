@@ -21,6 +21,7 @@
 
 namespace mock_drivers
 {
+/// \brief Mock IMU driver. Operates as a passthrough for bag data which updates the timestamps on received messages */
 class MockIMUDriver : public MockDriver
 {
 private:
