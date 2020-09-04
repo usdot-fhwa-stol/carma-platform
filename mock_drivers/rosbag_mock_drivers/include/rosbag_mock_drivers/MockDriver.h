@@ -92,7 +92,7 @@ protected:
   void driverDiscovery();
 
   /*! \brief Returns the mock driver node for the mock driver (used for testing) */
-  MockDriverNode getMockDriverNode();
+  MockDriverNode getMockDriverNode() const;
 
   /**
    * \brief Function adds both a publisher and subscriber of the specified type.

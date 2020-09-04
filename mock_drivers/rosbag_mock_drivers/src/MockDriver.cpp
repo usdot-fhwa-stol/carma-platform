@@ -22,7 +22,7 @@ MockDriver::~MockDriver()
 {
 }
 
-MockDriverNode MockDriver::getMockDriverNode()
+MockDriverNode MockDriver::getMockDriverNode() const
 {
   return mock_driver_node_;
 }
