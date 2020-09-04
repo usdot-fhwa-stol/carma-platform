@@ -76,8 +76,9 @@ namespace route {
             case RouteStateWorker::RouteState::FOLLOWING:
                 return 3;
                 break;
-            default:
-                break;
+            default:                
+                // should not reach here
+                throw std::invalid_argument("Current state is illegal: " + std::to_string(state));
         } 
     }
 }
