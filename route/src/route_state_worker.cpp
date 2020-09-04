@@ -60,7 +60,7 @@ namespace route {
         }
     }
 
-      uint8_t RouteStateWorker::convertRouteStateToInt ( RouteStateWorker::RouteState state )
+      uint8_t RouteStateWorker::convertRouteStateToInt ( RouteStateWorker::RouteState state ) const
     {
         switch (state)
         {

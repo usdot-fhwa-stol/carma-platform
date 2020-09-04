@@ -121,7 +121,7 @@ TEST(RouteGeneratorTest, testLaneletRoutingTown02VectorMap)
     // <geoReference>+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs</geoReference>
 
     // File location of osm file
-    std::string file = "../resource/map/vector_map_Town02_workspace.osm";
+    std::string file = "../resource/map/town01_vector_map_1.osm";
     // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
     lanelet::Id start_id = 101;
     lanelet::Id end_id = 111;
@@ -216,17 +216,22 @@ TEST(RouteGeneratorTest, testReadRoutetfhrcFile)
     cav_srvs::GetAvailableRoutesResponse resp;
     ASSERT_TRUE(worker.get_available_route_cb(req, resp));
     std::cout<< resp.availableRoutes.front().route_id<< "\n";
-    ASSERT_EQ("tfhrc_test_route", resp.availableRoutes.front().route_id);
-    std::cout <<"C-HUB : " << resp.availableRoutes.front().route_name << "\n";
-    ASSERT_EQ("C-HUB", resp.availableRoutes.front().route_name);
-    std::cout << "Available Route : " << resp.availableRoutes.size() << "\n";
-    ASSERT_EQ(4, resp.availableRoutes.size());
-    auto points = worker.load_route_destinations_in_ecef("tfhrc_test_route");
-    std::cout << "Point Size : " << points.size()<<"\n";
-    ASSERT_EQ(5, points.size());
-    ASSERT_NEAR(1106580, points[0].getX(), 5.0);
-    ASSERT_NEAR(894697, points[0].getY(), 5.0);  
-    ASSERT_NEAR(-6196590, points[0].getZ(), 5.0);
+    for(auto i = 0; i < resp.availableRoutes.size();i++)    
+    {
+        if(resp.availableRoutes[i].route_id  == "tfhrc_test_route")
+        {
+            std::cout <<"C-HUB : " << resp.availableRoutes.front().route_name << "\n";
+            ASSERT_EQ("C-HUB", resp.availableRoutes.front().route_name);
+            std::cout << "Available Route : " << resp.availableRoutes.size() << "\n";
+            ASSERT_EQ(4, resp.availableRoutes.size());
+            auto points = worker.load_route_destinations_in_ecef("tfhrc_test_route");
+            std::cout << "Point Size : " << points.size()<<"\n";
+            ASSERT_EQ(5, points.size());
+            ASSERT_NEAR(1106580, points[0].getX(), 5.0);
+            ASSERT_NEAR(894697, points[0].getY(), 5.0);  
+            ASSERT_NEAR(-6196590, points[0].getZ(), 5.0);
+        }
+   }
 }
 
 // Run all the tests
