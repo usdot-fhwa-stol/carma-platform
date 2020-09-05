@@ -104,6 +104,9 @@ TEST(RouteGeneratorTest, testLaneletRoutingVectorMap)
             std::cout << ll.id() << " ";
         }
         std::cout << "\n";
+        cav_msgs::Route route_msg_ = worker.compose_route_msg(route);
+        ASSERT_TRUE(route_msg_.shortest_path_lanelet_ids.size() > 0);
+        ASSERT_TRUE(route_msg_.route_path_lanelet_ids.size() > 0);
     }
 }
 
@@ -169,7 +172,7 @@ TEST(RouteGeneratorTest, testLaneletRoutingTown02VectorMap)
     map_graph->exportGraphViz("../routing2.txt");
 
     // Computes the shortest path and prints the list of lanelet IDs to get from the start to the end. Can be manually confirmed in JOSM
-    auto route = map_graph->getRoute(start_lanelet, end_lanelet);
+    const auto route = map_graph->getRoute(start_lanelet, end_lanelet);
     if(!route) {
         ASSERT_FALSE(true);
         std::cout << "Route not generated." << " ";
@@ -179,7 +182,11 @@ TEST(RouteGeneratorTest, testLaneletRoutingTown02VectorMap)
             std::cout << ll.id() << " ";
         }
         std::cout << "\n";
+        cav_msgs::Route route_msg_ = worker.compose_route_msg(route);
+        ASSERT_TRUE(route_msg_.shortest_path_lanelet_ids.size() > 0);
+        ASSERT_TRUE(route_msg_.route_path_lanelet_ids.size() > 0);
     }
+
 }
 
 TEST(RouteGeneratorTest, testReadLanelet111RouteFile)
@@ -215,15 +222,13 @@ TEST(RouteGeneratorTest, testReadRoutetfhrcFile)
     cav_srvs::GetAvailableRoutesRequest req;
     cav_srvs::GetAvailableRoutesResponse resp;
     ASSERT_TRUE(worker.get_available_route_cb(req, resp));
-    std::cout<< resp.availableRoutes.front().route_id<< "\n";
+    std::cout << "Available Route : " << resp.availableRoutes.size() << "\n";
+    ASSERT_EQ(4, resp.availableRoutes.size());
     for(auto i = 0; i < resp.availableRoutes.size();i++)    
     {
         if(resp.availableRoutes[i].route_id  == "tfhrc_test_route")
         {
-            std::cout <<"C-HUB : " << resp.availableRoutes.front().route_name << "\n";
-            ASSERT_EQ("C-HUB", resp.availableRoutes.front().route_name);
-            std::cout << "Available Route : " << resp.availableRoutes.size() << "\n";
-            ASSERT_EQ(4, resp.availableRoutes.size());
+            std::cout <<"C-HUB : " << resp.availableRoutes[i].route_name << "\n";
             auto points = worker.load_route_destinations_in_ecef("tfhrc_test_route");
             std::cout << "Point Size : " << points.size()<<"\n";
             ASSERT_EQ(5, points.size());
