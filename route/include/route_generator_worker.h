@@ -192,8 +192,7 @@ namespace route {
         std::queue<uint8_t> route_event_queue;
 
         // private helper function to add a new route event into event queue
-        void publish_route_event(uint8_t event_type);
-
+        void publish_route_event(uint8_t event_type);        
     };
 }
 
