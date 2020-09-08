@@ -89,19 +89,6 @@ public:
     }
   }
 
-  // TODO (needs at least C++ 17): use a constexpr if statement to an addComms function so you don't need different add
-  // functions template<typename T> void addComms(T comm) {
-  //     if constexpr(comm->getCommType() == CommTypes::pub){
-  //         publishers_ = cnh_->advertise<decltype(comm->getTemplateType())>(comm->getTopic(), comm->getQueueSize());
-  //     } else if constexpr(comm->getCommType() == CommTypes::sub){
-  //         subscribers_ = cnh_->subscribe<const std_msgs::String::ConstPtr&>(comm->getTopic(), comm->getQueueSize(),
-  //         &ROSComms<decltype(comm->getTemplateType())>::callback, comm);
-  //     } else if constexpr(comm->getCommType() == CommTypes::srv){
-  //         services_.push_back(cnh_->advertiseService(comm->getTopic(), &ROSComms<decltype(comm->getReqType()),
-  //         decltype(comm->getResType())>::callback, comm));
-  //     }
-  // }
-
   /*! \brief Begin the ros node*/
   void spin(double rate) const;
 
