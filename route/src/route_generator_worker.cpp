@@ -348,7 +348,7 @@ namespace route {
             state_msg.cross_track = current_crosstrack_distance_;
             state_msg.down_track = current_downtrack_distance_;
             state_msg.lanelet_downtrack = ll_downtrack_distance_;            
-            state_msg.state = this->rs_worker_.convertRouteStateToInt(this->rs_worker_.get_route_state());
+            state_msg.state = this->rs_worker_.get_route_state();
             state_msg.lanelet_id = ll_id_;
             state_msg.speed_limit = speed_limit_;
             route_state_pub_.publish(state_msg);

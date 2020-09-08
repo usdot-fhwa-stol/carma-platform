@@ -59,22 +59,4 @@ namespace route {
             throw std::invalid_argument("Current state is illegal: " + std::to_string(state_));
         }
     }
-
-      uint8_t RouteStateWorker::convertRouteStateToInt ( RouteStateWorker::RouteState state ) const
-    {
-        switch (state)
-        {
-            case RouteStateWorker::RouteState::LOADING:
-                return 0;
-            case RouteStateWorker::RouteState::SELECTION:
-                return 1;
-            case RouteStateWorker::RouteState::ROUTING:
-                return 2;
-            case RouteStateWorker::RouteState::FOLLOWING:
-                return 3;
-            default:
-                // should not reach here
-                throw std::invalid_argument("Current state is illegal: " + std::to_string(state_));
-        } 
-    }
 }
