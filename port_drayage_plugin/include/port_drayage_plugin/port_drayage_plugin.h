@@ -127,8 +127,8 @@ namespace port_drayage_plugin
                                                                                         int lane_id, 
                                                                                         ros::Time current_time);
 
-            const double estimate_distance_to_stop(double v, double a);
-            const double estimate_time_to_stop(double d, double v);
+            double estimate_distance_to_stop(double v, double a) const;
+            double estimate_time_to_stop(double d, double v) const;
 
     };
 } // namespace port_drayage_plugin
