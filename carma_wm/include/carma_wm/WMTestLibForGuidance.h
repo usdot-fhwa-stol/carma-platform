@@ -354,7 +354,10 @@ inline void setSpeedLimit (lanelet::Velocity speed_limit, std::shared_ptr<carma_
 inline void setRouteByLanelets (std::vector<lanelet::Lanelet> lanelets, std::shared_ptr<carma_wm::CARMAWorldModel> cmw)
 {
   // Build routing graph from map	
-  auto map_graph = cmw->getMapRoutingGraph();
+  //auto map_graph = cmw->getMapRoutingGraph();
+  lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(
+      lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
+  lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*cmw->getMap(), *traffic_rules);
 
   // Generate route
   lanelet::Optional<lanelet::routing::Route> optional_route;
@@ -390,7 +393,7 @@ inline void setRouteByLanelets (std::vector<lanelet::Lanelet> lanelets, std::sha
   std::cerr << "heres 2" << std::endl;
 
   carma_wm::LaneletRoutePtr route_ptr = std::make_shared<lanelet::routing::Route>(std::move(route));
-  std::cerr << "heres 3" << std::endl;
+  std::cerr << "heres 1" << std::endl;
   cmw->setRoute(route_ptr);
 
   std::cout << "New route has been set successfully!" << std::endl;
