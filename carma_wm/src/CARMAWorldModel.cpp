@@ -286,12 +286,13 @@ lanelet::LaneletMapPtr CARMAWorldModel::getMutableMap() const
 void CARMAWorldModel::setRoute(LaneletRoutePtr route)
 {
   route_ = route;
-
+  std::cerr << "heress 1" << std::endl;
   lanelet::ConstLanelets path_lanelets(route_->shortestPath().begin(), route_->shortestPath().end());
-
+  std::cerr << "heress 2" << std::endl;
   shortest_path_view_ = lanelet::utils::createConstMap(path_lanelets, {});
-
+  std::cerr << "heress 3" << std::endl;
   computeDowntrackReferenceLine();
+  std::cerr << "heress 4" << std::endl;
 }
 
 lanelet::LineString3d CARMAWorldModel::copyConstructLineString(const lanelet::ConstLineString3d& line) const

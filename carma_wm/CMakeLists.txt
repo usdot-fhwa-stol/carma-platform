@@ -53,7 +53,6 @@ include_directories(
 add_library(
   ${PROJECT_NAME}
   src/CARMAWorldModel.cpp
-  src/WMTestLibForGuidance.cpp
   src/WMListener.cpp
   src/WMListenerWorker.cpp
   src/Geometry.cpp
@@ -98,12 +97,13 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 catkin_add_gmock(${PROJECT_NAME}-test
   test/TestMain.cpp
-  test/CARMAWorldModelTest.cpp  
-  test/IndexedDistanceMapTest.cpp
-  test/WMListenerWorkerTest.cpp
-  test/GeometryTest.cpp
-  test/CollisionDetectionTest.cpp
-  test/TrafficControlTest.cpp
+#  test/CARMAWorldModelTest.cpp
+  test/WMTestLibForGuidanceTest.cpp
+#  test/IndexedDistanceMapTest.cpp
+#  test/WMListenerWorkerTest.cpp
+#  test/GeometryTest.cpp
+#  test/CollisionDetectionTest.cpp
+#  test/TrafficControlTest.cpp
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 
