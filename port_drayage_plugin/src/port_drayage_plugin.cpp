@@ -223,7 +223,7 @@ namespace port_drayage_plugin
     }
 
     const double PortDrayagePlugin::estimate_time_to_stop(double d, double v) {
-        return 2*d/v;
+        return d/v;
     };
 
 } // namespace port_drayage_plugin
