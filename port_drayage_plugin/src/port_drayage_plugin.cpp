@@ -218,11 +218,11 @@ namespace port_drayage_plugin
     }
     // @SONAR_START@
 
-    double PortDrayagePlugin::estimate_distance_to_stop(double v, double a) const {
+    double estimate_distance_to_stop(double v, double a) {
         return (v*v)/2*a;
     }
 
-    double PortDrayagePlugin::estimate_time_to_stop(double d, double v) const {
+    double estimate_time_to_stop(double d, double v) {
         return 2*d/v;
     };
 

@@ -16,6 +16,7 @@
 
 #include "port_drayage_plugin/port_drayage_worker.h"
 #include "port_drayage_plugin/port_drayage_state_machine.h"
+#include "port_drayage_plugin/port_drayage_plugin.h"
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 #include <boost/property_tree/ptree.hpp>
@@ -187,6 +188,16 @@ TEST(PortDrayageTest, testStateMachine)
     ASSERT_EQ(port_drayage_plugin::PortDrayageState::EN_ROUTE, pdsm.get_state());
 
     // Rest of the state machine to be implemented and validated in future stories
+}
+
+TEST(PortDrayageTest, testEstimateDistanceToStop)
+{
+    ASSERT_EQ(port_drayage_plugin::estimate_distance_to_stop(10.0, 1.0), 50.0);
+}
+
+TEST(PortDrayageTest, testEstimateTimeToStop)
+{
+    ASSERT_EQ(port_drayage_plugin::estimate_time_to_stop(10.0, 1.0), 20.0);
 }
 
 // Run all the tests
