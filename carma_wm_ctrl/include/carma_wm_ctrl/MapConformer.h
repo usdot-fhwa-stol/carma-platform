@@ -19,9 +19,11 @@
 #include <lanelet2_core/Attribute.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 #include <lanelet2_traffic_rules/GermanTrafficRules.h>
+#include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <lanelet2_extension/regulatory_elements/RegionAccessRule.h>
 #include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
 #include <lanelet2_extension/regulatory_elements/DirectionOfTravel.h>
+#include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
 
 namespace lanelet
 {
