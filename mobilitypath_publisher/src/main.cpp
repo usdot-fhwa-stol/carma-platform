@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 LEIDOS.
+ * Copyright (C) 2019-2020 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,27 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include <carma_wm_ctrl/ROSTimer.h>
 
-namespace carma_wm_ctrl
+#include <ros/ros.h>
+#include "mobilitypath_publisher.h"
+
+// @SONAR_STOP@
+int main(int argc, char** argv)
 {
-ROSTimer::~ROSTimer(){};
-
-void ROSTimer::initializeTimer(ros::Duration duration, std::function<void(const ros::TimerEvent&)> callback,
-                               bool oneshot, bool autostart)
-{
-  timer_.stop();
-  timer_ = nh_.createTimer(duration, callback, oneshot, autostart);
-}
-
-void ROSTimer::start()
-{
-  timer_.start();
-}
-
-void ROSTimer::stop()
-{
-  timer_.stop();
-}
-
-}  // namespace carma_wm_ctrl
+    ros::init(argc, argv, "mobilitypath_publisher");
+    mobilitypath_publisher::MobilityPathPublication mp;
+    mp.run();
+    return 0;
+};
+// @SONAR_START@

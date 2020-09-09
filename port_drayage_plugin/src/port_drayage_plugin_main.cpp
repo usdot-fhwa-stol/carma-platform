@@ -1,6 +1,5 @@
-#pragma once
 /*
- * Copyright (C) 2020 LEIDOS.
+ * Copyright (C) 2018-2020 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,27 +13,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include <ros/node_handle.h>
-#include <ros/timer.h>
-#include <ros/time.h>
-#include "Timer.h"
 
-namespace carma_wm_ctrl
+// @SONAR_STOP@
+#include <ros/ros.h>
+#include <carma_utils/CARMAUtils.h>
+#include <memory>
+#include "port_drayage_plugin/port_drayage_plugin.h"
+
+int main(int argc, char** argv)
 {
-class ROSTimer : public Timer
-{
-  ros::Timer timer_;
-  ros::NodeHandle nh_;
+    ros::init(argc, argv, "port_drayage_plugin");
+    std::shared_ptr<ros::CARMANodeHandle> nh = std::make_shared<ros::CARMANodeHandle>("");
+    std::shared_ptr<ros::CARMANodeHandle> pnh = std::make_shared<ros::CARMANodeHandle>("~");
+    port_drayage_plugin::PortDrayagePlugin pdp{nh, pnh};
+    return pdp.run();
+}
 
-public:
-  ~ROSTimer();
-
-  //// Overrides
-  void initializeTimer(ros::Duration duration, std::function<void(const ros::TimerEvent&)> callback,
-                       bool oneshot = false, bool autostart = true) override;
-
-  void start() override;
-
-  void stop() override;
-};
-}  // namespace carma_wm_ctrl
+// @SONAR_START
