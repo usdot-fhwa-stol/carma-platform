@@ -20,23 +20,15 @@ namespace carma_wm
 {
 void IndexedDistanceMap::pushBack(const lanelet::LineString2d& ls)
 {
-  std::cerr << "end 0" << std::endl;
   if (id_index_map.find(ls.id()) != id_index_map.end())
   {
     throw std::invalid_argument("IndexedDistanceMap already contains this ls");
   }
-  std::cerr << "end 0" << std::endl;
   std::vector<double> accumulated_dist;
-  std::cerr << "end 0" << std::endl;
   accumulated_dist.reserve(ls.size());
-  std::cerr << "end 0" << std::endl;
   accumulated_dist.push_back(0);
-  std::cerr << "end 0" << std::endl;
   size_t ls_i = accum_lengths.size();
-  std::cerr << "end 0" << std::endl;
-  std::cerr << "siize" << ls.size() <<  std::endl;
   id_index_map[ls.front().id()] = std::make_pair(ls_i, 0);  // Add first point to id map
-  std::cerr << "end 1" << std::endl;
   for (size_t i = 0; i < ls.numSegments(); i++)
   {
     auto segment = ls.segment(i);
@@ -47,7 +39,6 @@ void IndexedDistanceMap::pushBack(const lanelet::LineString2d& ls)
   auto tuple = std::make_tuple(accumulated_dist, totalLength());
   accum_lengths.push_back(tuple);
   id_index_map[ls.id()] = std::make_pair(ls_i, 0);  // Add linestirng id
-  std::cerr << "end" << std::endl;
 }
 
 double IndexedDistanceMap::elementLength(size_t index) const

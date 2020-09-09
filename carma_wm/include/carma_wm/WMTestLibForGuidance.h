@@ -351,7 +351,7 @@ inline void setSpeedLimit (lanelet::Velocity speed_limit, std::shared_ptr<carma_
  *
  * \throw std::invalid_argument if fewer than 2 lanelets passed, or the given lanelets are not routable
  */
-inline void setRouteByLanelets (std::vector<lanelet::Lanelet> lanelets, std::shared_ptr<carma_wm::CARMAWorldModel> cmw)
+inline void setRouteByLanelets (std::vector<lanelet::ConstLanelet> lanelets, std::shared_ptr<carma_wm::CARMAWorldModel> cmw)
 {
   // Build routing graph from map	
   //auto map_graph = cmw->getMapRoutingGraph();
@@ -366,11 +366,6 @@ inline void setRouteByLanelets (std::vector<lanelet::Lanelet> lanelets, std::sha
   {
     middle_lanelets = std::vector<lanelet::ConstLanelet>(lanelets.begin() + 1, lanelets.end() - 1);
     optional_route = map_graph->getRouteVia(lanelets[0], middle_lanelets, lanelets[lanelets.size() - 1]);	
-    for (auto llt : middle_lanelets)
-    {
-      std::cerr<< "Id: " << llt.id() << " ";
-    }
-    std::cerr << "=========ended" << std::endl;
   }
   else if (lanelets.size() == 2)
   {
@@ -378,22 +373,16 @@ inline void setRouteByLanelets (std::vector<lanelet::Lanelet> lanelets, std::sha
   }
   else
   {
-    std::cerr << "here 1" << std::endl;
     throw lanelet::InvalidInputError("Fewer than 2 lanelets have been passed to setRouteByLanelets, which cannot be a valid route");
   }
   
   if (!optional_route)
   {
-    std::cerr << "here 2" << std::endl;
-    
     throw lanelet::InvalidInputError("There was an error in routing using the given lanelets in setRouteByLanelets");
   }
-  std::cerr << "heres 1" << std::endl;
-  lanelet::routing::Route route = std::move(*optional_route);
-  std::cerr << "heres 2" << std::endl;
 
+  lanelet::routing::Route route = std::move(*optional_route);
   carma_wm::LaneletRoutePtr route_ptr = std::make_shared<lanelet::routing::Route>(std::move(route));
-  std::cerr << "heres 1" << std::endl;
   cmw->setRoute(route_ptr);
 
   std::cout << "New route has been set successfully!" << std::endl;
@@ -409,10 +398,10 @@ inline void setRouteByLanelets (std::vector<lanelet::Lanelet> lanelets, std::sha
  */
 inline void setRouteByIds (std::vector<lanelet::Id> lanelet_ids, std::shared_ptr<carma_wm::CARMAWorldModel> cmw)
 {
-  std::vector<lanelet::Lanelet> lanelets;
+  std::vector<lanelet::ConstLanelet> lanelets;
   for (auto id : lanelet_ids)
   {
-      lanelets.push_back(cmw->getMutableMap()->laneletLayer.get(id));
+      lanelets.push_back(cmw->getMap()->laneletLayer.get(id));
   }
   setRouteByLanelets(lanelets, cmw);
 }

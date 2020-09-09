@@ -286,13 +286,9 @@ lanelet::LaneletMapPtr CARMAWorldModel::getMutableMap() const
 void CARMAWorldModel::setRoute(LaneletRoutePtr route)
 {
   route_ = route;
-  std::cerr << "heress 1" << std::endl;
   lanelet::ConstLanelets path_lanelets(route_->shortestPath().begin(), route_->shortestPath().end());
-  std::cerr << "heress 2" << std::endl;
   shortest_path_view_ = lanelet::utils::createConstMap(path_lanelets, {});
-  std::cerr << "heress 3" << std::endl;
   computeDowntrackReferenceLine();
-  std::cerr << "heress 4" << std::endl;
 }
 
 lanelet::LineString3d CARMAWorldModel::copyConstructLineString(const lanelet::ConstLineString3d& line) const
@@ -324,14 +320,12 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
 
   bool first = true;
   size_t next_index = 0;
-  std::cerr << "heresss 4" << std::endl;
   // Iterate over each lanelet in the shortest path this loop works by looking one lanelet ahead to detect lane changes
   for (lanelet::ConstLanelet ll : shortest_path)
   {
     next_index++;
     if (first)
     {  // For the first lanelet store its centerline and length
-      std::cerr << "heresss loop 0" << std::endl;
       lineStrings.push_back(copyConstructLineString(ll.centerline()));
       first = false;
     }
@@ -339,53 +333,42 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
     {  // Check for remaining lanelets
       auto nextLanelet = shortest_path[next_index];
       lanelet::LineString3d nextCenterline = copyConstructLineString(nextLanelet.centerline());
-
       size_t connectionCount = shortest_path_graph->possiblePaths(ll, (uint32_t)2, false).size();
       
       if (connectionCount == 1)
       {  // Get list of connected lanelets without lanechanges. On the shortest path this should only return 1 or 0
         // No lane change
         // Append distance to current centerline
-        std::cerr << "heresss loop 1" << std::endl;
         lineStrings.back().insert(lineStrings.back().end(), nextCenterline.begin(), nextCenterline.end());
       }
       else if (connectionCount == 0)
       {
         // Lane change required
         // Break the point chain when a lanechange occurs
-        std::cerr << "heresss loop 2" << std::endl;
+        if (lineStrings.back().size() == 0) continue; //we don't have to create empty_linestring if we already have one
+                                                      //occurs when route is changing lanes multiple times in sequence  
         lanelet::LineString3d empty_linestring;
         empty_linestring.setId(lanelet::utils::getId());
-        std::cerr << "heresss loop 2 mid" << std::endl;
-        std::cerr << "size:" << lineStrings.back().id() << std::endl;
-        std::cerr << "size of ls:" << lineStrings.back().size() << std::endl;
-        
         distance_map.pushBack(lanelet::utils::to2D(lineStrings.back()));
-        std::cerr << "heresss loop 2 mid2" << std::endl;
         lineStrings.push_back(empty_linestring);
-        std::cerr << "heresss loop 2 end" << std::endl;
       }
       else
       {
         assert(false);  // It should not be possable to reach this point. Doing so demonstrates a bug
       }
-      std::cerr << "heresss loop 3" << std::endl;
     }
-    std::cerr << "heresss loop " << std::endl;
   }
-  std::cerr << "heresss 4 asdsad" << std::endl;
   // Copy values to member variables
+  while (lineStrings.back().size() == 0) lineStrings.pop_back(); //clear empty linestrings that was never used in the end
   shortest_path_centerlines_ = lineStrings;
   shortest_path_distance_map_ = distance_map;
 
   // Add length of final sections
   if (shortest_path_centerlines_.size() > shortest_path_distance_map_.size())
   {
-    std::cerr << "pusback ls size:" << lineStrings.back().size() << std::endl;
     shortest_path_distance_map_.pushBack(lanelet::utils::to2D(lineStrings.back()));  // Record length of last continuous
                                                                                      // segment
   }
-  std::cerr << "heresss 4" << std::endl;
   shortest_path_filtered_centerline_view_ = lanelet::utils::createMap(shortest_path_centerlines_);
 }
 
