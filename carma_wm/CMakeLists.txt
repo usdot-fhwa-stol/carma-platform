@@ -53,6 +53,7 @@ include_directories(
 add_library(
   ${PROJECT_NAME}
   src/CARMAWorldModel.cpp
+  src/WMTestLibForGuidance.cpp
   src/WMListener.cpp
   src/WMListenerWorker.cpp
   src/Geometry.cpp

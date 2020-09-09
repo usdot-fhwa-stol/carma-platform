@@ -262,6 +262,18 @@ public:
    * \return An optional vector of ConstLanalet. Returns at least the vector of given lanelet if no other is found
    */
   virtual std::vector<lanelet::ConstLanelet> getLane(const lanelet::ConstLanelet& lanelet, const LaneSection& section = LANE_AHEAD) const = 0;
+
+  /**
+   * \brief Gets the underlying lanelet, given the cartesian point on the map
+   *
+   * \param point Cartesian point to check the corressponding lanelet
+   *
+   * \throw TODO: std::invalid_argument if the map is not set, contains no lanelets, or the given lanelet
+   * is not on the current semantic map, or lane section input is not of the three
+   *
+   * \return vector of underlying lanelet, empty vector if it is not part of any lanelet
+   */
+  virtual std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::BasicPoint2d& point) const = 0;
 };
 
 // Helpful using declarations for carma_wm classes

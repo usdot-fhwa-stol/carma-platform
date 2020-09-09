@@ -530,7 +530,6 @@ std::vector<cav_msgs::RoadwayObstacle> CARMAWorldModel::getInLaneObjects(const l
   return lane_objects;
 }
 
-
 lanelet::Optional<lanelet::Lanelet> CARMAWorldModel::getIntersectingLanelet (const cav_msgs::ExternalObject& object) const
 {
   // Check if the map is loaded yet
@@ -774,4 +773,12 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLane(const lanelet::Const
   prev_lane.insert(prev_lane.end(), following_lane.begin(), following_lane.end());
   return prev_lane;
 }
+
+std::vector<lanelet::Lanelet> CARMAWorldModel::getLaneletsFromPoint(const lanelet::BasicPoint2d& point) const
+{
+  //TODO
+  return {};
+}
+
+
 }  // namespace carma_wm

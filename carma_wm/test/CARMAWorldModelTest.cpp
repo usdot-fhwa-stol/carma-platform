@@ -23,6 +23,8 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include "TestHelpers.h"
 #include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
+#include <carma_wm/WMTestLibForGuidance.h>
+#include <ros/ros.h>
 
 using ::testing::_;
 using ::testing::A;
@@ -249,6 +251,7 @@ TEST(CARMAWorldModelTest, getNearestObjInLane)
   tp = cmw.getNearestObjInLane({15,17}, LANE_FULL).get();
   ASSERT_NEAR(std::get<0>(tp).downtrack, 5.242, 0.001);
   ASSERT_EQ(std::get<1>(tp).lanelet_id, roadway_objects[4].lanelet_id);
+  
 }
 
 TEST(CARMAWorldModelTest, nearestObjectBehindInLane)

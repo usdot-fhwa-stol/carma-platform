@@ -129,6 +129,8 @@ public:
 
   std::vector<lanelet::ConstLanelet> getLane(const lanelet::ConstLanelet& lanelet, const LaneSection& section = LANE_AHEAD) const override;
 
+  std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::BasicPoint2d& point) const override;
+
 private:
 
   /*! \brief Helper function to compute the geometry of the route downtrack/crosstrack reference line
