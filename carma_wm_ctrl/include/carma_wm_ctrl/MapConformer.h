@@ -24,6 +24,7 @@
 #include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
 #include <lanelet2_extension/regulatory_elements/DirectionOfTravel.h>
 #include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
+#include <lanelet2_core/Forward.h>
 
 namespace lanelet
 {

@@ -22,10 +22,10 @@
 #include <lanelet2_extension/regulatory_elements/RegionAccessRule.h>
 #include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
 #include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
-#include "RegulatoryHelpers.h"
 #include <lanelet2_core/utility/Units.h>
 #include <boost/algorithm/string.hpp>
 #include <carma_wm_ctrl/MapConformer.h>
+#include <lanelet2_core/Forward.h>
 #include <ros/ros.h>
 
 namespace lanelet
@@ -490,7 +490,7 @@ void addValidSpeedLimit(Lanelet& lanelet, Area& area, lanelet::LaneletMapPtr map
     auto speed_limit = lanelet.regulatoryElementsAs<DigitalSpeedLimit>();
     // If the lanelet does not have a digital speed limit then add one with the maximum value of 80
     std::vector<std::string> allowed_participants;
-    Velocity max_speed = 80; //Maximum speed limit is 80
+    Velocity max_speed = 80_mph; //Maximum speed limit is 80
     if (speed_limit.size()== 0)
     {
          for(const auto& rules : default_traffic_rules)
@@ -508,6 +508,20 @@ void addValidSpeedLimit(Lanelet& lanelet, Area& area, lanelet::LaneletMapPtr map
       map->add(rar);
 
      }
+  }
+  else if (speed_limit.back().get()->speed_limit_ > 0_mph)
+  {
+      for(const auto& rules : default_traffic_rules)
+         {
+            if (rules->canPass(lanelet))
+             {
+              allowed_participants.emplace_back(rules->participant());
+             }
+        }
+
+    std::shared_ptr<DigitalSpeedLimit> rar(new DigitalSpeedLimit(DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
+    speed_limit.back().get()->speed_limit_, {lanelet}, { area }, allowed_participants)));
+      map->add(rar);
   }
 
 }
