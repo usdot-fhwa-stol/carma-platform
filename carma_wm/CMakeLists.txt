@@ -52,6 +52,7 @@ include_directories(
 ## Declare C++ library
 add_library(
   ${PROJECT_NAME}
+  src/MapConformer.cpp
   src/CARMAWorldModel.cpp
   src/WMListener.cpp
   src/WMListenerWorker.cpp
@@ -97,7 +98,9 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 catkin_add_gmock(${PROJECT_NAME}-test
   test/TestMain.cpp
-  test/CARMAWorldModelTest.cpp  
+  test/MapConformerTest.cpp
+  test/CARMAWorldModelTest.cpp
+  test/WMTestLibForGuidanceTest.cpp
   test/IndexedDistanceMapTest.cpp
   test/WMListenerWorkerTest.cpp
   test/GeometryTest.cpp

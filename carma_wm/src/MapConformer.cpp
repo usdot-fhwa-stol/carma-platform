@@ -20,7 +20,7 @@
 #include <lanelet2_traffic_rules/GermanTrafficRules.h>
 #include <lanelet2_extension/regulatory_elements/RegionAccessRule.h>
 #include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
-#include <carma_wm_ctrl/MapConformer.h>
+#include <carma_wm/MapConformer.h>
 #include <ros/ros.h>
 
 namespace lanelet
@@ -29,6 +29,8 @@ namespace lanelet
  * The map conformer is responsible for ensuring that a loaded lanelet2 map meets the expectations of
  * CarmaUsTrafficRules Rather than simply validating the map this class will actually modify the map when possible to
  * ensure compliance.
+ * NOTE: This class is not meant to be used by carma_wm users at runtime. It is only used in WMTestLibraryForGuidance 
+ * currently to support unit testing.
  */
 namespace MapConformer
 {
