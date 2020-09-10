@@ -23,6 +23,8 @@
   <arg name="vector_map_file" default="vector_map.osm" doc="Path to the map osm file if using the noupdate load type"/>
   <arg name="yolo_dir" default="/opt/carma/yolo" doc="The directory continaing yolo weights files for the perception stack"/>
 
+  <arg name="non_simulation_mode" default="true" doc="False if CARMA Platform is launched with CARLA Simulator"/>
+
 	<!-- vector map loader -->
   <node pkg="map_file" type="lanelet2_map_loader" name="lanelet2_map_loader"  args="$(arg vector_map_file)">
     <remap from="/lanelet_map_bin" to="base_map"/>
@@ -45,7 +47,9 @@
 
 
   <!-- CARMA External Object Node -->
-  <include file="$(find object_detection_tracking)/launch/external_object.launch"/>
+  <group if="$(arg non_simulation_mode)">
+    <include file="$(find object_detection_tracking)/launch/external_object.launch"/>
+  </group>
 
   <!-- CARMA Roadway Objects Node -->
  <group>

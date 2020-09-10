@@ -44,7 +44,8 @@
     default="controller can comms gnss radar lidar camera roadway_sensor imu"
     doc="List of driver node base names which will be launched as mock drivers"
   />
-
+  <arg name="non_simulation_mode" default="true" doc="False if CARMA Platform is launched with CARLA Simulator"/>
+  
   <!-- Debug -->
   <!-- JVM Debug arguments -->
   <!-- JVM_DEBUG_OPTS: Start rosjava node with these JVM arguments for debugging -->
@@ -105,6 +106,7 @@
       <arg name="single_pcd_path" value="$(arg single_pcd_path)"/>
       <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
       <arg name="vector_map_file" value="$(arg vector_map_file)" />
+      <arg name="non_simulation_mode" value="$(arg non_simulation_mode)" />
     </include>
   </group>
 
@@ -121,6 +123,7 @@
       <arg name="vector_map_file" value="$(arg vector_map_file)" />
       <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
       <arg name="yolo_dir" value="$(arg yolo_dir)"/>
+      <arg name="non_simulation_mode" value="$(arg non_simulation_mode)" />
     </include>
   </group>
 
