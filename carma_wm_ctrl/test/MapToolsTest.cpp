@@ -19,7 +19,7 @@
  */
 
 #include <gmock/gmock.h>
-#include <carma_wm_ctrl/MapConformer.h>
+#include <carma_wm/MapConformer.h>
 #include <lanelet2_io/Io.h>
 #include <lanelet2_io/io_handlers/Factory.h>
 #include <lanelet2_io/io_handlers/Writer.h>
@@ -580,6 +580,6 @@ TEST(MapTools, DISABLED_split_lanes)  // Remove DISABLED_ to enable unit test
   geo_ref_node.text().set(target_frame.c_str());
   doc.save_file(new_file.c_str());
 
-}  // namespace carma_wm_ctrl
+}
 
 }  // namespace carma_wm_ctrl

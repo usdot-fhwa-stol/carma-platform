@@ -15,7 +15,7 @@
  */
 
 #include <gmock/gmock.h>
-#include <carma_wm_ctrl/MapConformer.h>
+#include <carma_wm/MapConformer.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include "TestHelpers.h"
 
@@ -26,7 +26,7 @@ using ::testing::InSequence;
 using ::testing::Return;
 using ::testing::ReturnArg;
 
-namespace carma_wm_ctrl
+namespace carma_wm
 {
 /**
  * @brief Function modifies an existing map to make a best effort attempt at ensuring the map confroms to the
@@ -176,4 +176,4 @@ TEST(MapConformer, ensureCompliance)
     count++;
   }
 }
-}  // namespace carma_wm_ctrl
+}  // namespace carma_wm
