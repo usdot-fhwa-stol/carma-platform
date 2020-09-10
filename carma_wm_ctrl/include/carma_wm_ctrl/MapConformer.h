@@ -25,6 +25,13 @@
 #include <lanelet2_extension/regulatory_elements/DirectionOfTravel.h>
 #include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
 #include <lanelet2_core/Forward.h>
+#include <boost/units/physical_dimensions/velocity.hpp>
+
+#include <boost/units/derived_dimension.hpp>
+#include <boost/units/physical_dimensions/length.hpp>
+#include <boost/units/physical_dimensions/time.hpp>
+using namespace lanelet::units::literals;
+
 
 namespace lanelet
 {

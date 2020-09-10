@@ -26,6 +26,8 @@
 #include <boost/algorithm/string.hpp>
 #include <carma_wm_ctrl/MapConformer.h>
 #include <lanelet2_core/Forward.h>
+
+
 #include <ros/ros.h>
 
 namespace lanelet
@@ -486,12 +488,11 @@ void addInferredDirectionOfTravel(Lanelet& lanelet, lanelet::LaneletMapPtr map,
 void addValidSpeedLimit(Lanelet& lanelet, Area& area, lanelet::LaneletMapPtr map,
     const std::vector<lanelet::traffic_rules::TrafficRulesUPtr>& default_traffic_rules )
 {
-
     auto speed_limit = lanelet.regulatoryElementsAs<DigitalSpeedLimit>();
     // If the lanelet does not have a digital speed limit then add one with the maximum value of 80
     std::vector<std::string> allowed_participants;
-    Velocity max_speed = 80_mph; //Maximum speed limit is 80
-    if (speed_limit.size()== 0)
+    lanelet::Velocity max_speed = 80_mph; //Maximum speed limit is 80
+    if (speed_limit.size()== 0)//If there is no assigned speed limit value
     {
          for(const auto& rules : default_traffic_rules)
          {
@@ -500,16 +501,14 @@ void addValidSpeedLimit(Lanelet& lanelet, Area& area, lanelet::LaneletMapPtr map
               allowed_participants.emplace_back(rules->participant());
              }
         }
-      
      if (allowed_participants.size() > 0)
      {
       std::shared_ptr<DigitalSpeedLimit> rar(new DigitalSpeedLimit(DigitalSpeedLimit::buildData(lanelet::utils::getId(), max_speed, {lanelet},
       { area }, allowed_participants)));
-      map->add(rar);
-
+      map->add(rar); //Add DigitalSpeedLimit data to the map
      }
   }
-  else if (speed_limit.back().get()->speed_limit_ > 0_mph)
+  else if (speed_limit.back().get()->speed_limit_ > 0_mph) //If the speed limit value already exists  
   {
       for(const auto& rules : default_traffic_rules)
          {
@@ -518,12 +517,20 @@ void addValidSpeedLimit(Lanelet& lanelet, Area& area, lanelet::LaneletMapPtr map
               allowed_participants.emplace_back(rules->participant());
              }
         }
-
-    std::shared_ptr<DigitalSpeedLimit> rar(new DigitalSpeedLimit(DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
-    speed_limit.back().get()->speed_limit_, {lanelet}, { area }, allowed_participants)));
-      map->add(rar);
+    if(speed_limit.back().get()->speed_limit_ > max_speed)//Check that speed limit value does not exceed the maximum value
+    {
+      ROS_WARN_STREAM("Invalid speed limit value. Value reset to maximum speed limit.");
+      std::shared_ptr<DigitalSpeedLimit> rar(new DigitalSpeedLimit(DigitalSpeedLimit::buildData(lanelet::utils::getId(), max_speed, {lanelet},
+      { area }, allowed_participants)));
+      map->add(rar); //Add DigitalSpeedLimit data to the map
+    }
+    else
+    {
+      std::shared_ptr<DigitalSpeedLimit> rar(new DigitalSpeedLimit(DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
+      speed_limit.back().get()->speed_limit_, {lanelet}, { area }, allowed_participants)));
+      map->add(rar); //Add DigitalSpeedLimit data to the map
+    }
   }
-
 }
 
 

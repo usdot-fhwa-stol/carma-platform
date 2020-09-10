@@ -101,21 +101,36 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
   // TODO: logic to determine what type of geofence goes here
   // currently only converting portion of control message that is relevant to:
   // - digital speed limit, passing control line
-
+  lanelet::Velocity sL;
   cav_msgs::TrafficControlDetail msg_detail = msg_v01.params.detail;
   
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE) 
-  {
+  {  
+    //Acquire speed limit information from TafficControlDetail msg
+    sL = lanelet::Velocity(msg_detail.maxspeed * lanelet::units::MPH());
+    //Ensure Geofences do not provide invalid speed limit data (exceed predetermined maximum value)
+    if(sL > 80_mph )
+    {
+     ROS_WARN_STREAM("Digital maximum speed limit is invalid. Value capped at 80mph."); //Output warning message
+     sL = 80_mph; //Cap the speed limit to the predetermined maximum value
+
+    }
     gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
-                                        lanelet::Velocity(msg_detail.maxspeed * lanelet::units::MPH()),
-                                        affected_llts, affected_areas, { lanelet::Participants::VehicleCar }));
+                                        sL, affected_llts, affected_areas, { lanelet::Participants::VehicleCar }));
   }
   
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::MINSPEED_CHOICE) 
   {
+    //Acquire speed limit information from TafficControlDetail msg
+     sL = lanelet::Velocity(msg_detail.minspeed * lanelet::units::MPH());
+    //Ensure Geofences do not provide invalid speed limit data 
+    if(sL > 80_mph )
+    {
+     ROS_WARN_STREAM("Digital  speed limit is invalid. Value capped at 80mph.");
+     sL = 80_mph;
+    }
     gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
-                                        lanelet::Velocity(msg_detail.minspeed * lanelet::units::MPH()),
-                                        affected_llts, affected_areas, { lanelet::Participants::VehicleCar }));
+                                        sL, affected_llts, affected_areas, { lanelet::Participants::VehicleCar }));
   }
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::LATPERM_CHOICE || msg_detail.choice == cav_msgs::TrafficControlDetail::LATAFFINITY_CHOICE)
   {
