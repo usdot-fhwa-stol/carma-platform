@@ -95,7 +95,7 @@ namespace port_drayage_plugin
 
         // auto stop_rules = current_lanelet.second.regulatoryElementsAs<StopRule>();
         // if(stop_rules.empty()){
-        //     return NULL;
+        //     return False;
         // } else{
         //     StopRule::Ptr stopRegelem = stop_rules.front();
         //     // TODO get stopRegelem position and return the object with downtrack
