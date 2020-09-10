@@ -68,14 +68,6 @@ jobs:
             export ROS_PARALLEL_JOBS='-j1 -l1' # Try to reduce memory consumption on build
             bash make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
       - run:
-          name: Run Java Tests
-          command: |
-            source ${INIT_ENV}
-            source /opt/carma/devel/setup.bash
-            cd src/CARMAPlatform/carmajava/
-            ./gradlew jacocoCombinedReport --info
-            ./gradlew testReport --info
-      - run:
           name: Save Java Test results
           command: |
             source ${INIT_ENV}
