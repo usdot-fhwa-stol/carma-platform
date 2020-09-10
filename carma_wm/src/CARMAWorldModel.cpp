@@ -779,15 +779,15 @@ std::vector<lanelet::Lanelet> CARMAWorldModel::getLaneletsFromPoint(const lanele
     throw std::invalid_argument("Map is not set or does not contain lanelets");
   }
   std::vector<lanelet::Lanelet> possible_lanelets;
-  auto nearestLanelets = semantic_map_->laneletLayer.nearest(point, n);
+  auto nearestLanelets = lanelet::geometry::findNearest(semantic_map_->laneletLayer,point,n);
   if (nearestLanelets.size() == 0) return {};
-  int id = nearestLanelets.size() - 1; // closest ones are in the back
+  int id = 0; // closest ones are in the back
   // loop through until the point is no longer geometrically in the lanelet
-  while (boost::geometry::within(point, nearestLanelets[id].polygon2d()))
+  while (boost::geometry::within(point, nearestLanelets[id].second.polygon2d()))
   {
-    possible_lanelets.push_back(nearestLanelets[id]);
-    id--;
-    if (id < 0) break;
+    possible_lanelets.push_back(nearestLanelets[id].second);
+    id++;
+    if (id >= nearestLanelets.size()) break;
   }
   return possible_lanelets;
 }
