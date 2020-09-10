@@ -35,7 +35,7 @@ MockLidarDriver::MockLidarDriver(bool dummy)
 
 unsigned int MockLidarDriver::getRate()
 {
-  return 20;
+  return 20;  // 20 Hz as default spin rate to surpass expected lidar data rate
 }
 
 int MockLidarDriver::onRun()

@@ -35,7 +35,7 @@ MockRoadwaySensorDriver::MockRoadwaySensorDriver(bool dummy)
 
 unsigned int MockRoadwaySensorDriver::getRate()
 {
-  return 20;
+  return 20;  // 20 Hz as default spin rate to match expected roadway data rate
 }
 
 int MockRoadwaySensorDriver::onRun()

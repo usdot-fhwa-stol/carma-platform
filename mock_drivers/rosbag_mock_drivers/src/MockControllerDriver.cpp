@@ -78,7 +78,7 @@ bool MockControllerDriver::onSpin()
 
 unsigned int MockControllerDriver::getRate()
 {
-  return 20;
+  return 20;  // 20 Hz as default spin rate to match expected controller data rate
 }
 
 int MockControllerDriver::onRun()

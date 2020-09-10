@@ -35,7 +35,7 @@ MockRadarDriver::MockRadarDriver(bool dummy)
 
 unsigned int MockRadarDriver::getRate()
 {
-  return 20;
+  return 20;  // 20 Hz as default spin rate to match expected radar data rate
 }
 
 int MockRadarDriver::onRun()

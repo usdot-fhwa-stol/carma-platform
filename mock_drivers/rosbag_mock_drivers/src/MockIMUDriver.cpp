@@ -35,7 +35,7 @@ MockIMUDriver::MockIMUDriver(bool dummy)
 
 unsigned int MockIMUDriver::getRate()
 {
-  return 100;
+  return 100;  // 100 Hz as default spin rate to match expected imu data rate
 }
 
 int MockIMUDriver::onRun()

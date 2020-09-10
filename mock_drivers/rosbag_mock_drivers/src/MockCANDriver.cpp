@@ -35,7 +35,7 @@ MockCANDriver::MockCANDriver(bool dummy)
 
 unsigned int MockCANDriver::getRate()
 {
-  return 50;
+  return 50; // 50 Hz as default spin rate to match expected CAN data rate
 }
 
 int MockCANDriver::onRun()

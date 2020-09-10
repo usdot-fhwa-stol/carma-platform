@@ -35,7 +35,7 @@ MockGNSSDriver::MockGNSSDriver(bool dummy)
 
 unsigned int MockGNSSDriver::getRate()
 {
-  return 20;
+  return 20;  // 20 Hz as default spin rate to match expected gnss data rate
 }
 
 int MockGNSSDriver::onRun()
