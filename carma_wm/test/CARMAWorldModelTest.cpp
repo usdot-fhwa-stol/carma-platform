@@ -978,4 +978,23 @@ TEST(CARMAWorldModelTest, toRoadwayObstacle)
 
   ASSERT_FALSE(!!result);
 }
+
+TEST(CARMAWorldModelTest, getLaneletsFromPoint)
+{
+  carma_wm::CARMAWorldModel cmw;
+  std::vector<lanelet::Lanelet> llts;
+  lanelet::LaneletMapPtr map;
+  std::vector<cav_msgs::ExternalObject> obstacles;
+
+  createTestingWorld(cmw, llts, map, obstacles);
+  // Test no map set
+  ASSERT_THROW(cmw.getLaneletsFromPoint({1,1}), std::invalid_argument);
+  // Create a complete map
+  test::MapOptions mp(1,1);
+  auto cmw_ptr = test::getGuidanceTestMap(mp);
+  auto underlyings = cmw_ptr->getLaneletsFromPoint({0.5,0.5});
+  ASSERT_EQ(underlyings.size(), 1);
+  ASSERT_EQ(underlyings.front().id(), 1200);
+}
+
 }  // namespace carma_wm

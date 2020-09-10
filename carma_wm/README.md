@@ -147,29 +147,12 @@ In the unit test, they can then intialize an instance of CARMAWorldModel, and se
 #### Unit Test Example for WMTestLibForGuidance
 
 To better support unit testing for guidance components, a test library is made available with a world model that is with prebaked obstacles and several helper functions. In general, it includes the following :
- * - Helper functions to create the world from scratch or extend the world in getGuidanceTestMap()
-* - getGuidanceTestMap gives a simple one way, 3 lane map (25mph speed limit) with one static prebaked obstacle and 
+* Helper functions to create the world from scratch or extend the world in getGuidanceTestMap()
+* getGuidanceTestMap gives a simple one way, 3 lane map (25mph speed limit) with one static prebaked obstacle and 
  ```c++
 using namespace carma_wm::test
 TEST(UserTest, someTest)
 {
-  std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>(); // create writeable cmw by share_ptr
-
-  // Build map
-  std::vector<lanelet::Point3d> left = {
-    getPoint(0, 0, 0), // user created helper function to make lanelet points
-    getPoint(0, 1, 0),
-  };
-  std::vector<lanelet::Point3d> right = {
-    getPoint(1, 0, 0),
-    getPoint(1, 1, 0),
-  };
-
-  auto ll = getLanelet(1200, left, right); //can specify id of the lanelet
-  auto map = lanelet::utils::createMap({ ll }, {});
-
-  cmw.setMap(map);
-
   // get a premade world model for guidance unit test with default config
   auto cmw_default = getGuidanceTestMap();
 
@@ -186,7 +169,7 @@ TEST(UserTest, someTest)
 }
 
 ```
- * - addObstacle at a specified Cartesian relative to the local origin or Trackpos point relative to specified lanelet Id:
+ * addObstacle at a specified Cartesian relative to the local origin or Trackpos point relative to specified lanelet Id:
 ```c++
 using namespace carma_wm::test
 TEST(UserTest, someTest)
@@ -210,8 +193,8 @@ TEST(UserTest, someTest)
   addObstacle(tp, 1200, cmw, {tp_pred});
 }
 ```
- * - set route by giving series of lanelet or their Ids in the map
- * - or also overwrite the speed of the entire map
+ * set route by giving series of lanelet or their Ids in the map
+ * or also overwrite the speed of the entire map
 ```c++
 using namespace carma_wm::test
 

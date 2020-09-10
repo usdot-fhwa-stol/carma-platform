@@ -39,7 +39,7 @@ using ::testing::InSequence;
 using ::testing::Return;
 using ::testing::ReturnArg;
 
-namespace carma_wm
+namespace carma_wm_ctrl
 {
 /**
  * @brief Unit test for combining 2 adjacent lanelets into one.
@@ -52,7 +52,7 @@ namespace carma_wm
  * See the UNIT TEST ARGUMENTS section below to configure this unit test.
  * The unit test is normally disabled. To enable it, removed the "DISABLED_" from the test name.
  * To run the unit test call
- *   catkin_make run_tests_carma_wm_gtest_map-tools
+ *   catkin_make run_tests_carma_wm_ctrl_gtest_map-tools
  *
  * This unit test will output the new map as <map_name>.osm.combined.osm
  * Additionally, two routing graphs will be created in the test/resource folder one before the changes routing_graph.viz
@@ -582,4 +582,4 @@ TEST(MapTools, DISABLED_split_lanes)  // Remove DISABLED_ to enable unit test
 
 }
 
-}  // namespace carma_wm
+}  // namespace carma_wm_ctrl

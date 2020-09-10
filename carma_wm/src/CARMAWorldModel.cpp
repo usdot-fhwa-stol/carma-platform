@@ -780,12 +780,15 @@ std::vector<lanelet::Lanelet> CARMAWorldModel::getLaneletsFromPoint(const lanele
   }
   std::vector<lanelet::Lanelet> possible_lanelets;
   auto nearestLanelets = semantic_map_->laneletLayer.nearest(point, n);
-  int id = 0;
+  if (nearestLanelets.size() == 0) return {};
+  std::cout<<"size" << nearestLanelets.size() << std::endl;
+  int id = nearestLanelets.size() - 1; // closest ones are in the back
   // loop through until the point is no longer geometrically in the lanelet
   while (boost::geometry::within(point, nearestLanelets[id].polygon2d()))
   {
     possible_lanelets.push_back(nearestLanelets[id]);
-    id++;
+    id--;
+    if (id < 0) break;
   }
   return possible_lanelets;
 }
