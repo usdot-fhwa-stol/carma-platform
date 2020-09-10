@@ -19,7 +19,7 @@
  */
 
 #include <gmock/gmock.h>
-#include <carma_wm_ctrl/MapConformer.h>
+#include <carma_wm/MapConformer.h>
 #include <lanelet2_io/Io.h>
 #include <lanelet2_io/io_handlers/Factory.h>
 #include <lanelet2_io/io_handlers/Writer.h>
@@ -39,7 +39,7 @@ using ::testing::InSequence;
 using ::testing::Return;
 using ::testing::ReturnArg;
 
-namespace carma_wm_ctrl
+namespace carma_wm
 {
 /**
  * @brief Unit test for combining 2 adjacent lanelets into one.
@@ -52,7 +52,7 @@ namespace carma_wm_ctrl
  * See the UNIT TEST ARGUMENTS section below to configure this unit test.
  * The unit test is normally disabled. To enable it, removed the "DISABLED_" from the test name.
  * To run the unit test call
- *   catkin_make run_tests_carma_wm_ctrl_gtest_map-tools
+ *   catkin_make run_tests_carma_wm_gtest_map-tools
  *
  * This unit test will output the new map as <map_name>.osm.combined.osm
  * Additionally, two routing graphs will be created in the test/resource folder one before the changes routing_graph.viz
@@ -580,6 +580,6 @@ TEST(MapTools, DISABLED_split_lanes)  // Remove DISABLED_ to enable unit test
   geo_ref_node.text().set(target_frame.c_str());
   doc.save_file(new_file.c_str());
 
-}  // namespace carma_wm_ctrl
+}
 
-}  // namespace carma_wm_ctrl
+}  // namespace carma_wm

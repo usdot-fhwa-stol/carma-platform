@@ -773,6 +773,11 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLane(const lanelet::Const
 
 std::vector<lanelet::Lanelet> CARMAWorldModel::getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n) const
 {
+  // Check if the map is loaded yet
+  if (!semantic_map_ || semantic_map_->laneletLayer.size() == 0)
+  {
+    throw std::invalid_argument("Map is not set or does not contain lanelets");
+  }
   std::vector<lanelet::Lanelet> possible_lanelets;
   auto nearestLanelets = semantic_map_->laneletLayer.nearest(point, n);
   int id = 0;

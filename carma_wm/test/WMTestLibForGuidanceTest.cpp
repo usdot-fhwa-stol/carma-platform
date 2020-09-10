@@ -65,11 +65,13 @@ TEST(WMTestLibForGuidanceTest, getGuidanceTestMap)
     ASSERT_EQ(cmw->getMap()->laneletLayer.get(1200).regulatoryElementsAs<lanelet::DigitalSpeedLimit>().size(), 1);
     ASSERT_NEAR(cmw->getMap()->laneletLayer.get(1200).regulatoryElementsAs<lanelet::DigitalSpeedLimit>().begin()->get()->getSpeedLimit().value(), 11.176, 0.0001); // 25mph is this meter/s
 
-    cmw = getGuidanceTestMap(3.7,25,{NO_OBSTACLE});
+    MapOptions mp(3.7,25,MapOptions::Obstacle::NONE);
+    cmw = getGuidanceTestMap(mp);
     ASSERT_EQ(cmw->getRoadwayObjects().size(), 0);
 
-    cmw = getGuidanceTestMap(3.7,25,{NO_OBSTACLE, NO_SPEED_LIMIT});
-    ASSERT_EQ(cmw->getMap()->regulatoryElementLayer.size(), 0);
+    mp.speed_limit_ = MapOptions::SpeedLimit::NONE;
+    cmw = getGuidanceTestMap(mp);
+    ASSERT_EQ(cmw->getMap()->regulatoryElementLayer.size(), 28); // 28 belong to map compliance
 }
 
 TEST(WMTestLibForGuidanceTest, buildGuidanceTestMap)
@@ -82,8 +84,9 @@ TEST(WMTestLibForGuidanceTest, buildGuidanceTestMap)
 
 TEST(WMTestLibForGuidanceTest, addObstacle)
 {
-    auto cmw = getGuidanceTestMap(1,1);
-    addObstacle(0.5,0.5, cmw, {{0.25,1.5}, {0.5,2.5}}, 0.75, 0.75);
+    MapOptions mp(1,1);
+    auto cmw = getGuidanceTestMap(mp);
+    addObstacle(0.5,0.5, cmw, {{0.25,1.5}, {0.5,2.5}}, 100, 0.75, 0.75);
     ASSERT_EQ(cmw->getRoadwayObjects().size(), 2);
     // Check if it is correctly filling raw values
     ASSERT_EQ(cmw->getRoadwayObjects()[1].object.pose.pose.position.x, 0.5);
@@ -99,10 +102,10 @@ TEST(WMTestLibForGuidanceTest, addObstacle)
 
     // predicted raw values
     ASSERT_EQ(cmw->getRoadwayObjects()[1].object.predictions.size(), 2);
-    ASSERT_EQ(cmw->getRoadwayObjects()[1].object.predictions[0].header.stamp.nsec, 1000);
-    ASSERT_EQ(cmw->getRoadwayObjects()[1].object.predictions[1].header.stamp.nsec, 2000);
+    ASSERT_EQ(cmw->getRoadwayObjects()[1].object.predictions[0].header.stamp.nsec, 1e8);
+    ASSERT_EQ(cmw->getRoadwayObjects()[1].object.predictions[1].header.stamp.nsec, 2e8);
     ASSERT_EQ(cmw->getRoadwayObjects()[1].object.predictions[0].predicted_position.position.y, 1.5);
-    ASSERT_EQ(cmw->getRoadwayObjects()[1].object.predictions[0].header.stamp.nsec, 1000);
+    ASSERT_EQ(cmw->getRoadwayObjects()[1].object.predictions[0].header.stamp.nsec, 1e8);
 
     // check calculated values
     ASSERT_EQ(cmw->getRoadwayObjects()[1].lanelet_id, 1200);
@@ -118,7 +121,7 @@ TEST(WMTestLibForGuidanceTest, addObstacle)
     carma_wm::TrackPos tp = {0.5, 0};
     carma_wm::TrackPos tp_pred = {1.5, -0.25};
 
-    addObstacle(tp, 1200, cmw, {tp_pred}, 0.75, 0.75);
+    addObstacle(tp, 1200, cmw, {tp_pred}, 100, 0.75, 0.75);
     // check calculated values
     ASSERT_EQ(cmw->getRoadwayObjects()[2].lanelet_id, 1200);
     ASSERT_EQ(cmw->getRoadwayObjects()[2].down_track, 0.5);
@@ -216,15 +219,16 @@ TEST(WMTestLibForGuidanceTest, setRouteByLanelets)
 
 TEST(WMTestLibForGuidanceTest, setSpeedLimit)
 {
-    auto cmw = getGuidanceTestMap(3.7, 25.0, {DEFAULT_OBSTACLE, NO_SPEED_LIMIT});
+    MapOptions mp(3.7,25,MapOptions::Obstacle::DEFAULT, MapOptions::SpeedLimit::NONE);
+    auto cmw = getGuidanceTestMap(mp);
     auto llt = cmw->getMutableMap()->laneletLayer.get(1200);
     // create existing speed limit to overwrite
     lanelet::DigitalSpeedLimitPtr sl = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 50_mph, {llt}, {},
                                                      { lanelet::Participants::VehicleCar }));
     cmw->getMutableMap()->update(llt, sl);
-    ASSERT_EQ(cmw->getMutableMap()->regulatoryElementLayer.size(), 1);
+    ASSERT_EQ(cmw->getMutableMap()->regulatoryElementLayer.size(), 29); // 28 belong to map compliance
     setSpeedLimit(25_mph, cmw);
-    ASSERT_EQ(cmw->getMutableMap()->regulatoryElementLayer.size(), 13); // old speed limit exists but is not assigned to any llt
+    ASSERT_EQ(cmw->getMutableMap()->regulatoryElementLayer.size(), 41); // old speed limit exists but is not assigned to any llt
     ASSERT_NEAR(cmw->getMutableMap()->laneletLayer.get(1200).regulatoryElementsAs<lanelet::DigitalSpeedLimit>()[0]->getSpeedLimit().value(), 11.176, 0.0001); 
 }
 }  // namespace test

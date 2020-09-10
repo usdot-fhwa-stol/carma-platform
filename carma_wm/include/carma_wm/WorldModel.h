@@ -268,8 +268,7 @@ public:
    *
    * \param point Cartesian point to check the corressponding lanelet
    * \param n     Number of lanelets to return. Default is 10. As there could be many lanelets overlapping.
-   * \throw TODO: std::invalid_argument if the map is not set, contains no lanelets, or the given lanelet
-   * is not on the current semantic map, or lane section input is not of the three
+   * \throw std::invalid_argument if the map is not set, contains no lanelets
    *
    * \return vector of underlying lanelet, empty vector if it is not part of any lanelet
    */

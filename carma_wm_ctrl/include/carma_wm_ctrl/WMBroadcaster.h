@@ -28,7 +28,7 @@
 #include <carma_wm_ctrl/GeofenceScheduler.h>
 #include <lanelet2_routing/RoutingGraph.h>
 
-#include "MapConformer.h"
+#include <carma_wm/MapConformer.h>
 
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <cav_msgs/TrafficControlMessage.h>

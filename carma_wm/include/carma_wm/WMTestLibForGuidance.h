@@ -28,8 +28,10 @@
 #include <lanelet2_core/geometry/Polygon.h>
 #include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
 #include <carma_wm/Geometry.h>
+#include <carma_wm/MapConformer.h>
+#include <ros/ros.h>
 /**
- * This is a test library made for guidance unit tests. It includes following in general:
+ * This is a test library made for guidance unit tests. In general, it includes the following :
  * - Helper functions to create the world from scratch or extend the world in getGuidanceTestMap()
  * - addObstacle at a specified Cartesian or Trackpos point relative to specified lanelet Id
  * - set route by giving series of lanelet Id in the map (setRouteById)
@@ -47,26 +49,54 @@
  *        |              |    O     = Default Obstacle
  *        ****************
  *           START_LINE
- * - NOTE: please look at unit test on example how to use them
+ * - NOTE: please look at the README for an example of how to use them
  */
 namespace carma_wm
 {
 namespace test
 {
 using namespace lanelet::units::literals;
-
-enum TestMapOption {DEFAULT_OBSTACLE, NO_OBSTACLE, DEFAULT_SPEED_LIMIT, NO_SPEED_LIMIT};
+/*
+ * Class which is passed into getGuidanceTestMap to configure
+ */
+struct MapOptions
+{
+  enum class Obstacle {DEFAULT, NONE};
+  enum class SpeedLimit {DEFAULT, NONE};
+  MapOptions(double lane_width = 3.7, double lane_length = 25, Obstacle obstacle =  Obstacle::DEFAULT, SpeedLimit speed_limit = SpeedLimit::DEFAULT): 
+                            lane_width_(lane_width), lane_length_(lane_length), obstacle_(obstacle), speed_limit_(speed_limit){}
+  double lane_width_;
+  double lane_length_;
+  Obstacle obstacle_ ;
+  SpeedLimit speed_limit_;
+};
+/**
+ * \brief helper function for quickly creating a lanelet::Point3d. random id is assigned
+ * \param x coord
+ * \param y coord
+ * \param z coord
+ */
 inline lanelet::Point3d getPoint(double x, double y, double z)
 {
   return lanelet::Point3d(lanelet::utils::getId(), x, y, z);
 }
-
+/**
+ * \brief helper function for quickly creating a lanelet::BasicPoint. random id is assigned
+ * \param x coord
+ * \param y coord
+ */
 inline lanelet::BasicPoint2d getBasicPoint(double x, double y)
 {
   return lanelet::utils::to2D(getPoint(x, y, 0.0)).basicPoint();
 }
 
-// Defaults to double solid line on left and a solid line on right
+/**
+ * \brief helper function for quickly creating a lanelet::Lanelet using linestrings. random id is assigned
+ * \param left_ls left linestring to use
+ * \param right_ls right linestring to use
+ * \param left_sub_type left linestring's line type. defaults to double solid line
+ * \param right_sub_type right linestring's line type. defaults to solid line
+ */
 inline lanelet::Lanelet getLanelet(lanelet::LineString3d& left_ls, lanelet::LineString3d& right_ls,
                                    const lanelet::Attribute& left_sub_type = lanelet::AttributeValueString::SolidSolid,
                                    const lanelet::Attribute& right_sub_type = lanelet::AttributeValueString::Solid)
@@ -91,6 +121,13 @@ inline lanelet::Lanelet getLanelet(lanelet::LineString3d& left_ls, lanelet::Line
   return ll;
 }
 
+/**
+ * \brief helper function for quickly creating a lanelet::Lanelet using points. random id is assigned
+ * \param left vector of points to use for left linestring
+ * \param right vector of points to use for right linestring
+ * \param left_sub_type left linestring's line type. defaults to double solid line
+ * \param right_sub_type right linestring's line type. defaults to solid line
+ */
 inline lanelet::Lanelet getLanelet(std::vector<lanelet::Point3d> left, std::vector<lanelet::Point3d> right,
                                    const lanelet::Attribute& left_sub_type = lanelet::AttributeValueString::SolidSolid,
                                    const lanelet::Attribute& right_sub_type = lanelet::AttributeValueString::Solid)
@@ -102,7 +139,31 @@ inline lanelet::Lanelet getLanelet(std::vector<lanelet::Point3d> left, std::vect
   return getLanelet(left_ls, right_ls, left_sub_type, right_sub_type);
 }
 
-inline lanelet::Lanelet getLanelet(lanelet::Id id, lanelet::LineString3d left, lanelet::LineString3d right,
+/**
+ * \brief helper function for quickly creating a lanelet::Lanelet using linestrings. id is specified
+ * \param id lanelet_id to use. it must be never used anywhere before
+ * \param left_ls left linestring to use
+ * \param right_ls right linestring to use
+ * \param left_sub_type left linestring's line type. defaults to double solid line
+ * \param right_sub_type right linestring's line type. defaults to solid line
+ */
+inline lanelet::Lanelet getLanelet(lanelet::Id id, lanelet::LineString3d left_ls, lanelet::LineString3d right_ls,
+                                   const lanelet::Attribute& left_sub_type = lanelet::AttributeValueString::SolidSolid,
+                                   const lanelet::Attribute& right_sub_type = lanelet::AttributeValueString::Solid)
+{
+  auto ll = getLanelet(left_ls, right_ls, left_sub_type, right_sub_type);
+  ll.setId(id);
+  return ll;
+}
+/**
+ * \brief helper function for quickly creating a lanelet::Lanelet using points. id is specified
+ * \param id lanelet_id to use. it must be never used anywhere before
+ * \param left vector of points to use for left linestring
+ * \param right vector of points to use for right linestring
+ * \param left_sub_type left linestring's line type. defaults to double solid line
+ * \param right_sub_type right linestring's line type. defaults to solid line
+ */
+inline lanelet::Lanelet getLanelet(lanelet::Id id, std::vector<lanelet::Point3d> left, std::vector<lanelet::Point3d> right,
                                    const lanelet::Attribute& left_sub_type = lanelet::AttributeValueString::SolidSolid,
                                    const lanelet::Attribute& right_sub_type = lanelet::AttributeValueString::Solid)
 {
@@ -110,7 +171,6 @@ inline lanelet::Lanelet getLanelet(lanelet::Id id, lanelet::LineString3d left, l
   ll.setId(id);
   return ll;
 }
-
 /**
  * \brief helper function for creating lanelet map for getGuidanceTestMap
  * \param width width of single lanelet, default is 3.7 meters which is US standard
@@ -177,6 +237,8 @@ inline lanelet::LaneletMapPtr buildGuidanceTestMap(double width, double length)
   
   // Create basic map and verify that the map and routing graph can be build, but the route remains false	
   lanelet::LaneletMapPtr map = lanelet::utils::createMap(all_lanelets, {});
+
+  lanelet::MapConformer::ensureCompliance(map);
   return map;
 }
 
@@ -186,11 +248,12 @@ inline lanelet::LaneletMapPtr buildGuidanceTestMap(double width, double length)
  * \param y coord
  * \param cmw CARMAWorldModel shared ptr
  * \param pred_coords vector of std::pair(x,y) predicted coords with 1s interval in the future
+ * \param time_step time_step interval for each predicted coords (milliseconds)
  * \param width width of roadway object, default 3 meters
  * \param length length of roadway object, default 3 meters
  * NOTE: x,y is the center of your object
  */
-inline void addObstacle(double x, double y, std::shared_ptr<carma_wm::CARMAWorldModel> cmw, std::vector<std::pair<double,double>> pred_coords = {}, double width = 3, double length = 3)
+inline void addObstacle(double x, double y, std::shared_ptr<carma_wm::CARMAWorldModel> cmw, std::vector<std::pair<double,double>> pred_coords = {}, int time_step = 100, double width = 3, double length = 3)
 {
     cav_msgs::RoadwayObstacle rwo;	
 
@@ -215,7 +278,7 @@ inline void addObstacle(double x, double y, std::shared_ptr<carma_wm::CARMAWorld
     for (auto pred : pred_coords)
     {
         cav_msgs::PredictedState ps;
-        time_stamp += 1000;
+        time_stamp += (time_step * 1e6);
         ps.header.stamp.nsec = time_stamp;
 
         ps.predicted_position.position.x = pred.first;	
@@ -247,11 +310,12 @@ inline void addObstacle(double x, double y, std::shared_ptr<carma_wm::CARMAWorld
  * \param lanelet_id Lanelet Id to place the roadway object relative to
  * \param cmw CARMAWorldModel shared ptr
  * \param pred_trackpos_list vector of TrackPos predicted coords with 1s interval in the future. This is relative to the given lanelet_id
+ * \param time_step time_step interval for each predicted coords (milliseconds)
  * \param width width of roadway object, default 3 meters
  * \param length length of roadway object, default 3 meters
  * NOTE: This assumes a similar simple shape of the GuidanceTestMap and does not populate cartesian components of the roadway object.
  */
-inline void addObstacle(carma_wm::TrackPos tp, lanelet::Id lanelet_id, std::shared_ptr<carma_wm::CARMAWorldModel> cmw, std::vector<carma_wm::TrackPos> pred_trackpos_list = {}, double width = 3, double length = 3)
+inline void addObstacle(carma_wm::TrackPos tp, lanelet::Id lanelet_id, std::shared_ptr<carma_wm::CARMAWorldModel> cmw, std::vector<carma_wm::TrackPos> pred_trackpos_list = {}, int time_step = 100, double width = 3, double length = 3)
 {
   cav_msgs::RoadwayObstacle rwo;	
 
@@ -284,7 +348,7 @@ inline void addObstacle(carma_wm::TrackPos tp, lanelet::Id lanelet_id, std::shar
   {
     // record time intervals
     cav_msgs::PredictedState ps;
-    time_stamp += 1000;
+    time_stamp += (time_step * 1e6);
     ps.header.stamp.nsec = time_stamp;
 
     auto ref_llt_pred = cmw->getMutableMap()->laneletLayer.get(lanelet_id);
@@ -294,7 +358,8 @@ inline void addObstacle(carma_wm::TrackPos tp, lanelet::Id lanelet_id, std::shar
     auto predNearestLanelet = cmw->getMap()->laneletLayer.nearest(object_center_pred, 1)[0]; 
     if (!boost::geometry::within(object_center_pred, predNearestLanelet.polygon2d()))
     {
-      std::cerr << "Given pred trackpos from given lanelet id does land on any lanelet in the map" << std::endl;
+      ROS_WARN_STREAM("Given pred trackpos from given lanelet id does land on any lanelet in the map");
+      continue;
     }
     rwo.predicted_lanelet_ids.emplace_back(predNearestLanelet.id());
     auto tp_pred = carma_wm::geometry::trackPos(predNearestLanelet,object_center_pred);
@@ -340,7 +405,7 @@ inline void setSpeedLimit (lanelet::Velocity speed_limit, std::shared_ptr<carma_
                                                      { lanelet::Participants::VehicleCar }));
     cmw->getMutableMap()->update(llt, sl);
   }
-  std::cout << "Set the new speed limit!" << std::endl;
+  ROS_INFO_STREAM("Set the new speed limit!");
 }
 
 /**
@@ -354,10 +419,8 @@ inline void setSpeedLimit (lanelet::Velocity speed_limit, std::shared_ptr<carma_
 inline void setRouteByLanelets (std::vector<lanelet::ConstLanelet> lanelets, std::shared_ptr<carma_wm::CARMAWorldModel> cmw)
 {
   // Build routing graph from map	
-  //auto map_graph = cmw->getMapRoutingGraph();
-  lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(
-      lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
-  lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*cmw->getMap(), *traffic_rules);
+  auto traffic_rules = cmw->getTrafficRules();
+  lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*cmw->getMap(), *traffic_rules.get());
 
   // Generate route
   lanelet::Optional<lanelet::routing::Route> optional_route;
@@ -385,7 +448,7 @@ inline void setRouteByLanelets (std::vector<lanelet::ConstLanelet> lanelets, std
   carma_wm::LaneletRoutePtr route_ptr = std::make_shared<lanelet::routing::Route>(std::move(route));
   cmw->setRoute(route_ptr);
 
-  std::cout << "New route has been set successfully!" << std::endl;
+  ROS_INFO_STREAM("New route has been set successfully!");
 }
 
 /**
@@ -415,11 +478,11 @@ inline void setRouteByIds (std::vector<lanelet::Id> lanelet_ids, std::shared_ptr
  *                    if mix and match, provide each one explicitly e.g. NO_OBSTACLE, DEFAULT_SPEED_LIMIT
  * NOTE: Input 1/4th of full lane length you want to accomplish in length. 
  */
-inline std::shared_ptr<carma_wm::CARMAWorldModel> getGuidanceTestMap(double width = 3.7, double length = 25.0, std::vector<TestMapOption> map_options = {DEFAULT_OBSTACLE, DEFAULT_SPEED_LIMIT})
+inline std::shared_ptr<carma_wm::CARMAWorldModel> getGuidanceTestMap(MapOptions map_options)
 {
   std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();	
   // create the semantic map
-  auto map = buildGuidanceTestMap(width, length);
+  auto map = buildGuidanceTestMap(map_options.lane_width_, map_options.lane_length_);
 
   // set the map, with default routingGraph
   cmw->setMap(map);
@@ -428,19 +491,22 @@ inline std::shared_ptr<carma_wm::CARMAWorldModel> getGuidanceTestMap(double widt
   setRouteByIds({1200,1203}, cmw);
 
   // set the obstacle
-  for (auto option : map_options)
+
+  if (map_options.obstacle_ == MapOptions::Obstacle::DEFAULT)
   {
-    if (option == DEFAULT_OBSTACLE)
-    {
-      addObstacle(1.5*width, 2.5*length, cmw);  // lanelet_id at 1212
-    }
-    else if (option == DEFAULT_SPEED_LIMIT)
-    {
-      setSpeedLimit(25_mph, cmw);   // change speed limit of all lanelets in the map to 25mph
-    }
+    addObstacle(1.5*map_options.lane_width_, 2.5*map_options.lane_length_, cmw);  // lanelet_id at 1212
   }
-  
+  if (map_options.speed_limit_ == MapOptions::SpeedLimit::DEFAULT)
+  {
+    setSpeedLimit(25_mph, cmw);   // change speed limit of all lanelets in the map to 25mph
+  }
+
   return cmw;
+}
+inline std::shared_ptr<carma_wm::CARMAWorldModel> getGuidanceTestMap()
+{
+  MapOptions map_options;
+  return getGuidanceTestMap(map_options);
 }
 }
   //namespace test
