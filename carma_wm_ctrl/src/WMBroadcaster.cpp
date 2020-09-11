@@ -17,7 +17,7 @@
 #include <functional>
 #include <mutex>
 #include <carma_wm_ctrl/WMBroadcaster.h>
-#include <carma_wm_ctrl/MapConformer.h>
+#include <carma_wm/MapConformer.h>
 #include <lanelet2_extension/utility/message_conversion.h>
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/geometry/Lanelet.h>
