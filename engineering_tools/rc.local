@@ -1,0 +1,31 @@
+#!/bin/sh -e
+#
+# rc.local
+#
+# This script is executed at the end of each multiuser runlevel.
+# Make sure that the script will "exit 0" on success or any other
+# value on error.
+#
+# In order to enable or disable this script just change the execution
+# bits.
+#
+# By default this script does nothing.
+
+count=0
+now=$(date +"%T")
+until ping -c2 192.168.0.64 > /dev/null 2>&1; do 
+  now=$(date +"%T")
+  sleep 1
+  count=$(($count + 1))
+done
+
+if count == 120; then
+ echo "Windows shared folder mount failed after $count seconds: $now\n" >> /home/autoware/WindowsMountStatus.txt
+ exit 1
+fi
+
+# Mount the Windows shared folder
+echo "Windows shared folder mount successful: $now\n" >> /home/autoware/WindowsMountStatus.txt
+sudo mount -t cifs -o username=CarmaWFusion,password=Carma18225,uid=1000,gid=1000,forceuid,forcegid //192.168.0.64/WindowsSharedFolder /home/autoware/WindowsSharedFolder
+
+exit 0

@@ -29,10 +29,6 @@
 #include <cav_srvs/PlanManeuvers.h>
 #include <cav_srvs/PlanTrajectory.h>
 
-#include <carma_wm/WMListener.h>
-#include <carma_wm/WorldModel.h>
-#include <carma_wm/collision_detection.h>
-#include <trajectory_utils/quintic_coefficient_calculator.h>
 
 namespace autoware_plugin
 {
@@ -58,18 +54,6 @@ namespace autoware_plugin
 
         // local copy of pose
         boost::shared_ptr<geometry_msgs::PoseStamped const> pose_msg_;
-
-
-        // new added
-        // wm listener pointer and pointer to the actual wm object
-        std::shared_ptr<carma_wm::WMListener> wml_;
-        carma_wm::WorldModelConstPtr wm_;
-        geometry_msgs::Vector3 host_vehicle_size;
-
-        cav_msgs::TrajectoryPlan update_traj_for_object(cav_msgs::TrajectoryPlan& tp);
-        double polynomial_calc(std::vector<double> coeff, double x) const;
-        double max_trajectory_speed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points) const;
-        geometry_msgs::Twist velocity;
 
     private:
 
@@ -121,11 +105,7 @@ namespace autoware_plugin
         // convert waypoints to a trajectory
         std::vector<cav_msgs::TrajectoryPlanPoint> compose_trajectory_from_waypoints(std::vector<autoware_msgs::Waypoint> waypoints);
 
-        double tpmin;
-        double maximum_deceleration_value;
-        double min_downtrack;
-        double x_gap;
-        
     };
+
 }
 
