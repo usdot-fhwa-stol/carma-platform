@@ -79,7 +79,7 @@ namespace port_drayage_plugin
     }
 
     bool PortDrayagePlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp){
-        
+
         geometry_msgs::PoseStamped stop_loc;
 
         lanelet::BasicPoint2d current_loc(curr_pose_->pose.position.x, curr_pose_->pose.position.y);
@@ -91,19 +91,21 @@ namespace port_drayage_plugin
         }
 
         auto current_lanelet = current_lanelets[0];
-        // uncomment after StopRule add.
+        auto traffic_light_rules = current_lanelet.second.regulatoryElementsAs<lanelet::TrafficLight>();
 
-        // auto stop_rules = current_lanelet.second.regulatoryElementsAs<StopRule>();
-        // if(stop_rules.empty()){
-        //     return False;
-        // } else{
-        //     StopRule::Ptr stopRegelem = stop_rules.front();
-        //     // TODO get stopRegelem position and return the object with downtrack
-        //     stop_loc = geometry_msgs::PoseStampedConstPtr pose;
-        // }
-
-        // TODO
         double stop_loc_downtrack = 0;
+        if(traffic_light_rules.empty()) {
+            return false;
+        }
+        else {
+            auto traffic_light_elem = traffic_light_rules.front();
+            lanelet::ConstLineString3d stop_line = *(traffic_light_elem->stopLine());
+            auto point = lanelet::traits::to2D(stop_line.front());
+            auto pos = carma_wm::geometry::trackPos(current_lanelet.second, point);
+
+            stop_loc_downtrack = pos.downtrack;
+        }
+
         double current_loc_downtrack = wm_->routeTrackPos(current_loc).downtrack;
 
         double speed_progress = _cur_speed->twist.linear.x;
@@ -168,7 +170,8 @@ namespace port_drayage_plugin
                                        speed_progress, 
                                        0.0, 
                                        current_lanelet.second.id(), 
-                                       start_time));
+                                       start_time,
+                                       estimated_time_to_stop));
         }
 
         if(resp.new_plan.maneuvers.size() == 0)
@@ -179,7 +182,7 @@ namespace port_drayage_plugin
         return true;
     };
 
-    cav_msgs::Maneuver PortDrayagePlugin::compose_stop_and_wait_maneuver_message(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time time)
+    cav_msgs::Maneuver PortDrayagePlugin::compose_stop_and_wait_maneuver_message(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time time, double time_to_stop)
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::STOP_AND_WAIT;
@@ -191,7 +194,6 @@ namespace port_drayage_plugin
         maneuver_msg.stop_and_wait_maneuver.start_speed = current_speed;
         maneuver_msg.stop_and_wait_maneuver.start_time = time;
         maneuver_msg.stop_and_wait_maneuver.end_dist = end_dist;
-        double time_to_stop = std::max(estimate_time_to_stop(end_dist - current_dist, current_speed), 15.0);
         maneuver_msg.stop_and_wait_maneuver.end_time = time + ros::Duration(time_to_stop);
         maneuver_msg.stop_and_wait_maneuver.starting_lane_id = std::to_string(lane_id);
         maneuver_msg.stop_and_wait_maneuver.ending_lane_id = std::to_string(lane_id);

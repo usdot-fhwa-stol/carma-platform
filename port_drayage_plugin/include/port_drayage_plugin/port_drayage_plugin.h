@@ -24,7 +24,9 @@
 #include <geometry_msgs/TwistStamped.h>
 #include <carma_wm/WorldModel.h>
 #include <carma_wm/WMListener.h>
+#include <carma_wm/Geometry.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
 namespace port_drayage_plugin
 {
@@ -108,7 +110,8 @@ namespace port_drayage_plugin
                                                       double current_speed, 
                                                       double target_speed, 
                                                       int lane_id, 
-                                                      ros::Time time);
+                                                      ros::Time time,
+                                                      double time_to_stop);
 
             /**
              * \brief compose Maneuver Message to send to tactical plugin.
