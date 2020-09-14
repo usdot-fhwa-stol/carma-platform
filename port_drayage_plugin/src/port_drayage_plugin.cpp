@@ -194,7 +194,7 @@ namespace port_drayage_plugin
         maneuver_msg.stop_and_wait_maneuver.start_speed = current_speed;
         maneuver_msg.stop_and_wait_maneuver.start_time = time;
         maneuver_msg.stop_and_wait_maneuver.end_dist = end_dist;
-        maneuver_msg.stop_and_wait_maneuver.end_time = time + ros::Duration(std::max(15,time_to_stop));
+        maneuver_msg.stop_and_wait_maneuver.end_time = time + ros::Duration(std::max(15.0,time_to_stop));
         maneuver_msg.stop_and_wait_maneuver.starting_lane_id = std::to_string(lane_id);
         maneuver_msg.stop_and_wait_maneuver.ending_lane_id = std::to_string(lane_id);
         return maneuver_msg;
