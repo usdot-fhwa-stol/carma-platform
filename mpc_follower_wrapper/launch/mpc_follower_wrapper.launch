@@ -9,10 +9,14 @@
         <remap from="steering_gear_ratio" to="/vehicle_steering_gear_ratio"/>
 
         <include file="$(find mpc_follower)/launch/mpc_follower.launch">
-                <arg name="qp_solver_type" value="qpoases_hotstart"/>
-                <arg name="mpc_prediction_sampling_time" value="0.05"/>
-                <arg name="mpc_weight_lat_error" value="0.2"/>
-                <arg name="mpc_weight_terminal_lat_error" value="1.0"/>
+                <arg name="qp_solver_type" value="unconstraint_fast"/>
+                <arg name="mpc_prediction_horizon" value="70.0"/>
+                <arg name="mpc_prediction_sampling_time" value="0.1"/>
+                <arg name="mpc_weight_lat_error" value="0.1"/>
+                <arg name="mpc_weight_terminal_lat_error" value="0.15"/>
+                <arg name="mpc_weight_terminal_heading_error" value="0.03"/>
+                <arg name="mpc_weight_heading_error" value="0.01"/>
+                <arg name="mpc_weight_heading_error_squared_vel_coeff" value="0.1"/>
         </include>
     </group>
     <!-- MPC Follower Wrapper Node -->
