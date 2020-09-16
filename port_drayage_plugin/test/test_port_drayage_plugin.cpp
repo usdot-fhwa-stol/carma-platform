@@ -23,6 +23,12 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <sstream>
 
+
+#include <carma_wm/WMListener.h>
+#include <carma_wm/WorldModel.h>
+#include <carma_wm/CARMAWorldModel.h>
+#include <carma_wm/WMTestLibForGuidance.h>
+
 TEST(PortDrayageTest, testComposeArrivalMessage)
 {
     ros::Time::init();
@@ -200,6 +206,98 @@ TEST(PortDrayageTest, testEstimateTimeToStop)
     ASSERT_EQ(port_drayage_plugin::estimate_time_to_stop(10.0, 1.0), 20.0);
 }
 
+TEST(PortDrayageTest, testPlanManeuverCb)
+{
+    port_drayage_plugin::PortDrayagePlugin pdp{nullptr, nullptr};
+    pdp.declaration = 1;
+
+    geometry_msgs::Pose pose;
+    pose.position.x = 0;
+    pose.position.y = 0;
+    pose.position.z = 0;    
+
+    geometry_msgs::PoseStamped pose_stamped;
+
+    pose_stamped.pose = pose;
+
+    std::shared_ptr<geometry_msgs::PoseStamped> curr_pose_ = std::make_shared<geometry_msgs::PoseStamped>(pose_stamped);
+    pdp.curr_pose_ = curr_pose_;
+
+    std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
+
+    auto pl1 = carma_wm::test::getPoint(0, 0, 0);
+    auto pl2 = carma_wm::test::getPoint(0, 1, 0);
+    auto pl3 = carma_wm::test::getPoint(0, 2, 0);
+    auto pr1 = carma_wm::test::getPoint(1, 0, 0);
+    auto pr2 = carma_wm::test::getPoint(1, 1, 0);
+    auto pr3 = carma_wm::test::getPoint(1, 2, 0);
+
+    std::vector<lanelet::Point3d> left_1 = { pl1, pl2 };
+    std::vector<lanelet::Point3d> right_1 = { pr1, pr2 };
+    auto ll_1 = carma_wm::test::getLanelet(left_1, right_1, lanelet::AttributeValueString::SolidSolid, lanelet::AttributeValueString::Dashed);
+
+    std::vector<lanelet::Point3d> left_2 = { pl2, pl3 };
+    std::vector<lanelet::Point3d> right_2 = { pr2, pr3 };
+    auto ll_2 = carma_wm::test::getLanelet(left_2, right_2);
+
+    // 1. Confirm all pointers are false (done above)
+    // Ensure that none of the returned pointers are valid if the map has not been set
+    ASSERT_FALSE((bool)cmw->getMap());
+    ASSERT_FALSE((bool)cmw->getRoute());
+    ASSERT_FALSE((bool)cmw->getMapRoutingGraph());
+
+    // 2. Build map but do not assign
+    // Create basic map and verify that the map and routing graph can be build, but the route remains false
+    lanelet::LaneletMapPtr map = lanelet::utils::createMap({ ll_1, ll_2 }, {});
+    
+    // traffic lights are created from a linestring that shows a traffic light and optionally a stop line.
+    lanelet::LineString3d trafficLight = lanelet::LineString3d(lanelet::utils::getId(), {lanelet::Point3d{lanelet::utils::getId(), 1, 0, 0}, lanelet::Point3d{lanelet::utils::getId(), 1, 1, 0}, lanelet::Point3d{lanelet::utils::getId(), 1, 2, 0}});
+    trafficLight.attributes()[lanelet::AttributeName::Type] = lanelet::AttributeValueString::TrafficLight;
+    // this creates our traffic light. Regelems are passed around as shared pointers.
+    lanelet::RegulatoryElementPtr trafficLightRegelem = lanelet::TrafficLight::make(lanelet::utils::getId(), {}, {trafficLight});
+
+    // 3. Build routing graph but do not assign
+    // Build routing graph from map
+    lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(
+    lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
+
+    map->update(ll_2, trafficLightRegelem);
+
+    lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
+
+    // 4. Generate route
+    auto optional_route = map_graph->getRoute(ll_1, ll_2);
+    ASSERT_TRUE((bool)optional_route);
+
+    lanelet::routing::Route route = std::move(*optional_route);
+    carma_wm::LaneletRoutePtr route_ptr = std::make_shared<lanelet::routing::Route>(std::move(route));
+    // 5. Try to set route without map and ensure it passes
+    cmw->setRoute(route_ptr);
+    // 6. getRoute is true but other pointers are false
+    ASSERT_FALSE((bool)cmw->getMap());
+    ASSERT_TRUE((bool)cmw->getRoute());
+    ASSERT_FALSE((bool)cmw->getMapRoutingGraph());
+
+    cmw->setMap(map);
+    // 8. All pointers exist
+    ASSERT_TRUE((bool)cmw->getMap());
+    ASSERT_TRUE((bool)cmw->getRoute());
+    ASSERT_TRUE((bool)cmw->getMapRoutingGraph());
+    // 9. Call setRoute again to confirm no errors
+    cmw->setRoute(route_ptr);
+    // 10. All pointers exist
+    ASSERT_TRUE((bool)cmw->getMap());
+    ASSERT_TRUE((bool)cmw->getRoute());
+    ASSERT_TRUE((bool)cmw->getMapRoutingGraph());
+
+    pdp.wm_ = cmw;
+
+    cav_srvs::PlanManeuversRequest req;
+    cav_srvs::PlanManeuversResponse resp;
+
+    ASSERT_EQ(pdp.plan_maneuver_cb(req,resp),false);
+
+}
 // Run all the tests
 int main(int argc, char **argv)
 {

@@ -49,17 +49,16 @@ namespace port_drayage_plugin
             // ROS service servers
             ros::ServiceServer plan_maneuver_srv_;  
 
+            geometry_msgs::TwistStampedConstPtr _cur_speed;
+
+        public:
+            double declaration;
+            std::shared_ptr<geometry_msgs::PoseStamped> curr_pose_ = nullptr;
+
             // wm listener pointer and pointer to the actual wm object
             std::shared_ptr<carma_wm::WMListener> wml_;
             carma_wm::WorldModelConstPtr wm_;
 
-            std::shared_ptr<geometry_msgs::PoseStamped> curr_pose_ = nullptr;
-
-            geometry_msgs::TwistStampedConstPtr _cur_speed;
-
-            double declaration;
-
-        public:
             /**
              * \brief Basic constructor for initializing the Port Drayage Plugin
              * 

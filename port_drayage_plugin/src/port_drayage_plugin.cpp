@@ -80,9 +80,16 @@ namespace port_drayage_plugin
 
     bool PortDrayagePlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp){
 
-        geometry_msgs::PoseStamped stop_loc;
+        if(curr_pose_ == nullptr) {
+            return false;
+        }
 
         lanelet::BasicPoint2d current_loc(curr_pose_->pose.position.x, curr_pose_->pose.position.y);
+
+        if(wm_ == nullptr) {
+            return false;
+        }
+
         auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc, 1);
 
         if(current_lanelets.size() == 0) {
@@ -92,8 +99,8 @@ namespace port_drayage_plugin
 
         auto current_lanelet = current_lanelets[0];
         auto traffic_light_rules = current_lanelet.second.regulatoryElementsAs<lanelet::TrafficLight>();
-
         double stop_loc_downtrack = 0;
+
         if(traffic_light_rules.empty()) {
             return false;
         }
@@ -107,9 +114,7 @@ namespace port_drayage_plugin
         }
 
         double current_loc_downtrack = wm_->routeTrackPos(current_loc).downtrack;
-
         double speed_progress = _cur_speed->twist.linear.x;
-
         double current_progress = 0;
 
         while(current_loc_downtrack < stop_loc_downtrack)
