@@ -30,6 +30,4 @@
   <depend>cav_msgs</depend>
   <depend>carma_utils</depend>
   <depend>autoware_msgs</depend>
-  <depend>carma_wm</depend>
-  <depend>trajectory_utils</depend>
 </package>
