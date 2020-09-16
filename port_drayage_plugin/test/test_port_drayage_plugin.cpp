@@ -297,6 +297,15 @@ TEST(PortDrayageTest, testPlanManeuverCb)
 
     ASSERT_EQ(pdp.plan_maneuver_cb(req,resp),false);
 
+    ros::Time time;
+    time.sec = 1;
+    time.nsec = 0;
+    
+    cav_msgs::Maneuver maneuver = pdp.compose_stop_and_wait_maneuver_message(1, 2, 1, 2, 1, time, 10);
+    ASSERT_EQ(maneuver.stop_and_wait_maneuver.end_time,time + ros::Duration(15));
+
+    maneuver = pdp.compose_lane_following_maneuver_message(1, 2, 1, 2, 1, time);
+    ASSERT_NEAR(maneuver.lane_following_maneuver.end_time.sec, 1, 0.0001);
 }
 // Run all the tests
 int main(int argc, char **argv)
