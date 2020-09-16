@@ -77,7 +77,7 @@ public:
    */
   void setRouteCallback(std::function<void()> callback);
 
-  void setConfigSpeedLimit(double config_lim);
+  void setConfigSpeedLimitCallback(double config_lim);
 
 private:
   std::shared_ptr<CARMAWorldModel> world_model_;
