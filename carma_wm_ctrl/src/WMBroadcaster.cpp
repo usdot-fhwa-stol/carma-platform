@@ -17,8 +17,8 @@
 #include <functional>
 #include <mutex>
 #include <carma_wm_ctrl/WMBroadcaster.h>
+#include <carma_wm_ctrl/MapConformer.h>
 #include <carma_wm/Geometry.h>
-#include <carma_wm/MapConformer.h>
 #include <lanelet2_extension/utility/message_conversion.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_core/primitives/Lanelet.h>
@@ -262,7 +262,9 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   }
   scheduler_.addGeofence(gf_ptr);  // Add the geofence to the scheduler
   ROS_INFO_STREAM("New geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
+  
 
+  
 };
 
 void WMBroadcaster::geoReferenceCallback(const std_msgs::String& geo_ref)
@@ -504,6 +506,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   std::lock_guard<std::mutex> guard(map_mutex_);
   ROS_INFO_STREAM("Adding active geofence to the map with geofence id: " << gf_ptr->id_);
   
+
   // Process the geofence object to populate update remove lists
   addGeofenceHelper(gf_ptr);
   

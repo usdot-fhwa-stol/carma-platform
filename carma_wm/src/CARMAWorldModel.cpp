@@ -286,8 +286,11 @@ lanelet::LaneletMapPtr CARMAWorldModel::getMutableMap() const
 void CARMAWorldModel::setRoute(LaneletRoutePtr route)
 {
   route_ = route;
+
   lanelet::ConstLanelets path_lanelets(route_->shortestPath().begin(), route_->shortestPath().end());
+
   shortest_path_view_ = lanelet::utils::createConstMap(path_lanelets, {});
+
   computeDowntrackReferenceLine();
 }
 
@@ -320,6 +323,7 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
 
   bool first = true;
   size_t next_index = 0;
+
   // Iterate over each lanelet in the shortest path this loop works by looking one lanelet ahead to detect lane changes
   for (lanelet::ConstLanelet ll : shortest_path)
   {
@@ -333,8 +337,9 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
     {  // Check for remaining lanelets
       auto nextLanelet = shortest_path[next_index];
       lanelet::LineString3d nextCenterline = copyConstructLineString(nextLanelet.centerline());
+
       size_t connectionCount = shortest_path_graph->possiblePaths(ll, (uint32_t)2, false).size();
-      
+
       if (connectionCount == 1)
       {  // Get list of connected lanelets without lanechanges. On the shortest path this should only return 1 or 0
         // No lane change
@@ -345,8 +350,6 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
       {
         // Lane change required
         // Break the point chain when a lanechange occurs
-        if (lineStrings.back().size() == 0) continue; //we don't have to create empty_linestring if we already have one
-                                                      //occurs when route is changing lanes multiple times in sequence  
         lanelet::LineString3d empty_linestring;
         empty_linestring.setId(lanelet::utils::getId());
         distance_map.pushBack(lanelet::utils::to2D(lineStrings.back()));
@@ -359,7 +362,6 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
     }
   }
   // Copy values to member variables
-  while (lineStrings.back().size() == 0) lineStrings.pop_back(); //clear empty linestrings that was never used in the end
   shortest_path_centerlines_ = lineStrings;
   shortest_path_distance_map_ = distance_map;
 
@@ -369,6 +371,7 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
     shortest_path_distance_map_.pushBack(lanelet::utils::to2D(lineStrings.back()));  // Record length of last continuous
                                                                                      // segment
   }
+
   shortest_path_filtered_centerline_view_ = lanelet::utils::createMap(shortest_path_centerlines_);
 }
 
@@ -526,6 +529,7 @@ std::vector<cav_msgs::RoadwayObstacle> CARMAWorldModel::getInLaneObjects(const l
   
   return lane_objects;
 }
+
 
 lanelet::Optional<lanelet::Lanelet> CARMAWorldModel::getIntersectingLanelet (const cav_msgs::ExternalObject& object) const
 {
@@ -770,27 +774,4 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLane(const lanelet::Const
   prev_lane.insert(prev_lane.end(), following_lane.begin(), following_lane.end());
   return prev_lane;
 }
-
-std::vector<lanelet::Lanelet> CARMAWorldModel::getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n) const
-{
-  // Check if the map is loaded yet
-  if (!semantic_map_ || semantic_map_->laneletLayer.size() == 0)
-  {
-    throw std::invalid_argument("Map is not set or does not contain lanelets");
-  }
-  std::vector<lanelet::Lanelet> possible_lanelets;
-  auto nearestLanelets = lanelet::geometry::findNearest(semantic_map_->laneletLayer,point,n);
-  if (nearestLanelets.size() == 0) return {};
-  int id = 0; // closest ones are in the back
-  // loop through until the point is no longer geometrically in the lanelet
-  while (boost::geometry::within(point, nearestLanelets[id].second.polygon2d()))
-  {
-    possible_lanelets.push_back(nearestLanelets[id].second);
-    id++;
-    if (id >= nearestLanelets.size()) break;
-  }
-  return possible_lanelets;
-}
-
-
 }  // namespace carma_wm

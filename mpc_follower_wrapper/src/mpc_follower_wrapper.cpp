@@ -34,7 +34,7 @@ void MPCFollowerWrapper::Initialize() {
 
   // Trajectory Plan Subscriber
   
-  trajectory_plan_sub = nh_.subscribe<cav_msgs::TrajectoryPlan>("mpc_follower/trajectory", 1, &MPCFollowerWrapper::TrajectoryPlanPoseHandler, this);
+  trajectory_plan_sub = nh_.subscribe<cav_msgs::TrajectoryPlan>("trajectory_plan", 1, &MPCFollowerWrapper::TrajectoryPlanPoseHandler, this);
 
   // WayPoints Publisher
   way_points_pub_ = nh_.advertise<autoware_msgs::Lane>("final_waypoints", 10, true);

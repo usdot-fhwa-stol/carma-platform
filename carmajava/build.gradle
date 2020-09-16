@@ -1,0 +1,218 @@
+/*
+ * Copyright (C) 2018-2020 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+buildscript {
+  // Default bootstrap file for rosjava came from here "https://github.com/rosjava/rosjava_bootstrap/raw/kinetic/buildscript.gradle"
+  apply from: "rosjava_bootstrap.gradle"
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.14.1'
+}
+
+apply plugin: 'catkin'
+
+allprojects {
+    // Apply jacoco plugin for code coverage reports used by SonarCloud
+    apply plugin: 'jacoco'
+    /*
+      A github url provides a good standard unique name for your project
+      Example below, but you may wish to switch to your own unique url.
+    */
+    group 'gov.dot.fhwa.saxton.carma'
+    version = project.catkin.pkg.version
+
+    repositories {
+        // Varies depending on project config
+        maven {
+            url uri("../../devel/share/maven")
+        }
+        maven {
+            url uri("../../../devel/share/maven")
+        }
+        maven {
+            url uri("../../../../devel/share/maven")
+        }
+
+        jcenter()
+    }
+}
+
+subprojects {
+    /*
+     * The ros-java plugin configures a few things:
+     *
+     *  - local deployment repository : where it dumps the jars and packaged artifacts)
+     *  - local maven repositories    : where it finds your locally installed/built artifacts)
+     *  - external maven repositories : where it goes looking if it can't find dependencies locally
+     *
+     * To modify, or add repos to the default external maven repositories list, pull request against this code:
+     *
+     *   https://github.com/rosjava/rosjava_bootstrap/blob/kinetic/gradle_plugins/src/main/groovy/org/ros/gradle_plugins/RosPlugin.groovy#L31
+     */
+    apply plugin: "ros-java"
+    apply plugin: 'checkstyle'
+
+
+
+    checkstyle {
+        configFile = rootProject.file("config/checkstyle.xml")
+    }
+
+    repositories {
+        flatDir {
+            dirs "../libs"
+        }
+    }
+
+    targetCompatibility = 1.8
+    sourceCompatibility = 1.8
+
+
+
+    test {
+        reports {
+            junitXml.enabled = false
+            html.enabled = true
+        }           
+
+        // Set the jacoco reports to be fresh each time
+        jacoco {
+            append = false
+        } 
+    }
+
+    // Identify sources of the jacoco reports
+    jacocoTestReport {
+        additionalSourceDirs = files(sourceSets.main.allSource.srcDirs)
+        sourceDirectories = files(sourceSets.main.allSource.srcDirs)
+        classDirectories =  files(sourceSets.main.output)
+        reports {
+            html.enabled = false
+            xml.enabled = true
+            csv.enabled = false
+        }
+    }
+
+    /*
+     * Some IDE support if you use it.
+     */
+    /* apply plugin: "eclipse" */
+    /* apply plugin: "idea" */
+    
+}
+
+// Task to run unit tests and collect all generated jacoco reports and place them in the top level build folder
+// Based off method described here https://gist.github.com/aalmiray/e6f54aa4b3803be0bcac
+task jacocoCombinedReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
+    // Requires submodule have test task
+    dependsOn = subprojects.test
+    // Set sources and classes to defaults
+    additionalSourceDirs = files(subprojects.sourceSets.main.allSource.srcDirs)
+    sourceDirectories = files(subprojects.sourceSets.main.allSource.srcDirs)
+    classDirectories =  files(subprojects.sourceSets.main.output)
+    executionData = files(subprojects.jacocoTestReport.executionData)
+    // Turn on XML reports.
+    // The XML report is required by SonarCloud
+    // The default location will put the reports  CARMAPlatform/carmajava/build/reports/jacoco/jacocoCombinedReport
+    reports {
+        html.enabled = false
+        xml.enabled = true
+        csv.enabled = false
+    }
+    // The onlyIf and doFirst lines here cause this task to only run for submodules with tests
+    onlyIf = {
+        true
+    }
+    doFirst {
+        executionData = files(executionData.findAll {
+            it.exists()
+        })
+    }
+}
+
+task testReport(type: TestReport) {
+    destinationDir = file("$buildDir/reports/allTests")
+    // Include the results from the `test` task in all subprojects
+    reportOn subprojects*.test
+}
+
+/*
+ * Create set of all sub-projects which are rosjava nodes. They will be applications with a main class of org.ros.RosRun
+ */
+def nodeProjects() {
+    subprojects.findAll {
+        subproject -> subproject.plugins.hasPlugin('application') && subproject.hasProperty('mainClassName') && subproject.property('mainClassName') == 'org.ros.RosRun'
+    }
+}
+
+/*
+ * Delete the build/scripts folder for all rosjava nodes to prevent duplicate executables from being created on build
+ */
+gradle.projectsEvaluated {
+    configure(nodeProjects()) {
+        task cleanScripts(dependsOn: 'installApp') << {
+            file('build/scripts').deleteDir()
+        }
+
+        installApp.finalizedBy(cleanScripts)
+    }
+}
+
+/*
+  Some useful tasks:
+
+    install: deploys jar's to MavenLocal() (i.e. ~/.m2/repository)
+    publish : deploys jar's to devel/share/maven
+    installApp : assembles java apps in the _subproject_/build directories.
+
+  Note that these are dependent on the type of project (e.g. installApp is only valid for
+  java binary subprojects, while publish is only added once a subproject is included.
+  If you're using catkin_make, this is not important, since it will use the task list specified
+  in CMakeLists.txt
+*/
+defaultTasks 'tasks'
+
+ext.gitVersioner = [
+    defaultBranch           : "master",
+    /* stableBranches          : ["master"], */
+    yearFactor              : 1000,
+    snapshotEnabled         : true,
+    localChangesCountEnabled: true,
+    shortName: { gitVersion ->
+      // Get the branch name, after the / if it exists
+      String verString = "";
+      String[] branchNameParts = gitVersion.branchName.split("/") 
+      String branchName = "";
+      if (branchNameParts.size() > 1) {
+          branchName = branchNameParts[1]
+      } else {
+          branchName = branchNameParts[0]
+      }
+
+      verString += branchName
+      if (gitVersion.branchVersion > 0 ) {
+          verString += gitVersion.branchVersion
+      }
+
+      if (gitVersion.localChanges > 0) {
+          verString += "-SNAPSHOT"
+          verString += "(" + gitVersion.localChanges + ")"
+      }
+
+      return verString
+    }
+]
