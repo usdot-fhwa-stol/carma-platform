@@ -93,6 +93,8 @@ public:
    */
   lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> getNearestObjInLane(const lanelet::BasicPoint2d& object_center, const LaneSection& section = LANE_AHEAD) const;
 
+  void setConfigSpeedLimit(double config_lim);
+  
   ////
   // Overrides
   ////
@@ -131,6 +133,9 @@ public:
 
   std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n = 10) const override;
 
+  
+
+
 private:
 
   /*! \brief Helper function to compute the geometry of the route downtrack/crosstrack reference line
@@ -163,5 +168,7 @@ private:
   lanelet::LaneletMapUPtr shortest_path_filtered_centerline_view_;  // Lanelet map view of shortest path center lines
                                                                     // only
   std::vector<cav_msgs::RoadwayObstacle> roadway_objects_; // 
+
+  double config_limit;
 };
 }  // namespace carma_wm

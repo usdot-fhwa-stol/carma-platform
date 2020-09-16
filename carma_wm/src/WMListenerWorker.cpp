@@ -159,7 +159,7 @@ void WMListenerWorker::setConfigSpeedLimit(double config_lim)
 {
   config_limit = config_lim;
   //Function to load config_limit into CarmaWorldModel
-   world_model_->getTrafficRules(lanelet::Participants::Vehicle);
+   world_model_->setConfigSpeedLimit(config_lim);
 }
 
 }  // namespace carma_wm

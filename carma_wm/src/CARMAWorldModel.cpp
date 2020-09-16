@@ -792,5 +792,10 @@ std::vector<lanelet::Lanelet> CARMAWorldModel::getLaneletsFromPoint(const lanele
   return possible_lanelets;
 }
 
+void CARMAWorldModel::setConfigSpeedLimit(double config_lim)
+{
+  config_limit = config_lim;
+}
+
 
 }  // namespace carma_wm
