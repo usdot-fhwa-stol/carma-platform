@@ -68,6 +68,7 @@ namespace mobilitypath_publisher
         ros::Publisher mob_path_pub_;
 
         cav_msgs::TrajectoryPlan latest_trajectory_;
+        cav_msgs::MobilityPath latest_mobility_path_;
 
         // TF listenser
         tf2_ros::Buffer tf2_buffer_;

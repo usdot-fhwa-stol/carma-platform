@@ -114,11 +114,12 @@
     <remap from="/emergency_stop" to="emergency_stop"/>
     <remap from="/state_cmd" to="state_cmd"/>
     <remap from="/vehicle_cmd" to="$(optenv CARMA_INTR_NS)/vehicle_cmd"/>
+    <!-- Parameter Remapping -->
     <remap from="vehicle_model_wheelbase" to="/vehicle_wheel_base"/>
+    <remap from="~lateral_accel_limit" to="/vehicle_lateral_accel_limit"/>
+    <remap from="~lateral_jerk_limit" to="/vehicle_lateral_jerk_limit"/>
 
     <include file="$(find twist_filter)/launch/twist_filter.launch">
-        <arg name="lateral_accel_limit" value="2.5"/>
-        <arg name="lateral_jerk_limit" value="2.0"/>
         <arg name="lowpass_gain_linear_x" value="0.1"/>
         <arg name="lowpass_gain_steering_angle" value="0.1"/>
     </include>
