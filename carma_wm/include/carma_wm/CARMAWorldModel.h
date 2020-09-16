@@ -17,6 +17,7 @@
  */
 
 #include "carma_wm/WorldModel.h"
+#include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <lanelet2_core/primitives/LineString.h>
 #include "IndexedDistanceMap.h"
 #include <cav_msgs/ExternalObject.h>
@@ -137,7 +138,9 @@ public:
 
 
 private:
-
+  
+  double config_limit;
+  
   /*! \brief Helper function to compute the geometry of the route downtrack/crosstrack reference line
    *         This function should generally only be called from inside the setRoute function as it uses member variables
    * set in that function
@@ -169,6 +172,6 @@ private:
                                                                     // only
   std::vector<cav_msgs::RoadwayObstacle> roadway_objects_; // 
 
-  double config_limit;
+  
 };
 }  // namespace carma_wm
