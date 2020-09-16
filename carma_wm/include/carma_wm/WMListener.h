@@ -95,7 +95,7 @@ public:
   std::unique_lock<std::mutex> getLock(bool pre_locked = true);
 
 
-  void setConfigSpeedLimit(double config_lim);
+  void setConfigSpeedLimitCallback(double config_lim);
 
 
 private:
