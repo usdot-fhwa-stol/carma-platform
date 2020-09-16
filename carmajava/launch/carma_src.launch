@@ -44,7 +44,8 @@
     default="controller can comms gnss radar lidar camera roadway_sensor imu"
     doc="List of driver node base names which will be launched as mock drivers"
   />
-
+  <arg name="simulation_mode" default="false" doc="True if CARMA Platform is launched with CARLA Simulator"/>
+  
   <!-- Debug -->
   <!-- JVM Debug arguments -->
   <!-- JVM_DEBUG_OPTS: Start rosjava node with these JVM arguments for debugging -->
@@ -64,6 +65,7 @@
   <param name="log_name" type="str" command="$(find carma)/scripts/generate_log_name.sh"/>
   <!-- ROS Bag -->
   <arg name="use_rosbag" default="true" doc="Record a rosbag"/>
+  <arg name="rosbag_exclusions" default="/fake_exclusion" doc="Additonal regex pattern to match for identifying what topics to exclude from rosbag recordings"/>
   
   <!-- Map files to load -->
   <arg name="arealist_path" default="arealist.txt" doc="Path to the arealist.txt file which contains the paths and dimensions of each map cell to load"/>
@@ -105,6 +107,7 @@
       <arg name="single_pcd_path" value="$(arg single_pcd_path)"/>
       <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
       <arg name="vector_map_file" value="$(arg vector_map_file)" />
+      <arg name="simulation_mode" value="$(arg simulation_mode)" />
     </include>
   </group>
 
@@ -121,6 +124,7 @@
       <arg name="vector_map_file" value="$(arg vector_map_file)" />
       <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
       <arg name="yolo_dir" value="$(arg yolo_dir)"/>
+      <arg name="simulation_mode" value="$(arg simulation_mode)" />
     </include>
   </group>
 
@@ -150,5 +154,5 @@
   </group>
 
   <!-- TODO should there be a data collection launch file. Record Rosbag of all topics excluding /rosout and CAN messages since they may contain sensetive data -->
-  <node pkg="rosbag" type="record" name="rosbag_node" args="record -o /opt/carma/logs/ --lz4 -a -x '/rosout(.*)|(.*)/received_messages|(.*)/sent_messages|(.*)/ds_fusion/(.*)|(.*)/scan'" if="$(arg use_rosbag)" />
+  <node pkg="rosbag" type="record" name="rosbag_node" args="record -o /opt/carma/logs/ --lz4 -a -x '/rosout(.*)|(.*)/received_messages|(.*)/sent_messages|(.*)/scan|$(arg rosbag_exclusions)'" if="$(arg use_rosbag)" />
 </launch>
