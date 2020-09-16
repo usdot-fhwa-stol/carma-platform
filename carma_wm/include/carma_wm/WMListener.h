@@ -94,6 +94,10 @@ public:
    */
   std::unique_lock<std::mutex> getLock(bool pre_locked = true);
 
+
+  void setConfigSpeedLimit(double config_lim);
+
+
 private:
   // Callback function that uses lock to edit the map
   void mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg);
@@ -107,5 +111,10 @@ private:
   ros::Subscriber route_sub_;
   const bool multi_threaded_;
   std::mutex mw_mutex_;
+ 
+  ros::CARMANodeHandle nh2_{"/"};
+  lanelet::Velocity config_limit;
+
+
 };
 }  // namespace carma_wm

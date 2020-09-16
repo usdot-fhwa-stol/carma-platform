@@ -26,7 +26,9 @@
 #include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
 #include <lanelet2_core/Forward.h>
 #include <boost/units/physical_dimensions/velocity.hpp>
-
+#include <functional>
+#include <autoware_lanelet2_msgs/MapBin.h>
+#include <carma_utils/CARMAUtils.h>
 #include <boost/units/derived_dimension.hpp>
 #include <boost/units/physical_dimensions/length.hpp>
 #include <boost/units/physical_dimensions/time.hpp>
@@ -55,7 +57,11 @@ namespace MapConformer
  * that.
  *
  * @param map A pointer to the map which will be modified in place
+ * 
+ * @param config_limit A pointer to the configurable the configurable speed limit value
  */
-void ensureCompliance(lanelet::LaneletMapPtr map);
+void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit);
+
+
 };  // namespace MapConformer
 }  // namespace lanelet

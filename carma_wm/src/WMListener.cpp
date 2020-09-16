@@ -35,6 +35,13 @@ WMListener::WMListener(bool multi_thread) : worker_(std::unique_ptr<WMListenerWo
   // route_sub_ = nh_.subscribe("route", 1, &WMListenerWorker::routeCallback, worker_.get()); // TODO uncomment when
   // route message is defined
   roadway_objects_sub_ = nh_.subscribe("roadway_objects", 1, &WMListenerWorker::roadwayObjectListCallback, worker_.get());
+
+  double cL;
+  nh2_.getParam("config_speed_limit", cL);
+  setConfigSpeedLimit(cL);
+  
+
+
   // Set up AsyncSpinner for multi-threaded use case
   if (multi_threaded_)
   {
@@ -85,5 +92,12 @@ std::unique_lock<std::mutex> WMListener::getLock(bool pre_locked)
   std::unique_lock<std::mutex> lock(mw_mutex_, std::defer_lock);  // Create movable deferred lock
   return lock;
 }
+
+void WMListener::setConfigSpeedLimit(double config_lim)
+{
+  worker_->setConfigSpeedLimit(config_lim);
+}
+
+
 
 }  // namespace carma_wm

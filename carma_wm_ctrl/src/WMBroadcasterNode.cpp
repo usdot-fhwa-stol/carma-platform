@@ -49,9 +49,13 @@ int WMBroadcasterNode::run()
   // Geofence Sub
   geofence_sub_ = cnh_.subscribe("geofence", 1, &WMBroadcaster::geofenceCallback, &wmb_);
   
+  double config_limit;
   double lane_max_width;
   pnh_.getParam("max_lane_width", lane_max_width);
   wmb_.setMaxLaneWidth(lane_max_width);
+
+  pnh2_.getParam("config_speed_limit", config_limit);
+  wmb_.setConfigSpeedLimit(config_limit);
   
   // Spin
   cnh_.setSpinRate(10);

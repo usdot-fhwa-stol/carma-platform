@@ -65,6 +65,8 @@ private:
   ros::CARMANodeHandle cnh_;
   ros::CARMANodeHandle pnh_{"~"};
 
+  ros::CARMANodeHandle pnh2_{"/"}; //Global Scope
+
   ros::Publisher map_pub_;
   ros::Publisher map_update_pub_;
 

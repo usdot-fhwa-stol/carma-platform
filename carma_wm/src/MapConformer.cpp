@@ -537,7 +537,7 @@ void addValidSpeedLimit(Lanelet& lanelet, Area& area, lanelet::LaneletMapPtr map
 
 }  // namespace
 
-void ensureCompliance(lanelet::LaneletMapPtr map)
+void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit)
 {
   auto default_traffic_rules = getAllGermanTrafficRules();  // Use german traffic rules as default as they most closely
                                                             // match the generic traffic rules
@@ -548,7 +548,7 @@ void ensureCompliance(lanelet::LaneletMapPtr map)
     addInferredPassingControlLine(lanelet, map);
     addInferredDirectionOfTravel(lanelet, map, default_traffic_rules);
     for (auto area : map->areaLayer)
-      addValidSpeedLimit(lanelet, area, map, 0_mph, default_traffic_rules);// 0_mph can be changed with the config_limit
+      addValidSpeedLimit(lanelet, area, map, config_limit, default_traffic_rules);// 0_mph can be changed with the config_limit
 
 
   }

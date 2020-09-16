@@ -77,10 +77,14 @@ public:
    */
   void setRouteCallback(std::function<void()> callback);
 
+  void setConfigSpeedLimit(double config_lim);
+
 private:
   std::shared_ptr<CARMAWorldModel> world_model_;
   std::function<void()> map_callback_;
   std::function<void()> route_callback_;
   void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const;
+  double config_limit;
+
 };
 }  // namespace carma_wm

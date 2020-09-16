@@ -31,6 +31,7 @@
 #include <carma_wm/MapConformer.h>
 
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
+#include <lanelet2_core/utility/Units.h>
 #include <cav_msgs/TrafficControlMessage.h>
 #include <carma_wm/TrafficControl.h>
 #include <std_msgs/String.h>
@@ -105,6 +106,8 @@ public:
    */
   void setMaxLaneWidth(double max_lane_width);
 
+  void setConfigSpeedLimit(double config_limit);
+
   /*!
    * \brief Returns geofence object from TrafficControlMessageV01 ROS Msg
    * \param geofence_msg The ROS msg that contains geofence information
@@ -113,6 +116,8 @@ public:
    */
   std::shared_ptr<Geofence> geofenceFromMsg(const cav_msgs::TrafficControlMessageV01& geofence_msg);
 
+
+  
 private:
   void addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const;
   void addBackRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const;
