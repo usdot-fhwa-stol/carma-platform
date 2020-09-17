@@ -25,11 +25,13 @@ const std::unordered_set<std::string> LocalizationManager::LIDAR_FAILURE_STRINGS
                                                                                                        "Failed" });
 
 LocalizationManager::LocalizationManager(PosePublisher pose_pub, TransformPublisher transform_pub,
-                                         StatePublisher state_pub, const LocalizationManagerConfig& config,
+                                         StatePublisher state_pub, ManagedInitialPosePublisher initialpose_pub,
+                                         const LocalizationManagerConfig& config,
                                          std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory)
   : pose_pub_(pose_pub)
   , transform_pub_(transform_pub)
   , state_pub_(state_pub)
+  , initialpose_pub_(initialpose_pub)
   , config_(config)
   , timer_factory_(std::move(timer_factory))
   , transition_table_(config_.localization_mode)
@@ -104,8 +106,7 @@ void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedC
   }
 
   const LocalizationState state = transition_table_.getState();
-  if (state == LocalizationState::INITIALIZING || state == LocalizationState::OPERATIONAL ||
-      state == LocalizationState::DEGRADED)
+  if (state != LocalizationState::UNINITIALIZED && state != LocalizationState::INITIALIZING)
   {
     publishPoseStamped(*pose);
   }
@@ -113,8 +114,21 @@ void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedC
   prev_ndt_stamp_ = pose->header.stamp;
 }
 
-void LocalizationManager::gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg) const
+
+void LocalizationManager::gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
 {
+  // Just like ndt_matching the gnss pose is treated as an initialize signal if the system is not yet intialized
+  if (transition_table_.getState() == LocalizationState::UNINITIALIZED) {
+    
+    transition_table_.signal(LocalizationSignal::INITIAL_POSE);
+    
+    geometry_msgs::PoseWithCovarianceStamped new_initial_pose;
+    new_initial_pose.header = msg->header;
+    new_initial_pose.pose.pose = msg->pose;
+
+    initialpose_pub_(new_initial_pose);
+  }
+
   if (transition_table_.getState() == LocalizationState::DEGRADED_NO_LIDAR_FIX)
   {
     publishPoseStamped(*msg);
@@ -124,6 +138,7 @@ void LocalizationManager::gnssPoseCallback(const geometry_msgs::PoseStampedConst
 void LocalizationManager::initialPoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg)
 {
   transition_table_.signal(LocalizationSignal::INITIAL_POSE);
+  initialpose_pub_(*msg); // Forward the intial pose to the rest of the system
 }
 
 void LocalizationManager::systemAlertCallback(const cav_msgs::SystemAlertConstPtr& alert)

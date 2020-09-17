@@ -39,6 +39,12 @@ void Localizer::publishStatus(const cav_msgs::LocalizationStatusReport& msg) con
   state_pub_.publish(msg);
 }
 
+
+void Localizer::publishManagedInitialPose(const geometry_msgs::PoseWithCovarianceStamped& msg) const
+{
+  managed_initial_pose_pub_.publish(msg);
+}
+
 void Localizer::poseAndStatsCallback(const geometry_msgs::PoseStampedConstPtr& pose,
                                      const autoware_msgs::NDTStatConstPtr& stats) const
 {
@@ -81,7 +87,9 @@ void Localizer::run()
   // Initialize worker object
   manager_.reset(new LocalizationManager(std::bind(&Localizer::publishPoseStamped, this, std_ph::_1),
                                          std::bind(&Localizer::publishTransform, this, std_ph::_1),
-                                         std::bind(&Localizer::publishStatus, this, std_ph::_1), config,
+                                         std::bind(&Localizer::publishStatus, this, std_ph::_1),
+                                         std::bind(&Localizer::publishManagedInitialPose, this, std_ph::_1),
+                                         config,
                                          std::make_unique<carma_utils::timers::ROSTimerFactory>()));
 
   // initialize subscribers
@@ -100,6 +108,7 @@ void Localizer::run()
   ros::CARMANodeHandle::setSpinCallback(std::bind(&LocalizationManager::onSpin, manager_.get()));
 
   // initialize publishers
+  managed_initial_pose_pub_ = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>("managed_initialpose", 1, true);
   pose_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("selected_pose", 5);
   state_pub_ = nh_.advertise<cav_msgs::LocalizationStatusReport>("localization_status", 1);
 

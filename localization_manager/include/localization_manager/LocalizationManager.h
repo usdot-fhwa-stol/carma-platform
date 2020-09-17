@@ -41,8 +41,10 @@ class LocalizationManager
 public:
   using PosePublisher = std::function<void(const geometry_msgs::PoseStamped&)>;
   using TransformPublisher = std::function<void(const geometry_msgs::TransformStamped&)>;
+  using ManagedInitialPosePublisher = std::function<void(const geometry_msgs::PoseWithCovarianceStamped&)>;
   using StatePublisher = std::function<void(const cav_msgs::LocalizationStatusReport&)>;
   using TimerUniquePtr = std::unique_ptr<carma_utils::timers::Timer>;
+
 
   /**
    * \brief Constructor
@@ -50,10 +52,13 @@ public:
    * \param pose_pub A callback to trigger publication of the selected pose
    * \param transform_pub A callback to trigger transform broadcast
    * \param state_pub A callback to trigger publication of the localization state
+   * \param initialpose_pub A callback to trigger publication of the intial pose
+   * \param config The configuration settings to use for this manager
    * \param timer_factory A pointer to a timer factory to support dependency injection of timing functionality for use
    * in unit testing
    */
   LocalizationManager(PosePublisher pose_pub, TransformPublisher transform_pub, StatePublisher state_pub,
+                      ManagedInitialPosePublisher initialpose_pub,
                       const LocalizationManagerConfig& config,
                       std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory);
 
@@ -62,7 +67,7 @@ public:
    *
    * \param msg The pose of vehicle in map frame provided by GNSS
    */
-  void gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg) const;
+  void gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
 
   /**
    * \brief Synced callback for the NDT reported pose and status messages
@@ -125,6 +130,7 @@ private:
   PosePublisher pose_pub_;
   TransformPublisher transform_pub_;
   StatePublisher state_pub_;
+  ManagedInitialPosePublisher initialpose_pub_;
 
   LocalizationManagerConfig config_;
 

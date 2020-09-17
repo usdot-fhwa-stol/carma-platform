@@ -66,6 +66,13 @@ public:
   void publishStatus(const cav_msgs::LocalizationStatusReport& msg) const;
 
   /**
+   * \brief Callback to publish the initial pose deemed suitable to intialize NDT
+   * \param msg The msg to publish
+   */
+  void publishManagedInitialPose(const geometry_msgs::PoseWithCovarianceStamped& msg) const;
+
+
+  /**
    * \brief Synchronized callback for pose and stats data for usage with message_filters.
    *        Provides exception handling. 
    * \param pose The received pose message
@@ -90,6 +97,7 @@ private:
   // publisher
   ros::Publisher pose_pub_;
   ros::Publisher state_pub_;
+  ros::Publisher managed_initial_pose_pub_;
 
   double spin_rate_{ 10 };
 

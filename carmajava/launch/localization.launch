@@ -76,7 +76,7 @@
 
   <!--EKF Localizer  Commend out to remove and change marked line in waypoint following.launch--> 
   <group unless="$(arg simulation_mode)">
-    <remap from="/initialpose" to="initialpose"/>
+    <remap from="initialpose" to="managed_initialpose"/>
     <remap from="ekf_pose" to="current_pose"/>
 
     <include file="$(find ekf_localizer)/launch/ekf_localizer.launch" >
@@ -119,10 +119,11 @@
 
     <remap from="/config/ndt" to="config/ndt"/>
     <remap from="filtered_points" to="random_points"/>
+    <remap from="initialpose" to="managed_initialpose"/>
     <include file="$(find lidar_localizer)/launch/ndt_matching.launch">
       <arg name="get_height" value="true" />
       <arg name="use_odom" value="true" />
-      <arg name="use_gnss" value="1"/>
+      <arg name="use_gnss" value="0"/>
       <arg name="gnss_reinit_fitness" value="10000.0" /> <!-- Set to unreasonably high value to ensure no reinitialization occurs as it rarely works -->
       <arg name="base_frame" value="base_link"/>
     </include>
