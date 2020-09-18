@@ -138,7 +138,7 @@ namespace route {
             tf2::Transform map_in_earth;
             try
             {
-                tf2::convert(tf_tree_.lookupTransform("map", "earth", ros::Time(0)).transform, map_in_earth);
+                tf2::convert(tf_tree_.lookupTransform("earth", "map", ros::Time(0)).transform, map_in_earth);
             }
             catch (tf2::TransformException &ex)
             {
@@ -153,6 +153,11 @@ namespace route {
             for (auto pt : destination_points_in_map)
             {
                 ROS_ERROR_STREAM("in map x: " << pt.x() << " y: " << pt.y() );
+                auto llts = world_model_->getLaneletsFromPoint(pt, 10);
+                if (llts.size() != 0)
+                ROS_ERROR_STREAM("llt:id" << world_model_->getLaneletsFromPoint(pt, 10)[0].id());
+                else
+                ROS_ERROR_STREAM("this dest point is not in the map");
             }
             // get route graph from world model object
             auto p = world_model_->getMapRoutingGraph();
