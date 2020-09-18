@@ -23,11 +23,11 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <sstream>
 
-
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
 #include <carma_wm/CARMAWorldModel.h>
 #include <carma_wm/WMTestLibForGuidance.h>
+#include <lanelet2_extension/regulatory_elements/StopRule.h>
 
 TEST(PortDrayageTest, testComposeArrivalMessage)
 {
@@ -208,8 +208,19 @@ TEST(PortDrayageTest, testEstimateTimeToStop)
 
 TEST(PortDrayageTest, testPlanManeuverCb)
 {
+    cav_srvs::PlanManeuversRequest req;
+    cav_srvs::PlanManeuversResponse resp;
+
     port_drayage_plugin::PortDrayagePlugin pdp{nullptr, nullptr};
     pdp.declaration = 1;
+
+    ASSERT_EQ(pdp.plan_maneuver_cb(req,resp),false);
+
+    geometry_msgs::Twist _cur_speed;
+    _cur_speed.linear.x = 1;
+    _cur_speed.linear.y = 2;
+
+    pdp._cur_speed = _cur_speed;
 
     geometry_msgs::Pose pose;
     pose.position.x = 0;
@@ -246,22 +257,30 @@ TEST(PortDrayageTest, testPlanManeuverCb)
     ASSERT_FALSE((bool)cmw->getRoute());
     ASSERT_FALSE((bool)cmw->getMapRoutingGraph());
 
+
+    lanelet::Id stop_line_id = lanelet::utils::getId();
+    lanelet::LineString3d virtual_stop_line(stop_line_id, {pl2, pr2});
+    // Creat passing control line for solid dashed line
+    std::shared_ptr<lanelet::StopRule> stop_and_wait(new lanelet::StopRule(lanelet::StopRule::buildData(
+    lanelet::utils::getId(), { virtual_stop_line }, { lanelet::Participants::Vehicle })));
+
+    ll_1.addRegulatoryElement(stop_and_wait);
+
+
     // 2. Build map but do not assign
     // Create basic map and verify that the map and routing graph can be build, but the route remains false
     lanelet::LaneletMapPtr map = lanelet::utils::createMap({ ll_1, ll_2 }, {});
     
-    // traffic lights are created from a linestring that shows a traffic light and optionally a stop line.
-    lanelet::LineString3d trafficLight = lanelet::LineString3d(lanelet::utils::getId(), {lanelet::Point3d{lanelet::utils::getId(), 1, 0, 0}, lanelet::Point3d{lanelet::utils::getId(), 1, 1, 0}, lanelet::Point3d{lanelet::utils::getId(), 1, 2, 0}});
-    trafficLight.attributes()[lanelet::AttributeName::Type] = lanelet::AttributeValueString::TrafficLight;
-    // this creates our traffic light. Regelems are passed around as shared pointers.
-    lanelet::RegulatoryElementPtr trafficLightRegelem = lanelet::TrafficLight::make(lanelet::utils::getId(), {}, {trafficLight});
+    // // traffic lights are created from a linestring that shows a traffic light and optionally a stop line.
+    // lanelet::LineString3d stop_rule = lanelet::LineString3d(lanelet::utils::getId(), {lanelet::Point3d{lanelet::utils::getId(), 1, 0, 0}, lanelet::Point3d{lanelet::utils::getId(), 1, 1, 0}, lanelet::Point3d{lanelet::utils::getId(), 1, 2, 0}});
+    // trafficLight.attributes()[lanelet::AttributeName::Type] = lanelet::AttributeValueString::TrafficLight;
+    // // this creates our traffic light. Regelems are passed around as shared pointers.
+    // lanelet::RegulatoryElementPtr trafficLightRegelem = lanelet::TrafficLight::make(lanelet::utils::getId(), {}, {trafficLight});
 
-    // 3. Build routing graph but do not assign
-    // Build routing graph from map
+    // // 3. Build routing graph but do not assign
+    // // Build routing graph from map
     lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(
     lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
-
-    map->update(ll_2, trafficLightRegelem);
 
     lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
 
@@ -292,20 +311,19 @@ TEST(PortDrayageTest, testPlanManeuverCb)
 
     pdp.wm_ = cmw;
 
-    cav_srvs::PlanManeuversRequest req;
-    cav_srvs::PlanManeuversResponse resp;
-
-    ASSERT_EQ(pdp.plan_maneuver_cb(req,resp),false);
+    ASSERT_EQ(pdp.plan_maneuver_cb(req,resp),true);
 
     ros::Time time;
     time.sec = 1;
     time.nsec = 0;
-    
+
     cav_msgs::Maneuver maneuver = pdp.compose_stop_and_wait_maneuver_message(1, 2, 1, 2, 1, time, 10);
     ASSERT_EQ(maneuver.stop_and_wait_maneuver.end_time,time + ros::Duration(15));
 
     maneuver = pdp.compose_lane_following_maneuver_message(1, 2, 1, 2, 1, time);
     ASSERT_NEAR(maneuver.lane_following_maneuver.end_time.sec, 1, 0.0001);
+
+
 }
 // Run all the tests
 int main(int argc, char **argv)

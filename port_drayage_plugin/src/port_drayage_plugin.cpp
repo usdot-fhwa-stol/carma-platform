@@ -55,7 +55,7 @@ namespace port_drayage_plugin
         ros::Subscriber twist_sub = _nh->subscribe<geometry_msgs::TwistStamped>("localization/ekf_twist", 5, 
             [&](const geometry_msgs::TwistStampedConstPtr& speed) {
                 pdw.set_current_speed(speed);
-                _cur_speed = speed;
+                _cur_speed = speed->twist;
         });
         _cur_speed_subscriber = std::make_shared<ros::Subscriber>(twist_sub);
 
@@ -98,27 +98,29 @@ namespace port_drayage_plugin
         }
 
         auto current_lanelet = current_lanelets[0];
-        auto traffic_light_rules = current_lanelet.second.regulatoryElementsAs<lanelet::TrafficLight>();
-        double stop_loc_downtrack = 0;
+        auto stop_rules = current_lanelet.second.regulatoryElementsAs<lanelet::StopRule>();
+        double stop_rule_downtrack = 0;
 
-        if(traffic_light_rules.empty()) {
+        if(stop_rules.empty()) {
             return false;
         }
         else {
-            auto traffic_light_elem = traffic_light_rules.front();
-            lanelet::ConstLineString3d stop_line = *(traffic_light_elem->stopLine());
+            auto stop_rule_elem = stop_rules.front();
+            auto stop_line_vector = stop_rule_elem->stopAndWaitLine();
+            auto stop_line = lanelet::traits::to2D(stop_line_vector.front());
             auto point = lanelet::traits::to2D(stop_line.front());
             auto pos = carma_wm::geometry::trackPos(current_lanelet.second, point);
-
-            stop_loc_downtrack = pos.downtrack;
+            stop_rule_downtrack = pos.downtrack;
         }
 
         double current_loc_downtrack = wm_->routeTrackPos(current_loc).downtrack;
-        double speed_progress = _cur_speed->twist.linear.x;
-        double current_progress = 0;
 
-        while(current_loc_downtrack < stop_loc_downtrack)
+        double speed_progress = _cur_speed.linear.x;
+        double current_progress = 0;
+        
+        if(current_loc_downtrack < stop_rule_downtrack)
         {
+
             ros::Time start_time;
 
             if(req.prior_plan.maneuvers.size() > 0) {
@@ -153,12 +155,12 @@ namespace port_drayage_plugin
                 current_progress = current_loc_downtrack;
             }
 
-            double end_dist = stop_loc_downtrack;
+            double end_dist = stop_rule_downtrack;
 
             double estimated_distance_to_stop = estimate_distance_to_stop(speed_progress,declaration);
             double estimated_time_to_stop = estimate_time_to_stop(estimated_distance_to_stop,speed_progress);
 
-            double lane_following_distance = stop_loc_downtrack - estimated_distance_to_stop;
+            double lane_following_distance = stop_rule_downtrack - estimated_distance_to_stop;
             double stop_and_wait_distance = estimated_distance_to_stop;
 
             resp.new_plan.maneuvers.push_back(
