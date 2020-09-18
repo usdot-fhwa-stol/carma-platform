@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 2.8.3)
 project(port_drayage_plugin)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++14)
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -14,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   roscpp
   std_msgs
+  carma_wm
 )
 
 ## System dependencies are found with CMake's conventions
@@ -31,7 +34,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES port_drayage_plugin
-#  CATKIN_DEPENDS carma_utils cav_msgs cav_srvs roscpp std_msgs
+  CATKIN_DEPENDS carma_utils cav_msgs cav_srvs roscpp std_msgs carma_wm
 #  DEPENDS system_lib
 )
 
