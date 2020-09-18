@@ -136,6 +136,8 @@ void WMListenerWorker::roadwayObjectListCallback(const cav_msgs::RoadwayObstacle
 
 void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
 {
+  ROS_ERROR_STREAM("RouteCallback has been called!");
+  
   if (!world_model_->getMap()) {
     ROS_ERROR_STREAM("WMListener received a route before a map was available. Dropping route message.");
     return;
@@ -152,6 +154,11 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
                                : world_model_->getMapRoutingGraph()->getRouteVia(path.front(), lanelet::ConstLanelets(path.begin() + 1, path.end() - 1), path.back());
   if(route_opt.is_initialized()) {
     auto ptr = std::make_shared<lanelet::routing::Route>(std::move(route_opt.get()));
+    ROS_ERROR_STREAM("Route is being set by the Route topic right now!!!");
+    for (auto llt: ptr->shortestPath())
+    {
+      ROS_ERROR_STREAM("part of shorted path id: " << llt.id());
+    }
     world_model_->setRoute(ptr);
   }
   // Call route_callback_;
@@ -159,6 +166,8 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
   {
     route_callback_();
   }
+  ROS_ERROR_STREAM("RouteCallback has been finished!");
+
 }
 
 void WMListenerWorker::setMapCallback(std::function<void()> callback)

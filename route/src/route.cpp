@@ -39,10 +39,12 @@ namespace route {
         wm_ = wml_.getWorldModel();
         rg_worker_.setWorldModelPtr(wm_);
         // load params and pass to route generator worker
-        double ct_error, dt_range;
+        double ct_error, dt_range, x, y;
         pnh_->getParam("max_crosstrack_error", ct_error);
         pnh_->getParam("destination_downtrack_range", dt_range);
-        rg_worker_.set_ctdt_param(ct_error, dt_range);
+        pnh_->getParam("x", x);
+        pnh_->getParam("y", y);
+        rg_worker_.set_ctdt_param(ct_error, dt_range, x, y);
         std::string route_file_location;
         pnh_->getParam("route_file_path", route_file_location);
         rg_worker_.set_route_file_path(route_file_location);

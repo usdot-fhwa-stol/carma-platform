@@ -20,6 +20,7 @@
 #include <cav_msgs/Route.h>
 #include <carma_wm/CARMAWorldModel.h>
 #include <carma_wm/TrafficControl.h>
+#include <ros/ros.h>
 
 namespace carma_wm
 {

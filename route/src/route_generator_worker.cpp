@@ -259,7 +259,8 @@ namespace route {
     {
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING) {
             // convert from pose stamp into lanelet basic 2D point
-            lanelet::BasicPoint2d current_loc(msg->pose.position.x, msg->pose.position.y);
+            //lanelet::BasicPoint2d current_loc(msg->pose.position.x, msg->pose.position.y);
+            lanelet::BasicPoint2d current_loc(318.0, -492.23);
             // get dt ct from world model
             carma_wm::TrackPos track(0.0, 0.0);
             try {
@@ -320,10 +321,12 @@ namespace route {
         route_pub_ = route_pub;
     }
 
-    void RouteGeneratorWorker::set_ctdt_param(double ct_max_error, double dt_dest_range)
+    void RouteGeneratorWorker::set_ctdt_param(double ct_max_error, double dt_dest_range, double x, double y)
     {
         this->cross_track_max_ = ct_max_error;
         this->down_track_target_range_ = dt_dest_range;
+        this->curr_loc_x_ = x;
+        this->curr_loc_y_ = y;
     }
 
     void RouteGeneratorWorker::publish_route_event(uint8_t event_type)

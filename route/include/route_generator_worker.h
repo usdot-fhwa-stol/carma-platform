@@ -111,7 +111,7 @@ namespace route {
          * \param ct_max_error Maximum cross track error which can trigger left route event
          * \param dt_dest_range Minimum down track error which can trigger route complete event
          */
-        void set_ctdt_param(double ct_max_error, double dt_dest_range);
+        void set_ctdt_param(double ct_max_error, double dt_dest_range, double x,double y);
 
         /**
          * \brief Method to pass publishers into worker class
@@ -173,7 +173,7 @@ namespace route {
         double down_track_target_range_;
 
         // current cross track and down track distance relative to the route
-        double current_crosstrack_distance_, current_downtrack_distance_;
+        double current_crosstrack_distance_, current_downtrack_distance_, curr_loc_x_, curr_loc_y_;
 
         // current lanelet down track and cross track distance
         double ll_crosstrack_distance_, ll_downtrack_distance_;
