@@ -120,6 +120,11 @@ namespace route {
             publish_route_event(cav_msgs::RouteEvent::ROUTE_SELECTED);
             // load destination points in ECEF frame
             auto destination_points = load_route_destinations_in_ecef(req.routeID);
+            ROS_ERROR_STREAM("Size of dest pts" << destination_points.size());
+            for (auto pt : destination_points)
+            {
+                ROS_ERROR_STREAM("in earth x: " << pt.x() << " y: " << pt.y() );
+            }
             // Check if route file are valid with at least one starting points and one destination points
             if(destination_points.size() < 2)
             {
@@ -133,7 +138,7 @@ namespace route {
             tf2::Transform map_in_earth;
             try
             {
-                tf2::convert(tf_tree_.lookupTransform("earth", "map", ros::Time(0)).transform, map_in_earth);
+                tf2::convert(tf_tree_.lookupTransform("map", "earth", ros::Time(0)).transform, map_in_earth);
             }
             catch (tf2::TransformException &ex)
             {
@@ -147,7 +152,7 @@ namespace route {
             auto destination_points_in_map = transform_to_map_frame(destination_points, map_in_earth);
             for (auto pt : destination_points_in_map)
             {
-                ROS_ERROR_STREAM("x: " << pt.x() << " y: " << pt.y() );
+                ROS_ERROR_STREAM("in map x: " << pt.x() << " y: " << pt.y() );
             }
             // get route graph from world model object
             auto p = world_model_->getMapRoutingGraph();
