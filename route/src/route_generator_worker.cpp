@@ -145,6 +145,10 @@ namespace route {
             }
             // convert points in ECEF to map frame
             auto destination_points_in_map = transform_to_map_frame(destination_points, map_in_earth);
+            for (auto pt : destination_points_in_map)
+            {
+                ROS_ERROR_STREAM("x: " << pt.x() << " y: " << pt.y() );
+            }
             // get route graph from world model object
             auto p = world_model_->getMapRoutingGraph();
             // generate a route
@@ -267,7 +271,7 @@ namespace route {
             }
             else
             {
-                lanelet::BasicPoint2d current_loc_(current_loc_x, current_loc_y);
+                lanelet::BasicPoint2d current_loc_(curr_loc_x_, curr_loc_y_);
                 current_loc = current_loc_;
             }
 
@@ -310,12 +314,12 @@ namespace route {
                 ROS_ERROR_STREAM("Failed to set the current speed limit. Valid traffic rules object could not be built.");
             }
              // check if we left the seleted route by cross track error
-            ROS_ERROR_STREAM("max_cross_track_error" << cross_track_max_);
-            ROS_ERROR_STREAM("current_crosstrack_distance" << std::fabs(current_crosstrack_distance_));
-            ROS_ERROR_STREAM("current_fowntrack_distance" << current_downtrack_distance_);
-            ROS_ERROR_STREAM("length 2" << world_model_->getRoute()->length2d());
-            ROS_ERROR_STREAM("downtrack_allows" << down_track_target_range_);
-            ROS_ERROR_STREAM("difference" <<  world_model_->getRoute()->length2d() - down_track_target_range_);
+            // ROS_ERROR_STREAM("max_cross_track_error" << cross_track_max_);
+            // ROS_ERROR_STREAM("current_crosstrack_distance" << std::fabs(current_crosstrack_distance_));
+            // ROS_ERROR_STREAM("current_fowntrack_distance" << current_downtrack_distance_);
+            // ROS_ERROR_STREAM("length 2" << world_model_->getRoute()->length2d());
+            // ROS_ERROR_STREAM("downtrack_allows" << down_track_target_range_);
+            // ROS_ERROR_STREAM("difference" <<  world_model_->getRoute()->length2d() - down_track_target_range_);
 
             // check if we left the seleted route by cross track error
             if(std::fabs(current_crosstrack_distance_) > cross_track_max_)
