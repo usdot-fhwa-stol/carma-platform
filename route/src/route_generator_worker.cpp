@@ -217,6 +217,8 @@ namespace route {
             coordinate.elevation = std::stod(line.substr(0, comma));
             // no rotation needed since it only represents a point
             tf2::Quaternion no_rotation(0, 0, 0, 1);
+            ROS_ERROR_STREAM("lat: " << coordinate.lat << ",lon: " << coordinate.lon << ", el: " << coordinate.elevation);
+
             destination_points.emplace_back(wgs84_utils::geodesic_to_ecef(coordinate, tf2::Transform(no_rotation)));
         }
         return destination_points;
@@ -228,7 +230,10 @@ namespace route {
         for(tf2::Vector3 point : ecef_points)
         {
             tf2::Transform point_in_earth;
+            tf2::Quaternion no_rotation(0, 0, 0, 1);
+
             point_in_earth.setOrigin(point);
+            point_in_earth.setRotation(no_rotation);
             // convert to map frame by (T_e_m)^(-1) * T_e_p
             auto point_in_map = map_in_earth.inverse() * point_in_earth;
             // return as 2D points as the API requiremnet of lanelet2 lib

@@ -237,6 +237,12 @@ TEST(RouteGeneratorTest, testReadRoutetfhrcFile)
             ASSERT_NEAR(-6196590, points[0].getZ(), 5.0);
         }
    }
+   wgs84_utils::wgs84_coordinate coordinate;
+   coordinate.lat = 4.93665;
+   coordinate.lon = 0.679911;
+   coordinate.elevation = 0.111111;
+   tf2::Quaternion no_rotation(0, 0, 0, 1);
+   wgs84_utils::geodesic_to_ecef(coordinate, tf2::Transform(no_rotation));
 }
 
 // Run all the tests
