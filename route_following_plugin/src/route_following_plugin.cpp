@@ -75,7 +75,9 @@ namespace route_following_plugin
         }
         auto current_lanelet = current_lanelets[0];
         auto shortest_path = wm_->getRoute()->shortestPath();
+        std::cerr << "path size: " << shortest_path.size() << std::endl;
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
+        std::cerr << "current_progress: " << current_progress << std::endl;
         double speed_progress = current_speed_;
         double total_maneuver_length = current_progress + mvr_duration_ * RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
         int last_lanelet_index = findLaneletIndexFromPath(current_lanelet.second.id(), shortest_path);
@@ -154,11 +156,11 @@ namespace route_following_plugin
         maneuver_msg.lane_following_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
         maneuver_msg.lane_following_maneuver.parameters.planning_tactical_plugin = "InlaneCruisingPlugin";
         maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin = "RouteFollowingPlugin";
-        maneuver_msg.lane_following_maneuver.start_dist = current_dist;
-        maneuver_msg.lane_following_maneuver.start_speed = current_speed;
+        maneuver_msg.lane_following_maneuver.start_dist = (current_dist > 0.0) ? current_dist : 10.0;
+        maneuver_msg.lane_following_maneuver.start_speed = (current_speed > 0.0) ? current_speed : 5.0;
         maneuver_msg.lane_following_maneuver.start_time = current_time;
-        maneuver_msg.lane_following_maneuver.end_dist = end_dist;
-        maneuver_msg.lane_following_maneuver.end_speed = target_speed;
+        maneuver_msg.lane_following_maneuver.end_dist = (end_dist > 0.0) ? end_dist : 20.0;
+        maneuver_msg.lane_following_maneuver.end_speed = (target_speed > 0.0) ? target_speed : 10.0;
         // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
         maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration((end_dist - current_dist) / (0.5 * (current_speed + target_speed)));
         maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
