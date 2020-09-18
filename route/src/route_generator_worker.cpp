@@ -259,8 +259,19 @@ namespace route {
     {
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING) {
             // convert from pose stamp into lanelet basic 2D point
+            lanelet::BasicPoint2d current_loc;
+            if (curr_loc_x_ == 0)   
+            {
+                lanelet::BasicPoint2d current_loc_(msg->pose.position.x, msg->pose.position.y);
+                current_loc = current_loc_;
+            }
+            else
+            {
+                lanelet::BasicPoint2d current_loc_(current_loc_x, current_loc_y);
+                current_loc = current_loc_;
+            }
+
             //lanelet::BasicPoint2d current_loc(msg->pose.position.x, msg->pose.position.y);
-            lanelet::BasicPoint2d current_loc(318.0, -492.23);
             // get dt ct from world model
             carma_wm::TrackPos track(0.0, 0.0);
             try {

@@ -6,6 +6,6 @@ max_crosstrack_error: 100000
 # Units: meter
 destination_downtrack_range: -1000000
 
-#for debug purposes
-x: 318.0
+#for debug purposes 318.0
+x: 0
 y: -492.23
