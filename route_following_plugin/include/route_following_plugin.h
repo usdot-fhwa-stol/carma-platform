@@ -24,7 +24,6 @@
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
 #include <cav_srvs/PlanManeuvers.h>
-#include <cav_srvs/GetLights.h>
 
 namespace route_following_plugin
 {
