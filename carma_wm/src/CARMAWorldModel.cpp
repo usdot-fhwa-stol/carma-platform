@@ -387,8 +387,8 @@ lanelet::Optional<TrafficRulesConstPtr> CARMAWorldModel::getTrafficRules(const s
     lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(
         lanelet::traffic_rules::CarmaUSTrafficRules::Location, participant);
 
-      std::unique_ptr<lanelet::traffic_rules::CarmaUSTrafficRules> carma_traffic_rules;
-      carma_traffic_rules->setConfigSpeedLimit(config_limit);
+     /* std::unique_ptr<lanelet::traffic_rules::CarmaUSTrafficRules> carma_traffic_rules;
+      carma_traffic_rules->setConfigSpeedLimit(config_limit);*/
 
 
     optional_ptr = std::static_pointer_cast<const lanelet::traffic_rules::TrafficRules>(
