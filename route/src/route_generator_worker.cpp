@@ -15,6 +15,8 @@
  */
 
 #include "route_generator_worker.h"
+#include <lanelet2_extension/projection/local_frame_projector.h>
+
 
 namespace route {
 
@@ -150,9 +152,21 @@ namespace route {
             }
             // convert points in ECEF to map frame
             auto destination_points_in_map = transform_to_map_frame(destination_points, map_in_earth);
+            std::string target_frame = "+proj=tmerc +lat_0=38.95197911150576 +lon_0=-77.14835128349988 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+            lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+            lanelet::BasicPoint3d localPoint;
             for (auto pt : destination_points_in_map)
             {
+                localPoint.x()= pt.x();
+                localPoint.y()= pt.y();
+                lanelet::GPSPoint gps = local_projector.reverse(localPoint); //If the appropriate library is included, the reverse() function can be used to convert from local xyz to lat/lon
+                ROS_ERROR_STREAM("reversed below to gps lat: " << gps.lat << " lon: " << gps.lon );
                 ROS_ERROR_STREAM("in map x: " << pt.x() << " y: " << pt.y() );
+                auto llts = world_model_->getLaneletsFromPoint(pt, 10);
+                if (llts.size() != 0)
+                ROS_ERROR_STREAM("llt:id" << world_model_->getLaneletsFromPoint(pt, 10)[0].id());
+                else
+                ROS_ERROR_STREAM("this dest point is not in the map");
             }
             // get route graph from world model object
             auto p = world_model_->getMapRoutingGraph();
@@ -185,7 +199,7 @@ namespace route {
         return false;
     }
 
-    std::vector<tf2::Vector3> RouteGeneratorWorker::load_route_destinations_in_ecef(const std::string& route_id) const
+    std::vector<tf2::Vector3> RouteGeneratorWorker::load_route_destinations_in_ecef(const std::string& route_id, std::vector<lanelet::BasicPoint2d>& pt_vec)
     {
         // compose full path of the route file
         std::string route_file_name = route_file_path_ + route_id + ".csv";
@@ -196,6 +210,7 @@ namespace route {
         while(std::getline(fs, line))
         {
             wgs84_utils::wgs84_coordinate coordinate;
+            lanelet::BasicPoint2d bpt;
             // lat lon and elev is seperated by comma
             auto comma = line.find(",");
             // convert lon value in the range of [0, 360.0] degree and then into rad
@@ -212,6 +227,8 @@ namespace route {
             coordinate.elevation = std::stod(line.substr(0, comma));
             // no rotation needed since it only represents a point
             tf2::Quaternion no_rotation(0, 0, 0, 1);
+            ROS_ERROR_STREAM("lat: " << coordinate.lat << ",lon: " << coordinate.lon << ", el: " << coordinate.elevation);
+
             destination_points.emplace_back(wgs84_utils::geodesic_to_ecef(coordinate, tf2::Transform(no_rotation)));
         }
         return destination_points;
@@ -223,7 +240,10 @@ namespace route {
         for(tf2::Vector3 point : ecef_points)
         {
             tf2::Transform point_in_earth;
+            tf2::Quaternion no_rotation(0, 0, 0, 1);
+
             point_in_earth.setOrigin(point);
+            point_in_earth.setRotation(no_rotation);
             // convert to map frame by (T_e_m)^(-1) * T_e_p
             auto point_in_map = map_in_earth.inverse() * point_in_earth;
             // return as 2D points as the API requiremnet of lanelet2 lib
