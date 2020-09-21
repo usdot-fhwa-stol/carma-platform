@@ -66,14 +66,18 @@ namespace route_following_plugin
     bool RouteFollowingPlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp)
     {        
 
+        ROS_ERROR_STREAM("Started maneuver");
+        
         lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
         auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc, 1);
         if(current_lanelets.size() == 0)
         {
-            ROS_WARN_STREAM("Cannot find any lanelet in map!");
+            ROS_ERROR_STREAM("Cannot find any lanelet in map!");
             return true;
         }
         auto current_lanelet = current_lanelets[0];
+        ROS_ERROR_STREAM("lnlt");
+
         auto shortest_path = wm_->getRoute()->shortestPath();
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
         double speed_progress = current_speed_;
@@ -81,7 +85,7 @@ namespace route_following_plugin
         int last_lanelet_index = findLaneletIndexFromPath(current_lanelet.second.id(), shortest_path);
         if(last_lanelet_index == -1)
         {
-            ROS_WARN_STREAM("Cannot find current lanelet in shortest path!");
+            ROS_ERROR_STREAM("Cannot find current lanelet in shortest path!");
             return true;
         }
         while(current_progress < total_maneuver_length && last_lanelet_index < shortest_path.size())
@@ -104,7 +108,7 @@ namespace route_following_plugin
             auto following_lanelets = wm_->getRoute()->followingRelations(shortest_path[last_lanelet_index]);
             if(following_lanelets.size() == 0)
             {
-                ROS_WARN_STREAM("Cannot find the following lanelet.");
+                ROS_ERROR_STREAM("Cannot find the following lanelet.");
                 return true;
             }
             if(identifyLaneChange(following_lanelets, shortest_path[last_lanelet_index + 1].id()))
@@ -113,13 +117,13 @@ namespace route_following_plugin
             }
             else
             {
-                ROS_WARN_STREAM("Cannot find the next lanelet in the current lanelet's successor list!");
+                ROS_ERROR_STREAM("Cannot find the next lanelet in the current lanelet's successor list!");
                 return true;
             }
         }
         if(resp.new_plan.maneuvers.size() == 0)
         {
-            ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
+            ROS_ERROR_STREAM("Cannot plan maneuver because no route is found");
         }
         return true;
     }

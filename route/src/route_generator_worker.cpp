@@ -121,7 +121,8 @@ namespace route {
             this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_SELECTED);
             publish_route_event(cav_msgs::RouteEvent::ROUTE_SELECTED);
             // load destination points in ECEF frame
-            auto destination_points = load_route_destinations_in_ecef(req.routeID);
+            std::vector<lanelet::BasicPoint2d> pt_vec;
+            auto destination_points = load_route_destinations_in_ecef(req.routeID, pt_vec);
             ROS_ERROR_STREAM("Size of dest pts" << destination_points.size());
             for (auto pt : destination_points)
             {
@@ -155,7 +156,7 @@ namespace route {
             std::string target_frame = "+proj=tmerc +lat_0=38.95197911150576 +lon_0=-77.14835128349988 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
             lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
             lanelet::BasicPoint3d localPoint;
-            for (auto pt : destination_points_in_map)
+            for (auto pt : pt_vec)
             {
                 localPoint.x()= pt.x();
                 localPoint.y()= pt.y();
@@ -171,9 +172,9 @@ namespace route {
             // get route graph from world model object
             auto p = world_model_->getMapRoutingGraph();
             // generate a route
-            auto route = routing(destination_points_in_map.front(),
-                                std::vector<lanelet::BasicPoint2d>(destination_points_in_map.begin() + 1, destination_points_in_map.end() - 1),
-                                destination_points_in_map.back(),
+            auto route = routing(pt_vec.front(),
+                                std::vector<lanelet::BasicPoint2d>(pt_vec.begin() + 1, pt_vec.end() - 1),
+                                pt_vec.back(),
                                 world_model_->getMap(), world_model_->getMapRoutingGraph());
             // check if route successed
             if(!route)
@@ -206,11 +207,14 @@ namespace route {
         std::ifstream fs(route_file_name);
         std::string line;
         std::vector<tf2::Vector3> destination_points;
+
+        std::string target_frame = "+proj=tmerc +lat_0=38.95197911150576 +lon_0=-77.14835128349988 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+        lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+
         // read each line if any
         while(std::getline(fs, line))
         {
             wgs84_utils::wgs84_coordinate coordinate;
-            lanelet::BasicPoint2d bpt;
             // lat lon and elev is seperated by comma
             auto comma = line.find(",");
             // convert lon value in the range of [0, 360.0] degree and then into rad
@@ -227,8 +231,15 @@ namespace route {
             coordinate.elevation = std::stod(line.substr(0, comma));
             // no rotation needed since it only represents a point
             tf2::Quaternion no_rotation(0, 0, 0, 1);
-            ROS_ERROR_STREAM("lat: " << coordinate.lat << ",lon: " << coordinate.lon << ", el: " << coordinate.elevation);
+            ROS_ERROR_STREAM("rad::: lat: " << coordinate.lat << ",lon: " << coordinate.lon << ", el: " << coordinate.elevation);
+            lanelet::GPSPoint gps;
+            gps.lat = coordinate.lat / DEG_TO_RAD;
+            gps.lon = coordinate.lon / DEG_TO_RAD - 360;
+            ROS_ERROR_STREAM("deg::: lat: " << gps.lat << ",lon: " << gps.lon);
 
+            lanelet::BasicPoint3d map_point = local_projector.forward(gps);
+            ROS_ERROR_STREAM("map_point: x" << map_point.x() << ",y: " << map_point.y());
+            pt_vec.push_back({map_point.x(), map_point.y()});
             destination_points.emplace_back(wgs84_utils::geodesic_to_ecef(coordinate, tf2::Transform(no_rotation)));
         }
         return destination_points;
