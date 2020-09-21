@@ -19,5 +19,3 @@
       <remap from="maneuver_plan" to="arbitrator/final_maneuver_plan"/>
     </node>
 </launch>
-
-

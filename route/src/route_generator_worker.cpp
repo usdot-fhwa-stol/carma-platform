@@ -222,7 +222,7 @@ namespace route {
                 (std::stod(line.substr(0, comma)) < 0 ? std::stod(line.substr(0, comma)) + 360.0 : std::stod(line.substr(0, comma))) * DEG_TO_RAD;
             line.erase(0, comma + 1);
             comma = line.find(",");
-            // convert lon value in the range of [0, 360.0] degree and then into rad
+            // convert lat value in the range of [0, 360.0] degree and then into rad
             coordinate.lat =
                 (std::stod(line.substr(0, comma)) < 0 ? std::stod(line.substr(0, comma)) + 360.0 : std::stod(line.substr(0, comma))) * DEG_TO_RAD;
             // elevation is in meters

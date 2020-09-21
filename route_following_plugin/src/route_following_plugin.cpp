@@ -65,10 +65,17 @@ namespace route_following_plugin
 
     bool RouteFollowingPlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp)
     {        
+<<<<<<< HEAD
 
         ROS_ERROR_STREAM("Started maneuver");
         
         lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
+=======
+        ROS_ERROR_STREAM("Plan maneuver cb started!");
+        //lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
+        lanelet::BasicPoint2d current_loc( 0.556598, 4.35433e-08);
+        
+>>>>>>> 9523aea935a8aa8fc4476c075677e8755bf57ada
         auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc, 1);
         if(current_lanelets.size() == 0)
         {
@@ -121,10 +128,14 @@ namespace route_following_plugin
                 return true;
             }
         }
+
         if(resp.new_plan.maneuvers.size() == 0)
         {
             ROS_ERROR_STREAM("Cannot plan maneuver because no route is found");
         }
+        
+        ROS_ERROR_STREAM("Plan maneuver cb ended!");
+
         return true;
     }
 
