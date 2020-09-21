@@ -26,26 +26,26 @@ namespace arbitrator
 {
     void Arbitrator::run()
     {
-        ROS_INFO("Aribtrator started, beginning arbitrator state machine.");
+        ROS_ERROR("Aribtrator started, beginning arbitrator state machine.");
         while (!ros::isShuttingDown())
         {
             ros::spinOnce();
             switch (sm_->get_state()) 
             {
                 case INITIAL:
-                    ROS_INFO("Aribtrator spinning in INITIAL state.");
+                    ROS_ERROR("Aribtrator spinning in INITIAL state.");
                     initial_state();
                     break;
                 case PLANNING:
-                    ROS_INFO("Aribtrator spinning in PLANNING state.");
+                    ROS_ERROR("Aribtrator spinning in PLANNING state.");
                     planning_state();
                     break;
                 case WAITING:
-                    ROS_INFO("Aribtrator spinning in WAITING state.");
+                    ROS_ERROR("Aribtrator spinning in WAITING state.");
                     waiting_state();
                     break;
                 case PAUSED:
-                    ROS_INFO("Aribtrator spinning in PAUSED state.");
+                    ROS_ERROR("Aribtrator spinning in PAUSED state.");
                     paused_state();
                     break;
                 default:
@@ -64,7 +64,7 @@ namespace arbitrator
             case cav_msgs::GuidanceState::DRIVERS_READY:
                 if(sm_->get_state() == ArbitratorState::PLANNING || sm_->get_state() == ArbitratorState::WAITING)
                 {
-                    ROS_INFO("Received notice that guidance has been restarted, pausing arbitrator.");
+                    ROS_ERROR("Received notice that guidance has been restarted, pausing arbitrator.");
                     sm_->submit_event(ArbitratorEvent::ARBITRATOR_PAUSED);
                 }
                 break;
@@ -72,7 +72,7 @@ namespace arbitrator
                 // NO-OP
                 break;
             case cav_msgs::GuidanceState::ENGAGED:
-                ROS_INFO("Received notice that guidance has been engaged!");
+                ROS_ERROR("Received notice that guidance has been engaged!");
                 if (sm_->get_state() == ArbitratorState::INITIAL) {
                     sm_->submit_event(ArbitratorEvent::SYSTEM_STARTUP_COMPLETE);
                 } else if (sm_->get_state() == ArbitratorState::PAUSED) {
@@ -80,11 +80,11 @@ namespace arbitrator
                 }
                 break;
             case cav_msgs::GuidanceState::INACTIVE:
-                ROS_INFO("Received notice that guidance has been disengaged, pausing arbitrator.");
+                ROS_ERROR("Received notice that guidance has been disengaged, pausing arbitrator.");
                 sm_->submit_event(ArbitratorEvent::ARBITRATOR_PAUSED);
                 break;
             case cav_msgs::GuidanceState::SHUTDOWN:
-                ROS_INFO("Received notice that guidance has been shutdown, shutting down arbitrator.");
+                ROS_ERROR("Received notice that guidance has been shutdown, shutting down arbitrator.");
                 sm_->submit_event(ArbitratorEvent::SYSTEM_SHUTDOWN_INITIATED);
                 break;
             default:
@@ -96,7 +96,7 @@ namespace arbitrator
     {
         if(!initialized_)
         {   
-            ROS_INFO("Arbitrator initializing on first initial state spin...");
+            ROS_ERROR("Arbitrator initializing on first initial state spin...");
             final_plan_pub_ = nh_->advertise<cav_msgs::ManeuverPlan>("final_maneuver_plan", 5);
             guidance_state_sub_ = nh_->subscribe<cav_msgs::GuidanceState>("guidance_state", 5, &Arbitrator::guidance_state_cb, this);
             initialized_ = true;
@@ -106,7 +106,7 @@ namespace arbitrator
 
     void Arbitrator::planning_state()
     {
-        ROS_INFO("Aribtrator beginning planning process!");
+        ROS_ERROR("Aribtrator beginning planning process!");
         ros::Time planning_process_start = ros::Time::now();
         cav_msgs::ManeuverPlan plan = planning_strategy_.generate_plan();
         if (!plan.maneuvers.empty()) 
@@ -117,17 +117,17 @@ namespace arbitrator
 
             if (plan_duration < min_plan_duration_) 
             {
-                ROS_WARN_STREAM("Arbitrator is unable to generate a plan with minimum plan duration requirement!");
+                ROS_ERROR_STREAM("Arbitrator is unable to generate a plan with minimum plan duration requirement!");
             } 
             else 
             {
-                ROS_INFO_STREAM("Arbitrator is publishing plan " << plan.maneuver_plan_id << " of duration " << plan_duration << " as current maneuver plan");
+                ROS_ERROR_STREAM("Arbitrator is publishing plan " << plan.maneuver_plan_id << " of duration " << plan_duration << " as current maneuver plan");
             }
             final_plan_pub_.publish(plan);
         }
         else
         {
-            ROS_WARN("Arbitrator was unable to generate a plan!");
+            ROS_ERROR("Arbitrator was unable to generate a plan!");
         }
 
         next_planning_process_start_ = planning_process_start + time_between_plans_;
@@ -143,7 +143,7 @@ namespace arbitrator
         {
             ros::Duration(0.1).sleep();
         }
-        ROS_INFO("Arbitrator transitioning from WAITING to PLANNING state.");
+        ROS_ERROR("Arbitrator transitioning from WAITING to PLANNING state.");
         sm_->submit_event(ArbitratorEvent::PLANNING_TIMER_TRIGGER);
     }
 
@@ -154,7 +154,7 @@ namespace arbitrator
 
     void Arbitrator::shutdown_state()
     {
-        ROS_INFO_STREAM("Arbitrator shutting down...");
+        ROS_ERROR_STREAM("Arbitrator shutting down...");
         ros::shutdown(); // Will stop upper level spin and shutdown node
     }
 };
