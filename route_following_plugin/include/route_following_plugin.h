@@ -128,7 +128,7 @@ namespace route_following_plugin
          * \param resp Plan maneuver response with a list of maneuver plan
          * \return If service call successed
          */
-        bool plan_maneuver_cb(cav_srvs::GetLights &req, cav_srvs::GetLights &resp);
+        bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
 
     };
 

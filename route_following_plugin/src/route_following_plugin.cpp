@@ -63,7 +63,7 @@ namespace route_following_plugin
         ros::CARMANodeHandle::spin();
     }
 
-    bool RouteFollowingPlugin::plan_maneuver_cb(cav_srvs::GetLights &req, cav_srvs::GetLights &resp)
+    bool RouteFollowingPlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp)
     {        
         ROS_ERROR_STREAM("Plan maneuver cb started!");
         //lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
