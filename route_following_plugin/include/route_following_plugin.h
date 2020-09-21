@@ -24,6 +24,7 @@
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
 #include <cav_srvs/PlanManeuvers.h>
+#include <cav_srvs/GetLights.h>
 
 namespace route_following_plugin
 {
@@ -127,7 +128,7 @@ namespace route_following_plugin
          * \param resp Plan maneuver response with a list of maneuver plan
          * \return If service call successed
          */
-        bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
+        bool plan_maneuver_cb(cav_srvs::GetLights &req, cav_srvs::GetLights &resp);
 
     };
 
