@@ -125,7 +125,7 @@ namespace route {
          * \brief Helper function to load route points from route file and convert them from lat/lon values to cooridinates in ECEF
          * \param route_id This function will read the route file with provided route_id
          */
-        std::vector<tf2::Vector3> load_route_destinations_in_ecef(const std::string& route_id) const;
+        std::vector<tf2::Vector3> load_route_destinations_in_ecef(const std::string& route_id, std::vector<lanelet::BasicPoint2d>& pt_vec) ;
 
         /**
          * \brief Helper function to transform points from ECEF frame to local map frame based on given transformation
