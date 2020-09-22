@@ -51,7 +51,7 @@ namespace arbitrator
                     // get plan duration
                     plan_duration = arbitrator_utils::get_plan_end_time(cur_plan) - arbitrator_utils::get_plan_start_time(cur_plan); 
                 }
-                ROS_ERROR_STREAM("arbitrator: generate plan: mid for");        
+                ROS_ERROR_STREAM("arbitrator: generate plan: mid: plan_duration" << plan_duration << ", target:" << target_plan_duration_);        
 
                 // Evaluate terminal condition
                 if (plan_duration >= target_plan_duration_) 
@@ -61,6 +61,7 @@ namespace arbitrator
                     longest_plan_duration = plan_duration;
                     longest_plan = cur_plan;
                 }
+                ROS_ERROR_STREAM("arbitrator: generate plan: mid: longest plan_duration" << longest_plan_duration);       
 
                 // Expand it, and reprioritize
                 std::vector<cav_msgs::ManeuverPlan> children = neighbor_generator_.generate_neighbors(cur_plan);
@@ -78,6 +79,11 @@ namespace arbitrator
             
             new_open_list = search_strategy_.prioritize_plans(new_open_list);
             open_list = new_open_list;
+            ROS_ERROR_STREAM("size of open_list:" << open_list.size());
+            for ( auto pair : open_list)
+            {
+                ROS_ERROR_STREAM("part of open_list man size: " << pair.first.maneuvers.size() << ", double:" << pair.second);
+            }
         }
 
         ROS_ERROR_STREAM("arbitrator: generate plan: ended");        
