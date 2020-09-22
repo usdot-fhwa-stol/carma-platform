@@ -34,7 +34,10 @@ namespace arbitrator
         {
             ros::ServiceClient sc = nh_->serviceClient<cav_srvs::PlanManeuvers>(*i);
             if (sc.call(msg)) {
+                ROS_ERROR_STREAM("finished call");
                 responses.emplace(*i, msg);
+                ROS_ERROR_STREAM("finished emplacing");
+
             }
         }
         return responses;

@@ -64,12 +64,15 @@ namespace arbitrator
 
                 // Expand it, and reprioritize
                 std::vector<cav_msgs::ManeuverPlan> children = neighbor_generator_.generate_neighbors(cur_plan);
+                ROS_ERROR_STREAM("arbitrator: generate plan: mid for: ended generate_neighbors");        
                 
                 // Compute cost for each child and store in open list
                 for (auto child = children.begin(); child != children.end(); child++)
                 {
                     new_open_list.push_back(std::make_pair(*child, cost_function_.compute_cost_per_unit_distance(*child)));
                 }
+                ROS_ERROR_STREAM("arbitrator: generate plan: mid for: ended mini children for loop");        
+
             }
             ROS_ERROR_STREAM("arbitrator: generate plan: end while");        
             

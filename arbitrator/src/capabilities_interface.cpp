@@ -32,7 +32,7 @@ namespace arbitrator
         if (query_string == STRATEGIC_PLAN_CAPABILITY && sc_s.call(srv))
         {
             topics = srv.response.plan_service;
-            ROS_INFO_STREAM("Received Topic: " << topics.front());
+            ROS_ERROR_STREAM("cap interface: Received Topic: " << topics.front());
         }
 
         return topics;

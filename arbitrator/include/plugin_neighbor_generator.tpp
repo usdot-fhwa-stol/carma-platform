@@ -30,13 +30,19 @@ namespace arbitrator
         cav_srvs::PlanManeuvers msg;
         msg.request.prior_plan = plan;
         std::map<std::string, cav_srvs::PlanManeuvers> res = ci_.multiplex_service_call_for_capability(CapabilitiesInterface::STRATEGIC_PLAN_CAPABILITY, msg);
-
+        ROS_ERROR_STREAM("neighbor generator: ended multiplex call");        
+        
         // Convert map to vector of map values
         std::vector<cav_msgs::ManeuverPlan> out;
         for (auto it = res.begin(); it != res.end(); it++)
         {
+            ROS_ERROR_STREAM("res pushing back");        
             out.push_back(it->second.response.new_plan);
+            ROS_ERROR_STREAM("res pushed back");        
+
         }
+        ROS_ERROR_STREAM("ended neighbor generator");        
+
         return out;
     }
 }

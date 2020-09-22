@@ -37,17 +37,26 @@ namespace arbitrator
         for (auto it = plugin_priorities.begin(); it != plugin_priorities.end(); it++)
         {
             plugin_costs_[it->first] = 1.0 - (it->second / max_priority);
+            ROS_ERROR_STREAM(">>> plugin cost" << plugin_costs_[it->first] << it->first);
         }
     }
 
     double FixedPriorityCostFunction::compute_total_cost(const cav_msgs::ManeuverPlan& plan) 
     {
         double total_cost = 0.0;
+        ROS_ERROR_STREAM("compute total cost man size" << plan.maneuvers.size());
+        ROS_ERROR_STREAM("compute total cost man type" << plan.maneuvers.begin()->type);
+        
         for (auto it = plan.maneuvers.begin(); it != plan.maneuvers.end(); it++)
         {
+            ROS_ERROR_STREAM("fixed: cont: compute_total: for start");
             std::string planning_plugin = GET_MANEUVER_PROPERTY(*it, parameters).planning_strategic_plugin;
+            ROS_ERROR_STREAM("fixed: cont: compute_total: for mid, name of planning plugin" << planning_plugin);
+
             total_cost += (arbitrator_utils::get_maneuver_end_distance(*it) - arbitrator_utils::get_maneuver_start_distance(*it)) *
                 plugin_costs_.at(planning_plugin);
+            ROS_ERROR_STREAM("fixed: cont: compute_total: for end");
+            
         }
 
         return total_cost;
@@ -55,7 +64,11 @@ namespace arbitrator
 
     double FixedPriorityCostFunction::compute_cost_per_unit_distance(const cav_msgs::ManeuverPlan& plan)
     {
+        ROS_ERROR_STREAM("fixed compute cost started");
+        
         double plan_dist = arbitrator_utils::get_plan_end_distance(plan) - arbitrator_utils::get_plan_start_distance(plan);
+        ROS_ERROR_STREAM("fixed compute cost ended");
+        
         return compute_total_cost(plan) / plan_dist;
     }
 }

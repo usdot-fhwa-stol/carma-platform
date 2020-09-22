@@ -50,7 +50,10 @@ namespace arbitrator
 
     double CostSystemCostFunction::compute_cost_per_unit_distance(const cav_msgs::ManeuverPlan& plan)
     {
+        ROS_ERROR_STREAM("compute cost started");
         double plan_dist = arbitrator_utils::get_plan_end_distance(plan) - arbitrator_utils::get_plan_start_distance(plan);
+        ROS_ERROR_STREAM("compute cost ended");
+
         return compute_total_cost(plan) / plan_dist;
     }
 }
