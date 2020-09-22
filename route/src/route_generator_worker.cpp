@@ -156,7 +156,7 @@ namespace route {
             std::string target_frame = "+proj=tmerc +lat_0=38.95197911150576 +lon_0=-77.14835128349988 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
             lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
             lanelet::BasicPoint3d localPoint;
-            for (auto pt : pt_vec)
+            for (auto pt : destination_points_in_map)
             {
                 localPoint.x()= pt.x();
                 localPoint.y()= pt.y();
@@ -172,9 +172,9 @@ namespace route {
             // get route graph from world model object
             auto p = world_model_->getMapRoutingGraph();
             // generate a route
-            auto route = routing(pt_vec.front(),
-                                std::vector<lanelet::BasicPoint2d>(pt_vec.begin() + 1, pt_vec.end() - 1),
-                                pt_vec.back(),
+            auto route = routing(destination_points_in_map.front(),
+                                std::vector<lanelet::BasicPoint2d>(destination_points_in_map.begin() + 1, destination_points_in_map.end() - 1),
+                                destination_points_in_map.back(),
                                 world_model_->getMap(), world_model_->getMapRoutingGraph());
             // check if route successed
             if(!route)

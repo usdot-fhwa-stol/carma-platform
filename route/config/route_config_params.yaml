@@ -1,10 +1,10 @@
 # Double: max cross track tolerance error
 # Units: meter
-max_crosstrack_error: 100000
+max_crosstrack_error: 25
 
 # Double: downtrack_range
 # Units: meter
-destination_downtrack_range: -1000000
+destination_downtrack_range: 0
 
 #for debug purposes 318.0
 x: 0
