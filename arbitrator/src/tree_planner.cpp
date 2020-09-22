@@ -24,19 +24,23 @@ namespace arbitrator
 {
     cav_msgs::ManeuverPlan TreePlanner::generate_plan() 
     {
+        ROS_ERROR_STREAM("arbitrator: started generate plan");        
         cav_msgs::ManeuverPlan root;
         std::vector<std::pair<cav_msgs::ManeuverPlan, double>> open_list;
         const double INF = std::numeric_limits<double>::infinity();
         open_list.push_back(std::make_pair(root, INF));
-
+        
         cav_msgs::ManeuverPlan longest_plan = root; // Track longest plan in case target length is never reached
         ros::Duration longest_plan_duration = ros::Duration(0);
+        ROS_ERROR_STREAM("arbitrator: generate plan: before while");        
 
         while (!open_list.empty())
         {
             std::vector<std::pair<cav_msgs::ManeuverPlan, double>> new_open_list;
             for (auto it = open_list.begin(); it != open_list.end(); it++)
             {
+                ROS_ERROR_STREAM("arbitrator: generate plan: first for");        
+                
                 // Pop the first element off the open list
                 cav_msgs::ManeuverPlan cur_plan = it->first;
                 ros::Duration plan_duration; // zero duration
@@ -47,6 +51,8 @@ namespace arbitrator
                     // get plan duration
                     plan_duration = arbitrator_utils::get_plan_end_time(cur_plan) - arbitrator_utils::get_plan_start_time(cur_plan); 
                 }
+                ROS_ERROR_STREAM("arbitrator: generate plan: mid for");        
+
                 // Evaluate terminal condition
                 if (plan_duration >= target_plan_duration_) 
                 {
@@ -65,11 +71,13 @@ namespace arbitrator
                     new_open_list.push_back(std::make_pair(*child, cost_function_.compute_cost_per_unit_distance(*child)));
                 }
             }
+            ROS_ERROR_STREAM("arbitrator: generate plan: end while");        
             
             new_open_list = search_strategy_.prioritize_plans(new_open_list);
             open_list = new_open_list;
         }
 
+        ROS_ERROR_STREAM("arbitrator: generate plan: ended");        
 
         // If no perfect match is found, return the longest plan that fit the criteria
         return longest_plan;

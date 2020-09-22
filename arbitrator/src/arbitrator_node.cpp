@@ -49,7 +49,7 @@ int main(int argc, char** argv)
         cscf.init(nh);
         cf = &cscf;
     }
-
+    ROS_ERROR_STREAM("fixed cost passed fine");
     int beam_width;
     pnh.param("beam_width", beam_width, 3);
     arbitrator::BeamSearchStrategy bss{beam_width};
