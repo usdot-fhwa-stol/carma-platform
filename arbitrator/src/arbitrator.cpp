@@ -131,7 +131,7 @@ namespace arbitrator
         }
 
         next_planning_process_start_ = planning_process_start + time_between_plans_;
-        ROS_ERROR_STREAM("PLANNING COMPLETE");
+
         sm_->submit_event(ArbitratorEvent::PLANNING_COMPLETE);
     }
 
