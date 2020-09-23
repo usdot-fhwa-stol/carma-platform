@@ -50,6 +50,7 @@ namespace arbitrator
                 {
                     // get plan duration
                     plan_duration = arbitrator_utils::get_plan_end_time(cur_plan) - arbitrator_utils::get_plan_start_time(cur_plan); 
+                    ROS_ERROR_STREAM("arbit: start:" << arbitrator_utils::get_plan_start_time(cur_plan) << ", end" << arbitrator_utils::get_plan_end_time(cur_plan));
                 }
                 ROS_ERROR_STREAM("arbitrator: generate plan: mid: plan_duration" << plan_duration << ", target:" << target_plan_duration_);        
 

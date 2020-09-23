@@ -169,6 +169,9 @@ namespace route_following_plugin
         maneuver_msg.lane_following_maneuver.end_speed = target_speed;
         // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
         maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration((end_dist - current_dist) / (0.5 * (current_speed + target_speed)));
+        ROS_ERROR_STREAM("plugin: start_time:" << maneuver_msg.lane_following_maneuver.start_time);
+        ROS_ERROR_STREAM("plugin: end_time:" << maneuver_msg.lane_following_maneuver.end_time);
+
         maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
         return maneuver_msg;
     }
