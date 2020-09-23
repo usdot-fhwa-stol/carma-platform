@@ -2,7 +2,7 @@
 <launch>
     <remap from="final_waypoints" to="carma_final_waypoints"/>
     <!-- MPC Follower Node -->
-    <group>
+    <group> 
         <remap from="vehicle_model_steer_tau" to="/vehicle_steer_tau"/>
         <remap from="vehicle_model_wheelbase" to="/vehicle_wheel_base"/>
         <remap from="steer_lim_deg" to="/vehicle_steer_lim_deg"/>
@@ -10,13 +10,14 @@
 
         <include file="$(find mpc_follower)/launch/mpc_follower.launch">
                 <arg name="qp_solver_type" value="unconstraint_fast"/>
-                <arg name="mpc_prediction_horizon" value="70.0"/>
-                <arg name="mpc_prediction_sampling_time" value="0.1"/>
-                <arg name="mpc_weight_lat_error" value="0.1"/>
-                <arg name="mpc_weight_terminal_lat_error" value="0.15"/>
-                <arg name="mpc_weight_terminal_heading_error" value="0.03"/>
-                <arg name="mpc_weight_heading_error" value="0.01"/>
-                <arg name="mpc_weight_heading_error_squared_vel_coeff" value="0.1"/>
+                <!-- <arg name="vehicle_model_type" value="kinematics" doc="vehicle model type for mpc prediction. option is kinematics, kinematics_no_delay, and dynamics"/> -->
+                <!-- <arg name="mpc_prediction_horizon" value="70.0"/>
+                <arg name="mpc_prediction_sampling_time" value="0.1"/> -->
+                <arg name="mpc_weight_lat_error" value="0.7"/>
+                <arg name="mpc_weight_terminal_lat_error" value="1.0"/>
+                <arg name="mpc_weight_terminal_heading_error" value="0.1"/>
+                <arg name="mpc_weight_heading_error" value="0.0"/>
+                <arg name="mpc_weight_heading_error_squared_vel_coeff" value="0.3"/>
         </include>
     </group>
     <!-- MPC Follower Wrapper Node -->
