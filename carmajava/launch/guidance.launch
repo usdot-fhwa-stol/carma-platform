@@ -72,6 +72,8 @@
   <remap from="maneuver_plan" to="$(optenv CARMA_GUIDE_NS)/arbitrator/final_maneuver_plan"/>
 
   <remap from="semantic_map" to="$(optenv CARMA_ENV_NS)/semantic_map"/>
+  <remap from="map_update" to="$(optenv CARMA_ENV_NS)/map_update"/>
+  <remap from="roadway_objects" to="$(optenv CARMA_ENV_NS)/roadway_objects"/>
 
   <!-- Launch Guidance Main -->
   <include file="$(find guidance)/launch/guidance_main.launch"/>
