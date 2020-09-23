@@ -39,7 +39,7 @@ namespace route {
         // check if there are any lanelets in the map
         if(start_lanelet_vector.size() == 0)
         {
-            ROS_ERROR_STREAM("Found no lanelets in the map. Routing cannot be done.");
+            ROS_INFO_STREAM("Found no lanelets in the map. Routing cannot be done.");
             return lanelet::Optional<lanelet::routing::Route>();
         }
         // extract starting lanelet
@@ -90,7 +90,7 @@ namespace route {
                             fin.close();
                         } else
                         {
-                            ROS_ERROR_STREAM("File open failed...");
+                            ROS_INFO_STREAM("File open failed...");
                         }
                         auto last_comma = dest_name.find_last_of(',');
                         route_msg.route_name = dest_name.substr(last_comma + 1);
@@ -123,15 +123,15 @@ namespace route {
             // load destination points in ECEF frame
             std::vector<lanelet::BasicPoint2d> pt_vec;
             auto destination_points = load_route_destinations_in_ecef(req.routeID, pt_vec);
-            ROS_ERROR_STREAM("Size of dest pts" << destination_points.size());
+            ROS_INFO_STREAM("Size of dest pts" << destination_points.size());
             for (auto pt : destination_points)
             {
-                ROS_ERROR_STREAM("in earth x: " << pt.x() << " y: " << pt.y() );
+                ROS_INFO_STREAM("in earth x: " << pt.x() << " y: " << pt.y() );
             }
             // Check if route file are valid with at least one starting points and one destination points
             if(destination_points.size() < 2)
             {
-                ROS_ERROR_STREAM("Selected route file conatins 1 or less points. Routing cannot be completed.");
+                ROS_INFO_STREAM("Selected route file conatins 1 or less points. Routing cannot be completed.");
                 resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTE_FILE_ERROR;
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
@@ -145,7 +145,7 @@ namespace route {
             }
             catch (tf2::TransformException &ex)
             {
-                ROS_ERROR_STREAM("Could not lookup transform with exception " << ex.what());
+                ROS_INFO_STREAM("Could not lookup transform with exception " << ex.what());
                 resp.errorStatus = cav_srvs::SetActiveRouteResponse::TRANSFORM_ERROR;
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
@@ -161,13 +161,13 @@ namespace route {
                 localPoint.x()= pt.x();
                 localPoint.y()= pt.y();
                 lanelet::GPSPoint gps = local_projector.reverse(localPoint); //If the appropriate library is included, the reverse() function can be used to convert from local xyz to lat/lon
-                ROS_ERROR_STREAM("reversed below to gps lat: " << gps.lat << " lon: " << gps.lon );
-                ROS_ERROR_STREAM("in map x: " << pt.x() << " y: " << pt.y() );
+                ROS_INFO_STREAM("reversed below to gps lat: " << gps.lat << " lon: " << gps.lon );
+                ROS_INFO_STREAM("in map x: " << pt.x() << " y: " << pt.y() );
                 auto llts = world_model_->getLaneletsFromPoint(pt, 10);
                 if (llts.size() != 0)
-                ROS_ERROR_STREAM("llt:id" << world_model_->getLaneletsFromPoint(pt, 10)[0].id());
+                ROS_INFO_STREAM("llt:id" << world_model_->getLaneletsFromPoint(pt, 10)[0].id());
                 else
-                ROS_ERROR_STREAM("this dest point is not in the map");
+                ROS_INFO_STREAM("this dest point is not in the map");
             }
             // get route graph from world model object
             auto p = world_model_->getMapRoutingGraph();
@@ -179,7 +179,7 @@ namespace route {
             // check if route successed
             if(!route)
             {
-                ROS_ERROR_STREAM("Cannot find a route passing all destinations.");
+                ROS_INFO_STREAM("Cannot find a route passing all destinations.");
                 resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
@@ -231,14 +231,14 @@ namespace route {
             coordinate.elevation = std::stod(line.substr(0, comma));
             // no rotation needed since it only represents a point
             tf2::Quaternion no_rotation(0, 0, 0, 1);
-            ROS_ERROR_STREAM("rad::: lat: " << coordinate.lat << ",lon: " << coordinate.lon << ", el: " << coordinate.elevation);
+            ROS_INFO_STREAM("rad::: lat: " << coordinate.lat << ",lon: " << coordinate.lon << ", el: " << coordinate.elevation);
             lanelet::GPSPoint gps;
             gps.lat = coordinate.lat / DEG_TO_RAD;
             gps.lon = coordinate.lon / DEG_TO_RAD - 360;
-            ROS_ERROR_STREAM("deg::: lat: " << gps.lat << ",lon: " << gps.lon);
+            ROS_INFO_STREAM("deg::: lat: " << gps.lat << ",lon: " << gps.lon);
 
             lanelet::BasicPoint3d map_point = local_projector.forward(gps);
-            ROS_ERROR_STREAM("map_point: x" << map_point.x() << ",y: " << map_point.y());
+            ROS_INFO_STREAM("map_point: x" << map_point.x() << ",y: " << map_point.y());
             pt_vec.push_back({map_point.x(), map_point.y()});
             destination_points.emplace_back(wgs84_utils::geodesic_to_ecef(coordinate, tf2::Transform(no_rotation)));
         }
@@ -339,7 +339,7 @@ namespace route {
                 } 
                 else 
                 {
-                    ROS_ERROR_STREAM("Failed to set the current speed limit. The lanelet_id: "
+                    ROS_INFO_STREAM("Failed to set the current speed limit. The lanelet_id: "
                         << ll_id_ << " could not be matched with a lanelet in the map. The previous speed limit of "
                         << speed_limit_ << " will be used.");
                 }
@@ -347,15 +347,15 @@ namespace route {
             } 
             else 
             {
-                ROS_ERROR_STREAM("Failed to set the current speed limit. Valid traffic rules object could not be built.");
+                ROS_INFO_STREAM("Failed to set the current speed limit. Valid traffic rules object could not be built.");
             }
              // check if we left the seleted route by cross track error
-            // ROS_ERROR_STREAM("max_cross_track_error" << cross_track_max_);
-            // ROS_ERROR_STREAM("current_crosstrack_distance" << std::fabs(current_crosstrack_distance_));
-            // ROS_ERROR_STREAM("current_fowntrack_distance" << current_downtrack_distance_);
-            // ROS_ERROR_STREAM("length 2" << world_model_->getRoute()->length2d());
-            // ROS_ERROR_STREAM("downtrack_allows" << down_track_target_range_);
-            // ROS_ERROR_STREAM("difference" <<  world_model_->getRoute()->length2d() - down_track_target_range_);
+            // ROS_INFO_STREAM("max_cross_track_error" << cross_track_max_);
+            // ROS_INFO_STREAM("current_crosstrack_distance" << std::fabs(current_crosstrack_distance_));
+            // ROS_INFO_STREAM("current_fowntrack_distance" << current_downtrack_distance_);
+            // ROS_INFO_STREAM("length 2" << world_model_->getRoute()->length2d());
+            // ROS_INFO_STREAM("downtrack_allows" << down_track_target_range_);
+            // ROS_INFO_STREAM("difference" <<  world_model_->getRoute()->length2d() - down_track_target_range_);
 
             // check if we left the seleted route by cross track error
             if(std::fabs(current_crosstrack_distance_) > cross_track_max_)

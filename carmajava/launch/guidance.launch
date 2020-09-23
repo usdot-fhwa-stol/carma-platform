@@ -106,6 +106,8 @@
     <!-- Route Following Plugin -->
   <include file="$(find route_following_plugin)/launch/route_following_plugin.launch" />
 
+
+
   <!-- Twist Filter -->
   <group>
     <remap from="/accel_cmd" to="accel_cmd"/>
@@ -159,6 +161,10 @@
 
   <!-- Autoware Plugin -->
   <include file="$(find autoware_plugin)/launch/autoware_plugin.launch" />
+
+  <!-- Inlanecruising Plugin -->
+  <include file="$(find inlanecruising_plugin)/launch/inlanecruising_plugin.launch" />
+
   <!-- Route Node -->
   <include file="$(find route)/launch/route.launch">
   <!-- Mobility Path Publisher -->
