@@ -35,8 +35,8 @@ namespace truck_inspection_client
         pnh_->getParam("iss_score", iss_score_);
         pnh_->getParam("permit_required", permit_required_);
         pnh_->getParam("pre_trip_ads_health_check", pre_trip_ads_health_check_);
-        mo_pub_ = nh_->advertise<cav_msgs::MobilityOperation>("mobility_operation_outbound", 5);
-        request_sub_ = nh_->subscribe("mobility_request_inbound", 1, &TruckInspectionClient::requestCallback, this);
+        mo_pub_ = nh_->advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 5);
+        request_sub_ = nh_->subscribe("incoming_mobility_request", 1, &TruckInspectionClient::requestCallback, this);
         ads_state_sub_ = nh_->subscribe("guidance/state", 1, &TruckInspectionClient::guidanceStatesCallback, this);
         ads_system_alert_sub_ = nh_->subscribe("system_alert", 1, &TruckInspectionClient::systemAlertsCallback, this);
         version_sub_ = nh_->subscribe("carma_system_version", 1, &TruckInspectionClient::versionCallback, this);
