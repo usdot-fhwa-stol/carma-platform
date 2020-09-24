@@ -42,7 +42,7 @@ void PurePursuitWrapper::Initialize() {
   // Pose Subscriber
   pose_sub.subscribe(nh_, "current_pose", 1);
   // Trajectory Plan Subscriber
-  trajectory_plan_sub.subscribe(nh_, "trajectory_plan", 1);
+  trajectory_plan_sub.subscribe(nh_, "plan_trajectory", 1);
 
   // WayPoints Publisher
   way_points_pub_ = nh_.advertise<autoware_msgs::Lane>("final_waypoints", 10, true);

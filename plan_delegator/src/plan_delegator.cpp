@@ -57,14 +57,14 @@ namespace plan_delegator
 
     void PlanDelegator::maneuverPlanCallback(const cav_msgs::ManeuverPlanConstPtr& plan)
     {
-        ROS_INFO_STREAM("Received request to delegate plan ID " << plan->maneuver_plan_id);
+        ROS_ERROR_STREAM("Received request to delegate plan ID: " << plan->maneuver_plan_id);
         // do basic check to see if the input is valid
         if (isManeuverPlanValid(plan))
         {
             latest_maneuver_plan_ = *plan;
         }
         else {
-            ROS_WARN_STREAM("Received empty plan, no maneuvers found in plan ID " << plan->maneuver_plan_id);
+            ROS_ERROR_STREAM("Received empty plan, no maneuvers found in plan ID " << plan->maneuver_plan_id);
         }
     }
 
@@ -76,7 +76,7 @@ namespace plan_delegator
         }
         if(trajectory_planners_.find(planner_name) == trajectory_planners_.end())
         {
-            ROS_INFO_STREAM("Discovered new trajectory planner: " << planner_name);
+            ROS_ERROR_STREAM("Discovered new trajectory planner: " << planner_name);
             trajectory_planners_.emplace(
                 planner_name, nh_.serviceClient<cav_srvs::PlanTrajectory>(planning_topic_prefix_ + planner_name + planning_topic_suffix_));
         }
@@ -136,7 +136,7 @@ namespace plan_delegator
         cav_msgs::TrajectoryPlan latest_trajectory_plan;
         if(!guidance_engaged)
         {
-            ROS_INFO_STREAM("Guidance is not engaged. Plan delegator will not plan trajectory.");
+            ROS_ERROR_STREAM("Guidance is not engaged. Plan delegator will not plan trajectory.");
             return latest_trajectory_plan;
         }
         // iterate through maneuver list to make service call
@@ -158,7 +158,7 @@ namespace plan_delegator
                 // validate trajectory before add to the plan
                 if(!isTrajectoryValid(plan_req.response.trajectory_plan))
                 {
-                    ROS_WARN_STREAM("Found invalid trajectory with less than 2 trajectory points for " << latest_maneuver_plan_.maneuver_plan_id);
+                    ROS_ERROR_STREAM("Found invalid trajectory with less than 2 trajectory points for " << latest_maneuver_plan_.maneuver_plan_id);
                     break;
                 }
                 latest_trajectory_plan.trajectory_points.insert(latest_trajectory_plan.trajectory_points.end(),
@@ -166,13 +166,13 @@ namespace plan_delegator
                                                                 plan_req.response.trajectory_plan.trajectory_points.end());
                 if(isTrajectoryLongEnough(latest_trajectory_plan))
                 {
-                    ROS_INFO_STREAM("Plan Trajectory completed for " << latest_maneuver_plan_.maneuver_plan_id);
+                    ROS_ERROR_STREAM("Plan Trajectory completed for " << latest_maneuver_plan_.maneuver_plan_id);
                     break;
                 }
             }
             else
             {
-                ROS_WARN_STREAM("Unsuccessful service call to trajectory planner:" << maneuver_planner << " for plan ID " << latest_maneuver_plan_.maneuver_plan_id);
+                ROS_ERROR_STREAM("Unsuccessful service call to trajectory planner:" << maneuver_planner << " for plan ID " << latest_maneuver_plan_.maneuver_plan_id);
                 // if one service call fails, it should end plan immediately because it is there is no point to generate plan with empty space
                 break;
             }
@@ -191,7 +191,7 @@ namespace plan_delegator
         }
         else
         {
-            ROS_WARN_STREAM("Planned trajectory is empty. It will not be published!");
+            ROS_ERROR_STREAM("Planned trajectory is empty. It will not be published!");
         }
         return true;
     }

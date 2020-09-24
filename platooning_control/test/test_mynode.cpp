@@ -14,7 +14,7 @@
 TEST(TestSuite, testCase1)
 {
     ros::NodeHandle nh = ros::NodeHandle();
-    ros::Publisher traj_pub_ = nh.advertise<cav_msgs::TrajectoryPlan>("trajectory_plan", 5);
+    ros::Publisher traj_pub_ = nh.advertise<cav_msgs::TrajectoryPlan>("plan_trajectory", 5);
     cav_msgs::TrajectoryPlan tp;
     traj_pub_.publish(tp);
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
