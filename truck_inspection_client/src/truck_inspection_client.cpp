@@ -37,9 +37,9 @@ namespace truck_inspection_client
         pnh_->getParam("pre_trip_ads_health_check", pre_trip_ads_health_check_);
         mo_pub_ = nh_->advertise<cav_msgs::MobilityOperation>("mobility_operation_outbound", 5);
         request_sub_ = nh_->subscribe("mobility_request_inbound", 1, &TruckInspectionClient::requestCallback, this);
-        ads_state_sub_ = nh_->subscribe("/guidance/state", 1, &TruckInspectionClient::guidanceStatesCallback, this);
+        ads_state_sub_ = nh_->subscribe("guidance/state", 1, &TruckInspectionClient::guidanceStatesCallback, this);
         ads_system_alert_sub_ = nh_->subscribe("system_alert", 1, &TruckInspectionClient::systemAlertsCallback, this);
-        version_sub_ = nh_->subscribe("/carma_system_version", 1, &TruckInspectionClient::versionCallback, this);
+        version_sub_ = nh_->subscribe("carma_system_version", 1, &TruckInspectionClient::versionCallback, this);
         bsm_sub_ = nh_->subscribe("bsm_outbound", 1, &TruckInspectionClient::bsmCallback, this);
         this->ads_engaged_ = false;
         this->ads_system_alert_type_ = std::to_string(cav_msgs::SystemAlert::NOT_READY);

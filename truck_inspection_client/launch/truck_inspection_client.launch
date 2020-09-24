@@ -15,7 +15,12 @@
 -->
 <launch>
     
-    <node name="truck_inspection_client" pkg="truck_inspection_client" type="truck_inspection_client" output="screen">
+    <remap from="mobility_operation_outbound" to="$(optenv CARMA_MSG_NS)/outgoing_plain_mobility_operation_message"/>
+    <remap from="bsm_outbound" to="$(optenv CARMA_MSG_NS)/bsm_outbound"/>
+    <remap from="mobility_request_inbound" to="$(optenv CARMA_MSG_NS)/incoming_mobility_request"/>
+    <remap from="guidance/state" to="$(optenv CARMA_GUIDE_NS)/incoming_mobility_request"/>
+
+    <node name="truck_inspection_client" pkg="truck_inspection_client" type="truck_inspection_client">
       <rosparam command="load" file="$(find truck_inspection_client)/config/parameters.yaml"/>
     </node>
 </launch>
