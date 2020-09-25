@@ -140,10 +140,11 @@
   />
   
   <!-- Waypoint Generator -->
-  <remap from="carma_waypoints" to="base/lane_waypoints_raw"/>
-  <include file="$(find waypoint_generator)/launch/waypoint_generator.launch"/>
+  <group>
+    <remap from="carma_waypoints" to="base/lane_waypoints_raw"/>
+    <include file="$(find waypoint_generator)/launch/waypoint_generator.launch"/>
+  </group>
       
-  </node>
   <node pkg="waypoint_maker" type="waypoint_replanner" name="waypoint_replanner"/>
   <node pkg="waypoint_maker" type="waypoint_marker_publisher" name="waypoint_marker_publisher" />
 
