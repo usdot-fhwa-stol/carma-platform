@@ -26,9 +26,9 @@ namespace route {
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
         // init publishers
-        route_pub_ = nh_->advertise<cav_msgs::Route>("route", 1);
+        route_pub_ = nh_->advertise<cav_msgs::Route>("route", 1, true);
         route_event_pub_ = nh_->advertise<cav_msgs::RouteEvent>("route_event", 1);
-        route_state_pub_ = nh_->advertise<cav_msgs::RouteState>("route_state", 1);
+        route_state_pub_ = nh_->advertise<cav_msgs::RouteState>("route_state", 1, true);
         // init subscribers
         pose_sub_ = nh_->subscribe("current_pose", 1, &RouteGeneratorWorker::pose_cb, &rg_worker_);
         // init service server

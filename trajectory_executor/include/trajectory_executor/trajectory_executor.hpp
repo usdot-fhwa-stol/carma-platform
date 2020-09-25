@@ -127,6 +127,8 @@ namespace trajectory_executor {
             std::unique_ptr<cav_msgs::TrajectoryPlan> _cur_traj; 
             int _timesteps_since_last_traj {0};
             std::mutex _cur_traj_mutex;
+            std::string default_control_plugin_;
+            std::string default_control_plugin_topic_;
 
             // Timers and associated spin rates
             int _min_traj_publish_tickrate_hz {10};

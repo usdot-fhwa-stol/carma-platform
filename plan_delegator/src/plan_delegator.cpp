@@ -149,7 +149,7 @@ namespace plan_delegator
                 continue;
             }
             // get corresponding ros service client for plan trajectory
-            auto maneuver_planner = GET_MANEUVER_PROPERTY(maneuver, parameters.planning_strategic_plugin);
+            auto maneuver_planner = GET_MANEUVER_PROPERTY(maneuver, parameters.planning_tactical_plugin);
             auto client = getPlannerClientByName(maneuver_planner);
             // compose service request
             auto plan_req = composePlanTrajectoryRequest(latest_trajectory_plan);

@@ -159,6 +159,10 @@
 
   <!-- Autoware Plugin -->
   <include file="$(find autoware_plugin)/launch/autoware_plugin.launch" />
+
+  <!-- Inlanecruising Plugin -->
+  <include file="$(find inlanecruising_plugin)/launch/inlanecruising_plugin.launch" />
+
   <!-- Route Node -->
   <include file="$(find route)/launch/route.launch">
   <!-- Mobility Path Publisher -->
