@@ -62,7 +62,8 @@ namespace route {
     bool RouteGeneratorWorker::get_available_route_cb(cav_srvs::GetAvailableRoutesRequest& req, cav_srvs::GetAvailableRoutesResponse& resp)
     {
         // only allow to get route names after entering route selection state
-        if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::SELECTION)
+        if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::SELECTION ||
+        )
         {
             boost::filesystem::path route_path_object(this->route_file_path_);
             if(boost::filesystem::exists(route_path_object))
@@ -161,13 +162,13 @@ namespace route {
                 localPoint.x()= pt.x();
                 localPoint.y()= pt.y();
                 lanelet::GPSPoint gps = local_projector.reverse(localPoint); //If the appropriate library is included, the reverse() function can be used to convert from local xyz to lat/lon
-                ROS_INFO_STREAM("reversed below to gps lat: " << gps.lat << " lon: " << gps.lon );
-                ROS_INFO_STREAM("in map x: " << pt.x() << " y: " << pt.y() );
+                ROS_ERROR_STREAM("reversed below to gps lat: " << gps.lat << " lon: " << gps.lon );
+                ROS_ERROR_STREAM("in map x: " << pt.x() << " y: " << pt.y() );
                 auto llts = world_model_->getLaneletsFromPoint(pt, 10);
                 if (llts.size() != 0)
-                ROS_INFO_STREAM("llt:id" << world_model_->getLaneletsFromPoint(pt, 10)[0].id());
+                ROS_ERROR_STREAM("llt:id" << world_model_->getLaneletsFromPoint(pt, 10)[0].id());
                 else
-                ROS_INFO_STREAM("this dest point is not in the map");
+                ROS_ERROR_STREAM("this dest point is not in the map");
             }
             // get route graph from world model object
             auto p = world_model_->getMapRoutingGraph();
