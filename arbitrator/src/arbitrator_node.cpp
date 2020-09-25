@@ -57,7 +57,7 @@ int main(int argc, char** argv)
     arbitrator::PluginNeighborGenerator<arbitrator::CapabilitiesInterface> png{ci};
 
     double target_plan;
-    pnh.param("target_duration", target_plan, 15.0);
+    pnh.param("target_plan_duration", target_plan, 15.0);
     arbitrator::TreePlanner tp{*cf, png, bss, ros::Duration(target_plan)};
 
     double min_plan_duration;
