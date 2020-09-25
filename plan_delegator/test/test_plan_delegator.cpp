@@ -127,7 +127,7 @@
         cav_msgs::TrajectoryPlan res_plan;
         // bool flag = false;
         ros::Publisher maneuver_pub = nh.advertise<cav_msgs::ManeuverPlan>("maneuver_plan", 5);
-        // ros::Subscriber traj_sub = nh.subscribe<cav_msgs::TrajectoryPlan>("trajectory_plan", 5, [&](cav_msgs::TrajectoryPlanConstPtr msg){
+        // ros::Subscriber traj_sub = nh.subscribe<cav_msgs::TrajectoryPlan>("plan_trajectory", 5, [&](cav_msgs::TrajectoryPlanConstPtr msg){
         //     res_plan = msg.get();
             
         // });

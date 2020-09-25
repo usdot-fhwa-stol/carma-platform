@@ -31,10 +31,10 @@ namespace route_following_plugin
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
         
-        plan_maneuver_srv_ = nh_->advertiseService("strategic_plan/plan_maneuvers", &RouteFollowingPlugin::plan_maneuver_cb, this);
+        plan_maneuver_srv_ = nh_->advertiseService("plugins/RouteFollowing/plan_maneuvers", &RouteFollowingPlugin::plan_maneuver_cb, this);
                 
         plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
-        plugin_discovery_msg_.name = "Route Following";
+        plugin_discovery_msg_.name = "RouteFollowing";
         plugin_discovery_msg_.versionId = "v1.0";
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = true;
@@ -152,7 +152,7 @@ namespace route_following_plugin
         maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
         maneuver_msg.lane_following_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
         maneuver_msg.lane_following_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
-        maneuver_msg.lane_following_maneuver.parameters.planning_tactical_plugin = "InlaneCruisingPlugin";
+        maneuver_msg.lane_following_maneuver.parameters.planning_tactical_plugin = "InLaneCruisingPlugin";
         maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin = "RouteFollowingPlugin";
         maneuver_msg.lane_following_maneuver.start_dist = current_dist;
         maneuver_msg.lane_following_maneuver.start_speed = current_speed;

@@ -52,13 +52,10 @@ namespace trajectory_executor
         ROS_DEBUG("Executing stub behavior for plugin discovery MVP...");
         std::map<std::string, std::string> out;
 
-        std::string default_control_plugin;
-        _private_nh->param<std::string>("default_control_plugin", default_control_plugin, "NULL");
+        _private_nh->param<std::string>("default_control_plugin", default_control_plugin_, "NULL");
+        _private_nh->param<std::string>("default_control_plugin_topic", default_control_plugin_topic_, "NULL");
 
-        std::string default_control_plugin_topic;
-        _private_nh->param<std::string>("default_control_plugin_topic", default_control_plugin_topic, "NULL");
-
-        out[default_control_plugin] = default_control_plugin_topic;
+        out[default_control_plugin_] = default_control_plugin_topic_;
         return out;
     }
     
@@ -106,6 +103,10 @@ namespace trajectory_executor
             if (!_cur_traj->trajectory_points.empty()) {
                 // Determine the relevant control plugin for the current timestep
                 std::string control_plugin = _cur_traj->trajectory_points[0].controller_plugin_name;
+                // if it instructed to use default control_plugin
+                if (control_plugin == "default" || control_plugin =="")
+                    control_plugin = default_control_plugin_;
+
                 std::map<std::string, ros::Publisher>::iterator it = _traj_publisher_map.find(control_plugin);
                 if (it != _traj_publisher_map.end()) {
                     ROS_DEBUG("Found match for control plugin %s at point %d in current trajectory!",
