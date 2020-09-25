@@ -59,47 +59,41 @@ namespace route {
 
     bool RouteGeneratorWorker::get_available_route_cb(cav_srvs::GetAvailableRoutesRequest& req, cav_srvs::GetAvailableRoutesResponse& resp)
     {
-        // only allow to get route names after entering route selection state
-        if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::SELECTION)
+        boost::filesystem::path route_path_object(this->route_file_path_);
+        if(boost::filesystem::exists(route_path_object))
         {
-            boost::filesystem::path route_path_object(this->route_file_path_);
-            if(boost::filesystem::exists(route_path_object))
+            boost::filesystem::directory_iterator end_point;
+            // read all route files in the given directory
+            for(boost::filesystem::directory_iterator itr(route_path_object); itr != end_point; ++itr)
             {
-                boost::filesystem::directory_iterator end_point;
-                // read all route files in the given directory
-                for(boost::filesystem::directory_iterator itr(route_path_object); itr != end_point; ++itr)
+                if(!boost::filesystem::is_directory(itr->status()))
                 {
-                    if(!boost::filesystem::is_directory(itr->status()))
+                    auto full_file_name = itr->path().filename().generic_string();
+                    cav_msgs::Route route_msg;
+                    // assume route files ending with ".csv", before that is the actual route name
+                    route_msg.route_id = full_file_name.substr(0, full_file_name.find(".csv"));
+                    std::ifstream fin(itr->path().generic_string());
+                    std::string dest_name;
+                    if(fin.is_open())
                     {
-                        auto full_file_name = itr->path().filename().generic_string();
-                        cav_msgs::Route route_msg;
-                        // assume route files ending with ".csv", before that is the actual route name
-                        route_msg.route_id = full_file_name.substr(0, full_file_name.find(".csv"));
-                        std::ifstream fin(itr->path().generic_string());
-                        std::string dest_name;
-                        if(fin.is_open())
+                        while (!fin.eof())
                         {
-                            while (!fin.eof())
-                            {
-                                std::string temp;
-                                std::getline(fin, temp);
-                                if(temp != "") dest_name = temp;
-                            }
-                            fin.close();
-                        } else
-                        {
-                            ROS_ERROR_STREAM("File open failed...");
+                            std::string temp;
+                            std::getline(fin, temp);
+                            if(temp != "") dest_name = temp;
                         }
-                        auto last_comma = dest_name.find_last_of(',');
-                        route_msg.route_name = dest_name.substr(last_comma + 1);
-                        resp.availableRoutes.push_back(route_msg);
+                        fin.close();
+                    } else
+                    {
+                        ROS_ERROR_STREAM("File open failed...");
                     }
+                    auto last_comma = dest_name.find_last_of(',');
+                    route_msg.route_name = dest_name.substr(last_comma + 1);
+                    resp.availableRoutes.push_back(route_msg);
                 }
             }
-            return true;
         }
-        // calling service fails because the state is not ready
-        return false;
+        return true;
     }
 
     void RouteGeneratorWorker::set_route_file_path(const std::string& path)
@@ -118,17 +112,6 @@ namespace route {
             // entering to routing state once destinations are picked
             this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_SELECTED);
             publish_route_event(cav_msgs::RouteEvent::ROUTE_SELECTED);
-            // load destination points in ECEF frame
-            auto destination_points = load_route_destinations_in_ecef(req.routeID);
-            // Check if route file are valid with at least one starting points and one destination points
-            if(destination_points.size() < 2)
-            {
-                ROS_ERROR_STREAM("Selected route file conatins 1 or less points. Routing cannot be completed.");
-                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTE_FILE_ERROR;
-                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
-                publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
-                return false;
-            }
             // get transform from ECEF(earth) to local map frame
             tf2::Transform map_in_earth;
             try
@@ -143,8 +126,37 @@ namespace route {
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
                 return false;
             }
+
+            // load destination points in ECEF frame
+            auto destination_points = load_route_destinations_in_ecef(req.routeID);
+            // Check if route file are valid with at least one starting points and one destination points
+            if(destination_points.size() < 2)
+            {
+                ROS_ERROR_STREAM("Selected route file contains 1 or less points. Routing cannot be completed.");
+                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTE_FILE_ERROR;
+                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+                publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
+                return false;
+            }
             // convert points in ECEF to map frame
             auto destination_points_in_map = transform_to_map_frame(destination_points, map_in_earth);
+            int idx = 0;
+            // validate if the points are geometrically in the map
+            for (auto pt : destination_points_in_map)
+            {
+                auto llts = world_model_->getLaneletsFromPoint(pt, 1);
+                if (llts.size() == 0)
+                {
+                    ROS_ERROR_STREAM("Route Generator: " << idx 
+                        << "th destination point is not in the map, x: " << pt.x() << " y: " << pt.y());
+                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTE_FILE_ERROR;
+                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+                publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
+                return false;
+                }
+                idx ++;
+            }
+            
             // get route graph from world model object
             auto p = world_model_->getMapRoutingGraph();
             // generate a route
@@ -194,7 +206,7 @@ namespace route {
                 (std::stod(line.substr(0, comma)) < 0 ? std::stod(line.substr(0, comma)) + 360.0 : std::stod(line.substr(0, comma))) * DEG_TO_RAD;
             line.erase(0, comma + 1);
             comma = line.find(",");
-            // convert lon value in the range of [0, 360.0] degree and then into rad
+            // convert lat value in the range of [0, 360.0] degree and then into rad
             coordinate.lat =
                 (std::stod(line.substr(0, comma)) < 0 ? std::stod(line.substr(0, comma)) + 360.0 : std::stod(line.substr(0, comma))) * DEG_TO_RAD;
             // elevation is in meters
@@ -214,7 +226,10 @@ namespace route {
         for(tf2::Vector3 point : ecef_points)
         {
             tf2::Transform point_in_earth;
+            tf2::Quaternion no_rotation(0, 0, 0, 1);
+
             point_in_earth.setOrigin(point);
+            point_in_earth.setRotation(no_rotation);
             // convert to map frame by (T_e_m)^(-1) * T_e_p
             auto point_in_map = map_in_earth.inverse() * point_in_earth;
             // return as 2D points as the API requiremnet of lanelet2 lib
