@@ -211,7 +211,7 @@ namespace autoware_plugin
         uint64_t current_nsec = ros::Time::now().toNSec();
         for(int i = 0; i < trajectory.size(); ++i)
         {
-            trajectory[i].controller_plugin_name = "mpc_follower";
+            trajectory[i].controller_plugin_name = "default";
             trajectory[i].planner_plugin_name = "autoware";
             trajectory[i].target_time += current_nsec;
         }
