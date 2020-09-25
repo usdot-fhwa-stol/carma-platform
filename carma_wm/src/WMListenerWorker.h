@@ -59,6 +59,7 @@ public:
    */
   void routeCallback(const cav_msgs::RouteConstPtr& route_msg);
 
+
   /*!
    * \brief Callback for roadway objects msg
    */

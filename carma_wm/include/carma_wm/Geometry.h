@@ -85,23 +85,92 @@ TrackPos trackPos(const lanelet::BasicPoint2d& p, const lanelet::BasicPoint2d& s
 std::tuple<TrackPos, lanelet::BasicSegment2d> matchSegment(const lanelet::BasicPoint2d& p,
                                                            const lanelet::BasicLineString2d& line_string);
 
-/*! \brief Returns a list of lists of local (3-point) curvatures, computed in 2d. Each continuous segment of the
- * lanelets' centerlines is one elemtent in the first list. Where each lane change occurs along the list of lanelets a
- * new list of curvatures is started.
- *
- * Each elemnent in the first list contains a tuple where the first element is the index of the lanelet which is the
- * starting point of that segment. The second element of the tuple contains the list of local curvatures for that
- * segment. These map to the points on the lanlet centerlines excluding first and last point of the continuous
- * centerline segments
- *
- * \param lanelets The list of lanelets to compute curvatures for
- *
- * \throw std::invalid_argument If one of the provided lanelets cannot have its centerline computed
- *
- * \return A list of continuous centerline segments and their respective curvatures
- */
-std::vector<std::tuple<size_t, std::vector<double>>>
+/*! \brief Returns a list of lists of local (computed by discrete derivative)
+* curvatures for the input lanelets. The list of returned curvatures matches
+* 1-to-1 with with list of points in the input lanelet's centerlines. 
+* 
+* The numerical accuracy of this method is greatly increased by using larger
+* collections of points as inputs as the first 2 and final 2 points in the
+* list must be computed using alternative differentiation methods from all 
+* the others resulting in greater error. It is also important for this function
+* to yield useful results that all points in the input lanelet's centerline
+* are actually on the centerline of the lanelet (i.e. none to minimal linear
+* interpolation of points) as this results in "flat" spots on an otherwise
+* smooth curve that causes 0 curvature to be computed.
+*
+* \param lanelets The list of lanelets to compute curvatures for
+*
+* \throws std::invalid_argument If one of the provided lanelets cannot have its centerline computed
+*
+* \return A list of continuous centerline segments and their respective curvatures
+*/
+std::vector<double>
 getLocalCurvatures(const std::vector<lanelet::ConstLanelet>& lanelets);
+
+/*!
+* \brief Helper function to concatenate 2 linestrings together and return the result. Neither LineString is modified in this function.
+*/
+lanelet::BasicLineString2d concatenate_line_strings(const lanelet::BasicLineString2d& l1, const lanelet::BasicLineString2d& l2);
+
+/*!
+* \brief Helper function to a list of lanelets together and return the result. Neither LineString is modified in this function.
+*/
+lanelet::BasicLineString2d concatenate_lanelets(const std::vector<lanelet::ConstLanelet>& lanelets);
+
+/*! 
+* \brief Use finite differences methods to compute the derivative of the input data set with respect to index
+* Compute the finite differences using the forward finite difference for the first point, centered finite differences
+* for the middle points and backwards finite difference for the final point. This will result in the middle points 
+* being a better approximation of the actual derivative than the endpoints.
+* 
+* \param data The data to differentiate over
+* \return A vector containing the point-by-point derivatives in the same indices as the input data
+*/
+std::vector<Eigen::Vector2d> compute_finite_differences(const lanelet::BasicLineString2d& data);
+
+/*! 
+* \brief Use finite differences methods to compute the derivative of the input data set with respect to index
+* Compute the finite differences using the forward finite difference for the first point, centered finite differences
+* for the middle points and backwards finite difference for the final point. This will result in the middle points 
+* being a better approximation of the actual derivative than the endpoints.
+* 
+* \param data The data to differentiate over
+* \return A vector containing the point-by-point derivatives in the same indices as the input data
+*/
+std::vector<double> compute_finite_differences(const std::vector<double>& data);
+
+/*! 
+* \brief Use finite differences methods to compute the derivative of the input data set with respect to the second paramter.
+* 
+* Input x and y must be the same length. Compute the finite differences using the forward finite difference for the first point, 
+* centered finite differences for the middle points and backwards finite difference for the final point. This will result in 
+* the middle points being a better approximation of the actual derivative than the endpoints.
+* 
+* \param x The x value of the derivative dx/dy
+* \param y The y value of the derivative dx/dy
+* \return A vector containing the point-by-point derivatives in the same indices as the input data
+*/
+std::vector<Eigen::Vector2d> compute_finite_differences(const std::vector<Eigen::Vector2d>& x, const std::vector<double>& y);
+
+/*!
+* \brief Compute the arc length at each point around the curve
+*/
+std::vector<double> compute_arc_lengths(const lanelet::BasicLineString2d& data);
+
+/*!
+* \brief Compute the Euclidean distance between the two points
+*/
+double compute_euclidean_distance(const Eigen::Vector2d& a, const Eigen::Vector2d& b);
+
+/*!
+* \brief Normalize the vectors in the input list such that their magnitudes = 1
+*/
+std::vector<Eigen::Vector2d> normalize_vectors(const std::vector<Eigen::Vector2d>& vectors);
+
+/*!
+* \brief Compute the magnitude of each vector in the input list
+*/
+std::vector<double> compute_magnitude_of_vectors(const std::vector<Eigen::Vector2d>& vectors);
 
 /*! \brief Function for computing curvature from 3 points.
  *
@@ -117,6 +186,7 @@ getLocalCurvatures(const std::vector<lanelet::ConstLanelet>& lanelets);
  *
  * \return The computed curvature in 1/m units.
  */
+[[deprecated("computeCurvature is deprecated in favor of using the finite differences-based computeLocalCurvature for large curves")]]
 double computeCurvature(const lanelet::BasicPoint2d& p1, const lanelet::BasicPoint2d& p2,
                         const lanelet::BasicPoint2d& p3);
 

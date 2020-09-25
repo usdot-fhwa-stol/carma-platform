@@ -139,8 +139,9 @@
         args="pub -l /config/waypoint_replanner autoware_config_msgs/ConfigWaypointReplanner '{replanning_mode: false, velocity_max: 10.0, velocity_min: 1.0, accel_limit: 0.98, decel_limit: 0.98, radius_thresh: 20.0, radius_min: 6.0, resample_mode: true, resample_interval: 1.0, velocity_offset: 4, end_point_offset: 5}' "
   />
   
-  <!-- Waypoint Loader -->
-  <node pkg="waypoint_maker" type="waypoint_loader" name="waypoint_loader">
+  <!-- Waypoint Generator -->
+  <remap from="carma_waypoints" to="base/lane_waypoints_raw"/>
+  <include file="$(find waypoint_generator)/launch/waypoint_generator.launch"/>
       
   </node>
   <node pkg="waypoint_maker" type="waypoint_replanner" name="waypoint_replanner"/>
