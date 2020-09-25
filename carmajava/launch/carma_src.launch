@@ -145,6 +145,7 @@
     
     <include file="$(find carma)/launch/guidance.launch">
       <arg name="route_file_folder" value="$(arg route_file_folder)"/>
+      <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
     </include>
   </group>
 

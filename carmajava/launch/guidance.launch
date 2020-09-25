@@ -99,7 +99,9 @@
   <remap from="/current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>  
   
   <!-- MPC Follower Wrapper -->
-  <include file="$(find mpc_follower_wrapper)/launch/mpc_follower_wrapper.launch" />
+  <include file="$(find mpc_follower_wrapper)/launch/mpc_follower_wrapper.launch">
+    <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
+  </include>
   
   <!-- Twist Filter -->
   <group>

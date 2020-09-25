@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
 <launch>
+
+    <arg name="vehicle_calibration_dir" default="$(arg vehicle_calibration_dir)"/>
     <remap from="final_waypoints" to="carma_final_waypoints"/>
     <!-- MPC Follower Node -->
     <group>
