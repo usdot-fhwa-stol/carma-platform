@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+#include "ros/ros.h"
 #include <gmock/gmock.h>
 #include <carma_wm/MapConformer.h>
 #include <lanelet2_core/Attribute.h>
@@ -191,8 +191,9 @@ TEST(MapConformer, ensureCompliance)
 
 //Test Speed Limits
 /*
-  * Create 2x2 lanelets map by hand
+  * Create lanelet map by hand
   */
+ ROS_INFO_STREAM("Create new map");
 std::vector<lanelet::Lanelet> llts;
 lanelet::Areas areas;
   // Linestring points
@@ -226,52 +227,88 @@ lanelet::Areas areas;
   lanelet::LineString3d right_2(unique_ids[5], { pr[1], pr[2]});
   lanelet::LineString3d right_3(unique_ids[8], { pr[2], pr[3]});
 
-  // Create Lanelets
+  // Create Lanelets for the maps
+
+  /*Map2*/
+  //First lanelet
   llts.push_back(carma_wm::getLanelet(left_1, mid_1, lanelet::AttributeValueString::SolidSolid, lanelet::AttributeValueString::Dashed));
 
+  //Add regualtory element - Digital Speed Limit 1
+  std::shared_ptr<lanelet::DigitalSpeedLimit> dsl(new lanelet::DigitalSpeedLimit(lanelet::DigitalSpeedLimit::buildData(
+        lanelet::utils::getId(), 63_mph, llts, {}, {lanelet::Participants::Vehicle})));
+        llts.back().addRegulatoryElement(dsl);
+
+
+  //Second Lanelet
   llts.push_back(carma_wm::getLanelet(mid_1, right_1, lanelet::AttributeValueString::Dashed, lanelet::AttributeValueString::SolidSolid));
 
-// Add regualtory element - Passing Control Line
-  
-      std::shared_ptr<lanelet::DigitalSpeedLimit> dsl(new lanelet::DigitalSpeedLimit(lanelet::DigitalSpeedLimit::buildData(
-        lanelet::utils::getId(), 80_mph, llts, areas, {lanelet::Participants::Vehicle})));
-        llts.back().addRegulatoryElement(dsl);
-      
-
+  // Add regualtory element - Digital Speed Limit 2
       std::shared_ptr<lanelet::DigitalSpeedLimit> dsl2(new lanelet::DigitalSpeedLimit(lanelet::DigitalSpeedLimit::buildData(
-        lanelet::utils::getId(), 39_mph, llts, areas, {lanelet::Participants::Vehicle})));
+        lanelet::utils::getId(), 39_mph, llts, {}, {lanelet::Participants::Vehicle})));
         llts.back().addRegulatoryElement(dsl2);
-  
 
+  ASSERT_EQ(2, llts.size());//Assert that there are 2 lanelets
+  ROS_INFO_STREAM("There are "<<llts.size()<<" lanelets.");
 
+  ROS_ERROR_STREAM("SpeedLimitTestcheck");
 
   // Create lanelet map
   lanelet::LaneletMapPtr map2;
   map2 = lanelet::utils::createMap(llts, {});
 
- //Test speed limits within ensureCompliance
+ //Test speed limits in map after ensureCompliance()
  lanelet::MapConformer::ensureCompliance(map2, 0_mph);//config_limit not in use
-
+  ROS_ERROR_STREAM("SpeedLimitTest1");
  for (auto ll: map2->laneletLayer)
  {
-   auto speed_limit = ll.regulatoryElementsAs<lanelet::DigitalSpeedLimit>();
-   
-   ASSERT_LT(speed_limit.back().get()->speed_limit_ , 80_mph); 
+  auto speed_limit = ll.regulatoryElementsAs<lanelet::DigitalSpeedLimit>();
+  ASSERT_EQ(1, speed_limit.size()); //Assert that there is only one digital speed limit in each lanelet
+  ROS_ERROR_STREAM("SpeedLimitTest1a Complete");
 
-   ASSERT_EQ(2, llts.size());
-
- //Since the value is larger than the max speed limit, the speed limit should be reset to 80_mph
-  // ASSERT_EQ(speed_limit.front().get()->speed_limit_, 80_mph);
-
+  ASSERT_LT(speed_limit.back().get()->speed_limit_ , 80_mph);//Assert that the speed_limit in each lanelet is less that the maximum 80mph
+  ROS_ERROR_STREAM("SpeedLimitTest1b Complete");
  }
-
-ASSERT_EQ(7, map2->regulatoryElementLayer.size());//Test that there are only 7 regulatory elements: 4 access rules
+ ASSERT_EQ(2,map2->laneletLayer.size()); //Test that there are only two lanelets in the map.
+ ASSERT_EQ(7, map2->regulatoryElementLayer.size());//Test that there are only 7 regulatory elements: 2 access rules, 2 PassingControlLines
                                                   //+ 1 direction of travel route + 2 digital speed limits
 
+ROS_INFO_STREAM("End SpeedLimit Test 1");
+
+ROS_INFO_STREAM("*********************************");
+
+ROS_INFO_STREAM("Begin SpeedLimit Test 2");
+/*Create new lanelet map for testing*/
+
+//Map 3
+std::vector<lanelet::Lanelet> llt2;
+
+  //First/Only lanelet
+  llt2.push_back(carma_wm::getLanelet(left_2, mid_2, lanelet::AttributeValueString::SolidSolid, lanelet::AttributeValueString::Dashed));
 
 
+  ASSERT_EQ(1, llt2.size());
+  ROS_INFO_STREAM("Number of lanelets: "<< llt2.size());
 
+  lanelet::LaneletMapPtr map3;
+  map3 = lanelet::utils::createMap(llt2, {});
+  lanelet::Velocity config_limit = 55_mph;
 
+  ASSERT_EQ(0, map3->regulatoryElementLayer.size());
+
+  ROS_ERROR_STREAM("SpeedLimitTest2");
+
+  lanelet::MapConformer::ensureCompliance(map3, config_limit);
+  for(auto ll: map3->laneletLayer)
+  {
+    auto digital_speed_limit = ll.regulatoryElementsAs<lanelet::DigitalSpeedLimit>();
+    ASSERT_EQ(1, digital_speed_limit.size());//Assert that there are no DigitalSpeedLimits
+    ASSERT_EQ(config_limit, digital_speed_limit.back().get()->speed_limit_);//Assrt that the config_limit has been applied to the lanelet.
+    ROS_ERROR_STREAM("SpeedLimitTest2a Complete");
+
+  }
+
+    ASSERT_EQ(4, map3->regulatoryElementLayer.size());//The new map should have 4 regulatory elements: 1 access rule,
+                                                      //1 Direction of Travel Rule, 1 DigitalSpeedLimit, 1 PassingControlLine
 
 
 }

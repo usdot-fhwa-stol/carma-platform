@@ -487,18 +487,32 @@ void addInferredDirectionOfTravel(Lanelet& lanelet, lanelet::LaneletMapPtr map,
   }
 }
 
-void addValidSpeedLimit(Lanelet& lanelet, Area& area, lanelet::LaneletMapPtr map, lanelet::Velocity config_limit,
+void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::Velocity config_limit,
     const std::vector<lanelet::traffic_rules::TrafficRulesUPtr>& default_traffic_rules )
 {
+  ROS_WARN_STREAM("Add Valid Speed Limit function has been entered.");
+  lanelet::Velocity max_speed;
     auto speed_limit = lanelet.regulatoryElementsAs<DigitalSpeedLimit>();
+     if(config_limit < 80_mph && config_limit > 0_mph)//Accounting for the configured speed limit, input zero when not in use
+      {  
+        max_speed = config_limit;
+        ROS_WARN_STREAM("Config_limit in use.");
+      }
+      else
+      {
+        max_speed = 80_mph;
+        ROS_WARN_STREAM("Default limit in use.");
+      }
+      
     // If the lanelet does not have a digital speed limit then add one with the maximum value of 80
     std::vector<std::string> allowed_participants;
-    lanelet::Velocity max_speed = 80_mph; //Maximum speed limit is 80
-    if(config_limit > 0_mph && config_limit < max_speed)//Accounting for the configured speed limit, input zero when not in use
-        max_speed = config_limit;
+     //Maximum speed limit is 80
+   
 
     if (speed_limit.size()== 0)//If there is no assigned speed limit value
     {
+              ROS_WARN_STREAM(" check");
+
          for(const auto& rules : default_traffic_rules)
          {
             if (rules->canPass(lanelet))
@@ -509,12 +523,17 @@ void addValidSpeedLimit(Lanelet& lanelet, Area& area, lanelet::LaneletMapPtr map
      if (allowed_participants.size() > 0)
      {
       std::shared_ptr<DigitalSpeedLimit> rar(new DigitalSpeedLimit(DigitalSpeedLimit::buildData(lanelet::utils::getId(), max_speed, {lanelet},
-      { area }, allowed_participants)));
-      map->update(lanelet, rar);//Add DigitalSpeedLimit data to the map
+      {}, allowed_participants))); 
+      
+      lanelet.addRegulatoryElement(rar);
+      map->add(rar);//Add DigitalSpeedLimit data to the map
+      ROS_WARN_STREAM(" Regulatory Element Added");
      }
+     ROS_ERROR_STREAM("AddValidSpeedLimit ended with condition 1.");
   }
-  else if (speed_limit.back().get()->speed_limit_ > 0_mph) //If the speed limit value already exists  
+  else /*if (speed_limit.back()->speed_limit_ > 0_mph) //If the speed limit value already exists */
   {
+    ROS_WARN_STREAM("check3");
       for(const auto& rules : default_traffic_rules)
          {
             if (rules->canPass(lanelet))
@@ -526,9 +545,12 @@ void addValidSpeedLimit(Lanelet& lanelet, Area& area, lanelet::LaneletMapPtr map
     {
       ROS_WARN_STREAM("Invalid speed limit value. Value reset to maximum speed limit.");
       std::shared_ptr<DigitalSpeedLimit> rar(new DigitalSpeedLimit(DigitalSpeedLimit::buildData(lanelet::utils::getId(), max_speed, {lanelet},
-      { area }, allowed_participants)));
+      {}, allowed_participants)));
       map->remove(lanelet, speed_limit.back());
+      lanelet.addRegulatoryElement(rar);
       map->update(lanelet, rar);//Add DigitalSpeedLimit data to the map
+      ROS_WARN_STREAM(" Regulatory Element Updated");
+
     }
     
   }
@@ -539,6 +561,8 @@ void addValidSpeedLimit(Lanelet& lanelet, Area& area, lanelet::LaneletMapPtr map
 
 void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit)
 {
+    ROS_ERROR_STREAM("ensureComplianceCheck");
+
   auto default_traffic_rules = getAllGermanTrafficRules();  // Use german traffic rules as default as they most closely
                                                             // match the generic traffic rules
   // Handle lanelets
@@ -547,8 +571,7 @@ void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit
     addInferredAccessRule(lanelet, map, default_traffic_rules);
     addInferredPassingControlLine(lanelet, map);
     addInferredDirectionOfTravel(lanelet, map, default_traffic_rules);
-    for (auto area : map->areaLayer)
-      addValidSpeedLimit(lanelet, area, map, config_limit, default_traffic_rules);// 0_mph can be changed with the config_limit
+      addValidSpeedLimit(lanelet, map, config_limit, default_traffic_rules);// 0_mph can be changed with the config_limit
 
 
   }
