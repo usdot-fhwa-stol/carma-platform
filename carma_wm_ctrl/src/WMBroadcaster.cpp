@@ -126,11 +126,18 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
   {
     //Acquire speed limit information from TafficControlDetail msg
      sL = lanelet::Velocity(msg_detail.minspeed * lanelet::units::MPH());
+     if(config_limit > 0_mph && config_limit < 80_mph)//Accounting for the configured speed limit, input zero when not in use
+        sL = config_limit;
     //Ensure Geofences do not provide invalid speed limit data 
     if(sL > 80_mph )
     {
-     ROS_WARN_STREAM("Digital  speed limit is invalid. Value capped at 80mph.");
+     ROS_WARN_STREAM("Digital speed limit is invalid. Value capped at 80mph.");
      sL = 80_mph;
+    }
+    if(sL < 0_mph)
+    {
+           ROS_WARN_STREAM("Digital  speed limit is invalid. Value set to 0mph.");
+      sL = 0_mph;
     }
     gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
                                         sL, affected_llts, affected_areas, { lanelet::Participants::VehicleCar }));
@@ -273,10 +280,10 @@ void WMBroadcaster::setMaxLaneWidth(double max_lane_width)
   max_lane_width_ = max_lane_width;
 }
 
-void WMBroadcaster::setConfigSpeedLimit(double config_lim)
+void WMBroadcaster::setConfigSpeedLimit(double cL)
 {
   /*Logic to change config_lim to Velocity value config_limit*/
-  config_limit = lanelet::Velocity(config_lim * lanelet::units::MPH());
+  config_limit = lanelet::Velocity(cL * lanelet::units::MPH());
 }
 
 // currently only supports geofence message version 1: TrafficControlMessageV01 

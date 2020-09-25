@@ -265,7 +265,7 @@ lanelet::Areas areas;
   ASSERT_EQ(1, speed_limit.size()); //Assert that there is only one digital speed limit in each lanelet
   ROS_ERROR_STREAM("SpeedLimitTest1a Complete");
 
-  ASSERT_LT(speed_limit.back().get()->speed_limit_ , 80_mph);//Assert that the speed_limit in each lanelet is less that the maximum 80mph
+  ASSERT_LT(speed_limit.back().get()->speed_limit_ , 80_mph);//Assert that the speed_limit in each lanelet is less than or equal to the maximum 80mph
   ROS_ERROR_STREAM("SpeedLimitTest1b Complete");
  }
  ASSERT_EQ(2,map2->laneletLayer.size()); //Test that there are only two lanelets in the map.

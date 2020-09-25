@@ -524,7 +524,7 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
      {
       std::shared_ptr<DigitalSpeedLimit> rar(new DigitalSpeedLimit(DigitalSpeedLimit::buildData(lanelet::utils::getId(), max_speed, {lanelet},
       {}, allowed_participants))); 
-      
+
       lanelet.addRegulatoryElement(rar);
       map->add(rar);//Add DigitalSpeedLimit data to the map
       ROS_WARN_STREAM(" Regulatory Element Added");
@@ -546,9 +546,10 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
       ROS_WARN_STREAM("Invalid speed limit value. Value reset to maximum speed limit.");
       std::shared_ptr<DigitalSpeedLimit> rar(new DigitalSpeedLimit(DigitalSpeedLimit::buildData(lanelet::utils::getId(), max_speed, {lanelet},
       {}, allowed_participants)));
-      map->remove(lanelet, speed_limit.back());
+      //map->remove(lanelet, speed_limit.back());
+      lanelet.removeRegulatoryElement(speed_limit.back());
       lanelet.addRegulatoryElement(rar);
-      map->update(lanelet, rar);//Add DigitalSpeedLimit data to the map
+      //map->update(lanelet, rar);//Add DigitalSpeedLimit data to the map
       ROS_WARN_STREAM(" Regulatory Element Updated");
 
     }

@@ -106,8 +106,11 @@ public:
    */
   void setMaxLaneWidth(double max_lane_width);
 
-  void setConfigSpeedLimit(double config_limit);
-
+/*!
+   * \brief Sets the configured speed limit. 
+   */
+  void setConfigSpeedLimit(double cL);
+  
   /*!
    * \brief Returns geofence object from TrafficControlMessageV01 ROS Msg
    * \param geofence_msg The ROS msg that contains geofence information
