@@ -44,11 +44,11 @@ chmod 775 /opt/carma/yolo/darknet/data/yolov3.weights
 curl -o /opt/carma/maps/pcd_map.pcd -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-config/develop/example_opt_carma/maps/base_map.pcd
 chmod 775 /opt/carma/maps/pcd_map.pcd
 
-curl -o /opt/carma/maps/vector_map.osm -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-config/develop/example_opt_carma/maps/vector_map.osm
+curl -o /opt/carma/maps/vector_map.osm -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/integration/routing/route/resource/map/town01_vector_map_1.osm
 chmod 775 /opt/carma/maps/vector_map.osm
 
-curl -o /opt/carma/routes/example_route.csv -L https://raw.githubusercontent.com/usdot-fhwa-stol/carma-config/develop/example_opt_carma/routes/example_route.csv
-chmod 775 /opt/carma/routes/example_route.csv
+curl -o /opt/carma/routes/Test_lanelet111_route_1.csv -L  https://raw.githubusercontent.com/usdot-fhwa-stol/carma-platform/integration/routing/route/resource/route/Test_lanelet111_route_1.csv
+chmod 775 /opt/carma/routes/Test_lanelet111_route_1.csv
 
 ln -s "$1" /opt/carma/vehicle
 

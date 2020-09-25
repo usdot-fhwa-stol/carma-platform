@@ -34,10 +34,23 @@ void MPCFollowerWrapper::Initialize() {
 
   // Trajectory Plan Subscriber
   
-  trajectory_plan_sub = nh_.subscribe<cav_msgs::TrajectoryPlan>("trajectory_plan", 1, &MPCFollowerWrapper::TrajectoryPlanPoseHandler, this);
+  trajectory_plan_sub = nh_.subscribe<cav_msgs::TrajectoryPlan>("mpc_follower/trajectory", 1, &MPCFollowerWrapper::TrajectoryPlanPoseHandler, this);
 
   // WayPoints Publisher
   way_points_pub_ = nh_.advertise<autoware_msgs::Lane>("final_waypoints", 10, true);
+
+  mpc_plugin_discovery_pub_ = nh_.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
+  plugin_discovery_msg_.name = "MPC";
+  plugin_discovery_msg_.versionId = "v1.0";
+  plugin_discovery_msg_.available = true;
+  plugin_discovery_msg_.activated = true;
+  plugin_discovery_msg_.type = cav_msgs::Plugin::CONTROL;
+  plugin_discovery_msg_.capability = "control_mpc_plan/plan_controls";
+
+  ros::CARMANodeHandle::setSpinCallback([this]() -> bool {
+  mpc_plugin_discovery_pub_.publish(plugin_discovery_msg_);
+  return true;
+  });
 }
 
 

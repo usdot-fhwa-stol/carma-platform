@@ -51,11 +51,8 @@ include_directories(
 ## Declare C++ library
 add_library(${PROJECT_NAME}
   src/WMBroadcaster.cpp
-  src/MapConformer.cpp
   src/GeofenceScheduler.cpp
   src/GeofenceSchedule.cpp
-  src/ROSTimer.cpp
-  src/ROSTimerFactory.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -113,8 +110,6 @@ catkin_add_gmock(${PROJECT_NAME}-test
  test/TestMain.cpp
  test/GeofenceSchedulerTest.cpp
  test/GeofenceScheduleTest.cpp
- test/MapConformerTest.cpp
- test/TestTimer.cpp
  test/WMBroadcasterTest.cpp
  test/MapToolsTest.cpp
  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests

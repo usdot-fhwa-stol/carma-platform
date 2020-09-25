@@ -16,7 +16,7 @@
  the License.
 -->
 
-<package format="2">
+<package format="3">
   <name>autoware_plugin</name>
   <version>3.3.0</version>
   <description>The autoware_plugin converts final waypoint plan from autoware to a CARMA trajectory</description>

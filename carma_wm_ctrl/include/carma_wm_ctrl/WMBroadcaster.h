@@ -25,13 +25,28 @@
 #include <boost/icl/interval_set.hpp>
 #include <unordered_set>
 #include "ros/ros.h"
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/primitives/Lanelet.h>
+#include <autoware_lanelet2_msgs/MapBin.h>
+#include <lanelet2_extension/utility/message_conversion.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
 #include <carma_wm_ctrl/GeofenceScheduler.h>
+#include <lanelet2_core/geometry/BoundingBox.h>
+#include <lanelet2_core/primitives/BoundingBox.h>
+#include <carma_wm/WMListener.h>
+#include <cav_msgs/Route.h>
+#include <cav_msgs/TrafficControlRequest.h>
+#include <cav_msgs/TrafficControlBounds.h>
+#include <autoware_lanelet2_msgs/MapBin.h>
 #include <lanelet2_routing/RoutingGraph.h>
+#include <geometry_msgs/PoseStamped.h>
 
-#include "MapConformer.h"
+#include <carma_wm/MapConformer.h>
 
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
-#include <cav_msgs/ControlMessage.h>
+#include <cav_msgs/TrafficControlMessage.h>
+#include <cav_msgs/CheckActiveGeofence.h>
 #include <carma_wm/TrafficControl.h>
 #include <std_msgs/String.h>
 #include <unordered_set>
@@ -52,11 +67,16 @@ class WMBroadcaster
 public:
   using PublishMapCallback = std::function<void(const autoware_lanelet2_msgs::MapBin&)>;
   using PublishMapUpdateCallback = std::function<void(const autoware_lanelet2_msgs::MapBin&)>;
+  using PublishCtrlRequestCallback = std::function<void(const cav_msgs::TrafficControlRequest&)>;
+  using PublishActiveGeofCallback = std::function<void(const cav_msgs::CheckActiveGeofence&)>;
+
 
   /*!
    * \brief Constructor
    */
-  WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, std::unique_ptr<TimerFactory> timer_factory);
+
+  WMBroadcaster(const PublishMapCallback& map_pub, const PublishMapUpdateCallback& map_update_pub, const PublishCtrlRequestCallback& control_msg_pub,
+  const PublishActiveGeofCallback& active_pub, std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory);
 
   /*!
    * \brief Callback to set the base map when it has been loaded
@@ -74,11 +94,11 @@ public:
   void geoReferenceCallback(const std_msgs::String& geo_ref);
 
   /*!
-   * \brief Callback to add a geofence to the map
+   * \brief Callback to add a geofence to the map. Currently only supports version 1 TrafficControlMessage
    *
    * \param geofence_msg The ROS msg of the geofence to add. 
    */
-  void geofenceCallback(const cav_msgs::ControlMessage& geofence_msg);
+  void geofenceCallback(const cav_msgs::TrafficControlMessage& geofence_msg);
 
   /*!
    * \brief Adds a geofence to the current map and publishes the ROS msg
@@ -89,6 +109,21 @@ public:
    * \brief Removes a geofence from the current map and publishes the ROS msg
    */
   void removeGeofence(std::shared_ptr<Geofence> gf_ptr);
+  
+  /*!
+  * \brief Calls controlRequestFromRoute() and publishes the TrafficControlRequest Message returned after the completed operations
+  * \param route_msg The message containing route information
+  */
+  void routeCallbackMessage(const cav_msgs::Route& route_msg);
+
+ /*!
+  * \brief Pulls vehicle information from CARMA Cloud at startup by providing its selected route in a TrafficControlRequest message that is published after a route is selected.
+  * During operation at ~10s intervals the vehicle will make another control request for the remainder of its route.
+  * \param route_msg The message containing route information pulled from routeCallbackMessage()
+  * \param req_id_for_testing this ptr is optional. it gives req_id for developer to test TrafficControlMessage as it needs it 
+  */
+  cav_msgs::TrafficControlRequest controlRequestFromRoute(const cav_msgs::Route& route_msg, std::shared_ptr<j2735_msgs::Id64b> req_id_for_testing = NULL);
+
 
   /*!
    * \brief Gets the affected lanelet or areas based on the geofence_msg
@@ -97,7 +132,7 @@ public:
    * NOTE:Currently this function only checks lanelets and will be expanded 
    * to areas in the future.
    */
-  lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const cav_msgs::ControlMessage& geofence_msg);
+  lanelet::ConstLaneletOrAreas getAffectedLaneletOrAreas(const cav_msgs::TrafficControlMessageV01& geofence_msg);
 
   /*!
    * \brief Sets the max lane width in meters. Geofence points are associated to a lanelet if they are 
@@ -105,23 +140,60 @@ public:
    */
   void setMaxLaneWidth(double max_lane_width);
 
+  /*!
+   * \brief Returns geofence object from TrafficControlMessageV01 ROS Msg
+   * \param geofence_msg The ROS msg that contains geofence information
+   * \throw InvalidObjectStateError if base_map is not set or the base_map's georeference is empty
+   * NOTE:Currently this function populates digitalSpeedLimit and passingControlLine instructions
+   */
+  std::shared_ptr<Geofence> geofenceFromMsg(const cav_msgs::TrafficControlMessageV01& geofence_msg);
+
+  /*!
+   * \brief Returns the route distance (downtrack or crosstrack in meters) to the nearest active geofence lanelet
+   * \param curr_pos Current position in local coordinates
+   * \throw InvalidObjectStateError if base_map is not set
+   * \throw std::invalid_argument if curr_pos is not on the road
+   * \return 0 if there is no active geofence on the vehicle's route 
+   */
+  double distToNearestActiveGeofence(const lanelet::BasicPoint2d& curr_pos);
+
+
+  void currentLocationCallback(const geometry_msgs::PoseStamped& current_pos);
+  /*!
+   * \brief Returns a message indicating whether or not the vehicle is inside of an active geofence lanelet
+   * \param current_pos Current position of the vehicle
+   * \return 0 if vehicle is not on an active geofence 
+   */
+  cav_msgs::CheckActiveGeofence checkActiveGeofenceLogic(const geometry_msgs::PoseStamped& current_pos);
+
+
+
+
 private:
-  void addSpeedLimit(std::shared_ptr<Geofence> gf_ptr);
-  void addBackSpeedLimit(std::shared_ptr<Geofence> gf_ptr);
-  void removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr);
-  void addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr);
-  std::shared_ptr<Geofence> geofenceFromMsg(const cav_msgs::ControlMessage& geofence_msg);
+  lanelet::ConstLanelets route_path_;
+  std::unordered_set<lanelet::Id> active_geofence_llt_ids_; 
+  void addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const;
+  void addBackRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const;
+  void removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr) const;
+  void addGeofenceHelper(std::shared_ptr<Geofence> gf_ptr) const;
+  bool shouldChangeControlLine(const lanelet::ConstLaneletOrArea& el,const lanelet::RegulatoryElementConstPtr& regem, std::shared_ptr<Geofence> gf_ptr) const;
+  void addPassingControlLineFromMsg(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const; 
   std::unordered_set<lanelet::Lanelet> filterSuccessorLanelets(const std::unordered_set<lanelet::Lanelet>& possible_lanelets, const std::unordered_set<lanelet::Lanelet>& root_lanelets);
   lanelet::LaneletMapPtr base_map_;
   lanelet::LaneletMapPtr current_map_;
   std::unordered_set<std::string>  checked_geofence_ids_;
+  std::unordered_set<std::string>  generated_geofence_reqids_;
   std::vector<lanelet::LaneletMapPtr> cached_maps_;
   std::mutex map_mutex_;
   PublishMapCallback map_pub_;
   PublishMapUpdateCallback map_update_pub_;
+  PublishCtrlRequestCallback control_msg_pub_;
+  PublishActiveGeofCallback active_pub_;
   GeofenceScheduler scheduler_;
   std::string base_map_georef_;
   double max_lane_width_;
+  
+
 };
 }  // namespace carma_wm_ctrl
 

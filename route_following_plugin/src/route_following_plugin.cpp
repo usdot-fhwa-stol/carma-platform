@@ -34,10 +34,10 @@ namespace route_following_plugin
         plan_maneuver_srv_ = nh_->advertiseService("strategic_plan/plan_maneuvers", &RouteFollowingPlugin::plan_maneuver_cb, this);
                 
         plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
-        plugin_discovery_msg_.name = "RouteFollowingPlugin";
+        plugin_discovery_msg_.name = "Route Following";
         plugin_discovery_msg_.versionId = "v1.0";
         plugin_discovery_msg_.available = true;
-        plugin_discovery_msg_.activated = false;
+        plugin_discovery_msg_.activated = true;
         plugin_discovery_msg_.type = cav_msgs::Plugin::STRATEGIC;
         plugin_discovery_msg_.capability = "strategic_plan/plan_maneuvers";
 
@@ -50,9 +50,9 @@ namespace route_following_plugin
         // set world model point form wm listener
         wm_ = wml_->getWorldModel();
 
-        ros::CARMANodeHandle::setSpinCallback([this]()
+        ros::CARMANodeHandle::setSpinCallback([this]() -> bool 
         {
-            plugin_discovery_pub_.publish(plugin_discovery_msg_);
+           plugin_discovery_pub_.publish(plugin_discovery_msg_);
             return true;
         });
     }

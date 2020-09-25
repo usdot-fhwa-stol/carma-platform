@@ -232,7 +232,7 @@ namespace route {
             msg.shortest_path_lanelet_ids.push_back(ll.id());
         }
         // iterate thought the all lanelet in the route to populat route_path_lanelet_ids
-        for(const auto& ll : route.get().laneletMap()->laneletLayer)
+        for(const auto& ll : route.get().laneletSubmap()->laneletLayer)
         {
             msg.route_path_lanelet_ids.push_back(ll.id());
         }
@@ -347,7 +347,8 @@ namespace route {
             state_msg.routeID = route_msg_.route_name;
             state_msg.cross_track = current_crosstrack_distance_;
             state_msg.down_track = current_downtrack_distance_;
-            state_msg.lanelet_downtrack = ll_downtrack_distance_;
+            state_msg.lanelet_downtrack = ll_downtrack_distance_;            
+            state_msg.state = this->rs_worker_.get_route_state();
             state_msg.lanelet_id = ll_id_;
             state_msg.speed_limit = speed_limit_;
             route_state_pub_.publish(state_msg);
@@ -361,5 +362,6 @@ namespace route {
         }
         return true;
     }
+
 }
 

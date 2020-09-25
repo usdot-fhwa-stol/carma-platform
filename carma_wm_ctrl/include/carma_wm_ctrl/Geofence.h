@@ -22,6 +22,7 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
 #include <lanelet2_core/primitives/LaneletOrArea.h>
+#include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
 
 namespace carma_wm_ctrl
 {
@@ -36,16 +37,16 @@ class Geofence
 public:
   boost::uuids::uuid id_;  // Unique id of this geofence
 
-  GeofenceSchedule schedule;  // The schedule this geofence operates with
+  std::vector<GeofenceSchedule> schedules;  // The schedules this geofence operates with
 
   std::string proj;
 
-  // TODO Add rest of the attributes provided by geofences in the future
-  lanelet::DigitalSpeedLimitPtr min_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_kmh, {}, {},
-                                                     { lanelet::Participants::VehicleCar }));
-  lanelet::DigitalSpeedLimitPtr max_speed_limit_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_kmh, {}, {},
-                                                     { lanelet::Participants::VehicleCar }));
+  std::string type_;
   
+
+  // TODO Add rest of the attributes provided by geofences in the future
+  lanelet::RegulatoryElementPtr regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_kmh, {}, {},
+                                                     { lanelet::Participants::VehicleCar }));
   // elements needed for broadcasting to the rest of map users
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list_;
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> remove_list_;
@@ -54,5 +55,8 @@ public:
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> prev_regems_;
   lanelet::ConstLaneletOrAreas affected_parts_;
   
+  // Helper member for PassingControlLine type regulatory geofence
+  bool pcl_affects_left_ = false;
+  bool pcl_affects_right_ = false;
 };
 }  // namespace carma_wm_ctrl

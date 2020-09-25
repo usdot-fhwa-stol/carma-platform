@@ -37,12 +37,12 @@ namespace autoware_plugin
         trajectory_srv_ = nh_->advertiseService("plugins/AutowarePlugin/plan_trajectory", &AutowarePlugin::plan_trajectory_cb, this);
                 
         autoware_plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
-        plugin_discovery_msg_.name = "AutowarePlugin";
+        plugin_discovery_msg_.name = "In-Lane Cruising";
         plugin_discovery_msg_.versionId = "v1.0";
         plugin_discovery_msg_.available = true;
-        plugin_discovery_msg_.activated = false;
-        plugin_discovery_msg_.type = cav_msgs::Plugin::STRATEGIC;
-        plugin_discovery_msg_.capability = "strategic_plan/plan_maneuvers";
+        plugin_discovery_msg_.activated = true;
+        plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
+        plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
 
         waypoints_sub_ = nh_->subscribe("final_waypoints", 1, &AutowarePlugin::waypoints_cb, this);
         pose_sub_ = nh_->subscribe("current_pose", 1, &AutowarePlugin::pose_cb, this);

@@ -59,5 +59,4 @@ namespace route {
             throw std::invalid_argument("Current state is illegal: " + std::to_string(state_));
         }
     }
-
 }
