@@ -22,6 +22,8 @@
 
   <!-- Arguments -->
   <arg name="route_file_folder" default="$(find carma)/routes" doc="Path of folder containing routes to load"/>
+  <arg name="vehicle_calibration_dir" default="$(find carma)../../CARMAVehicleCalibration/development/vehicle" doc="The directory continaing vehicle calibration type parameters"/>
+  
   
   <!-- Remap topics from external packages -->
   <remap from="bsm" to="$(optenv CARMA_MSG_NS)/outgoing_bsm"/>
@@ -97,15 +99,18 @@
 
   <remap from="/vehicle_status" to="$(optenv CARMA_INTR_NS)/vehicle_status"/>
   <remap from="/current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>  
+  
   <!-- MPC Follower Wrapper -->
-  <include file="$(find mpc_follower_wrapper)/launch/mpc_follower_wrapper.launch" />
+  <include file="$(find mpc_follower_wrapper)/launch/mpc_follower_wrapper.launch">
+    <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
+  </include>
 
     <!-- Pure Pursuit Wrapper -->
   <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch" />
 
     <!-- Route Following Plugin -->
   <include file="$(find route_following_plugin)/launch/route_following_plugin.launch" />
-
+  
   <!-- Twist Filter -->
   <group>
     <remap from="/accel_cmd" to="accel_cmd"/>
