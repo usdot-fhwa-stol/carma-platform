@@ -164,9 +164,6 @@
   <include file="$(find waypoint_planner)/launch/astar_avoid.launch" />
   <include file="$(find waypoint_planner)/launch/velocity_set.launch" />
 
-  <!-- Autoware Plugin -->
-  <include file="$(find autoware_plugin)/launch/autoware_plugin.launch" />
-
   <!-- Inlanecruising Plugin -->
   <include file="$(find inlanecruising_plugin)/launch/inlanecruising_plugin.launch" />
 
