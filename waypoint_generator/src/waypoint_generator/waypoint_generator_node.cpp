@@ -70,9 +70,27 @@ namespace waypoint_generator
 
         lanelet::BasicLineString2d route_geometry = 
             carma_wm::geometry::concatenate_lanelets(tmp);
+
+        ROS_DEBUG_STREAM(" ");
+        ROS_DEBUG_STREAM(" ");
+        ROS_DEBUG_STREAM("concatenate_lanelets resulted in data: ");
+
+        for (auto p : route_geometry) {
+            ROS_DEBUG_STREAM(" Point: ( " << p.x() << ", " << p.y() << " )");
+        }
+
         ROS_DEBUG("Processing curvatures...");
         std::vector<double> curvatures = 
             carma_wm::geometry::getLocalCurvatures(tmp);
+
+        ROS_DEBUG_STREAM(" ");
+        ROS_DEBUG_STREAM(" ");
+        ROS_DEBUG_STREAM("Computed Curvatures");
+
+        for (auto p : curvatures) {
+            ROS_DEBUG_STREAM(" Curvature: " << p);
+        }
+
 
         std::vector<int> constant_curvature_regions = 
             _wpg.compute_constant_curvature_regions(
@@ -80,15 +98,42 @@ namespace waypoint_generator
                 _curvature_epsilon, 
                 _linearity_constraint);
 
+        ROS_DEBUG_STREAM(" ");
+        ROS_DEBUG_STREAM(" ");
+        ROS_DEBUG_STREAM("Curvature Regions");
+
+        for (auto p : constant_curvature_regions) {
+            ROS_DEBUG_STREAM(" Region: " << p);
+        }
+
+        ROS_DEBUG("Normalizing curvatures...");
+
         std::vector<double> processed_curvatures = 
             _wpg.normalize_curvature_regions(
                 curvatures, 
                 constant_curvature_regions);
 
+        ROS_DEBUG_STREAM(" ");
+        ROS_DEBUG_STREAM(" ");
+        ROS_DEBUG_STREAM("Normalized Curvatures");
+
+        for (auto p : processed_curvatures) {
+            ROS_DEBUG_STREAM(" Curvature: " << p);
+        }
+
         ROS_DEBUG("Processing speeds...");
         std::vector<double> ideal_speeds = _wpg.compute_ideal_speeds(
             processed_curvatures, 
             _lateral_accel_limit);
+
+        
+        ROS_DEBUG_STREAM(" ");
+        ROS_DEBUG_STREAM(" ");
+        ROS_DEBUG_STREAM("Ideal Speeds");
+
+        for (auto p : ideal_speeds) {
+            ROS_DEBUG_STREAM("IdealSpeed: " << p);
+        }
 
         std::vector<double> accel_limited_speeds = _wpg.apply_accel_limits(
             ideal_speeds, 
@@ -96,15 +141,50 @@ namespace waypoint_generator
             route_geometry,
             _longitudinal_accel_limit,
             _longitudinal_decel_limit);
+        
+        ROS_DEBUG_STREAM(" ");
+        ROS_DEBUG_STREAM(" ");
+        ROS_DEBUG_STREAM("Accel Limited Speeds");
+
+        for (auto p : accel_limited_speeds) {
+            ROS_DEBUG_STREAM(" Speed: " << p);
+        }
 
         std::vector<double> speed_limits = _wpg.get_speed_limits(tmp);
+
+
+        ROS_DEBUG_STREAM(" ");
+        ROS_DEBUG_STREAM(" ");
+        ROS_DEBUG_STREAM("Speed Limits");
+
+        for (auto p : speed_limits) {
+            ROS_DEBUG_STREAM(" SpeedLimits: " << p);
+        }
+
         std::vector<double> final_speeds = _wpg.apply_speed_limits(
             accel_limited_speeds, 
             speed_limits);
 
+        ROS_DEBUG_STREAM(" ");
+        ROS_DEBUG_STREAM(" ");
+        ROS_DEBUG_STREAM("Final Speeds");
+
+        for (auto p : final_speeds) {
+            ROS_DEBUG_STREAM(" Final Speed: " << p);
+        }
+
         ROS_DEBUG("Processing orientations...");
         std::vector<geometry_msgs::Quaternion> orientations = 
             _wpg.compute_orientations(tmp);
+
+        ROS_DEBUG_STREAM(" ");
+        ROS_DEBUG_STREAM(" ");
+        ROS_DEBUG_STREAM("Orientations");
+
+        for (auto p : orientations) {
+            ROS_DEBUG_STREAM(" Orientation: ( " << p.x << ", " << p.y << ", " << p.z << ", " << p.w  << " )");
+        }
+
 
         // Update current waypoints
         ROS_DEBUG("Generating final waypoint message.");
