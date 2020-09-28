@@ -27,6 +27,8 @@ namespace waypoint_generator
         _pnh.reset(new ros::CARMANodeHandle("~"));
         _wml.reset(new carma_wm::WMListener());
         _wm = _wml->getWorldModel();
+        _wpg.setWorldModel(_wm);
+        
         ROS_DEBUG("Initialized all node handles");
 
         _pnh->param<double>("curvature_epsilon", _curvature_epsilon, 3.0);

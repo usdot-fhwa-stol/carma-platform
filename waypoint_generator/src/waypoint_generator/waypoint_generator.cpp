@@ -20,6 +20,10 @@
 namespace waypoint_generator
 {
 
+void WaypointGenerator::setWorldModel(carma_wm::WorldModelConstPtr wm) {
+    _wm = wm;
+}
+
 std::vector<int> WaypointGenerator::compute_constant_curvature_regions(
     std::vector<double> curvatures, 
     double epsilon,
@@ -116,6 +120,8 @@ std::vector<double> WaypointGenerator::apply_speed_limits(
     const std::vector<double> speeds, 
     const std::vector<double> speed_limits) const
 {
+    ROS_ERROR_STREAM("Speeds list size: " << speeds.size());
+    ROS_ERROR_STREAM("SpeedLimits list size: " << speed_limits.size());
     if (speeds.size() != speed_limits.size()){
         throw std::invalid_argument("Speeds and speed limit lists not same size");
     }
@@ -296,6 +302,19 @@ std::vector<double> WaypointGenerator::get_speed_limits(
 {
     std::vector<double> out;
     for (int i = 0; i < lanelets.size(); i++) {
+        if (!_wm) {
+            ROS_ERROR_STREAM("Invalid WM");
+            throw std::invalid_argument("Inavlid WM");
+        }
+
+        if (!(_wm->getTrafficRules())) {
+            ROS_ERROR_STREAM("Invalid TrafficRules");
+            throw std::invalid_argument("Inavlid TrafficRules");
+        }
+        if (!(_wm->getTrafficRules()->get())) {
+            ROS_ERROR_STREAM("Invalid TrafficRules Ptr");
+            throw std::invalid_argument("Inavlid TrafficRules Ptr");
+        }
         lanelet::traffic_rules::SpeedLimitInformation sli = 
             _wm->getTrafficRules()->get()->speedLimit(lanelets[i]);
 

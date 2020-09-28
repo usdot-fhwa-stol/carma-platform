@@ -39,6 +39,9 @@ namespace waypoint_generator
     class WaypointGenerator 
     {
         public:
+            
+            void setWorldModel(carma_wm::WorldModelConstPtr wm);
+
             /**!
              * \brief Analyze the list of curvatures to detect any regions of 
              * constant (within epsilon) curvature or linearly increasing curvature
