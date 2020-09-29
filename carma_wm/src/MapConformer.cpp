@@ -549,7 +549,7 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
       //map->remove(lanelet, speed_limit.back());
       lanelet.removeRegulatoryElement(speed_limit.back());
       lanelet.addRegulatoryElement(rar);
-      //map->update(lanelet, rar);//Add DigitalSpeedLimit data to the map
+      map->update(lanelet, rar);//Add DigitalSpeedLimit data to the map
       ROS_WARN_STREAM(" Regulatory Element Updated");
 
     }
