@@ -17,7 +17,7 @@
 #include <waypoint_generator/waypoint_generator.hpp>
 #include <waypoint_generator/waypoint_generator_config.hpp>
 #include <carma_wm/Geometry.h>
-
+#include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
 namespace waypoint_generator
 {
 WaypointGenerator::WaypointGenerator(carma_wm::WorldModelConstPtr wm, WaypointGeneratorConfig config, PublishWaypointsCallback waypoint_publisher) 
@@ -273,21 +273,21 @@ autoware_msgs::LaneArray WaypointGenerator::generate_lane_array_message(
     header.seq = 0;
     header.stamp = ros::Time::now();
     lane.header = header;
-
     std::vector<autoware_msgs::Waypoint> waypoints;
-    for (int j = 0; j < lanelets[j].centerline3d().size(); j++)
+    for (int j = 0; j < lanelets[i].centerline3d().size(); j++)
     {
       autoware_msgs::Waypoint wp;
       wp.lane_id = i;
-
+      
       geometry_msgs::Pose p;
       p.position.x = lanelets[i].centerline3d()[j].x();
       p.position.y = lanelets[i].centerline3d()[j].y();
       p.position.z = lanelets[i].centerline3d()[j].z();
       p.orientation = orientations[centerline_point_idx];
-
+      wp.pose.pose = p;
       geometry_msgs::Twist t;
       t.linear.x = speeds[centerline_point_idx];  // Vehicle's forward velocity corresponds to x
+      wp.twist.twist = t;
 
       wp.change_flag = 0;
       wp.direction = 0;
@@ -310,35 +310,36 @@ autoware_msgs::LaneArray WaypointGenerator::generate_lane_array_message(
     }
 
     lane.waypoints = waypoints;
+    out.lanes.push_back(lane);
   }
+
   return out;
 }
 std::vector<double> WaypointGenerator::get_speed_limits(std::vector<lanelet::ConstLanelet> lanelets) const
 {
   std::vector<double> out;
+  if (!_wm)
+  {
+    ROS_ERROR_STREAM("get_speed_limit: Invalid WM");
+    throw std::invalid_argument("get_speed_limit: Inavlid WM");
+  }
+  if (lanelets.size() == 0)
+  {
+    ROS_ERROR_STREAM("get_speed_limit: Invalid lanelets");
+    throw std::invalid_argument("get_speed_limit: Empty lanelets passed!");
+  }
   for (int i = 0; i < lanelets.size(); i++)
   {
-    if (!_wm)
+    auto slis = lanelets[i].regulatoryElementsAs<lanelet::DigitalSpeedLimit>();
+    if (slis.size() == 0)
     {
-      ROS_ERROR_STREAM("Invalid WM");
-      throw std::invalid_argument("Inavlid WM");
+      std::string err_msg = "get_speed_limit: Lanalet Id:" + std::to_string(lanelets[i].id()) + " has no Digital Speed Limit Regulatory Element!";
+      ROS_ERROR_STREAM(err_msg);
+      throw std::invalid_argument(err_msg);
     }
-
-    if (!(_wm->getTrafficRules()))
-    {
-      ROS_ERROR_STREAM("Invalid TrafficRules");
-      throw std::invalid_argument("Inavlid TrafficRules");
-    }
-    if (!(_wm->getTrafficRules()->get()))
-    {
-      ROS_ERROR_STREAM("Invalid TrafficRules Ptr");
-      throw std::invalid_argument("Inavlid TrafficRules Ptr");
-    }
-    lanelet::traffic_rules::SpeedLimitInformation sli = _wm->getTrafficRules()->get()->speedLimit(lanelets[i]);
-
     for (int j = 0; j < lanelets[i].centerline2d().size(); j++)
     {
-      out.push_back(sli.speedLimit.value());
+      out.push_back(slis[0]->getSpeedLimit().value());
     }
   }
 
