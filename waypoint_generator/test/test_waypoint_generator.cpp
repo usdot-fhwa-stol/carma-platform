@@ -328,7 +328,7 @@ TEST(WaypointGeneratorTest, TestGenerateLaneArray)
     ASSERT_EQ(msg.lanes[0].waypoints[0].pose.pose.orientation.x, no_rot1.x); //just checking one random side of 4 possible
     ASSERT_EQ(msg.lanes[0].waypoints[1].pose.pose.orientation.y, no_rot2.y);
     ASSERT_EQ(msg.lanes[0].waypoints[2].pose.pose.orientation.z, no_rot3.z);
-    ASSERT_EQ(msg.lanes[1].waypoints[0].pose.pose.orientation.x, no_rot4.x);
+    ASSERT_EQ(msg.lanes[1].waypoints[0].pose.pose.orientation.w, no_rot4.w);
     ASSERT_EQ(msg.lanes[1].waypoints[1].pose.pose.orientation.x, no_rot5.x);
     ASSERT_EQ(msg.lanes[1].waypoints[2].pose.pose.orientation.x, no_rot6.x);
     // check twist (speeds)
