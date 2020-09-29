@@ -233,6 +233,10 @@ WaypointGenerator::compute_orientations(const std::vector<lanelet::ConstLanelet>
 {
   std::vector<geometry_msgs::Quaternion> out;
 
+  if (lanelets.size() == 0) {
+      return out;
+  }
+
   lanelet::BasicLineString2d centerline = carma_wm::geometry::concatenate_lanelets(lanelets);
 
   std::vector<Eigen::Vector2d> tangents = carma_wm::geometry::compute_finite_differences(centerline);
@@ -246,6 +250,7 @@ WaypointGenerator::compute_orientations(const std::vector<lanelet::ConstLanelet>
     double yaw = std::acos(tangents[i].dot(x_axis) / (tangents[i].norm() * x_axis.norm()));
 
     q = tf::createQuaternionMsgFromYaw(yaw);
+    out.push_back(q);
   }
 
   return out;

@@ -15,6 +15,9 @@ find_package(catkin REQUIRED COMPONENTS
   carma_wm
   roscpp
   std_msgs
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
 )
 
 catkin_package(
@@ -111,6 +114,7 @@ install(DIRECTORY
 catkin_add_gmock(${PROJECT_NAME}-test 
   test/TestMain.cpp
   test/test_waypoint_generator.cpp
+  test/test_compute_orientations.cpp
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit test
 )
 
