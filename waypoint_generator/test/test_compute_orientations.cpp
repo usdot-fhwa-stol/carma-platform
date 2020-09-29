@@ -160,10 +160,6 @@ TEST(WaypointGeneratorTest, compute_orientations_curved)
 
   double roll, pitch, yaw;
 
-  for (int i = 0; i < result.size(); i++){
-    rpyFromQuatMsg(result[i], roll, pitch, yaw);
-    std::cerr << i << " Yaw: " << yaw << std::endl;
-  }
   rpyFromQuatMsg(result[0], roll, pitch, yaw);
   ASSERT_NEAR(0.0, roll, 0.00001);
   ASSERT_NEAR(0.0, pitch, 0.00001);
@@ -243,6 +239,11 @@ TEST(WaypointGeneratorTest, compute_orientations_curved)
   ASSERT_NEAR(0.0, roll, 0.00001);
   ASSERT_NEAR(0.0, pitch, 0.00001);
   ASSERT_NEAR(3.14159, yaw, 0.00001);
+
+  // Verify 0 input gives 0 output
+  result = wpg.compute_orientations({});
+  ASSERT_EQ(0, result.size());
+
 }
 
 
