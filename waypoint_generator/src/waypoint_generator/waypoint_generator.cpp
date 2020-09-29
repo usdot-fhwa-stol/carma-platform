@@ -268,23 +268,18 @@ autoware_msgs::LaneArray WaypointGenerator::generate_lane_array_message(
     header.seq = 0;
     header.stamp = ros::Time::now();
     lane.header = header;
-    ROS_ERROR_STREAM("hey");
     std::vector<autoware_msgs::Waypoint> waypoints;
     for (int j = 0; j < lanelets[i].centerline3d().size(); j++)
     {
-      
-      
       autoware_msgs::Waypoint wp;
       wp.lane_id = i;
       
-      ROS_ERROR_STREAM("hey1");
       geometry_msgs::Pose p;
       p.position.x = lanelets[i].centerline3d()[j].x();
       p.position.y = lanelets[i].centerline3d()[j].y();
       p.position.z = lanelets[i].centerline3d()[j].z();
       p.orientation = orientations[centerline_point_idx];
       wp.pose.pose = p;
-      ROS_ERROR_STREAM("hey2");
       geometry_msgs::Twist t;
       t.linear.x = speeds[centerline_point_idx];  // Vehicle's forward velocity corresponds to x
       wp.twist.twist = t;
