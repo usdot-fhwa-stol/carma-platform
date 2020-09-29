@@ -85,7 +85,7 @@ namespace truck_inspection_client
             std::string ads_auto_status = this->ads_engaged_ ? "Engaged" : "Not Engaged";
             std::string ads_health_status = ads_system_alert_type_ ;
             //std::string params = boost::str(boost::format("vin_number:%s,license_plate:%s,carrier_name:%s,carrier_id:%s,weight:%d,ads_software_version:%s,date_of_last_state_inspection:%s,date_of_last_ads_calibration:%s,pre_trip_ads_health_check:%s,ads_health_status:%s,ads_auto_status:%s,iss_score:%d,permit_required:%s")
-             std::string params = boost::str(boost::format("v:%s,l:%s,n:%s,c:%s,w:%d,o:%s,f:%s,a:%s,r:%s,h:%s,u:%s,i:%d,p:%s")
+            std::string params = boost::str(boost::format("v:%s,l:%s,n:%s,c:%s,w:%d,o:%s,f:%s,a:%s,r:%s,h:%s,u:%s,i:%d,p:%s")
                                                          % vin_number_ % license_plate_ % carrier_name_ % carrier_id_ % weight_ % ads_software_version_ % date_of_last_state_inspection_ % date_of_last_ads_calibration_ % pre_trip_ads_health_check_ % ads_health_status % ads_auto_status % iss_score_ % permit_required_);
             long time = (long)(ros::Time::now().toNSec() / pow(10, 6));
             mo_msg.header.timestamp = time;
