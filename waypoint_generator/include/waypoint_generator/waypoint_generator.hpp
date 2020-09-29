@@ -23,6 +23,7 @@
 #include <carma_wm/WorldModel.h>
 #include <vector>
 #include <tf/transform_datatypes.h>
+#include "waypoint_generator_config.hpp"
 
 namespace waypoint_generator 
 {
@@ -39,9 +40,11 @@ namespace waypoint_generator
     class WaypointGenerator 
     {
         public:
-            
-            void setWorldModel(carma_wm::WorldModelConstPtr wm);
 
+            using PublishWaypointsCallback = std::function<void(const autoware_msgs::LaneArray&)>;
+
+            WaypointGenerator(carma_wm::WorldModelConstPtr wm, WaypointGeneratorConfig config, PublishWaypointsCallback waypoint_publisher);
+            
             /**!
              * \brief Analyze the list of curvatures to detect any regions of 
              * constant (within epsilon) curvature or linearly increasing curvature
@@ -185,7 +188,11 @@ namespace waypoint_generator
             std::vector<double> apply_speed_limits(
                 const std::vector<double> speeds, 
                 const std::vector<double> speed_limits) const;
+
+            void new_route_callback();
         private:
             carma_wm::WorldModelConstPtr _wm;
+            WaypointGeneratorConfig _config;
+            PublishWaypointsCallback _waypoint_publisher;
     };
 };

@@ -36,7 +36,7 @@ namespace waypoint_generator
 
             void initialize();
             void run();
-            void new_route_callback();
+            void publishWaypoints(const autoware_msgs::LaneArray& msg);
         private:
             int argc;
             char** argv;
@@ -45,14 +45,8 @@ namespace waypoint_generator
             std::shared_ptr<ros::CARMANodeHandle> _pnh{nullptr};
             ros::Subscriber _route_sub;
             ros::Publisher _waypoints_pub;
-            double _curvature_epsilon = 3.0;
-            int _linearity_constraint = 2;
-            double _lateral_accel_limit = 1.5;
-            double _longitudinal_accel_limit = 1.5;
-            double _longitudinal_decel_limit = 1.5;
-            double _max_speed = 10.0;
             autoware_msgs::LaneArray _cur_waypoints;
-            WaypointGenerator _wpg;
+            std::shared_ptr<WaypointGenerator> _wpg;
             std::shared_ptr<carma_wm::WMListener> _wml{nullptr};
             carma_wm::WorldModelConstPtr _wm;
     };
