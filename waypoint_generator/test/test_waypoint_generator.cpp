@@ -22,6 +22,7 @@
 #include <lanelet2_extension/utility/utilities.h>
 #include <lanelet2_core/Attribute.h>
 #include <carma_wm/Geometry.h>
+#include <carma_wm/CARMAWorldModel.h>
 #include "TestHelpers.h"
 
 using ::testing::_;
@@ -34,8 +35,10 @@ using ::testing::ReturnArg;
 using namespace waypoint_generator;
 
 TEST(WaypointGeneratorTest, TestComputeConstantCurvatureRegions)
-{
-    WaypointGenerator wpg;
+{   
+    WaypointGeneratorConfig config;
+    std::shared_ptr<WorldModel> wm = std::make_shared<CARMAWorldModel>();
+    WaypointGenerator wpg(wm, config, [&](auto msg){});
 
     std::vector<double> case_a = {0.0, 0.0, 0.0, 0.0, 0.0, 
                                     0.0, 0.0, 0.0, 0.0, 0.0};
@@ -84,7 +87,9 @@ TEST(WaypointGeneratorTest, TestComputeConstantCurvatureRegions)
 
 TEST(WaypointGeneratorTest, TestComputeIdealSpeeds)
 {
-    WaypointGenerator wpg;
+    WaypointGeneratorConfig config;
+    std::shared_ptr<WorldModel> wm = std::make_shared<CARMAWorldModel>();
+    WaypointGenerator wpg(wm, config, [&](auto msg){});
 
     std::vector<double> curvatures_1 = {1.0, 1.0, 1.0, 1.0, 1.0, 
                                     1.0, 1.0, 1.0, 1.0, 1.0};
@@ -121,7 +126,9 @@ TEST(WaypointGeneratorTest, TestComputeIdealSpeeds)
 
 TEST(WaypointGeneratorTest, TestComputeSpeedForCurvature)
 {
-    WaypointGenerator wpg;
+    WaypointGeneratorConfig config;
+    std::shared_ptr<WorldModel> wm = std::make_shared<CARMAWorldModel>();
+    WaypointGenerator wpg(wm, config, [&](auto msg){});
 
     double speed1 = wpg.compute_speed_for_curvature(1.0, 1.0);
     ASSERT_NEAR(1.0, speed1, 0.005);
@@ -140,7 +147,10 @@ TEST(WaypointGeneratorTest, TestComputeSpeedForCurvature)
 }
 
 TEST(WaypointGeneratorTest, TestNormalizeCurvatureRegions) {
-    WaypointGenerator wpg;
+
+    WaypointGeneratorConfig config;
+    std::shared_ptr<WorldModel> wm = std::make_shared<CARMAWorldModel>();
+    WaypointGenerator wpg(wm, config, [&](auto msg){});
 
     std::vector<double> case_a = {0.0, 1.0, 0.0, 1.0, 0.0, 
                                     0.0, 1.0, 0.0, 1.0, 0.0};
@@ -179,7 +189,10 @@ TEST(WaypointGeneratorTest, TestNormalizeCurvatureRegions) {
 }
 
 TEST(WaypointGeneratorTest, TestApplyAccelLimits) {
-    WaypointGenerator wpg;
+
+    WaypointGeneratorConfig config;
+    std::shared_ptr<WorldModel> wm = std::make_shared<CARMAWorldModel>();
+    WaypointGenerator wpg(wm, config, [&](auto msg){});
 
     std::vector<double> speeds_a = {0.0, 0.0, 0.0, 0.0, 0.0, 
                                     5.0, 5.0, 5.0, 5.0, 5.0};
@@ -237,7 +250,10 @@ TEST(WaypointGeneratorTest, TestApplyAccelLimits) {
 }
 
 TEST(WaypointGeneratorTest, TestApplySpeedLimits) {
-    WaypointGenerator wpg;
+
+    WaypointGeneratorConfig config;
+    std::shared_ptr<WorldModel> wm = std::make_shared<CARMAWorldModel>();
+    WaypointGenerator wpg(wm, config, [&](auto msg){});
 
     std::vector<double> speeds_a = {0.0, 0.0, 0.0, 0.0, 0.0, 
                                     5.0, 5.0, 5.0, 5.0, 5.0};
