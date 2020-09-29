@@ -30,7 +30,7 @@
 using namespace waypoint_generator;
 
 
-TEST(WaypointGeneratorTest, DISABLED_TestComputeConstantCurvatureRegions)
+TEST(WaypointGeneratorTest, TestComputeConstantCurvatureRegions)
 {   
     WaypointGeneratorConfig config;
     std::shared_ptr<carma_wm::WorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -81,7 +81,7 @@ TEST(WaypointGeneratorTest, DISABLED_TestComputeConstantCurvatureRegions)
     ASSERT_EQ(9, out_e[0]);
 }
 
-TEST(WaypointGeneratorTest, DISABLED_TestComputeIdealSpeeds)
+TEST(WaypointGeneratorTest, TestComputeIdealSpeeds)
 {
     WaypointGeneratorConfig config;
     std::shared_ptr<carma_wm::WorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -120,7 +120,7 @@ TEST(WaypointGeneratorTest, DISABLED_TestComputeIdealSpeeds)
     ASSERT_NEAR(std::sqrt(10.0), out_2[9], 0.005);
 }
 
-TEST(WaypointGeneratorTest, DISABLED_TestComputeSpeedForCurvature)
+TEST(WaypointGeneratorTest, TestComputeSpeedForCurvature)
 {
     WaypointGeneratorConfig config;
     std::shared_ptr<carma_wm::WorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -142,7 +142,7 @@ TEST(WaypointGeneratorTest, DISABLED_TestComputeSpeedForCurvature)
     ASSERT_NEAR(0.0, speed5, 0.005);
 }
 
-TEST(WaypointGeneratorTest, DISABLED_TestNormalizeCurvatureRegions) {
+TEST(WaypointGeneratorTest, TestNormalizeCurvatureRegions) {
 
     WaypointGeneratorConfig config;
     std::shared_ptr<carma_wm::WorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -184,7 +184,7 @@ TEST(WaypointGeneratorTest, DISABLED_TestNormalizeCurvatureRegions) {
     ASSERT_NEAR(2.0, out_b[9], 0.001);
 }
 
-TEST(WaypointGeneratorTest, DISABLED_TestApplyAccelLimits) {
+TEST(WaypointGeneratorTest, TestApplyAccelLimits) {
 
     WaypointGeneratorConfig config;
     std::shared_ptr<carma_wm::WorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -245,7 +245,7 @@ TEST(WaypointGeneratorTest, DISABLED_TestApplyAccelLimits) {
     ASSERT_NEAR(0.0, limited_b[9], 0.01);
 }
 
-TEST(WaypointGeneratorTest, DISABLED_TestApplySpeedLimits) {
+TEST(WaypointGeneratorTest, TestApplySpeedLimits) {
 
     WaypointGeneratorConfig config;
     std::shared_ptr<carma_wm::WorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -296,7 +296,7 @@ TEST(WaypointGeneratorTest, TestGetSpeedLimits)
 
 TEST(WaypointGeneratorTest, TestGenerateLaneArray) 
 {
-    ros::Time::init();
+    ros::Time::init(); // required here by ros::Time::now() in the function
     WaypointGeneratorConfig config;
     std::shared_ptr<carma_wm::WorldModel> wm = carma_wm::test::getGuidanceTestMap();
     WaypointGenerator wpg(wm, config, [&](auto msg){});
