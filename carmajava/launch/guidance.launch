@@ -59,7 +59,8 @@
 
   <remap from="system_alert" to="/system_alert"/>
 
-  <remap from="/base/lane_waypoints_raw" to="base/lane_waypoints_raw"/>       
+  <remap from="/base/lane_waypoints_raw" to="base/lane_waypoints_raw"/> 
+  <remap from="/based/lane_waypoints_raw" to="base/lane_waypoints_raw"/>      
   <remap from="/lane_waypoints_array" to="lane_waypoints_array"/>
   <remap from="/traffic_waypoints_array" to="traffic_waypoints_array"/>
   <remap from="/red_waypoints_array" to="red_waypoints_array"/>
