@@ -109,15 +109,15 @@ TEST(WaypointGeneratorTest, TestComputeIdealSpeeds)
 
     ASSERT_EQ(10, out_2.size());
     ASSERT_NEAR(1.0, out_2[0], 0.005);
-    ASSERT_NEAR(std::sqrt(2.0), out_2[1], 0.005);
-    ASSERT_NEAR(std::sqrt(3.0), out_2[2], 0.005);
-    ASSERT_NEAR(std::sqrt(4.0), out_2[3], 0.005);
-    ASSERT_NEAR(std::sqrt(5.0), out_2[4], 0.005);
-    ASSERT_NEAR(std::sqrt(6.0), out_2[5], 0.005);
-    ASSERT_NEAR(std::sqrt(7.0), out_2[6], 0.005);
-    ASSERT_NEAR(std::sqrt(8.0), out_2[7], 0.005);
-    ASSERT_NEAR(std::sqrt(9.0), out_2[8], 0.005);
-    ASSERT_NEAR(std::sqrt(10.0), out_2[9], 0.005);
+    ASSERT_NEAR(std::sqrt(1.0 / 2.0), out_2[1], 0.005);
+    ASSERT_NEAR(std::sqrt(1.0 / 3.0), out_2[2], 0.005);
+    ASSERT_NEAR(std::sqrt(1.0 / 4.0), out_2[3], 0.005);
+    ASSERT_NEAR(std::sqrt(1.0 / 5.0), out_2[4], 0.005);
+    ASSERT_NEAR(std::sqrt(1.0 / 6.0), out_2[5], 0.005);
+    ASSERT_NEAR(std::sqrt(1.0 / 7.0), out_2[6], 0.005);
+    ASSERT_NEAR(std::sqrt(1.0 / 8.0), out_2[7], 0.005);
+    ASSERT_NEAR(std::sqrt(1.0 / 9.0), out_2[8], 0.005);
+    ASSERT_NEAR(std::sqrt(1.0 / 10.0), out_2[9], 0.005);
 }
 
 TEST(WaypointGeneratorTest, TestComputeSpeedForCurvature)
@@ -130,16 +130,16 @@ TEST(WaypointGeneratorTest, TestComputeSpeedForCurvature)
     ASSERT_NEAR(1.0, speed1, 0.005);
 
     double speed2 = wpg.compute_speed_for_curvature(10.0, 3.33);
-    ASSERT_NEAR(5.77321400954, speed2, 0.005);
+    ASSERT_NEAR(std::sqrt(3.33 / 10.0), speed2, 0.005);
 
     double speed3 = wpg.compute_speed_for_curvature(5.0, 10.0);
-    ASSERT_NEAR(7.07106781187, speed3, 0.005);
+    ASSERT_NEAR(std::sqrt(10.0 / 5.0), speed3, 0.005);
 
     double speed4 = wpg.compute_speed_for_curvature(100.0, 1.0);
-    ASSERT_NEAR(10.0, speed4, 0.005);
+    ASSERT_NEAR(std::sqrt(1.0 / 100.0), speed4, 0.005);
 
     double speed5 = wpg.compute_speed_for_curvature(0.0, 0.0);
-    ASSERT_NEAR(0.0, speed5, 0.005);
+    ASSERT_TRUE(std::isinf(speed5));
 }
 
 TEST(WaypointGeneratorTest, TestNormalizeCurvatureRegions) {

@@ -96,8 +96,6 @@ install(TARGETS ${PROJECT_NAME}
 ## Mark cpp header files for installation
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
 )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
@@ -115,6 +113,7 @@ catkin_add_gmock(${PROJECT_NAME}-test
   test/TestMain.cpp
   test/test_waypoint_generator.cpp
   test/test_compute_orientations.cpp
+  test/test_route_callback.cpp
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit test
 )
 

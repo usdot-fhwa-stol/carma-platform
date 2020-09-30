@@ -18,6 +18,8 @@
 #include <waypoint_generator/waypoint_generator_config.hpp>
 #include <carma_wm/Geometry.h>
 #include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
+#include <limits>
+
 namespace waypoint_generator
 {
 WaypointGenerator::WaypointGenerator(carma_wm::WorldModelConstPtr wm, WaypointGeneratorConfig config, PublishWaypointsCallback waypoint_publisher) 
@@ -113,11 +115,18 @@ std::vector<double> WaypointGenerator::normalize_curvature_regions(std::vector<d
 
 double WaypointGenerator::compute_speed_for_curvature(double curvature, double lateral_accel_limit) const
 {
+// Check at compile time for infinity availability
+  static_assert(std::numeric_limits<double>::has_infinity, "This code requires compilation using a system that supports IEEE 754 for access to positive infinity values");
+
   // Solve a = v^2/r (k = 1/r) for v
   // a = v^2 * k
-  // a * k = v^2
-  // v = sqrt(a * k)
-  return std::sqrt(lateral_accel_limit * curvature);
+  // a / k = v^2
+  // v = sqrt(a / k)
+  
+  if (fabs(curvature) < 0.00000001) { // Check for curvature of 0.
+      return std::numeric_limits<double>::infinity();
+  }
+  return std::sqrt(fabs(lateral_accel_limit / curvature));
 }
 std::vector<double> WaypointGenerator::compute_ideal_speeds(std::vector<double> curvatures,
                                                             double lateral_accel_limit) const
@@ -125,6 +134,7 @@ std::vector<double> WaypointGenerator::compute_ideal_speeds(std::vector<double> 
   std::vector<double> out;
   for (double k : curvatures)
   {
+      std::cerr << "compute_ideal_speeds: " << compute_speed_for_curvature(k, lateral_accel_limit) << std::endl;
     out.push_back(compute_speed_for_curvature(k, lateral_accel_limit));
   }
 
@@ -269,7 +279,7 @@ autoware_msgs::LaneArray WaypointGenerator::generate_lane_array_message(
     lane.lane_id = i;
 
     std_msgs::Header header;
-    header.frame_id = "/map";
+    header.frame_id = "map";
     header.seq = 0;
     header.stamp = ros::Time::now();
     lane.header = header;
@@ -370,7 +380,7 @@ void WaypointGenerator::new_route_callback()
   }
 
   ROS_DEBUG("Processing curvatures...");
-  std::vector<double> curvatures = carma_wm::geometry::getLocalCurvatures(tmp);
+  std::vector<double> curvatures = carma_wm::geometry::getLocalCurvatures(tmp); // TODO the accuracy of this call would be far better if using the non-lane change concatenated set
 
   ROS_DEBUG_STREAM(" ");
   ROS_DEBUG_STREAM(" ");
@@ -378,6 +388,8 @@ void WaypointGenerator::new_route_callback()
 
   for (auto p : curvatures)
   {
+               std::cerr << " Computed Curvature : " << p << std::endl;
+   
     ROS_DEBUG_STREAM(" Curvature: " << p);
   }
 
@@ -389,6 +401,8 @@ void WaypointGenerator::new_route_callback()
 
   for (auto p : constant_curvature_regions)
   {
+            std::cerr << " Region: " << p << std::endl;
+
     ROS_DEBUG_STREAM(" Region: " << p);
   }
 
@@ -402,6 +416,7 @@ void WaypointGenerator::new_route_callback()
 
   for (auto p : processed_curvatures)
   {
+      std::cerr << " Curvature: " << p << std::endl;
     ROS_DEBUG_STREAM(" Curvature: " << p);
   }
 
@@ -414,6 +429,8 @@ void WaypointGenerator::new_route_callback()
 
   for (auto p : ideal_speeds)
   {
+          std::cerr << " IdealSpeed: " << p << std::endl;
+
     ROS_DEBUG_STREAM("IdealSpeed: " << p);
   }
 
@@ -426,6 +443,8 @@ void WaypointGenerator::new_route_callback()
 
   for (auto p : accel_limited_speeds)
   {
+    std::cerr << " Accel Limited Speed: " << p << std::endl;
+
     ROS_DEBUG_STREAM(" Speed: " << p);
   }
 
@@ -437,6 +456,8 @@ void WaypointGenerator::new_route_callback()
 
   for (auto p : speed_limits)
   {
+    std::cerr << " SpeedLimits: " << p << std::endl;
+
     ROS_DEBUG_STREAM(" SpeedLimits: " << p);
   }
 
@@ -448,6 +469,7 @@ void WaypointGenerator::new_route_callback()
 
   for (auto p : final_speeds)
   {
+    std::cerr << " Final Speed: " << p << std::endl;
     ROS_DEBUG_STREAM(" Final Speed: " << p);
   }
 
