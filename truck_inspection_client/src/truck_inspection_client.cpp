@@ -24,7 +24,7 @@ namespace truck_inspection_client
     {
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
-        pnh_->getParam("vin_number", vin_number_);
+        pnh_->getParam("/vin_number", vin_number_); //get vin from global params in UniqueVehicleParams.ymal
         pnh_->getParam("license_plate", license_plate_);
         pnh_->getParam("state_short_name", state_short_name_);
         pnh_->getParam("carrier_name", carrier_name_);
