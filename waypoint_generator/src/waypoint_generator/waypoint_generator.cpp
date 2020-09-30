@@ -134,7 +134,6 @@ std::vector<double> WaypointGenerator::compute_ideal_speeds(std::vector<double> 
   std::vector<double> out;
   for (double k : curvatures)
   {
-      std::cerr << "compute_ideal_speeds: " << compute_speed_for_curvature(k, lateral_accel_limit) << std::endl;
     out.push_back(compute_speed_for_curvature(k, lateral_accel_limit));
   }
 
@@ -387,9 +386,7 @@ void WaypointGenerator::new_route_callback()
   ROS_DEBUG_STREAM("Computed Curvatures");
 
   for (auto p : curvatures)
-  {
-               std::cerr << " Computed Curvature : " << p << std::endl;
-   
+  {   
     ROS_DEBUG_STREAM(" Curvature: " << p);
   }
 
@@ -401,8 +398,6 @@ void WaypointGenerator::new_route_callback()
 
   for (auto p : constant_curvature_regions)
   {
-            std::cerr << " Region: " << p << std::endl;
-
     ROS_DEBUG_STREAM(" Region: " << p);
   }
 
@@ -416,7 +411,6 @@ void WaypointGenerator::new_route_callback()
 
   for (auto p : processed_curvatures)
   {
-      std::cerr << " Curvature: " << p << std::endl;
     ROS_DEBUG_STREAM(" Curvature: " << p);
   }
 
@@ -429,8 +423,6 @@ void WaypointGenerator::new_route_callback()
 
   for (auto p : ideal_speeds)
   {
-          std::cerr << " IdealSpeed: " << p << std::endl;
-
     ROS_DEBUG_STREAM("IdealSpeed: " << p);
   }
 
@@ -443,8 +435,6 @@ void WaypointGenerator::new_route_callback()
 
   for (auto p : accel_limited_speeds)
   {
-    std::cerr << " Accel Limited Speed: " << p << std::endl;
-
     ROS_DEBUG_STREAM(" Speed: " << p);
   }
 
@@ -456,8 +446,6 @@ void WaypointGenerator::new_route_callback()
 
   for (auto p : speed_limits)
   {
-    std::cerr << " SpeedLimits: " << p << std::endl;
-
     ROS_DEBUG_STREAM(" SpeedLimits: " << p);
   }
 
@@ -469,7 +457,6 @@ void WaypointGenerator::new_route_callback()
 
   for (auto p : final_speeds)
   {
-    std::cerr << " Final Speed: " << p << std::endl;
     ROS_DEBUG_STREAM(" Final Speed: " << p);
   }
 

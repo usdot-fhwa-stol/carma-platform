@@ -117,6 +117,14 @@ catkin_add_gmock(${PROJECT_NAME}-test
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit test
 )
 
+catkin_add_gmock(test-waypoint_generator-with-map 
+  test/TestMain.cpp
+  test/complex_waypoint_generation_test.cpp
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit test
+)
+
+
 if(TARGET ${PROJECT_NAME}-test)
   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
+  target_link_libraries(test-waypoint_generator-with-map ${PROJECT_NAME} ${catkin_LIBRARIES})
 endif()

@@ -137,6 +137,10 @@ void assert_lane_array_eq(const autoware_msgs::LaneArray& expected, const autowa
   } 
 }
 
+
+/**
+ * NOTE: This test depends on the test for generate_lane_array_message to be valid and passing
+ */ 
 TEST(WaypointGeneratorTest, basic_route)
 {
   WaypointGeneratorConfig config;
@@ -192,36 +196,13 @@ TEST(WaypointGeneratorTest, basic_route)
       num_points++;
     }    
   }
-  // TODO NOTE: For this test to be valid the test for generate_lane_array_message must already be passing
 
   autoware_msgs::LaneArray expected_wp = wpg.generate_lane_array_message(
                 speeds, 
                 orientations, 
                 lanelets_as_vec);
 
-  assert_lane_array_eq(expected_wp, published_wps);
-
-
-  
-
-
-
-  // std::vector<geometry_msgs::Quaternion> result;
-  // result = wpg.compute_orientations(lanelets_as_vec);
-
-  // ASSERT_EQ(num_points, result.size());
-
-  // for (geometry_msgs::Quaternion q_msg : result)
-  // {
-  //   double roll, pitch, yaw;
-  //   rpyFromQuatMsg(q_msg, roll, pitch, yaw);
-  //   ASSERT_NEAR(0.0, roll, 0.000001);
-  //   ASSERT_NEAR(0.0, pitch, 0.000001);
-  //   ASSERT_NEAR(M_PI_2, yaw, 0.000001);
-  // }
+  assert_lane_array_eq(expected_wp, published_wps); // Verify output data
 }
-
-
-
 
 }
