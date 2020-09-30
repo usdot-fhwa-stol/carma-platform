@@ -160,7 +160,12 @@ namespace route_following_plugin
         maneuver_msg.lane_following_maneuver.end_dist = end_dist;
         maneuver_msg.lane_following_maneuver.end_speed = target_speed;
         // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
-        maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration((end_dist - current_dist) / (0.5 * (current_speed + target_speed)));
+        double cur_plus_target = current_speed + target_speed;
+        if (cur_plus_target < 0.00001) {
+            maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration(mvr_duration_);
+        } else {
+            maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration((end_dist - current_dist) / (0.5 * cur_plus_target));
+        }
         maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
         return maneuver_msg;
     }
