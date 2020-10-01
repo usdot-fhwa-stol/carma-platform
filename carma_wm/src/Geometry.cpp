@@ -24,15 +24,23 @@ namespace carma_wm
 namespace geometry
 {
 
+// https://stackoverflow.com/questions/8489792/is-it-legal-to-take-acos-of-1-0f-or-1-0f
+double SafeAcos (double x)
+{
+  if (x < -1.0) x = -1.0 ;
+  else if (x > 1.0) x = 1.0 ;
+  return std::acos(x) ;
+}
+
 double getAngleBetweenVectors(const Eigen::Vector2d& vec1, const Eigen::Vector2d& vec2)
 {
   double vec1Mag = vec1.norm();
   double vec2Mag = vec2.norm();
-  if (vec1Mag == 0 || vec2Mag == 0)
+  if (vec1Mag == 0.0 || vec2Mag == 0.0)
   {
     return 0;
   }
-  return std::acos(vec1.dot(vec2) / (vec1Mag * vec2Mag));
+  return SafeAcos(vec1.dot(vec2) / (vec1Mag * vec2Mag));
 }
 
 TrackPos trackPos(const lanelet::BasicPoint2d& p, const lanelet::BasicPoint2d& seg_start,
