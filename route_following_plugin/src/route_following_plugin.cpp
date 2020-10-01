@@ -86,8 +86,15 @@ namespace route_following_plugin
         }
         while(current_progress < total_maneuver_length && last_lanelet_index < shortest_path.size())
         {
+            ROS_ERROR_STREAM("Lanlet: " << shortest_path[last_lanelet_index].id());
+            auto p = shortest_path[last_lanelet_index].centerline2d().back();
+            ROS_ERROR_STREAM("EndPoint: " << p.x() << ", " << p.y());
             double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
             double dist_diff = end_dist - current_progress;
+
+            ROS_ERROR_STREAM("end_dist: " << end_dist);
+            ROS_ERROR_STREAM("current_progress: " << current_progress);
+            ROS_ERROR_STREAM("dist_diff: " << current_progress);
 
             resp.new_plan.maneuvers.push_back(
                 composeManeuverMessage(current_progress, end_dist, 
