@@ -15,6 +15,9 @@
  * the License.
  */
 
+#ifndef MAP_CONFORMER_H
+
+
 #include <carma_wm/WorldModel.h>
 #include <lanelet2_core/Attribute.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
@@ -25,13 +28,10 @@
 #include <lanelet2_extension/regulatory_elements/DirectionOfTravel.h>
 #include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
 #include <lanelet2_core/Forward.h>
-#include <boost/units/physical_dimensions/velocity.hpp>
 #include <functional>
 #include <autoware_lanelet2_msgs/MapBin.h>
 #include <carma_utils/CARMAUtils.h>
-#include <boost/units/derived_dimension.hpp>
-#include <boost/units/physical_dimensions/length.hpp>
-#include <boost/units/physical_dimensions/time.hpp>
+
 using namespace lanelet::units::literals;
 
 
@@ -65,3 +65,5 @@ void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit
 
 };  // namespace MapConformer
 }  // namespace lanelet
+
+#endif

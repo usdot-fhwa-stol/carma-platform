@@ -16,14 +16,18 @@
  */
 #include <lanelet2_core/primitives/Point.h>
 #include "GeofenceSchedule.h"
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
+#include <lanelet2_core/primitives/Lanelet.h>
+#include <lanelet2_core/primitives/RegulatoryElement.h>
+#include <lanelet2_core/primitives/LaneletOrArea.h>
+#include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
+#include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
 
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/uuid/uuid_generators.hpp>
-#include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
-#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
-#include <lanelet2_core/primitives/LaneletOrArea.h>
-#include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
+
 
 namespace carma_wm_ctrl
 {
@@ -43,12 +47,12 @@ public:
   std::string proj;
 
   // TODO Add rest of the attributes provided by geofences in the future
- lanelet::RegulatoryElementPtr regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 0_kmh, {}, {},
+/* following regulatory element pointer is a placeholder created with rule name 'basic_regulatory_element' to later point to 
+specific type of regulatory element (such as digital speed limit, passing control line)*/
+
+  lanelet::RegulatoryElementPtr regulatory_element_ = lanelet::RegulatoryElementFactory::create("regulatory_element", lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_kmh, {}, {},
                                                      { lanelet::Participants::VehicleCar }));
-
-
-
-
+                                                     
   // elements needed for broadcasting to the rest of map users
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> update_list_;
   std::vector<std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>> remove_list_;

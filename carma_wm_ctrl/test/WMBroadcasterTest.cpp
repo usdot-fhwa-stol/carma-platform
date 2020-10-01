@@ -60,6 +60,10 @@ TEST(WMBroadcaster, baseMapCallback)
 {
   ros::Time::setNow(ros::Time(0));  // Set current time
 
+  auto regElem = lanelet::RegulatoryElementFactory::create("regulatory_element", lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_kmh, {}, {},
+                                                     { lanelet::Participants::VehicleCar }));
+
+
   size_t base_map_call_count = 0;
   WMBroadcaster wmb(
       [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
@@ -472,7 +476,7 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   // we can see that the gf_ptr->now would have the prev speed limit of 5_mph that affected llt 10000
   ROS_ERROR_STREAM("gf_ptr->prev_regems_[0] = "<< gf_ptr->prev_regems_[0].first <<" , "<<gf_ptr->prev_regems_[0].second);
   ROS_ERROR_STREAM("gf_ptr->prev_regems_[1] = "<< gf_ptr->prev_regems_[1].first <<" , "<<gf_ptr->prev_regems_[1].second);
- // ASSERT_EQ(gf_ptr->prev_regems_.size(), 1);
+  ASSERT_EQ(gf_ptr->prev_regems_.size(), 1);
   
   ASSERT_EQ(gf_ptr->prev_regems_[0].first, 10000);
   ASSERT_EQ(gf_ptr->prev_regems_[0].second->id(), old_speed_limit->id());

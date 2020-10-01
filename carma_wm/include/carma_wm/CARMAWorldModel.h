@@ -1,5 +1,6 @@
 #pragma once
 
+
 /*
  * Copyright (C) 2019 LEIDOS.
  *
@@ -139,7 +140,7 @@ public:
 
 private:
   
-  double config_limit;
+  double con_lim;
   
   /*! \brief Helper function to compute the geometry of the route downtrack/crosstrack reference line
    *         This function should generally only be called from inside the setRoute function as it uses member variables

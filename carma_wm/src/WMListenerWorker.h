@@ -84,7 +84,7 @@ private:
   std::function<void()> map_callback_;
   std::function<void()> route_callback_;
   void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const;
-  double config_limit;
+  double configured_limit;
 
 };
 }  // namespace carma_wm

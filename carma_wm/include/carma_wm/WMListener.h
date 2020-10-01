@@ -113,7 +113,7 @@ private:
   std::mutex mw_mutex_;
  
   ros::CARMANodeHandle nh2_{"/"};
-  lanelet::Velocity config_limit;
+  lanelet::Velocity cL;
 
 
 };

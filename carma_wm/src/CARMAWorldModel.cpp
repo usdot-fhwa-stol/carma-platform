@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <assert.h>
 #include <carma_wm/CARMAWorldModel.h>
-#include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 #include <lanelet2_core/Attribute.h>
@@ -388,7 +387,7 @@ lanelet::Optional<TrafficRulesConstPtr> CARMAWorldModel::getTrafficRules(const s
         lanelet::traffic_rules::CarmaUSTrafficRules::Location, participant);
 
      /* std::unique_ptr<lanelet::traffic_rules::CarmaUSTrafficRules> carma_traffic_rules;
-      carma_traffic_rules->setConfigSpeedLimit(config_limit);*/
+      carma_traffic_rules->setConfigSpeedLimit(con_lim);*/
 
     
 
@@ -801,7 +800,7 @@ std::vector<lanelet::Lanelet> CARMAWorldModel::getLaneletsFromPoint(const lanele
 
 void CARMAWorldModel::setConfigSpeedLimit(double config_lim)
 {
-  config_limit = config_lim;
+  con_lim = config_lim;
 }
 
 
