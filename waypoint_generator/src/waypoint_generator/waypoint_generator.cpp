@@ -256,7 +256,7 @@ WaypointGenerator::compute_orientations(const std::vector<lanelet::ConstLanelet>
     geometry_msgs::Quaternion q;
 
     // Derive angle by cos theta = (u . v)/(||u| * ||v||)
-    double yaw = std::acos(tangents[i].dot(x_axis) / (tangents[i].norm() * x_axis.norm()));
+    double yaw = carma_wm::geometry::safeAcos(tangents[i].dot(x_axis) / (tangents[i].norm() * x_axis.norm()));
 
     q = tf::createQuaternionMsgFromYaw(yaw);
     out.push_back(q);

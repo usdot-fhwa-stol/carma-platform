@@ -190,6 +190,9 @@ std::vector<double> compute_magnitude_of_vectors(const std::vector<Eigen::Vector
 double computeCurvature(const lanelet::BasicPoint2d& p1, const lanelet::BasicPoint2d& p2,
                         const lanelet::BasicPoint2d& p3);
 
+// TODO comments
+double SafeAcos(double x);
+
 /**
  * \brief Calculates the angle between two vectors.
  *
