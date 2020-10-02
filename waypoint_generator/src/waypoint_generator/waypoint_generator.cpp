@@ -373,8 +373,8 @@ std::vector<lanelet::ConstLanelet> WaypointGenerator::findSuccessingLanelets() c
       // TODO: Find an approach for handling transition between non-successing lanelets
       auto right = _wm->getRoute()->rightRelation(shortest_path[i-1]);
       auto left = _wm->getRoute()->leftRelation(shortest_path[i-1]);
-      if (right || left) ROS_ERROR_STREAM("skipping adjacent lanelet: " << l.id());
-      else ROS_ERROR_STREAM("unidentified relation to lanelet: " << l.id());
+      if (right || left)  throw std::invalid_argument("skipping adjacent lanelet");
+      else throw std::invalid_argument("unidentified relation to lanelet");
     }
   }
   return out;

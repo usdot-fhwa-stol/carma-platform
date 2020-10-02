@@ -233,33 +233,22 @@ TEST(WaypointGeneratorTest, following_lanelet)
    *           START_LINE
    */
 
-  // carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
-  carma_wm::test::setRouteByIds({ 1210, 1201, 1212, 1223 }, wm);
+  carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
 
   std::vector<lanelet::ConstLanelet> res1 =  wpg.findSuccessingLanelets();
   ASSERT_EQ(res1.size(), 4);
-  ASSERT_EQ(res1[0].id(), 1210);
+  ASSERT_EQ(res1[0].id(), 1200);
   ASSERT_EQ(res1[1].id(), 1201);
-  ASSERT_EQ(res1[2].id(), 1212);
-  ASSERT_EQ(res1[3].id(), 1223);
+  ASSERT_EQ(res1[2].id(), 1202);
+  ASSERT_EQ(res1[3].id(), 1203);
 
   carma_wm::test::setRouteByIds({ 1200, 1211, 1212, 1213 }, wm);
+  ASSERT_THROW( wpg.findSuccessingLanelets(), std::invalid_argument);
 
-  std::vector<lanelet::ConstLanelet> res2 =  wpg.findSuccessingLanelets();
-  ASSERT_EQ(res2.size(), 4);
-  ASSERT_EQ(res2[0].id(), 1200);
-  ASSERT_EQ(res2[1].id(), 1211);
-  ASSERT_EQ(res2[2].id(), 1212);
-  ASSERT_EQ(res2[3].id(), 1213);
 
   carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1223 }, wm);
+  ASSERT_THROW( wpg.findSuccessingLanelets(), std::invalid_argument);
 
-  std::vector<lanelet::ConstLanelet> res3 =  wpg.findSuccessingLanelets();
-  ASSERT_EQ(res3.size(), 4);
-  ASSERT_EQ(res3[0].id(), 1200);
-  ASSERT_EQ(res3[1].id(), 1201);
-  ASSERT_EQ(res3[2].id(), 1202);
-  ASSERT_EQ(res3[3].id(), 1223);
 
 }
 
