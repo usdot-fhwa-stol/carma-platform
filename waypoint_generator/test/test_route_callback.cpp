@@ -205,4 +205,62 @@ TEST(WaypointGeneratorTest, basic_route)
   assert_lane_array_eq(expected_wp, published_wps); // Verify output data
 }
 
+TEST(WaypointGeneratorTest, following_lanelet)
+{
+  WaypointGeneratorConfig config;
+  std::shared_ptr<CARMAWorldModel> wm = std::make_shared<CARMAWorldModel>();
+  bool wp_published;
+  autoware_msgs::LaneArray published_wps;
+  WaypointGenerator wpg(wm, config, [&](auto msg) {published_wps = msg; wp_published = true;});
+
+  auto map = carma_wm::test::buildGuidanceTestMap(3.7, 25);
+
+  wm->setMap(map);
+  carma_wm::test::setSpeedLimit(25_mph, wm);
+
+  /**
+   *
+   *
+   *        |1203|1213|1223|
+   *        | _  _  _  _  _|
+   *        |1202| Ob |1222|
+   *        | _  _  _  _  _|
+   *        |1201|1211|1221|    num   = lanelet id hardcoded for easier testing
+   *        | _  _  _  _  _|    |     = lane lines
+   *        |1200|1210|1220|    - - - = Lanelet boundary
+   *        |              |    O     = Default Obstacle
+   *        ****************
+   *           START_LINE
+   */
+
+  // carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
+  carma_wm::test::setRouteByIds({ 1210, 1201, 1212, 1223 }, wm);
+
+  std::vector<lanelet::ConstLanelet> res1 =  wpg.findSuccessingLanelets();
+  ASSERT_EQ(res1.size(), 4);
+  ASSERT_EQ(res1[0].id(), 1210);
+  ASSERT_EQ(res1[1].id(), 1201);
+  ASSERT_EQ(res1[2].id(), 1212);
+  ASSERT_EQ(res1[3].id(), 1223);
+
+  carma_wm::test::setRouteByIds({ 1200, 1211, 1212, 1213 }, wm);
+
+  std::vector<lanelet::ConstLanelet> res2 =  wpg.findSuccessingLanelets();
+  ASSERT_EQ(res2.size(), 4);
+  ASSERT_EQ(res2[0].id(), 1200);
+  ASSERT_EQ(res2[1].id(), 1211);
+  ASSERT_EQ(res2[2].id(), 1212);
+  ASSERT_EQ(res2[3].id(), 1213);
+
+  carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1223 }, wm);
+
+  std::vector<lanelet::ConstLanelet> res3 =  wpg.findSuccessingLanelets();
+  ASSERT_EQ(res3.size(), 4);
+  ASSERT_EQ(res3[0].id(), 1200);
+  ASSERT_EQ(res3[1].id(), 1201);
+  ASSERT_EQ(res3[2].id(), 1202);
+  ASSERT_EQ(res3[3].id(), 1223);
+
+}
+
 }

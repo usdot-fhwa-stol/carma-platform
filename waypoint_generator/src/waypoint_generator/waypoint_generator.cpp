@@ -355,17 +355,37 @@ std::vector<double> WaypointGenerator::get_speed_limits(std::vector<lanelet::Con
   return out;
 }
 
+std::vector<lanelet::ConstLanelet> WaypointGenerator::findSuccessingLanelets(){
+  std::vector<lanelet::ConstLanelet> out;
+  auto shortest_path = _wm->getRoute()->shortestPath();
+  ROS_DEBUG_STREAM("Processing " << shortest_path.size() << " lanelets.");
+  
+  out.push_back(shortest_path[0]);
+  int prev_index = 0;
+  for (size_t i=1; i<shortest_path.size(); i++)
+  {
+    lanelet::ConstLanelet l = shortest_path[i];
+    auto following = _wm->getRoute()->followingRelations(shortest_path[i-1]);
+    if (following[0].lanelet.id()==l.id() && following[0].relationType == lanelet::routing::RelationType::Successor){
+      out.push_back(l);
+    }
+    else{
+      // TODO: Find an approach for handling transition between non-successing lanelets
+      auto right = _wm->getRoute()->rightRelation(shortest_path[i-1]);
+      auto left = _wm->getRoute()->leftRelation(shortest_path[i-1]);
+      if (right || left) ROS_ERROR_STREAM("skipping adjacent lanelet: " << l.id());
+      else ROS_ERROR_STREAM("unidentified relation to lanelet: " << l.id());
+    }
+  }
+  return out;
+
+}
+
 void WaypointGenerator::new_route_callback()
 {
   ROS_DEBUG_STREAM("Received new route message, processing...");
 
-  auto shortest_path = _wm->getRoute()->shortestPath();
-  ROS_DEBUG_STREAM("Processing " << shortest_path.size() << " lanelets.");
-  std::vector<lanelet::ConstLanelet> tmp;
-  for (lanelet::ConstLanelet l : shortest_path)
-  {
-    tmp.push_back(l);
-  }
+  std::vector<lanelet::ConstLanelet> tmp = findSuccessingLanelets();
 
   lanelet::BasicLineString2d route_geometry = carma_wm::geometry::concatenate_lanelets(tmp);
 
