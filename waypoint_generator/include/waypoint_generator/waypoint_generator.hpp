@@ -189,6 +189,13 @@ namespace waypoint_generator
                 const std::vector<double> speeds, 
                 const std::vector<double> speed_limits) const;
 
+            /**!
+             * \brief Lists the successig lanelets from the shortest path
+             * by removing adjacent lanelets.
+             * 
+             */
+            std::vector<lanelet::ConstLanelet> findSuccessingLanelets() const;
+
             void new_route_callback();
         private:
             carma_wm::WorldModelConstPtr _wm;

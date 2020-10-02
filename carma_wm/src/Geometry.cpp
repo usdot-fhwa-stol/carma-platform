@@ -25,7 +25,7 @@ namespace geometry
 {
 
 // https://stackoverflow.com/questions/8489792/is-it-legal-to-take-acos-of-1-0f-or-1-0f
-double SafeAcos (double x)
+double safeAcos (double x)
 {
   if (x < -1.0) x = -1.0 ;
   else if (x > 1.0) x = 1.0 ;
@@ -40,7 +40,7 @@ double getAngleBetweenVectors(const Eigen::Vector2d& vec1, const Eigen::Vector2d
   {
     return 0;
   }
-  return SafeAcos(vec1.dot(vec2) / (vec1Mag * vec2Mag));
+  return safeAcos(vec1.dot(vec2) / (vec1Mag * vec2Mag));
 }
 
 TrackPos trackPos(const lanelet::BasicPoint2d& p, const lanelet::BasicPoint2d& seg_start,
