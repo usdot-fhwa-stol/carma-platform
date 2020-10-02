@@ -191,7 +191,7 @@ double computeCurvature(const lanelet::BasicPoint2d& p1, const lanelet::BasicPoi
                         const lanelet::BasicPoint2d& p3);
 
 // TODO comments
-double SafeAcos(double x);
+double safeAcos(double x);
 
 /**
  * \brief Calculates the angle between two vectors.
