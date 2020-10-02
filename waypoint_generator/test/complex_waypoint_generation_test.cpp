@@ -62,7 +62,7 @@ Using this file:
     NOTE: The test is disabled by default. Enable it by removing the DISABLED_ prefix from the test name
 */
 
-TEST(WaypointGeneratorTest, test_full_waypoint_generation)
+TEST(WaypointGeneratorTest, DISABLED_test_full_waypoint_generation)
 {
     int projector_type = 0;
     std::string target_frame;
@@ -71,7 +71,7 @@ TEST(WaypointGeneratorTest, test_full_waypoint_generation)
     // File location of osm file
     std::string file = "/workspaces/carma_ws/carma/src/carma-platform/waypoint_generator/AOI_1_TFHRC_faster_pretty.osm";    
     // The route ids that will form the route used
-    std::vector<lanelet::Id> route_ids = { 130, 111, 110, 113, 135, 137, 170, 144, 143, 145, 140 };
+    std::vector<lanelet::Id> route_ids = { 130, 111, 110, 113, 135, 138 };
 
     // The parsing in this file was copied from https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/carma_wm_ctrl/test/MapToolsTest.cpp
     lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
@@ -91,14 +91,9 @@ TEST(WaypointGeneratorTest, test_full_waypoint_generation)
     auto routing_graph = wm->getMapRoutingGraph();
 
     // Output graph for debugging
-    //routing_graph->exportGraphViz("/workspaces/carma_ws/carma/src/carma-platform/waypoint_generator/routing.viz");
+    routing_graph->exportGraphViz("/workspaces/carma_ws/carma/src/carma-platform/waypoint_generator/routing.viz");
 
     carma_wm::test::setRouteByIds(route_ids, wm);
-
-    auto ll = map->laneletLayer.find(111);
-    auto p = ll->centerline2d().back();
-    auto tp = wm->routeTrackPos(p);
-    double end_dist = tp.downtrack;
 
     wpg.new_route_callback();
 
