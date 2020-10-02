@@ -156,11 +156,15 @@
   <!-- Lane Planner -->
   <node pkg="lane_planner" type="lane_select" name="lane_select">
       <remap from="state" to="autoware_state"/>
+      <remap from="traffic_waypoints_array" to="base/lane_waypoints_raw"/>
   </node>
 
   <!-- Velocity Set -->
-  <include file="$(find waypoint_planner)/launch/velocity_set.launch" />
-
+  <group>
+    <remap from="safety_waypoints" to="base_waypoints"/>
+    <include file="$(find waypoint_planner)/launch/velocity_set.launch" />
+  </group>
+  
   <!-- Inlanecruising Plugin -->
   <include file="$(find inlanecruising_plugin)/launch/inlanecruising_plugin.launch" />
 
