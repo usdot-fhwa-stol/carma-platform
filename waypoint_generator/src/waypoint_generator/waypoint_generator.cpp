@@ -361,21 +361,71 @@ std::vector<lanelet::ConstLanelet> WaypointGenerator::findSuccessingLanelets() c
   auto shortest_path = _wm->getRoute()->shortestPath();
   ROS_DEBUG_STREAM("Processing " << shortest_path.size() << " lanelets.");
   
-  out.push_back(shortest_path[0]);
-  for (size_t i=1; i<shortest_path.size(); i++)
+  for (size_t i=0; i<shortest_path.size(); i++)
   {
     lanelet::ConstLanelet l = shortest_path[i];
-    auto following = _wm->getRoute()->followingRelations(shortest_path[i-1]);
-    if (following[0].lanelet.id()==l.id() && following[0].relationType == lanelet::routing::RelationType::Successor){
-      out.push_back(l);
+    auto connections = _wm->getMapRoutingGraph()->possiblePaths(l, (uint32_t)2, false);
+    std::cerr << "Lanelet: " << l.id() << std::endl;
+
+    std::cerr << "Connections size: " << connections.size() << std::endl;
+    bool foundSuccessorOnShortestPath = false;
+    for (auto path : connections) {
+      auto successor = path[1]; // Each path has length of 2 with the second element being the successor
+      std::cerr << "successor: " << successor.id() << std::endl;
+      for (auto path_lanelet : shortest_path) {
+        if (successor.id() == path_lanelet.id()) {
+          foundSuccessorOnShortestPath = true;
+          std::cerr << "Found valid successor: " << successor.id() << std::endl;
+          break;
+        }
+      }
+      if (foundSuccessorOnShortestPath) {
+        break;
+      }
     }
-    else{
-      // TODO: Find an approach for handling transition between non-successing lanelets
-      auto right = _wm->getRoute()->rightRelation(shortest_path[i-1]);
-      auto left = _wm->getRoute()->leftRelation(shortest_path[i-1]);
-      if (right || left)  throw std::invalid_argument("skipping adjacent lanelet");
-      else throw std::invalid_argument("unidentified relation to lanelet");
+
+
+    if (!foundSuccessorOnShortestPath && i < shortest_path.size() - 1) {
+      throw std::invalid_argument("Route contains lane changes");
     }
+
+    out.push_back(l);
+
+
+    
+    
+    // std::cerr << "Lanelet: " << l.id() << std::endl;
+    // _wm->getRoute()->forEachSuccessor(l, [&](const lanelet::routing::LaneletVisitInformation& info) {
+    //   std::cerr << "Successor: " << info.lanelet.id() << std::endl;
+    //   std::cerr << "Pred of Successor: " << info.predecessor.id() << std::endl;
+
+    //   if (info.predecessor.id() == l.id()) { // If the predecessor on the shortestpath was current lanelet
+    //     auto right = _wm->getRoute()->rightRelation(l);
+    //     auto left = _wm->getRoute()->leftRelation(l);
+    //     std::cerr << "Found pred" << std::endl;
+    //     std::cerr << "Found pred" << std::endl;
+    //     std::cerr << "Found pred" << std::endl;
+
+    //     if ((right && right->lanelet.id() != info.lanelet.id()) &&
+    //       (left && left->lanelet.id() != info.lanelet.id())) {
+    //         std::cerr << "Found on path" << std::endl;
+    //         foundSuccessorOnShortestPath = true;
+    //         return false; // Exit loop
+    //       }
+    //   }
+    // });
+
+    // auto following = _wm->getRoute()->followingRelations(shortest_path[i-1]);
+    // if (foundSuccessorOnShortestPath) {
+    //   out.push_back(l);
+    // }
+    // else{
+    //   // TODO: Find an approach for handling transition between non-successing lanelets
+    //   auto right = _wm->getRoute()->rightRelation(shortest_path[i-1]);
+    //   auto left = _wm->getRoute()->leftRelation(shortest_path[i-1]);
+    //   if (right || left)  throw std::invalid_argument("skipping adjacent lanelet");
+    //   else throw std::invalid_argument("unidentified relation to lanelet");
+    // }
   }
   return out;
 

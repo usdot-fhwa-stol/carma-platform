@@ -249,6 +249,39 @@ TEST(WaypointGeneratorTest, following_lanelet)
   carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1223 }, wm);
   ASSERT_THROW( wpg.findSuccessingLanelets(), std::invalid_argument);
 
+  auto p1 = carma_wm::test::getPoint(0, 0, 0);
+  auto p2 = carma_wm::test::getPoint(1, 0, 0);
+  auto p3 = carma_wm::test::getPoint(0, 1, 0);
+  auto p4 = carma_wm::test::getPoint(1, 1, 0);
+  auto p5 = carma_wm::test::getPoint(-1, 3, 0);
+  auto p6 = carma_wm::test::getPoint(0, 3, 0);
+  auto p7 = carma_wm::test::getPoint(2, 3, 0);
+  auto p8 = carma_wm::test::getPoint(3, 3, 0);
+
+  std::vector<lanelet::Point3d> left_1 = {p1, p3};
+  std::vector<lanelet::Point3d> right_1 = {p2, p4};
+
+  std::vector<lanelet::Point3d> left_2 = {p3, p5};
+  std::vector<lanelet::Point3d> right_2 = {p4, p6};
+
+  std::vector<lanelet::Point3d> left_3 = {p3, p7};
+  std::vector<lanelet::Point3d> right_3 = {p4, p8};
+
+  lanelet::Lanelet ll_1 = carma_wm::test::getLanelet(left_1, right_1);
+  lanelet::Lanelet ll_2 = carma_wm::test::getLanelet(left_2, right_2);
+  lanelet::Lanelet ll_3 = carma_wm::test::getLanelet(left_3, right_3);
+
+  map = lanelet::utils::createMap({ ll_1, ll_2, ll_3 }, {});
+  lanelet::MapConformer::ensureCompliance(map);
+
+  wm->setMap(map);
+
+  carma_wm::test::setRouteByIds({ ll_1.id(), ll_3.id() }, wm);
+
+  std::vector<lanelet::ConstLanelet> res3 =  wpg.findSuccessingLanelets();
+  ASSERT_EQ(res3.size(), 2);
+  ASSERT_EQ(res3[0].id(), ll_1.id());
+  ASSERT_EQ(res3[1].id(), ll_3.id());
 
 }
 
