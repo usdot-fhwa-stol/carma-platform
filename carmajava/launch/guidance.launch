@@ -151,18 +151,14 @@
     <include file="$(find waypoint_generator)/launch/waypoint_generator.launch"/>
   </group>
       
-  <node pkg="waypoint_maker" type="waypoint_replanner" name="waypoint_replanner"/>
   <node pkg="waypoint_maker" type="waypoint_marker_publisher" name="waypoint_marker_publisher" />
 
   <!-- Lane Planner -->
-  <node pkg="lane_planner" type="lane_stop" name="lane_stop"/>
-  <node pkg="lane_planner" type="lane_rule" name="lane_rule"/>
   <node pkg="lane_planner" type="lane_select" name="lane_select">
       <remap from="state" to="autoware_state"/>
   </node>
 
-  <!-- AStar Planner -->
-  <include file="$(find waypoint_planner)/launch/astar_avoid.launch" />
+  <!-- Velocity Set -->
   <include file="$(find waypoint_planner)/launch/velocity_set.launch" />
 
   <!-- Inlanecruising Plugin -->
