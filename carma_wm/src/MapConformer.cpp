@@ -527,7 +527,9 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
 
       lanelet.addRegulatoryElement(rar);
       map->add(rar);//Add DigitalSpeedLimit data to the map
-      ROS_WARN_STREAM(" Regulatory Element Added");
+      ROS_WARN_STREAM(" Regulatory Element Added to Lanelet id: " << lanelet.id() << ", Speed Limit ="<< rar->speed_limit_.value());
+      ROS_INFO_STREAM("Number of Regulatory Elements: "<< map->regulatoryElementLayer.size());
+
      }
      ROS_ERROR_STREAM("AddValidSpeedLimit ended with condition 1.");
   }
@@ -551,6 +553,8 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
       lanelet.addRegulatoryElement(rar);
       map->update(lanelet, rar);//Add DigitalSpeedLimit data to the map
       ROS_WARN_STREAM(" Regulatory Element Updated");
+      ROS_INFO_STREAM("Number of Regulatory Elements: "<< map->regulatoryElementLayer.size());
+
 
     }
     

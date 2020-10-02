@@ -474,12 +474,11 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   ASSERT_EQ(map_update_call_count, 1);
   /*Analyze prev_regems_.size()*/
   // we can see that the gf_ptr->now would have the prev speed limit of 5_mph that affected llt 10000
-  ROS_ERROR_STREAM("gf_ptr->prev_regems_[0] = "<< gf_ptr->prev_regems_[0].first <<" , "<<gf_ptr->prev_regems_[0].second);
-  ROS_ERROR_STREAM("gf_ptr->prev_regems_[1] = "<< gf_ptr->prev_regems_[1].first <<" , "<<gf_ptr->prev_regems_[1].second);
-  ASSERT_EQ(gf_ptr->prev_regems_.size(), 1);
-  
-  ASSERT_EQ(gf_ptr->prev_regems_[0].first, 10000);
-  ASSERT_EQ(gf_ptr->prev_regems_[0].second->id(), old_speed_limit->id());
+  //ROS_ERROR_STREAM("gf_ptr->prev_regems_[0] = "<< gf_ptr->prev_regems_[0].first <<" , "<<gf_ptr->prev_regems_[0].second);
+  //ROS_ERROR_STREAM("gf_ptr->prev_regems_[1] = "<< gf_ptr->prev_regems_[1].first <<" , "<<gf_ptr->prev_regems_[1].second);
+  ASSERT_EQ(gf_ptr->prev_regems_.size(), 2);
+  ASSERT_EQ(gf_ptr->prev_regems_[0].first, 10007);
+  ASSERT_EQ(gf_ptr->prev_regems_[1].second->id(), old_speed_limit->id());
 
   // now suppose the geofence is finished being used, we have to revert the changes
   wmb.removeGeofence(gf_ptr);
@@ -489,9 +488,9 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   // we can check if the removeGeofence worked, by using addGeofence again and if the original is there again
   wmb.addGeofence(gf_ptr);
   ASSERT_EQ(map_update_call_count, 3);
-  ASSERT_EQ(gf_ptr->prev_regems_.size(), 1);
-  ASSERT_EQ(gf_ptr->prev_regems_[0].first, 10000);
-  ASSERT_EQ(gf_ptr->prev_regems_[0].second->id(), old_speed_limit->id());
+  ASSERT_EQ(gf_ptr->prev_regems_.size(), 2);
+  ASSERT_EQ(gf_ptr->prev_regems_[1].first, 10000);
+  ASSERT_EQ(gf_ptr->prev_regems_[1].second->id(), old_speed_limit->id());
 
 }
 
@@ -575,16 +574,16 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   auto data_received = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
   carma_wm::fromBinMsg(gf_obj_msg, data_received);
   ASSERT_EQ(data_received->id_, gf_ptr->id_);
-  ASSERT_EQ(gf_ptr->remove_list_.size(), 1);
-  ASSERT_EQ(data_received->remove_list_.size(), 1); // old_speed_limit
+  ASSERT_EQ(gf_ptr->remove_list_.size(), 2);
+  ASSERT_EQ(data_received->remove_list_.size(), 2); // old_speed_limit
   ASSERT_TRUE(data_received->remove_list_[0].second->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) ==0 );
   ASSERT_EQ(data_received->update_list_.size(), 2); // geofence tags 2 lanelets
   ASSERT_EQ(data_received->update_list_[1].first, 10000);
 
   // we can see that the gf_ptr->now would have the prev speed limit of 5_mph that affected llt 10000
-  ASSERT_EQ(gf_ptr->prev_regems_.size(), 1);
-  ASSERT_EQ(gf_ptr->prev_regems_[0].first, 10000);
-  ASSERT_EQ(gf_ptr->prev_regems_[0].second->id(), old_speed_limit->id());
+  ASSERT_EQ(gf_ptr->prev_regems_.size(), 2);
+  ASSERT_EQ(gf_ptr->prev_regems_[1].first, 10000);
+  ASSERT_EQ(gf_ptr->prev_regems_[1].second->id(), old_speed_limit->id());
 
   // now suppose the geofence is finished being used, we have to revert the changes
   wmb.removeGeofence(gf_ptr);
@@ -601,9 +600,9 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   ASSERT_EQ(rec_data_revert->remove_list_.size(), 2);
   ASSERT_EQ(rec_data_revert->remove_list_.size(), data_received->update_list_.size());
   ASSERT_EQ(rec_data_revert->update_list_.size(), data_received->remove_list_.size());
-  ASSERT_EQ(rec_data_revert->update_list_.size(), 1);
-  ASSERT_EQ(rec_data_revert->update_list_[0].first, 10000);
-  ASSERT_EQ(rec_data_revert->update_list_[0].second->id(), old_speed_limit->id());
+  ASSERT_EQ(rec_data_revert->update_list_.size(), 2);
+  ASSERT_EQ(rec_data_revert->update_list_[1].first, 10000);
+  ASSERT_EQ(rec_data_revert->update_list_[1].second->id(), old_speed_limit->id());
   
 }
 
