@@ -102,9 +102,16 @@
   <remap from="/current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>  
   
   <!-- MPC Follower Wrapper -->
-  <include file="$(find mpc_follower_wrapper)/launch/mpc_follower_wrapper.launch">
-    <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
-  </include>
+  <group>
+    <remap from="/mpc_waypoints" to="mpc_waypoints"/>
+    <remap from="base_waypoints" to="mpc_waypoints"/>
+    <remap from="/base_waypoints" to="base_waypoints"/>
+    <remap from="/final_waypoints" to="carma_waypoints"/>
+
+    <include file="$(find mpc_follower_wrapper)/launch/mpc_follower_wrapper.launch">
+      <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
+    </include>
+  </group>
 
     <!-- Pure Pursuit Wrapper -->
   <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch" />
@@ -160,13 +167,13 @@
   </node>
 
   <!-- Velocity Set -->
-  <group>
-    <remap from="safety_waypoints" to="base_waypoints"/>
-    <include file="$(find waypoint_planner)/launch/velocity_set.launch" />
-  </group>
   
   <!-- Inlanecruising Plugin -->
-  <include file="$(find inlanecruising_plugin)/launch/inlanecruising_plugin.launch" />
+  <group>
+    <remap from="final_waypoints" to="base_waypoints"/>
+    <include file="$(find inlanecruising_plugin)/launch/inlanecruising_plugin.launch" />
+  </group>
+  
 
   <!-- Route Node -->
   <include file="$(find route)/launch/route.launch">
