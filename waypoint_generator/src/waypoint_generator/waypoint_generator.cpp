@@ -355,13 +355,13 @@ std::vector<double> WaypointGenerator::get_speed_limits(std::vector<lanelet::Con
   return out;
 }
 
-std::vector<lanelet::ConstLanelet> WaypointGenerator::findSuccessingLanelets(){
+std::vector<lanelet::ConstLanelet> WaypointGenerator::findSuccessingLanelets() const
+{
   std::vector<lanelet::ConstLanelet> out;
   auto shortest_path = _wm->getRoute()->shortestPath();
   ROS_DEBUG_STREAM("Processing " << shortest_path.size() << " lanelets.");
   
   out.push_back(shortest_path[0]);
-  int prev_index = 0;
   for (size_t i=1; i<shortest_path.size(); i++)
   {
     lanelet::ConstLanelet l = shortest_path[i];

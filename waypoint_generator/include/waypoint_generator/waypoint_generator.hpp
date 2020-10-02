@@ -194,7 +194,7 @@ namespace waypoint_generator
              * by removing adjacent lanelets.
              * 
              */
-            std::vector<lanelet::ConstLanelet> findSuccessingLanelets();
+            std::vector<lanelet::ConstLanelet> findSuccessingLanelets() const;
 
             void new_route_callback();
         private:
