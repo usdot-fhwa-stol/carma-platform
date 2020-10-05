@@ -265,6 +265,24 @@ TEST(WaypointGeneratorTest, TestApplySpeedLimits)
     }
 }
 
+TEST(WaypointGeneratorTest, TestApplySpeedLimits2)
+{
+
+    WaypointGeneratorConfig config;
+    std::shared_ptr<carma_wm::WorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+    WaypointGenerator wpg(wm, config, [&](auto msg) {});
+
+    std::vector<double> speeds_a = {20.0, 30.0, 50.0, 40.0, 40.0};
+    std::vector<double> limits_a = {30.0, 30.0, 60.0, 50.0, 20.0};
+    std::vector<double> out_a = wpg.apply_speed_limits(speeds_a, limits_a);
+
+    ASSERT_EQ(5, out_a.size());
+    ASSERT_EQ(22, out_a[1]);
+    ASSERT_EQ(24, out_a[2]);
+    ASSERT_EQ(26, out_a[3]);
+    ASSERT_EQ(20, out_a[4]);
+}
+
 TEST(WaypointGeneratorTest, TestGetSpeedLimits)
 {
 
