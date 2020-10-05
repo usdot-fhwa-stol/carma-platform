@@ -68,7 +68,7 @@ add_dependencies(inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
 ## Install ##
 #############
 
-install(DIRECTORY include/${PROJECT_NAME}/
+install(DIRECTORY include
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
