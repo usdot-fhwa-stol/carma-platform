@@ -65,6 +65,14 @@ namespace inlanecruising_plugin
 
 
     bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp){
+
+        cav_msgs::TrajectoryPlan trajectory;
+        trajectory.header.frame_id = "map";
+        trajectory.header.stamp = ros::Time::now();
+        trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
+        trajectory.trajectory_points = compose_trajectory_from_waypoints(waypoints_list);
+        trajectory_msg = trajectory;
+
         resp.trajectory_plan = trajectory_msg;
         resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_FOLLOWING);
         resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
@@ -81,13 +89,17 @@ namespace inlanecruising_plugin
             return;
         }
 
-        cav_msgs::TrajectoryPlan trajectory;
-        trajectory.header.frame_id = msg->header.frame_id;
-        trajectory.header.stamp = ros::Time::now();
-        trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
-        trajectory.trajectory_points = compose_trajectory_from_waypoints(msg->waypoints);
         waypoints_list = msg->waypoints;
-        trajectory_msg = trajectory;
+        
+        Point2DRTree empty_rtree;
+        rtree = empty_rtree; // Overwrite the existing RTree
+
+        size_t index = 0;
+        for (auto wp : waypoints_list) {
+            Boost2DPoint p(wp.pose.pose.position.x, wp.pose.pose.position.y);
+            rtree.insert(std::make_pair(p, index));
+            index++;
+        }
     }
 
     void InLaneCruisingPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
@@ -159,9 +171,26 @@ namespace inlanecruising_plugin
 
     std::vector<autoware_msgs::Waypoint> InLaneCruisingPlugin::get_waypoints_in_time_boundary(std::vector<autoware_msgs::Waypoint> waypoints, double time_span)
     {
+        // Find nearest waypoint
         std::vector<autoware_msgs::Waypoint> sublist;
+        Boost2DPoint vehicle_point(pose_msg_->pose.position.x, pose_msg_->pose.position.y);
+        std::vector<PointIndexPair> nearest_points;
+        rtree.query(boost::geometry::index::nearest(vehicle_point, 1), std::back_inserter(nearest_points));
+
+        if (nearest_points.size() == 0) {
+            ROS_ERROR_STREAM("Failed to find nearest waypoint");
+        }
+
+        // Get waypoints from nearest waypoint to time boundary
+        size_t index = std::get<1>(nearest_points[0]);
+
+        if (index = waypoints.size() - 1) {
+            ROS_INFO_STREAM("Nearest point is final waypoint so it is being dropped");
+            return sublist;
+        }
+
         double total_time = 0.0;
-        for(int i = 0; i < waypoints.size(); ++i)
+        for(int i = index + 1; i < waypoints.size(); ++i) // Iterate starting from the waypoint after nearest to ensure it is beyond the current vehicle position
         {
             sublist.push_back(waypoints[i]);
             if(i == 0)

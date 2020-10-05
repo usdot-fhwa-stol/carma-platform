@@ -34,6 +34,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
+find_package(Eigen3 REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
@@ -41,6 +42,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 
 catkin_package(
   CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils cav_msgs autoware_msgs
+  DEPENDS Boost Eigen3
 )
 
 ###########
@@ -48,15 +50,13 @@ catkin_package(
 ###########
 
 include_directories(
+  include
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
-  include
+  ${EIGEN3_INCLUDE_DIRS}
 )
 
-file(GLOB_RECURSE headers */*.hpp */*.h)
-
 add_executable( ${PROJECT_NAME}
-  ${headers}
   src/inlanecruising_plugin.cpp
   src/main.cpp)
 add_library(inlanecruising_plugin_library src/inlanecruising_plugin.cpp)
@@ -70,8 +70,6 @@ add_dependencies(inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
 )
 
 ## Install C++

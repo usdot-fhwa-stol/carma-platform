@@ -25,6 +25,9 @@
 #include <carma_utils/CARMAUtils.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/point.hpp>
+#include <boost/geometry/index/rtree.hpp>
 
 #include <cav_srvs/PlanTrajectory.h>
 
@@ -78,6 +81,12 @@ namespace inlanecruising_plugin
         cav_msgs::TrajectoryPlan trajectory_msg;
         // Array of waypoints
         std::vector<autoware_msgs::Waypoint> waypoints_list;
+
+        typedef boost::geometry::model::point<double, 2, boost::geometry::cs::cartesian> Boost2DPoint;
+        typedef std::pair<Boost2DPoint, size_t> PointIndexPair;
+        typedef boost::geometry::index::rtree< PointIndexPair, boost::geometry::index::quadratic<16> > Point2DRTree;
+
+        Point2DRTree rtree;
 
         // Length of maneuver
         double mvr_length = 16;
