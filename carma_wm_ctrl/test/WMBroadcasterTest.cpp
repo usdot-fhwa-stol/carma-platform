@@ -470,9 +470,6 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   wmb.addGeofence(gf_ptr);
   ASSERT_EQ(map_update_call_count, 1);
   /*Analyze prev_regems_.size()*/
-  // we can see that the gf_ptr->now would have the prev speed limit of 5_mph that affected llt 10000
-  //ROS_ERROR_STREAM("gf_ptr->prev_regems_[0] = "<< gf_ptr->prev_regems_[0].first <<" , "<<gf_ptr->prev_regems_[0].second);
-  //ROS_ERROR_STREAM("gf_ptr->prev_regems_[1] = "<< gf_ptr->prev_regems_[1].first <<" , "<<gf_ptr->prev_regems_[1].second);
   ASSERT_EQ(gf_ptr->prev_regems_.size(), 2);
   ASSERT_EQ(gf_ptr->prev_regems_[0].first, 10007);
   ASSERT_EQ(gf_ptr->prev_regems_[1].second->id(), old_speed_limit->id());

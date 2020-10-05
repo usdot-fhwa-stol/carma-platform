@@ -242,7 +242,6 @@ lanelet::Areas areas;
   ASSERT_EQ(2, llts.size());//Assert that there are 2 lanelets
   ROS_INFO_STREAM("There are "<<llts.size()<<" lanelets.");
 
-  ROS_ERROR_STREAM("SpeedLimitTestcheck");
 
   // Create lanelet map
   lanelet::LaneletMapPtr map2;
@@ -250,25 +249,18 @@ lanelet::Areas areas;
 
  //Test speed limits in map after ensureCompliance()
  lanelet::MapConformer::ensureCompliance(map2, 0_mph);//config_limit not in use
-  ROS_ERROR_STREAM("SpeedLimitTest1");
  for (auto ll: map2->laneletLayer)
  {
   auto speed_limit = ll.regulatoryElementsAs<lanelet::DigitalSpeedLimit>();
   ASSERT_EQ(1, speed_limit.size()); //Assert that there is only one digital speed limit in each lanelet
-  ROS_ERROR_STREAM("SpeedLimitTest1a Complete");
 
   ASSERT_LT(speed_limit.back().get()->speed_limit_ , 80_mph);//Assert that the speed_limit in each lanelet is less than or equal to the maximum 80mph
-  ROS_ERROR_STREAM("SpeedLimitTest1b Complete");
  }
  ASSERT_EQ(2,map2->laneletLayer.size()); //Test that there are only two lanelets in the map.
  ASSERT_EQ(7, map2->regulatoryElementLayer.size());//Test that there are only 7 regulatory elements: 2 access rules, 2 PassingControlLines
                                                   //+ 1 direction of travel route + 2 digital speed limits
 
-ROS_INFO_STREAM("End SpeedLimit Test 1");
 
-ROS_INFO_STREAM("*********************************");
-
-ROS_INFO_STREAM("Begin SpeedLimit Test 2");
 /*Create new lanelet map for testing*/
 
 //Map 3
@@ -287,7 +279,6 @@ std::vector<lanelet::Lanelet> llt2;
 
   ASSERT_EQ(0, map3->regulatoryElementLayer.size());
 
-  ROS_ERROR_STREAM("SpeedLimitTest2");
 
   lanelet::MapConformer::ensureCompliance(map3, config_limit);
   for(auto ll: map3->laneletLayer)
@@ -295,7 +286,6 @@ std::vector<lanelet::Lanelet> llt2;
     auto digital_speed_limit = ll.regulatoryElementsAs<lanelet::DigitalSpeedLimit>();
     ASSERT_EQ(1, digital_speed_limit.size());//Assert that there are no DigitalSpeedLimits
     ASSERT_EQ(config_limit, digital_speed_limit.back().get()->speed_limit_);//Assrt that the config_limit has been applied to the lanelet.
-    ROS_ERROR_STREAM("SpeedLimitTest2a Complete");
 
   }
 

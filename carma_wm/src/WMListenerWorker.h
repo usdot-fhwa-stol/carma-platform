@@ -82,7 +82,7 @@ public:
    *
    * \param config_lim A callback function that will be triggered after the world model receives a new map update
    */
-  void setConfigSpeedLimitCallback(double config_lim);
+  void setConfigSpeedLimit(double config_lim);
 
 private:
   std::shared_ptr<CARMAWorldModel> world_model_;

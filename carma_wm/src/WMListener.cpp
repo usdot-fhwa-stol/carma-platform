@@ -38,7 +38,7 @@ WMListener::WMListener(bool multi_thread) : worker_(std::unique_ptr<WMListenerWo
 
   double cL;
   nh2_.getParam("config_speed_limit", cL);
-  setConfigSpeedLimitCallback(cL);
+  setConfigSpeedLimit(cL);
   
 
 
@@ -93,9 +93,9 @@ std::unique_lock<std::mutex> WMListener::getLock(bool pre_locked)
   return lock;
 }
 
-void WMListener::setConfigSpeedLimitCallback(double config_lim)
+void WMListener::setConfigSpeedLimit(double config_lim)
 {
-  worker_->setConfigSpeedLimitCallback(config_lim);
+  worker_->setConfigSpeedLimit(config_lim);
 }
 
 

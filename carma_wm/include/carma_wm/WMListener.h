@@ -100,9 +100,9 @@ public:
    *        NOTE: If operating in multi-threaded mode the world model will remain locked until the user function
    * completes.
    *
-   * \param config_lim A callback function that will be triggered after the world model is updated with a new route
+   * \param config_lim A function that populate the configurable speed limit value after the world model is updated with a new route
    */
-  void setConfigSpeedLimitCallback(double config_lim);
+  void setConfigSpeedLimit(double config_lim);
 
 
 private:

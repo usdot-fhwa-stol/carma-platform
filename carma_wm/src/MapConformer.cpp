@@ -499,7 +499,6 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
 
     if (speed_limit.size()== 0)//If there is no assigned speed limit value
     {
-              ROS_WARN_STREAM(" check");
 
          for(const auto& rules : default_traffic_rules)
          {
@@ -520,7 +519,6 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
   }
   else  //If the speed limit value already exists 
   {
-    ROS_WARN_STREAM("check3");
       for(const auto& rules : default_traffic_rules)
          {
             if (rules->canPass(lanelet))
