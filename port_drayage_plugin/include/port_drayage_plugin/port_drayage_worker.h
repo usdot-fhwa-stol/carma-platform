@@ -19,6 +19,8 @@
 #include <cav_msgs/ManeuverPlan.h>
 #include <cav_msgs/MobilityOperation.h>
 #include <geometry_msgs/TwistStamped.h>
+#include <geometry_msgs/PoseStamped.h>
+
 #include "port_drayage_plugin/port_drayage_state_machine.h"
 
 namespace port_drayage_plugin
@@ -48,6 +50,7 @@ namespace port_drayage_plugin
             const std::string PORT_DRAYAGE_PLUGIN_ID = "Port Drayage Plugin";
             const std::string PORT_DRAYAGE_STRATEGY_ID = "carma/port_drayage";
             const std::string PORT_DRAYAGE_ARRIVAL_OPERATION_ID = "ARRIVED_AT_DESTINATION";
+
         public:
 
             /**
@@ -116,7 +119,7 @@ namespace port_drayage_plugin
             bool spin();
             
             /**
-             * Check to see if the vehicle has stopped under the command of the 
+             * \brief Check to see if the vehicle has stopped under the command of the 
              * Port Drayage Plugin.
              * 
              * \param plan The current maneuver plan
@@ -125,5 +128,7 @@ namespace port_drayage_plugin
              * \return True if the vehicle has been stopped by the PDP, false o.w.
              */
             bool check_for_stop(const cav_msgs::ManeuverPlanConstPtr& plan, const geometry_msgs::TwistStampedConstPtr& speed) const;
+
+
     };
 } // namespace port_drayage_plugin

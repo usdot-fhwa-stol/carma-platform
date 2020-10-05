@@ -24,7 +24,7 @@ namespace truck_inspection_client
     {
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
-        pnh_->getParam("vin_number", vin_number_);
+        pnh_->getParam("/vin_number", vin_number_); //get vin from global params in UniqueVehicleParams.ymal
         pnh_->getParam("license_plate", license_plate_);
         pnh_->getParam("state_short_name", state_short_name_);
         pnh_->getParam("carrier_name", carrier_name_);
@@ -35,11 +35,11 @@ namespace truck_inspection_client
         pnh_->getParam("iss_score", iss_score_);
         pnh_->getParam("permit_required", permit_required_);
         pnh_->getParam("pre_trip_ads_health_check", pre_trip_ads_health_check_);
-        mo_pub_ = nh_->advertise<cav_msgs::MobilityOperation>("mobility_operation_outbound", 5);
-        request_sub_ = nh_->subscribe("mobility_request_inbound", 1, &TruckInspectionClient::requestCallback, this);
-        ads_state_sub_ = nh_->subscribe("/guidance/state", 1, &TruckInspectionClient::guidanceStatesCallback, this);
+        mo_pub_ = nh_->advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 5);
+        request_sub_ = nh_->subscribe("incoming_mobility_request", 1, &TruckInspectionClient::requestCallback, this);
+        ads_state_sub_ = nh_->subscribe("guidance/state", 1, &TruckInspectionClient::guidanceStatesCallback, this);
         ads_system_alert_sub_ = nh_->subscribe("system_alert", 1, &TruckInspectionClient::systemAlertsCallback, this);
-        version_sub_ = nh_->subscribe("/carma_system_version", 1, &TruckInspectionClient::versionCallback, this);
+        version_sub_ = nh_->subscribe("carma_system_version", 1, &TruckInspectionClient::versionCallback, this);
         bsm_sub_ = nh_->subscribe("bsm_outbound", 1, &TruckInspectionClient::bsmCallback, this);
         this->ads_engaged_ = false;
         this->ads_system_alert_type_ = std::to_string(cav_msgs::SystemAlert::NOT_READY);
@@ -84,7 +84,9 @@ namespace truck_inspection_client
             mo_msg.strategy = this->INSPECTION_STRATEGY;
             std::string ads_auto_status = this->ads_engaged_ ? "Engaged" : "Not Engaged";
             std::string ads_health_status = ads_system_alert_type_ ;
-            std::string params = boost::str(boost::format("vin_number:%s,license_plate:%s,carrier_name:%s,carrier_id:%s,weight:%d,ads_software_version:%s,date_of_last_state_inspection:%s,date_of_last_ads_calibration:%s,pre_trip_ads_health_check:%s,ads_health_status:%s,ads_auto_status:%s,iss_score:%d,permit_required:%s")
+            //commented this out to put a temporary fix due to github issue#https://github.com/usdot-fhwa-stol/carma-platform/issues/879
+            //std::string params = boost::str(boost::format("vin_number:%s,license_plate:%s,carrier_name:%s,carrier_id:%s,weight:%d,ads_software_version:%s,date_of_last_state_inspection:%s,date_of_last_ads_calibration:%s,pre_trip_ads_health_check:%s,ads_health_status:%s,ads_auto_status:%s,iss_score:%d,permit_required:%s")
+            std::string params = boost::str(boost::format("v:%s,l:%s,n:%s,c:%s,w:%d,o:%s,f:%s,a:%s,r:%s,h:%s,u:%s,i:%d,p:%s")
                                                          % vin_number_ % license_plate_ % carrier_name_ % carrier_id_ % weight_ % ads_software_version_ % date_of_last_state_inspection_ % date_of_last_ads_calibration_ % pre_trip_ads_health_check_ % ads_health_status % ads_auto_status % iss_score_ % permit_required_);
             long time = (long)(ros::Time::now().toNSec() / pow(10, 6));
             mo_msg.header.timestamp = time;
