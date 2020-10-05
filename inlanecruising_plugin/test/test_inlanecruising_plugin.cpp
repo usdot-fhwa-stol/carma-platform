@@ -47,12 +47,10 @@ TEST(InLaneCruisingPluginTest, testGetWaypointsInTimeBoundary1)
     ip.pose_msg_.reset(new geometry_msgs::PoseStamped());
     std::vector<autoware_msgs::Waypoint> res = ip.get_waypoints_in_time_boundary(waypoints, 6.0);
     EXPECT_EQ(3, res.size());
-    EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(0.0, res[0].pose.pose.position.x, 0.01);
-    EXPECT_NEAR(4.0, res[1].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(6.0, res[1].pose.pose.position.x, 0.01);
-    EXPECT_NEAR(8.0, res[2].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(24.0, res[2].pose.pose.position.x, 0.01);
+    EXPECT_NEAR(4.0, res[0].twist.twist.linear.x, 0.01);
+    EXPECT_NEAR(6.0, res[0].pose.pose.position.x, 0.01);
+    EXPECT_NEAR(8.0, res[1].twist.twist.linear.x, 0.01);
+    EXPECT_NEAR(24.0, res[1].pose.pose.position.x, 0.01);
     EXPECT_NEAR(8.0, res.back().twist.twist.linear.x, 0.01);
     EXPECT_NEAR(40.0, res.back().pose.pose.position.x, 0.01);
 }
@@ -73,11 +71,9 @@ TEST(InLaneCruisingPluginTest, testGetWaypointsInTimeBoundary2)
     ip.set_waypoints(waypoints);
     ip.pose_msg_.reset(new geometry_msgs::PoseStamped());
     std::vector<autoware_msgs::Waypoint> res = ip.get_waypoints_in_time_boundary(waypoints, 6.0);
-    EXPECT_EQ(2, res.size());
-    EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(0.0, res[0].pose.pose.position.x, 0.01);
-    EXPECT_NEAR(4.0, res[1].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(6.0, res[1].pose.pose.position.x, 0.01);
+    EXPECT_EQ(1, res.size());
+    EXPECT_NEAR(4.0, res[0].twist.twist.linear.x, 0.01);
+    EXPECT_NEAR(6.0, res[0].pose.pose.position.x, 0.01);
 }
 
 TEST(InLaneCruisingPluginTest, testGetWaypointsInTimeBoundary3)
@@ -100,13 +96,11 @@ TEST(InLaneCruisingPluginTest, testGetWaypointsInTimeBoundary3)
     ip.set_waypoints(waypoints);
     ip.pose_msg_.reset(new geometry_msgs::PoseStamped());
     std::vector<autoware_msgs::Waypoint> res = ip.get_waypoints_in_time_boundary(waypoints, 5.0);
-    EXPECT_EQ(3, res.size());
-    EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(0.0, res[0].pose.pose.position.x, 0.01);
-    EXPECT_NEAR(4.0, res[1].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(6.0, res[1].pose.pose.position.x, 0.01);
-    EXPECT_NEAR(8.0, res[2].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(24.0, res[2].pose.pose.position.x, 0.01);
+    EXPECT_EQ(2, res.size());
+    EXPECT_NEAR(4.0, res[0].twist.twist.linear.x, 0.01);
+    EXPECT_NEAR(6.0, res[0].pose.pose.position.x, 0.01);
+    EXPECT_NEAR(8.0, res[1].twist.twist.linear.x, 0.01);
+    EXPECT_NEAR(24.0, res[1].pose.pose.position.x, 0.01);
 }
 
 TEST(InLaneCruisingPluginTest, testCreateUnevenTrajectory1)
