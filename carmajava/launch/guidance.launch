@@ -103,6 +103,8 @@
   
   <!-- MPC Follower Wrapper -->
   <group>
+    <remap from="estimate_twist" to="$(optenv CARMA_LOCZ_NS)/ekf_twist"/>
+    <remap from="vehicle_status" to="$(optenv CARMA_INTR_NS)/vehicle_status"/>
     <remap from="/mpc_waypoints" to="mpc_waypoints"/>
     <remap from="base_waypoints" to="mpc_waypoints"/>
     <remap from="/base_waypoints" to="base_waypoints"/>
@@ -114,7 +116,8 @@
   </group>
 
     <!-- Pure Pursuit Wrapper -->
-  <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch" />
+<!--   
+  <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch" /> -->
 
     <!-- Route Following Plugin -->
   <include file="$(find route_following_plugin)/launch/route_following_plugin.launch" />

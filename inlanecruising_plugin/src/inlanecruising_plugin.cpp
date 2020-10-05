@@ -189,7 +189,7 @@ namespace inlanecruising_plugin
         return uneven_traj;
     }
 
-    std::vector<autoware_msgs::Waypoint> InLaneCruisingPlugin::get_waypoints_in_time_boundary(const std::vector<autoware_msgs::Waypoint> waypoints&, double time_span)
+    std::vector<autoware_msgs::Waypoint> InLaneCruisingPlugin::get_waypoints_in_time_boundary(const std::vector<autoware_msgs::Waypoint>& waypoints, double time_span)
     {
         // Find nearest waypoint
         ROS_WARN_STREAM("15");

@@ -26,6 +26,8 @@
   <depend>message_filters</depend>
   <depend>geometry_msgs</depend>
   <depend>autoware_config_msgs</depend>
+  <depend>lanelet2_core</depend>
+  <depend>carma_wm</depend>
 
 <!--   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>cav_msgs</build_depend>

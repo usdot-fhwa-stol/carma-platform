@@ -15,6 +15,7 @@
  */
 
 #include "mpc_follower_wrapper/mpc_follower_wrapper.hpp"
+#include <carma_wm/Geometry.h>
 
 namespace mpc_follower_wrapper {
 
@@ -27,6 +28,38 @@ MPCFollowerWrapper::MPCFollowerWrapper(ros::CARMANodeHandle &nodeHandle): nh_(no
 }
 
 MPCFollowerWrapper::~MPCFollowerWrapper() {
+}
+
+std::vector<geometry_msgs::Quaternion>
+compute_orientations(const cav_msgs::TrajectoryPlan::ConstPtr& tp) const
+{
+  std::vector<geometry_msgs::Quaternion> out;
+
+  if (tp->trajectory_points.size() == 0) {
+      return out;
+  }
+
+  lanelet::BasicLineString2d centerline;
+  for (auto traj_point : tp->trajectory_points) {
+    lanelet::BasicPoint2d p(traj_point.x, traj_point.y);
+    centerline.push_back(p);
+  }
+
+  std::vector<Eigen::Vector2d> tangents = carma_wm::geometry::compute_finite_differences(centerline);
+
+  Eigen::Vector2d x_axis = { 1, 0 };
+  for (int i = 0; i < tangents.size(); i++)
+  {
+    geometry_msgs::Quaternion q;
+
+    // Derive angle by cos theta = (u . v)/(||u| * ||v||)
+    double yaw = carma_wm::geometry::safeAcos(tangents[i].dot(x_axis) / (tangents[i].norm() * x_axis.norm()));
+
+    q = tf::createQuaternionMsgFromYaw(yaw);
+    out.push_back(q);
+  }
+
+  return out;
 }
 
 void MPCFollowerWrapper::Initialize() {
@@ -60,11 +93,16 @@ void MPCFollowerWrapper::TrajectoryPlanPoseHandler(const cav_msgs::TrajectoryPla
       autoware_msgs::Lane lane;
       lane.header = tp->header;
       std::vector <autoware_msgs::Waypoint> waypoints;
+      std::vector<geometry_msgs::Quaternion> quats = compute_orientations(tp);
+      if (quats.size() != tp->trajectory_points.size()) {
+        ROS_ERROR_STREAM("Quat list size mismatch");
+      }
       for(int i = 0; i < tp->trajectory_points.size() - 1; i++ ) {
 
         cav_msgs::TrajectoryPlanPoint t1 = tp->trajectory_points[i];
         cav_msgs::TrajectoryPlanPoint t2 = tp->trajectory_points[i + 1];
         autoware_msgs::Waypoint waypoint = mpcww.TrajectoryPlanPointToWaypointConverter(t1, t2);
+        waypoint.pose.pose.orientation = quats[i];
         waypoints.push_back(waypoint);
       }
 
@@ -81,6 +119,5 @@ void MPCFollowerWrapper::TrajectoryPlanPoseHandler(const cav_msgs::TrajectoryPla
 void MPCFollowerWrapper::PublisherForWayPoints(const autoware_msgs::Lane& msg){
   way_points_pub_.publish(msg);
 };
-
 
 }  // namespace mpc_follower_wrapper
