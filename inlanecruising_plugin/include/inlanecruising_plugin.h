@@ -54,8 +54,13 @@ namespace inlanecruising_plugin
         // postprocess traj to add plugin names and shift time origin to the current ROS time
         std::vector<cav_msgs::TrajectoryPlanPoint> post_process_traj_points(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory);
 
+        // set waypoints and construct rtee
+        void set_waypoints(std::vector<autoware_msgs::Waypoint> waypoints);
+        
         // local copy of pose
         boost::shared_ptr<geometry_msgs::PoseStamped const> pose_msg_;
+        
+       
 
     private:
 
