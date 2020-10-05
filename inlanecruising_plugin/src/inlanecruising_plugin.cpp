@@ -66,16 +66,21 @@ namespace inlanecruising_plugin
 
     bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp){
 
+        ROS_WARN_STREAM("PlanTrajectory");
         cav_msgs::TrajectoryPlan trajectory;
         trajectory.header.frame_id = "map";
         trajectory.header.stamp = ros::Time::now();
         trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
+        ROS_WARN_STREAM("1");
         trajectory.trajectory_points = compose_trajectory_from_waypoints(waypoints_list);
+        ROS_WARN_STREAM("2");
         trajectory_msg = trajectory;
 
         resp.trajectory_plan = trajectory_msg;
         resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_FOLLOWING);
         resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
+
+        ROS_WARN_STREAM("3");
 
         return true;
     }
@@ -89,17 +94,30 @@ namespace inlanecruising_plugin
             return;
         }
 
+        ROS_WARN_STREAM("Waypoints Callback");
+
+        
         waypoints_list = msg->waypoints;
+
+        ROS_WARN_STREAM("4");
         
         Point2DRTree empty_rtree;
         rtree = empty_rtree; // Overwrite the existing RTree
 
+        ROS_WARN_STREAM("5");
+
         size_t index = 0;
+        ROS_WARN_STREAM("6");
         for (auto wp : waypoints_list) {
+            ROS_WARN_STREAM("7");
             Boost2DPoint p(wp.pose.pose.position.x, wp.pose.pose.position.y);
+            ROS_WARN_STREAM("8");
             rtree.insert(std::make_pair(p, index));
+            ROS_WARN_STREAM("9");
             index++;
         }
+
+        ROS_WARN_STREAM("10");
     }
 
     void InLaneCruisingPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
@@ -112,15 +130,19 @@ namespace inlanecruising_plugin
         current_speed_ = msg->twist.linear.x;
     }
 
-    std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_trajectory_from_waypoints(std::vector<autoware_msgs::Waypoint> waypoints)
+    std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_trajectory_from_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints)
     {
+        ROS_WARN_STREAM("11");
         std::vector<autoware_msgs::Waypoint> partial_waypoints = get_waypoints_in_time_boundary(waypoints, trajectory_time_length_);
+        ROS_WARN_STREAM("12");
         std::vector<cav_msgs::TrajectoryPlanPoint> tmp_trajectory = create_uneven_trajectory_from_waypoints(partial_waypoints);
+        ROS_WARN_STREAM("13");
         std::vector<cav_msgs::TrajectoryPlanPoint> final_trajectory = post_process_traj_points(tmp_trajectory);
+        ROS_WARN_STREAM("14");
         return final_trajectory;
     }
 
-    std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::create_uneven_trajectory_from_waypoints(std::vector<autoware_msgs::Waypoint> waypoints)
+    std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::create_uneven_trajectory_from_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints)
     {
         std::vector<cav_msgs::TrajectoryPlanPoint> uneven_traj;
         // TODO land id is not populated because we are not using it in Autoware
@@ -169,34 +191,45 @@ namespace inlanecruising_plugin
         return uneven_traj;
     }
 
-    std::vector<autoware_msgs::Waypoint> InLaneCruisingPlugin::get_waypoints_in_time_boundary(std::vector<autoware_msgs::Waypoint> waypoints, double time_span)
+    std::vector<autoware_msgs::Waypoint> InLaneCruisingPlugin::get_waypoints_in_time_boundary(const std::vector<autoware_msgs::Waypoint> waypoints&, double time_span)
     {
         // Find nearest waypoint
+        ROS_WARN_STREAM("15");
         std::vector<autoware_msgs::Waypoint> sublist;
         Boost2DPoint vehicle_point(pose_msg_->pose.position.x, pose_msg_->pose.position.y);
         std::vector<PointIndexPair> nearest_points;
+        ROS_WARN_STREAM("16");
         rtree.query(boost::geometry::index::nearest(vehicle_point, 1), std::back_inserter(nearest_points));
 
+        ROS_WARN_STREAM("17");
         if (nearest_points.size() == 0) {
             ROS_ERROR_STREAM("Failed to find nearest waypoint");
         }
 
+        ROS_WARN_STREAM("18");
+
         // Get waypoints from nearest waypoint to time boundary
         size_t index = std::get<1>(nearest_points[0]);
 
+        ROS_WARN_STREAM("19");
         if (index = waypoints.size() - 1) {
             ROS_INFO_STREAM("Nearest point is final waypoint so it is being dropped");
             return sublist;
         }
 
+        ROS_WARN_STREAM("20");
+
         double total_time = 0.0;
+        size_t start_index = index + 1;
         for(int i = index + 1; i < waypoints.size(); ++i) // Iterate starting from the waypoint after nearest to ensure it is beyond the current vehicle position
         {
             sublist.push_back(waypoints[i]);
-            if(i == 0)
+            if(i == start_index)
             {
+                ROS_WARN_STREAM("21");
                 continue;
             }
+            ROS_WARN_STREAM("20");
             double delta_x_square = pow(waypoints[i].pose.pose.position.x - waypoints[i - 1].pose.pose.position.x, 2);
             double delta_y_square = pow(waypoints[i].pose.pose.position.y - waypoints[i - 1].pose.pose.position.y, 2);
             //double delta_z_square = waypoints[i].pose.pose.position.z - waypoints[i - 1].pose.pose.position.z;
