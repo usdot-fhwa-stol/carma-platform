@@ -9,6 +9,7 @@
         <remap from="vehicle_model_wheelbase" to="/vehicle_wheel_base"/>
         <remap from="steer_lim_deg" to="/vehicle_steer_lim_deg"/>
         <remap from="steering_gear_ratio" to="/vehicle_steering_gear_ratio"/>
+        <remap from="/mpc_waypoints" to="mpc_waypoints"/>
 
         <node pkg="mpc_follower" type="mpc_waypoints_converter" name="mpc_waypoints_converter" output="screen">
 			<remap from="/base_waypoints" to="base_waypoints"/>
@@ -20,6 +21,7 @@
 			<remap from="/ctrl_raw" to="ctrl_raw"/>
 			<remap from="/twist_raw" to="twist_raw"/>
             <rosparam command="load" file="$(arg vehicle_calibration_dir)/mpc_follower/calibration.yaml"/>
+            <param name="in_waypoints_name" value="/mpc_waypoints"/>
         </node>
 
     </group>
