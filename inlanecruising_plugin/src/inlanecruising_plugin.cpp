@@ -85,8 +85,9 @@ namespace inlanecruising_plugin
         return true;
     }
 
-    void InLaneCruisingPlugin::set_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints)
+    Point2DRTree InLaneCruisingPlugin::set_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints)
     {
+        // guaranteed to get non-empty waypoints due to the protection in the callback function
         waypoints_list = waypoints;
         
         Point2DRTree empty_rtree;
@@ -104,8 +105,7 @@ namespace inlanecruising_plugin
             ROS_WARN_STREAM("9");
             index++;
         }
-
-        ROS_WARN_STREAM("10");
+        return rtree; // TODO make return meaningful
     }
 
     void InLaneCruisingPlugin::waypoints_cb(const autoware_msgs::LaneConstPtr& msg)

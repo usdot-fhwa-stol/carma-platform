@@ -18,6 +18,53 @@
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 
+
+TEST(InLaneCruisingPluginTest, setWaypointsTest)
+{
+    // compose a list of waypoints spanning 8 seconds
+    std::vector<autoware_msgs::Waypoint> waypoints;
+    autoware_msgs::Waypoint wp_1;
+    wp_1.twist.twist.linear.x = 2.0;
+    wp_1.pose.pose.position.x = 0.0;
+    autoware_msgs::Waypoint wp_2;
+    wp_2.twist.twist.linear.x = 4.0;
+    wp_2.pose.pose.position.x = 6.0;
+    autoware_msgs::Waypoint wp_3;
+    wp_3.twist.twist.linear.x = 8.0;
+    wp_3.pose.pose.position.x = 24.0;
+    autoware_msgs::Waypoint wp_4;
+    wp_4.twist.twist.linear.x = 8.0;
+    wp_4.pose.pose.position.x = 40.0;
+    autoware_msgs::Waypoint wp_5;
+    wp_5.twist.twist.linear.x = 8.0;
+    wp_5.pose.pose.position.x = 48.0;
+    waypoints.push_back(wp_1);
+    waypoints.push_back(wp_2);
+    waypoints.push_back(wp_3);
+    waypoints.push_back(wp_4);
+    waypoints.push_back(wp_5);
+    inlanecruising_plugin::InLaneCruisingPlugin ip;
+    inlanecruising_plugin::Point2DRTree rTree = ip.set_waypoints(waypoints);
+    ip.pose_msg_.reset(new geometry_msgs::PoseStamped());
+    
+    inlanecruising_plugin::Boost2DPoint vehicle_point(0.0, 0.0);
+    std::vector<inlanecruising_plugin::PointIndexPair> nearest_points;
+    rTree.query(boost::geometry::index::nearest(vehicle_point, 1), std::back_inserter(nearest_points));
+    ASSERT_EQ(0, std::get<1>(nearest_points[0]));
+    vehicle_point = inlanecruising_plugin::Boost2DPoint(2.0, 0.0);
+    nearest_points = {};
+    rTree.query(boost::geometry::index::nearest(vehicle_point, 1), std::back_inserter(nearest_points));
+    ASSERT_EQ(0, std::get<1>(nearest_points[0]));
+    vehicle_point = inlanecruising_plugin::Boost2DPoint(24.0, 0.0);
+    nearest_points = {};
+    rTree.query(boost::geometry::index::nearest(vehicle_point, 1), std::back_inserter(nearest_points));
+    ASSERT_EQ(2, std::get<1>(nearest_points[0]));
+    vehicle_point = inlanecruising_plugin::Boost2DPoint(50.0, 0.0);
+    nearest_points = {};
+    rTree.query(boost::geometry::index::nearest(vehicle_point, 1), std::back_inserter(nearest_points));
+    ASSERT_EQ(4, std::get<1>(nearest_points[0]));
+}
+
 TEST(InLaneCruisingPluginTest, testGetWaypointsInTimeBoundary1)
 {
     // compose a list of waypoints spanning 8 seconds
@@ -47,14 +94,18 @@ TEST(InLaneCruisingPluginTest, testGetWaypointsInTimeBoundary1)
     ip.pose_msg_.reset(new geometry_msgs::PoseStamped());
     std::vector<autoware_msgs::Waypoint> res = ip.get_waypoints_in_time_boundary(waypoints, 6.0);
     EXPECT_EQ(3, res.size());
-    EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(0.0, res[0].pose.pose.position.x, 0.01);
-    EXPECT_NEAR(4.0, res[1].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(6.0, res[1].pose.pose.position.x, 0.01);
-    EXPECT_NEAR(8.0, res[2].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(24.0, res[2].pose.pose.position.x, 0.01);
+    EXPECT_NEAR(4.0, res[0].twist.twist.linear.x, 0.01);
+    EXPECT_NEAR(6.0, res[0].pose.pose.position.x, 0.01);
+    EXPECT_NEAR(8.0, res[1].twist.twist.linear.x, 0.01);
+    EXPECT_NEAR(24.0, res[1].pose.pose.position.x, 0.01);
     EXPECT_NEAR(8.0, res.back().twist.twist.linear.x, 0.01);
     EXPECT_NEAR(40.0, res.back().pose.pose.position.x, 0.01);
+    // test if plugin returns sublist if the point is on the last waypoint
+    geometry_msgs::PoseStamped pose;
+    pose.pose.position.x = 48.0;
+    ip.pose_msg_.reset(new geometry_msgs::PoseStamped(pose));
+    res = ip.get_waypoints_in_time_boundary(waypoints, 6.0);
+    EXPECT_EQ(0, res.size());
 }
 
 TEST(InLaneCruisingPluginTest, testGetWaypointsInTimeBoundary2)
@@ -73,11 +124,9 @@ TEST(InLaneCruisingPluginTest, testGetWaypointsInTimeBoundary2)
     ip.set_waypoints(waypoints);
     ip.pose_msg_.reset(new geometry_msgs::PoseStamped());
     std::vector<autoware_msgs::Waypoint> res = ip.get_waypoints_in_time_boundary(waypoints, 6.0);
-    EXPECT_EQ(2, res.size());
-    EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(0.0, res[0].pose.pose.position.x, 0.01);
-    EXPECT_NEAR(4.0, res[1].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(6.0, res[1].pose.pose.position.x, 0.01);
+    EXPECT_EQ(1, res.size());
+    EXPECT_NEAR(4.0, res[0].twist.twist.linear.x, 0.01);
+    EXPECT_NEAR(6.0, res[0].pose.pose.position.x, 0.01);
 }
 
 TEST(InLaneCruisingPluginTest, testGetWaypointsInTimeBoundary3)
@@ -100,13 +149,11 @@ TEST(InLaneCruisingPluginTest, testGetWaypointsInTimeBoundary3)
     ip.set_waypoints(waypoints);
     ip.pose_msg_.reset(new geometry_msgs::PoseStamped());
     std::vector<autoware_msgs::Waypoint> res = ip.get_waypoints_in_time_boundary(waypoints, 5.0);
-    EXPECT_EQ(3, res.size());
-    EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(0.0, res[0].pose.pose.position.x, 0.01);
-    EXPECT_NEAR(4.0, res[1].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(6.0, res[1].pose.pose.position.x, 0.01);
-    EXPECT_NEAR(8.0, res[2].twist.twist.linear.x, 0.01);
-    EXPECT_NEAR(24.0, res[2].pose.pose.position.x, 0.01);
+    EXPECT_EQ(2, res.size());
+    EXPECT_NEAR(4.0, res[0].twist.twist.linear.x, 0.01);
+    EXPECT_NEAR(6.0, res[0].pose.pose.position.x, 0.01);
+    EXPECT_NEAR(8.0, res[1].twist.twist.linear.x, 0.01);
+    EXPECT_NEAR(24.0, res[1].pose.pose.position.x, 0.01);
 }
 
 TEST(InLaneCruisingPluginTest, testCreateUnevenTrajectory1)

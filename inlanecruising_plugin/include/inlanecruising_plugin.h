@@ -34,6 +34,9 @@
 
 namespace inlanecruising_plugin
 {
+    typedef boost::geometry::model::point<double, 2, boost::geometry::cs::cartesian> Boost2DPoint;
+    typedef std::pair<Boost2DPoint, size_t> PointIndexPair;
+    typedef boost::geometry::index::rtree< PointIndexPair, boost::geometry::index::quadratic<16> > Point2DRTree;
 
     class InLaneCruisingPlugin
     {
@@ -55,13 +58,12 @@ namespace inlanecruising_plugin
         std::vector<cav_msgs::TrajectoryPlanPoint> post_process_traj_points(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory);
 
         // set waypoints and construct rtee
-        void set_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints);
-        
+        // returns Point2DRTree for unit test purposes
+        Point2DRTree set_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints);
+
         // local copy of pose
         boost::shared_ptr<geometry_msgs::PoseStamped const> pose_msg_;
         
-       
-
     private:
 
         // node handles
@@ -86,10 +88,6 @@ namespace inlanecruising_plugin
         cav_msgs::TrajectoryPlan trajectory_msg;
         // Array of waypoints
         std::vector<autoware_msgs::Waypoint> waypoints_list;
-
-        typedef boost::geometry::model::point<double, 2, boost::geometry::cs::cartesian> Boost2DPoint;
-        typedef std::pair<Boost2DPoint, size_t> PointIndexPair;
-        typedef boost::geometry::index::rtree< PointIndexPair, boost::geometry::index::quadratic<16> > Point2DRTree;
 
         Point2DRTree rtree;
 
