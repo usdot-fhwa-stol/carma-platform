@@ -16,6 +16,8 @@
 
 #include "mpc_follower_wrapper/mpc_follower_wrapper.hpp"
 #include <carma_wm/Geometry.h>
+#include <carma_wm/WorldModel.h>
+#include <geometry_msgs/Quaternion.h>
 
 namespace mpc_follower_wrapper {
 
@@ -31,7 +33,7 @@ MPCFollowerWrapper::~MPCFollowerWrapper() {
 }
 
 std::vector<geometry_msgs::Quaternion>
-compute_orientations(const cav_msgs::TrajectoryPlan::ConstPtr& tp) const
+compute_orientations(const cav_msgs::TrajectoryPlan::ConstPtr& tp)
 {
   std::vector<geometry_msgs::Quaternion> out;
 
@@ -39,11 +41,14 @@ compute_orientations(const cav_msgs::TrajectoryPlan::ConstPtr& tp) const
       return out;
   }
 
-  lanelet::BasicLineString2d centerline;
-  for (auto traj_point : tp->trajectory_points) {
+  
+  std::vector<lanelet::BasicPoint2d> points;
+  for (cav_msgs::TrajectoryPlanPoint traj_point : tp->trajectory_points) {
     lanelet::BasicPoint2d p(traj_point.x, traj_point.y);
-    centerline.push_back(p);
+    points.push_back(p);
   }
+
+  lanelet::BasicLineString2d centerline(points.begin(), points.end());
 
   std::vector<Eigen::Vector2d> tangents = carma_wm::geometry::compute_finite_differences(centerline);
 

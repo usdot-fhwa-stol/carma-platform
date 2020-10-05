@@ -19,8 +19,8 @@ find_package(catkin REQUIRED COMPONENTS
   message_filters
   autoware_config_msgs
   carma_utils
-  lanelet2_core
   carma_wm
+  tf
 )
 
 ## System dependencies are found with CMake's conventions
@@ -69,7 +69,7 @@ add_dependencies(mpc_follower_wrapper_worker_library ${catkin_EXPORTED_TARGETS})
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES mpc_follower_wrapper_worker_library
- CATKIN_DEPENDS cav_msgs roscpp rospy geometry_msgs autoware_msgs message_filters autoware_config_msgs carma_utils lanelet2_core carma_wm
+ CATKIN_DEPENDS cav_msgs roscpp rospy geometry_msgs autoware_msgs message_filters tf autoware_config_msgs carma_utils carma_wm
 #  DEPENDS system_lib
  DEPENDS Boost
 )
