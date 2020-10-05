@@ -85,21 +85,9 @@ namespace inlanecruising_plugin
         return true;
     }
 
-
-    void InLaneCruisingPlugin::waypoints_cb(const autoware_msgs::LaneConstPtr& msg)
+    void InLaneCruisingPlugin::set_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints)
     {
-        if(msg->waypoints.size() == 0)
-        {
-            ROS_WARN_STREAM("Received an empty trajectory!");
-            return;
-        }
-
-        ROS_WARN_STREAM("Waypoints Callback");
-
-        
-        waypoints_list = msg->waypoints;
-
-        ROS_WARN_STREAM("4");
+        waypoints_list = waypoints;
         
         Point2DRTree empty_rtree;
         rtree = empty_rtree; // Overwrite the existing RTree
@@ -118,6 +106,16 @@ namespace inlanecruising_plugin
         }
 
         ROS_WARN_STREAM("10");
+    }
+
+    void InLaneCruisingPlugin::waypoints_cb(const autoware_msgs::LaneConstPtr& msg)
+    {
+        if(msg->waypoints.size() == 0)
+        {
+            ROS_WARN_STREAM("Received an empty trajectory!");
+            return;
+        }
+        set_waypoints(msg->waypoints);
     }
 
     void InLaneCruisingPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
@@ -212,7 +210,7 @@ namespace inlanecruising_plugin
         size_t index = std::get<1>(nearest_points[0]);
 
         ROS_WARN_STREAM("19");
-        if (index = waypoints.size() - 1) {
+        if (index == waypoints.size() - 1) {
             ROS_INFO_STREAM("Nearest point is final waypoint so it is being dropped");
             return sublist;
         }

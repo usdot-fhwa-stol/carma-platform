@@ -43,8 +43,10 @@ TEST(InLaneCruisingPluginTest, testGetWaypointsInTimeBoundary1)
     waypoints.push_back(wp_4);
     waypoints.push_back(wp_5);
     inlanecruising_plugin::InLaneCruisingPlugin ip;
+    ip.set_waypoints(waypoints);
+    ip.pose_msg_.reset(new geometry_msgs::PoseStamped());
     std::vector<autoware_msgs::Waypoint> res = ip.get_waypoints_in_time_boundary(waypoints, 6.0);
-    EXPECT_EQ(4, res.size());
+    EXPECT_EQ(3, res.size());
     EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
     EXPECT_NEAR(0.0, res[0].pose.pose.position.x, 0.01);
     EXPECT_NEAR(4.0, res[1].twist.twist.linear.x, 0.01);
@@ -68,6 +70,8 @@ TEST(InLaneCruisingPluginTest, testGetWaypointsInTimeBoundary2)
     waypoints.push_back(wp_1);
     waypoints.push_back(wp_2);
     inlanecruising_plugin::InLaneCruisingPlugin ip;
+    ip.set_waypoints(waypoints);
+    ip.pose_msg_.reset(new geometry_msgs::PoseStamped());
     std::vector<autoware_msgs::Waypoint> res = ip.get_waypoints_in_time_boundary(waypoints, 6.0);
     EXPECT_EQ(2, res.size());
     EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
@@ -93,6 +97,8 @@ TEST(InLaneCruisingPluginTest, testGetWaypointsInTimeBoundary3)
     waypoints.push_back(wp_2);
     waypoints.push_back(wp_3);
     inlanecruising_plugin::InLaneCruisingPlugin ip;
+    ip.set_waypoints(waypoints);
+    ip.pose_msg_.reset(new geometry_msgs::PoseStamped());
     std::vector<autoware_msgs::Waypoint> res = ip.get_waypoints_in_time_boundary(waypoints, 5.0);
     EXPECT_EQ(3, res.size());
     EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
@@ -128,6 +134,7 @@ TEST(InLaneCruisingPluginTest, testCreateUnevenTrajectory1)
     waypoints.push_back(wp_4);
     waypoints.push_back(wp_5);
     inlanecruising_plugin::InLaneCruisingPlugin ip;
+    ip.set_waypoints(waypoints);
     // create pose message to indicate that the current location is on top of the starting waypoint
     ip.pose_msg_.reset(new geometry_msgs::PoseStamped());
     std::vector<cav_msgs::TrajectoryPlanPoint> traj = ip.create_uneven_trajectory_from_waypoints(waypoints);
@@ -169,6 +176,7 @@ TEST(InLaneCruisingPluginTest, testCreateUnevenTrajectory2)
     waypoints.push_back(wp_4);
     waypoints.push_back(wp_5);
     inlanecruising_plugin::InLaneCruisingPlugin ip;
+    ip.set_waypoints(waypoints);
     // create pose message to indicate that the current location is not near the starting waypoint
     geometry_msgs::PoseStamped pose;
     pose.pose.position.x = -1.0;
