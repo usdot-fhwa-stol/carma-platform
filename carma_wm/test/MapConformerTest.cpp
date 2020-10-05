@@ -16,14 +16,6 @@
 #include "ros/ros.h"
 #include <gmock/gmock.h>
 #include <carma_wm/MapConformer.h>
-#include <lanelet2_core/Attribute.h>
-#include <lanelet2_core/Forward.h>
-#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
-#include <lanelet2_traffic_rules/GermanTrafficRules.h>
-#include <lanelet2_extension/regulatory_elements/RegionAccessRule.h>
-#include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
-#include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
-#include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
 #include <lanelet2_core/utility/Units.h>
 #include <boost/algorithm/string.hpp>
 #include "TestHelpers.h"

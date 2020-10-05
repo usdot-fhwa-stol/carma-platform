@@ -391,7 +391,7 @@ lanelet::Optional<TrafficRulesConstPtr> CARMAWorldModel::getTrafficRules(const s
       
     carma_traffic_rules = std::static_pointer_cast<lanelet::traffic_rules::CarmaUSTrafficRules>(
     lanelet::traffic_rules::TrafficRulesPtr(std::move(traffic_rules)));
-    carma_traffic_rules->setConfigSpeedLimit(con_lim);
+    carma_traffic_rules->setConfigSpeedLimit(config_speed_limit_);
 
 
     optional_ptr = std::static_pointer_cast<const lanelet::traffic_rules::CarmaUSTrafficRules>(
@@ -803,7 +803,7 @@ std::vector<lanelet::Lanelet> CARMAWorldModel::getLaneletsFromPoint(const lanele
 
 void CARMAWorldModel::setConfigSpeedLimit(double config_lim)
 {
-  con_lim = config_lim;
+  config_speed_limit_ = config_lim;
 }
 
 

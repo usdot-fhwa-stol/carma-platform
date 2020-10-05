@@ -77,6 +77,11 @@ public:
    */
   void setRouteCallback(std::function<void()> callback);
 
+ /*!
+   * \brief Allows user to set a callback to be triggered when a map update is received
+   *
+   * \param config_lim A callback function that will be triggered after the world model receives a new map update
+   */
   void setConfigSpeedLimitCallback(double config_lim);
 
 private:
@@ -84,7 +89,7 @@ private:
   std::function<void()> map_callback_;
   std::function<void()> route_callback_;
   void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const;
-  double configured_limit;
+  double config_speed_limit_;
 
 };
 }  // namespace carma_wm

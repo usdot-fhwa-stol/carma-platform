@@ -60,9 +60,6 @@ TEST(WMBroadcaster, baseMapCallback)
 {
   ros::Time::setNow(ros::Time(0));  // Set current time
 
-  auto regElem = lanelet::RegulatoryElementFactory::create("regulatory_element", lanelet::DigitalSpeedLimit::buildData(lanelet::InvalId, 5_kmh, {}, {},
-                                                     { lanelet::Participants::VehicleCar }));
-
 
   size_t base_map_call_count = 0;
   WMBroadcaster wmb(

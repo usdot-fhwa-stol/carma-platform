@@ -95,6 +95,10 @@ public:
    */
   lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> getNearestObjInLane(const lanelet::BasicPoint2d& object_center, const LaneSection& section = LANE_AHEAD) const;
 
+/** \param config_lim the configurable speed limit value populated from WMListener using the config_speed_limit parameter
+ * in VehicleConfigParams.yaml
+*
+*/
   void setConfigSpeedLimit(double config_lim);
   
   ////
@@ -140,7 +144,7 @@ public:
 
 private:
   
-  double con_lim;
+  double config_speed_limit_;
   
   /*! \brief Helper function to compute the geometry of the route downtrack/crosstrack reference line
    *         This function should generally only be called from inside the setRoute function as it uses member variables

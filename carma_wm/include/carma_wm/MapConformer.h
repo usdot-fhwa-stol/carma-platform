@@ -58,7 +58,7 @@ namespace MapConformer
  *
  * @param map A pointer to the map which will be modified in place
  * 
- * @param config_limit A pointer to the configurable the configurable speed limit value
+ * @param config_limit A value corresponding to the configurable speed limit value
  */
 void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit);
 

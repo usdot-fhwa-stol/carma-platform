@@ -16,19 +16,10 @@
 #include <ros/ros.h>
 #include <carma_wm/WorldModel.h>
 #include <lanelet2_core/Attribute.h>
-#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
-#include <lanelet2_traffic_rules/GermanTrafficRules.h>
-#include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
-#include <lanelet2_extension/regulatory_elements/RegionAccessRule.h>
-#include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
-#include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
 #include <lanelet2_core/utility/Units.h>
 #include <boost/algorithm/string.hpp>
 #include <carma_wm/MapConformer.h>
-#include <lanelet2_core/Forward.h>
 
-
-#include <carma_wm/MapConformer.h>
 
 namespace lanelet
 {
@@ -490,18 +481,15 @@ void addInferredDirectionOfTravel(Lanelet& lanelet, lanelet::LaneletMapPtr map,
 void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::Velocity config_limit,
     const std::vector<lanelet::traffic_rules::TrafficRulesUPtr>& default_traffic_rules )
 {
-  ROS_WARN_STREAM("Add Valid Speed Limit function has been entered.");
   lanelet::Velocity max_speed;
     auto speed_limit = lanelet.regulatoryElementsAs<DigitalSpeedLimit>();
      if(config_limit < 80_mph && config_limit > 0_mph)//Accounting for the configured speed limit, input zero when not in use
       {  
         max_speed = config_limit;
-        ROS_WARN_STREAM("Config_limit in use.");
       }
       else
       {
         max_speed = 80_mph;
-        ROS_WARN_STREAM("Default limit in use.");
       }
       
     // If the lanelet does not have a digital speed limit then add one with the maximum value of 80
@@ -527,13 +515,10 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
 
       lanelet.addRegulatoryElement(rar);
       map->add(rar);//Add DigitalSpeedLimit data to the map
-      ROS_WARN_STREAM(" Regulatory Element Added to Lanelet id: " << lanelet.id() << ", Speed Limit ="<< rar->speed_limit_.value());
-      ROS_INFO_STREAM("Number of Regulatory Elements: "<< map->regulatoryElementLayer.size());
 
      }
-     ROS_ERROR_STREAM("AddValidSpeedLimit ended with condition 1.");
   }
-  else /*if (speed_limit.back()->speed_limit_ > 0_mph) //If the speed limit value already exists */
+  else  //If the speed limit value already exists 
   {
     ROS_WARN_STREAM("check3");
       for(const auto& rules : default_traffic_rules)
@@ -552,7 +537,6 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
       lanelet.removeRegulatoryElement(speed_limit.back());
       lanelet.addRegulatoryElement(rar);
       map->update(lanelet, rar);//Add DigitalSpeedLimit data to the map
-      ROS_WARN_STREAM(" Regulatory Element Updated");
       ROS_INFO_STREAM("Number of Regulatory Elements: "<< map->regulatoryElementLayer.size());
 
 
@@ -566,7 +550,6 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
 
 void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit)
 {
-    ROS_ERROR_STREAM("ensureComplianceCheck");
 
   auto default_traffic_rules = getAllGermanTrafficRules();  // Use german traffic rules as default as they most closely
                                                             // match the generic traffic rules

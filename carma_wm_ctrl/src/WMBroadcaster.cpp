@@ -118,6 +118,11 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
      sL = 80_mph; //Cap the speed limit to the predetermined maximum value
 
     }
+    if(sL < 0_mph)
+    {
+           ROS_WARN_STREAM("Digital  speed limit is invalid. Value set to 0mph.");
+      sL = 0_mph;
+    }
     gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
                                         sL, affected_llts, affected_areas, { lanelet::Participants::VehicleCar }));
   }
