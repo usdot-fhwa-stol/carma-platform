@@ -27,7 +27,7 @@
 #include "ros/ros.h"
 #include <carma_wm_ctrl/GeofenceScheduler.h>
 #include <lanelet2_routing/RoutingGraph.h>
-
+#include <hardcoded_params/control_limits/control_limits.h>
 #include <carma_wm/MapConformer.h>
 
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
@@ -140,6 +140,9 @@ private:
   GeofenceScheduler scheduler_;
   std::string base_map_georef_;
   double max_lane_width_;
+  // Maximum allowable speed limit
+  const lanelet::Velocity MAX_SPEED_LIMIT = lanelet::Velocity(hardcoded_params::control_limits::MAX_LONGITUDINAL_VELOCITY_MPS * lanelet::units::MPS());
+
 };
 }  // namespace carma_wm_ctrl
 

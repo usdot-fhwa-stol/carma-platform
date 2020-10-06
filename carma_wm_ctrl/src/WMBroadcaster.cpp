@@ -109,13 +109,13 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
     //Acquire speed limit information from TafficControlDetail msg
     sL = lanelet::Velocity(msg_detail.maxspeed * lanelet::units::MPH()); 
     
-    if(config_limit > 0_mph && config_limit < 80_mph)//Accounting for the configured speed limit, input zero when not in use
+    if(config_limit > 0_mph && config_limit < MAX_SPEED_LIMIT)//Accounting for the configured speed limit, input zero when not in use
         sL = config_limit;
     //Ensure Geofences do not provide invalid speed limit data (exceed predetermined maximum value)
-    if(sL > 80_mph )
+    if(sL > MAX_SPEED_LIMIT )
     {
-     ROS_WARN_STREAM("Digital maximum speed limit is invalid. Value capped at 80mph."); //Output warning message
-     sL = 80_mph; //Cap the speed limit to the predetermined maximum value
+     ROS_WARN_STREAM("Digital maximum speed limit is invalid. Value capped at " << MAX_SPEED_LIMIT.value() << " m/s "); //Output warning message
+     sL = MAX_SPEED_LIMIT; //Cap the speed limit to the predetermined maximum value
 
     }
     if(sL < 0_mph)
@@ -131,13 +131,13 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
   {
     //Acquire speed limit information from TafficControlDetail msg
      sL = lanelet::Velocity(msg_detail.minspeed * lanelet::units::MPH());
-     if(config_limit > 0_mph && config_limit < 80_mph)//Accounting for the configured speed limit, input zero when not in use
+     if(config_limit > 0_mph && config_limit < MAX_SPEED_LIMIT)//Accounting for the configured speed limit, input zero when not in use
         sL = config_limit;
     //Ensure Geofences do not provide invalid speed limit data 
-    if(sL > 80_mph )
+    if(sL > MAX_SPEED_LIMIT )
     {
      ROS_WARN_STREAM("Digital speed limit is invalid. Value capped at 80mph.");
-     sL = 80_mph;
+     sL = MAX_SPEED_LIMIT;
     }
     if(sL < 0_mph)
     {
