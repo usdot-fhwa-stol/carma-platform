@@ -284,7 +284,7 @@ std::vector<lanelet::Lanelet> llt2;
   for(auto ll: map3->laneletLayer)
   {
     auto digital_speed_limit = ll.regulatoryElementsAs<lanelet::DigitalSpeedLimit>();
-    ASSERT_EQ(1, digital_speed_limit.size());//Assert that there are no DigitalSpeedLimits
+    ASSERT_EQ(1, digital_speed_limit.size());//Assert that there is only 1 DigitalSpeedLimit
     ASSERT_EQ(config_limit, digital_speed_limit.back().get()->speed_limit_);//Assrt that the config_limit has been applied to the lanelet.
 
   }

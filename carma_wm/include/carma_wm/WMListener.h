@@ -102,7 +102,7 @@ public:
    *
    * \param config_lim A function that populate the configurable speed limit value after the world model is updated with a new route
    */
-  void setConfigSpeedLimit(double config_lim);
+  void setConfigSpeedLimit(double config_lim) const;
 
 
 private:

@@ -93,7 +93,7 @@ std::unique_lock<std::mutex> WMListener::getLock(bool pre_locked)
   return lock;
 }
 
-void WMListener::setConfigSpeedLimit(double config_lim)
+void WMListener::setConfigSpeedLimit(double config_lim) const
 {
   worker_->setConfigSpeedLimit(config_lim);
 }
