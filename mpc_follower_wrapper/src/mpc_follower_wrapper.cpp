@@ -14,10 +14,11 @@
  * the License.
  */
 
-#include "mpc_follower_wrapper/mpc_follower_wrapper.hpp"
-#include <carma_wm/Geometry.h>
 #include <carma_wm/WorldModel.h>
+#include <carma_wm/Geometry.h>
+#include "mpc_follower_wrapper/mpc_follower_wrapper.hpp"
 #include <geometry_msgs/Quaternion.h>
+#include <tf/transform_datatypes.h>
 
 namespace mpc_follower_wrapper {
 
@@ -42,13 +43,12 @@ compute_orientations(const cav_msgs::TrajectoryPlan::ConstPtr& tp)
   }
 
   
-  std::vector<lanelet::BasicPoint2d> points;
+  lanelet::BasicLineString2d centerline;
   for (cav_msgs::TrajectoryPlanPoint traj_point : tp->trajectory_points) {
     lanelet::BasicPoint2d p(traj_point.x, traj_point.y);
-    points.push_back(p);
+    centerline.push_back(p);
   }
 
-  lanelet::BasicLineString2d centerline(points.begin(), points.end());
 
   std::vector<Eigen::Vector2d> tangents = carma_wm::geometry::compute_finite_differences(centerline);
 
