@@ -18,6 +18,7 @@
 #include <lanelet2_core/Attribute.h>
 #include <lanelet2_core/utility/Units.h>
 #include <boost/algorithm/string.hpp>
+#include <hardcoded_params/control_limits/control_limits.h>
 #include <carma_wm/MapConformer.h>
 
 
@@ -34,6 +35,10 @@ namespace MapConformer
 {
 namespace
 {  // Private namespace
+
+// Maximum allowable speed limit
+const lanelet::Velocity MAX_SPEED_LIMIT = lanelet::Velocity(hardcoded_params::control_limits::MAX_LONGITUDINAL_VELOCITY_MPS * lanelet::units::MPS());
+
 // Enum defining types of lane change
 enum class LaneChangeType
 {
@@ -483,18 +488,18 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
 {
   lanelet::Velocity max_speed;
     auto speed_limit = lanelet.regulatoryElementsAs<DigitalSpeedLimit>();
-     if(config_limit < 80_mph && config_limit > 0_mph)//Accounting for the configured speed limit, input zero when not in use
+     if(config_limit < MAX_SPEED_LIMIT && config_limit > 0_mph)//Accounting for the configured speed limit, input zero when not in use
       {  
         max_speed = config_limit;
       }
       else
       {
-        max_speed = 80_mph;
+        max_speed = MAX_SPEED_LIMIT;
       }
       
-    // If the lanelet does not have a digital speed limit then add one with the maximum value of 80
+    // If the lanelet does not have a digital speed limit then add one with the maximum value of MAX_SPEED_LIMIT
     std::vector<std::string> allowed_participants;
-     //Maximum speed limit is 80
+     //Maximum speed limit is MAX_SPEED_LIMIT
    
 
     if (speed_limit.empty())//If there is no assigned speed limit value

@@ -19,6 +19,7 @@ set ( PKG_CATKIN_DEPS
   roscpp
   tf2
   tf2_geometry_msgs
+  hardcoded_params
 )
 
 ## Find required catkin packages
