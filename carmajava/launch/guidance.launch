@@ -161,7 +161,10 @@
     <include file="$(find waypoint_generator)/launch/waypoint_generator.launch"/>
   </group>
       
-  <node pkg="waypoint_maker" type="waypoint_marker_publisher" name="waypoint_marker_publisher" />
+  <node pkg="waypoint_maker" type="waypoint_marker_publisher" name="waypoint_marker_publisher">
+    <remap from="lane_waypoints_array" to="base/lane_waypoints_raw"/>
+    <remap from="final_waypoints" to="carma_final_waypoints"/>
+  </node>
 
   <!-- Lane Planner -->
   <node pkg="lane_planner" type="lane_select" name="lane_select">
