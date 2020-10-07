@@ -15,6 +15,7 @@
  */
 
 #include "mpc_follower_wrapper/mpc_follower_wrapper_worker.hpp"
+#include <tf/transform_datatypes.h>
 
 namespace mpc_follower_wrapper {
 
@@ -25,6 +26,7 @@ autoware_msgs::Waypoint MPCFollowerWrapperWorker::TrajectoryPlanPointToWaypointC
 
   waypoint.pose.pose.position.x = tpp.x;
   waypoint.pose.pose.position.y = tpp.y;
+  waypoint.pose.pose.orientation = tf::createQuaternionMsgFromYaw(tpp.yaw);
   double delta_x = tpp.x - tpp2.x;
   double delta_y = tpp.y - tpp2.y;
   double delta_pos = sqrt(delta_x * delta_x + delta_y * delta_y);

@@ -18,6 +18,7 @@
 #include <string>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <algorithm>
 #include "inlanecruising_plugin.h"
 
 
@@ -164,6 +165,7 @@ namespace inlanecruising_plugin
         double previous_wp_yaw = starting_point.yaw;
         ros::Time previous_wp_t = starting_point.target_time;
 
+        ROS_WARN_STREAM("previous_wp_v" << previous_wp_v);
 
         for(int i = 0; i < waypoints.size(); ++i)
         {
@@ -171,7 +173,7 @@ namespace inlanecruising_plugin
 
             cav_msgs::TrajectoryPlanPoint traj_point;
             // assume the vehicle is starting from stationary state because it is the same assumption made by pure pursuit wrapper node
-            double average_speed = previous_wp_v;
+            double average_speed = std::max(previous_wp_v, 2.2352); // TODO need better solution for this
             double delta_d = sqrt(pow(waypoints[i].pose.pose.position.x - previous_wp_x, 2) + pow(waypoints[i].pose.pose.position.y - previous_wp_y, 2));
             ros::Duration delta_t(delta_d / average_speed);
             traj_point.target_time = previous_wp_t + delta_t;
