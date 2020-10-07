@@ -112,9 +112,9 @@ void MPCFollowerWrapper::TrajectoryPlanPoseHandler(const cav_msgs::TrajectoryPla
         cav_msgs::TrajectoryPlanPoint t2 = tp->trajectory_points[i + 1];
         autoware_msgs::Waypoint waypoint = mpcww.TrajectoryPlanPointToWaypointConverter(t1, t2);
         if (i == 0) { // Assume first point in trajectory is current vehicle location // TODO add time synchronization here
-          current_pose_
+          waypoint.pose.pose.orientation = current_pose_.pose.orientation;
         } else {
-          waypoint.pose.pose.orientation = current_pose_.pose.orientation; // TODO handle orientation of vehicle for first point 
+          waypoint.pose.pose.orientation = quats[i]; 
         }
         waypoints.push_back(waypoint);
       }
