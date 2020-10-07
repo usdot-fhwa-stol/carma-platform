@@ -204,7 +204,18 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   ASSERT_EQ(wmlw.getWorldModel()->getMap()->laneletLayer.findUsages(regem_old_correct_data)[0].id(), ll_1.id());
 }
 
+TEST(WMListenerWorkerTest, setConfigSpeedLimitTest)
+{
+  WMListenerWorker wmlw;
 
+  bool flag = false;
+  double cL = 24.0;
+  ///// Test without user defined config limit
+  wmlw.setConfigSpeedLimit(cL);
+
+  ASSERT_FALSE(flag);
+
+}
 
 
 }  // namespace carma_wm

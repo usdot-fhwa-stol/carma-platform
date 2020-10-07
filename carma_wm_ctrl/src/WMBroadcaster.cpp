@@ -116,8 +116,8 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
     // @SONAR_STOP@
     if(sL > 80_mph )
     {
-     ROS_WARN_STREAM("Digital maximum speed limit is invalid. Value capped at 80mph."); //Output warning message
-     sL = 80_mph; //Cap the speed limit to the predetermined maximum value
+     ROS_WARN_STREAM("Digital maximum speed limit is invalid. Value capped at max speed limit."); //Output warning message
+     sL = 79_mph; //Cap the speed limit to the predetermined maximum value
 
     }
     if(sL < 0_mph)
@@ -139,8 +139,8 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
     // @SONAR_STOP@
     if(sL > 80_mph )
     {
-     ROS_WARN_STREAM("Digital speed limit is invalid. Value capped at 80mph.");
-     sL = 80_mph;
+     ROS_WARN_STREAM("Digital speed limit is invalid. Value capped at max speed limit.");
+     sL = 79_mph;
     }
     if(sL < 0_mph)
     {

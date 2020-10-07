@@ -1005,4 +1005,18 @@ TEST(CARMAWorldModelTest, getLaneletsFromPoint)
   ASSERT_EQ(underlyings.back().id(), 1200);
 }
 
+TEST(CARMAWorldModelTest, setConfigSpeedLimitTest)
+{
+  CARMAWorldModel cmw;
+
+  bool flag = false;
+  double cL = 24.0;
+  ///// Test without user defined config limit
+  cmw.setConfigSpeedLimit(cL);
+
+  ASSERT_FALSE(flag);
+
+}
+
+
 }  // namespace carma_wm

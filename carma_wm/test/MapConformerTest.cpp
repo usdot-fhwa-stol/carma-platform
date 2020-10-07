@@ -227,7 +227,7 @@ lanelet::Areas areas;
 
   //Add regualtory element - Digital Speed Limit 1
   std::shared_ptr<lanelet::DigitalSpeedLimit> dsl(new lanelet::DigitalSpeedLimit(lanelet::DigitalSpeedLimit::buildData(
-        lanelet::utils::getId(), 63_mph, llts, {}, {lanelet::Participants::Vehicle})));
+        lanelet::utils::getId(), 67_mph, llts, {}, {lanelet::Participants::Vehicle})));
         llts.back().addRegulatoryElement(dsl);
 
 
