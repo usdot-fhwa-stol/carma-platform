@@ -24,6 +24,9 @@
 #include <lanelet2_core/utility/Optional.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Vector3.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
 #include "TrackPos.h"
 
 namespace carma_wm
@@ -216,6 +219,18 @@ double getAngleBetweenVectors(const Eigen::Vector2d& vec1, const Eigen::Vector2d
 lanelet::BasicPolygon2d objectToMapPolygon(const geometry_msgs::Pose& pose, const geometry_msgs::Vector3& size);
 
 
+inline void rpyFromQuaternion(const tf2::Quaternion& q, double& roll, double& pitch, double& yaw) 
+{
+  tf2::Matrix3x3 mat(q);
+  mat.getRPY(roll, pitch, yaw);
+}
+
+inline void rpyFromQuaternion(const geometry_msgs::Quaternion& q_msg, double& roll, double& pitch, double& yaw)
+{
+  tf2::Quaternion quat;
+  tf2::convert(q_msg, quat);
+  rpyFromQuaternion(quat, roll, pitch, yaw);
+}
 
 }  // namespace geometry
 
