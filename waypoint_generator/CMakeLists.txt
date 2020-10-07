@@ -112,7 +112,6 @@ install(DIRECTORY
 catkin_add_gmock(${PROJECT_NAME}-test 
   test/TestMain.cpp
   test/test_waypoint_generator.cpp
-  test/test_compute_orientations.cpp
   test/test_route_callback.cpp
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit test
 )
