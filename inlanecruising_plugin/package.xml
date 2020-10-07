@@ -16,7 +16,7 @@
  the License.
 -->
 
-<package format="2">
+<package format="3">
   <name>inlanecruising_plugin</name>
   <version>3.2.0</version>
   <description>The inlanecruising_plugin converts final waypoint plan from autoware to a CARMA trajectory</description>
@@ -30,4 +30,5 @@
   <depend>cav_msgs</depend>
   <depend>carma_utils</depend>
   <depend>autoware_msgs</depend>
+  <depend>carma_wm</depend>
 </package>

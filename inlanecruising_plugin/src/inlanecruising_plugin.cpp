@@ -140,55 +140,58 @@ namespace inlanecruising_plugin
         return final_trajectory;
     }
 
+// TODO comments: Takes in a waypoint list that is from the next waypoint till the time boundary
     std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::create_uneven_trajectory_from_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints)
     {
         std::vector<cav_msgs::TrajectoryPlanPoint> uneven_traj;
         // TODO land id is not populated because we are not using it in Autoware
         // Adding current vehicle location as the first trajectory point if it is not on the first waypoint
-        if(fabs(pose_msg_->pose.position.x - waypoints[0].pose.pose.position.x) > 0.1 || fabs(pose_msg_->pose.position.y - waypoints[0].pose.pose.position.y) > 0.1)
-        {
-            cav_msgs::TrajectoryPlanPoint starting_point;
-            starting_point.target_time = 0.0;
-            starting_point.x = pose_msg_->pose.position.x;
-            starting_point.y = pose_msg_->pose.position.y;
-            uneven_traj.push_back(starting_point);
-        }
+        // TODO there is an equivalent loop to this in the platooning plugin that should also be updated to assign the orientation value
+        // Add vehicle location as first point
+        cav_msgs::TrajectoryPlanPoint starting_point;
+        starting_point.target_time = ros::Time(0.0);
+        starting_point.x = pose_msg_->pose.position.x;
+        starting_point.y = pose_msg_->pose.position.y;
+        double roll,pitch,yaw;
+        carma_wm::geometry::rpyFromQuaternion(pose_msg_->pose.orientation, roll, pitch, yaw);
+        starting_point.yaw = yaw;
+        uneven_traj.push_back(starting_point);
 
+        // Update previous wp
         double previous_wp_v = waypoints[0].twist.twist.linear.x;
-        double previous_wp_x = pose_msg_->pose.position.x;
-        double previous_wp_y = pose_msg_->pose.position.y;
-        double previous_wp_t = 0.0;
+        double previous_wp_x = starting_point.x;
+        double previous_wp_y = starting_point.y;
+        double previous_wp_yaw = starting_point.yaw;
+        ros::Time previous_wp_t = starting_point.target_time;
+
+
         for(int i = 0; i < waypoints.size(); ++i)
         {
-            if(i != 0)
-            {
-                previous_wp_v = waypoints[i - 1].twist.twist.linear.x;
-                previous_wp_x = uneven_traj.back().x;
-                previous_wp_y = uneven_traj.back().y;
-                previous_wp_t = uneven_traj.back().target_time;
-            }
-            if(i == 0 && uneven_traj.size() == 0)
-            {
-                cav_msgs::TrajectoryPlanPoint starting_point;
-                starting_point.target_time = 0.0;
-                starting_point.x = waypoints[i].pose.pose.position.x;
-                starting_point.y = waypoints[i].pose.pose.position.y;
-                uneven_traj.push_back(starting_point);
-                continue;
-            }
+
+
             cav_msgs::TrajectoryPlanPoint traj_point;
             // assume the vehicle is starting from stationary state because it is the same assumption made by pure pursuit wrapper node
             double average_speed = previous_wp_v;
             double delta_d = sqrt(pow(waypoints[i].pose.pose.position.x - previous_wp_x, 2) + pow(waypoints[i].pose.pose.position.y - previous_wp_y, 2));
-            traj_point.target_time = (delta_d / average_speed) * 1e9 + previous_wp_t;
+            ros::Duration delta_t(delta_d / average_speed);
+            traj_point.target_time = previous_wp_t + delta_t;
             traj_point.x = waypoints[i].pose.pose.position.x;
             traj_point.y = waypoints[i].pose.pose.position.y;
+            carma_wm::geometry::rpyFromQuaternion(waypoints[i].pose.pose.orientation, roll, pitch, yaw);
+            traj_point.yaw = yaw;
             uneven_traj.push_back(traj_point);
+
+            previous_wp_v = waypoints[i - 1].twist.twist.linear.x;
+            previous_wp_x = uneven_traj.back().x;
+            previous_wp_y = uneven_traj.back().y;
+            previous_wp_y = uneven_traj.back().y;
+            previous_wp_t = uneven_traj.back().target_time;
         }
 
         return uneven_traj;
     }
 
+    // TODO comments: This method returns all waypoints from the nearest waypoint + 1
     std::vector<autoware_msgs::Waypoint> InLaneCruisingPlugin::get_waypoints_in_time_boundary(const std::vector<autoware_msgs::Waypoint>& waypoints, double time_span)
     {
         // Find nearest waypoint
@@ -246,12 +249,13 @@ namespace inlanecruising_plugin
 
     std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::post_process_traj_points(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory)
     {
-        uint64_t current_nsec = ros::Time::now().toNSec();
+        ros::Time now = ros::Time::now();
+        ros::Duration now_duration(now.sec, now.nsec);
         for(int i = 0; i < trajectory.size(); ++i)
         {
             trajectory[i].controller_plugin_name = "default";
             trajectory[i].planner_plugin_name = "autoware";
-            trajectory[i].target_time += current_nsec;
+            trajectory[i].target_time += now_duration;
         }
 
         return trajectory;

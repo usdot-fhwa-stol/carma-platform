@@ -26,10 +26,10 @@ namespace trajectory_executor
         cav_msgs::TrajectoryPlan out(plan);
         out.trajectory_points = std::vector<cav_msgs::TrajectoryPlanPoint>();
 
-        uint64_t current_nsec = ros::Time::now().toNSec();
+        ros::Time current_time = ros::Time::now();
 
         for (int i = 0; i < plan.trajectory_points.size(); i++) {
-            if (plan.trajectory_points[i].target_time > current_nsec) {
+            if (plan.trajectory_points[i].target_time > current_time) {
                 out.trajectory_points.push_back(plan.trajectory_points[i]);
             }
         }
