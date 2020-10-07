@@ -158,7 +158,7 @@ namespace platooning_tactical_plugin {
 
             double delta_d = sqrt(pow(waypoints[i].pose.pose.position.x - previous_wp_x, 2) + pow(waypoints[i].pose.pose.position.y - previous_wp_y, 2));
             ros::Duration delta_t(delta_d / average_speed);
-            traj_point.target_time = delta_t + previous_wp_t);
+            traj_point.target_time =  previous_wp_t + delta_t;
             traj_point.x = waypoints[i].pose.pose.position.x;
             traj_point.y = waypoints[i].pose.pose.position.y;
             uneven_traj.push_back(traj_point);
