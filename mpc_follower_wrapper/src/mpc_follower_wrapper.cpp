@@ -91,6 +91,10 @@ void MPCFollowerWrapper::Initialize() {
   });
 }
 
+void MPCFollowerWrapper::CurrentPoseHandler(const geometry_msgs::PoseStamped::ConstPtr& pose) {
+  current_pose_ = *pose;
+}
+
 
 void MPCFollowerWrapper::TrajectoryPlanPoseHandler(const cav_msgs::TrajectoryPlan::ConstPtr& tp){
   ROS_DEBUG_STREAM("Received TrajectoryPlanCurrentPosecallback message");
@@ -107,7 +111,11 @@ void MPCFollowerWrapper::TrajectoryPlanPoseHandler(const cav_msgs::TrajectoryPla
         cav_msgs::TrajectoryPlanPoint t1 = tp->trajectory_points[i];
         cav_msgs::TrajectoryPlanPoint t2 = tp->trajectory_points[i + 1];
         autoware_msgs::Waypoint waypoint = mpcww.TrajectoryPlanPointToWaypointConverter(t1, t2);
-        waypoint.pose.pose.orientation = quats[i];
+        if (i == 0) { // Assume first point in trajectory is current vehicle location // TODO add time synchronization here
+          current_pose_
+        } else {
+          waypoint.pose.pose.orientation = current_pose_.pose.orientation; // TODO handle orientation of vehicle for first point 
+        }
         waypoints.push_back(waypoint);
       }
 
