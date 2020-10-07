@@ -18,6 +18,7 @@
 #include <lanelet2_core/geometry/Point.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf/transform_datatypes.h>
 
 namespace carma_wm
 {
@@ -449,6 +450,30 @@ compute_magnitude_of_vectors(const std::vector<Eigen::Vector2d>& vectors)
   std::vector<double> out;
   for (auto vec : vectors) {
     out.push_back(vec.norm());
+  }
+
+  return out;
+}
+
+std::vector<geometry_msgs::Quaternion>
+compute_tangent_orientations(lanelet::BasicLineString2d centerline)
+{
+  std::vector<geometry_msgs::Quaternion> out;
+  if (centerline.empty())
+    return out;
+
+  std::vector<Eigen::Vector2d> tangents = carma_wm::geometry::compute_finite_differences(centerline);
+
+  Eigen::Vector2d x_axis = { 1, 0 };
+  for (int i = 0; i < tangents.size(); i++)
+  {
+    geometry_msgs::Quaternion q;
+
+    // Derive angle by cos theta = (u . v)/(||u| * ||v||)
+    double yaw = carma_wm::geometry::safeAcos(tangents[i].dot(x_axis) / (tangents[i].norm() * x_axis.norm()));
+
+    q = tf::createQuaternionMsgFromYaw(yaw);
+    out.push_back(q);
   }
 
   return out;

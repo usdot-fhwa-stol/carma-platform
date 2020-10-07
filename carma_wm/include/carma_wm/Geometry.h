@@ -215,7 +215,19 @@ double getAngleBetweenVectors(const Eigen::Vector2d& vec1, const Eigen::Vector2d
  */
 lanelet::BasicPolygon2d objectToMapPolygon(const geometry_msgs::Pose& pose, const geometry_msgs::Vector3& size);
 
-
+/**!
+ * \brief Compute an approximate orientation for the vehicle at each
+ * point along the centerline of the lanelets.
+ * 
+ * Uses the tangent vectors along the route centerline to estimate vehicle pose
+ * in the yaw dimension. Roll and pitch are not considered.
+ * 
+ * \param centerline centerline represented as BasicLinestring2d of the lanelets to compute the orientation
+ * 
+ * \returns A vector of quaternions representing the vehicle's 
+ * orientation at each point of the lanelet's centerline.
+ */
+std::vector<geometry_msgs::Quaternion> compute_tangent_orientations(lanelet::BasicLineString2d centerline);
 
 }  // namespace geometry
 
