@@ -144,21 +144,6 @@ namespace waypoint_generator
                 double decel_limit) const;
 
             /**!
-             * \brief Compute an approximate orientation for the vehicle at each
-             * point along the lanelets.
-             * 
-             * Uses the tangent vectors along the route to estimate vehicle pose
-             * in the yaw dimension. Roll and pitch are not considered.
-             * 
-             * \param lanelets The list of lanelets to compute over
-             * 
-             * \returns A vector of quaternions representing the vehicle's 
-             * orientation at each point of the lanelet's centerline.
-             */
-            std::vector<geometry_msgs::Quaternion> compute_orientations(
-                std::vector<lanelet::ConstLanelet> lanelets) const;
-
-            /**!
              * \brief Compose the autoware_msgs::LaneArray object from it's
              * constituent pieces.
              * 

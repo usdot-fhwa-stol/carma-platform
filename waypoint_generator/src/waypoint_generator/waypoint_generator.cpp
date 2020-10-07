@@ -237,34 +237,6 @@ std::vector<double> WaypointGenerator::apply_accel_limits(std::vector<double> sp
   return out;
 }
 
-std::vector<geometry_msgs::Quaternion>
-WaypointGenerator::compute_orientations(const std::vector<lanelet::ConstLanelet> lanelets) const
-{
-  std::vector<geometry_msgs::Quaternion> out;
-
-  if (lanelets.size() == 0) {
-      return out;
-  }
-
-  lanelet::BasicLineString2d centerline = carma_wm::geometry::concatenate_lanelets(lanelets);
-
-  std::vector<Eigen::Vector2d> tangents = carma_wm::geometry::compute_finite_differences(centerline);
-
-  Eigen::Vector2d x_axis = { 1, 0 };
-  for (int i = 0; i < tangents.size(); i++)
-  {
-    geometry_msgs::Quaternion q;
-
-    // Derive angle by cos theta = (u . v)/(||u| * ||v||)
-    double yaw = carma_wm::geometry::safeAcos(tangents[i].dot(x_axis) / (tangents[i].norm() * x_axis.norm()));
-
-    q = tf::createQuaternionMsgFromYaw(yaw);
-    out.push_back(q);
-  }
-
-  return out;
-}
-
 autoware_msgs::LaneArray WaypointGenerator::generate_lane_array_message(
     std::vector<double> speeds, std::vector<geometry_msgs::Quaternion> orientations,
     std::vector<lanelet::ConstLanelet> lanelets) const
@@ -531,7 +503,8 @@ void WaypointGenerator::new_route_callback()
   }
 
   ROS_DEBUG("Processing orientations...");
-  std::vector<geometry_msgs::Quaternion> orientations = this->compute_orientations(tmp);
+  lanelet::BasicLineString2d centerline = carma_wm::geometry::concatenate_lanelets(tmp);
+  std::vector<geometry_msgs::Quaternion> orientations = carma_wm::geometry::compute_tangent_orientations(centerline);
 
   ROS_DEBUG_STREAM(" ");
   ROS_DEBUG_STREAM(" ");
