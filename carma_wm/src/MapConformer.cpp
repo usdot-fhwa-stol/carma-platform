@@ -529,6 +529,7 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
         }
     if(speed_limit.back().get()->speed_limit_ > max_speed)//Check that speed limit value does not exceed the maximum value
     {
+      // @SONAR_STOP@
       ROS_WARN_STREAM("Invalid speed limit value. Value reset to maximum speed limit.");
       auto rar = std::make_shared<DigitalSpeedLimit>(DigitalSpeedLimit::buildData(lanelet::utils::getId(), max_speed, {lanelet},
       {}, allowed_participants));
@@ -536,7 +537,7 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
       lanelet.addRegulatoryElement(rar);
       map->update(lanelet, rar);//Add DigitalSpeedLimit data to the map
       ROS_INFO_STREAM("Number of Regulatory Elements: "<< map->regulatoryElementLayer.size());
-
+// @SONAR_START@
 
     }
     
