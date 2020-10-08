@@ -164,6 +164,7 @@
   <node pkg="waypoint_maker" type="waypoint_marker_publisher" name="waypoint_marker_publisher">
     <remap from="lane_waypoints_array" to="base/lane_waypoints_raw"/>
     <remap from="final_waypoints" to="carma_final_waypoints"/>
+    <remap from="traffic_waypoints_array" to="base/lane_waypoints_raw"/>
   </node>
 
   <!-- Lane Select (in Carma) / Replaced Lane Planner in Autoware -->
