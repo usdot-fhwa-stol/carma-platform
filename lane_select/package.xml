@@ -27,4 +27,5 @@
   <depend>roscpp</depend>
   <depend>autoware_msgs</depend>
   <depend>carma_utils</depend>
+  <depend>cav_msgs</depend>
 </package>

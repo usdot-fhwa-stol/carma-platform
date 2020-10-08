@@ -27,6 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   autoware_msgs
   carma_utils
+  cav_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -37,7 +38,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS roscpp autoware_msgs carma_utils
+  CATKIN_DEPENDS roscpp autoware_msgs carma_utils cav_msgs
 )
 
 ###########
