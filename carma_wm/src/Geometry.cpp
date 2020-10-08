@@ -470,7 +470,12 @@ compute_tangent_orientations(lanelet::BasicLineString2d centerline)
     geometry_msgs::Quaternion q;
 
     // Derive angle by cos theta = (u . v)/(||u| * ||v||)
-    double yaw = carma_wm::geometry::safeAcos(tangents[i].dot(x_axis) / (tangents[i].norm() * x_axis.norm()));
+    double yaw = 0;
+    double norm = tangents[i].norm();
+    if (norm != 0.0) {
+      auto normalized_tanged = tangents[i] / norm;
+      yaw = atan2(normalized_tanged[1], normalized_tanged[0]);
+    }
 
     q = tf::createQuaternionMsgFromYaw(yaw);
     out.push_back(q);
