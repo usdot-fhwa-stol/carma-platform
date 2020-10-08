@@ -1,0 +1,104 @@
+#!/usr/bin/env python
+import rospy
+import rostopic
+import rosgraph
+import sys
+import numpy as np
+from geometry_msgs.msg import Pose
+from geometry_msgs.msg import PoseArray
+from geometry_msgs.msg import Quaternion
+from geometry_msgs.msg import Vector3
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
+
+
+class Converter:
+    def __init__(self, pub, element_attr, list_attr=''):
+        self.element_attr = element_attr
+        self.list_attr = list_attr
+        self.pub = pub
+
+    def normalize(self, array):
+        """ 
+        Normalize a 4 element array/list/numpy.array for use as a quaternion
+        :param quat_array: 4 element list/array
+        :returns: normalized array
+        :rtype: numpy array
+        """
+        quat = np.array(array)
+        return quat / np.sqrt(np.dot(quat, quat))
+
+    def convertQuatToVector3(self, quat):
+        orientation_list = [quat.x, quat.y, quat.z, quat.w]
+	orientation_list = self.normalize(orientation_list)
+        (roll, pitch, yaw) = euler_from_quaternion (orientation_list, axes='sxyz')
+        vector_msg = Vector3()
+        vector_msg.x = roll
+        vector_msg.y = pitch
+        vector_msg.z = yaw
+        return vector_msg
+
+    def handle_list(self, msg):
+      list_ele = getattr(msg, self.list_attr)
+
+      pose_array_msg = PoseArray()
+      for e in list_ele:
+        quat = getattr(e, self.element_attr)
+        fake_pose = Pose()
+        fake_pose.position = self.convertQuatToVector3(quat)
+        fake_pose.orientation = quat
+        pose_array_msg.poses.append(fake_pose)
+
+      self.pub.publish(pose_array_msg)
+
+    def handle_individual(self, msg):
+      quat = getattr(msg, self.element_attr)
+
+
+      pose_array_msg = PoseArray()
+
+      fake_pose = Pose()
+      fake_pose.position = self.convertQuatToVector3(quat)
+      fake_pose.orientation = quat
+      pose_array_msg.poses.append(fake_pose)
+      
+      self.pub.publish(pose_array_msg)
+
+
+
+def run(args):
+  rospy.init_node('extract_rpy_from_quat')
+
+  in_topic = args[1]
+  out_topic = args[2]
+  element_accessor = args[3]
+
+  pub = rospy.Publisher(out_topic, PoseArray, queue_size=10)
+
+
+  converter = Converter(pub, element_accessor)
+  callback = converter.handle_individual
+
+  if len(args) == 5:
+    converter = Converter(pub, element_accessor, args[4])
+    callback = converter.handle_list
+
+  print(in_topic)
+  msg_class, _, _ = rostopic.get_topic_class(in_topic, True)
+
+  sub = rospy.Subscriber(in_topic, msg_class, callback)
+
+  r = rospy.Rate(20)
+  while not rospy.is_shutdown():
+      r.sleep()
+
+
+if __name__ == '__main__':
+    try:
+      if (len(sys.argv) < 4 or len(sys.argv) > 5):
+        print 'At one-two arguments required extract_rpy_from_quat <in topic> <out topic> <element path> <list path>'
+
+      run(sys.argv)
+    except rospy.ROSInterruptException:
+        print("ROS Exception")
+        pass
+        
