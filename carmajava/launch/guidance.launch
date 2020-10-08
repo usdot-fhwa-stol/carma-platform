@@ -166,9 +166,8 @@
     <remap from="final_waypoints" to="carma_final_waypoints"/>
   </node>
 
-  <!-- Lane Planner -->
-  <node pkg="lane_planner" type="lane_select" name="lane_select">
-      <remap from="state" to="autoware_state"/>
+  <!-- Lane Select (in Carma) / Replaced Lane Planner in Autoware -->
+  <node pkg="lane_select" type="lane_select" name="lane_select">
       <remap from="traffic_waypoints_array" to="base/lane_waypoints_raw"/>
   </node>
 
