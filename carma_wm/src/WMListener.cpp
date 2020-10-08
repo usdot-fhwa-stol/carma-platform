@@ -20,6 +20,7 @@
 
 namespace carma_wm
 {
+  // @SONAR_STOP@
 WMListener::WMListener(bool multi_thread) : worker_(std::unique_ptr<WMListenerWorker>(new WMListenerWorker)), multi_threaded_(multi_thread)
 {
 
@@ -98,6 +99,6 @@ void WMListener::setConfigSpeedLimit(double config_lim) const
   worker_->setConfigSpeedLimit(config_lim);
 }
 
-
+// @SONAR_START@
 
 }  // namespace carma_wm
