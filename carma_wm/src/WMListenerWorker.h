@@ -88,7 +88,7 @@ public:
  *  \brief Returns the current configured speed limit value
  * 
 */
-  double getConfigSpeedLimit();
+  double getConfigSpeedLimit() const;
 
 
 private:

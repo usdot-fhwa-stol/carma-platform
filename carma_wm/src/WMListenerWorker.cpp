@@ -162,7 +162,7 @@ void WMListenerWorker::setConfigSpeedLimit(double config_lim)
    world_model_->setConfigSpeedLimit(config_speed_limit_);
 }
 
-double WMListenerWorker::getConfigSpeedLimit()
+double WMListenerWorker::getConfigSpeedLimit() const
 {
   return config_speed_limit_;
 }
