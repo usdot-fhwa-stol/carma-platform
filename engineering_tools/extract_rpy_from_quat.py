@@ -13,9 +13,19 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
 class Converter:
     def __init__(self, pub, element_attr, list_attr=''):
-        self.element_attr = element_attr
-        self.list_attr = list_attr
+        self.element_attr_array = element_attr.split('.')
+        self.list_attr_array = list_attr.split('.')
         self.pub = pub
+
+    def getElementFromAttributeArray(self, attr_array, data):
+      attr_list = []
+      for attr in attr_array:
+        if len(attr_list) == 0:
+          attr_list.append(getattr(data, attr))
+        else:
+          attr_list.append(getattr(attr_list[-1], attr))
+      
+      return attr_list[-1]
 
     def normalize(self, array):
         """ 
@@ -29,7 +39,7 @@ class Converter:
 
     def convertQuatToVector3(self, quat):
         orientation_list = [quat.x, quat.y, quat.z, quat.w]
-	orientation_list = self.normalize(orientation_list)
+        orientation_list = self.normalize(orientation_list)
         (roll, pitch, yaw) = euler_from_quaternion (orientation_list, axes='sxyz')
         vector_msg = Vector3()
         vector_msg.x = roll
@@ -38,11 +48,11 @@ class Converter:
         return vector_msg
 
     def handle_list(self, msg):
-      list_ele = getattr(msg, self.list_attr)
+      list_ele = self.getElementFromAttributeArray(self.list_attr_array, msg)
 
       pose_array_msg = PoseArray()
       for e in list_ele:
-        quat = getattr(e, self.element_attr)
+        quat = self.getElementFromAttributeArray(self.element_attr_array, e)
         fake_pose = Pose()
         fake_pose.position = self.convertQuatToVector3(quat)
         fake_pose.orientation = quat
@@ -51,8 +61,7 @@ class Converter:
       self.pub.publish(pose_array_msg)
 
     def handle_individual(self, msg):
-      quat = getattr(msg, self.element_attr)
-
+      quat = self.getElementFromAttributeArray(self.element_attr_array, msg)
 
       pose_array_msg = PoseArray()
 
