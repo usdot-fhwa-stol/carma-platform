@@ -213,7 +213,12 @@ TEST(WMListenerWorkerTest, setConfigSpeedLimitTest)
   ///// Test without user defined config limit
   wmlw.setConfigSpeedLimit(cL);
 
-  ASSERT_FALSE(flag);
+  double current_cl;
+
+  current_cl = wmlw.getConfigSpeedLimit();
+
+  ASSERT_EQ(cL, current_cl);
+  ROS_INFO_STREAM("config_speed_limit = "<< current_cl);
 
 }
 

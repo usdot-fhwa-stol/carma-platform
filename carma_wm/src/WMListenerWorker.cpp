@@ -162,4 +162,9 @@ void WMListenerWorker::setConfigSpeedLimit(double config_lim)
    world_model_->setConfigSpeedLimit(config_speed_limit_);
 }
 
+double WMListenerWorker::getConfigSpeedLimit()
+{
+  return config_speed_limit_;
+}
+
 }  // namespace carma_wm

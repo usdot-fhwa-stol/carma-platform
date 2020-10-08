@@ -84,6 +84,13 @@ public:
    */
   void setConfigSpeedLimit(double config_lim);
 
+/**
+ *  \brief Returns the current configured speed limit value
+ * 
+*/
+  double getConfigSpeedLimit();
+
+
 private:
   std::shared_ptr<CARMAWorldModel> world_model_;
   std::function<void()> map_callback_;
