@@ -167,8 +167,8 @@
     <remap from="traffic_waypoints_array" to="base/lane_waypoints_raw"/>
   </node>
 
-  <!-- Lane Select (in Carma) / Replaced Lane Planner in Autoware -->
-  <node pkg="lane_select" type="lane_select" name="lane_select">
+  <!-- Lane Array to Lane Converter -->
+  <node pkg="lane_array_to_lane_converter" type="lane_array_to_lane_converter" name="lane_array_to_lane_converter">
       <remap from="traffic_waypoints_array" to="base/lane_waypoints_raw"/>
   </node>
 

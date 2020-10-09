@@ -16,13 +16,13 @@
 
 #include <ros/ros.h>
 
-#include "lane_select.h"
+#include "lane_array_to_lane_converter.h"
 
 int main(int argc, char** argv)
 { 
-    ros::init(argc, argv, "lane_select");
-    lane_select::LaneSelect lane_select_node;
-    lane_select_node.run();
+    ros::init(argc, argv, "lane_array_to_lane_converter");
+    lane_array_to_lane_converter::LaneArrayToLaneConverter lane_array_to_lane_converter_node;
+    lane_array_to_lane_converter_node.run();
     return 0;
 
 };

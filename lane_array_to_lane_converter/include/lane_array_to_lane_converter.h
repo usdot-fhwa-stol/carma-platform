@@ -22,14 +22,14 @@
 #include <carma_utils/CARMAUtils.h>
 #include <visualization_msgs/MarkerArray.h>
 
-namespace lane_select {
+namespace lane_array_to_lane_converter {
 
     /**
-     * LaneSelect converts and publishes autoware_msgs/LaneArray.msg to autoware_msgs/Lane.msg by picking the first lane
+     * LaneArrayToLaneConverter converts and publishes autoware_msgs/LaneArray.msg to autoware_msgs/Lane.msg by picking the first lane
      * in the array as it simply assumes the whole array is one lane.
      * 
     */ 
-    class LaneSelect
+    class LaneArrayToLaneConverter
     {
 
     public:
@@ -37,7 +37,7 @@ namespace lane_select {
         /**
          * \brief Default constructor
          */
-        LaneSelect();
+        LaneArrayToLaneConverter();
 
         /**
          * \brief General starting point to run this node
@@ -50,7 +50,7 @@ namespace lane_select {
         std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
         // publisher
-        ros::Publisher lane_pub_, lane_select_viz_pub_;
+        ros::Publisher lane_pub_;
         
         // subscriber
         ros::Subscriber lane_array_sub_;
@@ -62,12 +62,7 @@ namespace lane_select {
         void callbackFromLaneArray(const autoware_msgs::LaneArrayConstPtr& msg);
 
         // variables
-        int32_t lane_array_id_;
         autoware_msgs::Lane current_lane_;  // current lane we are driving
-
-        // visualizer
-        void publishVisualizer();
-        visualization_msgs::Marker createCurrentLaneMarker();
     };
 
 }

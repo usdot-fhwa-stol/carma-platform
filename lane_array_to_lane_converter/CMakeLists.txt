@@ -15,7 +15,7 @@
 #
 
 cmake_minimum_required(VERSION 2.8.3)
-project(lane_select)
+project(lane_array_to_lane_converter)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++14)
@@ -52,7 +52,7 @@ include_directories(
 
 add_executable( ${PROJECT_NAME}
   src/main.cpp
-  src/lane_select.cpp
+  src/lane_array_to_lane_converter.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})

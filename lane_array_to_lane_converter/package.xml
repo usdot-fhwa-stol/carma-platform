@@ -17,9 +17,9 @@
 -->
 
 <package format="3">
-  <name>lane_select</name>
+  <name>lane_array_to_lane_converter</name>
   <version>3.3.0</version>
-  <description>The lane_select package converts autoware's lanearray msg type to lane type</description>
+  <description>The lane_array_to_lane_converter package converts autoware's lanearray msg type to lane type</description>
   <maintainer email="carma@dot.gov">carma</maintainer>
   <license>Apache License 2.0</license>
   <author email="carma@dot.gov">carma</author>
