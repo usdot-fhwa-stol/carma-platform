@@ -167,7 +167,7 @@ namespace inlanecruising_plugin
 
         ROS_WARN_STREAM("previous_wp_v" << previous_wp_v);
 
-        for(int i = 0; i < waypoints.size(); ++i)
+        for(int i = 0; i < waypoints.size(); i++)
         {
 
 
@@ -183,7 +183,7 @@ namespace inlanecruising_plugin
             traj_point.yaw = yaw;
             uneven_traj.push_back(traj_point);
 
-            previous_wp_v = waypoints[i - 1].twist.twist.linear.x;
+            previous_wp_v = waypoints[i].twist.twist.linear.x;
             previous_wp_x = uneven_traj.back().x;
             previous_wp_y = uneven_traj.back().y;
             previous_wp_y = uneven_traj.back().y;
