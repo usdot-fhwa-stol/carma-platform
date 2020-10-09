@@ -15,13 +15,25 @@
  * the License.
  */
 
+#ifndef MAP_CONFORMER_H
+
+
 #include <carma_wm/WorldModel.h>
 #include <lanelet2_core/Attribute.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 #include <lanelet2_traffic_rules/GermanTrafficRules.h>
+#include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <lanelet2_extension/regulatory_elements/RegionAccessRule.h>
 #include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
 #include <lanelet2_extension/regulatory_elements/DirectionOfTravel.h>
+#include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
+#include <lanelet2_core/Forward.h>
+#include <functional>
+#include <autoware_lanelet2_msgs/MapBin.h>
+#include <carma_utils/CARMAUtils.h>
+
+using namespace lanelet::units::literals;
+
 
 namespace lanelet
 {
@@ -45,7 +57,13 @@ namespace MapConformer
  * that.
  *
  * @param map A pointer to the map which will be modified in place
+ * 
+ * @param config_limit A value corresponding to the configurable speed limit value
  */
-void ensureCompliance(lanelet::LaneletMapPtr map);
+void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit);
+
+
 };  // namespace MapConformer
 }  // namespace lanelet
+
+#endif

@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+#include <ros/ros.h>
 #include <tuple>
 #include <algorithm>
 #include <assert.h>
@@ -26,7 +26,6 @@
 #include <Eigen/Core>
 #include <Eigen/LU>
 #include <cmath>
-#include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <lanelet2_core/geometry/Polygon.h>
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/polygon.hpp>
@@ -387,8 +386,18 @@ lanelet::Optional<TrafficRulesConstPtr> CARMAWorldModel::getTrafficRules(const s
     lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(
         lanelet::traffic_rules::CarmaUSTrafficRules::Location, participant);
 
-    optional_ptr = std::static_pointer_cast<const lanelet::traffic_rules::TrafficRules>(
-        lanelet::traffic_rules::TrafficRulesPtr(std::move(traffic_rules)));
+
+    auto carma_traffic_rules = std::make_shared<lanelet::traffic_rules::CarmaUSTrafficRules>();
+      
+    carma_traffic_rules = std::static_pointer_cast<lanelet::traffic_rules::CarmaUSTrafficRules>(
+    lanelet::traffic_rules::TrafficRulesPtr(std::move(traffic_rules)));
+    carma_traffic_rules->setConfigSpeedLimit(config_speed_limit_);
+
+
+    optional_ptr = std::static_pointer_cast<const lanelet::traffic_rules::CarmaUSTrafficRules>(
+    carma_traffic_rules);
+
+    
   }
   catch (const lanelet::InvalidInputError& e)
   {
@@ -790,6 +799,11 @@ std::vector<lanelet::Lanelet> CARMAWorldModel::getLaneletsFromPoint(const lanele
     if (id >= nearestLanelets.size()) break;
   }
   return possible_lanelets;
+}
+
+void CARMAWorldModel::setConfigSpeedLimit(double config_lim)
+{
+  config_speed_limit_ = config_lim;
 }
 
 

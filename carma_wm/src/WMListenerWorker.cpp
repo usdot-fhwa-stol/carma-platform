@@ -154,4 +154,17 @@ void WMListenerWorker::setRouteCallback(std::function<void()> callback)
 {
   route_callback_ = callback;
 }
+
+void WMListenerWorker::setConfigSpeedLimit(double config_lim)
+{
+  config_speed_limit_ = config_lim;
+  //Function to load config_limit into CarmaWorldModel
+   world_model_->setConfigSpeedLimit(config_speed_limit_);
+}
+
+double WMListenerWorker::getConfigSpeedLimit() const
+{
+  return config_speed_limit_;
+}
+
 }  // namespace carma_wm
