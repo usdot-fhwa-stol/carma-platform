@@ -71,7 +71,9 @@ TEST(WMTestLibForGuidanceTest, getGuidanceTestMap)
 
     mp.speed_limit_ = MapOptions::SpeedLimit::NONE;
     cmw = getGuidanceTestMap(mp);
-    ASSERT_EQ(cmw->getMap()->regulatoryElementLayer.size(), 28); // 28 belong to map compliance
+    //ASSERT_EQ(cmw->getMap()->regulatoryElementLayer.size(), 28); // 28 belong to map compliance
+    ASSERT_EQ(cmw->getMap()->regulatoryElementLayer.size(), 40); // 28 belong to map compliance
+
 }
 
 TEST(WMTestLibForGuidanceTest, buildGuidanceTestMap)
@@ -222,13 +224,11 @@ TEST(WMTestLibForGuidanceTest, setSpeedLimit)
     MapOptions mp(3.7,25,MapOptions::Obstacle::DEFAULT, MapOptions::SpeedLimit::NONE);
     auto cmw = getGuidanceTestMap(mp);
     auto llt = cmw->getMutableMap()->laneletLayer.get(1200);
-    // create existing speed limit to overwrite
-    lanelet::DigitalSpeedLimitPtr sl = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 50_mph, {llt}, {},
-                                                     { lanelet::Participants::VehicleCar }));
-    cmw->getMutableMap()->update(llt, sl);
-    ASSERT_EQ(cmw->getMutableMap()->regulatoryElementLayer.size(), 29); // 28 belong to map compliance
+   
+    ASSERT_EQ(cmw->getMutableMap()->regulatoryElementLayer.size(), 40); // 40 belong to map compliance
+
     setSpeedLimit(25_mph, cmw);
-    ASSERT_EQ(cmw->getMutableMap()->regulatoryElementLayer.size(), 41); // old speed limit exists but is not assigned to any llt
+    ASSERT_EQ(cmw->getMutableMap()->regulatoryElementLayer.size(), 52); // old speed limit exists but is not assigned to any llt
     ASSERT_NEAR(cmw->getMutableMap()->laneletLayer.get(1200).regulatoryElementsAs<lanelet::DigitalSpeedLimit>()[0]->getSpeedLimit().value(), 11.176, 0.0001); 
 }
 }  // namespace test
