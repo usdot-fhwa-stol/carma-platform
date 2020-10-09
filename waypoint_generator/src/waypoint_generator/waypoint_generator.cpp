@@ -239,60 +239,57 @@ std::vector<double> WaypointGenerator::apply_accel_limits(std::vector<double> sp
 
 autoware_msgs::LaneArray WaypointGenerator::generate_lane_array_message(
     std::vector<double> speeds, std::vector<geometry_msgs::Quaternion> orientations,
-    std::vector<lanelet::ConstLanelet> lanelets) const
+    const lanelet::BasicLineString2d& centerline) const
 {
   autoware_msgs::LaneArray out;
 
-  int centerline_point_idx = 0;
-  for (int i = 0; i < lanelets.size(); i++)
+  autoware_msgs::Lane lane;
+  lane.lane_id = 1;
+
+  std_msgs::Header header;
+  header.frame_id = "map";
+  header.seq = 0;
+  header.stamp = ros::Time::now();
+  lane.header = header;
+  std::vector<autoware_msgs::Waypoint> waypoints;
+
+    
+  for (int j = 0; j < centerline.size(); j++)
   {
-    autoware_msgs::Lane lane;
-    lane.lane_id = i;
+    autoware_msgs::Waypoint wp;
+    wp.lane_id = lane.lane_id;
+    
+    geometry_msgs::Pose p;
+    p.position.x = centerline[j].x();
+    p.position.y = centerline[j].y();
+    p.position.z = 0;
+    p.orientation = orientations[j];
+    wp.pose.pose = p;
+    geometry_msgs::Twist t;
+    t.linear.x = speeds[j];  // Vehicle's forward velocity corresponds to x
+    wp.twist.twist = t;
 
-    std_msgs::Header header;
-    header.frame_id = "map";
-    header.seq = 0;
-    header.stamp = ros::Time::now();
-    lane.header = header;
-    std::vector<autoware_msgs::Waypoint> waypoints;
-    for (int j = 0; j < lanelets[i].centerline3d().size(); j++)
-    {
-      autoware_msgs::Waypoint wp;
-      wp.lane_id = i;
-      
-      geometry_msgs::Pose p;
-      p.position.x = lanelets[i].centerline3d()[j].x();
-      p.position.y = lanelets[i].centerline3d()[j].y();
-      p.position.z = lanelets[i].centerline3d()[j].z();
-      p.orientation = orientations[centerline_point_idx];
-      wp.pose.pose = p;
-      geometry_msgs::Twist t;
-      t.linear.x = speeds[centerline_point_idx];  // Vehicle's forward velocity corresponds to x
-      wp.twist.twist = t;
+    wp.change_flag = 0;
+    wp.direction = 0;
+    wp.cost = 0;
+    wp.time_cost = 0;
 
-      wp.change_flag = 0;
-      wp.direction = 0;
-      wp.cost = 0;
-      wp.time_cost = 0;
+    /*
+    // left undefined until we understand what we need
+    wp.wpstate;
+    wp.dtlane;
+    wp.gid;
+    wp.lid;
+    wp.right_lane_id;
+    wp.stop_line_id;
+    wp.lid;
+    */
 
-      /*
-      // left undefined until we understand what we need
-      wp.wpstate;
-      wp.dtlane;
-      wp.gid;
-      wp.lid;
-      wp.right_lane_id;
-      wp.stop_line_id;
-      wp.lid;
-      */
-
-      waypoints.push_back(wp);
-      centerline_point_idx++;
-    }
-
-    lane.waypoints = waypoints;
-    out.lanes.push_back(lane);
+    waypoints.push_back(wp);
   }
+
+  lane.waypoints = waypoints;
+  out.lanes.push_back(lane);
 
   return out;
 }
@@ -518,7 +515,7 @@ void WaypointGenerator::new_route_callback()
   // Update current waypoints
   ROS_DEBUG("Generating final waypoint message.");
   autoware_msgs::LaneArray waypoint_msg;
-  waypoint_msg = this->generate_lane_array_message(final_speeds, orientations, tmp);
+  waypoint_msg = this->generate_lane_array_message(final_speeds, orientations, centerline);
 
   ROS_DEBUG_STREAM("Finished processing route.");
 

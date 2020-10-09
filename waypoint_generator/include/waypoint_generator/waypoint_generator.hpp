@@ -157,9 +157,8 @@ namespace waypoint_generator
              * for publication
              */
             autoware_msgs::LaneArray generate_lane_array_message(
-                std::vector<double> speeds, 
-                std::vector<geometry_msgs::Quaternion> orientations, 
-                std::vector<lanelet::ConstLanelet> lanelets) const;
+    std::vector<double> speeds, std::vector<geometry_msgs::Quaternion> orientations,
+    const lanelet::BasicLineString2d& centerline) const;
 
             /**!
              * \brief Apply a basic speed limiter to all speeds in the input list
