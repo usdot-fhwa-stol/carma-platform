@@ -227,7 +227,7 @@ lanelet::Areas areas;
 
   //Add regualtory element - Digital Speed Limit 1
   std::shared_ptr<lanelet::DigitalSpeedLimit> dsl(new lanelet::DigitalSpeedLimit(lanelet::DigitalSpeedLimit::buildData(
-        lanelet::utils::getId(), 63_mph, llts, {}, {lanelet::Participants::Vehicle})));
+        lanelet::utils::getId(), 67_mph, llts, {}, {lanelet::Participants::Vehicle})));
         llts.back().addRegulatoryElement(dsl);
 
 
@@ -253,8 +253,8 @@ lanelet::Areas areas;
  {
   auto speed_limit = ll.regulatoryElementsAs<lanelet::DigitalSpeedLimit>();
   ASSERT_EQ(1, speed_limit.size()); //Assert that there is only one digital speed limit in each lanelet
+  ASSERT_LE(speed_limit.back().get()->speed_limit_ , 80_mph);//Assert that the speed_limit in each lanelet is less than or equal to the maximum 80mph
 
-  ASSERT_LT(speed_limit.back().get()->speed_limit_ , 80_mph);//Assert that the speed_limit in each lanelet is less than or equal to the maximum 80mph
  }
  ASSERT_EQ(2,map2->laneletLayer.size()); //Test that there are only two lanelets in the map.
  ASSERT_EQ(7, map2->regulatoryElementLayer.size());//Test that there are only 7 regulatory elements: 2 access rules, 2 PassingControlLines

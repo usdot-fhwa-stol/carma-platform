@@ -104,6 +104,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
   lanelet::Velocity sL;
   cav_msgs::TrafficControlDetail msg_detail = msg_v01.params.detail;
  
+  
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE) 
   {  
     //Acquire speed limit information from TafficControlDetail msg
@@ -114,13 +115,13 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
     //Ensure Geofences do not provide invalid speed limit data (exceed predetermined maximum value)
     if(sL > MAX_SPEED_LIMIT )
     {
-     ROS_WARN_STREAM("Digital maximum speed limit is invalid. Value capped at " << MAX_SPEED_LIMIT.value() << " m/s "); //Output warning message
-     sL = MAX_SPEED_LIMIT; //Cap the speed limit to the predetermined maximum value
+      ROS_WARN_STREAM("Digital maximum speed limit is invalid. Value capped at " << MAX_SPEED_LIMIT.value() << " m/s "); //Output warning message
+      sL = MAX_SPEED_LIMIT; //Cap the speed limit to the predetermined maximum value
 
     }
     if(sL < 0_mph)
     {
-           ROS_WARN_STREAM("Digital  speed limit is invalid. Value set to 0mph.");
+      ROS_WARN_STREAM("Digital  speed limit is invalid. Value set to 0mph.");
       sL = 0_mph;
     }
     gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
@@ -141,7 +142,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
     }
     if(sL < 0_mph)
     {
-           ROS_WARN_STREAM("Digital  speed limit is invalid. Value set to 0mph.");
+      ROS_WARN_STREAM("Digital  speed limit is invalid. Value set to 0mph.");
       sL = 0_mph;
     }
     gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
