@@ -33,6 +33,11 @@ inline lanelet::Point3d getPoint(double x, double y, double z)
   return lanelet::Point3d(lanelet::utils::getId(), x, y, z);
 }
 
+inline lanelet::Point3d getPoint(double x, double y)
+{
+  return lanelet::Point2d(lanelet::utils::getId(), x, y);
+}
+
 inline lanelet::BasicPoint3d getBasicPoint(double x, double y, double z)
 {
   return getPoint(x, y, z).basicPoint();
