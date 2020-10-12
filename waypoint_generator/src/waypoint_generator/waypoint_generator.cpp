@@ -534,9 +534,12 @@ autoware_msgs::LaneArray WaypointGenerator::downsample_waypoints(autoware_msgs::
   autoware_msgs::LaneArray downsampled{waypoints};
 
   for (int i = 0; i < downsampled.lanes.size(); i++) {
-    for (int j = 0; j < downsampled.lanes[i].waypoints.size(); j++) {
-      if (j % ratio != 0) {
-        downsampled.lanes[i].waypoints.erase(downsampled.lanes[i].waypoints.begin() + j);
+    int idx = 0;
+    for (auto j = downsampled.lanes[i].waypoints.begin(); j != downsampled.lanes[i].waypoints.end();) {
+      if (idx++ % ratio != 0) {
+        downsampled.lanes[i].waypoints.erase(j);
+      } else {
+        ++j;
       }
     }
   }
