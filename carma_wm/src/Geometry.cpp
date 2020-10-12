@@ -25,6 +25,8 @@ namespace carma_wm
 namespace geometry
 {
 
+constexpr double SPATIAL_EPSILON_M = 0.05;
+
 // https://stackoverflow.com/questions/8489792/is-it-legal-to-take-acos-of-1-0f-or-1-0f
 double safeAcos (double x)
 {
@@ -329,8 +331,16 @@ concatenate_line_strings(const lanelet::BasicLineString2d& a,
                                           const lanelet::BasicLineString2d& b)
 {
   lanelet::BasicLineString2d out;
+
+  int start_offset = 0;
+  if (!a.empty() && !b.empty()) {
+    if (compute_euclidean_distance(a.back(), b.front()) < SPATIAL_EPSILON_M) {
+      start_offset = 1;
+    }
+  }
+
   out.insert(out.end(), a.begin(), a.end());
-  out.insert(out.end(), b.begin(), b.end());
+  out.insert(out.end(), b.begin() + start_offset, b.end());
 
   return out;
 }

@@ -67,11 +67,11 @@ namespace waypoint_generator
             /**!
              * \brief Get a list of speed limits at each point of the centerline
              * for each lanelet
-             * \param lanelets The lanelets to get speed limits from
+             * \param points The centerline points to get speed limit data for
              * \return A vector where the i-th element is the speed limit for
              * the i-th centerline point amongst all input lanelets
              */
-            std::vector<double> get_speed_limits(std::vector<lanelet::ConstLanelet> lanelets) const;
+            std::vector<double> get_speed_limits(const lanelet::BasicLineString2d& points) const;
 
             /**!
              * \brief Normalize the curvature within curvature regions to an
