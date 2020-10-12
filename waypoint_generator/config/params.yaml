@@ -29,4 +29,4 @@ downsample_ratio: 2
 
 # Coefficient on the single-pole lowpass filter for yaw
 # Units: N/a
-yaw_filter_coefficient: 1
+yaw_filter_coefficient: 1.0
