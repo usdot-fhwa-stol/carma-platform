@@ -312,7 +312,7 @@ std::vector<double> WaypointGenerator::get_speed_limits(const lanelet::BasicLine
     auto nearest_lanelet = _wm->getMap()->laneletLayer.nearest(centerline[i], 1);
     if (nearest_lanelet.size() == 0)
     {
-      std::string err_msg = "get_speed_limit: No lanelet found matching point #" + i;
+      std::string err_msg = "get_speed_limit: No lanelet found matching point #" + std::to_string(i);
       ROS_ERROR_STREAM(err_msg);
       throw std::invalid_argument(err_msg);
     }
