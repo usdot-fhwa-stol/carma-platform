@@ -526,7 +526,7 @@ void WaypointGenerator::new_route_callback()
     o.getRPY(roll, pitch, yaw);
     yaws.push_back(yaw);
   }
-  std::vector<double> filtered_yaws = lowpass_filter(yaws);
+  std::vector<double> filtered_yaws = lowpass_filter(yaws, _config._yaw_filter_coefficient);
 
   std::vector<geometry_msgs::Quaternion> filtered_orientations;
   for (double yaw : yaws) {

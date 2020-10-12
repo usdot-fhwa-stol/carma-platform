@@ -43,12 +43,14 @@ namespace waypoint_generator
         _pnh->param<double>("longitudinal_accel_limit", config._longitudinal_accel_limit, config._longitudinal_accel_limit);
         _pnh->param<double>("longitudinal_decel_limit", config._longitudinal_decel_limit, config._longitudinal_decel_limit);
         _pnh->param<int>("downsample_ratio", config._downsample_ratio, config._downsample_ratio);
+        _pnh->param<double>("yaw_filter_coefficient", config._yaw_filter_coefficient, config._yaw_filter_coefficient);
         ROS_DEBUG_STREAM("Parameters loaded!" << std::endl
             << "curvature_epsilon: " << config._curvature_epsilon << std::endl
             << "linearity_constraint" << config._linearity_constraint << std::endl
             << "downsample_ratio" << config._downsample_ratio << std::endl
             << "lateral_accel_limit: " << config._lateral_accel_limit << std::endl
             << "longitudinal_accel_limit: " << config._longitudinal_accel_limit << std::endl
+            << "yaw_filter_coefficient" << config._yaw_filter_coefficient << std::endl
             << "longitudinal_decel_limit: " << config._longitudinal_decel_limit << std::endl);
 
         _wpg.reset(new WaypointGenerator(_wm, config, std::bind(&WaypointGeneratorNode::publishWaypoints, this, std::placeholders::_1)));

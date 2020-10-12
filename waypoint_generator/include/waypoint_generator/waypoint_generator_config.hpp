@@ -8,4 +8,5 @@ struct WaypointGeneratorConfig {
   double _longitudinal_decel_limit = 1.5;
   double _max_speed = 10.0;
   int _downsample_ratio = 2.0;
+  double _yaw_filter_coefficient = 10.0;
 };
