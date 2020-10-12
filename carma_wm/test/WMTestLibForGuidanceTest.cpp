@@ -71,8 +71,7 @@ TEST(WMTestLibForGuidanceTest, getGuidanceTestMap)
 
     mp.speed_limit_ = MapOptions::SpeedLimit::NONE;
     cmw = getGuidanceTestMap(mp);
-    //ASSERT_EQ(cmw->getMap()->regulatoryElementLayer.size(), 28); // 28 belong to map compliance
-    ASSERT_EQ(cmw->getMap()->regulatoryElementLayer.size(), 40); // 28 belong to map compliance
+    ASSERT_EQ(cmw->getMap()->regulatoryElementLayer.size(), 40); // 40 belong to map compliance
 
 }
 
