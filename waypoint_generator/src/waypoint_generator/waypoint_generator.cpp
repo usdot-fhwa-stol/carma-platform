@@ -537,7 +537,7 @@ autoware_msgs::LaneArray WaypointGenerator::downsample_waypoints(autoware_msgs::
     int idx = 0;
     for (auto j = downsampled.lanes[i].waypoints.begin(); j != downsampled.lanes[i].waypoints.end();) {
       if (idx++ % ratio != 0) {
-        downsampled.lanes[i].waypoints.erase(j);
+        j = downsampled.lanes[i].waypoints.erase(j);
       } else {
         ++j;
       }
