@@ -25,7 +25,7 @@ namespace carma_wm
 namespace geometry
 {
 
-constexpr double SPATIAL_EPSILON_M = 0.01;
+constexpr double SPATIAL_EPSILON_M = 0.05;
 
 // https://stackoverflow.com/questions/8489792/is-it-legal-to-take-acos-of-1-0f-or-1-0f
 double safeAcos (double x)
