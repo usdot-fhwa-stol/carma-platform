@@ -194,6 +194,17 @@ namespace waypoint_generator
             std::vector<lanelet::ConstLanelet> findSuccessingLanelets() const;
 
             void new_route_callback();
+
+            /**!
+             * \brief Single pole lowpass filter of sequential items in the input
+             * list
+             * 
+             * \param input A const reference to a vector containing data to filter
+             * \param alpha Filter coefficient
+             * 
+             * \return A new list containing the filtered datapoints
+             */
+            std::vector<double> lowpass_filter(const std::vector<double>& input, double alpha);
         private:
             carma_wm::WorldModelConstPtr _wm;
             WaypointGeneratorConfig _config;

@@ -517,10 +517,35 @@ void WaypointGenerator::new_route_callback()
     ROS_DEBUG_STREAM(" Orientation: ( " << p.x << ", " << p.y << ", " << p.z << ", " << p.w << " )");
   }
 
+  std::vector<double> yaws;
+  double roll, pitch, yaw;
+  tf::Quaternion quat;
+  for (auto orientation : orientations) {
+    tf::quaternionMsgToTF(orientation, quat);
+    tf::Matrix3x3 o{quat};
+    o.getRPY(roll, pitch, yaw);
+    yaws.push_back(yaw);
+  }
+  std::vector<double> filtered_yaws = lowpass_filter(yaws);
+
+  std::vector<geometry_msgs::Quaternion> filtered_orientations;
+  for (double yaw : yaws) {
+    filtered_orientations.push_back(tf::createQuaternionMsgFromYaw(yaw));
+  }
+
+  ROS_DEBUG_STREAM(" ");
+  ROS_DEBUG_STREAM(" ");
+  ROS_DEBUG_STREAM("Filtered Orientations");
+
+  for (auto p : orientations)
+  {
+    ROS_DEBUG_STREAM(" Filtered Orientation: ( " << p.x << ", " << p.y << ", " << p.z << ", " << p.w << " )");
+  }
+
   // Update current waypoints
   ROS_DEBUG("Generating final waypoint message.");
   autoware_msgs::LaneArray waypoint_msg;
-  waypoint_msg = this->generate_lane_array_message(final_speeds, orientations, centerline);
+  waypoint_msg = this->generate_lane_array_message(final_speeds, filtered_orientations, centerline);
   waypoint_msg = this->downsample_waypoints(waypoint_msg, _config._downsample_ratio);
 
   ROS_DEBUG_STREAM("Finished processing route.");
@@ -545,6 +570,19 @@ autoware_msgs::LaneArray WaypointGenerator::downsample_waypoints(autoware_msgs::
   }
 
   return downsampled;
+}
+
+std::vector<double> WaypointGenerator::lowpass_filter(const std::vector<double>& input, double alpha) 
+{
+  std::vector<double> filtered;
+
+  double delta;
+  for (int i = 1; i < input.size(); i++) {
+    delta = input[i - 1] - input[i];
+    filtered[i] = input[i] + delta * alpha;
+  }
+
+  return filtered;
 }
 
 };  // namespace waypoint_generator
