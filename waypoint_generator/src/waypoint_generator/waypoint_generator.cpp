@@ -521,10 +521,30 @@ void WaypointGenerator::new_route_callback()
   ROS_DEBUG("Generating final waypoint message.");
   autoware_msgs::LaneArray waypoint_msg;
   waypoint_msg = this->generate_lane_array_message(final_speeds, orientations, centerline);
+  waypoint_msg = this->downsample_waypoints(waypoint_msg, _config._downsample_ratio);
 
   ROS_DEBUG_STREAM("Finished processing route.");
 
   _waypoint_publisher(waypoint_msg);
   ROS_DEBUG_STREAM("Published waypoints list!");
 }
+
+autoware_msgs::LaneArray WaypointGenerator::downsample_waypoints(autoware_msgs::LaneArray waypoints, int ratio) const
+{
+  autoware_msgs::LaneArray downsampled{waypoints};
+
+  for (int i = 0; i < downsampled.lanes.size(); i++) {
+    int idx = 0;
+    for (auto j = downsampled.lanes[i].waypoints.begin(); j != downsampled.lanes[i].waypoints.end();) {
+      if (idx++ % ratio != 0) {
+        j = downsampled.lanes[i].waypoints.erase(j);
+      } else {
+        ++j;
+      }
+    }
+  }
+
+  return downsampled;
+}
+
 };  // namespace waypoint_generator

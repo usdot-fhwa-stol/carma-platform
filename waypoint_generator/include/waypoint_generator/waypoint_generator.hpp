@@ -160,6 +160,19 @@ namespace waypoint_generator
     std::vector<double> speeds, std::vector<geometry_msgs::Quaternion> orientations,
     const lanelet::BasicLineString2d& centerline) const;
 
+
+            /**!
+             * \brief Downsample the generated waypoints to a specified ratio.
+             * 
+             * \param waypoints The LaneArray message to be downsampled
+             * \param ratio The ratio to reduce the size by (e.g. 2 yields 1/2,
+             * yields 1/4 points)
+             * 
+             * \return The fully composed autoware_msgs::LaneArray object ready
+             * for publication
+             */
+            autoware_msgs::LaneArray downsample_waypoints(autoware_msgs::LaneArray waypoints, int ratio) const;
+
             /**!
              * \brief Apply a basic speed limiter to all speeds in the input list
              * 
