@@ -672,16 +672,16 @@ TEST(GeometryTest, concatenate_line_string_dedupe)
 
   ASSERT_EQ(5, result.size());
 
-  auto p1 = Eigen::Vector2d(-1, 0);
-  auto p2 = Eigen::Vector2d(-1, 1);
-  auto p3 = Eigen::Vector2d(-1, 2);
-  auto p4 = Eigen::Vector2d(-1, 2.5);
-  auto p5 = Eigen::Vector2d(-1, 3);
-  auto p6 = Eigen::Vector2d(-1, 4);
-  const lanelet::BasicLineString2d line1 = { p1, p2, p3 };
-  const lanelet::BasicLineString2d line2 = { p4, p4, p6 };
+  p1 = Eigen::Vector2d(-1, 0);
+  p2 = Eigen::Vector2d(-1, 1);
+  p3 = Eigen::Vector2d(-1, 2);
+  p4 = Eigen::Vector2d(-1, 2.5);
+  p5 = Eigen::Vector2d(-1, 3);
+  p6 = Eigen::Vector2d(-1, 4);
+  const lanelet::BasicLineString2d line3 = { p1, p2, p3 };
+  const lanelet::BasicLineString2d line4 = { p4, p4, p6 };
 
-  auto result = carma_wm::geometry::concatenate_line_strings(line1, line2);
+  result = carma_wm::geometry::concatenate_line_strings(line3, line4);
 
   ASSERT_EQ(6, result.size());
 }

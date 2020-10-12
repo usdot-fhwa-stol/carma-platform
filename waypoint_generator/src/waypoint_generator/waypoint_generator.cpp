@@ -293,7 +293,7 @@ autoware_msgs::LaneArray WaypointGenerator::generate_lane_array_message(
 
   return out;
 }
-std::vector<double> WaypointGenerator::get_speed_limits(std::vector<lanelet::ConstLanelet> lanelets) const
+std::vector<double> WaypointGenerator::get_speed_limits(const lanelet::BasicLineString2d& centerline) const
 {
   std::vector<double> out;
   if (!_wm)
@@ -301,24 +301,29 @@ std::vector<double> WaypointGenerator::get_speed_limits(std::vector<lanelet::Con
     ROS_ERROR_STREAM("get_speed_limit: Invalid WM");
     throw std::invalid_argument("get_speed_limit: Inavlid WM");
   }
-  if (lanelets.size() == 0)
+  if (centerline.size() == 0)
   {
-    ROS_ERROR_STREAM("get_speed_limit: Invalid lanelets");
-    throw std::invalid_argument("get_speed_limit: Empty lanelets passed!");
+    ROS_ERROR_STREAM("get_speed_limit: Invalid centerline");
+    throw std::invalid_argument("get_speed_limit: Empty centerline passed!");
   }
-  for (int i = 0; i < lanelets.size(); i++)
+  for (int i = 0; i < centerline.size(); i++)
   {
-    auto slis = lanelets[i].regulatoryElementsAs<lanelet::DigitalSpeedLimit>();
-    if (slis.size() == 0)
+
+    auto nearest_lanelet = _wm->getMap()->laneletLayer.nearest(centerline[i], 1);
+    if (nearest_lanelet.size() == 0)
     {
-      std::string err_msg = "get_speed_limit: Lanalet Id:" + std::to_string(lanelets[i].id()) + " has no Digital Speed Limit Regulatory Element!";
+      std::string err_msg = "get_speed_limit: No lanelet found matching point #" + i;
       ROS_ERROR_STREAM(err_msg);
       throw std::invalid_argument(err_msg);
     }
-    for (int j = 0; j < lanelets[i].centerline2d().size(); j++)
+    auto slis = nearest_lanelet[0].regulatoryElementsAs<lanelet::DigitalSpeedLimit>();
+    if (slis.size() == 0)
     {
-      out.push_back(slis[0]->getSpeedLimit().value());
+      std::string err_msg = "get_speed_limit: Lanalet Id:" + std::to_string(nearest_lanelet[0].id()) + " has no Digital Speed Limit Regulatory Element!";
+      ROS_ERROR_STREAM(err_msg);
+      throw std::invalid_argument(err_msg);
     }
+    out.push_back(slis[0]->getSpeedLimit().value());
   }
 
   return out;
@@ -477,7 +482,7 @@ void WaypointGenerator::new_route_callback()
     ROS_DEBUG_STREAM(" Speed: " << p);
   }
 
-  std::vector<double> speed_limits = get_speed_limits(tmp);
+  std::vector<double> speed_limits = get_speed_limits(route_geometry);
 
   ROS_DEBUG_STREAM(" ");
   ROS_DEBUG_STREAM(" ");
