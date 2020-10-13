@@ -149,13 +149,30 @@ std::vector<double> WaypointGenerator::apply_speed_limits(const std::vector<doub
   {
     throw std::invalid_argument("Speeds and speed limit lists not same size");
   }
+
+  // Speed limit is increased incrementally
   std::vector<double> out;
   for (int i = 0; i < speeds.size(); i++)
+
+  double threshold_speed = 5.0;
+  double speed_increment = 2.0;
+
+  double out_speed = std::min(speeds[0], speed_limits[0]);
+  out.push_back(out_speed);
+  for (int i = 1; i < speeds.size(); i++)
   {
     out.push_back(std::min(speeds[i], speed_limits[i]));
-  }
+    double min_speed = std::min(speeds[i], speed_limits[i]);
+    if ((min_speed - out[i-1])>threshold_speed){
+      out_speed = out[i-1] + speed_increment;  
+    }
+    else{
+      // Deceleration is not required to be smooth, for safety reasons.
+      out_speed = min_speed;
+    }
 
-  return out;
+    out.push_back(out_speed);
+
 }
 
 std::vector<double> WaypointGenerator::apply_accel_limits(std::vector<double> speeds, std::vector<int> regions,
@@ -168,74 +185,77 @@ std::vector<double> WaypointGenerator::apply_accel_limits(std::vector<double> sp
   }
 
   std::vector<double> out{ speeds };
+  double SPEED_INCREMENT = 1.0;
 
   for (int i = 0; i < regions.size() - 1; i++)
   {
     int idx = regions[i];
+    int next_idx = std::min(regions[i+1], int(speeds.size()));
+    int prev_idx = std::max(0, regions[i-1]);    
     double initial_v = speeds[idx];
     double final_v = speeds[idx + 1];
+    double target_v = final_v;
+    double delta_v = abs(speeds[idx+1] - speeds[idx]);
+    double avg_v = (final_v + initial_v) / 2.0;
+    
+    auto tuple1 = carma_wm::geometry::matchSegment(centerline[idx], centerline);
+    double initial_x = std::get<0>(tuple1).downtrack;
+
     if (final_v < initial_v)
     {
       // Slowing down
+      // deceleration starts at the previous region
+      // to reach the desired velocity in time
 
-      double delta_v = speeds[idx] - speeds[idx + 1];
-      double avg_v = delta_v / 2.0;
-      double delta_t = delta_v / decel_limit;
-      double delta_d = avg_v * delta_t;
-
-      double dist_accum = 0;
-      for (int j = idx; j >= 0; j--)
-      {
-        // Iterate until we find a point that gives us enough delta_d to
-        // slow down in time
-        dist_accum += carma_wm::geometry::compute_euclidean_distance(centerline[j], centerline[j + 1]);
-
-        if (dist_accum >= delta_d)
-        {
-          for (int k = j; k <= idx; k++)
-          {
-            // Linearly interpolate between speeds starting at that
-            // point
-            double dist = carma_wm::geometry::compute_euclidean_distance(centerline[k], centerline[idx + 1]);
-            out[k] = initial_v - (1.0 - std::min(dist / dist_accum, 1.0)) * delta_v;
-          }
-        }
+      // calclate the length of previous region
+      auto tuple2 = carma_wm::geometry::matchSegment(centerline[prev_idx], centerline);
+      double previous_x = std::get<0>(tuple2).downtrack;
+      double dist = abs(previous_x - initial_x);
+      // calculate maximum velocity allowed with the deceleration limit over the region
+      double allowed_v = sqrt(initial_v*initial_v - 2*decel_limit*dist);
+      target_v = std::max(final_v, allowed_v);
+      
+      // Interpolate the deceleration over the region
+      for (int j = prev_idx+1; j <= idx; j++){
+        auto tuple_x = carma_wm::geometry::matchSegment(centerline[j], centerline);
+        double progress_x = std::get<0>(tuple_x).downtrack;
+        double speed_reduction = abs(((progress_x - previous_x)/dist)*(target_v - initial_v));
+        double new_vel = std::max(0.0, out[idx] - speed_reduction);
+        out[j] = std::min(speeds[j], new_vel);
       }
     }
 
     if (final_v > initial_v)
     {
       // Speeding up
-      double delta_v = speeds[idx + 1] - speeds[idx];
-      double avg_v = delta_v / 2.0;
-      double delta_t = delta_v / accel_limit;
-      double delta_d = avg_v * delta_t;
+      // acceleration starts at the current region
+      // to reach the desired velocity begore end of region
 
-      double dist_accum = 0;
-      for (int j = idx; j < speeds.size(); j++)
-      {
-        // Iterate until we find a point that gives us enough delta_d to
-        // speed up acceptably
-        if (dist_accum >= delta_d)
-        {
-          for (int k = idx; k < j; k++)
-          {
-            // Linearly interpolate between speeds starting at that
-            // point
-            double dist = carma_wm::geometry::compute_euclidean_distance(centerline[k], centerline[j]);
-            out[k] = initial_v + (1.0 - std::min(dist / dist_accum, 1.0)) * delta_v;
-          }
-        }
-
-        auto a = centerline[j];
-        auto b = centerline[j + 1];
-        dist_accum += carma_wm::geometry::compute_euclidean_distance(a, b);
+      // calclate the length of previous region
+      auto tuple2 = carma_wm::geometry::matchSegment(centerline[next_idx], centerline);
+      double final_x = std::get<0>(tuple2).downtrack;
+      double dist = abs(final_x - initial_x);
+      // calculate maximum velocity allowed with the deceleration limit
+      double allowed_v = sqrt(initial_v*initial_v + 2*accel_limit*dist);
+      target_v = std::min(target_v, allowed_v);
+      // Interpolate the acceleration over the region
+      for (int j = idx + 1; j <= next_idx; j++){
+        auto tuple = carma_wm::geometry::matchSegment(centerline[j], centerline);
+        double progress_x = std::get<0>(tuple).downtrack;
+        double speed_increment = ((progress_x - initial_x)/dist)*(target_v - initial_v);
+        double new_vel = out[idx] + speed_increment;
+        out[j] = std::min(speeds[j], new_vel);
       }
     }
   }
 
+
+    
+
+  
   return out;
 }
+
 
 autoware_msgs::LaneArray WaypointGenerator::generate_lane_array_message(
     std::vector<double> speeds, std::vector<geometry_msgs::Quaternion> orientations,

@@ -225,10 +225,52 @@ TEST(WaypointGeneratorTest, TestApplyAccelLimits)
     ASSERT_NEAR(4.0, limited_a[8], 0.01);
     ASSERT_NEAR(5.0, limited_a[9], 0.01);
 
+
     // Test slowdown case
     std::vector<double> speeds_b = {5.0, 5.0, 5.0, 5.0, 5.0,
                                     0.0, 0.0, 0.0, 0.0, 0.0};
     std::vector<double> limited_b;
+    limited_b = wpg.apply_accel_limits(speeds_b,
+                                       regions_a, centerline_a, 3.0, 3.0);
+
+    ASSERT_EQ(10, limited_b.size());
+    ASSERT_NEAR(5.0, limited_b[0], 0.01);
+    ASSERT_NEAR(4.0, limited_b[1], 0.01);
+    ASSERT_NEAR(3.0, limited_b[2], 0.01);
+    ASSERT_NEAR(2.0, limited_b[3], 0.01);
+    ASSERT_NEAR(1.0, limited_b[4], 0.01);
+    ASSERT_NEAR(0.0, limited_b[5], 0.01);
+    ASSERT_NEAR(0.0, limited_b[6], 0.01);
+    ASSERT_NEAR(0.0, limited_b[7], 0.01);
+    ASSERT_NEAR(0.0, limited_b[8], 0.01);
+    ASSERT_NEAR(0.0, limited_b[9], 0.01);
+
+
+    // Test varying speed case
+    std::vector<double> speeds_c = {0.0, 0.0, 5.0, 5.0, 5.0,
+                                    10.0, 10.0, 10.0, 3.0, 3.0};
+    std::vector<int> regions_c = {1, 4, 7, 9};
+
+    std::vector<double> limited_c;
+    limited_c = wpg.apply_accel_limits(speeds_c,
+                                       regions_c, centerline_a, 4.0, 4.0);
+
+    ASSERT_EQ(10, limited_c.size());
+    ASSERT_NEAR(0.0, limited_c[0], 0.01);
+    ASSERT_NEAR(0.0, limited_c[1], 0.01);
+    ASSERT_NEAR(1.63, limited_c[2], 0.01);
+    ASSERT_NEAR(3.26, limited_c[3], 0.01);
+    ASSERT_NEAR(4.89, limited_c[4], 0.01);
+    ASSERT_NEAR(6.89, limited_c[5], 0.01);
+    ASSERT_NEAR(6.89, limited_c[6], 0.01);
+    ASSERT_NEAR(5.89, limited_c[7], 0.01);
+    ASSERT_NEAR(3.0, limited_c[8], 0.01);
+    ASSERT_NEAR(3.0, limited_c[9], 0.01);
+
+    // Test large speeds case
+    std::vector<double> speeds_d = {15.0, 15.0, 15.0, 15.0, 15.0,
+                                    0.0, 0.0, 0.0, 0.0, 0.0};
+    std::vector<double> limited_d;
     limited_b = wpg.apply_accel_limits(speeds_b,
                                        regions_a, centerline_a, 3.0, 3.0);
 
