@@ -152,26 +152,12 @@ std::vector<double> WaypointGenerator::apply_speed_limits(const std::vector<doub
 
   // Speed limit is increased incrementally
   std::vector<double> out;
-  for (int i = 0; i < speeds.size(); i++)
-
-  double threshold_speed = 5.0;
-  double speed_increment = 2.0;
-
-  double out_speed = std::min(speeds[0], speed_limits[0]);
-  out.push_back(out_speed);
   for (int i = 1; i < speeds.size(); i++)
   {
     out.push_back(std::min(speeds[i], speed_limits[i]));
-    double min_speed = std::min(speeds[i], speed_limits[i]);
-    if ((min_speed - out[i-1])>threshold_speed){
-      out_speed = out[i-1] + speed_increment;  
-    }
-    else{
-      // Deceleration is not required to be smooth, for safety reasons.
-      out_speed = min_speed;
-    }
+  }
 
-    out.push_back(out_speed);
+  return out;
 
 }
 
