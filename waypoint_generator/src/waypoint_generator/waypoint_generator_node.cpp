@@ -42,9 +42,11 @@ namespace waypoint_generator
         _pnh->param<double>("lateral_accel_limit", config._lateral_accel_limit, config._lateral_accel_limit);
         _pnh->param<double>("longitudinal_accel_limit", config._longitudinal_accel_limit, config._longitudinal_accel_limit);
         _pnh->param<double>("longitudinal_decel_limit", config._longitudinal_decel_limit, config._longitudinal_decel_limit);
+        _pnh->param<int>("downsample_ratio", config._downsample_ratio, config._downsample_ratio);
         ROS_DEBUG_STREAM("Parameters loaded!" << std::endl
             << "curvature_epsilon: " << config._curvature_epsilon << std::endl
             << "linearity_constraint" << config._linearity_constraint << std::endl
+            << "downsample_ratio" << config._downsample_ratio << std::endl
             << "lateral_accel_limit: " << config._lateral_accel_limit << std::endl
             << "longitudinal_accel_limit: " << config._longitudinal_accel_limit << std::endl
             << "longitudinal_decel_limit: " << config._longitudinal_decel_limit << std::endl);

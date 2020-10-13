@@ -67,11 +67,11 @@ namespace waypoint_generator
             /**!
              * \brief Get a list of speed limits at each point of the centerline
              * for each lanelet
-             * \param lanelets The lanelets to get speed limits from
+             * \param points The centerline points to get speed limit data for
              * \return A vector where the i-th element is the speed limit for
              * the i-th centerline point amongst all input lanelets
              */
-            std::vector<double> get_speed_limits(std::vector<lanelet::ConstLanelet> lanelets) const;
+            std::vector<double> get_speed_limits(const lanelet::BasicLineString2d& points) const;
 
             /**!
              * \brief Normalize the curvature within curvature regions to an
@@ -157,9 +157,21 @@ namespace waypoint_generator
              * for publication
              */
             autoware_msgs::LaneArray generate_lane_array_message(
-                std::vector<double> speeds, 
-                std::vector<geometry_msgs::Quaternion> orientations, 
-                std::vector<lanelet::ConstLanelet> lanelets) const;
+    std::vector<double> speeds, std::vector<geometry_msgs::Quaternion> orientations,
+    const lanelet::BasicLineString2d& centerline) const;
+
+
+            /**!
+             * \brief Downsample the generated waypoints to a specified ratio.
+             * 
+             * \param waypoints The LaneArray message to be downsampled
+             * \param ratio The ratio to reduce the size by (e.g. 2 yields 1/2,
+             * yields 1/4 points)
+             * 
+             * \return The fully composed autoware_msgs::LaneArray object ready
+             * for publication
+             */
+            autoware_msgs::LaneArray downsample_waypoints(autoware_msgs::LaneArray waypoints, int ratio) const;
 
             /**!
              * \brief Apply a basic speed limiter to all speeds in the input list

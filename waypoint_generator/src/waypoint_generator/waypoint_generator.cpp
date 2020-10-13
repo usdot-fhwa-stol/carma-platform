@@ -259,64 +259,61 @@ std::vector<double> WaypointGenerator::apply_accel_limits(std::vector<double> sp
 
 autoware_msgs::LaneArray WaypointGenerator::generate_lane_array_message(
     std::vector<double> speeds, std::vector<geometry_msgs::Quaternion> orientations,
-    std::vector<lanelet::ConstLanelet> lanelets) const
+    const lanelet::BasicLineString2d& centerline) const
 {
   autoware_msgs::LaneArray out;
 
-  int centerline_point_idx = 0;
-  for (int i = 0; i < lanelets.size(); i++)
+  autoware_msgs::Lane lane;
+  lane.lane_id = 1;
+
+  std_msgs::Header header;
+  header.frame_id = "map";
+  header.seq = 0;
+  header.stamp = ros::Time::now();
+  lane.header = header;
+  std::vector<autoware_msgs::Waypoint> waypoints;
+
+    
+  for (int j = 0; j < centerline.size(); j++)
   {
-    autoware_msgs::Lane lane;
-    lane.lane_id = i;
+    autoware_msgs::Waypoint wp;
+    wp.lane_id = lane.lane_id;
+    
+    geometry_msgs::Pose p;
+    p.position.x = centerline[j].x();
+    p.position.y = centerline[j].y();
+    p.position.z = 0;
+    p.orientation = orientations[j];
+    wp.pose.pose = p;
+    geometry_msgs::Twist t;
+    t.linear.x = speeds[j];  // Vehicle's forward velocity corresponds to x
+    wp.twist.twist = t;
 
-    std_msgs::Header header;
-    header.frame_id = "map";
-    header.seq = 0;
-    header.stamp = ros::Time::now();
-    lane.header = header;
-    std::vector<autoware_msgs::Waypoint> waypoints;
-    for (int j = 0; j < lanelets[i].centerline3d().size(); j++)
-    {
-      autoware_msgs::Waypoint wp;
-      wp.lane_id = i;
-      
-      geometry_msgs::Pose p;
-      p.position.x = lanelets[i].centerline3d()[j].x();
-      p.position.y = lanelets[i].centerline3d()[j].y();
-      p.position.z = lanelets[i].centerline3d()[j].z();
-      p.orientation = orientations[centerline_point_idx];
-      wp.pose.pose = p;
-      geometry_msgs::Twist t;
-      t.linear.x = speeds[centerline_point_idx];  // Vehicle's forward velocity corresponds to x
-      wp.twist.twist = t;
+    wp.change_flag = 0;
+    wp.direction = 0;
+    wp.cost = 0;
+    wp.time_cost = 0;
 
-      wp.change_flag = 0;
-      wp.direction = 0;
-      wp.cost = 0;
-      wp.time_cost = 0;
+    /*
+    // left undefined until we understand what we need
+    wp.wpstate;
+    wp.dtlane;
+    wp.gid;
+    wp.lid;
+    wp.right_lane_id;
+    wp.stop_line_id;
+    wp.lid;
+    */
 
-      /*
-      // left undefined until we understand what we need
-      wp.wpstate;
-      wp.dtlane;
-      wp.gid;
-      wp.lid;
-      wp.right_lane_id;
-      wp.stop_line_id;
-      wp.lid;
-      */
-
-      waypoints.push_back(wp);
-      centerline_point_idx++;
-    }
-
-    lane.waypoints = waypoints;
-    out.lanes.push_back(lane);
+    waypoints.push_back(wp);
   }
+
+  lane.waypoints = waypoints;
+  out.lanes.push_back(lane);
 
   return out;
 }
-std::vector<double> WaypointGenerator::get_speed_limits(std::vector<lanelet::ConstLanelet> lanelets) const
+std::vector<double> WaypointGenerator::get_speed_limits(const lanelet::BasicLineString2d& centerline) const
 {
   std::vector<double> out;
   if (!_wm)
@@ -324,24 +321,29 @@ std::vector<double> WaypointGenerator::get_speed_limits(std::vector<lanelet::Con
     ROS_ERROR_STREAM("get_speed_limit: Invalid WM");
     throw std::invalid_argument("get_speed_limit: Inavlid WM");
   }
-  if (lanelets.size() == 0)
+  if (centerline.size() == 0)
   {
-    ROS_ERROR_STREAM("get_speed_limit: Invalid lanelets");
-    throw std::invalid_argument("get_speed_limit: Empty lanelets passed!");
+    ROS_ERROR_STREAM("get_speed_limit: Invalid centerline");
+    throw std::invalid_argument("get_speed_limit: Empty centerline passed!");
   }
-  for (int i = 0; i < lanelets.size(); i++)
+  for (int i = 0; i < centerline.size(); i++)
   {
-    auto slis = lanelets[i].regulatoryElementsAs<lanelet::DigitalSpeedLimit>();
-    if (slis.size() == 0)
+
+    auto nearest_lanelet = _wm->getMap()->laneletLayer.nearest(centerline[i], 1);
+    if (nearest_lanelet.size() == 0)
     {
-      std::string err_msg = "get_speed_limit: Lanalet Id:" + std::to_string(lanelets[i].id()) + " has no Digital Speed Limit Regulatory Element!";
+      std::string err_msg = "get_speed_limit: No lanelet found matching point #" + std::to_string(i);
       ROS_ERROR_STREAM(err_msg);
       throw std::invalid_argument(err_msg);
     }
-    for (int j = 0; j < lanelets[i].centerline2d().size(); j++)
+    auto slis = nearest_lanelet[0].regulatoryElementsAs<lanelet::DigitalSpeedLimit>();
+    if (slis.size() == 0)
     {
-      out.push_back(slis[0]->getSpeedLimit().value());
+      std::string err_msg = "get_speed_limit: Lanalet Id:" + std::to_string(nearest_lanelet[0].id()) + " has no Digital Speed Limit Regulatory Element!";
+      ROS_ERROR_STREAM(err_msg);
+      throw std::invalid_argument(err_msg);
     }
+    out.push_back(slis[0]->getSpeedLimit().value());
   }
 
   return out;
@@ -500,7 +502,7 @@ void WaypointGenerator::new_route_callback()
     ROS_DEBUG_STREAM(" Speed: " << p);
   }
 
-  std::vector<double> speed_limits = get_speed_limits(tmp);
+  std::vector<double> speed_limits = get_speed_limits(route_geometry);
 
   ROS_DEBUG_STREAM(" ");
   ROS_DEBUG_STREAM(" ");
@@ -538,11 +540,31 @@ void WaypointGenerator::new_route_callback()
   // Update current waypoints
   ROS_DEBUG("Generating final waypoint message.");
   autoware_msgs::LaneArray waypoint_msg;
-  waypoint_msg = this->generate_lane_array_message(final_speeds, orientations, tmp);
+  waypoint_msg = this->generate_lane_array_message(final_speeds, orientations, centerline);
+  waypoint_msg = this->downsample_waypoints(waypoint_msg, _config._downsample_ratio);
 
   ROS_DEBUG_STREAM("Finished processing route.");
 
   _waypoint_publisher(waypoint_msg);
   ROS_DEBUG_STREAM("Published waypoints list!");
 }
+
+autoware_msgs::LaneArray WaypointGenerator::downsample_waypoints(autoware_msgs::LaneArray waypoints, int ratio) const
+{
+  autoware_msgs::LaneArray downsampled{waypoints};
+
+  for (int i = 0; i < downsampled.lanes.size(); i++) {
+    int idx = 0;
+    for (auto j = downsampled.lanes[i].waypoints.begin(); j != downsampled.lanes[i].waypoints.end();) {
+      if (idx++ % ratio != 0) {
+        j = downsampled.lanes[i].waypoints.erase(j);
+      } else {
+        ++j;
+      }
+    }
+  }
+
+  return downsampled;
+}
+
 };  // namespace waypoint_generator

@@ -158,6 +158,10 @@ namespace inlanecruising_plugin
         starting_point.yaw = yaw;
         uneven_traj.push_back(starting_point);
 
+        if (waypoints.size() == 0) {
+            ROS_ERROR_STREAM("Trying to create uneven trajectory from 0 waypoints");
+            return uneven_traj;
+        }
         // Update previous wp
         double previous_wp_v = waypoints[0].twist.twist.linear.x;
         double previous_wp_x = starting_point.x;
@@ -167,7 +171,7 @@ namespace inlanecruising_plugin
 
         ROS_WARN_STREAM("previous_wp_v" << previous_wp_v);
 
-        for(int i = 0; i < waypoints.size(); ++i)
+        for(int i = 0; i < waypoints.size(); i++)
         {
 
 
@@ -183,7 +187,7 @@ namespace inlanecruising_plugin
             traj_point.yaw = yaw;
             uneven_traj.push_back(traj_point);
 
-            previous_wp_v = waypoints[i - 1].twist.twist.linear.x;
+            previous_wp_v = waypoints[i].twist.twist.linear.x;
             previous_wp_x = uneven_traj.back().x;
             previous_wp_y = uneven_traj.back().y;
             previous_wp_y = uneven_traj.back().y;
@@ -207,6 +211,7 @@ namespace inlanecruising_plugin
         ROS_WARN_STREAM("17");
         if (nearest_points.size() == 0) {
             ROS_ERROR_STREAM("Failed to find nearest waypoint");
+            return sublist;
         }
 
         ROS_WARN_STREAM("18");
@@ -224,7 +229,7 @@ namespace inlanecruising_plugin
 
         double total_time = 0.0;
         size_t start_index = index + 1;
-        for(int i = index + 1; i < waypoints.size(); ++i) // Iterate starting from the waypoint after nearest to ensure it is beyond the current vehicle position
+        for(int i = start_index; i < waypoints.size(); ++i) // Iterate starting from the waypoint after nearest to ensure it is beyond the current vehicle position
         {
             sublist.push_back(waypoints[i]);
             if(i == start_index)
@@ -253,7 +258,7 @@ namespace inlanecruising_plugin
     {
         ros::Time now = ros::Time::now();
         ros::Duration now_duration(now.sec, now.nsec);
-        for(int i = 0; i < trajectory.size(); ++i)
+        for(int i = 0; i < trajectory.size(); i++)
         {
             trajectory[i].controller_plugin_name = "default";
             trajectory[i].planner_plugin_name = "autoware";

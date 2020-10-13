@@ -22,3 +22,7 @@ longitudinal_decel_limit: 3.0
 # Maximum speed along the route
 # Units: m/s
 max_speed: 10.0
+
+# Ratio to downsample output waypoints (keep 1/n waypoints)
+# Units: N/a
+downsample_ratio: 2

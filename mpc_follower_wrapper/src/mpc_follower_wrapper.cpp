@@ -68,26 +68,13 @@ void MPCFollowerWrapper::TrajectoryPlanPoseHandler(const cav_msgs::TrajectoryPla
       autoware_msgs::Lane lane;
       lane.header = tp->header;
       std::vector <autoware_msgs::Waypoint> waypoints;
-      lanelet::BasicLineString2d centerline;
-      for (cav_msgs::TrajectoryPlanPoint traj_point : tp->trajectory_points) {
-        lanelet::BasicPoint2d p(traj_point.x, traj_point.y);
-        centerline.push_back(p);
-      }
-      std::vector<geometry_msgs::Quaternion> quats = carma_wm::geometry::compute_tangent_orientations(centerline);
-      if (quats.size() != tp->trajectory_points.size()) {
-        ROS_ERROR_STREAM("Quat list size mismatch");
-      }
+
       for(int i = 0; i < tp->trajectory_points.size() - 1; i++ ) {
 
         cav_msgs::TrajectoryPlanPoint t1 = tp->trajectory_points[i];
         cav_msgs::TrajectoryPlanPoint t2 = tp->trajectory_points[i + 1];
         autoware_msgs::Waypoint waypoint = mpcww.TrajectoryPlanPointToWaypointConverter(t1, t2);
-        // if (i == 0) { // Assume first point in trajectory is current vehicle location // TODO add time synchronization here
-        //   waypoint.pose.pose.orientation = current_pose_.pose.orientation;
-        // } 
-        // else {
-        //   waypoint.pose.pose.orientation = tf::createQuaternionMsgFromYaw(t1.yaw);//quats[i]; 
-        // }
+
         waypoints.push_back(waypoint);
       }
 
