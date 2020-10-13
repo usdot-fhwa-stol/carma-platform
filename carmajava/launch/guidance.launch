@@ -107,7 +107,7 @@
     <remap from="vehicle_status" to="$(optenv CARMA_INTR_NS)/vehicle_status"/>
     <remap from="/mpc_waypoints" to="mpc_waypoints"/>
     <remap from="base_waypoints" to="mpc_waypoints"/>
-    <remap from="/base_waypoints" to="base_waypoints"/>
+    <remap from="/base_waypoints" to="plugin_base_waypoints"/>
     <remap from="/final_waypoints" to="carma_waypoints"/>
 
     <include file="$(find mpc_follower_wrapper)/launch/mpc_follower_wrapper.launch">

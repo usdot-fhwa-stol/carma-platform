@@ -31,6 +31,7 @@ find_package(catkin REQUIRED COMPONENTS
   carma_utils
   autoware_msgs
   carma_wm
+  tf
 )
 
 ## System dependencies are found with CMake's conventions

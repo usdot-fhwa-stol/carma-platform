@@ -19,6 +19,7 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <algorithm>
+#include <tf/transform_datatypes.h>
 #include "inlanecruising_plugin.h"
 
 
@@ -35,7 +36,8 @@ namespace inlanecruising_plugin
         pnh_.reset(new ros::CARMANodeHandle("~"));
         
         trajectory_srv_ = nh_->advertiseService("plugins/InLaneCruisingPlugin/plan_trajectory", &InLaneCruisingPlugin::plan_trajectory_cb, this);
-                
+        base_waypoints_pub_ = nh_->advertise<autoware_msgs::Lane>("plugin_base_waypoints", 1);                
+
         inlanecruising_plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
         plugin_discovery_msg_.name = "InLaneCruisingPlugin";
         plugin_discovery_msg_.versionId = "v1.0";
@@ -109,6 +111,24 @@ namespace inlanecruising_plugin
         return rtree; // TODO make return meaningful
     }
 
+    size_t getNearestWaypointIndex(const Point2DRTree& rtree, const geometry_msgs::PoseStamped& pose_msg) {
+        Boost2DPoint vehicle_point(pose_msg.pose.position.x, pose_msg.pose.position.y);
+        std::vector<PointIndexPair> nearest_points;
+        ROS_WARN_STREAM("16");
+        rtree.query(boost::geometry::index::nearest(vehicle_point, 1), std::back_inserter(nearest_points));
+
+        ROS_WARN_STREAM("17");
+        if (nearest_points.size() == 0) {
+            ROS_ERROR_STREAM("Failed to find nearest waypoint");
+            return -1;
+        }
+
+        ROS_WARN_STREAM("18");
+
+        // Get waypoints from nearest waypoint to time boundary
+        return std::get<1>(nearest_points[0]);
+    }
+
     void InLaneCruisingPlugin::waypoints_cb(const autoware_msgs::LaneConstPtr& msg)
     {
         if(msg->waypoints.size() == 0)
@@ -129,15 +149,136 @@ namespace inlanecruising_plugin
         current_speed_ = msg->twist.linear.x;
     }
 
+    std::vector<autoware_msgs::Waypoint> get_back_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints, size_t index, size_t mpc_back_waypoints_num) {
+        std::vector<autoware_msgs::Waypoint> back_waypoints;
+        size_t min_index = 0;
+        if (mpc_back_waypoints_num < index) {
+            min_index = index - mpc_back_waypoints_num;
+        } 
+
+        for (int i = index; i >= min_index; i--) {
+            back_waypoints.push_back(waypoints[i]);
+        }
+
+        std::reverse(back_waypoints.begin(), back_waypoints.end());
+        return back_waypoints;
+    }
+
+    std::vector<lanelet::BasicPoint2d> waypointsToBasicPoints(const std::vector<autoware_msgs::Waypoint>& waypoints) {
+        std::vector<lanelet::BasicPoint2d> basic_points;
+        for (auto wp : waypoints) {
+            lanelet::BasicPoint2d pt(wp.pose.pose.position.x, wp.pose.pose.position.y);
+            basic_points.push_back(pt);
+        }
+
+        return basic_points;
+    }
+
+    double compute_speed_for_curvature(double curvature, double lateral_accel_limit)
+    {
+        // Check at compile time for infinity availability
+        static_assert(std::numeric_limits<double>::has_infinity, "This code requires compilation using a system that supports IEEE 754 for access to positive infinity values");
+
+        // Solve a = v^2/r (k = 1/r) for v
+        // a = v^2 * k
+        // a / k = v^2
+        // v = sqrt(a / k)
+        
+        if (fabs(curvature) < 0.00000001) { // Check for curvature of 0.
+            return std::numeric_limits<double>::infinity();
+        }
+        return std::sqrt(fabs(lateral_accel_limit / curvature));
+    }
+    std::vector<double> compute_ideal_speeds(std::vector<double> curvatures,
+                                                                double lateral_accel_limit)
+    {
+        std::vector<double> out;
+        for (double k : curvatures)
+        {
+            out.push_back(compute_speed_for_curvature(k, lateral_accel_limit));
+        }
+
+        return out;
+    }
+
+    std::vector<double> apply_speed_limits(const std::vector<double> speeds,
+                                                            const std::vector<double> speed_limits)
+    {
+        ROS_ERROR_STREAM("Speeds list size: " << speeds.size());
+        ROS_ERROR_STREAM("SpeedLimits list size: " << speed_limits.size());
+        if (speeds.size() != speed_limits.size())
+        {
+            throw std::invalid_argument("Speeds and speed limit lists not same size");
+        }
+        std::vector<double> out;
+        for (int i = 0; i < speeds.size(); i++)
+        {
+            out.push_back(std::min(speeds[i], speed_limits[i]));
+        }
+
+        return out;
+    }
+
     std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_trajectory_from_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints)
     {
-        ROS_WARN_STREAM("11");
-        std::vector<autoware_msgs::Waypoint> partial_waypoints = get_waypoints_in_time_boundary(waypoints, trajectory_time_length_);
-        ROS_WARN_STREAM("12");
-        std::vector<cav_msgs::TrajectoryPlanPoint> tmp_trajectory = create_uneven_trajectory_from_waypoints(partial_waypoints);
-        ROS_WARN_STREAM("13");
-        std::vector<cav_msgs::TrajectoryPlanPoint> final_trajectory = post_process_traj_points(tmp_trajectory);
-        ROS_WARN_STREAM("14");
+        std::vector<cav_msgs::TrajectoryPlanPoint> final_trajectory;
+        size_t nearest_pt_index = getNearestWaypointIndex(rtree, *pose_msg_);
+
+        if (nearest_pt_index == -1) {
+            ROS_ERROR_STREAM("Nearest waypoint not found");
+            return final_trajectory;
+        }
+
+        std::vector<autoware_msgs::Waypoint> future_waypoints(waypoints.begin() + nearest_pt_index + 1, waypoints.end());
+        std::vector<autoware_msgs::Waypoint> time_bound_waypoints = get_waypoints_in_time_boundary(future_waypoints, trajectory_time_length_);
+        std::vector<autoware_msgs::Waypoint> previous_waypoints = get_back_waypoints(waypoints, nearest_pt_index, mpc_back_waypoints_num_);
+        std::vector<autoware_msgs::Waypoint> combined_waypoints(previous_waypoints.begin(), previous_waypoints.end());
+
+        size_t new_nearest_wp_index = combined_waypoints.size() - 1;
+
+        combined_waypoints.insert( combined_waypoints.end(), time_bound_waypoints.begin(), time_bound_waypoints.end());
+
+        std::vector<lanelet::BasicPoint2d> basic_points = waypointsToBasicPoints(combined_waypoints);
+
+        //auto curve = carma_wm::geometry::compute_fit(basic_points); // Returned data type TBD
+        std::vector<double> sampling_points;
+        for (auto wp : combined_waypoints) {
+            sampling_points.push_back(wp.pose.pose.position.x);
+        }
+
+        std::vector<double> yaw_values;// = carma_wm::geometry::compute_orientations_from_fit(curve, sampling_points);
+        std::vector<double> curvatures; //carma_wm::geometry::compute_curvatures_from_fit(curve, sampling_points);
+
+        std::vector<double> speed_limits(curvatures.size(), 6.7056); // TODO use lanelets to get these values
+        std::vector<double> ideal_speeds = compute_ideal_speeds(curvatures, 1.5);
+        std::vector<double> actual_speeds = apply_speed_limits(ideal_speeds, speed_limits);
+
+
+        // Apply new values to combined waypoint set
+        int i = 0;
+        for (auto& wp : combined_waypoints) {
+            wp.twist.twist.linear.x = actual_speeds[i];
+            wp.pose.pose.orientation = tf::createQuaternionMsgFromYaw(yaw_values[i]);
+            i++;
+        }
+
+        autoware_msgs::Lane lane;
+        lane.lane_id = 1;
+
+        std_msgs::Header header;
+        header.frame_id = "map";
+        header.seq = 0;
+        header.stamp = ros::Time::now();
+        lane.header = header;
+        lane.waypoints = combined_waypoints;
+
+        base_waypoints_pub_.publish(lane);
+        
+        std::vector<autoware_msgs::Waypoint> final_waypoints(combined_waypoints.begin() + new_nearest_wp_index + 1, combined_waypoints.end());
+        std::vector<cav_msgs::TrajectoryPlanPoint> uneven_traj = create_uneven_trajectory_from_waypoints(final_waypoints);
+        final_trajectory = post_process_traj_points(uneven_traj);
+
+
         return final_trajectory;
     }
 
@@ -197,42 +338,18 @@ namespace inlanecruising_plugin
         return uneven_traj;
     }
 
-    // TODO comments: This method returns all waypoints from the nearest waypoint + 1
+    // TODO comments: This method takes in all waypoints from the nearest waypoint + 1 and returns all waypoints in that set that fit within the time boundary
     std::vector<autoware_msgs::Waypoint> InLaneCruisingPlugin::get_waypoints_in_time_boundary(const std::vector<autoware_msgs::Waypoint>& waypoints, double time_span)
     {
         // Find nearest waypoint
         ROS_WARN_STREAM("15");
         std::vector<autoware_msgs::Waypoint> sublist;
-        Boost2DPoint vehicle_point(pose_msg_->pose.position.x, pose_msg_->pose.position.y);
-        std::vector<PointIndexPair> nearest_points;
-        ROS_WARN_STREAM("16");
-        rtree.query(boost::geometry::index::nearest(vehicle_point, 1), std::back_inserter(nearest_points));
-
-        ROS_WARN_STREAM("17");
-        if (nearest_points.size() == 0) {
-            ROS_ERROR_STREAM("Failed to find nearest waypoint");
-            return sublist;
-        }
-
-        ROS_WARN_STREAM("18");
-
-        // Get waypoints from nearest waypoint to time boundary
-        size_t index = std::get<1>(nearest_points[0]);
-
-        ROS_WARN_STREAM("19");
-        if (index == waypoints.size() - 1) {
-            ROS_INFO_STREAM("Nearest point is final waypoint so it is being dropped");
-            return sublist;
-        }
-
-        ROS_WARN_STREAM("20");
 
         double total_time = 0.0;
-        size_t start_index = index + 1;
-        for(int i = start_index; i < waypoints.size(); ++i) // Iterate starting from the waypoint after nearest to ensure it is beyond the current vehicle position
+        for(int i = 0; i < waypoints.size(); ++i) // 
         {
             sublist.push_back(waypoints[i]);
-            if(i == start_index)
+            if(i == 0)
             {
                 ROS_WARN_STREAM("21");
                 continue;

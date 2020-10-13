@@ -71,6 +71,7 @@ namespace inlanecruising_plugin
 
 
         ros::Publisher inlanecruising_plugin_discovery_pub_;
+        ros::Publisher base_waypoints_pub_;
 
         // subscriber for Autoware waypoints
         ros::Subscriber waypoints_sub_;
@@ -93,6 +94,8 @@ namespace inlanecruising_plugin
 
         // Length of maneuver
         double mvr_length = 16;
+
+        size_t mpc_back_waypoints_num_ = 20; // Double the number of points expected by mpc converter to account for errors in our approach
 
         // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
