@@ -269,25 +269,25 @@ namespace inlanecruising_plugin
     }
 
     tk::spline InLaneCruisingPlugin::compute_fit(std::vector<lanelet::BasicPoint2d> basic_points){
-        int n = int(basic_points.size())/3;
+        if (basic_points.size()<3){
+            throw std::invalid_argument("Insufficient Spline Points");
+        }
+        int n = basic_points.size()/3;
+        int last_idx = std::min((int)basic_points.size() - 1, n*3);
 
         tk::spline spl;
 
         std::vector<double> points_x;
         points_x.push_back(basic_points[n].x());
         points_x.push_back(basic_points[2*n].x());
-        points_x.push_back(basic_points[3*n].x());
+        points_x.push_back(basic_points[last_idx].x());
 
         std::vector<double> points_y;
         points_y.push_back(basic_points[n].y());
         points_y.push_back(basic_points[2*n].y());
-        points_y.push_back(basic_points[3*n].y());
+        points_y.push_back(basic_points[last_idx].y());
 
-        if (points_x.size()<3 || points_y.size()<3){
-            throw std::invalid_argument("Insufficient Spline Points");
-        }
-
-        spl.set_points(points_x, points_x);
+        spl.set_points(points_x, points_y);
 
         return spl;
 
