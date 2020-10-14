@@ -305,7 +305,6 @@ namespace inlanecruising_plugin
                 map_in_curve = curve.frame.inverse();
                 x_going_positive = true; // Reset to true because we are using a new frame
             }
-           // tf2::Transform frame = compute_heading_frame(basic_points[i], basic_points[i + 1]);
         }
 
         if (!transformExactMatch(curves.back().frame, curve.frame)) {
@@ -341,20 +340,21 @@ namespace inlanecruising_plugin
         std::vector<double> final_actual_speeds;
 
         for (const auto& discreet_curve : sub_curves) {
-            //auto fit_curve = carma_wm::geometry::compute_fit(discreet_curve.points); // Returned data type TBD
+            tk::spline fit_curve = compute_fit(discreet_curve.points); // Returned data type TBD
             std::vector<double> sampling_points;
             sampling_points.reserve(discreet_curve.points.size());
             for (const auto& p : discreet_curve.points) {
                 sampling_points.push_back(p.x());
             }
 
-            std::vector<double> yaw_values;// = carma_wm::geometry::compute_orientations_from_fit(fit_curve, sampling_points);
-            std::vector<double> curvatures; //carma_wm::geometry::compute_curvatures_from_fit(fit_curve, sampling_points);
+            std::vector<double> yaw_values = compute_orientation_from_fit(fit_curve, sampling_points);
+            std::vector<double> curvatures = compute_curvature_from_fit(fit_curve, sampling_points);
             std::vector<double> speed_limits(curvatures.size(), 6.7056); // TODO use lanelets to get these values
             std::vector<double> ideal_speeds = compute_ideal_speeds(curvatures, 1.5);
             std::vector<double> actual_speeds = apply_speed_limits(ideal_speeds, speed_limits);
 
-            for (auto yaw : yaw_values) {
+            for (int i = 0; i < yaw_values.size() - 1; i++) { // Drop last point
+                double yaw = yaw_values[i];
                 tf2::Matrix3x3 rot_mat = tf2::Matrix3x3::getIdentity();
                 rot_mat.setRPY(0, 0, yaw);
                 tf2::Transform c_to_yaw(rot_mat);
@@ -362,7 +362,7 @@ namespace inlanecruising_plugin
                 final_yaw_values.push_back(m_to_yaw.getRotation());
             }
 
-            final_actual_speeds.insert(final_actual_speeds.end(), actual_speeds.begin(), actual_speeds.end());
+            final_actual_speeds.insert(final_actual_speeds.end(), actual_speeds.begin(), actual_speeds.end() - 1);
         }
 
 
