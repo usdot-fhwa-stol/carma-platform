@@ -496,4 +496,85 @@ namespace inlanecruising_plugin
 
         return trajectory;
     }
+
+    tk::spline InLaneCruisingPlugin::compute_fit(std::vector<lanelet::BasicPoint2d> basic_points){
+        if (basic_points.size()<3){
+            throw std::invalid_argument("Insufficient Spline Points");
+        }
+        
+
+        tk::spline spl;
+        std::vector<double> points_x;
+        std::vector<double> points_y;
+
+        for (size_t i=0; i<basic_points.size(); i++){
+            points_x.push_back(basic_points[i].x());
+            points_y.push_back(basic_points[i].y());
+        }
+
+        spl.set_points(points_x, points_y);
+
+        return spl;
+
+    }
+
+    std::vector<double> InLaneCruisingPlugin::compute_orientation_from_fit(tk::spline curve, std::vector<double> sampling_points){
+        std::vector<double> orientations;
+        std::vector<double> cur_point{0.0, 0.0};
+        std::vector<double> next_point{0.0, 0.0};
+        double lookahead = 0.3;
+        for (size_t i=0; i<sampling_points.size(); i++){
+            cur_point[0] = sampling_points[i];
+            cur_point[1] = curve(cur_point[0]);
+            next_point[0] = cur_point[0] + lookahead;
+            next_point[1] = curve(next_point[0]);
+            double res = calculate_yaw(cur_point, next_point);
+            orientations.push_back(res);
+
+        }
+        return orientations;
+    }
+
+    std::vector<double> InLaneCruisingPlugin::compute_curvature_from_fit(tk::spline curve, std::vector<double> sampling_points){
+        std::vector<double> curvatures;
+        std::vector<double> cur_point{0.0, 0.0};
+        std::vector<double> next_point{0.0, 0.0};
+        double lookahead = 0.3;
+        for (size_t i=0; i<sampling_points.size(); i++){
+            cur_point[0] = sampling_points[i];
+            cur_point[1] = curve(cur_point[0]);
+            next_point[0] = cur_point[0] + lookahead;
+            next_point[1] = curve(next_point[0]);
+            double cur = calculate_curvature(cur_point, next_point);
+            curvatures.push_back(cur);
+
+        }
+        return curvatures;
+    }
+
+    double InLaneCruisingPlugin::calculate_yaw(std::vector<double> cur_point, std::vector<double> next_point){
+        double dx = next_point[0] - cur_point[0];
+        double dy = next_point[1] - cur_point[1];
+        double yaw = atan2 (dy, dx);
+        return yaw;
+
+    }
+
+    double InLaneCruisingPlugin::calculate_curvature(std::vector<double> cur_point, std::vector<double> next_point){
+        double dist = sqrt(pow(cur_point[0] - next_point[0], 2) + pow(cur_point[1] - next_point[0], 2));
+
+        double angle = calculate_yaw(cur_point, next_point);
+
+        double r = 0.5*(dist/std::sin(angle));
+
+        double max_curvature = 100000;
+        double curvature = std::min(1/r, max_curvature);
+
+        return curvature;
+    }
+
+
+
+    // compute_fit(points);
+    // compute_orientation_from_fit(curve, sampling_points)
 }
