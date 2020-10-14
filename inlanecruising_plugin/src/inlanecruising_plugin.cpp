@@ -240,6 +240,81 @@ namespace inlanecruising_plugin
         return downtracks;
     }
 
+    class DiscreteCurve {
+        public: 
+            tf2::Transform frame;
+            std::vector<lanelet::BasicPoint2d> points;
+    };
+
+    tf2::Transform compute_heading_frame(const tf2::Vector3& p1, const tf2::Vector3& p2) {
+        tf2::Matrix3x3 rot_mat = tf2::Matrix3x3::getIdentity();
+
+        double yaw = atan2(p2.y() - p1.y(), p2.x() - p1.x());
+
+        rot_mat.setRPY(0, 0, yaw);
+        tf2::Vector3 position(p1.x(), p1.y(), 0);
+        tf2::Transform frame(rot_mat, position);
+        return frame;
+    }
+
+    tf2::Vector3 point2DToTF2Vec(const lanelet::BasicPoint2d& p) {
+        return tf2::Vector3(p.x(), p.y(), 0);
+    }
+
+    lanelet::BasicPoint2d tf2VecToPoint2D(const tf2::Vector3& p) {
+        return lanelet::BasicPoint2d(p.x(), p.y());
+    }
+
+    bool transformExactMatch(const tf2::Transform& t1, const tf2::Transform& t2) {
+        return t1.getRotation().x() == t2.getRotation().x() && 
+        t1.getRotation().y() == t2.getRotation().y() && 
+        t1.getRotation().z() == t2.getRotation().z() && 
+        t1.getRotation().w() == t2.getRotation().w() && 
+        t1.getOrigin().x() == t2.getOrigin().x() && 
+        t1.getOrigin().y() == t2.getOrigin().y() && 
+        t1.getOrigin().z() == t2.getOrigin().z(); 
+    }
+
+    std::vector<DiscreteCurve> compute_sub_curves(const std::vector<lanelet::BasicPoint2d>& basic_points) {
+        if (basic_points.size() < 2) {
+            throw std::invalid_argument("Not enough points");
+        }
+
+        bool x_going_positive = true; // Since we define the frame to be positive x along line this always starts as true
+
+        std::vector<DiscreteCurve> curves;
+        DiscreteCurve curve;
+        curve.frame = compute_heading_frame(point2DToTF2Vec(basic_points[0]), point2DToTF2Vec(basic_points[1]));
+        tf2::Transform map_in_curve = curve.frame.inverse();
+
+
+
+        for (int i = 0; i < basic_points.size() - 1; i++) {
+            tf2::Vector3 p1 = map_in_curve * point2DToTF2Vec(basic_points[i]);
+            tf2::Vector3 p2 = map_in_curve * point2DToTF2Vec(basic_points[i+1]); // TODO Optimization to cache this value
+            
+            curve.points.push_back(tf2VecToPoint2D(p1));
+
+            bool x_dir = (p2.x() - p1.x()) >= 0;
+            if (x_going_positive != x_dir) {
+                // New Curve
+                curves.push_back(curve);
+
+                curve = DiscreteCurve();
+                curve.frame = compute_heading_frame(p1, p2);
+                map_in_curve = curve.frame.inverse();
+                x_going_positive = true; // Reset to true because we are using a new frame
+            }
+           // tf2::Transform frame = compute_heading_frame(basic_points[i], basic_points[i + 1]);
+        }
+
+        if (!transformExactMatch(curves.back().frame, curve.frame)) {
+            curves.push_back(curve);
+        }
+
+        return curves;
+    }
+
     std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_trajectory_from_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints)
     {
         std::vector<cav_msgs::TrajectoryPlanPoint> final_trajectory;
@@ -260,23 +335,42 @@ namespace inlanecruising_plugin
         combined_waypoints.insert( combined_waypoints.end(), time_bound_waypoints.begin(), time_bound_waypoints.end());
 
         std::vector<lanelet::BasicPoint2d> basic_points = waypointsToBasicPoints(combined_waypoints);
+        std::vector<DiscreteCurve> sub_curves = compute_sub_curves(basic_points);
 
-        //auto curve = carma_wm::geometry::compute_fit(basic_points); // Returned data type TBD
-        std::vector<double> sampling_points = compute_downtracks(basic_points);
+        std::vector<tf2::Quaternion> final_yaw_values;
+        std::vector<double> final_actual_speeds;
 
-        std::vector<double> yaw_values;// = carma_wm::geometry::compute_orientations_from_fit(curve, sampling_points);
-        std::vector<double> curvatures; //carma_wm::geometry::compute_curvatures_from_fit(curve, sampling_points);
+        for (const auto& discreet_curve : sub_curves) {
+            //auto fit_curve = carma_wm::geometry::compute_fit(discreet_curve.points); // Returned data type TBD
+            std::vector<double> sampling_points;
+            sampling_points.reserve(discreet_curve.points.size());
+            for (const auto& p : discreet_curve.points) {
+                sampling_points.push_back(p.x());
+            }
 
-        std::vector<double> speed_limits(curvatures.size(), 6.7056); // TODO use lanelets to get these values
-        std::vector<double> ideal_speeds = compute_ideal_speeds(curvatures, 1.5);
-        std::vector<double> actual_speeds = apply_speed_limits(ideal_speeds, speed_limits);
+            std::vector<double> yaw_values;// = carma_wm::geometry::compute_orientations_from_fit(fit_curve, sampling_points);
+            std::vector<double> curvatures; //carma_wm::geometry::compute_curvatures_from_fit(fit_curve, sampling_points);
+            std::vector<double> speed_limits(curvatures.size(), 6.7056); // TODO use lanelets to get these values
+            std::vector<double> ideal_speeds = compute_ideal_speeds(curvatures, 1.5);
+            std::vector<double> actual_speeds = apply_speed_limits(ideal_speeds, speed_limits);
+
+            for (auto yaw : yaw_values) {
+                tf2::Matrix3x3 rot_mat = tf2::Matrix3x3::getIdentity();
+                rot_mat.setRPY(0, 0, yaw);
+                tf2::Transform c_to_yaw(rot_mat);
+                tf2::Transform m_to_yaw = discreet_curve.frame * c_to_yaw;
+                final_yaw_values.push_back(m_to_yaw.getRotation());
+            }
+
+            final_actual_speeds.insert(final_actual_speeds.end(), actual_speeds.begin(), actual_speeds.end());
+        }
 
 
         // Apply new values to combined waypoint set
         int i = 0;
         for (auto& wp : combined_waypoints) {
-            wp.twist.twist.linear.x = actual_speeds[i];
-            wp.pose.pose.orientation = tf::createQuaternionMsgFromYaw(yaw_values[i]);
+            wp.twist.twist.linear.x = final_actual_speeds[i];
+            tf2::convert(final_yaw_values[i], wp.pose.pose.orientation);
             i++;
         }
 

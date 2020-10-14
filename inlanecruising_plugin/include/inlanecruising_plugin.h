@@ -30,6 +30,11 @@
 #include <boost/geometry/index/rtree.hpp>
 #include <carma_wm/Geometry.h>
 #include <cav_srvs/PlanTrajectory.h>
+#include <tf2/LinearMath/Matrix3x3.h> // TODO it should be possible to use tf2_eigen instead which would be more efficient since lanelet2 uses eigen under the hood
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2/LinearMath/Vector3.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 
 namespace inlanecruising_plugin

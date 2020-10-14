@@ -32,6 +32,8 @@ find_package(catkin REQUIRED COMPONENTS
   autoware_msgs
   carma_wm
   tf
+  tf2
+  tf2_geometry_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -43,7 +45,7 @@ find_package(Eigen3 REQUIRED)
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils cav_msgs autoware_msgs carma_wm
+  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils cav_msgs autoware_msgs carma_wm tf tf2 tf2_geometry_msgs
   DEPENDS Boost Eigen3
 )
 
