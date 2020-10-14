@@ -30,7 +30,7 @@
 #include <boost/geometry/index/rtree.hpp>
 #include <carma_wm/Geometry.h>
 #include <cav_srvs/PlanTrajectory.h>
-
+#include "third_party_library/spline.h"
 
 namespace inlanecruising_plugin
 {
@@ -63,6 +63,17 @@ namespace inlanecruising_plugin
 
         // local copy of pose
         boost::shared_ptr<geometry_msgs::PoseStamped const> pose_msg_;
+
+        // Fit a cubic spline to the points
+        tk::spline compute_fit(std::vector<lanelet::BasicPoint2d> basic_points);
+
+        // calculate the orientations of given points on the curve
+        std::vector<double> compute_orientation_from_fit(tk::spline curve, std::vector<double> sampling_points);
+
+        std::vector<double> compute_curvature_from_fit(tk::spline curve, std::vector<double> sampling_points);
+
+        double calculate_yaw(std::vector<double> cur_point, std::vector<double> prev_point);
+        double calculate_curvature(std::vector<double> cur_point, std::vector<double> next_point);
         
     private:
 
