@@ -343,7 +343,7 @@ namespace inlanecruising_plugin
         double r = 0.5*(dist/std::sin(angle));
 
         double max_curvature = 100000;
-        double curvature = (1/r, max_curvature);
+        double curvature = std::min(1/r, max_curvature);
 
         return curvature;
     }
