@@ -273,21 +273,15 @@ namespace inlanecruising_plugin
             throw std::invalid_argument("Insufficient Spline Points");
         }
         
-        int first_idx = 0;
-        int mid_idx = basic_points.size()/2;
-        int last_idx = basic_points.size() - 1;
 
         tk::spline spl;
-
         std::vector<double> points_x;
-        points_x.push_back(basic_points[first_idx].x());
-        points_x.push_back(basic_points[mid_idx].x());
-        points_x.push_back(basic_points[last_idx].x());
-
         std::vector<double> points_y;
-        points_y.push_back(basic_points[first_idx].y());
-        points_y.push_back(basic_points[mid_idx].y());
-        points_y.push_back(basic_points[last_idx].y());
+
+        for (size_t i=0; i<basic_points.size(); i++){
+            points_x.push_back(basic_points[i].x());
+            points_y.push_back(basic_points[i].y());
+        }
 
         spl.set_points(points_x, points_y);
 
