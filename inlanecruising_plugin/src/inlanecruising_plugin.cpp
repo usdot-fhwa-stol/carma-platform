@@ -219,6 +219,27 @@ namespace inlanecruising_plugin
         return out;
     }
 
+    std::vector<double> compute_downtracks(std::vector<lanelet::BasicPoint2d> basic_points) {
+        std::vector<double> downtracks;
+        downtracks.reserve(basic_points.size());
+        double current_dt = 0;
+        boost::optional<lanelet::BasicPoint2d> prev_p;
+        for (const auto& p : basic_points) {
+            if (!prev_p) {
+                downtracks.push_back(0);
+                continue;
+            }
+            double dx = p.x() - prev_p->x();
+            double dy = p.y() - prev_p->y();
+            double dist = sqrt(dx * dx + dy * dy);
+            current_dt += dist;
+            downtracks.push_back(current_dt);
+            prev_p = p;
+        }
+
+        return downtracks;
+    }
+
     std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_trajectory_from_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints)
     {
         std::vector<cav_msgs::TrajectoryPlanPoint> final_trajectory;
@@ -241,10 +262,7 @@ namespace inlanecruising_plugin
         std::vector<lanelet::BasicPoint2d> basic_points = waypointsToBasicPoints(combined_waypoints);
 
         //auto curve = carma_wm::geometry::compute_fit(basic_points); // Returned data type TBD
-        std::vector<double> sampling_points;
-        for (auto wp : combined_waypoints) {
-            sampling_points.push_back(wp.pose.pose.position.x);
-        }
+        std::vector<double> sampling_points = compute_downtracks(basic_points);
 
         std::vector<double> yaw_values;// = carma_wm::geometry::compute_orientations_from_fit(curve, sampling_points);
         std::vector<double> curvatures; //carma_wm::geometry::compute_curvatures_from_fit(curve, sampling_points);
