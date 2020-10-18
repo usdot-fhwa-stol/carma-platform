@@ -32,7 +32,7 @@ namespace lane_array_to_lane_converter {
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
          // init publishers
-        lane_pub_ = nh_->advertise<autoware_msgs::Lane>("base_waypoints", 1);
+        lane_pub_ = nh_->advertise<autoware_msgs::Lane>("base_waypoints", 1, true);
 
         // init subscribers
         lane_array_sub_ = nh_->subscribe("traffic_waypoints_array", 1, &LaneArrayToLaneConverter::callbackFromLaneArray, this);

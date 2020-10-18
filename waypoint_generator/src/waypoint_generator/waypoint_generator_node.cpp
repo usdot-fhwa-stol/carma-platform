@@ -58,7 +58,7 @@ namespace waypoint_generator
     {
         ROS_DEBUG("Beginning execution of waypoint generator node.");
 
-        _waypoints_pub = _nh->advertise<autoware_msgs::LaneArray>("carma_waypoints", 5);
+        _waypoints_pub = _nh->advertise<autoware_msgs::LaneArray>("carma_waypoints", 5, true);
 
         std::function<void()> cb = std::bind(&WaypointGenerator::new_route_callback, _wpg);
         _wml->setRouteCallback(cb);

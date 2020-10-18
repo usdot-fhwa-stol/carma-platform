@@ -302,18 +302,19 @@ namespace inlanecruising_plugin
             curve.points.push_back(tf2VecToPoint2D(p1));
 
             bool x_dir = (p2.x() - p1.x()) >= 0;
-            if (x_going_positive != x_dir) {
+            if (x_going_positive != x_dir) { // TODO this check could be simplified to (!x_dir)
                 // New Curve
                 curves.push_back(curve);
 
                 curve = DiscreteCurve();
                 curve.frame = compute_heading_frame(p1, p2);
                 map_in_curve = curve.frame.inverse();
+                curve.points.push_back(tf2VecToPoint2D(p1)); // Include first point in curve
                 x_going_positive = true; // Reset to true because we are using a new frame
             }
         }
 
-        if (!transformExactMatch(curves.back().frame, curve.frame)) {
+        if (curves.size() == 0 || (!transformExactMatch(curves.back().frame, curve.frame))) {
             curves.push_back(curve);
         }
 
@@ -374,7 +375,7 @@ namespace inlanecruising_plugin
              ROS_WARN("Got yaw");
             std::vector<double> curvatures = compute_curvature_from_fit(fit_curve, sampling_points);
              ROS_WARN("Got curvatures");
-            std::vector<double> speed_limits(curvatures.size(), 6.7056); // TODO use lanelets to get these values
+            std::vector<double> speed_limits(curvatures.size(), 6.7056); // TODO use lanelets to get these values. Or existing waypoints
              ROS_WARN("Got speeds limits");
             std::vector<double> ideal_speeds = compute_ideal_speeds(curvatures, 1.5);
             ROS_WARN("Got ideal limits");
@@ -385,7 +386,7 @@ namespace inlanecruising_plugin
                 double yaw = yaw_values[i];
                 tf2::Matrix3x3 rot_mat = tf2::Matrix3x3::getIdentity();
                 rot_mat.setRPY(0, 0, yaw);
-                tf2::Transform c_to_yaw(rot_mat);
+                tf2::Transform c_to_yaw(rot_mat); // NOTE: I'm pretty certain the origin does not matter here but unit test to confirm
                 tf2::Transform m_to_yaw = discreet_curve.frame * c_to_yaw;
                 final_yaw_values.push_back(m_to_yaw.getRotation());
             }
@@ -403,6 +404,9 @@ namespace inlanecruising_plugin
         // Apply new values to combined waypoint set
         int i = 0;
         for (auto& wp : combined_waypoints) {
+            if (i == combined_waypoints.size() - 1) {
+                break; // TODO rework loop at final yaw and speed arrays should be 1 less element than original waypoint set
+            }
             wp.twist.twist.linear.x = final_actual_speeds[i];
             tf2::convert(final_yaw_values[i], wp.pose.pose.orientation);
             i++;
@@ -452,7 +456,7 @@ namespace inlanecruising_plugin
             return uneven_traj;
         }
         // Update previous wp
-        double previous_wp_v = waypoints[0].twist.twist.linear.x;
+        double previous_wp_v = waypoints[0].twist.twist.linear.x; // TODO it would make more sense to subscribe to vehicle/twist and use that value here
         double previous_wp_x = starting_point.x;
         double previous_wp_y = starting_point.y;
         double previous_wp_yaw = starting_point.yaw;
