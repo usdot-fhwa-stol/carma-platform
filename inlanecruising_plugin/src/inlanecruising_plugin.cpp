@@ -331,6 +331,11 @@ namespace inlanecruising_plugin
             return final_trajectory;
         }
 
+        if (nearest_pt_index >= waypoints.size()) {
+            ROS_ERROR_STREAM("nearest_pt_index: " << nearest_pt_index << " waypoints.size(): " << waypoints.size());
+            throw std::invalid_argument("NearestPtIndex greater than waypoint list size");
+        }
+
         std::vector<autoware_msgs::Waypoint> future_waypoints(waypoints.begin() + nearest_pt_index + 1, waypoints.end());
         std::vector<autoware_msgs::Waypoint> time_bound_waypoints = get_waypoints_in_time_boundary(future_waypoints, trajectory_time_length_);
         
