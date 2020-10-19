@@ -71,7 +71,7 @@ namespace inlanecruising_plugin
         boost::shared_ptr<geometry_msgs::PoseStamped const> pose_msg_;
 
         // Fit a cubic spline to the points
-        tk::spline compute_fit(std::vector<lanelet::BasicPoint2d> basic_points);
+        boost::optional<tk::spline> compute_fit(std::vector<lanelet::BasicPoint2d> basic_points);
 
         // calculate the orientations of given points on the curve
         std::vector<double> compute_orientation_from_fit(tk::spline curve, std::vector<double> sampling_points);

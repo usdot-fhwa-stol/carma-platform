@@ -18,6 +18,7 @@
 #include <string>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <boost/optional/optional.hpp>
 #include <algorithm>
 #include <tf/transform_datatypes.h>
 #include "inlanecruising_plugin.h"
@@ -366,7 +367,16 @@ namespace inlanecruising_plugin
 
         for (const auto& discreet_curve : sub_curves) {
             ROS_WARN("SubCurve");
-            tk::spline fit_curve = compute_fit(discreet_curve.points); // Returned data type TBD
+            boost::optional<tk::spline> fit_curve = compute_fit(discreet_curve.points); // Returned data type TBD
+
+            if (!fit_curve) { // TODO how better to handle this case
+                for (auto p : discreet_curve.points) {
+                    final_yaw_values.push_back(final_yaw_values.back());
+                    final_actual_speeds.push_back(final_actual_speeds.back());
+                }
+                continue;
+            }
+
             ROS_WARN("Got fit");
             std::vector<double> sampling_points;
             sampling_points.reserve(discreet_curve.points.size());
@@ -375,10 +385,10 @@ namespace inlanecruising_plugin
             }
 
              ROS_WARN("Sampled points");
-            std::vector<double> yaw_values = compute_orientation_from_fit(fit_curve, sampling_points);
+            std::vector<double> yaw_values = compute_orientation_from_fit(fit_curve.get(), sampling_points);
 
              ROS_WARN("Got yaw");
-            std::vector<double> curvatures = compute_curvature_from_fit(fit_curve, sampling_points);
+            std::vector<double> curvatures = compute_curvature_from_fit(fit_curve.get(), sampling_points);
              ROS_WARN("Got curvatures");
             std::vector<double> speed_limits(curvatures.size(), 6.7056); // TODO use lanelets to get these values. Or existing waypoints
              ROS_WARN("Got speeds limits");
@@ -542,9 +552,10 @@ namespace inlanecruising_plugin
         return trajectory;
     }
 
-    tk::spline InLaneCruisingPlugin::compute_fit(std::vector<lanelet::BasicPoint2d> basic_points){
+    boost::optional<tk::spline> InLaneCruisingPlugin::compute_fit(std::vector<lanelet::BasicPoint2d> basic_points){
         if (basic_points.size()<3){
-            throw std::invalid_argument("Insufficient Spline Points");
+            ROS_WARN_STREAM("Insufficient Spline Points");
+            return boost::none;
         }
         
 
