@@ -389,6 +389,9 @@ namespace inlanecruising_plugin
 
              ROS_WARN("Got yaw");
             std::vector<double> curvatures = compute_curvature_from_fit(fit_curve.get(), sampling_points);
+            for (auto c : curvatures) {
+                ROS_WARN_STREAM("curvatures[i]: " << c);
+            }
              ROS_WARN("Got curvatures");
             std::vector<double> speed_limits(curvatures.size(), 6.7056); // TODO use lanelets to get these values. Or existing waypoints
              ROS_WARN("Got speeds limits");
@@ -399,6 +402,7 @@ namespace inlanecruising_plugin
 
             for (int i = 0; i < yaw_values.size() - 1; i++) { // Drop last point
                 double yaw = yaw_values[i];
+                ROS_WARN_STREAM("yaw_values[i]: " << yaw_values[i]);
                 tf2::Matrix3x3 rot_mat = tf2::Matrix3x3::getIdentity();
                 rot_mat.setRPY(0, 0, yaw);
                 tf2::Transform c_to_yaw(rot_mat); // NOTE: I'm pretty certain the origin does not matter here but unit test to confirm
@@ -422,6 +426,8 @@ namespace inlanecruising_plugin
             if (i == combined_waypoints.size() - 1) {
                 break; // TODO rework loop at final yaw and speed arrays should be 1 less element than original waypoint set
             }
+            ROS_WARN_STREAM("final_actual_speeds[i]: " << final_actual_speeds[i]);
+            ROS_WARN_STREAM("final_yaw_values[i]: " << final_yaw_values[i]);
             wp.twist.twist.linear.x = final_actual_speeds[i];
             tf2::convert(final_yaw_values[i], wp.pose.pose.orientation);
             i++;
@@ -564,6 +570,7 @@ namespace inlanecruising_plugin
         std::vector<double> points_y;
 
         for (size_t i=0; i<basic_points.size(); i++){
+            ROS_WARN_STREAM("basic_points[i]: " << basic_points[i].x() << ", " << basic_points[i].y());
             points_x.push_back(basic_points[i].x());
             points_y.push_back(basic_points[i].y());
         }
@@ -596,9 +603,11 @@ namespace inlanecruising_plugin
         std::vector<double> cur_point{0.0, 0.0};
         std::vector<double> next_point{0.0, 0.0};
         double lookahead = 0.3;
+        ROS_WARN_STREAM("Computing Curvatures");
         for (size_t i=0; i<sampling_points.size(); i++){
             cur_point[0] = sampling_points[i];
             cur_point[1] = curve(cur_point[0]);
+            ROS_WARN_STREAM("sampling_points[i]: " << cur_point[0] << ", " << cur_point[1]);
             next_point[0] = cur_point[0] + lookahead;
             next_point[1] = curve(next_point[0]);
             double cur = calculate_curvature(cur_point, next_point);
