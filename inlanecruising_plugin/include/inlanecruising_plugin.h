@@ -124,6 +124,8 @@ namespace inlanecruising_plugin
         // current vehicle speed
         double current_speed_;
 
+        int prev_wp_index_ = 0;
+
         // initialize this node
         void initialize();
 

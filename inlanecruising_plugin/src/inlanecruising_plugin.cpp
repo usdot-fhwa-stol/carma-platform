@@ -112,22 +112,45 @@ namespace inlanecruising_plugin
         return rtree; // TODO make return meaningful
     }
 
-    int getNearestWaypointIndex(const Point2DRTree& rtree, const geometry_msgs::PoseStamped& pose_msg) {
+    int getNearestWaypointIndex(const Point2DRTree& rtree, const geometry_msgs::PoseStamped& pose_msg, const int prev_waypoint_index) {
         Boost2DPoint vehicle_point(pose_msg.pose.position.x, pose_msg.pose.position.y);
         std::vector<PointIndexPair> nearest_points;
         ROS_WARN_STREAM("16");
-        rtree.query(boost::geometry::index::nearest(vehicle_point, 1), std::back_inserter(nearest_points));
+
+        std::vector<PointIndexPair> nearest_point;
+        rtree.query(boost::geometry::index::nearest(vehicle_point, 1), std::back_inserter(nearest_point)); // Call finds the nearest point since the returned nearest points are not sorted
+
+        rtree.query(boost::geometry::index::nearest(vehicle_point, 10), std::back_inserter(nearest_points));
 
         ROS_WARN_STREAM("17");
-        if (nearest_points.size() == 0) {
+        if (nearest_points.size() == 0 || nearest_point.size() == 0) {
             ROS_ERROR_STREAM("Failed to find nearest waypoint");
             return -1;
         }
 
-        ROS_WARN_STREAM("18");
+        int current_best_index = std::get<1>(nearest_point[0]);
 
-        // Get waypoints from nearest waypoint to time boundary
-        return std::get<1>(nearest_points[0]);
+        ROS_WARN_STREAM("18");
+        if (prev_waypoint_index != 0) { // TODO it would be better to use -1 as the flag instead of 0
+
+            int min_index_delta = rtree.size();
+            for (auto pair : nearest_points) {
+                int index = std::get<1>(pair);
+                int index_delta = index - prev_waypoint_index;
+                if (index_delta < 0) {
+                    continue; // Ignore previous points
+                }
+                if (index_delta < min_index_delta) {
+                    min_index_delta = index_delta;
+                    current_best_index = index;
+                }
+           }   
+            
+        }
+
+        return current_best_index;
+
+
     }
 
     void InLaneCruisingPlugin::waypoints_cb(const autoware_msgs::LaneConstPtr& msg)
@@ -382,7 +405,7 @@ namespace inlanecruising_plugin
             else
             {
                 maxs.push_back(max);
-                max = std::numeric_limits<double>::infinity();
+                max = 0;
                 region++;
             }
         }
@@ -413,7 +436,7 @@ namespace inlanecruising_plugin
     std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_trajectory_from_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints)
     {
         std::vector<cav_msgs::TrajectoryPlanPoint> final_trajectory;
-        int nearest_pt_index = getNearestWaypointIndex(rtree, *pose_msg_);
+        int nearest_pt_index = getNearestWaypointIndex(rtree, *pose_msg_, prev_wp_index_);
 
         if (nearest_pt_index == -1) {
             ROS_ERROR_STREAM("Nearest waypoint not found");
@@ -424,6 +447,9 @@ namespace inlanecruising_plugin
             ROS_ERROR_STREAM("nearest_pt_index: " << nearest_pt_index << " waypoints.size(): " << waypoints.size());
             throw std::invalid_argument("NearestPtIndex greater than waypoint list size");
         }
+
+        prev_wp_index_ = nearest_pt_index;
+
 
         std::vector<autoware_msgs::Waypoint> future_waypoints(waypoints.begin() + nearest_pt_index + 1, waypoints.end());
         std::vector<autoware_msgs::Waypoint> time_bound_waypoints = get_waypoints_in_time_boundary(future_waypoints, trajectory_time_length_);
@@ -724,7 +750,7 @@ namespace inlanecruising_plugin
             next_point[0] = cur_point[0] + lookahead;
             next_point[1] = curve(next_point[0]);
             double cur = calculate_curvature(cur_point, next_point);
-            curvatures.push_back(cur);
+            curvatures.push_back(fabs(cur)); // TODO now using abs think in more detail if this will cause issues
 
         }
         return curvatures;
