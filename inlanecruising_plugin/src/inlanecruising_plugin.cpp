@@ -322,6 +322,94 @@ namespace inlanecruising_plugin
         return curves;
     }
 
+    std::vector<int> compute_constant_curvature_regions(std::vector<double> curvatures, double epsilon,
+                                                                        int linearity_constraint)
+    {
+        std::vector<int> regions;
+        double cur_min = 0;
+        for (int i = 0; i < curvatures.size(); i++)
+        {
+            if (i == 0)
+            {
+            cur_min = curvatures[i];
+            }
+
+            if (std::fabs(curvatures[i] - cur_min) > epsilon)
+            {
+            regions.push_back(i - 1);
+            cur_min = curvatures[i];
+            }
+        }
+
+        regions.push_back(curvatures.size() - 1);
+
+        // Post-process for linearly increasing/decreasing regions
+        // It is assumed that the underyling dataset is itself linearly increasing
+        // or decreasing and that is is just sampling it down to the endpoint
+        std::vector<int> out;
+        for (int i = 0; i < regions.size() - 1; i++)
+        {
+            if (regions[i + 1] - regions[i] < linearity_constraint)
+            {
+            continue;
+            }
+            else
+            {
+            out.push_back(regions[i]);
+            }
+        }
+
+        out.push_back(curvatures.size() - 1);
+
+        return out;
+    }
+
+    std::vector<double> normalize_curvature_regions(std::vector<double> curvatures,
+                                                                   std::vector<int> regions)
+    {
+        int region = 0;
+        double min = std::numeric_limits<double>::infinity();
+        std::vector<double> mins;
+        for (int i = 0; i < curvatures.size(); i++)
+        {
+            if (i <= regions[region])
+            {
+                if (curvatures[i] < min)
+                {
+                    min = curvatures[i];
+                }
+            }
+            else
+            {
+                mins.push_back(min);
+                min = std::numeric_limits<double>::infinity();
+                region++;
+            }
+        }
+        mins.push_back(min);
+
+        std::vector<double> processed_curvatures;
+        for (int i = 0; i < regions.size(); i++)
+        {
+            if (i == 0)
+            {
+                for (int j = 0; j <= regions[i]; j++)
+                {
+                    processed_curvatures.push_back(mins[i]);
+                }
+            }
+            else
+            {
+                for (int j = 0; j <= (regions[i] - regions[i - 1]) - 1; j++)
+                {
+                    processed_curvatures.push_back(mins[i]);
+                }
+            }
+        }
+
+        return processed_curvatures;
+    }
+
     std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_trajectory_from_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints)
     {
         std::vector<cav_msgs::TrajectoryPlanPoint> final_trajectory;
@@ -392,10 +480,35 @@ namespace inlanecruising_plugin
             for (auto c : curvatures) {
                 ROS_WARN_STREAM("curvatures[i]: " << c);
             }
-             ROS_WARN("Got curvatures");
-            std::vector<double> speed_limits(curvatures.size(), 6.7056); // TODO use lanelets to get these values. Or existing waypoints
+
+            std::vector<int> constant_curvature_regions = compute_constant_curvature_regions(curvatures, 3.0, 2.0); // TODO set parameters
+
+            ROS_DEBUG_STREAM(" ");
+            ROS_DEBUG_STREAM(" ");
+            ROS_DEBUG_STREAM("Curvature Regions");
+
+            for (auto p : constant_curvature_regions)
+            {
+                ROS_DEBUG_STREAM(" Region: " << p);
+            }
+
+            ROS_DEBUG("Normalizing curvatures...");
+
+            std::vector<double> processed_curvatures = normalize_curvature_regions(curvatures, constant_curvature_regions);
+
+            ROS_DEBUG_STREAM(" ");
+            ROS_DEBUG_STREAM(" ");
+            ROS_DEBUG_STREAM("Normalized Curvatures");
+
+            for (auto p : processed_curvatures)
+            {
+                ROS_DEBUG_STREAM(" Curvature: " << p);
+            }
+
+            ROS_WARN("Got curvatures");
+            std::vector<double> speed_limits(processed_curvatures.size(), 6.7056); // TODO use lanelets to get these values. Or existing waypoints
              ROS_WARN("Got speeds limits");
-            std::vector<double> ideal_speeds = compute_ideal_speeds(curvatures, 1.5);
+            std::vector<double> ideal_speeds = compute_ideal_speeds(processed_curvatures, 1.5);
             ROS_WARN("Got ideal limits");
             std::vector<double> actual_speeds = apply_speed_limits(ideal_speeds, speed_limits);
             ROS_WARN("Got actual");
