@@ -193,7 +193,15 @@ std::vector<double> compute_magnitude_of_vectors(const std::vector<Eigen::Vector
 double computeCurvature(const lanelet::BasicPoint2d& p1, const lanelet::BasicPoint2d& p2,
                         const lanelet::BasicPoint2d& p3);
 
-// TODO comments
+/**
+ * \brief acos method that caps the input x value for 1 or -1 to avoid undefined output. 
+ *        This is meant to prevent issues with floating point approximations. 
+ *        The user should still make sure the input data is expected to be within the [-1, 1] range for this method to give accurate results. 
+ * 
+ * \param x The angle in radians
+ * 
+ * \return The arc cosine of x
+ */ 
 double safeAcos(double x);
 
 /**
@@ -218,19 +226,28 @@ double getAngleBetweenVectors(const Eigen::Vector2d& vec1, const Eigen::Vector2d
  */
 lanelet::BasicPolygon2d objectToMapPolygon(const geometry_msgs::Pose& pose, const geometry_msgs::Vector3& size);
 
-// TODO clean up this methods
-inline void rpyFromQuaternion(const tf2::Quaternion& q, double& roll, double& pitch, double& yaw) 
-{
-  tf2::Matrix3x3 mat(q);
-  mat.getRPY(roll, pitch, yaw);
-}
+/**
+ * \brief Extract extrinsic roll-pitch-yaw from quaternion
+ * 
+ * \param q The quaternion to convert
+ * \param roll The output variable for roll units will be radians
+ * \param pitch The output variable for pitch units will be radians
+ * \param yaw The output variable for yaw units will be radians
+ * 
+ */ 
+void rpyFromQuaternion(const tf2::Quaternion& q, double& roll, double& pitch, double& yaw);
 
-inline void rpyFromQuaternion(const geometry_msgs::Quaternion& q_msg, double& roll, double& pitch, double& yaw)
-{
-  tf2::Quaternion quat;
-  tf2::convert(q_msg, quat);
-  rpyFromQuaternion(quat, roll, pitch, yaw);
-}
+/**
+ * \brief Extract extrinsic roll-pitch-yaw from quaternion
+ * 
+ * \param q The quaternion message to convert
+ * \param roll The output variable for roll units will be radians
+ * \param pitch The output variable for pitch units will be radians
+ * \param yaw The output variable for yaw units will be radians
+ * 
+ */ 
+void rpyFromQuaternion(const geometry_msgs::Quaternion& q_msg, double& roll, double& pitch, double& yaw);
+
 /**!
  * \brief Compute an approximate orientation for the vehicle at each
  * point along the centerline of the lanelets.

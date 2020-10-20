@@ -27,12 +27,28 @@ namespace geometry
 
 constexpr double SPATIAL_EPSILON_M = 0.05;
 
-// https://stackoverflow.com/questions/8489792/is-it-legal-to-take-acos-of-1-0f-or-1-0f
+// This safeAcos implementation is based on Stack Overflow answer: https://stackoverflow.com/questions/8489792/is-it-legal-to-take-acos-of-1-0f-or-1-0f
+// Asked by SirYakalot: https://stackoverflow.com/users/956689/siryakalot
+// Answered by TonyK: https://stackoverflow.com/users/428857/tonyk
+// Credited in accordance with Stack Overflow's CC-BY license
 double safeAcos (double x)
 {
   if (x < -1.0) x = -1.0 ;
   else if (x > 1.0) x = 1.0 ;
   return std::acos(x) ;
+}
+
+void rpyFromQuaternion(const tf2::Quaternion& q, double& roll, double& pitch, double& yaw) 
+{
+  tf2::Matrix3x3 mat(q);
+  mat.getRPY(roll, pitch, yaw);
+}
+
+void rpyFromQuaternion(const geometry_msgs::Quaternion& q_msg, double& roll, double& pitch, double& yaw)
+{
+  tf2::Quaternion quat;
+  tf2::convert(q_msg, quat);
+  rpyFromQuaternion(quat, roll, pitch, yaw);
 }
 
 double getAngleBetweenVectors(const Eigen::Vector2d& vec1, const Eigen::Vector2d& vec2)

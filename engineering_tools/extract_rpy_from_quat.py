@@ -10,6 +10,22 @@ from geometry_msgs.msg import Quaternion
 from geometry_msgs.msg import Vector3
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
+# USAGE:
+# This script converts geometry_msgs/Quaternion into extrinsic Roll Pitch Yaw values
+# The output is a PoseArray message where the position x,y,z fields are actually set to the RPY values in radians and the orientation field is set to the original quaternion.
+#
+# python extract_rpy_from_quat.py <fully namespaced input topic> <fully namespaced output topic> <string describing the address of quaternion> <optional: string describing address of list which should be used as base reference for element address> 
+#
+# Examples:
+#  If someone is publishing a PoseStamped topic I would call this like
+#  python extract_rpy_from_quat.py /my_in_topic /my_out_topic pose.orientation
+#
+#  Or if there was a PoseArray being published I would call it using the list optional arg like
+#  python extract_rpy_from_quat.py /my_in_topic /my_out_topic orientation poses
+#
+#  To be more specific this is what it would look like for /guidance/base_waypoints running inside carma exec where I copied the script to /opt/carma/maps
+#  python extract_rpy_from_quat.py /guidance/base_waypoints /base_waypoint_rpy pose.pose.orientation waypoints
+#
 
 class Converter:
     def __init__(self, pub, element_attr, list_attr=''):
