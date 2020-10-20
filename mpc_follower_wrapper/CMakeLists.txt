@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(mpc_follower_wrapper)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+## Compile as C++14, supported in ROS Kinetic and newer
+add_compile_options(-std=c++14)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
@@ -19,6 +19,8 @@ find_package(catkin REQUIRED COMPONENTS
   message_filters
   autoware_config_msgs
   carma_utils
+  carma_wm
+  tf
 )
 
 ## System dependencies are found with CMake's conventions
@@ -67,7 +69,7 @@ add_dependencies(mpc_follower_wrapper_worker_library ${catkin_EXPORTED_TARGETS})
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES mpc_follower_wrapper_worker_library
- CATKIN_DEPENDS cav_msgs roscpp rospy geometry_msgs autoware_msgs message_filters autoware_config_msgs carma_utils
+ CATKIN_DEPENDS cav_msgs roscpp rospy geometry_msgs autoware_msgs message_filters tf autoware_config_msgs carma_utils carma_wm
 #  DEPENDS system_lib
  DEPENDS Boost
 )

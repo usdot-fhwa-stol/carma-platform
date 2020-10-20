@@ -86,8 +86,15 @@ namespace route_following_plugin
         }
         while(current_progress < total_maneuver_length && last_lanelet_index < shortest_path.size())
         {
+            ROS_ERROR_STREAM("Lanlet: " << shortest_path[last_lanelet_index].id());
+            auto p = shortest_path[last_lanelet_index].centerline2d().back();
+            ROS_ERROR_STREAM("EndPoint: " << p.x() << ", " << p.y());
             double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
             double dist_diff = end_dist - current_progress;
+
+            ROS_ERROR_STREAM("end_dist: " << end_dist);
+            ROS_ERROR_STREAM("current_progress: " << current_progress);
+            ROS_ERROR_STREAM("dist_diff: " << current_progress);
 
             resp.new_plan.maneuvers.push_back(
                 composeManeuverMessage(current_progress, end_dist, 
@@ -160,7 +167,12 @@ namespace route_following_plugin
         maneuver_msg.lane_following_maneuver.end_dist = end_dist;
         maneuver_msg.lane_following_maneuver.end_speed = target_speed;
         // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
-        maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration((end_dist - current_dist) / (0.5 * (current_speed + target_speed)));
+        double cur_plus_target = current_speed + target_speed;
+        if (cur_plus_target < 0.00001) {
+            maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration(mvr_duration_);
+        } else {
+            maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration((end_dist - current_dist) / (0.5 * cur_plus_target));
+        }
         maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
         return maneuver_msg;
     }

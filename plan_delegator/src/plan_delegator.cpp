@@ -119,16 +119,18 @@ namespace plan_delegator
             plan_req.request.vehicle_state.X_pos_global = last_point.x;
             plan_req.request.vehicle_state.Y_pos_global = last_point.y;
             auto distance_diff = std::sqrt(std::pow(last_point.x - second_last_point.x, 2) + std::pow(last_point.y - second_last_point.y, 2));
-            auto time_diff = (last_point.target_time - second_last_point.target_time) * MILLISECOND_TO_SECOND;
+            ros::Duration time_diff = last_point.target_time - second_last_point.target_time;
+            auto time_diff_sec = time_diff.toSec();
             // this assumes the vehicle does not have significant lateral velocity
-            plan_req.request.vehicle_state.longitudinal_vel = distance_diff / time_diff;
+            plan_req.request.vehicle_state.longitudinal_vel = distance_diff / time_diff_sec;
         }
         return plan_req;
     }
 
     bool PlanDelegator::isTrajectoryLongEnough(const cav_msgs::TrajectoryPlan& plan) const noexcept
     {
-        return (plan.trajectory_points.back().target_time - plan.trajectory_points.front().target_time) * MILLISECOND_TO_SECOND >= max_trajectory_duration_;
+        ros::Duration time_diff = plan.trajectory_points.back().target_time - plan.trajectory_points.front().target_time;
+        return time_diff.toSec() >= max_trajectory_duration_;
     }
 
     cav_msgs::TrajectoryPlan PlanDelegator::planTrajectory()

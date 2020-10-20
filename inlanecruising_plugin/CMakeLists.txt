@@ -18,7 +18,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(inlanecruising_plugin)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++14)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
@@ -30,17 +30,20 @@ find_package(catkin REQUIRED COMPONENTS
   cav_srvs
   carma_utils
   autoware_msgs
+  carma_wm
 )
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
+find_package(Eigen3 REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils cav_msgs autoware_msgs
+  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils cav_msgs autoware_msgs carma_wm
+  DEPENDS Boost Eigen3
 )
 
 ###########
@@ -48,15 +51,13 @@ catkin_package(
 ###########
 
 include_directories(
+  include
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
-  include
+  ${EIGEN3_INCLUDE_DIRS}
 )
 
-file(GLOB_RECURSE headers */*.hpp */*.h)
-
 add_executable( ${PROJECT_NAME}
-  ${headers}
   src/inlanecruising_plugin.cpp
   src/main.cpp)
 add_library(inlanecruising_plugin_library src/inlanecruising_plugin.cpp)
@@ -68,10 +69,8 @@ add_dependencies(inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
 ## Install ##
 #############
 
-install(DIRECTORY include/${PROJECT_NAME}/
+install(DIRECTORY include
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
 )
 
 ## Install C++
@@ -82,7 +81,7 @@ install(TARGETS ${PROJECT_NAME}
 )
 
 ## Install Other Resources
-install(DIRECTORY launch 
+install(DIRECTORY launch config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 

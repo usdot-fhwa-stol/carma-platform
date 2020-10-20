@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2020 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,14 +16,13 @@
 
 #include <ros/ros.h>
 
-#include "autoware_plugin.h"
+#include "lane_array_to_lane_converter.h"
 
 int main(int argc, char** argv)
-{
-  
-    ros::init(argc, argv, "autoware_plugin");
-    autoware_plugin::AutowarePlugin ap;
-    ap.run();
+{ 
+    ros::init(argc, argv, "lane_array_to_lane_converter");
+    lane_array_to_lane_converter::LaneArrayToLaneConverter lane_array_to_lane_converter_node;
+    lane_array_to_lane_converter_node.run();
     return 0;
 
 };

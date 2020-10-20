@@ -121,7 +121,7 @@ namespace platooning_tactical_plugin {
         if(fabs(pose_msg_->pose.position.x - waypoints[0].pose.pose.position.x) > 0.1 || fabs(pose_msg_->pose.position.y - waypoints[0].pose.pose.position.y) > 0.1)
         {
             cav_msgs::TrajectoryPlanPoint starting_point;
-            starting_point.target_time = 0.0;
+            starting_point.target_time = ros::Time(0.0);
             starting_point.x = pose_msg_->pose.position.x;
             starting_point.y = pose_msg_->pose.position.y;
             uneven_traj.push_back(starting_point);
@@ -130,7 +130,7 @@ namespace platooning_tactical_plugin {
         double previous_wp_v = waypoints[0].twist.twist.linear.x;
         double previous_wp_x = pose_msg_->pose.position.x;
         double previous_wp_y = pose_msg_->pose.position.y;
-        unsigned long previous_wp_t = 0.0;
+        ros::Time previous_wp_t = ros::Time(0.0);
         for(int i = 0; i < waypoints.size(); ++i)
         {
             if(i != 0)
@@ -143,7 +143,7 @@ namespace platooning_tactical_plugin {
             if(i == 0 && uneven_traj.size() == 0)
             {
                 cav_msgs::TrajectoryPlanPoint starting_point;
-                starting_point.target_time = 0.0;
+                starting_point.target_time = ros::Time(0.0);
                 starting_point.x = waypoints[i].pose.pose.position.x;
                 starting_point.y = waypoints[i].pose.pose.position.y;
                 uneven_traj.push_back(starting_point);
@@ -154,10 +154,11 @@ namespace platooning_tactical_plugin {
 
             double traj_speed = (start_speed+end_speed)/2;
 
-            unsigned long average_speed = std::min(previous_wp_v ,traj_speed);
+            double average_speed = std::min(previous_wp_v ,traj_speed);
 
-            unsigned long delta_d = sqrt(pow(waypoints[i].pose.pose.position.x - previous_wp_x, 2) + pow(waypoints[i].pose.pose.position.y - previous_wp_y, 2));
-            traj_point.target_time = (unsigned long)((delta_d / average_speed) * 1e9 + previous_wp_t);
+            double delta_d = sqrt(pow(waypoints[i].pose.pose.position.x - previous_wp_x, 2) + pow(waypoints[i].pose.pose.position.y - previous_wp_y, 2));
+            ros::Duration delta_t(delta_d / average_speed);
+            traj_point.target_time =  previous_wp_t + delta_t;
             traj_point.x = waypoints[i].pose.pose.position.x;
             traj_point.y = waypoints[i].pose.pose.position.y;
             uneven_traj.push_back(traj_point);
@@ -195,12 +196,13 @@ namespace platooning_tactical_plugin {
 
     std::vector<cav_msgs::TrajectoryPlanPoint> PlatooningTacticalPlugin::post_process_traj_points(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory)
     {
-        uint64_t current_nsec = ros::Time::now().toNSec();
+        ros::Time now = ros::Time::now();
+        ros::Duration now_duration(now.sec, now.nsec);
         for(int i = 0; i < trajectory.size(); ++i)
         {
             trajectory[i].controller_plugin_name = "default";
             trajectory[i].planner_plugin_name = "platooning_tactical_plugin";
-            trajectory[i].target_time += current_nsec;
+            trajectory[i].target_time += now_duration;
         }
 
         return trajectory;

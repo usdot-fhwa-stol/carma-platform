@@ -15,6 +15,9 @@ find_package(catkin REQUIRED COMPONENTS
   carma_wm
   roscpp
   std_msgs
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
 )
 
 catkin_package(
@@ -93,8 +96,6 @@ install(TARGETS ${PROJECT_NAME}
 ## Mark cpp header files for installation
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
 )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
@@ -111,9 +112,18 @@ install(DIRECTORY
 catkin_add_gmock(${PROJECT_NAME}-test 
   test/TestMain.cpp
   test/test_waypoint_generator.cpp
+  test/test_route_callback.cpp
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit test
 )
 
+catkin_add_gmock(test-waypoint_generator-with-map 
+  test/TestMain.cpp
+  test/complex_waypoint_generation_test.cpp
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit test
+)
+
+
 if(TARGET ${PROJECT_NAME}-test)
   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
+  target_link_libraries(test-waypoint_generator-with-map ${PROJECT_NAME} ${catkin_LIBRARIES})
 endif()

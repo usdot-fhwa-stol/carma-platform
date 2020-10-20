@@ -15,32 +15,30 @@
 #
 
 cmake_minimum_required(VERSION 2.8.3)
-project(autoware_plugin)
+project(lane_array_to_lane_converter)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++14)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  std_msgs
-  cav_msgs
-  cav_srvs
-  carma_utils
   autoware_msgs
+  carma_utils
+  cav_msgs
 )
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
 
 ###################################
 ## catkin specific configuration ##
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils cav_msgs autoware_msgs
+  INCLUDE_DIRS include
+  CATKIN_DEPENDS roscpp autoware_msgs carma_utils cav_msgs
 )
 
 ###########
@@ -49,29 +47,24 @@ catkin_package(
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
   include
 )
 
-file(GLOB_RECURSE headers */*.hpp */*.h)
-
 add_executable( ${PROJECT_NAME}
-  ${headers}
-  src/autoware_plugin.cpp
-  src/main.cpp)
-add_library(autoware_plugin_library src/autoware_plugin.cpp)
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+  src/main.cpp
+  src/lane_array_to_lane_converter.cpp
+)
+
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-add_dependencies(autoware_plugin_library ${catkin_EXPORTED_TARGETS})
+
 
 #############
 ## Install ##
 #############
 
-install(DIRECTORY include/${PROJECT_NAME}/
+install(DIRECTORY include
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
 )
 
 ## Install C++
@@ -82,12 +75,11 @@ install(TARGETS ${PROJECT_NAME}
 )
 
 ## Install Other Resources
-install(DIRECTORY launch config
+install(DIRECTORY launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
 #############
 ## Testing ##
 #############
-catkin_add_gmock(${PROJECT_NAME}-test test/test_autoware_plugin.cpp)
-target_link_libraries(${PROJECT_NAME}-test autoware_plugin_library ${catkin_LIBRARIES})
+# no test currently

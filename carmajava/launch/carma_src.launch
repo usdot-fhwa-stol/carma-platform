@@ -54,8 +54,6 @@
   <arg name="debug_node" default="" doc="Set to the java node base name to enable debugging on that node"/>
 
   <!-- Logging -->
-  <!-- C++ Logging -->
-  <env name="ROSCONSOLE_CONFIG_FILE" value="$(find carma)/launch/log-config/roscpp_log.config"/>
   <!-- JVM Logging Options -->
   <arg name="log_config" default="$(find carma)/launch/log-config/log-config.properties" doc="The location of the logging configuration file"/>
   <arg name="JVM_LOG_OPTS" value="-Djava.util.logging.config.file=$(arg log_config)"/>

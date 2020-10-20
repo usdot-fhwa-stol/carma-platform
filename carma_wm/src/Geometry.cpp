@@ -18,21 +18,48 @@
 #include <lanelet2_core/geometry/Point.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf/transform_datatypes.h>
 
 namespace carma_wm
 {
 namespace geometry
 {
 
+constexpr double SPATIAL_EPSILON_M = 0.05;
+
+// This safeAcos implementation is based on Stack Overflow answer: https://stackoverflow.com/questions/8489792/is-it-legal-to-take-acos-of-1-0f-or-1-0f
+// Asked by SirYakalot: https://stackoverflow.com/users/956689/siryakalot
+// Answered by TonyK: https://stackoverflow.com/users/428857/tonyk
+// Credited in accordance with Stack Overflow's CC-BY license
+double safeAcos (double x)
+{
+  if (x < -1.0) x = -1.0 ;
+  else if (x > 1.0) x = 1.0 ;
+  return std::acos(x) ;
+}
+
+void rpyFromQuaternion(const tf2::Quaternion& q, double& roll, double& pitch, double& yaw) 
+{
+  tf2::Matrix3x3 mat(q);
+  mat.getRPY(roll, pitch, yaw);
+}
+
+void rpyFromQuaternion(const geometry_msgs::Quaternion& q_msg, double& roll, double& pitch, double& yaw)
+{
+  tf2::Quaternion quat;
+  tf2::convert(q_msg, quat);
+  rpyFromQuaternion(quat, roll, pitch, yaw);
+}
+
 double getAngleBetweenVectors(const Eigen::Vector2d& vec1, const Eigen::Vector2d& vec2)
 {
   double vec1Mag = vec1.norm();
   double vec2Mag = vec2.norm();
-  if (vec1Mag == 0 || vec2Mag == 0)
+  if (vec1Mag == 0.0 || vec2Mag == 0.0)
   {
     return 0;
   }
-  return std::acos(vec1.dot(vec2) / (vec1Mag * vec2Mag));
+  return safeAcos(vec1.dot(vec2) / (vec1Mag * vec2Mag));
 }
 
 TrackPos trackPos(const lanelet::BasicPoint2d& p, const lanelet::BasicPoint2d& seg_start,
@@ -320,8 +347,16 @@ concatenate_line_strings(const lanelet::BasicLineString2d& a,
                                           const lanelet::BasicLineString2d& b)
 {
   lanelet::BasicLineString2d out;
+
+  int start_offset = 0;
+  if (!a.empty() && !b.empty()) {
+    if (compute_euclidean_distance(a.back(), b.front()) < SPATIAL_EPSILON_M) {
+      start_offset = 1;
+    }
+  }
+
   out.insert(out.end(), a.begin(), a.end());
-  out.insert(out.end(), b.begin(), b.end());
+  out.insert(out.end(), b.begin() + start_offset, b.end());
 
   return out;
 }
@@ -441,6 +476,35 @@ compute_magnitude_of_vectors(const std::vector<Eigen::Vector2d>& vectors)
   std::vector<double> out;
   for (auto vec : vectors) {
     out.push_back(vec.norm());
+  }
+
+  return out;
+}
+
+std::vector<geometry_msgs::Quaternion>
+compute_tangent_orientations(lanelet::BasicLineString2d centerline)
+{
+  std::vector<geometry_msgs::Quaternion> out;
+  if (centerline.empty())
+    return out;
+
+  std::vector<Eigen::Vector2d> tangents = carma_wm::geometry::compute_finite_differences(centerline);
+
+  Eigen::Vector2d x_axis = { 1, 0 };
+  for (int i = 0; i < tangents.size(); i++)
+  {
+    geometry_msgs::Quaternion q;
+
+    // Derive angle by cos theta = (u . v)/(||u| * ||v||)
+    double yaw = 0;
+    double norm = tangents[i].norm();
+    if (norm != 0.0) {
+      auto normalized_tanged = tangents[i] / norm;
+      yaw = atan2(normalized_tanged[1], normalized_tanged[0]);
+    }
+
+    q = tf::createQuaternionMsgFromYaw(yaw);
+    out.push_back(q);
   }
 
   return out;

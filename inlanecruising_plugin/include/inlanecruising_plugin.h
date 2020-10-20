@@ -25,12 +25,18 @@
 #include <carma_utils/CARMAUtils.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
-
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/point.hpp>
+#include <boost/geometry/index/rtree.hpp>
+#include <carma_wm/Geometry.h>
 #include <cav_srvs/PlanTrajectory.h>
 
 
 namespace inlanecruising_plugin
 {
+    typedef boost::geometry::model::point<double, 2, boost::geometry::cs::cartesian> Boost2DPoint;
+    typedef std::pair<Boost2DPoint, size_t> PointIndexPair;
+    typedef boost::geometry::index::rtree< PointIndexPair, boost::geometry::index::quadratic<16> > Point2DRTree;
 
     class InLaneCruisingPlugin
     {
@@ -43,17 +49,21 @@ namespace inlanecruising_plugin
         void run();
 
         // create uneven trajectory from waypoints
-        std::vector<cav_msgs::TrajectoryPlanPoint> create_uneven_trajectory_from_waypoints(std::vector<autoware_msgs::Waypoint> waypoints);
+        std::vector<cav_msgs::TrajectoryPlanPoint> create_uneven_trajectory_from_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints);
 
         // get a sublist of waypoints marked by desired time span
-        std::vector<autoware_msgs::Waypoint> get_waypoints_in_time_boundary(std::vector<autoware_msgs::Waypoint> waypoints, double time_span);
+        std::vector<autoware_msgs::Waypoint> get_waypoints_in_time_boundary(const std::vector<autoware_msgs::Waypoint>& waypoints, double time_span);
 
         // postprocess traj to add plugin names and shift time origin to the current ROS time
         std::vector<cav_msgs::TrajectoryPlanPoint> post_process_traj_points(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory);
 
+        // set waypoints and construct rtee
+        // returns Point2DRTree for unit test purposes
+        Point2DRTree set_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints);
+
         // local copy of pose
         boost::shared_ptr<geometry_msgs::PoseStamped const> pose_msg_;
-
+        
     private:
 
         // node handles
@@ -79,6 +89,8 @@ namespace inlanecruising_plugin
         // Array of waypoints
         std::vector<autoware_msgs::Waypoint> waypoints_list;
 
+        Point2DRTree rtree;
+
         // Length of maneuver
         double mvr_length = 16;
 
@@ -101,7 +113,7 @@ namespace inlanecruising_plugin
         void twist_cd(const geometry_msgs::TwistStampedConstPtr& msg);
 
         // convert waypoints to a trajectory
-        std::vector<cav_msgs::TrajectoryPlanPoint> compose_trajectory_from_waypoints(std::vector<autoware_msgs::Waypoint> waypoints);
+        std::vector<cav_msgs::TrajectoryPlanPoint> compose_trajectory_from_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints);
 
     };
 

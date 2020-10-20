@@ -17,7 +17,7 @@
 
 // ROS
 #include <ros/ros.h>
-// #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 // #include <message_filters/subscriber.h>
 // #include <message_filters/time_synchronizer.h>
@@ -61,6 +61,10 @@ class MPCFollowerWrapper {
         // @brief ROS subscriber
         ros::Subscriber trajectory_plan_sub;
 
+        ros::Subscriber pose_sub;
+
+        void CurrentPoseHandler(const geometry_msgs::PoseStamped::ConstPtr& pose);
+
 
         void TrajectoryPlanPoseHandler(const cav_msgs::TrajectoryPlan::ConstPtr& tp);
 
@@ -73,6 +77,8 @@ class MPCFollowerWrapper {
 
         // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
+
+        geometry_msgs::PoseStamped current_pose_;
 
 
         // @brief ROS publishers.

@@ -23,6 +23,7 @@
 #include <carma_wm/WorldModel.h>
 #include <vector>
 #include <tf/transform_datatypes.h>
+#include "waypoint_generator_config.hpp"
 
 namespace waypoint_generator 
 {
@@ -39,6 +40,11 @@ namespace waypoint_generator
     class WaypointGenerator 
     {
         public:
+
+            using PublishWaypointsCallback = std::function<void(const autoware_msgs::LaneArray&)>;
+
+            WaypointGenerator(carma_wm::WorldModelConstPtr wm, WaypointGeneratorConfig config, PublishWaypointsCallback waypoint_publisher);
+            
             /**!
              * \brief Analyze the list of curvatures to detect any regions of 
              * constant (within epsilon) curvature or linearly increasing curvature
@@ -61,11 +67,11 @@ namespace waypoint_generator
             /**!
              * \brief Get a list of speed limits at each point of the centerline
              * for each lanelet
-             * \param lanelets The lanelets to get speed limits from
+             * \param points The centerline points to get speed limit data for
              * \return A vector where the i-th element is the speed limit for
              * the i-th centerline point amongst all input lanelets
              */
-            std::vector<double> get_speed_limits(std::vector<lanelet::ConstLanelet> lanelets) const;
+            std::vector<double> get_speed_limits(const lanelet::BasicLineString2d& points) const;
 
             /**!
              * \brief Normalize the curvature within curvature regions to an
@@ -138,21 +144,6 @@ namespace waypoint_generator
                 double decel_limit) const;
 
             /**!
-             * \brief Compute an approximate orientation for the vehicle at each
-             * point along the lanelets.
-             * 
-             * Uses the tangent vectors along the route to estimate vehicle pose
-             * in the yaw dimension. Roll and pitch are not considered.
-             * 
-             * \param lanelets The list of lanelets to compute over
-             * 
-             * \returns A vector of quaternions representing the vehicle's 
-             * orientation at each point of the lanelet's centerline.
-             */
-            std::vector<geometry_msgs::Quaternion> compute_orientations(
-                std::vector<lanelet::ConstLanelet> lanelets) const;
-
-            /**!
              * \brief Compose the autoware_msgs::LaneArray object from it's
              * constituent pieces.
              * 
@@ -166,9 +157,21 @@ namespace waypoint_generator
              * for publication
              */
             autoware_msgs::LaneArray generate_lane_array_message(
-                std::vector<double> speeds, 
-                std::vector<geometry_msgs::Quaternion> orientations, 
-                std::vector<lanelet::ConstLanelet> lanelets) const;
+    std::vector<double> speeds, std::vector<geometry_msgs::Quaternion> orientations,
+    const lanelet::BasicLineString2d& centerline) const;
+
+
+            /**!
+             * \brief Downsample the generated waypoints to a specified ratio.
+             * 
+             * \param waypoints The LaneArray message to be downsampled
+             * \param ratio The ratio to reduce the size by (e.g. 2 yields 1/2,
+             * yields 1/4 points)
+             * 
+             * \return The fully composed autoware_msgs::LaneArray object ready
+             * for publication
+             */
+            autoware_msgs::LaneArray downsample_waypoints(autoware_msgs::LaneArray waypoints, int ratio) const;
 
             /**!
              * \brief Apply a basic speed limiter to all speeds in the input list
@@ -182,7 +185,18 @@ namespace waypoint_generator
             std::vector<double> apply_speed_limits(
                 const std::vector<double> speeds, 
                 const std::vector<double> speed_limits) const;
+
+            /**!
+             * \brief Lists the successig lanelets from the shortest path
+             * by removing adjacent lanelets.
+             * 
+             */
+            std::vector<lanelet::ConstLanelet> findSuccessingLanelets() const;
+
+            void new_route_callback();
         private:
             carma_wm::WorldModelConstPtr _wm;
+            WaypointGeneratorConfig _config;
+            PublishWaypointsCallback _waypoint_publisher;
     };
 };

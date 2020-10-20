@@ -18,6 +18,7 @@
 #include <string>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <algorithm>
 #include "inlanecruising_plugin.h"
 
 
@@ -65,13 +66,48 @@ namespace inlanecruising_plugin
 
 
     bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp){
+
+        ROS_WARN_STREAM("PlanTrajectory");
+        cav_msgs::TrajectoryPlan trajectory;
+        trajectory.header.frame_id = "map";
+        trajectory.header.stamp = ros::Time::now();
+        trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
+        ROS_WARN_STREAM("1");
+        trajectory.trajectory_points = compose_trajectory_from_waypoints(waypoints_list);
+        ROS_WARN_STREAM("2");
+        trajectory_msg = trajectory;
+
         resp.trajectory_plan = trajectory_msg;
         resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_FOLLOWING);
         resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
+        ROS_WARN_STREAM("3");
+
         return true;
     }
 
+    Point2DRTree InLaneCruisingPlugin::set_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints)
+    {
+        // guaranteed to get non-empty waypoints due to the protection in the callback function
+        waypoints_list = waypoints;
+        
+        Point2DRTree empty_rtree;
+        rtree = empty_rtree; // Overwrite the existing RTree
+
+        ROS_WARN_STREAM("5");
+
+        size_t index = 0;
+        ROS_WARN_STREAM("6");
+        for (auto wp : waypoints_list) {
+            ROS_WARN_STREAM("7");
+            Boost2DPoint p(wp.pose.pose.position.x, wp.pose.pose.position.y);
+            ROS_WARN_STREAM("8");
+            rtree.insert(std::make_pair(p, index));
+            ROS_WARN_STREAM("9");
+            index++;
+        }
+        return rtree; // TODO make return meaningful
+    }
 
     void InLaneCruisingPlugin::waypoints_cb(const autoware_msgs::LaneConstPtr& msg)
     {
@@ -80,14 +116,7 @@ namespace inlanecruising_plugin
             ROS_WARN_STREAM("Received an empty trajectory!");
             return;
         }
-
-        cav_msgs::TrajectoryPlan trajectory;
-        trajectory.header.frame_id = msg->header.frame_id;
-        trajectory.header.stamp = ros::Time::now();
-        trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
-        trajectory.trajectory_points = compose_trajectory_from_waypoints(msg->waypoints);
-        waypoints_list = msg->waypoints;
-        trajectory_msg = trajectory;
+        set_waypoints(msg->waypoints);
     }
 
     void InLaneCruisingPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
@@ -100,74 +129,115 @@ namespace inlanecruising_plugin
         current_speed_ = msg->twist.linear.x;
     }
 
-    std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_trajectory_from_waypoints(std::vector<autoware_msgs::Waypoint> waypoints)
+    std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_trajectory_from_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints)
     {
+        ROS_WARN_STREAM("11");
         std::vector<autoware_msgs::Waypoint> partial_waypoints = get_waypoints_in_time_boundary(waypoints, trajectory_time_length_);
+        ROS_WARN_STREAM("12");
         std::vector<cav_msgs::TrajectoryPlanPoint> tmp_trajectory = create_uneven_trajectory_from_waypoints(partial_waypoints);
+        ROS_WARN_STREAM("13");
         std::vector<cav_msgs::TrajectoryPlanPoint> final_trajectory = post_process_traj_points(tmp_trajectory);
+        ROS_WARN_STREAM("14");
         return final_trajectory;
     }
 
-    std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::create_uneven_trajectory_from_waypoints(std::vector<autoware_msgs::Waypoint> waypoints)
+// TODO comments: Takes in a waypoint list that is from the next waypoint till the time boundary
+    std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::create_uneven_trajectory_from_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints)
     {
         std::vector<cav_msgs::TrajectoryPlanPoint> uneven_traj;
         // TODO land id is not populated because we are not using it in Autoware
         // Adding current vehicle location as the first trajectory point if it is not on the first waypoint
-        if(fabs(pose_msg_->pose.position.x - waypoints[0].pose.pose.position.x) > 0.1 || fabs(pose_msg_->pose.position.y - waypoints[0].pose.pose.position.y) > 0.1)
-        {
-            cav_msgs::TrajectoryPlanPoint starting_point;
-            starting_point.target_time = 0.0;
-            starting_point.x = pose_msg_->pose.position.x;
-            starting_point.y = pose_msg_->pose.position.y;
-            uneven_traj.push_back(starting_point);
-        }
+        // TODO there is an equivalent loop to this in the platooning plugin that should also be updated to assign the orientation value
+        // Add vehicle location as first point
+        cav_msgs::TrajectoryPlanPoint starting_point;
+        starting_point.target_time = ros::Time(0.0);
+        starting_point.x = pose_msg_->pose.position.x;
+        starting_point.y = pose_msg_->pose.position.y;
+        double roll,pitch,yaw;
+        carma_wm::geometry::rpyFromQuaternion(pose_msg_->pose.orientation, roll, pitch, yaw);
+        starting_point.yaw = yaw;
+        uneven_traj.push_back(starting_point);
 
+        if (waypoints.size() == 0) {
+            ROS_ERROR_STREAM("Trying to create uneven trajectory from 0 waypoints");
+            return uneven_traj;
+        }
+        // Update previous wp
         double previous_wp_v = waypoints[0].twist.twist.linear.x;
-        double previous_wp_x = pose_msg_->pose.position.x;
-        double previous_wp_y = pose_msg_->pose.position.y;
-        double previous_wp_t = 0.0;
-        for(int i = 0; i < waypoints.size(); ++i)
+        double previous_wp_x = starting_point.x;
+        double previous_wp_y = starting_point.y;
+        double previous_wp_yaw = starting_point.yaw;
+        ros::Time previous_wp_t = starting_point.target_time;
+
+        ROS_WARN_STREAM("previous_wp_v" << previous_wp_v);
+
+        for(int i = 0; i < waypoints.size(); i++)
         {
-            if(i != 0)
-            {
-                previous_wp_v = waypoints[i - 1].twist.twist.linear.x;
-                previous_wp_x = uneven_traj.back().x;
-                previous_wp_y = uneven_traj.back().y;
-                previous_wp_t = uneven_traj.back().target_time;
-            }
-            if(i == 0 && uneven_traj.size() == 0)
-            {
-                cav_msgs::TrajectoryPlanPoint starting_point;
-                starting_point.target_time = 0.0;
-                starting_point.x = waypoints[i].pose.pose.position.x;
-                starting_point.y = waypoints[i].pose.pose.position.y;
-                uneven_traj.push_back(starting_point);
-                continue;
-            }
+
+
             cav_msgs::TrajectoryPlanPoint traj_point;
             // assume the vehicle is starting from stationary state because it is the same assumption made by pure pursuit wrapper node
-            double average_speed = previous_wp_v;
+            double average_speed = std::max(previous_wp_v, 2.2352); // TODO need better solution for this
             double delta_d = sqrt(pow(waypoints[i].pose.pose.position.x - previous_wp_x, 2) + pow(waypoints[i].pose.pose.position.y - previous_wp_y, 2));
-            traj_point.target_time = (delta_d / average_speed) * 1e9 + previous_wp_t;
+            ros::Duration delta_t(delta_d / average_speed);
+            traj_point.target_time = previous_wp_t + delta_t;
             traj_point.x = waypoints[i].pose.pose.position.x;
             traj_point.y = waypoints[i].pose.pose.position.y;
+            carma_wm::geometry::rpyFromQuaternion(waypoints[i].pose.pose.orientation, roll, pitch, yaw);
+            traj_point.yaw = yaw;
             uneven_traj.push_back(traj_point);
+
+            previous_wp_v = waypoints[i].twist.twist.linear.x;
+            previous_wp_x = uneven_traj.back().x;
+            previous_wp_y = uneven_traj.back().y;
+            previous_wp_y = uneven_traj.back().y;
+            previous_wp_t = uneven_traj.back().target_time;
         }
 
         return uneven_traj;
     }
 
-    std::vector<autoware_msgs::Waypoint> InLaneCruisingPlugin::get_waypoints_in_time_boundary(std::vector<autoware_msgs::Waypoint> waypoints, double time_span)
+    // TODO comments: This method returns all waypoints from the nearest waypoint + 1
+    std::vector<autoware_msgs::Waypoint> InLaneCruisingPlugin::get_waypoints_in_time_boundary(const std::vector<autoware_msgs::Waypoint>& waypoints, double time_span)
     {
+        // Find nearest waypoint
+        ROS_WARN_STREAM("15");
         std::vector<autoware_msgs::Waypoint> sublist;
+        Boost2DPoint vehicle_point(pose_msg_->pose.position.x, pose_msg_->pose.position.y);
+        std::vector<PointIndexPair> nearest_points;
+        ROS_WARN_STREAM("16");
+        rtree.query(boost::geometry::index::nearest(vehicle_point, 1), std::back_inserter(nearest_points));
+
+        ROS_WARN_STREAM("17");
+        if (nearest_points.size() == 0) {
+            ROS_ERROR_STREAM("Failed to find nearest waypoint");
+            return sublist;
+        }
+
+        ROS_WARN_STREAM("18");
+
+        // Get waypoints from nearest waypoint to time boundary
+        size_t index = std::get<1>(nearest_points[0]);
+
+        ROS_WARN_STREAM("19");
+        if (index == waypoints.size() - 1) {
+            ROS_INFO_STREAM("Nearest point is final waypoint so it is being dropped");
+            return sublist;
+        }
+
+        ROS_WARN_STREAM("20");
+
         double total_time = 0.0;
-        for(int i = 0; i < waypoints.size(); ++i)
+        size_t start_index = index + 1;
+        for(int i = start_index; i < waypoints.size(); ++i) // Iterate starting from the waypoint after nearest to ensure it is beyond the current vehicle position
         {
             sublist.push_back(waypoints[i]);
-            if(i == 0)
+            if(i == start_index)
             {
+                ROS_WARN_STREAM("21");
                 continue;
             }
+            ROS_WARN_STREAM("20");
             double delta_x_square = pow(waypoints[i].pose.pose.position.x - waypoints[i - 1].pose.pose.position.x, 2);
             double delta_y_square = pow(waypoints[i].pose.pose.position.y - waypoints[i - 1].pose.pose.position.y, 2);
             //double delta_z_square = waypoints[i].pose.pose.position.z - waypoints[i - 1].pose.pose.position.z;
@@ -186,12 +256,13 @@ namespace inlanecruising_plugin
 
     std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::post_process_traj_points(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory)
     {
-        uint64_t current_nsec = ros::Time::now().toNSec();
-        for(int i = 0; i < trajectory.size(); ++i)
+        ros::Time now = ros::Time::now();
+        ros::Duration now_duration(now.sec, now.nsec);
+        for(int i = 0; i < trajectory.size(); i++)
         {
             trajectory[i].controller_plugin_name = "default";
             trajectory[i].planner_plugin_name = "autoware";
-            trajectory[i].target_time += current_nsec;
+            trajectory[i].target_time += now_duration;
         }
 
         return trajectory;

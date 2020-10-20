@@ -14,8 +14,8 @@ namespace platoon_control
 	}
 
 	double PurePursuit::getVelocity(const cav_msgs::TrajectoryPlanPoint& tp, double delta_pos) const {
-		
-		double delta_t_second = (double)abs(tp.target_time - tp0.target_time) / 1e9;
+		ros::Duration delta_t = tp.target_time - tp0.target_time;
+		double delta_t_second = fabs(delta_t.toSec());
 
 		if(delta_t_second != 0) {
 			return delta_pos / delta_t_second;

@@ -14,7 +14,11 @@
  * the License.
  */
 
+#include <carma_wm/WorldModel.h>
+#include <carma_wm/Geometry.h>
 #include "mpc_follower_wrapper/mpc_follower_wrapper.hpp"
+#include <geometry_msgs/Quaternion.h>
+#include <tf/transform_datatypes.h>
 
 namespace mpc_follower_wrapper {
 
@@ -53,6 +57,10 @@ void MPCFollowerWrapper::Initialize() {
   });
 }
 
+void MPCFollowerWrapper::CurrentPoseHandler(const geometry_msgs::PoseStamped::ConstPtr& pose) {
+  current_pose_ = *pose;
+}
+
 
 void MPCFollowerWrapper::TrajectoryPlanPoseHandler(const cav_msgs::TrajectoryPlan::ConstPtr& tp){
   ROS_DEBUG_STREAM("Received TrajectoryPlanCurrentPosecallback message");
@@ -60,11 +68,13 @@ void MPCFollowerWrapper::TrajectoryPlanPoseHandler(const cav_msgs::TrajectoryPla
       autoware_msgs::Lane lane;
       lane.header = tp->header;
       std::vector <autoware_msgs::Waypoint> waypoints;
+
       for(int i = 0; i < tp->trajectory_points.size() - 1; i++ ) {
 
         cav_msgs::TrajectoryPlanPoint t1 = tp->trajectory_points[i];
         cav_msgs::TrajectoryPlanPoint t2 = tp->trajectory_points[i + 1];
         autoware_msgs::Waypoint waypoint = mpcww.TrajectoryPlanPointToWaypointConverter(t1, t2);
+
         waypoints.push_back(waypoint);
       }
 
@@ -81,6 +91,5 @@ void MPCFollowerWrapper::TrajectoryPlanPoseHandler(const cav_msgs::TrajectoryPla
 void MPCFollowerWrapper::PublisherForWayPoints(const autoware_msgs::Lane& msg){
   way_points_pub_.publish(msg);
 };
-
 
 }  // namespace mpc_follower_wrapper

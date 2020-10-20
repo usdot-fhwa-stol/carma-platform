@@ -24,6 +24,9 @@
 #include <lanelet2_core/utility/Optional.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Vector3.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
 #include "TrackPos.h"
 
 namespace carma_wm
@@ -191,6 +194,17 @@ double computeCurvature(const lanelet::BasicPoint2d& p1, const lanelet::BasicPoi
                         const lanelet::BasicPoint2d& p3);
 
 /**
+ * \brief acos method that caps the input x value for 1 or -1 to avoid undefined output. 
+ *        This is meant to prevent issues with floating point approximations. 
+ *        The user should still make sure the input data is expected to be within the [-1, 1] range for this method to give accurate results. 
+ * 
+ * \param x The angle in radians
+ * 
+ * \return The arc cosine of x
+ */ 
+double safeAcos(double x);
+
+/**
  * \brief Calculates the angle between two vectors.
  *
  * \param vec1 the first vector
@@ -212,7 +226,41 @@ double getAngleBetweenVectors(const Eigen::Vector2d& vec1, const Eigen::Vector2d
  */
 lanelet::BasicPolygon2d objectToMapPolygon(const geometry_msgs::Pose& pose, const geometry_msgs::Vector3& size);
 
+/**
+ * \brief Extract extrinsic roll-pitch-yaw from quaternion
+ * 
+ * \param q The quaternion to convert
+ * \param roll The output variable for roll units will be radians
+ * \param pitch The output variable for pitch units will be radians
+ * \param yaw The output variable for yaw units will be radians
+ * 
+ */ 
+void rpyFromQuaternion(const tf2::Quaternion& q, double& roll, double& pitch, double& yaw);
 
+/**
+ * \brief Extract extrinsic roll-pitch-yaw from quaternion
+ * 
+ * \param q The quaternion message to convert
+ * \param roll The output variable for roll units will be radians
+ * \param pitch The output variable for pitch units will be radians
+ * \param yaw The output variable for yaw units will be radians
+ * 
+ */ 
+void rpyFromQuaternion(const geometry_msgs::Quaternion& q_msg, double& roll, double& pitch, double& yaw);
+
+/**!
+ * \brief Compute an approximate orientation for the vehicle at each
+ * point along the centerline of the lanelets.
+ * 
+ * Uses the tangent vectors along the route centerline to estimate vehicle pose
+ * in the yaw dimension. Roll and pitch are not considered.
+ * 
+ * \param centerline centerline represented as BasicLinestring2d of the lanelets to compute the orientation
+ * 
+ * \returns A vector of quaternions representing the vehicle's 
+ * orientation at each point of the lanelet's centerline.
+ */
+std::vector<geometry_msgs::Quaternion> compute_tangent_orientations(lanelet::BasicLineString2d centerline);
 
 }  // namespace geometry
 

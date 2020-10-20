@@ -17,17 +17,15 @@
 -->
 
 <package format="3">
-  <name>autoware_plugin</name>
+  <name>lane_array_to_lane_converter</name>
   <version>3.3.0</version>
-  <description>The autoware_plugin converts final waypoint plan from autoware to a CARMA trajectory</description>
-  <maintainer email="carma@todo.todo">carma</maintainer>
+  <description>The lane_array_to_lane_converter package converts autoware's lanearray msg type to lane type</description>
+  <maintainer email="carma@dot.gov">carma</maintainer>
   <license>Apache License 2.0</license>
-  <author email="carma@todo.todo">carma</author>
+  <author email="carma@dot.gov">carma</author>
   <buildtool_depend>catkin</buildtool_depend>
   <depend>roscpp</depend>
-  <depend>std_msgs</depend>
-  <depend>cav_srvs</depend>
-  <depend>cav_msgs</depend>
-  <depend>carma_utils</depend>
   <depend>autoware_msgs</depend>
+  <depend>carma_utils</depend>
+  <depend>cav_msgs</depend>
 </package>
