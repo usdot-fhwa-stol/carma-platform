@@ -326,18 +326,18 @@ namespace inlanecruising_plugin
                                                                         int linearity_constraint)
     {
         std::vector<int> regions;
-        double cur_min = 0;
+        double cur = 0;
         for (int i = 0; i < curvatures.size(); i++)
         {
             if (i == 0)
             {
-            cur_min = curvatures[i];
+            cur = curvatures[i];
             }
 
-            if (std::fabs(curvatures[i] - cur_min) > epsilon)
+            if (std::fabs(curvatures[i] - cur) > epsilon)
             {
             regions.push_back(i - 1);
-            cur_min = curvatures[i];
+            cur = curvatures[i];
             }
         }
 
@@ -368,25 +368,25 @@ namespace inlanecruising_plugin
                                                                    std::vector<int> regions)
     {
         int region = 0;
-        double min = std::numeric_limits<double>::infinity();
-        std::vector<double> mins;
+        double max = 0;
+        std::vector<double> maxs;
         for (int i = 0; i < curvatures.size(); i++)
         {
             if (i <= regions[region])
             {
-                if (curvatures[i] < min)
+                if (curvatures[i] > max)
                 {
-                    min = curvatures[i];
+                    max = curvatures[i];
                 }
             }
             else
             {
-                mins.push_back(min);
-                min = std::numeric_limits<double>::infinity();
+                maxs.push_back(max);
+                max = std::numeric_limits<double>::infinity();
                 region++;
             }
         }
-        mins.push_back(min);
+        maxs.push_back(max);
 
         std::vector<double> processed_curvatures;
         for (int i = 0; i < regions.size(); i++)
@@ -395,14 +395,14 @@ namespace inlanecruising_plugin
             {
                 for (int j = 0; j <= regions[i]; j++)
                 {
-                    processed_curvatures.push_back(mins[i]);
+                    processed_curvatures.push_back(maxs[i]);
                 }
             }
             else
             {
                 for (int j = 0; j <= (regions[i] - regions[i - 1]) - 1; j++)
                 {
-                    processed_curvatures.push_back(mins[i]);
+                    processed_curvatures.push_back(maxs[i]);
                 }
             }
         }
