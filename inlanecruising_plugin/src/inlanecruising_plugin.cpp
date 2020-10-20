@@ -481,7 +481,7 @@ namespace inlanecruising_plugin
                 ROS_WARN_STREAM("curvatures[i]: " << c);
             }
 
-            std::vector<int> constant_curvature_regions = compute_constant_curvature_regions(curvatures, 3.0, 2.0); // TODO set parameters
+            std::vector<int> constant_curvature_regions = compute_constant_curvature_regions(curvatures, (1.0/2.0), 2.0); // TODO set parameters
 
             ROS_DEBUG_STREAM(" ");
             ROS_DEBUG_STREAM(" ");
