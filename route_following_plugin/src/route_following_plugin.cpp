@@ -19,7 +19,8 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include "route_following_plugin.h"
-
+#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/geometry/BoundingBox.h>
 
 namespace route_following_plugin
 {
@@ -67,23 +68,38 @@ namespace route_following_plugin
     {        
 
         lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
-        auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc, 1);
+        auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc, 10);       
         if(current_lanelets.size() == 0)
         {
             ROS_WARN_STREAM("Cannot find any lanelet in map!");
             return true;
         }
-        auto current_lanelet = current_lanelets[0];
+        
         auto shortest_path = wm_->getRoute()->shortestPath();
+
+        lanelet::ConstLanelet current_lanelet = current_lanelets[0].second;
+        int last_lanelet_index = -1;
+        for (auto llt : current_lanelets)
+        {
+            if (boost::geometry::within(current_loc, llt.second.polygon2d()))
+            {
+                int potential_index = findLaneletIndexFromPath(llt.second.id(), shortest_path);
+                if (potential_index != -1)
+                {
+                    last_lanelet_index = potential_index;
+                    break;
+                }
+            }
+        }
+        if(last_lanelet_index == -1)
+        {
+            ROS_ERROR_STREAM("Current position is not on the shortest path! Returning an empty maneuver");
+            return true;
+        }
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
         double speed_progress = current_speed_;
         double total_maneuver_length = current_progress + mvr_duration_ * RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
-        int last_lanelet_index = findLaneletIndexFromPath(current_lanelet.second.id(), shortest_path);
-        if(last_lanelet_index == -1)
-        {
-            ROS_WARN_STREAM("Cannot find current lanelet in shortest path!");
-            return true;
-        }
+        
         while(current_progress < total_maneuver_length && last_lanelet_index < shortest_path.size())
         {
             ROS_ERROR_STREAM("Lanlet: " << shortest_path[last_lanelet_index].id());
