@@ -25,4 +25,4 @@ max_speed: 10.0
 
 # Ratio to downsample output waypoints (keep 1/n waypoints)
 # Units: N/a
-downsample_ratio: 4
+downsample_ratio: 8

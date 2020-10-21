@@ -21,6 +21,7 @@
 #include <boost/optional/optional.hpp>
 #include <algorithm>
 #include <tf/transform_datatypes.h>
+#include <lanelet2_core/geometry/Point.h>
 #include "inlanecruising_plugin.h"
 
 
@@ -458,14 +459,14 @@ namespace inlanecruising_plugin
         std::vector<autoware_msgs::Waypoint> previous_waypoints = get_back_waypoints(waypoints, nearest_pt_index, mpc_back_waypoints_num_);
         
         ROS_WARN("Got Previous");
-        std::vector<autoware_msgs::Waypoint> combined_waypoints(previous_waypoints.begin(), previous_waypoints.end());
+        std::vector<autoware_msgs::Waypoint> combined_waypoints(future_waypoints.begin(), future_waypoints.end());
 
-        ROS_WARN("Got combined");
-        size_t new_nearest_wp_index = combined_waypoints.size() - 1;
+        // ROS_WARN("Got combined");
+        // size_t new_nearest_wp_index = combined_waypoints.size() - 1;
 
-        ROS_WARN_STREAM("New Nearest index: " << new_nearest_wp_index);
+        // ROS_WARN_STREAM("New Nearest index: " << new_nearest_wp_index);
 
-        combined_waypoints.insert( combined_waypoints.end(), time_bound_waypoints.begin(), time_bound_waypoints.end());
+        // combined_waypoints.insert( combined_waypoints.end(), time_bound_waypoints.begin(), time_bound_waypoints.end());
 
         ROS_WARN("Concat completed ");
 
@@ -478,7 +479,7 @@ namespace inlanecruising_plugin
 
         std::vector<tf2::Quaternion> final_yaw_values;
         std::vector<double> final_actual_speeds;
-
+        std::vector<lanelet::BasicPoint2d> all_sampling_points;
         for (const auto& discreet_curve : sub_curves) {
             ROS_WARN("SubCurve");
             boost::optional<tk::spline> fit_curve = compute_fit(discreet_curve.points); // Returned data type TBD
@@ -492,17 +493,42 @@ namespace inlanecruising_plugin
             }
 
             ROS_WARN("Got fit");
-            std::vector<double> sampling_points;
-            sampling_points.reserve(discreet_curve.points.size());
-            for (const auto& p : discreet_curve.points) {
-                sampling_points.push_back(p.x());
+            std::vector<lanelet::BasicPoint2d> sampling_points;
+            sampling_points.reserve(discreet_curve.points.size() * 2);
+
+            double totalDist = 0;
+            bool firstLoop = true;
+            lanelet::BasicPoint2d prev_point(0.0, 0.0);
+            for (auto p : discreet_curve.points) {
+                if (firstLoop) {
+                    prev_point = p; 
+                    firstLoop = false;
+                    continue;
+                }
+                
+                totalDist += lanelet::geometry::distance2d(prev_point, p);
             }
 
+            double current_dist = 0;
+            double step_size = 1;
+            tk::spline actual_fit_curve = fit_curve.get();
+            while(current_dist < totalDist - step_size) {
+                double x = current_dist;
+                double y = actual_fit_curve(x);
+                lanelet::BasicPoint2d p(x, y);
+                sampling_points.push_back(p);
+                current_dist += step_size;
+            }
+
+            // for (const auto& p : discreet_curve.points) {
+            //     sampling_points.push_back(p.x());
+            // }
+
              ROS_WARN("Sampled points");
-            std::vector<double> yaw_values = compute_orientation_from_fit(fit_curve.get(), sampling_points);
+            std::vector<double> yaw_values = compute_orientation_from_fit(actual_fit_curve, sampling_points);
 
              ROS_WARN("Got yaw");
-            std::vector<double> curvatures = compute_curvature_from_fit(fit_curve.get(), sampling_points);
+            std::vector<double> curvatures = compute_curvature_from_fit(actual_fit_curve, sampling_points);
             for (auto c : curvatures) {
                 ROS_WARN_STREAM("curvatures[i]: " << c);
             }
@@ -552,6 +578,7 @@ namespace inlanecruising_plugin
             ROS_WARN("Converted yaw to quat");
 
             final_actual_speeds.insert(final_actual_speeds.end(), actual_speeds.begin(), actual_speeds.end() - 1);
+            all_sampling_points.insert(all_sampling_points.end(), sampling_points.begin(), sampling_points.end() - 1);
 
             ROS_WARN("Appended to final");
         }
@@ -560,15 +587,22 @@ namespace inlanecruising_plugin
 
 
         // Apply new values to combined waypoint set
+        std::vector<autoware_msgs::Waypoint> final_waypoints;
         int i = 0;
-        for (auto& wp : combined_waypoints) {
-            if (i == combined_waypoints.size() - 1) {
+        for (auto speed : final_actual_speeds) {
+            if (i == final_actual_speeds.size() - 1) {
                 break; // TODO rework loop at final yaw and speed arrays should be 1 less element than original waypoint set
             }
             ROS_WARN_STREAM("final_actual_speeds[i]: " << final_actual_speeds[i]);
             ROS_WARN_STREAM("final_yaw_values[i]: " << final_yaw_values[i]);
+
+            autoware_msgs::Waypoint wp;
+
             wp.twist.twist.linear.x = final_actual_speeds[i];
             tf2::convert(final_yaw_values[i], wp.pose.pose.orientation);
+            wp.pose.pose.position.x = all_sampling_points[i].x();
+            wp.pose.pose.position.y = all_sampling_points[i].y();
+            final_waypoints.push_back(wp);
             i++;
         }
 
@@ -582,11 +616,11 @@ namespace inlanecruising_plugin
         header.seq = 0;
         header.stamp = ros::Time::now();
         lane.header = header;
-        lane.waypoints = combined_waypoints;
+        lane.waypoints = final_waypoints;
 
         base_waypoints_pub_.publish(lane);
         
-        std::vector<autoware_msgs::Waypoint> final_waypoints(combined_waypoints.begin() + new_nearest_wp_index + 1, combined_waypoints.end());
+        //std::vector<autoware_msgs::Waypoint> final_waypoints(combined_waypoints.begin() + new_nearest_wp_index + 1, combined_waypoints.end());
         std::vector<cav_msgs::TrajectoryPlanPoint> uneven_traj = create_uneven_trajectory_from_waypoints(final_waypoints);
         final_trajectory = post_process_traj_points(uneven_traj);
 
@@ -720,39 +754,40 @@ namespace inlanecruising_plugin
 
     }
 
-    std::vector<double> InLaneCruisingPlugin::compute_orientation_from_fit(tk::spline curve, std::vector<double> sampling_points){
+    std::vector<double> InLaneCruisingPlugin::compute_orientation_from_fit(tk::spline curve, std::vector<lanelet::BasicPoint2d> sampling_points){
         std::vector<double> orientations;
         std::vector<double> cur_point{0.0, 0.0};
         std::vector<double> next_point{0.0, 0.0};
         double lookahead = 0.3;
-        for (size_t i=0; i<sampling_points.size(); i++){
-            cur_point[0] = sampling_points[i];
-            cur_point[1] = curve(cur_point[0]);
-            next_point[0] = cur_point[0] + lookahead;
-            next_point[1] = curve(next_point[0]);
+        for (size_t i=0; i<sampling_points.size() - 1; i++){
+            cur_point[0] = sampling_points[i].x();
+            cur_point[1] = sampling_points[i].y();
+            next_point[0] = sampling_points[i+1].x();
+            next_point[1] = sampling_points[i+1].y();
             double res = calculate_yaw(cur_point, next_point);
             orientations.push_back(res);
 
         }
+        orientations.push_back(orientations.back());
         return orientations;
     }
 
-    std::vector<double> InLaneCruisingPlugin::compute_curvature_from_fit(tk::spline curve, std::vector<double> sampling_points){
+    std::vector<double> InLaneCruisingPlugin::compute_curvature_from_fit(tk::spline curve, std::vector<lanelet::BasicPoint2d> sampling_points){
         std::vector<double> curvatures;
         std::vector<double> cur_point{0.0, 0.0};
         std::vector<double> next_point{0.0, 0.0};
         double lookahead = 0.3;
         ROS_WARN_STREAM("Computing Curvatures");
-        for (size_t i=0; i<sampling_points.size(); i++){
-            cur_point[0] = sampling_points[i];
-            cur_point[1] = curve(cur_point[0]);
-            ROS_WARN_STREAM("sampling_points[i]: " << cur_point[0] << ", " << cur_point[1]);
-            next_point[0] = cur_point[0] + lookahead;
-            next_point[1] = curve(next_point[0]);
+        for (size_t i=0; i<sampling_points.size() - 1; i++) {
+            cur_point[0] = sampling_points[i].x();
+            cur_point[1] = sampling_points[i].y();
+            next_point[0] = sampling_points[i+1].x();
+            next_point[1] = sampling_points[i+1].y();
             double cur = calculate_curvature(cur_point, next_point);
             curvatures.push_back(fabs(cur)); // TODO now using abs think in more detail if this will cause issues
 
         }
+        curvatures.push_back(curvatures.back());
         return curvatures;
     }
 
