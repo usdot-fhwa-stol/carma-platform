@@ -15,6 +15,9 @@
  */
 
 #include "health_monitor.h"
+#include <sstream>
+#include "carma_utils/CARMANodeHandle.h"
+
 
 namespace health_monitor
 {
@@ -60,7 +63,11 @@ namespace health_monitor
         // record starup time
         start_up_timestamp_ = ros::Time::now().toNSec() / 1e6;
         start_time_flag_=ros::Time::now();
-        
+
+        pnh_.setSystemAlertCallback([](const cav_msgs::SystemAlertConstPtr& msg) -> void {});
+        pnh_.setExceptionCallback([](const std::exception& exp) -> void {});
+
+
     }
     
     void HealthMonitor::run()
