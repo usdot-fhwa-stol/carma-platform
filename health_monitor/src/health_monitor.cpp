@@ -64,8 +64,32 @@ namespace health_monitor
         start_up_timestamp_ = ros::Time::now().toNSec() / 1e6;
         start_time_flag_=ros::Time::now();
 
-        pnh_.setSystemAlertCallback([](const cav_msgs::SystemAlertConstPtr& msg) -> void {});
-        pnh_.setExceptionCallback([](const std::exception& exp) -> void {});
+        pnh_.setSystemAlertCallback([&](const cav_msgs::SystemAlertConstPtr& msg) -> void {
+
+            if (msg->type == cav_msgs::SystemAlert::FATAL)
+            { 
+                std::string header = "health_monitor requesting shutdown due to: " + msg->description;
+
+                cav_msgs::SystemAlert new_msg;
+                new_msg.description = header;
+                new_msg.type = cav_msgs::SystemAlert::SHUTDOWN;
+
+                pnh_.publishSystemAlert(new_msg);
+            }
+
+
+        });
+        
+
+        pnh_.setExceptionCallback([&](const std::exception& exp) -> void {
+
+         cav_msgs::SystemAlert new_msg;
+        new_msg.type = cav_msgs::SystemAlert::SHUTDOWN;
+        new_msg.description = exp.what();
+
+        pnh_.publishSystemAlert(new_msg);
+
+        });
 
 
     }
