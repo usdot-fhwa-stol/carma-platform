@@ -120,6 +120,7 @@ namespace inlanecruising_plugin
         // ROS params
         double trajectory_time_length_;
         double trajectory_point_spacing_;
+        double smooth_accel_;
 
         // current vehicle speed
         double current_speed_;
