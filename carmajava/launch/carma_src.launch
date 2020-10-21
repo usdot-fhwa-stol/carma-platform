@@ -54,6 +54,8 @@
   <arg name="debug_node" default="" doc="Set to the java node base name to enable debugging on that node"/>
 
   <!-- Logging -->
+  <param name="rosout_disable_topics_generation" value="true"/> <!-- Disable excesive logging of connected topics in rosout.log file -->
+
   <!-- JVM Logging Options -->
   <arg name="log_config" default="$(find carma)/launch/log-config/log-config.properties" doc="The location of the logging configuration file"/>
   <arg name="JVM_LOG_OPTS" value="-Djava.util.logging.config.file=$(arg log_config)"/>
