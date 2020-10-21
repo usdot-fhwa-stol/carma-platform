@@ -77,7 +77,6 @@ namespace health_monitor
                 pnh_.publishSystemAlert(new_msg);
             }
 
-
         });
         
 
