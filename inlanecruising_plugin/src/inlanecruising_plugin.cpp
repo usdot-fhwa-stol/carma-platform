@@ -626,19 +626,28 @@ namespace inlanecruising_plugin
         ROS_WARN_STREAM("previous_wp_v" << previous_wp_v);
 
         for(int i = 0; i < waypoints.size(); i++)
-        {
-
-
+        {   
+            double lookahead_speed = current_speed_;
+            int lookahead_wp = 8;
+            if ( i + lookahead_wp < waypoints.size()-1){
+                lookahead_speed = waypoints[i + lookahead_wp].twist.twist.linear.x;
+            }
+            else {
+                lookahead_speed = waypoints[waypoints.size()-1].twist.twist.linear.x;
+            }   
+            
             cav_msgs::TrajectoryPlanPoint traj_point;
             // assume the vehicle is starting from stationary state because it is the same assumption made by pure pursuit wrapper node
-            double average_speed = std::max(previous_wp_v, 1.2352); // TODO need better solution for this
             double delta_d = sqrt(pow(waypoints[i].pose.pose.position.x - previous_wp_x, 2) + pow(waypoints[i].pose.pose.position.y - previous_wp_y, 2));
-            if (waypoints[i].twist.twist.linear.x > previous_wp_v){
+            double average_speed = previous_wp_v;
+
+            if (lookahead_speed > previous_wp_v){
                 average_speed = sqrt(previous_wp_v*previous_wp_v + 2*smooth_accel_*delta_d);
             }
-            if (waypoints[i].twist.twist.linear.x < previous_wp_v){
+            if (lookahead_speed < previous_wp_v){
                 average_speed = sqrt(previous_wp_v*previous_wp_v - 2*smooth_accel_*delta_d);
             }
+            average_speed = std::max(previous_wp_v, 2.2352); // TODO need better solution for this
             ros::Duration delta_t(delta_d / average_speed);
             traj_point.target_time = previous_wp_t + delta_t;
             traj_point.x = waypoints[i].pose.pose.position.x;
