@@ -459,7 +459,7 @@ namespace inlanecruising_plugin
         std::vector<autoware_msgs::Waypoint> previous_waypoints = get_back_waypoints(waypoints, nearest_pt_index, mpc_back_waypoints_num_);
         
         ROS_WARN("Got Previous");
-        std::vector<autoware_msgs::Waypoint> combined_waypoints(future_waypoints.begin(), future_waypoints.end());
+        std::vector<autoware_msgs::Waypoint> combined_waypoints(time_bound_waypoints.begin(), time_bound_waypoints.end());
 
         // ROS_WARN("Got combined");
         // size_t new_nearest_wp_index = combined_waypoints.size() - 1;
@@ -573,12 +573,16 @@ namespace inlanecruising_plugin
                 tf2::Transform c_to_yaw(rot_mat); // NOTE: I'm pretty certain the origin does not matter here but unit test to confirm
                 tf2::Transform m_to_yaw = discreet_curve.frame * c_to_yaw;
                 final_yaw_values.push_back(m_to_yaw.getRotation());
+
+                tf2::Vector3 vec = point2DToTF2Vec(sampling_points[i]);
+                tf2::Vector3 map_frame_vec = discreet_curve.frame * vec;
+                all_sampling_points.push_back(tf2VecToPoint2D(map_frame_vec));
+
             }
 
             ROS_WARN("Converted yaw to quat");
 
             final_actual_speeds.insert(final_actual_speeds.end(), actual_speeds.begin(), actual_speeds.end() - 1);
-            all_sampling_points.insert(all_sampling_points.end(), sampling_points.begin(), sampling_points.end() - 1);
 
             ROS_WARN("Appended to final");
         }
