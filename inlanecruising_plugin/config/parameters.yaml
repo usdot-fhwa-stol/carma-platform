@@ -2,3 +2,5 @@
 trajectory_time_length: 6.0
 # The spacing between two consecutive trajectory points, in seconds
 trajectory_point_spacing: 0.1
+# Acceleration/Decceleration limit for smooth speed changes
+smooth_accel_: 0.5
