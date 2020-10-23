@@ -28,9 +28,7 @@
 
 namespace inlanecruising_plugin
 {
-    using PointSpeedPair = std::pair<BasicPoint2d, double>;
     InLaneCruisingPlugin::InLaneCruisingPlugin() :
-                    current_speed_(0.0),
                     trajectory_time_length_(6.0),
                     trajectory_point_spacing_(0.1),
                     smooth_accel_(0.5) {}
@@ -39,6 +37,9 @@ namespace inlanecruising_plugin
     {
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
+
+        wml_.reset(new carma_wm::WMListener());
+        wm_ = wml_->getWorldModel();
         
         trajectory_srv_ = nh_->advertiseService("plugins/InLaneCruisingPlugin/plan_trajectory", &InLaneCruisingPlugin::plan_trajectory_cb, this);
         base_waypoints_pub_ = nh_->advertise<autoware_msgs::Lane>("plugin_base_waypoints", 1);                
@@ -51,11 +52,9 @@ namespace inlanecruising_plugin
         plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
         plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
 
-        waypoints_sub_ = nh_->subscribe("final_waypoints", 1, &InLaneCruisingPlugin::waypoints_cb, this);
-        pose_sub_ = nh_->subscribe("current_pose", 1, &InLaneCruisingPlugin::pose_cb, this);
-        twist_sub_ = nh_->subscribe("current_velocity", 1, &InLaneCruisingPlugin::twist_cd, this);
         pnh_->param<double>("trajectory_time_length", trajectory_time_length_, 6.0);
         pnh_->param<double>("trajectory_point_spacing", trajectory_point_spacing_, 0.1);
+        
 
         ros::CARMANodeHandle::setSpinCallback([this]() -> bool {
             inlanecruising_plugin_discovery_pub_.publish(plugin_discovery_msg_);
@@ -75,7 +74,7 @@ namespace inlanecruising_plugin
     bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp){
 
 
-        auto points_and_target_speeds = maneuvers_to_points(req.maneuver_plan.maneuvers);
+        auto points_and_target_speeds = maneuvers_to_points(req.maneuver_plan.maneuvers, wm_);
         auto downsampled_points = downsample_points(points_and_target_speeds, 8); // TODO make config param
         
         ROS_WARN_STREAM("PlanTrajectory");
@@ -227,7 +226,7 @@ namespace inlanecruising_plugin
             tf2::Vector3 p1 = map_in_curve * point2DToTF2Vec(std::get<0>(basic_points[i]));
             tf2::Vector3 p2 = map_in_curve * point2DToTF2Vec(std::get<0>(basic_points[i+1])); // TODO Optimization to cache this value
             
-            curve.points.push_back(tf2VecToPoint2D(p1));
+            curve.points.push_back(std::make_pair(tf2VecToPoint2D(p1), std::get<1>(basic_points[i])));
 
             bool x_dir = (p2.x() - p1.x()) >= 0;
             if (x_going_positive != x_dir) { // TODO this check could be simplified to (!x_dir)
@@ -237,7 +236,7 @@ namespace inlanecruising_plugin
                 curve = DiscreteCurve();
                 curve.frame = compute_heading_frame(p1, p2);
                 map_in_curve = curve.frame.inverse();
-                curve.points.push_back(tf2VecToPoint2D(p1)); // Include first point in curve
+                curve.points.push_back(std::make_pair(tf2VecToPoint2D(p1), std::get<1>(basic_points[i]))); // Include first point in curve
                 x_going_positive = true; // Reset to true because we are using a new frame
             }
         }
@@ -268,7 +267,10 @@ namespace inlanecruising_plugin
 
         for (const auto& discreet_curve : sub_curves) {
             ROS_WARN("SubCurve");
-            boost::optional<tk::spline> fit_curve = compute_fit(discreet_curve.points); // Returned data type TBD
+            std::vector<double> speed_limits;
+            std::vector<lanelet::BasicPoint2d> basic_points;
+            splitPointSpeedPairs(discreet_curve.points, &basic_points, &speed_limits);
+            boost::optional<tk::spline> fit_curve = compute_fit(basic_points); // Returned data type TBD
 
             if (!fit_curve) { // TODO how better to handle this case
                 for (auto p : discreet_curve.points) {
@@ -286,7 +288,7 @@ namespace inlanecruising_plugin
             double totalDist = 0;
             bool firstLoop = true;
             lanelet::BasicPoint2d prev_point(0.0, 0.0);
-            for (auto p : discreet_curve.points) {
+            for (auto p : basic_points) {
                 if (firstLoop) {
                     prev_point = p; 
                     firstLoop = false;
@@ -317,9 +319,6 @@ namespace inlanecruising_plugin
             }
 
             ROS_WARN("Got curvatures");
-            std::vector<double> speed_limits;
-            std::vector<lanelet::BasicPoint2d> basic_points;
-            splitPointSpeedPairs(discreet_curve.points, &basic_points, &speed_limits);
 
             ROS_WARN("Got speeds limits");
             std::vector<double> ideal_speeds = compute_ideal_speeds(curvatures, 1.5);
@@ -364,7 +363,7 @@ namespace inlanecruising_plugin
 
 
         
-        std::vector<cav_msgs::TrajectoryPlanPoint> uneven_traj = create_uneven_trajectory_from_points(all_sampling_points, final_actual_speeds, final_yaw_values);
+        std::vector<cav_msgs::TrajectoryPlanPoint> uneven_traj = create_uneven_trajectory_from_points(all_sampling_points, final_actual_speeds, final_yaw_values, state);
         final_trajectory = post_process_traj_points(uneven_traj);
 
 
@@ -392,7 +391,7 @@ namespace inlanecruising_plugin
             return uneven_traj;
         }
         // Update previous wp
-        double previous_wp_v = current_speed_;
+        double previous_wp_v = std::max(state.longitudinal_vel, 2.2352);
         double previous_wp_x = starting_point.x;
         double previous_wp_y = starting_point.y;
         double previous_wp_yaw = starting_point.yaw;
@@ -403,18 +402,28 @@ namespace inlanecruising_plugin
         for(int i = 0; i < points.size(); i++)
         {
 
+            double lookahead_speed = 0;
+            int lookahead_wp = 8;
+            if ( i + lookahead_wp < points.size()-1){
+                lookahead_speed = speeds[i + lookahead_wp];
+            }
+            else {
+                lookahead_speed = speeds[speeds.size()-1];
+            }   
+
 
             cav_msgs::TrajectoryPlanPoint traj_point;
             // assume the vehicle is starting from stationary state because it is the same assumption made by pure pursuit wrapper node
-            double average_speed = std::max(previous_wp_v, 1.2352); // TODO need better solution for this
             double delta_d = sqrt(pow(points[i].x() - previous_wp_x, 2) + pow(points[i].y() - previous_wp_y, 2));
-            if (speeds[i] > previous_wp_v){
-                average_speed = sqrt(previous_wp_v*previous_wp_v + 2*smooth_accel_*delta_d);
+            double set_speed = 0;
+            if (lookahead_speed > previous_wp_v){
+                set_speed = std::min(lookahead_speed, sqrt(previous_wp_v*previous_wp_v + 2*smooth_accel_*delta_d));
             }
-            if (speeds[i] < previous_wp_v){
-                average_speed = sqrt(previous_wp_v*previous_wp_v - 2*smooth_accel_*delta_d);
+            if (lookahead_speed < previous_wp_v){
+                set_speed = std::max(lookahead_speed, sqrt(previous_wp_v*previous_wp_v - 2*smooth_accel_*delta_d));
             }
-            ros::Duration delta_t(delta_d / average_speed);
+            set_speed = std::max(set_speed, 2.2352); // TODO need better solution for this
+            ros::Duration delta_t(delta_d / previous_wp_v);
             traj_point.target_time = previous_wp_t + delta_t;
             traj_point.x = points[i].x();
             traj_point.y = points[i].y();
@@ -423,47 +432,14 @@ namespace inlanecruising_plugin
             traj_point.yaw = yaw;
             uneven_traj.push_back(traj_point);
 
-            previous_wp_v = std::min(average_speed, speeds[i]);
+            previous_wp_v = set_speed;
             previous_wp_x = uneven_traj.back().x;
             previous_wp_y = uneven_traj.back().y;
-            previous_wp_y = uneven_traj.back().y;
+            previous_wp_yaw = uneven_traj.back().yaw;
             previous_wp_t = uneven_traj.back().target_time;
         }
 
         return uneven_traj;
-    }
-
-    // TODO comments: This method takes in all waypoints from the nearest waypoint + 1 and returns all waypoints in that set that fit within the time boundary
-    std::vector<autoware_msgs::Waypoint> InLaneCruisingPlugin::get_waypoints_in_time_boundary(const std::vector<autoware_msgs::Waypoint>& waypoints, double time_span)
-    {
-        // Find nearest waypoint
-        ROS_WARN_STREAM("15");
-        std::vector<autoware_msgs::Waypoint> sublist;
-
-        double total_time = 0.0;
-        for(int i = 0; i < waypoints.size(); ++i) // 
-        {
-            sublist.push_back(waypoints[i]);
-            if(i == 0)
-            {
-                ROS_WARN_STREAM("21");
-                continue;
-            }
-            ROS_WARN_STREAM("20");
-            double delta_x_square = pow(waypoints[i].pose.pose.position.x - waypoints[i - 1].pose.pose.position.x, 2);
-            double delta_y_square = pow(waypoints[i].pose.pose.position.y - waypoints[i - 1].pose.pose.position.y, 2);
-            //double delta_z_square = waypoints[i].pose.pose.position.z - waypoints[i - 1].pose.pose.position.z;
-            // Here we ignore z attribute because it is not used by Autoware
-            double delta_d = sqrt(delta_x_square + delta_y_square);
-            double average_v = 0.5 * (waypoints[i].twist.twist.linear.x + waypoints[i - 1].twist.twist.linear.x);
-            double delta_t = delta_d / average_v;
-            total_time += delta_t;
-            if(total_time >= time_span)
-            {
-                break;
-            }
-        }
-        return sublist;
     }
 
     std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::post_process_traj_points(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory)

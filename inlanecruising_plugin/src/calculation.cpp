@@ -9,6 +9,8 @@
 #include <tuple>
 #include <cav_msgs/ManeuverPlan.h>
 #include <cav_msgs/LaneFollowingManeuver.h>
+#include <carma_wm/WorldModel.h>
+#include <carma_wm/Geometry.h>
 #include <limits>
 
 /*
@@ -36,7 +38,6 @@ float64 longitudinal_vel
 
 namespace inlanecruising_plugin
 {
-using PointSpeedPair = std::pair<BasicPoint2d, double>;
 std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
                                                 const carma_wm::WorldModelConstPtr& wm)
 {
@@ -63,7 +64,7 @@ std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Mane
 std::vector<PointSpeedPair> downsample_points(const std::vector<PointSpeedPair>& points, int nth_point) {
   std::vector<PointSpeedPair> downsampled_points;
   
-  downsampled_points.reserve((points.size() / nth_point) + 1)
+  downsampled_points.reserve((points.size() / nth_point) + 1);
   
   for (int i = 0; i < points.size(); i += nth_point) {
     downsampled_points.push_back(points[i]);
@@ -78,7 +79,7 @@ int getNearestPointIndex(const std::vector<PointSpeedPair>& points, const cav_ms
   int i = 0;
   int best_index = 0;
   for (const auto& p : points) {
-    double distance = lanelet::geometry::distance2d(p, veh_point);
+    double distance = lanelet::geometry::distance2d(std::get<0>(p), veh_point);
     if (distance < min_distance) {
       best_index = i;
       min_distance = distance;
