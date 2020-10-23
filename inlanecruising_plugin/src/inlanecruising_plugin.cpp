@@ -361,7 +361,6 @@ namespace inlanecruising_plugin
             i++;
         }
 
-
         
         std::vector<cav_msgs::TrajectoryPlanPoint> uneven_traj = create_uneven_trajectory_from_points(all_sampling_points, final_actual_speeds, final_yaw_values, state);
         final_trajectory = post_process_traj_points(uneven_traj);
