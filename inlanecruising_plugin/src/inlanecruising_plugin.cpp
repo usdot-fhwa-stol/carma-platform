@@ -22,10 +22,12 @@
 #include <algorithm>
 #include <tf/transform_datatypes.h>
 #include "inlanecruising_plugin.h"
+#include "calculation.cpp"
 
 
 namespace inlanecruising_plugin
 {
+    using PointSpeedPair = std::pair<BasicPoint2d, double>;
     InLaneCruisingPlugin::InLaneCruisingPlugin() :
                     current_speed_(0.0),
                     trajectory_time_length_(6.0),
@@ -71,13 +73,17 @@ namespace inlanecruising_plugin
 
     bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp){
 
+
+        auto points_and_target_speeds = maneuvers_to_points(req.maneuver_plan.maneuvers);
+        auto downsampled_points = downsample_points(points_and_target_speeds, 8); // TODO make config param
+        
         ROS_WARN_STREAM("PlanTrajectory");
         cav_msgs::TrajectoryPlan trajectory;
         trajectory.header.frame_id = "map";
         trajectory.header.stamp = ros::Time::now();
         trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
         ROS_WARN_STREAM("1");
-        trajectory.trajectory_points = compose_trajectory_from_waypoints(waypoints_list);
+        trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state);
         ROS_WARN_STREAM("2");
         trajectory_msg = trajectory;
 
@@ -90,110 +96,6 @@ namespace inlanecruising_plugin
         return true;
     }
 
-    Point2DRTree InLaneCruisingPlugin::set_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints)
-    {
-        // guaranteed to get non-empty waypoints due to the protection in the callback function
-        waypoints_list = waypoints;
-        
-        Point2DRTree empty_rtree;
-        rtree = empty_rtree; // Overwrite the existing RTree
-
-        ROS_WARN_STREAM("5");
-
-        size_t index = 0;
-        ROS_WARN_STREAM("6");
-        for (auto wp : waypoints_list) {
-            ROS_WARN_STREAM("7");
-            Boost2DPoint p(wp.pose.pose.position.x, wp.pose.pose.position.y);
-            ROS_WARN_STREAM("8");
-            rtree.insert(std::make_pair(p, index));
-            ROS_WARN_STREAM("9");
-            index++;
-        }
-        return rtree; // TODO make return meaningful
-    }
-
-    int getNearestWaypointIndex(const Point2DRTree& rtree, const geometry_msgs::PoseStamped& pose_msg, const int prev_waypoint_index) {
-        Boost2DPoint vehicle_point(pose_msg.pose.position.x, pose_msg.pose.position.y);
-        std::vector<PointIndexPair> nearest_points;
-        ROS_WARN_STREAM("16");
-
-        std::vector<PointIndexPair> nearest_point;
-        rtree.query(boost::geometry::index::nearest(vehicle_point, 1), std::back_inserter(nearest_point)); // Call finds the nearest point since the returned nearest points are not sorted
-
-        rtree.query(boost::geometry::index::nearest(vehicle_point, 10), std::back_inserter(nearest_points));
-
-        ROS_WARN_STREAM("17");
-        if (nearest_points.size() == 0 || nearest_point.size() == 0) {
-            ROS_ERROR_STREAM("Failed to find nearest waypoint");
-            return -1;
-        }
-
-        int current_best_index = std::get<1>(nearest_point[0]);
-
-        ROS_WARN_STREAM("18");
-        if (prev_waypoint_index != 0) { // TODO it would be better to use -1 as the flag instead of 0
-
-            int min_index_delta = rtree.size();
-            for (auto pair : nearest_points) {
-                int index = std::get<1>(pair);
-                int index_delta = index - prev_waypoint_index;
-                if (index_delta < 0) {
-                    continue; // Ignore previous points
-                }
-                if (index_delta < min_index_delta) {
-                    min_index_delta = index_delta;
-                    current_best_index = index;
-                }
-           }   
-            
-        }
-
-        return current_best_index;
-
-
-    }
-
-    void InLaneCruisingPlugin::waypoints_cb(const autoware_msgs::LaneConstPtr& msg)
-    {
-        if(msg->waypoints.size() == 0)
-        {
-            ROS_WARN_STREAM("Received an empty trajectory!");
-            return;
-        }
-        rtree = set_waypoints(msg->waypoints);
-    }
-
-    void InLaneCruisingPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
-    {
-        pose_msg_ = msg;
-    }
-
-    void InLaneCruisingPlugin::twist_cd(const geometry_msgs::TwistStampedConstPtr& msg)
-    {
-        current_speed_ = msg->twist.linear.x;
-    }
-
-    std::vector<autoware_msgs::Waypoint> get_back_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints, size_t index, size_t mpc_back_waypoints_num) {
-        std::vector<autoware_msgs::Waypoint> back_waypoints;
-        size_t min_index = 0;
-        if (mpc_back_waypoints_num < index) {
-            min_index = std::max(0, (int)(index - mpc_back_waypoints_num));
-        } 
-
-        ROS_WARN_STREAM("Min index: " << min_index << " index: " << index << " mpc_back_waypoints_num: " << mpc_back_waypoints_num);
-
-        for (int i = index; i >= min_index; i--) {
-            back_waypoints.push_back(waypoints[i]);
-        }
-
-        ROS_WARN_STREAM("back_waypoints size: " << back_waypoints.size());
-
-        std::reverse(back_waypoints.begin(), back_waypoints.end());
-
-        ROS_WARN_STREAM("past reverse");
-        return back_waypoints;
-    }
 
     std::vector<lanelet::BasicPoint2d> waypointsToBasicPoints(const std::vector<autoware_msgs::Waypoint>& waypoints) {
         std::vector<lanelet::BasicPoint2d> basic_points;
@@ -274,7 +176,7 @@ namespace inlanecruising_plugin
     class DiscreteCurve {
         public: 
             tf2::Transform frame;
-            std::vector<lanelet::BasicPoint2d> points;
+            std::vector<PointSpeedPair> points;
     };
 
     tf2::Transform compute_heading_frame(const tf2::Vector3& p1, const tf2::Vector3& p2) {
@@ -306,7 +208,7 @@ namespace inlanecruising_plugin
         t1.getOrigin().z() == t2.getOrigin().z(); 
     }
 
-    std::vector<DiscreteCurve> compute_sub_curves(const std::vector<lanelet::BasicPoint2d>& basic_points) {
+    std::vector<DiscreteCurve> compute_sub_curves(const std::vector<PointSpeedPair>& basic_points) {
         if (basic_points.size() < 2) {
             throw std::invalid_argument("Not enough points");
         }
@@ -315,14 +217,14 @@ namespace inlanecruising_plugin
 
         std::vector<DiscreteCurve> curves;
         DiscreteCurve curve;
-        curve.frame = compute_heading_frame(point2DToTF2Vec(basic_points[0]), point2DToTF2Vec(basic_points[1]));
+        curve.frame = compute_heading_frame(point2DToTF2Vec(std::get<0>(basic_points[0])), point2DToTF2Vec(std::get<0>(basic_points[1])));
         tf2::Transform map_in_curve = curve.frame.inverse();
 
 
 
         for (int i = 0; i < basic_points.size() - 1; i++) {
-            tf2::Vector3 p1 = map_in_curve * point2DToTF2Vec(basic_points[i]);
-            tf2::Vector3 p2 = map_in_curve * point2DToTF2Vec(basic_points[i+1]); // TODO Optimization to cache this value
+            tf2::Vector3 p1 = map_in_curve * point2DToTF2Vec(std::get<0>(basic_points[i]));
+            tf2::Vector3 p2 = map_in_curve * point2DToTF2Vec(std::get<0>(basic_points[i+1])); // TODO Optimization to cache this value
             
             curve.points.push_back(tf2VecToPoint2D(p1));
 
@@ -346,139 +248,22 @@ namespace inlanecruising_plugin
         return curves;
     }
 
-    std::vector<int> compute_constant_curvature_regions(std::vector<double> curvatures, double epsilon,
-                                                                        int linearity_constraint)
-    {
-        std::vector<int> regions;
-        double cur = 0;
-        for (int i = 0; i < curvatures.size(); i++)
-        {
-            if (i == 0)
-            {
-            cur = curvatures[i];
-            }
-
-            if (std::fabs(curvatures[i] - cur) > epsilon)
-            {
-            regions.push_back(i - 1);
-            cur = curvatures[i];
-            }
-        }
-
-        regions.push_back(curvatures.size() - 1);
-
-        // Post-process for linearly increasing/decreasing regions
-        // It is assumed that the underyling dataset is itself linearly increasing
-        // or decreasing and that is is just sampling it down to the endpoint
-        std::vector<int> out;
-        for (int i = 0; i < regions.size() - 1; i++)
-        {
-            if (regions[i + 1] - regions[i] < linearity_constraint)
-            {
-            continue;
-            }
-            else
-            {
-            out.push_back(regions[i]);
-            }
-        }
-
-        out.push_back(curvatures.size() - 1);
-
-        return out;
-    }
-
-    std::vector<double> normalize_curvature_regions(std::vector<double> curvatures,
-                                                                   std::vector<int> regions)
-    {
-        int region = 0;
-        double max = 0;
-        std::vector<double> maxs;
-        for (int i = 0; i < curvatures.size(); i++)
-        {
-            if (i <= regions[region])
-            {
-                if (curvatures[i] > max)
-                {
-                    max = curvatures[i];
-                }
-            }
-            else
-            {
-                maxs.push_back(max);
-                max = 0;
-                region++;
-            }
-        }
-        maxs.push_back(max);
-
-        std::vector<double> processed_curvatures;
-        for (int i = 0; i < regions.size(); i++)
-        {
-            if (i == 0)
-            {
-                for (int j = 0; j <= regions[i]; j++)
-                {
-                    processed_curvatures.push_back(maxs[i]);
-                }
-            }
-            else
-            {
-                for (int j = 0; j <= (regions[i] - regions[i - 1]) - 1; j++)
-                {
-                    processed_curvatures.push_back(maxs[i]);
-                }
-            }
-        }
-
-        return processed_curvatures;
-    }
-
-    std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_trajectory_from_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints)
+    std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_trajectory_from_centerline(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state)
     {
         std::vector<cav_msgs::TrajectoryPlanPoint> final_trajectory;
-        int nearest_pt_index = getNearestWaypointIndex(rtree, *pose_msg_, prev_wp_index_);
-
-        if (nearest_pt_index == -1) {
-            ROS_ERROR_STREAM("Nearest waypoint not found");
-            return final_trajectory;
-        }
-
-        if (nearest_pt_index >= waypoints.size()) {
-            ROS_ERROR_STREAM("nearest_pt_index: " << nearest_pt_index << " waypoints.size(): " << waypoints.size());
-            throw std::invalid_argument("NearestPtIndex greater than waypoint list size");
-        }
-
-        prev_wp_index_ = nearest_pt_index;
+        int nearest_pt_index = getNearestPointIndex(points, state);
 
 
-        std::vector<autoware_msgs::Waypoint> future_waypoints(waypoints.begin() + nearest_pt_index + 1, waypoints.end());
-        std::vector<autoware_msgs::Waypoint> time_bound_waypoints = get_waypoints_in_time_boundary(future_waypoints, trajectory_time_length_);
-        
-        ROS_WARN("Got boundary");
-        std::vector<autoware_msgs::Waypoint> previous_waypoints = get_back_waypoints(waypoints, nearest_pt_index, mpc_back_waypoints_num_);
-        
-        ROS_WARN("Got Previous");
-        std::vector<autoware_msgs::Waypoint> combined_waypoints(previous_waypoints.begin(), previous_waypoints.end());
-
-        ROS_WARN("Got combined");
-        size_t new_nearest_wp_index = combined_waypoints.size() - 1;
-
-        ROS_WARN_STREAM("New Nearest index: " << new_nearest_wp_index);
-
-        combined_waypoints.insert( combined_waypoints.end(), time_bound_waypoints.begin(), time_bound_waypoints.end());
-
-        ROS_WARN("Concat completed ");
-
-        std::vector<lanelet::BasicPoint2d> basic_points = waypointsToBasicPoints(combined_waypoints);
+        std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end());        
 
         ROS_WARN("Got basic points ");
-        std::vector<DiscreteCurve> sub_curves = compute_sub_curves(basic_points);
+        std::vector<DiscreteCurve> sub_curves = compute_sub_curves(future_points);
 
         ROS_WARN_STREAM("Got sub_curves " << sub_curves.size());
 
         std::vector<tf2::Quaternion> final_yaw_values;
         std::vector<double> final_actual_speeds;
+        std::vector<lanelet::BasicPoint2d> final_positions;
 
         for (const auto& discreet_curve : sub_curves) {
             ROS_WARN("SubCurve");
@@ -496,7 +281,7 @@ namespace inlanecruising_plugin
             std::vector<double> sampling_points;
             sampling_points.reserve(discreet_curve.points.size());
             for (const auto& p : discreet_curve.points) {
-                sampling_points.push_back(p.x());
+                sampling_points.push_back(std::get<0>(p).x());
             }
 
              ROS_WARN("Sampled points");
@@ -508,34 +293,13 @@ namespace inlanecruising_plugin
                 ROS_WARN_STREAM("curvatures[i]: " << c);
             }
 
-            // std::vector<int> constant_curvature_regions = compute_constant_curvature_regions(curvatures, (1.0/2.0), 2.0); // TODO set parameters
-
-            // ROS_DEBUG_STREAM(" ");
-            // ROS_DEBUG_STREAM(" ");
-            // ROS_DEBUG_STREAM("Curvature Regions");
-
-            // for (auto p : constant_curvature_regions)
-            // {
-            //     ROS_DEBUG_STREAM(" Region: " << p);
-            // }
-
-            // ROS_DEBUG("Normalizing curvatures...");
-
-            std::vector<double> processed_curvatures = curvatures; //normalize_curvature_regions(curvatures, constant_curvature_regions);
-
-            ROS_DEBUG_STREAM(" ");
-            ROS_DEBUG_STREAM(" ");
-            ROS_DEBUG_STREAM("Normalized Curvatures");
-
-            for (auto p : processed_curvatures)
-            {
-                ROS_DEBUG_STREAM(" Curvature: " << p);
-            }
-
             ROS_WARN("Got curvatures");
-            std::vector<double> speed_limits(processed_curvatures.size(), 6.7056); // TODO use lanelets to get these values. Or existing waypoints
-             ROS_WARN("Got speeds limits");
-            std::vector<double> ideal_speeds = compute_ideal_speeds(processed_curvatures, 1.5);
+            std::vector<double> speed_limits;
+            std::vector<lanelet::BasicPoint2d> basic_points;
+            splitPointSpeedPairs(discreet_curve.points, &basic_points, &speed_limits);
+
+            ROS_WARN("Got speeds limits");
+            std::vector<double> ideal_speeds = compute_ideal_speeds(curvatures, 1.5);
             ROS_WARN("Got ideal limits");
             std::vector<double> actual_speeds = apply_speed_limits(ideal_speeds, speed_limits);
             ROS_WARN("Got actual");
@@ -560,10 +324,10 @@ namespace inlanecruising_plugin
         ROS_WARN("Processed all curves");
 
 
-        // Apply new values to combined waypoint set
+        // Apply new values to future waypoint set
         int i = 0;
-        for (auto& wp : combined_waypoints) {
-            if (i == combined_waypoints.size() - 1) {
+        for (auto& wp : future_points) {
+            if (i == future_points.size() - 1) {
                 break; // TODO rework loop at final yaw and speed arrays should be 1 less element than original waypoint set
             }
             ROS_WARN_STREAM("final_actual_speeds[i]: " << final_actual_speeds[i]);
