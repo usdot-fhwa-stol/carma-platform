@@ -22,7 +22,6 @@
             <remap from="/twist_raw" to="twist_raw"/>
             <rosparam command="load" file="$(arg vehicle_calibration_dir)/mpc_follower/calibration.yaml"/>
             <param name="in_waypoints_name" value="/mpc_waypoints"/>
-            <param name="enable_yaw_recalculation" value="true"/>
         </node>
     </group>
     <!-- MPC Follower Wrapper Node -->
