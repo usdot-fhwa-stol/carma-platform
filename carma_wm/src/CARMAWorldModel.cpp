@@ -222,7 +222,7 @@ TrackPos CARMAWorldModel::routeTrackPos(const lanelet::BasicPoint2d& point) cons
   return tp;
 }
 
-std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double start, double end) const
+std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double start, double end, bool shortest_path_only = false) const
 {
   // Check if the route was loaded yet
   if (!route_)
@@ -239,6 +239,9 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double st
   auto lanelet_map = route_->laneletMap();
   for (lanelet::ConstLanelet lanelet : lanelet_map->laneletLayer)
   {
+    if (shortest_path_only && shortest_path_view_->laneletLayer.exists(lanelet.id())) {
+      continue; // Continue if we are only evaluating the shortest path and this lanelet is not part of it
+    }
     lanelet::ConstLineString2d centerline = lanelet::utils::to2D(lanelet.centerline());
 
     auto front = centerline.front();
