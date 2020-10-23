@@ -21,6 +21,7 @@
 #include <boost/optional/optional.hpp>
 #include <algorithm>
 #include <tf/transform_datatypes.h>
+#include <lanelet2_core/geometry/Point.h>
 #include "inlanecruising_plugin.h"
 #include "calculation.cpp"
 
@@ -263,7 +264,7 @@ namespace inlanecruising_plugin
 
         std::vector<tf2::Quaternion> final_yaw_values;
         std::vector<double> final_actual_speeds;
-        std::vector<lanelet::BasicPoint2d> final_positions;
+        std::vector<lanelet::BasicPoint2d> all_sampling_points;
 
         for (const auto& discreet_curve : sub_curves) {
             ROS_WARN("SubCurve");
@@ -278,17 +279,39 @@ namespace inlanecruising_plugin
             }
 
             ROS_WARN("Got fit");
-            std::vector<double> sampling_points;
-            sampling_points.reserve(discreet_curve.points.size());
-            for (const auto& p : discreet_curve.points) {
-                sampling_points.push_back(std::get<0>(p).x());
+
+            std::vector<lanelet::BasicPoint2d> sampling_points;
+            sampling_points.reserve(1 + discreet_curve.points.size() * 2);
+
+            double totalDist = 0;
+            bool firstLoop = true;
+            lanelet::BasicPoint2d prev_point(0.0, 0.0);
+            for (auto p : discreet_curve.points) {
+                if (firstLoop) {
+                    prev_point = p; 
+                    firstLoop = false;
+                    continue;
+                }
+                
+                totalDist += lanelet::geometry::distance2d(prev_point, p);
+            }
+
+            double current_dist = 0;
+            double step_size = 1; // TODO make parameter
+            tk::spline actual_fit_curve = fit_curve.get();
+            while(current_dist < totalDist - step_size) {
+                double x = current_dist;
+                double y = actual_fit_curve(x);
+                lanelet::BasicPoint2d p(x, y);
+                sampling_points.push_back(p);
+                current_dist += step_size;
             }
 
              ROS_WARN("Sampled points");
-            std::vector<double> yaw_values = compute_orientation_from_fit(fit_curve.get(), sampling_points);
+            std::vector<double> yaw_values = compute_orientation_from_fit(actual_fit_curve, sampling_points);
 
              ROS_WARN("Got yaw");
-            std::vector<double> curvatures = compute_curvature_from_fit(fit_curve.get(), sampling_points);
+            std::vector<double> curvatures = compute_curvature_from_fit(actual_fit_curve, sampling_points);
             for (auto c : curvatures) {
                 ROS_WARN_STREAM("curvatures[i]: " << c);
             }
@@ -312,6 +335,11 @@ namespace inlanecruising_plugin
                 tf2::Transform c_to_yaw(rot_mat); // NOTE: I'm pretty certain the origin does not matter here but unit test to confirm
                 tf2::Transform m_to_yaw = discreet_curve.frame * c_to_yaw;
                 final_yaw_values.push_back(m_to_yaw.getRotation());
+
+                tf2::Vector3 vec = point2DToTF2Vec(sampling_points[i]);
+                tf2::Vector3 map_frame_vec = discreet_curve.frame * vec;
+                all_sampling_points.push_back(tf2VecToPoint2D(map_frame_vec));
+
             }
 
             ROS_WARN("Converted yaw to quat");
@@ -324,35 +352,19 @@ namespace inlanecruising_plugin
         ROS_WARN("Processed all curves");
 
 
-        // Apply new values to future waypoint set
         int i = 0;
-        for (auto& wp : future_points) {
-            if (i == future_points.size() - 1) {
+        for (auto speed : final_actual_speeds) {
+            if (i == final_actual_speeds.size() - 1) {
                 break; // TODO rework loop at final yaw and speed arrays should be 1 less element than original waypoint set
             }
             ROS_WARN_STREAM("final_actual_speeds[i]: " << final_actual_speeds[i]);
             ROS_WARN_STREAM("final_yaw_values[i]: " << final_yaw_values[i]);
-            wp.twist.twist.linear.x = final_actual_speeds[i];
-            tf2::convert(final_yaw_values[i], wp.pose.pose.orientation);
             i++;
         }
 
-        ROS_WARN("Created waypoints");
 
-        autoware_msgs::Lane lane;
-        lane.lane_id = 1;
-
-        std_msgs::Header header;
-        header.frame_id = "map";
-        header.seq = 0;
-        header.stamp = ros::Time::now();
-        lane.header = header;
-        lane.waypoints = combined_waypoints;
-
-        base_waypoints_pub_.publish(lane);
         
-        std::vector<autoware_msgs::Waypoint> final_waypoints(combined_waypoints.begin() + new_nearest_wp_index + 1, combined_waypoints.end());
-        std::vector<cav_msgs::TrajectoryPlanPoint> uneven_traj = create_uneven_trajectory_from_waypoints(final_waypoints);
+        std::vector<cav_msgs::TrajectoryPlanPoint> uneven_traj = create_uneven_trajectory_from_points(all_sampling_points, final_actual_speeds, final_yaw_values);
         final_trajectory = post_process_traj_points(uneven_traj);
 
 
@@ -360,7 +372,8 @@ namespace inlanecruising_plugin
     }
 
 // TODO comments: Takes in a waypoint list that is from the next waypoint till the time boundary
-    std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::create_uneven_trajectory_from_waypoints(const std::vector<autoware_msgs::Waypoint>& waypoints)
+    std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::create_uneven_trajectory_from_points(const std::vector<lanelet::BasicPoint2d>& points,
+    const std::vector<double>& speeds, const std::vector<tf2::Quaternion>& orientations, const cav_msgs::VehicleState& state)
     {
         std::vector<cav_msgs::TrajectoryPlanPoint> uneven_traj;
         // TODO land id is not populated because we are not using it in Autoware
@@ -369,15 +382,13 @@ namespace inlanecruising_plugin
         // Add vehicle location as first point
         cav_msgs::TrajectoryPlanPoint starting_point;
         starting_point.target_time = ros::Time(0.0);
-        starting_point.x = pose_msg_->pose.position.x;
-        starting_point.y = pose_msg_->pose.position.y;
-        double roll,pitch,yaw;
-        carma_wm::geometry::rpyFromQuaternion(pose_msg_->pose.orientation, roll, pitch, yaw);
-        starting_point.yaw = yaw;
+        starting_point.x = state.X_pos_global;
+        starting_point.y = state.Y_pos_global;
+        starting_point.yaw = state.orientation;
         uneven_traj.push_back(starting_point);
 
-        if (waypoints.size() == 0) {
-            ROS_ERROR_STREAM("Trying to create uneven trajectory from 0 waypoints");
+        if (points.size() == 0) {
+            ROS_ERROR_STREAM("Trying to create uneven trajectory from 0 points");
             return uneven_traj;
         }
         // Update previous wp
@@ -389,29 +400,30 @@ namespace inlanecruising_plugin
 
         ROS_WARN_STREAM("previous_wp_v" << previous_wp_v);
 
-        for(int i = 0; i < waypoints.size(); i++)
+        for(int i = 0; i < points.size(); i++)
         {
 
 
             cav_msgs::TrajectoryPlanPoint traj_point;
             // assume the vehicle is starting from stationary state because it is the same assumption made by pure pursuit wrapper node
             double average_speed = std::max(previous_wp_v, 1.2352); // TODO need better solution for this
-            double delta_d = sqrt(pow(waypoints[i].pose.pose.position.x - previous_wp_x, 2) + pow(waypoints[i].pose.pose.position.y - previous_wp_y, 2));
-            if (waypoints[i].twist.twist.linear.x > previous_wp_v){
+            double delta_d = sqrt(pow(points[i].x() - previous_wp_x, 2) + pow(points[i].y() - previous_wp_y, 2));
+            if (speeds[i] > previous_wp_v){
                 average_speed = sqrt(previous_wp_v*previous_wp_v + 2*smooth_accel_*delta_d);
             }
-            if (waypoints[i].twist.twist.linear.x < previous_wp_v){
+            if (speeds[i] < previous_wp_v){
                 average_speed = sqrt(previous_wp_v*previous_wp_v - 2*smooth_accel_*delta_d);
             }
             ros::Duration delta_t(delta_d / average_speed);
             traj_point.target_time = previous_wp_t + delta_t;
-            traj_point.x = waypoints[i].pose.pose.position.x;
-            traj_point.y = waypoints[i].pose.pose.position.y;
-            carma_wm::geometry::rpyFromQuaternion(waypoints[i].pose.pose.orientation, roll, pitch, yaw);
+            traj_point.x = points[i].x();
+            traj_point.y = points[i].y();
+            double roll,pitch,yaw;
+            carma_wm::geometry::rpyFromQuaternion(orientations[i], roll, pitch, yaw);
             traj_point.yaw = yaw;
             uneven_traj.push_back(traj_point);
 
-            previous_wp_v = std::min(average_speed, waypoints[i].twist.twist.linear.x);
+            previous_wp_v = std::min(average_speed, speeds[i]);
             previous_wp_x = uneven_traj.back().x;
             previous_wp_y = uneven_traj.back().y;
             previous_wp_y = uneven_traj.back().y;
@@ -491,39 +503,40 @@ namespace inlanecruising_plugin
 
     }
 
-    std::vector<double> InLaneCruisingPlugin::compute_orientation_from_fit(tk::spline curve, std::vector<double> sampling_points){
+    std::vector<double> InLaneCruisingPlugin::compute_orientation_from_fit(tk::spline curve, std::vector<lanelet::BasicPoint2d> sampling_points){
         std::vector<double> orientations;
         std::vector<double> cur_point{0.0, 0.0};
         std::vector<double> next_point{0.0, 0.0};
         double lookahead = 0.3;
-        for (size_t i=0; i<sampling_points.size(); i++){
-            cur_point[0] = sampling_points[i];
-            cur_point[1] = curve(cur_point[0]);
-            next_point[0] = cur_point[0] + lookahead;
-            next_point[1] = curve(next_point[0]);
+        for (size_t i=0; i<sampling_points.size() - 1; i++){
+            cur_point[0] = sampling_points[i].x();
+            cur_point[1] = sampling_points[i].y();
+            next_point[0] = sampling_points[i+1].x();
+            next_point[1] = sampling_points[i+1].y();
             double res = calculate_yaw(cur_point, next_point);
             orientations.push_back(res);
 
         }
+        orientations.push_back(orientations.back());
         return orientations;
     }
 
-    std::vector<double> InLaneCruisingPlugin::compute_curvature_from_fit(tk::spline curve, std::vector<double> sampling_points){
+    std::vector<double> InLaneCruisingPlugin::compute_curvature_from_fit(tk::spline curve, std::vector<lanelet::BasicPoint2d> sampling_points){
         std::vector<double> curvatures;
         std::vector<double> cur_point{0.0, 0.0};
         std::vector<double> next_point{0.0, 0.0};
         double lookahead = 0.3;
         ROS_WARN_STREAM("Computing Curvatures");
-        for (size_t i=0; i<sampling_points.size(); i++){
-            cur_point[0] = sampling_points[i];
-            cur_point[1] = curve(cur_point[0]);
-            ROS_WARN_STREAM("sampling_points[i]: " << cur_point[0] << ", " << cur_point[1]);
-            next_point[0] = cur_point[0] + lookahead;
-            next_point[1] = curve(next_point[0]);
+        for (size_t i=0; i<sampling_points.size() - 1; i++) {
+            cur_point[0] = sampling_points[i].x();
+            cur_point[1] = sampling_points[i].y();
+            next_point[0] = sampling_points[i+1].x();
+            next_point[1] = sampling_points[i+1].y();
             double cur = calculate_curvature(cur_point, next_point);
             curvatures.push_back(fabs(cur)); // TODO now using abs think in more detail if this will cause issues
 
         }
+        curvatures.push_back(curvatures.back());
         return curvatures;
     }
 
