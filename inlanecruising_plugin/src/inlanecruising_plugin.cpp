@@ -49,7 +49,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
                                               cav_srvs::PlanTrajectoryResponse& resp)
 {
   auto points_and_target_speeds = maneuvers_to_points(req.maneuver_plan.maneuvers, wm_);
-  auto downsampled_points = downsample_points(points_and_target_speeds, 8);  // TODO make config param
+  auto downsampled_points = downsample_points(points_and_target_speeds, config_.downsample_ratio);
 
   ROS_WARN_STREAM("PlanTrajectory");
   cav_msgs::TrajectoryPlan trajectory;
@@ -289,7 +289,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
     }
 
     double current_dist = 0;
-    double step_size = 1;  // TODO make parameter
+    double step_size = config_.curve_resample_step_size; 
     tk::spline actual_fit_curve = fit_curve.get();
     while (current_dist < totalDist - step_size)
     {
@@ -420,7 +420,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::create_uneven_t
     {
       set_speed = std::max(lookahead_speed, sqrt(previous_wp_v * previous_wp_v - 2 * smooth_accel_ * delta_d));
     }
-    set_speed = std::max(set_speed, 2.2352);  // TODO need better solution for this
+    set_speed = std::max(set_speed, config_.minimum_speed);  // TODO need better solution for this
     ros::Duration delta_t(delta_d / previous_wp_v);
     traj_point.target_time = previous_wp_t + delta_t;
     traj_point.x = points[i].x();
