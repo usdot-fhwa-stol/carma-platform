@@ -16,13 +16,13 @@
 
 #include <ros/ros.h>
 
-#include "inlanecruising_plugin.h"
+#include "inlanecruising_plugin_node.h"
 
 int main(int argc, char** argv)
 {
   
     ros::init(argc, argv, "inlanecruising_plugin");
-    inlanecruising_plugin::InLaneCruisingPlugin ip;
+    inlanecruising_plugin::InLaneCruisingPluginNode ip;
     ip.run();
     return 0;
 

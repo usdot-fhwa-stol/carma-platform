@@ -1,6 +1,6 @@
 # The length of the trajectory in time domain, in seconds
 trajectory_time_length: 6.0
-# The spacing between two consecutive trajectory points, in seconds
-trajectory_point_spacing: 0.1
-# Acceleration/Decceleration limit for smooth speed changes
-smooth_accel_: 0.5
+curve_resample_step_size: 1.0 # todo comments
+downsample_ratio: 8.0
+minimum_speed: 2.2352
+lookahead_count: 8
