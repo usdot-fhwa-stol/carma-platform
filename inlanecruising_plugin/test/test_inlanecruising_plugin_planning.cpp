@@ -29,7 +29,7 @@ TEST(InLaneCruisingPluginTest, testPlanningCallback)
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
 
-  auto map = carma_wm::test::buildGuidanceTestMap(3.7, 25);
+  auto map = carma_wm::test::buildGuidanceTestMap(3.7, 10);
 
   wm->setMap(map);
   carma_wm::test::setSpeedLimit(15_mph, wm);

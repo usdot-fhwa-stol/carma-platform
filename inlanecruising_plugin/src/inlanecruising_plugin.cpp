@@ -52,6 +52,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
 
   ROS_WARN_STREAM("points_and_target_speeds: " << points_and_target_speeds.size());
   auto downsampled_points = downsample_points(points_and_target_speeds, config_.downsample_ratio);
+  auto time_bound_points = points_in_time_boundary(downsampled_points, config_.trajectory_time_length);
   ROS_WARN_STREAM("downsample_points: " << downsampled_points.size());
 
   ROS_WARN_STREAM("PlanTrajectory");
@@ -60,7 +61,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   trajectory.header.stamp = ros::Time::now();
   trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
   ROS_WARN_STREAM("1");
-  trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state);
+  trajectory.trajectory_points = compose_trajectory_from_centerline(time_bound_points, req.vehicle_state);
   ROS_WARN_STREAM("2");
 
   resp.trajectory_plan = trajectory;

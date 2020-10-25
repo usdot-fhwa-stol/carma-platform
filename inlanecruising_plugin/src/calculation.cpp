@@ -39,6 +39,36 @@ float64 longitudinal_vel
 
 namespace inlanecruising_plugin
 {
+
+std::vector<PointSpeedPair> points_in_time_boundary(const std::vector<PointSpeedPair>& points, double time_span) {
+  std::vector<PointSpeedPair> output;
+  output.reserve(points.size());
+  double current_time = 0;
+  PointSpeedPair prev_pair;
+  bool first = true;
+  for (const auto& p : points) {
+    if (current_time > time_span) {
+      return output;
+    }
+
+    if (first) {
+      output.push_back(p);
+      prev_pair = p;
+      first = false;
+      continue;
+    }
+
+    double delta_d = lanelet::geometry::distance2d(std::get<0>(p), std::get<0>(prev_pair));
+
+    current_time += delta_d / std::get<1>(prev_pair);
+
+    output.push_back(p);
+    prev_pair = p;
+  }
+
+  return output;
+}
+
 std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
                                                 const carma_wm::WorldModelConstPtr& wm)
 {
