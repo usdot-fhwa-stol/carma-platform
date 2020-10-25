@@ -48,6 +48,7 @@ bool InLaneCruisingPlugin::onSpin()
 bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req,
                                               cav_srvs::PlanTrajectoryResponse& resp)
 {
+  ros::WallTime start_time = ros::WallTime::now();
   lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
   double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
   auto points_and_target_speeds = maneuvers_to_points(req.maneuver_plan.maneuvers, current_downtrack, wm_);
@@ -71,6 +72,11 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
   ROS_WARN_STREAM("3");
+
+  ros::WallTime end_time = ros::WallTime::now();
+
+  ros::WallDuration duration = end_time - start_time;
+  ROS_WARN_STREAM("ExecutionTime: " << duration.toSec());
 
   return true;
 }
@@ -335,6 +341,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
     }
 
     ROS_WARN("Sampled points");
+    for (auto p: sampling_points) {
+      ROS_WARN_STREAM("sample_point: " << p.x() << ", " << p.y());
+    }
     std::vector<double> yaw_values = compute_orientation_from_fit(actual_fit_curve, sampling_points);
 
     ROS_WARN("Got yaw");
