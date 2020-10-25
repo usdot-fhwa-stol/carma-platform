@@ -48,7 +48,9 @@ bool InLaneCruisingPlugin::onSpin()
 bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req,
                                               cav_srvs::PlanTrajectoryResponse& resp)
 {
-  auto points_and_target_speeds = maneuvers_to_points(req.maneuver_plan.maneuvers, wm_);
+  lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
+  double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
+  auto points_and_target_speeds = maneuvers_to_points(req.maneuver_plan.maneuvers, current_downtrack, wm_);
 
   ROS_WARN_STREAM("points_and_target_speeds: " << points_and_target_speeds.size());
   auto downsampled_points = downsample_points(points_and_target_speeds, config_.downsample_ratio);
@@ -242,6 +244,12 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 {
 
     ROS_WARN_STREAM("points size: " << points.size());
+
+  for (auto pair: points) {
+    auto p = std::get<0>(pair);
+    ROS_WARN_STREAM("p: " << p.x() << ", " << p.y());
+  }
+
   std::vector<cav_msgs::TrajectoryPlanPoint> final_trajectory;
   int nearest_pt_index = getNearestPointIndex(points, state);
 
@@ -339,7 +347,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
     ROS_WARN("Got curvatures");
 
     ROS_WARN("Got speeds limits");
-    std::vector<double> ideal_speeds = compute_ideal_speeds(curvatures, 1.5);
+    std::vector<double> ideal_speeds = compute_ideal_speeds(curvatures, config_.lateral_accel_limit);
     ROS_WARN("Got ideal limits");
     std::vector<double> actual_speeds = apply_speed_limits(ideal_speeds, distributed_speed_limits);
     ROS_WARN("Got actual");
@@ -370,12 +378,27 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   ROS_WARN("Processed all curves");
 
   int i = 0;
-  for (auto speed : final_actual_speeds)
+  double average;
+  std::vector<double> samples;
+  int sample_size = 5;
+  for (auto& speed : final_actual_speeds)
   {
     if (i == final_actual_speeds.size() - 1)
     {
       break;  // TODO rework loop at final yaw and speed arrays should be 1 less element than original waypoint set
     }
+
+    if (i < sample_size) {
+      samples.push_back(final_actual_speeds[i]);
+    }
+
+    double total = 0;
+    for (auto s: samples) {
+      total += s;
+    }
+
+    double average = total / samples.size();
+    speed = average;
     ROS_WARN_STREAM("final_actual_speeds[i]: " << final_actual_speeds[i]);
     ROS_WARN_STREAM("final_yaw_values[i]: " << final_yaw_values[i]);
     i++;

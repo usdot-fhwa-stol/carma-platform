@@ -53,6 +53,7 @@ public:
     pnh_->param<double>("minimum_speed", config.minimum_speed, config.minimum_speed);
     pnh_->param<int>("lookahead_count", config.lookahead_count, config.lookahead_count);
     pnh_->param<double>("/vehicle_acceleration_limit", config.max_accel, config.max_accel);
+    pnh_->param<double>("/vehicle_lateral_accel_limit", config.lateral_accel_limit, config.lateral_accel_limit);
 
     InLaneCruisingPlugin worker(
         wm_, config, std::bind(&InLaneCruisingPluginNode::publishPluginDiscovery, this, std::placeholders::_1));

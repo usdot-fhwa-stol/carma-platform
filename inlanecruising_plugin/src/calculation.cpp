@@ -70,12 +70,13 @@ std::vector<PointSpeedPair> points_in_time_boundary(const std::vector<PointSpeed
 }
 
 std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
-                                                const carma_wm::WorldModelConstPtr& wm)
+                                                double max_starting_downtrack, const carma_wm::WorldModelConstPtr& wm)
 {
   std::vector<PointSpeedPair> points_and_target_speeds;
   std::unordered_set<lanelet::Id> visited_lanelets;
 
-
+  bool first = true;
+  ROS_WARN_STREAM("VehDowntrack: " << max_starting_downtrack);
   for (const auto& manuever : maneuvers)
   {
     if (manuever.type != cav_msgs::Maneuver::LANE_FOLLOWING)
@@ -85,7 +86,17 @@ std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Mane
 
     cav_msgs::LaneFollowingManeuver lane_following_maneuver = manuever.lane_following_maneuver;
 
-    auto lanelets = wm->getLaneletsBetween(lane_following_maneuver.start_dist, lane_following_maneuver.end_dist, true);
+    double starting_downtrack = lane_following_maneuver.start_dist;
+    if (first) {
+      if (starting_downtrack > max_starting_downtrack) {
+        starting_downtrack = max_starting_downtrack;
+      }
+      first = false;
+    }
+
+    ROS_WARN_STREAM("Used downtrack: " << starting_downtrack);
+
+    auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist, true);
 
     ROS_WARN_STREAM("Maneuver");
     std::vector<lanelet::ConstLanelet> lanelets_to_add;
@@ -130,12 +141,15 @@ std::vector<PointSpeedPair> downsample_points(const std::vector<PointSpeedPair>&
 int getNearestPointIndex(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state)
 {
   lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
+  ROS_WARN_STREAM("veh_point: " << veh_point.x() << ", " << veh_point.y());
   double min_distance = std::numeric_limits<double>::max();
   int i = 0;
   int best_index = 0;
   for (const auto& p : points)
   {
     double distance = lanelet::geometry::distance2d(std::get<0>(p), veh_point);
+    ROS_WARN_STREAM("distance: " << distance);
+    ROS_WARN_STREAM("p: " << std::get<0>(p).x() << ", " << std::get<0>(p).y());
     if (distance < min_distance)
     {
       best_index = i;
