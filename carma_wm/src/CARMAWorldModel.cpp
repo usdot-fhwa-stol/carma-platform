@@ -239,7 +239,7 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double st
   auto lanelet_map = route_->laneletMap();
   for (lanelet::ConstLanelet lanelet : lanelet_map->laneletLayer)
   {
-    if (shortest_path_only && shortest_path_view_->laneletLayer.exists(lanelet.id())) {
+    if (shortest_path_only && !shortest_path_view_->laneletLayer.exists(lanelet.id())) {
       continue; // Continue if we are only evaluating the shortest path and this lanelet is not part of it
     }
     lanelet::ConstLineString2d centerline = lanelet::utils::to2D(lanelet.centerline());

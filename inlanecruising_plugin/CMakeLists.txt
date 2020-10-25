@@ -61,12 +61,12 @@ include_directories(
 )
 
 add_executable( ${PROJECT_NAME}
-  src/inlanecruising_plugin.cpp
   src/main.cpp)
 add_library(inlanecruising_plugin_library src/inlanecruising_plugin.cpp)
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-add_dependencies(inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
+add_dependencies(inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS} ${Boost_LIBRARIES})
+
+target_link_libraries(${PROJECT_NAME} inlanecruising_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+add_dependencies(${PROJECT_NAME} inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
@@ -92,6 +92,9 @@ install(DIRECTORY launch config
 ## Testing ##
 #############
 
-catkin_add_gmock(${PROJECT_NAME}-test test/test_inlanecruising_plugin.cpp)
+catkin_add_gmock(${PROJECT_NAME}-test test/test_inlanecruising_plugin_planning.cpp)
 target_link_libraries(${PROJECT_NAME}-test inlanecruising_plugin_library ${catkin_LIBRARIES})
+
+# catkin_add_gmock(${PROJECT_NAME}-test test/test_inlanecruising_plugin.cpp)
+# target_link_libraries(${PROJECT_NAME}-test inlanecruising_plugin_library ${catkin_LIBRARIES})
 

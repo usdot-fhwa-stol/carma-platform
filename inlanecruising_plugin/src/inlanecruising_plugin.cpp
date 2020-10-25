@@ -49,7 +49,10 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
                                               cav_srvs::PlanTrajectoryResponse& resp)
 {
   auto points_and_target_speeds = maneuvers_to_points(req.maneuver_plan.maneuvers, wm_);
+
+  ROS_WARN_STREAM("points_and_target_speeds: " << points_and_target_speeds.size());
   auto downsampled_points = downsample_points(points_and_target_speeds, config_.downsample_ratio);
+  ROS_WARN_STREAM("downsample_points: " << downsampled_points.size());
 
   ROS_WARN_STREAM("PlanTrajectory");
   cav_msgs::TrajectoryPlan trajectory;
@@ -236,8 +239,12 @@ std::vector<DiscreteCurve> compute_sub_curves(const std::vector<PointSpeedPair>&
 std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_trajectory_from_centerline(
     const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state)
 {
+
+    ROS_WARN_STREAM("points size: " << points.size());
   std::vector<cav_msgs::TrajectoryPlanPoint> final_trajectory;
   int nearest_pt_index = getNearestPointIndex(points, state);
+
+  ROS_WARN_STREAM("NearestPtIndex: " << nearest_pt_index);
 
   std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end());
 
@@ -272,10 +279,16 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
     std::vector<lanelet::BasicPoint2d> sampling_points;
     sampling_points.reserve(1 + discreet_curve.points.size() * 2);
+    
+    std::vector<double> distributed_speed_limits;
+    distributed_speed_limits.reserve(1 + discreet_curve.points.size() * 2);
 
     double totalDist = 0;
     bool firstLoop = true;
     lanelet::BasicPoint2d prev_point(0.0, 0.0);
+    std::vector<std::pair<double, double>> limit_distance_pairs;
+    limit_distance_pairs.reserve(basic_points.size());
+    int current_p_i = 0;
     for (auto p : basic_points)
     {
       if (firstLoop)
@@ -286,17 +299,29 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
       }
 
       totalDist += lanelet::geometry::distance2d(prev_point, p);
+      limit_distance_pairs.push_back(std::make_pair(speed_limits[current_p_i], totalDist));
+      current_p_i++;
     }
 
     double current_dist = 0;
     double step_size = config_.curve_resample_step_size; 
     tk::spline actual_fit_curve = fit_curve.get();
+    int current_pair_index = 0;
     while (current_dist < totalDist - step_size)
     {
       double x = current_dist;
       double y = actual_fit_curve(x);
       lanelet::BasicPoint2d p(x, y);
       sampling_points.push_back(p);
+
+      for (size_t i = current_pair_index; i < limit_distance_pairs.size(); i++) {
+        if (std::get<1>(limit_distance_pairs[i]) >= current_dist) {
+            current_pair_index = i;
+            break;
+        }
+      }
+
+      distributed_speed_limits.push_back(std::get<0>(limit_distance_pairs[current_pair_index]));
       current_dist += step_size;
     }
 
@@ -315,7 +340,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
     ROS_WARN("Got speeds limits");
     std::vector<double> ideal_speeds = compute_ideal_speeds(curvatures, 1.5);
     ROS_WARN("Got ideal limits");
-    std::vector<double> actual_speeds = apply_speed_limits(ideal_speeds, speed_limits);
+    std::vector<double> actual_speeds = apply_speed_limits(ideal_speeds, distributed_speed_limits);
     ROS_WARN("Got actual");
 
     for (int i = 0; i < yaw_values.size() - 1; i++)
@@ -385,7 +410,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::create_uneven_t
     return uneven_traj;
   }
   // Update previous wp
-  double previous_wp_v = std::max(state.longitudinal_vel, 2.2352);
+  double previous_wp_v = std::max(state.longitudinal_vel, config_.minimum_speed);
   double previous_wp_x = starting_point.x;
   double previous_wp_y = starting_point.y;
   double previous_wp_yaw = starting_point.yaw;
@@ -396,7 +421,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::create_uneven_t
   for (int i = 0; i < points.size(); i++)
   {
     double lookahead_speed = 0;
-    int lookahead_wp = 8;
+    int lookahead_wp = config_.lookahead_count;
     if (i + lookahead_wp < points.size() - 1)
     {
       lookahead_speed = speeds[i + lookahead_wp];
@@ -409,18 +434,24 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::create_uneven_t
     cav_msgs::TrajectoryPlanPoint traj_point;
     // assume the vehicle is starting from stationary state because it is the same assumption made by pure pursuit
     // wrapper node
-    double delta_d = sqrt(pow(points[i].x() - previous_wp_x, 2) + pow(points[i].y() - previous_wp_y, 2));
+    // TODO NOTE: In order to graph this data there is an hidden requirement here that the original centerline data be spaced at a smaller resolution than our sampling size so that the first point of the resampled result is no less than two sampling size away from the starting point
+    double delta_d = sqrt(pow(points[i].x() - previous_wp_x, 2) + pow(points[i].y() - previous_wp_y, 2)); 
+    ROS_WARN_STREAM("delta_d: " << delta_d << " lookahead speed: " << lookahead_speed);
     double set_speed = 0;
     double smooth_accel_ = config_.max_accel / 2.0; // TODO is this ok?
     if (lookahead_speed > previous_wp_v)
     {
       set_speed = std::min(lookahead_speed, sqrt(previous_wp_v * previous_wp_v + 2 * smooth_accel_ * delta_d));
-    }
-    if (lookahead_speed < previous_wp_v)
+
+    } else if (lookahead_speed < previous_wp_v)
     {
       set_speed = std::max(lookahead_speed, sqrt(previous_wp_v * previous_wp_v - 2 * smooth_accel_ * delta_d));
+
+    } else { // Equal speed
+        set_speed = lookahead_speed;
     }
     set_speed = std::max(set_speed, config_.minimum_speed);  // TODO need better solution for this
+    ROS_WARN_STREAM("set_speed: " << set_speed);
     ros::Duration delta_t(delta_d / previous_wp_v);
     traj_point.target_time = previous_wp_t + delta_t;
     traj_point.x = points[i].x();

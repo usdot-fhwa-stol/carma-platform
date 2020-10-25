@@ -12,6 +12,7 @@
 #include <carma_wm/WorldModel.h>
 #include <carma_wm/Geometry.h>
 #include <limits>
+#include <unordered_set>
 
 /*
 #
@@ -42,6 +43,8 @@ std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Mane
                                                 const carma_wm::WorldModelConstPtr& wm)
 {
   std::vector<PointSpeedPair> points_and_target_speeds;
+  std::unordered_set<lanelet::Id> visited_lanelets;
+
 
   for (const auto& manuever : maneuvers)
   {
@@ -53,10 +56,26 @@ std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Mane
     cav_msgs::LaneFollowingManeuver lane_following_maneuver = manuever.lane_following_maneuver;
 
     auto lanelets = wm->getLaneletsBetween(lane_following_maneuver.start_dist, lane_following_maneuver.end_dist, true);
-    lanelet::BasicLineString2d route_geometry = carma_wm::geometry::concatenate_lanelets(lanelets);
 
+    ROS_WARN_STREAM("Maneuver");
+    std::vector<lanelet::ConstLanelet> lanelets_to_add;
+    for (auto l: lanelets) {
+      ROS_WARN_STREAM("Lanelet ID: " << l.id());
+      if (visited_lanelets.find(l.id()) == visited_lanelets.end()) {
+        lanelets_to_add.push_back(l);
+        visited_lanelets.insert(l.id());
+      }
+    }
+    
+    lanelet::BasicLineString2d route_geometry = carma_wm::geometry::concatenate_lanelets(lanelets_to_add);
+
+    bool first = true;
     for (auto p : route_geometry)
     {
+      if (first && points_and_target_speeds.size() != 0) {
+        first = false;
+        continue; // Skip the first point if we have already added points from a previous maneuver to avoid duplicates
+      }
       points_and_target_speeds.push_back(std::make_pair(p, lane_following_maneuver.end_speed));
     }
   }

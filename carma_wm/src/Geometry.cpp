@@ -332,6 +332,9 @@ getLocalCurvatures(const std::vector<lanelet::ConstLanelet>& lanelets)
 
 lanelet::BasicLineString2d concatenate_lanelets(const std::vector<lanelet::ConstLanelet>& lanelets)
 {
+  if (lanelets.size() == 0) {
+    return lanelet::BasicLineString2d();
+  }
   lanelet::BasicLineString2d centerline_points = lanelets[0].centerline2d().basicLineString();
   lanelet::BasicLineString2d new_points;
   for (size_t i = 1; i < lanelets.size(); i++) {
