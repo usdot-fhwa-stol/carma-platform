@@ -20,6 +20,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/optional/optional.hpp>
 #include <algorithm>
+#include <deque>
 #include <tf/transform_datatypes.h>
 #include <lanelet2_core/geometry/Point.h>
 #include "inlanecruising_plugin.h"
@@ -348,6 +349,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
     ROS_WARN("Got yaw");
     std::vector<double> curvatures = compute_curvature_from_fit(actual_fit_curve, sampling_points);
+    curvatures = moving_average_filter(curvatures, config_.moving_average_window_size);
     for (auto c : curvatures)
     {
       ROS_WARN_STREAM("curvatures[i]: " << c);
@@ -357,8 +359,14 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
     ROS_WARN("Got speeds limits");
     std::vector<double> ideal_speeds = compute_ideal_speeds(curvatures, config_.lateral_accel_limit);
+    for (auto s: ideal_speeds) {
+      ROS_WARN_STREAM("ideal_speeds: " << s);
+    }
     ROS_WARN("Got ideal limits");
     std::vector<double> actual_speeds = apply_speed_limits(ideal_speeds, distributed_speed_limits);
+    for (auto s: actual_speeds) {
+      ROS_WARN_STREAM("actual_speeds: " << s);
+    }
     ROS_WARN("Got actual");
 
     for (int i = 0; i < yaw_values.size() - 1; i++)
@@ -386,28 +394,14 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   ROS_WARN("Processed all curves");
 
+  final_actual_speeds = moving_average_filter(final_actual_speeds, config_.moving_average_window_size);
+
   int i = 0;
-  double average;
-  std::vector<double> samples;
-  int sample_size = 5;
   for (auto& speed : final_actual_speeds)
   {
-    if (i == final_actual_speeds.size() - 1)
-    {
-      break;  // TODO rework loop at final yaw and speed arrays should be 1 less element than original waypoint set
+    if (i == final_actual_speeds.size() - 1) {
+      break; // TODO double check why this is needed
     }
-
-    if (i < sample_size) {
-      samples.push_back(final_actual_speeds[i]);
-    }
-
-    double total = 0;
-    for (auto s: samples) {
-      total += s;
-    }
-
-    double average = total / samples.size();
-    speed = average;
     ROS_WARN_STREAM("final_actual_speeds[i]: " << final_actual_speeds[i]);
     ROS_WARN_STREAM("final_yaw_values[i]: " << final_yaw_values[i]);
     i++;
