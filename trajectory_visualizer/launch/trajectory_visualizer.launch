@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+	<node pkg="trajectory_visualizer" type="trajectory_visualizer" name="trajectory_visualizer" output="log" />
+</launch>
