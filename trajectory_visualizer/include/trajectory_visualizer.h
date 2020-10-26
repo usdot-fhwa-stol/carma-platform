@@ -27,6 +27,8 @@ namespace trajectory_visualizer {
      * TrajectoryVisualizer publishes 
      * 
     */ 
+    const double MPH_TO_MS = 0.44704;
+    
     class TrajectoryVisualizer
     {
 
@@ -59,7 +61,9 @@ namespace trajectory_visualizer {
         // callbacks
         void callbackPlanTrajectory(const cav_msgs::TrajectoryPlan& msg);
 
-        // variables we are not saving it at this point
+        // variables    
+        double max_speed_;
+        // we are not saving every trajectory history at this point
         //visualization_msgs::MarkerArray g_global_marker_array; 
     };
 

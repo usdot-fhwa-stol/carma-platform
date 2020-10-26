@@ -31,6 +31,7 @@ namespace trajectory_visualizer {
         // init CARMANodeHandle
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
+        pnh_->param<double>("max_speed", max_speed_, 25.0);
          // init publishers
         traj_marker_pub_ = nh_->advertise<visualization_msgs::MarkerArray>("trajectory_visualizer", 1, true);
 
@@ -50,13 +51,13 @@ namespace trajectory_visualizer {
         marker.header = msg.header;
         marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
         marker.action = visualization_msgs::Marker::ADD;
+        marker.scale.x = 0.4;
+        marker.scale.y = 0.4;
         marker.scale.z = 0.4;
         marker.frame_locked = true;
 
-        //some for
         for (auto i = 1; i < msg.trajectory_points.size(); i++)
         {
-            
             ros::Duration dt = msg.trajectory_points[i].target_time - msg.trajectory_points[i - 1].target_time;
             
             double dx = msg.trajectory_points[i].x - msg.trajectory_points[i-1].x;
@@ -67,20 +68,30 @@ namespace trajectory_visualizer {
 
             // map color to the scale of the speed
             // red being the highest, green being the lowest (0ms)
-            double max_speed = 
+            double max_speed = max_speed_ * MPH_TO_MS;
             
-            velocity.id = i;
-            geometry_msgs::Point relative_p;
-            relative_p.y = -0.65;
-            velocity.pose.position = calcAbsoluteCoordinate(relative_p, lane_waypoint.waypoints[i].pose.pose);
-            velocity.pose.position.z += 0.2;
+            ROS_DEBUG_STREAM("Speed:" << speed << "ms, max_speed:" << max_speed << "ms");
+            if (speed > max_speed) 
+            {
+                ROS_DEBUG_STREAM("Speed was big, so capped at " << max_speed << "ms");
+                speed = max_speed;
+            }
+
+            marker.color.r = 1.0f * speed / max_speed;
+            marker.color.g = 1.0f - marker.color.r;
+            marker.color.b = 0.0f;
+            marker.color.a = 0.0f;
+
+            marker.id = i;
+            marker.pose.position.x =  msg.trajectory_points[i-1].x;
+            marker.pose.position.y =  msg.trajectory_points[i-1].y;
 
             // double to string
             std::ostringstream oss;
-            oss << std::fixed << std::setprecision(1) << mps2kmph(lane_waypoint.waypoints[i].twist.twist.linear.x);
-            velocity.text = oss.str();
+            oss << std::fixed << std::setprecision(1) << speed;
+            marker.text = oss.str();
 
-            tmp_marker_array.markers.push_back(velocity);
+            tmp_marker_array.markers.push_back(marker);
         }
 
         traj_marker_pub_.publish(tmp_marker_array);
