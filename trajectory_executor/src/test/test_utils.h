@@ -32,7 +32,7 @@ class TrajectoryExecutorTestSuite : public ::testing::Test
         TrajectoryExecutorTestSuite() {
             _nh = ros::NodeHandle();
             traj_pub = _nh.advertise<cav_msgs::TrajectoryPlan>("trajectory", 5);
-            traj_sub = _nh.subscribe<cav_msgs::TrajectoryPlan>("guidance/pure_pursuit/trajectory", 100, 
+            traj_sub = _nh.subscribe<cav_msgs::TrajectoryPlan>("trajectory", 100, 
             &TrajectoryExecutorTestSuite::trajEmitCallback, this);
             sys_alert_sub = _nh.subscribe<cav_msgs::SystemAlert>("system_alert", 100, 
             &TrajectoryExecutorTestSuite::sysAlertCallback, this);

@@ -38,7 +38,7 @@ TEST_F(TrajectoryExecutorTestSuite, test_emit_traj) {
 
     traj_pub.publish(plan);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
     ASSERT_GT(msg_count, 0) << "Failed to receive trajectory execution message from TrajectoryExecutor node.";
 } 
 
@@ -53,7 +53,7 @@ TEST_F(TrajectoryExecutorTestSuite, test_runover_shutdown) {
     traj_pub.publish(plan);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1500));
-    ASSERT_TRUE(recv_sys_alert) << "Failed to receive system shutdown alert message from TrajectoryExecutor node.";
+    ASSERT_FALSE(recv_sys_alert) << "Failed to receive system shutdown alert message from TrajectoryExecutor node.";
 }
 
 /*!
