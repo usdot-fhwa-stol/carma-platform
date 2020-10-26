@@ -48,12 +48,14 @@ namespace trajectory_visualizer {
         visualization_msgs::MarkerArray tmp_marker_array;
         // display by markers the velocity between each trajectory point/target time.
         visualization_msgs::Marker marker;
-        marker.header = msg.header;
-        marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+        marker.header.frame_id = "map";
+        marker.header.stamp = ros::Time();
+        marker.type = visualization_msgs::Marker::ARROW;
         marker.action = visualization_msgs::Marker::ADD;
-        marker.scale.x = 0.4;
-        marker.scale.y = 0.4;
-        marker.scale.z = 0.4;
+        
+        marker.scale.x = 1;
+        marker.scale.y = 1;
+        marker.scale.z = 1;
         marker.frame_locked = true;
 
         for (auto i = 1; i < msg.trajectory_points.size(); i++)
@@ -80,21 +82,25 @@ namespace trajectory_visualizer {
             marker.color.r = 1.0f * speed / max_speed;
             marker.color.g = 1.0f - marker.color.r;
             marker.color.b = 0.0f;
-            marker.color.a = 0.0f;
+            marker.color.a = 1.0f;
 
             marker.id = i;
-            marker.pose.position.x =  msg.trajectory_points[i-1].x;
-            marker.pose.position.y =  msg.trajectory_points[i-1].y;
+            marker.points = {};
+            geometry_msgs::Point start;
+            start.x = msg.trajectory_points[i-1].x;
+            start.y = msg.trajectory_points[i-1].y;
 
-            // double to string
-            std::ostringstream oss;
-            oss << std::fixed << std::setprecision(1) << speed;
-            marker.text = oss.str();
+            geometry_msgs::Point end;
+            end.x = msg.trajectory_points[i].x;
+            end.y = msg.trajectory_points[i].y;
+            marker.points.push_back(start);
+            marker.points.push_back(end);
 
             tmp_marker_array.markers.push_back(marker);
         }
 
         traj_marker_pub_.publish(tmp_marker_array);
     }
+    
 }
 

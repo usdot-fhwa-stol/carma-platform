@@ -20,7 +20,6 @@
 #include <cav_msgs/TrajectoryPlan.h>
 #include <carma_utils/CARMAUtils.h>
 #include <visualization_msgs/MarkerArray.h>
-
 namespace trajectory_visualizer {
 
     /**
