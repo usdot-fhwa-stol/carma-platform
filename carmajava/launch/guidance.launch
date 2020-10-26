@@ -188,4 +188,9 @@
     <arg name="route_file_folder" value="$(arg route_file_folder)"/>
   </include>
 
+  <!-- Trajectory Plan Speed Visualizer -->
+  <group>
+    <include file="$(find trajectory_visualizer)/launch/trajectory_visualizer.launch" />
+  </group>
+
 </launch>
