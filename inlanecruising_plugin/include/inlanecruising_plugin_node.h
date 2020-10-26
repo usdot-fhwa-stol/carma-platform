@@ -63,6 +63,7 @@ public:
                                             &InLaneCruisingPlugin::plan_trajectory_cb, &worker);
 
     ros::CARMANodeHandle::setSpinCallback(std::bind(&InLaneCruisingPlugin::onSpin, &worker));
+    ros::CARMANodeHandle::spin();
   }
 
   void publishPluginDiscovery(const cav_msgs::Plugin& msg)

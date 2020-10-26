@@ -51,6 +51,9 @@ std::vector<PointSpeedPair> points_in_time_boundary(const std::vector<PointSpeed
       return output;
     }
 
+   ROS_WARN_STREAM("Evaluating time of point: " << std::get<0>(p).x() << ", " << std::get<0>(p).y());
+
+
     if (first) {
       output.push_back(p);
       prev_pair = p;

@@ -98,7 +98,7 @@ namespace route_following_plugin
         }
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
         double speed_progress = current_speed_;
-        double total_maneuver_length = current_progress + mvr_duration_ * RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
+        double total_maneuver_length = current_progress + mvr_duration_ * RouteFollowingPlugin::FIFTEEN_MPH_IN_MS;
         
         while(current_progress < total_maneuver_length && last_lanelet_index < shortest_path.size())
         {
@@ -114,11 +114,11 @@ namespace route_following_plugin
 
             resp.new_plan.maneuvers.push_back(
                 composeManeuverMessage(current_progress, end_dist, 
-                                       speed_progress, RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS, 
+                                       speed_progress, RouteFollowingPlugin::FIFTEEN_MPH_IN_MS, 
                                        shortest_path[last_lanelet_index].id(), ros::Time::now()));
 
             current_progress += dist_diff;
-            speed_progress = RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
+            speed_progress = RouteFollowingPlugin::FIFTEEN_MPH_IN_MS;
             if(current_progress >= total_maneuver_length || last_lanelet_index == shortest_path.size() - 1)
             {
                 break;

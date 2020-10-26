@@ -1,7 +1,7 @@
 # The length of the trajectory in time domain, in seconds
 trajectory_time_length: 6.0
 curve_resample_step_size: 1.0 # todo comments
-downsample_ratio: 8.0
+downsample_ratio: 8
 minimum_speed: 2.2352
 lookahead_count: 8
 moving_average_window_size: 5

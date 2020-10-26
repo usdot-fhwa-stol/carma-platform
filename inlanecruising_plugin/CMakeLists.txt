@@ -63,7 +63,8 @@ include_directories(
 add_executable( ${PROJECT_NAME}
   src/main.cpp)
 add_library(inlanecruising_plugin_library src/inlanecruising_plugin.cpp)
-add_dependencies(inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS} ${Boost_LIBRARIES})
+target_link_libraries(inlanecruising_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+add_dependencies(inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(${PROJECT_NAME} inlanecruising_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(${PROJECT_NAME} inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
@@ -77,7 +78,7 @@ install(DIRECTORY include
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} inlanecruising_plugin_library
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

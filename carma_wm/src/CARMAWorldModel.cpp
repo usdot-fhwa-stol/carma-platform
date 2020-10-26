@@ -222,6 +222,23 @@ TrackPos CARMAWorldModel::routeTrackPos(const lanelet::BasicPoint2d& point) cons
   return tp;
 }
 
+class LaneletDowntrackPair
+{
+  public:
+    lanelet::ConstLanelet lanelet_;
+    double downtrack_ = 0;
+
+    LaneletDowntrackPair(lanelet::ConstLanelet lanelet, double downtrack) : lanelet_(lanelet), downtrack_(downtrack) {}
+    bool operator<(const LaneletDowntrackPair& pair) const
+    {
+      return this->downtrack_ < pair.downtrack_;
+    }
+    bool operator>(const LaneletDowntrackPair& pair) const
+    {
+      return this->downtrack_ > pair.downtrack_;
+    }
+};
+
 std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double start, double end, bool shortest_path_only) const
 {
   // Check if the route was loaded yet
@@ -234,7 +251,8 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double st
     throw std::invalid_argument("Start distance is greater than or equal to end distance");
   }
 
-  std::vector<lanelet::ConstLanelet> vec;
+  std::vector<lanelet::ConstLanelet> output;
+  std::priority_queue<LaneletDowntrackPair,  std::vector<LaneletDowntrackPair>, std::greater<LaneletDowntrackPair>> prioritized_lanelets;
 
   auto lanelet_map = route_->laneletMap();
   for (lanelet::ConstLanelet lanelet : lanelet_map->laneletLayer)
@@ -255,10 +273,18 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double st
       continue;
     }
     // Intersection has occurred so add lanelet to list
-    vec.push_back(lanelet);
+    LaneletDowntrackPair pair(lanelet, min.downtrack);
+    prioritized_lanelets.push(pair);
   }
 
-  return vec;
+  output.reserve(prioritized_lanelets.size());
+  while(!prioritized_lanelets.empty()) {
+    auto pair = prioritized_lanelets.top();
+    prioritized_lanelets.pop();
+    output.push_back(pair.lanelet_);
+  }
+
+  return output;
 }
 
 lanelet::LaneletMapConstPtr CARMAWorldModel::getMap() const
