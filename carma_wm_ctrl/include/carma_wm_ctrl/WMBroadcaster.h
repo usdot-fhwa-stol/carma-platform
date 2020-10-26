@@ -31,6 +31,7 @@
 #include <carma_wm/MapConformer.h>
 
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
+#include <lanelet2_core/utility/Units.h>
 #include <cav_msgs/TrafficControlMessage.h>
 #include <carma_wm/TrafficControl.h>
 #include <std_msgs/String.h>
@@ -105,6 +106,11 @@ public:
    */
   void setMaxLaneWidth(double max_lane_width);
 
+/*!
+   * \brief Sets the configured speed limit. 
+   */
+  void setConfigSpeedLimit(double cL);
+  
   /*!
    * \brief Returns geofence object from TrafficControlMessageV01 ROS Msg
    * \param geofence_msg The ROS msg that contains geofence information
@@ -113,6 +119,8 @@ public:
    */
   std::shared_ptr<Geofence> geofenceFromMsg(const cav_msgs::TrafficControlMessageV01& geofence_msg);
 
+
+  
 private:
   void addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const;
   void addBackRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) const;
@@ -123,6 +131,7 @@ private:
   std::unordered_set<lanelet::Lanelet> filterSuccessorLanelets(const std::unordered_set<lanelet::Lanelet>& possible_lanelets, const std::unordered_set<lanelet::Lanelet>& root_lanelets);
   lanelet::LaneletMapPtr base_map_;
   lanelet::LaneletMapPtr current_map_;
+  lanelet::Velocity config_limit;
   std::unordered_set<std::string>  checked_geofence_ids_;
   std::vector<lanelet::LaneletMapPtr> cached_maps_;
   std::mutex map_mutex_;
