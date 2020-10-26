@@ -33,7 +33,7 @@ namespace trajectory_visualizer {
         pnh_.reset(new ros::CARMANodeHandle("~"));
         pnh_->param<double>("max_speed", max_speed_, 25.0);
          // init publishers
-        traj_marker_pub_ = nh_->advertise<visualization_msgs::MarkerArray>("trajectory_visualizer", 1, true);
+        traj_marker_pub_ = nh_->advertise<visualization_msgs::MarkerArray>("trajectory_visualizer", 1);
 
         // init subscribers
         traj_sub_ = nh_->subscribe("plan_trajectory", 1, &TrajectoryVisualizer::callbackPlanTrajectory, this);
@@ -53,8 +53,8 @@ namespace trajectory_visualizer {
         marker.type = visualization_msgs::Marker::ARROW;
         marker.action = visualization_msgs::Marker::ADD;
         
-        marker.scale.x = 1;
-        marker.scale.y = 1;
+        marker.scale.x = 2;
+        marker.scale.y = 2;
         marker.scale.z = 1;
         marker.frame_locked = true;
 
@@ -79,10 +79,31 @@ namespace trajectory_visualizer {
                 speed = max_speed;
             }
 
-            marker.color.r = 1.0f * speed / max_speed;
-            marker.color.g = 1.0f - marker.color.r;
+            marker.color.r = 0.0f;
+            marker.color.g = 0.0f;
             marker.color.b = 0.0f;
             marker.color.a = 1.0f;
+
+
+            double ratio = speed / max_speed;
+            if (ratio >= 0.75f)
+            {
+                marker.color.r = 1.0f;
+            }
+            else if (ratio >= 0.5f)
+            {
+                marker.color.b = 1.0f;
+            }
+            else if (ratio >= 0.25)
+            {
+                marker.color.b = 1.0f;
+                marker.color.g = 1.0f;
+
+            }
+            else if (ratio >= 0.0)
+            {
+                marker.color.g = 1.0f;
+            }
 
             marker.id = i;
             marker.points = {};
