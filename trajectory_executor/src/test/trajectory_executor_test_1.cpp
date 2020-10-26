@@ -53,7 +53,7 @@ TEST_F(TrajectoryExecutorTestSuite, test_runover_shutdown) {
     traj_pub.publish(plan);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1500));
-    ASSERT_FALSE(recv_sys_alert) << "Failed to receive system shutdown alert message from TrajectoryExecutor node.";
+    ASSERT_TRUE(recv_sys_alert) << "Failed to receive system shutdown alert message from TrajectoryExecutor node.";
 }
 
 /*!

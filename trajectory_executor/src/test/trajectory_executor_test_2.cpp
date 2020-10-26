@@ -28,7 +28,7 @@ TEST_F(TrajectoryExecutorTestSuite, test_emit_multiple) {
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
-    ASSERT_LE(msg_count, 10) << "Failed to receive whole trajectory from TrajectoryExecutor node.";
+    ASSERT_LE(10, msg_count) << "Failed to receive whole trajectory from TrajectoryExecutor node.";
     ASSERT_TRUE(shrinking) << "Output trajectory plans were not shrunk each time step as expected.";
 }
 
