@@ -86,6 +86,8 @@ namespace health_monitor
 
 
             // spin callback function
+            bool is_published_truck[9] = {false};
+            bool is_published_car[7] = {false};
             bool spin_cb();
     };
 }
