@@ -150,29 +150,6 @@
   </group>
 
   <!-- Planning Stack -->
-  <!-- Waypoint_loader config-->
-  <node pkg="rostopic" type="rostopic" name="config_waypoint_replanner_rostopic"
-        args="pub -l /config/waypoint_replanner autoware_config_msgs/ConfigWaypointReplanner '{replanning_mode: false, velocity_max: 10.0, velocity_min: 1.0, accel_limit: 0.98, decel_limit: 0.98, radius_thresh: 20.0, radius_min: 6.0, resample_mode: true, resample_interval: 1.0, velocity_offset: 4, end_point_offset: 5}' "
-  />
-  
-  <!-- Waypoint Generator -->
-  <group>
-    <remap from="carma_waypoints" to="base/lane_waypoints_raw"/>
-    <include file="$(find waypoint_generator)/launch/waypoint_generator.launch"/>
-  </group>
-      
-  <node pkg="waypoint_maker" type="waypoint_marker_publisher" name="waypoint_marker_publisher">
-    <remap from="lane_waypoints_array" to="base/lane_waypoints_raw"/>
-    <remap from="final_waypoints" to="carma_final_waypoints"/>
-    <remap from="traffic_waypoints_array" to="base/lane_waypoints_raw"/>
-  </node>
-
-  <!-- Lane Array to Lane Converter -->
-  <node pkg="lane_array_to_lane_converter" type="lane_array_to_lane_converter" name="lane_array_to_lane_converter">
-      <remap from="traffic_waypoints_array" to="base/lane_waypoints_raw"/>
-  </node>
-
-  <!-- Velocity Set -->
   
   <!-- Inlanecruising Plugin -->
   <group>
