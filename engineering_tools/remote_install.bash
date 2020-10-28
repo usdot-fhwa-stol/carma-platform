@@ -112,11 +112,10 @@ LOCAL_CARMA_DIR=${PWD}
 echo "Installing to ${HOST} as user: ${USERNAME}..."
 
 # Define paths for files to copy from src
-LAUNCH_DIR="${LOCAL_CARMA_DIR}/carmajava/launch"
-PARAMS_DIR="${LOCAL_CARMA_DIR}/carmajava/launch/params"
-ROUTES_DIR="${LOCAL_CARMA_DIR}/carmajava/route/src/test/resources/routes"
-URDF_DIR="${LOCAL_CARMA_DIR}/carmajava/launch/urdf"
-MOCK_DATA_DIR="${LOCAL_CARMA_DIR}/carmajava/mock_drivers/src/config/data"
+LAUNCH_DIR="${LOCAL_CARMA_DIR}/carma/launch"
+PARAMS_DIR="${LOCAL_CARMA_DIR}/carma/launch/params"
+ROUTES_DIR="${LOCAL_CARMA_DIR}/carma/route/src/test/resources/routes"
+URDF_DIR="${LOCAL_CARMA_DIR}/carma/launch/urdf"
 WEBSITE_DIR="${CATKIN_WS}/src/CARMAWebUi/website"
 SCRIPTS_DIR="${LOCAL_CARMA_DIR}/engineering_tools"
 
@@ -210,20 +209,6 @@ if [ ${EVERYTHING} == true ] || [ ${EXECUTABLES} == true ]; then
 		# Run install
 		catkin_make install
 	fi
-
-	# Find Version Number
-	GUIDANCE_MAVEN="${INSTALL_DIR}/share/maven/gov/dot/fhwa/saxton/carma/guidance"
-	cd "${GUIDANCE_MAVEN}" # Go to Maven directory for guidance
-	VERSION="$(ls -d */)"
-	VERSION=${VERSION::(-1)} # Remove backslash on directory name
-	GUIDANCE_JAR="${GUIDANCE_MAVEN}/${VERSION}/guidance-${VERSION}.jar"
-	cd "${LOCAL_CARMA_DIR}" # Return to carma directory
-	# Extract version number file
-	jar xf ${GUIDANCE_JAR} version
-	FULL_VERSION_ID="${VERSION}.$(sed -n 1p version)-$(sed -n 2p version)"
-	FULL_VERSION_ID="$(echo "${FULL_VERSION_ID}" | tr \( \- | tr -d \) )" # Replace bad characters ( and )
-	echo "Version appears to be: ${FULL_VERSION_ID}"
-	rm version
 
 	# Helper function for determining the index of a substring in a string
 	substring_index () {
@@ -329,18 +314,6 @@ if [ ${EVERYTHING} == true ] || [ ${LAUNCH} == true ] || [ ${EXECUTABLES} == tru
 	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT_1} ${SCRIPT_2} ${SCRIPT_3}"
 		# Update permissions script
 	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${APP_DIR}/launch/*; chmod -R ${UG_PERMISSIONS} ${APP_DIR}/launch/*; chmod -R ${O_PERMISSIONS} ${APP_DIR}/launch/*;"
-fi
-
-# If we want to copy mock data files
-if [ ${EVERYTHING} == true ] || [ ${MOCK_DATA} == true ]; then
-	echo "Trying to copy mock_data ..."
-	# Delete old files
-	SCRIPT="rm -r ${APP_DIR}/mock_data/*;"
-	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${USERNAME} ${HOST} "${SCRIPT}"
-	# Copy the launch file to the remote machine using current symlink
-	scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${MOCK_DATA_DIR}/." ${USERNAME}@${HOST}:"${APP_DIR}/mock_data/"
-	# Update permissions script
-	PERMISSIONS_SCRIPT="${PERMISSIONS_SCRIPT} chgrp -R ${GROUP} ${APP_DIR}/mock_data/*; chmod -R ${UG_PERMISSIONS} ${APP_DIR}/mock_data/*; chmod -R ${O_PERMISSIONS} ${APP_DIR}/mock_data/*;"
 fi
 
 # If we want to copy website  files

@@ -28,10 +28,6 @@
 
   <arg name="mock_driver_launch_file" default="$(find rosbag_mock_drivers)/launch/mock_drivers.launch" doc="mock_driver.launch file location"/>
 
-  <!-- Debug -->
-  <!-- Set to true to enable debugging on the specified node -->
-  <arg name="debug_node" default="" doc="Set to the java node base name to enable debugging on that node"/>
-
   <!-- Simulation Usage -->
   <arg name="mock_drivers" default="controller can comms gnss radar lidar camera roadway_sensor imu lightbar" doc="List of driver node base names which will be launched as mock drivers"/>
 

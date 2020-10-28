@@ -31,7 +31,7 @@ echo 'Updating routes folder'
 # if [ ! -d "routes" ]; then # if routes folder does not exist then make it
 #   mkdir /opt/carma/routes
 # fi
-sudo cp -R -r /opt/carma/src/CarmaPlatform/carmajava/route/src/test/resources/routefiles/* /opt/carma/routes/
+sudo cp -R -r /opt/carma/src/CarmaPlatform/carma/route/src/test/resources/routefiles/* /opt/carma/routes/
 
 echo 'Deleting files from html folder and copying new files ...'
 cd /var/www/html

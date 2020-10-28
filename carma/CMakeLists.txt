@@ -32,7 +32,6 @@ find_package(catkin REQUIRED
         autoware_msgs
         derived_object_msgs
         radar_msgs
-        rosjava_utils
 )
 # Enable integration tests using python
 #if(CATKIN_ENABLE_TESTING)
@@ -46,7 +45,7 @@ catkin_package()
 # Installation
 ##############################################################################
 
-# Instal Binaries from Gradle Build folder
+# Instal Binaries
 install(DIRECTORY
         launch
         routes

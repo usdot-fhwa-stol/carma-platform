@@ -22,7 +22,6 @@
   Also sets up all static transforms used by tf2 within the system.
 
   Use:
-  First delete the generated build/scripts folder in all java packages.
   rostest carma transform_server_integration.test
   After using source devel/setup.bash from workspace root.
 
