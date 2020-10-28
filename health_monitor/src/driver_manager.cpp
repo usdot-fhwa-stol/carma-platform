@@ -206,13 +206,13 @@ namespace health_monitor
             else if(are_critical_drivers_operational_truck(time_now)=="s_1_l1_0_l2_0_g_0")
             {
                 alert.description = "LIDARS and GPS Failed";
-                alert.type = cav_msgs::SystemAlert::FATAL;
+                alert.type = cav_msgs::SystemAlert::SHUTDOWN;
                 return alert;
             }
             else if(are_critical_drivers_operational_truck(time_now)=="s_0")
             {
                 alert.description = "SSC Failed";
-                alert.type = cav_msgs::SystemAlert::FATAL;
+                alert.type = cav_msgs::SystemAlert::SHUTDOWN;
                 return alert;
             }
             else
@@ -252,13 +252,13 @@ namespace health_monitor
             else if(are_critical_drivers_operational_car(time_now)=="s_1_l_0_g_0")
             {
                 alert.description = "LIDAR, GPS Failed";
-                alert.type = cav_msgs::SystemAlert::FATAL;
+                alert.type = cav_msgs::SystemAlert::SHUTDOWN;
                 return alert; 
             }
             else if(are_critical_drivers_operational_car(time_now)=="s_0")
             {
                 alert.description = "SSC Failed";
-                alert.type = cav_msgs::SystemAlert::FATAL;
+                alert.type = cav_msgs::SystemAlert::SHUTDOWN;
                 return alert; 
             }
             else
