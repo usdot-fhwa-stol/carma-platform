@@ -31,7 +31,7 @@ namespace trajectory_visualizer {
         // init CARMANodeHandle
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
-        pnh_->param<double>("max_speed", max_speed_, 25.0);
+        nh_->param<double>("max_speed", max_speed_, 25.0);
          // init publishers
         traj_marker_pub_ = nh_->advertise<visualization_msgs::MarkerArray>("trajectory_visualizer", 1);
 

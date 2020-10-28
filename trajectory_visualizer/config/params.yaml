@@ -14,4 +14,4 @@
 
 # Double: Maximum speed to map the red color to
 # Units: mph
-max_speed: 25
+max_speed: 15.0
