@@ -79,7 +79,6 @@
   <group ns="$(env CARMA_INTR_NS)">
     <include file="$(find carma)/launch/hardware_interface.launch">
       <arg name="mock_drivers" value="$(arg mock_drivers)"/>
-      <arg name="debug_node" value="$(arg debug_node)"/>
       <arg name="launch_drivers" value="$(arg launch_drivers)"/>
       <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
     </include>
@@ -100,9 +99,7 @@
 
   <!-- Comms Messaging Stack -->
   <group ns="$(env CARMA_MSG_NS)">
-    <include file="$(find carma)/launch/message.launch">
-      <arg name="debug_node" value="$(arg debug_node)"/>
-    </include>
+    <include file="$(find carma)/launch/message.launch"/>
   </group>
 
   <!-- Environment Perception Stack -->
