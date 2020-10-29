@@ -44,8 +44,6 @@
     doc="List of driver node base names which will be launched as mock drivers"
   />
   <arg name="simulation_mode" default="false" doc="True if CARMA Platform is launched with CARLA Simulator"/>
-  
-  <!-- Debug -->
 
   <!-- Logging -->
   <!-- C++ Logging -->

@@ -33,11 +33,6 @@ find_package(catkin REQUIRED
         derived_object_msgs
         radar_msgs
 )
-# Enable integration tests using python
-#if(CATKIN_ENABLE_TESTING)
-#  find_package(rostest REQUIRED)
-#  add_rostest(test/transform_server_integration.test)
-#endif()
 
 catkin_package()
 
