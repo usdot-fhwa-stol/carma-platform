@@ -50,6 +50,3 @@ install(DIRECTORY
 install(DIRECTORY
         ui/config
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/ui)
-install(DIRECTORY
-        test
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/test)
