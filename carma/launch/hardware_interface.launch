@@ -28,10 +28,6 @@
   <!-- Startup Drivers With Main CARMA System -->
   <arg name="launch_drivers" default="true" doc="True if drivers are to be launched with the CARMA Platform, overrides mock_drivers arg if false"/>
 
-  <!-- Debug -->
-  <!-- Set to true to enable debugging on the specified node -->
-  <arg name="debug_node" default="" doc="Set to the java node base name to enable debugging on that node. Requires JVM_DEBUG_OPTS environment variable to be set"/>
-
   <!-- Remap topics from external packages -->
   <remap from="ui_instructions" to="$(optenv CARMA_UI_NS)/ui_instructions"/>
 
