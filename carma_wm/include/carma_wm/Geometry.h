@@ -262,6 +262,14 @@ void rpyFromQuaternion(const geometry_msgs::Quaternion& q_msg, double& roll, dou
  */
 std::vector<geometry_msgs::Quaternion> compute_tangent_orientations(lanelet::BasicLineString2d centerline);
 
+// TODO comments
+Eigen::Isometry2d build2dEigenTransform(const Eigen::Vector2d& position, const Eigen::Rotation2Dd& rotation);
+
+Eigen::Isometry3d build3dEigenTransform(const Eigen::Vector3d& position, const Eigen::Quaterniond& rotation);
+
+Eigen::Isometry3d build3dEigenTransform(const Eigen::Vector3d& position, const Eigen::AngleAxisd& rotation);
+
+
 }  // namespace geometry
 
 }  // namespace carma_wm

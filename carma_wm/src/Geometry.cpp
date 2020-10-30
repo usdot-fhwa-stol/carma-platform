@@ -513,6 +513,24 @@ compute_tangent_orientations(lanelet::BasicLineString2d centerline)
   return out;
 }
 
+Eigen::Isometry2d build2dEigenTransform(const Eigen::Vector2d& position, const Eigen::Rotation2Dd& rotation) {
+  Eigen::Vector2d scale(1.0, 1.0);
+  Eigen::Isometry2d tf;
+  return tf.fromPositionOrientationScale(position, rotation, scale);;
+}
+
+Eigen::Isometry3d build3dEigenTransform(const Eigen::Vector3d& position, const Eigen::Quaterniond& rotation) {
+  Eigen::Vector3d scale(1.0, 1.0, 1.0);
+  Eigen::Isometry3d tf;
+  return tf.fromPositionOrientationScale(position, rotation, scale);
+}
+
+Eigen::Isometry3d build3dEigenTransform(const Eigen::Vector3d& position, const Eigen::AngleAxisd& rotation) {
+  Eigen::Vector3d scale(1.0, 1.0, 1.0);
+  Eigen::Isometry3d tf;
+  return tf.fromPositionOrientationScale(position, rotation, scale);
+}
+
 }  // namespace geometry
 
 }  // namespace carma_wm

@@ -74,8 +74,6 @@ namespace inlanecruising_plugin
         std::vector<cav_msgs::TrajectoryPlanPoint> create_uneven_trajectory_from_points(const std::vector<lanelet::BasicPoint2d>& points,
             const std::vector<double>& speeds, const std::vector<tf2::Quaternion>& orientations, const cav_msgs::VehicleState& state);
 
-        // postprocess traj to add plugin names and shift time origin to the current ROS time
-        std::vector<cav_msgs::TrajectoryPlanPoint> post_process_traj_points(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory);
 
     };
 
