@@ -22,18 +22,23 @@ add_compile_options(-std=c++14)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
-## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS
+set( CATKIN_DEPS
   roscpp
   std_msgs
   cav_msgs
   cav_srvs
   carma_utils
+  trajectory_utils
   autoware_msgs
   carma_wm
   tf
   tf2
   tf2_geometry_msgs
+)
+
+## Find catkin macros and libraries
+find_package(catkin REQUIRED COMPONENTS
+ ${CATKIN_DEPS}
 )
 
 ## System dependencies are found with CMake's conventions
@@ -45,7 +50,7 @@ find_package(Eigen3 REQUIRED)
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils cav_msgs autoware_msgs carma_wm tf tf2 tf2_geometry_msgs
+  CATKIN_DEPENDS ${CATKIN_DEPS}
   DEPENDS Boost Eigen3
 )
 

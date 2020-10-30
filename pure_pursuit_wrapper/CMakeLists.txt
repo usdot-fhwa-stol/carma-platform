@@ -12,7 +12,7 @@ set(CMAKE_CXX_FLAGS "-lboost_system")
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
+set( CATKIN_DEPS 
   cav_msgs
   roscpp
   rospy
@@ -22,6 +22,12 @@ find_package(catkin REQUIRED COMPONENTS
   autoware_config_msgs
   message_filters
   carma_utils
+  trajectory_utils
+  carma_wm
+)
+
+find_package(catkin REQUIRED COMPONENTS
+  ${CATKIN_DEPS}
 )
 
 ## System dependencies are found with CMake's conventions
@@ -119,8 +125,7 @@ add_dependencies(pure_pursuit_wrapper_worker_library ${catkin_EXPORTED_TARGETS})
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES pure_pursuit_wrapper_worker_library
- CATKIN_DEPENDS cav_msgs roscpp rospy std_msgs geometry_msgs autoware_msgs carma_utils
-#  DEPENDS system_lib
+ CATKIN_DEPENDS ${CATKIN_DEPS}
  DEPENDS Boost
 )
 

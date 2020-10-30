@@ -23,9 +23,14 @@
 #include <deque>
 #include <tf/transform_datatypes.h>
 #include <lanelet2_core/geometry/Point.h>
+#include <trajectory_utils/trajectory_utils.h>
+#include <trajectory_utils/conversions/conversions.h>
+#include <sstream>
+#include <carma_utils/containers/containers.h>
 #include "inlanecruising_plugin.h"
 #include "calculation.cpp"
 
+using std::ostringstream = oss;
 namespace inlanecruising_plugin
 {
 InLaneCruisingPlugin::InLaneCruisingPlugin(carma_wm::WorldModelConstPtr wm, InLaneCruisingPluginConfig config,
@@ -54,43 +59,31 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
   auto points_and_target_speeds = maneuvers_to_points(req.maneuver_plan.maneuvers, current_downtrack, wm_);
 
-  ROS_WARN_STREAM("points_and_target_speeds: " << points_and_target_speeds.size());
-  auto downsampled_points = downsample_points(points_and_target_speeds, config_.downsample_ratio);
-  ROS_WARN_STREAM("downsample_points: " << downsampled_points.size());
+  ROS_DEBUG_STREAM("points_and_target_speeds: " << points_and_target_speeds.size());
+  auto downsampled_points = carma_utils::containers::downsample_vector(points_and_target_speeds, config_.downsample_ratio);
+  ROS_DEBUG_STREAM("downsample_points: " << downsampled_points.size());
 
-  ROS_WARN_STREAM("PlanTrajectory");
+  ROS_DEBUG_STREAM("PlanTrajectory");
   cav_msgs::TrajectoryPlan trajectory;
   trajectory.header.frame_id = "map";
   trajectory.header.stamp = ros::Time::now();
   trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
-  ROS_WARN_STREAM("1");
+  ROS_DEBUG_STREAM("1");
   trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state);
-  ROS_WARN_STREAM("2");
+  ROS_DEBUG_STREAM("2");
 
   resp.trajectory_plan = trajectory;
   resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_FOLLOWING);
   resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
-  ROS_WARN_STREAM("3");
+  ROS_DEBUG_STREAM("3");
 
   ros::WallTime end_time = ros::WallTime::now();
 
   ros::WallDuration duration = end_time - start_time;
-  ROS_WARN_STREAM("ExecutionTime: " << duration.toSec());
+  ROS_DEBUG_STREAM("ExecutionTime: " << duration.toSec());
 
   return true;
-}
-
-std::vector<lanelet::BasicPoint2d> waypointsToBasicPoints(const std::vector<autoware_msgs::Waypoint>& waypoints)
-{
-  std::vector<lanelet::BasicPoint2d> basic_points;
-  for (auto wp : waypoints)
-  {
-    lanelet::BasicPoint2d pt(wp.pose.pose.position.x, wp.pose.pose.position.y);
-    basic_points.push_back(pt);
-  }
-
-  return basic_points;
 }
 
 double compute_speed_for_curvature(double curvature, double lateral_accel_limit)
@@ -110,6 +103,7 @@ double compute_speed_for_curvature(double curvature, double lateral_accel_limit)
   }
   return std::sqrt(fabs(lateral_accel_limit / curvature));
 }
+
 std::vector<double> compute_ideal_speeds(std::vector<double> curvatures, double lateral_accel_limit)
 {
   std::vector<double> out;
@@ -245,35 +239,48 @@ std::vector<DiscreteCurve> compute_sub_curves(const std::vector<PointSpeedPair>&
   return curves;
 }
 
+oss basicPointToStream(const lanelet::BasicPoint2d& point) {
+  oss out;
+  out << point.x() << ", " << point.y();
+  return out;
+}
+
+oss pointSpeedPairToStream(const PointSpeedPair& point) {
+  oss out;
+  out << "Point: " << basicPointToStream(std::get<0>(point) << " Speed: " << std::get<1>(point));
+  return out;
+}
+
+template<T>
+void printDebugPerLine(std::vector<T> values, std::function<oss(T)> func) {
+  for (const auto& value : values) {
+    ROS_DEBUG_STREAM(func(value));
+  }
+}
+
 std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_trajectory_from_centerline(
     const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state)
 {
 
-    ROS_WARN_STREAM("points size: " << points.size());
-
-  for (auto pair: points) {
-    auto p = std::get<0>(pair);
-    ROS_WARN_STREAM("p: " << p.x() << ", " << p.y());
-  }
+  ROS_DEBUG_STREAM("points size: " << points.size());
+  printDebugPerLine(points, &pointSpeedPairToStream);
 
   std::vector<cav_msgs::TrajectoryPlanPoint> final_trajectory;
   int nearest_pt_index = getNearestPointIndex(points, state);
 
-  ROS_WARN_STREAM("NearestPtIndex: " << nearest_pt_index);
+  ROS_DEBUG_STREAM("NearestPtIndex: " << nearest_pt_index);
 
   std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end());
   auto time_bound_points = points_in_time_boundary(future_points, config_.trajectory_time_length);
 
-  ROS_WARN_STREAM("time_bound_points: " << time_bound_points.size());
+  ROS_DEBUG_STREAM("time_bound_points: " << time_bound_points.size());
 
-  for(auto p: time_bound_points) {
-      ROS_WARN_STREAM("time_bound_points: " << std::get<0>(p).x() << ", " <<  std::get<0>(p).y());
-  }
+  printDebugPerLine(time_bound_points, &pointSpeedPairToStream);
 
   ROS_WARN("Got basic points ");
   std::vector<DiscreteCurve> sub_curves = compute_sub_curves(time_bound_points);
 
-  ROS_WARN_STREAM("Got sub_curves " << sub_curves.size());
+  ROS_DEBUG_STREAM("Got sub_curves " << sub_curves.size());
 
   std::vector<tf2::Quaternion> final_yaw_values;
   std::vector<double> final_actual_speeds;
@@ -348,37 +355,36 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
     }
 
     ROS_WARN("Sampled points");
-    for (auto p: sampling_points) {
-      ROS_WARN_STREAM("sample_point: " << p.x() << ", " << p.y());
-    }
+    printDebugPerLine(sampling_points, &basicPointToStream);
+
+    
     std::vector<double> yaw_values = compute_orientation_from_fit(actual_fit_curve, sampling_points);
 
     ROS_WARN("Got yaw");
     std::vector<double> curvatures = compute_curvature_from_fit(actual_fit_curve, sampling_points);
     curvatures = moving_average_filter(curvatures, config_.moving_average_window_size);
-    for (auto c : curvatures)
-    {
-      ROS_WARN_STREAM("curvatures[i]: " << c);
-    }
+
+    printDebugPerLine(curvatures, [](auto c){oss o; o << "curvatures[i]: " << c; return o;});
+    
 
     ROS_WARN("Got curvatures");
 
     ROS_WARN("Got speeds limits");
     std::vector<double> ideal_speeds = compute_ideal_speeds(curvatures, config_.lateral_accel_limit);
-    for (auto s: ideal_speeds) {
-      ROS_WARN_STREAM("ideal_speeds: " << s);
-    }
+
+    printDebugPerLine(ideal_speeds, [](auto s){oss o; o << "ideal_speeds: " << s; return o;});
+
     ROS_WARN("Got ideal limits");
     std::vector<double> actual_speeds = apply_speed_limits(ideal_speeds, distributed_speed_limits);
-    for (auto s: actual_speeds) {
-      ROS_WARN_STREAM("actual_speeds: " << s);
-    }
+
+    printDebugPerLine(actual_speeds, [](auto s){oss o; o << "actual_speeds: " << s; return o;});
     ROS_WARN("Got actual");
+
+    printDebugPerLine(yaw_values, [](auto y){oss o; o << "yaw_values[i]: " << y; return o;});
 
     for (int i = 0; i < yaw_values.size() - 1; i++)
     {  // Drop last point
       double yaw = yaw_values[i];
-      ROS_WARN_STREAM("yaw_values[i]: " << yaw_values[i]);
       tf2::Matrix3x3 rot_mat = tf2::Matrix3x3::getIdentity();
       rot_mat.setRPY(0, 0, yaw);
       tf2::Transform c_to_yaw(rot_mat);  // NOTE: I'm pretty certain the origin does not matter here but unit test to
@@ -402,106 +408,38 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   final_actual_speeds = moving_average_filter(final_actual_speeds, config_.moving_average_window_size);
 
-  int i = 0;
-  for (auto& speed : final_actual_speeds)
-  {
-    if (i == final_actual_speeds.size() - 1) {
-      break; // TODO double check why this is needed
-    }
-    ROS_WARN_STREAM("final_actual_speeds[i]: " << final_actual_speeds[i]);
-    ROS_WARN_STREAM("final_yaw_values[i]: " << final_yaw_values[i]);
-    i++;
-  }
+  printDebugPerLine(final_actual_speeds, [](auto s){oss o; o << "final_actual_speeds[i]: " << s; return o;});
+  printDebugPerLine(final_yaw_values, [](auto s){oss o; o << "final_yaw_values[i]: " << s; return o;});
 
-  std::vector<cav_msgs::TrajectoryPlanPoint> uneven_traj =
-      create_uneven_trajectory_from_points(all_sampling_points, final_actual_speeds, final_yaw_values, state);
-  final_trajectory = post_process_traj_points(uneven_traj);
+  // Add current vehicle point to front of the trajectory
+  std::vector<lanelet::BasicPoint2d> cur_veh_point(state.X_pos_global, state.Y_pos_global);
+  all_sampling_points.insert(all_sampling_points.begin(), cur_veh_point); // Add current vehicle position to front of sample points
+  final_actual_speeds.insert(final_actual_speeds.begin(), std::max(state.longitudinal_vel, config_.minimum_speed));
+  tf2::Quaternion initial_quat;
+  initial_quat.setRPY(0,0, state.orientation);
+  final_yaw_values.insert(final_yaw_values.begin(), initial_quat)
+
+
+  // Compute points to local downtracks
+  std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(all_sampling_points);
+
+  // Apply lookahead speeds
+  final_actual_speeds = trajectory_utils::shift_by_lookahead(final_actual_speeds, config_.lookahead_count)
+
+  // Apply accel limits
+  final_actual_speeds = trajectory_utils::apply_accel_limits_by_distance(downtracks, final_actual_speeds, config_.max_accel, config_.max_accel); // TODO write method
+
+  // Convert speeds to times
+  std::vector<double> times;
+  trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
+
+  // Build trajectory points
+
+  std::vector<cav_msgs::TrajectoryPlanPoint> traj_points = trajectory_from_points_times_orientations(all_sampling_points, times, final_yaw_values); // TODO need to implement this method
+
+  final_trajectory = post_process_traj_points(traj_points);
 
   return final_trajectory;
-}
-
-// TODO comments: Takes in a waypoint list that is from the next waypoint till the time boundary
-std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::create_uneven_trajectory_from_points(
-    const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& speeds,
-    const std::vector<tf2::Quaternion>& orientations, const cav_msgs::VehicleState& state)
-{
-  std::vector<cav_msgs::TrajectoryPlanPoint> uneven_traj;
-  // TODO land id is not populated because we are not using it in Autoware
-  // Adding current vehicle location as the first trajectory point if it is not on the first waypoint
-  // TODO there is an equivalent loop to this in the platooning plugin that should also be updated to assign the
-  // orientation value Add vehicle location as first point
-  cav_msgs::TrajectoryPlanPoint starting_point;
-  starting_point.target_time = ros::Time(0.0);
-  starting_point.x = state.X_pos_global;
-  starting_point.y = state.Y_pos_global;
-  starting_point.yaw = state.orientation;
-  uneven_traj.push_back(starting_point);
-
-  if (points.size() == 0)
-  {
-    ROS_ERROR_STREAM("Trying to create uneven trajectory from 0 points");
-    return uneven_traj;
-  }
-  // Update previous wp
-  double previous_wp_v = std::max(state.longitudinal_vel, config_.minimum_speed);
-  double previous_wp_x = starting_point.x;
-  double previous_wp_y = starting_point.y;
-  double previous_wp_yaw = starting_point.yaw;
-  ros::Time previous_wp_t = starting_point.target_time;
-
-  ROS_WARN_STREAM("previous_wp_v" << previous_wp_v);
-
-  for (int i = 0; i < points.size(); i++)
-  {
-    double lookahead_speed = 0;
-    int lookahead_wp = config_.lookahead_count;
-    if (i + lookahead_wp < points.size() - 1)
-    {
-      lookahead_speed = speeds[i + lookahead_wp];
-    }
-    else
-    {
-      lookahead_speed = speeds[speeds.size() - 1];
-    }
-
-    cav_msgs::TrajectoryPlanPoint traj_point;
-    // assume the vehicle is starting from stationary state because it is the same assumption made by pure pursuit
-    // wrapper node
-    // TODO NOTE: In order to graph this data there is an hidden requirement here that the original centerline data be spaced at a smaller resolution than our sampling size so that the first point of the resampled result is no less than two sampling size away from the starting point
-    double delta_d = sqrt(pow(points[i].x() - previous_wp_x, 2) + pow(points[i].y() - previous_wp_y, 2)); 
-    ROS_WARN_STREAM("delta_d: " << delta_d << " lookahead speed: " << lookahead_speed);
-    double set_speed = 0;
-    double smooth_accel_ = config_.max_accel / 2.0; // TODO is this ok?
-    if (lookahead_speed > previous_wp_v)
-    {
-      set_speed = std::min(lookahead_speed, sqrt(previous_wp_v * previous_wp_v + 2 * smooth_accel_ * delta_d));
-
-    } else if (lookahead_speed < previous_wp_v)
-    {
-      set_speed = std::max(lookahead_speed, sqrt(previous_wp_v * previous_wp_v - 2 * smooth_accel_ * delta_d));
-
-    } else { // Equal speed
-        set_speed = lookahead_speed;
-    }
-    set_speed = std::max(set_speed, config_.minimum_speed);  // TODO need better solution for this
-    ROS_WARN_STREAM("set_speed: " << set_speed);
-    ros::Duration delta_t(delta_d / previous_wp_v);
-    traj_point.target_time = previous_wp_t + delta_t;
-    traj_point.x = points[i].x();
-    traj_point.y = points[i].y();
-    double roll, pitch, yaw;
-    carma_wm::geometry::rpyFromQuaternion(orientations[i], roll, pitch, yaw);
-    traj_point.yaw = yaw;
-    uneven_traj.push_back(traj_point);
-
-    previous_wp_v = set_speed;
-    previous_wp_x = uneven_traj.back().x;
-    previous_wp_y = uneven_traj.back().y;
-    previous_wp_yaw = uneven_traj.back().yaw;
-    previous_wp_t = uneven_traj.back().target_time;
-  }
-
-  return uneven_traj;
 }
 
 std::vector<cav_msgs::TrajectoryPlanPoint>
@@ -512,7 +450,7 @@ InLaneCruisingPlugin::post_process_traj_points(std::vector<cav_msgs::TrajectoryP
   for (int i = 0; i < trajectory.size(); i++)
   {
     trajectory[i].controller_plugin_name = "default";
-    trajectory[i].planner_plugin_name = "autoware";
+    trajectory[i].planner_plugin_name = plugin_discovery_msg_.name;
     trajectory[i].target_time += now_duration;
   }
 

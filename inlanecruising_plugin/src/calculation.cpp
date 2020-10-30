@@ -127,20 +127,6 @@ std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Mane
   return points_and_target_speeds;
 }
 
-std::vector<PointSpeedPair> downsample_points(const std::vector<PointSpeedPair>& points, int nth_point)
-{
-  std::vector<PointSpeedPair> downsampled_points;
-
-  downsampled_points.reserve((points.size() / nth_point) + 1);
-
-  for (int i = 0; i < points.size(); i += nth_point)
-  {
-    downsampled_points.push_back(points[i]);
-  }
-
-  return downsampled_points;
-}
-
 int getNearestPointIndex(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state)
 {
   lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);

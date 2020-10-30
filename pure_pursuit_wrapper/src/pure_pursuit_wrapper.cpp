@@ -15,6 +15,8 @@
  */
 
 #include "pure_pursuit_wrapper/pure_pursuit_wrapper.hpp"
+#include <trajectory_utils/conversions/conversions.h>
+#include <carma_wm/Geometry.h>
 
 namespace pure_pursuit_wrapper {
 
@@ -69,16 +71,33 @@ bool PurePursuitWrapper::ReadParameters() {
 void PurePursuitWrapper::TrajectoryPlanPoseHandler(const geometry_msgs::PoseStamped::ConstPtr& pose, const cav_msgs::TrajectoryPlan::ConstPtr& tp){
   ROS_DEBUG_STREAM("Received TrajectoryPlanCurrentPosecallback message");
     try {
+      double current_time = ros::Time::now().toSec();
+      
+      std::vector<double> times;
+      std::vector<double> downtracks;
+      trajectory_to_downtrack_time(tp->trajectory_points, current_time, &downtracks, &times);
+
+      std::vector<double> speeds;
+      trajectory_utils::conversions::time_to_speed(downtracks, times, tp->initial_longitudinal_velocity, &speeds);
+
+      if (speeds.size() != trajectory_points.size()) {
+        throw std::invalid_argument("Speeds and trajectory points sizes do not match");
+      }
+
+
       autoware_msgs::Lane lane;
       lane.header = tp->header;
       std::vector <autoware_msgs::Waypoint> waypoints;
-      double current_time = ros::Time::now().toSec();
-      for(int i = 0; i < tp->trajectory_points.size() - 1; i++ ) {
+      waypoints.reserve(tp->trajectory_points.size());
 
-        cav_msgs::TrajectoryPlanPoint t1 = tp->trajectory_points[i];
-        cav_msgs::TrajectoryPlanPoint t2 = tp->trajectory_points[i + 1];
-        autoware_msgs::Waypoint waypoint = ppww.TrajectoryPlanPointToWaypointConverter(current_time, *pose,t1, t2);
-        waypoints.push_back(waypoint);
+      for (int i = 0; i < tp->trajectory_points.size(); i++) {
+        autoware_msgs::Waypoint wp;
+
+        wp.pose.pose.position.x = tp->trajectory_points[i].x;
+        wp.pose.pose.position.y = tp->trajectory_points[i].y;
+        wp.twist.twist.linear.x = speeds[i];
+
+        waypoints.push_back(wp);
       }
 
       lane.waypoints = waypoints;
