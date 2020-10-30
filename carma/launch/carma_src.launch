@@ -22,7 +22,6 @@
   Also sets up all static transforms used by tf2 within the system.
 
   Use:
-  First delete the generated build/scripts folder in all java packages.
   roslaunch carma carma.launch
   After using source devel/setup.bash from workspace root.
 
@@ -45,24 +44,10 @@
     doc="List of driver node base names which will be launched as mock drivers"
   />
   <arg name="simulation_mode" default="false" doc="True if CARMA Platform is launched with CARLA Simulator"/>
-  
-  <!-- Debug -->
-  <!-- JVM Debug arguments -->
-  <!-- JVM_DEBUG_OPTS: Start rosjava node with these JVM arguments for debugging -->
-  <env name="JVM_DEBUG_OPTS" value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"/>
-  <!-- Set to true to enable debugging on the specified node -->
-  <arg name="debug_node" default="" doc="Set to the java node base name to enable debugging on that node"/>
 
   <!-- Logging -->
   <!-- C++ Logging -->
   <env name="ROSCONSOLE_CONFIG_FILE" value="$(find carma)/launch/log-config/roscpp_log.config"/>
-  <!-- JVM Logging Options -->
-  <arg name="log_config" default="$(find carma)/launch/log-config/log-config.properties" doc="The location of the logging configuration file"/>
-  <arg name="JVM_LOG_OPTS" value="-Djava.util.logging.config.file=$(arg log_config)"/>
-  <!-- Apply logging properties to all java nodes using JAVA_OPTS-->
-  <env name="JAVA_OPTS" value="$(arg JVM_LOG_OPTS)"/>
-  <!-- Generate log name configuration file -->
-  <param name="log_name" type="str" command="$(find carma)/scripts/generate_log_name.sh"/>
   <!-- ROS Bag -->
   <arg name="use_rosbag" default="true" doc="Record a rosbag"/>
   <arg name="rosbag_exclusions" default="/fake_exclusion" doc="Additonal regex pattern to match for identifying what topics to exclude from rosbag recordings"/>
@@ -92,7 +77,6 @@
   <group ns="$(env CARMA_INTR_NS)">
     <include file="$(find carma)/launch/hardware_interface.launch">
       <arg name="mock_drivers" value="$(arg mock_drivers)"/>
-      <arg name="debug_node" value="$(arg debug_node)"/>
       <arg name="launch_drivers" value="$(arg launch_drivers)"/>
       <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
     </include>
@@ -113,9 +97,7 @@
 
   <!-- Comms Messaging Stack -->
   <group ns="$(env CARMA_MSG_NS)">
-    <include file="$(find carma)/launch/message.launch">
-      <arg name="debug_node" value="$(arg debug_node)"/>
-    </include>
+    <include file="$(find carma)/launch/message.launch"/>
   </group>
 
   <!-- Environment Perception Stack -->
