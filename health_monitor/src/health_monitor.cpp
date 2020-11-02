@@ -96,8 +96,6 @@ namespace health_monitor
     void HealthMonitor::run()
     {
         initialize();
-
-        setisPublishedFalse();
         ros::CARMANodeHandle::setSpinCallback(std::bind(&HealthMonitor::spin_cb, this));
         ros::CARMANodeHandle::setSpinRate(spin_rate_);
         ros::CARMANodeHandle::spin();

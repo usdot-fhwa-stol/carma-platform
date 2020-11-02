@@ -37,6 +37,9 @@ namespace health_monitor
              */
             void run();
 
+            //Publisher Handling
+            void setisPublishedFalse();
+
         private:
 
             // node handles
@@ -89,8 +92,7 @@ namespace health_monitor
             bool spin_cb();
             
 
-            //Publisher Handling
-            void setisPublishedFalse();
+            
             bool is_published_truck[9];
             bool is_published_car[7];
     };
