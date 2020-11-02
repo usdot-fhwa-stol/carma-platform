@@ -17,9 +17,9 @@
 -->
 
 <package format="3">
-  <name>autoware_plugin</name>
+  <name>cruising_plugin</name>
   <version>3.3.0</version>
-  <description>The autoware_plugin converts final waypoint plan from autoware to a CARMA trajectory</description>
+  <description>The cruising_plugin converts final waypoint plan from cruising to a CARMA trajectory</description>
   <maintainer email="carma@todo.todo">carma</maintainer>
   <license>Apache License 2.0</license>
   <author email="carma@todo.todo">carma</author>

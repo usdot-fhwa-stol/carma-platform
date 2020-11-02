@@ -26,7 +26,7 @@ startup_duration: 30.0
 
 # List of String: Required plugins for the platform to be functional
 required_plugins:
-  - AutowarePlugin
+  - CruisingPlugin
 
 # String: Plugin service name prefix
 plugin_service_prefix: /guidance/plugins/
