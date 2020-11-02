@@ -96,6 +96,8 @@ namespace health_monitor
     void HealthMonitor::run()
     {
         initialize();
+
+        setisPublishedFalse();
         ros::CARMANodeHandle::setSpinCallback(std::bind(&HealthMonitor::spin_cb, this));
         ros::CARMANodeHandle::setSpinRate(spin_rate_);
         ros::CARMANodeHandle::spin();
@@ -255,6 +257,20 @@ namespace health_monitor
 
 
         return true;
+    }
+
+
+    void HealthMonitor::setisPublishedFalse()
+    {
+        for(int i=0; i<9; i++)
+        {
+            is_published_truck[i] = false;
+        }
+
+        for(int j = 0; j < 7; j++)
+        {
+            is_published_car[j] = false;
+        }
     }
 
 }
