@@ -208,7 +208,7 @@ namespace health_monitor
         
         else if (car_ = true)
         {
-            if((crit_driver_status_car == "s_1_l_1_g_1") && (is_published_car[0] = false))
+            if((crit_driver_status_car == "s_1_l_1_g_1") && (is_published_car[0] == false))
             {
              	nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,start_time_flag_.isZero()));
 
