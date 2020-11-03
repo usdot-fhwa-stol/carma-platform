@@ -206,7 +206,7 @@ namespace health_monitor
             
         }//End truck
         
-        else if (car_ = true)
+        else if (car_ == true)
         {
             if((crit_driver_status_car == "s_1_l_1_g_1") && (is_published_car[0] == false))
             {
@@ -244,12 +244,12 @@ namespace health_monitor
 
   		        is_published_car[5] = true;
             }
-            else
+            /*else
             {
                 nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,start_time_flag_.isZero()));
 
   		        is_published_car[6] = true;
-            }
+            }*/
 
         }//End car
 
