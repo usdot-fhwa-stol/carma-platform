@@ -91,8 +91,7 @@ namespace health_monitor
             // spin callback function
             bool spin_cb();
             
-
-            
+            //SystemAlert Publishing Status Arrays
             bool is_published_truck[9];
             bool is_published_car[7];
     };

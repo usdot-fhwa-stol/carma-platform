@@ -139,117 +139,102 @@ namespace health_monitor
         ros::Duration sd(startup_duration_);
         long start_duration=sd.toNSec() / 1e6;
 
-        //nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,start_time_flag_.isZero()));
         
         /*Publish each system alert only once*/
-
         auto crit_driver_status_truck = driver_manager_.are_critical_drivers_operational_truck(time_now);
         auto crit_driver_status_car = driver_manager_.are_critical_drivers_operational_car(time_now);
 
-        if(truck_==true)
+        if(truck_ == true)
         {
-            if((crit_driver_status_truck == "s_1_l1_1_l2_1_g_1") && (is_published_truck[0] == false))
+            if((crit_driver_status_truck == "s_1_l1_1_l2_1_g_1") && (is_published_truck[0] == false)) //"All essential drivers are ready"
             {
              	nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,start_time_flag_.isZero()));
 
   		        is_published_truck[0] = true;
             } 
-           else if((start_time_flag_.isZero()==true) || (time_now - start_up_timestamp_ <= start_duration) && (is_published_truck[1] ==false))
+           else if((start_time_flag_.isZero()==true) || (time_now - start_up_timestamp_ <= start_duration) && (is_published_truck[1] == false)) //"System is starting up..."
             {
                 nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,start_time_flag_.isZero()));
 
   		        is_published_truck[1] = true;
             } 
-            else if((crit_driver_status_truck == "s_1_l1_0_l2_1_g_1") || (crit_driver_status_truck=="s_1_l1_1_l2_0_g_1")&& (is_published_truck[2] =false))
+            else if((crit_driver_status_truck == "s_1_l1_0_l2_1_g_1") || (crit_driver_status_truck=="s_1_l1_1_l2_0_g_1")&& (is_published_truck[2] =false)) //One LIDAR Failure
             {
              	nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,start_time_flag_.isZero()));
 
   		        is_published_truck[2] = true;
             } 
-            else if((crit_driver_status_truck =="s_1_l1_0_l2_1_g_0") || (crit_driver_status_truck =="s_1_l1_1_l2_0_g_0")&& (is_published_truck[3] =false))
+            else if((crit_driver_status_truck =="s_1_l1_0_l2_1_g_0") || (crit_driver_status_truck =="s_1_l1_1_l2_0_g_0")&& (is_published_truck[3] =false)) //One LIDAR and GPS Failure
             {
              	nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,start_time_flag_.isZero()));
 
   		        is_published_truck[3] = true;
             } 
-            else if((crit_driver_status_truck=="s_1_l1_1_l2_1_g_0" )&& (is_published_truck[4] ==false))
+            else if((crit_driver_status_truck=="s_1_l1_1_l2_1_g_0" )&& (is_published_truck[4] ==false)) //GPS Failure
             {
-             	nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,start_time_flag_.isZero()));
+             	nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,start_time_flag_.isZero())); 
 
   		        is_published_truck[4] = true;
             } 
-            else if((crit_driver_status_truck =="s_1_l1_0_l2_0_g_1" ) && (is_published_truck[5] ==false))
+            else if((crit_driver_status_truck =="s_1_l1_0_l2_0_g_1" ) && (is_published_truck[5] ==false)) //Both LIDARs Failed
             {
              	nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,start_time_flag_.isZero()));
 
   		        is_published_truck[5] = true;
             } 
-            else if((crit_driver_status_truck=="s_1_l1_0_l2_0_g_0") && (is_published_truck[6] == false))
+            else if((crit_driver_status_truck=="s_1_l1_0_l2_0_g_0") && (is_published_truck[6] == false)) //LIDARs and GPS Failure
             {
              	nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,start_time_flag_.isZero()));
 
   		        is_published_truck[6] = true;
             } 
-            else if((crit_driver_status_truck=="s_0") && (is_published_truck[7] ==false))
+            else if((crit_driver_status_truck=="s_0") && (is_published_truck[7] ==false)) //SSC Failure
             {
              	nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,start_time_flag_.isZero()));
 
   		        is_published_truck[7] = true;
-            }
-            else
-            {
-                nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,start_time_flag_.isZero()));
-
-  		        is_published_truck[8] = true;
-            }
-            
+            }       
             
         }//End truck
         
         else if (car_ == true)
         {
-            if((crit_driver_status_car == "s_1_l_1_g_1") && (is_published_car[0] == false))
+            if((crit_driver_status_car == "s_1_l_1_g_1") && (is_published_car[0] == false)) //"All essential drivers are ready"
             {
              	nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,start_time_flag_.isZero()));
 
   		        is_published_car[0] = true;
             } 
-            else if((start_time_flag_.isZero()==true) || (time_now - start_up_timestamp_ <= start_duration) && (is_published_car[1] ==false))
+            else if((start_time_flag_.isZero()==true) || (time_now - start_up_timestamp_ <= start_duration) && (is_published_car[1] == false)) //"System is starting up..."
             {
                 nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,start_time_flag_.isZero()));
 
   		        is_published_truck[1] = true;
             }
-            else if((crit_driver_status_car == "s_1_l_1_g_0") && (is_published_car[2] == false))
+            else if((crit_driver_status_car == "s_1_l_1_g_0") && (is_published_car[2] == false)) //GPS Failure
             {
                 nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,start_time_flag_.isZero()));
-
   		        is_published_car[2] = true;
             }
-            else if((crit_driver_status_car == "s_1_l_0_g_1") && (is_published_car[3] == false))
+            else if((crit_driver_status_car == "s_1_l_0_g_1") && (is_published_car[3] == false)) //LIDAR Failure
             {
                 nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,start_time_flag_.isZero()));
 
   		        is_published_car[3] = true;
             }
-            else if((crit_driver_status_car == "s_1_l_0_g_0") && (is_published_car[4] == false))
+            else if((crit_driver_status_car == "s_1_l_0_g_0") && (is_published_car[4] == false)) //LIDAR, GPS Failure
             {
                 nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,start_time_flag_.isZero()));
 
   		        is_published_car[4] = true;
             }
-            else if((crit_driver_status_car == "s_0") && (is_published_car[5] == false))
+            else if((crit_driver_status_car == "s_0") && (is_published_car[5] == false)) //SSC Failure
             {
                 nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,start_time_flag_.isZero()));
 
   		        is_published_car[5] = true;
             }
-            /*else
-            {
-                nh_.publishSystemAlert(driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,start_time_flag_.isZero()));
-
-  		        is_published_car[6] = true;
-            }*/
+            
 
         }//End car
 
