@@ -75,12 +75,12 @@ void PurePursuitWrapper::TrajectoryPlanPoseHandler(const geometry_msgs::PoseStam
       
       std::vector<double> times;
       std::vector<double> downtracks;
-      trajectory_to_downtrack_time(tp->trajectory_points, current_time, &downtracks, &times);
+      trajectory_utils::conversions::trajectory_to_downtrack_time(tp->trajectory_points, current_time, &downtracks, &times);
 
       std::vector<double> speeds;
       trajectory_utils::conversions::time_to_speed(downtracks, times, tp->initial_longitudinal_velocity, &speeds);
 
-      if (speeds.size() != trajectory_points.size()) {
+      if (speeds.size() != tp->trajectory_points.size()) {
         throw std::invalid_argument("Speeds and trajectory points sizes do not match");
       }
 
