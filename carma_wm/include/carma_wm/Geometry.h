@@ -101,6 +101,8 @@ std::tuple<TrackPos, lanelet::BasicSegment2d> matchSegment(const lanelet::BasicP
 * interpolation of points) as this results in "flat" spots on an otherwise
 * smooth curve that causes 0 curvature to be computed.
 *
+* TODO fix comments 
+*
 * \param lanelets The list of lanelets to compute curvatures for
 *
 * \throws std::invalid_argument If one of the provided lanelets cannot have its centerline computed
@@ -108,7 +110,10 @@ std::tuple<TrackPos, lanelet::BasicSegment2d> matchSegment(const lanelet::BasicP
 * \return A list of continuous centerline segments and their respective curvatures
 */
 std::vector<double>
-getLocalCurvatures(const std::vector<lanelet::ConstLanelet>& lanelets);
+local_curvatures(const lanelet::BasicLineString2d& centerline_points);
+
+std::vector<double>
+local_curvatures(const std::vector<lanelet::BasicPoint2d>& centerline_points);
 
 /*!
 * \brief Helper function to concatenate 2 linestrings together and return the result. Neither LineString is modified in this function.
@@ -130,6 +135,8 @@ lanelet::BasicLineString2d concatenate_lanelets(const std::vector<lanelet::Const
 * \return A vector containing the point-by-point derivatives in the same indices as the input data
 */
 std::vector<Eigen::Vector2d> compute_finite_differences(const lanelet::BasicLineString2d& data);
+
+std::vector<Eigen::Vector2d> compute_finite_differences(const std::vector<lanelet::BasicPoint2d>& data);
 
 /*! 
 * \brief Use finite differences methods to compute the derivative of the input data set with respect to index
@@ -154,6 +161,11 @@ std::vector<double> compute_finite_differences(const std::vector<double>& data);
 * \return A vector containing the point-by-point derivatives in the same indices as the input data
 */
 std::vector<Eigen::Vector2d> compute_finite_differences(const std::vector<Eigen::Vector2d>& x, const std::vector<double>& y);
+
+/*!
+* \brief Compute the arc length at each point around the curve
+*/
+std::vector<double> compute_arc_lengths(const std::vector<lanelet::BasicPoint2d>& data);
 
 /*!
 * \brief Compute the arc length at each point around the curve
@@ -258,9 +270,15 @@ void rpyFromQuaternion(const geometry_msgs::Quaternion& q_msg, double& roll, dou
  * \param centerline centerline represented as BasicLinestring2d of the lanelets to compute the orientation
  * 
  * \returns A vector of quaternions representing the vehicle's 
- * orientation at each point of the lanelet's centerline.
+ * orientation at each point of the lanelet's centerline. 
+ * 
+ * TODO comments
  */
-std::vector<geometry_msgs::Quaternion> compute_tangent_orientations(lanelet::BasicLineString2d centerline);
+std::vector<double>
+compute_tangent_orientations(const lanelet::BasicLineString2d& centerline);
+
+std::vector<double>
+compute_tangent_orientations(const std::vector<lanelet::BasicPoint2d>& centerline);
 
 // TODO comments
 Eigen::Isometry2d build2dEigenTransform(const Eigen::Vector2d& position, const Eigen::Rotation2Dd& rotation);
@@ -268,6 +286,10 @@ Eigen::Isometry2d build2dEigenTransform(const Eigen::Vector2d& position, const E
 Eigen::Isometry3d build3dEigenTransform(const Eigen::Vector3d& position, const Eigen::Quaterniond& rotation);
 
 Eigen::Isometry3d build3dEigenTransform(const Eigen::Vector3d& position, const Eigen::AngleAxisd& rotation);
+
+double point_to_point_yaw(std::vector<double> cur_point, std::vector<double> next_point);
+
+double circular_arc_curvature(std::vector<double> cur_point, std::vector<double> next_point);
 
 
 }  // namespace geometry

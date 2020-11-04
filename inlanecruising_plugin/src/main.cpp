@@ -16,7 +16,7 @@
 
 #include <ros/ros.h>
 
-#include "inlanecruising_plugin_node.h"
+#include <inlanecruising_plugin/inlanecruising_plugin_node.h>
 
 int main(int argc, char** argv)
 {

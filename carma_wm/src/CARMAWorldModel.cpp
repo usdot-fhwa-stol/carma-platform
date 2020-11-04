@@ -513,7 +513,7 @@ std::vector<cav_msgs::RoadwayObstacle> CARMAWorldModel::getInLaneObjects(const l
 
   // Create an index queue for roadway objects to quickly pop the idx if associated 
   // lanelet is found. This is to reduce number of objects to check as we check new lanelets
-  for (int i = 0; i < roadway_objects_copy.size(); i++)
+  for (size_t i = 0; i < roadway_objects_copy.size(); i++)
   {
     obj_idxs_queue.push(i);
   }
@@ -660,7 +660,7 @@ lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> CARMAWorldMode
 
   // Create an index queue for in lane objects to quickly pop the idx if associated 
   // lanelet is found. This is to reduce number of objects to check as we check new lanelets
-  for (int i = 0; i < lane_objects.size(); i++)
+  for (size_t i = 0; i < lane_objects.size(); i++)
   {
     obj_idxs_queue.push(i);
   }
@@ -714,7 +714,7 @@ lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> CARMAWorldMode
   // compare with input's downtrack and return the min_dist
   int min_idx = 0;
   double min_dist = INFINITY; 
-  for (int idx = 0 ; idx < object_downtracks.size(); idx ++)
+  for (size_t idx = 0 ; idx < object_downtracks.size(); idx ++)
   {
     if (min_dist > std::abs(object_downtracks[idx] - input_obj_downtrack))
     {
