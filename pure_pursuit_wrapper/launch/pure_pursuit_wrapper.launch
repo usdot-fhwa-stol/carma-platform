@@ -3,6 +3,7 @@
     <remap from="final_waypoints" to="carma_final_waypoints"/>
     <!-- Pure Pursuit Node -->
     <group>
+        <remap from="/guidance/trajectory_plan" to="/guidance/mpc_follower/trajectory"/>
         <remap from="vehicle_info/wheel_base" to="/vehicle_wheel_base"/>
         <include file="$(find pure_pursuit)/launch/pure_pursuit.launch">
             <arg name="is_linear_interpolation" value="True"/>
