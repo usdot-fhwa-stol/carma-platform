@@ -28,6 +28,7 @@
 #include <cav_msgs/LightBarIndicatorControllers.h>
 #include <cav_msgs/LightBarStatus.h>
 #include <cav_msgs/GuidanceState.h>
+#include <automotive_platform_msgs/TurnSignalCommand.h>
 
 #include <cav_srvs/RequestIndicatorControl.h>
 #include <cav_srvs/ReleaseIndicatorControl.h>
@@ -70,6 +71,12 @@ class LightBarManagerWorker
         * It triggers the transitioning to the next state in LightBarStateMachine based on the guidance state change. 
         */
         void handleStateChange(const cav_msgs::GuidanceStateConstPtr& msg_ptr);
+
+        /*!
+        * \brief This function checks if the turn signal should be changed on the lightbar
+        * \return size one vector of turn signal, empty if no change is required
+        */
+        std::vector<lightbar_manager::LightBarIndicator> handleTurnSignal(const automotive_platform_msgs::TurnSignalCommandPtr& msg_ptr);
 
         /*!
         * \brief Releases the specified owner plugin or component's control of the given indicator list.
@@ -177,6 +184,9 @@ class LightBarManagerWorker
 
         // Indicators and their corresponding CDA msg type mapping
         std::map<LightBarCDAType, LightBarIndicator> cda_ind_map_;
+
+        // Current turn signal
+        uint8_t current_turn_signal_ = automotive_platform_msgs::TurnSignalCommand::NONE;
 
         // Helper maps that convert string into enum representations when reading from ROSParameter
         std::map<std::string, LightBarCDAType> cda_type_dict_ = {

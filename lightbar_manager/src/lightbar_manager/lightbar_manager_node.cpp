@@ -135,6 +135,7 @@ bool LightBarManager::releaseControlCallBack(cav_srvs::ReleaseIndicatorControlRe
 
 bool LightBarManager::spinCallBack()
 {
+    
     indicator_control_publisher_.publish(lbm_.getMsg(lbm_.getIndicatorControllers()));
     return true;
 }
@@ -165,6 +166,58 @@ void LightBarManager::stateChangeCallBack(const cav_msgs::GuidanceStateConstPtr&
         }
     }
 }
+
+void LightBarManager::turnSignalCallback(const automotive_platform_msgs::TurnSignalCommandPtr& msg_ptr)
+{
+    // if not automated
+    if (msg_ptr->mode == 1)
+    {
+        return;
+    }
+    
+    std::map<lightbar_manager::LightBarIndicator, std::__cxx11::string> prev_owners = lbm_.getIndicatorControllers();
+    
+    lightbar_manager::IndicatorStatus indicator_status;
+    // check if we should turn off or on given any indicator
+    if (msg_ptr->turn_signal == automotive_platform_msgs::TurnSignalCommand::NONE)
+    {
+        indicator_status = lightbar_manager::IndicatorStatus::OFF;
+    }
+    else 
+    {
+        indicator_status = lightbar_manager::IndicatorStatus::ON;
+    }
+
+    // check if left or right signal should be controlled, or none at all
+    std::vector<lightbar_manager::LightBarIndicator> changed_turn_signal = lbm_.handleTurnSignal(msg_ptr);
+
+    if (changed_turn_signal.empty())
+    {
+        return; //no need to do anything if it is same turn signal changed
+    }
+
+    if (lbm_.requestControl(changed_turn_signal, node_name_).empty())
+    {
+        int response_code = 0;
+        response_code = setIndicator(changed_turn_signal[0], indicator_status, node_name_);
+        if (response_code != 0)
+            ROS_WARN_STREAM ("In Function " << __FUNCTION__ << ": LightBarManager was not able to set light of indicator ID:" 
+                << changed_turn_signal[0] << ". Response code: " << response_code);
+    }
+    else
+    {
+        std::string turn_string = msg_ptr->turn_signal == automotive_platform_msgs::TurnSignalCommand::LEFT ? "left" : "right";
+        ROS_WARN_STREAM("Lightbar was not able to take control of lightbar to indicate " << turn_string << "turn!");
+        return;
+    }
+
+    // release control if it is turning off
+    if (indicator_status == lightbar_manager::IndicatorStatus::OFF)
+    {
+        lbm_.releaseControl(changed_turn_signal, node_name_);
+    }
+}
+
 
 LightBarManagerWorker LightBarManager::getWorker()
 {
@@ -245,6 +298,7 @@ void LightBarManager::init(std::string mode)
     set_indicator_server_= nh_.advertiseService("set_indicator", &LightBarManager::setIndicatorCallBack, this);
     indicator_control_publisher_ = nh_.advertise<cav_msgs::LightBarIndicatorControllers>("indicator_control", 5);
     guidance_state_subscriber_ = nh_.subscribe(guidance_state_topic_name, 5, &LightBarManager::stateChangeCallBack, this);
+    turn_signal_subscriber_ = nh_.subscribe("turn_signal_command", 5, &LightBarManager::turnSignalCallback, this);
     lightbar_driver_client_ = nh_.serviceClient<cav_srvs::SetLights>(lightbar_driver_service_name);
 
     // Load Conversion table, CDAType to Indicator mapping

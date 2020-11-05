@@ -75,8 +75,34 @@ namespace lightbar_manager
         return;
     }
 
+    std::vector<lightbar_manager::LightBarIndicator> LightBarManagerWorker::handleTurnSignal(const automotive_platform_msgs::TurnSignalCommandPtr& msg_ptr)
+    {
+        std::vector<lightbar_manager::LightBarIndicator> turn_signal;
+        if (msg_ptr->turn_signal == current_turn_signal_)
+        {
+            return {};
+        }
+        if (msg_ptr->turn_signal == automotive_platform_msgs::TurnSignalCommand::LEFT) //NONE -> LEFT
+        {
+            turn_signal.push_back(lightbar_manager::LightBarIndicator::YELLOW_ARROW_LEFT);  
+        }
+        else if (msg_ptr->turn_signal == automotive_platform_msgs::TurnSignalCommand::RIGHT) //NONE -> RIGHT
+        {
+            turn_signal.push_back(lightbar_manager::LightBarIndicator::YELLOW_ARROW_RIGHT);
+        }
+        else if (msg_ptr->turn_signal == automotive_platform_msgs::TurnSignalCommand::NONE) 
+        {
+            // check previous signal
+            if (current_turn_signal_ == automotive_platform_msgs::TurnSignalCommand::RIGHT) // RIGHT -> NONE
+                turn_signal.push_back(lightbar_manager::LightBarIndicator::YELLOW_ARROW_RIGHT);
+            else if (current_turn_signal_ == automotive_platform_msgs::TurnSignalCommand::LEFT) // LEFT -> NONE
+                turn_signal.push_back(lightbar_manager::LightBarIndicator::YELLOW_ARROW_LEFT);
+        }
 
+        current_turn_signal_ = msg_ptr->turn_signal;
 
+        return turn_signal;
+    }
     std::map<LightBarIndicator, std::string> LightBarManagerWorker::getIndicatorControllers()
     {
         return ind_ctrl_map_;

@@ -28,6 +28,7 @@
 #include <cav_msgs/LightBarIndicatorControllers.h>
 #include <cav_msgs/LightBarStatus.h>
 #include <cav_msgs/GuidanceState.h>
+#include <automotive_platform_msgs/TurnSignalCommand.h>
 
 #include <cav_srvs/RequestIndicatorControl.h>
 #include <cav_srvs/ReleaseIndicatorControl.h>
@@ -96,6 +97,7 @@ class LightBarManager
         bool releaseControlCallBack(cav_srvs::ReleaseIndicatorControlRequest& req, cav_srvs::ReleaseIndicatorControlResponse& res);
         bool setIndicatorCallBack(cav_srvs::SetLightBarIndicatorRequest& req, cav_srvs::SetLightBarIndicatorResponse& res);
         void stateChangeCallBack(const cav_msgs::GuidanceStateConstPtr& msg_ptr);
+        void turnSignalCallback(const automotive_platform_msgs::TurnSignalCommandPtr& msg_ptr);
 
         // Service servers/clients
         ros::ServiceServer request_control_server_;
@@ -108,6 +110,7 @@ class LightBarManager
 
         // Subscribers
         ros::Subscriber guidance_state_subscriber_;
+        ros::Subscriber turn_signal_subscriber_;
 
         // Node handles
         ros::CARMANodeHandle nh_{"lightbar_manager"}, pnh_{"~"};
