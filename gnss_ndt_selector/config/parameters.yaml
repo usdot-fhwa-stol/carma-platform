@@ -2,7 +2,7 @@
 spin_rate: 10.0
 
 # fitness score thredhold to determine if one ndt result is reliable or not
-score_upper_limit: 2.0
+score_upper_limit: 60.0
 
 # num of message thredhold to determin if ndt node is reliable or not
 unreliable_message_upper_limit: 3
