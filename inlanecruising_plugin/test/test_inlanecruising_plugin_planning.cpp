@@ -126,7 +126,7 @@ TEST(WaypointGeneratorTest, test_full_generation)
     lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
     lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
 
-    lanelet::MapConformer::ensureCompliance(map);
+    lanelet::MapConformer::ensureCompliance(map, 80_mph);
 
     InLaneCruisingPluginConfig config;
     config.lateral_accel_limit = 0.75;
