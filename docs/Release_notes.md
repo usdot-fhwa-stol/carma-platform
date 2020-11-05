@@ -8,10 +8,10 @@ Version 3.4.0, released November TBD, 2020
 carma-platform release version 3.4.0 is comprised of four major enhancements. First, a steering limiter was added in order to prevent Carma from taking turns that present a risk of vehicle rollover. Second, updates were made to the health_monitor to allow for graceful handling of sensor failure, including control handover to the human driver. Third, carma-messenger was updated to detect nearby automated vehicles via DSRC. And fourth, functionality was added to carma-messenger to allow for requesting, receiving, and displaying truck safety info from a passing Carma truck via DSRC while vehicles are in motion. Along with the above enhancements, several bug fixes and CI related enhancements are included in this release.
 
 Enhancements in this release:
--	Issue 520 & 617: Added a steering limiter to prevent Carma from taking overly sharp turns, reducing rollover risk.
+-	Issues 520 & 617: Added a steering limiter to prevent Carma from taking overly sharp turns, reducing rollover risk.
 -	Issue 592: Updated Carma’s UI to work with the new Route Manager.
 -	Issue 606: Created carma-messenger repo and docker images to separate v2x messaging stack from carma-platform.
--	Issue 613 & 688: Implemented Truck Inspection Client for carma-messenger.
+-	Issues 613 & 688: Implemented Truck Inspection Client for carma-messenger.
 -	Issue 625: Added a LightBar Manager to handle control of the lightbar between different Carma components.
 -	Issue 640: Updated the health_monitor to better handle lidar failures.
 -	Issue 766: Improved localization computation speed.
