@@ -1,5 +1,6 @@
 #pragma once
 
+
 /*
  * Copyright (C) 2019 LEIDOS.
  *
@@ -17,6 +18,7 @@
  */
 
 #include "carma_wm/WorldModel.h"
+#include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <lanelet2_core/primitives/LineString.h>
 #include "IndexedDistanceMap.h"
 #include <cav_msgs/ExternalObject.h>
@@ -93,6 +95,12 @@ public:
    */
   lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> getNearestObjInLane(const lanelet::BasicPoint2d& object_center, const LaneSection& section = LANE_AHEAD) const;
 
+/** \param config_lim the configurable speed limit value populated from WMListener using the config_speed_limit parameter
+ * in VehicleConfigParams.yaml
+*
+*/
+  void setConfigSpeedLimit(double config_lim);
+  
   ////
   // Overrides
   ////
@@ -131,8 +139,13 @@ public:
 
   std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n = 10) const override;
 
-private:
+  
 
+
+private:
+  
+  double config_speed_limit_;
+  
   /*! \brief Helper function to compute the geometry of the route downtrack/crosstrack reference line
    *         This function should generally only be called from inside the setRoute function as it uses member variables
    * set in that function
@@ -163,5 +176,7 @@ private:
   lanelet::LaneletMapUPtr shortest_path_filtered_centerline_view_;  // Lanelet map view of shortest path center lines
                                                                     // only
   std::vector<cav_msgs::RoadwayObstacle> roadway_objects_; // 
+
+  
 };
 }  // namespace carma_wm

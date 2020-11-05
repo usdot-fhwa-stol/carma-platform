@@ -38,7 +38,7 @@ TEST_F(TrajectoryExecutorTestSuite, test_emit_traj) {
 
     traj_pub.publish(plan);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
     ASSERT_GT(msg_count, 0) << "Failed to receive trajectory execution message from TrajectoryExecutor node.";
 } 
 

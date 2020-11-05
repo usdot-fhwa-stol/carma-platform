@@ -1,8 +1,10 @@
 <?xml version="1.0"?>
 <launch>
-
     <arg name="vehicle_calibration_dir" default="/opt/carma/vehicle"/>
     <remap from="final_waypoints" to="carma_final_waypoints"/>
+    <remap from="/guidance/vehicle_status" to="/hardware_interface/vehicle_status"/>
+    <remap from="/guidance/estimate_twist" to="/localization/estimate_twist"/>
+
     <!-- MPC Follower Node -->
     <group>
         <remap from="vehicle_model_steer_tau" to="/vehicle_steer_tau"/>
