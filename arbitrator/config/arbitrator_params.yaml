@@ -21,9 +21,9 @@ beam_width: 3
 # Bool: Use fixed priority cost function over using the cost system for 
 # evaluating maneuver plans
 # Unit: N/a
-use_fixed_costs: false
+use_fixed_costs: true
 
 # Map: The priorities/costs associated with each plugin during the planning 
 # process, values will be normalized at runtime
 # Unit: N/a
-plugin_priorities: {AutowarePlugin: 10.0, GlidepathPlugin: 5.0}
+plugin_priorities: {AutowarePlugin: 10.0, GlidepathPlugin: 5.0, RouteFollowingPlugin: 4.0}
