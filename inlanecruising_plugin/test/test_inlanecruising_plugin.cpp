@@ -18,23 +18,7 @@
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 
-TEST(InLaneCruisingPluginTest, testYawCalc)
-{
-    std::vector<double> point1{1.0, 1.0};
-    std::vector<double> point2{1.0, 2.0};
-    inlanecruising_plugin::InLaneCruisingPlugin ip;
-    double res = ip.calculate_yaw(point1, point2);
-    EXPECT_NEAR(1.57, res, 0.1);
-}
 
-TEST(InLaneCruisingPluginTest, testCurvCalc)
-{
-    std::vector<double> point1{1.0, 1.0};
-    std::vector<double> point2{3.0, 4.0};
-    inlanecruising_plugin::InLaneCruisingPlugin ip;
-    double res = ip.calculate_curvature(point1, point2);
-    EXPECT_NEAR(0.588, res, 0.1);
-}
 
 
 
