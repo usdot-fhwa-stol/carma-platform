@@ -20,6 +20,8 @@
 
 namespace carma_wm_ctrl
 {
+  // @SONAR_STOP@
+
 using std::placeholders::_1;
 
 void WMBroadcasterNode::publishMap(const autoware_lanelet2_msgs::MapBin& map_msg)
@@ -70,9 +72,13 @@ int WMBroadcasterNode::run()
   //Current Location Sub
   curr_location_sub_ = cnh_.subscribe("current_pose", 1,&WMBroadcaster::currentLocationCallback, &wmb_);
   
+  double config_limit;
   double lane_max_width;
   pnh_.getParam("max_lane_width", lane_max_width);
   wmb_.setMaxLaneWidth(lane_max_width);
+
+  pnh2_.getParam("config_speed_limit", config_limit);
+  wmb_.setConfigSpeedLimit(config_limit);
   
  
   // Spin
@@ -80,5 +86,7 @@ int WMBroadcasterNode::run()
   cnh_.spin();
   return 0;
 }
+
+// @SONAR_START@
 
 }  // namespace carma_wm_ctrl

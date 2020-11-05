@@ -238,7 +238,9 @@ inline lanelet::LaneletMapPtr buildGuidanceTestMap(double width, double length)
   // Create basic map and verify that the map and routing graph can be build, but the route remains false	
   lanelet::LaneletMapPtr map = lanelet::utils::createMap(all_lanelets, {});
 
-  lanelet::MapConformer::ensureCompliance(map);
+  
+  using namespace lanelet::units::literals;
+  lanelet::MapConformer::ensureCompliance(map, 0_mph);
   return map;
 }
 

@@ -66,6 +66,7 @@ TEST(WMBroadcaster, baseMapCallback)
 {
   ros::Time::setNow(ros::Time(0));  // Set current time
 
+
   size_t base_map_call_count = 0;
   WMBroadcaster wmb(
       [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
@@ -559,10 +560,10 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
 
   wmb.addGeofence(gf_ptr);
   ASSERT_EQ(map_update_call_count, 1);
-  // we can see that the gf_ptr->now would have the prev speed limit of 5_mph that affected llt 10000
-  ASSERT_EQ(gf_ptr->prev_regems_.size(), 1);
-  ASSERT_EQ(gf_ptr->prev_regems_[0].first, 10000);
-  ASSERT_EQ(gf_ptr->prev_regems_[0].second->id(), old_speed_limit->id());
+  /*Analyze prev_regems_.size()*/
+  ASSERT_EQ(gf_ptr->prev_regems_.size(), 2);
+  ASSERT_EQ(gf_ptr->prev_regems_[0].first, 10007);
+  ASSERT_EQ(gf_ptr->prev_regems_[1].second->id(), old_speed_limit->id());
 
   // now suppose the geofence is finished being used, we have to revert the changes
   wmb.removeGeofence(gf_ptr);
@@ -572,9 +573,9 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
   // we can check if the removeGeofence worked, by using addGeofence again and if the original is there again
   wmb.addGeofence(gf_ptr);
   ASSERT_EQ(map_update_call_count, 3);
-  ASSERT_EQ(gf_ptr->prev_regems_.size(), 1);
-  ASSERT_EQ(gf_ptr->prev_regems_[0].first, 10000);
-  ASSERT_EQ(gf_ptr->prev_regems_[0].second->id(), old_speed_limit->id());
+  ASSERT_EQ(gf_ptr->prev_regems_.size(), 2);
+  ASSERT_EQ(gf_ptr->prev_regems_[1].first, 10000);
+  ASSERT_EQ(gf_ptr->prev_regems_[1].second->id(), old_speed_limit->id());
 
 }
 
@@ -659,16 +660,16 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   auto data_received = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
   carma_wm::fromBinMsg(gf_obj_msg, data_received);
   ASSERT_EQ(data_received->id_, gf_ptr->id_);
-  ASSERT_EQ(gf_ptr->remove_list_.size(), 1);
-  ASSERT_EQ(data_received->remove_list_.size(), 1); // old_speed_limit
+  ASSERT_EQ(gf_ptr->remove_list_.size(), 2);
+  ASSERT_EQ(data_received->remove_list_.size(), 2); // old_speed_limit
   ASSERT_TRUE(data_received->remove_list_[0].second->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) ==0 );
   ASSERT_EQ(data_received->update_list_.size(), 2); // geofence tags 2 lanelets
   ASSERT_EQ(data_received->update_list_[1].first, 10000);
 
   // we can see that the gf_ptr->now would have the prev speed limit of 5_mph that affected llt 10000
-  ASSERT_EQ(gf_ptr->prev_regems_.size(), 1);
-  ASSERT_EQ(gf_ptr->prev_regems_[0].first, 10000);
-  ASSERT_EQ(gf_ptr->prev_regems_[0].second->id(), old_speed_limit->id());
+  ASSERT_EQ(gf_ptr->prev_regems_.size(), 2);
+  ASSERT_EQ(gf_ptr->prev_regems_[1].first, 10000);
+  ASSERT_EQ(gf_ptr->prev_regems_[1].second->id(), old_speed_limit->id());
 
   // now suppose the geofence is finished being used, we have to revert the changes
   wmb.removeGeofence(gf_ptr);
@@ -685,9 +686,9 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
   ASSERT_EQ(rec_data_revert->remove_list_.size(), 2);
   ASSERT_EQ(rec_data_revert->remove_list_.size(), data_received->update_list_.size());
   ASSERT_EQ(rec_data_revert->update_list_.size(), data_received->remove_list_.size());
-  ASSERT_EQ(rec_data_revert->update_list_.size(), 1);
-  ASSERT_EQ(rec_data_revert->update_list_[0].first, 10000);
-  ASSERT_EQ(rec_data_revert->update_list_[0].second->id(), old_speed_limit->id());
+  ASSERT_EQ(rec_data_revert->update_list_.size(), 2);
+  ASSERT_EQ(rec_data_revert->update_list_[1].first, 10000);
+  ASSERT_EQ(rec_data_revert->update_list_[1].second->id(), old_speed_limit->id());
   
 }
 
@@ -918,21 +919,80 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   msg_v01.geometry.nodes.push_back(pt);
   msg_v01.params_exists = true;
   
-  // test maxspeed
+  // test maxspeed - config limit inactive
   msg_v01.params.detail.choice = cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
-  msg_v01.params.detail.maxspeed = 50;
+  msg_v01.params.detail.maxspeed = 99;
+
+  lanelet::Velocity limit = 80_mph;
+
   auto gf_ptr = wmb.geofenceFromMsg(msg_v01);
   ASSERT_TRUE(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
   lanelet::DigitalSpeedLimitPtr max_speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(gf_ptr->regulatory_element_);
-  ASSERT_NEAR(max_speed->speed_limit_.value(), 22.352, 0.00001);
+  ROS_ERROR_STREAM("Speed Limit: "<<max_speed->speed_limit_.value());
+  ASSERT_NEAR(max_speed->speed_limit_.value(), limit.value(),0.0001) ;//Check that the maximum speed limit is not larger than 80_mph
+  ASSERT_GE(max_speed->speed_limit_, 0_mph);//Check that the maximum speed limit is not smaller than 0_mph
+  ROS_WARN_STREAM("Maximum speed limit is valid (1).");
 
-  // test maxspeed
+  msg_v01.params.detail.maxspeed = -4;
+
+  gf_ptr = wmb.geofenceFromMsg(msg_v01);
+  ASSERT_TRUE(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
+  max_speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(gf_ptr->regulatory_element_);
+  ASSERT_GE(max_speed->speed_limit_, 0_mph);//Check that the maximum speed limit is not smaller than 0_mph
+  ROS_WARN_STREAM("Maximum speed limit is valid(2).");
+
+
+  // test minspeed - config limit inactive
   msg_v01.params.detail.choice = cav_msgs::TrafficControlDetail::MINSPEED_CHOICE;
-  msg_v01.params.detail.minspeed = 50;
+  msg_v01.params.detail.minspeed = -4.0;
+
+
   gf_ptr = wmb.geofenceFromMsg(msg_v01);
   ASSERT_TRUE(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
   lanelet::DigitalSpeedLimitPtr min_speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(gf_ptr->regulatory_element_);
-  ASSERT_NEAR(min_speed->speed_limit_.value(), 22.352,  0.00001);
+  ASSERT_GE(min_speed->speed_limit_, 0_mph);
+  ROS_WARN_STREAM("Minimum speed limit is valid.(1)");
+
+
+   msg_v01.params.detail.minspeed = 99.0;
+
+
+  gf_ptr = wmb.geofenceFromMsg(msg_v01);
+  ASSERT_TRUE(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
+  min_speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(gf_ptr->regulatory_element_);
+  ASSERT_NEAR(min_speed->speed_limit_.value(), limit.value(), 0.0001) ;//Check that the minimum speed limit is not larger than 80_mph
+  ASSERT_GE(min_speed->speed_limit_, 0_mph);
+  ROS_WARN_STREAM("Minimum speed limit is valid.(2)");
+
+  
+
+// test maxspeed - config limit active
+  wmb.setConfigSpeedLimit(55.0);//Set the config speed limit
+  msg_v01.params.detail.choice = cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
+  msg_v01.params.detail.maxspeed = 0;
+  auto gf_ptr2 = wmb.geofenceFromMsg(msg_v01);
+  ASSERT_TRUE(gf_ptr2->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
+  lanelet::DigitalSpeedLimitPtr max_speed_cL = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(gf_ptr2->regulatory_element_);
+  //ASSERT_NEAR(max_speed->speed_limit_.value(), 22.352, 0.00001);
+  ASSERT_LE(max_speed_cL->speed_limit_, 80_mph);//Check that the maximum speed limit is not larger than 80_mph
+  ASSERT_EQ(max_speed_cL->speed_limit_, 55_mph);//Check that the maximum speed limit is equal to the configured limit
+  ROS_WARN_STREAM("Maximum speed limit (config_limit enabled) is valid.");
+
+   // test minspeed - config limit active
+  wmb.setConfigSpeedLimit(55.0);//Set the config speed limit
+  msg_v01.params.detail.choice = cav_msgs::TrafficControlDetail::MINSPEED_CHOICE;
+  msg_v01.params.detail.minspeed = 0;
+  gf_ptr2 = wmb.geofenceFromMsg(msg_v01);
+  ASSERT_TRUE(gf_ptr2->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0);
+  lanelet::DigitalSpeedLimitPtr min_speed_cL = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(gf_ptr2->regulatory_element_);
+ // ASSERT_NEAR(min_speed->speed_limit_.value(), 22.352,  0.00001);
+  ASSERT_LE(min_speed_cL->speed_limit_, 80_mph);//Check that the maximum speed limit is not larger than 80_mph
+  ASSERT_GE(min_speed_cL->speed_limit_, 0_mph);
+  ASSERT_EQ(min_speed_cL->speed_limit_, 55_mph);
+  ROS_WARN_STREAM("Minimum speed limit (config_limit enabled) is valid.");
+
+
+
 
   // TEST passing control line
   // Test lataffinity

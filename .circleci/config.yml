@@ -19,7 +19,7 @@ version: 2
 # CI will report failure if any executed command returns and error status
 # Operations performed are as follows
 # Build source code
-# Run unit tests for C++ and Java
+# Run unit tests for C++
 # Run static code analyzer for SourceCloud
 # Upload test results
 # Every run command should start with source ${INIT_ENV} to ensure all default dependancies are available
@@ -67,19 +67,7 @@ jobs:
             source ${INIT_ENV}
             export ROS_PARALLEL_JOBS='-j1 -l1' # Try to reduce memory consumption on build
             bash make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
-      - run:
-          name: Save Java Test results
-          command: |
-            source ${INIT_ENV}
-            if [ -z "$(ls -A src/CARMAPlatform/carmajava/build/reports/allTests)" ]; then
-              echo "No java unit test results to collect"
-            else
-              mkdir -p ~/junit/ 
-              sudo mkdir -p /reports/tests
-              sudo mv src/CARMAPlatform/carmajava/build/reports/allTests/* /reports/tests/
-              find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/junit/ \;
-            fi
-          when: always
+          
       # Run SonarCloud analysis
       # PR Branchs and number extracted from Circle variables and github api
       # Circle CI seems to make a change to the base branch, so we must fetch --force to ensure correct git file change stats

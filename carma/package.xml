@@ -55,10 +55,7 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <depend>rosjava_build_tools</depend>
   <depend>message_generation</depend>
-  <depend>genjava</depend>
-  <depend>rosjava_messages</depend>
   <depend>cav_msgs</depend>
   <depend>cav_srvs</depend>
   <depend>j2735_msgs</depend>
@@ -67,7 +64,6 @@
   <depend>autoware_msgs</depend>
   <depend>derived_object_msgs</depend>
   <depend>radar_msgs</depend>
-  <depend>rosjava_utils</depend>
   <exec_depend>robot_state_publisher</exec_depend>
 
 
