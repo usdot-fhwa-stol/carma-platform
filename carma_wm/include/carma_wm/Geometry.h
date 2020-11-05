@@ -115,6 +115,9 @@ local_curvatures(const lanelet::BasicLineString2d& centerline_points);
 std::vector<double>
 local_curvatures(const std::vector<lanelet::BasicPoint2d>& centerline_points);
 
+std::vector<double>
+local_curvatures(const std::vector<lanelet::ConstLanelet>& lanelets);
+
 /*!
 * \brief Helper function to concatenate 2 linestrings together and return the result. Neither LineString is modified in this function.
 */

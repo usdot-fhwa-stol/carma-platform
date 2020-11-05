@@ -302,6 +302,21 @@ lanelet::BasicPolygon2d objectToMapPolygon(const geometry_msgs::Pose& pose, cons
   return { p1, p2, p3, p4 };
 }
 
+lanelet::BasicLineString2d concatenate_lanelets(const std::vector<lanelet::ConstLanelet>& lanelets)
+{
+  if (lanelets.size() == 0) {
+    return lanelet::BasicLineString2d();
+  }
+  lanelet::BasicLineString2d centerline_points = lanelets[0].centerline2d().basicLineString();
+  lanelet::BasicLineString2d new_points;
+  for (size_t i = 1; i < lanelets.size(); i++) {
+    new_points = lanelets[i].centerline2d().basicLineString();
+    centerline_points = concatenate_line_strings(centerline_points, new_points);
+  }
+
+  return centerline_points;
+}
+
 template <class P, class A>
 std::vector<double>
 templated_local_curvatures(const std::vector<P, A>& centerline_points)
@@ -338,19 +353,9 @@ local_curvatures(const std::vector<lanelet::BasicPoint2d>& centerline_points)
   return templated_local_curvatures(centerline_points);
 }
 
-lanelet::BasicLineString2d concatenate_lanelets(const std::vector<lanelet::ConstLanelet>& lanelets)
-{
-  if (lanelets.size() == 0) {
-    return lanelet::BasicLineString2d();
-  }
-  lanelet::BasicLineString2d centerline_points = lanelets[0].centerline2d().basicLineString();
-  lanelet::BasicLineString2d new_points;
-  for (size_t i = 1; i < lanelets.size(); i++) {
-    new_points = lanelets[i].centerline2d().basicLineString();
-    centerline_points = concatenate_line_strings(centerline_points, new_points);
-  }
-
-  return centerline_points;
+std::vector<double>
+local_curvatures(const std::vector<lanelet::ConstLanelet>& lanelets) {
+  return local_curvatures(concatenate_lanelets(lanelets));
 }
 
 lanelet::BasicLineString2d 
