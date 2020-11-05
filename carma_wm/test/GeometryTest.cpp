@@ -635,17 +635,15 @@ TEST(GeometryTest, compute_tangent_orientations_straight)
 
   lanelet::ConstLanelets lanelets_as_vec;
 
-  size_t num_points = 0;
   for (lanelet::ConstLanelet ll : route_lanelets)
   {
     lanelets_as_vec.push_back(ll);
-    num_points += ll.centerline2d().size();
   }
 
   std::vector<double> result;
   lanelet::BasicLineString2d centerline = carma_wm::geometry::concatenate_lanelets(lanelets_as_vec);  
   result = carma_wm::geometry::compute_tangent_orientations(centerline);
-  ASSERT_EQ(num_points, result.size());
+  ASSERT_EQ(9, result.size());
 
   for (double yaw : result)
   {
@@ -721,20 +719,12 @@ TEST(GeometryTest, compute_tangent_orientations_curved)
 
   auto route_lanelets = wm->getRoute()->shortestPath();
 
-  lanelet::ConstLanelets lanelets_as_vec;
 
   std::vector<double> result;
   lanelet::BasicLineString2d centerline = carma_wm::geometry::concatenate_lanelets({ lanelet::traits::toConst(ll_1), lanelet::traits::toConst(ll_2) });
   result = carma_wm::geometry::compute_tangent_orientations(centerline);
 
-  size_t num_points = 0;
-  for (lanelet::ConstLanelet ll : route_lanelets)
-  {
-    lanelets_as_vec.push_back(ll);
-    num_points += ll.centerline2d().size();
-  }
-
-  ASSERT_EQ(num_points, result.size());
+  ASSERT_EQ(15, result.size());
 
   ASSERT_NEAR(1.7017, result[0], 0.00001); // First point has some error which is allowable due to mathemtical constraints on calculating the tangent
   ASSERT_NEAR(1.7017, result[1], 0.00001);
@@ -748,10 +738,9 @@ TEST(GeometryTest, compute_tangent_orientations_curved)
   ASSERT_NEAR(2.74889, result[9], 0.00001);
   ASSERT_NEAR(2.87157, result[10], 0.00001);
   ASSERT_NEAR(3.01069, result[11], 0.00001);
-  ASSERT_NEAR(3.01069, result[12], 0.00001);
+  ASSERT_NEAR(3.05132, result[12], 0.00001);
   ASSERT_NEAR(3.14159, result[13], 0.00001);
   ASSERT_NEAR(3.14159, result[14], 0.00001);
-  ASSERT_NEAR(3.14159, result[15], 0.00001);
 
   // Verify empty centerline gives 0 output
   lanelet::BasicLineString2d empty_ls;
