@@ -291,6 +291,7 @@ void LightBarManager::init(std::string mode)
     spin_rate_ = pnh_.param<double>("spin_rate_hz", 10.0);
     std::string lightbar_driver_service_name= pnh_.param<std::string>("lightbar_driver_service_name", "set_lights");
     std::string guidance_state_topic_name = pnh_.param<std::string>("guidance_state_topic_name", "state");
+    std::string turn_signal_topic_name = pnh_.param<std::string>("turn_signal_topic_name", "turn_signal_command");
 
     // Init our ROS objects
     request_control_server_= nh_.advertiseService("request_control", &LightBarManager::requestControlCallBack, this);
@@ -298,7 +299,7 @@ void LightBarManager::init(std::string mode)
     set_indicator_server_= nh_.advertiseService("set_indicator", &LightBarManager::setIndicatorCallBack, this);
     indicator_control_publisher_ = nh_.advertise<cav_msgs::LightBarIndicatorControllers>("indicator_control", 5);
     guidance_state_subscriber_ = nh_.subscribe(guidance_state_topic_name, 5, &LightBarManager::stateChangeCallBack, this);
-    turn_signal_subscriber_ = nh_.subscribe("turn_signal_command", 5, &LightBarManager::turnSignalCallback, this);
+    turn_signal_subscriber_ = nh_.subscribe(turn_signal_topic_name, 5, &LightBarManager::turnSignalCallback, this);
     lightbar_driver_client_ = nh_.serviceClient<cav_srvs::SetLights>(lightbar_driver_service_name);
 
     // Load Conversion table, CDAType to Indicator mapping
