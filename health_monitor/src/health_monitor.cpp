@@ -22,6 +22,16 @@
 namespace health_monitor
 {
 
+
+    HealthMonitor::HealthMonitor()
+    {
+        std::vector<bool>pub_truck(9, false);
+        std::vector<bool>pub_car(7, false);
+        is_published_truck = pub_truck;
+        is_published_car = pub_car;
+
+    
+    }
     void HealthMonitor::initialize()
     {
         // init node handles
@@ -245,7 +255,7 @@ namespace health_monitor
     }
 
 
-    void HealthMonitor::setisPublishedFalse()
+    /*void HealthMonitor::setisPublishedFalse()
     {
         for(int i=0; i<9; i++)
         {
@@ -256,6 +266,6 @@ namespace health_monitor
         {
             is_published_car[j] = false;
         }
-    }
+    }*/
 
 }

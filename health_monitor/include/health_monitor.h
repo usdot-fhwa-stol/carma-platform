@@ -40,6 +40,8 @@ namespace health_monitor
             //Publisher Handling
             void setisPublishedFalse();
 
+            HealthMonitor();
+
         private:
 
             // node handles
@@ -92,7 +94,7 @@ namespace health_monitor
             bool spin_cb();
             
             //SystemAlert Publishing Status Arrays
-            bool is_published_truck[9];
-            bool is_published_car[7];
+            std::vector<bool>is_published_truck;//Num elements = 9
+            std::vector<bool> is_published_car;//Num elements = 7
     };
 }

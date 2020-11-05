@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 {
     ros::init(argc, argv, "health_monitor");
     health_monitor::HealthMonitor node;
-    node.setisPublishedFalse();
+    //node.setisPublishedFalse();
     node.run();
     return 0;
 };
