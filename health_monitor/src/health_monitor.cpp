@@ -25,6 +25,7 @@ namespace health_monitor
 
     HealthMonitor::HealthMonitor()
     {
+        ROS_WARN_STREAM("Check Health_Monitor");
         std::vector<bool>pub_truck(9, false);
         std::vector<bool>pub_car(7, false);
         is_published_truck = pub_truck;
@@ -255,7 +256,7 @@ namespace health_monitor
     }
 
 
-    /*void HealthMonitor::setisPublishedFalse()
+    /*void HealthMonitor::setIsPublishedFalse()
     {
         for(int i=0; i<9; i++)
         {
@@ -267,5 +268,20 @@ namespace health_monitor
             is_published_car[j] = false;
         }
     }*/
+
+
+    std::vector<bool> HealthMonitor::getPubStatusCar()
+    {
+        ROS_WARN_STREAM("THISISATEST");
+        std::vector <bool> cr_;
+        for(int i=0; i< is_published_car.size();i++)
+            cr_.push_back(is_published_car[i]);
+        return cr_;
+    }
+
+    std::vector<bool> HealthMonitor::getPubStatusTruck()
+    {
+        return is_published_truck;
+    }
 
 }

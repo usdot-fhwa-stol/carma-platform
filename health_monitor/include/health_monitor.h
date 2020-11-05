@@ -29,7 +29,11 @@ namespace health_monitor
     class HealthMonitor
     {
         public:
-
+            
+            /*!
+             * \brief Default constructor for HealthMonitor
+             */
+            HealthMonitor();
             /*!
              * \brief Begin normal execution of health monitor node. Will take over control flow of program and exit from here.
              * 
@@ -38,9 +42,13 @@ namespace health_monitor
             void run();
 
             //Publisher Handling
-            void setisPublishedFalse();
+            std::vector<bool> getPubStatusCar();
+            std::vector<bool> getPubStatusTruck();
 
-            HealthMonitor();
+            void setIsPublishedFalse();
+
+
+            
 
         private:
 
