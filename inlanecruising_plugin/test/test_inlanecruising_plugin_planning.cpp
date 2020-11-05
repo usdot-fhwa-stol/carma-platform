@@ -14,7 +14,7 @@
  * the License.
  */
 
-#include "inlanecruising_plugin.h"
+#include <inlanecruising_plugin/inlanecruising_plugin.h>
 #include <carma_wm/WMTestLibForGuidance.h>
 #include <gtest/gtest.h>
 #include <ros/ros.h>
@@ -36,7 +36,7 @@
 using namespace lanelet::units::literals;
 namespace inlanecruising_plugin
 {
-TEST(InLaneCruisingPluginTest, testPlanningCallback)
+TEST(InLaneCruisingPluginTest, DISABLED_testPlanningCallback)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -117,7 +117,7 @@ TEST(WaypointGeneratorTest, test_full_generation)
     lanelet::ErrorMessages load_errors;
 
     // File location of osm file
-    std::string file = "/workspaces/carma_ws/carma/src/carma-platform/waypoint_generator/AOI_1_TFHRC_fixed_speeds.osm";    
+    std::string file = "/workspaces/carma_ws/carma/AOI_1_TFHRC_faster_pretty.osm";    
     // The route ids that will form the route used
     std::vector<lanelet::Id> route_ids = { 130, 111, 110, 113, 135, 138 };
 
@@ -138,7 +138,7 @@ TEST(WaypointGeneratorTest, test_full_generation)
     auto routing_graph = wm->getMapRoutingGraph();
 
     // Output graph for debugging
-    routing_graph->exportGraphViz("/workspaces/carma_ws/carma/src/carma-platform/waypoint_generator/routing.viz");
+    //routing_graph->exportGraphViz("/workspaces/carma_ws/carma/src/carma-platform/waypoint_generator/routing.viz");
 
     carma_wm::test::setRouteByIds(route_ids, wm);
 
