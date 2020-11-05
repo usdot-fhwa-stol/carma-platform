@@ -226,8 +226,10 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
     if (!fit_curve)
     {  // TODO how better to handle this case
-      for (auto p : discreet_curve.points)
+      for (size_t i = 0; i < discreet_curve.points.size() - 1; i++)
       {
+        Eigen::Isometry2d point_in_map = curvePointInMapTF(discreet_curve.frame, discreet_curve.points[i].point, final_yaw_values.back());
+        all_sampling_points.push_back(point_in_map.translation());
         final_yaw_values.push_back(final_yaw_values.back());
         final_actual_speeds.push_back(final_actual_speeds.back());
       }
@@ -317,16 +319,8 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
     for (int i = 0; i < yaw_values.size() - 1; i++)
     {  // Drop last point
-      Eigen::Vector2d identity(0.0, 0.0);
-      Eigen::Rotation2Dd yaw_rot(yaw_values[i]);
 
-      // NOTE: I'm pretty certain the origin does not matter here but unit test to confirm
-      Eigen::Isometry2d point_in_c = carma_wm::geometry::build2dEigenTransform(sampling_points[i], yaw_rot);
-
-      Eigen::Isometry2d point_in_map = discreet_curve.frame * point_in_c;
-      // Eigen::Matrix2d rot_mat;
-      // Eigen::Vector2d scale;
-      // point_in_map.computeRotationScaling(&rot_mat, &scale);
+      Eigen::Isometry2d point_in_map = curvePointInMapTF(discreet_curve.frame, sampling_points[i], yaw_values[i]);
       Eigen::Rotation2Dd new_rot(point_in_map.rotation());
       final_yaw_values.push_back(new_rot.smallestAngle());
       all_sampling_points.push_back(point_in_map.translation());
@@ -377,6 +371,14 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   return traj_points;
 }
+
+Eigen::Isometry2d InLaneCruisingPlugin::curvePointInMapTF(const Eigen::Isometry2d& curve_in_map, const lanelet::BasicPoint2d& p, double yaw) const {
+  Eigen::Rotation2Dd yaw_rot(yaw);
+  Eigen::Isometry2d point_in_c = carma_wm::geometry::build2dEigenTransform(p, yaw_rot);
+  Eigen::Isometry2d point_in_map = curve_in_map * point_in_c;
+  return point_in_map;
+}
+
 
 std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::trajectory_from_points_times_orientations(
     const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& times, const std::vector<double>& yaws,

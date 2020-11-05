@@ -725,9 +725,9 @@ lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> CARMAWorldMode
   double min_dist = INFINITY; 
   for (size_t idx = 0 ; idx < object_downtracks.size(); idx ++)
   {
-    if (min_dist > std::abs(object_downtracks[idx] - input_obj_downtrack))
+    if (min_dist > std::fabs(object_downtracks[idx] - input_obj_downtrack))
     {
-      min_dist = std::abs(object_downtracks[idx] - input_obj_downtrack);    
+      min_dist = std::fabs(object_downtracks[idx] - input_obj_downtrack);    
       min_idx = idx;
     }
   }

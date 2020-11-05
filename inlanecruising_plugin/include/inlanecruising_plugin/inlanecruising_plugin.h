@@ -95,6 +95,8 @@ public:
 
   std::vector<DiscreteCurve> compute_sub_curves(const std::vector<PointSpeedPair>& basic_points);
 
+  Eigen::Isometry2d curvePointInMapTF(const Eigen::Isometry2d& curve_in_map, const lanelet::BasicPoint2d& p, double yaw) const;
+
 private:
   carma_wm::WorldModelConstPtr wm_;
   InLaneCruisingPluginConfig config_;

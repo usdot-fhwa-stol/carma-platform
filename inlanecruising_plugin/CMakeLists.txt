@@ -101,9 +101,10 @@ install(DIRECTORY launch config
 ## Testing ##
 #############
 
-catkin_add_gmock(${PROJECT_NAME}-test test/test_inlanecruising_plugin_planning.cpp)
+catkin_add_gmock(${PROJECT_NAME}-test 
+  test/test_inlanecruising_plugin_planning.cpp
+  test/test_inlanecruising_plugin.cpp
+)
 target_link_libraries(${PROJECT_NAME}-test inlanecruising_plugin_library ${catkin_LIBRARIES})
 
-# catkin_add_gmock(${PROJECT_NAME}-test test/test_inlanecruising_plugin.cpp)
-# target_link_libraries(${PROJECT_NAME}-test inlanecruising_plugin_library ${catkin_LIBRARIES})
 

@@ -32,6 +32,8 @@
 #include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <carma_wm/MapConformer.h>
 #include <carma_wm/CARMAWorldModel.h>
+#include <ros/console.h>
+
 
 using namespace lanelet::units::literals;
 namespace inlanecruising_plugin
@@ -110,7 +112,7 @@ Using this file:
     NOTE: The test is disabled by default. Enable it by removing the DISABLED_ prefix from the test name
 */
 
-TEST(WaypointGeneratorTest, test_full_generation)
+TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
 {
     int projector_type = 0;
     std::string target_frame;
@@ -191,5 +193,9 @@ int main(int argc, char **argv)
 {
     testing::InitGoogleTest(&argc, argv);
     ros::Time::init();
+    ROSCONSOLE_AUTOINIT;
+    if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+      ros::console::notifyLoggerLevelsChanged();
+    }
     return RUN_ALL_TESTS();
 }
