@@ -11,4 +11,4 @@ unreliable_message_upper_limit: 3
 # 0 - ndt only
 # 1 - GNSS only
 # 2 - auto select between ndt and GNSS
-localization_mode: 0
+localization_mode: 2
