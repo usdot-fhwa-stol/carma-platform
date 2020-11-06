@@ -84,6 +84,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
   trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state);
+  trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
 
   resp.trajectory_plan = trajectory;
   resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_FOLLOWING);
@@ -349,27 +350,32 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   lanelet::BasicPoint2d cur_veh_point(state.X_pos_global, state.Y_pos_global);
   all_sampling_points.insert(all_sampling_points.begin(),
                              cur_veh_point);  // Add current vehicle position to front of sample points
-  final_actual_speeds.insert(final_actual_speeds.begin(), std::max(final_actual_speeds.front(), config_.minimum_speed));
+  final_actual_speeds.insert(final_actual_speeds.begin(), std::max(state.longitudinal_vel, config_.minimum_speed));
   final_yaw_values.insert(final_yaw_values.begin(), state.orientation);
 
+
+log::printDoublesPerLineWithPrefix("pre_smoot[i]: ", final_actual_speeds);
   // Compute points to local downtracks
   std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(all_sampling_points);
 
   // Apply lookahead speeds
   final_actual_speeds = trajectory_utils::shift_by_lookahead(final_actual_speeds, config_.lookahead_count);
 
+log::printDoublesPerLineWithPrefix("post_shift[i]: ", final_actual_speeds);
   // Apply accel limits
   final_actual_speeds = trajectory_utils::apply_accel_limits_by_distance(
       downtracks, final_actual_speeds, config_.max_accel, config_.max_accel); 
+log::printDoublesPerLineWithPrefix("postAccel[i]: ", final_actual_speeds);
 
   final_actual_speeds = smoothing::moving_average_filter(
       final_actual_speeds,
       config_.moving_average_window_size);
-
+log::printDoublesPerLineWithPrefix("post_average[i]: ", final_actual_speeds);
   // Convert speeds to times
   std::vector<double> times;
   trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
 
+log::printDoublesPerLineWithPrefix("times[i]: ", times);
   // Build trajectory points
   // TODO When more plugins are implemented that might share trajectory planning the start time will need to be based
   // off the last point in the plan if an earlier plan was provided
