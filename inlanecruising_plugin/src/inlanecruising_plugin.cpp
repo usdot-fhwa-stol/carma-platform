@@ -199,6 +199,7 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::constrain_to_time_boundary(con
 std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_trajectory_from_centerline(
     const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state)
 {
+  ROS_DEBUG_STREAM("VehicleState: " << " x: " << state.X_pos_global << " y: " << state.Y_pos_global << " yaw: " << state.orientation << " speed: " << state.longitudinal_vel);
   ROS_DEBUG_STREAM("points size: " << points.size());
   log::printDebugPerLine(points, &log::pointSpeedPairToStream);
 
@@ -246,36 +247,28 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
     ROS_WARN("Got fit");
 
+    ROS_ERROR_STREAM("speed_limits.size() " << speed_limits.size());
+
     std::vector<lanelet::BasicPoint2d> sampling_points;
     sampling_points.reserve(1 + discreet_curve.points.size() * 2);
 
     std::vector<double> distributed_speed_limits;
     distributed_speed_limits.reserve(1 + discreet_curve.points.size() * 2);
 
-    double totalDist = 0;
-    bool firstLoop = true;
     lanelet::BasicPoint2d prev_point(0.0, 0.0);
     std::vector<std::pair<double, double>> limit_distance_pairs;
     limit_distance_pairs.reserve(basic_points.size());
-    int current_p_i = 0;
-    for (auto p : basic_points)
-    {
-      if (firstLoop)
-      {
-        prev_point = p;
-        firstLoop = false;
-        continue;
-      }
+    double max_x = basic_points.back().x();
 
-      totalDist += lanelet::geometry::distance2d(prev_point, p);
-      limit_distance_pairs.push_back(std::make_pair(speed_limits[current_p_i], totalDist));
-      current_p_i++;
+    for (size_t i = 0; i < basic_points.size(); i++)
+    {
+      limit_distance_pairs.push_back(std::make_pair(speed_limits[i], basic_points[i].x()));
     }
 
     double current_dist = 0;
     double step_size = config_.curve_resample_step_size;
     int current_pair_index = 0;
-    while (current_dist < totalDist - step_size)
+    while (current_dist < max_x - step_size)
     {
       double x = current_dist;
       double y = (*fit_curve)(x);
@@ -340,7 +333,6 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
     ROS_WARN("Appended to final");
   }
-
   ROS_WARN("Processed all curves");
 
   final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, config_.moving_average_window_size);
