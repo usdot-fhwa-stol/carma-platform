@@ -23,12 +23,23 @@
 namespace lightbar_manager
 {
 
+
 TEST(LightBarManagerWorkerTest, testRequestControl) 
 {
-    LightBarManager node("lightbar_manager");
-    // initialize worker that is unit testable
-    node.init("test");
-    LightBarManagerWorker worker = node.getWorker();
+    LightBarManagerWorker worker("lightbar_manager");
+    // Initialize indicator control map. Fills with supporting indicators with empty string name as owners.
+    worker.setIndicatorControllers();
+    worker.control_priorities.push_back("lightbar_manager");
+    worker.control_priorities.push_back("tester1");
+    worker.control_priorities.push_back("tester2");
+    worker.control_priorities.push_back("tester3");
+
+    // Initialize indicator representation of lightbar status to all OFF
+    for (int i =0; i < INDICATOR_COUNT; i++)
+        worker.light_status.push_back(OFF);
+
+    std::vector<LightBarIndicator> greens_default = {GREEN_SOLID, GREEN_FLASH};
+    worker.requestControl(greens_default, "lightbar_manager");
 
     std::map<LightBarIndicator, std::string> curr_owners = worker.getIndicatorControllers();
     std::vector<LightBarIndicator> exclusive_list = {YELLOW_DIM, YELLOW_SIDES}, 
@@ -149,10 +160,21 @@ TEST(LightBarManagerWorkerTest, testRequestControl)
 
 TEST(LightBarManagerWorkerTest, testReleaseControl) 
 {
-    LightBarManager node("lightbar_manager");
-    // initialize worker that is unit testable
-    node.init("test");
-    LightBarManagerWorker worker = node.getWorker();
+    LightBarManagerWorker worker("lightbar_manager");
+    // Initialize indicator control map. Fills with supporting indicators with empty string name as owners.
+    worker.setIndicatorControllers();
+    worker.control_priorities.push_back("lightbar_manager");
+    worker.control_priorities.push_back("tester1");
+    worker.control_priorities.push_back("tester2");
+    worker.control_priorities.push_back("tester3");
+
+    // Initialize indicator representation of lightbar status to all OFF
+    for (int i =0; i < INDICATOR_COUNT; i++)
+        worker.light_status.push_back(OFF);
+
+    std::vector<LightBarIndicator> greens_default = {GREEN_SOLID, GREEN_FLASH};
+    worker.requestControl(greens_default, "lightbar_manager");
+
     std::map<LightBarIndicator, std::string> curr_owners = worker.getIndicatorControllers();
     std::vector<LightBarIndicator> greens = {GREEN_FLASH, GREEN_SOLID}, curr_ind;
 
@@ -198,10 +220,22 @@ TEST(LightBarManagerWorkerTest, testReleaseControl)
 
 TEST(LightBarManagerWorkerTest, testSetIndicator) 
 {
-    LightBarManager node("lightbar_manager");
-    // initialize worker that is unit testable
-    node.init("test");
-    LightBarManagerWorker worker = node.getWorker();
+    LightBarManagerWorker worker("lightbar_manager");
+    // Initialize indicator control map. Fills with supporting indicators with empty string name as owners.
+    worker.setIndicatorControllers();
+    worker.control_priorities.push_back("lightbar_manager");
+    worker.control_priorities.push_back("tester1");
+    worker.control_priorities.push_back("tester2");
+    worker.control_priorities.push_back("tester3");
+
+    // Initialize indicator representation of lightbar status to all OFF
+    for (int i =0; i < INDICATOR_COUNT; i++)
+        worker.light_status.push_back(OFF);
+
+    std::vector<LightBarIndicator> greens_default = {GREEN_SOLID, GREEN_FLASH};
+    worker.requestControl(greens_default, "lightbar_manager");
+
+
     std::vector<IndicatorStatus> correct_light_status;
     std::vector<LightBarIndicator> target_indicators;
     // Lightbar_manager should be able to set the green indicators right away
@@ -235,10 +269,22 @@ TEST(LightBarManagerWorkerTest, testSetIndicator)
 
 TEST(LightBarManagerWorkerTest, testHasHigherPriority) 
 {
-    LightBarManager node("lightbar_manager");
-    // initialize worker that is unit testable
-    node.init("test");
-    LightBarManagerWorker worker = node.getWorker();
+    LightBarManagerWorker worker("lightbar_manager");
+    // Initialize indicator control map. Fills with supporting indicators with empty string name as owners.
+    worker.setIndicatorControllers();
+    worker.control_priorities.push_back("lightbar_manager");
+    worker.control_priorities.push_back("tester1");
+    worker.control_priorities.push_back("tester2");
+    worker.control_priorities.push_back("tester3");
+
+    // Initialize indicator representation of lightbar status to all OFF
+    for (int i =0; i < INDICATOR_COUNT; i++)
+        worker.light_status.push_back(OFF);
+
+    std::vector<LightBarIndicator> greens_default = {GREEN_SOLID, GREEN_FLASH};
+    worker.requestControl(greens_default, "lightbar_manager");
+
+
     // Lightbar compared to anything should be higher
     EXPECT_EQ(true, worker.hasHigherPriority("lightbar_manager", "tester1"));
     // Test priority list
@@ -252,12 +298,22 @@ TEST(LightBarManagerWorkerTest, testHasHigherPriority)
 
 TEST(LightBarManagerWorkerTest, testGetLightBarStatusMsg) 
 {
-    LightBarManager node("lightbar_manager");
-    // initialize worker that is unit testable
-    node.init("test");
+    LightBarManagerWorker worker("lightbar_manager");
+    // Initialize indicator control map. Fills with supporting indicators with empty string name as owners.
+    worker.setIndicatorControllers();
+    worker.control_priorities.push_back("lightbar_manager");
+    worker.control_priorities.push_back("tester1");
+    worker.control_priorities.push_back("tester2");
+    worker.control_priorities.push_back("tester3");
 
-    // Handle left/right indicators with arrow_out correctly
-    LightBarManagerWorker worker = node.getWorker();
+    // Initialize indicator representation of lightbar status to all OFF
+    for (int i =0; i < INDICATOR_COUNT; i++)
+        worker.light_status.push_back(OFF);
+
+    std::vector<LightBarIndicator> greens_default = {GREEN_SOLID, GREEN_FLASH};
+    worker.requestControl(greens_default, "lightbar_manager");
+
+
     std::vector<IndicatorStatus> all_indicators = {ON, OFF, ON, ON, OFF, OFF, OFF, ON};
     cav_msgs::LightBarStatus msg = worker.getLightBarStatusMsg(all_indicators);
     EXPECT_EQ(cav_msgs::LightBarStatus::ON, msg.green_solid);
