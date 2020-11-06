@@ -50,7 +50,7 @@ class LightBarManager
         LightBarManager(const std::string& node_name);
 
         /*!
-        * \brief Initiliaze ROS related functions. Pass "test" to setup ROS parameters for unit testing
+        * \brief Initialize ROS related functions. Pass "test" to setup ROS parameters for unit testing
         */
         void init(std::string mode = "");
 

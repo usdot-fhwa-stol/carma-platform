@@ -175,6 +175,14 @@ void LightBarManager::turnSignalCallback(const automotive_platform_msgs::TurnSig
         return;
     }
     
+    // check if left or right signal should be controlled, or none at all
+    std::vector<lightbar_manager::LightBarIndicator> changed_turn_signal = lbm_.handleTurnSignal(msg_ptr);
+
+    if (changed_turn_signal.empty())
+    {
+        return; //no need to do anything if it is same turn signal changed
+    }
+
     std::map<lightbar_manager::LightBarIndicator, std::__cxx11::string> prev_owners = lbm_.getIndicatorControllers();
     
     lightbar_manager::IndicatorStatus indicator_status;
@@ -186,14 +194,6 @@ void LightBarManager::turnSignalCallback(const automotive_platform_msgs::TurnSig
     else 
     {
         indicator_status = lightbar_manager::IndicatorStatus::ON;
-    }
-
-    // check if left or right signal should be controlled, or none at all
-    std::vector<lightbar_manager::LightBarIndicator> changed_turn_signal = lbm_.handleTurnSignal(msg_ptr);
-
-    if (changed_turn_signal.empty())
-    {
-        return; //no need to do anything if it is same turn signal changed
     }
 
     if (lbm_.requestControl(changed_turn_signal, node_name_).empty())
@@ -211,10 +211,14 @@ void LightBarManager::turnSignalCallback(const automotive_platform_msgs::TurnSig
         return;
     }
 
-    // release control if it is turning off
+    // release control if it is turning off and put back the previous owners
     if (indicator_status == lightbar_manager::IndicatorStatus::OFF)
     {
         lbm_.releaseControl(changed_turn_signal, node_name_);
+        for (auto const& pair : prev_owners)
+        {
+            lbm_.requestControl({pair.first}, pair.second);
+        }
     }
 }
 // @SONAR_START@
