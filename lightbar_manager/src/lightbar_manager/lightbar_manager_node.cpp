@@ -166,7 +166,7 @@ void LightBarManager::stateChangeCallBack(const cav_msgs::GuidanceStateConstPtr&
         }
     }
 }
-
+// @SONAR_STOP@
 void LightBarManager::turnSignalCallback(const automotive_platform_msgs::TurnSignalCommandPtr& msg_ptr)
 {
     // if not automated
@@ -217,7 +217,7 @@ void LightBarManager::turnSignalCallback(const automotive_platform_msgs::TurnSig
         lbm_.releaseControl(changed_turn_signal, node_name_);
     }
 }
-
+// @SONAR_START@
 
 LightBarManagerWorker LightBarManager::getWorker()
 {
