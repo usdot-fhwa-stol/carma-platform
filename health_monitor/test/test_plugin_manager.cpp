@@ -45,7 +45,7 @@ namespace health_monitor
         cav_srvs::PluginListResponse res;
         pm.get_registered_plugins(res);
         EXPECT_EQ(2, res.plugins.size());
-        // for autoware plugin
+        // for cruising plugin
         EXPECT_EQ(true, res.plugins.begin()->activated);
         EXPECT_EQ(true, res.plugins.begin()->available);
         EXPECT_EQ(0, res.plugins.begin()->name.compare("autoware"));
