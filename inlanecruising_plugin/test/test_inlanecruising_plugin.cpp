@@ -128,7 +128,147 @@ TEST(InLaneCruisingPluginTest, trajectory_from_points_times_orientations)
   ASSERT_EQ(0, traj_points[3].planner_plugin_name.compare(expected_plugin_name));
 }
 
-TEST(InLaneCruisingPluginTest, compose_trajectory_from_centerline)
+TEST(InLaneCruisingPluginTest, constrain_to_time_boundary)
+{
+  InLaneCruisingPluginConfig config;
+  config.downsample_ratio = 1;
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+
+  std::vector<PointSpeedPair> points;
+
+  PointSpeedPair p;
+  p.point = lanelet::BasicPoint2d(0, 0);
+  p.speed = 1.0;
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(1, 0);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(2, 0);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(3, 0);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(4, 0);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(5, 0);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(6, 0);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(7, 0);
+  points.push_back(p);
+
+  std::vector<PointSpeedPair> time_bound_points = plugin.constrain_to_time_boundary(points, 5.0);
+
+  ASSERT_EQ(6, time_bound_points.size());
+  ASSERT_NEAR(0.0, time_bound_points[0].point.x(), 0.0000001);
+  ASSERT_NEAR(1.0, time_bound_points[1].point.x(), 0.0000001);
+  ASSERT_NEAR(2.0, time_bound_points[2].point.x(), 0.0000001);
+  ASSERT_NEAR(3.0, time_bound_points[3].point.x(), 0.0000001);
+  ASSERT_NEAR(4.0, time_bound_points[4].point.x(), 0.0000001);
+  ASSERT_NEAR(5.0, time_bound_points[5].point.x(), 0.0000001);
+
+  ASSERT_NEAR(0.0, time_bound_points[0].point.y(), 0.0000001);
+  ASSERT_NEAR(0.0, time_bound_points[1].point.y(), 0.0000001);
+  ASSERT_NEAR(0.0, time_bound_points[2].point.y(), 0.0000001);
+  ASSERT_NEAR(0.0, time_bound_points[3].point.y(), 0.0000001);
+  ASSERT_NEAR(0.0, time_bound_points[4].point.y(), 0.0000001);
+  ASSERT_NEAR(0.0, time_bound_points[5].point.y(), 0.0000001);
+
+  ASSERT_NEAR(1.0, time_bound_points[0].speed, 0.0000001);
+  ASSERT_NEAR(1.0, time_bound_points[1].speed, 0.0000001);
+  ASSERT_NEAR(1.0, time_bound_points[2].speed, 0.0000001);
+  ASSERT_NEAR(1.0, time_bound_points[3].speed, 0.0000001);
+  ASSERT_NEAR(1.0, time_bound_points[4].speed, 0.0000001);
+  ASSERT_NEAR(1.0, time_bound_points[5].speed, 0.0000001);
+}
+
+TEST(InLaneCruisingPluginTest, getNearestPointIndex)
+{
+  InLaneCruisingPluginConfig config;
+  config.downsample_ratio = 1;
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+
+  std::vector<PointSpeedPair> points;
+
+  PointSpeedPair p;
+  p.point = lanelet::BasicPoint2d(0, 0);
+  p.speed = 1.0;
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(1, 1);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(2, 2);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(3, 3);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(4, 4);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(5, 5);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(6, 6);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(7, 7);
+  points.push_back(p);
+
+  cav_msgs::VehicleState state;
+  state.X_pos_global = 3.3;
+  state.Y_pos_global = 3.3;
+
+  ASSERT_EQ(3, plugin.getNearestPointIndex(points, state));
+}
+
+TEST(InLaneCruisingPluginTest, splitPointSpeedPairs)
+{
+  InLaneCruisingPluginConfig config;
+  config.downsample_ratio = 1;
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+
+  std::vector<PointSpeedPair> points;
+
+  PointSpeedPair p;
+  p.point = lanelet::BasicPoint2d(0, 1);
+  p.speed = 1.0;
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(1, 2);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(2, 3);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(3, 4);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(4, 5);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(5, 6);
+  points.push_back(p);
+
+  std::vector<lanelet::BasicPoint2d> basic_points;
+  std::vector<double> speeds;
+
+  plugin.splitPointSpeedPairs(points, &basic_points, &speeds);
+
+  ASSERT_EQ(points.size(), basic_points.size());
+  ASSERT_NEAR(0.0, basic_points[0].x(), 0.0000001);
+  ASSERT_NEAR(1.0, basic_points[1].x(), 0.0000001);
+  ASSERT_NEAR(2.0, basic_points[2].x(), 0.0000001);
+  ASSERT_NEAR(3.0, basic_points[3].x(), 0.0000001);
+  ASSERT_NEAR(4.0, basic_points[4].x(), 0.0000001);
+  ASSERT_NEAR(5.0, basic_points[5].x(), 0.0000001);
+
+  ASSERT_NEAR(1.0, basic_points[0].y(), 0.0000001);
+  ASSERT_NEAR(2.0, basic_points[1].y(), 0.0000001);
+  ASSERT_NEAR(3.0, basic_points[2].y(), 0.0000001);
+  ASSERT_NEAR(4.0, basic_points[3].y(), 0.0000001);
+  ASSERT_NEAR(5.0, basic_points[4].y(), 0.0000001);
+  ASSERT_NEAR(6.0, basic_points[5].y(), 0.0000001);
+
+  ASSERT_NEAR(1.0, speeds[0], 0.0000001);
+  ASSERT_NEAR(1.0, speeds[1], 0.0000001);
+  ASSERT_NEAR(1.0, speeds[2], 0.0000001);
+  ASSERT_NEAR(1.0, speeds[3], 0.0000001);
+  ASSERT_NEAR(1.0, speeds[4], 0.0000001);
+  ASSERT_NEAR(1.0, speeds[5], 0.0000001);
+}
+
+TEST(InLaneCruisingPluginTest, DISABLED_compose_trajectory_from_centerline)
 {
   cav_msgs::VehicleState state;
   state.X_pos_global = -191.098;
