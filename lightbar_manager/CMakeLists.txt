@@ -113,7 +113,7 @@ install(DIRECTORY
 #############
 
 catkin_add_gmock(${PROJECT_NAME}-test
-  test/test_lightbar_manager_sm.cpp
+  test/test_lightbar_manager.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}-test

@@ -271,12 +271,8 @@ TEST(LightBarManagerWorkerTest, testGetLightBarStatusMsg)
 
 TEST(LightBarManagerWorkerTest, testHandleHandleTurnSignal) 
 {
-    LightBarManager node("lightbar_manager");
-    // initialize worker that is unit testable
-    node.init("test");
-
     // Handle left/right indicators with arrow_out correctly
-    LightBarManagerWorker worker = node.getWorker();
+    LightBarManagerWorker worker("lightbar_manager");
 
     automotive_platform_msgs::TurnSignalCommandPtr turn_signal = boost::make_shared<automotive_platform_msgs::TurnSignalCommand>();
     turn_signal->turn_signal = automotive_platform_msgs::TurnSignalCommand::RIGHT;

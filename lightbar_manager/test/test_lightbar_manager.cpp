@@ -14,6 +14,7 @@
  * the License.
  */
 
+#include "lightbar_manager/lightbar_manager_worker.hpp"
 #include "lightbar_manager/lightbar_manager_sm.hpp"
 #include <cav_msgs/GuidanceState.h>
 #include <gtest/gtest.h>
@@ -90,6 +91,46 @@ TEST(LightBarManagerStateMachineTest, testStates)
     lbsm.handleStateChange(msg_ptr);
     EXPECT_EQ(DISENGAGED, lbsm.getCurrentState());
 }
+
+
+TEST(LightBarManagerWorkerTest, testHandleHandleTurnSignal) 
+{
+    // Handle left/right indicators with arrow_out correctly
+    LightBarManagerWorker worker("lightbar_manager");
+
+    automotive_platform_msgs::TurnSignalCommandPtr turn_signal = boost::make_shared<automotive_platform_msgs::TurnSignalCommand>();
+    turn_signal->turn_signal = automotive_platform_msgs::TurnSignalCommand::RIGHT;
+    auto light_signals = worker.handleTurnSignal(turn_signal);
+
+    EXPECT_EQ(light_signals.size(), 1);
+    EXPECT_EQ(light_signals[0], lightbar_manager::LightBarIndicator::YELLOW_ARROW_RIGHT);
+    
+    turn_signal->turn_signal = automotive_platform_msgs::TurnSignalCommand::NONE;
+    light_signals = worker.handleTurnSignal(turn_signal);
+
+    EXPECT_EQ(light_signals.size(), 1);
+    EXPECT_EQ(light_signals[0], lightbar_manager::LightBarIndicator::YELLOW_ARROW_RIGHT);
+
+    turn_signal->turn_signal = automotive_platform_msgs::TurnSignalCommand::NONE;
+    light_signals = worker.handleTurnSignal(turn_signal);
+    EXPECT_EQ(light_signals.size(), 0);
+
+    turn_signal->turn_signal = automotive_platform_msgs::TurnSignalCommand::LEFT;
+    light_signals = worker.handleTurnSignal(turn_signal);
+    EXPECT_EQ(light_signals.size(), 1);
+    EXPECT_EQ(light_signals[0], lightbar_manager::LightBarIndicator::YELLOW_ARROW_LEFT);
+    
+    turn_signal->turn_signal = automotive_platform_msgs::TurnSignalCommand::NONE;
+    light_signals = worker.handleTurnSignal(turn_signal);
+    EXPECT_EQ(light_signals.size(), 1);
+    EXPECT_EQ(light_signals[0], lightbar_manager::LightBarIndicator::YELLOW_ARROW_LEFT);
+
+    turn_signal->turn_signal = automotive_platform_msgs::TurnSignalCommand::NONE;
+    light_signals = worker.handleTurnSignal(turn_signal);
+    EXPECT_EQ(light_signals.size(), 0);
+}
+
+
 
 }   // namespace lightbar_manager
 
