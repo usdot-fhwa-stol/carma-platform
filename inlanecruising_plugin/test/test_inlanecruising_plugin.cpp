@@ -268,6 +268,165 @@ TEST(InLaneCruisingPluginTest, splitPointSpeedPairs)
   ASSERT_NEAR(1.0, speeds[5], 0.0000001);
 }
 
+TEST(InLaneCruisingPluginTest, compute_sub_curves)
+{
+  InLaneCruisingPluginConfig config;
+  config.downsample_ratio = 1;
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+
+  std::vector<PointSpeedPair> points;
+  double speed = 1.0;
+  PointSpeedPair p;
+  p.point = lanelet::BasicPoint2d(20, 30);
+  p.speed = speed;
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(21, 30);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(22, 30);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(23, 30);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(24, 30);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(24, 31);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(24, 32);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(24, 33);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(23, 33);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(22, 33);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(21, 33);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(21, 34);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(21, 35);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(21, 36);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(21, 37);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(22, 37);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(23, 37);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(24, 37);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(25, 37);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(26, 37);
+  points.push_back(p);
+
+  std::vector<PointSpeedPair> c1;
+  p.point = lanelet::BasicPoint2d(0, 0);
+  c1.push_back(p);
+  p.point = lanelet::BasicPoint2d(1, 0);
+  c1.push_back(p);
+  p.point = lanelet::BasicPoint2d(2, 0);
+  c1.push_back(p);
+  p.point = lanelet::BasicPoint2d(3, 0);
+  c1.push_back(p);
+  p.point = lanelet::BasicPoint2d(4, 0);
+  c1.push_back(p);
+
+  std::vector<PointSpeedPair> c2;
+  p.point = lanelet::BasicPoint2d(0, 0);
+  c2.push_back(p);
+  p.point = lanelet::BasicPoint2d(1, 0);
+  c2.push_back(p);
+  p.point = lanelet::BasicPoint2d(2, 0);
+  c2.push_back(p);
+  p.point = lanelet::BasicPoint2d(3, 0);
+  c2.push_back(p);
+
+  std::vector<PointSpeedPair> c3;
+  p.point = lanelet::BasicPoint2d(0, 0);
+  c3.push_back(p);
+  p.point = lanelet::BasicPoint2d(1, 0);
+  c3.push_back(p);
+  p.point = lanelet::BasicPoint2d(2, 0);
+  c3.push_back(p);
+  p.point = lanelet::BasicPoint2d(3, 0);
+  c3.push_back(p);
+
+  std::vector<PointSpeedPair> c4;
+  p.point = lanelet::BasicPoint2d(0, 0);
+  c4.push_back(p);
+  p.point = lanelet::BasicPoint2d(1, 0);
+  c4.push_back(p);
+  p.point = lanelet::BasicPoint2d(2, 0);
+  c4.push_back(p);
+  p.point = lanelet::BasicPoint2d(3, 0);
+  c4.push_back(p);
+  p.point = lanelet::BasicPoint2d(4, 0);
+  c4.push_back(p);
+
+  std::vector<PointSpeedPair> c5;
+  p.point = lanelet::BasicPoint2d(0, 0);
+  c5.push_back(p);
+  p.point = lanelet::BasicPoint2d(1, 0);
+  c5.push_back(p);
+  p.point = lanelet::BasicPoint2d(2, 0);
+  c5.push_back(p);
+  p.point = lanelet::BasicPoint2d(3, 0);
+  c5.push_back(p);
+  p.point = lanelet::BasicPoint2d(4, 0);
+  c5.push_back(p);
+  // p.point = lanelet::BasicPoint2d(5, 0); // Last point is not added because compute_sub_curves always drops the last point
+  // c5.push_back(p);
+
+  std::vector<DiscreteCurve> discrete_curves = plugin.compute_sub_curves(points);
+  ASSERT_EQ(5, discrete_curves.size());
+
+  ASSERT_EQ(c1.size(), discrete_curves[0].points.size());
+  for (size_t i = 0; i < discrete_curves[0].points.size(); i++)
+  {
+    auto p = discrete_curves[0].points[i];
+    ASSERT_NEAR(c1[i].point.x(), p.point.x(), 0.0000001);
+    ASSERT_NEAR(c1[i].point.y(), p.point.y(), 0.0000001);
+    ASSERT_NEAR(c1[i].speed, p.speed, 0.0000001);
+  }
+
+  ASSERT_EQ(c2.size(), discrete_curves[1].points.size());
+  for (size_t i = 0; i < discrete_curves[1].points.size(); i++)
+  {
+    auto p = discrete_curves[1].points[i];
+    ASSERT_NEAR(c2[i].point.x(), p.point.x(), 0.0000001);
+    ASSERT_NEAR(c2[i].point.y(), p.point.y(), 0.0000001);
+    ASSERT_NEAR(c2[i].speed, p.speed, 0.0000001);
+  }
+
+  ASSERT_EQ(c3.size(), discrete_curves[2].points.size());
+  for (size_t i = 0; i < discrete_curves[2].points.size(); i++)
+  {
+    auto p = discrete_curves[2].points[i];
+    ASSERT_NEAR(c3[i].point.x(), p.point.x(), 0.0000001);
+    ASSERT_NEAR(c3[i].point.y(), p.point.y(), 0.0000001);
+    ASSERT_NEAR(c3[i].speed, p.speed, 0.0000001);
+  }
+
+  ASSERT_EQ(c4.size(), discrete_curves[3].points.size());
+  for (size_t i = 0; i < discrete_curves[3].points.size(); i++)
+  {
+    auto p = discrete_curves[3].points[i];
+    ASSERT_NEAR(c4[i].point.x(), p.point.x(), 0.0000001);
+    ASSERT_NEAR(c4[i].point.y(), p.point.y(), 0.0000001);
+    ASSERT_NEAR(c4[i].speed, p.speed, 0.0000001);
+  }
+
+  ASSERT_EQ(c5.size(), discrete_curves[4].points.size());
+  for (size_t i = 0; i < discrete_curves[4].points.size(); i++)
+  {
+    auto p = discrete_curves[4].points[i];
+    ASSERT_NEAR(c5[i].point.x(), p.point.x(), 0.0000001);
+    ASSERT_NEAR(c5[i].point.y(), p.point.y(), 0.0000001);
+    ASSERT_NEAR(c5[i].speed, p.speed, 0.0000001);
+  }
+}
+
 TEST(InLaneCruisingPluginTest, DISABLED_compose_trajectory_from_centerline)
 {
   cav_msgs::VehicleState state;

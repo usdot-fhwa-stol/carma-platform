@@ -139,7 +139,10 @@ std::vector<DiscreteCurve> InLaneCruisingPlugin::compute_sub_curves(const std::v
   {
     lanelet::BasicPoint2d p1 = map_in_curve * map_points[i].point;
     lanelet::BasicPoint2d p2 = map_in_curve * map_points[i + 1].point;  // TODO Optimization to cache this value
-
+    
+    //ROS_WARN_STREAM("map_point[i]: " << map_points[i].point.x() << ", " << map_points[i].point.y());
+    //ROS_WARN_STREAM("curve_point[i]: " << p1.x() << ", " << p1.y() << std::endl);
+    
     PointSpeedPair initial_pair;
     initial_pair.point = p1;
     initial_pair.speed = map_points[i].speed;
@@ -152,10 +155,10 @@ std::vector<DiscreteCurve> InLaneCruisingPlugin::compute_sub_curves(const std::v
       curves.push_back(curve);
 
       curve = DiscreteCurve();
-      curve.frame = compute_heading_frame(p1, p2);
+      curve.frame = compute_heading_frame(map_points[i].point, map_points[i + 1].point);
       map_in_curve = curve.frame.inverse();
       PointSpeedPair pair;
-      pair.point = p1;
+      pair.point = map_in_curve * map_points[i].point;
       pair.speed = map_points[i].speed;
       curve.points.push_back(pair);  // Include first point in curve
     }
