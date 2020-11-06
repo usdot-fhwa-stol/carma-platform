@@ -42,7 +42,7 @@ TEST(CruisingPluginTest, testGetWaypointsInTimeBoundary1)
     waypoints.push_back(wp_3);
     waypoints.push_back(wp_4);
     waypoints.push_back(wp_5);
-    autoware_plugin::CruisingPlugin ap;
+    cruising_plugin::CruisingPlugin ap;
     std::vector<autoware_msgs::Waypoint> res = ap.get_waypoints_in_time_boundary(waypoints, 6.0);
     EXPECT_EQ(4, res.size());
     EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
@@ -67,7 +67,7 @@ TEST(CruisingPluginTest, testGetWaypointsInTimeBoundary2)
     wp_2.pose.pose.position.x = 6.0;
     waypoints.push_back(wp_1);
     waypoints.push_back(wp_2);
-    autoware_plugin::CruisingPlugin ap;
+    cruising_plugin::CruisingPlugin ap;
     std::vector<autoware_msgs::Waypoint> res = ap.get_waypoints_in_time_boundary(waypoints, 6.0);
     EXPECT_EQ(2, res.size());
     EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
@@ -92,7 +92,7 @@ TEST(CruisingPluginTest, testGetWaypointsInTimeBoundary3)
     waypoints.push_back(wp_1);
     waypoints.push_back(wp_2);
     waypoints.push_back(wp_3);
-    autoware_plugin::CruisingPlugin ap;
+    cruising_plugin::CruisingPlugin ap;
     std::vector<autoware_msgs::Waypoint> res = ap.get_waypoints_in_time_boundary(waypoints, 5.0);
     EXPECT_EQ(3, res.size());
     EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
@@ -127,7 +127,7 @@ TEST(CruisingPluginTest, testCreateUnevenTrajectory1)
     waypoints.push_back(wp_3);
     waypoints.push_back(wp_4);
     waypoints.push_back(wp_5);
-    autoware_plugin::CruisingPlugin ap;
+    cruising_plugin::CruisingPlugin ap;
     // create pose message to indicate that the current location is on top of the starting waypoint
     ap.pose_msg_.reset(new geometry_msgs::PoseStamped());
     std::vector<cav_msgs::TrajectoryPlanPoint> traj = ap.create_uneven_trajectory_from_waypoints(waypoints);
@@ -168,7 +168,7 @@ TEST(CruisingPluginTest, testCreateUnevenTrajectory2)
     waypoints.push_back(wp_3);
     waypoints.push_back(wp_4);
     waypoints.push_back(wp_5);
-    autoware_plugin::CruisingPlugin ap;
+    cruising_plugin::CruisingPlugin ap;
     // create pose message to indicate that the current location is not near the starting waypoint
     geometry_msgs::PoseStamped pose;
     pose.pose.position.x = -1.0;
