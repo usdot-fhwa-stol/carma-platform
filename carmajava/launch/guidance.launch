@@ -99,10 +99,13 @@
   <remap from="/current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>  
   
   <!-- MPC Follower Wrapper -->
-  <include file="$(find mpc_follower_wrapper)/launch/mpc_follower_wrapper.launch">
+<!--  <include file="$(find mpc_follower_wrapper)/launch/mpc_follower_wrapper.launch">
     <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
   </include>
-  
+  -->
+  <remap to="/guidance/mpc_follower/trajectory" from="/guidance/trajectory_plan"/>
+  <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch" />
+
   <!-- Twist Filter -->
   <group>
     <remap from="/accel_cmd" to="accel_cmd"/>
