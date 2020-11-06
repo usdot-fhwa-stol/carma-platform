@@ -179,12 +179,20 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::constrain_to_time_boundary(con
   std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(basic_points);
   size_t time_boundary_exclusive_index = trajectory_utils::time_boundary_index(downtracks, speeds, config_.trajectory_time_length);
 
-  if (time_boundary_exclusive_index == 0 || time_boundary_exclusive_index == downtracks.size())
+  if (time_boundary_exclusive_index == 0)
   {
-    throw std::invalid_argument("No points to fit in timespan");
+    throw std::invalid_argument("No points to fit in timespan"); // TODO might be better to return empty list here
   }
 
-  std::vector<PointSpeedPair> time_bound_points(points.begin() + time_boundary_exclusive_index - 1, points.end());
+  std::vector<PointSpeedPair> time_bound_points;
+  time_bound_points.reserve(time_boundary_exclusive_index);
+
+  if (time_boundary_exclusive_index == points.size()) {
+    time_bound_points.insert(time_bound_points.end(), points.begin(), points.end()); // All points fit within time boundary
+  } else {
+    time_bound_points.insert(time_bound_points.end(), points.begin(), points.begin() + time_boundary_exclusive_index); // Limit points by time boundary
+  }
+
   return time_bound_points;
 }
 
