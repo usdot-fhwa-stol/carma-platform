@@ -190,7 +190,7 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::constrain_to_time_boundary(con
   if (time_boundary_exclusive_index == points.size()) {
     time_bound_points.insert(time_bound_points.end(), points.begin(), points.end()); // All points fit within time boundary
   } else {
-    time_bound_points.insert(time_bound_points.end(), points.begin(), points.begin() + time_boundary_exclusive_index); // Limit points by time boundary
+    time_bound_points.insert(time_bound_points.end(), points.begin(), points.begin() + time_boundary_exclusive_index - 1); // Limit points by time boundary
   }
 
   return time_bound_points;
