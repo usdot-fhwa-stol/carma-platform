@@ -81,6 +81,7 @@ void LightBarManagerStateMachine::handleStateChange(const cav_msgs::GuidanceStat
         break;
         default:
         ROS_WARN_STREAM("LightBarManager received unknown state from guidance state machine:" << msg_ptr->state);
+        return;
         break;
     }
     // Update the current state
