@@ -15,61 +15,124 @@
  */
 
 #include "pure_pursuit_wrapper/pure_pursuit_wrapper.hpp"
-#include <trajectory_utils/conversions/conversions.h>
-#include <carma_wm/Geometry.h>
 
-namespace pure_pursuit_wrapper
+namespace pure_pursuit_wrapper {
+
+PurePursuitWrapper::PurePursuitWrapper(ros::NodeHandle &nodeHandle): nh_(nodeHandle)
 {
-PurePursuitWrapper::PurePursuitWrapper(WaypointPub waypoint_pub, PluginDiscoveryPub plugin_discovery_pub)
-  : waypoint_pub_(waypoint_pub), plugin_discovery_pub_(plugin_discovery_pub)
-{
+  if (!ReadParameters())
+  {
+    ROS_ERROR("Could not read parameters.");
+  }
+
+  Initialize();
+
+  ROS_INFO("Successfully launched node.");
+}
+
+PurePursuitWrapper::~PurePursuitWrapper() {
+}
+
+void PurePursuitWrapper::Initialize() {
+  // SystemAlert Subscriber
+  system_alert_sub_ = nh_.subscribe("system_alert", 10, &PurePursuitWrapper::SystemAlertHandler, this);
+  // SystemAlert Publisher
+  system_alert_pub_ = nh_.advertise<cav_msgs::SystemAlert>("system_alert", 10, true);
+
+  // Pose Subscriber
+  pose_sub.subscribe(nh_, "current_pose", 1);
+  // Trajectory Plan Subscriber
+  trajectory_plan_sub.subscribe(nh_, "plan_trajectory", 1);
+
+  // WayPoints Publisher
+  way_points_pub_ = nh_.advertise<autoware_msgs::Lane>("final_waypoints", 10, true);
+
+  pure_pursuit_plugin_discovery_pub_ = nh_.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
   plugin_discovery_msg_.name = "Pure Pursuit";
   plugin_discovery_msg_.versionId = "v1.0";
   plugin_discovery_msg_.available = true;
   plugin_discovery_msg_.activated = true;
   plugin_discovery_msg_.type = cav_msgs::Plugin::CONTROL;
   plugin_discovery_msg_.capability = "control_pure_pursuit_plan/plan_controls";
+  
 }
 
-bool PurePursuitWrapper::onSpin()
+void PurePursuitWrapper::PublishPluginDiscovery()
 {
-  plugin_discovery_pub_(plugin_discovery_msg_);
+  pure_pursuit_plugin_discovery_pub_.publish(plugin_discovery_msg_);
+}
+
+bool PurePursuitWrapper::ReadParameters() {
   return true;
 }
 
-void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::ConstPtr& tp)
-{
+void PurePursuitWrapper::TrajectoryPlanPoseHandler(const geometry_msgs::PoseStamped::ConstPtr& pose, const cav_msgs::TrajectoryPlan::ConstPtr& tp){
   ROS_DEBUG_STREAM("Received TrajectoryPlanCurrentPosecallback message");
+    try {
+      autoware_msgs::Lane lane;
+      lane.header = tp->header;
+      std::vector <autoware_msgs::Waypoint> waypoints;
+      double current_time = ros::Time::now().toSec();
+      for(int i = 1; i < tp->trajectory_points.size() - 1; i++ ) {
 
-  std::vector<double> times;
-  std::vector<double> downtracks;
-  trajectory_utils::conversions::trajectory_to_downtrack_time(tp->trajectory_points, &downtracks, &times);
+        cav_msgs::TrajectoryPlanPoint t1 = tp->trajectory_points[i];
+        cav_msgs::TrajectoryPlanPoint t2 = tp->trajectory_points[i + 1];
+        autoware_msgs::Waypoint waypoint = ppww.TrajectoryPlanPointToWaypointConverter(current_time, *pose,t1, t2);
+        waypoints.push_back(waypoint);
+      }
 
-  std::vector<double> speeds;
-  trajectory_utils::conversions::time_to_speed(downtracks, times, tp->initial_longitudinal_velocity, &speeds);
+      lane.waypoints = waypoints;
+      PublisherForWayPoints(lane);
+    }
+    catch(const std::exception& e) {
+      HandleException(e);
+    }
 
-  if (speeds.size() != tp->trajectory_points.size())
-  {
-    throw std::invalid_argument("Speeds and trajectory points sizes do not match");
-  }
-
-  autoware_msgs::Lane lane;
-  lane.header = tp->header;
-  std::vector<autoware_msgs::Waypoint> waypoints;
-  waypoints.reserve(tp->trajectory_points.size());
-
-  for (int i = 0; i < tp->trajectory_points.size(); i++)
-  {
-    autoware_msgs::Waypoint wp;
-
-    wp.pose.pose.position.x = tp->trajectory_points[i].x;
-    wp.pose.pose.position.y = tp->trajectory_points[i].y;
-    wp.twist.twist.linear.x = speeds[i];
-
-    waypoints.push_back(wp);
-  }
-
-  lane.waypoints = waypoints;
-  waypoint_pub_(lane);
 };
+
+void PurePursuitWrapper::SystemAlertHandler(const cav_msgs::SystemAlert::ConstPtr& msg) {
+    try {
+      ROS_INFO_STREAM("Received SystemAlert message of type: " << msg->type);
+      switch(msg->type) {
+        case cav_msgs::SystemAlert::SHUTDOWN: 
+          Shutdown(); 
+          break;
+        default:
+          break;
+      }
+    }
+    catch(const std::exception& e) {
+      HandleException(e);
+    }
+};
+
+void PurePursuitWrapper::PublisherForWayPoints(autoware_msgs::Lane& msg){
+  try {
+    ROS_DEBUG_STREAM("Sending WayPoints message.");
+    way_points_pub_.publish(msg);
+  }
+  catch(const std::exception& e) {
+    HandleException(e);
+  }
+};
+
+void PurePursuitWrapper::HandleException(const std::exception& e) {
+  ROS_DEBUG("Sending SystemAlert Message");
+  cav_msgs::SystemAlert alert_msg;
+  alert_msg.type = cav_msgs::SystemAlert::FATAL;
+  alert_msg.description = "Uncaught Exception in " + ros::this_node::getName() + " exception: " + e.what();
+ 
+  ROS_ERROR_STREAM(alert_msg.description);
+  system_alert_pub_.publish(alert_msg);
+
+  ros::Duration(0.05).sleep();
+  Shutdown();
+}
+
+void PurePursuitWrapper::Shutdown() {
+  std::lock_guard<std::mutex> lock(shutdown_mutex_);
+  ROS_WARN_STREAM("Node shutting down");
+  shutting_down_ = true;
+}
+
 }  // namespace pure_pursuit_wrapper
