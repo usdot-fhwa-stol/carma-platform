@@ -20,7 +20,7 @@
 namespace lightbar_manager
 {
 LightBarManager::LightBarManager(const std::string& node_name) : 
-    lbm_(node_name),
+    lbm_(std::make_shared<LightBarManagerWorker>(LightBarManagerWorker(node_name))),
     node_name_ (node_name) {}
 
 void LightBarManager::turnOffAll()
@@ -30,15 +30,14 @@ void LightBarManager::turnOffAll()
 
     ROS_INFO_STREAM("LightBarManager was commanded to turn off all indicators!");
 
-    for (std::pair <LightBarIndicator, std::string> element : lbm_.getIndicatorControllers())
+    for (std::pair <LightBarIndicator, std::string> element : lbm_->getIndicatorControllers())
         all_indicators.push_back(element.first);
     
     // Reset all controls
-    lbm_.setIndicatorControllers();
+    lbm_->setIndicatorControllers();
     
     // Give lightbar manager the control which is guaranteed to succeed
-    lbm_.requestControl(all_indicators, node_name_);
-        
+    lbm_->requestControl(all_indicators, node_name_);
     int response_code = 0;
     for (auto indicator : all_indicators)
     {
@@ -51,7 +50,7 @@ void LightBarManager::turnOffAll()
     // Once forced them off, release controls in case carma is still running so that lightbar_manager does not hog the control
     all_indicators.erase(std::remove(all_indicators.begin(), all_indicators.end(), GREEN_FLASH), all_indicators.end());
     all_indicators.erase(std::remove(all_indicators.begin(), all_indicators.end(), GREEN_SOLID), all_indicators.end());
-    lbm_.releaseControl(all_indicators, node_name_);
+    lbm_->releaseControl(all_indicators, node_name_);
 }
 
 bool LightBarManager::requestControlCallBack(cav_srvs::RequestIndicatorControlRequest& req, cav_srvs::RequestIndicatorControlResponse& res)
@@ -67,7 +66,7 @@ bool LightBarManager::requestControlCallBack(cav_srvs::RequestIndicatorControlRe
             // return false if invalid cda_type number
             if (static_cast<uint8_t>(cda_type.type) >= INDICATOR_COUNT)
                 return false; 
-            ind_list.push_back(lbm_.getIndicatorFromCDAType(static_cast<LightBarCDAType>(cda_type.type)));
+            ind_list.push_back(lbm_->getIndicatorFromCDAType(static_cast<LightBarCDAType>(cda_type.type)));
         }
     }
     else
@@ -82,14 +81,14 @@ bool LightBarManager::requestControlCallBack(cav_srvs::RequestIndicatorControlRe
             
     }
     
-    controlled_ind_list = lbm_.requestControl(ind_list, req.requester_name);
+    controlled_ind_list = lbm_->requestControl(ind_list, req.requester_name);
     
     for (auto indicator : controlled_ind_list)
     {
         try
         {
             // Some indicators do not have mapped CDAType
-            controlled_cda_type_list.push_back(lbm_.getCDATypeFromIndicator(indicator));
+            controlled_cda_type_list.push_back(lbm_->getCDATypeFromIndicator(indicator));
         }
         catch(INDICATOR_NOT_MAPPED)
         {
@@ -99,8 +98,8 @@ bool LightBarManager::requestControlCallBack(cav_srvs::RequestIndicatorControlRe
     }
         
     // Modify the response
-    res.cda_list = lbm_.getMsg(controlled_cda_type_list);
-    res.ind_list = lbm_.getMsg(controlled_ind_list);
+    res.cda_list = lbm_->getMsg(controlled_cda_type_list);
+    res.ind_list = lbm_->getMsg(controlled_ind_list);
     return true;
 }
 
@@ -116,7 +115,7 @@ bool LightBarManager::releaseControlCallBack(cav_srvs::ReleaseIndicatorControlRe
             // return false if invalid indicator number
             if (static_cast<uint8_t>(cda_type.type) >= INDICATOR_COUNT)
                 return false; 
-            ind_list.push_back(lbm_.getIndicatorFromCDAType(static_cast<LightBarCDAType>(cda_type.type)));
+            ind_list.push_back(lbm_->getIndicatorFromCDAType(static_cast<LightBarCDAType>(cda_type.type)));
         }
     }
     else
@@ -129,25 +128,25 @@ bool LightBarManager::releaseControlCallBack(cav_srvs::ReleaseIndicatorControlRe
             ind_list.push_back(static_cast<LightBarIndicator>(indicator.indicator));
         }
     }
-    lbm_.releaseControl(ind_list, req.requester_name);
+    lbm_->releaseControl(ind_list, req.requester_name);
     return true;
 }
 
 bool LightBarManager::spinCallBack()
 {
     
-    indicator_control_publisher_.publish(lbm_.getMsg(lbm_.getIndicatorControllers()));
+    indicator_control_publisher_.publish(lbm_->getMsg(lbm_->getIndicatorControllers()));
     return true;
 }
 
 void LightBarManager::stateChangeCallBack(const cav_msgs::GuidanceStateConstPtr& msg_ptr)
 {
     // Relay the msg to state machine
-    LightBarState prev_lightbar_state = lbm_.getCurrentState();
-    lbm_.handleStateChange(msg_ptr);
+    LightBarState prev_lightbar_state = lbm_->getCurrentState();
+    lbm_->handleStateChange(msg_ptr);
 
     // Change green lights depending on states, no need to check if its current owner, as it will always be for green lights
-    LightBarState curr_lightbar_state = lbm_.getCurrentState();
+    LightBarState curr_lightbar_state = lbm_->getCurrentState();
     if (curr_lightbar_state != prev_lightbar_state)
     {
         switch(curr_lightbar_state)
@@ -166,24 +165,22 @@ void LightBarManager::stateChangeCallBack(const cav_msgs::GuidanceStateConstPtr&
         }
     }
 }
-// @SONAR_STOP@
+
 void LightBarManager::turnSignalCallback(const automotive_platform_msgs::TurnSignalCommandPtr& msg_ptr)
 {
     // if not automated
-    if (msg_ptr->mode == 1)
+    if (msg_ptr->mode != 1)
     {
         return;
     }
-    
+
     // check if left or right signal should be controlled, or none at all
-    std::vector<lightbar_manager::LightBarIndicator> changed_turn_signal = lbm_.handleTurnSignal(msg_ptr);
+    std::vector<lightbar_manager::LightBarIndicator> changed_turn_signal = lbm_->handleTurnSignal(msg_ptr);
 
     if (changed_turn_signal.empty())
     {
         return; //no need to do anything if it is same turn signal changed
     }
-
-    std::map<lightbar_manager::LightBarIndicator, std::__cxx11::string> prev_owners = lbm_.getIndicatorControllers();
     
     lightbar_manager::IndicatorStatus indicator_status;
     // check if we should turn off or on given any indicator
@@ -194,14 +191,15 @@ void LightBarManager::turnSignalCallback(const automotive_platform_msgs::TurnSig
     else 
     {
         indicator_status = lightbar_manager::IndicatorStatus::ON;
+        prev_owners_before_turn_ = lbm_->getIndicatorControllers(); // save the owner if new turn is starting
     }
 
-    if (lbm_.requestControl(changed_turn_signal, node_name_).empty())
+    if (lbm_->requestControl(changed_turn_signal, node_name_).empty())
     {
         int response_code = 0;
         response_code = setIndicator(changed_turn_signal[0], indicator_status, node_name_);
         if (response_code != 0)
-            ROS_WARN_STREAM ("In Function " << __FUNCTION__ << ": LightBarManager was not able to set light of indicator ID:" 
+            ROS_ERROR_STREAM ("In Function " << __FUNCTION__ << ": LightBarManager was not able to set light of indicator ID:" 
                 << changed_turn_signal[0] << ". Response code: " << response_code);
     }
     else
@@ -214,16 +212,16 @@ void LightBarManager::turnSignalCallback(const automotive_platform_msgs::TurnSig
     // release control if it is turning off and put back the previous owners
     if (indicator_status == lightbar_manager::IndicatorStatus::OFF)
     {
-        lbm_.releaseControl(changed_turn_signal, node_name_);
-        for (auto const& pair : prev_owners)
-        {
-            lbm_.requestControl({pair.first}, pair.second);
-        }
+        lbm_->releaseControl(changed_turn_signal, node_name_);
+        // we need to force set the <indicator, owner> mapping
+        // as series of requestControl may not be able to exactly achieve previous combination
+        lbm_->setIndicatorControllers(prev_owners_before_turn_);
+        // reset as the turn is finished
+        prev_owners_before_turn_.clear();
     }
 }
-// @SONAR_START@
 
-LightBarManagerWorker LightBarManager::getWorker()
+std::shared_ptr<LightBarManagerWorker> LightBarManager::getWorker()
 {
     return lbm_;
 }
@@ -240,7 +238,7 @@ int LightBarManager::setIndicator(LightBarIndicator ind, IndicatorStatus ind_sta
     }
 
     // Check if the requester has control of this light
-    std::string current_controller = lbm_.getIndicatorControllers()[ind];
+    std::string current_controller = lbm_->getIndicatorControllers()[ind];
     if (requester_name == "" || current_controller != requester_name) 
     {
         ROS_WARN_STREAM(requester_name << " failed to set the LightBarIndicator ID" << ind 
@@ -249,8 +247,8 @@ int LightBarManager::setIndicator(LightBarIndicator ind, IndicatorStatus ind_sta
         return response_code;
     }
 
-    std::vector<IndicatorStatus> light_status_proposed = lbm_.setIndicator(ind, ind_status, requester_name);
-    cav_msgs::LightBarStatus msg = lbm_.getLightBarStatusMsg(light_status_proposed);
+    std::vector<IndicatorStatus> light_status_proposed = lbm_->setIndicator(ind, ind_status, requester_name);
+    cav_msgs::LightBarStatus msg = lbm_->getLightBarStatusMsg(light_status_proposed);
     cav_srvs::SetLights srv;
     srv.request.set_state = msg;
     
@@ -258,7 +256,7 @@ int LightBarManager::setIndicator(LightBarIndicator ind, IndicatorStatus ind_sta
     if (lightbar_driver_client_.call(srv))
     {
         // if successful, update the local copy.
-        lbm_.light_status = light_status_proposed;
+        lbm_->light_status = light_status_proposed;
         response_code =  0;
     }
     else
@@ -274,7 +272,7 @@ bool LightBarManager::setIndicatorCallBack(cav_srvs::SetLightBarIndicatorRequest
     LightBarIndicator indicator;
     int response_code = 0;
     if (req.cda_type.type != NULL)
-        indicator = lbm_.getIndicatorFromCDAType(static_cast<LightBarCDAType>(req.cda_type.type));
+        indicator = lbm_->getIndicatorFromCDAType(static_cast<LightBarCDAType>(req.cda_type.type));
     else
         indicator = static_cast<LightBarIndicator>(req.indicator.indicator);
 
@@ -296,7 +294,6 @@ void LightBarManager::init(std::string mode)
     std::string lightbar_driver_service_name= pnh_.param<std::string>("lightbar_driver_service_name", "set_lights");
     std::string guidance_state_topic_name = pnh_.param<std::string>("guidance_state_topic_name", "state");
     std::string turn_signal_topic_name = pnh_.param<std::string>("turn_signal_topic_name", "turn_signal_command");
-
     // Init our ROS objects
     request_control_server_= nh_.advertiseService("request_control", &LightBarManager::requestControlCallBack, this);
     release_control_server_= nh_.advertiseService("release_control", &LightBarManager::releaseControlCallBack, this);
@@ -309,17 +306,17 @@ void LightBarManager::init(std::string mode)
     // Load Conversion table, CDAType to Indicator mapping
     std::map<std::string,std::string> cda_ind_map_raw;
     pnh_.getParam("lightbar_cda_to_ind_table", cda_ind_map_raw);
-    lbm_.setIndicatorCDAMap(cda_ind_map_raw);
+    lbm_->setIndicatorCDAMap(cda_ind_map_raw);
 
     // Initialize indicator control map. Fills with supporting indicators with empty string name as owners.
-    lbm_.setIndicatorControllers();
+    lbm_->setIndicatorControllers();
 
     // Initialize indicator representation of lightbar status to all OFF
     for (int i =0; i < INDICATOR_COUNT; i++)
-        lbm_.light_status.push_back(OFF);
+        lbm_->light_status.push_back(OFF);
 
     // Load lightbar priorities. 
-    pnh_.getParam("lightbar_priorities", lbm_.control_priorities);
+    pnh_.getParam("lightbar_priorities", lbm_->control_priorities);
 
     // Setup priorities for unit test 
     if (mode == "test")
@@ -328,12 +325,12 @@ void LightBarManager::init(std::string mode)
     // Take control of green light
     bool normal_operation = pnh_.param<bool>("normal_operation", true);
     std::vector<LightBarIndicator> denied_list, greens = {GREEN_SOLID, GREEN_FLASH};
-    denied_list = lbm_.requestControl(greens, node_name_);
+    denied_list = lbm_->requestControl(greens, node_name_);
     if (denied_list.size() != 0)
     {
         if (normal_operation)
         {
-            ROS_ERROR_STREAM("In fuction " << __FUNCTION__ << ", LightBarManager was not able to take control of all green indicators."
+            ROS_WARN_STREAM("In fuction " << __FUNCTION__ << ", LightBarManager was not able to take control of all green indicators."
                 << ".\n Please check priority list rosparameter, and ensure " << node_name_ << " has the highest priority."
                 << ".\n If this is intended, pass false to normal_operation argument. Exiting...");
             throw INVALID_LIGHTBAR_MANAGER_PRIORITY();
@@ -350,12 +347,12 @@ void LightBarManager::init(std::string mode)
 void LightBarManager::setupUnitTest()
 {
     // Add mock components for unit test
-    while (lbm_.control_priorities.size() != 0)
-        lbm_.control_priorities.pop_back();
-    lbm_.control_priorities.push_back("lightbar_manager");
-    lbm_.control_priorities.push_back("tester1");
-    lbm_.control_priorities.push_back("tester2");
-    lbm_.control_priorities.push_back("tester3");
+    while (lbm_->control_priorities.size() != 0)
+        lbm_->control_priorities.pop_back();
+    lbm_->control_priorities.push_back("lightbar_manager");
+    lbm_->control_priorities.push_back("tester1");
+    lbm_->control_priorities.push_back("tester2");
+    lbm_->control_priorities.push_back("tester3");
     return;
 }
 

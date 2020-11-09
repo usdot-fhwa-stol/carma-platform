@@ -61,10 +61,10 @@ class LightBarManager
         int run();
 
         /*!
-        * \brief Get lightbar_manager_worder (for ease of unit testing)
+        * \brief Get ptr to lightbar_manager_worker (for ease of unit testing)
         * \return LightBarManagerWorker
         */
-        LightBarManagerWorker getWorker();
+        std::shared_ptr<LightBarManagerWorker> getWorker();
  
         /*!
         * \brief Miscellaneous function that forces the state to disengaged and turn off all indicators.
@@ -78,6 +78,12 @@ class LightBarManager
         */
         int setIndicator(LightBarIndicator ind, IndicatorStatus ind_status, const std::string& requester_name);
 
+        /*!
+        * \brief Callback function for turning signal
+        * \return 
+        */
+        void turnSignalCallback(const automotive_platform_msgs::TurnSignalCommandPtr& msg_ptr);
+
     private:
         /*!
         * \brief Helper function that sets up ROS parameters for unit test
@@ -88,6 +94,7 @@ class LightBarManager
         // Node Data
         std::string node_name_;
         double spin_rate_;
+        std::map<lightbar_manager::LightBarIndicator, std::__cxx11::string> prev_owners_before_turn_;
 
         // spin callback function
         bool spinCallBack();
@@ -97,7 +104,6 @@ class LightBarManager
         bool releaseControlCallBack(cav_srvs::ReleaseIndicatorControlRequest& req, cav_srvs::ReleaseIndicatorControlResponse& res);
         bool setIndicatorCallBack(cav_srvs::SetLightBarIndicatorRequest& req, cav_srvs::SetLightBarIndicatorResponse& res);
         void stateChangeCallBack(const cav_msgs::GuidanceStateConstPtr& msg_ptr);
-        void turnSignalCallback(const automotive_platform_msgs::TurnSignalCommandPtr& msg_ptr);
 
         // Service servers/clients
         ros::ServiceServer request_control_server_;
@@ -116,7 +122,7 @@ class LightBarManager
         ros::CARMANodeHandle nh_{"lightbar_manager"}, pnh_{"~"};
 
         // LightBarManager Worker
-        LightBarManagerWorker lbm_;
+        std::shared_ptr<LightBarManagerWorker> lbm_;
 
 }; //class LightBarManagerNode
 } // namespace lightbar_manager

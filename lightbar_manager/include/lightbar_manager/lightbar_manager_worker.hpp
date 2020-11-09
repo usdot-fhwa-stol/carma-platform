@@ -129,6 +129,11 @@ class LightBarManagerWorker
         void setIndicatorControllers();
 
         /*!
+        * \brief Helper function that resets Indicators and their owner mapping
+        */
+        void setIndicatorControllers(std::map<LightBarIndicator, std::string> ind_ctrl_map);
+
+        /*!
         * \brief Helper function that checks if the first input component has higher priority than the second.
         * \return true if the requester has higher priority than the controller
         */
