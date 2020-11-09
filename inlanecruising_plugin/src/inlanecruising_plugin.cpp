@@ -140,10 +140,10 @@ std::vector<DiscreteCurve> InLaneCruisingPlugin::compute_sub_curves(const std::v
   {
     lanelet::BasicPoint2d p1 = map_in_curve * map_points[i].point;
     lanelet::BasicPoint2d p2 = map_in_curve * map_points[i + 1].point;  // TODO Optimization to cache this value
-    
-    //ROS_WARN_STREAM("map_point[i]: " << map_points[i].point.x() << ", " << map_points[i].point.y());
-    //ROS_WARN_STREAM("curve_point[i]: " << p1.x() << ", " << p1.y() << std::endl);
-    
+
+    // ROS_WARN_STREAM("map_point[i]: " << map_points[i].point.x() << ", " << map_points[i].point.y());
+    // ROS_WARN_STREAM("curve_point[i]: " << p1.x() << ", " << p1.y() << std::endl);
+
     PointSpeedPair initial_pair;
     initial_pair.point = p1;
     initial_pair.speed = map_points[i].speed;
@@ -296,9 +296,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
     std::vector<double> yaw_values = carma_wm::geometry::compute_tangent_orientations(sampling_points);
 
     ROS_WARN("Got yaw");
-    std::vector<double> curvatures = carma_wm::geometry::local_curvatures(
-        sampling_points);  // TODO it might be better to sample the line at 0.5m resolution then downsample back to 1m
-                           // resolution after curvature/speed calc
+    std::vector<double> curvatures = carma_wm::geometry::local_circular_arc_curvatures(
+        sampling_points, 1);  // TODO it might be better to sample the line at 0.5m resolution then downsample back to
+                              // 1m resolution after curvature/speed calc
     curvatures = smoothing::moving_average_filter(curvatures, config_.moving_average_window_size);
 
     log::printDoublesPerLineWithPrefix("curvatures[i]: ", curvatures);
@@ -337,7 +337,8 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   }
   ROS_WARN("Processed all curves");
 
-  if (all_sampling_points.size() == 0) {
+  if (all_sampling_points.size() == 0)
+  {
     ROS_WARN_STREAM("No trajectory points could be generated");
     return {};
   }
@@ -346,36 +347,42 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   log::printDoublesPerLineWithPrefix("final_yaw_values[i]: ", final_yaw_values);
 
+  // Apply lookahead speeds
+  final_actual_speeds = trajectory_utils::shift_by_lookahead(final_actual_speeds, config_.lookahead_count);
+
   // Add current vehicle point to front of the trajectory
   lanelet::BasicPoint2d cur_veh_point(state.X_pos_global, state.Y_pos_global);
   all_sampling_points.insert(all_sampling_points.begin(),
                              cur_veh_point);  // Add current vehicle position to front of sample points
+
   final_actual_speeds.insert(final_actual_speeds.begin(), std::max(state.longitudinal_vel, config_.minimum_speed));
+
   final_yaw_values.insert(final_yaw_values.begin(), state.orientation);
 
-
-log::printDoublesPerLineWithPrefix("pre_smoot[i]: ", final_actual_speeds);
+  log::printDoublesPerLineWithPrefix("pre_smoot[i]: ", final_actual_speeds);
   // Compute points to local downtracks
   std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(all_sampling_points);
 
-  // Apply lookahead speeds
-  final_actual_speeds = trajectory_utils::shift_by_lookahead(final_actual_speeds, config_.lookahead_count);
-
-log::printDoublesPerLineWithPrefix("post_shift[i]: ", final_actual_speeds);
+  log::printDoublesPerLineWithPrefix("post_shift[i]: ", final_actual_speeds);
   // Apply accel limits
-  final_actual_speeds = trajectory_utils::apply_accel_limits_by_distance(
-      downtracks, final_actual_speeds, config_.max_accel, config_.max_accel); 
-log::printDoublesPerLineWithPrefix("postAccel[i]: ", final_actual_speeds);
+  final_actual_speeds = trajectory_utils::apply_accel_limits_by_distance(downtracks, final_actual_speeds,
+                                                                         config_.max_accel, config_.max_accel);
+  log::printDoublesPerLineWithPrefix("postAccel[i]: ", final_actual_speeds);
 
-  final_actual_speeds = smoothing::moving_average_filter(
-      final_actual_speeds,
-      config_.moving_average_window_size);
-log::printDoublesPerLineWithPrefix("post_average[i]: ", final_actual_speeds);
+  final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, config_.moving_average_window_size);
+  log::printDoublesPerLineWithPrefix("post_average[i]: ", final_actual_speeds);
+
+  for (auto& s : final_actual_speeds)  // Limit minimum speed. TODO how to handle stopping?
+  {
+    s = std::max(s, config_.minimum_speed);
+  }
+
+  log::printDoublesPerLineWithPrefix("post_min_speed[i]: ", final_actual_speeds);
   // Convert speeds to times
   std::vector<double> times;
   trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
 
-log::printDoublesPerLineWithPrefix("times[i]: ", times);
+  log::printDoublesPerLineWithPrefix("times[i]: ", times);
   // Build trajectory points
   // TODO When more plugins are implemented that might share trajectory planning the start time will need to be based
   // off the last point in the plan if an earlier plan was provided

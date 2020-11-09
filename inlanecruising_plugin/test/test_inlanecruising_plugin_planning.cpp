@@ -112,7 +112,7 @@ Using this file:
     NOTE: The test is disabled by default. Enable it by removing the DISABLED_ prefix from the test name
 */
 
-TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
+TEST(WaypointGeneratorTest, test_full_generation)
 {
     int projector_type = 0;
     std::string target_frame;
@@ -131,7 +131,7 @@ TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
     lanelet::MapConformer::ensureCompliance(map, 80_mph);
 
     InLaneCruisingPluginConfig config;
-    config.lateral_accel_limit = 0.75;
+    config.lateral_accel_limit = 1.5;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
     wm->setMap(map);
 

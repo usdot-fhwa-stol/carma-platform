@@ -577,7 +577,7 @@ Eigen::Isometry3d build3dEigenTransform(const Eigen::Vector3d& position, const E
   return tf.fromPositionOrientationScale(position, rotation, scale);
 }
 
-double point_to_point_yaw(std::vector<double> cur_point, std::vector<double> next_point)
+double point_to_point_yaw(const lanelet::BasicPoint2d& cur_point, const lanelet::BasicPoint2d& next_point)
 {
   double dx = next_point[0] - cur_point[0];
   double dy = next_point[1] - cur_point[1];
@@ -585,9 +585,9 @@ double point_to_point_yaw(std::vector<double> cur_point, std::vector<double> nex
   return yaw;
 }
 
-double circular_arc_curvature(std::vector<double> cur_point, std::vector<double> next_point)
+double circular_arc_curvature(const lanelet::BasicPoint2d& cur_point, const lanelet::BasicPoint2d& next_point)
 {
-  double dist = sqrt(pow(cur_point[0] - next_point[0], 2) + pow(cur_point[1] - next_point[0], 2));
+  double dist = sqrt(pow(cur_point[0] - next_point[0], 2) + pow(cur_point[1] - next_point[1], 2));
 
   double angle = point_to_point_yaw(cur_point, next_point);
 
@@ -598,6 +598,36 @@ double circular_arc_curvature(std::vector<double> cur_point, std::vector<double>
 
   return curvature;
 }
+
+std::vector<double> local_circular_arc_curvatures(const std::vector<lanelet::BasicPoint2d>& points, int lookahead) {
+  std::vector<double> curvatures;
+  curvatures.reserve(points.size());
+
+  if (lookahead <= 0) {
+    throw std::invalid_argument("local_circular_arc_curvatures lookahead must be greater than 0");
+  }
+
+  if (points.size() == 0) {
+    return curvatures;
+  }
+  else if (points.size() == 1) {
+    curvatures.push_back(0.0);
+    return curvatures;
+  }
+
+  for (size_t i = 0; i < points.size() - 1; i++)
+  {
+    size_t next_point_index = i + lookahead;
+    if (next_point_index >= points.size()) {
+      next_point_index = points.size() - 1;
+    }
+    double cur = circular_arc_curvature(points[i], points[next_point_index]);
+    curvatures.push_back(fabs(cur));
+  }
+  curvatures.push_back(curvatures.back());
+  return curvatures;
+}
+
 
 }  // namespace geometry
 

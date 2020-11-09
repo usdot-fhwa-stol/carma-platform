@@ -290,9 +290,11 @@ Eigen::Isometry3d build3dEigenTransform(const Eigen::Vector3d& position, const E
 
 Eigen::Isometry3d build3dEigenTransform(const Eigen::Vector3d& position, const Eigen::AngleAxisd& rotation);
 
-double point_to_point_yaw(std::vector<double> cur_point, std::vector<double> next_point);
+double point_to_point_yaw(const lanelet::BasicPoint2d& cur_point, const lanelet::BasicPoint2d& next_point);
 
-double circular_arc_curvature(std::vector<double> cur_point, std::vector<double> next_point);
+double circular_arc_curvature(const lanelet::BasicPoint2d& cur_point, const lanelet::BasicPoint2d& next_point);
+
+std::vector<double> local_circular_arc_curvatures(const std::vector<lanelet::BasicPoint2d>& points, int lookahead);
 
 
 }  // namespace geometry
