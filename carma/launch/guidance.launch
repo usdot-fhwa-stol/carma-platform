@@ -100,22 +100,8 @@
 
   <remap from="/vehicle_status" to="$(optenv CARMA_INTR_NS)/vehicle_status"/>
   <remap from="/current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>  
-  
-  <!-- MPC Follower Wrapper -->
-  <!-- <group>
-    <remap from="estimate_twist" to="$(optenv CARMA_LOCZ_NS)/ekf_twist"/>
-    <remap from="vehicle_status" to="$(optenv CARMA_INTR_NS)/vehicle_status"/>
-    <remap from="/mpc_waypoints" to="mpc_waypoints"/>
-    <remap from="base_waypoints" to="mpc_waypoints"/>
-    <remap from="/base_waypoints" to="plugin_base_waypoints"/>
-    <remap from="/final_waypoints" to="carma_waypoints"/>
 
-    <include file="$(find mpc_follower_wrapper)/launch/mpc_follower_wrapper.launch">
-      <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
-    </include>
-  </group>  -->
-
-    <!-- Pure Pursuit Wrapper -->
+  <!-- Pure Pursuit Wrapper -->
   
   <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch" />
 
