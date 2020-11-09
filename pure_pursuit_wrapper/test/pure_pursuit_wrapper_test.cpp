@@ -59,7 +59,7 @@ TEST(TrajectoryPlanPointToWaypointConverterTest, test1)
 
     EXPECT_NEAR(correct_v_x, v_x, 0.01);
 
-}
+} // TODO rework tests for new wrapper structure
 
 int main(int argc, char**argv)
 {
