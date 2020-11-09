@@ -16,8 +16,6 @@
  * the License.
  */
 
-#include <vector>
-#include <cav_msgs/TrajectoryPlan.h>
 #include <cav_msgs/Plugin.h>
 #include <carma_utils/CARMAUtils.h>
 #include <cav_srvs/PlanTrajectory.h>
@@ -29,57 +27,50 @@
 
 namespace inlanecruising_plugin
 {
+/**
+ * \brief ROS node for the InLaneCruisingPlugin
+ */ 
 class InLaneCruisingPluginNode
 {
 public:
-  InLaneCruisingPluginNode(){}
 
-  // general starting point of this node
+  /**
+   * \brief Entrypoint for this node
+   */ 
   void run()
   {
-    nh_.reset(new ros::CARMANodeHandle());
-    pnh_.reset(new ros::CARMANodeHandle("~"));
+    ros::CARMANodeHandle nh;
+    ros::CARMANodeHandle pnh("~");
 
-    wml_.reset(new carma_wm::WMListener());
-    auto wm_ = wml_->getWorldModel();
+    carma_wm::WMListener wml;
+    auto wm_ = wml->getWorldModel();
 
-    inlanecruising_plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
+    ros::Publisher discovery_pub = nh->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
 
     InLaneCruisingPluginConfig config;
 
-    pnh_->param<double>("trajectory_time_length", config.trajectory_time_length, config.trajectory_time_length);
-    pnh_->param<double>("curve_resample_step_size", config.curve_resample_step_size, config.curve_resample_step_size);
-    pnh_->param<int>("downsample_ratio", config.downsample_ratio, config.downsample_ratio);
-    pnh_->param<double>("minimum_speed", config.minimum_speed, config.minimum_speed);
-    pnh_->param<int>("lookahead_count", config.lookahead_count, config.lookahead_count);
-    pnh_->param<int>("moving_average_window_size", config.moving_average_window_size, config.moving_average_window_size);
-    pnh_->param<double>("/vehicle_acceleration_limit", config.max_accel, config.max_accel);
-    pnh_->param<double>("/vehicle_lateral_accel_limit", config.lateral_accel_limit, config.lateral_accel_limit);
-    
-    InLaneCruisingPlugin worker(
-        wm_, config, std::bind(&InLaneCruisingPluginNode::publishPluginDiscovery, this, std::placeholders::_1));
+    pnh->param<double>("trajectory_time_length", config.trajectory_time_length, config.trajectory_time_length);
+    pnh->param<double>("curve_resample_step_size", config.curve_resample_step_size, config.curve_resample_step_size);
+    pnh->param<int>("downsample_ratio", config.downsample_ratio, config.downsample_ratio);
+    pnh->param<double>("minimum_speed", config.minimum_speed, config.minimum_speed);
+    pnh->param<int>("lookahead_count", config.lookahead_count, config.lookahead_count);
+    pnh->param<int>("moving_average_window_size", config.moving_average_window_size,
+                     config.moving_average_window_size);
+    pnh->param<double>("/vehicle_acceleration_limit", config.max_accel, config.max_accel);
+    pnh->param<double>("/vehicle_lateral_accel_limit", config.lateral_accel_limit, config.lateral_accel_limit);
+    pnh->param<double>("curvature_calc_lookahead_count", config.curvature_calc_lookahead_count,
+                        config.curvature_calc_lookahead_count);
 
-    trajectory_srv_ = nh_->advertiseService("plugins/InLaneCruisingPlugin/plan_trajectory",
+    ROS_INFO_STREAM("InLaneCruisingPlugin Params" << config);
+    
+    InLaneCruisingPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); });
+
+    ros::ServiceServer trajectory_srv_ = nh->advertiseService("plugins/InLaneCruisingPlugin/plan_trajectory",
                                             &InLaneCruisingPlugin::plan_trajectory_cb, &worker);
 
     ros::CARMANodeHandle::setSpinCallback(std::bind(&InLaneCruisingPlugin::onSpin, &worker));
     ros::CARMANodeHandle::spin();
   }
-
-  void publishPluginDiscovery(const cav_msgs::Plugin& msg)
-  {
-    inlanecruising_plugin_discovery_pub_.publish(msg);
-  }
-
-private:
-  // node handles
-  std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
-  std::shared_ptr<carma_wm::WMListener> wml_;
-
-  ros::Publisher inlanecruising_plugin_discovery_pub_;
-
-  // ros service servers
-  ros::ServiceServer trajectory_srv_;
 };
 
 }  // namespace inlanecruising_plugin

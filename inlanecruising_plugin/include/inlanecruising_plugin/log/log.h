@@ -5,13 +5,18 @@ namespace inlanecruising_plugin
 {
 namespace log
 {
+/**
+ * \brief Helper function to convert a lanelet::BasicPoint2d to a string
+ */ 
 std::string basicPointToStream(lanelet::BasicPoint2d point)
 {
   std::ostringstream out;
   out << point.x() << ", " << point.y();
   return out.str();
 }
-
+/**
+ * \brief Helper function to convert a PointSpeedPair to a string
+ */ 
 std::string pointSpeedPairToStream(PointSpeedPair point)
 {
   std::ostringstream out;
@@ -19,6 +24,9 @@ std::string pointSpeedPairToStream(PointSpeedPair point)
   return out.str();
 }
 
+/**
+ * \brief Print a ROS_DEBUG_STREAM for each value in values where the printed value is a string returned by func
+ */ 
 template <class T>
 void printDebugPerLine(const std::vector<T>& values, std::function<std::string(T)> func)
 {
@@ -28,6 +36,9 @@ void printDebugPerLine(const std::vector<T>& values, std::function<std::string(T
   }
 }
 
+/**
+ * \brief Print a ROS_DEBUG_STREAM for each value in values where the printed value is a string returned by free_func
+ */ 
 template <class T>
 void printDebugPerLine(const std::vector<T>& values, std::string (*free_func)(T))
 {
@@ -35,6 +46,9 @@ void printDebugPerLine(const std::vector<T>& values, std::string (*free_func)(T)
   printDebugPerLine(values, function);
 }
 
+/**
+ * \brief Print a ROS_DEBUG_STREAM for each value in values where the printed value is << prefix << value
+ */ 
 void printDoublesPerLineWithPrefix(const std::string& prefix, const std::vector<double>& values)
 {
   for (const auto& value : values)
