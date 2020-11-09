@@ -68,12 +68,12 @@ void LightBarManagerStateMachine::handleStateChange(const cav_msgs::GuidanceStat
     switch (msg_ptr->state)
     {
         case cav_msgs::GuidanceState::STARTUP:
-        case cav_msgs::GuidanceState::DRIVERS_READY:
         case cav_msgs::GuidanceState::SHUTDOWN:
-        case cav_msgs::GuidanceState::INACTIVE:
         onDisengage();
         break;
         case cav_msgs::GuidanceState::ACTIVE:
+        case cav_msgs::GuidanceState::DRIVERS_READY:
+        case cav_msgs::GuidanceState::INACTIVE:
         onActive();
         break;
         case cav_msgs::GuidanceState::ENGAGED:
