@@ -43,29 +43,29 @@ public:
     ros::CARMANodeHandle pnh("~");
 
     carma_wm::WMListener wml;
-    auto wm_ = wml->getWorldModel();
+    auto wm_ = wml.getWorldModel();
 
-    ros::Publisher discovery_pub = nh->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
+    ros::Publisher discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
 
     InLaneCruisingPluginConfig config;
 
-    pnh->param<double>("trajectory_time_length", config.trajectory_time_length, config.trajectory_time_length);
-    pnh->param<double>("curve_resample_step_size", config.curve_resample_step_size, config.curve_resample_step_size);
-    pnh->param<int>("downsample_ratio", config.downsample_ratio, config.downsample_ratio);
-    pnh->param<double>("minimum_speed", config.minimum_speed, config.minimum_speed);
-    pnh->param<int>("lookahead_count", config.lookahead_count, config.lookahead_count);
-    pnh->param<int>("moving_average_window_size", config.moving_average_window_size,
+    pnh.param<double>("trajectory_time_length", config.trajectory_time_length, config.trajectory_time_length);
+    pnh.param<double>("curve_resample_step_size", config.curve_resample_step_size, config.curve_resample_step_size);
+    pnh.param<int>("downsample_ratio", config.downsample_ratio, config.downsample_ratio);
+    pnh.param<double>("minimum_speed", config.minimum_speed, config.minimum_speed);
+    pnh.param<int>("lookahead_count", config.lookahead_count, config.lookahead_count);
+    pnh.param<int>("moving_average_window_size", config.moving_average_window_size,
                      config.moving_average_window_size);
-    pnh->param<double>("/vehicle_acceleration_limit", config.max_accel, config.max_accel);
-    pnh->param<double>("/vehicle_lateral_accel_limit", config.lateral_accel_limit, config.lateral_accel_limit);
-    pnh->param<double>("curvature_calc_lookahead_count", config.curvature_calc_lookahead_count,
+    pnh.param<double>("/vehicle_acceleration_limit", config.max_accel, config.max_accel);
+    pnh.param<double>("/vehicle_lateral_accel_limit", config.lateral_accel_limit, config.lateral_accel_limit);
+    pnh.param<int>("curvature_calc_lookahead_count", config.curvature_calc_lookahead_count,
                         config.curvature_calc_lookahead_count);
 
     ROS_INFO_STREAM("InLaneCruisingPlugin Params" << config);
     
     InLaneCruisingPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); });
 
-    ros::ServiceServer trajectory_srv_ = nh->advertiseService("plugins/InLaneCruisingPlugin/plan_trajectory",
+    ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/InLaneCruisingPlugin/plan_trajectory",
                                             &InLaneCruisingPlugin::plan_trajectory_cb, &worker);
 
     ros::CARMANodeHandle::setSpinCallback(std::bind(&InLaneCruisingPlugin::onSpin, &worker));
