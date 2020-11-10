@@ -25,11 +25,12 @@ namespace health_monitor
 
     HealthMonitor::HealthMonitor()
     {
-        ROS_WARN_STREAM("Check Health_Monitor");
-        std::vector<bool>pub_truck(9, false);
-        std::vector<bool>pub_car(7, false);
+        std::vector<bool>pub_truck(8, false);
+        std::vector<bool>pub_car(6, false);
         is_published_truck = pub_truck;
         is_published_car = pub_car;
+        car_ = false;
+        truck_ = false;
 
     
     }
@@ -37,34 +38,36 @@ namespace health_monitor
     {
         // init node handles
         ROS_INFO_STREAM("Initalizing health_monitor node...");
-        nh_ = ros::CARMANodeHandle();
-        pnh_ = ros::CARMANodeHandle("~");
+        pnh_.reset(new ros::CARMANodeHandle("~"));
+        nh_.reset(new ros::CARMANodeHandle());
+        //nh_ = std::shared_ptr<ros::CARMANodeHandle>();
+        //pnh_ = std::shared_ptr<ros::CARMANodeHandle>("~");
 
         // init ros service servers, publishers and subscribers
-        registered_plugin_service_server_ = nh_.advertiseService("plugins/get_registered_plugins", &HealthMonitor::registered_plugin_cb, this);
-        active_plugin_service_server_ = nh_.advertiseService("plugins/get_active_plugins", &HealthMonitor::active_plugin_cb, this);
-        activate_plugin_service_server_ = nh_.advertiseService("plugins/activate_plugin", &HealthMonitor::activate_plugin_cb, this);
-        get_strategic_plugin_by_capability_server_ = nh_.advertiseService("plugins/get_strategic_plugin_by_capability", &PluginManager::get_strategic_plugins_by_capability, &plugin_manager_);
-        get_tactical_plugin_by_capability_server_ = nh_.advertiseService("plugins/get_tactical_plugin_by_capability", &PluginManager::get_tactical_plugins_by_capability, &plugin_manager_);
-        plugin_discovery_subscriber_ = nh_.subscribe<cav_msgs::Plugin>("plugin_discovery", 5, &HealthMonitor::plugin_discovery_cb, this);
-        driver_discovery_subscriber_ = nh_.subscribe<cav_msgs::DriverStatus>("driver_discovery", 5, &HealthMonitor::driver_discovery_cb, this);
+        registered_plugin_service_server_ = nh_->advertiseService("plugins/get_registered_plugins", &HealthMonitor::registered_plugin_cb, this);
+        active_plugin_service_server_ = nh_->advertiseService("plugins/get_active_plugins", &HealthMonitor::active_plugin_cb, this);
+        activate_plugin_service_server_ = nh_->advertiseService("plugins/activate_plugin", &HealthMonitor::activate_plugin_cb, this);
+        get_strategic_plugin_by_capability_server_ = nh_->advertiseService("plugins/get_strategic_plugin_by_capability", &PluginManager::get_strategic_plugins_by_capability, &plugin_manager_);
+        get_tactical_plugin_by_capability_server_ = nh_->advertiseService("plugins/get_tactical_plugin_by_capability", &PluginManager::get_tactical_plugins_by_capability, &plugin_manager_);
+        plugin_discovery_subscriber_ = nh_->subscribe<cav_msgs::Plugin>("plugin_discovery", 5, &HealthMonitor::plugin_discovery_cb, this);
+        driver_discovery_subscriber_ = nh_->subscribe<cav_msgs::DriverStatus>("driver_discovery", 5, &HealthMonitor::driver_discovery_cb, this);
 
         // load params
-        spin_rate_ = pnh_.param<double>("spin_rate_hz", 10.0);
-        driver_timeout_ = pnh_.param<double>("required_driver_timeout", 500);
-        startup_duration_ = pnh_.param<double>("startup_duration", 25);
-        plugin_service_prefix_ = pnh_.param<std::string>("plugin_service_prefix", "");
-        strategic_plugin_service_suffix_ = pnh_.param<std::string>("strategic_plugin_service_suffix", "");
-        tactical_plugin_service_suffix_ = pnh_.param<std::string>("tactical_plugin_service_suffix", "");
+        spin_rate_ = pnh_->param<double>("spin_rate_hz", 10.0);
+        driver_timeout_ = pnh_->param<double>("required_driver_timeout", 500);
+        startup_duration_ = pnh_->param<double>("startup_duration", 25);
+        plugin_service_prefix_ = pnh_->param<std::string>("plugin_service_prefix", "");
+        strategic_plugin_service_suffix_ = pnh_->param<std::string>("strategic_plugin_service_suffix", "");
+        tactical_plugin_service_suffix_ = pnh_->param<std::string>("tactical_plugin_service_suffix", "");
         
-        pnh_.getParam("required_plugins", required_plugins_);
-        pnh_.getParam("required_drivers", required_drivers_);
-        pnh_.getParam("lidar_gps_drivers", lidar_gps_drivers_); 
+        pnh_->getParam("required_plugins", required_plugins_);
+        pnh_->getParam("required_drivers", required_drivers_);
+        pnh_->getParam("lidar_gps_drivers", lidar_gps_drivers_); 
 
         truck_=false;
         car_=false;
-        pnh_.getParam("truck", truck_);
-        pnh_.getParam("car", car_);
+        pnh_->getParam("truck", truck_);
+        pnh_->getParam("car", car_);
          
 
         // initialize worker class
@@ -75,7 +78,7 @@ namespace health_monitor
         start_up_timestamp_ = ros::Time::now().toNSec() / 1e6;
         start_time_flag_=ros::Time::now();
 
-        pnh_.setSystemAlertCallback([&](const cav_msgs::SystemAlertConstPtr& msg) -> void {
+        pnh_->setSystemAlertCallback([&](const cav_msgs::SystemAlertConstPtr& msg) -> void {
 
             if (msg->type == cav_msgs::SystemAlert::FATAL)
             { 
@@ -85,19 +88,19 @@ namespace health_monitor
                 new_msg.description = header;
                 new_msg.type = cav_msgs::SystemAlert::SHUTDOWN;
 
-                pnh_.publishSystemAlert(new_msg);
+                pnh_->publishSystemAlert(new_msg);
             }
 
         });
         
 
-        pnh_.setExceptionCallback([&](const std::exception& exp) -> void {
+        pnh_->setExceptionCallback([&](const std::exception& exp) -> void {
 
          cav_msgs::SystemAlert new_msg;
         new_msg.type = cav_msgs::SystemAlert::SHUTDOWN;
         new_msg.description = exp.what();
 
-        pnh_.publishSystemAlert(new_msg);
+        pnh_->publishSystemAlert(new_msg);
 
         });
 
@@ -150,6 +153,7 @@ namespace health_monitor
         ros::Duration sd(startup_duration_);
         long start_duration=sd.toNSec() / 1e6;
 
+        car_ = true;
         
         /*Publish each system alert only once*/
         auto crit_driver_status_truck = driver_manager_.are_critical_drivers_operational_truck(time_now);
@@ -161,49 +165,49 @@ namespace health_monitor
         {
             if((crit_driver_status_truck == "s_1_l1_1_l2_1_g_1") && (is_published_truck[0] == false)) //"All essential drivers are ready"
             {
-             	nh_.publishSystemAlert(dm);
+             	nh_->publishSystemAlert(dm);
 
   		        is_published_truck[0] = true;
             } 
            else if((start_time_flag_.isZero()==true) || (time_now - start_up_timestamp_ <= start_duration) && (is_published_truck[1] == false)) //"System is starting up..."
             {
-                nh_.publishSystemAlert(dm);
+                nh_->publishSystemAlert(dm);
 
   		        is_published_truck[1] = true;
             } 
             else if((crit_driver_status_truck == "s_1_l1_0_l2_1_g_1") || (crit_driver_status_truck=="s_1_l1_1_l2_0_g_1")&& (is_published_truck[2] =false)) //One LIDAR Failure
             {
-             	nh_.publishSystemAlert(dm);
+             	nh_->publishSystemAlert(dm);
 
   		        is_published_truck[2] = true;
             } 
             else if((crit_driver_status_truck =="s_1_l1_0_l2_1_g_0") || (crit_driver_status_truck =="s_1_l1_1_l2_0_g_0")&& (is_published_truck[3] =false)) //One LIDAR and GPS Failure
             {
-             	nh_.publishSystemAlert(dm);
+             	nh_->publishSystemAlert(dm);
 
   		        is_published_truck[3] = true;
             } 
             else if((crit_driver_status_truck=="s_1_l1_1_l2_1_g_0" )&& (is_published_truck[4] ==false)) //GPS Failure
             {
-             	nh_.publishSystemAlert(dm); 
+             	nh_->publishSystemAlert(dm); 
 
   		        is_published_truck[4] = true;
             } 
             else if((crit_driver_status_truck =="s_1_l1_0_l2_0_g_1" ) && (is_published_truck[5] ==false)) //Both LIDARs Failed
             {
-             	nh_.publishSystemAlert(dm);
+             	nh_->publishSystemAlert(dm);
 
   		        is_published_truck[5] = true;
             } 
             else if((crit_driver_status_truck=="s_1_l1_0_l2_0_g_0") && (is_published_truck[6] == false)) //LIDARs and GPS Failure
             {
-             	nh_.publishSystemAlert(dm);
+             	nh_->publishSystemAlert(dm);
 
   		        is_published_truck[6] = true;
             } 
             else if((crit_driver_status_truck=="s_0") && (is_published_truck[7] ==false)) //SSC Failure
             {
-             	nh_.publishSystemAlert(dm);
+             	nh_->publishSystemAlert(dm);
 
   		        is_published_truck[7] = true;
             }       
@@ -214,36 +218,36 @@ namespace health_monitor
         {
             if((crit_driver_status_car == "s_1_l_1_g_1") && (is_published_car[0] == false)) //"All essential drivers are ready"
             {
-             	nh_.publishSystemAlert(dm);
+             	nh_->publishSystemAlert(dm);
 
   		        is_published_car[0] = true;
             } 
             else if((start_time_flag_.isZero()==true) || (time_now - start_up_timestamp_ <= start_duration) && (is_published_car[1] == false)) //"System is starting up..."
             {
-                nh_.publishSystemAlert(dm);
+                nh_->publishSystemAlert(dm);
 
   		        is_published_truck[1] = true;
             }
             else if((crit_driver_status_car == "s_1_l_1_g_0") && (is_published_car[2] == false)) //GPS Failure
             {
-                nh_.publishSystemAlert(dm);
+                nh_->publishSystemAlert(dm);
   		        is_published_car[2] = true;
             }
             else if((crit_driver_status_car == "s_1_l_0_g_1") && (is_published_car[3] == false)) //LIDAR Failure
             {
-                nh_.publishSystemAlert(dm);
+                nh_->publishSystemAlert(dm);
 
   		        is_published_car[3] = true;
             }
             else if((crit_driver_status_car == "s_1_l_0_g_0") && (is_published_car[4] == false)) //LIDAR, GPS Failure
             {
-                nh_.publishSystemAlert(dm);
+                nh_->publishSystemAlert(dm);
 
   		        is_published_car[4] = true;
             }
             else if((crit_driver_status_car == "s_0") && (is_published_car[5] == false)) //SSC Failure
             {
-                nh_.publishSystemAlert(dm);
+                nh_->publishSystemAlert(dm);
 
   		        is_published_car[5] = true;
             }
@@ -255,24 +259,91 @@ namespace health_monitor
         return true;
     }
 
+    void HealthMonitor::spinObject(long time_now)
+    {   
+        ros::Duration sd(startup_duration_);
+        long start_duration=sd.toNSec() / 1e6;
 
-    /*void HealthMonitor::setIsPublishedFalse()
+        auto crit_driver_status_truck = driver_manager_.are_critical_drivers_operational_truck(time_now);
+        auto crit_driver_status_car = driver_manager_.are_critical_drivers_operational_car(time_now);
+        int pos;
+
+        if(truck_ == true)
+        {
+            for(int count = 0; count < is_published_truck.size(); count++)
+                {
+                    if(is_published_truck[count]==false)//only check system alerts that have not been published
+                    {   
+                        pos = getStatusTruck(crit_driver_status_truck, time_now);
+                        if(count == pos)
+                           is_published_truck[count] = true;
+                    }
+                }
+         }//End truck
+        
+        else if (car_ == true)
+        {
+            for(int count = 0; count < is_published_car.size(); count++)
+                {
+                    if(is_published_car.at(count) == false)//only check system alerts that have not been published
+                    {   
+                        pos = getStatusCar(crit_driver_status_car, time_now);
+                        if(count == pos)
+                            is_published_car[count] = true;
+
+                    }
+                }
+
+        }//End car
+
+    }//End spinObject
+
+
+    int HealthMonitor::getStatusTruck(std::string status, long time_now)
     {
-        for(int i=0; i<9; i++)
-        {
-            is_published_truck[i] = false;
-        }
+        ros::Duration sd(startup_duration_);
+        long start_duration=sd.toNSec() / 1e6;
 
-        for(int j = 0; j < 7; j++)
-        {
-            is_published_car[j] = false;
-        }
-    }*/
+        if(status == "s_1_l1_1_l2_1_g_1")        
+            return 0;
+        else if(status == "s_1_l1_0_l2_1_g_1")
+            return 2;
+        else if (status == "s_1_l1_0_l2_1_g_0")
+            return 3;
+        else if(status == "s_1_l1_1_l2_1_g_0")
+            return 4;
+        else if(status =="s_1_l1_0_l2_0_g_1")
+            return 5;
+        else if(status == "s_1_l1_0_l2_0_g_0") 
+            return 6;
+        else if(status =="s_0")
+            return 7;
+
+
+
+    }
+
+
+    int HealthMonitor::getStatusCar(std::string status, long time_now)
+    {
+        ros::Duration sd(startup_duration_);
+        long start_duration=sd.toNSec() / 1e6;
+
+        if(status == "s_1_l_1_g_1" )
+            return 0;
+        else if(status == "s_1_l_1_g_0")
+            return 2;
+        else if(status == "s_1_l_0_g_1")
+            return 3;
+        else if(status == "s_1_l_0_g_0")
+            return 4;
+        else if(status == "s_0")
+            return 5;
+    }
 
 
     std::vector<bool> HealthMonitor::getPubStatusCar()
     {
-        ROS_WARN_STREAM("THISISATEST");
         std::vector <bool> cr_;
         for(int i=0; i< is_published_car.size();i++)
             cr_.push_back(is_published_car[i]);
@@ -283,5 +354,22 @@ namespace health_monitor
     {
         return is_published_truck;
     }
+
+
+    void HealthMonitor::setDriverManager(DriverManager dm)
+    {
+        driver_manager_ = dm;
+    }
+
+    void HealthMonitor::setCarTrue()
+    {
+        car_ = true;
+    }
+
+    void HealthMonitor::setTruckTrue()
+    {
+        truck_ = true;
+    }
+
 
 }
