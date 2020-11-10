@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PARAMS_DIR=$(find .. -path "*carmajava/launch/params" -type d)
+PARAMS_DIR=$(find .. -path "*carma/launch/params" -type d)
 if [[ -z $PARAMS_DIR ]]; then
     echo "Unable to find params in local dir, looking in deployment dir"
     $PARAMS_DIR=$(find /opt/carma -path "*launch/params" -type d)

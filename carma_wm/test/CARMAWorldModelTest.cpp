@@ -23,6 +23,8 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include "TestHelpers.h"
 #include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
+#include <carma_wm/WMTestLibForGuidance.h>
+#include <ros/ros.h>
 
 using ::testing::_;
 using ::testing::A;
@@ -249,6 +251,7 @@ TEST(CARMAWorldModelTest, getNearestObjInLane)
   tp = cmw.getNearestObjInLane({15,17}, LANE_FULL).get();
   ASSERT_NEAR(std::get<0>(tp).downtrack, 5.242, 0.001);
   ASSERT_EQ(std::get<1>(tp).lanelet_id, roadway_objects[4].lanelet_id);
+  
 }
 
 TEST(CARMAWorldModelTest, nearestObjectBehindInLane)
@@ -975,4 +978,45 @@ TEST(CARMAWorldModelTest, toRoadwayObstacle)
 
   ASSERT_FALSE(!!result);
 }
+
+TEST(CARMAWorldModelTest, getLaneletsFromPoint)
+{
+  carma_wm::CARMAWorldModel cmw;
+  std::vector<lanelet::Lanelet> llts;
+  lanelet::LaneletMapPtr map;
+  std::vector<cav_msgs::ExternalObject> obstacles;
+
+  createTestingWorld(cmw, llts, map, obstacles);
+  // Test no map set
+  ASSERT_THROW(cmw.getLaneletsFromPoint({1,1}), std::invalid_argument);
+  // Create a complete map
+  test::MapOptions mp(1,1);
+  auto cmw_ptr = test::getGuidanceTestMap(mp);
+  auto underlyings = cmw_ptr->getLaneletsFromPoint({0.5,0.5});
+  ASSERT_EQ(underlyings.size(), 1);
+  ASSERT_EQ(underlyings.front().id(), 1200);
+
+  auto ll_1500 = test::getLanelet(1500, {getPoint(0.0,0.1, 0),getPoint(0.0,1.1, 0)}, 
+                         {getPoint(1.0,0.1, 0),getPoint(1.0,1.1, 0)}); // another lanelet the point is in
+  cmw_ptr->getMutableMap()->add(ll_1500);
+  underlyings = cmw_ptr->getLaneletsFromPoint({0.5,0.5});
+  ASSERT_EQ(underlyings.size(), 2);
+  ASSERT_EQ(underlyings.front().id(), 1500);
+  ASSERT_EQ(underlyings.back().id(), 1200);
+}
+
+TEST(CARMAWorldModelTest, setConfigSpeedLimitTest)
+{
+  CARMAWorldModel cmw;
+
+  bool flag = false;
+  double cL = 24.0;
+  ///// Test without user defined config limit
+  cmw.setConfigSpeedLimit(cL);
+
+  ASSERT_FALSE(flag);
+
+}
+
+
 }  // namespace carma_wm
