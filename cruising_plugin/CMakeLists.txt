@@ -15,7 +15,7 @@
 #
 
 cmake_minimum_required(VERSION 2.8.3)
-project(autoware_plugin)
+project(cruising_plugin)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
@@ -57,12 +57,12 @@ file(GLOB_RECURSE headers */*.hpp */*.h)
 
 add_executable( ${PROJECT_NAME}
   ${headers}
-  src/autoware_plugin.cpp
+  src/cruising_plugin.cpp
   src/main.cpp)
-add_library(autoware_plugin_library src/autoware_plugin.cpp)
+add_library(cruising_plugin_library src/cruising_plugin.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-add_dependencies(autoware_plugin_library ${catkin_EXPORTED_TARGETS})
+add_dependencies(cruising_plugin_library ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
@@ -89,5 +89,5 @@ install(DIRECTORY launch config
 #############
 ## Testing ##
 #############
-catkin_add_gmock(${PROJECT_NAME}-test test/test_autoware_plugin.cpp)
-target_link_libraries(${PROJECT_NAME}-test autoware_plugin_library ${catkin_LIBRARIES})
+catkin_add_gmock(${PROJECT_NAME}-test test/test_cruising_plugin.cpp)
+target_link_libraries(${PROJECT_NAME}-test cruising_plugin_library ${catkin_LIBRARIES})

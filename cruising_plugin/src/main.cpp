@@ -16,13 +16,13 @@
 
 #include <ros/ros.h>
 
-#include "autoware_plugin.h"
+#include "cruising_plugin.h"
 
 int main(int argc, char** argv)
 {
   
-    ros::init(argc, argv, "autoware_plugin");
-    autoware_plugin::AutowarePlugin ap;
+    ros::init(argc, argv, "cruising_plugin");
+    cruising_plugin::CruisingPlugin ap;
     ap.run();
     return 0;
 

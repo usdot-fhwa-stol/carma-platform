@@ -30,15 +30,15 @@
 #include <cav_srvs/PlanTrajectory.h>
 
 
-namespace autoware_plugin
+namespace cruising_plugin
 {
 
-    class AutowarePlugin
+    class CruisingPlugin
     {
 
     public:
 
-        AutowarePlugin();
+        CruisingPlugin();
 
         // general starting point of this node
         void run();
@@ -61,9 +61,9 @@ namespace autoware_plugin
         std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
 
-        ros::Publisher autoware_plugin_discovery_pub_;
+        ros::Publisher cruising_plugin_discovery_pub_;
 
-        // subscriber for Autoware waypoints
+        // subscriber for cruising waypoints
         ros::Subscriber waypoints_sub_;
         ros::Subscriber pose_sub_;
         ros::Subscriber twist_sub_;

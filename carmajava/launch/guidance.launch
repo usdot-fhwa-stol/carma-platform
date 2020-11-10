@@ -159,8 +159,8 @@
   <include file="$(find waypoint_planner)/launch/astar_avoid.launch" />
   <include file="$(find waypoint_planner)/launch/velocity_set.launch" />
 
-  <!-- Autoware Plugin -->
-  <include file="$(find autoware_plugin)/launch/autoware_plugin.launch" />
+  <!-- Cruising Plugin -->
+  <include file="$(find cruising_plugin)/launch/cruising_plugin.launch" />
 
    <!-- Mobility Path Publisher -->
   <include file="$(find mobilitypath_publisher)/launch/mobilitypath_publisher.launch" />

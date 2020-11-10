@@ -11,9 +11,9 @@
   the License.
 -->
 <!--
-  This file is used to launch a ros wrapper of Autoware planner as a CARMA strategic plugin.
+  This file is used to launch a ros wrapper of Cruising planner as a CARMA strategic plugin.
 -->
 <launch>
-    <rosparam command="load" file="$(find autoware_plugin)/config/parameters.yaml"/>
-    <node name="autoware_plugin" pkg="autoware_plugin" type="autoware_plugin"/>
+    <rosparam command="load" file="$(find cruising_plugin)/config/parameters.yaml"/>
+    <node name="cruising_plugin" pkg="cruising_plugin" type="cruising_plugin"/>
 </launch>

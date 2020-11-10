@@ -18,46 +18,46 @@
 #include <string>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include "autoware_plugin.h"
+#include "cruising_plugin.h"
 
 
-namespace autoware_plugin
+namespace cruising_plugin
 {
-    AutowarePlugin::AutowarePlugin() :
+    CruisingPlugin::CruisingPlugin() :
                     current_speed_(0.0),
                     trajectory_time_length_(6.0),
                     trajectory_point_spacing_(0.1) {}
 
-    void AutowarePlugin::initialize()
+    void CruisingPlugin::initialize()
     {
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
         
-        maneuver_srv_ = nh_->advertiseService("plugins/AutowarePlugin/plan_maneuvers", &AutowarePlugin::plan_maneuver_cb, this);
-        trajectory_srv_ = nh_->advertiseService("plugins/AutowarePlugin/plan_trajectory", &AutowarePlugin::plan_trajectory_cb, this);
+        maneuver_srv_ = nh_->advertiseService("plugins/CruisingPlugin/plan_maneuvers", &CruisingPlugin::plan_maneuver_cb, this);
+        trajectory_srv_ = nh_->advertiseService("plugins/CruisingPlugin/plan_trajectory", &CruisingPlugin::plan_trajectory_cb, this);
                 
-        autoware_plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
-        plugin_discovery_msg_.name = "AutowarePlugin";
+        cruising_plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
+        plugin_discovery_msg_.name = "CruisingPlugin";
         plugin_discovery_msg_.versionId = "v1.0";
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = false;
         plugin_discovery_msg_.type = cav_msgs::Plugin::STRATEGIC;
         plugin_discovery_msg_.capability = "strategic_plan/plan_maneuvers";
 
-        waypoints_sub_ = nh_->subscribe("final_waypoints", 1, &AutowarePlugin::waypoints_cb, this);
-        pose_sub_ = nh_->subscribe("current_pose", 1, &AutowarePlugin::pose_cb, this);
-        twist_sub_ = nh_->subscribe("current_velocity", 1, &AutowarePlugin::twist_cd, this);
+        waypoints_sub_ = nh_->subscribe("final_waypoints", 1, &CruisingPlugin::waypoints_cb, this);
+        pose_sub_ = nh_->subscribe("current_pose", 1, &CruisingPlugin::pose_cb, this);
+        twist_sub_ = nh_->subscribe("current_velocity", 1, &CruisingPlugin::twist_cd, this);
         pnh_->param<double>("trajectory_time_length", trajectory_time_length_, 6.0);
         pnh_->param<double>("trajectory_point_spacing", trajectory_point_spacing_, 0.1);
 
         ros::CARMANodeHandle::setSpinCallback([this]() -> bool {
-            autoware_plugin_discovery_pub_.publish(plugin_discovery_msg_);
+            cruising_plugin_discovery_pub_.publish(plugin_discovery_msg_);
             return true;
         });
     }
 
 
-    void AutowarePlugin::run()
+    void CruisingPlugin::run()
     {
         initialize();
         ros::CARMANodeHandle::spin();
@@ -65,7 +65,7 @@ namespace autoware_plugin
 
 
 
-    bool AutowarePlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp){
+    bool CruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp){
         resp.trajectory_plan = trajectory_msg;
         resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_FOLLOWING);
         resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
@@ -73,7 +73,7 @@ namespace autoware_plugin
         return true;
     }
 
-    bool AutowarePlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp){        
+    bool CruisingPlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp){        
 
         cav_msgs::Maneuver maneuver_msg;
 
@@ -88,14 +88,14 @@ namespace autoware_plugin
         maneuver_msg.lane_following_maneuver.end_dist = 20.0;
         maneuver_msg.lane_following_maneuver.end_speed = ((waypoints_list.size() > 0) ? waypoints_list[waypoints_list.size() - 1].twist.twist.linear.x : 0.0);
         maneuver_msg.lane_following_maneuver.end_time = ros::Time::now()+ros::Duration(mvr_length);
-        maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin = "AutowarePlugin";
+        maneuver_msg.lane_following_maneuver.parameters.planning_strategic_plugin = "CruisingPlugin";
 
         resp.new_plan.maneuvers.push_back(maneuver_msg);
        
         return true;
     }
 
-    void AutowarePlugin::waypoints_cb(const autoware_msgs::LaneConstPtr& msg)
+    void CruisingPlugin::waypoints_cb(const autoware_msgs::LaneConstPtr& msg)
     {
         if(msg->waypoints.size() == 0)
         {
@@ -112,17 +112,17 @@ namespace autoware_plugin
         trajectory_msg = trajectory;
     }
 
-    void AutowarePlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
+    void CruisingPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
         pose_msg_ = msg;
     }
 
-    void AutowarePlugin::twist_cd(const geometry_msgs::TwistStampedConstPtr& msg)
+    void CruisingPlugin::twist_cd(const geometry_msgs::TwistStampedConstPtr& msg)
     {
         current_speed_ = msg->twist.linear.x;
     }
 
-    std::vector<cav_msgs::TrajectoryPlanPoint> AutowarePlugin::compose_trajectory_from_waypoints(std::vector<autoware_msgs::Waypoint> waypoints)
+    std::vector<cav_msgs::TrajectoryPlanPoint> CruisingPlugin::compose_trajectory_from_waypoints(std::vector<autoware_msgs::Waypoint> waypoints)
     {
         std::vector<autoware_msgs::Waypoint> partial_waypoints = get_waypoints_in_time_boundary(waypoints, trajectory_time_length_);
         std::vector<cav_msgs::TrajectoryPlanPoint> tmp_trajectory = create_uneven_trajectory_from_waypoints(partial_waypoints);
@@ -130,10 +130,10 @@ namespace autoware_plugin
         return final_trajectory;
     }
 
-    std::vector<cav_msgs::TrajectoryPlanPoint> AutowarePlugin::create_uneven_trajectory_from_waypoints(std::vector<autoware_msgs::Waypoint> waypoints)
+    std::vector<cav_msgs::TrajectoryPlanPoint> CruisingPlugin::create_uneven_trajectory_from_waypoints(std::vector<autoware_msgs::Waypoint> waypoints)
     {
         std::vector<cav_msgs::TrajectoryPlanPoint> uneven_traj;
-        // TODO land id is not populated because we are not using it in Autoware
+        // TODO land id is not populated because we are not using it in Cruising
         // Adding current vehicle location as the first trajectory point if it is not on the first waypoint
         if(fabs(pose_msg_->pose.position.x - waypoints[0].pose.pose.position.x) > 0.1 || fabs(pose_msg_->pose.position.y - waypoints[0].pose.pose.position.y) > 0.1)
         {
@@ -179,7 +179,7 @@ namespace autoware_plugin
         return uneven_traj;
     }
 
-    std::vector<autoware_msgs::Waypoint> AutowarePlugin::get_waypoints_in_time_boundary(std::vector<autoware_msgs::Waypoint> waypoints, double time_span)
+    std::vector<autoware_msgs::Waypoint> CruisingPlugin::get_waypoints_in_time_boundary(std::vector<autoware_msgs::Waypoint> waypoints, double time_span)
     {
         std::vector<autoware_msgs::Waypoint> sublist;
         double total_time = 0.0;
@@ -192,7 +192,7 @@ namespace autoware_plugin
             }
             double delta_x_square = pow(waypoints[i].pose.pose.position.x - waypoints[i - 1].pose.pose.position.x, 2);
             double delta_y_square = pow(waypoints[i].pose.pose.position.y - waypoints[i - 1].pose.pose.position.y, 2);
-            // Here we ignore z attribute because it is not used by Autoware
+            // Here we ignore z attribute because it is not used by Cruising
             
             double delta_d = sqrt(delta_x_square + delta_y_square);
             double average_v = 0.5 * (waypoints[i].twist.twist.linear.x + waypoints[i - 1].twist.twist.linear.x);
@@ -206,13 +206,13 @@ namespace autoware_plugin
         return sublist;
     }
 
-    std::vector<cav_msgs::TrajectoryPlanPoint> AutowarePlugin::post_process_traj_points(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory)
+    std::vector<cav_msgs::TrajectoryPlanPoint> CruisingPlugin::post_process_traj_points(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory)
     {
         uint64_t current_nsec = ros::Time::now().toNSec();
         for(int i = 0; i < trajectory.size(); ++i)
         {
             trajectory[i].controller_plugin_name = "mpc_follower";
-            trajectory[i].planner_plugin_name = "autoware";
+            trajectory[i].planner_plugin_name = "cruising";
             trajectory[i].target_time += current_nsec;
         }
 

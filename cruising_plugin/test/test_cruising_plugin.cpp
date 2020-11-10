@@ -14,11 +14,11 @@
  * the License.
  */
 
-#include "autoware_plugin.h"
+#include "cruising_plugin.h"
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 
-TEST(AutowarePluginTest, testGetWaypointsInTimeBoundary1)
+TEST(CruisingPluginTest, testGetWaypointsInTimeBoundary1)
 {
     // compose a list of waypoints spanning 8 seconds
     std::vector<autoware_msgs::Waypoint> waypoints;
@@ -42,7 +42,7 @@ TEST(AutowarePluginTest, testGetWaypointsInTimeBoundary1)
     waypoints.push_back(wp_3);
     waypoints.push_back(wp_4);
     waypoints.push_back(wp_5);
-    autoware_plugin::AutowarePlugin ap;
+    cruising_plugin::CruisingPlugin ap;
     std::vector<autoware_msgs::Waypoint> res = ap.get_waypoints_in_time_boundary(waypoints, 6.0);
     EXPECT_EQ(4, res.size());
     EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
@@ -55,7 +55,7 @@ TEST(AutowarePluginTest, testGetWaypointsInTimeBoundary1)
     EXPECT_NEAR(40.0, res.back().pose.pose.position.x, 0.01);
 }
 
-TEST(AutowarePluginTest, testGetWaypointsInTimeBoundary2)
+TEST(CruisingPluginTest, testGetWaypointsInTimeBoundary2)
 {
     // compose a list of waypoints spaning less than 6 seconds
     std::vector<autoware_msgs::Waypoint> waypoints;
@@ -67,7 +67,7 @@ TEST(AutowarePluginTest, testGetWaypointsInTimeBoundary2)
     wp_2.pose.pose.position.x = 6.0;
     waypoints.push_back(wp_1);
     waypoints.push_back(wp_2);
-    autoware_plugin::AutowarePlugin ap;
+    cruising_plugin::CruisingPlugin ap;
     std::vector<autoware_msgs::Waypoint> res = ap.get_waypoints_in_time_boundary(waypoints, 6.0);
     EXPECT_EQ(2, res.size());
     EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
@@ -76,7 +76,7 @@ TEST(AutowarePluginTest, testGetWaypointsInTimeBoundary2)
     EXPECT_NEAR(6.0, res[1].pose.pose.position.x, 0.01);
 }
 
-TEST(AutowarePluginTest, testGetWaypointsInTimeBoundary3)
+TEST(CruisingPluginTest, testGetWaypointsInTimeBoundary3)
 {
     // compose a list of waypoints spanning exactly 5 seconds
     std::vector<autoware_msgs::Waypoint> waypoints;
@@ -92,7 +92,7 @@ TEST(AutowarePluginTest, testGetWaypointsInTimeBoundary3)
     waypoints.push_back(wp_1);
     waypoints.push_back(wp_2);
     waypoints.push_back(wp_3);
-    autoware_plugin::AutowarePlugin ap;
+    cruising_plugin::CruisingPlugin ap;
     std::vector<autoware_msgs::Waypoint> res = ap.get_waypoints_in_time_boundary(waypoints, 5.0);
     EXPECT_EQ(3, res.size());
     EXPECT_NEAR(2.0, res[0].twist.twist.linear.x, 0.01);
@@ -103,7 +103,7 @@ TEST(AutowarePluginTest, testGetWaypointsInTimeBoundary3)
     EXPECT_NEAR(24.0, res[2].pose.pose.position.x, 0.01);
 }
 
-TEST(AutowarePluginTest, testCreateUnevenTrajectory1)
+TEST(CruisingPluginTest, testCreateUnevenTrajectory1)
 {
     // compose a list of waypoints, uneven spaced
     std::vector<autoware_msgs::Waypoint> waypoints;
@@ -127,7 +127,7 @@ TEST(AutowarePluginTest, testCreateUnevenTrajectory1)
     waypoints.push_back(wp_3);
     waypoints.push_back(wp_4);
     waypoints.push_back(wp_5);
-    autoware_plugin::AutowarePlugin ap;
+    cruising_plugin::CruisingPlugin ap;
     // create pose message to indicate that the current location is on top of the starting waypoint
     ap.pose_msg_.reset(new geometry_msgs::PoseStamped());
     std::vector<cav_msgs::TrajectoryPlanPoint> traj = ap.create_uneven_trajectory_from_waypoints(waypoints);
@@ -144,7 +144,7 @@ TEST(AutowarePluginTest, testCreateUnevenTrajectory1)
     EXPECT_NEAR(2.0, traj[4].x, 0.01);
 }
 
-TEST(AutowarePluginTest, testCreateUnevenTrajectory2)
+TEST(CruisingPluginTest, testCreateUnevenTrajectory2)
 {
     // compose a list of waypoints, uneven spaced
     std::vector<autoware_msgs::Waypoint> waypoints;
@@ -168,7 +168,7 @@ TEST(AutowarePluginTest, testCreateUnevenTrajectory2)
     waypoints.push_back(wp_3);
     waypoints.push_back(wp_4);
     waypoints.push_back(wp_5);
-    autoware_plugin::AutowarePlugin ap;
+    cruising_plugin::CruisingPlugin ap;
     // create pose message to indicate that the current location is not near the starting waypoint
     geometry_msgs::PoseStamped pose;
     pose.pose.position.x = -1.0;
