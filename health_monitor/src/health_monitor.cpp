@@ -22,7 +22,6 @@
 namespace health_monitor
 {
 
-
     HealthMonitor::HealthMonitor()
     {
         is_published_truck =  std::vector<bool>(8, false);
@@ -30,7 +29,6 @@ namespace health_monitor
         car_ = false;
         truck_ = false;
 
-    
     }
     void HealthMonitor::initialize()
     {
@@ -99,7 +97,6 @@ namespace health_monitor
         pnh_->publishSystemAlert(new_msg);
 
         });
-
 
     }
     
@@ -246,7 +243,6 @@ namespace health_monitor
   		        is_published_car[5] = true;
             }
             
-
         }//End car
 
 
@@ -255,7 +251,6 @@ namespace health_monitor
 
     void HealthMonitor::pubStatusLogic(long time_now)
     {   
-       
         auto crit_driver_status_truck = driver_manager_.are_critical_drivers_operational_truck(time_now);
         auto crit_driver_status_car = driver_manager_.are_critical_drivers_operational_car(time_now);
 
@@ -268,20 +263,18 @@ namespace health_monitor
          }//End truck
         
         else if (car_ == true)
-        {
-            
+        {       
             int pos = getStatusCar(crit_driver_status_car);
             if (pos < is_published_car.size())
                 is_published_car[pos] = true;
 
         }//End car
 
-    }//End spinObject
+    }//End pubStatusLogic
 
 
     int HealthMonitor::getStatusTruck(std::string status)
     {
-      
         if(status == "s_1_l1_1_l2_1_g_1")        
             return 0;
         else if(status == "s_1_l1_0_l2_1_g_1")
@@ -298,7 +291,6 @@ namespace health_monitor
             return 7;
         else
             throw std::invalid_argument("Invalid crit driver status");
-
 
     }
 
