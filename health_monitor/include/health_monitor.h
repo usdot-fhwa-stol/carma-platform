@@ -48,7 +48,8 @@ namespace health_monitor
             std::vector<bool> getPubStatusCar();
             std::vector<bool> getPubStatusTruck();
 
-            void spinObject(long time_now);
+            //Test publish status logic
+            void pubStatusLogic(long time_now);
             
 
 

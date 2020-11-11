@@ -25,10 +25,10 @@ namespace health_monitor
 
     HealthMonitor::HealthMonitor()
     {
-        std::vector<bool>pub_truck(8, false);
-        std::vector<bool>pub_car(6, false);
-        is_published_truck = pub_truck;
-        is_published_car = pub_car;
+        //std::vector<bool>pub_truck(8, false);
+        //std::vector<bool>pub_car(6, false);
+        is_published_truck =  std::vector<bool>(8, false);
+        is_published_car = std::vector<bool>(6, false);
         car_ = false;
         truck_ = false;
 
@@ -152,8 +152,6 @@ namespace health_monitor
         long time_now=(ros::Time::now().toNSec() / 1e6);
         ros::Duration sd(startup_duration_);
         long start_duration=sd.toNSec() / 1e6;
-
-        car_ = true;
         
         /*Publish each system alert only once*/
         auto crit_driver_status_truck = driver_manager_.are_critical_drivers_operational_truck(time_now);
@@ -259,40 +257,26 @@ namespace health_monitor
         return true;
     }
 
-    void HealthMonitor::spinObject(long time_now)
+    void HealthMonitor::pubStatusLogic(long time_now)
     {   
-        ros::Duration sd(startup_duration_);
-        long start_duration=sd.toNSec() / 1e6;
-
+       
         auto crit_driver_status_truck = driver_manager_.are_critical_drivers_operational_truck(time_now);
         auto crit_driver_status_car = driver_manager_.are_critical_drivers_operational_car(time_now);
-        int pos;
 
         if(truck_ == true)
         {
-            for(int count = 0; count < is_published_truck.size(); count++)
-                {
-                    if(is_published_truck[count]==false)//only check system alerts that have not been published
-                    {   
-                        pos = getStatusTruck(crit_driver_status_truck, time_now);
-                        if(count == pos)
-                           is_published_truck[count] = true;
-                    }
-                }
+            int pos = getStatusTruck(crit_driver_status_truck, time_now);
+            if (pos < is_published_truck.size())
+                is_published_truck[pos] = true;
+
          }//End truck
         
         else if (car_ == true)
         {
-            for(int count = 0; count < is_published_car.size(); count++)
-                {
-                    if(is_published_car.at(count) == false)//only check system alerts that have not been published
-                    {   
-                        pos = getStatusCar(crit_driver_status_car, time_now);
-                        if(count == pos)
-                            is_published_car[count] = true;
-
-                    }
-                }
+            
+            int pos = getStatusCar(crit_driver_status_car, time_now);
+            if (pos < is_published_car.size())
+                is_published_car[pos] = true;
 
         }//End car
 
@@ -301,9 +285,7 @@ namespace health_monitor
 
     int HealthMonitor::getStatusTruck(std::string status, long time_now)
     {
-        ros::Duration sd(startup_duration_);
-        long start_duration=sd.toNSec() / 1e6;
-
+      
         if(status == "s_1_l1_1_l2_1_g_1")        
             return 0;
         else if(status == "s_1_l1_0_l2_1_g_1")
@@ -318,7 +300,8 @@ namespace health_monitor
             return 6;
         else if(status =="s_0")
             return 7;
-
+        else
+            throw std::invalid_argument("Invalid crit driver status");
 
 
     }
@@ -326,9 +309,7 @@ namespace health_monitor
 
     int HealthMonitor::getStatusCar(std::string status, long time_now)
     {
-        ros::Duration sd(startup_duration_);
-        long start_duration=sd.toNSec() / 1e6;
-
+     
         if(status == "s_1_l_1_g_1" )
             return 0;
         else if(status == "s_1_l_1_g_0")
@@ -339,15 +320,14 @@ namespace health_monitor
             return 4;
         else if(status == "s_0")
             return 5;
+        else
+            throw std::invalid_argument("Invalid crit driver status");
     }
 
 
     std::vector<bool> HealthMonitor::getPubStatusCar()
     {
-        std::vector <bool> cr_;
-        for(int i=0; i< is_published_car.size();i++)
-            cr_.push_back(is_published_car[i]);
-        return cr_;
+        return is_published_car;
     }
 
     std::vector<bool> HealthMonitor::getPubStatusTruck()
@@ -364,11 +344,16 @@ namespace health_monitor
     void HealthMonitor::setCarTrue()
     {
         car_ = true;
+        if(truck_ == true)
+            throw std::invalid_argument("truck_ = true");
     }
 
     void HealthMonitor::setTruckTrue()
     {
         truck_ = true;
+        if(car_ == true)
+            throw std::invalid_argument("car_ = true");
+        
     }
 
 
