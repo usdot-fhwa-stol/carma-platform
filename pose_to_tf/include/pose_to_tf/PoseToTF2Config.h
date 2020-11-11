@@ -16,8 +16,11 @@
  */
 
 #include <string>
-
-struct PoseToTF2Config {
+namespace pose_to_tf
+{
+struct PoseToTF2Config
+{
   std::string child_frame = "base_link";
   std::string default_parent_frame = "map";
 };
+}  // namespace pose_to_tf

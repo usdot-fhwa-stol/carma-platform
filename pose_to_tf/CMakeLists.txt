@@ -56,12 +56,14 @@ include_directories(
 add_library( ${PROJECT_NAME}
                 src/PoseToTF2.cpp)
 
+add_dependencies( ${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 
 add_executable( ${PROJECT_NAME}_node
                 src/main.cpp)
 
+add_dependencies( ${PROJECT_NAME}_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME} ${catkin_LIBRARIES})
 
 #############
@@ -80,7 +82,7 @@ install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
 )
 
 ## Install Other Resources
-install(DIRECTORY launch
+install(DIRECTORY launch config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 

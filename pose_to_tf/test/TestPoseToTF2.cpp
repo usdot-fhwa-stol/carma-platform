@@ -29,9 +29,10 @@ TEST(PoseToTF2, test_methods)
   bool msg_set = false;
   geometry_msgs::TransformStamped msg;
 
-  PoseToTF2 manager(config, [&msg, &msg_set](auto msg) { msg_set = true; msg = msg; });
+  PoseToTF2 manager(config, [&msg, &msg_set](auto in) { msg_set = true; msg = in; });
 
-  ros::Time::setNow(1.5);
+  ros::Time now(1.5);
+  ros::Time::setNow(now);
 
   geometry_msgs::Pose poseA;
   poseA.position.x = 1.2;
@@ -60,7 +61,8 @@ TEST(PoseToTF2, test_methods)
 
 
   ASSERT_FALSE(msg_set);
-  manager.poseCallback(poseA);
+  geometry_msgs::PoseConstPtr poseA_ptr(new geometry_msgs::Pose(poseA));
+  manager.poseCallback(poseA_ptr);
 
   ASSERT_TRUE(msg_set);
   ASSERT_EQ(poseA.position.x, msg.transform.translation.x);
@@ -77,7 +79,8 @@ TEST(PoseToTF2, test_methods)
   
 
   msg_set = false;
-  manager.poseStampedCallback(poseB);
+  geometry_msgs::PoseStampedConstPtr poseB_ptr(new geometry_msgs::PoseStamped(poseB));
+  manager.poseStampedCallback(poseB_ptr);
 
   ASSERT_TRUE(msg_set);
   ASSERT_EQ(poseB.pose.position.x, msg.transform.translation.x);
@@ -93,7 +96,8 @@ TEST(PoseToTF2, test_methods)
   ASSERT_NEAR(poseB.header.stamp.toSec(), msg.header.stamp.toSec(), 0.000000001);
 
   msg_set = false;
-  manager.poseWithCovarianceCallback(poseC);
+  geometry_msgs::PoseWithCovarianceConstPtr poseC_ptr(new geometry_msgs::PoseWithCovariance(poseC));
+  manager.poseWithCovarianceCallback(poseC_ptr);
 
   ASSERT_TRUE(msg_set);
   ASSERT_EQ(poseC.pose.position.x, msg.transform.translation.x);
@@ -109,7 +113,8 @@ TEST(PoseToTF2, test_methods)
   ASSERT_NEAR(1.5, msg.header.stamp.toSec(), 0.000000001);
 
   msg_set = false;
-  manager.poseWithCovarianceStampedCallback(poseD);
+  geometry_msgs::PoseWithCovarianceStampedConstPtr poseD_ptr(new geometry_msgs::PoseWithCovarianceStamped(poseD));
+  manager.poseWithCovarianceStampedCallback(poseD_ptr);
 
   ASSERT_TRUE(msg_set);
   ASSERT_EQ(poseD.pose.pose.position.x, msg.transform.translation.x);

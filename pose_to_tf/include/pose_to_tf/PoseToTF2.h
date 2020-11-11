@@ -20,6 +20,7 @@
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/PoseWithCovariance.h>
 #include <geometry_msgs/Pose.h>
+#include <geometry_msgs/TransformStamped.h>
 #include <functional>
 #include <pose_to_tf/PoseToTF2Config.h>
 
@@ -70,8 +71,8 @@ public:
 
 private:
 
-  TransformPublisher transform_pub_;
   PoseToTF2Config config_;
+  TransformPublisher transform_pub_;
 };
 
 }  // namespace pose_to_tf

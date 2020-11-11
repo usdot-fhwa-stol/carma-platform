@@ -1,4 +1,3 @@
-#pragma once
 /*
  * Copyright (C) 2019-2020 LEIDOS.
  *
@@ -19,7 +18,10 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/Pose.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/Transform.h>
 #include <functional>
+#include <pose_to_tf/PoseToTF2.h>
 
 namespace tf2
 {
@@ -54,7 +56,8 @@ void convert(const geometry_msgs::PoseWithCovarianceStamped& pose, geometry_msgs
 
 namespace pose_to_tf
 {
-PoseToTF2::PoseToTF2(PoseToTF2Config config, TransformPublisher transform_pub) : config_(config), transform_pub_(transform_pub)
+PoseToTF2::PoseToTF2(PoseToTF2Config config, TransformPublisher transform_pub)
+  : config_(config), transform_pub_(transform_pub)
 {
 }
 
@@ -62,7 +65,7 @@ void PoseToTF2::poseStampedCallback(const geometry_msgs::PoseStampedConstPtr& ms
 {
   geometry_msgs::TransformStamped out_tf;
   tf2::convert(*msg, out_tf);
-  out_tf.child_frame_id  = config_.child_frame;
+  out_tf.child_frame_id = config_.child_frame;
   transform_pub_(out_tf);
 }
 
@@ -70,7 +73,7 @@ void PoseToTF2::poseWithCovarianceStampedCallback(const geometry_msgs::PoseWithC
 {
   geometry_msgs::TransformStamped out_tf;
   tf2::convert(*msg, out_tf);
-  out_tf.child_frame_id  = config_.child_frame;
+  out_tf.child_frame_id = config_.child_frame;
   transform_pub_(out_tf);
 }
 
@@ -80,7 +83,7 @@ void PoseToTF2::poseCallback(const geometry_msgs::PoseConstPtr& msg)
   tf2::convert(*msg, out_tf.transform);
   out_tf.header.stamp = ros::Time::now();
   out_tf.header.frame_id = config_.default_parent_frame;
-  out_tf.child_frame_id  = config_.child_frame;
+  out_tf.child_frame_id = config_.child_frame;
   transform_pub_(out_tf);
 }
 
@@ -90,7 +93,7 @@ void PoseToTF2::poseWithCovarianceCallback(const geometry_msgs::PoseWithCovarian
   tf2::convert(*msg, out_tf.transform);
   out_tf.header.stamp = ros::Time::now();
   out_tf.header.frame_id = config_.default_parent_frame;
-  out_tf.child_frame_id  = config_.child_frame;
+  out_tf.child_frame_id = config_.child_frame;
   transform_pub_(out_tf);
 }
-}  // namespace localizer
+}  // namespace pose_to_tf
