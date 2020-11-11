@@ -61,8 +61,6 @@ namespace health_monitor
         private:
 
             // node handles
-            //ros::CARMANodeHandle nh_, pnh_;
-
             std::shared_ptr<ros::CARMANodeHandle> nh_;
             std::shared_ptr<ros::CARMANodeHandle> pnh_;
 
@@ -109,8 +107,8 @@ namespace health_monitor
             ros::Time start_time_flag_; //Bool for start up time
 
             //Unit Testing Functions
-            int getStatusTruck(std::string status, long time_now);
-            int getStatusCar(std::string status, long time_now);
+            int getStatusTruck(std::string status);
+            int getStatusCar(std::string status);
             
             //SystemAlert Publishing Status Arrays
             std::vector<bool>is_published_truck;//Num elements = 8

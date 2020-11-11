@@ -25,8 +25,6 @@ namespace health_monitor
 
     HealthMonitor::HealthMonitor()
     {
-        //std::vector<bool>pub_truck(8, false);
-        //std::vector<bool>pub_car(6, false);
         is_published_truck =  std::vector<bool>(8, false);
         is_published_car = std::vector<bool>(6, false);
         car_ = false;
@@ -40,8 +38,6 @@ namespace health_monitor
         ROS_INFO_STREAM("Initalizing health_monitor node...");
         pnh_.reset(new ros::CARMANodeHandle("~"));
         nh_.reset(new ros::CARMANodeHandle());
-        //nh_ = std::shared_ptr<ros::CARMANodeHandle>();
-        //pnh_ = std::shared_ptr<ros::CARMANodeHandle>("~");
 
         // init ros service servers, publishers and subscribers
         registered_plugin_service_server_ = nh_->advertiseService("plugins/get_registered_plugins", &HealthMonitor::registered_plugin_cb, this);
@@ -167,43 +163,43 @@ namespace health_monitor
 
   		        is_published_truck[0] = true;
             } 
-           else if((start_time_flag_.isZero()==true) || (time_now - start_up_timestamp_ <= start_duration) && (is_published_truck[1] == false)) //"System is starting up..."
+           else if((start_time_flag_.isZero() == true) || (time_now - start_up_timestamp_ <= start_duration) && (is_published_truck[1] == false)) //"System is starting up..."
             {
                 nh_->publishSystemAlert(dm);
 
   		        is_published_truck[1] = true;
             } 
-            else if((crit_driver_status_truck == "s_1_l1_0_l2_1_g_1") || (crit_driver_status_truck=="s_1_l1_1_l2_0_g_1")&& (is_published_truck[2] =false)) //One LIDAR Failure
+            else if((crit_driver_status_truck == "s_1_l1_0_l2_1_g_1") || (crit_driver_status_truck=="s_1_l1_1_l2_0_g_1")&& (is_published_truck[2] == false)) //One LIDAR Failure
             {
              	nh_->publishSystemAlert(dm);
 
   		        is_published_truck[2] = true;
             } 
-            else if((crit_driver_status_truck =="s_1_l1_0_l2_1_g_0") || (crit_driver_status_truck =="s_1_l1_1_l2_0_g_0")&& (is_published_truck[3] =false)) //One LIDAR and GPS Failure
+            else if((crit_driver_status_truck == "s_1_l1_0_l2_1_g_0") || (crit_driver_status_truck =="s_1_l1_1_l2_0_g_0")&& (is_published_truck[3] == false)) //One LIDAR and GPS Failure
             {
              	nh_->publishSystemAlert(dm);
 
   		        is_published_truck[3] = true;
             } 
-            else if((crit_driver_status_truck=="s_1_l1_1_l2_1_g_0" )&& (is_published_truck[4] ==false)) //GPS Failure
+            else if((crit_driver_status_truck == "s_1_l1_1_l2_1_g_0" )&& (is_published_truck[4] == false)) //GPS Failure
             {
              	nh_->publishSystemAlert(dm); 
 
   		        is_published_truck[4] = true;
             } 
-            else if((crit_driver_status_truck =="s_1_l1_0_l2_0_g_1" ) && (is_published_truck[5] ==false)) //Both LIDARs Failed
+            else if((crit_driver_status_truck == "s_1_l1_0_l2_0_g_1" ) && (is_published_truck[5] == false)) //Both LIDARs Failed
             {
              	nh_->publishSystemAlert(dm);
 
   		        is_published_truck[5] = true;
             } 
-            else if((crit_driver_status_truck=="s_1_l1_0_l2_0_g_0") && (is_published_truck[6] == false)) //LIDARs and GPS Failure
+            else if((crit_driver_status_truck == "s_1_l1_0_l2_0_g_0") && (is_published_truck[6] == false)) //LIDARs and GPS Failure
             {
              	nh_->publishSystemAlert(dm);
 
   		        is_published_truck[6] = true;
             } 
-            else if((crit_driver_status_truck=="s_0") && (is_published_truck[7] ==false)) //SSC Failure
+            else if((crit_driver_status_truck == "s_0") && (is_published_truck[7] == false)) //SSC Failure
             {
              	nh_->publishSystemAlert(dm);
 
@@ -265,7 +261,7 @@ namespace health_monitor
 
         if(truck_ == true)
         {
-            int pos = getStatusTruck(crit_driver_status_truck, time_now);
+            int pos = getStatusTruck(crit_driver_status_truck);
             if (pos < is_published_truck.size())
                 is_published_truck[pos] = true;
 
@@ -274,7 +270,7 @@ namespace health_monitor
         else if (car_ == true)
         {
             
-            int pos = getStatusCar(crit_driver_status_car, time_now);
+            int pos = getStatusCar(crit_driver_status_car);
             if (pos < is_published_car.size())
                 is_published_car[pos] = true;
 
@@ -283,7 +279,7 @@ namespace health_monitor
     }//End spinObject
 
 
-    int HealthMonitor::getStatusTruck(std::string status, long time_now)
+    int HealthMonitor::getStatusTruck(std::string status)
     {
       
         if(status == "s_1_l1_1_l2_1_g_1")        
@@ -307,7 +303,7 @@ namespace health_monitor
     }
 
 
-    int HealthMonitor::getStatusCar(std::string status, long time_now)
+    int HealthMonitor::getStatusCar(std::string status)
     {
      
         if(status == "s_1_l_1_g_1" )
