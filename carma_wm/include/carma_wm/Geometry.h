@@ -88,7 +88,7 @@ TrackPos trackPos(const lanelet::BasicPoint2d& p, const lanelet::BasicPoint2d& s
 std::tuple<TrackPos, lanelet::BasicSegment2d> matchSegment(const lanelet::BasicPoint2d& p,
                                                            const lanelet::BasicLineString2d& line_string);
 
-/*! \brief Returns a list of lists of local (computed by discrete derivative)
+/*! \brief Returns a list of local (computed by discrete derivative)
  * curvatures for the input centerlines. The list of returned curvatures matches
  * 1-to-1 with with list of points in the input centerlines.
  *
@@ -101,7 +101,7 @@ std::tuple<TrackPos, lanelet::BasicSegment2d> matchSegment(const lanelet::BasicP
  * interpolation of points) as this results in "flat" spots on an otherwise
  * smooth curve that causes 0 curvature to be computed.
  *
- * NOTE: This the accuracy of this method is very susceptable to input noise.
+ * NOTE: The accuracy of this method is very susceptable to input noise.
  *       Consider using local_circular_arc_curvatures for calculations using noisy data
  *
  * \param centerline_points The list of points to compute curvatures for

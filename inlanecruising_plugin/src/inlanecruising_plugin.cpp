@@ -101,8 +101,8 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
 std::vector<double> InLaneCruisingPlugin::apply_speed_limits(const std::vector<double> speeds,
                                                              const std::vector<double> speed_limits)
 {
-  ROS_ERROR_STREAM("Speeds list size: " << speeds.size());
-  ROS_ERROR_STREAM("SpeedLimits list size: " << speed_limits.size());
+  ROS_DEBUG_STREAM("Speeds list size: " << speeds.size());
+  ROS_DEBUG_STREAM("SpeedLimits list size: " << speed_limits.size());
 
   if (speeds.size() != speed_limits.size())
   {
@@ -227,7 +227,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   log::printDebugPerLine(time_bound_points, &log::pointSpeedPairToStream);
 
-  ROS_WARN("Got basic points ");
+  ROS_DEBUG("Got basic points ");
   std::vector<DiscreteCurve> sub_curves = compute_sub_curves(time_bound_points);
 
   ROS_DEBUG_STREAM("Got sub_curves " << sub_curves.size());
@@ -238,7 +238,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   for (const auto& discreet_curve : sub_curves)
   {
-    ROS_WARN("SubCurve");
+    ROS_DEBUG("SubCurve");
 
     std::vector<double> speed_limits;
     std::vector<lanelet::BasicPoint2d> curve_points;
@@ -259,9 +259,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
       continue;
     }
 
-    ROS_WARN("Got fit");
+    ROS_DEBUG("Got fit");
 
-    ROS_ERROR_STREAM("speed_limits.size() " << speed_limits.size());
+    ROS_DEBUG_STREAM("speed_limits.size() " << speed_limits.size());
 
     std::vector<lanelet::BasicPoint2d> sampling_points;
     sampling_points.reserve(1 + discreet_curve.points.size() * 2);
@@ -327,11 +327,11 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
     final_actual_speeds.insert(final_actual_speeds.end(), actual_speeds.begin(), actual_speeds.end() - 1);
 
-    ROS_WARN("Appended to final");
+    ROS_DEBUG("Appended to final");
   }
 
 
-  ROS_WARN("Processed all curves");
+  ROS_DEBUG("Processed all curves");
 
   if (all_sampling_points.size() == 0)
   {
