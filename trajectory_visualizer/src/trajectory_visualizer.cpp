@@ -52,7 +52,7 @@ namespace trajectory_visualizer {
         marker.header.stamp = ros::Time();
         marker.type = visualization_msgs::Marker::ARROW;
         marker.action = visualization_msgs::Marker::ADD;
-        marker.ns = "trajectory_visualizer"
+        marker.ns = "trajectory_visualizer";
 
 
         marker.scale.x = 2;
