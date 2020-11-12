@@ -302,17 +302,28 @@ lanelet::BasicPolygon2d objectToMapPolygon(const geometry_msgs::Pose& pose, cons
   return { p1, p2, p3, p4 };
 }
 
-std::vector<double>
-getLocalCurvatures(const std::vector<lanelet::ConstLanelet>& lanelets)
+lanelet::BasicLineString2d concatenate_lanelets(const std::vector<lanelet::ConstLanelet>& lanelets)
 {
-  if (lanelets.empty()) {
-    throw std::invalid_argument("Attempted to call getLocalCurvatures on empty lanelet list");
+  if (lanelets.size() == 0) {
+    return lanelet::BasicLineString2d();
+  }
+  lanelet::BasicLineString2d centerline_points = lanelets[0].centerline2d().basicLineString();
+  lanelet::BasicLineString2d new_points;
+  for (size_t i = 1; i < lanelets.size(); i++) {
+    new_points = lanelets[i].centerline2d().basicLineString();
+    centerline_points = concatenate_line_strings(centerline_points, new_points);
   }
 
-  lanelet::BasicLineString2d centerline_points = concatenate_lanelets(lanelets);
+  return centerline_points;
+}
+
+template <class P, class A>
+std::vector<double>
+templated_local_curvatures(const std::vector<P, A>& centerline_points)
+{
 
   if (centerline_points.empty()) {
-    throw std::invalid_argument("No points in lanelet centerline for curvature calculation");
+    throw std::invalid_argument("No points in centerline for curvature calculation");
   }
 
   std::vector<Eigen::Vector2d> spatial_derivative = compute_finite_differences(centerline_points);
@@ -330,16 +341,21 @@ getLocalCurvatures(const std::vector<lanelet::ConstLanelet>& lanelets)
   return curvature;
 }
 
-lanelet::BasicLineString2d concatenate_lanelets(const std::vector<lanelet::ConstLanelet>& lanelets)
+std::vector<double>
+local_curvatures(const lanelet::BasicLineString2d& centerline_points)
 {
-  lanelet::BasicLineString2d centerline_points = lanelets[0].centerline2d().basicLineString();
-  lanelet::BasicLineString2d new_points;
-  for (size_t i = 1; i < lanelets.size(); i++) {
-    new_points = lanelets[i].centerline2d().basicLineString();
-    centerline_points = concatenate_line_strings(centerline_points, new_points);
-  }
+  return templated_local_curvatures(centerline_points);
+}
 
-  return centerline_points;
+std::vector<double>
+local_curvatures(const std::vector<lanelet::BasicPoint2d>& centerline_points)
+{
+  return templated_local_curvatures(centerline_points);
+}
+
+std::vector<double>
+local_curvatures(const std::vector<lanelet::ConstLanelet>& lanelets) {
+  return local_curvatures(concatenate_lanelets(lanelets));
 }
 
 lanelet::BasicLineString2d 
@@ -361,8 +377,9 @@ concatenate_line_strings(const lanelet::BasicLineString2d& a,
   return out;
 }
 
+template <class P, class A>
 std::vector<Eigen::Vector2d> 
-compute_finite_differences(const lanelet::BasicLineString2d& data)
+compute_templated_finite_differences(const std::vector<P,A>& data)
 {
   std::vector<Eigen::Vector2d> out;
   Eigen::Vector2d diff;
@@ -387,6 +404,16 @@ compute_finite_differences(const lanelet::BasicLineString2d& data)
   }
 
   return out;
+}
+
+std::vector<Eigen::Vector2d> 
+compute_finite_differences(const lanelet::BasicLineString2d& data)
+{
+  return compute_templated_finite_differences(data);
+}
+
+std::vector<Eigen::Vector2d> compute_finite_differences(const std::vector<lanelet::BasicPoint2d>& data) {
+  return compute_templated_finite_differences(data);
 }
 
 std::vector<double> 
@@ -434,9 +461,9 @@ compute_finite_differences(const std::vector<Eigen::Vector2d>& x,const std::vect
   return out;
 }
 
+template <class P, class A>
 std::vector<double>
-compute_arc_lengths(const lanelet::BasicLineString2d& data)
-{
+compute_templated_arc_lengths(const std::vector<P, A>& data) {
   std::vector<double> out;
   double total = 0;
   double diff = 0;
@@ -451,6 +478,17 @@ compute_arc_lengths(const lanelet::BasicLineString2d& data)
   }
 
   return out;
+}
+
+std::vector<double>
+compute_arc_lengths(const lanelet::BasicLineString2d& data) {
+  return compute_templated_arc_lengths(data);
+}
+
+std::vector<double>
+compute_arc_lengths(const std::vector<lanelet::BasicPoint2d>& data)
+{
+  return compute_templated_arc_lengths(data);
 }
 
 double 
@@ -481,17 +519,17 @@ compute_magnitude_of_vectors(const std::vector<Eigen::Vector2d>& vectors)
   return out;
 }
 
-std::vector<geometry_msgs::Quaternion>
-compute_tangent_orientations(lanelet::BasicLineString2d centerline)
+template<class P, class A>
+std::vector<double>
+compute_templated_tangent_orientations(const std::vector<P,A>& centerline)
 {
-  std::vector<geometry_msgs::Quaternion> out;
+  std::vector<double> out;
   if (centerline.empty())
     return out;
 
-  std::vector<Eigen::Vector2d> tangents = carma_wm::geometry::compute_finite_differences(centerline);
+  std::vector<Eigen::Vector2d> tangents = carma_wm::geometry::compute_templated_finite_differences(centerline);
 
-  Eigen::Vector2d x_axis = { 1, 0 };
-  for (int i = 0; i < tangents.size(); i++)
+  for (size_t i = 0; i < tangents.size(); i++)
   {
     geometry_msgs::Quaternion q;
 
@@ -503,12 +541,93 @@ compute_tangent_orientations(lanelet::BasicLineString2d centerline)
       yaw = atan2(normalized_tanged[1], normalized_tanged[0]);
     }
 
-    q = tf::createQuaternionMsgFromYaw(yaw);
-    out.push_back(q);
+    out.push_back(yaw);
   }
 
   return out;
 }
+
+std::vector<double>
+compute_tangent_orientations(const lanelet::BasicLineString2d& centerline)
+{
+  return compute_templated_tangent_orientations(centerline);
+}
+
+std::vector<double>
+compute_tangent_orientations(const std::vector<lanelet::BasicPoint2d>& centerline)
+{
+  return compute_templated_tangent_orientations(centerline);
+}
+
+Eigen::Isometry2d build2dEigenTransform(const Eigen::Vector2d& position, const Eigen::Rotation2Dd& rotation) {
+  Eigen::Vector2d scale(1.0, 1.0);
+  Eigen::Isometry2d tf;
+  return tf.fromPositionOrientationScale(position, rotation, scale);;
+}
+
+Eigen::Isometry3d build3dEigenTransform(const Eigen::Vector3d& position, const Eigen::Quaterniond& rotation) {
+  Eigen::Vector3d scale(1.0, 1.0, 1.0);
+  Eigen::Isometry3d tf;
+  return tf.fromPositionOrientationScale(position, rotation, scale);
+}
+
+Eigen::Isometry3d build3dEigenTransform(const Eigen::Vector3d& position, const Eigen::AngleAxisd& rotation) {
+  Eigen::Vector3d scale(1.0, 1.0, 1.0);
+  Eigen::Isometry3d tf;
+  return tf.fromPositionOrientationScale(position, rotation, scale);
+}
+
+double point_to_point_yaw(const lanelet::BasicPoint2d& cur_point, const lanelet::BasicPoint2d& next_point)
+{
+  double dx = next_point[0] - cur_point[0];
+  double dy = next_point[1] - cur_point[1];
+  double yaw = atan2(dy, dx);
+  return yaw;
+}
+
+double circular_arc_curvature(const lanelet::BasicPoint2d& cur_point, const lanelet::BasicPoint2d& next_point)
+{
+  double dist = sqrt(pow(cur_point[0] - next_point[0], 2) + pow(cur_point[1] - next_point[1], 2));
+
+  double angle = point_to_point_yaw(cur_point, next_point);
+
+  double r = 0.5 * (dist / std::sin(angle));
+
+  double max_curvature = 100000;
+  double curvature = std::min(1 / r, max_curvature);
+
+  return curvature;
+}
+
+std::vector<double> local_circular_arc_curvatures(const std::vector<lanelet::BasicPoint2d>& points, int lookahead) {
+  std::vector<double> curvatures;
+  curvatures.reserve(points.size());
+
+  if (lookahead <= 0) {
+    throw std::invalid_argument("local_circular_arc_curvatures lookahead must be greater than 0");
+  }
+
+  if (points.size() == 0) {
+    return curvatures;
+  }
+  else if (points.size() == 1) {
+    curvatures.push_back(0.0);
+    return curvatures;
+  }
+
+  for (size_t i = 0; i < points.size() - 1; i++)
+  {
+    size_t next_point_index = i + lookahead;
+    if (next_point_index >= points.size()) {
+      next_point_index = points.size() - 1;
+    }
+    double cur = circular_arc_curvature(points[i], points[next_point_index]);
+    curvatures.push_back(fabs(cur));
+  }
+  curvatures.push_back(curvatures.back());
+  return curvatures;
+}
+
 
 }  // namespace geometry
 

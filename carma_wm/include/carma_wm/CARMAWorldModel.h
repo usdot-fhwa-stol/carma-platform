@@ -110,7 +110,7 @@ public:
 
   TrackPos routeTrackPos(const lanelet::BasicPoint2d& point) const override;
 
-  std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end) const override;
+  std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end, bool shortest_path_only = false) const override;
 
   lanelet::LaneletMapConstPtr getMap() const override;
 

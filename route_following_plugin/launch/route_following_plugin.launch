@@ -15,5 +15,5 @@
 -->
 <launch>
     <rosparam command="load" file="$(find route_following_plugin)/config/parameters.yaml"/>
-    <node name="route_following_plugin" pkg="route_following_plugin" type="route_following_plugin"/>
+    <node name="route_following_plugin" pkg="route_following_plugin" type="route_following_plugin" output="log"/>
 </launch>

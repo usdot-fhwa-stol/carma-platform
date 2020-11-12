@@ -31,4 +31,9 @@
   <depend>carma_utils</depend>
   <depend>autoware_msgs</depend>
   <depend>carma_wm</depend>
+  <depend>tf</depend>
+  <depend>tf2</depend>
+  <depend>tf2_geometry_msgs</depend> 
+  <depend>trajectory_utils</depend>   
+  
 </package>

@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  * Copyright (C) 2019-2020 LEIDOS.
  *
@@ -14,16 +16,27 @@
  * the License.
  */
 
-#include <ros/ros.h>
+#include <vector>
+#include <carma_wm/Geometry.h>
+#include <inlanecruising_plugin/third_party_library/spline.h>
+#include <inlanecruising_plugin/smoothing/SplineI.h>
 
-#include <inlanecruising_plugin/inlanecruising_plugin_node.h>
-
-int main(int argc, char** argv)
+namespace inlanecruising_plugin
 {
-  
-    ros::init(argc, argv, "inlanecruising_plugin");
-    inlanecruising_plugin::InLaneCruisingPluginNode ip;
-    ip.run();
-    return 0;
+namespace smoothing
+{
+/**
+ * \brief Realization of SplineI that uses the tk::spline library for interpolation 
+ */ 
+class CubicSpline : public SplineI
+{
+public:
+  ~CubicSpline(){};
+  void setPoints(std::vector<lanelet::BasicPoint2d> points) override;
+  double operator()(double x) const override;
 
+private:
+  tk::spline spline_;
 };
+};  // namespace smoothing
+};  // namespace inlanecruising_plugin

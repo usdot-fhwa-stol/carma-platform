@@ -15,6 +15,7 @@
  */
 
 #include <stdexcept>
+#include <carma_wm/Geometry.h>
 #include "plan_delegator.hpp"
 
 namespace plan_delegator
@@ -110,6 +111,9 @@ namespace plan_delegator
             plan_req.request.vehicle_state.longitudinal_vel = latest_twist_.twist.linear.x;
             plan_req.request.vehicle_state.X_pos_global = latest_pose_.pose.position.x;
             plan_req.request.vehicle_state.Y_pos_global = latest_pose_.pose.position.y;
+            double roll, pitch, yaw;
+            carma_wm::geometry::rpyFromQuaternion(latest_pose_.pose.orientation, roll, pitch, yaw);
+            plan_req.request.vehicle_state.orientation = yaw;
         }
         // set vehicle state based on last two planned trajectory points
         else
@@ -123,6 +127,7 @@ namespace plan_delegator
             auto time_diff_sec = time_diff.toSec();
             // this assumes the vehicle does not have significant lateral velocity
             plan_req.request.vehicle_state.longitudinal_vel = distance_diff / time_diff_sec;
+            // TODO develop way to set yaw value for future points
         }
         return plan_req;
     }

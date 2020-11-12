@@ -103,7 +103,7 @@ generate_const_curvature_linestring(
   return out;
 }
 
-TEST(Geometry, getLocalCurvatures)
+TEST(Geometry, local_curvatures)
 {
   CARMAWorldModel cmw;
 
@@ -119,7 +119,7 @@ TEST(Geometry, getLocalCurvatures)
   std::vector<lanelet::ConstLanelet> lanelets = { lanelet::utils::toConst(ll_1) };
 
   ///// Compute single lanelet 0 curvature
-  std::vector<double> curvatures = geometry::getLocalCurvatures(lanelets);
+  std::vector<double> curvatures = geometry::local_curvatures(lanelets);
   ASSERT_EQ(lanelets[0].centerline2d().size(), curvatures.size());
   ASSERT_NEAR(0.0, curvatures[0], 0.0000001);
   ASSERT_NEAR(0.0, curvatures[1], 0.0000001);
@@ -133,7 +133,7 @@ TEST(Geometry, getLocalCurvatures)
   auto ll_2 = getLanelet(left_2, right_2);
   std::vector<lanelet::ConstLanelet> lanelets2 = { lanelet::utils::toConst(ll_2) };
 
-  std::vector<double> curvatures2 = geometry::getLocalCurvatures(lanelets2);
+  std::vector<double> curvatures2 = geometry::local_curvatures(lanelets2);
   ASSERT_EQ(lanelets2[0].centerline2d().size(), curvatures2.size());
 
   double total = 0;
@@ -154,7 +154,7 @@ TEST(Geometry, getLocalCurvatures)
   lanelet::utils::overwriteLaneletsCenterline(map);
 
   std::vector<lanelet::ConstLanelet> lanelets3 = { lanelet::utils::toConst(ll_3) };
-  std::vector<double> curvatures3 = geometry::getLocalCurvatures(lanelets3);
+  std::vector<double> curvatures3 = geometry::local_curvatures(lanelets3);
   ASSERT_EQ(lanelets3[0].centerline2d().size(), curvatures3.size());
 
   total = 0;
@@ -190,7 +190,7 @@ TEST(Geometry, getLocalCurvatures)
   }
 
   std::vector<lanelet::ConstLanelet> lanelets4 = { lanelet::utils::toConst(ll_4) };
-  std::vector<double> curvatures4 = geometry::getLocalCurvatures(lanelets4);
+  std::vector<double> curvatures4 = geometry::local_curvatures(lanelets4);
   ASSERT_EQ(lanelets4[0].centerline2d().size(), curvatures4.size());
 
   // Values calculated by hand using same method
@@ -203,7 +203,7 @@ TEST(Geometry, getLocalCurvatures)
   ///// Test exception
   lanelet::Lanelet ll_empty;
   std::vector<lanelet::ConstLanelet> lanelets_5 = { lanelet::utils::toConst(ll_empty) };
-  ASSERT_THROW(geometry::getLocalCurvatures(lanelets_5), std::invalid_argument);
+  ASSERT_THROW(geometry::local_curvatures(lanelets_5), std::invalid_argument);
 }
 
 TEST(GeometryTest, trackPos)
@@ -635,24 +635,18 @@ TEST(GeometryTest, compute_tangent_orientations_straight)
 
   lanelet::ConstLanelets lanelets_as_vec;
 
-  size_t num_points = 0;
   for (lanelet::ConstLanelet ll : route_lanelets)
   {
     lanelets_as_vec.push_back(ll);
-    num_points += ll.centerline2d().size();
   }
 
-  std::vector<geometry_msgs::Quaternion> result;
+  std::vector<double> result;
   lanelet::BasicLineString2d centerline = carma_wm::geometry::concatenate_lanelets(lanelets_as_vec);  
   result = carma_wm::geometry::compute_tangent_orientations(centerline);
-  ASSERT_EQ(num_points, result.size());
+  ASSERT_EQ(9, result.size());
 
-  for (geometry_msgs::Quaternion q_msg : result)
+  for (double yaw : result)
   {
-    double roll, pitch, yaw;
-    rpyFromQuatMsg(q_msg, roll, pitch, yaw);
-    ASSERT_NEAR(0.0, roll, 0.000001);
-    ASSERT_NEAR(0.0, pitch, 0.000001);
     ASSERT_NEAR(M_PI_2, yaw, 0.000001);
   }
 }
@@ -725,108 +719,50 @@ TEST(GeometryTest, compute_tangent_orientations_curved)
 
   auto route_lanelets = wm->getRoute()->shortestPath();
 
-  lanelet::ConstLanelets lanelets_as_vec;
 
-  std::vector<geometry_msgs::Quaternion> result;
+  std::vector<double> result;
   lanelet::BasicLineString2d centerline = carma_wm::geometry::concatenate_lanelets({ lanelet::traits::toConst(ll_1), lanelet::traits::toConst(ll_2) });
   result = carma_wm::geometry::compute_tangent_orientations(centerline);
 
-  size_t num_points = 0;
-  for (lanelet::ConstLanelet ll : route_lanelets)
-  {
-    lanelets_as_vec.push_back(ll);
-    num_points += ll.centerline2d().size();
-  }
+  ASSERT_EQ(15, result.size());
 
-  ASSERT_EQ(num_points, result.size());
-
-  double roll, pitch, yaw;
-
-  rpyFromQuatMsg(result[0], roll, pitch, yaw);
-  ASSERT_NEAR(0.0, roll, 0.00001);
-  ASSERT_NEAR(0.0, pitch, 0.00001);
-  ASSERT_NEAR(1.7017, yaw, 0.00001); // First point has some error which is allowable due to mathemtical constraints on calculating the tangent
-
-  rpyFromQuatMsg(result[1], roll, pitch, yaw);
-  ASSERT_NEAR(0.0, roll, 0.00001);
-  ASSERT_NEAR(0.0, pitch, 0.00001);
-  ASSERT_NEAR(1.7017, yaw, 0.00001);
-
-  rpyFromQuatMsg(result[2], roll, pitch, yaw);
-  ASSERT_NEAR(0.0, roll, 0.00001);
-  ASSERT_NEAR(0.0, pitch, 0.00001);
-  ASSERT_NEAR(1.82437, yaw, 0.00001);
-
-  rpyFromQuatMsg(result[3], roll, pitch, yaw);
-  ASSERT_NEAR(0.0, roll, 0.00001);
-  ASSERT_NEAR(0.0, pitch, 0.00001);
-  ASSERT_NEAR(1.9635, yaw, 0.00001);
-
-  rpyFromQuatMsg(result[4], roll, pitch, yaw);
-  ASSERT_NEAR(0.0, roll, 0.00001);
-  ASSERT_NEAR(0.0, pitch, 0.00001);
-  ASSERT_NEAR(2.0944, yaw, 0.00001);
-
-  rpyFromQuatMsg(result[5], roll, pitch, yaw);
-  ASSERT_NEAR(0.0, roll, 0.00001);
-  ASSERT_NEAR(0.0, pitch, 0.00001);
-  ASSERT_NEAR(2.22529, yaw, 0.00001);
-
-  rpyFromQuatMsg(result[6], roll, pitch, yaw);
-  ASSERT_NEAR(0.0, roll, 0.00001);
-  ASSERT_NEAR(0.0, pitch, 0.00001);
-  ASSERT_NEAR(2.35619, yaw, 0.00001);
-
-  rpyFromQuatMsg(result[7], roll, pitch, yaw);
-  ASSERT_NEAR(0.0, roll, 0.00001);
-  ASSERT_NEAR(0.0, pitch, 0.00001);
-  ASSERT_NEAR(2.48709, yaw, 0.00001);
-
-  rpyFromQuatMsg(result[8], roll, pitch, yaw);
-  ASSERT_NEAR(0.0, roll, 0.00001);
-  ASSERT_NEAR(0.0, pitch, 0.00001);
-  ASSERT_NEAR(2.60977, yaw, 0.00001);
-
-  rpyFromQuatMsg(result[9], roll, pitch, yaw);
-  ASSERT_NEAR(0.0, roll, 0.00001);
-  ASSERT_NEAR(0.0, pitch, 0.00001);
-  ASSERT_NEAR(2.74889, yaw, 0.00001);
-
-  rpyFromQuatMsg(result[10], roll, pitch, yaw);
-  ASSERT_NEAR(0.0, roll, 0.00001);
-  ASSERT_NEAR(0.0, pitch, 0.00001);
-  ASSERT_NEAR(2.87157, yaw, 0.00001);
-
-  rpyFromQuatMsg(result[11], roll, pitch, yaw);
-  ASSERT_NEAR(0.0, roll, 0.00001);
-  ASSERT_NEAR(0.0, pitch, 0.00001);
-  ASSERT_NEAR(3.01069, yaw, 0.00001);
-
-  rpyFromQuatMsg(result[12], roll, pitch, yaw);
-  ASSERT_NEAR(0.0, roll, 0.00001);
-  ASSERT_NEAR(0.0, pitch, 0.00001);
-  ASSERT_NEAR(3.01069, yaw, 0.00001);
-
-  rpyFromQuatMsg(result[13], roll, pitch, yaw);
-  ASSERT_NEAR(0.0, roll, 0.00001);
-  ASSERT_NEAR(0.0, pitch, 0.00001);
-  ASSERT_NEAR(3.14159, yaw, 0.00001);
-
-  rpyFromQuatMsg(result[14], roll, pitch, yaw);
-  ASSERT_NEAR(0.0, roll, 0.00001);
-  ASSERT_NEAR(0.0, pitch, 0.00001);
-  ASSERT_NEAR(3.14159, yaw, 0.00001);
-
-  rpyFromQuatMsg(result[15], roll, pitch, yaw);
-  ASSERT_NEAR(0.0, roll, 0.00001);
-  ASSERT_NEAR(0.0, pitch, 0.00001);
-  ASSERT_NEAR(3.14159, yaw, 0.00001);
+  ASSERT_NEAR(1.7017, result[0], 0.00001); // First point has some error which is allowable due to mathemtical constraints on calculating the tangent
+  ASSERT_NEAR(1.7017, result[1], 0.00001);
+  ASSERT_NEAR(1.82437, result[2], 0.00001);
+  ASSERT_NEAR(1.9635, result[3], 0.00001);
+  ASSERT_NEAR(2.0944, result[4], 0.00001);
+  ASSERT_NEAR(2.22529, result[5], 0.00001);
+  ASSERT_NEAR(2.35619, result[6], 0.00001);
+  ASSERT_NEAR(2.48709, result[7], 0.00001);
+  ASSERT_NEAR(2.60977, result[8], 0.00001);
+  ASSERT_NEAR(2.74889, result[9], 0.00001);
+  ASSERT_NEAR(2.87157, result[10], 0.00001);
+  ASSERT_NEAR(3.01069, result[11], 0.00001);
+  ASSERT_NEAR(3.05132, result[12], 0.00001);
+  ASSERT_NEAR(3.14159, result[13], 0.00001);
+  ASSERT_NEAR(3.14159, result[14], 0.00001);
 
   // Verify empty centerline gives 0 output
   lanelet::BasicLineString2d empty_ls;
   result = carma_wm::geometry::compute_tangent_orientations(empty_ls);
   ASSERT_EQ(0, result.size());
 
+}
+
+TEST(GeometryTest, point_to_point_yaw)
+{
+    lanelet::BasicPoint2d point1{1.0, 1.0};
+    lanelet::BasicPoint2d point2{1.0, 2.0};
+    double res = geometry::point_to_point_yaw(point1, point2);
+    EXPECT_NEAR(1.57, res, 0.1);
+}
+
+TEST(GeometryTest, circular_arc_curvature)
+{
+    lanelet::BasicPoint2d point1{1.0, 1.0};
+    lanelet::BasicPoint2d point2{3.0, 4.0};
+    double res = geometry::circular_arc_curvature(point1, point2);
+    EXPECT_NEAR(0.46153846, res, 0.1);
 }
 
 
