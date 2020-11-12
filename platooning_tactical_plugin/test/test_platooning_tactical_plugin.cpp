@@ -145,15 +145,15 @@ TEST(PlatooningTacticalPluginTest, testCreateUnevenTrajectory1)
     tp.pose_msg_.reset(new geometry_msgs::PoseStamped());
     std::vector<cav_msgs::TrajectoryPlanPoint> traj = tp.create_uneven_trajectory_from_waypoints(waypoints);
     EXPECT_EQ(5, traj.size());
-    EXPECT_NEAR(0.0, traj[0].target_time, 0.01);
+    EXPECT_NEAR(0.0, traj[0].target_time.toSec(), 0.01);
     EXPECT_NEAR(0.0, traj[0].x, 0.01);
-    EXPECT_NEAR(0.25, traj[1].target_time / 1e9, 0.01);
+    EXPECT_NEAR(0.25, traj[1].target_time.toSec(), 0.01);
     EXPECT_NEAR(0.5, traj[1].x, 0.01);
-    EXPECT_NEAR(0.45, traj[2].target_time / 1e9, 0.01);
+    EXPECT_NEAR(0.45, traj[2].target_time.toSec(), 0.01);
     EXPECT_NEAR(1.3, traj[2].x, 0.01);
-    EXPECT_NEAR(0.5, traj[3].target_time / 1e9, 0.01);
+    EXPECT_NEAR(0.5, traj[3].target_time.toSec(), 0.01);
     EXPECT_NEAR(1.4, traj[3].x, 0.01);
-    EXPECT_NEAR(0.64, traj[4].target_time / 1e9, 0.01);
+    EXPECT_NEAR(0.65, traj[4].target_time.toSec(), 0.01);
     EXPECT_NEAR(2.0, traj[4].x, 0.01);
 }
 
@@ -191,17 +191,17 @@ TEST(PlatooningTacticalPluginTest, testCreateUnevenTrajectory2)
     tp.pose_msg_.reset(new geometry_msgs::PoseStamped(pose));
     std::vector<cav_msgs::TrajectoryPlanPoint> traj = tp.create_uneven_trajectory_from_waypoints(waypoints);
     EXPECT_EQ(6, traj.size());
-    EXPECT_NEAR(0.0, traj[0].target_time / 1e9, 0.01);
+    EXPECT_NEAR(0.0, traj[0].target_time.toSec(), 0.01);
     EXPECT_NEAR(-1.0, traj[0].x, 0.01);
-    EXPECT_NEAR(0.5, traj[1].target_time / 1e9, 0.01);
+    EXPECT_NEAR(0.5, traj[1].target_time.toSec(), 0.01);
     EXPECT_NEAR(0.0, traj[1].x, 0.01);
-    EXPECT_NEAR(0.75, traj[2].target_time / 1e9, 0.001);
+    EXPECT_NEAR(0.75, traj[2].target_time.toSec(), 0.001);
     EXPECT_NEAR(0.5, traj[2].x, 0.01);
-    EXPECT_NEAR(0.95, traj[3].target_time / 1e9, 0.001);
+    EXPECT_NEAR(0.95, traj[3].target_time.toSec(), 0.001);
     EXPECT_NEAR(1.3, traj[3].x, 0.01);
-    EXPECT_NEAR(1.0, traj[4].target_time / 1e9, 0.001);
+    EXPECT_NEAR(1.0, traj[4].target_time.toSec(), 0.001);
     EXPECT_NEAR(1.4, traj[4].x, 0.01);
-    EXPECT_NEAR(1.15, traj[5].target_time / 1e9, 0.001);
+    EXPECT_NEAR(1.15, traj[5].target_time.toSec(), 0.001);
     EXPECT_NEAR(2.0, traj[5].x, 0.01);
 }
 

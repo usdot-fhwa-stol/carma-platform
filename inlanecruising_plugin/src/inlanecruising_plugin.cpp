@@ -184,7 +184,7 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::constrain_to_time_boundary(con
 
   if (time_boundary_exclusive_index == 0)
   {
-    throw std::invalid_argument("No points to fit in timespan");  // TODO might be better to return empty list here
+    throw std::invalid_argument("No points to fit in timespan"); 
   }
 
   std::vector<PointSpeedPair> time_bound_points;
@@ -477,7 +477,7 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
 
     lanelet::BasicLineString2d route_geometry = carma_wm::geometry::concatenate_lanelets(lanelets_to_add);
 
-    bool first = true;
+    first = true;
     for (auto p : route_geometry)
     {
       if (first && points_and_target_speeds.size() != 0)

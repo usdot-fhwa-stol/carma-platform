@@ -95,13 +95,14 @@ cav_msgs::TrajectoryPlan buildSampleTraj() {
     plan.header.stamp = ros::Time::now();
     plan.trajectory_id = "TEST TRAJECTORY 1";
 
-    uint64_t cur_time_nanos = ros::Time::now().toNSec();
+    ros::Time cur_time = ros::Time::now();
     for (int i = 0; i < 10; i++) {
         cav_msgs::TrajectoryPlanPoint p;
         p.controller_plugin_name = "mpc_follower";
         p.lane_id = "0";
         p.planner_plugin_name = "cruising";
-        p.target_time = cur_time_nanos + i * 130000000;
+        ros::Duration dur(i * 0.13);
+        p.target_time = cur_time + dur;
         p.x = 10 * i;
         p.y = 10 * i;
         plan.trajectory_points.push_back(p);
