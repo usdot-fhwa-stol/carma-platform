@@ -24,11 +24,6 @@ Localizer::Localizer()
 {
 }
 
-void Localizer::publishTransform(const geometry_msgs::TransformStamped& msg)
-{
-  br_.sendTransform(msg);
-}
-
 void Localizer::publishPoseStamped(const geometry_msgs::PoseStamped& msg) const
 {
   pose_pub_.publish(msg);
@@ -86,7 +81,6 @@ void Localizer::run()
 
   // Initialize worker object
   manager_.reset(new LocalizationManager(std::bind(&Localizer::publishPoseStamped, this, std_ph::_1),
-                                         std::bind(&Localizer::publishTransform, this, std_ph::_1),
                                          std::bind(&Localizer::publishStatus, this, std_ph::_1),
                                          std::bind(&Localizer::publishManagedInitialPose, this, std_ph::_1),
                                          config,

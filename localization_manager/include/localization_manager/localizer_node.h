@@ -54,11 +54,7 @@ public:
    * \param msg The pose to publish
    */
   void publishPoseStamped(const geometry_msgs::PoseStamped& msg) const;
-  /**
-   * \brief Callback to publish the provided transform
-   * \param msg The transform to publish
-   */
-  void publishTransform(const geometry_msgs::TransformStamped& msg);
+
   /**
    * \brief Callback to publish the provided localization status report
    * \param msg The report to publish
@@ -84,9 +80,6 @@ public:
 private:
   // node handles
   ros::CARMANodeHandle nh_, pnh_;
-
-  // transform broadcaster
-  tf2_ros::TransformBroadcaster br_;
 
   // subscribers
   ros::Subscriber ndt_pose_sub_;
