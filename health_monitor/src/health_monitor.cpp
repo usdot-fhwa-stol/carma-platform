@@ -82,7 +82,7 @@ namespace health_monitor
                 new_msg.description = header;
                 new_msg.type = cav_msgs::SystemAlert::SHUTDOWN;
 
-                ros::CARMANodeHandle::publishSystemAlert(new_msg);
+                nh_->publishSystemAlert(new_msg);
             }
 
         });
@@ -94,7 +94,7 @@ namespace health_monitor
             new_msg.type = cav_msgs::SystemAlert::SHUTDOWN;
             new_msg.description = exp.what();
 
-            ros::CARMANodeHandle::publishSystemAlert(new_msg);
+            nh_->publishSystemAlert(new_msg);
 
         });
 
