@@ -110,6 +110,12 @@
     </include>
   </group>
 
+  <!-- Pose To TF -->
+  <group>
+    <remap from="pose_stamped_to_tf" to="current_pose"/>
+    <include file="$(find pose_to_tf)/launch/pose_to_tf.launch"/>
+  </group>
+
   <!-- NDT Matching-->
   <!-- This namesapce sets the parameters which are not set by default in the ndt_matching.launch file -->
   <!-- These parameters are not in the ndt_matching node private namespace -->

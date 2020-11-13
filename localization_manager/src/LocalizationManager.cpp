@@ -24,12 +24,11 @@ namespace localizer
 const std::unordered_set<std::string> LocalizationManager::LIDAR_FAILURE_STRINGS({ "One LIDAR Failed", "Both LIDARS "
                                                                                                        "Failed" });
 
-LocalizationManager::LocalizationManager(PosePublisher pose_pub, TransformPublisher transform_pub,
+LocalizationManager::LocalizationManager(PosePublisher pose_pub,
                                          StatePublisher state_pub, ManagedInitialPosePublisher initialpose_pub,
                                          const LocalizationManagerConfig& config,
                                          std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory)
   : pose_pub_(pose_pub)
-  , transform_pub_(transform_pub)
   , state_pub_(state_pub)
   , initialpose_pub_(initialpose_pub)
   , config_(config)
@@ -39,25 +38,6 @@ LocalizationManager::LocalizationManager(PosePublisher pose_pub, TransformPublis
   transition_table_.setTransitionCallback(std::bind(&LocalizationManager::stateTransitionCallback, this,
                                                     std::placeholders::_1, std::placeholders::_2,
                                                     std::placeholders::_3));
-}
-
-void LocalizationManager::publishPoseStamped(const geometry_msgs::PoseStamped& pose) const
-{
-  geometry_msgs::TransformStamped tf_msg;
-
-  tf_msg.header.stamp = pose.header.stamp;
-  tf_msg.header.frame_id = "map";
-  tf_msg.child_frame_id = "base_link";
-  tf_msg.transform.translation.x = pose.pose.position.x;
-  tf_msg.transform.translation.y = pose.pose.position.y;
-  tf_msg.transform.translation.z = pose.pose.position.z;
-  tf_msg.transform.rotation.x = pose.pose.orientation.x;
-  tf_msg.transform.rotation.y = pose.pose.orientation.y;
-  tf_msg.transform.rotation.z = pose.pose.orientation.z;
-  tf_msg.transform.rotation.w = pose.pose.orientation.w;
-
-  pose_pub_(pose);
-  transform_pub_(tf_msg);
 }
 
 double LocalizationManager::computeFreq(const ros::Time& old_stamp, const ros::Time& new_stamp) const
@@ -108,7 +88,7 @@ void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedC
   const LocalizationState state = transition_table_.getState();
   if (state != LocalizationState::UNINITIALIZED && state != LocalizationState::INITIALIZING)
   {
-    publishPoseStamped(*pose);
+    pose_pub_(*pose);
   }
 
   prev_ndt_stamp_ = pose->header.stamp;
@@ -131,7 +111,7 @@ void LocalizationManager::gnssPoseCallback(const geometry_msgs::PoseStampedConst
 
   if (transition_table_.getState() == LocalizationState::DEGRADED_NO_LIDAR_FIX)
   {
-    publishPoseStamped(*msg);
+    pose_pub_(*msg);
   }
 }
 

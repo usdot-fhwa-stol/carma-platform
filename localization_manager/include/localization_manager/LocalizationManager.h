@@ -40,7 +40,6 @@ class LocalizationManager
 {
 public:
   using PosePublisher = std::function<void(const geometry_msgs::PoseStamped&)>;
-  using TransformPublisher = std::function<void(const geometry_msgs::TransformStamped&)>;
   using ManagedInitialPosePublisher = std::function<void(const geometry_msgs::PoseWithCovarianceStamped&)>;
   using StatePublisher = std::function<void(const cav_msgs::LocalizationStatusReport&)>;
   using TimerUniquePtr = std::unique_ptr<carma_utils::timers::Timer>;
@@ -50,14 +49,13 @@ public:
    * \brief Constructor
    *
    * \param pose_pub A callback to trigger publication of the selected pose
-   * \param transform_pub A callback to trigger transform broadcast
    * \param state_pub A callback to trigger publication of the localization state
    * \param initialpose_pub A callback to trigger publication of the intial pose
    * \param config The configuration settings to use for this manager
    * \param timer_factory A pointer to a timer factory to support dependency injection of timing functionality for use
    * in unit testing
    */
-  LocalizationManager(PosePublisher pose_pub, TransformPublisher transform_pub, StatePublisher state_pub,
+  LocalizationManager(PosePublisher pose_pub, StatePublisher state_pub,
                       ManagedInitialPosePublisher initialpose_pub,
                       const LocalizationManagerConfig& config,
                       std::unique_ptr<carma_utils::timers::TimerFactory> timer_factory);
@@ -128,7 +126,6 @@ private:
   static const std::unordered_set<std::string> LIDAR_FAILURE_STRINGS;  // Static const container defined in cpp file
 
   PosePublisher pose_pub_;
-  TransformPublisher transform_pub_;
   StatePublisher state_pub_;
   ManagedInitialPosePublisher initialpose_pub_;
 
@@ -142,13 +139,6 @@ private:
 
   TimerUniquePtr current_timer_;
   std::vector<TimerUniquePtr> expired_timers_;
-
-  /**
-   * \brief Helper function to publish both the pose and transform at the same time
-   *
-   * \param pose The pose to publish
-   */
-  void publishPoseStamped(const geometry_msgs::PoseStamped& pose) const;
 
   /**
    * \brief Helper function to both compute the NDT Frequency and update the previous pose timestamp
