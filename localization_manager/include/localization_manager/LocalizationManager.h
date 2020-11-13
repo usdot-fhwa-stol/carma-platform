@@ -20,6 +20,7 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <boost/optional.hpp>
 #include <autoware_msgs/NDTStat.h>
 #include <cav_msgs/SystemAlert.h>
 #include <cav_msgs/LocalizationStatusReport.h>
@@ -139,6 +140,8 @@ private:
 
   TimerUniquePtr current_timer_;
   std::vector<TimerUniquePtr> expired_timers_;
+  boost::optional<geometry_msgs::PoseStamped> last_raw_gnss_value_;
+  boost::optional<tf2::Vector3> gnss_offset_;
 
   /**
    * \brief Helper function to both compute the NDT Frequency and update the previous pose timestamp

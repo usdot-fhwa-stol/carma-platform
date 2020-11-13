@@ -86,7 +86,18 @@ void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedC
   }
 
   const LocalizationState state = transition_table_.getState();
-  if (state != LocalizationState::UNINITIALIZED && state != LocalizationState::INITIALIZING)
+
+  if (state == LocalizationState::OPERATIONAL && last_raw_gnss_value_) {
+    tf2::Vector3 ndt_translation(pose->pose.position.x, pose->pose.position.y, pose->pose.position.z);
+
+    tf2::Vector3 gnss_translation(last_raw_gnss_value_.pose.position.x, last_raw_gnss_value_.pose.position.y, last_raw_gnss_value_.pose.position.z);
+
+    gnss_offset_ = ndt_translation - gnss_translation;
+  }
+
+  if (state != LocalizationState::UNINITIALIZED 
+      && state != LocalizationState::INITIALIZING
+      && state != LocalizationState::DEGRADED_NO_LIDAR_FIX)
   {
     pose_pub_(*pose);
   }
@@ -97,6 +108,7 @@ void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedC
 
 void LocalizationManager::gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
 {
+  last_raw_gnss_value_ = *msg;
   // Just like ndt_matching the gnss pose is treated as an initialize signal if the system is not yet intialized
   if (transition_table_.getState() == LocalizationState::UNINITIALIZED) {
     
@@ -111,7 +123,13 @@ void LocalizationManager::gnssPoseCallback(const geometry_msgs::PoseStampedConst
 
   if (transition_table_.getState() == LocalizationState::DEGRADED_NO_LIDAR_FIX)
   {
-    pose_pub_(*msg);
+    geometry_msgs::PoseStamped corrected_pose = *msg;
+    if (gnss_offset_) {
+      corrected_pose.pose.position.x = corrected_pose.pose.position.x + gnss_offset_.x();
+      corrected_pose.pose.position.y = corrected_pose.pose.position.y + gnss_offset_.y();
+      corrected_pose.pose.position.z = corrected_pose.pose.position.z + gnss_offset_.z();
+    }
+    pose_pub_(corrected_pose);
   }
 }
 
@@ -151,6 +169,7 @@ void LocalizationManager::stateTransitionCallback(LocalizationState prev_state, 
   switch (new_state)
   {
     case LocalizationState::INITIALIZING:
+      gnss_offset_ = boost::none;
 
       current_timer_ = timer_factory_->buildTimer(
           1, ros::Duration((double)config_.auto_initialization_timeout / 1000.0),
