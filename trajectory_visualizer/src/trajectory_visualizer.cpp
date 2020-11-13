@@ -15,6 +15,8 @@
  */
 
 #include <ros/ros.h>
+#include <limits>
+#include <math.h>
 #include "trajectory_visualizer.h"
 
 namespace trajectory_visualizer {
@@ -37,6 +39,15 @@ namespace trajectory_visualizer {
 
         // init subscribers
         traj_sub_ = nh_->subscribe("plan_trajectory", 1, &TrajectoryVisualizer::callbackPlanTrajectory, this);
+    }
+
+    bool validateTime(const ros::Time& time) {
+
+        int64_t sec64 = static_cast<int64_t>(floor(time.toSec()));
+        if (sec64 < std::numeric_limits<int32_t>::min() || sec64 > std::numeric_limits<int32_t>::max())
+           return false;
+
+        return true;
     }
 
     void TrajectoryVisualizer::callbackPlanTrajectory(const cav_msgs::TrajectoryPlan& msg)
@@ -69,17 +80,27 @@ namespace trajectory_visualizer {
             if (i >= msg.trajectory_points.size()) { // If we need to delete previous points
                 marker.action = visualization_msgs::Marker::DELETE;
             }
-            ros::Duration dt = msg.trajectory_points[i].target_time - msg.trajectory_points[i - 1].target_time;
             
-            double dx = msg.trajectory_points[i].x - msg.trajectory_points[i-1].x;
-            double dy = msg.trajectory_points[i].y - msg.trajectory_points[i-1].y;
-            double dist = sqrt(dx * dx + dy * dy);
+            double max_speed = max_speed_ * MPH_TO_MS;
+            double speed = max_speed;
 
-            double speed = dist/ dt.toSec();
+            ros::Time t2 = msg.trajectory_points[i].target_time;
+            ros::Time t1 = msg.trajectory_points[i - 1].target_time;
+
+            if (validateTime(t2) && validateTime(t1) && t2 > t1 ) {
+                ros::Duration dt = t2 - t1;
+                
+                double dx = msg.trajectory_points[i].x - msg.trajectory_points[i-1].x;
+                double dy = msg.trajectory_points[i].y - msg.trajectory_points[i-1].y;
+                double dist = sqrt(dx * dx + dy * dy);
+
+                speed = dist/ dt.toSec();
+            }
+
+
 
             // map color to the scale of the speed
             // red being the highest, green being the lowest (0ms)
-            double max_speed = max_speed_ * MPH_TO_MS;
             
             ROS_DEBUG_STREAM("Speed:" << speed << "ms, max_speed:" << max_speed << "ms");
             if (speed > max_speed) 
