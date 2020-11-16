@@ -25,7 +25,6 @@
 namespace route_following_plugin
 {
     RouteFollowingPlugin::RouteFollowingPlugin() : mvr_duration_(16.0), current_speed_(0.0) { }
-
     void RouteFollowingPlugin::initialize()
     {
         
@@ -41,32 +40,26 @@ namespace route_following_plugin
         plugin_discovery_msg_.activated = true;
         plugin_discovery_msg_.type = cav_msgs::Plugin::STRATEGIC;
         plugin_discovery_msg_.capability = "strategic_plan/plan_maneuvers";
-
         pose_sub_ = nh_->subscribe("current_pose", 1, &RouteFollowingPlugin::pose_cb, this);
         twist_sub_ = nh_->subscribe("current_velocity", 1, &RouteFollowingPlugin::twist_cd, this);
         
         pnh_->param<double>("minimal_maneuver_duration", mvr_duration_, 16.0);
-
         wml_.reset(new carma_wm::WMListener());
         // set world model point form wm listener
         wm_ = wml_->getWorldModel();
-
         ros::CARMANodeHandle::setSpinCallback([this]() -> bool 
         {
            plugin_discovery_pub_.publish(plugin_discovery_msg_);
             return true;
         });
     }
-
     void RouteFollowingPlugin::run()
     {
         initialize();
         ros::CARMANodeHandle::spin();
     }
-
     bool RouteFollowingPlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp)
     {        
-
         lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
         auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc, 10);       
         if(current_lanelets.size() == 0)
@@ -76,7 +69,6 @@ namespace route_following_plugin
         }
         
         auto shortest_path = wm_->getRoute()->shortestPath();
-
         lanelet::ConstLanelet current_lanelet = current_lanelets[0].second;
         int last_lanelet_index = -1;
         for (auto llt : current_lanelets)
@@ -98,58 +90,31 @@ namespace route_following_plugin
         }
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
         double speed_progress = current_speed_;
-        //Determine speed limit
-        /*lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules();
-        double target_speed=RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
-        if (traffic_rules)
-        {
-            auto laneletIterator = wm_->getMap()->laneletLayer.find(current_lanelet.id());
-            if(laneletIterator !=wm_->getMap()->laneletLayer.end()){
-                target_speed=(*traffic_rules)->speedLimit(*laneletIterator).speedLimit.value();
-            }
-            else
-            {
-                target_speed=RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
-                ROS_ERROR_STREAM("Failed to set the current speed limit. The lanelet id:"
-                <<current_lanelet.id()<<"could not be matched with a lanelet in the map. The default speed limit
-                of 25mph will be used.");
-            }
-            
-        }
-        else
-        {
-            ROS_ERROR_STREAM("Failed to set the current speed limit. Valid traffic rules object could not be built.");
-        }*/
-        double target_speed=findSpeedLimit(current_lanelet.id());
+
+        double target_speed=findSpeedLimit(current_lanelet);   //get Speed Limit
+
         double total_maneuver_length = current_progress + mvr_duration_ * target_speed;
         
         while(current_progress < total_maneuver_length && last_lanelet_index < shortest_path.size())
         {
             ROS_ERROR_STREAM("Lanlet: " << shortest_path[last_lanelet_index].id());
             auto p = shortest_path[last_lanelet_index].centerline2d().back();
-            // ROS_ERROR_STREAM("EndPoint: " << p.x() << ", " << p.y());
             double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
             double dist_diff = end_dist - current_progress;
-
-            // ROS_ERROR_STREAM("end_dist: " << end_dist);
-            // ROS_ERROR_STREAM("current_progress: " << current_progress);
-            // ROS_ERROR_STREAM("dist_diff: " << current_progress);
-            ROS_ERROR_STREAM("Target_speed:"<<target_speed);
-
             resp.new_plan.maneuvers.push_back(
                 composeManeuverMessage(current_progress, end_dist, 
                                        speed_progress, target_speed, 
                                        shortest_path[last_lanelet_index].id(), ros::Time::now()));
-
             current_progress += dist_diff;
             speed_progress = target_speed;
-            current_lanelet=shortest_path[last_lanelet_index];
-            target_speed=findSpeedLimit(current_lanelet.id());
+            //get speed limit
+            current_lanelet=shortest_path[last_lanelet_index];  //update current lanelet
+            target_speed=findSpeedLimit(current_lanelet);
+
             if(current_progress >= total_maneuver_length || last_lanelet_index == shortest_path.size() - 1)
             {
                 break;
             }
-
             auto following_lanelets = wm_->getRoute()->followingRelations(shortest_path[last_lanelet_index]);
             if(following_lanelets.size() == 0)
             {
@@ -172,17 +137,14 @@ namespace route_following_plugin
         }
         return true;
     }
-
     void RouteFollowingPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
         pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
     }
-
     void RouteFollowingPlugin::twist_cd(const geometry_msgs::TwistStampedConstPtr& msg)
     {
         current_speed_ = msg->twist.linear.x;
     }
-
     int RouteFollowingPlugin::findLaneletIndexFromPath(int target_id, lanelet::routing::LaneletPath& path)
     {
         for(size_t i = 0; i < path.size(); ++i)
@@ -194,7 +156,6 @@ namespace route_following_plugin
         }
         return -1;
     }
-
     cav_msgs::Maneuver RouteFollowingPlugin::composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time current_time)
     {
         cav_msgs::Maneuver maneuver_msg;
@@ -218,7 +179,6 @@ namespace route_following_plugin
         maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
         return maneuver_msg;
     }
-
     bool RouteFollowingPlugin::identifyLaneChange(lanelet::routing::LaneletRelations relations, int target_id)
     {
         for(auto& relation : relations)
@@ -230,32 +190,22 @@ namespace route_following_plugin
         }
         return false;
     }
-
-    double RouteFollowingPlugin::findSpeedLimit(int lane_id)
+    double RouteFollowingPlugin::findSpeedLimit(lanelet::ConstLanelet& llt)
     {
         lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules();
         double target_speed=RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
         if (traffic_rules)
         {
-            auto laneletIterator = wm_->getMap()->laneletLayer.find(lane_id);
-            if(laneletIterator !=wm_->getMap()->laneletLayer.end())
-            {
-                target_speed=(*traffic_rules)->speedLimit(*laneletIterator).speedLimit.value();
-                //compare with config speed
-                
-            }
-            else
-            {
-                ROS_ERROR_STREAM("Failed to set the current speed limit. The lanelet id:" << lane_id);
-                //<< "could not be matched with a lanelet in the map. The default speed limit of 25mph will be used.");
-            }
+            target_speed=(*traffic_rules)->speedLimit(llt).speedLimit.value();
             
         }
         else
         {
-            ROS_ERROR_STREAM("Failed to set the current speed limit. Valid traffic rules object could not be built.");
+            ROS_ERROR_STREAM("Failed to set the current speed limit. Valid traffic rules object could not be built. Setting default limit");
         }
-
+        return target_speed;
     }
-
 }
+
+
+
