@@ -20,26 +20,16 @@
 #include <thread>
 #include <chrono>
 #include <carma_wm/WMTestLibForGuidance.h>
-
-#include <lanelet2_extension/io/autoware_osm_parser.h>
-// #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
-//
+#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
+#include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <lanelet2_core/primitives/Lanelet.h>
+#include <lanelet2_extension/io/autoware_osm_parser.h>
+#include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_io/Io.h>
 #include <lanelet2_io/io_handlers/Factory.h>
 #include <lanelet2_io/io_handlers/Writer.h>
-#include <lanelet2_projection/UTM.h>
-#include <lanelet2_routing/RoutingGraph.h>
-#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
-#include <lanelet2_core/Attribute.h>
-#include <lanelet2_core/geometry/LineString.h>
-#include <lanelet2_core/primitives/Traits.h>
-#include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
-#include <lanelet2_extension/utility/query.h>
-#include <lanelet2_extension/utility/utilities.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
-
-
+#include <lanelet2_core/geometry/LineString.h>
 #include <string>
 
 
@@ -87,7 +77,7 @@ namespace route_following_plugin
         EXPECT_TRUE(rfp.identifyLaneChange(relations, 0));
     }
 
-    TEST(RouteFollowingPlugin,TestAssociateSpeedLimit)
+    TEST(RouteFollowingPlugin,DISABLED_TestAssociateSpeedLimit)
     {
         //Use Guidance Lib to create map
         carma_wm::test::MapOptions options;
@@ -167,22 +157,32 @@ namespace route_following_plugin
 
     }
 
-    TEST(RouteFollowingPlugin,DISABLED_TestAssociateSpeedLimitusingosm)
+    TEST(RouteFollowingPlugin,TestAssociateSpeedLimitusingosm)
     {
-          // File to process. Path is relative to test folder
-        std::string file = "../resource/map/TFHRC_mod.osm";
-
-          // Write new map to file
+        // File to process. Path is relative to test folder
+        std::string file = "../resource/map/town01_vector_map_1.osm";
+        lanelet::Id start_id=101;
+        lanelet::Id end_id=111;
+        /***
+         * VAVLID PATHs (consists of lanenet ids): (This is also the shortest path because certain Lanelets missing)
+         * 159->160->164->136->135->137->144->121; 
+         * 159->160->164->136->135->137->144->118;
+         * 168->170->111
+         * 159->161->168->170->111
+         * 167->169->168->170->111
+         * 115->146->140->139->143->167->169->168->170->111 
+         * 141->139->143->167->169->168->170->111 
+         * 127->146->140->139->143->167->169->168->170->111 
+         * 101->100->104->167->169->168->170->111 (a counter cLock circle) 
+         * **/
+        // Write new map to file
         int projector_type = 0;
         std::string target_frame;
         lanelet::ErrorMessages load_errors;
-         // Parse geo reference info from the original lanelet map (.osm)
+        // Parse geo reference info from the original lanelet map (.osm)
         lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
-
         lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
-
-          lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
-
+        lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
         if (map->laneletLayer.size() == 0)
         {
             FAIL() << "Input map does not contain any lanelets";
@@ -191,36 +191,42 @@ namespace route_following_plugin
         cmw->carma_wm::CARMAWorldModel::setMap(map);
 
         RouteFollowingPlugin worker;
-        worker.wm_=cmw;
-        //Set route
-        // Id of lanelet to start combing from
-        lanelet::Id starting_id = 140;
-        lanelet::Id ending_id=146;
-        //Define current position and velocity
-        worker.pose_msg_.pose.position.x=-98.13235056135724;
-        worker.pose_msg_.pose.position.y=337.6604800268564;
-        worker.pose_msg_.pose.position.z=0.0;
-        
+        //get position on map
+        auto llt=map.get()->laneletLayer.get(101);
+        lanelet::LineString3d left_bound=llt.leftBound();
+        lanelet::LineString3d right_bound=llt.rightBound();
+        geometry_msgs::PoseStamped left;
+        geometry_msgs::PoseStamped right;
+        for(lanelet::Point3d& p : left_bound)
+        {
+            left.pose.position.x=p.x();
+            left.pose.position.y=p.y();
+            left.pose.position.z=p.z();
+
+        }
+        for(lanelet::Point3d& p : right_bound)
+        {
+            right.pose.position.x=p.x();
+            right.pose.position.y=p.y();
+            right.pose.position.z=p.z();
+        }
+        worker.pose_msg_.pose.position.x=(left.pose.position.x+right.pose.position.x)/2;
+        worker.pose_msg_.pose.position.y=(left.pose.position.y+right.pose.position.y)/2;
+        worker.pose_msg_.pose.position.z=(left.pose.position.z+right.pose.position.z)/2;
+
         worker.pose_msg_.pose.orientation.x=0.0;
         worker.pose_msg_.pose.orientation.y=0.0;
         worker.pose_msg_.pose.orientation.z=0.0;
         worker.pose_msg_.pose.orientation.w=0.0;
+
         //define twist
         worker.current_speed_=0.0;
-        lanelet::BasicPoint2d current_loc(worker.pose_msg_.pose.position.x, worker.pose_msg_.pose.position.y);
 
-        auto current_lanelets = lanelet::geometry::findNearest(worker.wm_->getMap()->laneletLayer, current_loc, 10);       
-        if(current_lanelets.size() == 0)
-        {
-            ROS_WARN_STREAM("Cannot find any lanelet in map!");
-            FAIL();
-        }
-
-
-        carma_wm::test::setRouteByIds({starting_id,ending_id},cmw);
+        //Set Route
+        carma_wm::test::setRouteByIds({start_id,end_id},cmw);
         cmw->carma_wm::CARMAWorldModel::setMap(map);
         worker.wm_=cmw;
-
+        
         //Define plan for request and response
         //PlanManeuversRequest
         cav_srvs::PlanManeuvers plan;
@@ -244,16 +250,17 @@ namespace route_following_plugin
         ros::Time::init();  //initializing ros time to use ros::Time::now()
         if(worker.plan_maneuver_cb(plan.request,plan.response)){    
             //check target speeds in updated response
-            lanelet::Velocity limit=10_mph;
+            lanelet::Velocity limit=25_mph;
             ASSERT_EQ(plan.response.new_plan.maneuvers[0].lane_following_maneuver.end_speed,0);
+            //std::cout<<"Maneuver size:"<<
             for(auto i=1;i<plan.response.new_plan.maneuvers.size();i++){
+                //std::cout<<"maneuver:"<<i<<" "<< plan.response.new_plan.maneuvers[i].lane_following_maneuver.end_speed<<std::endl;
                 ASSERT_EQ(plan.response.new_plan.maneuvers[i].lane_following_maneuver.end_speed, limit.value()) ;
             }
         }
         else{
             EXPECT_TRUE(false);
         } 
-        
     }
 
     

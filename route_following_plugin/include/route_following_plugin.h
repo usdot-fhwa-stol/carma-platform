@@ -37,6 +37,7 @@ namespace route_following_plugin
         // TODO Once world_model and vector map is ready, it should be removed
         static constexpr double TWENTY_FIVE_MPH_IN_MS = 11.176;
         static constexpr double FIFTEEN_MPH_IN_MS = 6.7056;
+        static constexpr double FORTYFIVE_MPH_IN_MS = 20.1168;
 
         /**
          * \brief Default constructor for RouteFollowingPlugin class
@@ -83,8 +84,12 @@ namespace route_following_plugin
          * \return If service call successed
          */
         bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
-
-        double findSpeedLimit(lanelet::ConstLanelet& llt);
+        /**
+         * \brief Given a Lanelet, find it's associated Speed Limit from the vector map
+         * \param llt Constant Lanelet object
+         * \return value of speed limit as a double, returns default value of 25 mph
+         */
+        double findSpeedLimit(const lanelet::ConstLanelet& llt);
 
         //Internal Variables used in unit tests
         // Current vehicle forward speed

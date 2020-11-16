@@ -97,7 +97,7 @@ namespace route_following_plugin
         
         while(current_progress < total_maneuver_length && last_lanelet_index < shortest_path.size())
         {
-            ROS_ERROR_STREAM("Lanlet: " << shortest_path[last_lanelet_index].id());
+            ROS_DEBUG_STREAM("Lanlet: " << shortest_path[last_lanelet_index].id());
             auto p = shortest_path[last_lanelet_index].centerline2d().back();
             double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
             double dist_diff = end_dist - current_progress;
@@ -190,10 +190,10 @@ namespace route_following_plugin
         }
         return false;
     }
-    double RouteFollowingPlugin::findSpeedLimit(lanelet::ConstLanelet& llt)
+    double RouteFollowingPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt)
     {
         lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules();
-        double target_speed=RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
+        double target_speed=RouteFollowingPlugin::FORTYFIVE_MPH_IN_MS;
         if (traffic_rules)
         {
             target_speed=(*traffic_rules)->speedLimit(llt).speedLimit.value();
@@ -201,7 +201,7 @@ namespace route_following_plugin
         }
         else
         {
-            ROS_ERROR_STREAM("Failed to set the current speed limit. Valid traffic rules object could not be built. Setting default limit");
+            ROS_WARN("Failed to set the current speed limit. Valid traffic rules object could not be built. Setting default limit");
         }
         return target_speed;
     }
