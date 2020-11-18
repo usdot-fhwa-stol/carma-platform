@@ -63,6 +63,11 @@ public:
 
     ROS_INFO_STREAM("InLaneCruisingPlugin Params" << config);
     
+    config.lateral_accel_limit = config.lateral_accel_limit * 0.75;
+    config.max_accel = config.max_accel * 0.75;
+
+    ROS_INFO_STREAM("InLaneCruisingPlugin Params After Accel Change" << config);
+    
     InLaneCruisingPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); });
 
     ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/InLaneCruisingPlugin/plan_trajectory",
