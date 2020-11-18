@@ -50,6 +50,24 @@ public:
    * \return The y value that matches x
    */ 
   virtual double operator()(double x) const = 0;
+
+  /**
+   * \brief Get the y value for the given x value
+   * 
+   * \param x The value to solve the spline for
+   * 
+   * \return The y value that matches x
+   */ 
+  virtual double first_deriv(double x) const = 0;
+
+  /**
+   * \brief Get the y value for the given x value
+   * 
+   * \param x The value to solve the spline for
+   * 
+   * \return The y value that matches x
+   */ 
+  virtual double second_deriv(double x) const = 0;
 };
 };  // namespace smoothing
 };  // namespace inlanecruising_plugin
