@@ -23,8 +23,8 @@ enum class GeofenceType{ INVALID, DIGITAL_SPEED_LIMIT, PASSING_CONTROL_LINE, /* 
 // helper function that return geofence type as an enum, which makes it cleaner by allowing switch statement
 GeofenceType resolveGeofenceType(const std::string& rule_name)
 {
-  if (rule_name.compare(lanelet::PassingControlLine::RuleName) == 0) return PASSING_CONTROL_LINE;
-  if (rule_name.compare(lanelet::DigitalSpeedLimit::RuleName) == 0) return DIGITAL_SPEED_LIMIT;
+  if (rule_name.compare(lanelet::PassingControlLine::RuleName) == 0) return GeofenceType::PASSING_CONTROL_LINE;
+  if (rule_name.compare(lanelet::DigitalSpeedLimit::RuleName) == 0) return GeofenceType::DIGITAL_SPEED_LIMIT;
 }
 
 WMListenerWorker::WMListenerWorker()
@@ -110,13 +110,13 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
   // we should extract general regem to specific type of regem the geofence specifies
   switch(resolveGeofenceType(regem->attribute(lanelet::AttributeName::Subtype).value()))
   {
-    case PASSING_CONTROL_LINE:
+    case GeofenceType::PASSING_CONTROL_LINE:
     {
       lanelet::PassingControlLinePtr control_line = std::dynamic_pointer_cast<lanelet::PassingControlLine>(factory_pcl);
       world_model_->getMutableMap()->update(parent_llt, control_line);
       break;
     }
-    case DIGITAL_SPEED_LIMIT:
+    case GeofenceType::DIGITAL_SPEED_LIMIT:
     {
       lanelet::DigitalSpeedLimitPtr speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(factory_pcl);
       world_model_->getMutableMap()->update(parent_llt, speed);
