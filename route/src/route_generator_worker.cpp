@@ -57,7 +57,7 @@ namespace route {
         return graph_pointer->getRouteVia(start_lanelet, via_lanelets_vector, end_lanelet);
     }
 
-    bool RouteGeneratorWorker::get_available_route_cb(const cav_srvs::GetAvailableRoutesRequest& req, cav_srvs::GetAvailableRoutesResponse& resp)
+    bool RouteGeneratorWorker::get_available_route_cb(cav_srvs::GetAvailableRoutesRequest& req, cav_srvs::GetAvailableRoutesResponse& resp)
     {
         boost::filesystem::path route_path_object(this->route_file_path_);
         if(boost::filesystem::exists(route_path_object))
@@ -104,7 +104,7 @@ namespace route {
         publish_route_event(cav_msgs::RouteEvent::ROUTE_LOADED);
     }
 
-    bool RouteGeneratorWorker::set_active_route_cb(const cav_srvs::SetActiveRouteRequest &req, cav_srvs::SetActiveRouteResponse &resp)
+    bool RouteGeneratorWorker::set_active_route_cb(cav_srvs::SetActiveRouteRequest &req, cav_srvs::SetActiveRouteResponse &resp)
     {
         // only allow activate a new route in route selection state
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::SELECTION)
@@ -254,7 +254,7 @@ namespace route {
         return msg;
     }
 
-    bool RouteGeneratorWorker::abort_active_route_cb(const cav_srvs::AbortActiveRouteRequest &req, cav_srvs::AbortActiveRouteResponse &resp)
+    bool RouteGeneratorWorker::abort_active_route_cb(cav_srvs::AbortActiveRouteRequest &req, cav_srvs::AbortActiveRouteResponse &resp)
     {
         // only make sense to abort when it is in route following state
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING)

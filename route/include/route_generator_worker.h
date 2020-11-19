@@ -78,21 +78,21 @@ namespace route {
          * \param req A empty cav_srvs::GetAvailableRoutesRequest
          * \param resp A cav_srvs::GetAvailableRoutesResponse msg contains a list of empty Route messages with only route name populated
          */
-        bool get_available_route_cb(const cav_srvs::GetAvailableRoutesRequest &req, cav_srvs::GetAvailableRoutesResponse &resp);
+        bool get_available_route_cb(cav_srvs::GetAvailableRoutesRequest &req, cav_srvs::GetAvailableRoutesResponse &resp);
 
         /**
          * \brief Set_active_route service callback. User can select a route to start following by calling this service
          * \param req A cav_srvs::SetActiveRouteRequest msg which contains the route name user wants to select
          * \param resp A cav_srvs::SetActiveRouteResponse msg contains error status showing if the routing successed
          */
-        bool set_active_route_cb(const cav_srvs::SetActiveRouteRequest &req, cav_srvs::SetActiveRouteResponse &resp);
+        bool set_active_route_cb(cav_srvs::SetActiveRouteRequest &req, cav_srvs::SetActiveRouteResponse &resp);
 
         /**
          * \brief Abort_active_route service callback. User can call this service to abort a current following route and back to route selection stage
          * \param req A cav_srvs::AbortActiveRouteRequest msg which contains the route name user wants to stop following
          * \param resp A cav_srvs::AbortActiveRouteResponse msg contains error status showing if there is an active route
          */
-        bool abort_active_route_cb(const cav_srvs::AbortActiveRouteRequest &req, cav_srvs::AbortActiveRouteResponse &resp);
+        bool abort_active_route_cb(cav_srvs::AbortActiveRouteRequest &req, cav_srvs::AbortActiveRouteResponse &resp);
 
         /**
          * \brief Pose message callback. Use the latest pose message to determin if we left the route or reach the route destination
