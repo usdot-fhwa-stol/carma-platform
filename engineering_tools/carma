@@ -207,7 +207,6 @@ carma-config__install() {
 carma__record() {
     last_modified_file="$(find "/opt/carma/logs" -type f \( -name \*.bag.active -o -name \*.bag \) -printf "%T@ %p\0" | awk 'BEGIN {RS="\0";} {if (NR==1){minmtime=$1; $1=""; lastmodified=$0;} else if (minmtime<$1){minmtime=$1; $1=""; lastmodified=$0;}} END{print substr(lastmodified,2)}')"
 
-    # do something
     printf "The last modified file is named %s\n" "${last_modified_file}"
 
     if [[ ${last_modified_file} == *.bag.active ]]; then
