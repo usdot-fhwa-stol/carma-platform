@@ -1,4 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-	<node pkg="lane_array_to_lane_converter" type="lane_array_to_lane_converter" name="lane_array_to_lane_converter" output="log" />
-</launch>
