@@ -13,7 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 #include <ros/ros.h>
 #include <string>
 #include <boost/uuid/uuid_generators.hpp>
@@ -21,7 +20,6 @@
 #include "route_following_plugin.h"
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_core/geometry/BoundingBox.h>
-
 namespace route_following_plugin
 {
     RouteFollowingPlugin::RouteFollowingPlugin() : mvr_duration_(16.0), current_speed_(0.0) { }
@@ -193,7 +191,7 @@ namespace route_following_plugin
     double RouteFollowingPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt)
     {
         lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules();
-        double target_speed=RouteFollowingPlugin::FORTYFIVE_MPH_IN_MS;
+        //double target_speed=RouteFollowingPlugin::FORTYFIVE_MPH_IN_MS;
         if (traffic_rules)
         {
             target_speed=(*traffic_rules)->speedLimit(llt).speedLimit.value();
