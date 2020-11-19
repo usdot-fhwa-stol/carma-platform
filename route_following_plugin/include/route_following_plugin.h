@@ -37,7 +37,6 @@ namespace route_following_plugin
         // TODO Once world_model and vector map is ready, it should be removed
         static constexpr double TWENTY_FIVE_MPH_IN_MS = 11.176;
         static constexpr double FIFTEEN_MPH_IN_MS = 6.7056;
-        static constexpr double FORTYFIVE_MPH_IN_MS = 20.1168;
 
         /**
          * \brief Default constructor for RouteFollowingPlugin class

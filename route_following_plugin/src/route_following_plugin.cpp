@@ -191,7 +191,7 @@ namespace route_following_plugin
     double RouteFollowingPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt)
     {
         lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules();
-        //double target_speed=RouteFollowingPlugin::FORTYFIVE_MPH_IN_MS;
+        double target_speed=0.0;
         if (traffic_rules)
         {
             target_speed=(*traffic_rules)->speedLimit(llt).speedLimit.value();
