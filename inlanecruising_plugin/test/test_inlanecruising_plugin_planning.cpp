@@ -131,8 +131,9 @@ TEST(WaypointGeneratorTest, test_full_generation)
     lanelet::MapConformer::ensureCompliance(map, 80_mph);
 
     InLaneCruisingPluginConfig config;
-    config.lateral_accel_limit = 1.5;
+    config.lateral_accel_limit = 0.5;
     config.downsample_ratio = 12;
+    config.trajectory_time_length = 12.0;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
     wm->setMap(map);
 
@@ -151,8 +152,13 @@ TEST(WaypointGeneratorTest, test_full_generation)
     // -159.666, 521.683
 
   cav_srvs::PlanTrajectoryRequest req;
-  req.vehicle_state.X_pos_global = -159.666;
-  req.vehicle_state.Y_pos_global = 521.683;
+  // req.vehicle_state.X_pos_global = -159.666;
+  // req.vehicle_state.Y_pos_global = 521.683;
+  // req.vehicle_state.orientation = -2.7570977;
+  // req.vehicle_state.longitudinal_vel = 0.0;
+
+  req.vehicle_state.X_pos_global = -194.9;
+  req.vehicle_state.Y_pos_global = 473.6;
   req.vehicle_state.orientation = -2.7570977;
   req.vehicle_state.longitudinal_vel = 0.0;
 
@@ -174,7 +180,7 @@ TEST(WaypointGeneratorTest, test_full_generation)
   maneuver2.lane_following_maneuver.start_speed = 6.7056;
   maneuver2.lane_following_maneuver.start_time = ros::Time(4.4704);
 
-  maneuver2.lane_following_maneuver.end_dist = 14.98835712 + 50.0 + 45;
+  maneuver2.lane_following_maneuver.end_dist = 14.98835712 + 50.0 + 45+ 100;
   maneuver2.lane_following_maneuver.end_speed = 6.7056;
   maneuver2.lane_following_maneuver.end_time = ros::Time(4.4704 + 7.45645430685);
 
