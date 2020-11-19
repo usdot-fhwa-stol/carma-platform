@@ -106,6 +106,8 @@ namespace route_following_plugin
         // CARMA ROS node handles
         std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
+        std::shared_ptr<ros::CARMANodeHandle> pnh2_; //Global Scope
+
         // ROS publishers and subscribers
         ros::Publisher plugin_discovery_pub_;
         ros::Subscriber pose_sub_;
@@ -120,7 +122,7 @@ namespace route_following_plugin
         // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
 
-
+        double config_limit;
         /**
          * \brief Initialize ROS publishers, subscribers, service servers and service clients
          */

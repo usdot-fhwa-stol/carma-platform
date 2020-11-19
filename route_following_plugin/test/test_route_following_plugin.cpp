@@ -260,7 +260,13 @@ namespace route_following_plugin
         }
         else{
             EXPECT_TRUE(false);
-        } 
+        }
+        //Test findSpeedLimit function
+        lanelet::BasicPoint2d current_loc(worker.pose_msg_.pose.position.x, worker.pose_msg_.pose.position.y);
+        auto current_lanelets= lanelet::geometry::findNearest(worker.wm_->getMap()->laneletLayer, current_loc, 10); 
+        lanelet::ConstLanelet current_lanelet = current_lanelets[0].second;
+        double speed=worker.findSpeedLimit(current_lanelet);
+        ASSERT_EQ(speed,11.176);                                                                            
     }
 
     

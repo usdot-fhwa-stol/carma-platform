@@ -20,6 +20,8 @@
 #include "route_following_plugin.h"
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_core/geometry/BoundingBox.h>
+#include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
+
 namespace route_following_plugin
 {
     RouteFollowingPlugin::RouteFollowingPlugin() : mvr_duration_(16.0), current_speed_(0.0) { }
@@ -28,6 +30,7 @@ namespace route_following_plugin
         
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
+        pnh2_.reset(new ros::CARMANodeHandle("/"));
         
         plan_maneuver_srv_ = nh_->advertiseService("plugins/RouteFollowing/plan_maneuvers", &RouteFollowingPlugin::plan_maneuver_cb, this);
                 
@@ -42,6 +45,7 @@ namespace route_following_plugin
         twist_sub_ = nh_->subscribe("current_velocity", 1, &RouteFollowingPlugin::twist_cd, this);
         
         pnh_->param<double>("minimal_maneuver_duration", mvr_duration_, 16.0);
+        pnh2_->param<double>("config_speed_limit",config_limit);
         wml_.reset(new carma_wm::WMListener());
         // set world model point form wm listener
         wm_ = wml_->getWorldModel();
@@ -191,7 +195,9 @@ namespace route_following_plugin
     double RouteFollowingPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt)
     {
         lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules();
-        double target_speed=0.0;
+        double target_speed;
+        double hardcoded_max=lanelet::Velocity(hardcoded_params::control_limits::MAX_LONGITUDINAL_VELOCITY_MPS * lanelet::units::MPS()).value();
+
         if (traffic_rules)
         {
             target_speed=(*traffic_rules)->speedLimit(llt).speedLimit.value();
@@ -199,7 +205,18 @@ namespace route_following_plugin
         }
         else
         {
-            ROS_WARN("Failed to set the current speed limit. Valid traffic rules object could not be built. Setting default limit");
+            if(config_limit > 0 && config_limit < hardcoded_max)
+            {
+                target_speed=config_limit;
+                ROS_WARN("Failed to set the current speed limit. Valid traffic rules object could not be built. Using Configurable value");
+            }
+
+            else 
+            {
+                target_speed= hardcoded_max;
+                ROS_WARN("Failed to set the current speed limit. Valid traffic rules object could not be built. Using Hardcoded maximum");
+            }
+            
         }
         return target_speed;
     }
