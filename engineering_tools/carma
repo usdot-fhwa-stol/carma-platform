@@ -267,6 +267,8 @@ carma__stop() {
         if [ "$2" = "record" ]; then
             echo "Saving the last rosbag file..."
             carma__record
+        elif [ ! -z "$2" ]; then
+            echo "Unrecognized argument \"stop all $2\""
         fi
     elif [ "$1" = "record" ]; then
         echo "Saving the last rosbag file..."
