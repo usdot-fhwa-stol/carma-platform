@@ -38,7 +38,7 @@
 using namespace lanelet::units::literals;
 namespace inlanecruising_plugin
 {
-TEST(InLaneCruisingPluginTest, DISABLED_testPlanningCallback)
+TEST(InLaneCruisingPluginTest, testPlanningCallback)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
