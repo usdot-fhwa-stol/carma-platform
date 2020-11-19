@@ -37,6 +37,7 @@ namespace route_following_plugin
         // TODO Once world_model and vector map is ready, it should be removed
         static constexpr double TWENTY_FIVE_MPH_IN_MS = 11.176;
         static constexpr double FIFTEEN_MPH_IN_MS = 6.7056;
+        static constexpr double FORTYFIVE_MPH_IN_MS = 20.1168;
 
         /**
          * \brief Default constructor for RouteFollowingPlugin class
@@ -76,7 +77,30 @@ namespace route_following_plugin
          */
         bool identifyLaneChange(lanelet::routing::LaneletRelations relations, int target_id);
 
-        double findSpeedLimit(int lane_id);
+        /**
+         * \brief Service callback for arbitrator maneuver planning
+         * \param req Plan maneuver request
+         * \param resp Plan maneuver response with a list of maneuver plan
+         * \return If service call successed
+         */
+        bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
+        /**
+         * \brief Given a Lanelet, find it's associated Speed Limit from the vector map
+         * \param llt Constant Lanelet object
+         * \return value of speed limit as a double, returns default value of 25 mph
+         */
+        double findSpeedLimit(const lanelet::ConstLanelet& llt);
+
+        //Internal Variables used in unit tests
+        // Current vehicle forward speed
+        double current_speed_;
+
+        // Current vehicle pose in map
+        geometry_msgs::PoseStamped pose_msg_;
+
+        // wm listener pointer and pointer to the actual wm object
+        std::shared_ptr<carma_wm::WMListener> wml_;
+        carma_wm::WorldModelConstPtr wm_;
 
     private:
 
@@ -97,15 +121,6 @@ namespace route_following_plugin
         // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
 
-        // Current vehicle forward speed
-        double current_speed_;
-
-        // Current vehicle pose in map
-        geometry_msgs::PoseStamped pose_msg_;
-
-        // wm listener pointer and pointer to the actual wm object
-        std::shared_ptr<carma_wm::WMListener> wml_;
-        carma_wm::WorldModelConstPtr wm_;
 
         /**
          * \brief Initialize ROS publishers, subscribers, service servers and service clients
@@ -124,14 +139,8 @@ namespace route_following_plugin
          */
         void twist_cd(const geometry_msgs::TwistStampedConstPtr& msg);
  
-        /**
-         * \brief Service callback for arbitrator maneuver planning
-         * \param req Plan maneuver request
-         * \param resp Plan maneuver response with a list of maneuver plan
-         * \return If service call successed
-         */
-        bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
-
+    
+    
     };
 
 }

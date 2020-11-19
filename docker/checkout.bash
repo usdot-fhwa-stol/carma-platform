@@ -38,7 +38,7 @@ done
 cd ${dir}/src
 
 if [[ "$BRANCH" = "develop" ]]; then
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch feature/initial_vel_in_trajectory_plan
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch integration/routing
       git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch $BRANCH
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch integration/routing
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch $BRANCH

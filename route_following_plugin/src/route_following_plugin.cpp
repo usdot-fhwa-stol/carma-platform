@@ -88,83 +88,27 @@ namespace route_following_plugin
         }
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
         double speed_progress = current_speed_;
-        //Determine speed limit
-        lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules();
-        double target_speed=RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
-        if (traffic_rules)
-        {
-            auto laneletIterator = wm_->getMap()->laneletLayer.find(current_lanelet.id());
-            //if(laneletIterator !=wm_->getMap()->laneletLayer.end()){
-                target_speed=(*traffic_rules)->speedLimit(current_lanelet).speedLimit.value();
-            //}
-            // else
-            // {
-            //     target_speed=RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
-            //     // ROS_ERROR_STREAM("Failed to set the current speed limit. The lanelet id:"
-            //     // <<current_lanelet.id()<<"could not be matched with a lanelet in the map. The default speed limit
-            //     // of 25mph will be used.");
-            // }
-            
-        }
-        else
-        {
-            target_speed=RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
-            ROS_ERROR_STREAM("Failed to set the current speed limit. Valid traffic rules object could not be built.");
-        }
-        if(target_speed==0){
-            ROS_WARN_STREAM("Target Speed:"<<target_speed);
-            target_speed=RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
-        }
-        //double target_speed=findSpeedLimit(current_lanelet.id());
+
+        double target_speed=findSpeedLimit(current_lanelet);   //get Speed Limit
+
         double total_maneuver_length = current_progress + mvr_duration_ * target_speed;
         
         while(current_progress < total_maneuver_length && last_lanelet_index < shortest_path.size())
         {
-            ROS_ERROR_STREAM("Lanlet: " << shortest_path[last_lanelet_index].id());
+            ROS_DEBUG_STREAM("Lanlet: " << shortest_path[last_lanelet_index].id());
             auto p = shortest_path[last_lanelet_index].centerline2d().back();
-            // ROS_ERROR_STREAM("EndPoint: " << p.x() << ", " << p.y());
             double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
             double dist_diff = end_dist - current_progress;
-            // ROS_ERROR_STREAM("end_dist: " << end_dist);
-            // ROS_ERROR_STREAM("current_progress: " << current_progress);
-            // ROS_ERROR_STREAM("dist_diff: " << current_progress);
-            ROS_ERROR_STREAM("Target_speed:"<<target_speed);
             resp.new_plan.maneuvers.push_back(
                 composeManeuverMessage(current_progress, end_dist, 
                                        speed_progress, target_speed, 
                                        shortest_path[last_lanelet_index].id(), ros::Time::now()));
             current_progress += dist_diff;
             speed_progress = target_speed;
-            current_lanelet=shortest_path[last_lanelet_index];
-            traffic_rules = wm_->getTrafficRules();
-            if (traffic_rules)
-            {
-                //auto laneletIterator = wm_->getMap()->laneletLayer.find(current_lanelet.id());
-                //if(laneletIterator !=wm_->getMap()->laneletLayer.end()){
-                target_speed=(*traffic_rules)->speedLimit(current_lanelet).speedLimit.value();
-                if(target_speed==0){
-                    target_speed=RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
-                }
-                //}
-                //else
-                //{
-                    //target_speed=RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
-                    // ROS_ERROR_STREAM("Failed to set the current speed limit. The lanelet id:"
-                    // <<current_lanelet.id()<<"could not be matched with a lanelet in the map. The default speed limit
-                    // of 25mph will be used.");
-                //}
-                
-            }
-            else
-            {
-                target_speed=RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
-                ROS_ERROR_STREAM("Failed to set the current speed limit. Valid traffic rules object could not be built.");
-            }
-            if(target_speed==0){
-                ROS_WARN_STREAM("Target Speed:"<<target_speed);
-                target_speed=RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
-            }
-            //target_speed=findSpeedLimit(current_lanelet.id());
+            //get speed limit
+            current_lanelet=shortest_path[last_lanelet_index];  //update current lanelet
+            target_speed=findSpeedLimit(current_lanelet);
+
             if(current_progress >= total_maneuver_length || last_lanelet_index == shortest_path.size() - 1)
             {
                 break;
@@ -244,30 +188,20 @@ namespace route_following_plugin
         }
         return false;
     }
-    double RouteFollowingPlugin::findSpeedLimit(int lane_id)
+    double RouteFollowingPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt)
     {
         lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules();
-        double target_speed=RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS;
+        //double target_speed=RouteFollowingPlugin::FORTYFIVE_MPH_IN_MS;
         if (traffic_rules)
         {
-            auto laneletIterator = wm_->getMap()->laneletLayer.find(lane_id);
-            if(laneletIterator !=wm_->getMap()->laneletLayer.end())
-            {
-                target_speed=(*traffic_rules)->speedLimit(*laneletIterator).speedLimit.value();
-                //compare with config speed
-                
-            }
-            else
-            {
-                ROS_ERROR_STREAM("Failed to set the current speed limit. The lanelet id:" << lane_id);
-                //<< "could not be matched with a lanelet in the map. The default speed limit of 25mph will be used.");
-            }
+            target_speed=(*traffic_rules)->speedLimit(llt).speedLimit.value();
             
         }
         else
         {
-            ROS_ERROR_STREAM("Failed to set the current speed limit. Valid traffic rules object could not be built.");
+            ROS_WARN("Failed to set the current speed limit. Valid traffic rules object could not be built. Setting default limit");
         }
+        return target_speed;
     }
 }
 
