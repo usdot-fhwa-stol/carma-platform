@@ -36,6 +36,7 @@
 #include <carma_utils/containers/containers.h>
 #include <inlanecruising_plugin/smoothing/filters.h>
 #include <unordered_set>
+#include <math.h>
 
 using oss = std::ostringstream;
 
@@ -68,7 +69,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
 
   auto points_and_target_speeds =
-      maneuvers_to_points(req.maneuver_plan.maneuvers, current_downtrack, wm_);  // Convert maneuvers to points
+      maneuvers_to_points(req.maneuver_plan.maneuvers, std::max(0.0, current_downtrack - config_.back_distance), wm_);  // Convert maneuvers to points
 
   ROS_DEBUG_STREAM("points_and_target_speeds: " << points_and_target_speeds.size());
 
@@ -220,15 +221,16 @@ std::vector<double> optimize_speed(const std::vector<double>& downtracks, const 
 
     double v_i = std::get<0>(min_pair);
     double x_i = downtracks[min_idx];
-    for (int i = min_idx - 1; i >= 0; i--) {
+    for (int i = min_idx - 1; i >= 0; i--) { // NOTE: Do not use size_t for i type here as -- with >= 0 will result in overflow
       double v_f = curv_speeds[i];
       double dv = v_f - v_i;
       
       double x_f = downtracks[i];
-      double dx = x_f - x_i;
+      double dx = x_i - x_f; // invert dx to make math work out
 
       if(dv > 0) {
         v_f = std::min(v_f, sqrt(v_i * v_i + 2 * accel_limit * dx));
+        visited_idx.insert(i);
       } else if (dv < 0) {
         break;
       }
@@ -238,9 +240,11 @@ std::vector<double> optimize_speed(const std::vector<double>& downtracks, const 
     }
   }
 
+  log::printDoublesPerLineWithPrefix("only_reverse[i]: ", output);
+
   
   output = trajectory_utils::apply_accel_limits_by_distance(downtracks, output, accel_limit, accel_limit);
-
+  log::printDoublesPerLineWithPrefix("after_forward[i]: ", output);
   return output;
 }
 
@@ -278,6 +282,31 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::constrain_to_time_boundary(con
   return time_bound_points;
 }
 
+int getNearestBasicPointIndex(const std::vector<lanelet::BasicPoint2d>& points,
+                                               const cav_msgs::VehicleState& state)
+{
+  lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
+  ROS_DEBUG_STREAM("veh_point: " << veh_point.x() << ", " << veh_point.y());
+  double min_distance = std::numeric_limits<double>::max();
+  int i = 0;
+  int best_index = 0;
+  for (const auto& p : points)
+  {
+    double distance = lanelet::geometry::distance2d(p, veh_point);
+    ROS_DEBUG_STREAM("distance: " << distance);
+    ROS_DEBUG_STREAM("p: " << p.x() << ", " << p.y());
+    if (distance < min_distance)
+    {
+      best_index = i;
+      min_distance = distance;
+    }
+    i++;
+  }
+
+  return best_index;
+}
+
+
 std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_trajectory_from_centerline(
     const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state)
 {
@@ -296,14 +325,35 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1,
                                             points.end());  // Points in front of current vehicle position
 
+  std::vector<PointSpeedPair> back_and_future;
+  back_and_future.reserve(points.size());
+  double total_dist = 0;
+  int min_i = 0;
+  for (int i = nearest_pt_index; i >= 0; --i) { // NOTE: Do not use size_t for i type here as -- with >= 0 will result in overflow
+    min_i = i;
+    if (i == nearest_pt_index) {
+      continue;
+    }
+    total_dist += lanelet::geometry::distance2d(points[i].point, points[i-1].point);
+    if (total_dist > config_.back_distance) {
+      break;
+    }
+  }
+
   auto time_bound_points = constrain_to_time_boundary(future_points, config_.trajectory_time_length);
+
+  back_and_future.insert(back_and_future.end(), points.begin() + min_i, points.begin() + nearest_pt_index + 1);
+  back_and_future.insert(back_and_future.end(), time_bound_points.begin(), time_bound_points.end());
 
   ROS_DEBUG_STREAM("time_bound_points: " << time_bound_points.size());
 
   log::printDebugPerLine(time_bound_points, &log::pointSpeedPairToStream);
+  
+  ROS_DEBUG("Back and time bounds points");
+  log::printDebugPerLine(back_and_future, &log::pointSpeedPairToStream);
 
   ROS_DEBUG("Got basic points ");
-  std::vector<DiscreteCurve> sub_curves = compute_sub_curves(time_bound_points);
+  std::vector<DiscreteCurve> sub_curves = compute_sub_curves(back_and_future);
 
   ROS_DEBUG_STREAM("Got sub_curves " << sub_curves.size());
 
@@ -390,7 +440,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
     log::printDoublesPerLineWithPrefix("pre_smooth_curvatures[i]: ", curvatures);
 
-    curvatures = smoothing::moving_average_filter(curvatures, config_.moving_average_window_size);
+    //curvatures = smoothing::moving_average_filter(curvatures, config_.moving_average_window_size);
 
     log::printDoublesPerLineWithPrefix("curvatures[i]: ", curvatures);
 
@@ -435,6 +485,20 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   // final_actual_speeds = trajectory_utils::shift_by_lookahead(final_actual_speeds, config_.lookahead_count);
 
   // Add current vehicle point to front of the trajectory
+
+  nearest_pt_index = getNearestBasicPointIndex(all_sampling_points, state);
+
+  std::vector<lanelet::BasicPoint2d> future_basic_points(all_sampling_points.begin() + nearest_pt_index + 1,
+                                            all_sampling_points.end());  // Points in front of current vehicle position
+
+  std::vector<double> future_speeds(final_actual_speeds.begin() + nearest_pt_index + 1,
+                                            final_actual_speeds.end());  // Points in front of current vehicle position
+  std::vector<double> future_yaw(final_yaw_values.begin() + nearest_pt_index + 1,
+                                            final_yaw_values.end());  // Points in front of current vehicle position
+  final_actual_speeds = future_speeds;
+  all_sampling_points = future_basic_points;
+  final_yaw_values = future_yaw;
+
   lanelet::BasicPoint2d cur_veh_point(state.X_pos_global, state.Y_pos_global);
   all_sampling_points.insert(all_sampling_points.begin(),
                              cur_veh_point);  // Add current vehicle position to front of sample points

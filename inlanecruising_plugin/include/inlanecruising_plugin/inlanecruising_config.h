@@ -31,10 +31,11 @@ struct InLaneCruisingPluginConfig
   double max_accel = 1.5;                  // Maximum allowable longitudinal acceleration in m/s^2
   int lookahead_count = 8;                 // Number of points to look ahead for speed reduction.
   double lateral_accel_limit = 1.5;        // Maximum allowable lateral acceleration m/s^2
-  int moving_average_window_size = 5;      // Size of the window used in the moving average filter to smooth both the
+  int moving_average_window_size = 3;      // Size of the window used in the moving average filter to smooth both the
                                            // computed curvature and output speeds
   int curvature_calc_lookahead_count = 1;  // Number of points to look ahead when calculating the curvature
                                            // of the lanelet centerline
+  double back_distance = 15;
 
   friend std::ostream& operator<<(std::ostream& output, const InLaneCruisingPluginConfig& c)
   {
@@ -48,6 +49,7 @@ struct InLaneCruisingPluginConfig
            << "lateral_accel_limit: " << c.lateral_accel_limit << std::endl
            << "moving_average_window_size: " << c.moving_average_window_size << std::endl
            << "curvature_calc_lookahead_count: " << c.curvature_calc_lookahead_count << std::endl
+           << "back_distance: " << c.back_distance << std::endl
            << "}" << std::endl;
     return output;
   }

@@ -10,7 +10,7 @@ namespace log
  */ 
 std::string basicPointToStream(lanelet::BasicPoint2d point)
 {
-  std::ostringstream out;
+  std::stringstream out;
   out << point.x() << ", " << point.y();
   return out.str();
 }
@@ -19,7 +19,7 @@ std::string basicPointToStream(lanelet::BasicPoint2d point)
  */ 
 std::string pointSpeedPairToStream(PointSpeedPair point)
 {
-  std::ostringstream out;
+  std::stringstream out;
   out << "Point: " << basicPointToStream(point.point) << " Speed: " << point.speed;
   return out.str();
 }
