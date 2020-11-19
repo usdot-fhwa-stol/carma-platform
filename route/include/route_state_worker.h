@@ -58,7 +58,7 @@ namespace route {
                 FOLLOWING = 3,
             };
 
-            RouteStateWorker();
+            RouteStateWorker() = default;
 
             /**
              * \brief Process route event based on designed state machine diagram
@@ -69,12 +69,12 @@ namespace route {
             /**
              * \brief Get current route state machine state
              */
-            RouteState get_route_state();
+            RouteState get_route_state() const;
 
         private:
 
             // private local variable tracks the current route satte
-            RouteState state_;
+            RouteState state_ = RouteState::LOADING;
 
     };
 

@@ -53,7 +53,7 @@ class MPCFollowerWrapper {
         /*!
         * Destructor.
         */
-        virtual ~MPCFollowerWrapper();
+        virtual ~MPCFollowerWrapper() = default;
 
         // @brief ROS initialize.
         void Initialize();

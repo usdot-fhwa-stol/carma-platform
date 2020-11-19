@@ -35,14 +35,6 @@
 namespace carma_wm
 {
 
-CARMAWorldModel::CARMAWorldModel()
-{
-}
-
-CARMAWorldModel::~CARMAWorldModel()
-{
-}
-
 std::pair<TrackPos, TrackPos> CARMAWorldModel::routeTrackPos(const lanelet::ConstArea& area) const
 {
   // Check if the route was loaded yet
@@ -524,7 +516,7 @@ std::vector<cav_msgs::RoadwayObstacle> CARMAWorldModel::getInLaneObjects(const l
   // lanelet is found. This is to reduce number of objects to check as we check new lanelets
   for (size_t i = 0; i < roadway_objects_copy.size(); i++)
   {
-    obj_idxs_queue.push(i);
+    obj_idxs_queue.push((int)i);
   }
 
   // check each lanelets
@@ -664,14 +656,14 @@ lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> CARMAWorldMode
   std::vector<int> object_idxs;
   std::queue<int> obj_idxs_queue;
   double base_downtrack = 0;
-  double input_obj_downtrack;
+  double input_obj_downtrack = 0;
   int curr_idx = 0;
 
   // Create an index queue for in lane objects to quickly pop the idx if associated 
   // lanelet is found. This is to reduce number of objects to check as we check new lanelets
   for (size_t i = 0; i < lane_objects.size(); i++)
   {
-    obj_idxs_queue.push(i);
+    obj_idxs_queue.push((int)i);
   }
 
   // For each lanelet, check if each object is inside it. if so, calculate downtrack
@@ -721,7 +713,7 @@ lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> CARMAWorldMode
   }
 
   // compare with input's downtrack and return the min_dist
-  int min_idx = 0;
+  size_t min_idx = 0;
   double min_dist = INFINITY; 
   for (size_t idx = 0 ; idx < object_downtracks.size(); idx ++)
   {

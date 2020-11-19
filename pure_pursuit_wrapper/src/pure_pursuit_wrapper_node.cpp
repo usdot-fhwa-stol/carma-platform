@@ -22,8 +22,8 @@
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
-int main(int argc, char** argv) {
-
+int main(int argc, char** argv)
+{
   ros::init(argc, argv, "pure_pursuit_wrapper_node");
   ros::CARMANodeHandle nh("");
 
@@ -31,14 +31,18 @@ int main(int argc, char** argv) {
   ros::CARMANodeHandle::setSpinRate(10);
 
   // Approximate time of 100ms used because NDT outputs at 10Hz
-  message_filters::Synchronizer<pure_pursuit_wrapper::PurePursuitWrapper::SyncPolicy> sync(pure_pursuit_wrapper::PurePursuitWrapper::SyncPolicy(100), PurePursuitWrapper.pose_sub, PurePursuitWrapper.trajectory_plan_sub);
-  sync.registerCallback(boost::bind(&pure_pursuit_wrapper::PurePursuitWrapper::TrajectoryPlanPoseHandler, &PurePursuitWrapper, _1, _2));
+  message_filters::Synchronizer<pure_pursuit_wrapper::PurePursuitWrapper::SyncPolicy> sync(
+      pure_pursuit_wrapper::PurePursuitWrapper::SyncPolicy(100), PurePursuitWrapper.pose_sub,
+      PurePursuitWrapper.trajectory_plan_sub);
+  sync.registerCallback(
+      boost::bind(&pure_pursuit_wrapper::PurePursuitWrapper::TrajectoryPlanPoseHandler, &PurePursuitWrapper, _1, _2));
 
-  ros::CARMANodeHandle::setSpinCallback([&]() -> bool
-  {
-  if (!PurePursuitWrapper.shutting_down_)
-  {PurePursuitWrapper.PublishPluginDiscovery();}
-  return !PurePursuitWrapper.shutting_down_;
+  ros::CARMANodeHandle::setSpinCallback([&PurePursuitWrapper]() {
+    if (!PurePursuitWrapper.shutting_down_)
+    {
+      PurePursuitWrapper.PublishPluginDiscovery();
+    }
+    return !PurePursuitWrapper.shutting_down_;
   });
 
   ROS_INFO("Successfully launched node.");

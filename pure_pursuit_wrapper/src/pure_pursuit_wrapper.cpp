@@ -30,9 +30,6 @@ PurePursuitWrapper::PurePursuitWrapper(ros::NodeHandle &nodeHandle): nh_(nodeHan
   ROS_INFO("Successfully launched node.");
 }
 
-PurePursuitWrapper::~PurePursuitWrapper() {
-}
-
 void PurePursuitWrapper::Initialize() {
   // SystemAlert Subscriber
   system_alert_sub_ = nh_.subscribe("system_alert", 10, &PurePursuitWrapper::SystemAlertHandler, this);
@@ -57,7 +54,7 @@ void PurePursuitWrapper::Initialize() {
   
 }
 
-void PurePursuitWrapper::PublishPluginDiscovery()
+void PurePursuitWrapper::PublishPluginDiscovery() const
 {
   pure_pursuit_plugin_discovery_pub_.publish(plugin_discovery_msg_);
 }

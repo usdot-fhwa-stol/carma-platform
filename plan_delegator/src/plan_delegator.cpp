@@ -20,8 +20,6 @@
 
 namespace plan_delegator
 {
-    PlanDelegator::PlanDelegator() : 
-        guidance_engaged(false), planning_topic_prefix_(""), planning_topic_suffix_(""), spin_rate_(10.0), max_trajectory_duration_(6.0) { }
     
     void PlanDelegator::init()
     {

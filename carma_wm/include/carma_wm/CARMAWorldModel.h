@@ -46,13 +46,13 @@ public:
    * @brief Constructor
    *
    */
-  CARMAWorldModel();
+  CARMAWorldModel() = default;
 
   /**
    * @brief Destructor as required by interface
    *
    */
-  ~CARMAWorldModel();
+  ~CARMAWorldModel() = default;
 
   /*! \brief Set the current map
    *

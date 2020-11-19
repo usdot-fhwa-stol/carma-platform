@@ -177,7 +177,7 @@ namespace route {
 
         // current lanelet down track and cross track distance
         double ll_crosstrack_distance_, ll_downtrack_distance_;
-        unsigned int ll_id_;
+        lanelet::Id ll_id_;
 
         // current speed limit on current lanelet
         double speed_limit_ = 0;
@@ -186,7 +186,7 @@ namespace route {
         ros::Publisher route_event_pub_, route_state_pub_, route_pub_;
 
         // a bool flag indicates a new route has been generated such that a local copy of Route message should be published again
-        bool new_route_msg_generated_;
+        bool new_route_msg_generated_ = false;
 
         // a queue of route event. All events in the queue will be published in order on each spin.
         std::queue<uint8_t> route_event_queue;

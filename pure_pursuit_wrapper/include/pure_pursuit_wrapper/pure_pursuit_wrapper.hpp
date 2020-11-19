@@ -53,13 +53,13 @@ class PurePursuitWrapper {
         /*!
         * Destructor.
         */
-        virtual ~PurePursuitWrapper();
+        virtual ~PurePursuitWrapper() = default;
 
         // @brief ROS initialize.
         void Initialize();
 
         // @brief Publish plugin info to plugin discovery
-        void PublishPluginDiscovery();
+        void PublishPluginDiscovery() const;
         
         // runs publish at a desired frequency
         int rate;

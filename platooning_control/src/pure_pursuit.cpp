@@ -4,7 +4,6 @@
 
 namespace platoon_control
 {
-	PurePursuit::PurePursuit(){}
 
 	double PurePursuit::getLookaheadDist(const cav_msgs::TrajectoryPlanPoint& tp) const{
 		double x_diff = (tp.x-tp0.x);

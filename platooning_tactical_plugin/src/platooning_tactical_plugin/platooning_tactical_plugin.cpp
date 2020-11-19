@@ -130,7 +130,7 @@ namespace platooning_tactical_plugin {
         double previous_wp_v = waypoints[0].twist.twist.linear.x;
         double previous_wp_x = pose_msg_->pose.position.x;
         double previous_wp_y = pose_msg_->pose.position.y;
-        ros::Time previous_wp_t = ros::Time(0.0);
+        ros::Time previous_wp_t(0.0);
         for(int i = 0; i < waypoints.size(); ++i)
         {
             if(i != 0)

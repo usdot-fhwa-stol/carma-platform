@@ -19,7 +19,7 @@
 namespace route {
 
     RouteGeneratorWorker::RouteGeneratorWorker(tf2_ros::Buffer& tf_buffer) :
-                                               tf_tree_(tf_buffer), new_route_msg_generated_(false) { }
+                                               tf_tree_(tf_buffer) { }
     
     void RouteGeneratorWorker::setWorldModelPtr(carma_wm::WorldModelConstPtr wm)
     {
@@ -35,7 +35,7 @@ namespace route {
         // find start lanelet
         auto start_lanelet_vector = lanelet::geometry::findNearest(map_pointer->laneletLayer, start, 1);
         // check if there are any lanelets in the map
-        if(start_lanelet_vector.size() == 0)
+        if(start_lanelet_vector.empty())
         {
             ROS_ERROR_STREAM("Found no lanelets in the map. Routing cannot be done.");
             return lanelet::Optional<lanelet::routing::Route>();
@@ -57,7 +57,7 @@ namespace route {
         return graph_pointer->getRouteVia(start_lanelet, via_lanelets_vector, end_lanelet);
     }
 
-    bool RouteGeneratorWorker::get_available_route_cb(cav_srvs::GetAvailableRoutesRequest& req, cav_srvs::GetAvailableRoutesResponse& resp)
+    bool RouteGeneratorWorker::get_available_route_cb(const cav_srvs::GetAvailableRoutesRequest& req, cav_srvs::GetAvailableRoutesResponse& resp)
     {
         boost::filesystem::path route_path_object(this->route_file_path_);
         if(boost::filesystem::exists(route_path_object))
@@ -104,7 +104,7 @@ namespace route {
         publish_route_event(cav_msgs::RouteEvent::ROUTE_LOADED);
     }
 
-    bool RouteGeneratorWorker::set_active_route_cb(cav_srvs::SetActiveRouteRequest &req, cav_srvs::SetActiveRouteResponse &resp)
+    bool RouteGeneratorWorker::set_active_route_cb(const cav_srvs::SetActiveRouteRequest &req, cav_srvs::SetActiveRouteResponse &resp)
     {
         // only allow activate a new route in route selection state
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::SELECTION)
@@ -118,7 +118,7 @@ namespace route {
             {
                 tf2::convert(tf_tree_.lookupTransform("earth", "map", ros::Time(0)).transform, map_in_earth);
             }
-            catch (tf2::TransformException &ex)
+            catch (const tf2::TransformException &ex)
             {
                 ROS_ERROR_STREAM("Could not lookup transform with exception " << ex.what());
                 resp.errorStatus = cav_srvs::SetActiveRouteResponse::TRANSFORM_ERROR;
@@ -145,7 +145,7 @@ namespace route {
             for (auto pt : destination_points_in_map)
             {
                 auto llts = world_model_->getLaneletsFromPoint(pt, 1);
-                if (llts.size() == 0)
+                if (llts.empty())
                 {
                     ROS_ERROR_STREAM("Route Generator: " << idx 
                         << "th destination point is not in the map, x: " << pt.x() << " y: " << pt.y());
@@ -254,7 +254,7 @@ namespace route {
         return msg;
     }
 
-    bool RouteGeneratorWorker::abort_active_route_cb(cav_srvs::AbortActiveRouteRequest &req, cav_srvs::AbortActiveRouteResponse &resp)
+    bool RouteGeneratorWorker::abort_active_route_cb(const cav_srvs::AbortActiveRouteRequest &req, cav_srvs::AbortActiveRouteResponse &resp)
     {
         // only make sense to abort when it is in route following state
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING)

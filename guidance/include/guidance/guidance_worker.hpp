@@ -36,7 +36,7 @@ namespace guidance
             /*!
              * \brief Default constructor for GuidanceWorker
              */
-            GuidanceWorker();
+            GuidanceWorker() = default;
 
             /*!
              * \brief Begin normal execution of Guidance worker. Will take over control flow of program and exit from here.
