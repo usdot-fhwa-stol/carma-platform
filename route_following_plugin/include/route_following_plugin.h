@@ -122,7 +122,7 @@ namespace route_following_plugin
         // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
 
-        double config_limit;
+        double config_limit=0.0;
         /**
          * \brief Initialize ROS publishers, subscribers, service servers and service clients
          */
