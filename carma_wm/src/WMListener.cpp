@@ -37,7 +37,7 @@ WMListener::WMListener(bool multi_thread) : worker_(std::unique_ptr<WMListenerWo
   roadway_objects_sub_ = nh_.subscribe("roadway_objects", 1, &WMListenerWorker::roadwayObjectListCallback, worker_.get());
 
   double cL;
-  nh2_.getParam("config_speed_limit", cL);
+  nh2_.getParam("/config_speed_limit", cL);
   setConfigSpeedLimit(cL);
   
 
