@@ -131,9 +131,10 @@ TEST(WaypointGeneratorTest, test_full_generation)
     lanelet::MapConformer::ensureCompliance(map, 80_mph);
 
     InLaneCruisingPluginConfig config;
-    config.lateral_accel_limit = 0.5;
-    config.downsample_ratio = 12;
-    config.trajectory_time_length = 12.0;
+    config.lateral_accel_limit = 2.5;
+    config.back_distance = 0;
+    //config.downsample_ratio = 12;
+    //config.trajectory_time_length = 12.0;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
     wm->setMap(map);
 
@@ -146,6 +147,13 @@ TEST(WaypointGeneratorTest, test_full_generation)
 
     carma_wm::test::setRouteByIds(route_ids, wm);
 
+  	
+    for(auto l : wm->getRoute()->shortestPath()) {
+      for(auto p : l.centerline2d()) {
+        ROS_WARN_STREAM("rp: " << p.x() << ", " << p.y());
+      }
+    }
+
     auto p = wm->getMap()->laneletLayer.get(130).centerline()[3];
     ROS_WARN_STREAM("Start Point: " << p.x() << ", " << p.y());
 
@@ -157,8 +165,8 @@ TEST(WaypointGeneratorTest, test_full_generation)
   // req.vehicle_state.orientation = -2.7570977;
   // req.vehicle_state.longitudinal_vel = 0.0;
 
-  req.vehicle_state.X_pos_global = -194.9;
-  req.vehicle_state.Y_pos_global = 473.6;
+  req.vehicle_state.X_pos_global = -242.3;
+  req.vehicle_state.Y_pos_global = 441;
   req.vehicle_state.orientation = -2.7570977;
   req.vehicle_state.longitudinal_vel = 0.0;
 
@@ -180,7 +188,7 @@ TEST(WaypointGeneratorTest, test_full_generation)
   maneuver2.lane_following_maneuver.start_speed = 6.7056;
   maneuver2.lane_following_maneuver.start_time = ros::Time(4.4704);
 
-  maneuver2.lane_following_maneuver.end_dist = 14.98835712 + 50.0 + 45+ 100;
+  maneuver2.lane_following_maneuver.end_dist = 14.98835712 + 50.0 + 45 + 100;
   maneuver2.lane_following_maneuver.end_speed = 6.7056;
   maneuver2.lane_following_maneuver.end_time = ros::Time(4.4704 + 7.45645430685);
 
