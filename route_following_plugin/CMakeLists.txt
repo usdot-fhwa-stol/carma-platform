@@ -84,7 +84,7 @@ install(TARGETS ${PROJECT_NAME}
 )
 
 ## Install Other Resources
-install(DIRECTORY launch config resource
+install(DIRECTORY launch config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 

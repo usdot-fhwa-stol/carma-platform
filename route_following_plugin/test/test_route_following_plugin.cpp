@@ -266,7 +266,11 @@ namespace route_following_plugin
         auto current_lanelets= lanelet::geometry::findNearest(worker.wm_->getMap()->laneletLayer, current_loc, 10); 
         lanelet::ConstLanelet current_lanelet = current_lanelets[0].second;
         double speed=worker.findSpeedLimit(current_lanelet);
-        ASSERT_EQ(speed,11.176);                                                                            
+        if(speed < 11.176)
+        {
+            ASSERT_EQ(speed, worker.config_limit);
+        }
+        else ASSERT_EQ(speed,11.176);                                                                            
     }
 
     

@@ -101,6 +101,9 @@ namespace route_following_plugin
         std::shared_ptr<carma_wm::WMListener> wml_;
         carma_wm::WorldModelConstPtr wm_;
 
+        // config limit for vehicle speed limit set as ros parameter
+        double config_limit=0.0;
+
     private:
 
         // CARMA ROS node handles
@@ -122,7 +125,6 @@ namespace route_following_plugin
         // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
 
-        double config_limit=0.0;
         /**
          * \brief Initialize ROS publishers, subscribers, service servers and service clients
          */
