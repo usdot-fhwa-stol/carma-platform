@@ -15,12 +15,11 @@
  */
 
 #include <stdexcept>
+#include <carma_wm/Geometry.h>
 #include "plan_delegator.hpp"
 
 namespace plan_delegator
 {
-    PlanDelegator::PlanDelegator() : 
-        planning_topic_prefix_(""), planning_topic_suffix_(""), spin_rate_(10.0), max_trajectory_duration_(6.0) { }
     
     void PlanDelegator::init()
     {
@@ -38,6 +37,8 @@ namespace plan_delegator
             [this](const geometry_msgs::TwistStampedConstPtr& twist) {this->latest_twist_ = *twist;});
         pose_sub_ = nh_.subscribe<geometry_msgs::PoseStamped>("current_pose", 5,
             [this](const geometry_msgs::PoseStampedConstPtr& pose) {this->latest_pose_ = *pose;});
+        guidance_state_sub_ = nh_.subscribe<cav_msgs::GuidanceState>("guidance_state", 5, &PlanDelegator::guidanceStateCallback, this);
+
 
         ros::CARMANodeHandle::setSpinCallback(std::bind(&PlanDelegator::spinCallback, this));
         ros::CARMANodeHandle::setSpinRate(spin_rate_);
@@ -46,6 +47,11 @@ namespace plan_delegator
     void PlanDelegator::run() 
     {
         ros::CARMANodeHandle::spin();
+    }
+
+    void PlanDelegator::guidanceStateCallback(const cav_msgs::GuidanceStateConstPtr& msg)
+    {
+        guidance_engaged = (msg->state == cav_msgs::GuidanceState::ENGAGED);
     }
 
     void PlanDelegator::maneuverPlanCallback(const cav_msgs::ManeuverPlanConstPtr& plan)
@@ -103,6 +109,9 @@ namespace plan_delegator
             plan_req.request.vehicle_state.longitudinal_vel = latest_twist_.twist.linear.x;
             plan_req.request.vehicle_state.X_pos_global = latest_pose_.pose.position.x;
             plan_req.request.vehicle_state.Y_pos_global = latest_pose_.pose.position.y;
+            double roll, pitch, yaw;
+            carma_wm::geometry::rpyFromQuaternion(latest_pose_.pose.orientation, roll, pitch, yaw);
+            plan_req.request.vehicle_state.orientation = yaw;
         }
         // set vehicle state based on last two planned trajectory points
         else
@@ -112,21 +121,29 @@ namespace plan_delegator
             plan_req.request.vehicle_state.X_pos_global = last_point.x;
             plan_req.request.vehicle_state.Y_pos_global = last_point.y;
             auto distance_diff = std::sqrt(std::pow(last_point.x - second_last_point.x, 2) + std::pow(last_point.y - second_last_point.y, 2));
-            auto time_diff = (last_point.target_time - second_last_point.target_time) * MILLISECOND_TO_SECOND;
+            ros::Duration time_diff = last_point.target_time - second_last_point.target_time;
+            auto time_diff_sec = time_diff.toSec();
             // this assumes the vehicle does not have significant lateral velocity
-            plan_req.request.vehicle_state.longitudinal_vel = distance_diff / time_diff;
+            plan_req.request.vehicle_state.longitudinal_vel = distance_diff / time_diff_sec;
+            // TODO develop way to set yaw value for future points
         }
         return plan_req;
     }
 
     bool PlanDelegator::isTrajectoryLongEnough(const cav_msgs::TrajectoryPlan& plan) const noexcept
     {
-        return (plan.trajectory_points.back().target_time - plan.trajectory_points.front().target_time) * MILLISECOND_TO_SECOND >= max_trajectory_duration_;
+        ros::Duration time_diff = plan.trajectory_points.back().target_time - plan.trajectory_points.front().target_time;
+        return time_diff.toSec() >= max_trajectory_duration_;
     }
 
     cav_msgs::TrajectoryPlan PlanDelegator::planTrajectory()
     {
         cav_msgs::TrajectoryPlan latest_trajectory_plan;
+        if(!guidance_engaged)
+        {
+            ROS_INFO_STREAM("Guidance is not engaged. Plan delegator will not plan trajectory.");
+            return latest_trajectory_plan;
+        }
         // iterate through maneuver list to make service call
     
         for(const auto& maneuver : latest_maneuver_plan_.maneuvers)
@@ -137,7 +154,7 @@ namespace plan_delegator
                 continue;
             }
             // get corresponding ros service client for plan trajectory
-            auto maneuver_planner = GET_MANEUVER_PROPERTY(maneuver, parameters.planning_strategic_plugin);
+            auto maneuver_planner = GET_MANEUVER_PROPERTY(maneuver, parameters.planning_tactical_plugin);
             auto client = getPlannerClientByName(maneuver_planner);
             // compose service request
             auto plan_req = composePlanTrajectoryRequest(latest_trajectory_plan);

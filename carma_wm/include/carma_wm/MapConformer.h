@@ -60,7 +60,7 @@ namespace MapConformer
  * 
  * @param config_limit A value corresponding to the configurable speed limit value
  */
-void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit);
+void ensureCompliance(lanelet::LaneletMapPtr map, lanelet::Velocity config_limit=80_mph);
 
 
 };  // namespace MapConformer

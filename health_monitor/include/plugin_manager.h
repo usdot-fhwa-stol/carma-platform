@@ -31,7 +31,7 @@ namespace health_monitor
             /**
              * \brief Default constructor for PluginManager
              */
-            PluginManager();
+            PluginManager() = default;
 
             /**
              * \brief Constructor for PluginManager takes in require_plugin_names and service names

@@ -1,0 +1,5 @@
+digraph G {
+0[label="1349" lanelet="1349"];
+1[label="1346" lanelet="1346"];
+1->0 [label="Successor" color="green" weight="4.41937" routingCostId="0"];
+}
