@@ -6,7 +6,7 @@ spin_rate: 10.0
 fitness_score_degraded_threshold: 20.0
 
 # Double: NDT fitness score threshold to determine if the result can be considered unusable
-fitness_score_fault_threshold: 150.0
+fitness_score_fault_threshold: 10000.0
 
 # Double: NDT result frequency threshold below which the result can be considered degraded
 # Units: Hz
@@ -14,7 +14,7 @@ ndt_frequency_degraded_threshold: 8.0
 
 # Double: NDT result frequency threshold below which the result can be considered unusable
 # Units: Hz
-ndt_frequency_fault_threshold: 4.0
+ndt_frequency_fault_threshold: 0.1
 
 # Integer: The timeout of an auto initialization system
 # Units: ms
@@ -27,5 +27,6 @@ gnss_only_operation_timeout: 20000
 # Integer Enum: Localization mode for the platform
 # 0 - NDT only
 # 1 - GNSS only
-# 2 - AUTO select between NDT and GNSS
-localization_mode: 0
+# 2 - AUTO select between NDT and GNSS with GNSS timeout
+# 3 - AUTO select between NDT and GNSS without GNSS timeout
+localization_mode: 3

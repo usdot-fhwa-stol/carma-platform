@@ -25,7 +25,8 @@ enum LocalizerMode
 {
   NDT = 0,   // NDT only operation
   GNSS = 1,  // GNSS only operation
-  AUTO = 2,  // NDT operation with support for GPS fallback
+  AUTO_WITH_TIMEOUT = 2,  // NDT operation with support for GPS fallback that will timeout
+  AUTO_WITHOUT_TIMEOUT = 3,  // NDT operation with support for GPS fallback that will not timeout
 };
 /**
  * \brief Stream operator for LocalizerMode enum.

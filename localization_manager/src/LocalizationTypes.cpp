@@ -24,7 +24,8 @@ std::ostream& operator<<(std::ostream& os, LocalizerMode m)
   {  // clang-format off
     case LocalizerMode::NDT   : os << "NDT"; break;
     case LocalizerMode::GNSS: os << "GNSS"; break;
-    case LocalizerMode::AUTO : os << "AUTO"; break;
+    case LocalizerMode::AUTO_WITH_TIMEOUT : os << "AUTO_WITH_TIMEOUT"; break;
+    case LocalizerMode::AUTO_WITHOUT_TIMEOUT : os << "AUTO_WITHOUT_TIMEOUT"; break;
     default: os.setstate(std::ios_base::failbit);
   }  // clang-format on
   return os;

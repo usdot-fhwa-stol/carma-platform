@@ -60,7 +60,7 @@ private:
   //! Current state. This state should only ever be set using the setAndLogState() function.
   LocalizationState state_ = LocalizationState::UNINITIALIZED;
 
-  LocalizerMode mode_ = LocalizerMode::AUTO;
+  LocalizerMode mode_ = LocalizerMode::AUTO_WITHOUT_TIMEOUT;
 
   TransitionCallback transition_callback_;
 

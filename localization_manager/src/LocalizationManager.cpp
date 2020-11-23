@@ -90,14 +90,12 @@ void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedC
   if (state == LocalizationState::OPERATIONAL && last_raw_gnss_value_) {
     tf2::Vector3 ndt_translation(pose->pose.position.x, pose->pose.position.y, pose->pose.position.z);
 
-    tf2::Vector3 gnss_translation(last_raw_gnss_value_.pose.position.x, last_raw_gnss_value_.pose.position.y, last_raw_gnss_value_.pose.position.z);
+    tf2::Vector3 gnss_translation(last_raw_gnss_value_->pose.position.x, last_raw_gnss_value_->pose.position.y, last_raw_gnss_value_->pose.position.z);
 
     gnss_offset_ = ndt_translation - gnss_translation;
   }
 
-  if (state != LocalizationState::UNINITIALIZED 
-      && state != LocalizationState::INITIALIZING
-      && state != LocalizationState::DEGRADED_NO_LIDAR_FIX)
+  if (state != LocalizationState::DEGRADED_NO_LIDAR_FIX)
   {
     pose_pub_(*pose);
   }
@@ -125,9 +123,9 @@ void LocalizationManager::gnssPoseCallback(const geometry_msgs::PoseStampedConst
   {
     geometry_msgs::PoseStamped corrected_pose = *msg;
     if (gnss_offset_) {
-      corrected_pose.pose.position.x = corrected_pose.pose.position.x + gnss_offset_.x();
-      corrected_pose.pose.position.y = corrected_pose.pose.position.y + gnss_offset_.y();
-      corrected_pose.pose.position.z = corrected_pose.pose.position.z + gnss_offset_.z();
+      corrected_pose.pose.position.x = corrected_pose.pose.position.x + gnss_offset_->x();
+      corrected_pose.pose.position.y = corrected_pose.pose.position.y + gnss_offset_->y();
+      corrected_pose.pose.position.z = corrected_pose.pose.position.z + gnss_offset_->z();
     }
     pose_pub_(corrected_pose);
   }
