@@ -36,8 +36,8 @@
 
 /*
 Using this file:
-    1) Libraries you should have: carma-base, carma-config, carma-msgs (integration/routing branch), 
-        carma-platform (integration/routing branch), carma-utils, caram-web-ui, opendrive2lanelet.
+    1) Libraries you should have: carma-base, carma-config, carma-msgs, 
+        carma-platform, carma-utils, caram-web-ui, opendrive2lanelet.
     2) Then the test can be built with the command: 
         ./carma_build -c /workspaces/carma_ws/carma/ -a /workspaces/carma_ws/autoware.ai/ -x -m "--only-pkg-with-deps route"
     3) Update the osm file location and starting/ending IDs to match the file you want to test
