@@ -44,7 +44,7 @@ double CostofComfort::compute_cost(cav_msgs::ManeuverPlan plan) const
     }
 
     // Normalize the cost to 0-1
-    cost = cost / ((abs(max_deceleration_) + 1.0) * maneuver_size);
+    cost = cost / ((fabs(max_deceleration_) + 1.0) * maneuver_size);
 
     return cost;
 }

@@ -18,9 +18,13 @@
 #include <carma_wm_ctrl/GeofenceSchedule.h>
 #include <carma_wm_ctrl/Geofence.h>
 #include <carma_wm/TrafficControl.h>
+#include <lanelet2_io/Io.h>
+#include <lanelet2_io/io_handlers/Factory.h>
+#include <lanelet2_io/io_handlers/Writer.h>
 #include <carma_wm_ctrl/GeofenceScheduler.h>
 #include <carma_wm_ctrl/WMBroadcaster.h>
 #include <lanelet2_extension/utility/message_conversion.h>
+#include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <memory>
 #include <chrono>
 #include <ctime>
@@ -30,9 +34,11 @@
 #include <carma_utils/timers/testing/TestTimerFactory.h>
 #include <algorithm>
 
+#include <cav_msgs/Route.h>
 #include <cav_msgs/TrafficControlMessage.h>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/functional/hash.hpp>
+#include <geometry_msgs/PoseStamped.h>
 
 #include "TestHelpers.h"
 
@@ -53,7 +59,7 @@ namespace carma_wm_ctrl
 TEST(WMBroadcaster, Constructor)
 {
   WMBroadcaster([](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
-                std::make_unique<TestTimerFactory>());  // Create broadcaster with test timers. Having this check helps
+   [](const cav_msgs::TrafficControlRequest& control_msg_pub_){}, [](const cav_msgs::CheckActiveGeofence& active_pub_){}, std::make_unique<TestTimerFactory>());  // Create broadcaster with test timers. Having this check helps
                                                         // verify that the timers do not crash on destruction
 }
 TEST(WMBroadcaster, baseMapCallback)
@@ -71,7 +77,8 @@ TEST(WMBroadcaster, baseMapCallback)
         ASSERT_EQ(4, map->laneletLayer.size());  // Verify the map can be decoded
 
         base_map_call_count++;
-      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, 
+      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
       std::make_unique<TestTimerFactory>());
 
   // Get and convert map to binary message
@@ -100,9 +107,10 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
 
         ASSERT_EQ(4, map->laneletLayer.size());  // Verify the map can be decoded
+
         base_map_call_count++;
-      }, 
-      [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
+      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
       std::make_unique<TestTimerFactory>());
 
   //////
@@ -164,9 +172,10 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
         // Publish map callback
         lanelet::LaneletMapPtr map(new lanelet::LaneletMap);
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
+        
         base_map_call_count++;
-      },
-      [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
+      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
       std::make_unique<TestTimerFactory>());
 
   //////
@@ -287,6 +296,8 @@ TEST(WMBroadcaster, geofenceCallback)
   std::atomic<uint32_t> active_call_count(0);
   std::atomic<std::size_t> last_active_gf(0);
 
+
+
   WMBroadcaster wmb(
       [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
         // Publish map callback
@@ -305,10 +316,11 @@ TEST(WMBroadcaster, geofenceCallback)
         active_call_count.store(active_call_count.load() + 1);
         // atomic is not working for boost::uuids::uuid, so hash it
         last_active_gf.store(boost::hash<boost::uuids::uuid>()(data_received->id_));
-      },
+      }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
       std::make_unique<TestTimerFactory>());
 
-  // Get and convert map to binary message
+ // Get and convert map to binary message
   auto map = carma_wm::getDisjointRouteMap();
   autoware_lanelet2_msgs::MapBin msg;
   lanelet::utils::conversion::toBinMsg(map, &msg);
@@ -351,6 +363,14 @@ TEST(WMBroadcaster, geofenceCallback)
   // create the geofence request
   msg_v01.geometry.proj = geofence_proj_string;
   gf_msg.tcmV01 = msg_v01;
+
+  // every control message needs associated control request id
+  cav_msgs::Route route_msg;
+  route_msg.route_path_lanelet_ids.push_back(10000);
+  std::shared_ptr<j2735_msgs::Id64b> req_id = std::make_shared<j2735_msgs::Id64b>(j2735_msgs::Id64b());
+  wmb.controlRequestFromRoute(route_msg, req_id);
+  gf_msg.tcmV01.reqid = *req_id;
+
   // check geofence with no applicable points
   ros::Time::setNow(ros::Time(0));
   wmb.geofenceCallback(gf_msg);
@@ -368,7 +388,8 @@ TEST(WMBroadcaster, geofenceCallback)
   // update id to continue testing
   curr_id = boost::uuids::random_generator()(); 
   curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
-  std::copy(curr_id.begin(),  curr_id.end(), msg_v01.id.id.begin());
+  std::copy(curr_id.begin(), curr_id.end(), msg_v01.id.id.begin());
+  msg_v01.reqid = *req_id;
   gf_msg.tcmV01 = msg_v01;
 
   ros::Time::setNow(ros::Time(0));
@@ -392,6 +413,75 @@ TEST(WMBroadcaster, geofenceCallback)
   ASSERT_EQ(2, active_call_count.load());
 
 }
+  
+TEST(WMBroadcaster, routeCallbackMessage) 
+{
+  cav_msgs::Route route_msg;
+  
+  route_msg.route_path_lanelet_ids.push_back(1346);
+  route_msg.route_path_lanelet_ids.push_back(1349);
+
+  ROS_INFO_STREAM("This is a test: ");
+  
+  size_t base_map_call_count = 0;
+  WMBroadcaster wmb(
+      [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
+        // Publish map callback  
+        lanelet::LaneletMapPtr map(new lanelet::LaneletMap);
+        lanelet::utils::conversion::fromBinMsg(map_bin, map);
+
+        ASSERT_EQ(2, map->laneletLayer.size());  // Verify the map can be decoded
+
+        base_map_call_count++;
+      }, [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
+      std::make_unique<TestTimerFactory>());
+ 
+  
+  //Test throw exceptions
+  ASSERT_THROW(wmb.routeCallbackMessage(route_msg), lanelet::InvalidObjectStateError);
+  ROS_INFO_STREAM("Throw Exceptions Test Passed.");
+  
+  // Load vector map from a file start 
+  std::string file = "resource/test_vector_map1.osm";
+  int projector_type = 0;
+  std::string target_frame;
+  lanelet::ErrorMessages load_errors;
+  // Parse geo reference info from the original lanelet map (.osm)
+  lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+
+  lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+
+  lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+
+  if (map->laneletLayer.size() == 0)
+  {
+    FAIL() << "Input map does not contain any lanelets";
+  }
+  // apply loaded map to WMBroadcaster
+  autoware_lanelet2_msgs::MapBin msg;
+  lanelet::utils::conversion::toBinMsg(map, &msg);
+  autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(msg));
+
+  // Trigger basemap callback
+  wmb.baseMapCallback(map_msg_ptr);
+  ASSERT_EQ(1, base_map_call_count);
+
+  //Test target_frame value
+  std_msgs::String target;
+  target.data = target_frame;
+  wmb.geoReferenceCallback(target);
+  ASSERT_FALSE(target_frame.empty());
+  // loading end
+  
+  cav_msgs::TrafficControlRequest coRe;
+
+  ///// Test without user defined route callback
+  coRe = wmb.controlRequestFromRoute(route_msg);
+
+  ASSERT_TRUE(coRe.tcrV01.bounds.size() > 0);
+
+}
 
 TEST(WMBroadcaster, addAndRemoveGeofence)
 {
@@ -409,7 +499,8 @@ TEST(WMBroadcaster, addAndRemoveGeofence)
       [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
         // Publish map update callback
         map_update_call_count++;
-      },
+      }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
       std::make_unique<TestTimerFactory>());
 
   //////
@@ -500,7 +591,8 @@ TEST(WMBroadcaster, GeofenceBinMsgTest)
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
         base_map_call_count++;
       },
-      [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
+      [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
       std::make_unique<TestTimerFactory>());
   
   /////
@@ -695,10 +787,11 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
         active_call_count.store(active_call_count.load() + 1);
         // atomic is not working for boost::uuids::uuid, so hash it
         last_active_gf.store(boost::hash<boost::uuids::uuid>()(data_received->id_));
-      },
+      }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
       std::make_unique<TestTimerFactory>());
 
-  autoware_lanelet2_msgs::MapBin msg;
+ autoware_lanelet2_msgs::MapBin msg;
   lanelet::utils::conversion::toBinMsg(map, &msg);
   autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(msg));
   // Set the map
@@ -732,10 +825,19 @@ TEST(WMBroadcaster, RegulatoryPCLTest)
   // register the geofence
   cav_msgs::TrafficControlMessage gf_msg;
   gf_msg.choice = cav_msgs::TrafficControlMessage::TCMV01;
+
+  // every control message needs associated control request id
+  cav_msgs::Route route_msg;
+  route_msg.route_path_lanelet_ids.push_back(10000);
+  std::shared_ptr<j2735_msgs::Id64b> req_id = std::make_shared<j2735_msgs::Id64b>(j2735_msgs::Id64b());
+  wmb.controlRequestFromRoute(route_msg, req_id);
+  msg_v01.reqid = *req_id;
+
   gf_msg.tcmV01 = msg_v01;
   testing_forward_direction = true;
-  
+
   wmb.geofenceCallback(gf_msg);
+
   ros::Time::setNow(ros::Time(2.1));  // Set current time
   ASSERT_TRUE(carma_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
   ASSERT_EQ(1, active_call_count.load());
@@ -791,7 +893,8 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
         lanelet::utils::conversion::fromBinMsg(map_bin, map);
         base_map_call_count++;
       },
-      [](const autoware_lanelet2_msgs::MapBin& map_bin) {},
+      [](const autoware_lanelet2_msgs::MapBin& map_bin) {}, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
       std::make_unique<TestTimerFactory>());
 
   autoware_lanelet2_msgs::MapBin msg;
@@ -972,4 +1075,297 @@ TEST(WMBroadcaster, geofenceFromMsgTest)
   ASSERT_TRUE(strcmp(pcl->left_participants_.begin()->data(), lanelet::Participants::VehicleEmergency) == 0);
   
 }
+
+TEST(WMBroadcaster, distToNearestActiveGeofence)
+{
+   // Test adding then evaluate if the calls to active and inactive are done correctly
+  auto gf = std::make_shared<Geofence>(Geofence());
+
+  boost::uuids::uuid curr_id = boost::uuids::random_generator()(); 
+  std::size_t curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
+  gf->id_ = curr_id;
+
+  gf->schedules.push_back(carma_wm_ctrl::GeofenceSchedule(ros::Time(1),  // Schedule between 1 and 8
+                                 ros::Time(8),
+                                 ros::Duration(2),    // Starts at 2
+                                 ros::Duration(1.1),  // Ends at by 3.1
+                                 ros::Duration(0),    // 0 offset for repetition start, so still starts at 2
+                                 ros::Duration(1),    // Duration of 1 and interval of two so active durations are (2-3)
+                                 ros::Duration(2)));
+  // convert to ros msg
+  cav_msgs::TrafficControlMessageV01 msg_v01;
+  std::copy(gf->id_.begin(),  gf->id_.end(), msg_v01.id.id.begin());
+  msg_v01.params.schedule.start = gf->schedules[0].schedule_start_;
+  msg_v01.params.schedule.end = gf->schedules[0].schedule_end_;
+  cav_msgs::DailySchedule daily_schedule;
+  daily_schedule.begin = gf->schedules[0].control_start_;
+  daily_schedule.duration = gf->schedules[0].control_duration_;
+  msg_v01.params.schedule.between.push_back(daily_schedule);
+  msg_v01.params.schedule.repeat.offset =  gf->schedules[0].control_offset_;
+  msg_v01.params.schedule.repeat.span =  gf->schedules[0].control_span_;
+  msg_v01.params.schedule.repeat.period =  gf->schedules[0].control_period_;
+
+  ros::Time::setNow(ros::Time(0));  // Set current time
+
+  // variables needed to test
+  size_t base_map_call_count = 0;
+  std::atomic<uint32_t> map_update_call_count(0);
+  std::atomic<std::size_t> last_active_gf(0);
+  std::atomic<std::size_t> last_inactive_gf(0);
+  bool activated = false;
+
+  WMBroadcaster wmb(
+      [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
+        // Publish map callback
+        lanelet::LaneletMapPtr map(new lanelet::LaneletMap);
+        lanelet::utils::conversion::fromBinMsg(map_bin, map);
+      },
+      [&](const autoware_lanelet2_msgs::MapBin& geofence_bin) {
+        auto data_received = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
+        carma_wm::fromBinMsg(geofence_bin, data_received);
+        map_update_call_count.store(map_update_call_count.load() + 1);
+        // atomic is not working for boost::uuids::uuid, so hash it
+        if (activated)
+          last_active_gf.store(boost::hash<boost::uuids::uuid>()(data_received->id_));
+        if (!activated)
+          last_inactive_gf.store(boost::hash<boost::uuids::uuid>()(data_received->id_));
+      }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
+      std::make_unique<TestTimerFactory>());
+
+  // Get and convert map to binary message
+  auto map = carma_wm::getDisjointRouteMap();
+  autoware_lanelet2_msgs::MapBin msg;
+  lanelet::utils::conversion::toBinMsg(map, &msg);
+  autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(msg));
+
+  // Trigger basemap callback
+  wmb.baseMapCallback(map_msg_ptr);
+
+  // Setting georeferences
+  // geofence's origin (0,0) is at base_map's (10,10)
+  std::string base_map_proj_string, geofence_proj_string;
+  std_msgs::String base_map_proj;
+  base_map_proj_string = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+  geofence_proj_string = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+  base_map_proj.data = base_map_proj_string;
+  wmb.geoReferenceCallback(base_map_proj);
+  
+  cav_msgs::TrafficControlMessage gf_msg;
+  gf_msg.choice = cav_msgs::TrafficControlMessage::TCMV01;
+  // create the geofence request
+  msg_v01.geometry.proj = geofence_proj_string;
+
+  // every control message needs associated control request id
+  cav_msgs::Route route_msg;
+  route_msg.route_path_lanelet_ids.push_back(10000);
+  route_msg.route_path_lanelet_ids.push_back(10001);
+  route_msg.route_path_lanelet_ids.push_back(10002);
+  route_msg.route_path_lanelet_ids.push_back(10003);
+  std::shared_ptr<j2735_msgs::Id64b> req_id = std::make_shared<j2735_msgs::Id64b>(j2735_msgs::Id64b());
+  wmb.controlRequestFromRoute(route_msg, req_id);
+  msg_v01.reqid = *req_id;
+
+  // set the points
+  cav_msgs::PathNode pt;
+  // check points that are inside lanelets
+  pt.x = 1.5; pt.y = 1.5; pt.z = 0; // straight geofence line across 2 lanelets
+  msg_v01.geometry.nodes.push_back(pt);
+  pt.x = 1.5; pt.y = 2.5; pt.z = 0;
+  msg_v01.geometry.nodes.push_back(pt);
+  // update id to continue testing
+  curr_id = boost::uuids::random_generator()(); 
+  curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
+  std::copy(curr_id.begin(), curr_id.end(), msg_v01.id.id.begin());
+
+  msg_v01.params.detail.choice = cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
+  msg_v01.params.detail.maxspeed = 50;
+  gf_msg.tcmV01 = msg_v01;
+
+  // Make sure the geofence is active now
+  ros::Time::setNow(ros::Time(0));
+  activated = true;
+  wmb.geofenceCallback(gf_msg);
+  ros::Time::setNow(ros::Time(2.1));  // Set current time so that geofence is active
+  ASSERT_TRUE(carma_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
+  ASSERT_EQ(1, map_update_call_count.load());
+
+  lanelet::BasicPoint2d curr_pos = {1.5,0.5};
+  double nearest_gf_dist = wmb.distToNearestActiveGeofence(curr_pos);
+  ASSERT_NEAR(nearest_gf_dist, 0.5, 0.0001);
+
+  curr_pos = {0.5,0.5};
+  nearest_gf_dist = wmb.distToNearestActiveGeofence(curr_pos);
+  ASSERT_NEAR(nearest_gf_dist, 1.5, 0.0001);
+
+  curr_pos = {1.5,1.5};  // it is currently on an active geofence
+  nearest_gf_dist = wmb.distToNearestActiveGeofence(curr_pos);
+  ASSERT_NEAR(nearest_gf_dist, 0.5, 0.0001);  // it should point the next
+
+  curr_pos = {1.5,3.5};  // it is currently not on any lanelet
+  EXPECT_THROW(wmb.distToNearestActiveGeofence(curr_pos), std::invalid_argument);
+
+  activated = false;
+  ros::Time::setNow(ros::Time(3.2));  // Geofences deactivate now
+  ASSERT_TRUE(carma_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed, last_inactive_gf));
+  ASSERT_EQ(2, map_update_call_count.load());
+
+  curr_pos = {1.5,1.5};  // it is currently on an active geofence
+  nearest_gf_dist = wmb.distToNearestActiveGeofence(curr_pos);
+  ASSERT_NEAR(nearest_gf_dist, 0, 0.0001);  // it should point the next
+}
+
+
+TEST(WMBroadcaster, currentLocationCallback)
+{
+
+   // Test adding then evaluate if the calls to active and inactive are done correctly
+  auto gf = std::make_shared<Geofence>(Geofence());
+
+  boost::uuids::uuid curr_id = boost::uuids::random_generator()(); 
+  std::size_t curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
+  gf->id_ = curr_id;
+
+  gf->schedules.push_back(carma_wm_ctrl::GeofenceSchedule(ros::Time(1),  // Schedule between 1 and 8
+                                 ros::Time(8),
+                                 ros::Duration(2),    // Starts at 2
+                                 ros::Duration(1.1),  // Ends at by 3.1
+                                 ros::Duration(0),    // 0 offset for repetition start, so still starts at 2
+                                 ros::Duration(1),    // Duration of 1 and interval of two so active durations are (2-3)
+                                 ros::Duration(2)));
+  // convert to ros msg
+  cav_msgs::TrafficControlMessageV01 msg_v01;
+  std::copy(gf->id_.begin(),  gf->id_.end(), msg_v01.id.id.begin());
+  msg_v01.params.schedule.start = gf->schedules[0].schedule_start_;
+  msg_v01.params.schedule.end = gf->schedules[0].schedule_end_;
+  cav_msgs::DailySchedule daily_schedule;
+  daily_schedule.begin = gf->schedules[0].control_start_;
+  daily_schedule.duration = gf->schedules[0].control_duration_;
+  msg_v01.params.schedule.between.push_back(daily_schedule);
+  msg_v01.params.schedule.repeat.offset =  gf->schedules[0].control_offset_;
+  msg_v01.params.schedule.repeat.span =  gf->schedules[0].control_span_;
+  msg_v01.params.schedule.repeat.period =  gf->schedules[0].control_period_;
+
+  ros::Time::setNow(ros::Time(0));  // Set current time
+
+
+
+  
+
+ // variables needed to test
+  std::atomic<uint32_t> map_update_call_count(0);
+  std::atomic<std::size_t> last_active_gf(0);
+  std::atomic<std::size_t> last_inactive_gf(0);
+  bool activated = false;
+
+//Create input message
+  geometry_msgs::PoseStamped input_msg;
+
+  //Input message coordinates
+  input_msg.pose.position.x = 1.5;
+  input_msg.pose.position.y = 1.5;
+  input_msg.pose.position.z = 0.0;
+
+
+
+ size_t base_map_call_count = 0;
+  WMBroadcaster wmb(
+      [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
+        // Publish map callback
+        lanelet::LaneletMapPtr map(new lanelet::LaneletMap);
+        lanelet::utils::conversion::fromBinMsg(map_bin, map);
+      },
+      [&](const autoware_lanelet2_msgs::MapBin& geofence_bin) {
+        auto data_received = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
+        carma_wm::fromBinMsg(geofence_bin, data_received);
+        map_update_call_count.store(map_update_call_count.load() + 1);
+        // atomic is not working for boost::uuids::uuid, so hash it
+        if (activated)
+          last_active_gf.store(boost::hash<boost::uuids::uuid>()(data_received->id_));
+        if (!activated)
+          last_inactive_gf.store(boost::hash<boost::uuids::uuid>()(data_received->id_));
+      }, [](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
+      [](const cav_msgs::CheckActiveGeofence& active_pub_){},
+      std::make_unique<TestTimerFactory>());
+
+   //Test throw exceptions
+  ASSERT_THROW(wmb.currentLocationCallback(input_msg), lanelet::InvalidObjectStateError);
+  ROS_INFO_STREAM("Throw Exceptions Test Passed.");
+
+  // Get and convert map to binary message
+  auto map = carma_wm::getDisjointRouteMap();
+  autoware_lanelet2_msgs::MapBin msg;
+  lanelet::utils::conversion::toBinMsg(map, &msg);
+  autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(msg));
+
+  // Trigger basemap callback
+  wmb.baseMapCallback(map_msg_ptr);
+
+  // Setting georeferences
+  // geofence's origin (0,0) is at base_map's (10,10)
+  std::string base_map_proj_string, geofence_proj_string;
+  std_msgs::String base_map_proj;
+  base_map_proj_string = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+  geofence_proj_string = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+  base_map_proj.data = base_map_proj_string;
+  wmb.geoReferenceCallback(base_map_proj);
+  
+  cav_msgs::TrafficControlMessage gf_msg;
+  gf_msg.choice = cav_msgs::TrafficControlMessage::TCMV01;
+  // create the geofence request
+  msg_v01.geometry.proj = geofence_proj_string;
+
+  // every control message needs associated control request id
+  cav_msgs::Route route_msg;
+  route_msg.route_path_lanelet_ids.push_back(10000);
+  route_msg.route_path_lanelet_ids.push_back(10001);
+  route_msg.route_path_lanelet_ids.push_back(10002);
+  route_msg.route_path_lanelet_ids.push_back(10003);
+  std::shared_ptr<j2735_msgs::Id64b> req_id = std::make_shared<j2735_msgs::Id64b>(j2735_msgs::Id64b());
+  wmb.controlRequestFromRoute(route_msg, req_id);
+  msg_v01.reqid = *req_id;
+
+  // set the points
+  cav_msgs::PathNode pt;
+  // check points that are inside lanelets
+  pt.x = 1.5; pt.y = 1.5; pt.z = 0; // straight geofence line across 2 lanelets
+  msg_v01.geometry.nodes.push_back(pt);
+  pt.x = 1.5; pt.y = 2.5; pt.z = 0;
+  msg_v01.geometry.nodes.push_back(pt);
+  // update id to continue testing
+  curr_id = boost::uuids::random_generator()(); 
+  curr_id_hashed = boost::hash<boost::uuids::uuid>()(curr_id);
+  std::copy(curr_id.begin(), curr_id.end(), msg_v01.id.id.begin());
+
+  msg_v01.params.detail.choice = cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
+  msg_v01.params.detail.maxspeed = 50;
+  gf_msg.tcmV01 = msg_v01;
+
+  // Make sure the geofence is active now
+  ros::Time::setNow(ros::Time(0));
+  activated = true;
+  wmb.geofenceCallback(gf_msg);
+  ros::Time::setNow(ros::Time(2.1));  // Set current time so that geofence is active
+  ASSERT_TRUE(carma_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed, last_active_gf));
+  ASSERT_EQ(1, map_update_call_count.load());
+
+ // wmb.addGeofence(gf);
+
+  std::unordered_set<lanelet::Id> active_geofence_llt_ids;
+ // active_geofence_llt_ids.insert(gf->id_);
+
+  cav_msgs::CheckActiveGeofence check = wmb.checkActiveGeofenceLogic(input_msg);
+  ASSERT_GE(check.distance_to_next_geofence, 0);
+  EXPECT_TRUE(check.type > 0);
+  EXPECT_TRUE(check.is_on_active_geofence);
+
+  activated = false;
+  ros::Time::setNow(ros::Time(3.2));  // Geofences deactivate now
+  ASSERT_TRUE(carma_utils::testing::waitForEqOrTimeout(10.0, curr_id_hashed, last_inactive_gf));
+  ASSERT_EQ(2, map_update_call_count.load());
+
+
+}
+
+
 }  // namespace carma_wm_ctrl

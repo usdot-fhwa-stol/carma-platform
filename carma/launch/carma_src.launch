@@ -46,8 +46,6 @@
   <arg name="simulation_mode" default="false" doc="True if CARMA Platform is launched with CARLA Simulator"/>
 
   <!-- Logging -->
-  <!-- C++ Logging -->
-  <env name="ROSCONSOLE_CONFIG_FILE" value="$(find carma)/launch/log-config/roscpp_log.config"/>
   <!-- ROS Bag -->
   <arg name="use_rosbag" default="true" doc="Record a rosbag"/>
   <arg name="rosbag_exclusions" default="/fake_exclusion" doc="Additonal regex pattern to match for identifying what topics to exclude from rosbag recordings"/>

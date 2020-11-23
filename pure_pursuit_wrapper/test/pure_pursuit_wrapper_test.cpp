@@ -31,11 +31,11 @@ TEST(TrajectoryPlanPointToWaypointConverterTest, test1)
 
     tpp.x = 10;
     tpp.y = 10;
-    tpp.target_time = 1e8;
+    tpp.target_time = ros::Time(0, 10);
 
     tpp2.x = 12;
     tpp2.y = 12;
-    tpp2.target_time = 2e8;
+    tpp2.target_time = ros::Time(0, 20);
 
     waypoint = ppww.TrajectoryPlanPointToWaypointConverter(current_time, current_pose, tpp, tpp2);
 
@@ -46,11 +46,11 @@ TEST(TrajectoryPlanPointToWaypointConverterTest, test1)
 
     tpp.x = 0;
     tpp.y = 0;
-    tpp.target_time = 0;
+    tpp.target_time = ros::Time(0.0);
 
     tpp2.x = 1;
     tpp2.y = -1;
-    tpp2.target_time = 1e8;
+    tpp2.target_time = ros::Time(0, 10);
 
     waypoint = ppww.TrajectoryPlanPointToWaypointConverter(current_time, current_pose, tpp, tpp2);
 

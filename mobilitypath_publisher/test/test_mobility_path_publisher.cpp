@@ -26,7 +26,7 @@ TEST(MobilityPathPublicationTest, test1)
         cav_msgs::TrajectoryPlanPoint point;
         point.x = i;
         point.y = i;
-        point.target_time = i;
+        point.target_time = ros::Time(0,i);
         plan.trajectory_points.push_back(point);
     }
     mobilitypath_publisher::MobilityPathPublication worker;
@@ -54,7 +54,7 @@ TEST(MobilityPathPublicationTest, test2)
     cav_msgs::TrajectoryPlanPoint point;
     point.x = 1;
     point.y = 1;
-    point.target_time = 1;
+    point.target_time = ros::Time(0,1);
     plan.trajectory_points.push_back(point);
     mobilitypath_publisher::MobilityPathPublication worker;
     geometry_msgs::PoseStamped pose;

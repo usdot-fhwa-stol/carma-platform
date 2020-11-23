@@ -19,8 +19,6 @@
 namespace health_monitor
 {
 
-    PluginManager::PluginManager() {}
-
     PluginManager::PluginManager(const std::vector<std::string>& require_plugin_names,
                                  const std::string& service_prefix,
                                  const std::string& strategic_service_suffix,
@@ -81,7 +79,7 @@ namespace health_monitor
     {
         boost::optional<Entry> requested_plugin = em_.get_entry_by_name(msg->name);
         // params: bool available, bool active, std::string name, long timestamp, uint8_t type
-        Entry plugin(msg->available, false, msg->name, 0, msg->type, msg->capability);
+        Entry plugin(msg->available, msg->activated, msg->name, 0, msg->type, msg->capability);
         // if it already exists, we do not change its activation status
         if(requested_plugin)
         {

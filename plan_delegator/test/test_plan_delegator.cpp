@@ -109,11 +109,11 @@
         cav_msgs::TrajectoryPlanPoint point_1;
         point_1.x = 0.0;
         point_1.y = 0.0;
-        point_1.target_time = 0;
+        point_1.target_time = ros::Time(0);
         cav_msgs::TrajectoryPlanPoint point_2;
         point_2.x = 1.0;
         point_2.y = 1.0;
-        point_2.target_time = 1.41421 / PlanDelegatorTest::MILLISECOND_TO_SECOND;
+        point_2.target_time = ros::Time(1.41421);
         traj_plan.trajectory_points.push_back(point_1);
         traj_plan.trajectory_points.push_back(point_2);
         cav_srvs::PlanTrajectory req = pd.composePlanTrajectoryRequest(traj_plan);
@@ -127,7 +127,7 @@
         cav_msgs::TrajectoryPlan res_plan;
         // bool flag = false;
         ros::Publisher maneuver_pub = nh.advertise<cav_msgs::ManeuverPlan>("maneuver_plan", 5);
-        // ros::Subscriber traj_sub = nh.subscribe<cav_msgs::TrajectoryPlan>("trajectory_plan", 5, [&](cav_msgs::TrajectoryPlanConstPtr msg){
+        // ros::Subscriber traj_sub = nh.subscribe<cav_msgs::TrajectoryPlan>("plan_trajectory", 5, [&](cav_msgs::TrajectoryPlanConstPtr msg){
         //     res_plan = msg.get();
             
         // });

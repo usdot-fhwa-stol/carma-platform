@@ -84,7 +84,7 @@ namespace carma_wm {
                 trajectory_pose.orientation.z = orientation.getZ();
                 trajectory_pose.orientation.w = orientation.getW();
 
-                std::tuple <__uint64_t,polygon_t> future_object(tp.trajectory_points[i].target_time,ObjectToBoostPolygon<polygon_t>(trajectory_pose, size));
+                std::tuple <__uint64_t,polygon_t> future_object(tp.trajectory_points[i].target_time.toNSec(),ObjectToBoostPolygon<polygon_t>(trajectory_pose, size));
 
                 v.fp.push_back(future_object);
             }
