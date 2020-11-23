@@ -204,12 +204,15 @@ carma-config__install() {
     echo "Cleaning up temporary container..."
     docker rm carma-config-tmp
 }
-carma__record() {
+carma__fix_bag() {
+    # following script finds the most recently modified .bag.active or .bag file in /opt/carma/logs directory
     last_modified_file="$(find "/opt/carma/logs" -type f \( -name \*.bag.active -o -name \*.bag \) -printf "%T@ %p\0" | awk 'BEGIN {RS="\0";} {if (NR==1){minmtime=$1; $1=""; lastmodified=$0;} else if (minmtime<$1){minmtime=$1; $1=""; lastmodified=$0;}} END{print substr(lastmodified,2)}')"
 
-    printf "The last modified file is named %s\n" "${last_modified_file}"
-
-    if [[ ${last_modified_file} == *.bag.active ]]; then
+    if [[ ${last_modified_file} == *.bag ]]; then
+        printf "The last modified file is named %s\n" "${last_modified_file}"
+        printf "Since it is not .bag.active, there is nothing to fix. Nothing changed.\n"
+    elif [[ ${last_modified_file} == *.bag.active ]]; then
+        printf "The last modified file is named %s\n" "${last_modified_file}"
         rosbag reindex ${last_modified_file}
 
         rosbag_name="$(basename -s .bag.active ${last_modified_file})"
@@ -221,6 +224,9 @@ carma__record() {
         mv ${last_modified_file} "/opt/carma/logs/${rosbag_name}.bag"
 
         printf "Created a rosbag named %s\n" "/opt/carma/logs/${rosbag_name}.bag"
+    elif [[ ${last_modified_file} == "" ]]; then
+
+        printf "There is no .bag.active or .bag files in /opt/carma/logs directory. Nothing changed.\n"
 
     fi
 }
@@ -264,15 +270,15 @@ carma__stop() {
         docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
         'cat /opt/carma/vehicle/config/docker-compose-background.yml' | \
         docker-compose -f - -p carma-background down
-        if [ "$2" = "record" ]; then
-            echo "Saving the last rosbag file..."
-            carma__record
+        if [ "$2" = "fix_bag" ]; then
+            echo "Trying to fix the last rosbag file..."
+            carma__fix_bag
         elif [ ! -z "$2" ]; then
             echo "Unrecognized argument \"stop all $2\""
         fi
-    elif [ "$1" = "record" ]; then
-        echo "Saving the last rosbag file..."
-        carma__record
+    elif [ "$1" = "fix_bag" ]; then
+        echo "Trying to fix the last rosbag file..."
+        carma__fix_bag
     elif [ ! -z "$1" ]; then
         echo "Unrecognized argument \"stop $1\""
     fi
