@@ -26,10 +26,10 @@ namespace trajectory_executor
         cav_msgs::TrajectoryPlan out(plan);
         out.trajectory_points = std::vector<cav_msgs::TrajectoryPlanPoint>();
 
-        uint64_t current_nsec = ros::Time::now().toNSec();
+        ros::Time current_time = ros::Time::now();
 
         for (int i = 0; i < plan.trajectory_points.size(); i++) {
-            if (plan.trajectory_points[i].target_time > current_nsec) {
+            if (plan.trajectory_points[i].target_time > current_time) {
                 out.trajectory_points.push_back(plan.trajectory_points[i]);
             }
         }
@@ -38,9 +38,12 @@ namespace trajectory_executor
     }
 
     TrajectoryExecutor::TrajectoryExecutor(int traj_frequency) :
-        _min_traj_publish_tickrate_hz(traj_frequency) {}
+        _timesteps_since_last_traj(0),
+        _min_traj_publish_tickrate_hz(traj_frequency) { }
 
-    TrajectoryExecutor::TrajectoryExecutor() {}
+    TrajectoryExecutor::TrajectoryExecutor() :
+        _timesteps_since_last_traj(0),
+        _min_traj_publish_tickrate_hz(10) { }
 
     std::map<std::string, std::string> TrajectoryExecutor::queryControlPlugins()
     {
@@ -49,13 +52,10 @@ namespace trajectory_executor
         ROS_DEBUG("Executing stub behavior for plugin discovery MVP...");
         std::map<std::string, std::string> out;
 
-        std::string default_control_plugin;
-        _private_nh->param<std::string>("default_control_plugin", default_control_plugin, "NULL");
+        _private_nh->param<std::string>("default_control_plugin", default_control_plugin_, "NULL");
+        _private_nh->param<std::string>("default_control_plugin_topic", default_control_plugin_topic_, "NULL");
 
-        std::string default_control_plugin_topic;
-        _private_nh->param<std::string>("default_control_plugin_topic", default_control_plugin_topic, "NULL");
-
-        out[default_control_plugin] = default_control_plugin_topic;
+        out[default_control_plugin_] = default_control_plugin_topic_;
         return out;
     }
     
@@ -78,7 +78,17 @@ namespace trajectory_executor
         {
         	_cur_traj= nullptr;
         }
-        
+
+    }
+
+    void TrajectoryExecutor::guidanceStateCb(const cav_msgs::GuidanceStateConstPtr& msg)
+    {
+        std::unique_lock<std::mutex> lock(_cur_traj_mutex);
+        // TODO need to handle control handover once alernative planner system is finished
+        if(msg->state != cav_msgs::GuidanceState::ENGAGED)
+        {
+        	_cur_traj= nullptr;
+        }
     }
 
     void TrajectoryExecutor::onTrajEmitTick(const ros::TimerEvent& te)
@@ -93,6 +103,10 @@ namespace trajectory_executor
             if (!_cur_traj->trajectory_points.empty()) {
                 // Determine the relevant control plugin for the current timestep
                 std::string control_plugin = _cur_traj->trajectory_points[0].controller_plugin_name;
+                // if it instructed to use default control_plugin
+                if (control_plugin == "default" || control_plugin =="")
+                    control_plugin = default_control_plugin_;
+
                 std::map<std::string, ros::Publisher>::iterator it = _traj_publisher_map.find(control_plugin);
                 if (it != _traj_publisher_map.end()) {
                     ROS_DEBUG("Found match for control plugin %s at point %d in current trajectory!",
@@ -149,6 +163,7 @@ namespace trajectory_executor
 
         this->_plan_sub = this->_public_nh->subscribe<const cav_msgs::TrajectoryPlan&>("trajectory", 5, &TrajectoryExecutor::onNewTrajectoryPlan, this);
         this->_state_sub = this->_public_nh->subscribe<cav_msgs::GuidanceState>("state", 5, &TrajectoryExecutor::guidanceStateMonitor, this);
+
         this->_cur_traj = std::unique_ptr<cav_msgs::TrajectoryPlan>();
         ROS_DEBUG("Subscribed to inbound trajectory plans.");
 

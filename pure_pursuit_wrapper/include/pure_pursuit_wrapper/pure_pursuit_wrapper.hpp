@@ -23,7 +23,8 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
-
+#include <cav_msgs/Plugin.h>
+#include <carma_utils/CARMAUtils.h>
 // msgs
 #include <cav_msgs/SystemAlert.h>
 #include <cav_msgs/TrajectoryPlan.h>
@@ -52,10 +53,13 @@ class PurePursuitWrapper {
         /*!
         * Destructor.
         */
-        virtual ~PurePursuitWrapper();
+        virtual ~PurePursuitWrapper() = default;
 
         // @brief ROS initialize.
         void Initialize();
+
+        // @brief Publish plugin info to plugin discovery
+        void PublishPluginDiscovery() const;
         
         // runs publish at a desired frequency
         int rate;
@@ -84,8 +88,12 @@ class PurePursuitWrapper {
         // @brief ROS publishers.
         ros::Publisher way_points_pub_;
         ros::Publisher system_alert_pub_;
+        ros::Publisher pure_pursuit_plugin_discovery_pub_;
 
         PurePursuitWrapperWorker ppww;
+
+        // Plugin discovery message
+        cav_msgs::Plugin plugin_discovery_msg_;
 
         /*!
         * Reads and verifies the ROS parameters.

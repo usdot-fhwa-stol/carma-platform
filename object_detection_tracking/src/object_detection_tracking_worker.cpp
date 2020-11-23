@@ -92,7 +92,7 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
 
     // Binary value to show if the object is static or dynamic (1: dynamic, 0: static)
 
-    if ((abs(obj.velocity.twist.linear.x || obj.velocity.twist.linear.y || obj.velocity.twist.linear.z)) > 0.75)
+    if ((fabs(obj.velocity.twist.linear.x || obj.velocity.twist.linear.y || obj.velocity.twist.linear.z)) > 0.75)
     {
       obj.dynamic_obj = 1;
     }

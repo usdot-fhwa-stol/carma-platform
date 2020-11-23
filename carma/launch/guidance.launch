@@ -59,7 +59,8 @@
 
   <remap from="system_alert" to="/system_alert"/>
 
-  <remap from="/base/lane_waypoints_raw" to="base/lane_waypoints_raw"/>       
+  <remap from="/base/lane_waypoints_raw" to="base/lane_waypoints_raw"/> 
+  <remap from="/based/lane_waypoints_raw" to="base/lane_waypoints_raw"/>      
   <remap from="/lane_waypoints_array" to="lane_waypoints_array"/>
   <remap from="/traffic_waypoints_array" to="traffic_waypoints_array"/>
   <remap from="/red_waypoints_array" to="red_waypoints_array"/>
@@ -74,6 +75,8 @@
   <remap from="maneuver_plan" to="$(optenv CARMA_GUIDE_NS)/arbitrator/final_maneuver_plan"/>
 
   <remap from="semantic_map" to="$(optenv CARMA_ENV_NS)/semantic_map"/>
+  <remap from="map_update" to="$(optenv CARMA_ENV_NS)/map_update"/>
+  <remap from="roadway_objects" to="$(optenv CARMA_ENV_NS)/roadway_objects"/>
 
   <!-- Launch Guidance Main -->
   <include file="$(find guidance)/launch/guidance_main.launch"/>
@@ -97,11 +100,13 @@
 
   <remap from="/vehicle_status" to="$(optenv CARMA_INTR_NS)/vehicle_status"/>
   <remap from="/current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>  
+
+  <!-- Pure Pursuit Wrapper -->
   
-  <!-- MPC Follower Wrapper -->
-  <include file="$(find mpc_follower_wrapper)/launch/mpc_follower_wrapper.launch">
-    <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
-  </include>
+  <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch" />
+
+    <!-- Route Following Plugin -->
+  <include file="$(find route_following_plugin)/launch/route_following_plugin.launch" />
   
   <!-- Twist Filter -->
   <group>
@@ -131,38 +136,24 @@
   </group>
 
   <!-- Planning Stack -->
-  <!-- Waypoint_loader config-->
-  <node pkg="rostopic" type="rostopic" name="config_waypoint_replanner_rostopic"
-        args="pub -l /config/waypoint_replanner autoware_config_msgs/ConfigWaypointReplanner '{replanning_mode: false, velocity_max: 10.0, velocity_min: 1.0, accel_limit: 0.98, decel_limit: 0.98, radius_thresh: 20.0, radius_min: 6.0, resample_mode: true, resample_interval: 1.0, velocity_offset: 4, end_point_offset: 5}' "
-  />
   
-  <!-- Waypoint Loader -->
-  <node pkg="waypoint_maker" type="waypoint_loader" name="waypoint_loader">
-      
-  </node>
-  <node pkg="waypoint_maker" type="waypoint_replanner" name="waypoint_replanner"/>
-  <node pkg="waypoint_maker" type="waypoint_marker_publisher" name="waypoint_marker_publisher" />
+  <!-- Inlanecruising Plugin -->
+  <group>
+    <remap from="final_waypoints" to="base_waypoints"/>
+    <include file="$(find inlanecruising_plugin)/launch/inlanecruising_plugin.launch" />
+  </group>
+  
 
-  <!-- Lane Planner -->
-  <node pkg="lane_planner" type="lane_stop" name="lane_stop"/>
-  <node pkg="lane_planner" type="lane_rule" name="lane_rule"/>
-  <node pkg="lane_planner" type="lane_select" name="lane_select">
-      <remap from="state" to="autoware_state"/>
-  </node>
-
-  <!-- AStar Planner -->
-  <include file="$(find waypoint_planner)/launch/astar_avoid.launch" />
-  <include file="$(find waypoint_planner)/launch/velocity_set.launch" />
-
-  <!-- Autoware Plugin -->
-  <include file="$(find autoware_plugin)/launch/autoware_plugin.launch" />
-
-   <!-- Mobility Path Publisher -->
+  <!-- Route Node -->
+  <include file="$(find route)/launch/route.launch">
+  <!-- Mobility Path Publisher -->
   <include file="$(find mobilitypath_publisher)/launch/mobilitypath_publisher.launch" />
-
-  <!-- Route Generator -->
-  <include file="$(find route_generator)/launch/route_generator.launch">
     <arg name="route_file_folder" value="$(arg route_file_folder)"/>
   </include>
+
+  <!-- Trajectory Plan Speed Visualizer -->
+  <group>
+    <include file="$(find trajectory_visualizer)/launch/trajectory_visualizer.launch" />
+  </group>
 
 </launch>

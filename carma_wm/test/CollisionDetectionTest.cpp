@@ -296,23 +296,23 @@ namespace carma_wm
 
     trajectory_point_1.x = 1.0;
     trajectory_point_1.y = 1.0;
-    trajectory_point_1.target_time = 0.0;
+    trajectory_point_1.target_time = ros::Time(0, 0);
 
     trajectory_point_2.x = 1.0;
     trajectory_point_2.y = 2.0;
-    trajectory_point_2.target_time = 1.0;
+    trajectory_point_2.target_time = ros::Time(0, 1);
 
     trajectory_point_3.x = 1.0;
     trajectory_point_3.y = 3.0;
-    trajectory_point_3.target_time = 2.0;
+    trajectory_point_3.target_time = ros::Time(0, 2);
 
     trajectory_point_4.x = 1.0;
     trajectory_point_4.y = 4.0;
-    trajectory_point_4.target_time = 3.0;
+    trajectory_point_4.target_time = ros::Time(0, 3);
 
     trajectory_point_5.x = 1.0;
     trajectory_point_5.y = 5.0;
-    trajectory_point_5.target_time = 4.0;
+    trajectory_point_5.target_time = ros::Time(0, 4);
 
     tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4, trajectory_point_5};
 
@@ -415,23 +415,23 @@ namespace carma_wm
 
     trajectory_point_1.x = 1.0;
     trajectory_point_1.y = 1.0;
-    trajectory_point_1.target_time = 0.0;
+    trajectory_point_1.target_time = ros::Time(0, 0);
 
     trajectory_point_2.x = 1.0;
     trajectory_point_2.y = 2.0;
-    trajectory_point_2.target_time = 1.0;
+    trajectory_point_2.target_time = ros::Time(0, 1);
 
     trajectory_point_3.x = 1.0;
     trajectory_point_3.y = 3.0;
-    trajectory_point_3.target_time = 2.0;
+    trajectory_point_3.target_time = ros::Time(0, 2);
 
     trajectory_point_4.x = 1.0;
     trajectory_point_4.y = 4.0;
-    trajectory_point_4.target_time = 3.0;
+    trajectory_point_4.target_time = ros::Time(0, 3);
 
     trajectory_point_5.x = 1.0;
     trajectory_point_5.y = 5.0;
-    trajectory_point_5.target_time = 4.0;
+    trajectory_point_5.target_time = ros::Time(0, 4);
 
     tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4, trajectory_point_5};
 

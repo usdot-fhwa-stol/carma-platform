@@ -21,6 +21,7 @@
 #include <math.h>
 #include <ros/ros.h>
 #include <cav_msgs/ManeuverPlan.h>
+#include <cav_msgs/GuidanceState.h>
 #include <cav_srvs/PlanTrajectory.h>
 #include <carma_utils/CARMAUtils.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -50,7 +51,7 @@ namespace plan_delegator
             // constants definition
             static const constexpr double MILLISECOND_TO_SECOND = 0.001;
 
-            PlanDelegator();
+            PlanDelegator() = default;
 
             /**
              * \brief Initialize the plan delegator
@@ -66,6 +67,11 @@ namespace plan_delegator
              * \brief Callback function of maneuver plan subscriber
              */
             void maneuverPlanCallback(const cav_msgs::ManeuverPlanConstPtr& plan);
+
+            /**
+             * \brief Callback function of guidance state subscriber
+             */
+            void guidanceStateCallback(const cav_msgs::GuidanceStateConstPtr& plan);
 
             /**
              * \brief Get PlanTrajectory service client by plugin name and
@@ -87,11 +93,12 @@ namespace plan_delegator
             cav_srvs::PlanTrajectory composePlanTrajectoryRequest(const cav_msgs::TrajectoryPlan& latest_trajectory_plan) const;
 
         protected:
-            
+        
             // ROS params
-            std::string planning_topic_prefix_;
-            std::string planning_topic_suffix_;
-            double spin_rate_, max_trajectory_duration_;
+            std::string planning_topic_prefix_ = "";
+            std::string planning_topic_suffix_ = "";
+            double spin_rate_ = 10.0;
+            double max_trajectory_duration_ = 6.0;
 
             // map to store service clients
             std::unordered_map<std::string, ros::ServiceClient> trajectory_planners_;
@@ -111,6 +118,9 @@ namespace plan_delegator
             ros::Subscriber plan_sub_;
             ros::Subscriber pose_sub_;
             ros::Subscriber twist_sub_;
+            ros::Subscriber guidance_state_sub_;
+
+            bool guidance_engaged = false;
 
             /**
              * \brief Callback function of node spin
