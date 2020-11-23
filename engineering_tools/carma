@@ -505,6 +505,8 @@ Please enter one of the following commands:
         - Stop the CARMA platform's foreground processes. If all, stop 
           everything.
         - Accepts the same flags as "docker-compose down"
+        - fix_bag
+            - After stopping carma, checks if the last run's rosbag has been correctly saved. If not, fixes it to be replayable. 
     exec <optional bash command>
         - Opens a new container with GUI support from the carma-platform or carma-messenger image with the version specified in docker compose. If no version is found it will use latest.
           This container can be used to interact with CARMA using ROS tooling such as Rviz and RQT.
