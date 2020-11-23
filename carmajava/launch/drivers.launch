@@ -27,5 +27,4 @@ If not using simulated drivers they are activated if the respective mock argumen
   <arg name="mock_drivers" default="controller can comms gnss radar lidar camera roadway_sensor" />
   <arg name="vehicle_calibration_dir" default="$(arg vehicle_calibration_dir)"/>
   <!-- File not used in development environment where only mock drivers are used -->
-   <remap from="system_alert" to="/system_alert"/>
 </launch>

@@ -187,6 +187,5 @@
   </include>
   </group>
 
-  <remap from="system_alert" to="/system_alert"/>
 
 </launch>
