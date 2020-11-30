@@ -195,12 +195,11 @@ void LocalizationTransitionTable::signalWhenAWAIT_MANUAL_INITIALIZATION(Localiza
       if (mode_ == LocalizerMode::GNSS)
       {
         setAndLogState(LocalizationState::DEGRADED_NO_LIDAR_FIX, signal);
-      }
-      else
+      } 
+      else 
       {
-        setAndLogState(LocalizationState::AWAIT_MANUAL_INITIALIZATION, signal);
+        setAndLogState(LocalizationState::INITIALIZING, signal);
       }
-      setAndLogState(LocalizationState::INITIALIZING, signal);
       break;
     default:
       logDebugSignal(signal);

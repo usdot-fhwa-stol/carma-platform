@@ -68,7 +68,7 @@ void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedC
                                                const autoware_msgs::NDTStatConstPtr& stats)
 {
   double ndt_freq = computeNDTFreq(pose->header.stamp);
-  ROS_INFO_STREAM("Received pose resulting in frequency value of " << ndt_freq << " with score of " << stats->score);
+  ROS_DEBUG_STREAM("Received pose resulting in frequency value of " << ndt_freq << " with score of " << stats->score);
 
   if (stats->score >= config_.fitness_score_fault_threshold || ndt_freq <= config_.ndt_frequency_fault_threshold)
   {
@@ -167,6 +167,7 @@ void LocalizationManager::stateTransitionCallback(LocalizationState prev_state, 
   {
     case LocalizationState::INITIALIZING:
       gnss_offset_ = boost::none;
+      prev_ndt_stamp_ = boost::none;
 
       current_timer_ = timer_factory_->buildTimer(
           1, ros::Duration((double)config_.auto_initialization_timeout / 1000.0),
