@@ -10,4 +10,4 @@ elif [[ "$SOURCE_BRANCH" =~ ^release/.*$ ]]; then
         Dockerfile
     sed -i "s|--branch .*|--branch $SOURCE_BRANCH|g" \
         docker/checkout.bash
-fiS
+fi
