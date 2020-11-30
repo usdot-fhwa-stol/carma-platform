@@ -21,8 +21,7 @@
 namespace localizer
 {
 // Initialize static values
-const std::unordered_set<std::string> LocalizationManager::LIDAR_FAILURE_STRINGS({ "One LIDAR Failed", "Both LIDARS "
-                                                                                                       "Failed" });
+const std::unordered_set<std::string> LocalizationManager::LIDAR_FAILURE_STRINGS({ "One LIDAR Failed", "Both LIDARS Failed" });
 
 LocalizationManager::LocalizationManager(PosePublisher pose_pub,
                                          StatePublisher state_pub, ManagedInitialPosePublisher initialpose_pub,
@@ -134,7 +133,7 @@ void LocalizationManager::gnssPoseCallback(const geometry_msgs::PoseStampedConst
 void LocalizationManager::initialPoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg)
 {
   transition_table_.signal(LocalizationSignal::INITIAL_POSE);
-  initialpose_pub_(*msg); // Forward the intial pose to the rest of the system
+  initialpose_pub_(*msg); // Forward the initial pose to the rest of the system
 }
 
 void LocalizationManager::systemAlertCallback(const cav_msgs::SystemAlertConstPtr& alert)
