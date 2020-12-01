@@ -52,6 +52,19 @@ FROM usdotfhwastolcandidate/autoware.ai:candidate AS install
 # Copy the source files from the previous stage and build/install
 RUN mkdir ~/carma_ws
 COPY --from=source-code --chown=carma /home/carma/src /home/carma/carma_ws/src
+RUN cd ~/ && \
+    wget https://services.gradle.org/distributions/gradle-4.10.2-bin.zip && \
+    sudo chmod 777 ~/gradle-4.10.2-bin.zip && \
+    mkdir -p /home/carma/.gradle/wrapper/dists/gradle-4.10.2-bin/cghg6c4gf4vkiutgsab8yrnwv/ && \
+    mv ~/gradle-4.10.2-bin.zip /home/carma/.gradle/wrapper/dists/gradle-4.10.2-bin/cghg6c4gf4vkiutgsab8yrnwv/gradle-4.10.2-bin.zip
+
+RUN cd ~/ && \
+    wget https://services.gradle.org/distributions/gradle-2.14.1-bin.zip && \
+    sudo chmod 777 ~/gradle-2.14.1-bin.zip && \
+    mkdir -p /home/carma/.gradle/wrapper/dists/gradle-2.14.1-bin/ && \
+    mv ~/gradle-2.14.1-bin.zip /home/carma/.gradle/wrapper/dists/gradle-2.14.1-bin/gradle-2.14.1-bin.zip
+
+
 RUN ~/carma_ws/src/carma-platform/docker/install.sh
 
 # /////////////////////////////////////////////////////////////////////////////

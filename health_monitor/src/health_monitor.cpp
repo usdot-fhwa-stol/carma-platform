@@ -60,6 +60,36 @@ namespace health_monitor
         car_=false;
         pnh_->getParam("truck", truck_);
         pnh_->getParam("car", car_);
+
+        // Log parameters
+        ROS_INFO_STREAM("Health Monitor Parameters {");
+        ROS_INFO_STREAM("spin_rate_hz: " << spin_rate_);
+        ROS_INFO_STREAM("required_driver_timeout: " << driver_timeout_);
+        ROS_INFO_STREAM("startup_duration: " << startup_duration_);
+        ROS_INFO_STREAM("plugin_service_prefix: " << plugin_service_prefix_);
+        ROS_INFO_STREAM("strategic_plugin_service_suffix: " << strategic_plugin_service_suffix_);
+        ROS_INFO_STREAM("tactical_plugin_service_suffix: " << tactical_plugin_service_suffix_);
+        ROS_INFO_STREAM("truck: " << truck_);
+        ROS_INFO_STREAM("car: " << car_);
+        ROS_INFO_STREAM("required_plugins: [");
+        for(auto p : required_plugins_) {
+            ROS_INFO_STREAM("   " << p);
+        }
+        ROS_INFO_STREAM("  ]");
+
+        ROS_INFO_STREAM("required_drivers: [");
+        for(auto p : required_drivers_) {
+            ROS_INFO_STREAM("   " << p);
+        }
+        ROS_INFO_STREAM("  ]");
+
+        ROS_INFO_STREAM("lidar_gps_drivers: [");
+        for(auto p : lidar_gps_drivers_) {
+            ROS_INFO_STREAM("   " << p);
+        }
+        ROS_INFO_STREAM("  ]");
+        ROS_INFO_STREAM("}");
+        
          
 
         // initialize worker class
