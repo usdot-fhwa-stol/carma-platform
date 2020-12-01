@@ -97,6 +97,8 @@ namespace health_monitor
             }
 
         }
+
+        return -1;
     }
 
 }
