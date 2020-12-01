@@ -176,6 +176,7 @@ namespace health_monitor
         auto dm = driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration);
         if (!prev_alert) {
             prev_alert = dm;
+            nh_->publishSystemAlert(dm);
         } else if (prev_alert->type == dm.type && prev_alert->description.compare(dm.description) == 0) { // Do not publish duplicate alerts
             ROS_DEBUG_STREAM("No change to alert status");
         } else {
