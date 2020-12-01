@@ -46,5 +46,5 @@ else
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch release/Wanderer
       git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch release/Wanderer
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch release/Wanderer
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch fix/gradle
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch release/Wanderer
 fi
