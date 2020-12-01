@@ -34,7 +34,7 @@
 # /////////////////////////////////////////////////////////////////////////////
 
 
-FROM usdotfhwastol/autoware.ai:3.8.2 AS source-code
+FROM usdotfhwastolcandidate/autoware.ai:candidate AS source-code
 
 
 RUN mkdir ~/src
@@ -46,12 +46,14 @@ RUN ~/src/carma-platform/docker/checkout.bash
 # /////////////////////////////////////////////////////////////////////////////
 
 
-FROM usdotfhwastol/autoware.ai:3.8.2 AS install
+FROM usdotfhwastolcandidate/autoware.ai:candidate AS install
 
 
 # Copy the source files from the previous stage and build/install
 RUN mkdir ~/carma_ws
 COPY --from=source-code --chown=carma /home/carma/src /home/carma/carma_ws/src
+
+
 RUN ~/carma_ws/src/carma-platform/docker/install.sh
 
 # /////////////////////////////////////////////////////////////////////////////
@@ -59,7 +61,7 @@ RUN ~/carma_ws/src/carma-platform/docker/install.sh
 # /////////////////////////////////////////////////////////////////////////////
 
 
-FROM usdotfhwastol/autoware.ai:3.8.2
+FROM usdotfhwastolcandidate/autoware.ai:candidate
 
 ARG BUILD_DATE="NULL"
 ARG VCS_REF="NULL"

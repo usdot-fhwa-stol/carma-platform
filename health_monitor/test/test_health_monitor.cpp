@@ -13,13 +13,6 @@ namespace health_monitor
     {
 
         HealthMonitor node;
-        //bool publish_status_c, publish_status_t;
-        auto pub_stat_c = node.getPubStatusCar();
-        for(int i = 0; i< pub_stat_c.size(); i++)
-        {
-            ASSERT_EQ(pub_stat_c[i], false);
-
-        }
         /*Test the published status of each system alert*/
 
         // inordinary case where no critical drivers are specified
@@ -60,27 +53,11 @@ namespace health_monitor
 
         EXPECT_EQ("s_1_l_1_g_1", dm.are_critical_drivers_operational_car(1500));
 
-
-        node.setDriverManager(dm);
-        node.setCarTrue();
-        node.pubStatusLogic(1500);
-        auto pub_vec_c1 = node.getPubStatusCar();
-        ASSERT_EQ(pub_vec_c1[0], true); //Check All driver's ready msg published (Car)
-
-
 }
 
     TEST(HealthMonitorTest, runTest_s_1_l_1_g_0)
     {   
         HealthMonitor node;
-        auto pub_stat_c = node.getPubStatusCar();
-
-        for(int i = 0; i< pub_stat_c.size(); i++)
-        {
-            ASSERT_EQ(pub_stat_c[i], false); //Assert that none of the car's system alerts have been published
-
-        }
-
 
         std::vector<std::string> required_drivers{"controller"};
         std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
@@ -110,12 +87,6 @@ namespace health_monitor
 
         EXPECT_EQ("s_1_l_1_g_0", dm.are_critical_drivers_operational_car(1500));
 
-        node.setCarTrue();
-        node.setDriverManager(dm);
-        node.pubStatusLogic(1500);
-        auto pub_vec_c1 = node.getPubStatusCar();
-        ASSERT_EQ(pub_vec_c1[2], true); //Check System starting up msg published (Car)
-
     }
 
 
@@ -123,12 +94,6 @@ namespace health_monitor
     TEST(HealthMonitorTest, runTest_s_1_l_0_g_1)
     {
         HealthMonitor node;
-        auto pub_stat_c = node.getPubStatusCar();
-
-        for(int i = 0; i< pub_stat_c.size(); i++)
-        {            
-            ASSERT_EQ(pub_stat_c[i], false); //Assert that none of the car's system alerts have been published
-        }
 
         std::vector<std::string> required_drivers{"controller"};
         std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
@@ -158,12 +123,6 @@ namespace health_monitor
 
         EXPECT_EQ("s_1_l_0_g_1", dm.are_critical_drivers_operational_car(1500));
 
-        node.setCarTrue();
-        node.setDriverManager(dm);
-        node.pubStatusLogic(1500);
-        auto pub_vec_c1 = node.getPubStatusCar();
-        ASSERT_EQ(pub_vec_c1[3], true);
-
     }
 
 
@@ -171,11 +130,6 @@ namespace health_monitor
     TEST(HealthMonitorTest, runTest_s_1_l_0_g_0)
     {
          HealthMonitor node;
-        auto pub_stat_c = node.getPubStatusCar();
-        for(int i = 0; i< pub_stat_c.size(); i++)
-        {
-            ASSERT_EQ(pub_stat_c[i], false); //Assert that none of the car's system alerts have been published
-        }
 
         std::vector<std::string> required_drivers{"controller"};
         std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
@@ -204,23 +158,12 @@ namespace health_monitor
         dm.update_driver_status(msg3_pointer, 1000);
 
         EXPECT_EQ("s_1_l_0_g_0", dm.are_critical_drivers_operational_car(1500));
-        node.setCarTrue();
-        node.setDriverManager(dm);
-        node.pubStatusLogic(1500);
-        auto pub_vec_c1 = node.getPubStatusCar();
-        ASSERT_EQ(pub_vec_c1[4], true);
-
 
     }
 
     TEST(HealthMonitorTest, runTest_s_0)
     {
         HealthMonitor node;
-        auto pub_stat_c = node.getPubStatusCar();
-        for(int i = 0; i< pub_stat_c.size(); i++)
-        {
-            ASSERT_EQ(pub_stat_c[i], false); //Assert that none of the car's system alerts have been published
-        }
 
 
         std::vector<std::string> required_drivers{"controller"};
@@ -251,25 +194,13 @@ namespace health_monitor
 
         EXPECT_EQ("s_0", dm.are_critical_drivers_operational_car(1500));
 
-        node.setCarTrue();
-        node.setDriverManager(dm);
-        node.pubStatusLogic(1500);
-        auto pub_vec_c1 = node.getPubStatusCar();
-        ASSERT_EQ(pub_vec_c1[5], true);
     }
 
     TEST(HealthMonitorTest, runTest_s_1_l1_1_l2_1_g_1)
     {
           HealthMonitor node;
-        auto pub_stat_t = node.getPubStatusTruck();
 
-        for(int i = 0; i< pub_stat_t.size(); i++)
-        {
-            ASSERT_EQ(pub_stat_t[i], false); //Assert that none of the truck's system alerts have been published*/
-
-        }
-
-                 std::vector<std::string> required_drivers{"controller"};
+        std::vector<std::string> required_drivers{"controller"};
         std::vector<std::string> lidar_gps_drivers{"lidar1", "lidar2","gps"};
 
         DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
@@ -304,24 +235,11 @@ namespace health_monitor
 
         EXPECT_EQ("s_1_l1_1_l2_1_g_1", dm.are_critical_drivers_operational_truck(1500));
 
-        node.setTruckTrue();
-        node.setDriverManager(dm);
-        node.pubStatusLogic(1500);
-        auto pub_vec_t1 = node.getPubStatusTruck();
-        ASSERT_EQ(pub_vec_t1[0], true); //Check All driver's ready msg published (Truck)
-
     }
 
     TEST(HealthMonitorTest, runTest_s_1_l1_0_l2_1_g_1)
     {
         HealthMonitor node;
-        auto pub_stat_t = node.getPubStatusTruck();
-
-        for(int i = 0; i< pub_stat_t.size(); i++)
-        {
-            ASSERT_EQ(pub_stat_t[i], false); //Assert that none of the truck's system alerts have been published*/
-
-        }
 
 
         std::vector<std::string> required_drivers{"controller"};
@@ -359,24 +277,11 @@ namespace health_monitor
 
         EXPECT_EQ("s_1_l1_0_l2_1_g_1", dm.are_critical_drivers_operational_truck(1500));
 
-        node.setTruckTrue();
-        node.setDriverManager(dm);
-        node.pubStatusLogic(1500);
-        auto pub_vec_t1 = node.getPubStatusTruck();
-        ASSERT_EQ(pub_vec_t1[2], true);
-
     }
 
     TEST(HealthMonitorTest, runTest_s_1_l1_0_l2_1_g_0)
     {
         HealthMonitor node;
-        auto pub_stat_t = node.getPubStatusTruck();
-
-        for(int i = 0; i< pub_stat_t.size(); i++)
-        {
-            ASSERT_EQ(pub_stat_t[i], false); //Assert that none of the truck's system alerts have been published*/
-
-        }
         std::vector<std::string> required_drivers{"controller"};
         std::vector<std::string> lidar_gps_drivers{"lidar1", "lidar2","gps"};
 
@@ -412,24 +317,11 @@ namespace health_monitor
 
         EXPECT_EQ("s_1_l1_0_l2_1_g_0", dm.are_critical_drivers_operational_truck(1500));
 
-        node.setTruckTrue();
-        node.setDriverManager(dm);
-        node.pubStatusLogic(1500);
-        auto pub_vec_t1 = node.getPubStatusTruck();
-        ASSERT_EQ(pub_vec_t1[3], true);
-
     }
 
     TEST(HealthMonitorTest, runTest_s_1_l1_1_l2_1_g_0)
     {
         HealthMonitor node;
-        auto pub_stat_t = node.getPubStatusTruck();
-
-        for(int i = 0; i< pub_stat_t.size(); i++)
-        {
-            ASSERT_EQ(pub_stat_t[i], false); //Assert that none of the truck's system alerts have been published*/
-
-        }
 
         std::vector<std::string> required_drivers{"controller"};
         std::vector<std::string> lidar_gps_drivers{"lidar1", "lidar2","gps"};
@@ -466,25 +358,12 @@ namespace health_monitor
 
         EXPECT_EQ("s_1_l1_1_l2_1_g_0", dm.are_critical_drivers_operational_truck(1500));
 
-        node.setTruckTrue();
-        node.setDriverManager(dm);
-        node.pubStatusLogic(1500);
-        auto pub_vec_t1 = node.getPubStatusTruck();
-        ASSERT_EQ(pub_vec_t1[4], true);
-
 
     }
 
     TEST(HealthMonitorTest, runTest_s_1_l1_0_l2_0_g_1)
     {
         HealthMonitor node;
-        bool publish_status_t;
-        auto pub_stat_t = node.getPubStatusTruck();
-
-        for(int i = 0; i< pub_stat_t.size(); i++)
-        {
-            ASSERT_EQ(pub_stat_t[i], false); //Assert that none of the truck's system alerts have been published*/
-        }
 
         std::vector<std::string> required_drivers{"controller"};
         std::vector<std::string> lidar_gps_drivers{"lidar1", "lidar2","gps"};
@@ -521,24 +400,11 @@ namespace health_monitor
 
         EXPECT_EQ("s_1_l1_0_l2_0_g_1", dm.are_critical_drivers_operational_truck(1500));
 
-        node.setTruckTrue();
-        node.setDriverManager(dm);
-        node.pubStatusLogic(1500);
-        auto pub_vec_t1 = node.getPubStatusTruck();
-        ASSERT_EQ(pub_vec_t1[5], true);
-
     }
 
     TEST(HealthMonitorTest, runTest_s_1_l1_0_l2_0_g_0)
     {
         HealthMonitor node;
-        bool publish_status_t;
-        auto pub_stat_t = node.getPubStatusTruck();
-
-        for(int i = 0; i< pub_stat_t.size(); i++)
-        {
-            ASSERT_EQ(pub_stat_t[i], false); //Assert that none of the truck's system alerts have been published*/
-        }
 
 
         std::vector<std::string> required_drivers{"controller"};
@@ -576,23 +442,11 @@ namespace health_monitor
 
         EXPECT_EQ("s_1_l1_0_l2_0_g_0", dm.are_critical_drivers_operational_truck(1500));
 
-        node.setTruckTrue();
-        node.setDriverManager(dm);
-        node.pubStatusLogic(1500);
-        auto pub_vec_t1 = node.getPubStatusTruck();
-        ASSERT_EQ(pub_vec_t1[6], true);
     }
 
     TEST(HealthMonitorTest, runTest_truck_s_0)
     {
         HealthMonitor node;
-        bool publish_status_t;
-        auto pub_stat_t = node.getPubStatusTruck();
-
-        for(int i = 0; i< pub_stat_t.size(); i++)
-        {
-            ASSERT_EQ(pub_stat_t[i], false); //Assert that none of the truck's system alerts have been published*/
-        }
 
         std::vector<std::string> required_drivers{"controller"};
         std::vector<std::string> lidar_gps_drivers{"lidar1", "lidar2","gps"};
@@ -628,12 +482,6 @@ namespace health_monitor
         dm.update_driver_status(msg4_pointer, 1000);
 
         EXPECT_EQ("s_0", dm.are_critical_drivers_operational_truck(1500));
-
-        node.setTruckTrue();
-        node.setDriverManager(dm);
-        node.pubStatusLogic(1500);
-        auto pub_vec_t1 = node.getPubStatusTruck();
-        ASSERT_EQ(pub_vec_t1[7], true);
 
 
     }
