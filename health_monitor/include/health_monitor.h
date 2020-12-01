@@ -21,6 +21,7 @@
 #include <cav_srvs/PluginActivation.h>
 #include <cav_msgs/Plugin.h>
 #include <cav_msgs/DriverStatus.h>
+#include <boost/optional.hpp>
 #include "plugin_manager.h"
 #include "driver_manager.h"
 
@@ -43,13 +44,6 @@ namespace health_monitor
 
             // spin callback function
             bool spin_cb();
-
-            //Publisher Handling
-            std::vector<bool> getPubStatusCar();
-            std::vector<bool> getPubStatusTruck();
-
-            //Test publish status logic
-            void pubStatusLogic(long time_now);
             
 
 
@@ -104,14 +98,8 @@ namespace health_monitor
             std::string plugin_service_prefix_;
             std::string strategic_plugin_service_suffix_;
             std::string tactical_plugin_service_suffix_;
-            ros::Time start_time_flag_; //Bool for start up time
-
-            //Unit Testing Functions
-            int getStatusTruck(std::string status);
-            int getStatusCar(std::string status);
             
-            //SystemAlert Publishing Status Arrays
-            std::vector<bool>is_published_truck;//Num elements = 8
-            std::vector<bool> is_published_car;//Num elements = 6
+            // Previously published alert message
+            boost::optional<cav_msgs::SystemAlert> prev_alert;
     };
 }
