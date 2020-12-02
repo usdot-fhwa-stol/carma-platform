@@ -208,6 +208,10 @@ public:
    */ 
   Eigen::Isometry2d curvePointInMapTF(const Eigen::Isometry2d& curve_in_map, const lanelet::BasicPoint2d& p, double yaw) const;
 
+  std::vector<double> get_lookahead_speed(const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& speeds, const cav_msgs::VehicleState& state);
+
+  double get_adaptive_lookahead(double velocity);
+
 private:
   carma_wm::WorldModelConstPtr wm_;
   InLaneCruisingPluginConfig config_;
