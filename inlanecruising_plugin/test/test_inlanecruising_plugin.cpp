@@ -231,13 +231,8 @@ TEST(InLaneCruisingPluginTest, get_lookahead_speed)
   std::vector<lanelet::BasicPoint2d> points = { p1, p2, p3, p4 };
   std::vector<double> speeds = {8, 9, 10, 11};
 
-  cav_msgs::VehicleState state;
-  state.X_pos_global = 1.0;
-  state.Y_pos_global = 0.0;
-  state.longitudinal_vel = 5.0;
-
   std::vector<double> out;
-  out = plugin.get_lookahead_speed(points, speeds, state);
+  out = plugin.get_lookahead_speed(points, speeds, 10);
   ASSERT_EQ(4, out.size());
   ASSERT_EQ(9, out[0]);
   ASSERT_EQ(10, out[1]);

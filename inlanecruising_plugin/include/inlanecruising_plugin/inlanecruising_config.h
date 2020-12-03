@@ -29,7 +29,14 @@ struct InLaneCruisingPluginConfig
                                            // Corresponds to saving each nth point.
   double minimum_speed = 2.2352;           // Minimum allowable speed in m/s
   double max_accel = 1.5;                  // Maximum allowable longitudinal acceleration in m/s^2
-  int lookahead_count = 8;                 // Number of points to look ahead for speed reduction.
+  
+  double minimum_lookahead_distance = 5.0; // Minimum value for lookahead distance in m
+  double maximum_lookahead_distance = 25.0;// Maximum value for lookahead distance in m
+  double minimum_lookahead_speed = 2.8;    // Minimum speed value for lookahead calculation in m/s
+  double maximum_lookahead_speed = 13.9;   // Maximum speed value for lookahead calculation in m/s
+  double lookahead_ratio = 2.0;            // ratio to calculate lookahead distance from speed
+  
+
   double lateral_accel_limit = 1.5;        // Maximum allowable lateral acceleration m/s^2
   int moving_average_window_size = 5;      // Size of the window used in the moving average filter to smooth both the
                                            // computed curvature and output speeds
@@ -44,7 +51,11 @@ struct InLaneCruisingPluginConfig
            << "downsample_ratio: " << c.downsample_ratio << std::endl
            << "minimum_speed: " << c.minimum_speed << std::endl
            << "max_accel: " << c.max_accel << std::endl
-           << "lookahead_count: " << c.lookahead_count << std::endl
+           << "minimum_lookahead_distance: " << c.minimum_lookahead_distance << std::endl
+           << "maximum_lookahead_distance: " << c.maximum_lookahead_distance << std::endl
+           << "minimum_lookahead_speed: " << c.minimum_lookahead_speed << std::endl
+           << "maximum_lookahead_speed: " << c.maximum_lookahead_speed << std::endl
+           << "lookahead_ratio: " << c.lookahead_ratio << std::endl
            << "lateral_accel_limit: " << c.lateral_accel_limit << std::endl
            << "moving_average_window_size: " << c.moving_average_window_size << std::endl
            << "curvature_calc_lookahead_count: " << c.curvature_calc_lookahead_count << std::endl

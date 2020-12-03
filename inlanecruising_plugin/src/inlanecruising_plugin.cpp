@@ -343,11 +343,14 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   log::printDoublesPerLineWithPrefix("final_yaw_values[i]: ", final_yaw_values);
 
-  final_actual_speeds = get_lookahead_speed(all_sampling_points, final_actual_speeds, state);
+  // Find Lookahead Distance based on Velocity
+  double lookahead_distance = get_adaptive_lookahead(state.longitudinal_vel);
+
+  ROS_DEBUG_STREAM("Lookahead distance at current speed: " << lookahead_distance);
 
   // Apply lookahead speeds
-  // final_actual_speeds = trajectory_utils::shift_by_lookahead(final_actual_speeds, config_.lookahead_count);
-
+  final_actual_speeds = get_lookahead_speed(all_sampling_points, final_actual_speeds, lookahead_distance);
+  
   // Add current vehicle point to front of the trajectory
   lanelet::BasicPoint2d cur_veh_point(state.X_pos_global, state.Y_pos_global);
   all_sampling_points.insert(all_sampling_points.begin(),
@@ -401,54 +404,51 @@ double InLaneCruisingPlugin::get_adaptive_lookahead(double velocity){
   // 10kph<v<50kph:  0.5*v
   // v>50kph:  25m
 
-  double min_ld = 5.0;
-  double max_ld = 25.0;
-  double v_low = 2.8;
-  double v_high = 13.9;
-  double ratio = 2.0;
-  double lookahead = min_ld;
+  double lookahead = config_.minimum_lookahead_distance;
 
-  if (velocity <= v_low) lookahead = min_ld;
-  else if (velocity >= v_low && velocity < v_high) lookahead = ratio * velocity;
-  else lookahead = max_ld;
+  if (velocity < config_.minimum_lookahead_speed)
+  {
+    lookahead = config_.minimum_lookahead_distance;
+  } 
+  else if (velocity >= config_.minimum_lookahead_speed && velocity < config_.maximum_lookahead_speed)
+  {
+    lookahead = config_.lookahead_ratio * velocity;
+  } 
+  else lookahead = config_.maximum_lookahead_distance;
 
   return lookahead;
 
 }
 
-std::vector<double> InLaneCruisingPlugin::get_lookahead_speed(const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& speeds, const cav_msgs::VehicleState& state){
+std::vector<double> InLaneCruisingPlugin::get_lookahead_speed(const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& speeds, const double& lookahead){
   
+  if (lookahead < config_.minimum_lookahead_distance)
+  {
+    throw std::invalid_argument("Invalid lookahead value");
+  }
+
+
   if (speeds.size() != points.size())
   {
     throw std::invalid_argument("Speeds and Points lists not same size");
   }
 
-  double vel = state.longitudinal_vel;
-  double lookahead = get_adaptive_lookahead(vel);
-
-  double min_dist = 5.0;
-
-  std::vector<double> out;// = speeds;
+  std::vector<double> out;
   out.reserve(speeds.size());
-
-  
 
   for (int i = 0; i < points.size(); i++)
   {
     int idx = i;
-    for (int j=i; j < points.size(); j++){
+    double min_dist = std::numeric_limits<double>::max();
+    for (int j=i+1; j < points.size(); j++){
       double dist = lanelet::geometry::distance2d(points[i],points[j]);
-      if (lookahead - dist <= min_dist){
+      if (abs(lookahead - dist) <= min_dist){
         idx = j;
-        break;
-      }
-      if (j == points.size()-1 ){
-        idx = j;
+        min_dist = abs(lookahead - dist);
       }
     }
     out.push_back(speeds[idx]);
   }
-  
   
   return out;
 }
@@ -579,6 +579,7 @@ int InLaneCruisingPlugin::getNearestPointIndex(const std::vector<PointSpeedPair>
 
   return best_index;
 }
+
 
 void InLaneCruisingPlugin::splitPointSpeedPairs(const std::vector<PointSpeedPair>& points,
                                                 std::vector<lanelet::BasicPoint2d>* basic_points,
