@@ -162,7 +162,8 @@ namespace localizer
 
 	void Localizer::run()
 	{
-        nh_->spin();
+        init();
+		nh_->spin();
 	}
 }
 
