@@ -53,11 +53,11 @@ public:
     pnh.param<double>("curve_resample_step_size", config.curve_resample_step_size, config.curve_resample_step_size);
     pnh.param<int>("downsample_ratio", config.downsample_ratio, config.downsample_ratio);
     pnh.param<double>("minimum_speed", config.minimum_speed, config.minimum_speed);
-    pnh.param<int>("minimum_lookahead_distance", config.minimum_lookahead_distance, config.minimum_lookahead_distance);
-    pnh.param<int>("maximum_lookahead_distance", config.maximum_lookahead_distance, config.maximum_lookahead_distance);
-    pnh.param<int>("minimum_lookahead_speed", config.minimum_lookahead_speed, config.minimum_lookahead_speed);
-    pnh.param<int>("maximum_lookahead_speed", config.maximum_lookahead_speed, config.maximum_lookahead_speed);
-    pnh.param<int>("lookahead_ratio", config.lookahead_ratio, config.lookahead_ratio);
+    pnh.param<double>("minimum_lookahead_distance", config.minimum_lookahead_distance, config.minimum_lookahead_distance);
+    pnh.param<double>("maximum_lookahead_distance", config.maximum_lookahead_distance, config.maximum_lookahead_distance);
+    pnh.param<double>("minimum_lookahead_speed", config.minimum_lookahead_speed, config.minimum_lookahead_speed);
+    pnh.param<double>("maximum_lookahead_speed", config.maximum_lookahead_speed, config.maximum_lookahead_speed);
+    pnh.param<double>("lookahead_ratio", config.lookahead_ratio, config.lookahead_ratio);
     pnh.param<int>("moving_average_window_size", config.moving_average_window_size,
                      config.moving_average_window_size);
     pnh.param<double>("/vehicle_acceleration_limit", config.max_accel, config.max_accel);
