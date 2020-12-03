@@ -85,9 +85,12 @@ namespace localizer
 		if (gnss_initialized_)
 		{
 			// check if timeout
-			if (gnss_operational_ && (ros::Time::now() - gnss_last_received_).toSec() > double(gnss_time_out_ / 1000))
+			if (gnss_operational_ && (ros::Time::now() - gnss_last_received_).toSec() > (double)gnss_time_out_ / 1000.0)
 			{
 				ROS_WARN_STREAM("GNSS has timed out since:" << gnss_last_received_);
+				ROS_WARN_STREAM("time difference:" << (ros::Time::now() - gnss_last_received_).toSec());
+				ROS_WARN_STREAM("timeout:" << (double)gnss_time_out_);
+				
 				gnss_operational_ = false;
 			}
 			// try to switch to ndt if gnss not operational
@@ -99,14 +102,13 @@ namespace localizer
 			else if (!gnss_operational_ && !ndt_operational_) //if both not operational although initialized
 			{
 				ROS_ERROR_STREAM("Both NDT and GNSS have timed out! Please take manual control!");
-				return false;
 			}
 		}
 
 		if (ndt_initialized_)
 		{
 			// check if timeout
-			if (ndt_operational_ && (ros::Time::now() - ndt_last_received_).toSec() > double(ndt_time_out_ / 1000))
+			if (ndt_operational_ && (ros::Time::now() - ndt_last_received_).toSec() > (double)ndt_time_out_ / 1000)
 			{
 				ROS_WARN_STREAM("NDT has timed out since:" << ndt_last_received_);
 				ndt_operational_ = false;
@@ -120,13 +122,20 @@ namespace localizer
 			else if (!gnss_operational_ && !ndt_operational_) //if both not operational although initialized
 			{
 				ROS_ERROR_STREAM("Both NDT and GNSS have timed out! Please take manual control!");
-				return false;
 			}
 		}
 		return true;
 	}
 
-	void Localizer::run()
+	void Localizer::reportStatus(bool& gnss_operational,bool&  ndt_operational ,bool&  gnss_initialized ,bool&  ndt_initialized)
+	{
+		gnss_operational = gnss_operational_;
+		ndt_operational = ndt_operational_;
+		gnss_initialized = gnss_initialized_;
+		ndt_initialized = ndt_initialized_;
+	}
+
+	void Localizer::init()
 	{
 		// initialize node handles
 		nh_.reset(new ros::CARMANodeHandle());
@@ -136,8 +145,8 @@ namespace localizer
 		pnh_->param<double>("score_upper_limit", score_upper_limit_, 2.0);
 		pnh_->param<int>("unreliable_message_upper_limit", unreliable_message_upper_limit_, 3);
 		pnh_->param<int>("localization_mode", localization_mode_, 0);
-		pnh_->param<int>("gnss_pose_timeout", gnss_time_out_, 2000);
-		pnh_->param<int>("ndt_pose_timeout", ndt_time_out_, 2000);
+		pnh_->param<int>("gnss_pose_timeout", gnss_time_out_, 1500);
+		pnh_->param<int>("ndt_pose_timeout", ndt_time_out_, 1500);
 		// initialize counter
 		counter = NDTReliabilityCounter(score_upper_limit_, unreliable_message_upper_limit_);
 		// initialize subscribers
@@ -149,6 +158,10 @@ namespace localizer
         // spin
         nh_->setSpinRate(spin_rate_);
 		nh_->setSpinCallback(std::bind(&Localizer::spinCallback, this));
+	}
+
+	void Localizer::run()
+	{
         nh_->spin();
 	}
 }

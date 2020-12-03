@@ -1,3 +1,6 @@
+#ifndef LOCALIZER_H
+#define LOCALIZER_H
+
 /*
  * Copyright (C) 2019-2020 LEIDOS.
  *
@@ -41,7 +44,18 @@ namespace localizer
             Localizer();
 
             // general starting point of this node
+            void init();
+
             void run();
+
+            // callbacks
+            void ndtPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
+            void gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
+            void ndtScoreCallback(const autoware_msgs::NDTStatConstPtr& msg);
+            bool spinCallback();
+
+            // debug
+            void reportStatus(bool& gnss_operational,bool&  ndt_operational ,bool&  gnss_initialized ,bool&  ndt_initialized);
 
         private:
 
@@ -72,12 +86,6 @@ namespace localizer
             // reliability counter
             NDTReliabilityCounter counter;
 
-            // callbacks
-            void ndtPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
-            void gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
-            void ndtScoreCallback(const autoware_msgs::NDTStatConstPtr& msg);
-            bool spinCallback();
-
             // helper function
             void publishPoseStamped(const geometry_msgs::PoseStampedConstPtr& msg);
             void publishTransform(const geometry_msgs::PoseStampedConstPtr& msg);
@@ -96,3 +104,6 @@ namespace localizer
     };
 	
 }
+
+
+#endif // LOCALIZER_H

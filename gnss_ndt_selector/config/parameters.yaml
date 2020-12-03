@@ -9,11 +9,11 @@ unreliable_message_upper_limit: 3
 
 # Integer: Maximum allowed time for failed gnss before using ndt_pose
 # Units: ms
-gnss_pose_timeout: 2000
+gnss_pose_timeout: 1500
 
 # Integer: Maximum allowed time for failed ndt before using gnss_pose
 # Units: ms
-ndt_pose_timeout: 2000
+ndt_pose_timeout: 1500
 
 # localization mode for the platform
 # 0 - ndt only
