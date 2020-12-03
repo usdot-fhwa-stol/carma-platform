@@ -76,6 +76,7 @@ namespace localizer
             void ndtPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
             void gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
             void ndtScoreCallback(const autoware_msgs::NDTStatConstPtr& msg);
+            bool spinCallback();
 
             // helper function
             void publishPoseStamped(const geometry_msgs::PoseStampedConstPtr& msg);

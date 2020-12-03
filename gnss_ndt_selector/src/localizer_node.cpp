@@ -79,7 +79,7 @@ namespace localizer
 		}
 	}
 
-	void Localizer::spinCallback()
+	bool Localizer::spinCallback()
 	{
 		// once initialized check if sensors are timeout
 		if (gnss_initialized_)
@@ -93,12 +93,13 @@ namespace localizer
 			// try to switch to ndt if gnss not operational
 			if (!gnss_operational_ && ndt_operational_)
 			{
+				ROS_WARN_STREAM("Since GNSS has timed out, switching to NDT");
 				localization_mode_ = LocalizerMode::NDT;
 			}
 			else if (!gnss_operational_ && !ndt_operational_) //if both not operational although initialized
 			{
 				ROS_ERROR_STREAM("Both NDT and GNSS have timed out! Please take manual control!");
-				return;
+				return false;
 			}
 		}
 
@@ -111,22 +112,18 @@ namespace localizer
 				ndt_operational_ = false;
 			}
 			// try to switch to gnss if ndt not operational
-			if (!gnss_operational_ && ndt_operational_)
+			if (!ndt_operational_ && gnss_operational_)
 			{
-				localization_mode_ = LocalizerMode::NDT;
+				ROS_WARN_STREAM("Since NDT has timed out, switching to GNSS");
+				localization_mode_ = LocalizerMode::GNSS;
 			}
 			else if (!gnss_operational_ && !ndt_operational_) //if both not operational although initialized
 			{
 				ROS_ERROR_STREAM("Both NDT and GNSS have timed out! Please take manual control!");
-				return;
+				return false;
 			}
 		}
-
-		if (ndt_operational_ || gnss_operational_) 
-		{
-			ROS_WARN_STREAM("Since GNSS has timed out, switching to:" << gnss_last_received_)
-			localization_mode_ = LocalizerMode::NDT;
-		}
+		return true;
 	}
 
 	void Localizer::run()
