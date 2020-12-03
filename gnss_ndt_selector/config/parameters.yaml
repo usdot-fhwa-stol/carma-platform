@@ -7,8 +7,18 @@ score_upper_limit: 60.0
 # num of message thredhold to determin if ndt node is reliable or not
 unreliable_message_upper_limit: 3
 
+# Integer: Maximum allowed time for failed gnss before using ndt_pose
+# Units: ms
+gnss_pose_timeout: 1500
+
+# Integer: Maximum allowed time for failed ndt before using gnss_pose
+# Units: ms
+ndt_pose_timeout: 1500
+
 # localization mode for the platform
 # 0 - ndt only
 # 1 - GNSS only
 # 2 - auto select between ndt and GNSS
 localization_mode: 2
+
+
