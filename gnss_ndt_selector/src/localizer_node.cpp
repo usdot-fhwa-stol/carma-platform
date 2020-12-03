@@ -85,7 +85,7 @@ namespace localizer
 		if (gnss_initialized_)
 		{
 			// check if timeout
-			if (gnss_operational_ && (ros::Time::now() - gnss_last_received_).toSec() > (double)gnss_time_out_ / 1000.0)
+			if (gnss_operational_ && (ros::Time::now() - gnss_last_received_).toSec() > (double)(gnss_time_out_) / 1000.0)
 			{
 				ROS_WARN_STREAM("GNSS has timed out since:" << gnss_last_received_);
 				ROS_WARN_STREAM("time difference:" << (ros::Time::now() - gnss_last_received_).toSec());
@@ -108,7 +108,7 @@ namespace localizer
 		if (ndt_initialized_)
 		{
 			// check if timeout
-			if (ndt_operational_ && (ros::Time::now() - ndt_last_received_).toSec() > (double)ndt_time_out_ / 1000)
+			if (ndt_operational_ && (ros::Time::now() - ndt_last_received_).toSec() > (double)(ndt_time_out_) / 1000.0)
 			{
 				ROS_WARN_STREAM("NDT has timed out since:" << ndt_last_received_);
 				ndt_operational_ = false;
