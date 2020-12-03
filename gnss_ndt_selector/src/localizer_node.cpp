@@ -44,7 +44,11 @@ namespace localizer
 
     void Localizer::ndtPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
 	{
-        if(localization_mode_ == LocalizerMode::NDT)
+        ndt_initialized_ = true;
+		ndt_operational_ = true;
+		ndt_last_received_ = ros::Time::now();
+
+		if(localization_mode_ == LocalizerMode::NDT)
         {
             publishPoseStamped(msg);
         } else if(localization_mode_ == LocalizerMode::AUTO &&
@@ -61,6 +65,10 @@ namespace localizer
 
 	void Localizer::gnssPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg)
 	{
+		gnss_initialized_ = true;
+		gnss_operational_ = true;
+		gnss_last_received_ = ros::Time::now();
+
 		if(localization_mode_ == LocalizerMode::GNSS)
 		{
 			publishPoseStamped(msg);
@@ -68,6 +76,56 @@ namespace localizer
 					counter.getNDTReliabilityCounter() > unreliable_message_upper_limit_)
 		{
 			publishPoseStamped(msg);
+		}
+	}
+
+	void Localizer::spinCallback()
+	{
+		// once initialized check if sensors are timeout
+		if (gnss_initialized_)
+		{
+			// check if timeout
+			if (gnss_operational_ && (ros::Time::now() - gnss_last_received_).toSec() > double(gnss_time_out_ / 1000))
+			{
+				ROS_WARN_STREAM("GNSS has timed out since:" << gnss_last_received_);
+				gnss_operational_ = false;
+			}
+			// try to switch to ndt if gnss not operational
+			if (!gnss_operational_ && ndt_operational_)
+			{
+				localization_mode_ = LocalizerMode::NDT;
+			}
+			else if (!gnss_operational_ && !ndt_operational_) //if both not operational although initialized
+			{
+				ROS_ERROR_STREAM("Both NDT and GNSS have timed out! Please take manual control!");
+				return;
+			}
+		}
+
+		if (ndt_initialized_)
+		{
+			// check if timeout
+			if (ndt_operational_ && (ros::Time::now() - ndt_last_received_).toSec() > double(ndt_time_out_ / 1000))
+			{
+				ROS_WARN_STREAM("NDT has timed out since:" << ndt_last_received_);
+				ndt_operational_ = false;
+			}
+			// try to switch to gnss if ndt not operational
+			if (!gnss_operational_ && ndt_operational_)
+			{
+				localization_mode_ = LocalizerMode::NDT;
+			}
+			else if (!gnss_operational_ && !ndt_operational_) //if both not operational although initialized
+			{
+				ROS_ERROR_STREAM("Both NDT and GNSS have timed out! Please take manual control!");
+				return;
+			}
+		}
+
+		if (ndt_operational_ || gnss_operational_) 
+		{
+			ROS_WARN_STREAM("Since GNSS has timed out, switching to:" << gnss_last_received_)
+			localization_mode_ = LocalizerMode::NDT;
 		}
 	}
 
@@ -81,6 +139,8 @@ namespace localizer
 		pnh_->param<double>("score_upper_limit", score_upper_limit_, 2.0);
 		pnh_->param<int>("unreliable_message_upper_limit", unreliable_message_upper_limit_, 3);
 		pnh_->param<int>("localization_mode", localization_mode_, 0);
+		pnh_->param<int>("gnss_pose_timeout", gnss_time_out_, 2000);
+		pnh_->param<int>("ndt_pose_timeout", ndt_time_out_, 2000);
 		// initialize counter
 		counter = NDTReliabilityCounter(score_upper_limit_, unreliable_message_upper_limit_);
 		// initialize subscribers
@@ -91,6 +151,7 @@ namespace localizer
 		pose_pub_ = nh_->advertise<geometry_msgs::PoseStamped>("selected_pose", 5);
         // spin
         nh_->setSpinRate(spin_rate_);
+		nh_->setSpinCallback(std::bind(&Localizer::spinCallback, this));
         nh_->spin();
 	}
 }

@@ -81,6 +81,17 @@ namespace localizer
             void publishPoseStamped(const geometry_msgs::PoseStampedConstPtr& msg);
             void publishTransform(const geometry_msgs::PoseStampedConstPtr& msg);
 
+            // time stamps when last messages were received to check if sensors failed
+            ros::Time gnss_last_received_, ndt_last_received_;
+
+            // timeout for sensors before switching to one another (ms)
+            int gnss_time_out_, ndt_time_out_;
+
+            // indicators whether if sensors are working
+            bool gnss_operational_ = false, ndt_operational_ = false, gnss_initialized_ = false, ndt_initialized_ = false;
+
+
+
     };
 	
 }
