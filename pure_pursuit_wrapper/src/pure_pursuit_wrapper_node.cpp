@@ -23,7 +23,7 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "pure_pursuit_wrapper_node");
   ros::CARMANodeHandle nh;
 
-  ros::Publisher waypoints_pub = nh.advertise<autoware_msgs::Lane>("final_waypoints", 1, true);
+  ros::Publisher waypoints_pub = nh.advertise<autoware_msgs::Lane>("final_waypoints", 10, true);
 
   ros::Publisher discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
 

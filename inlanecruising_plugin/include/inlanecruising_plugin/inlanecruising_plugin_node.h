@@ -62,7 +62,7 @@ public:
                         config.curvature_calc_lookahead_count);
 
     ROS_INFO_STREAM("InLaneCruisingPlugin Params" << config);
-    
+    ROS_WARN_STREAM("is CONFIG WORKING?speed:" << config.minimum_speed );
     InLaneCruisingPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); });
 
     ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/InLaneCruisingPlugin/plan_trajectory",

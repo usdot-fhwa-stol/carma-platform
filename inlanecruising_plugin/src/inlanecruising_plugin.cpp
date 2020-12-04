@@ -84,7 +84,9 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
   trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state); // Compute the trajectory
+  ROS_WARN_STREAM(">>>>>> speeds: vehicle_state.long+vel:" << req.vehicle_state.longitudinal_vel << "config: " << config_.minimum_speed);
   trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
+  ROS_WARN_STREAM(">>>>>> selected speed:" << trajectory.initial_longitudinal_velocity);
 
   resp.trajectory_plan = trajectory;
   resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_FOLLOWING);
