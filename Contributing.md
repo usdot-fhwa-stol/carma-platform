@@ -69,7 +69,7 @@ Welcome to the CARMAPlatform contributing guide. There are a few guidelines that
 **We want your help to make CARMA Platform Project great.**
 * All pull requests will be reviewed by the CARMAPlatform team. 
 * During the review of your pull request the team member will either merge it, request changes to it, or close it with an explanation. 
-    * Remember: we are unable to add unstested code to CARMA, as it will add to the CARMA team's technical debt.
+    * Remember: we are unable to add untested code to CARMA, as it will add to the CARMA team's technical debt.
 * For major changes the reviewer may require additional support from the team, which could cause some delay. 
 * We'll do our best to provide updates and feedback throughout the process. 
 * Feel free to open pull requests, and the CARMAPlatform team will communicate through it with any comments.
