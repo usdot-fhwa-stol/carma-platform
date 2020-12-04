@@ -13,7 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+#include <limits>
+#include <math.h>
 #include "route_generator_worker.h"
 
 namespace route {
@@ -238,6 +239,45 @@ namespace route {
         return map_points;
     }
 
+ void RouteGeneratorWorker::routeVisualizer(const vecror<lanelet::Point3d>& msg)
+    {
+        route_marker_msg_.markers={};
+
+        if (msg.size() == 0)
+        {
+            ROS_WARN_STREAM("No central line points! Returning");
+        }
+        //visualization_msgs::MarkerArray tmp_marker_array; route_marker_msg_
+        // display by markers the velocity between each trajectory point/target time.
+        visualization_msgs::Marker marker;
+        marker.header.frame_id = "map";
+        marker.header.stamp = ros::Time();
+        marker.type = visualization_msgs::Marker::SPHERE;//
+        marker.action = visualization_msgs::Marker::ADD;
+        marker.ns = "route_visualizer";
+
+        marker.scale.x = 0.5;
+        marker.scale.y = 0.5;
+        marker.scale.z = 0;
+        marker.frame_locked = true;
+ 
+        for (size_t i = 0; i < msg.size(); i++)
+        {
+            marker.id = i;
+
+            marker.color.r = 1.0f;
+            marker.color.g = 1.0f;
+            marker.color.b = 1.0f;
+            marker.color.a = 1.0f;
+
+            marker.pose.position.x = msg[i].x;
+            marker.pose.position.y = msg[i].y;
+            
+            route_marker_msg_.markers.push_back(marker);
+        }
+
+    }
+
     cav_msgs::Route RouteGeneratorWorker::compose_route_msg(const lanelet::Optional<lanelet::routing::Route>& route) const
     {
         cav_msgs::Route msg;
@@ -245,7 +285,13 @@ namespace route {
         for(const auto& ll : route.get().shortestPath())
         {
             msg.shortest_path_lanelet_ids.push_back(ll.id());
+
+            for(auto pt: ll.centerline())
+            {
+				points_.push_back(pt);
+            }
         }
+        routeVisualizer(points_);
         // iterate thought the all lanelet in the route to populat route_path_lanelet_ids
         for(const auto& ll : route.get().laneletSubmap()->laneletLayer)
         {
@@ -328,11 +374,12 @@ namespace route {
         }
     }
 
-    void RouteGeneratorWorker::set_publishers(ros::Publisher route_event_pub, ros::Publisher route_state_pub, ros::Publisher route_pub)
+    void RouteGeneratorWorker::set_publishers(ros::Publisher route_event_pub, ros::Publisher route_state_pub, ros::Publisher route_pub,ros::Publisher route_marker_pub)
     {
         route_event_pub_ = route_event_pub;
         route_state_pub_ = route_state_pub;
         route_pub_ = route_pub;
+        route_marker_pub_= route_marker_pub;
     }
 
     void RouteGeneratorWorker::set_ctdt_param(double ct_max_error, double dt_dest_range)
@@ -352,6 +399,7 @@ namespace route {
         if(new_route_msg_generated_)
         {
             route_pub_.publish(route_msg_);
+            route_marker_pub_.publish(route_marker_msg_);
             new_route_msg_generated_ = false;
         }
         // publish route state messsage if a route is selected

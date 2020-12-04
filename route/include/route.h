@@ -19,6 +19,7 @@
 #include <ros/ros.h>
 #include <std_msgs/String.h>
 #include <carma_utils/CARMAUtils.h>
+#include <visualization_msgs/MarkerArray.h>
 
 #include "route_generator_worker.h"
 
@@ -66,6 +67,7 @@ namespace route {
         ros::Publisher route_pub_;
         ros::Publisher route_state_pub_;
         ros::Publisher route_event_pub_;
+        ros::Publisher route_marker_pub_;
 
         // subscriber to current pose in the map
         ros::Subscriber pose_sub_;
