@@ -239,7 +239,7 @@ namespace route {
         return map_points;
     }
 
- void RouteGeneratorWorker::routeVisualizer(const std::vector<lanelet::Point3d>& msg)
+ void RouteGeneratorWorker::routeVisualizer(const std::vector<lanelet::ConstPoint3d>& msg)
     {
         route_marker_msg_.markers={};
 
@@ -261,7 +261,7 @@ namespace route {
         marker.scale.z = 0.5;
         marker.frame_locked = true;
  
-        for (size_t i = 0; i < msg.size(); i++)
+        for (size_t i = 0; i < msg.size(); i=i+5)
         {
             marker.id = i;
 
@@ -272,7 +272,6 @@ namespace route {
 
             marker.pose.position.x = msg[i].x();
             marker.pose.position.y = msg[i].y();
-            ROS_ERROR_STREAM("x" << msg[i].x() << "y" << msg[i].y());
             marker.pose.orientation.x = 0.0;
             marker.pose.orientation.y = 0.0;
             marker.pose.orientation.z = 0.0;
@@ -293,9 +292,9 @@ namespace route {
         {
             msg.shortest_path_lanelet_ids.push_back(ll.id());
 
-            for(auto constpt: ll.centerline())
+            for(const auto& pt : ll.centerline())
             {
-                lanelet::Point3d pt{constpt.x(),constpt.y(), 0};
+                //lanelet::Point3d pt{constpt.x(),constpt.y(), 0};
                 
                 points_.push_back(pt);
             }
