@@ -141,7 +141,7 @@ namespace route {
          * \brief Helper function to generate a CARMA route message based on planned lanelet route
          * \param route Route object from lanelet2 lib routing function
          */
-        cav_msgs::Route compose_route_msg(const lanelet::Optional<lanelet::routing::Route>& route) const;
+        cav_msgs::Route compose_route_msg(const lanelet::Optional<lanelet::routing::Route>& route);
 
         /**
          * \brief Spin callback which will be called frequently based on spin rate
@@ -151,7 +151,7 @@ namespace route {
          * \brief routeVisualizer is a function to generate route rviz markers
          * \param cav_msgs::TrajectoryPlan centerline points
          */
-        void routeVisualizer(const lanelet::Point3d& msg);
+        void routeVisualizer(const std::vector<lanelet::Point3d>&msg);
 
     private:
 
@@ -174,7 +174,7 @@ namespace route {
         cav_msgs::RouteEvent route_event_msg_;
         cav_msgs::RouteState route_state_msg_;
         visualization_msgs::MarkerArray route_marker_msg_;
-        vector<lanelet::Point3d> points_; 
+        std::vector<lanelet::Point3d> points_; 
         size_t prev_marker_list_size_ = 0;
 
         // we are not saving every trajectory history at this point

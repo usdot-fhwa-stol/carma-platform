@@ -239,7 +239,7 @@ namespace route {
         return map_points;
     }
 
- void RouteGeneratorWorker::routeVisualizer(const vecror<lanelet::Point3d>& msg)
+ void RouteGeneratorWorker::routeVisualizer(const std::vector<lanelet::Point3d>& msg)
     {
         route_marker_msg_.markers={};
 
@@ -270,15 +270,15 @@ namespace route {
             marker.color.b = 1.0f;
             marker.color.a = 1.0f;
 
-            marker.pose.position.x = msg[i].x;
-            marker.pose.position.y = msg[i].y;
+            marker.pose.position.x = msg[i].x();
+            marker.pose.position.y = msg[i].y();
             
             route_marker_msg_.markers.push_back(marker);
         }
 
     }
 
-    cav_msgs::Route RouteGeneratorWorker::compose_route_msg(const lanelet::Optional<lanelet::routing::Route>& route) const
+    cav_msgs::Route RouteGeneratorWorker::compose_route_msg(const lanelet::Optional<lanelet::routing::Route>& route)
     {
         cav_msgs::Route msg;
         // iterate thought the shortest path to populat shortest_path_lanelet_ids
@@ -286,9 +286,10 @@ namespace route {
         {
             msg.shortest_path_lanelet_ids.push_back(ll.id());
 
-            for(auto pt: ll.centerline())
+            for(auto constpt: ll.centerline())
             {
-				points_.push_back(pt);
+                lanelet::Point3d pt{constpt.x(),constpt.y(), 0};
+                points_.push_back(pt);
             }
         }
         routeVisualizer(points_);
