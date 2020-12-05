@@ -258,7 +258,7 @@ namespace route {
 
         marker.scale.x = 0.5;
         marker.scale.y = 0.5;
-        marker.scale.z = 0;
+        marker.scale.z = 0.5;
         marker.frame_locked = true;
  
         for (size_t i = 0; i < msg.size(); i++)
