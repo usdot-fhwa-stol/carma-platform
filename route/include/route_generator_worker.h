@@ -199,6 +199,7 @@ namespace route {
 
         // a bool flag indicates a new route has been generated such that a local copy of Route message should be published again
         bool new_route_msg_generated_ = false;
+        bool new_route_marker_generated_ = false;
 
         // a queue of route event. All events in the queue will be published in order on each spin.
         std::queue<uint8_t> route_event_queue;

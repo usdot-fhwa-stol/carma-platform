@@ -272,15 +272,22 @@ namespace route {
 
             marker.pose.position.x = msg[i].x();
             marker.pose.position.y = msg[i].y();
+            ROS_ERROR_STREAM("x" << msg[i].x() << "y" << msg[i].y());
+            marker.pose.orientation.x = 0.0;
+            marker.pose.orientation.y = 0.0;
+            marker.pose.orientation.z = 0.0;
+            marker.pose.orientation.w = 1.0;
             
             route_marker_msg_.markers.push_back(marker);
         }
+        new_route_marker_generated_ = true;
 
     }
 
     cav_msgs::Route RouteGeneratorWorker::compose_route_msg(const lanelet::Optional<lanelet::routing::Route>& route)
     {
         cav_msgs::Route msg;
+        points_ = {}; // clear points
         // iterate thought the shortest path to populat shortest_path_lanelet_ids
         for(const auto& ll : route.get().shortestPath())
         {
@@ -289,9 +296,11 @@ namespace route {
             for(auto constpt: ll.centerline())
             {
                 lanelet::Point3d pt{constpt.x(),constpt.y(), 0};
+                
                 points_.push_back(pt);
             }
         }
+
         routeVisualizer(points_);
         // iterate thought the all lanelet in the route to populat route_path_lanelet_ids
         for(const auto& ll : route.get().laneletSubmap()->laneletLayer)
@@ -397,11 +406,12 @@ namespace route {
     bool RouteGeneratorWorker::spin_callback()
     {
         // publish new route and set new route flag back to false
-        if(new_route_msg_generated_)
+        if(new_route_msg_generated_ && new_route_marker_generated_)
         {
             route_pub_.publish(route_msg_);
             route_marker_pub_.publish(route_marker_msg_);
             new_route_msg_generated_ = false;
+            new_route_marker_generated_ = false;
         }
         // publish route state messsage if a route is selected
         if(route_msg_.route_name != "")
