@@ -283,6 +283,11 @@ namespace route {
 
     }
 
+    visualization_msgs::MarkerArray RouteGeneratorWorker::getMessage()
+    {
+         return route_marker_msg_;
+    }
+
     cav_msgs::Route RouteGeneratorWorker::compose_route_msg(const lanelet::Optional<lanelet::routing::Route>& route)
     {
         cav_msgs::Route msg;

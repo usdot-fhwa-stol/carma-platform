@@ -45,6 +45,57 @@ Using this file:
         catkin_make run_tests_route
     5) Confirm that the test passed and that the list of lanelet IDs does traverse from the start to the end
 */
+TEST(RouteGeneratorTest, testRouteVisualizer)
+{
+    tf2_ros::Buffer tf_buffer;
+    carma_wm::WorldModelConstPtr wm;
+    route::RouteGeneratorWorker worker(tf_buffer);
+
+    std::vector<lanelet::ConstPoint3d> points={};
+
+    points.push_back({35.0,45.0,0});
+    points.push_back({45.0,55.0,0});
+    points.push_back({55.0,65.0,0});
+    points.push_back({65.0,75.0,0});
+    points.push_back({75.0,85.0,0});
+
+    worker.routeVisualizer(points);
+
+    visualization_msgs::MarkerArray route_marker_msg.markers={};
+
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "map";
+    marker.header.stamp = ros::Time();
+    marker.type = visualization_msgs::Marker::SPHERE;//
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.ns = "route_visualizer";
+
+    marker.scale.x = 0.5;
+    marker.scale.y = 0.5;
+    marker.scale.z = 0.5;
+    marker.frame_locked = true;
+ 
+    for (size_t i = 0; i < points.size(); i=i+5)
+    {
+        marker.id = i;
+
+        marker.color.r = 1.0f;
+        marker.color.g = 1.0f;
+        marker.color.b = 1.0f;
+        marker.color.a = 1.0f;
+
+        marker.pose.position.x = msg[i].x();
+        marker.pose.position.y = msg[i].y();
+        marker.pose.orientation.x = 0.0;
+        marker.pose.orientation.y = 0.0;
+        marker.pose.orientation.z = 0.0;
+        marker.pose.orientation.w = 1.0;
+            
+        route_marker_msg.markers.push_back(marker);
+    }
+    
+    EXPECT_EQ(route_marker_msg, getMessage()); 
+}
 
 TEST(RouteGeneratorTest, testLaneletRoutingVectorMap)
 {

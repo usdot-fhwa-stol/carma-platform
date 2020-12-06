@@ -153,6 +153,8 @@ namespace route {
          */
         void routeVisualizer(const std::vector<lanelet::ConstPoint3d>& msg);
 
+        visualization_msgs::MarkerArray getMessage();
+
     private:
 
         const double DEG_TO_RAD = 0.0174533;
