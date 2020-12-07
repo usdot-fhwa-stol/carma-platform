@@ -427,6 +427,10 @@ std::vector<double> InLaneCruisingPlugin::get_lookahead_speed(const std::vector<
     throw std::invalid_argument("Invalid lookahead value");
   }
 
+  if (speeds.size() < 1)
+  {
+    throw std::invalid_argument("Invalid speeds vector");
+  }
 
   if (speeds.size() != points.size())
   {
