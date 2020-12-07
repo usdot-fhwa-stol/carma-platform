@@ -52,16 +52,22 @@ TEST(RouteGeneratorTest, testRouteVisualizer)
     route::RouteGeneratorWorker worker(tf_buffer);
 
     std::vector<lanelet::ConstPoint3d> points={};
+    lanelet::ConstPoint3d pt1 = lanelet::ConstPoint3d(1,35.0,45.0,0);
+    lanelet::ConstPoint3d pt2 = lanelet::ConstPoint3d(2,45.0,55.0,0);
+    lanelet::ConstPoint3d pt3 = lanelet::ConstPoint3d(3,55.0,65.0,0);
+    lanelet::ConstPoint3d pt4 = lanelet::ConstPoint3d(4,65.0,75.0,0);
+    lanelet::ConstPoint3d pt5 = lanelet::ConstPoint3d(5,75.0,85.0,0);
 
-    points.push_back({35.0,45.0,0});
-    points.push_back({45.0,55.0,0});
-    points.push_back({55.0,65.0,0});
-    points.push_back({65.0,75.0,0});
-    points.push_back({75.0,85.0,0});
+    points.push_back(pt1);
+    points.push_back(pt2);
+    points.push_back(pt3);
+    points.push_back(pt4);
+    points.push_back(pt5);
 
     worker.routeVisualizer(points);
 
-    visualization_msgs::MarkerArray route_marker_msg.markers={};
+    visualization_msgs::MarkerArray route_marker_msg;
+    route_marker_msg.markers={};
 
     visualization_msgs::Marker marker;
     marker.header.frame_id = "map";
@@ -84,8 +90,8 @@ TEST(RouteGeneratorTest, testRouteVisualizer)
         marker.color.b = 1.0f;
         marker.color.a = 1.0f;
 
-        marker.pose.position.x = msg[i].x();
-        marker.pose.position.y = msg[i].y();
+        marker.pose.position.x = points[i].x();
+        marker.pose.position.y = points[i].y();
         marker.pose.orientation.x = 0.0;
         marker.pose.orientation.y = 0.0;
         marker.pose.orientation.z = 0.0;
@@ -94,8 +100,106 @@ TEST(RouteGeneratorTest, testRouteVisualizer)
         route_marker_msg.markers.push_back(marker);
     }
     
-    EXPECT_EQ(route_marker_msg, getMessage()); 
+    EXPECT_EQ(route_marker_msg.markers[0].pose.position.x, worker.getMessage().markers[0].pose.position.x);
+    EXPECT_EQ(route_marker_msg.markers[0].pose.position.y, worker.getMessage().markers[0].pose.position.y); 
+    EXPECT_NE(route_marker_msg.markers[1].pose.position.x, worker.getMessage().markers[1].pose.position.x); 
+    EXPECT_NE(route_marker_msg.markers[1].pose.position.y, worker.getMessage().markers[1].pose.position.y); 
+    EXPECT_EQ(route_marker_msg.markers[4].pose.position.x, worker.getMessage().markers[4].pose.position.x); 
+    EXPECT_EQ(route_marker_msg.markers[4].pose.position.y, worker.getMessage().markers[4].pose.position.y); 
 }
+
+
+TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
+{
+    tf2_ros::Buffer tf_buffer;
+    carma_wm::WorldModelConstPtr wm;
+    route::RouteGeneratorWorker worker(tf_buffer);
+
+    int projector_type = 0;
+    std::string target_frame;
+    lanelet::ErrorMessages load_errors;
+
+    // If the output is an error about the geoReference field in the osm file, here is a correct example. If the lat/lon coordinates are already correct, simply add:
+    // <geoReference>+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs</geoReference>
+
+    // File location of osm file
+    std::string file = "../resource/map/vector_map.osm";    
+    // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
+    lanelet::Id start_id = 1346;
+    lanelet::Id end_id = 1349;
+
+    // The parsing in this file was copied from https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/carma_wm_ctrl/test/MapToolsTest.cpp
+    lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+    lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+    lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+
+    // Grabs lanelet elements from the start and end IDs. Fails the unit test if there is no lanelet with the matching ID
+    lanelet::Lanelet start_lanelet;
+    lanelet::Lanelet end_lanelet;
+
+    try {
+        start_lanelet = map->laneletLayer.get(start_id);
+    }
+    catch (const lanelet::NoSuchPrimitiveError& e) {
+        FAIL() << "The specified starting lanelet Id of " << start_id << " does not exist in the provided map.";
+    }
+    try {
+        end_lanelet = map->laneletLayer.get(end_id);
+    }
+    catch (const lanelet::NoSuchPrimitiveError& e) {
+        FAIL() << "The specified ending lanelet Id of " << end_id << " does not exist in the provided map.";
+    }
+
+    lanelet::LaneletMapConstPtr const_map(map);
+    lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
+    lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
+    
+    // Create MarkerArray to test
+    visualization_msgs::MarkerArray route_marker_msg;
+    route_marker_msg.markers={};
+
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "map";
+    marker.header.stamp = ros::Time();
+    marker.type = visualization_msgs::Marker::SPHERE;//
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.ns = "route_visualizer";
+
+    marker.scale.x = 0.5;
+    marker.scale.y = 0.5;
+    marker.scale.z = 0.5;
+    marker.frame_locked = true;
+
+    marker.color.r = 1.0f;
+    marker.color.g = 1.0f;
+    marker.color.b = 1.0f;
+    marker.color.a = 1.0f;
+
+    marker.pose.position.x = start_lanelet.centerline3d().front().x();
+    marker.pose.position.y = start_lanelet.centerline3d().front().y();
+
+    route_marker_msg.markers.push_back(marker);
+
+    // Computes the shortest path and prints the list of lanelet IDs to get from the start to the end. Can be manually confirmed in JOSM
+    auto route = map_graph->getRoute(start_lanelet, end_lanelet);
+    if(!route) {
+        ASSERT_FALSE(true);
+        std::cout << "Route not generated." << " ";
+    } else {
+        std::cout << "shortest path: \n";
+        for(const auto& ll : route.get().shortestPath()) {
+            std::cout << ll.id() << " ";
+        }
+        std::cout << "\n";
+        cav_msgs::Route route_msg_ = worker.compose_route_msg(route);
+        
+        
+        EXPECT_EQ(route_marker_msg.markers[0].pose.position.x, worker.getMessage().markers[0].pose.position.x);
+        EXPECT_EQ(route_marker_msg.markers[0].pose.position.y, worker.getMessage().markers[0].pose.position.y);
+    }
+}
+
+
 
 TEST(RouteGeneratorTest, testLaneletRoutingVectorMap)
 {
@@ -156,6 +260,8 @@ TEST(RouteGeneratorTest, testLaneletRoutingVectorMap)
         }
         std::cout << "\n";
         cav_msgs::Route route_msg_ = worker.compose_route_msg(route);
+
+
         ASSERT_TRUE(route_msg_.shortest_path_lanelet_ids.size() > 0);
         ASSERT_TRUE(route_msg_.route_path_lanelet_ids.size() > 0);
     }
