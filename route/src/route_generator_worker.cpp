@@ -272,7 +272,7 @@ namespace route {
         marker.scale.z = 0.5;
         marker.frame_locked = true;
  
-        for (size_t i = 0; i < points.size(); i=i+5)
+        for (int i = 0; i < points.size(); i=i+5)
         {
             marker.id = i;
 
@@ -294,7 +294,7 @@ namespace route {
         return route_marker_msg;
     }
 
-    const cav_msgs::Route RouteGeneratorWorker::compose_route_msg(const lanelet::Optional<lanelet::routing::Route>& route)
+    cav_msgs::Route RouteGeneratorWorker::compose_route_msg(const lanelet::Optional<lanelet::routing::Route>& route)
     {
         cav_msgs::Route msg;
         // iterate thought the shortest path to populat shortest_path_lanelet_ids
