@@ -343,9 +343,14 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   log::printDoublesPerLineWithPrefix("final_yaw_values[i]: ", final_yaw_values);
 
-  // Apply lookahead speeds
-  final_actual_speeds = trajectory_utils::shift_by_lookahead(final_actual_speeds, config_.lookahead_count);
+  // Find Lookahead Distance based on Velocity
+  double lookahead_distance = get_adaptive_lookahead(state.longitudinal_vel);
 
+  ROS_DEBUG_STREAM("Lookahead distance at current speed: " << lookahead_distance);
+
+  // Apply lookahead speeds
+  final_actual_speeds = get_lookahead_speed(all_sampling_points, final_actual_speeds, lookahead_distance);
+  
   // Add current vehicle point to front of the trajectory
   lanelet::BasicPoint2d cur_veh_point(state.X_pos_global, state.Y_pos_global);
   all_sampling_points.insert(all_sampling_points.begin(),
@@ -390,6 +395,66 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
       trajectory_from_points_times_orientations(all_sampling_points, times, final_yaw_values, ros::Time::now());
 
   return traj_points;
+}
+
+double InLaneCruisingPlugin::get_adaptive_lookahead(double velocity){
+  
+  // lookahead:
+  // v<10kph:  5m
+  // 10kph<v<50kph:  0.5*v
+  // v>50kph:  25m
+
+  double lookahead = config_.minimum_lookahead_distance;
+
+  if (velocity < config_.minimum_lookahead_speed)
+  {
+    lookahead = config_.minimum_lookahead_distance;
+  } 
+  else if (velocity >= config_.minimum_lookahead_speed && velocity < config_.maximum_lookahead_speed)
+  {
+    lookahead = config_.lookahead_ratio * velocity;
+  } 
+  else lookahead = config_.maximum_lookahead_distance;
+
+  return lookahead;
+
+}
+
+std::vector<double> InLaneCruisingPlugin::get_lookahead_speed(const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& speeds, const double& lookahead){
+  
+  if (lookahead < config_.minimum_lookahead_distance)
+  {
+    throw std::invalid_argument("Invalid lookahead value");
+  }
+
+  if (speeds.size() < 1)
+  {
+    throw std::invalid_argument("Invalid speeds vector");
+  }
+
+  if (speeds.size() != points.size())
+  {
+    throw std::invalid_argument("Speeds and Points lists not same size");
+  }
+
+  std::vector<double> out;
+  out.reserve(speeds.size());
+
+  for (int i = 0; i < points.size(); i++)
+  {
+    int idx = i;
+    double min_dist = std::numeric_limits<double>::max();
+    for (int j=i+1; j < points.size(); j++){
+      double dist = lanelet::geometry::distance2d(points[i],points[j]);
+      if (abs(lookahead - dist) <= min_dist){
+        idx = j;
+        min_dist = abs(lookahead - dist);
+      }
+    }
+    out.push_back(speeds[idx]);
+  }
+  
+  return out;
 }
 
 Eigen::Isometry2d InLaneCruisingPlugin::curvePointInMapTF(const Eigen::Isometry2d& curve_in_map,
@@ -518,6 +583,7 @@ int InLaneCruisingPlugin::getNearestPointIndex(const std::vector<PointSpeedPair>
 
   return best_index;
 }
+
 
 void InLaneCruisingPlugin::splitPointSpeedPairs(const std::vector<PointSpeedPair>& points,
                                                 std::vector<lanelet::BasicPoint2d>* basic_points,
