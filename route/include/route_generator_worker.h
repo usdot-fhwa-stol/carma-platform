@@ -148,12 +148,10 @@ namespace route {
          */
         bool spin_callback();
         /**
-         * \brief routeVisualizer is a function to generate route rviz markers
-         * \param cav_msgs::TrajectoryPlan centerline points
+         * \brief compose_route_marker_msg is a function to generate route rviz markers
+         * \param route Route object from lanelet2 lib routing function
          */
-        void routeVisualizer(const std::vector<lanelet::ConstPoint3d>& msg);
-
-        visualization_msgs::MarkerArray getMessage();
+        visualization_msgs::MarkerArray compose_route_marker_msg(const lanelet::Optional<lanelet::routing::Route>& route);
 
     private:
 

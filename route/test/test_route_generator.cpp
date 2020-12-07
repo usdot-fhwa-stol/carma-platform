@@ -45,68 +45,6 @@ Using this file:
         catkin_make run_tests_route
     5) Confirm that the test passed and that the list of lanelet IDs does traverse from the start to the end
 */
-TEST(RouteGeneratorTest, testRouteVisualizer)
-{
-    tf2_ros::Buffer tf_buffer;
-    carma_wm::WorldModelConstPtr wm;
-    route::RouteGeneratorWorker worker(tf_buffer);
-
-    std::vector<lanelet::ConstPoint3d> points={};
-    lanelet::ConstPoint3d pt1 = lanelet::ConstPoint3d(1,35.0,45.0,0);
-    lanelet::ConstPoint3d pt2 = lanelet::ConstPoint3d(2,45.0,55.0,0);
-    lanelet::ConstPoint3d pt3 = lanelet::ConstPoint3d(3,55.0,65.0,0);
-    lanelet::ConstPoint3d pt4 = lanelet::ConstPoint3d(4,65.0,75.0,0);
-    lanelet::ConstPoint3d pt5 = lanelet::ConstPoint3d(5,75.0,85.0,0);
-
-    points.push_back(pt1);
-    points.push_back(pt2);
-    points.push_back(pt3);
-    points.push_back(pt4);
-    points.push_back(pt5);
-
-    worker.routeVisualizer(points);
-
-    visualization_msgs::MarkerArray route_marker_msg;
-    route_marker_msg.markers={};
-
-    visualization_msgs::Marker marker;
-    marker.header.frame_id = "map";
-    marker.header.stamp = ros::Time();
-    marker.type = visualization_msgs::Marker::SPHERE;//
-    marker.action = visualization_msgs::Marker::ADD;
-    marker.ns = "route_visualizer";
-
-    marker.scale.x = 0.5;
-    marker.scale.y = 0.5;
-    marker.scale.z = 0.5;
-    marker.frame_locked = true;
- 
-    for (size_t i = 0; i < points.size(); i=i+5)
-    {
-        marker.id = i;
-
-        marker.color.r = 1.0f;
-        marker.color.g = 1.0f;
-        marker.color.b = 1.0f;
-        marker.color.a = 1.0f;
-
-        marker.pose.position.x = points[i].x();
-        marker.pose.position.y = points[i].y();
-        marker.pose.orientation.x = 0.0;
-        marker.pose.orientation.y = 0.0;
-        marker.pose.orientation.z = 0.0;
-        marker.pose.orientation.w = 1.0;
-            
-        route_marker_msg.markers.push_back(marker);
-    }
-    
-    EXPECT_EQ(route_marker_msg.markers[0].pose.position.x, worker.getMessage().markers[0].pose.position.x);
-    EXPECT_EQ(route_marker_msg.markers[0].pose.position.y, worker.getMessage().markers[0].pose.position.y); 
-    EXPECT_NE(route_marker_msg.markers[1].pose.position.x, worker.getMessage().markers[1].pose.position.x); 
-    EXPECT_NE(route_marker_msg.markers[1].pose.position.y, worker.getMessage().markers[1].pose.position.y); 
-    EXPECT_EQ(route_marker_msg.markers[4].pose.position.x, worker.getMessage().markers[4].pose.position.x); 
-    EXPECT_EQ(route_marker_msg.markers[4].pose.position.y, worker.getMessage().markers[4].pose.position.y); 
-}
 
 
 TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
@@ -126,7 +64,7 @@ TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
     std::string file = "../resource/map/vector_map.osm";    
     // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
     lanelet::Id start_id = 1346;
-    lanelet::Id end_id = 1349;
+    lanelet::Id end_id = 1351;
 
     // The parsing in this file was copied from https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/carma_wm_ctrl/test/MapToolsTest.cpp
     lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
@@ -191,11 +129,11 @@ TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
             std::cout << ll.id() << " ";
         }
         std::cout << "\n";
-        cav_msgs::Route route_msg_ = worker.compose_route_msg(route);
-        
-        
-        EXPECT_EQ(route_marker_msg.markers[0].pose.position.x, worker.getMessage().markers[0].pose.position.x);
-        EXPECT_EQ(route_marker_msg.markers[0].pose.position.y, worker.getMessage().markers[0].pose.position.y);
+        auto test_msg = worker.compose_route_marker_msg(route);
+        EXPECT_EQ(route_marker_msg.markers[0].pose.position.x, test_msg.markers[0].pose.position.x);
+        EXPECT_EQ(route_marker_msg.markers[0].pose.position.y, test_msg.markers[0].pose.position.y);
+        EXPECT_EQ(route_marker_msg.markers[1].pose.position.x, test_msg.markers[1].pose.position.x);
+        EXPECT_EQ(route_marker_msg.markers[1].pose.position.y, test_msg.markers[1].pose.position.y);
     }
 }
 

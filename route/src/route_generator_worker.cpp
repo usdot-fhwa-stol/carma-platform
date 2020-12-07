@@ -176,6 +176,7 @@ namespace route {
             }
             // update route message
             route_msg_ = compose_route_msg(route);
+            route_marker_msg_ = compose_route_marker_msg(route);
             route_msg_.header.stamp = ros::Time::now();
             route_msg_.header.frame_id = "map";
             route_msg_.route_name = req.routeID;
@@ -239,16 +240,26 @@ namespace route {
         return map_points;
     }
 
- void RouteGeneratorWorker::routeVisualizer(const std::vector<lanelet::ConstPoint3d>& msg)
+    visualization_msgs::MarkerArray RouteGeneratorWorker::compose_route_marker_msg(const lanelet::Optional<lanelet::routing::Route>& route)
     {
+        std::vector<lanelet::ConstPoint3d> points;
+        for(const auto& ll : route.get().shortestPath())
+        {
+            for(const auto& pt : ll.centerline())
+            {
+                points.push_back(pt);
+            }
+        }
+
         route_marker_msg_.markers={};
 
-        if (msg.size() == 0)
+        if (points.size() == 0)
         {
             ROS_WARN_STREAM("No central line points! Returning");
         }
-        //visualization_msgs::MarkerArray tmp_marker_array; route_marker_msg_
-        // display by markers the velocity between each trajectory point/target time.
+
+        // create the marker msgs
+        visualization_msgs::MarkerArray route_marker_msg;
         visualization_msgs::Marker marker;
         marker.header.frame_id = "map";
         marker.header.stamp = ros::Time();
@@ -261,7 +272,7 @@ namespace route {
         marker.scale.z = 0.5;
         marker.frame_locked = true;
  
-        for (size_t i = 0; i < msg.size(); i=i+5)
+        for (size_t i = 0; i < points.size(); i=i+5)
         {
             marker.id = i;
 
@@ -270,42 +281,28 @@ namespace route {
             marker.color.b = 1.0f;
             marker.color.a = 1.0f;
 
-            marker.pose.position.x = msg[i].x();
-            marker.pose.position.y = msg[i].y();
+            marker.pose.position.x = points[i].x();
+            marker.pose.position.y = points[i].y();
             marker.pose.orientation.x = 0.0;
             marker.pose.orientation.y = 0.0;
             marker.pose.orientation.z = 0.0;
             marker.pose.orientation.w = 1.0;
             
-            route_marker_msg_.markers.push_back(marker);
+            route_marker_msg.markers.push_back(marker);
         }
         new_route_marker_generated_ = true;
-
-    }
-
-    visualization_msgs::MarkerArray RouteGeneratorWorker::getMessage()
-    {
-         return route_marker_msg_;
+        return route_marker_msg;
     }
 
     cav_msgs::Route RouteGeneratorWorker::compose_route_msg(const lanelet::Optional<lanelet::routing::Route>& route)
     {
         cav_msgs::Route msg;
-        points_ = {}; // clear points
         // iterate thought the shortest path to populat shortest_path_lanelet_ids
         for(const auto& ll : route.get().shortestPath())
         {
             msg.shortest_path_lanelet_ids.push_back(ll.id());
-
-            for(const auto& pt : ll.centerline())
-            {
-                //lanelet::Point3d pt{constpt.x(),constpt.y(), 0};
-                
-                points_.push_back(pt);
-            }
         }
 
-        routeVisualizer(points_);
         // iterate thought the all lanelet in the route to populat route_path_lanelet_ids
         for(const auto& ll : route.get().laneletSubmap()->laneletLayer)
         {
