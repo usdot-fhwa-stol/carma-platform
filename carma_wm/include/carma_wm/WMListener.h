@@ -22,6 +22,8 @@
 #include <ros/callback_queue.h>
 #include <carma_wm/WorldModel.h>
 #include <carma_utils/CARMAUtils.h>
+#include <cav_msgs/RouteEvent.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <autoware_lanelet2_msgs/MapBin.h>
 
 namespace carma_wm
@@ -104,6 +106,9 @@ public:
    */
   void setConfigSpeedLimit(double config_lim) const;
 
+  void routeEventCallback(cav_msgs::RouteEvent status);
+
+
 
 private:
   // Callback function that uses lock to edit the map
@@ -116,6 +121,7 @@ private:
   std::unique_ptr<ros::AsyncSpinner> wm_spinner_;
   ros::Subscriber map_sub_;
   ros::Subscriber route_sub_;
+  ros::Subscriber route_event_sub_;
   const bool multi_threaded_;
   std::mutex mw_mutex_;
  

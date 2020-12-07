@@ -17,9 +17,18 @@
  */
 
 #include <autoware_lanelet2_msgs/MapBin.h>
+#include<ros/ros.h>
+#include <carma_utils/CARMAUtils.h>
 #include <cav_msgs/Route.h>
+#include <cav_msgs/RouteEvent.h>
 #include <carma_wm/CARMAWorldModel.h>
 #include <carma_wm/TrafficControl.h>
+#include <lanelet2_core/geometry/BoundingBox.h>
+#include <lanelet2_core/primitives/BoundingBox.h>
+#include <lanelet2_core/primitives/Lanelet.h>
+#include <lanelet2_core/geometry/Lanelet.h>
+#include <geometry_msgs/PoseStamped.h>
+
 
 namespace carma_wm
 {
@@ -92,6 +101,14 @@ public:
 */
   double getConfigSpeedLimit() const;
 
+  void routeEventCallback(cav_msgs::RouteEvent status);
+
+  bool crossTrackErrorCheck(cav_msgs::RouteEvent status);
+
+  void laneletsFromRoute(cav_msgs::Route route_msg);
+
+  void getVehiclePosition(geometry_msgs::PoseStamped pos);
+
 
 private:
   std::shared_ptr<CARMAWorldModel> world_model_;
@@ -99,6 +116,9 @@ private:
   std::function<void()> route_callback_;
   void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const;
   double config_speed_limit_;
+  ros::CARMANodeHandle nh_;
+  std::vector<lanelet::ConstLanelet> llts;
+  lanelet::BasicPoint2d position;
 
 };
 }  // namespace carma_wm

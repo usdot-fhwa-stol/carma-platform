@@ -17,6 +17,7 @@
 #include <lanelet2_extension/utility/message_conversion.h>
 #include "WMListenerWorker.h"
 
+
 namespace carma_wm
 {
 enum class GeofenceType{ INVALID, DIGITAL_SPEED_LIMIT, PASSING_CONTROL_LINE, /* ... others */ };
@@ -182,5 +183,107 @@ double WMListenerWorker::getConfigSpeedLimit() const
 {
   return config_speed_limit_;
 }
+
+void WMListenerWorker::routeEventCallback(cav_msgs::RouteEvent status)
+{
+
+  bool check = crossTrackErrorCheck(status);
+  cav_msgs::SystemAlert msg;
+  msg.type = 6;
+
+  if(check == true)
+  {
+    nh_.publishSystemAlert(msg); //If there is a cross-track error, publish a Shutdown message
+  }
+
+}
+
+void WMListenerWorker::getVehiclePosition(geometry_msgs::PoseStamped pos)
+{
+  position.x() = pos.pose.position.x;
+  position.y() = pos.pose.position.y;
+
+}
+
+bool WMListenerWorker::crossTrackErrorCheck(cav_msgs::RouteEvent status)
+{
+
+  //for(auto id: route_msg.route_path_lanelet_ids)
+  //auto route = world_model_.get()->getRoute();
+  bool out_of_llt_bounds = false;
+  auto llt_list = llts;
+  std::vector<lanelet::BoundingBox2d> routepathBox; 
+  double minX = std::numeric_limits<double>::max();
+  double minY = std::numeric_limits<double>::max();
+  double maxX = std::numeric_limits<double>::lowest();
+  double maxY = std::numeric_limits<double>::lowest();
+
+/*Determine the lanelet bounds using maximu and minimum*/
+
+  for(auto num: llt_list)
+     {
+       routepathBox.push_back(lanelet::geometry::boundingBox2d(num)); //Create a bounding box of the added lanelet and add it to the vector
+
+
+      if (routepathBox.back().corner(lanelet::BoundingBox2d::BottomLeft).x() < minX)
+        minX = routepathBox.back().corner(lanelet::BoundingBox2d::BottomLeft).x(); //minimum x-value
+
+
+      if (routepathBox.back().corner(lanelet::BoundingBox2d::BottomLeft).y() < minY)
+        minY = routepathBox.back().corner(lanelet::BoundingBox2d::BottomLeft).y(); //minimum y-value
+
+
+
+     if (routepathBox.back().corner(lanelet::BoundingBox2d::TopRight).x() > maxX)
+        maxX = routepathBox.back().corner(lanelet::BoundingBox2d::TopRight).x(); //maximum x-value
+
+
+     if (routepathBox.back().corner(lanelet::BoundingBox2d::TopRight).y() > maxY)
+        maxY = routepathBox.back().corner(lanelet::BoundingBox2d::TopRight).y(); //maximum y-value
+
+     }
+
+
+    double start = llts.front().leftBound2d().front().x();
+    double end = llts.back().rightBound2d().back().y();
+
+    auto route_lanelets = world_model_->getLaneletsBetween(start, end, false);
+
+      /*Check if the vehicle is inside or outside the lanelet bounds*/
+      if(position.x() < minX || position.x() > maxX)
+        out_of_llt_bounds = true;
+
+      if(position.y() < minY || position.y() > maxY)
+        out_of_llt_bounds = true; 
+
+
+      if(status.event == cav_msgs::RouteEvent::ROUTE_DEPARTED && out_of_llt_bounds == true)
+        return true;
+
+
+
+}
+
+
+
+
+void WMListenerWorker::laneletsFromRoute(cav_msgs::Route route_msg)
+{
+
+    auto route = world_model_->getRoute();
+    auto path = lanelet::ConstLanelets();
+  for(auto id : route_msg.shortest_path_lanelet_ids)
+  {
+    //auto ll = world_model_->getMap()->laneletLayer.get(id);
+    auto ll = world_model_->getRoute()->laneletMap()->laneletLayer.get(id);
+    
+    path.push_back(ll);
+  }
+  
+  llts = path;
+  
+
+}
+
 
 }  // namespace carma_wm
