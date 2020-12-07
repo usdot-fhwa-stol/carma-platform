@@ -175,9 +175,7 @@ namespace route {
         cav_msgs::RouteState route_state_msg_;
         visualization_msgs::MarkerArray route_marker_msg_;
         std::vector<lanelet::ConstPoint3d> points_; 
-        size_t prev_marker_list_size_ = 0;
 
-        // we are not saving every trajectory history at this point
         // maximum cross track error which can trigger left route event
         double cross_track_max_;
         
