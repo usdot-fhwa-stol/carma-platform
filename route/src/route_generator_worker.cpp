@@ -253,7 +253,7 @@ namespace route {
 
         route_marker_msg_.markers={};
 
-        if (points.size() == 0)
+        if (!points.empty())
         {
             ROS_WARN_STREAM("No central line points! Returning");
         }
@@ -276,10 +276,10 @@ namespace route {
         {
             marker.id = i;
 
-            marker.color.r = 1.0f;
-            marker.color.g = 1.0f;
-            marker.color.b = 1.0f;
-            marker.color.a = 1.0f;
+            marker.color.r = 1.0F;
+            marker.color.g = 1.0F;
+            marker.color.b = 1.0F;
+            marker.color.a = 1.0F;
 
             marker.pose.position.x = points[i].x();
             marker.pose.position.y = points[i].y();
@@ -294,7 +294,7 @@ namespace route {
         return route_marker_msg;
     }
 
-    cav_msgs::Route RouteGeneratorWorker::compose_route_msg(const lanelet::Optional<lanelet::routing::Route>& route)
+    const cav_msgs::Route RouteGeneratorWorker::compose_route_msg(const lanelet::Optional<lanelet::routing::Route>& route)
     {
         cav_msgs::Route msg;
         // iterate thought the shortest path to populat shortest_path_lanelet_ids

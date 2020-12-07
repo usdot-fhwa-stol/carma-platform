@@ -141,7 +141,7 @@ namespace route {
          * \brief Helper function to generate a CARMA route message based on planned lanelet route
          * \param route Route object from lanelet2 lib routing function
          */
-        cav_msgs::Route compose_route_msg(const lanelet::Optional<lanelet::routing::Route>& route);
+        const cav_msgs::Route compose_route_msg(const lanelet::Optional<lanelet::routing::Route>& route);
 
         /**
          * \brief Spin callback which will be called frequently based on spin rate
