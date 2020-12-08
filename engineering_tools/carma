@@ -43,6 +43,61 @@ __pull_newest_carma_base() {
     docker pull $remote_image
 }
 
+##
+# Helper function to print to stderr.
+# This is useful for allowing bash methods to return strings while still communicating information to the user
+##
+echoerr() { echo "$@" 1>&2; }
+
+##
+# Method returns a fully specified docker image name and tag based on the currently set carma-config.
+# The method will return the first tag that appears in the config for the possible organizations and images.
+# If the config is not set or an image cannot be found the method will return a carma-base image as the default.
+# The user can specify optional organizations or images as sed compatable regex lists.
+# For example calling 
+#  $(__get_image_from_config 'carma-platform:\|carma-messenger:' 'usdotfhwastol\|usdotfhwastoldev\|usdotfhwastolcandidate')
+# 
+#  If no parameters are provided the defaults will be used
+##
+__get_image_from_config() {
+    local TARGET_IMAGE="usdotfhwastol/carma-base:latest"
+    local SUPPORTED_ORANIZATIONS="usdotfhwastol\|usdotfhwastoldev\|usdotfhwastolcandidate"
+    local SUPPORTED_IMAGES="carma-platform:\|carma-messenger:"
+
+    if [ -n "$1" ]
+    then
+        local SUPPORTED_IMAGES="$1"
+    fi
+
+    if [ -n "$2" ]
+    then
+        
+        local SUPPORTED_ORANIZATIONS="$2"
+    fi
+
+    # Check if carma-config is set. If so, use what was in the carma config
+    if docker container inspect carma-config > /dev/null 2>&1; then
+
+        local IMAGE_BACKUP=$TARGET_IMAGE
+
+        # sed command finds the first instance of an image which is part of the set defined in SUPPORTED_ORGANIZATIONS and SUPPORTED_IMAGES.
+        # then returns the name of the image.  
+        local TARGET_IMAGE=$(docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
+            "sed -n -e '/image:\s*\($SUPPORTED_ORANIZATIONS\)\/\($SUPPORTED_IMAGES\)/ s/.*\image: *//p' /opt/carma/vehicle/config/docker-compose.yml | grep -m 1 '.*'")
+            
+
+        # If the sed resulted in an empty string then reset the tag
+        if [ -z "$TARGET_IMAGE" ]; then
+            local TARGET_IMAGE=$IMAGE_BACKUP
+            echoerr "Could not identify usable image from config so defaulting to image: $TARGET_IMAGE"
+        fi
+    else
+        echoerr "No config detected or target image specified so using default: $TARGET_IMAGE"
+    fi
+
+    echo "$TARGET_IMAGE"
+}
+
 __get_most_recent_carma_base() {
     if [ "$1" = "-d" ]; then
         local USERNAME=usdotfhwastoldev
@@ -100,7 +155,7 @@ carma-config__edit() {
 
     echo "Opening shell inside carma-config container with read/write privileges..."
 
-    local carma_base=$(__get_most_recent_carma_base)
+    local carma_base=$(__get_image_from_config carma-base:)
     if [[ -z $carma_base ]]; then
         __pull_newest_carma_base
         carma_base=$(__get_most_recent_carma_base)
@@ -326,26 +381,9 @@ carma__exec() {
 
         shift
         shift
-    # If the image was not specified use what was in the carma config
-    elif docker container inspect carma-config > /dev/null 2>&1; then
-
-        local IMAGE_BACKUP=$TARGET_IMAGE
-        local SUPPORTED_ORANIZATIONS="usdotfhwastol\|usdotfhwastoldev"
-        local SUPPORTED_IMAGES="carma-platform:\|carma-messenger:"
-
-        # sed command finds the first instance of an image which is part of the set defined in SUPPORTED_ORGANIZATIONS and SUPPORTED_IMAGES.
-        # then returns the name of the image.  
-        local TARGET_IMAGE=$(docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
-            "sed -n -e '/image:\s*\($SUPPORTED_ORANIZATIONS\)\/\($SUPPORTED_IMAGES\)/ s/.*\image: *//p' /opt/carma/vehicle/config/docker-compose.yml | grep -m 1 '.*'")
-            
-
-        # If the sed resulted in an empty string then reset the tag
-        if [ -z "$TARGET_IMAGE" ]; then
-            local TARGET_IMAGE=$IMAGE_BACKUP
-        fi
+    # If the image was not specified try to use what was in the carma config
     else
-        echo "No config detected or target image specified so using default: $TARGET_IMAGE"
-    
+        local TARGET_IMAGE=$(__get_image_from_config 'carma-platform:\|carma-messenger:')
     fi
 
     # Verify target image exists
@@ -450,10 +488,6 @@ Please enter one of the following commands:
         edit 
             - Open a shell inside the current configuration storage with r/w 
               permissions
-            -d
-                - uses a usdotfhwastoldev/carma-base image
-            -c
-                - uses a usdotfhwastolcandidate/carma-base image
         inspect 
             - Open a shell inside the current configuration storage with r/o
               permissions
