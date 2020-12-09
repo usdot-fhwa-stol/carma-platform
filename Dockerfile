@@ -81,4 +81,6 @@ LABEL org.label-schema.build-date=${BUILD_DATE}
 COPY --from=install --chown=carma /opt/carma /opt/carma
 COPY --from=install --chown=carma /root/.bashrc /home/carma/.bashrc
 
+RUN pip install future
+
 CMD "roslaunch carma carma_docker.launch"
