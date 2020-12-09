@@ -193,7 +193,7 @@ void WMListenerWorker::routeEventCallback(cav_msgs::RouteEvent status)
 
   if(check == true)
   {
-    nh_.publishSystemAlert(msg); //If there is a cross-track error, publish a Shutdown message
+    nh_->publishSystemAlert(msg); //If there is a cross-track error, publish a Shutdown message
   }
 
 }
@@ -243,6 +243,14 @@ bool WMListenerWorker::crossTrackErrorCheck(cav_msgs::RouteEvent status)
 
      }
 
+    ROS_ERROR_STREAM("MinX "<< minX);
+    ROS_ERROR_STREAM("MinY "<< minY);
+    ROS_ERROR_STREAM("MaxX "<< maxX);
+    ROS_ERROR_STREAM("MaxY "<< maxY);
+
+
+
+
 
     double start = llts.front().leftBound2d().front().x();
     double end = llts.back().rightBound2d().back().y();
@@ -259,6 +267,11 @@ bool WMListenerWorker::crossTrackErrorCheck(cav_msgs::RouteEvent status)
 
       if(status.event == cav_msgs::RouteEvent::ROUTE_DEPARTED && out_of_llt_bounds == true)
         return true;
+        
+      else
+        return false;
+      
+      
 
 
 
@@ -269,12 +282,14 @@ bool WMListenerWorker::crossTrackErrorCheck(cav_msgs::RouteEvent status)
 
 void WMListenerWorker::laneletsFromRoute(cav_msgs::Route route_msg)
 {
-
+    if (!world_model_->getMap()) {
+    ROS_ERROR_STREAM("WMListener received a route before a map was available. Dropping route message.");
+    return;
+  }
     auto route = world_model_->getRoute();
     auto path = lanelet::ConstLanelets();
   for(auto id : route_msg.shortest_path_lanelet_ids)
   {
-    //auto ll = world_model_->getMap()->laneletLayer.get(id);
     auto ll = world_model_->getRoute()->laneletMap()->laneletLayer.get(id);
     
     path.push_back(ll);

@@ -116,7 +116,8 @@ private:
   std::function<void()> route_callback_;
   void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const;
   double config_speed_limit_;
-  ros::CARMANodeHandle nh_;
+  std::shared_ptr<ros::CARMANodeHandle> nh_;
+  //ros::CARMANodeHandle nh_;
   std::vector<lanelet::ConstLanelet> llts;
   lanelet::BasicPoint2d position;
 

@@ -23,6 +23,14 @@
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 #include <lanelet2_core/Attribute.h>
 #include <boost/archive/binary_oarchive.hpp>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <lanelet2_core/primitives/Lanelet.h>
+#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_io/Projection.h>
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_io/Io.h>
+#include <lanelet2_io/io_handlers/Factory.h>
+#include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <sstream>
 #include <string>
 #include "TestHelpers.h"
@@ -247,6 +255,103 @@ TEST(WMListenerWorkerTest, setConfigSpeedLimitTest)
   ROS_INFO_STREAM("config_speed_limit = "<< current_cl);
 
 }
+
+TEST(WMListenerWorkerTest, crossTrackErrorCheck)
+{
+  
+  WMListenerWorker wmlw;
+
+
+  CARMAWorldModel cwm;
+  addStraightRoute(cwm);
+
+  ASSERT_TRUE((bool)cwm.getMap());
+  ASSERT_TRUE((bool)cwm.getRoute());
+  ASSERT_TRUE((bool)cwm.getMapRoutingGraph());
+
+  auto map_ptr = lanelet::utils::removeConst(cwm.getMap());
+
+  autoware_lanelet2_msgs::MapBin msg;
+  lanelet::utils::conversion::toBinMsg(map_ptr, &msg);
+
+  autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(msg));
+  
+  cav_msgs::RouteEvent event_msg;
+  event_msg.event = cav_msgs::RouteEvent::ROUTE_DEPARTED;
+
+  cav_msgs::Route route_msg;
+  
+  route_msg.shortest_path_lanelet_ids.push_back(cwm.getRoute()->shortestPath()[0].id());
+  route_msg.shortest_path_lanelet_ids.push_back(cwm.getRoute()->shortestPath()[1].id());
+
+  ROS_INFO_STREAM("This is a test: ");
+
+  ROS_INFO_STREAM("THIS IS ANOTHER TEST");
+/*/Test route callback without map to verify no crash
+wmlw.routeCallback(rpt);*/
+  cav_msgs::RouteConstPtr rpt(new cav_msgs::Route(route_msg));
+
+//Include map and test route callback 
+  wmlw.mapCallback(map_msg_ptr);
+
+  wmlw.routeCallback(rpt);
+  
+  geometry_msgs::PoseStamped pos1, pos2, pos3, pos4;
+
+  
+  //Get Vehicle's Position
+  pos1.pose.position.x = -1.0; //Invalid x-axis position value
+  pos1.pose.position.y = 1.0;
+
+  ROS_WARN_STREAM("Test 1");
+
+  wmlw.getVehiclePosition(pos1); //Vehicle position saved in WMListenerWorker object
+  wmlw.laneletsFromRoute(route_msg); //Get lanelets from the route_msg
+  ASSERT_EQ(route_msg.shortest_path_lanelet_ids.size(), 2);
+
+  bool error_check = wmlw.crossTrackErrorCheck(event_msg);
+  ASSERT_EQ(error_check, true); //Assert that a cross track error has taken place
+
+  pos2.pose.position.x = 1.0; 
+  pos2.pose.position.y = -1.0;//Invalid y-axis position value
+
+  ROS_WARN_STREAM("CTE Test 2");
+
+  wmlw.getVehiclePosition(pos2); //Vehicle position saved in WMListenerWorker object
+  wmlw.laneletsFromRoute(route_msg); //Get lanelets from the route_msg
+  ASSERT_EQ(route_msg.shortest_path_lanelet_ids.size(), 2);
+
+  error_check = wmlw.crossTrackErrorCheck(event_msg);
+  ASSERT_EQ(error_check, true); //Assert that a cross track error has taken place
+
+  pos3.pose.position.x = -1.0; //Invalid x-axis position value
+  pos3.pose.position.y = -1.0; //Invalid y-axis position value
+
+  ROS_WARN_STREAM("CTE Test 3");
+
+  wmlw.getVehiclePosition(pos3); //Vehicle position saved in WMListenerWorker object
+  wmlw.laneletsFromRoute(route_msg); //Get lanelets from the route_msg
+  ASSERT_EQ(route_msg.shortest_path_lanelet_ids.size(), 2);
+
+  error_check = wmlw.crossTrackErrorCheck(event_msg);
+  ASSERT_EQ(error_check, true); //Assert that a cross track error has taken place
+
+/*Test Valid position values*/
+  pos4.pose.position.x = 1.0; 
+  pos4.pose.position.y = 1.0;
+
+  ROS_WARN_STREAM("CTE Test 4");
+
+  wmlw.getVehiclePosition(pos4); //Vehicle position saved in WMListenerWorker object
+  wmlw.laneletsFromRoute(route_msg); //Get lanelets from the route_msg
+  ASSERT_EQ(route_msg.shortest_path_lanelet_ids.size(), 2);
+
+  error_check = wmlw.crossTrackErrorCheck(event_msg);
+  ASSERT_EQ(error_check, false); //Assert that a cross track error has taken place
+
+}
+
+
 
 
 }  // namespace carma_wm
