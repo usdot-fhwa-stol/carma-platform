@@ -12,7 +12,7 @@ myClock.bin
 **/bin
 
 # ignore build directories
-build
+build/
 target
 devel
 
