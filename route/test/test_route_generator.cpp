@@ -30,7 +30,8 @@
 #include <lanelet2_extension/utility/utilities.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_extension/io/autoware_osm_parser.h>
-
+#include <fstream>
+#include <carma_utils/containers/containers.h>
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 
@@ -47,103 +48,101 @@ Using this file:
 */
 
 
-TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
-{
-    tf2_ros::Buffer tf_buffer;
-    carma_wm::WorldModelConstPtr wm;
-    route::RouteGeneratorWorker worker(tf_buffer);
+// TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
+// {
+//     tf2_ros::Buffer tf_buffer;
+//     carma_wm::WorldModelConstPtr wm;
+//     route::RouteGeneratorWorker worker(tf_buffer);
 
-    int projector_type = 0;
-    std::string target_frame;
-    lanelet::ErrorMessages load_errors;
+//     int projector_type = 0;
+//     std::string target_frame;
+//     lanelet::ErrorMessages load_errors;
 
-    // If the output is an error about the geoReference field in the osm file, here is a correct example. If the lat/lon coordinates are already correct, simply add:
-    // <geoReference>+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs</geoReference>
+//     // If the output is an error about the geoReference field in the osm file, here is a correct example. If the lat/lon coordinates are already correct, simply add:
+//     // <geoReference>+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs</geoReference>
 
-    // File location of osm file
-    std::string file = "../resource/map/vector_map.osm";    
-    // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
-    lanelet::Id start_id = 1346;
-    lanelet::Id end_id = 1351;
+//     // File location of osm file
+//     std::string file = "../resource/map/vector_map.osm";    
+//     // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
+//     lanelet::Id start_id = 1346;
+//     lanelet::Id end_id = 1351;
 
-    // The parsing in this file was copied from https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/carma_wm_ctrl/test/MapToolsTest.cpp
-    lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
-    lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
-    lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+//     // The parsing in this file was copied from https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/carma_wm_ctrl/test/MapToolsTest.cpp
+//     lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+//     lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+//     lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
 
-    // Grabs lanelet elements from the start and end IDs. Fails the unit test if there is no lanelet with the matching ID
-    lanelet::Lanelet start_lanelet;
-    lanelet::Lanelet end_lanelet;
+//     // Grabs lanelet elements from the start and end IDs. Fails the unit test if there is no lanelet with the matching ID
+//     lanelet::Lanelet start_lanelet;
+//     lanelet::Lanelet end_lanelet;
 
-    try {
-        start_lanelet = map->laneletLayer.get(start_id);
-    }
-    catch (const lanelet::NoSuchPrimitiveError& e) {
-        FAIL() << "The specified starting lanelet Id of " << start_id << " does not exist in the provided map.";
-    }
-    try {
-        end_lanelet = map->laneletLayer.get(end_id);
-    }
-    catch (const lanelet::NoSuchPrimitiveError& e) {
-        FAIL() << "The specified ending lanelet Id of " << end_id << " does not exist in the provided map.";
-    }
+//     try {
+//         start_lanelet = map->laneletLayer.get(start_id);
+//     }
+//     catch (const lanelet::NoSuchPrimitiveError& e) {
+//         FAIL() << "The specified starting lanelet Id of " << start_id << " does not exist in the provided map.";
+//     }
+//     try {
+//         end_lanelet = map->laneletLayer.get(end_id);
+//     }
+//     catch (const lanelet::NoSuchPrimitiveError& e) {
+//         FAIL() << "The specified ending lanelet Id of " << end_id << " does not exist in the provided map.";
+//     }
 
-    lanelet::LaneletMapConstPtr const_map(map);
-    lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
-    lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
+//     lanelet::LaneletMapConstPtr const_map(map);
+//     lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
+//     lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
     
-    // Create MarkerArray to test
-    visualization_msgs::MarkerArray route_marker_msg;
-    route_marker_msg.markers={};
+//     // Create MarkerArray to test
+//     visualization_msgs::MarkerArray route_marker_msg;
+//     route_marker_msg.markers={};
 
-    visualization_msgs::Marker marker;
-    marker.header.frame_id = "map";
-    marker.header.stamp = ros::Time();
-    marker.type = visualization_msgs::Marker::SPHERE;//
-    marker.action = visualization_msgs::Marker::ADD;
-    marker.ns = "route_visualizer";
+//     visualization_msgs::Marker marker;
+//     marker.header.frame_id = "map";
+//     marker.header.stamp = ros::Time();
+//     marker.type = visualization_msgs::Marker::SPHERE;//
+//     marker.action = visualization_msgs::Marker::ADD;
+//     marker.ns = "route_visualizer";
 
-    marker.scale.x = 0.5;
-    marker.scale.y = 0.5;
-    marker.scale.z = 0.5;
-    marker.frame_locked = true;
+//     marker.scale.x = 0.5;
+//     marker.scale.y = 0.5;
+//     marker.scale.z = 0.5;
+//     marker.frame_locked = true;
 
-    marker.color.r = 1.0f;
-    marker.color.g = 1.0f;
-    marker.color.b = 1.0f;
-    marker.color.a = 1.0f;
+//     marker.color.r = 1.0f;
+//     marker.color.g = 1.0f;
+//     marker.color.b = 1.0f;
+//     marker.color.a = 1.0f;
 
-    marker.pose.position.x = start_lanelet.centerline3d().front().x();
-    marker.pose.position.y = start_lanelet.centerline3d().front().y();
+//     marker.pose.position.x = start_lanelet.centerline3d().front().x();
+//     marker.pose.position.y = start_lanelet.centerline3d().front().y();
 
-    route_marker_msg.markers.push_back(marker);
+//     route_marker_msg.markers.push_back(marker);
 
-    // Computes the shortest path and prints the list of lanelet IDs to get from the start to the end. Can be manually confirmed in JOSM
-    auto route = map_graph->getRoute(start_lanelet, end_lanelet);
-    if(!route) {
-        ASSERT_FALSE(true);
-        std::cout << "Route not generated." << " ";
-    } else {
-        std::cout << "shortest path: \n";
-        for(const auto& ll : route.get().shortestPath()) {
-            std::cout << ll.id() << " ";
-        }
-        std::cout << "\n";
-        auto test_msg = worker.compose_route_marker_msg(route);
-        EXPECT_EQ(route_marker_msg.markers[0].pose.position.x, test_msg.markers[0].pose.position.x);
-        EXPECT_EQ(route_marker_msg.markers[0].pose.position.y, test_msg.markers[0].pose.position.y);
-        EXPECT_EQ(route_marker_msg.markers[1].pose.position.x, test_msg.markers[1].pose.position.x);
-        EXPECT_EQ(route_marker_msg.markers[1].pose.position.y, test_msg.markers[1].pose.position.y);
-    }
-}
+//     // Computes the shortest path and prints the list of lanelet IDs to get from the start to the end. Can be manually confirmed in JOSM
+//     auto route = map_graph->getRoute(start_lanelet, end_lanelet);
+//     if(!route) {
+//         ASSERT_FALSE(true);
+//         std::cout << "Route not generated." << " ";
+//     } else {
+//         std::cout << "shortest path: \n";
+//         for(const auto& ll : route.get().shortestPath()) {
+//             std::cout << ll.id() << " ";
+//         }
+//         std::cout << "\n";
+//         auto test_msg = worker.compose_route_marker_msg(route);
+//         EXPECT_EQ(route_marker_msg.markers[0].pose.position.x, test_msg.markers[0].pose.position.x);
+//         EXPECT_EQ(route_marker_msg.markers[0].pose.position.y, test_msg.markers[0].pose.position.y);
+//         EXPECT_EQ(route_marker_msg.markers[1].pose.position.x, test_msg.markers[1].pose.position.x);
+//         EXPECT_EQ(route_marker_msg.markers[1].pose.position.y, test_msg.markers[1].pose.position.y);
+//     }
+// }
 
 
 
 TEST(RouteGeneratorTest, testLaneletRoutingVectorMap)
 {
-    tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
-    route::RouteGeneratorWorker worker(tf_buffer);
 
     int projector_type = 0;
     std::string target_frame;
@@ -153,7 +152,7 @@ TEST(RouteGeneratorTest, testLaneletRoutingVectorMap)
     // <geoReference>+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs</geoReference>
 
     // File location of osm file
-    std::string file = "../resource/map/vector_map.osm";    
+    std::string file = "/workspaces/carma_ws/carma/src/carma-platform/route/resource/map/ATEF_senario_1_final.osm";    
     // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
     lanelet::Id start_id = 1346;
     lanelet::Id end_id = 1349;
@@ -164,21 +163,17 @@ TEST(RouteGeneratorTest, testLaneletRoutingVectorMap)
     lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
 
     // Grabs lanelet elements from the start and end IDs. Fails the unit test if there is no lanelet with the matching ID
-    lanelet::Lanelet start_lanelet;
-    lanelet::Lanelet end_lanelet;
+    lanelet::Lanelet start_lanelet = map->laneletLayer.get(113);
+    lanelet::Lanelet end_lanelet = map->laneletLayer.get(105);
 
-    try {
-        start_lanelet = map->laneletLayer.get(start_id);
-    }
-    catch (const lanelet::NoSuchPrimitiveError& e) {
-        FAIL() << "The specified starting lanelet Id of " << start_id << " does not exist in the provided map.";
-    }
-    try {
-        end_lanelet = map->laneletLayer.get(end_id);
-    }
-    catch (const lanelet::NoSuchPrimitiveError& e) {
-        FAIL() << "The specified ending lanelet Id of " << end_id << " does not exist in the provided map.";
-    }
+    lanelet::ConstLanelets vias = {
+        map->laneletLayer.get(117),
+        map->laneletLayer.get(1),
+        map->laneletLayer.get(118),
+        map->laneletLayer.get(2),
+        map->laneletLayer.get(119),
+        map->laneletLayer.get(106)
+    };
 
     lanelet::LaneletMapConstPtr const_map(map);
     lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
@@ -187,152 +182,165 @@ TEST(RouteGeneratorTest, testLaneletRoutingVectorMap)
     map_graph->exportGraphViz("../routing.txt");
 
     // Computes the shortest path and prints the list of lanelet IDs to get from the start to the end. Can be manually confirmed in JOSM
-    auto route = map_graph->getRoute(start_lanelet, end_lanelet);
+    auto route = map_graph->getRouteVia(start_lanelet, vias, end_lanelet);
     if(!route) {
         ASSERT_FALSE(true);
         std::cout << "Route not generated." << " ";
     } else {
         std::cout << "shortest path: \n";
-        for(const auto& ll : route.get().shortestPath()) {
-            std::cout << ll.id() << " ";
+        auto path = route.get().shortestPath();
+        std::vector<lanelet::ConstLanelet> l_vec;
+        for (auto l : path) {
+            l_vec.push_back(l);
         }
-        std::cout << "\n";
-        cav_msgs::Route route_msg_ = worker.compose_route_msg(route);
-
-
-        ASSERT_TRUE(route_msg_.shortest_path_lanelet_ids.size() > 0);
-        ASSERT_TRUE(route_msg_.route_path_lanelet_ids.size() > 0);
-    }
-}
-
-TEST(RouteGeneratorTest, testLaneletRoutingTown02VectorMap)
-{
-    tf2_ros::Buffer tf_buffer;
-    carma_wm::WorldModelConstPtr wm;
-    route::RouteGeneratorWorker worker(tf_buffer);
-
-    int projector_type = 0;
-    std::string target_frame;
-    lanelet::ErrorMessages load_errors;
-
-    // If the output is an error about the geoReference field in the osm file, here is a correct example. If the lat/lon coordinates are already correct, simply add:
-    // <geoReference>+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs</geoReference>
-
-    // File location of osm file
-    std::string file = "../resource/map/town01_vector_map_1.osm";
-    // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
-    lanelet::Id start_id = 101;
-    lanelet::Id end_id = 111;
-    /***
-     * VAVLID PATHs (consists of lanenet ids): (This is also the shortest path because certain Lanelets missing)
-     * 159->160->164->136->135->137->144->121; 
-     * 159->160->164->136->135->137->144->118;
-     * 168->170->111
-     * 159->161->168->170->111
-     * 167->169->168->170->111
-     * 115->146->140->139->143->167->169->168->170->111 
-     * 141->139->143->167->169->168->170->111 
-     * 127->146->140->139->143->167->169->168->170->111 
-     * 101->100->104->167->169->168->170->111 (a counter cLock circle) 
-     * **/
-
-    // The parsing in this file was copied from https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/carma_wm_ctrl/test/MapToolsTest.cpp
-    lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
-    lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
-    lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
-
-    // Grabs lanelet elements from the start and end IDs. Fails the unit test if there is no lanelet with the matching ID
-    lanelet::Lanelet start_lanelet;
-    lanelet::Lanelet end_lanelet;
-
-    try 
-    {
-        //get lanelet layer
-        start_lanelet = map->laneletLayer.get(start_id);        
-    }
-    catch (const lanelet::NoSuchPrimitiveError& e) {
-        FAIL() << "The specified starting lanelet Id of " << start_id << " does not exist in the provided map.";
-    }
-    try {
-        end_lanelet = map->laneletLayer.get(end_id);
-    }
-    catch (const lanelet::NoSuchPrimitiveError& e) {
-        FAIL() << "The specified ending lanelet Id of " << end_id << " does not exist in the provided map.";
-    }
-
-    lanelet::LaneletMapConstPtr const_map(map);
-    lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
-    lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
-    // Output graph for debugging
-    map_graph->exportGraphViz("../routing2.txt");
-
-    // Computes the shortest path and prints the list of lanelet IDs to get from the start to the end. Can be manually confirmed in JOSM
-    const auto route = map_graph->getRoute(start_lanelet, end_lanelet);
-    if(!route) {
-        ASSERT_FALSE(true);
-        std::cout << "Route not generated." << " ";
-    } else {
-        std::cout << "shortest path: \n";
-        for(const auto& ll : route.get().shortestPath()) {
-            std::cout << ll.id() << " ";
+        lanelet::BasicLineString2d centerline = carma_wm::geometry::concatenate_lanelets(l_vec);
+        std::vector<lanelet::BasicPoint2d> p_vec;
+        for (auto p : centerline) {
+            p_vec.push_back(p);
         }
-        std::cout << "\n";
-        cav_msgs::Route route_msg_ = worker.compose_route_msg(route);
-        ASSERT_TRUE(route_msg_.shortest_path_lanelet_ids.size() > 0);
-        ASSERT_TRUE(route_msg_.route_path_lanelet_ids.size() > 0);
-    }
-
-}
-
-TEST(RouteGeneratorTest, testReadLanelet111RouteFile)
-{
-    tf2_ros::Buffer tf_buffer;
-    carma_wm::WorldModelConstPtr wm;
-    route::RouteGeneratorWorker worker(tf_buffer);
-    worker.set_route_file_path("../resource/route/");
-    cav_srvs::GetAvailableRoutesRequest req;
-    cav_srvs::GetAvailableRoutesResponse resp;
-    ASSERT_TRUE(worker.get_available_route_cb(req, resp));
-    for(auto i = 0; i < resp.availableRoutes.size();i++)    
-    {
-        std::cout<< "Route #: " << (i+1) << "\n";
-        std::cout<< "Route ID: " << resp.availableRoutes[i].route_id << "\n";
-        std::cout<< "Route Name: " << resp.availableRoutes[i].route_name << "\n";
-    }
-    auto points = worker.load_route_destinations_in_ecef("Test_lanelet111_route_2");
-    std::cout << "Point Size : " << points.size()<<"\n";
-    ASSERT_EQ(8, points.size());    
-    ASSERT_NEAR(4.15171e+06, points[0].getX(), 5.0);
-    ASSERT_NEAR(583682, points[0].getY(), 5.0);    
-    ASSERT_NEAR(4.79047e+06, points[0].getZ(), 5.0);
-}
-
-
-TEST(RouteGeneratorTest, testReadRoutetfhrcFile)
-{
-    tf2_ros::Buffer tf_buffer;
-    carma_wm::WorldModelConstPtr wm;
-    route::RouteGeneratorWorker worker(tf_buffer);
-    worker.set_route_file_path("../resource/route/");
-    cav_srvs::GetAvailableRoutesRequest req;
-    cav_srvs::GetAvailableRoutesResponse resp;
-    ASSERT_TRUE(worker.get_available_route_cb(req, resp));
-    std::cout << "Available Route : " << resp.availableRoutes.size() << "\n";
-    ASSERT_EQ(4, resp.availableRoutes.size());
-    for(auto i = 0; i < resp.availableRoutes.size();i++)    
-    {
-        if(resp.availableRoutes[i].route_id  == "tfhrc_test_route")
-        {
-            std::cout <<"C-HUB : " << resp.availableRoutes[i].route_name << "\n";
-            auto points = worker.load_route_destinations_in_ecef("tfhrc_test_route");
-            std::cout << "Point Size : " << points.size()<<"\n";
-            ASSERT_EQ(5, points.size());
-            ASSERT_NEAR(1106580, points[0].getX(), 5.0);
-            ASSERT_NEAR(894697, points[0].getY(), 5.0);  
-            ASSERT_NEAR(-6196590, points[0].getZ(), 5.0);
+        auto downsampled = carma_utils::containers::downsample_vector<lanelet::BasicPoint2d>(p_vec, 4);
+        
+        std::ofstream myfile;
+        myfile.open ("wp.csv");
+        myfile << "x,y,z,yaw,velocity,change_flag" << std::endl;
+        
+        for(auto p : downsampled) {
+            myfile << p.x() <<"," << p.y() << "," << "9.0" << "," << "0.0" << "," << "48.0" << "," << "0" << std::endl;
         }
-   }
+
+        myfile.close();
+
+    }
 }
+
+// TEST(RouteGeneratorTest, testLaneletRoutingTown02VectorMap)
+// {
+//     tf2_ros::Buffer tf_buffer;
+//     carma_wm::WorldModelConstPtr wm;
+//     route::RouteGeneratorWorker worker(tf_buffer);
+
+//     int projector_type = 0;
+//     std::string target_frame;
+//     lanelet::ErrorMessages load_errors;
+
+//     // If the output is an error about the geoReference field in the osm file, here is a correct example. If the lat/lon coordinates are already correct, simply add:
+//     // <geoReference>+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs</geoReference>
+
+//     // File location of osm file
+//     std::string file = "../resource/map/town01_vector_map_1.osm";
+//     // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
+//     lanelet::Id start_id = 101;
+//     lanelet::Id end_id = 111;
+//     /***
+//      * VAVLID PATHs (consists of lanenet ids): (This is also the shortest path because certain Lanelets missing)
+//      * 159->160->164->136->135->137->144->121; 
+//      * 159->160->164->136->135->137->144->118;
+//      * 168->170->111
+//      * 159->161->168->170->111
+//      * 167->169->168->170->111
+//      * 115->146->140->139->143->167->169->168->170->111 
+//      * 141->139->143->167->169->168->170->111 
+//      * 127->146->140->139->143->167->169->168->170->111 
+//      * 101->100->104->167->169->168->170->111 (a counter cLock circle) 
+//      * **/
+
+//     // The parsing in this file was copied from https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/carma_wm_ctrl/test/MapToolsTest.cpp
+//     lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+//     lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+//     lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+
+//     // Grabs lanelet elements from the start and end IDs. Fails the unit test if there is no lanelet with the matching ID
+//     lanelet::Lanelet start_lanelet;
+//     lanelet::Lanelet end_lanelet;
+
+//     try 
+//     {
+//         //get lanelet layer
+//         start_lanelet = map->laneletLayer.get(start_id);        
+//     }
+//     catch (const lanelet::NoSuchPrimitiveError& e) {
+//         FAIL() << "The specified starting lanelet Id of " << start_id << " does not exist in the provided map.";
+//     }
+//     try {
+//         end_lanelet = map->laneletLayer.get(end_id);
+//     }
+//     catch (const lanelet::NoSuchPrimitiveError& e) {
+//         FAIL() << "The specified ending lanelet Id of " << end_id << " does not exist in the provided map.";
+//     }
+
+//     lanelet::LaneletMapConstPtr const_map(map);
+//     lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
+//     lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
+//     // Output graph for debugging
+//     map_graph->exportGraphViz("../routing2.txt");
+
+//     // Computes the shortest path and prints the list of lanelet IDs to get from the start to the end. Can be manually confirmed in JOSM
+//     const auto route = map_graph->getRoute(start_lanelet, end_lanelet);
+//     if(!route) {
+//         ASSERT_FALSE(true);
+//         std::cout << "Route not generated." << " ";
+//     } else {
+//         std::cout << "shortest path: \n";
+//         for(const auto& ll : route.get().shortestPath()) {
+//             std::cout << ll.id() << " ";
+//         }
+//         std::cout << "\n";
+//         cav_msgs::Route route_msg_ = worker.compose_route_msg(route);
+//         ASSERT_TRUE(route_msg_.shortest_path_lanelet_ids.size() > 0);
+//         ASSERT_TRUE(route_msg_.route_path_lanelet_ids.size() > 0);
+//     }
+
+// }
+
+// TEST(RouteGeneratorTest, testReadLanelet111RouteFile)
+// {
+//     tf2_ros::Buffer tf_buffer;
+//     carma_wm::WorldModelConstPtr wm;
+//     route::RouteGeneratorWorker worker(tf_buffer);
+//     worker.set_route_file_path("../resource/route/");
+//     cav_srvs::GetAvailableRoutesRequest req;
+//     cav_srvs::GetAvailableRoutesResponse resp;
+//     ASSERT_TRUE(worker.get_available_route_cb(req, resp));
+//     for(auto i = 0; i < resp.availableRoutes.size();i++)    
+//     {
+//         std::cout<< "Route #: " << (i+1) << "\n";
+//         std::cout<< "Route ID: " << resp.availableRoutes[i].route_id << "\n";
+//         std::cout<< "Route Name: " << resp.availableRoutes[i].route_name << "\n";
+//     }
+//     auto points = worker.load_route_destinations_in_ecef("Test_lanelet111_route_2");
+//     std::cout << "Point Size : " << points.size()<<"\n";
+//     ASSERT_EQ(8, points.size());    
+//     ASSERT_NEAR(4.15171e+06, points[0].getX(), 5.0);
+//     ASSERT_NEAR(583682, points[0].getY(), 5.0);    
+//     ASSERT_NEAR(4.79047e+06, points[0].getZ(), 5.0);
+// }
+
+
+// TEST(RouteGeneratorTest, testReadRoutetfhrcFile)
+// {
+//     tf2_ros::Buffer tf_buffer;
+//     carma_wm::WorldModelConstPtr wm;
+//     route::RouteGeneratorWorker worker(tf_buffer);
+//     worker.set_route_file_path("../resource/route/");
+//     cav_srvs::GetAvailableRoutesRequest req;
+//     cav_srvs::GetAvailableRoutesResponse resp;
+//     ASSERT_TRUE(worker.get_available_route_cb(req, resp));
+//     std::cout << "Available Route : " << resp.availableRoutes.size() << "\n";
+//     ASSERT_EQ(4, resp.availableRoutes.size());
+//     for(auto i = 0; i < resp.availableRoutes.size();i++)    
+//     {
+//         if(resp.availableRoutes[i].route_id  == "tfhrc_test_route")
+//         {
+//             std::cout <<"C-HUB : " << resp.availableRoutes[i].route_name << "\n";
+//             auto points = worker.load_route_destinations_in_ecef("tfhrc_test_route");
+//             std::cout << "Point Size : " << points.size()<<"\n";
+//             ASSERT_EQ(5, points.size());
+//             ASSERT_NEAR(1106580, points[0].getX(), 5.0);
+//             ASSERT_NEAR(894697, points[0].getY(), 5.0);  
+//             ASSERT_NEAR(-6196590, points[0].getZ(), 5.0);
+//         }
+//    }
+//}
 
 // Run all the tests
 int main(int argc, char **argv)
