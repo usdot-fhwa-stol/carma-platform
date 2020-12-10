@@ -12,7 +12,7 @@ myClock.bin
 **/bin
 
 # ignore build directories
-build/
+build
 target
 devel
 
@@ -37,3 +37,6 @@ srx_can_driver
 srx_objects
 truck_can_driver
 **/J2735_201603.asn1
+
+# exceptions
+!hooks/build
