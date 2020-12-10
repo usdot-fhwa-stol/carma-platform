@@ -19,9 +19,9 @@
   <name>stop_and_wait_plugin</name>
   <version>3.3.0</version>
   <description>The stop_and_wait_plugin package</description>
-  <maintainer email="CARMA@dot.gov">carma</maintainer>
+  <maintainer email="carma@dot.gov">carma</maintainer>
   <license>Apache License 2.0</license>
-  <author email="CARMA@dot.gov">carma</author>
+  <author email="carma@dot.gov">carma</author>
   <buildtool_depend>catkin</buildtool_depend>
   <depend>roscpp</depend>
   <depend>std_msgs</depend>

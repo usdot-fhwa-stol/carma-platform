@@ -39,8 +39,17 @@ namespace stopandwait_plugin
 
             ros::Publisher discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery",1);
 
-            
-            //ros::CARMANodeHandle::setSpinCallback(std::bind(&StopandWait::onSpin, &worker));
+            StopandWait sw;
+            pnh.param<double>("minimal_trajectory_duration", sw.minimal_trajectory_duration_);
+            pnh.param<double>("max_jerk_limit", sw.max_jerk_limit_);
+
+
+            StopandWait worker(wm_, [&discovery_pub](auto msg) { discovery_pub.publish(msg); });
+
+            ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/StopandWaitPlugin/plan_trajectory", &StopandWait::plan_trajectory_cb, &worker);
+
+            ros::CARMANodeHandle::setSpinCallback(std::bind(&StopandWait::onSpin, &worker));
+            ros::CARMANodeHandle::spin();
         }
     };
 }

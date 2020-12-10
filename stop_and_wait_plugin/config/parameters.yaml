@@ -1,0 +1,5 @@
+# The minimum duration of a trajectory length in seconds
+minimal_trajectory_duration : 6.0
+
+# The maximum acceptable jerk for completing maneuver in meters per second cube
+max_jerk_limit: 3.0

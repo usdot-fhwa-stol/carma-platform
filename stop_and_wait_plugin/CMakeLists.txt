@@ -48,27 +48,31 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
 )
-add_executable( ${PROJECT_NAME}
-  src/main.cpp)
-  add_library(stopandwait_plugin_library 
-  src/stop_and_wait.cpp
-)  
-target_link_libraries(stopandwait_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(stopandwait_plugin_library ${catkin_EXPORTED_TARGETS})
+file(GLOB_RECURSE headers */*.hpp */*.h)
 
-target_link_libraries(${PROJECT_NAME} stopandwait_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(${PROJECT_NAME} stopandwait_plugin_library ${catkin_EXPORTED_TARGETS})
+add_executable( ${PROJECT_NAME}
+  ${headers}
+  src/main.cpp
+  src/stop_and_wait.cpp)
+
+add_library(stopandwait_plugin_lib  src/stop_and_wait.cpp)  
+add_dependencies(stopandwait_plugin_lib ${catkin_EXPORTED_TARGETS})
+
+target_link_libraries(${PROJECT_NAME}  stopandwait_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
 
 #############
 ## Install ##
 #############
 
-install(DIRECTORY include
+install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".svn" EXCLUDE
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME} stopandwait_plugin_library
+install(TARGETS ${PROJECT_NAME} 
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -86,4 +90,4 @@ install(DIRECTORY launch config
 catkin_add_gmock(${PROJECT_NAME}-test 
   test/test_stopandwait_plugin.cpp
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
-target_link_libraries(${PROJECT_NAME}-test stopandwait_plugin_library ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}-test stopandwait_plugin_lib ${catkin_LIBRARIES})

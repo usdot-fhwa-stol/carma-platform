@@ -23,7 +23,7 @@ int main(int argc, char** argv)
 {
 
     ros::init(argc, argv, "stop_and_wait_plugin");
-    stopandwait_plugin::StopandWaitNode sw;
-    sw.run();
+    stopandwait_plugin::StopandWaitNode swn;
+    swn.run();
     return 0;
 }

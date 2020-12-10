@@ -36,6 +36,7 @@
 #include <carma_utils/containers/containers.h>
 #include <cav_msgs/VehicleState.h>
 #include <cav_msgs/TrajectoryPlanPoint.h>
+#include <fstream>
 
 namespace stopandwait_plugin
 {

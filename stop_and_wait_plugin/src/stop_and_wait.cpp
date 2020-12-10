@@ -49,16 +49,16 @@ using oss = std::ostringstream;
 
 namespace stopandwait_plugin
 {
-    // StopandWait::StopandWait (carma_wm::WorldModeConstPtr wm, PublishPluginDiscoveryCB plugin_discovery_publisher)
-    // : wm_(wm) , plugin_discovery_publisher_(plugin_discovery_publisher)
-    // {
-    //     plugin_discovery_msg_.name = "StopandWaitPlugin";
-    //     plugin_discovery_msg_.versionId = "v1.0";
-    //     plugin_discovery_msg_.available = true;
-    //     plugin_discovery_msg_.activated = false;
-    //     plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
-    //     plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
-    // }
+    StopandWait::StopandWait(carma_wm::WorldModelConstPtr wm, PublishPluginDiscoveryCB plugin_discovery_publisher)
+    : wm_(wm) , plugin_discovery_publisher_(plugin_discovery_publisher)
+    {
+        plugin_discovery_msg_.name = "StopandWaitPlugin";
+        plugin_discovery_msg_.versionId = "v1.0";
+        plugin_discovery_msg_.available = true;
+        plugin_discovery_msg_.activated = false;
+        plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
+        plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
+    }
 
     bool StopandWait::onSpin()
     {
@@ -68,7 +68,7 @@ namespace stopandwait_plugin
 
     bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp)
     {
-        ros::WallTime start_time = ros::WallTime::now();
+        //ros::WallTime start_time = ros::WallTime::now(); - for checking planning time
         
         lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global,req.vehicle_state.Y_pos_global);
         double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
@@ -78,14 +78,22 @@ namespace stopandwait_plugin
         auto downsampled_points = 
             carma_utils::containers::downsample_vector(points_and_target_speeds,8);
 
-      /*  //Trajectory plan
+        //Trajectory plan
         cav_msgs::TrajectoryPlan  trajectory;
         trajectory.header.frame_id = "map";
         trajectory.header.stamp = ros::Time::now();
         trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
-        trajectory.trajectory_points = 
-        trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_min_speed); */
+        trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points,req.vehicle_state);
+        trajectory.initial_longitudinal_velocity = req.vehicle_state.longitudinal_vel;
+
+        resp.trajectory_plan = trajectory;
+        resp.related_maneuvers.push_back(cav_msgs::Maneuver::STOP_AND_WAIT);
+        resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
+
+        // ros::WallTime end_time = ros::WallTime::now(); // Planning complete
+        // ros::WallDuration duration = end_time - start_time;
+        // ROS_DEBUG_STREAM("ExecutionTime: " << duration.toSec());
 
         return true;
     }
@@ -123,14 +131,14 @@ namespace stopandwait_plugin
             //------------------------------------------
             //Create speed profile
             double maneuver_time = ros::Duration(stop_and_wait_maneuver.end_time - stop_and_wait_maneuver.start_time).toSec();
-            double travel_dist =  stop_and_wait_maneuver.end_dist - starting_downtrack;
-            double acceleration = stop_and_wait_maneuver.start_speed/maneuver_time;
-            double max_jerk = 3.0, jerk_req= 0.0, jerk=0.0;
+            //double travel_dist =  stop_and_wait_maneuver.end_dist - starting_downtrack;
+            //double acceleration = stop_and_wait_maneuver.start_speed/maneuver_time;
+            double jerk_req, jerk;
             jerk_req = (2*stop_and_wait_maneuver.start_speed)/pow(maneuver_time,2);
-            if(jerk_req > max_jerk)
+            if(jerk_req > max_jerk_limit_)
             {
                 //unsafe to stop at the required jerk - reset to max_jerk and go beyond the maneuver end_dist
-                jerk = max_jerk;  
+                jerk = max_jerk_limit_;  
                 maneuver_time = pow(2*stop_and_wait_maneuver.start_speed, 0.5);
                 double travel_dist_new = stop_and_wait_maneuver.start_speed * maneuver_time - (0.167 * jerk * pow(maneuver_time,3));
                 ending_downtrack = travel_dist_new + starting_downtrack;
@@ -156,7 +164,6 @@ namespace stopandwait_plugin
 
             lanelet::BasicLineString2d route_geometry = carma_wm::geometry::concatenate_lanelets(lanelets_to_add);
             
-            //double acceleration = 2*(travel_dist - stop_and_wait_maneuver.start_speed * maneuver_time)/pow(maneuver_time,2);
             int points_count = route_geometry.size();
             double delta_time = maneuver_time/(points_count-1);
 
@@ -173,8 +180,6 @@ namespace stopandwait_plugin
                 }
                 PointSpeedPair pair;
                 pair.point = p;
-                //pair.speed = stop_and_wait_maneuver.start_speed - (acceleration * curr_time);
-                //double jerk_speed = stop_and_wait_maneuver.start_speed - (0.5 * jerk_req * pow(curr_time,2));
                 pair.speed = stop_and_wait_maneuver.start_speed - (0.5 * jerk_req * pow(curr_time,2));
                 if(p == route_geometry.back()) pair.speed = 0.0;    //force speed to 0 at last point
                 curr_time +=delta_time;
@@ -182,9 +187,9 @@ namespace stopandwait_plugin
                 points_and_target_speeds.push_back(pair);
             }
  
-            if(maneuver_time < 6.0)
+            if(maneuver_time < minimal_trajectory_duration_)
             {
-                while(curr_time < 6.0)
+                while(curr_time < minimal_trajectory_duration_)
                 {
                     PointSpeedPair pair;
                     pair.point = points_and_target_speeds.back().point;
@@ -203,7 +208,7 @@ namespace stopandwait_plugin
         int nearest_pt_index = getNearestPointIndex(points,state);
         std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end()); // Points in front of current vehicle position
 
-        //Get yaw
+        //Get yaw - geometrically
         std::vector<float> yaw_values;
         for(size_t i=0 ;i < points.size()-1 ;i++)
         {
