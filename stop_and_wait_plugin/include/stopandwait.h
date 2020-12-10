@@ -128,12 +128,6 @@ namespace stopandwait_plugin
         double minimal_trajectory_duration_ = 6.0;
         double max_jerk_limit_ = 3.0;
 
-    private:
-        //CARMA ROS node handles
-        std::shared_ptr<ros::CARMANodeHandle> nh_,pnh_;
-
-        //ROS publishers and subscribers
-        ros::Publisher plugin_discovery_pub_;
         ros::Subscriber pose_sub_;
         ros::Subscriber twist_sub_;
 
@@ -147,6 +141,17 @@ namespace stopandwait_plugin
          * \param msg Latest twist message
          */
         void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
+
+    private:
+        //CARMA ROS node handles
+        std::shared_ptr<ros::CARMANodeHandle> nh_,pnh_;
+
+        //ROS publishers and subscribers
+        ros::Publisher plugin_discovery_pub_;
+
+        // Current vehicle pose in map
+        geometry_msgs::PoseStamped pose_msg_;
+        double current_speed_;
         
         PublishPluginDiscoveryCB plugin_discovery_publisher_;
 

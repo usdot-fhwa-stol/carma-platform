@@ -66,6 +66,16 @@ namespace stopandwait_plugin
         return true;
     }
 
+    void StopandWait::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
+    {
+        pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
+    }
+    
+    void StopandWait::twist_cb(const geometry_msgs::TwistStampedConstPtr& msg)
+    {
+        current_speed_ = msg->twist.linear.x;
+    }
+    
     bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp)
     {
         //ros::WallTime start_time = ros::WallTime::now(); - for checking planning time
@@ -133,58 +143,77 @@ namespace stopandwait_plugin
             double maneuver_time = ros::Duration(stop_and_wait_maneuver.end_time - stop_and_wait_maneuver.start_time).toSec();
             //double travel_dist =  stop_and_wait_maneuver.end_dist - starting_downtrack;
             //double acceleration = stop_and_wait_maneuver.start_speed/maneuver_time;
-            double jerk_req, jerk;
-            jerk_req = (2*stop_and_wait_maneuver.start_speed)/pow(maneuver_time,2);
-            if(jerk_req > max_jerk_limit_)
+            double delta_time, curr_time;
+            if(starting_downtrack == ending_downtrack)
             {
-                //unsafe to stop at the required jerk - reset to max_jerk and go beyond the maneuver end_dist
-                jerk = max_jerk_limit_;  
-                maneuver_time = pow(2*stop_and_wait_maneuver.start_speed, 0.5);
-                double travel_dist_new = stop_and_wait_maneuver.start_speed * maneuver_time - (0.167 * jerk * pow(maneuver_time,3));
-                ending_downtrack = travel_dist_new + starting_downtrack;
-            }
-            else jerk = jerk_req;
-
-            //----------------------------------------------
-
-            //get all the lanelets in between starting and ending downtrack on shortest path
-            auto lanelets = wm_->getLaneletsBetween(starting_downtrack, ending_downtrack, true);
-            
-            //record all the lanelets to be added to path
-            std::vector<lanelet::ConstLanelet> lanelets_to_add;
-            for (auto l : lanelets)
-            {
-                ROS_DEBUG_STREAM("Lanelet ID: " << l.id());
-                if(visited_lanelets.find(l.id()) == visited_lanelets.end())
+                delta_time = maneuver_time/1000;
+                curr_time = 0;
+                //wait
+                lanelet::BasicPoint2d curr_pose (pose_msg_.pose.position.x,pose_msg_.pose.position.y);
+                for(int i=0;i<1000;i++)
                 {
-                    lanelets_to_add.push_back(l);
-                    visited_lanelets.insert(l.id());
+                    PointSpeedPair pair;
+                    pair.point = curr_pose;
+                    pair.speed = 0.0;
+                    points_and_target_speeds.push_back(pair);
+                    curr_time += delta_time;
                 }
             }
-
-            lanelet::BasicLineString2d route_geometry = carma_wm::geometry::concatenate_lanelets(lanelets_to_add);
-            
-            int points_count = route_geometry.size();
-            double delta_time = maneuver_time/(points_count-1);
-
-            first = true;
-            double curr_time = 0.0;
-
-            for(auto p : route_geometry)
+            else
             {
-                if (first && points_and_target_speeds.size() != 0)
+                double jerk_req, jerk;
+                jerk_req = (2*stop_and_wait_maneuver.start_speed)/pow(maneuver_time,2);
+                if(jerk_req > max_jerk_limit_)
                 {
-                    first = false;
-
-                    continue; //Skip the first point to avoid duplicates from previous maneuver
+                    //unsafe to stop at the required jerk - reset to max_jerk and go beyond the maneuver end_dist
+                    jerk = max_jerk_limit_;  
+                    maneuver_time = pow(2*stop_and_wait_maneuver.start_speed, 0.5);
+                    double travel_dist_new = stop_and_wait_maneuver.start_speed * maneuver_time - (0.167 * jerk * pow(maneuver_time,3));
+                    ending_downtrack = travel_dist_new + starting_downtrack;
                 }
-                PointSpeedPair pair;
-                pair.point = p;
-                pair.speed = stop_and_wait_maneuver.start_speed - (0.5 * jerk_req * pow(curr_time,2));
-                if(p == route_geometry.back()) pair.speed = 0.0;    //force speed to 0 at last point
-                curr_time +=delta_time;
+                else jerk = jerk_req;
 
-                points_and_target_speeds.push_back(pair);
+                //----------------------------------------------
+
+                //get all the lanelets in between starting and ending downtrack on shortest path
+                auto lanelets = wm_->getLaneletsBetween(starting_downtrack, ending_downtrack, true);
+                
+                //record all the lanelets to be added to path
+                std::vector<lanelet::ConstLanelet> lanelets_to_add;
+                for (auto l : lanelets)
+                {
+                    ROS_DEBUG_STREAM("Lanelet ID: " << l.id());
+                    if(visited_lanelets.find(l.id()) == visited_lanelets.end())
+                    {
+                        lanelets_to_add.push_back(l);
+                        visited_lanelets.insert(l.id());
+                    }
+                }
+
+                lanelet::BasicLineString2d route_geometry = carma_wm::geometry::concatenate_lanelets(lanelets_to_add);
+                
+                int points_count = route_geometry.size();
+                delta_time = maneuver_time/(points_count-1);
+
+                first = true;
+                curr_time = 0.0;
+
+                for(auto p : route_geometry)
+                {
+                    if (first && points_and_target_speeds.size() != 0)
+                    {
+                        first = false;
+
+                        continue; //Skip the first point to avoid duplicates from previous maneuver
+                    }
+                    PointSpeedPair pair;
+                    pair.point = p;
+                    pair.speed = stop_and_wait_maneuver.start_speed - (0.5 * jerk_req * pow(curr_time,2));
+                    if(p == route_geometry.back()) pair.speed = 0.0;    //force speed to 0 at last point
+                    curr_time +=delta_time;
+
+                    points_and_target_speeds.push_back(pair);
+                }
             }
  
             if(maneuver_time < minimal_trajectory_duration_)

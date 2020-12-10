@@ -46,9 +46,11 @@ namespace stopandwait_plugin
 
             StopandWait worker(wm_, [&discovery_pub](auto msg) { discovery_pub.publish(msg); });
 
-            ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/StopandWaitPlugin/plan_trajectory", &StopandWait::plan_trajectory_cb, &worker);
+            ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/StopandWaitPlugin/plan_trajectory", &StopandWait::plan_trajectory_cb, &sw);
+            sw.pose_sub_ = nh.subscribe("current_pose",1, &StopandWait::pose_cb, &sw);
+            sw.twist_sub_ = nh.subscribe("current_velocity", 1, &StopandWait::twist_cb, &sw);
 
-            ros::CARMANodeHandle::setSpinCallback(std::bind(&StopandWait::onSpin, &worker));
+            ros::CARMANodeHandle::setSpinCallback(std::bind(&StopandWait::onSpin, &sw));
             ros::CARMANodeHandle::spin();
         }
     };
