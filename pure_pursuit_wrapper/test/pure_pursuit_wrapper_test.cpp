@@ -19,7 +19,6 @@
 #include <gtest/gtest.h>
 #include <iostream>
 
-
 TEST(TrajectoryPlanPointToWaypointConverterTest, test1)
 {  
 

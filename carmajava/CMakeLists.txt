@@ -26,14 +26,12 @@ project(carma)
 ##############################################################################
 
 find_package(catkin REQUIRED
-	rosjava_build_tools
-        rosjava_messages #genjava was here
         cav_msgs
-        cav_srvs
         j2735_msgs
         autoware_msgs
         derived_object_msgs
         radar_msgs
+        rosjava_utils
 )
 # Enable integration tests using python
 #if(CATKIN_ENABLE_TESTING)
@@ -41,42 +39,19 @@ find_package(catkin REQUIRED
 #  add_rostest(test/transform_server_integration.test)
 #endif()
 
-# Set the gradle targets you want catkin's make to run by default, e.g.
-#   catkin_rosjava_setup(installApp)
-# Note that the catkin_create_rosjava_xxx scripts will usually automatically
-# add tasks to this for you when you create subprojects.
-catkin_rosjava_setup(installApp publish)
-
-
-# make sure messages get built first if genjava is enabled
-add_dependencies(gradle-${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-
 catkin_package()
 
 ##############################################################################
 # Installation
 ##############################################################################
 
-# Change this to match the maven group name you have specified in the
-# allprojects closure the root build.gradle
-install(DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_GLOBAL_MAVEN_DESTINATION}/gov/dot/fhwa/saxton/${PROJECT_NAME}/
-        DESTINATION ${CATKIN_GLOBAL_MAVEN_DESTINATION}/gov/dot/fhwa/saxton/${PROJECT_NAME})
-
 # Instal Binaries from Gradle Build folder
 install(DIRECTORY
         launch
         routes
-        map
         scripts
+        rviz
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
-install(DIRECTORY
-        message/build
-        message/config
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/message)
-install(DIRECTORY
-        mock_drivers/build
-        mock_drivers/config
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/mock_drivers)
 install(DIRECTORY
         ui/config
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/ui)

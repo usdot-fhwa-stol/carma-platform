@@ -58,7 +58,8 @@ namespace trajectory_executor {
              * \brief Constructor for TrajectoryExecutor. Uses default value for output tickrate.
              */
             TrajectoryExecutor();
-/*!
+            
+            /*!
              * \brief Monitor the guidance state and set the current trajector as null_ptr 
              */
             void guidanceStateMonitor(cav_msgs::GuidanceState msg);
@@ -90,7 +91,7 @@ namespace trajectory_executor {
              * 
              * \param msg The new TrajectoryPlan message
              */
-            void onNewTrajectoryPlan(cav_msgs::TrajectoryPlan msg);
+            void onNewTrajectoryPlan(const cav_msgs::TrajectoryPlan& msg);
 
             /*!
              * \brief Timer callback to be invoked at our output tickrate.
@@ -118,11 +119,11 @@ namespace trajectory_executor {
 
             // Trajectory plan tracking data. Synchronized on _cur_traj_mutex
             std::unique_ptr<cav_msgs::TrajectoryPlan> _cur_traj; 
-            int _timesteps_since_last_traj;
+            int _timesteps_since_last_traj {0};
             std::mutex _cur_traj_mutex;
 
             // Timers and associated spin rates
-            int _min_traj_publish_tickrate_hz;
+            int _min_traj_publish_tickrate_hz {10};
             ros::Timer _timer;
             int _default_spin_rate;
     };

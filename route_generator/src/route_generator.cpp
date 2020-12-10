@@ -18,7 +18,7 @@
 
 #include "route_generator.h"
 
-RouteGenerator::RouteGenerator() : route_is_active_(false) {}
+RouteGenerator::RouteGenerator(){}
 
 RouteGenerator::~RouteGenerator() {}
 
@@ -59,7 +59,18 @@ bool RouteGenerator::set_active_route_cb(cav_srvs::SetActiveRouteRequest &req, c
 {
     if(!route_is_active_)
     {
-        std::string route_file_name = req.routeID.append(".csv");
+        std::string route_file_name = req.routeID;
+
+        // Check if the route file name contains spaces and if so log an error as waypoint_loader does not support spaces in file names
+        // TODO once the waypoint_loader is no longer required it may be possible to support files with spaces
+        if (route_file_name.find(" ") != std::string::npos) {
+            ROS_WARN_STREAM("Route file name cannot contain spaces");
+            resp.errorStatus = cav_srvs::SetActiveRouteResponse::NO_ROUTE;
+            return true;
+        }
+
+        route_file_name = route_file_name + ".csv";
+
         std_msgs::String selected_route_file_path;
         selected_route_file_path.data = route_file_path_ + route_file_name;
         route_file_path_pub_.publish(selected_route_file_path);
@@ -105,7 +116,7 @@ bool RouteGenerator::abort_active_route_cb(cav_srvs::AbortActiveRouteRequest &re
     return true;
 }
 
-std::vector<std::string> RouteGenerator::read_route_names(std::string route_path)
+std::vector<std::string> RouteGenerator::read_route_names(const std::string& route_path)
 {
     boost::filesystem::path route_path_object(route_path);
     std::vector<std::string> route_names;
@@ -121,4 +132,9 @@ std::vector<std::string> RouteGenerator::read_route_names(std::string route_path
         }
     }
     return route_names;
+}
+
+bool RouteGenerator::is_route_active ()
+{
+    return route_is_active_;
 }

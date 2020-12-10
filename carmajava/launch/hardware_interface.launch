@@ -40,7 +40,6 @@
   <group if="$(arg launch_drivers)">
     <!-- Simulated Mock Drivers -->
     <include file="$(find carma)/launch/mock_drivers.launch">
-      <arg name="debug_node" value="$(arg debug_node)"/>
       <arg name="mock_drivers" value="$(arg mock_drivers)"/>
     </include>
 
@@ -50,5 +49,11 @@
       <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
     </include>
   </group>
+
+  <!-- LightBar Manager -->
+  <include file="$(find lightbar_manager)/launch/lightbar_manager.launch">
+    <arg name="lightbar_driver_service_name" value="$(optenv CARMA_INTR_NS)/lightbar/set_lights"/>
+    <arg name="guidance_state_topic_name" value= "$(optenv CARMA_GUIDE_NS)/state"/>
+  </include>
 
 </launch>

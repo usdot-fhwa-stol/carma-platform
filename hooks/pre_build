@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [[ "$SOURCE_BRANCH" = "develop" ]]; then
+    # add -d flag to checkout.bash and update image dependencies
+    sed -i "s|checkout.bash|checkout.bash -d|g; s|usdotfhwastol/|usdotfhwastoldev/|g; s|:[0-9]*\.[0-9]*\.[0-9]*|:develop|g s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:develop|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:develop|g" \
+        Dockerfile
+elif [[ "$SOURCE_BRANCH" =~ ^release/.*$ ]]; then
+    # swap checkout branch in checkout.bash to release branch
+    sed -i "s|usdotfhwastoldev/|usdotfhwastolcandidate/|g; s|usdotfhwastol/|usdotfhwastolcandidate/|g; s|:[0-9]*\.[0-9]*\.[0-9]*|:candidate|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:candidate|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:candidate|g" \
+        Dockerfile
+    sed -i "s|--branch .*|--branch $SOURCE_BRANCH|g" \
+        docker/checkout.bash
+fi

@@ -84,13 +84,13 @@ namespace guidance
             void onGuidanceSignal(Signal signal);
 
             // a local variable keeps the current state machine state
-            State current_guidance_state_;
+            State current_guidance_state_ {State::STARTUP};
 
             // Previous robotic active status
-            bool robotic_active_status_;
+            bool robotic_active_status_{false};
 
             // make one service call in ACTIVE state to engage
-            bool called_robotic_engage_in_active_;
+            bool called_robotic_engage_in_active_{false};
     };
 
 }

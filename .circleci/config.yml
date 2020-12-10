@@ -28,7 +28,7 @@ jobs:
     # Pull docker image from docker hub
     # XTERM used for better catkin_make output
     docker:
-      - image: usdotfhwastol/autoware.ai:3.6.0
+      - image: usdotfhwastol/autoware.ai:carma-system-3.4.0
         user: carma
         environment:
           TERM: xterm
@@ -52,7 +52,7 @@ jobs:
           name: Pull Deps
           command: |
             source ${INIT_ENV}
-            ./src/CARMAPlatform/docker/checkout.sh ${PWD}
+            ./src/CARMAPlatform/docker/checkout.bash -r ${PWD}
             cd ${PWD}
             sudo apt-get update
       - run:
@@ -68,21 +68,17 @@ jobs:
             export ROS_PARALLEL_JOBS='-j1 -l1' # Try to reduce memory consumption on build
             bash make_with_coverage.bash -t -e /opt/carma/ -o ./coverage_reports/gcov
       - run:
-          name: Run Java Tests
-          command: |
-            source ${INIT_ENV}
-            source /opt/carma/devel/setup.bash
-            cd src/CARMAPlatform/carmajava/
-            ./gradlew jacocoCombinedReport --info
-            ./gradlew testReport --info
-      - run:
           name: Save Java Test results
           command: |
             source ${INIT_ENV}
-            mkdir -p ~/junit/ 
-            sudo mkdir -p /reports/tests
-            sudo mv src/CARMAPlatform/carmajava/build/reports/allTests/* /reports/tests/
-            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/junit/ \;
+            if [ -z "$(ls -A src/CARMAPlatform/carmajava/build/reports/allTests)" ]; then
+              echo "No java unit test results to collect"
+            else
+              mkdir -p ~/junit/ 
+              sudo mkdir -p /reports/tests
+              sudo mv src/CARMAPlatform/carmajava/build/reports/allTests/* /reports/tests/
+              find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/junit/ \;
+            fi
           when: always
       # Run SonarCloud analysis
       # PR Branchs and number extracted from Circle variables and github api

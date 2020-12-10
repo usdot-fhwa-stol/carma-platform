@@ -18,16 +18,11 @@
 
 namespace localizer
 {
-    NDTReliabilityCounter::NDTReliabilityCounter()
-    {
-        NDTReliabilityCounter(2.0, 3);
-    }
+    NDTReliabilityCounter::NDTReliabilityCounter() : NDTReliabilityCounter(2.0, 3) {}
     
-    NDTReliabilityCounter::NDTReliabilityCounter(double score_upper_limit, int message_upper_limit) : ndt_reliability_counter(0)
-    {
-        score_upper_limit_ = score_upper_limit;
-        unreliable_message_upper_limit_ = message_upper_limit;
-    }
+    NDTReliabilityCounter::NDTReliabilityCounter(double score_upper_limit, int message_upper_limit) : 
+                                                score_upper_limit_(score_upper_limit),
+                                                unreliable_message_upper_limit_(message_upper_limit) {}
 
     void NDTReliabilityCounter::onNDTScore(float score)
     {

@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="vehicle_calibration_dir" default="/opt/carma/vehicle"/>
+    <remap from="final_waypoints" to="carma_final_waypoints"/>
+    <remap from="/guidance/vehicle_status" to="/hardware_interface/vehicle_status"/>
+    <remap from="/guidance/estimate_twist" to="/localization/estimate_twist"/>
+
+    <!-- MPC Follower Node -->
+    <group>
+        <remap from="vehicle_model_steer_tau" to="/vehicle_steer_tau"/>
+        <remap from="vehicle_model_wheelbase" to="/vehicle_wheel_base"/>
+        <remap from="steer_lim_deg" to="/vehicle_steer_lim_deg"/>
+        <remap from="steering_gear_ratio" to="/vehicle_steering_gear_ratio"/>
+        <remap from="/mpc_waypoints" to="mpc_waypoints"/>
+        <node pkg="mpc_follower" type="mpc_waypoints_converter" name="mpc_waypoints_converter" output="screen">
+            <remap from="/base_waypoints" to="base_waypoints"/>
+            <remap from="/closest_waypoint" to="closest_waypoint"/>
+            <remap from="/final_waypoints" to="carma_final_waypoints"/>
+        </node>
+        <node pkg="mpc_follower" type="mpc_follower" name="mpc_follower" output="screen">
+            <remap from="/ctrl_raw" to="ctrl_raw"/>
+            <remap from="/twist_raw" to="twist_raw"/>
+            <rosparam command="load" file="$(arg vehicle_calibration_dir)/mpc_follower/calibration.yaml"/>
+            <param name="in_waypoints_name" value="/mpc_waypoints"/>
+        </node>
+    </group>
+    <!-- MPC Follower Wrapper Node -->
+    <node pkg="mpc_follower_wrapper" type="mpc_follower_wrapper_node" name="mpc_follower_wrapper_node" output="screen">
+        <rosparam command="load" file="$(find mpc_follower_wrapper)/config/default.yaml" />
+    </node>
+</launch>

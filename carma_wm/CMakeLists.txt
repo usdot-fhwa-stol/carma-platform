@@ -17,6 +17,8 @@ set ( PKG_CATKIN_DEPS
   carma_utils
   cav_msgs
   roscpp
+  tf2
+  tf2_geometry_msgs
 )
 
 ## Find required catkin packages
@@ -31,9 +33,9 @@ find_package(Eigen3 REQUIRED)
 ## Catkin export configuration
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES carma_wm
+  LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS ${PKG_CATKIN_DEPS}
-  DEPENDS Boost Eigen3
+  DEPENDS Boost EIGEN3
 )
 
 ###########
@@ -48,17 +50,28 @@ include_directories(
 )
 
 ## Declare C++ library
-add_library(${PROJECT_NAME}
+add_library(
+  ${PROJECT_NAME}
+  src/MapConformer.cpp
   src/CARMAWorldModel.cpp
   src/WMListener.cpp
   src/WMListenerWorker.cpp
+  src/Geometry.cpp
+  src/TrafficControl.cpp
+  src/IndexedDistanceMap.cpp
+  src/collision_detection.cpp
 )
 
 ## Add cmake target dependencies of the library
-add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(
+  ${PROJECT_NAME} 
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 
@@ -77,8 +90,6 @@ install(TARGETS ${PROJECT_NAME}
 # Mark cpp header files for installation
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
 )
 
 #############
@@ -87,9 +98,14 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 catkin_add_gmock(${PROJECT_NAME}-test
   test/TestMain.cpp
-  test/CARMAWorldModleTest.cpp  
+  test/MapConformerTest.cpp
+  test/CARMAWorldModelTest.cpp
+  test/WMTestLibForGuidanceTest.cpp
   test/IndexedDistanceMapTest.cpp
   test/WMListenerWorkerTest.cpp
+  test/GeometryTest.cpp
+  test/CollisionDetectionTest.cpp
+  test/TrafficControlTest.cpp
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 

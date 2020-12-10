@@ -19,8 +19,11 @@
 -->
 <launch>
 
+
   <!-- Arguments -->
   <arg name="route_file_folder" default="$(find carma)/routes" doc="Path of folder containing routes to load"/>
+  <arg name="vehicle_calibration_dir" default="$(find carma)../../CARMAVehicleCalibration/development/vehicle" doc="The directory continaing vehicle calibration type parameters"/>
+  
   
   <!-- Remap topics from external packages -->
   <remap from="bsm" to="$(optenv CARMA_MSG_NS)/outgoing_bsm"/>
@@ -62,14 +65,15 @@
   <remap from="/red_waypoints_array" to="red_waypoints_array"/>
   <remap from="/green_waypoints_array" to="green_waypoints_array"/>
   <remap from="trajectory" to="plan_trajectory"/>
-  <!-- TODO use arguments for top level namespace -->
-  <remap from="trajectory_plan" to="/guidance/pure_pursuit/trajectory"/>
-  <remap from="current_pose" to="$(optenv CARMA_LOCZ_NS)/selected_pose"/>
+
+  <remap from="current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>
   <remap from="current_velocity" to="$(optenv CARMA_INTR_NS)/vehicle/twist"/>
   <remap from="controller/enable_robotic" to="$(optenv CARMA_INTR_NS)/controller/enable_robotic"/>
 
   <remap from="guidance_state" to="$(optenv CARMA_GUIDE_NS)/state"/>
   <remap from="maneuver_plan" to="$(optenv CARMA_GUIDE_NS)/arbitrator/final_maneuver_plan"/>
+
+  <remap from="semantic_map" to="$(optenv CARMA_ENV_NS)/semantic_map"/>
 
   <!-- Launch Guidance Main -->
   <include file="$(find guidance)/launch/guidance_main.launch"/>
@@ -90,7 +94,16 @@
   <!-- Trajectory Executor -->
   <include file="$(find trajectory_executor)/launch/trajectory_executor.launch" />
 
-  <!-- Pure Pursuit Wrapper -->
+
+  <remap from="/vehicle_status" to="$(optenv CARMA_INTR_NS)/vehicle_status"/>
+  <remap from="/current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>  
+  
+  <!-- MPC Follower Wrapper -->
+<!--  <include file="$(find mpc_follower_wrapper)/launch/mpc_follower_wrapper.launch">
+    <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
+  </include>
+  -->
+  <remap to="/guidance/mpc_follower/trajectory" from="/guidance/trajectory_plan"/>
   <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch" />
 
   <!-- Twist Filter -->
@@ -109,7 +122,17 @@
     <remap from="/emergency_stop" to="emergency_stop"/>
     <remap from="/state_cmd" to="state_cmd"/>
     <remap from="/vehicle_cmd" to="$(optenv CARMA_INTR_NS)/vehicle_cmd"/>
-    <include file="$(find twist_filter)/launch/twist_filter.launch"/>
+    <!-- Parameter Remapping -->
+    <remap from="vehicle_model_wheelbase" to="/vehicle_wheel_base"/>
+    <remap from="~lateral_accel_limit" to="/vehicle_lateral_accel_limit"/>
+    <remap from="~lateral_jerk_limit" to="/vehicle_lateral_jerk_limit"/>
+    <remap from="~longitudinal_velocity_limit" to="/config_speed_limit"/>
+    <remap from="~longitudinal_accel_limit" to="/vehicle_acceleration_limit"/>
+
+    <include file="$(find twist_filter)/launch/twist_filter.launch">
+        <arg name="lowpass_gain_linear_x" value="0.1"/>
+        <arg name="lowpass_gain_steering_angle" value="0.1"/>
+    </include>
   </group>
 
   <!-- Planning Stack -->
@@ -136,17 +159,15 @@
   <include file="$(find waypoint_planner)/launch/astar_avoid.launch" />
   <include file="$(find waypoint_planner)/launch/velocity_set.launch" />
 
-  <!-- Autoware Plugin -->
-  <include file="$(find autoware_plugin)/launch/autoware_plugin.launch" />
+  <!-- Cruising Plugin -->
+  <include file="$(find cruising_plugin)/launch/cruising_plugin.launch" />
+
+   <!-- Mobility Path Publisher -->
+  <include file="$(find mobilitypath_publisher)/launch/mobilitypath_publisher.launch" />
 
   <!-- Route Generator -->
   <include file="$(find route_generator)/launch/route_generator.launch">
     <arg name="route_file_folder" value="$(arg route_file_folder)"/>
-  </include>
-
-  <!-- Health Monitor -->
-  <remap from="~required_drivers" to="/required_drivers"/>
-  <include file="$(find health_monitor)/launch/health_monitor.launch" >
   </include>
 
 </launch>
