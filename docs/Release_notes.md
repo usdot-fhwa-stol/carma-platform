@@ -1,6 +1,15 @@
 CARMA Platform Release Notes
 ----------------------------
 
+Version 3.4.1, released December 11th, 2020
+--------------------------------------------------------
+
+**Summary:**
+carma-platform release version 3.4.1 is a hotfix release to address the issue of unexpected switching between NDT and GPS localization. This hotfix ensures that switching between NDT and GPS will only occur in the event of a timeout.
+
+Fixes in this release:
+-   Issue 1005: The gnss_ndt_selector would cause lidar to gps failover in the event of an ndt timeout and vice versa regardless of the    operational mode (NDT only, GNSS only, AUTO score based switch).
+
 Version 3.4.0, released December 9th, 2020
 --------------------------------------------------------
 
@@ -16,7 +25,7 @@ Enhancements in this release:
 -	Issue 640: Updated the health_monitor to better handle lidar failures.
 -	Issue 766: Improved localization computation speed.
 -	Issue 838: Added support for PCD map file generation.
-- Issue 986: Added ability for gnss_ndt_selector to operate with a degraded sensor.
+-   Issue 986: Added ability for gnss_ndt_selector to operate with a degraded sensor.
 
 Fixes in this release:
 -	Issue 460: carma-platform does not fully shutdown when a fatal system alert occurs.
