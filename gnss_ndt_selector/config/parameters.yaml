@@ -19,6 +19,6 @@ ndt_pose_timeout: 1500
 # 0 - ndt only
 # 1 - GNSS only
 # 2 - auto select between ndt and GNSS
-localization_mode: 2
+localization_mode: 0
 
 
