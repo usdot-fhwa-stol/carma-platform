@@ -34,7 +34,7 @@
 #include <geometry_msgs/TwistStamped.h>
 
 
-namespace stopandwait_plugin
+namespace stop_and_wait_plugin
 {
     using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
     struct PointSpeedPair
@@ -73,12 +73,13 @@ namespace stopandwait_plugin
          */ 
         bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp);
         
-        /**
-         * \brief Method to call at fixed rate in execution loop. Will publish plugin discovery updates
-         * 
-         * \return True if the node should continue running. False otherwise
-         */ 
-        bool onSpin();
+        void run();
+        // /**
+        //  * \brief Method to call at fixed rate in execution loop. Will publish plugin discovery updates
+        //  * 
+        //  * \return True if the node should continue running. False otherwise
+        //  */ 
+        // bool onSpin();
 
         /**
          * \brief Converts a set of requested STOP_AND_WAIT maneuvers to point speed limit pairs. 
@@ -143,6 +144,7 @@ namespace stopandwait_plugin
         void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
 
     private:
+        void initialize();
         //CARMA ROS node handles
         std::shared_ptr<ros::CARMANodeHandle> nh_,pnh_;
 

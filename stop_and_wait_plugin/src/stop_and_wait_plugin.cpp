@@ -30,7 +30,7 @@
 #include <Eigen/LU>
 #include <Eigen/SVD>
 #include <unordered_set>
-#include "stopandwait.h"
+#include "stop_and_wait_plugin.h"
 #include <vector>
 
 #include <cav_msgs/Trajectory.h>
@@ -47,8 +47,37 @@
 
 using oss = std::ostringstream;
 
-namespace stopandwait_plugin
+namespace stop_and_wait_plugin
 {
+    void StopandWait::initialize()
+    {
+        nh_.reset(new ros::CARMANodeHandle());
+        pnh_.reset(new ros::CARMANodeHandle("~"));
+
+        carma_wm::WMListener wml;
+        auto wm_ = wml.getWorldModel();
+        plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery",1);
+
+        pnh_->param<double>("minimal_trajectory_duration", minimal_trajectory_duration_);
+        pnh_->param<double>("max_jerk_limit", max_jerk_limit_);
+
+        ros::ServiceServer trajectory_srv_ = nh_->advertiseService("plugins/stop_and_wait_plugin/plan_trajectory",&StopandWait::plan_trajectory_cb, this);
+        pose_sub_ = nh_->subscribe("current_pose",1, &StopandWait::pose_cb, this);
+        twist_sub_ = nh_->subscribe("current_velocity", 1, &StopandWait::twist_cb, this);
+
+        ros::CARMANodeHandle::setSpinCallback([this]() -> bool
+        {
+        plugin_discovery_pub_.publish(plugin_discovery_msg_);
+        return true;
+        });
+    }
+
+    void StopandWait::run()
+    {
+        initialize();
+        ros::CARMANodeHandle::spin();
+    }
+
     StopandWait::StopandWait(carma_wm::WorldModelConstPtr wm, PublishPluginDiscoveryCB plugin_discovery_publisher)
     : wm_(wm) , plugin_discovery_publisher_(plugin_discovery_publisher)
     {
@@ -60,11 +89,11 @@ namespace stopandwait_plugin
         plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
     }
 
-    bool StopandWait::onSpin()
-    {
-        plugin_discovery_publisher_(plugin_discovery_msg_);
-        return true;
-    }
+    // bool StopandWait::onSpin()
+    // {
+    //     plugin_discovery_publisher_(plugin_discovery_msg_);
+    //     return true;
+    // }
 
     void StopandWait::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
@@ -144,7 +173,7 @@ namespace stopandwait_plugin
             //double travel_dist =  stop_and_wait_maneuver.end_dist - starting_downtrack;
             //double acceleration = stop_and_wait_maneuver.start_speed/maneuver_time;
             double delta_time, curr_time;
-            if(starting_downtrack == ending_downtrack)
+            if(starting_downtrack == ending_downtrack || current_speed_ == 0)
             {
                 delta_time = maneuver_time/1000;
                 curr_time = 0;

@@ -53,9 +53,9 @@ file(GLOB_RECURSE headers */*.hpp */*.h)
 add_executable( ${PROJECT_NAME}
   ${headers}
   src/main.cpp
-  src/stop_and_wait.cpp)
+  src/stop_and_wait_plugin.cpp)
 
-add_library(stopandwait_plugin_lib  src/stop_and_wait.cpp)  
+add_library(stopandwait_plugin_lib  src/stop_and_wait_plugin.cpp)  
 add_dependencies(stopandwait_plugin_lib ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(${PROJECT_NAME}  stopandwait_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})

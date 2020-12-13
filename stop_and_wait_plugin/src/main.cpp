@@ -17,13 +17,13 @@
 
 #include <ros/ros.h>
 
-#include <stopandwait_plugin_node.h>
+#include <stop_and_wait_plugin.h>
 
 int main(int argc, char** argv)
 {
 
     ros::init(argc, argv, "stop_and_wait_plugin");
-    stopandwait_plugin::StopandWaitNode swn;
-    swn.run();
+    stop_and_wait_plugin::StopandWait sw;
+    sw.run();
     return 0;
 }
