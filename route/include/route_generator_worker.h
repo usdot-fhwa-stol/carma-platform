@@ -32,6 +32,8 @@
 #include <carma_wm/Geometry.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <tf2_ros/transform_listener.h>
+#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/primitives/Lanelet.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/Transform.h>
@@ -152,6 +154,12 @@ namespace route {
          * \param route Route object from lanelet2 lib routing function
          */
         visualization_msgs::MarkerArray compose_route_marker_msg(const lanelet::Optional<lanelet::routing::Route>& route);
+
+
+
+        void routeEventCallback(cav_msgs::RouteEvent status);
+
+        bool crossTrackErrorCheck(const geometry_msgs::PoseStampedConstPtr& msg);
 
     private:
 

@@ -106,8 +106,6 @@ public:
    */
   void setConfigSpeedLimit(double config_lim) const;
 
-  void routeEventCallback(cav_msgs::RouteEvent status);
-
 
 
 private:
@@ -121,7 +119,6 @@ private:
   std::unique_ptr<ros::AsyncSpinner> wm_spinner_;
   ros::Subscriber map_sub_;
   ros::Subscriber route_sub_;
-  ros::Subscriber route_event_sub_;
   const bool multi_threaded_;
   std::mutex mw_mutex_;
  

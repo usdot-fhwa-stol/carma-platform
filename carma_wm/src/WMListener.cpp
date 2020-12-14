@@ -34,7 +34,6 @@ WMListener::WMListener(bool multi_thread) : worker_(std::unique_ptr<WMListenerWo
   map_update_sub_= nh_.subscribe("map_update", 1, &WMListener::mapUpdateCallback, this);
   map_sub_ = nh_.subscribe("semantic_map", 1, &WMListenerWorker::mapCallback, worker_.get());
   route_sub_ = nh_.subscribe("route", 1, &WMListenerWorker::routeCallback, worker_.get());
-  route_event_sub_ = nh_.subscribe("route_event", 1, &WMListenerWorker::routeEventCallback, worker_.get());
   roadway_objects_sub_ = nh_.subscribe("roadway_objects", 1, &WMListenerWorker::roadwayObjectListCallback, worker_.get());
 
   double cL;
@@ -97,11 +96,6 @@ std::unique_lock<std::mutex> WMListener::getLock(bool pre_locked)
 void WMListener::setConfigSpeedLimit(double config_lim) const
 {
   worker_->setConfigSpeedLimit(config_lim);
-}
-
-void WMListener::routeEventCallback(cav_msgs::RouteEvent status)
-{
-  worker_->routeEventCallback(status);
 }
 
 

@@ -101,15 +101,6 @@ public:
 */
   double getConfigSpeedLimit() const;
 
-  void routeEventCallback(cav_msgs::RouteEvent status);
-
-  bool crossTrackErrorCheck(cav_msgs::RouteEvent status);
-
-  void laneletsFromRoute(cav_msgs::Route route_msg);
-
-  void getVehiclePosition(geometry_msgs::PoseStamped pos);
-
-
 private:
   std::shared_ptr<CARMAWorldModel> world_model_;
   std::function<void()> map_callback_;
@@ -117,8 +108,6 @@ private:
   void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const;
   double config_speed_limit_;
   std::shared_ptr<ros::CARMANodeHandle> nh_;
-  //ros::CARMANodeHandle nh_;
-  std::vector<lanelet::ConstLanelet> llts;
   lanelet::BasicPoint2d position;
 
 };

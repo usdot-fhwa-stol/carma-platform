@@ -373,8 +373,12 @@ namespace route {
             // check if we left the seleted route by cross track error
             if(std::fabs(current_crosstrack_distance_) > cross_track_max_)
             {
-                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
-                publish_route_event(cav_msgs::RouteEvent::ROUTE_DEPARTED);
+                bool llt_departed = crossTrackErrorCheck(msg);
+                if(llt_departed == true)
+                {
+                    this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+                    publish_route_event(cav_msgs::RouteEvent::ROUTE_DEPARTED);
+                }
             }
             // check if we reached our destination be remaining down track distance
             if(current_downtrack_distance_ > world_model_->getRoute()->length2d() - down_track_target_range_)
@@ -437,6 +441,76 @@ namespace route {
         }
         return true;
     }
+
+bool RouteGeneratorWorker::crossTrackErrorCheck(const geometry_msgs::PoseStampedConstPtr& msg)
+{
+  if (!world_model_->getMap()) 
+  {
+    ROS_ERROR_STREAM("WMListener received a route before a map was available. Dropping route message.");
+    return true;
+  }
+
+  auto route = world_model_->getRoute()->shortestPath();
+
+  bool out_of_llt_bounds = false;
+
+    lanelet::BasicPoint2d position;
+
+    position.x()= msg->pose.position.x;
+    position.y()= msg->pose.position.y;
+
+
+  std::vector<lanelet::BasicPoint2d> llt_points;
+  std::vector<lanelet::ConstLanelet> llt_list;
+  lanelet::BasicPolygon2d s;
+  lanelet::BasicPoint2d p1,p2,p3,p4;
+  std::vector<lanelet::BasicPoint2d> point;
+  //lanelet::BasicPoint2d point;
+
+
+  for(auto i: route)
+  {
+
+    llt_list.push_back(i);
+    ROS_WARN_STREAM("Left:");
+    for(auto left: i.leftBound2d())
+      {
+        point.push_back(left.basicPoint2d());
+        ROS_WARN_STREAM(point.back().x()<<","<<point.back().y());
+      }
+    ROS_WARN_STREAM("Right:");
+    for(auto right: i.rightBound2d())
+    {
+      point.push_back(right.basicPoint2d());
+      ROS_WARN_STREAM(point.back().x()<<","<<point.back().y());
+
+    }
+
+  }
+
+  ROS_INFO_STREAM("Number of points inside polygon: " << point.size());
+
+  for(auto p: point)
+  {
+    s.push_back(p);
+  }
+
+
+  if(boost::geometry::within(position, s) == false) //Determine whether or not the vehicle is in the lanelet polygon
+      {
+        out_of_llt_bounds = true;
+      }
+
+      if(out_of_llt_bounds == true)
+        return true;
+        
+      else
+        return false;
+}
+
+
+
+
 
 }
 
