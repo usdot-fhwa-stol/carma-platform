@@ -1,6 +1,15 @@
 CARMA Platform Release Notes
 ----------------------------
 
+Version 3.4.2, released December 15th, 2020
+--------------------------------------------------------
+
+**Summary:**
+carma-platform rlease version 3.4.2 is a hotfix to update platform with the most recent version of carma-messenger (carma-messenger-1.0.2). The carma-messenger-1.0.2 release resolves a defect where version numbers were not populating in carma-messenger-ui.
+
+Fixes in this release:
+-   Issue 948: The carma user interface dispalys "NULL" instead of the current version number.
+
 Version 3.4.1, released December 11th, 2020
 --------------------------------------------------------
 
