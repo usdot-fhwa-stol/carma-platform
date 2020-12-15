@@ -156,10 +156,9 @@ namespace route {
         visualization_msgs::MarkerArray compose_route_marker_msg(const lanelet::Optional<lanelet::routing::Route>& route);
 
 
+        bool crossTrackErrorCheck(const geometry_msgs::PoseStampedConstPtr& msg, lanelet::ConstLanelet current_llt);
 
-        void routeEventCallback(cav_msgs::RouteEvent status);
-
-        bool crossTrackErrorCheck(const geometry_msgs::PoseStampedConstPtr& msg);
+        void setCTEcounter(double cte_counter);
 
     private:
 
@@ -212,6 +211,11 @@ namespace route {
 
         // private helper function to add a new route event into event queue
         void publish_route_event(uint8_t event_type);        
+
+        double cross_track_dist = 1.0;
+
+        int cte_count;
     };
+
 }
 

@@ -107,8 +107,6 @@ private:
   std::function<void()> route_callback_;
   void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const;
   double config_speed_limit_;
-  std::shared_ptr<ros::CARMANodeHandle> nh_;
-  lanelet::BasicPoint2d position;
 
 };
 }  // namespace carma_wm

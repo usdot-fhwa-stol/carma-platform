@@ -373,7 +373,7 @@ namespace route {
             // check if we left the seleted route by cross track error
             if(std::fabs(current_crosstrack_distance_) > cross_track_max_)
             {
-                bool llt_departed = crossTrackErrorCheck(msg);
+                bool llt_departed = crossTrackErrorCheck(msg, current_lanelet);
                 if(llt_departed == true)
                 {
                     this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
@@ -442,7 +442,7 @@ namespace route {
         return true;
     }
 
-bool RouteGeneratorWorker::crossTrackErrorCheck(const geometry_msgs::PoseStampedConstPtr& msg)
+bool RouteGeneratorWorker::crossTrackErrorCheck(const geometry_msgs::PoseStampedConstPtr& msg, lanelet::ConstLanelet current)
 {
   if (!world_model_->getMap()) 
   {
@@ -457,51 +457,41 @@ bool RouteGeneratorWorker::crossTrackErrorCheck(const geometry_msgs::PoseStamped
     lanelet::BasicPoint2d position;
 
     position.x()= msg->pose.position.x;
-    position.y()= msg->pose.position.y;
+    position.y()= msg->pose.position.y;  
 
+    if (boost::geometry::distance(position, current.polygon2d()) > cross_track_dist)
+        {
+            cte_count++;
 
-  std::vector<lanelet::BasicPoint2d> llt_points;
-  std::vector<lanelet::ConstLanelet> llt_list;
-  lanelet::BasicPolygon2d s;
-  lanelet::BasicPoint2d p1,p2,p3,p4;
-  std::vector<lanelet::BasicPoint2d> point;
-  //lanelet::BasicPoint2d point;
+            if(cte_count > 4)
+                return true;
+        }
 
-
-  for(auto i: route)
-  {
-
-    llt_list.push_back(i);
-    ROS_WARN_STREAM("Left:");
-    for(auto left: i.leftBound2d())
-      {
-        point.push_back(left.basicPoint2d());
-        ROS_WARN_STREAM(point.back().x()<<","<<point.back().y());
-      }
-    ROS_WARN_STREAM("Right:");
-    for(auto right: i.rightBound2d())
-    {
-      point.push_back(right.basicPoint2d());
-      ROS_WARN_STREAM(point.back().x()<<","<<point.back().y());
-
-    }
-
-  }
-
-  ROS_INFO_STREAM("Number of points inside polygon: " << point.size());
-
-  for(auto p: point)
-  {
-    s.push_back(p);
-  }
-
-
-  if(boost::geometry::within(position, s) == false) //Determine whether or not the vehicle is in the lanelet polygon
+  if(boost::geometry::within(position, current.polygon2d()) == false) //Determine whether or not the vehicle is in the lanelet polygon
       {
         out_of_llt_bounds = true;
       }
 
-      if(out_of_llt_bounds == true)
+    auto following_llts = world_model_->getMapRoutingGraph()->following(current);
+    lanelet::ConstLanelets filtered_llts;//TODO: Filter lanelets from following lanelets that are not a part ot the route
+    int out_count = 0;
+    for(auto i:following_llts)
+    {
+       
+        if (boost::geometry::within(position, i.polygon2d()) == false) 
+           out_count++;
+
+        if (boost::geometry::distance(position, current.polygon2d()) > 2.0)
+            out_of_llt_bounds = true;
+
+    }
+    if(out_count == following_llts.size()) //If our current position is not within the bounds of any of the following lanelets, then return true
+        out_of_llt_bounds = true;
+
+
+    
+    
+    if(out_of_llt_bounds == true)
         return true;
         
       else
