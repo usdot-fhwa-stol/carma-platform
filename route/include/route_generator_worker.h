@@ -158,7 +158,10 @@ namespace route {
 
         bool crossTrackErrorCheck(const geometry_msgs::PoseStampedConstPtr& msg, lanelet::ConstLanelet current_llt);
 
-        void setCTEcounter(double cte_counter);
+        void setCTEcounter(int cte_counter);
+
+        void set_out_counter(int out_counter);
+
 
     private:
 
@@ -214,7 +217,11 @@ namespace route {
 
         double cross_track_dist = 1.0;
 
+
         int cte_count;
+
+        int out_count;
+
     };
 
 }

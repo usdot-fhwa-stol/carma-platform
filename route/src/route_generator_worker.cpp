@@ -473,32 +473,44 @@ bool RouteGeneratorWorker::crossTrackErrorCheck(const geometry_msgs::PoseStamped
       }
 
     auto following_llts = world_model_->getMapRoutingGraph()->following(current);
-    lanelet::ConstLanelets filtered_llts;//TODO: Filter lanelets from following lanelets that are not a part ot the route
-    int out_count = 0;
+    lanelet::ConstLanelets filtered_llts;//TODO: Filter lanelets from following lanelets that are not a part of the route
+ 
+
     for(auto i:following_llts)
     {
-       
+       for(auto j: route)
+       {
+           if (i.id() == j.id())
+            filtered_llts.push_back(i);
+       }
+    }
+
+    for(auto i: filtered_llts)
+    {
         if (boost::geometry::within(position, i.polygon2d()) == false) 
            out_count++;
-
-        if (boost::geometry::distance(position, current.polygon2d()) > 2.0)
+           
+        if (boost::geometry::distance(position, current.polygon2d()) > ll_downtrack_distance_)
             out_of_llt_bounds = true;
-
     }
-    if(out_count == following_llts.size()) //If our current position is not within the bounds of any of the following lanelets, then return true
+
+    if(out_count == filtered_llts.size()) //If our current position is not within the bounds of any of the following lanelets, then return true
         out_of_llt_bounds = true;
-
-
     
-    
-    if(out_of_llt_bounds == true)
-        return true;
-        
-      else
-        return false;
+    return out_of_llt_bounds;
 }
 
+    void RouteGeneratorWorker::set_out_counter(int out_counter)
+    {
+        out_count = out_counter;
 
+    }
+
+    void RouteGeneratorWorker::setCTEcounter(int cte_counter)
+    {
+        cte_count = cte_counter;
+
+    }
 
 
 
