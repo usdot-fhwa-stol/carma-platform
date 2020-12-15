@@ -216,6 +216,47 @@ TEST(InLaneCruisingPluginTest, getNearestPointIndex)
   ASSERT_EQ(3, plugin.getNearestPointIndex(points, state));
 }
 
+TEST(InLaneCruisingPluginTest, get_lookahead_speed)
+{
+  InLaneCruisingPluginConfig config;
+  config.downsample_ratio = 1;
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+
+  lanelet::BasicPoint2d p1(10.0, 0.0);
+  lanelet::BasicPoint2d p2(20.0, 0.0);
+  lanelet::BasicPoint2d p3(30, 0.0);
+  lanelet::BasicPoint2d p4(40, 0.0);
+
+  std::vector<lanelet::BasicPoint2d> points = { p1, p2, p3, p4 };
+  std::vector<double> speeds = {8, 9, 10, 11};
+
+  std::vector<double> out;
+  out = plugin.get_lookahead_speed(points, speeds, 10);
+  ASSERT_EQ(4, out.size());
+  ASSERT_EQ(9, out[0]);
+  ASSERT_EQ(10, out[1]);
+  ASSERT_EQ(11, out[2]);
+  ASSERT_EQ(11, out[3]);
+
+  // ASSERT_EQ(3, plugin.getNearestPointIndex(points, state));
+}
+
+TEST(InLaneCruisingPluginTest, get_adaptive_lookahead)
+{
+  InLaneCruisingPluginConfig config;
+  config.downsample_ratio = 1;
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+
+  
+  ASSERT_EQ(5.0, plugin.get_adaptive_lookahead(2.0));
+  ASSERT_EQ(2.0*6.0, plugin.get_adaptive_lookahead(6.0));
+  ASSERT_EQ(25.0, plugin.get_adaptive_lookahead(22.0));
+
+
+}
+
 TEST(InLaneCruisingPluginTest, splitPointSpeedPairs)
 {
   InLaneCruisingPluginConfig config;

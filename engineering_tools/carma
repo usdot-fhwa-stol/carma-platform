@@ -204,7 +204,32 @@ carma-config__install() {
     echo "Cleaning up temporary container..."
     docker rm carma-config-tmp
 }
+carma__fix_bag() {
+    # following script finds the most recently modified .bag.active or .bag file in /opt/carma/logs directory
+    last_modified_file="$(find "/opt/carma/logs" -type f \( -name \*.bag.active -o -name \*.bag \) -printf "%T@ %p\0" | awk 'BEGIN {RS="\0";} {if (NR==1){minmtime=$1; $1=""; lastmodified=$0;} else if (minmtime<$1){minmtime=$1; $1=""; lastmodified=$0;}} END{print substr(lastmodified,2)}')"
 
+    if [[ ${last_modified_file} == *.bag ]]; then
+        printf "The last modified file is named %s\n" "${last_modified_file}"
+        printf "Since it is not .bag.active, there is nothing to fix. Nothing changed.\n"
+    elif [[ ${last_modified_file} == *.bag.active ]]; then
+        printf "The last modified file is named %s\n" "${last_modified_file}"
+        rosbag reindex ${last_modified_file}
+
+        rosbag_name="$(basename -s .bag.active ${last_modified_file})"
+
+        if test -f "/opt/carma/logs/${rosbag_name}.bag.orig.active"; then
+            rm "/opt/carma/logs/${rosbag_name}.bag.orig.active"
+        fi
+
+        mv ${last_modified_file} "/opt/carma/logs/${rosbag_name}.bag"
+
+        printf "Created a rosbag named %s\n" "/opt/carma/logs/${rosbag_name}.bag"
+    elif [[ ${last_modified_file} == "" ]]; then
+
+        printf "There is no .bag.active or .bag files in /opt/carma/logs directory. Nothing changed.\n"
+
+    fi
+}
 carma__start() {
     if ! docker container inspect carma-config > /dev/null 2>&1; then
         echo "No existing CARMA configuration found, nothing to start. Please set a config."
@@ -245,6 +270,15 @@ carma__stop() {
         docker run --rm --volumes-from carma-config:ro --entrypoint sh busybox:latest -c \
         'cat /opt/carma/vehicle/config/docker-compose-background.yml' | \
         docker-compose -f - -p carma-background down
+        if [ "$2" = "fix_bag" ]; then
+            echo "Trying to fix the last rosbag file..."
+            carma__fix_bag
+        elif [ ! -z "$2" ]; then
+            echo "Unrecognized argument \"stop all $2\""
+        fi
+    elif [ "$1" = "fix_bag" ]; then
+        echo "Trying to fix the last rosbag file..."
+        carma__fix_bag
     elif [ ! -z "$1" ]; then
         echo "Unrecognized argument \"stop $1\""
     fi
@@ -471,6 +505,8 @@ Please enter one of the following commands:
         - Stop the CARMA platform's foreground processes. If all, stop 
           everything.
         - Accepts the same flags as "docker-compose down"
+        - fix_bag
+            - After stopping carma, checks if the last run's rosbag has been correctly saved. If not, fixes it to be replayable. 
     exec <optional bash command>
         - Opens a new container with GUI support from the carma-platform or carma-messenger image with the version specified in docker compose. If no version is found it will use latest.
           This container can be used to interact with CARMA using ROS tooling such as Rviz and RQT.

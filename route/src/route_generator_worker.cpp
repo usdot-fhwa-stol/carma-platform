@@ -13,7 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+#include <limits>
+#include <math.h>
 #include "route_generator_worker.h"
 
 namespace route {
@@ -175,6 +176,7 @@ namespace route {
             }
             // update route message
             route_msg_ = compose_route_msg(route);
+            route_marker_msg_ = compose_route_marker_msg(route);
             route_msg_.header.stamp = ros::Time::now();
             route_msg_.header.frame_id = "map";
             route_msg_.route_name = req.routeID;
@@ -238,7 +240,61 @@ namespace route {
         return map_points;
     }
 
-    cav_msgs::Route RouteGeneratorWorker::compose_route_msg(const lanelet::Optional<lanelet::routing::Route>& route) const
+    visualization_msgs::MarkerArray RouteGeneratorWorker::compose_route_marker_msg(const lanelet::Optional<lanelet::routing::Route>& route)
+    {
+        std::vector<lanelet::ConstPoint3d> points;
+        for(const auto& ll : route.get().shortestPath())
+        {
+            for(const auto& pt : ll.centerline())
+            {
+                points.push_back(pt);
+            }
+        }
+
+        route_marker_msg_.markers={};
+
+        if (!points.empty())
+        {
+            ROS_WARN_STREAM("No central line points! Returning");
+        }
+
+        // create the marker msgs
+        visualization_msgs::MarkerArray route_marker_msg;
+        visualization_msgs::Marker marker;
+        marker.header.frame_id = "map";
+        marker.header.stamp = ros::Time();
+        marker.type = visualization_msgs::Marker::SPHERE;//
+        marker.action = visualization_msgs::Marker::ADD;
+        marker.ns = "route_visualizer";
+
+        marker.scale.x = 0.5;
+        marker.scale.y = 0.5;
+        marker.scale.z = 0.5;
+        marker.frame_locked = true;
+ 
+        for (int i = 0; i < points.size(); i=i+5)
+        {
+            marker.id = i;
+
+            marker.color.r = 1.0F;
+            marker.color.g = 1.0F;
+            marker.color.b = 1.0F;
+            marker.color.a = 1.0F;
+
+            marker.pose.position.x = points[i].x();
+            marker.pose.position.y = points[i].y();
+            marker.pose.orientation.x = 0.0;
+            marker.pose.orientation.y = 0.0;
+            marker.pose.orientation.z = 0.0;
+            marker.pose.orientation.w = 1.0;
+            
+            route_marker_msg.markers.push_back(marker);
+        }
+        new_route_marker_generated_ = true;
+        return route_marker_msg;
+    }
+
+    cav_msgs::Route RouteGeneratorWorker::compose_route_msg(const lanelet::Optional<lanelet::routing::Route>& route)
     {
         cav_msgs::Route msg;
         // iterate thought the shortest path to populat shortest_path_lanelet_ids
@@ -246,6 +302,7 @@ namespace route {
         {
             msg.shortest_path_lanelet_ids.push_back(ll.id());
         }
+
         // iterate thought the all lanelet in the route to populat route_path_lanelet_ids
         for(const auto& ll : route.get().laneletSubmap()->laneletLayer)
         {
@@ -328,11 +385,12 @@ namespace route {
         }
     }
 
-    void RouteGeneratorWorker::set_publishers(ros::Publisher route_event_pub, ros::Publisher route_state_pub, ros::Publisher route_pub)
+    void RouteGeneratorWorker::set_publishers(ros::Publisher route_event_pub, ros::Publisher route_state_pub, ros::Publisher route_pub,ros::Publisher route_marker_pub)
     {
         route_event_pub_ = route_event_pub;
         route_state_pub_ = route_state_pub;
         route_pub_ = route_pub;
+        route_marker_pub_= route_marker_pub;
     }
 
     void RouteGeneratorWorker::set_ctdt_param(double ct_max_error, double dt_dest_range)
@@ -349,10 +407,12 @@ namespace route {
     bool RouteGeneratorWorker::spin_callback()
     {
         // publish new route and set new route flag back to false
-        if(new_route_msg_generated_)
+        if(new_route_msg_generated_ && new_route_marker_generated_)
         {
             route_pub_.publish(route_msg_);
+            route_marker_pub_.publish(route_marker_msg_);
             new_route_msg_generated_ = false;
+            new_route_marker_generated_ = false;
         }
         // publish route state messsage if a route is selected
         if(route_msg_.route_name != "")
