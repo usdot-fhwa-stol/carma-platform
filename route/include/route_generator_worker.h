@@ -155,8 +155,15 @@ namespace route {
          */
         visualization_msgs::MarkerArray compose_route_marker_msg(const lanelet::Optional<lanelet::routing::Route>& route);
 
-
-        bool crossTrackErrorCheck(const geometry_msgs::PoseStampedConstPtr& msg, lanelet::ConstLanelet current_llt);
+        /**
+        * \brief crosstrack_error_check is a function that determines when the vehicle has left the route and reports when a crosstrack error has
+        * taken place
+        * 
+        *  \param msg Msg that contains the vehicle's current position
+        *  \param current_llt The lanelet that the vehicle is currently in
+        *  \param llt_track The crosstrack and downtrack distance of the current lanelet
+        * */
+        bool crosstrack_error_check(const geometry_msgs::PoseStampedConstPtr& msg, lanelet::ConstLanelet current_llt, carma_wm::TrackPos llt_track);
 
         void setCTEcounter(int cte_counter);
 
@@ -217,9 +224,10 @@ namespace route {
 
         double cross_track_dist = 1.0;
 
-
+        // counter to record how many times vehicle's position exceeds crosstrack distance
         int cte_count;
 
+        // counter to record how many times the vehicle leaves the lanelet bounds
         int out_count;
 
     };

@@ -334,6 +334,105 @@ TEST(RouteGeneratorTest, testReadRoutetfhrcFile)
    }
 }
 
+TEST(RouteGeneratorTest, test_crosstrack_error_check)
+{
+     tf2_ros::Buffer tf_buffer;
+    carma_wm::WorldModelConstPtr wm;
+    route::RouteGeneratorWorker worker(tf_buffer);
+
+    int projector_type = 0;
+    std::string target_frame;
+    lanelet::ErrorMessages load_errors;
+
+
+    ROS_WARN_STREAM("Placeholder1");
+
+    geometry_msgs::PoseStamped msg;
+
+    ROS_WARN_STREAM("Placeholder2");
+
+
+    
+
+        ROS_WARN_STREAM("Placeholder2a");
+
+
+    //Create route msg
+    cav_msgs::Route route_msg;
+
+  // File location of osm file
+    std::string file = "../resource/map/town01_vector_map_1.osm";
+
+     // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
+    lanelet::Id start_id = 101;
+    lanelet::Id end_id = 111;
+
+    //Load map parameters
+
+    lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+    lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+    lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+
+
+     // Grabs lanelet elements from the start and end IDs. Fails the unit test if there is no lanelet with the matching ID
+    lanelet::Lanelet start_lanelet;
+    lanelet::Lanelet end_lanelet;
+
+        ROS_WARN_STREAM("Placeholder2b");
+
+
+    try 
+    {
+        //get lanelet layer
+        start_lanelet = map->laneletLayer.get(start_id);        
+    }
+    catch (const lanelet::NoSuchPrimitiveError& e) {
+        FAIL() << "The specified starting lanelet Id of " << start_id << " does not exist in the provided map.";
+    }
+    try {
+        end_lanelet = map->laneletLayer.get(end_id);
+    }
+    catch (const lanelet::NoSuchPrimitiveError& e) {
+        FAIL() << "The specified ending lanelet Id of " << end_id << " does not exist in the provided map.";
+    }
+
+        ROS_WARN_STREAM("Placeholder3");
+
+
+    lanelet::LaneletMapConstPtr const_map(map);
+    lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
+    lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
+
+    const auto route = map_graph->getRoute(start_lanelet, end_lanelet);
+    route_msg = worker.compose_route_msg(route);
+    ASSERT_TRUE(route_msg.route_path_lanelet_ids.size() > 0);
+
+
+ROS_WARN_STREAM("Begin Test");
+
+    //Assign vehicle position
+    msg.pose.position.x = 8.1;
+    msg.pose.position.y = 48.9;
+
+    //  cav_msgs::RouteConstPtr rpt(new cav_msgs::Route(route_msg));
+
+    geometry_msgs::PoseStampedPtr mpt(new geometry_msgs::PoseStamped(msg));
+
+
+    /*Compare vehicle position to the route bounds */
+    lanelet::BasicPoint2d current_loc(mpt->pose.position.x, mpt->pose.position.y);
+    auto via_lanelet_vector = lanelet::geometry::findNearest(wm->getMap()->laneletLayer, current_loc, 1);
+    auto current_lanelet = lanelet::ConstLanelet(via_lanelet_vector[0].second.constData());
+
+    auto ll_track = carma_wm::geometry::trackPos(current_lanelet, current_loc);
+
+    bool test1 = worker.crosstrack_error_check(mpt, start_lanelet, ll_track);
+    ASSERT_EQ(test1, false); //The vehicle shouldn't have any crosstrack error, so the value should return false
+
+}
+
+
+
 // Run all the tests
 int main(int argc, char **argv)
 {

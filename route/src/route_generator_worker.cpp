@@ -369,17 +369,13 @@ namespace route {
             {
                 ROS_ERROR_STREAM("Failed to set the current speed limit. Valid traffic rules object could not be built.");
             }
-
             // check if we left the seleted route by cross track error
-            if(std::fabs(current_crosstrack_distance_) > cross_track_max_)
-            {
-                bool llt_departed = crossTrackErrorCheck(msg, current_lanelet);
-                if(llt_departed == true)
+            bool departed = crosstrack_error_check(msg, current_lanelet, lanelet_track);
+            if (departed == true)
                 {
                     this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
                     publish_route_event(cav_msgs::RouteEvent::ROUTE_DEPARTED);
                 }
-            }
             // check if we reached our destination be remaining down track distance
             if(current_downtrack_distance_ > world_model_->getRoute()->length2d() - down_track_target_range_)
             {
@@ -442,7 +438,7 @@ namespace route {
         return true;
     }
 
-bool RouteGeneratorWorker::crossTrackErrorCheck(const geometry_msgs::PoseStampedConstPtr& msg, lanelet::ConstLanelet current)
+bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStampedConstPtr& msg, lanelet::ConstLanelet current, carma_wm::TrackPos llt_track)
 {
   if (!world_model_->getMap()) 
   {
@@ -450,7 +446,14 @@ bool RouteGeneratorWorker::crossTrackErrorCheck(const geometry_msgs::PoseStamped
     return true;
   }
 
-  auto route = world_model_->getRoute()->shortestPath();
+   
+
+  auto route = lanelet::ConstLanelets();
+  for(auto id : route_msg_.route_path_lanelet_ids)
+  {
+    auto ll = world_model_->getMap()->laneletLayer.get(id);
+    route.push_back(ll);
+  }
 
   bool out_of_llt_bounds = false;
 
@@ -459,7 +462,15 @@ bool RouteGeneratorWorker::crossTrackErrorCheck(const geometry_msgs::PoseStamped
     position.x()= msg->pose.position.x;
     position.y()= msg->pose.position.y;  
 
-    if (boost::geometry::distance(position, current.polygon2d()) > cross_track_dist)
+    if (boost::geometry::distance(position, current.polygon2d()) > cross_track_dist) //Evaluate lanelet crosstrack distance from vehicle
+        {
+            cte_count++;
+
+            if(cte_count > 4) //If the distance exceeds the crosstrack distance a certain number of times, report that the route has been departed
+                return true;
+        }
+
+         if (boost::geometry::distance(position, current.polygon2d()) > llt_track.downtrack) //Evaluate lanelet downtrack distance
         {
             cte_count++;
 
@@ -472,14 +483,13 @@ bool RouteGeneratorWorker::crossTrackErrorCheck(const geometry_msgs::PoseStamped
         out_of_llt_bounds = true;
       }
 
-    auto following_llts = world_model_->getMapRoutingGraph()->following(current);
-    lanelet::ConstLanelets filtered_llts;//TODO: Filter lanelets from following lanelets that are not a part of the route
- 
-
+    auto following_llts = world_model_->getMapRoutingGraph()->following(current); //Get all subsequent lanelets from the map
+    lanelet::ConstLanelets filtered_llts;
     for(auto i:following_llts)
     {
        for(auto j: route)
        {
+           //Filter lanelets from following lanelets that are not a part of the route based on id
            if (i.id() == j.id())
             filtered_llts.push_back(i);
        }
@@ -490,7 +500,7 @@ bool RouteGeneratorWorker::crossTrackErrorCheck(const geometry_msgs::PoseStamped
         if (boost::geometry::within(position, i.polygon2d()) == false) 
            out_count++;
            
-        if (boost::geometry::distance(position, current.polygon2d()) > ll_downtrack_distance_)
+        if (boost::geometry::distance(position, current.polygon2d()) > llt_track.downtrack)
             out_of_llt_bounds = true;
     }
 
