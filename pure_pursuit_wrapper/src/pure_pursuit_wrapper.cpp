@@ -30,9 +30,6 @@ PurePursuitWrapper::PurePursuitWrapper(ros::NodeHandle &nodeHandle): nh_(nodeHan
   ROS_INFO("Successfully launched node.");
 }
 
-PurePursuitWrapper::~PurePursuitWrapper() {
-}
-
 void PurePursuitWrapper::Initialize() {
   // SystemAlert Subscriber
   system_alert_sub_ = nh_.subscribe("system_alert", 10, &PurePursuitWrapper::SystemAlertHandler, this);
@@ -42,10 +39,24 @@ void PurePursuitWrapper::Initialize() {
   // Pose Subscriber
   pose_sub.subscribe(nh_, "current_pose", 1);
   // Trajectory Plan Subscriber
-  trajectory_plan_sub.subscribe(nh_, "trajectory_plan", 1);
+  trajectory_plan_sub.subscribe(nh_, "plan_trajectory", 1);
 
   // WayPoints Publisher
   way_points_pub_ = nh_.advertise<autoware_msgs::Lane>("final_waypoints", 10, true);
+
+  pure_pursuit_plugin_discovery_pub_ = nh_.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
+  plugin_discovery_msg_.name = "Pure Pursuit";
+  plugin_discovery_msg_.versionId = "v1.0";
+  plugin_discovery_msg_.available = true;
+  plugin_discovery_msg_.activated = true;
+  plugin_discovery_msg_.type = cav_msgs::Plugin::CONTROL;
+  plugin_discovery_msg_.capability = "control_pure_pursuit_plan/plan_controls";
+  
+}
+
+void PurePursuitWrapper::PublishPluginDiscovery() const
+{
+  pure_pursuit_plugin_discovery_pub_.publish(plugin_discovery_msg_);
 }
 
 bool PurePursuitWrapper::ReadParameters() {
@@ -59,7 +70,7 @@ void PurePursuitWrapper::TrajectoryPlanPoseHandler(const geometry_msgs::PoseStam
       lane.header = tp->header;
       std::vector <autoware_msgs::Waypoint> waypoints;
       double current_time = ros::Time::now().toSec();
-      for(int i = 0; i < tp->trajectory_points.size() - 1; i++ ) {
+      for(int i = 1; i < tp->trajectory_points.size() - 1; i++ ) {
 
         cav_msgs::TrajectoryPlanPoint t1 = tp->trajectory_points[i];
         cav_msgs::TrajectoryPlanPoint t2 = tp->trajectory_points[i + 1];

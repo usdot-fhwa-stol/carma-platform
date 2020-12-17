@@ -25,6 +25,7 @@
 #include <std_msgs/Bool.h>
 #include <cav_msgs/GuidanceState.h>
 #include <cav_msgs/RobotEnabled.h>
+#include <cav_msgs/RouteEvent.h>
 #include "guidance/guidance_state_machine.hpp"
 
 namespace guidance
@@ -35,7 +36,7 @@ namespace guidance
             /*!
              * \brief Default constructor for GuidanceWorker
              */
-            GuidanceWorker();
+            GuidanceWorker() = default;
 
             /*!
              * \brief Begin normal execution of Guidance worker. Will take over control flow of program and exit from here.
@@ -51,6 +52,7 @@ namespace guidance
 
             // Message/service callbacks
             bool guidance_acivation_cb(cav_srvs::SetGuidanceActiveRequest& req, cav_srvs::SetGuidanceActiveResponse& res);
+            void route_event_cb(const cav_msgs::RouteEventConstPtr& msg);
             void robot_status_cb(const cav_msgs::RobotEnabledConstPtr& msg);
             void system_alert_cb(const cav_msgs::SystemAlertConstPtr& msg);
 
@@ -63,6 +65,7 @@ namespace guidance
 
             // Subscribers
             ros::Subscriber robot_status_subscriber_;
+            ros::Subscriber route_event_subscriber_;
 
             // Node handles
             ros::CARMANodeHandle nh_{}, pnh_{"~"};

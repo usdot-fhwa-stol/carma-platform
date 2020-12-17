@@ -84,17 +84,45 @@ TEST(WMListenerWorkerTest, routeCallback)
 {
   WMListenerWorker wmlw;
 
+  CARMAWorldModel cwm;
+
+  addStraightRoute(cwm);
+
+  ASSERT_TRUE((bool)cwm.getMap());
+  ASSERT_TRUE((bool)cwm.getRoute());
+  ASSERT_TRUE((bool)cwm.getMapRoutingGraph());
+
+  auto map_ptr = lanelet::utils::removeConst(cwm.getMap());
+
+  autoware_lanelet2_msgs::MapBin msg;
+  lanelet::utils::conversion::toBinMsg(map_ptr, &msg);
+
+  autoware_lanelet2_msgs::MapBinConstPtr map_msg_ptr(new autoware_lanelet2_msgs::MapBin(msg));
+
+  cav_msgs::Route route_msg;
+  route_msg.shortest_path_lanelet_ids.push_back(cwm.getRoute()->shortestPath()[0].id());
+  route_msg.shortest_path_lanelet_ids.push_back(cwm.getRoute()->shortestPath()[1].id());
+  cav_msgs::RouteConstPtr rpt(new cav_msgs::Route(route_msg));
+
+  //// Test route callback without map to verify no crash
+  wmlw.routeCallback(rpt);
+
+  wmlw.mapCallback(map_msg_ptr);
+
+  ///// Test without user defined route callback
+  wmlw.routeCallback(rpt);
+
   bool flag = false;
 
   ///// Test without user defined route callback
-  wmlw.routeCallback();
+  wmlw.routeCallback(rpt);
 
   ASSERT_FALSE(flag);
 
   ///// Test with user defined route callback
   wmlw.setRouteCallback([&flag]() { flag = true; });
 
-  wmlw.routeCallback();
+  wmlw.routeCallback(rpt);
 
   ASSERT_TRUE(flag);
 }
@@ -108,7 +136,6 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   auto p2 = getPoint(0, 1, 0);
   auto p3 = getPoint(1, 1, 0);
   auto p4 = getPoint(1, 0, 0);
-
   lanelet::LineString3d left_ls_1(lanelet::utils::getId(), { p1, p2 });
   lanelet::LineString3d right_ls_1(lanelet::utils::getId(), { p4, p3 });
 
@@ -124,7 +151,6 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   // Create the geofence object
   auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
   gf_ptr->id_ = boost::uuids::random_generator()();
-
   gf_ptr->remove_list_.push_back(std::make_pair(ll_1.id(), speed_limit_old));
   gf_ptr->update_list_.push_back(std::make_pair(ll_1.id(), speed_limit_new));
 

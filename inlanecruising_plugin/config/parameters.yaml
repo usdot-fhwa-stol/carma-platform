@@ -1,0 +1,12 @@
+# The length of the trajectory in time domain, in seconds
+trajectory_time_length: 6.0 # Trajectory length in seconds
+curve_resample_step_size: 1.0 # Curve re-sampling step size in m
+downsample_ratio: 8 # Amount to downsample input lanelet centerline data. Value corresponds to saving each nth point.
+minimum_speed: 2.2352 # Minimum allowable speed in m/s
+minimum_lookahead_distance: 5.0 # Minimum value for lookahead distance in m
+maximum_lookahead_distance: 25.0 # Maximum value for lookahead distance in m
+minimum_lookahead_speed: 2.8 # Minimum speed value for lookahead calculation in m/s
+maximum_lookahead_speed: 13.9 # Maximum speed value for lookahead calculation in m/s
+lookahead_ratio: 2.0 # ratio to calculate lookahead distance from speed
+moving_average_window_size: 5 # Size of the window used in the moving average filter to smooth both the computed curvature and output speeds
+curvature_calc_lookahead_count: 1 # Number of points to look ahead when calculating the curvature of the lanelet centerline
