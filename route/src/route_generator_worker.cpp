@@ -440,13 +440,17 @@ namespace route {
 
 bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStampedConstPtr& msg, lanelet::ConstLanelet current, carma_wm::TrackPos llt_track)
 {
+
+               ROS_ERROR_STREAM("CheckEnter");
+
   if (!world_model_->getMap()) 
   {
     ROS_ERROR_STREAM("WMListener received a route before a map was available. Dropping route message.");
     return true;
   }
 
-   
+           ROS_ERROR_STREAM("Check1");
+
 
   auto route = lanelet::ConstLanelets();
   for(auto id : route_msg_.route_path_lanelet_ids)
@@ -482,6 +486,10 @@ bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStamp
       {
         out_of_llt_bounds = true;
       }
+
+           ROS_ERROR_STREAM("Check2");
+
+
 
     auto following_llts = world_model_->getMapRoutingGraph()->following(current); //Get all subsequent lanelets from the map
     lanelet::ConstLanelets filtered_llts;

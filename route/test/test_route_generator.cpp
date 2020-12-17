@@ -414,17 +414,26 @@ ROS_WARN_STREAM("Begin Test");
     msg.pose.position.x = 8.1;
     msg.pose.position.y = 48.9;
 
-    //  cav_msgs::RouteConstPtr rpt(new cav_msgs::Route(route_msg));
+  //  wm->getMap();
+
+    worker.setCTEcounter(0);
+    worker.set_out_counter(0);
 
     geometry_msgs::PoseStampedPtr mpt(new geometry_msgs::PoseStamped(msg));
+        ROS_WARN_STREAM("Placeholder4");
 
 
     /*Compare vehicle position to the route bounds */
     lanelet::BasicPoint2d current_loc(mpt->pose.position.x, mpt->pose.position.y);
+                ROS_WARN_STREAM("Placeholder4a");
+
     auto via_lanelet_vector = lanelet::geometry::findNearest(wm->getMap()->laneletLayer, current_loc, 1);
+            ROS_WARN_STREAM("Placeholder4b");
+
     auto current_lanelet = lanelet::ConstLanelet(via_lanelet_vector[0].second.constData());
 
     auto ll_track = carma_wm::geometry::trackPos(current_lanelet, current_loc);
+        ROS_WARN_STREAM("Placeholder5");
 
     bool test1 = worker.crosstrack_error_check(mpt, start_lanelet, ll_track);
     ASSERT_EQ(test1, false); //The vehicle shouldn't have any crosstrack error, so the value should return false
