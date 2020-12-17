@@ -53,7 +53,7 @@ void printDoublesPerLineWithPrefix(const std::string& prefix, const std::vector<
 {
   for (const auto& value : values)
   {
-    ROS_DEBUG_STREAM(prefix << value);
+    ROS_DEBUG_STREAM(prefix << value * 2.23694 << "mph");
   }
 }
 
