@@ -1,6 +1,5 @@
-<?xml version="1.0"?>
 <launch>
+    <rosparam command="load" file="$(find platooning_tactical_plugin)/config/parameters.yaml"/>
     <!--  platooning tactical plugin Node -->
-        <node pkg="platooning_tactical_plugin_node" type="platooning_tactical_plugin" name="platooning_tactical_plugin" output="screen">
-        </node>
+    <node name="platooning_tactical_plugin" pkg="platooning_tactical_plugin" type="platooning_tactical_plugin"/>
 </launch>
