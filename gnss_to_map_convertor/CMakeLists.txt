@@ -159,11 +159,12 @@ add_library(${PROJECT_NAME}
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-#add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME}
-  #wgs84_utils_library
   ${catkin_LIBRARIES}
 )
+
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
@@ -181,9 +182,7 @@ add_executable(${PROJECT_NAME}_node src/gnss_to_map_convertor/main.cpp src/${PRO
 ## Specify libraries to link a library or executable target against
 
  target_link_libraries(${PROJECT_NAME}_node
- ${PROJECT_NAME}
-  #wgs84_utils_library
-  #carma_utils
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
  )
 
