@@ -41,7 +41,7 @@ void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::C
 {
   ROS_DEBUG_STREAM("Received TrajectoryPlanCurrentPosecallback message");
 
-  std::vector<ros::Time> times;
+  std::vector<double> times;
   std::vector<double> downtracks;
   trajectory_utils::conversions::trajectory_to_downtrack_time(tp->trajectory_points, &downtracks, &times);
 
