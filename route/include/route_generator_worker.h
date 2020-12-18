@@ -165,8 +165,18 @@ namespace route {
         * */
         bool crosstrack_error_check(const geometry_msgs::PoseStampedConstPtr& msg, lanelet::ConstLanelet current_llt, carma_wm::TrackPos llt_track);
 
-        void setCTEcounter(int cte_counter);
+        /**
+         * \brief set the crosstrack error counter
+         * 
+         *  \param cte_counter initial value of the counter (set to zero as specified in the route_config_params.yaml file)
+        */
+        void set_CTE_counter(int cte_counter);
 
+        /**
+         * \brief set the "out-of-bounds" error counter
+         * 
+         *  \param out_counter initial value of the counter (set to zero as specified in the route_config_params.yaml file)
+        */
         void set_out_counter(int out_counter);
 
 

@@ -46,7 +46,7 @@ namespace route {
         pnh_->getParam("destination_downtrack_range", dt_range);
         pnh_->getParam("cte_count", cte_count);
         pnh_->getParam("out_count", out_count);
-        rg_worker_.setCTEcounter(cte_count);
+        rg_worker_.set_CTE_counter(cte_count);
         rg_worker_.set_ctdt_param(ct_error, dt_range);
         std::string route_file_location;
         pnh_->getParam("route_file_path", route_file_location);

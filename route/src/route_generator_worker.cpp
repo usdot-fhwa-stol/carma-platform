@@ -371,7 +371,7 @@ namespace route {
             }
             // check if we left the seleted route by cross track error
             bool departed = crosstrack_error_check(msg, current_lanelet, lanelet_track);
-            if (departed == true)
+            if (departed)
                 {
                     this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
                     publish_route_event(cav_msgs::RouteEvent::ROUTE_DEPARTED);
@@ -441,15 +441,7 @@ namespace route {
 bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStampedConstPtr& msg, lanelet::ConstLanelet current, carma_wm::TrackPos llt_track)
 {
 
-               ROS_ERROR_STREAM("CheckEnter");
-
-  if (!world_model_->getMap()) 
-  {
-    ROS_ERROR_STREAM("WMListener received a route before a map was available. Dropping route message.");
-    return true;
-  }
-
-           ROS_ERROR_STREAM("Check1");
+    ROS_ERROR_STREAM("CheckEnter");
 
 
   auto route = lanelet::ConstLanelets();
@@ -458,6 +450,7 @@ bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStamp
     auto ll = world_model_->getMap()->laneletLayer.get(id);
     route.push_back(ll);
   }
+           ROS_ERROR_STREAM("Check1");
 
   bool out_of_llt_bounds = false;
 
@@ -482,7 +475,7 @@ bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStamp
                 return true;
         }
 
-  if(boost::geometry::within(position, current.polygon2d()) == false) //Determine whether or not the vehicle is in the lanelet polygon
+  if(!boost::geometry::within(position, current.polygon2d())) //Determine whether or not the vehicle is in the lanelet polygon
       {
         out_of_llt_bounds = true;
       }
@@ -492,28 +485,23 @@ bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStamp
 
 
     auto following_llts = world_model_->getMapRoutingGraph()->following(current); //Get all subsequent lanelets from the map
-    lanelet::ConstLanelets filtered_llts;
+    bool out_of_following_llts = false;
+    
+               ROS_ERROR_STREAM("Check3");
+
     for(auto i:following_llts)
     {
-       for(auto j: route)
-       {
-           //Filter lanelets from following lanelets that are not a part of the route based on id
-           if (i.id() == j.id())
-            filtered_llts.push_back(i);
-       }
+       if (boost::geometry::within(position, i.polygon2d())) 
+           return false; // iterate over the list of lanelets in the route. If the vehicle is inside of one, return that there is "No CTE violation"
+        else
+        {
+            out_of_following_llts = true;
+        }
+        
     }
+    if (out_of_following_llts)//If we make it to the end of the list and the vehicle is not inside of a lanelet, then return true
+        return true;
 
-    for(auto i: filtered_llts)
-    {
-        if (boost::geometry::within(position, i.polygon2d()) == false) 
-           out_count++;
-           
-        if (boost::geometry::distance(position, current.polygon2d()) > llt_track.downtrack)
-            out_of_llt_bounds = true;
-    }
-
-    if(out_count == filtered_llts.size()) //If our current position is not within the bounds of any of the following lanelets, then return true
-        out_of_llt_bounds = true;
     
     return out_of_llt_bounds;
 }
@@ -524,7 +512,7 @@ bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStamp
 
     }
 
-    void RouteGeneratorWorker::setCTEcounter(int cte_counter)
+    void RouteGeneratorWorker::set_CTE_counter(int cte_counter)
     {
         cte_count = cte_counter;
 

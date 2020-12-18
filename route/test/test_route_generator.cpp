@@ -337,6 +337,7 @@ TEST(RouteGeneratorTest, testReadRoutetfhrcFile)
 TEST(RouteGeneratorTest, test_crosstrack_error_check)
 {
      tf2_ros::Buffer tf_buffer;
+     std::shared_ptr<carma_wm::WMListener> wml;
     carma_wm::WorldModelConstPtr wm;
     route::RouteGeneratorWorker worker(tf_buffer);
 
@@ -415,8 +416,12 @@ ROS_WARN_STREAM("Begin Test");
     msg.pose.position.y = 48.9;
 
   //  wm->getMap();
+  // wm = wml->getWorldModel();
 
-    worker.setCTEcounter(0);
+
+  worker.setWorldModelPtr(wm);
+
+    worker.set_CTE_counter(0);
     worker.set_out_counter(0);
 
     geometry_msgs::PoseStampedPtr mpt(new geometry_msgs::PoseStamped(msg));
@@ -427,13 +432,18 @@ ROS_WARN_STREAM("Begin Test");
     lanelet::BasicPoint2d current_loc(mpt->pose.position.x, mpt->pose.position.y);
                 ROS_WARN_STREAM("Placeholder4a");
 
-    auto via_lanelet_vector = lanelet::geometry::findNearest(wm->getMap()->laneletLayer, current_loc, 1);
+    auto via_lanelet_vector = lanelet::geometry::findNearest(map->laneletLayer, current_loc, 1);
             ROS_WARN_STREAM("Placeholder4b");
 
     auto current_lanelet = lanelet::ConstLanelet(via_lanelet_vector[0].second.constData());
 
     auto ll_track = carma_wm::geometry::trackPos(current_lanelet, current_loc);
         ROS_WARN_STREAM("Placeholder5");
+
+
+    worker.pose_cb(mpt);
+            ROS_WARN_STREAM("POSE_CB CLEAR");
+
 
     bool test1 = worker.crosstrack_error_check(mpt, start_lanelet, ll_track);
     ASSERT_EQ(test1, false); //The vehicle shouldn't have any crosstrack error, so the value should return false
