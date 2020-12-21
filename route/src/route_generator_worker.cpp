@@ -443,10 +443,12 @@ bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStamp
 
     ROS_ERROR_STREAM("CheckEnter");
 
+    ROS_ERROR_STREAM("CheckEnter");
 
   auto route = lanelet::ConstLanelets();
   for(auto id : route_msg_.route_path_lanelet_ids)
   {
+    ROS_ERROR_STREAM("Check1.aa");
     auto ll = world_model_->getMap()->laneletLayer.get(id);
     route.push_back(ll);
   }
@@ -475,19 +477,21 @@ bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStamp
                 return true;
         }
 
-  if(!boost::geometry::within(position, current.polygon2d())) //Determine whether or not the vehicle is in the lanelet polygon
-      {
-        out_of_llt_bounds = true;
-      }
+    if(!boost::geometry::within(position, current.polygon2d())) //Determine whether or not the vehicle is in the lanelet polygon
+    {
+    out_of_llt_bounds = true;
+    }
 
-           ROS_ERROR_STREAM("Check2");
+    ROS_ERROR_STREAM("Check2");
 
 
 
-    auto following_llts = world_model_->getMapRoutingGraph()->following(current); //Get all subsequent lanelets from the map
+    auto graph = world_model_->getMapRoutingGraph();
+    ROS_ERROR_STREAM("Check2.a");
+    auto following_llts = graph->following(current); //Get all subsequent lanelets from the map
     bool out_of_following_llts = false;
     
-               ROS_ERROR_STREAM("Check3");
+    ROS_ERROR_STREAM("Check3");
 
     for(auto i:following_llts)
     {

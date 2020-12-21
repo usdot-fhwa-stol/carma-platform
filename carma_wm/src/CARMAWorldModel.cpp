@@ -394,6 +394,16 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
 
 LaneletRoutingGraphConstPtr CARMAWorldModel::getMapRoutingGraph() const
 {
+  std::cerr << "GOT IN!" << std::endl;
+  
+  if (map_routing_graph_)
+  {
+    ROS_ERROR_STREAM("Looks good");
+  }
+  else
+  {
+    ROS_ERROR_STREAM("ptr is emopty");
+  }
   return std::static_pointer_cast<const lanelet::routing::RoutingGraph>(map_routing_graph_);  // Cast pointer to const
                                                                                               // variant
 }

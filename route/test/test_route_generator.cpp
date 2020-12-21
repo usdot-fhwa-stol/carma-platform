@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+#include <carma_wm/WMTestLibForGuidance.h>
 #include "route_generator_worker.h"
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_io/Io.h>
@@ -47,7 +47,7 @@ Using this file:
 */
 
 
-TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
+TEST(RouteGeneratorTest, DISABLED_testRouteVisualizerCenterLineParser)
 {
     tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
@@ -139,7 +139,7 @@ TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
 
 
 
-TEST(RouteGeneratorTest, testLaneletRoutingVectorMap)
+TEST(RouteGeneratorTest, DISABLED_testLaneletRoutingVectorMap)
 {
     tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
@@ -205,7 +205,7 @@ TEST(RouteGeneratorTest, testLaneletRoutingVectorMap)
     }
 }
 
-TEST(RouteGeneratorTest, testLaneletRoutingTown02VectorMap)
+TEST(RouteGeneratorTest, DISABLED_testLaneletRoutingTown02VectorMap)
 {
     tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
@@ -284,7 +284,7 @@ TEST(RouteGeneratorTest, testLaneletRoutingTown02VectorMap)
 
 }
 
-TEST(RouteGeneratorTest, testReadLanelet111RouteFile)
+TEST(RouteGeneratorTest, DISABLED_testReadLanelet111RouteFile)
 {
     tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
@@ -308,7 +308,7 @@ TEST(RouteGeneratorTest, testReadLanelet111RouteFile)
 }
 
 
-TEST(RouteGeneratorTest, testReadRoutetfhrcFile)
+TEST(RouteGeneratorTest, DISABLED_testReadRoutetfhrcFile)
 {
     tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
@@ -338,7 +338,7 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
 {
      tf2_ros::Buffer tf_buffer;
      std::shared_ptr<carma_wm::WMListener> wml;
-    carma_wm::WorldModelConstPtr wm;
+    std::shared_ptr<carma_wm::CARMAWorldModel> cmw=std::make_shared<carma_wm::CARMAWorldModel>();
     route::RouteGeneratorWorker worker(tf_buffer);
 
     int projector_type = 0;
@@ -373,7 +373,7 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
     lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
     lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
     lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
-
+    cmw->carma_wm::CARMAWorldModel::setMap(map);
 
      // Grabs lanelet elements from the start and end IDs. Fails the unit test if there is no lanelet with the matching ID
     lanelet::Lanelet start_lanelet;
@@ -419,7 +419,7 @@ ROS_WARN_STREAM("Begin Test");
   // wm = wml->getWorldModel();
 
 
-  worker.setWorldModelPtr(wm);
+  worker.setWorldModelPtr(cmw);
 
     worker.set_CTE_counter(0);
     worker.set_out_counter(0);
