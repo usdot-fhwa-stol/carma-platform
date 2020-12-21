@@ -17,21 +17,17 @@
 -->
 
 <package format="3">
-  <name>gnss_ndt_selector</name>
+  <name>cruising_plugin</name>
   <version>3.3.0</version>
-  <description>The localizer package provides ndt or GNSS localization selection and publishes pose info as tf2 transformation messages</description>
+  <description>The cruising_plugin converts final waypoint plan from cruising to a CARMA trajectory</description>
   <maintainer email="carma@todo.todo">carma</maintainer>
   <license>Apache License 2.0</license>
   <author email="carma@todo.todo">carma</author>
   <buildtool_depend>catkin</buildtool_depend>
-  <depend>geometry_msgs</depend>
   <depend>roscpp</depend>
-  <depend>rostest</depend>
   <depend>std_msgs</depend>
-  <depend>tf2</depend>
-  <depend>tf2_ros</depend>	
-  <depend>tf2_geometry_msgs</depend>
-  <depend>autoware_msgs</depend>
-  <depend>carma_utils</depend>
+  <depend>cav_srvs</depend>
   <depend>cav_msgs</depend>
+  <depend>carma_utils</depend>
+  <depend>autoware_msgs</depend>
 </package>

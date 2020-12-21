@@ -15,7 +15,7 @@
 #
 
 cmake_minimum_required(VERSION 2.8.3)
-project(gnss_ndt_selector)
+project(cruising_plugin)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
@@ -24,15 +24,12 @@ set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
-  geometry_msgs
   roscpp
   std_msgs
-  tf2
-  tf2_ros
-  tf2_geometry_msgs
-  autoware_msgs
-  carma_utils
   cav_msgs
+  cav_srvs
+  carma_utils
+  autoware_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -43,7 +40,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS geometry_msgs roscpp std_msgs tf2 tf2_ros tf2_geometry_msgs autoware_msgs carma_utils cav_msgs
+  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils cav_msgs autoware_msgs
 )
 
 ###########
@@ -52,30 +49,33 @@ catkin_package(
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
   include
 )
+
 file(GLOB_RECURSE headers */*.hpp */*.h)
+
 add_executable( ${PROJECT_NAME}
-                src/main.cpp)
-add_library(gnss_ndt_library src/ndt_reliability_counter.cpp src/localizer_node.cpp)
-add_dependencies(${PROJECT_NAME} 
-                ${catkin_EXPORTED_TARGETS}
-)
-add_dependencies(gnss_ndt_library
-                ${catkin_EXPORTED_TARGETS}
-) 
-target_link_libraries(${PROJECT_NAME} gnss_ndt_library ${catkin_LIBRARIES} )
+  ${headers}
+  src/cruising_plugin.cpp
+  src/main.cpp)
+add_library(cruising_plugin_library src/cruising_plugin.cpp)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+add_dependencies(cruising_plugin_library ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
 #############
 
-install(DIRECTORY include/
-DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".svn" EXCLUDE
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME} gnss_ndt_library
+install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -89,12 +89,5 @@ install(DIRECTORY launch config
 #############
 ## Testing ##
 #############
-catkin_add_gmock(${PROJECT_NAME}-test test/test_gnss_ndt_selector.cpp)
-target_link_libraries(${PROJECT_NAME}-test gnss_ndt_library ${catkin_LIBRARIES})
-
-if (CATKIN_ENABLE_TESTING)
-  find_package(rostest REQUIRED)
-  add_rostest_gtest(test_gnss_ndt_selector_node test/gnss_ndt_selector.test test/test_gnss_ndt_selector_node.cpp)
-  target_link_libraries(test_gnss_ndt_selector_node gnss_ndt_library ${catkin_LIBRARIES})
-endif()
-
+catkin_add_gmock(${PROJECT_NAME}-test test/test_cruising_plugin.cpp)
+target_link_libraries(${PROJECT_NAME}-test cruising_plugin_library ${catkin_LIBRARIES})

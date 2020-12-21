@@ -34,7 +34,7 @@
 # /////////////////////////////////////////////////////////////////////////////
 
 
-FROM usdotfhwastol/autoware.ai:3.8.2 AS source-code
+FROM usdotfhwastol/autoware.ai:3.9.0 AS source-code
 
 RUN mkdir ~/src
 COPY --chown=carma . /home/carma/src/carma-platform/
@@ -45,11 +45,13 @@ RUN ~/src/carma-platform/docker/checkout.bash
 # /////////////////////////////////////////////////////////////////////////////
 
 
-FROM usdotfhwastol/autoware.ai:3.8.2 AS install
+FROM usdotfhwastol/autoware.ai:3.9.0 AS install
 
 # Copy the source files from the previous stage and build/install
 RUN mkdir ~/carma_ws
 COPY --from=source-code --chown=carma /home/carma/src /home/carma/carma_ws/src
+
+
 RUN ~/carma_ws/src/carma-platform/docker/install.sh
 
 # /////////////////////////////////////////////////////////////////////////////
@@ -57,7 +59,7 @@ RUN ~/carma_ws/src/carma-platform/docker/install.sh
 # /////////////////////////////////////////////////////////////////////////////
 
 
-FROM usdotfhwastol/autoware.ai:3.8.2
+FROM usdotfhwastol/autoware.ai:3.9.0
 
 ARG BUILD_DATE="NULL"
 ARG VCS_REF="NULL"
@@ -76,5 +78,7 @@ LABEL org.label-schema.build-date=${BUILD_DATE}
 # Migrate the files from the install stage
 COPY --from=install --chown=carma /opt/carma /opt/carma
 COPY --from=install --chown=carma /root/.bashrc /home/carma/.bashrc
+
+RUN pip install future
 
 CMD "roslaunch carma carma_docker.launch"

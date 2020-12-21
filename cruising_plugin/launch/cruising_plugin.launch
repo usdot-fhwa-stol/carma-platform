@@ -10,9 +10,10 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-
+<!--
+  This file is used to launch a ros wrapper of Cruising planner as a CARMA strategic plugin.
+-->
 <launch>
-    <node pkg="gnss_ndt_selector" type="gnss_ndt_selector" name="gnss_ndt_selector">
-          <rosparam command="load" file="$(find gnss_ndt_selector)/config/parameters.yaml"/>
-    </node>
+    <rosparam command="load" file="$(find cruising_plugin)/config/parameters.yaml"/>
+    <node name="cruising_plugin" pkg="cruising_plugin" type="cruising_plugin"/>
 </launch>
