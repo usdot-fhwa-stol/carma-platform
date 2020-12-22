@@ -91,7 +91,7 @@ namespace truck_inspection_client
                 if(pnh_->getParam("/vin_number", vin_number_))
                 {
                     ROS_INFO("retrieved vin_number1:  %s",vin_number_.c_str());
-                    break;
+                    break; 
                 }
                 ROS_WARN("retrieving vin_number:  %s",vin_number_.c_str());
             }

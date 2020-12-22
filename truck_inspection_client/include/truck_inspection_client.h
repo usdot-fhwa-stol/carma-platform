@@ -39,7 +39,7 @@ namespace truck_inspection_client
         void run();
 
         const std::string INSPECTION_STRATEGY = "TruckInspection";
-        const std::uint16_t MAX_RETRIEVE_VIN_COUNT = 300;
+        const std::uint16_t MAX_RETRIEVE_VIN_COUNT = 300; 
 
     private:
 
