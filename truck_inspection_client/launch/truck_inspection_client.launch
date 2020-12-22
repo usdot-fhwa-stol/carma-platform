@@ -20,7 +20,7 @@
     <remap from="incoming_mobility_request" to="$(optenv CARMA_MSG_NS)/incoming_mobility_request"/>
     <remap from="guidance/state" to="$(optenv CARMA_GUIDE_NS)/state"/>
 
-    <node name="truck_inspection_client" pkg="truck_inspection_client" type="truck_inspection_client">
+    <node name="truck_inspection_client" pkg="truck_inspection_client" type="truck_inspection_client" output="screen">
       <rosparam command="load" file="$(find truck_inspection_client)/config/parameters.yaml"/>
     </node>
 </launch>

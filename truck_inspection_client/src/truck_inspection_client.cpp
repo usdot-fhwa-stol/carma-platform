@@ -36,6 +36,7 @@ namespace truck_inspection_client
         pnh_->getParam("permit_required", permit_required_);
         pnh_->getParam("pre_trip_ads_health_check", pre_trip_ads_health_check_);
         mo_pub_ = nh_->advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 5);
+        vin_system_alert_pub_ = nh_->advertise<cav_msgs::SystemAlert>("system_alert", 10);
         request_sub_ = nh_->subscribe("incoming_mobility_request", 1, &TruckInspectionClient::requestCallback, this);
         ads_state_sub_ = nh_->subscribe("guidance/state", 1, &TruckInspectionClient::guidanceStatesCallback, this);
         ads_system_alert_sub_ = nh_->subscribe("system_alert", 1, &TruckInspectionClient::systemAlertsCallback, this);
@@ -54,7 +55,7 @@ namespace truck_inspection_client
         });
         ROS_INFO_STREAM("Truck inspection plugin is initialized...");
     }
-
+///opt/carma/vehicle/config/carma_docker.launch
     void TruckInspectionClient::run()
     {
         initialize();
@@ -79,6 +80,30 @@ namespace truck_inspection_client
     void TruckInspectionClient::requestCallback(const cav_msgs::MobilityRequestConstPtr& msg)
     {
         if(msg->strategy == this->INSPECTION_STRATEGY) {
+            std::uint16_t vin_retrive_count = 0;
+            //Checking: vin number does not exist yet in global parameter server
+            while((!pnh_->getParam("/vin_number", vin_number_)) && vin_retrive_count < MAX_RETRIEVE_VIN_COUNT)
+            {
+                //sleep for 0.1 second
+                boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
+                vin_retrive_count++;
+
+                if(pnh_->getParam("/vin_number", vin_number_))
+                {
+                    ROS_INFO("retrieved vin_number1:  %s",vin_number_.c_str());
+                    break;
+                }
+                ROS_WARN("retrieving vin_number:  %s",vin_number_.c_str());
+            }
+            // //if exceed maximum count, publish warning messages to system_alert
+            if(vin_retrive_count >= MAX_RETRIEVE_VIN_COUNT)
+            {
+                cav_msgs::SystemAlert alert_msg;
+                alert_msg.type = cav_msgs::SystemAlert::WARNING;
+                alert_msg.description = ros::this_node::getName() + ": vin_number does not exist in global parameter server.";                
+                ROS_ERROR_STREAM(alert_msg.description);
+                vin_system_alert_pub_.publish(alert_msg);
+            }
             cav_msgs::MobilityOperation mo_msg;
             mo_msg.header.sender_bsm_id = bsm_id_;
             mo_msg.strategy = this->INSPECTION_STRATEGY;

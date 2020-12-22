@@ -24,6 +24,8 @@
 #include <cav_msgs/BSM.h>
 #include <std_msgs/String.h>
 #include "boost/format.hpp"
+#include <boost/chrono.hpp>
+#include <boost/thread/thread.hpp>
 
 namespace truck_inspection_client
 {
@@ -37,6 +39,7 @@ namespace truck_inspection_client
         void run();
 
         const std::string INSPECTION_STRATEGY = "TruckInspection";
+        const std::uint16_t MAX_RETRIEVE_VIN_COUNT = 300;
 
     private:
 
@@ -45,6 +48,7 @@ namespace truck_inspection_client
 
         // publisher for generated Mobility Operation messages
         ros::Publisher  mo_pub_;
+        ros::Publisher vin_system_alert_pub_;
 
         // subscriber for Mobility Request messages
         ros::Subscriber request_sub_;
