@@ -461,6 +461,11 @@ bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStamp
     position.x()= msg->pose.position.x;
     position.y()= msg->pose.position.y;  
 
+    
+    ROS_INFO_STREAM("Distance1: "<< boost::geometry::distance(position, current.polygon2d())<<" Crosstrack: "<< cross_track_dist );
+    ROS_INFO_STREAM("Distance2: "<< boost::geometry::distance(position, current.polygon2d())<<" Downtrack: "<< llt_track.downtrack);
+
+    
     if (boost::geometry::distance(position, current.polygon2d()) > cross_track_dist) //Evaluate lanelet crosstrack distance from vehicle
         {
             cte_count++;
@@ -479,6 +484,7 @@ bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStamp
 
     if(!boost::geometry::within(position, current.polygon2d())) //Determine whether or not the vehicle is in the lanelet polygon
     {
+    ROS_WARN_STREAM("TRUE");
     out_of_llt_bounds = true;
     }
 
@@ -492,13 +498,19 @@ bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStamp
     bool out_of_following_llts = false;
     
     ROS_ERROR_STREAM("Check3");
-
+    ROS_INFO_STREAM("Following_size "<< following_llts.size());
     for(auto i:following_llts)
     {
        if (boost::geometry::within(position, i.polygon2d())) 
-           return false; // iterate over the list of lanelets in the route. If the vehicle is inside of one, return that there is "No CTE violation"
+           {
+               ROS_WARN_STREAM("FALSE");
+               return false; // iterate over the list of lanelets in the route. If the vehicle is inside of one, return that there is "No CTE violation"
+        
+           }
         else
         {
+            ROS_WARN_STREAM("TRUE");
+
             out_of_following_llts = true;
         }
         

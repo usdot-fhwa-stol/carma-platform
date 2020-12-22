@@ -363,7 +363,6 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
 
   // File location of osm file
     std::string file = "../resource/map/town01_vector_map_1.osm";
-
      // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
     lanelet::Id start_id = 101;
     lanelet::Id end_id = 111;
@@ -408,16 +407,11 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
     route_msg = worker.compose_route_msg(route);
     ASSERT_TRUE(route_msg.route_path_lanelet_ids.size() > 0);
 
-
 ROS_WARN_STREAM("Begin Test");
 
     //Assign vehicle position
-    msg.pose.position.x = 8.1;
-    msg.pose.position.y = 48.9;
-
-  //  wm->getMap();
-  // wm = wml->getWorldModel();
-
+    msg.pose.position.x = 0.0;
+    msg.pose.position.y = 0.0;
 
   worker.setWorldModelPtr(cmw);
 
@@ -446,7 +440,10 @@ ROS_WARN_STREAM("Begin Test");
 
 
     bool test1 = worker.crosstrack_error_check(mpt, start_lanelet, ll_track);
-    ASSERT_EQ(test1, false); //The vehicle shouldn't have any crosstrack error, so the value should return false
+    ASSERT_EQ(test1, true); //The vehicle will show crosstrack error, so the value should return true
+
+    //TODO: Use position values to show the case when there is no crosstrack error
+
 
 }
 
