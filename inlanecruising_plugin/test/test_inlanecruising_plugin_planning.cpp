@@ -184,8 +184,6 @@ TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
 
   inlc.plan_trajectory_cb(req, resp);
 
-  
-
 }
 
 };  // namespace inlanecruising_plugin
