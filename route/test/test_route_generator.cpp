@@ -443,6 +443,18 @@ ROS_WARN_STREAM("Begin Test");
     ASSERT_EQ(test1, true); //The vehicle will show crosstrack error, so the value should return true
 
     //TODO: Use position values to show the case when there is no crosstrack error
+    //Assign vehicle position
+    msg.pose.position.x = -9.45542;
+    msg.pose.position.y = -182.324;
+
+     geometry_msgs::PoseStampedPtr mpt2(new geometry_msgs::PoseStamped(msg));
+        ROS_WARN_STREAM("Placeholder4");
+
+
+
+    bool test2 = worker.crosstrack_error_check(mpt2, start_lanelet, ll_track);
+    ASSERT_EQ(test2, false);
+
 
 
 }

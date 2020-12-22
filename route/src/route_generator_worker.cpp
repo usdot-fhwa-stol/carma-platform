@@ -443,6 +443,9 @@ bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStamp
 
     ROS_ERROR_STREAM("CheckEnter");
 
+    ROS_INFO_STREAM("x: "<<current.rightBound2d().front().x() <<" y:"<< current.rightBound2d().front().y());
+
+
     ROS_ERROR_STREAM("CheckEnter");
 
   auto route = lanelet::ConstLanelets();
@@ -507,7 +510,7 @@ bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStamp
                return false; // iterate over the list of lanelets in the route. If the vehicle is inside of one, return that there is "No CTE violation"
         
            }
-        else
+        else if (!boost::geometry::within(position, i.polygon2d()) && boost::geometry::distance(position, current.polygon2d()) > cross_track_dist)
         {
             ROS_WARN_STREAM("TRUE");
 
