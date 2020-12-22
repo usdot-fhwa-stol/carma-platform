@@ -29,6 +29,8 @@
 #include <cstring>
 #include <vector>
 #include <sstream>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <lanelet2_core/geometry/Lanelet.h>
 
 namespace traffic{
 
@@ -42,14 +44,14 @@ class TrafficIncidentParserWorker
   /*!
    * \brief Constructor
    */
-  TrafficIncidentParserWorker(PublishTrafficControlCallback traffic_control_pub);
+  TrafficIncidentParserWorker(carma_wm::WorldModelConstPtr wm,PublishTrafficControlCallback traffic_control_pub);
     
   /*! \fn pinpointDriverCallback(const gps_common::GPSFix &pinpoint_msg)
     \brief pinpointDriverCallback populates lat lon heading from pinpoint driver.
     \param  gps_common::GPSFix.
   */
 
-  void projectionCallback(const projection::projection &projection_msg);
+  void projectionCallback(const std_msgs::String &projection_msg);
 
     /*! \fn pinpointDriverCallback(const gps_common::GPSFix &pinpoint_msg)
     \brief pinpointDriverCallback populates lat lon heading from pinpoint driver.
@@ -71,12 +73,16 @@ class TrafficIncidentParserWorker
 
   string stringParserHelper(string str,int str_index);
 
+  void findNearByLanetlet();
+
  private:
   double latitude_;
   double longitude_;
   double closed_lane_;
   double down_track_;
   double up_track_;
+  lanelet::BasicPoint3d local_point_;
+  std::string projection_msg_;
   // local copy of external object publihsers
 
   PublishTrafficControlCallback traffic_control_pub_;

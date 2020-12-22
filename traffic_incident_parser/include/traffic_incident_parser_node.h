@@ -21,6 +21,9 @@
 #include <carma_utils/CARMAUtils.h>
 #include <functional>
 #include <string>
+#include <carma_wm/WMListener.h>
+#include <carma_wm/WorldModel.h>
+
 #include "traffic_incident_parser_worker.h"
 
 namespace traffic{
@@ -38,6 +41,9 @@ class TrafficIncidentParserNode
   //ros::Subscriber pinpoint_driver_sub_;
   ros::Subscriber projection_sub_;
   ros::Subscriber mobility_operation_sub_;
+
+  // World Model Listener. Must be declared before object_worker_ for proper initialization.
+  carma_wm::WMListener wm_listener_;
 
   //publisher
   //ros::Publisher traffic_mobility_operation_pub_;

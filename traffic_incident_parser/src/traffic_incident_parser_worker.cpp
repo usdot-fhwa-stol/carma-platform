@@ -19,7 +19,7 @@
 namespace traffic
 {
 
-  TrafficIncidentParserWorker::TrafficIncidentParserWorker(PublishTrafficControlCallback traffic_control_pub) : traffic_control_pub_(traffic_control_pub){};
+  TrafficIncidentParserWorker::TrafficIncidentParserWorker(carma_wm::WorldModelConstPtr wm,PublishTrafficControlCallback traffic_control_pub) : traffic_control_pub_(traffic_control_pub),wm_(wm){};
 
   void TrafficIncidentParserWorker::mobilityOperationCallback(const cav_msgs::MobilityOperation &mobility_msg)
   {
@@ -71,16 +71,33 @@ namespace traffic
     return str_temp;
   }
 
-  void TrafficIncidentParserWorker::projectionCallback(const projection::projection &projection_msg)
+  void TrafficIncidentParserWorker::projectionCallback(const std_msgs::String &projection_msg)
   {
-
+      projection_msg_=projection_msg.data;
   }
 
   void TrafficIncidentParserWorker::earthToMapFrame()
   {
+    lanelet::projection::LocalFrameProjector projector(projection_msg_.c_str());
 
+    lanelet::GPSPoint gps_point;
+    gps_point.lat = latitude_;
+    gps_point.lon = longitude_;
+    gps_point.ele = 0;
+    local_point_ = projector.forward(gps_point);
   }
 
+  void TrafficIncidentParserWorker::findNearByLanetlet()
+  {
+    //auto map = wm_->getMap();
+    auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, local_point_, closed_lane_);  
+    lanelet::ConstLanelet current_lanelet = current_lanelets[0].second;
+    lanelet::LineString current_lanelet.centerline();
+    current_lanelets.
+    current_lanelets.
+
+     carma_wm::TrackPos tp = carma_wm::geometry::trackPos(current_lanelet, local_point_);//Downtrack and cross track relative to lanelet starting position
+  }
 
  /* cav_msgs::MobilityOperation TrafficIncidentWorker::mobilityMessageGenerator(const gps_common::GPSFix& pinpoint_msg)
   {

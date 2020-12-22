@@ -38,7 +38,7 @@
 
     // Setup pub/sub
     //pinpoint_driver_sub_=nh_.subscribe("gps_common_fix",10,&TrafficIncidentParserWorker::pinpointDriverCallback,&traffic_parser_worker_);
-    projection_sub_=nh_.subscribe("projection",10,&TrafficIncidentParserWorker::projectionCallback,&traffic_parser_worker_);
+    projection_sub_=nh_.subscribe("georeference",10,&TrafficIncidentParserWorker::projectionCallback,&traffic_parser_worker_);
     mobility_operation_sub_=nh_.subscribe("incoming_mobility_operation",10,&TrafficIncidentParserWorker::mobilityOperationCallback,&traffic_parser_worker_);
     //traffic_mobility_operation_pub_=nh_.advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 10);
     traffic_control_msg_pub_=nh_.advertise<cav_msgs::TrafficControlMessageV01>("traffic_incident_control_msg", 10);
