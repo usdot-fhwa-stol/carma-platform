@@ -57,7 +57,6 @@
   <buildtool_depend>catkin</buildtool_depend>
   <depend>message_generation</depend>
   <depend>cav_msgs</depend>
-  <depend>cav_srvs</depend>
   <depend>j2735_msgs</depend>
   <depend>rostest</depend>
   <depend>rospy</depend>

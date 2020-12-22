@@ -14,9 +14,11 @@
  * the License.
  */
 
-#include "ndt_reliability_counter.h"
+
+#include "localizer.h"
 #include <gtest/gtest.h>
 #include <ros/ros.h>
+namespace localizer{
 
 TEST(GnssNdtSelectorTest, testReliabilityCounter)
 {
@@ -69,6 +71,9 @@ TEST(GnssNdtSelectorTest, testReliabilityCounter)
     counter.onNDTScore(0.1);
     EXPECT_EQ(0, counter.getNDTReliabilityCounter());
 }
+
+}
+
 
 // Run all the tests
 int main(int argc, char **argv)

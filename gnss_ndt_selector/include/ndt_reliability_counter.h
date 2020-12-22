@@ -1,3 +1,6 @@
+#ifndef NDT_RELIABILITY_COUNTER_H
+#define NDT_RELIABILITY_COUNTER_H
+
 /*
  * Copyright (C) 2019-2021 LEIDOS.
  *
@@ -39,3 +42,5 @@ namespace localizer
             int unreliable_message_upper_limit_;
     };
 }
+
+#endif // NDT_RELIABILITY_COUNTER_H

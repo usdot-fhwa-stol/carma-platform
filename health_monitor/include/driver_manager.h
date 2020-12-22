@@ -53,11 +53,12 @@ namespace health_monitor
             /*!
              * \brief Handle the spin and publisher
              */
-            cav_msgs::SystemAlert handleSpin(bool truck,bool car,long time_now,long start_up_timestamp,long startup_duration,bool is_zero);
+            cav_msgs::SystemAlert handleSpin(bool truck,bool car,long time_now,long start_up_timestamp,long startup_duration);
 
         private:
 
             EntryManager em_;
+            bool starting_up_ = true;
             // timeout for critical driver timeout
             long driver_timeout_ {1000};
 

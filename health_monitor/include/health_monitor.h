@@ -21,6 +21,7 @@
 #include <cav_srvs/PluginActivation.h>
 #include <cav_msgs/Plugin.h>
 #include <cav_msgs/DriverStatus.h>
+#include <boost/optional.hpp>
 #include "plugin_manager.h"
 #include "driver_manager.h"
 
@@ -29,7 +30,11 @@ namespace health_monitor
     class HealthMonitor
     {
         public:
-
+            
+            /*!
+             * \brief Default constructor for HealthMonitor
+             */
+            HealthMonitor();
             /*!
              * \brief Begin normal execution of health monitor node. Will take over control flow of program and exit from here.
              * 
@@ -37,10 +42,21 @@ namespace health_monitor
              */
             void run();
 
+            // spin callback function
+            bool spin_cb();
+            
+
+
+            //Unit Testing Functions
+            void setDriverManager(DriverManager dm);
+            void setCarTrue();
+            void setTruckTrue();
+
         private:
 
             // node handles
-            ros::CARMANodeHandle nh_, pnh_;
+            std::shared_ptr<ros::CARMANodeHandle> nh_;
+            std::shared_ptr<ros::CARMANodeHandle> pnh_;
 
             // workers
             PluginManager plugin_manager_;
@@ -82,10 +98,8 @@ namespace health_monitor
             std::string plugin_service_prefix_;
             std::string strategic_plugin_service_suffix_;
             std::string tactical_plugin_service_suffix_;
-            ros::Time start_time_flag_; //Bool for start up time
-
-
-            // spin callback function
-            bool spin_cb();
+            
+            // Previously published alert message
+            boost::optional<cav_msgs::SystemAlert> prev_alert;
     };
 }

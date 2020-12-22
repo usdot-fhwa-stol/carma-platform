@@ -91,12 +91,14 @@ namespace health_monitor
         
         for(int i=0;i<lidar_gps_entries_.size();i++)
         {
-            if(lidar_gps_entries_[i]==name)
+            if(lidar_gps_entries_[i].compare(name) == 0)
             {
                 return i;
             }
 
         }
+
+        return -1;
     }
 
 }
