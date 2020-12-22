@@ -48,7 +48,6 @@ namespace truck_inspection_client
 
         // publisher for generated Mobility Operation messages
         ros::Publisher  mo_pub_;
-        ros::Publisher vin_system_alert_pub_;
 
         // subscriber for Mobility Request messages
         ros::Subscriber request_sub_;
@@ -83,6 +82,7 @@ namespace truck_inspection_client
         bool permit_required_;
         bool ads_engaged_;  
         std::string ads_system_alert_type_;  
+        std::uint16_t vin_retrive_count = 0;
     };
 
 }
