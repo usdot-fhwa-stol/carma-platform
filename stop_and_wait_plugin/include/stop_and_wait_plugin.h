@@ -122,12 +122,17 @@ namespace stop_and_wait_plugin
          */ 
         void splitPointSpeedPairs(const std::vector<PointSpeedPair>& points, std::vector<lanelet::BasicPoint2d>* basic_points,
                             std::vector<double>* speeds);
+        
+        std::vector<PointSpeedPair> constrain_to_time_boundary(const std::vector<PointSpeedPair>& points,
+                                                                            double time_span);
 
         //wm pointer to the actual wm object
+        std::shared_ptr<carma_wm::WMListener> wml_;
         carma_wm::WorldModelConstPtr wm_;
 
         double minimal_trajectory_duration_ = 6.0;
         double max_jerk_limit_ = 3.0;
+        double trajectory_time_length_ = 6.0;
 
         ros::Subscriber pose_sub_;
         ros::Subscriber twist_sub_;
@@ -142,23 +147,31 @@ namespace stop_and_wait_plugin
          * \param msg Latest twist message
          */
         void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
+        double current_speed_;
 
+        void getWaitTrajectory(cav_srvs::PlanTrajectoryResponse& resp);
     private:
         void initialize();
         //CARMA ROS node handles
         std::shared_ptr<ros::CARMANodeHandle> nh_,pnh_;
+
+        // ROS service servers
+        ros::ServiceServer trajectory_srv_;
 
         //ROS publishers and subscribers
         ros::Publisher plugin_discovery_pub_;
 
         // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;
-        double current_speed_;
+       
         
         PublishPluginDiscoveryCB plugin_discovery_publisher_;
 
         //Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
+
+        //Total time required to complete the maneuver
+        double maneuver_time_;
         
     };
 }
