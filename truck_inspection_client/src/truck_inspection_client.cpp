@@ -55,7 +55,7 @@ namespace truck_inspection_client
         });
         ROS_INFO_STREAM("Truck inspection plugin is initialized...");
     }
-///opt/carma/vehicle/config/carma_docker.launch
+
     void TruckInspectionClient::run()
     {
         initialize();
@@ -95,7 +95,7 @@ namespace truck_inspection_client
                 }
                 ROS_WARN("retrieving vin_number:  %s",vin_number_.c_str());
             }
-            // //if exceed maximum count, publish warning messages to system_alert
+            //if exceed maximum count, publish warning messages to system_alert
             if(vin_retrive_count >= MAX_RETRIEVE_VIN_COUNT)
             {
                 cav_msgs::SystemAlert alert_msg;
