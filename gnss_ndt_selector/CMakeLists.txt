@@ -56,26 +56,26 @@ include_directories(
 )
 file(GLOB_RECURSE headers */*.hpp */*.h)
 add_executable( ${PROJECT_NAME}
-                src/localizer_node.cpp
                 src/main.cpp)
-add_library(gnss_ndt_counter_library src/ndt_reliability_counter.cpp)
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} gnss_ndt_counter_library)
-if(catkin_EXPORTED_TARGETS)
-  add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-endif()
+add_library(gnss_ndt_library src/ndt_reliability_counter.cpp src/localizer_node.cpp)
+add_dependencies(${PROJECT_NAME} 
+                ${catkin_EXPORTED_TARGETS}
+)
+add_dependencies(gnss_ndt_library
+                ${catkin_EXPORTED_TARGETS}
+) 
+target_link_libraries(${PROJECT_NAME} gnss_ndt_library ${catkin_LIBRARIES} )
 
 #############
 ## Install ##
 #############
 
-install(DIRECTORY include/${PROJECT_NAME}/
+install(DIRECTORY include/
 DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-FILES_MATCHING PATTERN "*.hpp"
-PATTERN ".svn" EXCLUDE
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME} gnss_ndt_counter_library
+install(TARGETS ${PROJECT_NAME} gnss_ndt_library
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -90,4 +90,11 @@ install(DIRECTORY launch config
 ## Testing ##
 #############
 catkin_add_gmock(${PROJECT_NAME}-test test/test_gnss_ndt_selector.cpp)
-target_link_libraries(${PROJECT_NAME}-test gnss_ndt_counter_library ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}-test gnss_ndt_library ${catkin_LIBRARIES})
+
+if (CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(test_gnss_ndt_selector_node test/gnss_ndt_selector.test test/test_gnss_ndt_selector_node.cpp)
+  target_link_libraries(test_gnss_ndt_selector_node gnss_ndt_library ${catkin_LIBRARIES})
+endif()
+
