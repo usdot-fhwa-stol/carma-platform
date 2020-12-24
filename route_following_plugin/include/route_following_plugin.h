@@ -67,7 +67,7 @@ namespace route_following_plugin
          * \return A lane keeping maneuver message which is ready to be published
          */
         cav_msgs::Maneuver composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time current_time);
-        cav_msgs::Maneuver composeStopandWaitManeuverMessage(double current_dist, double end_dist, double current_speed, int start_lane_id, int end_lane_id, ros::Time current_time);
+
         /**
          * \brief Given a LaneletRelations and ID of the next lanelet in the shortest path
          * \param relations LaneletRelations relative to the previous lanelet
@@ -105,7 +105,7 @@ namespace route_following_plugin
         double config_limit=0.0;
 
     private:
-        ros::Time maneuver_time_;
+
         // CARMA ROS node handles
         std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
@@ -147,4 +147,3 @@ namespace route_following_plugin
     };
 
 }
-

@@ -27,7 +27,6 @@
 #include <carma_wm/WMListener.h>
 #include <functional>
 #include <carma_wm/CARMAWorldModel.h>
-
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/geometry/LineString.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -36,32 +35,22 @@
 
 namespace stop_and_wait_plugin
 {
-    using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
+    /**
+     * \brief Convenience class for pairing 2d points with speeds
+     */ 
     struct PointSpeedPair
     {
         lanelet::BasicPoint2d point;
         double speed=0;
     };
 
-    struct DiscreteCurve
-    {
-        Eigen::Isometry2d frame;
-        std::vector<PointSpeedPair> points;
-    };
-
     class StopandWait
     {
     public:
-        
+        /** 
+         * \brief Constructor
+         */
         StopandWait(){};
-    /**
-        * \brief Constructor
-        * 
-        * \param wm Pointer to intialized instance of the carma world model for accessing semantic map data
-        * \param plugin_discovery_publisher Callback which will publish the current plugin discovery state
-        */
-        StopandWait(carma_wm::WorldModelConstPtr wm, PublishPluginDiscoveryCB plugin_discovery_publisher);
-
 
           /**
          * \brief Service callback for trajectory planning
@@ -73,13 +62,10 @@ namespace stop_and_wait_plugin
          */ 
         bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp);
         
+        /**
+         * \brief General entry point to begin the operation of this class
+         */
         void run();
-        // /**
-        //  * \brief Method to call at fixed rate in execution loop. Will publish plugin discovery updates
-        //  * 
-        //  * \return True if the node should continue running. False otherwise
-        //  */ 
-        // bool onSpin();
 
         /**
          * \brief Converts a set of requested STOP_AND_WAIT maneuvers to point speed limit pairs. 
@@ -122,36 +108,25 @@ namespace stop_and_wait_plugin
          */ 
         void splitPointSpeedPairs(const std::vector<PointSpeedPair>& points, std::vector<lanelet::BasicPoint2d>* basic_points,
                             std::vector<double>* speeds);
-        
-        std::vector<PointSpeedPair> constrain_to_time_boundary(const std::vector<PointSpeedPair>& points,
-                                                                            double time_span);
 
-        //wm pointer to the actual wm object
+        /**
+         * \brief Method converts speed values associated with given points along path to time. Calculated for constant jerk. 
+         * For jerk lesser than 0.001m/s3 speed is assumed to be constant
+         * \param downtrack downtrack distance corresponding to the distance travelled on the route
+         * \param speeds a vector of speeds associated with given downtrack distances
+         * \param times a pointer to a vector filled with calculated time values
+         * \param jerk constant jerk along maneuver used for calculating time
+         */
+        void speed_to_time(const std::vector<double>& downtrack, const std::vector<double>& speeds, std::vector<double>* times, double jerk);
+
+       //current vehicle forward speed
+        double current_speed_;
+
+        //wm listener pointer and pointer to the actual wm object
         std::shared_ptr<carma_wm::WMListener> wml_;
         carma_wm::WorldModelConstPtr wm_;
 
-        double minimal_trajectory_duration_ = 6.0;
-        double max_jerk_limit_ = 3.0;
-        double trajectory_time_length_ = 6.0;
-
-        ros::Subscriber pose_sub_;
-        ros::Subscriber twist_sub_;
-
-        /**
-         * \brief Callback for the pose subscriber, which will store latest pose locally
-         * \param msg Latest pose message
-         */
-        void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
-        /**
-         * \brief Callback for the twist subscriber, which will store latest twist locally
-         * \param msg Latest twist message
-         */
-        void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
-        double current_speed_;
-
-        void getWaitTrajectory(cav_srvs::PlanTrajectoryResponse& resp);
     private:
-        void initialize();
         //CARMA ROS node handles
         std::shared_ptr<ros::CARMANodeHandle> nh_,pnh_;
 
@@ -160,18 +135,47 @@ namespace stop_and_wait_plugin
 
         //ROS publishers and subscribers
         ros::Publisher plugin_discovery_pub_;
+        ros::Subscriber pose_sub_;
+        ros::Subscriber twist_sub_;
 
         // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;
        
-        
-        PublishPluginDiscoveryCB plugin_discovery_publisher_;
-
         //Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
 
+        //Calculated jerk for maneuver in m/s3
+        double jerk_;
         //Total time required to complete the maneuver
         double maneuver_time_;
+
+        //Parameters loaded from config file initialized for unit tests
+        //The minimum duration of a trajectory length in seconds
+        double minimal_trajectory_duration_ = 6.0;
+        //The maximum acceptable jerk 
+        double max_jerk_limit_ = 3.0;
+        //The minimum acceptable jerk, after which constant speed is assumed
+        double min_jerk_ = 0.01;
+        //Minimum timestep used for planning trajectory
+        double min_timestep_ =0.1;
+
+
+        /**
+         * \brief Initialize ROS publishers, subscribers, service servers and service clients
+        */
+        void initialize();
+
+        /**
+         * \brief Callback for the pose subscriber, which will store latest pose locally
+         * \param msg Latest pose message
+         */
+        void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
+
+        /**
+         * \brief Callback for the twist subscriber, which will store latest twist locally
+         * \param msg Latest twist message
+         */
+        void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
         
     };
 }

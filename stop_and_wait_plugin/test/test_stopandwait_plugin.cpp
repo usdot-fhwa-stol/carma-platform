@@ -14,7 +14,7 @@
  * the License.
  */
 
-#include "stopandwait.h"
+#include "stop_and_wait_plugin.h"
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 #include <thread>
@@ -37,14 +37,18 @@
 #include <cav_msgs/VehicleState.h>
 #include <cav_msgs/TrajectoryPlanPoint.h>
 #include <fstream>
+#include <cav_srvs/PlanTrajectory.h>
+#include <sstream>
+#include<ros/package.h>
 
-namespace stopandwait_plugin
+namespace stop_and_wait_plugin
 {
-    TEST(StopandWait, TestManeuvers_to_point)
+    TEST(StopandWait, TestStopandWaitPlanning)
     {
         // File to process. Path is relative to test folder
-        std::string file = "../resource/map/town01_vector_map_1.osm";
-        //std::string file = "../resource/map/TFHRC.osm";
+        std::string path = ros::package::getPath("route");
+        std::string file = "/resource/map/town01_vector_map_1.osm";
+        file = path.append(file);
         lanelet::Id start_id=159;           //sample map :101
         lanelet::Id end_id=121;            //sample map = 111
         int target_lane_id = 164;       //Lane where stop is required - sample map = 167
@@ -146,12 +150,13 @@ namespace stopandwait_plugin
         
         StopandWait sw;
         sw.wm_=cmw;
+        sw.current_speed_=maneuver.stop_and_wait_maneuver.start_speed;
         std::vector <PointSpeedPair> points= sw.maneuvers_to_points(maneuvers, starting_downtrack, cmw);
 
         //Check if corresponding speed is decreasing
         auto downsampled_points = carma_utils::containers::downsample_vector(points,8);
         auto p_prev = downsampled_points[0];
-        for(p : downsampled_points){
+        for(auto p : downsampled_points){
             EXPECT_TRUE(p.speed <= p_prev.speed);
             p_prev = p;
         }
@@ -162,6 +167,38 @@ namespace stopandwait_plugin
         state.X_pos_global=curr_pos.pose.position.x;
         state.Y_pos_global = curr_pos.pose.position.y;
         trajectory = sw.compose_trajectory_from_centerline(points,state);
+       
+        //plan_trajectory_cb
+        cav_srvs::PlanTrajectoryRequest req;
+        cav_srvs::PlanTrajectoryResponse resp;
+        //plan_trajectory_cb gives back a bool and fills in the response trajectory plan
+        ros::Time::init();
+        req.maneuver_plan.planning_start_time = ros::Time::now();
+        req.maneuver_plan.planning_completion_time = req.maneuver_plan.planning_start_time + ros::Duration(10.0);
+        req.vehicle_state.X_pos_global = veh_pos.x();
+        req.vehicle_state.Y_pos_global = veh_pos.y();
+        req.vehicle_state.longitudinal_vel = 30.0;
+        std::vector<cav_msgs::Maneuver> maneuvers_msg;  
+        cav_msgs::Maneuver maneuver_msg;
+        maneuver_msg.type = cav_msgs::Maneuver::STOP_AND_WAIT;
+        maneuver_msg.stop_and_wait_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
+        maneuver_msg.stop_and_wait_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
+        maneuver_msg.stop_and_wait_maneuver.parameters.planning_tactical_plugin = "StopandWaitPlugin";
+        maneuver_msg.stop_and_wait_maneuver.parameters.planning_strategic_plugin = "RouteFollowingPlugin";
+        maneuver_msg.stop_and_wait_maneuver.start_dist = starting_downtrack;
+        maneuver_msg.stop_and_wait_maneuver.start_speed = 30.0;
+        maneuver_msg.stop_and_wait_maneuver.start_time = ros::Time::now();
+        
+        maneuver_msg.stop_and_wait_maneuver.end_dist = ending_downtrack;
+        maneuver_msg.stop_and_wait_maneuver.starting_lane_id = std::to_string(start_id);
+        maneuver_msg.stop_and_wait_maneuver.ending_lane_id = std::to_string(end_id);
+        // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
+        maneuver_msg.stop_and_wait_maneuver.end_time =ros::Time(end_time + maneuver.stop_and_wait_maneuver.start_time.toSec());
+        maneuvers_msg.push_back(maneuver_msg);
+        req.maneuver_plan.maneuvers = maneuvers_msg;
+        bool isTrajectory = sw.plan_trajectory_cb(req,resp);
+        std::cout << resp.trajectory_plan.trajectory_points.size()<<std::endl;
+        EXPECT_TRUE(isTrajectory);
 
     }
 }
