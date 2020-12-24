@@ -41,6 +41,7 @@
 #include <carma_wm/Geometry.h>
 #include <cav_msgs/TrajectoryPlanPoint.h>
 #include <cav_msgs/TrajectoryPlan.h>
+#include <math.h>
 
 
 
@@ -53,7 +54,7 @@ namespace stop_and_wait_plugin
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
 
-        trajectory_srv_ = nh_->advertiseService("plugins/StopandWaitPlugin/plan_trajectory",&StopandWait::plan_trajectory_cb, this);
+        trajectory_srv_ = nh_->advertiseService("plan_trajectory",&StopandWait::plan_trajectory_cb, this);
         
         plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery",1);
         plugin_discovery_msg_.name = "StopandWaitPlugin";
@@ -72,7 +73,7 @@ namespace stop_and_wait_plugin
         pnh_->param<double>("minimal_trajectory_duration", minimal_trajectory_duration_);
         pnh_->param<double>("max_jerk_limit", max_jerk_limit_);
         pnh_->param<double>("min_timestep",min_timestep_);
-        pnh_->param<double>("min_acceptable_jerk", min_jerk_);
+        pnh_->param<double>("min_acceptable_acc", min_instantaneous_acc_);
 
         ros::CARMANodeHandle::setSpinCallback([this]() -> bool
         {
@@ -227,7 +228,10 @@ namespace stop_and_wait_plugin
                     pair.point = p;
                     pair.speed = start_speed - (0.5 * jerk_ * pow(curr_time,2));
 
-                    if(p == route_geometry.back()) pair.speed = 0.0;    //force speed to 0 at last point
+                    if(p == route_geometry.back()) 
+                    {
+                        pair.speed = 0.0;    //force speed to 0 at last point
+                    }
                     curr_time +=delta_time;
 
                     points_and_target_speeds.push_back(pair);
@@ -272,7 +276,7 @@ namespace stop_and_wait_plugin
         std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(trajectory_locations);
 
         //get trajectory time from distance and speed
-        speed_to_time(downtracks, trajectory_speeds, &target_times, jerk_);
+        speed_to_time(downtracks, trajectory_speeds,target_times, jerk_);
         std::vector <cav_msgs::TrajectoryPlanPoint> traj;
         ros::Time start_time = ros::Time::now();
         cav_msgs::TrajectoryPlanPoint traj_prev;
@@ -308,7 +312,7 @@ namespace stop_and_wait_plugin
         return traj;
     }
 
-    void StopandWait::speed_to_time(const std::vector<double>& downtrack, const std::vector<double>& speeds, std::vector<double>* times, double jerk)
+    void StopandWait::speed_to_time(const std::vector<double>& downtrack, const std::vector<double>& speeds,std::vector<double>& times, double jerk)
     {
         if(downtrack.size() !=speeds.size())
         {
@@ -319,27 +323,28 @@ namespace stop_and_wait_plugin
             throw std::invalid_argument("Input vectors are empty");
         }
 
-        times->reserve(downtrack.size());  
+        times.reserve(downtrack.size());  
 
         //Uses equation 
-        //d_t = sqrt(2(d*v)/j)
+        //d_t = sqrt(2(d_v)/j)
         double prev_speed = speeds[0];
         double prev_time = 0.0;
         double prev_pos = downtrack[0];
-        times->push_back(prev_time);
+        times.push_back(prev_time);
         for(int i=1; i <downtrack.size();i++)
         {
             double cur_speed = speeds[i];
             double delta_v = std::abs(cur_speed - prev_speed);
             double dt = pow((2*delta_v/jerk),0.5);
-            if(jerk < min_jerk_)    //If jerk is almost 0, treat as constant velocity
+            double inst_acc = jerk * dt;
+            if(inst_acc < min_instantaneous_acc_)    //If jerk is almost 0, treat as constant velocity
             {
                 double cur_pos = downtrack[i];
                 double delta_x = cur_pos - prev_pos;
                 dt = delta_x/cur_speed;
             }
             double cur_time = dt + prev_time;
-            times->push_back(cur_time);
+            times.push_back(cur_time);
 
             prev_speed = cur_speed;
             prev_time = cur_time;

@@ -1,14 +1,19 @@
-# The minimum duration of a trajectory length in seconds
+# Double: The minimum duration of a trajectory length
+# Units: seconds
 minimal_trajectory_duration : 6.0
 
-# The maximum acceptable jerk for completing maneuver in meters per second cube
+# Double: The maximum acceptable jerk for completing maneuver 
+# Units: meters per second cube
 max_jerk_limit: 3.0
 
-#The rate at which the Guidance Node will process message in hz
+# Double: The rate at which the Guidance Node will process message
+# Units: Hz
 spin_rate_hz: 10
 
-#The minimum timestep used for planning trajectory, in seconds
+# Double: The minimum timestep used for planning trajectory
+#Units: seconds
 min_timestep : 0.1
 
-#The minimum acceptable jerk, after which constant speed is assumed, in m/s3
-min_acceptable_jerk: 0.001
+# Double: The minimum acceptable instantaneous acceleration, after which constant speed is assumed, in m/s2
+#Units: meters per second square
+min_acceptable_acc: 0.001

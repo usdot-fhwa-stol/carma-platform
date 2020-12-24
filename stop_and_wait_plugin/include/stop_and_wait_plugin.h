@@ -114,10 +114,10 @@ namespace stop_and_wait_plugin
          * For jerk lesser than 0.001m/s3 speed is assumed to be constant
          * \param downtrack downtrack distance corresponding to the distance travelled on the route
          * \param speeds a vector of speeds associated with given downtrack distances
-         * \param times a pointer to a vector filled with calculated time values
          * \param jerk constant jerk along maneuver used for calculating time
+         * \return a vector of time values associated with downtrack distances
          */
-        void speed_to_time(const std::vector<double>& downtrack, const std::vector<double>& speeds, std::vector<double>* times, double jerk);
+        void speed_to_time(const std::vector<double>& downtrack, const std::vector<double>& speeds,std::vector<double>& times, double jerk);
 
        //current vehicle forward speed
         double current_speed_;
@@ -155,7 +155,7 @@ namespace stop_and_wait_plugin
         //The maximum acceptable jerk 
         double max_jerk_limit_ = 3.0;
         //The minimum acceptable jerk, after which constant speed is assumed
-        double min_jerk_ = 0.01;
+        double min_instantaneous_acc_ = 0.001;
         //Minimum timestep used for planning trajectory
         double min_timestep_ =0.1;
 

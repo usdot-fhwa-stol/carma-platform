@@ -166,7 +166,6 @@ namespace stop_and_wait_plugin
 
         //Maneuver_3- jerk req > max permittable
         cav_msgs::Maneuver maneuver_3 = maneuver;
-        double jerk_req = 5.0;
         maneuver_3.stop_and_wait_maneuver.start_time = ros::Time::now();
         maneuver_3.stop_and_wait_maneuver.end_time = ros::Time(3.0 + maneuver_3.stop_and_wait_maneuver.start_time.toSec());
         maneuvers[0] = maneuver_3;
@@ -195,7 +194,7 @@ namespace stop_and_wait_plugin
         std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(points_split);
         
         std::vector<double> times;
-        sw.speed_to_time(downtracks,speeds_split, &times, 0.01);
+        sw.speed_to_time(downtracks,speeds_split,times, 0.01);
         for(auto i = 0;i <times.size();i++){
             EXPECT_TRUE(times[i] >= 0);
         }
