@@ -114,8 +114,8 @@ namespace stop_and_wait_plugin
          * For jerk lesser than 0.001m/s3 speed is assumed to be constant
          * \param downtrack downtrack distance corresponding to the distance travelled on the route
          * \param speeds a vector of speeds associated with given downtrack distances
+         * \param time a vector of time values associated with downtrack distances, filled into in the function
          * \param jerk constant jerk along maneuver used for calculating time
-         * \return a vector of time values associated with downtrack distances
          */
         void speed_to_time(const std::vector<double>& downtrack, const std::vector<double>& speeds,std::vector<double>& times, double jerk);
 
