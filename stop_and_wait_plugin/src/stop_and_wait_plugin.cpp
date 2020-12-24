@@ -189,7 +189,6 @@ namespace stop_and_wait_plugin
                 {
                     //unsafe to stop at the required jerk - reset to max_jerk and go beyond the maneuver end_dist
                     jerk_ = max_jerk_limit_;  
-                    maneuver_time_ = pow(2*start_speed, 0.5);
                     double travel_dist_new = start_speed * maneuver_time_ - (0.167 * jerk_ * pow(maneuver_time_,3));
                     ending_downtrack = travel_dist_new + starting_downtrack;
                 }

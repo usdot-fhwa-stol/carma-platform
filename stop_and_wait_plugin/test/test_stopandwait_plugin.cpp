@@ -45,13 +45,14 @@ namespace stop_and_wait_plugin
 {
     TEST(StopandWait, TestStopandWaitPlanning)
     {
-        // File to process. Path is relative to test folder
+        // File to process. Path is relative to route package
         std::string path = ros::package::getPath("route");
         std::string file = "/resource/map/town01_vector_map_1.osm";
         file = path.append(file);
-        lanelet::Id start_id=159;           //sample map :101
-        lanelet::Id end_id=121;            //sample map = 111
-        int target_lane_id = 164;       //Lane where stop is required - sample map = 167
+        lanelet::Id start_id=159;          
+        lanelet::Id end_id=121;            
+        int target_lane_id = 164;       
+
         /***
          * VAVLID PATHs (consists of lanenet ids): (This is also the shortest path because certain Lanelets missing)
          * 159->160->164->136->135->137->144->121; 
@@ -64,6 +65,7 @@ namespace stop_and_wait_plugin
          * 127->146->140->139->143->167->169->168->170->111 
          * 101->100->104->167->169->168->170->111 (a counter cLock circle) 
          * **/
+
         // Write new map to file
         int projector_type = 0;
         std::string target_frame;
@@ -129,7 +131,7 @@ namespace stop_and_wait_plugin
                 ending_downtrack = cmw->routeTrackPos(shortest_path[i].centerline2d().back()).downtrack;
             }
         }
-        
+
         //Define stop and wait maneuver
         cav_msgs::Maneuver maneuver;
         maneuver.type=cav_msgs::Maneuver::STOP_AND_WAIT;
@@ -147,31 +149,65 @@ namespace stop_and_wait_plugin
         
         std::vector<cav_msgs::Maneuver> maneuvers;
         maneuvers.push_back(maneuver);
-        
+
+        //Call function
         StopandWait sw;
         sw.wm_=cmw;
         sw.current_speed_=maneuver.stop_and_wait_maneuver.start_speed;
         std::vector <PointSpeedPair> points= sw.maneuvers_to_points(maneuvers, starting_downtrack, cmw);
 
-        //Check if corresponding speed is decreasing
+        //Check else condition maneuver
+        cav_msgs::Maneuver maneuver_2 = maneuver;
+        maneuver_2.stop_and_wait_maneuver.start_dist = ending_downtrack;
+        //Less than min trajectory time
+        maneuver_2.stop_and_wait_maneuver.end_time = ros::Time(3.0 + maneuver_2.stop_and_wait_maneuver.start_time.toSec()); 
+        maneuvers[0] = maneuver_2;
+        std::vector <PointSpeedPair> coverage_points= sw.maneuvers_to_points(maneuvers, starting_downtrack, cmw);
+
+        //Maneuver_3- jerk req > max permittable
+        cav_msgs::Maneuver maneuver_3 = maneuver;
+        double jerk_req = 5.0;
+        maneuver_3.stop_and_wait_maneuver.start_time = ros::Time::now();
+        maneuver_3.stop_and_wait_maneuver.end_time = ros::Time(3.0 + maneuver_3.stop_and_wait_maneuver.start_time.toSec());
+        maneuvers[0] = maneuver_3;
+        coverage_points= sw.maneuvers_to_points(maneuvers, starting_downtrack, cmw);
+
+        //Downsample points
         auto downsampled_points = carma_utils::containers::downsample_vector(points,8);
+        //Check if corresponding speed is decreasing
         auto p_prev = downsampled_points[0];
         for(auto p : downsampled_points){
             EXPECT_TRUE(p.speed <= p_prev.speed);
             p_prev = p;
         }
 
-        //Check Trajectory
+        /* Test compose trajectory and helper functions*/
+
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory;
         cav_msgs::VehicleState state;
         state.X_pos_global=curr_pos.pose.position.x;
         state.Y_pos_global = curr_pos.pose.position.y;
-        trajectory = sw.compose_trajectory_from_centerline(points,state);
-       
-        //plan_trajectory_cb
+        int nearest_pt =sw.getNearestPointIndex(downsampled_points, state);
+        std::vector<lanelet::BasicPoint2d> points_split;
+        std::vector<double> speeds_split;
+        sw.splitPointSpeedPairs(downsampled_points,&points_split,&speeds_split);
+        EXPECT_TRUE(points_split.size() == speeds_split.size());
+        std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(points_split);
+        
+        std::vector<double> times;
+        sw.speed_to_time(downtracks,speeds_split, &times, 0.01);
+        for(auto i = 0;i <times.size();i++){
+            EXPECT_TRUE(times[i] >= 0);
+        }
+
+        trajectory = sw.compose_trajectory_from_centerline(downsampled_points,state);
+        //Valid Trajectory has at least 2 points
+        EXPECT_TRUE(trajectory.size() > 2);
+
+        /* Test PlanTrajectory cb */
         cav_srvs::PlanTrajectoryRequest req;
         cav_srvs::PlanTrajectoryResponse resp;
-        //plan_trajectory_cb gives back a bool and fills in the response trajectory plan
+        
         ros::Time::init();
         req.maneuver_plan.planning_start_time = ros::Time::now();
         req.maneuver_plan.planning_completion_time = req.maneuver_plan.planning_start_time + ros::Duration(10.0);
@@ -197,8 +233,9 @@ namespace stop_and_wait_plugin
         maneuvers_msg.push_back(maneuver_msg);
         req.maneuver_plan.maneuvers = maneuvers_msg;
         bool isTrajectory = sw.plan_trajectory_cb(req,resp);
-        std::cout << resp.trajectory_plan.trajectory_points.size()<<std::endl;
+        
         EXPECT_TRUE(isTrajectory);
+        EXPECT_TRUE(resp.trajectory_plan.trajectory_points.size() > 2);
 
     }
 }
