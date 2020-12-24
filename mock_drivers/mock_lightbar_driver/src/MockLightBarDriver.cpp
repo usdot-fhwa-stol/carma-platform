@@ -32,15 +32,11 @@
 using namespace std;
 
 namespace mock_drivers{
-      
-        
-            MockLightBarDriver::MockLightBarDriver(ros::CARMANodeHandle node)  {
-                
-                
+            MockLightBarDriver::MockLightBarDriver(ros::CARMANodeHandle node)  {   
+                //lightbar topics and services
                 lbStatusTopic = "lightbar/light_bar_status";
                 lbGetLightService = "lightbar/get_lights";
                 lbSetLightService = "lightbar/set_lights";
-
                 //lightbar states
                 greenFlash = false;
                 yellowFlash = false;
@@ -49,10 +45,7 @@ namespace mock_drivers{
                 sidesSolid = false;
                 greenSolid = false;
                 yellowDim = false;
-                takedown = false;
-                
-                
-                
+                takedown = false;      
                 //topics published
                 lbPub = node.advertise<cav_msgs::LightBarStatus>(lbStatusTopic, 100);
                 discoveryPub = node.advertise<cav_msgs::DriverStatus>("driver_discovery",100);  
@@ -62,7 +55,7 @@ namespace mock_drivers{
                 getDriverStatusService = node.advertiseService("mock_lightbar/get_status",&MockLightBarDriver::getDriverStatus_cb,this);
                 setLightsService = node.advertiseService(lbSetLightService, &MockLightBarDriver::setLightService_cb, this);
                 getLightsService = node.advertiseService(lbGetLightService, &MockLightBarDriver::getLightService_cb, this);
-
+                //publish driver status
                 driverStatus.status = cav_msgs::DriverStatus::OPERATIONAL;
                 publishDriverStatus();
             }

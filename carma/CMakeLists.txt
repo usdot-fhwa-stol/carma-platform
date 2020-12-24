@@ -27,7 +27,6 @@ project(carma)
 
 find_package(catkin REQUIRED
         cav_msgs
-        cav_srvs
         j2735_msgs
         autoware_msgs
         derived_object_msgs
