@@ -192,9 +192,15 @@ namespace stop_and_wait_plugin
                     jerk_ = max_jerk_limit_;  
                     double travel_dist_new = start_speed * maneuver_time_ - (0.167 * jerk_ * pow(maneuver_time_,3));
                     ending_downtrack = travel_dist_new + starting_downtrack;
+
+                    auto shortest_path = wm_->getRoute()->shortestPath();
+                    if(ending_downtrack > wm_->routeTrackPos(shortest_path.back().centerline2d().back()).downtrack)
+                    {
+                        ROS_ERROR("Ending distance is beyond known route");
+                        throw std::invalid_argument("Ending distance is beyond known route"); 
+                    }
                 }
                 else jerk_ = jerk_req;
-
                 //get all the lanelets in between starting and ending downtrack on shortest path
                 auto lanelets = wm_->getLaneletsBetween(starting_downtrack, ending_downtrack, true);
                 //record all the lanelets to be added to path
@@ -335,7 +341,7 @@ namespace stop_and_wait_plugin
         {
             double cur_speed = speeds[i];
             double delta_v = std::abs(cur_speed - prev_speed);
-            double dt = pow((2*delta_v/jerk),0.5);
+            double dt = sqrt(2*delta_v/jerk);
             double inst_acc = jerk * dt;
             if(inst_acc < min_instantaneous_acc_)    //If jerk is almost 0, treat as constant velocity
             {
