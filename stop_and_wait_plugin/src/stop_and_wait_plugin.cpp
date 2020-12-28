@@ -74,6 +74,7 @@ namespace stop_and_wait_plugin
         pnh_->param<double>("max_jerk_limit", max_jerk_limit_);
         pnh_->param<double>("min_timestep",min_timestep_);
         pnh_->param<double>("min_acceptable_acc", min_instantaneous_acc_);
+        pnh_->param<double>("downsample_ratio", downsample_ratio_);
 
         ros::CARMANodeHandle::setSpinCallback([this]() -> bool
         {
@@ -117,7 +118,7 @@ namespace stop_and_wait_plugin
         std::vector<PointSpeedPair> points_and_target_speeds = maneuvers_to_points(maneuver_plan, current_downtrack, wm_);
 
         auto downsampled_points = 
-            carma_utils::containers::downsample_vector(points_and_target_speeds,8);
+            carma_utils::containers::downsample_vector(points_and_target_speeds,downsample_ratio_);
 
         //Trajectory plan
         cav_msgs::TrajectoryPlan  trajectory;
@@ -165,7 +166,7 @@ namespace stop_and_wait_plugin
             maneuver_time_ = ros::Duration(stop_and_wait_maneuver.end_time - stop_and_wait_maneuver.start_time).toSec();
             
             double delta_time, curr_time;
-            if(starting_downtrack == ending_downtrack)  //If at end_dist return zero speed trajectory
+            if(current_speed_ == 0 && starting_downtrack >= ending_downtrack)  //If at end_dist return zero speed trajectory
             {
                 delta_time = min_timestep_;
                 curr_time = 0.0;
@@ -290,7 +291,6 @@ namespace stop_and_wait_plugin
         traj_prev.y = future_points[0].point.y();
         traj_prev.yaw = yaw_values[0];
         traj_prev.target_time = start_time;
-        double delta_time = maneuver_time_/future_points.size();
 
         for (size_t i=0; i < future_points.size(); i++)
         {
@@ -306,7 +306,7 @@ namespace stop_and_wait_plugin
                 traj_point.x=traj_prev.x;
                 traj_point.y=traj_prev.y;
                 traj_point.yaw=traj_prev.yaw;
-                traj_point.target_time = traj_prev.target_time + ros::Duration(0.1);
+                traj_point.target_time = traj_prev.target_time + ros::Duration(min_timestep_);
                 
             }
             traj_point.controller_plugin_name = "default";
@@ -343,7 +343,7 @@ namespace stop_and_wait_plugin
             double delta_v = std::abs(cur_speed - prev_speed);
             double dt = sqrt(2*delta_v/jerk);
             double inst_acc = jerk * dt;
-            if(inst_acc < min_instantaneous_acc_)    //If jerk is almost 0, treat as constant velocity
+            if(inst_acc < min_instantaneous_acc_)    //If instantaneous acceleration is almost 0, treat as constant velocity
             {
                 double cur_pos = downtrack[i];
                 double delta_x = cur_pos - prev_pos;

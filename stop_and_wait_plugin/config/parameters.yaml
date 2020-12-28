@@ -2,6 +2,9 @@
 # Units: seconds
 minimal_trajectory_duration : 6.0
 
+#Int:Amount to downsample input lanelet centerline data.Corresponds to saving each nth point.
+downsample_ratio: 8
+
 # Double: The maximum acceptable jerk for completing maneuver 
 # Units: meters per second cube
 max_jerk_limit: 3.0
@@ -16,4 +19,4 @@ min_timestep : 0.1
 
 # Double: The minimum acceptable instantaneous acceleration, after which constant speed is assumed, in m/s2
 #Units: meters per second square
-min_acceptable_acc: 0.001
+min_acceptable_acc: 0.01

@@ -158,6 +158,8 @@ namespace stop_and_wait_plugin
         double min_instantaneous_acc_ = 0.001;
         //Minimum timestep used for planning trajectory
         double min_timestep_ =0.1;
+        //Amount to downsample input lanelet centerline data
+        int downsample_ratio_ =8;
 
 
         /**
