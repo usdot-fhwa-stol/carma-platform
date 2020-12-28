@@ -46,6 +46,7 @@ namespace route_following_plugin
         
         pnh_->param<double>("minimal_maneuver_duration", mvr_duration_, 16.0);
         pnh2_->param<double>("config_speed_limit",config_limit);
+        pnh_->param<double>("route_end_jerk", jerk_);
         wml_.reset(new carma_wm::WMListener());
         // set world model point form wm listener
         wm_ = wml_->getWorldModel();
@@ -103,10 +104,23 @@ namespace route_following_plugin
             auto p = shortest_path[last_lanelet_index].centerline2d().back();
             double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
             double dist_diff = end_dist - current_progress;
-            resp.new_plan.maneuvers.push_back(
-                composeManeuverMessage(current_progress, end_dist, 
-                                       speed_progress, target_speed, 
-                                       shortest_path[last_lanelet_index].id(), ros::Time::now()));
+            //Stop and Wait Manuever towards the end of the route
+            //Calculate end distance as a function of the speed - assuming speed progress is the actual speed at start of maneuver
+            double time_req_to_stop = sqrt(2*speed_progress/jerk_);
+            double dist_req_to_stop = speed_progress*time_req_to_stop + (0.167 * jerk_ * pow(time_req_to_stop,3));
+            if(dist_diff <= dist_req_to_stop)
+            {
+                resp.new_plan.maneuvers.push_back(
+                    composeStopandWaitManeuverMessage(current_progress, end_dist, 
+                                                    speed_progress, shortest_path[last_lanelet_index].id(), 
+                                                    shortest_path.back().id(),ros::Time::now(), time_req_to_stop));
+            }
+            else{
+                resp.new_plan.maneuvers.push_back(
+                    composeManeuverMessage(current_progress, end_dist, 
+                                        speed_progress, target_speed, 
+                                        shortest_path[last_lanelet_index].id(), ros::Time::now()));
+            }
             current_progress += dist_diff;
             speed_progress = target_speed;
             //get speed limit
@@ -179,6 +193,23 @@ namespace route_following_plugin
             maneuver_msg.lane_following_maneuver.end_time = current_time + ros::Duration((end_dist - current_dist) / (0.5 * cur_plus_target));
         }
         maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
+        return maneuver_msg;
+    }
+    cav_msgs::Maneuver RouteFollowingPlugin::composeStopandWaitManeuverMessage(double current_dist, double end_dist, double current_speed, int start_lane_id, int end_lane_id, ros::Time current_time, double end_time)
+    {
+        cav_msgs::Maneuver maneuver_msg;
+        maneuver_msg.type = cav_msgs::Maneuver::STOP_AND_WAIT;
+        maneuver_msg.stop_and_wait_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
+        maneuver_msg.stop_and_wait_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
+        maneuver_msg.stop_and_wait_maneuver.parameters.planning_tactical_plugin = "StopandWaitPlugin";
+        maneuver_msg.stop_and_wait_maneuver.parameters.planning_strategic_plugin = "RouteFollowingPlugin";
+        maneuver_msg.stop_and_wait_maneuver.start_dist = current_dist;
+        maneuver_msg.stop_and_wait_maneuver.start_speed = current_speed;
+        maneuver_msg.stop_and_wait_maneuver.end_dist = end_dist;
+        maneuver_msg.stop_and_wait_maneuver.start_time = current_time;
+        maneuver_msg.stop_and_wait_maneuver.starting_lane_id = std::to_string(start_lane_id);
+        maneuver_msg.stop_and_wait_maneuver.ending_lane_id = std::to_string(end_lane_id);
+        maneuver_msg.stop_and_wait_maneuver.end_time = ros::Time(end_time +current_time.toSec());
         return maneuver_msg;
     }
     bool RouteFollowingPlugin::identifyLaneChange(lanelet::routing::LaneletRelations relations, int target_id)
