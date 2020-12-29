@@ -233,8 +233,12 @@ namespace stop_and_wait_plugin
                     }
                     PointSpeedPair pair;
                     pair.point = p;
-                    pair.speed = start_speed - (0.5 * jerk_ * pow(curr_time,2));
-
+                    if(jerk_ < 1.0){ // if jerk req is too small, don't start slowing down
+                        pair.speed = start_speed;
+                    }
+                    else{
+                        pair.speed = start_speed - (0.5 * jerk_ * pow(curr_time,2));
+                    }
                     if(p == route_geometry.back()) 
                     {
                         pair.speed = 0.0;    //force speed to 0 at last point
