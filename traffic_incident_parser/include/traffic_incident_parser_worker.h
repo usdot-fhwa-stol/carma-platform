@@ -28,9 +28,11 @@
 #include <string>
 #include <cstring>
 #include <vector>
+#include <algorithm>
 #include <sstream>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_routing/RoutingGraph.h>
 
 namespace traffic{
 
@@ -86,6 +88,7 @@ class TrafficIncidentParserWorker
   // local copy of external object publihsers
 
   PublishTrafficControlCallback traffic_control_pub_;
+  carma_wm::WorldModelConstPtr wm_;
  
  // Prediction parameters
  // std::string sender_id_ = "USDOT-49096";
