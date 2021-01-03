@@ -28,5 +28,11 @@ double BSpline::operator()(double x) const
   std::cerr << "Official: Operator:" << values << std::endl;
   return values.z();
 }
+Eigen::VectorXf BSpline::operator[](double x) const
+{
+  Eigen::VectorXf values = spline_(x);
+  std::cerr << "Official: Operator:" << values << std::endl;
+  return values;
+}
 };  // namespace smoothing
 };  // namespace inlanecruising_plugin

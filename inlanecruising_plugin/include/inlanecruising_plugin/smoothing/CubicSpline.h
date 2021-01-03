@@ -34,6 +34,7 @@ public:
   ~CubicSpline(){};
   void setPoints(std::vector<lanelet::BasicPoint2d> points) override;
   double operator()(double x) const override;
+  Eigen::VectorXf operator[](double x) const override;
 
 private:
   tk::spline spline_;

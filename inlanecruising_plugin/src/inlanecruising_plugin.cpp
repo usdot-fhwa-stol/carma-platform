@@ -306,8 +306,8 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
       double x = current_dist;
       
       time += 1.0/time_length; //adding time_step_size
-      double y = (*fit_curve)(time);
-      lanelet::BasicPoint2d p(x, y);
+      Eigen::VectorXf v = (*fit_curve)[time];
+      lanelet::BasicPoint2d p(v.y(), v.z());
       
       sampling_points.push_back(p);
 
@@ -410,7 +410,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   
   final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, config_.moving_average_window_size);
-  //log::printDoublesPerLineWithPrefix("post_average[i]: ", final_actual_speeds);
+  log::printDoublesPerLineWithPrefix("post_average[i]: ", final_actual_speeds);
 
   for (auto& s : final_actual_speeds)  // Limit minimum speed. TODO how to handle stopping?
   {
