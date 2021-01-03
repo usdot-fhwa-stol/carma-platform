@@ -51,6 +51,7 @@ struct DiscreteCurve
 {
   Eigen::Isometry2d frame; // Frame which points are in
   std::vector<PointSpeedPair> points;
+  size_t num_points_since_last_mid = 0;
 };
 
 /**

@@ -31,11 +31,13 @@
 #include <Eigen/SVD>
 #include <inlanecruising_plugin/smoothing/SplineI.h>
 #include <inlanecruising_plugin/smoothing/CubicSpline.h>
+#include <inlanecruising_plugin/smoothing/BSpline.h>
 #include <inlanecruising_plugin/inlanecruising_plugin.h>
 #include <inlanecruising_plugin/log/log.h>
 #include <carma_utils/containers/containers.h>
 #include <inlanecruising_plugin/smoothing/filters.h>
 #include <unordered_set>
+
 
 using oss = std::ostringstream;
 
@@ -134,34 +136,52 @@ std::vector<DiscreteCurve> InLaneCruisingPlugin::compute_sub_curves(const std::v
 
   std::vector<DiscreteCurve> curves;
   DiscreteCurve curve;
-  curve.frame = compute_heading_frame(map_points[0].point, map_points[1].point);
-  Eigen::Isometry2d map_in_curve = curve.frame.inverse();
-
+  //curve.frame = compute_heading_frame(map_points[0].point, map_points[1].point);
+  //Eigen::Isometry2d map_in_curve = curve.frame.inverse();
+  size_t last_curve_start_idx = 0;
   for (size_t i = 0; i < map_points.size() - 1; i++)
   {
-    lanelet::BasicPoint2d p1 = map_in_curve * map_points[i].point;
-    lanelet::BasicPoint2d p2 = map_in_curve * map_points[i + 1].point;  // TODO Optimization to cache this value
+    lanelet::BasicPoint2d p1 = map_points[i].point;
+    lanelet::BasicPoint2d p2 = map_points[i + 1].point;  // TODO Optimization to cache this value
+    //lanelet::BasicPoint2d p1 = map_in_curve * map_points[i].point;
+    //lanelet::BasicPoint2d p2 = map_in_curve * map_points[i + 1].point;  // TODO Optimization to cache this value
 
     PointSpeedPair initial_pair;
     initial_pair.point = p1;
     initial_pair.speed = map_points[i].speed;
     curve.points.push_back(initial_pair);
-
-    bool x_dir = (p2.x() - p1.x()) > 0;
+    bool x_dir = true;
+    //bool x_dir = (p2.x() - p1.x()) > 0;
     if (!x_dir)  // If x starts going backwards we need a new curve
     {
       // New Curve
       curves.push_back(curve);
-
+      
+      
       curve = DiscreteCurve();
-      curve.frame = compute_heading_frame(map_points[i].point, map_points[i + 1].point);
-      map_in_curve = curve.frame.inverse();
+      //curve.frame = compute_heading_frame(map_points[i].point, map_points[i + 1].point);
+      //map_in_curve = curve.frame.inverse();
 
       PointSpeedPair pair;
-      pair.point = map_in_curve * map_points[i].point;
-      pair.speed = map_points[i].speed;
+      /*
+      size_t last_mid_range = (i - last_curve_start_idx)/2 - 1;
+      curve.num_points_since_last_mid = last_mid_range;
+      // include mid-range points that came before
+      for (size_t j = last_mid_range; j > 0; j --)
+      {
+        pair.point = map_in_curve * map_points[i - j].point;
+        pair.speed = map_points[i - j].speed;
+        curve.points.push_back(pair);
+      }
+      */
+      pair.point = map_points[i].point;
+      
+      //pair.point = map_in_curve * map_points[i].point;
+      ROS_WARN_STREAM("x:" <<map_points[i].point.x() << ", y:" << map_points[i].point.y()) ;
 
+      pair.speed = map_points[i].speed;
       curve.points.push_back(pair);  // Include first point in curve
+      last_curve_start_idx = i;
     }
   }
 
@@ -180,7 +200,7 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::constrain_to_time_boundary(con
   std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(basic_points);
 
   size_t time_boundary_exclusive_index =
-      trajectory_utils::time_boundary_index(downtracks, speeds, config_.trajectory_time_length);
+      trajectory_utils::time_boundary_index(downtracks, speeds, 10);
 
   if (time_boundary_exclusive_index == 0)
   {
@@ -221,7 +241,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end()); // Points in front of current vehicle position
 
-  auto time_bound_points = constrain_to_time_boundary(future_points, config_.trajectory_time_length);
+  auto time_bound_points = constrain_to_time_boundary(future_points, 30);
 
   ROS_DEBUG_STREAM("time_bound_points: " << time_bound_points.size());
 
@@ -243,11 +263,16 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
     std::vector<double> speed_limits;
     std::vector<lanelet::BasicPoint2d> curve_points;
     splitPointSpeedPairs(discreet_curve.points, &curve_points, &speed_limits);
-
+    ROS_WARN_STREAM("size" <<discreet_curve.points.size());
+    ROS_WARN_STREAM("x[0]" <<discreet_curve.points[0].point.x() << ",y[0]" <<discreet_curve.points[0].point.y() );
+    ROS_WARN_STREAM("x[1]" <<discreet_curve.points[1].point.x() << ",y[1]" <<discreet_curve.points[1].point.y() );
+    
     std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(curve_points); // Compute splines based on curve points
-
+    
+    
     if (!fit_curve)
     {  // TODO how better to handle this case
+      ROS_ERROR_STREAM("Could not fit!");
       for (size_t i = 0; i < discreet_curve.points.size() - 1; i++)
       {
         Eigen::Isometry2d point_in_map =
@@ -258,7 +283,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
       }
       continue;
     }
-
+    
     ROS_DEBUG("Got fit");
 
     ROS_DEBUG_STREAM("speed_limits.size() " << speed_limits.size());
@@ -270,15 +295,20 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
     distributed_speed_limits.reserve(1 + discreet_curve.points.size() * 2);
 
     double max_x = curve_points.back().x();
-    double current_dist = 0;
+    double current_dist = curve_points.front().x();
+    double time = 0.0;
+    double time_length = 40.0;
     double step_size = config_.curve_resample_step_size;
     int current_speed_index = 0;
-
-    while (current_dist < max_x - step_size) // Resample curve at tighter resolution
+    int i = 0;
+    while (i < time_length) // Resample curve at tighter resolution
     {
       double x = current_dist;
-      double y = (*fit_curve)(x);
+      
+      time += 1.0/time_length; //adding time_step_size
+      double y = (*fit_curve)(time);
       lanelet::BasicPoint2d p(x, y);
+      
       sampling_points.push_back(p);
 
       for (size_t i = current_speed_index; i < curve_points.size(); i++)
@@ -292,6 +322,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
       distributed_speed_limits.push_back(speed_limits[current_speed_index]); // Identify speed limits for resampled points
       current_dist += step_size;
+      i++;
     }
 
     log::printDebugPerLine(sampling_points, &log::basicPointToStream);
@@ -303,18 +334,18 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
     curvatures = smoothing::moving_average_filter(curvatures, config_.moving_average_window_size);
 
-    log::printDoublesPerLineWithPrefix("curvatures[i]: ", curvatures);
+    //log::printDoublesPerLineWithPrefix("curvatures[i]: ", curvatures);
 
     std::vector<double> ideal_speeds =
         trajectory_utils::constrained_speeds_for_curvatures(curvatures, config_.lateral_accel_limit);
 
-    log::printDoublesPerLineWithPrefix("ideal_speeds: ", ideal_speeds);
+    //log::printDoublesPerLineWithPrefix("ideal_speeds: ", ideal_speeds);
 
     std::vector<double> actual_speeds = apply_speed_limits(ideal_speeds, distributed_speed_limits);
 
-    log::printDoublesPerLineWithPrefix("actual_speeds: ", actual_speeds);
+    //log::printDoublesPerLineWithPrefix("actual_speeds: ", actual_speeds);
 
-    log::printDoublesPerLineWithPrefix("yaw_values[i]: ", yaw_values);
+    //log::printDoublesPerLineWithPrefix("yaw_values[i]: ", yaw_values);
 
     for (int i = 0; i < yaw_values.size() - 1; i++)
     {  // Drop last point
@@ -339,9 +370,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
     return {};
   }
 
-  log::printDoublesPerLineWithPrefix("final_actual_speeds[i]: ", final_actual_speeds);
+  //log::printDoublesPerLineWithPrefix("final_actual_speeds[i]: ", final_actual_speeds);
 
-  log::printDoublesPerLineWithPrefix("final_yaw_values[i]: ", final_yaw_values);
+  //log::printDoublesPerLineWithPrefix("final_yaw_values[i]: ", final_yaw_values);
 
   // Find Lookahead Distance based on Velocity
   double lookahead_distance = get_adaptive_lookahead(state.longitudinal_vel);
@@ -353,6 +384,11 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   
   // Add current vehicle point to front of the trajectory
   lanelet::BasicPoint2d cur_veh_point(state.X_pos_global, state.Y_pos_global);
+  for (auto pt: all_sampling_points)
+  {
+    ROS_ERROR_STREAM("computed x:" << pt.x() << "y:" << pt.y());
+  }
+
   all_sampling_points.insert(all_sampling_points.begin(),
                              cur_veh_point);  // Add current vehicle position to front of sample points
 
@@ -360,33 +396,33 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   final_yaw_values.insert(final_yaw_values.begin(), state.orientation);
 
-  log::printDoublesPerLineWithPrefix("pre_smoot[i]: ", final_actual_speeds);
+  //log::printDoublesPerLineWithPrefix("pre_smoot[i]: ", final_actual_speeds);
   
   // Compute points to local downtracks
   std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(all_sampling_points);
 
-  log::printDoublesPerLineWithPrefix("post_shift[i]: ", final_actual_speeds);
+  //log::printDoublesPerLineWithPrefix("post_shift[i]: ", final_actual_speeds);
   
   // Apply accel limits
   final_actual_speeds = trajectory_utils::apply_accel_limits_by_distance(downtracks, final_actual_speeds,
                                                                          config_.max_accel, config_.max_accel);
-  log::printDoublesPerLineWithPrefix("postAccel[i]: ", final_actual_speeds);
+  //log::printDoublesPerLineWithPrefix("postAccel[i]: ", final_actual_speeds);
 
   
   final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, config_.moving_average_window_size);
-  log::printDoublesPerLineWithPrefix("post_average[i]: ", final_actual_speeds);
+  //log::printDoublesPerLineWithPrefix("post_average[i]: ", final_actual_speeds);
 
   for (auto& s : final_actual_speeds)  // Limit minimum speed. TODO how to handle stopping?
   {
     s = std::max(s, config_.minimum_speed);
   }
 
-  log::printDoublesPerLineWithPrefix("post_min_speed[i]: ", final_actual_speeds);
+  //log::printDoublesPerLineWithPrefix("post_min_speed[i]: ", final_actual_speeds);
   // Convert speeds to times
   std::vector<double> times;
   trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
 
-  log::printDoublesPerLineWithPrefix("times[i]: ", times);
+  //log::printDoublesPerLineWithPrefix("times[i]: ", times);
   
   // Build trajectory points
   // TODO When more plugins are implemented that might share trajectory planning the start time will need to be based
@@ -462,7 +498,9 @@ Eigen::Isometry2d InLaneCruisingPlugin::curvePointInMapTF(const Eigen::Isometry2
 {
   Eigen::Rotation2Dd yaw_rot(yaw);
   Eigen::Isometry2d point_in_c = carma_wm::geometry::build2dEigenTransform(p, yaw_rot);
-  Eigen::Isometry2d point_in_map = curve_in_map * point_in_c;
+  Eigen::Isometry2d point_in_map = point_in_c;
+  
+  //Eigen::Isometry2d point_in_map = curve_in_map * point_in_c;
   return point_in_map;
 }
 
@@ -607,10 +645,11 @@ InLaneCruisingPlugin::compute_fit(const std::vector<lanelet::BasicPoint2d>& basi
     ROS_WARN_STREAM("Insufficient Spline Points");
     return nullptr;
   }
-
-  std::unique_ptr<smoothing::SplineI> spl = std::make_unique<smoothing::CubicSpline>();
+  // TODO change below smoothing spline type
+  std::unique_ptr<smoothing::SplineI> spl = std::make_unique<smoothing::BSpline>();
   spl->setPoints(basic_points);
-
+  //double y = (*spl)(-71.8552);
+  //std::cerr << ">>>> CHECK: x:-71.8552 << y:" << y << std::endl;
   return spl;
 }
 }  // namespace inlanecruising_plugin

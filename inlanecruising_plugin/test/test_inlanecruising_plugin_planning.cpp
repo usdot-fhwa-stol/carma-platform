@@ -33,12 +33,16 @@
 #include <carma_wm/MapConformer.h>
 #include <carma_wm/CARMAWorldModel.h>
 #include <ros/console.h>
+#include <unsupported/Eigen/Splines>
 
+typedef Eigen::Spline<float, 3> Spline3d;
 
 using namespace lanelet::units::literals;
 namespace inlanecruising_plugin
 {
-TEST(InLaneCruisingPluginTest, testPlanningCallback)
+
+
+TEST(InLaneCruisingPluginTest, DISABLED_testPlanningCallback)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -112,16 +116,18 @@ Using this file:
     NOTE: The test is disabled by default. Enable it by removing the DISABLED_ prefix from the test name
 */
 
-TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
+TEST(WaypointGeneratorTest, test_full_generation)
 {
+    
+    
     int projector_type = 0;
     std::string target_frame;
     lanelet::ErrorMessages load_errors;
 
     // File location of osm file
-    std::string file = "/workspaces/carma_ws/carma/AOI_1_TFHRC_faster_pretty.osm";    
+    std::string file = "/workspaces/carma/AOI_1_TFHRC_faster_pretty.osm";    
     // The route ids that will form the route used
-    std::vector<lanelet::Id> route_ids = { 130, 111, 110, 113, 135, 138 };
+    std::vector<lanelet::Id> route_ids = { 130, 111, 110, 113, 135, 137, 170, 144, 143, 145, 140 };
 
     // The parsing in this file was copied from https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/carma_wm_ctrl/test/MapToolsTest.cpp
     lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
@@ -150,32 +156,33 @@ TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
     // -159.666, 521.683
 
   cav_srvs::PlanTrajectoryRequest req;
-  req.vehicle_state.X_pos_global = -159.666;
-  req.vehicle_state.Y_pos_global = 521.683;
+
+  req.vehicle_state.X_pos_global = -107;
+  req.vehicle_state.Y_pos_global = 311.904;
   req.vehicle_state.orientation = -2.7570977;
   req.vehicle_state.longitudinal_vel = 0.0;
 
   cav_msgs::Maneuver maneuver;
   maneuver.type = cav_msgs::Maneuver::LANE_FOLLOWING;
-  maneuver.lane_following_maneuver.lane_id = 130;
-  maneuver.lane_following_maneuver.start_dist = 50;
+  maneuver.lane_following_maneuver.lane_id = 110;
+  maneuver.lane_following_maneuver.start_dist = 14.98835712 + 45+ 180;
   maneuver.lane_following_maneuver.start_time = ros::Time(0.0);
   maneuver.lane_following_maneuver.start_speed = 0.0;
 
-  maneuver.lane_following_maneuver.end_dist = 14.98835712 + 45;
+  maneuver.lane_following_maneuver.end_dist = 14.98835712 + 50.0 + 45 + 200;
   maneuver.lane_following_maneuver.end_speed = 6.7056;
-  maneuver.lane_following_maneuver.end_time = ros::Time(4.4704);
+  maneuver.lane_following_maneuver.end_time = ros::Time(8);
 
   cav_msgs::Maneuver maneuver2;
   maneuver2.type = cav_msgs::Maneuver::LANE_FOLLOWING;
-  maneuver2.lane_following_maneuver.lane_id = 130;
-  maneuver2.lane_following_maneuver.start_dist = 14.98835712 + 45;
+  maneuver2.lane_following_maneuver.lane_id = 110;
+  maneuver2.lane_following_maneuver.start_dist = 14.98835712 + 45+ 202;
   maneuver2.lane_following_maneuver.start_speed = 6.7056;
   maneuver2.lane_following_maneuver.start_time = ros::Time(4.4704);
 
-  maneuver2.lane_following_maneuver.end_dist = 14.98835712 + 50.0 + 45;
+  maneuver2.lane_following_maneuver.end_dist = 14.98835712 + 50.0 + 45 + 250;
   maneuver2.lane_following_maneuver.end_speed = 6.7056;
-  maneuver2.lane_following_maneuver.end_time = ros::Time(4.4704 + 7.45645430685);
+  maneuver2.lane_following_maneuver.end_time = ros::Time(4.4704 + 7.45645430685 + 37.31);
 
   req.maneuver_plan.maneuvers.push_back(maneuver);
   req.maneuver_plan.maneuvers.push_back(maneuver2);
@@ -183,6 +190,43 @@ TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
   cav_srvs::PlanTrajectoryResponse resp;
 
   inlc.plan_trajectory_cb(req, resp);
+
+  for (auto pt: resp.trajectory_plan.trajectory_points)
+  {
+    std::cerr << "x:" << pt.x << "y: " << pt.y << "t: " << pt.target_time << std::endl;
+  }
+  
+  
+
+  
+  std::vector<Eigen::VectorXf> waypoints;
+  Eigen::Vector3f po1(2,3,4);
+  Eigen::Vector3f po2(2,5,4);
+  Eigen::Vector3f po3(2,8,9);
+  Eigen::Vector3f po4(2,8,23);
+  Eigen::Vector3f po5(2,3.5,25);
+  waypoints.push_back(po1);
+  waypoints.push_back(po2);
+  waypoints.push_back(po3);
+  waypoints.push_back(po4);
+  waypoints.push_back(po5);
+  // The degree of the interpolating spline needs to be one less than the number of points
+  // that are fitted to the spline.
+  Eigen::MatrixXf points(3, waypoints.size());
+  int row_index = 0;
+  for(auto const way_point : waypoints){
+      points.col(row_index) << way_point[0], way_point[1], way_point[2];
+      row_index++;
+  }
+  Spline3d spline = Eigen::SplineFitting<Spline3d>::Interpolate(points, 2);
+  float time_ = 0;
+  for(int i=0; i<20; i++){
+      time_ += 1.0/(20*1.0);
+      Eigen::VectorXf values = spline(time_);
+      std::cout<< values << std::endl;
+      std::cout<< "x:" << values.x() << "y:" << values.y() << "z:" << values.z() << std::endl;
+  }
+    
 
 }
 

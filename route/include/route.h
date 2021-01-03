@@ -61,7 +61,7 @@ namespace route {
         tf2_ros::TransformListener tf_listener_;
 
         // route generator worker
-        RouteGeneratorWorker rg_worker_;
+        RouteGeneratorWorker rg_workers_;
 
         // publishers for route file, current route state and route event
         ros::Publisher route_pub_;

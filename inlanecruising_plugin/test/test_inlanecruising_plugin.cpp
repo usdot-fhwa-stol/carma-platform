@@ -22,7 +22,7 @@
 
 using namespace inlanecruising_plugin;
 // Test to ensure Eigen::Isometry2d behaves like tf2::Transform
-TEST(InLaneCruisingPluginTest, validate_eigen)
+TEST(InLaneCruisingPluginTest, DISABLED_validate_eigen)
 {
   Eigen::Rotation2Dd frame_rot(M_PI_2);
   lanelet::BasicPoint2d origin(1, 1);
@@ -52,7 +52,7 @@ TEST(InLaneCruisingPluginTest, validate_eigen)
   ASSERT_NEAR(M_PI_2, P_in_A_rot.smallestAngle(), 0.000000001);
 }
 
-TEST(InLaneCruisingPluginTest, curvePointInMapTF)
+TEST(InLaneCruisingPluginTest, DISABLED_curvePointInMapTF)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -74,7 +74,7 @@ TEST(InLaneCruisingPluginTest, curvePointInMapTF)
   ASSERT_NEAR(M_PI, fabs(P_in_M_rot.smallestAngle()), 0.000000001);
 }
 
-TEST(InLaneCruisingPluginTest, trajectory_from_points_times_orientations)
+TEST(InLaneCruisingPluginTest, DISABLED_trajectory_from_points_times_orientations)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -128,7 +128,7 @@ TEST(InLaneCruisingPluginTest, trajectory_from_points_times_orientations)
   ASSERT_EQ(0, traj_points[3].planner_plugin_name.compare(expected_plugin_name));
 }
 
-TEST(InLaneCruisingPluginTest, constrain_to_time_boundary)
+TEST(InLaneCruisingPluginTest, DISABLED_constrain_to_time_boundary)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -181,7 +181,7 @@ TEST(InLaneCruisingPluginTest, constrain_to_time_boundary)
   ASSERT_NEAR(1.0, time_bound_points[5].speed, 0.0000001);
 }
 
-TEST(InLaneCruisingPluginTest, getNearestPointIndex)
+TEST(InLaneCruisingPluginTest, DISABLED_getNearestPointIndex)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -216,7 +216,7 @@ TEST(InLaneCruisingPluginTest, getNearestPointIndex)
   ASSERT_EQ(3, plugin.getNearestPointIndex(points, state));
 }
 
-TEST(InLaneCruisingPluginTest, get_lookahead_speed)
+TEST(InLaneCruisingPluginTest, DISABLED_get_lookahead_speed)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -242,7 +242,7 @@ TEST(InLaneCruisingPluginTest, get_lookahead_speed)
   // ASSERT_EQ(3, plugin.getNearestPointIndex(points, state));
 }
 
-TEST(InLaneCruisingPluginTest, get_adaptive_lookahead)
+TEST(InLaneCruisingPluginTest, DISABLED_get_adaptive_lookahead)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -257,7 +257,7 @@ TEST(InLaneCruisingPluginTest, get_adaptive_lookahead)
 
 }
 
-TEST(InLaneCruisingPluginTest, splitPointSpeedPairs)
+TEST(InLaneCruisingPluginTest, DISABLED_splitPointSpeedPairs)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -309,7 +309,7 @@ TEST(InLaneCruisingPluginTest, splitPointSpeedPairs)
   ASSERT_NEAR(1.0, speeds[5], 0.0000001);
 }
 
-TEST(InLaneCruisingPluginTest, compute_sub_curves)
+TEST(InLaneCruisingPluginTest, DISABLED_compute_sub_curves)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
