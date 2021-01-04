@@ -120,11 +120,7 @@ namespace plan_delegator
             ros::Subscriber twist_sub_;
             ros::Subscriber guidance_state_sub_;
 
-<<<<<<< HEAD
-            bool guidance_engaged;
-=======
             bool guidance_engaged = false;
->>>>>>> develop
 
             /**
              * \brief Callback function of node spin

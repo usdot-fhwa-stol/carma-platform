@@ -668,10 +668,6 @@ int InLaneCruisingPlugin::getNearestPointIndex(const std::vector<PointSpeedPair>
   return best_index;
 }
 
-<<<<<<< HEAD
-=======
-
->>>>>>> develop
 void InLaneCruisingPlugin::splitPointSpeedPairs(const std::vector<PointSpeedPair>& points,
                                                 std::vector<lanelet::BasicPoint2d>* basic_points,
                                                 std::vector<double>* speeds)

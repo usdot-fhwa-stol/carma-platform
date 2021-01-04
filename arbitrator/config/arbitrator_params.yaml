@@ -26,8 +26,4 @@ use_fixed_costs: true
 # Map: The priorities/costs associated with each plugin during the planning 
 # process, values will be normalized at runtime
 # Unit: N/a
-<<<<<<< HEAD
-plugin_priorities: {AutowarePlugin: 10.0, GlidepathPlugin: 5.0, RouteFollowingPlugin: 4.0}
-=======
 plugin_priorities: {RouteFollowingPlugin: 4.0}
->>>>>>> develop

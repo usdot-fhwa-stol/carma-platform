@@ -147,22 +147,14 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
     auto ll = world_model_->getMap()->laneletLayer.get(id);
     path.push_back(ll);
   }
-<<<<<<< HEAD
-  if(path.size() == 0) return;
-=======
   if(path.empty()) return;
->>>>>>> develop
   auto route_opt = path.size() == 1 ? world_model_->getMapRoutingGraph()->getRoute(path.front(), path.back())
                                : world_model_->getMapRoutingGraph()->getRouteVia(path.front(), lanelet::ConstLanelets(path.begin() + 1, path.end() - 1), path.back());
   if(route_opt.is_initialized()) {
     auto ptr = std::make_shared<lanelet::routing::Route>(std::move(route_opt.get()));
     world_model_->setRoute(ptr);
   }
-<<<<<<< HEAD
-  // Call route_callback_;
-=======
   // Call route_callback_
->>>>>>> develop
   if (route_callback_)
   {
     route_callback_();
