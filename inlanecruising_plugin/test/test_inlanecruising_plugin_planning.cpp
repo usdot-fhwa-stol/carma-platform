@@ -118,7 +118,7 @@ Using this file:
 
 TEST(WaypointGeneratorTest, test_full_generation)
 {
-    
+  
     
     int projector_type = 0;
     std::string target_frame;
@@ -198,18 +198,72 @@ TEST(WaypointGeneratorTest, test_full_generation)
   
   
 
-  
+  /*
   std::vector<Eigen::VectorXf> waypoints;
+  
   Eigen::Vector3f po1(2,3,4);
   Eigen::Vector3f po2(2,5,4);
   Eigen::Vector3f po3(2,8,9);
   Eigen::Vector3f po4(2,8,23);
   Eigen::Vector3f po5(2,3.5,25);
+  Eigen::Vector3f po6(2,3,25);
+  Eigen::Vector3f po7(2,2.5,26);
+  Eigen::Vector3f po8(2,2.25,27);
+  Eigen::Vector3f po9(2,2.0,28);
+  Eigen::Vector3f po10(2,1.5,30);
+  Eigen::Vector3f po11(2,1.0,32);
+  Eigen::Vector3f po12(2,1.25,34);
+  Eigen::Vector3f po13(2,2.0,35);
+  Eigen::Vector3f po14(2,4.0,35);
+  Eigen::Vector3f po15(2,5.0,35.5);
+  Eigen::Vector3f po16(2,6.0,36);
+  Eigen::Vector3f po17(2,7.0,50);
+  Eigen::Vector3f po18(2,6.5,48);
+  Eigen::Vector3f po19(2,4.0,43);
+  
+                        //x,    y
+  // Eigen::Vector3f po1(2, 1    ,5);
+  // Eigen::Vector3f po2(2,  2   ,5);
+  // Eigen::Vector3f po3(2,  3   ,5);
+  // Eigen::Vector3f po4(2,  4    ,5);
+  // Eigen::Vector3f po5(2,  5     ,5);
+  // Eigen::Vector3f po6(2,  10    ,5);
+  // Eigen::Vector3f po7(2,  7     ,5);
+  // Eigen::Vector3f po8(2,  8    ,5);
+  // Eigen::Vector3f po9(2,  9     ,5);
+  // Eigen::Vector3f po10(2, 10    ,5);
+  // Eigen::Vector3f po11(2, 11    ,5);
+  // Eigen::Vector3f po12(2, 12    ,5);
+  // Eigen::Vector3f po13(2, 13 , 5);
+  // Eigen::Vector3f po14(2, 14     ,5);
+  // Eigen::Vector3f po15(2, 15    ,5);
+  // Eigen::Vector3f po16(2, 16     ,5);
+  // Eigen::Vector3f po17(2, 17     ,5);
+  // Eigen::Vector3f po18(2, 18     ,5);
+  // Eigen::Vector3f po19(2, 19     ,5);
+// 
+  /*
   waypoints.push_back(po1);
   waypoints.push_back(po2);
   waypoints.push_back(po3);
   waypoints.push_back(po4);
   waypoints.push_back(po5);
+  waypoints.push_back(po6);
+  waypoints.push_back(po7);
+  waypoints.push_back(po8);
+  waypoints.push_back(po9);
+  waypoints.push_back(po10);
+  waypoints.push_back(po11);
+  waypoints.push_back(po12);
+  waypoints.push_back(po13);
+  waypoints.push_back(po14);
+  waypoints.push_back(po15);
+  waypoints.push_back(po16);
+  waypoints.push_back(po17);
+  waypoints.push_back(po18);
+  waypoints.push_back(po19);
+
+
   // The degree of the interpolating spline needs to be one less than the number of points
   // that are fitted to the spline.
   Eigen::MatrixXf points(3, waypoints.size());
@@ -220,13 +274,13 @@ TEST(WaypointGeneratorTest, test_full_generation)
   }
   Spline3d spline = Eigen::SplineFitting<Spline3d>::Interpolate(points, 2);
   float time_ = 0;
-  for(int i=0; i<20; i++){
-      time_ += 1.0/(20*1.0);
+  for(int i=0; i<100; i++){
+      time_ += 1.0/(100*1.0);
       Eigen::VectorXf values = spline(time_);
       std::cout<< values << std::endl;
       std::cout<< "x:" << values.x() << "y:" << values.y() << "z:" << values.z() << std::endl;
   }
-    
+  */
 
 }
 

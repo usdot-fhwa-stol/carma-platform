@@ -136,53 +136,39 @@ std::vector<DiscreteCurve> InLaneCruisingPlugin::compute_sub_curves(const std::v
 
   std::vector<DiscreteCurve> curves;
   DiscreteCurve curve;
-  //curve.frame = compute_heading_frame(map_points[0].point, map_points[1].point);
-  //Eigen::Isometry2d map_in_curve = curve.frame.inverse();
-  size_t last_curve_start_idx = 0;
+  curve.frame = compute_heading_frame(map_points[0].point, map_points[1].point);
+  Eigen::Isometry2d map_in_curve = curve.frame.inverse();
+
   for (size_t i = 0; i < map_points.size() - 1; i++)
   {
-    lanelet::BasicPoint2d p1 = map_points[i].point;
-    lanelet::BasicPoint2d p2 = map_points[i + 1].point;  // TODO Optimization to cache this value
-    //lanelet::BasicPoint2d p1 = map_in_curve * map_points[i].point;
-    //lanelet::BasicPoint2d p2 = map_in_curve * map_points[i + 1].point;  // TODO Optimization to cache this value
+    lanelet::BasicPoint2d p1 = map_in_curve * map_points[i].point;
+    lanelet::BasicPoint2d p2 = map_in_curve * map_points[i + 1].point;  // TODO Optimization to cache this value
+    //lanelet::BasicPoint2d p1 = map_points[i].point;
+    //lanelet::BasicPoint2d p2 = map_points[i + 1].point;
 
     PointSpeedPair initial_pair;
     initial_pair.point = p1;
     initial_pair.speed = map_points[i].speed;
     curve.points.push_back(initial_pair);
-    bool x_dir = true;
-    //bool x_dir = (p2.x() - p1.x()) > 0;
+    
+    bool x_dir = (p2.x() - p1.x()) > 0;
     if (!x_dir)  // If x starts going backwards we need a new curve
     {
       // New Curve
       curves.push_back(curve);
-      
-      
+
       curve = DiscreteCurve();
-      //curve.frame = compute_heading_frame(map_points[i].point, map_points[i + 1].point);
-      //map_in_curve = curve.frame.inverse();
+      curve.frame = compute_heading_frame(map_points[i].point, map_points[i + 1].point);
+      map_in_curve = curve.frame.inverse();
 
       PointSpeedPair pair;
-      /*
-      size_t last_mid_range = (i - last_curve_start_idx)/2 - 1;
-      curve.num_points_since_last_mid = last_mid_range;
-      // include mid-range points that came before
-      for (size_t j = last_mid_range; j > 0; j --)
-      {
-        pair.point = map_in_curve * map_points[i - j].point;
-        pair.speed = map_points[i - j].speed;
-        curve.points.push_back(pair);
-      }
-      */
-      pair.point = map_points[i].point;
-      
-      //pair.point = map_in_curve * map_points[i].point;
-      ROS_WARN_STREAM("x:" <<map_points[i].point.x() << ", y:" << map_points[i].point.y()) ;
-
+      pair.point = map_in_curve * map_points[i].point;
+      //pair.point = map_points[i].point;
       pair.speed = map_points[i].speed;
+
       curve.points.push_back(pair);  // Include first point in curve
-      last_curve_start_idx = i;
     }
+    
   }
 
   curves.push_back(curve);
@@ -334,7 +320,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
     curvatures = smoothing::moving_average_filter(curvatures, config_.moving_average_window_size);
 
-    //log::printDoublesPerLineWithPrefix("curvatures[i]: ", curvatures);
+    log::printDoublesPerLineWithPrefix("curvatures[i]: ", curvatures);
 
     std::vector<double> ideal_speeds =
         trajectory_utils::constrained_speeds_for_curvatures(curvatures, config_.lateral_accel_limit);
@@ -498,9 +484,9 @@ Eigen::Isometry2d InLaneCruisingPlugin::curvePointInMapTF(const Eigen::Isometry2
 {
   Eigen::Rotation2Dd yaw_rot(yaw);
   Eigen::Isometry2d point_in_c = carma_wm::geometry::build2dEigenTransform(p, yaw_rot);
-  Eigen::Isometry2d point_in_map = point_in_c;
+  //Eigen::Isometry2d point_in_map = point_in_c;
   
-  //Eigen::Isometry2d point_in_map = curve_in_map * point_in_c;
+  Eigen::Isometry2d point_in_map = curve_in_map * point_in_c;
   return point_in_map;
 }
 
