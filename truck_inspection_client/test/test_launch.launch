@@ -16,5 +16,5 @@ the License.
       <rosparam command="load" file="$(find truck_inspection_client)/config/parameters.yaml"/>
     </node>
 
-    <test test-name="truck_inspection_client_node_test" pkg="truck_inspection_client" type="truck_inspection_client_test" />
+    <test test-name="truck_inspection_client_test" pkg="truck_inspection_client" type="truck_inspection_client_test" />
 </launch>

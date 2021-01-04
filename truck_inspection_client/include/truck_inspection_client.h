@@ -24,6 +24,8 @@
 #include <cav_msgs/BSM.h>
 #include <std_msgs/String.h>
 #include "boost/format.hpp"
+#include <boost/chrono.hpp>
+#include <boost/thread/thread.hpp>
 
 namespace truck_inspection_client
 {
@@ -37,6 +39,7 @@ namespace truck_inspection_client
         void run();
 
         const std::string INSPECTION_STRATEGY = "TruckInspection";
+        const std::uint16_t MAX_RETRIEVE_VIN_COUNT = 300; 
 
     private:
 
@@ -79,6 +82,7 @@ namespace truck_inspection_client
         bool permit_required_;
         bool ads_engaged_;  
         std::string ads_system_alert_type_;  
+        std::uint16_t vin_retrive_count = 0;
     };
 
 }

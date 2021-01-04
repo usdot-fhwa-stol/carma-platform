@@ -12,7 +12,7 @@
 -->
 
 <launch>
-    <node pkg="gnss_ndt_selector" type="gnss_ndt_selector" name="gnss_ndt_selector" output="screen">
+    <node pkg="gnss_ndt_selector" type="gnss_ndt_selector" name="gnss_ndt_selector">
           <rosparam command="load" file="$(find gnss_ndt_selector)/config/parameters.yaml"/>
     </node>
 </launch>

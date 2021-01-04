@@ -69,20 +69,22 @@ void LightBarManagerStateMachine::handleStateChange(const cav_msgs::GuidanceStat
     {
         case cav_msgs::GuidanceState::STARTUP:
         case cav_msgs::GuidanceState::SHUTDOWN:
-        onDisengage();
-        break;
+            onDisengage();
+            break;
+
         case cav_msgs::GuidanceState::ACTIVE:
-        case cav_msgs::GuidanceState::INACTIVE:
         case cav_msgs::GuidanceState::DRIVERS_READY:
-        onActive();
-        break;
+        case cav_msgs::GuidanceState::INACTIVE:
+            onActive();
+            break;
+
         case cav_msgs::GuidanceState::ENGAGED:
-        onEngage();
-        break;
+            onEngage();
+            break;
+
         default:
-        ROS_WARN_STREAM("LightBarManager received unknown state from guidance state machine:" << msg_ptr->state);
-        return;
-        break;
+            ROS_WARN_STREAM("LightBarManager received unknown state from guidance state machine:" << msg_ptr->state);
+            break;
     }
     // Update the current state
     guidance_state_ = msg_ptr->state;

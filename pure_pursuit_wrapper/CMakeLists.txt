@@ -17,7 +17,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(pure_pursuit_wrapper)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++14)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 add_definitions(-DBOOST_LOG_DYN_LINK=1)
@@ -27,7 +27,7 @@ set(CMAKE_CXX_FLAGS "-lboost_system")
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
+set( CATKIN_DEPS 
   cav_msgs
   roscpp
   rospy
@@ -37,6 +37,12 @@ find_package(catkin REQUIRED COMPONENTS
   autoware_config_msgs
   message_filters
   carma_utils
+  trajectory_utils
+  carma_wm
+)
+
+find_package(catkin REQUIRED COMPONENTS
+  ${CATKIN_DEPS}
 )
 
 ## System dependencies are found with CMake's conventions
@@ -99,8 +105,8 @@ find_package(Boost REQUIRED COMPONENTS system)
 #   cav_msgs#   std_msgs
 # )
 
-add_library(pure_pursuit_wrapper_worker_library src/pure_pursuit_wrapper_worker.cpp)
-add_dependencies(pure_pursuit_wrapper_worker_library ${catkin_EXPORTED_TARGETS})
+add_library(${PROJECT_NAME} src/pure_pursuit_wrapper.cpp)
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -133,9 +139,8 @@ add_dependencies(pure_pursuit_wrapper_worker_library ${catkin_EXPORTED_TARGETS})
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
  INCLUDE_DIRS include
- LIBRARIES pure_pursuit_wrapper_worker_library
- CATKIN_DEPENDS cav_msgs roscpp rospy std_msgs geometry_msgs autoware_msgs carma_utils
-#  DEPENDS system_lib
+ LIBRARIES ${PROJECT_NAME}
+ CATKIN_DEPENDS ${CATKIN_DEPS}
  DEPENDS Boost
 )
 
@@ -164,7 +169,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node src/pure_pursuit_wrapper_node.cpp src/pure_pursuit_wrapper.cpp)
+add_executable(${PROJECT_NAME}_node src/pure_pursuit_wrapper_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -178,7 +183,7 @@ add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
-  pure_pursuit_wrapper_worker_library
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
@@ -192,7 +197,7 @@ target_link_libraries(${PROJECT_NAME}_node
 
 # Mark executable scripts (Python etc.) for installation
 # in contrast to setup.py, you can choose the destination
-install(TARGETS ${PROJECT_NAME}_node pure_pursuit_wrapper_worker_library
+install(TARGETS ${PROJECT_NAME}_node ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -227,6 +232,6 @@ install(DIRECTORY
 
 catkin_add_gtest(${PROJECT_NAME}_test test/${PROJECT_NAME}_test.cpp)
 
-target_link_libraries( ${PROJECT_NAME}_test pure_pursuit_wrapper_worker_library
+target_link_libraries( ${PROJECT_NAME}_test ${PROJECT_NAME}
         ${catkin_LIBRARIES}
         )

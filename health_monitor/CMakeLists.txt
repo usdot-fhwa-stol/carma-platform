@@ -75,6 +75,7 @@ add_library(plugin_driver_manager_library
   src/plugin_manager.cpp
   src/driver_manager.cpp
   src/entry_manager.cpp
+  src/health_monitor.cpp
   src/entry.cpp)
 
 ## Specify libraries to link a library or executable target against
@@ -120,6 +121,7 @@ catkin_add_gtest(${PROJECT_NAME}-test
   test/test_driver_manager.cpp
   test/test_entry_manager.cpp
   test/test_plugin_manager.cpp
+  test/test_health_monitor.cpp
   test/test_main.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
