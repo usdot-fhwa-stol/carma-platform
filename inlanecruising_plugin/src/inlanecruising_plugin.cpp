@@ -227,7 +227,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end()); // Points in front of current vehicle position
 
-  auto time_bound_points = constrain_to_time_boundary(future_points, 30);
+  auto time_bound_points = constrain_to_time_boundary(future_points, 10);
 
   ROS_DEBUG_STREAM("time_bound_points: " << time_bound_points.size());
 
