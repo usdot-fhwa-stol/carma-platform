@@ -103,7 +103,8 @@ namespace stop_and_wait_plugin
     
     bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp)
     {
-        lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global,req.vehicle_state.Y_pos_global);
+        //lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global,req.vehicle_state.Y_pos_global);
+        lanelet::BasicPoint2d veh_pos(pose_msg_.pose.position.x,pose_msg_.pose.position.y); 
         double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
 
         std::vector<cav_msgs::Maneuver> maneuver_plan;
@@ -116,9 +117,14 @@ namespace stop_and_wait_plugin
         }
 
         std::vector<PointSpeedPair> points_and_target_speeds = maneuvers_to_points(maneuver_plan, current_downtrack, wm_);
-
+        
         auto downsampled_points = 
             carma_utils::containers::downsample_vector(points_and_target_speeds,downsample_ratio_);
+
+        for(int i=0;i<downsampled_points.size();i++)
+        {
+            std::cout<< "Point speed "<<i<<":"<<downsampled_points[i].speed<<" x:"<<downsampled_points[i].point.x()<<" y:"<<downsampled_points[i].point.y()<<std::endl;
+        }
 
         //Trajectory plan
         cav_msgs::TrajectoryPlan  trajectory;
@@ -161,10 +167,15 @@ namespace stop_and_wait_plugin
                 first = false;
 
             }
+            //double starting_downtrack = max_starting_downtrack;
            
             double ending_downtrack = stop_and_wait_maneuver.end_dist;
-            maneuver_time_ = ros::Duration(stop_and_wait_maneuver.end_time - stop_and_wait_maneuver.start_time).toSec();
-            
+            std::cout<<"Starting downtrack:"<< starting_downtrack<<" Ending_downtrack:"<<ending_downtrack<<"Current speed"<< current_speed_<<std::endl;
+            //maneuver_time_ = ros::Duration(stop_and_wait_maneuver.end_time - stop_and_wait_maneuver.start_time).toSec();
+            //Update maneuver time
+            //maneuver_time_ = (stop_and_wait_maneuver.start_dist/starting_downtrack)* maneuver_time_;
+            double start_speed = current_speed_;    //Get static value of current speed at start of planning
+            maneuver_time_ = (3*(ending_downtrack - starting_downtrack))/(2*start_speed);
             double delta_time, curr_time;
             if(current_speed_ == 0 && starting_downtrack >= ending_downtrack)  //If at end_dist return zero speed trajectory
             {
@@ -186,7 +197,7 @@ namespace stop_and_wait_plugin
             else
             {
                 double jerk_req = (2*current_speed_)/pow(maneuver_time_,2);
-                double start_speed = current_speed_;    //Get static value of current speed at start of planning
+                
                 if(jerk_req > max_jerk_limit_)
                 {
                     //unsafe to stop at the required jerk - reset to max_jerk and go beyond the maneuver end_dist
@@ -202,6 +213,7 @@ namespace stop_and_wait_plugin
                     }
                 }
                 else jerk_ = jerk_req;
+                std::cout<<"Jerk being used:"<< jerk_<<std::endl;
                 //get all the lanelets in between starting and ending downtrack on shortest path
                 auto lanelets = wm_->getLaneletsBetween(starting_downtrack, ending_downtrack, true);
                 //record all the lanelets to be added to path
@@ -219,7 +231,7 @@ namespace stop_and_wait_plugin
                 
                 int points_count = route_geometry.size();
                 delta_time = maneuver_time_/(points_count-1);
-
+                std::cout<<"delta time:"<<delta_time<<std::endl;
                 first = true;
                 curr_time = 0.0;
 
@@ -233,12 +245,12 @@ namespace stop_and_wait_plugin
                     }
                     PointSpeedPair pair;
                     pair.point = p;
-                    if(jerk_ < 1.0){ // if jerk req is too small, don't start slowing down
-                        pair.speed = start_speed;
+                    pair.speed = start_speed - (0.5 * jerk_ * pow(curr_time,2));
+                    if(pair.speed <0)
+                    {
+                        pair.speed == 0;
                     }
-                    else{
-                        pair.speed = start_speed - (0.5 * jerk_ * pow(curr_time,2));
-                    }
+
                     if(p == route_geometry.back()) 
                     {
                         pair.speed = 0.0;    //force speed to 0 at last point
@@ -283,6 +295,10 @@ namespace stop_and_wait_plugin
         std::vector<lanelet::BasicPoint2d> trajectory_locations;
         std::vector<double> trajectory_speeds;
         //split point speed pair
+        for(int i=0;i<future_points.size();i++)
+        {
+            std::cout<<"Future_point "<<i<<": "<<future_points[i].speed << " x:"<<future_points[i].point.x()<<" y:"<<future_points[i].point.y()<<std::endl;
+        }
         splitPointSpeedPairs(future_points,&trajectory_locations,&trajectory_speeds);
         std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(trajectory_locations);
 
@@ -295,17 +311,18 @@ namespace stop_and_wait_plugin
         traj_prev.y = future_points[0].point.y();
         traj_prev.yaw = yaw_values[0];
         traj_prev.target_time = start_time;
-
+        std::cout<<"Printing Trajectory"<<std::endl;
+        std::cout<<"Current Location x:"<<pose_msg_.pose.position.x<<" y:"<<pose_msg_.pose.position.y<<std::endl;
         for (size_t i=0; i < future_points.size(); i++)
         {
             cav_msgs::TrajectoryPlanPoint traj_point;
-            if(trajectory_speeds[i] > 0){
+            if(trajectory_speeds[i] > 0.1){
                 traj_point.x = future_points[i].point.x();
                 traj_point.y = future_points[i].point.y();
                 traj_point.yaw = yaw_values[i];
                 traj_point.target_time = start_time + ros::Duration(target_times[i]);
             }
-            else    //speed_to_time doesn't work for 0.0 speed
+            else    //speed_to_time doesn't work for 0.0 speed (Treat speeds lower than 0.1 as 0)
             {
                 traj_point.x=traj_prev.x;
                 traj_point.y=traj_prev.y;
@@ -317,8 +334,21 @@ namespace stop_and_wait_plugin
             traj_point.planner_plugin_name =plugin_discovery_msg_.name;
             traj.push_back(traj_point);
             traj_prev = traj_point;
+            std::cout<<"Point x:"<<traj_point.x<<" y:"<<traj_point.y<<" time:"<<ros::Duration(traj_point.target_time - start_time).toSec()<<std::endl;
         }
-        
+        while(ros::Duration(traj.back().target_time - start_time).toSec() < 6.0)
+        {
+            cav_msgs::TrajectoryPlanPoint traj_point;
+            traj_point.x=traj_prev.x;
+            traj_point.y=traj_prev.y;
+            traj_point.yaw=traj_prev.yaw;
+            traj_point.target_time = traj_prev.target_time + ros::Duration(min_timestep_);
+            traj_point.controller_plugin_name = "default";
+            traj_point.planner_plugin_name =plugin_discovery_msg_.name;
+            traj.push_back(traj_point);
+            traj_prev = traj_point;
+        }
+        std::cout<<"Total Trajectory time:" << ros::Duration(traj.back().target_time - start_time).toSec() <<std::endl;
         return traj;
     }
 
@@ -355,7 +385,7 @@ namespace stop_and_wait_plugin
             }
             double cur_time = dt + prev_time;
             times.push_back(cur_time);
-
+            std::cout<<"Curr speed:"<< cur_speed <<" Curr pos:"<<downtrack[i ]<< "dt:"<< dt << " delta_v:"<< delta_v<<std::endl;
             prev_speed = cur_speed;
             prev_time = cur_time;
             prev_pos = downtrack[i];

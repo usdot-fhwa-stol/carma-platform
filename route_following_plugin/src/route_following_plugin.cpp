@@ -96,31 +96,32 @@ namespace route_following_plugin
 
         double target_speed=findSpeedLimit(current_lanelet);   //get Speed Limit
 
-        double total_maneuver_length = current_progress + mvr_duration_ * target_speed;
-        
-        while(current_progress < total_maneuver_length && last_lanelet_index < shortest_path.size())
+        //double total_maneuver_length = current_progress + mvr_duration_ * target_speed;
+        double total_maneuver_length = wm_->routeTrackPos(shortest_path.back().centerline2d().back()).downtrack;
+        std::cout<<"Total maneuver length:"<<total_maneuver_length<<std::endl;
+        bool approaching_route_end = false;
+        double time_req_to_stop,dist_req_to_stop;
+        while(current_progress < total_maneuver_length && !approaching_route_end)
         {
             ROS_DEBUG_STREAM("Lanlet: " << shortest_path[last_lanelet_index].id());
             auto p = shortest_path[last_lanelet_index].centerline2d().back();
             double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
             double dist_diff = end_dist - current_progress;
-            //Stop and Wait Manuever towards the end of the route
-            //Calculate end distance as a function of the speed - assuming speed progress is the actual speed at start of maneuver
-            double time_req_to_stop = sqrt(2*speed_progress/jerk_);
-            double dist_req_to_stop = speed_progress*time_req_to_stop + (0.167 * jerk_ * pow(time_req_to_stop,3));
-            if(dist_diff <= dist_req_to_stop)
-            {
-                resp.new_plan.maneuvers.push_back(
-                    composeStopandWaitManeuverMessage(current_progress, end_dist, 
-                                                    speed_progress, shortest_path[last_lanelet_index].id(), 
-                                                    shortest_path.back().id(),ros::Time::now(), time_req_to_stop));
+            time_req_to_stop = sqrt(2*speed_progress/jerk_);
+            dist_req_to_stop = speed_progress*time_req_to_stop - (0.167 * jerk_ * pow(time_req_to_stop,3));
+            std::cout<<"Current_progress:"<<current_progress <<" End dist:"<<end_dist<<" dist_diff:"<<dist_diff<<" dist_req_to_stop"<< dist_req_to_stop<<std::endl;
+            if(total_maneuver_length - end_dist < dist_req_to_stop){
+                end_dist -= dist_req_to_stop;
+                dist_diff = end_dist - current_progress;
+                approaching_route_end = true;
             }
-            else{
-                resp.new_plan.maneuvers.push_back(
-                    composeManeuverMessage(current_progress, end_dist, 
-                                        speed_progress, target_speed, 
-                                        shortest_path[last_lanelet_index].id(), ros::Time::now()));
+            if(end_dist < current_progress){
+                break;
             }
+            resp.new_plan.maneuvers.push_back(
+                composeManeuverMessage(current_progress, end_dist,  
+                                    speed_progress, target_speed, 
+                                    shortest_path[last_lanelet_index].id(), ros::Time::now()));
             current_progress += dist_diff;
             speed_progress = target_speed;
             //get speed limit
@@ -147,6 +148,10 @@ namespace route_following_plugin
                 return true;
             }
         }
+        resp.new_plan.maneuvers.push_back(
+            composeStopandWaitManeuverMessage(current_progress,total_maneuver_length,
+            speed_progress,shortest_path[last_lanelet_index].id(),
+            shortest_path[last_lanelet_index].id(),ros::Time::now(),time_req_to_stop));
         if(resp.new_plan.maneuvers.size() == 0)
         {
             ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
@@ -185,6 +190,7 @@ namespace route_following_plugin
         maneuver_msg.lane_following_maneuver.start_time = current_time;
         maneuver_msg.lane_following_maneuver.end_dist = end_dist;
         maneuver_msg.lane_following_maneuver.end_speed = target_speed;
+        std::cout<<"Creating lane follow for start dist:"<<current_dist<<" Till end dist:"<<end_dist<<std::endl;
         // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
         double cur_plus_target = current_speed + target_speed;
         if (cur_plus_target < 0.00001) {
@@ -209,7 +215,11 @@ namespace route_following_plugin
         maneuver_msg.stop_and_wait_maneuver.start_time = current_time;
         maneuver_msg.stop_and_wait_maneuver.starting_lane_id = std::to_string(start_lane_id);
         maneuver_msg.stop_and_wait_maneuver.ending_lane_id = std::to_string(end_lane_id);
-        maneuver_msg.stop_and_wait_maneuver.end_time = ros::Time(end_time +current_time.toSec());
+        if(end_time < mvr_duration_){
+            end_time = mvr_duration_;
+        } 
+        maneuver_msg.stop_and_wait_maneuver.end_time = current_time + ros::Duration(end_time);
+        std::cout<<" Creating stop and wait for start dist:"<< current_dist << " till end dist:"<< end_dist<< "for time:"<< end_time<<std::endl;
         return maneuver_msg;
     }
     bool RouteFollowingPlugin::identifyLaneChange(lanelet::routing::LaneletRelations relations, int target_id)
@@ -254,3 +264,15 @@ namespace route_following_plugin
 }
 
 
+/* 
+            double end_of_route_dist = wm_->routeTrackPos(shortest_path[shortest_path.size() -1].centerline2d().back()).downtrack;
+            double dist_left = end_of_route_dist - current_progress;    //distance left on path
+            double time_req_to_stop = sqrt(2*speed_progress/jerk_);
+            double dist_req_to_stop = speed_progress*time_req_to_stop + (0.167 * jerk_ * pow(time_req_to_stop,3));
+            ROS_INFO_STREAM("Distance req to stop:" << dist_req_to_stop <<" Current Progress:"<<current_progress);
+
+                        //Stop and Wait Manuever towards the end of the route
+            //Calculate end distance as a function of the speed - assuming speed progress is the actual speed at start of maneuver
+            double time_req_to_stop = sqrt(2*speed_progress/jerk_);
+            double dist_req_to_stop = speed_progress*time_req_to_stop + (0.167 * jerk_ * pow(time_req_to_stop,3));
+            */
