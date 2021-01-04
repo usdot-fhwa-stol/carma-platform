@@ -18,7 +18,6 @@
 
 namespace guidance
 {
-    GuidanceWorker::GuidanceWorker(){}
 
     void GuidanceWorker::system_alert_cb(const cav_msgs::SystemAlertConstPtr& msg)
     {

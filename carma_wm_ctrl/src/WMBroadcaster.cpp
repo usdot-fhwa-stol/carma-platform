@@ -326,7 +326,7 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
     throw lanelet::InvalidObjectStateError(std::string("Base lanelet map has empty proj string loaded as georeference. Therefore, WMBroadcaster failed to\n ") +
                                           std::string("get transformation between the geofence and the map"));
 
-  PJ* geofence_in_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, tcmV01.geometry.proj.c_str(), base_map_georef_.c_str(), NULL);
+  PJ* geofence_in_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, tcmV01.geometry.proj.c_str(), base_map_georef_.c_str(), nullptr);
   
   // convert all geofence points into our map's frame
   std::vector<lanelet::Point3d> gf_pts;

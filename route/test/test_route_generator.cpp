@@ -36,8 +36,8 @@
 
 /*
 Using this file:
-    1) Libraries you should have: carma-base, carma-config, carma-msgs (integration/routing branch), 
-        carma-platform (integration/routing branch), carma-utils, caram-web-ui, opendrive2lanelet.
+    1) Libraries you should have: carma-base, carma-config, carma-msgs, 
+        carma-platform, carma-utils, caram-web-ui, opendrive2lanelet.
     2) Then the test can be built with the command: 
         ./carma_build -c /workspaces/carma_ws/carma/ -a /workspaces/carma_ws/autoware.ai/ -x -m "--only-pkg-with-deps route"
     3) Update the osm file location and starting/ending IDs to match the file you want to test
@@ -45,6 +45,99 @@ Using this file:
         catkin_make run_tests_route
     5) Confirm that the test passed and that the list of lanelet IDs does traverse from the start to the end
 */
+
+
+TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
+{
+    tf2_ros::Buffer tf_buffer;
+    carma_wm::WorldModelConstPtr wm;
+    route::RouteGeneratorWorker worker(tf_buffer);
+
+    int projector_type = 0;
+    std::string target_frame;
+    lanelet::ErrorMessages load_errors;
+
+    // If the output is an error about the geoReference field in the osm file, here is a correct example. If the lat/lon coordinates are already correct, simply add:
+    // <geoReference>+proj=tmerc +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +geoidgrids=egm96_15.gtx +vunits=m +no_defs</geoReference>
+
+    // File location of osm file
+    std::string file = "../resource/map/vector_map.osm";    
+    // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
+    lanelet::Id start_id = 1346;
+    lanelet::Id end_id = 1351;
+
+    // The parsing in this file was copied from https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/carma_wm_ctrl/test/MapToolsTest.cpp
+    lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+    lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+    lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+
+    // Grabs lanelet elements from the start and end IDs. Fails the unit test if there is no lanelet with the matching ID
+    lanelet::Lanelet start_lanelet;
+    lanelet::Lanelet end_lanelet;
+
+    try {
+        start_lanelet = map->laneletLayer.get(start_id);
+    }
+    catch (const lanelet::NoSuchPrimitiveError& e) {
+        FAIL() << "The specified starting lanelet Id of " << start_id << " does not exist in the provided map.";
+    }
+    try {
+        end_lanelet = map->laneletLayer.get(end_id);
+    }
+    catch (const lanelet::NoSuchPrimitiveError& e) {
+        FAIL() << "The specified ending lanelet Id of " << end_id << " does not exist in the provided map.";
+    }
+
+    lanelet::LaneletMapConstPtr const_map(map);
+    lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
+    lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
+    
+    // Create MarkerArray to test
+    visualization_msgs::MarkerArray route_marker_msg;
+    route_marker_msg.markers={};
+
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "map";
+    marker.header.stamp = ros::Time();
+    marker.type = visualization_msgs::Marker::SPHERE;//
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.ns = "route_visualizer";
+
+    marker.scale.x = 0.5;
+    marker.scale.y = 0.5;
+    marker.scale.z = 0.5;
+    marker.frame_locked = true;
+
+    marker.color.r = 1.0f;
+    marker.color.g = 1.0f;
+    marker.color.b = 1.0f;
+    marker.color.a = 1.0f;
+
+    marker.pose.position.x = start_lanelet.centerline3d().front().x();
+    marker.pose.position.y = start_lanelet.centerline3d().front().y();
+
+    route_marker_msg.markers.push_back(marker);
+
+    // Computes the shortest path and prints the list of lanelet IDs to get from the start to the end. Can be manually confirmed in JOSM
+    auto route = map_graph->getRoute(start_lanelet, end_lanelet);
+    if(!route) {
+        ASSERT_FALSE(true);
+        std::cout << "Route not generated." << " ";
+    } else {
+        std::cout << "shortest path: \n";
+        for(const auto& ll : route.get().shortestPath()) {
+            std::cout << ll.id() << " ";
+        }
+        std::cout << "\n";
+        auto test_msg = worker.compose_route_marker_msg(route);
+        EXPECT_EQ(route_marker_msg.markers[0].pose.position.x, test_msg.markers[0].pose.position.x);
+        EXPECT_EQ(route_marker_msg.markers[0].pose.position.y, test_msg.markers[0].pose.position.y);
+        EXPECT_EQ(route_marker_msg.markers[1].pose.position.x, test_msg.markers[1].pose.position.x);
+        EXPECT_EQ(route_marker_msg.markers[1].pose.position.y, test_msg.markers[1].pose.position.y);
+    }
+}
+
+
 
 TEST(RouteGeneratorTest, testLaneletRoutingVectorMap)
 {
@@ -105,6 +198,8 @@ TEST(RouteGeneratorTest, testLaneletRoutingVectorMap)
         }
         std::cout << "\n";
         cav_msgs::Route route_msg_ = worker.compose_route_msg(route);
+
+
         ASSERT_TRUE(route_msg_.shortest_path_lanelet_ids.size() > 0);
         ASSERT_TRUE(route_msg_.route_path_lanelet_ids.size() > 0);
     }

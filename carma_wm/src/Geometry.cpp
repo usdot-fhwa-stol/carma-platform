@@ -304,7 +304,11 @@ lanelet::BasicPolygon2d objectToMapPolygon(const geometry_msgs::Pose& pose, cons
 
 lanelet::BasicLineString2d concatenate_lanelets(const std::vector<lanelet::ConstLanelet>& lanelets)
 {
+<<<<<<< HEAD
   if (lanelets.size() == 0) {
+=======
+  if (lanelets.empty()) {
+>>>>>>> develop
     return lanelet::BasicLineString2d();
   }
   lanelet::BasicLineString2d centerline_points = lanelets[0].centerline2d().basicLineString();
@@ -365,10 +369,15 @@ concatenate_line_strings(const lanelet::BasicLineString2d& a,
   lanelet::BasicLineString2d out;
 
   int start_offset = 0;
+<<<<<<< HEAD
   if (!a.empty() && !b.empty()) {
     if (compute_euclidean_distance(a.back(), b.front()) < SPATIAL_EPSILON_M) {
       start_offset = 1;
     }
+=======
+  if (!a.empty() && !b.empty() && compute_euclidean_distance(a.back(), b.front()) < SPATIAL_EPSILON_M) {
+    start_offset = 1;
+>>>>>>> develop
   }
 
   out.insert(out.end(), a.begin(), a.end());
@@ -495,7 +504,10 @@ double
 compute_euclidean_distance(const Eigen::Vector2d& a, const Eigen::Vector2d& b)
 {
   return std::sqrt(std::pow(b[0] - a[0], 2) + std::pow(b[1] - a[1], 2));
+<<<<<<< HEAD
   //return (b - a).norm();
+=======
+>>>>>>> develop
 }
 
 std::vector<Eigen::Vector2d>
@@ -529,15 +541,25 @@ compute_templated_tangent_orientations(const std::vector<P,A>& centerline)
 
   std::vector<Eigen::Vector2d> tangents = carma_wm::geometry::compute_templated_finite_differences(centerline);
 
+<<<<<<< HEAD
   for (size_t i = 0; i < tangents.size(); i++)
+=======
+  for (auto tangent : tangents)
+>>>>>>> develop
   {
     geometry_msgs::Quaternion q;
 
     // Derive angle by cos theta = (u . v)/(||u| * ||v||)
     double yaw = 0;
+<<<<<<< HEAD
     double norm = tangents[i].norm();
     if (norm != 0.0) {
       auto normalized_tanged = tangents[i] / norm;
+=======
+    double norm = tangent.norm();
+    if (norm != 0.0) {
+      auto normalized_tanged = tangent / norm;
+>>>>>>> develop
       yaw = atan2(normalized_tanged[1], normalized_tanged[0]);
     }
 
@@ -562,7 +584,11 @@ compute_tangent_orientations(const std::vector<lanelet::BasicPoint2d>& centerlin
 Eigen::Isometry2d build2dEigenTransform(const Eigen::Vector2d& position, const Eigen::Rotation2Dd& rotation) {
   Eigen::Vector2d scale(1.0, 1.0);
   Eigen::Isometry2d tf;
+<<<<<<< HEAD
   return tf.fromPositionOrientationScale(position, rotation, scale);;
+=======
+  return tf.fromPositionOrientationScale(position, rotation, scale);
+>>>>>>> develop
 }
 
 Eigen::Isometry3d build3dEigenTransform(const Eigen::Vector3d& position, const Eigen::Quaterniond& rotation) {
@@ -607,7 +633,11 @@ std::vector<double> local_circular_arc_curvatures(const std::vector<lanelet::Bas
     throw std::invalid_argument("local_circular_arc_curvatures lookahead must be greater than 0");
   }
 
+<<<<<<< HEAD
   if (points.size() == 0) {
+=======
+  if (points.empty()) {
+>>>>>>> develop
     return curvatures;
   }
   else if (points.size() == 1) {

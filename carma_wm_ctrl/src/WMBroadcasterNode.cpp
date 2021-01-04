@@ -77,7 +77,7 @@ int WMBroadcasterNode::run()
   pnh_.getParam("max_lane_width", lane_max_width);
   wmb_.setMaxLaneWidth(lane_max_width);
 
-  pnh2_.getParam("config_speed_limit", config_limit);
+  pnh2_.getParam("/config_speed_limit", config_limit);
   wmb_.setConfigSpeedLimit(config_limit);
   
  

@@ -19,8 +19,6 @@
 namespace health_monitor
 {
 
-    PluginManager::PluginManager() {}
-
     PluginManager::PluginManager(const std::vector<std::string>& require_plugin_names,
                                  const std::string& service_prefix,
                                  const std::string& strategic_service_suffix,

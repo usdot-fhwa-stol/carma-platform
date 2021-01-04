@@ -315,7 +315,6 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
                    << " speed: " << state.longitudinal_vel);
 
   ROS_DEBUG_STREAM("points size: " << points.size());
-
   log::printDebugPerLine(points, &log::pointSpeedPairToStream);
 
   int nearest_pt_index = getNearestPointIndex(points, state);
@@ -508,7 +507,6 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   final_yaw_values.insert(final_yaw_values.begin(), state.orientation);
 
   log::printDoublesPerLineWithPrefix("pre_smoot[i]: ", final_actual_speeds);
-
   // Compute points to local downtracks
   std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(all_sampling_points);
 
@@ -534,7 +532,6 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
 
   log::printDoublesPerLineWithPrefix("times[i]: ", times);
-
   // Build trajectory points
   // TODO When more plugins are implemented that might share trajectory planning the start time will need to be based
   // off the last point in the plan if an earlier plan was provided
@@ -671,6 +668,10 @@ int InLaneCruisingPlugin::getNearestPointIndex(const std::vector<PointSpeedPair>
   return best_index;
 }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> develop
 void InLaneCruisingPlugin::splitPointSpeedPairs(const std::vector<PointSpeedPair>& points,
                                                 std::vector<lanelet::BasicPoint2d>* basic_points,
                                                 std::vector<double>* speeds)

@@ -31,24 +31,23 @@ TEST(LightBarManagerStateMachineTest, testStates)
     /*
     * test possible/impossible states from lightbar DISENGAGE
     */
-    cav_msgs::GuidanceStatePtr msg_ptr;
+    cav_msgs::GuidanceStatePtr msg_ptr = boost::make_shared<cav_msgs::GuidanceState>();
     // guidance startup, lightbar should not change state
     msg_ptr->state = cav_msgs::GuidanceState::STARTUP;
     lbsm.handleStateChange(msg_ptr);
     EXPECT_EQ(DISENGAGED, lbsm.getCurrentState());
-    // guidance driver_ready, lightbar should not change state
+    // guidance driver_ready, lightbar should become active
     msg_ptr->state = cav_msgs::GuidanceState::DRIVERS_READY;
     lbsm.handleStateChange(msg_ptr);
-    EXPECT_EQ(DISENGAGED, lbsm.getCurrentState());
-    // guidance SHUTDOWN, lightbar should not change state
+    EXPECT_EQ(ACTIVE, lbsm.getCurrentState());
+    // guidance SHUTDOWN, lightbar should disengage
     msg_ptr->state = cav_msgs::GuidanceState::SHUTDOWN;
     lbsm.handleStateChange(msg_ptr);
     EXPECT_EQ(DISENGAGED, lbsm.getCurrentState());
-     // guidance INACTIVE, lightbar should not change state
+     // guidance INACTIVE, lightbar should become active
     msg_ptr->state = cav_msgs::GuidanceState::INACTIVE;
     lbsm.handleStateChange(msg_ptr);
-    EXPECT_EQ(DISENGAGED, lbsm.getCurrentState());
-
+    EXPECT_EQ(ACTIVE, lbsm.getCurrentState());
     // guidance ACTIVE, lightbar should change to ACTIVE
     msg_ptr->state = cav_msgs::GuidanceState::ACTIVE;
     lbsm.handleStateChange(msg_ptr);
@@ -82,7 +81,7 @@ TEST(LightBarManagerStateMachineTest, testStates)
     msg_ptr->state = cav_msgs::GuidanceState::ACTIVE;
     lbsm.handleStateChange(msg_ptr);
     // guidance SHUTDOWN, lightbar should change to DISENGAGED
-    msg_ptr->state = cav_msgs::GuidanceState::ACTIVE;
+    msg_ptr->state = cav_msgs::GuidanceState::SHUTDOWN;
     lbsm.handleStateChange(msg_ptr);
     EXPECT_EQ(DISENGAGED, lbsm.getCurrentState());
 

@@ -37,6 +37,8 @@
 #include <geometry_msgs/Transform.h>
 #include <wgs84_utils/wgs84_utils.h>
 #include <boost/filesystem.hpp>
+#include <visualization_msgs/MarkerArray.h>
+
 
 #include "route_state_worker.h"
 
@@ -118,8 +120,9 @@ namespace route {
          * \param route_event_pub Route event publisher
          * \param route_state_pub Route state publisher
          * \param route_pub Route publisher
+         * \param route_marker_pub publisher
          */
-        void set_publishers(ros::Publisher route_event_pub, ros::Publisher route_state_pub, ros::Publisher route_pub);
+        void set_publishers(ros::Publisher route_event_pub, ros::Publisher route_state_pub, ros::Publisher route_pub,ros::Publisher route_marker_pub);
 
         /**
          * \brief Helper function to load route points from route file and convert them from lat/lon values to cooridinates in ECEF
@@ -138,12 +141,17 @@ namespace route {
          * \brief Helper function to generate a CARMA route message based on planned lanelet route
          * \param route Route object from lanelet2 lib routing function
          */
-        cav_msgs::Route compose_route_msg(const lanelet::Optional<lanelet::routing::Route>& route) const;
+        cav_msgs::Route compose_route_msg(const lanelet::Optional<lanelet::routing::Route>& route);
 
         /**
          * \brief Spin callback which will be called frequently based on spin rate
          */
         bool spin_callback();
+        /**
+         * \brief compose_route_marker_msg is a function to generate route rviz markers
+         * \param route Route object from lanelet2 lib routing function
+         */
+        visualization_msgs::MarkerArray compose_route_marker_msg(const lanelet::Optional<lanelet::routing::Route>& route);
 
     private:
 
@@ -165,6 +173,8 @@ namespace route {
         cav_msgs::Route      route_msg_;
         cav_msgs::RouteEvent route_event_msg_;
         cav_msgs::RouteState route_state_msg_;
+        visualization_msgs::MarkerArray route_marker_msg_;
+        std::vector<lanelet::ConstPoint3d> points_; 
 
         // maximum cross track error which can trigger left route event
         double cross_track_max_;
@@ -177,16 +187,17 @@ namespace route {
 
         // current lanelet down track and cross track distance
         double ll_crosstrack_distance_, ll_downtrack_distance_;
-        unsigned int ll_id_;
+        lanelet::Id ll_id_;
 
         // current speed limit on current lanelet
         double speed_limit_ = 0;
 
         // local copy of Route publihsers
-        ros::Publisher route_event_pub_, route_state_pub_, route_pub_;
+        ros::Publisher route_event_pub_, route_state_pub_, route_pub_,route_marker_pub_;
 
         // a bool flag indicates a new route has been generated such that a local copy of Route message should be published again
-        bool new_route_msg_generated_;
+        bool new_route_msg_generated_ = false;
+        bool new_route_marker_generated_ = false;
 
         // a queue of route event. All events in the queue will be published in order on each spin.
         std::queue<uint8_t> route_event_queue;

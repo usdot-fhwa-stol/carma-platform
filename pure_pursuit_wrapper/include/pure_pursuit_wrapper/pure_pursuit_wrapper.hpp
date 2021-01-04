@@ -14,111 +14,35 @@
  * the License.
  */
 
-#include <mutex>
-
+#include <functional>
 // ROS
 #include <ros/ros.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
-#include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
-#include <message_filters/sync_policies/approximate_time.h>
 #include <cav_msgs/Plugin.h>
-#include <carma_utils/CARMAUtils.h>
 // msgs
-#include <cav_msgs/SystemAlert.h>
 #include <cav_msgs/TrajectoryPlan.h>
-
-// autoware
-#include "autoware_msgs/Lane.h"
-#include "autoware_config_msgs/ConfigWaypointFollower.h"
-#include "autoware_msgs/ControlCommandStamped.h"
-
-#include "pure_pursuit_wrapper_worker.hpp"
+#include <autoware_msgs/Lane.h>
 
 namespace pure_pursuit_wrapper {
 
+using WaypointPub = std::function<void(autoware_msgs::Lane)>;
+using PluginDiscoveryPub = std::function<void(cav_msgs::Plugin)>;
 /*!
  * Main class for the node to handle the ROS interfacing.
  */
 
 class PurePursuitWrapper {
     public:
-        /*!
-        * Constructor.
-        * @param nodeHandle the ROS node handle.
-        */
-        PurePursuitWrapper(ros::NodeHandle& nodeHandle);
 
-        /*!
-        * Destructor.
-        */
-        virtual ~PurePursuitWrapper();
+        PurePursuitWrapper(WaypointPub waypoint_pub, PluginDiscoveryPub plugin_discovery_pub);
 
-        // @brief ROS initialize.
-        void Initialize();
+        void trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::ConstPtr& tp);
 
-        // @brief Publish plugin info to plugin discovery
-        void PublishPluginDiscovery();
-        
-        // runs publish at a desired frequency
-        int rate;
-
-        // Shutdown flags and mutex
-        std::mutex shutdown_mutex_;
-        bool shutting_down_ = false;
-
-        // message filter subscribers
-        message_filters::Subscriber<geometry_msgs::PoseStamped> pose_sub;
-        message_filters::Subscriber<cav_msgs::TrajectoryPlan> trajectory_plan_sub;
-        
-        // SyncPolicy
-        typedef message_filters::sync_policies::ApproximateTime<geometry_msgs::PoseStamped, cav_msgs::TrajectoryPlan> SyncPolicy;
-
-        void TrajectoryPlanPoseHandler(const geometry_msgs::PoseStamped::ConstPtr& pose, const cav_msgs::TrajectoryPlan::ConstPtr& tp);
+        bool onSpin();
 
     private:
-
-        //@brief ROS node handle.
-        ros::NodeHandle& nh_;
-
-        //@brief ROS subscribers.
-        ros::Subscriber system_alert_sub_;
-
-        // @brief ROS publishers.
-        ros::Publisher way_points_pub_;
-        ros::Publisher system_alert_pub_;
-        ros::Publisher pure_pursuit_plugin_discovery_pub_;
-
-        PurePursuitWrapperWorker ppww;
-
-        // Plugin discovery message
-        cav_msgs::Plugin plugin_discovery_msg_;
-
-        /*!
-        * Reads and verifies the ROS parameters.
-        * @return true if successful.
-        */
-        bool ReadParameters();
-
-        // @brief ROS subscriber handlers.
-        void SystemAlertHandler(const cav_msgs::SystemAlert::ConstPtr& msg);
-
-        // @brief ROS pusblishers.
-        void PublisherForWayPoints(autoware_msgs::Lane& msg);
-          
-        /*
-         * @brief Handles caught exceptions which have reached the top level of this node
-         * 
-         * @param message The exception to handle
-         * 
-         * If an exception reaches the top level of this node it should be passed to this function.
-         * The function will try to log the exception and publish a FATAL message to system_alert before shutting itself down.
-         */
-        void HandleException(const std::exception& e);
-
-        // @brief Shutsdown this node
-        void Shutdown();
+    WaypointPub waypoint_pub_;
+    PluginDiscoveryPub plugin_discovery_pub_;
+    cav_msgs::Plugin plugin_discovery_msg_;
 
 };
 

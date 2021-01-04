@@ -4,9 +4,17 @@
   <node id="1338" visible="true" version="1" lat="0" lon="0" />
   <node id="1339" visible="true" version="1" lat="0.00000898315" lon="0" />
   <node id="1340" visible="true" version="1" lat="0.00001796631" lon="0" />
+<<<<<<< HEAD
   <node id="1341" visible="true" version="1" lat="0" lon="0.00000898315" />
   <node id="1342" visible="true" version="1" lat="0.00000898315" lon="0.00000898315" />
   <node id="1343" visible="true" version="1" lat="0.00001796631" lon="0.00000898315" />
+=======
+  <node id="1368" visible="true" version="1" lat="0.000035933" lon="0" />
+  <node id="1341" visible="true" version="1" lat="0" lon="0.00000898315" />
+  <node id="1342" visible="true" version="1" lat="0.00000898315" lon="0.00000898315" />
+  <node id="1343" visible="true" version="1" lat="0.00001796631" lon="0.00000898315" />
+  <node id="1369" visible="true" version="1" lat="0.000035933" lon="0.00000898315" />
+>>>>>>> develop
   <way id="1344" visible="true" version="1">
     <nd ref="1338" />
     <nd ref="1339" />
@@ -31,6 +39,21 @@
     <tag k="subtype" v="solid" />
     <tag k="type" v="line_thin" />
   </way>
+<<<<<<< HEAD
+=======
+  <way id="1366" visible="true" version="1">
+    <nd ref="1340" />
+    <nd ref="1368" />
+    <tag k="subtype" v="solid_solid" />
+    <tag k="type" v="line_thin" />
+  </way>
+  <way id="1367" visible="true" version="1">
+    <nd ref="1343" />
+    <nd ref="1369" />
+    <tag k="subtype" v="solid" />
+    <tag k="type" v="line_thin" />
+  </way>
+>>>>>>> develop
   <relation id="1346" visible="true" version="1">
     <member type="way" ref="1344" role="left" />
     <member type="way" ref="1345" role="right" />
@@ -53,6 +76,18 @@
     <!-- Speed Limit -->
     <member type='relation' ref='45218' role='regulatory_element' />
   </relation>
+<<<<<<< HEAD
+=======
+  <relation id="1351" visible="true" version="1">
+    <member type="way" ref="1366" role="left" />
+    <member type="way" ref="1367" role="right" />
+    <tag k="dynamic" v="no" />
+    <tag k="location" v="urban" />
+    <tag k="one_way" v="yes" />
+    <tag k="subtype" v="road" />
+    <tag k="type" v="lanelet" />
+  </relation>
+>>>>>>> develop
 
   <!-- Regulatory speed limit -->
   <relation id='45218' visible='true' version='1'>

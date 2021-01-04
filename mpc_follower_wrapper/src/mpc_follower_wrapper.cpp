@@ -30,9 +30,6 @@ MPCFollowerWrapper::MPCFollowerWrapper(ros::CARMANodeHandle &nodeHandle): nh_(no
   ROS_INFO("Successfully launched node.");
 }
 
-MPCFollowerWrapper::~MPCFollowerWrapper() {
-}
-
 void MPCFollowerWrapper::Initialize() {
 
 
@@ -51,9 +48,15 @@ void MPCFollowerWrapper::Initialize() {
   plugin_discovery_msg_.type = cav_msgs::Plugin::CONTROL;
   plugin_discovery_msg_.capability = "control_mpc_plan/plan_controls";
 
+<<<<<<< HEAD
   ros::CARMANodeHandle::setSpinCallback([this]() -> bool {
   mpc_plugin_discovery_pub_.publish(plugin_discovery_msg_);
   return true;
+=======
+  ros::CARMANodeHandle::setSpinCallback([this]() {
+    mpc_plugin_discovery_pub_.publish(plugin_discovery_msg_);
+    return true;
+>>>>>>> develop
   });
 }
 

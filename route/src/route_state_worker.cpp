@@ -18,9 +18,7 @@
 
 namespace route {
 
-    RouteStateWorker::RouteStateWorker() : state_(RouteState::LOADING) { }
-
-    RouteStateWorker::RouteState RouteStateWorker::get_route_state() {
+    RouteStateWorker::RouteState RouteStateWorker::get_route_state() const {
         return state_;
     }
 

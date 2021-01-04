@@ -137,6 +137,4 @@ namespace guidance
         return false;
     }
 
-    GuidanceStateMachine::GuidanceStateMachine() {}
-
 }

@@ -50,7 +50,7 @@ namespace guidance
             /*!
              * \brief Default constructor for GuidanceStateMachine
              */
-            GuidanceStateMachine();
+            GuidanceStateMachine() = default;
 
             /*!
              * \brief Handle system_alert message from ROS network.
