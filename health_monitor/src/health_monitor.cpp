@@ -24,8 +24,6 @@ namespace health_monitor
 
     HealthMonitor::HealthMonitor()
     {
-        is_published_truck =  std::vector<bool>(8, false);
-        is_published_car = std::vector<bool>(6, false);
         car_ = false;
         truck_ = false;
 
@@ -62,6 +60,36 @@ namespace health_monitor
         car_=false;
         pnh_->getParam("truck", truck_);
         pnh_->getParam("car", car_);
+
+        // Log parameters
+        ROS_INFO_STREAM("Health Monitor Parameters {");
+        ROS_INFO_STREAM("spin_rate_hz: " << spin_rate_);
+        ROS_INFO_STREAM("required_driver_timeout: " << driver_timeout_);
+        ROS_INFO_STREAM("startup_duration: " << startup_duration_);
+        ROS_INFO_STREAM("plugin_service_prefix: " << plugin_service_prefix_);
+        ROS_INFO_STREAM("strategic_plugin_service_suffix: " << strategic_plugin_service_suffix_);
+        ROS_INFO_STREAM("tactical_plugin_service_suffix: " << tactical_plugin_service_suffix_);
+        ROS_INFO_STREAM("truck: " << truck_);
+        ROS_INFO_STREAM("car: " << car_);
+        ROS_INFO_STREAM("required_plugins: [");
+        for(auto p : required_plugins_) {
+            ROS_INFO_STREAM("   " << p);
+        }
+        ROS_INFO_STREAM("  ]");
+
+        ROS_INFO_STREAM("required_drivers: [");
+        for(auto p : required_drivers_) {
+            ROS_INFO_STREAM("   " << p);
+        }
+        ROS_INFO_STREAM("  ]");
+
+        ROS_INFO_STREAM("lidar_gps_drivers: [");
+        for(auto p : lidar_gps_drivers_) {
+            ROS_INFO_STREAM("   " << p);
+        }
+        ROS_INFO_STREAM("  ]");
+        ROS_INFO_STREAM("}");
+        
          
 
         // initialize worker class
@@ -70,7 +98,6 @@ namespace health_monitor
 
         // record starup time
         start_up_timestamp_ = ros::Time::now().toNSec() / 1e6;
-        start_time_flag_=ros::Time::now();
 
         ros::CARMANodeHandle::setSystemAlertCallback([&](const cav_msgs::SystemAlertConstPtr& msg) -> void {
 
@@ -145,182 +172,19 @@ namespace health_monitor
         long time_now=(ros::Time::now().toNSec() / 1e6);
         ros::Duration sd(startup_duration_);
         long start_duration=sd.toNSec() / 1e6;
-        
-        /*Publish each system alert only once*/
-        auto crit_driver_status_truck = driver_manager_.are_critical_drivers_operational_truck(time_now);
-        auto crit_driver_status_car = driver_manager_.are_critical_drivers_operational_car(time_now);
 
-
-        auto dm = driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration,start_time_flag_.isZero());
-        if(truck_ == true)
-        {
-            if((crit_driver_status_truck == "s_1_l1_1_l2_1_g_1") && (is_published_truck[0] == false)) //"All essential drivers are ready"
-            {
-             	nh_->publishSystemAlert(dm);
-
-  		        is_published_truck[0] = true;
-            } 
-           else if((start_time_flag_.isZero() == true) || (time_now - start_up_timestamp_ <= start_duration) && (is_published_truck[1] == false)) //"System is starting up..."
-            {
-                nh_->publishSystemAlert(dm);
-
-  		        is_published_truck[1] = true;
-            } 
-            else if((crit_driver_status_truck == "s_1_l1_0_l2_1_g_1") || (crit_driver_status_truck=="s_1_l1_1_l2_0_g_1")&& (is_published_truck[2] == false)) //One LIDAR Failure
-            {
-             	nh_->publishSystemAlert(dm);
-
-  		        is_published_truck[2] = true;
-            } 
-            else if((crit_driver_status_truck == "s_1_l1_0_l2_1_g_0") || (crit_driver_status_truck =="s_1_l1_1_l2_0_g_0")&& (is_published_truck[3] == false)) //One LIDAR and GPS Failure
-            {
-             	nh_->publishSystemAlert(dm);
-
-  		        is_published_truck[3] = true;
-            } 
-            else if((crit_driver_status_truck == "s_1_l1_1_l2_1_g_0" )&& (is_published_truck[4] == false)) //GPS Failure
-            {
-             	nh_->publishSystemAlert(dm); 
-
-  		        is_published_truck[4] = true;
-            } 
-            else if((crit_driver_status_truck == "s_1_l1_0_l2_0_g_1" ) && (is_published_truck[5] == false)) //Both LIDARs Failed
-            {
-             	nh_->publishSystemAlert(dm);
-
-  		        is_published_truck[5] = true;
-            } 
-            else if((crit_driver_status_truck == "s_1_l1_0_l2_0_g_0") && (is_published_truck[6] == false)) //LIDARs and GPS Failure
-            {
-             	nh_->publishSystemAlert(dm);
-
-  		        is_published_truck[6] = true;
-            } 
-            else if((crit_driver_status_truck == "s_0") && (is_published_truck[7] == false)) //SSC Failure
-            {
-             	nh_->publishSystemAlert(dm);
-
-  		        is_published_truck[7] = true;
-            }       
-            
-        }//End truck
-        
-        else if (car_ == true)
-        {
-            if((crit_driver_status_car == "s_1_l_1_g_1") && (is_published_car[0] == false)) //"All essential drivers are ready"
-            {
-             	nh_->publishSystemAlert(dm);
-
-  		        is_published_car[0] = true;
-            } 
-            else if((start_time_flag_.isZero()==true) || (time_now - start_up_timestamp_ <= start_duration) && (is_published_car[1] == false)) //"System is starting up..."
-            {
-                nh_->publishSystemAlert(dm);
-
-  		        is_published_truck[1] = true;
-            }
-            else if((crit_driver_status_car == "s_1_l_1_g_0") && (is_published_car[2] == false)) //GPS Failure
-            {
-                nh_->publishSystemAlert(dm);
-  		        is_published_car[2] = true;
-            }
-            else if((crit_driver_status_car == "s_1_l_0_g_1") && (is_published_car[3] == false)) //LIDAR Failure
-            {
-                nh_->publishSystemAlert(dm);
-
-  		        is_published_car[3] = true;
-            }
-            else if((crit_driver_status_car == "s_1_l_0_g_0") && (is_published_car[4] == false)) //LIDAR, GPS Failure
-            {
-                nh_->publishSystemAlert(dm);
-
-  		        is_published_car[4] = true;
-            }
-            else if((crit_driver_status_car == "s_0") && (is_published_car[5] == false)) //SSC Failure
-            {
-                nh_->publishSystemAlert(dm);
-
-  		        is_published_car[5] = true;
-            }
-            
-        }//End car
-
-
+        auto dm = driver_manager_.handleSpin(truck_,car_,time_now,start_up_timestamp_,start_duration);
+        if (!prev_alert) {
+            prev_alert = dm;
+            nh_->publishSystemAlert(dm);
+        } else if (prev_alert->type == dm.type && prev_alert->description.compare(dm.description) == 0) { // Do not publish duplicate alerts
+            ROS_DEBUG_STREAM("No change to alert status");
+        } else {
+            prev_alert = dm;
+            nh_->publishSystemAlert(dm);
+        }
+    
         return true;
-    }
-
-    void HealthMonitor::pubStatusLogic(long time_now)
-    {   
-        auto crit_driver_status_truck = driver_manager_.are_critical_drivers_operational_truck(time_now);
-        auto crit_driver_status_car = driver_manager_.are_critical_drivers_operational_car(time_now);
-
-        if(truck_ == true)
-        {
-            int pos = getStatusTruck(crit_driver_status_truck);
-            if (pos < is_published_truck.size())
-                is_published_truck[pos] = true;
-
-         }//End truck
-        
-        else if (car_ == true)
-        {       
-            int pos = getStatusCar(crit_driver_status_car);
-            if (pos < is_published_car.size())
-                is_published_car[pos] = true;
-
-        }//End car
-
-    }//End pubStatusLogic
-
-
-    int HealthMonitor::getStatusTruck(std::string status)
-    {
-        if(status == "s_1_l1_1_l2_1_g_1")        
-            return 0;
-        else if(status == "s_1_l1_0_l2_1_g_1")
-            return 2;
-        else if (status == "s_1_l1_0_l2_1_g_0")
-            return 3;
-        else if(status == "s_1_l1_1_l2_1_g_0")
-            return 4;
-        else if(status =="s_1_l1_0_l2_0_g_1")
-            return 5;
-        else if(status == "s_1_l1_0_l2_0_g_0") 
-            return 6;
-        else if(status =="s_0")
-            return 7;
-        else
-            throw std::invalid_argument("Invalid crit driver status");
-
-    }
-
-
-    int HealthMonitor::getStatusCar(std::string status)
-    {
-     
-        if(status == "s_1_l_1_g_1" )
-            return 0;
-        else if(status == "s_1_l_1_g_0")
-            return 2;
-        else if(status == "s_1_l_0_g_1")
-            return 3;
-        else if(status == "s_1_l_0_g_0")
-            return 4;
-        else if(status == "s_0")
-            return 5;
-        else
-            throw std::invalid_argument("Invalid crit driver status");
-    }
-
-
-    std::vector<bool> HealthMonitor::getPubStatusCar()
-    {
-        return is_published_car;
-    }
-
-    std::vector<bool> HealthMonitor::getPubStatusTruck()
-    {
-        return is_published_truck;
     }
 
 

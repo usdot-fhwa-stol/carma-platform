@@ -114,6 +114,7 @@ install(DIRECTORY
 
 catkin_add_gmock(${PROJECT_NAME}-test
   test/test_lightbar_manager_sm.cpp
+  test/test_lightbar_manager_worker.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}-test
@@ -125,7 +126,6 @@ if (CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
   add_rostest_gtest(lightbar_manager_test 
     test/lightbar_manager_launch.test 
-    test/lightbar_manager_worker_test.cpp
     test/lightbar_manager_node_test.cpp
   )
   target_link_libraries(lightbar_manager_test

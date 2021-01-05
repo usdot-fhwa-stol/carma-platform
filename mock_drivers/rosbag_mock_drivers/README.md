@@ -101,7 +101,7 @@ Once the classes are created, the src/main.cpp file will need to be updated to t
   }
 ```
 
-Additionally, for full integration with carma the carma-config development config will need to be updated mainly the ```drivers.launch``` and ```docker-compose.yml``` launch files. Additionally, the ```carmajava/launch/mock_drivers.launch``` file should be updated to launch this new mock_driver.
+Additionally, for full integration with carma the carma-config development config will need to be updated mainly the ```drivers.launch``` and ```docker-compose.yml``` launch files. Additionally, the ```carma/launch/mock_drivers.launch``` file should be updated to launch this new mock_driver.
 
 ## Testing
 
