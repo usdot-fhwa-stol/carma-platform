@@ -123,7 +123,11 @@ TEST(LocalizerMode, testStream)
   ASSERT_EQ("NDT", output.str());
   output.str(std::string());
 
-  output << LocalizerMode::AUTO;
-  ASSERT_EQ("AUTO", output.str());
+  output << LocalizerMode::AUTO_WITH_TIMEOUT;
+  ASSERT_EQ("AUTO_WITH_TIMEOUT", output.str());
+  output.str(std::string());
+
+  output << LocalizerMode::AUTO_WITHOUT_TIMEOUT;
+  ASSERT_EQ("AUTO_WITHOUT_TIMEOUT", output.str());
   output.str(std::string());
 }

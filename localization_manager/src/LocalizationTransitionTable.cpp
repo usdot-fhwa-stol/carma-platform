@@ -146,7 +146,7 @@ void LocalizationTransitionTable::signalWhenDEGRADED(LocalizationSignal signal)
       }
       break;
     case LocalizationSignal::UNUSABLE_NDT_FREQ_OR_FITNESS_SCORE:
-      if (mode_ == LocalizerMode::AUTO_WITH_TIMEOUT || LocalizerMode::AUTO_WITHOUT_TIMEOUT)
+      if (mode_ == LocalizerMode::AUTO_WITH_TIMEOUT || mode_ == LocalizerMode::AUTO_WITHOUT_TIMEOUT)
       {
         setAndLogState(LocalizationState::DEGRADED_NO_LIDAR_FIX, signal);
       }

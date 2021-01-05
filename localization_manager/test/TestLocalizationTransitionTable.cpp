@@ -37,7 +37,7 @@ void testNonTransitionSignals(LocalizationTransitionTable& table, const std::vec
 
 TEST(LocalizationTransitionTable, testGetState)
 {
-  LocalizationTransitionTable ltt(LocalizerMode::AUTO);
+  LocalizationTransitionTable ltt(LocalizerMode::AUTO_WITH_TIMEOUT);
   ASSERT_EQ(LocalizationState::UNINITIALIZED, ltt.getState());
 
   ltt.signal(LocalizationSignal::INITIAL_POSE);
@@ -46,7 +46,7 @@ TEST(LocalizationTransitionTable, testGetState)
 
 TEST(LocalizationTransitionTable, testTransitionCallback)
 {
-  LocalizationTransitionTable ltt(LocalizerMode::AUTO);
+  LocalizationTransitionTable ltt(LocalizerMode::AUTO_WITH_TIMEOUT);
 
   boost::optional<LocalizationState> prev, current;
   boost::optional<LocalizationSignal> sig;
@@ -108,7 +108,6 @@ TEST(LocalizationTransitionTable, testTransitionsGNSSMode)
   // Evaluate DEGRADED_NO_LIDAR_FIX state
 
   testNonTransitionSignals(ltt, {
-                                    LocalizationSignal::GOOD_NDT_FREQ_AND_FITNESS_SCORE,
                                     LocalizationSignal::POOR_NDT_FREQ_OR_FITNESS_SCORE,
                                     LocalizationSignal::UNUSABLE_NDT_FREQ_OR_FITNESS_SCORE,
                                     LocalizationSignal::TIMEOUT,
@@ -221,7 +220,7 @@ TEST(LocalizationTransitionTable, testTransitionsNDTMode)
 TEST(LocalizationTransitionTable, testTransitionsAUTOMode)
 {
   // Test NDT Mode
-  LocalizationTransitionTable ltt(LocalizerMode::AUTO);
+  LocalizationTransitionTable ltt(LocalizerMode::AUTO_WITH_TIMEOUT);
 
   // Evaluate UNINITIALIZED State
   ASSERT_EQ(LocalizationState::UNINITIALIZED, ltt.getState());
@@ -269,7 +268,6 @@ TEST(LocalizationTransitionTable, testTransitionsAUTOMode)
   ASSERT_EQ(LocalizationState::DEGRADED_NO_LIDAR_FIX, ltt.getState());
 
   testNonTransitionSignals(ltt, {
-                                  LocalizationSignal::GOOD_NDT_FREQ_AND_FITNESS_SCORE,
                                   LocalizationSignal::POOR_NDT_FREQ_OR_FITNESS_SCORE,
                                   LocalizationSignal::UNUSABLE_NDT_FREQ_OR_FITNESS_SCORE,
                                   LocalizationSignal::LIDAR_SENSOR_FAILURE,

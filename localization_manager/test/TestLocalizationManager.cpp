@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 #include <boost/optional.hpp>
+#include <cav_msgs/LocalizationStatusReport.h>
 #include <carma_utils/timers/testing/TestTimer.h>
 #include <carma_utils/timers/testing/TestTimerFactory.h>
 #include <carma_utils/testing/TestHelpers.h>
@@ -34,7 +35,7 @@ using namespace localizer;
 TEST(LocalizationManager, testConstructor)
 {
   LocalizationManagerConfig config;
-  LocalizationManager manager([](auto pose) {}, [](auto tf) {}, [](auto status) {}, config,
+  LocalizationManager manager([](auto pose) {}, [](auto status) {}, [](auto pose_with_cov) {}, config,
                               std::make_unique<carma_utils::timers::testing::TestTimerFactory>());
 }
 
@@ -43,7 +44,7 @@ TEST(LocalizationManager, testSpin)
   LocalizationManagerConfig config;
 
   boost::optional<cav_msgs::LocalizationStatusReport> status_msg;
-  LocalizationManager manager([](auto pose) {}, [](auto tf) {}, [&](auto status) { status_msg = status; }, config,
+  LocalizationManager manager([](auto pose) {}, [&](auto status) { status_msg = status; }, [](auto pose_with_cov) {}, config,
                               std::make_unique<carma_utils::timers::testing::TestTimerFactory>());
 
   ASSERT_FALSE(!!status_msg);
@@ -60,15 +61,15 @@ TEST(LocalizationManager, testSpin)
 TEST(LocalizationManager, testSignals)
 {
   LocalizationManagerConfig config;
-  config.localization_mode = LocalizerMode::AUTO;
+  config.localization_mode = LocalizerMode::AUTO_WITH_TIMEOUT;
   config.auto_initialization_timeout = 1000;
   config.gnss_only_operation_timeout = 2000;
 
   boost::optional<geometry_msgs::PoseStamped> published_pose;
-  boost::optional<geometry_msgs::TransformStamped> published_transform;
+  boost::optional<geometry_msgs::PoseWithCovarianceStamped> published_initial_pose;
 
-  LocalizationManager manager([&](auto pose) { published_pose = pose; }, [&](auto tf) { published_transform = tf; },
-                              [](auto status) {}, config,
+  LocalizationManager manager([&](auto pose) { published_pose = pose; },
+                              [](auto status) {}, [&](auto initial) { published_initial_pose = initial; }, config,
                               std::make_unique<carma_utils::timers::testing::TestTimerFactory>());
 
   ros::Time::setNow(ros::Time(1.0));
@@ -76,10 +77,13 @@ TEST(LocalizationManager, testSignals)
   ASSERT_EQ(LocalizationState::UNINITIALIZED, manager.getState());
 
   geometry_msgs::PoseWithCovarianceStamped msg;
+  msg.header.seq = 1;
   geometry_msgs::PoseWithCovarianceStampedConstPtr msg_ptr(new geometry_msgs::PoseWithCovarianceStamped(msg));
   manager.initialPoseCallback(msg_ptr);
 
   ASSERT_EQ(LocalizationState::INITIALIZING, manager.getState());
+  ASSERT_TRUE(!!published_initial_pose);
+  ASSERT_EQ(msg.header.seq, published_initial_pose->header.seq);
 
   ros::Time::setNow(ros::Time(2.1));
 
@@ -107,7 +111,6 @@ TEST(LocalizationManager, testSignals)
   ASSERT_EQ(LocalizationState::OPERATIONAL, manager.getState());
 
   ASSERT_TRUE(!!published_pose);
-  ASSERT_TRUE(!!published_transform);
 
   ros::Time::setNow(ros::Time(3.2));
   pose_msg.header.stamp = ros::Time::now();
@@ -153,22 +156,22 @@ TEST(LocalizationManager, testSignals)
 
   ASSERT_EQ(LocalizationState::DEGRADED_NO_LIDAR_FIX, manager.getState());
 
-  published_transform = boost::none;
   published_pose = boost::none;
+  published_initial_pose = boost::none;
 
   manager.poseAndStatsCallback(pose_msg_ptr, stat_msg_ptr);
 
-  ASSERT_FALSE(!!published_transform);
   ASSERT_FALSE(!!published_pose);
 
   manager.gnssPoseCallback(pose_msg_ptr);
 
-  ASSERT_TRUE(!!published_transform);
   ASSERT_TRUE(!!published_pose);
 
   ros::Time::setNow(ros::Time(3.7));
 
   manager.initialPoseCallback(msg_ptr);
+
+  ASSERT_TRUE(!!published_initial_pose);
 
   ASSERT_EQ(LocalizationState::INITIALIZING, manager.getState());
 

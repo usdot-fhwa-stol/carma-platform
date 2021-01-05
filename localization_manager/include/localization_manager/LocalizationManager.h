@@ -22,6 +22,7 @@
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <boost/optional.hpp>
 #include <autoware_msgs/NDTStat.h>
+#include <tf2/LinearMath/Vector3.h>
 #include <cav_msgs/SystemAlert.h>
 #include <cav_msgs/LocalizationStatusReport.h>
 #include <functional>
