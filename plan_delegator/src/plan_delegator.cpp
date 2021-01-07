@@ -169,6 +169,7 @@ namespace plan_delegator
                 latest_trajectory_plan.trajectory_points.insert(latest_trajectory_plan.trajectory_points.end(),
                                                                 plan_req.response.trajectory_plan.trajectory_points.begin(),
                                                                 plan_req.response.trajectory_plan.trajectory_points.end());
+                latest_trajectory_plan.initial_longitudinal_velocity = plan_req.response.trajectory_plan.initial_longitudinal_velocity;
                 if(isTrajectoryLongEnough(latest_trajectory_plan))
                 {
                     ROS_INFO_STREAM("Plan Trajectory completed for " << latest_maneuver_plan_.maneuver_plan_id);
