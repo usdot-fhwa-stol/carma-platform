@@ -23,14 +23,6 @@
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 #include <lanelet2_core/Attribute.h>
 #include <boost/archive/binary_oarchive.hpp>
-#include <lanelet2_extension/projection/local_frame_projector.h>
-#include <lanelet2_core/primitives/Lanelet.h>
-#include <lanelet2_core/geometry/Lanelet.h>
-#include <lanelet2_io/Projection.h>
-#include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_io/Io.h>
-#include <lanelet2_io/io_handlers/Factory.h>
-#include <lanelet2_extension/io/autoware_osm_parser.h>
 #include <sstream>
 #include <string>
 #include "TestHelpers.h"

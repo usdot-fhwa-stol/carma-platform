@@ -345,18 +345,7 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
     std::string target_frame;
     lanelet::ErrorMessages load_errors;
 
-
-    ROS_WARN_STREAM("Placeholder1");
-
     geometry_msgs::PoseStamped msg;
-
-    ROS_WARN_STREAM("Placeholder2");
-
-
-    
-
-        ROS_WARN_STREAM("Placeholder2a");
-
 
     //Create route msg
     cav_msgs::Route route_msg;
@@ -378,8 +367,6 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
     lanelet::Lanelet start_lanelet;
     lanelet::Lanelet end_lanelet;
 
-        ROS_WARN_STREAM("Placeholder2b");
-
 
     try 
     {
@@ -396,8 +383,6 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
         FAIL() << "The specified ending lanelet Id of " << end_id << " does not exist in the provided map.";
     }
 
-        ROS_WARN_STREAM("Placeholder3");
-
 
     lanelet::LaneletMapConstPtr const_map(map);
     lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
@@ -407,8 +392,6 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
     route_msg = worker.compose_route_msg(route);
     ASSERT_TRUE(route_msg.route_path_lanelet_ids.size() > 0);
 
-ROS_WARN_STREAM("Begin Test");
-
     //Assign vehicle position
     msg.pose.position.x = 0.0;
     msg.pose.position.y = 0.0;
@@ -417,40 +400,35 @@ ROS_WARN_STREAM("Begin Test");
 
     worker.set_CTE_counter(0);
     worker.set_out_counter(0);
+    worker.set_CTE_dist(1.0);
 
     geometry_msgs::PoseStampedPtr mpt(new geometry_msgs::PoseStamped(msg));
-        ROS_WARN_STREAM("Placeholder4");
-
 
     /*Compare vehicle position to the route bounds */
     lanelet::BasicPoint2d current_loc(mpt->pose.position.x, mpt->pose.position.y);
-                ROS_WARN_STREAM("Placeholder4a");
 
     auto via_lanelet_vector = lanelet::geometry::findNearest(map->laneletLayer, current_loc, 1);
-            ROS_WARN_STREAM("Placeholder4b");
 
     auto current_lanelet = lanelet::ConstLanelet(via_lanelet_vector[0].second.constData());
 
     auto ll_track = carma_wm::geometry::trackPos(current_lanelet, current_loc);
-        ROS_WARN_STREAM("Placeholder5");
-
 
     worker.pose_cb(mpt);
-            ROS_WARN_STREAM("POSE_CB CLEAR");
-
 
     bool test1 = worker.crosstrack_error_check(mpt, start_lanelet, ll_track);
     ASSERT_EQ(test1, true); //The vehicle will show crosstrack error, so the value should return true
 
     //TODO: Use position values to show the case when there is no crosstrack error
+    worker.set_CTE_counter(0);
+    worker.set_out_counter(0);
+    worker.set_CTE_dist(1.0);
+
+
     //Assign vehicle position
     msg.pose.position.x = -9.45542;
     msg.pose.position.y = -182.324;
 
      geometry_msgs::PoseStampedPtr mpt2(new geometry_msgs::PoseStamped(msg));
-        ROS_WARN_STREAM("Placeholder4");
-
-
 
     bool test2 = worker.crosstrack_error_check(mpt2, start_lanelet, ll_track);
     ASSERT_EQ(test2, false);

@@ -20,14 +20,9 @@
 #include<ros/ros.h>
 #include <carma_utils/CARMAUtils.h>
 #include <cav_msgs/Route.h>
-#include <cav_msgs/RouteEvent.h>
 #include <carma_wm/CARMAWorldModel.h>
 #include <carma_wm/TrafficControl.h>
-#include <lanelet2_core/geometry/BoundingBox.h>
-#include <lanelet2_core/primitives/BoundingBox.h>
-#include <lanelet2_core/primitives/Lanelet.h>
-#include <lanelet2_core/geometry/Lanelet.h>
-#include <geometry_msgs/PoseStamped.h>
+
 
 
 namespace carma_wm

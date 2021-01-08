@@ -440,81 +440,67 @@ namespace route {
 
 bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStampedConstPtr& msg, lanelet::ConstLanelet current, carma_wm::TrackPos llt_track)
 {
-
-    ROS_ERROR_STREAM("CheckEnter");
-
-    ROS_INFO_STREAM("x: "<<current.rightBound2d().front().x() <<" y:"<< current.rightBound2d().front().y());
-
-
-    ROS_ERROR_STREAM("CheckEnter");
-
   auto route = lanelet::ConstLanelets();
   for(auto id : route_msg_.route_path_lanelet_ids)
   {
-    ROS_ERROR_STREAM("Check1.aa");
     auto ll = world_model_->getMap()->laneletLayer.get(id);
     route.push_back(ll);
   }
-           ROS_ERROR_STREAM("Check1");
 
   bool out_of_llt_bounds = false;
 
     lanelet::BasicPoint2d position;
 
     position.x()= msg->pose.position.x;
-    position.y()= msg->pose.position.y;  
+    position.y()= msg->pose.position.y;
 
-    
-    ROS_INFO_STREAM("Distance1: "<< boost::geometry::distance(position, current.polygon2d())<<" Crosstrack: "<< cross_track_dist );
-    ROS_INFO_STREAM("Distance2: "<< boost::geometry::distance(position, current.polygon2d())<<" Downtrack: "<< llt_track.downtrack);
+
+    ROS_DEBUG_STREAM("Distance1: "<< boost::geometry::distance(position, current.polygon2d())<<" Crosstrack: "<< cross_track_dist );
+    ROS_DEBUG_STREAM("Distance2: "<< boost::geometry::distance(position, current.polygon2d())<<" Downtrack: "<< llt_track.downtrack);
 
     
     if (boost::geometry::distance(position, current.polygon2d()) > cross_track_dist) //Evaluate lanelet crosstrack distance from vehicle
         {
-            cte_count++;
+            cte_count_++;
 
-            if(cte_count > 4) //If the distance exceeds the crosstrack distance a certain number of times, report that the route has been departed
+            if(cte_count_ > 4) //If the distance exceeds the crosstrack distance a certain number of times, report that the route has been departed
                 return true;
         }
 
          if (boost::geometry::distance(position, current.polygon2d()) > llt_track.downtrack) //Evaluate lanelet downtrack distance
         {
-            cte_count++;
+            cte_count_++;
 
-            if(cte_count > 4)
+            if(cte_count_ > 4)
                 return true;
         }
 
+  ROS_DEBUG_STREAM("LLt Polygon Dimensions1: " << current.polygon2d().front().x()<< ", "<< current.polygon2d().front().y());
+  ROS_DEBUG_STREAM("LLt Polygon Dimensions2: " << current.polygon2d().back().x()<< ", "<< current.polygon2d().back().y());
+
     if(!boost::geometry::within(position, current.polygon2d())) //Determine whether or not the vehicle is in the lanelet polygon
     {
-    ROS_WARN_STREAM("TRUE");
-    out_of_llt_bounds = true;
+        out_of_llt_bounds = true;
     }
 
-    ROS_ERROR_STREAM("Check2");
-
-
-
     auto graph = world_model_->getMapRoutingGraph();
-    ROS_ERROR_STREAM("Check2.a");
     auto following_llts = graph->following(current); //Get all subsequent lanelets from the map
     bool out_of_following_llts = false;
     
-    ROS_ERROR_STREAM("Check3");
-    ROS_INFO_STREAM("Following_size "<< following_llts.size());
+    ROS_DEBUG_STREAM("Following_size "<< following_llts.size());
     for(auto i:following_llts)
     {
        if (boost::geometry::within(position, i.polygon2d())) 
            {
-               ROS_WARN_STREAM("FALSE");
                return false; // iterate over the list of lanelets in the route. If the vehicle is inside of one, return that there is "No CTE violation"
         
            }
         else if (!boost::geometry::within(position, i.polygon2d()) && boost::geometry::distance(position, current.polygon2d()) > cross_track_dist)
         {
-            ROS_WARN_STREAM("TRUE");
+            cte_count_++;
 
-            out_of_following_llts = true;
+            if(cte_count_ > 4)
+                out_of_following_llts = true;
         }
         
     }
@@ -527,15 +513,21 @@ bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStamp
 
     void RouteGeneratorWorker::set_out_counter(int out_counter)
     {
-        out_count = out_counter;
+        out_count_ = out_counter;
 
     }
 
     void RouteGeneratorWorker::set_CTE_counter(int cte_counter)
     {
-        cte_count = cte_counter;
+        cte_count_ = cte_counter;
 
     }
+
+    void RouteGeneratorWorker::set_CTE_dist(int cte_dist)
+    {
+        cross_track_dist = cte_dist;
+    }
+
 
 
 

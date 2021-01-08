@@ -183,6 +183,13 @@ namespace route {
         */
         void set_out_counter(int out_counter);
 
+        /**
+         * \brief set the maximum crosstrack error distance
+         * 
+         *  \param cte_dist maximum distance value (specified in the route_config_params.yaml file)
+        */
+        void set_CTE_dist(int cte_dist);
+
 
     private:
 
@@ -236,13 +243,13 @@ namespace route {
         // private helper function to add a new route event into event queue
         void publish_route_event(uint8_t event_type);        
 
-        double cross_track_dist = 1.0;
+        double cross_track_dist;
 
         // counter to record how many times vehicle's position exceeds crosstrack distance
-        int cte_count;
+        int cte_count_;
 
         // counter to record how many times the vehicle leaves the lanelet bounds
-        int out_count;
+        int out_count_;
 
     };
 

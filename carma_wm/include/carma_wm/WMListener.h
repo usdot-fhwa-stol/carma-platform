@@ -22,7 +22,6 @@
 #include <ros/callback_queue.h>
 #include <carma_wm/WorldModel.h>
 #include <carma_utils/CARMAUtils.h>
-#include <cav_msgs/RouteEvent.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <autoware_lanelet2_msgs/MapBin.h>
 

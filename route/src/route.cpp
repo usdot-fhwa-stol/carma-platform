@@ -47,7 +47,9 @@ namespace route {
         pnh_->getParam("cte_count", cte_count);
         pnh_->getParam("out_count", out_count);
         rg_worker_.set_CTE_counter(cte_count);
+        rg_worker_.set_out_counter(out_count);
         rg_worker_.set_ctdt_param(ct_error, dt_range);
+        rg_worker_.set_CTE_dist(ct_error);
         std::string route_file_location;
         pnh_->getParam("route_file_path", route_file_location);
         rg_worker_.set_route_file_path(route_file_location);
