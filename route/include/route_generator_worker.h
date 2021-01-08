@@ -38,6 +38,7 @@
 #include <wgs84_utils/wgs84_utils.h>
 #include <boost/filesystem.hpp>
 #include <visualization_msgs/MarkerArray.h>
+#include <geometry_msgs/TwistStamped.h>
 
 
 #include "route_state_worker.h"
@@ -101,6 +102,8 @@ namespace route {
          * \param msg A geometry_msgs::PoseStampedConstPtr msg which contains current vehicle pose in the map frame
          */
         void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
+
+        void twist_cd(const geometry_msgs::TwistStampedConstPtr& msg);
 
         /**
          * \brief Set method for configurable parameter
@@ -192,6 +195,7 @@ namespace route {
         // current speed limit on current lanelet
         double speed_limit_ = 0;
 
+        double current_speed_ = 0;
         // local copy of Route publihsers
         ros::Publisher route_event_pub_, route_state_pub_, route_pub_,route_marker_pub_;
 

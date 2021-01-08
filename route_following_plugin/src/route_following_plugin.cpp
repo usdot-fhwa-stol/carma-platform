@@ -101,14 +101,19 @@ namespace route_following_plugin
         std::cout<<"Total maneuver length:"<<total_maneuver_length<<std::endl;
         bool approaching_route_end = false;
         double time_req_to_stop,dist_req_to_stop;
+        time_req_to_stop = sqrt(2*target_speed/jerk_);
+        dist_req_to_stop = target_speed*time_req_to_stop - (0.167 * jerk_ * pow(time_req_to_stop,3));
+        if(total_maneuver_length - current_progress <= dist_req_to_stop){
+            approaching_route_end = true;
+        }
         while(current_progress < total_maneuver_length && !approaching_route_end)
         {
             ROS_DEBUG_STREAM("Lanlet: " << shortest_path[last_lanelet_index].id());
             auto p = shortest_path[last_lanelet_index].centerline2d().back();
             double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
             double dist_diff = end_dist - current_progress;
-            time_req_to_stop = sqrt(2*speed_progress/jerk_);
-            dist_req_to_stop = speed_progress*time_req_to_stop - (0.167 * jerk_ * pow(time_req_to_stop,3));
+            time_req_to_stop = sqrt(2*target_speed/jerk_);
+            dist_req_to_stop = target_speed*time_req_to_stop - (0.167 * jerk_ * pow(time_req_to_stop,3));
             std::cout<<"Current_progress:"<<current_progress <<" End dist:"<<end_dist<<" dist_diff:"<<dist_diff<<" dist_req_to_stop"<< dist_req_to_stop<<std::endl;
             if(total_maneuver_length - end_dist < dist_req_to_stop){
                 end_dist -= dist_req_to_stop;

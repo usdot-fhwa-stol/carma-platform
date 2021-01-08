@@ -4,4 +4,4 @@ max_crosstrack_error: 25
 
 # Double: downtrack_range
 # Units: meter
-destination_downtrack_range: 0
+destination_downtrack_range: 10

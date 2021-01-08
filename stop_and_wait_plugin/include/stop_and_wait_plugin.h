@@ -79,8 +79,8 @@ namespace stop_and_wait_plugin
          * \return List of centerline points paired with speed limits
          */ 
         std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
-                                                                      double max_starting_downtrack,
-                                                                      const carma_wm::WorldModelConstPtr& wm);
+                                                                      double starting_downtrack,
+                                                                      const carma_wm::WorldModelConstPtr& wm, const cav_msgs::VehicleState& state);
           /**
          * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of trajectory points for trajectory planning
          * 
@@ -102,7 +102,7 @@ namespace stop_and_wait_plugin
          * \return index of nearest point in points
          */
         int getNearestPointIndex(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state);
-
+        int getNearestRouteIndex(lanelet::BasicLineString2d& points, const cav_msgs::VehicleState& state);
         /**
          * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
          */ 
@@ -130,6 +130,7 @@ namespace stop_and_wait_plugin
         //CARMA ROS node handles
         std::shared_ptr<ros::CARMANodeHandle> nh_,pnh_;
 
+        std::shared_ptr<ros::CARMANodeHandle> pnh2_;
         // ROS service servers
         ros::ServiceServer trajectory_srv_;
 
@@ -178,6 +179,8 @@ namespace stop_and_wait_plugin
          * \param msg Latest twist message
          */
         void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
+
+        double destination_downtrack_range = 0.0;
         
     };
 }

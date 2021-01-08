@@ -377,12 +377,17 @@ namespace route {
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_DEPARTED);
             }
             // check if we reached our destination be remaining down track distance
-            if(current_downtrack_distance_ > world_model_->getRoute()->length2d() - down_track_target_range_)
+            if(current_downtrack_distance_ > world_model_->getRoute()->length2d() - down_track_target_range_ && current_speed_ == 0 || current_downtrack_distance_ > world_model_->getRoute()->length2d())
             {
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_COMPLETED);
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_COMPLETED);
             }
         }
+    }
+
+    void RouteGeneratorWorker::twist_cd(const geometry_msgs::TwistStampedConstPtr& msg)
+    {
+        current_speed_ = msg->twist.linear.x;
     }
 
     void RouteGeneratorWorker::set_publishers(ros::Publisher route_event_pub, ros::Publisher route_state_pub, ros::Publisher route_pub,ros::Publisher route_marker_pub)
