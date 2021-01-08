@@ -234,119 +234,107 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   log::printDebugPerLine(time_bound_points, &log::pointSpeedPairToStream);
 
   ROS_DEBUG("Got basic points ");
-  std::vector<DiscreteCurve> sub_curves = compute_sub_curves(time_bound_points);
 
-  ROS_DEBUG_STREAM("Got sub_curves " << sub_curves.size());
+  // ROS_DEBUG_STREAM("Got sub_curves " << sub_curves.size());
 
   std::vector<double> final_yaw_values;
   std::vector<double> final_actual_speeds;
   std::vector<lanelet::BasicPoint2d> all_sampling_points;
 
-  for (const auto& discreet_curve : sub_curves)
-  {
-    ROS_DEBUG("SubCurve");
-
-    std::vector<double> speed_limits;
-    std::vector<lanelet::BasicPoint2d> curve_points;
-    splitPointSpeedPairs(discreet_curve.points, &curve_points, &speed_limits);
-    ROS_WARN_STREAM("size" <<discreet_curve.points.size());
-    ROS_WARN_STREAM("x[0]" <<discreet_curve.points[0].point.x() << ",y[0]" <<discreet_curve.points[0].point.y() );
-    ROS_WARN_STREAM("x[1]" <<discreet_curve.points[1].point.x() << ",y[1]" <<discreet_curve.points[1].point.y() );
-    
-    std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(curve_points); // Compute splines based on curve points
-    
-    
-    if (!fit_curve)
-    {  // TODO how better to handle this case
-      ROS_ERROR_STREAM("Could not fit!");
-      for (size_t i = 0; i < discreet_curve.points.size() - 1; i++)
-      {
-        Eigen::Isometry2d point_in_map =
-            curvePointInMapTF(discreet_curve.frame, discreet_curve.points[i].point, final_yaw_values.back());
-        all_sampling_points.push_back(point_in_map.translation());
-        final_yaw_values.push_back(final_yaw_values.back());
-        final_actual_speeds.push_back(final_actual_speeds.back());
-      }
-      continue;
-    }
-    
-    ROS_DEBUG("Got fit");
-
-    ROS_DEBUG_STREAM("speed_limits.size() " << speed_limits.size());
-
-    std::vector<lanelet::BasicPoint2d> sampling_points;
-    sampling_points.reserve(1 + discreet_curve.points.size() * 2);
-
-    std::vector<double> distributed_speed_limits;
-    distributed_speed_limits.reserve(1 + discreet_curve.points.size() * 2);
-
-    double max_x = curve_points.back().x();
-    double current_dist = curve_points.front().x();
-    double time = 0.0;
-    double time_length = 40.0;
-    double step_size = config_.curve_resample_step_size;
-    int current_speed_index = 0;
-    int i = 0;
-    while (i < time_length) // Resample curve at tighter resolution
+  std::vector<double> speed_limits;
+  std::vector<lanelet::BasicPoint2d> curve_points;
+  splitPointSpeedPairs(time_bound_points, &curve_points, &speed_limits);
+  
+  std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(curve_points); // Compute splines based on curve points
+  
+  if (!fit_curve)
+  {  // TODO how better to handle this case
+    // TODOM check this
+    ROS_ERROR_STREAM("Could not fit!");
+    for (size_t i = 0; i < curve_points.size() - 1; i++)
     {
-      double x = current_dist;
-      
-      time += 1.0/time_length; //adding time_step_size
-      Eigen::VectorXf v = (*fit_curve)[time];
-      lanelet::BasicPoint2d p(v.y(), v.z());
-      
-      sampling_points.push_back(p);
-
-      for (size_t i = current_speed_index; i < curve_points.size(); i++)
-      {
-        if (curve_points[i].x() >= current_dist)
-        {
-          current_speed_index = i;
-          break;
-        }
-      }
-
-      distributed_speed_limits.push_back(speed_limits[current_speed_index]); // Identify speed limits for resampled points
-      current_dist += step_size;
-      i++;
+      //Eigen::Isometry2d point_in_map =
+      //    curvePointInMapTF(discreet_curve.frame, discreet_curve.points[i].point, final_yaw_values.back());
+      all_sampling_points.push_back(curve_points[i]);
+      final_yaw_values.push_back(final_yaw_values.back());
+      final_actual_speeds.push_back(final_actual_speeds.back());
     }
+  }
+  
+  ROS_DEBUG("Got fit");
 
-    log::printDebugPerLine(sampling_points, &log::basicPointToStream);
+  ROS_DEBUG_STREAM("speed_limits.size() " << speed_limits.size());
 
-    std::vector<double> yaw_values = carma_wm::geometry::compute_tangent_orientations(sampling_points);
+  std::vector<lanelet::BasicPoint2d> sampling_points;
+  sampling_points.reserve(1 + curve_points.size() * 2);
 
-    std::vector<double> curvatures = carma_wm::geometry::local_circular_arc_curvatures(
-        sampling_points, config_.curvature_calc_lookahead_count);  
+  std::vector<double> distributed_speed_limits;
+  distributed_speed_limits.reserve(1 + curve_points.size() * 2);
 
-    curvatures = smoothing::moving_average_filter(curvatures, config_.moving_average_window_size);
-
-    log::printDoublesPerLineWithPrefix("curvatures[i]: ", curvatures);
-
-    std::vector<double> ideal_speeds =
-        trajectory_utils::constrained_speeds_for_curvatures(curvatures, config_.lateral_accel_limit);
-
-    //log::printDoublesPerLineWithPrefix("ideal_speeds: ", ideal_speeds);
-
-    std::vector<double> actual_speeds = apply_speed_limits(ideal_speeds, distributed_speed_limits);
-
-    //log::printDoublesPerLineWithPrefix("actual_speeds: ", actual_speeds);
-
-    //log::printDoublesPerLineWithPrefix("yaw_values[i]: ", yaw_values);
-
-    for (int i = 0; i < yaw_values.size() - 1; i++)
-    {  // Drop last point
-
-      Eigen::Isometry2d point_in_map = curvePointInMapTF(discreet_curve.frame, sampling_points[i], yaw_values[i]);
-      Eigen::Rotation2Dd new_rot(point_in_map.rotation());
-      final_yaw_values.push_back(new_rot.smallestAngle());
-      all_sampling_points.push_back(point_in_map.translation());
-    }
-
-    final_actual_speeds.insert(final_actual_speeds.end(), actual_speeds.begin(), actual_speeds.end() - 1);
-
-    ROS_DEBUG("Appended to final");
+  // compute subcurves to get correct time steps
+  std::vector<DiscreteCurve> sub_curves = compute_sub_curves(time_bound_points);
+  int parameter_length = 0;
+  double step_size = config_.curve_resample_step_size;
+  for (auto const discrete_curve : sub_curves)
+  {
+    double max_x = discrete_curve.points.back().point.x();
+    parameter_length += max_x / step_size;
   }
 
+  int current_speed_index = 0;
+  int total_point_size = curve_points.size();
+  double next_speed_idx_threshold = parameter_length / total_point_size;
+  double parameter = 0.0;
+
+  for (size_t i = 0; i < parameter_length; i++) // Resample curve at tighter resolution
+  {
+    parameter += 1.0/parameter_length; //adding parameter_step_size
+    Eigen::VectorXf v = (*fit_curve)[parameter];
+    lanelet::BasicPoint2d p(v.y(), v.z());
+    
+    sampling_points.push_back(p);
+    if (parameter_length > next_speed_idx_threshold)
+    {
+      next_speed_idx_threshold += parameter_length / total_point_size;
+      current_speed_index ++;
+    }
+    distributed_speed_limits.push_back(speed_limits[current_speed_index]); // Identify speed limits for resampled points
+  }
+
+  log::printDebugPerLine(sampling_points, &log::basicPointToStream);
+
+  std::vector<double> yaw_values = carma_wm::geometry::compute_tangent_orientations(sampling_points);
+
+  std::vector<double> curvatures = carma_wm::geometry::local_circular_arc_curvatures(
+      sampling_points, config_.curvature_calc_lookahead_count);  
+
+  curvatures = smoothing::moving_average_filter(curvatures, config_.moving_average_window_size);
+
+  log::printDoublesPerLineWithPrefix("curvatures[i]: ", curvatures);
+
+  std::vector<double> ideal_speeds =
+      trajectory_utils::constrained_speeds_for_curvatures(curvatures, config_.lateral_accel_limit);
+
+  //log::printDoublesPerLineWithPrefix("ideal_speeds: ", ideal_speeds);
+
+  std::vector<double> actual_speeds = apply_speed_limits(ideal_speeds, distributed_speed_limits);
+
+  //log::printDoublesPerLineWithPrefix("actual_speeds: ", actual_speeds);
+
+  //log::printDoublesPerLineWithPrefix("yaw_values[i]: ", yaw_values);
+
+  for (int i = 0; i < yaw_values.size() - 1; i++)
+  {  // Drop last point
+    //TODOM: Check if this works
+    //Eigen::Isometry2d point_in_map = curvePointInMapTF(discreet_curve.frame, sampling_points[i], yaw_values[i]);
+    //Eigen::Rotation2Dd new_rot(point_in_map.rotation());
+    final_yaw_values.push_back(yaw_values[i]);
+    all_sampling_points.push_back(sampling_points[i]);
+  }
+
+  final_actual_speeds.insert(final_actual_speeds.end(), actual_speeds.begin(), actual_speeds.end() - 1);
+
+  ROS_DEBUG("Appended to final");
 
   ROS_DEBUG("Processed all curves");
 
@@ -631,11 +619,8 @@ InLaneCruisingPlugin::compute_fit(const std::vector<lanelet::BasicPoint2d>& basi
     ROS_WARN_STREAM("Insufficient Spline Points");
     return nullptr;
   }
-  // TODO change below smoothing spline type
   std::unique_ptr<smoothing::SplineI> spl = std::make_unique<smoothing::BSpline>();
   spl->setPoints(basic_points);
-  //double y = (*spl)(-71.8552);
-  //std::cerr << ">>>> CHECK: x:-71.8552 << y:" << y << std::endl;
   return spl;
 }
 }  // namespace inlanecruising_plugin
