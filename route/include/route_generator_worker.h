@@ -188,7 +188,7 @@ namespace route {
          * 
          *  \param cte_dist maximum distance value (specified in the route_config_params.yaml file)
         */
-        void set_CTE_dist(int cte_dist);
+        void set_CTE_dist(double cte_dist);
 
 
     private:

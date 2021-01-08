@@ -399,7 +399,7 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
   worker.setWorldModelPtr(cmw);
 
     worker.set_CTE_counter(0);
-    worker.set_out_counter(0);
+    worker.set_out_counter(4);
     worker.set_CTE_dist(1.0);
 
     geometry_msgs::PoseStampedPtr mpt(new geometry_msgs::PoseStamped(msg));
@@ -415,8 +415,12 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
 
     worker.pose_cb(mpt);
 
-    bool test1 = worker.crosstrack_error_check(mpt, start_lanelet, ll_track);
-    ASSERT_EQ(test1, true); //The vehicle will show crosstrack error, so the value should return true
+    ASSERT_EQ(worker.crosstrack_error_check(mpt, start_lanelet, ll_track), true); //The vehicle will show crosstrack error, so the value should return true
+
+    worker.set_out_counter(0);
+    worker.set_CTE_counter(4);
+    ASSERT_EQ(worker.crosstrack_error_check(mpt, start_lanelet, ll_track), true);
+
 
     //TODO: Use position values to show the case when there is no crosstrack error
     worker.set_CTE_counter(0);
@@ -430,10 +434,7 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
 
      geometry_msgs::PoseStampedPtr mpt2(new geometry_msgs::PoseStamped(msg));
 
-    bool test2 = worker.crosstrack_error_check(mpt2, start_lanelet, ll_track);
-    ASSERT_EQ(test2, false);
-
-
+    ASSERT_EQ(worker.crosstrack_error_check(mpt2, start_lanelet, ll_track), false);
 
 }
 

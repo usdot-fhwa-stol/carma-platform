@@ -448,16 +448,24 @@ bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStamp
   }
 
   bool out_of_llt_bounds = false;
-
-    lanelet::BasicPoint2d position;
+  
+  lanelet::BasicPoint2d position;
 
     position.x()= msg->pose.position.x;
     position.y()= msg->pose.position.y;
 
+    ROS_DEBUG_STREAM("LLt Polygon Dimensions1: " << current.polygon2d().front().x()<< ", "<< current.polygon2d().front().y());
+    ROS_DEBUG_STREAM("LLt Polygon Dimensions2: " << current.polygon2d().back().x()<< ", "<< current.polygon2d().back().y());
+
+    if(!boost::geometry::within(position, current.polygon2d())) //Determine whether or not the vehicle is in the lanelet polygon
+    {
+        out_count_++;
+        if(out_count_ > 4)
+            return true;
+    }
+
 
     ROS_DEBUG_STREAM("Distance1: "<< boost::geometry::distance(position, current.polygon2d())<<" Crosstrack: "<< cross_track_dist );
-    ROS_DEBUG_STREAM("Distance2: "<< boost::geometry::distance(position, current.polygon2d())<<" Downtrack: "<< llt_track.downtrack);
-
     
     if (boost::geometry::distance(position, current.polygon2d()) > cross_track_dist) //Evaluate lanelet crosstrack distance from vehicle
         {
@@ -467,21 +475,6 @@ bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStamp
                 return true;
         }
 
-         if (boost::geometry::distance(position, current.polygon2d()) > llt_track.downtrack) //Evaluate lanelet downtrack distance
-        {
-            cte_count_++;
-
-            if(cte_count_ > 4)
-                return true;
-        }
-
-  ROS_DEBUG_STREAM("LLt Polygon Dimensions1: " << current.polygon2d().front().x()<< ", "<< current.polygon2d().front().y());
-  ROS_DEBUG_STREAM("LLt Polygon Dimensions2: " << current.polygon2d().back().x()<< ", "<< current.polygon2d().back().y());
-
-    if(!boost::geometry::within(position, current.polygon2d())) //Determine whether or not the vehicle is in the lanelet polygon
-    {
-        out_of_llt_bounds = true;
-    }
 
     auto graph = world_model_->getMapRoutingGraph();
     auto following_llts = graph->following(current); //Get all subsequent lanelets from the map
@@ -523,7 +516,7 @@ bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStamp
 
     }
 
-    void RouteGeneratorWorker::set_CTE_dist(int cte_dist)
+    void RouteGeneratorWorker::set_CTE_dist(double cte_dist)
     {
         cross_track_dist = cte_dist;
     }
