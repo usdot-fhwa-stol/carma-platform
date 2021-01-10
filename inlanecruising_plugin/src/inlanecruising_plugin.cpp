@@ -143,8 +143,6 @@ std::vector<DiscreteCurve> InLaneCruisingPlugin::compute_sub_curves(const std::v
   {
     lanelet::BasicPoint2d p1 = map_in_curve * map_points[i].point;
     lanelet::BasicPoint2d p2 = map_in_curve * map_points[i + 1].point;  // TODO Optimization to cache this value
-    //lanelet::BasicPoint2d p1 = map_points[i].point;
-    //lanelet::BasicPoint2d p2 = map_points[i + 1].point;
 
     PointSpeedPair initial_pair;
     initial_pair.point = p1;
@@ -163,7 +161,6 @@ std::vector<DiscreteCurve> InLaneCruisingPlugin::compute_sub_curves(const std::v
 
       PointSpeedPair pair;
       pair.point = map_in_curve * map_points[i].point;
-      //pair.point = map_points[i].point;
       pair.speed = map_points[i].speed;
 
       curve.points.push_back(pair);  // Include first point in curve
@@ -271,6 +268,10 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   std::vector<double> distributed_speed_limits;
   distributed_speed_limits.reserve(1 + curve_points.size() * 2);
 
+  std::cout << "curve_points size:" << curve_points.size() << std::endl;
+  std::cout << "speed_limits.size():" << speed_limits.size() << std::endl;
+
+
   // compute subcurves to get correct time steps
   std::vector<DiscreteCurve> sub_curves = compute_sub_curves(time_bound_points);
   int parameter_length = 0;
@@ -278,27 +279,37 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   for (auto const discrete_curve : sub_curves)
   {
     double max_x = discrete_curve.points.back().point.x();
+    std::cout << "max_x:" << max_x << std::endl;
     parameter_length += max_x / step_size;
+    std::cout << "parameter_length:" << parameter_length << std::endl;
   }
 
   int current_speed_index = 0;
   int total_point_size = curve_points.size();
-  double next_speed_idx_threshold = parameter_length / total_point_size;
-  double parameter = 0.0;
+  std::cout << "total_point_size:" << total_point_size << std::endl;
 
-  for (size_t i = 0; i < parameter_length; i++) // Resample curve at tighter resolution
+  double next_speed_parameter_threshold = parameter_length / total_point_size;
+  double scaled_parameter = 0.0;
+
+  for (size_t parameter = 0; parameter < parameter_length; parameter++) // Resample curve at tighter resolution
   {
-    parameter += 1.0/parameter_length; //adding parameter_step_size
-    Eigen::VectorXf v = (*fit_curve)[parameter];
+    Eigen::VectorXf v = (*fit_curve)[scaled_parameter];
     lanelet::BasicPoint2d p(v.y(), v.z());
     
     sampling_points.push_back(p);
-    if (parameter_length > next_speed_idx_threshold)
+    if (parameter > next_speed_parameter_threshold)
     {
-      next_speed_idx_threshold += parameter_length / total_point_size;
+      next_speed_parameter_threshold += (double)parameter_length / (double) total_point_size;
       current_speed_index ++;
     }
     distributed_speed_limits.push_back(speed_limits[current_speed_index]); // Identify speed limits for resampled points
+    scaled_parameter += 1.0/parameter_length; //adding parameter_step_size
+
+    std::cout << "parameter_length:" << parameter_length << std::endl;
+    std::cout << "current_speed_index:" << current_speed_index << std::endl;
+    std::cout << "scaled_parameter:" << scaled_parameter << std::endl;
+    std::cout << "parameter:" << parameter << std::endl;
+    std::cout << "next_speed_parameter_threshold:" << next_speed_parameter_threshold << std::endl;
   }
 
   log::printDebugPerLine(sampling_points, &log::basicPointToStream);
