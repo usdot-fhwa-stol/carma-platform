@@ -28,9 +28,7 @@
 #include <carma_wm/WMListener.h>
 #include <functional>
 #include <inlanecruising_plugin/smoothing/SplineI.h>
-
 #include "inlanecruising_config.h"
-#include "third_party_library/spline.h"
 
 namespace inlanecruising_plugin
 {
@@ -207,6 +205,27 @@ public:
    * \return A transform where the translation corresponds to point p in the map frame and the rotation corresponds to yaw in the map frame.
    */ 
   Eigen::Isometry2d curvePointInMapTF(const Eigen::Isometry2d& curve_in_map, const lanelet::BasicPoint2d& p, double yaw) const;
+
+  /**
+   * \brief Returns the speeds of points closest to the lookahead distance.
+   * 
+   * \param points The points in the map frame that the trajectory will follow. Units m
+   * \param speeds Speeds assigned to points that trajectory will follow. Unit m/s
+   * \param lookahead The lookahead distance to obtain future points' speed. Unit m
+   * 
+   * \return A vector of speed values shifted by the lookahead distance.
+   */ 
+
+  std::vector<double> get_lookahead_speed(const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& speeds, const double& lookahead);
+
+  /**
+   * \brief Computes the lookahead distance based on the input velocity
+   * 
+   * \param velocity vehicle velocity in m/s.
+   * 
+   * \return lookahead distance in m.
+   */ 
+  double get_adaptive_lookahead(double velocity);
 
 private:
   carma_wm::WorldModelConstPtr wm_;

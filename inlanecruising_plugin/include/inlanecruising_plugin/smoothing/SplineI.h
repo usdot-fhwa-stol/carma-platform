@@ -41,15 +41,15 @@ public:
    * \param points The key points
    */ 
   virtual void setPoints(std::vector<lanelet::BasicPoint2d> points) = 0;
-
-  /**
-   * \brief Get the y value for the given x value
+  
+    /**
+   * \brief Get the Eigen::VectorXf for the given t parameter
    * 
-   * \param x The value to solve the spline for
+   * \param t The value to solve the spline for
    * 
-   * \return The y value that matches x
+   * \return The Eigen::VectorXf vector with x, y that matches t parameter
    */ 
-  virtual double operator()(double x) const = 0;
+  virtual Eigen::VectorXf operator()(double t) const = 0;
 
   /**
    * \brief Get the y value for the given x value

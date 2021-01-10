@@ -18,27 +18,27 @@
 
 #include <vector>
 #include <carma_wm/Geometry.h>
-#include <inlanecruising_plugin/third_party_library/spline.h>
 #include <inlanecruising_plugin/smoothing/SplineI.h>
+#include <unsupported/Eigen/Splines>
 
 namespace inlanecruising_plugin
 {
 namespace smoothing
 {
+
+  typedef Eigen::Spline<float, 2> Spline2d;
 /**
- * \brief Realization of SplineI that uses the tk::spline library for interpolation 
+ * \brief Realization of SplineI that uses the Eigen::Splines library for interpolation 
  */ 
-class CubicSpline : public SplineI
+class BSpline : public SplineI
 {
 public:
-  ~CubicSpline(){};
+  ~BSpline(){};
   void setPoints(std::vector<lanelet::BasicPoint2d> points) override;
-  double operator()(double x) const override;
-  double first_deriv(double x) const;
-  double second_deriv(double x) const;
+  Eigen::VectorXf operator()(double t) const override;
 
 private:
-  tk::spline spline_;
+  Spline2d spline_;
 };
 };  // namespace smoothing
 };  // namespace inlanecruising_plugin
