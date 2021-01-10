@@ -322,9 +322,6 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   for (int i = 0; i < yaw_values.size() - 1; i++)
   {  // Drop last point
-    //TODOM: Check if this works
-    //Eigen::Isometry2d point_in_map = curvePointInMapTF(discreet_curve.frame, sampling_points[i], yaw_values[i]);
-    //Eigen::Rotation2Dd new_rot(point_in_map.rotation());
     final_yaw_values.push_back(yaw_values[i]);
     all_sampling_points.push_back(sampling_points[i]);
   }
@@ -355,10 +352,6 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   
   // Add current vehicle point to front of the trajectory
   lanelet::BasicPoint2d cur_veh_point(state.X_pos_global, state.Y_pos_global);
-  for (auto pt: all_sampling_points)
-  {
-    ROS_ERROR_STREAM("computed x:" << pt.x() << "y:" << pt.y());
-  }
 
   all_sampling_points.insert(all_sampling_points.begin(),
                              cur_veh_point);  // Add current vehicle position to front of sample points

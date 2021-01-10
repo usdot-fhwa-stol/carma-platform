@@ -44,7 +44,7 @@ namespace inlanecruising_plugin
 {
 
 
-TEST(InLaneCruisingPluginTest, DISABLED_testPlanningCallback)
+TEST(InLaneCruisingPluginTest, testPlanningCallback)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -121,70 +121,68 @@ Using this file:
 TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
 {
   
-    
-    int projector_type = 0;
-    std::string target_frame;
-    lanelet::ErrorMessages load_errors;
+  int projector_type = 0;
+  std::string target_frame;
+  lanelet::ErrorMessages load_errors;
 
-    // File location of osm file
-    std::string file = "/workspaces/carma/AOI_1_TFHRC_faster_pretty.osm";    
-    // The route ids that will form the route used
-    std::vector<lanelet::Id> route_ids = { 130, 111, 110, 113, 135, 137, 170, 144, 143, 145, 140 };
+  // File location of osm file
+  std::string file = "/workspaces/carma/AOI_1_TFHRC_faster_pretty.osm";    
+  // The route ids that will form the route used
+  std::vector<lanelet::Id> route_ids = { 130, 111, 110, 113, 135, 138 };
 
-    // The parsing in this file was copied from https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/carma_wm_ctrl/test/MapToolsTest.cpp
-    lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
-    lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
-    lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+  // The parsing in this file was copied from https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/carma_wm_ctrl/test/MapToolsTest.cpp
+  lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+  lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+  lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
 
-    lanelet::MapConformer::ensureCompliance(map, 80_mph);
+  lanelet::MapConformer::ensureCompliance(map, 80_mph);
 
-    InLaneCruisingPluginConfig config;
-    config.lateral_accel_limit = 1.5;
-    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-    wm->setMap(map);
+  InLaneCruisingPluginConfig config;
+  config.lateral_accel_limit = 1.5;
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  wm->setMap(map);
 
-    InLaneCruisingPlugin inlc(wm, config, [&](auto msg) {});
-    
-    auto routing_graph = wm->getMapRoutingGraph();
+  InLaneCruisingPlugin inlc(wm, config, [&](auto msg) {});
+  
+  auto routing_graph = wm->getMapRoutingGraph();
 
-    // Output graph for debugging
-    //routing_graph->exportGraphViz("/workspaces/carma_ws/carma/src/carma-platform/waypoint_generator/routing.viz");
+  // Output graph for debugging
+  //routing_graph->exportGraphViz("/workspaces/carma_ws/carma/src/carma-platform/waypoint_generator/routing.viz");
 
-    carma_wm::test::setRouteByIds(route_ids, wm);
+  carma_wm::test::setRouteByIds(route_ids, wm);
 
-    auto p = wm->getMap()->laneletLayer.get(130).centerline()[3];
-    ROS_WARN_STREAM("Start Point: " << p.x() << ", " << p.y());
+  auto p = wm->getMap()->laneletLayer.get(130).centerline()[3];
+  ROS_WARN_STREAM("Start Point: " << p.x() << ", " << p.y());
 
-    // -159.666, 521.683
+  // -159.666, 521.683
 
   cav_srvs::PlanTrajectoryRequest req;
-
-  req.vehicle_state.X_pos_global = -107;
-  req.vehicle_state.Y_pos_global = 311.904;
+  req.vehicle_state.X_pos_global = -159.666;
+  req.vehicle_state.Y_pos_global = 521.683;
   req.vehicle_state.orientation = -2.7570977;
   req.vehicle_state.longitudinal_vel = 0.0;
 
   cav_msgs::Maneuver maneuver;
   maneuver.type = cav_msgs::Maneuver::LANE_FOLLOWING;
-  maneuver.lane_following_maneuver.lane_id = 110;
-  maneuver.lane_following_maneuver.start_dist = 14.98835712 + 45+ 180;
+  maneuver.lane_following_maneuver.lane_id = 130;
+  maneuver.lane_following_maneuver.start_dist = 50;
   maneuver.lane_following_maneuver.start_time = ros::Time(0.0);
   maneuver.lane_following_maneuver.start_speed = 0.0;
 
-  maneuver.lane_following_maneuver.end_dist = 14.98835712 + 50.0 + 45 + 200;
+  maneuver.lane_following_maneuver.end_dist = 14.98835712 + 45;
   maneuver.lane_following_maneuver.end_speed = 6.7056;
-  maneuver.lane_following_maneuver.end_time = ros::Time(8);
+  maneuver.lane_following_maneuver.end_time = ros::Time(4.4704);
 
   cav_msgs::Maneuver maneuver2;
   maneuver2.type = cav_msgs::Maneuver::LANE_FOLLOWING;
-  maneuver2.lane_following_maneuver.lane_id = 110;
-  maneuver2.lane_following_maneuver.start_dist = 14.98835712 + 45+ 202;
+  maneuver2.lane_following_maneuver.lane_id = 130;
+  maneuver2.lane_following_maneuver.start_dist = 14.98835712 + 45;
   maneuver2.lane_following_maneuver.start_speed = 6.7056;
   maneuver2.lane_following_maneuver.start_time = ros::Time(4.4704);
 
-  maneuver2.lane_following_maneuver.end_dist = 14.98835712 + 50.0 + 45 + 250;
+  maneuver2.lane_following_maneuver.end_dist = 14.98835712 + 50.0 + 45;
   maneuver2.lane_following_maneuver.end_speed = 6.7056;
-  maneuver2.lane_following_maneuver.end_time = ros::Time(4.4704 + 7.45645430685 + 37.31);
+  maneuver2.lane_following_maneuver.end_time = ros::Time(4.4704 + 7.45645430685);
 
   req.maneuver_plan.maneuvers.push_back(maneuver);
   req.maneuver_plan.maneuvers.push_back(maneuver2);
@@ -192,6 +190,7 @@ TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
   cav_srvs::PlanTrajectoryResponse resp;
 
   inlc.plan_trajectory_cb(req, resp);
+
 
 }
 
@@ -263,7 +262,7 @@ TEST(WaypointGeneratorTest, DISABLED_test_compute_fit_full_generation)
   
   for(int i = 1; i < downsampled_points.size(); i ++)
   {
-    // tag as erroneous if directions of generated points are within 5 degree of those of original points
+    // tag as erroneous if directions of generated points are not within 5 degree of those of original points
     tf::Vector3 original_vector(downsampled_points[i].x() - downsampled_points[i-1].x(), 
                       downsampled_points[i].y() - downsampled_points[i-1].y(), 0);
     original_vector.setZ(0);
