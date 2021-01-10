@@ -250,7 +250,7 @@ TEST(WaypointGeneratorTest, DISABLED_test_compute_fit_full_generation)
   // Following logic is written for BSpline library. Switch with appropriate call of the new library if different.
   float parameter = 0.0;
   for(int i=0; i< downsampled_points.size(); i++){
-    Eigen::VectorXf values = (*fit_curve)[parameter];
+    Eigen::VectorXf values = (*fit_curve)(parameter);
     // Uncomment to print and check if this generated map matches with the original one above 
     // ROS_INFO_STREAM("BSpline point: x: " << values.x() << "y: " << values.y());
     spline_points.push_back({values.x(),values.y()});

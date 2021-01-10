@@ -28,9 +28,7 @@
 #include <carma_wm/WMListener.h>
 #include <functional>
 #include <inlanecruising_plugin/smoothing/SplineI.h>
-
 #include "inlanecruising_config.h"
-#include "third_party_library/spline.h"
 
 namespace inlanecruising_plugin
 {

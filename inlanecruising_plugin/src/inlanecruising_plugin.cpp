@@ -30,7 +30,6 @@
 #include <Eigen/LU>
 #include <Eigen/SVD>
 #include <inlanecruising_plugin/smoothing/SplineI.h>
-#include <inlanecruising_plugin/smoothing/CubicSpline.h>
 #include <inlanecruising_plugin/smoothing/BSpline.h>
 #include <inlanecruising_plugin/inlanecruising_plugin.h>
 #include <inlanecruising_plugin/log/log.h>
@@ -281,7 +280,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   for (size_t parameter = 0; parameter < parameter_length; parameter++) // Resample curve at tighter resolution
   {
-    Eigen::VectorXf v = (*fit_curve)[scaled_parameter];
+    Eigen::VectorXf v = (*fit_curve)(scaled_parameter);
     lanelet::BasicPoint2d p(v.x(), v.y());
     
     sampling_points.push_back(p);

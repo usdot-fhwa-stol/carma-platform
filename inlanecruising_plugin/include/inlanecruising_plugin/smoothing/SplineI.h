@@ -41,16 +41,7 @@ public:
    * \param points The key points
    */ 
   virtual void setPoints(std::vector<lanelet::BasicPoint2d> points) = 0;
-
-  /**
-   * \brief Get the y value for the given x value
-   * 
-   * \param x The value to solve the spline for
-   * 
-   * \return The y value that matches x
-   */ 
-  virtual double operator()(double x) const = 0;
-
+  
     /**
    * \brief Get the Eigen::VectorXf for the given t parameter
    * 
@@ -58,7 +49,7 @@ public:
    * 
    * \return The Eigen::VectorXf vector with x, y that matches t parameter
    */ 
-  virtual Eigen::VectorXf operator[](double x) const = 0;
+  virtual Eigen::VectorXf operator()(double t) const = 0;
 };
 };  // namespace smoothing
 };  // namespace inlanecruising_plugin

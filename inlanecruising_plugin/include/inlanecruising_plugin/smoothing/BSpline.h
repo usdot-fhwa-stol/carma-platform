@@ -35,9 +35,7 @@ class BSpline : public SplineI
 public:
   ~BSpline(){};
   void setPoints(std::vector<lanelet::BasicPoint2d> points) override;
-  // Note: It returns y value based on t parameter: (0 to 1), not x
-  double operator()(double t) const override;
-  Eigen::VectorXf operator[](double t) const override;
+  Eigen::VectorXf operator()(double t) const override;
 
 private:
   Spline2d spline_;

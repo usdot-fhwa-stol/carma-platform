@@ -14,12 +14,7 @@ void BSpline::setPoints(std::vector<lanelet::BasicPoint2d> points)
   }
   spline_ = Eigen::SplineFitting<Spline2d>::Interpolate(matrix_points, 2);
 }
-double BSpline::operator()(double t) const
-{
-  Eigen::VectorXf values = spline_(t);
-  return values.y();
-}
-Eigen::VectorXf BSpline::operator[](double t) const
+Eigen::VectorXf BSpline::operator()(double t) const
 {
   Eigen::VectorXf values = spline_(t);
   return values;
