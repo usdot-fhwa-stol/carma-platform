@@ -308,13 +308,13 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   std::vector<double> ideal_speeds =
       trajectory_utils::constrained_speeds_for_curvatures(curvatures, config_.lateral_accel_limit);
 
-  //log::printDoublesPerLineWithPrefix("ideal_speeds: ", ideal_speeds);
+  log::printDoublesPerLineWithPrefix("ideal_speeds: ", ideal_speeds);
 
   std::vector<double> actual_speeds = apply_speed_limits(ideal_speeds, distributed_speed_limits);
 
-  //log::printDoublesPerLineWithPrefix("actual_speeds: ", actual_speeds);
+  log::printDoublesPerLineWithPrefix("actual_speeds: ", actual_speeds);
 
-  //log::printDoublesPerLineWithPrefix("yaw_values[i]: ", yaw_values);
+  log::printDoublesPerLineWithPrefix("yaw_values[i]: ", yaw_values);
 
   for (int i = 0; i < yaw_values.size() - 1; i++)
   {  // Drop last point
@@ -334,9 +334,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
     return {};
   }
 
-  //log::printDoublesPerLineWithPrefix("final_actual_speeds[i]: ", final_actual_speeds);
+  log::printDoublesPerLineWithPrefix("final_actual_speeds[i]: ", final_actual_speeds);
 
-  //log::printDoublesPerLineWithPrefix("final_yaw_values[i]: ", final_yaw_values);
+  log::printDoublesPerLineWithPrefix("final_yaw_values[i]: ", final_yaw_values);
 
   // Find Lookahead Distance based on Velocity
   double lookahead_distance = get_adaptive_lookahead(state.longitudinal_vel);
@@ -356,17 +356,17 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   final_yaw_values.insert(final_yaw_values.begin(), state.orientation);
 
-  //log::printDoublesPerLineWithPrefix("pre_smoot[i]: ", final_actual_speeds);
+  log::printDoublesPerLineWithPrefix("pre_smoot[i]: ", final_actual_speeds);
   
   // Compute points to local downtracks
   std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(all_sampling_points);
 
-  //log::printDoublesPerLineWithPrefix("post_shift[i]: ", final_actual_speeds);
+  log::printDoublesPerLineWithPrefix("post_shift[i]: ", final_actual_speeds);
   
   // Apply accel limits
   final_actual_speeds = trajectory_utils::apply_accel_limits_by_distance(downtracks, final_actual_speeds,
                                                                          config_.max_accel, config_.max_accel);
-  //log::printDoublesPerLineWithPrefix("postAccel[i]: ", final_actual_speeds);
+  log::printDoublesPerLineWithPrefix("postAccel[i]: ", final_actual_speeds);
 
   
   final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, config_.moving_average_window_size);
@@ -377,12 +377,12 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
     s = std::max(s, config_.minimum_speed);
   }
 
-  //log::printDoublesPerLineWithPrefix("post_min_speed[i]: ", final_actual_speeds);
+  log::printDoublesPerLineWithPrefix("post_min_speed[i]: ", final_actual_speeds);
   // Convert speeds to times
   std::vector<double> times;
   trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
 
-  //log::printDoublesPerLineWithPrefix("times[i]: ", times);
+  log::printDoublesPerLineWithPrefix("times[i]: ", times);
   
   // Build trajectory points
   // TODO When more plugins are implemented that might share trajectory planning the start time will need to be based
