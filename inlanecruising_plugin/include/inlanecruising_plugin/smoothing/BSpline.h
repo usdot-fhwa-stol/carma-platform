@@ -26,20 +26,21 @@ namespace inlanecruising_plugin
 namespace smoothing
 {
 
-  typedef Eigen::Spline<float, 3> Spline3d;
+  typedef Eigen::Spline<float, 2> Spline2d;
 /**
- * \brief Realization of SplineI that uses the tk::spline library for interpolation 
+ * \brief Realization of SplineI that uses the Eigen::Splines library for interpolation 
  */ 
 class BSpline : public SplineI
 {
 public:
   ~BSpline(){};
   void setPoints(std::vector<lanelet::BasicPoint2d> points) override;
-  double operator()(double x) const override;
-  Eigen::VectorXf operator[](double x) const override;
+  // Note: It returns y value based on t parameter: (0 to 1), not x
+  double operator()(double t) const override;
+  Eigen::VectorXf operator[](double t) const override;
 
 private:
-  Spline3d spline_;
+  Spline2d spline_;
 };
 };  // namespace smoothing
 };  // namespace inlanecruising_plugin

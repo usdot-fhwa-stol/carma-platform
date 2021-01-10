@@ -242,7 +242,6 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   splitPointSpeedPairs(time_bound_points, &curve_points, &speed_limits);
   
   std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(curve_points); // Compute splines based on curve points
-  
   if (!fit_curve)
   {  // TODO how better to handle this case
     // TODOM check this
@@ -286,7 +285,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   for (size_t parameter = 0; parameter < parameter_length; parameter++) // Resample curve at tighter resolution
   {
     Eigen::VectorXf v = (*fit_curve)[scaled_parameter];
-    lanelet::BasicPoint2d p(v.y(), v.z());
+    lanelet::BasicPoint2d p(v.x(), v.y());
     
     sampling_points.push_back(p);
     if (parameter > next_speed_parameter_threshold)

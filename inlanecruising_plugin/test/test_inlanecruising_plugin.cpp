@@ -23,7 +23,7 @@
 
 using namespace inlanecruising_plugin;
 // Test to ensure Eigen::Isometry2d behaves like tf2::Transform
-TEST(InLaneCruisingPluginTest, DISABLED_validate_eigen)
+TEST(InLaneCruisingPluginTest, validate_eigen)
 {
   Eigen::Rotation2Dd frame_rot(M_PI_2);
   lanelet::BasicPoint2d origin(1, 1);
@@ -53,7 +53,7 @@ TEST(InLaneCruisingPluginTest, DISABLED_validate_eigen)
   ASSERT_NEAR(M_PI_2, P_in_A_rot.smallestAngle(), 0.000000001);
 }
 
-TEST(InLaneCruisingPluginTest, DISABLED_curvePointInMapTF)
+TEST(InLaneCruisingPluginTest, curvePointInMapTF)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -75,7 +75,7 @@ TEST(InLaneCruisingPluginTest, DISABLED_curvePointInMapTF)
   ASSERT_NEAR(M_PI, fabs(P_in_M_rot.smallestAngle()), 0.000000001);
 }
 
-TEST(InLaneCruisingPluginTest, DISABLED_trajectory_from_points_times_orientations)
+TEST(InLaneCruisingPluginTest, trajectory_from_points_times_orientations)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -129,7 +129,7 @@ TEST(InLaneCruisingPluginTest, DISABLED_trajectory_from_points_times_orientation
   ASSERT_EQ(0, traj_points[3].planner_plugin_name.compare(expected_plugin_name));
 }
 
-TEST(InLaneCruisingPluginTest, DISABLED_constrain_to_time_boundary)
+TEST(InLaneCruisingPluginTest, constrain_to_time_boundary)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -182,7 +182,7 @@ TEST(InLaneCruisingPluginTest, DISABLED_constrain_to_time_boundary)
   ASSERT_NEAR(1.0, time_bound_points[5].speed, 0.0000001);
 }
 
-TEST(InLaneCruisingPluginTest, DISABLED_getNearestPointIndex)
+TEST(InLaneCruisingPluginTest, getNearestPointIndex)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -217,7 +217,7 @@ TEST(InLaneCruisingPluginTest, DISABLED_getNearestPointIndex)
   ASSERT_EQ(3, plugin.getNearestPointIndex(points, state));
 }
 
-TEST(InLaneCruisingPluginTest, DISABLED_get_lookahead_speed)
+TEST(InLaneCruisingPluginTest, get_lookahead_speed)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -243,7 +243,7 @@ TEST(InLaneCruisingPluginTest, DISABLED_get_lookahead_speed)
   // ASSERT_EQ(3, plugin.getNearestPointIndex(points, state));
 }
 
-TEST(InLaneCruisingPluginTest, DISABLED_get_adaptive_lookahead)
+TEST(InLaneCruisingPluginTest, get_adaptive_lookahead)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -258,7 +258,7 @@ TEST(InLaneCruisingPluginTest, DISABLED_get_adaptive_lookahead)
 
 }
 
-TEST(InLaneCruisingPluginTest, DISABLED_splitPointSpeedPairs)
+TEST(InLaneCruisingPluginTest, splitPointSpeedPairs)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -310,7 +310,7 @@ TEST(InLaneCruisingPluginTest, DISABLED_splitPointSpeedPairs)
   ASSERT_NEAR(1.0, speeds[5], 0.0000001);
 }
 
-TEST(InLaneCruisingPluginTest, DISABLED_compute_sub_curves)
+TEST(InLaneCruisingPluginTest, compute_sub_curves)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -486,18 +486,16 @@ TEST(InLaneCruisingPluginTest, compute_fit)
   points.push_back(p);
   p = lanelet::BasicPoint2d(22, 30);
   points.push_back(p);
-  
   std::unique_ptr<smoothing::SplineI> fit_curve = plugin.compute_fit(points);
-
   std::vector<lanelet::BasicPoint2d> spline_points;
-
   // Following logic is written for BSpline library. Switch with appropriate call of the new library if different.
   float parameter = 0.0;
   for(int i=0; i< points.size(); i++){
     Eigen::VectorXf values = (*fit_curve)[parameter];
+  
     // Uncomment to print and check if this generated map matches with the original one above 
-    // ROS_INFO_STREAM("BSpline point: x: " << values.y() << "y: " << values.z());
-    spline_points.push_back({values.y(),values.z()});
+    // ROS_INFO_STREAM("BSpline point: x: " << values.x() << "y: " << values.y());
+    spline_points.push_back({values.x(),values.y()});
     parameter += 1.0/(points.size()*1.0);
   }
 
@@ -567,6 +565,9 @@ TEST(InLaneCruisingPluginTest, compute_fit)
 
   // As different libraries may fit S curves differently, we are only checking if we can get any fit here.
   ASSERT_NO_THROW(plugin.compute_fit(points));
+
   std::unique_ptr<smoothing::SplineI> fit_s_curve = plugin.compute_fit(points);
+
   ASSERT_TRUE(!!fit_s_curve);
+
 }

@@ -21,7 +21,8 @@ double CubicSpline::operator()(double x) const
 }
 Eigen::VectorXf CubicSpline::operator[](double x) const
 {
-  return {};
+  Eigen::Vector2f output = {x, spline_(x)};
+  return output;
 }
 };  // namespace smoothing
 };  // namespace inlanecruising_plugin
