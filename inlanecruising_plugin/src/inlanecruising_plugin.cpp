@@ -244,12 +244,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(curve_points); // Compute splines based on curve points
   if (!fit_curve)
   {  // TODO how better to handle this case
-    // TODOM check this
     ROS_ERROR_STREAM("Could not fit!");
     for (size_t i = 0; i < curve_points.size() - 1; i++)
     {
-      //Eigen::Isometry2d point_in_map =
-      //    curvePointInMapTF(discreet_curve.frame, discreet_curve.points[i].point, final_yaw_values.back());
       all_sampling_points.push_back(curve_points[i]);
       final_yaw_values.push_back(final_yaw_values.back());
       final_actual_speeds.push_back(final_actual_speeds.back());
@@ -461,7 +458,6 @@ Eigen::Isometry2d InLaneCruisingPlugin::curvePointInMapTF(const Eigen::Isometry2
 {
   Eigen::Rotation2Dd yaw_rot(yaw);
   Eigen::Isometry2d point_in_c = carma_wm::geometry::build2dEigenTransform(p, yaw_rot);
-  //Eigen::Isometry2d point_in_map = point_in_c;
   
   Eigen::Isometry2d point_in_map = curve_in_map * point_in_c;
   return point_in_map;

@@ -37,7 +37,7 @@
 #include <carma_utils/containers/containers.h>
 #include <tf/LinearMath/Vector3.h>
 
-typedef Eigen::Spline<float, 3> Spline3d;
+typedef Eigen::Spline<float, 2> Spline2d;
 
 using namespace lanelet::units::literals;
 namespace inlanecruising_plugin
