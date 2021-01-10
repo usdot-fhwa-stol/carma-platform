@@ -404,9 +404,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
     lanelet::BasicPoint2d p(v.x(), v.y());
     
     sampling_points.push_back(p);
-    double f_prime = (*fit_curve).first_deriv(x);
-    double f_prime_prime = (*fit_curve).second_deriv(x);
-    double c = fabs(f_prime_prime) / pow(1 + (f_prime * f_prime), 1.5);
+    auto f_prime = (*fit_curve).first_deriv(parameter);
+    auto f_prime_prime = (*fit_curve).second_deriv(parameter);
+    double c = f_prime.cross(f_prime_prime).norm()/pow(f_prime.norm(),3);
     better_curvature.push_back(c);
     if (parameter > next_speed_parameter_threshold)
     {

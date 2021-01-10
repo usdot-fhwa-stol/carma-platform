@@ -19,5 +19,18 @@ Eigen::VectorXf BSpline::operator()(double t) const
   Eigen::VectorXf values = spline_(t);
   return values;
 }
+
+Eigen::Vector3d BSpline::first_deriv(double t) const {
+  Eigen::Array2Xf v = spline_.derivatives(t, 1);
+  Eigen::Vector3d output = {v(2), v(3), 0};
+  return output;
+}
+
+Eigen::Vector3d BSpline::second_deriv(double t) const {
+  Eigen::Array2Xf v = spline_.derivatives(t, 2);
+  Eigen::Vector3d output = {v(4), v(5), 0};
+  return output;
+}
+
 };  // namespace smoothing
 };  // namespace inlanecruising_plugin

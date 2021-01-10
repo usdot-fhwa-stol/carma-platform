@@ -58,7 +58,7 @@ public:
    * 
    * \return The y value that matches x
    */ 
-  virtual double first_deriv(double x) const = 0;
+  virtual Eigen::Vector3d first_deriv(double x) const = 0;
 
   /**
    * \brief Get the y value for the given x value
@@ -67,7 +67,7 @@ public:
    * 
    * \return The y value that matches x
    */ 
-  virtual double second_deriv(double x) const = 0;
+  virtual Eigen::Vector3d second_deriv(double x) const = 0;
 };
 };  // namespace smoothing
 };  // namespace inlanecruising_plugin

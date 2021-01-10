@@ -36,7 +36,8 @@ public:
   ~BSpline(){};
   void setPoints(std::vector<lanelet::BasicPoint2d> points) override;
   Eigen::VectorXf operator()(double t) const override;
-
+  Eigen::Vector3d first_deriv(double t) const override;
+  Eigen::Vector3d second_deriv(double t) const override;
 private:
   Spline2d spline_;
 };
