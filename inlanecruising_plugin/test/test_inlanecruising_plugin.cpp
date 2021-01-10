@@ -19,6 +19,7 @@
 #include <ros/ros.h>
 #include <carma_wm/CARMAWorldModel.h>
 #include <math.h>
+#include <tf/LinearMath/Vector3.h>
 
 using namespace inlanecruising_plugin;
 // Test to ensure Eigen::Isometry2d behaves like tf2::Transform
@@ -468,3 +469,56 @@ TEST(InLaneCruisingPluginTest, DISABLED_compute_sub_curves)
   }
 }
 
+TEST(InLaneCruisingPluginTest, compute_fit)
+{
+  InLaneCruisingPluginConfig config;
+  config.downsample_ratio = 1;
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+
+  ///////////////////////
+  // Check straight line
+  ///////////////////////
+  std::vector<lanelet::BasicPoint2d> points;
+  auto p = lanelet::BasicPoint2d(20, 30);
+  points.push_back(p);
+  p = lanelet::BasicPoint2d(21, 30);
+  points.push_back(p);
+  p = lanelet::BasicPoint2d(22, 30);
+  points.push_back(p);
+  
+  std::unique_ptr<smoothing::SplineI> fit_curve = plugin.compute_fit(points);
+
+  std::vector<lanelet::BasicPoint2d> spline_points;
+
+  // Following logic is written for BSpline library. Switch with appropriate call of the new library if different.
+  float parameter = 0.0;
+  for(int i=0; i< points.size(); i++){
+    Eigen::VectorXf values = (*fit_curve)[parameter];
+    // Uncomment to print and check if this generated map matches with the original one above 
+    // ROS_INFO_STREAM("BSpline point: x: " << values.y() << "y: " << values.z());
+    spline_points.push_back({values.y(),values.z()});
+    parameter += 1.0/(points.size()*1.0);
+  }
+
+  ASSERT_EQ(spline_points.size(), points.size());
+  int error_count = 0;
+  
+  tf::Vector3 original_vector_1(points[1].x() - points[0].x(), 
+                      points[1].y() - points[0].y(), 0);
+  original_vector_1.setZ(0);
+  tf::Vector3 spline_vector_1(spline_points[1].x() - spline_points[0].x(), 
+                      spline_points[1].y() - spline_points[0].y(), 0);
+  spline_vector_1.setZ(0);
+    tf::Vector3 original_vector_2(points[2].x() - points[1].x(), 
+                      points[2].y() - points[1].y(), 0);
+  original_vector_2.setZ(0);
+  tf::Vector3 spline_vector_2(spline_points[2].x() - spline_points[1].x(), 
+                      spline_points[2].y() - spline_points[1].y(), 0);
+  spline_vector_2.setZ(0);
+  double angle_in_rad_1 = std::fabs(tf::tfAngle(original_vector_1, spline_vector_1));
+  double angle_in_rad_2 = std::fabs(tf::tfAngle(original_vector_2, spline_vector_2));
+
+  ASSERT_NEAR(angle_in_rad_1, 0.0, 0.0001);
+  ASSERT_NEAR(angle_in_rad_2, 0.0, 0.0001);
+}

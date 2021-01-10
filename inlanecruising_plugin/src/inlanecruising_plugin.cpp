@@ -34,7 +34,6 @@
 #include <inlanecruising_plugin/smoothing/BSpline.h>
 #include <inlanecruising_plugin/inlanecruising_plugin.h>
 #include <inlanecruising_plugin/log/log.h>
-#include <carma_utils/containers/containers.h>
 #include <inlanecruising_plugin/smoothing/filters.h>
 #include <unordered_set>
 
@@ -183,7 +182,7 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::constrain_to_time_boundary(con
   std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(basic_points);
 
   size_t time_boundary_exclusive_index =
-      trajectory_utils::time_boundary_index(downtracks, speeds, 10);
+      trajectory_utils::time_boundary_index(downtracks, speeds, config_.trajectory_time_length);
 
   if (time_boundary_exclusive_index == 0)
   {
@@ -224,7 +223,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end()); // Points in front of current vehicle position
 
-  auto time_bound_points = constrain_to_time_boundary(future_points, 10);
+  auto time_bound_points = constrain_to_time_boundary(future_points, config_.trajectory_time_length);
 
   ROS_DEBUG_STREAM("time_bound_points: " << time_bound_points.size());
 
@@ -268,10 +267,6 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   std::vector<double> distributed_speed_limits;
   distributed_speed_limits.reserve(1 + curve_points.size() * 2);
 
-  std::cout << "curve_points size:" << curve_points.size() << std::endl;
-  std::cout << "speed_limits.size():" << speed_limits.size() << std::endl;
-
-
   // compute subcurves to get correct time steps
   std::vector<DiscreteCurve> sub_curves = compute_sub_curves(time_bound_points);
   int parameter_length = 0;
@@ -279,14 +274,11 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   for (auto const discrete_curve : sub_curves)
   {
     double max_x = discrete_curve.points.back().point.x();
-    std::cout << "max_x:" << max_x << std::endl;
     parameter_length += max_x / step_size;
-    std::cout << "parameter_length:" << parameter_length << std::endl;
   }
 
   int current_speed_index = 0;
   int total_point_size = curve_points.size();
-  std::cout << "total_point_size:" << total_point_size << std::endl;
 
   double next_speed_parameter_threshold = parameter_length / total_point_size;
   double scaled_parameter = 0.0;
@@ -304,12 +296,6 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
     }
     distributed_speed_limits.push_back(speed_limits[current_speed_index]); // Identify speed limits for resampled points
     scaled_parameter += 1.0/parameter_length; //adding parameter_step_size
-
-    std::cout << "parameter_length:" << parameter_length << std::endl;
-    std::cout << "current_speed_index:" << current_speed_index << std::endl;
-    std::cout << "scaled_parameter:" << scaled_parameter << std::endl;
-    std::cout << "parameter:" << parameter << std::endl;
-    std::cout << "next_speed_parameter_threshold:" << next_speed_parameter_threshold << std::endl;
   }
 
   log::printDebugPerLine(sampling_points, &log::basicPointToStream);

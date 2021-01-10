@@ -34,6 +34,8 @@
 #include <carma_wm/CARMAWorldModel.h>
 #include <ros/console.h>
 #include <unsupported/Eigen/Splines>
+#include <carma_utils/containers/containers.h>
+#include <tf/LinearMath/Vector3.h>
 
 typedef Eigen::Spline<float, 3> Spline3d;
 
@@ -116,7 +118,7 @@ Using this file:
     NOTE: The test is disabled by default. Enable it by removing the DISABLED_ prefix from the test name
 */
 
-TEST(WaypointGeneratorTest, test_full_generation)
+TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
 {
   
     
@@ -191,100 +193,96 @@ TEST(WaypointGeneratorTest, test_full_generation)
 
   inlc.plan_trajectory_cb(req, resp);
 
-  for (auto pt: resp.trajectory_plan.trajectory_points)
-  {
-    std::cerr << "x:" << pt.x << "y: " << pt.y << "t: " << pt.target_time << std::endl;
-  }
-  
-  
-
-  /*
-  std::vector<Eigen::VectorXf> waypoints;
-  
-  Eigen::Vector3f po1(2,3,4);
-  Eigen::Vector3f po2(2,5,4);
-  Eigen::Vector3f po3(2,8,9);
-  Eigen::Vector3f po4(2,8,23);
-  Eigen::Vector3f po5(2,3.5,25);
-  Eigen::Vector3f po6(2,3,25);
-  Eigen::Vector3f po7(2,2.5,26);
-  Eigen::Vector3f po8(2,2.25,27);
-  Eigen::Vector3f po9(2,2.0,28);
-  Eigen::Vector3f po10(2,1.5,30);
-  Eigen::Vector3f po11(2,1.0,32);
-  Eigen::Vector3f po12(2,1.25,34);
-  Eigen::Vector3f po13(2,2.0,35);
-  Eigen::Vector3f po14(2,4.0,35);
-  Eigen::Vector3f po15(2,5.0,35.5);
-  Eigen::Vector3f po16(2,6.0,36);
-  Eigen::Vector3f po17(2,7.0,50);
-  Eigen::Vector3f po18(2,6.5,48);
-  Eigen::Vector3f po19(2,4.0,43);
-  
-                        //x,    y
-  // Eigen::Vector3f po1(2, 1    ,5);
-  // Eigen::Vector3f po2(2,  2   ,5);
-  // Eigen::Vector3f po3(2,  3   ,5);
-  // Eigen::Vector3f po4(2,  4    ,5);
-  // Eigen::Vector3f po5(2,  5     ,5);
-  // Eigen::Vector3f po6(2,  10    ,5);
-  // Eigen::Vector3f po7(2,  7     ,5);
-  // Eigen::Vector3f po8(2,  8    ,5);
-  // Eigen::Vector3f po9(2,  9     ,5);
-  // Eigen::Vector3f po10(2, 10    ,5);
-  // Eigen::Vector3f po11(2, 11    ,5);
-  // Eigen::Vector3f po12(2, 12    ,5);
-  // Eigen::Vector3f po13(2, 13 , 5);
-  // Eigen::Vector3f po14(2, 14     ,5);
-  // Eigen::Vector3f po15(2, 15    ,5);
-  // Eigen::Vector3f po16(2, 16     ,5);
-  // Eigen::Vector3f po17(2, 17     ,5);
-  // Eigen::Vector3f po18(2, 18     ,5);
-  // Eigen::Vector3f po19(2, 19     ,5);
-// 
-  /*
-  waypoints.push_back(po1);
-  waypoints.push_back(po2);
-  waypoints.push_back(po3);
-  waypoints.push_back(po4);
-  waypoints.push_back(po5);
-  waypoints.push_back(po6);
-  waypoints.push_back(po7);
-  waypoints.push_back(po8);
-  waypoints.push_back(po9);
-  waypoints.push_back(po10);
-  waypoints.push_back(po11);
-  waypoints.push_back(po12);
-  waypoints.push_back(po13);
-  waypoints.push_back(po14);
-  waypoints.push_back(po15);
-  waypoints.push_back(po16);
-  waypoints.push_back(po17);
-  waypoints.push_back(po18);
-  waypoints.push_back(po19);
-
-
-  // The degree of the interpolating spline needs to be one less than the number of points
-  // that are fitted to the spline.
-  Eigen::MatrixXf points(3, waypoints.size());
-  int row_index = 0;
-  for(auto const way_point : waypoints){
-      points.col(row_index) << way_point[0], way_point[1], way_point[2];
-      row_index++;
-  }
-  Spline3d spline = Eigen::SplineFitting<Spline3d>::Interpolate(points, 2);
-  float time_ = 0;
-  for(int i=0; i<100; i++){
-      time_ += 1.0/(100*1.0);
-      Eigen::VectorXf values = spline(time_);
-      std::cout<< values << std::endl;
-      std::cout<< "x:" << values.x() << "y:" << values.y() << "z:" << values.z() << std::endl;
-  }
-  */
-
 }
 
+TEST(WaypointGeneratorTest, DISABLED_test_compute_fit_full_generation)
+{
+  int projector_type = 0;
+  std::string target_frame;
+  lanelet::ErrorMessages load_errors;
+
+  // File location of osm file
+  std::string file = "/workspaces/carma/AOI_1_TFHRC_faster_pretty.osm";    
+  // The route ids that will form the route used
+  std::vector<lanelet::Id> route_ids = { 130, 129 };
+
+  // The parsing in this file was copied from https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/carma_wm_ctrl/test/MapToolsTest.cpp
+  lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+  lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+  lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+
+  lanelet::MapConformer::ensureCompliance(map, 80_mph);
+
+  InLaneCruisingPluginConfig config;
+  config.lateral_accel_limit = 1.5;
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  wm->setMap(map);
+
+  InLaneCruisingPlugin inlc(wm, config, [&](auto msg) {});
+  
+  auto routing_graph = wm->getMapRoutingGraph();
+
+  carma_wm::test::setRouteByIds(route_ids, wm);
+
+  auto route = wm->getRoute()->shortestPath();
+  std::vector<lanelet::ConstLanelet> lanelets;
+  for (auto llt : route)
+  {
+    lanelets.push_back(llt);
+  }
+  // Get centerline
+  lanelet::BasicLineString2d route_geometry = carma_wm::geometry::concatenate_lanelets(lanelets);
+  
+  // Downsample
+  std::vector<lanelet::BasicPoint2d> downsampled_points;
+  downsampled_points.reserve((route_geometry.size() / config.downsample_ratio) + 1);
+
+  for (int i = 0; i < route_geometry.size(); i += config.downsample_ratio)
+  {
+    downsampled_points.push_back(route_geometry[i]);
+    // Uncomment to print and check if this original map matches with the generated one below 
+    // ROS_INFO_STREAM("Original point: x: " << route_geometry[i].x() << "y: " << route_geometry[i].y());
+  }
+
+  std::unique_ptr<smoothing::SplineI> fit_curve = inlc.compute_fit(downsampled_points);
+  
+  std::vector<lanelet::BasicPoint2d> spline_points;
+
+  // Following logic is written for BSpline library. Switch with appropriate call of the new library if different.
+  float parameter = 0.0;
+  for(int i=0; i< downsampled_points.size(); i++){
+    Eigen::VectorXf values = (*fit_curve)[parameter];
+    // Uncomment to print and check if this generated map matches with the original one above 
+    // ROS_INFO_STREAM("BSpline point: x: " << values.y() << "y: " << values.z());
+    spline_points.push_back({values.y(),values.z()});
+    parameter += 1.0/(downsampled_points.size()*1.0);
+  }
+
+  ASSERT_EQ(spline_points.size(), downsampled_points.size());
+  int error_count = 0;
+  
+  for(int i = 1; i < downsampled_points.size(); i ++)
+  {
+    // tag as erroneous if directions of generated points are within 5 degree of those of original points
+    tf::Vector3 original_vector(downsampled_points[i].x() - downsampled_points[i-1].x(), 
+                      downsampled_points[i].y() - downsampled_points[i-1].y(), 0);
+    original_vector.setZ(0);
+    tf::Vector3 spline_vector(spline_points[i].x() - spline_points[i-1].x(), 
+                      spline_points[i].y() - spline_points[i-1].y(), 0);
+    spline_vector.setZ(0);
+    double angle_in_rad = std::fabs(tf::tfAngle(original_vector, spline_vector));
+    if (angle_in_rad > 0.08)  error_count ++;
+  }
+
+  // We say it is passing if there is less than 10% error in total number of points
+  ROS_INFO_STREAM("Total points above 5 degree difference in their direction:" << error_count 
+    << ", which is " << (double)error_count/(double)downsampled_points.size()*100 << "% of total");
+  ASSERT_TRUE((double)error_count/(double)downsampled_points.size() < 0.1); 
+}
+
+
 };  // namespace inlanecruising_plugin
+
 
 // Run all the tests
 int main(int argc, char **argv)
