@@ -42,7 +42,7 @@ public:
   /**
    * \brief Default constructor
    */
-  Localizer();
+  Localizer()=default;
 
   /**
    * \brief Primary entry function for node execution. Will not exist until node shutdown.

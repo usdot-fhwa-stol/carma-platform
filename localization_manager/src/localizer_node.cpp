@@ -20,9 +20,6 @@
 namespace localizer
 {
 namespace std_ph = std::placeholders;  // Make alias for std placeholders to differentiate from boost.
-Localizer::Localizer()
-{
-}
 
 void Localizer::publishPoseStamped(const geometry_msgs::PoseStamped& msg) const
 {
