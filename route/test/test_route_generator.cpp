@@ -400,6 +400,7 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
     msg.pose.position.y = 0.0;
 
     worker.setWorldModelPtr(cmw);
+    worker.set_CTE_count_max(4);
 
     worker.set_CTE_counter(0);
     worker.set_out_counter(4);

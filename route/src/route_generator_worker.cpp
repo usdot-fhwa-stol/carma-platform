@@ -460,7 +460,7 @@ bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStamp
     if(!boost::geometry::within(position, current.polygon2d())) //Determine whether or not the vehicle is in the lanelet polygon
     {
         out_count_++;
-        if(out_count_ > 4)
+        if(out_count_ > cte_count_max_)
             return true;
     }
 
@@ -471,7 +471,7 @@ bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStamp
         {
             cte_count_++;
 
-            if(cte_count_ > 4) //If the distance exceeds the crosstrack distance a certain number of times, report that the route has been departed
+            if(cte_count_ > cte_count_max_) //If the distance exceeds the crosstrack distance a certain number of times, report that the route has been departed
                 return true;
         }
 
@@ -492,7 +492,7 @@ bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStamp
         {
             cte_count_++;
 
-            if(cte_count_ > 4)
+            if(cte_count_ > cte_count_max_)
                 out_of_following_llts = true;
         }
         
@@ -521,7 +521,11 @@ bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStamp
         cross_track_dist = cte_dist;
     }
 
+     void RouteGeneratorWorker::set_CTE_count_max(int cte_max)
+    {
+        cte_count_max_ = cte_max;
 
+    }
 
 
 }

@@ -43,14 +43,17 @@ namespace route {
         double ct_error, dt_range;
         int cte_count;
         int out_count;
+        int cte_count_max;
         pnh_->getParam("max_crosstrack_error", ct_error);
         pnh_->getParam("destination_downtrack_range", dt_range);
         pnh_->getParam("cte_count", cte_count);
         pnh_->getParam("out_count", out_count);
+        pnh_->getParam("cte_count_max", cte_count_max);
         rg_worker_.set_CTE_counter(cte_count);
         rg_worker_.set_out_counter(out_count);
         rg_worker_.set_ctdt_param(ct_error, dt_range);
         rg_worker_.set_CTE_dist(ct_error);
+        rg_worker_.set_CTE_count_max(cte_count_max);
         std::string route_file_location;
         pnh_->getParam("route_file_path", route_file_location);
         rg_worker_.set_route_file_path(route_file_location);

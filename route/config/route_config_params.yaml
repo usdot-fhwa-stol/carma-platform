@@ -9,6 +9,9 @@ destination_downtrack_range: 0
 # Int: cross-track deviation counter
 cte_count: 0
 
+# Int: maximum cross track error counter
+cte_max_count: 4
+
 # Int: lanelets outside of the route counter
 # If our current position is not within the bounds of any of the following lanelets, increment the counter by one
 out_count: 0
