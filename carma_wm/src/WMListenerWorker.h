@@ -17,8 +17,6 @@
  */
 
 #include <autoware_lanelet2_msgs/MapBin.h>
-#include<ros/ros.h>
-#include <carma_utils/CARMAUtils.h>
 #include <cav_msgs/Route.h>
 #include <carma_wm/CARMAWorldModel.h>
 #include <carma_wm/TrafficControl.h>
