@@ -74,10 +74,8 @@ namespace stop_and_wait_plugin
         pnh_->param<double>("minimal_trajectory_duration", minimal_trajectory_duration_);
         pnh_->param<double>("max_jerk_limit", max_jerk_limit_);
         pnh_->param<double>("min_timestep",min_timestep_);
-        pnh_->param<double>("min_acceptable_acc", min_instantaneous_acc_);
-        pnh_->param<double>("downsample_ratio", downsample_ratio_);
+        pnh_->param<double>("min_jerk", min_jerk_limit_);
 
-        //pnh2_->setParam("route/destination_downtrack_range", destination_downtrack_range);
         ros::CARMANodeHandle::setSpinCallback([this]() -> bool
         {
             plugin_discovery_pub_.publish(plugin_discovery_msg_);
@@ -128,7 +126,7 @@ namespace stop_and_wait_plugin
         trajectory.header.stamp = ros::Time::now();
         trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
-        trajectory.trajectory_points = compose_trajectory_from_centerline(points_and_target_speeds,req.vehicle_state);
+        trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points,req.vehicle_state);
         trajectory.initial_longitudinal_velocity = req.vehicle_state.longitudinal_vel;
         resp.trajectory_plan = trajectory;
         resp.related_maneuvers.push_back(cav_msgs::Maneuver::STOP_AND_WAIT);
@@ -166,7 +164,6 @@ namespace stop_and_wait_plugin
            
             double ending_downtrack = stop_and_wait_maneuver.end_dist; 
             double start_speed = current_speed_;    //Get static value of current speed at start of planning
-            std::cout<<"Starting downtrack:"<< starting_downtrack<<" Ending downtrack:"<< ending_downtrack<<" Speed:"<<start_speed<< std::endl;
             //maneuver_time_ = ros::Duration(stop_and_wait_maneuver.end_time - stop_and_wait_maneuver.start_time).toSec();
             
             maneuver_time_ = (3*(ending_downtrack - starting_downtrack))/(2*start_speed);
@@ -280,15 +277,8 @@ namespace stop_and_wait_plugin
     std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_centerline(
     const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state)
     {
-        for(int i=0;i<points.size();i++){
-            std::cout<<"downsampled points "<< i <<" Speed: "<< points[i].speed <<" x:"<<points[i].point.x()<<" y:"<<points[i].point.y()<<std::endl;
-        }
         int nearest_pt_index = getNearestPointIndex(points,state);
         std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index, points.end()); // Points in front of current vehicle position
-        std::cout<<"Curr_pose x:"<< pose_msg_.pose.position.x<<" y:"<<pose_msg_.pose.position.y<<std::endl;
-        for(int i=0;i<future_points.size();i++){
-            std::cout<<"Future points "<< i <<" Speed: "<< future_points[i].speed <<" x:"<<future_points[i].point.x()<<" y:"<<future_points[i].point.y()<<std::endl;
-        }
         //Get yaw - geometrically
         std::vector<float> yaw_values;
         for(size_t i=0 ;i < future_points.size()-1 ;i++)
@@ -333,7 +323,6 @@ namespace stop_and_wait_plugin
                 traj_point.target_time = traj_prev.target_time + ros::Duration(min_timestep_);
                 
             }
-            std::cout<<"Trajectory point x:"<<traj_point.x << " y:"<<traj_point.y<<" target_time:"<<ros::Duration(traj_point.target_time - traj_prev.target_time).toSec()<<std::endl;
             traj_point.controller_plugin_name = "default";
             traj_point.planner_plugin_name =plugin_discovery_msg_.name;
             traj.push_back(traj_point);
@@ -368,7 +357,7 @@ namespace stop_and_wait_plugin
             double delta_v = std::abs(cur_speed - prev_speed);
             double dt = sqrt(2*delta_v/jerk);
             double inst_acc = jerk * dt;
-            if(jerk < min_instantaneous_acc_)    //If instantaneous acceleration is almost 0, treat as constant velocity
+            if(jerk < min_jerk_limit_)    //Below minimum jerk slow down is ignored, treat as constant velocity
             {
                 double cur_pos = downtrack[i];
                 double delta_x = cur_pos - prev_pos;

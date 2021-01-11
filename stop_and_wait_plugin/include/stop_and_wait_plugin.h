@@ -102,6 +102,15 @@ namespace stop_and_wait_plugin
          * \return index of nearest point in points
          */
         int getNearestPointIndex(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state);
+        
+        /**
+         * \brief Returns the nearest point on the route to the provided vehicle pose in the provided list
+         * 
+         * \param points Route points to evaluate
+         * \param state The current vehicle state
+         * 
+         * \return index of nearest point in points
+         */
         int getNearestRouteIndex(lanelet::BasicLineString2d& points, const cav_msgs::VehicleState& state);
         /**
          * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
@@ -156,7 +165,7 @@ namespace stop_and_wait_plugin
         //The maximum acceptable jerk 
         double max_jerk_limit_ = 3.0;
         //The minimum acceptable jerk, after which constant speed is assumed
-        double min_instantaneous_acc_ = 0.001;
+        double min_jerk_limit_ = 0.001;
         //Minimum timestep used for planning trajectory
         double min_timestep_ =0.1;
         //Amount to downsample input lanelet centerline data

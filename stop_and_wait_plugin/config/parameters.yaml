@@ -17,6 +17,6 @@ spin_rate_hz: 10
 #Units: seconds
 min_timestep : 0.1
 
-# Double: The minimum acceptable instantaneous acceleration, after which constant speed is assumed, in m/s2
-#Units: meters per second square
-min_acceptable_acc: 0.01
+# Double: The minimum jerk below which slow down is ignored, constant speed is assumed, in m/s2
+#Units: meters per second cube
+min_jerk: 0.01

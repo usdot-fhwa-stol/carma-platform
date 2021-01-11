@@ -103,6 +103,10 @@ namespace route {
          */
         void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
 
+        /**
+         * \brief Callback for the twist subscriber, which will store latest twist locally
+         * \param msg Latest twist message
+         */
         void twist_cd(const geometry_msgs::TwistStampedConstPtr& msg);
 
         /**
@@ -194,7 +198,7 @@ namespace route {
 
         // current speed limit on current lanelet
         double speed_limit_ = 0;
-
+        // Current vehicle forward speed
         double current_speed_ = 0;
         // local copy of Route publihsers
         ros::Publisher route_event_pub_, route_state_pub_, route_pub_,route_marker_pub_;

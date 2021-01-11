@@ -31,7 +31,6 @@
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_core/geometry/LineString.h>
 #include <string>
-
 #include <cav_msgs/Maneuver.h>
 #include <carma_utils/containers/containers.h>
 #include <cav_msgs/VehicleState.h>
@@ -40,6 +39,7 @@
 #include <cav_srvs/PlanTrajectory.h>
 #include <sstream>
 #include<ros/package.h>
+#include <unordered_set>
 
 namespace stop_and_wait_plugin
 {
@@ -150,11 +150,15 @@ namespace stop_and_wait_plugin
         std::vector<cav_msgs::Maneuver> maneuvers;
         maneuvers.push_back(maneuver);
 
+        std::vector<cav_msgs::TrajectoryPlanPoint> trajectory;
+        cav_msgs::VehicleState state;
+        state.X_pos_global=curr_pos.pose.position.x;
+        state.Y_pos_global = curr_pos.pose.position.y;
         //Call function
         StopandWait sw;
         sw.wm_=cmw;
         sw.current_speed_=maneuver.stop_and_wait_maneuver.start_speed;
-        std::vector <PointSpeedPair> points= sw.maneuvers_to_points(maneuvers, starting_downtrack, cmw);
+        std::vector <PointSpeedPair> points= sw.maneuvers_to_points(maneuvers, starting_downtrack, cmw, state);
 
         //Check else condition maneuver
         cav_msgs::Maneuver maneuver_2 = maneuver;
@@ -162,14 +166,14 @@ namespace stop_and_wait_plugin
         //Less than min trajectory time
         maneuver_2.stop_and_wait_maneuver.end_time = ros::Time(3.0 + maneuver_2.stop_and_wait_maneuver.start_time.toSec()); 
         maneuvers[0] = maneuver_2;
-        std::vector <PointSpeedPair> coverage_points= sw.maneuvers_to_points(maneuvers, starting_downtrack, cmw);
+        std::vector <PointSpeedPair> coverage_points= sw.maneuvers_to_points(maneuvers, starting_downtrack, cmw, state);
 
         //Maneuver_3- jerk req > max permittable
         cav_msgs::Maneuver maneuver_3 = maneuver;
         maneuver_3.stop_and_wait_maneuver.start_time = ros::Time::now();
         maneuver_3.stop_and_wait_maneuver.end_time = ros::Time(3.0 + maneuver_3.stop_and_wait_maneuver.start_time.toSec());
         maneuvers[0] = maneuver_3;
-        coverage_points= sw.maneuvers_to_points(maneuvers, starting_downtrack, cmw);
+        coverage_points= sw.maneuvers_to_points(maneuvers, starting_downtrack, cmw, state);
 
         //Downsample points
         auto downsampled_points = carma_utils::containers::downsample_vector(points,8);
@@ -181,18 +185,31 @@ namespace stop_and_wait_plugin
         }
 
         /* Test compose trajectory and helper functions*/
-
-        std::vector<cav_msgs::TrajectoryPlanPoint> trajectory;
-        cav_msgs::VehicleState state;
-        state.X_pos_global=curr_pos.pose.position.x;
-        state.Y_pos_global = curr_pos.pose.position.y;
+            //getNearestPointIndex
         int nearest_pt =sw.getNearestPointIndex(downsampled_points, state);
         std::vector<lanelet::BasicPoint2d> points_split;
         std::vector<double> speeds_split;
         sw.splitPointSpeedPairs(downsampled_points,&points_split,&speeds_split);
         EXPECT_TRUE(points_split.size() == speeds_split.size());
         std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(points_split);
+
+            //getNearestRouteIndex
+        std::unordered_set<lanelet::Id> visited_lanelets;
+        auto lanelets = cmw->getLaneletsBetween(starting_downtrack,ending_downtrack);
+        std::vector<lanelet::ConstLanelet> lanelets_to_add;
+        for (auto l : lanelets)
+        {
+            if(visited_lanelets.find(l.id()) == visited_lanelets.end())
+            {
+                lanelets_to_add.push_back(l);
+                visited_lanelets.insert(l.id());
+            }
+        }  
+        lanelet::BasicLineString2d route_geometry = carma_wm::geometry::concatenate_lanelets(lanelets_to_add);
+        int nearest_pt_index = sw.getNearestRouteIndex(route_geometry,state);
+        EXPECT_TRUE(nearest_pt_index < route_geometry.size());
         
+            //speed_to_time
         std::vector<double> times;
         sw.speed_to_time(downtracks,speeds_split,times, 0.01);
         for(auto i = 0;i <times.size();i++){
