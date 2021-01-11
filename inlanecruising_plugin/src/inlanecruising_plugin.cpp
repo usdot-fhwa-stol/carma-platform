@@ -230,8 +230,6 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   ROS_DEBUG("Got basic points ");
 
-  ROS_DEBUG_STREAM("Got sub_curves " << sub_curves.size());
-
   std::vector<double> final_yaw_values;
   std::vector<double> final_actual_speeds;
   std::vector<lanelet::BasicPoint2d> all_sampling_points;
