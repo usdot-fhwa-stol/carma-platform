@@ -14,7 +14,7 @@ ndt_frequency_degraded_threshold: 8.0
 
 # Double: NDT result frequency threshold below which the result can be considered unusable
 # Units: Hz
-ndt_frequency_fault_threshold: 0.1
+ndt_frequency_fault_threshold: 0.66
 
 # Integer: The timeout of an auto initialization system
 # Units: ms
