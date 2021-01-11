@@ -176,6 +176,15 @@ namespace route {
             }
             // update route message
             route_msg_ = compose_route_msg(route);
+
+            for(auto id : route_msg_.route_path_lanelet_ids)
+            {
+                auto ll = world_model_->getMap()->laneletLayer.get(id);
+                route_llts.push_back(ll);
+
+            }
+
+
             route_marker_msg_ = compose_route_marker_msg(route);
             route_msg_.header.stamp = ros::Time::now();
             route_msg_.header.frame_id = "map";
@@ -340,8 +349,9 @@ namespace route {
                 ROS_WARN_STREAM("Routing has finished but carma_wm has not receive it!");
                 return;
             }
-            auto via_lanelet_vector = lanelet::geometry::findNearest(world_model_->getMap()->laneletLayer, current_loc, 1);
-            auto current_lanelet = lanelet::ConstLanelet(via_lanelet_vector[0].second.constData());
+            auto via_lanelet_vector = lanelet::geometry::findNearest(world_model_->getMap()->laneletLayer, current_loc, 10);
+            //auto current_lanelet = lanelet::ConstLanelet(via_lanelet_vector[0].second.constData());
+            auto current_lanelet = get_closest_lanelet_from_vector_llts(via_lanelet_vector);
             auto lanelet_track = carma_wm::geometry::trackPos(current_lanelet, current_loc);
             ll_id_ = current_lanelet.id();
             ll_crosstrack_distance_ = lanelet_track.crosstrack;
@@ -440,7 +450,6 @@ namespace route {
 
     bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStampedConstPtr& msg, lanelet::ConstLanelet current)
     {
-  
        lanelet::BasicPoint2d position;
 
         position.x()= msg->pose.position.x;
@@ -448,6 +457,7 @@ namespace route {
 
         if(boost::geometry::within(position, current.polygon2d())) //If vehicle is inside current_lanelet, there is no crosstrack error
         {
+            cte_count_ = 0;
             return false;
         }
 
@@ -460,16 +470,48 @@ namespace route {
                 cte_count_++;
 
                 if(cte_count_ > cte_count_max_) //If the distance exceeds the crosstrack distance a certain number of times, report that the route has been departed
-                    return true;
+                    {
+                        cte_count_ = 0;
+                        return true;
+                    }
+                else 
+                    return false;
+            }
+        else
+            {
+                cte_count_ = 0;
+                return false;
             }
  
     }
 
 
-    void RouteGeneratorWorker::set_CTE_counter(int cte_counter)
-    {
-        cte_count_ = cte_counter;
 
+    lanelet::ConstLanelet RouteGeneratorWorker::get_closest_lanelet_from_vector_llts (std::vector<std::pair<double, lanelet::ConstLanelet::ConstType>> list_of_pair)
+    {
+        std::vector<std::pair<double, lanelet::ConstLanelet::ConstType>>  filtered;
+        double min = 1000.0;
+        lanelet::ConstLanelet min_llt;
+        for(auto i : list_of_pair)
+        {
+            for(auto j: route_llts)
+            {
+                if(i.second.id() == j.id())
+                    filtered.push_back(i);
+            }
+
+        }
+
+        for (auto i: filtered)
+        {
+            if(i.first < min)
+                {
+                    min = i.first;
+                    min_llt = i.second;
+                }
+        }
+
+        return min_llt;
     }
 
     void RouteGeneratorWorker::set_CTE_dist(double cte_dist)

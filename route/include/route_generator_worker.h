@@ -170,13 +170,6 @@ namespace route {
         bool crosstrack_error_check(const geometry_msgs::PoseStampedConstPtr& msg, lanelet::ConstLanelet current_llt);
 
         /**
-         * \brief set the crosstrack error counter
-         * 
-         *  \param cte_counter initial value of the counter (set to zero as specified in the route_config_params.yaml file)
-        */
-        void set_CTE_counter(int cte_counter);
-
-        /**
          * \brief set the crosstrack error counter maximum limit
          * 
          *  \param cte_max the maximum amount of acceptable crosstrack error instances
@@ -189,6 +182,13 @@ namespace route {
          *  \param cte_dist maximum distance value (specified in the route_config_params.yaml file)
         */
         void set_CTE_dist(double cte_dist);
+
+        /**
+         * \brief Get the closest lanelet from the list of llts
+         * 
+         *  \param list_of_pair (<distance to the point, lanelet> pair)to get lanelets on the route
+        */
+        lanelet::ConstLanelet get_closest_lanelet_from_vector_llts(std::vector<std::pair<double, lanelet::ConstLanelet::ConstType>> list_of_pair);
 
 
     private:
@@ -213,6 +213,9 @@ namespace route {
         cav_msgs::RouteState route_state_msg_;
         visualization_msgs::MarkerArray route_marker_msg_;
         std::vector<lanelet::ConstPoint3d> points_; 
+        
+        //list of lanelets in the route
+        lanelet::ConstLanelets route_llts;
 
         // maximum cross track error which can trigger left route event
         double cross_track_max_;
@@ -246,7 +249,7 @@ namespace route {
         double cross_track_dist;
 
         // counter to record how many times vehicle's position exceeds crosstrack distance
-        int cte_count_;
+        int cte_count_ = 0;
 
         int cte_count_max_;
 

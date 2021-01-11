@@ -45,7 +45,6 @@ namespace route {
         pnh_->getParam("max_crosstrack_error", ct_error);
         pnh_->getParam("destination_downtrack_range", dt_range);
         pnh_->getParam("cte_count_max", cte_count_max);
-        rg_worker_.set_CTE_counter(0);
         rg_worker_.set_ctdt_param(ct_error, dt_range);
         rg_worker_.set_CTE_dist(ct_error);
         rg_worker_.set_CTE_count_max(cte_count_max);
