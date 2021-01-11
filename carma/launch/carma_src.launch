@@ -134,7 +134,7 @@
     <include file="$(find carma)/launch/ui.launch"/>
   </group>
 
-  <!-- TODO should there be a data collection launch file. Record Rosbag of all topics excluding /rosout and CAN messages since they may contain sensetive data -->
+  <!-- Set up the rosbag record node that will exclude sensitive topics -->
   <include file="$(find carma_record)/launch/carma_record.launch" if="$(arg use_rosbag)" />
 
 </launch>

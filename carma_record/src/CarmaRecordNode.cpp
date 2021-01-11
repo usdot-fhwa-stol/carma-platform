@@ -23,11 +23,6 @@ CarmaRecordNode::CarmaRecordNode(){};
 
 int CarmaRecordNode::run()
 {
-  // pnh_.getParam("max_lane_width", lane_max_width);
-  // wmb_.setMaxLaneWidth(lane_max_width);
-
-  // pnh2_.getParam("/config_speed_limit", config_limit);
-  // wmb_.setConfigSpeedLimit(config_limit);
 
   // boolean values that will load in from the rosparam server
   //they control if a set of topics will be excluded
@@ -88,12 +83,10 @@ int CarmaRecordNode::run()
   exclude_regex.pop_back();
  
   // set the exclude_regex as a param in the param server
-
   cnh_.setParam("/exclude_regex", exclude_regex);
 
   // Spin
   cnh_.spin();
-  // ros::shutdown();
   return 0;
 }
 

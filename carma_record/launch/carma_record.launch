@@ -12,6 +12,8 @@
 -->
 
 <launch>
+  <!-- The carma_record_node will load in the parameters from the rosparam server, and export a exclude_regex param -->
   <node name="carma_record_load_regex" pkg="carma_record" type="carma_record_node"/>
+  <!-- The carma_record script will call rosbag record with the desired parameters -->
   <node name="carma_record" pkg="carma_record" type="carma_record.sh"/>
 </launch>
