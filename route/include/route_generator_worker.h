@@ -184,13 +184,6 @@ namespace route {
         void set_CTE_count_max(int cte_max);
 
         /**
-         * \brief set the "out-of-bounds" error counter
-         * 
-         *  \param out_counter initial value of the counter (set to zero as specified in the route_config_params.yaml file)
-        */
-        void set_out_counter(int out_counter);
-
-        /**
          * \brief set the maximum crosstrack error distance
          * 
          *  \param cte_dist maximum distance value (specified in the route_config_params.yaml file)
@@ -256,9 +249,6 @@ namespace route {
         int cte_count_;
 
         int cte_count_max_;
-
-        // counter to record how many times the vehicle leaves the lanelet bounds
-        int out_count_;
 
     };
 

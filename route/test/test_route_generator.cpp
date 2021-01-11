@@ -402,8 +402,7 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
     worker.setWorldModelPtr(cmw);
     worker.set_CTE_count_max(4);
 
-    worker.set_CTE_counter(0);
-    worker.set_out_counter(4);
+    worker.set_CTE_counter(4);
     worker.set_CTE_dist(1.0);
 
     geometry_msgs::PoseStampedPtr mpt(new geometry_msgs::PoseStamped(msg));
@@ -424,18 +423,11 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
     ASSERT_EQ(boost::geometry::within(position, start_lanelet.polygon2d()), false);
     ASSERT_EQ(worker.crosstrack_error_check(mpt, start_lanelet), true); //The vehicle will show crosstrack error, so the value should return true
 
-    /*Test 2: Crosstrack error has occured more than what is allowed*/
 
-    worker.set_out_counter(0);
-    worker.set_CTE_counter(4);
-    ASSERT_EQ(worker.crosstrack_error_check(mpt, start_lanelet), true);
-
-
-    /*Test 3: Vehicle is in bounds, no crosstrack error*/
+    /*Test 2: Vehicle is in bounds, no crosstrack error*/
 
     //Use position values to show the case when there is no crosstrack error
     worker.set_CTE_counter(0);
-    worker.set_out_counter(0);
     worker.set_CTE_dist(1.0);
 
     //Assign vehicle position

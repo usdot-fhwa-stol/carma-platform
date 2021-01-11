@@ -459,8 +459,8 @@ bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStamp
 
     if(!boost::geometry::within(position, current.polygon2d())) //Determine whether or not the vehicle is in the lanelet polygon
     {
-        out_count_++;
-        if(out_count_ > cte_count_max_)
+        cte_count_++;
+        if(cte_count_ > cte_count_max_)
             return true;
     }
 
@@ -504,11 +504,6 @@ bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStamp
     return out_of_llt_bounds;
 }
 
-    void RouteGeneratorWorker::set_out_counter(int out_counter)
-    {
-        out_count_ = out_counter;
-
-    }
 
     void RouteGeneratorWorker::set_CTE_counter(int cte_counter)
     {
