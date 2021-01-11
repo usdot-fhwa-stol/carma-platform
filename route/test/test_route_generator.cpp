@@ -392,11 +392,14 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
     route_msg = worker.compose_route_msg(route);
     ASSERT_TRUE(route_msg.route_path_lanelet_ids.size() > 0);
 
+
+    /*Test 1: Vehicle is out of bounds*/
+
     //Assign vehicle position
     msg.pose.position.x = 0.0;
     msg.pose.position.y = 0.0;
 
-  worker.setWorldModelPtr(cmw);
+    worker.setWorldModelPtr(cmw);
 
     worker.set_CTE_counter(0);
     worker.set_out_counter(4);
@@ -413,27 +416,40 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
 
     worker.pose_cb(mpt);
 
+    lanelet::BasicPoint2d position;
+    position.x()= msg.pose.position.x;
+    position.y()= msg.pose.position.y;
+
+    ASSERT_EQ(boost::geometry::within(position, start_lanelet.polygon2d()), false);
     ASSERT_EQ(worker.crosstrack_error_check(mpt, start_lanelet), true); //The vehicle will show crosstrack error, so the value should return true
+
+    /*Test 2: Crosstrack error has occured more than what is allowed*/
 
     worker.set_out_counter(0);
     worker.set_CTE_counter(4);
     ASSERT_EQ(worker.crosstrack_error_check(mpt, start_lanelet), true);
 
 
-    //TODO: Use position values to show the case when there is no crosstrack error
+    /*Test 3: Vehicle is in bounds, no crosstrack error*/
+
+    //Use position values to show the case when there is no crosstrack error
     worker.set_CTE_counter(0);
     worker.set_out_counter(0);
     worker.set_CTE_dist(1.0);
-
 
     //Assign vehicle position
     msg.pose.position.x = -9.45542;
     msg.pose.position.y = -182.324;
 
-     geometry_msgs::PoseStampedPtr mpt2(new geometry_msgs::PoseStamped(msg));
+    position.x()= msg.pose.position.x;
+    position.y()= msg.pose.position.y;
 
+    geometry_msgs::PoseStampedPtr mpt2(new geometry_msgs::PoseStamped(msg));
+
+    ASSERT_EQ(boost::geometry::within(position, start_lanelet.polygon2d()), true);
     ASSERT_EQ(worker.crosstrack_error_check(mpt2, start_lanelet), false);
 
+    
 }
 
 
