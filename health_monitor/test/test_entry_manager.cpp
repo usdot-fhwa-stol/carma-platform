@@ -25,13 +25,13 @@ namespace health_monitor
     {
         EntryManager em;
         // params: bool available, bool active, std::string name, long timestamp, uint8_t type
-        Entry entry(true, false, "autoware_plugin", 1000, 1, "");
+        Entry entry(true, false, "cruising_plugin", 1000, 1, "");
         em.update_entry(entry);
         std::vector<Entry> res = em.get_entries();
         EXPECT_EQ(1, res.size());
         EXPECT_EQ(true, res.begin()->available_);
         EXPECT_EQ(false, res.begin()->active_);
-        EXPECT_EQ("autoware_plugin", res.begin()->name_);
+        EXPECT_EQ("cruising_plugin", res.begin()->name_);
         EXPECT_EQ(1000, res.begin()->timestamp_);
         EXPECT_EQ(1, res.begin()->type_);
     }
@@ -40,9 +40,9 @@ namespace health_monitor
     {
         EntryManager em;
         // params: bool available, bool active, std::string name, long timestamp, uint8_t type
-        Entry entry(true, false, "autoware_plugin", 1000, 1, "");
+        Entry entry(true, false, "cruising_plugin", 1000, 1, "");
         em.update_entry(entry);
-        Entry new_entry(false, true, "autoware_plugin", 2000, 3, "");
+        Entry new_entry(false, true, "cruising_plugin", 2000, 3, "");
         em.update_entry(new_entry);
         std::vector<Entry> res = em.get_entries();
         EXPECT_EQ(1, res.size());
@@ -50,7 +50,7 @@ namespace health_monitor
         EXPECT_EQ(true, res.begin()->active_);
         EXPECT_EQ(2000, res.begin()->timestamp_);
         // the following two attributes should not change once set
-        EXPECT_EQ("autoware_plugin", res.begin()->name_);
+        EXPECT_EQ("cruising_plugin", res.begin()->name_);
         EXPECT_EQ(1, res.begin()->type_);
     }
 
@@ -58,18 +58,18 @@ namespace health_monitor
     {
         EntryManager em;
         // params: bool available, bool active, std::string name, long timestamp, uint8_t type
-        Entry entry(true, false, "autoware_plugin", 1000, 1, "");
+        Entry entry(true, false, "cruising_plugin", 1000, 1, "");
         em.update_entry(entry);
-        Entry new_entry(false, true, "autoware_plugin_2", 2000, 3, "");
+        Entry new_entry(false, true, "cruising_plugin_2", 2000, 3, "");
         em.update_entry(new_entry);
-        em.delete_entry("autoware_plugin");
+        em.delete_entry("cruising_plugin");
         std::vector<Entry> res = em.get_entries();
         EXPECT_EQ(1, res.size());
         EXPECT_EQ(false, res.begin()->available_);
         EXPECT_EQ(true, res.begin()->active_);
         EXPECT_EQ(2000, res.begin()->timestamp_);
         // the following two attributes should not change once set
-        EXPECT_EQ("autoware_plugin_2", res.begin()->name_);
+        EXPECT_EQ("cruising_plugin_2", res.begin()->name_);
         EXPECT_EQ(3, res.begin()->type_);
     }
 
@@ -77,21 +77,21 @@ namespace health_monitor
     {
         EntryManager em;
         // params: bool available, bool active, std::string name, long timestamp, uint8_t type
-        Entry entry(true, false, "autoware_plugin", 1000, 1, "");
+        Entry entry(true, false, "cruising_plugin", 1000, 1, "");
         em.update_entry(entry);
-        boost::optional<Entry> res = em.get_entry_by_name("autoware_plugin");
+        boost::optional<Entry> res = em.get_entry_by_name("cruising_plugin");
         EXPECT_EQ(true, res->available_);
         EXPECT_EQ(false, res->active_);
         EXPECT_EQ(1000, res->timestamp_);
         EXPECT_EQ(1, res->type_);
-        EXPECT_EQ("autoware_plugin", res->name_);
+        EXPECT_EQ("cruising_plugin", res->name_);
     }
 
     TEST(EntryManagerTest, testGetEntryByInvalidName)
     {
         EntryManager em;
         // params: bool available, bool active, std::string name, long timestamp, uint8_t type
-        Entry entry(true, false, "autoware_plugin", 1000, 1, "");
+        Entry entry(true, false, "cruising_plugin", 1000, 1, "");
         em.update_entry(entry);
         boost::optional<Entry> res = em.get_entry_by_name("plugin");
         if(!res)
@@ -106,16 +106,16 @@ namespace health_monitor
     TEST(EntryManagerTest, testRequiredEntryCheck)
     {
         std::vector<std::string> required_names;
-        required_names.push_back("autoware");
-        required_names.push_back("autoware_plugin");
+        required_names.push_back("cruising");
+        required_names.push_back("cruising_plugin");
         EntryManager em(required_names);
-        Entry entry(true, false, "autoware_plugin", 1000, 1, "");
+        Entry entry(true, false, "cruising_plugin", 1000, 1, "");
         em.update_entry(entry);
-        Entry new_entry(false, true, "autoware_plugin_2", 2000, 3, "");
+        Entry new_entry(false, true, "cruising_plugin_2", 2000, 3, "");
         em.update_entry(new_entry);
-        EXPECT_EQ(true, em.is_entry_required("autoware_plugin"));
-        EXPECT_EQ(true, em.is_entry_required("autoware"));
-        EXPECT_EQ(false, em.is_entry_required("autoware_plugin_2"));
+        EXPECT_EQ(true, em.is_entry_required("cruising_plugin"));
+        EXPECT_EQ(true, em.is_entry_required("cruising"));
+        EXPECT_EQ(false, em.is_entry_required("cruising_plugin_2"));
     }
 
         TEST(EntryManagerTest, testTruckLidarGpsEntryCheck)

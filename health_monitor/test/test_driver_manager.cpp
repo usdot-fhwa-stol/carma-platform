@@ -251,7 +251,7 @@ namespace health_monitor
         bool car=true;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,1500,150,750);
 
         EXPECT_EQ(5, alert.type);
     }   
@@ -288,7 +288,7 @@ namespace health_monitor
         bool car=true;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,1500,150,750);
 
         EXPECT_EQ(1, alert.type);
     }   
@@ -325,7 +325,7 @@ namespace health_monitor
         bool car=true;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,1500,150,750);
 
         EXPECT_EQ(2, alert.type);
     }   
@@ -362,9 +362,9 @@ namespace health_monitor
         bool car=true;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,1500,150,750);
 
-        EXPECT_EQ(3, alert.type);
+        EXPECT_EQ(6, alert.type);
     } 
 
     TEST(DriverManagerTest, testCarHandleSpinFatalSscWorking)
@@ -399,9 +399,9 @@ namespace health_monitor
         bool car=true;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,1500,150,750);
 
-        EXPECT_EQ(3, alert.type);
+        EXPECT_EQ(6, alert.type);
     } 
 
     TEST(DriverManagerTest, testCarHandleSpinFatalUnknownInside)
@@ -415,9 +415,9 @@ namespace health_monitor
         bool car=true;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,1500,150,750);
 
-        EXPECT_EQ(3, alert.type);
+        EXPECT_EQ(6, alert.type);
     } 
 
         TEST(DriverManagerTest, testCarHandleSpinNotReadyCase1)
@@ -452,7 +452,7 @@ namespace health_monitor
         bool car=true;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,1000,750,1);
+        alert=dm.handleSpin(truck,car,1500,1000,750);
 
         EXPECT_EQ(4, alert.type);
     } 
@@ -489,7 +489,7 @@ namespace health_monitor
         bool car=true;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,5000,750,0);
+        alert=dm.handleSpin(truck,car,1500,5000,750);
 
         EXPECT_EQ(4, alert.type);
     } 
@@ -527,7 +527,7 @@ namespace health_monitor
         bool car=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,1500,150,750);
 
         EXPECT_EQ(3, alert.type);
     } 
@@ -956,7 +956,7 @@ namespace health_monitor
         bool car=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,1500,150,750);
 
         EXPECT_EQ(5, alert.type);
     }
@@ -1000,7 +1000,7 @@ namespace health_monitor
         bool car=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,1500,150,750);
 
         EXPECT_EQ(1, alert.type);
     }
@@ -1044,7 +1044,7 @@ namespace health_monitor
         bool car=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,1500,150,750);
 
         EXPECT_EQ(1, alert.type);
     }
@@ -1088,7 +1088,7 @@ namespace health_monitor
         bool car=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,1500,150,750);
 
         EXPECT_EQ(1, alert.type);
     }
@@ -1132,7 +1132,7 @@ namespace health_monitor
         bool car=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,1500,150,750);
 
         EXPECT_EQ(1, alert.type);
     }
@@ -1177,7 +1177,7 @@ namespace health_monitor
         bool car=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,1500,150,750);
 
         EXPECT_EQ(1, alert.type);
     }
@@ -1221,7 +1221,7 @@ namespace health_monitor
         bool car=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,1500,150,750);
 
         EXPECT_EQ(2, alert.type);
     }
@@ -1265,9 +1265,9 @@ namespace health_monitor
         bool car=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,1500,150,750);
 
-        EXPECT_EQ(3, alert.type);
+        EXPECT_EQ(6, alert.type);
     }
 
     TEST(DriverManagerTest, testHandleSpinFatalSscNotWorking)
@@ -1309,9 +1309,9 @@ namespace health_monitor
         bool car=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,1500,150,750);
 
-        EXPECT_EQ(3, alert.type);
+        EXPECT_EQ(6, alert.type);
     }
 
         TEST(DriverManagerTest, testHandleSpinFatalUnknownInsideTruck)
@@ -1325,9 +1325,9 @@ namespace health_monitor
         bool car=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,150,750,0);
+        alert=dm.handleSpin(truck,car,1500,150,750);
 
-        EXPECT_EQ(3, alert.type);
+        EXPECT_EQ(6, alert.type);
     }
 
 
@@ -1370,7 +1370,7 @@ namespace health_monitor
         bool car=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,1000,750,1);
+        alert=dm.handleSpin(truck,car,1500,1000,750);
 
         EXPECT_EQ(4, alert.type);
     }
@@ -1414,7 +1414,7 @@ namespace health_monitor
         bool car=false;
         
         cav_msgs::SystemAlert alert;
-        alert=dm.handleSpin(truck,car,1500,5000,750,0);
+        alert=dm.handleSpin(truck,car,1500,5000,750);
 
         EXPECT_EQ(4, alert.type);
     }

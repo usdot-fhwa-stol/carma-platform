@@ -116,13 +116,14 @@ public:
    *
    * \param start The starting downtrack for the query
    * \param end The ending downtrack for the query
+   * \param shortest_path_only If true the lanelets returned will be part of the route shortest path
    *
    * \throws std::invalid_argument If the route is not yet loaded or if start >= end
    *
    * \return A list of lanelets which contain regions that lie between start and end along the route. This function will
    * not return lanelets which are not part of the route
    */
-  virtual std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end) const = 0;
+  virtual std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end, bool shortest_path_only = false) const = 0;
 
   /*! \brief Get a pointer to the current map. If the underlying map has changed the pointer will also need to be
    * reacquired
@@ -262,6 +263,17 @@ public:
    * \return An optional vector of ConstLanalet. Returns at least the vector of given lanelet if no other is found
    */
   virtual std::vector<lanelet::ConstLanelet> getLane(const lanelet::ConstLanelet& lanelet, const LaneSection& section = LANE_AHEAD) const = 0;
+
+  /**
+   * \brief Gets the underlying lanelet, given the cartesian point on the map
+   *
+   * \param point Cartesian point to check the corressponding lanelet
+   * \param n     Number of lanelets to return. Default is 10. As there could be many lanelets overlapping.
+   * \throw std::invalid_argument if the map is not set, contains no lanelets
+   *
+   * \return vector of underlying lanelet, empty vector if it is not part of any lanelet
+   */
+  virtual std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n) const = 0;
 };
 
 // Helpful using declarations for carma_wm classes

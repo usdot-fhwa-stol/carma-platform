@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>health_monitor</name>
   <version>3.3.0</version>
   <description>The node is used to manage and monitor plugin and driver status</description>

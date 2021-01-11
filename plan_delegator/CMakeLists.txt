@@ -16,7 +16,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(plan_delegator)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++14)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
@@ -29,6 +29,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   carma_utils
+  carma_wm
 )
 
 ###################################
@@ -43,7 +44,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES plan_delegator
-   CATKIN_DEPENDS cav_msgs cav_srvs roscpp std_msgs carma_utils
+   CATKIN_DEPENDS cav_msgs cav_srvs roscpp std_msgs carma_utils carma_wm
 #  DEPENDS system_lib
 )
 
@@ -113,10 +114,10 @@ install(DIRECTORY
 ## Testing ##
 #############
 #catkin_add_gmock(${PROJECT_NAME}-test test/test_plan_delegator.cpp)
-add_rostest_gtest(test_plan_delegator test/plan_delegator.test test/test_plan_delegator.cpp)
-target_link_libraries(test_plan_delegator ${PROJECT_NAME}_lib ${catkin_LIBRARIES})
-##if(CATKIN_ENABLE_TESTING)
-##  find_package(rostest REQUIRED)
-##  add_rostest_gtest(test_plan_delegator test/plan_delegator.test test/test_plan_delegator.cpp)
-##  target_link_libraries(test_plan_delegator ${catkin_LIBRARIES})
-##endif()
+
+if(CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(test_plan_delegator test/plan_delegator.test test/test_plan_delegator.cpp)
+  target_link_libraries(test_plan_delegator ${PROJECT_NAME}_lib ${catkin_LIBRARIES})
+endif()
+

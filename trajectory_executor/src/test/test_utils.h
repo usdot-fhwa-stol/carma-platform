@@ -21,6 +21,7 @@
 #include <cav_msgs/TrajectoryPlan.h>
 #include <cav_msgs/SystemAlert.h>
 
+
 /**
  * Test fixture for TrajectoryExecutor testing
  * Maintains publishers, subscribers, and message tracking for all tests.
@@ -32,7 +33,7 @@ class TrajectoryExecutorTestSuite : public ::testing::Test
         TrajectoryExecutorTestSuite() {
             _nh = ros::NodeHandle();
             traj_pub = _nh.advertise<cav_msgs::TrajectoryPlan>("trajectory", 5);
-            traj_sub = _nh.subscribe<cav_msgs::TrajectoryPlan>("guidance/pure_pursuit/trajectory", 100, 
+            traj_sub = _nh.subscribe<cav_msgs::TrajectoryPlan>("guidance/mpc_follower/trajectory", 100, 
             &TrajectoryExecutorTestSuite::trajEmitCallback, this);
             sys_alert_sub = _nh.subscribe<cav_msgs::SystemAlert>("system_alert", 100, 
             &TrajectoryExecutorTestSuite::sysAlertCallback, this);
@@ -94,13 +95,14 @@ cav_msgs::TrajectoryPlan buildSampleTraj() {
     plan.header.stamp = ros::Time::now();
     plan.trajectory_id = "TEST TRAJECTORY 1";
 
-    uint64_t cur_time_nanos = ros::Time::now().toNSec();
+    ros::Time cur_time = ros::Time::now();
     for (int i = 0; i < 10; i++) {
         cav_msgs::TrajectoryPlanPoint p;
-        p.controller_plugin_name = "pure_pursuit";
+        p.controller_plugin_name = "mpc_follower";
         p.lane_id = "0";
         p.planner_plugin_name = "cruising";
-        p.target_time = cur_time_nanos + i * 130000000;
+        ros::Duration dur(i * 0.13);
+        p.target_time = cur_time + dur;
         p.x = 10 * i;
         p.y = 10 * i;
         plan.trajectory_points.push_back(p);

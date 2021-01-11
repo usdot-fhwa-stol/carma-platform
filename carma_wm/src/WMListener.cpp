@@ -20,6 +20,7 @@
 
 namespace carma_wm
 {
+  // @SONAR_STOP@
 WMListener::WMListener(bool multi_thread) : worker_(std::unique_ptr<WMListenerWorker>(new WMListenerWorker)), multi_threaded_(multi_thread)
 {
 
@@ -30,11 +31,17 @@ WMListener::WMListener(bool multi_thread) : worker_(std::unique_ptr<WMListenerWo
     ROS_DEBUG_STREAM("WMListener: Using multi-threaded subscription");
     nh_.setCallbackQueue(&async_queue_);
   }
-
+  map_update_sub_= nh_.subscribe("map_update", 1, &WMListener::mapUpdateCallback, this);
   map_sub_ = nh_.subscribe("semantic_map", 1, &WMListenerWorker::mapCallback, worker_.get());
-  // route_sub_ = nh_.subscribe("route", 1, &WMListenerWorker::routeCallback, worker_.get()); // TODO uncomment when
-  // route message is defined
+  route_sub_ = nh_.subscribe("route", 1, &WMListenerWorker::routeCallback, worker_.get());
   roadway_objects_sub_ = nh_.subscribe("roadway_objects", 1, &WMListenerWorker::roadwayObjectListCallback, worker_.get());
+
+  double cL;
+  nh2_.getParam("/config_speed_limit", cL);
+  setConfigSpeedLimit(cL);
+  
+
+
   // Set up AsyncSpinner for multi-threaded use case
   if (multi_threaded_)
   {
@@ -55,6 +62,12 @@ WorldModelConstPtr WMListener::getWorldModel()
 {
   const std::lock_guard<std::mutex> lock(mw_mutex_);
   return worker_->getWorldModel();
+}
+
+void WMListener::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg)
+{
+  const std::lock_guard<std::mutex> lock(mw_mutex_);
+  worker_->mapUpdateCallback(geofence_msg);
 }
 
 void WMListener::setMapCallback(std::function<void()> callback)
@@ -79,5 +92,12 @@ std::unique_lock<std::mutex> WMListener::getLock(bool pre_locked)
   std::unique_lock<std::mutex> lock(mw_mutex_, std::defer_lock);  // Create movable deferred lock
   return lock;
 }
+
+void WMListener::setConfigSpeedLimit(double config_lim) const
+{
+  worker_->setConfigSpeedLimit(config_lim);
+}
+
+// @SONAR_START@
 
 }  // namespace carma_wm

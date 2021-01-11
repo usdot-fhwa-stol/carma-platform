@@ -15,6 +15,7 @@ Welcome to the CARMAPlatform contributing guide. There are a few guidelines that
 * Making Changes
 * Submitting Changes
 * Merging Changes
+* Register as a collaborator
 
 ### Reporting Issues
 
@@ -52,6 +53,7 @@ Welcome to the CARMAPlatform contributing guide. There are a few guidelines that
 #### Make Changes Locally
 **Do the work, write good commit messages.**
 * Open up the project in your favorite text editor, select the file you want to contribute to, and make your changes.
+* If your changes include functionality that requires new testing, write the tests as well.
 * Commit your changes using a descriptive commit message that begins with the **`issue number being addressed`**.
 * When you have finished making your changes, you'll need to push up your changes to a topic branch in your fork of the repository.  Read the article ["Committing and reviewing changes to your project"](https://help.github.com/desktop/guides/contributing-to-projects/committing-and-reviewing-changes-to-your-project/) on GitHub. 
 * With them all committed, push them, this pushes everything in that branch up. 
@@ -67,12 +69,13 @@ Welcome to the CARMAPlatform contributing guide. There are a few guidelines that
 **We want your help to make CARMA Platform Project great.**
 * All pull requests will be reviewed by the CARMAPlatform team. 
 * During the review of your pull request the team member will either merge it, request changes to it, or close it with an explanation. 
+    * Remember: we are unable to add untested code to CARMA, as it will add to the CARMA team's technical debt.
 * For major changes the reviewer may require additional support from the team, which could cause some delay. 
 * We'll do our best to provide updates and feedback throughout the process. 
 * Feel free to open pull requests, and the CARMAPlatform team will communicate through it with any comments.
 
 #### Become a Collaborator
-**Please fill out this [form](https://docs.google.com/forms/d/e/1FAIpQLSdjEh0OPBVw-jaqfZ6gbyoPV0RetMOirvzp5NpE_whdrnhLdg/viewform) to be added to the CARMA Collaborative.**
+**Please fill out this [form](https://forms.gle/2Rd6ii4BgCLCmRpi7) to be added to the CARMA Collaborative.**
 
 Four Contribution Levels
 1.	Informative Group Contributor.

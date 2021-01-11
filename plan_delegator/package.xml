@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>plan_delegator</name>
   <version>3.3.0</version>
   <description>The plan_delegator package</description>
@@ -21,6 +21,7 @@
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
   <depend>carma_utils</depend>
+  <depend>carma_wm</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

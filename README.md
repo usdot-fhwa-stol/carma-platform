@@ -7,16 +7,16 @@
 
 CARMA<sup>SM</sup>  advances research and development to accelerate market readiness and deployment of cooperative driving automation, while advancing automated driving technology safety, security, data, and artificial intelligence. It encourages collaboration and participation by a community of engineers and researchers to advance understanding of cooperative driving automation using open source software (OSS) and agile project management practices. 
 
-CARMA is a reusable, extensible platform for controlling SAE level 2 connected, automated vehicles (AVs). It provides a rich, generic API for third party plugins that implement vehicle guidance algorithms that plan vehicle trajectories. It is written in Java and C++ and runs in a Robot Operating System (ROS) environment. The platform can be reused on a variety of properly equipped vehicles.
+CARMA is a reusable, extensible platform for controlling SAE level 2 connected, automated vehicles (AVs). It provides a rich, generic API for third party plugins that implement vehicle guidance algorithms to plan vehicle trajectories. It is written in C++ and runs in a Robot Operating System (ROS) environment on Ubuntu. The platform can be reused on a variety of properly equipped vehicles.  Migration has begun from the ROS 1 framework to ROS 2.
 
-This readme updated: February 7th, 2020
+This readme updated: October 23, 2020
 
-## What Is CARMA
+## What Is CARMA Platform
 ![CARMA Arch](docs/image/10-052L-CARMA-Diagram_Rev4-011020-1.png)
 
 Managing automated vehicle motion involves three aspects. The first is **navigation, also known as localization**, which is the act of determining where the vehicle currently is with respect to the earth and with respect to the desired path of travel (its planned route). The second is **guidance, also known as trajectory planning**, which includes the processes of determining how the vehicle is to move from its current location to its destination. The destination and route will be handed to the guidance algorithms, and they then determine how the vehicle’s motion needs to be adjusted at any time in order to follow the route. The third aspect of automated vehicle motion is **control**, which covers the actuation of the vehicle’s physical devices to induce changes in motion (for land vehicles these are typically causing the wheels to rotate faster or slower and turning the steering wheel). Therefore, the navigation solution becomes an input to the guidance function, and the guidance solution becomes an input to the control function. As the vehicle moves, obviously its location changes so that the navigation function constantly needs to update its solution and the cycle iterates as quickly as necessary to produce a smooth and accurate vehicle motion. The rate of iteration is largely determined by the expected speed of the vehicle.
 
-CARMA provides the navigation and guidance functions for its host vehicle, as well as some of the control functions.  It depends on low level controller hardware to provide the rest of the control function.  The current version of CARMA provides SAE level 2+ autonomy, with both speed and steering control.
+CARMA Platform provides the navigation and guidance functions for its host vehicle, as well as some of the control functions.  It depends on low level controller hardware to provide the rest of the control function.  The current version of CARMA Platform provides SAE level 3+ autonomy, with both speed and steering control.
 
 ## Documentation
 
@@ -27,6 +27,7 @@ Documentation of the setup, operation, and design of the CARMA Platform can be f
 <!-- We would like to publish this section, but are not ready to at this time:
 ## System Specifications
 The current CARMA requirements specification: [CARMA Platform Requirements](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/56786945/Platform+Requirements+Document?preview=/56786945/56852481/CAV%20Platform%20Requirements.docx)
+
 -->
 
 ## Release Notes
@@ -35,7 +36,7 @@ The current version and release history of the CARMA software platform: [CARMA R
 **Repo Structure Note:**  The master and develop branches of this repo (and all other repos in the usdot-fhwa-stol GitHub organization) now reflects the third generation of CARMA code and documentation, called CARMA3.  It uses [Autoware](https://github.com/autowarefoundation/autoware) to provide SAE level 2 and 3 automation capability.  The legacy CARMA2 code is still being supported.  It was used extensively by FHWA during 2018 for SAE level 1 experiments.  To work with that code base, please check out the CARMA2-integration branch and make pull requests to it (using the contribution process outlined below).
 
 ## Roadmap
-The current CARMA development direction and release plans. [CARMA Roadmap](<docs/Roadmap.md>)
+The current CARMA ecosystem development direction and release plans can be found here: [CARMA Roadmap](https://usdot-carma.atlassian.net/wiki/spaces/CET/pages/745111786/CARMA+Ecosystem+Roadmap)
 
 ## Architecture Guide
 The documentation describes the software architecture within a single CARMA vehicle.  There may be several of these vehicles operating in concert, communicating with each other via DSRC or cellular means.  They can also communicate with roadside infrastructure using DSRC or cellular.  The communication among software components within a single vehicle, however, is mostly done via the Robot Operating System (ROS) framework.  There are no ROS communications between neighboring vehicles. [CARMA3 System Architecture](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/89587713/CARMA3+System+Architecture?preview=/89587713/128680006/CARMA%203.0%20Platform%20Architecture%20v0.docx)

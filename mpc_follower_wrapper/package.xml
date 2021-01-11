@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>mpc_follower_wrapper</name>
   <version>3.3.0</version>
   <description>The mpc_follower_wrapper package</description>
@@ -26,6 +26,8 @@
   <depend>message_filters</depend>
   <depend>geometry_msgs</depend>
   <depend>autoware_config_msgs</depend>
+  <depend>carma_wm</depend>
+  <depend>tf</depend>
 
 <!--   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>cav_msgs</build_depend>

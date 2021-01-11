@@ -17,7 +17,9 @@
  */
 
 #include <autoware_lanelet2_msgs/MapBin.h>
+#include <cav_msgs/Route.h>
 #include <carma_wm/CARMAWorldModel.h>
+#include <carma_wm/TrafficControl.h>
 
 namespace carma_wm
 {
@@ -41,14 +43,22 @@ public:
   /*!
    * \brief Callback for new map messages. Updates the underlying map
    *
-   * \param map_msg The new map messaged to generate the map from
+   * \param map_msg The new map messages to generate the map from
    */
   void mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr& map_msg);
 
   /*!
+   * \brief Callback for new map update messages (geofence). Updates the underlying map
+   *
+   * \param geofence_msg The new map update messages to generate the map edits from
+   */
+  void mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg) const;
+
+  /*!
    * \brief Callback for route message. It is a TODO: To update function when route message spec is defined
    */
-  void routeCallback();
+  void routeCallback(const cav_msgs::RouteConstPtr& route_msg);
+
 
   /*!
    * \brief Callback for roadway objects msg
@@ -69,9 +79,26 @@ public:
    */
   void setRouteCallback(std::function<void()> callback);
 
+ /*!
+   * \brief Allows user to set a callback to be triggered when a map update is received
+   *
+   * \param config_lim A callback function that will be triggered after the world model receives a new map update
+   */
+  void setConfigSpeedLimit(double config_lim);
+
+/**
+ *  \brief Returns the current configured speed limit value
+ * 
+*/
+  double getConfigSpeedLimit() const;
+
+
 private:
   std::shared_ptr<CARMAWorldModel> world_model_;
   std::function<void()> map_callback_;
   std::function<void()> route_callback_;
+  void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const;
+  double config_speed_limit_;
+
 };
 }  // namespace carma_wm

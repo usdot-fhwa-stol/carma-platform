@@ -28,9 +28,10 @@ public:
   ros::Time schedule_end_;    // Overall schedule end
 
   ros::Duration control_start_;     // Duration from start of day
-  ros::Duration control_end_;       // Duration from start of day
-  ros::Duration control_duration_;  // Duration of active status. Starts from control_start
-  ros::Duration control_interval_;  // Interval between active status within control_start and control_end
+  ros::Duration control_duration_;  // Duration from start of control_start
+  ros::Duration control_offset_;    // Duration from start of day (specifies start time for repeat parameters - span, period)
+  ros::Duration control_span_;      // Duration of active status. Starts from offset
+  ros::Duration control_period_;    // Interval between active status within control_duration since control_start
 
   using DayOfTheWeekSet =
       std::unordered_set<boost::gregorian::greg_weekday, std::hash<int>>;  // Set of week days where geofence is active.
@@ -38,23 +39,24 @@ public:
   DayOfTheWeekSet week_day_set_;  // NOTE: If no day of the week is included then all should be
 
   /**
-   * @brief Default Constructor does not intialize any members
+   * @brief Default Constructor does not initialize any members
    */
   GeofenceSchedule();
 
   /**
    * @brief Constructor
    *
-   * @param schedule_start Overall schedule start in UTC
-   * @param schedule_end Overall schedule end in UTC
-   * @param control_start Duration from start of day
-   * @param control_end Duration from start of day
-   * @param control_duration Duration of active status. Starts from control_start
-   * @param control_interval Interval between active status within control_start and control_end
-   * @param week_day_set Set of days of the week which this schedule applies to. Defaults as all days of the week
+   * @param schedule_start    Overall schedule start in UTC
+   * @param schedule_end      Overall schedule end in UTC
+   * @param control_start     Duration from start of day
+   * @param control_duration  Duration from start of control_start
+   * @param control_offset    Duration from start of day (specifies start time for repeat parameters - span, period)
+   * @param control_span      Duration of active status. Starts from offset
+   * @param control_period    Interval between active status within control_duration since control_start
+   * @param week_day_set      Set of days of the week which this schedule applies to. Defaults as all days of the week
    */
   GeofenceSchedule(ros::Time schedule_start, ros::Time schedule_end, ros::Duration control_start,
-                   ros::Duration control_end, ros::Duration control_duration, ros::Duration control_interval,
+                   ros::Duration control_duration, ros::Duration control_offset, ros::Duration control_span, ros::Duration control_period,
                    DayOfTheWeekSet week_day_set = { 0, 1, 2, 3, 4, 5, 6 });  // Include all weekdays as default (0-6) ->
                                                                              // (Sun-Sat)
 

@@ -160,59 +160,61 @@ namespace health_monitor
 
     }
     
-    cav_msgs::SystemAlert DriverManager::handleSpin(bool truck,bool car,long time_now,long start_up_timestamp,long start_duration,bool is_zero)
+    cav_msgs::SystemAlert DriverManager::handleSpin(bool truck,bool car,long time_now,long start_up_timestamp,long start_duration)
     {
-         cav_msgs::SystemAlert alert;
+        cav_msgs::SystemAlert alert;
 
         if(truck==true)
         {
-            if(are_critical_drivers_operational_truck(time_now)=="s_1_l1_1_l2_1_g_1")
+            std::string status = are_critical_drivers_operational_truck(time_now);
+            if(status.compare("s_1_l1_1_l2_1_g_1") == 0)
             {
+                starting_up_ = false;
                 alert.description = "All essential drivers are ready";
                 alert.type = cav_msgs::SystemAlert::DRIVERS_READY;
                 return alert;
             } 
-           else if(is_zero || time_now - start_up_timestamp <= start_duration)
+           else if(starting_up_ && (time_now - start_up_timestamp <= start_duration))
             {
                 alert.description = "System is starting up...";
                 alert.type = cav_msgs::SystemAlert::NOT_READY;
                 return alert;
             }
-            else if((are_critical_drivers_operational_truck(time_now)=="s_1_l1_0_l2_1_g_1") || (are_critical_drivers_operational_truck(time_now)=="s_1_l1_1_l2_0_g_1"))
+            else if((status.compare("s_1_l1_0_l2_1_g_1") == 0) || (status.compare("s_1_l1_1_l2_0_g_1") == 0))
             {
             
                 alert.description = "One LIDAR Failed";
                 alert.type = cav_msgs::SystemAlert::CAUTION;
                 return alert;
             }
-            else if((are_critical_drivers_operational_truck(time_now)=="s_1_l1_0_l2_1_g_0") || (are_critical_drivers_operational_truck(time_now)=="s_1_l1_1_l2_0_g_0"))
+            else if((status.compare("s_1_l1_0_l2_1_g_0") == 0) || (status.compare("s_1_l1_1_l2_0_g_0") == 0))
             {   
                 alert.description = "One Lidar and GPS Failed";
                 alert.type = cav_msgs::SystemAlert::CAUTION;
                 return alert;
             } 
-            else if(are_critical_drivers_operational_truck(time_now)=="s_1_l1_1_l2_1_g_0")
+            else if(status.compare("s_1_l1_1_l2_1_g_0") == 0)
             {
                 alert.description = "GPS Failed";
                 alert.type = cav_msgs::SystemAlert::CAUTION;
                 return alert;
             }
-            else if(are_critical_drivers_operational_truck(time_now)=="s_1_l1_0_l2_0_g_1")
+            else if(status.compare("s_1_l1_0_l2_0_g_1") == 0)
             {
                 alert.description = "Both LIDARS Failed";
                 alert.type = cav_msgs::SystemAlert::WARNING;
                 return alert;
             }
-            else if(are_critical_drivers_operational_truck(time_now)=="s_1_l1_0_l2_0_g_0")
+            else if(status.compare("s_1_l1_0_l2_0_g_0") == 0)
             {
                 alert.description = "LIDARS and GPS Failed";
-                alert.type = cav_msgs::SystemAlert::FATAL;
+                alert.type = cav_msgs::SystemAlert::SHUTDOWN;
                 return alert;
             }
-            else if(are_critical_drivers_operational_truck(time_now)=="s_0")
+            else if(status.compare("s_0") == 0)
             {
                 alert.description = "SSC Failed";
-                alert.type = cav_msgs::SystemAlert::FATAL;
+                alert.type = cav_msgs::SystemAlert::SHUTDOWN;
                 return alert;
             }
             else
@@ -225,40 +227,42 @@ namespace health_monitor
         }
         else if(car==true)
         {
-            if(are_critical_drivers_operational_car(time_now)=="s_1_l_1_g_1")
+            std::string status = are_critical_drivers_operational_car(time_now);
+            if(status.compare("s_1_l_1_g_1") == 0)
             {
+                starting_up_ = false;
                 alert.description = "All essential drivers are ready";
                 alert.type = cav_msgs::SystemAlert::DRIVERS_READY;
                 return alert; 
             }
-            else if(is_zero || time_now - start_up_timestamp <= start_duration)
+            else if(starting_up_ && (time_now - start_up_timestamp <= start_duration))
             {
                 alert.description = "System is starting up...";
                 alert.type = cav_msgs::SystemAlert::NOT_READY;
                 return alert; 
             } 
-            else if(are_critical_drivers_operational_car(time_now)=="s_1_l_1_g_0")
+            else if(status.compare("s_1_l_1_g_0") == 0)
             {
                 alert.description = "GPS Failed";
                 alert.type = cav_msgs::SystemAlert::CAUTION;
                 return alert; 
             }
-            else if(are_critical_drivers_operational_car(time_now)=="s_1_l_0_g_1")
+            else if(status.compare("s_1_l_0_g_1") == 0)
             {
                 alert.description = "LIDAR Failed";
                 alert.type = cav_msgs::SystemAlert::WARNING;
                 return alert; 
             }
-            else if(are_critical_drivers_operational_car(time_now)=="s_1_l_0_g_0")
+            else if(status.compare("s_1_l_0_g_0") == 0)
             {
                 alert.description = "LIDAR, GPS Failed";
-                alert.type = cav_msgs::SystemAlert::FATAL;
+                alert.type = cav_msgs::SystemAlert::SHUTDOWN;
                 return alert; 
             }
-            else if(are_critical_drivers_operational_car(time_now)=="s_0")
+            else if(status.compare("s_0") == 0)
             {
                 alert.description = "SSC Failed";
-                alert.type = cav_msgs::SystemAlert::FATAL;
+                alert.type = cav_msgs::SystemAlert::SHUTDOWN;
                 return alert; 
             }
             else

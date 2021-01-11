@@ -23,10 +23,7 @@ source /opt/ros/kinetic/setup.bash
 source /opt/autoware.ai/ros/install/setup.bash --extend
 
 cd ~/carma_ws
-sudo apt-get update
-rosdep update
-rosdep install --from-paths src --ignore-src -y
-./src/carma-platform/carma_build.bash -c ~/carma_ws -a /opt/autoware.ai/ -x
+./src/carma-platform/carma_build.bash -c ~/carma_ws -a /opt/autoware.ai/ -x -m "-DCMAKE_BUILD_TYPE=Release"
 
 # Copy the installed files
 cd ~/carma_ws 

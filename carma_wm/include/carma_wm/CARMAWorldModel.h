@@ -1,5 +1,6 @@
 #pragma once
 
+
 /*
  * Copyright (C) 2019 LEIDOS.
  *
@@ -17,6 +18,7 @@
  */
 
 #include "carma_wm/WorldModel.h"
+#include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include <lanelet2_core/primitives/LineString.h>
 #include "IndexedDistanceMap.h"
 #include <cav_msgs/ExternalObject.h>
@@ -28,7 +30,7 @@
 namespace carma_wm
 {
 /*! \brief Class which implements the WorldModel interface. In addition this class provides write access to the world
- *         model. Write access is achieved through setters for the Map and Route.
+ *         model. Write access is achieved through setters for the Map and Route and getMutableMap().
  *         NOTE: This class should NOT be used in runtime code by users and is exposed solely for use in unit tests where the WMListener class cannot be instantiated. 
  *
  *  Proper usage of this class dictates that the Map and Route object be kept in sync. For this reason normal WorldModel users should not try to construct this class directly unless in unit tests.
@@ -44,13 +46,13 @@ public:
    * @brief Constructor
    *
    */
-  CARMAWorldModel();
+  CARMAWorldModel() = default;
 
   /**
    * @brief Destructor as required by interface
    *
    */
-  ~CARMAWorldModel();
+  ~CARMAWorldModel() = default;
 
   /*! \brief Set the current map
    *
@@ -63,6 +65,12 @@ public:
    *  \param route A shared pointer to the route which will share ownership to this object
    */
   void setRoute(LaneletRoutePtr route);
+
+  /*! \brief Get a mutable version of the current map
+   * 
+   *  NOTE: the user must make sure to setMap() after any edit to the map and to set a valid route
+   */
+  lanelet::LaneletMapPtr getMutableMap() const;
 
   /*! \brief Update internal records of roadway objects. These objects MUST be guaranteed to be on the road. 
    * 
@@ -87,6 +95,12 @@ public:
    */
   lanelet::Optional<std::tuple<TrackPos,cav_msgs::RoadwayObstacle>> getNearestObjInLane(const lanelet::BasicPoint2d& object_center, const LaneSection& section = LANE_AHEAD) const;
 
+/** \param config_lim the configurable speed limit value populated from WMListener using the config_speed_limit parameter
+ * in VehicleConfigParams.yaml
+*
+*/
+  void setConfigSpeedLimit(double config_lim);
+  
   ////
   // Overrides
   ////
@@ -96,7 +110,7 @@ public:
 
   TrackPos routeTrackPos(const lanelet::BasicPoint2d& point) const override;
 
-  std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end) const override;
+  std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end, bool shortest_path_only = false) const override;
 
   lanelet::LaneletMapConstPtr getMap() const override;
 
@@ -123,8 +137,15 @@ public:
 
   std::vector<lanelet::ConstLanelet> getLane(const lanelet::ConstLanelet& lanelet, const LaneSection& section = LANE_AHEAD) const override;
 
-private:
+  std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::BasicPoint2d& point, const unsigned int n = 10) const override;
 
+  
+
+
+private:
+  
+  double config_speed_limit_;
+  
   /*! \brief Helper function to compute the geometry of the route downtrack/crosstrack reference line
    *         This function should generally only be called from inside the setRoute function as it uses member variables
    * set in that function
@@ -155,5 +176,7 @@ private:
   lanelet::LaneletMapUPtr shortest_path_filtered_centerline_view_;  // Lanelet map view of shortest path center lines
                                                                     // only
   std::vector<cav_msgs::RoadwayObstacle> roadway_objects_; // 
+
+  
 };
 }  // namespace carma_wm
