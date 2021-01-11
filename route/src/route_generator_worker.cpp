@@ -370,7 +370,7 @@ namespace route {
                 ROS_ERROR_STREAM("Failed to set the current speed limit. Valid traffic rules object could not be built.");
             }
             // check if we left the seleted route by cross track error
-            bool departed = crosstrack_error_check(msg, current_lanelet, lanelet_track);
+            bool departed = crosstrack_error_check(msg, current_lanelet);
             if (departed)
                 {
                     this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
@@ -438,7 +438,7 @@ namespace route {
         return true;
     }
 
-bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStampedConstPtr& msg, lanelet::ConstLanelet current, carma_wm::TrackPos llt_track)
+bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStampedConstPtr& msg, lanelet::ConstLanelet current)
 {
   auto route = lanelet::ConstLanelets();
   for(auto id : route_msg_.route_path_lanelet_ids)
@@ -481,7 +481,7 @@ bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStamp
     bool out_of_following_llts = false;
     
     ROS_DEBUG_STREAM("Following_size "<< following_llts.size());
-    for(auto i:following_llts)
+    for(const auto i : following_llts)
     {
        if (boost::geometry::within(position, i.polygon2d())) 
            {

@@ -411,15 +411,13 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
 
     auto current_lanelet = lanelet::ConstLanelet(via_lanelet_vector[0].second.constData());
 
-    auto ll_track = carma_wm::geometry::trackPos(current_lanelet, current_loc);
-
     worker.pose_cb(mpt);
 
-    ASSERT_EQ(worker.crosstrack_error_check(mpt, start_lanelet, ll_track), true); //The vehicle will show crosstrack error, so the value should return true
+    ASSERT_EQ(worker.crosstrack_error_check(mpt, start_lanelet), true); //The vehicle will show crosstrack error, so the value should return true
 
     worker.set_out_counter(0);
     worker.set_CTE_counter(4);
-    ASSERT_EQ(worker.crosstrack_error_check(mpt, start_lanelet, ll_track), true);
+    ASSERT_EQ(worker.crosstrack_error_check(mpt, start_lanelet), true);
 
 
     //TODO: Use position values to show the case when there is no crosstrack error
@@ -434,7 +432,7 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
 
      geometry_msgs::PoseStampedPtr mpt2(new geometry_msgs::PoseStamped(msg));
 
-    ASSERT_EQ(worker.crosstrack_error_check(mpt2, start_lanelet, ll_track), false);
+    ASSERT_EQ(worker.crosstrack_error_check(mpt2, start_lanelet), false);
 
 }
 

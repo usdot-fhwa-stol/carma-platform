@@ -167,7 +167,7 @@ namespace route {
         *  \param current_llt The lanelet that the vehicle is currently in
         *  \param llt_track The crosstrack and downtrack distance of the current lanelet
         * */
-        bool crosstrack_error_check(const geometry_msgs::PoseStampedConstPtr& msg, lanelet::ConstLanelet current_llt, carma_wm::TrackPos llt_track);
+        bool crosstrack_error_check(const geometry_msgs::PoseStampedConstPtr& msg, lanelet::ConstLanelet current_llt);
 
         /**
          * \brief set the crosstrack error counter

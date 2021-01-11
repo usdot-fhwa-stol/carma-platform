@@ -41,7 +41,8 @@ namespace route {
         rg_worker_.setWorldModelPtr(wm_);
         // load params and pass to route generator worker
         double ct_error, dt_range;
-        int cte_count, out_count;
+        int cte_count;
+        int out_count;
         pnh_->getParam("max_crosstrack_error", ct_error);
         pnh_->getParam("destination_downtrack_range", dt_range);
         pnh_->getParam("cte_count", cte_count);
