@@ -438,71 +438,32 @@ namespace route {
         return true;
     }
 
-bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStampedConstPtr& msg, lanelet::ConstLanelet current)
-{
-  auto route = lanelet::ConstLanelets();
-  for(auto id : route_msg_.route_path_lanelet_ids)
-  {
-    auto ll = world_model_->getMap()->laneletLayer.get(id);
-    route.push_back(ll);
-  }
-
-  bool out_of_llt_bounds = false;
+    bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStampedConstPtr& msg, lanelet::ConstLanelet current)
+    {
   
-  lanelet::BasicPoint2d position;
+       lanelet::BasicPoint2d position;
 
-    position.x()= msg->pose.position.x;
-    position.y()= msg->pose.position.y;
+        position.x()= msg->pose.position.x;
+        position.y()= msg->pose.position.y;
 
-    ROS_DEBUG_STREAM("LLt Polygon Dimensions1: " << current.polygon2d().front().x()<< ", "<< current.polygon2d().front().y());
-    ROS_DEBUG_STREAM("LLt Polygon Dimensions2: " << current.polygon2d().back().x()<< ", "<< current.polygon2d().back().y());
-
-    if(!boost::geometry::within(position, current.polygon2d())) //Determine whether or not the vehicle is in the lanelet polygon
-    {
-        cte_count_++;
-        if(cte_count_ > cte_count_max_)
-            return true;
-    }
-
-
-    ROS_DEBUG_STREAM("Distance1: "<< boost::geometry::distance(position, current.polygon2d())<<" Crosstrack: "<< cross_track_dist );
-    
-    if (boost::geometry::distance(position, current.polygon2d()) > cross_track_dist) //Evaluate lanelet crosstrack distance from vehicle
+        if(boost::geometry::within(position, current.polygon2d())) //If vehicle is inside current_lanelet, there is no crosstrack error
         {
-            cte_count_++;
-
-            if(cte_count_ > cte_count_max_) //If the distance exceeds the crosstrack distance a certain number of times, report that the route has been departed
-                return true;
+            return false;
         }
 
-
-    auto graph = world_model_->getMapRoutingGraph();
-    auto following_llts = graph->following(current); //Get all subsequent lanelets from the map
-    bool out_of_following_llts = false;
+        ROS_DEBUG_STREAM("LLt Polygon Dimensions1: " << current.polygon2d().front().x()<< ", "<< current.polygon2d().front().y());
+        ROS_DEBUG_STREAM("LLt Polygon Dimensions2: " << current.polygon2d().back().x()<< ", "<< current.polygon2d().back().y());
+        ROS_DEBUG_STREAM("Distance1: "<< boost::geometry::distance(position, current.polygon2d())<<" Crosstrack: "<< cross_track_dist );
     
-    ROS_DEBUG_STREAM("Following_size "<< following_llts.size());
-    for(const auto i : following_llts)
-    {
-       if (boost::geometry::within(position, i.polygon2d())) 
-           {
-               return false; // iterate over the list of lanelets in the route. If the vehicle is inside of one, return that there is "No CTE violation"
-        
-           }
-        else if (!boost::geometry::within(position, i.polygon2d()) && boost::geometry::distance(position, current.polygon2d()) > cross_track_dist)
-        {
-            cte_count_++;
+        if (boost::geometry::distance(position, current.polygon2d()) > cross_track_dist) //Evaluate lanelet crosstrack distance from vehicle
+            {
+                cte_count_++;
 
-            if(cte_count_ > cte_count_max_)
-                out_of_following_llts = true;
-        }
-        
+                if(cte_count_ > cte_count_max_) //If the distance exceeds the crosstrack distance a certain number of times, report that the route has been departed
+                    return true;
+            }
+ 
     }
-    if (out_of_following_llts)//If we make it to the end of the list and the vehicle is not inside of a lanelet, then return true
-        return true;
-
-    
-    return out_of_llt_bounds;
-}
 
 
     void RouteGeneratorWorker::set_CTE_counter(int cte_counter)
