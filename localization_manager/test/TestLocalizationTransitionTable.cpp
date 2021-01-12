@@ -215,6 +215,13 @@ TEST(LocalizationTransitionTable, testTransitionsNDTMode)
 
   ltt.signal(LocalizationSignal::LIDAR_SENSOR_FAILURE);
   ASSERT_EQ(LocalizationState::AWAIT_MANUAL_INITIALIZATION, ltt.getState());
+
+  // Lidar sensor failure during initialization
+  ltt.signal(LocalizationSignal::INITIAL_POSE);
+  ASSERT_EQ(LocalizationState::INITIALIZING, ltt.getState());
+
+  ltt.signal(LocalizationSignal::LIDAR_SENSOR_FAILURE);
+  ASSERT_EQ(LocalizationState::AWAIT_MANUAL_INITIALIZATION, ltt.getState());
 }
 
 TEST(LocalizationTransitionTable, testTransitionsAUTOMode)
@@ -320,4 +327,11 @@ TEST(LocalizationTransitionTable, testTransitionsAUTOMode)
   // Evaluate DEGRADED_NO_LIDAR_FIX
   ltt.signal(LocalizationSignal::TIMEOUT);
   ASSERT_EQ(LocalizationState::AWAIT_MANUAL_INITIALIZATION, ltt.getState());
+
+  // Lidar sensor failure during initialization
+  ltt.signal(LocalizationSignal::INITIAL_POSE);
+  ASSERT_EQ(LocalizationState::INITIALIZING, ltt.getState());
+
+  ltt.signal(LocalizationSignal::LIDAR_SENSOR_FAILURE);
+  ASSERT_EQ(LocalizationState::DEGRADED_NO_LIDAR_FIX, ltt.getState());
 }

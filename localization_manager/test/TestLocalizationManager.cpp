@@ -23,25 +23,34 @@
 #include <carma_utils/testing/TestHelpers.h>
 #include "localization_manager/LocalizationManager.h"
 
-using namespace localizer;
 
-/*
+namespace localizer 
+{
 
-  using PosePublisher = std::function<void(const geometry_msgs::PoseStamped&)>;
-  using TransformPublisher = std::function<void(const geometry_msgs::TransformStamped&)>;
-  using StatePublisher = std::function<void(const cav_msgs::LocalizationStatusReport&)>;
-  */
+// Helper function returns the config that these tests were origionally meant to assume was the default
+LocalizationManagerConfig getDefaultConfigForTest() {
+  LocalizationManagerConfig config;
+  config.fitness_score_degraded_threshold = 1.0;
+  config.fitness_score_fault_threshold = 2.0;
+  config.ndt_frequency_degraded_threshold = 9;
+  config.ndt_frequency_fault_threshold = 5;
+  config.auto_initialization_timeout = 30000;
+  config.gnss_only_operation_timeout = 6000;
+  config.localization_mode = LocalizerMode::NDT;
+
+  return config;
+}
 
 TEST(LocalizationManager, testConstructor)
 {
-  LocalizationManagerConfig config;
+  LocalizationManagerConfig config = getDefaultConfigForTest();
   LocalizationManager manager([](auto pose) {}, [](auto status) {}, [](auto pose_with_cov) {}, config,
                               std::make_unique<carma_utils::timers::testing::TestTimerFactory>());
 }
 
 TEST(LocalizationManager, testSpin)
 {
-  LocalizationManagerConfig config;
+  LocalizationManagerConfig config = getDefaultConfigForTest();
 
   boost::optional<cav_msgs::LocalizationStatusReport> status_msg;
   LocalizationManager manager([](auto pose) {}, [&](auto status) { status_msg = status; }, [](auto pose_with_cov) {}, config,
@@ -60,7 +69,7 @@ TEST(LocalizationManager, testSpin)
 
 TEST(LocalizationManager, testSignals)
 {
-  LocalizationManagerConfig config;
+  LocalizationManagerConfig config = getDefaultConfigForTest();
   config.localization_mode = LocalizerMode::AUTO_WITH_TIMEOUT;
   config.auto_initialization_timeout = 1000;
   config.gnss_only_operation_timeout = 2000;
@@ -245,3 +254,34 @@ TEST(LocalizationManager, testSignals)
   ASSERT_EQ(LocalizationState::DEGRADED_NO_LIDAR_FIX, manager.getState());
   
 }
+
+TEST(LocalizationManager, testGNSSCorrection)
+{
+  LocalizationManagerConfig config = getDefaultConfigForTest();
+  config.localization_mode = LocalizerMode::AUTO_WITHOUT_TIMEOUT;
+  config.auto_initialization_timeout = 1000;
+  config.gnss_only_operation_timeout = 2000;
+
+  boost::optional<geometry_msgs::PoseStamped> published_pose;
+  boost::optional<geometry_msgs::PoseWithCovarianceStamped> published_initial_pose;
+
+  LocalizationManager manager([&](auto pose) { published_pose = pose; },
+                              [](auto status) {}, [&](auto initial) { published_initial_pose = initial; }, config,
+                              std::make_unique<carma_utils::timers::testing::TestTimerFactory>());
+
+  ros::Time::setNow(ros::Time(1.0));
+
+  ASSERT_EQ(LocalizationState::UNINITIALIZED, manager.getState());
+
+  geometry_msgs::PoseStamped msg;
+  msg.header.seq = 1;
+  geometry_msgs::PoseStampedConstPtr msg_ptr(new geometry_msgs::PoseStamped(msg));
+  manager.gnssPoseCallback(msg_ptr);
+
+  ASSERT_EQ(LocalizationState::INITIALIZING, manager.getState());
+  ASSERT_TRUE(!!published_initial_pose);
+  ASSERT_EQ(msg.header.seq, published_initial_pose->header.seq);
+
+}
+
+}; // localizer
