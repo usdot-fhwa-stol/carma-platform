@@ -184,13 +184,12 @@ namespace route {
         void set_CTE_dist(double cte_dist);
 
         /**
-         * \brief "Get the closest lanelet on the route from the list of <distance, lanelet> pairs relative to the vehicle's current point. 
+         * \brief "Get the closest lanelet on the route relative to the vehicle's current position. 
          * If the input list does not contain lanelets on the route, still closest lanelet from the route will be returned
          * 
-         *  \param list_of_pair <distance to the point, lanelet> pair to get the lanelets on the route
          *  \param position the current position of the vehicle
         */
-        lanelet::ConstLanelet get_closest_lanelet_from_route_llts(std::vector<std::pair<double, lanelet::ConstLanelet::ConstType>> list_of_pair, lanelet::BasicPoint2d position);
+        lanelet::ConstLanelet get_closest_lanelet_from_route_llts(lanelet::BasicPoint2d position);
 
 
     private:

@@ -349,8 +349,7 @@ namespace route {
                 ROS_WARN_STREAM("Routing has finished but carma_wm has not receive it!");
                 return;
             }
-            auto via_lanelet_vector = lanelet::geometry::findNearest(world_model_->getMap()->laneletLayer, current_loc, 10);
-            auto current_lanelet = get_closest_lanelet_from_route_llts(via_lanelet_vector,current_loc);
+            auto current_lanelet = get_closest_lanelet_from_route_llts(current_loc);
             auto lanelet_track = carma_wm::geometry::trackPos(current_lanelet, current_loc);
             ll_id_ = current_lanelet.id();
             ll_crosstrack_distance_ = lanelet_track.crosstrack;
@@ -486,45 +485,20 @@ namespace route {
 
 
 
-    lanelet::ConstLanelet RouteGeneratorWorker::get_closest_lanelet_from_route_llts(std::vector<std::pair<double, lanelet::ConstLanelet::ConstType>> list_of_pair, lanelet::BasicPoint2d position)
+    lanelet::ConstLanelet RouteGeneratorWorker::get_closest_lanelet_from_route_llts(lanelet::BasicPoint2d position)
     {
-        std::vector<std::pair<double, lanelet::ConstLanelet::ConstType>>  filtered;
-        double min = std::numeric_limits<double>::infinity();
+       double min = std::numeric_limits<double>::infinity();
         lanelet::ConstLanelet min_llt;
-        for(auto i : list_of_pair)
-        {
-            for(auto j: route_msg_.route_path_lanelet_ids)
+        for (auto i: route_llts)
+         {
+            double dist = boost::geometry::distance(position, i.polygon2d());
+            if (dist < min)
             {
-                if(i.second.id() == j)
-                    filtered.push_back(i);
+                min = dist;
+                min_llt = i;
             }
-
-        }
-        for (auto i: filtered)
-        {
-            if(i.first < min)
-                {
-                    min = i.first;
-                    min_llt = i.second;
-                }
-        }
-
-        if (filtered.empty())
-        {
-            for (auto i: route_llts)
-            {
-                double dist = boost::geometry::distance(position, i.polygon2d());
-                if (dist < min)
-                {
-                    min = dist;
-                    min_llt = i;
-                }
-
-            }
-
-        }
-
-        return min_llt;
+     }
+    return min_llt;
     }
 
     void RouteGeneratorWorker::set_CTE_dist(double cte_dist)
