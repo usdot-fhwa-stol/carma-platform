@@ -190,7 +190,7 @@ namespace route {
          *  \param list_of_pair <distance to the point, lanelet> pair to get the lanelets on the route
          *  \param position the current position of the vehicle
         */
-        lanelet::ConstLanelet get_closest_lanelet_from_vector_llts(std::vector<std::pair<double, lanelet::ConstLanelet::ConstType>> list_of_pair, lanelet::BasicPoint2d position);
+        lanelet::ConstLanelet get_closest_lanelet_from_route_llts(std::vector<std::pair<double, lanelet::ConstLanelet::ConstType>> list_of_pair, lanelet::BasicPoint2d position);
 
 
     private:
@@ -217,7 +217,7 @@ namespace route {
         std::vector<lanelet::ConstPoint3d> points_; 
         
         //Unordered set of lanelets in the route
-        std::unordered_set<lanelet::ConstLanelet> route_llts;
+        lanelet::ConstLanelets route_llts;
 
         // maximum cross track error which can trigger left route event
         double cross_track_max_;
