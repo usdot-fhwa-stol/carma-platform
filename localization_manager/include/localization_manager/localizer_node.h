@@ -45,7 +45,7 @@ public:
   Localizer()=default;
 
   /**
-   * \brief Primary entry function for node execution. Will not exist until node shutdown.
+   * \brief Primary entry function for node execution. Will not exit until node shutdown.
    */
   void run();
 
