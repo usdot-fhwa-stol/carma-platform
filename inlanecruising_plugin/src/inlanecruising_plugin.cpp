@@ -488,7 +488,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   all_sampling_points.insert(all_sampling_points.begin(),
                              cur_veh_point);  // Add current vehicle position to front of sample points
 
-  final_actual_speeds.insert(final_actual_speeds.begin(), std::max(state.longitudinal_vel, config_.minimum_speed));
+  final_actual_speeds.insert(final_actual_speeds.begin(), state.longitudinal_vel);
 
   final_yaw_values.insert(final_yaw_values.begin(), state.orientation);
 
