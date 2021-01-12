@@ -180,7 +180,8 @@ namespace route {
             for(auto id : route_msg_.route_path_lanelet_ids)
             {
                 auto ll = world_model_->getMap()->laneletLayer.get(id);
-                route_llts.push_back(ll);
+               // route_llts.push_back(ll);
+                route_llts.insert(ll);
 
             }
 
@@ -350,8 +351,7 @@ namespace route {
                 return;
             }
             auto via_lanelet_vector = lanelet::geometry::findNearest(world_model_->getMap()->laneletLayer, current_loc, 10);
-            //auto current_lanelet = lanelet::ConstLanelet(via_lanelet_vector[0].second.constData());
-            auto current_lanelet = get_closest_lanelet_from_vector_llts(via_lanelet_vector);
+            auto current_lanelet = get_closest_lanelet_from_vector_llts(via_lanelet_vector,current_loc);
             auto lanelet_track = carma_wm::geometry::trackPos(current_lanelet, current_loc);
             ll_id_ = current_lanelet.id();
             ll_crosstrack_distance_ = lanelet_track.crosstrack;
@@ -487,21 +487,20 @@ namespace route {
 
 
 
-    lanelet::ConstLanelet RouteGeneratorWorker::get_closest_lanelet_from_vector_llts (std::vector<std::pair<double, lanelet::ConstLanelet::ConstType>> list_of_pair)
+    lanelet::ConstLanelet RouteGeneratorWorker::get_closest_lanelet_from_vector_llts(std::vector<std::pair<double, lanelet::ConstLanelet::ConstType>> list_of_pair, lanelet::BasicPoint2d position)
     {
         std::vector<std::pair<double, lanelet::ConstLanelet::ConstType>>  filtered;
-        double min = 1000.0;
+        double min = std::numeric_limits<double>::infinity();
         lanelet::ConstLanelet min_llt;
         for(auto i : list_of_pair)
         {
-            for(auto j: route_llts)
+            for(auto j: route_msg_.route_path_lanelet_ids)
             {
-                if(i.second.id() == j.id())
+                if(i.second.id() == j)
                     filtered.push_back(i);
             }
 
         }
-
         for (auto i: filtered)
         {
             if(i.first < min)
@@ -509,6 +508,21 @@ namespace route {
                     min = i.first;
                     min_llt = i.second;
                 }
+        }
+
+        if (filtered.empty())
+        {
+            for (auto i: route_llts)
+            {
+                double dist = boost::geometry::distance(position, i.polygon2d());
+                if (dist < min)
+                {
+                    min = dist;
+                    min_llt = i;
+                }
+
+            }
+
         }
 
         return min_llt;

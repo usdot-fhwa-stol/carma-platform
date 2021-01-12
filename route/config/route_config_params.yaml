@@ -1,10 +1,10 @@
 # Double: max cross track tolerance error
 # Units: meter
-max_crosstrack_error: 25
+max_crosstrack_error: 2.0
 
 # Double: downtrack_range
 # Units: meter
 destination_downtrack_range: 0
 
-# Int: maximum cross track error counter
+# Int: Maximum number of consecutive timesteps outside of the route allowable before triggering LEFT_ROUTE
 cte_max_count: 4

@@ -40,7 +40,7 @@
 #include <wgs84_utils/wgs84_utils.h>
 #include <boost/filesystem.hpp>
 #include <visualization_msgs/MarkerArray.h>
-
+#include <unordered_set>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_extension/io/autoware_osm_parser.h>
 
@@ -184,11 +184,13 @@ namespace route {
         void set_CTE_dist(double cte_dist);
 
         /**
-         * \brief Get the closest lanelet from the list of llts
+         * \brief "Get the closest lanelet on the route from the list of <distance, lanelet> pairs relative to the vehicle's current point. 
+         * If the input list does not contain lanelets on the route, still closest lanelet from the route will be returned
          * 
-         *  \param list_of_pair (<distance to the point, lanelet> pair)to get lanelets on the route
+         *  \param list_of_pair <distance to the point, lanelet> pair to get the lanelets on the route
+         *  \param position the current position of the vehicle
         */
-        lanelet::ConstLanelet get_closest_lanelet_from_vector_llts(std::vector<std::pair<double, lanelet::ConstLanelet::ConstType>> list_of_pair);
+        lanelet::ConstLanelet get_closest_lanelet_from_vector_llts(std::vector<std::pair<double, lanelet::ConstLanelet::ConstType>> list_of_pair, lanelet::BasicPoint2d position);
 
 
     private:
@@ -214,8 +216,8 @@ namespace route {
         visualization_msgs::MarkerArray route_marker_msg_;
         std::vector<lanelet::ConstPoint3d> points_; 
         
-        //list of lanelets in the route
-        lanelet::ConstLanelets route_llts;
+        //Unordered set of lanelets in the route
+        std::unordered_set<lanelet::ConstLanelet> route_llts;
 
         // maximum cross track error which can trigger left route event
         double cross_track_max_;
