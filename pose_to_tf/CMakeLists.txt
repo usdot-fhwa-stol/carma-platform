@@ -15,35 +15,33 @@
 #
 
 cmake_minimum_required(VERSION 2.8.3)
-project(gnss_ndt_selector)
+project(pose_to_tf)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+## Compile as C++14
+add_compile_options(-std=c++14)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 ## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS
+set(ROS_DEPS
   geometry_msgs
   roscpp
-  std_msgs
   tf2
   tf2_ros
   tf2_geometry_msgs
-  autoware_msgs
   carma_utils
-  cav_msgs
 )
-
-## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(catkin REQUIRED COMPONENTS
+  ${ROS_DEPS}
+)
 
 ###################################
 ## catkin specific configuration ##
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS geometry_msgs roscpp std_msgs tf2 tf2_ros tf2_geometry_msgs autoware_msgs carma_utils cav_msgs
+  CATKIN_DEPENDS ${ROS_DEPS}
+  LIBRARIES ${PROJECT_NAME}
 )
 
 ###########
@@ -51,31 +49,33 @@ catkin_package(
 ###########
 
 include_directories(
-  ${catkin_INCLUDE_DIRS}
   include
+  ${catkin_INCLUDE_DIRS}
 )
-file(GLOB_RECURSE headers */*.hpp */*.h)
-add_executable( ${PROJECT_NAME}
+
+add_library( ${PROJECT_NAME}
+                src/PoseToTF2.cpp)
+
+add_dependencies( ${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+
+
+add_executable( ${PROJECT_NAME}_node
                 src/main.cpp)
-add_library(gnss_ndt_library src/ndt_reliability_counter.cpp src/localizer_node.cpp)
-add_dependencies(${PROJECT_NAME} 
-                ${catkin_EXPORTED_TARGETS}
-)
-add_dependencies(gnss_ndt_library
-                ${catkin_EXPORTED_TARGETS}
-) 
-target_link_libraries(${PROJECT_NAME} gnss_ndt_library ${catkin_LIBRARIES} )
+
+add_dependencies( ${PROJECT_NAME}_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME} ${catkin_LIBRARIES})
 
 #############
 ## Install ##
 #############
 
-install(DIRECTORY include/
-DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+install(DIRECTORY include
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME} gnss_ndt_library
+install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -89,12 +89,7 @@ install(DIRECTORY launch config
 #############
 ## Testing ##
 #############
-catkin_add_gmock(${PROJECT_NAME}-test test/test_gnss_ndt_selector.cpp)
-target_link_libraries(${PROJECT_NAME}-test gnss_ndt_library ${catkin_LIBRARIES})
-
-if (CATKIN_ENABLE_TESTING)
-  find_package(rostest REQUIRED)
-  add_rostest_gtest(test_gnss_ndt_selector_node test/gnss_ndt_selector.test test/test_gnss_ndt_selector_node.cpp)
-  target_link_libraries(test_gnss_ndt_selector_node gnss_ndt_library ${catkin_LIBRARIES})
-endif()
-
+catkin_add_gmock(${PROJECT_NAME}-test test/TestMain.cpp 
+  test/TestPoseToTF2.cpp
+)
+target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
