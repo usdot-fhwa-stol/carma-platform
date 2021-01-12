@@ -43,13 +43,13 @@ public:
   virtual void setPoints(std::vector<lanelet::BasicPoint2d> points) = 0;
   
     /**
-   * \brief Get the Eigen::VectorXf for the given t parameter
+   * \brief Get the BasicPoint2d coordinate along the curve at t-th step. 
    * 
-   * \param t The value to solve the spline for
+   * \param t The t-th step to solve the spline for, where t is from 0 (beginning of curve) to 1 (end of curve)
    * 
-   * \return The Eigen::VectorXf vector with x, y that matches t parameter
+   * \return lanelet::BasicPoint2d with x, y that matches the t-th step along the curve
    */ 
-  virtual Eigen::VectorXf operator()(double t) const = 0;
+  virtual lanelet::BasicPoint2d operator()(double t) const = 0;
 };
 };  // namespace smoothing
 };  // namespace inlanecruising_plugin

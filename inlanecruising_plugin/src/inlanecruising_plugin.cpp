@@ -125,52 +125,6 @@ Eigen::Isometry2d InLaneCruisingPlugin::compute_heading_frame(const lanelet::Bas
   return carma_wm::geometry::build2dEigenTransform(p1, yaw);
 }
 
-std::vector<DiscreteCurve> InLaneCruisingPlugin::compute_sub_curves(const std::vector<PointSpeedPair>& map_points)
-{
-  if (map_points.size() < 2)
-  {
-    throw std::invalid_argument("Not enough points");
-  }
-
-  std::vector<DiscreteCurve> curves;
-  DiscreteCurve curve;
-  curve.frame = compute_heading_frame(map_points[0].point, map_points[1].point);
-  Eigen::Isometry2d map_in_curve = curve.frame.inverse();
-
-  for (size_t i = 0; i < map_points.size() - 1; i++)
-  {
-    lanelet::BasicPoint2d p1 = map_in_curve * map_points[i].point;
-    lanelet::BasicPoint2d p2 = map_in_curve * map_points[i + 1].point;  // TODO Optimization to cache this value
-
-    PointSpeedPair initial_pair;
-    initial_pair.point = p1;
-    initial_pair.speed = map_points[i].speed;
-    curve.points.push_back(initial_pair);
-    
-    bool x_dir = (p2.x() - p1.x()) > 0;
-    if (!x_dir)  // If x starts going backwards we need a new curve
-    {
-      // New Curve
-      curves.push_back(curve);
-
-      curve = DiscreteCurve();
-      curve.frame = compute_heading_frame(map_points[i].point, map_points[i + 1].point);
-      map_in_curve = curve.frame.inverse();
-
-      PointSpeedPair pair;
-      pair.point = map_in_curve * map_points[i].point;
-      pair.speed = map_points[i].speed;
-
-      curve.points.push_back(pair);  // Include first point in curve
-    }
-    
-  }
-
-  curves.push_back(curve);
-
-  return curves;
-}
-
 std::vector<PointSpeedPair> InLaneCruisingPlugin::constrain_to_time_boundary(const std::vector<PointSpeedPair>& points,
                                                                              double time_span)
 {
@@ -240,16 +194,10 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   
   std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(curve_points); // Compute splines based on curve points
   if (!fit_curve)
-  {  // TODO how better to handle this case
-    ROS_ERROR_STREAM("Could not fit!");
-    for (size_t i = 0; i < curve_points.size() - 1; i++)
-    {
-      all_sampling_points.push_back(curve_points[i]);
-      final_yaw_values.push_back(final_yaw_values.back());
-      final_actual_speeds.push_back(final_actual_speeds.back());
-    }
+  {
+    throw std::runtime_error("Could not fit a spline curve along the given trajectory!");
   }
-  
+
   ROS_DEBUG("Got fit");
 
   ROS_DEBUG_STREAM("speed_limits.size() " << speed_limits.size());
@@ -260,35 +208,30 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   std::vector<double> distributed_speed_limits;
   distributed_speed_limits.reserve(1 + curve_points.size() * 2);
 
-  // compute subcurves to get correct time steps
-  std::vector<DiscreteCurve> sub_curves = compute_sub_curves(time_bound_points);
-  int parameter_length = 0;
-  double step_size = config_.curve_resample_step_size;
-  for (auto const discrete_curve : sub_curves)
-  {
-    double max_x = discrete_curve.points.back().point.x();
-    parameter_length += max_x / step_size;
-  }
+  // compute total length of the trajectory to get correct number of points 
+  // we expect using curve_resample_step_size
+  std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(curve_points);
+
+  int total_step_along_curve = downtracks.back() / config_.curve_resample_step_size;
 
   int current_speed_index = 0;
   int total_point_size = curve_points.size();
 
-  double next_speed_parameter_threshold = parameter_length / total_point_size;
-  double scaled_parameter = 0.0;
+  double step_threshold_for_next_speed = total_step_along_curve / total_point_size;
+  double scaled_steps_along_curve = 0.0; // from 0 (start) to 1 (end) for the whole trajectory
 
-  for (size_t parameter = 0; parameter < parameter_length; parameter++) // Resample curve at tighter resolution
+  for (size_t steps_along_curve = 0; steps_along_curve < total_step_along_curve; steps_along_curve++) // Resample curve at tighter resolution
   {
-    Eigen::VectorXf v = (*fit_curve)(scaled_parameter);
-    lanelet::BasicPoint2d p(v.x(), v.y());
+    lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
     
     sampling_points.push_back(p);
-    if (parameter > next_speed_parameter_threshold)
+    if (steps_along_curve > step_threshold_for_next_speed)
     {
-      next_speed_parameter_threshold += (double)parameter_length / (double) total_point_size;
+      step_threshold_for_next_speed += (double)total_step_along_curve / (double) total_point_size;
       current_speed_index ++;
     }
     distributed_speed_limits.push_back(speed_limits[current_speed_index]); // Identify speed limits for resampled points
-    scaled_parameter += 1.0/parameter_length; //adding parameter_step_size
+    scaled_steps_along_curve += 1.0/total_step_along_curve; //adding steps_along_curve_step_size
   }
 
   log::printDebugPerLine(sampling_points, &log::basicPointToStream);
@@ -313,17 +256,14 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   log::printDoublesPerLineWithPrefix("yaw_values[i]: ", yaw_values);
 
-  for (int i = 0; i < yaw_values.size() - 1; i++)
-  {  // Drop last point
-    final_yaw_values.push_back(yaw_values[i]);
-    all_sampling_points.push_back(sampling_points[i]);
-  }
-
+  // Drop last point
+  final_yaw_values.insert(final_yaw_values.end(), yaw_values.begin(), yaw_values.end() - 1);
+  all_sampling_points.insert(all_sampling_points.end(), sampling_points.begin(), sampling_points.end() - 1);
   final_actual_speeds.insert(final_actual_speeds.end(), actual_speeds.begin(), actual_speeds.end() - 1);
 
   ROS_DEBUG("Appended to final");
-
-  ROS_DEBUG("Processed all curves");
+  
+  ROS_DEBUG("Processed all points in computed fit");
 
   if (all_sampling_points.size() == 0)
   {
@@ -448,16 +388,6 @@ std::vector<double> InLaneCruisingPlugin::get_lookahead_speed(const std::vector<
   }
   
   return out;
-}
-
-Eigen::Isometry2d InLaneCruisingPlugin::curvePointInMapTF(const Eigen::Isometry2d& curve_in_map,
-                                                          const lanelet::BasicPoint2d& p, double yaw) const
-{
-  Eigen::Rotation2Dd yaw_rot(yaw);
-  Eigen::Isometry2d point_in_c = carma_wm::geometry::build2dEigenTransform(p, yaw_rot);
-  
-  Eigen::Isometry2d point_in_map = curve_in_map * point_in_c;
-  return point_in_map;
 }
 
 std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::trajectory_from_points_times_orientations(
