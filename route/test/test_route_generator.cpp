@@ -47,7 +47,7 @@ Using this file:
 */
 
 
-TEST(RouteGeneratorTest, DISABLED_testRouteVisualizerCenterLineParser)
+TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
 {
     tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
@@ -139,7 +139,7 @@ TEST(RouteGeneratorTest, DISABLED_testRouteVisualizerCenterLineParser)
 
 
 
-TEST(RouteGeneratorTest, DISABLED_testLaneletRoutingVectorMap)
+TEST(RouteGeneratorTest, testLaneletRoutingVectorMap)
 {
     tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
@@ -205,7 +205,7 @@ TEST(RouteGeneratorTest, DISABLED_testLaneletRoutingVectorMap)
     }
 }
 
-TEST(RouteGeneratorTest, DISABLED_testLaneletRoutingTown02VectorMap)
+TEST(RouteGeneratorTest, testLaneletRoutingTown02VectorMap)
 {
     tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
@@ -284,7 +284,7 @@ TEST(RouteGeneratorTest, DISABLED_testLaneletRoutingTown02VectorMap)
 
 }
 
-TEST(RouteGeneratorTest, DISABLED_testReadLanelet111RouteFile)
+TEST(RouteGeneratorTest, testReadLanelet111RouteFile)
 {
     tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
@@ -308,7 +308,7 @@ TEST(RouteGeneratorTest, DISABLED_testReadLanelet111RouteFile)
 }
 
 
-TEST(RouteGeneratorTest, DISABLED_testReadRoutetfhrcFile)
+TEST(RouteGeneratorTest, testReadRoutetfhrcFile)
 {
     tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
