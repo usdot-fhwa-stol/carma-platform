@@ -45,7 +45,7 @@ public:
     /**
    * \brief Get the BasicPoint2d coordinate along the curve at t-th step. 
    * 
-   * \param t The t-th step to solve the spline for, where t is from 0 (beginning of curve) to 1 (end of curve)
+   * \param t The t-th step to solve the spline at, where t is from 0 (beginning of curve) to 1 (end of curve)
    * 
    * \return lanelet::BasicPoint2d with x, y that matches the t-th step along the curve
    */ 
