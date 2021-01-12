@@ -51,6 +51,6 @@ private:
   // Make publisher functions which will be bound to this object and sent to CarmaRecord
   // Have the run function set up the connections to the subscribers
 
-  ros::CARMANodeHandle cnh_{"/"};
+  ros::CARMANodeHandle cnh_;
 };
 }  // namespace carma_record

@@ -135,6 +135,8 @@
   </group>
 
   <!-- Set up the rosbag record node that will exclude sensitive topics -->
-  <include file="$(find carma_record)/launch/carma_record.launch" if="$(arg use_rosbag)" />
-
+  <group ns="carma_record">
+    <include file="$(find carma_record)/launch/carma_record.launch" if="$(arg use_rosbag)" />
+  </group>
+  
 </launch>

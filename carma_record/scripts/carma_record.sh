@@ -3,7 +3,7 @@
 while true
     do
         # Get the regex of the excluded topics
-        excluded_topics="$(rosparam get /exclude_regex)"
+        excluded_topics="$(rosparam get exclude_regex)"
         if [ ! -z "${excluded_topics}" ]
         then 
             # Run the rosbag record command

@@ -83,7 +83,8 @@ int CarmaRecordNode::run()
   exclude_regex.pop_back();
  
   // set the exclude_regex as a param in the param server
-  cnh_.setParam("/exclude_regex", exclude_regex);
+  // cnh_.setParam("exclude_regex", exclude_regex);
+  ros::param::set("exclude_regex", exclude_regex);
 
   // Spin
   cnh_.spin();
