@@ -22,21 +22,21 @@ namespace localizer
 struct LocalizationManagerConfig
 {
   //! NDT Fitness score above which the localization is considered in a degraded state
-  double fitness_score_degraded_threshold = 1.0;
+  double fitness_score_degraded_threshold = 20.0;
   //! NDT Fitness score above which the localization is considered in a fault state and NDT matching can no longer be
   //! used.
-  double fitness_score_fault_threshold = 2.0;
+  double fitness_score_fault_threshold = 10000.0;
   //! NDT solution frequency below which the localization is considered in a degraded state
-  double ndt_frequency_degraded_threshold = 9;
+  double ndt_frequency_degraded_threshold = 8.0;
   //! NDT solution frequency below which the localization is considered in a fault state and NDT matching can no longer
   //! be used.
-  double ndt_frequency_fault_threshold = 5;
+  double ndt_frequency_fault_threshold = 0.66;
   //! Timeout in ms for auto initialization.
   //! If initialization cannot be completed in this time user action will be requested.
   int auto_initialization_timeout = 30000;
   //! Timeout in ms for GNSS only operation. Ignored when in GNSS mode.
-  int gnss_only_operation_timeout = 6000;
+  int gnss_only_operation_timeout = 20000;
   //! Localization mode to use
-  LocalizerMode localization_mode = LocalizerMode::NDT;
+  LocalizerMode localization_mode = LocalizerMode::AUTO_WITHOUT_TIMEOUT;
 };
 }  // namespace localizer
