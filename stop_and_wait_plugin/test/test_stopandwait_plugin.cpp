@@ -154,22 +154,25 @@ namespace stop_and_wait_plugin
         StopandWait sw;
         sw.wm_=cmw;
         sw.current_speed_=maneuver.stop_and_wait_maneuver.start_speed;
-        std::vector <PointSpeedPair> points= sw.maneuvers_to_points(maneuvers, starting_downtrack, cmw);
+        std::vector <PointSpeedPair> points= sw.maneuvers_to_points(maneuvers, starting_downtrack);
 
         //Check else condition maneuver
         cav_msgs::Maneuver maneuver_2 = maneuver;
         maneuver_2.stop_and_wait_maneuver.start_dist = ending_downtrack;
+        maneuver_2.stop_and_wait_maneuver.start_speed =0.0;
+        sw.current_speed_=maneuver_2.stop_and_wait_maneuver.start_speed;
         //Less than min trajectory time
         maneuver_2.stop_and_wait_maneuver.end_time = ros::Time(3.0 + maneuver_2.stop_and_wait_maneuver.start_time.toSec()); 
         maneuvers[0] = maneuver_2;
-        std::vector <PointSpeedPair> coverage_points= sw.maneuvers_to_points(maneuvers, starting_downtrack, cmw);
+        std::vector <PointSpeedPair> coverage_points= sw.maneuvers_to_points(maneuvers, starting_downtrack);
 
         //Maneuver_3- jerk req > max permittable
         cav_msgs::Maneuver maneuver_3 = maneuver;
         maneuver_3.stop_and_wait_maneuver.start_time = ros::Time::now();
         maneuver_3.stop_and_wait_maneuver.end_time = ros::Time(3.0 + maneuver_3.stop_and_wait_maneuver.start_time.toSec());
         maneuvers[0] = maneuver_3;
-        coverage_points= sw.maneuvers_to_points(maneuvers, starting_downtrack, cmw);
+        sw.current_speed_=maneuver_3.stop_and_wait_maneuver.start_speed;
+        coverage_points= sw.maneuvers_to_points(maneuvers, starting_downtrack);
 
         //Downsample points
         auto downsampled_points = carma_utils::containers::downsample_vector(points,8);
