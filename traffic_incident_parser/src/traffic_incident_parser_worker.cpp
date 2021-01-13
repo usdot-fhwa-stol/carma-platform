@@ -61,7 +61,7 @@ namespace traffic
     up_track_=stod(stringParserHelper(uptrack,uptrack.find_last_of("lon:")));
   }
 
-  std::string stringParserHelper(std::string str,int str_index)
+  std::string TrafficIncidentParserWorker::stringParserHelper(std::string str,int str_index)
   {
     std::string str_temp="";
     for(int i=str_index+1;i<=str.length();i++)
