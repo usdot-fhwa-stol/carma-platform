@@ -195,7 +195,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(curve_points); // Compute splines based on curve points
   if (!fit_curve)
   {
-    throw std::runtime_error("Could not fit a spline curve along the given trajectory!");
+    throw std::invalid_argument("Could not fit a spline curve along the given trajectory!");
   }
 
   ROS_DEBUG("Got fit");
@@ -212,12 +212,12 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   // we expect using curve_resample_step_size
   std::vector<double> downtracks_raw = carma_wm::geometry::compute_arc_lengths(curve_points);
 
-  int total_step_along_curve = downtracks_raw.back() / config_.curve_resample_step_size;
+  int total_step_along_curve = static_cast<int>(downtracks_raw.back() / config_.curve_resample_step_size);
 
   int current_speed_index = 0;
-  int total_point_size = curve_points.size();
+  size_t total_point_size = curve_points.size();
 
-  double step_threshold_for_next_speed = total_step_along_curve / total_point_size;
+  double step_threshold_for_next_speed = (double)total_step_along_curve / (double)total_point_size;
   double scaled_steps_along_curve = 0.0; // from 0 (start) to 1 (end) for the whole trajectory
 
   for (size_t steps_along_curve = 0; steps_along_curve < total_step_along_curve; steps_along_curve++) // Resample curve at tighter resolution
@@ -225,7 +225,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
     lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
     
     sampling_points.push_back(p);
-    if (steps_along_curve > step_threshold_for_next_speed)
+    if ((double)steps_along_curve > step_threshold_for_next_speed)
     {
       step_threshold_for_next_speed += (double)total_step_along_curve / (double) total_point_size;
       current_speed_index ++;
