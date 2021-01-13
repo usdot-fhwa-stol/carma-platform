@@ -530,3 +530,107 @@ TEST(InLaneCruisingPluginTest, compute_fit)
   ASSERT_TRUE(!!fit_s_curve);
 
 }
+
+//TODO
+TEST(InLaneCruisingPluginTest, optimize_speed)
+{
+  InLaneCruisingPluginConfig config;
+  config.downsample_ratio = 1;
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+
+  ///////////////////////
+  // Check straight line
+  ///////////////////////
+  std::vector<lanelet::BasicPoint2d> points;
+  auto p = lanelet::BasicPoint2d(20, 30);
+  points.push_back(p);
+  p = lanelet::BasicPoint2d(21, 30);
+  points.push_back(p);
+  p = lanelet::BasicPoint2d(22, 30);
+  points.push_back(p);
+  std::unique_ptr<smoothing::SplineI> fit_curve = plugin.compute_fit(points);
+  std::vector<lanelet::BasicPoint2d> spline_points;
+  // Following logic is written for BSpline library. Switch with appropriate call of the new library if different.
+  float parameter = 0.0;
+  for(int i=0; i< points.size(); i++){
+    Eigen::VectorXf values = (*fit_curve)(parameter);
+  
+    // Uncomment to print and check if this generated map matches with the original one above 
+    // ROS_INFO_STREAM("BSpline point: x: " << values.x() << "y: " << values.y());
+    spline_points.push_back({values.x(),values.y()});
+    parameter += 1.0/(points.size()*1.0);
+  }
+
+  ASSERT_EQ(spline_points.size(), points.size());
+  int error_count = 0;
+  
+  tf::Vector3 original_vector_1(points[1].x() - points[0].x(), 
+                      points[1].y() - points[0].y(), 0);
+  original_vector_1.setZ(0);
+  tf::Vector3 spline_vector_1(spline_points[1].x() - spline_points[0].x(), 
+                      spline_points[1].y() - spline_points[0].y(), 0);
+  spline_vector_1.setZ(0);
+    tf::Vector3 original_vector_2(points[2].x() - points[1].x(), 
+                      points[2].y() - points[1].y(), 0);
+  original_vector_2.setZ(0);
+  tf::Vector3 spline_vector_2(spline_points[2].x() - spline_points[1].x(), 
+                      spline_points[2].y() - spline_points[1].y(), 0);
+  spline_vector_2.setZ(0);
+  double angle_in_rad_1 = std::fabs(tf::tfAngle(original_vector_1, spline_vector_1));
+  double angle_in_rad_2 = std::fabs(tf::tfAngle(original_vector_2, spline_vector_2));
+
+  ASSERT_NEAR(angle_in_rad_1, 0.0, 0.0001);
+  ASSERT_NEAR(angle_in_rad_2, 0.0, 0.0001);
+
+  ///////////////////////
+  // S curve
+  ///////////////////////
+  points = {};
+  lanelet::BasicPoint2d po1(3,4);
+  points.push_back( po1);
+  lanelet::BasicPoint2d po2(5,4);
+  points.push_back( po2);
+  lanelet::BasicPoint2d po3(8,9);
+  points.push_back( po3);
+  lanelet::BasicPoint2d po4(8,23);
+  points.push_back( po4);
+  lanelet::BasicPoint2d po5(3.5,25);
+  points.push_back( po5);
+  lanelet::BasicPoint2d po6(3,25);
+  points.push_back( po6);
+  lanelet::BasicPoint2d po7(2.5,26);
+  points.push_back( po7);
+  lanelet::BasicPoint2d po8(2.25,27);
+  points.push_back( po8);
+  lanelet::BasicPoint2d po9(2.0,28);
+  points.push_back( po9);
+  lanelet::BasicPoint2d po10(1.5,30);
+  points.push_back(po10);
+  lanelet::BasicPoint2d po11(1.0,32);
+  points.push_back(po11);
+  lanelet::BasicPoint2d po12(1.25,34);
+  points.push_back(po12);
+  lanelet::BasicPoint2d po13(2.0,35);
+  points.push_back(po13);
+  lanelet::BasicPoint2d po14(4.0,35);
+  points.push_back(po14);
+  lanelet::BasicPoint2d po15(5.0,35.5);
+  points.push_back(po15);
+  lanelet::BasicPoint2d po16(6.0,36);
+  points.push_back(po16);
+  lanelet::BasicPoint2d po17(7.0,50);
+  points.push_back(po17);
+  lanelet::BasicPoint2d po18(6.5,48);
+  points.push_back(po18);
+  lanelet::BasicPoint2d po19(4.0,43);
+  points.push_back(po19);
+
+  // As different libraries may fit S curves differently, we are only checking if we can get any fit here.
+  ASSERT_NO_THROW(plugin.compute_fit(points));
+
+  std::unique_ptr<smoothing::SplineI> fit_s_curve = plugin.compute_fit(points);
+
+  ASSERT_TRUE(!!fit_s_curve);
+
+}

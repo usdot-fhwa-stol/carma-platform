@@ -188,7 +188,7 @@ std::pair<double, size_t> min_with_exclusions(const std::vector<double>& values,
   return std::make_pair(min, best_idx);
 }
 
-std::vector<double> optimize_speed(const std::vector<double>& downtracks, const std::vector<double>& curv_speeds, double accel_limit)
+std::vector<double> InLaneCruisingPlugin::optimize_speed(const std::vector<double>& downtracks, const std::vector<double>& curv_speeds, double accel_limit)
 {
   if (downtracks.size() != curv_speeds.size())
   {

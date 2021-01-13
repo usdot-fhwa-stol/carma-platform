@@ -226,6 +226,15 @@ public:
    * \return lookahead distance in m.
    */ 
   double get_adaptive_lookahead(double velocity);
+  
+  /**
+   * \brief Computes the lookahead distance based on the input velocity
+   * 
+   * \param velocity vehicle velocity in m/s.
+   * 
+   * \return lookahead distance in m.
+   */ 
+  std::vector<double> optimize_speed(const std::vector<double>& downtracks, const std::vector<double>& curv_speeds, double accel_limit);
 
 private:
   carma_wm::WorldModelConstPtr wm_;

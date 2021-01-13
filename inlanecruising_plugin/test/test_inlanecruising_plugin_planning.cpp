@@ -118,7 +118,7 @@ Using this file:
     NOTE: The test is disabled by default. Enable it by removing the DISABLED_ prefix from the test name
 */
 
-TEST(WaypointGeneratorTest, test_full_generation)
+TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
 {
   
  int projector_type = 0;
