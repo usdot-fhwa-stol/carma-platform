@@ -17,19 +17,19 @@ void BSpline::setPoints(std::vector<lanelet::BasicPoint2d> points)
 lanelet::BasicPoint2d BSpline::operator()(double t) const
 {
   Eigen::VectorXf values = spline_(t);
-  lanelet::BasicPoint2d pt = {values.x(), values.y()};
+  lanelet::BasicPoint2d pt = {(double)values.x(), (double)values.y()};
   return pt;
 }
 
 lanelet::BasicPoint2d  BSpline::first_deriv(double t) const {
   Eigen::Array2Xf v = spline_.derivatives(t, 1);
-  lanelet::BasicPoint2d  output = {v(2), v(3)};
+  lanelet::BasicPoint2d  output = {(double)v(2), (double)v(3)};
   return output;
 }
 
 lanelet::BasicPoint2d  BSpline::second_deriv(double t) const {
   Eigen::Array2Xf v = spline_.derivatives(t, 2);
-  lanelet::BasicPoint2d  output = {v(4), v(5)};
+  lanelet::BasicPoint2d  output = {(double)v(4), (double)v(5)};
   return output;
 }
 

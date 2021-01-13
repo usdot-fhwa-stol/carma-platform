@@ -319,7 +319,6 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   ROS_DEBUG("Got basic points ");
 
-
   std::vector<double> final_yaw_values;
   std::vector<double> final_actual_speeds;
   std::vector<lanelet::BasicPoint2d> all_sampling_points;
@@ -331,7 +330,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(curve_points); // Compute splines based on curve points
   if (!fit_curve)
   {
-    throw std::runtime_error("Could not fit a spline curve along the given trajectory!");
+    throw std::invalid_argument("Could not fit a spline curve along the given trajectory!");
   }
 
   ROS_DEBUG("Got fit");
@@ -348,16 +347,16 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   // we expect using curve_resample_step_size
   std::vector<double> downtracks_raw = carma_wm::geometry::compute_arc_lengths(curve_points);
 
-  int total_step_along_curve = downtracks_raw.back() / config_.curve_resample_step_size;
+  int total_step_along_curve = static_cast<int>(downtracks_raw.back() / config_.curve_resample_step_size);
 
   int current_speed_index = 0;
-  int total_point_size = curve_points.size();
+  size_t total_point_size = curve_points.size();
 
   double step_threshold_for_next_speed = (double)total_step_along_curve / (double)total_point_size;
   double scaled_steps_along_curve = 0.0; // from 0 (start) to 1 (end) for the whole trajectory
   std::vector<double> better_curvature;
-    better_curvature.reserve(1 + curve_points.size() * 2);
-
+  better_curvature.reserve(1 + curve_points.size() * 2);
+    
   for (size_t steps_along_curve = 0; steps_along_curve < total_step_along_curve; steps_along_curve++) // Resample curve at tighter resolution
   {
     lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
@@ -365,7 +364,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
     sampling_points.push_back(p);
     double c = compute_curvature_at(fit_curve, scaled_steps_along_curve);
     better_curvature.push_back(c);
-    if (steps_along_curve > step_threshold_for_next_speed)
+    if ((double)steps_along_curve > step_threshold_for_next_speed)
     {
       step_threshold_for_next_speed += (double)total_step_along_curve / (double) total_point_size;
       current_speed_index ++;
@@ -406,7 +405,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   ROS_DEBUG("Appended to final");
 
-  ROS_DEBUG("Processed all curves");
+  ROS_DEBUG("Appended to final");
+  
+  ROS_DEBUG("Processed all points in computed fit");
 
   if (all_sampling_points.size() == 0)
   {
@@ -437,6 +438,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   final_yaw_values = future_yaw;
 
   lanelet::BasicPoint2d cur_veh_point(state.X_pos_global, state.Y_pos_global);
+
   all_sampling_points.insert(all_sampling_points.begin(),
                              cur_veh_point);  // Add current vehicle position to front of sample points
 

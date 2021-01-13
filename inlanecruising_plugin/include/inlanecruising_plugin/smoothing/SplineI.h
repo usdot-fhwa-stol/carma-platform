@@ -43,29 +43,29 @@ public:
   virtual void setPoints(std::vector<lanelet::BasicPoint2d> points) = 0;
   
     /**
-   * \brief Get the lanelet::BasicPoint2d for the given t parameter
+  *  \brief Get the BasicPoint2d coordinate along the curve at t-th step. 
    * 
-   * \param t The value to solve the spline for
+   * \param t The t-th step to solve the spline at, where t is from 0 (beginning of curve) to 1 (end of curve)
    * 
-   * \return The lanelet::BasicPoint2d vector with x, y that matches t parameter
+   * \return lanelet::BasicPoint2d with x, y that matches the t-th step along the curve
    */ 
   virtual lanelet::BasicPoint2d operator()(double t) const = 0;
 
   /**
-   * \brief Get the y value for the given x value
+  *  \brief Get the BasicPoint2d representing the first_deriv along the curve at t-th step. 
    * 
-   * \param x The value to solve the spline for
+   * \param t The t-th step to solve the spline at, where t is from 0 (beginning of curve) to 1 (end of curve)
    * 
-   * \return The y value that matches x
+   * \return lanelet::BasicPoint2d with x, y that matches the first_deriv at t-th step along the curve
    */ 
   virtual lanelet::BasicPoint2d first_deriv(double x) const = 0;
 
   /**
-   * \brief Get the y value for the given x value
+  *  \brief Get the BasicPoint2d representing the first_deriv along the curve at t-th step. 
    * 
-   * \param x The value to solve the spline for
+   * \param t The t-th step to solve the spline at, where t is from 0 (beginning of curve) to 1 (end of curve)
    * 
-   * \return The y value that matches x
+   * \return lanelet::BasicPoint2d with x, y that matches the second_deriv at t-th step along the curve
    */ 
   virtual lanelet::BasicPoint2d second_deriv(double x) const = 0;
 };
