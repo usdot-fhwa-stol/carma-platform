@@ -43,13 +43,13 @@ public:
   virtual void setPoints(std::vector<lanelet::BasicPoint2d> points) = 0;
   
     /**
-   * \brief Get the Eigen::VectorXf for the given t parameter
+   * \brief Get the lanelet::BasicPoint2d for the given t parameter
    * 
    * \param t The value to solve the spline for
    * 
-   * \return The Eigen::VectorXf vector with x, y that matches t parameter
+   * \return The lanelet::BasicPoint2d vector with x, y that matches t parameter
    */ 
-  virtual Eigen::VectorXf operator()(double t) const = 0;
+  virtual lanelet::BasicPoint2d operator()(double t) const = 0;
 
   /**
    * \brief Get the y value for the given x value
@@ -58,7 +58,7 @@ public:
    * 
    * \return The y value that matches x
    */ 
-  virtual Eigen::Vector3d first_deriv(double x) const = 0;
+  virtual lanelet::BasicPoint2d first_deriv(double x) const = 0;
 
   /**
    * \brief Get the y value for the given x value
@@ -67,7 +67,7 @@ public:
    * 
    * \return The y value that matches x
    */ 
-  virtual Eigen::Vector3d second_deriv(double x) const = 0;
+  virtual lanelet::BasicPoint2d second_deriv(double x) const = 0;
 };
 };  // namespace smoothing
 };  // namespace inlanecruising_plugin
