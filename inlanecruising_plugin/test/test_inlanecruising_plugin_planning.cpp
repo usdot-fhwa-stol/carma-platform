@@ -44,11 +44,7 @@ namespace inlanecruising_plugin
 {
 
 
-<<<<<<< HEAD
 TEST(InLaneCruisingPluginTest, DISABLED_testPlanningCallback)
-=======
-TEST(InLaneCruisingPluginTest, testPlanningCallback)
->>>>>>> develop
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -125,22 +121,14 @@ Using this file:
 TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
 {
   
-<<<<<<< HEAD
  int projector_type = 0;
-=======
-  int projector_type = 0;
->>>>>>> develop
   std::string target_frame;
   lanelet::ErrorMessages load_errors;
 
   // File location of osm file
   std::string file = "/workspaces/carma/AOI_1_TFHRC_faster_pretty.osm";    
   // The route ids that will form the route used
-<<<<<<< HEAD
-  std::vector<lanelet::Id> route_ids = { 130, 111, 110, 113, 135, 137, 170, 144, 143, 145, 140 };
-=======
   std::vector<lanelet::Id> route_ids = { 130, 111, 110, 113, 135, 138 };
->>>>>>> develop
 
   // The parsing in this file was copied from https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/carma_wm_ctrl/test/MapToolsTest.cpp
   lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
@@ -263,17 +251,10 @@ TEST(WaypointGeneratorTest, DISABLED_test_compute_fit_full_generation)
   // Following logic is written for BSpline library. Switch with appropriate call of the new library if different.
   float parameter = 0.0;
   for(int i=0; i< downsampled_points.size(); i++){
-<<<<<<< HEAD
-    auto values = (*fit_curve)(parameter);
-    // Uncomment to print and check if this generated map matches with the original one above 
-    // ROS_INFO_STREAM("BSpline point: x: " << values.x() << "y: " << values.y());
-    spline_points.push_back({values.x(),values.y()});
-=======
     lanelet::BasicPoint2d pt = (*fit_curve)(parameter);
     // Uncomment to print and check if this generated map matches with the original one above 
     // ROS_INFO_STREAM("BSpline point: x: " << values.x() << "y: " << values.y());
     spline_points.push_back(pt);
->>>>>>> develop
     parameter += 1.0/(downsampled_points.size()*1.0);
   }
 
