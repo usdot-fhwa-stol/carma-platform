@@ -28,9 +28,7 @@
 #include <carma_wm/WMListener.h>
 #include <functional>
 #include <inlanecruising_plugin/smoothing/SplineI.h>
-
 #include "inlanecruising_config.h"
-#include "third_party_library/spline.h"
 
 namespace inlanecruising_plugin
 {
@@ -43,14 +41,6 @@ struct PointSpeedPair
 {
   lanelet::BasicPoint2d point;
   double speed = 0;
-};
-/**
- * \brief Class representing a curve in space defined by a set of discrete points in the specified frame
- */ 
-struct DiscreteCurve
-{
-  Eigen::Isometry2d frame; // Frame which points are in
-  std::vector<PointSpeedPair> points;
 };
 
 /**
@@ -184,29 +174,6 @@ public:
    * \return A spline which has been fit to the provided points
    */ 
   std::unique_ptr<smoothing::SplineI> compute_fit(const std::vector<lanelet::BasicPoint2d>& basic_points);
-
-  /**
-   * \brief Calculates a list of DiscreteCurve objects from the input points where a new curve is present everytime the dx of the previous point went negative.
-   *        Each curve is defined relative to a frame oriented on the current point and next point. 
-   *        This ensures that splines can be fit on each sub-curve. The endpoint and start point of each curve is shared.
-   * 
-   * \param basic_points The points to split into sub-curves
-   * 
-   * \return The vector of sub-curves
-   */ 
-  std::vector<DiscreteCurve> compute_sub_curves(const std::vector<PointSpeedPair>& basic_points);
-
-  /**
-   * \brief Computes the transform T_m_p for the point and yaw in a curve which has a transform with the map frame.
-   *        This is effectively a method for computing position and orientation of points in a DiscreteCurve frame in the map frame.
-   * 
-   * \param curve_in_map The transform defined by the curve location and orientation in the map frame
-   * \param p A point in the curve frame
-   * \param yaw The orientation of the vehicle at point p in the curve frame
-   * 
-   * \return A transform where the translation corresponds to point p in the map frame and the rotation corresponds to yaw in the map frame.
-   */ 
-  Eigen::Isometry2d curvePointInMapTF(const Eigen::Isometry2d& curve_in_map, const lanelet::BasicPoint2d& p, double yaw) const;
 
   /**
    * \brief Returns the speeds of points closest to the lookahead distance.
