@@ -83,7 +83,8 @@ namespace traffic
     gps_point.lat = latitude_;
     gps_point.lon = longitude_;
     gps_point.ele = 0;
-    local_point_ = projector.forward(gps_point);
+    auto local_point3d = projector.forward(gps_point);
+    local_point_ = {local_point3d.x(), local_point3d.y()};
   }
 
   void TrafficIncidentParserWorker::findNearByLanetlet()
@@ -96,33 +97,33 @@ namespace traffic
     std::vector<lanelet::BasicPoint2d> center_line_points_left={};
  
     while(following_distance<down_track_)
-      {
-        auto next_lanelets = wm_->getMapRoutingGraph()->following(current_lanelet);
-        carma_wm::TrackPos tp = carma_wm::geometry::trackPos(next_lanelets[0], local_point_);
-        following_distance= std::fabs(tp.downtrack);
-        auto back_point = current_lanelet.centerline().back().basicPoint2d();
-        auto front_point = current_lanelet.centerline().front().basicPoint2d();
-        lanelet::BasicPoint2d middle = {(back_point().x + front_point().x)/2, (back_point().y + front_point().y)/2};
-        center_line_points_right.push_back(middle);
-        current_lanelet=next_lanelets[0];
-      }
+    {
+      auto next_lanelets = wm_->getMapRoutingGraph()->following(current_lanelet);
+      carma_wm::TrackPos tp = carma_wm::geometry::trackPos(next_lanelets[0], local_point_);
+      following_distance= std::fabs(tp.downtrack);
+      auto back_point = current_lanelet.centerline().back().basicPoint2d();
+      auto front_point = current_lanelet.centerline().front().basicPoint2d();
+      lanelet::BasicPoint2d middle = {(back_point.x() + front_point.x())/2, (back_point.y() + front_point.y())/2};
+      center_line_points_right.push_back(middle);
+      current_lanelet=next_lanelets[0];
+    }
 
-        auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, local_point_, 1); 
-        lanelet::ConstLanelet current_lanelet = current_lanelets[0].second;
-        carma_wm::TrackPos tp = carma_wm::geometry::trackPos(current_lanelet, local_point_);
-        previous_distance= std::fabs(tp.downtrack);
+    current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, local_point_, 1); 
+    current_lanelet = current_lanelets[0].second;
+    carma_wm::TrackPos tp = carma_wm::geometry::trackPos(current_lanelet, local_point_);
+    previous_distance= std::fabs(tp.downtrack);
     
     while(previous_distance<up_track_)
-      {
-        auto next_lanelets = wm_->getMapRoutingGraph()->previous(current_lanelet);
-        carma_wm::TrackPos tp = carma_wm::geometry::trackPos(next_lanelets[0], local_point_);
-        previous_distance= std::fabs(tp.downtrack);
-        auto back_point = next_lanelets[0].centerline().back().basicPoint2d();
-        auto front_point = next_lanelets[0].centerline().front().basicPoint2d();
-        lanelet::BasicPoint2d middle = {(back_point().x + front_point().x)/2, (back_point().y + front_point().y)/2};
-        center_line_points_left.push_back(middle);
-        current_lanelet=next_lanelets[0];
-      }
+    {
+      auto next_lanelets = wm_->getMapRoutingGraph()->previous(current_lanelet);
+      carma_wm::TrackPos tp = carma_wm::geometry::trackPos(next_lanelets[0], local_point_);
+      previous_distance= std::fabs(tp.downtrack);
+      auto back_point = next_lanelets[0].centerline().back().basicPoint2d();
+      auto front_point = next_lanelets[0].centerline().front().basicPoint2d();
+      lanelet::BasicPoint2d middle = {(back_point.x() + front_point.x())/2, (back_point.y() + front_point.y())/2};
+      center_line_points_left.push_back(middle);
+      current_lanelet=next_lanelets[0];
+    }
 
     std::reverse(center_line_points_left.begin(), center_line_points_left.end());
     

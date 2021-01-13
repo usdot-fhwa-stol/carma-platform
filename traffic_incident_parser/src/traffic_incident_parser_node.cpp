@@ -20,7 +20,7 @@
 
   using std::placeholders::_1;
 
-  TrafficIncidentParserNode::TrafficIncidentParserNode(): pnh_("~"), traffic_parser_worker_(std::bind(&TrafficIncidentParserNode::publishTrafficControlMessage, this, _1)){}
+  TrafficIncidentParserNode::TrafficIncidentParserNode(): pnh_("~"), traffic_parser_worker_(wm_listener_.getWorldModel(), std::bind(&TrafficIncidentParserNode::publishTrafficControlMessage, this, _1)){}
 
   void TrafficIncidentParserNode::initialize()
   {

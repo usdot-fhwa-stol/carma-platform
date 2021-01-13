@@ -89,7 +89,7 @@ class TrafficIncidentParserWorker
   double closed_lane_;
   double down_track_;
   double up_track_;
-  lanelet::BasicPoint3d local_point_;
+  lanelet::BasicPoint2d local_point_;
   std::string projection_msg_;
   // local copy of external object publihsers
 
