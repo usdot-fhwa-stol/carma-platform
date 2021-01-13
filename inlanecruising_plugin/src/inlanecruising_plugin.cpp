@@ -210,9 +210,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   // compute total length of the trajectory to get correct number of points 
   // we expect using curve_resample_step_size
-  std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(curve_points);
+  std::vector<double> downtracks_raw = carma_wm::geometry::compute_arc_lengths(curve_points);
 
-  int total_step_along_curve = downtracks.back() / config_.curve_resample_step_size;
+  int total_step_along_curve = downtracks_raw.back() / config_.curve_resample_step_size;
 
   int current_speed_index = 0;
   int total_point_size = curve_points.size();
