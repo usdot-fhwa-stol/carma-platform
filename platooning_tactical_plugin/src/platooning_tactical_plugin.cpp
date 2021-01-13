@@ -87,7 +87,13 @@ bool PlatooningTacticalPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryReques
   trajectory.initial_longitudinal_velocity = req.vehicle_state.longitudinal_vel;
 
   resp.trajectory_plan = trajectory;
-  resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_FOLLOWING);
+  for (int i=0; i<req.maneuver_plan.maneuvers.size(); i++){
+    if (req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::LANE_FOLLOWING){
+      resp.related_maneuvers.push_back(i);
+      break;
+    }
+  }
+  
   resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
   ros::WallTime end_time = ros::WallTime::now(); // Planning complete
