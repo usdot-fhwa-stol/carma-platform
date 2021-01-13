@@ -20,8 +20,6 @@
 #include <carma_utils/CARMAUtils.h>
 #include <ros/ros.h>
 
-#include <std_msgs/String.h>
-
 namespace carma_record
 {
 /*!
@@ -37,7 +35,7 @@ public:
   /**
    * @brief Constructor
    */
-  CarmaRecordNode();
+  CarmaRecordNode()=default;
 
   /**
    * @brief Starts the Node
@@ -47,9 +45,6 @@ public:
   int run();
   
 private:
-
-  // Make publisher functions which will be bound to this object and sent to CarmaRecord
-  // Have the run function set up the connections to the subscribers
 
   ros::CARMANodeHandle cnh_;
 };

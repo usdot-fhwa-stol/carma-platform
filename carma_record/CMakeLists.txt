@@ -1,12 +1,11 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(carma_record)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+## Compile as C++14
+add_compile_options(-std=c++14)
 
 set( PKG_CATKIN_DEPENDS
   roscpp
-  std_msgs
   carma_utils
 )
 
@@ -76,8 +75,6 @@ install(TARGETS ${PROJECT_NAME}_node
 # Mark cpp header files for installation
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
 )
 
 ## Install Other Resources

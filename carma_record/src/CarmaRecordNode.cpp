@@ -19,13 +19,11 @@
 namespace carma_record
 {
 
-CarmaRecordNode::CarmaRecordNode(){};
-
 int CarmaRecordNode::run()
 {
 
   // boolean values that will load in from the rosparam server
-  //they control if a set of topics will be excluded
+  // they control if a set of topics will be excluded
   bool exclude_default;
   bool exclude_lidar;
   bool exclude_camera;
@@ -36,9 +34,6 @@ int CarmaRecordNode::run()
   cnh_.getParam("/exclude_camera", exclude_camera);
   cnh_.getParam("/exclude_can", exclude_can);
 
-  // param_itr is used to iterate through the parameter list 
-  std::vector<std::string>::iterator param_itr;
-
   // exclude_regex is the final list of topics to be excluded
   std::string exclude_regex = ""; // Add default exclusion to this string
 
@@ -47,8 +42,8 @@ int CarmaRecordNode::run()
     std::vector<std::string> excluded_default_topics;
     cnh_.getParam("/excluded_default_topics", excluded_default_topics);
 
-    for (param_itr = excluded_default_topics.begin(); param_itr < excluded_default_topics.end(); param_itr++){
-      exclude_regex += ((*param_itr) + "|");
+    for (auto exclusion_string : excluded_default_topics){
+      exclude_regex += exclusion_string + "|";
     }
   }
 
@@ -56,8 +51,8 @@ int CarmaRecordNode::run()
     std::vector<std::string> excluded_lidar_topics;
     cnh_.getParam("/excluded_lidar_topics", excluded_lidar_topics);
 
-    for (param_itr = excluded_lidar_topics.begin(); param_itr < excluded_lidar_topics.end(); param_itr++){
-      exclude_regex += ((*param_itr) + "|");
+    for (auto exclusion_string : excluded_lidar_topics){
+      exclude_regex += exclusion_string + "|";
     }
   }
 
@@ -65,8 +60,8 @@ int CarmaRecordNode::run()
     std::vector<std::string> excluded_camera_topics;
     cnh_.getParam("/excluded_camera_topics", excluded_camera_topics);
 
-    for (param_itr = excluded_camera_topics.begin(); param_itr < excluded_camera_topics.end(); param_itr++){
-      exclude_regex += ((*param_itr) + "|");
+    for (auto exclusion_string : excluded_camera_topics){
+      exclude_regex += exclusion_string + "|";
     }
   }
 
@@ -74,8 +69,8 @@ int CarmaRecordNode::run()
     std::vector<std::string> excluded_can_topics;
     cnh_.getParam("/excluded_can_topics", excluded_can_topics);
 
-    for (param_itr = excluded_can_topics.begin(); param_itr < excluded_can_topics.end(); param_itr++){
-      exclude_regex += ((*param_itr) + "|");
+    for (auto exclusion_string : excluded_can_topics){
+      exclude_regex += exclusion_string + "|";
     }
   }
 
@@ -83,11 +78,16 @@ int CarmaRecordNode::run()
   exclude_regex.pop_back();
  
   // set the exclude_regex as a param in the param server
-  // cnh_.setParam("exclude_regex", exclude_regex);
-  ros::param::set("exclude_regex", exclude_regex);
+  cnh_.setParam("exclude_regex", exclude_regex);
 
-  // Spin
-  cnh_.spin();
+  // if no topics are being excluded, set the no_exclusions parameter so the record script will still run
+  if(!(exclude_default && exclude_lidar && exclude_camera && exclude_can)){
+    cnh_.setParam("no_exclusions", true);
+  } else {
+    cnh_.setParam("no_exclusions", false);
+  }
+
+  // End node because there is no need to spin
   return 0;
 }
 
