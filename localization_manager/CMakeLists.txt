@@ -15,19 +15,24 @@
 #
 
 cmake_minimum_required(VERSION 2.8.3)
-project(truck_inspection_client)
+project(localization_manager)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+## Compile as C++14
+add_compile_options(-std=c++14)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
+  geometry_msgs
   roscpp
   std_msgs
-  cav_msgs
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
+  autoware_msgs
   carma_utils
+  cav_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -38,7 +43,8 @@ find_package(Boost REQUIRED COMPONENTS system)
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs cav_msgs carma_utils
+  CATKIN_DEPENDS geometry_msgs roscpp std_msgs tf2 tf2_ros tf2_geometry_msgs autoware_msgs carma_utils cav_msgs
+  DEPENDS Boost
 )
 
 ###########
@@ -46,33 +52,34 @@ catkin_package(
 ###########
 
 include_directories(
-  ${catkin_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
   include
+  ${catkin_INCLUDE_DIRS}
 )
 
-file(GLOB_RECURSE headers */*.hpp */*.h)
+add_library( ${PROJECT_NAME}
+                src/LocalizationManager.cpp
+                src/LocalizationTransitionTable.cpp
+                src/LocalizationTypes.cpp)
 
-add_executable( ${PROJECT_NAME}
-  ${headers}
-  src/truck_inspection_client.cpp
-  src/main.cpp)
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-add_library(truck_inspection_client_library src/truck_inspection_client.cpp)
+target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${catkin_LIBRARIES})
+
+
+add_executable( ${PROJECT_NAME}_node
+                src/localizer_node.cpp
+                src/main.cpp)
+
+target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME} ${Boost_LIBRARIES} ${catkin_LIBRARIES})
 
 #############
 ## Install ##
 #############
 
-install(DIRECTORY include/${PROJECT_NAME}/
+install(DIRECTORY include
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.hpp"
-  PATTERN ".svn" EXCLUDE
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -86,9 +93,9 @@ install(DIRECTORY launch config
 #############
 ## Testing ##
 #############
-
-if (CATKIN_ENABLE_TESTING)
-  find_package(rostest REQUIRED)
-  add_rostest_gtest(truck_inspection_client_test test/test_launch.launch test/test_truck_inspection_client.cpp)
-  target_link_libraries(truck_inspection_client_test truck_inspection_client_library ${catkin_LIBRARIES})
-endif()
+catkin_add_gmock(${PROJECT_NAME}-test test/TestMain.cpp 
+  test/TestLocalizationTransitionTable.cpp
+  test/TestLocalizationManager.cpp
+  test/TestLocalizationTypes.cpp
+)
+target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
