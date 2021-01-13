@@ -33,6 +33,10 @@
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_routing/RoutingGraph.h>
+#include <carma_wm/WorldModel.h>
+#include <std_msgs/String.h>
+#include <gps_common/GPSFix.h>
+#include <carma_wm/Geometry.h>
 
 namespace traffic{
 
@@ -71,11 +75,13 @@ class TrafficIncidentParserWorker
   // Generate mobility message
   cav_msgs::MobilityOperation mobilityMessageGenerator(const gps_common::GPSFix& msg);
 
-  void mobilityMessageParser(string mobility_strategy_params);
+  void mobilityMessageParser(std::string mobility_strategy_params);
 
-  string stringParserHelper(string str,int str_index);
+  std::string stringParserHelper(std::string str,int str_index);
 
   void findNearByLanetlet();
+
+  void earthToMapFrame();
 
  private:
   double latitude_;
