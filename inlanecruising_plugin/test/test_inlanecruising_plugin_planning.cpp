@@ -44,7 +44,7 @@ namespace inlanecruising_plugin
 {
 
 
-TEST(InLaneCruisingPluginTest, testPlanningCallback)
+TEST(InLaneCruisingPluginTest, DISABLED_testPlanningCallback)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;

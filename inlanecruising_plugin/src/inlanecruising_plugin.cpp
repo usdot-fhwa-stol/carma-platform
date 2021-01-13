@@ -154,6 +154,11 @@ std::vector<double> InLaneCruisingPlugin::optimize_speed(const std::vector<doubl
   {
     throw std::invalid_argument("Accel limits should be positive");
   }
+  std::cout << "Before applying optimization" << std::endl;
+  for (auto speed : curv_speeds)
+  {
+    std::cout << "speed: " << speed << std::endl;
+  }
 
   bool optimize = true;
   size_t min_index = 0;
@@ -194,10 +199,20 @@ std::vector<double> InLaneCruisingPlugin::optimize_speed(const std::vector<doubl
   }
 
   //log::printDoublesPerLineWithPrefix("only_reverse[i]: ", output);
-
   
+  std::cout << "After applying optimization" << std::endl;
+  for (auto speed : output)
+  {
+    std::cout << "speed: " << speed << std::endl;
+  }
   output = trajectory_utils::apply_accel_limits_by_distance(downtracks, output, accel_limit, accel_limit);
   //log::printDoublesPerLineWithPrefix("after_forward[i]: ", output);
+  std::cout << "End applying accel limit" << std::endl;
+  for (auto speed : output)
+  {
+    std::cout << "speed: " << speed << std::endl;
+  }
+  
   return output;
 }
 
