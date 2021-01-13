@@ -19,7 +19,7 @@
 namespace carma_record
 {
 
-int CarmaRecordNode::run const()
+int CarmaRecordNode::run() const
 {
 
   // boolean values that will load in from the rosparam server

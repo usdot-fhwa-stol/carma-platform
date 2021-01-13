@@ -42,7 +42,7 @@ public:
    *
    * @return 0 on exit with no errors
    */
-  int run();
+  int run() const;
   
 private:
 
