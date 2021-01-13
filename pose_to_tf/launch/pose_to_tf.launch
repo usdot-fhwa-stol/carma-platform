@@ -12,7 +12,7 @@
 -->
 
 <launch>
-    <node pkg="gnss_ndt_selector" type="gnss_ndt_selector" name="gnss_ndt_selector">
-          <rosparam command="load" file="$(find gnss_ndt_selector)/config/parameters.yaml"/>
+    <node pkg="pose_to_tf" type="pose_to_tf_node" name="pose_to_tf">
+          <rosparam command="load" file="$(find pose_to_tf)/config/parameters.yaml"/>
     </node>
 </launch>
