@@ -6,7 +6,7 @@ namespace smoothing
 {
 void BSpline::setPoints(std::vector<lanelet::BasicPoint2d> points)
 {
-  Eigen::MatrixXd matrix_points(2, points.size());
+  Eigen::MatrixXf matrix_points(2, points.size());
   int row_index = 0;
   for(auto const point : points){
       matrix_points.col(row_index) << point.x(), point.y();
@@ -16,8 +16,8 @@ void BSpline::setPoints(std::vector<lanelet::BasicPoint2d> points)
 }
 lanelet::BasicPoint2d BSpline::operator()(double t) const
 {
-  Eigen::VectorXd values = spline_(t);
-  lanelet::BasicPoint2d pt = {values.x(), values.y()};
+  Eigen::VectorXf values = spline_(t);
+  lanelet::BasicPoint2d pt = {(double)values.x(), (double)values.y()};
   return pt;
 }
 };  // namespace smoothing
