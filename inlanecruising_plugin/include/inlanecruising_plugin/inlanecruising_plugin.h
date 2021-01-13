@@ -158,12 +158,12 @@ public:
    * 
    * \return index of nearest point in points
    */ 
-  int getNearestPointIndex(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state);
+  int get_nearest_point_index(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state);
 
   /**
    * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
    */ 
-  void splitPointSpeedPairs(const std::vector<PointSpeedPair>& points, std::vector<lanelet::BasicPoint2d>* basic_points,
+  void split_point_speed_pairs(const std::vector<PointSpeedPair>& points, std::vector<lanelet::BasicPoint2d>* basic_points,
                             std::vector<double>* speeds);
 
   /**
@@ -204,6 +204,15 @@ public:
    * \return lookahead distance in m.
    */ 
   std::vector<double> optimize_speed(const std::vector<double>& downtracks, const std::vector<double>& curv_speeds, double accel_limit);
+
+/**
+   * \brief Computes the lookahead distance based on the input velocity
+   * 
+   * \param velocity vehicle velocity in m/s.
+   * 
+   * \return lookahead distance in m.
+   */ 
+  double compute_curvature_at(const std::unique_ptr<inlanecruising_plugin::smoothing::SplineI>& fit_curve, double step_along_the_curve);
 
 private:
   carma_wm::WorldModelConstPtr wm_;

@@ -160,7 +160,7 @@ TEST(InLaneCruisingPluginTest, DISABLED_constrain_to_time_boundary)
   ASSERT_NEAR(1.0, time_bound_points[5].speed, 0.0000001);
 }
 
-TEST(InLaneCruisingPluginTest, DISABLED_getNearestPointIndex)
+TEST(InLaneCruisingPluginTest, DISABLED_get_nearest_point_index)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -192,10 +192,10 @@ TEST(InLaneCruisingPluginTest, DISABLED_getNearestPointIndex)
   state.X_pos_global = 3.3;
   state.Y_pos_global = 3.3;
 
-  ASSERT_EQ(3, plugin.getNearestPointIndex(points, state));
+  ASSERT_EQ(3, plugin.get_nearest_point_index(points, state));
 }
 
-TEST(InLaneCruisingPluginTest, DISABLED_splitPointSpeedPairs)
+TEST(InLaneCruisingPluginTest, DISABLED_split_point_speed_pairs)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -222,7 +222,7 @@ TEST(InLaneCruisingPluginTest, DISABLED_splitPointSpeedPairs)
   std::vector<lanelet::BasicPoint2d> basic_points;
   std::vector<double> speeds;
 
-  plugin.splitPointSpeedPairs(points, &basic_points, &speeds);
+  plugin.split_point_speed_pairs(points, &basic_points, &speeds);
 
   ASSERT_EQ(points.size(), basic_points.size());
   ASSERT_NEAR(0.0, basic_points[0].x(), 0.0000001);
@@ -247,7 +247,7 @@ TEST(InLaneCruisingPluginTest, DISABLED_splitPointSpeedPairs)
   ASSERT_NEAR(1.0, speeds[5], 0.0000001);
 }
 
-TEST(InLaneCruisingPluginTest, DISABLED_compute_fit)
+TEST(InLaneCruisingPluginTest, compute_fit)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -405,5 +405,66 @@ TEST(InLaneCruisingPluginTest, optimize_speed)
   ASSERT_NEAR(expected_results[6], test_results[6], 0.001);
   ASSERT_NEAR(expected_results[7], test_results[7], 0.001);
   ASSERT_NEAR(expected_results[8], test_results[8], 0.001);
+  
+}
+
+TEST(InLaneCruisingPluginTest, compute_curvature_at)
+{
+  InLaneCruisingPluginConfig config;
+  config.downsample_ratio = 1;
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+
+  ///////////////////////
+  // Check straight line
+  ///////////////////////
+  std::vector<lanelet::BasicPoint2d> points;
+  auto p = lanelet::BasicPoint2d(20, 30);
+  points.push_back(p);
+  p = lanelet::BasicPoint2d(21, 30);
+  points.push_back(p);
+  p = lanelet::BasicPoint2d(22, 30);
+  points.push_back(p);
+  std::unique_ptr<smoothing::SplineI> fit_curve = plugin.compute_fit(points);
+
+  ASSERT_NEAR(plugin.compute_curvature_at(fit_curve, 0.0), 0, 0.001); // check start
+  ASSERT_NEAR(plugin.compute_curvature_at(fit_curve, 1.0), 0, 0.001); // check end
+  ASSERT_NEAR(plugin.compute_curvature_at(fit_curve, 0.23), 0, 0.001); // check random 1
+  ASSERT_NEAR(plugin.compute_curvature_at(fit_curve, 0.97), 0, 0.001); // check random 2
+
+  ///////////////////////
+  // Circle
+  ///////////////////////
+  points = {};
+  lanelet::BasicPoint2d po1(0,0);
+  points.push_back( po1);
+  lanelet::BasicPoint2d po2(1,1);
+  points.push_back( po2);
+  lanelet::BasicPoint2d po3(0,2);
+  points.push_back( po3);
+  lanelet::BasicPoint2d po4(-1,1);
+  points.push_back( po4);
+  lanelet::BasicPoint2d po5(0, 0);
+  points.push_back( po5);
+
+  // As different libraries may fit S curves differently, we are only checking if we can get any fit here.
+  std::unique_ptr<smoothing::SplineI> fit_circle = plugin.compute_fit(points);
+  double param = 0.0;
+  for (int i = 0 ; i < 50; i ++)
+  {
+    auto pt = (*fit_circle)(param);
+    std::cout << pt.x() << ", " << pt.y() << std::endl;
+    param += 0.02;
+    //std::cout << param<< std::endl;
+  }
+  auto pt = (*fit_circle)(param);
+  //std::cout << pt.x() << ", " << pt.y() << std::endl;
+
+  //ASSERT_NEAR(plugin.compute_curvature_at(fit_circle, 0.0), 0.1, 0.001); // check start
+  ASSERT_NEAR(plugin.compute_curvature_at(fit_circle, 0.25), plugin.compute_curvature_at(fit_circle, 0.75), 0.001); // check end
+  //ASSERT_NEAR(plugin.compute_curvature_at(fit_circle, 0.75), 0.1, 0.001); // check random 1
+  //ASSERT_NEAR(plugin.compute_curvature_at(fit_circle, 0.97), 0.1, 0.001); // check random 2
+
+
   
 }
