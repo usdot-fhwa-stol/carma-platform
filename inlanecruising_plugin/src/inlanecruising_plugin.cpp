@@ -257,9 +257,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   log::printDoublesPerLineWithPrefix("yaw_values[i]: ", yaw_values);
 
   // Drop last point
-  final_yaw_values.insert(final_yaw_values.end(), yaw_values.begin(), yaw_values.end() - 1);
-  all_sampling_points.insert(all_sampling_points.end(), sampling_points.begin(), sampling_points.end() - 1);
-  final_actual_speeds.insert(final_actual_speeds.end(), actual_speeds.begin(), actual_speeds.end() - 1);
+  final_yaw_values.insert(final_yaw_values.end(), yaw_values.begin(), yaw_values.end());
+  all_sampling_points.insert(all_sampling_points.end(), sampling_points.begin(), sampling_points.end() );
+  final_actual_speeds.insert(final_actual_speeds.end(), actual_speeds.begin(), actual_speeds.end());
 
   ROS_DEBUG("Appended to final");
   
