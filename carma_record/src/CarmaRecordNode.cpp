@@ -81,7 +81,7 @@ int CarmaRecordNode::run()
   cnh_.setParam("exclude_regex", exclude_regex);
 
   // if no topics are being excluded, set the no_exclusions parameter so the record script will still run
-  if(!(exclude_default && exclude_lidar && exclude_camera && exclude_can)){
+  if(!(exclude_default || exclude_lidar || exclude_camera || exclude_can)){
     cnh_.setParam("no_exclusions", true);
   } else {
     cnh_.setParam("no_exclusions", false);
