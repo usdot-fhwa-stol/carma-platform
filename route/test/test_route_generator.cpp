@@ -440,6 +440,18 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
     ASSERT_EQ(boost::geometry::within(position, start_lanelet.polygon2d()), true);
     ASSERT_EQ(worker.crosstrack_error_check(mpt2, start_lanelet), false);
 
+    /*Test 3: Vehicle is out of bounds, and has exceeded the maximum number of consecutive timesteps outside of the route allowable before triggering LEFT_ROUTE*/
+    worker.set_CTE_count_max(1);
+    worker.set_CTE_dist(1.0);
+
+    position.x()= 0.0;
+    position.y()= 0.0;
+
+    ASSERT_EQ(boost::geometry::within(position, start_lanelet.polygon2d()), false);
+    ASSERT_EQ(worker.crosstrack_error_check(mpt, start_lanelet), false); //The vehicle will show no crosstrack error, so the value should return false
+    ASSERT_EQ(worker.crosstrack_error_check(mpt, start_lanelet), true); //The vehicle will show crosstrack error, so the value should return true
+
+
 
 }
 
