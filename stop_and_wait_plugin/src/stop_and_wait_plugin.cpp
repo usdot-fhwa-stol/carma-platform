@@ -107,7 +107,7 @@ namespace stop_and_wait_plugin
         double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
 
         std::vector<cav_msgs::Maneuver> maneuver_plan;
-        for(auto maneuver : req.maneuver_plan.maneuvers)
+        for(const auto maneuver : req.maneuver_plan.maneuvers)
         {
             if(maneuver.type == cav_msgs::Maneuver::STOP_AND_WAIT)
             {

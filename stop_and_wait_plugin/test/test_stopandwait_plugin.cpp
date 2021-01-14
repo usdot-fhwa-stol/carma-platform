@@ -160,11 +160,11 @@ namespace stop_and_wait_plugin
         cav_msgs::Maneuver maneuver_2 = maneuver;
         maneuver_2.stop_and_wait_maneuver.start_dist = ending_downtrack;
         maneuver_2.stop_and_wait_maneuver.start_speed =0.0;
-        sw.current_speed_=maneuver_2.stop_and_wait_maneuver.start_speed;
+        sw.current_speed_=0.0;
         //Less than min trajectory time
         maneuver_2.stop_and_wait_maneuver.end_time = ros::Time(3.0 + maneuver_2.stop_and_wait_maneuver.start_time.toSec()); 
         maneuvers[0] = maneuver_2;
-        std::vector <PointSpeedPair> coverage_points= sw.maneuvers_to_points(maneuvers, starting_downtrack);
+        std::vector <PointSpeedPair> coverage_points= sw.maneuvers_to_points(maneuvers, maneuver_2.stop_and_wait_maneuver.start_dist);
 
         //Maneuver_3- jerk req > max permittable
         cav_msgs::Maneuver maneuver_3 = maneuver;
