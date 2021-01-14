@@ -294,10 +294,11 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   back_and_future.insert(back_and_future.end(), points.begin() + min_i, points.begin() + nearest_pt_index + 1);
   back_and_future.insert(back_and_future.end(), time_bound_points.begin(), time_bound_points.end());
   //ROS_DEBUG_STREAM("time_bound_points: " << time_bound_points.size());
-
+  ROS_DEBUG_STREAM(">>future points");
   log::printDebugPerLine(time_bound_points, &log::pointSpeedPairToStream);
   //ROS_DEBUG("Back and time bounds points");
-  //log::printDebugPerLine(back_and_future, &log::pointSpeedPairToStream);
+  ROS_DEBUG_STREAM(">>back_and_future points");
+  log::printDebugPerLine(back_and_future, &log::pointSpeedPairToStream);
 
   //ROS_DEBUG("Got basic points ");
 
@@ -307,7 +308,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   std::vector<double> speed_limits;
   std::vector<lanelet::BasicPoint2d> curve_points;
-  split_point_speed_pairs(time_bound_points, &curve_points, &speed_limits);
+  split_point_speed_pairs(back_and_future, &curve_points, &speed_limits);
   
   std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(curve_points); // Compute splines based on curve points
   if (!fit_curve)
