@@ -14,99 +14,64 @@
  * the License.
  */
 
-#include "traffic_incident_worker.h"
+#include "traffic_incident_parser_worker.h"
 #include <gtest/gtest.h>
+#include <carma_wm/CARMAWorldModel.h>
 
 namespace traffic
 {
 
-TEST(TrafficIncidentWorkerTest, testTrafficMobilityOperationBroadcastStrategyParams)
+TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser1)
 {
 
-    TrafficIncidentWorker traffic_worker([](auto msg){});
-  
-    gps_common::GPSFix msg;
-   
-    msg.latitude=57.1;
-    msg.longitude=155.79;
-    msg.header.stamp.sec=25;
-
-    std::string sender_id="USDOT-49096";
-    std::string closed_lane="[1]";
-    double down_track=50.1;
-    double up_track=50.1;
+  std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
+  TrafficIncidentParserWorker traffic_worker(std::static_pointer_cast<const carma_wm::WorldModel>(cmw),[](auto msg){});
     
-    traffic_worker.setSenderId(sender_id);
-    traffic_worker.setClosedLane(closed_lane);
-    traffic_worker.setDownTrack(down_track);
-    traffic_worker.setUpTrack(up_track);
-
-    cav_msgs::MobilityOperation traffic_msg=traffic_worker.mobilityMessageGenerator(msg);
- 
-    EXPECT_EQ(traffic_msg.strategy_params,"lat:57.1,lon:155.79,closed_lanes:[1],downtrack:50.1,uptrack:50.1");
+  std::string mobility_strategy_params="lat:0.435,lon:0.555,closed_lanes:1,downtrack:5,uptrack:5";
+  traffic_worker.mobilityMessageParser(mobility_strategy_params);
+  
+  EXPECT_EQ(traffic_worker.latitude,0.435);
+  EXPECT_EQ(traffic_worker.longitude,0.555);
+  EXPECT_EQ(traffic_worker.closed_lane,1);
+  EXPECT_EQ(traffic_worker.down_track,5);
+  EXPECT_EQ(traffic_worker.up_track,5);  
   
   }
 
-  TEST(TrafficIncidentWorkerTest, testTrafficMobilityOperationBroadcastTimeStamp)
+
+TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser2)
 {
 
-    TrafficIncidentWorker traffic_worker([](auto msg){});
+  std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
+  TrafficIncidentParserWorker traffic_worker(std::static_pointer_cast<const carma_wm::WorldModel>(cmw),[](auto msg){});
+      
+  std::string mobility_strategy_params="lat:0.75,lon:0.555,closed_lanes:2,downtrack:75,uptrack:55";
+  traffic_worker.mobilityMessageParser(mobility_strategy_params);
   
-    gps_common::GPSFix msg;
-   
-    msg.latitude=57.1;
-    msg.longitude=155.79;
-    msg.header.stamp.sec=25;
-
-    std::string sender_id="USDOT-49096";
-    std::string closed_lane="[1]";
-    double down_track=50.1;
-    double up_track=50.1;
-    
-    traffic_worker.setSenderId(sender_id);
-    traffic_worker.setClosedLane(closed_lane);
-    traffic_worker.setDownTrack(down_track);
-    traffic_worker.setUpTrack(up_track);
-
-    cav_msgs::MobilityOperation traffic_msg=traffic_worker.mobilityMessageGenerator(msg);
- 
-    EXPECT_EQ(traffic_msg.header.timestamp,25000);
- 
+  EXPECT_EQ(traffic_worker.latitude,0.75);
+  EXPECT_EQ(traffic_worker.longitude,0.555);
+  EXPECT_EQ(traffic_worker.closed_lane,2);
+  EXPECT_EQ(traffic_worker.down_track,75);
+  EXPECT_EQ(traffic_worker.up_track,55);  
+  
   }
 
-  TEST(TrafficIncidentWorkerTest, testTrafficMobilityOperationBroadcastStrategy)
+
+TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
 {
 
-    TrafficIncidentWorker traffic_worker([](auto msg){});
-  
-    gps_common::GPSFix msg;
+  std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
+  TrafficIncidentParserWorker traffic_worker(std::static_pointer_cast<const carma_wm::WorldModel>(cmw),[](auto msg){});
    
-    msg.latitude=57.1;
-    msg.longitude=155.79;
-    msg.header.stamp.sec=25;
-
-    std::string sender_id="USDOT-49096";
-    std::string closed_lane="[1]";
-    double down_track=50.1;
-    double up_track=50.1;
-    
-    traffic_worker.setSenderId(sender_id);
-    traffic_worker.setClosedLane(closed_lane);
-    traffic_worker.setDownTrack(down_track);
-    traffic_worker.setUpTrack(up_track);
-
-    cav_msgs::MobilityOperation traffic_msg=traffic_worker.mobilityMessageGenerator(msg);
- 
-    EXPECT_EQ(traffic_msg.header.sender_id,"USDOT-49096");
-    EXPECT_EQ(traffic_msg.strategy,"carma3/Incident_Use_Case");
+  std::string mobility_strategy_params="lat:0.3,lon:0.95,closed_lanes:3,downtrack:57,uptrack:59";
+  traffic_worker.mobilityMessageParser(mobility_strategy_params);
+  
+  EXPECT_EQ(traffic_worker.latitude,0.3);
+  EXPECT_EQ(traffic_worker.longitude,0.95);
+  EXPECT_EQ(traffic_worker.closed_lane,3);
+  EXPECT_EQ(traffic_worker.down_track,57);
+  EXPECT_EQ(traffic_worker.up_track,59);  
   
   }
-  
-    TEST(TrafficIncidentWorkerTest, testAnyTypeToStringFunction)
-{
-   TrafficIncidentWorker traffic_worker([](auto msg){});
- 
-   EXPECT_EQ(traffic_worker.anytypeToString(55.6712),"55.6712");
-}
 
 }//traffic

@@ -29,8 +29,6 @@ namespace traffic
           mobilityMessageParser(mobility_msg.strategy_params);
     }
 
-    //cav_msgs::MobilityOperation traffic_mobility_msg=mobilityMessageGenerator(pinpoint_msg);
-    //traffic_control_pub_(traffic_mobility_msg);
   }
 
   void TrafficIncidentParserWorker::mobilityMessageParser(std::string mobility_strategy_params)
@@ -54,11 +52,11 @@ namespace traffic
     std::string downtrack=vec[3];
     std::string uptrack=vec[4];
 
-    latitude_=stod(stringParserHelper(lat,lat.find_last_of("lat:")));
-    longitude_=stod(stringParserHelper(lon,lon.find_last_of("lon:")));
-    closed_lane_=stoi(stringParserHelper(closed_lanes,closed_lanes.find_last_of("lat:")));
-    down_track_=stod(stringParserHelper(downtrack,downtrack.find_last_of("lon:")));
-    up_track_=stod(stringParserHelper(uptrack,uptrack.find_last_of("lon:")));
+    latitude=stod(stringParserHelper(lat,lat.find_last_of("lat:")));
+    longitude=stod(stringParserHelper(lon,lon.find_last_of("lon:")));
+    closed_lane=stoi(stringParserHelper(closed_lanes,closed_lanes.find_last_of("lat:")));
+    down_track=stod(stringParserHelper(downtrack,downtrack.find_last_of("lon:")));
+    up_track=stod(stringParserHelper(uptrack,uptrack.find_last_of("lon:")));
   }
 
   std::string TrafficIncidentParserWorker::stringParserHelper(std::string str,int str_index)
@@ -80,8 +78,8 @@ namespace traffic
   {
     lanelet::projection::LocalFrameProjector projector(projection_msg_.c_str());
     lanelet::GPSPoint gps_point;
-    gps_point.lat = latitude_;
-    gps_point.lon = longitude_;
+    gps_point.lat = latitude;
+    gps_point.lon = longitude;
     gps_point.ele = 0;
     auto local_point3d = projector.forward(gps_point);
     local_point_ = {local_point3d.x(), local_point3d.y()};
@@ -96,7 +94,7 @@ namespace traffic
     std::vector<lanelet::BasicPoint2d> center_line_points_right={};
     std::vector<lanelet::BasicPoint2d> center_line_points_left={};
  
-    while(following_distance<down_track_)
+    while(following_distance<down_track)
     {
       auto next_lanelets = wm_->getMapRoutingGraph()->following(current_lanelet);
       carma_wm::TrackPos tp = carma_wm::geometry::trackPos(next_lanelets[0], local_point_);
@@ -113,7 +111,7 @@ namespace traffic
     carma_wm::TrackPos tp = carma_wm::geometry::trackPos(current_lanelet, local_point_);
     previous_distance= std::fabs(tp.downtrack);
     
-    while(previous_distance<up_track_)
+    while(previous_distance<up_track)
     {
       auto next_lanelets = wm_->getMapRoutingGraph()->previous(current_lanelet);
       carma_wm::TrackPos tp = carma_wm::geometry::trackPos(next_lanelets[0], local_point_);
@@ -128,6 +126,10 @@ namespace traffic
     std::reverse(center_line_points_left.begin(), center_line_points_left.end());
     
     center_line_points_left.insert( center_line_points_left.end(), center_line_points_right.begin(), center_line_points_right.end() );
+
+    cav_msgs::TrafficControlMessageV01 traffic_mobility_msg;
+
+    traffic_control_pub_(traffic_mobility_msg);
   }
 
 }//traffic

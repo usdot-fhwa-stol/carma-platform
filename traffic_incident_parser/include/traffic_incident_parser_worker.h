@@ -83,12 +83,14 @@ class TrafficIncidentParserWorker
 
   void earthToMapFrame();
 
+  double latitude;
+  double longitude;
+  double closed_lane;
+  double down_track;
+  double up_track;
+
  private:
-  double latitude_;
-  double longitude_;
-  double closed_lane_;
-  double down_track_;
-  double up_track_;
+
   lanelet::BasicPoint2d local_point_;
   std::string projection_msg_;
   // local copy of external object publihsers

@@ -80,9 +80,9 @@ install(DIRECTORY
 #############
 
 ## Add gtest based cpp test target and link libraries
-#catkin_add_gmock(${PROJECT_NAME}-test 
- # test/main.cpp 
- # test/test_traffic_parser.cpp
- # WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
-#)
-#target_link_libraries(${PROJECT_NAME}-test traffic_incident_parser_worker_lib ${catkin_LIBRARIES})
+catkin_add_gmock(${PROJECT_NAME}-test 
+  test/main.cpp 
+  test/test_traffic_parser.cpp
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
+)
+target_link_libraries(${PROJECT_NAME}-test traffic_incident_parser_worker_lib ${catkin_LIBRARIES})

@@ -38,7 +38,6 @@ class TrafficIncidentParserNode
   ros::CARMANodeHandle pnh_;
    
   //subscriber
-  //ros::Subscriber pinpoint_driver_sub_;
   ros::Subscriber projection_sub_;
   ros::Subscriber mobility_operation_sub_;
 
@@ -46,7 +45,6 @@ class TrafficIncidentParserNode
   carma_wm::WMListener wm_listener_;
 
   //publisher
-  //ros::Publisher traffic_mobility_operation_pub_;
   ros::Publisher traffic_control_msg_pub_;
   
   //TrafficIncidentWorker class object
@@ -65,15 +63,14 @@ class TrafficIncidentParserNode
 
  public:
   
-  /*! \fn TrafficIncidentNode()
-    \brief TrafficIncidentNode constructor 
+  /*! \fn TrafficIncidentParserNode()
+    \brief TrafficIncidentParserNode constructor 
   */
   TrafficIncidentParserNode();
 
-  /*! \fn publishTrafficIncidentMobilityOperation()
-    \brief Publish mobility operation message
+  /*! \fn publishTrafficControlMessage()
+    \brief Publish traffic control message
   */
- // void publishTrafficIncidentMobilityOperation(const cav_msgs::MobilityOperation& traffic_msg);
   void publishTrafficControlMessage(const cav_msgs::TrafficControlMessageV01& traffic_control_msg);
 
   /*!fn run()
