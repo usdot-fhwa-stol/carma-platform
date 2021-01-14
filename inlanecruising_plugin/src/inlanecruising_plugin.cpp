@@ -293,13 +293,13 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   back_and_future.insert(back_and_future.end(), points.begin() + min_i, points.begin() + nearest_pt_index + 1);
   back_and_future.insert(back_and_future.end(), time_bound_points.begin(), time_bound_points.end());
-  ROS_DEBUG_STREAM("time_bound_points: " << time_bound_points.size());
+  //ROS_DEBUG_STREAM("time_bound_points: " << time_bound_points.size());
 
   log::printDebugPerLine(time_bound_points, &log::pointSpeedPairToStream);
-  ROS_DEBUG("Back and time bounds points");
+  //ROS_DEBUG("Back and time bounds points");
   //log::printDebugPerLine(back_and_future, &log::pointSpeedPairToStream);
 
-  ROS_DEBUG("Got basic points ");
+  //ROS_DEBUG("Got basic points ");
 
   std::vector<double> final_yaw_values;
   std::vector<double> final_actual_speeds;
@@ -355,41 +355,33 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
     scaled_steps_along_curve += 1.0/total_step_along_curve; //adding steps_along_curve_step_size
   }
 
- //log::printDoublesPerLineWithPrefix("better_curvature[i]: ", better_curvature);
+  //log::printDoublesPerLineWithPrefix("better_curvature[i]: ", better_curvature);
 
   //log::printDebugPerLine(sampling_points, &log::basicPointToStream);
 
   std::vector<double> yaw_values = carma_wm::geometry::compute_tangent_orientations(sampling_points);
 
   std::vector<double> curvatures = better_curvature;
-  //std::vector<double> curvatures =
-  //    carma_wm::geometry::local_circular_arc_curvatures(sampling_points, config_.curvature_calc_lookahead_count);
 
   //log::printDoublesPerLineWithPrefix("pre_smooth_curvatures[i]: ", curvatures);
-
-  //curvatures = smoothing::moving_average_filter(curvatures, config_.moving_average_window_size);
 
   log::printDoublesPerLineWithPrefix("curvatures[i]: ", curvatures);
 
   std::vector<double> ideal_speeds =
       trajectory_utils::constrained_speeds_for_curvatures(curvatures, config_.lateral_accel_limit);
 
-  //log::printDoublesPerLineWithPrefix("ideal_speeds: ", ideal_speeds);
+  log::printDoublesPerLineWithPrefix("ideal_speeds: ", ideal_speeds);
 
   std::vector<double> actual_speeds = apply_speed_limits(ideal_speeds, distributed_speed_limits);
 
   //log::printDoublesPerLineWithPrefix("actual_speeds: ", actual_speeds);
-
   //log::printDoublesPerLineWithPrefix("yaw_values[i]: ", yaw_values);
+
   final_yaw_values.insert(final_yaw_values.end(), yaw_values.begin(), yaw_values.end());
   all_sampling_points.insert(all_sampling_points.end(), sampling_points.begin(), sampling_points.end());
   final_actual_speeds.insert(final_actual_speeds.end(), actual_speeds.begin(), actual_speeds.end());
-
-  ROS_DEBUG("Appended to final");
-
-  ROS_DEBUG("Appended to final");
   
-  ROS_DEBUG("Processed all points in computed fit");
+  //ROS_DEBUG("Processed all points in computed fit");
 
   if (all_sampling_points.size() == 0)
   {
@@ -407,6 +399,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   // Add current vehicle point to front of the trajectory
 
   nearest_pt_index = get_nearest_point_index(all_sampling_points, state);
+  ROS_DEBUG_STREAM("Curvature right now: " << better_curvature[nearest_pt_index] << ", at x: " << state.X_pos_global << ", y: " << state.Y_pos_global);
 
   std::vector<lanelet::BasicPoint2d> future_basic_points(all_sampling_points.begin() + nearest_pt_index + 1,
                                             all_sampling_points.end());  // Points in front of current vehicle position
@@ -437,11 +430,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   
   // Apply accel limits
   final_actual_speeds = optimize_speed(downtracks, final_actual_speeds, config_.max_accel);
-    //final_actual_speeds = trajectory_utils::apply_accel_limits_by_distance(downtracks, final_actual_speeds,
-  //                                                                       config_.max_accel, config_.max_accel);
+
   //log::printDoublesPerLineWithPrefix("postAccel[i]: ", final_actual_speeds);
 
-  
   final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, config_.moving_average_window_size);
   log::printDoublesPerLineWithPrefix("post_average[i]: ", final_actual_speeds);
 
