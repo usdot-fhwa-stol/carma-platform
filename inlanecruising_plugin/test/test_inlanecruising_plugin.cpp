@@ -433,38 +433,55 @@ TEST(InLaneCruisingPluginTest, compute_curvature_at)
   ASSERT_NEAR(plugin.compute_curvature_at(fit_curve, 0.97), 0, 0.001); // check random 2
 
   ///////////////////////
-  // Circle
+  // Circle (0,0 centered, R radius)
   ///////////////////////
   points = {};
-  lanelet::BasicPoint2d po1(0,0);
-  points.push_back( po1);
-  lanelet::BasicPoint2d po2(1,1);
-  points.push_back( po2);
-  lanelet::BasicPoint2d po3(0,2);
-  points.push_back( po3);
-  lanelet::BasicPoint2d po4(-1,1);
-  points.push_back( po4);
-  lanelet::BasicPoint2d po5(0, 0);
-  points.push_back( po5);
+  std::vector<double> x,y;
+  double x_ = 0.0;
+  double radius = 20;
+  for (int i = 0; i < 10; i++)
+  { 
+    x.push_back(x_);
+    y.push_back(-sqrt(pow(radius,2) - pow(x_,2))); //y-
+    x_ += radius/(double)10;
+  }
+  for (int i = 0; i < 10; i++)
+  { 
+    x.push_back(x_);
+    y.push_back(sqrt(pow(radius,2) - pow(x_,2))); //y+
+    x_ -= radius/(double)10;
+  }
+  for (int i = 0; i < 10; i++)
+  { 
+    x.push_back(x_);
+    y.push_back(sqrt(pow(radius,2) - pow(x_,2))); //y+
+    x_ -= radius/(double)10;
+  }
+  for (int i = 0; i < 10; i++)
+  { 
+    x.push_back(x_);
+    y.push_back(-sqrt(pow(radius,2) - pow(x_,2))); //y-
+    x_ += radius/(double)10;
+  }
+  y.push_back(-sqrt(pow(radius,2) - pow(x_,2))); // to close the loop with redundant first point
 
-  // As different libraries may fit S curves differently, we are only checking if we can get any fit here.
+  for (auto i = 0; i < y.size(); i ++)
+  {
+    points.push_back({x[i],y[i]});
+  }
+
   std::unique_ptr<smoothing::SplineI> fit_circle = plugin.compute_fit(points);
   double param = 0.0;
-  for (int i = 0 ; i < 50; i ++)
+  for (int i = 0 ; i < 40; i ++)
   {
     auto pt = (*fit_circle)(param);
-    std::cout << pt.x() << ", " << pt.y() << std::endl;
-    param += 0.02;
-    //std::cout << param<< std::endl;
+    param += 1.0/40.0;
   }
   auto pt = (*fit_circle)(param);
-  //std::cout << pt.x() << ", " << pt.y() << std::endl;
-
-  //ASSERT_NEAR(plugin.compute_curvature_at(fit_circle, 0.0), 0.1, 0.001); // check start
-  ASSERT_NEAR(plugin.compute_curvature_at(fit_circle, 0.25), plugin.compute_curvature_at(fit_circle, 0.75), 0.001); // check end
-  //ASSERT_NEAR(plugin.compute_curvature_at(fit_circle, 0.75), 0.1, 0.001); // check random 1
-  //ASSERT_NEAR(plugin.compute_curvature_at(fit_circle, 0.97), 0.1, 0.001); // check random 2
-
-
-  
+  ASSERT_NEAR(plugin.compute_curvature_at(fit_circle, 0.0), 1.0/radius, 0.002); // check start curvature 1/r
+  // check curvature is consistent
+  ASSERT_NEAR(plugin.compute_curvature_at(fit_circle, 0.42), plugin.compute_curvature_at(fit_circle, 0.85), 0.002); 
+  ASSERT_NEAR(plugin.compute_curvature_at(fit_circle, 0.0), plugin.compute_curvature_at(fit_circle, 1.0), 0.002); 
+  ASSERT_NEAR(plugin.compute_curvature_at(fit_circle, 0.23), plugin.compute_curvature_at(fit_circle, 0.99), 0.002); 
+  ASSERT_NEAR(plugin.compute_curvature_at(fit_circle, 0.12), plugin.compute_curvature_at(fit_circle, 0.76), 0.002);  
 }

@@ -154,11 +154,6 @@ std::vector<double> InLaneCruisingPlugin::optimize_speed(const std::vector<doubl
   {
     throw std::invalid_argument("Accel limits should be positive");
   }
-  std::cout << "Before applying optimization" << std::endl;
-  for (auto speed : curv_speeds)
-  {
-    std::cout << "speed: " << speed << std::endl;
-  }
 
   bool optimize = true;
   size_t min_index = 0;
@@ -200,19 +195,9 @@ std::vector<double> InLaneCruisingPlugin::optimize_speed(const std::vector<doubl
 
   //log::printDoublesPerLineWithPrefix("only_reverse[i]: ", output);
   
-  std::cout << "After applying optimization" << std::endl;
-  for (auto speed : output)
-  {
-    std::cout << "speed: " << speed << std::endl;
-  }
   output = trajectory_utils::apply_accel_limits_by_distance(downtracks, output, accel_limit, accel_limit);
   //log::printDoublesPerLineWithPrefix("after_forward[i]: ", output);
-  std::cout << "End applying accel limit" << std::endl;
-  for (auto speed : output)
-  {
-    std::cout << "speed: " << speed << std::endl;
-  }
-  
+
   return output;
 }
 
@@ -638,7 +623,7 @@ double InLaneCruisingPlugin::compute_curvature_at(const std::unique_ptr<inlanecr
   // Convert to 3d vector to do 3d vector operations like cross.
   Eigen::Vector3d f_prime = {f_prime_pt.x(), f_prime_pt.y(), 0};
   Eigen::Vector3d f_prime_prime = {f_prime_prime_pt.x(), f_prime_prime_pt.y(), 0};
-  return f_prime.cross(f_prime_prime).norm()/pow(f_prime.norm(),3);
+  return (f_prime.cross(f_prime_prime)).norm()/(pow(f_prime.norm(),3));
 }
 
 }  // namespace inlanecruising_plugin
