@@ -409,9 +409,6 @@ TEST(RouteGeneratorTest, test_crosstrack_error_check)
     /*Compare vehicle position to the route bounds */
     lanelet::BasicPoint2d current_loc(mpt->pose.position.x, mpt->pose.position.y);
 
-    //auto via_lanelet_vector = lanelet::geometry::findNearest(map->laneletLayer, current_loc, 1);
-
-    //auto current_lanelet = lanelet::ConstLanelet(via_lanelet_vector[0].second.constData());
     auto current_lanelet = worker.get_closest_lanelet_from_route_llts(current_loc);
 
     worker.pose_cb(mpt);
