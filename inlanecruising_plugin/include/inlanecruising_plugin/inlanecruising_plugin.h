@@ -161,6 +161,16 @@ public:
   int get_nearest_point_index(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state);
 
   /**
+   * \brief Returns the nearest point to the provided vehicle pose in the provided list
+   * 
+   * \param points The points to evaluate
+   * \param state The current vehicle state
+   * 
+   * \return index of nearest point in points
+   */ 
+  int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points, const cav_msgs::VehicleState& state);
+
+  /**
    * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
    */ 
   void split_point_speed_pairs(const std::vector<PointSpeedPair>& points, std::vector<lanelet::BasicPoint2d>* basic_points,

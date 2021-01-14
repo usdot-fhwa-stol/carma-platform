@@ -235,19 +235,16 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::constrain_to_time_boundary(con
   return time_bound_points;
 }
 
-int get_nearest_basic_point_index(const std::vector<lanelet::BasicPoint2d>& points,
+int InLaneCruisingPlugin::get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points,
                                                const cav_msgs::VehicleState& state)
 {
   lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
-  ROS_DEBUG_STREAM("veh_point: " << veh_point.x() << ", " << veh_point.y());
   double min_distance = std::numeric_limits<double>::max();
   int i = 0;
   int best_index = 0;
   for (const auto& p : points)
   {
     double distance = lanelet::geometry::distance2d(p, veh_point);
-    //ROS_DEBUG_STREAM("distance: " << distance);
-    //ROS_DEBUG_STREAM("p: " << p.x() << ", " << p.y());
     if (distance < min_distance)
     {
       best_index = i;
@@ -409,7 +406,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   // Add current vehicle point to front of the trajectory
 
-  nearest_pt_index = get_nearest_basic_point_index(all_sampling_points, state);
+  nearest_pt_index = get_nearest_point_index(all_sampling_points, state);
 
   std::vector<lanelet::BasicPoint2d> future_basic_points(all_sampling_points.begin() + nearest_pt_index + 1,
                                             all_sampling_points.end());  // Points in front of current vehicle position

@@ -23,7 +23,7 @@
 
 using namespace inlanecruising_plugin;
 // Test to ensure Eigen::Isometry2d behaves like tf2::Transform
-TEST(InLaneCruisingPluginTest, DISABLED_validate_eigen)
+TEST(InLaneCruisingPluginTest, validate_eigen)
 {
   Eigen::Rotation2Dd frame_rot(M_PI_2);
   lanelet::BasicPoint2d origin(1, 1);
@@ -53,7 +53,7 @@ TEST(InLaneCruisingPluginTest, DISABLED_validate_eigen)
   ASSERT_NEAR(M_PI_2, P_in_A_rot.smallestAngle(), 0.000000001);
 }
 
-TEST(InLaneCruisingPluginTest, DISABLED_trajectory_from_points_times_orientations)
+TEST(InLaneCruisingPluginTest, trajectory_from_points_times_orientations)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -107,7 +107,7 @@ TEST(InLaneCruisingPluginTest, DISABLED_trajectory_from_points_times_orientation
   ASSERT_EQ(0, traj_points[3].planner_plugin_name.compare(expected_plugin_name));
 }
 
-TEST(InLaneCruisingPluginTest, DISABLED_constrain_to_time_boundary)
+TEST(InLaneCruisingPluginTest, constrain_to_time_boundary)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -160,7 +160,51 @@ TEST(InLaneCruisingPluginTest, DISABLED_constrain_to_time_boundary)
   ASSERT_NEAR(1.0, time_bound_points[5].speed, 0.0000001);
 }
 
-TEST(InLaneCruisingPluginTest, DISABLED_get_nearest_point_index)
+TEST(InLaneCruisingPluginTest, get_nearest_point_index)
+{
+  InLaneCruisingPluginConfig config;
+  config.downsample_ratio = 1;
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+
+  std::vector<PointSpeedPair> points;
+  std::vector<lanelet::BasicPoint2d> basic_points;
+  PointSpeedPair p;
+  p.point = lanelet::BasicPoint2d(0, 0);
+  p.speed = 1.0;
+  points.push_back(p);
+  basic_points.push_back(p.point);
+  p.point = lanelet::BasicPoint2d(1, 1);
+  points.push_back(p);
+  basic_points.push_back(p.point);
+  p.point = lanelet::BasicPoint2d(2, 2);
+  points.push_back(p);
+  basic_points.push_back(p.point);
+  p.point = lanelet::BasicPoint2d(3, 3);
+  points.push_back(p);
+  basic_points.push_back(p.point);
+  p.point = lanelet::BasicPoint2d(4, 4);
+  points.push_back(p);
+  basic_points.push_back(p.point);
+  p.point = lanelet::BasicPoint2d(5, 5);
+  points.push_back(p);
+  basic_points.push_back(p.point);
+  p.point = lanelet::BasicPoint2d(6, 6);
+  points.push_back(p);
+  basic_points.push_back(p.point);
+  p.point = lanelet::BasicPoint2d(7, 7);
+  points.push_back(p);
+  basic_points.push_back(p.point);
+
+  cav_msgs::VehicleState state;
+  state.X_pos_global = 3.3;
+  state.Y_pos_global = 3.3;
+
+  ASSERT_EQ(3, plugin.get_nearest_point_index(points, state));
+  ASSERT_EQ(3, plugin.get_nearest_point_index(basic_points, state));
+}
+
+TEST(InLaneCruisingPluginTest, get_nearest_basic_point_index)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -195,7 +239,7 @@ TEST(InLaneCruisingPluginTest, DISABLED_get_nearest_point_index)
   ASSERT_EQ(3, plugin.get_nearest_point_index(points, state));
 }
 
-TEST(InLaneCruisingPluginTest, DISABLED_split_point_speed_pairs)
+TEST(InLaneCruisingPluginTest, split_point_speed_pairs)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
