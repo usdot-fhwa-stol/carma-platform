@@ -92,7 +92,18 @@ double get_maneuver_start_speed(const cav_msgs::Maneuver &mvr)
 
 double get_maneuver_end_speed(const cav_msgs::Maneuver &mvr)
 {
-    return GET_MANEUVER_PROPERTY(mvr, end_speed);
+    if(mvr.type == cav_msgs::Maneuver::LANE_FOLLOWING){
+        return mvr.lane_following_maneuver.end_speed;
+    }else if(mvr.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN){
+        return mvr.intersection_transit_left_turn_maneuver.end_speed;
+    }else if(mvr.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN){
+        return mvr.intersection_transit_right_turn_maneuver.end_speed;
+    }else if(mvr.type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT){
+        return mvr.intersection_transit_straight_maneuver.end_speed;
+    }else if(mvr.type == cav_msgs::Maneuver::STOP_AND_WAIT){
+        return 0.0;
+    }
+    throw std::invalid_argument("Trying to get end_speed of maneuver with invalid type.");
 }
 
 std::string get_maneuver_starting_lane_id(const cav_msgs::Maneuver &mvr)
@@ -107,7 +118,9 @@ std::string get_maneuver_starting_lane_id(const cav_msgs::Maneuver &mvr)
         return mvr.intersection_transit_straight_maneuver.starting_lane_id;
     } else if (mvr.type == cav_msgs::Maneuver::LANE_CHANGE) {
         return mvr.lane_change_maneuver.starting_lane_id;
-    } 
+    }else if (mvr.type == cav_msgs::Maneuver::STOP_AND_WAIT) {
+        return mvr.stop_and_wait_maneuver.starting_lane_id;
+    }
 
     throw std::invalid_argument("Trying to get starting_lane_id of maneuver with invalid type.");
 }
@@ -124,7 +137,9 @@ std::string get_maneuver_ending_lane_id(const cav_msgs::Maneuver &mvr)
         return mvr.intersection_transit_straight_maneuver.ending_lane_id;
     } else if (mvr.type == cav_msgs::Maneuver::LANE_CHANGE) {
         return mvr.lane_change_maneuver.ending_lane_id;
-    } 
+    } else if(mvr.type == cav_msgs::Maneuver::STOP_AND_WAIT){
+        return mvr.stop_and_wait_maneuver.ending_lane_id;
+    }
 
     throw std::invalid_argument("Trying to get ending_lane_id of maneuver with invalid type.");
 }
