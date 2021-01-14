@@ -512,6 +512,11 @@ namespace route {
 
     }
 
+    void RouteGeneratorWorker::addllt(lanelet::ConstLanelet llt)
+    {
+        route_llts.push_back(llt);
+    }
+
 
 }
 

@@ -191,6 +191,9 @@ namespace route {
         */
         lanelet::ConstLanelet get_closest_lanelet_from_route_llts(lanelet::BasicPoint2d position);
 
+        //Added for Unit Testing
+        void addllt(lanelet::ConstLanelet llt);
+
 
     private:
 
@@ -215,7 +218,7 @@ namespace route {
         visualization_msgs::MarkerArray route_marker_msg_;
         std::vector<lanelet::ConstPoint3d> points_; 
         
-        //Unordered set of lanelets in the route
+        //List of lanelets in the route
         lanelet::ConstLanelets route_llts;
 
         // maximum cross track error which can trigger left route event
