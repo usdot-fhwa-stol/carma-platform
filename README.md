@@ -22,7 +22,7 @@ CARMA Platform provides the navigation and guidance functions for its host vehic
 
 ![CARMA Demo](docs/image/CARMA2_Platooning_from_Office.jpg)
 
-Documentation of the setup, operation, and design of the CARMA Platform can be found on the project [Confluence](https://usdot-carma.atlassian.net/wiki/spaces/CAR/overview?homepageId=1212636) pages.
+Documentation of the setup, operation, and design of the CARMA Platform can be found on the project [Confluence](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/) pages. 
 
 <!-- We would like to publish this section, but are not ready to at this time:
 ## System Specifications
@@ -36,12 +36,12 @@ The current version and release history of the CARMA software platform: [CARMA R
 **Repo Structure Note:**  The master and develop branches of this repo (and all other repos in the usdot-fhwa-stol GitHub organization) now reflects the third generation of CARMA code and documentation, called CARMA3.  It uses [Autoware](https://github.com/autowarefoundation/autoware) to provide SAE level 2 and 3 automation capability.  The legacy CARMA2 code is still being supported.  It was used extensively by FHWA during 2018 for SAE level 1 experiments.  To work with that code base, please check out the CARMA2-integration branch and make pull requests to it (using the contribution process outlined below).
 
 ## Roadmap
-The current CARMA ecosystem development direction and release plans can be found here: [CARMA Roadmap](https://usdot-carma.atlassian.net/wiki/spaces/CET/pages/745111786/CARMA+Ecosystem+Roadmap)
+The current CARMA ecosystem development direction and release plans can be found here: [CARMA Roadmap](https://usdot-carma.atlassian.net/wiki/spaces/CRMECO/pages/1093435397/CARMA+Ecosystem+Roadmap)
 
 ## Architecture Guide
-The documentation describes the software architecture within a single CARMA vehicle.  There may be several of these vehicles operating in concert, communicating with each other via DSRC or cellular means.  They can also communicate with roadside infrastructure using DSRC or cellular.  The communication among software components within a single vehicle, however, is mostly done via the Robot Operating System (ROS) framework.  There are no ROS communications between neighboring vehicles. [CARMA3 System Architecture](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/89587713/CARMA3+System+Architecture?preview=/89587713/128680006/CARMA%203.0%20Platform%20Architecture%20v0.docx)
+The documentation describes the software architecture within a single CARMA vehicle.  There may be several of these vehicles operating in concert, communicating with each other via DSRC or cellular means.  They can also communicate with roadside infrastructure using DSRC or cellular.  The communication among software components within a single vehicle, however, is mostly done via the Robot Operating System (ROS) framework.  There are no ROS communications between neighboring vehicles. [CARMA3 System Architecture](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/pages/89587713/CARMA3+System+Architecture)
 
-For information on the CARMA2 architecture, please see [CARMA2 System Architecture](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/11403311/CARMA2+System+Architecture?preview=/11403311/130678837/CAV%20Platform%20Architecture.docx)
+For information on the CARMA2 architecture, please see [CARMA2 System Architecture](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/pages/1160642573/CARMA2+System+Architecture)
 
 ## Detailed Design Documents
 Please see the Detail Design document page for detailed design specification for CARMA and other additional information.
@@ -51,22 +51,22 @@ Please see the Detail Design document page for detailed design specification for
 
 Useful development documentation and instructions for the setup of a development environment for CARMA Platform can be found at the following pages:
 
-* [CARMA Development Resources](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/64946377/CARMA+Development+Resources)
-* [Development Environment Setup](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/486178827/Development+Environment+Setup)
+* [CARMA Development Resources](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/pages/64946377/CARMA+Development+Resources)
+* [Development Environment Setup](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/pages/486178827/Development+Environment+Setup)
 
 A plug-in developers guide for CARMA3 will be coming soon.
 
-For a description of the approach to develop a plug-in for CARMA2, please see [CARMA 2.7 Developers Guide](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29556796/CARMA%202.7%20Developers%20Guide.docx)
+For a description of the approach to develop a plug-in for CARMA2, please see [CARMA 2.7 Developers Guide](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/pages/1160642629/CARMA2+Project+Documentation?preview=/1160642629/1160642727/CARMA%202.7%20Developers%20Guide.docx)
 
 ## Users Guide
 A user guide for CARMA3 will be coming soon.
 
-For a description of the functionality specific to CARMA2 on the Cadillac SRX, see [CARMA User Guide](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29392940/CARMA%202.7%20USER%20GUIDE.docx)
+For a description of the functionality specific to CARMA2 on the Cadillac SRX, see [CARMA User Guide](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/pages/1160642629/CARMA2+Project+Documentation?preview=/1160642629/1160642733/CARMA%202.7%20USER%20GUIDE.docx)
 
 ## Administrator Guide
 An administrator guide for CARMA3 will be coming soon.
 
-For administrative information on CARMA2, including vehicle and developer PC configuration, build, deployment and testing steps necessary to install and run CARMA Platform, please see [Administrator Guide](https://usdot-carma.atlassian.net/wiki/spaces/CAR/pages/23330913/CARMA+Project+Documentation?preview=/23330913/29196388/CARMA%20Administrator%20Guide.docx)
+For administrative information on CARMA2, including vehicle and developer PC configuration, build, deployment and testing steps necessary to install and run CARMA Platform, please see [Administrator Guide](https://usdot-carma.atlassian.net/wiki/spaces/CRMPLT/pages/1160642629/CARMA2+Project+Documentation?preview=/1160642629/1160642730/CARMA%20Administrator%20Guide.docx)
 
 ## Other CARMA Packages
 CARMA Platform<sup>SM</sup> is a downloadable, open source software (OSS) platform architected to be extensible and reusable for a wide variety of research purposes to advance innovation for cooperative driving automation. It enables communication between vehicles, road users such as pedestrians, bicyclists, and scooters, and infrastructure devices capable of communication. It promotes collaboration between a community of engineers and researchers to accelerate the development, testing, and evaluation of cooperative driving automation while advancing the safety, security, data, and use of artificial intelligence in automated driving technology.  
