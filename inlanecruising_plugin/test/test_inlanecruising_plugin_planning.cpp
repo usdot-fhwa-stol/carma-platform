@@ -195,7 +195,7 @@ TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
 
 }
 
-TEST(WaypointGeneratorTest, test_compute_fit_full_generation)
+TEST(WaypointGeneratorTest, DISABLED_test_compute_fit_full_generation)
 {
   int projector_type = 0;
   std::string target_frame;
