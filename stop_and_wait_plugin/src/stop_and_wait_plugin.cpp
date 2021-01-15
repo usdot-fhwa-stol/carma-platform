@@ -169,7 +169,7 @@ namespace stop_and_wait_plugin
             maneuver_time_ = (3*(ending_downtrack - starting_downtrack))/(2*start_speed);
 
             double delta_time, curr_time;
-            if(start_speed == 0 )  //If at end_dist return zero speed trajectory
+            if(start_speed < epsilon_ )  //If at end_dist return zero speed trajectory
             {
                 ///guidance/route/destination_downtrack_range
                 auto shortest_path = wm_->getRoute()->shortestPath();

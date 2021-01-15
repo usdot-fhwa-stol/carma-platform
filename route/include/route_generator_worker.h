@@ -200,6 +200,8 @@ namespace route {
         double speed_limit_ = 0;
         // Current vehicle forward speed
         double current_speed_ = 0;
+        //A small static value for comparing doubles
+        static constexpr double epsilon_ = 0.001;
         // local copy of Route publihsers
         ros::Publisher route_event_pub_, route_state_pub_, route_pub_,route_marker_pub_;
 
