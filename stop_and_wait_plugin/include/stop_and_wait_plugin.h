@@ -78,7 +78,8 @@ namespace stop_and_wait_plugin
          * \return List of centerline points paired with speed limits
          */ 
         std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
-                                                                      double max_starting_downtrack);
+                                                                      double starting_downtrack,
+                                                                      const carma_wm::WorldModelConstPtr& wm, const cav_msgs::VehicleState& state);
           /**
          * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of trajectory points for trajectory planning
          * 
@@ -100,7 +101,16 @@ namespace stop_and_wait_plugin
          * \return index of nearest point in points
          */
         int getNearestPointIndex(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state) const;
-
+        
+        /**
+         * \brief Returns the nearest point on the route to the provided vehicle pose in the provided list
+         * 
+         * \param points Route points to evaluate
+         * \param state The current vehicle state
+         * 
+         * \return index of nearest point in points
+         */
+        int getNearestRouteIndex(lanelet::BasicLineString2d& points, const cav_msgs::VehicleState& state);
         /**
          * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
          */ 
@@ -128,6 +138,7 @@ namespace stop_and_wait_plugin
         //CARMA ROS node handles
         std::shared_ptr<ros::CARMANodeHandle> nh_,pnh_;
 
+        std::shared_ptr<ros::CARMANodeHandle> pnh2_;
         // ROS service servers
         ros::ServiceServer trajectory_srv_;
 
@@ -153,11 +164,14 @@ namespace stop_and_wait_plugin
         //The maximum acceptable jerk 
         double max_jerk_limit_ = 3.0;
         //The minimum acceptable jerk, after which constant speed is assumed
-        double min_instantaneous_acc_ = 0.001;
+        double min_jerk_limit_ = 0.001;
         //Minimum timestep used for planning trajectory
         double min_timestep_ =0.1;
         //Amount to downsample input lanelet centerline data
         int downsample_ratio_ =8;
+        
+        //A small static value for comparing doubles
+        static constexpr double epsilon_ = 0.001;
 
 
         /**
@@ -176,6 +190,8 @@ namespace stop_and_wait_plugin
          * \param msg Latest twist message
          */
         void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
+
+        double destination_downtrack_range = 0.0;
         
     };
 }

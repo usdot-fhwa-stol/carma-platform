@@ -97,6 +97,8 @@ namespace guidance
 
             // make one service call in ACTIVE state to engage
             bool called_robotic_engage_in_active_{false};
+
+            cav_msgs::SystemAlert sys_alert_msg_;
     };
 
 }

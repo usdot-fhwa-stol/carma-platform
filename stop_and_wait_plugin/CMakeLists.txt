@@ -105,6 +105,6 @@ install(DIRECTORY launch config
 #############
 
 catkin_add_gmock(${PROJECT_NAME}-test 
-  test/test_stopandwait_plugin.cpp
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+ test/test_stopandwait_plugin.cpp
+ WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
 target_link_libraries(${PROJECT_NAME}-test stopandwait_plugin_lib ${catkin_LIBRARIES})

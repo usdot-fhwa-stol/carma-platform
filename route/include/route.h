@@ -71,6 +71,7 @@ namespace route {
 
         // subscriber to current pose in the map
         ros::Subscriber pose_sub_;
+        ros::Subscriber twist_sub_;
         
         // route service servers
         ros::ServiceServer get_available_route_srv_;
