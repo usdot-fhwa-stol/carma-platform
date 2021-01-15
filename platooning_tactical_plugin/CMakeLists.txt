@@ -69,7 +69,7 @@ add_executable( ${PROJECT_NAME}
   src/platooning_tactical_plugin_node.cpp)
 add_library(platooning_tactical_plugin_library 
   src/platooning_tactical_plugin.cpp
-  src/smoothing/CubicSpline.cpp
+  src/smoothing/BSpline.cpp
 )
 target_link_libraries(platooning_tactical_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(platooning_tactical_plugin_library ${catkin_EXPORTED_TARGETS})

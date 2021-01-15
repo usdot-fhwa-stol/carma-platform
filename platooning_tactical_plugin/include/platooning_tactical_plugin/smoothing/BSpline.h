@@ -18,38 +18,27 @@
 
 #include <vector>
 #include <carma_wm/Geometry.h>
+#include <platooning_tactical_plugin/smoothing/SplineI.h>
+#include <unsupported/Eigen/Splines>
 
 namespace platooning_tactical_plugin
 {
 namespace smoothing
 {
+
+  typedef Eigen::Spline<float, 2> Spline2d;
 /**
- * \brief Interface to a spline interpolator that can be used to smoothly interpolate between points
+ * \brief Realization of SplineI that uses the Eigen::Splines library for interpolation 
  */ 
-class SplineI
+class BSpline : public SplineI
 {
 public:
-  /**
-   * @brief Virtual destructor to ensure delete safety for pointers to implementing classes
-   *
-   */
-  virtual ~SplineI(){};
+  ~BSpline(){};
+  void setPoints(std::vector<lanelet::BasicPoint2d> points) override;
+  lanelet::BasicPoint2d operator()(double t) const override;
 
-  /**
-   * \brief Set key points which the spline will interpolate between
-   * 
-   * \param points The key points
-   */ 
-  virtual void setPoints(std::vector<lanelet::BasicPoint2d> points) = 0;
-  
-    /**
-   * \brief Get the BasicPoint2d coordinate along the curve at t-th step. 
-   * 
-   * \param t The t-th step to solve the spline at, where t is from 0 (beginning of curve) to 1 (end of curve)
-   * 
-   * \return lanelet::BasicPoint2d with x, y that matches the t-th step along the curve
-   */ 
-  virtual lanelet::BasicPoint2d operator()(double t) const = 0;
+private:
+  Spline2d spline_;
 };
 };  // namespace smoothing
 };  // namespace platooning_tactical_plugin

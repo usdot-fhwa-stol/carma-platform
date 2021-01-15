@@ -31,9 +31,8 @@
 #include <Eigen/LU>
 #include <Eigen/SVD>
 #include <platooning_tactical_plugin/smoothing/SplineI.h>
-#include <platooning_tactical_plugin/smoothing/CubicSpline.h>
+#include <platooning_tactical_plugin/smoothing/BSpline.h>
 #include <platooning_tactical_plugin/log/log.h>
-#include <carma_utils/containers/containers.h>
 #include <platooning_tactical_plugin/smoothing/filters.h>
 #include <unordered_set>
 
@@ -130,50 +129,7 @@ Eigen::Isometry2d PlatooningTacticalPlugin::compute_heading_frame(const lanelet:
 }
 
 
-std::vector<DiscreteCurve> PlatooningTacticalPlugin::compute_sub_curves(const std::vector<PointSpeedPair>& map_points)
-{
-  if (map_points.size() < 2)
-  {
-    throw std::invalid_argument("Not enough points");
-  }
 
-  std::vector<DiscreteCurve> curves;
-  DiscreteCurve curve;
-  curve.frame = compute_heading_frame(map_points[0].point, map_points[1].point);
-  Eigen::Isometry2d map_in_curve = curve.frame.inverse();
-
-  for (size_t i = 0; i < map_points.size() - 1; i++)
-  {
-    lanelet::BasicPoint2d p1 = map_in_curve * map_points[i].point;
-    lanelet::BasicPoint2d p2 = map_in_curve * map_points[i + 1].point;  // TODO Optimization to cache this value
-
-    PointSpeedPair initial_pair;
-    initial_pair.point = p1;
-    initial_pair.speed = map_points[i].speed;
-    curve.points.push_back(initial_pair);
-
-    bool x_dir = (p2.x() - p1.x()) > 0;
-    if (!x_dir)  // If x starts going backwards we need a new curve
-    {
-      // New Curve
-      curves.push_back(curve);
-
-      curve = DiscreteCurve();
-      curve.frame = compute_heading_frame(map_points[i].point, map_points[i + 1].point);
-      map_in_curve = curve.frame.inverse();
-
-      PointSpeedPair pair;
-      pair.point = map_in_curve * map_points[i].point;
-      pair.speed = map_points[i].speed;
-
-      curve.points.push_back(pair);  // Include first point in curve
-    }
-  }
-
-  curves.push_back(curve);
-
-  return curves;
-}
 
 std::vector<PointSpeedPair> PlatooningTacticalPlugin::constrain_to_time_boundary(const std::vector<PointSpeedPair>& points,
                                                                              double time_span)
@@ -267,15 +223,6 @@ std::vector<double> PlatooningTacticalPlugin::get_lookahead_speed(const std::vec
   }
   
   return out;
-}
-
-Eigen::Isometry2d PlatooningTacticalPlugin::curvePointInMapTF(const Eigen::Isometry2d& curve_in_map,
-                                                          const lanelet::BasicPoint2d& p, double yaw) const
-{
-  Eigen::Rotation2Dd yaw_rot(yaw);
-  Eigen::Isometry2d point_in_c = carma_wm::geometry::build2dEigenTransform(p, yaw_rot);
-  Eigen::Isometry2d point_in_map = curve_in_map * point_in_c;
-  return point_in_map;
 }
 
 std::vector<cav_msgs::TrajectoryPlanPoint> PlatooningTacticalPlugin::trajectory_from_points_times_orientations(
@@ -434,7 +381,7 @@ PlatooningTacticalPlugin::compute_fit(const std::vector<lanelet::BasicPoint2d>& 
     return nullptr;
   }
 
-  std::unique_ptr<smoothing::SplineI> spl = std::make_unique<smoothing::CubicSpline>();
+  std::unique_ptr<smoothing::SplineI> spl = std::make_unique<smoothing::BSpline>();
   spl->setPoints(basic_points);
 
   return spl;
@@ -457,42 +404,27 @@ std::vector<cav_msgs::TrajectoryPlanPoint> PlatooningTacticalPlugin::compose_tra
 
   std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end()); // Points in front of current vehicle position
 
-  auto time_bound_points = constrain_to_time_boundary(future_points, config_.trajectory_time_length);
+  auto time_bound_points = constrain_to_time_boundary(future_points, 30);
 
   ROS_DEBUG_STREAM("time_bound_points: " << time_bound_points.size());
 
   log::printDebugPerLine(time_bound_points, &log::pointSpeedPairToStream);
 
   ROS_DEBUG("Got basic points ");
-  std::vector<DiscreteCurve> sub_curves = compute_sub_curves(time_bound_points);
-
-  ROS_DEBUG_STREAM("Got sub_curves " << sub_curves.size());
 
   std::vector<double> final_yaw_values;
   std::vector<double> final_actual_speeds;
   std::vector<lanelet::BasicPoint2d> all_sampling_points;
 
-  for (const auto& discreet_curve : sub_curves)
-  {
-    ROS_DEBUG("SubCurve");
+  std::vector<double> speed_limits;
+  std::vector<lanelet::BasicPoint2d> curve_points;
+  splitPointSpeedPairs(time_bound_points, &curve_points, &speed_limits);
 
-    std::vector<double> speed_limits;
-    std::vector<lanelet::BasicPoint2d> curve_points;
-    splitPointSpeedPairs(discreet_curve.points, &curve_points, &speed_limits);
-
-    std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(curve_points); // Compute splines based on curve points
+  std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(curve_points); // Compute splines based on curve points
 
     if (!fit_curve)
-    {  // TODO how better to handle this case
-      for (size_t i = 0; i < discreet_curve.points.size() - 1; i++)
-      {
-        Eigen::Isometry2d point_in_map =
-            curvePointInMapTF(discreet_curve.frame, discreet_curve.points[i].point, final_yaw_values.back());
-        all_sampling_points.push_back(point_in_map.translation());
-        final_yaw_values.push_back(final_yaw_values.back());
-        final_actual_speeds.push_back(final_actual_speeds.back());
-      }
-      continue;
+    {  
+      throw std::invalid_argument("Could not fit a spline curve along the given trajectory!");
     }
 
     ROS_DEBUG("Got fit");
@@ -500,74 +432,67 @@ std::vector<cav_msgs::TrajectoryPlanPoint> PlatooningTacticalPlugin::compose_tra
     ROS_DEBUG_STREAM("speed_limits.size() " << speed_limits.size());
 
     std::vector<lanelet::BasicPoint2d> sampling_points;
-    sampling_points.reserve(1 + discreet_curve.points.size() * 2);
+    sampling_points.reserve(1 + curve_points.size() * 2);
 
     std::vector<double> distributed_speed_limits;
-    distributed_speed_limits.reserve(1 + discreet_curve.points.size() * 2);
+    distributed_speed_limits.reserve(1 + curve_points.size() * 2);
 
-    double max_x = curve_points.back().x();
-    double current_dist = 0;
-    double step_size = config_.curve_resample_step_size;
+    // compute total length of the trajectory to get correct number of points 
+    // we expect using curve_resample_step_size
+    std::vector<double> downtracks_raw = carma_wm::geometry::compute_arc_lengths(curve_points);
+
+    int total_step_along_curve = static_cast<int>(downtracks_raw.back() / config_.curve_resample_step_size);
+
     int current_speed_index = 0;
+    size_t total_point_size = curve_points.size();
 
-    while (current_dist < max_x - step_size) // Resample curve at tighter resolution
+    double step_threshold_for_next_speed = (double)total_step_along_curve / (double)total_point_size;
+    double scaled_steps_along_curve = 0.0; // from 0 (start) to 1 (end) for the whole trajectory
+
+    for (size_t steps_along_curve = 0; steps_along_curve < total_step_along_curve; steps_along_curve++) // Resample curve at tighter resolution
     {
-      double x = current_dist;
-      double y = (*fit_curve)(x);
-      lanelet::BasicPoint2d p(x, y);
+      lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
+      
       sampling_points.push_back(p);
-
-      for (size_t i = current_speed_index; i < curve_points.size(); i++)
+      if ((double)steps_along_curve > step_threshold_for_next_speed)
       {
-        if (curve_points[i].x() >= current_dist)
-        {
-          current_speed_index = i;
-          break;
-        }
+        step_threshold_for_next_speed += (double)total_step_along_curve / (double) total_point_size;
+        current_speed_index ++;
       }
-
       distributed_speed_limits.push_back(speed_limits[current_speed_index]); // Identify speed limits for resampled points
-      current_dist += step_size;
+      scaled_steps_along_curve += 1.0/total_step_along_curve; //adding steps_along_curve_step_size
     }
 
-    log::printDebugPerLine(sampling_points, &log::basicPointToStream);
+  log::printDebugPerLine(sampling_points, &log::basicPointToStream);
 
-    std::vector<double> yaw_values = carma_wm::geometry::compute_tangent_orientations(sampling_points);
+  std::vector<double> yaw_values = carma_wm::geometry::compute_tangent_orientations(sampling_points);
 
-    std::vector<double> curvatures = carma_wm::geometry::local_circular_arc_curvatures(
-        sampling_points, config_.curvature_calc_lookahead_count);  
+  std::vector<double> curvatures = carma_wm::geometry::local_circular_arc_curvatures(
+      sampling_points, config_.curvature_calc_lookahead_count);  
+  
+  curvatures = smoothing::moving_average_filter(curvatures, config_.moving_average_window_size);
 
-    curvatures = smoothing::moving_average_filter(curvatures, config_.moving_average_window_size);
+  log::printDoublesPerLineWithPrefix("curvatures[i]: ", curvatures);
 
-    log::printDoublesPerLineWithPrefix("curvatures[i]: ", curvatures);
+  std::vector<double> ideal_speeds =
+      trajectory_utils::constrained_speeds_for_curvatures(curvatures, config_.lateral_accel_limit);
 
-    std::vector<double> ideal_speeds =
-        trajectory_utils::constrained_speeds_for_curvatures(curvatures, config_.lateral_accel_limit);
+  log::printDoublesPerLineWithPrefix("ideal_speeds: ", ideal_speeds);
 
-    log::printDoublesPerLineWithPrefix("ideal_speeds: ", ideal_speeds);
+  std::vector<double> actual_speeds = apply_speed_limits(ideal_speeds, distributed_speed_limits);
 
-    std::vector<double> actual_speeds = apply_speed_limits(ideal_speeds, distributed_speed_limits);
+  log::printDoublesPerLineWithPrefix("actual_speeds: ", actual_speeds);
 
-    log::printDoublesPerLineWithPrefix("actual_speeds: ", actual_speeds);
+  log::printDoublesPerLineWithPrefix("yaw_values[i]: ", yaw_values);
 
-    log::printDoublesPerLineWithPrefix("yaw_values[i]: ", yaw_values);
+  // Drop last point
+  final_yaw_values.insert(final_yaw_values.end(), yaw_values.begin(), yaw_values.end());
+  all_sampling_points.insert(all_sampling_points.end(), sampling_points.begin(), sampling_points.end() );
+  final_actual_speeds.insert(final_actual_speeds.end(), actual_speeds.begin(), actual_speeds.end());
 
-    for (int i = 0; i < yaw_values.size() - 1; i++)
-    {  // Drop last point
-
-      Eigen::Isometry2d point_in_map = curvePointInMapTF(discreet_curve.frame, sampling_points[i], yaw_values[i]);
-      Eigen::Rotation2Dd new_rot(point_in_map.rotation());
-      final_yaw_values.push_back(new_rot.smallestAngle());
-      all_sampling_points.push_back(point_in_map.translation());
-    }
-
-    final_actual_speeds.insert(final_actual_speeds.end(), actual_speeds.begin(), actual_speeds.end() - 1);
-
-    ROS_DEBUG("Appended to final");
-  }
-
-
-  ROS_DEBUG("Processed all curves");
+  ROS_DEBUG("Appended to final");
+  
+  ROS_DEBUG("Processed all points in computed fit");
 
   if (all_sampling_points.size() == 0)
   {
@@ -589,6 +514,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> PlatooningTacticalPlugin::compose_tra
   
   // Add current vehicle point to front of the trajectory
   lanelet::BasicPoint2d cur_veh_point(state.X_pos_global, state.Y_pos_global);
+
   all_sampling_points.insert(all_sampling_points.begin(),
                              cur_veh_point);  // Add current vehicle position to front of sample points
 
@@ -632,7 +558,5 @@ std::vector<cav_msgs::TrajectoryPlanPoint> PlatooningTacticalPlugin::compose_tra
 
   return traj_points;
 }
-
-
 
 }  // namespace platooning_tactical_plugin

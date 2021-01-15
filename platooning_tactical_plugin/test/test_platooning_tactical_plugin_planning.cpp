@@ -33,6 +33,11 @@
 #include <carma_wm/MapConformer.h>
 #include <carma_wm/CARMAWorldModel.h>
 #include <ros/console.h>
+#include <unsupported/Eigen/Splines>
+#include <carma_utils/containers/containers.h>
+#include <tf/LinearMath/Vector3.h>
+
+typedef Eigen::Spline<float, 2> Spline2d;
 
 
 using namespace lanelet::units::literals;
