@@ -41,15 +41,15 @@ public:
    * \param points The key points
    */ 
   virtual void setPoints(std::vector<lanelet::BasicPoint2d> points) = 0;
-
-  /**
-   * \brief Get the y value for the given x value
+  
+    /**
+   * \brief Get the BasicPoint2d coordinate along the curve at t-th step. 
    * 
-   * \param x The value to solve the spline for
+   * \param t The t-th step to solve the spline at, where t is from 0 (beginning of curve) to 1 (end of curve)
    * 
-   * \return The y value that matches x
+   * \return lanelet::BasicPoint2d with x, y that matches the t-th step along the curve
    */ 
-  virtual double operator()(double x) const = 0;
+  virtual lanelet::BasicPoint2d operator()(double t) const = 0;
 };
 };  // namespace smoothing
 };  // namespace inlanecruising_plugin

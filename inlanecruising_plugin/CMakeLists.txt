@@ -50,6 +50,7 @@ find_package(Eigen3 REQUIRED)
 ###################################
 
 catkin_package(
+  INCLUDE_DIRS include
   CATKIN_DEPENDS ${CATKIN_DEPS}
   DEPENDS Boost Eigen3
 )
@@ -69,7 +70,7 @@ add_executable( ${PROJECT_NAME}
   src/main.cpp)
 add_library(inlanecruising_plugin_library 
   src/inlanecruising_plugin.cpp
-  src/smoothing/CubicSpline.cpp
+  src/smoothing/BSpline.cpp
 )
 target_link_libraries(inlanecruising_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})

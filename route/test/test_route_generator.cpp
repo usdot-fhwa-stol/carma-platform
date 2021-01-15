@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+#include <carma_wm/WMTestLibForGuidance.h>
 #include "route_generator_worker.h"
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_io/Io.h>
@@ -26,6 +26,7 @@
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_core/primitives/Traits.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
+#include "route_state_worker.h"
 #include <lanelet2_extension/utility/query.h>
 #include <lanelet2_extension/utility/utilities.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
@@ -333,6 +334,251 @@ TEST(RouteGeneratorTest, testReadRoutetfhrcFile)
         }
    }
 }
+
+TEST(RouteGeneratorTest, test_crosstrack_error_check)
+{
+     tf2_ros::Buffer tf_buffer;
+     std::shared_ptr<carma_wm::WMListener> wml;
+    std::shared_ptr<carma_wm::CARMAWorldModel> cmw=std::make_shared<carma_wm::CARMAWorldModel>();
+    route::RouteGeneratorWorker worker(tf_buffer);
+
+    int projector_type = 0;
+    std::string target_frame;
+    lanelet::ErrorMessages load_errors;
+
+    geometry_msgs::PoseStamped msg;
+
+    //Create route msg
+    cav_msgs::Route route_msg;
+
+  // File location of osm file
+    std::string file = "../resource/map/town01_vector_map_1.osm";
+     // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
+    lanelet::Id start_id = 101;
+    lanelet::Id end_id = 111;
+
+    //Load map parameters
+
+    lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+    lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+    lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+    cmw->carma_wm::CARMAWorldModel::setMap(map);
+
+     // Grabs lanelet elements from the start and end IDs. Fails the unit test if there is no lanelet with the matching ID
+    lanelet::Lanelet start_lanelet;
+    lanelet::Lanelet end_lanelet;
+
+
+    try 
+    {
+        //get lanelet layer
+        start_lanelet = map->laneletLayer.get(start_id);        
+    }
+    catch (const lanelet::NoSuchPrimitiveError& e) {
+        FAIL() << "The specified starting lanelet Id of " << start_id << " does not exist in the provided map.";
+    }
+    try {
+        end_lanelet = map->laneletLayer.get(end_id);
+    }
+    catch (const lanelet::NoSuchPrimitiveError& e) {
+        FAIL() << "The specified ending lanelet Id of " << end_id << " does not exist in the provided map.";
+    }
+
+
+    lanelet::LaneletMapConstPtr const_map(map);
+    lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
+    lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
+
+    const auto route = map_graph->getRoute(start_lanelet, end_lanelet);
+    route_msg = worker.compose_route_msg(route);
+    ASSERT_TRUE(route_msg.route_path_lanelet_ids.size() > 0);
+
+
+    /*Test 1: Vehicle is out of bounds*/
+
+    //Assign vehicle position
+    msg.pose.position.x = 0.0;
+    msg.pose.position.y = 0.0;
+
+    worker.setWorldModelPtr(cmw);
+    worker.set_CTE_count_max(0);
+    worker.set_CTE_dist(1.0);
+
+    geometry_msgs::PoseStampedPtr mpt(new geometry_msgs::PoseStamped(msg));
+
+    /*Compare vehicle position to the route bounds */
+    lanelet::BasicPoint2d current_loc(mpt->pose.position.x, mpt->pose.position.y);
+
+    auto current_lanelet = worker.get_closest_lanelet_from_route_llts(current_loc);
+
+    worker.pose_cb(mpt);
+
+    lanelet::BasicPoint2d position;
+    position.x()= msg.pose.position.x;
+    position.y()= msg.pose.position.y;
+
+    ASSERT_EQ(boost::geometry::within(position, start_lanelet.polygon2d()), false);
+    ASSERT_EQ(worker.crosstrack_error_check(mpt, start_lanelet), true); //The vehicle will show crosstrack error, so the value should return true
+
+    /*Test 2: Vehicle is in bounds, no crosstrack error*/
+
+    //Use position values to show the case when there is no crosstrack error
+    worker.set_CTE_dist(1.0);
+
+    //Assign vehicle position
+    msg.pose.position.x = -9.45542;
+    msg.pose.position.y = -182.324;
+
+    position.x()= msg.pose.position.x;
+    position.y()= msg.pose.position.y;
+
+    geometry_msgs::PoseStampedPtr mpt2(new geometry_msgs::PoseStamped(msg));
+
+    ASSERT_EQ(boost::geometry::within(position, start_lanelet.polygon2d()), true);
+    ASSERT_EQ(worker.crosstrack_error_check(mpt2, start_lanelet), false);
+
+    /*Test 3: Vehicle is out of bounds, and has exceeded the maximum number of consecutive timesteps outside of the route allowable before triggering LEFT_ROUTE*/
+    worker.set_CTE_count_max(1);
+    worker.set_CTE_dist(1.0);
+
+    position.x()= 0.0;
+    position.y()= 0.0;
+
+    ASSERT_EQ(boost::geometry::within(position, start_lanelet.polygon2d()), false);
+    ASSERT_EQ(worker.crosstrack_error_check(mpt, start_lanelet), false); //The vehicle will show no crosstrack error, so the value should return false
+    ASSERT_EQ(worker.crosstrack_error_check(mpt, start_lanelet), true); //The vehicle will show crosstrack error, so the value should return true
+
+
+
+}
+
+TEST(RouteGeneratorTest, test_set_active_route_cb)
+{
+    tf2_ros::Buffer tf_buffer;
+    carma_wm::WorldModelConstPtr wm;
+    route::RouteGeneratorWorker worker(tf_buffer);
+    worker.set_route_file_path("../resource/route/");
+    cav_srvs::GetAvailableRoutesRequest req;
+    cav_srvs::GetAvailableRoutesResponse resp;
+    ASSERT_TRUE(worker.get_available_route_cb(req, resp));
+
+    std::cout << "Available Route : " << resp.availableRoutes.size() << "\n";
+    ASSERT_EQ(4, resp.availableRoutes.size());
+    for(auto i = 0; i < resp.availableRoutes.size();i++)    
+    {
+        if(resp.availableRoutes[i].route_id  == "tfhrc_test_route")
+        {
+            std::cout <<"C-HUB : " << resp.availableRoutes[i].route_name << "\n";
+            auto points = worker.load_route_destinations_in_ecef("tfhrc_test_route");
+            std::cout << "Point Size : " << points.size()<<"\n";
+            ASSERT_EQ(5, points.size());
+            ASSERT_NEAR(1106580, points[0].getX(), 5.0);
+            ASSERT_NEAR(894697, points[0].getY(), 5.0);  
+            ASSERT_NEAR(-6196590, points[0].getZ(), 5.0);
+        }
+   }
+    cav_srvs::SetActiveRouteRequest req2;
+    cav_srvs::SetActiveRouteResponse resp2;
+
+   resp2.errorStatus = 0;
+
+   for(auto i: resp.availableRoutes)
+   {
+        if(i.route_id  == "tfhrc_test_route")
+        {
+            req2.routeID = i.route_id;
+
+            ASSERT_EQ(worker.set_active_route_cb(req2, resp2), false);
+        }
+
+   }
+}
+
+TEST(RouteGeneratorTest, test_get_closest_lanelet_from_route_llts)
+{
+     tf2_ros::Buffer tf_buffer;
+     std::shared_ptr<carma_wm::WMListener> wml;
+    std::shared_ptr<carma_wm::CARMAWorldModel> cmw=std::make_shared<carma_wm::CARMAWorldModel>();
+    route::RouteGeneratorWorker worker(tf_buffer);
+
+    int projector_type = 0;
+    std::string target_frame;
+    lanelet::ErrorMessages load_errors;
+
+    geometry_msgs::PoseStamped msg;
+
+    //Create route msg
+    cav_msgs::Route route_msg;
+
+  // File location of osm file
+    std::string file = "../resource/map/town01_vector_map_1.osm";
+     // Starting and ending lanelet IDs. It's easiest to grab these from JOSM
+    lanelet::Id start_id = 101;
+    lanelet::Id end_id = 111;
+
+    //Load map parameters
+
+    lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+    lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+    lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+    cmw->carma_wm::CARMAWorldModel::setMap(map);
+
+     // Grabs lanelet elements from the start and end IDs. Fails the unit test if there is no lanelet with the matching ID
+    lanelet::Lanelet start_lanelet;
+    lanelet::Lanelet end_lanelet;
+
+
+    try 
+    {
+        //get lanelet layer
+        start_lanelet = map->laneletLayer.get(start_id);        
+    }
+    catch (const lanelet::NoSuchPrimitiveError& e) {
+        FAIL() << "The specified starting lanelet Id of " << start_id << " does not exist in the provided map.";
+    }
+    try {
+        end_lanelet = map->laneletLayer.get(end_id);
+    }
+    catch (const lanelet::NoSuchPrimitiveError& e) {
+        FAIL() << "The specified ending lanelet Id of " << end_id << " does not exist in the provided map.";
+    }
+
+
+    lanelet::LaneletMapConstPtr const_map(map);
+    lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
+    lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
+
+    const auto route = map_graph->getRoute(start_lanelet, end_lanelet);
+    route_msg = worker.compose_route_msg(route);
+    ASSERT_TRUE(route_msg.route_path_lanelet_ids.size() > 0);
+
+    worker.setWorldModelPtr(cmw);
+    worker.set_CTE_count_max(0);
+    worker.set_CTE_dist(1.0);
+
+     //Assign vehicle position
+    msg.pose.position.x = -9.45542;
+    msg.pose.position.y = -182.324;
+
+    lanelet::BasicPoint2d position;
+    position.x()= msg.pose.position.x;
+    position.y()= msg.pose.position.y;
+
+    geometry_msgs::PoseStampedPtr mpt(new geometry_msgs::PoseStamped(msg));
+
+    worker.pose_cb(mpt);
+    worker.addllt(start_lanelet);
+    lanelet::ConstLanelet llt = worker.get_closest_lanelet_from_route_llts(position);
+
+    ASSERT_EQ(worker.crosstrack_error_check(mpt, llt), false);
+    ASSERT_EQ(boost::geometry::within(position, llt.polygon2d()), true);
+
+
+
+}
+
+
+
 
 // Run all the tests
 int main(int argc, char **argv)
