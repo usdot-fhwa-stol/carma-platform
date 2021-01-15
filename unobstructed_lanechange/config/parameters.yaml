@@ -1,5 +1,41 @@
-# The length of the trajectory in time domain, in seconds
+# Double: The length of the trajectory in time domain, in seconds
+# Units: Seconds
 trajectory_time_length: 6.0
 
-# The default control plugin name
+# String: The default control plugin name
 control_plugin_name: "mpc_follower"
+
+
+# Double : inimum allowable speed
+# Units : m/s
+minimum_speed : 2.2352
+
+# Double : Maximum allowable longitudinal acceleration 
+# Units : m/s^2
+max_accel : 1.5
+
+# Double : Minimum value for lookahead distance 
+# Units : meters
+minimum_lookahead_distance : 5.0
+
+# Double : Maximum value for lookahead distance 
+# Units : meters
+maximum_lookahead_distance : 25.0
+
+# Double : Minimum speed value for lookahead calculation
+# Units : m/s
+minimum_lookahead_speed : 2.8
+
+# Double : Maximum speed value for lookahead calculation
+# Units : m/s
+maximum_lookahead_speed : 13.9
+
+# Double : Maximum allowable lateral acceleration 
+# Units : m/s^2
+lateral_accel_limit : 1.5
+
+# Int : Size of the window used in the moving average filter to smooth both the computed curvature and output speeds
+moving_average_window_size : 5
+
+# Int : Number of points to look ahead when calculating the curvature of the lanelet centerline
+curvature_calc_lookahead_count : 1

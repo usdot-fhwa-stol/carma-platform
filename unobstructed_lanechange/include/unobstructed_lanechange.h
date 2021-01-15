@@ -40,18 +40,13 @@
 
 namespace unobstructed_lanechange
 {
+    /**
+     * \brief Convenience class for pairing 2d points with speeds
+    */ 
     struct PointSpeedPair
     {
     lanelet::BasicPoint2d point;
     double speed = 0;
-    };
-    /**
-     * \brief Class representing a curve in space defined by a set of discrete points in the specified frame
-     */ 
-    struct DiscreteCurve
-    {
-    Eigen::Isometry2d frame; // Frame which points are in
-    std::vector<PointSpeedPair> points;
     };
 
     class UnobstructedLaneChangePlugin
@@ -61,76 +56,185 @@ namespace unobstructed_lanechange
             // Default constructor for UnobstructedLaneChangePlugin class
             UnobstructedLaneChangePlugin();
 
-            // general starting point of this node
+            /**
+             * \brief General entry point to begin the operation of this class
+            */
             void run();
 
-             // service callbacks for carma trajectory planning
+            /**
+             * \brief Service callback for trajectory planning
+             * 
+             * \param req The service request
+             * \param resp The service response
+             * 
+             * \return True if success. False otherwise
+             */ 
             bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp);
-
+            
+            /**
+             * \brief Converts a set of requested STOP_AND_WAIT maneuvers to point speed limit pairs. 
+             * 
+             * \param maneuvers The list of maneuvers to convert
+             * \param max_starting_downtrack The maximum downtrack that is allowed for the first maneuver. This should be set to the vehicle position or earlier.
+             *                               If the first maneuver exceeds this then it's downtrack will be shifted to this value.
+             * \param wm Pointer to intialized world model for semantic map access
+             * 
+             * \return List of centerline points paired with speed limits
+             */ 
             std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
                                                 double max_starting_downtrack,
                                                 const carma_wm::WorldModelConstPtr& wm);
+
+            /**
+             * \brief Creates a Lanelet2 Linestring from a vector or points along the geometry 
+             * \param starting_downtrack staring downtrack in start lanelet
+             * \param start_lane_id lanelet id of start lanelet
+             * \param ending_downtrack ending downtrack in end lanelet
+             * \param end_lane_id lanelet id of end lanelet
+             * \param wm Pointer to intialized world model for semantic map access
+             * \return A Linestring of the path from starting downtrack to ending downtrack
+             */
             
             lanelet::BasicLineString2d create_route_geom(double starting_downtrack, int start_lane_id, double ending_downtrack, int end_lane_id, const carma_wm::WorldModelConstPtr& wm);
 
+            /**
+             * \brief Given a LaneletPath object, find index of the lanelet which has target_id as its lanelet ID
+             * \param target_id The lanelet ID this function is looking for
+             * \param path A list of lanelet with different lanelet IDs
+             * \return Index of the target lanelet in the list
+             */
             int findLaneletIndexFromPath(int target_id, lanelet::routing::LaneletPath& path);
 
-            bool identifyLaneChange(lanelet::routing::LaneletRelations relations, int target_id);
+            /**
+             * \brief Given a start and end point, create a vector of points fit through a spline between the points (using a Spline library)
+             * \param start The start position
+             * \param end The end position
+             * \return A linestring path from start to end fit through Spline Library
+             */
             lanelet::BasicLineString2d create_lanechange_route(lanelet::BasicPoint2d start, lanelet::BasicPoint2d end);
-
+            
+            /**
+             * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of trajectory points for trajectory planning
+             * 
+             * \param points The set of points that define the current lane the vehicle is in and are defined based on the request planning maneuvers. 
+             *               These points must be in the same lane as the vehicle and must extend in front of it though it is fine if they also extend behind it. 
+             * \param state The current state of the vehicle
+             * 
+             * \return A list of trajectory points to send to the carma planning stack
+             */
             std::vector<cav_msgs::TrajectoryPlanPoint> compose_trajectory_from_centerline(
             const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state);
-
+            /**
+             * \brief Returns the nearest point to the provided vehicle pose in the provided list
+             * 
+             * \param points The points to evaluate
+             * \param state The current vehicle state
+             * 
+             * \return index of nearest point in points
+             */
             int getNearestPointIndex(const std::vector<PointSpeedPair>& points,
                                                const cav_msgs::VehicleState& state);
-
+            /**
+             * \brief Reduces the input points to only those points that fit within the provided time boundary
+             * 
+             * \param points The input point speed pairs to reduce
+             * \param time_span The time span in seconds which the output points will fit within
+             * 
+             * \return The subset of points that fit within time_span
+             */ 
             std::vector<PointSpeedPair> constrain_to_time_boundary(const std::vector<PointSpeedPair>& points,double time_span);
-        
+            
+            /**
+             * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
+             */ 
             void splitPointSpeedPairs(const std::vector<PointSpeedPair>& points,
                                             std::vector<lanelet::BasicPoint2d>* basic_points,
                                             std::vector<double>* speeds);
-            
-            std::vector<DiscreteCurve> compute_sub_curves(const std::vector<PointSpeedPair>& map_points);
 
+            /**
+             * \brief Returns a 2D coordinate frame which is located at p1 and oriented so p2 lies on the +X axis
+             * 
+             * \param p1 The origin point for the frame in the parent frame
+             * \param p2 A point in the parent frame that will define the +X axis relative to p1
+             * 
+             * \return A 2D coordinate frame transform
+             */ 
             Eigen::Isometry2d compute_heading_frame(const lanelet::BasicPoint2d& p1,
                                                               const lanelet::BasicPoint2d& p2);
-            
+            /**
+             * \brief Computes a spline based on the provided points
+             * 
+             * \param basic_points The points to use for fitting the spline
+             * 
+             * \return A spline which has been fit to the provided points
+             */ 
             std::unique_ptr<smoothing::SplineI>
             compute_fit(const std::vector<lanelet::BasicPoint2d>& basic_points);
 
             std::vector<double> apply_speed_limits(const std::vector<double> speeds,
                                                              const std::vector<double> speed_limits);
-
+            /**
+             * \brief Applies the provided speed limits to the provided speeds such that each element is capped at its corresponding speed limit if needed
+             * 
+             * \param speeds The speeds to limit
+             * \param speed_limits The speed limits to apply. Must have the same size as speeds
+             * 
+             * \return The capped speed limits. Has the same size as speeds
+             */ 
             double get_adaptive_lookahead(double velocity);
+
+              /**
+             * \brief Returns the speeds of points closest to the lookahead distance.
+             * 
+             * \param points The points in the map frame that the trajectory will follow. Units m
+             * \param speeds Speeds assigned to points that trajectory will follow. Unit m/s
+             * \param lookahead The lookahead distance to obtain future points' speed. Unit m
+             * 
+             * \return A vector of speed values shifted by the lookahead distance.
+             */ 
             std::vector<double> get_lookahead_speed(const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& speeds, const double& lookahead);
-            
+              /**
+             * \brief Method combines input points, times, orientations, and an absolute start time to form a valid carma platform trajectory
+             * 
+             * NOTE: All input vectors must be the same size. The output vector will take this size.
+             * 
+             * \param points The points in the map frame that the trajectory will follow. Units m
+             * \param times The times which at the vehicle should arrive at the specified points. First point should have a value of 0. Units s
+             * \param yaws The orientation the vehicle should achieve at each point. Units radians
+             * \param startTime The absolute start time which will be used to update the input relative times. Units s
+             * 
+             * \return A list of trajectory points built from the provided inputs.
+             */
             std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_from_points_times_orientations(
             const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& times, const std::vector<double>& yaws,
             ros::Time startTime);
-            
+
+            //Internal Variables used in unit tests
+            // Current vehicle forward speed
+            double current_speed_;
+
+            // Current vehicle pose in map
+            geometry_msgs::PoseStamped pose_msg_;
+
+            // wm listener pointer and pointer to the actual wm object
+            std::shared_ptr<carma_wm::WMListener> wml_;
             carma_wm::WorldModelConstPtr wm_;
-
-            // start vehicle speed
-            double start_speed_;
-
 
             private:
 
-            
             // node handles
             std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
-
             ros::Publisher ubobstructed_lanechange_plugin_discovery_pub_;
-
-
 
             // ros service servers
             ros::ServiceServer trajectory_srv_;
             ros::ServiceServer maneuver_srv_;
 
-            // Plugin discovery message
+            // ROS publishers and subscribers
             cav_msgs::Plugin plugin_discovery_msg_;
+            ros::Subscriber pose_sub_;
+            ros::Subscriber twist_sub_;
 
             // trajectory frequency
             double traj_freq = 10;
@@ -138,6 +242,16 @@ namespace unobstructed_lanechange
             // ROS params
             double trajectory_time_length_ = 6;
             std::string control_plugin_name_ = "mpc_follower";
+            double minimum_speed_ = 2.0;
+            double max_accel_ = 1.5;
+            double minimum_lookahead_distance_ = 5.0;
+            double maximum_lookahead_distance_ = 25.0;
+            double minimum_lookahead_speed_ = 2.8;
+            double maximum_lookahead_speed_ =13.9;
+            double lateral_accel_limit_ = 1.5;
+            double moving_average_window_size_ = 5;
+            double curvature_calc_lookahead_count_ = 1;
+
             
             // target vehicle speed
             double target_speed_;
@@ -145,15 +259,24 @@ namespace unobstructed_lanechange
 
             int num_points = traj_freq * trajectory_time_length_;
 
-            // initialize this node
-            void initialize();
 
             // generated trajectory plan
             cav_msgs::TrajectoryPlan trajectory_msg;
-
-            // wm listener pointer and pointer to the actual wm object
-            std::shared_ptr<carma_wm::WMListener> wml_{nullptr};
             
+            // initialize this node
+            void initialize();
+
+            /**
+             * \brief Callback for the pose subscriber, which will store latest pose locally
+             * \param msg Latest pose message
+             */
+            void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
+            
+            /**
+             * \brief Callback for the twist subscriber, which will store latest twist locally
+             * \param msg Latest twist message
+             */
+            void twist_cd(const geometry_msgs::TwistStampedConstPtr& msg);
 
 
     

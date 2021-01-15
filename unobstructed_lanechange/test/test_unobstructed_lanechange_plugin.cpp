@@ -270,7 +270,7 @@ namespace unobstructed_lanechange
     
     std::vector<cav_msgs::Maneuver> maneuvers;
     maneuvers.push_back(maneuver);
-    worker.start_speed_ = maneuver.lane_change_maneuver.start_speed;
+    worker.current_speed_ = maneuver.lane_change_maneuver.start_speed;
     worker.maneuvers_to_points(maneuvers, starting_downtrack, cmw);
     EXPECT_TRUE(true);
 

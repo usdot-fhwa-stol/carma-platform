@@ -44,8 +44,22 @@ namespace unobstructed_lanechange
         plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
         plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
         
+        pose_sub_ = nh_->subscribe("current_pose", 1, &UnobstructedLaneChangePlugin::pose_cb, this);
+        twist_sub_ = nh_->subscribe("current_velocity", 1, &UnobstructedLaneChangePlugin::twist_cd, this);
+
         pnh_->param<double>("trajectory_time_length", trajectory_time_length_, 6.0);
         pnh_->param<std::string>("control_plugin_name", control_plugin_name_, "NULL");
+        pnh_->param<double>("minimum_speed", minimum_speed_, 2.2352);
+        pnh_->param<double>("max_accel", max_accel_, 1.5);
+        pnh_->param<double>("minimum_lookahead_distance", minimum_lookahead_distance_, 5.0);
+        pnh_->param<double>("maximum_lookahead_distance", maximum_lookahead_distance_, 25.0);
+        pnh_->param<double>("minimum_lookahead_speed", minimum_lookahead_speed_, 2.8);
+        pnh_->param<double>("maximum_lookahead_speed", maximum_lookahead_speed_, 13.9);
+        pnh_->param<double>("lateral_accel_limit", lateral_accel_limit_, 1.5);
+        pnh_->param<double>("moving_average_window_size", moving_average_window_size_, 5);
+        pnh_->param<double>("curvature_calc_lookahead_count", curvature_calc_lookahead_count_, 1);
+
+
 
         ros::CARMANodeHandle::setSpinCallback([this]() -> bool {
             ubobstructed_lanechange_plugin_discovery_pub_.publish(plugin_discovery_msg_);
@@ -55,6 +69,15 @@ namespace unobstructed_lanechange
         wml_.reset(new carma_wm::WMListener());
         wm_ = wml_->getWorldModel();
 
+    }
+
+    void UnobstructedLaneChangePlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
+    {
+        pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
+    }
+    void UnobstructedLaneChangePlugin::twist_cd(const geometry_msgs::TwistStampedConstPtr& msg)
+    {
+        current_speed_ = msg->twist.linear.x;
     }
 
     void UnobstructedLaneChangePlugin::run()
@@ -84,7 +107,7 @@ namespace unobstructed_lanechange
 
         trajectory.trajectory_points = compose_trajectory_from_centerline(points_and_target_speeds, req.vehicle_state);
 
-        trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, 2.2352);
+        trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, minimum_speed_);
 
         resp.trajectory_plan = trajectory;
         resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_CHANGE);
@@ -120,8 +143,8 @@ namespace unobstructed_lanechange
            lanelet::BasicLineString2d route_geometry = create_route_geom(starting_downtrack,stoi(lane_change_maneuver.starting_lane_id),lane_change_maneuver.end_dist, stoi(lane_change_maneuver.ending_lane_id), wm);
 
             first = true;
-            double delta_v = (lane_change_maneuver.end_speed - start_speed_)/route_geometry.size();
-            double prev_v = start_speed_;
+            double delta_v = (lane_change_maneuver.end_speed - current_speed_)/route_geometry.size();
+            double prev_v = current_speed_;
             for(auto p :route_geometry)
             {
                 if(first && points_and_target_speeds.size() !=0){
@@ -133,7 +156,6 @@ namespace unobstructed_lanechange
                 pair.speed = prev_v+ delta_v;
                 points_and_target_speeds.push_back(pair);
                 prev_v = pair.speed;
-                //std::cout<<"Point "<<" x:"<< pair.point.x()<<" y:"<<pair.point.y()<<" Speed:"<< pair.speed<<std::endl;
 
             }
         }
@@ -150,7 +172,7 @@ namespace unobstructed_lanechange
         ROS_DEBUG_STREAM("NearestPtIndex: " << nearest_pt_index);
         std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end()); // Points in front of current vehicle position
 
-        auto time_bound_points = constrain_to_time_boundary(future_points, 6.0);
+        auto time_bound_points = constrain_to_time_boundary(future_points, trajectory_time_length_ );
 
         std::vector<double> final_yaw_values;
         std::vector<double> final_actual_speeds;
@@ -198,13 +220,13 @@ namespace unobstructed_lanechange
         std::vector<double> yaw_values = carma_wm::geometry::compute_tangent_orientations(curve_points);
 
         std::vector<double> curvatures = carma_wm::geometry::local_circular_arc_curvatures(
-            curve_points, 1);  
+            curve_points, curvature_calc_lookahead_count_);  
 
-        curvatures = smoothing::moving_average_filter(curvatures, 5);
+        curvatures = smoothing::moving_average_filter(curvatures, moving_average_window_size_);
 
 
         std::vector<double> ideal_speeds =
-            trajectory_utils::constrained_speeds_for_curvatures(curvatures, 1.5);
+            trajectory_utils::constrained_speeds_for_curvatures(curvatures, lateral_accel_limit_);
 
         std::vector<double> actual_speeds = apply_speed_limits(ideal_speeds, distributed_speed_limits);
 
@@ -232,7 +254,7 @@ namespace unobstructed_lanechange
         all_sampling_points.insert(all_sampling_points.begin(),
                                     cur_veh_point);  // Add current vehicle position to front of sample points
 
-        final_actual_speeds.insert(final_actual_speeds.begin(), std::max(state.longitudinal_vel, 2.2352));
+        final_actual_speeds.insert(final_actual_speeds.begin(), std::max(state.longitudinal_vel, minimum_speed_));
 
         final_yaw_values.insert(final_yaw_values.begin(), state.orientation);
 
@@ -243,14 +265,14 @@ namespace unobstructed_lanechange
         
         // Apply accel limits
         final_actual_speeds = trajectory_utils::apply_accel_limits_by_distance(downtracks, final_actual_speeds,
-                                                                                1.5, 1.5);
+                                                                                max_accel_, max_accel_);
 
         
-        final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, 5);
+        final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, moving_average_window_size_);
 
         for (auto& s : final_actual_speeds)  // Limit minimum speed. TODO how to handle stopping?
         {
-            s = std::max(s, 2.2352);
+            s = std::max(s, minimum_speed_);
         }
 
         // Convert speeds to times
@@ -305,17 +327,17 @@ namespace unobstructed_lanechange
         // 10kph<v<50kph:  0.5*v
         // v>50kph:  25m
 
-        double lookahead = 5.0;
+        double lookahead = minimum_lookahead_distance_;
 
-        if (velocity < 2.8)
+        if (velocity < minimum_lookahead_speed_)
         {
-            lookahead = 5.0;
+            lookahead = minimum_lookahead_distance_;
         } 
-        else if (velocity >= 2.8 && velocity < 13.9)
+        else if (velocity >= minimum_lookahead_speed_ && velocity < maximum_lookahead_speed_)
         {
             lookahead = 2.0 * velocity;
         } 
-        else lookahead = 25.0;
+        else lookahead = maximum_lookahead_distance_;
 
         return lookahead;
 
@@ -324,7 +346,7 @@ namespace unobstructed_lanechange
     std::vector<double> UnobstructedLaneChangePlugin::get_lookahead_speed(const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& speeds, const double& lookahead)
     {
   
-        if (lookahead < 5.0)
+        if (lookahead < minimum_lookahead_distance_)
         {
             throw std::invalid_argument("Invalid lookahead value");
         }
@@ -388,50 +410,6 @@ namespace unobstructed_lanechange
         return spl;
     }
 
-    std::vector<DiscreteCurve> UnobstructedLaneChangePlugin::compute_sub_curves(const std::vector<PointSpeedPair>& map_points)
-    {
-        if (map_points.size() < 2)
-        {
-            throw std::invalid_argument("Not enough points");
-        }
-
-        std::vector<DiscreteCurve> curves;
-        DiscreteCurve curve;
-        curve.frame = compute_heading_frame(map_points[0].point, map_points[1].point);
-        Eigen::Isometry2d map_in_curve = curve.frame.inverse();
-
-        for (size_t i = 0; i < map_points.size() - 1; i++)
-        {
-            lanelet::BasicPoint2d p1 = map_in_curve * map_points[i].point;
-            lanelet::BasicPoint2d p2 = map_in_curve * map_points[i + 1].point;  // TODO Optimization to cache this value
-
-            PointSpeedPair initial_pair;
-            initial_pair.point = p1;
-            initial_pair.speed = map_points[i].speed;
-            curve.points.push_back(initial_pair);
-
-            bool x_dir = (p2.x() - p1.x()) > 0;
-            if (!x_dir)  // If x starts going backwards we need a new curve
-            {
-            // New Curve
-            curves.push_back(curve);
-
-            curve = DiscreteCurve();
-            curve.frame = compute_heading_frame(map_points[i].point, map_points[i + 1].point);
-            map_in_curve = curve.frame.inverse();
-
-            PointSpeedPair pair;
-            pair.point = map_in_curve * map_points[i].point;
-            pair.speed = map_points[i].speed;
-
-            curve.points.push_back(pair);  // Include first point in curve
-                }
-            }
-
-        curves.push_back(curve);
-
-        return curves;
-    }
 
     Eigen::Isometry2d UnobstructedLaneChangePlugin::compute_heading_frame(const lanelet::BasicPoint2d& p1,
                                                               const lanelet::BasicPoint2d& p2)
@@ -450,7 +428,7 @@ namespace unobstructed_lanechange
         std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(basic_points);
 
         size_t time_boundary_exclusive_index =
-        trajectory_utils::time_boundary_index(downtracks, speeds, 6.0);
+        trajectory_utils::time_boundary_index(downtracks, speeds, trajectory_time_length_);
 
         if (time_boundary_exclusive_index == 0)
         {
@@ -602,19 +580,6 @@ namespace unobstructed_lanechange
 
 
         return lc_route;
-
-    }
-
-    bool UnobstructedLaneChangePlugin::identifyLaneChange(lanelet::routing::LaneletRelations relations, int target_id)
-    {        
-        for(auto& relation : relations)
-        {
-            if(relation.lanelet.id() == target_id && relation.relationType == lanelet::routing::RelationType::Left || relation.relationType == lanelet::routing::RelationType::Right )
-            {
-                return true;
-            }
-        }
-        return false;
 
     }
 
