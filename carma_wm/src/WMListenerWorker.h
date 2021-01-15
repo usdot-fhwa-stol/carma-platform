@@ -21,6 +21,8 @@
 #include <carma_wm/CARMAWorldModel.h>
 #include <carma_wm/TrafficControl.h>
 
+
+
 namespace carma_wm
 {
 /*!
@@ -91,7 +93,6 @@ public:
  * 
 */
   double getConfigSpeedLimit() const;
-
 
 private:
   std::shared_ptr<CARMAWorldModel> world_model_;
