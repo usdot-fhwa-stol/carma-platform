@@ -98,6 +98,7 @@ void WMListener::setConfigSpeedLimit(double config_lim) const
   worker_->setConfigSpeedLimit(config_lim);
 }
 
+
 // @SONAR_START@
 
 }  // namespace carma_wm
