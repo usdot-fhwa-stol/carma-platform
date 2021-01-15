@@ -23,7 +23,7 @@
 
 using namespace inlanecruising_plugin;
 // Test to ensure Eigen::Isometry2d behaves like tf2::Transform
-TEST(InLaneCruisingPluginTest, validate_eigen)
+TEST(InLaneCruisingPluginTest, DISABLED_validate_eigen)
 {
   Eigen::Rotation2Dd frame_rot(M_PI_2);
   lanelet::BasicPoint2d origin(1, 1);
@@ -53,7 +53,7 @@ TEST(InLaneCruisingPluginTest, validate_eigen)
   ASSERT_NEAR(M_PI_2, P_in_A_rot.smallestAngle(), 0.000000001);
 }
 
-TEST(InLaneCruisingPluginTest, trajectory_from_points_times_orientations)
+TEST(InLaneCruisingPluginTest, DISABLED_trajectory_from_points_times_orientations)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -107,7 +107,7 @@ TEST(InLaneCruisingPluginTest, trajectory_from_points_times_orientations)
   ASSERT_EQ(0, traj_points[3].planner_plugin_name.compare(expected_plugin_name));
 }
 
-TEST(InLaneCruisingPluginTest, constrain_to_time_boundary)
+TEST(InLaneCruisingPluginTest, DISABLED_constrain_to_time_boundary)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -160,7 +160,7 @@ TEST(InLaneCruisingPluginTest, constrain_to_time_boundary)
   ASSERT_NEAR(1.0, time_bound_points[5].speed, 0.0000001);
 }
 
-TEST(InLaneCruisingPluginTest, get_nearest_point_index)
+TEST(InLaneCruisingPluginTest, DISABLED_get_nearest_point_index)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -204,7 +204,7 @@ TEST(InLaneCruisingPluginTest, get_nearest_point_index)
   ASSERT_EQ(3, plugin.get_nearest_point_index(basic_points, state));
 }
 
-TEST(InLaneCruisingPluginTest, get_nearest_basic_point_index)
+TEST(InLaneCruisingPluginTest, DISABLED_get_nearest_basic_point_index)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -239,7 +239,7 @@ TEST(InLaneCruisingPluginTest, get_nearest_basic_point_index)
   ASSERT_EQ(3, plugin.get_nearest_point_index(points, state));
 }
 
-TEST(InLaneCruisingPluginTest, split_point_speed_pairs)
+TEST(InLaneCruisingPluginTest, DISABLED_split_point_speed_pairs)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -291,7 +291,7 @@ TEST(InLaneCruisingPluginTest, split_point_speed_pairs)
   ASSERT_NEAR(1.0, speeds[5], 0.0000001);
 }
 
-TEST(InLaneCruisingPluginTest, compute_fit)
+TEST(InLaneCruisingPluginTest, DISABLED_compute_fit)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -311,7 +311,7 @@ TEST(InLaneCruisingPluginTest, compute_fit)
   std::unique_ptr<smoothing::SplineI> fit_curve = plugin.compute_fit(points);
   std::vector<lanelet::BasicPoint2d> spline_points;
   // Following logic is written for BSpline library. Switch with appropriate call of the new library if different.
-  float parameter = 0.0;
+  double parameter = 0.0;
   for(int i=0; i< points.size(); i++){
     auto values = (*fit_curve)(parameter);
   
@@ -394,7 +394,7 @@ TEST(InLaneCruisingPluginTest, compute_fit)
 
 }
 
-TEST(InLaneCruisingPluginTest, optimize_speed)
+TEST(InLaneCruisingPluginTest, DISABLED_optimize_speed)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -452,7 +452,7 @@ TEST(InLaneCruisingPluginTest, optimize_speed)
   
 }
 
-TEST(InLaneCruisingPluginTest, compute_curvature_at)
+TEST(InLaneCruisingPluginTest, DISABLED_compute_curvature_at)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -519,9 +519,19 @@ TEST(InLaneCruisingPluginTest, compute_curvature_at)
   for (int i = 0 ; i < 40; i ++)
   {
     auto pt = (*fit_circle)(param);
+    std::cout << "pt: x: " << pt.x() << ", y: " << pt.y() << std::endl;
     param += 1.0/40.0;
   }
   auto pt = (*fit_circle)(param);
+
+  double circle_param = 0.0;
+  for ( auto i= 0; i < 50; i++)
+  {
+    std::cout << "c: " << plugin.compute_curvature_at(fit_circle, circle_param) << std::endl;
+    circle_param += 0.02;
+  }
+  std::cout << "c: " << plugin.compute_curvature_at(fit_circle, circle_param) << std::endl;
+
   ASSERT_NEAR(plugin.compute_curvature_at(fit_circle, 0.0), 1.0/radius, 0.002); // check start curvature 1/r
   // check curvature is consistent
   ASSERT_NEAR(plugin.compute_curvature_at(fit_circle, 0.42), plugin.compute_curvature_at(fit_circle, 0.85), 0.002); 

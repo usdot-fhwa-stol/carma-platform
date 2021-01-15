@@ -26,7 +26,7 @@ namespace inlanecruising_plugin
 namespace smoothing
 {
 
-  typedef Eigen::Spline<float, 2> Spline2d;
+  typedef Eigen::Spline<double, 2> Spline2d;
 /**
  * \brief Realization of SplineI that uses the Eigen::Splines library for interpolation 
  */ 
