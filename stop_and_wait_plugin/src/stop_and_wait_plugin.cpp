@@ -107,11 +107,11 @@ namespace stop_and_wait_plugin
         double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
 
         std::vector<cav_msgs::Maneuver> maneuver_plan;
-        for(int i=0;i<req.maneuver_plan.maneuvers.size();i++)
+        for(const auto maneuver : req.maneuver_plan.maneuvers)
         {
-            if(req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::STOP_AND_WAIT)
+            if(maneuver.type == cav_msgs::Maneuver::STOP_AND_WAIT)
             {
-                maneuver_plan.push_back(req.maneuver_plan.maneuvers[i]);
+                maneuver_plan.push_back(maneuver);
             }
         }
 
@@ -216,7 +216,7 @@ namespace stop_and_wait_plugin
                 auto lanelets = wm_->getLaneletsBetween(starting_downtrack, ending_downtrack, true);
                 //record all the lanelets to be added to path
                 std::vector<lanelet::ConstLanelet> lanelets_to_add;
-                for (auto l : lanelets)
+                for (auto& l : lanelets)
                 {
                     if(visited_lanelets.find(l.id()) == visited_lanelets.end())
                     {
@@ -237,7 +237,7 @@ namespace stop_and_wait_plugin
 
                 for(auto p : future_route_geometry)
                 {
-                    if (first && points_and_target_speeds.size() != 0)
+                    if (first && points_and_target_speeds.empty())
                     {
                         first = false;
 
@@ -280,10 +280,10 @@ namespace stop_and_wait_plugin
         int nearest_pt_index = getNearestPointIndex(points,state);
         std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index, points.end()); // Points in front of current vehicle position
         //Get yaw - geometrically
-        std::vector<float> yaw_values;
+        std::vector<double> yaw_values;
         for(size_t i=0 ;i < future_points.size()-1 ;i++)
         {
-            float yaw = atan((future_points[i+1].point.y() - future_points[i].point.y())/ (future_points[i+1].point.x() - future_points[i].point.x()));
+            double yaw = atan((future_points[i+1].point.y() - future_points[i].point.y())/ (future_points[i+1].point.x() - future_points[i].point.x()));
             yaw_values.push_back(yaw);
         }
         yaw_values.push_back(0.0); //No rotation from last point
@@ -332,13 +332,13 @@ namespace stop_and_wait_plugin
         return traj;
     }
 
-    void StopandWait::speed_to_time(const std::vector<double>& downtrack, const std::vector<double>& speeds,std::vector<double>& times, double jerk)
+    void StopandWait::speed_to_time(const std::vector<double>& downtrack, const std::vector<double>& speeds,std::vector<double>& times, double jerk) const
     {
         if(downtrack.size() !=speeds.size())
         {
             throw std::invalid_argument("Input vector sizes do not match");
         }
-        if (downtrack.size() == 0)
+        if (downtrack.empty())
         {
             throw std::invalid_argument("Input vectors are empty");
         }
@@ -373,7 +373,7 @@ namespace stop_and_wait_plugin
     }
 
 
-    int StopandWait::getNearestPointIndex(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state)
+    int StopandWait::getNearestPointIndex(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state) const
     {
         lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
         double min_distance = std::numeric_limits<double>::max();
@@ -416,7 +416,7 @@ namespace stop_and_wait_plugin
     }
 
     void StopandWait::splitPointSpeedPairs(const std::vector<PointSpeedPair>& points, std::vector<lanelet::BasicPoint2d>* basic_points,
-                        std::vector<double>* speeds)
+                        std::vector<double>* speeds) const
     {
         basic_points->reserve(points.size());
         speeds->reserve(points.size());

@@ -74,7 +74,6 @@ namespace stop_and_wait_plugin
          * \param max_starting_downtrack The maximum downtrack that is allowed for the first maneuver. This should be set to the vehicle position or earlier.
          *                               If the first maneuver exceeds this then it's downtrack will be shifted to this value.
          * 
-         * \param wm Pointer to intialized world model for semantic map access
          * 
          * \return List of centerline points paired with speed limits
          */ 
@@ -101,7 +100,7 @@ namespace stop_and_wait_plugin
          * 
          * \return index of nearest point in points
          */
-        int getNearestPointIndex(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state);
+        int getNearestPointIndex(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state) const;
         
         /**
          * \brief Returns the nearest point on the route to the provided vehicle pose in the provided list
@@ -116,7 +115,7 @@ namespace stop_and_wait_plugin
          * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
          */ 
         void splitPointSpeedPairs(const std::vector<PointSpeedPair>& points, std::vector<lanelet::BasicPoint2d>* basic_points,
-                            std::vector<double>* speeds);
+                            std::vector<double>* speeds) const;
 
         /**
          * \brief Method converts speed values associated with given points along path to time. Calculated for constant jerk. 
@@ -126,7 +125,7 @@ namespace stop_and_wait_plugin
          * \param time a vector of time values associated with downtrack distances, filled into in the function
          * \param jerk constant jerk along maneuver used for calculating time
          */
-        void speed_to_time(const std::vector<double>& downtrack, const std::vector<double>& speeds,std::vector<double>& times, double jerk);
+        void speed_to_time(const std::vector<double>& downtrack, const std::vector<double>& speeds,std::vector<double>& times, double jerk) const;
 
        //current vehicle forward speed
         double current_speed_;

@@ -163,6 +163,8 @@ namespace stop_and_wait_plugin
         //Check else condition maneuver
         cav_msgs::Maneuver maneuver_2 = maneuver;
         maneuver_2.stop_and_wait_maneuver.start_dist = ending_downtrack;
+        maneuver_2.stop_and_wait_maneuver.start_speed =0.0;
+        sw.current_speed_=0.0;
         //Less than min trajectory time
         maneuver_2.stop_and_wait_maneuver.end_time = ros::Time(3.0 + maneuver_2.stop_and_wait_maneuver.start_time.toSec()); 
         maneuvers[0] = maneuver_2;
