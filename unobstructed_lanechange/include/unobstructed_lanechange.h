@@ -87,15 +87,13 @@ namespace unobstructed_lanechange
 
             /**
              * \brief Creates a Lanelet2 Linestring from a vector or points along the geometry 
-             * \param starting_downtrack staring downtrack in start lanelet
              * \param start_lane_id lanelet id of start lanelet
-             * \param ending_downtrack ending downtrack in end lanelet
              * \param end_lane_id lanelet id of end lanelet
              * \param wm Pointer to intialized world model for semantic map access
              * \return A Linestring of the path from starting downtrack to ending downtrack
              */
             
-            lanelet::BasicLineString2d create_route_geom(double starting_downtrack, int start_lane_id, double ending_downtrack, int end_lane_id, const carma_wm::WorldModelConstPtr& wm);
+            lanelet::BasicLineString2d create_route_geom(int start_lane_id,  int end_lane_id, const carma_wm::WorldModelConstPtr& wm);
 
             /**
              * \brief Given a LaneletPath object, find index of the lanelet which has target_id as its lanelet ID
@@ -251,11 +249,6 @@ namespace unobstructed_lanechange
             double lateral_accel_limit_ = 1.5;
             double moving_average_window_size_ = 5;
             double curvature_calc_lookahead_count_ = 1;
-
-            
-            // target vehicle speed
-            double target_speed_;
-
 
             int num_points = traj_freq * trajectory_time_length_;
 

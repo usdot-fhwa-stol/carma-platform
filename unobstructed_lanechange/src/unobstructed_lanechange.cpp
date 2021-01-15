@@ -90,11 +90,10 @@ namespace unobstructed_lanechange
 
     bool UnobstructedLaneChangePlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp){
 
-        cav_msgs::Maneuver maneuver_msg = req.maneuver_plan.maneuvers[0];
         lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
         double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
-        target_speed_= maneuver_msg.lane_change_maneuver.end_speed;
 
+        //convert maneuver info to route points and speeds
         auto points_and_target_speeds = maneuvers_to_points(req.maneuver_plan.maneuvers, current_downtrack, wm_);
         
         //Ignoring downsampling based on assumption than lane change will happen over short distance
@@ -119,6 +118,7 @@ namespace unobstructed_lanechange
 
     std::vector<PointSpeedPair> UnobstructedLaneChangePlugin::maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
     double max_starting_downtrack, const carma_wm::WorldModelConstPtr& wm){
+        
         std::vector<PointSpeedPair> points_and_target_speeds;
         std::unordered_set<lanelet::Id> visited_lanelets;
 
@@ -140,7 +140,17 @@ namespace unobstructed_lanechange
                 first = false;
             }
             // //Get lane change route
-           lanelet::BasicLineString2d route_geometry = create_route_geom(starting_downtrack,stoi(lane_change_maneuver.starting_lane_id),lane_change_maneuver.end_dist, stoi(lane_change_maneuver.ending_lane_id), wm);
+            double ending_downtrack = lane_change_maneuver.end_dist;
+                //Get geometry for maneuver
+            if (starting_downtrack >= ending_downtrack)
+            {
+                throw std::invalid_argument("Start distance is greater than or equal to end distance");
+            }
+
+            //get route geometry between starting and ending lanelets
+            int starting_lanelet_id = stoi(lane_change_maneuver.starting_lane_id);
+            int ending_lanelet_id = stoi(lane_change_maneuver.ending_lane_id);
+            lanelet::BasicLineString2d route_geometry = create_route_geom(starting_lanelet_id, ending_lanelet_id, wm);
 
             first = true;
             double delta_v = (lane_change_maneuver.end_speed - current_speed_)/route_geometry.size();
@@ -169,7 +179,6 @@ namespace unobstructed_lanechange
     {
         int nearest_pt_index = getNearestPointIndex(points, state);
 
-        ROS_DEBUG_STREAM("NearestPtIndex: " << nearest_pt_index);
         std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end()); // Points in front of current vehicle position
 
         auto time_bound_points = constrain_to_time_boundary(future_points, trajectory_time_length_ );
@@ -490,13 +499,8 @@ namespace unobstructed_lanechange
         return best_index;
     }
 
-    lanelet::BasicLineString2d UnobstructedLaneChangePlugin::create_route_geom(double starting_downtrack, int start_lane_id, double ending_downtrack, int end_lane_id, const carma_wm::WorldModelConstPtr& wm)
+    lanelet::BasicLineString2d UnobstructedLaneChangePlugin::create_route_geom( int start_lane_id, int end_lane_id, const carma_wm::WorldModelConstPtr& wm)
     {
-        //Get geometry for maneuver
-        if (starting_downtrack >= ending_downtrack)
-        {
-            throw std::invalid_argument("Start distance is greater than or equal to end distance");
-        }
 
         auto shortest_path = wm_->getRoute()->shortestPath();
 
