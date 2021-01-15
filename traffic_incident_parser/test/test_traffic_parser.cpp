@@ -17,6 +17,7 @@
 #include "traffic_incident_parser_worker.h"
 #include <gtest/gtest.h>
 #include <carma_wm/CARMAWorldModel.h>
+#include <carma_wm/WMTestLibForGuidance.h>
 
 namespace traffic
 {
@@ -73,5 +74,50 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
   EXPECT_EQ(traffic_worker.up_track,59);  
   
   }
+
+  TEST(TrafficIncidentParserWorkerTest, earthToMapFrame)
+{
+
+  std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
+  TrafficIncidentParserWorker traffic_worker(std::static_pointer_cast<const carma_wm::WorldModel>(cmw),[](auto msg){});
+  std_msgs::String projection_msg;
+  projection_msg.data="+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+
+  traffic_worker.projectionCallback(projection_msg);
+
+  std::string mobility_strategy_params="lat:39.46636844371259,lon:-76.16919523566943,closed_lanes:3,downtrack:57,uptrack:59";
+  traffic_worker.mobilityMessageParser(mobility_strategy_params);
+
+  lanelet::BasicPoint2d local_point=traffic_worker.earthToMapFrame();
+    
+  EXPECT_NEAR(local_point.x(),0,0.001);
+  EXPECT_NEAR(local_point.y(),0,0.001);
+}
+
+  TEST(TrafficIncidentParserWorkerTest, earthToMapFrame)
+{
+
+  auto cmw= getGuidanceTestMap();
+  carma_wm::test::setRouteByLanelets({1200, 1201,1202,1203}, cmw);
+  
+  TrafficIncidentParserWorker traffic_worker(std::static_pointer_cast<const carma_wm::WorldModel>(cmw),[](auto msg){});
+  std_msgs::String projection_msg;
+  projection_msg.data="+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+
+  traffic_worker.projectionCallback(projection_msg);
+
+  std::string mobility_strategy_params="lat:39.46636844371259,lon:-76.16919523566943,closed_lanes:3,downtrack:57,uptrack:59";
+  traffic_worker.mobilityMessageParser(mobility_strategy_params);
+  
+  traffic_worker.composeTrafficControlMesssage();
+
+
+  
+
+  //lanelet::BasicPoint2d local_point=traffic_worker.earthToMapFrame();
+    
+  EXPECT_NEAR(local_point.x(),0,0.001);
+  EXPECT_NEAR(local_point.y(),0,0.001);
+}
 
 }//traffic

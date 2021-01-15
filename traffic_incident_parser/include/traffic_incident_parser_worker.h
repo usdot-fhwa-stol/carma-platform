@@ -79,15 +79,16 @@ class TrafficIncidentParserWorker
 
   std::string stringParserHelper(std::string str,int str_index);
 
-  void findNearByLanetlet();
+  cav_msgs::TrafficControlMessageV01 composeTrafficControlMesssage();
 
-  void earthToMapFrame();
+  lanelet::BasicPoint2d earthToMapFrame();
 
   double latitude;
   double longitude;
   double closed_lane;
   double down_track;
   double up_track;
+  std::string previous_strategy_params={};
 
  private:
 
