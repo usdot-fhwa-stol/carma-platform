@@ -13,9 +13,8 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 #
-
-cmake_minimum_required(VERSION 2.8.3)
-project(inlanecruising_plugin)
+cmake_minimum_required(VERSION 3.0.2)
+project(stop_and_wait_plugin)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++14)
@@ -34,13 +33,14 @@ set( CATKIN_DEPS
   tf
   tf2
   tf2_geometry_msgs
+  roslib
 )
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
  ${CATKIN_DEPS}
 )
-
+find_package(route REQUIRED)
 ## System dependencies are found with CMake's conventions
 find_package(Boost)
 find_package(Eigen3 REQUIRED)
@@ -50,9 +50,8 @@ find_package(Eigen3 REQUIRED)
 ###################################
 
 catkin_package(
-  INCLUDE_DIRS include
   CATKIN_DEPENDS ${CATKIN_DEPS}
-  DEPENDS Boost Eigen3
+  DEPENDS Boost Eigen3 route
 )
 
 ###########
@@ -64,30 +63,33 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
+  ${route_INCLUDE_DIRS}
 )
+file(GLOB_RECURSE headers */*.hpp */*.h)
 
 add_executable( ${PROJECT_NAME}
-  src/main.cpp)
-add_library(inlanecruising_plugin_library 
-  src/inlanecruising_plugin.cpp
-  src/smoothing/BSpline.cpp
-)
-target_link_libraries(inlanecruising_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
+  ${headers}
+  src/main.cpp
+  src/stop_and_wait_plugin.cpp)
 
-target_link_libraries(${PROJECT_NAME} inlanecruising_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(${PROJECT_NAME} inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
+add_library(stopandwait_plugin_lib  src/stop_and_wait_plugin.cpp)  
+add_dependencies(stopandwait_plugin_lib ${catkin_EXPORTED_TARGETS})
+
+target_link_libraries(${PROJECT_NAME}  stopandwait_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
 
 #############
 ## Install ##
 #############
 
-install(DIRECTORY include
+install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".svn" EXCLUDE
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME} inlanecruising_plugin_library
+install(TARGETS ${PROJECT_NAME} 
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -103,9 +105,6 @@ install(DIRECTORY launch config
 #############
 
 catkin_add_gmock(${PROJECT_NAME}-test 
-  test/test_inlanecruising_plugin_planning.cpp
-  test/test_inlanecruising_plugin.cpp
-)
-target_link_libraries(${PROJECT_NAME}-test inlanecruising_plugin_library ${catkin_LIBRARIES})
-
-
+  test/test_stopandwait_plugin.cpp
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+target_link_libraries(${PROJECT_NAME}-test stopandwait_plugin_lib ${catkin_LIBRARIES})

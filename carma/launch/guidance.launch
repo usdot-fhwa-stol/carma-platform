@@ -145,6 +145,11 @@
     <include file="$(find inlanecruising_plugin)/launch/inlanecruising_plugin.launch" />
   </group>
   
+    <!-- StopandWait Plugin -->
+  <group>
+    <remap from="final_waypoints" to="base_waypoints"/>
+    <include file="$(find stop_and_wait_plugin)/launch/stop_and_wait_plugin.launch" />
+  </group>
 
   <!-- Route Node -->
   <include file="$(find route)/launch/route.launch">
