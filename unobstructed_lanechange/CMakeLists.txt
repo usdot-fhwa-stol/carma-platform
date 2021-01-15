@@ -20,17 +20,29 @@ add_compile_options(-std=c++14)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
-## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS
-  carma_utils
-  cav_msgs
+set( CATKIN_DEPS
   roscpp
   std_msgs
+  cav_msgs
+  cav_srvs
+  carma_utils
+  trajectory_utils
+  autoware_msgs
   carma_wm
+  tf
+  tf2
+  tf2_geometry_msgs
+  roslib
 )
 
+## Find catkin macros and libraries
+find_package(catkin REQUIRED COMPONENTS
+ ${CATKIN_DEPS}
+)
+find_package(route REQUIRED)
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
+find_package(Eigen3 REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
@@ -39,7 +51,8 @@ find_package(Boost REQUIRED COMPONENTS system)
 
 catkin_package(
    INCLUDE_DIRS include
-   CATKIN_DEPENDS carma_utils cav_msgs roscpp std_msgs carma_wm
+   CATKIN_DEPENDS ${CATKIN_DEPS}
+   DEPENDS Boost Eigen3 route
 )
 
 ###########
@@ -52,6 +65,8 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
+  ${route_INCLUDE_DIRS}
 )
 
 file(GLOB_RECURSE headers */*.hpp */*.h)
@@ -62,7 +77,7 @@ add_executable( ${PROJECT_NAME}
   src/main.cpp)
 
 
-add_library(unobstructed_lanechange_plugin_lib src/unobstructed_lanechange.cpp)
+add_library(unobstructed_lanechange_plugin_lib src/unobstructed_lanechange.cpp src/smoothing/BSpline.cpp)
 
 add_dependencies(unobstructed_lanechange_plugin_lib ${catkin_EXPORTED_TARGETS})
 
@@ -98,7 +113,7 @@ install(DIRECTORY
 ## Testing ##
 #############
 catkin_add_gmock(${PROJECT_NAME}-test
-  test/test_unobstructed_lanechange_plugin.cpp
+  test/test_unobstructed_lanechange_plugin_2.cpp
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
 target_link_libraries(${PROJECT_NAME}-test unobstructed_lanechange_plugin_lib ${catkin_LIBRARIES})
 

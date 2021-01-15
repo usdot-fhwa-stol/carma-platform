@@ -1,5 +1,4 @@
 #pragma once
-
 /*
  * Copyright (C) 2019-2020 LEIDOS.
  *
@@ -29,11 +28,32 @@
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
 #include "third_party_library/spline.h"
+#include <carma_wm/Geometry.h>
+#include <lanelet2_core/primitives/Lanelet.h>
+#include <lanelet2_core/geometry/LineString.h>
+#include <carma_wm/Geometry.h>
+#include "smoothing/SplineI.h"
+#include "smoothing/BSpline.h"
+
 
 
 
 namespace unobstructed_lanechange
 {
+    struct PointSpeedPair
+    {
+    lanelet::BasicPoint2d point;
+    double speed = 0;
+    };
+    /**
+     * \brief Class representing a curve in space defined by a set of discrete points in the specified frame
+     */ 
+    struct DiscreteCurve
+    {
+    Eigen::Isometry2d frame; // Frame which points are in
+    std::vector<PointSpeedPair> points;
+    };
+
     class UnobstructedLaneChangePlugin
     {
         public:
@@ -44,36 +64,57 @@ namespace unobstructed_lanechange
             // general starting point of this node
             void run();
 
-            // postprocess traj to add plugin names and shift time origin to the current ROS time
-            std::vector<cav_msgs::TrajectoryPlanPoint> post_process_traj_points(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory);
+             // service callbacks for carma trajectory planning
+            bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp);
 
-            /**
-                * \brief Given start and end points, create a continous lanechange trajectory
-                * \param start start point of lanechange
-                * \param end end point of lanechange
-                * \return vector of trajectory points
-            */
-            std::vector<cav_msgs::TrajectoryPlanPoint> create_lanechange_trajectory(std::vector<double> start, std::vector<double> end);
+            std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
+                                                double max_starting_downtrack,
+                                                const carma_wm::WorldModelConstPtr& wm);
+            
+            lanelet::BasicLineString2d create_route_geom(double starting_downtrack, int start_lane_id, double ending_downtrack, int end_lane_id, const carma_wm::WorldModelConstPtr& wm);
 
-            /**
-                * \brief Compose lane change trajectory given its input parameters
-                * \param start_id Lanechange starting point lanelet id
-                * \param start_downtrack Lanechange starting point downtrack
-                * \param end_id Lanechange ending point lanelet id
-                * \param end_downtrack Lanechange ending point downtrack
-                * \return vector of trajectory points
-            */
-            std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanechange_trajectory(carma_wm::WorldModelConstPtr wm, const std::string& start_id, double start_downtrack, const std::string& end_id, double end_downtrack);
+            int findLaneletIndexFromPath(int target_id, lanelet::routing::LaneletPath& path);
 
-            /**
-                * \brief Given Lanelet id and downtrack, find the corresponding point coordinates on the lanelet's centerline
-                * \param lanelet_id Lanelet ID
-                * \param downtrack downtrack value
-                * \return Vector of x and y coordinates
-            */
-            std::vector<double> extract_point_from_lanelet(carma_wm::WorldModelConstPtr wm, const std::string& lanelet_id, double downtrack);
+            bool identifyLaneChange(lanelet::routing::LaneletRelations relations, int target_id);
+            lanelet::BasicLineString2d create_lanechange_route(lanelet::BasicPoint2d start, lanelet::BasicPoint2d end);
+
+            std::vector<cav_msgs::TrajectoryPlanPoint> compose_trajectory_from_centerline(
+            const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state);
+
+            int getNearestPointIndex(const std::vector<PointSpeedPair>& points,
+                                               const cav_msgs::VehicleState& state);
+
+            std::vector<PointSpeedPair> constrain_to_time_boundary(const std::vector<PointSpeedPair>& points,double time_span);
         
-        private:
+            void splitPointSpeedPairs(const std::vector<PointSpeedPair>& points,
+                                            std::vector<lanelet::BasicPoint2d>* basic_points,
+                                            std::vector<double>* speeds);
+            
+            std::vector<DiscreteCurve> compute_sub_curves(const std::vector<PointSpeedPair>& map_points);
+
+            Eigen::Isometry2d compute_heading_frame(const lanelet::BasicPoint2d& p1,
+                                                              const lanelet::BasicPoint2d& p2);
+            
+            std::unique_ptr<smoothing::SplineI>
+            compute_fit(const std::vector<lanelet::BasicPoint2d>& basic_points);
+
+            std::vector<double> apply_speed_limits(const std::vector<double> speeds,
+                                                             const std::vector<double> speed_limits);
+
+            double get_adaptive_lookahead(double velocity);
+            std::vector<double> get_lookahead_speed(const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& speeds, const double& lookahead);
+            
+            std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_from_points_times_orientations(
+            const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& times, const std::vector<double>& yaws,
+            ros::Time startTime);
+            
+            carma_wm::WorldModelConstPtr wm_;
+
+            // start vehicle speed
+            double start_speed_;
+
+
+            private:
 
             
             // node handles
@@ -82,8 +123,7 @@ namespace unobstructed_lanechange
 
             ros::Publisher ubobstructed_lanechange_plugin_discovery_pub_;
 
-            // service callbacks for carma trajectory planning
-            bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp);
+
 
             // ros service servers
             ros::ServiceServer trajectory_srv_;
@@ -99,9 +139,6 @@ namespace unobstructed_lanechange
             double trajectory_time_length_ = 6;
             std::string control_plugin_name_ = "mpc_follower";
             
-
-            // start vehicle speed
-            double start_speed_;
             // target vehicle speed
             double target_speed_;
 
@@ -115,8 +152,8 @@ namespace unobstructed_lanechange
             cav_msgs::TrajectoryPlan trajectory_msg;
 
             // wm listener pointer and pointer to the actual wm object
-            std::shared_ptr<carma_wm::WMListener> _wml{nullptr};
-            carma_wm::WorldModelConstPtr _wm;
+            std::shared_ptr<carma_wm::WMListener> wml_{nullptr};
+            
 
 
     
