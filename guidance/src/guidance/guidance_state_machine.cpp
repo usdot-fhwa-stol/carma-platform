@@ -60,6 +60,8 @@ namespace guidance
                 if(signal == Signal::ACTIVATED)
                 {
                     current_guidance_state_ = State::ACTIVE;
+                }else if(signal == Signal::INITIALIZED){
+                    current_guidance_state_ = State::DRIVERS_READY;
                 }
                 break;
             default:
@@ -69,6 +71,7 @@ namespace guidance
 
     void GuidanceStateMachine::onSystemAlert(const cav_msgs::SystemAlertConstPtr& msg)
     {
+        sys_alert_msg_ = *msg;
         if(msg->type == msg->DRIVERS_READY)
         {
             onGuidanceSignal(Signal::INITIALIZED);
@@ -109,10 +112,16 @@ namespace guidance
     void GuidanceStateMachine::onRouteEvent(const cav_msgs::RouteEventConstPtr& msg)
     {
         if(msg->event == cav_msgs::RouteEvent::ROUTE_DEPARTED ||
-           msg->event == cav_msgs::RouteEvent::ROUTE_COMPLETED ||
            msg->event == cav_msgs::RouteEvent::ROUTE_ABORTED) {
                onGuidanceSignal(Signal::DISENGAGED);
            }
+        else if(msg->event == cav_msgs::RouteEvent::ROUTE_COMPLETED){
+            onGuidanceSignal(Signal::OVERRIDE);  //Engaged -> Inactive (needs Override)
+            
+            if(sys_alert_msg_.type == sys_alert_msg_.DRIVERS_READY){
+                onGuidanceSignal(INITIALIZED);
+            }
+        }
     }
 
     uint8_t GuidanceStateMachine::getCurrentState()
