@@ -52,34 +52,43 @@ class TrafficIncidentParserWorker
    */
   TrafficIncidentParserWorker(carma_wm::WorldModelConstPtr wm,PublishTrafficControlCallback traffic_control_pub);
     
-  /*! \fn pinpointDriverCallback(const gps_common::GPSFix &pinpoint_msg)
-    \brief pinpointDriverCallback populates lat lon heading from pinpoint driver.
-    \param  gps_common::GPSFix.
+  /*! \fn projectionCallback(const std_msgs::String &projection_msg)
+    \brief projectionCallback to convert ECEF to MAP frame
+    \param  std_msgs::String
   */
 
   void projectionCallback(const std_msgs::String &projection_msg);
 
-    /*! \fn pinpointDriverCallback(const gps_common::GPSFix &pinpoint_msg)
-    \brief pinpointDriverCallback populates lat lon heading from pinpoint driver.
-    \param  gps_common::GPSFix.
+    /*! \fn mobilityOperationCallback(const cav_msgs::MobilityOperation &mobility_msg)
+    \brief mobilityOperationCallback to receive the incoming mobility operation message from message node
+    \param  cav_msgs::MobilityOperation
   */
 
   void mobilityOperationCallback(const cav_msgs::MobilityOperation &mobility_msg);
 
-  // Setters for the prediction parameters
-  //void setSenderId(std::string sender_id);
-  //void setClosedLane(std::string closed_lane);
-  //void setDownTrack(double down_track);
-  //void setUpTrack(double up_track);
-
-  // Generate mobility message
-  cav_msgs::MobilityOperation mobilityMessageGenerator(const gps_common::GPSFix& msg);
+    /*! \fn mobilityMessageParser(std::string mobility_strategy_params)
+    \brief mobilityMessageParser helps to parse incoming mobility operation message to required format
+    \param  std::string mobility_strategy_params
+  */
 
   void mobilityMessageParser(std::string mobility_strategy_params);
 
+    /*! \fn stringParserHelper(std::string str,int str_index)
+    \brief stringParserHelper helps in string to required data type conversion
+    \param  std::string str,int str_index
+  */
+
   std::string stringParserHelper(std::string str,int str_index);
+  
+    /*! \fn composeTrafficControlMesssage()
+    \brief composeTrafficControlMesssage holds the algorith for extracting the closed lanelet and assign it to traffic control message, which is then published.
+  */
 
   cav_msgs::TrafficControlMessageV01 composeTrafficControlMesssage();
+
+    /*! \fnearthToMapFrame()
+    \brief earthToMapFrame converts ECEF to MAP fram using projection string
+  */
 
   lanelet::BasicPoint2d earthToMapFrame();
 
@@ -94,16 +103,8 @@ class TrafficIncidentParserWorker
 
   lanelet::BasicPoint2d local_point_;
   std::string projection_msg_;
-  // local copy of external object publihsers
-
-  PublishTrafficControlCallback traffic_control_pub_;
+  PublishTrafficControlCallback traffic_control_pub_;// local copy of external object publihsers
   carma_wm::WorldModelConstPtr wm_;
- 
- // Prediction parameters
- // std::string sender_id_ = "USDOT-49096";
- // std::string closed_lane_= "[1]";
- // double down_track_= 50.0;
- // double up_track_= 50.0;
 
 };
 

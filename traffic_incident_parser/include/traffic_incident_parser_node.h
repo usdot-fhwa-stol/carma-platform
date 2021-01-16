@@ -23,7 +23,6 @@
 #include <string>
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
-
 #include "traffic_incident_parser_worker.h"
 
 namespace traffic{
@@ -47,19 +46,13 @@ class TrafficIncidentParserNode
   //publisher
   ros::Publisher traffic_control_msg_pub_;
   
-  //TrafficIncidentWorker class object
+  //TrafficIncidentParserWorker class object
   TrafficIncidentParserWorker traffic_parser_worker_;
   
     /*!fn initialize()
   \brief initialize this node before running
   */
   void initialize();
-
-  //ROS Params
- // std::string sender_id_; 
- // std::string closed_lane_;
- // double down_track_;
- // double up_track_; 
 
  public:
   

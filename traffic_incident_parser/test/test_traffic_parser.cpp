@@ -94,11 +94,11 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
   EXPECT_NEAR(local_point.y(),0,0.001);
 }
 
-  TEST(TrafficIncidentParserWorkerTest, earthToMapFrame)
+  TEST(TrafficIncidentParserWorkerTest, composeTrafficControlMesssage)
 {
 
-  auto cmw= getGuidanceTestMap();
-  carma_wm::test::setRouteByLanelets({1200, 1201,1202,1203}, cmw);
+  auto cmw= carma_wm::test::getGuidanceTestMap();
+  carma_wm::test::setRouteByIds({1200, 1201,1202,1203}, cmw);
   
   TrafficIncidentParserWorker traffic_worker(std::static_pointer_cast<const carma_wm::WorldModel>(cmw),[](auto msg){});
   std_msgs::String projection_msg;
@@ -106,18 +106,23 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
 
   traffic_worker.projectionCallback(projection_msg);
 
-  std::string mobility_strategy_params="lat:39.46636844371259,lon:-76.16919523566943,closed_lanes:3,downtrack:57,uptrack:59";
+  std::string mobility_strategy_params="lat:39.46636844371259,lon:-76.16919523566943,closed_lanes:3,downtrack:99,uptrack:25";
   traffic_worker.mobilityMessageParser(mobility_strategy_params);
   
-  traffic_worker.composeTrafficControlMesssage();
+  cav_msgs::TrafficControlMessageV01 traffic_mobility_msg_test=traffic_worker.composeTrafficControlMesssage();
 
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[0].x,1.85,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[0].y,12.5,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[1].x,1.85,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[1].y,37.5,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[2].x,1.85,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[2].y,62.5,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[3].x,1.85,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[3].y,87.5,0.001);
 
-  
-
-  //lanelet::BasicPoint2d local_point=traffic_worker.earthToMapFrame();
-    
-  EXPECT_NEAR(local_point.x(),0,0.001);
-  EXPECT_NEAR(local_point.y(),0,0.001);
+  EXPECT_EQ(traffic_mobility_msg_test.geometry_exists,true);
+  EXPECT_EQ(traffic_mobility_msg_test.params.detail.choice,cav_msgs::TrafficControlDetail::CLOSED_CHOICE);
+  EXPECT_EQ(traffic_mobility_msg_test.params.detail.closed,cav_msgs::TrafficControlDetail::CLOSED);
 }
 
 }//traffic

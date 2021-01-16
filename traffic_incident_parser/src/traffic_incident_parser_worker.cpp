@@ -23,9 +23,8 @@ namespace traffic
 
   void TrafficIncidentParserWorker::mobilityOperationCallback(const cav_msgs::MobilityOperation &mobility_msg)
   {
-    
-
-      if(mobility_msg.strategy=="carma3/Incident_Use_Case")
+   
+        if(mobility_msg.strategy=="carma3/Incident_Use_Case")
       { 
         if(mobility_msg.strategy_params!=previous_strategy_params)
         {  
@@ -62,7 +61,6 @@ namespace traffic
     std::string closed_lanes=vec[2];
     std::string downtrack=vec[3];
     std::string uptrack=vec[4];
-
     latitude=stod(stringParserHelper(lat,lat.find_last_of("lat:")));
     longitude=stod(stringParserHelper(lon,lon.find_last_of("lon:")));
     closed_lane=stoi(stringParserHelper(closed_lanes,closed_lanes.find_last_of("lat:")));
@@ -104,17 +102,25 @@ namespace traffic
     while(following_distance<down_track)
     {
       auto next_lanelets = wm_->getMapRoutingGraph()->following(current_lanelet);
+      if(!next_lanelets.empty())
+      {
+        carma_wm::TrackPos tp = carma_wm::geometry::trackPos(next_lanelets[0], local_point_);
+        following_distance= std::fabs(tp.downtrack);
+      }
+      
+      auto back_point = current_lanelet.centerline().back().basicPoint2d();
+      auto front_point = current_lanelet.centerline().front().basicPoint2d();
+      lanelet::BasicPoint2d middle = {(back_point.x() + front_point.x())/2, (back_point.y() + front_point.y())/2};
+          
+      center_line_points_right.push_back(middle);
       if(next_lanelets.empty())
       {
         break;
       }
-      carma_wm::TrackPos tp = carma_wm::geometry::trackPos(next_lanelets[0], local_point_);
-      following_distance= std::fabs(tp.downtrack);
-      auto back_point = current_lanelet.centerline().back().basicPoint2d();
-      auto front_point = current_lanelet.centerline().front().basicPoint2d();
-      lanelet::BasicPoint2d middle = {(back_point.x() + front_point.x())/2, (back_point.y() + front_point.y())/2};//
-      center_line_points_right.push_back(middle);
+      else
+      {
       current_lanelet=next_lanelets[0];
+      }
     }
 
     current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, local_point_, 1); 
@@ -122,42 +128,42 @@ namespace traffic
     carma_wm::TrackPos tp = carma_wm::geometry::trackPos(current_lanelet, local_point_);
     previous_distance= std::fabs(tp.downtrack);
     
-    while(previous_distance<up_track)
+   while(previous_distance<up_track)
     {
       auto next_lanelets = wm_->getMapRoutingGraph()->previous(current_lanelet);
-      if(next_lanelets.empty())
+      if(!next_lanelets.empty())
+      {
+        carma_wm::TrackPos tp = carma_wm::geometry::trackPos(next_lanelets[0], local_point_);
+        previous_distance= std::fabs(tp.downtrack);
+        auto back_point = next_lanelets[0].centerline().back().basicPoint2d();
+        auto front_point = next_lanelets[0].centerline().front().basicPoint2d();
+        lanelet::BasicPoint2d middle = {(back_point.x() + front_point.x())/2, (back_point.y() + front_point.y())/2};
+        center_line_points_left.push_back(middle);
+        current_lanelet=next_lanelets[0];
+      }
+       else
       {
         break;
       }
-      carma_wm::TrackPos tp = carma_wm::geometry::trackPos(next_lanelets[0], local_point_);
-      previous_distance= std::fabs(tp.downtrack);
-      auto back_point = next_lanelets[0].centerline().back().basicPoint2d();
-      auto front_point = next_lanelets[0].centerline().front().basicPoint2d();
-      lanelet::BasicPoint2d middle = {(back_point.x() + front_point.x())/2, (back_point.y() + front_point.y())/2};
-      center_line_points_left.push_back(middle);
-      current_lanelet=next_lanelets[0];
     }
-
+   
     std::reverse(center_line_points_left.begin(), center_line_points_left.end());
-    
+   
     center_line_points_left.insert( center_line_points_left.end(), center_line_points_right.begin(), center_line_points_right.end() );
     cav_msgs::TrafficControlMessageV01 traffic_mobility_msg;
     
     traffic_mobility_msg.geometry_exists=true;
-
-    traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::CLOSED_CHOICE;;
-    traffic_mobility_msg.params.detail.close=cav_msgs::TrafficControlDetail::CLOSED;;
+    traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::CLOSED_CHOICE;
+    traffic_mobility_msg.params.detail.closed=cav_msgs::TrafficControlDetail::CLOSED;
     
     for(auto &i:center_line_points_left)
     {
       cav_msgs::PathNode path_point;
-      path_point.x=i.x;
-      path_point.y=i.y;
+      path_point.x=i.x();
+      path_point.y=i.y();
       traffic_mobility_msg.geometry.nodes.push_back(path_point);
     }
-
-    return traffic_mobility_msg;
-    
-  }
+      return traffic_mobility_msg;
+    }
 
 }//traffic

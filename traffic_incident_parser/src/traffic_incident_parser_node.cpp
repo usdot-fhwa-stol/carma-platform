@@ -24,17 +24,6 @@
 
   void TrafficIncidentParserNode::initialize()
   {
-
-	  //pnh_.getParam("sender_id", sender_id_);
-  	//pnh_.getParam("closed_lane", closed_lane_);
-    //pnh_.getParam("down_track", down_track_);
-    //pnh_.getParam("up_track", up_track_); 
-
-   //traffic_worker_.setSenderId(sender_id_);
-    //traffic_worker_.setClosedLane(closed_lane_);
-    //traffic_worker_.setDownTrack(down_track_);
-    //traffic_worker_.setUpTrack(up_track_);
-
     // Setup pub/sub
     projection_sub_=nh_.subscribe("georeference",10,&TrafficIncidentParserWorker::projectionCallback,&traffic_parser_worker_);
     mobility_operation_sub_=nh_.subscribe("incoming_mobility_operation",10,&TrafficIncidentParserWorker::mobilityOperationCallback,&traffic_parser_worker_);
