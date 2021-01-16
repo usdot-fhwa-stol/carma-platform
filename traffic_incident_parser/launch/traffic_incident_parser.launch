@@ -15,7 +15,6 @@
 -->
 
 <launch>
-  <node name="traffic_incident" pkg="traffic_incident" type="traffic_incident_node">
-    <rosparam command="load" file="$(find traffic_incident)/config/parameters.yaml"/>
+  <node name="traffic_incident_parser" pkg="traffic_incident_parser" type="traffic_incident_parser_node">
   </node>
 </launch>
