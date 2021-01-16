@@ -128,6 +128,8 @@
     <remap from="vehicle_model_wheelbase" to="/vehicle_wheel_base"/>
     <remap from="~lateral_accel_limit" to="/vehicle_lateral_accel_limit"/>
     <remap from="~lateral_jerk_limit" to="/vehicle_lateral_jerk_limit"/>
+    <remap from="~longitudinal_velocity_limit" to="/config_speed_limit"/>
+    <remap from="~longitudinal_accel_limit" to="/vehicle_acceleration_limit"/>
 
     <include file="$(find twist_filter)/launch/twist_filter.launch">
         <arg name="lowpass_gain_linear_x" value="0.1"/>
@@ -143,6 +145,11 @@
     <include file="$(find inlanecruising_plugin)/launch/inlanecruising_plugin.launch" />
   </group>
   
+    <!-- StopandWait Plugin -->
+  <group>
+    <remap from="final_waypoints" to="base_waypoints"/>
+    <include file="$(find stop_and_wait_plugin)/launch/stop_and_wait_plugin.launch" />
+  </group>
 
   <!-- Route Node -->
   <include file="$(find route)/launch/route.launch">

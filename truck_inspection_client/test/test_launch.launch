@@ -1,0 +1,7 @@
+<launch>
+    <node name="truck_inspection_client_node" pkg="truck_inspection_client" type="truck_inspection_client" output="screen">
+      <rosparam command="load" file="$(find truck_inspection_client)/config/parameters.yaml"/>
+    </node>
+
+    <test test-name="truck_inspection_client_test" pkg="truck_inspection_client" type="truck_inspection_client_test" />
+</launch>

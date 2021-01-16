@@ -17,6 +17,7 @@
 #include <lanelet2_extension/utility/message_conversion.h>
 #include "WMListenerWorker.h"
 
+
 namespace carma_wm
 {
 enum class GeofenceType{ INVALID, DIGITAL_SPEED_LIMIT, PASSING_CONTROL_LINE, /* ... others */ };
@@ -182,5 +183,7 @@ double WMListenerWorker::getConfigSpeedLimit() const
 {
   return config_speed_limit_;
 }
+
+
 
 }  // namespace carma_wm

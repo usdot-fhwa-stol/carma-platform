@@ -67,7 +67,17 @@ namespace route_following_plugin
          * \return A lane keeping maneuver message which is ready to be published
          */
         cav_msgs::Maneuver composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time current_time);
-
+        /**
+         * \brief Compose a stop and wait maneuver message based on input params
+         * \param current_dist Start downtrack distance of the current maneuver
+         * \param end_dist End downtrack distance of the current maneuver
+         * \param current_speed Start speed of the current maneuver
+         * \param start_lane_id Starting Lanelet ID of the current maneuver
+         * \param target_speed Target Lanelet ID of the current maneuver
+         * \param current_time Start time of the current maneuver
+         * \return A lane keeping maneuver message which is ready to be published
+         */
+        cav_msgs::Maneuver composeStopandWaitManeuverMessage(double current_dist, double end_dist, double current_speed, int start_lane_id, int target_lane_id, ros::Time current_time, double end_time);
         /**
          * \brief Given a LaneletRelations and ID of the next lanelet in the shortest path
          * \param relations LaneletRelations relative to the previous lanelet
@@ -121,6 +131,8 @@ namespace route_following_plugin
 
         // Minimal duration of maneuver, loaded from config file
         double mvr_duration_;
+        //Jerk used to come to stop at end of route
+        double jerk_ = 0.25;
 
         // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
@@ -147,4 +159,3 @@ namespace route_following_plugin
     };
 
 }
-

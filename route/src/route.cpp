@@ -32,6 +32,7 @@ namespace route {
         route_marker_pub_= nh_->advertise<visualization_msgs::MarkerArray>("route_marker", 1, true);
         // init subscribers
         pose_sub_ = nh_->subscribe("current_pose", 1, &RouteGeneratorWorker::pose_cb, &rg_worker_);
+        twist_sub_ = nh_->subscribe("current_velocity", 1, &RouteGeneratorWorker::twist_cd, &rg_worker_);
         // init service server
         get_available_route_srv_ = nh_->advertiseService("get_available_routes", &RouteGeneratorWorker::get_available_route_cb, &rg_worker_);
         set_active_route_srv_ = nh_->advertiseService("set_active_route", &RouteGeneratorWorker::set_active_route_cb, &rg_worker_);
@@ -41,9 +42,13 @@ namespace route {
         rg_worker_.setWorldModelPtr(wm_);
         // load params and pass to route generator worker
         double ct_error, dt_range;
+        int cte_count_max;
         pnh_->getParam("max_crosstrack_error", ct_error);
         pnh_->getParam("destination_downtrack_range", dt_range);
+        pnh_->getParam("cte_count_max", cte_count_max);
         rg_worker_.set_ctdt_param(ct_error, dt_range);
+        rg_worker_.set_CTE_dist(ct_error);
+        rg_worker_.set_CTE_count_max(cte_count_max);
         std::string route_file_location;
         pnh_->getParam("route_file_path", route_file_location);
         rg_worker_.set_route_file_path(route_file_location);
