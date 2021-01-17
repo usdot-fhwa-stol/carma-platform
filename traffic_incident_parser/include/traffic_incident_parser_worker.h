@@ -53,14 +53,14 @@ class TrafficIncidentParserWorker
   TrafficIncidentParserWorker(carma_wm::WorldModelConstPtr wm,PublishTrafficControlCallback traffic_control_pub);
     
   /*! \fn projectionCallback(const std_msgs::String &projection_msg)
-    \brief projectionCallback to convert ECEF to MAP frame
+    \brief projectionCallback stores the projection string needed to convert ECEF to MAP frame
     \param  std_msgs::String
   */
 
   void projectionCallback(const std_msgs::String &projection_msg);
 
     /*! \fn mobilityOperationCallback(const cav_msgs::MobilityOperation &mobility_msg)
-    \brief mobilityOperationCallback to receive the incoming mobility operation message from message node
+    \brief mobilityOperationCallback to receive the incoming mobility operation message from message node and also this function publishes the geofence message upon processing the mobility msg.
     \param  cav_msgs::MobilityOperation
   */
 
@@ -74,23 +74,25 @@ class TrafficIncidentParserWorker
   void mobilityMessageParser(std::string mobility_strategy_params);
 
     /*! \fn stringParserHelper(std::string str,int str_index)
-    \brief stringParserHelper helps in string to required data type conversion
-    \param  std::string str,int str_index
+    \brief stringParserHelper helps to convert string to double data type.
+    \param  std::string 
+    \param  int 
   */
 
   std::string stringParserHelper(std::string str,int str_index);
   
     /*! \fn composeTrafficControlMesssage()
-    \brief composeTrafficControlMesssage holds the algorith for extracting the closed lanelet and assign it to traffic control message, which is then published.
+    \brief composeTrafficControlMesssage algorithm for extracting the closed lanelet from internally saved mobility message (or geofence) params and assign it to trafic contol message. 
+    Closed lanelets are represent by vector of points, where each point represents the geometric middle point of a closed lanelet
   */
 
   cav_msgs::TrafficControlMessageV01 composeTrafficControlMesssage();
 
-    /*! \fnearthToMapFrame()
-    \brief earthToMapFrame converts ECEF to MAP fram using projection string
+    /*! \fngetIncidentOriginPoint()
+    \brief getIncidentOriginPoint converts internally saved incident origin point from ECEF to local map frame
   */
 
-  lanelet::BasicPoint2d earthToMapFrame();
+  lanelet::BasicPoint2d getIncidentOriginPoint();
 
   double latitude;
   double longitude;

@@ -88,7 +88,7 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
   std::string mobility_strategy_params="lat:39.46636844371259,lon:-76.16919523566943,closed_lanes:3,downtrack:57,uptrack:59";
   traffic_worker.mobilityMessageParser(mobility_strategy_params);
 
-  lanelet::BasicPoint2d local_point=traffic_worker.earthToMapFrame();
+  lanelet::BasicPoint2d local_point=traffic_worker.getIncidentOriginPoint();
     
   EXPECT_NEAR(local_point.x(),0,0.001);
   EXPECT_NEAR(local_point.y(),0,0.001);

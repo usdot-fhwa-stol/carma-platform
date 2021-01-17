@@ -56,6 +56,12 @@ namespace traffic
     }
     vec.push_back(mobility_strategy_params);
 
+    if (vec.size() != 5) 
+    {
+      ROS_ERROR_STREAM("Given mobility strategy params are not correctly formatted.");
+      return;
+    }  
+
     std::string lat=vec[0];
     std::string lon=vec[1];
     std::string closed_lanes=vec[2];
@@ -78,7 +84,7 @@ namespace traffic
     return str_temp;
   }
 
- lanelet::BasicPoint2d TrafficIncidentParserWorker::earthToMapFrame()
+ lanelet::BasicPoint2d TrafficIncidentParserWorker::getIncidentOriginPoint()
   {
     lanelet::projection::LocalFrameProjector projector(projection_msg_.c_str());
     lanelet::GPSPoint gps_point;
@@ -91,7 +97,7 @@ namespace traffic
 
   cav_msgs::TrafficControlMessageV01 TrafficIncidentParserWorker::composeTrafficControlMesssage()
   {
-    local_point_=earthToMapFrame();
+    local_point_=getIncidentOriginPoint();
     auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, local_point_, 1);  
     lanelet::ConstLanelet current_lanelet = current_lanelets[0].second;
     double following_distance=0.0;
@@ -99,7 +105,7 @@ namespace traffic
     std::vector<lanelet::BasicPoint2d> center_line_points_right={};
     std::vector<lanelet::BasicPoint2d> center_line_points_left={};
  
-    while(following_distance<down_track)
+    while(following_distance<down_track) //Extract the center line point towards the downtrack lanelets
     {
       auto next_lanelets = wm_->getMapRoutingGraph()->following(current_lanelet);
       if(!next_lanelets.empty())
@@ -128,7 +134,7 @@ namespace traffic
     carma_wm::TrackPos tp = carma_wm::geometry::trackPos(current_lanelet, local_point_);
     previous_distance= std::fabs(tp.downtrack);
     
-   while(previous_distance<up_track)
+   while(previous_distance<up_track) //Extract the center line point towards the uptrack lanelets
     {
       auto next_lanelets = wm_->getMapRoutingGraph()->previous(current_lanelet);
       if(!next_lanelets.empty())
