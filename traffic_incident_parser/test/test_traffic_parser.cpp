@@ -125,4 +125,35 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
   EXPECT_EQ(traffic_mobility_msg_test.params.detail.closed,cav_msgs::TrafficControlDetail::CLOSED);
 }
 
+ TEST(TrafficIncidentParserWorkerTest, composeTrafficControlMesssage1)
+{
+
+  auto cmw= carma_wm::test::getGuidanceTestMap();
+  carma_wm::test::setRouteByIds({1200, 1201,1202,1203}, cmw);
+  
+  TrafficIncidentParserWorker traffic_worker(std::static_pointer_cast<const carma_wm::WorldModel>(cmw),[](auto msg){});
+  std_msgs::String projection_msg;
+  projection_msg.data="+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+	
+  traffic_worker.projectionCallback(projection_msg);
+
+  std::string mobility_strategy_params="lat:39.46663865458896225,lon:-76.16919523566940597,closed_lanes:3,downtrack:99,uptrack:25";
+  traffic_worker.mobilityMessageParser(mobility_strategy_params);
+  
+  cav_msgs::TrafficControlMessageV01 traffic_mobility_msg_test=traffic_worker.composeTrafficControlMesssage();
+
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[0].x,1.85,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[0].y,12.5,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[1].x,1.85,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[1].y,37.5,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[2].x,1.85,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[2].y,62.5,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[3].x,1.85,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[3].y,87.5,0.001);
+
+  EXPECT_EQ(traffic_mobility_msg_test.geometry_exists,true);
+  EXPECT_EQ(traffic_mobility_msg_test.params.detail.choice,cav_msgs::TrafficControlDetail::CLOSED_CHOICE);
+  EXPECT_EQ(traffic_mobility_msg_test.params.detail.closed,cav_msgs::TrafficControlDetail::CLOSED);
+}
+
 }//traffic

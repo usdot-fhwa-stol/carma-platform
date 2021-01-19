@@ -34,7 +34,7 @@ class TrafficIncidentParserNode
   
   //node handle
   ros::CARMANodeHandle nh_;
-  ros::CARMANodeHandle pnh_;
+  ros::CARMANodeHandle pnh_{"~"};
    
   //subscriber
   ros::Subscriber projection_sub_;
@@ -64,7 +64,7 @@ class TrafficIncidentParserNode
   /*! \fn publishTrafficControlMessage()
     \brief Publish traffic control message
   */
-  void publishTrafficControlMessage(const cav_msgs::TrafficControlMessageV01& traffic_control_msg);
+  void publishTrafficControlMessage(const cav_msgs::TrafficControlMessageV01& traffic_control_msg) const;
 
   /*!fn run()
     \brief General starting point to run this node

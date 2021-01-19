@@ -20,7 +20,7 @@
 
   using std::placeholders::_1;
 
-  TrafficIncidentParserNode::TrafficIncidentParserNode(): pnh_("~"), traffic_parser_worker_(wm_listener_.getWorldModel(), std::bind(&TrafficIncidentParserNode::publishTrafficControlMessage, this, _1)){}
+  TrafficIncidentParserNode::TrafficIncidentParserNode():traffic_parser_worker_(wm_listener_.getWorldModel(), std::bind(&TrafficIncidentParserNode::publishTrafficControlMessage, this, _1)){}
 
   void TrafficIncidentParserNode::initialize()
   {
@@ -30,7 +30,7 @@
     traffic_control_msg_pub_=nh_.advertise<cav_msgs::TrafficControlMessageV01>("traffic_incident_control_msg", 10);
   }
 
-  void TrafficIncidentParserNode::publishTrafficControlMessage(const cav_msgs::TrafficControlMessageV01& traffic_control_msg)
+  void TrafficIncidentParserNode::publishTrafficControlMessage(const cav_msgs::TrafficControlMessageV01& traffic_control_msg) const
   {
   	traffic_control_msg_pub_.publish(traffic_control_msg);
   }
@@ -38,8 +38,8 @@
   void TrafficIncidentParserNode::run()
   {
     initialize();
-    nh_.setSpinRate(20);
-    nh_.spin();
+    ros::CARMANodeHandle::setSpinRate(20);
+    ros::CARMANodeHandle::spin();
   }
 
 }//traffic

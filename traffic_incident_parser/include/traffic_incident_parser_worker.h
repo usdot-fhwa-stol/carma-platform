@@ -50,7 +50,7 @@ class TrafficIncidentParserWorker
   /*!
    * \brief Constructor
    */
-  TrafficIncidentParserWorker(carma_wm::WorldModelConstPtr wm,PublishTrafficControlCallback traffic_control_pub);
+  TrafficIncidentParserWorker(carma_wm::WorldModelConstPtr wm,const PublishTrafficControlCallback &traffic_control_pub);
     
   /*! \fn projectionCallback(const std_msgs::String &projection_msg)
     \brief projectionCallback stores the projection string needed to convert ECEF to MAP frame
@@ -79,7 +79,7 @@ class TrafficIncidentParserWorker
     \param  int 
   */
 
-  std::string stringParserHelper(std::string str,int str_index);
+  std::string stringParserHelper(std::string str,int str_index) const;
   
     /*! \fn composeTrafficControlMesssage()
     \brief composeTrafficControlMesssage algorithm for extracting the closed lanelet from internally saved mobility message (or geofence) params and assign it to trafic contol message. 
@@ -92,7 +92,7 @@ class TrafficIncidentParserWorker
     \brief getIncidentOriginPoint converts internally saved incident origin point from ECEF to local map frame
   */
 
-  lanelet::BasicPoint2d getIncidentOriginPoint();
+  lanelet::BasicPoint2d getIncidentOriginPoint() const;
 
   double latitude;
   double longitude;

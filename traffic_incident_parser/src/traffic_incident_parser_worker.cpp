@@ -19,19 +19,16 @@
 namespace traffic
 {
 
-  TrafficIncidentParserWorker::TrafficIncidentParserWorker(carma_wm::WorldModelConstPtr wm,PublishTrafficControlCallback traffic_control_pub) : traffic_control_pub_(traffic_control_pub),wm_(wm){};
+  TrafficIncidentParserWorker::TrafficIncidentParserWorker(carma_wm::WorldModelConstPtr wm,const PublishTrafficControlCallback &traffic_control_pub) : traffic_control_pub_(traffic_control_pub),wm_(wm){};
 
   void TrafficIncidentParserWorker::mobilityOperationCallback(const cav_msgs::MobilityOperation &mobility_msg)
   {
    
-        if(mobility_msg.strategy=="carma3/Incident_Use_Case")
+        if((mobility_msg.strategy=="carma3/Incident_Use_Case") && (mobility_msg.strategy_params!=previous_strategy_params))
       { 
-        if(mobility_msg.strategy_params!=previous_strategy_params)
-        {  
            previous_strategy_params=mobility_msg.strategy_params;
            mobilityMessageParser(mobility_msg.strategy_params);
            traffic_control_pub_(composeTrafficControlMesssage());
-        }
       }
    }
 
@@ -69,12 +66,12 @@ namespace traffic
     std::string uptrack=vec[4];
     latitude=stod(stringParserHelper(lat,lat.find_last_of("lat:")));
     longitude=stod(stringParserHelper(lon,lon.find_last_of("lon:")));
-    closed_lane=stoi(stringParserHelper(closed_lanes,closed_lanes.find_last_of("lat:")));
-    down_track=stod(stringParserHelper(downtrack,downtrack.find_last_of("lon:")));
-    up_track=stod(stringParserHelper(uptrack,uptrack.find_last_of("lon:")));
+    closed_lane=stoi((std::string)stringParserHelper(closed_lanes,closed_lanes.find_last_of("lat:")));
+    down_track=stod((std::string)stringParserHelper(downtrack,downtrack.find_last_of("lon:")));
+    up_track=stod((std::string)stringParserHelper(uptrack,uptrack.find_last_of("lon:")));
   }
 
-  std::string TrafficIncidentParserWorker::stringParserHelper(std::string str,int str_index)
+  std::string TrafficIncidentParserWorker::stringParserHelper(std::string str,int str_index) const
   {
     std::string str_temp="";
     for(int i=str_index+1;i<=str.length();i++)
@@ -84,7 +81,7 @@ namespace traffic
     return str_temp;
   }
 
- lanelet::BasicPoint2d TrafficIncidentParserWorker::getIncidentOriginPoint()
+ lanelet::BasicPoint2d TrafficIncidentParserWorker::getIncidentOriginPoint() const
   {
     lanelet::projection::LocalFrameProjector projector(projection_msg_.c_str());
     lanelet::GPSPoint gps_point;
@@ -131,16 +128,16 @@ namespace traffic
 
     current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, local_point_, 1); 
     current_lanelet = current_lanelets[0].second;
-    carma_wm::TrackPos tp = carma_wm::geometry::trackPos(current_lanelet, local_point_);
-    previous_distance= std::fabs(tp.downtrack);
+    carma_wm::TrackPos tp0 = carma_wm::geometry::trackPos(current_lanelet, local_point_);
+    previous_distance= std::fabs(tp0.downtrack);
     
    while(previous_distance<up_track) //Extract the center line point towards the uptrack lanelets
     {
       auto next_lanelets = wm_->getMapRoutingGraph()->previous(current_lanelet);
       if(!next_lanelets.empty())
       {
-        carma_wm::TrackPos tp = carma_wm::geometry::trackPos(next_lanelets[0], local_point_);
-        previous_distance= std::fabs(tp.downtrack);
+        carma_wm::TrackPos tp1 = carma_wm::geometry::trackPos(next_lanelets[0], local_point_);
+        previous_distance= std::fabs(tp1.downtrack);
         auto back_point = next_lanelets[0].centerline().back().basicPoint2d();
         auto front_point = next_lanelets[0].centerline().front().basicPoint2d();
         lanelet::BasicPoint2d middle = {(back_point.x() + front_point.x())/2, (back_point.y() + front_point.y())/2};
