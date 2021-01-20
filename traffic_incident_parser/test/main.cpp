@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 LEIDOS.
+ * Copyright (C) 2020 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,17 +14,10 @@
  * the License.
  */
 
-#include <sstream>
+#include <gtest/gtest.h>
 
-#include <ros/ros.h>
-#include "platooning_tactical_plugin/platooning_tactical_plugin_node.h"
-
-int main(int argc, char** argv)
-{
-
-  ros::init(argc, argv, "platooning_tactical_plugin");
-  platooning_tactical_plugin::PlatooningTacticalPluginNode platooning_tactical_plugin;
-  platooning_tactical_plugin.run();
-
-  return 0;
+// Run all the tests
+int main(int argc, char **argv) {
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

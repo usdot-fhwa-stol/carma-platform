@@ -66,9 +66,22 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
 
   lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
   double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
+<<<<<<< HEAD
 
   auto points_and_target_speeds =
       maneuvers_to_points(req.maneuver_plan.maneuvers, std::max(0.0, current_downtrack - config_.back_distance), wm_);  // Convert maneuvers to points
+=======
+  //only work on lane_following maneuver plans
+  std::vector<cav_msgs::Maneuver> maneuver_plan;
+  for(int i=0;i<req.maneuver_plan.maneuvers.size();i++)
+  {
+    if(req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::LANE_FOLLOWING)
+    {
+      maneuver_plan.push_back(req.maneuver_plan.maneuvers[i]);
+    }
+  }
+  auto points_and_target_speeds = maneuvers_to_points(maneuver_plan, current_downtrack, wm_); // Convert maneuvers to points
+>>>>>>> develop
 
   ROS_DEBUG_STREAM("points_and_target_speeds: " << points_and_target_speeds.size());
 
