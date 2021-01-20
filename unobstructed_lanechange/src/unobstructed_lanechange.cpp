@@ -520,7 +520,7 @@ namespace unobstructed_lanechange
         lanelet::BasicLineString2d new_points;
 
         //Till path.size() -1 beacause no following relation for path.end()
-        for(size_t i=1;i<lanelets_in_path.size()-1;i++){
+        for(size_t i=1;i<lanelets_in_path.size();i++){
             if(lanelets_in_path[i].id() !=following_lanelet){
                 //CHANGING LANES
                 //generate new points
@@ -546,6 +546,9 @@ namespace unobstructed_lanechange
                 centerline_points.insert(centerline_points.end(), new_points.begin(), new_points.end());
             }
 
+            if(i == lanelets_in_path.size() -1){
+                break;
+            }
             prev_lanelet_id = lanelets_in_path[i].id();
             index = findLaneletIndexFromPath(prev_lanelet_id, shortest_path);
             following_lanelet = wm_->getRoute()->followingRelations(lanelets_in_path[i])[0].lanelet.id();
@@ -559,6 +562,11 @@ namespace unobstructed_lanechange
     {    
         lanelet::BasicLineString2d lc_route;
 
+        //*Liu Z, Zhang T., Wang Y.,Research on Local Dynamic Path Planning Method for Intelligent Vehicle Lane-Changing. Journal of Advanced Transportation
+        //https://doi.org/10.1155/2019/4762658
+        
+        //Get data points for cubic spline using f(x)= a*x^3 + b*x^2 + c*x + d
+        //Shifting start to origin
         lanelet::BasicPoint2d start_spl;
         lanelet::BasicPoint2d end_spl;
         start_spl.x() = 0;

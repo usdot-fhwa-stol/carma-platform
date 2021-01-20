@@ -46,116 +46,6 @@
 
 namespace unobstructed_lanechange
 {
-    TEST(UnobstructedLaneChangePlugin,DISABLED_Testusingosm){
-    // File to process. Path is relative to test folder
-    std::string path = ros::package::getPath("route");
-    std::string file = "/resource/map/town01_vector_map_1.osm";
-    file = path.append(file);
-    lanelet::Id start_id=159;
-    lanelet::Id end_id=121;
-    /***
-     * VAVLID PATHs (consists of lanenet ids): (This is also the shortest path because certain Lanelets missing)
-     * 159->160->164->136->135->137->144->121; 
-     * 159->160->164->136->135->137->144->118;
-     * 168->170->111
-     * 159->161->168->170->111
-     * 167->169->168->170->111
-     * 115->146->140->139->143->167->169->168->170->111 
-     * 141->139->143->167->169->168->170->111 
-     * 127->146->140->139->143->167->169->168->170->111 
-     * 101->100->104->167->169->168->170->111 (a counter cLock circle)
-     * * **/
-
-   // Write new map to file
-        int projector_type = 0;
-        std::string target_frame;
-        lanelet::ErrorMessages load_errors;
-        // Parse geo reference info from the original lanelet map (.osm)
-        lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
-        lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
-        lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
-        if (map->laneletLayer.size() == 0)
-        {
-            FAIL() << "Input map does not contain any lanelets";
-        }
-        std::shared_ptr<carma_wm::CARMAWorldModel> cmw=std::make_shared<carma_wm::CARMAWorldModel>();
-        cmw->carma_wm::CARMAWorldModel::setMap(map);
-
-        //Set Route
-        carma_wm::test::setRouteByIds({start_id,end_id},cmw);
-        cmw->carma_wm::CARMAWorldModel::setMap(map);
-
-        //get starting position
-        auto llt=map.get()->laneletLayer.get(start_id);
-        lanelet::LineString3d left_bound=llt.leftBound();
-        lanelet::LineString3d right_bound=llt.rightBound();
-        geometry_msgs::PoseStamped left;
-        geometry_msgs::PoseStamped right;
-        for(lanelet::Point3d& p : left_bound)
-        {
-            left.pose.position.x=p.x();
-            left.pose.position.y=p.y();
-            left.pose.position.z=p.z();
-
-        }
-        for(lanelet::Point3d& p : right_bound)
-        {
-            right.pose.position.x=p.x();
-            right.pose.position.y=p.y();
-            right.pose.position.z=p.z();
-        }
-        geometry_msgs::PoseStamped curr_pos;
-        curr_pos.pose.position.x=(left.pose.position.x+right.pose.position.x)/2;
-        curr_pos.pose.position.y=(left.pose.position.y+right.pose.position.y)/2;
-        curr_pos.pose.position.z=(left.pose.position.z+right.pose.position.z)/2;
-
-        curr_pos.pose.orientation.x=0.0;
-        curr_pos.pose.orientation.y=0.0;
-        curr_pos.pose.orientation.z=0.0;
-        curr_pos.pose.orientation.w=0.0;
-
-        //Define arguments for function maneuvers_to_points
-        UnobstructedLaneChangePlugin worker;
-        ros::Time::init(); //Initialize ros::Time
-        lanelet::BasicPoint2d veh_pos(curr_pos.pose.position.x,curr_pos.pose.position.y);
-        double starting_downtrack = cmw->routeTrackPos(veh_pos).downtrack;
-        //get ending downtrack from lanelet id
-        double ending_downtrack;
-        auto shortest_path = cmw->getRoute()->shortestPath();
-        for (size_t i=0; i <shortest_path.size(); ++i)
-        {
-            if(shortest_path[i].id() == end_id)
-            {
-                lanelet::ConstLanelet ending_lanelet;
-                ending_lanelet == shortest_path[i];
-                ending_downtrack = cmw->routeTrackPos(shortest_path[i].centerline2d().back()).downtrack;
-            }
-        }
-    worker.wm_ = cmw;
-
-    //Define lane change maneuver
-    cav_msgs::Maneuver maneuver;
-    maneuver.type=cav_msgs::Maneuver::LANE_CHANGE;
-    maneuver.lane_change_maneuver.start_dist = starting_downtrack;
-    maneuver.lane_change_maneuver.end_dist = ending_downtrack;
-    maneuver.lane_change_maneuver.start_speed = 30.0;
-    maneuver.lane_change_maneuver.start_time = ros::Time::now();
-    //calculate end_time assuming constant acceleration
-    double acc = pow(maneuver.lane_change_maneuver.start_speed,2)/(2*(ending_downtrack - starting_downtrack));
-    double end_time = maneuver.lane_change_maneuver.start_speed/acc;
-    maneuver.lane_change_maneuver.end_speed = 30.0;
-    maneuver.lane_change_maneuver.end_time = ros::Time(end_time + maneuver.lane_change_maneuver.start_time.toSec());
-    maneuver.lane_change_maneuver.starting_lane_id = std::to_string(start_id);
-    maneuver.lane_change_maneuver.ending_lane_id = std::to_string(end_id);
-    
-    std::vector<cav_msgs::Maneuver> maneuvers;
-    maneuvers.push_back(maneuver);
-    
-
-    worker.maneuvers_to_points(maneuvers, starting_downtrack, cmw);
-    EXPECT_TRUE(true);
-    }
-
     TEST(UnobstructedLaneChangePlugin,TestusingGuidanceLib){
         //Using Guidance Lib to create map
         carma_wm::test::MapOptions options;
@@ -226,7 +116,7 @@ namespace unobstructed_lanechange
         }
         geometry_msgs::PoseStamped curr_pos;
         curr_pos.pose.position.x=(left.pose.position.x+right.pose.position.x)/2;
-        curr_pos.pose.position.y=(left.pose.position.y+right.pose.position.y)/2;
+        curr_pos.pose.position.y=0;
         curr_pos.pose.position.z=(left.pose.position.z+right.pose.position.z)/2;
 
         curr_pos.pose.orientation.x=0.0;
@@ -294,19 +184,6 @@ namespace unobstructed_lanechange
         
         EXPECT_TRUE(isTrajectory);
         EXPECT_TRUE(resp.trajectory_plan.trajectory_points.size() > 2);
-
-        std::ofstream myfile;
-        myfile.open("Points.csv");
-        myfile<<"Maneuver_to_Points"<<"\n";
-        for(int i =0; i< points_and_target_speeds.size();i++){
-            myfile<<"Point"<<i<<","<< points_and_target_speeds[i].point.x() <<","<< points_and_target_speeds[i].point.y()<<"\n";
-        }
-        myfile<<"\n";
-        myfile<<"Compose Trajectory"<<"\n";
-        for(int i =0;i< resp.trajectory_plan.trajectory_points.size();i++){
-            myfile<<" Point"<<i<<","<<resp.trajectory_plan.trajectory_points[i].x<<","<<resp.trajectory_plan.trajectory_points[i].y<<"\n";
-        }
-        myfile.close();
 
         /* Test compose trajectory and helper functions */
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory;
