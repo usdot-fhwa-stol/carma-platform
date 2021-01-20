@@ -271,7 +271,7 @@ namespace unobstructed_lanechange
     std::vector<cav_msgs::Maneuver> maneuvers;
     maneuvers.push_back(maneuver);
     worker.current_speed_ = maneuver.lane_change_maneuver.start_speed;
-    worker.maneuvers_to_points(maneuvers, starting_downtrack, cmw);
+    auto points_and_target_speeds = worker.maneuvers_to_points(maneuvers, starting_downtrack, cmw);
     EXPECT_TRUE(true);
 
     /* Test PlanTrajectory cb */
@@ -295,7 +295,59 @@ namespace unobstructed_lanechange
         EXPECT_TRUE(isTrajectory);
         EXPECT_TRUE(resp.trajectory_plan.trajectory_points.size() > 2);
 
+        std::ofstream myfile;
+        myfile.open("Points.csv");
+        myfile<<"Maneuver_to_Points"<<"\n";
+        for(int i =0; i< points_and_target_speeds.size();i++){
+            myfile<<"Point"<<i<<","<< points_and_target_speeds[i].point.x() <<","<< points_and_target_speeds[i].point.y()<<"\n";
+        }
+        myfile<<"\n";
+        myfile<<"Compose Trajectory"<<"\n";
+        for(int i =0;i< resp.trajectory_plan.trajectory_points.size();i++){
+            myfile<<" Point"<<i<<","<<resp.trajectory_plan.trajectory_points[i].x<<","<<resp.trajectory_plan.trajectory_points[i].y<<"\n";
+        }
+        myfile.close();
 
+        /* Test compose trajectory and helper functions */
+        std::vector<cav_msgs::TrajectoryPlanPoint> trajectory;
+        cav_msgs::VehicleState state;
+        state.X_pos_global=curr_pos.pose.position.x;
+        state.Y_pos_global = curr_pos.pose.position.y;
+        int nearest_pt = worker.getNearestPointIndex(points_and_target_speeds,state);
+
+        std::vector<lanelet::BasicPoint2d> points_split;
+        std::vector<double> speeds_split;
+        worker.splitPointSpeedPairs(points_and_target_speeds, &points_split, &speeds_split);
+        EXPECT_TRUE(points_split.size() == speeds_split.size());
+
+        //Test apply speed limits
+        std::vector<double> speed_limits={};
+        speed_limits.resize(speeds_split.size(),5);
+        std::vector<double> constrained_speeds = worker.apply_speed_limits(speeds_split,speed_limits);
+        
+        // Test adaptive lookahead
+        double lookahead = worker.get_adaptive_lookahead(5);   
+        std::vector<double> lookahead_speeds = worker.get_lookahead_speed(points_split,constrained_speeds, lookahead);
+
+        trajectory = worker.compose_trajectory_from_centerline(points_and_target_speeds, state);
+        //Valid Trajectory has at least 2 points
+        EXPECT_TRUE(trajectory.size() > 2);
+
+        lanelet::BasicLineString2d route_geometry = worker.create_route_geom(starting_downtrack, ending_downtrack,cmw);
+
+        EXPECT_TRUE(worker.findLaneletIndexFromPath(start_id,shortest_path) == 0);
+
+        //Test create lanechange route
+        lanelet::BasicPoint2d start_position(state.X_pos_global, state.Y_pos_global);
+        lanelet::BasicPoint2d end_position(9.25, 100);
+        lanelet::BasicLineString2d lc_route = worker.create_lanechange_route(start_position, end_position);
+
+        //tes Compute heading frame between two points
+         Eigen::Isometry2d frame = worker.compute_heading_frame(start_position,
+                                                              end_position);
+        //Test constrain to time boundary
+        std::vector<PointSpeedPair> constrained = worker.constrain_to_time_boundary(points_and_target_speeds, 6.0);
+        
     }
 }
 

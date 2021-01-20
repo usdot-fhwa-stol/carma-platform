@@ -41,4 +41,4 @@ private:
   Spline2d spline_;
 };
 };  // namespace smoothing
-};  // namespace inlanecruising_plugin
+};  // namespace unobstructed_lanechange

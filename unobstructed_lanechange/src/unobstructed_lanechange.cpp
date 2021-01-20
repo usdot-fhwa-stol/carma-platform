@@ -36,7 +36,7 @@ namespace unobstructed_lanechange
         
         trajectory_srv_ = nh_->advertiseService("plugins/UnobstructedLaneChangePlugin/plan_trajectory", &UnobstructedLaneChangePlugin::plan_trajectory_cb, this);
                 
-        ubobstructed_lanechange_plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
+        unobstructed_lanechange_plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
         plugin_discovery_msg_.name = "UnobstructedLaneChangePlugin";
         plugin_discovery_msg_.versionId = "v1.0";
         plugin_discovery_msg_.available = true;
@@ -62,7 +62,7 @@ namespace unobstructed_lanechange
 
 
         ros::CARMANodeHandle::setSpinCallback([this]() -> bool {
-            ubobstructed_lanechange_plugin_discovery_pub_.publish(plugin_discovery_msg_);
+            unobstructed_lanechange_plugin_discovery_pub_.publish(plugin_discovery_msg_);
             return true;
         });
 
@@ -147,10 +147,8 @@ namespace unobstructed_lanechange
                 throw std::invalid_argument("Start distance is greater than or equal to end distance");
             }
 
-            //get route geometry between starting and ending lanelets
-            int starting_lanelet_id = stoi(lane_change_maneuver.starting_lane_id);
-            int ending_lanelet_id = stoi(lane_change_maneuver.ending_lane_id);
-            lanelet::BasicLineString2d route_geometry = create_route_geom(starting_lanelet_id, ending_lanelet_id, wm);
+            //get route geometry between starting and ending downtracks
+            lanelet::BasicLineString2d route_geometry = create_route_geom(starting_downtrack, ending_downtrack, wm);
 
             first = true;
             double delta_v = (lane_change_maneuver.end_speed - current_speed_)/route_geometry.size();
@@ -499,35 +497,35 @@ namespace unobstructed_lanechange
         return best_index;
     }
 
-    lanelet::BasicLineString2d UnobstructedLaneChangePlugin::create_route_geom( int start_lane_id, int end_lane_id, const carma_wm::WorldModelConstPtr& wm)
+    lanelet::BasicLineString2d UnobstructedLaneChangePlugin::create_route_geom( double starting_downtrack, double ending_downtrack, const carma_wm::WorldModelConstPtr& wm)
     {
-
-        auto shortest_path = wm_->getRoute()->shortestPath();
-
-        //Use start and end lanelet index on maneuver-route to get lanelets in path
-        int start_lanelet_index = findLaneletIndexFromPath(start_lane_id,shortest_path);
-        int end_lanelet_index = findLaneletIndexFromPath(end_lane_id, shortest_path);
+        //Create route geometry for lane change maneuver
+        std::vector<lanelet::ConstLanelet> lanelets_in_path = wm->getLaneletsBetween(starting_downtrack, ending_downtrack, true);
     
-        std::vector<lanelet::ConstLanelet> lanelets_in_path(shortest_path.begin() + start_lanelet_index, shortest_path.begin() + end_lanelet_index);
-
-    
-        //Concatenate centerline path for forward lanelets, create spline for lane change=
+        //Concatenate centerline path for same-lane lanelets, create spline for lane change
         lanelet::Id prev_lanelet_id= lanelets_in_path[0].id();
 
         //find index on path
+        auto shortest_path = wm_->getRoute()->shortestPath();
         int index = findLaneletIndexFromPath(prev_lanelet_id, shortest_path);
+        
+        //Get centerline for first lanelet, to compound with others
+        lanelet::BasicLineString2d centerline_points = lanelets_in_path[0].centerline2d().basicLineString();
+
+        if(lanelets_in_path.size() == 1){
+            return centerline_points;
+        }
+        
         lanelet::Id following_lanelet = wm_->getRoute()->followingRelations(shortest_path[index])[0].lanelet.id();
-        lanelet::BasicLineString2d centerline_points = wm_->getRoute()->followingRelations(shortest_path[index])[0].lanelet.centerline2d().basicLineString();
         lanelet::BasicLineString2d new_points;
 
-
-        for(size_t i=1;i<lanelets_in_path.size();i++){
-            index = findLaneletIndexFromPath(lanelets_in_path[i].id(), shortest_path);
+        //Till path.size() -1 beacause no following relation for path.end()
+        for(size_t i=1;i<lanelets_in_path.size()-1;i++){
             if(lanelets_in_path[i].id() !=following_lanelet){
                 //CHANGING LANES
                 //generate new points
                 lanelet::BasicLineString2d out;
-                lanelet::BasicLineString2d  a = wm_->getRoute()->followingRelations(shortest_path[index])[0].lanelet.centerline2d().basicLineString();
+                lanelet::BasicLineString2d  a =lanelets_in_path[i].centerline2d().basicLineString();
                 lanelet::BasicPoint2d start = centerline_points.front();
                 lanelet::BasicPoint2d end = a.back();
                 //Use Spline lib to create lane change route
@@ -535,12 +533,11 @@ namespace unobstructed_lanechange
             }
             else{
                 //GOING STRAIGHT
-                new_points = wm_->getRoute()->followingRelations(shortest_path[index])[0].lanelet.centerline2d().basicLineString();
+                new_points = lanelets_in_path[i].centerline2d().basicLineString();
                 //concatenate
                 //carma_wm::geometry::concatenate_line_strings(centerline_points, new_points);
 
             }
-
             //Start from .begin() for first iteration to account for relation between lanelet 0 and lanelet 1
             if(i == 1){     
                 centerline_points = new_points;
@@ -551,7 +548,7 @@ namespace unobstructed_lanechange
 
             prev_lanelet_id = lanelets_in_path[i].id();
             index = findLaneletIndexFromPath(prev_lanelet_id, shortest_path);
-            following_lanelet = wm_->getRoute()->followingRelations(shortest_path[index])[0].lanelet.id();
+            following_lanelet = wm_->getRoute()->followingRelations(lanelets_in_path[i])[0].lanelet.id();
         }
 
         return centerline_points;
@@ -562,10 +559,29 @@ namespace unobstructed_lanechange
     {    
         lanelet::BasicLineString2d lc_route;
 
+        lanelet::BasicPoint2d start_spl;
+        lanelet::BasicPoint2d end_spl;
+        start_spl.x() = 0;
+        start_spl.y() = 0;
+        end_spl.x() = end.x() - start.x();
+        end_spl.y() = end.y() - start.y();
+        double W = end_spl.y() - start_spl.y();
+        double L = end_spl.x() - start_spl.x();
+        //double slope = W/L; //c
+        double slope =0;
+        double b = ((3*W - (2*L*slope)))/pow(L,2);
+        double a = (L * pow(slope,2) - (2 *W))/(pow(L,3));
+
+
         lanelet::BasicPoint2d mid;
-        mid.x() = (start.x() + end.x())/2;
-        mid.y() = (start.y() + end.y())/2;
-        std::vector<lanelet::BasicPoint2d> points = {start, mid, end};
+        mid.x() = (start_spl.x() + end_spl.x())/2;
+        mid.y() = (start_spl.y() + end_spl.y())/2;
+        mid.y() = a*pow(mid.x(),3) + b*pow(mid.x(),2) + slope*(mid.x());
+
+        lanelet::BasicPoint2d mid2;
+        mid2.x() = mid.x() + 0.5*mid.x();
+        mid2.y() = a*pow(mid2.x(),3) + b*pow(mid2.x(),2) + slope*(mid2.x());
+        std::vector<lanelet::BasicPoint2d> points = {start_spl, mid,mid2, end_spl};
 
         std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(points);
         if(!fit_curve)
@@ -577,6 +593,8 @@ namespace unobstructed_lanechange
         double scaled_steps_along_curve = 0.0; // from 0 (start) to 1 (end) for the whole trajectory
         for(int i =0;i<num_points;i++){
             lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
+            p.x() = p.x() + start.x();
+            p.y() = p.y() + start.y();
             lc_route.push_back(p);
             scaled_steps_along_curve += 1.0/num_points;
         }

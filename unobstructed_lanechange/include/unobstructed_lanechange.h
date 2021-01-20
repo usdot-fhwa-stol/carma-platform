@@ -34,6 +34,7 @@
 #include <carma_wm/Geometry.h>
 #include "smoothing/SplineI.h"
 #include "smoothing/BSpline.h"
+#include "spline.h"
 
 
 
@@ -87,13 +88,13 @@ namespace unobstructed_lanechange
 
             /**
              * \brief Creates a Lanelet2 Linestring from a vector or points along the geometry 
-             * \param start_lane_id lanelet id of start lanelet
-             * \param end_lane_id lanelet id of end lanelet
+             * \param starting_downtrack downtrack along route where maneuver starts
+             * \param ending_downtrack downtrack along route where maneuver starts
              * \param wm Pointer to intialized world model for semantic map access
              * \return A Linestring of the path from starting downtrack to ending downtrack
              */
             
-            lanelet::BasicLineString2d create_route_geom(int start_lane_id,  int end_lane_id, const carma_wm::WorldModelConstPtr& wm);
+            lanelet::BasicLineString2d create_route_geom(double starting_downtrack,  double ending_downtrack, const carma_wm::WorldModelConstPtr& wm);
 
             /**
              * \brief Given a LaneletPath object, find index of the lanelet which has target_id as its lanelet ID
@@ -223,7 +224,7 @@ namespace unobstructed_lanechange
             // node handles
             std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
-            ros::Publisher ubobstructed_lanechange_plugin_discovery_pub_;
+            ros::Publisher unobstructed_lanechange_plugin_discovery_pub_;
 
             // ros service servers
             ros::ServiceServer trajectory_srv_;
