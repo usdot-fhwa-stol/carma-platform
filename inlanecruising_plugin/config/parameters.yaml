@@ -7,3 +7,6 @@ lookahead_count: 8 # Number of points to look ahead for speed reduction.
 moving_average_window_size: 5 # Size of the window used in the moving average filter to smooth both the computed curvature and output speeds
 curvature_calc_lookahead_count: 1 # Number of points to look ahead when calculating the curvature of the lanelet centerline
 back_distance: 15.0 # Number of meters behind the first maneuver that need to be included in points for curvature calculation
+lateral_accel_limit_multiplier: 0.75 # Lateral acceleration limit multiplier
+max_accel_multiplier: 0.1 # Longitudinal acceleration limit multiplier
+use_lookahead: true

@@ -64,6 +64,7 @@ namespace route_following_plugin
     bool RouteFollowingPlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp)
     {        
         lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
+        ROS_DEBUG_STREAM("current_loc: x:" << pose_msg_.pose.position.x <<", y: " << pose_msg_.pose.position.y);
         auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc, 10);       
         if(current_lanelets.size() == 0)
         {

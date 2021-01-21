@@ -57,14 +57,20 @@ public:
     pnh.param<int>("moving_average_window_size", config.moving_average_window_size,
                      config.moving_average_window_size);
     pnh.param<double>("/vehicle_acceleration_limit", config.max_accel, config.max_accel);
+    pnh.param<double>("/vehicle_deceleration_limit", config.max_decel, config.max_decel);
+
     pnh.param<double>("/vehicle_lateral_accel_limit", config.lateral_accel_limit, config.lateral_accel_limit);
+    pnh.param<double>("lateral_accel_limit_multiplier", config.lateral_accel_limit_multiplier, config.lateral_accel_limit_multiplier);
+    pnh.param<double>("max_accel_multiplier", config.max_accel_multiplier, config.max_accel_multiplier);
     pnh.param<int>("curvature_calc_lookahead_count", config.curvature_calc_lookahead_count,
                         config.curvature_calc_lookahead_count);
+    pnh.param<bool>("use_lookahead", config.use_lookahead,config.use_lookahead);
 
     ROS_INFO_STREAM("InLaneCruisingPlugin Params" << config);
     
-    config.lateral_accel_limit = config.lateral_accel_limit * 0.75;
-    config.max_accel = config.max_accel * 0.75;
+    config.lateral_accel_limit = config.lateral_accel_limit * config.lateral_accel_limit_multiplier;
+    config.max_accel = config.max_accel * config.max_accel_multiplier;
+    config.max_decel = config.max_decel * config.max_accel_multiplier;
 
     ROS_INFO_STREAM("InLaneCruisingPlugin Params After Accel Change" << config);
     
