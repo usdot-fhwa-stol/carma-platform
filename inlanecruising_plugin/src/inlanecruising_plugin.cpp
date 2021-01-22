@@ -66,6 +66,11 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
 
   lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
   double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
+<<<<<<< HEAD
+
+  auto points_and_target_speeds =
+      maneuvers_to_points(req.maneuver_plan.maneuvers, std::max(0.0, current_downtrack - config_.back_distance), wm_);  // Convert maneuvers to points
+=======
   //only work on lane_following maneuver plans
   std::vector<cav_msgs::Maneuver> maneuver_plan;
   for(int i=0;i<req.maneuver_plan.maneuvers.size();i++)
@@ -76,6 +81,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
     }
   }
   auto points_and_target_speeds = maneuvers_to_points(maneuver_plan, current_downtrack, wm_); // Convert maneuvers to points
+>>>>>>> develop
 
   ROS_DEBUG_STREAM("points_and_target_speeds: " << points_and_target_speeds.size());
 
@@ -189,7 +195,7 @@ std::vector<double> InLaneCruisingPlugin::optimize_speed(const std::vector<doubl
       double dx = x_i - x_f; // invert dx to make math work out
 
       if(dv > 0) {
-        v_f = std::min(v_f, sqrt(v_i * v_i + 2 * config_.max_decel * dx));
+        v_f = std::min(v_f, sqrt(v_i * v_i + 2 * accel_limit * dx));
         visited_idx.insert(i);
       } else if (dv < 0) {
         break;
@@ -401,7 +407,8 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   //log::printDoublesPerLineWithPrefix("final_yaw_values[i]: ", final_yaw_values);
 
-
+  // Apply lookahead speeds
+  // final_actual_speeds = trajectory_utils::shift_by_lookahead(final_actual_speeds, config_.lookahead_count);
 
   // Add current vehicle point to front of the trajectory
 
@@ -415,14 +422,6 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
                                             final_actual_speeds.end());  // Points in front of current vehicle position
   std::vector<double> future_yaw(final_yaw_values.begin() + nearest_pt_index + 1,
                                             final_yaw_values.end());  // Points in front of current vehicle position
-  
-    // Apply lookahead speeds
-  if (config_.use_lookahead)
-  {
-   ROS_DEBUG_STREAM("Lookahead correctly being used");
-   future_speeds = trajectory_utils::shift_by_lookahead(future_speeds, config_.lookahead_count);
-  }
-  
   final_actual_speeds = future_speeds;
   all_sampling_points = future_basic_points;
   final_yaw_values = future_yaw;
