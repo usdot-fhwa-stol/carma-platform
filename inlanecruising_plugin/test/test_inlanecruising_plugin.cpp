@@ -394,7 +394,7 @@ TEST(InLaneCruisingPluginTest, DISABLED_compute_fit)
 
 }
 
-TEST(InLaneCruisingPluginTest, DISABLED_optimize_speed)
+TEST(InLaneCruisingPluginTest, optimize_speed)
 {
   InLaneCruisingPluginConfig config;
   config.downsample_ratio = 1;
@@ -441,6 +441,42 @@ TEST(InLaneCruisingPluginTest, DISABLED_optimize_speed)
   expected_results.push_back(4.12311);
   auto test_results = plugin.optimize_speed(downtracks, curv_speeds, max_accel);
   
+  ASSERT_NEAR(expected_results[0], test_results[0], 0.001);
+  ASSERT_NEAR(expected_results[1], test_results[1], 0.001);
+  ASSERT_NEAR(expected_results[2], test_results[2], 0.001);
+  ASSERT_NEAR(expected_results[3], test_results[3], 0.001);
+  ASSERT_NEAR(expected_results[4], test_results[4], 0.001);
+  ASSERT_NEAR(expected_results[5], test_results[5], 0.001);
+  ASSERT_NEAR(expected_results[6], test_results[6], 0.001);
+  ASSERT_NEAR(expected_results[7], test_results[7], 0.001);
+  ASSERT_NEAR(expected_results[8], test_results[8], 0.001);
+
+  // Check if the first speed is same
+  curv_speeds = {};
+  curv_speeds.push_back(4);
+  curv_speeds.push_back(1);
+  curv_speeds.push_back(3);
+  curv_speeds.push_back(4);
+  curv_speeds.push_back(1);
+  curv_speeds.push_back(0);
+  curv_speeds.push_back(3);
+  curv_speeds.push_back(3);
+  curv_speeds.push_back(6);
+
+  expected_results = {};
+  expected_results.push_back(4);
+  expected_results.push_back(2.82847);
+  expected_results.push_back(3);
+  expected_results.push_back(3);
+  expected_results.push_back(1);
+  expected_results.push_back(0);
+  expected_results.push_back(2.82843);
+  expected_results.push_back(3);
+  expected_results.push_back(4.12311);
+
+  test_results = plugin.optimize_speed(downtracks, curv_speeds, max_accel);
+
+  ASSERT_NEAR(expected_results[0], test_results[0], 0.001);
   ASSERT_NEAR(expected_results[1], test_results[1], 0.001);
   ASSERT_NEAR(expected_results[2], test_results[2], 0.001);
   ASSERT_NEAR(expected_results[3], test_results[3], 0.001);

@@ -181,7 +181,8 @@ std::vector<double> InLaneCruisingPlugin::optimize_speed(const std::vector<doubl
 
     double v_i = std::get<0>(min_pair);
     double x_i = downtracks[min_idx];
-    for (int i = min_idx - 1; i >= 0; i--) { // NOTE: Do not use size_t for i type here as -- with >= 0 will result in overflow
+    for (int i = min_idx - 1; i > 0; i--) { // NOTE: Do not use size_t for i type here as -- with > 0 will result in overflow
+                                            //       First point's speed is left unchanged as it is current speed of the vehicle
       double v_f = curv_speeds[i];
       double dv = v_f - v_i;
       
