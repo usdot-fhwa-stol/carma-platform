@@ -53,6 +53,8 @@ public:
     pnh.param<double>("curve_resample_step_size", config.curve_resample_step_size, config.curve_resample_step_size);
     pnh.param<int>("downsample_ratio", config.downsample_ratio, config.downsample_ratio);
     pnh.param<double>("minimum_speed", config.minimum_speed, config.minimum_speed);
+    pnh.param<double>("max_accel_multiplier", config.max_accel_multiplier, config.max_accel_multiplier);
+    pnh.param<double>("lat_accel_multiiplier", config.lat_accel_multiiplier, config.lat_accel_multiiplier);
     pnh.param<int>("lookahead_count", config.lookahead_count, config.lookahead_count);
     pnh.param<int>("moving_average_window_size", config.moving_average_window_size,
                      config.moving_average_window_size);
@@ -63,8 +65,8 @@ public:
 
     ROS_INFO_STREAM("InLaneCruisingPlugin Params" << config);
     
-    config.lateral_accel_limit = config.lateral_accel_limit * 0.75;
-    config.max_accel = config.max_accel * 0.75;
+    config.lateral_accel_limit = config.lateral_accel_limit * config.lat_accel_multiiplier;
+    config.max_accel = config.max_accel *  config.max_accel_multiplier;
 
     ROS_INFO_STREAM("InLaneCruisingPlugin Params After Accel Change" << config);
     

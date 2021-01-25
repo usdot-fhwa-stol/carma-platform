@@ -28,7 +28,11 @@ struct InLaneCruisingPluginConfig
   int downsample_ratio = 12.0;              // Amount to downsample input lanelet centerline data.
                                            // Corresponds to saving each nth point.
   double minimum_speed = 2.2352;           // Minimum allowable speed in m/s
-  double max_accel = 2;                  // Maximum allowable longitudinal acceleration in m/s^2
+  double max_accel = 3;                  // Maximum allowable longitudinal acceleration in m/s^2
+  double max_accel_multiplier = 0.75;                  // TODO
+  double lat_accel_multiiplier = 0.75;                  // TODO
+  
+  
   int lookahead_count = 8;                 // Number of points to look ahead for speed reduction.
   double lateral_accel_limit = 2.5;        // Maximum allowable lateral acceleration m/s^2
   int moving_average_window_size = 5;      // Size of the window used in the moving average filter to smooth both the
@@ -45,6 +49,8 @@ struct InLaneCruisingPluginConfig
            << "downsample_ratio: " << c.downsample_ratio << std::endl
            << "minimum_speed: " << c.minimum_speed << std::endl
            << "max_accel: " << c.max_accel << std::endl
+           << "max_accel_multiplier: " << c.max_accel_multiplier << std::endl
+           << "lat_accel_multiiplier: " << c.lat_accel_multiiplier << std::endl
            << "lookahead_count: " << c.lookahead_count << std::endl
            << "lateral_accel_limit: " << c.lateral_accel_limit << std::endl
            << "moving_average_window_size: " << c.moving_average_window_size << std::endl
