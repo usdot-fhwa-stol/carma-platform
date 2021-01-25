@@ -5,5 +5,5 @@ downsample_ratio: 12 # Amount to downsample input lanelet centerline data. Value
 minimum_speed: 2.2352 # Minimum allowable speed in m/s
 moving_average_window_size: 5 # Size of the window used in the moving average filter to smooth both the computed curvature and output speeds
 back_distance: 15.0 # Number of meters behind the first maneuver that need to be included in points for curvature calculation
-max_accel_multiplier: 0.875 # Multiplier of max_accel to bring the value under max_accel
-lat_accel_multiplier: 0.05 # Multiplier of lat_accel to bring the value under lat_accel TODO needs to be optimized
+max_accel_multiplier: 0.85 # Multiplier of max_accel to bring the value under max_accel
+lat_accel_multiplier: 0.50 # Multiplier of lat_accel to bring the value under lat_accel TODO needs to be optimized

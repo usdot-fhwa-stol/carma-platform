@@ -572,12 +572,12 @@ TEST(InLaneCruisingPluginTest, compute_curvature_at)
     circle_param += 0.02;
   }
 
-  ASSERT_NEAR(plugin.compute_curvature_at((*fit_circle), 0.0), 1.0/radius, 0.002); // check start curvature 1/r
+  ASSERT_NEAR(plugin.compute_curvature_at((*fit_circle), 0.0), 1.0/radius, 0.005); // check start curvature 1/r
   // check curvature is consistent
-  ASSERT_NEAR(plugin.compute_curvature_at((*fit_circle), 0.42), plugin.compute_curvature_at((*fit_circle), 0.85), 0.002); 
-  ASSERT_NEAR(plugin.compute_curvature_at((*fit_circle), 0.0), plugin.compute_curvature_at((*fit_circle), 1.0), 0.002); 
-  ASSERT_NEAR(plugin.compute_curvature_at((*fit_circle), 0.23), plugin.compute_curvature_at((*fit_circle), 0.99), 0.002); 
-  ASSERT_NEAR(plugin.compute_curvature_at((*fit_circle), 0.12), plugin.compute_curvature_at((*fit_circle), 0.76), 0.002);  
+  ASSERT_NEAR(plugin.compute_curvature_at((*fit_circle), 0.42), plugin.compute_curvature_at((*fit_circle), 0.85), 0.005); 
+  ASSERT_NEAR(plugin.compute_curvature_at((*fit_circle), 0.0), plugin.compute_curvature_at((*fit_circle), 1.0), 0.005); 
+  ASSERT_NEAR(plugin.compute_curvature_at((*fit_circle), 0.23), plugin.compute_curvature_at((*fit_circle), 0.99), 0.005); 
+  ASSERT_NEAR(plugin.compute_curvature_at((*fit_circle), 0.12), plugin.compute_curvature_at((*fit_circle), 0.76), 0.005);  
 }
 
 TEST(InLaneCruisingPluginTest, attach_back_points)
@@ -599,6 +599,7 @@ TEST(InLaneCruisingPluginTest, attach_back_points)
   p.point = lanelet::BasicPoint2d(2, 3);
   points.push_back(p);
   p.point = lanelet::BasicPoint2d(3, 4);
+  future_points.push_back(p);
   points.push_back(p);
   p.point = lanelet::BasicPoint2d(4, 5);
   future_points.push_back(p);
@@ -607,7 +608,7 @@ TEST(InLaneCruisingPluginTest, attach_back_points)
   future_points.push_back(p);
   points.push_back(p);
 
-  int nearest_pt_index = 3;
+  int nearest_pt_index = 2;
 
   auto result = plugin.attach_back_points(points, nearest_pt_index, future_points, 1.5);
 

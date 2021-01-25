@@ -29,12 +29,12 @@ struct InLaneCruisingPluginConfig
                                            // Corresponds to saving each nth point.
   double minimum_speed = 2.2352;           // Minimum allowable speed in m/s
   double max_accel = 3;                  // Maximum allowable longitudinal acceleration in m/s^2
-  double max_accel_multiplier = 0.875;     // Multiplier of max_accel to bring the value under max_accel
-  double lat_accel_multiplier = 0.05;      // Multiplier of lat_accel to bring the value under lat_accel TODO: needs to be tuned
+  double max_accel_multiplier = 0.85;     // Multiplier of max_accel to bring the value under max_accel
+  double lat_accel_multiplier = 0.50;      // Multiplier of lat_accel to bring the value under lat_accel TODO: needs to be tuned
   double lateral_accel_limit = 2.5;        // Maximum allowable lateral acceleration m/s^2
   int moving_average_window_size = 5;      // Size of the window used in the moving average filter to smooth both the
                                            // computed curvature and output speeds
-  double back_distance = 15;
+  double back_distance = 15;               // Number of meters behind the first maneuver that need to be included in points for curvature calculation
 
   friend std::ostream& operator<<(std::ostream& output, const InLaneCruisingPluginConfig& c)
   {

@@ -463,9 +463,6 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::attach_back_points(const std::
   int min_i = 0;
   for (int i = nearest_pt_index; i > 0; --i) { 
     min_i = i;
-    if (i == nearest_pt_index) {
-      continue;
-    }
     total_dist += lanelet::geometry::distance2d(points[i].point, points[i-1].point);
   
     if (total_dist > back_distance) {
