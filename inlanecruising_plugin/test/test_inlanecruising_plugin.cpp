@@ -579,3 +579,49 @@ TEST(InLaneCruisingPluginTest, compute_curvature_at)
   ASSERT_NEAR(plugin.compute_curvature_at((*fit_circle), 0.23), plugin.compute_curvature_at((*fit_circle), 0.99), 0.002); 
   ASSERT_NEAR(plugin.compute_curvature_at((*fit_circle), 0.12), plugin.compute_curvature_at((*fit_circle), 0.76), 0.002);  
 }
+
+TEST(InLaneCruisingPluginTest, attach_back_points)
+{
+  InLaneCruisingPluginConfig config;
+  config.downsample_ratio = 1;
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+
+  std::vector<PointSpeedPair> points;
+  std::vector<PointSpeedPair> future_points;
+
+  PointSpeedPair p;
+  p.point = lanelet::BasicPoint2d(0, 1);
+  p.speed = 1.0;
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(1, 2);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(2, 3);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(3, 4);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(4, 5);
+  future_points.push_back(p);
+  points.push_back(p);
+  p.point = lanelet::BasicPoint2d(5, 6);
+  future_points.push_back(p);
+  points.push_back(p);
+
+  int nearest_pt_index = 3;
+
+  auto result = plugin.attach_back_points(points, nearest_pt_index, future_points, 1.5);
+
+  ASSERT_EQ(points.size()  -1, result.size());
+  ASSERT_NEAR(1.0, result[0].point.x(), 0.0000001);
+  ASSERT_NEAR(2.0, result[1].point.x(), 0.0000001);
+  ASSERT_NEAR(3.0, result[2].point.x(), 0.0000001);
+  ASSERT_NEAR(4.0, result[3].point.x(), 0.0000001);
+  ASSERT_NEAR(5.0, result[4].point.x(), 0.0000001);
+
+  ASSERT_NEAR(2.0, result[0].point.y(), 0.0000001);
+  ASSERT_NEAR(3.0, result[1].point.y(), 0.0000001);
+  ASSERT_NEAR(4.0, result[2].point.y(), 0.0000001);
+  ASSERT_NEAR(5.0, result[3].point.y(), 0.0000001);
+  ASSERT_NEAR(6.0, result[4].point.y(), 0.0000001);
+
+}

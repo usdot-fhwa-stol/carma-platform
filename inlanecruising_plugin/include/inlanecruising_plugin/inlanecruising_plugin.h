@@ -220,6 +220,19 @@ public:
    */ 
   double compute_curvature_at(const inlanecruising_plugin::smoothing::SplineI& fit_curve, double step_along_the_curve) const;
 
+    /**
+   * \brief Attaches back_distance length of points in front of future points
+   * 
+   * \param points all point speed pairs
+   * \param nearest_pt_index idx of nearest point to the vehicle
+   * \param future_points future points before which to attach the points
+   * \param back_distance number of back distance in meters
+   * 
+   * \return point speed pairs with back distance length of points in front of future points
+   */ 
+  std::vector<PointSpeedPair> attach_back_points(const std::vector<PointSpeedPair>& points, const int nearest_pt_index, 
+                               std::vector<inlanecruising_plugin::PointSpeedPair> future_points, double back_distance) const;
+  
 private:
 
   /**
@@ -233,19 +246,7 @@ private:
    */ 
   std::pair<double, size_t> min_with_exclusions(const std::vector<double>& values, const std::unordered_set<size_t>& excluded) const;
   
-  /**
-   * \brief Attaches back_distance length of points in front of future points
-   * 
-   * \param points all point speed pairs
-   * \param nearest_pt_index idx of nearest point to the vehicle
-   * \param future_points future points before which to attach the points
-   * \param back_distance number of back distance in meters
-   * 
-   * \return point speed pairs with back distance length of points in front of future points
-   */ 
-  std::vector<PointSpeedPair> attach_back_points(const std::vector<PointSpeedPair>& points, const int nearest_pt_index, 
-                               std::vector<inlanecruising_plugin::PointSpeedPair> future_points, double back_distance) const;
-  
+
   carma_wm::WorldModelConstPtr wm_;
   InLaneCruisingPluginConfig config_;
   PublishPluginDiscoveryCB plugin_discovery_publisher_;
