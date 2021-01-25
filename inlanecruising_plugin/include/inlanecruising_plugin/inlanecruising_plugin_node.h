@@ -55,13 +55,10 @@ public:
     pnh.param<double>("minimum_speed", config.minimum_speed, config.minimum_speed);
     pnh.param<double>("max_accel_multiplier", config.max_accel_multiplier, config.max_accel_multiplier);
     pnh.param<double>("lat_accel_multiplier", config.lat_accel_multiplier, config.lat_accel_multiplier);
-    pnh.param<int>("lookahead_count", config.lookahead_count, config.lookahead_count);
     pnh.param<int>("moving_average_window_size", config.moving_average_window_size,
                      config.moving_average_window_size);
     pnh.param<double>("/vehicle_acceleration_limit", config.max_accel, config.max_accel);
     pnh.param<double>("/vehicle_lateral_accel_limit", config.lateral_accel_limit, config.lateral_accel_limit);
-    pnh.param<int>("curvature_calc_lookahead_count", config.curvature_calc_lookahead_count,
-                        config.curvature_calc_lookahead_count);
 
     ROS_INFO_STREAM("InLaneCruisingPlugin Params" << config);
     

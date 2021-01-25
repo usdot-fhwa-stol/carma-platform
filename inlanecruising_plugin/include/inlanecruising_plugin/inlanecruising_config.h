@@ -29,16 +29,11 @@ struct InLaneCruisingPluginConfig
                                            // Corresponds to saving each nth point.
   double minimum_speed = 2.2352;           // Minimum allowable speed in m/s
   double max_accel = 3;                  // Maximum allowable longitudinal acceleration in m/s^2
-  double max_accel_multiplier = 0.75;                  // TODO
-  double lat_accel_multiplier = 0.75;                  // TODO
-  
-  
-  int lookahead_count = 8;                 // Number of points to look ahead for speed reduction.
+  double max_accel_multiplier = 0.875;     // Multiplier of max_accel to bring the value under max_accel
+  double lat_accel_multiplier = 0.05;      // Multiplier of lat_accel to bring the value under lat_accel TODO: needs to be tuned
   double lateral_accel_limit = 2.5;        // Maximum allowable lateral acceleration m/s^2
   int moving_average_window_size = 5;      // Size of the window used in the moving average filter to smooth both the
                                            // computed curvature and output speeds
-  int curvature_calc_lookahead_count = 1;  // Number of points to look ahead when calculating the curvature
-                                           // of the lanelet centerline
   double back_distance = 15;
 
   friend std::ostream& operator<<(std::ostream& output, const InLaneCruisingPluginConfig& c)
@@ -51,10 +46,8 @@ struct InLaneCruisingPluginConfig
            << "max_accel: " << c.max_accel << std::endl
            << "max_accel_multiplier: " << c.max_accel_multiplier << std::endl
            << "lat_accel_multiplier: " << c.lat_accel_multiplier << std::endl
-           << "lookahead_count: " << c.lookahead_count << std::endl
            << "lateral_accel_limit: " << c.lateral_accel_limit << std::endl
            << "moving_average_window_size: " << c.moving_average_window_size << std::endl
-           << "curvature_calc_lookahead_count: " << c.curvature_calc_lookahead_count << std::endl
            << "back_distance: " << c.back_distance << std::endl
            << "}" << std::endl;
     return output;

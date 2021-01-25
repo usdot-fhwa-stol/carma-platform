@@ -29,6 +29,7 @@
 #include <functional>
 #include <inlanecruising_plugin/smoothing/SplineI.h>
 #include "inlanecruising_config.h"
+#include <unordered_set>
 
 namespace inlanecruising_plugin
 {
@@ -198,33 +199,52 @@ public:
   std::vector<double> get_lookahead_speed(const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& speeds, const double& lookahead);
 
   /**
-   * \brief Computes the lookahead distance based on the input velocity
+   * \brief Applies the longitudinal acceleration limit to each point's speed
    * 
-   * \param velocity vehicle velocity in m/s.
+   * \param downtracks downtrack distances corresponding to each speed
+   * \param curv_speeds vehicle velocity in m/s.
+   * \param accel_limit vehicle longitudinal acceleration in m/s^2.
    * 
-   * \return lookahead distance in m.
-   */ 
-  double get_adaptive_lookahead(double velocity);
-  
-  /**
-   * \brief Computes the lookahead distance based on the input velocity
-   * 
-   * \param velocity vehicle velocity in m/s.
-   * 
-   * \return lookahead distance in m.
+   * \return optimized speeds for each dowtrack points that satisfies longitudinal acceleration
    */ 
   std::vector<double> optimize_speed(const std::vector<double>& downtracks, const std::vector<double>& curv_speeds, double accel_limit);
 
-/**
-   * \brief Computes the lookahead distance based on the input velocity
+  /**
+   * \brief Given the curvature fit, computes the curvature at the given step along the curve
    * 
-   * \param velocity vehicle velocity in m/s.
+   * \param step_along_the_curve Value in double from 0.0 (curvature start) to 1.0 (curvature end) representing where to calculate the curvature
    * 
-   * \return lookahead distance in m.
+   * \param fit_curve curvature fit
+   * 
+   * \return Curvature (k = 1/r, 1/meter)
    */ 
   double compute_curvature_at(const std::unique_ptr<inlanecruising_plugin::smoothing::SplineI>& fit_curve, double step_along_the_curve);
 
 private:
+
+  /**
+   * \brief Returns the min, and its idx, from the vector of values, excluding given set of values
+   * 
+   * \param values vector of values
+   * 
+   * \param excluded set of excluded values
+   * 
+   * \return minimum value and its idx
+   */ 
+  std::pair<double, size_t> min_with_exclusions(const std::vector<double>& values, const std::unordered_set<size_t>& excluded);
+  
+  /**
+   * \brief Attaches back_distance length of points in front of future points
+   * 
+   * \param points all point speed pairs
+   * \param nearest_pt_index idx of nearest point to the vehicle
+   * \param future_points future points before which to attach the points
+   * \param back_distance number of back distance in meters
+   * 
+   * \return point speed pairs with back distance length of points in front of future points
+   */ 
+  std::vector<PointSpeedPair> attach_back_points(const std::vector<PointSpeedPair>& points, const int nearest_pt_index, std::vector<inlanecruising_plugin::PointSpeedPair> future_points, double back_distance);
+  
   carma_wm::WorldModelConstPtr wm_;
   InLaneCruisingPluginConfig config_;
   PublishPluginDiscoveryCB plugin_discovery_publisher_;

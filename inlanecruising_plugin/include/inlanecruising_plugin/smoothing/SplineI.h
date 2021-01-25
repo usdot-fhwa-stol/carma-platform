@@ -56,7 +56,7 @@ public:
    * 
    * \param t The t-th step to solve the spline at, where t is from 0 (beginning of curve) to 1 (end of curve)
    * 
-   * \return lanelet::BasicPoint2d with x, y that matches the first_deriv at t-th step along the curve
+   * \return lanelet::BasicPoint2d with x, y that matches the first_deriv at t-th step along the curve. This is not partial derivatives
    */ 
   virtual lanelet::BasicPoint2d first_deriv(double x) const = 0;
 
@@ -65,7 +65,7 @@ public:
    * 
    * \param t The t-th step to solve the spline at, where t is from 0 (beginning of curve) to 1 (end of curve)
    * 
-   * \return lanelet::BasicPoint2d with x, y that matches the second_deriv at t-th step along the curve
+   * \return lanelet::BasicPoint2d with x, y that matches the second_deriv at t-th step along the curve. This is not partial derivatives
    */ 
   virtual lanelet::BasicPoint2d second_deriv(double x) const = 0;
 };
