@@ -74,6 +74,12 @@ TEST(GuidanceStateMachineTest, testStates)
     gsm.onRoboticStatus(engage_status_pointer);
     // test re-engage state from inactive
     EXPECT_EQ(4, static_cast<int>(gsm.getCurrentState()));
+    cav_msgs::RouteEvent re;
+    re.event = cav_msgs::RouteEvent::ROUTE_COMPLETED;
+    //test drivers ready at end of route 
+    cav_msgs::RouteEventConstPtr route_event(new cav_msgs::RouteEvent(re));
+    gsm.onRouteEvent(route_event);
+    EXPECT_EQ(2, static_cast<int>(gsm.getCurrentState()));
     alert.type = alert.SHUTDOWN;
     cav_msgs::SystemAlertConstPtr alert_pointer_2(new cav_msgs::SystemAlert(alert));
     gsm.onSystemAlert(alert_pointer_2);
