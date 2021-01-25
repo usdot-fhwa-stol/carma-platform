@@ -514,10 +514,10 @@ TEST(InLaneCruisingPluginTest, compute_curvature_at)
   points.push_back(p);
   std::unique_ptr<smoothing::SplineI> fit_curve = plugin.compute_fit(points);
 
-  ASSERT_NEAR(plugin.compute_curvature_at(fit_curve, 0.0), 0, 0.001); // check start
-  ASSERT_NEAR(plugin.compute_curvature_at(fit_curve, 1.0), 0, 0.001); // check end
-  ASSERT_NEAR(plugin.compute_curvature_at(fit_curve, 0.23), 0, 0.001); // check random 1
-  ASSERT_NEAR(plugin.compute_curvature_at(fit_curve, 0.97), 0, 0.001); // check random 2
+  ASSERT_NEAR(plugin.compute_curvature_at((*fit_curve), 0.0), 0, 0.001); // check start
+  ASSERT_NEAR(plugin.compute_curvature_at((*fit_curve), 1.0), 0, 0.001); // check end
+  ASSERT_NEAR(plugin.compute_curvature_at((*fit_curve), 0.23), 0, 0.001); // check random 1
+  ASSERT_NEAR(plugin.compute_curvature_at((*fit_curve), 0.97), 0, 0.001); // check random 2
 
   ///////////////////////
   // Circle (0,0 centered, R radius)
@@ -572,10 +572,10 @@ TEST(InLaneCruisingPluginTest, compute_curvature_at)
     circle_param += 0.02;
   }
 
-  ASSERT_NEAR(plugin.compute_curvature_at(fit_circle, 0.0), 1.0/radius, 0.002); // check start curvature 1/r
+  ASSERT_NEAR(plugin.compute_curvature_at((*fit_circle), 0.0), 1.0/radius, 0.002); // check start curvature 1/r
   // check curvature is consistent
-  ASSERT_NEAR(plugin.compute_curvature_at(fit_circle, 0.42), plugin.compute_curvature_at(fit_circle, 0.85), 0.002); 
-  ASSERT_NEAR(plugin.compute_curvature_at(fit_circle, 0.0), plugin.compute_curvature_at(fit_circle, 1.0), 0.002); 
-  ASSERT_NEAR(plugin.compute_curvature_at(fit_circle, 0.23), plugin.compute_curvature_at(fit_circle, 0.99), 0.002); 
-  ASSERT_NEAR(plugin.compute_curvature_at(fit_circle, 0.12), plugin.compute_curvature_at(fit_circle, 0.76), 0.002);  
+  ASSERT_NEAR(plugin.compute_curvature_at((*fit_circle), 0.42), plugin.compute_curvature_at((*fit_circle), 0.85), 0.002); 
+  ASSERT_NEAR(plugin.compute_curvature_at((*fit_circle), 0.0), plugin.compute_curvature_at((*fit_circle), 1.0), 0.002); 
+  ASSERT_NEAR(plugin.compute_curvature_at((*fit_circle), 0.23), plugin.compute_curvature_at((*fit_circle), 0.99), 0.002); 
+  ASSERT_NEAR(plugin.compute_curvature_at((*fit_circle), 0.12), plugin.compute_curvature_at((*fit_circle), 0.76), 0.002);  
 }

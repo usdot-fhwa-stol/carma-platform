@@ -135,7 +135,7 @@ Eigen::Isometry2d InLaneCruisingPlugin::compute_heading_frame(const lanelet::Bas
 
 
 
-std::pair<double, size_t> InLaneCruisingPlugin::min_with_exclusions(const std::vector<double>& values, const std::unordered_set<size_t>& excluded) {
+std::pair<double, size_t> InLaneCruisingPlugin::min_with_exclusions(const std::vector<double>& values, const std::unordered_set<size_t>& excluded) const {
   double min = std::numeric_limits<double>::max();
   size_t best_idx = -1;
   for (size_t i = 0; i < values.size(); i++) {
@@ -165,7 +165,6 @@ std::vector<double> InLaneCruisingPlugin::optimize_speed(const std::vector<doubl
   }
 
   bool optimize = true;
-  size_t min_index = 0;
   std::unordered_set<size_t> visited_idx;
   visited_idx.reserve(curv_speeds.size());
 
@@ -246,7 +245,7 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::constrain_to_time_boundary(con
 }
 
 int InLaneCruisingPlugin::get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points,
-                                               const cav_msgs::VehicleState& state)
+                                               const cav_msgs::VehicleState& state) const
 {
   lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
   double min_distance = std::numeric_limits<double>::max();
@@ -331,7 +330,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
     lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
     
     all_sampling_points.push_back(p);
-    double c = compute_curvature_at(fit_curve, scaled_steps_along_curve);
+    double c = compute_curvature_at((*fit_curve), scaled_steps_along_curve);
     better_curvature.push_back(c);
     if ((double)steps_along_curve > step_threshold_for_next_speed)
     {
@@ -455,12 +454,13 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::trajectory_from
   return traj;
 }
 
-std::vector<PointSpeedPair> InLaneCruisingPlugin::attach_back_points(const std::vector<PointSpeedPair>& points, const int nearest_pt_index, std::vector<inlanecruising_plugin::PointSpeedPair> future_points, double back_distance)
+std::vector<PointSpeedPair> InLaneCruisingPlugin::attach_back_points(const std::vector<PointSpeedPair>& points, 
+                          const int nearest_pt_index, std::vector<inlanecruising_plugin::PointSpeedPair> future_points, double back_distance) const
 {
   std::vector<PointSpeedPair> back_and_future;
   back_and_future.reserve(points.size());
   double total_dist = 0;
-  int min_i = 0;
+  int min_i = 0;//
   for (int i = nearest_pt_index; i >= 0; --i) { // NOTE: Do not use size_t for i type here as -- with >= 0 will result in overflow
     min_i = i;
     if (i == nearest_pt_index) {
@@ -543,7 +543,7 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
 }
 
 int InLaneCruisingPlugin::get_nearest_point_index(const std::vector<PointSpeedPair>& points,
-                                               const cav_msgs::VehicleState& state)
+                                               const cav_msgs::VehicleState& state) const
 {
   lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
   ROS_DEBUG_STREAM("veh_point: " << veh_point.x() << ", " << veh_point.y());
@@ -553,8 +553,6 @@ int InLaneCruisingPlugin::get_nearest_point_index(const std::vector<PointSpeedPa
   for (const auto& p : points)
   {
     double distance = lanelet::geometry::distance2d(p.point, veh_point);
-    //ROS_DEBUG_STREAM("distance: " << distance);
-    //ROS_DEBUG_STREAM("p: " << p.point.x() << ", " << p.point.y());
     if (distance < min_distance)
     {
       best_index = i;
@@ -569,7 +567,7 @@ int InLaneCruisingPlugin::get_nearest_point_index(const std::vector<PointSpeedPa
 
 void InLaneCruisingPlugin::split_point_speed_pairs(const std::vector<PointSpeedPair>& points,
                                                 std::vector<lanelet::BasicPoint2d>* basic_points,
-                                                std::vector<double>* speeds)
+                                                std::vector<double>* speeds) const
 {
   basic_points->reserve(points.size());
   speeds->reserve(points.size());
@@ -597,10 +595,10 @@ InLaneCruisingPlugin::compute_fit(const std::vector<lanelet::BasicPoint2d>& basi
   return spl;
 }
 
-double InLaneCruisingPlugin::compute_curvature_at(const std::unique_ptr<inlanecruising_plugin::smoothing::SplineI>& fit_curve, double step_along_the_curve)
+double InLaneCruisingPlugin::compute_curvature_at(const inlanecruising_plugin::smoothing::SplineI& fit_curve, double step_along_the_curve) const
 {
-  lanelet::BasicPoint2d f_prime_pt = (*fit_curve).first_deriv(step_along_the_curve);
-  lanelet::BasicPoint2d f_prime_prime_pt = (*fit_curve).second_deriv(step_along_the_curve);
+  lanelet::BasicPoint2d f_prime_pt = fit_curve.first_deriv(step_along_the_curve);
+  lanelet::BasicPoint2d f_prime_prime_pt = fit_curve.second_deriv(step_along_the_curve);
   // Convert to 3d vector to do 3d vector operations like cross.
   Eigen::Vector3d f_prime = {f_prime_pt.x(), f_prime_pt.y(), 0};
   Eigen::Vector3d f_prime_prime = {f_prime_prime_pt.x(), f_prime_prime_pt.y(), 0};

@@ -159,7 +159,7 @@ public:
    * 
    * \return index of nearest point in points
    */ 
-  int get_nearest_point_index(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state);
+  int get_nearest_point_index(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state) const;
 
   /**
    * \brief Returns the nearest point to the provided vehicle pose in the provided list
@@ -169,13 +169,13 @@ public:
    * 
    * \return index of nearest point in points
    */ 
-  int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points, const cav_msgs::VehicleState& state);
+  int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points, const cav_msgs::VehicleState& state) const;
 
   /**
    * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
    */ 
   void split_point_speed_pairs(const std::vector<PointSpeedPair>& points, std::vector<lanelet::BasicPoint2d>* basic_points,
-                            std::vector<double>* speeds);
+                            std::vector<double>* speeds) const;
 
   /**
    * \brief Computes a spline based on the provided points
@@ -218,7 +218,7 @@ public:
    * 
    * \return Curvature (k = 1/r, 1/meter)
    */ 
-  double compute_curvature_at(const std::unique_ptr<inlanecruising_plugin::smoothing::SplineI>& fit_curve, double step_along_the_curve);
+  double compute_curvature_at(const inlanecruising_plugin::smoothing::SplineI& fit_curve, double step_along_the_curve) const;
 
 private:
 
@@ -231,7 +231,7 @@ private:
    * 
    * \return minimum value and its idx
    */ 
-  std::pair<double, size_t> min_with_exclusions(const std::vector<double>& values, const std::unordered_set<size_t>& excluded);
+  std::pair<double, size_t> min_with_exclusions(const std::vector<double>& values, const std::unordered_set<size_t>& excluded) const;
   
   /**
    * \brief Attaches back_distance length of points in front of future points
@@ -243,7 +243,8 @@ private:
    * 
    * \return point speed pairs with back distance length of points in front of future points
    */ 
-  std::vector<PointSpeedPair> attach_back_points(const std::vector<PointSpeedPair>& points, const int nearest_pt_index, std::vector<inlanecruising_plugin::PointSpeedPair> future_points, double back_distance);
+  std::vector<PointSpeedPair> attach_back_points(const std::vector<PointSpeedPair>& points, const int nearest_pt_index, 
+                               std::vector<inlanecruising_plugin::PointSpeedPair> future_points, double back_distance) const;
   
   carma_wm::WorldModelConstPtr wm_;
   InLaneCruisingPluginConfig config_;
