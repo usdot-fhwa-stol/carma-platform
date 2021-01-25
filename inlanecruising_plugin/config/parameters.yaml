@@ -8,4 +8,4 @@ moving_average_window_size: 5 # Size of the window used in the moving average fi
 curvature_calc_lookahead_count: 1 # Number of points to look ahead when calculating the curvature of the lanelet centerline
 back_distance: 15.0 # Number of meters behind the first maneuver that need to be included in points for curvature calculation
 max_accel_multiplier: 0.75 # TODO
-lateral_accel_limit: 0.75 # TODO
+lat_accel_multiplier: 0.5 # TODO

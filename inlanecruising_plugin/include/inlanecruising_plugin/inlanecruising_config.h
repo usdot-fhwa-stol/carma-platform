@@ -30,7 +30,7 @@ struct InLaneCruisingPluginConfig
   double minimum_speed = 2.2352;           // Minimum allowable speed in m/s
   double max_accel = 3;                  // Maximum allowable longitudinal acceleration in m/s^2
   double max_accel_multiplier = 0.75;                  // TODO
-  double lat_accel_multiiplier = 0.75;                  // TODO
+  double lat_accel_multiplier = 0.75;                  // TODO
   
   
   int lookahead_count = 8;                 // Number of points to look ahead for speed reduction.
@@ -50,7 +50,7 @@ struct InLaneCruisingPluginConfig
            << "minimum_speed: " << c.minimum_speed << std::endl
            << "max_accel: " << c.max_accel << std::endl
            << "max_accel_multiplier: " << c.max_accel_multiplier << std::endl
-           << "lat_accel_multiiplier: " << c.lat_accel_multiiplier << std::endl
+           << "lat_accel_multiplier: " << c.lat_accel_multiplier << std::endl
            << "lookahead_count: " << c.lookahead_count << std::endl
            << "lateral_accel_limit: " << c.lateral_accel_limit << std::endl
            << "moving_average_window_size: " << c.moving_average_window_size << std::endl
