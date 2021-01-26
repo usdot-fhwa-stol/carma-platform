@@ -46,7 +46,7 @@
 
   <!-- CARMA Motion Computation Node -->
   <group>
-    <include file = "$(find motion_computation)/launch/external_object_predictions.launch"/>
+    <include file = "$(find motion_computation)/launch/motion_computation.launch"/>
   </group>
 
 
