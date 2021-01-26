@@ -41,11 +41,9 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(motion_computation_node src/main.cpp src/motion_computation_node.cpp src/motion_computation_worker.cpp)
+add_executable(motion_computation_node src/main.cpp src/motion_computation_node.cpp )
+add_library(motion_computation_worker_lib
 
-add_library(motion_computation_worker_lib 
-  src/main.cpp
-  src/motion_computation_node.cpp
   src/motion_computation_worker.cpp
 )
 
@@ -53,7 +51,6 @@ add_dependencies(motion_computation_worker_lib ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(motion_computation_node motion_computation_worker_lib ${catkin_LIBRARIES})
-
 #############
 ## Install ##
 #############
@@ -96,7 +93,7 @@ catkin_add_gmock(${PROJECT_NAME}-test
 
 
 if(TARGET ${PROJECT_NAME}-test)
- target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
+ target_link_libraries(${PROJECT_NAME}-test motion_computation_worker_lib ${catkin_LIBRARIES})
 endif()
 
 
