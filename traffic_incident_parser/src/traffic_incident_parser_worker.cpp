@@ -53,22 +53,25 @@ namespace traffic
     }
     vec.push_back(mobility_strategy_params);
 
-    if (vec.size() != 5) 
+    if (vec.size() != 6) 
     {
       ROS_ERROR_STREAM("Given mobility strategy params are not correctly formatted.");
       return;
     }  
 
-    std::string lat=vec[0];
-    std::string lon=vec[1];
-    std::string closed_lanes=vec[2];
-    std::string downtrack=vec[3];
-    std::string uptrack=vec[4];
-    latitude=stod(stringParserHelper(lat,lat.find_last_of("lat:")));
-    longitude=stod(stringParserHelper(lon,lon.find_last_of("lon:")));
-    closed_lane=stoi((std::string)stringParserHelper(closed_lanes,closed_lanes.find_last_of("lat:")));
-    down_track=stod((std::string)stringParserHelper(downtrack,downtrack.find_last_of("lon:")));
-    up_track=stod((std::string)stringParserHelper(uptrack,uptrack.find_last_of("lon:")));
+    std::string lat_str=vec[0];
+    std::string lon_str=vec[1];
+    std::string closed_lanes_str=vec[2];
+    std::string downtrack_str=vec[3];
+    std::string uptrack_str=vec[4];
+    std::string min_gap_str=vec[5];
+
+    latitude=stod(stringParserHelper(lat_str,lat_str.find_last_of("lat:")));
+    longitude=stod(stringParserHelper(lon_str,lon_str.find_last_of("lon:")));
+    closed_lane=stoi(stringParserHelper(closed_lanes_str,closed_lanes_str.find_last_of("closed_lane:")));
+    down_track=stod(stringParserHelper(downtrack_str,downtrack_str.find_last_of("down_track:")));
+    up_track=stod(stringParserHelper(uptrack_str,uptrack_str.find_last_of("up_track:")));
+    min_gap=stod(stringParserHelper(min_gap_str,min_gap_str.find_last_of("min_gap:")));
   }
 
   std::string TrafficIncidentParserWorker::stringParserHelper(std::string str,int str_index) const
@@ -156,9 +159,14 @@ namespace traffic
     cav_msgs::TrafficControlMessageV01 traffic_mobility_msg;
     
     traffic_mobility_msg.geometry_exists=true;
+    traffic_mobility_msg.params_exists=true;
+    j2735_msgs::TrafficControlVehClass veh_type;
+    veh_type.vehicle_class = j2735_msgs::TrafficControlVehClass::ANY; // TODO decide what vehicle is affected
+    traffic_mobility_msg.params.vclasses.push_back(veh_type);
     traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::CLOSED_CHOICE;
     traffic_mobility_msg.params.detail.closed=cav_msgs::TrafficControlDetail::CLOSED;
-    
+    traffic_mobility_msg.params.detail.minhdwy=min_gap;
+
     for(auto &i:center_line_points_left)
     {
       cav_msgs::PathNode path_point;
