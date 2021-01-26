@@ -41,7 +41,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(motion_computation_node src/main.cpp src/motion_computation_node.cpp )
+add_executable(motion_computation_node src/main.cpp src/motion_computation_node.cpp   src/motion_computation_worker.cpp )
 add_library(motion_computation_worker_lib
 
   src/motion_computation_worker.cpp
@@ -91,9 +91,7 @@ catkin_add_gmock(${PROJECT_NAME}-test
  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 
+target_link_libraries(${PROJECT_NAME}-test motion_computation_worker_lib ${catkin_LIBRARIES})
 
-if(TARGET ${PROJECT_NAME}-test)
- target_link_libraries(${PROJECT_NAME}-test motion_computation_worker_lib ${catkin_LIBRARIES})
-endif()
 
 

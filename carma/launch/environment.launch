@@ -45,8 +45,8 @@
   <!-- Object Tracking and World Model -->
 
   <!-- CARMA Motion Computation Node -->
-  <group>
-    <include file = "$(find motion_computation)/launch/motion_computation.launch"/>
+  <group unless="$(arg simulation_mode)">
+    <include file="$(find motion_computation)/launch/motion_computation.launch"/>
   </group>
 
 
