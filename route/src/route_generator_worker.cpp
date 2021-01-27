@@ -311,7 +311,6 @@ namespace route {
         {
             msg.shortest_path_lanelet_ids.push_back(ll.id());
         }
-
         // iterate thought the all lanelet in the route to populat route_path_lanelet_ids
         for(const auto& ll : route.get().laneletSubmap()->laneletLayer)
         {

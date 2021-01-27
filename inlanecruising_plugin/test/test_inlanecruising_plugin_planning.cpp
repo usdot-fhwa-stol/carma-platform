@@ -37,7 +37,31 @@
 #include <carma_utils/containers/containers.h>
 #include <tf/LinearMath/Vector3.h>
 
-typedef Eigen::Spline<float, 2> Spline2d;
+
+#include <ros/ros.h>
+#include <string>
+#include <algorithm>
+#include <memory>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <lanelet2_core/geometry/Point.h>
+#include <trajectory_utils/trajectory_utils.h>
+#include <trajectory_utils/conversions/conversions.h>
+#include <sstream>
+#include <carma_utils/containers/containers.h>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+#include <Eigen/LU>
+#include <Eigen/SVD>
+#include <inlanecruising_plugin/smoothing/SplineI.h>
+#include <inlanecruising_plugin/smoothing/BSpline.h>
+#include <inlanecruising_plugin/inlanecruising_plugin.h>
+#include <inlanecruising_plugin/log/log.h>
+#include <inlanecruising_plugin/smoothing/filters.h>
+#include <unordered_set>
+
+
+typedef Eigen::Spline<double, 2> Spline2d;
 
 using namespace lanelet::units::literals;
 namespace inlanecruising_plugin
@@ -121,7 +145,7 @@ Using this file:
 TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
 {
   
-  int projector_type = 0;
+ int projector_type = 0;
   std::string target_frame;
   lanelet::ErrorMessages load_errors;
 
@@ -157,32 +181,33 @@ TEST(WaypointGeneratorTest, DISABLED_test_full_generation)
   // -159.666, 521.683
 
   cav_srvs::PlanTrajectoryRequest req;
-  req.vehicle_state.X_pos_global = -159.666;
-  req.vehicle_state.Y_pos_global = 521.683;
+
+  req.vehicle_state.X_pos_global = -107;
+  req.vehicle_state.Y_pos_global = 311.904;
   req.vehicle_state.orientation = -2.7570977;
   req.vehicle_state.longitudinal_vel = 0.0;
 
   cav_msgs::Maneuver maneuver;
   maneuver.type = cav_msgs::Maneuver::LANE_FOLLOWING;
-  maneuver.lane_following_maneuver.lane_id = 130;
-  maneuver.lane_following_maneuver.start_dist = 50;
+  maneuver.lane_following_maneuver.lane_id = 110;
+  maneuver.lane_following_maneuver.start_dist = 14.98835712 + 45+ 180;
   maneuver.lane_following_maneuver.start_time = ros::Time(0.0);
   maneuver.lane_following_maneuver.start_speed = 0.0;
 
-  maneuver.lane_following_maneuver.end_dist = 14.98835712 + 45;
+  maneuver.lane_following_maneuver.end_dist = 14.98835712 + 50.0 + 45 + 200;
   maneuver.lane_following_maneuver.end_speed = 6.7056;
-  maneuver.lane_following_maneuver.end_time = ros::Time(4.4704);
+  maneuver.lane_following_maneuver.end_time = ros::Time(8);
 
   cav_msgs::Maneuver maneuver2;
   maneuver2.type = cav_msgs::Maneuver::LANE_FOLLOWING;
-  maneuver2.lane_following_maneuver.lane_id = 130;
-  maneuver2.lane_following_maneuver.start_dist = 14.98835712 + 45;
+  maneuver2.lane_following_maneuver.lane_id = 110;
+  maneuver2.lane_following_maneuver.start_dist = 14.98835712 + 45+ 202;
   maneuver2.lane_following_maneuver.start_speed = 6.7056;
   maneuver2.lane_following_maneuver.start_time = ros::Time(4.4704);
 
-  maneuver2.lane_following_maneuver.end_dist = 14.98835712 + 50.0 + 45;
+  maneuver2.lane_following_maneuver.end_dist = 14.98835712 + 50.0 + 45 + 250;
   maneuver2.lane_following_maneuver.end_speed = 6.7056;
-  maneuver2.lane_following_maneuver.end_time = ros::Time(4.4704 + 7.45645430685);
+  maneuver2.lane_following_maneuver.end_time = ros::Time(4.4704 + 7.45645430685 + 37.31);
 
   req.maneuver_plan.maneuvers.push_back(maneuver);
   req.maneuver_plan.maneuvers.push_back(maneuver2);
@@ -248,7 +273,7 @@ TEST(WaypointGeneratorTest, DISABLED_test_compute_fit_full_generation)
   std::vector<lanelet::BasicPoint2d> spline_points;
 
   // Following logic is written for BSpline library. Switch with appropriate call of the new library if different.
-  float parameter = 0.0;
+  double parameter = 0.0;
   for(int i=0; i< downsampled_points.size(); i++){
     lanelet::BasicPoint2d pt = (*fit_curve)(parameter);
     // Uncomment to print and check if this generated map matches with the original one above 
@@ -278,7 +303,6 @@ TEST(WaypointGeneratorTest, DISABLED_test_compute_fit_full_generation)
     << ", which is " << (double)error_count/(double)downsampled_points.size()*100 << "% of total");
   ASSERT_TRUE((double)error_count/(double)downsampled_points.size() < 0.1); 
 }
-
 
 };  // namespace inlanecruising_plugin
 
