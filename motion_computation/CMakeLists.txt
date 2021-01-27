@@ -57,6 +57,7 @@ target_link_libraries(motion_computation_node motion_computation_worker_lib ${ca
 
 ## Mark executables for installation
 install(TARGETS motion_computation_node
+	motion_computation_worker_lib
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
