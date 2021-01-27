@@ -53,7 +53,7 @@ namespace traffic
     }
     vec.push_back(mobility_strategy_params);
 
-    if (vec.size() != 6) 
+    if (vec.size() != 5) 
     {
       ROS_ERROR_STREAM("Given mobility strategy params are not correctly formatted.");
       return;
@@ -61,20 +61,18 @@ namespace traffic
 
     std::string lat_str=vec[0];
     std::string lon_str=vec[1];
-    std::string closed_lanes_str=vec[2];
-    std::string downtrack_str=vec[3];
-    std::string uptrack_str=vec[4];
-    std::string min_gap_str=vec[5];
+    std::string downtrack_str=vec[2];
+    std::string uptrack_str=vec[3];
+    std::string min_gap_str=vec[4];
 
     latitude=stod(stringParserHelper(lat_str,lat_str.find_last_of("lat:")));
     longitude=stod(stringParserHelper(lon_str,lon_str.find_last_of("lon:")));
-    closed_lane=stoi(stringParserHelper(closed_lanes_str,closed_lanes_str.find_last_of("closed_lane:")));
     down_track=stod(stringParserHelper(downtrack_str,downtrack_str.find_last_of("down_track:")));
     up_track=stod(stringParserHelper(uptrack_str,uptrack_str.find_last_of("up_track:")));
     min_gap=stod(stringParserHelper(min_gap_str,min_gap_str.find_last_of("min_gap:")));
   }
 
-  std::string TrafficIncidentParserWorker::stringParserHelper(std::string str,int str_index) const
+  std::string TrafficIncidentParserWorker::stringParserHelper(std::string str, unsigned long str_index) const
   {
     std::string str_temp="";
     for(int i=str_index+1;i<=str.length();i++)
