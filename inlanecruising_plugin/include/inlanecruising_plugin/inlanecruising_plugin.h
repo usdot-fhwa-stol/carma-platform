@@ -29,6 +29,7 @@
 #include <functional>
 #include <inlanecruising_plugin/smoothing/SplineI.h>
 #include "inlanecruising_config.h"
+#include <unordered_set>
 
 namespace inlanecruising_plugin
 {
@@ -158,13 +159,23 @@ public:
    * 
    * \return index of nearest point in points
    */ 
-  int getNearestPointIndex(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state);
+  int get_nearest_point_index(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state) const;
+
+  /**
+   * \brief Returns the nearest point to the provided vehicle pose in the provided list
+   * 
+   * \param points The points to evaluate
+   * \param state The current vehicle state
+   * 
+   * \return index of nearest point in points
+   */ 
+  int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points, const cav_msgs::VehicleState& state) const;
 
   /**
    * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
    */ 
-  void splitPointSpeedPairs(const std::vector<PointSpeedPair>& points, std::vector<lanelet::BasicPoint2d>* basic_points,
-                            std::vector<double>* speeds);
+  void split_point_speed_pairs(const std::vector<PointSpeedPair>& points, std::vector<lanelet::BasicPoint2d>* basic_points,
+                            std::vector<double>* speeds) const;
 
   /**
    * \brief Computes a spline based on the provided points
@@ -188,15 +199,54 @@ public:
   std::vector<double> get_lookahead_speed(const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& speeds, const double& lookahead);
 
   /**
-   * \brief Computes the lookahead distance based on the input velocity
+   * \brief Applies the longitudinal acceleration limit to each point's speed
    * 
-   * \param velocity vehicle velocity in m/s.
+   * \param downtracks downtrack distances corresponding to each speed
+   * \param curv_speeds vehicle velocity in m/s.
+   * \param accel_limit vehicle longitudinal acceleration in m/s^2.
    * 
-   * \return lookahead distance in m.
+   * \return optimized speeds for each dowtrack points that satisfies longitudinal acceleration
    */ 
-  double get_adaptive_lookahead(double velocity);
+  std::vector<double> optimize_speed(const std::vector<double>& downtracks, const std::vector<double>& curv_speeds, double accel_limit);
 
+  /**
+   * \brief Given the curvature fit, computes the curvature at the given step along the curve
+   * 
+   * \param step_along_the_curve Value in double from 0.0 (curvature start) to 1.0 (curvature end) representing where to calculate the curvature
+   * 
+   * \param fit_curve curvature fit
+   * 
+   * \return Curvature (k = 1/r, 1/meter)
+   */ 
+  double compute_curvature_at(const inlanecruising_plugin::smoothing::SplineI& fit_curve, double step_along_the_curve) const;
+
+    /**
+   * \brief Attaches back_distance length of points in front of future points
+   * 
+   * \param points all point speed pairs
+   * \param nearest_pt_index idx of nearest point to the vehicle
+   * \param future_points future points before which to attach the points
+   * \param back_distance number of back distance in meters
+   * 
+   * \return point speed pairs with back distance length of points in front of future points
+   */ 
+  std::vector<PointSpeedPair> attach_back_points(const std::vector<PointSpeedPair>& points, const int nearest_pt_index, 
+                               std::vector<inlanecruising_plugin::PointSpeedPair> future_points, double back_distance) const;
+  
 private:
+
+  /**
+   * \brief Returns the min, and its idx, from the vector of values, excluding given set of values
+   * 
+   * \param values vector of values
+   * 
+   * \param excluded set of excluded values
+   * 
+   * \return minimum value and its idx
+   */ 
+  std::pair<double, size_t> min_with_exclusions(const std::vector<double>& values, const std::unordered_set<size_t>& excluded) const;
+  
+
   carma_wm::WorldModelConstPtr wm_;
   InLaneCruisingPluginConfig config_;
   PublishPluginDiscoveryCB plugin_discovery_publisher_;
