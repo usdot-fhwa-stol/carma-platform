@@ -94,7 +94,16 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state); // Compute the trajectory
   trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
 
-  resp.trajectory_plan = trajectory;
+  if (config_.enable_object_avoidance)
+  {
+    object_avoidance::ObjectAvoidance obj;
+    resp.trajectory_plan = obj.update_traj_for_object(trajectory, wm_, req.vehicle_state.longitudinal_vel);
+  }
+  else
+  {
+    resp.trajectory_plan = trajectory;
+  }
+  
   resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_FOLLOWING);
   resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 

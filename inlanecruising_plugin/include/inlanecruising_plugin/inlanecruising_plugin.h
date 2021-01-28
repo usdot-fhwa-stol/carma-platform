@@ -30,6 +30,7 @@
 #include <inlanecruising_plugin/smoothing/SplineI.h>
 #include "inlanecruising_config.h"
 #include <unordered_set>
+#include <inlanecruising_plugin/object_avoidance.h>
 
 namespace inlanecruising_plugin
 {
