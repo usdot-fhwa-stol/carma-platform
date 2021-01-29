@@ -46,7 +46,7 @@
 
   <!-- CARMA Motion Computation Node -->
   <group>
-    <include file = "$(find motion_computation)/launch/external_object_predictions.launch"/>
+    <include file="$(find motion_computation)/launch/motion_computation.launch"/>
   </group>
 
 
@@ -107,7 +107,7 @@
   <!-- lidar_euclidean_cluster_detect -->
   <group>
   <include file="$(find lidar_euclidean_cluster_detect)/launch/lidar_euclidean_cluster_detect.launch">
-  <arg name="points_node" value="$(optenv CARMA_LOCZ_NS)/ray_ground_filter/points_no_ground" />
+  <arg name="points_node" value="ray_ground_filter/points_no_ground" />
 
   <arg name="remove_ground" value="false" />
   <arg name="downsample_cloud" value="false" /> <!-- Apply VoxelGrid Filter with the value given by "leaf_size"-->
@@ -190,6 +190,14 @@
   <arg name="input_topic" value="detection/objects"/>
   </include>
   </group>
-
+  
+  <!-- Ray Ground Filter -->
+  <group>
+    <remap from="/points_raw" to="$(optenv CARMA_INTR_NS)/lidar/points_raw"/>
+    <include file="$(find points_preprocessor)/launch/ray_ground_filter.launch">
+      <arg name="no_ground_point_topic" value="points_no_ground" />
+      <arg name="ground_point_topic" value="points_ground" />
+    </include>
+  </group>
 
 </launch>

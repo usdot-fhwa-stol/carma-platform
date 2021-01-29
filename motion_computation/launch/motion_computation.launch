@@ -11,11 +11,11 @@
   the License.
 -->
 <!--
-  This file is used to launch the CARMA3 motion_computation_node
+  This file is used to launch the CARMA3 motion_computation node
 -->
 
 <launch>
-  <node name="external_object_predictions" pkg="motion_computation" type="motion_computation_node">
+  <node name="motion_computation" pkg="motion_computation" type="motion_computation_node">
     <rosparam command="load" file="$(find motion_computation)/config/parameters.yaml"/>
   </node>
 </launch>
