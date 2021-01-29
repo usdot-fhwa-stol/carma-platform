@@ -24,6 +24,7 @@
 #include <trajectory_utils/conversions/conversions.h>
 #include <carma_utils/containers/containers.h>
 #include "smoothing/filters.h"
+#include <future> 
 
 namespace unobstructed_lanechange
 {           
@@ -94,7 +95,24 @@ namespace unobstructed_lanechange
         double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
 
         //convert maneuver info to route points and speeds
-        auto points_and_target_speeds = maneuvers_to_points(req.maneuver_plan.maneuvers, current_downtrack, wm_);
+        std::vector<cav_msgs::Maneuver> maneuver_plan;
+        for(const auto maneuver : req.maneuver_plan.maneuvers)
+        {
+            if(maneuver.type == cav_msgs::Maneuver::LANE_CHANGE)
+            {
+                maneuver_plan.push_back(maneuver);
+            }
+        }
+        auto points_and_target_speeds = maneuvers_to_points(maneuver_plan, current_downtrack, wm_,req.vehicle_state);
+        std::cout<<"Maneuver to points"<< std::endl;
+        for(int i=0;i<points_and_target_speeds.size();i++){
+            std::cout<<" Point,"<<i<<",x,"<<points_and_target_speeds[i].point.x()<<",y,"<<points_and_target_speeds[i].point.y()<<",speed,"<<points_and_target_speeds[i].speed<<std::endl;
+        }
+        std::cout<<"Downtrack from maneuvers to points:"<<std::endl;
+        for(int i=0;i<points_and_target_speeds.size();i++){
+            lanelet::BasicPoint2d curr(points_and_target_speeds[i].point.x(),points_and_target_speeds[i].point.y());
+            std::cout<<"downtrack from points:"<<wm_->routeTrackPos(curr).downtrack<<std::endl;
+        }
         
         //Ignoring downsampling based on assumption than lane change will happen over short distance
         //auto downsampled_points = carma_utils::containers::downsample_vector(points_and_target_speeds.size(), 8);
@@ -105,6 +123,15 @@ namespace unobstructed_lanechange
         trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
         trajectory.trajectory_points = compose_trajectory_from_centerline(points_and_target_speeds, req.vehicle_state);
+        std::cout<<"Compose Trajectory"<<std::endl;
+        for(int i=0;i<trajectory.trajectory_points.size();i++){
+            std::cout<<" Point,"<<i<<",x,"<<trajectory.trajectory_points[i].x<<",y,"<<trajectory.trajectory_points[i].y<<std::endl;
+        }
+        std::cout<<"Downtrack from compose_trajectory:"<<std::endl;
+        for(int i=0;i<trajectory.trajectory_points.size();i++){
+            lanelet::BasicPoint2d curr(trajectory.trajectory_points[i].x,trajectory.trajectory_points[i].y);
+            std::cout<<"downtrack from points:"<<wm_->routeTrackPos(curr).downtrack<<std::endl;
+        }
 
         trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, minimum_speed_);
 
@@ -117,8 +144,7 @@ namespace unobstructed_lanechange
     }
 
     std::vector<PointSpeedPair> UnobstructedLaneChangePlugin::maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
-    double max_starting_downtrack, const carma_wm::WorldModelConstPtr& wm){
-        
+    double max_starting_downtrack, const carma_wm::WorldModelConstPtr& wm,const cav_msgs::VehicleState& state){
         std::vector<PointSpeedPair> points_and_target_speeds;
         std::unordered_set<lanelet::Id> visited_lanelets;
 
@@ -141,6 +167,7 @@ namespace unobstructed_lanechange
             }
             // //Get lane change route
             double ending_downtrack = lane_change_maneuver.end_dist;
+            std::cout<<"Starting downtrack:"<<starting_downtrack<<" ending downtrack:"<<ending_downtrack<<std::endl;
                 //Get geometry for maneuver
             if (starting_downtrack >= ending_downtrack)
             {
@@ -148,12 +175,14 @@ namespace unobstructed_lanechange
             }
 
             //get route geometry between starting and ending downtracks
-            lanelet::BasicLineString2d route_geometry = create_route_geom(starting_downtrack, ending_downtrack, wm);
+            lanelet::BasicLineString2d route_geometry = create_route_geom(starting_downtrack, stoi(lane_change_maneuver.starting_lane_id), ending_downtrack, wm);
+            int nearest_pt_index = getNearestRouteIndex(route_geometry,state);
+            lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.end());
 
             first = true;
-            double delta_v = (lane_change_maneuver.end_speed - current_speed_)/route_geometry.size();
+            double delta_v = (lane_change_maneuver.end_speed - current_speed_)/future_route_geometry.size();
             double prev_v = current_speed_;
-            for(auto p :route_geometry)
+            for(auto p :future_route_geometry)
             {
                 if(first && points_and_target_speeds.size() !=0){
                     first = false;
@@ -175,11 +204,12 @@ namespace unobstructed_lanechange
     std::vector<cav_msgs::TrajectoryPlanPoint> UnobstructedLaneChangePlugin::compose_trajectory_from_centerline(
     const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state)
     {
+        std::cout<<"State x:"<<state.X_pos_global<<" y:"<< state.Y_pos_global<<std::endl;
         int nearest_pt_index = getNearestPointIndex(points, state);
 
         std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end()); // Points in front of current vehicle position
 
-        auto time_bound_points = constrain_to_time_boundary(future_points, trajectory_time_length_ );
+        //auto time_bound_points = constrain_to_time_boundary(future_points, trajectory_time_length_ );
 
         std::vector<double> final_yaw_values;
         std::vector<double> final_actual_speeds;
@@ -187,7 +217,7 @@ namespace unobstructed_lanechange
 
         std::vector<double> speed_limits;
         std::vector<lanelet::BasicPoint2d> curve_points;
-        splitPointSpeedPairs(time_bound_points, &curve_points, &speed_limits);
+        splitPointSpeedPairs(future_points, &curve_points, &speed_limits);
         
         std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(curve_points); // Compute splines based on curve points
         if (!fit_curve)
@@ -473,6 +503,26 @@ namespace unobstructed_lanechange
         }
     }
 
+    int UnobstructedLaneChangePlugin::getNearestRouteIndex(lanelet::BasicLineString2d& points, const cav_msgs::VehicleState& state)
+    {
+        lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
+                double min_distance = std::numeric_limits<double>::max();
+        int i = 0;
+        int best_index = 0;
+        for (const auto& p : points)
+        {
+            double distance = lanelet::geometry::distance2d(p,veh_point);
+            if (distance < min_distance)
+            {
+            best_index = i;
+            min_distance = distance;
+            }
+            i++;
+        }
+        return best_index;
+
+    }
+
     int UnobstructedLaneChangePlugin::getNearestPointIndex(const std::vector<PointSpeedPair>& points,
                                                const cav_msgs::VehicleState& state)
     {
@@ -497,16 +547,51 @@ namespace unobstructed_lanechange
         return best_index;
     }
 
-    lanelet::BasicLineString2d UnobstructedLaneChangePlugin::create_route_geom( double starting_downtrack, double ending_downtrack, const carma_wm::WorldModelConstPtr& wm)
+    lanelet::BasicLineString2d UnobstructedLaneChangePlugin::create_route_geom( double starting_downtrack, int starting_lane_id, double ending_downtrack, const carma_wm::WorldModelConstPtr& wm)
     {
         //Create route geometry for lane change maneuver
+        //Starting downtrack maybe in the previous lanelet, if it is, have a lane follow till new lanelet starts
         std::vector<lanelet::ConstLanelet> lanelets_in_path = wm->getLaneletsBetween(starting_downtrack, ending_downtrack, true);
-    
-        //Concatenate centerline path for same-lane lanelets, create spline for lane change
+        lanelet::BasicLineString2d centerline_points = {};
+        int lane_change_iteration = 0;
+        if(lanelets_in_path[0].id() != starting_lane_id){
+            bool lane_change_req= false;
+            //Check if future lanelet is lane change lanelet
+            for(int i=0;i<lanelets_in_path.size();i++){
+                if(lanelets_in_path[i].id() == starting_lane_id){
+                    lane_change_req = true;
+                    lane_change_iteration = i;
+                    break;
+                }
+            }
+            if(!lane_change_req){
+                throw std::invalid_argument("Current path does not require a lane change. Request Incorrectly sent to Unobstructed lane change plugin");
+            }
+            //lane_follow till lane_change req
+            lanelet::BasicLineString2d new_points =lanelets_in_path[lane_change_iteration-1].centerline2d().basicLineString();
+            centerline_points.insert(centerline_points.end(), new_points.begin(), new_points.end());
+        }
+
+
+        //---------------------------------------------------------------------------------------------------
+            //Create lane change trajectory 
+            lanelet::BasicLineString2d first=lanelets_in_path[lane_change_iteration].centerline2d().basicLineString();
+            lanelet::BasicPoint2d start = first.front();
+            lanelet::BasicLineString2d last=lanelets_in_path.back().centerline2d().basicLineString();
+            lanelet::BasicPoint2d end = last.back();
+            lanelet::BasicLineString2d new_points = create_lanechange_route(start, end);
+            centerline_points.insert(centerline_points.end(),new_points.begin(),new_points.end() );
+        //----------------------------------------------------------------------------------------------------
+       /* //Concatenate centerline path for same-lane lanelets, create spline for lane change
         lanelet::Id prev_lanelet_id= lanelets_in_path[0].id();
 
         //find index on path
         auto shortest_path = wm_->getRoute()->shortestPath();
+        std::cout<<"shortest_path:"<<std::endl;
+        for(int i=0;i<shortest_path.size();i++){
+            std::cout<<shortest_path[i].id()<<" ";
+        }
+        std::cout<<"\n";
         int index = findLaneletIndexFromPath(prev_lanelet_id, shortest_path);
         
         //Get centerline for first lanelet, to compound with others
@@ -515,13 +600,16 @@ namespace unobstructed_lanechange
         if(lanelets_in_path.size() == 1){
             return centerline_points;
         }
-        
+        bool isfollowing=true;
         lanelet::Id following_lanelet = wm_->getRoute()->followingRelations(shortest_path[index])[0].lanelet.id();
         lanelet::BasicLineString2d new_points;
 
         //Till path.size() -1 beacause no following relation for path.end()
         for(size_t i=1;i<lanelets_in_path.size();i++){
-            if(lanelets_in_path[i].id() !=following_lanelet){
+            std::cout<<"Starting iter for lanelet:"<<lanelets_in_path[i].id()<<std::endl;
+            if(lanelets_in_path[i].id() !=following_lanelet || !isfollowing){
+                isfollowing = true;
+                std::cout<<"Changing lanes"<<std::endl;
                 //CHANGING LANES
                 //generate new points
                 lanelet::BasicLineString2d out;
@@ -532,12 +620,14 @@ namespace unobstructed_lanechange
                 new_points = create_lanechange_route(start, end);
             }
             else{
+                std::cout<<"Going straight"<<std::endl;
                 //GOING STRAIGHT
                 new_points = lanelets_in_path[i].centerline2d().basicLineString();
                 //concatenate
                 //carma_wm::geometry::concatenate_line_strings(centerline_points, new_points);
 
             }
+            std::cout<<"working for iter:"<<i<<" size:"<<shortest_path.size()<<" lanelet:"<<lanelets_in_path[i].id()<<std::endl;
             //Start from .begin() for first iteration to account for relation between lanelet 0 and lanelet 1
             if(i == 1){     
                 centerline_points = new_points;
@@ -547,13 +637,25 @@ namespace unobstructed_lanechange
             }
 
             if(i == lanelets_in_path.size() -1){
-                break;
+                break;  
             }
             prev_lanelet_id = lanelets_in_path[i].id();
-            index = findLaneletIndexFromPath(prev_lanelet_id, shortest_path);
-            following_lanelet = wm_->getRoute()->followingRelations(lanelets_in_path[i])[0].lanelet.id();
-        }
-
+            //If lanechange is on the last lanelet in the route, then can't check route for next lanelet
+            //std::future<lanelet::ConstLanelet> foo = wm_->getRoute()->followingRelations(lanelets_in_path[i])[0].lanelet;
+            //check left relation
+            //if(wm_->getRoute()->leftRelation(lanelets_in_path[i]))
+            std::cout<<"Reaching here"<<std::endl;
+            std::cout<< "Left:"<<wm_->getRoute()->leftRelations(lanelets_in_path[i])[0].lanelet.id()<<std::endl;
+            std::cout<<"Right:"<<wm_->getRoute()->rightRelations(lanelets_in_path[i])[0].lanelet.id()<<std::endl;
+//            if(wm_->getRoute()->followingRelations(lanelets_in_path[i]) !=NULL){
+                following_lanelet = wm_->getRoute()->followingRelations(lanelets_in_path[i])[0].lanelet.id();
+            // }
+            // else{
+            //     following_lanelet = lanelets_in_path[i].id();
+            //     isfollowing = false;
+            // }
+        
+        }*/
         return centerline_points;
         
     }
@@ -561,7 +663,8 @@ namespace unobstructed_lanechange
     lanelet::BasicLineString2d  UnobstructedLaneChangePlugin::create_lanechange_route(lanelet::BasicPoint2d start, lanelet::BasicPoint2d end)
     {    
         lanelet::BasicLineString2d lc_route;
-
+        std::cout<<"start x:"<<start.x()<< " y:"<<start.y()<<std::endl;
+        std::cout<<"end x:"<<end.x()<<" y:"<<end.y()<<std::endl;
         //*Liu Z, Zhang T., Wang Y.,Research on Local Dynamic Path Planning Method for Intelligent Vehicle Lane-Changing. Journal of Advanced Transportation
         //https://doi.org/10.1155/2019/4762658
         

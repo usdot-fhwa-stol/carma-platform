@@ -84,8 +84,9 @@ namespace unobstructed_lanechange
              */ 
             std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
                                                 double max_starting_downtrack,
-                                                const carma_wm::WorldModelConstPtr& wm);
-
+                                                const carma_wm::WorldModelConstPtr& wm,const cav_msgs::VehicleState& state);
+            
+            int getNearestRouteIndex(lanelet::BasicLineString2d& points, const cav_msgs::VehicleState& state);
             /**
              * \brief Creates a Lanelet2 Linestring from a vector or points along the geometry 
              * \param starting_downtrack downtrack along route where maneuver starts
@@ -94,7 +95,7 @@ namespace unobstructed_lanechange
              * \return A Linestring of the path from starting downtrack to ending downtrack
              */
             
-            lanelet::BasicLineString2d create_route_geom(double starting_downtrack,  double ending_downtrack, const carma_wm::WorldModelConstPtr& wm);
+            lanelet::BasicLineString2d create_route_geom(double starting_downtrack, int starting_lane_id, double ending_downtrack, const carma_wm::WorldModelConstPtr& wm);
 
             /**
              * \brief Given a LaneletPath object, find index of the lanelet which has target_id as its lanelet ID
