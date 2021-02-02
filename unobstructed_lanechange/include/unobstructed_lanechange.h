@@ -85,7 +85,6 @@ namespace unobstructed_lanechange
             std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
                                                 double max_starting_downtrack,
                                                 const carma_wm::WorldModelConstPtr& wm,const cav_msgs::VehicleState& state);
-
             int getNearestRouteIndex(lanelet::BasicLineString2d& points, const cav_msgs::VehicleState& state);
             /**
              * \brief Creates a Lanelet2 Linestring from a vector or points along the geometry 

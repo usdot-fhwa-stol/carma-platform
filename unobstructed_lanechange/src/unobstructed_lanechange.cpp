@@ -24,6 +24,7 @@
 #include <trajectory_utils/conversions/conversions.h>
 #include <carma_utils/containers/containers.h>
 #include "smoothing/filters.h"
+#include <future> 
 
 namespace unobstructed_lanechange
 {           
@@ -196,7 +197,6 @@ namespace unobstructed_lanechange
         std::vector<double> speed_limits;
         std::vector<lanelet::BasicPoint2d> curve_points;
         splitPointSpeedPairs(future_points, &curve_points, &speed_limits);
-
         std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(curve_points); // Compute splines based on curve points
         if (!fit_curve)
         {
@@ -568,8 +568,6 @@ namespace unobstructed_lanechange
         lc_route.push_back(end);
 
         return lc_route;
-
-        //return centerline_points;
     }
 
     lanelet::BasicLineString2d UnobstructedLaneChangePlugin::create_route_geom( double starting_downtrack, int starting_lane_id, double ending_downtrack, const carma_wm::WorldModelConstPtr& wm)

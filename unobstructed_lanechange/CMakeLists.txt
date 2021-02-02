@@ -96,7 +96,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} unobstructed_lanechange_plugin_lib
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -105,6 +105,7 @@ install(TARGETS ${PROJECT_NAME}
 # Mark other files for installation (e.g. launch and bag files, etc.)
 install(DIRECTORY
   launch
+  config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
@@ -112,8 +113,7 @@ install(DIRECTORY
 #############
 ## Testing ##
 #############
-catkin_add_gmock(${PROJECT_NAME}-test
-  test/test_unobstructed_lanechange_plugin.cpp
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
-target_link_libraries(${PROJECT_NAME}-test unobstructed_lanechange_plugin_lib ${catkin_LIBRARIES})
-
+##(${PROJECT_NAME}-test
+##  test/test_unobstructed_lanechange_plugin.cpp
+##  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+## target_link_libraries(${PROJECT_NAME}-test unobstructed_lanechange_plugin_lib ${catkin_LIBRARIES})
