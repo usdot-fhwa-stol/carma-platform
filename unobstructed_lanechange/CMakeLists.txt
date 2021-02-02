@@ -113,7 +113,7 @@ install(DIRECTORY
 #############
 ## Testing ##
 #############
-##(${PROJECT_NAME}-test
-##  test/test_unobstructed_lanechange_plugin.cpp
-##  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
-## target_link_libraries(${PROJECT_NAME}-test unobstructed_lanechange_plugin_lib ${catkin_LIBRARIES})
+catkin_add_gmock(${PROJECT_NAME}-test
+ test/test_unobstructed_lanechange_plugin.cpp
+ WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+target_link_libraries(${PROJECT_NAME}-test unobstructed_lanechange_plugin_lib ${catkin_LIBRARIES})
