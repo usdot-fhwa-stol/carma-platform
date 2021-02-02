@@ -39,18 +39,13 @@
 #include <carma_utils/containers/containers.h>
 #include <cav_msgs/VehicleState.h>
 #include <cav_msgs/TrajectoryPlanPoint.h>
-#include <fstream>
 #include <cav_srvs/PlanTrajectory.h>
-#include <sstream>
-#include<ros/package.h>
 
 namespace unobstructed_lanechange
 {
     TEST(UnobstructedLaneChangePlugin,Testusingosm){
         // File to process. Path is relative to route package
-        std::string path = ros::package::getPath("route");
-        std::string file = "/resource/map/town01_vector_map_1.osm";
-        file = path.append(file);
+        std::string file = "../resource/map/town01_vector_map_lane_change.osm";
         lanelet::Id start_id = 111;
         lanelet::Id lane_change_start_id = 111;
         lanelet::Id end_id = 106;

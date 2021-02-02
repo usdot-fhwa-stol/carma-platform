@@ -17,6 +17,4 @@
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend> 
   <depend>trajectory_utils</depend>  
-  <depend>route</depend>
-  <depend>roslib</depend> 
 </package>

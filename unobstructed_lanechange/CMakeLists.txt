@@ -32,14 +32,12 @@ set( CATKIN_DEPS
   tf
   tf2
   tf2_geometry_msgs
-  roslib
 )
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
  ${CATKIN_DEPS}
 )
-find_package(route REQUIRED)
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(Eigen3 REQUIRED)
@@ -52,7 +50,7 @@ find_package(Eigen3 REQUIRED)
 catkin_package(
    INCLUDE_DIRS include
    CATKIN_DEPENDS ${CATKIN_DEPS}
-   DEPENDS Boost Eigen3 route
+   DEPENDS Boost Eigen3
 )
 
 ###########
@@ -66,7 +64,6 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
-  ${route_INCLUDE_DIRS}
 )
 
 file(GLOB_RECURSE headers */*.hpp */*.h)

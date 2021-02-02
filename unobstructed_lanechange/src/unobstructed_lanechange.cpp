@@ -24,12 +24,9 @@
 #include <trajectory_utils/conversions/conversions.h>
 #include <carma_utils/containers/containers.h>
 #include "smoothing/filters.h"
-#include <future> 
 
 namespace unobstructed_lanechange
 {           
-    UnobstructedLaneChangePlugin::UnobstructedLaneChangePlugin(){}
-
     void UnobstructedLaneChangePlugin::initialize()
     {
         nh_.reset(new ros::CARMANodeHandle());
@@ -59,6 +56,7 @@ namespace unobstructed_lanechange
         pnh_->param<double>("lateral_accel_limit", lateral_accel_limit_, 1.5);
         pnh_->param<double>("moving_average_window_size", moving_average_window_size_, 5);
         pnh_->param<double>("curvature_calc_lookahead_count", curvature_calc_lookahead_count_, 1);
+        pnh_->param<int>("downsample_ratio", downsample_ratio_, 8);
 
 
 
@@ -105,7 +103,7 @@ namespace unobstructed_lanechange
         }
         auto points_and_target_speeds = maneuvers_to_points(maneuver_plan, current_downtrack, wm_,req.vehicle_state);
         
-        auto downsampled_points = carma_utils::containers::downsample_vector(points_and_target_speeds, 8);
+        auto downsampled_points = carma_utils::containers::downsample_vector(points_and_target_speeds, downsample_ratio_);
 
         cav_msgs::TrajectoryPlan trajectory;
         trajectory.header.frame_id = "map";
@@ -117,7 +115,13 @@ namespace unobstructed_lanechange
         trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, minimum_speed_);
 
         resp.trajectory_plan = trajectory;
-        resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_CHANGE);
+
+        for (int i=0; i<req.maneuver_plan.maneuvers.size(); i++){
+            if (req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::LANE_CHANGE){
+            resp.related_maneuvers.push_back(i);
+            break;
+            }
+        }
         resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
         return true;

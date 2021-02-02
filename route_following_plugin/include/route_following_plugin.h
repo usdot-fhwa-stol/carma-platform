@@ -78,9 +78,6 @@ namespace route_following_plugin
          * \return A lane keeping maneuver message which is ready to be published
          */
         cav_msgs::Maneuver composeStopandWaitManeuverMessage(double current_dist, double end_dist, double current_speed, int start_lane_id, int target_lane_id, ros::Time current_time, double end_time);
-
-        cav_msgs::Maneuver composeLaneChangeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int starting_lane_id,int ending_lane_id, ros::Time current_time);
-        
         /**
          * \brief Given a LaneletRelations and ID of the next lanelet in the shortest path
          * \param relations LaneletRelations relative to the previous lanelet

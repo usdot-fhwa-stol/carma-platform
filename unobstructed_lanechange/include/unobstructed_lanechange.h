@@ -27,14 +27,12 @@
 #include <cav_srvs/PlanTrajectory.h>
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
-#include "third_party_library/spline.h"
 #include <carma_wm/Geometry.h>
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/geometry/LineString.h>
 #include <carma_wm/Geometry.h>
 #include "smoothing/SplineI.h"
 #include "smoothing/BSpline.h"
-#include "spline.h"
 
 
 
@@ -53,10 +51,6 @@ namespace unobstructed_lanechange
     class UnobstructedLaneChangePlugin
     {
         public:
-            
-            // Default constructor for UnobstructedLaneChangePlugin class
-            UnobstructedLaneChangePlugin();
-
             /**
              * \brief General entry point to begin the operation of this class
             */
@@ -244,6 +238,7 @@ namespace unobstructed_lanechange
             double lateral_accel_limit_ = 1.5;
             double moving_average_window_size_ = 5;
             double curvature_calc_lookahead_count_ = 1;
+            int downsample_ratio_ =8;
 
             int num_points = traj_freq * trajectory_time_length_;
 
