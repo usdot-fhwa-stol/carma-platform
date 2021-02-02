@@ -17,6 +17,7 @@
  */
 
 #include <vector>
+#include <cmath>
 #include <cav_msgs/TrajectoryPlan.h>
 #include <cav_msgs/TrajectoryPlanPoint.h>
 #include <cav_msgs/Plugin.h>
@@ -49,10 +50,17 @@ namespace object_avoidance
 
         cav_msgs::TrajectoryPlan update_traj_for_object(cav_msgs::TrajectoryPlan& original_tp, const carma_wm::WorldModelConstPtr& wm_, double current_speed_);
 
+        // calculate the quintic polynomial with coefficients
         double polynomial_calc(std::vector<double> coeff, double x);
+        
+        // calculate the derivative of quintic polynomial with coefficients
+        double polynomial_calc_d(std::vector<double> coeff, double x);
+
+        // finds maximum speed in a set of trajectory points
         double max_trajectory_speed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points);
+
+        // calculates distance between trajectory points in a plan
         std::vector<double> get_relative_downtracks(cav_msgs::TrajectoryPlan& trajectory_plan);
-        int get_nearest_point_index(const std::vector<double>& values, const double& target_value) const;
 
         // parameter for activating object avoidance logic
         bool enable_avoidance = true;
@@ -64,9 +72,13 @@ namespace object_avoidance
          // current vehicle speed
         double current_speed_;
 
+        // minimum planning time
         double tpmin = 2;
+        // max deceleration value
         double maximum_deceleration_value = 3;
+        // minimum downtrack
         double min_downtrack = 3;
+        // minimum safety gap
         double x_gap = 2;
 
     };
