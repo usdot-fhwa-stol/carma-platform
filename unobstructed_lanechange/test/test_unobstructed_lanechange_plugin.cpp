@@ -46,54 +46,30 @@
 
 namespace unobstructed_lanechange
 {
-    TEST(UnobstructedLaneChangePlugin,TestusingGuidanceLib){
-        //Using Guidance Lib to create map
-        carma_wm::test::MapOptions options;
-        options.lane_length_ = 25;
-        options.lane_width_ = 3.7;
-        options.speed_limit_ = carma_wm::test::MapOptions::SpeedLimit::DEFAULT;
-        options.obstacle_ = carma_wm::test::MapOptions::Obstacle::DEFAULT;
-        std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
-        //create the Semantic Map
-        lanelet::LaneletMapPtr map = carma_wm::test::buildGuidanceTestMap(options.lane_width_, options.lane_length_);
-    /**
-     * This is a test library made for guidance unit tests. In general, it includes the following :
-     * - Helper functions to create the world from scratch or extend the world in getGuidanceTestMap()
-     * - addObstacle at a specified Cartesian or Trackpos point relative to specified lanelet Id
-     * - set route by giving series of lanelet Id in the map (setRouteById)
-     * - set speed of entire road (setSpeedLimit)
-     * - getGuidanceTestMap gives a simple one way, 3 lane map (25mph speed limit) with one static prebaked obstacle and 
-     *      4 lanelets in a lane (if 2 stripes make up one lanelet):
-     *
-     *        |1203|1213|1223|
-     *        | _  _  _  _  _|
-     *        |1202| Ob |1222|
-     *        | _  _  _  _  _|
-     *        |1201|1211|1221|    num   = lanelet id hardcoded for easier testing
-     *        | _  _  _  _  _|    |     = lane lines
-     *        |1200|1210|1220|    - - - = Lanelet boundary
-     *        |              |    O     = Default Obstacle
-     *        ****************
-     *           START_LINE
-     */
-        lanelet::Id start_id=1210;
-        lanelet::Id end_id=1223;
-
-        //set the map with default routingGraph
-        cmw ->carma_wm::CARMAWorldModel::setMap(map);
-        carma_wm::test::setRouteByIds({start_id,end_id},cmw);
-        lanelet::LaneletMapConstPtr const_map(map);
-        lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
-        lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
-
-        //Compute and print the shortest path
-        lanelet::Lanelet start_lanelet = map->laneletLayer.get(start_id);
-        lanelet::Lanelet end_lanelet = map->laneletLayer.get(end_id);
-        auto route = map_graph->getRoute(start_lanelet,end_lanelet);
-
-        
+    TEST(UnobstructedLaneChangePlugin,Testusingosm){
+        // File to process. Path is relative to route package
+        std::string path = ros::package::getPath("route");
+        std::string file = "/resource/map/town01_vector_map_1.osm";
+        file = path.append(file);
+        lanelet::Id start_id = 111;
+        lanelet::Id lane_change_start_id = 111;
+        lanelet::Id end_id = 106;
+        int projector_type = 0;
+        std::string target_frame;
+        lanelet::ErrorMessages load_errors;
+        // Parse geo reference info from the original lanelet map (.osm)
+        lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+        lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+        lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+        if (map->laneletLayer.size() == 0)
+        {
+            FAIL() << "Input map does not contain any lanelets";
+        }
+        std::shared_ptr<carma_wm::CARMAWorldModel> cmw=std::make_shared<carma_wm::CARMAWorldModel>();
         cmw->carma_wm::CARMAWorldModel::setMap(map);
-
+        //Set Route
+        carma_wm::test::setRouteByIds({start_id,end_id},cmw);
+        cmw->carma_wm::CARMAWorldModel::setMap(map);
 
         //get starting position
         auto llt=map.get()->laneletLayer.get(start_id);
@@ -116,7 +92,7 @@ namespace unobstructed_lanechange
         }
         geometry_msgs::PoseStamped curr_pos;
         curr_pos.pose.position.x=(left.pose.position.x+right.pose.position.x)/2;
-        curr_pos.pose.position.y=0;
+        curr_pos.pose.position.y=(left.pose.position.y+right.pose.position.y)/2;
         curr_pos.pose.position.z=(left.pose.position.z+right.pose.position.z)/2;
 
         curr_pos.pose.orientation.x=0.0;
@@ -127,44 +103,42 @@ namespace unobstructed_lanechange
         //Define arguments for function maneuvers_to_points
         UnobstructedLaneChangePlugin worker;
         ros::Time::init(); //Initialize ros::Time
-        lanelet::BasicPoint2d veh_pos(curr_pos.pose.position.x,curr_pos.pose.position.y);
-        double starting_downtrack = cmw->routeTrackPos(veh_pos).downtrack;
+
         //get ending downtrack from lanelet id
         double ending_downtrack;
         auto shortest_path = cmw->getRoute()->shortestPath();
-        for (size_t i=0; i <shortest_path.size(); ++i)
-        {
-            if(shortest_path[i].id() == end_id)
-            {
-                lanelet::ConstLanelet ending_lanelet;
-                ending_lanelet == shortest_path[i];
-                ending_downtrack = cmw->routeTrackPos(shortest_path[i].centerline2d().back()).downtrack;
-            }
-        }
-    worker.wm_ = cmw;
 
-    //Define lane change maneuver
-    cav_msgs::Maneuver maneuver;
-    maneuver.type=cav_msgs::Maneuver::LANE_CHANGE;
-    maneuver.lane_change_maneuver.start_dist = starting_downtrack;
-    maneuver.lane_change_maneuver.end_dist = ending_downtrack;
-    maneuver.lane_change_maneuver.start_speed = 25.0;
-    maneuver.lane_change_maneuver.start_time = ros::Time::now();
-    //calculate end_time assuming constant acceleration
-    double acc = pow(maneuver.lane_change_maneuver.start_speed,2)/(2*(ending_downtrack - starting_downtrack));
-    double end_time = maneuver.lane_change_maneuver.start_speed/acc;
-    maneuver.lane_change_maneuver.end_speed = 30.0;
-    maneuver.lane_change_maneuver.end_time = ros::Time(end_time + 10.0);
-    maneuver.lane_change_maneuver.starting_lane_id = std::to_string(start_id);
-    maneuver.lane_change_maneuver.ending_lane_id = std::to_string(end_id);
-    
-    std::vector<cav_msgs::Maneuver> maneuvers;
-    maneuvers.push_back(maneuver);
-    worker.current_speed_ = maneuver.lane_change_maneuver.start_speed;
-    auto points_and_target_speeds = worker.maneuvers_to_points(maneuvers, starting_downtrack, cmw);
-    EXPECT_TRUE(true);
+        lanelet::BasicPoint2d veh_pos=shortest_path[0].centerline2d().front();
+        double starting_downtrack = cmw->routeTrackPos(veh_pos).downtrack;
+        ending_downtrack = cmw->routeTrackPos(shortest_path.back().centerline2d().back()).downtrack;
 
-    /* Test PlanTrajectory cb */
+        worker.wm_ = cmw;
+
+        //Define lane change maneuver
+        cav_msgs::Maneuver maneuver;
+        maneuver.type=cav_msgs::Maneuver::LANE_CHANGE;
+        maneuver.lane_change_maneuver.start_dist = starting_downtrack;
+        maneuver.lane_change_maneuver.end_dist = ending_downtrack;
+        maneuver.lane_change_maneuver.start_speed = 5.0;
+        maneuver.lane_change_maneuver.start_time = ros::Time::now();
+        //calculate end_time assuming constant acceleration
+        double acc = pow(maneuver.lane_change_maneuver.start_speed,2)/(2*(ending_downtrack - starting_downtrack));
+        double end_time = maneuver.lane_change_maneuver.start_speed/acc;
+        maneuver.lane_change_maneuver.end_speed = 25.0;
+        maneuver.lane_change_maneuver.end_time = ros::Time(end_time + 10.0);
+        maneuver.lane_change_maneuver.starting_lane_id = std::to_string(lane_change_start_id);
+        maneuver.lane_change_maneuver.ending_lane_id = std::to_string(end_id);
+        
+        std::vector<cav_msgs::Maneuver> maneuvers;
+        maneuvers.push_back(maneuver);
+        worker.current_speed_ = maneuver.lane_change_maneuver.start_speed;
+        cav_msgs::VehicleState vehicle_state;
+        vehicle_state.X_pos_global = veh_pos.x();
+        vehicle_state.Y_pos_global = veh_pos.y();
+        auto points_and_target_speeds = worker.maneuvers_to_points(maneuvers, starting_downtrack, cmw, vehicle_state);  
+        
+
+        /* Test PlanTrajectory cb */
         cav_srvs::PlanTrajectoryRequest req;
         cav_srvs::PlanTrajectoryResponse resp;
         
@@ -185,47 +159,54 @@ namespace unobstructed_lanechange
         EXPECT_TRUE(isTrajectory);
         EXPECT_TRUE(resp.trajectory_plan.trajectory_points.size() > 2);
 
-        /* Test compose trajectory and helper functions */
+        /*Test compose trajectort and helper function*/
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory;
-        cav_msgs::VehicleState state;
-        state.X_pos_global=curr_pos.pose.position.x;
-        state.Y_pos_global = curr_pos.pose.position.y;
-        int nearest_pt = worker.getNearestPointIndex(points_and_target_speeds,state);
+
+        int nearest_pt = worker.getNearestPointIndex(points_and_target_speeds,vehicle_state);
 
         std::vector<lanelet::BasicPoint2d> points_split;
         std::vector<double> speeds_split;
         worker.splitPointSpeedPairs(points_and_target_speeds, &points_split, &speeds_split);
         EXPECT_TRUE(points_split.size() == speeds_split.size());
 
+        //Test trajectory from points
+        std::vector<double> yaw_values ={};
+        yaw_values.resize(points_and_target_speeds.size(),0);
+        std::vector<double> times={};
+        times.resize(points_and_target_speeds.size(),0.1); // Sample time vector with all 0.1 speeds
+        std::vector<cav_msgs::TrajectoryPlanPoint> traj_points = worker.trajectory_from_points_times_orientations(points_split,times,yaw_values, ros::Time::now());
+
         //Test apply speed limits
         std::vector<double> speed_limits={};
         speed_limits.resize(speeds_split.size(),5);
         std::vector<double> constrained_speeds = worker.apply_speed_limits(speeds_split,speed_limits);
-        
+
         // Test adaptive lookahead
         double lookahead = worker.get_adaptive_lookahead(5);   
         std::vector<double> lookahead_speeds = worker.get_lookahead_speed(points_split,constrained_speeds, lookahead);
 
-        trajectory = worker.compose_trajectory_from_centerline(points_and_target_speeds, state);
+        trajectory = worker.compose_trajectory_from_centerline(points_and_target_speeds, vehicle_state);
         //Valid Trajectory has at least 2 points
         EXPECT_TRUE(trajectory.size() > 2);
 
-        lanelet::BasicLineString2d route_geometry = worker.create_route_geom(starting_downtrack, ending_downtrack,cmw);
-
-        EXPECT_TRUE(worker.findLaneletIndexFromPath(start_id,shortest_path) == 0);
+        lanelet::BasicLineString2d route_geometry = worker.create_route_geom(starting_downtrack,start_id, ending_downtrack,cmw);
+        int nearest_pt_geom = worker.getNearestRouteIndex(route_geometry, vehicle_state);
 
         //Test create lanechange route
-        lanelet::BasicPoint2d start_position(state.X_pos_global, state.Y_pos_global);
-        lanelet::BasicPoint2d end_position(9.25, 100);
-        lanelet::BasicLineString2d lc_route = worker.create_lanechange_route(start_position, end_position);
+        lanelet::Lanelet start_lanelet = map->laneletLayer.get(start_id);
+        lanelet::Lanelet end_lanelet = map->laneletLayer.get(end_id);
+        lanelet::BasicPoint2d start_position(vehicle_state.X_pos_global, vehicle_state.Y_pos_global);
+        lanelet::BasicPoint2d end_position = end_lanelet.centerline2d().basicLineString().back() ;
+        lanelet::BasicLineString2d lc_route = worker.create_lanechange_route(start_position, start_lanelet, end_position, end_lanelet);
 
-        //tes Compute heading frame between two points
-         Eigen::Isometry2d frame = worker.compute_heading_frame(start_position,
-                                                              end_position);
-        //Test constrain to time boundary
-        std::vector<PointSpeedPair> constrained = worker.constrain_to_time_boundary(points_and_target_speeds, 6.0);
-        
+        //Test Compute heading frame between two points
+         Eigen::Isometry2d frame = worker.compute_heading_frame(start_position, end_position);
+
+
+
+
     }
+
 }
 
 // Run all the tests

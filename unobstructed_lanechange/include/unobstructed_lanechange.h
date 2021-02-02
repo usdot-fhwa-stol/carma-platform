@@ -84,8 +84,9 @@ namespace unobstructed_lanechange
              */ 
             std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
                                                 double max_starting_downtrack,
-                                                const carma_wm::WorldModelConstPtr& wm);
+                                                const carma_wm::WorldModelConstPtr& wm,const cav_msgs::VehicleState& state);
 
+            int getNearestRouteIndex(lanelet::BasicLineString2d& points, const cav_msgs::VehicleState& state);
             /**
              * \brief Creates a Lanelet2 Linestring from a vector or points along the geometry 
              * \param starting_downtrack downtrack along route where maneuver starts
@@ -94,23 +95,17 @@ namespace unobstructed_lanechange
              * \return A Linestring of the path from starting downtrack to ending downtrack
              */
             
-            lanelet::BasicLineString2d create_route_geom(double starting_downtrack,  double ending_downtrack, const carma_wm::WorldModelConstPtr& wm);
-
-            /**
-             * \brief Given a LaneletPath object, find index of the lanelet which has target_id as its lanelet ID
-             * \param target_id The lanelet ID this function is looking for
-             * \param path A list of lanelet with different lanelet IDs
-             * \return Index of the target lanelet in the list
-             */
-            int findLaneletIndexFromPath(int target_id, lanelet::routing::LaneletPath& path);
+            lanelet::BasicLineString2d create_route_geom(double starting_downtrack, int starting_lane_id, double ending_downtrack, const carma_wm::WorldModelConstPtr& wm);
 
             /**
              * \brief Given a start and end point, create a vector of points fit through a spline between the points (using a Spline library)
              * \param start The start position
+             * \param start_lanelet The lanelet from which lane change starts
              * \param end The end position
+             * \param end_lanelet The lanelet in which lane change ends
              * \return A linestring path from start to end fit through Spline Library
              */
-            lanelet::BasicLineString2d create_lanechange_route(lanelet::BasicPoint2d start, lanelet::BasicPoint2d end);
+            lanelet::BasicLineString2d create_lanechange_route(lanelet::BasicPoint2d start, lanelet::ConstLanelet& start_lanelet, lanelet::BasicPoint2d end, lanelet::ConstLanelet& end_lanelet);
             
             /**
              * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of trajectory points for trajectory planning

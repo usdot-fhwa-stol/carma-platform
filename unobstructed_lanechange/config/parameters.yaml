@@ -6,7 +6,7 @@ trajectory_time_length: 6.0
 control_plugin_name: "mpc_follower"
 
 
-# Double : inimum allowable speed
+# Double : Minimum allowable speed
 # Units : m/s
 minimum_speed : 2.2352
 
