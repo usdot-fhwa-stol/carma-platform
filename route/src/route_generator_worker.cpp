@@ -151,7 +151,7 @@ namespace route {
             // convert points in ECEF to map frame
             auto destination_points_in_map = transform_to_map_frame(destination_points, map_in_earth);
             
-            lanelet::BasicPoint2d vehicle_position(vehicle_pose_->pose.x, vehicle_pose_->pose.y);
+            lanelet::BasicPoint2d vehicle_position(vehicle_pose_->pose.position.x, vehicle_pose_->pose.position.y);
             destination_points_in_map.insert(destination_points_in_map.begin(), vehicle_position);
 
             int idx = 0;
