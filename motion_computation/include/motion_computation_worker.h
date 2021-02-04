@@ -68,19 +68,24 @@ class MotionComputationWorker
   void setConfidenceDropRate(double drop_rate);
   void setExternalObjectPredictionMode(int external_object_prediction_mode);
   
-  
   //callbacks
   void mobilityPathCallback(const cav_msgs::MobilityPath& msg);
   void geoReferenceCallback(const std_msgs::String& georef);
+  
   // TODO
   cav_msgs::PredictedState composePredictedState(const lanelet::BasicPoint3d& curr_pt, const lanelet::BasicPoint3d& prev_pt, const ros::Time& prev_time_stamp);
 
   // msg converter
   cav_msgs::ExternalObject mobilityPathToExternalObject(const cav_msgs::MobilityPath& msg);
+
+  // TODO synchronizes and interpolates
+  cav_msgs::ExternalObjectList synchronizeAndAppend(const cav_msgs::ExternalObjectList& sensor_list, cav_msgs::ExternalObjectList mobility_path_list);
+
+  cav_msgs::ExternalObject matchAndInterpolateTimeStamp(cav_msgs::ExternalObject path, const ros::Time& time_to_match) const;
+
  private:
 
   // local copy of external object publishers
-
   PublishObjectCallback obj_pub_;
 
   // Prediction parameters

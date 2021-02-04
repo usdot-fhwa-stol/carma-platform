@@ -62,7 +62,7 @@ namespace object{
 
   void MotionComputationNode::publishObject(const cav_msgs::ExternalObjectList& obj_pred_msg)
   {
-  carma_obj_pub_.publish(obj_pred_msg);
+    carma_obj_pub_.publish(obj_pred_msg);
   }
 
   void MotionComputationNode::run()

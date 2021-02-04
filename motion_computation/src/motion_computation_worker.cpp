@@ -84,24 +84,19 @@ void MotionComputationWorker::predictionLogic(cav_msgs::ExternalObjectListPtr ob
   }//end for-loop
 
   // Determine mode
-  /*
   switch(external_object_prediction_mode_)
   {
-    case MOBILITY_PATH_ONLY:
-      output_list = mobility_path_list_;
-    break;
     case SENSORS_ONLY:
       output_list = sensor_list;
     break;
     case PATH_AND_SENSORS:
-      output_list.objects.insert(output_list.objects.begin(),sensor_list.objects.begin(),sensor_list.objects.end());
-      output_list.objects.insert(output_list.objects.begin(),mobility_path_list_.objects.begin(),mobility_path_list_.objects.end());
+      output_list = synchronizeAndAppend(sensor_list, mobility_path_list_);
     break;
     default:
       ROS_WARN_STREAM("Received invalid motion computation operational mode:" << external_object_prediction_mode_ << " publishing empty list.");
     break;
   }
-  */
+  
   obj_pub_(output_list);
 
   // Clear mobility msg path queue since it is published
@@ -162,6 +157,13 @@ void MotionComputationWorker::geoReferenceCallback(const std_msgs::String& geore
 void MotionComputationWorker::mobilityPathCallback(const cav_msgs::MobilityPath& msg)
 {
   mobility_path_list_.objects.push_back(mobilityPathToExternalObject(msg));
+  if (external_object_prediction_mode_ == MOBILITY_PATH_ONLY)
+  {
+    obj_pub_(mobility_path_list_);
+    // Clear mobility msg path queue since it is published
+    mobility_path_list_.objects = {};
+    return;
+  }
 }
 
 cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(const cav_msgs::MobilityPath& msg)
@@ -175,9 +177,9 @@ cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(c
   }
 
   // get reference origin in ECEF (convert from cm to m)
-  double ecef_x = (double)msg.trajectory.location.ecef_x/1000.0;
-  double ecef_y = (double)msg.trajectory.location.ecef_y/1000.0;
-  double ecef_z = (double)msg.trajectory.location.ecef_z/1000.0;
+  double ecef_x = (double)msg.trajectory.location.ecef_x/100.0;
+  double ecef_y = (double)msg.trajectory.location.ecef_y/100.0;
+  double ecef_z = (double)msg.trajectory.location.ecef_z/100.0;
 
   // Convert general information
   for (size_t i = 0; i < msg.header.sender_bsm_id.size(); i+=2) // convert hex std::string to uint8_t array
@@ -190,7 +192,7 @@ cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(c
   output.header.stamp = ros::Time((double)msg.header.timestamp/ 1000.0);
 
   // If it is a static object, we finished processing
-  if (msg.trajectory.offsets.size() < 1)
+  if (msg.trajectory.offsets.size() < 2)
   {
     output.dynamic_obj = false;
     return output;
@@ -200,15 +202,15 @@ cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(c
   // get planned trajectory points
   auto prev_pt_msg = msg.trajectory.offsets[0]; // setup first point to be processed later
   cav_msgs::PredictedState prev_state;
-  lanelet::BasicPoint3d prev_pt_ecef {ecef_x + prev_pt_msg.offset_x, ecef_y + prev_pt_msg.offset_y, ecef_z + prev_pt_msg.offset_z};
+  lanelet::BasicPoint3d prev_pt_ecef {ecef_x + (double)prev_pt_msg.offset_x /100.0, ecef_y + (double)prev_pt_msg.offset_y /100.0, ecef_z + (double)prev_pt_msg.offset_z /100.0};
 
-  auto prev_pt_map = local_projector_->projectECEF(prev_pt_ecef, 1);
+  auto prev_pt_map = local_projector_->projectECEF(prev_pt_ecef, -1);
 
   for (size_t i = 1; i < msg.trajectory.offsets.size(); i ++)
   {
     auto curr_pt_msg = msg.trajectory.offsets[i];
-    lanelet::BasicPoint3d curr_pt_ecef {ecef_x + curr_pt_msg.offset_x, ecef_y + curr_pt_msg.offset_y, ecef_z + curr_pt_msg.offset_z};
-    auto curr_pt_map = local_projector_->projectECEF(curr_pt_ecef, 1);
+    lanelet::BasicPoint3d curr_pt_ecef {ecef_x + (double)curr_pt_msg.offset_x /100.0, ecef_y + (double)curr_pt_msg.offset_y /100.0, ecef_z + (double)curr_pt_msg.offset_z /100.0};
+    auto curr_pt_map = local_projector_->projectECEF(curr_pt_ecef, -1);
 
     cav_msgs::PredictedState curr_state;
 
@@ -218,22 +220,23 @@ cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(c
       output.pose.pose = curr_state.predicted_position;
       output.velocity.twist = curr_state.predicted_velocity;
     }
-    else if (i == msg.trajectory.offsets.size()- 1) // if last point, copy the prev_state velocity & orientation to the last point too
+    else    
     {
       curr_state = composePredictedState(curr_pt_map, prev_pt_map, prev_state.header.stamp + ros::Duration(mobility_path_prediction_time_step_));
       output.predictions.push_back(curr_state);
+    }
+
+    if (i == msg.trajectory.offsets.size() - 1) // if last point, copy the prev_state velocity & orientation to the last point too
+    {
+      curr_state = composePredictedState(curr_pt_map, prev_pt_map, curr_state.header.stamp + ros::Duration(mobility_path_prediction_time_step_));
       curr_state.predicted_position.position.x = curr_pt_map.x();
       curr_state.predicted_position.position.y = curr_pt_map.y();
       curr_state.predicted_position.position.z = curr_pt_map.z();
-      curr_state.header.stamp = prev_state.header.stamp + ros::Duration(mobility_path_prediction_time_step_);
       output.predictions.push_back(curr_state);
     }
-    else
-    {
-      curr_state = composePredictedState(curr_pt_map, prev_pt_map, prev_state.header.stamp + ros::Duration(mobility_path_prediction_time_step_));
-      output.predictions.push_back(curr_state);
-    }
+    
     prev_state = curr_state;
+    prev_pt_map = curr_pt_map;
   }
 
   return output;
@@ -266,6 +269,87 @@ cav_msgs::PredictedState MotionComputationWorker::composePredictedState(const la
   output_state.header.stamp = prev_time_stamp;
 
   return output_state;
+}
+
+cav_msgs::ExternalObjectList MotionComputationWorker::synchronizeAndAppend(const cav_msgs::ExternalObjectList& sensor_list, cav_msgs::ExternalObjectList mobility_path_list)
+{
+  cav_msgs::ExternalObjectList output_list;
+  // Compare time_stamps of first elements of each list as they are guaranteed to be the earliest of the respective lists
+  
+  for (auto &path: mobility_path_list.objects)
+  {
+    // interpolate and match timesteps
+    path = matchAndInterpolateTimeStamp(path, sensor_list.objects[0].header.stamp);
+  }
+  
+  output_list.objects.insert(output_list.objects.begin(),sensor_list.objects.begin(),sensor_list.objects.end());
+  output_list.objects.insert(output_list.objects.end(),mobility_path_list.objects.begin(),mobility_path_list.objects.end());
+  return output_list;
+}
+
+cav_msgs::ExternalObject MotionComputationWorker::matchAndInterpolateTimeStamp(cav_msgs::ExternalObject path, const ros::Time& time_to_match) const
+{
+  cav_msgs::ExternalObject output = path;
+  // empty predictions
+  output.predictions = {};
+
+  // add the first point to start of the predictions to easily loop over
+  cav_msgs::PredictedState prev_state;
+  prev_state.header.stamp = output.header.stamp;
+  prev_state.predicted_position.orientation = output.pose.pose.orientation ;         
+  prev_state.predicted_velocity = output.velocity.twist ;    
+  prev_state.predicted_position.position.x = output.pose.pose.position.x ;        
+  prev_state.predicted_position.position.y = output.pose.pose.position.y ;        
+  prev_state.predicted_position.position.z = output.pose.pose.position.z ;  
+  path.predictions.insert(path.predictions.begin(), prev_state);
+
+  ros::Time curr_time_to_match = time_to_match;
+  // because of this logic, we would not encounter mobility path
+  // that starts later than the time we are trying to match (which is starting time of sensed objects)
+  bool is_first_point = true;
+  cav_msgs::PredictedState new_state;
+  for (auto curr_state : path.predictions)
+  { 
+    if (curr_time_to_match > curr_state.header.stamp )
+    {
+      prev_state = curr_state;
+      continue;
+    }
+    // reaching here means curr_state starts later than the time we are trying to match
+    ros::Duration delta_t = curr_state.header.stamp - curr_time_to_match;
+    double ratio = delta_t.toSec() / mobility_path_prediction_time_step_;
+    double delta_x = curr_state.predicted_position.position.x - prev_state.predicted_position.position.x;
+    double delta_y = curr_state.predicted_position.position.y - prev_state.predicted_position.position.y;
+    double delta_z = curr_state.predicted_position.position.z - prev_state.predicted_position.position.z;
+    // copy old unchanged parts
+    new_state.header.stamp = curr_time_to_match;
+    new_state.predicted_velocity = prev_state.predicted_velocity;
+    new_state.predicted_position.orientation = prev_state.predicted_position.orientation;
+    // interpolate position
+    // we are "stepping back in time" to match the position
+    new_state.predicted_position.position.x = curr_state.predicted_position.position.x - delta_x * ratio; 
+    new_state.predicted_position.position.y = curr_state.predicted_position.position.y - delta_y * ratio; 
+    new_state.predicted_position.position.z = curr_state.predicted_position.position.z - delta_z * ratio; 
+
+    if (is_first_point) // we store in the body if it is the first point, not predictions
+    {
+      output.header.stamp = curr_time_to_match;
+      output.pose.pose.orientation = new_state.predicted_position.orientation;
+      output.velocity.twist = new_state.predicted_velocity;
+      output.pose.pose.position.x = new_state.predicted_position.position.x;
+      output.pose.pose.position.y = new_state.predicted_position.position.y;
+      output.pose.pose.position.z = new_state.predicted_position.position.z;
+      is_first_point = false;
+    }
+    else
+    {
+      output.predictions.push_back(new_state);
+    }
+    prev_state = curr_state;
+    curr_time_to_match += ros::Duration(mobility_path_prediction_time_step_);
+  }
+
+  return output;
 }
 
 }  // namespace object
