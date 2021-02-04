@@ -13,13 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include <motion_computation_worker.h>
-#include <motion_predict/motion_predict.h>
-#include <motion_predict/predict_ctrv.h>
-#include <ros/ros.h>
-#include <cav_msgs/ExternalObject.h>
-#include <cav_msgs/ExternalObjectList.h> 
-#include <functional>
+#include "motion_computation_worker.h"
+
 
 
 namespace object
@@ -89,6 +84,7 @@ void MotionComputationWorker::predictionLogic(cav_msgs::ExternalObjectListPtr ob
   }//end for-loop
 
   // Determine mode
+  /*
   switch(external_object_prediction_mode_)
   {
     case MOBILITY_PATH_ONLY:
@@ -105,7 +101,7 @@ void MotionComputationWorker::predictionLogic(cav_msgs::ExternalObjectListPtr ob
       ROS_WARN_STREAM("Received invalid motion computation operational mode:" << external_object_prediction_mode_ << " publishing empty list.");
     break;
   }
-
+  */
   obj_pub_(output_list);
 
   // Clear mobility msg path queue since it is published
@@ -152,6 +148,17 @@ void MotionComputationWorker::setExternalObjectPredictionMode(int external_objec
   external_object_prediction_mode_ = static_cast<MotionComputationMode>(external_object_prediction_mode);
 }
 
+void MotionComputationWorker::geoReferenceCallback(const std_msgs::String& georef)
+{
+  if (georeference_ == georef.data)
+    return;
+  else
+  {
+    georeference_ = georef.data;
+  }
+  local_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(lanelet::projection::LocalFrameProjector(georeference_.c_str()));
+}
+
 void MotionComputationWorker::mobilityPathCallback(const cav_msgs::MobilityPath& msg)
 {
   mobility_path_list_.objects.push_back(mobilityPathToExternalObject(msg));
@@ -160,7 +167,8 @@ void MotionComputationWorker::mobilityPathCallback(const cav_msgs::MobilityPath&
 cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(const cav_msgs::MobilityPath& msg)
 {
   cav_msgs::ExternalObject output;
-  if (!local_projector)
+
+  if (!local_projector_)
   {
     ROS_WARN_STREAM("Motion computation has not received georeference string yet!");
     return output;
@@ -193,13 +201,14 @@ cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(c
   auto prev_pt_msg = msg.trajectory.offsets[0]; // setup first point to be processed later
   cav_msgs::PredictedState prev_state;
   lanelet::BasicPoint3d prev_pt_ecef {ecef_x + prev_pt_msg.offset_x, ecef_y + prev_pt_msg.offset_y, ecef_z + prev_pt_msg.offset_z};
-  auto prev_pt_map = local_projector->projectECEF(prev_pt_ecef, 1);
+
+  auto prev_pt_map = local_projector_->projectECEF(prev_pt_ecef, 1);
 
   for (size_t i = 1; i < msg.trajectory.offsets.size(); i ++)
   {
     auto curr_pt_msg = msg.trajectory.offsets[i];
     lanelet::BasicPoint3d curr_pt_ecef {ecef_x + curr_pt_msg.offset_x, ecef_y + curr_pt_msg.offset_y, ecef_z + curr_pt_msg.offset_z};
-    auto curr_pt_map = local_projector->projectECEF(curr_pt_ecef, 1);
+    auto curr_pt_map = local_projector_->projectECEF(curr_pt_ecef, 1);
 
     cav_msgs::PredictedState curr_state;
 
@@ -228,17 +237,6 @@ cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(c
   }
 
   return output;
-}
-
-void MotionComputationWorker::geoReferenceCallback(const std_msgs::String& georef)
-{
-  if (georeference_ == georef.data)
-    return;
-  else
-  {
-    georeference_ = georef.data;
-  }
-  local_projector = std::make_shared<lanelet::projection::LocalFrameProjector>(lanelet::projection::LocalFrameProjector(georeference_.c_str()));
 }
 
 cav_msgs::PredictedState MotionComputationWorker::composePredictedState(const lanelet::BasicPoint3d& curr_pt, const lanelet::BasicPoint3d& prev_pt, const ros::Time& prev_time_stamp)

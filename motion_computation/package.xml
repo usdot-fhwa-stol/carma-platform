@@ -27,6 +27,11 @@
   <depend>roscpp</depend>
   <depend>carma_utils</depend>
   <depend>motion_predict</depend>
+  <depend>lanelet2_extension</depend>
+  <depend>tf2</depend>
+
+
+
   <export>
   
 

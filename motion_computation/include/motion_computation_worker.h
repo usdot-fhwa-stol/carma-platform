@@ -14,8 +14,8 @@
  * the License.
  */
 
-#ifndef EXTERNAL_OBJECT_WORKER_H
-#define EXTERNAL_OBJECT_WORKER_H
+#ifndef MOTION_COMPUTATION_WORKER_H
+#define MOTION_COMPUTATION_WORKER_H
 
 #include <ros/ros.h>
 #include <cav_msgs/ExternalObject.h>
@@ -23,7 +23,10 @@
 #include <cav_msgs/MobilityPath.h>
 #include <std_msgs/String.h>
 #include <functional>
+#include <motion_predict/motion_predict.h>
+#include <motion_predict/predict_ctrv.h>
 #include <lanelet2_extension/projection/local_frame_projector.h>
+#include <carma_utils/CARMAUtils.h>
 #include <tf2/LinearMath/Transform.h>
 
 namespace object{
@@ -64,17 +67,16 @@ class MotionComputationWorker
   void setProcessNoiseMax(double noise_max);
   void setConfidenceDropRate(double drop_rate);
   void setExternalObjectPredictionMode(int external_object_prediction_mode);
-
+  
+  
   //callbacks
   void mobilityPathCallback(const cav_msgs::MobilityPath& msg);
   void geoReferenceCallback(const std_msgs::String& georef);
-  
   // TODO
   cav_msgs::PredictedState composePredictedState(const lanelet::BasicPoint3d& curr_pt, const lanelet::BasicPoint3d& prev_pt, const ros::Time& prev_time_stamp);
 
   // msg converter
   cav_msgs::ExternalObject mobilityPathToExternalObject(const cav_msgs::MobilityPath& msg);
-  
  private:
 
   // local copy of external object publishers
@@ -98,10 +100,10 @@ class MotionComputationWorker
 
   // Projector variables to convert from ECEF to Map frame
   std::string georeference_ = "";
-  std::shared_ptr<lanelet::projection::LocalFrameProjector> local_projector;
+  std::shared_ptr<lanelet::projection::LocalFrameProjector> local_projector_;
 
 };
 
 }//object
 
-#endif /* EXTERNAL_OBJECT_WORKER_H */
+#endif /* MOTION_COMPUTATION_WORKER_H */

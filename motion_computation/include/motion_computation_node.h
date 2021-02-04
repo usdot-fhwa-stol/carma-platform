@@ -14,8 +14,8 @@
  * the License.
  */
 
-#ifndef EXTERNAL_OBJECT_H
-#define EXTERNAL_OBJECT_H
+#ifndef MOTION_COMPUTATION_H
+#define MOTION_COMPUTATION_H
 
 #include <ros/ros.h>
 #include <carma_utils/CARMAUtils.h>
@@ -70,4 +70,4 @@ class MotionComputationNode
 
 }//object
 
-#endif /* EXTERNAL_OBJECT_H */
+#endif /* MOTION_COMPUTATION_H */
