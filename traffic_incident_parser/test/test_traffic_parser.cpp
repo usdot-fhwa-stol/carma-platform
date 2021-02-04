@@ -22,7 +22,7 @@
 namespace traffic
 {
 
-TEST(TrafficIncidentParserWorkerTest, DISABLED_testMobilityMessageParser1)
+TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser1)
 {
 
   std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -40,7 +40,7 @@ TEST(TrafficIncidentParserWorkerTest, DISABLED_testMobilityMessageParser1)
   }
 
 
-TEST(TrafficIncidentParserWorkerTest, DISABLED_testMobilityMessageParser2)
+TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser2)
 {
 
   std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -58,7 +58,7 @@ TEST(TrafficIncidentParserWorkerTest, DISABLED_testMobilityMessageParser2)
   }
 
 
-TEST(TrafficIncidentParserWorkerTest, DISABLED_testMobilityMessageParser3)
+TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
 {
 
   std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -75,7 +75,7 @@ TEST(TrafficIncidentParserWorkerTest, DISABLED_testMobilityMessageParser3)
   
   }
 
-  TEST(TrafficIncidentParserWorkerTest, DISABLED_earthToMapFrame)
+  TEST(TrafficIncidentParserWorkerTest, earthToMapFrame)
 {
 
   std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -94,7 +94,7 @@ TEST(TrafficIncidentParserWorkerTest, DISABLED_testMobilityMessageParser3)
   EXPECT_NEAR(local_point.y(),0,0.001);
 }
 
-  TEST(TrafficIncidentParserWorkerTest, DISABLED_composeTrafficControlMesssage)
+  TEST(TrafficIncidentParserWorkerTest, composeTrafficControlMesssage)
 {
 
   auto cmw= carma_wm::test::getGuidanceTestMap();
@@ -127,7 +127,7 @@ TEST(TrafficIncidentParserWorkerTest, DISABLED_testMobilityMessageParser3)
 
 }
 
- TEST(TrafficIncidentParserWorkerTest, DISABLED_composeTrafficControlMesssage1)
+ TEST(TrafficIncidentParserWorkerTest, composeTrafficControlMesssage1)
 {
 
   auto cmw= carma_wm::test::getGuidanceTestMap();
@@ -163,7 +163,7 @@ TEST(TrafficIncidentParserWorkerTest, DISABLED_testMobilityMessageParser3)
 
  TEST(TrafficIncidentParserWorkerTest, composeTrafficControlMesssage1)
 {
-  /*
+  
   auto cmw= carma_wm::test::getGuidanceTestMap();
   carma_wm::test::setRouteByIds({1200, 1201,1202,1203}, cmw);
   
@@ -191,15 +191,6 @@ TEST(TrafficIncidentParserWorkerTest, DISABLED_testMobilityMessageParser3)
   EXPECT_EQ(traffic_mobility_msg_test.params.detail.choice,cav_msgs::TrafficControlDetail::CLOSED_CHOICE);
   EXPECT_EQ(traffic_mobility_msg_test.params.detail.closed,cav_msgs::TrafficControlDetail::CLOSED);
   EXPECT_EQ(traffic_mobility_msg_test.params.detail.minhdwy,2);
-  */
-  std::string hex = "FF";
-  //auto hex_uint = std::strtoul(hex.c_str());
-  int num = 0;
-  sscanf(hex.c_str(), "%x", &num);
-  ROS_WARN_STREAM(num);
-  ROS_WARN_STREAM((int)(uint8_t)257);
-  //ROS_WARN_STREAM(hex_uint);
-  //ROS_WARN_STREAM((int)hex_uint);
 }
 
 

@@ -40,7 +40,7 @@ namespace object
 {
 
 
-    TEST(MotionComputationWorker, DISABLED_Constructor)
+    TEST(MotionComputationWorker, Constructor)
     {   
         MotionComputationWorker([](const cav_msgs::ExternalObjectList& obj_pub){});
 
