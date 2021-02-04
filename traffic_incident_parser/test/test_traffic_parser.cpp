@@ -22,7 +22,7 @@
 namespace traffic
 {
 
-TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser1)
+TEST(TrafficIncidentParserWorkerTest, DISABLED_testMobilityMessageParser1)
 {
 
   std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -40,7 +40,7 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser1)
   }
 
 
-TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser2)
+TEST(TrafficIncidentParserWorkerTest, DISABLED_testMobilityMessageParser2)
 {
 
   std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -58,7 +58,7 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser2)
   }
 
 
-TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
+TEST(TrafficIncidentParserWorkerTest, DISABLED_testMobilityMessageParser3)
 {
 
   std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -75,7 +75,7 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
   
   }
 
-  TEST(TrafficIncidentParserWorkerTest, earthToMapFrame)
+  TEST(TrafficIncidentParserWorkerTest, DISABLED_earthToMapFrame)
 {
 
   std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -94,7 +94,7 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
   EXPECT_NEAR(local_point.y(),0,0.001);
 }
 
-  TEST(TrafficIncidentParserWorkerTest, composeTrafficControlMesssage)
+  TEST(TrafficIncidentParserWorkerTest, DISABLED_composeTrafficControlMesssage)
 {
 
   auto cmw= carma_wm::test::getGuidanceTestMap();
@@ -127,7 +127,7 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
 
 }
 
- TEST(TrafficIncidentParserWorkerTest, composeTrafficControlMesssage1)
+ TEST(TrafficIncidentParserWorkerTest, DISABLED_composeTrafficControlMesssage1)
 {
 
   auto cmw= carma_wm::test::getGuidanceTestMap();
@@ -159,5 +159,48 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
   EXPECT_EQ(traffic_mobility_msg_test.params.detail.minhdwy,2);
 
 }
+
+
+ TEST(TrafficIncidentParserWorkerTest, composeTrafficControlMesssage1)
+{
+  /*
+  auto cmw= carma_wm::test::getGuidanceTestMap();
+  carma_wm::test::setRouteByIds({1200, 1201,1202,1203}, cmw);
+  
+  TrafficIncidentParserWorker traffic_worker(std::static_pointer_cast<const carma_wm::WorldModel>(cmw),[](auto msg){});
+  std_msgs::String projection_msg;
+  projection_msg.data="+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
+	
+  traffic_worker.projectionCallback(projection_msg);
+
+  std::string mobility_strategy_params="lat:39.46663865458896225,lon:-76.16919523566940597,downtrack:99,uptrack:25,min_gap:2";
+  traffic_worker.mobilityMessageParser(mobility_strategy_params);
+  
+  cav_msgs::TrafficControlMessageV01 traffic_mobility_msg_test=traffic_worker.composeTrafficControlMesssage();
+
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[0].x,1.85,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[0].y,12.5,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[1].x,1.85,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[1].y,37.5,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[2].x,1.85,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[2].y,62.5,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[3].x,1.85,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test.geometry.nodes[3].y,87.5,0.001);
+
+  EXPECT_EQ(traffic_mobility_msg_test.geometry_exists,true);
+  EXPECT_EQ(traffic_mobility_msg_test.params.detail.choice,cav_msgs::TrafficControlDetail::CLOSED_CHOICE);
+  EXPECT_EQ(traffic_mobility_msg_test.params.detail.closed,cav_msgs::TrafficControlDetail::CLOSED);
+  EXPECT_EQ(traffic_mobility_msg_test.params.detail.minhdwy,2);
+  */
+  std::string hex = "FF";
+  //auto hex_uint = std::strtoul(hex.c_str());
+  int num = 0;
+  sscanf(hex.c_str(), "%x", &num);
+  ROS_WARN_STREAM(num);
+  ROS_WARN_STREAM((int)(uint8_t)257);
+  //ROS_WARN_STREAM(hex_uint);
+  //ROS_WARN_STREAM((int)hex_uint);
+}
+
 
 }//traffic

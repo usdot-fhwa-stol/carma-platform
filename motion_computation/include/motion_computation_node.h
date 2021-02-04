@@ -35,6 +35,8 @@ class MotionComputationNode
    
   //subscriber
   ros::Subscriber motion_comp_sub_;
+  ros::Subscriber mobility_path_sub_;
+  ros::Subscriber georeference_sub_;
 
   //publisher
   ros::Publisher carma_obj_pub_;
