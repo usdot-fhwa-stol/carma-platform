@@ -25,6 +25,20 @@
 #include <carma_wm/WorldModel.h>
 #include <cav_srvs/PlanManeuvers.h>
 
+/**
+ * \brief Macro definition to enable easier access to fields shared across the maneuver typees
+ * \param mvr The maneuver object to invoke the accessors on
+ * \param property The name of the field to access on the specific maneuver types. Must be shared by all extant maneuver types
+ * \return Expands to an expression (in the form of chained ternary operators) that evalutes to the desired field
+ */
+#define GET_MANEUVER_PROPERTY(mvr, property)\
+        (((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property :\
+            ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property :\
+                ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property :\
+                    ((mvr).type == cav_msgs::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property :\
+                        throw new std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id"))))))
+
+
 namespace route_following_plugin
 {
 
@@ -78,6 +92,10 @@ namespace route_following_plugin
          * \return A lane keeping maneuver message which is ready to be published
          */
         cav_msgs::Maneuver composeStopandWaitManeuverMessage(double current_dist, double end_dist, double current_speed, int start_lane_id, int target_lane_id, ros::Time current_time, double end_time);
+
+        cav_msgs::Maneuver composeLaneChangeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int starting_lane_id,int ending_lane_id, ros::Time current_time);
+
+        void updateCurrentStatus(cav_msgs::Maneuver maneuver, double& speed, double& end_dist, int& lane_id);
         /**
          * \brief Given a LaneletRelations and ID of the next lanelet in the shortest path
          * \param relations LaneletRelations relative to the previous lanelet
@@ -133,6 +151,11 @@ namespace route_following_plugin
         double mvr_duration_;
         //Jerk used to come to stop at end of route
         double jerk_ = 0.25;
+
+        //lane change constant
+        static constexpr double LATERAL_ACCELERATION_LIMIT_IN_MS=2.00;
+        static const int MAX_LANE_WIDTH=3.70;
+        static constexpr double LANE_CHANGE_TIME_MAX=sqrt(2*MAX_LANE_WIDTH/LATERAL_ACCELERATION_LIMIT_IN_MS);
 
         // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
