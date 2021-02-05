@@ -162,7 +162,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
     addPassingControlLineFromMsg(gf_ptr, msg_v01, affected_llts);
   }
 
- if (msg_detail.choice == cav_msgs::TrafficControlDetail::CLOSED_CHOICE || msg_detail.choice == cav_msgs::TrafficControlDetail::CLOSED)
+ if (msg_detail.choice == cav_msgs::TrafficControlDetail::CLOSED_CHOICE && msg_detail.choice == cav_msgs::TrafficControlDetail::CLOSED)
   {
     addRegionAccessRule(gf_ptr,msg_v01,affected_llts);
   }
