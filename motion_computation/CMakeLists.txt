@@ -1,10 +1,8 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 2.8.3)
 project(motion_computation)
 
-## Compile as C++14, as it is required by lanelet2
-add_compile_options(-std=c++14)
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+## Compile as C++11, supported in ROS Kinetic and newer
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -14,8 +12,9 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   carma_utils
   motion_predict
-  lanelet2_extension
   tf2
+  tf2_ros
+  tf2_geometry_msgs
 )
 
 ###################################
@@ -30,7 +29,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES ${PROJECT_NAME}
- CATKIN_DEPENDS cav_msgs roscpp carma_utils motion_predict lanelet2_extension tf2
+ CATKIN_DEPENDS cav_msgs roscpp carma_utils motion_predict tf2 tf2_ros tf2_geometry_msgs
 #  DEPENDS system_lib
 )
 

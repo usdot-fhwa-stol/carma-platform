@@ -21,6 +21,9 @@
 #include <carma_utils/CARMAUtils.h>
 #include <functional>
 #include "motion_computation_worker.h"
+#include <tf2_ros/transform_listener.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 namespace object{
 
@@ -36,7 +39,6 @@ class MotionComputationNode
   //subscriber
   ros::Subscriber motion_comp_sub_;
   ros::Subscriber mobility_path_sub_;
-  ros::Subscriber georeference_sub_;
 
   //publisher
   ros::Publisher carma_obj_pub_;
@@ -47,7 +49,16 @@ class MotionComputationNode
     /*!fn initialize()
   \brief initialize this node before running
   */
-    void initialize();
+  void initialize();
+
+  // tf buffer holds the tree of transforms
+  tf2_ros::Buffer tf_buffer_;
+
+  /*!fn initialize()
+  \brief lookup ECEF to Map transform from tf2 tree
+  \return ECEF to Map transform
+  */
+  tf2::Transform lookupECEFtoMapTransform();
 
  public:
   

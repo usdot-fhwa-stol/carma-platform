@@ -32,7 +32,7 @@ using ::testing::DoAll;
 using ::testing::InSequence;
 using ::testing::Return;
 using ::testing::ReturnArg;
-
+#include <ros/ros.h>
 //using PublishObjectCallback = std::function<void(const cav_msgs::ExternalObjectList&)>;
 
 
@@ -74,6 +74,14 @@ namespace object
         mcw_sensor_only.setExternalObjectPredictionMode(object::SENSORS_ONLY);
         mcw_mobility_only.setExternalObjectPredictionMode(object::MOBILITY_PATH_ONLY);
         mcw_mixed_operation.setExternalObjectPredictionMode(object::PATH_AND_SENSORS);
+        // 1 to 1 transform
+        tf2::Transform identity_transform;
+        identity_transform.setIdentity();
+
+        mcw_sensor_only.setECEFToMapTransform(identity_transform);
+        mcw_mobility_only.setECEFToMapTransform(identity_transform);
+        mcw_mixed_operation.setECEFToMapTransform(identity_transform);
+
         cav_msgs::ExternalObject msg;
 
         /*Create test message*/
@@ -113,16 +121,12 @@ namespace object
         // add mobilitypath data
         cav_msgs::MobilityPath input_path;
 
-        std_msgs::String georef;
-        georef.data = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
-        mcw_sensor_only.geoReferenceCallback(georef);
-
         // INPUT PATH
         input_path.header.sender_bsm_id = "FFFFFFFF";
         input_path.header.timestamp = 1000;
-        input_path.trajectory.location.ecef_x = 117868253; //local map 0,0,0
-        input_path.trajectory.location.ecef_y = -478762236; 
-        input_path.trajectory.location.ecef_z = 403242163; 
+        input_path.trajectory.location.ecef_x = 0; //local map 0,0,0
+        input_path.trajectory.location.ecef_y = 0; 
+        input_path.trajectory.location.ecef_z = 0; 
         
         cav_msgs::LocationOffsetECEF location;
         location.offset_x = 0;
@@ -151,10 +155,13 @@ namespace object
     TEST(MotionComputationWorker, composePredictedState)
     {    
         object::MotionComputationWorker mcw([&](const cav_msgs::ExternalObjectList& obj_pub){});
-        
+        tf2::Transform identity_transform;
+        identity_transform.setIdentity();
+
+        mcw.setECEFToMapTransform(identity_transform);
         ros::Time time_stamp = ros::Time(5.0);
-        lanelet::BasicPoint3d curr = {5, 0, 0};
-        lanelet::BasicPoint3d prev = {4, 0, 0};
+        tf2::Vector3 curr = {5, 0, 0};
+        tf2::Vector3 prev = {4, 0, 0};
 
         auto test_result = mcw.composePredictedState(curr, prev,time_stamp);
 
@@ -182,23 +189,22 @@ namespace object
     TEST(MotionComputationWorker, mobilityPathToExternalObject)
     {    
         object::MotionComputationWorker mcw([&](const cav_msgs::ExternalObjectList& obj_pub){});
-        
+        tf2::Transform identity_transform;
+        identity_transform.setIdentity();
+
+        mcw.setECEFToMapTransform(identity_transform);
         // Test no georef
         cav_msgs::MobilityPath input;
         cav_msgs::ExternalObject output, expected;
         output = mcw.mobilityPathToExternalObject(input);
         ASSERT_EQ(output.header.stamp, expected.header.stamp); //empty object returned
-        
-        std_msgs::String georef;
-        georef.data = "+proj=tmerc +lat_0=39.46636844371259 +lon_0=-76.16919523566943 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +vunits=m +no_defs";
-        mcw.geoReferenceCallback(georef);
 
         // INPUT
         input.header.sender_bsm_id = "FFFFFFFF";
         input.header.timestamp = 1000;
-        input.trajectory.location.ecef_x = 117868253; //local map 0,0,0
-        input.trajectory.location.ecef_y = -478762236; 
-        input.trajectory.location.ecef_z = 403242163; 
+        input.trajectory.location.ecef_x = 0; //local map 0,0,0
+        input.trajectory.location.ecef_y = 0; 
+        input.trajectory.location.ecef_z = 0; 
         
         cav_msgs::LocationOffsetECEF location;
         location.offset_x = 0;
@@ -211,9 +217,9 @@ namespace object
         output = mcw.mobilityPathToExternalObject(input);
         ASSERT_FALSE(output.dynamic_obj);
         
-        location.offset_x = 117868738 - 117868253;
-        location.offset_y = -478762117 + 478762236;
-        location.offset_z = 403242163 - 403242163;
+        location.offset_x = 500.00; 
+        location.offset_y = 0;
+        location.offset_z = 0;
         input.trajectory.offsets.push_back(location);
 
         // Test 0th, 1st point predicted state
@@ -268,6 +274,10 @@ namespace object
         object::MotionComputationWorker mcw_mixed_operation([&](const cav_msgs::ExternalObjectList& obj_pub){});
         mcw_mixed_operation.setExternalObjectPredictionMode(object::PATH_AND_SENSORS);
         mcw_mixed_operation.setMobilityPathPredictionTimeStep(0.2);
+        tf2::Transform identity_transform;
+        identity_transform.setIdentity();
+
+        mcw_mixed_operation.setECEFToMapTransform(identity_transform);
 
         // Test no georef
         cav_msgs::ExternalObject sensor_obj, mobility_path_obj;

@@ -25,9 +25,9 @@
 #include <functional>
 #include <motion_predict/motion_predict.h>
 #include <motion_predict/predict_ctrv.h>
-#include <lanelet2_extension/projection/local_frame_projector.h>
 #include <carma_utils/CARMAUtils.h>
 #include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 namespace object{
 
@@ -45,6 +45,7 @@ class MotionComputationWorker
  public:
 
   using PublishObjectCallback = std::function<void(const cav_msgs::ExternalObjectList&)>;
+  using LookUpTransform = std::function<void()>;
 
   /*!
    * \brief Constructor
@@ -67,24 +68,64 @@ class MotionComputationWorker
   void setProcessNoiseMax(double noise_max);
   void setConfidenceDropRate(double drop_rate);
   void setExternalObjectPredictionMode(int external_object_prediction_mode);
-  
+  void setECEFToMapTransform(const tf2::Transform& map_in_earth);
+
   //callbacks
   void mobilityPathCallback(const cav_msgs::MobilityPath& msg);
   void geoReferenceCallback(const std_msgs::String& georef);
   
-  // TODO
-  cav_msgs::PredictedState composePredictedState(const lanelet::BasicPoint3d& curr_pt, const lanelet::BasicPoint3d& prev_pt, const ros::Time& prev_time_stamp);
+  /*!
+  \brief Compose cav_msgs::PredictedState msg current point and previous point. It calculates the speed from these points using mobility_path_time_step
+  \param curr_pt current point
+  \param prev_pt prev_pt. this point is recorded in the state
+  \param prev_time_stamp prev_pt's time stamp. This time is recorded in the state
+  \return cav_msgs::PredictedState, including linear velocity, last_time, orientation filled in
+  */
+  cav_msgs::PredictedState composePredictedState(const tf2::Vector3& curr_pt, const tf2::Vector3& prev_pt, const ros::Time& prev_time_stamp);
 
-  // msg converter
+  /*!
+  \brief Convert from mobilitypath's predicted points in ECEF to local map and other fields in external object
+  \param msg Mobility path msg to convert
+  \return ExternalObject object
+  */
   cav_msgs::ExternalObject mobilityPathToExternalObject(const cav_msgs::MobilityPath& msg);
 
-  // TODO synchronizes and interpolates
+  /*!
+  \brief Appends external objects list behind sensor_list. This does not do sensor fusion.
+         When doing so, it drops the predictions points that start before the first prediction is sensor list.
+         And interpolates the remaining predictions points to match the mobility_path_time_step using its average sped between points
+  \param curr_pt sensor_list sensor list from object detection
+  \param prev_pt mobility_path_list. from incoming mobility path msg from other cars
+  \return append and synchronized list of external objects
+  */
   cav_msgs::ExternalObjectList synchronizeAndAppend(const cav_msgs::ExternalObjectList& sensor_list, cav_msgs::ExternalObjectList mobility_path_list);
 
+  /*!
+  \brief It cuts ExternalObject's prediction points before the time_to_match. And uses the average 
+         velocity in its predictions to match the starting point to the point it would have crossed at time_to_match
+         It uses mobility_path_time_step between prediction points to interpolate.
+  \param path External object with predictions to modify
+  \param time_to_match time stamp to have the object start at
+  \return cav_msgs::ExternalObject
+  \note  It assumes time_to_match falls in prediction time's whole interval.
+  */
   cav_msgs::ExternalObject matchAndInterpolateTimeStamp(cav_msgs::ExternalObject path, const ros::Time& time_to_match) const;
+
+  /*!
+  \brief Transforms ecef point to map frame using internally saved map transform
+  \param ecef_point ecef_point to transform
+  \return point in map
+  */
+  tf2::Vector3 transform_to_map_frame(const tf2::Vector3& ecef_point);
 
  private:
 
+  /*! 
+  \brief Helper function to fill in the angular velocity of the external object
+  \param ExternalObject to fill in its angular velocities
+  */
+  void calculateAngVelocityOfPredictedStates(cav_msgs::ExternalObject& object);
+  
   // local copy of external object publishers
   PublishObjectCallback obj_pub_;
 
@@ -103,10 +144,8 @@ class MotionComputationWorker
   // Queue for mobility path msgs to synchronize them with sensor msgs 
   cav_msgs::ExternalObjectList mobility_path_list_;
 
-  // Projector variables to convert from ECEF to Map frame
-  std::string georeference_ = "";
-  std::shared_ptr<lanelet::projection::LocalFrameProjector> local_projector_;
-
+  // ECEF to map transform
+  tf2::Transform map_in_earth_;
 };
 
 }//object

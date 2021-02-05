@@ -19,8 +19,8 @@
 
 namespace object
 {
-MotionComputationWorker::MotionComputationWorker(const PublishObjectCallback& obj_pub) : obj_pub_(obj_pub){};
-
+MotionComputationWorker::MotionComputationWorker(const PublishObjectCallback& obj_pub) : 
+                                                  obj_pub_(obj_pub){};
 
 void MotionComputationWorker::predictionLogic(cav_msgs::ExternalObjectListPtr obj_list)
 {
@@ -92,11 +92,14 @@ void MotionComputationWorker::predictionLogic(cav_msgs::ExternalObjectListPtr ob
     case PATH_AND_SENSORS:
       output_list = synchronizeAndAppend(sensor_list, mobility_path_list_);
     break;
+    case MOBILITY_PATH_ONLY:
+      output_list = mobility_path_list_;
+    break;
     default:
       ROS_WARN_STREAM("Received invalid motion computation operational mode:" << external_object_prediction_mode_ << " publishing empty list.");
     break;
   }
-  
+
   obj_pub_(output_list);
 
   // Clear mobility msg path queue since it is published
@@ -143,38 +146,19 @@ void MotionComputationWorker::setExternalObjectPredictionMode(int external_objec
   external_object_prediction_mode_ = static_cast<MotionComputationMode>(external_object_prediction_mode);
 }
 
-void MotionComputationWorker::geoReferenceCallback(const std_msgs::String& georef)
+void MotionComputationWorker::setECEFToMapTransform(const tf2::Transform& map_in_earth)
 {
-  if (georeference_ == georef.data)
-    return;
-  else
-  {
-    georeference_ = georef.data;
-  }
-  local_projector_ = std::make_shared<lanelet::projection::LocalFrameProjector>(lanelet::projection::LocalFrameProjector(georeference_.c_str()));
+  map_in_earth_ = map_in_earth;
 }
 
 void MotionComputationWorker::mobilityPathCallback(const cav_msgs::MobilityPath& msg)
 {
   mobility_path_list_.objects.push_back(mobilityPathToExternalObject(msg));
-  if (external_object_prediction_mode_ == MOBILITY_PATH_ONLY)
-  {
-    obj_pub_(mobility_path_list_);
-    // Clear mobility msg path queue since it is published
-    mobility_path_list_.objects = {};
-    return;
-  }
 }
 
 cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(const cav_msgs::MobilityPath& msg)
 {
   cav_msgs::ExternalObject output;
-
-  if (!local_projector_)
-  {
-    ROS_WARN_STREAM("Motion computation has not received georeference string yet!");
-    return output;
-  }
 
   // get reference origin in ECEF (convert from cm to m)
   double ecef_x = (double)msg.trajectory.location.ecef_x/100.0;
@@ -202,15 +186,15 @@ cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(c
   // get planned trajectory points
   auto prev_pt_msg = msg.trajectory.offsets[0]; // setup first point to be processed later
   cav_msgs::PredictedState prev_state;
-  lanelet::BasicPoint3d prev_pt_ecef {ecef_x + (double)prev_pt_msg.offset_x /100.0, ecef_y + (double)prev_pt_msg.offset_y /100.0, ecef_z + (double)prev_pt_msg.offset_z /100.0};
+  tf2::Vector3 prev_pt_ecef {ecef_x + (double)prev_pt_msg.offset_x /100.0, ecef_y + (double)prev_pt_msg.offset_y /100.0, ecef_z + (double)prev_pt_msg.offset_z /100.0};
 
-  auto prev_pt_map = local_projector_->projectECEF(prev_pt_ecef, -1);
+  auto prev_pt_map = transform_to_map_frame(prev_pt_ecef);
 
   for (size_t i = 1; i < msg.trajectory.offsets.size(); i ++)
   {
     auto curr_pt_msg = msg.trajectory.offsets[i];
-    lanelet::BasicPoint3d curr_pt_ecef {ecef_x + (double)curr_pt_msg.offset_x /100.0, ecef_y + (double)curr_pt_msg.offset_y /100.0, ecef_z + (double)curr_pt_msg.offset_z /100.0};
-    auto curr_pt_map = local_projector_->projectECEF(curr_pt_ecef, -1);
+    tf2::Vector3 curr_pt_ecef {ecef_x + (double)curr_pt_msg.offset_x /100.0, ecef_y + (double)curr_pt_msg.offset_y /100.0, ecef_z + (double)curr_pt_msg.offset_z /100.0};
+    auto curr_pt_map = transform_to_map_frame(curr_pt_ecef);
 
     cav_msgs::PredictedState curr_state;
 
@@ -239,10 +223,45 @@ cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(c
     prev_pt_map = curr_pt_map;
   }
 
+  calculateAngVelocityOfPredictedStates(output);
+
   return output;
 }
+double getYawFromQuaternionMsg(const geometry_msgs::Quaternion& quaternion)
+{
+  tf2::Quaternion orientation;
+  orientation.setX(quaternion.x);
+  orientation.setY(quaternion.y);
+  orientation.setZ(quaternion.z);
+  orientation.setW(quaternion.w);
 
-cav_msgs::PredictedState MotionComputationWorker::composePredictedState(const lanelet::BasicPoint3d& curr_pt, const lanelet::BasicPoint3d& prev_pt, const ros::Time& prev_time_stamp)
+  double roll, pitch, yaw;
+  tf2::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
+
+  return yaw;
+}
+
+void MotionComputationWorker::calculateAngVelocityOfPredictedStates(cav_msgs::ExternalObject& object)
+{
+  if (!object.dynamic_obj)
+    return;
+
+  // Object's current angular velocity
+  object.velocity.twist.angular.z = (getYawFromQuaternionMsg(object.pose.pose.orientation) - 
+                                     getYawFromQuaternionMsg(object.predictions[0].predicted_position.orientation)) / mobility_path_prediction_time_step_;
+  
+  // Predictions' angular velocities
+  auto prev_orient = object.pose.pose.orientation;
+  for (auto& pred: object.predictions)
+  {
+    pred.predicted_velocity.angular.z = (getYawFromQuaternionMsg(prev_orient) - 
+                                     getYawFromQuaternionMsg(pred.predicted_position.orientation)) / mobility_path_prediction_time_step_;
+  }
+}
+
+
+
+cav_msgs::PredictedState MotionComputationWorker::composePredictedState(const tf2::Vector3& curr_pt, const tf2::Vector3& prev_pt, const ros::Time& prev_time_stamp)
 {
   cav_msgs::PredictedState output_state;
   // Set Position
@@ -350,6 +369,18 @@ cav_msgs::ExternalObject MotionComputationWorker::matchAndInterpolateTimeStamp(c
   }
 
   return output;
+}
+
+tf2::Vector3 MotionComputationWorker::transform_to_map_frame(const tf2::Vector3& ecef_point)
+{
+  tf2::Transform point_in_earth;
+  tf2::Quaternion no_rotation(0, 0, 0, 1);
+
+  point_in_earth.setOrigin(ecef_point);
+  point_in_earth.setRotation(no_rotation);
+  // convert to map frame by (T_e_m)^(-1) * T_e_p
+  auto point_in_map = map_in_earth_.inverse() * point_in_earth;
+  return point_in_map.getOrigin(); //return point in map frame
 }
 
 }  // namespace object
