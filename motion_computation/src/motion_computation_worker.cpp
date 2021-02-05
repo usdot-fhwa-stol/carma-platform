@@ -166,6 +166,18 @@ cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(c
   double ecef_z = (double)msg.trajectory.location.ecef_z/100.0;
 
   // Convert general information
+  output.presence_vector |= cav_msgs::ExternalObject::ID_PRESENCE_VECTOR; 
+  output.presence_vector |= cav_msgs::ExternalObject::POSE_PRESENCE_VECTOR;
+  output.presence_vector |= cav_msgs::ExternalObject::VELOCITY_PRESENCE_VECTOR;
+  output.presence_vector |= cav_msgs::ExternalObject::OBJECT_TYPE_PRESENCE_VECTOR;
+  output.presence_vector |= cav_msgs::ExternalObject::BSM_ID_PRESENCE_VECTOR;
+  output.presence_vector |= cav_msgs::ExternalObject::DYNAMIC_OBJ_PRESENCE;
+  output.presence_vector |= cav_msgs::ExternalObject::PREDICTION_PRESENCE_VECTOR;
+  output.object_type = cav_msgs::ExternalObject::SMALL_VEHICLE;
+  std::hash<std::string> hasher;
+  auto hashed = hasher(msg.header.sender_id);
+  output.id = hashed;
+  
   for (size_t i = 0; i < msg.header.sender_bsm_id.size(); i+=2) // convert hex std::string to uint8_t array
   {
     int num = 0;
@@ -258,8 +270,6 @@ void MotionComputationWorker::calculateAngVelocityOfPredictedStates(cav_msgs::Ex
                                      getYawFromQuaternionMsg(pred.predicted_position.orientation)) / mobility_path_prediction_time_step_;
   }
 }
-
-
 
 cav_msgs::PredictedState MotionComputationWorker::composePredictedState(const tf2::Vector3& curr_pt, const tf2::Vector3& prev_pt, const ros::Time& prev_time_stamp)
 {
