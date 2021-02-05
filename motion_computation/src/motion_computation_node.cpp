@@ -75,7 +75,7 @@ namespace object{
     try
     {
       std::string errstr;
-      if (tf_buffer_.canTransform("earth", "map", ros::Time(0), ros::Duration(10), &errstr)) //10 second timeout
+      if (tf_buffer_.canTransform("earth", "map", ros::Time(0), ros::Duration(20), &errstr)) //20 second timeout
         tf2::convert(tf_buffer_.lookupTransform("earth", "map", ros::Time(0)).transform, map_in_earth); //save to local copy of transform
       else
         ROS_ERROR_STREAM("Look up transform timed out: " << errstr);

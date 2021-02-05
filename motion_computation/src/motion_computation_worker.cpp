@@ -175,7 +175,7 @@ cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(c
   output.presence_vector |= cav_msgs::ExternalObject::PREDICTION_PRESENCE_VECTOR;
   output.object_type = cav_msgs::ExternalObject::SMALL_VEHICLE;
   std::hash<std::string> hasher;
-  auto hashed = hasher(msg.header.sender_id);
+  auto hashed = hasher(msg.header.sender_id); //TODO hasher returns size_t, message accept uint32_t which we might lose info
   output.id = hashed;
   
   for (size_t i = 0; i < msg.header.sender_bsm_id.size(); i+=2) // convert hex std::string to uint8_t array
