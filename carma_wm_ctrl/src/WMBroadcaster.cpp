@@ -204,42 +204,7 @@ void WMBroadcaster::addPassingControlLineFromMsg(std::shared_ptr<Geofence> gf_pt
   // Get specified participants
   ros::V_string left_participants;
   ros::V_string right_participants;
-  ros::V_string participants;
-  for (j2735_msgs::TrafficControlVehClass participant : msg_v01.params.vclasses)
-  {
-    // Currently j2735_msgs::TrafficControlVehClass::RAIL is not supported
-    if (participant.vehicle_class == j2735_msgs::TrafficControlVehClass::ANY)
-    {
-      participants = {lanelet::Participants::Vehicle, lanelet::Participants::Pedestrian, lanelet::Participants::Bicycle};
-      break;
-    }
-    else if (participant.vehicle_class == j2735_msgs::TrafficControlVehClass::PEDESTRIAN)
-    {
-      participants.push_back(lanelet::Participants::Pedestrian);
-    }
-    else if (participant.vehicle_class == j2735_msgs::TrafficControlVehClass::BICYCLE)
-    {
-      participants.push_back(lanelet::Participants::Bicycle);
-    }
-    else if (participant.vehicle_class == j2735_msgs::TrafficControlVehClass::MICROMOBILE ||
-              participant.vehicle_class == j2735_msgs::TrafficControlVehClass::MOTORCYCLE)
-    {
-      participants.push_back(lanelet::Participants::VehicleMotorcycle);
-    }
-    else if (participant.vehicle_class == j2735_msgs::TrafficControlVehClass::BUS)
-    {
-      participants.push_back(lanelet::Participants::VehicleBus);
-    }
-    else if (participant.vehicle_class == j2735_msgs::TrafficControlVehClass::LIGHT_TRUCK_VAN ||
-            participant.vehicle_class == j2735_msgs::TrafficControlVehClass::PASSENGER_CAR)
-    {
-      participants.push_back(lanelet::Participants::VehicleCar);
-    }
-    else if (8<= participant.vehicle_class && participant.vehicle_class <= 16) // Truck enum definition range from 8-16 currently
-    {
-      participants.push_back(lanelet::Participants::VehicleTruck);
-    }
-  }
+  ros::V_string participants=participantsChecker(msg_v01);
 
   // Create the pcl depending on the allowed passing control direction, left, right, or both
   if (msg_detail.latperm[0] == cav_msgs::TrafficControlDetail::PERMITTED ||
@@ -267,7 +232,12 @@ void WMBroadcaster::addPassingControlLineFromMsg(std::shared_ptr<Geofence> gf_pt
 
 void WMBroadcaster::addRegionAccessRule(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const
 {
-  ros::V_string participants;
+   gf_ptr->regulatory_element_ = std::make_shared<lanelet::RegionAccessRule>(lanelet::RegionAccessRule::buildData(lanelet::utils::getId(),affected_llts,{},participantsChecker(msg_v01)));
+}
+
+ros::V_string WMBroadcaster::participantsChecker(const cav_msgs::TrafficControlMessageV01& msg_v01) const
+{
+    ros::V_string participants;
  for (j2735_msgs::TrafficControlVehClass participant : msg_v01.params.vclasses)
   {
     // Currently j2735_msgs::TrafficControlVehClass::RAIL is not supported
@@ -304,8 +274,7 @@ void WMBroadcaster::addRegionAccessRule(std::shared_ptr<Geofence> gf_ptr, const 
     }
   }
 
-  gf_ptr->regulatory_element_ = std::make_shared<lanelet::RegionAccessRule>(lanelet::RegionAccessRule::buildData(lanelet::utils::getId(),affected_llts,{},participants));
-
+  return  participants;
 }
 
 // currently only supports geofence message version 1: TrafficControlMessageV01 

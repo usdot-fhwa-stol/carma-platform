@@ -178,6 +178,11 @@ public:
    * \param afffected_llts affected lanelets
    */
   void addRegionAccessRule(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const;
+  /*!
+   * \brief Generates participants list
+   * \param msg_v01 message type
+   */
+  ros::V_string participantsChecker(const cav_msgs::TrafficControlMessageV01& msg_v01) const;
 
 
 private:
