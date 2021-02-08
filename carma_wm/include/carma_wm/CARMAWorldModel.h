@@ -116,6 +116,8 @@ public:
 
   LaneletRouteConstPtr getRoute() const override;
 
+  void setRouteEndPoint(const lanelet::BasicPoint3d& end_point) override;
+
   TrackPos getRouteEndTrackPos() const override;
 
   LaneletRoutingGraphConstPtr getMapRoutingGraph() const override;
