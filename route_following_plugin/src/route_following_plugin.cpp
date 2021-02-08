@@ -47,6 +47,7 @@ namespace route_following_plugin
         pnh_->param<double>("minimal_maneuver_duration", mvr_duration_, 16.0);
         pnh2_->param<double>("config_speed_limit",config_limit);
         pnh_->param<double>("route_end_jerk", jerk_);
+        pnh_->param<double>("buffer_time_lanechange",buffer_lanechange_time_);
         wml_.reset(new carma_wm::WMListener());
         // set world model point form wm listener
         wm_ = wml_->getWorldModel();
@@ -139,27 +140,26 @@ namespace route_following_plugin
             if(last_lanelet_index!= (shortest_path.size()-1) && identifyLaneChange(following_lanelets, shortest_path[last_lanelet_index + 1].id()))
             {
                 //calculate constant start distance for lane change
-                double longl_travel_dist = (target_speed*LANE_CHANGE_TIME_MAX);
-                double start_dist = end_dist-longl_travel_dist;
+                double longl_travel_dist = (target_speed*(LANE_CHANGE_TIME_MAX + buffer_lanechange_time_)); //*config_param for time
+                double lane_change_start_dist = end_dist-longl_travel_dist;
                 
                 //lane following till start_distance
-                if(current_progress < start_dist){
+                if(current_progress < lane_change_start_dist){
                     resp.new_plan.maneuvers.push_back(
-                    composeManeuverMessage(current_progress, start_dist, 
+                    composeManeuverMessage(current_progress, lane_change_start_dist, 
                                         speed_progress, target_speed, 
                                         shortest_path[last_lanelet_index].id(), current_time));
-                    current_time = resp.new_plan.maneuvers.back().lane_following_maneuver.end_time;
                 }
                 else{ //update start_dist if beyond const start calculated above
-                    start_dist = current_progress;
+                    lane_change_start_dist = current_progress;
+
                 }
                 double starting_lanelet_id = shortest_path[last_lanelet_index].id();
                 double ending_lanelet_id = shortest_path[last_lanelet_index+1].id();
                 resp.new_plan.maneuvers.push_back(
-                composeLaneChangeManeuverMessage(start_dist, end_dist, speed_progress, target_speed, 
+                composeLaneChangeManeuverMessage(lane_change_start_dist, end_dist, speed_progress, target_speed, 
                                     starting_lanelet_id, ending_lanelet_id,
                                     current_time));
-                current_time = resp.new_plan.maneuvers.back().lane_change_maneuver.end_time;
             }
             else
             {
@@ -167,7 +167,7 @@ namespace route_following_plugin
                 composeManeuverMessage(current_progress, end_dist,  
                                     speed_progress, target_speed, 
                                     shortest_path[last_lanelet_index].id(), current_time));
-                current_time = resp.new_plan.maneuvers.back().lane_following_maneuver.end_time;
+                
             }
             current_progress += dist_diff;
             speed_progress = target_speed;
@@ -187,7 +187,7 @@ namespace route_following_plugin
             composeStopandWaitManeuverMessage(current_progress,total_maneuver_length,
             speed_progress,shortest_path[last_lanelet_index].id(),
             shortest_path[last_lanelet_index].id(),current_time,time_req_to_stop));
-        current_time = resp.new_plan.maneuvers.back().stop_and_wait_maneuver.end_time;
+        
 
         if(resp.new_plan.maneuvers.size() == 0)
         {
@@ -214,7 +214,7 @@ namespace route_following_plugin
         }
         return -1;
     }
-    cav_msgs::Maneuver RouteFollowingPlugin::composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time current_time)
+    cav_msgs::Maneuver RouteFollowingPlugin::composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time& current_time)
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
@@ -237,11 +237,11 @@ namespace route_following_plugin
         }
         maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
         current_time = maneuver_msg.lane_following_maneuver.end_time;
-        std::cout<<"Creating lane following maneuver start dist: "<<current_dist<<" end_dist:"<<end_dist<<std::endl;
+
         return maneuver_msg;
     }
 
-    cav_msgs::Maneuver RouteFollowingPlugin::composeLaneChangeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int starting_lane_id,int ending_lane_id, ros::Time current_time){
+    cav_msgs::Maneuver RouteFollowingPlugin::composeLaneChangeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int starting_lane_id,int ending_lane_id, ros::Time& current_time){
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::LANE_CHANGE;
         maneuver_msg.lane_change_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
@@ -263,12 +263,11 @@ namespace route_following_plugin
         maneuver_msg.lane_change_maneuver.starting_lane_id = std::to_string(starting_lane_id);
         maneuver_msg.lane_change_maneuver.ending_lane_id = std::to_string(ending_lane_id);
         current_time = maneuver_msg.lane_change_maneuver.end_time;
-        std::cout<<"Creating lane change maneuver start dist: "<<current_dist<<" end_dist:"<<end_dist<<std::endl;
 
         return maneuver_msg;
     }
 
-    cav_msgs::Maneuver RouteFollowingPlugin::composeStopandWaitManeuverMessage(double current_dist, double end_dist, double current_speed, int start_lane_id, int end_lane_id, ros::Time current_time, double end_time)
+    cav_msgs::Maneuver RouteFollowingPlugin::composeStopandWaitManeuverMessage(double current_dist, double end_dist, double current_speed, int start_lane_id, int end_lane_id, ros::Time& current_time, double end_time)
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::STOP_AND_WAIT;
@@ -287,7 +286,7 @@ namespace route_following_plugin
         } 
         maneuver_msg.stop_and_wait_maneuver.end_time = current_time + ros::Duration(end_time);
         current_time = maneuver_msg.stop_and_wait_maneuver.end_time;
-        std::cout<<"Creating stop and wait maneuver, start dist: "<<current_dist<<" end_dist:"<<end_dist<<std::endl;
+        
         return maneuver_msg;
     }
     bool RouteFollowingPlugin::identifyLaneChange(lanelet::routing::LaneletRelations relations, int target_id)

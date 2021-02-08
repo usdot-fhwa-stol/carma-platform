@@ -80,7 +80,7 @@ namespace route_following_plugin
          * \param current_time Start time of the current maneuver
          * \return A lane keeping maneuver message which is ready to be published
          */
-        cav_msgs::Maneuver composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time current_time);
+        cav_msgs::Maneuver composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time& current_time);
         /**
          * \brief Compose a stop and wait maneuver message based on input params
          * \param current_dist Start downtrack distance of the current maneuver
@@ -91,9 +91,9 @@ namespace route_following_plugin
          * \param current_time Start time of the current maneuver
          * \return A lane keeping maneuver message which is ready to be published
          */
-        cav_msgs::Maneuver composeStopandWaitManeuverMessage(double current_dist, double end_dist, double current_speed, int start_lane_id, int target_lane_id, ros::Time current_time, double end_time);
+        cav_msgs::Maneuver composeStopandWaitManeuverMessage(double current_dist, double end_dist, double current_speed, int start_lane_id, int target_lane_id, ros::Time& current_time, double end_time);
 
-        cav_msgs::Maneuver composeLaneChangeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int starting_lane_id,int ending_lane_id, ros::Time current_time);
+        cav_msgs::Maneuver composeLaneChangeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int starting_lane_id,int ending_lane_id, ros::Time& current_time);
 
         void updateCurrentStatus(cav_msgs::Maneuver maneuver, double& speed, double& end_dist, int& lane_id);
         /**
@@ -151,6 +151,8 @@ namespace route_following_plugin
         double mvr_duration_;
         //Jerk used to come to stop at end of route
         double jerk_ = 0.25;
+        //extra time allowed for lane changing, in order to make transition smooth
+        double buffer_lanechange_time_ = 1.0;
 
         //lane change constant
         static constexpr double LATERAL_ACCELERATION_LIMIT_IN_MS=2.00;

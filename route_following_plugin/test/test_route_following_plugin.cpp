@@ -36,7 +36,7 @@
 namespace route_following_plugin
 {
 
-    TEST(RouteFollowingPluginTest, DISABLED_testFindLaneletIndexFromPath)
+    TEST(RouteFollowingPluginTest, testFindLaneletIndexFromPath)
     {
         RouteFollowingPlugin rfp;
         lanelet::ConstLanelets lls;
@@ -48,10 +48,12 @@ namespace route_following_plugin
         EXPECT_EQ(-1, rfp.findLaneletIndexFromPath(5, path));
     }
 
-    TEST(RouteFollowingPluginTest, DISABLED_testComposeManeuverMessage)
+    TEST(RouteFollowingPluginTest, testComposeManeuverMessage)
     {
         RouteFollowingPlugin rfp;
-        auto msg = rfp.composeManeuverMessage(1.0, 10.0, 0.9, RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS, 2, ros::Time(0, 0));
+        ros::Time::init();
+        ros::Time time = ros::Time(0,0);
+        auto msg = rfp.composeManeuverMessage(1.0, 10.0, 0.9, RouteFollowingPlugin::TWENTY_FIVE_MPH_IN_MS, 2, time);
         EXPECT_EQ(cav_msgs::Maneuver::LANE_FOLLOWING, msg.type);
         EXPECT_EQ(cav_msgs::ManeuverParameters::NO_NEGOTIATION, msg.lane_following_maneuver.parameters.neogition_type);
         EXPECT_EQ(cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN, msg.lane_following_maneuver.parameters.presence_vector);
@@ -66,15 +68,15 @@ namespace route_following_plugin
         EXPECT_EQ("2", msg.lane_following_maneuver.lane_id);
     }
 
-    TEST(RouteFollowingPluginTest, DISABLED_testIdentifyLaneChange)
+    TEST(RouteFollowingPluginTest, testIdentifyLaneChange)
     {
         RouteFollowingPlugin rfp;
         auto relations = lanelet::routing::LaneletRelations();
-        EXPECT_FALSE(rfp.identifyLaneChange(relations, 1));
+        EXPECT_TRUE(rfp.identifyLaneChange(relations, 1));
         lanelet::routing::LaneletRelation relation;
         relation.relationType = lanelet::routing::RelationType::Successor;
         relations.push_back(relation);
-        EXPECT_TRUE(rfp.identifyLaneChange(relations, 0));
+        EXPECT_FALSE(rfp.identifyLaneChange(relations, 0));
     }
 
     TEST(RouteFollowingPlugin,DISABLED_TestAssociateSpeedLimit)
@@ -128,10 +130,19 @@ namespace route_following_plugin
         cav_msgs::ManeuverPlan plan_req1;
         plan_req1.header;
         plan_req1.maneuver_plan_id;
-        plan_req1.planning_start_time;
-        plan_req1.planning_completion_time;
-        //cav_msgs::Maneuver RouteFollowingPlugin::composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time current_time)
-        plan_req1.maneuvers.push_back(worker.composeManeuverMessage(0,0,0,0,0,ros::Time(0)));
+        plan_req1.planning_start_time = ros::Time(0);
+        plan_req1.planning_completion_time = ros::Time(0.0);
+        
+        cav_msgs::Maneuver message;
+        message.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+        message.lane_following_maneuver.start_dist =0.0;
+        message.lane_following_maneuver.end_dist =0.0;
+        message.lane_following_maneuver.lane_id = std::to_string(1210);
+        message.lane_following_maneuver.start_speed =0.0;
+        message.lane_following_maneuver.end_speed =0.0;
+        message.lane_following_maneuver.start_time = ros::Time::now();
+        message.lane_following_maneuver.end_time = ros::Time::now();
+        plan_req1.maneuvers.push_back(message);
         pplan.prior_plan=plan_req1;
         plan.request=pplan;
         //PlanManeuversResponse 
@@ -146,7 +157,7 @@ namespace route_following_plugin
             //check target speeds in updated response
             lanelet::Velocity limit=30_mph;
             ASSERT_EQ(plan.response.new_plan.maneuvers[0].lane_following_maneuver.end_speed,0);
-            for(auto i=1;i<plan.response.new_plan.maneuvers.size();i++){
+            for(auto i=1;i<plan.response.new_plan.maneuvers.size()-1;i++){
                 ASSERT_EQ(plan.response.new_plan.maneuvers[i].lane_following_maneuver.end_speed, limit.value()) ;
             }
         }
@@ -157,11 +168,11 @@ namespace route_following_plugin
 
     }
 
-    TEST(RouteFollowingPlugin,DISABLED_TestAssociateSpeedLimitusingosm)
+    TEST(RouteFollowingPlugin, TestAssociateSpeedLimitusingosm)
     {
         // File to process. Path is relative to test folder
         std::string file = "../resource/map/town01_vector_map_1.osm";
-        lanelet::Id start_id=101;
+        lanelet::Id start_id=167;
         lanelet::Id end_id=111;
         /***
          * VAVLID PATHs (consists of lanenet ids): (This is also the shortest path because certain Lanelets missing)
@@ -192,7 +203,7 @@ namespace route_following_plugin
 
         RouteFollowingPlugin worker;
         //get position on map
-        auto llt=map.get()->laneletLayer.get(start_id);
+        auto llt=map.get()->laneletLayer.get(169);
         lanelet::LineString3d left_bound=llt.leftBound();
         lanelet::LineString3d right_bound=llt.rightBound();
         geometry_msgs::PoseStamped left;
@@ -235,10 +246,19 @@ namespace route_following_plugin
         cav_msgs::ManeuverPlan plan_req1;
         plan_req1.header;
         plan_req1.maneuver_plan_id;
-        plan_req1.planning_start_time;
-        plan_req1.planning_completion_time;
+        plan_req1.planning_start_time = ros::Time(0);
+        plan_req1.planning_completion_time = ros::Time(0.0);
         
-        plan_req1.maneuvers.push_back(worker.composeManeuverMessage(0,0,0,0,0,ros::Time(0)));
+        cav_msgs::Maneuver message;
+        message.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+        message.lane_following_maneuver.start_dist =0.0;
+        message.lane_following_maneuver.end_dist =0.0;
+        message.lane_following_maneuver.lane_id = std::to_string(start_id);
+        message.lane_following_maneuver.start_speed =0.0;
+        message.lane_following_maneuver.end_speed =0.0;
+        message.lane_following_maneuver.start_time = ros::Time::now();
+        message.lane_following_maneuver.end_time = ros::Time::now();
+        plan_req1.maneuvers.push_back(message);
         pplan.prior_plan=plan_req1;
         plan.request=pplan;
         //PlanManeuversResponse 
@@ -276,10 +296,10 @@ namespace route_following_plugin
     {
         //File to process. Path is relative to unobstructed lanechange package
         std::string path = ros::package::getPath("unobstructed_lanechange");
-        std::string file = "/resource/map/AOI_1_TFHRC_faster_pretty_lanechange.osm";
+        std::string file = "/resource/map/town01_vector_map_lane_change.osm";
         file = path.append(file);
-        lanelet::Id start_id = 130;//166;
-        lanelet::Id end_id = 140;//111;
+        lanelet::Id start_id = 166;
+        lanelet::Id end_id = 111;
 
         // Write new map to file
         int projector_type = 0;
@@ -301,11 +321,6 @@ namespace route_following_plugin
         cmw->carma_wm::CARMAWorldModel::setMap(map);
 
         auto shortest_path = cmw->getRoute()->shortestPath();
-        std::cout<<"Shortest path:";
-        for(int i =0 ;i<shortest_path.size();i++){
-            std::cout<<shortest_path[i].id()<<" ";
-        }
-        std::cout<<"\n";
         
 
         RouteFollowingPlugin worker;
@@ -376,11 +391,9 @@ namespace route_following_plugin
         plan.response=newplan;
     
         
-        if(worker.plan_maneuver_cb(plan.request,plan.response)){    
-            for(auto i=0;i<plan.response.new_plan.maneuvers.size() ;i++){
-                std::cout<< plan.response.new_plan.maneuvers[i].type<<" ";
-            }
-            std::cout<<"\n";
+        if(worker.plan_maneuver_cb(plan.request,plan.response)){  
+            int maneuvers_size = plan.response.new_plan.maneuvers.size();
+            ASSERT_EQ(plan.response.new_plan.maneuvers[maneuvers_size -2].type, cav_msgs::Maneuver::LANE_CHANGE);
         }
         else{
             EXPECT_TRUE(false);

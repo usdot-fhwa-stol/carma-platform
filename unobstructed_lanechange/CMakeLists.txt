@@ -75,10 +75,8 @@ add_executable( ${PROJECT_NAME}
 
 
 add_library(unobstructed_lanechange_plugin_lib src/unobstructed_lanechange.cpp src/smoothing/BSpline.cpp)
-
-add_dependencies(unobstructed_lanechange_plugin_lib ${catkin_EXPORTED_TARGETS})
-
 target_link_libraries(${PROJECT_NAME} unobstructed_lanechange_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+add_dependencies(unobstructed_lanechange_plugin_lib ${catkin_EXPORTED_TARGETS})
 
 
 #############
@@ -86,14 +84,14 @@ target_link_libraries(${PROJECT_NAME} unobstructed_lanechange_plugin_lib ${catki
 #############
 
 
-install(DIRECTORY include/${PROJECT_NAME}/
+install(DIRECTORY include
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.h"
   PATTERN ".svn" EXCLUDE
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME} unobstructed_lanechange_plugin_lib
+install(TARGETS ${PROJECT_NAME} 
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
