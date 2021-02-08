@@ -27,6 +27,11 @@
   <depend>roscpp</depend>
   <depend>carma_utils</depend>
   <depend>motion_predict</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
+
+
   <export>
   
 
