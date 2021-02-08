@@ -78,11 +78,14 @@ namespace object{
       if (tf_buffer_.canTransform("earth", "map", ros::Time(0), ros::Duration(20), &errstr)) //20 second timeout
         tf2::convert(tf_buffer_.lookupTransform("earth", "map", ros::Time(0)).transform, map_in_earth); //save to local copy of transform
       else
-        ROS_ERROR_STREAM("Look up transform timed out: " << errstr);
+      {
+        tf2::TransformException ex("Look up transform timed out: " + errstr);
+        ros::CARMANodeHandle::handleException(ex);
+      }
     }
     catch (const tf2::TransformException &ex)
     {
-      ROS_ERROR_STREAM("Could not lookup transform with exception: " << ex.what());
+      ros::CARMANodeHandle::handleException(ex);
     }
     return map_in_earth;
   }
