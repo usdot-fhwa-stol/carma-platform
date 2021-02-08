@@ -1,4 +1,20 @@
 
+/*
+ * Copyright (C) 2019-2020 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 #include <inlanecruising_plugin/object_avoidance.h>
 
 namespace inlanecruising_plugin
@@ -7,7 +23,7 @@ namespace object_avoidance
 {
     ObjectAvoidance::ObjectAvoidance(){}
 
-    cav_msgs::TrajectoryPlan ObjectAvoidance::update_traj_for_object(cav_msgs::TrajectoryPlan& original_tp, const carma_wm::WorldModelConstPtr& wm_, double current_speed_) 
+    cav_msgs::TrajectoryPlan ObjectAvoidance::update_traj_for_object(const cav_msgs::TrajectoryPlan& original_tp, const carma_wm::WorldModelConstPtr& wm_, double current_speed_) 
     {
         
         cav_msgs::TrajectoryPlan update_tpp_vector;
@@ -22,30 +38,28 @@ namespace object_avoidance
 
         std::cout << "host_vehicle_size" << host_vehicle_size.x << std::endl;
 
-        std::vector<cav_msgs::RoadwayObstacle> rwol_collision = carma_wm::collision_detection::WorldCollisionDetection(rwol2, original_tp, host_vehicle_size, current_velocity, 10.0);// 10 replace to target_time
+        std::vector<cav_msgs::RoadwayObstacle> rwol_collision = carma_wm::collision_detection::WorldCollisionDetection(rwol2, original_tp, host_vehicle_size, current_velocity, collision_horizon_);
         std::cout << "rwol_collision" << rwol_collision.size() << std::endl;
         std::cout << "rwol" << rwol.size() << std::endl;
 
         // correct the input types
         if(rwol_collision.size() > 0) {
 
-            std::cout << "Collision!" << std::endl;
-
-            // use trajectory utiles to update trajectory plan points
+            ROS_WARN_STREAM("Collision Detected!");
             
-            // lead vehicle trjactory
+            // Distance from the original trajectory point to the lead vehicle/object
             double dist_x = rwol_collision[0].object.pose.pose.position.x - original_tp.trajectory_points[0].x;
             double dist_y = rwol_collision[0].object.pose.pose.position.y - original_tp.trajectory_points[0].y;
-            double x_lead = sqrt(dist_x*dist_x + dist_y*dist_y);
+            double dist_lead = sqrt(dist_x*dist_x + dist_y*dist_y);
 
             // roadway object position
-            double gap_time = (x_lead - x_gap)/current_speed_;
+            double gap_time = (dist_lead - x_gap_)/current_speed_;
 
             double collision_time = 0; //\TODO comming from carma_wm collision detection in future (not used now)
 
             double goal_velocity = rwol_collision[0].object.velocity.twist.linear.x;
 
-            double goal_pos = x_lead - goal_velocity * gap_time - 10.0; 
+            double goal_pos = dist_lead - goal_velocity * gap_time - 10.0; 
 
             double initial_time = 0;
             double initial_pos = 0.0; //relative initial position (first trajectory point)
@@ -54,27 +68,31 @@ namespace object_avoidance
             double goal_accel = 0;
 
             // TODO: Add special case for when the object is not moving
+            if (goal_velocity <= min_obstacle_speed_){
+                ROS_WARN_STREAM("The obstacle is not moving");
+            }
 
             double delta_v_max = abs(rwol_collision[0].object.velocity.twist.linear.x - max_trajectory_speed(original_tp.trajectory_points));
-            
+            // reference time, is the maximum time available to perform object avoidance (length of a trajectory)
             double t_ref = (original_tp.trajectory_points[original_tp.trajectory_points.size() - 1].target_time.toSec() - original_tp.trajectory_points[0].target_time.toSec());
 
-            double t_ph = 4 * delta_v_max / maximum_deceleration_value;
+            // time required for comfortable deceleration
+            double t_ph = acceleration_adjustment_factor_ * delta_v_max / maximum_deceleration_value_;
 
+            // planning time for object avoidance
             double tp = 0;
 
-            if(t_ph > tpmin && t_ref < t_ph){
+            if(t_ph > tpmin_ && t_ph < t_ref){
                 tp = t_ph;
             }
-            else if(t_ph < tpmin){
-                tp = tpmin;
+            else if(t_ph < tpmin_){
+                tp = tpmin_;
             }
             else {
                 tp = t_ref;
             }
 
-            std::cout << "tp:  "<< tp << std::endl;
-
+            ROS_DEBUG_STREAM("Object avoidance planning time: " << tp);
             std::vector<double> values = quintic_coefficient_calculator::quintic_coefficient_calculator(initial_pos, 
                                                                                                         goal_pos, 
                                                                                                         current_speed_, 
@@ -100,7 +118,9 @@ namespace object_avoidance
 
                 std::cout << "new dist: "<< dt_dist << std::endl;
                 std::cout << "new velocity: "<< dv << std::endl; //TODO Consider case when resulting velocity is 0 or <0
-
+                if (dv <= 0.0){
+                    ROS_WARN_STREAM("target speed is zero");
+                }
                 cav_msgs::TrajectoryPlanPoint new_tpp;
                 new_tpp.x = original_tp.trajectory_points[i].x;
                 new_tpp.y = original_tp.trajectory_points[i].y;
@@ -121,7 +141,7 @@ namespace object_avoidance
     } 
 
 
-    std::vector<double> ObjectAvoidance::get_relative_downtracks(cav_msgs::TrajectoryPlan& trajectory_plan)
+    std::vector<double> ObjectAvoidance::get_relative_downtracks(const cav_msgs::TrajectoryPlan& trajectory_plan)
     {
         std::vector<double> downtracks;
         downtracks.reserve(trajectory_plan.trajectory_points.size());

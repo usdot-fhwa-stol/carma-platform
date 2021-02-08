@@ -211,8 +211,6 @@ TEST(InLaneCruisingPluginTest, get_relative_downtracks_test)
     EXPECT_EQ(5, result[4]);
     EXPECT_EQ(5, result[5]);
     EXPECT_EQ(15, result[6]);
-    
-
 }
 
 TEST(InLaneCruisingPluginTest, test_update_traj)

@@ -45,6 +45,7 @@ InLaneCruisingPlugin::InLaneCruisingPlugin(carma_wm::WorldModelConstPtr wm, InLa
                                            PublishPluginDiscoveryCB plugin_discovery_publisher)
   : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
 {
+  object_avoidance::ObjectAvoidance obj_;
   plugin_discovery_msg_.name = "InLaneCruisingPlugin";
   plugin_discovery_msg_.versionId = "v1.0";
   plugin_discovery_msg_.available = true;
@@ -96,8 +97,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
 
   if (config_.enable_object_avoidance)
   {
-    object_avoidance::ObjectAvoidance obj;
-    resp.trajectory_plan = obj.update_traj_for_object(trajectory, wm_, req.vehicle_state.longitudinal_vel);
+    resp.trajectory_plan = obj_.update_traj_for_object(trajectory, wm_, req.vehicle_state.longitudinal_vel);
   }
   else
   {

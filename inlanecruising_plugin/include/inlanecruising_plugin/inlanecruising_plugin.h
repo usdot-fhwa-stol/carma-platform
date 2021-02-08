@@ -247,7 +247,7 @@ private:
    */ 
   std::pair<double, size_t> min_with_exclusions(const std::vector<double>& values, const std::unordered_set<size_t>& excluded) const;
   
-
+  object_avoidance::ObjectAvoidance obj_;
   carma_wm::WorldModelConstPtr wm_;
   InLaneCruisingPluginConfig config_;
   PublishPluginDiscoveryCB plugin_discovery_publisher_;

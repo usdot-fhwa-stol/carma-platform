@@ -48,7 +48,7 @@ namespace object_avoidance
 
         geometry_msgs::Vector3 host_vehicle_size;
 
-        cav_msgs::TrajectoryPlan update_traj_for_object(cav_msgs::TrajectoryPlan& original_tp, const carma_wm::WorldModelConstPtr& wm_, double current_speed_);
+        cav_msgs::TrajectoryPlan update_traj_for_object(const cav_msgs::TrajectoryPlan& original_tp, const carma_wm::WorldModelConstPtr& wm_, double current_speed_);
 
         // calculate the quintic polynomial with coefficients
         double polynomial_calc(std::vector<double> coeff, double x);
@@ -60,26 +60,27 @@ namespace object_avoidance
         double max_trajectory_speed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points);
 
         // calculates distance between trajectory points in a plan
-        std::vector<double> get_relative_downtracks(cav_msgs::TrajectoryPlan& trajectory_plan);
+        std::vector<double> get_relative_downtracks(const cav_msgs::TrajectoryPlan& trajectory_plan);
 
-        // parameter for activating object avoidance logic
-        bool enable_avoidance = true;
+        
 
 
         private:
-
         
-         // current vehicle speed
+        // time horizon for collision avoidance in s
+        const double collision_horizon_ = 10.0;
+        // Minimum speed for moving obstacle in m/s
+        const double min_obstacle_speed_ = 2.0;
+        // Adjustment factor for safe and comfortable acceleration/deceleration 
+        const double acceleration_adjustment_factor_ = 4.0;
+        // current vehicle speed in m/s
         double current_speed_;
-
-        // minimum planning time
-        double tpmin = 2;
-        // max deceleration value
-        double maximum_deceleration_value = 3;
-        // minimum downtrack
-        double min_downtrack = 3;
-        // minimum safety gap
-        double x_gap = 2;
+        // minimum planning time in s
+        const double tpmin_ = 2;
+        // max deceleration value in m/s^2
+        const double maximum_deceleration_value_ = 3.0;
+        // minimum safety gap in m
+        const double x_gap_ = 2.0;
 
     };
 
