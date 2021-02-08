@@ -14,13 +14,16 @@
  * the License.
  */
 
-#ifndef EXTERNAL_OBJECT_H
-#define EXTERNAL_OBJECT_H
+#ifndef MOTION_COMPUTATION_H
+#define MOTION_COMPUTATION_H
 
 #include <ros/ros.h>
 #include <carma_utils/CARMAUtils.h>
 #include <functional>
 #include "motion_computation_worker.h"
+#include <tf2_ros/transform_listener.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 namespace object{
 
@@ -31,10 +34,11 @@ class MotionComputationNode
   
   //node handle
   ros::CARMANodeHandle nh_;
-  ros::CARMANodeHandle pnh_;
+  ros::CARMANodeHandle pnh_ = {"~"};
    
   //subscriber
   ros::Subscriber motion_comp_sub_;
+  ros::Subscriber mobility_path_sub_;
 
   //publisher
   ros::Publisher carma_obj_pub_;
@@ -45,7 +49,16 @@ class MotionComputationNode
     /*!fn initialize()
   \brief initialize this node before running
   */
-    void initialize();
+  void initialize();
+
+  // tf buffer holds the tree of transforms
+  tf2_ros::Buffer tf_buffer_;
+
+  /*!fn initialize()
+  \brief lookup ECEF to Map transform from tf2 tree
+  \return ECEF to Map transform
+  */
+  tf2::Transform lookupECEFtoMapTransform();
 
  public:
   
@@ -57,7 +70,7 @@ class MotionComputationNode
      /*! \fn publishObject()
     \brief Callback to publish ObjectList
    */
-  void publishObject(const cav_msgs::ExternalObjectList& obj_pred_msg);
+  void publishObject(const cav_msgs::ExternalObjectList& obj_pred_msg) const;
 
   /*!fn run()
   \brief General starting point to run this node
@@ -68,4 +81,4 @@ class MotionComputationNode
 
 }//object
 
-#endif /* EXTERNAL_OBJECT_H */
+#endif /* MOTION_COMPUTATION_H */
