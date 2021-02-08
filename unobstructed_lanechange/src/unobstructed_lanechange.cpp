@@ -529,7 +529,7 @@ namespace unobstructed_lanechange
         return best_index;
     }
 
-    lanelet::BasicLineString2d  UnobstructedLaneChangePlugin::create_lanechange_route(lanelet::BasicPoint2d start, lanelet::ConstLanelet& start_lanelet, lanelet::BasicPoint2d end, lanelet::ConstLanelet& end_lanelet)
+    lanelet::BasicLineString2d  UnobstructedLaneChangePlugin::create_lanechange_path(lanelet::BasicPoint2d start, lanelet::ConstLanelet& start_lanelet, lanelet::BasicPoint2d end, lanelet::ConstLanelet& end_lanelet)
     {
         std::vector<lanelet::BasicPoint2d> centerline_points={};
         lanelet::BasicLineString2d centerline_start_lane = start_lanelet.centerline2d().basicLineString();
@@ -603,8 +603,8 @@ namespace unobstructed_lanechange
             lanelet::BasicPoint2d start = first.front();
             lanelet::BasicLineString2d last=lanelets_in_path.back().centerline2d().basicLineString();
             lanelet::BasicPoint2d end = last.back();
-            //lanelet::BasicLineString2d new_points = create_lanechange_route(start, end);
-            lanelet::BasicLineString2d new_points = create_lanechange_route(start,lanelets_in_path[lane_change_iteration], end, lanelets_in_path.back());
+            
+            lanelet::BasicLineString2d new_points = create_lanechange_path(start,lanelets_in_path[lane_change_iteration], end, lanelets_in_path.back());
             centerline_points.insert(centerline_points.end(),new_points.begin(),new_points.end() );
     
         return centerline_points;
