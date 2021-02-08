@@ -51,6 +51,7 @@ InLaneCruisingPlugin::InLaneCruisingPlugin(carma_wm::WorldModelConstPtr wm, InLa
   plugin_discovery_msg_.activated = false;
   plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
   plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
+  curvature_brackets_ = compute_curvature_brackets(config_.lateral_accel_limit, 2.2352, 35.7632); // TODO make parameters?
 }
 
 bool InLaneCruisingPlugin::onSpin()
@@ -346,11 +347,13 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   std::vector<double> final_yaw_values = carma_wm::geometry::compute_tangent_orientations(all_sampling_points);
 
-  std::vector<double> curvatures = better_curvature;
+
+  std::vector<double> curvatures = constrain_to_brackets(curvature_brackets_, better_curvature);
 
   std::vector<double> ideal_speeds =
       trajectory_utils::constrained_speeds_for_curvatures(curvatures, config_.lateral_accel_limit);
   
+  log::printDoublesPerLineWithPrefix("better_curvature[i]: ", better_curvature);
   log::printDoublesPerLineWithPrefix("curvatures[i]: ", curvatures);
   log::printDoublesPerLineWithPrefix("ideal_speeds: ", ideal_speeds);
   log::printDoublesPerLineWithPrefix("final_yaw_values[i]: ", final_yaw_values);
@@ -602,5 +605,52 @@ double InLaneCruisingPlugin::compute_curvature_at(const inlanecruising_plugin::s
   Eigen::Vector3d f_prime_prime = {f_prime_prime_pt.x(), f_prime_prime_pt.y(), 0};
   return (f_prime.cross(f_prime_prime)).norm()/(pow(f_prime.norm(),3));
 }
+
+/**
+ * Returns a list of values the same size as input values that have been set to the values of brackets that are lower than their initial values. 
+ */ 
+std::vector<double> InLaneCruisingPlugin::constrain_to_brackets(const std::vector<double>& brackets, const std::vector<double>& values) {
+  std::vector<double> output;
+  output.reserve(values.size());
+
+  for (auto val : values) {
+    auto range_max_it=std::lower_bound (brackets.begin(), brackets.end(), val);
+    if (range_max_it == brackets.begin()) {
+      output.push_back(*range_max_it);
+    } else if (range_max_it == brackets.end()) {
+      output.push_back(brackets.back());
+    } else {
+      double low_val = *(range_max_it - 1);
+      double high_val = *range_max_it;
+      double halfway = ((high_val - low_val) / 2.0) + low_val;
+      if (val < halfway) {
+          output.push_back(low_val); // Round down
+      } else {
+          output.push_back(high_val); // Round up
+      }
+    }
+  }
+
+  return output;
+}
+
+/**
+ * Returns a list of curvatures that correspond to velocities from 0 to max_value for the given acceleration_limit semperated by bracket_size
+ * The values are ordered lowest to hightest which means their corresponding speeds are from hightest to lowest
+ */ 
+std::vector<double> InLaneCruisingPlugin::compute_curvature_brackets(const double acceleration_limit, const double bracket_size, const double max_value)
+{
+  std::vector<double> curvature_bracket_upper_bounds = {std::numeric_limits<double>::max()};
+  double velocity = bracket_size; // 2.2352 5mph as m/s
+  
+  while(velocity < max_value) { // 35.7632 Less than 80mph
+    curvature_bracket_upper_bounds.push_back(acceleration_limit / (velocity*velocity)); // curvature = a / v^2
+    velocity += bracket_size;
+  }
+  
+  std::reverse(curvature_bracket_upper_bounds.begin(),curvature_bracket_upper_bounds.end());
+  return curvature_bracket_upper_bounds;
+}
+
 
 }  // namespace inlanecruising_plugin

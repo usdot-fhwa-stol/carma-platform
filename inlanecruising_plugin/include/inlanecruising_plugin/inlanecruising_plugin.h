@@ -246,11 +246,22 @@ private:
    */ 
   std::pair<double, size_t> min_with_exclusions(const std::vector<double>& values, const std::unordered_set<size_t>& excluded) const;
   
+  /**
+ * Returns a list of values the same size as input values that have been set to the values of brackets that are lower than their initial values. 
+ */ 
+  std::vector<double> constrain_to_brackets(const std::vector<double>& brackets, const std::vector<double>& values);
+
+/**
+ * Returns a list of curvatures that correspond to velocities from 0 to max_value for the given acceleration_limit semperated by bracket_size
+ * The values are ordered lowest to hightest which means their corresponding speeds are from hightest to lowest
+ */ 
+  std::vector<double> compute_curvature_brackets(const double acceleration_limit, const double bracket_size, const double max_value);
 
   carma_wm::WorldModelConstPtr wm_;
   InLaneCruisingPluginConfig config_;
   PublishPluginDiscoveryCB plugin_discovery_publisher_;
 
   cav_msgs::Plugin plugin_discovery_msg_;
+  std::vector<double> curvature_brackets_;
 };
 };  // namespace inlanecruising_plugin
