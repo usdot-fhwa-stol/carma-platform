@@ -18,7 +18,7 @@ namespace object{
 
   using std::placeholders::_1;
 
-  MotionComputationNode::MotionComputationNode(): pnh_("~"), motion_worker_(std::bind(&MotionComputationNode::publishObject, this, _1)){};
+  MotionComputationNode::MotionComputationNode(): motion_worker_(std::bind(&MotionComputationNode::publishObject, this, _1)){};
 
   void MotionComputationNode::initialize()
   {
@@ -57,7 +57,7 @@ namespace object{
     mobility_path_sub_=nh_.subscribe("incoming_mobility_path",20,&MotionComputationWorker::mobilityPathCallback,&motion_worker_); // 20 is most number of vehicles in our immeadiate vicinity which might ever need to be tracked.
   }
 
-  void MotionComputationNode::publishObject(const cav_msgs::ExternalObjectList& obj_pred_msg)
+  void MotionComputationNode::publishObject(const cav_msgs::ExternalObjectList& obj_pred_msg) const
   {
     carma_obj_pub_.publish(obj_pred_msg);
   }
@@ -65,8 +65,8 @@ namespace object{
   void MotionComputationNode::run()
   {
     initialize();
-    nh_.setSpinRate(20);
-    nh_.spin();
+    ros::CARMANodeHandle::setSpinRate(20);
+    ros::CARMANodeHandle::spin();
   }
 
   tf2::Transform MotionComputationNode::lookupECEFtoMapTransform()

@@ -81,14 +81,14 @@ class MotionComputationWorker
   \param prev_time_stamp prev_pt's time stamp. This time is recorded in the state
   \return cav_msgs::PredictedState, including linear velocity, last_time, orientation filled in
   */
-  cav_msgs::PredictedState composePredictedState(const tf2::Vector3& curr_pt, const tf2::Vector3& prev_pt, const ros::Time& prev_time_stamp);
+  cav_msgs::PredictedState composePredictedState(const tf2::Vector3& curr_pt, const tf2::Vector3& prev_pt, const ros::Time& prev_time_stamp) const;
 
   /*!
   \brief Convert from mobilitypath's predicted points in ECEF to local map and other fields in external object
   \param msg Mobility path msg to convert
   \return ExternalObject object
   */
-  cav_msgs::ExternalObject mobilityPathToExternalObject(const cav_msgs::MobilityPath& msg);
+  cav_msgs::ExternalObject mobilityPathToExternalObject(const cav_msgs::MobilityPath& msg) const;
 
   /*!
   \brief Appends external objects list behind sensor_list. This does not do sensor fusion.
@@ -98,7 +98,7 @@ class MotionComputationWorker
   \param prev_pt mobility_path_list. from incoming mobility path msg from other cars
   \return append and synchronized list of external objects
   */
-  cav_msgs::ExternalObjectList synchronizeAndAppend(const cav_msgs::ExternalObjectList& sensor_list, cav_msgs::ExternalObjectList mobility_path_list);
+  cav_msgs::ExternalObjectList synchronizeAndAppend(const cav_msgs::ExternalObjectList& sensor_list, cav_msgs::ExternalObjectList mobility_path_list) const;
 
   /*!
   \brief It cuts ExternalObject's prediction points before the time_to_match. And uses the average 
@@ -116,7 +116,7 @@ class MotionComputationWorker
   \param ecef_point ecef_point to transform
   \return point in map
   */
-  tf2::Vector3 transform_to_map_frame(const tf2::Vector3& ecef_point);
+  tf2::Vector3 transform_to_map_frame(const tf2::Vector3& ecef_point) const;
 
  private:
 
@@ -124,7 +124,7 @@ class MotionComputationWorker
   \brief Helper function to fill in the angular velocity of the external object
   \param ExternalObject to fill in its angular velocities
   */
-  void calculateAngVelocityOfPredictedStates(cav_msgs::ExternalObject& object);
+  void calculateAngVelocityOfPredictedStates(cav_msgs::ExternalObject& object) const;
   
   // local copy of external object publishers
   PublishObjectCallback obj_pub_;

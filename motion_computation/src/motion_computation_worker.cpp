@@ -156,7 +156,7 @@ void MotionComputationWorker::mobilityPathCallback(const cav_msgs::MobilityPath&
   mobility_path_list_.objects.push_back(mobilityPathToExternalObject(msg));
 }
 
-cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(const cav_msgs::MobilityPath& msg)
+cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(const cav_msgs::MobilityPath& msg) const
 {
   cav_msgs::ExternalObject output;
 
@@ -176,7 +176,7 @@ cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(c
   output.object_type = cav_msgs::ExternalObject::SMALL_VEHICLE;
   std::hash<std::string> hasher;
   auto hashed = hasher(msg.header.sender_id); //TODO hasher returns size_t, message accept uint32_t which we might lose info
-  output.id = hashed;
+  output.id = (uint32_t)hashed;
   
   for (size_t i = 0; i < msg.header.sender_bsm_id.size(); i+=2) // convert hex std::string to uint8_t array
   {
@@ -247,13 +247,15 @@ double getYawFromQuaternionMsg(const geometry_msgs::Quaternion& quaternion)
   orientation.setZ(quaternion.z);
   orientation.setW(quaternion.w);
 
-  double roll, pitch, yaw;
+  double roll;
+  double pitch;
+  double yaw;
   tf2::Matrix3x3(orientation).getRPY(roll, pitch, yaw);
 
   return yaw;
 }
 
-void MotionComputationWorker::calculateAngVelocityOfPredictedStates(cav_msgs::ExternalObject& object)
+void MotionComputationWorker::calculateAngVelocityOfPredictedStates(cav_msgs::ExternalObject& object) const
 {
   if (!object.dynamic_obj)
     return;
@@ -271,7 +273,7 @@ void MotionComputationWorker::calculateAngVelocityOfPredictedStates(cav_msgs::Ex
   }
 }
 
-cav_msgs::PredictedState MotionComputationWorker::composePredictedState(const tf2::Vector3& curr_pt, const tf2::Vector3& prev_pt, const ros::Time& prev_time_stamp)
+cav_msgs::PredictedState MotionComputationWorker::composePredictedState(const tf2::Vector3& curr_pt, const tf2::Vector3& prev_pt, const ros::Time& prev_time_stamp) const
 {
   cav_msgs::PredictedState output_state;
   // Set Position
@@ -300,7 +302,7 @@ cav_msgs::PredictedState MotionComputationWorker::composePredictedState(const tf
   return output_state;
 }
 
-cav_msgs::ExternalObjectList MotionComputationWorker::synchronizeAndAppend(const cav_msgs::ExternalObjectList& sensor_list, cav_msgs::ExternalObjectList mobility_path_list)
+cav_msgs::ExternalObjectList MotionComputationWorker::synchronizeAndAppend(const cav_msgs::ExternalObjectList& sensor_list, cav_msgs::ExternalObjectList mobility_path_list) const
 {
   cav_msgs::ExternalObjectList output_list;
   // Compare time_stamps of first elements of each list as they are guaranteed to be the earliest of the respective lists
@@ -337,7 +339,7 @@ cav_msgs::ExternalObject MotionComputationWorker::matchAndInterpolateTimeStamp(c
   // that starts later than the time we are trying to match (which is starting time of sensed objects)
   bool is_first_point = true;
   cav_msgs::PredictedState new_state;
-  for (auto curr_state : path.predictions)
+  for (auto const& curr_state : path.predictions)
   { 
     if (curr_time_to_match > curr_state.header.stamp )
     {
@@ -381,7 +383,7 @@ cav_msgs::ExternalObject MotionComputationWorker::matchAndInterpolateTimeStamp(c
   return output;
 }
 
-tf2::Vector3 MotionComputationWorker::transform_to_map_frame(const tf2::Vector3& ecef_point)
+tf2::Vector3 MotionComputationWorker::transform_to_map_frame(const tf2::Vector3& ecef_point) const
 {
   tf2::Transform point_in_earth;
   tf2::Quaternion no_rotation(0, 0, 0, 1);

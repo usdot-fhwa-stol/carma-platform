@@ -34,7 +34,7 @@ class MotionComputationNode
   
   //node handle
   ros::CARMANodeHandle nh_;
-  ros::CARMANodeHandle pnh_;
+  ros::CARMANodeHandle pnh_ = {"~"};
    
   //subscriber
   ros::Subscriber motion_comp_sub_;
@@ -70,7 +70,7 @@ class MotionComputationNode
      /*! \fn publishObject()
     \brief Callback to publish ObjectList
    */
-  void publishObject(const cav_msgs::ExternalObjectList& obj_pred_msg);
+  void publishObject(const cav_msgs::ExternalObjectList& obj_pred_msg) const;
 
   /*!fn run()
   \brief General starting point to run this node
