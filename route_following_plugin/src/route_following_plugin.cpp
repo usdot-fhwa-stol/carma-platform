@@ -137,6 +137,7 @@ namespace route_following_plugin
             
             auto following_lanelets = wm_->getRoute()->followingRelations(shortest_path[last_lanelet_index]);
 
+            //if not already on last lanelet in path, check relation with next lanelet- follow lane change procedure if req, else lane follow
             if(last_lanelet_index!= (shortest_path.size()-1) && identifyLaneChange(following_lanelets, shortest_path[last_lanelet_index + 1].id()))
             {
                 //calculate constant start distance for lane change
@@ -301,20 +302,20 @@ namespace route_following_plugin
         return true;
     }
 
-    void RouteFollowingPlugin::updateCurrentStatus(cav_msgs::Maneuver maneuver, double& speed, double& end_dist, int& lane_id){
+    void RouteFollowingPlugin::updateCurrentStatus(cav_msgs::Maneuver maneuver, double& speed, double& current_progress, int& lane_id){
         if(maneuver.type == cav_msgs::Maneuver::STOP_AND_WAIT){
             speed =0.0;
-            end_dist = maneuver.stop_and_wait_maneuver.end_dist;
+            current_progress = maneuver.stop_and_wait_maneuver.end_dist;
             lane_id = stoi(maneuver.stop_and_wait_maneuver.ending_lane_id);
         }
         else if(maneuver.type == cav_msgs::Maneuver::LANE_FOLLOWING){
             speed =  maneuver.lane_following_maneuver.end_speed;
-            end_dist =  maneuver.lane_following_maneuver.end_dist;
+            current_progress =  maneuver.lane_following_maneuver.end_dist;
             lane_id =  stoi(maneuver.lane_following_maneuver.lane_id);
         }
         else{
             speed = GET_MANEUVER_PROPERTY(maneuver,end_speed);
-            end_dist =GET_MANEUVER_PROPERTY(maneuver,end_dist);
+            current_progress =GET_MANEUVER_PROPERTY(maneuver,end_dist);
             lane_id = stoi(GET_MANEUVER_PROPERTY(maneuver,ending_lane_id));
         }
 

@@ -77,7 +77,7 @@ namespace route_following_plugin
          * \param current_speed Start speed of the current maneuver
          * \param target_speed Target speed pf the current maneuver, usually it is the lanelet speed limit
          * \param lane_id Lanelet ID of the current maneuver
-         * \param current_time Start time of the current maneuver
+         * \param current_time Start time of the current maneuver passed as reference
          * \return A lane keeping maneuver message which is ready to be published
          */
         cav_msgs::Maneuver composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time& current_time);
@@ -87,15 +87,32 @@ namespace route_following_plugin
          * \param end_dist End downtrack distance of the current maneuver
          * \param current_speed Start speed of the current maneuver
          * \param start_lane_id Starting Lanelet ID of the current maneuver
-         * \param target_speed Target Lanelet ID of the current maneuver
-         * \param current_time Start time of the current maneuver
+         * \param target_speed Target speed of the current maneuver
+         * \param current_time Start time of the current maneuver passed as reference
          * \return A lane keeping maneuver message which is ready to be published
          */
         cav_msgs::Maneuver composeStopandWaitManeuverMessage(double current_dist, double end_dist, double current_speed, int start_lane_id, int target_lane_id, ros::Time& current_time, double end_time);
-
-        cav_msgs::Maneuver composeLaneChangeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int starting_lane_id,int ending_lane_id, ros::Time& current_time);
-
-        void updateCurrentStatus(cav_msgs::Maneuver maneuver, double& speed, double& end_dist, int& lane_id);
+        /**
+         * \brief Compose a lane change maneuver message based on input params
+         * \param current_dist Start downtrack distance of the current maneuver
+         * \param end_dist End downtrack distance of the current maneuver
+         * \param current_speed Start speed of the current maneuver
+         * \param start_lane_id Starting Lanelet ID of the current maneuver
+         * \param ending_lane_id Ending Lanelet ID of the current maneuver
+         * \param target_speed Target speed of the current maneuver
+         * \param current_time Start time of the current maneuver passed as reference
+         * \return A lane keeping maneuver message which is ready to be published
+         */
+        cav_msgs::Maneuver composeLaneChangeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int starting_lane_id, int ending_lane_id, ros::Time& current_time);
+        /**
+         * \brief Given a prior maneuver plan, update current speed, current_progress and current lanelet id for requested plan
+         * \param maneuver A maneuver message from the end of the prior plan, used to update current request
+         * \param speed current speed value passed as reference, updated in the function
+         * \param current_progress the current_progress passed as reference, updated in the function
+         * \param lane_id The lanelet id of the current lanelet passed as reference, updated in the function
+         * \return Whether we need a lanechange to reach to the next lanelet in the shortest path
+         */
+        void updateCurrentStatus(cav_msgs::Maneuver maneuver, double& speed, double& current_progress, int& lane_id);
         /**
          * \brief Given a LaneletRelations and ID of the next lanelet in the shortest path
          * \param relations LaneletRelations relative to the previous lanelet
