@@ -174,20 +174,11 @@ namespace route {
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
                 return false;
             }
-            ROS_WARN_STREAM("ERROR1");
+
             // Specify the end point of the route that is inside the last lanelet
             lanelet::Point3d end_point{lanelet::utils::getId(), destination_points_in_map.back().x(), destination_points_in_map.back().y(), 0};
-            try
-            {
-                route->setEndPoint(end_point);
-            }
-            catch (const std::invalid_argument& ex)
-            {
-                ROS_ERROR_STREAM("Specified end point: x:" << destination_points_in_map.back().x() 
-                                << ", y:" <<destination_points_in_map.back().y() << "is not inside the last lanelet of the route."
-                                << "Defaulted to the centerline's last point of the last lanelet ine route");
-            }
-            ROS_WARN_STREAM("ERROR2");
+
+            route->setEndPoint(end_point);
 
             // update route message
             route_msg_ = compose_route_msg(route);
@@ -198,7 +189,6 @@ namespace route {
                 route_llts.push_back(ll);
 
             }
-
 
             route_marker_msg_ = compose_route_marker_msg(route);
             route_msg_.header.stamp = ros::Time::now();

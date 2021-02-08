@@ -238,15 +238,12 @@ TEST(RouteGeneratorTest, testLaneletRoutingTown02VectorMap)
      * **/
 
     // The parsing in this file was copied from https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/carma_wm_ctrl/test/MapToolsTest.cpp
-    ROS_ERROR_STREAM("ERROR_TEST 1");
     lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
     lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
     lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
-    ROS_ERROR_STREAM("ERROR_TEST 1");
     // Grabs lanelet elements from the start and end IDs. Fails the unit test if there is no lanelet with the matching ID
     lanelet::Lanelet start_lanelet;
     lanelet::Lanelet end_lanelet;
-    ROS_ERROR_STREAM("ERROR_TEST 1");
     try 
     {
         //get lanelet layer
@@ -261,16 +258,14 @@ TEST(RouteGeneratorTest, testLaneletRoutingTown02VectorMap)
     catch (const lanelet::NoSuchPrimitiveError& e) {
         FAIL() << "The specified ending lanelet Id of " << end_id << " does not exist in the provided map.";
     }
-    ROS_ERROR_STREAM("ERROR_TEST 1");
     lanelet::LaneletMapConstPtr const_map(map);
     lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
     lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
     // Output graph for debugging
     map_graph->exportGraphViz("../routing2.txt");
-    ROS_ERROR_STREAM("ERROR_TEST 1.a");
+   
     // Computes the shortest path and prints the list of lanelet IDs to get from the start to the end. Can be manually confirmed in JOSM
     const auto route = map_graph->getRoute(start_lanelet, end_lanelet);
-    ROS_ERROR_STREAM("ERROR_TEST 1");
     if(!route) {
         ASSERT_FALSE(true);
         std::cout << "Route not generated." << " ";
@@ -284,7 +279,7 @@ TEST(RouteGeneratorTest, testLaneletRoutingTown02VectorMap)
         ASSERT_TRUE(route_msg_.shortest_path_lanelet_ids.size() > 0);
         ASSERT_TRUE(route_msg_.route_path_lanelet_ids.size() > 0);
     }
-    ROS_ERROR_STREAM("ERROR_TEST 2");
+    
 
 }
 
