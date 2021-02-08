@@ -146,10 +146,6 @@ public:
    */
   virtual TrackPos getRouteEndTrackPos() const = 0;
 
-  /*! \brief Set endpoint of the route
-   */
-  virtual void setRouteEndPoint(const lanelet::BasicPoint3d& end_point) = 0;
-
   /*! \brief Get a pointer to the routing graph for the current map. If the underlying map has changed the pointer will
    * also need to be reacquired
    *
