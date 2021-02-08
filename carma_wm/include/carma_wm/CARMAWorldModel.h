@@ -116,6 +116,8 @@ public:
 
   LaneletRouteConstPtr getRoute() const override;
 
+  TrackPos getRouteEndTrackPos() const override;
+
   LaneletRoutingGraphConstPtr getMapRoutingGraph() const override;
 
   lanelet::Optional<TrafficRulesConstPtr>

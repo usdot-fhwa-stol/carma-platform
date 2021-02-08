@@ -288,6 +288,11 @@ LaneletRouteConstPtr CARMAWorldModel::getRoute() const
   return std::static_pointer_cast<const lanelet::routing::Route>(route_);  // Cast pointer to const variant
 }
 
+TrackPos CARMAWorldModel::getRouteEndTrackPos() const
+{
+  return geometry::trackPos(route_->shortestPath().back(), route_->getEndPoint().basicPoint2d());
+}
+
 void CARMAWorldModel::setMap(lanelet::LaneletMapPtr map)
 {
   semantic_map_ = map;
