@@ -218,111 +218,99 @@ for content in core_data["content"]:
 
 print("DONE PROCESSING FILE")
 print("CREATING GRAPHS")
-  
-plt.figure(0)
-plt.scatter([xy[0] for xy in core_data["time_steps"][0][DataSource.RAW_POINTS]], [xy[1] for xy in core_data["time_steps"][0][DataSource.RAW_POINTS]])
-plt.title("Raw Downsampled Points from Lanelet Centerlines")
-plt.xlabel("X (m)")
-plt.ylabel("Y (m)")
 
-plt.figure(1)
-plt.scatter([xy[0] for xy in core_data["time_steps"][0][DataSource.TIME_BOUND_POINTS]], [xy[1] for xy in core_data["time_steps"][0][DataSource.TIME_BOUND_POINTS]])
-plt.title("Time Bound Points from Lanelet Centerlines")
-plt.xlabel("X (m)")
-plt.ylabel("Y (m)")
+# Takes list of dictionary
+def xy_scatter_with_slider(figure_num, data, key, title, xlabel, ylabel):
 
-plt.figure(2)
-plt.scatter([xy[0] for xy in core_data["time_steps"][0][DataSource.BACK_AND_FRONT_POINTS]], [xy[1] for xy in core_data["time_steps"][0][DataSource.BACK_AND_FRONT_POINTS]])
-plt.title("Back and front points from Lanelet Centerlines")
-plt.xlabel("X (m)")
-plt.ylabel("Y (m)")
+  fig = plt.figure(figure_num)
 
-plt.figure(3)
-plt.scatter([xy[0] for xy in core_data["time_steps"][0][DataSource.SAMPLED_POINTS]], [xy[1] for xy in core_data["time_steps"][0][DataSource.SAMPLED_POINTS]])
-plt.title("Sampled points for spline fitting")
-plt.xlabel("X (m)")
-plt.ylabel("Y (m)")
+  plt.title(title)
+  plt.xlabel(xlabel)
+  plt.ylabel(ylabel)
+  time_step = data[0]
+  l, = plt.plot([xy[0] for xy in time_step[key]], [xy[1] for xy in time_step[key]], '.')
 
-plt.figure(5)
-plt.plot(range(len(core_data["time_steps"][0][DataSource.RAW_CURVATURES])), core_data["time_steps"][0][DataSource.RAW_CURVATURES])
-plt.title("Raw Curvatures")
-plt.xlabel("Index")
-plt.ylabel("Curvature (1/r) (m)")
+  time_step_ax = plt.axes([0.20, 0.001, 0.65, 0.03])
+  time_step_sldr = Slider(time_step_ax, 'Time Step', 0.0, len(data) - 1.0, valinit=0, valstep=1)
 
-plt.figure(6)
-plt.plot(range(len(core_data["time_steps"][0][DataSource.PROCESSED_CURVATURES])), core_data["time_steps"][0][DataSource.PROCESSED_CURVATURES])
-plt.title("Processed Curvatures")
-plt.xlabel("Index")
-plt.ylabel("Curvature (1/r) (m)")
+  def update_timestep(val):
+    time_step = data[int(time_step_sldr.val)]
+    l.set_xdata([xy[0] for xy in time_step[key]])
+    l.set_ydata([xy[1] for xy in time_step[key]])
+    fig.canvas.draw_idle()
 
-plt.figure(7)
-plt.plot(range(len(core_data["time_steps"][0][DataSource.CURVATURE_CONSTRAINED_SPEEDS])), core_data["time_steps"][0][DataSource.CURVATURE_CONSTRAINED_SPEEDS])
-plt.title("Curvature constrained speeds")
-plt.xlabel("Index")
-plt.ylabel("Velocity (m/s)")
+  time_step_sldr.on_changed(update_timestep)
 
-plt.figure(8)
-plt.plot(range(len(core_data["time_steps"][0][DataSource.FINAL_YAWS])), core_data["time_steps"][0][DataSource.FINAL_YAWS])
-plt.title("Final Yaw values")
-plt.xlabel("Index")
-plt.ylabel("Yaw (rad)")
+  return (fig, l, time_step_sldr)
 
-plt.figure(9)
-plt.plot(range(len(core_data["time_steps"][0][DataSource.SPEED_LIMIT_CONSTRAINED_SPEEDS])), core_data["time_steps"][0][DataSource.SPEED_LIMIT_CONSTRAINED_SPEEDS])
-plt.title("Speed Limit Constrained Speeds")
-plt.xlabel("Index")
-plt.ylabel("Velocity (m/s)")
+# Takes list of dictionary
+def index_plot_with_slider(figure_num, data, key, title, xlabel, ylabel):
 
-plt.figure(10)
-plt.plot(range(len(core_data["time_steps"][0][DataSource.SPEED_OP_REVERSE_STEP])), core_data["time_steps"][0][DataSource.SPEED_OP_REVERSE_STEP])
-plt.title("Speed Optimization Reverse Step")
-plt.xlabel("Index")
-plt.ylabel("Velocity (m/s)")
+  fig = plt.figure(figure_num)
 
-plt.figure(11)
-plt.plot(range(len(core_data["time_steps"][0][DataSource.SPEED_OP_FORWARD])), core_data["time_steps"][0][DataSource.SPEED_OP_FORWARD])
-plt.title("Speed Optimization Forward Step")
-plt.xlabel("Index")
-plt.ylabel("Velocity (m/s)")
+  plt.title(title)
+  plt.xlabel(xlabel)
+  plt.ylabel(ylabel)
+  time_step = data[0]
+  l, = plt.plot(range(len(time_step[key])), time_step[key])
 
-plt.figure(12)
-plt.plot(range(len(core_data["time_steps"][0][DataSource.AFTER_SPEED_OP])), core_data["time_steps"][0][DataSource.AFTER_SPEED_OP])
-plt.title("Speed Optimization Output")
-plt.xlabel("Index")
-plt.ylabel("Velocity (m/s)")
+  time_step_ax = plt.axes([0.20, 0.01, 0.65, 0.03])
+  time_step_sldr = Slider(time_step_ax, 'Time Step', 0.0, len(data) - 1.0, valinit=0, valstep=1)
 
-plt.figure(13)
-plt.plot(range(len(core_data["time_steps"][0][DataSource.AFTER_AVERAGE])), core_data["time_steps"][0][DataSource.AFTER_AVERAGE])
-plt.title("Speed after Moving Average")
-plt.xlabel("Index")
-plt.ylabel("Velocity (m/s)")
+  def update_timestep(val):
+    time_step = data[int(time_step_sldr.val)]
+    l.set_xdata(range(len(time_step[key])))
+    l.set_ydata(time_step[key])
+    fig.canvas.draw_idle()
 
+  time_step_sldr.on_changed(update_timestep)
 
+  return (fig, l, time_step_sldr)
 
+plot1= xy_scatter_with_slider(1, core_data["time_steps"], DataSource.RAW_POINTS, 
+  "Raw Downsampled Points from Lanelet Centerlines", "X (m)", "Y (m)")
 
-final_speed_fig = plt.figure(14)
+plot2= xy_scatter_with_slider(2, core_data["time_steps"], DataSource.TIME_BOUND_POINTS, 
+  "Time Bound Points from Lanelet Centerlines", "X (m)", "Y (m)")
 
-plt.title("Speed after applying minimum speed (FINAL SPEED)")
-plt.xlabel("Index")
-plt.ylabel("Velocity (m/s)")
-l, = plt.plot(range(len(time_step[DataSource.AFTER_MIN_SPEED])), time_step[DataSource.AFTER_MIN_SPEED])
+plot3= xy_scatter_with_slider(3, core_data["time_steps"], DataSource.BACK_AND_FRONT_POINTS, 
+  "Back and front points from Lanelet Centerlines", "X (m)", "Y (m)")
 
-time_step_ax = plt.axes([0.20, 0.01, 0.65, 0.03])
-time_step_sldr = Slider(time_step_ax, 'Time Step', 0.0, len(core_data["time_steps"]) - 1.0, valinit=0, valstep=1)
+plot4= xy_scatter_with_slider(4, core_data["time_steps"], DataSource.SAMPLED_POINTS, 
+  "Sampled points from spline fitting", "X (m)", "Y (m)")
 
-def update_final_speed_timestep(val):
-  time_step = core_data["time_steps"][int(time_step_sldr.val)]
-  l.set_xdata(range(len(time_step[DataSource.AFTER_MIN_SPEED])))
-  l.set_ydata(time_step[DataSource.AFTER_MIN_SPEED])
-  final_speed_fig.canvas.draw_idle()
+plot5 = index_plot_with_slider(5, core_data["time_steps"], DataSource.RAW_CURVATURES, 
+  "Raw Curvatures", "Index", "Curvature (1/r) (m)")
 
-time_step_sldr.on_changed(update_final_speed_timestep)
+plot6 = index_plot_with_slider(6, core_data["time_steps"], DataSource.PROCESSED_CURVATURES, 
+  "Processed Curvatures", "Index", "Curvature (1/r) (m)")
 
-plt.figure(15)
-plt.plot(range(len(core_data["time_steps"][0][DataSource.FINAL_TIMES])), core_data["time_steps"][0][DataSource.FINAL_TIMES])
-plt.title("Final Times")
-plt.xlabel("Index")
-plt.ylabel("Seconds (s)")
+plot7 = index_plot_with_slider(7, core_data["time_steps"], DataSource.CURVATURE_CONSTRAINED_SPEEDS, 
+  "Curvature constrained speeds", "Index", "Velocity (m/s)")
+
+plot8 = index_plot_with_slider(8, core_data["time_steps"], DataSource.FINAL_YAWS, 
+  "Final Yaw values", "Index", "Yaw (rad)")
+
+plot9 = index_plot_with_slider(9, core_data["time_steps"], DataSource.SPEED_LIMIT_CONSTRAINED_SPEEDS, 
+  "Speed Limit Constrained Speeds", "Index", "Velocity (m/s)")
+
+plot10 = index_plot_with_slider(10, core_data["time_steps"], DataSource.SPEED_OP_REVERSE_STEP, 
+  "Speed Optimization Reverse Step", "Index", "Velocity (m/s)")
+
+plot11 = index_plot_with_slider(11, core_data["time_steps"], DataSource.SPEED_OP_FORWARD, 
+  "Speed Optimization Forward Step", "Index", "Velocity (m/s)")
+
+plot12 = index_plot_with_slider(12, core_data["time_steps"], DataSource.AFTER_SPEED_OP, 
+  "Speed Optimization Output", "Index", "Velocity (m/s)")
+
+plot13 = index_plot_with_slider(13, core_data["time_steps"], DataSource.AFTER_AVERAGE, 
+  "Speed after Moving Average", "Index", "Velocity (m/s)")
+
+plot14 = index_plot_with_slider(14, core_data["time_steps"], DataSource.AFTER_MIN_SPEED, 
+  "Speed after applying minimum speed (FINAL SPEED)", "Index", "Velocity (m/s)")
+
+plot15 = index_plot_with_slider(15, core_data["time_steps"], DataSource.FINAL_TIMES, 
+  "Final Times", "Index", "Seconds (s)")
 
 plt.show()
 '''
