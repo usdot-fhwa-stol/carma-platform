@@ -63,6 +63,13 @@ namespace route {
         boost::filesystem::path route_path_object(this->route_file_path_);
         if(boost::filesystem::exists(route_path_object))
         {
+            //after route path object is available to select, worker will able to transit state and provide route selection service
+            if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::LOADING) 
+            {
+                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_LOADED);
+                publish_route_event(cav_msgs::RouteEvent::ROUTE_LOADED);
+            }
+            
             boost::filesystem::directory_iterator end_point;
             // read all route files in the given directory
             for(boost::filesystem::directory_iterator itr(route_path_object); itr != end_point; ++itr)
