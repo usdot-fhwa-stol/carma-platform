@@ -97,7 +97,7 @@ namespace route_following_plugin
         double target_speed=findSpeedLimit(current_lanelet);   //get Speed Limit
 
         //double total_maneuver_length = current_progress + mvr_duration_ * target_speed;
-        double total_maneuver_length = wm_->routeTrackPos(shortest_path.back().centerline2d().back()).downtrack;
+        double total_maneuver_length = wm_->getRouteEndTrackPos().downtrack;
         bool approaching_route_end = false;
         double time_req_to_stop,stopping_dist;
         time_req_to_stop = sqrt(2*target_speed/jerk_);
