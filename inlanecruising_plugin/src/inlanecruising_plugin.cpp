@@ -45,7 +45,6 @@ InLaneCruisingPlugin::InLaneCruisingPlugin(carma_wm::WorldModelConstPtr wm, InLa
                                            PublishPluginDiscoveryCB plugin_discovery_publisher)
   : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
 {
-  object_avoidance::ObjectAvoidance obj_;
   plugin_discovery_msg_.name = "InLaneCruisingPlugin";
   plugin_discovery_msg_.versionId = "v1.0";
   plugin_discovery_msg_.available = true;
@@ -95,15 +94,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state); // Compute the trajectory
   trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
 
-  if (config_.enable_object_avoidance)
-  {
-    resp.trajectory_plan = obj_.update_traj_for_object(trajectory, wm_, req.vehicle_state.longitudinal_vel);
-  }
-  else
-  {
-    resp.trajectory_plan = trajectory;
-  }
-  
+  resp.trajectory_plan = trajectory;
   resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_FOLLOWING);
   resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 

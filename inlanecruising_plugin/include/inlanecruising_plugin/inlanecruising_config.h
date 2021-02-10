@@ -35,8 +35,7 @@ struct InLaneCruisingPluginConfig
   int moving_average_window_size = 5;      // Size of the window used in the moving average filter to smooth both the
                                            // computed curvature and output speeds
   double back_distance = 15;               // Number of meters behind the first maneuver that need to be included in points for curvature calculation
-  bool enable_object_avoidance = false;    // Activate object avoidance logic
-  
+
   friend std::ostream& operator<<(std::ostream& output, const InLaneCruisingPluginConfig& c)
   {
     output << "InLaneCruisingPluginConfig { " << std::endl
@@ -50,7 +49,6 @@ struct InLaneCruisingPluginConfig
            << "lateral_accel_limit: " << c.lateral_accel_limit << std::endl
            << "moving_average_window_size: " << c.moving_average_window_size << std::endl
            << "back_distance: " << c.back_distance << std::endl
-           << "enable_object_avoidance: " << c.enable_object_avoidance << std::endl
            << "}" << std::endl;
     return output;
   }
