@@ -140,19 +140,19 @@ for content in core_data["content"]:
   if data_source == DataSource.BACK_AND_FRONT_POINTS and "Got sampled points with size:" in content:
     data_source = DataSource.SAMPLED_POINTS
  
-  if data_source == DataSource.SAMPLED_POINTS and "," in content:
+  if data_source == DataSource.SAMPLED_POINTS and "," in content and not ":" in content:
     xy = content.split(',')
     x = float(xy[0])
     y = float(xy[1])
     core_data["time_steps"][-1][DataSource.SAMPLED_POINTS].append((x,y))
  
-  if (data_source == DataSource.RAW_CURVATURES or data_source == DataSource.SAMPLED_POINTS) and "better_curvature[i]:" in content:
+  if (False and data_source == DataSource.RAW_CURVATURES or data_source == DataSource.SAMPLED_POINTS) and "better_curvature[i]:" in content:
     data_source = DataSource.RAW_CURVATURES
     split = content.split(':')
     c = float(split[1])
     core_data["time_steps"][-1][DataSource.RAW_CURVATURES].append(c)
 
-  if (data_source == DataSource.PROCESSED_CURVATURES or data_source == DataSource.RAW_CURVATURES) and "curvatures[i]:" in content:
+  if (data_source == DataSource.PROCESSED_CURVATURES or data_source == DataSource.SAMPLED_POINTS) and "curvatures[i]:" in content:
     data_source = DataSource.PROCESSED_CURVATURES
     split = content.split(':')
     c = float(split[1])
