@@ -111,10 +111,10 @@ namespace route_following_plugin
             double end_dist;
 
             if(last_lanelet_index == shortest_path.size()- 1)
-                end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
-            else
                 end_dist = total_maneuver_length;
-            
+            else
+                end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
+                
             double dist_diff = end_dist - current_progress;
             time_req_to_stop = sqrt(2*target_speed/jerk_);
             stopping_dist = target_speed*time_req_to_stop - (0.167 * jerk_ * pow(time_req_to_stop,3));
