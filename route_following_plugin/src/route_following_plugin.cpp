@@ -108,7 +108,13 @@ namespace route_following_plugin
         while(current_progress < total_maneuver_length && !approaching_route_end)
         {
             ROS_DEBUG_STREAM("Lanlet: " << shortest_path[last_lanelet_index].id());
-            double end_dist = wm_->getRouteEndTrackPos().downtrack;
+            double end_dist;
+
+            if(last_lanelet_index == shortest_path.size()- 1)
+                end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
+            else
+                end_dist = total_maneuver_length;
+            
             double dist_diff = end_dist - current_progress;
             time_req_to_stop = sqrt(2*target_speed/jerk_);
             stopping_dist = target_speed*time_req_to_stop - (0.167 * jerk_ * pow(time_req_to_stop,3));
