@@ -190,7 +190,7 @@
   <arg name="num_prediction" value="10"/>
   <arg name="sensor_height_calibration_params_file" value="$(arg vehicle_calibration_dir)/naive_motion_predict/calibration.yaml"/>
   <arg name="filter_out_close_object_threshold" value="1.5"/>
-  <arg name="input_topic" value="detection/objects"/>
+  <arg name="input_topic" value="/detection/fusion_tools/objects"/>
   </include>
   </group>
   
