@@ -145,7 +145,7 @@ namespace plan_delegator
             return latest_trajectory_plan;
         }
         // iterate through maneuver list to make service call
-    
+        bool already_planned_inlane_cruising = false;
         for(const auto& maneuver : latest_maneuver_plan_.maneuvers)
         {
             // ignore expired maneuvers
@@ -155,6 +155,19 @@ namespace plan_delegator
             }
             // get corresponding ros service client for plan trajectory
             auto maneuver_planner = GET_MANEUVER_PROPERTY(maneuver, parameters.planning_tactical_plugin);
+
+            //////////
+            // TODO REMOVE THE FOLLOWING IF STATEMENT AFTER VANDEN-PLAS release
+            /////////
+            if (maneuver_planner.compare("InLaneCruisingPlugin") == 0) {
+                if (already_planned_inlane_cruising) {
+                    ROS_DEBUG_STREAM("Skipping already planned maneuvers for InLaneCruisingPlugin");
+                    continue;
+                } else {
+                    already_planned_inlane_cruising = true;
+                }
+            }
+            //////////////////// END TODO BLOCK
             auto client = getPlannerClientByName(maneuver_planner);
             // compose service request
             auto plan_req = composePlanTrajectoryRequest(latest_trajectory_plan);
@@ -169,7 +182,7 @@ namespace plan_delegator
                 latest_trajectory_plan.trajectory_points.insert(latest_trajectory_plan.trajectory_points.end(),
                                                                 plan_req.response.trajectory_plan.trajectory_points.begin(),
                                                                 plan_req.response.trajectory_plan.trajectory_points.end());
-                latest_trajectory_plan.initial_longitudinal_velocity = plan_req.response.trajectory_plan.initial_longitudinal_velocity;
+                
                 if(isTrajectoryLongEnough(latest_trajectory_plan))
                 {
                     ROS_INFO_STREAM("Plan Trajectory completed for " << latest_maneuver_plan_.maneuver_plan_id);
@@ -183,6 +196,7 @@ namespace plan_delegator
                 break;
             }
         }
+        latest_trajectory_plan.initial_longitudinal_velocity = std::max(latest_twist_.twist.linear.x, 2.2352); // TODO make config parameter
         return latest_trajectory_plan;
     }
 
