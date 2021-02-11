@@ -137,6 +137,10 @@
  
   <!-- range_vision_fusion -->
   <group>
+
+  <remap to="/detection/image_detector/objects" from="/environment/range_vision_fusion_01/detection/image_detector/objects"/>
+  <remap to="/detection/lidar_detector/objects" from="/environment/range_vision_fusion_01/detection/lidar_detector/objects"/>
+	  
   <include file="$(find range_vision_fusion)/launch/range_vision_fusion.launch">
   <arg name="detected_objects_range" value="detection/lidar_detector/objects"/>
   <arg name="detected_objects_vision" value="detection/image_detector/objects"/>
