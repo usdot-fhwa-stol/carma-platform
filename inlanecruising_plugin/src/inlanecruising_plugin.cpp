@@ -75,7 +75,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
       maneuver_plan.push_back(req.maneuver_plan.maneuvers[i]);
     }
   }
-  auto points_and_target_speeds = maneuvers_to_points(maneuver_plan, current_downtrack, wm_); // Convert maneuvers to points
+  auto points_and_target_speeds = maneuvers_to_points(maneuver_plan, std::max(0, current_downtrack - config_.back_distance), wm_); // Convert maneuvers to points
 
   ROS_DEBUG_STREAM("points_and_target_speeds: " << points_and_target_speeds.size());
 
