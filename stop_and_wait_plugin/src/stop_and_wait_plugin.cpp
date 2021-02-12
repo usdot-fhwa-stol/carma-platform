@@ -173,9 +173,9 @@ namespace stop_and_wait_plugin
             {
                 ///guidance/route/destination_downtrack_range
                 auto shortest_path = wm_->getRoute()->shortestPath();
-                if(ending_downtrack  >= wm_->routeTrackPos(shortest_path.back().centerline2d().back()).downtrack ){
+                if(ending_downtrack  >= wm_->getRouteEndTrackPos().downtrack ){
                     destination_downtrack_range = std::abs(ending_downtrack - starting_downtrack);
-                    std::cout<<"destination downtrack range: "<< destination_downtrack_range<<std::endl;
+                    ROS_DEBUG_STREAM("destination downtrack range: "<< destination_downtrack_range);
                 }
 
                 delta_time = min_timestep_;
@@ -203,9 +203,10 @@ namespace stop_and_wait_plugin
                     jerk_ = max_jerk_limit_;  
                     double travel_dist_new = start_speed * maneuver_time_ - (0.167 * jerk_ * pow(maneuver_time_,3));
                     ending_downtrack = travel_dist_new + starting_downtrack;
+                    ROS_DEBUG_STREAM("we are asking to go beyond the end_dist, new end_dist" << ending_downtrack);
 
                     auto shortest_path = wm_->getRoute()->shortestPath();
-                    if(ending_downtrack > wm_->routeTrackPos(shortest_path.back().centerline2d().back()).downtrack)
+                    if(ending_downtrack > wm_->getRouteEndTrackPos().downtrack)
                     {
                         ROS_ERROR("Ending distance is beyond known route");
                         throw std::invalid_argument("Ending distance is beyond known route"); 
@@ -213,6 +214,9 @@ namespace stop_and_wait_plugin
                 }
                 else jerk_ = jerk_req;
                 //get all the lanelets in between starting and ending downtrack on shortest path
+                ROS_DEBUG_STREAM("starting_downtrack" << starting_downtrack);
+                ROS_DEBUG_STREAM("ending_downtrack" << ending_downtrack);
+
                 auto lanelets = wm_->getLaneletsBetween(starting_downtrack, ending_downtrack, true);
                 //record all the lanelets to be added to path
                 std::vector<lanelet::ConstLanelet> lanelets_to_add;
