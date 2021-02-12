@@ -72,16 +72,11 @@ namespace object{
   tf2::Transform MotionComputationNode::lookupECEFtoMapTransform()
   {
     tf2::Transform map_in_earth;
+    tf2_listener_.reset(new tf2_ros::TransformListener(tf_buffer_));
+    tf_buffer_.setUsingDedicatedThread(true);
     try
     {
-      std::string errstr;
-      if (tf_buffer_.canTransform("earth", "map", ros::Time(0), ros::Duration(20), &errstr)) //20 second timeout
-        tf2::convert(tf_buffer_.lookupTransform("earth", "map", ros::Time(0)).transform, map_in_earth); //save to local copy of transform
-      else
-      {
-        tf2::TransformException ex("Look up transform timed out: " + errstr);
-        ros::CARMANodeHandle::handleException(ex);
-      }
+      tf2::convert(tf_buffer_.lookupTransform("earth", "map", ros::Time(0), ros::Duration((double)time_out_time_)).transform, map_in_earth); //save to local copy of transform
     }
     catch (const tf2::TransformException &ex)
     {
