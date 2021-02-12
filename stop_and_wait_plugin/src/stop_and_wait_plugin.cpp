@@ -206,11 +206,19 @@ namespace stop_and_wait_plugin
                     ROS_DEBUG_STREAM("we are asking to go beyond the end_dist, new end_dist" << ending_downtrack);
 
                     auto shortest_path = wm_->getRoute()->shortestPath();
-                    if(ending_downtrack > wm_->getRouteEndTrackPos().downtrack)
+                    try
                     {
-                        ROS_ERROR("Ending distance is beyond known route");
-                        throw std::invalid_argument("Ending distance is beyond known route"); 
+                        if(ending_downtrack > wm_->getRouteEndTrackPos().downtrack)
+                        {
+                            ROS_ERROR("Ending distance is beyond known route");
+                            throw std::invalid_argument("Ending distance is beyond known route"); 
+                        }
                     }
+                    catch (const std::exception& e)
+                    {
+                        ros::CARMANodeHandle::handleException(e);
+                    }
+                  
                 }
                 else jerk_ = jerk_req;
                 //get all the lanelets in between starting and ending downtrack on shortest path
