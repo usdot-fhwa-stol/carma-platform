@@ -96,13 +96,16 @@ namespace route_following_plugin
 
         double target_speed=findSpeedLimit(current_lanelet);   //get Speed Limit
 
-        //double total_maneuver_length = current_progress + mvr_duration_ * target_speed; // TODO STOPPING_ISSUE we can do a min of this line and the line below. 
-        double total_maneuver_length = wm_->routeTrackPos(shortest_path.back().centerline2d().back()).downtrack; // TODO STOPPING_ISSUE Maneuver extends to the end of the route???
+        double total_maneuver_length = current_progress + mvr_duration_ * target_speed; // TODO STOPPING_ISSUE we can do a min of this line and the line below. 
+        double route_length= wm_->routeTrackPos(shortest_path.back().centerline2d().back()).downtrack; // TODO STOPPING_ISSUE Maneuver extends to the end of the route???
+        total_maneuver_length = std::min(total_maneuver_length, route_length);
+
         bool approaching_route_end = false;
         double time_req_to_stop,stopping_dist;
-        time_req_to_stop = sqrt(2*target_speed/jerk_); // TODO STOPPING_ISSUE target_speed not related to route end
+        time_req_to_stop = sqrt(2*findSpeedLimit(shortest_path.back())/jerk_); // TODO STOPPING_ISSUE target_speed not related to route end
         stopping_dist = target_speed*time_req_to_stop - (0.167 * jerk_ * pow(time_req_to_stop,3));
-        if(total_maneuver_length - current_progress <= stopping_dist){
+        
+        if(route_length - current_progress <= stopping_dist){
             approaching_route_end = true;
         }
         while(current_progress < total_maneuver_length && !approaching_route_end)
@@ -110,12 +113,13 @@ namespace route_following_plugin
             ROS_DEBUG_STREAM("Lanlet: " << shortest_path[last_lanelet_index].id());
             auto p = shortest_path[last_lanelet_index].centerline2d().back();
             double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
+            end_dist = std::min(end_dist, total_maneuver_length);
+
             double dist_diff = end_dist - current_progress;
-            time_req_to_stop = sqrt(2*target_speed/jerk_);
-            stopping_dist = target_speed*time_req_to_stop - (0.167 * jerk_ * pow(time_req_to_stop,3));
             
-            if(total_maneuver_length - end_dist <= stopping_dist){
-                end_dist -= stopping_dist; // TODO STOPPING_ISSUE this will cause you to stop early if the final lanelet is shorter than stopping distance
+            if(route_length - end_dist <= stopping_dist){
+                end_dist -= stopping_dist; // TODO STOPPING_ISSUE this will cause you to stop early if the final lanelet is shorter than stopping distance 
+                //Commented issue above might be solved by tuning the jerk parameter
                 dist_diff = end_dist - current_progress;
                 approaching_route_end = true;
             }
@@ -128,9 +132,6 @@ namespace route_following_plugin
                                     shortest_path[last_lanelet_index].id(), ros::Time::now()));
             current_progress += dist_diff;
             speed_progress = target_speed;
-            //get speed limit
-            current_lanelet=shortest_path[last_lanelet_index];  //update current lanelet
-            target_speed=findSpeedLimit(current_lanelet); // TODO STOPPING_ISSUE target speed will lag by 1 lanelet
 
             if(current_progress >= total_maneuver_length || last_lanelet_index == shortest_path.size() - 1)
             {
@@ -151,11 +152,16 @@ namespace route_following_plugin
                 ROS_WARN_STREAM("Cannot find the next lanelet in the current lanelet's successor list!");
                 return true;
             }
+            //get speed limit
+            current_lanelet=shortest_path[last_lanelet_index];  //update current lanelet
+            target_speed=findSpeedLimit(current_lanelet); // TODO STOPPING_ISSUE target speed will lag by 1 lanelet
         }
+        if(approaching_route_end){
         resp.new_plan.maneuvers.push_back(
             composeStopandWaitManeuverMessage(current_progress,total_maneuver_length,
             speed_progress,shortest_path[last_lanelet_index].id(),
             shortest_path[last_lanelet_index].id(),ros::Time::now(),time_req_to_stop)); // TODO STOPPING_ISSUE start time is not correct. Stop and wait plugin does not use this but has the same problem. 
+        }
         if(resp.new_plan.maneuvers.size() == 0)
         {
             ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
