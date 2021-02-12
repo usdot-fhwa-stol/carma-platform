@@ -76,7 +76,7 @@ namespace object{
     tf_buffer_.setUsingDedicatedThread(true);
     try
     {
-      tf2::convert(tf_buffer_.lookupTransform("earth", "map", ros::Time(0), ros::Duration((double)time_out_time_)).transform, map_in_earth); //save to local copy of transform
+      tf2::convert(tf_buffer_.lookupTransform("earth", "map", ros::Time(0), ros::Duration(20.0)).transform, map_in_earth); //save to local copy of transform 20 sec timeout
     }
     catch (const tf2::TransformException &ex)
     {
