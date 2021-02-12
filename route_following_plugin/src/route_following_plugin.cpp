@@ -118,15 +118,27 @@ namespace route_following_plugin
             double dist_diff = end_dist - current_progress;
             time_req_to_stop = sqrt(2*target_speed/jerk_);
             stopping_dist = target_speed*time_req_to_stop - (0.167 * jerk_ * pow(time_req_to_stop,3));
-            
+            ROS_DEBUG_STREAM("dist_diff" << dist_diff);
+            ROS_DEBUG_STREAM("current_progress" << current_progress);
+            ROS_DEBUG_STREAM("stopping_dist" << stopping_dist);
+            ROS_DEBUG_STREAM("total_maneuver_length" << total_maneuver_length);
+
+
             if(total_maneuver_length - end_dist <= stopping_dist){
                 end_dist -= stopping_dist;
                 dist_diff = end_dist - current_progress;
                 approaching_route_end = true;
+
+                ROS_DEBUG_STREAM("new dist_diff" << dist_diff);
+                ROS_DEBUG_STREAM("new current_progress" << current_progress);
+                ROS_DEBUG_STREAM("new stopping_dist" << stopping_dist);
+                ROS_DEBUG_STREAM("new total_maneuver_length" << total_maneuver_length);
             }
             if(end_dist < current_progress){
+                ROS_WARN_STREAM("We are breaking here");
                 break;
             }
+            ROS_WARN_STREAM("Composing regular maneuver message");
             resp.new_plan.maneuvers.push_back(
                 composeManeuverMessage(current_progress, end_dist,  
                                     speed_progress, target_speed, 
@@ -139,6 +151,10 @@ namespace route_following_plugin
 
             if(current_progress >= total_maneuver_length || last_lanelet_index == shortest_path.size() - 1)
             {
+                ROS_DEBUG_STREAM("---last_lanelet_index" << last_lanelet_index);
+                ROS_DEBUG_STREAM("---current_progress" << current_progress);
+                ROS_DEBUG_STREAM("---total_maneuver_length" << total_maneuver_length);
+
                 break;
             }
             auto following_lanelets = wm_->getRoute()->followingRelations(shortest_path[last_lanelet_index]);
@@ -157,6 +173,8 @@ namespace route_following_plugin
                 return true;
             }
         }
+        ROS_DEBUG_STREAM("Reached a point to compose stop and wait message");
+        
         resp.new_plan.maneuvers.push_back(
             composeStopandWaitManeuverMessage(current_progress,total_maneuver_length,
             speed_progress,shortest_path[last_lanelet_index].id(),
@@ -190,6 +208,10 @@ namespace route_following_plugin
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
+        ROS_DEBUG_STREAM("inside reg, current_dist" << current_dist);
+        ROS_DEBUG_STREAM("inside reg, end_dist" << end_dist);
+        ROS_DEBUG_STREAM("inside reg, current_speed" << current_speed);
+
         maneuver_msg.lane_following_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
         maneuver_msg.lane_following_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
         maneuver_msg.lane_following_maneuver.parameters.planning_tactical_plugin = "InLaneCruisingPlugin";
@@ -214,6 +236,12 @@ namespace route_following_plugin
     {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::STOP_AND_WAIT;
+        ROS_DEBUG_STREAM("inside, current_dist" << current_dist);
+        ROS_DEBUG_STREAM("inside, end_dist" << end_dist);
+        ROS_DEBUG_STREAM("inside, current_speed" << current_speed);
+        ROS_DEBUG_STREAM("inside, start_lane_id" << start_lane_id);
+        ROS_DEBUG_STREAM("inside, end_lane_id" << end_lane_id);
+
         maneuver_msg.stop_and_wait_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
         maneuver_msg.stop_and_wait_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
         maneuver_msg.stop_and_wait_maneuver.parameters.planning_tactical_plugin = "StopandWaitPlugin";
