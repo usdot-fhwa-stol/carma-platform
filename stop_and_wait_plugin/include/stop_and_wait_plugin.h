@@ -154,7 +154,7 @@ namespace stop_and_wait_plugin
         cav_msgs::Plugin plugin_discovery_msg_;
 
         //Calculated jerk for maneuver in m/s3
-        double jerk_;
+        double jerk_ =0.0;
         //Total time required to complete the maneuver
         double maneuver_time_;
 
@@ -169,6 +169,7 @@ namespace stop_and_wait_plugin
         double min_timestep_ =0.1;
         //Amount to downsample input lanelet centerline data
         int downsample_ratio_ =8;
+        ros::Publisher jerk_pub_;
         
         //A small static value for comparing doubles
         static constexpr double epsilon_ = 0.001;

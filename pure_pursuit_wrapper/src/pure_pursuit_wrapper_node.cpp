@@ -34,6 +34,8 @@ int main(int argc, char** argv)
   // Trajectory Plan Subscriber
   ros::Subscriber trajectory_plan_sub = nh.subscribe(
       "pure_pursuit/plan_trajectory", 1, &pure_pursuit_wrapper::PurePursuitWrapper::trajectoryPlanHandler, &purePursuitWrapper);
+  
+  ros::Subscriber jerk_sub_ = nh.subscribe("plugins/StopandWaitPlugin/jerk_val", 1, &pure_pursuit_wrapper::PurePursuitWrapper::updatejerk, &purePursuitWrapper);
 
   ros::CARMANodeHandle::setSpinRate(10);
 

@@ -37,6 +37,10 @@ bool PurePursuitWrapper::onSpin()
   return true;
 }
 
+void PurePursuitWrapper::updatejerk(std_msgs::Float64 jerk){
+  stop_and_wait_jerk_ = jerk.data;
+}
+
 void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::ConstPtr& tp)
 {
   ROS_DEBUG_STREAM("Received TrajectoryPlanCurrentPosecallback message");
@@ -45,8 +49,17 @@ void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::C
   std::vector<double> downtracks;
   trajectory_utils::conversions::trajectory_to_downtrack_time(tp->trajectory_points, &downtracks, &times);
 
+  std::vector<bool> isStopandWait;
+  isStopandWait.resize(tp->trajectory_points.size(),0);
+  for(int i=0;i<tp->trajectory_points.size();i++){
+    if(tp->trajectory_points[i].planner_plugin_name == "StopandWaitPlugin"){
+      isStopandWait[i] =true;
+    }
+  }
+
   std::vector<double> speeds;
-  trajectory_utils::conversions::time_to_speed(downtracks, times, tp->initial_longitudinal_velocity, &speeds);
+  std::cout<<"In new iteration, top message type:"<<tp->trajectory_points[0].planner_plugin_name<<std::endl;
+  trajectory_utils::conversions::time_to_speed(downtracks, times, tp->initial_longitudinal_velocity, &speeds, isStopandWait, stop_and_wait_jerk_);
 
   if (speeds.size() != tp->trajectory_points.size())
   {

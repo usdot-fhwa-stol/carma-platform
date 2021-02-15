@@ -42,6 +42,7 @@
 #include <cav_msgs/TrajectoryPlanPoint.h>
 #include <cav_msgs/TrajectoryPlan.h>
 #include <math.h>
+#include <std_msgs/Float64.h>
 
 
 
@@ -58,6 +59,7 @@ namespace stop_and_wait_plugin
         trajectory_srv_ = nh_->advertiseService("plan_trajectory",&StopandWait::plan_trajectory_cb, this);
         
         plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery",1);
+        jerk_pub_ = nh_->advertise<std_msgs::Float64>("jerk",1);
         plugin_discovery_msg_.name = "StopandWaitPlugin";
         plugin_discovery_msg_.versionId = "v1.0";
         plugin_discovery_msg_.available = true;
@@ -79,6 +81,9 @@ namespace stop_and_wait_plugin
         ros::CARMANodeHandle::setSpinCallback([this]() -> bool
         {
             plugin_discovery_pub_.publish(plugin_discovery_msg_);
+            std_msgs::Float64 jerk_msg;
+            jerk_msg.data = jerk_;
+            jerk_pub_.publish(jerk_msg);
             return true;
         });
     }

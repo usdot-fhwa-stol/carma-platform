@@ -21,6 +21,7 @@
 // msgs
 #include <cav_msgs/TrajectoryPlan.h>
 #include <autoware_msgs/Lane.h>
+#include <std_msgs/Float64.h>
 
 namespace pure_pursuit_wrapper {
 
@@ -36,13 +37,17 @@ class PurePursuitWrapper {
         PurePursuitWrapper(WaypointPub waypoint_pub, PluginDiscoveryPub plugin_discovery_pub);
 
         void trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::ConstPtr& tp);
+        void updatejerk(std_msgs::Float64 jerk);
 
         bool onSpin();
 
     private:
     WaypointPub waypoint_pub_;
     PluginDiscoveryPub plugin_discovery_pub_;
+    ros::Subscriber jerk_sub_;  //Jerk value from stop&wait plugin
     cav_msgs::Plugin plugin_discovery_msg_;
+
+    double stop_and_wait_jerk_;
 
 };
 
