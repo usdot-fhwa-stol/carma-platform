@@ -115,7 +115,7 @@ namespace stop_and_wait_plugin
             }
         }
 
-        if(current_downtrack < maneuver_plan[0].stop_and_wait.start_dist){
+        if(current_downtrack < maneuver_plan[0].stop_and_wait_maneuver.start_dist){
             //Do nothing
             return true;
         }
