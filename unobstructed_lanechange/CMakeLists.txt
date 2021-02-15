@@ -1,4 +1,3 @@
-#
 # Copyright (C) 2018-2020 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,10 +11,9 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under
 # the License.
-#
 
 cmake_minimum_required(VERSION 2.8.3)
-project(inlanecruising_plugin)
+project(unobstructed_lanechange)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++14)
@@ -40,25 +38,27 @@ set( CATKIN_DEPS
 find_package(catkin REQUIRED COMPONENTS
  ${CATKIN_DEPS}
 )
-
 ## System dependencies are found with CMake's conventions
-find_package(Boost)
+find_package(Boost REQUIRED COMPONENTS system)
 find_package(Eigen3 REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
 ###################################
 
+
 catkin_package(
-  INCLUDE_DIRS include
-  CATKIN_DEPENDS ${CATKIN_DEPS}
-  DEPENDS Boost Eigen3
+   INCLUDE_DIRS include
+   CATKIN_DEPENDS ${CATKIN_DEPS}
+   DEPENDS Boost Eigen3
 )
 
 ###########
 ## Build ##
 ###########
 
+## Specify additional locations of header files
+## Your package locations should be listed before other locations
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
@@ -66,48 +66,51 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
 )
 
-add_executable( ${PROJECT_NAME}
-  src/main.cpp)
-add_library(inlanecruising_plugin_library 
-  src/inlanecruising_plugin.cpp
-  src/smoothing/BSpline.cpp
-  src/object_avoidance.cpp
-)
-target_link_libraries(inlanecruising_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
+file(GLOB_RECURSE headers */*.hpp */*.h)
 
-target_link_libraries(${PROJECT_NAME} inlanecruising_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(${PROJECT_NAME} inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
+add_executable( ${PROJECT_NAME}
+  ${headers}
+  src/unobstructed_lanechange.cpp
+  src/main.cpp)
+
+
+add_library(unobstructed_lanechange_plugin_lib src/unobstructed_lanechange.cpp src/smoothing/BSpline.cpp)
+
+add_dependencies(unobstructed_lanechange_plugin_lib ${catkin_EXPORTED_TARGETS})
+
+target_link_libraries(${PROJECT_NAME} unobstructed_lanechange_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
 
 #############
 ## Install ##
 #############
 
-install(DIRECTORY include
+
+install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".svn" EXCLUDE
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME} inlanecruising_plugin_library
+install(TARGETS ${PROJECT_NAME} unobstructed_lanechange_plugin_lib
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-## Install Other Resources
-install(DIRECTORY launch config
+# Mark other files for installation (e.g. launch and bag files, etc.)
+install(DIRECTORY
+  launch
+  config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
 
 #############
 ## Testing ##
 #############
-
-catkin_add_gmock(${PROJECT_NAME}-test 
-  test/test_inlanecruising_plugin_planning.cpp
-  test/test_inlanecruising_plugin.cpp
-  test/test_object_avoidance.cpp
-)
-target_link_libraries(${PROJECT_NAME}-test inlanecruising_plugin_library ${catkin_LIBRARIES})
-
-
+catkin_add_gmock(${PROJECT_NAME}-test
+ test/test_unobstructed_lanechange_plugin.cpp
+ WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+target_link_libraries(${PROJECT_NAME}-test unobstructed_lanechange_plugin_lib ${catkin_LIBRARIES})

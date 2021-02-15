@@ -56,50 +56,46 @@ class TrafficIncidentParserWorker
     \brief projectionCallback stores the projection string needed to convert ECEF to MAP frame
     \param  std_msgs::String
   */
-
   void projectionCallback(const std_msgs::String &projection_msg);
 
     /*! \fn mobilityOperationCallback(const cav_msgs::MobilityOperation &mobility_msg)
-    \brief mobilityOperationCallback to receive the incoming mobility operation message from message node and also this function publishes the geofence message upon processing the mobility msg.
+    \brief mobilityOperationCallback to receive the incoming mobility operation message from message node 
+           and also this function publishes the geofence message upon processing the mobility msg.
     \param  cav_msgs::MobilityOperation
   */
-
   void mobilityOperationCallback(const cav_msgs::MobilityOperation &mobility_msg);
 
     /*! \fn mobilityMessageParser(std::string mobility_strategy_params)
     \brief mobilityMessageParser helps to parse incoming mobility operation message to required format
     \param  std::string mobility_strategy_params
   */
-
   void mobilityMessageParser(std::string mobility_strategy_params);
 
     /*! \fn stringParserHelper(std::string str,int str_index)
     \brief stringParserHelper helps to convert string to double data type.
-    \param  std::string 
-    \param  int 
+    \param  std::string to convert from str to double
+    \param  unsigned long idx to start looking at 
   */
-
-  std::string stringParserHelper(std::string str,int str_index) const;
+  std::string stringParserHelper(std::string str, unsigned long str_index) const;
   
     /*! \fn composeTrafficControlMesssage()
     \brief composeTrafficControlMesssage algorithm for extracting the closed lanelet from internally saved mobility message (or geofence) params and assign it to trafic contol message. 
     Closed lanelets are represent by vector of points, where each point represents the geometric middle point of a closed lanelet
   */
-
   cav_msgs::TrafficControlMessageV01 composeTrafficControlMesssage();
 
     /*! \fngetIncidentOriginPoint()
     \brief getIncidentOriginPoint converts internally saved incident origin point from ECEF to local map frame
   */
-
   lanelet::BasicPoint2d getIncidentOriginPoint() const;
 
   double latitude;
   double longitude;
-  double closed_lane;
   double down_track;
   double up_track;
-  std::string previous_strategy_params={};
+  double min_gap;
+
+  std::string previous_strategy_params="";
 
  private:
 
