@@ -118,8 +118,7 @@ namespace route_following_plugin
             double dist_diff = end_dist - current_progress;
             
             if(route_length - end_dist <= stopping_dist){
-                end_dist -= stopping_dist; // TODO STOPPING_ISSUE this will cause you to stop early if the final lanelet is shorter than stopping distance 
-                //Commented issue above might be solved by tuning the jerk parameter
+                end_dist = route_length - stopping_dist; // TODO STOPPING_ISSUE this will cause you to stop early if the final lanelet is shorter than stopping distance 
                 dist_diff = end_dist - current_progress;
                 approaching_route_end = true;
             }
