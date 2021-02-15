@@ -255,7 +255,7 @@ namespace route_following_plugin
             for(auto i=1;i<plan.response.new_plan.maneuvers.size() -1 ;i++){
                 ASSERT_EQ(plan.response.new_plan.maneuvers[i].lane_following_maneuver.end_speed, limit.value()) ;
             }
-            ASSERT_EQ(plan.response.new_plan.maneuvers.back().type,cav_msgs::Maneuver::STOP_AND_WAIT);
+            
         }
         else{
             EXPECT_TRUE(false);
