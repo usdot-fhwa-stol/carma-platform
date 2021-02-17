@@ -48,7 +48,8 @@
 
   <!-- CARMA Motion Computation Node -->
   <group>
-    <include file="$(find motion_computation)/launch/motion_computation.launch"/>
+   <remap to="/message/incoming_mobility_path" from="/environment/incoming_mobility_path"/> 
+   <include file="$(find motion_computation)/launch/motion_computation.launch"/>
   </group>
 
 
@@ -59,9 +60,9 @@
 
   <!-- CARMA Roadway Objects Node -->
  <group>
-  <remap to= "external_objects" from= "external_object_predictions"/>
-  <!-- <remap to="/environment/external_object" from="/environment/external_object_predictions"/> -->
-  <include file="$(find roadway_objects)/launch/roadway_objects.launch"/>
+	 <!-- <remap to= "/environment/external_object_predictions" from= "external_object_predictions"/> -->
+ <remap from= "external_objects" to= "external_object_predictions"/>	
+ <include file="$(find roadway_objects)/launch/roadway_objects.launch"/>
 </group>
 
   <!-- calibration_publisher -->
