@@ -21,6 +21,7 @@
 #include <cav_srvs/PlanTrajectory.h>
 #include <carma_wm/WMListener.h>
 #include <functional>
+#include <autoware_msgs/Lane.h>
 
 #include "inlanecruising_plugin.h"
 #include "inlanecruising_config.h"
@@ -46,7 +47,7 @@ public:
     auto wm_ = wml.getWorldModel();
 
     ros::Publisher discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
-
+    
     InLaneCruisingPluginConfig config;
 
     pnh.param<double>("trajectory_time_length", config.trajectory_time_length, config.trajectory_time_length);
@@ -68,7 +69,7 @@ public:
     ROS_INFO_STREAM("InLaneCruisingPlugin Params After Accel Change" << config);
     
     InLaneCruisingPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); });
-
+    worker.setWPPub(nh.advertise<autoware_msgs::Lane>("/guidance/carma_final_waypoints", 1)); // TODO remove
     ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/InLaneCruisingPlugin/plan_trajectory",
                                             &InLaneCruisingPlugin::plan_trajectory_cb, &worker);
 

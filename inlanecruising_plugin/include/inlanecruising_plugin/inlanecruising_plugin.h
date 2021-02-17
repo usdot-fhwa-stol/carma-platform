@@ -30,7 +30,8 @@
 #include <inlanecruising_plugin/smoothing/SplineI.h>
 #include "inlanecruising_config.h"
 #include <unordered_set>
-
+#include <autoware_msgs/Lane.h>
+#include <ros/ros.h>
 namespace inlanecruising_plugin
 {
 using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
@@ -232,7 +233,9 @@ public:
    */ 
   std::vector<PointSpeedPair> attach_back_points(const std::vector<PointSpeedPair>& points, const int nearest_pt_index, 
                                std::vector<inlanecruising_plugin::PointSpeedPair> future_points, double back_distance) const;
-  
+  void setWPPub(ros::Publisher pub) { // TODO remove
+    waypoint_pub_ = pub;
+  }
 private:
 
   /**
@@ -252,5 +255,6 @@ private:
   PublishPluginDiscoveryCB plugin_discovery_publisher_;
 
   cav_msgs::Plugin plugin_discovery_msg_;
+  ros::Publisher waypoint_pub_; // TODO remove
 };
 };  // namespace inlanecruising_plugin
