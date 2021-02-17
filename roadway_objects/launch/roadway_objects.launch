@@ -15,5 +15,6 @@
 -->
 
 <launch>
-   <node name="roadway_objects" pkg="roadway_objects" type="roadway_objects_node"/>
+   <node name="roadway_objects" pkg="roadway_objects" type="roadway_objects_node">
+   </node>
 </launch>
