@@ -158,7 +158,7 @@ namespace route_following_plugin
         if(approaching_route_end){
         resp.new_plan.maneuvers.push_back(
             composeStopandWaitManeuverMessage(current_progress,total_maneuver_length,
-            speed_progress,shortest_path[last_lanelet_index].id(),
+            current_speed_,shortest_path[last_lanelet_index].id(),
             shortest_path[last_lanelet_index].id(),ros::Time::now(),time_req_to_stop)); // TODO STOPPING_ISSUE start time is not correct. Stop and wait plugin does not use this but has the same problem. 
         }
         if(resp.new_plan.maneuvers.size() == 0)

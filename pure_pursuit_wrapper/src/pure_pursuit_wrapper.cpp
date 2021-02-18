@@ -58,7 +58,7 @@ void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::C
   }
 
   std::vector<double> speeds;
-  std::cout<<"In new iteration, top message type:"<<tp->trajectory_points[0].planner_plugin_name<<std::endl;
+  ROS_DEBUG_STREAM("In new iteration, top message type:"<<tp->trajectory_points[0].planner_plugin_name);
   trajectory_utils::conversions::time_to_speed(downtracks, times, tp->initial_longitudinal_velocity, &speeds, isStopandWait, stop_and_wait_jerk_);
 
   if (speeds.size() != tp->trajectory_points.size())
