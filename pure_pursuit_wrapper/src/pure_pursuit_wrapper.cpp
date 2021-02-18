@@ -51,7 +51,7 @@ void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::C
 
 //Tag all the trajectory points needing constant jerk calc
   std::vector<bool> isStopandWait;
-  isStopandWait.resize(tp->trajectory_points.size(),0);
+  isStopandWait.resize(tp->trajectory_points.size(),false);
   for(int i=0;i<tp->trajectory_points.size();i++){
     if(tp->trajectory_points[i].planner_plugin_name == "StopandWaitPlugin"){
       isStopandWait[i] =true;
