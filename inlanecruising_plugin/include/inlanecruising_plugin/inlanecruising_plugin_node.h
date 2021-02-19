@@ -16,6 +16,7 @@
  * the License.
  */
 
+
 #include <cav_msgs/Plugin.h>
 #include <carma_utils/CARMAUtils.h>
 #include <cav_srvs/PlanTrajectory.h>
@@ -39,6 +40,8 @@ public:
    */ 
   void run()
   {
+
+
     ros::CARMANodeHandle nh;
     ros::CARMANodeHandle pnh("~");
 
@@ -59,6 +62,7 @@ public:
                      config.moving_average_window_size);
     pnh.param<double>("/vehicle_acceleration_limit", config.max_accel, config.max_accel);
     pnh.param<double>("/vehicle_lateral_accel_limit", config.lateral_accel_limit, config.lateral_accel_limit);
+    pnh.param<bool>("enable_object_avoidance", config.enable_object_avoidance, config.enable_object_avoidance);
 
     ROS_INFO_STREAM("InLaneCruisingPlugin Params" << config);
     
@@ -69,11 +73,39 @@ public:
     
     InLaneCruisingPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); });
 
+
+    
+
+    ros::ServiceClient yield_client = nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/YieldPlugin/plan_trajectory");
+    if (config.enable_object_avoidance){
+      ROS_INFO_STREAM("yield service: " << yield_client.getService());
+      bool got_service = false;
+      cav_srvs::PlanTrajectory yield_srv = worker.get_yield_service(got_service);
+      got_service = true;
+      if(ros::service::exists(yield_client.getService(), true))
+      {
+        if (yield_client.call(yield_srv))
+        {
+          ROS_INFO("Yield Service called");
+          worker.yield_called_ = true;
+          // extract the yield trajectory from service response
+          worker.set_yield_trajectory(yield_srv.response.trajectory_plan);
+          worker.yield_called_ = false;
+        }
+        else
+        {
+          ROS_INFO("Failed to call service ");
+        } 
+      }
+      else ROS_INFO("Service Unavailable");
+    }
+    
     ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/InLaneCruisingPlugin/plan_trajectory",
                                             &InLaneCruisingPlugin::plan_trajectory_cb, &worker);
 
     ros::CARMANodeHandle::setSpinCallback(std::bind(&InLaneCruisingPlugin::onSpin, &worker));
     ros::CARMANodeHandle::spin();
+
   }
 };
 
