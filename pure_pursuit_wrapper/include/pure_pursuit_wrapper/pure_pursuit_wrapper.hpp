@@ -21,7 +21,7 @@
 // msgs
 #include <cav_msgs/TrajectoryPlan.h>
 #include <autoware_msgs/Lane.h>
-#include "pure_pursuit_wrapper_config.h"
+#include "pure_pursuit_wrapper_config.hpp"
 #include <algorithm>
 #include <trajectory_utils/trajectory_utils.h>
 

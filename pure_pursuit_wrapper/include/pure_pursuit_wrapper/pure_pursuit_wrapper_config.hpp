@@ -24,7 +24,7 @@ namespace pure_pursuit_wrapper {
  */
 struct PurePursuitWrapperConfig
 {
-  double vehicle_response_lag = 1.0;       // An approximation of the delay (sec) between sent vehicle commands and the vehicle begining a meaningful acceleration to that command
+  double vehicle_response_lag = 0.2;       // An approximation of the delay (sec) between sent vehicle commands and the vehicle begining a meaningful acceleration to that command
 
   friend std::ostream& operator<<(std::ostream& output, const PurePursuitWrapperConfig& c)
   {
