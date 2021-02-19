@@ -13,7 +13,7 @@
     </group>
     <!-- Pure Pursuit Wrapper Node -->
     <group>
-       <remap from="final_waypoints" to="carma_final_waypoints_old"/>
+       <remap from="final_waypoints" to="carma_final_waypoints"/>
         <node pkg="pure_pursuit_wrapper" type="pure_pursuit_wrapper_node" name="pure_pursuit_wrapper_node">
             <rosparam command="load" file="$(find pure_pursuit_wrapper)/config/default.yaml" />
         </node>

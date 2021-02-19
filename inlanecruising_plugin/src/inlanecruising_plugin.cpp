@@ -408,28 +408,13 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   }
 
   log::printDoublesPerLineWithPrefix("post_min_speed[i]: ", final_actual_speeds);
+
   // Convert speeds to times
   std::vector<double> times;
   trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
 
   log::printDoublesPerLineWithPrefix("times[i]: ", times);
   
-  ///////////////////// TODO REMOVE THIS BLOCK
-
-  autoware_msgs::Lane lane_msg;
-  lane_msg.header.frame_id = "map";
-  lane_msg.header.stamp = ros::Time::now();
-  lane_msg.waypoints.reserve(all_sampling_points.size());
-  for (int i = 0; i < all_sampling_points.size(); i++) { // TODO double check all_sampling points is actually the correct positions for our speeds
-    autoware_msgs::Waypoint wp;
-    wp.pose.pose.position.x = all_sampling_points[i].x();
-    wp.pose.pose.position.y = all_sampling_points[i].y();
-    wp.twist.twist.linear.x = final_actual_speeds[i];
-    lane_msg.waypoints.push_back(wp);
-  }
-  waypoint_pub_.publish(lane_msg);
-
-  ///////////////////// END REMOVE BLOCK
   // Build trajectory points
   // TODO When more plugins are implemented that might share trajectory planning the start time will need to be based
   // off the last point in the plan if an earlier plan was provided

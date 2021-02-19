@@ -96,7 +96,7 @@ namespace plan_delegator
 
     bool PlanDelegator::isManeuverExpired(const cav_msgs::Maneuver& maneuver, ros::Time current_time) const
     {
-        return GET_MANEUVER_PROPERTY(maneuver, end_time) <= current_time;
+        return GET_MANEUVER_PROPERTY(maneuver, end_time) <= current_time; // TODO maneuver expiration should maybe be based off of distance not time?
     }
 
     cav_srvs::PlanTrajectory PlanDelegator::composePlanTrajectoryRequest(const cav_msgs::TrajectoryPlan& latest_trajectory_plan) const

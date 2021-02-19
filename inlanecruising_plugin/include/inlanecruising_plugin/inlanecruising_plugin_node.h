@@ -69,7 +69,7 @@ public:
     ROS_INFO_STREAM("InLaneCruisingPlugin Params After Accel Change" << config);
     
     InLaneCruisingPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); });
-    worker.setWPPub(nh.advertise<autoware_msgs::Lane>("/guidance/carma_final_waypoints", 1)); // TODO remove
+
     ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/InLaneCruisingPlugin/plan_trajectory",
                                             &InLaneCruisingPlugin::plan_trajectory_cb, &worker);
 

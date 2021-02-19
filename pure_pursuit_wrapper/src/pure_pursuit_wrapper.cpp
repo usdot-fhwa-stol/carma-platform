@@ -20,8 +20,8 @@
 
 namespace pure_pursuit_wrapper
 {
-PurePursuitWrapper::PurePursuitWrapper(WaypointPub waypoint_pub, PluginDiscoveryPub plugin_discovery_pub)
-  : waypoint_pub_(waypoint_pub), plugin_discovery_pub_(plugin_discovery_pub)
+PurePursuitWrapper::PurePursuitWrapper(PurePursuitWrapperConfig config, WaypointPub waypoint_pub, PluginDiscoveryPub plugin_discovery_pub)
+  : config_(config), waypoint_pub_(waypoint_pub), plugin_discovery_pub_(plugin_discovery_pub)
 {
   plugin_discovery_msg_.name = "Pure Pursuit";
   plugin_discovery_msg_.versionId = "v1.0";
@@ -53,6 +53,8 @@ void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::C
     throw std::invalid_argument("Speeds and trajectory points sizes do not match");
   }
 
+  std::vector<double> lag_speeds = apply_response_lag(speeds, downtracks, config_.vehicle_response_lag); // This call requires that the first speed point be current speed to work as expected
+
   autoware_msgs::Lane lane;
   lane.header = tp->header;
   std::vector<autoware_msgs::Waypoint> waypoints;
@@ -64,14 +66,32 @@ void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::C
 
     wp.pose.pose.position.x = tp->trajectory_points[i].x;
     wp.pose.pose.position.y = tp->trajectory_points[i].y;
-    wp.twist.twist.linear.x = speeds[i];
+    wp.twist.twist.linear.x = lag_speeds[i];
     ROS_DEBUG_STREAM("Setting waypoint idx: " << i <<", x: " << tp->trajectory_points[i].x << 
                             ", y: " << tp->trajectory_points[i].y <<
-                            ", speed: " << speeds[i]* 2.23694 << "mph");
+                            ", speed: " << lag_speeds[i]* 2.23694 << "mph");
     waypoints.push_back(wp);
   }
 
   lane.waypoints = waypoints;
   waypoint_pub_(lane);
 };
+
+std::vector<double> PurePursuitWrapper::apply_response_lag(const std::vector<double>& speeds, const std::vector<double> downtracks, double response_lag) { // Note first speed is assumed to be vehicle speed
+  if (speeds.size() != downtracks.size()) {
+    throw std::invalid_argument("Speed list and downtrack list are not the same size.");
+  }
+
+  std::vector<double> output;
+  if (speeds.size() == 0) {
+    return output;
+  }
+
+  double lookahead_distance = speeds[0] * response_lag;
+
+  double downtrack_cutoff = downtracks[0] + lookahead_distance;
+  size_t lookahead_count = std::lower_bound(downtracks.begin(),downtracks.end(), downtrack_cutoff) - downtracks.begin(); // Use binary search to find lower bound cutoff point
+  output = trajectory_utils::shift_by_lookahead(speeds, lookahead_count);
+  return output;
+}
 }  // namespace pure_pursuit_wrapper
