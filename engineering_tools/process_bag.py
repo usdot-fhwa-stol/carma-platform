@@ -7,7 +7,8 @@ from enum import Enum
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 import rosbag # Imported to python env with pip install --extra-index-url https://rospypi.github.io/simple/ rospy rosbag
-
+import math
+import numpy as np
 
 # Usage
 # process_traj_logs.py <file name>
@@ -34,11 +35,25 @@ for topic, msg, t in bag.read_messages(topics=['/guidance/pure_pursuit/plan_traj
     pure_pursuit_plan_trajectory_time_steps[-1].append(point.target_time.to_sec())
 
 carma_final_waypoints_times_steps = []
+first_point = []
+second_point = []
+third_point = []
+fourth_point = []
 for topic, msg, t in bag.read_messages(topics=['/guidance/carma_final_waypoints']):
   # Create data to print for Pure Pursuit Wrapper -> Pure Pursuit
   carma_final_waypoints_times_steps.append([])
+  i = 0
   for point in msg.waypoints:
+    if i == 0:
+      first_point.append(point.twist.twist.linear.x)
+    elif i == 1:
+      second_point.append(point.twist.twist.linear.x)
+    elif i == 2:
+      third_point.append(point.twist.twist.linear.x)
+    elif i == 3:
+      fourth_point.append(point.twist.twist.linear.x)
     carma_final_waypoints_times_steps[-1].append(point.twist.twist.linear.x)
+    i+=1
 
 ctrl_raw = []
 for topic, msg, t in bag.read_messages(topics=['/guidance/ctrl_raw']):
@@ -53,7 +68,8 @@ for topic, msg, t in bag.read_messages(topics=['/guidance/ctrl_cmd']):
 vehicle_cmd = []
 for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle_cmd']):
   # Create data to print for Twist Gate -> SSC Interface (TODO double check)
-  vehicle_cmd.append(msg.ctrl_cmd.linear_velocity)
+  if msg.ctrl_cmd.linear_velocity != 0.0:
+    vehicle_cmd.append(msg.ctrl_cmd.linear_velocity)
 
 print("Done Bag Processing")
 
@@ -67,7 +83,7 @@ def index_plot_with_slider(figure_num, data, title, xlabel, ylabel):
   plt.xlabel(xlabel)
   plt.ylabel(ylabel)
   time_step = data[0]
-  l, = plt.plot(range(len(data[0])), data[0])
+  l, = plt.plot(range(len(data[0])), data[0], '.')
 
   time_step_ax = plt.axes([0.20, 0.01, 0.65, 0.03])
   time_step_sldr = Slider(time_step_ax, 'Time Step', 0.0, len(data) - 1.0, valinit=0, valstep=1)
@@ -92,5 +108,33 @@ plot2= index_plot_with_slider(2, pure_pursuit_plan_trajectory_time_steps,
 
 plot3= index_plot_with_slider(3, carma_final_waypoints_times_steps, 
   "/guidance/carma_final_waypoints", "Index", "Velocity (m/s)")
+
+
+fig = plt.figure(8)
+
+plt.title("Commands")
+plt.xlabel("Index")
+plt.ylabel("Velocity (m/s)")
+plt.plot(range(len(ctrl_raw)), ctrl_raw, 'r')
+plt.plot(range(len(ctrl_cmd)), ctrl_cmd, 'g')
+#plt.plot(range(len(vehicle_cmd)), vehicle_cmd, '.b')
+
+
+fig2 = plt.figure(9)
+
+plt.title("Points Waypoints")
+plt.xlabel("Timestep")
+plt.ylabel("Velocity (m/s)")
+plt.plot(range(len(first_point)), first_point, 'r')
+plt.plot(range(len(second_point)), second_point, 'g')
+plt.plot(range(len(third_point)), third_point, 'b')
+plt.plot(range(len(fourth_point)), fourth_point, 'y')
+plt.legend(["First", "Second", "Third", "Fourth"])
+
+# plot4= index_plot_with_slider(4, accel_time_steps, 
+#   "/guidance/carma_final_waypoints Accel", "Index - 1", "Acceleration (m/s^2)")
+
+# plot5= index_plot_with_slider(5, numpy_accels, 
+#   "Numpy Accel", "Index - 1", "Acceleration (m/s^2)")
 
 plt.show()
