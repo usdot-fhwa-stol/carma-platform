@@ -16,6 +16,7 @@
  * the License.
  */
 
+
 #include <cav_msgs/Plugin.h>
 #include <carma_utils/CARMAUtils.h>
 #include <cav_srvs/PlanTrajectory.h>
@@ -39,6 +40,8 @@ public:
    */ 
   void run()
   {
+
+
     ros::CARMANodeHandle nh;
     ros::CARMANodeHandle pnh("~");
 
@@ -59,6 +62,7 @@ public:
                      config.moving_average_window_size);
     pnh.param<double>("/vehicle_acceleration_limit", config.max_accel, config.max_accel);
     pnh.param<double>("/vehicle_lateral_accel_limit", config.lateral_accel_limit, config.lateral_accel_limit);
+    pnh.param<bool>("enable_object_avoidance", config.enable_object_avoidance, config.enable_object_avoidance);
 
     ROS_INFO_STREAM("InLaneCruisingPlugin Params" << config);
     
@@ -69,11 +73,49 @@ public:
     
     InLaneCruisingPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); });
 
-    ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/InLaneCruisingPlugin/plan_trajectory",
-                                            &InLaneCruisingPlugin::plan_trajectory_cb, &worker);
 
-    ros::CARMANodeHandle::setSpinCallback(std::bind(&InLaneCruisingPlugin::onSpin, &worker));
-    ros::CARMANodeHandle::spin();
+    ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/InLaneCruisingPlugin/plan_trajectory",
+                                            &InLaneCruisingPlugin::plan_trajectory_cb2, &worker);
+
+    ros::ServiceClient yield_client = nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/YieldPlugin/plan_trajectory");
+    worker.set_yield_client(yield_client);
+    // if (config.enable_object_avoidance){
+    //   ros::ServiceClient yield_client = nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/YieldPlugin/plan_trajectory");
+    //   ROS_INFO_STREAM("yield service: " << yield_client.getService());
+    //   cav_srvs::PlanTrajectory yield_srv;
+    //   if(ros::service::exists(yield_client.getService(), true))
+    //   {
+    //     if (yield_client.call(yield_srv))
+    //     {
+    //       ROS_INFO("SERVICE CALLED");
+    //     }
+    //     else
+    //     {
+    //       ROS_INFO("Failed to call service ");
+    //     } 
+    //   }
+    // else ROS_INFO("Service Unavailable");
+    // }
+    
+    
+    
+    
+    
+     
+
+    // ros::CARMANodeHandle::setSpinCallback(std::bind(&InLaneCruisingPlugin::onSpin, &worker));
+    // ros::CARMANodeHandle::spin();
+
+    ros::CallbackQueue myq;
+    
+    // myq.callOne();
+    nh.setCallbackQueue(&myq);
+    ros::AsyncSpinner spinner(1, &myq);
+    myq.callAvailable(ros::WallDuration(6.0));
+    // ros::AsyncSpinner spinner(1); // Use 4 threads
+    // spinner.start();
+    // ros::waitForShutdown();
+
   }
 };
 

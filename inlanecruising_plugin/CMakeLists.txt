@@ -67,11 +67,13 @@ include_directories(
 )
 
 add_executable( ${PROJECT_NAME}
-  src/main.cpp)
+  src/main.cpp
+)
 add_library(inlanecruising_plugin_library 
   src/inlanecruising_plugin.cpp
   src/smoothing/BSpline.cpp
   src/object_avoidance.cpp
+  src/test_helper.cpp
 )
 target_link_libraries(inlanecruising_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
@@ -109,5 +111,8 @@ catkin_add_gmock(${PROJECT_NAME}-test
   test/test_object_avoidance.cpp
 )
 target_link_libraries(${PROJECT_NAME}-test inlanecruising_plugin_library ${catkin_LIBRARIES})
+
+add_rostest_gtest(rostest_ilc test/ilc_plugin.test test/rostest_ilc.cpp)
+target_link_libraries(rostest_ilc ${catkin_LIBRARIES})
 
 
