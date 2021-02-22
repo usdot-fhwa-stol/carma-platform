@@ -114,6 +114,10 @@ namespace stop_and_wait_plugin
                 maneuver_plan.push_back(maneuver);
             }
         }
+        if(current_downtrack < maneuver_plan[0].stop_and_wait_maneuver.start_dist){
+            //Do nothing
+            return true;
+        }
 
         std::vector<PointSpeedPair> points_and_target_speeds = maneuvers_to_points(maneuver_plan, current_downtrack, wm_, req.vehicle_state);
 
@@ -173,10 +177,6 @@ namespace stop_and_wait_plugin
             {
                 ///guidance/route/destination_downtrack_range
                 auto shortest_path = wm_->getRoute()->shortestPath();
-                if(ending_downtrack  >= wm_->getRouteEndTrackPos().downtrack ){
-                    destination_downtrack_range = std::abs(ending_downtrack - starting_downtrack);
-                    ROS_DEBUG_STREAM("destination downtrack range: "<< destination_downtrack_range);
-                }
 
                 delta_time = min_timestep_;
                 curr_time = 0.0;
@@ -196,7 +196,7 @@ namespace stop_and_wait_plugin
             else
             {
                 double jerk_req = (2*start_speed)/pow(maneuver_time_,2);
-                //double start_speed = current_speed_;    //Get static value of current speed at start of planning
+                
                 if(jerk_req > max_jerk_limit_)
                 {
                     //unsafe to stop at the required jerk - reset to max_jerk and go beyond the maneuver end_dist
@@ -270,6 +270,14 @@ namespace stop_and_wait_plugin
 
                     points_and_target_speeds.push_back(pair);
                 }
+                //Change timestep to 0.1s
+                PointSpeedPair last_point = points_and_target_speeds.back();
+                if(delta_time < min_timestep_){
+                    int downsample_ratio = min_timestep_/delta_time;
+                    points_and_target_speeds = carma_utils::containers::downsample_vector(points_and_target_speeds,downsample_ratio);
+                }
+                points_and_target_speeds.push_back(last_point);   
+                
             }
             //If planned time is less than min trajectory duration add zero speed points
             while(curr_time < minimal_trajectory_duration_)
