@@ -50,13 +50,13 @@ class PurePursuitWrapper {
          * 
          * \return A Shifted trajectory
          */ 
-        std::vector<double> apply_response_lag(const std::vector<double>& speeds, const std::vector<double> downtracks, double response_lag);
+        std::vector<double> apply_response_lag(const std::vector<double>& speeds, const std::vector<double> downtracks, double response_lag) const;
 
     private:
+    PurePursuitWrapperConfig config_;
     WaypointPub waypoint_pub_;
     PluginDiscoveryPub plugin_discovery_pub_;
     cav_msgs::Plugin plugin_discovery_msg_;
-    PurePursuitWrapperConfig config_;
 
 };
 

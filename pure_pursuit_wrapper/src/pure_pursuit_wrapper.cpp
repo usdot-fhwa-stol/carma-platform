@@ -77,13 +77,13 @@ void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::C
   waypoint_pub_(lane);
 };
 
-std::vector<double> PurePursuitWrapper::apply_response_lag(const std::vector<double>& speeds, const std::vector<double> downtracks, double response_lag) { // Note first speed is assumed to be vehicle speed
+std::vector<double> PurePursuitWrapper::apply_response_lag(const std::vector<double>& speeds, const std::vector<double> downtracks, double response_lag) const { // Note first speed is assumed to be vehicle speed
   if (speeds.size() != downtracks.size()) {
     throw std::invalid_argument("Speed list and downtrack list are not the same size.");
   }
 
   std::vector<double> output;
-  if (speeds.size() == 0) {
+  if (speeds.empty()) {
     return output;
   }
 
@@ -91,7 +91,7 @@ std::vector<double> PurePursuitWrapper::apply_response_lag(const std::vector<dou
 
   double downtrack_cutoff = downtracks[0] + lookahead_distance;
   size_t lookahead_count = std::lower_bound(downtracks.begin(),downtracks.end(), downtrack_cutoff) - downtracks.begin(); // Use binary search to find lower bound cutoff point
-  output = trajectory_utils::shift_by_lookahead(speeds, lookahead_count);
+  output = trajectory_utils::shift_by_lookahead(speeds, (unsigned int) lookahead_count);
   return output;
 }
 }  // namespace pure_pursuit_wrapper

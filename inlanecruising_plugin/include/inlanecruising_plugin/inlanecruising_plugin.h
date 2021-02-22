@@ -115,11 +115,12 @@ public:
    * \param points The set of points that define the current lane the vehicle is in and are defined based on the request planning maneuvers. 
    *               These points must be in the same lane as the vehicle and must extend in front of it though it is fine if they also extend behind it. 
    * \param state The current state of the vehicle
+   * \param state_time The abosolute time which the provided vehicle state corresponds to
    * 
    * \return A list of trajectory points to send to the carma planning stack
    */ 
   std::vector<cav_msgs::TrajectoryPlanPoint>
-  compose_trajectory_from_centerline(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state);
+  compose_trajectory_from_centerline(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time);
 
   /**
    * \brief Method combines input points, times, orientations, and an absolute start time to form a valid carma platform trajectory

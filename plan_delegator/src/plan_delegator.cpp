@@ -106,6 +106,7 @@ namespace plan_delegator
         // set current vehicle state if we have NOT planned any previous trajectories
         if(latest_trajectory_plan.trajectory_points.empty())
         {
+            plan_req.request.header.stamp = latest_pose_.header.stamp;
             plan_req.request.vehicle_state.longitudinal_vel = latest_twist_.twist.linear.x;
             plan_req.request.vehicle_state.X_pos_global = latest_pose_.pose.position.x;
             plan_req.request.vehicle_state.Y_pos_global = latest_pose_.pose.position.y;
@@ -124,6 +125,7 @@ namespace plan_delegator
             ros::Duration time_diff = last_point.target_time - second_last_point.target_time;
             auto time_diff_sec = time_diff.toSec();
             // this assumes the vehicle does not have significant lateral velocity
+            plan_req.request.header.stamp = latest_trajectory_plan.trajectory_points.back().target_time;
             plan_req.request.vehicle_state.longitudinal_vel = distance_diff / time_diff_sec;
             // TODO develop way to set yaw value for future points
         }
@@ -196,7 +198,7 @@ namespace plan_delegator
                 break;
             }
         }
-        latest_trajectory_plan.initial_longitudinal_velocity = std::max(latest_twist_.twist.linear.x, 2.2352); // TODO make config parameter
+        latest_trajectory_plan.initial_longitudinal_velocity = std::max(latest_twist_.twist.linear.x, 2.2352); // TODO make config paramete or evaluate if this max call needed? Would 0 cause an issue?
         return latest_trajectory_plan;
     }
 

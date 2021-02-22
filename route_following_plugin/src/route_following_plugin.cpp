@@ -96,13 +96,13 @@ namespace route_following_plugin
         ros::Time time_progress = ros::Time::now();
         double target_speed=findSpeedLimit(current_lanelet);   //get Speed Limit
 
-        double total_maneuver_length = current_progress + mvr_duration_ * target_speed; // TODO STOPPING_ISSUE we can do a min of this line and the line below. 
-        double route_length= wm_->routeTrackPos(shortest_path.back().centerline2d().back()).downtrack; // TODO STOPPING_ISSUE Maneuver extends to the end of the route???
+        double total_maneuver_length = current_progress + mvr_duration_ * target_speed;
+        double route_length= wm_->routeTrackPos(shortest_path.back().centerline2d().back()).downtrack; 
         total_maneuver_length = std::min(total_maneuver_length, route_length);
 
         bool approaching_route_end = false;
         double time_req_to_stop,stopping_dist;
-        time_req_to_stop = sqrt(2*findSpeedLimit(shortest_path.back())/jerk_); // TODO STOPPING_ISSUE target_speed not related to route end
+        time_req_to_stop = sqrt(2*findSpeedLimit(shortest_path.back())/jerk_); 
         stopping_dist = target_speed*time_req_to_stop - (0.167 * jerk_ * pow(time_req_to_stop,3));
         
         if(route_length - current_progress <= stopping_dist){
@@ -125,7 +125,7 @@ namespace route_following_plugin
             double dist_diff = end_dist - current_progress;
             ROS_DEBUG_STREAM("dist_diff: " << dist_diff);
             if(route_length - end_dist <= stopping_dist){
-                end_dist = route_length - stopping_dist; // TODO STOPPING_ISSUE this will cause you to stop early if the final lanelet is shorter than stopping distance 
+                end_dist = route_length - stopping_dist; 
                 dist_diff = end_dist - current_progress;
                 approaching_route_end = true;
             }
@@ -163,7 +163,7 @@ namespace route_following_plugin
             }
             //get speed limit
             current_lanelet=shortest_path[last_lanelet_index];  //update current lanelet
-            target_speed=findSpeedLimit(current_lanelet); // TODO STOPPING_ISSUE target speed will lag by 1 lanelet
+            target_speed=findSpeedLimit(current_lanelet); 
         }
         ROS_DEBUG_STREAM("Done Loop: approaching_route_end: " << approaching_route_end);
         if(approaching_route_end){
@@ -175,7 +175,7 @@ namespace route_following_plugin
             resp.new_plan.maneuvers.push_back(
                 composeStopandWaitManeuverMessage(current_progress,total_maneuver_length,
                 speed_progress,shortest_path[last_lanelet_index].id(),
-                shortest_path[last_lanelet_index].id(),end_time,time_req_to_stop)); // TODO STOPPING_ISSUE start time is not correct. Stop and wait plugin does not use this but has the same problem. 
+                shortest_path[last_lanelet_index].id(),end_time,time_req_to_stop)); 
         }
         if(resp.new_plan.maneuvers.size() == 0)
         {
