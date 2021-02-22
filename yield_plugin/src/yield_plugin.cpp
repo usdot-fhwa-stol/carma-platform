@@ -63,11 +63,11 @@ namespace yield_plugin
     cav_msgs::TrajectoryPlan original_trajectory = req.initial_trajectory_plan;
     cav_msgs::TrajectoryPlan trajectory;
     trajectory.header.frame_id = "map";
-    trajectory.header.stamp = original_trajectory.header.stamp;// should it be now or the original plan's time? 
+    trajectory.header.stamp = ros::Time::now();
     trajectory.trajectory_id = original_trajectory.trajectory_id;
 
     trajectory = update_traj_for_object(original_trajectory, req.vehicle_state.longitudinal_vel); // Compute the trajectory
-    trajectory.initial_longitudinal_velocity = trajectory.initial_longitudinal_velocity;//std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);//????  find better value
+    trajectory.initial_longitudinal_velocity = original_trajectory.initial_longitudinal_velocity;//copy the original trajectory's desired speed for now. 
 
     resp.trajectory_plan = trajectory;
   }
@@ -88,7 +88,8 @@ namespace yield_plugin
     host_vehicle_size.z = config_.vehicle_height; 
     // std::cout << "host_vehicle_size" << host_vehicle_size.x << std::endl;
     std::vector<cav_msgs::RoadwayObstacle> rwol_collision = carma_wm::collision_detection::WorldCollisionDetection(rwol2, original_tp, host_vehicle_size, current_velocity, config_.collision_horizon);
-    std::cout << "rwol" << rwol.size() << std::endl;
+    
+    ROS_DEBUG_STREAM("Roadway Object List (rwol) size: " << rwol.size());
 
     // correct the input types
     if(rwol_collision.size() > 0)
@@ -103,15 +104,17 @@ namespace yield_plugin
       // roadway object position
       double gap_time = (x_lead - config_.x_gap)/current_speed_;
 
-      double collision_time = 0; //\TODO comming from carma_wm collision detection in future (not used now)
+      double collision_time = 0; //\TODO comming from carma_wm collision detection in future (CAR 4288)
 
       double goal_velocity = rwol_collision[0].object.velocity.twist.linear.x;
       
+      double goal_pos = x_lead - goal_velocity * gap_time; 
+
       if (goal_velocity <= config_.min_obstacle_speed){
         ROS_WARN_STREAM("The obstacle is not moving");
+        goal_pos = x_lead - config_.x_gap;
       }
 
-      double goal_pos = x_lead - goal_velocity * gap_time; 
 
       double initial_time = 0;
       double initial_pos = 0.0; //relative initial position (first trajectory point)
@@ -123,7 +126,7 @@ namespace yield_plugin
       // reference time, is the maximum time available to perform object avoidance (length of a trajectory)
       double t_ref = (original_tp.trajectory_points[original_tp.trajectory_points.size() - 1].target_time.toSec() - original_tp.trajectory_points[0].target_time.toSec());
       // time required for comfortable deceleration
-      double t_ph = config_.acceleration_adjustment_factor * delta_v_max / config_.maximum_deceleration_value;
+      double t_ph = config_.acceleration_adjustment_factor * delta_v_max / config_.yield_max_deceleration;
 
       // planning time for object avoidance
       double tp = 0;
@@ -163,7 +166,7 @@ namespace yield_plugin
         double dv = polynomial_calc_d(values, traj_target_time);
         cav_msgs::TrajectoryPlanPoint new_tpp;
         // the last moving trajectory point
-        if (dv >= 1.0)
+        if (dv >= config_.max_stop_speed)
         {
           ROS_WARN_STREAM("target speed is positive");
           if (dv >= current_speed_){

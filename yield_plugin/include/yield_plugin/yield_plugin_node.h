@@ -53,11 +53,12 @@ public:
     pnh.param<double>("collision_horizon", config.collision_horizon, config.collision_horizon);
     pnh.param<double>("min_obstacle_speed", config.min_obstacle_speed, config.min_obstacle_speed);
     pnh.param<double>("tpmin", config.tpmin, config.tpmin);
-    pnh.param<double>("maximum_deceleration_value", config.maximum_deceleration_value, config.maximum_deceleration_value);
+    pnh.param<double>("yield_max_deceleration", config.yield_max_deceleration, config.yield_max_deceleration);
     pnh.param<double>("x_gap", config.x_gap, config.x_gap);
-    pnh.param<double>("vehicle_length", config.vehicle_length, config.vehicle_length);
-    pnh.param<double>("vehicle_height", config.vehicle_height, config.vehicle_height);
-    pnh.param<double>("vehicle_width", config.vehicle_width, config.vehicle_width);
+    pnh.param<double>("max_stop_speed", config.max_stop_speed, config.max_stop_speed);
+    pnh.param<double>("/vehicle_length", config.vehicle_length, config.vehicle_length);
+    pnh.param<double>("/vehicle_height", config.vehicle_height, config.vehicle_height);
+    pnh.param<double>("/vehicle_width", config.vehicle_width, config.vehicle_width);
     ROS_INFO_STREAM("YieldPlugin Params" << config);
 
     YieldPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); });

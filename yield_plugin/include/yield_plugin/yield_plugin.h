@@ -118,9 +118,6 @@ public:
    */                     
   std::vector<double> get_relative_downtracks(const cav_msgs::TrajectoryPlan& trajectory_plan);  
 
-
-  //temppp
-  
   
 private:
 
