@@ -72,7 +72,7 @@ namespace route {
                     auto full_file_name = itr->path().filename().generic_string();
                     cav_msgs::Route route_msg;
 
-                    /*TODO: Include logic that sorts out invalid route files based on their ending*/
+                    //Include logic that sorts out invalid route files based on their ending*/
                     if(full_file_name.find(".csv") != full_file_name.npos)
                      { 
                        // assume route files ending with ".csv", before that is the actual route name
