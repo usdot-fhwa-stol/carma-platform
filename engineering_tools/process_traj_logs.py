@@ -16,17 +16,11 @@
 
 import sys
 import csv
-from bisect import bisect_left 
 from enum import Enum
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
+import curvature_filter as cf
 
-def binarySearch(a, x): 
-    i = bisect_left(a, x) 
-    if i: 
-        return (i-1) 
-    else: 
-        return -1
 # Usage
 # process_traj_logs.py <file name> <start time> <end_time>
 #
@@ -67,8 +61,8 @@ with open(sys.argv[1] + ".clean", 'r') as csv_file:
     #  break
 
 # Grab requested section
-start_index = max(binarySearch(core_data["times"], float(sys.argv[2])) - 1, 0)
-end_index = min(binarySearch(core_data["times"], float(sys.argv[3])) + 1, len(core_data["times"]))
+start_index = max(cf.binarySearch(core_data["times"], float(sys.argv[2])) - 1, 0)
+end_index = min(cf.binarySearch(core_data["times"], float(sys.argv[3])) + 1, len(core_data["times"]))
 
 print("Start index: " + str(start_index))
 print("End index: " + str(end_index))
@@ -231,7 +225,17 @@ for content in core_data["content"]:
   
 
 print("DONE PROCESSING FILE")
+
+# Process Curvatures
+process_curvatures_time_steps = []
+for t in core_data["time_steps"]:
+  new_data = cf.filter_curvatures(t[DataSource.PROCESSED_CURVATURES], 1.0)
+  #print("New Data:" + str(new_data))
+  process_curvatures_time_steps.append({"Data":new_data})
+
 print("CREATING GRAPHS")
+
+
 
 # Takes list of dictionary
 def xy_scatter_with_slider(figure_num, data, key, title, xlabel, ylabel):
@@ -266,7 +270,7 @@ def index_plot_with_slider(figure_num, data, key, title, xlabel, ylabel):
   plt.xlabel(xlabel)
   plt.ylabel(ylabel)
   time_step = data[0]
-  l, = plt.plot(range(len(time_step[key])), time_step[key])
+  l, = plt.plot(range(len(time_step[key])), time_step[key], '-o')
 
   time_step_ax = plt.axes([0.20, 0.01, 0.65, 0.03])
   time_step_sldr = Slider(time_step_ax, 'Time Step', 0.0, len(data) - 1.0, valinit=0, valstep=1)
@@ -325,6 +329,9 @@ plot14 = index_plot_with_slider(14, core_data["time_steps"], DataSource.AFTER_MI
 
 plot15 = index_plot_with_slider(15, core_data["time_steps"], DataSource.FINAL_TIMES, 
   "Final Times", "Index", "Seconds (s)")
+
+plot101 = index_plot_with_slider(101, process_curvatures_time_steps, "Data", 
+  "Extra Processed Curvatures", "Index", "Curvature (1/r) (m)")
 
 plt.show()
 '''
