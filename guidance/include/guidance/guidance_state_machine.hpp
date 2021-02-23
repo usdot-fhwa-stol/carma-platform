@@ -20,6 +20,7 @@
 #include <cav_msgs/RobotEnabled.h>
 #include <cav_msgs/GuidanceState.h>
 #include <cav_msgs/RouteEvent.h>
+#include <autoware_msgs/VehicleStatus.h>
 
 namespace guidance
 {
@@ -35,6 +36,7 @@ namespace guidance
                 DISENGAGED = 3,
                 SHUTDOWN = 4,
                 OVERRIDE = 5,
+                PARK = 6,
             };
 
             enum State
@@ -45,12 +47,18 @@ namespace guidance
                 ACTIVE = 3,
                 ENGAGED = 4,
                 INACTIVE = 5,
+                ENTER_PARK = 6,
             };
 
             /*!
              * \brief Default constructor for GuidanceStateMachine
              */
             GuidanceStateMachine() = default;
+
+            /*!
+             * \brief Handle system_alert message from ROS network.
+             */
+            void onVehicleStatus(const autoware_msgs::VehicleStatusConsPtr& msg);
 
             /*!
              * \brief Handle system_alert message from ROS network.

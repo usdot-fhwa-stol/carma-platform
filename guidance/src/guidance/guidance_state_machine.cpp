@@ -54,6 +54,9 @@ namespace guidance
                 } else if(signal == Signal::OVERRIDE)
                 {
                     current_guidance_state_ = State::INACTIVE;
+                } else if(signal == Signal::PARK)
+                {
+                    current_guidance_state_ = State::ENTER_PARK;
                 }
                 break;
             case State::INACTIVE:
@@ -64,9 +67,19 @@ namespace guidance
                     current_guidance_state_ = State::DRIVERS_READY;
                 }
                 break;
+            case State::ENTER_PARK:
+                if(signal == Signal::OVERRIDE)
+                {
+                    current_guidance_state_ = State::INACTIVE
+                }
             default:
                 break;
         }
+    }
+
+    void GuidanceStateMachine::onVehicleStatus(const autoware_msgs::VehicleStatusConstPtr& msg)
+    {
+        vehicle_status_msg_ = *msg;
     }
 
     void GuidanceStateMachine::onSystemAlert(const cav_msgs::SystemAlertConstPtr& msg)
@@ -116,7 +129,15 @@ namespace guidance
                onGuidanceSignal(Signal::DISENGAGED);
            }
         else if(msg->event == cav_msgs::RouteEvent::ROUTE_COMPLETED){
-            onGuidanceSignal(Signal::OVERRIDE);  //Engaged -> Inactive (needs Override)
+            onGuidanceSignal(Signal::PARK); // ENGAGED -> ENTER_PARK
+
+            // Need to wait for shifter to shift to PARK
+
+            // vehicle_status_msgs_.gearshift == 3 indicates that vehicle is shifted into park
+            if (vehicle_status_msgs_.gearshift == 3)
+            {
+                onGuidanceSignal(Signal::OVERRIDE);  // ENTER_PARK -> INACTIVE (needs Override)
+            }
             
             if(sys_alert_msg_.type == sys_alert_msg_.DRIVERS_READY){
                 onGuidanceSignal(INITIALIZED);
