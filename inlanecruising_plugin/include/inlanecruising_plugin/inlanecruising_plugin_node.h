@@ -79,23 +79,22 @@ public:
 
     ros::ServiceClient yield_client = nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/YieldPlugin/plan_trajectory");
     worker.set_yield_client(yield_client);
-    // if (config.enable_object_avoidance){
-    //   ros::ServiceClient yield_client = nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/YieldPlugin/plan_trajectory");
-    //   ROS_INFO_STREAM("yield service: " << yield_client.getService());
+    worker.set_yield_client2(&yield_client);
+  
     //   cav_srvs::PlanTrajectory yield_srv;
-    //   if(ros::service::exists(yield_client.getService(), true))
-    //   {
+    // if(yield_client.waitForExistence(ros::Duration(5.0)))
+    // {
     //     if (yield_client.call(yield_srv))
     //     {
-    //       ROS_INFO("SERVICE CALLED");
+    //       ROS_ERROR("SERVICE CALLED");
     //     }
     //     else
     //     {
-    //       ROS_INFO("Failed to call service ");
+    //       ROS_ERROR("Failed to call service ");
     //     } 
-    //   }
-    // else ROS_INFO("Service Unavailable");
     // }
+    // else ROS_ERROR("Service Unavailable");
+  
     
     
     
@@ -103,18 +102,13 @@ public:
     
      
 
-    // ros::CARMANodeHandle::setSpinCallback(std::bind(&InLaneCruisingPlugin::onSpin, &worker));
-    // ros::CARMANodeHandle::spin();
+    ros::CARMANodeHandle::setSpinCallback(std::bind(&InLaneCruisingPlugin::onSpin, &worker));
+    ros::CARMANodeHandle::spin();
 
-    ros::CallbackQueue myq;
+    // ros::CallbackQueue myq;
     
-    // myq.callOne();
-    nh.setCallbackQueue(&myq);
-    ros::AsyncSpinner spinner(1, &myq);
-    myq.callAvailable(ros::WallDuration(6.0));
-    // ros::AsyncSpinner spinner(1); // Use 4 threads
-    // spinner.start();
-    // ros::waitForShutdown();
+    ros::AsyncSpinner spinner(1);
+    spinner.start();
 
   }
 };

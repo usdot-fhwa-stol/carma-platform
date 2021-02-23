@@ -65,41 +65,45 @@ void InLaneCruisingPlugin::set_yield_client(ros::ServiceClient& client)
   yield_client_ = client;
 }
 
+void InLaneCruisingPlugin::set_yield_client2(ros::ServiceClient* client)
+{
+  clientPtr = client;
+}
+
 bool InLaneCruisingPlugin::plan_trajectory_cb2(cav_srvs::PlanTrajectoryRequest& req,
                                               cav_srvs::PlanTrajectoryResponse& resp)
 {
-  std::mutex cb_mutex;
-  std::unique_lock<std::mutex> lock(cb_mutex);
+  // // std::mutex cb_mutex;
+  // // std::unique_lock<std::mutex> lock(cb_mutex);
 
   ROS_ERROR("in cb2");
-  if (yield_client_ && yield_client_.exists() && yield_client_.isValid()){
+  if (clientPtr && clientPtr->exists() && clientPtr->isValid()){
     ROS_ERROR("Good Client");
   }
   cav_srvs::PlanTrajectory yield_srv;
-  // if(ros::service::exists("plugins/YieldPlugin/plan_trajectory", true))
-  // {
-    // if (yield_client_.call("plugins/YieldPlugin/plan_trajectory", yield_srv))
-    if (yield_client_.call(yield_srv))
+  if(ros::service::exists("plugins/YieldPlugin/plan_trajectory", true))
+  {
+    ROS_ERROR("SERVICE EXISTS");
+
+    if(clientPtr->waitForExistence(ros::Duration(5.0))){
+      ROS_ERROR("SERVICE still EXISTS");
+    }
+    ros::ServiceClient client = (ros::ServiceClient)*clientPtr;
+    // if (ros::service::call("plugins/YieldPlugin/plan_trajectory", yield_srv))
+    if (client.call(yield_srv))
     {
         ROS_ERROR("SERVICE CALLED");
-        // if (yield_srv.response.trajectory_plan.trajectory_points.size()>= 2)
-        // {
-          cav_msgs::TrajectoryPlan yield_trajectory = yield_srv.response.trajectory_plan;
-          resp.trajectory_plan = yield_trajectory;
-
-        // }
-        // else
-        // {
-        //   ROS_WARN_STREAM("Invalid Yield Trajectory");
-        //   // std::invalid_argument("Invalid Yield Trajectory");
-        // }
+        cav_msgs::TrajectoryPlan yield_trajectory = yield_srv.response.trajectory_plan;
+        resp.trajectory_plan = yield_trajectory;
     }
     else
       {
         ROS_ERROR("Failed to call service ");
       } 
-  // }
-  //   else ROS_ERROR("Service Unavailable");
+  }
+    else ROS_ERROR("Service Unavailable");
+  
+  return true;
 }
 
 bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req,
@@ -137,41 +141,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   initial_trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state); // Compute the trajectory
   initial_trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
 
-
-  if (config_.enable_object_avoidance)
-  {
-    // ROS_WARN_STREAM("Object avoidance active");
-    cav_srvs::PlanTrajectory yield_srv;
-    yield_srv = compose_yield_request(initial_trajectory);
-    
-    // if(ros::service::exists("plugins/YieldPlugin/plan_trajectory", true)) {
-    // if (ros::service::call("plugins/YieldPlugin/plan_trajectory", yield_srv))
-    //   {
-    //     ROS_INFO_STREAM("SERVICE CALLED");
-    //     // if (yield_srv.response.trajectory_plan.trajectory_points.size()>= 2)
-    //     // {
-    //       cav_msgs::TrajectoryPlan yield_trajectory = yield_srv.response.trajectory_plan;
-    //       resp.trajectory_plan = yield_trajectory;
-
-    //     // }
-    //     // else
-    //     // {
-    //     //   ROS_WARN_STREAM("Invalid Yield Trajectory");
-    //     //   // std::invalid_argument("Invalid Yield Trajectory");
-    //     // }
-      // }
-      // else
-      // {
-      //   ROS_INFO_STREAM("Failed to call service ");
-      // } 
-    // }
-    // else ROS_INFO_STREAM("Service Unavailable");
-
-  }
-  else
-  {
     resp.trajectory_plan = initial_trajectory;
-  }
   
   resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_FOLLOWING);
   resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);

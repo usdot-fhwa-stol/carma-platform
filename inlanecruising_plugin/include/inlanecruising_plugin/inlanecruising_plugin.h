@@ -74,6 +74,7 @@ public:
 
   bool plan_trajectory_cb2(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp);
 
+  void set_yield_client2(ros::ServiceClient* client);
   void set_yield_client(ros::ServiceClient& client);
   /**
    * \brief Method to call at fixed rate in execution loop. Will publish plugin discovery updates
@@ -259,5 +260,6 @@ private:
 
   cav_msgs::Plugin plugin_discovery_msg_;
   ros::ServiceClient yield_client_;
+  ros::ServiceClient *clientPtr;
 };
 };  // namespace inlanecruising_plugin

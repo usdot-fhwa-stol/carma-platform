@@ -27,39 +27,10 @@
 
 bool srvCallback(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& res)
 {
-  return true;
+    ROS_ERROR("received yield service");
+    return true;
+
 }
-
-// TEST(InLaneCruisingPluginTest, advertiseMultiple)
-// {
-//   ros::NodeHandle nh;
-//   ros::ServiceServer srv = nh.advertiseService("plugins/YieldPlugin/plan_trajectory", srvCallback);
-//   std::this_thread::sleep_for(std::chrono::milliseconds(25000));
-//   ASSERT_TRUE(srv);
-//   ASSERT_TRUE(ros::service::exists("plugins/YieldPlugin/plan_trajectory", true));
-
-// }
-
-// TEST(InLaneCruisingPluginTest, rostest2)
-// {
-    
-
-//     ros::NodeHandle nh;
-//     bool flag_yield = false;
-
-//     boost::function<bool(cav_srvs::PlanTrajectoryRequest&, cav_srvs::PlanTrajectoryResponse&)> cb = [&](cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& res) -> bool
-//     {
-//         flag_yield = true;
-//         return true;
-//     };
-
-//     ros::ServiceServer srv = nh.advertiseService("plugins/YieldPlugin/plan_trajectory", cb);
-//     ros::Duration(5).sleep();
-//     ros::spinOnce();
-//     ASSERT_TRUE(srv);
-//     ASSERT_TRUE(flag_yield);
-// }
-
 
 TEST(InLaneCruisingPluginTest, rostest1)
 {
@@ -73,10 +44,9 @@ TEST(InLaneCruisingPluginTest, rostest1)
     {
         ROS_ERROR("received yield service");
         flag_yield = true;
-        // ros::spinOnce();
-        // ros::Duration(5).sleep();
         return true;
     };
+
 
     cav_msgs::ManeuverPlan plan;
     cav_msgs::Maneuver maneuver;
@@ -93,15 +63,20 @@ TEST(InLaneCruisingPluginTest, rostest1)
     traj_srv.request.maneuver_plan = plan;
 
 
-    ros::ServiceServer srv = nh.advertiseService("plugins/YieldPlugin/plan_trajectory", cb);
-    ros::Duration(5).sleep();
-    
 
+    ros::ServiceServer srv = nh.advertiseService("plugins/YieldPlugin/plan_trajectory", cb);
+    // ros::Duration(5).sleep();
+    // ros::spinOnce();
+    
     ros::ServiceClient plugin1= nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/InLaneCruisingPlugin/plan_trajectory");
 
+    ros::Duration(5).sleep();
+    ros::spinOnce();
+
     ROS_INFO_STREAM("ilc service: " << plugin1.getService());
-    // if(ros::service::waitForService("plugins/InLaneCruisingPlugin/plan_trajectory",-1))
-    // {
+    if(plugin1.waitForExistence(ros::Duration(5.0)))
+    {
+        ros::spinOnce();
         ROS_ERROR("waiting");
         if (plugin1.call(traj_srv))
         {
@@ -113,21 +88,13 @@ TEST(InLaneCruisingPluginTest, rostest1)
         {
             ROS_ERROR("Failed to call ILC Traj service");
         }
-    // }
+    }
 
-    // ros::ServiceServer srv = nh.advertiseService("plugins/YieldPlugin/plan_trajectory", cb);
-    // ros::Duration(5).sleep();
-    // ros::spinOnce();
-    
-
-
-    
-    // ros::Duration(5).sleep();
-    // ros::spinOnce();
 
     EXPECT_TRUE(flag_trajectory);
-    // ASSERT_TRUE(srv);
     ASSERT_TRUE(flag_yield);
+    // ros::AsyncSpinner spinner(1);
+    // spinner.start();
 }
 
 
