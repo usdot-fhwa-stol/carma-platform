@@ -201,7 +201,8 @@ namespace stop_and_wait_plugin
             }
             else
             {
-                double jerk_req = (2*start_speed)/pow(maneuver_time_,2);
+                //double jerk_req = (2*start_speed)/pow(maneuver_time_,2);
+                double jerk_req = 2.0; //Setting constant for testing:vanden-plas
 
                 if(jerk_req > max_jerk_limit_)
                 {
