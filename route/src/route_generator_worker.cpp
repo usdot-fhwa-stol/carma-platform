@@ -62,7 +62,7 @@ namespace route {
     {
         boost::filesystem::path route_path_object(this->route_file_path_);
         if(boost::filesystem::exists(route_path_object))
-        {
+        {   
             boost::filesystem::directory_iterator end_point;
             // read all route files in the given directory
             for(boost::filesystem::directory_iterator itr(route_path_object); itr != end_point; ++itr)
@@ -71,27 +71,43 @@ namespace route {
                 {
                     auto full_file_name = itr->path().filename().generic_string();
                     cav_msgs::Route route_msg;
-                    // assume route files ending with ".csv", before that is the actual route name
-                    route_msg.route_id = full_file_name.substr(0, full_file_name.find(".csv"));
-                    std::ifstream fin(itr->path().generic_string());
-                    std::string dest_name;
-                    if(fin.is_open())
-                    {
-                        while (!fin.eof())
+
+                    //Include logic that sorts out invalid route files based on their ending*/
+                    if(full_file_name.find(".csv") != full_file_name.npos)
+                     { 
+                       // assume route files ending with ".csv", before that is the actual route name
+                        route_msg.route_id = full_file_name.substr(0, full_file_name.find(".csv"));
+                        std::ifstream fin(itr->path().generic_string());
+                        std::string dest_name;
+                        if(fin.is_open())
                         {
-                            std::string temp;
-                            std::getline(fin, temp);
-                            if(temp != "") dest_name = temp;
+                            while (!fin.eof())
+                            {
+                                std::string temp;
+                                std::getline(fin, temp);
+                                if(temp != "") dest_name = temp;
+                            }
+                            fin.close();
+                        } 
+                        else
+                        {
+                           ROS_ERROR_STREAM("File open failed...");
                         }
-                        fin.close();
-                    } else
-                    {
-                        ROS_ERROR_STREAM("File open failed...");
-                    }
-                    auto last_comma = dest_name.find_last_of(',');
-                    route_msg.route_name = dest_name.substr(last_comma + 1);
-                    resp.availableRoutes.push_back(route_msg);
+                        auto last_comma = dest_name.find_last_of(',');
+                        if(!std::isdigit(dest_name.substr(last_comma + 1).at(0)))
+                        {
+                            route_msg.route_name = dest_name.substr(last_comma + 1);
+                            resp.availableRoutes.push_back(route_msg);
+                        }
+                     }
                 }
+            }
+            
+            //after route path object is available to select, worker will able to transit state and provide route selection service
+            if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::LOADING) 
+            {
+                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_LOADED);
+                publish_route_event(cav_msgs::RouteEvent::ROUTE_LOADED);
             }
         }
         return true;

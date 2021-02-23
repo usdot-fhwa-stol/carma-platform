@@ -30,6 +30,7 @@ namespace plan_delegator
         pnh_.param<std::string>("planning_topic_suffix", planning_topic_suffix_, "/plan_trajectory");
         pnh_.param<double>("spin_rate", spin_rate_, 10.0);
         pnh_.param<double>("trajectory_duration_threshold", max_trajectory_duration_, 6.0);
+        pnh_.param<double>("min_speed", min_crawl_speed_, min_crawl_speed_);
 
         traj_pub_ = nh_.advertise<cav_msgs::TrajectoryPlan>("plan_trajectory", 5);
         plan_sub_ = nh_.subscribe("final_maneuver_plan", 5, &PlanDelegator::maneuverPlanCallback, this);
@@ -96,7 +97,7 @@ namespace plan_delegator
 
     bool PlanDelegator::isManeuverExpired(const cav_msgs::Maneuver& maneuver, ros::Time current_time) const
     {
-        return GET_MANEUVER_PROPERTY(maneuver, end_time) <= current_time;
+        return GET_MANEUVER_PROPERTY(maneuver, end_time) <= current_time; // TODO maneuver expiration should maybe be based off of distance not time? https://github.com/usdot-fhwa-stol/carma-platform/issues/1107
     }
 
     cav_srvs::PlanTrajectory PlanDelegator::composePlanTrajectoryRequest(const cav_msgs::TrajectoryPlan& latest_trajectory_plan) const
@@ -106,6 +107,7 @@ namespace plan_delegator
         // set current vehicle state if we have NOT planned any previous trajectories
         if(latest_trajectory_plan.trajectory_points.empty())
         {
+            plan_req.request.header.stamp = latest_pose_.header.stamp;
             plan_req.request.vehicle_state.longitudinal_vel = latest_twist_.twist.linear.x;
             plan_req.request.vehicle_state.X_pos_global = latest_pose_.pose.position.x;
             plan_req.request.vehicle_state.Y_pos_global = latest_pose_.pose.position.y;
@@ -124,6 +126,7 @@ namespace plan_delegator
             ros::Duration time_diff = last_point.target_time - second_last_point.target_time;
             auto time_diff_sec = time_diff.toSec();
             // this assumes the vehicle does not have significant lateral velocity
+            plan_req.request.header.stamp = latest_trajectory_plan.trajectory_points.back().target_time;
             plan_req.request.vehicle_state.longitudinal_vel = distance_diff / time_diff_sec;
             // TODO develop way to set yaw value for future points
         }
@@ -157,7 +160,7 @@ namespace plan_delegator
             auto maneuver_planner = GET_MANEUVER_PROPERTY(maneuver, parameters.planning_tactical_plugin);
 
             //////////
-            // TODO REMOVE THE FOLLOWING IF STATEMENT AFTER VANDEN-PLAS release
+            // TODO REMOVE THE FOLLOWING IF STATEMENT AFTER VANDEN-PLAS release https://github.com/usdot-fhwa-stol/carma-platform/issues/1106
             /////////
             if (maneuver_planner.compare("InLaneCruisingPlugin") == 0) {
                 if (already_planned_inlane_cruising) {
@@ -196,7 +199,7 @@ namespace plan_delegator
                 break;
             }
         }
-        latest_trajectory_plan.initial_longitudinal_velocity = std::max(latest_twist_.twist.linear.x, 2.2352); // TODO make config parameter
+        latest_trajectory_plan.initial_longitudinal_velocity = std::max(latest_twist_.twist.linear.x, min_crawl_speed_); 
         return latest_trajectory_plan;
     }
 

@@ -91,7 +91,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   trajectory.header.stamp = ros::Time::now();
   trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
-  trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state); // Compute the trajectory
+  trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state, req.header.stamp); // Compute the trajectory
   trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
 
   resp.trajectory_plan = trajectory;
@@ -267,7 +267,7 @@ int InLaneCruisingPlugin::get_nearest_point_index(const std::vector<lanelet::Bas
 
 
 std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_trajectory_from_centerline(
-    const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state)
+    const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time)
 {
  ROS_DEBUG_STREAM("VehicleState: "
                    << " x: " << state.X_pos_global << " y: " << state.Y_pos_global << " yaw: " << state.orientation
@@ -408,6 +408,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   }
 
   log::printDoublesPerLineWithPrefix("post_min_speed[i]: ", final_actual_speeds);
+
   // Convert speeds to times
   std::vector<double> times;
   trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
@@ -418,7 +419,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   // TODO When more plugins are implemented that might share trajectory planning the start time will need to be based
   // off the last point in the plan if an earlier plan was provided
   std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
-      trajectory_from_points_times_orientations(all_sampling_points, times, final_yaw_values, ros::Time::now());
+      trajectory_from_points_times_orientations(all_sampling_points, times, final_yaw_values, state_time); 
 
   return traj_points;
 }

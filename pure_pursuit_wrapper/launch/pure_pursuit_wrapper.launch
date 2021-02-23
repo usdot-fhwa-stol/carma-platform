@@ -1,8 +1,9 @@
 <?xml version="1.0"?>
 <launch>
-    <remap from="final_waypoints" to="carma_final_waypoints"/>
+    
     <!-- Pure Pursuit Node -->
     <group>
+        <remap from="final_waypoints" to="carma_final_waypoints"/>
         <remap from="/guidance/trajectory_plan" to="/guidance/mpc_follower/trajectory"/>
         <remap from="vehicle_info/wheel_base" to="/vehicle_wheel_base"/>
         <include file="$(find pure_pursuit)/launch/pure_pursuit.launch">
@@ -11,7 +12,10 @@
         </include>
     </group>
     <!-- Pure Pursuit Wrapper Node -->
-    <node pkg="pure_pursuit_wrapper" type="pure_pursuit_wrapper_node" name="pure_pursuit_wrapper_node">
-        <rosparam command="load" file="$(find pure_pursuit_wrapper)/config/default.yaml" />
-    </node>
+    <group>
+       <remap from="final_waypoints" to="carma_final_waypoints"/>
+        <node pkg="pure_pursuit_wrapper" type="pure_pursuit_wrapper_node" name="pure_pursuit_wrapper_node">
+            <rosparam command="load" file="$(find pure_pursuit_wrapper)/config/default.yaml" />
+        </node>
+    </group>
 </launch>
