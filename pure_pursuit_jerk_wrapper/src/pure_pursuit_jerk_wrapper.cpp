@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 LEIDOS.
+ * Copyright (C) 2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -71,7 +71,7 @@ void PurePursuitJerkWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPla
     wp.twist.twist.linear.x = speeds[i];
     ROS_DEBUG_STREAM("Setting waypoint idx: " << i <<", x: " << tp->trajectory_points[i].x << 
                             ", y: " << tp->trajectory_points[i].y <<
-                            ", speed: " << speeds[i]* 2.23694 << "mph" << "  Tactical plugin:"<< tp->trajectory_points[i].planner_plugin_name);
+                            ", speed: " << lag_speeds[i]* 2.23694 << "mph" << "  Tactical plugin:"<< tp->trajectory_points[i].planner_plugin_name);
     waypoints.push_back(wp);
   }
 
