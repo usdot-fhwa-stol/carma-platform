@@ -210,8 +210,9 @@ install(DIRECTORY
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-# catkin_add_gtest(${PROJECT_NAME}_test test/${PROJECT_NAME}_test.cpp)
+catkin_add_gtest(${PROJECT_NAME}_test test/${PROJECT_NAME}_test.cpp)
 
-# target_link_libraries( ${PROJECT_NAME}_test ${PROJECT_NAME}
-#         ${catkin_LIBRARIES}
-#         )
+target_link_libraries( ${PROJECT_NAME}_test ${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        )
+

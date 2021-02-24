@@ -21,7 +21,9 @@
 // msgs
 #include <cav_msgs/TrajectoryPlan.h>
 #include <autoware_msgs/Lane.h>
+#include "pure_pursuit_jerk_wrapper_config.hpp"
 #include <std_msgs/Float64.h>
+#include <trajectory_utils/trajectory_utils.h>
 
 namespace pure_pursuit_jerk_wrapper {
 
@@ -34,7 +36,7 @@ using PluginDiscoveryPub = std::function<void(cav_msgs::Plugin)>;
 class PurePursuitJerkWrapper {
     public:
 
-        PurePursuitJerkWrapper(WaypointPub waypoint_pub, PluginDiscoveryPub plugin_discovery_pub);
+        PurePursuitJerkWrapper(PurePursuitJerkWrapperConfig config,WaypointPub waypoint_pub, PluginDiscoveryPub plugin_discovery_pub);
 
         void trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::ConstPtr& tp);
         /**

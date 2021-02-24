@@ -27,7 +27,11 @@ int main(int argc, char** argv)
 
   ros::Publisher discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
 
+  pure_pursuit_jerk_wrapper::PurePursuitJerkWrapperConfig config;
+  nh.param<double>("/vehicle_response_lag", config.vehicle_response_lag, config.vehicle_response_lag);
+
   pure_pursuit_jerk_wrapper::PurePursuitJerkWrapper purePursuitJerkWrapper(
+      config,
       [&waypoints_pub](auto msg) { waypoints_pub.publish(msg); },
       [&discovery_pub](auto msg) { discovery_pub.publish(msg); });
 

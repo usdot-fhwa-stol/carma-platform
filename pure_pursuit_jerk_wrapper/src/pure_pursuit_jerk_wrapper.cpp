@@ -20,7 +20,7 @@
 
 namespace pure_pursuit_jerk_wrapper
 {
-PurePursuitJerkWrapper::PurePursuitJerkWrapper(WaypointPub waypoint_pub, PluginDiscoveryPub plugin_discovery_pub)
+PurePursuitJerkWrapper::PurePursuitJerkWrapper(PurePursuitJerkWrapperConfig config,WaypointPub waypoint_pub, PluginDiscoveryPub plugin_discovery_pub)
   : waypoint_pub_(waypoint_pub), plugin_discovery_pub_(plugin_discovery_pub)
 {
   plugin_discovery_msg_.name = "Pure Pursuit Jerk";
