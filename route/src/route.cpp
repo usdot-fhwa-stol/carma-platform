@@ -20,6 +20,8 @@ namespace route {
 
     Route::Route() : tf_listener_(tf_buffer_), rg_worker_(tf_buffer_) {}
 
+    using std::placeholders::_1;
+ 
     void Route::initialize()
     {
         // init CARMANodeHandle
@@ -40,6 +42,7 @@ namespace route {
         // set world model point form wm listener
         wm_ = wml_.getWorldModel();
         rg_worker_.setWorldModelPtr(wm_);
+        rg_worker_.setReroutingChecker(std::bind(&WMListenerWorker::checkIfReRoutingNeeded,&wml_, _1);
         // load params and pass to route generator worker
         double ct_error, dt_range;
         int cte_count_max;
@@ -53,6 +56,7 @@ namespace route {
         pnh_->getParam("route_file_path", route_file_location);
         rg_worker_.set_route_file_path(route_file_location);
         rg_worker_.set_publishers(route_event_pub_, route_state_pub_, route_pub_,route_marker_pub_);
+        rg_worker_.set_publishers(wml_);
     }
 
     void Route::run()

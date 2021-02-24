@@ -52,8 +52,21 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr&
     map_callback_();
   }
 }
+
+bool WMListenerWorker::checkIfReRoutingNeeded()
+{
+  return set_flag_;
+}
+
 void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg) const
 {
+
+  if(geofence_msg.route_flag==true)
+  {
+  local_geofence_msg_=geofence_msg;
+  set_flag_=true;
+  }
+
   // convert ros msg to geofence object
   auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
   carma_wm::fromBinMsg(*geofence_msg, gf_ptr);
@@ -93,6 +106,8 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinCon
   
   // set the map to set a new routing
   world_model_->setMap(world_model_->getMutableMap());
+
+  
   ROS_INFO_STREAM("Finished Applying the Map Update with Geofence Id:" << gf_ptr->id_);
 }
 
@@ -137,6 +152,12 @@ void WMListenerWorker::roadwayObjectListCallback(const cav_msgs::RoadwayObstacle
 
 void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
 {
+
+  if(set_flag_==true)
+  {
+    mapUpdateCallback(local_geofence_msg_);
+  }
+
   if (!world_model_->getMap()) {
     ROS_ERROR_STREAM("WMListener received a route before a map was available. Dropping route message.");
     return;
@@ -165,6 +186,7 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
 void WMListenerWorker::setMapCallback(std::function<void()> callback)
 {
   map_callback_ = callback;
+  map_flag_=true;
 }
 
 void WMListenerWorker::setRouteCallback(std::function<void()> callback)

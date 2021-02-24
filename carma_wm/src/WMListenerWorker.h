@@ -94,12 +94,15 @@ public:
 */
   double getConfigSpeedLimit() const;
 
+  bool checkIfReRoutingNeeded() const;
+
 private:
   std::shared_ptr<CARMAWorldModel> world_model_;
   std::function<void()> map_callback_;
   std::function<void()> route_callback_;
   void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const;
   double config_speed_limit_;
-
+  autoware_lanelet2_msgs::MapBin local_geofence_msg_;
+  bool set_flag_=false;
 };
 }  // namespace carma_wm

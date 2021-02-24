@@ -184,7 +184,6 @@ public:
    */
   ros::V_string participantsChecker(const cav_msgs::TrafficControlMessageV01& msg_v01) const;
 
-
 private:
   lanelet::ConstLanelets route_path_;
   std::unordered_set<lanelet::Id> active_geofence_llt_ids_; 
@@ -209,8 +208,7 @@ private:
   GeofenceScheduler scheduler_;
   std::string base_map_georef_;
   double max_lane_width_;
-  
-
+  bool route_flag_=false;
 };
 }  // namespace carma_wm_ctrl
 

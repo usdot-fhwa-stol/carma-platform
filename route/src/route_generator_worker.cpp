@@ -16,6 +16,7 @@
 #include <limits>
 #include <math.h>
 #include "route_generator_worker.h"
+#include <functional>
 
 namespace route {
 
@@ -56,6 +57,11 @@ namespace route {
         }
         // routing
         return graph_pointer->getRouteVia(start_lanelet, via_lanelets_vector, end_lanelet);
+    }
+
+    void RouteGeneratorWorker::setReroutingChecker(std::function<bool()> inputFunction)
+    {
+        localFunction=inputFunction;
     }
 
     bool RouteGeneratorWorker::get_available_route_cb(cav_srvs::GetAvailableRoutesRequest& req, cav_srvs::GetAvailableRoutesResponse& resp)
@@ -418,6 +424,14 @@ namespace route {
     
     bool RouteGeneratorWorker::spin_callback()
     {
+        if(localFunction()==true)
+        {
+           cav_srvs::SetActiveRouteResponse resp;
+           cav_srvs::SetActiveRouteRequest req;
+           req.routeID=route_msg_.route_name;
+           set_active_route_cb(req,resp);
+        }
+    
         // publish new route and set new route flag back to false
         if(new_route_msg_generated_ && new_route_marker_generated_)
         {
@@ -447,7 +461,7 @@ namespace route {
             route_event_pub_.publish(route_event_msg_);
             route_event_queue.pop();
         }
-        return true;
+        return true; 
     }
 
     bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStampedConstPtr& msg, lanelet::ConstLanelet current)

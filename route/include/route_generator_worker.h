@@ -44,7 +44,7 @@
 #include <unordered_set>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_extension/io/autoware_osm_parser.h>
-
+#include <functional>
 
 
 #include "route_state_worker.h"
@@ -56,6 +56,10 @@ namespace route {
 
     public:
 
+        std::function<bool()> localFunction;
+
+        void setReroutingChecker(std::function<bool()> inputFunction);
+        
         /**
          * \brief Constructor for RouteGeneratorWorker class taking in dependencies via dependency injection
          * \param tf_buffer ROS tf tree buffer for getting latest tf between any two available frames
