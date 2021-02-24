@@ -60,7 +60,7 @@ namespace trajectory_executor
         //Hardcoding jerk control wrapper
         std::string default_jerk_control_plugin = "Pure Pursuit Jerk";
         std::string default_jerk_control_plugin_topic_ = "/guidance/pure_pursuit/plan_jerk_trajectory";
-        out[default_jerk_control_plugin]=default_jerk_control_plugin_topic_
+        out[default_jerk_control_plugin]=default_jerk_control_plugin_topic_;
         return out;
     }
     
