@@ -40,8 +40,8 @@ class PurePursuitJerkWrapper {
 
         void trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::ConstPtr& tp);
         /**
-         * \brief callback function for jerk published by stop_and_wait_plugin. This function updates the local jerk variable used in time_to_speed calculation
-         * \param jerk float64 message with jerk value from stop_and_wait_plugin
+         * \brief callback function for jerk published by constant jerk plugin. This function updates the local jerk variable used in time_to_speed calculation
+         * \param jerk float64 message with jerk value from the plugin
          */
         void updatejerk(std_msgs::Float64 jerk);
 
@@ -50,10 +50,10 @@ class PurePursuitJerkWrapper {
     private:
     WaypointPub waypoint_pub_;
     PluginDiscoveryPub plugin_discovery_pub_;
-    ros::Subscriber jerk_sub_;  //Jerk value from stop&wait plugin
+    ros::Subscriber jerk_sub_; 
     cav_msgs::Plugin plugin_discovery_msg_;
 
-    double stop_and_wait_jerk_;
+    double jerk_;
 
 };
 

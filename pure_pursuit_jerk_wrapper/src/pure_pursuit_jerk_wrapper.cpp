@@ -38,7 +38,7 @@ bool PurePursuitJerkWrapper::onSpin()
 }
 
 void PurePursuitJerkWrapper::updatejerk(std_msgs::Float64 jerk){
-  stop_and_wait_jerk_ = jerk.data;
+  jerk_ = jerk.data;
 }
 
 void PurePursuitJerkWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::ConstPtr& tp)
@@ -50,7 +50,7 @@ void PurePursuitJerkWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPla
   trajectory_utils::conversions::trajectory_to_downtrack_time(tp->trajectory_points, &downtracks, &times);
 
   std::vector<double> speeds;
-  trajectory_utils::conversions::time_to_speed_constjerk(downtracks, times, tp->initial_longitudinal_velocity, &speeds, stop_and_wait_jerk_);
+  trajectory_utils::conversions::time_to_speed_constjerk(downtracks, times, tp->initial_longitudinal_velocity, &speeds, jerk_);
 
   if (speeds.size() != tp->trajectory_points.size())
   {
