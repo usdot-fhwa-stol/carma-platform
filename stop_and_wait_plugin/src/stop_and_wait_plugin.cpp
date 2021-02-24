@@ -336,7 +336,7 @@ namespace stop_and_wait_plugin
                 traj_point.target_time = traj_prev.target_time + ros::Duration(min_timestep_);
                 
             }
-            traj_point.controller_plugin_name = "default";
+            traj_point.controller_plugin_name = "Pure Pursuit Jerk";
             traj_point.planner_plugin_name =plugin_discovery_msg_.name;
             traj.push_back(traj_point);
             traj_prev = traj_point;

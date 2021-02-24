@@ -21,11 +21,9 @@
 // msgs
 #include <cav_msgs/TrajectoryPlan.h>
 #include <autoware_msgs/Lane.h>
-#include "pure_pursuit_wrapper_config.hpp"
-#include <algorithm>
-#include <trajectory_utils/trajectory_utils.h>
+#include <std_msgs/Float64.h>
 
-namespace pure_pursuit_wrapper {
+namespace pure_pursuit_jerk_wrapper {
 
 using WaypointPub = std::function<void(autoware_msgs::Lane)>;
 using PluginDiscoveryPub = std::function<void(cav_msgs::Plugin)>;
@@ -33,30 +31,27 @@ using PluginDiscoveryPub = std::function<void(cav_msgs::Plugin)>;
  * Main class for the node to handle the ROS interfacing.
  */
 
-class PurePursuitWrapper {
+class PurePursuitJerkWrapper {
     public:
 
-        PurePursuitWrapper(PurePursuitWrapperConfig config, WaypointPub waypoint_pub, PluginDiscoveryPub plugin_discovery_pub);
+        PurePursuitJerkWrapper(WaypointPub waypoint_pub, PluginDiscoveryPub plugin_discovery_pub);
 
         void trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::ConstPtr& tp);
+        /**
+         * \brief callback function for jerk published by stop_and_wait_plugin. This function updates the local jerk variable used in time_to_speed calculation
+         * \param jerk float64 message with jerk value from stop_and_wait_plugin
+         */
+        void updatejerk(std_msgs::Float64 jerk);
 
         bool onSpin();
 
-        /**
-         * \brief Applies a specified response lag in seconds to the trajectory shifting the whole thing by the specified lag time
-         * \param speeds Velocity profile to shift. The first point should be the current vehicle speed
-         * \param downtrack Distance points for each velocity point. Should have the same size as speeds and start from 0
-         * \param response_lag The lag in seconds before which the vehicle will not meaningfully accelerate
-         * 
-         * \return A Shifted trajectory
-         */ 
-        std::vector<double> apply_response_lag(const std::vector<double>& speeds, const std::vector<double> downtracks, double response_lag) const;
-
     private:
-    PurePursuitWrapperConfig config_;
     WaypointPub waypoint_pub_;
     PluginDiscoveryPub plugin_discovery_pub_;
+    ros::Subscriber jerk_sub_;  //Jerk value from stop&wait plugin
     cav_msgs::Plugin plugin_discovery_msg_;
+
+    double stop_and_wait_jerk_;
 
 };
 
