@@ -219,11 +219,7 @@ for content in core_data["content"]:
     split = content.split(':')
     c = float(split[1])
     core_data["time_steps"][-1][DataSource.AFTER_MIN_SPEED].append(c)
-<<<<<<< HEAD
-  
-=======
 
->>>>>>> origin/release/vanden-plas
   if (data_source == DataSource.FINAL_TIMES or data_source == DataSource.AFTER_MIN_SPEED) and "times[i]:" in content:
     data_source = DataSource.FINAL_TIMES
     split = content.split(':')
