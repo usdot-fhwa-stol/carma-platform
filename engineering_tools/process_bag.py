@@ -49,13 +49,6 @@ for topic, msg, t in bag.read_messages(topics=['/guidance/pure_pursuit/plan_traj
     pure_pursuit_plan_trajectory_time_steps[-1].append(point.target_time.to_sec())
 
 carma_final_waypoints_times_steps = []
-<<<<<<< HEAD
-for topic, msg, t in bag.read_messages(topics=['/guidance/carma_final_waypoints']):
-  # Create data to print for Pure Pursuit Wrapper -> Pure Pursuit
-  carma_final_waypoints_times_steps.append([])
-  for point in msg.waypoints:
-    carma_final_waypoints_times_steps[-1].append(point.twist.twist.linear.x)
-=======
 first_point = []
 second_point = []
 third_point = []
@@ -75,7 +68,6 @@ for topic, msg, t in bag.read_messages(topics=['/guidance/carma_final_waypoints'
       fourth_point.append(point.twist.twist.linear.x)
     carma_final_waypoints_times_steps[-1].append(point.twist.twist.linear.x)
     i+=1
->>>>>>> origin/release/vanden-plas
 
 ctrl_raw = []
 for topic, msg, t in bag.read_messages(topics=['/guidance/ctrl_raw']):
@@ -90,12 +82,8 @@ for topic, msg, t in bag.read_messages(topics=['/guidance/ctrl_cmd']):
 vehicle_cmd = []
 for topic, msg, t in bag.read_messages(topics=['/hardware_interface/vehicle_cmd']):
   # Create data to print for Twist Gate -> SSC Interface (TODO double check)
-<<<<<<< HEAD
-  vehicle_cmd.append(msg.ctrl_cmd.linear_velocity)
-=======
   if msg.ctrl_cmd.linear_velocity != 0.0:
     vehicle_cmd.append(msg.ctrl_cmd.linear_velocity)
->>>>>>> origin/release/vanden-plas
 
 print("Done Bag Processing")
 
@@ -109,11 +97,7 @@ def index_plot_with_slider(figure_num, data, title, xlabel, ylabel):
   plt.xlabel(xlabel)
   plt.ylabel(ylabel)
   time_step = data[0]
-<<<<<<< HEAD
-  l, = plt.plot(range(len(data[0])), data[0])
-=======
   l, = plt.plot(range(len(data[0])), data[0], '.')
->>>>>>> origin/release/vanden-plas
 
   time_step_ax = plt.axes([0.20, 0.01, 0.65, 0.03])
   time_step_sldr = Slider(time_step_ax, 'Time Step', 0.0, len(data) - 1.0, valinit=0, valstep=1)
@@ -139,8 +123,6 @@ plot2= index_plot_with_slider(2, pure_pursuit_plan_trajectory_time_steps,
 plot3= index_plot_with_slider(3, carma_final_waypoints_times_steps, 
   "/guidance/carma_final_waypoints", "Index", "Velocity (m/s)")
 
-<<<<<<< HEAD
-=======
 
 fig = plt.figure(8)
 
@@ -169,5 +151,4 @@ plt.legend(["First", "Second", "Third", "Fourth"])
 # plot5= index_plot_with_slider(5, numpy_accels, 
 #   "Numpy Accel", "Index - 1", "Acceleration (m/s^2)")
 
->>>>>>> origin/release/vanden-plas
 plt.show()
