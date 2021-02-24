@@ -71,11 +71,11 @@ void PurePursuitJerkWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPla
     wp.twist.twist.linear.x = speeds[i];
     ROS_DEBUG_STREAM("Setting waypoint idx: " << i <<", x: " << tp->trajectory_points[i].x << 
                             ", y: " << tp->trajectory_points[i].y <<
-                            ", speed: " << lag_speeds[i]* 2.23694 << "mph" << "  Tactical plugin:"<< tp->trajectory_points[i].planner_plugin_name);
+                            ", speed: " << speeds[i]* 2.23694 << "mph" << "  Tactical plugin:"<< tp->trajectory_points[i].planner_plugin_name);
     waypoints.push_back(wp);
   }
 
   lane.waypoints = waypoints;
   waypoint_pub_(lane);
 };
-}  // namespace pure_pursuit_wrapper
+}  // namespace pure_pursuit_jerk_wrapper

@@ -57,4 +57,4 @@ class PurePursuitJerkWrapper {
 
 };
 
-}  // namespace pure_pursuit_wrapper
+}  // namespace pure_pursuit_jerk_wrapper
