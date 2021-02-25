@@ -346,7 +346,13 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   std::vector<double> final_yaw_values = carma_wm::geometry::compute_tangent_orientations(all_sampling_points);
 
-  std::vector<double> curvatures = better_curvature;
+  log::printDoublesPerLineWithPrefix("raw_curvatures[i]: ", better_curvature);
+
+  std::vector<double> all_downtracks = carma_wm::geometry::compute_arc_lengths(all_sampling_points);
+
+  std::vector<double> curvatures = filter_curvatures(better_curvature, all_downtracks, 0.039);
+
+  log::printDoublesPerLineWithPrefix("all_downtracks[i]: ", all_downtracks);
 
   std::vector<double> ideal_speeds =
       trajectory_utils::constrained_speeds_for_curvatures(curvatures, config_.lateral_accel_limit);

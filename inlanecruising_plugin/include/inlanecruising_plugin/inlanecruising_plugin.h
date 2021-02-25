@@ -235,6 +235,52 @@ public:
   std::vector<PointSpeedPair> attach_back_points(const std::vector<PointSpeedPair>& points, const int nearest_pt_index, 
                                std::vector<inlanecruising_plugin::PointSpeedPair> future_points, double back_distance) const;
 
+  std::vector<double> filter_curvatures(const std::vector<double>& curvatures, const std::vector<double>& downtracks, double max_curvature_rate) {
+
+    if (downtracks.size() != curvatures.size())
+    {
+      throw std::invalid_argument("Downtracks and speeds do not have the same size");
+    }
+
+    if (max_curvature_rate <= 0)
+    {
+      throw std::invalid_argument("Max curvature rate should be positive");
+    }
+
+    std::vector<double> output;
+    output.reserve(curvatures.size());
+
+    if (curvatures.size() == 0)
+    {
+      return output;
+    }
+
+    output.push_back(curvatures[0]);  // First point will be unchanged
+
+    for (size_t i = 1; i < downtracks.size(); i++)
+    {
+      double delta_d = downtracks[i] - downtracks[i - 1];
+      double prev_curvature = output.back();
+      double cur_curvature = curvatures[i];
+      double new_curvature = cur_curvature;
+      double slope = (cur_curvature - prev_curvature) / delta_d; // TODO throw exception if downtracks does not increase
+      double limited_curvature = prev_curvature + (slope * downtracks[i]);
+      if (slope > 0)
+      {  // Acceleration case
+        new_curvature = std::min(cur_curvature, limited_curvature);
+      }
+      else if (slope < 0)
+      {  // Deceleration case
+        new_curvature = std::max(cur_curvature, limited_curvature);
+      }
+
+      new_curvature = std::max(0.0, new_curvature);
+
+      output.push_back(new_curvature);
+    }
+
+    return output; 
+  }
 private:
 
   /**
