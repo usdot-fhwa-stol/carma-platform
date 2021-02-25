@@ -70,7 +70,7 @@ namespace guidance
             case State::ENTER_PARK:
                 if(signal == Signal::OVERRIDE)
                 {
-                    current_guidance_state_ = State::INACTIVE
+                    current_guidance_state_ = State::INACTIVE;
                 }
             default:
                 break;
