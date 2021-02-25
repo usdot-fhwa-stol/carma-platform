@@ -23,14 +23,8 @@
 #include <thread>
 #include <chrono>
 
-
-
-bool srvCallback(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& res)
-{
-    ROS_ERROR("received yield service");
-    return true;
-
-}
+#include "ros/ros.h"
+#include <cav_srvs/PlanTrajectory.h>
 
 TEST(InLaneCruisingPluginTest, rostest1)
 {
@@ -39,39 +33,12 @@ TEST(InLaneCruisingPluginTest, rostest1)
     ros::CARMANodeHandle nh;
     bool flag_trajectory = false;
     bool flag_yield = false;
+    std::string res = "";
 
-    boost::function<bool(cav_srvs::PlanTrajectoryRequest&, cav_srvs::PlanTrajectoryResponse&)> cb = [&](cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& res) -> bool
-    {
-        ROS_ERROR("received yield service");
-        flag_yield = true;
-        return true;
-    };
-
-
-    cav_msgs::ManeuverPlan plan;
-    cav_msgs::Maneuver maneuver;
-    maneuver.type = maneuver.LANE_FOLLOWING;
-    maneuver.lane_following_maneuver.parameters.planning_strategic_plugin = "InLane_Cruising";
-    plan.maneuvers.push_back(maneuver);
-
-    cav_msgs::TrajectoryPlan original_tp;
     cav_srvs::PlanTrajectory traj_srv;
-    traj_srv.request.initial_trajectory_plan = original_tp;
-    traj_srv.request.vehicle_state.X_pos_global= 1;
-    traj_srv.request.vehicle_state.Y_pos_global = 1;
-    traj_srv.request.vehicle_state.longitudinal_vel = 11;
-    traj_srv.request.maneuver_plan = plan;
-
-
-
-    ros::ServiceServer srv = nh.advertiseService("plugins/YieldPlugin/plan_trajectory", cb);
-    // ros::Duration(5).sleep();
-    // ros::spinOnce();
-    
+    traj_srv.request.initial_trajectory_plan.trajectory_id = "ILCReq";
+   
     ros::ServiceClient plugin1= nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/InLaneCruisingPlugin/plan_trajectory");
-
-    ros::Duration(5).sleep();
-    ros::spinOnce();
 
     ROS_INFO_STREAM("ilc service: " << plugin1.getService());
     if(plugin1.waitForExistence(ros::Duration(5.0)))
@@ -80,21 +47,21 @@ TEST(InLaneCruisingPluginTest, rostest1)
         ROS_ERROR("waiting");
         if (plugin1.call(traj_srv))
         {
+            res = traj_srv.response.trajectory_plan.trajectory_id;
             ROS_ERROR("ILC Traj Service called");
             flag_trajectory = true;
+            flag_yield = true;
             
         }
         else
         {
-            ROS_ERROR("Failed to call ILC Traj service");
+            ROS_ERROR("ILC Trajectory Service not called");
+            res = "error";
         }
     }
-
-
     EXPECT_TRUE(flag_trajectory);
     ASSERT_TRUE(flag_yield);
-    // ros::AsyncSpinner spinner(1);
-    // spinner.start();
+    EXPECT_EQ(res, "ILC2Yield");
 }
 
 

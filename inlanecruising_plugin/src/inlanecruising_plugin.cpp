@@ -65,36 +65,33 @@ void InLaneCruisingPlugin::set_yield_client(ros::ServiceClient& client)
   yield_client_ = client;
 }
 
-void InLaneCruisingPlugin::set_yield_client2(ros::ServiceClient* client)
-{
-  clientPtr = client;
-}
-
 bool InLaneCruisingPlugin::plan_trajectory_cb2(cav_srvs::PlanTrajectoryRequest& req,
                                               cav_srvs::PlanTrajectoryResponse& resp)
 {
-  // // std::mutex cb_mutex;
-  // // std::unique_lock<std::mutex> lock(cb_mutex);
 
   ROS_ERROR("in cb2");
-  if (clientPtr && clientPtr->exists() && clientPtr->isValid()){
+  if (yield_client_ && yield_client_.exists() && yield_client_.isValid()){
     ROS_ERROR("Good Client");
   }
   cav_srvs::PlanTrajectory yield_srv;
+  if (req.initial_trajectory_plan.trajectory_id == "ILCReq"){
+    yield_srv.request.initial_trajectory_plan.trajectory_id = "YieldReq";
+  }
+
   if(ros::service::exists("plugins/YieldPlugin/plan_trajectory", true))
   {
     ROS_ERROR("SERVICE EXISTS");
 
-    if(clientPtr->waitForExistence(ros::Duration(5.0))){
+    if(yield_client_.waitForExistence(ros::Duration(5.0))){
       ROS_ERROR("SERVICE still EXISTS");
     }
-    ros::ServiceClient client = (ros::ServiceClient)*clientPtr;
-    // if (ros::service::call("plugins/YieldPlugin/plan_trajectory", yield_srv))
-    if (client.call(yield_srv))
+    if (yield_client_.call(yield_srv))
     {
-        ROS_ERROR("SERVICE CALLED");
-        cav_msgs::TrajectoryPlan yield_trajectory = yield_srv.response.trajectory_plan;
-        resp.trajectory_plan = yield_trajectory;
+        ROS_ERROR("Yield SERVICE CALLED");
+        if (yield_srv.response.trajectory_plan.trajectory_id == "YieldResp")
+        {
+          resp.trajectory_plan.trajectory_id = "ILC2Yield";
+        } 
     }
     else
       {

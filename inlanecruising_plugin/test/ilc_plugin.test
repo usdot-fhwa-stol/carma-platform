@@ -19,7 +19,7 @@
       <rosparam command="load" file="$(find inlanecruising_plugin)/config/parameters.yaml"/>
     </node>
 
-    <!-- <node name="test_helper" pkg="test_helper" type="test_helper"/> -->
+    <node name="helper" pkg="inlanecruising_plugin" type="helper_node"/>
     <test test-name="rostest_ilc" pkg="inlanecruising_plugin" type="rostest_ilc"/>
 
 </launch>

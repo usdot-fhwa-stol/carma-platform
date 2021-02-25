@@ -74,6 +74,18 @@ add_library(inlanecruising_plugin_library
   src/smoothing/BSpline.cpp
   src/object_avoidance.cpp
 )
+
+add_library(helper src/helper.cpp)
+target_link_libraries(helper
+  ${catkin_LIBRARIES}
+)
+
+add_executable(helper_node src/helper.cpp)
+target_link_libraries(helper_node
+  helper
+  ${catkin_LIBRARIES}
+)
+
 target_link_libraries(inlanecruising_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
 

@@ -79,36 +79,9 @@ public:
 
     ros::ServiceClient yield_client = nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/YieldPlugin/plan_trajectory");
     worker.set_yield_client(yield_client);
-    worker.set_yield_client2(&yield_client);
-  
-    //   cav_srvs::PlanTrajectory yield_srv;
-    // if(yield_client.waitForExistence(ros::Duration(5.0)))
-    // {
-    //     if (yield_client.call(yield_srv))
-    //     {
-    //       ROS_ERROR("SERVICE CALLED");
-    //     }
-    //     else
-    //     {
-    //       ROS_ERROR("Failed to call service ");
-    //     } 
-    // }
-    // else ROS_ERROR("Service Unavailable");
-  
-    
-    
-    
-    
-    
-     
 
     ros::CARMANodeHandle::setSpinCallback(std::bind(&InLaneCruisingPlugin::onSpin, &worker));
     ros::CARMANodeHandle::spin();
-
-    // ros::CallbackQueue myq;
-    
-    ros::AsyncSpinner spinner(1);
-    spinner.start();
 
   }
 };
