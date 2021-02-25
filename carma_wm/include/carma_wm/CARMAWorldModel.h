@@ -173,7 +173,7 @@ private:
   std::vector<lanelet::LineString3d> shortest_path_centerlines_;  // List of disjoint centerlines seperated by lane
                                                                   // changes along the shortest path
   IndexedDistanceMap shortest_path_distance_map_;
-  lanelet::LaneletSubmapUPtr shortest_path_filtered_centerline_view_;  // Lanelet map view of shortest path center lines
+  lanelet::LaneletMapUPtr shortest_path_filtered_centerline_view_;  // Lanelet map view of shortest path center lines
                                                                     // only
   std::vector<cav_msgs::RoadwayObstacle> roadway_objects_; // 
 
