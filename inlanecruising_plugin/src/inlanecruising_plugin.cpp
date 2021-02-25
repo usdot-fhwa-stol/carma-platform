@@ -59,12 +59,10 @@ bool InLaneCruisingPlugin::onSpin()
   return true;
 }
 
-
 bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req,
                                               cav_srvs::PlanTrajectoryResponse& resp)
 {
-  
-  ros::WallTime start_time = ros::WallTime::now();  // Start timeing the execution time for planning so it can be logged
+   ros::WallTime start_time = ros::WallTime::now();  // Start timeing the execution time for planning so it can be logged
 
   lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
   double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
@@ -88,45 +86,48 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
 
   ROS_DEBUG_STREAM("PlanTrajectory");
 
-  cav_msgs::TrajectoryPlan initial_trajectory;
-  initial_trajectory.header.frame_id = "map";
-  initial_trajectory.header.stamp = ros::Time::now();
-  initial_trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
+  cav_msgs::TrajectoryPlan original_trajectory;
+  original_trajectory.header.frame_id = "map";
+  original_trajectory.header.stamp = ros::Time::now();
+  original_trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
-  initial_trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state); // Compute the trajectory
-  initial_trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
-
+  original_trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state); // Compute the trajectory
+  original_trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
 
   if (config_.enable_object_avoidance)
-  { 
-    ROS_DEBUG_STREAM("Modifying Trajectory to Yield");
-    // compose yield service request
-    yield_srv_.request.vehicle_state = req.vehicle_state;
-    yield_srv_.request.initial_trajectory_plan = initial_trajectory;
-
-
-    if (yield_called_)
+  {
+    if (yield_client_ && yield_client_.exists() && yield_client_.isValid())
     {
-      cav_msgs::TrajectoryPlan yield_trajectory;
-      if (validate_yield_plan(yield_trajectory))
+      ROS_DEBUG_STREAM("Yield Client is valid");
+      cav_srvs::PlanTrajectory yield_srv;
+      yield_srv.request.initial_trajectory_plan = original_trajectory;
+
+      if (yield_client_.call(yield_srv))
       {
-        resp.trajectory_plan = yield_trajectory_;
+        cav_msgs::TrajectoryPlan yield_plan = yield_srv.response.trajectory_plan;
+        if (validate_yield_plan(yield_plan))
+        {
+          resp.trajectory_plan = original_trajectory;
+        }
+        else
+        {
+          throw std::invalid_argument("Invalid Yield Trajectory");
+        }
       }
       else
       {
-        ROS_ERROR("Invalid Yield Trajectory");
-        std::invalid_argument("Invalid Yield Trajectory");
+        throw std::invalid_argument("Unable to Call Yield Plugin");
       }
     }
     else
     {
-      ROS_ERROR("Yield was not called");
+      throw std::invalid_argument("Yield Client is unavailable");
     }
+    
   }
   else
   {
-    ROS_DEBUG_STREAM("Object Avoidance not active");
-    resp.trajectory_plan = initial_trajectory;
+    resp.trajectory_plan = original_trajectory;
   }
   
   resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_FOLLOWING);
@@ -138,56 +139,6 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   ROS_DEBUG_STREAM("ExecutionTime: " << duration.toSec());
 
   return true;
-}
-
-bool InLaneCruisingPlugin::validate_yield_plan(const cav_msgs::TrajectoryPlan& yield_plan)
-{
-  if (yield_plan.trajectory_points.size()>= 2)
-  {
-    if (yield_plan.trajectory_points[0].target_time > ros::Time::now())
-    {
-      return true;
-    }
-    else
-    {
-      ROS_DEBUG_STREAM("Old Yield Trajectory");
-    }
-  }
-  else
-  {
-    ROS_DEBUG_STREAM("Invalid Yield Trajectory"); 
-  }
-  return false;
-}
-
-cav_srvs::PlanTrajectory InLaneCruisingPlugin::get_yield_service(bool got_service)
-{
-  if (!got_service)
-  {
-    return yield_srv_;
-  }
-  cav_srvs::PlanTrajectory empty_srv;
-  return empty_srv;  
-}
-
-void InLaneCruisingPlugin::set_yield_service(const cav_srvs::PlanTrajectory& yield_srv)
-{
-  yield_srv_ = yield_srv;
-}
-
-void InLaneCruisingPlugin::set_yield_trajectory(const cav_msgs::TrajectoryPlan& yield_plan)
-{
-  yield_trajectory_ = yield_plan;
-}
-
-cav_msgs::TrajectoryPlan InLaneCruisingPlugin::get_yield_trajectory(bool got_trajectory)
-{
-  if (!got_trajectory)
-  {
-    return yield_trajectory_;
-  }
-  cav_msgs::TrajectoryPlan empty_traj;
-  return empty_traj; 
 }
 
 std::vector<double> InLaneCruisingPlugin::apply_speed_limits(const std::vector<double> speeds,
@@ -686,5 +637,32 @@ double InLaneCruisingPlugin::compute_curvature_at(const inlanecruising_plugin::s
   Eigen::Vector3d f_prime_prime = {f_prime_prime_pt.x(), f_prime_prime_pt.y(), 0};
   return (f_prime.cross(f_prime_prime)).norm()/(pow(f_prime.norm(),3));
 }
+
+void InLaneCruisingPlugin::set_yield_client(ros::ServiceClient& client)
+{
+  yield_client_ = client;
+}
+
+bool InLaneCruisingPlugin::validate_yield_plan(const cav_msgs::TrajectoryPlan& yield_plan)
+{
+  if (yield_plan.trajectory_points.size()>= 2)
+  {
+    if (yield_plan.trajectory_points[0].target_time > ros::Time::now())
+    {
+      return true;
+    }
+    else
+    {
+      ROS_DEBUG_STREAM("Old Yield Trajectory");
+    }
+  }
+  else
+  {
+    ROS_DEBUG_STREAM("Invalid Yield Trajectory"); 
+  }
+  return false;
+}
+
+
 
 }  // namespace inlanecruising_plugin

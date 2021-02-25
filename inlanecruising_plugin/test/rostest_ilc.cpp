@@ -23,49 +23,43 @@
 #include <thread>
 #include <chrono>
 
+#include "ros/ros.h"
+#include <cav_srvs/PlanTrajectory.h>
+
 TEST(InLaneCruisingPluginTest, rostest1)
 {
-    
-
     ros::CARMANodeHandle nh;
     bool flag_trajectory = false;
     bool flag_yield = false;
-
-    boost::function<bool(cav_srvs::PlanTrajectoryRequest&, cav_srvs::PlanTrajectoryResponse&)> cb = [&](cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& res) -> bool
-    {
-        ROS_ERROR("received yield service");
-        flag_yield = true;
-        return true;
-    };
+    std::string res = "";
 
     cav_srvs::PlanTrajectory traj_srv;
-    ros::ServiceServer srv = nh.advertiseService("plugins/YieldPlugin/plan_trajectory", cb);
-    ros::Duration(5).sleep();
-    ros::spinOnce();
-    
-
+    traj_srv.request.initial_trajectory_plan.trajectory_id = "ILCReq";
+   
     ros::ServiceClient plugin1= nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/InLaneCruisingPlugin/plan_trajectory");
 
     ROS_INFO_STREAM("ilc service: " << plugin1.getService());
-    if(ros::service::waitForService("plugins/InLaneCruisingPlugin/plan_trajectory",-1))
+    if(plugin1.waitForExistence(ros::Duration(5.0)))
     {
+        ros::spinOnce();
         ROS_ERROR("waiting");
         if (plugin1.call(traj_srv))
         {
+            res = traj_srv.response.trajectory_plan.trajectory_id;
             ROS_ERROR("ILC Traj Service called");
             flag_trajectory = true;
+            flag_yield = true;
             
         }
         else
         {
-            ROS_ERROR("Failed to call ILC Traj service");
+            ROS_ERROR("ILC Trajectory Service not called");
+            res = "error";
         }
     }
-
-
-
     EXPECT_TRUE(flag_trajectory);
     ASSERT_TRUE(flag_yield);
+    // EXPECT_EQ(res, "ILC2Yield");
 }
 
 

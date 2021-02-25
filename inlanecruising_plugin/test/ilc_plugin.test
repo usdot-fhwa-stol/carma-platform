@@ -17,9 +17,9 @@
 
     <node name="inlanecruising_plugin" pkg="inlanecruising_plugin" type="inlanecruising_plugin" output="screen">
       <rosparam command="load" file="$(find inlanecruising_plugin)/config/parameters.yaml"/>
-      <param name="enable_object_avoidance" value="true"/>
     </node>
 
+    <node name="helper" pkg="inlanecruising_plugin" type="helper_node"/>
     <test test-name="rostest_ilc" pkg="inlanecruising_plugin" type="rostest_ilc"/>
 
 </launch>

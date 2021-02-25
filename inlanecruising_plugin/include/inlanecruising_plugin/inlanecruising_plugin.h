@@ -232,42 +232,14 @@ public:
    */ 
   std::vector<PointSpeedPair> attach_back_points(const std::vector<PointSpeedPair>& points, const int nearest_pt_index, 
                                std::vector<inlanecruising_plugin::PointSpeedPair> future_points, double back_distance) const;
-  
   /**
-   * \brief outputs the yield service
-   * 
-   * \param got_service flag to show if service is received before
-   *
-   * \return yield service
-   */
-  cav_srvs::PlanTrajectory get_yield_service(bool got_service);
-
-    /**
    * \brief set the yield service
    * 
    * \param yield_srv input yield service
-
    */
-  void set_yield_service(const cav_srvs::PlanTrajectory& yield_srv);
+  void set_yield_client(ros::ServiceClient& client);
 
-    /**
-   * \brief set the final yield trajectory plan
-   * 
-   * \param yield_plan input yield plan
-
-   */
-  void set_yield_trajectory(const cav_msgs::TrajectoryPlan& yield_plan);
-
-  /**
-   * \brief outputs the yield trajectory (helper for unit test)
-   * 
-   * \param got_trajectory flag to show if trajectory is received before
-   *
-   * \return yield trajectory plan
-   */
-  cav_msgs::TrajectoryPlan get_yield_trajectory(bool got_trajectory);
-
-    /**
+   /**
    * \brief verify if the input yield trajectory plan is valid
    * 
    * \param yield_plan input yield trajectory plan
@@ -275,8 +247,6 @@ public:
    * \return true or falss
    */
   bool validate_yield_plan(const cav_msgs::TrajectoryPlan& yield_plan);
-
-  bool yield_called_ = false;
   
 private:
 
@@ -294,13 +264,9 @@ private:
   carma_wm::WorldModelConstPtr wm_;
   InLaneCruisingPluginConfig config_;
   PublishPluginDiscoveryCB plugin_discovery_publisher_;
-  
+  ros::ServiceClient yield_client_;
 
   cav_msgs::Plugin plugin_discovery_msg_;
-  // yield service
-  cav_srvs::PlanTrajectory yield_srv_;
-  // yield trajectory plan
-  cav_msgs::TrajectoryPlan yield_trajectory_;
+
 };
-  
 };  // namespace inlanecruising_plugin

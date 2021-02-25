@@ -67,8 +67,7 @@ include_directories(
 )
 
 add_executable( ${PROJECT_NAME}
-  src/main.cpp
-)
+  src/main.cpp)
 add_library(inlanecruising_plugin_library 
   src/inlanecruising_plugin.cpp
   src/smoothing/BSpline.cpp
@@ -79,6 +78,16 @@ add_dependencies(inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} inlanecruising_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(${PROJECT_NAME} inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
 
+add_library(helper src/helper.cpp)
+target_link_libraries(helper
+  ${catkin_LIBRARIES}
+)
+
+add_executable(helper_node src/helper.cpp)
+target_link_libraries(helper_node
+  helper
+  ${catkin_LIBRARIES}
+)
 #############
 ## Install ##
 #############
