@@ -19,7 +19,7 @@
 namespace guidance
 {
 
-    void GuidanceWorker::vehicle_status_cb(const autoware_msgs::VehicleStatusConsPtr& msg)
+    void GuidanceWorker::vehicle_status_cb(const autoware_msgs::VehicleStatusConstPtr& msg)
     {
         gsm_.onVehicleStatus(msg);
     }
