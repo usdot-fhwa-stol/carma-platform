@@ -101,6 +101,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
       ROS_DEBUG_STREAM("Yield Client is valid");
       cav_srvs::PlanTrajectory yield_srv;
       yield_srv.request.initial_trajectory_plan = original_trajectory;
+      yield_srv.request.vehicle_state = req.vehicle_state;
 
       if (yield_client_.call(yield_srv))
       {
