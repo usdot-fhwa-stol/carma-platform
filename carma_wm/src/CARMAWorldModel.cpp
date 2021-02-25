@@ -307,7 +307,7 @@ void CARMAWorldModel::setRoute(LaneletRoutePtr route)
 {
   route_ = route;
   lanelet::ConstLanelets path_lanelets(route_->shortestPath().begin(), route_->shortestPath().end());
-  shortest_path_view_ = lanelet::utils::createConstMap(path_lanelets, {});
+  shortest_path_view_ = lanelet::utils::createConstSubmap(path_lanelets, {});
   computeDowntrackReferenceLine();
 }
 
@@ -389,7 +389,7 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
     shortest_path_distance_map_.pushBack(lanelet::utils::to2D(lineStrings.back()));  // Record length of last continuous
                                                                                      // segment
   }
-  shortest_path_filtered_centerline_view_ = lanelet::utils::createMap(shortest_path_centerlines_);
+  shortest_path_filtered_centerline_view_ = lanelet::utils::createSubmap(shortest_path_centerlines_);
 }
 
 LaneletRoutingGraphConstPtr CARMAWorldModel::getMapRoutingGraph() const
