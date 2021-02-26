@@ -108,11 +108,10 @@ namespace yield_plugin
 
       double goal_velocity = rwol_collision[0].object.velocity.twist.linear.x;
       
-      double goal_pos = x_lead - goal_velocity * gap_time; 
+      double goal_pos = x_lead - std::max(goal_velocity * gap_time, config_.x_gap); 
 
       if (goal_velocity <= config_.min_obstacle_speed){
         ROS_WARN_STREAM("The obstacle is not moving");
-        goal_pos = x_lead - config_.x_gap;
       }
 
 
