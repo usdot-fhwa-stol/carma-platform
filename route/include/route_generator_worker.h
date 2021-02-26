@@ -39,8 +39,10 @@
 #include <geometry_msgs/Transform.h>
 #include <wgs84_utils/wgs84_utils.h>
 #include <boost/filesystem.hpp>
+#include <boost/optional.hpp>
 #include <visualization_msgs/MarkerArray.h>
 #include <geometry_msgs/TwistStamped.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <unordered_set>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_extension/io/autoware_osm_parser.h>
@@ -266,6 +268,8 @@ namespace route {
         int cte_count_ = 0;
 
         int cte_count_max_;
+
+        boost::optional<geometry_msgs::PoseStamped> vehicle_pose_;
 
     };
 

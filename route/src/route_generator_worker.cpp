@@ -62,7 +62,7 @@ namespace route {
     {
         boost::filesystem::path route_path_object(this->route_file_path_);
         if(boost::filesystem::exists(route_path_object))
-        {
+        {   
             boost::filesystem::directory_iterator end_point;
             // read all route files in the given directory
             for(boost::filesystem::directory_iterator itr(route_path_object); itr != end_point; ++itr)
@@ -71,27 +71,43 @@ namespace route {
                 {
                     auto full_file_name = itr->path().filename().generic_string();
                     cav_msgs::Route route_msg;
-                    // assume route files ending with ".csv", before that is the actual route name
-                    route_msg.route_id = full_file_name.substr(0, full_file_name.find(".csv"));
-                    std::ifstream fin(itr->path().generic_string());
-                    std::string dest_name;
-                    if(fin.is_open())
-                    {
-                        while (!fin.eof())
+
+                    //Include logic that sorts out invalid route files based on their ending*/
+                    if(full_file_name.find(".csv") != full_file_name.npos)
+                     { 
+                       // assume route files ending with ".csv", before that is the actual route name
+                        route_msg.route_id = full_file_name.substr(0, full_file_name.find(".csv"));
+                        std::ifstream fin(itr->path().generic_string());
+                        std::string dest_name;
+                        if(fin.is_open())
                         {
-                            std::string temp;
-                            std::getline(fin, temp);
-                            if(temp != "") dest_name = temp;
+                            while (!fin.eof())
+                            {
+                                std::string temp;
+                                std::getline(fin, temp);
+                                if(temp != "") dest_name = temp;
+                            }
+                            fin.close();
+                        } 
+                        else
+                        {
+                           ROS_ERROR_STREAM("File open failed...");
                         }
-                        fin.close();
-                    } else
-                    {
-                        ROS_ERROR_STREAM("File open failed...");
-                    }
-                    auto last_comma = dest_name.find_last_of(',');
-                    route_msg.route_name = dest_name.substr(last_comma + 1);
-                    resp.availableRoutes.push_back(route_msg);
+                        auto last_comma = dest_name.find_last_of(',');
+                        if(!std::isdigit(dest_name.substr(last_comma + 1).at(0)))
+                        {
+                            route_msg.route_name = dest_name.substr(last_comma + 1);
+                            resp.availableRoutes.push_back(route_msg);
+                        }
+                     }
                 }
+            }
+            
+            //after route path object is available to select, worker will able to transit state and provide route selection service
+            if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::LOADING) 
+            {
+                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_LOADED);
+                publish_route_event(cav_msgs::RouteEvent::ROUTE_LOADED);
             }
         }
         return true;
@@ -113,6 +129,15 @@ namespace route {
             // entering to routing state once destinations are picked
             this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_SELECTED);
             publish_route_event(cav_msgs::RouteEvent::ROUTE_SELECTED);
+
+            if (!vehicle_pose_) {
+                ROS_ERROR_STREAM("No vehicle position. Routing cannot be completed.");
+                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
+                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+                publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
+                return true;
+            }
+
             // get transform from ECEF(earth) to local map frame
             tf2::Transform map_in_earth;
             try
@@ -125,22 +150,26 @@ namespace route {
                 resp.errorStatus = cav_srvs::SetActiveRouteResponse::TRANSFORM_ERROR;
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
-                return false;
+                return true;
             }
 
             // load destination points in ECEF frame
             auto destination_points = load_route_destinations_in_ecef(req.routeID);
             // Check if route file are valid with at least one starting points and one destination points
-            if(destination_points.size() < 2)
+            if(destination_points.size() < 1)
             {
-                ROS_ERROR_STREAM("Selected route file contains 1 or less points. Routing cannot be completed.");
+                ROS_ERROR_STREAM("Selected route file contains no points. Routing cannot be completed.");
                 resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTE_FILE_ERROR;
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
-                return false;
+                return true;
             }
             // convert points in ECEF to map frame
             auto destination_points_in_map = transform_to_map_frame(destination_points, map_in_earth);
+            
+            lanelet::BasicPoint2d vehicle_position(vehicle_pose_->pose.position.x, vehicle_pose_->pose.position.y);
+            destination_points_in_map.insert(destination_points_in_map.begin(), vehicle_position);
+
             int idx = 0;
             // validate if the points are geometrically in the map
             for (auto pt : destination_points_in_map)
@@ -153,7 +182,7 @@ namespace route {
                 resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTE_FILE_ERROR;
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
-                return false;
+                return true;
                 }
                 idx ++;
             }
@@ -172,7 +201,7 @@ namespace route {
                 resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
-                return false;
+                return true;
             }
 
             // Specify the end point of the route that is inside the last lanelet
@@ -201,7 +230,10 @@ namespace route {
             new_route_msg_generated_ = true;
             return true;
         }
-        return false;
+
+        resp.errorStatus = cav_srvs::SetActiveRouteResponse::ALREADY_FOLLOWING_ROUTE;
+
+        return true;
     }
 
     std::vector<tf2::Vector3> RouteGeneratorWorker::load_route_destinations_in_ecef(const std::string& route_id) const
@@ -346,6 +378,7 @@ namespace route {
 
     void RouteGeneratorWorker::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
+        vehicle_pose_ = *msg;
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING) {
             // convert from pose stamp into lanelet basic 2D point
             lanelet::BasicPoint2d current_loc(msg->pose.position.x, msg->pose.position.y);

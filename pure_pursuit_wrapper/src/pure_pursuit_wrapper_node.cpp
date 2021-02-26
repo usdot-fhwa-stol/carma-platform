@@ -14,6 +14,7 @@
  * the License.
  */
 #include "pure_pursuit_wrapper/pure_pursuit_wrapper.hpp"
+#include "pure_pursuit_wrapper/pure_pursuit_wrapper_config.hpp"
 
 #include <ros/ros.h>
 #include <carma_utils/CARMANodeHandle.h>
@@ -27,7 +28,12 @@ int main(int argc, char** argv)
 
   ros::Publisher discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
 
+  pure_pursuit_wrapper::PurePursuitWrapperConfig config;
+  nh.param<double>("/vehicle_response_lag", config.vehicle_response_lag, config.vehicle_response_lag);
+  
+
   pure_pursuit_wrapper::PurePursuitWrapper purePursuitWrapper(
+      config, 
       [&waypoints_pub](auto msg) { waypoints_pub.publish(msg); },
       [&discovery_pub](auto msg) { discovery_pub.publish(msg); });
 

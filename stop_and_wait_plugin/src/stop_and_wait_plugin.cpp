@@ -119,6 +119,10 @@ namespace stop_and_wait_plugin
             return true;
         }
 
+        if(current_downtrack < maneuver_plan[0].stop_and_wait_maneuver.start_dist){
+            //Do nothing
+            return true;
+        }
         std::vector<PointSpeedPair> points_and_target_speeds = maneuvers_to_points(maneuver_plan, current_downtrack, wm_, req.vehicle_state);
 
         auto downsampled_points = 
