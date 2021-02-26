@@ -238,7 +238,7 @@ namespace stop_and_wait_plugin
                 temp_state.X_pos_global = wm_->getRoute()->getEndPoint().basicPoint2d().x();
                 temp_state.Y_pos_global =  wm_->getRoute()->getEndPoint().basicPoint2d().y();
                 int nearest_end_pt_index = getNearestRouteIndex(route_geometry,temp_state);
-                lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, nearest_end_pt_index);
+                lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.begin()+ nearest_end_pt_index);
                 
                 int points_count = future_route_geometry.size();
                 delta_time = maneuver_time_/(points_count-1);
