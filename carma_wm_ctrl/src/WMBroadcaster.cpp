@@ -575,12 +575,12 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   
   if(route_flag_==true)
   { 
-    gf_msg.route_flag=true;
+    gf_msg.invalidates_route=true;
     map_update_pub_(gf_msg);
   }
   else
   {
-    gf_msg.route_flag=false;
+    gf_msg.invalidates_route=false;
     map_update_pub_(gf_msg);
   }
    

@@ -61,7 +61,7 @@ bool WMListenerWorker::checkIfReRoutingNeeded()
 void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg) const
 {
 
-  if(geofence_msg.route_flag==true)
+  if(geofence_msg.invalidates_route==true)
   {
   local_geofence_msg_=geofence_msg;
   set_flag_=true;

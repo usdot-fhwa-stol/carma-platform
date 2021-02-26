@@ -146,10 +146,10 @@ namespace route {
                 return false;
             }
             // convert points in ECEF to map frame
-            auto destination_points_in_map = transform_to_map_frame(destination_points, map_in_earth);
+            auto destination_points_in_map_ = transform_to_map_frame(destination_points, map_in_earth);
             int idx = 0;
             // validate if the points are geometrically in the map
-            for (auto pt : destination_points_in_map)
+            for (auto pt : destination_points_in_map_)
             {
                 auto llts = world_model_->getLaneletsFromPoint(pt, 1);
                 if (llts.empty())
@@ -426,10 +426,16 @@ namespace route {
     {
         if(localFunction()==true)
         {
-           cav_srvs::SetActiveRouteResponse resp;
-           cav_srvs::SetActiveRouteRequest req;
-           req.routeID=route_msg_.route_name;
-           set_active_route_cb(req,resp);
+           this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_INVALIDATION);
+           publish_route_event(cav_msgs::RouteEvent::ROUTE_INVALIDATION);
+           
+           auto route=routing(destination_points_in_map_.front(),
+                                std::vector<lanelet::BasicPoint2d>(destination_points_in_map_.begin() + 1, destination_points_in_map_.end() - 1),
+                                destination_points_in_map_.back(),
+                                world_model_->getMap(), world_model_->getMapRoutingGraph());
+
+           route_msg_=compose_route_msg(route);
+           route_marker_msg_=compose_route_marker_msg(route);
         }
     
         // publish new route and set new route flag back to false
