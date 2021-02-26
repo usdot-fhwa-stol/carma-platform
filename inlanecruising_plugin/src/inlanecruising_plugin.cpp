@@ -348,11 +348,11 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   log::printDoublesPerLineWithPrefix("raw_curvatures[i]: ", better_curvature);
 
-  std::vector<double> all_downtracks = carma_wm::geometry::compute_arc_lengths(all_sampling_points);
+  //std::vector<double> all_downtracks = carma_wm::geometry::compute_arc_lengths(all_sampling_points);
 
-  std::vector<double> curvatures = filter_curvatures(better_curvature, all_downtracks, 0.039);
-
-  log::printDoublesPerLineWithPrefix("all_downtracks[i]: ", all_downtracks);
+  // std::vector<double> curvatures = filter_curvatures(better_curvature, all_downtracks, 0.039);
+  std::vector<double> curvatures = smoothing::moving_average_filter(better_curvature, 8, false);
+  //log::printDoublesPerLineWithPrefix("all_downtracks[i]: ", all_downtracks);
 
   std::vector<double> ideal_speeds =
       trajectory_utils::constrained_speeds_for_curvatures(curvatures, config_.lateral_accel_limit);

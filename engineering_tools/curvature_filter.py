@@ -24,12 +24,41 @@ def binarySearch(a, x):
 
 def filter_curvatures(curvatures, downtrack_step_size):
 
-  brackets = compute_curvature_brackets(2.5, 2.2352, 35.7632)
+  #brackets = compute_curvature_brackets(2.5, 2.2352, 35.7632)
   #print("Brackets: " + str(brackets))
-  c1 = constrain_to_brackets(brackets, curvatures, 1)
-  c2 = denoise(c1, 4)
-  return c2
+  #c1 = constrain_to_brackets(brackets, curvatures, 1)
+  #c2 = denoise(c1, 4)
+  c3 = moving_average_filter(curvatures, 8)
+  return c3
   #return apply_curvature_rate_limits(c2, downtrack_step_size, 0.039)
+
+def moving_average_filter(input, window_size, ignore_first_point=False):
+
+  output = []
+
+  if len(input) == 0:
+    return output
+
+  start_index = 0
+  if ignore_first_point:
+    start_index = 1
+    output.append(input[0])
+
+  for i in range(start_index, len(input)):    
+    
+    total = 0
+    sample_min = int(max(0, i - int(window_size) / int(2)))
+    sample_max = int(min( len(input) - 1 , i + int(window_size) / int(2)))
+
+    count = sample_max - sample_min + 1
+    sample = []
+    for j in range(sample_min, sample_max + 1):
+      total += input[j]
+    
+    output.append(total / float(count))
+
+
+  return output
 
 def apply_curvature_rate_limits(curvatures, downtrack_step_size, max_curvature_rate):
   output = []
