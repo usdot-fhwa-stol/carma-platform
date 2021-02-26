@@ -168,7 +168,7 @@ private:
   LaneletRoutePtr route_;
   LaneletRoutingGraphPtr map_routing_graph_;
   
-  lanelet::LaneletMapConstUPtr shortest_path_view_;  // Map containing only lanelets along the shortest path of the
+  lanelet::LaneletSubmapConstUPtr shortest_path_view_;  // Map containing only lanelets along the shortest path of the
                                                      // route
   std::vector<lanelet::LineString3d> shortest_path_centerlines_;  // List of disjoint centerlines seperated by lane
                                                                   // changes along the shortest path
