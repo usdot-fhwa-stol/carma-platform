@@ -208,7 +208,6 @@ private:
   GeofenceScheduler scheduler_;
   std::string base_map_georef_;
   double max_lane_width_;
-  bool route_flag_=false;
 };
 }  // namespace carma_wm_ctrl
 

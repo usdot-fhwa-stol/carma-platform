@@ -103,6 +103,6 @@ private:
   void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const;
   double config_speed_limit_;
   autoware_lanelet2_msgs::MapBin local_geofence_msg_;
-  bool set_flag_=false;
+  bool rerouting_flag_=false;
 };
 }  // namespace carma_wm

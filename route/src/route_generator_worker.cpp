@@ -434,6 +434,21 @@ namespace route {
                                 destination_points_in_map_.back(),
                                 world_model_->getMap(), world_model_->getMapRoutingGraph());
 
+           // check if route successed
+           if(!route)
+            {
+                ROS_ERROR_STREAM("Cannot find a route passing all destinations.");
+                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
+                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+                publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
+                return false;
+            }
+            else
+            {
+                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_STARTED);
+                publish_route_event(cav_msgs::RouteEvent::ROUTE_STARTED);  
+            }                    
+
            route_msg_=compose_route_msg(route);
            route_marker_msg_=compose_route_marker_msg(route);
         }

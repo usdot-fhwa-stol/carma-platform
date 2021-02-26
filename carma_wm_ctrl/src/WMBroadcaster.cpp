@@ -233,7 +233,7 @@ void WMBroadcaster::addPassingControlLineFromMsg(std::shared_ptr<Geofence> gf_pt
 void WMBroadcaster::addRegionAccessRule(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const
 {
    gf_ptr->regulatory_element_ = std::make_shared<lanelet::RegionAccessRule>(lanelet::RegionAccessRule::buildData(lanelet::utils::getId(),affected_llts,{},participantsChecker(msg_v01)));
-   route_flag_=true;
+   gf_ptr->invalidate_route_=true;
 }
 
 ros::V_string WMBroadcaster::participantsChecker(const cav_msgs::TrafficControlMessageV01& msg_v01) const
@@ -572,18 +572,8 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   autoware_lanelet2_msgs::MapBin gf_msg;
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
   carma_wm::toBinMsg(send_data, &gf_msg);
-  
-  if(route_flag_==true)
-  { 
-    gf_msg.invalidates_route=true;
-    map_update_pub_(gf_msg);
-  }
-  else
-  {
-    gf_msg.invalidates_route=false;
-    map_update_pub_(gf_msg);
-  }
-   
+  gf_msg.invalidates_route=gf_ptr->invalidate_route_;
+  map_update_pub_(gf_msg);
 };
 
 void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)

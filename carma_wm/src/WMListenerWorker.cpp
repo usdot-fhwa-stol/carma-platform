@@ -55,7 +55,7 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr&
 
 bool WMListenerWorker::checkIfReRoutingNeeded()
 {
-  return set_flag_;
+  return rerouting_flag_;
 }
 
 void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg) const
@@ -64,7 +64,7 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinCon
   if(geofence_msg.invalidates_route==true)
   {
   local_geofence_msg_=geofence_msg;
-  set_flag_=true;
+  rerouting_flag_=true;
   }
 
   // convert ros msg to geofence object
@@ -153,7 +153,7 @@ void WMListenerWorker::roadwayObjectListCallback(const cav_msgs::RoadwayObstacle
 void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
 {
 
-  if(set_flag_==true)
+  if(rerouting_flag_==true)
   {
     mapUpdateCallback(local_geofence_msg_);
   }
