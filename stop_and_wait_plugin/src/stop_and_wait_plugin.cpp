@@ -322,7 +322,7 @@ namespace stop_and_wait_plugin
         for (size_t i=0; i < future_points.size(); i++)
         {
             cav_msgs::TrajectoryPlanPoint traj_point;
-            if(trajectory_speeds[i] > 0){
+            if(trajectory_speeds[i] > 0.0){
                 traj_point.x = future_points[i].point.x();
                 traj_point.y = future_points[i].point.y();
                 traj_point.yaw = yaw_values[i];
@@ -330,8 +330,8 @@ namespace stop_and_wait_plugin
             }
             else    //speed_to_time doesn't work for 0.0 speed
             {
-                traj_point.x=traj_prev.x;
-                traj_point.y=traj_prev.y;
+                traj_point.x=future_points[i].point.x();
+                traj_point.y=future_points[i].point.y();
                 traj_point.yaw=traj_prev.yaw;
                 traj_point.target_time = traj_prev.target_time + ros::Duration(min_timestep_);
                 
