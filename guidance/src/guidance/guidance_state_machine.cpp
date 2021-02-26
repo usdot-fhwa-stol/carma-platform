@@ -81,7 +81,7 @@ namespace guidance
     {
         if (shifting_into_park_)
         {
-            // Vehicle gearshift is currently set to PARK
+            // '3' indicates vehicle gearshift is currently set to PARK
             if(msg->gearshift == 3)
             {
                 shifting_into_park_ = false;
