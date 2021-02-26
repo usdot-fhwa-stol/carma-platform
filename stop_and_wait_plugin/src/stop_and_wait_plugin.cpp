@@ -212,7 +212,7 @@ namespace stop_and_wait_plugin
                     ending_downtrack = travel_dist_new + starting_downtrack;
 
                     auto shortest_path = wm_->getRoute()->shortestPath();
-                    if(ending_downtrack > wm_->routeTrackPos(shortest_path.back().centerline2d().back()).downtrack)
+                    if(ending_downtrack > wm_->getRouteEndTrackPos().downtrack)
                     {
                         ROS_ERROR("Ending distance is beyond known route");
                         throw std::invalid_argument("Ending distance is beyond known route"); 

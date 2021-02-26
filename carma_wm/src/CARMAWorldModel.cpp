@@ -288,6 +288,11 @@ LaneletRouteConstPtr CARMAWorldModel::getRoute() const
   return std::static_pointer_cast<const lanelet::routing::Route>(route_);  // Cast pointer to const variant
 }
 
+TrackPos CARMAWorldModel::getRouteEndTrackPos() const
+{
+  return routeTrackPos(route_->getEndPoint().basicPoint2d());
+}
+
 void CARMAWorldModel::setMap(lanelet::LaneletMapPtr map)
 {
   semantic_map_ = map;
@@ -309,6 +314,12 @@ void CARMAWorldModel::setRoute(LaneletRoutePtr route)
   lanelet::ConstLanelets path_lanelets(route_->shortestPath().begin(), route_->shortestPath().end());
   shortest_path_view_ = lanelet::utils::createConstMap(path_lanelets, {});
   computeDowntrackReferenceLine();
+}
+
+void CARMAWorldModel::setRouteEndPoint(const lanelet::BasicPoint3d& end_point)
+{
+  lanelet::ConstPoint3d const_end_point {lanelet::utils::getId(), end_point.x(),end_point.y(),end_point.z()};
+  route_->setEndPoint(const_end_point);
 }
 
 lanelet::LineString3d CARMAWorldModel::copyConstructLineString(const lanelet::ConstLineString3d& line) const
