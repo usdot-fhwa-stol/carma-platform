@@ -74,11 +74,17 @@ TEST(GuidanceStateMachineTest, testStates)
     gsm.onRoboticStatus(engage_status_pointer);
     // test re-engage state from inactive
     EXPECT_EQ(4, static_cast<int>(gsm.getCurrentState()));
-    cav_msgs::RouteEvent re;
-    re.event = cav_msgs::RouteEvent::ROUTE_COMPLETED;
-    //test drivers ready at end of route 
-    cav_msgs::RouteEventConstPtr route_event(new cav_msgs::RouteEvent(re));
-    gsm.onRouteEvent(route_event);
+    cav_msgs::RouteEvent route_event;
+    route_event.event = cav_msgs::RouteEvent::ROUTE_COMPLETED;
+    cav_msgs::RouteEventConstPtr route_event_pointer(new cav_msgs::RouteEvent(route_event));
+    gsm.onRouteEvent(route_event_pointer);
+    // test ENTER_PARK state at end of route
+    EXPECT_EQ(6, static_cast<int>(gsm.getCurrentState()));
+    autoware_msgs::VehicleStatus vehicle_status;
+    vehicle_status.gearshift = 3; // '3' indicates gearshift is set to Park
+    autoware_msgs::VehicleStatusConstPtr vehicle_status_pointer(new autoware_msgs::VehicleStatus(vehicle_status));
+    gsm.onVehicleStatus(vehicle_status_pointer);
+    // test DRIVERS_READY state
     EXPECT_EQ(2, static_cast<int>(gsm.getCurrentState()));
     alert.type = alert.SHUTDOWN;
     cav_msgs::SystemAlertConstPtr alert_pointer_2(new cav_msgs::SystemAlert(alert));
