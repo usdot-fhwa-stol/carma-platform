@@ -46,6 +46,7 @@
   <remap from="/controller/cmd_longitudinal_effort" to="$(optenv CARMA_INTR_NS)/controller/cmd_longitudinal_effort"/>
   <remap from="/controller/cmd_speed" to="$(optenv CARMA_INTR_NS)/controller/cmd_speed"/>
   <remap from="enable_robotic" to="$(optenv CARMA_INTR_NS)/controller/enable_robotic"/>
+  <remap from="vehicle_status" to="$(optenv CARMA_INTR_NS)/vehicle_status"/>
 
   <remap from="ui_instructions" to="$(optenv CARMA_UI_NS)/ui_instructions"/>
 
