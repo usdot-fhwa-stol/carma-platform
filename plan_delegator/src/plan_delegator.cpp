@@ -199,7 +199,12 @@ namespace plan_delegator
                 break;
             }
         }
-        latest_trajectory_plan.initial_longitudinal_velocity = std::max(latest_twist_.twist.linear.x, min_crawl_speed_); 
+        if(latest_trajectory_plan.trajectory_points[0].planner_plugin_name == "InLaneCruisingPlugin"){
+            latest_trajectory_plan.initial_longitudinal_velocity = std::max(latest_twist_.twist.linear.x, min_crawl_speed_); 
+        }
+        else{
+            latest_trajectory_plan.initial_longitudinal_velocity = latest_twist_.twist.linear.x; 
+        }
         return latest_trajectory_plan;
     }
 
