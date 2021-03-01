@@ -130,11 +130,11 @@ public:
     /////Descriotuibn
   void mobilityrequest_cb(const cav_msgs::MobilityRequestConstPtr& msg);
   void bsm_cb(const cav_msgs::BSMConstPtr& msg);
-  std::vector<lanelet::BasicPoint2d> convert_eceftrajectory_to_mappoints(const cav_msgs::Trajectory& ecef_trajectory, const geometry_msgs::TransformStamped& tf);
-  cav_msgs::MobilityResponse compose_mobility_response(std::string resp_recipient_id, std::string req_plan_id);
+  std::vector<lanelet::BasicPoint2d> convert_eceftrajectory_to_mappoints(const cav_msgs::Trajectory& ecef_trajectory, const geometry_msgs::TransformStamped& tf) const;
+  cav_msgs::MobilityResponse compose_mobility_response(const std::string& resp_recipient_id, const std::string& req_plan_id) const;
   cav_msgs::TrajectoryPlan generate_JMT_trajectory(const cav_msgs::TrajectoryPlan& original_tp, double initial_pos, double goal_pos, double initial_velocity, double goal_velocity, double planning_time);
   cav_msgs::TrajectoryPlan update_traj_for_cooperative_behavior(const cav_msgs::TrajectoryPlan& original_tp, double current_speed);
-  std::vector<lanelet::BasicPoint2d> detect_trajectories_intersection(std::vector<lanelet::BasicPoint2d> trajectory1, std::vector<lanelet::BasicPoint2d> trajectory2);
+  std::vector<lanelet::BasicPoint2d> detect_trajectories_intersection(std::vector<lanelet::BasicPoint2d> trajectory1, std::vector<lanelet::BasicPoint2d> trajectory2) const;
   void set_incoming_request_info(std::vector <lanelet::BasicPoint2d> req_trajectory, double req_speed, double req_planning_time);
   
   

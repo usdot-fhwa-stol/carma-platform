@@ -56,20 +56,21 @@ namespace yield_plugin
     return true;
   }
 
-  std::vector<lanelet::BasicPoint2d> YieldPlugin::detect_trajectories_intersection(std::vector<lanelet::BasicPoint2d> trajectory1, std::vector<lanelet::BasicPoint2d> trajectory2)
+  std::vector<lanelet::BasicPoint2d> YieldPlugin::detect_trajectories_intersection(std::vector<lanelet::BasicPoint2d> trajectory1, std::vector<lanelet::BasicPoint2d> trajectory2) const
   {
     // the vectors are converted to linestrings so their intersection point can be calculated
 
     // A linestring is a Curve with linear interpolation between Points.
-    boost::geometry::model::linestring<lanelet::BasicPoint2d> traj1, traj2;
-    for (size_t i=0; i<trajectory1.size(); i++)
+    boost::geometry::model::linestring<lanelet::BasicPoint2d> traj1;
+    boost::geometry::model::linestring<lanelet::BasicPoint2d> traj2;
+    for (auto tpp1:trajectory1)
     {
-      boost::geometry::append(traj1, trajectory1[i]);
+      boost::geometry::append(traj1, tpp1);
     }
 
-    for (size_t i=0; i<trajectory2.size(); i++)
+    for (auto tpp2:trajectory2)
     {
-      boost::geometry::append(traj2, trajectory2[i]);
+      boost::geometry::append(traj2, tpp2);
     }
 
     std::vector<lanelet::BasicPoint2d> intersection_points;
@@ -78,9 +79,8 @@ namespace yield_plugin
     return intersection_points;
   }
 
-  std::vector<lanelet::BasicPoint2d> YieldPlugin::convert_eceftrajectory_to_mappoints(const cav_msgs::Trajectory& ecef_trajectory, const geometry_msgs::TransformStamped& tf)
+  std::vector<lanelet::BasicPoint2d> YieldPlugin::convert_eceftrajectory_to_mappoints(const cav_msgs::Trajectory& ecef_trajectory, const geometry_msgs::TransformStamped& tf) const
   {
-    // geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("map", "earth", ros::Time(0));
     cav_msgs::TrajectoryPlan trajectory_plan;
     std::vector<lanelet::BasicPoint2d> map_points;
     lanelet::BasicPoint2d first_point;
@@ -103,7 +103,7 @@ namespace yield_plugin
     return map_points;
   }
 
-  cav_msgs::MobilityResponse YieldPlugin::compose_mobility_response(std::string resp_recipient_id, std::string req_plan_id)
+  cav_msgs::MobilityResponse YieldPlugin::compose_mobility_response(const std::string& resp_recipient_id, const std::string& req_plan_id) const
   {
     cav_msgs::MobilityResponse out_mobility_response;
     out_mobility_response.header.sender_id = host_id_;
@@ -162,7 +162,7 @@ namespace yield_plugin
           geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("map", "earth", ros::Time(0));
           req_traj_plan = convert_eceftrajectory_to_mappoints(incoming_trajectory, tf);
         }
-        catch (tf2::TransformException &ex)
+        catch (const tf2::TransformException &ex)
         {
             ROS_WARN("%s", ex.what());
         }
@@ -170,19 +170,21 @@ namespace yield_plugin
         double req_expiration_sec = incoming_request.expiration/1000;
         double current_time = ros::Time::now().toSec();
 
+        cav_msgs::MobilityResponse outgoing_response = compose_mobility_response(req_sender_id, req_plan_id);
         // ensure there is enough time for the yield
         if (req_expiration_sec - current_time >= config_.tpmin)
         {
           received_cooperative_request_ = true;
           double req_plan_time = req_expiration_sec - current_time;
           set_incoming_request_info(req_traj_plan, req_traj_speed, req_plan_time);
-          cav_msgs::MobilityResponse outgoing_response = compose_mobility_response(req_sender_id, req_plan_id);
-          mobility_response_publisher_(outgoing_response);
+        
         }
         else
         {
           ROS_DEBUG_STREAM("Igonore expired Mobility Request.");
+          outgoing_response.is_accepted = false;
         }
+        mobility_response_publisher_(outgoing_response);
       }
     }
   }
@@ -250,7 +252,7 @@ namespace yield_plugin
     }
 
     std::vector<lanelet::BasicPoint2d> intersection_points = detect_trajectories_intersection(host_traj_points, req_trajectory_points_);
-    if (intersection_points.size() > 0)
+    if (!intersection_points.empty())
     {
       lanelet::BasicPoint2d first_point = intersection_points[0];
       double dx = original_tp.trajectory_points[0].x - first_point.x();
