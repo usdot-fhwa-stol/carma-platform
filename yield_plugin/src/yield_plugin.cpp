@@ -36,9 +36,9 @@ using oss = std::ostringstream;
 
 namespace yield_plugin
 {
-  YieldPlugin::YieldPlugin(carma_wm::WorldModelConstPtr wm, YieldPluginConfig config,
-                                            PublishPluginDiscoveryCB plugin_discovery_publisher, 
-                                            MobilityResponseCB mobility_response_publisher)
+  YieldPlugin::YieldPlugin(carma_wm::WorldModelConstPtr wm, const YieldPluginConfig& config,
+                                            const PublishPluginDiscoveryCB& plugin_discovery_publisher, 
+                                            const MobilityResponseCB& mobility_response_publisher)
     : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher), mobility_response_publisher_(mobility_response_publisher)
   {
     plugin_discovery_msg_.name = "YieldPlugin";
@@ -47,11 +47,13 @@ namespace yield_plugin
     plugin_discovery_msg_.activated = false;
     plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
     plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
+    
   }
 
-  bool YieldPlugin::onSpin()
+  bool YieldPlugin::onSpin() const
   {
-    tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
+    // tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
+    
     plugin_discovery_publisher_(plugin_discovery_msg_);
     return true;
   }
@@ -322,12 +324,12 @@ namespace yield_plugin
     return jmt_trajectory;
   }
   
-  cav_msgs::TrajectoryPlan YieldPlugin::update_traj_for_object(const cav_msgs::TrajectoryPlan& original_tp, double current_speed_) 
+  cav_msgs::TrajectoryPlan YieldPlugin::update_traj_for_object(const cav_msgs::TrajectoryPlan& original_tp, double initial_velocity) 
   {
         
     cav_msgs::TrajectoryPlan update_tpp_vector;
     geometry_msgs::Twist current_velocity;
-    current_velocity.linear.x = current_speed_;
+    current_velocity.linear.x = initial_velocity;
 
     std::vector<cav_msgs::RoadwayObstacle> rwol = wm_->getRoadwayObjects();
     cav_msgs::RoadwayObstacleList rwol2;
@@ -340,7 +342,7 @@ namespace yield_plugin
     ROS_DEBUG_STREAM("Roadway Object List (rwol) size: " << rwol.size());
 
     // correct the input types
-    if(rwol_collision.size() > 0)
+    if(!rwol_collision.empty())
     {
       ROS_WARN_STREAM("Collision Detected!");
 
@@ -350,7 +352,7 @@ namespace yield_plugin
       double x_lead = sqrt(dist_x*dist_x + dist_y*dist_y);
 
       // roadway object position
-      double gap_time = (x_lead - config_.x_gap)/current_speed_;
+      double gap_time = (x_lead - config_.x_gap)/initial_velocity;
 
       double collision_time = 0; //\TODO comming from carma_wm collision detection in future (CAR 4288)
 
@@ -369,7 +371,7 @@ namespace yield_plugin
       double initial_accel = 0;
       double goal_accel = 0;
 
-      double delta_v_max = abs(rwol_collision[0].object.velocity.twist.linear.x - max_trajectory_speed(original_tp.trajectory_points));
+      double delta_v_max = fabs(rwol_collision[0].object.velocity.twist.linear.x - max_trajectory_speed(original_tp.trajectory_points));
       // reference time, is the maximum time available to perform object avoidance (length of a trajectory)
       double t_ref = (original_tp.trajectory_points[original_tp.trajectory_points.size() - 1].target_time.toSec() - original_tp.trajectory_points[0].target_time.toSec());
       // time required for comfortable deceleration
@@ -393,7 +395,7 @@ namespace yield_plugin
       
       ROS_DEBUG_STREAM("Object avoidance planning time: " << tp);
 
-      update_tpp_vector = generate_JMT_trajectory(original_tp, initial_pos, goal_pos, current_speed_, goal_velocity, tp);
+      update_tpp_vector = generate_JMT_trajectory(original_tp, initial_pos, goal_pos, initial_velocity, goal_velocity, tp);
 
       return update_tpp_vector;
     }
@@ -401,7 +403,7 @@ namespace yield_plugin
   }
 
 
-  std::vector<double> YieldPlugin::get_relative_downtracks(const cav_msgs::TrajectoryPlan& trajectory_plan)
+  std::vector<double> YieldPlugin::get_relative_downtracks(const cav_msgs::TrajectoryPlan& trajectory_plan) const
   {
     std::vector<double> downtracks;
     downtracks.reserve(trajectory_plan.trajectory_points.size());
@@ -415,7 +417,7 @@ namespace yield_plugin
     return downtracks;
   }
 
-  double YieldPlugin::polynomial_calc(std::vector<double> coeff, double x)
+  double YieldPlugin::polynomial_calc(std::vector<double> coeff, double x) const
   {
     double result = 0;
     for (size_t i = 0; i < coeff.size(); i++)
@@ -426,7 +428,7 @@ namespace yield_plugin
     return result;
   }
 
-  double YieldPlugin::polynomial_calc_d(std::vector<double> coeff, double x)
+  double YieldPlugin::polynomial_calc_d(std::vector<double> coeff, double x) const
   {
     double result = 0;
     for (size_t i = 0; i < coeff.size()-1; i++) 
@@ -437,7 +439,7 @@ namespace yield_plugin
     return result;
   }
 
-  double YieldPlugin::max_trajectory_speed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points) 
+  double YieldPlugin::max_trajectory_speed(const std::vector<cav_msgs::TrajectoryPlanPoint>& trajectory_points) const
   {
     double max_speed = 0;
     for(size_t i = 0; i < trajectory_points.size() - 2; i++ )

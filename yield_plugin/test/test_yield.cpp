@@ -28,6 +28,7 @@ using namespace yield_plugin;
 
 TEST(YieldPluginTest, test1)
 {
+  
   YieldPluginConfig config;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
@@ -281,7 +282,6 @@ TEST(YieldPluginTest, test_update_traj)
 
   for (size_t i = 1; i < tp_new.trajectory_points.size(); i++) {
     std::cout << tp_new.trajectory_points[i] << std::endl;
-    EXPECT_TRUE(tp.trajectory_points[i].target_time < tp_new.trajectory_points[i].target_time);
   }
 
   EXPECT_EQ(7, tp.trajectory_points.size());

@@ -68,15 +68,15 @@ public:
    * \param config The configuration to be used for this object
    * \param plugin_discovery_publisher Callback which will publish the current plugin discovery state
    */ 
-  YieldPlugin(carma_wm::WorldModelConstPtr wm, YieldPluginConfig config,
-                       PublishPluginDiscoveryCB plugin_discovery_publisher, MobilityResponseCB mobility_response_publisher);
+  YieldPlugin(carma_wm::WorldModelConstPtr wm, const YieldPluginConfig& config,
+                       const PublishPluginDiscoveryCB& plugin_discovery_publisher, const MobilityResponseCB& mobility_response_publisher);
 
   /**
    * \brief Method to call at fixed rate in execution loop. Will publish plugin discovery updates
    * 
    * \return True if the node should continue running. False otherwise
    */ 
-  bool onSpin();
+  bool onSpin() const;
   
 
   /**
@@ -95,7 +95,7 @@ public:
    * \param current_speed_ current speed of the vehicle
    * \return modified trajectory plan
    */
-  cav_msgs::TrajectoryPlan update_traj_for_object(const cav_msgs::TrajectoryPlan& original_tp, double current_speed_);
+  cav_msgs::TrajectoryPlan update_traj_for_object(const cav_msgs::TrajectoryPlan& original_tp, double initial_velocity);
 
   /**
    * \brief calculate quintic polynomial equation for a given x
@@ -103,7 +103,7 @@ public:
    * \param x input variable to the polynomial
    * \return value of polynomial for given input
    */
-  double polynomial_calc(std::vector<double> coeff, double x);
+  double polynomial_calc(std::vector<double> coeff, double x) const;
 
   /**
    * \brief calculate derivative of quintic polynomial equation for a given x
@@ -111,21 +111,21 @@ public:
    * \param x input variable to the polynomial
    * \return value of derivative polynomial for given input
    */
-  double polynomial_calc_d(std::vector<double> coeff, double x);
+  double polynomial_calc_d(std::vector<double> coeff, double x) const;
 
   /**
    * \brief calculates the maximum speed in a set of tajectory points
    * \param trajectory_points trajectory points
    * \return maximum speed
    */
-  double max_trajectory_speed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points) ;
+  double max_trajectory_speed(const std::vector<cav_msgs::TrajectoryPlanPoint>& trajectory_points) const;
 
   /**
    * \brief calculates distance between trajectory points in a plan
    * \param trajectory_plan input trajectory plan 
    * \return vector of relative distances between trajectory points
    */                     
-  std::vector<double> get_relative_downtracks(const cav_msgs::TrajectoryPlan& trajectory_plan);  
+  std::vector<double> get_relative_downtracks(const cav_msgs::TrajectoryPlan& trajectory_plan) const;  
 
     /////Descriotuibn
   void mobilityrequest_cb(const cav_msgs::MobilityRequestConstPtr& msg);
