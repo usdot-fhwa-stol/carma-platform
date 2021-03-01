@@ -104,6 +104,9 @@
   <!-- Pure Pursuit Wrapper -->
   
   <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch" />
+  
+  <!-- Pure Pursuit Jerk Wrapper -->
+  <include file="$(find pure_pursuit_jerk_wrapper)/launch/pure_pursuit_jerk_wrapper.launch" />
 
     <!-- Route Following Plugin -->
   <include file="$(find route_following_plugin)/launch/route_following_plugin.launch" />
