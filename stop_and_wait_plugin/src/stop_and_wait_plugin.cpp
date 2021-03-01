@@ -321,7 +321,7 @@ namespace stop_and_wait_plugin
         for (size_t i=0; i < future_points.size(); i++)
         {
             cav_msgs::TrajectoryPlanPoint traj_point;
-            if(trajectory_speeds[i] > 0){
+            if(trajectory_speeds[i] > 0.0){
                 traj_point.x = future_points[i].point.x();
                 traj_point.y = future_points[i].point.y();
                 traj_point.yaw = yaw_values[i];
