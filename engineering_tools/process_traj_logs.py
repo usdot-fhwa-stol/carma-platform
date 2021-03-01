@@ -16,11 +16,17 @@
 
 import sys
 import csv
+from bisect import bisect_left 
 from enum import Enum
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
-import curvature_filter as cf
 
+def binarySearch(a, x): 
+    i = bisect_left(a, x) 
+    if i: 
+        return (i-1) 
+    else: 
+        return -1
 # Usage
 # process_traj_logs.py <file name> <start time> <end_time>
 #
@@ -61,8 +67,8 @@ with open(sys.argv[1] + ".clean", 'r') as csv_file:
     #  break
 
 # Grab requested section
-start_index = max(cf.binarySearch(core_data["times"], float(sys.argv[2])) - 1, 0)
-end_index = min(cf.binarySearch(core_data["times"], float(sys.argv[3])) + 1, len(core_data["times"]))
+start_index = max(binarySearch(core_data["times"], float(sys.argv[2])) - 1, 0)
+end_index = min(binarySearch(core_data["times"], float(sys.argv[3])) + 1, len(core_data["times"]))
 
 print("Start index: " + str(start_index))
 print("End index: " + str(end_index))
@@ -225,23 +231,7 @@ for content in core_data["content"]:
   
 
 print("DONE PROCESSING FILE")
-
-# Process Curvatures
-process_curvatures_time_steps = []
-for t in core_data["time_steps"]:
-  new_data = cf.filter_curvatures(t[DataSource.PROCESSED_CURVATURES], 1.0)
-  #print("New Data:" + str(new_data))
-  process_curvatures_time_steps.append({"Data":new_data})
-
-discrete_curvatures_time_steps = []
-for t in core_data["time_steps"]:
-  new_data = cf.local_curvatures(t[DataSource.SAMPLED_POINTS])
-  #print("New Data:" + str(new_data))
-  discrete_curvatures_time_steps.append({"Data":new_data})
-
 print("CREATING GRAPHS")
-
-
 
 # Takes list of dictionary
 def xy_scatter_with_slider(figure_num, data, key, title, xlabel, ylabel):
@@ -251,9 +241,8 @@ def xy_scatter_with_slider(figure_num, data, key, title, xlabel, ylabel):
   plt.title(title)
   plt.xlabel(xlabel)
   plt.ylabel(ylabel)
-
   time_step = data[0]
-  l, = plt.plot([xy[0] for xy in time_step[key]], [xy[1] for xy in time_step[key]], '-o')
+  l, = plt.plot([xy[0] for xy in time_step[key]], [xy[1] for xy in time_step[key]], '.')
 
   time_step_ax = plt.axes([0.20, 0.001, 0.65, 0.03])
   time_step_sldr = Slider(time_step_ax, 'Time Step', 0.0, len(data) - 1.0, valinit=0, valstep=1)
@@ -262,36 +251,6 @@ def xy_scatter_with_slider(figure_num, data, key, title, xlabel, ylabel):
     time_step = data[int(time_step_sldr.val)]
     l.set_xdata([xy[0] for xy in time_step[key]])
     l.set_ydata([xy[1] for xy in time_step[key]])
-    fig.canvas.draw_idle()
-
-  time_step_sldr.on_changed(update_timestep)
-
-  return (fig, l, time_step_sldr)
-
-def multi_xy_scatter_with_slider(figure_num, data1, key1, data2, key2, title, xlabel, ylabel):
-
-  fig = plt.figure(figure_num)
-
-  plt.title(title)
-  plt.xlabel(xlabel)
-  plt.ylabel(ylabel)
-  time_step = data1[0]
-  time_step2 = data2[0]
-  
-  l, = plt.plot([xy[0] for xy in time_step[key1]], [xy[1] for xy in time_step[key1]], '-ob')
-  l2, = plt.plot([xy[0] for xy in time_step2[key2]], [xy[1] for xy in time_step2[key2]], '-or')
-
-  time_step_ax = plt.axes([0.20, 0.001, 0.65, 0.03])
-  time_step_sldr = Slider(time_step_ax, 'Time Step', 0.0, len(data1) - 1.0, valinit=0, valstep=1)
-
-  def update_timestep(val):
-    time_step = data1[int(time_step_sldr.val)]
-    l.set_xdata([xy[0] for xy in time_step[key1]])
-    l.set_ydata([xy[1] for xy in time_step[key1]])
-    
-    time_step2 = data2[int(time_step_sldr.val)]
-    l2.set_xdata([xy[0] for xy in time_step2[key2]])
-    l2.set_ydata([xy[1] for xy in time_step2[key2]])
     fig.canvas.draw_idle()
 
   time_step_sldr.on_changed(update_timestep)
@@ -307,7 +266,7 @@ def index_plot_with_slider(figure_num, data, key, title, xlabel, ylabel):
   plt.xlabel(xlabel)
   plt.ylabel(ylabel)
   time_step = data[0]
-  l, = plt.plot(range(len(time_step[key])), time_step[key], '-o')
+  l, = plt.plot(range(len(time_step[key])), time_step[key])
 
   time_step_ax = plt.axes([0.20, 0.01, 0.65, 0.03])
   time_step_sldr = Slider(time_step_ax, 'Time Step', 0.0, len(data) - 1.0, valinit=0, valstep=1)
@@ -325,8 +284,6 @@ def index_plot_with_slider(figure_num, data, key, title, xlabel, ylabel):
 plot1= xy_scatter_with_slider(1, core_data["time_steps"], DataSource.RAW_POINTS, 
   "Raw Downsampled Points from Lanelet Centerlines", "X (m)", "Y (m)")
 
-
-
 plot2= xy_scatter_with_slider(2, core_data["time_steps"], DataSource.TIME_BOUND_POINTS, 
   "Time Bound Points from Lanelet Centerlines", "X (m)", "Y (m)")
 
@@ -335,9 +292,6 @@ plot3= xy_scatter_with_slider(3, core_data["time_steps"], DataSource.BACK_AND_FR
 
 plot4= xy_scatter_with_slider(4, core_data["time_steps"], DataSource.SAMPLED_POINTS, 
   "Sampled points from spline fitting", "X (m)", "Y (m)")
-
-
-plot102 = multi_xy_scatter_with_slider(102, core_data["time_steps"], DataSource.RAW_POINTS, core_data["time_steps"], DataSource.SAMPLED_POINTS, "Sampled points from spline fitting", "X (m)", "Y (m)")
 
 plot5 = index_plot_with_slider(5, core_data["time_steps"], DataSource.RAW_CURVATURES, 
   "Raw Curvatures", "Index", "Curvature (1/r) (m)")
@@ -371,12 +325,6 @@ plot14 = index_plot_with_slider(14, core_data["time_steps"], DataSource.AFTER_MI
 
 plot15 = index_plot_with_slider(15, core_data["time_steps"], DataSource.FINAL_TIMES, 
   "Final Times", "Index", "Seconds (s)")
-
-plot101 = index_plot_with_slider(101, process_curvatures_time_steps, "Data", 
-  "Extra Processed Curvatures", "Index", "Curvature (1/r) (m)")
-
-plot103 = index_plot_with_slider(103, discrete_curvatures_time_steps, "Data", 
-  "Discrete Curvatures", "Index", "Curvature (1/r) (m)")
 
 plt.show()
 '''
