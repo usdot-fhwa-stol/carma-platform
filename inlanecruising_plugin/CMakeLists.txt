@@ -52,7 +52,7 @@ find_package(Eigen3 REQUIRED)
 catkin_package(
   INCLUDE_DIRS include
   CATKIN_DEPENDS ${CATKIN_DEPS}
-  DEPENDS Boost Eigen3
+  DEPENDS Boost EIGEN3
 )
 
 ###########
@@ -101,11 +101,11 @@ install(DIRECTORY launch config
 #############
 ## Testing ##
 #############
-
-catkin_add_gmock(${PROJECT_NAME}-test 
-  test/test_inlanecruising_plugin_planning.cpp
-  test/test_inlanecruising_plugin.cpp
-)
-target_link_libraries(${PROJECT_NAME}-test inlanecruising_plugin_library ${catkin_LIBRARIES})
-
+if (CATKIN_ENABLE_TESTING)
+  catkin_add_gmock(${PROJECT_NAME}-test 
+    test/test_inlanecruising_plugin_planning.cpp
+    test/test_inlanecruising_plugin.cpp
+  )
+  target_link_libraries(${PROJECT_NAME}-test inlanecruising_plugin_library ${catkin_LIBRARIES})
+endif()
 
