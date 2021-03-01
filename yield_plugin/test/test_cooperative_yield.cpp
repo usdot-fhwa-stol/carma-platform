@@ -169,3 +169,63 @@ TEST(YieldPluginTest, test_update_clc_trajectory)
     EXPECT_TRUE(yield_plan.trajectory_points[3].target_time > original_tp.trajectory_points[3].target_time);
 }
 
+TEST(YieldPluginTest, test_traj_cb)
+{
+    YieldPluginConfig config;
+    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+    YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
+
+    cav_msgs::TrajectoryPlan original_tp;
+
+    cav_msgs::TrajectoryPlanPoint trajectory_point_1;
+    cav_msgs::TrajectoryPlanPoint trajectory_point_2;
+    cav_msgs::TrajectoryPlanPoint trajectory_point_3;
+    cav_msgs::TrajectoryPlanPoint trajectory_point_4;
+    cav_msgs::TrajectoryPlanPoint trajectory_point_5;
+    cav_msgs::TrajectoryPlanPoint trajectory_point_6;
+    cav_msgs::TrajectoryPlanPoint trajectory_point_7;
+
+    trajectory_point_1.x = 20.0;
+    trajectory_point_1.y = -40.0;
+    trajectory_point_1.target_time = ros::Time(0);
+
+    trajectory_point_2.x = 20.0;
+    trajectory_point_2.y = -30.0;
+    trajectory_point_2.target_time = ros::Time(1);
+
+    trajectory_point_3.x = 20.0;
+    trajectory_point_3.y = -20.0;
+    trajectory_point_3.target_time = ros::Time(2);
+    
+    trajectory_point_4.x = 20.0;
+    trajectory_point_4.y = -10.0;
+    trajectory_point_4.target_time = ros::Time(3);
+
+    trajectory_point_5.x = 20.0;
+    trajectory_point_5.y = 0.0;
+    trajectory_point_5.target_time = ros::Time(4);
+
+    trajectory_point_6.x = 20.0;
+    trajectory_point_6.y = 10.0;
+    trajectory_point_6.target_time = ros::Time(5);
+
+    trajectory_point_7.x = 20.0;
+    trajectory_point_7.y = 20.0;
+    trajectory_point_7.target_time = ros::Time(60);
+    
+    original_tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4, trajectory_point_5, trajectory_point_6, trajectory_point_7};
+
+    cav_srvs::PlanTrajectoryRequest req;
+    req.vehicle_state.X_pos_global = 1.5;
+    req.vehicle_state.Y_pos_global = 5;
+    req.vehicle_state.orientation = 0;
+    req.vehicle_state.longitudinal_vel = 0.0;
+
+    req.initial_trajectory_plan = original_tp;
+
+    cav_srvs::PlanTrajectoryResponse resp;
+
+    plugin.plan_trajectory_cb(req, resp);
+
+}
+

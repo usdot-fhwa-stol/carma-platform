@@ -68,15 +68,15 @@ public:
    * \param config The configuration to be used for this object
    * \param plugin_discovery_publisher Callback which will publish the current plugin discovery state
    */ 
-  YieldPlugin(carma_wm::WorldModelConstPtr wm, const YieldPluginConfig& config,
-                       const PublishPluginDiscoveryCB& plugin_discovery_publisher, const MobilityResponseCB& mobility_response_publisher);
+  YieldPlugin(carma_wm::WorldModelConstPtr wm, YieldPluginConfig config,
+                       PublishPluginDiscoveryCB plugin_discovery_publisher, MobilityResponseCB mobility_response_publisher);
 
   /**
    * \brief Method to call at fixed rate in execution loop. Will publish plugin discovery updates
    * 
    * \return True if the node should continue running. False otherwise
    */ 
-  bool onSpin() const;
+  bool onSpin();
   
 
   /**
@@ -127,14 +127,68 @@ public:
    */                     
   std::vector<double> get_relative_downtracks(const cav_msgs::TrajectoryPlan& trajectory_plan) const;  
 
-    /////Descriotuibn
+  /**
+   * \brief callback for mobility request
+   * \param msg mobility request message 
+   */
   void mobilityrequest_cb(const cav_msgs::MobilityRequestConstPtr& msg);
+
+  /**
+   * \brief callback for bsm message
+   * \param msg mobility bsm message 
+   */
   void bsm_cb(const cav_msgs::BSMConstPtr& msg);
+
+  /**
+   * \brief convert a carma trajectory from ecef frame to map frame
+   * \param ecef_trajectory carma trajectory (ecef frame)
+   * \param tf translate frame 
+   * \return vector of 2d points in map frame
+   */
   std::vector<lanelet::BasicPoint2d> convert_eceftrajectory_to_mappoints(const cav_msgs::Trajectory& ecef_trajectory, const geometry_msgs::TransformStamped& tf) const;
+  
+  /**
+   * \brief compose a mobility response message
+   * \param resp_recipient_id vehicle id of the recipient of the message
+   * \param req_plan_id plan id from the requested message
+   * \return filled mobility response
+   */
   cav_msgs::MobilityResponse compose_mobility_response(const std::string& resp_recipient_id, const std::string& req_plan_id) const;
+  
+  /**
+   * \brief generate a Jerk Minimizing Trajectory(JMT) with the provided start and end conditions
+   * \param original_tp original trajectory plan
+   * \param intial_pos start position
+   * \param goal_pos final position
+   * \param initial_velocity start velocity
+   * \param goal_velocity end velocity
+   * \param planning_time time duration of the planning
+   * \return updated JMT trajectory 
+   */
   cav_msgs::TrajectoryPlan generate_JMT_trajectory(const cav_msgs::TrajectoryPlan& original_tp, double initial_pos, double goal_pos, double initial_velocity, double goal_velocity, double planning_time);
+  
+  /**
+   * \brief update trajectory for yielding to an incoming cooperative behavior
+   * \param original_tp original trajectory plan
+   * \param current_speed current speed of the vehicle
+   * \return updated trajectory for cooperative behavior
+   */
   cav_msgs::TrajectoryPlan update_traj_for_cooperative_behavior(const cav_msgs::TrajectoryPlan& original_tp, double current_speed);
+
+  /**
+   * \brief detect intersection point(s) of two trajectories
+   * \param trajectory1 vector of 2d trajectory points
+   * \param trajectory2 vector of 2d trajectory points
+   * \return vector of 2d intersection points
+   */
   std::vector<lanelet::BasicPoint2d> detect_trajectories_intersection(std::vector<lanelet::BasicPoint2d> trajectory1, std::vector<lanelet::BasicPoint2d> trajectory2) const;
+
+  /**
+   * \brief set values for member variables related to cooperative behavior
+   * \param req_trajectory requested trajectory
+   * \param req_speed speed of requested cooperative behavior
+   * \param req_planning_time planning time for the requested cooperative behavior
+   */
   void set_incoming_request_info(std::vector <lanelet::BasicPoint2d> req_trajectory, double req_speed, double req_planning_time);
   
   

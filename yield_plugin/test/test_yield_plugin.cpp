@@ -97,6 +97,7 @@ TEST(YieldPlugin, UnitTestYield)
     
 
     ros::Publisher mob_req_pub = nh.advertise<cav_msgs::MobilityRequest>("incoming_mobility_request", 5);
+    ros::Publisher bsm_pub = nh.advertise<cav_msgs::BSM>("bsm_outbound", 5);
     cav_msgs::MobilityRequest req1;
     mob_req_pub.publish(req1);
 
@@ -104,7 +105,7 @@ TEST(YieldPlugin, UnitTestYield)
     ros::spinOnce(); 
     
     EXPECT_EQ(1, mob_req_pub.getNumSubscribers());
-
+    EXPECT_EQ(1, bsm_pub.getNumSubscribers());
     EXPECT_EQ(1, mob_resp_sub.getNumPublishers()); 
     
     if (plugin1.call(traj_srv))

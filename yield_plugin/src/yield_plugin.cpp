@@ -36,9 +36,9 @@ using oss = std::ostringstream;
 
 namespace yield_plugin
 {
-  YieldPlugin::YieldPlugin(carma_wm::WorldModelConstPtr wm, const YieldPluginConfig& config,
-                                            const PublishPluginDiscoveryCB& plugin_discovery_publisher, 
-                                            const MobilityResponseCB& mobility_response_publisher)
+  YieldPlugin::YieldPlugin(carma_wm::WorldModelConstPtr wm, YieldPluginConfig config,
+                                            PublishPluginDiscoveryCB plugin_discovery_publisher, 
+                                            MobilityResponseCB mobility_response_publisher)
     : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher), mobility_response_publisher_(mobility_response_publisher)
   {
     plugin_discovery_msg_.name = "YieldPlugin";
@@ -47,13 +47,13 @@ namespace yield_plugin
     plugin_discovery_msg_.activated = false;
     plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
     plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
+    // tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
+    
     
   }
 
-  bool YieldPlugin::onSpin() const
+  bool YieldPlugin::onSpin() 
   {
-    // tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
-    
     plugin_discovery_publisher_(plugin_discovery_msg_);
     return true;
   }
@@ -217,6 +217,7 @@ namespace yield_plugin
     // seperating cooperative yield with regular object detection for better performance.
     if (config_.enable_cooperative_behavior && received_cooperative_request_)
     {
+      tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
       yield_trajectory = update_traj_for_cooperative_behavior(original_trajectory, req.vehicle_state.longitudinal_vel);
       // reset the flag
       received_cooperative_request_ = false;

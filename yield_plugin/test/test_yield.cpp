@@ -26,17 +26,6 @@
 using namespace yield_plugin;
 
 
-TEST(YieldPluginTest, test1)
-{
-  
-  YieldPluginConfig config;
-  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
-
-
-  // ASSERT_EQ(3, plugin.get_nearest_point_index(points, state));
-}
-
 TEST(YieldPluginTest, test_polynomial_calc)
 {
   YieldPluginConfig config;
