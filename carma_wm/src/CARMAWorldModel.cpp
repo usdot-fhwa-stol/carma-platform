@@ -312,7 +312,7 @@ void CARMAWorldModel::setRoute(LaneletRoutePtr route)
 {
   route_ = route;
   lanelet::ConstLanelets path_lanelets(route_->shortestPath().begin(), route_->shortestPath().end());
-  shortest_path_view_ = lanelet::utils::createConstMap(path_lanelets, {});
+  shortest_path_view_ = lanelet::utils::createConstSubmap(path_lanelets, {});
   computeDowntrackReferenceLine();
 }
 
@@ -347,7 +347,7 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
       lanelet::routing::RoutingGraph::build(*shortest_path_view_, *traffic_rules);
 
   std::vector<lanelet::LineString3d> lineStrings;  // List of continuos line strings representing segments of the route
-                                                   // reference line
+                                                   // reference line                                       
 
   bool first = true;
   size_t next_index = 0;
@@ -400,7 +400,9 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
     shortest_path_distance_map_.pushBack(lanelet::utils::to2D(lineStrings.back()));  // Record length of last continuous
                                                                                      // segment
   }
-  shortest_path_filtered_centerline_view_ = lanelet::utils::createMap(shortest_path_centerlines_);
+
+  // Since our copy constructed linestrings do not contain references to lanelets they can be added to a full map instead of a submap
+  shortest_path_filtered_centerline_view_ = lanelet::utils::createMap(shortest_path_centerlines_); 
 }
 
 LaneletRoutingGraphConstPtr CARMAWorldModel::getMapRoutingGraph() const
