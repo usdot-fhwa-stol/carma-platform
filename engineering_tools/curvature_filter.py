@@ -28,7 +28,7 @@ def filter_curvatures(curvatures, downtrack_step_size):
   #print("Brackets: " + str(brackets))
   #c1 = constrain_to_brackets(brackets, curvatures, 1)
   #c2 = denoise(c1, 4)
-  c3 = moving_average_filter(curvatures, 8)
+  c3 = moving_average_filter(curvatures, 9)
   return c3
   #return apply_curvature_rate_limits(c2, downtrack_step_size, 0.039)
 
