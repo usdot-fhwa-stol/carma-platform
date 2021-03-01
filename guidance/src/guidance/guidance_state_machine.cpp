@@ -72,6 +72,7 @@ namespace guidance
                 {
                     current_guidance_state_ = State::INACTIVE;
                 }
+                break;
             default:
                 break;
         }
