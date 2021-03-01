@@ -305,8 +305,6 @@ namespace route {
                 {
                     points.push_back(ll.centerline()[i]);
                 }
-                // also add the end point
-                points.push_back(end_point_3d);
                 continue;
             }
             for(const auto& pt : ll.centerline())
