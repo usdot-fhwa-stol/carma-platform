@@ -44,6 +44,8 @@ class PurePursuitJerkWrapper {
          * \param jerk float64 message with jerk value from the plugin
          */
         void updatejerk(std_msgs::Float64 jerk);
+        
+        std::vector<double> apply_response_lag(const std::vector<double>& speeds, const std::vector<double> downtracks, double response_lag) const;
 
         bool onSpin();
 

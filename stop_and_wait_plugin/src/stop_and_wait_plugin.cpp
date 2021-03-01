@@ -201,8 +201,7 @@ namespace stop_and_wait_plugin
             }
             else
             {
-                //double jerk_req = (2*start_speed)/pow(maneuver_time_,2);
-                double jerk_req = 2.0; //Setting constant for testing:vanden-plas
+                double jerk_req = (2*start_speed)/pow(maneuver_time_,2);
 
                 if(jerk_req > max_jerk_limit_)
                 {
@@ -330,8 +329,8 @@ namespace stop_and_wait_plugin
             }
             else    //speed_to_time doesn't work for 0.0 speed
             {
-                traj_point.x=traj_prev.x;
-                traj_point.y=traj_prev.y;
+                traj_point.x = future_points[i].point.x();
+                traj_point.y = future_points[i].point.y();
                 traj_point.yaw=traj_prev.yaw;
                 traj_point.target_time = traj_prev.target_time + ros::Duration(min_timestep_);
                 
@@ -340,6 +339,13 @@ namespace stop_and_wait_plugin
             traj_point.planner_plugin_name =plugin_discovery_msg_.name;
             traj.push_back(traj_point);
             traj_prev = traj_point;
+        }
+        //If trajectory only contains one 0.0 mph point, add another iteration(valid trajectory needs to have atleast 2 points)
+        if(traj.size() == 1 && trajectory_speeds[0] == 0){
+            cav_msgs::TrajectoryPlanPoint traj_point;
+            traj_point = traj_prev;
+            traj_point.target_time = traj_prev.target_time + ros::Duration(min_timestep_);
+            traj.push_back(traj_point);
         }
         
         return traj;
