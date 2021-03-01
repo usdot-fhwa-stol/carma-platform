@@ -72,7 +72,8 @@ namespace route_following_plugin
         }
         
         auto shortest_path = wm_->getRoute()->shortestPath();
-        lanelet::ConstLanelet current_lanelet = current_lanelets[0].second;
+
+        lanelet::ConstLanelet current_lanelet;
         int last_lanelet_index = -1;
         for (auto llt : current_lanelets)
         {
@@ -82,6 +83,7 @@ namespace route_following_plugin
                 if (potential_index != -1)
                 {
                     last_lanelet_index = potential_index;
+                    current_lanelet = shortest_path[last_lanelet_index];
                     break;
                 }
             }
