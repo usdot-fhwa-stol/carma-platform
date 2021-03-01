@@ -108,7 +108,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
         cav_msgs::TrajectoryPlan yield_plan = yield_srv.response.trajectory_plan;
         if (validate_yield_plan(yield_plan))
         {
-          resp.trajectory_plan = original_trajectory;
+          resp.trajectory_plan = yield_plan;
         }
         else
         {
