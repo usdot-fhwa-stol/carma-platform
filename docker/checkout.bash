@@ -40,11 +40,11 @@ cd ${dir}/src
 if [[ "release/vanden-plas" = "develop" ]]; then
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch release/vanden-plas
       git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch release/vanden-plas
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch fix/const_jerk_conversions
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch release/vanden-plas
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch release/vanden-plas
 else
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch release/vanden-plas
       git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch release/vanden-plas
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch fix/const_jerk_conversions
+      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch release/vanden-plas
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch release/vanden-plas
 fi
