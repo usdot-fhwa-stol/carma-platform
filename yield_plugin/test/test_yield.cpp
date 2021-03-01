@@ -20,6 +20,8 @@
 #include <carma_wm/CARMAWorldModel.h>
 #include <math.h>
 #include <tf/LinearMath/Vector3.h>
+#include <boost/property_tree/json_parser.hpp>
+
 
 using namespace yield_plugin;
 
@@ -28,7 +30,7 @@ TEST(YieldPluginTest, test1)
 {
   YieldPluginConfig config;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  YieldPlugin plugin(wm, config, [&](auto msg) {});
+  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
 
 
   // ASSERT_EQ(3, plugin.get_nearest_point_index(points, state));
@@ -38,7 +40,7 @@ TEST(YieldPluginTest, test_polynomial_calc)
 {
   YieldPluginConfig config;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  YieldPlugin plugin(wm, config, [&](auto msg) {});
+  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
 
   std::vector<double> coeff;
   coeff.push_back(2.0);
@@ -65,7 +67,7 @@ TEST(YieldPluginTest, test_polynomial_calc_derivative)
 {
   YieldPluginConfig config;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  YieldPlugin plugin(wm, config, [&](auto msg) {});
+  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
 
   std::vector<double> coeff;
   coeff.push_back(2.0);
@@ -92,7 +94,7 @@ TEST(YieldPluginTest, MaxTrajectorySpeed)
 {
   YieldPluginConfig config;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  YieldPlugin plugin(wm, config, [&](auto msg) {});
+  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
 
   std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points;
 
@@ -162,7 +164,7 @@ TEST(YieldPluginTest, test_update_traj)
   config.vehicle_height = 1;
   
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  YieldPlugin plugin(wm, config, [&](auto msg) {});
+  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
 
   
 
@@ -290,7 +292,7 @@ TEST(YieldPluginTest, test_update_traj2)
 {
   YieldPluginConfig config;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  YieldPlugin plugin(wm, config, [&](auto msg) {});
+  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
 
   cav_msgs::TrajectoryPlan original_tp;
 
@@ -390,7 +392,7 @@ TEST(YieldPluginTest, test_update_traj_stop)
 {
   YieldPluginConfig config;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  YieldPlugin plugin(wm, config, [&](auto msg) {});
+  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
 
   cav_msgs::TrajectoryPlan original_tp;
 
@@ -491,6 +493,71 @@ TEST(YieldPluginTest, test_update_traj_stop)
   EXPECT_EQ(new_trajectory_points[5].x, new_trajectory_points[4].x);
   // Trajectory point time is greater than previous point
   EXPECT_TRUE(new_trajectory_points[5].target_time > new_trajectory_points[4].target_time);
+}
+
+TEST(YieldPluginTest, jmt_traj)
+{
+  YieldPluginConfig config;
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
+
+  cav_msgs::TrajectoryPlan original_tp;
+
+  cav_msgs::TrajectoryPlanPoint trajectory_point_1;
+  cav_msgs::TrajectoryPlanPoint trajectory_point_2;
+  cav_msgs::TrajectoryPlanPoint trajectory_point_3;
+  cav_msgs::TrajectoryPlanPoint trajectory_point_4;
+  cav_msgs::TrajectoryPlanPoint trajectory_point_5;
+  cav_msgs::TrajectoryPlanPoint trajectory_point_6;
+  cav_msgs::TrajectoryPlanPoint trajectory_point_7;
+
+  trajectory_point_1.x = 1.0;
+  trajectory_point_1.y = 1.0;
+  trajectory_point_1.target_time = ros::Time(0);
+
+  trajectory_point_2.x = 5.0;
+  trajectory_point_2.y = 1.0;
+  trajectory_point_2.target_time = ros::Time(1);
+
+  trajectory_point_3.x = 10.0;
+  trajectory_point_3.y = 1.0;
+  trajectory_point_3.target_time = ros::Time(2);
+  
+  trajectory_point_4.x = 15.0;
+  trajectory_point_4.y = 1.0;
+  trajectory_point_4.target_time = ros::Time(3);
+
+  trajectory_point_5.x = 20.0;
+  trajectory_point_5.y = 1.0;
+  trajectory_point_5.target_time = ros::Time(4);
+
+  trajectory_point_6.x = 25.0;
+  trajectory_point_6.y = 1.0;
+  trajectory_point_6.target_time = ros::Time(5);
+
+  trajectory_point_7.x = 30.0;
+  trajectory_point_7.y = 1.0;
+  trajectory_point_7.target_time = ros::Time(6);
+   
+  original_tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4, trajectory_point_5, trajectory_point_6, trajectory_point_7};
+
+
+  // When the lead vehicle is stopped
+
+  double initial_pos = 0.0;
+  double goal_pos = 35.0;
+  double initial_velocity = 10.0;
+  double goal_velocity = 5.0;
+  double initial_accel = 0.0;
+  double goal_accel = 0.0;
+  double initial_time = 0.0;
+  double tp = 5;
+
+  cav_msgs::TrajectoryPlan jmt_traj = plugin.generate_JMT_trajectory(original_tp, initial_pos, goal_pos, initial_velocity, goal_velocity, tp);
+
+  EXPECT_EQ(jmt_traj.trajectory_points.size(), original_tp.trajectory_points.size());
+  EXPECT_LE(jmt_traj.trajectory_points[2].target_time, original_tp.trajectory_points[2].target_time);
+
 }
 
 

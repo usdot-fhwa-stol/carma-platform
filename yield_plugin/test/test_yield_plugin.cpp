@@ -23,6 +23,12 @@
 #include <chrono>
 
 
+void callback(const cav_msgs::MobilityResponseConstPtr& msg)
+{
+    ROS_INFO_STREAM("Test callback..");
+}
+
+
 TEST(YieldPlugin, UnitTestYield)
 {
     
@@ -84,10 +90,23 @@ TEST(YieldPlugin, UnitTestYield)
     double res = 0;
 
     ros::CARMANodeHandle nh;
+
     ros::ServiceClient plugin1= nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/Yieldlugin/plan_trajectory");
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    ros::Subscriber mob_resp_sub = nh.subscribe("outgoing_mobility_response", 5, callback);    
+    
 
+    ros::Publisher mob_req_pub = nh.advertise<cav_msgs::MobilityRequest>("incoming_mobility_request", 5);
+    cav_msgs::MobilityRequest req1;
+    mob_req_pub.publish(req1);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    ros::spinOnce(); 
+    
+    EXPECT_EQ(1, mob_req_pub.getNumSubscribers());
+
+    EXPECT_EQ(1, mob_resp_sub.getNumPublishers()); 
+    
     if (plugin1.call(traj_srv))
     {   
         ROS_INFO("Service called");

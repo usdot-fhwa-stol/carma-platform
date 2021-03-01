@@ -101,7 +101,7 @@ install(DIRECTORY launch config
 ## Testing ##
 #############
 
-catkin_add_gmock(${PROJECT_NAME}-test test/test_yield.cpp)
+catkin_add_gmock(${PROJECT_NAME}-test test/test_yield.cpp test/test_cooperative_yield.cpp)
 target_link_libraries(${PROJECT_NAME}-test yield_plugin_library ${catkin_LIBRARIES})
 
 add_rostest_gtest(test_yield_plugin test/yield_plugin.test test/test_yield_plugin.cpp)

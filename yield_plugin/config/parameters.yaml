@@ -38,4 +38,10 @@ vehicle_height: 3.0
 # Maximum speed value to consider the ego vehicle stopped
 # Units: m/s
 # Value type: Desired
-max_stop_speed: 1.0           
+max_stop_speed: 1.0 
+# parameter to enable cooperative behavior
+# Value type: Desired
+enable_cooperative_behavior: true 
+# parameter to always accept mobility request
+# Value type: Desired
+always_accept_mobility_request: true 

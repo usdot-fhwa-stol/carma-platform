@@ -19,6 +19,8 @@
 #include <cav_msgs/Plugin.h>
 #include <carma_utils/CARMAUtils.h>
 #include <cav_srvs/PlanTrajectory.h>
+#include <cav_msgs/MobilityResponse.h>
+#include <cav_msgs/BSM.h>
 #include <carma_wm/WMListener.h>
 #include <functional>
 
@@ -46,6 +48,7 @@ public:
     auto wm_ = wml.getWorldModel();
 
     ros::Publisher discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
+    ros::Publisher mob_resp_pub = nh.advertise<cav_msgs::MobilityResponse>("outgoing_mobility_response", 1);
 
     YieldPluginConfig config;
 
@@ -56,16 +59,21 @@ public:
     pnh.param<double>("yield_max_deceleration", config.yield_max_deceleration, config.yield_max_deceleration);
     pnh.param<double>("x_gap", config.x_gap, config.x_gap);
     pnh.param<double>("max_stop_speed", config.max_stop_speed, config.max_stop_speed);
-    pnh.param<double>("/vehicle_length", config.vehicle_length, config.vehicle_length);
-    pnh.param<double>("/vehicle_height", config.vehicle_height, config.vehicle_height);
-    pnh.param<double>("/vehicle_width", config.vehicle_width, config.vehicle_width);
+    pnh.getParam("/vehicle_length", config.vehicle_length);
+    pnh.getParam("/vehicle_height", config.vehicle_height);
+    pnh.getParam("/vehicle_width", config.vehicle_width);
+    pnh.getParam("/vehicle_id", config.vehicle_id);
+    pnh.param<bool>("always_accept_mobility_request", config.always_accept_mobility_request, config.always_accept_mobility_request);
     ROS_INFO_STREAM("YieldPlugin Params" << config);
 
-    YieldPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); });
+    YieldPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); }, [&mob_resp_pub](auto msg) { mob_resp_pub.publish(msg); });
 
     // TODO confirm the name of service (should include inlane cruising?)
     ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/Yieldlugin/plan_trajectory",
                                             &YieldPlugin::plan_trajectory_cb, &worker);
+    ros::Subscriber mob_request_sub = nh.subscribe("incoming_mobility_request", 5, &YieldPlugin::mobilityrequest_cb,  &worker);
+    ros::Subscriber bsm_sub_ = nh.subscribe("bsm_outbound", 1, &YieldPlugin::bsm_cb,  &worker);
+    
 
     ros::CARMANodeHandle::setSpinCallback(std::bind(&YieldPlugin::onSpin, &worker));
     ros::CARMANodeHandle::spin();
