@@ -33,7 +33,7 @@
 # Stage 1 - Acquire the CARMA source as well as any extra packages
 # /////////////////////////////////////////////////////////////////////////////
 
-FROM usdotfhwastoldev/autoware.ai:develop AS base-image
+FROM usdotfhwastolcandidate/autoware.ai:vanden-plas AS base-image
 
 FROM base-image AS source-code
 

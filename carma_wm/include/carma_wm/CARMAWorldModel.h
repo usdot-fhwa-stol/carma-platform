@@ -101,6 +101,10 @@ public:
 */
   void setConfigSpeedLimit(double config_lim);
   
+  /*! \brief Set endpoint of the route
+   */
+  void setRouteEndPoint(const lanelet::BasicPoint3d& end_point);
+
   ////
   // Overrides
   ////
@@ -115,6 +119,8 @@ public:
   lanelet::LaneletMapConstPtr getMap() const override;
 
   LaneletRouteConstPtr getRoute() const override;
+
+  TrackPos getRouteEndTrackPos() const override;
 
   LaneletRoutingGraphConstPtr getMapRoutingGraph() const override;
 

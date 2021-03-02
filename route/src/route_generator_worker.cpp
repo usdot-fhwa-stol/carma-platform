@@ -203,6 +203,12 @@ namespace route {
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
                 return true;
             }
+
+            // Specify the end point of the route that is inside the last lanelet
+            lanelet::Point3d end_point{lanelet::utils::getId(), destination_points_in_map.back().x(), destination_points_in_map.back().y(), 0};
+
+            route->setEndPoint(end_point);
+
             // update route message
             route_msg_ = compose_route_msg(route);
 
@@ -284,8 +290,23 @@ namespace route {
     visualization_msgs::MarkerArray RouteGeneratorWorker::compose_route_marker_msg(const lanelet::Optional<lanelet::routing::Route>& route)
     {
         std::vector<lanelet::ConstPoint3d> points;
+        auto end_point_3d = route.get().getEndPoint();
+        auto last_ll = route.get().shortestPath().back();
+        double end_point_downtrack = carma_wm::geometry::trackPos(last_ll, {end_point_3d.x(), end_point_3d.y()}).downtrack;
+        double lanelet_downtrack = carma_wm::geometry::trackPos(last_ll, last_ll.centerline().back().basicPoint2d()).downtrack;
+        // get number of points to display using ratio of the downtracks
+        int points_until_end_point = (int) last_ll.centerline().size() * (end_point_downtrack / lanelet_downtrack);
+  
         for(const auto& ll : route.get().shortestPath())
         {
+            if (ll.id() == last_ll.id())
+            {
+                for (int i = 0; i < points_until_end_point; i++)
+                {
+                    points.push_back(ll.centerline()[i]);
+                }
+                continue;
+            }
             for(const auto& pt : ll.centerline())
             {
                 points.push_back(pt);
@@ -348,6 +369,10 @@ namespace route {
         {
             msg.route_path_lanelet_ids.push_back(ll.id());
         }
+        msg.end_point.x  = route->getEndPoint().x();
+        msg.end_point.y  = route->getEndPoint().y();
+        msg.end_point.z  = route->getEndPoint().z();
+
         return msg;
     }
 

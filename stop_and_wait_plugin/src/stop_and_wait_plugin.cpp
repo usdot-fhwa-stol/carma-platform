@@ -211,7 +211,7 @@ namespace stop_and_wait_plugin
                     ending_downtrack = travel_dist_new + starting_downtrack;
 
                     auto shortest_path = wm_->getRoute()->shortestPath();
-                    if(ending_downtrack > wm_->routeTrackPos(shortest_path.back().centerline2d().back()).downtrack)
+                    if(ending_downtrack > wm_->getRouteEndTrackPos().downtrack)
                     {
                         ROS_ERROR("Ending distance is beyond known route");
                         throw std::invalid_argument("Ending distance is beyond known route"); 
@@ -233,7 +233,11 @@ namespace stop_and_wait_plugin
 
                 lanelet::BasicLineString2d route_geometry = carma_wm::geometry::concatenate_lanelets(lanelets_to_add);
                 int nearest_pt_index = getNearestRouteIndex(route_geometry,state);
-                lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.end());
+                auto temp_state = state;
+                temp_state.X_pos_global = wm_->getRoute()->getEndPoint().basicPoint2d().x();
+                temp_state.Y_pos_global =  wm_->getRoute()->getEndPoint().basicPoint2d().y();
+                int nearest_end_pt_index = getNearestRouteIndex(route_geometry,temp_state);
+                lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.begin()+ nearest_end_pt_index);
                 
                 int points_count = future_route_geometry.size();
                 delta_time = maneuver_time_/(points_count-1);
