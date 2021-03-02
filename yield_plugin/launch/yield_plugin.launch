@@ -1,5 +1,5 @@
 <!--
-  Copyright (C) 2019-2020 LEIDOS.
+  Copyright (C) 2018-2020 LEIDOS.
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
   the License at
@@ -11,12 +11,10 @@
   the License.
 -->
 <!--
-  This file is used to launch the CARMA3 motion_computation node
+  This file is used to launch the tactical yield plugin.
 -->
-
 <launch>
-  <node name="motion_computation" pkg="motion_computation" type="motion_computation_node">
-    <rosparam command="load" file="$(find motion_computation)/config/parameters.yaml"/>
-    <remap from="incoming_mobility_path" to="$(optenv CARMA_MSG_NS)/incoming_mobility_path"/>
-  </node>
+    <node name="yield_plugin" pkg="yield_plugin" type="yield_plugin">
+      <rosparam command="load" file="$(find yield_plugin)/config/parameters.yaml"/>
+    </node>
 </launch>
