@@ -79,11 +79,6 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
 
   ROS_DEBUG_STREAM("points_and_target_speeds: " << points_and_target_speeds.size());
 
-  auto downsampled_points =
-      carma_utils::containers::downsample_vector(points_and_target_speeds, config_.downsample_ratio);
-
-  ROS_DEBUG_STREAM("downsample_points: " << downsampled_points.size());
-
   ROS_DEBUG_STREAM("PlanTrajectory");
 
   cav_msgs::TrajectoryPlan trajectory;
@@ -91,7 +86,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   trajectory.header.stamp = ros::Time::now();
   trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
-  trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state, req.header.stamp); // Compute the trajectory
+  trajectory.trajectory_points = compose_trajectory_from_centerline(points_and_target_speeds, req.vehicle_state, req.header.stamp); // Compute the trajectory
   trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
 
   resp.trajectory_plan = trajectory;
@@ -346,7 +341,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   std::vector<double> final_yaw_values = carma_wm::geometry::compute_tangent_orientations(all_sampling_points);
 
-  std::vector<double> curvatures = better_curvature;
+  log::printDoublesPerLineWithPrefix("raw_curvatures[i]: ", better_curvature);
+
+  std::vector<double> curvatures = smoothing::moving_average_filter(better_curvature, config_.curvature_moving_average_window_size, false);
 
   std::vector<double> ideal_speeds =
       trajectory_utils::constrained_speeds_for_curvatures(curvatures, config_.lateral_accel_limit);
@@ -399,7 +396,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   log::printDoublesPerLineWithPrefix("postAccel[i]: ", final_actual_speeds);
 
-  final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, config_.moving_average_window_size);
+  final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, config_.speed_moving_average_window_size);
   log::printDoublesPerLineWithPrefix("post_average[i]: ", final_actual_speeds);
 
   for (auto& s : final_actual_speeds)  // Limit minimum speed. TODO how to handle stopping?
@@ -510,21 +507,37 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
     auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist, true);
 
     ROS_DEBUG_STREAM("Maneuver");
-    std::vector<lanelet::ConstLanelet> lanelets_to_add;
+
+    lanelet::BasicLineString2d downsampled_centerline;
+    downsampled_centerline.reserve(200);
+
     for (auto l : lanelets)
     {
       ROS_DEBUG_STREAM("Lanelet ID: " << l.id());
       if (visited_lanelets.find(l.id()) == visited_lanelets.end())
       {
-        lanelets_to_add.push_back(l);
+        bool is_turn = false;
+        if(l.hasAttribute("turn_direction")) {
+          std::string turn_direction = l.attribute("turn_direction").value();
+          is_turn = turn_direction.compare("left") == 0 || turn_direction.compare("right") == 0;
+        }
+
+        
+        lanelet::BasicLineString2d centerline = l.centerline2d().basicLineString();
+        lanelet::BasicLineString2d downsampled_points;
+        if (is_turn) {
+          downsampled_points = carma_utils::containers::downsample_vector(centerline, config_.turn_downsample_ratio);
+        } else {
+          downsampled_points = carma_utils::containers::downsample_vector(centerline, config_.default_downsample_ratio);
+        }
+        downsampled_centerline = carma_wm::geometry::concatenate_line_strings(downsampled_centerline, downsampled_points);
         visited_lanelets.insert(l.id());
       }
     }
 
-    lanelet::BasicLineString2d route_geometry = carma_wm::geometry::concatenate_lanelets(lanelets_to_add);
 
     first = true;
-    for (auto p : route_geometry)
+    for (auto p : downsampled_centerline)
     {
       if (first && points_and_target_speeds.size() != 0)
       {
