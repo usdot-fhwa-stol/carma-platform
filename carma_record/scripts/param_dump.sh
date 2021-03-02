@@ -18,12 +18,13 @@
 sleep 10 # Sleep for 10s to allow the network to startup
 
 LOG_FOLDER="/opt/carma/logs"
+
 if [ -d "${LOG_FOLDER}/latest" ]
 then # If the latest folder exists then log to that
   
   echo "param_dump placing rosparams.yaml in ${LOG_FOLDER}/latest/rosparams.yaml"
-
-  rosparam dump > "${LOG_FOLDER}/latest/rosparams.yaml"
+  
+  rosparam dump > "${LOG_FOLDER}/latest/rosparams.yaml" # Store in file
 
 else # Handle case where latest/ does not exist
 
@@ -46,5 +47,9 @@ else # Handle case where latest/ does not exist
 
   echo "param_dump placing rosparams.yaml in ${BACKUPDIR}"
 
-  rosparam dump > "${BACKUPDIR}/rosparams.yaml"
+  rosparam dump > "${BACKUPDIR}/rosparams.yaml" # Store in file
 fi
+
+PARAM_DUMP=$(rosparam dump) # Get params
+rostopic pub --once /carma_record/rosparams std_msgs/String "${PARAM_DUMP}" # Try to store in rosbag
+
