@@ -51,7 +51,7 @@ find_package(Eigen3 REQUIRED)
 
 catkin_package(
   CATKIN_DEPENDS ${CATKIN_DEPS}
-  DEPENDS Boost Eigen3
+  DEPENDS Boost EIGEN3
 )
 
 ###########
