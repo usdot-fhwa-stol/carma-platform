@@ -441,10 +441,10 @@ namespace route {
                     this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
                     publish_route_event(cav_msgs::RouteEvent::ROUTE_DEPARTED);
                 }
-                
+
             // check if we reached our destination be remaining down track distance
-            auto end_point_3d = route.get().getEndPoint();
-            auto last_ll = route.get().shortestPath().back();
+            auto end_point_3d = world_model_->getRoute()->getEndPoint();
+            auto last_ll = world_model_->getRoute()->shortestPath().back();
             double end_point_downtrack = carma_wm::geometry::trackPos(last_ll, {end_point_3d.x(), end_point_3d.y()}).downtrack;
             double last_lanelet_downtrack = carma_wm::geometry::trackPos(last_ll, last_ll.centerline().back().basicPoint2d()).downtrack;
             
