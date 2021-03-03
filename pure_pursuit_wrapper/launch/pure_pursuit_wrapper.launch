@@ -10,6 +10,7 @@
             <arg name="is_linear_interpolation" value="True"/>
             <arg name="publishes_for_steering_robot" value="True"/>
         </include>
+        <rosparam command="load" file="$(arg vehicle_calibration_dir)/pure_pursuit/calibration.yaml"/>
     </group>
     <!-- Pure Pursuit Wrapper Node -->
     <group>
