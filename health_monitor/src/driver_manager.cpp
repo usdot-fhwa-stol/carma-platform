@@ -21,8 +21,9 @@ namespace health_monitor
 
     DriverManager::DriverManager() {}
 
-    DriverManager::DriverManager(std::vector<std::string> critical_driver_names, const long driver_timeout, std::vector<std::string> lidar_gps_driver_names):
-                                em_(EntryManager(critical_driver_names,lidar_gps_driver_names)), driver_timeout_(driver_timeout) {}
+    DriverManager::DriverManager(std::vector<std::string> critical_driver_names, const long driver_timeout, std::vector<std::string> lidar_gps_driver_names,
+     std::vector<std::string> camera_driver_names):
+                                em_(EntryManager(critical_driver_names,lidar_gps_driver_names, camera_driver_names)), driver_timeout_(driver_timeout) {}
 
     void DriverManager::update_driver_status(const cav_msgs::DriverStatusConstPtr& msg, long current_time)
     {
@@ -48,6 +49,8 @@ namespace health_monitor
         int lidar1=0;
         int lidar2=0;
         int gps=0;
+        int camera=0; //Add Camera Driver
+
         std::vector<Entry> driver_list = em_.get_entries(); //Real time driver list from driver status
         for(auto i = driver_list.begin(); i < driver_list.end(); ++i)
         {
@@ -68,6 +71,11 @@ namespace health_monitor
             {
               evaluate_sensor(gps,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
+            else if(em_.is_camera_entry_required(i->name_)==1)
+            {
+                evaluate_sensor(camera,i->available_,current_time,i->timestamp_,driver_timeout_);
+            }
+            
         }
 
         //Decision making 
@@ -108,6 +116,11 @@ namespace health_monitor
         {
             return "s_1_l1_1_l2_1_g_1";
         }
+        else if (camera==0)
+        {
+            return "s_1_c_0";
+        }
+        
     }
 
 
@@ -116,6 +129,7 @@ namespace health_monitor
         int ssc=0;
         int lidar=0;
         int gps=0;
+        int camera=0;
         std::vector<Entry> driver_list = em_.get_entries(); //Real time driver list from driver status
         for(auto i = driver_list.begin(); i < driver_list.end(); ++i)
         {
@@ -130,6 +144,10 @@ namespace health_monitor
             else if(em_.is_lidar_gps_entry_required(i->name_)==1) //GPS
             {
                 evaluate_sensor(gps,i->available_,current_time,i->timestamp_,driver_timeout_);
+            }
+            else if(em_.is_camera_entry_required(i->name_)==1)
+            {
+                evaluate_sensor(camera,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
         }
 
@@ -151,6 +169,10 @@ namespace health_monitor
             else if((lidar==1) && (gps==1))
             {
                 return "s_1_l_1_g_1";
+            }
+            else if (camera==0)
+            {
+                return "s_1_c_0";
             }
         }
         else
@@ -217,6 +239,11 @@ namespace health_monitor
                 alert.type = cav_msgs::SystemAlert::SHUTDOWN;
                 return alert;
             }
+            else if(status.compare("s_1_c_0")==0)
+            {
+                alert.description = "Camera Failed";
+                alert.type = cav_msgs::SystemAlert::WARNING;
+            }
             else
             {
                 alert.description = "Unknown problem assessing essential driver availability";
@@ -264,6 +291,11 @@ namespace health_monitor
                 alert.description = "SSC Failed";
                 alert.type = cav_msgs::SystemAlert::SHUTDOWN;
                 return alert; 
+            }
+            else if(status.compare("s_1_c_0") == 0)
+            {
+                alert.description = "Camera Failed";
+                alert.type = cav_msgs::SystemAlert::WARNING;
             }
             else
             {

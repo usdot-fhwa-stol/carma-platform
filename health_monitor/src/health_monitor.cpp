@@ -94,7 +94,7 @@ namespace health_monitor
 
         // initialize worker class
         plugin_manager_ = PluginManager(required_plugins_, plugin_service_prefix_, strategic_plugin_service_suffix_, tactical_plugin_service_suffix_);
-        driver_manager_ = DriverManager(required_drivers_, driver_timeout_,lidar_gps_drivers_); 
+        driver_manager_ = DriverManager(required_drivers_, driver_timeout_,lidar_gps_drivers_,camera_drivers_); 
 
         // record starup time
         start_up_timestamp_ = ros::Time::now().toNSec() / 1e6;
