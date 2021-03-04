@@ -60,7 +60,7 @@ namespace stop_and_wait_plugin
         
         plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery",1);
         jerk_pub_ = nh_->advertise<std_msgs::Float64>("jerk",1);
-        plugin_discovery_msg_.name = "Stop and Wait";
+        plugin_discovery_msg_.name = "StopandWaitPlugin";
         plugin_discovery_msg_.versionId = "v1.0";
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = false;
