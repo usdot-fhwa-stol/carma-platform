@@ -166,19 +166,19 @@ void LocalizationTransitionTable::signalWhenDEGRADED_NO_LIDAR_FIX(LocalizationSi
   switch (signal)
   {
     case LocalizationSignal::INITIAL_POSE:
-      if (mode_ != LocalizerMode::GNSS)
+      if (mode_ != LocalizerMode::GNSS && mode_ != LocalizerMode::GNSS_WITH_NDT_INIT)
       {
         setAndLogState(LocalizationState::INITIALIZING, signal);
       }
       break;
     case LocalizationSignal::GOOD_NDT_FREQ_AND_FITNESS_SCORE:
-      if (mode_ != LocalizerMode::GNSS)
+      if (mode_ != LocalizerMode::GNSS && mode_ != LocalizerMode::GNSS_WITH_NDT_INIT)
       {
         setAndLogState(LocalizationState::OPERATIONAL, signal);
       }
       break;
     case LocalizationSignal::TIMEOUT:
-      if (mode_ != LocalizerMode::GNSS && mode_ != LocalizerMode::AUTO_WITHOUT_TIMEOUT)
+      if (mode_ != LocalizerMode::GNSS && mode_ != LocalizerMode::AUTO_WITHOUT_TIMEOUT && mode_ != LocalizerMode::GNSS_WITH_NDT_INIT)
       {
         setAndLogState(LocalizationState::AWAIT_MANUAL_INITIALIZATION, signal);
       }
