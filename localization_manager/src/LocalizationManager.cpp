@@ -86,6 +86,18 @@ void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedC
 
   const LocalizationState state = transition_table_.getState();
 
+  if (config_.localization_mode == LocalizerMode::GNSS_WITH_NDT_INIT && state == LocalizationState::OPERATIONAL && last_raw_gnss_value_)
+  {
+    if (sequential_timesteps_counter_ < config_.sequential_timesteps_until_gps_operation)
+    {
+      sequential_timesteps_counter_ ++;
+    }
+    else
+    {
+      transition_table_.signal(LocalizationSignal::LIDAR_INITIALIZED_SWITCH_TO_GPS);
+    }
+  }
+  
   if (state == LocalizationState::OPERATIONAL && last_raw_gnss_value_) {
     tf2::Vector3 ndt_translation(pose->pose.position.x, pose->pose.position.y, pose->pose.position.z);
 

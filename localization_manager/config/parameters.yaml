@@ -24,9 +24,15 @@ auto_initialization_timeout: 30000
 # Units: ms
 gnss_only_operation_timeout: 20000
 
+# Integer: Maximum allowed number of sequential timesteps to let lidar initialize before switching to GPS only mode
+# NOTE: Only used in GNSS only with NDT initialization mode
+# Units: Int
+sequential_timesteps_until_gps_operation: 5
+
 # Integer Enum: Localization mode for the platform
 # 0 - NDT only
 # 1 - GNSS only
 # 2 - AUTO select between NDT and GNSS with GNSS timeout
 # 3 - AUTO select between NDT and GNSS without GNSS timeout
+# 4 - GNSS only with NDT initialization
 localization_mode: 3

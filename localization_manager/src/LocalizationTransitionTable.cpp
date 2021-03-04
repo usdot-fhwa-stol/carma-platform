@@ -111,7 +111,8 @@ void LocalizationTransitionTable::signalWhenOPERATIONAL(LocalizationSignal signa
       break;
     case LocalizationSignal::LIDAR_SENSOR_FAILURE: // Allowing fallthrough for duplicated behavior
     case LocalizationSignal::UNUSABLE_NDT_FREQ_OR_FITNESS_SCORE:
-      if (mode_ == LocalizerMode::AUTO_WITH_TIMEOUT || mode_ == LocalizerMode::AUTO_WITHOUT_TIMEOUT)
+    case LocalizationSignal::LIDAR_INITIALIZED_SWITCH_TO_GPS:
+      if (mode_ == LocalizerMode::GNSS_WITH_NDT_INIT || mode_ == LocalizerMode::AUTO_WITH_TIMEOUT || mode_ == LocalizerMode::AUTO_WITHOUT_TIMEOUT)
       {
         setAndLogState(LocalizationState::DEGRADED_NO_LIDAR_FIX, signal);
       }
@@ -206,7 +207,6 @@ void LocalizationTransitionTable::signalWhenAWAIT_MANUAL_INITIALIZATION(Localiza
       break;
   }
 }
-
 void LocalizationTransitionTable::signal(LocalizationSignal signal)
 {
   switch (state_)
