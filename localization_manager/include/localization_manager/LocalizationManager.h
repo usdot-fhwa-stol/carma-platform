@@ -141,6 +141,7 @@ private:
 
   TimerUniquePtr current_timer_;
   int sequential_timesteps_counter_ = 0;
+  bool is_sequential_ = false;
   std::vector<TimerUniquePtr> expired_timers_;
   boost::optional<geometry_msgs::PoseStamped> last_raw_gnss_value_;
   boost::optional<tf2::Vector3> gnss_offset_;

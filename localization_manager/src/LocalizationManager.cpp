@@ -90,12 +90,20 @@ void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedC
   {
     if (sequential_timesteps_counter_ < config_.sequential_timesteps_until_gps_operation)
     {
-      sequential_timesteps_counter_ ++;
+      if (is_sequential_)
+        sequential_timesteps_counter_ ++;
+      
+      is_sequential_ = true;
     }
     else
     {
       transition_table_.signal(LocalizationSignal::LIDAR_INITIALIZED_SWITCH_TO_GPS);
     }
+  }
+  else 
+  {
+    is_sequential_ = false;
+    sequential_timesteps_counter_ = 0;
   }
   
   if (state == LocalizationState::OPERATIONAL && last_raw_gnss_value_) {
