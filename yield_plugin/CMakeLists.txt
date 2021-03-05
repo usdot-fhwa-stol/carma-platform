@@ -15,7 +15,7 @@
 #
 
 cmake_minimum_required(VERSION 2.8.3)
-project(inlanecruising_plugin)
+project(yield_plugin)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++14)
@@ -68,26 +68,15 @@ include_directories(
 
 add_executable( ${PROJECT_NAME}
   src/main.cpp)
-add_library(inlanecruising_plugin_library 
-  src/inlanecruising_plugin.cpp
-  src/smoothing/BSpline.cpp
+add_library(yield_plugin_library 
+  src/yield_plugin.cpp
 )
-target_link_libraries(inlanecruising_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
+target_link_libraries(yield_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+add_dependencies(yield_plugin_library ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(${PROJECT_NAME} inlanecruising_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(${PROJECT_NAME} inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME} yield_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+add_dependencies(${PROJECT_NAME} yield_plugin_library ${catkin_EXPORTED_TARGETS})
 
-add_library(helper src/helper.cpp)
-target_link_libraries(helper
-  ${catkin_LIBRARIES}
-)
-
-add_executable(helper_node src/helper.cpp)
-target_link_libraries(helper_node
-  helper
-  ${catkin_LIBRARIES}
-)
 #############
 ## Install ##
 #############
@@ -97,7 +86,7 @@ install(DIRECTORY include
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME} inlanecruising_plugin_library
+install(TARGETS ${PROJECT_NAME} yield_plugin_library
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -112,16 +101,11 @@ install(DIRECTORY launch config
 ## Testing ##
 #############
 
-catkin_add_gmock(${PROJECT_NAME}-test 
-  test/test_inlanecruising_plugin_planning.cpp
-  test/test_inlanecruising_plugin.cpp
-)
-target_link_libraries(${PROJECT_NAME}-test inlanecruising_plugin_library ${catkin_LIBRARIES})
+catkin_add_gmock(${PROJECT_NAME}-test test/test_yield.cpp)
+target_link_libraries(${PROJECT_NAME}-test yield_plugin_library ${catkin_LIBRARIES})
 
 if(CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
-  add_rostest_gtest(rostest_ilc test/ilc_plugin.test test/rostest_ilc.cpp)
-  target_link_libraries(rostest_ilc ${catkin_LIBRARIES})
+  add_rostest_gtest(test_yield_plugin test/yield_plugin.test test/test_yield_plugin.cpp)
+  target_link_libraries(test_yield_plugin ${catkin_LIBRARIES})
 endif()
-
-
