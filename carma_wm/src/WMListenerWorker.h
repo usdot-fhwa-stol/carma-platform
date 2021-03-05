@@ -96,6 +96,8 @@ public:
 
   bool checkIfReRoutingNeeded() const;
 
+  void setRouteFlag();
+
 private:
   std::shared_ptr<CARMAWorldModel> world_model_;
   std::function<void()> map_callback_;
@@ -104,5 +106,6 @@ private:
   double config_speed_limit_;
   autoware_lanelet2_msgs::MapBin local_geofence_msg_;
   bool rerouting_flag_=false;
+  bool i_am_route_=false;
 };
 }  // namespace carma_wm

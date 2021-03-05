@@ -58,14 +58,24 @@ bool WMListenerWorker::checkIfReRoutingNeeded()
   return rerouting_flag_;
 }
 
+void WMListenerWorker::setRouteFlag()
+{
+  i_am_route_=true;
+}
+
 void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg) const
 {
 
-  if(geofence_msg.invalidates_route==true)
-  {
-  local_geofence_msg_=geofence_msg;
-  rerouting_flag_=true;
-  }
+  if(geofence_msg.invalidates_route==true && local_geofence_msg_.rerouting_successful!=true)
+  {  
+    rerouting_flag_=true;
+    local_geofence_msg_=geofence_msg;
+
+    if(i_am_route_!=true)
+    {
+     return;
+    }
+}
 
   // convert ros msg to geofence object
   auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
@@ -108,7 +118,7 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinCon
   world_model_->setMap(world_model_->getMutableMap());
 
   
-  ROS_INFO_STREAM("Finished Applying the Map Update with Geofence Id:" << gf_ptr->id_);
+  ROS_INFO_STREAM("Finished Applying the Map Update with Geofence Id:" << gf_ptr->id_); 
 }
 
 /*!
@@ -155,6 +165,7 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
 
   if(rerouting_flag_==true)
   {
+    local_geofence_msg_.rerouting_successful=true;
     mapUpdateCallback(local_geofence_msg_);
   }
 

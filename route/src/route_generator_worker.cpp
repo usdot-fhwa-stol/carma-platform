@@ -428,7 +428,22 @@ namespace route {
         {
            this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_INVALIDATION);
            publish_route_event(cav_msgs::RouteEvent::ROUTE_INVALIDATION);
+
+           std::vector<lanelet::BasicPoint2d> destination_points_in_map_temp;
+
+           for( auto &i:destination_points_in_map_)
+           {
+               
+               double destination_down_track=world_model_->routeTrackPos(i).downtrack;
+                      
+               if( current_downtrack_distance_< destination_down_track)
+               {
+                    destination_points_in_map_temp.push_back(i);
+               }
+               
+           }
            
+           destination_points_in_map_=destination_points_in_map_temp;
            auto route=routing(destination_points_in_map_.front(),
                                 std::vector<lanelet::BasicPoint2d>(destination_points_in_map_.begin() + 1, destination_points_in_map_.end() - 1),
                                 destination_points_in_map_.back(),
@@ -451,6 +466,7 @@ namespace route {
 
            route_msg_=compose_route_msg(route);
            route_marker_msg_=compose_route_marker_msg(route);
+           route_generated_=true;
         }
     
         // publish new route and set new route flag back to false
