@@ -71,7 +71,7 @@ namespace health_monitor
             {
               evaluate_sensor(gps,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
-            else if(em_.is_camera_entry_required(i->name_)==1)
+            else if(em_.is_camera_entry_required(i->name_)==0)
             {
                 evaluate_sensor(camera,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
@@ -112,13 +112,13 @@ namespace health_monitor
         {
             return "s_1_l1_1_l2_1_g_0";
         }
-        else if((lidar1==1) && (lidar2==1) && (gps==1))
-        {
-            return "s_1_l1_1_l2_1_g_1";
-        }
         else if (camera==0)
         {
             return "s_1_c_0";
+        }
+        else if((lidar1==1) && (lidar2==1) && (gps==1))
+        {
+            return "s_1_l1_1_l2_1_g_1";
         }
         
     }
@@ -145,7 +145,7 @@ namespace health_monitor
             {
                 evaluate_sensor(gps,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
-            else if(em_.is_camera_entry_required(i->name_)==1)
+            else if(em_.is_camera_entry_required(i->name_)==0)
             {
                 evaluate_sensor(camera,i->available_,current_time,i->timestamp_,driver_timeout_);
             }
@@ -158,6 +158,7 @@ namespace health_monitor
             {
                 return "s_1_l_0_g_0";
             }
+            
             else if((lidar==0) && (gps==1))
             {
                 return "s_1_l_0_g_1";
@@ -166,14 +167,15 @@ namespace health_monitor
             {
                 return "s_1_l_1_g_0";
             }
-            else if((lidar==1) && (gps==1))
-            {
-                return "s_1_l_1_g_1";
-            }
             else if (camera==0)
             {
                 return "s_1_c_0";
             }
+            else if((lidar==1) && (gps==1))
+            {
+                return "s_1_l_1_g_1";
+            }
+
         }
         else
         {
@@ -201,6 +203,11 @@ namespace health_monitor
                 alert.description = "System is starting up...";
                 alert.type = cav_msgs::SystemAlert::NOT_READY;
                 return alert;
+            }
+             else if(status.compare("s_1_c_0")==0)
+            {
+                alert.description = "Camera Failed";
+                alert.type = cav_msgs::SystemAlert::WARNING;
             }
             else if((status.compare("s_1_l1_0_l2_1_g_1") == 0) || (status.compare("s_1_l1_1_l2_0_g_1") == 0))
             {
@@ -239,11 +246,6 @@ namespace health_monitor
                 alert.type = cav_msgs::SystemAlert::SHUTDOWN;
                 return alert;
             }
-            else if(status.compare("s_1_c_0")==0)
-            {
-                alert.description = "Camera Failed";
-                alert.type = cav_msgs::SystemAlert::WARNING;
-            }
             else
             {
                 alert.description = "Unknown problem assessing essential driver availability";
@@ -267,6 +269,11 @@ namespace health_monitor
                 alert.description = "System is starting up...";
                 alert.type = cav_msgs::SystemAlert::NOT_READY;
                 return alert; 
+            }
+             else if(status.compare("s_1_c_0") == 0)
+            {
+                alert.description = "Camera Failed";
+                alert.type = cav_msgs::SystemAlert::WARNING;
             } 
             else if(status.compare("s_1_l_1_g_0") == 0)
             {
@@ -291,11 +298,6 @@ namespace health_monitor
                 alert.description = "SSC Failed";
                 alert.type = cav_msgs::SystemAlert::SHUTDOWN;
                 return alert; 
-            }
-            else if(status.compare("s_1_c_0") == 0)
-            {
-                alert.description = "Camera Failed";
-                alert.type = cav_msgs::SystemAlert::WARNING;
             }
             else
             {

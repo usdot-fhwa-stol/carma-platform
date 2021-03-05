@@ -54,7 +54,8 @@ namespace health_monitor
         
         pnh_->getParam("required_plugins", required_plugins_);
         pnh_->getParam("required_drivers", required_drivers_);
-        pnh_->getParam("lidar_gps_drivers", lidar_gps_drivers_); 
+        pnh_->getParam("lidar_gps_drivers", lidar_gps_drivers_);
+        pnh_->getParam("camera_drivers",camera_drivers_);
 
         truck_=false;
         car_=false;
@@ -87,6 +88,13 @@ namespace health_monitor
         for(auto p : lidar_gps_drivers_) {
             ROS_INFO_STREAM("   " << p);
         }
+        ROS_INFO_STREAM("  ]");
+
+        ROS_INFO_STREAM("camera_drivers: [");
+        for(auto p : camera_drivers_) {
+            ROS_INFO_STREAM("   " << p);
+        }
+
         ROS_INFO_STREAM("  ]");
         ROS_INFO_STREAM("}");
         
