@@ -33,6 +33,7 @@ namespace unobstructed_lanechange
         pnh_.reset(new ros::CARMANodeHandle("~"));
         
         trajectory_srv_ = nh_->advertiseService("plugins/UnobstructedLaneChangePlugin/plan_trajectory", &UnobstructedLaneChangePlugin::plan_trajectory_cb, this);
+        yield_client_ = nh_->serviceClient<cav_srvs::PlanTrajectory>("plugins/YieldPlugin/plan_trajectory");
                 
         unobstructed_lanechange_plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
         plugin_discovery_msg_.name = "UnobstructedLaneChangePlugin";
@@ -57,6 +58,7 @@ namespace unobstructed_lanechange
         pnh_->param<double>("moving_average_window_size", moving_average_window_size_, 5);
         pnh_->param<double>("curvature_calc_lookahead_count", curvature_calc_lookahead_count_, 1);
         pnh_->param<int>("downsample_ratio", downsample_ratio_, 8);
+        pnh_->param<bool>("enable_object_avoidance_lc", enable_object_avoidance_lc_, false);
 
 
 
@@ -105,16 +107,51 @@ namespace unobstructed_lanechange
         
         auto downsampled_points = carma_utils::containers::downsample_vector(points_and_target_speeds, downsample_ratio_);
 
-        cav_msgs::TrajectoryPlan trajectory;
-        trajectory.header.frame_id = "map";
-        trajectory.header.stamp = ros::Time::now();
-        trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
+        cav_msgs::TrajectoryPlan original_trajectory;
+        original_trajectory.header.frame_id = "map";
+        original_trajectory.header.stamp = ros::Time::now();
+        original_trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
-        trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state);
+        original_trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state);
 
-        trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, minimum_speed_);
+        original_trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, minimum_speed_);
 
-        resp.trajectory_plan = trajectory;
+        if (enable_object_avoidance_lc_)
+        {
+            if (yield_client_ && yield_client_.exists() && yield_client_.isValid())
+            {
+                ROS_DEBUG_STREAM("Yield Client is valid");
+                cav_srvs::PlanTrajectory yield_srv;
+                yield_srv.request.initial_trajectory_plan = original_trajectory;
+                yield_srv.request.vehicle_state = req.vehicle_state;
+                if (yield_client_.call(yield_srv))
+                {
+                    cav_msgs::TrajectoryPlan yield_plan = yield_srv.response.trajectory_plan;
+                    if (validate_yield_plan(yield_plan))
+                    {
+                    resp.trajectory_plan = yield_plan;
+                    }
+                    else
+                    {
+                    throw std::invalid_argument("Invalid Yield Trajectory");
+                    }
+                }
+                else
+                {
+                    throw std::invalid_argument("Unable to Call Yield Plugin");
+                }
+            }
+            else
+            {
+                throw std::invalid_argument("Yield Client is unavailable");
+            }
+        }
+        else
+        {
+            resp.trajectory_plan = original_trajectory;
+        }
+
+        
 
         for (int i=0; i<req.maneuver_plan.maneuvers.size(); i++){
             if (req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::LANE_CHANGE){
@@ -609,6 +646,26 @@ namespace unobstructed_lanechange
     
         return centerline_points;
         
+    }
+
+    bool UnobstructedLaneChangePlugin::validate_yield_plan(const cav_msgs::TrajectoryPlan& yield_plan)
+    {
+        if (yield_plan.trajectory_points.size()>= 2)
+        {
+            if (yield_plan.trajectory_points[0].target_time > ros::Time::now())
+            {
+            return true;
+            }
+            else
+            {
+            ROS_DEBUG_STREAM("Old Yield Trajectory");
+            }
+        }
+        else
+        {
+            ROS_DEBUG_STREAM("Invalid Yield Trajectory"); 
+        }
+        return false;
     }
 
 }

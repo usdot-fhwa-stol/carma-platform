@@ -197,10 +197,69 @@ namespace unobstructed_lanechange
         //Test Compute heading frame between two points
          Eigen::Isometry2d frame = worker.compute_heading_frame(start_position, end_position);
 
-
-
-
     }
+
+    TEST(InLaneCruisingPluginTest, test_verify_yield)
+{
+
+  UnobstructedLaneChangePlugin plugin;
+
+  std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points;
+
+    ros::Time startTime(ros::Time::now());
+
+    cav_msgs::TrajectoryPlanPoint point_2;
+    point_2.x = 5.0;
+    point_2.y = 0.0;
+    point_2.target_time = startTime + ros::Duration(1);
+    point_2.lane_id = "1";
+    trajectory_points.push_back(point_2);
+
+    cav_msgs::TrajectoryPlanPoint point_3;
+    point_3.x = 10.0;
+    point_3.y = 0.0;
+    point_3.target_time = startTime + ros::Duration(2);
+    point_3.lane_id = "1";
+    trajectory_points.push_back(point_3);
+
+
+    cav_msgs::TrajectoryPlan tp;
+    tp.trajectory_points = trajectory_points;
+
+    bool res = plugin.validate_yield_plan(tp);
+    ASSERT_TRUE(plugin.validate_yield_plan(tp));
+
+    cav_msgs::TrajectoryPlan tp2;
+
+    cav_msgs::TrajectoryPlanPoint point_4;
+    point_4.x = 5.0;
+    point_4.y = 0.0;
+    point_4.target_time = startTime + ros::Duration(1);
+    point_4.lane_id = "1";
+    tp2.trajectory_points.push_back(point_4);
+    
+    ASSERT_FALSE(plugin.validate_yield_plan(tp2));
+
+    cav_msgs::TrajectoryPlan tp3;
+
+    cav_msgs::TrajectoryPlanPoint point_5;
+    point_5.x = 5.0;
+    point_5.y = 0.0;
+    point_5.target_time = startTime;
+    point_5.lane_id = "1";
+    tp3.trajectory_points.push_back(point_5);
+
+    cav_msgs::TrajectoryPlanPoint point_6;
+    point_6.x = 10.0;
+    point_6.y = 0.0;
+    point_6.target_time = startTime + ros::Duration(1);
+    point_6.lane_id = "1";
+    tp3.trajectory_points.push_back(point_6);
+
+    ASSERT_FALSE(plugin.validate_yield_plan(tp2));
+    
+}
+
 
 }
 
