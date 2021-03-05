@@ -61,7 +61,7 @@ namespace route {
 
     void RouteGeneratorWorker::setReroutingChecker(std::function<bool()> inputFunction)
     {
-        localFunction=inputFunction;
+        reroutingChecker=inputFunction;
     }
 
     bool RouteGeneratorWorker::get_available_route_cb(cav_srvs::GetAvailableRoutesRequest& req, cav_srvs::GetAvailableRoutesResponse& resp)
@@ -424,7 +424,7 @@ namespace route {
     
     bool RouteGeneratorWorker::spin_callback()
     {
-        if(localFunction()==true)
+        if(reroutingChecker()==true)
         {
            this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_INVALIDATION);
            publish_route_event(cav_msgs::RouteEvent::ROUTE_INVALIDATION);

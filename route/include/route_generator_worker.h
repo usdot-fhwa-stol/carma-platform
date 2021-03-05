@@ -55,11 +55,12 @@ namespace route {
     {
 
     public:
-
-        std::function<bool()> localFunction;
         /**
-         * \brief Constructor for RouteGeneratorWorker class taking in dependencies via dependency injection
-         * \param tf_buffer ROS tf tree buffer for getting latest tf between any two available frames
+         * \brief reroutingChecker function to set the rerouting flag locally
+         */
+        std::function<bool()> reroutingChecker;
+        /**
+         * \brief setReroutingChecker function to set the rerouting flag
          */
         void setReroutingChecker(std::function<bool()> inputFunction);
         
