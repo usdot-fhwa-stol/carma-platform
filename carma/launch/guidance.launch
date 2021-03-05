@@ -88,11 +88,6 @@
   <include file="$(find plan_delegator)/launch/plan_delegator.launch"/>
 
   <!-- TODO Check topic remapping-->
-  <!-- Control Stack -->
-  <!-- Waypoint Follower Config-->
-  <node pkg="rostopic" type="rostopic" name="config_waypoint_follower_rostopic"
-        args="pub -l config/waypoint_follower autoware_config_msgs/ConfigWaypointFollower '{ header: auto, param_flag: 0, velocity: 5.0, displacement_threshold: 0.0, relative_angle_threshold: 0.0 }' "
-  />
 
   <!-- Trajectory Executor -->
   <include file="$(find trajectory_executor)/launch/trajectory_executor.launch" />

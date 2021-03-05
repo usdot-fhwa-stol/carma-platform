@@ -3,14 +3,14 @@
     
     <!-- Pure Pursuit Node -->
     <group>
-        <remap from="final_waypoints" to="carma_final_waypoints"/>
-        <remap from="/guidance/trajectory_plan" to="/guidance/mpc_follower/trajectory"/>
-        <remap from="vehicle_info/wheel_base" to="/vehicle_wheel_base"/>
-        <include file="$(find pure_pursuit)/launch/pure_pursuit.launch">
+        <node pkg="pure_pursuit" type="pure_pursuit" name="pure_pursuit" output="log">
+            <remap from="final_waypoints" to="carma_final_waypoints"/>
+            <remap from="/guidance/trajectory_plan" to="/guidance/mpc_follower/trajectory"/>
+            <remap from="vehicle_info/wheel_base" to="/vehicle_wheel_base"/>
             <arg name="is_linear_interpolation" value="True"/>
             <arg name="publishes_for_steering_robot" value="True"/>
             <rosparam command="load" file="$(arg vehicle_calibration_dir)/pure_pursuit/calibration.yaml"/>
-        </include>
+        </node>
     </group>
     <!-- Pure Pursuit Wrapper Node -->
     <group>
