@@ -16,6 +16,10 @@
 #include "object_detection_tracking_worker.h"
 #include <motion_predict/motion_predict.h>
 #include <motion_predict/predict_ctrv.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
 
 namespace object
 {
@@ -23,6 +27,9 @@ ObjectDetectionTrackingWorker::ObjectDetectionTrackingWorker(PublishObjectCallba
 
 void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::DetectedObjectArray& obj_array)
 {
+
+  std::cout << "call back called \n\n"; 
+
   cav_msgs::ExternalObjectList msg;
   msg.header = obj_array.header;
 
@@ -43,41 +50,34 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
     obj.presence_vector = obj.presence_vector | obj.OBJECT_TYPE_PRESENCE_VECTOR;
     obj.presence_vector = obj.presence_vector | obj.DYNAMIC_OBJ_PRESENCE;
 
-    // Object id. Matching ids on a topic should refer to the same object within some time period, expanded
-    obj.id = obj_array.objects[i].id;
 
-    // Pose of the object within the frame specified in header
-    tf::TransformListener listener;
-    ros::Rate rate(10.0);
-    tf::StampedTransform transform;
-
-
-    std::cout << " hellooooooooo" ;
     // Buffer which holds the tree of transforms
     tf2_ros::Buffer tfBuffer_;
     // tf2 listeners. Subscribes to the /tf and /tf_static topics
     tf2_ros::TransformListener tfListener_ {tfBuffer_};
 
+    std::string velodyne_frame_ = "velodyne";
+    std::string map_frame_ = "map";
 
-    listener.waitForTransform("map", "velodyne", ros::Time(0), ros::Duration(3.0));
-    try{
-      listener.lookupTransform("map", "velodyne", ros::Time(0), transform);
+    tf2::Transform velodyne_transform; 
+
+    try {
+      tf2::convert(tfBuffer_.lookupTransform("map", "velodyne", ros::Time(0)).transform,velodyne_transform);
+    } catch (tf2::TransformException &ex) {
+      ROS_WARN_STREAM("Ignoring fix message: Could not locate static transforms with exception " << ex.what());
     }
-    catch (tf::TransformException ex){
-      ROS_ERROR("%s",ex.what());
-      ros::Duration(1.0).sleep();
-    }
 
-    std::cout << " \n" << transform.getOrigin().x() + obj_array.objects[i].pose.position.x;
+    // Object id. Matching ids on a topic should refer to the same object within some time period, expanded
+    obj.id = obj_array.objects[i].id;
 
+    // Pose of the object within the frame specified in header
 
-    std::cout << " hello";
-    
-    obj.pose.pose.position.x = transform.getOrigin().x() + obj_array.objects[i].pose.position.x;
-    obj.pose.pose.position.y = transform.getOrigin().y() + obj_array.objects[i].pose.position.y;
+    obj.pose.pose = obj_array.objects[i].pose;
 
+    obj.pose.pose.position.x = obj_array.objects[i].pose.position.x + velodyne_transform.getOrigin().getX();
 
-    // obj.pose.pose = obj_array.objects[i].pose;
+    obj.pose.pose.position.y = obj_array.objects[i].pose.position.y + velodyne_transform.getOrigin().getY();
+
     obj.pose.covariance[0] = obj_array.objects[i].variance.x;
     obj.pose.covariance[7] = obj_array.objects[i].variance.y;
     obj.pose.covariance[17] = obj_array.objects[i].variance.z;
@@ -167,23 +167,5 @@ void ObjectDetectionTrackingWorker::setConfidenceDropRate(double drop_rate)
 {
   prediction_confidence_drop_rate_ = drop_rate;
 }
-/*
-void waitUntilCanTransform(const tf2_ros::Buffer& tf_buffer,
-                           const std::string& targetFrame,
-                           const std::string& sourceFrame,
-                           const ros::Time& time,
-                           const ros::Duration& timeout)
-{
-  // poll for transform if timeout is set
-  ros::Time start_time = ros::Time::now();
-  while (ros::Time::now() < start_time + timeout &&
-        !tf_buffer.canTransform(targetFrame, sourceFrame, time) &&
-        (ros::Time::now()+ros::Duration(3.0) >= start_time) &&  //don't wait when we detect a bag loop
-        (ros::ok() || !ros::isInitialized())) // Make sure we haven't been stopped (won't work for pytf)
-  {
-    ros::Duration(0.01).sleep();
-  }
-}
-*/
 
 }  // namespace object
