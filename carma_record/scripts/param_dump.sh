@@ -51,5 +51,9 @@ else # Handle case where latest/ does not exist
 fi
 
 PARAM_DUMP=$(rosparam dump) # Get params
-rostopic pub --once /carma_record/rosparams std_msgs/String "${PARAM_DUMP}" # Try to store in rosbag
+PARAM_DUMP=$(echo ${PARAM_DUMP} | tr ":" '=') # Convert colons to equals to support rostopic pub
+PARAM_DUMP=$(echo ${PARAM_DUMP} | tr "'" '"') # Replace single quotes with double to support rostopic pub
+PARAM_DUMP=\'${PARAM_DUMP}\' # Wrap whole thing in single quotes
+
+rostopic pub --once /carma_record/rosparams std_msgs/String "data: ${PARAM_DUMP}" # Try to store in rosbag
 
