@@ -76,7 +76,7 @@ namespace trajectory_executor
         ROS_DEBUG_STREAM("Successfully swapped trajectories!");
     }
 
-    void TrajectoryExecutor::guidanceStateMonitor(cav_msgs::GuidanceState msg)
+    void TrajectoryExecutor::guidanceStateMonitor(const cav_msgs::GuidanceStateConstPtr& msg)
     {
         std::unique_lock<std::mutex> lock(_cur_traj_mutex); // Acquire lock until end of this function scope
         // TODO need to handle control handover once alernative planner system is finished
