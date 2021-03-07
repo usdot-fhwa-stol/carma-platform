@@ -98,7 +98,9 @@
 
   <!-- Pure Pursuit Wrapper -->
   
-  <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch" />
+  <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch">
+	  <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
+  </include>
 
     <!-- Route Following Plugin -->
   <include file="$(find route_following_plugin)/launch/route_following_plugin.launch" />
