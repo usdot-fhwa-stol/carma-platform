@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="vehicle_calibration_dir" default="/opt/carma/vehicle/calibration/"/>
+    <arg name="vehicle_calibration_dir" default="/opt/carma/vehicle/calibration"/>
     <!-- Pure Pursuit Node -->
     <group>
         <node pkg="pure_pursuit" type="pure_pursuit" name="pure_pursuit" output="log">
