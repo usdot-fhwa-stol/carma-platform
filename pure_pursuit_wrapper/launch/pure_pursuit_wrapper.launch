@@ -5,7 +5,6 @@
     <group>
         <node pkg="pure_pursuit" type="pure_pursuit" name="pure_pursuit" output="log">
             <remap from="final_waypoints" to="carma_final_waypoints"/>
-            <remap from="/guidance/trajectory_plan" to="/guidance/mpc_follower/trajectory"/>
             <arg name="is_linear_interpolation" value="True"/>
             <arg name="publishes_for_steering_robot" value="True"/>
             <rosparam command="load" file="$(arg vehicle_calibration_dir)/pure_pursuit/calibration.yaml"/>
