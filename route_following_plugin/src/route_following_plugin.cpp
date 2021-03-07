@@ -72,7 +72,8 @@ namespace route_following_plugin
         }
         
         auto shortest_path = wm_->getRoute()->shortestPath();
-        lanelet::ConstLanelet current_lanelet = current_lanelets[0].second;
+
+        lanelet::ConstLanelet current_lanelet;
         int last_lanelet_index = -1;
         for (auto llt : current_lanelets)
         {
@@ -82,6 +83,7 @@ namespace route_following_plugin
                 if (potential_index != -1)
                 {
                     last_lanelet_index = potential_index;
+                    current_lanelet = shortest_path[last_lanelet_index];
                     break;
                 }
             }
@@ -97,7 +99,7 @@ namespace route_following_plugin
         double target_speed=findSpeedLimit(current_lanelet);   //get Speed Limit
 
         double total_maneuver_length = current_progress + mvr_duration_ * target_speed;
-        double route_length= wm_->routeTrackPos(shortest_path.back().centerline2d().back()).downtrack; 
+        double route_length=  wm_->getRouteEndTrackPos().downtrack; 
         total_maneuver_length = std::min(total_maneuver_length, route_length);
 
         bool approaching_route_end = false;

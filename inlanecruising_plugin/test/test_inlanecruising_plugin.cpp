@@ -56,7 +56,7 @@ TEST(InLaneCruisingPluginTest, validate_eigen)
 TEST(InLaneCruisingPluginTest, trajectory_from_points_times_orientations)
 {
   InLaneCruisingPluginConfig config;
-  config.downsample_ratio = 1;
+  config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
 
@@ -110,7 +110,7 @@ TEST(InLaneCruisingPluginTest, trajectory_from_points_times_orientations)
 TEST(InLaneCruisingPluginTest, constrain_to_time_boundary)
 {
   InLaneCruisingPluginConfig config;
-  config.downsample_ratio = 1;
+  config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
 
@@ -163,7 +163,7 @@ TEST(InLaneCruisingPluginTest, constrain_to_time_boundary)
 TEST(InLaneCruisingPluginTest, get_nearest_point_index)
 {
   InLaneCruisingPluginConfig config;
-  config.downsample_ratio = 1;
+  config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
 
@@ -207,7 +207,7 @@ TEST(InLaneCruisingPluginTest, get_nearest_point_index)
 TEST(InLaneCruisingPluginTest, get_nearest_basic_point_index)
 {
   InLaneCruisingPluginConfig config;
-  config.downsample_ratio = 1;
+  config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
 
@@ -242,7 +242,7 @@ TEST(InLaneCruisingPluginTest, get_nearest_basic_point_index)
 TEST(InLaneCruisingPluginTest, split_point_speed_pairs)
 {
   InLaneCruisingPluginConfig config;
-  config.downsample_ratio = 1;
+  config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
 
@@ -294,7 +294,7 @@ TEST(InLaneCruisingPluginTest, split_point_speed_pairs)
 TEST(InLaneCruisingPluginTest, compute_fit)
 {
   InLaneCruisingPluginConfig config;
-  config.downsample_ratio = 1;
+  config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
 
@@ -402,7 +402,7 @@ TEST(InLaneCruisingPluginTest, compute_fit)
 TEST(InLaneCruisingPluginTest, optimize_speed)
 {
   InLaneCruisingPluginConfig config;
-  config.downsample_ratio = 1;
+  config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
 
@@ -496,7 +496,7 @@ TEST(InLaneCruisingPluginTest, optimize_speed)
 TEST(InLaneCruisingPluginTest, compute_curvature_at)
 {
   InLaneCruisingPluginConfig config;
-  config.downsample_ratio = 1;
+  config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
 
@@ -583,7 +583,7 @@ TEST(InLaneCruisingPluginTest, compute_curvature_at)
 TEST(InLaneCruisingPluginTest, attach_back_points)
 {
   InLaneCruisingPluginConfig config;
-  config.downsample_ratio = 1;
+  config.default_downsample_ratio = 1;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 LEIDOS.
+ * Copyright (C) 2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,31 +14,34 @@
  * the License.
  */
 
-#include "pure_pursuit_wrapper/pure_pursuit_wrapper.hpp"
+#include "pure_pursuit_jerk_wrapper.hpp"
 #include <trajectory_utils/conversions/conversions.h>
 #include <carma_wm/Geometry.h>
 
-namespace pure_pursuit_wrapper
+namespace pure_pursuit_jerk_wrapper
 {
-PurePursuitWrapper::PurePursuitWrapper(PurePursuitWrapperConfig config, WaypointPub waypoint_pub, PluginDiscoveryPub plugin_discovery_pub)
-  : config_(config), waypoint_pub_(waypoint_pub), plugin_discovery_pub_(plugin_discovery_pub)
+PurePursuitJerkWrapper::PurePursuitJerkWrapper(PurePursuitJerkWrapperConfig config,WaypointPub waypoint_pub, PluginDiscoveryPub plugin_discovery_pub)
+  : waypoint_pub_(waypoint_pub), plugin_discovery_pub_(plugin_discovery_pub)
 {
-  plugin_discovery_msg_.name = "Pure Pursuit";
+  plugin_discovery_msg_.name = "Pure Pursuit Jerk";
   plugin_discovery_msg_.versionId = "v1.0";
   plugin_discovery_msg_.available = true;
   plugin_discovery_msg_.activated = true;
   plugin_discovery_msg_.type = cav_msgs::Plugin::CONTROL;
-  plugin_discovery_msg_.capability = "control_pure_pursuit_plan/plan_controls";
+  plugin_discovery_msg_.capability = "control_pure_pursuit_jerk_plan/plan_controls";
 }
 
-bool PurePursuitWrapper::onSpin()
+bool PurePursuitJerkWrapper::onSpin()
 {
   plugin_discovery_pub_(plugin_discovery_msg_);
   return true;
 }
 
+void PurePursuitJerkWrapper::updatejerk(std_msgs::Float64 jerk){
+  jerk_ = jerk.data;
+}
 
-void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::ConstPtr& tp)
+void PurePursuitJerkWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::ConstPtr& tp)
 {
   ROS_DEBUG_STREAM("Received TrajectoryPlanCurrentPosecallback message");
 
@@ -47,14 +50,14 @@ void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::C
   trajectory_utils::conversions::trajectory_to_downtrack_time(tp->trajectory_points, &downtracks, &times);
 
   std::vector<double> speeds;
-  trajectory_utils::conversions::time_to_speed(downtracks, times, tp->initial_longitudinal_velocity, &speeds);
+  trajectory_utils::conversions::time_to_speed_constjerk(downtracks, times, tp->initial_longitudinal_velocity, &speeds, jerk_);
 
   if (speeds.size() != tp->trajectory_points.size())
   {
     throw std::invalid_argument("Speeds and trajectory points sizes do not match");
   }
 
-  std::vector<double> lag_speeds = apply_response_lag(speeds, downtracks, config_.vehicle_response_lag); // This call requires that the first speed point be current speed to work as expected
+  std::vector<double> lag_speeds = apply_response_lag(speeds, downtracks, 0.5); // This call requires that the first speed point be current speed to work as expected
 
   autoware_msgs::Lane lane;
   lane.header = tp->header;
@@ -70,7 +73,7 @@ void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::C
     wp.twist.twist.linear.x = lag_speeds[i];
     ROS_DEBUG_STREAM("Setting waypoint idx: " << i <<", x: " << tp->trajectory_points[i].x << 
                             ", y: " << tp->trajectory_points[i].y <<
-                            ", speed: " << lag_speeds[i]* 2.23694 << "mph");
+                            ", speed: " << lag_speeds[i]* 2.23694 << "mph"<< " in mps:"<<lag_speeds[i] << "  Tactical plugin:"<< tp->trajectory_points[i].planner_plugin_name);
     waypoints.push_back(wp);
   }
 
@@ -78,7 +81,7 @@ void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::C
   waypoint_pub_(lane);
 };
 
-std::vector<double> PurePursuitWrapper::apply_response_lag(const std::vector<double>& speeds, const std::vector<double> downtracks, double response_lag) const { // Note first speed is assumed to be vehicle speed
+std::vector<double> PurePursuitJerkWrapper::apply_response_lag(const std::vector<double>& speeds, const std::vector<double> downtracks, double response_lag) const { // Note first speed is assumed to be vehicle speed
   if (speeds.size() != downtracks.size()) {
     throw std::invalid_argument("Speed list and downtrack list are not the same size.");
   }
@@ -95,4 +98,5 @@ std::vector<double> PurePursuitWrapper::apply_response_lag(const std::vector<dou
   output = trajectory_utils::shift_by_lookahead(speeds, (unsigned int) lookahead_count);
   return output;
 }
-}  // namespace pure_pursuit_wrapper
+
+}  // namespace pure_pursuit_jerk_wrapper

@@ -155,6 +155,9 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
     auto ptr = std::make_shared<lanelet::routing::Route>(std::move(route_opt.get()));
     world_model_->setRoute(ptr);
   }
+
+  world_model_->setRouteEndPoint({route_msg->end_point.x,route_msg->end_point.y,route_msg->end_point.z});
+
   // Call route_callback_
   if (route_callback_)
   {
