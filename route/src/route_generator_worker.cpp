@@ -438,7 +438,7 @@ namespace route {
             bool departed = crosstrack_error_check(msg, current_lanelet);
             if (departed)
                 {
-                    this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+                    this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_DEPARTED);
                     publish_route_event(cav_msgs::RouteEvent::ROUTE_DEPARTED);
                 }
 
