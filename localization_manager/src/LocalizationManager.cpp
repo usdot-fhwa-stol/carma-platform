@@ -120,6 +120,8 @@ void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedC
 
   if (state != LocalizationState::DEGRADED_NO_LIDAR_FIX)
   {
+    
+    ROS_DEBUG_STREAM("Publishing mixed pose with sequential_timesteps_counter_: " << sequential_timesteps_counter_ << ", and state" << state);
     pose_pub_(*pose);
   }
 
@@ -150,6 +152,7 @@ void LocalizationManager::gnssPoseCallback(const geometry_msgs::PoseStampedConst
       corrected_pose.pose.position.y = corrected_pose.pose.position.y + gnss_offset_->y();
       corrected_pose.pose.position.z = corrected_pose.pose.position.z + gnss_offset_->z();
     }
+    ROS_DEBUG_STREAM("Publishing GNSS pose with sequential_timesteps_counter_: " << sequential_timesteps_counter_);
     pose_pub_(corrected_pose);
   }
 }
