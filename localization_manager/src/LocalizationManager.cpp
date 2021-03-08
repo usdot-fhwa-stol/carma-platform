@@ -88,6 +88,7 @@ void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedC
 
   if (config_.localization_mode == LocalizerMode::GNSS_WITH_NDT_INIT && state == LocalizationState::OPERATIONAL && last_raw_gnss_value_)
   {
+    ROS_DEBUG_STREAM("sequential_timesteps_counter_: " << sequential_timesteps_counter_);
     if (sequential_timesteps_counter_ < config_.sequential_timesteps_until_gps_operation)
     {
       if (is_sequential_)
@@ -98,12 +99,15 @@ void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedC
     else
     {
       transition_table_.signal(LocalizationSignal::LIDAR_INITIALIZED_SWITCH_TO_GPS);
+      ROS_DEBUG_STREAM("Switched to LIDAR_INITIALIZED_SWITCH_TO_GPS at sequential_timesteps_counter_: " << sequential_timesteps_counter_);
     }
   }
   else 
   {
     is_sequential_ = false;
     sequential_timesteps_counter_ = 0;
+    ROS_DEBUG_STREAM("Resetting sequential_timesteps_counter_: " << sequential_timesteps_counter_);
+
   }
   
   if (state == LocalizationState::OPERATIONAL && last_raw_gnss_value_) {

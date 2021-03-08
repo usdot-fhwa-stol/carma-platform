@@ -111,14 +111,19 @@ void LocalizationTransitionTable::signalWhenOPERATIONAL(LocalizationSignal signa
       break;
     case LocalizationSignal::LIDAR_SENSOR_FAILURE: // Allowing fallthrough for duplicated behavior
     case LocalizationSignal::UNUSABLE_NDT_FREQ_OR_FITNESS_SCORE:
-    case LocalizationSignal::LIDAR_INITIALIZED_SWITCH_TO_GPS:
-      if (mode_ == LocalizerMode::GNSS_WITH_NDT_INIT || mode_ == LocalizerMode::AUTO_WITH_TIMEOUT || mode_ == LocalizerMode::AUTO_WITHOUT_TIMEOUT)
+      if (mode_ == LocalizerMode::AUTO_WITH_TIMEOUT || mode_ == LocalizerMode::AUTO_WITHOUT_TIMEOUT)
       {
         setAndLogState(LocalizationState::DEGRADED_NO_LIDAR_FIX, signal);
       }
       else
       {
         setAndLogState(LocalizationState::AWAIT_MANUAL_INITIALIZATION, signal);
+      }
+      break;
+    case LocalizationSignal::LIDAR_INITIALIZED_SWITCH_TO_GPS:
+      if ( mode_ == LocalizerMode::GNSS_WITH_NDT_INIT)
+      {
+        setAndLogState(LocalizationState::DEGRADED_NO_LIDAR_FIX, signal);
       }
       break;
     default:
@@ -166,13 +171,13 @@ void LocalizationTransitionTable::signalWhenDEGRADED_NO_LIDAR_FIX(LocalizationSi
   switch (signal)
   {
     case LocalizationSignal::INITIAL_POSE:
-      if (mode_ != LocalizerMode::GNSS && mode_ != LocalizerMode::GNSS_WITH_NDT_INIT)
+      if (mode_ != LocalizerMode::GNSS)
       {
         setAndLogState(LocalizationState::INITIALIZING, signal);
       }
       break;
     case LocalizationSignal::GOOD_NDT_FREQ_AND_FITNESS_SCORE:
-      if (mode_ != LocalizerMode::GNSS && mode_ != LocalizerMode::GNSS_WITH_NDT_INIT)
+      if (mode_ != LocalizerMode::GNSS)
       {
         setAndLogState(LocalizationState::OPERATIONAL, signal);
       }
