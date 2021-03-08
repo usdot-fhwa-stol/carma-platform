@@ -97,9 +97,13 @@
   <remap from="/current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>  
 
   <!-- Pure Pursuit Wrapper -->
-  <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch">
-	  <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
-  </include>
+  <group>
+    <remap from="vehicle_status" to="$(optenv CARMA_INTR_NS)/vehicle_status"/>
+    <remap from="/ctrl_raw" to="ctrl_raw"/>
+    <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch">
+      <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
+    </include>
+  </group>
   
   <!-- Pure Pursuit Jerk Wrapper -->
   <include file="$(find pure_pursuit_jerk_wrapper)/launch/pure_pursuit_jerk_wrapper.launch" />
