@@ -2,14 +2,16 @@
 <launch>
     <arg name="vehicle_calibration_dir" default="/opt/carma/vehicle/calibration"/>
     <!-- Pure Pursuit Node -->
-    <group>
+    <!-- <group>
         <node pkg="pure_pursuit" type="pure_pursuit" name="pure_pursuit" output="log">
             <remap from="final_waypoints" to="carma_final_waypoints"/>
             <param name="is_linear_interpolation" value="True"/>
             <param name="publishes_for_steering_robot" value="True"/>
             <rosparam command="load" file="$(arg vehicle_calibration_dir)/pure_pursuit/calibration.yaml"/>
         </node>
-    </group>
+    </group> -->
+    <include file="$(find stanley_controller)/launch/stanley_controller.launch">
+    </include>
     <!-- Pure Pursuit Wrapper Node -->
     <group>
        <remap from="final_waypoints" to="carma_final_waypoints"/>

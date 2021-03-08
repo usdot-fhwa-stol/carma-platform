@@ -1,0 +1,62 @@
+<launch>
+  <arg name="ctrl_period" default="0.033" doc="control period [s]"/>
+  <arg name="traj_resample_dist" default="0.1" doc="ath resampling interval [m]"/>
+  <arg name="enable_yaw_recalculation" default="true" doc="flag for recalculation of yaw angle after resampling"/>
+  <arg name="enable_path_smoothing" default="true" doc="flag for path smoothing"/>
+  <arg name="path_smoothing_times" default="1" doc="number of times of applying path smoothing filter"/>
+  <arg name="path_filter_moving_ave_num" default="10" doc="param of moving average filter for path smoothing "/>
+  <arg name="curvature_smoothing_num" default="10" doc="point-to-point index distance used in curvature calculation : curvature is calculated from three points p(i-num), p(i), p(i+num)"/>
+
+  <!-- Vehicle parameters -->
+  <arg name="mass_fl" default="550.0" doc=""/>
+  <arg name="mass_fr" default="550.0" doc=""/>
+  <arg name="mass_rl" default="550.0" doc=""/>
+  <arg name="mass_rr" default="550.0" doc=""/>
+  <arg name="cf" default="160000" doc=""/>
+  <arg name="cr" default="160000" doc=""/>  
+
+  <!-- Stanley tuning parameters and these default ones are tuned for Lexus rx450h with control loop running at 30Hz-->
+  <arg name="kp_yaw_error" default="0.375" doc=""/>
+  <arg name="kd_yaw_error" default="0.25" doc=""/>
+  <arg name="kp_lateral_error" default="2.25" doc=""/>
+  <arg name="kd_steer" default="0.0" doc=""/>
+  <arg name="preview_window" default="10" doc=""/>
+  
+  <group>
+
+    <!-- <node pkg="mpc_follower" type="mpc_waypoints_converter" name="mpc_waypoints_converter" output="screen"/> -->
+    <node pkg="stanley_controller" type="stanley_controller" name="stanley_controller">
+
+      <!-- system -->
+      <param name="ctrl_cmd_interface" value="ctrl_cmd"/>
+      <param name="in_waypoints_name" value="carma_final_waypoints"/>
+      <param name="in_vehicle_status_name" value="vehicle_status"/>
+      <param name="in_selfpose_name" value="current_pose"/>
+      <param name="out_twist_name" value="fake_twist_raw"/>
+      <param name="out_vehicle_cmd_name" value="ctrl_cmd"/>
+
+      <!-- paramters -->
+      <param name="ctrl_period" value="$(arg ctrl_period)"/>
+      <param name="traj_resample_dist" value="$(arg traj_resample_dist)"/>
+      <param name="path_smoothing_times" value="$(arg path_smoothing_times)"/>
+      <param name="enable_yaw_recalculation" value="$(arg enable_yaw_recalculation)"/>
+      <param name="enable_path_smoothing" value="$(arg enable_path_smoothing)"/>
+      <param name="path_filter_moving_ave_num" value="$(arg path_filter_moving_ave_num)"/>
+      <param name="curvature_smoothing_num" value="$(arg curvature_smoothing_num)"/>
+
+      <param name="mass_fl" value="$(arg mass_fl)"/>
+      <param name="mass_fr" value="$(arg mass_fr)"/>
+      <param name="mass_rl" value="$(arg mass_rl)"/>
+      <param name="mass_rr" value="$(arg mass_rr)"/>
+      <param name="cf" value="$(arg cf)"/>
+      <param name="cr" value="$(arg cr)"/>
+
+      <param name="kp_yaw_error" value="$(arg kp_yaw_error)"/>
+      <param name="kd_yaw_error" value="$(arg kd_yaw_error)"/>
+      <param name="kp_lateral_error" value="$(arg kp_lateral_error)"/>
+      <param name="kd_steer" value="$(arg kd_steer)"/>
+      <param name="preview_window" value="$(arg preview_window)"/>      
+    </node>
+
+  </group>
+</launch>

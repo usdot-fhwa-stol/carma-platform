@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>stanley_controller</name>
+  <version>1.13.0</version>
+  <description>The stanley controller package</description>
+  <maintainer email="jilin.zhou@autonomoustuff.com">Jilin Zhou</maintainer>
+  <author email="jilin.zhou@autonomoustuff.com">Jilin Zhou</author>
+  <license>Apache 2</license>
+
+  <buildtool_depend>autoware_build_flags</buildtool_depend>
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roslint</build_depend>
+
+  <depend>roscpp</depend>
+  <depend>amathutils_lib</depend>
+  <depend>autoware_health_checker</depend>
+  <depend>autoware_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf</depend>
+</package>
