@@ -94,13 +94,14 @@ StanleyController::StanleyController()
 };
 
 void StanleyController::param_callback(stanley_controller::StanleyDynamicParamsConfig &config, uint32_t level) {
-  ROS_INFO("Reconfigure Request: kp_yaw_error: %f,  kd_yaw_error: %f,  kp_lateral_error %f,  kd_steer: %f, k_soft: %f, preview_window: %d", 
+  ROS_INFO("Reconfigure Request: kp_yaw_error: %f,  kd_yaw_error: %f,  kp_lateral_error %f,  kd_steer: %f, k_soft: %f, preview_window: %d, path_smoothing_times: %d", 
             config.kp_yaw_error, 
             config.kd_yaw_error, 
             config.kp_lateral_error, 
             config.kd_steer, 
             config.k_soft,
-            config.preview_window);
+            config.preview_window,
+            config.path_smoothing_times);
 
   kp_yaw_error_ = config.kp_yaw_error;
   kd_yaw_error_ = config.kd_yaw_error;
@@ -108,6 +109,7 @@ void StanleyController::param_callback(stanley_controller::StanleyDynamicParamsC
   kd_steer_ = config.kd_steer;
   k_soft_ = config.k_soft;
   preview_window_ = config.preview_window;
+  path_smoothing_times_ = config.path_smoothing_times;
 
 }
 

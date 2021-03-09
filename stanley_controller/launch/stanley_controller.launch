@@ -3,7 +3,7 @@
   <arg name="traj_resample_dist" default="0.1" doc="ath resampling interval [m]"/>
   <arg name="enable_yaw_recalculation" default="true" doc="flag for recalculation of yaw angle after resampling"/>
   <arg name="enable_path_smoothing" default="true" doc="flag for path smoothing"/>
-  <arg name="path_smoothing_times" default="1" doc="number of times of applying path smoothing filter"/>
+  <arg name="path_smoothing_times" default="5" doc="number of times of applying path smoothing filter"/>
   <arg name="path_filter_moving_ave_num" default="10" doc="param of moving average filter for path smoothing "/>
   <arg name="curvature_smoothing_num" default="10" doc="point-to-point index distance used in curvature calculation : curvature is calculated from three points p(i-num), p(i), p(i+num)"/>
 
@@ -16,12 +16,12 @@
   <arg name="cr" default="160000" doc=""/>  
 
   <!-- Stanley tuning parameters and these default ones are tuned for Lexus rx450h with control loop running at 30Hz-->
-  <arg name="kp_yaw_error" default="0.375" doc=""/>
-  <arg name="kd_yaw_error" default="0.25" doc=""/>
-  <arg name="kp_lateral_error" default="2.25" doc=""/>
+  <arg name="kp_yaw_error" default="0.5" doc=""/>
+  <arg name="kd_yaw_error" default="0.3" doc=""/>
+  <arg name="kp_lateral_error" default="0.5" doc=""/>
   <arg name="kd_steer" default="0.0" doc=""/>
-  <arg name="preview_window" default="10" doc=""/>
-  
+  <arg name="preview_window" default="0" doc=""/>
+
   <group>
 
     <!-- <node pkg="mpc_follower" type="mpc_waypoints_converter" name="mpc_waypoints_converter" output="screen"/> -->
