@@ -18,6 +18,10 @@ find_package(
   dynamic_reconfigure
 )
 
+generate_dynamic_reconfigure_options(
+  config/StanleyDynamicParams.cfg
+)
+
 catkin_package(
   INCLUDE_DIRS include
   CATKIN_DEPENDS
@@ -25,9 +29,6 @@ catkin_package(
   dynamic_reconfigure
 )
 
-generate_dynamic_reconfigure_options(
-  config/StanleyDynamicParams.cfg
-)
 
 SET(CMAKE_CXX_FLAGS "-O2 -Wall ${CMAKE_CXX_FLAGS}")
 
