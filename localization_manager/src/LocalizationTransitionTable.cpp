@@ -120,6 +120,12 @@ void LocalizationTransitionTable::signalWhenOPERATIONAL(LocalizationSignal signa
         setAndLogState(LocalizationState::AWAIT_MANUAL_INITIALIZATION, signal);
       }
       break;
+    case LocalizationSignal::LIDAR_INITIALIZED_SWITCH_TO_GPS:
+      if ( mode_ == LocalizerMode::GNSS_WITH_NDT_INIT)
+      {
+        setAndLogState(LocalizationState::DEGRADED_NO_LIDAR_FIX, signal);
+      }
+      break;
     default:
       logDebugSignal(signal);
       break;
@@ -177,7 +183,7 @@ void LocalizationTransitionTable::signalWhenDEGRADED_NO_LIDAR_FIX(LocalizationSi
       }
       break;
     case LocalizationSignal::TIMEOUT:
-      if (mode_ != LocalizerMode::GNSS && mode_ != LocalizerMode::AUTO_WITHOUT_TIMEOUT)
+      if (mode_ != LocalizerMode::GNSS && mode_ != LocalizerMode::AUTO_WITHOUT_TIMEOUT && mode_ != LocalizerMode::GNSS_WITH_NDT_INIT)
       {
         setAndLogState(LocalizationState::AWAIT_MANUAL_INITIALIZATION, signal);
       }
@@ -206,7 +212,6 @@ void LocalizationTransitionTable::signalWhenAWAIT_MANUAL_INITIALIZATION(Localiza
       break;
   }
 }
-
 void LocalizationTransitionTable::signal(LocalizationSignal signal)
 {
   switch (state_)
