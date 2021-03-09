@@ -15,12 +15,18 @@ find_package(
   std_msgs
   tf
   tf2
+  dynamic_reconfigure
 )
 
 catkin_package(
   INCLUDE_DIRS include
   CATKIN_DEPENDS
   amathutils_lib
+  dynamic_reconfigure
+)
+
+generate_dynamic_reconfigure_options(
+  config/StanleyDynamicParams.cfg
 )
 
 SET(CMAKE_CXX_FLAGS "-O2 -Wall ${CMAKE_CXX_FLAGS}")
@@ -37,7 +43,7 @@ set(
 )
 
 add_executable(stanley_controller src/stanley_controller_node.cpp src/stanley_controller_core.cpp ${STANLEY_CONTROLLER_SRC})
-add_dependencies(stanley_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(stanley_controller ${PROJECT_NAME}_gencfg ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(stanley_controller ${catkin_LIBRARIES})
 
 install(

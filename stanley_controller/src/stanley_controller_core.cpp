@@ -23,6 +23,7 @@
 
 #include <vector>
 #include <string>
+#include <functional>
 
 namespace stanley_controller
 {
@@ -70,6 +71,10 @@ StanleyController::StanleyController()
 
   k_ag_ = mass / (cf * (1 + lf / lr));
 
+  dynamic_reconfigure::Server<stanley_controller::StanleyDynamicParams>::CallbackType param_server_cb;
+  param_server_cb = std::bind(&StanleyController::param_callback, this, std::placeholders::_1, std::placeholders::_2);
+  dynamic_param_server_.setCallback(param_server_cb);
+
   /* set up ros system */
   timer_control_ = nh_.createTimer(ros::Duration(1.0/update_rate_), &StanleyController::controlTimerCallback, this);
   std::string out_twist, out_ctrl_cmd, in_vehicle_status, in_waypoints, in_selfpose;
@@ -87,6 +92,24 @@ StanleyController::StanleyController()
 
   pub_ref_traj_marker_ = nh_.advertise<visualization_msgs::Marker>("ref_traj_viz", 1);
 };
+
+void StanleyController::param_callback(stanley_controller::StanleyDynamicParams &config, uint32_t level) {
+  ROS_INFO("Reconfigure Request: kp_yaw_error: %f,  kd_yaw_error: %f,  kp_lateral_error %f,  kd_steer: %f, k_soft: %f, preview_window: %d", 
+            config.kp_yaw_error, 
+            config.kd_yaw_error, 
+            config.kp_lateral_error, 
+            config.kd_steer, 
+            config.k_soft,
+            config.preview_window);
+
+  kp_yaw_error_ = config.kp_yaw_error;
+  kd_yaw_error_ = config.kd_yaw_error;
+  kp_lateral_error_ = config.kp_lateral_error;
+  kd_steer = config.kd_steer;
+  k_soft_ = config.k_soft;
+  preview_window_ = config.preview_window;
+
+}
 
 void StanleyController::controlTimerCallback(const ros::TimerEvent& te)
 {

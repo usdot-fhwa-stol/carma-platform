@@ -53,6 +53,9 @@
 #include <autoware_msgs/Lane.h>
 #include <autoware_msgs/VehicleStatus.h>
 
+#include <dynamic_reconfigure/server.h>
+#include <stanley_controller/StanleyDynamicParams.h>
+
 #include "stanley_controller/mpc_utils.h"
 #include "stanley_controller/mpc_trajectory.h"
 
@@ -142,6 +145,9 @@ private:
   double ref_pt_velocity_;   //< @brief velocity of nearest point on reference trajectory
   double ref_pt_curvature_;  //< @brief curvature of nearest point on reference trajectory
 
+  dynamic_reconfigure::Server<stanley_controller::StanleyDynamicParams> dynamic_param_server_;
+  
+
   bool updateStateError();
 
   /**
@@ -192,6 +198,9 @@ private:
    */
   void convertTrajToMarker(const MPCUtils::MPCTrajectory& traj, visualization_msgs::Marker* markers, std::string ns,
                            double r, double g, double b, double z);
+
+
+  void param_callback(stanley_controller::StanleyDynamicParams &config, uint32_t level);
 };
 }  // namespace stanley_controller
 #endif  // STANLEY_CONTROLLER_STANLEY_CONTROLLER_CORE_H

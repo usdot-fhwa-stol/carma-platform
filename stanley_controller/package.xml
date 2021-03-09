@@ -20,4 +20,5 @@
   <depend>std_msgs</depend>
   <depend>tf2</depend>
   <depend>tf</depend>
+  <depend>dynamic_reconfigure</depend>
 </package>
