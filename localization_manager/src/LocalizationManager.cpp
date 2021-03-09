@@ -82,9 +82,9 @@ void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedC
   else
   {
     // In GNSS_WITH_NDT_INIT mode, we shouldn't switch back to NDT and only rely on GPS
-    if (config_.localization_mode != LocalizerMode::GNSS_WITH_NDT_INIT && 
-        transition_table_.getState() != LocalizationState::DEGRADED_NO_LIDAR_FIX && 
-        sequential_timesteps_counter_ < config_.sequential_timesteps_until_gps_operation)
+    if (!(config_.localization_mode == LocalizerMode::GNSS_WITH_NDT_INIT && 
+        transition_table_.getState() == LocalizationState::DEGRADED_NO_LIDAR_FIX && 
+        sequential_timesteps_counter_ >= config_.sequential_timesteps_until_gps_operation))
       transition_table_.signal(LocalizationSignal::GOOD_NDT_FREQ_AND_FITNESS_SCORE);
   }
 
