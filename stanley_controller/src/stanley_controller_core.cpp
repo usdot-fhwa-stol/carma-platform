@@ -71,7 +71,7 @@ StanleyController::StanleyController()
 
   k_ag_ = mass / (cf * (1 + lf / lr));
 
-  dynamic_reconfigure::Server<stanley_controller::StanleyDynamicParams>::CallbackType param_server_cb;
+  dynamic_reconfigure::Server<stanley_controller::StanleyDynamicParamsConfig>::CallbackType param_server_cb;
   param_server_cb = std::bind(&StanleyController::param_callback, this, std::placeholders::_1, std::placeholders::_2);
   dynamic_param_server_.setCallback(param_server_cb);
 
@@ -93,7 +93,7 @@ StanleyController::StanleyController()
   pub_ref_traj_marker_ = nh_.advertise<visualization_msgs::Marker>("ref_traj_viz", 1);
 };
 
-void StanleyController::param_callback(stanley_controller::StanleyDynamicParams &config, uint32_t level) {
+void StanleyController::param_callback(stanley_controller::StanleyDynamicParamsConfig &config, uint32_t level) {
   ROS_INFO("Reconfigure Request: kp_yaw_error: %f,  kd_yaw_error: %f,  kp_lateral_error %f,  kd_steer: %f, k_soft: %f, preview_window: %d", 
             config.kp_yaw_error, 
             config.kd_yaw_error, 
@@ -105,7 +105,7 @@ void StanleyController::param_callback(stanley_controller::StanleyDynamicParams 
   kp_yaw_error_ = config.kp_yaw_error;
   kd_yaw_error_ = config.kd_yaw_error;
   kp_lateral_error_ = config.kp_lateral_error;
-  kd_steer = config.kd_steer;
+  kd_steer_ = config.kd_steer;
   k_soft_ = config.k_soft;
   preview_window_ = config.preview_window;
 
