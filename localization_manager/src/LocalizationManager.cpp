@@ -84,7 +84,7 @@ void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedC
     // In GNSS_WITH_NDT_INIT mode, we shouldn't switch back to NDT and only rely on GPS
     if (!(config_.localization_mode == LocalizerMode::GNSS_WITH_NDT_INIT && 
         transition_table_.getState() == LocalizationState::DEGRADED_NO_LIDAR_FIX && 
-        sequential_timesteps_counter_ >= config_.sequential_timesteps_until_gps_operation))
+        lidar_init_sequential_timesteps_counter_ >= config_.sequential_timesteps_until_gps_operation))
       transition_table_.signal(LocalizationSignal::GOOD_NDT_FREQ_AND_FITNESS_SCORE);
   }
 
@@ -92,29 +92,30 @@ void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedC
 
   if (config_.localization_mode == LocalizerMode::GNSS_WITH_NDT_INIT && state == LocalizationState::OPERATIONAL && last_raw_gnss_value_)
   {
-    ROS_DEBUG_STREAM("sequential_timesteps_counter_: " << sequential_timesteps_counter_);
-    if (sequential_timesteps_counter_ < config_.sequential_timesteps_until_gps_operation)
+    ROS_DEBUG_STREAM("lidar_init_sequential_timesteps_counter_: " << lidar_init_sequential_timesteps_counter_);
+    if (lidar_init_sequential_timesteps_counter_ < config_.sequential_timesteps_until_gps_operation)
     {
       if (is_sequential_)
-        sequential_timesteps_counter_ ++;
+        lidar_init_sequential_timesteps_counter_ ++;
       
       is_sequential_ = true;
     }
     else
     {
       transition_table_.signal(LocalizationSignal::LIDAR_INITIALIZED_SWITCH_TO_GPS);
-      ROS_DEBUG_STREAM("Switched to LIDAR_INITIALIZED_SWITCH_TO_GPS at sequential_timesteps_counter_: " << sequential_timesteps_counter_);
+      ROS_DEBUG_STREAM("Switched to LIDAR_INITIALIZED_SWITCH_TO_GPS at lidar_init_sequential_timesteps_counter_: " << lidar_init_sequential_timesteps_counter_ 
+        << ", with new state: " << transition_table_.getState());
     }
   }
   else if (!(config_.localization_mode == LocalizerMode::GNSS_WITH_NDT_INIT && 
              state == LocalizationState::DEGRADED_NO_LIDAR_FIX && 
              last_raw_gnss_value_ &&
-             sequential_timesteps_counter_ >= config_.sequential_timesteps_until_gps_operation)) // don't reset counter if Lidar initialized and switched to GPS
+             lidar_init_sequential_timesteps_counter_ >= config_.sequential_timesteps_until_gps_operation)) // don't reset counter if Lidar initialized and switched to GPS
                                                                                                  // as it will reset state to OPERATIONAL
   {
     is_sequential_ = false;
-    sequential_timesteps_counter_ = 0;
-    ROS_DEBUG_STREAM("Resetting sequential_timesteps_counter_: " << sequential_timesteps_counter_);
+    lidar_init_sequential_timesteps_counter_ = 0;
+    ROS_DEBUG_STREAM("Resetting lidar_init_sequential_timesteps_counter_: " << lidar_init_sequential_timesteps_counter_ << ", with new state: " << transition_table_.getState());
   }
   
   if (state == LocalizationState::OPERATIONAL && last_raw_gnss_value_) {
@@ -128,7 +129,7 @@ void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedC
   if (state != LocalizationState::DEGRADED_NO_LIDAR_FIX)
   {
     
-    ROS_DEBUG_STREAM("Publishing mixed pose with sequential_timesteps_counter_: " << sequential_timesteps_counter_ << ", and state" << state);
+    ROS_DEBUG_STREAM("Publishing mixed pose with lidar_init_sequential_timesteps_counter_: " << lidar_init_sequential_timesteps_counter_ << ", and state" << state);
     pose_pub_(*pose);
   }
 
@@ -141,7 +142,7 @@ void LocalizationManager::gnssPoseCallback(const geometry_msgs::PoseStampedConst
   last_raw_gnss_value_ = *msg;
   // Just like ndt_matching the gnss pose is treated as an initialize signal if the system is not yet intialized
   if (transition_table_.getState() == LocalizationState::UNINITIALIZED) {
-    sequential_timesteps_counter_ = 0;
+    lidar_init_sequential_timesteps_counter_ = 0;
     transition_table_.signal(LocalizationSignal::INITIAL_POSE);
     
     geometry_msgs::PoseWithCovarianceStamped new_initial_pose;
@@ -159,14 +160,14 @@ void LocalizationManager::gnssPoseCallback(const geometry_msgs::PoseStampedConst
       corrected_pose.pose.position.y = corrected_pose.pose.position.y + gnss_offset_->y();
       corrected_pose.pose.position.z = corrected_pose.pose.position.z + gnss_offset_->z();
     }
-    ROS_DEBUG_STREAM("Publishing GNSS pose with sequential_timesteps_counter_: " << sequential_timesteps_counter_);
+    ROS_DEBUG_STREAM("Publishing GNSS pose with lidar_init_sequential_timesteps_counter_: " << lidar_init_sequential_timesteps_counter_);
     pose_pub_(corrected_pose);
   }
 }
 
 void LocalizationManager::initialPoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg)
 {
-  sequential_timesteps_counter_ = 0;
+  lidar_init_sequential_timesteps_counter_ = 0;
   transition_table_.signal(LocalizationSignal::INITIAL_POSE);
   initialpose_pub_(*msg); // Forward the initial pose to the rest of the system
 }
@@ -239,6 +240,15 @@ bool LocalizationManager::onSpin()
     {
       transition_table_.signal(LocalizationSignal::POOR_NDT_FREQ_OR_FITNESS_SCORE);
     }
+  }
+
+  // Used in LocalizerMode::GNSS_WITH_NDT_INIT 
+  // If the state is not Operational with good NDT, or already using GPS only, we reset the counter
+  if (transition_table_.getState() != LocalizationState::OPERATIONAL && 
+      transition_table_.getState() != LocalizationState::DEGRADED_NO_LIDAR_FIX)   
+  {
+    lidar_init_sequential_timesteps_counter_ = 0;
+    ROS_DEBUG_STREAM("OnSpin: Resetting lidar_init_sequential_timesteps_counter_: " << lidar_init_sequential_timesteps_counter_ << ", with new state: " << transition_table_.getState());
   }
 
   // Create and publish status report message
