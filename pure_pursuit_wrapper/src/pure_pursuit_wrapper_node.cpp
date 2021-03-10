@@ -29,7 +29,8 @@ int main(int argc, char** argv)
   ros::Publisher discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
 
   pure_pursuit_wrapper::PurePursuitWrapperConfig config;
-  nh.param<double>("/vehicle_response_lag", config.vehicle_response_lag, config.vehicle_response_lag);
+  nh.param<double>("/vehicle_acceleration_response_lag", config.vehicle_acceleration_response_lag, config.vehicle_acceleration_response_lag);
+  nh.param<double>("/vehicle_deceleration_response_lag", config.vehicle_deceleration_response_lag, config.vehicle_deceleration_response_lag);
   
 
   pure_pursuit_wrapper::PurePursuitWrapper purePursuitWrapper(

@@ -17,6 +17,7 @@
 #include "pure_pursuit_wrapper/pure_pursuit_wrapper.hpp"
 #include <trajectory_utils/conversions/conversions.h>
 #include <carma_wm/Geometry.h>
+#include <boost/math/special_functions/sign.hpp>
 
 namespace pure_pursuit_wrapper
 {
@@ -54,7 +55,40 @@ void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::C
     throw std::invalid_argument("Speeds and trajectory points sizes do not match");
   }
 
-  std::vector<double> lag_speeds = apply_response_lag(speeds, downtracks, config_.vehicle_response_lag); // This call requires that the first speed point be current speed to work as expected
+  std::vector<double> lag_speeds;
+  lag_speeds.reserve(speeds.size());
+
+  std::vector<double> speed_section;
+  std::vector<double> downtrack_section;
+  double prev_speed = speeds[0];
+  bool prev_direction = true; // True is positive or steady acceleration
+  for (size_t i = 0; i < speeds.size(); i++) {
+    
+    bool direction = speeds[i] - prev_speed >= 0;
+    
+    if (direction != prev_direction) {
+      
+      speed_section = apply_response_lag(speed_section, downtrack_section, direction ? config_.vehicle_acceleration_response_lag : config_.vehicle_deceleration_response_lag);
+      
+      lag_speeds.insert(lag_speeds.begin(), speed_section.begin(), speed_section.end());
+      speed_section.clear();
+      downtrack_section.clear();
+    }
+
+    speed_section.push_back(speeds[i]);
+    downtrack_section.push_back(downtracks[i]);
+    prev_speed = speeds[i];
+    prev_direction = direction;
+  }
+
+  // Add final section
+  speed_section = apply_response_lag(speed_section, downtrack_section, prev_direction ? config_.vehicle_acceleration_response_lag : config_.vehicle_deceleration_response_lag);
+      
+  lag_speeds.insert(lag_speeds.begin(), speed_section.begin(), speed_section.end());
+
+  //std::vector<double> lag_speeds = apply_response_lag(speeds, downtracks, config_.vehicle_response_lag); // This call requires that the first speed point be current speed to work as expected
+
+
 
   autoware_msgs::Lane lane;
   lane.header = tp->header;
