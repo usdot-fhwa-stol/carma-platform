@@ -8,12 +8,17 @@ add_compile_options(-std=c++11)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  tf2_ros
+  tf2
+  tf2_geometry_msgs
+  tf2_msgs
   autoware_msgs
   cav_msgs
   roscpp
   carma_utils
   motion_predict
-)
+  tf
+  )
 
 ###################################
 ## catkin specific configuration ##

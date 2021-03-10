@@ -47,7 +47,37 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
     obj.id = obj_array.objects[i].id;
 
     // Pose of the object within the frame specified in header
-    obj.pose.pose = obj_array.objects[i].pose;
+    tf::TransformListener listener;
+    ros::Rate rate(10.0);
+    tf::StampedTransform transform;
+
+
+    std::cout << " hellooooooooo" ;
+    // Buffer which holds the tree of transforms
+    tf2_ros::Buffer tfBuffer_;
+    // tf2 listeners. Subscribes to the /tf and /tf_static topics
+    tf2_ros::TransformListener tfListener_ {tfBuffer_};
+
+
+    listener.waitForTransform("map", "velodyne", ros::Time(0), ros::Duration(3.0));
+    try{
+      listener.lookupTransform("map", "velodyne", ros::Time(0), transform);
+    }
+    catch (tf::TransformException ex){
+      ROS_ERROR("%s",ex.what());
+      ros::Duration(1.0).sleep();
+    }
+
+    std::cout << " \n" << transform.getOrigin().x() + obj_array.objects[i].pose.position.x;
+
+
+    std::cout << " hello";
+    
+    obj.pose.pose.position.x = transform.getOrigin().x() + obj_array.objects[i].pose.position.x;
+    obj.pose.pose.position.y = transform.getOrigin().y() + obj_array.objects[i].pose.position.y;
+
+
+    // obj.pose.pose = obj_array.objects[i].pose;
     obj.pose.covariance[0] = obj_array.objects[i].variance.x;
     obj.pose.covariance[7] = obj_array.objects[i].variance.y;
     obj.pose.covariance[17] = obj_array.objects[i].variance.z;
@@ -137,5 +167,23 @@ void ObjectDetectionTrackingWorker::setConfidenceDropRate(double drop_rate)
 {
   prediction_confidence_drop_rate_ = drop_rate;
 }
+/*
+void waitUntilCanTransform(const tf2_ros::Buffer& tf_buffer,
+                           const std::string& targetFrame,
+                           const std::string& sourceFrame,
+                           const ros::Time& time,
+                           const ros::Duration& timeout)
+{
+  // poll for transform if timeout is set
+  ros::Time start_time = ros::Time::now();
+  while (ros::Time::now() < start_time + timeout &&
+        !tf_buffer.canTransform(targetFrame, sourceFrame, time) &&
+        (ros::Time::now()+ros::Duration(3.0) >= start_time) &&  //don't wait when we detect a bag loop
+        (ros::ok() || !ros::isInitialized())) // Make sure we haven't been stopped (won't work for pytf)
+  {
+    ros::Duration(0.01).sleep();
+  }
+}
+*/
 
 }  // namespace object

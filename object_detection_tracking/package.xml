@@ -27,6 +27,8 @@
   <depend>cav_msgs</depend>
   <depend>roscpp</depend>
   <depend>carma_utils</depend>
+  <depend>tf2_msgs</depend>
+  <depend>tf2_geometry_msgs</depend>
   <depend>motion_predict</depend>
   <export>
   
