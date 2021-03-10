@@ -112,13 +112,13 @@ namespace health_monitor
         {
             return "s_1_l1_1_l2_1_g_0";
         }
-        else if (camera==0)
+        else if ((camera==0) && (lidar1 ==1) && (lidar2 == 1) && (gps == 1) )
         {
-            return "s_1_c_0";
+            return "s_1_l1_1_l2_1_g_1_c_0";
         }
-        else if((lidar1==1) && (lidar2==1) && (gps==1))
+        else if((lidar1==1) && (lidar2==1) && (gps==1) && (camera == 1))
         {
-            return "s_1_l1_1_l2_1_g_1";
+            return "s_1_l1_1_l2_1_g_1_c_1";
         }
         
     }
@@ -167,13 +167,21 @@ namespace health_monitor
             {
                 return "s_1_l_1_g_0";
             }
-            else if (camera==0)
+            else if ((camera==0) && (lidar == 1) && (gps ==1))
             {
-                return "s_1_c_0";
+                return "s_1_l_1_g_1_c_0";
             }
-            else if((lidar==1) && (gps==1))
+            else if ((camera==0) && (lidar == 0) && (gps == 1))
             {
-                return "s_1_l_1_g_1";
+                return "s_1_l_0_g_1_c_0";
+            }
+            else if ((camera==0) && (lidar == 1) && (gps == 0))
+            {
+                return "s_1_l_1_g_0_c_0";
+            }
+            else if((lidar==1) && (gps==1) && (camera == 1))
+            {
+                return "s_1_l_1_g_1_c_1";
             }
 
         }
@@ -191,7 +199,7 @@ namespace health_monitor
         if(truck==true)
         {
             std::string status = are_critical_drivers_operational_truck(time_now);
-            if(status.compare("s_1_l1_1_l2_1_g_1") == 0)
+            if(status.compare("s_1_l1_1_l2_1_g_1_c_1") == 0)
             {
                 starting_up_ = false;
                 alert.description = "All essential drivers are ready";
@@ -204,7 +212,7 @@ namespace health_monitor
                 alert.type = cav_msgs::SystemAlert::NOT_READY;
                 return alert;
             }
-             else if(status.compare("s_1_c_0")==0)
+             else if(status.compare("s_1_l1_1_l2_1_g_1_c_0")==0)
             {
                 alert.description = "Camera Failed";
                 alert.type = cav_msgs::SystemAlert::WARNING;
@@ -257,7 +265,7 @@ namespace health_monitor
         else if(car==true)
         {
             std::string status = are_critical_drivers_operational_car(time_now);
-            if(status.compare("s_1_l_1_g_1") == 0)
+            if(status.compare("s_1_l_1_g_1_c_1") == 0)
             {
                 starting_up_ = false;
                 alert.description = "All essential drivers are ready";
@@ -270,7 +278,8 @@ namespace health_monitor
                 alert.type = cav_msgs::SystemAlert::NOT_READY;
                 return alert; 
             }
-             else if(status.compare("s_1_c_0") == 0)
+            
+            else if(status.compare("s_1_l_1_g_1_c_0") == 0)
             {
                 alert.description = "Camera Failed";
                 alert.type = cav_msgs::SystemAlert::WARNING;
@@ -292,6 +301,16 @@ namespace health_monitor
                 alert.description = "LIDAR, GPS Failed";
                 alert.type = cav_msgs::SystemAlert::SHUTDOWN;
                 return alert; 
+            }
+            else if(status.compare("s_1_l_0_g_1_c_0") == 0)
+            {
+                alert.description = "LIDAR, Camera Failed";
+                alert.type = cav_msgs::SystemAlert::FATAL;
+            }
+            else if(status.compare("s_1_l_1_g_0_c_0") == 0)
+            {
+                alert.description = " GPS, Camera Failed";
+                alert.type = cav_msgs::SystemAlert::FATAL;
             }
             else if(status.compare("s_0") == 0)
             {

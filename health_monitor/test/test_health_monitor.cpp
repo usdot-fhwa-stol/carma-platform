@@ -59,7 +59,7 @@ namespace health_monitor
         cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
         dm.update_driver_status(msg4_pointer, 1000);
 
-        EXPECT_EQ("s_1_l_1_g_1", dm.are_critical_drivers_operational_car(1500));
+        EXPECT_EQ("s_1_l_1_g_1_c_1", dm.are_critical_drivers_operational_car(1500));
 
 }
 
@@ -281,7 +281,7 @@ namespace health_monitor
         cav_msgs::DriverStatusConstPtr msg5_pointer(new cav_msgs::DriverStatus(msg5));
         dm.update_driver_status(msg5_pointer, 1000);
 
-        EXPECT_EQ("s_1_l1_1_l2_1_g_1", dm.are_critical_drivers_operational_truck(1500));
+        EXPECT_EQ("s_1_l1_1_l2_1_g_1_c_1", dm.are_critical_drivers_operational_truck(1500));
 
     }
 

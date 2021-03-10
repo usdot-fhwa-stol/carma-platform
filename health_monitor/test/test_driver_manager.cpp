@@ -68,7 +68,7 @@ namespace health_monitor
         cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
         dm.update_driver_status(msg4_pointer, 1000);
 
-        EXPECT_EQ("s_1_l_1_g_1", dm.are_critical_drivers_operational_car(1500));
+        EXPECT_EQ("s_1_l_1_g_1_c_1", dm.are_critical_drivers_operational_car(1500));
     }
 
     TEST(DriverManagerTest, testCarSsc_1_Lidar_0_Gps_0)
@@ -286,14 +286,14 @@ namespace health_monitor
         cav_msgs::DriverStatus msg2;
         msg2.lidar = true;
         msg2.name = "lidar";
-        msg2.status = cav_msgs::DriverStatus::DEGRADED;
+        msg2.status = cav_msgs::DriverStatus::OPERATIONAL;
         cav_msgs::DriverStatusConstPtr msg2_pointer(new cav_msgs::DriverStatus(msg2));
         dm.update_driver_status(msg2_pointer, 1000);
 
         cav_msgs::DriverStatus msg3;
         msg3.gnss = true;
         msg3.name = "gps";
-        msg3.status = cav_msgs::DriverStatus::DEGRADED;
+        msg3.status = cav_msgs::DriverStatus::OPERATIONAL;
         cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
         dm.update_driver_status(msg3_pointer, 1000);
 
@@ -692,7 +692,7 @@ namespace health_monitor
         cav_msgs::DriverStatusConstPtr msg5_pointer(new cav_msgs::DriverStatus(msg5));
         dm.update_driver_status(msg5_pointer, 1000);
 
-        EXPECT_EQ("s_1_l1_1_l2_1_g_1", dm.are_critical_drivers_operational_truck(1500));
+        EXPECT_EQ("s_1_l1_1_l2_1_g_1_c_1", dm.are_critical_drivers_operational_truck(1500));
     }
 
     TEST(DriverManagerTest, testTruckSsc_0_Lidar1_1_Lidar2_1_Gps_1)
@@ -1107,7 +1107,7 @@ namespace health_monitor
         cav_msgs::DriverStatusConstPtr msg5_pointer(new cav_msgs::DriverStatus(msg5));
         dm.update_driver_status(msg5_pointer, 1000);
 
-        EXPECT_EQ("s_1_c_0", dm.are_critical_drivers_operational_truck(1500));
+        EXPECT_EQ("s_1_l1_1_l2_1_g_1_c_0", dm.are_critical_drivers_operational_truck(1500));
     }
 
     TEST(DriverManagerTest, testTruckDriverStatusTimeout)
