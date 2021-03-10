@@ -46,6 +46,7 @@
 
   <!-- CARMA Motion Computation Node -->
   <group>
+    <remap to="$(optenv CARMA_MSG_NS)/incoming_mobility_path" from="/environment/incoming_mobility_path"/>
     <include file="$(find motion_computation)/launch/motion_computation.launch"/>
   </group>
 
