@@ -21,6 +21,7 @@
   <arg name="kp_lateral_error" default="0.5" doc=""/>
   <arg name="kd_steer" default="0.0" doc=""/>
   <arg name="preview_window" default="0" doc=""/>
+  <arg name="yaw_offset_points" default="0" doc=""/>
 
   <group>
 
@@ -56,6 +57,7 @@
       <param name="kp_lateral_error" value="$(arg kp_lateral_error)"/>
       <param name="kd_steer" value="$(arg kd_steer)"/>
       <param name="preview_window" value="$(arg preview_window)"/>      
+      <param name="yaw_offset_points" value="$(arg yaw_offset_points)"/>      
     </node>
 
   </group>
