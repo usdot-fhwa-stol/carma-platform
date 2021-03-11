@@ -223,7 +223,7 @@ MPCUtils::MPCTrajectory StanleyController::apply_response_lag(const MPCUtils::MP
   }
 
   double final_yaw = out.yaw[traj.size() - offset - 1];
-  for (size_t i = traj.size() - offset; i < traj.size(); i++) {
+  for (size_t i = traj.size() - offset - 1; i < traj.size(); i++) {
     out.yaw[i] = final_yaw;
   }
 
