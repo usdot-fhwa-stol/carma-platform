@@ -215,7 +215,7 @@ bool StanleyController::updateStateError()
   return true;
 }
 
-MPCUtils::MPCTrajectory StanleyController::apply_response_lag(const MPCUtils::MPCTrajectory& traj, const int offset) const { // Note first speed is assumed to be vehicle speed
+MPCUtils::MPCTrajectory StanleyController::apply_response_lag(const MPCUtils::MPCTrajectory& traj, const int offset) const {
   MPCUtils::MPCTrajectory out{traj};
 
   for (size_t i = 0; i < traj.size() - offset; i++) {
