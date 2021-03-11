@@ -212,7 +212,7 @@ private:
    * traj with the yaw values shifted forward by offset points. The trajectory's
    * yaw values are backfilled with the last yaw value from the original traj.
    */
-  MPCUtils::MPCTrajectory StanleyController::apply_response_lag(const MPCUtils::MPCTrajectory& traj, const int offset) const;
+  MPCUtils::MPCTrajectory apply_response_lag(const MPCUtils::MPCTrajectory& traj, const int offset) const;
   void param_callback(stanley_controller::StanleyDynamicParamsConfig &config, uint32_t level);
 };
 }  // namespace stanley_controller

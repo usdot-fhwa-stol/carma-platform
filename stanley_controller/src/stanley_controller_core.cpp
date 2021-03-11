@@ -45,7 +45,7 @@ StanleyController::StanleyController()
   pnh_.param("curvature_smoothing_num", curvature_smoothing_num_, 35);
   pnh_.param("traj_resample_dist", traj_resample_dist_, 0.1);  // [m]
   pnh_.param("output_interface", output_interface_, std::string("all"));
-  pnh_.param("yaw_offset_points", yaw_offset_points_, 0);
+  pnh_.param("yaw_offset_points", yaw_offset_points_, 0.0);
 
   /* stanley parameters */
   pnh_.param("kp_yaw_error", kp_yaw_error_, 1.0);
