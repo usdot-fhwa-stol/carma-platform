@@ -16,6 +16,10 @@
 #include "object_detection_tracking_worker.h"
 #include <motion_predict/motion_predict.h>
 #include <motion_predict/predict_ctrv.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
 
 namespace object
 {
@@ -23,6 +27,7 @@ ObjectDetectionTrackingWorker::ObjectDetectionTrackingWorker(PublishObjectCallba
 
 void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::DetectedObjectArray& obj_array)
 {
+
   cav_msgs::ExternalObjectList msg;
   msg.header = obj_array.header;
 
@@ -43,11 +48,33 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
     obj.presence_vector = obj.presence_vector | obj.OBJECT_TYPE_PRESENCE_VECTOR;
     obj.presence_vector = obj.presence_vector | obj.DYNAMIC_OBJ_PRESENCE;
 
+
+    std::string velodyne_frame_ = "velodyne";
+    std::string map_frame_ = "map";
+
+    tf2::Transform velodyne_transform; 
+    try {
+      tf2::convert(tfBuffer_.lookupTransform(map_frame_ ,velodyne_frame_, ros::Time(0)).transform,velodyne_transform);
+    } catch (tf2::TransformException &ex) {
+      ROS_WARN_STREAM("Ignoring fix message: Could not locate static transforms with exception " << ex.what());
+    }
+
     // Object id. Matching ids on a topic should refer to the same object within some time period, expanded
     obj.id = obj_array.objects[i].id;
 
     // Pose of the object within the frame specified in header
+
     obj.pose.pose = obj_array.objects[i].pose;
+
+    obj.pose.pose.position.x = obj_array.objects[i].pose.position.x + velodyne_transform.getOrigin().getX();
+
+    obj.pose.pose.position.y = obj_array.objects[i].pose.position.y + velodyne_transform.getOrigin().getY();
+
+    ROS_WARN_STREAM(obj.pose.pose.position.x);
+
+    ROS_WARN_STREAM(obj.pose.pose.position.y);
+
+
     obj.pose.covariance[0] = obj_array.objects[i].variance.x;
     obj.pose.covariance[7] = obj_array.objects[i].variance.y;
     obj.pose.covariance[17] = obj_array.objects[i].variance.z;
@@ -103,7 +130,6 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
 
     msg.objects.emplace_back(obj);
   }
-
 
   obj_pub_(msg);
 }

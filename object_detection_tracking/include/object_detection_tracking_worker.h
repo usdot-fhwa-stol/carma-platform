@@ -23,7 +23,10 @@
 #include <autoware_msgs/DetectedObject.h>
 #include <autoware_msgs/DetectedObjectArray.h>
 #include <functional>
+#include <tf2_ros/transform_listener.h>
 
+#include <tf/transform_listener.h>
+#include <tf2/LinearMath/Transform.h>
 namespace object{
 
 class ObjectDetectionTrackingWorker
@@ -67,6 +70,11 @@ class ObjectDetectionTrackingWorker
   double cv_y_accel_noise_ = 9.0;
   double prediction_process_noise_max_ = 1000.0;
   double prediction_confidence_drop_rate_ = 0.9;
+
+  // Buffer which holds the tree of transforms
+  tf2_ros::Buffer tfBuffer_;
+  // tf2 listeners. Subscribes to the /tf and /tf_static topics
+  tf2_ros::TransformListener tfListener_ {tfBuffer_};
   
 };
 
