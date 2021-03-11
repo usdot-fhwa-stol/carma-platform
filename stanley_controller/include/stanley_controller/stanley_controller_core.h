@@ -114,6 +114,7 @@ private:
   double k_soft_;       //< @brief minimum speed during steering
   double k_ag_;         //< @brief for steady state yaw
   int preview_window_;  //< @brief lookahead window size for longitudinal control
+  double yaw_offset_points_ = 0.0;
 
   struct VehicleStatus
   {
@@ -200,6 +201,18 @@ private:
                            double r, double g, double b, double z);
 
 
+  /**
+   * @brief Compensate for lag in the yaw response by forward shifting target yaw values
+   * by a fixed nubmer of points
+   * 
+   * @param traj The MPCUtils::MPCTrajectory object to adjust, non-destructively
+   * @param offset The number of points to shift by
+   * 
+   * @return A new MPCUtils::MPCTrajectory object containing the same data as 
+   * traj with the yaw values shifted forward by offset points. The trajectory's
+   * yaw values are backfilled with the last yaw value from the original traj.
+   */
+  MPCUtils::MPCTrajectory StanleyController::apply_response_lag(const MPCUtils::MPCTrajectory& traj, const int offset) const { // Note first speed is assumed to be vehicle speed
   void param_callback(stanley_controller::StanleyDynamicParamsConfig &config, uint32_t level);
 };
 }  // namespace stanley_controller

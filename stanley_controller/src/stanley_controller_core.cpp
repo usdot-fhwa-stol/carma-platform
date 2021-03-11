@@ -45,6 +45,7 @@ StanleyController::StanleyController()
   pnh_.param("curvature_smoothing_num", curvature_smoothing_num_, 35);
   pnh_.param("traj_resample_dist", traj_resample_dist_, 0.1);  // [m]
   pnh_.param("output_interface", output_interface_, std::string("all"));
+  pnh_.param("yaw_offset_points", yaw_offset_points_, 0);
 
   /* stanley parameters */
   pnh_.param("kp_yaw_error", kp_yaw_error_, 1.0);
@@ -214,6 +215,21 @@ bool StanleyController::updateStateError()
   return true;
 }
 
+MPCUtils::MPCTrajectory StanleyController::apply_response_lag(const MPCUtils::MPCTrajectory& traj, const int offset) const { // Note first speed is assumed to be vehicle speed
+  MPCUtils::MPCTrajectory out{traj};
+
+  for (size_t i = 0; i < traj.size() - offset; i++) {
+    out.yaw[i] = out.yaw[i + offset];
+  }
+
+  double final_yaw = out.yaw[traj.size() - offset];
+  for (size_t i = traj.size() - offset; i < traj.size(); i++) {
+    out.yaw[i] = final_yaw;
+  }
+
+  return out;
+}
+
 void StanleyController::callbackRefPath(const autoware_msgs::Lane::ConstPtr& msg)
 {
   current_waypoints_ = *msg;
@@ -227,6 +243,8 @@ void StanleyController::callbackRefPath(const autoware_msgs::Lane::ConstPtr& msg
   /* resampling */
   MPCUtils::convertWaypointsToMPCTrajWithDistanceResample(current_waypoints_, relative_time, traj_resample_dist_,
                                                           &traj);
+
+  traj = apply_response_lag(traj, yaw_offset_points_);
   MPCUtils::convertEulerAngleToMonotonic(&traj.yaw);
 
   /* path smoothing */
