@@ -54,7 +54,7 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
 
     tf2::Transform velodyne_transform; 
     try {
-      tf2::convert(tfBuffer_.lookupTransform(velodyne_frame_, map_frame_, ros::Time(0)).transform,velodyne_transform);
+      tf2::convert(tfBuffer_.lookupTransform(map_frame_ ,velodyne_frame_, ros::Time(0)).transform,velodyne_transform);
     } catch (tf2::TransformException &ex) {
       ROS_WARN_STREAM("Ignoring fix message: Could not locate static transforms with exception " << ex.what());
     }
@@ -66,9 +66,9 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
 
     obj.pose.pose = obj_array.objects[i].pose;
 
-    obj.pose.pose.position.y = obj_array.objects[i].pose.position.x + velodyne_transform.getOrigin().getX();
+    obj.pose.pose.position.x = obj_array.objects[i].pose.position.x + velodyne_transform.getOrigin().getX();
 
-    obj.pose.pose.position.x = obj_array.objects[i].pose.position.y + velodyne_transform.getOrigin().getY();
+    obj.pose.pose.position.y = obj_array.objects[i].pose.position.y + velodyne_transform.getOrigin().getY();
 
     ROS_WARN_STREAM(obj.pose.pose.position.x);
 
