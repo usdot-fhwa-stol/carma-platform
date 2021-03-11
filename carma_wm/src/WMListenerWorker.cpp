@@ -53,26 +53,27 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr&
   }
 }
 
-bool WMListenerWorker::checkIfReRoutingNeeded()
+bool WMListenerWorker::checkIfReRoutingNeeded() const
 {
   return rerouting_flag_;
 }
 
-void WMListenerWorker::setRouteFlag()
+void WMListenerWorker::enableUpdatesWithoutRoute()
 {
-  i_am_route_=true;
+  route_node_flag_=true;
 }
 
 void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg) const
 {
 
-  if(geofence_msg.invalidates_route==true && local_geofence_msg_.rerouting_successful!=true)
+  if(geofence_msg.invalidates_route==true)
   {  
     rerouting_flag_=true;
     local_geofence_msg_=geofence_msg;
 
-    if(i_am_route_!=true)
+    if(route_node_flag_!=true)
     {
+     ROS_INFO_STREAM("Route is not invalidated/available yet");
      return;
     }
 }
@@ -165,7 +166,7 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
 
   if(rerouting_flag_==true)
   {
-    local_geofence_msg_.rerouting_successful=true;
+    local_geofence_msg_.invalidates_route = false;
     mapUpdateCallback(local_geofence_msg_);
   }
 
@@ -197,7 +198,6 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
 void WMListenerWorker::setMapCallback(std::function<void()> callback)
 {
   map_callback_ = callback;
-  map_flag_=true;
 }
 
 void WMListenerWorker::setRouteCallback(std::function<void()> callback)

@@ -146,7 +146,7 @@ namespace route {
                 return false;
             }
             // convert points in ECEF to map frame
-            auto destination_points_in_map_ = transform_to_map_frame(destination_points, map_in_earth);
+            destination_points_in_map_ = transform_to_map_frame(destination_points, map_in_earth);
             int idx = 0;
             // validate if the points are geometrically in the map
             for (auto pt : destination_points_in_map_)
@@ -167,9 +167,9 @@ namespace route {
             // get route graph from world model object
             auto p = world_model_->getMapRoutingGraph();
             // generate a route
-            auto route = routing(destination_points_in_map.front(),
-                                std::vector<lanelet::BasicPoint2d>(destination_points_in_map.begin() + 1, destination_points_in_map.end() - 1),
-                                destination_points_in_map.back(),
+            auto route = routing(destination_points_in_map_.front(),
+                                std::vector<lanelet::BasicPoint2d>(destination_points_in_map_.begin() + 1, destination_points_in_map_.end() - 1),
+                                destination_points_in_map_.back(),
                                 world_model_->getMap(), world_model_->getMapRoutingGraph());
             // check if route successed
             if(!route)
@@ -453,10 +453,9 @@ namespace route {
            if(!route)
             {
                 ROS_ERROR_STREAM("Cannot find a route passing all destinations.");
-                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
-                return false;
+                return true;
             }
             else
             {
@@ -466,7 +465,8 @@ namespace route {
 
            route_msg_=compose_route_msg(route);
            route_marker_msg_=compose_route_marker_msg(route);
-           route_generated_=true;
+           new_route_msg_generated_=true;
+           new_route_marker_generated_=true;
         }
     
         // publish new route and set new route flag back to false

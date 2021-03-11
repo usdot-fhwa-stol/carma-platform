@@ -93,10 +93,16 @@ public:
  * 
 */
   double getConfigSpeedLimit() const;
-
+/**
+ *  \brief Check if re-routing is needed and returns re-routing flag
+ * 
+*/
   bool checkIfReRoutingNeeded() const;
-
-  void setRouteFlag();
+/**
+ *  \brief Enable updates without route and set route_node_flag_ as true
+ * 
+*/
+  void enableUpdatesWithoutRoute();
 
 private:
   std::shared_ptr<CARMAWorldModel> world_model_;
@@ -106,6 +112,6 @@ private:
   double config_speed_limit_;
   autoware_lanelet2_msgs::MapBin local_geofence_msg_;
   bool rerouting_flag_=false;
-  bool i_am_route_=false;
+  bool route_node_flag_=false;
 };
 }  // namespace carma_wm
