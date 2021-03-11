@@ -28,8 +28,6 @@ ObjectDetectionTrackingWorker::ObjectDetectionTrackingWorker(PublishObjectCallba
 void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::DetectedObjectArray& obj_array)
 {
 
-  std::cout << "call back called \n\n"; 
-
   cav_msgs::ExternalObjectList msg;
   msg.header = obj_array.header;
 
@@ -51,18 +49,12 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
     obj.presence_vector = obj.presence_vector | obj.DYNAMIC_OBJ_PRESENCE;
 
 
-    // Buffer which holds the tree of transforms
-    tf2_ros::Buffer tfBuffer_;
-    // tf2 listeners. Subscribes to the /tf and /tf_static topics
-    tf2_ros::TransformListener tfListener_ {tfBuffer_};
-
     std::string velodyne_frame_ = "velodyne";
     std::string map_frame_ = "map";
 
     tf2::Transform velodyne_transform; 
-
     try {
-      tf2::convert(tfBuffer_.lookupTransform("map", "velodyne", ros::Time(0)).transform,velodyne_transform);
+      tf2::convert(tfBuffer_.lookupTransform(velodyne_frame_, map_frame_, ros::Time(0)).transform,velodyne_transform);
     } catch (tf2::TransformException &ex) {
       ROS_WARN_STREAM("Ignoring fix message: Could not locate static transforms with exception " << ex.what());
     }
@@ -74,9 +66,14 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
 
     obj.pose.pose = obj_array.objects[i].pose;
 
-    obj.pose.pose.position.x = obj_array.objects[i].pose.position.x + velodyne_transform.getOrigin().getX();
+    obj.pose.pose.position.y = obj_array.objects[i].pose.position.x + velodyne_transform.getOrigin().getX();
 
-    obj.pose.pose.position.y = obj_array.objects[i].pose.position.y + velodyne_transform.getOrigin().getY();
+    obj.pose.pose.position.x = obj_array.objects[i].pose.position.y + velodyne_transform.getOrigin().getY();
+
+    ROS_WARN_STREAM(obj.pose.pose.position.x);
+
+    ROS_WARN_STREAM(obj.pose.pose.position.y);
+
 
     obj.pose.covariance[0] = obj_array.objects[i].variance.x;
     obj.pose.covariance[7] = obj_array.objects[i].variance.y;
@@ -133,7 +130,6 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
 
     msg.objects.emplace_back(obj);
   }
-
 
   obj_pub_(msg);
 }
