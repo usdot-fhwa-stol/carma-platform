@@ -15,3 +15,9 @@ prediction_process_noise_max: 1000.0
 
 # Percentage of initial confidence to propagate to next time step
 prediction_confidence_drop_rate: 0.95
+
+#Velodyne frame designation 
+velodyne_frame_ : "velodyne";
+
+#Map frame designation
+map_frame_ : "map";
