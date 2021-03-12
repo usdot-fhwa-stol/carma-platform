@@ -33,7 +33,11 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
 
   tf2::Transform velodyne_transform; 
 
-
+  try {
+      tf2::convert(tfBuffer_.lookupTransform(map_frame_ ,velodyne_frame_, ros::Time(0)).transform,velodyne_transform);
+    } catch (tf2::TransformException &ex) {
+      ROS_WARN_STREAM("Ignoring fix message: Could not locate static transforms with exception " << ex.what());
+    }
   for (int i = 0; i < obj_array.objects.size(); i++)
   {
     cav_msgs::ExternalObject obj;
@@ -66,7 +70,12 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
 
     ROS_WARN_STREAM(obj.pose.pose.position.y);
 
-   // tf2::doTransform(obj_array.objects[i].pose.position, obj.pose.pose.position,velodyne_transform.getOrigin().getX());
+    geometry_msgs::TransformStamped v_transform = tfBuffer_.lookupTransform(map_frame_ ,velodyne_frame_, ros::Time(0));
+
+
+    //tf2::doTransform(obj_array.objects[i].pose.position.x, obj.pose.pose.position.x,v_transform);
+   // tf2::doTransform(obj_array.objects[i].pose.position.y, obj.pose.pose.position.y,v_transform);
+
 
     obj.pose.covariance[0] = obj_array.objects[i].variance.x;
     obj.pose.covariance[7] = obj_array.objects[i].variance.y;
@@ -126,11 +135,7 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
     msg.objects.emplace_back(obj);
   }
 
-try {
-      tf2::convert(tfBuffer_.lookupTransform(map_frame_ ,velodyne_frame_, ros::Time(0)).transform,velodyne_transform);
-    } catch (tf2::TransformException &ex) {
-      ROS_WARN_STREAM("Ignoring fix message: Could not locate static transforms with exception " << ex.what());
-    }
+
 
   obj_pub_(msg);
 }
