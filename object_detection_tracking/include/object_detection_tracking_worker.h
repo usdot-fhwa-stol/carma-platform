@@ -56,6 +56,10 @@ class ObjectDetectionTrackingWorker
   void setYAccelerationNoise(double noise);
   void setProcessNoiseMax(double noise_max);
   void setConfidenceDropRate(double drop_rate);
+
+  void setVelodyneFrame(std::string velodyne_frame);
+  void setMapFrame(std::string map_frame);
+
  
  private:
 
@@ -70,6 +74,8 @@ class ObjectDetectionTrackingWorker
   double cv_y_accel_noise_ = 9.0;
   double prediction_process_noise_max_ = 1000.0;
   double prediction_confidence_drop_rate_ = 0.9;
+  std::string velodyne_frame_;
+  std::string map_frame_;
 
   // Buffer which holds the tree of transforms
   tf2_ros::Buffer tfBuffer_;
