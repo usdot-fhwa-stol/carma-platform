@@ -19,7 +19,10 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2/LinearMath/Quaternion.h>
-#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/transform_datatypes.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_eigen/tf2_eigen.h>
+
 
 namespace object
 {
@@ -73,8 +76,8 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
     geometry_msgs::TransformStamped v_transform = tfBuffer_.lookupTransform(map_frame_ ,velodyne_frame_, ros::Time(0));
 
 
-    //tf2::doTransform(obj_array.objects[i].pose.position.x, obj.pose.pose.position.x,v_transform);
-   // tf2::doTransform(obj_array.objects[i].pose.position.y, obj.pose.pose.position.y,v_transform);
+    tf2::doTransform(obj_array.objects[i].pose.position.x, obj.pose.pose.position.x,v_transform);
+    tf2::doTransform(obj_array.objects[i].pose.position.y, obj.pose.pose.position.y,v_transform);
 
 
     obj.pose.covariance[0] = obj_array.objects[i].variance.x;
