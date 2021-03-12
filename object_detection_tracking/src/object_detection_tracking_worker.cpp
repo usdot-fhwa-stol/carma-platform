@@ -40,7 +40,7 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
       tf2::convert(tfBuffer_.lookupTransform(map_frame_ ,velodyne_frame_, ros::Time(0)).transform,velodyne_transform);
     } catch (tf2::TransformException &ex) {
       ROS_WARN_STREAM("Ignoring fix message: Could not locate static transforms with exception " << ex.what());
-      exit(0);
+      return;
     }
   for (int i = 0; i < obj_array.objects.size(); i++)
   {
