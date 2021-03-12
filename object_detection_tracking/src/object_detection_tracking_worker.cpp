@@ -40,6 +40,7 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
       tf2::convert(tfBuffer_.lookupTransform(map_frame_ ,velodyne_frame_, ros::Time(0)).transform,velodyne_transform);
     } catch (tf2::TransformException &ex) {
       ROS_WARN_STREAM("Ignoring fix message: Could not locate static transforms with exception " << ex.what());
+      throw std::invalid_argument(ex.what());
     }
   for (int i = 0; i < obj_array.objects.size(); i++)
   {
@@ -62,17 +63,6 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
     obj.id = obj_array.objects[i].id;
 
     // Pose of the object within the frame specified in header
-
-    obj.pose.pose = obj_array.objects[i].pose;
-
-    obj.pose.pose.position.x = obj_array.objects[i].pose.position.x + velodyne_transform.getOrigin().getX();
-
-    obj.pose.pose.position.y = obj_array.objects[i].pose.position.y + velodyne_transform.getOrigin().getY();
-
-    ROS_WARN_STREAM(obj.pose.pose.position.x);
-
-    ROS_WARN_STREAM(obj.pose.pose.position.y);
-
     geometry_msgs::TransformStamped v_transform = tfBuffer_.lookupTransform(map_frame_ ,velodyne_frame_, ros::Time(0));
 
 
