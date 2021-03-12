@@ -63,7 +63,7 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
     obj.id = obj_array.objects[i].id;
 
     // Pose of the object within the frame specified in header
-    geometry_msgs::TransformStamped v_transform = tfBuffer_.lookupTransform(map_frame_ ,velodyne_frame_, ros::Time(0));
+    geometry_msgs::TransformStamped v_transform = tfBuffer_.lookupTransform(map_frame_ ,velodyne_frame_,obj_array.header.stamp);
 
 
     tf2::doTransform(obj_array.objects[i].pose, obj.pose.pose, v_transform);
