@@ -15,6 +15,7 @@
  */
 
 #include "route.h"
+#include <carma_wm/WMListener.h>
 
 namespace route {
 
@@ -41,9 +42,9 @@ namespace route {
         abort_active_route_srv_ = nh_->advertiseService("abort_active_route", &RouteGeneratorWorker::abort_active_route_cb, &rg_worker_);
         // set world model point form wm listener
         wm_ = wml_.getWorldModel();
-        wml_.setRouteFlag();
+        wml_.enableUpdatesWithoutRouteWL();
         rg_worker_.setWorldModelPtr(wm_);
-        rg_worker_.setReroutingChecker(std::bind(&WMListenerWorker::checkIfReRoutingNeeded,&wml_, _1);
+        rg_worker_.setReroutingChecker(std::bind(&WMListener::checkIfReRoutingNeededWL,&wml_, _1);
         // load params and pass to route generator worker
         double ct_error, dt_range;
         int cte_count_max;

@@ -17,7 +17,6 @@
 #include <lanelet2_extension/utility/message_conversion.h>
 #include "WMListenerWorker.h"
 
-
 namespace carma_wm
 {
 enum class GeofenceType{ INVALID, DIGITAL_SPEED_LIMIT, PASSING_CONTROL_LINE, /* ... others */ };
@@ -63,13 +62,13 @@ void WMListenerWorker::enableUpdatesWithoutRoute()
   route_node_flag_=true;
 }
 
-void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg) const
+void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg)
 {
 
-  if(geofence_msg.invalidates_route==true)
+  if(geofence_msg->invalidates_route==true)
   {  
     rerouting_flag_=true;
-    local_geofence_msg_=geofence_msg;
+    local_geofence_msg_ = boost::make_shared<autoware_lanelet2_msgs::MapBin>(*geofence_msg);
 
     if(route_node_flag_!=true)
     {
@@ -166,7 +165,7 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
 
   if(rerouting_flag_==true)
   {
-    local_geofence_msg_.invalidates_route = false;
+    local_geofence_msg_->invalidates_route = false;
     mapUpdateCallback(local_geofence_msg_);
   }
 

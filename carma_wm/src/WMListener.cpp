@@ -58,6 +58,16 @@ WMListener::~WMListener()
   }
 }
 
+void WMListener::enableUpdatesWithoutRouteWL()
+{
+   worker_->enableUpdatesWithoutRoute();
+}
+
+bool WMListener::checkIfReRoutingNeededWL() const
+{
+  return worker_->checkIfReRoutingNeeded();
+}
+
 WorldModelConstPtr WMListener::getWorldModel()
 {
   const std::lock_guard<std::mutex> lock(mw_mutex_);

@@ -54,7 +54,7 @@ public:
    *
    * \param geofence_msg The new map update messages to generate the map edits from
    */
-  void mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg) const;
+  void mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg);
 
   /*!
    * \brief Callback for route message. It is a TODO: To update function when route message spec is defined
@@ -110,7 +110,9 @@ private:
   std::function<void()> route_callback_;
   void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const;
   double config_speed_limit_;
-  autoware_lanelet2_msgs::MapBin local_geofence_msg_;
+  autoware_lanelet2_msgs::MapBinPtr local_geofence_msg_;
+  //autoware_lanelet2_msgs::MapBinConstPtr *local_geofence_msg_ptr_;
+  
   bool rerouting_flag_=false;
   bool route_node_flag_=false;
 };
