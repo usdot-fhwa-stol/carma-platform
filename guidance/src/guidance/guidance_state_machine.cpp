@@ -91,7 +91,7 @@ namespace guidance
             {
                 onGuidanceSignal(Signal::OVERRIDE); // Required for ENTER_PARK -> INACTIVE
 
-                if(sys_alert_msg_.type == sys_alert_msg_.DRIVERS_READY){
+                if(operational_drivers_){
                     onGuidanceSignal(Signal::INITIALIZED); 
                 }
             }
@@ -100,12 +100,13 @@ namespace guidance
 
     void GuidanceStateMachine::onSystemAlert(const cav_msgs::SystemAlertConstPtr& msg)
     {
-        sys_alert_msg_ = *msg;
         if(msg->type == msg->DRIVERS_READY)
         {
+            operational_drivers_ = true;
             onGuidanceSignal(Signal::INITIALIZED);
-        } else if(msg->type == msg->SHUTDOWN || msg->type == msg->FATAL)
+        } else if(msg->type == msg->SHUTDOWN)
         {
+            operational_drivers_ = false;
             onGuidanceSignal(Signal::SHUTDOWN);
         }
     }
