@@ -84,12 +84,11 @@ namespace guidance
 
     void GuidanceStateMachine::onVehicleStatus(const autoware_msgs::VehicleStatusConstPtr& msg)
     {
-        if (shifting_into_park_)
+        if (current_guidance_state_ == State::ENTER_PARK)
         {
             // '3' indicates vehicle gearshift is currently set to PARK
             if(msg->gearshift == 3)
             {
-                shifting_into_park_ = false;
                 onGuidanceSignal(Signal::OVERRIDE); // Required for ENTER_PARK -> INACTIVE
 
                 if(sys_alert_msg_.type == sys_alert_msg_.DRIVERS_READY){
@@ -146,10 +145,7 @@ namespace guidance
                onGuidanceSignal(Signal::DISENGAGED);
            }
         else if(msg->event == cav_msgs::RouteEvent::ROUTE_COMPLETED){
-            onGuidanceSignal(Signal::PARK); // ENGAGED -> ENTER_PARK
-
-            // Set flag to restrict transitioning out of ENTER_PARK until vehicle is shifted to PARK
-            shifting_into_park_ = true;
+            onGuidanceSignal(Signal::PARK); // ENGAGED -> ENTER_PARK this state restricts transitioning out of ENTER_PARK until vehicle is shifted to PARK
         }
     }
 
