@@ -48,7 +48,7 @@ Using this file:
 */
 
 
-TEST(RouteGeneratorTest, DISABLED_testRouteVisualizerCenterLineParser)
+TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
 {
     tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
@@ -138,9 +138,7 @@ TEST(RouteGeneratorTest, DISABLED_testRouteVisualizerCenterLineParser)
     }
 }
 
-
-
-TEST(RouteGeneratorTest, DISABLED_testLaneletRoutingVectorMap)
+TEST(RouteGeneratorTest, testLaneletRoutingVectorMap)
 {
     tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
@@ -206,7 +204,7 @@ TEST(RouteGeneratorTest, DISABLED_testLaneletRoutingVectorMap)
     }
 }
 
-TEST(RouteGeneratorTest, DISABLED_testLaneletRoutingTown02VectorMap)
+TEST(RouteGeneratorTest, testLaneletRoutingTown02VectorMap)
 {
     tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
@@ -285,7 +283,7 @@ TEST(RouteGeneratorTest, DISABLED_testLaneletRoutingTown02VectorMap)
 
 }
 
-TEST(RouteGeneratorTest, DISABLED_testReadLanelet111RouteFile)
+TEST(RouteGeneratorTest, testReadLanelet111RouteFile)
 {
     tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
@@ -308,7 +306,7 @@ TEST(RouteGeneratorTest, DISABLED_testReadLanelet111RouteFile)
     ASSERT_NEAR(4.79047e+06, points[0].getZ(), 5.0);
 }
 
-TEST(RouteGeneratorTest, DISABLED_testReadRoutetfhrcFile)
+TEST(RouteGeneratorTest, testReadRoutetfhrcFile)
 {
     tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
@@ -334,7 +332,7 @@ TEST(RouteGeneratorTest, DISABLED_testReadRoutetfhrcFile)
    }
 }
 
-TEST(RouteGeneratorTest, DISABLED_test_crosstrack_error_check)
+TEST(RouteGeneratorTest, test_crosstrack_error_check)
 {
      tf2_ros::Buffer tf_buffer;
      std::shared_ptr<carma_wm::WMListener> wml;
@@ -451,7 +449,7 @@ TEST(RouteGeneratorTest, DISABLED_test_crosstrack_error_check)
 
 }
 
-TEST(RouteGeneratorTest, DISABLED_test_set_active_route_cb)
+TEST(RouteGeneratorTest, test_set_active_route_cb)
 {
     tf2_ros::Buffer tf_buffer;
     carma_wm::WorldModelConstPtr wm;
@@ -539,7 +537,7 @@ TEST(RouteGeneratorTest, test_setReroutingChecker)
     ASSERT_EQ(true,worker.reroutingChecker());
 }
 
-TEST(RouteGeneratorTest, DISABLED_test_get_closest_lanelet_from_route_llts)
+TEST(RouteGeneratorTest, test_get_closest_lanelet_from_route_llts)
 {
      tf2_ros::Buffer tf_buffer;
      std::shared_ptr<carma_wm::WMListener> wml;

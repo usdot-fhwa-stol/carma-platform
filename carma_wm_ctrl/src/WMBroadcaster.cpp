@@ -232,9 +232,9 @@ void WMBroadcaster::addPassingControlLineFromMsg(std::shared_ptr<Geofence> gf_pt
 
 void WMBroadcaster::addRegionAccessRule(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const
 {
-  gf_ptr->regulatory_element_ = std::make_shared<lanelet::RegionAccessRule>(lanelet::RegionAccessRule::buildData(lanelet::utils::getId(),affected_llts,{},participantsChecker(msg_v01)));
-   
-  if(!gf_ptr->regulatory_element_->accessable("vehicle:car"))
+  auto regulatory_element = std::make_shared<lanelet::RegionAccessRule>(lanelet::RegionAccessRule::buildData(lanelet::utils::getId(),affected_llts,{},participantsChecker(msg_v01)));
+
+  if(!regulatory_element->accessable("car"))
   {
    gf_ptr->invalidate_route_=true;
   }
@@ -242,12 +242,13 @@ void WMBroadcaster::addRegionAccessRule(std::shared_ptr<Geofence> gf_ptr, const 
   {
     gf_ptr->invalidate_route_=false;
   }
+  gf_ptr->regulatory_element_ = regulatory_element;
 }
 
 ros::V_string WMBroadcaster::participantsChecker(const cav_msgs::TrafficControlMessageV01& msg_v01) const
 {
-    ros::V_string participants;
- for (j2735_msgs::TrafficControlVehClass participant : msg_v01.params.vclasses)
+  ros::V_string participants;
+  for (j2735_msgs::TrafficControlVehClass participant : msg_v01.params.vclasses)
   {
     // Currently j2735_msgs::TrafficControlVehClass::RAIL is not supported
     if (participant.vehicle_class == j2735_msgs::TrafficControlVehClass::ANY)
@@ -276,6 +277,7 @@ ros::V_string WMBroadcaster::participantsChecker(const cav_msgs::TrafficControlM
             participant.vehicle_class == j2735_msgs::TrafficControlVehClass::PASSENGER_CAR)
     {
       participants.push_back(lanelet::Participants::VehicleCar);
+      ROS_WARN_STREAM("HEYYYYYYYY");
     }
     else if (8<= participant.vehicle_class && participant.vehicle_class <= 16) // Truck enum definition range from 8-16 currently
     {

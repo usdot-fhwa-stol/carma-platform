@@ -1215,6 +1215,36 @@ TEST(WMBroadcaster, distToNearestActiveGeofence)
   ASSERT_NEAR(nearest_gf_dist, 0, 0.0001);  // it should point the next
 }
 
+TEST(WMBroadcaster, addRegionAccessRule)
+{
+  auto gf_ptr = std::make_shared<Geofence>(Geofence());
+  auto map = carma_wm::getBroadcasterTestMap();
+
+  std::vector<lanelet::Lanelet> affected_llts {map->laneletLayer.get(map->laneletLayer.begin()->id())};
+
+  WMBroadcaster wmb(
+      [&](const autoware_lanelet2_msgs::MapBin& map_bin) {},
+      [&](const autoware_lanelet2_msgs::MapBin& geofence_bin) {},
+      [&](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
+      [&](const cav_msgs::CheckActiveGeofence& active_pub_){},
+      std::make_unique<TestTimerFactory>());
+
+  cav_msgs::TrafficControlMessageV01 msg_v01, msg_v02;
+  j2735_msgs::TrafficControlVehClass participant;
+  participant.vehicle_class = j2735_msgs::TrafficControlVehClass::PASSENGER_CAR;
+  msg_v01.params.vclasses.push_back(participant);
+
+  wmb.addRegionAccessRule(gf_ptr,msg_v01,affected_llts);
+
+  ASSERT_EQ(gf_ptr->invalidate_route_,true);
+
+  participant.vehicle_class = j2735_msgs::TrafficControlVehClass::BICYCLE;
+  msg_v02.params.vclasses.push_back(participant);
+
+  wmb.addRegionAccessRule(gf_ptr,msg_v02,affected_llts);
+
+  ASSERT_EQ(gf_ptr->invalidate_route_,false);
+}
 
 TEST(WMBroadcaster, currentLocationCallback)
 {
