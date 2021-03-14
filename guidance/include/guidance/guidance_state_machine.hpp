@@ -106,9 +106,6 @@ namespace guidance
             // make one service call in ACTIVE state to engage
             bool called_robotic_engage_in_active_{false};
 
-            // Flag to indicate whether currently waiting for vehicle to shift into park
-            bool shifting_into_park_{false};
-
             cav_msgs::SystemAlert sys_alert_msg_;
     };
 
