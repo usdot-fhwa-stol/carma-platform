@@ -71,6 +71,10 @@ namespace guidance
                 if(signal == Signal::OVERRIDE)
                 {
                     current_guidance_state_ = State::INACTIVE;
+                } 
+                else if(signal == Signal::DISENGAGED)
+                {
+                    current_guidance_state_ = State::DRIVERS_READY;
                 }
                 break;
             default:
