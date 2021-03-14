@@ -345,17 +345,18 @@ namespace route {
     {
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING) {
             // convert from pose stamp into lanelet basic 2D point
-            lanelet::BasicPoint2d current_loc(msg->pose.position.x, msg->pose.position.y);
+            current_loc_(msg->pose.position.x, msg->pose.position.y);
+            
             // get dt ct from world model
             carma_wm::TrackPos track(0.0, 0.0);
             try {
-                track = this->world_model_->routeTrackPos(current_loc);
+                track = this->world_model_->routeTrackPos(current_loc_);
             } catch (std::invalid_argument ex) {
                 ROS_WARN_STREAM("Routing has finished but carma_wm has not receive it!");
                 return;
             }
-            auto current_lanelet = get_closest_lanelet_from_route_llts(current_loc);
-            auto lanelet_track = carma_wm::geometry::trackPos(current_lanelet, current_loc);
+            auto current_lanelet = get_closest_lanelet_from_route_llts(current_loc_);
+            auto lanelet_track = carma_wm::geometry::trackPos(current_lanelet, current_loc_);
             ll_id_ = current_lanelet.id();
             ll_crosstrack_distance_ = lanelet_track.crosstrack;
             ll_downtrack_distance_ = lanelet_track.downtrack;
@@ -422,27 +423,29 @@ namespace route {
         route_event_queue.push(event_type);
     }
     
-    lanelet::Optional<lanelet::routing::Route> RouteGeneratorWorker::reroute_after_route_invalidation ()
+    lanelet::Optional<lanelet::routing::Route> RouteGeneratorWorker::reroute_after_route_invalidation(std::vector<lanelet::BasicPoint2d>& destination_points_in_map)
     {
         std::vector<lanelet::BasicPoint2d> destination_points_in_map_temp;
+        
+        for(const auto &i:destination_points_in_map)
+        {
+            double destination_down_track=world_model_->routeTrackPos(i).downtrack;
+            
+            if( current_downtrack_distance_< destination_down_track)
+            {
+                destination_points_in_map_temp.push_back(i);
+                ROS_DEBUG_STREAM("current_downtrack_distance_:" << current_downtrack_distance_);
+                ROS_DEBUG_STREAM("destination_down_track:" << destination_down_track);
+            }
+        }  
+        
+        destination_points_in_map = destination_points_in_map_temp;
+        ROS_DEBUG_STREAM("New destination_points_in_map.size:" << destination_points_in_map.size());
+        auto route=routing(current_loc_,
+                            std::vector<lanelet::BasicPoint2d>(destination_points_in_map.begin(), destination_points_in_map.end() - 1),
+                            destination_points_in_map.back(),
+                            world_model_->getMap(), world_model_->getMapRoutingGraph());
 
-           for( auto &i:destination_points_in_map_)
-           {
-               
-               double destination_down_track=world_model_->routeTrackPos(i).downtrack;
-                      
-               if( current_downtrack_distance_< destination_down_track)
-               {
-                    destination_points_in_map_temp.push_back(i);
-               }
-               
-           }
-           
-           destination_points_in_map_=destination_points_in_map_temp;
-           auto route=routing(destination_points_in_map_.front(),
-                                std::vector<lanelet::BasicPoint2d>(destination_points_in_map_.begin() + 1, destination_points_in_map_.end() - 1),
-                                destination_points_in_map_.back(),
-                                world_model_->getMap(), world_model_->getMapRoutingGraph());
         return route;
     }
 
@@ -452,8 +455,8 @@ namespace route {
         {
            this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_INVALIDATION);
            publish_route_event(cav_msgs::RouteEvent::ROUTE_INVALIDATION);
-
-           auto route = reroute_after_route_invalidation();
+           
+           auto route = reroute_after_route_invalidation(destination_points_in_map_);
 
            // check if route successed
            if(!route)

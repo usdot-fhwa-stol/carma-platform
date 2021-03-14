@@ -210,13 +210,11 @@ namespace route {
         void addllt(lanelet::ConstLanelet llt);
 
         /**
-         * \brief "Get the closest lanelet on the route relative to the vehicle's current position. 
-         * If the input list does not contain lanelets on the route, still closest lanelet from the route will be returned
-         * 
-         *  \param position the current position of the vehicle
+         * \brief After route is invalidated, this function returns a new route based on the destinations points.
+         * \param destination_points_in_map vector of destination points
+         * \note Destination points will be removed if the current pose is past those points.
         */
-        lanelet::Optional<lanelet::routing::Route> reroute_after_route_invalidation();
-
+        lanelet::Optional<lanelet::routing::Route> reroute_after_route_invalidation(std::vector<lanelet::BasicPoint2d>& destination_points_in_map);
 
     private:
 
@@ -252,6 +250,9 @@ namespace route {
 
         // current cross track and down track distance relative to the route
         double current_crosstrack_distance_, current_downtrack_distance_;
+
+        // current pose
+        lanelet::BasicPoint2d current_loc_;
 
         // current lanelet down track and cross track distance
         double ll_crosstrack_distance_, ll_downtrack_distance_;
