@@ -56,7 +56,7 @@ namespace guidance
             GuidanceStateMachine() = default;
 
             /*!
-             * \brief Handle system_alert message from ROS network.
+             * \brief Handle vehicle status message from ROS network.
              */
             void onVehicleStatus(const autoware_msgs::VehicleStatusConstPtr& msg);
 
