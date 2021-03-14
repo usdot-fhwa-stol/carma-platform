@@ -15,6 +15,7 @@
  */
 
 #include "guidance/guidance_state_machine.hpp"
+#include <ros/ros.h>
 
 namespace guidance
 {
@@ -84,6 +85,7 @@ namespace guidance
 
     void GuidanceStateMachine::onVehicleStatus(const autoware_msgs::VehicleStatusConstPtr& msg)
     {
+        current_velocity_ = msg->speed * 0.277777; // Convert kilometers per hour to meters per second. Rounded down so that it comes under epsilon for parking check
         if (current_guidance_state_ == State::ENTER_PARK)
         {
             // '3' indicates vehicle gearshift is currently set to PARK
@@ -146,7 +148,12 @@ namespace guidance
                onGuidanceSignal(Signal::DISENGAGED);
            }
         else if(msg->event == cav_msgs::RouteEvent::ROUTE_COMPLETED){
-            onGuidanceSignal(Signal::PARK); // ENGAGED -> ENTER_PARK this state restricts transitioning out of ENTER_PARK until vehicle is shifted to PARK
+            if (fabs(current_velocity_) < 0.001) { // Check we have successfully stopped
+                onGuidanceSignal(Signal::PARK); // ENGAGED -> ENTER_PARK this state restricts transitioning out of ENTER_PARK until vehicle is shifted to PARK
+            } else { // Vehicle was not able to stop transition to inactive
+                ROS_WARN_STREAM("Vehicle failed to park on route completion because current velocity was " << current_velocity_);
+                onGuidanceSignal(Signal::OVERRIDE);
+            }
         }
     }
 

@@ -110,6 +110,9 @@ namespace guidance
             // This is needed for state transitions since the most recent system alert message may contain unrelated information
             bool operational_drivers_{false}; 
 
+            // Current vehicle speed in m/s. Used to handle end of route state transition.
+            double current_velocity_ = 0.0;
+
     };
 
 }
