@@ -40,8 +40,6 @@ WMListener::WMListener(bool multi_thread) : worker_(std::unique_ptr<WMListenerWo
   nh2_.getParam("/config_speed_limit", cL);
   setConfigSpeedLimit(cL);
   
-
-
   // Set up AsyncSpinner for multi-threaded use case
   if (multi_threaded_)
   {
