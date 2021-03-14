@@ -209,6 +209,14 @@ namespace route {
         //Added for Unit Testing
         void addllt(lanelet::ConstLanelet llt);
 
+        /**
+         * \brief "Get the closest lanelet on the route relative to the vehicle's current position. 
+         * If the input list does not contain lanelets on the route, still closest lanelet from the route will be returned
+         * 
+         *  \param position the current position of the vehicle
+        */
+        lanelet::Optional<lanelet::routing::Route> reroute_after_route_invalidation();
+
 
     private:
 

@@ -422,14 +422,9 @@ namespace route {
         route_event_queue.push(event_type);
     }
     
-    bool RouteGeneratorWorker::spin_callback()
+    lanelet::Optional<lanelet::routing::Route> RouteGeneratorWorker::reroute_after_route_invalidation ()
     {
-        if(reroutingChecker()==true)
-        {
-           this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_INVALIDATION);
-           publish_route_event(cav_msgs::RouteEvent::ROUTE_INVALIDATION);
-
-           std::vector<lanelet::BasicPoint2d> destination_points_in_map_temp;
+        std::vector<lanelet::BasicPoint2d> destination_points_in_map_temp;
 
            for( auto &i:destination_points_in_map_)
            {
@@ -448,6 +443,17 @@ namespace route {
                                 std::vector<lanelet::BasicPoint2d>(destination_points_in_map_.begin() + 1, destination_points_in_map_.end() - 1),
                                 destination_points_in_map_.back(),
                                 world_model_->getMap(), world_model_->getMapRoutingGraph());
+        return route;
+    }
+
+    bool RouteGeneratorWorker::spin_callback()
+    {
+        if(reroutingChecker()==true)
+        {
+           this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_INVALIDATION);
+           publish_route_event(cav_msgs::RouteEvent::ROUTE_INVALIDATION);
+
+           auto route = reroute_after_route_invalidation();
 
            // check if route successed
            if(!route)

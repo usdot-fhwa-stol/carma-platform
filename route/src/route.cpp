@@ -44,7 +44,7 @@ namespace route {
         wm_ = wml_.getWorldModel();
         wml_.enableUpdatesWithoutRouteWL();
         rg_worker_.setWorldModelPtr(wm_);
-        rg_worker_.setReroutingChecker(std::bind(&WMListener::checkIfReRoutingNeededWL,&wml_, _1);
+        rg_worker_.setReroutingChecker(std::bind(&carma_wm::WMListener::checkIfReRoutingNeededWL,&wml_));
         // load params and pass to route generator worker
         double ct_error, dt_range;
         int cte_count_max;

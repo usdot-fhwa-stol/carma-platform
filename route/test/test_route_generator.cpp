@@ -494,6 +494,48 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
    }
 }
 
+TEST(RouteGeneratorTest, test_reroute_after_route_invalidation)
+{
+    tf2_ros::Buffer tf_buffer;
+    carma_wm::WorldModelConstPtr wm;
+    route::RouteGeneratorWorker worker(tf_buffer);
+    worker.set_route_file_path("../resource/route/");
+    cav_srvs::GetAvailableRoutesRequest req;
+    cav_srvs::GetAvailableRoutesResponse resp;
+    ASSERT_TRUE(worker.get_available_route_cb(req, resp));
+
+    std::cout << "Available Route : " << resp.availableRoutes.size() << "\n";
+    ASSERT_EQ(4, resp.availableRoutes.size());
+    for(auto i = 0; i < resp.availableRoutes.size();i++)    
+    {
+        if(resp.availableRoutes[i].route_id  == "tfhrc_test_route")
+        {
+            std::cout <<"C-HUB : " << resp.availableRoutes[i].route_name << "\n";
+            auto points = worker.load_route_destinations_in_ecef("tfhrc_test_route");
+            std::cout << "Point Size : " << points.size()<<"\n";
+            ASSERT_EQ(5, points.size());
+            ASSERT_NEAR(1106580, points[0].getX(), 5.0);
+            ASSERT_NEAR(894697, points[0].getY(), 5.0);  
+            ASSERT_NEAR(-6196590, points[0].getZ(), 5.0);
+        }
+   }
+    cav_srvs::SetActiveRouteRequest req2;
+    cav_srvs::SetActiveRouteResponse resp2;
+
+   resp2.errorStatus = 0;
+
+   for(auto i: resp.availableRoutes)
+   {
+        if(i.route_id  == "tfhrc_test_route")
+        {
+            req2.routeID = i.route_id;
+
+            ASSERT_EQ(worker.set_active_route_cb(req2, resp2), false);
+        }
+
+   }
+}
+
 TEST(RouteGeneratorTest, test_get_closest_lanelet_from_route_llts)
 {
      tf2_ros::Buffer tf_buffer;
