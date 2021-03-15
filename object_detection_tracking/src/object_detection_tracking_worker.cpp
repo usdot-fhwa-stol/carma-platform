@@ -35,10 +35,10 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
   msg.header = obj_array.header;
   msg.header.frame_id = map_frame_;
 
-  tf2::Transform velodyne_transform; 
+  geometry_msgs::TransformStamped velodyne_transform; 
 
   try {
-      tf2::convert(tfBuffer_.lookupTransform(map_frame_ ,velodyne_frame_, obj_array.header.stamp).transform, velodyne_transform);
+      velodyne_transform = tfBuffer_.lookupTransform(map_frame_ ,velodyne_frame_, obj_array.header.stamp);
     } catch (tf2::TransformException &ex) {
       ROS_WARN_STREAM("Ignoring fix message: Could not locate static transforms with exception " << ex.what());
       return;
