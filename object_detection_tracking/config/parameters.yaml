@@ -17,7 +17,7 @@ prediction_process_noise_max: 1000.0
 prediction_confidence_drop_rate: 0.95
 
 #Velodyne frame designation 
-velodyne_frame_ : "velodyne"
+velodyne_frame : "velodyne"
 
 #Map frame designation
-map_frame_ : "map"
+map_frame : "map"

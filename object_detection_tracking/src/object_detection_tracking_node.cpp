@@ -30,8 +30,8 @@ namespace object{
     double ay = 9.0;
     double process_noise_max = 1000.0;
     double drop_rate = 0.9;
-    std::string velodyne_frame_;
-    std::string map_frame_;
+    std::string velodyne_frame_ = "velodyne";
+    std::string map_frame_ = "map";
 
     pnh_.param<double>("prediction_time_step", step, step);
     pnh_.param<double>("prediction_period", period, period);
@@ -39,8 +39,8 @@ namespace object{
     pnh_.param<double>("cv_y_accel_noise", ay, ay);
     pnh_.param<double>("prediction_process_noise_max", process_noise_max, process_noise_max);
     pnh_.param<double>("prediction_confidence_drop_rate", drop_rate, drop_rate);
-    pnh_.param<std::string>("velodyne_frame_", velodyne_frame_);
-    pnh_.param<std::string>("map_frame_", map_frame_);
+    pnh_.param<std::string>("velodyne_frame", velodyne_frame_, velodyne_frame_);
+    pnh_.param<std::string>("map_frame", map_frame_, map_frame_);
 
     object_worker_.setPredictionTimeStep(step);
     object_worker_.setPredictionPeriod(period);
