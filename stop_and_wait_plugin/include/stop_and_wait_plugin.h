@@ -160,6 +160,8 @@ namespace stop_and_wait_plugin
         double maneuver_time_;
 
         //Parameters loaded from config file initialized for unit tests
+        //The crawl speed for the maneuver before reaching within acceptable distance from the end
+        double min_crawl_speed_ = 1.0;
         //The minimum duration of a trajectory length in seconds
         double minimal_trajectory_duration_ = 6.0;
         //The maximum acceptable jerk 

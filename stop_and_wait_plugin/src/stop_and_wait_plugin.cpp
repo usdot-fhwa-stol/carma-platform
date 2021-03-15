@@ -217,7 +217,18 @@ namespace stop_and_wait_plugin
                         throw std::invalid_argument("Ending distance is beyond known route"); 
                     }
                 }
-                else jerk_ = jerk_req;
+                else {
+                    //find distance to the end
+                    lanelet::BasicPoint2d curr_pose (pose_msg_.pose.position.x,pose_msg_.pose.position.y);
+                    double current_downtrack = wm_->routeTrackPos(curr_pose).downtrack;
+                    //stay approximately at crawl speed until within destination downtrack range (defined in route)
+                    if(start_speed <= min_crawl_speed_ && current_downtrack < ending_downtrack - 10.0){
+                        jerk_ = 0.0;
+                    }
+                    else{
+                        jerk_ = jerk_req;
+                    }
+                }
                 //get all the lanelets in between starting and ending downtrack on shortest path
                 auto lanelets = wm_->getLaneletsBetween(starting_downtrack, ending_downtrack, true);
                 //record all the lanelets to be added to path
