@@ -30,8 +30,8 @@ namespace object{
     double ay = 9.0;
     double process_noise_max = 1000.0;
     double drop_rate = 0.9;
-    std::string velodyne_frame_;
-    std::string map_frame_;
+    std::string velodyne_frame_ = "velodyne";
+    std::string map_frame_ = "map";
 
     pnh_.param<double>("prediction_time_step", step, step);
     pnh_.param<double>("prediction_period", period, period);
