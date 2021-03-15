@@ -65,7 +65,7 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
     obj.id = obj_array.objects[i].id;
 
     // Pose of the object within the frame specified in header
-    tf2::doTransform(obj_array.objects[i].pose, obj.pose.pose, v_transform);
+    tf2::doTransform(obj_array.objects[i].pose, obj.pose.pose, velodyne_transform);
 
 
     obj.pose.covariance[0] = obj_array.objects[i].variance.x;
