@@ -6,7 +6,7 @@ min_plan_duration: 6.0
 # Float: The nominal amount of time that an arbitrated plan should cover for the 
 # system to operate at best performance
 # Unit: s
-target_plan_duration: 15.0
+target_plan_duration: 13.0
 
 # Float: The planning frequency for generation for arbitrated plans
 # Unit: Hz
@@ -26,5 +26,4 @@ use_fixed_costs: true
 # Map: The priorities/costs associated with each plugin during the planning 
 # process, values will be normalized at runtime
 # Unit: N/a
-plugin_priorities: {CruisingPlugin: 10.0}
-
+plugin_priorities: {RouteFollowingPlugin: 4.0}

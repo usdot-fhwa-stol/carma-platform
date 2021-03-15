@@ -16,6 +16,13 @@
 #include "object_detection_tracking_worker.h"
 #include <motion_predict/motion_predict.h>
 #include <motion_predict/predict_ctrv.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/transform_datatypes.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_eigen/tf2_eigen.h>
+
 
 namespace object
 {
@@ -23,15 +30,26 @@ ObjectDetectionTrackingWorker::ObjectDetectionTrackingWorker(PublishObjectCallba
 
 void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::DetectedObjectArray& obj_array)
 {
+
   cav_msgs::ExternalObjectList msg;
   msg.header = obj_array.header;
+  msg.header.frame_id = map_frame_;
 
+  geometry_msgs::TransformStamped velodyne_transform; 
+
+  try {
+      velodyne_transform = tfBuffer_.lookupTransform(map_frame_ ,velodyne_frame_, obj_array.header.stamp);
+    } catch (tf2::TransformException &ex) {
+      ROS_WARN_STREAM("Ignoring fix message: Could not locate static transforms with exception " << ex.what());
+      return;
+    }
   for (int i = 0; i < obj_array.objects.size(); i++)
   {
     cav_msgs::ExternalObject obj;
 
     // Header contains the frame rest of the fields will use
     obj.header = obj_array.objects[i].header;
+    obj.header.frame_id = map_frame_;
 
     // Presence vector message is used to describe objects coming from potentially
     // different sources. The presence vector is used to determine what items are set
@@ -42,15 +60,19 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
     obj.presence_vector = obj.presence_vector | obj.SIZE_PRESENCE_VECTOR;
     obj.presence_vector = obj.presence_vector | obj.OBJECT_TYPE_PRESENCE_VECTOR;
     obj.presence_vector = obj.presence_vector | obj.DYNAMIC_OBJ_PRESENCE;
-
+    
     // Object id. Matching ids on a topic should refer to the same object within some time period, expanded
     obj.id = obj_array.objects[i].id;
 
     // Pose of the object within the frame specified in header
-    obj.pose.pose = obj_array.objects[i].pose;
+    tf2::doTransform(obj_array.objects[i].pose, obj.pose.pose, velodyne_transform);
+
+
     obj.pose.covariance[0] = obj_array.objects[i].variance.x;
     obj.pose.covariance[7] = obj_array.objects[i].variance.y;
     obj.pose.covariance[17] = obj_array.objects[i].variance.z;
+
+    
 
     // Average velocity of the object within the frame specified in header
     obj.velocity.twist = obj_array.objects[i].velocity;
@@ -92,7 +114,7 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
 
     // Binary value to show if the object is static or dynamic (1: dynamic, 0: static)
 
-    if ((abs(obj.velocity.twist.linear.x || obj.velocity.twist.linear.y || obj.velocity.twist.linear.z)) > 0.75)
+    if ((fabs(obj.velocity.twist.linear.x || obj.velocity.twist.linear.y || obj.velocity.twist.linear.z)) > 0.75)
     {
       obj.dynamic_obj = 1;
     }
@@ -103,6 +125,7 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
 
     msg.objects.emplace_back(obj);
   }
+
 
 
   obj_pub_(msg);
@@ -137,5 +160,15 @@ void ObjectDetectionTrackingWorker::setConfidenceDropRate(double drop_rate)
 {
   prediction_confidence_drop_rate_ = drop_rate;
 }
+
+  void ObjectDetectionTrackingWorker::setVelodyneFrame(std::string velodyne_frame)
+  {
+    velodyne_frame_ = velodyne_frame;
+  }
+  void ObjectDetectionTrackingWorker::setMapFrame(std::string map_frame)
+  {
+    map_frame_ = map_frame;
+  }
+
 
 }  // namespace object

@@ -28,9 +28,9 @@ devel
 /CMakeLists.txt
 
 # Ignore Guidance auto-generate VersionID files
-carmajava/guidance/src/main/resources/version
-carmajava/guidance/out/**
-carmajava/route/out/**
+carma/guidance/src/main/resources/version
+carma/guidance/out/**
+carma/route/out/**
 
 # Ignore sensitive data files and directories
 srx_can_driver

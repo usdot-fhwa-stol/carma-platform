@@ -1,0 +1,166 @@
+<?xml version="1.0"?>
+<!--
+  Copyright (C) 2018-2021 LEIDOS.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+<!--
+	Launch file for launching the nodes in the CARMA guidance stack
+-->
+<launch>
+
+
+  <!-- Arguments -->
+  <arg name="route_file_folder" default="$(find carma)/routes" doc="Path of folder containing routes to load"/>
+  <arg name="vehicle_calibration_dir" default="$(find carma)../../CARMAVehicleCalibration/development/vehicle" doc="The directory continaing vehicle calibration type parameters"/>
+  
+  
+  <!-- Remap topics from external packages -->
+  <remap from="bsm" to="$(optenv CARMA_MSG_NS)/outgoing_bsm"/>
+  <remap from="incoming_map" to="$(optenv CARMA_MSG_NS)/incoming_map"/>
+  <remap from="incoming_spat" to="$(optenv CARMA_MSG_NS)/incoming_spat"/>
+  <remap from="outgoing_mobility_operation" to="$(optenv CARMA_MSG_NS)/outgoing_mobility_operation"/>
+  <remap from="outgoing_mobility_request" to="$(optenv CARMA_MSG_NS)/outgoing_mobility_request"/>
+  <remap from="outgoing_mobility_response" to="$(optenv CARMA_MSG_NS)/outgoing_mobility_response"/>
+
+  <remap from="heading" to="$(optenv CARMA_INTR_NS)/gnss/heading_raw"/>
+  <remap from="nav_sat_fix" to="$(optenv CARMA_INTR_NS)/gnss/fix_raw"/>
+  <remap from="velocity" to="$(optenv CARMA_INTR_NS)/gnss/vel_raw"/>
+  
+  <remap from="/republish/cmd_lateral" to="$(optenv CARMA_INTR_NS)/controller/cmd_lateral"/>
+  <remap from="/republish/cmd_longitudinal_effort" to="$(optenv CARMA_INTR_NS)/controller/cmd_longitudinal_effort"/>
+  <remap from="/republish/cmd_speed" to="$(optenv CARMA_INTR_NS)/controller/cmd_speed"/>
+  <remap from="robot_enabled" to="$(optenv CARMA_INTR_NS)/controller/robot_enabled"/>
+  <remap from="robot_status" to="$(optenv CARMA_INTR_NS)/controller/robot_status"/>
+  <remap from="/controller/cmd_lateral" to="$(optenv CARMA_INTR_NS)/controller/cmd_lateral"/>
+  <remap from="/controller/cmd_longitudinal_effort" to="$(optenv CARMA_INTR_NS)/controller/cmd_longitudinal_effort"/>
+  <remap from="/controller/cmd_speed" to="$(optenv CARMA_INTR_NS)/controller/cmd_speed"/>
+  <remap from="enable_robotic" to="$(optenv CARMA_INTR_NS)/controller/enable_robotic"/>
+  <remap from="vehicle_status" to="$(optenv CARMA_INTR_NS)/vehicle_status"/>
+
+  <remap from="ui_instructions" to="$(optenv CARMA_UI_NS)/ui_instructions"/>
+
+  <remap from="get_transform" to="$(optenv CARMA_TF_NS)/get_transform"/>
+
+  <!-- TODO Look into if there is a better way for handling global prameters -->
+  <remap from="~vehicle_id" to="/vehicle_id"/> 
+  <remap from="vehicle_state_machine_type" to="/vehicle_state_machine_type"/> 
+  <remap from="vehicle_length" to="/vehicle_length"/> 
+  <remap from="vehicle_width" to="/vehicle_width"/> 
+
+  <remap from="system_alert" to="/system_alert"/>
+
+  <remap from="/base/lane_waypoints_raw" to="base/lane_waypoints_raw"/> 
+  <remap from="/based/lane_waypoints_raw" to="base/lane_waypoints_raw"/>      
+  <remap from="/lane_waypoints_array" to="lane_waypoints_array"/>
+  <remap from="/traffic_waypoints_array" to="traffic_waypoints_array"/>
+  <remap from="/red_waypoints_array" to="red_waypoints_array"/>
+  <remap from="/green_waypoints_array" to="green_waypoints_array"/>
+  <remap from="trajectory" to="plan_trajectory"/>
+
+  <remap from="current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>
+  <remap from="current_velocity" to="$(optenv CARMA_INTR_NS)/vehicle/twist"/>
+  <remap from="controller/enable_robotic" to="$(optenv CARMA_INTR_NS)/controller/enable_robotic"/>
+
+  <remap from="guidance_state" to="$(optenv CARMA_GUIDE_NS)/state"/>
+  <remap from="maneuver_plan" to="$(optenv CARMA_GUIDE_NS)/arbitrator/final_maneuver_plan"/>
+
+  <remap from="semantic_map" to="$(optenv CARMA_ENV_NS)/semantic_map"/>
+  <remap from="map_update" to="$(optenv CARMA_ENV_NS)/map_update"/>
+  <remap from="roadway_objects" to="$(optenv CARMA_ENV_NS)/roadway_objects"/>
+
+  <!-- Launch Guidance Main -->
+  <include file="$(find guidance)/launch/guidance_main.launch"/>
+
+  <!-- Launch Arbitrator -->
+  <include file="$(find arbitrator)/launch/arbitrator.launch"/>
+
+  <!-- Launch Plan Delegator -->
+  <include file="$(find plan_delegator)/launch/plan_delegator.launch"/>
+
+  <!-- TODO Check topic remapping-->
+
+  <!-- Trajectory Executor -->
+  <include file="$(find trajectory_executor)/launch/trajectory_executor.launch" />
+
+
+  <remap from="/vehicle_status" to="$(optenv CARMA_INTR_NS)/vehicle_status"/>
+  <remap from="/current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>  
+
+  <!-- Pure Pursuit Wrapper -->
+  <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch">
+	  <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
+  </include>
+  
+  <!-- Pure Pursuit Jerk Wrapper -->
+  <include file="$(find pure_pursuit_jerk_wrapper)/launch/pure_pursuit_jerk_wrapper.launch" />
+
+    <!-- Route Following Plugin -->
+  <include file="$(find route_following_plugin)/launch/route_following_plugin.launch" />
+  
+  <!-- Twist Filter -->
+  <group>
+    <remap from="/accel_cmd" to="accel_cmd"/>
+    <remap from="/brake_cmd" to="brake_cmd"/>
+    <remap from="/ctrl_cmd" to="ctrl_cmd"/>
+    <remap from="/decision_maker/state" to="decision_maker/state"/>
+    <remap from="/gear_cmd" to="gear_cmd"/>
+    <remap from="/twist_cmd" to="twist_cmd"/>
+    <remap from="/lamp_cmd" to="lamp_cmd"/>
+    <remap from="/mode_cmd" to="mode_cmd"/>
+    <remap from="/remote_cmd" to="remote_cmd"/>
+    <remap from="/steer_cmd" to="steer_cmd"/>
+    <remap from="/ctrl_mode" to="ctrl_mode"/>
+    <remap from="/emergency_stop" to="emergency_stop"/>
+    <remap from="/state_cmd" to="state_cmd"/>
+    <remap from="/vehicle_cmd" to="$(optenv CARMA_INTR_NS)/vehicle_cmd"/>
+    <!-- Parameter Remapping -->
+    <remap from="vehicle_model_wheelbase" to="/vehicle_wheel_base"/>
+    <remap from="~lateral_accel_limit" to="/vehicle_lateral_accel_limit"/>
+    <remap from="~lateral_jerk_limit" to="/vehicle_lateral_jerk_limit"/>
+    <remap from="~longitudinal_velocity_limit" to="/config_speed_limit"/>
+    <remap from="~longitudinal_accel_limit" to="/vehicle_acceleration_limit"/>
+
+    <include file="$(find twist_filter)/launch/twist_filter.launch">
+        <arg name="lowpass_gain_linear_x" value="0.1"/>
+        <arg name="lowpass_gain_steering_angle" value="0.1"/>
+    </include>
+  </group>
+
+  <!-- Planning Stack -->
+  
+  <!-- Inlanecruising Plugin -->
+  <group>
+    <remap from="final_waypoints" to="base_waypoints"/>
+    <include file="$(find inlanecruising_plugin)/launch/inlanecruising_plugin.launch" />
+  </group>
+  
+    <!-- StopandWait Plugin -->
+  <group>
+    <remap from="final_waypoints" to="base_waypoints"/>
+    <include file="$(find stop_and_wait_plugin)/launch/stop_and_wait_plugin.launch" />
+  </group>
+
+  <!-- Route Node -->
+  <include file="$(find route)/launch/route.launch">
+  <!-- Mobility Path Publisher -->
+  <include file="$(find mobilitypath_publisher)/launch/mobilitypath_publisher.launch" />
+    <arg name="route_file_folder" value="$(arg route_file_folder)"/>
+  </include>
+
+  <!-- Trajectory Plan Speed Visualizer -->
+  <group>
+    <include file="$(find trajectory_visualizer)/launch/trajectory_visualizer.launch" />
+  </group>
+
+</launch>

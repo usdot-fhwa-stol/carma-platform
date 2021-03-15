@@ -30,11 +30,12 @@ __list_remote_images()
 
 __carma()
 {
-  local cur prev subcmds config_subcmds
+  local cur prev subcmds config_subcmds stop_subcmds
   COMPREPLY=()
   _get_comp_words_by_ref -n : cur prev
   subcmds="config start stop ps help attach"
   config_subcmds=" status list_local list_remote install set edit inspect reset"
+  stop_subcmds=" all fix_bag"
 
   case ${prev} in
     "config")
@@ -49,7 +50,7 @@ __carma()
       __ltrim_colon_completions "$cur"
       ;;
     "stop")
-      COMPREPLY=( $(compgen -W "all" -- "${cur}") )
+      COMPREPLY=( $(compgen -W "${stop_subcmds}" -- "${cur}") )
       ;;
     "start")
       COMPREPLY=( $(compgen -W "all" -- "${cur}") )

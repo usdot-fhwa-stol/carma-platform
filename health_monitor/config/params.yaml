@@ -26,7 +26,10 @@ startup_duration: 30.0
 
 # List of String: Required plugins for the platform to be functional
 required_plugins:
-  - CruisingPlugin
+  - RouteFollowing
+  - InLaneCruisingPlugin
+  - StopandWaitPlugin
+  - Pure Pursuit
 
 # String: Plugin service name prefix
 plugin_service_prefix: /guidance/plugins/

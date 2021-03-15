@@ -17,7 +17,7 @@
 
 // ROS
 #include <ros/ros.h>
-// #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 // #include <message_filters/subscriber.h>
 // #include <message_filters/time_synchronizer.h>
@@ -31,7 +31,7 @@
 #include "autoware_msgs/Lane.h"
 #include "autoware_config_msgs/ConfigWaypointFollower.h"
 #include "autoware_msgs/ControlCommandStamped.h"
-
+#include <cav_msgs/Plugin.h>
 #include <carma_utils/CARMAUtils.h>
 
 #include "mpc_follower_wrapper_worker.hpp"
@@ -53,13 +53,17 @@ class MPCFollowerWrapper {
         /*!
         * Destructor.
         */
-        virtual ~MPCFollowerWrapper();
+        virtual ~MPCFollowerWrapper() = default;
 
         // @brief ROS initialize.
         void Initialize();
 
         // @brief ROS subscriber
         ros::Subscriber trajectory_plan_sub;
+
+        ros::Subscriber pose_sub;
+
+        void CurrentPoseHandler(const geometry_msgs::PoseStamped::ConstPtr& pose);
 
 
         void TrajectoryPlanPoseHandler(const cav_msgs::TrajectoryPlan::ConstPtr& tp);
@@ -68,6 +72,13 @@ class MPCFollowerWrapper {
 
         //@brief ROS node handle.
         ros::CARMANodeHandle& nh_;
+
+        ros::Publisher mpc_plugin_discovery_pub_; 
+
+        // Plugin discovery message
+        cav_msgs::Plugin plugin_discovery_msg_;
+
+        geometry_msgs::PoseStamped current_pose_;
 
 
         // @brief ROS publishers.

@@ -51,13 +51,13 @@ include_directories(
   include
 )
 
-file(GLOB_RECURSE headers */*.hpp */*.h)
+add_library(truck_inspection_client_library src/truck_inspection_client.cpp)
+target_link_libraries(truck_inspection_client_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+add_dependencies(truck_inspection_client_library ${catkin_EXPORTED_TARGETS})
 
 add_executable( ${PROJECT_NAME}
-  ${headers}
-  src/truck_inspection_client.cpp
   src/main.cpp)
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} truck_inspection_client_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
 #############
@@ -88,6 +88,6 @@ install(DIRECTORY launch config
 
 if (CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
-  add_rostest_gtest(truck_inspection_client_test test/test_launch.test test/test_truck_inspection_client.cpp)
-  target_link_libraries(truck_inspection_client_test ${catkin_LIBRARIES})
+  add_rostest_gtest(truck_inspection_client_test test/test_launch.launch test/test_truck_inspection_client.cpp)
+  target_link_libraries(truck_inspection_client_test truck_inspection_client_library ${catkin_LIBRARIES})
 endif()

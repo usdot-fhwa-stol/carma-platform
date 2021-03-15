@@ -105,6 +105,7 @@ public:
   void setConfigSpeedLimit(double config_lim) const;
 
 
+
 private:
   // Callback function that uses lock to edit the map
   void mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg);

@@ -13,12 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include "motion_computation_worker.h"
+#include <motion_computation_worker.h>
 #include <motion_predict/motion_predict.h>
 #include <motion_predict/predict_ctrv.h>
 #include <ros/ros.h>
 #include <cav_msgs/ExternalObject.h>
-#include <cav_msgs/ExternalObjectList.h>
+#include <cav_msgs/ExternalObjectList.h> 
 #include <functional>
 
 
@@ -99,6 +99,34 @@ void MotionComputationWorker::predictionLogic(cav_msgs::ExternalObjectListPtr ob
 
 }
 
+void MotionComputationWorker::setPredictionTimeStep(double time_step)
+{
+  prediction_time_step_ = time_step;
+}
 
+void MotionComputationWorker::setPredictionPeriod(double period)
+{
+  prediction_period_ = period;
+}
+
+void MotionComputationWorker::setXAccelerationNoise(double noise)
+{
+  cv_x_accel_noise_ = noise;
+}
+
+void MotionComputationWorker::setYAccelerationNoise(double noise)
+{
+  cv_y_accel_noise_ = noise;
+}
+
+void MotionComputationWorker::setProcessNoiseMax(double noise_max)
+{
+  prediction_process_noise_max_ = noise_max;
+}
+
+void MotionComputationWorker::setConfidenceDropRate(double drop_rate)
+{
+  prediction_confidence_drop_rate_ = drop_rate;
+}
 
 }  // namespace object

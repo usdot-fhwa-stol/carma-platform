@@ -16,3 +16,8 @@ spin_rate: 10.0
 # if the current plan is already over this threshold
 # Units: Second
 trajectory_duration_threshold: 6.0
+
+# Minimum crawl speed
+# Double: The minimum speed the vehicle will say it is moving in order to support accelerations
+# Units: m/s
+min_speed: 2.2352

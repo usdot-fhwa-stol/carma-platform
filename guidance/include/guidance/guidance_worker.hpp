@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 LEIDOS.
+ * Copyright (C) 2018-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,8 @@
 #include <std_msgs/Bool.h>
 #include <cav_msgs/GuidanceState.h>
 #include <cav_msgs/RobotEnabled.h>
+#include <cav_msgs/RouteEvent.h>
+#include <autoware_msgs/VehicleStatus.h>
 #include "guidance/guidance_state_machine.hpp"
 
 namespace guidance
@@ -35,7 +37,7 @@ namespace guidance
             /*!
              * \brief Default constructor for GuidanceWorker
              */
-            GuidanceWorker();
+            GuidanceWorker() = default;
 
             /*!
              * \brief Begin normal execution of Guidance worker. Will take over control flow of program and exit from here.
@@ -51,8 +53,10 @@ namespace guidance
 
             // Message/service callbacks
             bool guidance_acivation_cb(cav_srvs::SetGuidanceActiveRequest& req, cav_srvs::SetGuidanceActiveResponse& res);
+            void route_event_cb(const cav_msgs::RouteEventConstPtr& msg);
             void robot_status_cb(const cav_msgs::RobotEnabledConstPtr& msg);
             void system_alert_cb(const cav_msgs::SystemAlertConstPtr& msg);
+            void vehicle_status_cb(const autoware_msgs::VehicleStatusConstPtr& msg);
 
             // Service servers 
             ros::ServiceServer guidance_activate_service_server_;
@@ -63,6 +67,8 @@ namespace guidance
 
             // Subscribers
             ros::Subscriber robot_status_subscriber_;
+            ros::Subscriber route_event_subscriber_;
+            ros::Subscriber vehicle_status_subscriber_;
 
             // Node handles
             ros::CARMANodeHandle nh_{}, pnh_{"~"};

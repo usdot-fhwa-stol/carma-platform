@@ -46,13 +46,13 @@ public:
    * @brief Constructor
    *
    */
-  CARMAWorldModel();
+  CARMAWorldModel() = default;
 
   /**
    * @brief Destructor as required by interface
    *
    */
-  ~CARMAWorldModel();
+  ~CARMAWorldModel() = default;
 
   /*! \brief Set the current map
    *
@@ -101,6 +101,10 @@ public:
 */
   void setConfigSpeedLimit(double config_lim);
   
+  /*! \brief Set endpoint of the route
+   */
+  void setRouteEndPoint(const lanelet::BasicPoint3d& end_point);
+
   ////
   // Overrides
   ////
@@ -110,11 +114,13 @@ public:
 
   TrackPos routeTrackPos(const lanelet::BasicPoint2d& point) const override;
 
-  std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end) const override;
+  std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end, bool shortest_path_only = false) const override;
 
   lanelet::LaneletMapConstPtr getMap() const override;
 
   LaneletRouteConstPtr getRoute() const override;
+
+  TrackPos getRouteEndTrackPos() const override;
 
   LaneletRoutingGraphConstPtr getMapRoutingGraph() const override;
 
@@ -168,7 +174,7 @@ private:
   LaneletRoutePtr route_;
   LaneletRoutingGraphPtr map_routing_graph_;
   
-  lanelet::LaneletMapConstUPtr shortest_path_view_;  // Map containing only lanelets along the shortest path of the
+  lanelet::LaneletSubmapConstUPtr shortest_path_view_;  // Map containing only lanelets along the shortest path of the
                                                      // route
   std::vector<lanelet::LineString3d> shortest_path_centerlines_;  // List of disjoint centerlines seperated by lane
                                                                   // changes along the shortest path

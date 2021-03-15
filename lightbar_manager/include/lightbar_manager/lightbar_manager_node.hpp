@@ -28,6 +28,7 @@
 #include <cav_msgs/LightBarIndicatorControllers.h>
 #include <cav_msgs/LightBarStatus.h>
 #include <cav_msgs/GuidanceState.h>
+#include <automotive_platform_msgs/TurnSignalCommand.h>
 
 #include <cav_srvs/RequestIndicatorControl.h>
 #include <cav_srvs/ReleaseIndicatorControl.h>
@@ -49,7 +50,7 @@ class LightBarManager
         LightBarManager(const std::string& node_name);
 
         /*!
-        * \brief Initiliaze ROS related functions. Pass "test" to setup ROS parameters for unit testing
+        * \brief Initialize ROS related functions. Pass "test" to setup ROS parameters for unit testing
         */
         void init(std::string mode = "");
 
@@ -60,10 +61,10 @@ class LightBarManager
         int run();
 
         /*!
-        * \brief Get lightbar_manager_worder (for ease of unit testing)
+        * \brief Get ptr to lightbar_manager_worker (for ease of unit testing)
         * \return LightBarManagerWorker
         */
-        LightBarManagerWorker getWorker();
+        std::shared_ptr<LightBarManagerWorker> getWorker();
  
         /*!
         * \brief Miscellaneous function that forces the state to disengaged and turn off all indicators.
@@ -77,6 +78,12 @@ class LightBarManager
         */
         int setIndicator(LightBarIndicator ind, IndicatorStatus ind_status, const std::string& requester_name);
 
+        /*!
+        * \brief Callback function for turning signal
+        * \return 
+        */
+        void turnSignalCallback(const automotive_platform_msgs::TurnSignalCommandPtr& msg_ptr);
+
     private:
         /*!
         * \brief Helper function that sets up ROS parameters for unit test
@@ -87,6 +94,7 @@ class LightBarManager
         // Node Data
         std::string node_name_;
         double spin_rate_;
+        std::map<lightbar_manager::LightBarIndicator, std::__cxx11::string> prev_owners_before_turn_;
 
         // spin callback function
         bool spinCallBack();
@@ -108,12 +116,13 @@ class LightBarManager
 
         // Subscribers
         ros::Subscriber guidance_state_subscriber_;
+        ros::Subscriber turn_signal_subscriber_;
 
         // Node handles
         ros::CARMANodeHandle nh_{"lightbar_manager"}, pnh_{"~"};
 
         // LightBarManager Worker
-        LightBarManagerWorker lbm_;
+        std::shared_ptr<LightBarManagerWorker> lbm_;
 
 }; //class LightBarManagerNode
 } // namespace lightbar_manager

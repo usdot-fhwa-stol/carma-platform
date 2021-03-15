@@ -14,8 +14,6 @@
  * the License.
  */
 #include <motion_computation_node.h>
-#include <motion_computation_worker.h>
-
 namespace object{
 
   using std::placeholders::_1;

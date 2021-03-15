@@ -27,7 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 ## Catkin export configuration
@@ -47,6 +47,7 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
 )
 
 ## Declare C++ library
@@ -73,6 +74,7 @@ add_dependencies(
 target_link_libraries(
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
 )
 
 #############

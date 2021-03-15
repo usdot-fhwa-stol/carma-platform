@@ -14,29 +14,39 @@
  * the License.
  */
 #include "pure_pursuit_wrapper/pure_pursuit_wrapper.hpp"
+#include "pure_pursuit_wrapper/pure_pursuit_wrapper_config.hpp"
 
 #include <ros/ros.h>
-#include <ros/console.h>
+#include <carma_utils/CARMANodeHandle.h>
 
-#include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
-#include <message_filters/sync_policies/approximate_time.h>
-
-int main(int argc, char** argv) {
-
+int main(int argc, char** argv)
+{
   ros::init(argc, argv, "pure_pursuit_wrapper_node");
-  ros::NodeHandle nh("");
+  ros::CARMANodeHandle nh;
 
-  pure_pursuit_wrapper::PurePursuitWrapper PurePursuitWrapper(nh);
+  ros::Publisher waypoints_pub = nh.advertise<autoware_msgs::Lane>("final_waypoints", 10, true);
 
-  // Approximate time of 100ms used because NDT outputs at 10Hz
-  message_filters::Synchronizer<pure_pursuit_wrapper::PurePursuitWrapper::SyncPolicy> sync(pure_pursuit_wrapper::PurePursuitWrapper::SyncPolicy(100), PurePursuitWrapper.pose_sub, PurePursuitWrapper.trajectory_plan_sub);
-  sync.registerCallback(boost::bind(&pure_pursuit_wrapper::PurePursuitWrapper::TrajectoryPlanPoseHandler, &PurePursuitWrapper, _1, _2));
+  ros::Publisher discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
 
-  while (ros::ok() && !PurePursuitWrapper.shutting_down_) {
-    ros::spinOnce();
-  }
+  pure_pursuit_wrapper::PurePursuitWrapperConfig config;
+  nh.param<double>("/vehicle_response_lag", config.vehicle_response_lag, config.vehicle_response_lag);
+  
+
+  pure_pursuit_wrapper::PurePursuitWrapper purePursuitWrapper(
+      config, 
+      [&waypoints_pub](auto msg) { waypoints_pub.publish(msg); },
+      [&discovery_pub](auto msg) { discovery_pub.publish(msg); });
+
+  // Trajectory Plan Subscriber
+  ros::Subscriber trajectory_plan_sub = nh.subscribe(
+      "pure_pursuit/plan_trajectory", 1, &pure_pursuit_wrapper::PurePursuitWrapper::trajectoryPlanHandler, &purePursuitWrapper);
+  
+  ros::CARMANodeHandle::setSpinRate(10);
+
+  ros::CARMANodeHandle::setSpinCallback(std::bind(&pure_pursuit_wrapper::PurePursuitWrapper::onSpin, &purePursuitWrapper));
 
   ROS_INFO("Successfully launched node.");
+  ros::CARMANodeHandle::spin();
+
   return 0;
 }

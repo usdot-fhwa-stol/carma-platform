@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 LEIDOS.
+ * Copyright (C) 2018-2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,11 @@
 
 namespace guidance
 {
-    GuidanceWorker::GuidanceWorker(){}
+
+    void GuidanceWorker::vehicle_status_cb(const autoware_msgs::VehicleStatusConstPtr& msg)
+    {
+        gsm_.onVehicleStatus(msg);
+    }
 
     void GuidanceWorker::system_alert_cb(const cav_msgs::SystemAlertConstPtr& msg)
     {
@@ -28,6 +32,11 @@ namespace guidance
     void GuidanceWorker::robot_status_cb(const cav_msgs::RobotEnabledConstPtr& msg)
     {
         gsm_.onRoboticStatus(msg);
+    }
+
+    void GuidanceWorker::route_event_cb(const cav_msgs::RouteEventConstPtr& msg)
+    {
+        gsm_.onRouteEvent(msg);
     }
 
     bool GuidanceWorker::guidance_acivation_cb(cav_srvs::SetGuidanceActiveRequest& req, cav_srvs::SetGuidanceActiveResponse& res)
@@ -66,6 +75,8 @@ namespace guidance
         guidance_activate_service_server_ = nh_.advertiseService("set_guidance_active", &GuidanceWorker::guidance_acivation_cb, this);
         state_publisher_ = nh_.advertise<cav_msgs::GuidanceState>("state", 5);
         robot_status_subscriber_ = nh_.subscribe<cav_msgs::RobotEnabled>("robot_status", 5, &GuidanceWorker::robot_status_cb, this);
+        route_event_subscriber_ = nh_.subscribe<cav_msgs::RouteEvent>("route_event", 5, &GuidanceWorker::route_event_cb, this);
+        vehicle_status_subscriber_ = nh_.subscribe<autoware_msgs::VehicleStatus>("vehicle_status", 5, &GuidanceWorker::vehicle_status_cb, this);
         enable_client_ = nh_.serviceClient<cav_srvs::SetEnableRobotic>("controller/enable_robotic");
 
         // Load the spin rate param to determine how fast to process messages

@@ -116,13 +116,14 @@ public:
    *
    * \param start The starting downtrack for the query
    * \param end The ending downtrack for the query
+   * \param shortest_path_only If true the lanelets returned will be part of the route shortest path
    *
    * \throws std::invalid_argument If the route is not yet loaded or if start >= end
    *
    * \return A list of lanelets which contain regions that lie between start and end along the route. This function will
    * not return lanelets which are not part of the route
    */
-  virtual std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end) const = 0;
+  virtual std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end, bool shortest_path_only = false) const = 0;
 
   /*! \brief Get a pointer to the current map. If the underlying map has changed the pointer will also need to be
    * reacquired
@@ -138,6 +139,12 @@ public:
    * is loaded
    */
   virtual LaneletRouteConstPtr getRoute() const = 0;
+
+  /*! \brief Get trackpos of the end of route point relative to the route
+   *
+   * \return Trackpos 
+   */
+  virtual TrackPos getRouteEndTrackPos() const = 0;
 
   /*! \brief Get a pointer to the routing graph for the current map. If the underlying map has changed the pointer will
    * also need to be reacquired

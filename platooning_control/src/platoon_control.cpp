@@ -29,7 +29,7 @@ namespace platoon_control
         pnh_.reset(new ros::CARMANodeHandle("~"));
 
 	  	// Trajectory Plan Subscriber
-		trajectory_plan_sub = nh_->subscribe<cav_msgs::TrajectoryPlan>("trajectory_plan", 1, &PlatoonControlPlugin::TrajectoryPlan_cb, this);
+		trajectory_plan_sub = nh_->subscribe<cav_msgs::TrajectoryPlan>("plan_trajectory", 1, &PlatoonControlPlugin::TrajectoryPlan_cb, this);
         
         // Current Twist Subscriber
         current_twist_sub_ = nh_->subscribe<geometry_msgs::TwistStamped>("localization/ekf_twist", 1, &PlatoonControlPlugin::currentTwist_cb, this);
