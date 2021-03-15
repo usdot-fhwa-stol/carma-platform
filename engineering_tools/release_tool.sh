@@ -28,7 +28,7 @@ function parse_args {
         arg="$1"
         case $arg in
             -r|--repos)
-                PATH_TO_REPOS_FILE="$2"
+                PATH_TO_REPOS_FILE=$(realpath "$2")
                 shift
                 shift
                 ;;
@@ -43,7 +43,7 @@ function parse_args {
                 shift
                 ;;
             -d|--dir)
-                WORK_DIR="$2"
+                WORK_DIR=$(realpath "$2")
                 shift
                 shift
                 ;;
@@ -70,6 +70,7 @@ clone - Clone all repositories referenced in the repos file into the working
         directory
 update_version_numbers - Update the dockerfiles and checkout.bash files to 
                          reference the new release version number
+diff - View the Git diff for all repos under the release
 commit_version_numbers - Commit the version number updates after a manual review
 create_prs - Create PRs (assigned using the --assign option) to merge the 
              release branches into master
@@ -77,6 +78,8 @@ tag_repos - Tag the repositories with the new system release tag (component tags
             must be created manually)
 build_images - Build the docker images for each dockerized repository
 push_images - Push the resulting images to Dockerhub
+
+checkout - Checkout all repos to target branch
 
 Arguments:
     -r|--repos   - The path to the .repos file to load the repositories from
@@ -112,6 +115,13 @@ function checkout_branches {
     vcs custom --git --args checkout $1
 }
 
+function release_tool__checkout {
+    parse_args $@
+    echo "Checking out repos to $RELEASE_BRANCH"
+    cd $WORK_DIR
+    checkout_branches $RELEASE_BRANCH
+}
+
 function release_tool__clone {
     echo "Step #1: Cloning release branches for all repositories"
     parse_args $@
@@ -121,36 +131,40 @@ function release_tool__clone {
 }
 
 function update_version_numbers {
-    repo=$1
-    target_version_id=$2
+    local REPOSITORY=$1
+    local TARGET_VERSION_ID=$2
 
     cd $WORK_DIR/carma/src
-    cd $repo
+    cd $REPOSITORY
 
-    if [[ $repo == "carma-config/" ]]; then
+    if [[ $REPOSITORY == "carma-config/" ]]; then
         echo "Updating carma-configs..."
         for config in */; do
             if [[ -f $config/docker-compose.yml ]]; then
                 echo "Updating $config config"
-                sed -i "s|:[0-9]*\.[0-9]*\.[0-9]*|:$RELEASE_VERSION|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:$RELEASE_VERSION|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:$RELEASE_VERSION|g; s|:develop|:$RELEASE_VERSION|g" \
+                sed -i "s|usdotfhwastoldev|usdotfhwastol|; s|usdotfhwastolcandidate|usdotfhwastol|; s|:[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:develop|:$TARGET_VERSION_ID|g; s|:vanden-plas|:$TARGET_VERSION_ID|g" \
                     $config/docker-compose.yml
-                sed -i "s|:[0-9]*\.[0-9]*\.[0-9]*|:$RELEASE_VERSION|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:$RELEASE_VERSION|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:$RELEASE_VERSION|g; s|:develop|:$RELEASE_VERSION|g" \
+                sed -i "s|usdotfhwastoldev|usdotfhwastol|; s|usdotfhwastolcandidate|usdotfhwastol|; s|:[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:develop|:$TARGET_VERSION_ID|g; s|:vanden-plas|:$TARGET_VERSION_ID|g" \
                     $config/docker-compose-background.yml
             fi
         done
         return
     fi
 
-    echo "Updating version numbers in $repo to $target_version_id"
+    echo "Updating version numbers in $REPOSITORY to $target_version_id"
 
     if [[ -f Dockerfile ]]; then 
-        sed -i "s|:[0-9]*\.[0-9]*\.[0-9]*|:$RELEASE_VERSION|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:$RELEASE_VERSION|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:$RELEASE_VERSION|g; s|:develop|:$RELEASE_VERSION|g" \
+        sed -i "s|usdotfhwastoldev|usdotfhwastol|; s|usdotfhwastolcandidate|usdotfhwastol|; s|:[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:develop|:$TARGET_VERSION_ID|g; s|:vanden-plas|:$TARGET_VERSION_ID|g" \
             Dockerfile
+    else
+        echo "No Dockerfile found for $REPOSITORY"
     fi
 
     if [[ -f docker/checkout.bash ]]; then
-        sed -i "s|--branch .*|--branch carma-system-$RELEASE_VERSION|g" \
+        sed -i "s|--branch .*|--branch $TARGET_VERSION_ID|g; s|vanden-plas|$TARGET_VERSION_ID|g" \
             docker/checkout.bash
+    else
+        echo "No checkout.bash found for $REPOSITORY"
     fi
 }
 
@@ -158,8 +172,17 @@ function release_tool__update_version_numbers {
     parse_args $@
     cd $WORK_DIR/carma/src
     for repo in */; do
-        update_version_numbers "$repo" "$RELEASE_VERSION"
+        update_version_numbers "$repo" "carma-system-$RELEASE_VERSION"
     done
+
+    cd $WORK_DIR/autoware.ai
+    update_version_numbers "$repo" "carma-system-$RELEASE_VERSION"
+}
+
+function release_tool__diff {
+    parse_args $@
+    cd $WORK_DIR
+    vcs custom --git --args diff --color=always | less -r
 }
 
 function commit_version_numbers {
@@ -171,10 +194,10 @@ function commit_version_numbers {
     branch=$(git symbolic-ref --short HEAD)
 
     # Ensure PRs aren't opened for non-release branches
-    if [[ -z $(echo $branch | grep "release") ]]; then
-        echo "Not on a release/* branch, exiting."
-        exit -1
-    fi
+    #if [[ -z $(echo $branch | grep "release") ]]; then
+    #    echo "Not on a release/* branch, exiting."
+    #    exit -1
+    #fi
 
     if [[ $repo == "carma-config/" ]]; then
         echo "Committing carma config changes..."
@@ -216,22 +239,22 @@ function release_tool__tag_repos {
     parse_args $@
     cd $WORK_DIR/carma/src
 
-    checkout_branches master
+    #checkout_branches master
 
-    vcstool custom --git tag -am "carma-system-$RELEASE_VERSION" carma-system-$RELEASE_VERSION
-    vcstool custom --git push --tags
+    vcs custom --git --args tag -am "carma-system-$RELEASE_VERSION" carma-system-$RELEASE_VERSION
+    vcs custom --git --args push --tags
 }
 
 function release_tool__build_images {
     parse_args $@
     # Build CARMA base
-    cd $WORK_DIR/carma/src/carma-base
-    echo "Building docker image for carma-base..."
-    ./docker/build-image.sh
+    #cd $WORK_DIR/carma/src/carma-base
+    #echo "Building docker image for carma-base..."
+    #./docker/build-image.sh
 
     # Build Autoware AI
-    cd $WORK_DIR/carma/src/autoware.ai
-    echo "Building docker image for carma-base..."
+    cd $WORK_DIR/autoware.ai
+    echo "Building docker image for autoware..."
     ./docker/build-image.sh
     
     # Build the rest
