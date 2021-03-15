@@ -133,8 +133,9 @@ function release_tool__clone {
 function update_version_numbers {
     local REPOSITORY=$1
     local TARGET_VERSION_ID=$2
+    local WORKSPACE=$3 
 
-    cd $WORK_DIR/carma/src
+    cd $WORKSPACE
     cd $REPOSITORY
 
     if [[ $REPOSITORY == "carma-config/" ]]; then
@@ -151,7 +152,25 @@ function update_version_numbers {
         return
     fi
 
-    echo "Updating version numbers in $REPOSITORY to $target_version_id"
+    if [[ $REPOSITORY == "carma-messenger/" ]]; then
+        echo "Updating carma-messenger-configs..."
+        cd carma-messenger-config
+        for config in */; do
+            if [[ -f $config/docker-compose.yml ]]; then
+                echo "Updating $config config"
+                sed -i "s|usdotfhwastoldev|usdotfhwastol|; s|usdotfhwastolcandidate|usdotfhwastol|; s|:[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:develop|:$TARGET_VERSION_ID|g; s|:vanden-plas|:$TARGET_VERSION_ID|g" \
+                    $config/docker-compose.yml
+                sed -i "s|usdotfhwastoldev|usdotfhwastol|; s|usdotfhwastolcandidate|usdotfhwastol|; s|:[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:develop|:$TARGET_VERSION_ID|g; s|:vanden-plas|:$TARGET_VERSION_ID|g" \
+                    $config/docker-compose-background.yml
+            fi
+        done
+	cd ..
+        update_version_numbers "carma-messenger-core" "carma-system-$RELEASE_VERSION" .
+        cd ..
+        update_version_numbers "carma-messenger-ui" "carma-system-$RELEASE_VERSION" .
+    fi
+
+    echo "Updating version numbers in $REPOSITORY to $TARGET_VERSION_ID"
 
     if [[ -f Dockerfile ]]; then 
         sed -i "s|usdotfhwastoldev|usdotfhwastol|; s|usdotfhwastolcandidate|usdotfhwastol|; s|:[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:$TARGET_VERSION_ID|g; s|:develop|:$TARGET_VERSION_ID|g; s|:vanden-plas|:$TARGET_VERSION_ID|g" \
@@ -161,7 +180,7 @@ function update_version_numbers {
     fi
 
     if [[ -f docker/checkout.bash ]]; then
-        sed -i "s|--branch .*|--branch $TARGET_VERSION_ID|g; s|vanden-plas|$TARGET_VERSION_ID|g" \
+        sed -i "/usdot-fhwa-stol/ s|--branch .*|--branch $TARGET_VERSION_ID|g; /usdot-fhwa-stol/ s|vanden-plas|$TARGET_VERSION_ID|g" \
             docker/checkout.bash
     else
         echo "No checkout.bash found for $REPOSITORY"
@@ -171,12 +190,13 @@ function update_version_numbers {
 function release_tool__update_version_numbers {
     parse_args $@
     cd $WORK_DIR/carma/src
+    pwd
     for repo in */; do
-        update_version_numbers "$repo" "carma-system-$RELEASE_VERSION"
+        update_version_numbers "$repo" "carma-system-$RELEASE_VERSION" $WORK_DIR/carma/src
     done
 
-    cd $WORK_DIR/autoware.ai
-    update_version_numbers "$repo" "carma-system-$RELEASE_VERSION"
+    cd $WORK_DIR
+    update_version_numbers "autoware.ai/" "carma-system-$RELEASE_VERSION" $WORK_DIR
 }
 
 function release_tool__diff {
@@ -342,7 +362,7 @@ function release_tool__create_prs {
         read -p "Open PR on $repo for merging branch $branch into master (Assigned to $PR_ASSIGNEE)? (y/N): " -r -n 1
         echo ""
         if [[ $REPLY =~ ^[Yy]$ ]]; then
-            gh pr create --assignee $PR_ASSIGNEE --base master -t "Merge candidate to master for release $RELEASE_VERSION" -b <<EOB
+            gh pr create --assignee $PR_ASSIGNEE --base master -t "Merge candidate to master for release $RELEASE_VERSION" -b "<<EOB
 # PR Details
 ## Description
 Merge PR to formalize release of $branch release candidate as CARMA release $RELEASE_VERSION.
@@ -363,7 +383,7 @@ This release branch (minus final version number changes) has been tested through
 - [X] I have read the **CONTRIBUTING** document.
 [CARMA Contributing Guide](https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/Contributing.md) 
 - [X] I have added tests to cover my changes.
-- [X] All new and existing tests passed.
+- [X] All new and existing tests passed."
 EOB
             echo "PR created for $repo"
         else
