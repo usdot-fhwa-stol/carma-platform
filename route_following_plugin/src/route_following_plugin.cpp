@@ -105,13 +105,13 @@ namespace route_following_plugin
         bool approaching_route_end = false;
         double time_req_to_stop,stopping_dist;
         time_req_to_stop = sqrt(2*findSpeedLimit(shortest_path.back())/jerk_); 
-        stopping_dist = target_speed*time_req_to_stop - (0.167 * jerk_ * pow(time_req_to_stop,3));
+        stopping_dist = findSpeedLimit(shortest_path.back())*time_req_to_stop - (0.167 * jerk_ * pow(time_req_to_stop,3));
         
         if(route_length - current_progress <= stopping_dist){
             approaching_route_end = true;
         }
         ROS_DEBUG_STREAM("Starting Loop");
-        ROS_DEBUG_STREAM("Time Required To Stop: " << time_req_to_stop << " stopping_dist: " << stopping_dist);
+        ROS_DEBUG_STREAM("Time Required To Stop: " << time_req_to_stop << " stopping_dist: " << stopping_dist<<" Speed limit:"<<findSpeedLimit(shortest_path.back())<< " Jerk:"<<jerk_);
         ROS_DEBUG_STREAM("total_maneuver_length: " << total_maneuver_length << " route_length: " << route_length);
         while(current_progress < total_maneuver_length && !approaching_route_end)
         {
@@ -263,29 +263,27 @@ namespace route_following_plugin
     double RouteFollowingPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt)
     {
         lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules();
-        double target_speed;
+        double target_speed, traffic_speed = 0.0, param_speed = 0.0;
         double hardcoded_max=lanelet::Velocity(hardcoded_params::control_limits::MAX_LONGITUDINAL_VELOCITY_MPS * lanelet::units::MPS()).value();
 
         if (traffic_rules)
         {
-            target_speed=(*traffic_rules)->speedLimit(llt).speedLimit.value();
+            traffic_speed=(*traffic_rules)->speedLimit(llt).speedLimit.value();
             
         }
-        else
+ 
+        if(config_limit > 0 && config_limit < hardcoded_max)
         {
-            if(config_limit > 0 && config_limit < hardcoded_max)
-            {
-                target_speed=config_limit;
-                ROS_WARN("Failed to set the current speed limit. Valid traffic rules object could not be built. Using Configurable value");
-            }
-
-            else 
-            {
-                target_speed= hardcoded_max;
-                ROS_WARN("Failed to set the current speed limit. Valid traffic rules object could not be built. Using Hardcoded maximum");
-            }
-            
+            param_speed=config_limit;
+            ROS_WARN("Failed to set the current speed limit. Valid traffic rules object could not be built. Using Configurable value");
         }
+        else 
+        {
+            param_speed= hardcoded_max;
+            ROS_WARN("Failed to set the current speed limit. Valid traffic rules object could not be built. Using Hardcoded maximum");
+        }
+        target_speed = std::max(traffic_speed, param_speed);
+        
         return target_speed;
     }
 }
