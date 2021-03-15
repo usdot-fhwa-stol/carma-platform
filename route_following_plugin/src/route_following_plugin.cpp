@@ -285,7 +285,12 @@ namespace route_following_plugin
             param_speed = hardcoded_max;
             ROS_DEBUG(" Using Hardcoded maximum");
         }
-        target_speed = std::max(traffic_speed, param_speed);
+        if(traffic_speed <= 0.001 || param_speed <= 0.001){
+            target_speed = std::max(traffic_speed, param_speed);
+        }
+        else{
+            target_speed = std::min(traffic_speed,param_speed);
+        }
         
         return target_speed;
     }
