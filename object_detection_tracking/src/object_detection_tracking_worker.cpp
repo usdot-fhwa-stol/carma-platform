@@ -48,6 +48,7 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
 
     // Header contains the frame rest of the fields will use
     obj.header = obj_array.objects[i].header;
+    obj.header.frame_id = map_frame_;
 
     // Presence vector message is used to describe objects coming from potentially
     // different sources. The presence vector is used to determine what items are set
