@@ -263,27 +263,29 @@ namespace route_following_plugin
     double RouteFollowingPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt)
     {
         lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules();
-        double target_speed, traffic_speed = 0.0, param_speed = 0.0;
+        double target_speed;
         double hardcoded_max=lanelet::Velocity(hardcoded_params::control_limits::MAX_LONGITUDINAL_VELOCITY_MPS * lanelet::units::MPS()).value();
 
         if (traffic_rules)
         {
-            traffic_speed=(*traffic_rules)->speedLimit(llt).speedLimit.value();
+            target_speed=(*traffic_rules)->speedLimit(llt).speedLimit.value();
             
         }
- 
-        if(config_limit > 0 && config_limit < hardcoded_max)
+        else
         {
-            param_speed=config_limit;
-            ROS_WARN("Failed to set the current speed limit. Valid traffic rules object could not be built. Using Configurable value");
+            if(config_limit > 0 && config_limit < hardcoded_max)
+            {
+                target_speed=config_limit;
+                ROS_WARN("Failed to set the current speed limit. Valid traffic rules object could not be built. Using Configurable value");
+            }
+
+            else 
+            {
+                target_speed= hardcoded_max;
+                ROS_WARN("Failed to set the current speed limit. Valid traffic rules object could not be built. Using Hardcoded maximum");
+            }
+            
         }
-        else 
-        {
-            param_speed= hardcoded_max;
-            ROS_WARN("Failed to set the current speed limit. Valid traffic rules object could not be built. Using Hardcoded maximum");
-        }
-        target_speed = std::max(traffic_speed, param_speed);
-        
         return target_speed;
     }
 }
