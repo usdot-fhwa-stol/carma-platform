@@ -119,10 +119,10 @@ function checkout_branches {
 }
 
 function assert_set {
-    local $STRING="$1"
-    local $ERROR_MSG="$2"
+    local STRING="$1"
+    local ERROR_MSG="$2"
 
-    if [[ -z $STRING ]]; then
+    if [[ -z "$STRING" ]]; then
         echo "$ERROR_MSG"
         exit -1
     fi 
@@ -397,17 +397,16 @@ function release_tool__push_images {
 }
 
 function create_pr_for_repo {
-    local $repo="$1"
-    local $source_branch="$2"
-    local $target_branch="$3"
-    local $assignee="$4"
+    local repo="$1"
+    local source_branch="$2"
+    local target_branch="$3"
+    local assignee="$4"
  
     # TODO: Check for github CLI installation
     #if ! command -V gh &2>/dev/null; then
     #    echo "Github CLI not installed. PR creation will need to be done manually."
     #    exit -1
     #fi
-
 
     read -p "Open PR on $repo for merging branch $source_branch into $target_branch (Assigned to $assignee)? (y/N): " -r -n 1
     echo ""
@@ -443,6 +442,8 @@ function release_tool__create_release_prs {
     parse_args $@
     assert_set $WORK_DIR "Work directory must be specified with -d <WORK_DIR>"
     assert_set $RELEASE_VERSION "Release version must be specified with -v <RELEASE_VERSION>"
+    assert_set "$PR_ASSIGNEE" "PR assignee must be specified with --assign <ASSIGNEE>"
+
     echo "Creating Github pull requests for all repositories"
 
     cd $WORK_DIR/autoware.ai
@@ -476,8 +477,10 @@ function release_tool__create_release_prs {
 
 function release_tool__create_sync_prs {
     parse_args $@
-    assert_set $WORK_DIR "Work directory must be specified with -d <WORK_DIR>"
-    assert_set $RELEASE_VERSION "Release version must be specified with -v <RELEASE_VERSION>"
+    assert_set "$WORK_DIR" "Work directory must be specified with -d <WORK_DIR>"
+    assert_set "$RELEASE_VERSION" "Release version must be specified with -v <RELEASE_VERSION>"
+    assert_set "$PR_ASSIGNEE" "PR assignee must be specified with --assign <ASSIGNEE>"
+
     echo "Creating Github pull requests for all repositories back into develop"
     cd $WORK_DIR/autoware.ai
     branch=$(git symbolic-ref --short HEAD)
@@ -488,7 +491,7 @@ function release_tool__create_sync_prs {
         exit -1
     fi
 
-    ceate_pr_for_repo autoware.ai carma-master carma-develop $PR_ASSIGNEE
+    create_pr_for_repo autoware.ai carma-master carma-develop $PR_ASSIGNEE
 
     cd $WORK_DIR/carma/src
     for repo in */; do
@@ -527,7 +530,7 @@ release_tool() {
 
 # Globals
 PATH_TO_REPOS_FILE="$(realpath ../carma-platform.repos)"
-WORK_DIR="."
+WORK_DIR=""
 RELEASE_VERSION=""
 RELEASE_BRANCH=""
 PR_ASSIGNEE=""
