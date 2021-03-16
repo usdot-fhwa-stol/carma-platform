@@ -130,6 +130,13 @@ function release_tool__clone {
     checkout_branches $RELEASE_BRANCH
 }
 
+function replace_docker_image_versions {
+  local FILE="$1"
+  local IMAGE_VERSION="$2"
+  sed -i "s|usdotfhwastoldev|usdotfhwastol|; s|usdotfhwastolcandidate|usdotfhwastol|; s|:[0-9]*\.[0-9]*\.[0-9]*|:$IMAGE_VERSION|g; s|:CARMA[a-zA-Z]*_[0-9]*\.[0-9]*\.[0-9]*|:$IMAGE_VERSION|g; s|:carma-[a-zA-Z]*-[0-9]*\.[0-9]*\.[0-9]*|:$IMAGE_VERSION|g; s|:develop|:$IMAGE_VERSION|g; s|:vanden-plas|:$IMAGE_VERSION|g" \
+      $FILE
+}
+
 function update_version_numbers {
     local REPOSITORY=$1
     local TARGET_VERSION_ID=$2
@@ -165,9 +172,9 @@ function update_version_numbers {
             fi
         done
 	cd ..
-        update_version_numbers "carma-messenger-core" "carma-system-$RELEASE_VERSION" .
+        update_version_numbers "carma-messenger-core" "carma-system-$TARGET_VERSION_ID" .
         cd ..
-        update_version_numbers "carma-messenger-ui" "carma-system-$RELEASE_VERSION" .
+        update_version_numbers "carma-messenger-ui" "carma-system-$TARGET_VERSION_ID" .
     fi
 
     echo "Updating version numbers in $REPOSITORY to $TARGET_VERSION_ID"
@@ -179,8 +186,14 @@ function update_version_numbers {
         echo "No Dockerfile found for $REPOSITORY"
     fi
 
+    if [[ -f .circleci/config.yml ]]; then 
+	replace_docker_image_versions $(realpath .circleci/config.yml) "$TARGET_VERSION_ID"
+    else
+        echo "No CircleCI config found for $REPOSITORY"
+    fi
+
     if [[ -f docker/checkout.bash ]]; then
-        sed -i "/usdot-fhwa-stol/ s|--branch .*|--branch $TARGET_VERSION_ID|g; /usdot-fhwa-stol/ s|vanden-plas|$TARGET_VERSION_ID|g" \
+        sed -i "/\$BRANCH/ b; /usdot-fhwa-stol/ s|--branch .*|--branch $TARGET_VERSION_ID|g; /usdot-fhwa-stol/ s|vanden-plas|$TARGET_VERSION_ID|g" \
             docker/checkout.bash
     else
         echo "No checkout.bash found for $REPOSITORY"
@@ -257,9 +270,7 @@ function release_tool__tag_repos {
     echo "Tagging master branch on all repos"
 
     parse_args $@
-    cd $WORK_DIR/carma/src
-
-    #checkout_branches master
+    cd $WORK_DIR
 
     vcs custom --git --args tag -am "carma-system-$RELEASE_VERSION" carma-system-$RELEASE_VERSION
     vcs custom --git --args push --tags
@@ -267,19 +278,36 @@ function release_tool__tag_repos {
 
 function release_tool__build_images {
     parse_args $@
+    local IMAGE_TAG="carma-system-$RELEASE_VERSION"
     # Build CARMA base
-    #cd $WORK_DIR/carma/src/carma-base
-    #echo "Building docker image for carma-base..."
-    #./docker/build-image.sh
+    cd $WORK_DIR/carma/src/carma-base
+    echo "Building docker image for carma-base..."
+    ./docker/build-image.sh -v $IMAGE_TAG
 
     # Build Autoware AI
     cd $WORK_DIR/autoware.ai
     echo "Building docker image for autoware..."
-    ./docker/build-image.sh
+    ./docker/build-image.sh -v $IMAGE_TAG
+
+
+    # Build CARMA Messenger
+    cd $WORK_DIR/carma/src/carma-messenger
+    echo "Building CARMA Messenger..."
+    ./carma-messenger-core/docker/build-image.sh -v $IMAGE_TAG
+    ./carma-messenger-ui/docker/build-image.sh -v $IMAGE_TAG
+    cd carma-messenger-config
+    for messenger_config in */; do
+    	cd $WORK_DIR/carma/src/carma-messenger/carma-messenger-config/$messenger_config
+        if [[ -f build-image.sh ]]; then
+            echo "Building config $messenger_config..."
+            ./build-image.sh
+        fi
+    done
     
     # Build the rest
+    cd $WORK_DIR/carma/src
     for repo in */; do
-        if [[ $repo == "carma-base/" || $repo == "autoware.ai/" ]]; then
+        if [[ $repo == "carma-base/" || $repo == "autoware.ai/" || $repo == "carma-config/" || $repo == "carma-messenger/" ]]; then
             # Skip cause we already built this as dependencies
             continue
         fi
@@ -289,12 +317,7 @@ function release_tool__build_images {
         branch=$(git symbolic-ref --short HEAD)
         if [[ -f "docker/build-image.sh" ]]; then 
             # Ensure images aren't build off of non-master branches
-            if [[ -z $(echo $branch | grep "release") ]]; then
-                echo "Repo $repo not on master branch, skipping..."
-                continue
-            fi
-
-            if [[ -z $(echo $branch | grep "release") ]]; then
+            if [[ -z $(echo $branch | grep "master") ]]; then
                 echo "Repo $repo not on master branch, skipping..."
                 continue
             fi
@@ -305,32 +328,30 @@ function release_tool__build_images {
             fi
 
             echo "Building docker image for $repo..."
-            ./docker/build-image.sh
+            ./docker/build-image.sh -v $IMAGE_TAG
         else
             echo "No docker build script found for $repo, skipping..."
         fi
     done
+
+    # Build CARMA Config
+    cd $WORK_DIR/carma/src/carma-config
+    echo "Building CARMA Configs..."
+    for carma_config in */; do
+        cd $WORK_DIR/carma/src/carma-config/$carma_config
+        if [[ -f build-image.sh ]]; then
+            echo "Building config $carma_config..."
+            ./build-image.sh
+        fi
+    done
+
+   echo "==== ALL IMAGES BUILT SUCCESSFULLY ===="
 }
 
 function release_tool__push_images {
     echo "Pushing all images to Dockerhub"
     parse_args $@
-    cd $WORK_DIR/carma/src
-
-    for repo in */; do
-        image=$(echo $repo | sed "s/\(.*\)\//usdotfhwastol/\1:$RELEASE_VERSION")
-
-        # Docker image query borrowed from: https://stackoverflow.com/questions/30543409/how-to-check-if-a-docker-image-with-a-specific-tag-exist-locally
-        # Asked by user: Johan (https://stackoverflow.com/users/398441/johan)
-        # Answered by user: VonC (https://stackoverflow.com/users/6309/vonc)
-        # Attribution provided per StackOverflow licensing policy
-        if [[ -z "$(docker images -q $image 2> /dev/null)" ]]; then
-            echo "No image found for repo $repo, skipping..."
-            continue
-        fi
-
-        docker push $image
-    done
+    docker image ls | grep "carma-system-$RELEASE_VERSION" | tr -s ' ' | cut -d ' ' -f1,2 | sed -e 's/ /:/g' | xargs -I {} docker push {}
 }
 
 function release_tool__create_prs {
