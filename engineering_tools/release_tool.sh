@@ -72,12 +72,14 @@ update_version_numbers - Update the dockerfiles and checkout.bash files to
                          reference the new release version number
 diff - View the Git diff for all repos under the release
 commit_version_numbers - Commit the version number updates after a manual review
-create_prs - Create PRs (assigned using the --assign option) to merge the 
-             release branches into master
+create_release_prs - Create PRs (assigned using the --assign option) to merge the 
+                     release branches into master
 tag_repos - Tag the repositories with the new system release tag (component tags
             must be created manually)
 build_images - Build the docker images for each dockerized repository
 push_images - Push the resulting images to Dockerhub
+create_sync_prs - Create PRs (assigned using the --assign option) to merge
+                  master back into develop after release
 
 checkout - Checkout all repos to target branch
 
@@ -100,6 +102,7 @@ Recommended workflow:
 7. Build all docker images
 8. Deploy and test docker images to verify integrity of release
 9. Push all docker images to Dockerhub
+10. Create and merge sync PRs master -> develop
 
 This tool depends on the Github CLI (https://cli.github.com/) and vcstool
 (https://github.com/dirk-thomas/vcstool)
@@ -115,16 +118,32 @@ function checkout_branches {
     vcs custom --git --args checkout $1
 }
 
+function assert_set {
+    local $STRING="$1"
+    local $ERROR_MSG="$2"
+
+    if [[ -z $STRING ]]; then
+        echo "$ERROR_MSG"
+        exit -1
+    fi 
+}
+
 function release_tool__checkout {
     parse_args $@
+    assert_set $WORK_DIR "Work directory must be specified with -d <WORK_DIR>"
+    assert_set $RELEASE_BRANCH "Branch must be specified with -b <BRANCH>"
+
     echo "Checking out repos to $RELEASE_BRANCH"
     cd $WORK_DIR
     checkout_branches $RELEASE_BRANCH
 }
 
 function release_tool__clone {
-    echo "Step #1: Cloning release branches for all repositories"
     parse_args $@
+    assert_set $WORK_DIR "Work directory must be specified with -d <WORK_DIR>"
+    assert_set $PATH_TO_REPOS_FILE "Path to .repos file must be specified with -f <PATH_TO_FILE>"
+
+    echo "Step #1: Cloning release branches for all repositories"
     cd $WORK_DIR
     clone_repos $PATH_TO_REPOS_FILE
     checkout_branches $RELEASE_BRANCH
@@ -202,6 +221,9 @@ function update_version_numbers {
 
 function release_tool__update_version_numbers {
     parse_args $@
+    assert_set $WORK_DIR "Work directory must be specified with -d <WORK_DIR>"
+    assert_set $RELEASE_VERSION "Release version must be specified with -v <RELEASE_VERSION>"
+
     cd $WORK_DIR/carma/src
     pwd
     for repo in */; do
@@ -214,6 +236,8 @@ function release_tool__update_version_numbers {
 
 function release_tool__diff {
     parse_args $@
+    assert_set $WORK_DIR "Work directory must be specified with -d <WORK_DIR>"
+
     cd $WORK_DIR
     vcs custom --git --args diff --color=always | less -r
 }
@@ -221,7 +245,6 @@ function release_tool__diff {
 function commit_version_numbers {
     repo=$1
 
-    cd $WORK_DIR/carma/src
     cd $repo
 
     branch=$(git symbolic-ref --short HEAD)
@@ -258,26 +281,44 @@ function commit_version_numbers {
 }
 
 function release_tool__commit_version_numbers {
-    echo "Step #3: Commiting and pushing version number updates on all repositories"
     parse_args $@
+    assert_set $WORK_DIR "Work directory must be specified with -d <WORK_DIR>"
+    echo "Step #3: Commiting and pushing version number updates on all repositories"
+
+    cd $WORK_DIR
+    commit_version_numbers $WORK_DIR/autoware.ai
+
     cd $WORK_DIR/carma/src
     for repo in */; do
-        commit_version_numbers $repo
+        commit_version_numbers $WORK_DIR/carma/src/$repo
     done
 }
 
 function release_tool__tag_repos {
+    parse_args $@
+    assert_set $WORK_DIR "Work directory must be specified with -d <WORK_DIR>"
+    assert_set $RELEASE_VERSION "Release version must be specified with -v <RELEASE_VERSION>"
     echo "Tagging master branch on all repos"
 
-    parse_args $@
     cd $WORK_DIR
 
+    vcs checkout --git master
+
+    # Handle autoware's use of carma-master
+    cd $WORK_DIR/autoware.ai
+    git checkout carma-master
+    
+    cd $WORK_DIR
+    vcs pull
     vcs custom --git --args tag -am "carma-system-$RELEASE_VERSION" carma-system-$RELEASE_VERSION
     vcs custom --git --args push --tags
 }
 
 function release_tool__build_images {
     parse_args $@
+    assert_set $WORK_DIR "Work directory must be specified with -d <WORK_DIR>"
+    assert_set $RELEASE_VERSION "Release version must be specified with -v <RELEASE_VERSION>"
+
     local IMAGE_TAG="carma-system-$RELEASE_VERSION"
     # Build CARMA base
     cd $WORK_DIR/carma/src/carma-base
@@ -349,49 +390,36 @@ function release_tool__build_images {
 }
 
 function release_tool__push_images {
-    echo "Pushing all images to Dockerhub"
     parse_args $@
+    assert_set $RELEASE_VERSION "Release version must be specified with -v <RELEASE_VERSION>"
+    echo "Pushing all images to Dockerhub"
     docker image ls | grep "carma-system-$RELEASE_VERSION" | tr -s ' ' | cut -d ' ' -f1,2 | sed -e 's/ /:/g' | xargs -I {} docker push {}
 }
 
-function release_tool__create_prs {
-    parse_args $@
-    echo "Creating Github pull requests for all repositories"
-
+function create_pr_for_repo {
+    local $repo="$1"
+    local $source_branch="$2"
+    local $target_branch="$3"
+    local $assignee="$4"
+ 
     # TODO: Check for github CLI installation
     #if ! command -V gh &2>/dev/null; then
     #    echo "Github CLI not installed. PR creation will need to be done manually."
     #    exit -1
     #fi
 
-    cd $WORK_DIR/carma/src
-    for repo in */; do
-        echo $repo
-        cd $WORK_DIR/carma/src
-        cd $repo
-        branch=$(git symbolic-ref --short HEAD)
 
-        # Ensure PRs aren't opened for non-release branches
-        if [[ -z $(echo $branch | grep "release") ]]; then
-            echo "Not on a release/* branch, exiting."
-            exit -1
-        fi
-
-        release_name=$(echo $branch | sed "s/release\///")
-        echo $release_name
-
-        read -p "Open PR on $repo for merging branch $branch into master (Assigned to $PR_ASSIGNEE)? (y/N): " -r -n 1
-        echo ""
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            gh pr create --assignee $PR_ASSIGNEE --base master -t "Merge candidate to master for release $RELEASE_VERSION" -b "<<EOB
-# PR Details
+    read -p "Open PR on $repo for merging branch $source_branch into $target_branch (Assigned to $assignee)? (y/N): " -r -n 1
+    echo ""
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+            gh pr create --assignee $assignee --base $target_branch -t "Merge release to $target_branch for release $RELEASE_VERSION" -b "# PR Details
 ## Description
-Merge PR to formalize release of $branch release candidate as CARMA release $RELEASE_VERSION.
+Merge PR to formalize release of $source_branch into $target_branch as part of CARMA release process for $RELEASE_VERSION. 
 
 PR created automatically via CARMA release tool and Github CLI
 ## Motivation and Context
 
-This PR brings the tested and reviewed contents of the $branch release candidate into master for final release preparation
+This PR brings the tested and reviewed contents of the $source_branch release/candidate into $target_branch for final release preparation
 
 ## How Has This Been Tested?
 
@@ -405,11 +433,77 @@ This release branch (minus final version number changes) has been tested through
 [CARMA Contributing Guide](https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/Contributing.md) 
 - [X] I have added tests to cover my changes.
 - [X] All new and existing tests passed."
-EOB
             echo "PR created for $repo"
         else
             echo "PR not created for $repo."
         fi
+}
+
+function release_tool__create_release_prs {
+    parse_args $@
+    assert_set $WORK_DIR "Work directory must be specified with -d <WORK_DIR>"
+    assert_set $RELEASE_VERSION "Release version must be specified with -v <RELEASE_VERSION>"
+    echo "Creating Github pull requests for all repositories"
+
+    cd $WORK_DIR/autoware.ai
+    branch=$(git symbolic-ref --short HEAD)
+
+    # Ensure PRs aren't opened for non-release branches
+    if [[ -z $(echo $branch | grep "release") ]]; then
+        echo "$repo not on a release/* branch, exiting."
+        exit -1
+    fi
+
+    ceate_pr_for_repo autoware.ai $branch carma-master $PR_ASSIGNEE
+
+    cd $WORK_DIR/carma/src
+    for repo in */; do
+        echo $repo
+        cd $WORK_DIR/carma/src
+        cd $repo
+        branch=$(git symbolic-ref --short HEAD)
+
+        # Ensure PRs aren't opened for non-release branches
+        if [[ -z $(echo $branch | grep "release") ]]; then
+            echo "$repo not on a release/* branch, exiting."
+            exit -1
+        fi
+
+	create_pr_for_repo $repo $branch master $PR_ASSIGNEE
+    done
+}
+
+
+function release_tool__create_sync_prs {
+    parse_args $@
+    assert_set $WORK_DIR "Work directory must be specified with -d <WORK_DIR>"
+    assert_set $RELEASE_VERSION "Release version must be specified with -v <RELEASE_VERSION>"
+    echo "Creating Github pull requests for all repositories back into develop"
+    cd $WORK_DIR/autoware.ai
+    branch=$(git symbolic-ref --short HEAD)
+
+    # Ensure PRs aren't opened for non-release branches
+    if [[ -z $(echo $branch | grep "master") ]]; then
+        echo "$repo not on a master branch, exiting."
+        exit -1
+    fi
+
+    ceate_pr_for_repo autoware.ai carma-master carma-develop $PR_ASSIGNEE
+
+    cd $WORK_DIR/carma/src
+    for repo in */; do
+        echo $repo
+        cd $WORK_DIR/carma/src
+        cd $repo
+        branch=$(git symbolic-ref --short HEAD)
+
+        # Ensure PRs aren't opened for non-release branches
+        if [[ -z $(echo $branch | grep "master") ]]; then
+            echo "$repo not on a master branch, exiting."
+            exit -1
+        fi
+
+	create_pr_for_repo $repo master develop $PR_ASSIGNEE
     done
 }
 
