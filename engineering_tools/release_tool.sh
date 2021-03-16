@@ -411,7 +411,7 @@ function create_pr_for_repo {
     read -p "Open PR on $repo for merging branch $source_branch into $target_branch (Assigned to $assignee)? (y/N): " -r -n 1
     echo ""
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-            gh pr create --assignee $assignee --base $target_branch -t "Merge release to $target_branch for release $RELEASE_VERSION" -b "# PR Details
+            gh pr create --assignee $assignee --reviewer $assignee --head $source_branch --base $target_branch -t "Merge release to $target_branch for release $RELEASE_VERSION" -b "# PR Details
 ## Description
 Merge PR to formalize release of $source_branch into $target_branch as part of CARMA release process for $RELEASE_VERSION. 
 
