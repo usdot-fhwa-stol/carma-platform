@@ -132,7 +132,7 @@ namespace route_following_plugin
         // Minimal duration of maneuver, loaded from config file
         double mvr_duration_;
         //Jerk used to come to stop at end of route
-        double jerk_ = 0.25;
+        double jerk_ = 0.05;
 
         // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
