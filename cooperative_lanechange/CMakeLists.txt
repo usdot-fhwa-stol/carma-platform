@@ -18,6 +18,8 @@ set( CATKIN_DEPS
   tf
   tf2
   tf2_geometry_msgs
+  unobstructed_lanechange
+  roslib
 )
 
 ## Find catkin macros and libraries
@@ -96,7 +98,7 @@ install(DIRECTORY
 #############
 ## Testing ##
 #############
-# catkin_add_gmock(${PROJECT_NAME}-test
-#  test/test_unobstructed_lanechange_plugin.cpp
-#  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
-# target_link_libraries(${PROJECT_NAME}-test unobstructed_lanechange_plugin_lib ${catkin_LIBRARIES})
+catkin_add_gmock(${PROJECT_NAME}-test
+ test/test_cooperative_lanechange.cpp
+ WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+target_link_libraries(${PROJECT_NAME}-test cooperative_lanechange_plugin_lib ${catkin_LIBRARIES})

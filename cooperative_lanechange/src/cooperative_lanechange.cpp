@@ -25,6 +25,16 @@
 #include <carma_utils/containers/containers.h>
 #include "smoothing/filters.h"
 #include <cav_msgs/MobilityPath.h>
+#include <cav_msgs/RoadwayObstacle.h>
+#include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
+#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
+#include <lanelet2_extension/utility/query.h>
+#include <lanelet2_extension/utility/utilities.h>
+
+#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/geometry/BoundingBox.h>
+#include <lanelet2_core/LaneletMap.h>
+
 
 namespace cooperative_lanechange
 {
@@ -45,8 +55,14 @@ namespace cooperative_lanechange
         
         pose_sub_ = nh_->subscribe("current_pose", 1, &CooperativeLaneChangePlugin::pose_cb, this);
         twist_sub_ = nh_->subscribe("current_velocity", 1, &CooperativeLaneChangePlugin::twist_cd, this);
-        mobility_path_message_sub_=nh_->subscribe("outgoing_mobility_path",5, &CooperativeLaneChangePlugin::find_current_gap,this);
+        incoming_mobility_response_ = nh_->subscribe("incoming_mobilty_response", 1 , &CooperativeLaneChangePlugin::mobilityresponse_cb, this);
+        //mobility_path_message_sub_=nh_->subscribe("outgoing_mobility_path",5, &CooperativeLaneChangePlugin::find_current_gap,this);
+        bsm_sub_ = nh_->subscribe("bsm_outbound", 1, &CooperativeLaneChangePlugin::bsm_cb, this);
 
+        //Vehicle params
+        pnh_->getParam("vehicle_id",sender_id_);
+
+        //Plugin params
         pnh_->param<double>("trajectory_time_length", trajectory_time_length_, 6.0);
         pnh_->param<std::string>("control_plugin_name", control_plugin_name_, "NULL");
         pnh_->param<double>("minimum_speed", minimum_speed_, 2.2352);
@@ -60,6 +76,9 @@ namespace cooperative_lanechange
         pnh_->param<double>("curvature_calc_lookahead_count", curvature_calc_lookahead_count_, 1);
         pnh_->param<int>("downsample_ratio", downsample_ratio_, 8);
 
+        wml_.reset(new carma_wm::WMListener());
+        // set world model point form wm listener
+        wm_ = wml_->getWorldModel();
 
 
         ros::CARMANodeHandle::setSpinCallback([this]() -> bool {
@@ -69,34 +88,55 @@ namespace cooperative_lanechange
 
     }
 
-    CooperativeLaneChangePlugin::find_current_gap(cav_msgs::MobilityPath &path){
+    void CooperativeLaneChangePlugin::mobilityresponse_cb(const cav_msgs::MobilityResponse &msg){
+        if(msg.is_accepted){
+            is_lanechange_accepted_ = true;
+        }
+        else{
+            is_lanechange_accepted_ = false;
+        }
+    }
+
+
+    double CooperativeLaneChangePlugin::find_current_gap(int veh2_lanelet_id, double veh2_downtrack){
                 
-        //find transform between earth and map frame
-        geometry_msgs::TransformStamped tf;
-        try
-        {
-            tf = tf2_buffer_.lookupTransform("map", "earth", ros::Time(0));
-        }
-        catch (tf2::TransformException &ex)
-        {
-            ROS_WARN("%s", ex.what());
-        }
-        //convert ecef from mobility path to map frame
-        lanelet::BasicPoint3d lag_veh_location;
-        lag_veh_location.x() =path.trajectory.location.ecef_x * tf.transform.translation.x;
-        lag_veh_location.y() =path.trajectory.location.ecef_y * tf.transform.translation.y;
-        lag_veh_location.z() =path.trajectory.location.ecef_z * tf.transform.translation.z;
-        
         //find downtrack distance between ego and lag vehicle
-        lanelet::BasicPoint2d ego_pos(pose_msg_.pose.position.x(),pose_msg_.pose.position.y());
+        double current_gap = 0.0;
+        lanelet::BasicPoint2d ego_pos(pose_msg_.pose.position.x,pose_msg_.pose.position.y);
         double ego_current_downtrack = wm_->routeTrackPos(ego_pos).downtrack;
         
-        //Case 1 - vehicle behind adjacent lane
+        lanelet::LaneletMapConstPtr const_map(wm_->getMap());
+        lanelet::ConstLanelet veh2_lanelet = const_map->laneletLayer.get(veh2_lanelet_id);
 
-        //Case 2- vehicle in adjacent lane
+        lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
+        auto current_lanelets = lanelet::geometry::findNearest(const_map->laneletLayer, current_loc, 10);       
+        if(current_lanelets.size() == 0)
+        {
+            ROS_WARN_STREAM("Cannot find any lanelet in map!");
+            return true;
+        }
+        lanelet::ConstLanelet current_lanelet = current_lanelets[0].second;
+
+        //Create temporary route between the two vehicles
+        lanelet::ConstLanelet start_lanelet = veh2_lanelet;
+        lanelet::ConstLanelet end_lanelet = current_lanelet;
+        lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany,lanelet::Participants::VehicleCar);
+        lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*(wm_->getMap()), *traffic_rules);
+
+        auto temp_route = map_graph->getRoute(start_lanelet, end_lanelet);
         
+        auto shortest_path2 = temp_route.get().shortestPath();
+
+        //To find downtrack- distance of veh2 from current to start of end lanelet + downtrack of veh1 in its own current lanelet
+        lanelet::BasicPoint2d p = shortest_path2.back().centerline2d().front(); //Start point of last lanelet in path
+        
+        double downtrack_1 = wm_->routeTrackPos(p).downtrack;
+        double remaining_downtrack = downtrack_1 - veh2_downtrack + ego_current_downtrack;
+        //double downtrack_1 = map_graph->routeTrackPos(p).downtrack;
+        current_gap = remaining_downtrack;
 
 
+        return current_gap;
 
     }
 
@@ -107,6 +147,12 @@ namespace cooperative_lanechange
     void CooperativeLaneChangePlugin::twist_cd(const geometry_msgs::TwistStampedConstPtr& msg)
     {
         current_speed_ = msg->twist.linear.x;
+    }
+    
+    void CooperativeLaneChangePlugin::bsm_cb(const cav_msgs::BSMConstPtr& msg)
+    {
+        bsm_core_ = msg->core_data;
+        
     }
 
     void CooperativeLaneChangePlugin::run()
@@ -121,20 +167,74 @@ namespace cooperative_lanechange
 
     bool CooperativeLaneChangePlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp){
 
-        lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
-        double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
-        
+        std::vector<cav_msgs::RoadwayObstacle> rwol = wm_->getRoadwayObjects();
+        //Assuming only one object in list 
+        int veh2_lanelet_id = rwol[0].lanelet_id;
+        double veh2_downtrack = rwol[0].down_track;  //Returns downtrack
+        double veh2_speed = rwol[0].object.velocity.twist.linear.x;
+
+        //get current_gap
+        double current_gap = find_current_gap(veh2_lanelet_id,veh2_downtrack);
+        //get desired gap - desired time gap (default 3s)* relative velocity
+        double relative_velocity = current_speed_ - veh2_speed;
+        double desired_gap = 3.0 * relative_velocity;      
+         
+        cav_msgs::TrajectoryPlan trajectory_plan;
+        if(current_gap < desired_gap){
+            return true;
+        }
+        //plan lanechange without filling in response
+        std::vector<cav_msgs::TrajectoryPlanPoint> planned_trajectory_points = plan_lanechange(req);
+
         //send mobility request
+        cav_msgs::MobilityRequest request = create_mobility_request(planned_trajectory_points);
+        //outgoing_mobility_request_.publish(request);
 
         //if ack mobility response, create lanechange
-        
-        
+        if(is_lanechange_accepted_){
+            cav_msgs::TrajectoryPlan trajectory;
+            trajectory.header.frame_id = "map";
+            trajectory.header.stamp = ros::Time::now();
+            trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
+
+            trajectory.trajectory_points = planned_trajectory_points;
+            trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, minimum_speed_);
+            resp.trajectory_plan = trajectory;
+
+            for (int i=0; i<req.maneuver_plan.maneuvers.size(); i++){
+                if (req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::LANE_CHANGE){
+                    resp.related_maneuvers.push_back(i);
+                    break;
+                }
+            }
+            resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
+        }
 
         return true;
+    }
+    
+    cav_msgs::MobilityRequest CooperativeLaneChangePlugin::create_mobility_request(std::vector<cav_msgs::TrajectoryPlanPoint>& trajectory_plan){
 
+        cav_msgs::MobilityRequest request_msg;
+        cav_msgs::MobilityHeader header;
+        header.sender_id = sender_id_;
+        header.recipient_id = DEFAULT_STRING_;      //To do- find way to query recipient id
+        header.sender_bsm_id = bsmIDtoString(bsm_core_);
+        header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
+        header.timestamp = trajectory_plan.front().target_time.toSec();
+        
+        request_msg.strategy = "carma/cooperative-lane-change";
+        request_msg.plan_type.type = cav_msgs::PlanType::CHANGE_LANE_LEFT;
+        
+        request_msg.header = header;
+        return request_msg;
     }
 
-    void CooperativeLaneChangePlugin::plan_lanechange(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp){
+    std::vector<cav_msgs::TrajectoryPlanPoint> CooperativeLaneChangePlugin::plan_lanechange(cav_srvs::PlanTrajectoryRequest &req){
+        
+        lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
+        double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
+
         //convert maneuver info to route points and speeds
         std::vector<cav_msgs::Maneuver> maneuver_plan;
         for(const auto maneuver : req.maneuver_plan.maneuvers)
@@ -145,27 +245,14 @@ namespace cooperative_lanechange
             }
         }
         auto points_and_target_speeds = maneuvers_to_points(maneuver_plan, current_downtrack, wm_,req.vehicle_state);
-        
+
         auto downsampled_points = carma_utils::containers::downsample_vector(points_and_target_speeds, downsample_ratio_);
 
-        cav_msgs::TrajectoryPlan trajectory;
-        trajectory.header.frame_id = "map";
-        trajectory.header.stamp = ros::Time::now();
-        trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
+        std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points;
+        trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state);
 
-        trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state);
+        return trajectory_points;
 
-        trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, minimum_speed_);
-
-        resp.trajectory_plan = trajectory;
-
-        for (int i=0; i<req.maneuver_plan.maneuvers.size(); i++){
-            if (req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::LANE_CHANGE){
-            resp.related_maneuvers.push_back(i);
-            break;
-            }
-        }
-        resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
     }
 
     std::vector<PointSpeedPair> CooperativeLaneChangePlugin::maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,

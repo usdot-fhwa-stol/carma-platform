@@ -33,6 +33,9 @@
 #include <carma_wm/Geometry.h>
 #include "smoothing/SplineI.h"
 #include "smoothing/BSpline.h"
+#include <cav_msgs/MobilityResponse.h>
+#include <cav_msgs/MobilityRequest.h>
+#include <cav_msgs/BSM.h>
 
 
 
@@ -65,9 +68,9 @@ namespace cooperative_lanechange
              * \return True if success. False otherwise
              */ 
 
-            double find_current_gap(cav_msgs::MobilityPath &path);
+            double find_current_gap(int veh2_lanelet_id, double veh2_downtrack);
             //cav_msgs::MobilityRequest generateMobilityRequest()
-            void plan_lanechange(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp);
+            std::vector<cav_msgs::TrajectoryPlanPoint> plan_lanechange(cav_srvs::PlanTrajectoryRequest &req);
             bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp);
             
             /**
@@ -211,6 +214,9 @@ namespace cooperative_lanechange
             std::shared_ptr<carma_wm::WMListener> wml_;
             carma_wm::WorldModelConstPtr wm_;
 
+            //boolean which is updated if lane change request is accepted
+            bool is_lanechange_accepted_ = false;
+
             private:
 
             // node handles
@@ -226,12 +232,20 @@ namespace cooperative_lanechange
             cav_msgs::Plugin plugin_discovery_msg_;
             ros::Subscriber pose_sub_;
             ros::Subscriber twist_sub_;
-            ros::Subscriber mobility_request_sub_;
+            ros::Publisher outgoing_mobility_request_;
+            ros::Subscriber incoming_mobility_response_;
+            ros::Subscriber bsm_sub_;
 
             // trajectory frequency
             double traj_freq = 10;
+            std::string DEFAULT_STRING_= "";
 
             // ROS params
+            //Vehicle params
+            std::string sender_id_ = DEFAULT_STRING_;
+            cav_msgs::BSMCoreData bsm_core_;
+
+            //Plugin specific params
             double trajectory_time_length_ = 6;
             std::string control_plugin_name_ = "mpc_follower";
             double minimum_speed_ = 2.0;
@@ -266,6 +280,19 @@ namespace cooperative_lanechange
              */
             void twist_cd(const geometry_msgs::TwistStampedConstPtr& msg);
 
+            void mobilityresponse_cb(const cav_msgs::MobilityResponse& msg);
+
+            cav_msgs::MobilityRequest create_mobility_request(std::vector<cav_msgs::TrajectoryPlanPoint>& trajectory_plan);
+
+            void bsm_cb(const cav_msgs::BSMConstPtr& msg);
+
+            std::string bsmIDtoString(cav_msgs::BSMCoreData bsm_core){
+              std::string res = "";
+              for (size_t i=0; i<bsm_core.id.size(); i++){
+                  res+=std::to_string(bsm_core.id[i]);
+              }
+              return res;
+            }
 
     
     };
