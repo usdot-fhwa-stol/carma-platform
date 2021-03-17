@@ -1797,7 +1797,7 @@ namespace health_monitor
         cav_msgs::SystemAlert alert;
         alert=dm.handleSpin(truck,car,1500,150,750);
 
-        EXPECT_EQ(2, alert.type);
+        EXPECT_EQ(6, alert.type);
     }
 
 }

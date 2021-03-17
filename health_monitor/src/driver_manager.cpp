@@ -215,7 +215,7 @@ namespace health_monitor
              else if(status.compare("s_1_l1_1_l2_1_g_1_c_0")==0)
             {
                 alert.description = "Camera Failed";
-                alert.type = cav_msgs::SystemAlert::WARNING;
+                alert.type = cav_msgs::SystemAlert::SHUTDOWN;
             }
             else if((status.compare("s_1_l1_0_l2_1_g_1") == 0) || (status.compare("s_1_l1_1_l2_0_g_1") == 0))
             {
@@ -282,7 +282,7 @@ namespace health_monitor
             else if(status.compare("s_1_l_1_g_1_c_0") == 0)
             {
                 alert.description = "Camera Failed";
-                alert.type = cav_msgs::SystemAlert::WARNING;
+                alert.type = cav_msgs::SystemAlert::SHUTDOWN;
             } 
             else if(status.compare("s_1_l_1_g_0") == 0)
             {
