@@ -77,6 +77,7 @@ namespace stop_and_wait_plugin
         pnh_->param<double>("max_jerk_limit", max_jerk_limit_);
         pnh_->param<double>("min_timestep",min_timestep_);
         pnh_->param<double>("min_jerk", min_jerk_limit_);
+        pnh_->param<double>("/guidance/destination_downtrack_range",destination_downtrack_range_);
 
         ros::CARMANodeHandle::setSpinCallback([this]() -> bool
         {
@@ -231,7 +232,7 @@ namespace stop_and_wait_plugin
                     lanelet::BasicPoint2d curr_pose (pose_msg_.pose.position.x,pose_msg_.pose.position.y);
                     double current_downtrack = wm_->routeTrackPos(curr_pose).downtrack;
                     //stay approximately at crawl speed until within destination downtrack range (defined in route)
-                    if(start_speed <= min_crawl_speed_ && current_downtrack < ending_downtrack - 10.0){
+                    if(start_speed <= min_crawl_speed_ && current_downtrack < ending_downtrack - destination_downtrack_range_){
                         jerk_ = 0.0;
                     }
                     else{

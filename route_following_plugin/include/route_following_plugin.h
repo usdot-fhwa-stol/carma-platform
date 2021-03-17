@@ -133,6 +133,8 @@ namespace route_following_plugin
         double mvr_duration_;
         //Jerk used to come to stop at end of route
         double jerk_ = 0.05;
+        //Small constant to compare double with approx zero
+        const double epislon_ = 0.001;
 
         // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;

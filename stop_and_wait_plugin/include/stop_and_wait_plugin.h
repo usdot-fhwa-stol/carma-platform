@@ -158,6 +158,8 @@ namespace stop_and_wait_plugin
         double jerk_ =0.0;
         //Total time required to complete the maneuver
         double maneuver_time_;
+        //Acceptable range for stopping from end point of route
+        double destination_downtrack_range_ = 10.0;
 
         //Parameters loaded from config file initialized for unit tests
         //The crawl speed for the maneuver before reaching within acceptable distance from the end

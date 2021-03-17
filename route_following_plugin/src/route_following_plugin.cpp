@@ -263,7 +263,7 @@ namespace route_following_plugin
     double RouteFollowingPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt)
     {
         lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules();
-        double target_speed, traffic_speed =0.0, param_speed =0.0;
+        double target_speed = 0.0, traffic_speed =0.0, param_speed =0.0;
         double hardcoded_max=lanelet::Velocity(hardcoded_params::control_limits::MAX_LONGITUDINAL_VELOCITY_MPS * lanelet::units::MPS()).value();
 
         if (traffic_rules)
@@ -286,7 +286,7 @@ namespace route_following_plugin
             ROS_DEBUG(" Using Hardcoded maximum");
         }
         //If either value is 0, use the other valid limit
-        if(traffic_speed <= 0.001 || param_speed <= 0.001){
+        if(traffic_speed <= epislon_ || param_speed <= epislon_){
             target_speed = std::max(traffic_speed, param_speed);
         }
         else{
