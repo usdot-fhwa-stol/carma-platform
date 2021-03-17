@@ -33,11 +33,12 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
 
   cav_msgs::ExternalObjectList msg;
   msg.header = obj_array.header;
+  msg.header.frame_id = map_frame_;
 
-  tf2::Transform velodyne_transform; 
+  geometry_msgs::TransformStamped velodyne_transform; 
 
   try {
-      tf2::convert(tfBuffer_.lookupTransform(map_frame_ ,velodyne_frame_, ros::Time(0)).transform,velodyne_transform);
+      velodyne_transform = tfBuffer_.lookupTransform(map_frame_ ,velodyne_frame_, obj_array.header.stamp);
     } catch (tf2::TransformException &ex) {
       ROS_WARN_STREAM("Ignoring fix message: Could not locate static transforms with exception " << ex.what());
       return;
@@ -48,6 +49,7 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
 
     // Header contains the frame rest of the fields will use
     obj.header = obj_array.objects[i].header;
+    obj.header.frame_id = map_frame_;
 
     // Presence vector message is used to describe objects coming from potentially
     // different sources. The presence vector is used to determine what items are set
@@ -63,10 +65,7 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
     obj.id = obj_array.objects[i].id;
 
     // Pose of the object within the frame specified in header
-    geometry_msgs::TransformStamped v_transform = tfBuffer_.lookupTransform(map_frame_ ,velodyne_frame_,obj_array.header.stamp);
-
-
-    tf2::doTransform(obj_array.objects[i].pose, obj.pose.pose, v_transform);
+    tf2::doTransform(obj_array.objects[i].pose, obj.pose.pose, velodyne_transform);
 
 
     obj.pose.covariance[0] = obj_array.objects[i].variance.x;
