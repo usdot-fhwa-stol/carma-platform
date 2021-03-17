@@ -129,12 +129,8 @@ namespace stop_and_wait_plugin
             return true;
         }
 
-        // Update state to correctly reflect current pos
-        auto curr_state = req.vehicle_state;
-        curr_state.X_pos_global = pose_msg_.pose.position.x;
-        curr_state.Y_pos_global = pose_msg_.pose.position.y;
 
-        std::vector<PointSpeedPair> points_and_target_speeds = maneuvers_to_points(maneuver_plan, current_downtrack, wm_, curr_state);
+        std::vector<PointSpeedPair> points_and_target_speeds = maneuvers_to_points(maneuver_plan, current_downtrack, wm_, req.vehicle_state);
 
         auto downsampled_points = 
             carma_utils::containers::downsample_vector(points_and_target_speeds,downsample_ratio_);
@@ -145,7 +141,7 @@ namespace stop_and_wait_plugin
         trajectory.header.stamp = ros::Time::now();
         trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
       
-        trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points,curr_state);
+        trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points,req.vehicle_state);
         ROS_DEBUG_STREAM("Trajectory points size:"<<trajectory.trajectory_points.size());
         trajectory.initial_longitudinal_velocity = req.vehicle_state.longitudinal_vel;
         resp.trajectory_plan = trajectory;
