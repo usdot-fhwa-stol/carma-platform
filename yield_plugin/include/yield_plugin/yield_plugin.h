@@ -23,6 +23,7 @@
 #include <cav_msgs/MobilityRequest.h>
 #include <cav_msgs/MobilityResponse.h>
 #include <cav_msgs/BSM.h>
+#include <cav_msgs/LaneChangeStatus.h>
 #include <boost/shared_ptr.hpp>
 #include <carma_utils/CARMAUtils.h>
 #include <boost/geometry.hpp>
@@ -190,6 +191,12 @@ public:
    * \param req_planning_time planning time for the requested cooperative behavior
    */
   void set_incoming_request_info(std::vector <lanelet::BasicPoint2d> req_trajectory, double req_speed, double req_planning_time);
+
+  /**
+   * \brief set the ros publisher for lanechange status topic
+   * \param publisher ros publiser
+   */
+  void set_lanechange_status_publisher(const ros::Publisher& publisher);
   
   
 
@@ -199,6 +206,7 @@ private:
   YieldPluginConfig config_;
   PublishPluginDiscoveryCB plugin_discovery_publisher_;
   MobilityResponseCB mobility_response_publisher_;
+  ros::Publisher lanechange_status_pub_;
 
   // incoming request trajectory information:
   std::vector <lanelet::BasicPoint2d> req_trajectory_points_;
@@ -211,7 +219,6 @@ private:
   double current_speed_;
   // BSM Message
   std::string host_bsm_id_;
-  std::string host_id_;
 
   // TF listenser
   tf2_ros::Buffer tf2_buffer_;

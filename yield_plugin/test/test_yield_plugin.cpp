@@ -28,6 +28,11 @@ void callback(const cav_msgs::MobilityResponseConstPtr& msg)
     ROS_INFO_STREAM("Test callback..");
 }
 
+void status_callback(const cav_msgs::LaneChangeStatusConstPtr& msg)
+{
+    ROS_INFO_STREAM("Test callback..");
+}
+
 
 TEST(YieldPlugin, UnitTestYield)
 {
@@ -93,7 +98,8 @@ TEST(YieldPlugin, UnitTestYield)
 
     ros::ServiceClient plugin1= nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/Yieldlugin/plan_trajectory");
 
-    ros::Subscriber mob_resp_sub = nh.subscribe("outgoing_mobility_response", 5, callback);    
+    ros::Subscriber mob_resp_sub = nh.subscribe("outgoing_mobility_response", 5, callback);
+    ros::Subscriber lc_status_sub = nh.subscribe("cooperative_lane_change_status", 5, status_callback);    
     
 
     ros::Publisher mob_req_pub = nh.advertise<cav_msgs::MobilityRequest>("incoming_mobility_request", 5);
@@ -107,6 +113,7 @@ TEST(YieldPlugin, UnitTestYield)
     EXPECT_EQ(1, mob_req_pub.getNumSubscribers());
     EXPECT_EQ(1, bsm_pub.getNumSubscribers());
     EXPECT_EQ(1, mob_resp_sub.getNumPublishers()); 
+    EXPECT_EQ(1, lc_status_sub.getNumPublishers()); 
     
     if (plugin1.call(traj_srv))
     {   

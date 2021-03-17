@@ -46,9 +46,7 @@ namespace yield_plugin
     plugin_discovery_msg_.available = true;
     plugin_discovery_msg_.activated = false;
     plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
-    plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
-    // tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
-    
+    plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";    
     
   }
 
@@ -56,6 +54,11 @@ namespace yield_plugin
   {
     plugin_discovery_publisher_(plugin_discovery_msg_);
     return true;
+  }
+
+  void YieldPlugin::set_lanechange_status_publisher(const ros::Publisher& publisher)
+  {
+    lanechange_status_pub_ = publisher;
   }
 
   std::vector<lanelet::BasicPoint2d> YieldPlugin::detect_trajectories_intersection(std::vector<lanelet::BasicPoint2d> trajectory1, std::vector<lanelet::BasicPoint2d> trajectory2) const
@@ -108,7 +111,7 @@ namespace yield_plugin
   cav_msgs::MobilityResponse YieldPlugin::compose_mobility_response(const std::string& resp_recipient_id, const std::string& req_plan_id) const
   {
     cav_msgs::MobilityResponse out_mobility_response;
-    out_mobility_response.header.sender_id = host_id_;
+    out_mobility_response.header.sender_id = config_.vehicle_id;
     out_mobility_response.header.recipient_id = resp_recipient_id;
     out_mobility_response.header.sender_bsm_id = host_bsm_id_;
     out_mobility_response.header.plan_id = req_plan_id;
@@ -128,12 +131,15 @@ namespace yield_plugin
   void YieldPlugin::mobilityrequest_cb(const cav_msgs::MobilityRequestConstPtr& msg)
   {
     cav_msgs::MobilityRequest incoming_request = *msg;
+    cav_msgs::LaneChangeStatus lc_status_msg;
     if (incoming_request.strategy == "carma/cooperative-lane-change")
     {
       if (incoming_request.plan_type.type == cav_msgs::PlanType::CHANGE_LANE_LEFT || incoming_request.plan_type.type == cav_msgs::PlanType::CHANGE_LANE_RIGHT)
       {
         ROS_DEBUG_STREAM("Cooperative Lane Change Request Received");
-        if (incoming_request.header.recipient_id == host_id_)
+        lc_status_msg.status = cav_msgs::LaneChangeStatus::REQUEST_RECEIVED;
+        lc_status_msg.description = "Cooperative Lane Change Request Received";
+        if (incoming_request.header.recipient_id == config_.vehicle_id)
         {
           ROS_DEBUG_STREAM("CLC Request correctly received");
         }
@@ -179,16 +185,31 @@ namespace yield_plugin
           received_cooperative_request_ = true;
           double req_plan_time = req_expiration_sec - current_time;
           set_incoming_request_info(req_traj_plan, req_traj_speed, req_plan_time);
+          lc_status_msg.status = cav_msgs::LaneChangeStatus::REQUEST_ACCEPTED;
+          lc_status_msg.description = "Cooperative Lane Change Request Accepted by Yield Plugin";
         
         }
         else
         {
           ROS_DEBUG_STREAM("Igonore expired Mobility Request.");
           outgoing_response.is_accepted = false;
+          lc_status_msg.status = cav_msgs::LaneChangeStatus::REQUEST_REJECTED;
+          lc_status_msg.description = "Cooperative Lane Change Request Rejected by Yield Plugin";
         }
         mobility_response_publisher_(outgoing_response);
+        lc_status_msg.status = cav_msgs::LaneChangeStatus::RESPONSE_SENT;
+        lc_status_msg.description = "Cooperative Lane Change Response Sent";
       }
     }
+    if (lanechange_status_pub_.isLatched())
+    {
+      lanechange_status_pub_.publish(lc_status_msg);
+    }
+    else
+    {
+      ROS_WARN("Lane Change Status Topic is not latched.")
+    }
+    
   }
 
   void YieldPlugin::set_incoming_request_info(std::vector <lanelet::BasicPoint2d> req_trajectory, double req_speed, double req_planning_time)

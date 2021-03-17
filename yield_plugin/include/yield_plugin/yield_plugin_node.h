@@ -49,6 +49,7 @@ public:
 
     ros::Publisher discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
     ros::Publisher mob_resp_pub = nh.advertise<cav_msgs::MobilityResponse>("outgoing_mobility_response", 1);
+    ros::Publisher lc_status_pub = nh.advertise<cav_msgs::LaneChangeStatus>("cooperative_lane_change_status", 1);
 
     YieldPluginConfig config;
 
@@ -67,6 +68,8 @@ public:
     ROS_INFO_STREAM("YieldPlugin Params" << config);
 
     YieldPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); }, [&mob_resp_pub](auto msg) { mob_resp_pub.publish(msg); });
+
+    worker.set_lanechange_status_publisher(lc_status_pub);
 
     // TODO confirm the name of service (should include inlane cruising?)
     ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/Yieldlugin/plan_trajectory",
