@@ -72,10 +72,10 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinCon
 
     if(route_node_flag_!=true)
     {
-     ROS_INFO_STREAM("Route is not invalidated/available yet");
+     ROS_INFO_STREAM("Route is not yet available");
      return;
     }
-}
+  }
 
   // convert ros msg to geofence object
   auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());

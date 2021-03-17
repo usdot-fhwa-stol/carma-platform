@@ -234,9 +234,11 @@ void WMBroadcaster::addRegionAccessRule(std::shared_ptr<Geofence> gf_ptr, const 
 {
   auto regulatory_element = std::make_shared<lanelet::RegionAccessRule>(lanelet::RegionAccessRule::buildData(lanelet::utils::getId(),affected_llts,{},participantsChecker(msg_v01)));
 
-  if(!regulatory_element->accessable("car"))
+  if(regulatory_element->accessable("vehicle:car")) //TODO: region_access rule by default blocks everything except participant
+                                                    //however, its intended usage in carma_wm_ctrl, is to block the specified participants
+                                                    //which needs to be fixed
   {
-   gf_ptr->invalidate_route_=true;
+    gf_ptr->invalidate_route_=true;
   }
   else
   {
@@ -277,7 +279,6 @@ ros::V_string WMBroadcaster::participantsChecker(const cav_msgs::TrafficControlM
             participant.vehicle_class == j2735_msgs::TrafficControlVehClass::PASSENGER_CAR)
     {
       participants.push_back(lanelet::Participants::VehicleCar);
-      ROS_WARN_STREAM("HEYYYYYYYY");
     }
     else if (8<= participant.vehicle_class && participant.vehicle_class <= 16) // Truck enum definition range from 8-16 currently
     {

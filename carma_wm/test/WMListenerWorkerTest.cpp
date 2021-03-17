@@ -125,6 +125,16 @@ TEST(WMListenerWorkerTest, routeCallback)
   wmlw.routeCallback(rpt);
 
   ASSERT_TRUE(flag);
+
+  ///test route_node_flag_ and rerouting_flag_
+  autoware_lanelet2_msgs::MapBin geofence_msg;
+  geofence_msg.invalidates_route=true;
+  autoware_lanelet2_msgs::MapBinConstPtr geo_ptr(new autoware_lanelet2_msgs::MapBin(geofence_msg));
+
+  wmlw.mapUpdateCallback(geo_ptr);
+  wmlw.enableUpdatesWithoutRoute();
+  wmlw.routeCallback(rpt);
+  
 }
 
 TEST(WMListenerWorkerTest, mapUpdateCallback)

@@ -111,7 +111,6 @@ private:
   void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const;
   double config_speed_limit_;
   autoware_lanelet2_msgs::MapBinPtr local_geofence_msg_;
-  //autoware_lanelet2_msgs::MapBinConstPtr *local_geofence_msg_ptr_;
   
   bool rerouting_flag_=false;
   bool route_node_flag_=false;
