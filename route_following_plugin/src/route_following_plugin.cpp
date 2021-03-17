@@ -272,7 +272,7 @@ namespace route_following_plugin
             
         }
         else{
-            ROS_WARN("Failed to set the current speed limit. Valid traffic rules object could not be built.");
+            ROS_WARN(" Valid traffic rules object could not be built.");
         }
 
         if(config_limit > 0.0 && config_limit < hardcoded_max)
@@ -285,6 +285,7 @@ namespace route_following_plugin
             param_speed = hardcoded_max;
             ROS_DEBUG(" Using Hardcoded maximum");
         }
+        //If either value is 0, use the other valid limit
         if(traffic_speed <= 0.001 || param_speed <= 0.001){
             target_speed = std::max(traffic_speed, param_speed);
         }

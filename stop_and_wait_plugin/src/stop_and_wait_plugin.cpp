@@ -138,10 +138,6 @@ namespace stop_and_wait_plugin
         auto downsampled_points = 
             carma_utils::containers::downsample_vector(points_and_target_speeds,downsample_ratio_);
         ROS_DEBUG_STREAM("downsampled points size:"<<downsampled_points.size());
-        ROS_DEBUG_STREAM("Downsampled points");
-        for(int i=0;i<downsampled_points.size();i++){
-            ROS_DEBUG_STREAM("Point x:"<<downsampled_points[i].point.x()<<" y:"<<downsampled_points[i].point.y()<<" Speed:"<<downsampled_points[i].speed);
-        }
         //Trajectory plan
         cav_msgs::TrajectoryPlan  trajectory;
         trajectory.header.frame_id = "map";
@@ -149,11 +145,6 @@ namespace stop_and_wait_plugin
         trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
       
         trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points,curr_state);
-        ROS_DEBUG_STREAM("STARTING TRAJ PTS:");
-        for (auto pt :trajectory.trajectory_points)
-        {
-            ROS_DEBUG_STREAM("Traj Pt:id x:" << pt.x << ", y" << pt.y);
-        }
         ROS_DEBUG_STREAM("Trajectory points size:"<<trajectory.trajectory_points.size());
         trajectory.initial_longitudinal_velocity = req.vehicle_state.longitudinal_vel;
         resp.trajectory_plan = trajectory;
