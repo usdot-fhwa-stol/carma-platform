@@ -60,7 +60,6 @@ bool WMListenerWorker::checkIfReRoutingNeeded() const
 
 void WMListenerWorker::enableUpdatesWithoutRoute()
 {
-  ROS_DEBUG_STREAM("We are enabling route node flag here");
   route_node_flag_=true;
 }
 
@@ -70,12 +69,12 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinCon
   if(geofence_msg->invalidates_route==true)
   {  
     rerouting_flag_=true;
-    ROS_DEBUG_STREAM("We are setting rerouting_flag as true here now in mapUpdateCallback");
+    ROS_DEBUG_STREAM("Received notice that route has been invalidated in mapUpdateCallback");
     local_geofence_msg_ = boost::make_shared<autoware_lanelet2_msgs::MapBin>(*geofence_msg);
 
     if(route_node_flag_!=true)
     {
-     ROS_DEBUG_STREAM("Route is not yet available!!!! This is not route");
+     ROS_INFO_STREAM("Route is not yet available!");
      return;
     }
   }
@@ -173,7 +172,6 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
 {
   if(rerouting_flag_==true && route_msg->is_rerouted && !route_node_flag_)
   {
-    ROS_DEBUG_STREAM("In routeCallback, rerouting_flag_ is true already and calling mapupdatecallback");
     local_geofence_msg_->invalidates_route = false;
     mapUpdateCallback(local_geofence_msg_);
     rerouting_flag_ = false;
@@ -197,7 +195,6 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
     auto ptr = std::make_shared<lanelet::routing::Route>(std::move(route_opt.get()));
     world_model_->setRoute(ptr);
   }
-  ROS_DEBUG_STREAM("In routeCallback, exiting");
   // Call route_callback_
   if (route_callback_)
   {

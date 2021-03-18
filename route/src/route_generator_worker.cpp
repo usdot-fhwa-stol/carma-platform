@@ -456,7 +456,6 @@ namespace route {
         {
            this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_INVALIDATION);
            publish_route_event(cav_msgs::RouteEvent::ROUTE_INVALIDATION);
-           ROS_DEBUG_STREAM("REROUTING AFTER ROUTE INVALIDATION");
            auto route = reroute_after_route_invalidation(destination_points_in_map_);
 
            // check if route successed
@@ -472,7 +471,6 @@ namespace route {
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_STARTED);
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_STARTED);  
             }                    
-            ROS_DEBUG_STREAM("REROUTING WAS DONE");
             route_msg_=compose_route_msg(route);
             route_msg_.is_rerouted = true;
             route_marker_msg_=compose_route_marker_msg(route);

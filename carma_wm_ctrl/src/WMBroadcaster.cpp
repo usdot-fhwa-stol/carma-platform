@@ -364,10 +364,10 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
   std::vector<lanelet::Point3d> gf_pts;
   for (auto pt : tcmV01.geometry.nodes)
   {
-    //PJ_COORD c {{pt.x, pt.y, 0, 0}}; // z is not currently used
-    //PJ_COORD c_out;
-    //c_out = proj_trans(geofence_in_map_proj, PJ_FWD, c);
-    gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), pt.x, pt.y});
+    PJ_COORD c {{pt.x, pt.y, 0, 0}}; // z is not currently used
+    PJ_COORD c_out;
+    c_out = proj_trans(geofence_in_map_proj, PJ_FWD, c);
+    gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), c_out.xyz.x, c_out.xyz.y});
   }
 
   // Logic to detect which part is affected
