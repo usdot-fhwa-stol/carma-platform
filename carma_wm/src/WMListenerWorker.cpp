@@ -19,12 +19,13 @@
 
 namespace carma_wm
 {
-enum class GeofenceType{ INVALID, DIGITAL_SPEED_LIMIT, PASSING_CONTROL_LINE, /* ... others */ };
+enum class GeofenceType{ INVALID, DIGITAL_SPEED_LIMIT, PASSING_CONTROL_LINE, REGION_ACCESS_RULE/* ... others */ };
 // helper function that return geofence type as an enum, which makes it cleaner by allowing switch statement
 GeofenceType resolveGeofenceType(const std::string& rule_name)
 {
   if (rule_name.compare(lanelet::PassingControlLine::RuleName) == 0) return GeofenceType::PASSING_CONTROL_LINE;
   if (rule_name.compare(lanelet::DigitalSpeedLimit::RuleName) == 0) return GeofenceType::DIGITAL_SPEED_LIMIT;
+  if (rule_name.compare(lanelet::RegionAccessRule::RuleName) == 0) return GeofenceType::REGION_ACCESS_RULE;
 }
 
 WMListenerWorker::WMListenerWorker()
@@ -59,6 +60,7 @@ bool WMListenerWorker::checkIfReRoutingNeeded() const
 
 void WMListenerWorker::enableUpdatesWithoutRoute()
 {
+  ROS_DEBUG_STREAM("We are enabling route node flag here");
   route_node_flag_=true;
 }
 
@@ -68,11 +70,12 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinCon
   if(geofence_msg->invalidates_route==true)
   {  
     rerouting_flag_=true;
+    ROS_DEBUG_STREAM("We are setting rerouting_flag as true here now in mapUpdateCallback");
     local_geofence_msg_ = boost::make_shared<autoware_lanelet2_msgs::MapBin>(*geofence_msg);
 
     if(route_node_flag_!=true)
     {
-     ROS_INFO_STREAM("Route is not yet available");
+     ROS_DEBUG_STREAM("Route is not yet available!!!! This is not route");
      return;
     }
   }
@@ -148,6 +151,12 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
       world_model_->getMutableMap()->update(parent_llt, speed);
       break;
     }
+    case GeofenceType::REGION_ACCESS_RULE:
+    {
+      lanelet::RegionAccessRulePtr rar = std::dynamic_pointer_cast<lanelet::RegionAccessRule>(factory_pcl);
+      world_model_->getMutableMap()->update(parent_llt, rar);
+      break;
+    }
     default:
       ROS_WARN_STREAM("World Model instance received an unsupported geofence type in its map update callback!");
       break;
@@ -162,11 +171,12 @@ void WMListenerWorker::roadwayObjectListCallback(const cav_msgs::RoadwayObstacle
 
 void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
 {
-
-  if(rerouting_flag_==true)
+  if(rerouting_flag_==true && route_msg->is_rerouted && !route_node_flag_)
   {
+    ROS_DEBUG_STREAM("In routeCallback, rerouting_flag_ is true already and calling mapupdatecallback");
     local_geofence_msg_->invalidates_route = false;
     mapUpdateCallback(local_geofence_msg_);
+    rerouting_flag_ = false;
   }
 
   if (!world_model_->getMap()) {
@@ -187,6 +197,7 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
     auto ptr = std::make_shared<lanelet::routing::Route>(std::move(route_opt.get()));
     world_model_->setRoute(ptr);
   }
+  ROS_DEBUG_STREAM("In routeCallback, exiting");
   // Call route_callback_
   if (route_callback_)
   {

@@ -346,7 +346,8 @@ namespace route {
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING) {
             // convert from pose stamp into lanelet basic 2D point
             current_loc_(msg->pose.position.x, msg->pose.position.y);
-            
+
+            //x:-29.367 y:423.779
             // get dt ct from world model
             carma_wm::TrackPos track(0.0, 0.0);
             try {
@@ -423,7 +424,7 @@ namespace route {
         route_event_queue.push(event_type);
     }
     
-    lanelet::Optional<lanelet::routing::Route> RouteGeneratorWorker::reroute_after_route_invalidation(std::vector<lanelet::BasicPoint2d>& destination_points_in_map)
+    lanelet::Optional<lanelet::routing::Route> RouteGeneratorWorker::reroute_after_route_invalidation(std::vector<lanelet::BasicPoint2d>& destination_points_in_map) const
     {
         std::vector<lanelet::BasicPoint2d> destination_points_in_map_temp;
         
@@ -455,7 +456,7 @@ namespace route {
         {
            this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_INVALIDATION);
            publish_route_event(cav_msgs::RouteEvent::ROUTE_INVALIDATION);
-           
+           ROS_DEBUG_STREAM("REROUTING AFTER ROUTE INVALIDATION");
            auto route = reroute_after_route_invalidation(destination_points_in_map_);
 
            // check if route successed
@@ -471,11 +472,12 @@ namespace route {
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_STARTED);
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_STARTED);  
             }                    
-
-           route_msg_=compose_route_msg(route);
-           route_marker_msg_=compose_route_marker_msg(route);
-           new_route_msg_generated_=true;
-           new_route_marker_generated_=true;
+            ROS_DEBUG_STREAM("REROUTING WAS DONE");
+            route_msg_=compose_route_msg(route);
+            route_msg_.is_rerouted = true;
+            route_marker_msg_=compose_route_marker_msg(route);
+            new_route_msg_generated_=true;
+            new_route_marker_generated_=true;
         }
     
         // publish new route and set new route flag back to false
@@ -485,6 +487,7 @@ namespace route {
             route_marker_pub_.publish(route_marker_msg_);
             new_route_msg_generated_ = false;
             new_route_marker_generated_ = false;
+            route_msg_.is_rerouted = false;
         }
         // publish route state messsage if a route is selected
         if(route_msg_.route_name != "")

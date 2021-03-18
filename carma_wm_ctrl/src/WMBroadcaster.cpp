@@ -310,11 +310,13 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   std::copy(req_id.begin(),req_id.end(), uuid_id.begin());
   std::string reqid = boost::uuids::to_string(uuid_id).substr(0, 8);
   // drop if the req has never been sent
+  /*
   if (generated_geofence_reqids_.find(reqid) == generated_geofence_reqids_.end())
   {
     ROS_WARN_STREAM("CARMA_WM_CTRL received a TrafficControlMessage with unknown TrafficControlRequest ID (reqid): " << reqid);
     return;
   }
+  */
     
   checked_geofence_ids_.insert(boost::uuids::to_string(id));
   auto gf_ptr = geofenceFromMsg(geofence_msg.tcmV01);
@@ -362,10 +364,10 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
   std::vector<lanelet::Point3d> gf_pts;
   for (auto pt : tcmV01.geometry.nodes)
   {
-    PJ_COORD c {{pt.x, pt.y, 0, 0}}; // z is not currently used
-    PJ_COORD c_out;
-    c_out = proj_trans(geofence_in_map_proj, PJ_FWD, c);
-    gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), c_out.xyz.x, c_out.xyz.y});
+    //PJ_COORD c {{pt.x, pt.y, 0, 0}}; // z is not currently used
+    //PJ_COORD c_out;
+    //c_out = proj_trans(geofence_in_map_proj, PJ_FWD, c);
+    gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), pt.x, pt.y});
   }
 
   // Logic to detect which part is affected
