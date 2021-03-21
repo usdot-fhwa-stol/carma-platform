@@ -346,8 +346,6 @@ namespace route {
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING) {
             // convert from pose stamp into lanelet basic 2D point
             current_loc_(msg->pose.position.x, msg->pose.position.y);
-
-            //x:-29.367 y:423.779
             // get dt ct from world model
             carma_wm::TrackPos track(0.0, 0.0);
             try {
