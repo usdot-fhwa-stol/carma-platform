@@ -60,8 +60,8 @@ namespace unobstructed_lanechange
         pnh_->param<int>("downsample_ratio", downsample_ratio_, 8);
         pnh_->param<bool>("enable_object_avoidance_lc", enable_object_avoidance_lc_, false);
         pnh_->param<double>("acceptable_time_difference_", acceptable_time_difference_, 1.0);
-
-
+        // update ros_dur_ value
+        time_dur_ = ros::Duration(acceptable_time_difference_);
 
         ros::CARMANodeHandle::setSpinCallback([this]() -> bool {
             unobstructed_lanechange_plugin_discovery_pub_.publish(plugin_discovery_msg_);
