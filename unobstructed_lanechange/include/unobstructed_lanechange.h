@@ -203,7 +203,7 @@ namespace unobstructed_lanechange
             *
             * \return true or falss
             */
-            bool validate_yield_plan(const cav_msgs::TrajectoryPlan& yield_plan);
+            bool validate_yield_plan(const cav_msgs::TrajectoryPlan& yield_plan, const std::string& original_plan_id);
 
             //Internal Variables used in unit tests
             // Current vehicle forward speed
@@ -252,6 +252,10 @@ namespace unobstructed_lanechange
             double curvature_calc_lookahead_count_ = 1;
             int downsample_ratio_ =8;
             bool enable_object_avoidance_lc_ = false;
+            
+            // Time duration to ensure plan is recent
+            double acceptable_time_difference_ = 1.0;
+            ros::Duration time_dur_ = ros::Duration(acceptable_time_difference_);
 
             int num_points = traj_freq * trajectory_time_length_;
 

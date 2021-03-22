@@ -224,10 +224,14 @@ namespace unobstructed_lanechange
 
 
     cav_msgs::TrajectoryPlan tp;
+    tp.trajectory_id = "yield";
     tp.trajectory_points = trajectory_points;
 
-    bool res = plugin.validate_yield_plan(tp);
-    ASSERT_TRUE(plugin.validate_yield_plan(tp));
+    std::string traj_id = "yield";
+    bool res = plugin.validate_yield_plan(tp, traj_id);
+    ASSERT_TRUE(plugin.validate_yield_plan(tp, traj_id));
+    std::string traj_id2 = "yieldd";
+    ASSERT_FALSE(plugin.validate_yield_plan(tp, traj_id2));
 
     cav_msgs::TrajectoryPlan tp2;
 
@@ -238,7 +242,7 @@ namespace unobstructed_lanechange
     point_4.lane_id = "1";
     tp2.trajectory_points.push_back(point_4);
     
-    ASSERT_FALSE(plugin.validate_yield_plan(tp2));
+    ASSERT_FALSE(plugin.validate_yield_plan(tp2, traj_id));
 
     cav_msgs::TrajectoryPlan tp3;
 
@@ -256,7 +260,8 @@ namespace unobstructed_lanechange
     point_6.lane_id = "1";
     tp3.trajectory_points.push_back(point_6);
 
-    ASSERT_FALSE(plugin.validate_yield_plan(tp2));
+    ASSERT_FALSE(plugin.validate_yield_plan(tp2, traj_id));
+
     
 }
 

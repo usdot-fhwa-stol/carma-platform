@@ -59,6 +59,7 @@ namespace unobstructed_lanechange
         pnh_->param<double>("curvature_calc_lookahead_count", curvature_calc_lookahead_count_, 1);
         pnh_->param<int>("downsample_ratio", downsample_ratio_, 8);
         pnh_->param<bool>("enable_object_avoidance_lc", enable_object_avoidance_lc_, false);
+        pnh_->param<double>("acceptable_time_difference_", acceptable_time_difference_, 1.0);
 
 
 
@@ -127,7 +128,7 @@ namespace unobstructed_lanechange
                 if (yield_client_.call(yield_srv))
                 {
                     cav_msgs::TrajectoryPlan yield_plan = yield_srv.response.trajectory_plan;
-                    if (validate_yield_plan(yield_plan))
+                    if (validate_yield_plan(yield_plan, original_trajectory.trajectory_id))
                     {
                     resp.trajectory_plan = yield_plan;
                     }
@@ -648,17 +649,19 @@ namespace unobstructed_lanechange
         
     }
 
-    bool UnobstructedLaneChangePlugin::validate_yield_plan(const cav_msgs::TrajectoryPlan& yield_plan)
+    bool UnobstructedLaneChangePlugin::validate_yield_plan(const cav_msgs::TrajectoryPlan& yield_plan, const std::string& original_plan_id)
     {
-        if (yield_plan.trajectory_points.size()>= 2)
+        if (yield_plan.trajectory_points.size()>= 2 && yield_plan.trajectory_id == original_plan_id)
         {
-            if (yield_plan.trajectory_points[0].target_time > ros::Time::now())
+            ros::Duration time_difference = yield_plan.trajectory_points[0].target_time - ros::Time::now();
+            
+            if (time_difference <= time_dur_)
             {
-            return true;
+                return true;
             }
             else
             {
-            ROS_DEBUG_STREAM("Old Yield Trajectory");
+                ROS_DEBUG_STREAM("Old Yield Trajectory");
             }
         }
         else
