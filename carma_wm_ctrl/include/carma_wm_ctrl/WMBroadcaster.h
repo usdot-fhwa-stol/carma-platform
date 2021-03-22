@@ -184,6 +184,12 @@ public:
    */
   ros::V_string participantsChecker(const cav_msgs::TrafficControlMessageV01& msg_v01) const;
 
+  /*!
+   * \brief Generates inverse participants list of the given participants
+   * \param ros::V_string participants vector of strings 
+   */
+  ros::V_string invertParticipants(const ros::V_string& input_participants) const;
+
 private:
   lanelet::ConstLanelets route_path_;
   std::unordered_set<lanelet::Id> active_geofence_llt_ids_; 

@@ -232,11 +232,9 @@ void WMBroadcaster::addPassingControlLineFromMsg(std::shared_ptr<Geofence> gf_pt
 
 void WMBroadcaster::addRegionAccessRule(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const
 {
-  auto regulatory_element = std::make_shared<lanelet::RegionAccessRule>(lanelet::RegionAccessRule::buildData(lanelet::utils::getId(),affected_llts,{},participantsChecker(msg_v01)));
+  auto regulatory_element = std::make_shared<lanelet::RegionAccessRule>(lanelet::RegionAccessRule::buildData(lanelet::utils::getId(),affected_llts,{},invertParticipants(participantsChecker(msg_v01))));
 
-  if(regulatory_element->accessable(lanelet::Participants::VehicleCar) || regulatory_element->accessable(lanelet::Participants::VehicleTruck )) //TODO: region_access rule by default blocks everything except participant
-                                                    //however, its intended usage in carma_wm_ctrl, is to block the specified participants
-                                                    //which needs to be fixed
+  if(!regulatory_element->accessable(lanelet::Participants::VehicleCar) || !regulatory_element->accessable(lanelet::Participants::VehicleTruck )) 
   {
     gf_ptr->invalidate_route_=true;
   }
@@ -286,6 +284,22 @@ ros::V_string WMBroadcaster::participantsChecker(const cav_msgs::TrafficControlM
     }
   }
 
+  return  participants;
+}
+
+ros::V_string WMBroadcaster::invertParticipants(const ros::V_string& input_participants) const
+{
+  ros::V_string participants;
+
+  if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::Pedestrian ) == input_participants.end()) participants.push_back(lanelet::Participants::Pedestrian);
+  if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::Bicycle ) == input_participants.end()) participants.push_back(lanelet::Participants::Bicycle);
+  if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::Vehicle ) == input_participants.end())
+  {
+    if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleMotorcycle)== input_participants.end()) participants.push_back(lanelet::Participants::VehicleMotorcycle);
+    if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleBus)== input_participants.end()) participants.push_back(lanelet::Participants::VehicleBus);
+    if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleCar)== input_participants.end()) participants.push_back(lanelet::Participants::VehicleCar);
+    if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleTruck)== input_participants.end()) participants.push_back(lanelet::Participants::VehicleTruck);
+  }
   return  participants;
 }
 
