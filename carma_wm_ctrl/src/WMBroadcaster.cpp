@@ -234,7 +234,7 @@ void WMBroadcaster::addRegionAccessRule(std::shared_ptr<Geofence> gf_ptr, const 
 {
   auto regulatory_element = std::make_shared<lanelet::RegionAccessRule>(lanelet::RegionAccessRule::buildData(lanelet::utils::getId(),affected_llts,{},participantsChecker(msg_v01)));
 
-  if(regulatory_element->accessable(lanelet::Participants::VehicleCar)) //TODO: region_access rule by default blocks everything except participant
+  if(regulatory_element->accessable(lanelet::Participants::VehicleCar) || regulatory_element->accessable(lanelet::Participants::VehicleTruck )) //TODO: region_access rule by default blocks everything except participant
                                                     //however, its intended usage in carma_wm_ctrl, is to block the specified participants
                                                     //which needs to be fixed
   {
