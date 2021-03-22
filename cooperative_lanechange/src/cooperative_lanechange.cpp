@@ -60,8 +60,8 @@ namespace cooperative_lanechange
         incoming_mobility_response_ = nh_->subscribe("incoming_mobilty_response", 1 , &CooperativeLaneChangePlugin::mobilityresponse_cb, this);
         
         bsm_sub_ = nh_->subscribe("bsm_outbound", 1, &CooperativeLaneChangePlugin::bsm_cb, this);
-        outgoing_mobility_request_ = nh_->advertise<cav_msgs::MobilityRequest>("outgoing_mobility_request", 1);
-        lanechange_status_pub_ = nh_->advertise<cav_msgs::LaneChangeStatus>("cooperative_lane_change_status",1);
+        outgoing_mobility_request_ = nh_->advertise<cav_msgs::MobilityRequest>("outgoing_mobility_request", 5); // rate from yield plugin
+        lanechange_status_pub_ = nh_->advertise<cav_msgs::LaneChangeStatus>("cooperative_lane_change_status",10);
         //Vehicle params
         pnh_->getParam("vehicle_id",sender_id_);
 
@@ -78,7 +78,7 @@ namespace cooperative_lanechange
         pnh_->param<double>("moving_average_window_size", moving_average_window_size_, 5);
         pnh_->param<double>("curvature_calc_lookahead_count", curvature_calc_lookahead_count_, 1);
         pnh_->param<int>("downsample_ratio", downsample_ratio_, 8);
-        pnh_->param<int>("destination_range",destination_range_, 5);
+        pnh_->param<double>("destination_range",destination_range_, 5);
         pnh_->param<double>("lanechange_time_out",lanechange_time_out_, 6.0);
         //tf listener for looking up earth to map transform 
         tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));

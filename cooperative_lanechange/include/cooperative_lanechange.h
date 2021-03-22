@@ -290,7 +290,7 @@ namespace cooperative_lanechange
             double moving_average_window_size_ = 5;
             double curvature_calc_lookahead_count_ = 1;
             int downsample_ratio_ =8;
-            int destination_range_ = 5;
+            double destination_range_ = 5;
             double lanechange_time_out_ = 6.0;
             int num_points = traj_freq * trajectory_time_length_;
 
