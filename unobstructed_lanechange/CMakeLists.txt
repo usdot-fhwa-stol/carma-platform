@@ -80,14 +80,14 @@ add_dependencies(unobstructed_lanechange_plugin_lib ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(${PROJECT_NAME} unobstructed_lanechange_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
-add_library(helper test/helper.cpp)
-target_link_libraries(helper
+add_library(lc_helper test/helper.cpp)
+target_link_libraries(lc_helper
   ${catkin_LIBRARIES}
 )
 
-add_executable(helper_node test/helper.cpp)
-target_link_libraries(helper_node
-  helper
+add_executable(lc_helper_node test/helper.cpp)
+target_link_libraries(lc_helper_node
+  lc_helper
   ${catkin_LIBRARIES}
 )
 
