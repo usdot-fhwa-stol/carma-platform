@@ -16,7 +16,7 @@ set( CATKIN_DEPS
   autoware_msgs
   carma_wm
   tf
-  tf2
+  tf2_ros
   tf2_geometry_msgs
   unobstructed_lanechange
   roslib
@@ -98,7 +98,13 @@ install(DIRECTORY
 #############
 ## Testing ##
 #############
-catkin_add_gmock(${PROJECT_NAME}-test
- test/test_cooperative_lanechange.cpp
- WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
-target_link_libraries(${PROJECT_NAME}-test cooperative_lanechange_plugin_lib ${catkin_LIBRARIES})
+# catkin_add_gmock(${PROJECT_NAME}-test
+#  test/test_cooperative_lanechange.cpp
+#  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+# target_link_libraries(${PROJECT_NAME}-test cooperative_lanechange_plugin_lib ${catkin_LIBRARIES})
+
+if(CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(test_cooperative_lanechange test/cooperative_lanechange.test test/test_cooperative_lanechange.cpp)
+  target_link_libraries(test_cooperative_lanechange cooperative_lanechange_plugin_lib ${catkin_LIBRARIES})
+endif()

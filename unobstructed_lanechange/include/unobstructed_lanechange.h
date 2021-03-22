@@ -67,7 +67,7 @@ namespace unobstructed_lanechange
             bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp);
             
             /**
-             * \brief Converts a set of requested STOP_AND_WAIT maneuvers to point speed limit pairs. 
+             * \brief Converts a set of requested lane change maneuvers to point speed limit pairs. 
              * 
              * \param maneuvers The list of maneuvers to convert
              * \param max_starting_downtrack The maximum downtrack that is allowed for the first maneuver. This should be set to the vehicle position or earlier.

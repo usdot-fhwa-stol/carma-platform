@@ -161,7 +161,12 @@ namespace cooperative_lanechange
         
         //To test find current gap
         cooperative_lanechange::CooperativeLaneChangePlugin worker;
+        ros::NodeHandle nh;
+        worker.outgoing_mobility_request_ = nh.advertise<cav_msgs::MobilityRequest>("test_mobility_request",1);
         worker.wm_ = cmw;
+        if(start_id !=lag_veh_start_id){
+            EXPECT_TRUE(worker.find_current_gap(obstacle.lanelet_id,obstacle.down_track) > 0.0);
+        }
         std::cout << "Current gap:"<<worker.find_current_gap(obstacle.lanelet_id,obstacle.down_track) << std::endl;
 
 
@@ -206,6 +211,7 @@ namespace cooperative_lanechange
         EXPECT_TRUE(isTrajectory);
         EXPECT_TRUE(resp.trajectory_plan.trajectory_points.size() > 2);
         EXPECT_TRUE(true);
+        ros::spinOnce();
     }
 
 }
@@ -214,6 +220,10 @@ namespace cooperative_lanechange
 int main(int argc, char **argv)
 {
     testing::InitGoogleTest(&argc, argv);
-    auto res = RUN_ALL_TESTS();
-    return res;
+    ros::init(argc, argv, "test_cooperative_lanechange");
+    ROSCONSOLE_AUTOINIT;
+    if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+      ros::console::notifyLoggerLevelsChanged();
+    }
+    return RUN_ALL_TESTS();
 }

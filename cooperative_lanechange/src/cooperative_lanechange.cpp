@@ -34,7 +34,9 @@
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_core/LaneletMap.h>
-
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <cav_msgs/ManeuverPlan.h>
 
 namespace cooperative_lanechange
 {
@@ -58,7 +60,7 @@ namespace cooperative_lanechange
         incoming_mobility_response_ = nh_->subscribe("incoming_mobilty_response", 1 , &CooperativeLaneChangePlugin::mobilityresponse_cb, this);
         //mobility_path_message_sub_=nh_->subscribe("outgoing_mobility_path",5, &CooperativeLaneChangePlugin::find_current_gap,this);
         bsm_sub_ = nh_->subscribe("bsm_outbound", 1, &CooperativeLaneChangePlugin::bsm_cb, this);
-
+        outgoing_mobility_request_ = nh_->advertise<cav_msgs::MobilityRequest>("outgoing_mobility_request", 1);
         //Vehicle params
         pnh_->getParam("vehicle_id",sender_id_);
 
@@ -75,6 +77,8 @@ namespace cooperative_lanechange
         pnh_->param<double>("moving_average_window_size", moving_average_window_size_, 5);
         pnh_->param<double>("curvature_calc_lookahead_count", curvature_calc_lookahead_count_, 1);
         pnh_->param<int>("downsample_ratio", downsample_ratio_, 8);
+        //tf listener for looking up earth to map transform 
+        tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
 
         wml_.reset(new carma_wm::WMListener());
         // set world model point form wm listener
@@ -177,9 +181,8 @@ namespace cooperative_lanechange
         double current_gap = find_current_gap(veh2_lanelet_id,veh2_downtrack);
         //get desired gap - desired time gap (default 3s)* relative velocity
         double relative_velocity = current_speed_ - veh2_speed;
-        double desired_gap = 3.0 * relative_velocity;      
+        double desired_gap = desired_time_gap_ * relative_velocity;      
          
-        cav_msgs::TrajectoryPlan trajectory_plan;
         if(current_gap < desired_gap){
             return true;
         }
@@ -187,19 +190,28 @@ namespace cooperative_lanechange
         std::vector<cav_msgs::TrajectoryPlanPoint> planned_trajectory_points = plan_lanechange(req);
 
         //send mobility request
-        cav_msgs::MobilityRequest request = create_mobility_request(planned_trajectory_points);
-        //outgoing_mobility_request_.publish(request);
+        std::vector<cav_msgs::Maneuver> maneuver_plan;
+        for(const auto maneuver : req.maneuver_plan.maneuvers)
+        {
+            if(maneuver.type == cav_msgs::Maneuver::LANE_CHANGE)
+            {
+                maneuver_plan.push_back(maneuver);
+            }
+        }
+        //Planning for first lane change maneuver
+        cav_msgs::MobilityRequest request = create_mobility_request(planned_trajectory_points, maneuver_plan[0]);
+        outgoing_mobility_request_.publish(request);
 
-        //if ack mobility response, create lanechange
+        //if ack mobility response, send lanechange response
         if(is_lanechange_accepted_){
-            cav_msgs::TrajectoryPlan trajectory;
-            trajectory.header.frame_id = "map";
-            trajectory.header.stamp = ros::Time::now();
-            trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
+            cav_msgs::TrajectoryPlan trajectory_plan;
+            trajectory_plan.header.frame_id = "map";
+            trajectory_plan.header.stamp = ros::Time::now();
+            trajectory_plan.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
-            trajectory.trajectory_points = planned_trajectory_points;
-            trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, minimum_speed_);
-            resp.trajectory_plan = trajectory;
+            trajectory_plan.trajectory_points = planned_trajectory_points;
+            trajectory_plan.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, minimum_speed_);
+            resp.trajectory_plan = trajectory_plan;
 
             for (int i=0; i<req.maneuver_plan.maneuvers.size(); i++){
                 if (req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::LANE_CHANGE){
@@ -213,7 +225,7 @@ namespace cooperative_lanechange
         return true;
     }
     
-    cav_msgs::MobilityRequest CooperativeLaneChangePlugin::create_mobility_request(std::vector<cav_msgs::TrajectoryPlanPoint>& trajectory_plan){
+    cav_msgs::MobilityRequest CooperativeLaneChangePlugin::create_mobility_request(std::vector<cav_msgs::TrajectoryPlanPoint>& trajectory_plan, cav_msgs::Maneuver maneuver){
 
         cav_msgs::MobilityRequest request_msg;
         cav_msgs::MobilityHeader header;
@@ -222,13 +234,84 @@ namespace cooperative_lanechange
         header.sender_bsm_id = bsmIDtoString(bsm_core_);
         header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
         header.timestamp = trajectory_plan.front().target_time.toSec();
-        
+        request_msg.header = header;
+
         request_msg.strategy = "carma/cooperative-lane-change";
         request_msg.plan_type.type = cav_msgs::PlanType::CHANGE_LANE_LEFT;
+        //Urgency- Currently unassigned
+
+        //Location
+        cav_msgs::LocationECEF location;
+        location.ecef_x = pose_msg_.pose.position.x;
+        location.ecef_y = pose_msg_.pose.position.y;
+        location.ecef_z = pose_msg_.pose.position.z;
+        //Using trajectory first point time as location timestamp;
+        location.timestamp = trajectory_plan.front().target_time.toSec();
+        request_msg.location = location;
+        //Strategy params
+        //Encode JSON with Boost Property Tree
+        using boost::property_tree::ptree;
+        ptree pt;
+        pt.put("speed",maneuver.lane_change_maneuver.start_speed);
+        pt.put("start_lanelet",maneuver.lane_change_maneuver.starting_lane_id);
+        pt.put("end_lanelet", maneuver.lane_change_maneuver.ending_lane_id);
+        std::stringstream body_stream;
+        boost::property_tree::json_parser::write_json(body_stream,pt);
+        request_msg.strategy_params = body_stream.str();
+        //Trajectory
+        cav_msgs::Trajectory trajectory;
+        //get earth to map tf
+        try
+        {
+            geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("earth", "map", ros::Time(0));
+            trajectory = TrajectoryPlantoTrajectory(trajectory_plan, tf);
+        }
+        catch (tf2::TransformException &ex)
+        {
+            //Throw exception
+            ROS_WARN("%s", ex.what());
+        }
+        request_msg.trajectory = trajectory;
+        request_msg.expiration = trajectory_plan.back().target_time.toSec();
         
-        request_msg.header = header;
         return request_msg;
     }
+
+    cav_msgs::Trajectory CooperativeLaneChangePlugin::TrajectoryPlantoTrajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points, const geometry_msgs::TransformStamped& tf) const{
+        cav_msgs::Trajectory traj;
+        cav_msgs::LocationECEF ecef_location = TrajectoryPointtoECEF(traj_points[0], tf);
+
+        if (traj_points.size()<2){
+            ROS_WARN("Received Trajectory Plan is too small");
+            traj.offsets = {};
+        }
+        else{
+            for (size_t i=1; i<traj_points.size(); i++){
+                
+                cav_msgs::LocationOffsetECEF offset;
+                cav_msgs::LocationECEF new_point = TrajectoryPointtoECEF(traj_points[i], tf);
+                offset.offset_x = new_point.ecef_x - ecef_location.ecef_x;
+                offset.offset_y = new_point.ecef_y - ecef_location.ecef_y;
+                offset.offset_z = new_point.ecef_z - ecef_location.ecef_z;
+                traj.offsets.push_back(offset);
+                
+            }
+        }
+        
+        
+        traj.location = ecef_location;
+        return traj;
+    }
+
+    cav_msgs::LocationECEF CooperativeLaneChangePlugin::TrajectoryPointtoECEF(const cav_msgs::TrajectoryPlanPoint& traj_point, const geometry_msgs::TransformStamped& tf) const{
+        cav_msgs::LocationECEF ecef_point;    
+
+        ecef_point.ecef_x = traj_point.x * tf.transform.translation.x;
+        ecef_point.ecef_y = traj_point.y * tf.transform.translation.y;
+        ecef_point.ecef_z = 0.0 * tf.transform.translation.z;
+       
+        return ecef_point;
+    } 
 
     std::vector<cav_msgs::TrajectoryPlanPoint> CooperativeLaneChangePlugin::plan_lanechange(cav_srvs::PlanTrajectoryRequest &req){
         

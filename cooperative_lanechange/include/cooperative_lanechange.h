@@ -36,7 +36,7 @@
 #include <cav_msgs/MobilityResponse.h>
 #include <cav_msgs/MobilityRequest.h>
 #include <cav_msgs/BSM.h>
-
+#include <tf2_ros/transform_listener.h>
 
 
 
@@ -67,14 +67,26 @@ namespace cooperative_lanechange
              * 
              * \return True if success. False otherwise
              */ 
-
-            double find_current_gap(int veh2_lanelet_id, double veh2_downtrack);
-            //cav_msgs::MobilityRequest generateMobilityRequest()
-            std::vector<cav_msgs::TrajectoryPlanPoint> plan_lanechange(cav_srvs::PlanTrajectoryRequest &req);
             bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp);
-            
             /**
-             * \brief Converts a set of requested STOP_AND_WAIT maneuvers to point speed limit pairs. 
+             * \brief Creates a vector of Trajectory Points from maneuver information in trajectory request
+             * 
+             * \param req The service request
+             * 
+             * \return vector of unobstructed lane change trajectory points
+             */ 
+            std::vector<cav_msgs::TrajectoryPlanPoint> plan_lanechange(cav_srvs::PlanTrajectoryRequest &req);
+            /**
+             * \brief Calculates distance between subject vehicle and vehicle 2
+             * 
+             * \param veh2_lanelet_id Current lanelet id of vehicle 2
+             * \param veh2_downtrack Downtrack of vehicle 2 in its current lanelet
+             * 
+             * \return the distance between subject vehicle and vehicle 2
+             */ 
+            double find_current_gap(int veh2_lanelet_id, double veh2_downtrack);
+            /**
+             * \brief Converts a set of requested Lane Change maneuvers to point speed limit pairs. 
              * 
              * \param maneuvers The list of maneuvers to convert
              * \param max_starting_downtrack The maximum downtrack that is allowed for the first maneuver. This should be set to the vehicle position or earlier.
@@ -86,6 +98,14 @@ namespace cooperative_lanechange
             std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
                                                 double max_starting_downtrack,
                                                 const carma_wm::WorldModelConstPtr& wm,const cav_msgs::VehicleState& state);
+              /**
+             * \brief Finds the index for the point closest to the specified vehicle state
+             * 
+             * \param points A BasicLineString type variable, which is a vector of BasicPoint2d elements
+             * \param state The vehicle state to which the nearest index needs to be found
+             * 
+             * \return the index of the element in points which is closest to state.
+             */ 
             int getNearestRouteIndex(lanelet::BasicLineString2d& points, const cav_msgs::VehicleState& state);
             /**
              * \brief Creates a Lanelet2 Linestring from a vector or points along the geometry 
@@ -203,6 +223,9 @@ namespace cooperative_lanechange
             const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& times, const std::vector<double>& yaws,
             ros::Time startTime);
 
+            // initialize this node
+            void initialize();
+
             //Internal Variables used in unit tests
             // Current vehicle forward speed
             double current_speed_;
@@ -216,6 +239,8 @@ namespace cooperative_lanechange
 
             //boolean which is updated if lane change request is accepted
             bool is_lanechange_accepted_ = false;
+
+            ros::Publisher outgoing_mobility_request_;
 
             private:
 
@@ -232,9 +257,13 @@ namespace cooperative_lanechange
             cav_msgs::Plugin plugin_discovery_msg_;
             ros::Subscriber pose_sub_;
             ros::Subscriber twist_sub_;
-            ros::Publisher outgoing_mobility_request_;
+            
             ros::Subscriber incoming_mobility_response_;
             ros::Subscriber bsm_sub_;
+
+            // TF listenser
+            tf2_ros::Buffer tf2_buffer_;
+            std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
 
             // trajectory frequency
             double traj_freq = 10;
@@ -246,6 +275,7 @@ namespace cooperative_lanechange
             cav_msgs::BSMCoreData bsm_core_;
 
             //Plugin specific params
+            double desired_time_gap_ = 3.0;
             double trajectory_time_length_ = 6;
             std::string control_plugin_name_ = "mpc_follower";
             double minimum_speed_ = 2.0;
@@ -265,8 +295,7 @@ namespace cooperative_lanechange
             // generated trajectory plan
             cav_msgs::TrajectoryPlan trajectory_msg;
             
-            // initialize this node
-            void initialize();
+
 
             /**
              * \brief Callback for the pose subscriber, which will store latest pose locally
@@ -279,11 +308,36 @@ namespace cooperative_lanechange
              * \param msg Latest twist message
              */
             void twist_cd(const geometry_msgs::TwistStampedConstPtr& msg);
-
+            /**
+             * \brief Callback to subscribed mobility response topic
+             * \param msg Latest mobility response message
+             */
             void mobilityresponse_cb(const cav_msgs::MobilityResponse& msg);
-
-            cav_msgs::MobilityRequest create_mobility_request(std::vector<cav_msgs::TrajectoryPlanPoint>& trajectory_plan);
-
+            /**
+             * \brief Creates a mobility request message from planned trajectory and requested maneuver info
+             * \param trajectory_plan A vector of lane change trajectory points
+             * \param The mobility request message created from trajectory points, for publishing
+             */
+            cav_msgs::MobilityRequest create_mobility_request(std::vector<cav_msgs::TrajectoryPlanPoint>& trajectory_plan, cav_msgs::Maneuver maneuver);
+            /**
+             * \brief Converts Trajectory Plan to (Mobility) Trajectory
+             * \param traj_points vector of Trajectory Plan points to be converted to Trajectory type message
+             * \param tf The transform between the world frame and map frame in which the trajectory plan points are calculated
+             * \return The Trajectory type message in world frame
+             */
+            cav_msgs::Trajectory TrajectoryPlantoTrajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points, const geometry_msgs::TransformStamped& tf) const;
+            /**
+             * \brief Converts Trajectory Point to ECEF Transform
+             * \param traj_points A Trajectory Plan point to be converted to Trajectory type message
+             * \param tf The transform between the world frame and map frame in which the trajectory plan points are calculated
+             * \return The trajectory point message transformed to world frame
+             */
+            cav_msgs::LocationECEF TrajectoryPointtoECEF(const cav_msgs::TrajectoryPlanPoint& traj_point, const geometry_msgs::TransformStamped& tf) const;
+            /**
+             * \brief Callback to reads bsm message from topic
+             * \param msg The bsm message obtained from subscribed topic
+             * message info is stored in class variable
+             */
             void bsm_cb(const cav_msgs::BSMConstPtr& msg);
 
             std::string bsmIDtoString(cav_msgs::BSMCoreData bsm_core){
