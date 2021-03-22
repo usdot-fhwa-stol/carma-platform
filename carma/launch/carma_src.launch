@@ -118,6 +118,7 @@
       <remap from="system_alert" to="/system_alert"/>
       <remap from="~required_drivers" to="/required_drivers"/> 
       <remap from="~lidar_gps_drivers" to="/lidar_gps_drivers"/>
+      <remap from="~camera_drivers" to="/camera_drivers"/>
       <remap from="~truck" to="/truck"/>
       <remap from="~car" to="/car"/> 
       <rosparam command="load" file="$(find health_monitor)/config/params.yaml"/>
