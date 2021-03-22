@@ -56,3 +56,11 @@ curvature_calc_lookahead_count : 1
 
 # Int: Amount to downsample input lanelet centerline data. Value corresponds to saving each nth point.
 downsample_ratio : 8
+
+#double : Acceptable range from the ending downtrack, when planning success can be published, if vehicle has changed lanes
+#Units: meters
+destination_range : 0
+
+#Double : The time after which a lane change request can be considered to time out
+#Units : seconds
+lanechange_time_out: 6.0

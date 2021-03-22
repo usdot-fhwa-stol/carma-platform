@@ -58,9 +58,10 @@ namespace cooperative_lanechange
         pose_sub_ = nh_->subscribe("current_pose", 1, &CooperativeLaneChangePlugin::pose_cb, this);
         twist_sub_ = nh_->subscribe("current_velocity", 1, &CooperativeLaneChangePlugin::twist_cd, this);
         incoming_mobility_response_ = nh_->subscribe("incoming_mobilty_response", 1 , &CooperativeLaneChangePlugin::mobilityresponse_cb, this);
-        //mobility_path_message_sub_=nh_->subscribe("outgoing_mobility_path",5, &CooperativeLaneChangePlugin::find_current_gap,this);
+        
         bsm_sub_ = nh_->subscribe("bsm_outbound", 1, &CooperativeLaneChangePlugin::bsm_cb, this);
-        outgoing_mobility_request_ = nh_->advertise<cav_msgs::MobilityRequest>("outgoing_mobility_request", 1);
+        outgoing_mobility_request_ = nh_->advertise<cav_msgs::MobilityRequest>("outgoing_mobility_request", 5); // rate from yield plugin
+        lanechange_status_pub_ = nh_->advertise<cav_msgs::LaneChangeStatus>("cooperative_lane_change_status",10);
         //Vehicle params
         pnh_->getParam("vehicle_id",sender_id_);
 
@@ -77,6 +78,8 @@ namespace cooperative_lanechange
         pnh_->param<double>("moving_average_window_size", moving_average_window_size_, 5);
         pnh_->param<double>("curvature_calc_lookahead_count", curvature_calc_lookahead_count_, 1);
         pnh_->param<int>("downsample_ratio", downsample_ratio_, 8);
+        pnh_->param<double>("destination_range",destination_range_, 5);
+        pnh_->param<double>("lanechange_time_out",lanechange_time_out_, 6.0);
         //tf listener for looking up earth to map transform 
         tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
 
@@ -93,12 +96,19 @@ namespace cooperative_lanechange
     }
 
     void CooperativeLaneChangePlugin::mobilityresponse_cb(const cav_msgs::MobilityResponse &msg){
+        cav_msgs::LaneChangeStatus lc_status_msg;
         if(msg.is_accepted){
             is_lanechange_accepted_ = true;
+            lc_status_msg.status = cav_msgs::LaneChangeStatus::ACCEPTANCE_RECEIVED;
+            lc_status_msg.description = "Received lane merge acceptance";
+            
         }
         else{
             is_lanechange_accepted_ = false;
+            lc_status_msg.status = cav_msgs::LaneChangeStatus::REJECTION_RECEIVED;
+            lc_status_msg.description = "Received lane merge rejection";
         }
+        lanechange_status_pub_.publish(lc_status_msg);
     }
 
 
@@ -170,6 +180,31 @@ namespace cooperative_lanechange
     
 
     bool CooperativeLaneChangePlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp){
+        
+        //Check if Lane Change is needed
+        std::vector<cav_msgs::Maneuver> maneuver_plan;
+        for(const auto maneuver : req.maneuver_plan.maneuvers)
+        {
+            if(maneuver.type == cav_msgs::Maneuver::LANE_CHANGE)
+            {
+                maneuver_plan.push_back(maneuver);
+            }
+        }
+
+        //Current only checking for first lane change maneuver message
+        int target_lanelet_id = stoi(maneuver_plan[0].lane_change_maneuver.ending_lane_id);
+        double target_downtrack = maneuver_plan[0].lane_change_maneuver.end_dist;
+        //get subject vehicle info
+        lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
+        double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
+        auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, veh_pos, 10);       
+        int current_lanelet_id = current_lanelets[0].second.id();
+        if(current_lanelet_id == target_lanelet_id && current_downtrack >= target_downtrack - destination_range_){
+            cav_msgs::LaneChangeStatus lc_status_msg;
+            lc_status_msg.status = cav_msgs::LaneChangeStatus::PLANNING_SUCCESS;
+            //No description as per UI documentation
+            lanechange_status_pub_.publish(lc_status_msg);
+        }
 
         std::vector<cav_msgs::RoadwayObstacle> rwol = wm_->getRoadwayObjects();
         //Assuming only one object in list 
@@ -190,17 +225,14 @@ namespace cooperative_lanechange
         std::vector<cav_msgs::TrajectoryPlanPoint> planned_trajectory_points = plan_lanechange(req);
 
         //send mobility request
-        std::vector<cav_msgs::Maneuver> maneuver_plan;
-        for(const auto maneuver : req.maneuver_plan.maneuvers)
-        {
-            if(maneuver.type == cav_msgs::Maneuver::LANE_CHANGE)
-            {
-                maneuver_plan.push_back(maneuver);
-            }
-        }
         //Planning for first lane change maneuver
         cav_msgs::MobilityRequest request = create_mobility_request(planned_trajectory_points, maneuver_plan[0]);
         outgoing_mobility_request_.publish(request);
+        ros::Time request_sent_time = ros::Time::now();
+        cav_msgs::LaneChangeStatus lc_status_msg;
+        lc_status_msg.status = cav_msgs::LaneChangeStatus::PLAN_SENT;
+        lc_status_msg.description = "Requested lane merge";
+        lanechange_status_pub_.publish(lc_status_msg);
 
         //if ack mobility response, send lanechange response
         if(is_lanechange_accepted_){
@@ -220,6 +252,18 @@ namespace cooperative_lanechange
                 }
             }
             resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
+
+        }
+        else{
+            ros::Time planning_end_time = ros::Time::now();
+            ros::Duration passed_time = planning_end_time - request_sent_time;
+            if(passed_time.toSec() >= lanechange_time_out_){
+                cav_msgs::LaneChangeStatus lc_status_msg;
+                lc_status_msg.status = cav_msgs::LaneChangeStatus::TIMED_OUT;
+                lc_status_msg.description = "Request timed out for lane merge";
+                lanechange_status_pub_.publish(lc_status_msg);
+            }
+ 
         }
 
         return true;

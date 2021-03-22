@@ -32,9 +32,16 @@
 #include <lanelet2_core/geometry/LineString.h>
 #include <sstream>
 #include <ros/package.h>
+#include <cav_msgs/LaneChangeStatus.h>
 
 namespace cooperative_lanechange
 {
+    cav_msgs::LaneChangeStatus test_lanechange_status;
+    void status_callback(const cav_msgs::LaneChangeStatusConstPtr& msg){
+        test_lanechange_status = *msg.get();
+        ROS_INFO_STREAM("Test callback...");
+    }
+
     TEST(CooperativeLaneChangePlugin,Testusingosm){
     // File to process. Path is relative to unobstructed_lanechange package
         std::string path = ros::package::getPath("unobstructed_lanechange");
@@ -163,11 +170,12 @@ namespace cooperative_lanechange
         cooperative_lanechange::CooperativeLaneChangePlugin worker;
         ros::NodeHandle nh;
         worker.outgoing_mobility_request_ = nh.advertise<cav_msgs::MobilityRequest>("test_mobility_request",1);
+        worker.lanechange_status_pub_ = nh.advertise<cav_msgs::LaneChangeStatus>("cooperative_lane_change_status",1);
         worker.wm_ = cmw;
         if(start_id !=lag_veh_start_id){
             EXPECT_TRUE(worker.find_current_gap(obstacle.lanelet_id,obstacle.down_track) > 0.0);
         }
-        std::cout << "Current gap:"<<worker.find_current_gap(obstacle.lanelet_id,obstacle.down_track) << std::endl;
+
 
 
         //Test plan trajectory cb
@@ -207,10 +215,13 @@ namespace cooperative_lanechange
         req.maneuver_plan.maneuvers = maneuvers;
         worker.is_lanechange_accepted_ = true;
         bool isTrajectory = worker.plan_trajectory_cb(req,resp);
-        std::cout<<"Trajectory plan size:"<<resp.trajectory_plan.trajectory_points.size()<<std::endl;
+        ROS_INFO_STREAM("Trajectory plan size:"<<resp.trajectory_plan.trajectory_points.size());
         EXPECT_TRUE(isTrajectory);
         EXPECT_TRUE(resp.trajectory_plan.trajectory_points.size() > 2);
-        EXPECT_TRUE(true);
+        
+        //Test lane change status
+        ros::Subscriber lc_status_sub = nh.subscribe("cooperative_lane_change_status", 5, status_callback);
+        EXPECT_EQ(1, lc_status_sub.getNumPublishers());
         ros::spinOnce();
     }
 
