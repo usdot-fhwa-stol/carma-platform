@@ -291,14 +291,14 @@ ros::V_string WMBroadcaster::invertParticipants(const ros::V_string& input_parti
 {
   ros::V_string participants;
 
-  if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::Pedestrian ) == input_participants.end()) participants.push_back(lanelet::Participants::Pedestrian);
-  if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::Bicycle ) == input_participants.end()) participants.push_back(lanelet::Participants::Bicycle);
+  if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::Pedestrian ) == input_participants.end()) participants.emplace_back(lanelet::Participants::Pedestrian);
+  if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::Bicycle ) == input_participants.end()) participants.emplace_back(lanelet::Participants::Bicycle);
   if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::Vehicle ) == input_participants.end())
   {
-    if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleMotorcycle)== input_participants.end()) participants.push_back(lanelet::Participants::VehicleMotorcycle);
-    if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleBus)== input_participants.end()) participants.push_back(lanelet::Participants::VehicleBus);
-    if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleCar)== input_participants.end()) participants.push_back(lanelet::Participants::VehicleCar);
-    if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleTruck)== input_participants.end()) participants.push_back(lanelet::Participants::VehicleTruck);
+    if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleMotorcycle)== input_participants.end()) participants.emplace_back(lanelet::Participants::VehicleMotorcycle);
+    if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleBus)== input_participants.end()) participants.emplace_back(lanelet::Participants::VehicleBus);
+    if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleCar)== input_participants.end()) participants.emplace_back(lanelet::Participants::VehicleCar);
+    if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleTruck)== input_participants.end()) participants.emplace_back(lanelet::Participants::VehicleTruck);
   }
   return  participants;
 }
