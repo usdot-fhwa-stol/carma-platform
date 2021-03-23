@@ -56,3 +56,6 @@ curvature_calc_lookahead_count : 1
 
 # Int: Amount to downsample input lanelet centerline data. Value corresponds to saving each nth point.
 downsample_ratio : 8
+
+# bool: Flag to activate and deactivate object avoidance communication with Yield
+enable_object_avoidance_lc : false
