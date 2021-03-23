@@ -44,7 +44,7 @@
 #include <unordered_set>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_extension/io/autoware_osm_parser.h>
-
+#include <functional>
 
 
 #include "route_state_worker.h"
@@ -55,7 +55,15 @@ namespace route {
     {
 
     public:
-
+        /**
+         * \brief reroutingChecker function to set the rerouting flag locally
+         */
+        std::function<bool()> reroutingChecker;
+        /**
+         * \brief setReroutingChecker function to set the rerouting flag
+         */
+        void setReroutingChecker(std::function<bool()> inputFunction);
+        
         /**
          * \brief Constructor for RouteGeneratorWorker class taking in dependencies via dependency injection
          * \param tf_buffer ROS tf tree buffer for getting latest tf between any two available frames
@@ -201,6 +209,12 @@ namespace route {
         //Added for Unit Testing
         void addllt(lanelet::ConstLanelet llt);
 
+        /**
+         * \brief After route is invalidated, this function returns a new route based on the destinations points.
+         * \param destination_points_in_map vector of destination points
+         * \note Destination points will be removed if the current pose is past those points.
+        */
+        lanelet::Optional<lanelet::routing::Route> reroute_after_route_invalidation(std::vector<lanelet::BasicPoint2d>& destination_points_in_map) const;
 
     private:
 
@@ -237,6 +251,9 @@ namespace route {
         // current cross track and down track distance relative to the route
         double current_crosstrack_distance_, current_downtrack_distance_;
 
+        // current pose
+        lanelet::BasicPoint2d current_loc_;
+
         // current lanelet down track and cross track distance
         double ll_crosstrack_distance_, ll_downtrack_distance_;
         lanelet::Id ll_id_;
@@ -266,6 +283,8 @@ namespace route {
         int cte_count_ = 0;
 
         int cte_count_max_;
+        // destination points in map
+        std::vector<lanelet::BasicPoint2d> destination_points_in_map_;
 
     };
 

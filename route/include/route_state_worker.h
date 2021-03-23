@@ -33,6 +33,7 @@ namespace route {
             * ROUTE_DEPARTED - Vehicle has deviated from the route
             * ROUTE_ABORTED - User decides to stop following the current route
             * ROUTE_GEN_FAILED - No route can be generated based on provided route file
+            * ROUTE_INVALIDATION - Certain portion of the route is invalidated based on situation.
             */
             enum RouteEvent {
                 ROUTE_LOADED = 0,
@@ -42,6 +43,7 @@ namespace route {
                 ROUTE_DEPARTED = 4,
                 ROUTE_ABORTED = 5,
                 ROUTE_GEN_FAILED = 6,
+                ROUTE_INVALIDATION = 7,
             };
 
             /**

@@ -95,6 +95,7 @@
   <arg name="camera_id" value="/"/>
   <arg name="image_src" value="$(optenv CARMA_INTR_NS)/camera/image_raw"/>
   <arg name="cuda" value="$(arg cuda)"/>
+  
   </include>
   </group>
 

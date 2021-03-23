@@ -138,8 +138,6 @@ TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
     }
 }
 
-
-
 TEST(RouteGeneratorTest, testLaneletRoutingVectorMap)
 {
     tf2_ros::Buffer tf_buffer;
@@ -308,7 +306,6 @@ TEST(RouteGeneratorTest, testReadLanelet111RouteFile)
     ASSERT_NEAR(4.79047e+06, points[0].getZ(), 5.0);
 }
 
-
 TEST(RouteGeneratorTest, testReadRoutetfhrcFile)
 {
     tf2_ros::Buffer tf_buffer;
@@ -476,7 +473,7 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
             ASSERT_NEAR(894697, points[0].getY(), 5.0);  
             ASSERT_NEAR(-6196590, points[0].getZ(), 5.0);
         }
-   }
+    }
     cav_srvs::SetActiveRouteRequest req2;
     cav_srvs::SetActiveRouteResponse resp2;
 
@@ -492,6 +489,52 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
         }
 
    }
+}
+
+TEST(RouteGeneratorTest, test_reroute_after_route_invalidation)
+{
+    tf2_ros::Buffer tf_buffer;
+    route::RouteGeneratorWorker worker(tf_buffer);
+
+    auto cmw= carma_wm::test::getGuidanceTestMap();
+    worker.setWorldModelPtr(cmw);
+
+   // set route here
+    carma_wm::test::setRouteByIds({1200, 1201,1202,1203}, cmw);
+
+    lanelet::BasicPoint2d end_point{1.85, 87.5};
+
+    std::vector<lanelet::BasicPoint2d> dest_points;
+    dest_points.push_back(end_point);
+
+    geometry_msgs::PoseStamped msg;
+    //Assign vehicle position
+    msg.pose.position.x = 1.85;
+    msg.pose.position.y = 0.1;
+
+    geometry_msgs::PoseStampedPtr mpt(new geometry_msgs::PoseStamped(msg));
+
+    worker.pose_cb(mpt);
+
+    auto route = worker.reroute_after_route_invalidation(dest_points);
+
+    ASSERT_EQ(dest_points.size(), 1);
+    ASSERT_TRUE(!!route);
+    ASSERT_EQ(route->shortestPath().size(), 4);
+
+}
+
+TEST(RouteGeneratorTest, test_setReroutingChecker)
+{
+    tf2_ros::Buffer tf_buffer;
+    route::RouteGeneratorWorker worker(tf_buffer);
+    bool flag = false;
+    worker.setReroutingChecker([&]{
+        flag = true;
+        return flag;
+    });
+    EXPECT_NO_THROW(worker.reroutingChecker());
+    ASSERT_EQ(true,worker.reroutingChecker());
 }
 
 TEST(RouteGeneratorTest, test_get_closest_lanelet_from_route_llts)
@@ -576,7 +619,6 @@ TEST(RouteGeneratorTest, test_get_closest_lanelet_from_route_llts)
 
 
 }
-
 
 
 

@@ -1215,6 +1215,57 @@ TEST(WMBroadcaster, distToNearestActiveGeofence)
   ASSERT_NEAR(nearest_gf_dist, 0, 0.0001);  // it should point the next
 }
 
+TEST(WMBroadcaster, addRegionAccessRule)
+{
+  auto gf_ptr = std::make_shared<Geofence>(Geofence());
+  auto map = carma_wm::getBroadcasterTestMap();
+
+  std::vector<lanelet::Lanelet> affected_llts {map->laneletLayer.get(map->laneletLayer.begin()->id())};
+
+  WMBroadcaster wmb(
+      [&](const autoware_lanelet2_msgs::MapBin& map_bin) {},
+      [&](const autoware_lanelet2_msgs::MapBin& geofence_bin) {},
+      [&](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
+      [&](const cav_msgs::CheckActiveGeofence& active_pub_){},
+      std::make_unique<TestTimerFactory>());
+
+  cav_msgs::TrafficControlMessageV01 msg_v01;
+  cav_msgs::TrafficControlMessageV01 msg_v02;
+  j2735_msgs::TrafficControlVehClass participant1,participant2;
+  participant1.vehicle_class = j2735_msgs::TrafficControlVehClass::PASSENGER_CAR;
+  msg_v01.params.vclasses.push_back(participant1);
+
+  wmb.addRegionAccessRule(gf_ptr,msg_v01,affected_llts);
+
+  ASSERT_EQ(gf_ptr->invalidate_route_,true);
+
+  participant2.vehicle_class = j2735_msgs::TrafficControlVehClass::PEDESTRIAN;
+  msg_v02.params.vclasses = {};
+  msg_v02.params.vclasses.push_back(participant2);
+  gf_ptr = std::make_shared<Geofence>(Geofence());
+  wmb.addRegionAccessRule(gf_ptr,msg_v02,affected_llts);
+
+  ASSERT_EQ(gf_ptr->invalidate_route_,false);
+}
+
+TEST(WMBroadcaster, invertParticipants)
+{
+  auto gf_ptr = std::make_shared<Geofence>(Geofence());
+  auto map = carma_wm::getBroadcasterTestMap();
+
+  std::vector<lanelet::Lanelet> affected_llts {map->laneletLayer.get(map->laneletLayer.begin()->id())};
+
+  WMBroadcaster wmb(
+      [&](const autoware_lanelet2_msgs::MapBin& map_bin) {},
+      [&](const autoware_lanelet2_msgs::MapBin& geofence_bin) {},
+      [&](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
+      [&](const cav_msgs::CheckActiveGeofence& active_pub_){},
+      std::make_unique<TestTimerFactory>());
+  
+  ros::V_string participants;
+  auto result = wmb.invertParticipants(participants);
+  ASSERT_EQ(result.size(), 6);
+}
 
 TEST(WMBroadcaster, currentLocationCallback)
 {
@@ -1438,8 +1489,8 @@ TEST(WMBroadcaster, RegionAccessRuleTest)
           auto factory_pcl = lanelet::RegulatoryElementFactory::create(pair.second->attribute(lanelet::AttributeName::Subtype).value(),
                                                             std::const_pointer_cast<lanelet::RegulatoryElementData>(pair.second->constData()));
           lanelet::RegionAccessRulePtr region_acc = std::dynamic_pointer_cast<lanelet::RegionAccessRule>(factory_pcl);
-          ASSERT_FALSE(region_acc->accessable(lanelet::Participants::VehicleBus));
-          ASSERT_TRUE(region_acc->accessable(lanelet::Participants::VehicleCar));
+          ASSERT_TRUE(region_acc->accessable(lanelet::Participants::VehicleBus));
+          ASSERT_FALSE(region_acc->accessable(lanelet::Participants::VehicleCar));
         }
              
         active_call_count.store(active_call_count.load() + 1);
