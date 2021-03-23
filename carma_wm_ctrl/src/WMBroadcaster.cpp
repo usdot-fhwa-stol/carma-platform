@@ -162,6 +162,11 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
     addPassingControlLineFromMsg(gf_ptr, msg_v01, affected_llts);
   }
 
+ if (msg_detail.choice == cav_msgs::TrafficControlDetail::CLOSED_CHOICE && msg_detail.closed==cav_msgs::TrafficControlDetail::CLOSED)
+  {
+    addRegionAccessRule(gf_ptr,msg_v01,affected_llts);
+  }
+
   cav_msgs::TrafficControlSchedule msg_schedule = msg_v01.params.schedule;
   
   // Get schedule
@@ -199,6 +204,49 @@ void WMBroadcaster::addPassingControlLineFromMsg(std::shared_ptr<Geofence> gf_pt
   // Get specified participants
   ros::V_string left_participants;
   ros::V_string right_participants;
+  ros::V_string participants=participantsChecker(msg_v01);
+
+  // Create the pcl depending on the allowed passing control direction, left, right, or both
+  if (msg_detail.latperm[0] == cav_msgs::TrafficControlDetail::PERMITTED ||
+      msg_detail.latperm[0] == cav_msgs::TrafficControlDetail::PASSINGONLY)
+  {
+    left_participants = participants; 
+  }
+  else if (msg_detail.latperm[0] == cav_msgs::TrafficControlDetail::EMERGENCYONLY)
+  {
+    left_participants.push_back(lanelet::Participants::VehicleEmergency);
+  }
+  if (msg_detail.latperm[1] == cav_msgs::TrafficControlDetail::PERMITTED ||
+      msg_detail.latperm[1] == cav_msgs::TrafficControlDetail::PASSINGONLY)
+  {
+    right_participants = participants; 
+  }
+  else if (msg_detail.latperm[1] == cav_msgs::TrafficControlDetail::EMERGENCYONLY)
+  {
+    right_participants.push_back(lanelet::Participants::VehicleEmergency);
+  }
+
+  gf_ptr->regulatory_element_ = std::make_shared<lanelet::PassingControlLine>(lanelet::PassingControlLine::buildData(
+    lanelet::utils::getId(), pcl_bounds, left_participants, right_participants));
+}
+
+void WMBroadcaster::addRegionAccessRule(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const
+{
+  auto regulatory_element = std::make_shared<lanelet::RegionAccessRule>(lanelet::RegionAccessRule::buildData(lanelet::utils::getId(),affected_llts,{},invertParticipants(participantsChecker(msg_v01))));
+
+  if(!regulatory_element->accessable(lanelet::Participants::VehicleCar) || !regulatory_element->accessable(lanelet::Participants::VehicleTruck )) 
+  {
+    gf_ptr->invalidate_route_=true;
+  }
+  else
+  {
+    gf_ptr->invalidate_route_=false;
+  }
+  gf_ptr->regulatory_element_ = regulatory_element;
+}
+
+ros::V_string WMBroadcaster::participantsChecker(const cav_msgs::TrafficControlMessageV01& msg_v01) const
+{
   ros::V_string participants;
   for (j2735_msgs::TrafficControlVehClass participant : msg_v01.params.vclasses)
   {
@@ -236,29 +284,25 @@ void WMBroadcaster::addPassingControlLineFromMsg(std::shared_ptr<Geofence> gf_pt
     }
   }
 
-  // Create the pcl depending on the allowed passing control direction, left, right, or both
-  if (msg_detail.latperm[0] == cav_msgs::TrafficControlDetail::PERMITTED ||
-      msg_detail.latperm[0] == cav_msgs::TrafficControlDetail::PASSINGONLY)
-  {
-    left_participants = participants; 
-  }
-  else if (msg_detail.latperm[0] == cav_msgs::TrafficControlDetail::EMERGENCYONLY)
-  {
-    left_participants.push_back(lanelet::Participants::VehicleEmergency);
-  }
-  if (msg_detail.latperm[1] == cav_msgs::TrafficControlDetail::PERMITTED ||
-      msg_detail.latperm[1] == cav_msgs::TrafficControlDetail::PASSINGONLY)
-  {
-    right_participants = participants; 
-  }
-  else if (msg_detail.latperm[1] == cav_msgs::TrafficControlDetail::EMERGENCYONLY)
-  {
-    right_participants.push_back(lanelet::Participants::VehicleEmergency);
-  }
-
-  gf_ptr->regulatory_element_ = std::make_shared<lanelet::PassingControlLine>(lanelet::PassingControlLine::buildData(
-    lanelet::utils::getId(), pcl_bounds, left_participants, right_participants));
+  return  participants;
 }
+
+ros::V_string WMBroadcaster::invertParticipants(const ros::V_string& input_participants) const
+{
+  ros::V_string participants;
+
+  if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::Pedestrian ) == input_participants.end()) participants.emplace_back(lanelet::Participants::Pedestrian);
+  if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::Bicycle ) == input_participants.end()) participants.emplace_back(lanelet::Participants::Bicycle);
+  if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::Vehicle ) == input_participants.end())
+  {
+    if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleMotorcycle)== input_participants.end()) participants.emplace_back(lanelet::Participants::VehicleMotorcycle);
+    if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleBus)== input_participants.end()) participants.emplace_back(lanelet::Participants::VehicleBus);
+    if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleCar)== input_participants.end()) participants.emplace_back(lanelet::Participants::VehicleCar);
+    if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleTruck)== input_participants.end()) participants.emplace_back(lanelet::Participants::VehicleTruck);
+  }
+  return  participants;
+}
+
 // currently only supports geofence message version 1: TrafficControlMessageV01 
 void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geofence_msg)
 {
@@ -553,9 +597,8 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   autoware_lanelet2_msgs::MapBin gf_msg;
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
   carma_wm::toBinMsg(send_data, &gf_msg);
+  gf_msg.invalidates_route=gf_ptr->invalidate_route_; 
   map_update_pub_(gf_msg);
-  
-
 };
 
 void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)

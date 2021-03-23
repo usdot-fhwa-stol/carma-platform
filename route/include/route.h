@@ -20,6 +20,7 @@
 #include <std_msgs/String.h>
 #include <carma_utils/CARMAUtils.h>
 #include <visualization_msgs/MarkerArray.h>
+#include <carma_wm/WMListener.h>
 
 #include "route_generator_worker.h"
 

@@ -94,6 +94,7 @@ class TrafficIncidentParserWorker
   double down_track;
   double up_track;
   double min_gap;
+  double speed_advisory;
 
   std::string previous_strategy_params="";
 

@@ -17,5 +17,6 @@
 <launch>
   <node name="motion_computation" pkg="motion_computation" type="motion_computation_node">
     <rosparam command="load" file="$(find motion_computation)/config/parameters.yaml"/>
+    <remap from="incoming_mobility_path" to="$(optenv CARMA_MSG_NS)/incoming_mobility_path"/>
   </node>
 </launch>
