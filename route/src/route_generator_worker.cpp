@@ -171,15 +171,15 @@ namespace route {
                 return true;
             }
             // convert points in ECEF to map frame
-            auto destination_points_in_map = transform_to_map_frame(destination_points, map_in_earth);
+            destination_points_in_map_ = transform_to_map_frame(destination_points, map_in_earth);
+            auto destination_points_in_map_with_vehicle = destination_points_in_map_;
             
             lanelet::BasicPoint2d vehicle_position(vehicle_pose_->pose.position.x, vehicle_pose_->pose.position.y);
-            destination_points_in_map.insert(destination_points_in_map.begin(), vehicle_position);
+            destination_points_in_map_with_vehicle.insert(destination_points_in_map_with_vehicle.begin(), vehicle_position);
 
-            destination_points_in_map_ = transform_to_map_frame(destination_points, map_in_earth);
             int idx = 0;
             // validate if the points are geometrically in the map
-            for (auto pt : destination_points_in_map_)
+            for (auto pt : destination_points_in_map_with_vehicle)
             {
                 auto llts = world_model_->getLaneletsFromPoint(pt, 1);
                 if (llts.empty())
@@ -197,9 +197,9 @@ namespace route {
             // get route graph from world model object
             auto p = world_model_->getMapRoutingGraph();
             // generate a route
-            auto route = routing(destination_points_in_map_.front(),
-                                std::vector<lanelet::BasicPoint2d>(destination_points_in_map_.begin() + 1, destination_points_in_map_.end() - 1),
-                                destination_points_in_map_.back(),
+            auto route = routing(destination_points_in_map_with_vehicle.front(),
+                                std::vector<lanelet::BasicPoint2d>(destination_points_in_map_with_vehicle.begin() + 1, destination_points_in_map_with_vehicle.end() - 1),
+                                destination_points_in_map_with_vehicle.back(),
                                 world_model_->getMap(), world_model_->getMapRoutingGraph());
             // check if route successed
             if(!route)
@@ -212,7 +212,7 @@ namespace route {
             }
 
             // Specify the end point of the route that is inside the last lanelet
-            lanelet::Point3d end_point{lanelet::utils::getId(), destination_points_in_map.back().x(), destination_points_in_map.back().y(), 0};
+            lanelet::Point3d end_point{lanelet::utils::getId(), destination_points_in_map_with_vehicle.back().x(), destination_points_in_map_with_vehicle.back().y(), 0};
 
             route->setEndPoint(end_point);
 
@@ -445,7 +445,7 @@ namespace route {
             bool departed = crosstrack_error_check(msg, current_lanelet);
             if (departed)
                 {
-                    this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+                    this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_DEPARTED);
                     publish_route_event(cav_msgs::RouteEvent::ROUTE_DEPARTED);
                 }
 
@@ -488,11 +488,11 @@ namespace route {
         route_event_queue.push(event_type);
     }
     
-    lanelet::Optional<lanelet::routing::Route> RouteGeneratorWorker::reroute_after_route_invalidation(std::vector<lanelet::BasicPoint2d>& destination_points_in_map) const
+    lanelet::Optional<lanelet::routing::Route> RouteGeneratorWorker::reroute_after_route_invalidation(std::vector<lanelet::BasicPoint2d>& destination_points_in_map)
     {
         std::vector<lanelet::BasicPoint2d> destination_points_in_map_temp;
         
-        for(const auto &i:destination_points_in_map)
+        for(const auto &i:destination_points_in_map) // Identify all route points that we have not yet passed
         {
             double destination_down_track=world_model_->routeTrackPos(i).downtrack;
             
@@ -504,11 +504,13 @@ namespace route {
             }
         }  
         
-        destination_points_in_map = destination_points_in_map_temp;
-        ROS_DEBUG_STREAM("New destination_points_in_map.size:" << destination_points_in_map.size());
-        auto route=routing(current_loc_,
-                            std::vector<lanelet::BasicPoint2d>(destination_points_in_map.begin(), destination_points_in_map.end() - 1),
-                            destination_points_in_map.back(),
+        destination_points_in_map_ = destination_points_in_map_temp; // Update our route point list
+        
+        ROS_DEBUG_STREAM("New destination_points_in_map.size:" << destination_points_in_map_.size());
+
+        auto route=routing(current_loc_, // Route from current location through future destinations
+                            std::vector<lanelet::BasicPoint2d>(destination_points_in_map_.begin(), destination_points_in_map_.end() - 1),
+                            destination_points_in_map_.back(),
                             world_model_->getMap(), world_model_->getMapRoutingGraph());
 
         return route;

@@ -216,7 +216,7 @@ namespace route {
          * \param destination_points_in_map vector of destination points
          * \note Destination points will be removed if the current pose is past those points.
         */
-        lanelet::Optional<lanelet::routing::Route> reroute_after_route_invalidation(std::vector<lanelet::BasicPoint2d>& destination_points_in_map) const;
+        lanelet::Optional<lanelet::routing::Route> reroute_after_route_invalidation(std::vector<lanelet::BasicPoint2d>& destination_points_in_map);
 
     private:
 

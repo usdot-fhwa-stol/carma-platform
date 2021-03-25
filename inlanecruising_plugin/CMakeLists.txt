@@ -112,16 +112,16 @@ install(DIRECTORY launch config
 ## Testing ##
 #############
 
-catkin_add_gmock(${PROJECT_NAME}-test 
-  test/test_inlanecruising_plugin_planning.cpp
-  test/test_inlanecruising_plugin.cpp
-)
-target_link_libraries(${PROJECT_NAME}-test inlanecruising_plugin_library ${catkin_LIBRARIES})
-
 if(CATKIN_ENABLE_TESTING)
+
+  catkin_add_gmock(${PROJECT_NAME}-test 
+    test/test_inlanecruising_plugin_planning.cpp
+    test/test_inlanecruising_plugin.cpp
+  )
+  target_link_libraries(${PROJECT_NAME}-test inlanecruising_plugin_library ${catkin_LIBRARIES})
+
   find_package(rostest REQUIRED)
   add_rostest_gtest(rostest_ilc test/ilc_plugin.test test/rostest_ilc.cpp)
   target_link_libraries(rostest_ilc ${catkin_LIBRARIES})
 endif()
-
 

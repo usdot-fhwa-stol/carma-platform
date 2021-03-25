@@ -23,7 +23,16 @@
 #include <autoware_msgs/DetectedObject.h>
 #include <autoware_msgs/DetectedObjectArray.h>
 #include <functional>
-
+#include <tf2_ros/transform_listener.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <tf2/convert.h>
+#include <tf/transform_listener.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/transform_datatypes.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_eigen/tf2_eigen.h>
 namespace object{
 
 class ObjectDetectionTrackingWorker
@@ -53,6 +62,10 @@ class ObjectDetectionTrackingWorker
   void setYAccelerationNoise(double noise);
   void setProcessNoiseMax(double noise_max);
   void setConfidenceDropRate(double drop_rate);
+
+  void setVelodyneFrame(std::string velodyne_frame);
+  void setMapFrame(std::string map_frame);
+
  
  private:
 
@@ -67,6 +80,13 @@ class ObjectDetectionTrackingWorker
   double cv_y_accel_noise_ = 9.0;
   double prediction_process_noise_max_ = 1000.0;
   double prediction_confidence_drop_rate_ = 0.9;
+  std::string velodyne_frame_;
+  std::string map_frame_;
+
+  // Buffer which holds the tree of transforms
+  tf2_ros::Buffer tfBuffer_;
+  // tf2 listeners. Subscribes to the /tf and /tf_static topics
+  tf2_ros::TransformListener tfListener_ {tfBuffer_};
   
 };
 

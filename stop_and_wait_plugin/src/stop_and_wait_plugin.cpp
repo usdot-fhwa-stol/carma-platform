@@ -77,6 +77,7 @@ namespace stop_and_wait_plugin
         pnh_->param<double>("max_jerk_limit", max_jerk_limit_);
         pnh_->param<double>("min_timestep",min_timestep_);
         pnh_->param<double>("min_jerk", min_jerk_limit_);
+        pnh_->param<double>("/guidance/destination_downtrack_range",destination_downtrack_range_);
 
         ros::CARMANodeHandle::setSpinCallback([this]() -> bool
         {
@@ -108,9 +109,12 @@ namespace stop_and_wait_plugin
     
     bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp)
     {
-        lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global,req.vehicle_state.Y_pos_global);
+        lanelet::BasicPoint2d veh_pos(pose_msg_.pose.position.x,pose_msg_.pose.position.y);
+        ROS_DEBUG_STREAM("curr state x:"<< pose_msg_.pose.position.x << ", y: " << pose_msg_.pose.position.y);
+        ROS_DEBUG_STREAM("old state x:"<<  req.vehicle_state.X_pos_global << ", y: " << req.vehicle_state.Y_pos_global);
         double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
-
+        ROS_DEBUG_STREAM("Starting stop&wait planning");
+        ROS_DEBUG_STREAM("Current_downtrack"<<current_downtrack);
         std::vector<cav_msgs::Maneuver> maneuver_plan;
         for(const auto maneuver : req.maneuver_plan.maneuvers)
         {
@@ -124,19 +128,25 @@ namespace stop_and_wait_plugin
             //Do nothing
             return true;
         }
-        std::vector<PointSpeedPair> points_and_target_speeds = maneuvers_to_points(maneuver_plan, current_downtrack, wm_, req.vehicle_state);
+
+        // Update state to correctly reflect current pos
+        auto curr_state = req.vehicle_state;
+        curr_state.X_pos_global = pose_msg_.pose.position.x;
+        curr_state.Y_pos_global = pose_msg_.pose.position.y;
+
+        std::vector<PointSpeedPair> points_and_target_speeds = maneuvers_to_points(maneuver_plan, current_downtrack, wm_, curr_state);
 
         auto downsampled_points = 
             carma_utils::containers::downsample_vector(points_and_target_speeds,downsample_ratio_);
-
+        ROS_DEBUG_STREAM("downsampled points size:"<<downsampled_points.size());
         //Trajectory plan
         cav_msgs::TrajectoryPlan  trajectory;
         trajectory.header.frame_id = "map";
         trajectory.header.stamp = ros::Time::now();
         trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
-
-        trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points,req.vehicle_state);
-
+      
+        trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points,curr_state);
+        ROS_DEBUG_STREAM("Trajectory points size:"<<trajectory.trajectory_points.size());
         trajectory.initial_longitudinal_velocity = req.vehicle_state.longitudinal_vel;
         resp.trajectory_plan = trajectory;
         resp.related_maneuvers.push_back(cav_msgs::Maneuver::STOP_AND_WAIT);
@@ -217,7 +227,18 @@ namespace stop_and_wait_plugin
                         throw std::invalid_argument("Ending distance is beyond known route"); 
                     }
                 }
-                else jerk_ = jerk_req;
+                else {
+                    //find distance to the end
+                    lanelet::BasicPoint2d curr_pose (pose_msg_.pose.position.x,pose_msg_.pose.position.y);
+                    double current_downtrack = wm_->routeTrackPos(curr_pose).downtrack;
+                    //stay approximately at crawl speed until within destination downtrack range (defined in route)
+                    if(start_speed <= min_crawl_speed_ && current_downtrack < ending_downtrack - destination_downtrack_range_){
+                        jerk_ = 0.0;
+                    }
+                    else{
+                        jerk_ = jerk_req;
+                    }
+                }
                 //get all the lanelets in between starting and ending downtrack on shortest path
                 auto lanelets = wm_->getLaneletsBetween(starting_downtrack, ending_downtrack, true);
                 //record all the lanelets to be added to path
