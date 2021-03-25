@@ -159,11 +159,11 @@ namespace health_monitor
                 return "s_1_l_0_g_0";
             }
             
-            else if((lidar==0) && (gps==1))
+            else if((lidar==0) && (gps==1) && (camera == 1))
             {
                 return "s_1_l_0_g_1";
             }
-            else if((lidar==1) && (gps==0))
+            else if((lidar==1) && (gps==0) && (camera == 1))
             {
                 return "s_1_l_1_g_0";
             }
