@@ -39,8 +39,10 @@
 #include <geometry_msgs/Transform.h>
 #include <wgs84_utils/wgs84_utils.h>
 #include <boost/filesystem.hpp>
+#include <boost/optional.hpp>
 #include <visualization_msgs/MarkerArray.h>
 #include <geometry_msgs/TwistStamped.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <unordered_set>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_extension/io/autoware_osm_parser.h>
@@ -214,7 +216,7 @@ namespace route {
          * \param destination_points_in_map vector of destination points
          * \note Destination points will be removed if the current pose is past those points.
         */
-        lanelet::Optional<lanelet::routing::Route> reroute_after_route_invalidation(std::vector<lanelet::BasicPoint2d>& destination_points_in_map) const;
+        lanelet::Optional<lanelet::routing::Route> reroute_after_route_invalidation(std::vector<lanelet::BasicPoint2d>& destination_points_in_map);
 
     private:
 
@@ -285,6 +287,8 @@ namespace route {
         int cte_count_max_;
         // destination points in map
         std::vector<lanelet::BasicPoint2d> destination_points_in_map_;
+
+        boost::optional<geometry_msgs::PoseStamped> vehicle_pose_;
 
     };
 

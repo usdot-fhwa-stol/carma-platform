@@ -27,6 +27,7 @@ enum LocalizerMode
   GNSS = 1,  // GNSS only operation
   AUTO_WITH_TIMEOUT = 2,  // NDT operation with support for GPS fallback that will timeout
   AUTO_WITHOUT_TIMEOUT = 3,  // NDT operation with support for GPS fallback that will not timeout
+  GNSS_WITH_NDT_INIT = 4,  // GNSS only operation with NDT initialization, switching to GNSS after 5 sequential timesteps of OPERATIONAL NDT
 };
 /**
  * \brief Stream operator for LocalizerMode enum.
@@ -67,6 +68,7 @@ enum class LocalizationSignal
   UNUSABLE_NDT_FREQ_OR_FITNESS_SCORE,
   TIMEOUT,
   LIDAR_SENSOR_FAILURE,
+  LIDAR_INITIALIZED_SWITCH_TO_GPS,
 };
 /**
  * \brief Stream operator for LocalizationSignal enum.
