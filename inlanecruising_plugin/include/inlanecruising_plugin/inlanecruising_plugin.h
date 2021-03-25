@@ -30,8 +30,8 @@
 #include <inlanecruising_plugin/smoothing/SplineI.h>
 #include "inlanecruising_config.h"
 #include <unordered_set>
-#include <inlanecruising_plugin/object_avoidance.h>
-
+#include <autoware_msgs/Lane.h>
+#include <ros/ros.h>
 namespace inlanecruising_plugin
 {
 using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
@@ -115,11 +115,12 @@ public:
    * \param points The set of points that define the current lane the vehicle is in and are defined based on the request planning maneuvers. 
    *               These points must be in the same lane as the vehicle and must extend in front of it though it is fine if they also extend behind it. 
    * \param state The current state of the vehicle
+   * \param state_time The abosolute time which the provided vehicle state corresponds to
    * 
    * \return A list of trajectory points to send to the carma planning stack
    */ 
   std::vector<cav_msgs::TrajectoryPlanPoint>
-  compose_trajectory_from_centerline(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state);
+  compose_trajectory_from_centerline(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time);
 
   /**
    * \brief Method combines input points, times, orientations, and an absolute start time to form a valid carma platform trajectory
@@ -233,6 +234,21 @@ public:
    */ 
   std::vector<PointSpeedPair> attach_back_points(const std::vector<PointSpeedPair>& points, const int nearest_pt_index, 
                                std::vector<inlanecruising_plugin::PointSpeedPair> future_points, double back_distance) const;
+  /**
+   * \brief set the yield service
+   * 
+   * \param yield_srv input yield service
+   */
+  void set_yield_client(ros::ServiceClient& client);
+
+   /**
+   * \brief verify if the input yield trajectory plan is valid
+   * 
+   * \param yield_plan input yield trajectory plan
+   *
+   * \return true or falss
+   */
+  bool validate_yield_plan(const cav_msgs::TrajectoryPlan& yield_plan);
   
 private:
 
@@ -247,11 +263,12 @@ private:
    */ 
   std::pair<double, size_t> min_with_exclusions(const std::vector<double>& values, const std::unordered_set<size_t>& excluded) const;
   
-  object_avoidance::ObjectAvoidance obj_;
   carma_wm::WorldModelConstPtr wm_;
   InLaneCruisingPluginConfig config_;
   PublishPluginDiscoveryCB plugin_discovery_publisher_;
+  ros::ServiceClient yield_client_;
 
   cav_msgs::Plugin plugin_discovery_msg_;
+
 };
 };  // namespace inlanecruising_plugin

@@ -24,6 +24,7 @@ std::ostream& operator<<(std::ostream& os, LocalizerMode m)
   {  // clang-format off
     case LocalizerMode::NDT   : os << "NDT"; break;
     case LocalizerMode::GNSS: os << "GNSS"; break;
+    case LocalizerMode::GNSS_WITH_NDT_INIT: os << "GNSS_WITH_NDT_INIT"; break;
     case LocalizerMode::AUTO_WITH_TIMEOUT : os << "AUTO_WITH_TIMEOUT"; break;
     case LocalizerMode::AUTO_WITHOUT_TIMEOUT : os << "AUTO_WITHOUT_TIMEOUT"; break;
     default: os.setstate(std::ios_base::failbit);
@@ -56,6 +57,7 @@ std::ostream& operator<<(std::ostream& os, LocalizationSignal s)
     case LocalizationSignal::UNUSABLE_NDT_FREQ_OR_FITNESS_SCORE  : os << "UNUSABLE_NDT_FREQ_OR_FITNESS_SCORE"; break;
     case LocalizationSignal::TIMEOUT  : os << "TIMEOUT"; break;
     case LocalizationSignal::LIDAR_SENSOR_FAILURE  : os << "LIDAR_SENSOR_FAILURE"; break;
+    case LocalizationSignal::LIDAR_INITIALIZED_SWITCH_TO_GPS  : os << "LIDAR_INITIALIZED_SWITCH_TO_GPS"; break;
     default: os.setstate(std::ios_base::failbit);
   }  // clang-format on
   return os;

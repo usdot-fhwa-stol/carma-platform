@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-  Copyright (C) 2018-2020 LEIDOS.
+  Copyright (C) 2018-2021 LEIDOS.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -46,6 +46,7 @@
   <remap from="/controller/cmd_longitudinal_effort" to="$(optenv CARMA_INTR_NS)/controller/cmd_longitudinal_effort"/>
   <remap from="/controller/cmd_speed" to="$(optenv CARMA_INTR_NS)/controller/cmd_speed"/>
   <remap from="enable_robotic" to="$(optenv CARMA_INTR_NS)/controller/enable_robotic"/>
+  <remap from="vehicle_status" to="$(optenv CARMA_INTR_NS)/vehicle_status"/>
 
   <remap from="ui_instructions" to="$(optenv CARMA_UI_NS)/ui_instructions"/>
 
@@ -88,11 +89,6 @@
   <include file="$(find plan_delegator)/launch/plan_delegator.launch"/>
 
   <!-- TODO Check topic remapping-->
-  <!-- Control Stack -->
-  <!-- Waypoint Follower Config-->
-  <node pkg="rostopic" type="rostopic" name="config_waypoint_follower_rostopic"
-        args="pub -l config/waypoint_follower autoware_config_msgs/ConfigWaypointFollower '{ header: auto, param_flag: 0, velocity: 5.0, lookahead_distance: 4.0, lookahead_ratio: 2.0, minimum_lookahead_distance: 6.0, displacement_threshold: 0.0, relative_angle_threshold: 0.0 }' "
-  />
 
   <!-- Trajectory Executor -->
   <include file="$(find trajectory_executor)/launch/trajectory_executor.launch" />
@@ -102,8 +98,12 @@
   <remap from="/current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>  
 
   <!-- Pure Pursuit Wrapper -->
+  <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch">
+	  <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
+  </include>
   
-  <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch" />
+  <!-- Pure Pursuit Jerk Wrapper -->
+  <include file="$(find pure_pursuit_jerk_wrapper)/launch/pure_pursuit_jerk_wrapper.launch" />
 
     <!-- Route Following Plugin -->
   <include file="$(find route_following_plugin)/launch/route_following_plugin.launch" />

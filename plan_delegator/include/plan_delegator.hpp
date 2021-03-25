@@ -100,6 +100,7 @@ namespace plan_delegator
             std::string planning_topic_suffix_ = "";
             double spin_rate_ = 10.0;
             double max_trajectory_duration_ = 6.0;
+            double min_crawl_speed_ = 2.2352; // Min crawl speed in m/s
 
             // map to store service clients
             std::unordered_map<std::string, ros::ServiceClient> trajectory_planners_;

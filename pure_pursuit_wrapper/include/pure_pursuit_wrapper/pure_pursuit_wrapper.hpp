@@ -21,6 +21,9 @@
 // msgs
 #include <cav_msgs/TrajectoryPlan.h>
 #include <autoware_msgs/Lane.h>
+#include "pure_pursuit_wrapper_config.hpp"
+#include <algorithm>
+#include <trajectory_utils/trajectory_utils.h>
 
 namespace pure_pursuit_wrapper {
 
@@ -33,13 +36,24 @@ using PluginDiscoveryPub = std::function<void(cav_msgs::Plugin)>;
 class PurePursuitWrapper {
     public:
 
-        PurePursuitWrapper(WaypointPub waypoint_pub, PluginDiscoveryPub plugin_discovery_pub);
+        PurePursuitWrapper(PurePursuitWrapperConfig config, WaypointPub waypoint_pub, PluginDiscoveryPub plugin_discovery_pub);
 
         void trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::ConstPtr& tp);
 
         bool onSpin();
 
+        /**
+         * \brief Applies a specified response lag in seconds to the trajectory shifting the whole thing by the specified lag time
+         * \param speeds Velocity profile to shift. The first point should be the current vehicle speed
+         * \param downtrack Distance points for each velocity point. Should have the same size as speeds and start from 0
+         * \param response_lag The lag in seconds before which the vehicle will not meaningfully accelerate
+         * 
+         * \return A Shifted trajectory
+         */ 
+        std::vector<double> apply_response_lag(const std::vector<double>& speeds, const std::vector<double> downtracks, double response_lag) const;
+
     private:
+    PurePursuitWrapperConfig config_;
     WaypointPub waypoint_pub_;
     PluginDiscoveryPub plugin_discovery_pub_;
     cav_msgs::Plugin plugin_discovery_msg_;

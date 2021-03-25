@@ -50,6 +50,10 @@ namespace route {
             if(event == RouteEvent::ROUTE_COMPLETED || event == RouteEvent::ROUTE_DEPARTED || event == RouteEvent::ROUTE_ABORTED)
             {
                 state_ = RouteState::LOADING;
+            } 
+            else if(event == RouteEvent::ROUTE_INVALIDATION)
+            {
+                state_ = RouteState::ROUTING;
             }
             break;
         default:

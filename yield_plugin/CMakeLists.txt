@@ -109,5 +109,3 @@ if(CATKIN_ENABLE_TESTING)
   add_rostest_gtest(test_yield_plugin test/yield_plugin.test test/test_yield_plugin.cpp)
   target_link_libraries(test_yield_plugin ${catkin_LIBRARIES})
 endif()
-
-
