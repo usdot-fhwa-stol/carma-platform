@@ -153,9 +153,10 @@ public:
    * \brief compose a mobility response message
    * \param resp_recipient_id vehicle id of the recipient of the message
    * \param req_plan_id plan id from the requested message
+   * \param response accept/reject to the response based on conditions
    * \return filled mobility response
    */
-  cav_msgs::MobilityResponse compose_mobility_response(const std::string& resp_recipient_id, const std::string& req_plan_id) const;
+  cav_msgs::MobilityResponse compose_mobility_response(const std::string& resp_recipient_id, const std::string& req_plan_id, bool response) const;
   
   /**
    * \brief generate a Jerk Minimizing Trajectory(JMT) with the provided start and end conditions
@@ -200,8 +201,11 @@ public:
    * \param publisher ros publiser
    */
   void set_lanechange_status_publisher(const ros::Publisher& publisher);
-  
-  
+
+  /**
+   * \brief Looks up the transform between map and earth frames, and sets the member variable
+   */
+  void lookupECEFtoMapTransform();
 
 private:
 

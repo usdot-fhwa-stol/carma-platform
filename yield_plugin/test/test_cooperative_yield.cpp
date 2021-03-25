@@ -25,7 +25,6 @@
 
 using namespace yield_plugin;
 
-
 TEST(YieldPluginTest, convert_eceftrajectory_to_mappoints)
 {
   YieldPluginConfig config;
@@ -64,7 +63,7 @@ TEST(YieldPluginTest, compose_mobility_response)
   YieldPluginConfig config;
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
-  cav_msgs::MobilityResponse resp = plugin.compose_mobility_response("recicpient_id", "plan_id");
+  cav_msgs::MobilityResponse resp = plugin.compose_mobility_response("recicpient_id", "plan_id", true);
 
   EXPECT_EQ(resp.header.recipient_id, "recicpient_id");
   EXPECT_EQ(resp.header.plan_id, "plan_id");

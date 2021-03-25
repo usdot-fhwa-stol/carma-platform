@@ -68,7 +68,9 @@ public:
     ROS_INFO_STREAM("YieldPlugin Params" << config);
 
     YieldPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); }, [&mob_resp_pub](auto msg) { mob_resp_pub.publish(msg); });
-
+  
+    worker.lookupECEFtoMapTransform();
+    
     worker.set_lanechange_status_publisher(lc_status_pub);
 
     // TODO confirm the name of service (should include inlane cruising?)

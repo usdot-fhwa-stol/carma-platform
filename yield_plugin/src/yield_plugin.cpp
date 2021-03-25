@@ -46,16 +46,21 @@ namespace yield_plugin
     plugin_discovery_msg_.available = true;
     plugin_discovery_msg_.activated = false;
     plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
-    plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
+    plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";   
+  }
 
+  void YieldPlugin::lookupECEFtoMapTransform()
+  {
+    tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
+    tf2_buffer_.setUsingDedicatedThread(true);
     try
     {
-      tf_ = tf2_buffer_.lookupTransform("map", "earth", ros::Time(0));
+      tf_ = tf2_buffer_.lookupTransform("earth", "map", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
     }
     catch (const tf2::TransformException &ex)
     {
       ROS_WARN("%s", ex.what());
-    }    
+    }
   }
 
   bool YieldPlugin::onSpin() 
@@ -138,7 +143,7 @@ namespace yield_plugin
     return map_points;
   }
 
-  cav_msgs::MobilityResponse YieldPlugin::compose_mobility_response(const std::string& resp_recipient_id, const std::string& req_plan_id) const
+  cav_msgs::MobilityResponse YieldPlugin::compose_mobility_response(const std::string& resp_recipient_id, const std::string& req_plan_id, bool response) const
   {
     cav_msgs::MobilityResponse out_mobility_response;
     out_mobility_response.header.sender_id = config_.vehicle_id;
@@ -148,7 +153,7 @@ namespace yield_plugin
     out_mobility_response.header.timestamp = ros::Time::now().toSec()*1000;
 
 
-    if (config_.always_accept_mobility_request)
+    if (config_.always_accept_mobility_request && response)
     {
       out_mobility_response.is_accepted = true;
     }
@@ -210,7 +215,7 @@ namespace yield_plugin
         double req_expiration_sec = incoming_request.expiration/1000;
         double current_time = ros::Time::now().toSec();
 
-        cav_msgs::MobilityResponse outgoing_response = compose_mobility_response(req_sender_id, req_plan_id);
+        bool response_to_clc_req;
         // ensure there is enough time for the yield
         if (req_expiration_sec - current_time >= config_.tpmin)
         {
@@ -219,14 +224,16 @@ namespace yield_plugin
           set_incoming_request_info(req_traj_plan, req_traj_speed, req_plan_time);
           lc_status_msg.status = cav_msgs::LaneChangeStatus::REQUEST_ACCEPTED;
           lc_status_msg.description = "Accepted lane merge request";
+          response_to_clc_req = true;
         }
         else
         {
           ROS_DEBUG_STREAM("Igonore expired Mobility Request.");
-          outgoing_response.is_accepted = false;
           lc_status_msg.status = cav_msgs::LaneChangeStatus::REQUEST_REJECTED;
           lc_status_msg.description = "Rejected lane merge request";
+          response_to_clc_req = false;
         }
+        cav_msgs::MobilityResponse outgoing_response = compose_mobility_response(req_sender_id, req_plan_id, response_to_clc_req);
         mobility_response_publisher_(outgoing_response);
         lc_status_msg.status = cav_msgs::LaneChangeStatus::RESPONSE_SENT;
       }
@@ -268,7 +275,7 @@ namespace yield_plugin
     // seperating cooperative yield with regular object detection for better performance.
     if (config_.enable_cooperative_behavior && received_cooperative_request_)
     {
-      tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
+      // tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
       yield_trajectory = update_traj_for_cooperative_behavior(original_trajectory, req.vehicle_state.longitudinal_vel);
       // reset the flag
       received_cooperative_request_ = false;
