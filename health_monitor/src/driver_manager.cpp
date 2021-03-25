@@ -306,13 +306,13 @@ namespace health_monitor
             else if(status.compare("s_1_l_0_g_1_c_0") == 0)
             {
                 alert.description = "LIDAR, Camera Failed";
-                alert.type = cav_msgs::SystemAlert::FATAL;
+                alert.type = cav_msgs::SystemAlert::SHUTDOWN;
                 return alert;
             }
             else if(status.compare("s_1_l_1_g_0_c_0") == 0)
             {
                 alert.description = " GPS, Camera Failed";
-                alert.type = cav_msgs::SystemAlert::FATAL;
+                alert.type = cav_msgs::SystemAlert::SHUTDOWN;
                 return alert;
             }
             else if(status.compare("s_0") == 0)
