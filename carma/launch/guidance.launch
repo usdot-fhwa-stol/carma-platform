@@ -154,6 +154,12 @@
     <include file="$(find stop_and_wait_plugin)/launch/stop_and_wait_plugin.launch" />
   </group>
 
+  <!-- unobstructed lanechange -->
+  <group>
+    <remap from="final_waypoints" to="base_waypoints"/>
+    <include file="$(find unobstructed_lanechange)/launch/unobstructed_lanechange.launch" />
+  </group>
+
   <!-- Route Node -->
   <include file="$(find route)/launch/route.launch">
   <!-- Mobility Path Publisher -->

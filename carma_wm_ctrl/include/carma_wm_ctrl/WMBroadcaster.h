@@ -171,9 +171,24 @@ public:
    * \return 0 if vehicle is not on an active geofence 
    */
   cav_msgs::CheckActiveGeofence checkActiveGeofenceLogic(const geometry_msgs::PoseStamped& current_pos);
+  /*!
+   * \brief Adds RegionAccessRule to the map
+   * \param gf_ptr geofence pointer
+   * \param msg_v01 message type
+   * \param afffected_llts affected lanelets
+   */
+  void addRegionAccessRule(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const;
+  /*!
+   * \brief Generates participants list
+   * \param msg_v01 message type
+   */
+  ros::V_string participantsChecker(const cav_msgs::TrafficControlMessageV01& msg_v01) const;
 
-
-
+  /*!
+   * \brief Generates inverse participants list of the given participants
+   * \param ros::V_string participants vector of strings 
+   */
+  ros::V_string invertParticipants(const ros::V_string& input_participants) const;
 
 private:
   lanelet::ConstLanelets route_path_;
@@ -199,8 +214,6 @@ private:
   GeofenceScheduler scheduler_;
   std::string base_map_georef_;
   double max_lane_width_;
-  
-
 };
 }  // namespace carma_wm_ctrl
 

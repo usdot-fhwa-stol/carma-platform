@@ -16,6 +16,7 @@
 #include <limits>
 #include <math.h>
 #include "route_generator_worker.h"
+#include <functional>
 
 namespace route {
 
@@ -56,6 +57,11 @@ namespace route {
         }
         // routing
         return graph_pointer->getRouteVia(start_lanelet, via_lanelets_vector, end_lanelet);
+    }
+
+    void RouteGeneratorWorker::setReroutingChecker(std::function<bool()> inputFunction)
+    {
+        reroutingChecker=inputFunction;
     }
 
     bool RouteGeneratorWorker::get_available_route_cb(cav_srvs::GetAvailableRoutesRequest& req, cav_srvs::GetAvailableRoutesResponse& resp)
@@ -170,9 +176,10 @@ namespace route {
             lanelet::BasicPoint2d vehicle_position(vehicle_pose_->pose.position.x, vehicle_pose_->pose.position.y);
             destination_points_in_map.insert(destination_points_in_map.begin(), vehicle_position);
 
+            destination_points_in_map_ = transform_to_map_frame(destination_points, map_in_earth);
             int idx = 0;
             // validate if the points are geometrically in the map
-            for (auto pt : destination_points_in_map)
+            for (auto pt : destination_points_in_map_)
             {
                 auto llts = world_model_->getLaneletsFromPoint(pt, 1);
                 if (llts.empty())
@@ -190,9 +197,9 @@ namespace route {
             // get route graph from world model object
             auto p = world_model_->getMapRoutingGraph();
             // generate a route
-            auto route = routing(destination_points_in_map.front(),
-                                std::vector<lanelet::BasicPoint2d>(destination_points_in_map.begin() + 1, destination_points_in_map.end() - 1),
-                                destination_points_in_map.back(),
+            auto route = routing(destination_points_in_map_.front(),
+                                std::vector<lanelet::BasicPoint2d>(destination_points_in_map_.begin() + 1, destination_points_in_map_.end() - 1),
+                                destination_points_in_map_.back(),
                                 world_model_->getMap(), world_model_->getMapRoutingGraph());
             // check if route successed
             if(!route)
@@ -397,17 +404,17 @@ namespace route {
         vehicle_pose_ = *msg;
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::FOLLOWING) {
             // convert from pose stamp into lanelet basic 2D point
-            lanelet::BasicPoint2d current_loc(msg->pose.position.x, msg->pose.position.y);
+            current_loc_ = lanelet::BasicPoint2d(msg->pose.position.x, msg->pose.position.y);
             // get dt ct from world model
             carma_wm::TrackPos track(0.0, 0.0);
             try {
-                track = this->world_model_->routeTrackPos(current_loc);
+                track = this->world_model_->routeTrackPos(current_loc_);
             } catch (std::invalid_argument ex) {
                 ROS_WARN_STREAM("Routing has finished but carma_wm has not receive it!");
                 return;
             }
-            auto current_lanelet = get_closest_lanelet_from_route_llts(current_loc);
-            auto lanelet_track = carma_wm::geometry::trackPos(current_lanelet, current_loc);
+            auto current_lanelet = get_closest_lanelet_from_route_llts(current_loc_);
+            auto lanelet_track = carma_wm::geometry::trackPos(current_lanelet, current_loc_);
             ll_id_ = current_lanelet.id();
             ll_crosstrack_distance_ = lanelet_track.crosstrack;
             ll_downtrack_distance_ = lanelet_track.downtrack;
@@ -481,8 +488,60 @@ namespace route {
         route_event_queue.push(event_type);
     }
     
+    lanelet::Optional<lanelet::routing::Route> RouteGeneratorWorker::reroute_after_route_invalidation(std::vector<lanelet::BasicPoint2d>& destination_points_in_map) const
+    {
+        std::vector<lanelet::BasicPoint2d> destination_points_in_map_temp;
+        
+        for(const auto &i:destination_points_in_map)
+        {
+            double destination_down_track=world_model_->routeTrackPos(i).downtrack;
+            
+            if( current_downtrack_distance_< destination_down_track)
+            {
+                destination_points_in_map_temp.push_back(i);
+                ROS_DEBUG_STREAM("current_downtrack_distance_:" << current_downtrack_distance_);
+                ROS_DEBUG_STREAM("destination_down_track:" << destination_down_track);
+            }
+        }  
+        
+        destination_points_in_map = destination_points_in_map_temp;
+        ROS_DEBUG_STREAM("New destination_points_in_map.size:" << destination_points_in_map.size());
+        auto route=routing(current_loc_,
+                            std::vector<lanelet::BasicPoint2d>(destination_points_in_map.begin(), destination_points_in_map.end() - 1),
+                            destination_points_in_map.back(),
+                            world_model_->getMap(), world_model_->getMapRoutingGraph());
+
+        return route;
+    }
+
     bool RouteGeneratorWorker::spin_callback()
     {
+        if(reroutingChecker()==true)
+        {
+           this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_INVALIDATION);
+           publish_route_event(cav_msgs::RouteEvent::ROUTE_INVALIDATION);
+           auto route = reroute_after_route_invalidation(destination_points_in_map_);
+
+           // check if route successed
+           if(!route)
+            {
+                ROS_ERROR_STREAM("Cannot find a route passing all destinations.");
+                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+                publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
+                return true;
+            }
+            else
+            {
+                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_STARTED);
+                publish_route_event(cav_msgs::RouteEvent::ROUTE_STARTED);  
+            }                    
+            route_msg_=compose_route_msg(route);
+            route_msg_.is_rerouted = true;
+            route_marker_msg_=compose_route_marker_msg(route);
+            new_route_msg_generated_=true;
+            new_route_marker_generated_=true;
+        }
+    
         // publish new route and set new route flag back to false
         if(new_route_msg_generated_ && new_route_marker_generated_)
         {
@@ -490,6 +549,7 @@ namespace route {
             route_marker_pub_.publish(route_marker_msg_);
             new_route_msg_generated_ = false;
             new_route_marker_generated_ = false;
+            route_msg_.is_rerouted = false;
         }
         // publish route state messsage if a route is selected
         if(route_msg_.route_name != "")
@@ -512,7 +572,7 @@ namespace route {
             route_event_pub_.publish(route_event_msg_);
             route_event_queue.pop();
         }
-        return true;
+        return true; 
     }
 
     bool RouteGeneratorWorker::crosstrack_error_check(const geometry_msgs::PoseStampedConstPtr& msg, lanelet::ConstLanelet current)

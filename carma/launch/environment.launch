@@ -25,6 +25,8 @@
 
   <arg name="simulation_mode" default="true" doc="True if CARMA Platform is launched with CARLA Simulator"/>
 
+  <arg name="cuda" default="true" doc="cuda flag for vision_darknet_detect (true if cuda is available)"/>
+
   <remap from="route" to="$(optenv CARMA_GUIDE_NS)/route"/>
   
 	<!-- vector map loader -->
@@ -93,6 +95,8 @@
 
   <arg name="camera_id" value="/"/>
   <arg name="image_src" value="$(optenv CARMA_INTR_NS)/camera/image_raw"/>
+  <arg name="cuda" value="$(arg cuda)"/>
+  
   </include>
   </group>
 
@@ -127,7 +131,7 @@
   <arg name="use_vector_map" value="false" />
   <arg name="wayarea_gridmap_layer" value="wayarea" />
   <arg name="remove_points_upto" value="0.0" />
-  <arg name="use_gpu" value="false" />
+  <arg name="use_gpu" value="$(arg cuda)" />
   <arg name="use_multiple_thres" value="false"/>
   <arg name="clustering_ranges" value="[15,30,45,60]"/><!-- Distances to segment pointcloud -->
   <arg name="clustering_distances"
