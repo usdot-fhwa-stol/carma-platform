@@ -46,8 +46,16 @@ namespace yield_plugin
     plugin_discovery_msg_.available = true;
     plugin_discovery_msg_.activated = false;
     plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
-    plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";    
-    
+    plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
+
+    try
+    {
+      tf_ = tf2_buffer_.lookupTransform("map", "earth", ros::Time(0));
+    }
+    catch (const tf2::TransformException &ex)
+    {
+      ROS_WARN("%s", ex.what());
+    }    
   }
 
   bool YieldPlugin::onSpin() 
@@ -81,6 +89,28 @@ namespace yield_plugin
     std::vector<lanelet::BasicPoint2d> intersection_points;
     boost::geometry::intersection(traj1, traj2, intersection_points);
 
+    return intersection_points;
+  }
+
+  std::vector<lanelet::BasicPoint2d> YieldPlugin::detect_trajectories_intersection2(std::vector<lanelet::BasicPoint2d> self_trajectory, std::vector<lanelet::BasicPoint2d> incoming_trajectory) const
+  {
+    std::vector<lanelet::BasicPoint2d> intersection_points;
+    boost::geometry::model::linestring<lanelet::BasicPoint2d> self_traj;
+    for (auto tpp:self_trajectory)
+    {
+      boost::geometry::append(self_traj, tpp);
+    }
+    // distance to consider trajectories colliding (chosen based on lane width and vehicle size)
+    double acceptable_distance = 2.0;
+    for (size_t i=0; i<incoming_trajectory.size(); i++)
+    {
+      double res = boost::geometry::distance(incoming_trajectory[i], self_traj);
+    
+      if (fabs(res) <= acceptable_distance)
+      {
+        intersection_points.push_back(incoming_trajectory[i]);
+      }
+    }
     return intersection_points;
   }
 
@@ -138,7 +168,7 @@ namespace yield_plugin
       {
         ROS_DEBUG_STREAM("Cooperative Lane Change Request Received");
         lc_status_msg.status = cav_msgs::LaneChangeStatus::REQUEST_RECEIVED;
-        lc_status_msg.description = "Cooperative Lane Change Request Received";
+        lc_status_msg.description = "Received lane merge request";
         if (incoming_request.header.recipient_id == config_.vehicle_id)
         {
           ROS_DEBUG_STREAM("CLC Request correctly received");
@@ -165,15 +195,17 @@ namespace yield_plugin
 
 
         std::vector<lanelet::BasicPoint2d> req_traj_plan = {};
-        try
-        {
-          geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("map", "earth", ros::Time(0));
-          req_traj_plan = convert_eceftrajectory_to_mappoints(incoming_trajectory, tf);
-        }
-        catch (const tf2::TransformException &ex)
-        {
-            ROS_WARN("%s", ex.what());
-        }
+
+        req_traj_plan = convert_eceftrajectory_to_mappoints(incoming_trajectory, tf_);
+        // try
+        // {
+        //   geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("map", "earth", ros::Time(0));
+        //   req_traj_plan = convert_eceftrajectory_to_mappoints(incoming_trajectory, tf);
+        // }
+        // catch (const tf2::TransformException &ex)
+        // {
+        //     ROS_WARN("%s", ex.what());
+        // }
 
         double req_expiration_sec = incoming_request.expiration/1000;
         double current_time = ros::Time::now().toSec();
@@ -186,19 +218,17 @@ namespace yield_plugin
           double req_plan_time = req_expiration_sec - current_time;
           set_incoming_request_info(req_traj_plan, req_traj_speed, req_plan_time);
           lc_status_msg.status = cav_msgs::LaneChangeStatus::REQUEST_ACCEPTED;
-          lc_status_msg.description = "Cooperative Lane Change Request Accepted by Yield Plugin";
-        
+          lc_status_msg.description = "Accepted lane merge request";
         }
         else
         {
           ROS_DEBUG_STREAM("Igonore expired Mobility Request.");
           outgoing_response.is_accepted = false;
           lc_status_msg.status = cav_msgs::LaneChangeStatus::REQUEST_REJECTED;
-          lc_status_msg.description = "Cooperative Lane Change Request Rejected by Yield Plugin";
+          lc_status_msg.description = "Rejected lane merge request";
         }
         mobility_response_publisher_(outgoing_response);
         lc_status_msg.status = cav_msgs::LaneChangeStatus::RESPONSE_SENT;
-        lc_status_msg.description = "Cooperative Lane Change Response Sent";
       }
     }
     if (lanechange_status_pub_.isLatched())
@@ -207,7 +237,7 @@ namespace yield_plugin
     }
     else
     {
-      ROS_WARN("Lane Change Status Topic is not latched.")
+      ROS_WARN("Lane Change Status Topic is not latched.");
     }
     
   }

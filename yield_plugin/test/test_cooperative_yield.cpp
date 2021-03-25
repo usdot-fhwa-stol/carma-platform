@@ -103,6 +103,38 @@ TEST(YieldPluginTest, test_detect_trajectories_intersection)
 
 }
 
+TEST(YieldPluginTest, test_detect_trajectories_intersection2)
+{
+  YieldPluginConfig config;
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
+
+  std::vector<lanelet::BasicPoint2d> v1, v2;
+
+  lanelet::BasicPoint2d p1, p2, p3;
+  p1.x() = 1;
+  p1.y() = 1;
+  p2.x() = 2;
+  p2.y() = 2;
+  p3.x() = 3;
+  p3.y() = 3;
+  v1 = {p1, p2, p3};
+
+  
+  lanelet::BasicPoint2d p4;
+  p4.x() = 2.5;
+  p4.y() = 0;
+  lanelet::BasicPoint2d p5;
+  p5.x() = 0;
+  p5.y() = 2.5;
+  v2 = {p4, p5};
+
+  std::vector<lanelet::BasicPoint2d> output = plugin.detect_trajectories_intersection2(v1, v2);
+  EXPECT_EQ(output.size(), 2);
+  EXPECT_EQ(output[0].x(), 2.5);
+
+}
+
 TEST(YieldPluginTest, test_update_clc_trajectory)
 {
     YieldPluginConfig config;

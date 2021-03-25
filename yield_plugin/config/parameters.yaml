@@ -44,4 +44,4 @@ max_stop_speed: 1.0
 enable_cooperative_behavior: true 
 # parameter to always accept mobility request
 # Value type: Desired
-always_accept_mobility_request: true 
+always_accept_mobility_request: true

@@ -142,6 +142,7 @@ public:
 
   /**
    * \brief convert a carma trajectory from ecef frame to map frame
+   * ecef trajectory consists of the point and a set of offsets with reference to the point
    * \param ecef_trajectory carma trajectory (ecef frame)
    * \param tf translate frame 
    * \return vector of 2d points in map frame
@@ -183,6 +184,8 @@ public:
    * \return vector of 2d intersection points
    */
   std::vector<lanelet::BasicPoint2d> detect_trajectories_intersection(std::vector<lanelet::BasicPoint2d> trajectory1, std::vector<lanelet::BasicPoint2d> trajectory2) const;
+  std::vector<lanelet::BasicPoint2d> detect_trajectories_intersection2(std::vector<lanelet::BasicPoint2d> self_trajectory, std::vector<lanelet::BasicPoint2d> incoming_trajectory) const;
+  
 
   /**
    * \brief set values for member variables related to cooperative behavior
@@ -207,6 +210,7 @@ private:
   PublishPluginDiscoveryCB plugin_discovery_publisher_;
   MobilityResponseCB mobility_response_publisher_;
   ros::Publisher lanechange_status_pub_;
+  geometry_msgs::TransformStamped tf_;
 
   // incoming request trajectory information:
   std::vector <lanelet::BasicPoint2d> req_trajectory_points_;

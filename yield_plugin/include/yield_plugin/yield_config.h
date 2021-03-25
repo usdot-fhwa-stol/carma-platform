@@ -35,7 +35,7 @@ struct YieldPluginConfig
   double max_stop_speed = 1.0;           //  Maximum speed value to consider the ego vehicle stopped in m/s
   bool enable_cooperative_behavior = true;       //parameter to enable cooperative behavior
   bool always_accept_mobility_request = true;       //parameter to always accept mobility request
-  std::string vehicle_id = "USDOT-49096";         // Vehicle id is the license plate of the vehicle
+  std::string vehicle_id = "DEFAULT_VEHICLE_ID";         // Vehicle id is the license plate of the vehicle
 
 
   friend std::ostream& operator<<(std::ostream& output, const YieldPluginConfig& c)
@@ -52,6 +52,7 @@ struct YieldPluginConfig
           << "max_stop_speed: " << c.max_stop_speed << std::endl
           << "enable_cooperative_behavior: " << c.enable_cooperative_behavior << std::endl
           << "always_accept_mobility_request: " << c.always_accept_mobility_request << std::endl
+          << "vehicle_id: " << c.vehicle_id << std::endl
           << "}" << std::endl;
     return output;
   }
