@@ -52,7 +52,7 @@ namespace health_monitor
         //EXPECT_EQ(0, res.plugins.begin()->type);
         //EXPECT_EQ(0, res.plugins.begin()->versionId.compare(""));
         // for lane change plugin
-        EXPECT_EQ(1, std::prev(res.plugins.end())->activated);
+        EXPECT_EQ(false, std::prev(res.plugins.end())->activated);
         EXPECT_EQ(true, std::prev(res.plugins.end())->available);
         EXPECT_EQ(0, std::prev(res.plugins.end())->name.compare("lane_change"));
         //EXPECT_EQ(0, std::prev(res.plugins.end())->type);
