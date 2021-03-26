@@ -202,26 +202,18 @@ namespace yield_plugin
         std::vector<lanelet::BasicPoint2d> req_traj_plan = {};
 
         req_traj_plan = convert_eceftrajectory_to_mappoints(incoming_trajectory, tf_);
-        // try
-        // {
-        //   geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("map", "earth", ros::Time(0));
-        //   req_traj_plan = convert_eceftrajectory_to_mappoints(incoming_trajectory, tf);
-        // }
-        // catch (const tf2::TransformException &ex)
-        // {
-        //     ROS_WARN("%s", ex.what());
-        // }
 
         double req_expiration_sec = incoming_request.expiration/1000;
         double current_time = ros::Time::now().toSec();
 
         bool response_to_clc_req;
         // ensure there is enough time for the yield
-        if (req_expiration_sec - current_time >= config_.tpmin)
+        if (req_expiration_sec - current_time >= config_.tpmin && accept_cooperative_request)
         {
           received_cooperative_request_ = true;
           double req_plan_time = req_expiration_sec - current_time;
           set_incoming_request_info(req_traj_plan, req_traj_speed, req_plan_time);
+          // if time, speed, ddistance
           lc_status_msg.status = cav_msgs::LaneChangeStatus::REQUEST_ACCEPTED;
           lc_status_msg.description = "Accepted lane merge request";
           response_to_clc_req = true;
@@ -275,7 +267,6 @@ namespace yield_plugin
     // seperating cooperative yield with regular object detection for better performance.
     if (config_.enable_cooperative_behavior && received_cooperative_request_)
     {
-      // tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
       yield_trajectory = update_traj_for_cooperative_behavior(original_trajectory, req.vehicle_state.longitudinal_vel);
       // reset the flag
       received_cooperative_request_ = false;
@@ -312,17 +303,31 @@ namespace yield_plugin
       host_traj_points.push_back(traj_point);
     }
 
-    std::vector<lanelet::BasicPoint2d> intersection_points = detect_trajectories_intersection(host_traj_points, req_trajectory_points_);
+    std::vector<lanelet::BasicPoint2d> intersection_points = detect_trajectories_intersection2(host_traj_points, req_trajectory_points_);
     if (!intersection_points.empty())
     {
       lanelet::BasicPoint2d first_point = intersection_points[0];
       double dx = original_tp.trajectory_points[0].x - first_point.x();
       double dy = original_tp.trajectory_points[0].y - first_point.y();
       goal_pos = sqrt(dx*dx + dy*dy) - config_.x_gap;
-      cooperative_trajectory = generate_JMT_trajectory(original_tp, initial_pos, goal_pos, initial_velocity, goal_velocity, planning_time);                                                         
+
+      double minimum_dist = 0.5*config_.yield_max_deceleration*planning_time*planning_time;
+      if (goal_pos > minimum_dist)
+      {
+        accept_cooperative_request = true;
+        cooperative_trajectory = generate_JMT_trajectory(original_tp, initial_pos, goal_pos, initial_velocity, goal_velocity, planning_time); 
+      }
+      else
+      {
+        accept_cooperative_request = false;
+        ROS_DEBUG_STREAM("The incoming requested trajectory is rejected, due no insufficient gap");
+        cooperative_trajectory = original_tp;
+      }
+                                                              
     }
     else
     {
+      accept_cooperative_request = true;
       ROS_DEBUG_STREAM("The incoming requested trajectory does not overlap with host vehicle's trajectory");
       cooperative_trajectory = original_tp;
     }
@@ -330,7 +335,7 @@ namespace yield_plugin
     return cooperative_trajectory;
   }
 
-  cav_msgs::TrajectoryPlan YieldPlugin::generate_JMT_trajectory(const cav_msgs::TrajectoryPlan& original_tp, double initial_pos, double goal_pos, double initial_velocity, double goal_velocity, double planning_time)                                                         
+  cav_msgs::TrajectoryPlan YieldPlugin::generate_JMT_trajectory(const cav_msgs::TrajectoryPlan& original_tp, double initial_pos, double goal_pos, double initial_velocity, double goal_velocity, double planning_time) const                                                         
   {
     cav_msgs::TrajectoryPlan jmt_trajectory;
     std::vector<cav_msgs::TrajectoryPlanPoint> jmt_trajectory_points;

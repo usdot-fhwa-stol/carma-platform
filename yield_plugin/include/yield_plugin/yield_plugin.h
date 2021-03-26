@@ -168,7 +168,7 @@ public:
    * \param planning_time time duration of the planning
    * \return updated JMT trajectory 
    */
-  cav_msgs::TrajectoryPlan generate_JMT_trajectory(const cav_msgs::TrajectoryPlan& original_tp, double initial_pos, double goal_pos, double initial_velocity, double goal_velocity, double planning_time);
+  cav_msgs::TrajectoryPlan generate_JMT_trajectory(const cav_msgs::TrajectoryPlan& original_tp, double initial_pos, double goal_pos, double initial_velocity, double goal_velocity, double planning_time) const;
   
   /**
    * \brief update trajectory for yielding to an incoming cooperative behavior
@@ -215,6 +215,8 @@ private:
   MobilityResponseCB mobility_response_publisher_;
   ros::Publisher lanechange_status_pub_;
   geometry_msgs::TransformStamped tf_;
+
+  bool accept_cooperative_request = false;
 
   // incoming request trajectory information:
   std::vector <lanelet::BasicPoint2d> req_trajectory_points_;
