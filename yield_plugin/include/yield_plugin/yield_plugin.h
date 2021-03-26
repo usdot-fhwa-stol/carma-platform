@@ -184,8 +184,7 @@ public:
    * \param trajectory2 vector of 2d trajectory points
    * \return vector of 2d intersection points
    */
-  std::vector<lanelet::BasicPoint2d> detect_trajectories_intersection(std::vector<lanelet::BasicPoint2d> trajectory1, std::vector<lanelet::BasicPoint2d> trajectory2) const;
-  std::vector<lanelet::BasicPoint2d> detect_trajectories_intersection2(std::vector<lanelet::BasicPoint2d> self_trajectory, std::vector<lanelet::BasicPoint2d> incoming_trajectory) const;
+  std::vector<lanelet::BasicPoint2d> detect_trajectories_intersection(std::vector<lanelet::BasicPoint2d> self_trajectory, std::vector<lanelet::BasicPoint2d> incoming_trajectory) const;
   
 
   /**
@@ -216,12 +215,14 @@ private:
   ros::Publisher lanechange_status_pub_;
   geometry_msgs::TransformStamped tf_;
 
-  bool accept_cooperative_request = false;
+  // flag to show if it is possible for the vehicle to accept the cooperative request
+  bool cooperative_request_acceptable_ = false;
 
   // incoming request trajectory information:
   std::vector <lanelet::BasicPoint2d> req_trajectory_points_;
   double req_target_speed_;
   double req_target_plan_time_;
+  int timesteps_since_last_req_ = 0;
 
 
   cav_msgs::Plugin plugin_discovery_msg_;
@@ -233,8 +234,6 @@ private:
   // TF listenser
   tf2_ros::Buffer tf2_buffer_;
   std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
-
-  bool received_cooperative_request_ = false;
 
   std::string bsmIDtoString(cav_msgs::BSMCoreData bsm_core)
   {

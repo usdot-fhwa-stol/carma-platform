@@ -45,3 +45,10 @@ enable_cooperative_behavior: true
 # parameter to always accept mobility request
 # Value type: Desired
 always_accept_mobility_request: true
+# Acceptable number of timesteps to use the latest known mobility request before switching to yield
+# Value type: Desired
+acceptable_passed_timesteps: 3
+# Intervehicle distance that is considered a collision
+# Unit: m
+# Value type: Desired
+intervehicle_collision_distance: 2.0

@@ -65,6 +65,8 @@ public:
     pnh.getParam("/vehicle_width", config.vehicle_width);
     pnh.getParam("/vehicle_id", config.vehicle_id);
     pnh.param<bool>("always_accept_mobility_request", config.always_accept_mobility_request, config.always_accept_mobility_request);
+    pnh.param<int>("acceptable_passed_timesteps", config.acceptable_passed_timesteps, config.acceptable_passed_timesteps);
+    pnh.param<double>("intervehicle_collision_distance", config.intervehicle_collision_distance, config.intervehicle_collision_distance);
     ROS_INFO_STREAM("YieldPlugin Params" << config);
 
     YieldPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); }, [&mob_resp_pub](auto msg) { mob_resp_pub.publish(msg); });
@@ -76,7 +78,7 @@ public:
     ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/Yieldlugin/plan_trajectory",
                                             &YieldPlugin::plan_trajectory_cb, &worker);
     ros::Subscriber mob_request_sub = nh.subscribe("incoming_mobility_request", 5, &YieldPlugin::mobilityrequest_cb,  &worker);
-    ros::Subscriber bsm_sub_ = nh.subscribe("bsm_outbound", 1, &YieldPlugin::bsm_cb,  &worker);
+    ros::Subscriber bsm_sub = nh.subscribe("bsm_outbound", 1, &YieldPlugin::bsm_cb,  &worker);
     
 
     ros::CARMANodeHandle::setSpinCallback(std::bind(&YieldPlugin::onSpin, &worker));

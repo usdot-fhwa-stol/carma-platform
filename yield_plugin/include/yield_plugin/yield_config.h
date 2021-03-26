@@ -36,6 +36,8 @@ struct YieldPluginConfig
   bool enable_cooperative_behavior = true;       //parameter to enable cooperative behavior
   bool always_accept_mobility_request = true;       //parameter to always accept mobility request
   std::string vehicle_id = "DEFAULT_VEHICLE_ID";         // Vehicle id is the license plate of the vehicle
+  int acceptable_passed_timesteps = 3;              // acceptable number of timesteps to use the latest known mobility request before switching to yield
+  double intervehicle_collision_distance = 2.0;    //Intervehicle distance that is considered a collision
 
 
   friend std::ostream& operator<<(std::ostream& output, const YieldPluginConfig& c)
@@ -53,6 +55,8 @@ struct YieldPluginConfig
           << "enable_cooperative_behavior: " << c.enable_cooperative_behavior << std::endl
           << "always_accept_mobility_request: " << c.always_accept_mobility_request << std::endl
           << "vehicle_id: " << c.vehicle_id << std::endl
+          << "acceptable_passed_timesteps: " << c.acceptable_passed_timesteps << std::endl
+          << "intervehicle_collision_distance: " << c.intervehicle_collision_distance << std::endl
           << "}" << std::endl;
     return output;
   }
