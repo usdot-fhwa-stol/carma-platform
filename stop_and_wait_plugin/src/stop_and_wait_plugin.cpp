@@ -254,28 +254,12 @@ namespace stop_and_wait_plugin
                 auto temp_state = state;
                 
                 // maneuver end dist index
-                temp_state.X_pos_global = wm_->getRoute()->getEndPoint().basicPoint2d().x();
-                temp_state.Y_pos_global =  wm_->getRoute()->getEndPoint().basicPoint2d().y();
-                ROS_ERROR_STREAM("temp_state.X_pos_global" << temp_state.X_pos_global);
-                ROS_ERROR_STREAM("temp_state.Y_pos_global" << temp_state.Y_pos_global);
+                int ending_downtrack_pt_index = (int)(route_geometry.size() * (ending_downtrack / wm_->getRoute()->length2d()));
+                ROS_DEBUG_STREAM("ending_downtrack: " << ending_downtrack);
+                ROS_DEBUG_STREAM("ending_downtrack_pt_index" << ending_downtrack_pt_index);
+                ROS_DEBUG_STREAM("nearest_pt_index" << nearest_pt_index);
 
-                int route_end_pt_index = getNearestRouteIndex(route_geometry,temp_state);
-                
-                int ending_downtrack_pt_index = (int)route_geometry.size() * (ending_downtrack / wm_->getRoute()->length2d());
-                ROS_ERROR_STREAM("SDSDSD33a: ending_downtrack: " << ending_downtrack);
-                ROS_ERROR_STREAM("SDSDSD33a: wm_->getRoute()->length2d(): " << wm_->getRoute()->length2d());
-                ROS_ERROR_STREAM("SDSDSD33a: route_geometry.size(): " << route_geometry.size());
-
-                ROS_ERROR_STREAM("SDSDSD33a: ending_downtrack_pt_index" << ending_downtrack_pt_index);
-
-                int ending_downtrack_pt_index2 = (int)route_geometry.size() * (wm->getRouteEndTrackPos().downtrack / wm_->getRoute()->length2d());
-                ROS_ERROR_STREAM("SDSDSD33a: wm->getRouteEndTrackPos().downtrack: " << wm->getRouteEndTrackPos().downtrack);
-                ROS_ERROR_STREAM("SDSDSD33a:  wm_->getRoute()->length2d(): " <<  wm_->getRoute()->length2d());
-                ROS_ERROR_STREAM("SDSDSD33a: ending_downtrack_pt_index2 calc2: " << ending_downtrack_pt_index2);
-                ROS_ERROR_STREAM("SDSDSD33b: route_end_pt_index " << route_end_pt_index);
-
-                int nearest_end_pt_index = ending_downtrack_pt_index;
-                lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.begin()+ nearest_end_pt_index);
+                lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.begin()+ ending_downtrack_pt_index);
                 
                 int points_count = future_route_geometry.size();
                 delta_time = maneuver_time_/(points_count-1);
