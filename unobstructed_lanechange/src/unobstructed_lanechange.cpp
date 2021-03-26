@@ -529,7 +529,6 @@ namespace unobstructed_lanechange
         return best_index;
     }
 
-
     lanelet::BasicLineString2d  UnobstructedLaneChangePlugin::create_lanechange_path(lanelet::BasicPoint2d start, lanelet::ConstLanelet& start_lanelet, lanelet::BasicPoint2d end, lanelet::ConstLanelet& end_lanelet)
     {
         std::vector<lanelet::BasicPoint2d> centerline_points={};

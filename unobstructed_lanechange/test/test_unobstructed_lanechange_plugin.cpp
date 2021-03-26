@@ -192,7 +192,6 @@ namespace unobstructed_lanechange
         lanelet::Lanelet end_lanelet = map->laneletLayer.get(end_id);
         lanelet::BasicPoint2d start_position(vehicle_state.X_pos_global, vehicle_state.Y_pos_global);
         lanelet::BasicPoint2d end_position = end_lanelet.centerline2d().basicLineString().back() ;
-
         lanelet::BasicLineString2d lc_route = worker.create_lanechange_path(start_position, start_lanelet, end_position, end_lanelet);
 
         //Test Compute heading frame between two points

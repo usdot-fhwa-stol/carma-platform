@@ -98,9 +98,7 @@ namespace unobstructed_lanechange
              * \param end_lanelet The lanelet in which lane change ends
              * \return A linestring path from start to end fit through Spline Library
              */
-
             lanelet::BasicLineString2d create_lanechange_path(lanelet::BasicPoint2d start, lanelet::ConstLanelet& start_lanelet, lanelet::BasicPoint2d end, lanelet::ConstLanelet& end_lanelet);
-
             
             /**
              * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of trajectory points for trajectory planning
