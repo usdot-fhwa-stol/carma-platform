@@ -78,6 +78,16 @@ add_library(unobstructed_lanechange_plugin_lib src/unobstructed_lanechange.cpp s
 target_link_libraries(${PROJECT_NAME} unobstructed_lanechange_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(unobstructed_lanechange_plugin_lib ${catkin_EXPORTED_TARGETS})
 
+add_library(lc_helper test/helper.cpp)
+target_link_libraries(lc_helper
+  ${catkin_LIBRARIES}
+)
+
+add_executable(lc_helper_node test/helper.cpp)
+target_link_libraries(lc_helper_node
+  lc_helper
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
@@ -114,3 +124,9 @@ catkin_add_gmock(${PROJECT_NAME}-test
  test/test_unobstructed_lanechange_plugin.cpp
  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
 target_link_libraries(${PROJECT_NAME}-test unobstructed_lanechange_plugin_lib ${catkin_LIBRARIES})
+
+if(CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(rostest_ulc test/ulc_plugin.test test/rostest_ulc.cpp)
+  target_link_libraries(rostest_ulc ${catkin_LIBRARIES})
+endif()

@@ -167,7 +167,7 @@ namespace route_following_plugin
         // Minimal duration of maneuver, loaded from config file
         double mvr_duration_;
         //Jerk used to come to stop at end of route
-        double jerk_ = 0.25;
+        double jerk_ = 0.05;
         //extra time allowed for lane changing, in order to make transition smooth
         double buffer_lanechange_time_ = 1.0;
 
@@ -175,6 +175,9 @@ namespace route_following_plugin
         static constexpr double LATERAL_ACCELERATION_LIMIT_IN_MS=2.00;
         static const int MAX_LANE_WIDTH=3.70;
         static constexpr double LANE_CHANGE_TIME_MAX=sqrt(2*MAX_LANE_WIDTH/LATERAL_ACCELERATION_LIMIT_IN_MS);
+
+        //Small constant to compare double with approx zero
+        const double epislon_ = 0.001;
 
         // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;

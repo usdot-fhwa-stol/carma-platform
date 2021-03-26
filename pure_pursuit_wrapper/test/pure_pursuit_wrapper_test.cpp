@@ -27,8 +27,8 @@ TEST(pure_pursuit_wrapper, trajectoryPlanHandler)
 
   boost::optional<autoware_msgs::Lane> wp_msg;
   boost::optional<cav_msgs::Plugin> plugin_msg;
-
-  pure_pursuit_wrapper::PurePursuitWrapper ppw([&wp_msg](auto msg) { wp_msg = msg; },
+  pure_pursuit_wrapper::PurePursuitWrapperConfig config;
+  pure_pursuit_wrapper::PurePursuitWrapper ppw(config, [&wp_msg](auto msg) { wp_msg = msg; },
                                                [&plugin_msg](auto msg) { plugin_msg = msg; });
 
   cav_msgs::TrajectoryPlanPoint tpp, tpp2, tpp3;
@@ -77,8 +77,8 @@ TEST(pure_pursuit_wrapper, onSpin)
 
   boost::optional<autoware_msgs::Lane> wp_msg;
   boost::optional<cav_msgs::Plugin> plugin_msg;
-
-  pure_pursuit_wrapper::PurePursuitWrapper ppw([&wp_msg](auto msg) { wp_msg = msg; },
+  pure_pursuit_wrapper::PurePursuitWrapperConfig config;
+  pure_pursuit_wrapper::PurePursuitWrapper ppw(config, [&wp_msg](auto msg) { wp_msg = msg; },
                                                [&plugin_msg](auto msg) { plugin_msg = msg; });
 
   ASSERT_FALSE(!!plugin_msg);
