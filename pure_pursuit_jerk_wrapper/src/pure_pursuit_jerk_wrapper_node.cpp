@@ -30,6 +30,8 @@ int main(int argc, char** argv)
   pure_pursuit_jerk_wrapper::PurePursuitJerkWrapperConfig config;
   nh.param<double>("/vehicle_response_lag", config.vehicle_response_lag, config.vehicle_response_lag);
 
+
+  ROS_INFO_STREAM("" << config);
   pure_pursuit_jerk_wrapper::PurePursuitJerkWrapper purePursuitJerkWrapper(
       config,
       [&waypoints_pub](auto msg) { waypoints_pub.publish(msg); },

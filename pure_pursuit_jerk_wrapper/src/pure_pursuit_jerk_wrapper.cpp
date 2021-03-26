@@ -20,8 +20,8 @@
 
 namespace pure_pursuit_jerk_wrapper
 {
-PurePursuitJerkWrapper::PurePursuitJerkWrapper(PurePursuitJerkWrapperConfig config,WaypointPub waypoint_pub, PluginDiscoveryPub plugin_discovery_pub)
-  : waypoint_pub_(waypoint_pub), plugin_discovery_pub_(plugin_discovery_pub)
+PurePursuitJerkWrapper::PurePursuitJerkWrapper(PurePursuitJerkWrapperConfig config, WaypointPub waypoint_pub, PluginDiscoveryPub plugin_discovery_pub)
+  : config_(config), waypoint_pub_(waypoint_pub), plugin_discovery_pub_(plugin_discovery_pub)
 {
   plugin_discovery_msg_.name = "Pure Pursuit Jerk";
   plugin_discovery_msg_.versionId = "v1.0";
@@ -57,7 +57,7 @@ void PurePursuitJerkWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPla
     throw std::invalid_argument("Speeds and trajectory points sizes do not match");
   }
 
-  std::vector<double> lag_speeds = apply_response_lag(speeds, downtracks, 0.5); // This call requires that the first speed point be current speed to work as expected
+  std::vector<double> lag_speeds = apply_response_lag(speeds, downtracks, config_.vehicle_response_lag); // This call requires that the first speed point be current speed to work as expected
 
   autoware_msgs::Lane lane;
   lane.header = tp->header;

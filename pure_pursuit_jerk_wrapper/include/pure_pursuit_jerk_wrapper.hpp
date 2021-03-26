@@ -54,7 +54,7 @@ class PurePursuitJerkWrapper {
     PluginDiscoveryPub plugin_discovery_pub_;
     ros::Subscriber jerk_sub_; 
     cav_msgs::Plugin plugin_discovery_msg_;
-
+    PurePursuitJerkWrapperConfig config_;
     double jerk_;
 
 };

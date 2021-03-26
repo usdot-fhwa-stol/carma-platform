@@ -566,14 +566,38 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
         } else {
           downsampled_points = carma_utils::containers::downsample_vector(centerline, config_.default_downsample_ratio);
         }
+
+        if (downsampled_centerline.size() != 0 && downsampled_points.size() != 0 // If this is not the first lanelet and the points are closer than 1m drop the first point to prevent overlap
+        && lanelet::geometry::distance2d(downsampled_points.front(), downsampled_centerline.back()) < 1.2) { 
+          ROS_DEBUG_STREAM("Dropping first point due to overlap");
+          downsampled_points = lanelet::BasicLineString2d(downsampled_points.begin() + 1, downsampled_points.end());
+        }
+
         downsampled_centerline = carma_wm::geometry::concatenate_line_strings(downsampled_centerline, downsampled_points);
+        
         visited_lanelets.insert(l.id());
       }
     }
 
 
+
+    std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(downsampled_centerline);
+
+    double starting_route_downtrack = wm_->routeTrackPos(downsampled_centerline.back()).downtrack; // TODO probably should move this out of the maneuver loop after points and target speeds is computed
+    size_t i = 0;
+    size_t max_i = 0;
+    for (auto downtrack : downtracks) {
+      if ((downtrack  + starting_route_downtrack) > lane_following_maneuver.end_dist) {
+        max_i = i;
+        break;
+      }
+      i++;
+    }
+
+    lanelet::BasicLineString2d constrained_points(downsampled_centerline.begin(), downsampled_centerline.begin() + max_i);
+
     first = true;
-    for (auto p : downsampled_centerline)
+    for (auto p : constrained_points)
     {
       if (first && points_and_target_speeds.size() != 0)
       {
