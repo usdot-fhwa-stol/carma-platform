@@ -45,7 +45,6 @@ InLaneCruisingPlugin::InLaneCruisingPlugin(carma_wm::WorldModelConstPtr wm, InLa
                                            PublishPluginDiscoveryCB plugin_discovery_publisher)
   : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
 {
-  object_avoidance::ObjectAvoidance obj_;
   plugin_discovery_msg_.name = "InLaneCruisingPlugin";
   plugin_discovery_msg_.versionId = "v1.0";
   plugin_discovery_msg_.available = true;
@@ -87,21 +86,49 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
 
   ROS_DEBUG_STREAM("PlanTrajectory");
 
-  cav_msgs::TrajectoryPlan trajectory;
-  trajectory.header.frame_id = "map";
-  trajectory.header.stamp = ros::Time::now();
-  trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
+  cav_msgs::TrajectoryPlan original_trajectory;
+  original_trajectory.header.frame_id = "map";
+  original_trajectory.header.stamp = ros::Time::now();
+  original_trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
-  trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state); // Compute the trajectory
-  trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
+  original_trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state); // Compute the trajectory
+  original_trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
 
   if (config_.enable_object_avoidance)
   {
-    resp.trajectory_plan = obj_.update_traj_for_object(trajectory, wm_, req.vehicle_state.longitudinal_vel);
+    if (yield_client_ && yield_client_.exists() && yield_client_.isValid())
+    {
+      ROS_DEBUG_STREAM("Yield Client is valid");
+      cav_srvs::PlanTrajectory yield_srv;
+      yield_srv.request.initial_trajectory_plan = original_trajectory;
+      yield_srv.request.vehicle_state = req.vehicle_state;
+
+      if (yield_client_.call(yield_srv))
+      {
+        cav_msgs::TrajectoryPlan yield_plan = yield_srv.response.trajectory_plan;
+        if (validate_yield_plan(yield_plan))
+        {
+          resp.trajectory_plan = yield_plan;
+        }
+        else
+        {
+          throw std::invalid_argument("Invalid Yield Trajectory");
+        }
+      }
+      else
+      {
+        throw std::invalid_argument("Unable to Call Yield Plugin");
+      }
+    }
+    else
+    {
+      throw std::invalid_argument("Yield Client is unavailable");
+    }
+    
   }
   else
   {
-    resp.trajectory_plan = trajectory;
+    resp.trajectory_plan = original_trajectory;
   }
   
   resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_FOLLOWING);
@@ -611,5 +638,32 @@ double InLaneCruisingPlugin::compute_curvature_at(const inlanecruising_plugin::s
   Eigen::Vector3d f_prime_prime = {f_prime_prime_pt.x(), f_prime_prime_pt.y(), 0};
   return (f_prime.cross(f_prime_prime)).norm()/(pow(f_prime.norm(),3));
 }
+
+void InLaneCruisingPlugin::set_yield_client(ros::ServiceClient& client)
+{
+  yield_client_ = client;
+}
+
+bool InLaneCruisingPlugin::validate_yield_plan(const cav_msgs::TrajectoryPlan& yield_plan)
+{
+  if (yield_plan.trajectory_points.size()>= 2)
+  {
+    if (yield_plan.trajectory_points[0].target_time > ros::Time::now())
+    {
+      return true;
+    }
+    else
+    {
+      ROS_DEBUG_STREAM("Old Yield Trajectory");
+    }
+  }
+  else
+  {
+    ROS_DEBUG_STREAM("Invalid Yield Trajectory"); 
+  }
+  return false;
+}
+
+
 
 }  // namespace inlanecruising_plugin

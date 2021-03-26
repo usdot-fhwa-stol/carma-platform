@@ -53,7 +53,8 @@ class MotionComputationNode
 
   // tf buffer holds the tree of transforms
   tf2_ros::Buffer tf_buffer_;
-
+  std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
+  
   /*!fn initialize()
   \brief lookup ECEF to Map transform from tf2 tree
   \return ECEF to Map transform
@@ -76,7 +77,7 @@ class MotionComputationNode
   \brief General starting point to run this node
   */
   void run();
-  
+
 };
 
 }//object
