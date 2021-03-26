@@ -579,25 +579,8 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
       }
     }
 
-
-
-    std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(downsampled_centerline);
-
-    double starting_route_downtrack = wm_->routeTrackPos(downsampled_centerline.back()).downtrack; // TODO probably should move this out of the maneuver loop after points and target speeds is computed
-    size_t i = 0;
-    size_t max_i = 0;
-    for (auto downtrack : downtracks) {
-      if ((downtrack  + starting_route_downtrack) > lane_following_maneuver.end_dist) {
-        max_i = i;
-        break;
-      }
-      i++;
-    }
-
-    lanelet::BasicLineString2d constrained_points(downsampled_centerline.begin(), downsampled_centerline.begin() + max_i);
-
     first = true;
-    for (auto p : constrained_points)
+    for (auto p : downsampled_centerline)
     {
       if (first && points_and_target_speeds.size() != 0)
       {
@@ -611,7 +594,33 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
     }
   }
 
-  return points_and_target_speeds;
+  double starting_route_downtrack = wm_->routeTrackPos(points_and_target_speeds.back().point).downtrack; 
+  size_t i = 0;
+  size_t max_i = 0;
+  double dist_accumulator = starting_route_downtrack;
+  lanelet::BasicPoint2d prev_point;
+  for (auto point_speed_pair : points_and_target_speeds) {
+    auto current_point = point_speed_pair.point;
+    if (i == 0) {
+      prev_point = current_point;
+      continue;
+    }
+    
+    double delta_d = lanelet::geometry::distance2d(prev_point, current_point);
+    dist_accumulator += delta_d;
+    if (dist_accumulator > maneuvers.back().lane_following_maneuver.end_dist) {
+      max_i = i;
+      break;
+    }
+    prev_point = current_point;
+    i++;
+  }
+  if (max_i == 0) {
+    max_i = i - 1;
+  }
+
+  std::vector<PointSpeedPair> constrained_points(points_and_target_speeds.begin(), points_and_target_speeds.begin() + max_i);
+  return constrained_points;
 }
 
 int InLaneCruisingPlugin::get_nearest_point_index(const std::vector<PointSpeedPair>& points,
