@@ -104,9 +104,8 @@ namespace route_following_plugin
         total_maneuver_length = std::min(total_maneuver_length, route_length);
 
         //Update current status based on prior plan
-        ros::Time current_time = ros::Time::now();
         if(req.prior_plan.maneuvers.size()!=0){
-            current_time = req.prior_plan.planning_completion_time;
+            time_progress = req.prior_plan.planning_completion_time;
             int end_lanelet =0;
             updateCurrentStatus(req.prior_plan.maneuvers.back(),speed_progress,current_progress,end_lanelet);
             last_lanelet_index = findLaneletIndexFromPath(end_lanelet,shortest_path);
@@ -196,7 +195,7 @@ namespace route_following_plugin
         resp.new_plan.maneuvers.push_back(
             composeStopandWaitManeuverMessage(current_progress,total_maneuver_length,
             speed_progress,shortest_path[last_lanelet_index].id(),
-            shortest_path[last_lanelet_index].id(),current_time,time_req_to_stop));
+            shortest_path[last_lanelet_index].id(),time_progress,time_req_to_stop));
         
         ROS_DEBUG_STREAM("Done Loop: approaching_route_end: " << approaching_route_end);
         if(approaching_route_end){
