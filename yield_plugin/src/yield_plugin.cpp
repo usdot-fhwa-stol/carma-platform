@@ -74,9 +74,9 @@ namespace yield_plugin
     lanechange_status_pub_ = publisher;
   }
 
-  std::vector<lanelet::BasicPoint2d> YieldPlugin::detect_trajectories_intersection(std::vector<lanelet::BasicPoint2d> self_trajectory, std::vector<lanelet::BasicPoint2d> incoming_trajectory) const
+  std::vector<std::pair<int, lanelet::BasicPoint2d>> YieldPlugin::detect_trajectories_intersection(std::vector<lanelet::BasicPoint2d> self_trajectory, std::vector<lanelet::BasicPoint2d> incoming_trajectory) const
   {
-    std::vector<lanelet::BasicPoint2d> intersection_points;
+    std::vector<std::pair<int, lanelet::BasicPoint2d>> intersection_points;
     boost::geometry::model::linestring<lanelet::BasicPoint2d> self_traj;
     for (auto tpp:self_trajectory)
     {
@@ -89,7 +89,8 @@ namespace yield_plugin
     
       if (fabs(res) <= config_.intervehicle_collision_distance)
       {
-        intersection_points.push_back(incoming_trajectory[i]);
+        ROS_DEBUG_STREAM("Collision Detected at x: " << incoming_trajectory[i].x() << " and y: " <<  incoming_trajectory[i].y());
+        intersection_points.push_back(std::make_pair(i, incoming_trajectory[i]));
       }
     }
     return intersection_points;
@@ -157,12 +158,10 @@ namespace yield_plugin
         // extract mobility header
         std::string req_sender_id = incoming_request.header.sender_id;
         std::string req_plan_id = incoming_request.header.plan_id;
-        uint64_t req_timestamp = incoming_request.header.timestamp;
         // extract mobility request
         cav_msgs::LocationECEF ecef_location = incoming_request.location;
         cav_msgs::Trajectory incoming_trajectory = incoming_request.trajectory;
         std::string req_strategy_params = incoming_request.strategy_params;
-        
         
 
         // Parse strategy parameters
@@ -180,15 +179,18 @@ namespace yield_plugin
         req_traj_plan = convert_eceftrajectory_to_mappoints(incoming_trajectory, tf_);
 
         double req_expiration_sec = incoming_request.expiration/1000;
-        double current_time = ros::Time::now().toSec();
+        double current_time_sec = ros::Time::now().toSec();
 
         bool response_to_clc_req = false;
         // ensure there is enough time for the yield
-        if (req_expiration_sec - current_time >= config_.tpmin && cooperative_request_acceptable_)
+        double req_plan_time = req_expiration_sec - current_time_sec;
+        double req_timestamp = incoming_request.header.timestamp - current_time_sec;
+        set_incoming_request_info(req_traj_plan, req_traj_speed, req_plan_time, req_timestamp);
+
+
+        if (req_expiration_sec - current_time_sec >= config_.tpmin && cooperative_request_acceptable_)
         {
           timesteps_since_last_req_ = 0;
-          double req_plan_time = req_expiration_sec - current_time;
-          set_incoming_request_info(req_traj_plan, req_traj_speed, req_plan_time);
           lc_status_msg.status = cav_msgs::LaneChangeStatus::REQUEST_ACCEPTED;
           lc_status_msg.description = "Accepted lane merge request";
           response_to_clc_req = true;   
@@ -216,11 +218,12 @@ namespace yield_plugin
     
   }
 
-  void YieldPlugin::set_incoming_request_info(std::vector <lanelet::BasicPoint2d> req_trajectory, double req_speed, double req_planning_time)
+  void YieldPlugin::set_incoming_request_info(std::vector <lanelet::BasicPoint2d> req_trajectory, double req_speed, double req_planning_time, double req_timestamp)
   {
     req_trajectory_points_ = req_trajectory;
     req_target_speed_ = req_speed;
     req_target_plan_time_ = req_planning_time;
+    req_timestamp_ = req_timestamp;
   }
 
 
@@ -228,7 +231,6 @@ namespace yield_plugin
   {
     cav_msgs::BSMCoreData bsm_core_ = msg->core_data;
     host_bsm_id_ = bsmIDtoString(bsm_core_);
-    ROS_ERROR("bsm");
   }
 
   bool YieldPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req,
@@ -285,13 +287,25 @@ namespace yield_plugin
       host_traj_points.push_back(traj_point);
     }
 
-    std::vector<lanelet::BasicPoint2d> intersection_points = detect_trajectories_intersection(host_traj_points, req_trajectory_points_);
+    std::vector<std::pair<int, lanelet::BasicPoint2d>> intersection_points = detect_trajectories_intersection(host_traj_points, req_trajectory_points_);
     if (!intersection_points.empty())
     {
-      lanelet::BasicPoint2d first_point = intersection_points[0];
-      double dx = original_tp.trajectory_points[0].x - first_point.x();
-      double dy = original_tp.trajectory_points[0].y - first_point.y();
+      lanelet::BasicPoint2d intersection_point = intersection_points[0].second;
+      double dx = original_tp.trajectory_points[0].x - intersection_point.x();
+      double dy = original_tp.trajectory_points[0].y - intersection_point.y();
       goal_pos = sqrt(dx*dx + dy*dy) - config_.x_gap;
+
+      double collision_time = req_timestamp_ + (intersection_points[0].first * ecef_traj_time_);
+      planning_time = std::min(planning_time, collision_time);
+      ROS_DEBUG_STREAM("Detected collision time: " << collision_time);
+      ROS_DEBUG_STREAM("Planning time: " << planning_time);
+      // calculate distance traveled from beginning of trajectory to collision point
+      double dx2 = intersection_point.x() - req_trajectory_points_[0].x();
+      double dy2 = intersection_point.y() - req_trajectory_points_[0].y();
+      // calculate incoming trajectory speed from time and distance between trajectory points
+      double incoming_trajectory_speed = sqrt(dx2*dx2 + dy2*dy2)/(intersection_points[0].first * ecef_traj_time_);
+      // calculate goal velocity from request trajectory
+      goal_velocity = std::min(goal_velocity, incoming_trajectory_speed);
 
       double min_time = (initial_velocity - goal_velocity)/config_.yield_max_deceleration;
       if (planning_time > min_time)
@@ -302,7 +316,7 @@ namespace yield_plugin
       else
       {
         cooperative_request_acceptable_ = false;
-        ROS_DEBUG_STREAM("The incoming requested trajectory is rejected, due no insufficient gap");
+        ROS_DEBUG_STREAM("The incoming requested trajectory is rejected, due to insufficient gap");
         cooperative_trajectory = original_tp;
       }
                                                               

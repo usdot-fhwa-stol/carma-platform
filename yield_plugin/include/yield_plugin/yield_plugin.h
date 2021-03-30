@@ -182,9 +182,9 @@ public:
    * \brief detect intersection point(s) of two trajectories
    * \param trajectory1 vector of 2d trajectory points
    * \param trajectory2 vector of 2d trajectory points
-   * \return vector of 2d intersection points
+   * \return vector of pairs of 2d intersection points and index of the point in trajectory array
    */
-  std::vector<lanelet::BasicPoint2d> detect_trajectories_intersection(std::vector<lanelet::BasicPoint2d> self_trajectory, std::vector<lanelet::BasicPoint2d> incoming_trajectory) const;
+  std::vector<std::pair<int, lanelet::BasicPoint2d>> detect_trajectories_intersection(std::vector<lanelet::BasicPoint2d> self_trajectory, std::vector<lanelet::BasicPoint2d> incoming_trajectory) const;
   
 
   /**
@@ -192,8 +192,9 @@ public:
    * \param req_trajectory requested trajectory
    * \param req_speed speed of requested cooperative behavior
    * \param req_planning_time planning time for the requested cooperative behavior
+   * \param req_timestamp the mobility request time stamp 
    */
-  void set_incoming_request_info(std::vector <lanelet::BasicPoint2d> req_trajectory, double req_speed, double req_planning_time);
+  void set_incoming_request_info(std::vector <lanelet::BasicPoint2d> req_trajectory, double req_speed, double req_planning_time, double req_timestamp);
 
   /**
    * \brief set the ros publisher for lanechange status topic
@@ -220,9 +221,13 @@ private:
 
   // incoming request trajectory information:
   std::vector <lanelet::BasicPoint2d> req_trajectory_points_;
-  double req_target_speed_;
-  double req_target_plan_time_;
+  double req_target_speed_ = 0;
+  double req_timestamp_ = 0;
+  double req_target_plan_time_ = 0;
   int timesteps_since_last_req_ = 0;
+
+  // time between ecef trajectory points
+  double ecef_traj_time_ = 0.1;
 
 
   cav_msgs::Plugin plugin_discovery_msg_;

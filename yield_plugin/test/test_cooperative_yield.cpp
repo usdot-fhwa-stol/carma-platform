@@ -97,9 +97,10 @@ TEST(YieldPluginTest, test_detect_trajectories_intersection)
   p5.y() = 2.5;
   v2 = {p4, p5};
 
-  std::vector<lanelet::BasicPoint2d> output = plugin.detect_trajectories_intersection(v1, v2);
+  std::vector<std::pair<int, lanelet::BasicPoint2d>> output = plugin.detect_trajectories_intersection(v1, v2);
   EXPECT_EQ(output.size(), 2);
-  EXPECT_EQ(output[0].x(), 2.5);
+  EXPECT_EQ(output[0].first, 0);
+  EXPECT_EQ(output[0].second.x(), 2.5);
 
 }
 
@@ -117,8 +118,9 @@ TEST(YieldPluginTest, test_update_clc_trajectory)
     std::vector<lanelet::BasicPoint2d> incoming_traj = {p1, p2, p3, p4};
 
     double req_speed = 5;
-    double req_time = 5;
-    plugin.set_incoming_request_info(incoming_traj, req_speed, req_time);
+    double req_time = 7;
+    double req_stamp = 5;
+    plugin.set_incoming_request_info(incoming_traj, req_speed, req_time, req_stamp);
 
     cav_msgs::TrajectoryPlan original_tp;
 
@@ -156,7 +158,7 @@ TEST(YieldPluginTest, test_update_clc_trajectory)
 
     trajectory_point_7.x = 20.0;
     trajectory_point_7.y = 20.0;
-    trajectory_point_7.target_time = ros::Time(60);
+    trajectory_point_7.target_time = ros::Time(6);
     
     original_tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4, trajectory_point_5, trajectory_point_6, trajectory_point_7};
 
