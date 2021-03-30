@@ -531,10 +531,7 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
     double starting_downtrack = lane_following_maneuver.start_dist;
     if (first)
     {
-      if (starting_downtrack > max_starting_downtrack)
-      {
-        starting_downtrack = max_starting_downtrack;
-      }
+      starting_downtrack = std::min(starting_downtrack, max_starting_downtrack);
       first = false;
     }
 
@@ -545,7 +542,7 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
     ROS_DEBUG_STREAM("Maneuver");
 
     lanelet::BasicLineString2d downsampled_centerline;
-    downsampled_centerline.reserve(200);
+    downsampled_centerline.reserve(400);
 
     for (auto l : lanelets)
     {
@@ -579,12 +576,12 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
       }
     }
 
-    first = true;
+    bool loop_first = true;
     for (auto p : downsampled_centerline)
     {
-      if (first && points_and_target_speeds.size() != 0)
+      if (loop_first && points_and_target_speeds.size() != 0)
       {
-        first = false;
+        loop_first = false;
         continue;  // Skip the first point if we have already added points from a previous maneuver to avoid duplicates
       }
       PointSpeedPair pair;
@@ -592,6 +589,10 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
       pair.speed = lane_following_maneuver.end_speed;
       points_and_target_speeds.push_back(pair);
     }
+  }
+
+  if (points_and_target_speeds.size() == 0) {
+    throw std::invalid_argument("In-Lane Cruising failed to generate trajectory positions from lanelet centerlines");
   }
 
   double starting_route_downtrack = wm_->routeTrackPos(points_and_target_speeds.back().point).downtrack; 
@@ -616,7 +617,7 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
     i++;
   }
   if (max_i == 0) {
-    max_i = i - 1;
+    max_i = points_and_target_speeds.size() - 1;
   }
 
   std::vector<PointSpeedPair> constrained_points(points_and_target_speeds.begin(), points_and_target_speeds.begin() + max_i);
