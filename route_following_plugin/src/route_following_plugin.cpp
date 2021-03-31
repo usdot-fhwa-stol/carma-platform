@@ -104,8 +104,8 @@ namespace route_following_plugin
 
         bool approaching_route_end = false;
         double time_req_to_stop,stopping_dist;
-        time_req_to_stop = sqrt(2*findSpeedLimit(shortest_path.back())/jerk_); 
-        stopping_dist = findSpeedLimit(shortest_path.back())*time_req_to_stop - (0.167 * jerk_ * pow(time_req_to_stop,3));
+        time_req_to_stop = findSpeedLimit(shortest_path.back()) / (0.5 * accel_limit_); // TODO create accel limit variable
+        stopping_dist = 0.5 * findSpeedLimit(shortest_path.back()) * time_req_to_stop;
         
         if(route_length - current_progress <= stopping_dist){
             approaching_route_end = true;

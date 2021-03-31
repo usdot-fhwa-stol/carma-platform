@@ -97,6 +97,72 @@ namespace stop_and_wait_plugin
         ros::CARMANodeHandle::spin();
     }
 
+    typedef Vector6d = Eigen::Matrix<double, 6, 1>
+
+    Vector6d kinematic_contraints_as_eign(double xi, double xf, double vi, double vf, double ai, double af) {
+        Vector6d state_values;
+        state_values << xi, xf, vi, vf, ai, af;
+        return state_values;
+    }
+
+    Vector6d compute_quintic_coefficients(const Vector6d& constraints, const double period) {
+        Eigen::Matrix<double, 6, 6> mat;
+        const double Tp = period;
+        const double Tp_2 = tp*tp;
+        const double Tp_3 = tp*tp*tp;
+        const double Tp_4 = tp*tp*tp*tp;
+        const double Tp_5 = tp*tp*tp*tp*tp;
+
+        mat << 0, 0, 0, 0, 0, 1,
+               Tp_5, Tp_4, Tp_3, Tp_2, Tp, 1,
+               0, 0, 0, 0, 1, 0,
+               5*Tp_4, 4*Tp_3, 3*Tp_2, 2*Tp, 1, 0,
+               0, 0, 0, 2, 0, 0,
+               20*Tp_3, 12*Tp_2, 6*Tp, 2, 0, 0;
+        
+        return mat.inverse() * constraints;
+    }
+
+
+    std::vector<double> solve_quintic(const std::vector<double>& values, Vector6d coef ) {
+        std::vector<double> output;
+        output.reserve(t.size());
+        for (const auto t : values) {
+            const double t_2 = t*t;
+            const double t_3 = t*t*t;
+            const double t_4 = t*t*t*t;
+            const double t_5 = t*t*t*t*t;
+            output.push_back(coef[0] * t_5 + coef[1] * t_4 + coef[2] * t_3 + coef[3] * t_2 + coef[4] * t + coef[5]);
+        }
+
+        return output;
+    }
+
+    std::vector<double> solve_quintic_first_derv(const std::vector<double>& values, Vector6d coef ) {
+        std::vector<double> output;
+        output.reserve(t.size());
+        for (const auto t : values) {
+            const double t_2 = t*t;
+            const double t_3 = t*t*t;
+            const double t_4 = t*t*t*t;
+            output.push_back(5.0 * coef[0] * t_4 + 4.0 * coef[1] * t_3 + 3.0*coef[2] * t_2 + 2.0 * coef[3] * t + coef[4]);
+        }
+
+        return output;
+    }
+
+    std::vector<double> solve_quintic_second_derv(const std::vector<double>& values, Vector6d coef ) {
+        std::vector<double> output;
+        output.reserve(t.size());
+        for (const auto t : values) {
+            const double t_2 = t*t;
+            const double t_3 = t*t*t;
+            output.push_back(20.0 * coef[0] * t_3 + 12.0 * coef[1] * t_2 + 6.0*coef[2] * t + 2.0 * coef[3]);
+        }
+
+        return output;
+    }
+
     void StopandWait::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
         pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
