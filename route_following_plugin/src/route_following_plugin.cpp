@@ -30,7 +30,7 @@ namespace route_following_plugin
         
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
-        pnh2_.reset(new ros::CARMANodeHandle("/"));
+        gnh_.reset(new ros::CARMANodeHandle("/"));
         
         plan_maneuver_srv_ = nh_->advertiseService("plugins/RouteFollowing/plan_maneuvers", &RouteFollowingPlugin::plan_maneuver_cb, this);
                 
@@ -45,8 +45,8 @@ namespace route_following_plugin
         twist_sub_ = nh_->subscribe("current_velocity", 1, &RouteFollowingPlugin::twist_cd, this);
         
         pnh_->param<double>("minimal_maneuver_duration", mvr_duration_, 16.0);
-        pnh2_->param<double>("config_speed_limit",config_limit);
-        pnh_->param<double>("/guidance/route_end_jerk", jerk_, 1.0);
+        gnh_->param<double>("config_speed_limit",config_limit);
+        pnh_->param<double>("route_end_jerk", jerk_, 1.0);
         wml_.reset(new carma_wm::WMListener());
         // set world model point form wm listener
         wm_ = wml_->getWorldModel();

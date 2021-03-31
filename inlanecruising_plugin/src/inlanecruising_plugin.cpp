@@ -81,15 +81,51 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
 
   ROS_DEBUG_STREAM("PlanTrajectory");
 
-  cav_msgs::TrajectoryPlan trajectory;
-  trajectory.header.frame_id = "map";
-  trajectory.header.stamp = ros::Time::now();
-  trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
+  cav_msgs::TrajectoryPlan original_trajectory;
+  original_trajectory.header.frame_id = "map";
+  original_trajectory.header.stamp = ros::Time::now();
+  original_trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
-  trajectory.trajectory_points = compose_trajectory_from_centerline(points_and_target_speeds, req.vehicle_state, req.header.stamp); // Compute the trajectory
-  trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
+  original_trajectory.trajectory_points = compose_trajectory_from_centerline(points_and_target_speeds, req.vehicle_state, req.header.stamp); // Compute the trajectory
+  original_trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
 
-  resp.trajectory_plan = trajectory;
+  if (config_.enable_object_avoidance)
+  {
+    if (yield_client_ && yield_client_.exists() && yield_client_.isValid())
+    {
+      ROS_DEBUG_STREAM("Yield Client is valid");
+      cav_srvs::PlanTrajectory yield_srv;
+      yield_srv.request.initial_trajectory_plan = original_trajectory;
+      yield_srv.request.vehicle_state = req.vehicle_state;
+
+      if (yield_client_.call(yield_srv))
+      {
+        cav_msgs::TrajectoryPlan yield_plan = yield_srv.response.trajectory_plan;
+        if (validate_yield_plan(yield_plan))
+        {
+          resp.trajectory_plan = yield_plan;
+        }
+        else
+        {
+          throw std::invalid_argument("Invalid Yield Trajectory");
+        }
+      }
+      else
+      {
+        throw std::invalid_argument("Unable to Call Yield Plugin");
+      }
+    }
+    else
+    {
+      throw std::invalid_argument("Yield Client is unavailable");
+    }
+    
+  }
+  else
+  {
+    resp.trajectory_plan = original_trajectory;
+  }
+  
   resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_FOLLOWING);
   resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
@@ -495,10 +531,7 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
     double starting_downtrack = lane_following_maneuver.start_dist;
     if (first)
     {
-      if (starting_downtrack > max_starting_downtrack)
-      {
-        starting_downtrack = max_starting_downtrack;
-      }
+      starting_downtrack = std::min(starting_downtrack, max_starting_downtrack);
       first = false;
     }
 
@@ -509,7 +542,7 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
     ROS_DEBUG_STREAM("Maneuver");
 
     lanelet::BasicLineString2d downsampled_centerline;
-    downsampled_centerline.reserve(200);
+    downsampled_centerline.reserve(400);
 
     for (auto l : lanelets)
     {
@@ -530,18 +563,25 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
         } else {
           downsampled_points = carma_utils::containers::downsample_vector(centerline, config_.default_downsample_ratio);
         }
+
+        if (downsampled_centerline.size() != 0 && downsampled_points.size() != 0 // If this is not the first lanelet and the points are closer than 1m drop the first point to prevent overlap
+        && lanelet::geometry::distance2d(downsampled_points.front(), downsampled_centerline.back()) < 1.2) { 
+          ROS_DEBUG_STREAM("Dropping first point due to overlap");
+          downsampled_points = lanelet::BasicLineString2d(downsampled_points.begin() + 1, downsampled_points.end());
+        }
+
         downsampled_centerline = carma_wm::geometry::concatenate_line_strings(downsampled_centerline, downsampled_points);
+        
         visited_lanelets.insert(l.id());
       }
     }
 
-
-    first = true;
+    bool loop_first = true;
     for (auto p : downsampled_centerline)
     {
-      if (first && points_and_target_speeds.size() != 0)
+      if (loop_first && points_and_target_speeds.size() != 0)
       {
-        first = false;
+        loop_first = false;
         continue;  // Skip the first point if we have already added points from a previous maneuver to avoid duplicates
       }
       PointSpeedPair pair;
@@ -551,7 +591,37 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
     }
   }
 
-  return points_and_target_speeds;
+  if (points_and_target_speeds.size() == 0) {
+    throw std::invalid_argument("In-Lane Cruising failed to generate trajectory positions from lanelet centerlines");
+  }
+
+  double starting_route_downtrack = wm_->routeTrackPos(points_and_target_speeds.back().point).downtrack; 
+  size_t i = 0;
+  size_t max_i = 0;
+  double dist_accumulator = starting_route_downtrack;
+  lanelet::BasicPoint2d prev_point;
+  for (auto point_speed_pair : points_and_target_speeds) {
+    auto current_point = point_speed_pair.point;
+    if (i == 0) {
+      prev_point = current_point;
+      continue;
+    }
+    
+    double delta_d = lanelet::geometry::distance2d(prev_point, current_point);
+    dist_accumulator += delta_d;
+    if (dist_accumulator > maneuvers.back().lane_following_maneuver.end_dist) {
+      max_i = i;
+      break;
+    }
+    prev_point = current_point;
+    i++;
+  }
+  if (max_i == 0) {
+    max_i = points_and_target_speeds.size() - 1;
+  }
+
+  std::vector<PointSpeedPair> constrained_points(points_and_target_speeds.begin(), points_and_target_speeds.begin() + max_i);
+  return constrained_points;
 }
 
 int InLaneCruisingPlugin::get_nearest_point_index(const std::vector<PointSpeedPair>& points,
@@ -616,5 +686,32 @@ double InLaneCruisingPlugin::compute_curvature_at(const inlanecruising_plugin::s
   Eigen::Vector3d f_prime_prime = {f_prime_prime_pt.x(), f_prime_prime_pt.y(), 0};
   return (f_prime.cross(f_prime_prime)).norm()/(pow(f_prime.norm(),3));
 }
+
+void InLaneCruisingPlugin::set_yield_client(ros::ServiceClient& client)
+{
+  yield_client_ = client;
+}
+
+bool InLaneCruisingPlugin::validate_yield_plan(const cav_msgs::TrajectoryPlan& yield_plan)
+{
+  if (yield_plan.trajectory_points.size()>= 2)
+  {
+    if (yield_plan.trajectory_points[0].target_time > ros::Time::now())
+    {
+      return true;
+    }
+    else
+    {
+      ROS_DEBUG_STREAM("Old Yield Trajectory");
+    }
+  }
+  else
+  {
+    ROS_DEBUG_STREAM("Invalid Yield Trajectory"); 
+  }
+  return false;
+}
+
+
 
 }  // namespace inlanecruising_plugin

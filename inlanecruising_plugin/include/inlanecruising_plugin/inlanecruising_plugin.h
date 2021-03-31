@@ -234,7 +234,22 @@ public:
    */ 
   std::vector<PointSpeedPair> attach_back_points(const std::vector<PointSpeedPair>& points, const int nearest_pt_index, 
                                std::vector<inlanecruising_plugin::PointSpeedPair> future_points, double back_distance) const;
+  /**
+   * \brief set the yield service
+   * 
+   * \param yield_srv input yield service
+   */
+  void set_yield_client(ros::ServiceClient& client);
 
+   /**
+   * \brief verify if the input yield trajectory plan is valid
+   * 
+   * \param yield_plan input yield trajectory plan
+   *
+   * \return true or falss
+   */
+  bool validate_yield_plan(const cav_msgs::TrajectoryPlan& yield_plan);
+  
 private:
 
   /**
@@ -248,11 +263,12 @@ private:
    */ 
   std::pair<double, size_t> min_with_exclusions(const std::vector<double>& values, const std::unordered_set<size_t>& excluded) const;
   
-
   carma_wm::WorldModelConstPtr wm_;
   InLaneCruisingPluginConfig config_;
   PublishPluginDiscoveryCB plugin_discovery_publisher_;
+  ros::ServiceClient yield_client_;
 
   cav_msgs::Plugin plugin_discovery_msg_;
+
 };
 };  // namespace inlanecruising_plugin

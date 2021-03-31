@@ -119,7 +119,7 @@ namespace route_following_plugin
         // CARMA ROS node handles
         std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
-        std::shared_ptr<ros::CARMANodeHandle> pnh2_; //Global Scope
+        std::shared_ptr<ros::CARMANodeHandle> gnh_; //Global Scope
 
         // ROS publishers and subscribers
         ros::Publisher plugin_discovery_pub_;
