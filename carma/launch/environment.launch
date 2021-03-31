@@ -201,9 +201,9 @@
 
   <!-- naive_motion_predict -->
   <group>
-  <remap to="prediction/motion_predictor/objects" from="/prediction/motion_predictor/objects"/>
-  <remap to="prediction/motion_predictor/path_markers" from="/prediction/motion_predictor/path_markers"/>
-
+  <remap to="$(optenv CARMA_ENV_NS)prediction/motion_predictor/objects" from="/prediction/motion_predictor/objects"/>
+  <remap to="$(optenv CARMA_ENV_NS)prediction/motion_predictor/path_markers" from="/prediction/motion_predictor/path_markers"/>
+  <remap to="$(optenv CARMA_ENV_NS)prediction/motion_predictor/objects_markers" from="/prediction/motion_predictor/objects_markers"/>
   <include file="$(find naive_motion_predict)/launch/naive_motion_predict.launch">
   <arg name="interval_sec" value="0.1"/>
   <arg name="num_prediction" value="10"/>
