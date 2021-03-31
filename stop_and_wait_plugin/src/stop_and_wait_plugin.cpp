@@ -109,9 +109,9 @@ namespace stop_and_wait_plugin
     
     bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp)
     {
-        lanelet::BasicPoint2d veh_pos(pose_msg_.pose.position.x,pose_msg_.pose.position.y);
+        lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global,req.vehicle_state.Y_pos_global);
         ROS_DEBUG_STREAM("curr state x:"<< pose_msg_.pose.position.x << ", y: " << pose_msg_.pose.position.y);
-        ROS_DEBUG_STREAM("old state x:"<<  req.vehicle_state.X_pos_global << ", y: " << req.vehicle_state.Y_pos_global);
+        ROS_DEBUG_STREAM("planning state x:"<<  req.vehicle_state.X_pos_global << ", y: " << req.vehicle_state.Y_pos_global);
         double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
         ROS_DEBUG_STREAM("Starting stop&wait planning");
         ROS_DEBUG_STREAM("Current_downtrack"<<current_downtrack);
@@ -129,10 +129,7 @@ namespace stop_and_wait_plugin
             return true;
         }
 
-        // Update state to correctly reflect current pos
         auto curr_state = req.vehicle_state;
-        curr_state.X_pos_global = pose_msg_.pose.position.x;
-        curr_state.Y_pos_global = pose_msg_.pose.position.y;
 
         std::vector<PointSpeedPair> points_and_target_speeds = maneuvers_to_points(maneuver_plan, current_downtrack, wm_, curr_state);
 
@@ -183,7 +180,7 @@ namespace stop_and_wait_plugin
             }
            
             double ending_downtrack = stop_and_wait_maneuver.end_dist; 
-            double start_speed = current_speed_;    //Get static value of current speed at start of planning
+            double start_speed = state.longitudinal_vel;    //Get static value of current speed at start of planning
             //maneuver_time_ = ros::Duration(stop_and_wait_maneuver.end_time - stop_and_wait_maneuver.start_time).toSec();
             
             maneuver_time_ = (3*(ending_downtrack - starting_downtrack))/(2*start_speed);
@@ -197,7 +194,7 @@ namespace stop_and_wait_plugin
                 delta_time = min_timestep_;
                 curr_time = 0.0;
                 //wait
-                lanelet::BasicPoint2d curr_pose (pose_msg_.pose.position.x,pose_msg_.pose.position.y);
+                lanelet::BasicPoint2d curr_pose (state.X_pos_global,state.Y_pos_global);
                 while(curr_time < minimal_trajectory_duration_)
                 {
                     PointSpeedPair pair;
@@ -229,7 +226,7 @@ namespace stop_and_wait_plugin
                 }
                 else {
                     //find distance to the end
-                    lanelet::BasicPoint2d curr_pose (pose_msg_.pose.position.x,pose_msg_.pose.position.y);
+                    lanelet::BasicPoint2d curr_pose (state.X_pos_global,state.Y_pos_global);
                     double current_downtrack = wm_->routeTrackPos(curr_pose).downtrack;
                     //stay approximately at crawl speed until within destination downtrack range (defined in route)
                     if(start_speed <= min_crawl_speed_ && current_downtrack < ending_downtrack - destination_downtrack_range_){
