@@ -247,6 +247,42 @@ namespace stop_and_wait_plugin
            
             double ending_downtrack = stop_and_wait_maneuver.end_dist; 
             double start_speed = state.longitudinal_vel;    //Get static value of current speed at start of planning
+            
+            double max_accel_limit = 2.0; // TODO make parameter maybe with multiplier
+            double accel_target = 0.5 * max_accel_limit; // Deviding by 2 here guarentees we will not exceed the limit
+            double vf = 0;
+            double vi = start_speed;
+            double dt = abs(vf - vi) / accel_target;
+            double xf = dt * (vf + vi) / 2.0;
+
+            Vector6d X_i = kinematic_contraints_as_eign(0, xf, vi, vf, 0, 0); // Plan assuming 0 acceleration at start and end.TODO save the final trajectory and use it as refence to come to a stop
+            
+
+            Vector6d coefficients = compute_quintic_coefficients(X_i, dt);
+
+            std::vector<double> times;
+            times.reserve((dt / 0.1) + 1)
+            double cur_t = 0;
+            while (cur_t < dt) {
+                times.push_back(cur_t);
+                cur_t += 0.1;
+            }
+
+
+            std::vector<double> downtracks = solve_quintic(times, coefficients);
+
+            std::vector<double> speeds = solve_quintic_first_derv(times, coefficients);
+
+            // At this point we have the reference trajectory
+
+            //std::vector<double> solve_quintic_second_derv(const std::vector<double>& values, Vector6d coef );      
+            
+            
+            
+            
+            /////////////////////////////////////// BREAK /////////////////////////////////////////////////
+            
+            
             //maneuver_time_ = ros::Duration(stop_and_wait_maneuver.end_time - stop_and_wait_maneuver.start_time).toSec();
             
             maneuver_time_ = (3*(ending_downtrack - starting_downtrack))/(2*start_speed);
