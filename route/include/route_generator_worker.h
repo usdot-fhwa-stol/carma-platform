@@ -148,6 +148,12 @@ namespace route {
         void set_publishers(ros::Publisher route_event_pub, ros::Publisher route_state_pub, ros::Publisher route_pub,ros::Publisher route_marker_pub);
 
         /**
+         * \brief Helper function to check whether a route's shortest path contains any duplicate Lanelet IDs
+         * \param route Route object from lanelet2 lib routing function
+         */
+        bool check_for_duplicate_lanelets_in_shortest_path(const lanelet::Optional<lanelet::routing::Route>& route);
+
+        /**
          * \brief Helper function to load route points from route file and convert them from lat/lon values to cooridinates in ECEF
          * \param route_id This function will read the route file with provided route_id
          */
