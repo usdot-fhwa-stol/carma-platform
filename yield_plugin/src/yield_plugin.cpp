@@ -295,7 +295,7 @@ namespace yield_plugin
       double dy = original_tp.trajectory_points[0].y - intersection_point.y();
       goal_pos = sqrt(dx*dx + dy*dy) - config_.x_gap;
 
-      double collision_time = req_timestamp_ + (intersection_points[0].first * ecef_traj_time_);
+      double collision_time = req_timestamp_ + (intersection_points[0].first * ecef_traj_timestep_) - config_.safety_collision_time_gap;
       planning_time = std::min(planning_time, collision_time);
       ROS_DEBUG_STREAM("Detected collision time: " << collision_time);
       ROS_DEBUG_STREAM("Planning time: " << planning_time);
@@ -303,7 +303,7 @@ namespace yield_plugin
       double dx2 = intersection_point.x() - req_trajectory_points_[0].x();
       double dy2 = intersection_point.y() - req_trajectory_points_[0].y();
       // calculate incoming trajectory speed from time and distance between trajectory points
-      double incoming_trajectory_speed = sqrt(dx2*dx2 + dy2*dy2)/(intersection_points[0].first * ecef_traj_time_);
+      double incoming_trajectory_speed = sqrt(dx2*dx2 + dy2*dy2)/(intersection_points[0].first * ecef_traj_timestep_);
       // calculate goal velocity from request trajectory
       goal_velocity = std::min(goal_velocity, incoming_trajectory_speed);
 

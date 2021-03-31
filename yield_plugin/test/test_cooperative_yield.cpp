@@ -107,8 +107,10 @@ TEST(YieldPluginTest, test_detect_trajectories_intersection)
 TEST(YieldPluginTest, test_update_clc_trajectory)
 {
     YieldPluginConfig config;
+    config.safety_collision_time_gap = 0.1;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
     YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
+    
 
     
     lanelet::BasicPoint2d p1(10, 0);

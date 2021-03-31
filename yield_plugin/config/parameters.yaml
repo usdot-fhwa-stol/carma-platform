@@ -52,3 +52,7 @@ acceptable_passed_timesteps: 3
 # Unit: m
 # Value type: Desired
 intervehicle_collision_distance: 2.0
+# Time gap to finish planning a yield earlier than collision time
+# Unit: s
+# Value type: Desired
+safety_collision_time_gap: 2.0

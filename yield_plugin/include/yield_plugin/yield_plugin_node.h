@@ -67,6 +67,7 @@ public:
     pnh.param<bool>("always_accept_mobility_request", config.always_accept_mobility_request, config.always_accept_mobility_request);
     pnh.param<int>("acceptable_passed_timesteps", config.acceptable_passed_timesteps, config.acceptable_passed_timesteps);
     pnh.param<double>("intervehicle_collision_distance", config.intervehicle_collision_distance, config.intervehicle_collision_distance);
+    pnh.param<double>("safety_collision_time_gap", config.safety_collision_time_gap, config.safety_collision_time_gap);
     ROS_INFO_STREAM("YieldPlugin Params" << config);
 
     YieldPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); }, [&mob_resp_pub](auto msg) { mob_resp_pub.publish(msg); });

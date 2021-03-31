@@ -227,7 +227,7 @@ private:
   int timesteps_since_last_req_ = 0;
 
   // time between ecef trajectory points
-  double ecef_traj_time_ = 0.1;
+  double ecef_traj_timestep_ = 0.1;
 
 
   cav_msgs::Plugin plugin_discovery_msg_;
