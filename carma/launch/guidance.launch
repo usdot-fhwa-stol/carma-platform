@@ -159,7 +159,6 @@
 
   <!-- Cooperative lanechange -->
   <group>
-    <remap from = "final waypoints" to="base_waypoints"/>
     <include file = "$(find cooperative_lanechange)/launch/cooperative_lanechange.launch"/>
   </group>
 

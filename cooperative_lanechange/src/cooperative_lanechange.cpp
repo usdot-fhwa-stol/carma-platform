@@ -308,7 +308,7 @@ namespace cooperative_lanechange
         try
         {
             geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("earth", "map", ros::Time(0));
-            trajectory = TrajectoryPlantoTrajectory(trajectory_plan, tf);
+            trajectory = trajectory_plan_to_trajectory(trajectory_plan, tf);
         }
         catch (tf2::TransformException &ex)
         {
@@ -321,9 +321,9 @@ namespace cooperative_lanechange
         return request_msg;
     }
 
-    cav_msgs::Trajectory CooperativeLaneChangePlugin::TrajectoryPlantoTrajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points, const geometry_msgs::TransformStamped& tf) const{
+    cav_msgs::Trajectory CooperativeLaneChangePlugin::trajectory_plan_to_trajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points, const geometry_msgs::TransformStamped& tf) const{
         cav_msgs::Trajectory traj;
-        cav_msgs::LocationECEF ecef_location = TrajectoryPointtoECEF(traj_points[0], tf);
+        cav_msgs::LocationECEF ecef_location = trajectory_point_to_ecef(traj_points[0], tf);
 
         if (traj_points.size()<2){
             ROS_WARN("Received Trajectory Plan is too small");
@@ -333,7 +333,7 @@ namespace cooperative_lanechange
             for (size_t i=1; i<traj_points.size(); i++){
                 
                 cav_msgs::LocationOffsetECEF offset;
-                cav_msgs::LocationECEF new_point = TrajectoryPointtoECEF(traj_points[i], tf);
+                cav_msgs::LocationECEF new_point = trajectory_point_to_ecef(traj_points[i], tf);
                 offset.offset_x = new_point.ecef_x - ecef_location.ecef_x;
                 offset.offset_y = new_point.ecef_y - ecef_location.ecef_y;
                 offset.offset_z = new_point.ecef_z - ecef_location.ecef_z;
@@ -347,7 +347,7 @@ namespace cooperative_lanechange
         return traj;
     }
 
-    cav_msgs::LocationECEF CooperativeLaneChangePlugin::TrajectoryPointtoECEF(const cav_msgs::TrajectoryPlanPoint& traj_point, const geometry_msgs::TransformStamped& tf) const{
+    cav_msgs::LocationECEF CooperativeLaneChangePlugin::trajectory_point_to_ecef(const cav_msgs::TrajectoryPlanPoint& traj_point, const geometry_msgs::TransformStamped& tf) const{
         cav_msgs::LocationECEF ecef_point;    
 
         ecef_point.ecef_x = traj_point.x * tf.transform.translation.x;
@@ -584,12 +584,12 @@ namespace cooperative_lanechange
             tpp.y = points[i].y();
             tpp.yaw = yaws[i];
 
-            tpp.controller_plugin_name = "default";
+            tpp.controller_plugin_name = control_plugin_name_;
             tpp.planner_plugin_name = plugin_discovery_msg_.name;
 
             traj.push_back(tpp);
         }
-
+        
         return traj;
     }
 

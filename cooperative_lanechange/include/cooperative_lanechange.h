@@ -227,7 +227,7 @@ namespace cooperative_lanechange
             // initialize this node
             void initialize();
 
-            //Internal Variables used in unit tests
+            //Internal Variables used in unit testsis_lanechange_accepted_
             // Current vehicle forward speed
             double current_speed_;
 
@@ -239,7 +239,7 @@ namespace cooperative_lanechange
             carma_wm::WorldModelConstPtr wm_;
 
             //boolean which is updated if lane change request is accepted
-            bool is_lanechange_accepted_ = false;
+            bool is_lanechange_accepted_ = true;
 
             ros::Publisher outgoing_mobility_request_;
             ros::Publisher lanechange_status_pub_;
@@ -253,7 +253,6 @@ namespace cooperative_lanechange
 
             // ros service servers
             ros::ServiceServer trajectory_srv_;
-            ros::ServiceServer maneuver_srv_;
 
             // ROS publishers and subscribers
             cav_msgs::Plugin plugin_discovery_msg_;
@@ -279,7 +278,7 @@ namespace cooperative_lanechange
             //Plugin specific params
             double desired_time_gap_ = 3.0;
             double trajectory_time_length_ = 6;
-            std::string control_plugin_name_ = "mpc_follower";
+            std::string control_plugin_name_ = "pure_pursuit";
             double minimum_speed_ = 2.0;
             double max_accel_ = 1.5;
             double minimum_lookahead_distance_ = 5.0;
@@ -328,14 +327,14 @@ namespace cooperative_lanechange
              * \param tf The transform between the world frame and map frame in which the trajectory plan points are calculated
              * \return The Trajectory type message in world frame
              */
-            cav_msgs::Trajectory TrajectoryPlantoTrajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points, const geometry_msgs::TransformStamped& tf) const;
+            cav_msgs::Trajectory trajectory_plan_to_trajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points, const geometry_msgs::TransformStamped& tf) const;
             /**
              * \brief Converts Trajectory Point to ECEF Transform
              * \param traj_points A Trajectory Plan point to be converted to Trajectory type message
              * \param tf The transform between the world frame and map frame in which the trajectory plan points are calculated
              * \return The trajectory point message transformed to world frame
              */
-            cav_msgs::LocationECEF TrajectoryPointtoECEF(const cav_msgs::TrajectoryPlanPoint& traj_point, const geometry_msgs::TransformStamped& tf) const;
+            cav_msgs::LocationECEF trajectory_point_to_ecef(const cav_msgs::TrajectoryPlanPoint& traj_point, const geometry_msgs::TransformStamped& tf) const;
             /**
              * \brief Callback to reads bsm message from topic
              * \param msg The bsm message obtained from subscribed topic
