@@ -420,7 +420,8 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
       {  // Get list of connected lanelets without lanechanges. On the shortest path this should only return 1 or 0
         // No lane change
         // Append distance to current centerline
-        lineStrings.back().insert(lineStrings.back().end(), nextCenterline.begin(), nextCenterline.end());
+        size_t offset = lineStrings.size() == 0 || lineStrings.back().size() == 0 ? 0 : 1; // Prevent duplicate points when concatenating. Not clear if causes an issue at lane changes
+        lineStrings.back().insert(lineStrings.back().end(), nextCenterline.begin() + offset, nextCenterline.end());
       }
       else if (connectionCount == 0)
       {
