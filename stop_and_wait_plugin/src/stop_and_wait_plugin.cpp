@@ -133,86 +133,16 @@ std::vector<PointSpeedPair> StopandWait::maneuvers_to_points(const std::vector<c
   double starting_downtrack = wm_->routeTrackPos(veh_pos).downtrack;  // The vehicle position
   double starting_speed = state.longitudinal_vel;
 
-  ROS_DEBUG_STREAM("Used starting downtrack: " << starting_downtrack);
-
-  auto lanelets = wm->getLaneletsBetween(starting_downtrack, stop_and_wait_maneuver.end_dist, true);
-
-  lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm->getTrafficRules();
-
-  if (!traffic_rules)
-  {
-    throw std::invalid_argument("Traffic rules could not be optained from carma_wm");
+  std::vector<lanelet::BasicPoint2d> route_points = wm->sampleRoutePoints(std::min(starting_downtrack + 1, stop_and_wait_maneuver.end_dist), stop_and_wait_maneuver.end_dist, 1.0); // TODO make step size a parameter
+  route_points.insert(route_points.begin(), veh_pos);
+  
+  for (const auto& p : route_points) {
+    PointSpeedPair pair;
+    pair.point = p;
+    pair.speed = starting_speed;
+    points_and_target_speeds.push_back(pair);
   }
-
-  lanelet::BasicLineString2d downsampled_centerline;
-  downsampled_centerline.reserve(400);
-  double total_distance = starting_downtrack;
-  for (const auto& l : lanelets)
-  {
-    ROS_DEBUG_STREAM("Lanelet ID: " << l.id());
-
-    lanelet::BasicLineString2d centerline = l.centerline2d().basicLineString();
-    lanelet::BasicLineString2d downsampled_points;
-    downsampled_points.reserve((centerline.size() / 4) + 2);
-    downsampled_points = carma_utils::containers::downsample_vector(centerline, config_.downsample_ratio);  // Downsample centerline
-
-    downsampled_centerline = carma_wm::geometry::concatenate_line_strings(downsampled_centerline, downsampled_points);
-
-    if (downsampled_centerline.size() == 0) {
-        ROS_WARN_STREAM("downsampled_centerline.size() == 0");
-        continue;
-    }
-    bool loop_first = true;
-    lanelet::BasicPoint2d prev_point;
-    if (points_and_target_speeds.size() == 0) {
-        prev_point = downsampled_centerline.front();
-    } else {
-        prev_point = points_and_target_speeds.back().point;
-    }
-
-    for (auto p : downsampled_centerline)
-    {
-      if (loop_first && points_and_target_speeds.size() != 0)
-      {
-        loop_first = false;
-        continue;  // Skip the first point if we have already added points from a previous maneuver to avoid duplicates
-      }
-      double distance = lanelet::geometry::distance2d(p, prev_point);
-      if (distance < 0.00001) {
-          distance = 0;
-      }
-      total_distance += distance;
-      if (total_distance >= (stop_and_wait_maneuver.end_dist - 0.00001)) { // Handle ending before end of maneuver
-        auto end_point = wm->pointFromRouteTrackPos(stop_and_wait_maneuver.end_dist);
-        PointSpeedPair pair;
-        
-        if (!end_point) {
-            ROS_WARN_STREAM("End distance beyond route end: " << stop_and_wait_maneuver.end_dist);
-            pair.point = p;
-        } else {
-            pair.point = *end_point;
-        }
-
-        pair.speed = starting_speed; //(*traffic_rules)->speedLimit(l).speedLimit.value();
-        ROS_ERROR_STREAM("Speed: " << pair.speed);
-        pair.lanelet_id = l.id();
-        points_and_target_speeds.push_back(pair);
-        return points_and_target_speeds;
-      }
-
-      PointSpeedPair pair;
-      pair.point = p;
-      pair.speed = starting_speed; //(*traffic_rules)->speedLimit(l).speedLimit.value();
-      ROS_ERROR_STREAM("Speed: " << pair.speed);
-      pair.lanelet_id = l.id();
-      points_and_target_speeds.push_back(pair);
-      prev_point = p;
-    }
-
-  }
-
-  ROS_WARN_STREAM("Maneuver end never reached");
-
+  
   return points_and_target_speeds;
 }
 
@@ -284,7 +214,7 @@ StopandWait::compose_trajectory_from_centerline(const std::vector<PointSpeedPair
      //       First point's speed is left unchanged as it is current speed of the vehicle
     double v_i = prev_pair.speed;
 
-    if (v_i >= starting_speed)
+    if (reached_end || v_i >= starting_speed)
     {  // We are walking backward, so if the prev speed is greater than or equal to the starting speed then we are done
        // backtracking
       reached_end = true;
@@ -307,11 +237,15 @@ StopandWait::compose_trajectory_from_centerline(const std::vector<PointSpeedPair
   }
 
   // Now we have a trajectory that decelerates from our end point to somewhere in the maneuver
-  std::reverse(final_points.begin(), final_points.end());
+  std::reverse(final_points.begin(), final_points.end()); // TODO seems lik final_points does not contain start and end point for some reason
 
   std::vector<double> speeds;
   std::vector<lanelet::BasicPoint2d> raw_points;
-  splitPointSpeedPairs(points, &raw_points, &speeds);
+  splitPointSpeedPairs(final_points, &raw_points, &speeds);
+
+  for (auto s : speeds) {
+      ROS_INFO_STREAM("speed: " << s);
+  }
 
   std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(raw_points);
 
