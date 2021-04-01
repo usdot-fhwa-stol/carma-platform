@@ -127,7 +127,7 @@ public:
 
   /*! TODO
    */
-  virtual boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(double downtrack) const = 0;
+  virtual boost::optional<lanelet::BasicPoint2d> pointFromRouteTrackPos(double downtrack) const = 0;
 
   /*! \brief Get a pointer to the current map. If the underlying map has changed the pointer will also need to be
    * reacquired

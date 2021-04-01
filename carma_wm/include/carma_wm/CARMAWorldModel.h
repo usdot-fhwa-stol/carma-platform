@@ -116,7 +116,7 @@ public:
 
   std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end, bool shortest_path_only = false) const override;
 
-  boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(double downtrack) const override;
+  boost::optional<lanelet::BasicPoint2d> pointFromRouteTrackPos(double downtrack) const override;
 
   lanelet::LaneletMapConstPtr getMap() const override;
 
