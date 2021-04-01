@@ -48,7 +48,7 @@
 
   <!-- CARMA Motion Computation Node -->
   <group>
-    <remap to="$(optenv CARMA_MSG_NS)/incoming_mobility_path" from="/environment/incoming_mobility_path"/>
+    <remap to="$(optenv CARMA_MSG_NS)/incoming_mobility_path" from="incoming_mobility_path"/>
     <include file="$(find motion_computation)/launch/motion_computation.launch"/>
   </group>
 
@@ -103,7 +103,7 @@
   </group>
 
 <!-- vision_beyond_track -->
-  <remap to="detection/image_detector/objects" from="/environment/vision_beyond_track_01/detection/image_detector/objects"/>
+  <remap to="detection/image_detector/objects" from="vision_beyond_track_01/detection/image_detector/objects"/>
   <remap from="/detection/image_tracker/objects" to="detection/image_tracker/objects"/>
   <group>
   <include file="$(find vision_beyond_track)/launch/vision_beyond_track.launch">
@@ -114,6 +114,7 @@
   </group>
   
   <!-- lidar_euclidean_cluster_detect -->
+  <!-- todo: remove CARMA_ENV_NS namespace without the node generating extra unwanted topics-->
   <group>
   <remap to="$(optenv CARMA_ENV_NS)/detection/lidar_detector/cloud_clusters" from="/detection/lidar_detector/cloud_clusters"/>
   <remap to="$(optenv CARMA_ENV_NS)/detection/lidar_detector/objects" from="/detection/lidar_detector/objects"/>
@@ -151,8 +152,8 @@
   <!-- range_vision_fusion -->
   <group>
 
-  <remap to="detection/image_tracker/objects" from="/environment/range_vision_fusion_01/detection/image_detector/objects"/>
-  <remap to="detection/lidar_detector/objects" from="/environment/range_vision_fusion_01/detection/lidar_detector/objects"/>
+  <remap to="detection/image_tracker/objects" from="range_vision_fusion_01/detection/image_detector/objects"/>
+  <remap to="detection/lidar_detector/objects" from="range_vision_fusion_01/detection/lidar_detector/objects"/>
   <remap to="detection/fusion_tools/objects" from="/detection/fusion_tools/objects"/>
   
   <include file="$(find range_vision_fusion)/launch/range_vision_fusion.launch">
@@ -200,6 +201,7 @@
   </group>
 
   <!-- naive_motion_predict -->
+  <!-- todo: remove CARMA_ENV_NS namespace without the node generating extra unwanted topics-->
   <group>
   <remap to="$(optenv CARMA_ENV_NS)/prediction/motion_predictor/objects" from="/prediction/motion_predictor/objects"/>
   <remap to="$(optenv CARMA_ENV_NS)/prediction/motion_predictor/path_markers" from="/prediction/motion_predictor/path_markers"/>
