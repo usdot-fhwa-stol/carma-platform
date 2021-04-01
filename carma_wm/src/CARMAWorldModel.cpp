@@ -308,9 +308,7 @@ std::vector<lanelet::BasicPoint2d> CARMAWorldModel::sampleRoutePoints(double sta
     downtrack+=step_size;
   }
 
-  if (downtrack != end_downtrack) { // if we did not stop exactly on the end point add it.
-    output.emplace_back(*(pointFromRouteTrackPos(end_downtrack)));
-  }
+  output.emplace_back(*(pointFromRouteTrackPos(end_downtrack)));
   return output;
 }
 
