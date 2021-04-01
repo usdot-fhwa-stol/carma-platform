@@ -1,4 +1,4 @@
-# pragma once
+#pragma once
 /*
  * Copyright (C) 2019-2020 LEIDOS.
  *
@@ -32,118 +32,82 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 
-
 namespace stop_and_wait_plugin
 {
-    /**
-     * \brief Convenience class for pairing 2d points with speeds
-     */ 
-    struct PointSpeedPair
-    {
-        lanelet::BasicPoint2d point;
-        double speed=0;
-        lanelet::Id lanelet_id;
-    };
+using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
+/**
+ * \brief Convenience class for pairing 2d points with speeds
+ */
+struct PointSpeedPair
+{
+  lanelet::BasicPoint2d point;
+  double speed = 0;
+  lanelet::Id lanelet_id;
+};
 
-    class StopandWait
-    {
-    public:
-        /** 
-         * \brief Constructor
-         */
-        StopandWait(){};
+class StopandWait
+{
+public:
+  /**
+   * \brief Constructor
+   */
+  StopandWait(carma_wm::WorldModelConstPtr wm, StopandWaitConfig config,
+              PublishPluginDiscoveryCB plugin_discovery_publisher);
 
-          /**
-         * \brief Service callback for trajectory planning
-         * 
-         * \param req The service request
-         * \param resp The service response
-         * 
-         * \return True if success. False otherwise
-         */ 
-        bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp);
-        
-        /**
-         * \brief General entry point to begin the operation of this class
-         */
-        void run();
+  /**
+   * \brief Service callback for trajectory planning
+   *
+   * \param req The service request
+   * \param resp The service response
+   *
+   * \return True if success. False otherwise
+   */
+  bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_srvs::PlanTrajectoryResponse& resp);
 
-        /**
-         * \brief Converts a set of requested STOP_AND_WAIT maneuvers to point speed limit pairs. 
-         * 
-         * \param maneuvers The list of maneuvers to convert
-         * \param max_starting_downtrack The maximum downtrack that is allowed for the first maneuver. This should be set to the vehicle position or earlier.
-         *                               If the first maneuver exceeds this then it's downtrack will be shifted to this value.
-         * 
-         * 
-         * \return List of centerline points paired with speed limits
-         */ 
-        std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
-                                                                      double starting_downtrack,
-                                                                      const carma_wm::WorldModelConstPtr& wm, const cav_msgs::VehicleState& state);
-          /**
-         * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of trajectory points for trajectory planning
-         * 
-         * \param points The set of points that define the current lane the vehicle is in and are defined based on the request planning maneuvers. 
-         *               These points must be in the same lane as the vehicle and must extend in front of it though it is fine if they also extend behind it. 
-         * \param state The current state of the vehicle
-         * 
-         * \return A list of trajectory points to send to the carma planning stack
-         */ 
-        std::vector<cav_msgs::TrajectoryPlanPoint> compose_trajectory_from_centerline(
-        const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state);
-        
-        /**
-         * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
-         */ 
-        void splitPointSpeedPairs(const std::vector<PointSpeedPair>& points, std::vector<lanelet::BasicPoint2d>* basic_points,
+  bool spinCallback();
+
+  /**
+   * \brief General entry point to begin the operation of this class
+   */
+  void run();
+
+  /**
+   * \brief Converts a set of requested STOP_AND_WAIT maneuvers to point speed limit pairs.
+   *
+   * \param maneuvers The list of maneuvers to convert
+   * \param max_starting_downtrack The maximum downtrack that is allowed for the first maneuver. This should be set to
+   * the vehicle position or earlier. If the first maneuver exceeds this then it's downtrack will be shifted to this
+   * value.
+   *
+   *
+   * \return List of centerline points paired with speed limits
+   */
+  std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
+                                                  const carma_wm::WorldModelConstPtr& wm,
+                                                  const cav_msgs::VehicleState& state);
+  /**
+   * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of
+   * trajectory points for trajectory planning
+   *
+   * \param points The set of points that define the current lane the vehicle is in and are defined based on the request
+   * planning maneuvers. These points must be in the same lane as the vehicle and must extend in front of it though it
+   * is fine if they also extend behind it. \param state The current state of the vehicle
+   *
+   * \return A list of trajectory points to send to the carma planning stack
+   */
+  std::vector<cav_msgs::TrajectoryPlanPoint>
+  compose_trajectory_from_centerline(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state);
+
+  /**
+   * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists
+   */
+  void splitPointSpeedPairs(const std::vector<PointSpeedPair>& points, std::vector<lanelet::BasicPoint2d>* basic_points,
                             std::vector<double>* speeds) const;
 
-
-        //wm listener pointer and pointer to the actual wm object
-        std::shared_ptr<carma_wm::WMListener> wml_;
-        carma_wm::WorldModelConstPtr wm_;
-
-    private:
-        //CARMA ROS node handles
-        std::shared_ptr<ros::CARMANodeHandle> nh_,pnh_;
-
-        // ROS service servers
-        ros::ServiceServer trajectory_srv_;
-
-        //ROS publishers and subscribers
-        ros::Publisher plugin_discovery_pub_;
-
-        // Current vehicle pose in map
-        geometry_msgs::PoseStamped pose_msg_;
-       
-        //Plugin discovery message
-        cav_msgs::Plugin plugin_discovery_msg_;
-
-        //Acceptable range for stopping from end point of route
-        double destination_downtrack_range_ = 10.0;
-
-        //Parameters loaded from config file initialized for unit tests
-        //The crawl speed for the maneuver before reaching within acceptable distance from the end
-        double min_crawl_speed_ = 1.0;
-        //The minimum duration of a trajectory length in seconds
-        double minimal_trajectory_duration_ = 6.0;
-        //Minimum timestep used for planning trajectory
-        double min_timestep_ =0.1;
-        //Amount to downsample input lanelet centerline data
-        int downsample_ratio_ = 4;
-        
-        
-        //A small static value for comparing doubles
-        static constexpr double epsilon_ = 0.001;
-
-
-        /**
-         * \brief Initialize ROS publishers, subscribers, service servers and service clients
-        */
-        void initialize();
-
-        double destination_downtrack_range = 0.0;
-        
-    };
-}
+private:
+  PublishPluginDiscoveryCB plugin_discovery_publisher_;
+  StopandWaitConfig config_;
+  // pointer to the actual wm object
+  carma_wm::WorldModelConstPtr wm_;
+};
+}  // namespace stop_and_wait_plugin
