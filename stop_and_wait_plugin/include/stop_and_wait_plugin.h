@@ -31,6 +31,7 @@
 #include <lanelet2_core/geometry/LineString.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
+#include "stop_and_wait_config.h"
 
 namespace stop_and_wait_plugin
 {
@@ -96,7 +97,8 @@ public:
    * \return A list of trajectory points to send to the carma planning stack
    */
   std::vector<cav_msgs::TrajectoryPlanPoint>
-  compose_trajectory_from_centerline(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state);
+  compose_trajectory_from_centerline(const std::vector<PointSpeedPair>& points, double starting_downtrack,
+                                                double starting_speed, double stop_location, ros::Time start_time);
 
   /**
    * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists
@@ -104,10 +106,15 @@ public:
   void splitPointSpeedPairs(const std::vector<PointSpeedPair>& points, std::vector<lanelet::BasicPoint2d>* basic_points,
                             std::vector<double>* speeds) const;
 
+  std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_from_points_times_orientations(
+    const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& times, const std::vector<double>& yaws,
+    ros::Time startTime);
+
 private:
   PublishPluginDiscoveryCB plugin_discovery_publisher_;
   StopandWaitConfig config_;
   // pointer to the actual wm object
   carma_wm::WorldModelConstPtr wm_;
+  cav_msgs::Plugin plugin_discovery_msg_;
 };
 }  // namespace stop_and_wait_plugin

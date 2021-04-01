@@ -33,7 +33,7 @@
 #include <Eigen/SVD>
 #include <unordered_set>
 #include "stop_and_wait_plugin.h"
-#include "stop_and_wait_plugin_config.h"
+#include "stop_and_wait_config.h"
 #include <vector>
 #include <cav_msgs/Trajectory.h>
 #include <cav_msgs/StopAndWaitManeuver.h>
@@ -57,32 +57,33 @@ public:
    */
   void run()
   {
-    ros::CARMANodeHandle nh_;
-    ros::CARMANodeHandle pnh_("~");
+    ros::CARMANodeHandle nh;
+    ros::CARMANodeHandle pnh("~");
 
     carma_wm::WMListener wml;
     auto wm = wml.getWorldModel();
 
     StopandWaitConfig config;
 
-    pnh_->param<double>("minimal_trajectory_duration", config.minimal_trajectory_duration,
+    pnh.param<double>("minimal_trajectory_duration", config.minimal_trajectory_duration,
                         config.minimal_trajectory_duration);
-    pnh_->param<double>("stop_timestep", config.stop_timestep, config.stop_timestep);
-    pnh_->param<int>("downsample_ratio", config.downsample_ratio, config.downsample_ratio);
-    pnh_->param<double>("/guidance/destination_downtrack_range", config.destination_downtrack_range,
+    pnh.param<double>("stop_timestep", config.stop_timestep, config.stop_timestep);
+    pnh.param<int>("downsample_ratio", config.downsample_ratio, config.downsample_ratio);
+    pnh.param<double>("/guidance/destination_downtrack_range", config.destination_downtrack_range,
                         config.destination_downtrack_range);
 
-    ros::Publisher plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
+    ros::Publisher plugin_discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
 
-    StopandWait plugin(wm, config, [&plugin_discovery_pub_](auto msg) { plugin_discovery_pub_.publish(msg); });
+    StopandWait plugin(wm, config, [&plugin_discovery_pub](auto msg) { plugin_discovery_pub.publish(msg); });
 
     ros::ServiceServer trajectory_srv_ =
-        nh_->advertiseService("plan_trajectory", &StopandWait::plan_trajectory_cb, &plugin);
+        nh.advertiseService("plan_trajectory", &StopandWait::plan_trajectory_cb, &plugin);
 
-    ros::CARMANodeHandle::setSpinCallback(std::bind(&StopandWait::spinCallback, this));
+    ros::CARMANodeHandle::setSpinCallback(std::bind(&StopandWait::spinCallback, &plugin));
 
-    double spin_rate = pnh_->param<double>("spin_rate_hz", 10.0);
+    double spin_rate = pnh.param<double>("spin_rate_hz", 10.0);
     ros::CARMANodeHandle::setSpinRate(spin_rate);
     ros::CARMANodeHandle::spin();
   }
+};
 }  // stop_and_wait_plugin

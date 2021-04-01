@@ -50,17 +50,18 @@ namespace stop_and_wait_plugin
 {
 StopandWait::StopandWait(carma_wm::WorldModelConstPtr wm, StopandWaitConfig config,
                          PublishPluginDiscoveryCB plugin_discovery_publisher)
-  : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher){};
+  : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
+  {
+    plugin_discovery_msg_.name = "StopandWaitPlugin";
+    plugin_discovery_msg_.versionId = "v1.1";
+    plugin_discovery_msg_.available = true;
+    plugin_discovery_msg_.activated = false;
+    plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
+    plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
+  };
 
 bool StopandWait::spinCallback()
 {
-  cav_msgs::Plugin plugin_discovery_msg_;
-  plugin_discovery_msg_.name = "StopandWaitPlugin";
-  plugin_discovery_msg_.versionId = "v1.1";
-  plugin_discovery_msg_.available = true;
-  plugin_discovery_msg_.activated = false;
-  plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
-  plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
 
   plugin_discovery_publisher_(plugin_discovery_msg_);
   return true;
@@ -89,7 +90,7 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
     throw std::invalid_argument("No valid maneuvers in plan provided to stop and wait plugin.");
   }
 
-  std::vector<PointSpeedPair> points_and_target_speeds = maneuvers_to_points(maneuver_plan, wm_, req.vehicle_state;);
+  std::vector<PointSpeedPair> points_and_target_speeds = maneuvers_to_points(maneuver_plan, wm_, req.vehicle_state); // Now have 1m downsampled points from cur to endpoint
 
   // Trajectory plan
   cav_msgs::TrajectoryPlan trajectory;
@@ -98,7 +99,7 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
   trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
   trajectory.trajectory_points =
-      compose_trajectory_from_centerline(points_and_target_speeds, req.vehicle_state, req.header.stamp);
+      compose_trajectory_from_centerline(points_and_target_speeds, current_downtrack, req.vehicle_state.longitudinal_vel, maneuver_plan[0].stop_and_wait_maneuver.end_dist , req.header.stamp);
   ROS_DEBUG_STREAM("Trajectory points size:" << trajectory.trajectory_points.size());
   trajectory.initial_longitudinal_velocity = req.vehicle_state.longitudinal_vel;
   resp.trajectory_plan = trajectory;
@@ -128,9 +129,9 @@ std::vector<PointSpeedPair> StopandWait::maneuvers_to_points(const std::vector<c
 
   cav_msgs::StopAndWaitManeuver stop_and_wait_maneuver = maneuvers[0].stop_and_wait_maneuver;
 
-  lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
+  lanelet::BasicPoint2d veh_pos(state.X_pos_global, state.Y_pos_global);
   double starting_downtrack = wm_->routeTrackPos(veh_pos).downtrack;  // The vehicle position
-  double starting_speed = req.vehicle_state.longitudinal_vel;
+  double starting_speed = state.longitudinal_vel;
 
   ROS_DEBUG_STREAM("Used starting downtrack: " << starting_downtrack);
 
@@ -145,19 +146,30 @@ std::vector<PointSpeedPair> StopandWait::maneuvers_to_points(const std::vector<c
 
   lanelet::BasicLineString2d downsampled_centerline;
   downsampled_centerline.reserve(400);
-
+  double total_distance = starting_downtrack;
   for (const auto& l : lanelets)
   {
     ROS_DEBUG_STREAM("Lanelet ID: " << l.id());
 
     lanelet::BasicLineString2d centerline = l.centerline2d().basicLineString();
     lanelet::BasicLineString2d downsampled_points;
-    downsampled_points.reserve((centerline.size() / 4) + 2) downsampled_points =
-        carma_utils::containers::downsample_vector(centerline, downsample_ratio_);  // Downsample centerline
+    downsampled_points.reserve((centerline.size() / 4) + 2);
+    downsampled_points = carma_utils::containers::downsample_vector(centerline, config_.downsample_ratio);  // Downsample centerline
 
     downsampled_centerline = carma_wm::geometry::concatenate_line_strings(downsampled_centerline, downsampled_points);
 
+    if (downsampled_centerline.size() == 0) {
+        ROS_WARN_STREAM("downsampled_centerline.size() == 0");
+        continue;
+    }
     bool loop_first = true;
+    lanelet::BasicPoint2d prev_point;
+    if (points_and_target_speeds.size() == 0) {
+        prev_point = downsampled_centerline.front();
+    } else {
+        prev_point = points_and_target_speeds.back().point;
+    }
+
     for (auto p : downsampled_centerline)
     {
       if (loop_first && points_and_target_speeds.size() != 0)
@@ -165,18 +177,44 @@ std::vector<PointSpeedPair> StopandWait::maneuvers_to_points(const std::vector<c
         loop_first = false;
         continue;  // Skip the first point if we have already added points from a previous maneuver to avoid duplicates
       }
+      double distance = lanelet::geometry::distance2d(p, prev_point);
+      if (distance < 0.00001) {
+          distance = 0;
+      }
+      total_distance += distance;
+      if (total_distance >= (stop_and_wait_maneuver.end_dist - 0.00001)) { // Handle ending before end of maneuver
+        auto end_point = wm->pointFromRouteTrackPos(stop_and_wait_maneuver.end_dist);
+        PointSpeedPair pair;
+        
+        if (!end_point) {
+            ROS_WARN_STREAM("End distance beyond route end: " << stop_and_wait_maneuver.end_dist);
+            pair.point = p;
+        } else {
+            pair.point = *end_point;
+        }
+
+        pair.speed = (*traffic_rules)->speedLimit(l).speedLimit.value();
+        pair.lanelet_id = l.id();
+        points_and_target_speeds.push_back(pair);
+        return points_and_target_speeds;
+      }
+
       PointSpeedPair pair;
       pair.point = p;
-      pair.speed = (*traffic_rules)->speedLimit(llt).speedLimit.value();
+      pair.speed = (*traffic_rules)->speedLimit(l).speedLimit.value();
       pair.lanelet_id = l.id();
       points_and_target_speeds.push_back(pair);
+      prev_point = p;
     }
+
   }
+
+  ROS_WARN_STREAM("Maneuver end never reached");
 
   return points_and_target_speeds;
 }
 
-std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_from_points_times_orientations(
+std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::trajectory_from_points_times_orientations(
     const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& times, const std::vector<double>& yaws,
     ros::Time startTime)
 {

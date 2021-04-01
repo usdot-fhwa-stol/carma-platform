@@ -46,18 +46,19 @@ namespace stop_and_wait_plugin
 {
 TEST(StopandWait, TestStopandWaitPlanning)
 {
+  ros::Time::setNow(ros::Time(0.0));
   StopandWaitConfig config;
   config.downsample_ratio = 1;
 
   config.minimal_trajectory_duration = 6.0;    // Trajectory length in seconds
   config.stop_timestep = 0.1;                  // Size of timesteps between stopped trajectory points
   config.downsample_ratio = 1;                  // Amount to downsample input lanelet centerline data.
-  config.destination_downtrack_range_ = 10.0;  // Buffer around target end point TODO is this still needed?
+  config.destination_downtrack_range = 10.0;  // Buffer around target end point TODO is this still needed?
   config.accel_limit_multiplier = 0.5;         // Multiplier to compine with actual accel limit for target planning
   config.accel_limit = 2.0;                    // Longitudinal acceleration limit of the vehicle
 
   std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
-  InLaneCruisingPlugin plugin(wm, config, [&](auto msg) {});
+  StopandWait plugin(wm, config, [&](auto msg) {});
 
   auto map = carma_wm::test::buildGuidanceTestMap(3.7, 20);
 
@@ -86,10 +87,10 @@ TEST(StopandWait, TestStopandWaitPlanning)
   req.vehicle_state.Y_pos_global = 5;
   req.vehicle_state.orientation = 0;
   req.vehicle_state.longitudinal_vel = 8.9408; // 20 mph
+  req.header.stamp = ros::Time(0.0);
 
   cav_msgs::Maneuver maneuver;
   maneuver.type = cav_msgs::Maneuver::STOP_AND_WAIT;
-  maneuver.stop_and_wait_maneuver.lane_id = 1200;
   maneuver.stop_and_wait_maneuver.start_dist = 5.0;
   maneuver.stop_and_wait_maneuver.start_time = ros::Time(0.0);
   maneuver.stop_and_wait_maneuver.start_speed = 8.9408;
@@ -98,6 +99,9 @@ TEST(StopandWait, TestStopandWaitPlanning)
   maneuver.stop_and_wait_maneuver.end_time = ros::Time(11.175999999999998);
 
   req.maneuver_plan.maneuvers.push_back(maneuver);
+
+  cav_srvs::PlanTrajectoryResponse resp;
+  plugin.plan_trajectory_cb(req, resp);
 }
 }  // namespace stop_and_wait_plugin
 
@@ -105,6 +109,12 @@ TEST(StopandWait, TestStopandWaitPlanning)
 int main(int argc, char** argv)
 {
   testing::InitGoogleTest(&argc, argv);
+  ros::Time::init();
+  ROSCONSOLE_AUTOINIT;
+  if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info) ) { // Change to Debug to enable debug logs
+    ros::console::notifyLoggerLevelsChanged();
+  }
   auto res = RUN_ALL_TESTS();
+  
   return res;
 }
