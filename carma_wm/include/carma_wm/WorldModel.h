@@ -125,6 +125,10 @@ public:
    */
   virtual std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end, bool shortest_path_only = false) const = 0;
 
+  /*! TODO
+   */
+  virtual boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(double downtrack) const = 0;
+
   /*! \brief Get a pointer to the current map. If the underlying map has changed the pointer will also need to be
    * reacquired
    *

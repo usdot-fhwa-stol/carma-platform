@@ -22,6 +22,26 @@
 #include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 
+/**
+ * TODO remove code duplication with arbitrator where this method is copied from
+ * \brief Macro definition to enable easier access to fields shared across the maneuver typees
+ * 
+ * TODO: Implement a better system for handling Maneuver objects such that this
+ *       macro isn't needed.
+ * 
+ * \param mvr The maneuver object to invoke the accessors on
+ * \param property The name of the field to access on the specific maneuver types. Must be shared by all extant maneuver types
+ * \return Expands to an expression (in the form of chained ternary operators) that evalutes to the desired field
+ */
+#define GET_MANEUVER_PROPERTY(mvr, property)\
+        (((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property :\
+            ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property :\
+                ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property :\
+                    ((mvr).type == cav_msgs::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property :\
+                        ((mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :\
+                        ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property :\
+                            throw std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id"))))))))
+
 namespace route_following_plugin
 {
     RouteFollowingPlugin::RouteFollowingPlugin() : mvr_duration_(16.0), current_speed_(0.0) { }
@@ -63,7 +83,29 @@ namespace route_following_plugin
     }
     bool RouteFollowingPlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp)
     {        
+        if (!wm_->getRoute()) {
+            throw std::invalid_argument("RouteFollowing asked to plan maneuver before route is available. ");
+        }
+
+
+
         lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
+        double current_progress = 0;
+        double speed_progress = current_speed_;
+        ros::Time time_progress = ros::Time::now();
+
+        if (!req.prior_plan.maneuvers.empty()) { // If there is an existing maneuver plan then set the start state based on that end state
+            double start_dist = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_dist);
+            double start_speed = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_speed);
+            ros::Time start_time = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_time);
+            current_loc = wm_->pointFromRouteTrackPos(start_dist);
+            current_progress = start_dist;
+            speed_progress = start_speed;
+            time_progress = start_time;
+        } else {
+            current_progress = wm_->routeTrackPos(current_loc).downtrack;            
+        }
+        
         auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc, 10);       
         if(current_lanelets.size() == 0)
         {
@@ -93,9 +135,8 @@ namespace route_following_plugin
             ROS_ERROR_STREAM("Current position is not on the shortest path! Returning an empty maneuver");
             return true;
         }
-        double current_progress = wm_->routeTrackPos(current_loc).downtrack;
-        double speed_progress = current_speed_;
-        ros::Time time_progress = ros::Time::now();
+
+        
         double target_speed=findSpeedLimit(current_lanelet);   //get Speed Limit
 
         double total_maneuver_length = current_progress + mvr_duration_ * target_speed;
@@ -104,15 +145,20 @@ namespace route_following_plugin
 
         bool approaching_route_end = false;
         double time_req_to_stop,stopping_dist;
-        time_req_to_stop = sqrt(2*findSpeedLimit(shortest_path.back())/jerk_); 
-        stopping_dist = findSpeedLimit(shortest_path.back())*time_req_to_stop - (0.167 * jerk_ * pow(time_req_to_stop,3));
+
+        double accel_target = 0.4 * accel_limit; // TODO make parameter or figure out how be to set the limit to allow the trajectory to be generated
+        time_req_to_stop = speed_progress / accel_target; // TODO the time required to stop should be updated after each maneuver is generated then evaluated before planning the next maneuver
+
+        stopping_dist = 0.5 * speed_progress * time_req_to_stop; // TODO how is the buffer being accounted for?
         
         if(route_length - current_progress <= stopping_dist){
             approaching_route_end = true;
         }
+
         ROS_DEBUG_STREAM("Starting Loop");
         ROS_DEBUG_STREAM("Time Required To Stop: " << time_req_to_stop << " stopping_dist: " << stopping_dist<<" Speed limit:"<<findSpeedLimit(shortest_path.back())<< " Jerk:"<<jerk_);
         ROS_DEBUG_STREAM("total_maneuver_length: " << total_maneuver_length << " route_length: " << route_length);
+        
         while(current_progress < total_maneuver_length && !approaching_route_end)
         {
             ROS_DEBUG_STREAM("Lanlet: " << shortest_path[last_lanelet_index].id());
@@ -120,17 +166,20 @@ namespace route_following_plugin
             ROS_DEBUG_STREAM("speed_progress: " << speed_progress);
             ROS_DEBUG_STREAM("target_speed: " << target_speed);
             ROS_DEBUG_STREAM("time_progress: " << time_progress.toSec());
+
             auto p = shortest_path[last_lanelet_index].centerline2d().back();
             double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
             end_dist = std::min(end_dist, total_maneuver_length);
             ROS_DEBUG_STREAM("end_dist: " << end_dist);
             double dist_diff = end_dist - current_progress;
             ROS_DEBUG_STREAM("dist_diff: " << dist_diff);
+            
             if(route_length - end_dist <= stopping_dist){
                 end_dist = route_length - stopping_dist; 
                 dist_diff = end_dist - current_progress;
                 approaching_route_end = true;
             }
+            
             if(end_dist < current_progress){
                 break;
             }
@@ -139,9 +188,14 @@ namespace route_following_plugin
                 composeManeuverMessage(current_progress, end_dist,  
                                     speed_progress, target_speed, 
                                     shortest_path[last_lanelet_index].id(), time_progress));
+            
             current_progress += dist_diff;
             time_progress = resp.new_plan.maneuvers.back().lane_following_maneuver.end_time;
             speed_progress = target_speed;
+
+            time_req_to_stop = speed_progress / accel_target; // the time required to stop should be updated after each maneuver is generated so that it can be evaluated before planning the next maneuver
+
+            stopping_dist = 0.5 * speed_progress * time_req_to_stop;  
             
 
             if(current_progress >= total_maneuver_length || last_lanelet_index == shortest_path.size() - 1)
@@ -242,7 +296,7 @@ namespace route_following_plugin
         maneuver_msg.stop_and_wait_maneuver.start_time = current_time;
         maneuver_msg.stop_and_wait_maneuver.starting_lane_id = std::to_string(start_lane_id);
         maneuver_msg.stop_and_wait_maneuver.ending_lane_id = std::to_string(end_lane_id);
-        if(end_time < mvr_duration_){
+        if(end_time < mvr_duration_){ // TODO double check these durations
             end_time = mvr_duration_;
         } 
         maneuver_msg.stop_and_wait_maneuver.end_time = current_time + ros::Duration(end_time);

@@ -116,6 +116,8 @@ public:
 
   std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end, bool shortest_path_only = false) const override;
 
+  boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(double downtrack) const override;
+
   lanelet::LaneletMapConstPtr getMap() const override;
 
   LaneletRouteConstPtr getRoute() const override;
@@ -173,6 +175,7 @@ private:
   std::shared_ptr<lanelet::LaneletMap> semantic_map_;
   LaneletRoutePtr route_;
   LaneletRoutingGraphPtr map_routing_graph_;
+  double route_length_ = 0;
   
   lanelet::LaneletSubmapConstUPtr shortest_path_view_;  // Map containing only lanelets along the shortest path of the
                                                      // route

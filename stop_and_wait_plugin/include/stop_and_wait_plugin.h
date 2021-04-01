@@ -42,6 +42,7 @@ namespace stop_and_wait_plugin
     {
         lanelet::BasicPoint2d point;
         double speed=0;
+        lanelet::Id lanelet_id;
     };
 
     class StopandWait
@@ -91,44 +92,13 @@ namespace stop_and_wait_plugin
          */ 
         std::vector<cav_msgs::TrajectoryPlanPoint> compose_trajectory_from_centerline(
         const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state);
-
-        /**
-         * \brief Returns the nearest point to the provided vehicle pose in the provided list
-         * 
-         * \param points The points to evaluate
-         * \param state The current vehicle state
-         * 
-         * \return index of nearest point in points
-         */
-        int getNearestPointIndex(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state) const;
         
-        /**
-         * \brief Returns the nearest point on the route to the provided vehicle pose in the provided list
-         * 
-         * \param points Route points to evaluate
-         * \param state The current vehicle state
-         * 
-         * \return index of nearest point in points
-         */
-        int getNearestRouteIndex(lanelet::BasicLineString2d& points, const cav_msgs::VehicleState& state);
         /**
          * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
          */ 
         void splitPointSpeedPairs(const std::vector<PointSpeedPair>& points, std::vector<lanelet::BasicPoint2d>* basic_points,
                             std::vector<double>* speeds) const;
 
-        /**
-         * \brief Method converts speed values associated with given points along path to time. Calculated for constant jerk. 
-         * For jerk lesser than 0.001m/s3 speed is assumed to be constant
-         * \param downtrack downtrack distance corresponding to the distance travelled on the route
-         * \param speeds a vector of speeds associated with given downtrack distances
-         * \param time a vector of time values associated with downtrack distances, filled into in the function
-         * \param jerk constant jerk along maneuver used for calculating time
-         */
-        void speed_to_time(const std::vector<double>& downtrack, const std::vector<double>& speeds,std::vector<double>& times, double jerk) const;
-
-       //current vehicle forward speed
-        double current_speed_;
 
         //wm listener pointer and pointer to the actual wm object
         std::shared_ptr<carma_wm::WMListener> wml_;
@@ -138,15 +108,11 @@ namespace stop_and_wait_plugin
         //CARMA ROS node handles
         std::shared_ptr<ros::CARMANodeHandle> nh_,pnh_;
 
-        std::shared_ptr<ros::CARMANodeHandle> pnh2_;
         // ROS service servers
         ros::ServiceServer trajectory_srv_;
 
         //ROS publishers and subscribers
         ros::Publisher plugin_discovery_pub_;
-        ros::Subscriber pose_sub_;
-        ros::Subscriber twist_sub_;
-        ros::Publisher jerk_pub_;
 
         // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;
@@ -154,10 +120,6 @@ namespace stop_and_wait_plugin
         //Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
 
-        //Calculated jerk for maneuver in m/s3
-        double jerk_ =0.0;
-        //Total time required to complete the maneuver
-        double maneuver_time_;
         //Acceptable range for stopping from end point of route
         double destination_downtrack_range_ = 10.0;
 
@@ -166,14 +128,10 @@ namespace stop_and_wait_plugin
         double min_crawl_speed_ = 1.0;
         //The minimum duration of a trajectory length in seconds
         double minimal_trajectory_duration_ = 6.0;
-        //The maximum acceptable jerk 
-        double max_jerk_limit_ = 3.0;
-        //The minimum acceptable jerk, after which constant speed is assumed
-        double min_jerk_limit_ = 0.001;
         //Minimum timestep used for planning trajectory
         double min_timestep_ =0.1;
         //Amount to downsample input lanelet centerline data
-        int downsample_ratio_ =8;
+        int downsample_ratio_ = 4;
         
         
         //A small static value for comparing doubles
@@ -184,18 +142,6 @@ namespace stop_and_wait_plugin
          * \brief Initialize ROS publishers, subscribers, service servers and service clients
         */
         void initialize();
-
-        /**
-         * \brief Callback for the pose subscriber, which will store latest pose locally
-         * \param msg Latest pose message
-         */
-        void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
-
-        /**
-         * \brief Callback for the twist subscriber, which will store latest twist locally
-         * \param msg Latest twist message
-         */
-        void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
 
         double destination_downtrack_range = 0.0;
         
