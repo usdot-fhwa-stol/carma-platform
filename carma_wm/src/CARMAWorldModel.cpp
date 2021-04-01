@@ -278,6 +278,42 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double st
   return output;
 }
 
+std::vector<lanelet::BasicPoint2d> CARMAWorldModel::sampleRoutePoints(double start_downtrack, double end_downtrack, double step_size) const {
+  
+  std::vector<lanelet::BasicPoint2d> output;
+  if (!route_)
+  {
+    ROS_WARN_STREAM("Route has not yet been loaded");
+    return output;
+  }
+
+  double route_end = getRouteEndTrackPos().downtrack;
+
+  if (start_downtrack < 0 || start_downtrack > route_end
+    || end_downtrack < 0 || end_downtrack > route_end
+    || start_downtrack > end_downtrack) {
+    ROS_WARN_STREAM("Invalid input downtracks");
+    return output;
+  }
+
+  if (end_downtrack == start_downtrack) {
+    output.emplace_back(*(pointFromRouteTrackPos(start_downtrack))); // If a single point was provided return that point
+    return output;
+  }
+  
+  output.reserve(2 + (end_downtrack - start_downtrack) / step_size);
+  double downtrack = start_downtrack;
+  while (downtrack < end_downtrack) {
+    output.emplace_back(*(pointFromRouteTrackPos(downtrack)));
+    downtrack+=step_size;
+  }
+
+  if (downtrack != end_downtrack) { // if we did not stop exactly on the end point add it.
+    output.emplace_back(*(pointFromRouteTrackPos(end_downtrack)));
+  }
+  return output;
+}
+
 boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(double downtrack) const {
   if (!route_)
   {

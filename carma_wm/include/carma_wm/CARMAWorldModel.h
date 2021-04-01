@@ -116,6 +116,8 @@ public:
 
   std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end, bool shortest_path_only = false) const override;
 
+  std::vector<lanelet::BasicPoint2d> sampleRoutePoints(double start_downtrack, double end_downtrack, double step_size) const override;
+
   boost::optional<lanelet::BasicPoint2d> pointFromRouteTrackPos(double downtrack) const override;
 
   lanelet::LaneletMapConstPtr getMap() const override;
