@@ -557,12 +557,12 @@ Visualization Manager:
       width: 128
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /detection/lidar_detector/objects_markers
+      Marker Topic: /environment/detection/lidar_detector/objects_markers
       Name: MarkerArray
       Namespaces:
-        /detection/lidar_detector/centroid_markers: true
-        /detection/lidar_detector/hull_markers: true
-        /detection/lidar_detector/label_markers: true
+        /environment/detection/lidar_detector/centroid_markers: true
+        /environment/detection/lidar_detector/hull_markers: true
+        /environment/detection/lidar_detector/label_markers: true
       Queue Size: 100
       Value: true
     - Alpha: 1
