@@ -193,7 +193,8 @@ std::vector<PointSpeedPair> StopandWait::maneuvers_to_points(const std::vector<c
             pair.point = *end_point;
         }
 
-        pair.speed = (*traffic_rules)->speedLimit(l).speedLimit.value();
+        pair.speed = starting_speed; //(*traffic_rules)->speedLimit(l).speedLimit.value();
+        ROS_ERROR_STREAM("Speed: " << pair.speed);
         pair.lanelet_id = l.id();
         points_and_target_speeds.push_back(pair);
         return points_and_target_speeds;
@@ -201,7 +202,8 @@ std::vector<PointSpeedPair> StopandWait::maneuvers_to_points(const std::vector<c
 
       PointSpeedPair pair;
       pair.point = p;
-      pair.speed = (*traffic_rules)->speedLimit(l).speedLimit.value();
+      pair.speed = starting_speed; //(*traffic_rules)->speedLimit(l).speedLimit.value();
+      ROS_ERROR_STREAM("Speed: " << pair.speed);
       pair.lanelet_id = l.id();
       points_and_target_speeds.push_back(pair);
       prev_point = p;
@@ -317,6 +319,10 @@ StopandWait::compose_trajectory_from_centerline(const std::vector<PointSpeedPair
   trajectory_utils::conversions::speed_to_time(downtracks, speeds, &times);
 
   std::vector<double> yaws = carma_wm::geometry::compute_tangent_orientations(raw_points);
+
+  for (int i = 0; i < points.size(); i ++) {
+      ROS_INFO_STREAM("1d: " << downtracks[i] << " t: " << times[i] << " v: " << speeds[i]);
+  }
 
   auto traj = trajectory_from_points_times_orientations(raw_points, times, yaws, start_time);
 

@@ -102,6 +102,28 @@ TEST(StopandWait, TestStopandWaitPlanning)
 
   cav_srvs::PlanTrajectoryResponse resp;
   plugin.plan_trajectory_cb(req, resp);
+
+  double dist = 0;
+  double vel = resp.trajectory_plan.initial_longitudinal_velocity;
+  bool first= true;
+  lanelet::BasicPoint2d prev_point;
+  ros::Time prev_time = ros::Time(0.0);
+  for (auto point : resp.trajectory_plan.trajectory_points) {
+    lanelet::BasicPoint2d p(point.x, point.y);
+    ROS_INFO_STREAM("Y: " << point.y);
+    double delta = 0;
+    if (first) {
+      first = false;
+    } else {
+      delta = lanelet::geometry::distance2d(p, prev_point);
+      dist += delta;
+      ROS_INFO_STREAM("delta: " << delta << " timediff: " << (point.target_time - prev_time).toSec() << "pre_vel: " << vel);
+      vel = (2.0 * delta / (point.target_time - prev_time).toSec()) - vel;
+    }
+    ROS_ERROR_STREAM("point time: " << point.target_time.toSec() << " dist: " << dist << " vel: " << vel);
+    prev_point = p;
+    prev_time = point.target_time;
+  }
 }
 }  // namespace stop_and_wait_plugin
 
@@ -111,7 +133,7 @@ int main(int argc, char** argv)
   testing::InitGoogleTest(&argc, argv);
   ros::Time::init();
   ROSCONSOLE_AUTOINIT;
-  if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info) ) { // Change to Debug to enable debug logs
+  if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) { // Change to Debug to enable debug logs
     ros::console::notifyLoggerLevelsChanged();
   }
   auto res = RUN_ALL_TESTS();
