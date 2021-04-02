@@ -209,9 +209,9 @@ StopandWait::compose_trajectory_from_centerline(const std::vector<PointSpeedPair
   final_points.push_back(prev_pair);  // Store the points in reverse
 
   bool reached_end = false;
-  for (int i = points.size() - 2; i > 0; i--)
+  for (int i = points.size() - 2; i >= 0; i--)
   {  // NOTE: Do not use size_t for i type here as -- with > 0 will result in overflow
-     //       First point's speed is left unchanged as it is current speed of the vehicle
+
     double v_i = prev_pair.speed;
 
     if (reached_end || v_i >= starting_speed)
@@ -243,10 +243,6 @@ StopandWait::compose_trajectory_from_centerline(const std::vector<PointSpeedPair
   std::vector<lanelet::BasicPoint2d> raw_points;
   splitPointSpeedPairs(final_points, &raw_points, &speeds);
 
-  for (auto s : speeds) {
-      ROS_INFO_STREAM("speed: " << s);
-  }
-
   std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(raw_points);
 
   std::vector<double> times;
@@ -255,7 +251,7 @@ StopandWait::compose_trajectory_from_centerline(const std::vector<PointSpeedPair
   std::vector<double> yaws = carma_wm::geometry::compute_tangent_orientations(raw_points);
 
   for (int i = 0; i < points.size(); i ++) {
-      ROS_INFO_STREAM("1d: " << downtracks[i] << " t: " << times[i] << " v: " << speeds[i]);
+      ROS_DEBUG_STREAM("1d: " << downtracks[i] << " t: " << times[i] << " v: " << speeds[i]);
   }
 
   auto traj = trajectory_from_points_times_orientations(raw_points, times, yaws, start_time);

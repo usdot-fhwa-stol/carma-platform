@@ -48,12 +48,10 @@ TEST(StopandWait, TestStopandWaitPlanning)
 {
   ros::Time::setNow(ros::Time(0.0));
   StopandWaitConfig config;
-  config.downsample_ratio = 1;
 
   config.minimal_trajectory_duration = 6.0;    // Trajectory length in seconds
   config.stop_timestep = 0.1;                  // Size of timesteps between stopped trajectory points
-  config.downsample_ratio = 1;                  // Amount to downsample input lanelet centerline data.
-  config.destination_downtrack_range = 10.0;  // Buffer around target end point TODO is this still needed?
+  config.trajectory_step_size = 1;                  // Amount to downsample input lanelet centerline data.
   config.accel_limit_multiplier = 0.5;         // Multiplier to compine with actual accel limit for target planning
   config.accel_limit = 2.0;                    // Longitudinal acceleration limit of the vehicle
 
