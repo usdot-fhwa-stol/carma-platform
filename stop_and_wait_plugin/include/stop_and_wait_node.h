@@ -73,6 +73,7 @@ public:
                         config.accel_limit_multiplier);
     pnh.param<double>("/vehicle_acceleration_limit", config.accel_limit,
                         config.accel_limit);
+    pnh.param<double>("crawl_speed", config.crawl_speed, config.crawl_speed);
 
 
     ros::Publisher plugin_discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);

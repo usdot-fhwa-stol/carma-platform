@@ -28,6 +28,7 @@ struct StopandWaitConfig
   double trajectory_step_size = 1.0;                  // Downtrack distance between trajectory points
   double accel_limit_multiplier = 0.5;         // Multiplier to compine with actual accel limit for target planning
   double accel_limit = 2.0;                    // Longitudinal acceleration limit of the vehicle
+  double crawl_speed = 1.34112;                // Minimum speed the vehicle can command before being ready to stop
 
   friend std::ostream& operator<<(std::ostream& output, const StopandWaitConfig& c)
   {
@@ -37,6 +38,7 @@ struct StopandWaitConfig
            << "trajectory_step_size: " << c.trajectory_step_size << std::endl
            << "accel_limit_multiplier: " << c.accel_limit_multiplier << std::endl
            << "accel_limit: " << c.accel_limit << std::endl
+           << "crawl_speed: " << c.crawl_speed << std::endl
            << "}" << std::endl;
     return output;
   }

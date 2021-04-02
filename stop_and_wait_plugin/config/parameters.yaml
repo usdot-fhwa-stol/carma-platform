@@ -11,9 +11,13 @@ spin_rate_hz: 10
 stop_timestep : 0.1
 
 # Double: Downtrack distance between trajectory points
-# Units: seconds
+# Units: m
 trajectory_step_size : 1.0
 
 # Double: Downtrack distance between trajectory points
-# Units: seconds
+# Units: percentage
 accel_limit_multiplier : 0.7
+
+# Double: Minimum speed the vehicle can command before being ready to stop
+# Units: m/s
+crawl_speed : 1.34112

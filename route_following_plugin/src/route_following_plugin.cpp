@@ -319,7 +319,8 @@ namespace route_following_plugin
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::STOP_AND_WAIT;
         maneuver_msg.stop_and_wait_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
-        maneuver_msg.stop_and_wait_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
+        maneuver_msg.stop_and_wait_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN
+                                                                            | cav_msgs::ManeuverParameters::HAS_FLOAT_META_DATA;
         maneuver_msg.stop_and_wait_maneuver.parameters.planning_tactical_plugin = "StopandWaitPlugin";
         maneuver_msg.stop_and_wait_maneuver.parameters.planning_strategic_plugin = "RouteFollowingPlugin";
         maneuver_msg.stop_and_wait_maneuver.start_dist = current_dist;
@@ -328,6 +329,8 @@ namespace route_following_plugin
         maneuver_msg.stop_and_wait_maneuver.start_time = current_time;
         maneuver_msg.stop_and_wait_maneuver.starting_lane_id = std::to_string(start_lane_id);
         maneuver_msg.stop_and_wait_maneuver.ending_lane_id = std::to_string(end_lane_id);
+        // Receiving plugins can identify the index of the route end buffer by reaching index 1 of the meta data field
+        maneuver_msg.stop_and_wait_maneuver.float_valued_meta_data.push_back(route_end_point_buffer_ * 0.5);
         if(end_time < mvr_duration_){ // TODO double check these durations
             end_time = mvr_duration_;
         } 

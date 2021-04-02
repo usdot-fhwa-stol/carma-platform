@@ -43,6 +43,7 @@
 #include <cav_msgs/TrajectoryPlan.h>
 #include <math.h>
 #include <std_msgs/Float64.h>
+#include <math.h>
 
 using oss = std::ostringstream;
 
@@ -98,8 +99,14 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
   trajectory.header.stamp = ros::Time::now();
   trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
+  double stop_location_buffer = 3.0; // By default use a 3m stopping buffer 
+  if (maneuver_plan[0].stop_and_wait_maneuver.parameters.presence_vector & cav_msgs::ManeuverParameters::HAS_FLOAT_META_DATA) {
+    stop_location_buffer = maneuver_plan[0].stop_and_wait_maneuver.parameters.float_valued_meta_data[0];
+    ROS_DEBUG_STREAM("Using stop buffer from meta data: " << stop_location_buffer);
+  }
+
   trajectory.trajectory_points =
-      compose_trajectory_from_centerline(points_and_target_speeds, current_downtrack, req.vehicle_state.longitudinal_vel, maneuver_plan[0].stop_and_wait_maneuver.end_dist , req.header.stamp);
+      compose_trajectory_from_centerline(points_and_target_speeds, current_downtrack, req.vehicle_state.longitudinal_vel, maneuver_plan[0].stop_and_wait_maneuver.end_dist, stop_location_buffer, req.header.stamp);
   ROS_DEBUG_STREAM("Trajectory points size:" << trajectory.trajectory_points.size());
   trajectory.initial_longitudinal_velocity = req.vehicle_state.longitudinal_vel;
   resp.trajectory_plan = trajectory;
@@ -178,7 +185,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::trajectory_from_points_t
 // TODO how are we going to handle crawling to the stop line if stopped before?
 std::vector<cav_msgs::TrajectoryPlanPoint>
 StopandWait::compose_trajectory_from_centerline(const std::vector<PointSpeedPair>& points, double starting_downtrack,
-                                                double starting_speed, double stop_location, ros::Time start_time)
+                                                double starting_speed, double stop_location, double stop_location_buffer, ros::Time start_time)
 {
   std::vector<cav_msgs::TrajectoryPlanPoint> plan;
   if (points.size() == 0)
@@ -245,8 +252,37 @@ StopandWait::compose_trajectory_from_centerline(const std::vector<PointSpeedPair
 
   std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(raw_points);
 
+  double downtrack = 0;
+  bool in_range = false;
+  double stopped_downtrack = 0;
+  lanelet::BasicPoint2d stopped_point;
+  for (size_t i = 0; i < speeds.size(); i++) { // Apply minimum speed constraint
+    double downtrack = downtracks[i];
+    if (downtrack > downtracks.back() - stop_location_buffer && speeds[i] < config_.crawl_speed + 0.5) { // if we are within the stopping buffer and going at crawl speed then command stop
+      speeds[i] = 0.0;
+      
+      if (!in_range) {
+        stopped_downtrack = downtracks[i];
+        stopped_point = raw_points[i];
+        in_range = true;
+      }
+
+      downtracks[i] = stopped_downtrack;
+      raw_points[i] = stopped_point;
+       
+    } else {
+      speeds[i] = std::max(speeds[i], config_.crawl_speed); // TODO make crawl_speed a parameter
+    }
+  }
+
   std::vector<double> times;
   trajectory_utils::conversions::speed_to_time(downtracks, speeds, &times);
+
+  for (size_t i = 0; i < times.size(); i++) {
+    if (times[i] != 0 && !std::isnormal(times[i]) && i !=0 ) { // If the time 
+      times[i] = times[i-1] + config_.stop_timestep;
+    }
+  } 
 
   std::vector<double> yaws = carma_wm::geometry::compute_tangent_orientations(raw_points);
 
