@@ -270,9 +270,11 @@ namespace route {
         
         if (it != shortest_path_lanelet_ids.end())
         {
+            // Route's shortest path contains duplicate lanelet IDs
             return true;
         }
 
+        // Route's shortest path does not duplicate lanelet IDs
         return false;
     }
 

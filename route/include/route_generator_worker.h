@@ -148,7 +148,8 @@ namespace route {
         void set_publishers(ros::Publisher route_event_pub, ros::Publisher route_state_pub, ros::Publisher route_pub,ros::Publisher route_marker_pub);
 
         /**
-         * \brief Helper function to check whether a route's shortest path contains any duplicate Lanelet IDs
+         * \brief Helper function to check whether a route's shortest path contains any duplicate Lanelet IDs.
+         *        'true' indicates that the route's shortest path contains duplicate Lanelet IDs.
          * \param route Route object from lanelet2 lib routing function
          */
         bool check_for_duplicate_lanelets_in_shortest_path(const lanelet::Optional<lanelet::routing::Route>& route);
