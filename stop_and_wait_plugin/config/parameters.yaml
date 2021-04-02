@@ -2,21 +2,18 @@
 # Units: seconds
 minimal_trajectory_duration : 6.0
 
-#Int:Amount to downsample input lanelet centerline data.Corresponds to saving each nth point.
-downsample_ratio: 8
-
-# Double: The maximum acceptable jerk for completing maneuver 
-# Units: meters per second cube
-max_jerk_limit: 3.0
-
 # Double: The rate at which the Guidance Node will process message
 # Units: Hz
 spin_rate_hz: 10
 
-# Double: The minimum timestep used for planning trajectory
-#Units: seconds
-min_timestep : 0.1
+# Double: Size of timesteps between stopped trajectory points when stopped
+# Units: seconds
+stop_timestep : 0.1
 
-# Double: The minimum jerk below which slow down is ignored, constant speed is assumed, in m/s2
-#Units: meters per second cube
-min_jerk: 0.01
+# Double: Downtrack distance between trajectory points
+# Units: seconds
+trajectory_step_size : 1.0
+
+# Double: Downtrack distance between trajectory points
+# Units: seconds
+accel_limit_multiplier : 0.7

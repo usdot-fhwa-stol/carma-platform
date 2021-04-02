@@ -1,6 +1,6 @@
 # The minimum duration of a maneuver plan, in seconds
 minimal_maneuver_duration: 15
 
-#Double : The jerk used to bring vehicle to a halt at end of route
-#Unit : m/s3
-route_end_jerk : 0.5
+# Multiplier for the acceleration limit which will be used for formulating the stopping maneuver
+# This multiplier should be a bit lower than whatever plugin will be used to bring the vehicle to a stop to provide buffer in planning
+stopping_accel_limit_multiplier: 0.5

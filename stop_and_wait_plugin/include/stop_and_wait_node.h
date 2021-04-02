@@ -68,9 +68,12 @@ public:
     pnh.param<double>("minimal_trajectory_duration", config.minimal_trajectory_duration,
                         config.minimal_trajectory_duration);
     pnh.param<double>("stop_timestep", config.stop_timestep, config.stop_timestep);
-    pnh.param<int>("downsample_ratio", config.downsample_ratio, config.downsample_ratio);
-    pnh.param<double>("/guidance/destination_downtrack_range", config.destination_downtrack_range,
-                        config.destination_downtrack_range);
+    pnh.param<double>("trajectory_step_size", config.trajectory_step_size, config.trajectory_step_size);
+    pnh.param<double>("accel_limit_multiplier", config.accel_limit_multiplier,
+                        config.accel_limit_multiplier);
+    pnh.param<double>("/vehicle_acceleration_limit", config.accel_limit,
+                        config.accel_limit);
+
 
     ros::Publisher plugin_discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
 

@@ -33,6 +33,7 @@
  * \param property The name of the field to access on the specific maneuver types. Must be shared by all extant maneuver types
  * \return Expands to an expression (in the form of chained ternary operators) that evalutes to the desired field
  */
+
 #define GET_MANEUVER_PROPERTY(mvr, property)\
         (((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN ? (mvr).intersection_transit_left_turn_maneuver.property :\
             ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property :\
@@ -41,6 +42,28 @@
                         ((mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :\
                         ((mvr).type == cav_msgs::Maneuver::STOP_AND_WAIT ? (mvr).stop_and_wait_maneuver.property :\
                             throw std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id"))))))))
+
+namespace {
+double getManeuverEndSpeed(const cav_msgs::Maneuver& mvr) {
+    switch(mvr.type) {
+        case cav_msgs::Maneuver::LANE_FOLLOWING:
+            return mvr.lane_following_maneuver.end_speed;
+        case cav_msgs::Maneuver::LANE_CHANGE:
+            return mvr.lane_change_maneuver.end_speed;
+        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT:
+            return mvr.intersection_transit_straight_maneuver.end_speed;
+        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN:
+            return mvr.intersection_transit_left_turn_maneuver.end_speed;
+        case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN:
+            return mvr.intersection_transit_right_turn_maneuver.end_speed;
+        case cav_msgs::Maneuver::STOP_AND_WAIT:
+            return 0;
+        default:
+            ROS_ERROR_STREAM("Requested end speed from unsupported maneuver type");
+            return 0;
+    }
+}
+}
 
 namespace route_following_plugin
 {
@@ -61,13 +84,17 @@ namespace route_following_plugin
         plugin_discovery_msg_.activated = true;
         plugin_discovery_msg_.type = cav_msgs::Plugin::STRATEGIC;
         plugin_discovery_msg_.capability = "strategic_plan/plan_maneuvers";
+
         pose_sub_ = nh_->subscribe("current_pose", 1, &RouteFollowingPlugin::pose_cb, this);
         twist_sub_ = nh_->subscribe("current_velocity", 1, &RouteFollowingPlugin::twist_cd, this);
         
-        pnh_->param<double>("minimal_maneuver_duration", mvr_duration_, 16.0);
-        gnh_->param<double>("config_speed_limit",config_limit);
-        pnh_->param<double>("route_end_jerk", jerk_, 1.0);
+        pnh_->param<double>("minimal_maneuver_duration", mvr_duration_, mvr_duration_);
+        pnh_->param<double>("/guidance/route/destination_downtrack_range", route_end_point_buffer_, route_end_point_buffer_);
+        pnh_->param<double>("/vehicle_acceleration_limit", accel_limit_, accel_limit_);
+        pnh_->param<double>("stopping_accel_limit_multiplier", stopping_accel_limit_multiplier_, stopping_accel_limit_multiplier_);
+
         wml_.reset(new carma_wm::WMListener());
+
         // set world model point form wm listener
         wm_ = wml_->getWorldModel();
         ros::CARMANodeHandle::setSpinCallback([this]() -> bool 
@@ -96,9 +123,13 @@ namespace route_following_plugin
 
         if (!req.prior_plan.maneuvers.empty()) { // If there is an existing maneuver plan then set the start state based on that end state
             double start_dist = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_dist);
-            double start_speed = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_speed);
+            double start_speed = getManeuverEndSpeed(req.prior_plan.maneuvers.back());
             ros::Time start_time = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_time);
-            current_loc = wm_->pointFromRouteTrackPos(start_dist);
+            auto optional_point = wm_->pointFromRouteTrackPos(start_dist);
+            if (!optional_point) {
+                throw std::invalid_argument("Could not get starting point for plan. Is maneuver plan beyond end of route?");
+            }
+            current_loc = *optional_point;
             current_progress = start_dist;
             speed_progress = start_speed;
             time_progress = start_time;
@@ -140,23 +171,23 @@ namespace route_following_plugin
         double target_speed=findSpeedLimit(current_lanelet);   //get Speed Limit
 
         double total_maneuver_length = current_progress + mvr_duration_ * target_speed;
-        double route_length=  wm_->getRouteEndTrackPos().downtrack; 
+        double route_length=  wm_->getRouteEndTrackPos().downtrack - (route_end_point_buffer_ * 0.5); 
         total_maneuver_length = std::min(total_maneuver_length, route_length);
 
         bool approaching_route_end = false;
         double time_req_to_stop,stopping_dist;
 
-        double accel_target = 0.4 * accel_limit; // TODO make parameter or figure out how be to set the limit to allow the trajectory to be generated
-        time_req_to_stop = speed_progress / accel_target; // TODO the time required to stop should be updated after each maneuver is generated then evaluated before planning the next maneuver
+        double accel_target = stopping_accel_limit_multiplier_ * accel_limit_; 
+        time_req_to_stop = speed_progress / accel_target; 
 
-        stopping_dist = 0.5 * speed_progress * time_req_to_stop; // TODO how is the buffer being accounted for?
+        stopping_dist = 0.5 * speed_progress * time_req_to_stop;
         
         if(route_length - current_progress <= stopping_dist){
             approaching_route_end = true;
         }
 
         ROS_DEBUG_STREAM("Starting Loop");
-        ROS_DEBUG_STREAM("Time Required To Stop: " << time_req_to_stop << " stopping_dist: " << stopping_dist<<" Speed limit:"<<findSpeedLimit(shortest_path.back())<< " Jerk:"<<jerk_);
+        ROS_DEBUG_STREAM("Time Required To Stop: " << time_req_to_stop << " stopping_dist: " << stopping_dist<<" target_speed: "<< target_speed);
         ROS_DEBUG_STREAM("total_maneuver_length: " << total_maneuver_length << " route_length: " << route_length);
         
         while(current_progress < total_maneuver_length && !approaching_route_end)
@@ -282,6 +313,7 @@ namespace route_following_plugin
         maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
         return maneuver_msg;
     }
+
     cav_msgs::Maneuver RouteFollowingPlugin::composeStopandWaitManeuverMessage(double current_dist, double end_dist, double current_speed, int start_lane_id, int end_lane_id, ros::Time current_time, double end_time)
     {
         cav_msgs::Maneuver maneuver_msg;
@@ -303,6 +335,7 @@ namespace route_following_plugin
         
         return maneuver_msg;
     }
+
     bool RouteFollowingPlugin::identifyLaneChange(lanelet::routing::LaneletRelations relations, int target_id)
     {
         for(auto& relation : relations)
@@ -314,39 +347,21 @@ namespace route_following_plugin
         }
         return false;
     }
+
     double RouteFollowingPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt)
     {
         lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules();
-        double target_speed = 0.0, traffic_speed =0.0, param_speed =0.0;
-        double hardcoded_max=lanelet::Velocity(hardcoded_params::control_limits::MAX_LONGITUDINAL_VELOCITY_MPS * lanelet::units::MPS()).value();
+        double traffic_speed =0.0;
 
         if (traffic_rules)
         {
             traffic_speed=(*traffic_rules)->speedLimit(llt).speedLimit.value();
             
         }
-        else{
-            ROS_WARN(" Valid traffic rules object could not be built.");
-        }
-
-        if(config_limit > 0.0 && config_limit < hardcoded_max)
-        {
-            param_speed = config_limit;
-            ROS_DEBUG("Using Configurable value");
-        }
-        else 
-        {
-            param_speed = hardcoded_max;
-            ROS_DEBUG(" Using Hardcoded maximum");
-        }
-        //If either value is 0, use the other valid limit
-        if(traffic_speed <= epislon_ || param_speed <= epislon_){
-            target_speed = std::max(traffic_speed, param_speed);
-        }
-        else{
-            target_speed = std::min(traffic_speed,param_speed);
+        else {
+            throw std::invalid_argument("Could not get traffic rules and therefore can't get speed limit");
         }
         
-        return target_speed;
+        return traffic_speed;
     }
 }

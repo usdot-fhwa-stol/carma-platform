@@ -130,11 +130,15 @@ namespace route_following_plugin
         ros::ServiceServer plan_maneuver_srv_;        
 
         // Minimal duration of maneuver, loaded from config file
-        double mvr_duration_;
-        //Jerk used to come to stop at end of route
-        double jerk_ = 0.05;
+        double mvr_duration_ = 16.0;
         //Small constant to compare double with approx zero
         const double epislon_ = 0.001;
+
+        double route_end_point_buffer_ = 10.0;
+
+        double stopping_accel_limit_multiplier_ = 0.5;
+
+        double accel_limit_ = 2.0;
 
         // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
