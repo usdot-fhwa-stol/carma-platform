@@ -476,16 +476,25 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
     }
     cav_srvs::SetActiveRouteRequest req2;
     cav_srvs::SetActiveRouteResponse resp2;
+    geometry_msgs::PoseStamped msg;
 
-   resp2.errorStatus = 0;
+    //Assign vehicle position
+    msg.pose.position.x = 1106580;
+    msg.pose.position.y = 894697;
 
-   for(auto i: resp.availableRoutes)
-   {
+    geometry_msgs::PoseStampedPtr mpt(new geometry_msgs::PoseStamped(msg));
+
+    worker.pose_cb(mpt);
+
+    resp2.errorStatus = 0;
+
+    for(auto i: resp.availableRoutes)
+    {
         if(i.route_id  == "tfhrc_test_route")
         {
             req2.routeID = i.route_id;
 
-            ASSERT_EQ(worker.set_active_route_cb(req2, resp2), false);
+            ASSERT_EQ(worker.set_active_route_cb(req2, resp2), true);
         }
 
    }
