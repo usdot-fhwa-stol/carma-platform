@@ -330,7 +330,7 @@ namespace route_following_plugin
         maneuver_msg.stop_and_wait_maneuver.starting_lane_id = std::to_string(start_lane_id);
         maneuver_msg.stop_and_wait_maneuver.ending_lane_id = std::to_string(end_lane_id);
         // Receiving plugins can identify the index of the route end buffer by reaching index 1 of the meta data field
-        maneuver_msg.stop_and_wait_maneuver.float_valued_meta_data.push_back(route_end_point_buffer_ * 0.5);
+        maneuver_msg.stop_and_wait_maneuver.parameters.float_valued_meta_data.push_back(route_end_point_buffer_ * 0.5);
         if(end_time < mvr_duration_){ // TODO double check these durations
             end_time = mvr_duration_;
         } 

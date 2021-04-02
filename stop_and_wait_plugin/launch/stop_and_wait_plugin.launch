@@ -14,8 +14,8 @@
   This file is used to launch the tactical stop and wait plugin.
 -->
 <launch>
-    <remap from="plan_trajectory" to="plugins/StopandWaitPlugin/plan_trajectory"/>
-    <remap from = "jerk" to = "plugins/StopandWaitPlugin/jerk_val"/>
-    <rosparam command="load" file="$(find stop_and_wait_plugin)/config/parameters.yaml"/>
-    <node name="stop_and_wait_plugin" pkg="stop_and_wait_plugin" type="stop_and_wait_plugin" output="log"/>
+    <node name="stop_and_wait_plugin" pkg="stop_and_wait_plugin" type="stop_and_wait_plugin" output="log">
+      <remap from="plan_trajectory" to="plugins/StopandWaitPlugin/plan_trajectory"/>
+      <rosparam command="load" file="$(find stop_and_wait_plugin)/config/parameters.yaml"/>
+    </node>
 </launch>

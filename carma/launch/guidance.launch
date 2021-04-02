@@ -101,11 +101,8 @@
   <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch">
 	  <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
   </include>
-  
-  <!-- Pure Pursuit Jerk Wrapper -->
-  <include file="$(find pure_pursuit_jerk_wrapper)/launch/pure_pursuit_jerk_wrapper.launch" />
 
-    <!-- Route Following Plugin -->
+  <!-- Route Following Plugin -->
   <include file="$(find route_following_plugin)/launch/route_following_plugin.launch" />
   
   <!-- Twist Filter -->
@@ -147,7 +144,6 @@
   
     <!-- StopandWait Plugin -->
   <group>
-    <remap from="final_waypoints" to="base_waypoints"/>
     <include file="$(find stop_and_wait_plugin)/launch/stop_and_wait_plugin.launch" />
   </group>
 

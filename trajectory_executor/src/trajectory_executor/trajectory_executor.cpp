@@ -22,20 +22,6 @@
 
 namespace trajectory_executor 
 {
-    cav_msgs::TrajectoryPlan trimPastPoints(const cav_msgs::TrajectoryPlan &plan) {
-        cav_msgs::TrajectoryPlan out(plan);
-        out.trajectory_points = std::vector<cav_msgs::TrajectoryPlanPoint>();
-
-        ros::Time current_time = ros::Time::now();
-
-        for (int i = 0; i < plan.trajectory_points.size(); i++) {
-            if (plan.trajectory_points[i].target_time > current_time) {
-                out.trajectory_points.push_back(plan.trajectory_points[i]);
-            }
-        }
-
-        return out;
-    }
 
     TrajectoryExecutor::TrajectoryExecutor(int traj_frequency) :
         _timesteps_since_last_traj(0),
@@ -57,10 +43,6 @@ namespace trajectory_executor
 
         out[default_control_plugin_] = default_control_plugin_topic_;
 
-        //Hardcoding jerk control wrapper
-        std::string default_jerk_control_plugin = "Pure Pursuit Jerk";
-        std::string default_jerk_control_plugin_topic_ = "/guidance/pure_pursuit/plan_jerk_trajectory";
-        out[default_jerk_control_plugin]=default_jerk_control_plugin_topic_;
         return out;
     }
     
@@ -94,7 +76,7 @@ namespace trajectory_executor
 
         if (_cur_traj != nullptr) {
             if (_timesteps_since_last_traj > 0) {
-                _cur_traj = std::unique_ptr<cav_msgs::TrajectoryPlan>(new cav_msgs::TrajectoryPlan(trimPastPoints(*_cur_traj)));
+                _cur_traj = std::unique_ptr<cav_msgs::TrajectoryPlan>(new cav_msgs::TrajectoryPlan(*_cur_traj));
             }
             if (!_cur_traj->trajectory_points.empty()) {
                 // Determine the relevant control plugin for the current timestep
