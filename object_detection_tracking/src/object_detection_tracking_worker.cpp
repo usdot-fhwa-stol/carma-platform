@@ -103,7 +103,7 @@ void ObjectDetectionTrackingWorker::detectedObjectCallback(const autoware_msgs::
     {
       obj.object_type = obj.LARGE_VEHICLE;
     }
-    else if (obj_array.objects[i].label.compare("person"))
+    else if (obj_array.objects[i].label.compare("person") == 0)
     {
       obj.object_type = obj.PEDESTRIAN;
     }
