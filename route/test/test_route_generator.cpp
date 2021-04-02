@@ -118,6 +118,10 @@ TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
     marker.pose.position.y = start_lanelet.centerline3d().front().y();
 
     route_marker_msg.markers.push_back(marker);
+    marker.pose.position.x = end_lanelet.centerline3d().back().x();
+    marker.pose.position.y = end_lanelet.centerline3d().back().y();
+    route_marker_msg.markers.push_back(marker);
+
 
     // Computes the shortest path and prints the list of lanelet IDs to get from the start to the end. Can be manually confirmed in JOSM
     auto route = map_graph->getRoute(start_lanelet, end_lanelet);
@@ -131,11 +135,13 @@ TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
         }
         std::cout << "\n";
         auto test_msg = worker.compose_route_marker_msg(route);
-        EXPECT_EQ(route_marker_msg.markers[0].pose.position.x, test_msg.markers[0].pose.position.x);
-        EXPECT_EQ(route_marker_msg.markers[0].pose.position.y, test_msg.markers[0].pose.position.y);
-        EXPECT_EQ(route_marker_msg.markers[1].pose.position.x, test_msg.markers[1].pose.position.x);
-        EXPECT_EQ(route_marker_msg.markers[1].pose.position.y, test_msg.markers[1].pose.position.y);
+        EXPECT_NEAR(route_marker_msg.markers[0].pose.position.x, test_msg.markers[0].pose.position.x, 10.0);
+        EXPECT_NEAR(route_marker_msg.markers[0].pose.position.y, test_msg.markers[0].pose.position.y, 10.0);
+        EXPECT_NEAR(route_marker_msg.markers[1].pose.position.x, test_msg.markers[1].pose.position.x, 10.0);
+        EXPECT_NEAR(route_marker_msg.markers[1].pose.position.y, test_msg.markers[1].pose.position.y, 10.0);
     }
+    
+    
 }
 
 TEST(RouteGeneratorTest, testLaneletRoutingVectorMap)
