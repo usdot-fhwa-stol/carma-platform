@@ -491,6 +491,55 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
    }
 }
 
+TEST(RouteGeneratorTest, test_duplicate_lanelets_in_shortest_path)
+{
+    tf2_ros::Buffer tf_buffer;
+    carma_wm::WorldModelConstPtr wm;
+    route::RouteGeneratorWorker worker(tf_buffer);
+
+    int projector_type = 0;
+    std::string target_frame;
+    lanelet::ErrorMessages load_errors;
+
+    // File location of the osm file for this test case:
+    std::string file = "../resource/map/town01_vector_map_1.osm";
+
+    // The parsing in this file was copied from https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/carma_wm_ctrl/test/MapToolsTest.cpp
+    lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+    lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+    lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+
+    // Starting and ending lanelet IDs (these were obtained from viewing the osm file in JOSM)
+    lanelet::Id start_id = 111;
+    lanelet::Id end_id = 111;
+    lanelet::Lanelet start_lanelet = map->laneletLayer.get(start_id);
+    lanelet::Lanelet end_lanelet = map->laneletLayer.get(end_id);
+
+    // Create and populate the 'via_lanelets_vector':
+    lanelet::ConstLanelets via_lanelets_vector;
+    lanelet::Id middle_id = 167;
+    via_lanelets_vector.push_back(map->laneletLayer.get(middle_id));
+
+    lanelet::LaneletMapConstPtr const_map(map);
+    lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
+    lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
+
+    auto route_with_duplicates = map_graph->getRouteVia(start_lanelet, via_lanelets_vector, end_lanelet);
+
+    // Test that the shortest path in 'route_with_duplicates' contains duplicate lanelet IDs
+    // The shortest path is 111 -> 101 -> 100 -> 104 -> 167 -> 169 -> 168 -> 170 -> 111
+    ASSERT_EQ(worker.check_for_duplicate_lanelets_in_shortest_path(route_with_duplicates), true);
+
+    // Change the ending lanelet ID and update the route so the shortest path does not contain duplicate lanelet IDs
+    end_id = 170;
+    end_lanelet = map->laneletLayer.get(end_id);
+    auto route_without_duplicates = map_graph->getRouteVia(start_lanelet, via_lanelets_vector, end_lanelet);
+
+    // Test that the shortest path in 'route_without_duplicates' does not contain duplicate Lanelet IDs
+    // The shortest path is 111 -> 101 -> 100 -> 104 -> 167 -> 169 -> 168 -> 170
+    ASSERT_EQ(worker.check_for_duplicate_lanelets_in_shortest_path(route_without_duplicates), false);
+}
+
 TEST(RouteGeneratorTest, test_reroute_after_route_invalidation)
 {
     tf2_ros::Buffer tf_buffer;
