@@ -79,9 +79,6 @@ namespace trajectory_executor
         ROS_DEBUG("TrajectoryExecutor tick start!");
 
         if (_cur_traj != nullptr) {
-            if (_timesteps_since_last_traj > 0) {
-                _cur_traj = std::unique_ptr<cav_msgs::TrajectoryPlan>(new cav_msgs::TrajectoryPlan(*_cur_traj));
-            }
             if (!_cur_traj->trajectory_points.empty()) {
                 // Determine the relevant control plugin for the current timestep
                 std::string control_plugin = _cur_traj->trajectory_points[0].controller_plugin_name;
