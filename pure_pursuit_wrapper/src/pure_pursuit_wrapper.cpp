@@ -17,6 +17,8 @@
 #include "pure_pursuit_wrapper/pure_pursuit_wrapper.hpp"
 #include <trajectory_utils/conversions/conversions.h>
 #include <carma_wm/Geometry.h>
+#include <algorithm>
+
 
 namespace pure_pursuit_wrapper
 {
@@ -55,7 +57,7 @@ void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::C
   }
 
   for (size_t i =0; i < speeds.size(); i++) { // Ensure 0 is min speed
-    speeds[i] = std::max(0, speeds[i]);
+    speeds[i] = std::max(0.0, speeds[i]);
   }
 
   std::vector<double> lag_speeds = apply_response_lag(speeds, downtracks, config_.vehicle_response_lag); // This call requires that the first speed point be current speed to work as expected
