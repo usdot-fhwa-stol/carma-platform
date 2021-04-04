@@ -258,7 +258,7 @@ StopandWait::compose_trajectory_from_centerline(const std::vector<PointSpeedPair
   lanelet::BasicPoint2d stopped_point;
   for (size_t i = 0; i < speeds.size(); i++) { // Apply minimum speed constraint
     double downtrack = downtracks[i];
-    if (downtrack > downtracks.back() - stop_location_buffer && speeds[i] < config_.crawl_speed + 0.5) { // if we are within the stopping buffer and going at crawl speed then command stop
+    if (downtrack > downtracks.back() - stop_location_buffer && speeds[i] < config_.crawl_speed + 0.22352) { // if we are within the stopping buffer and going at crawl speed then command stop
       speeds[i] = 0.0;
       
       if (!in_range) {
@@ -291,11 +291,6 @@ StopandWait::compose_trajectory_from_centerline(const std::vector<PointSpeedPair
   }
 
   auto traj = trajectory_from_points_times_orientations(raw_points, times, yaws, start_time);
-
-  for (size_t i = 0; i < traj.size(); i++)
-  {
-    traj[i].lane_id = std::to_string(points[i].lanelet_id);
-  }
 
   while (traj.back().target_time - traj.front().target_time < ros::Duration(config_.minimal_trajectory_duration))
   {
