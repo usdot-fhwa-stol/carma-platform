@@ -178,9 +178,11 @@ namespace route_following_plugin
         double time_req_to_stop,stopping_dist;
 
         double accel_target = stopping_accel_limit_multiplier_ * accel_limit_; 
-        time_req_to_stop = speed_progress / accel_target; 
+        double min_time_to_stop = 4.4704 / accel_target; // 10mph is the minimum stopping distance we will compute for. Once below that it will be a fixed value. // TODO make parameter
+        double min_stopping_dist =  0.5 * 4.4704 * min_time_to_stop;
+        time_req_to_stop = std::max(speed_progress / accel_target, min_time_to_stop); 
 
-        stopping_dist = 0.5 * speed_progress * time_req_to_stop;
+        stopping_dist = std::max(0.5 * speed_progress * time_req_to_stop, min_stopping_dist);
         
         if(route_length - current_progress <= stopping_dist){
             approaching_route_end = true;
@@ -224,9 +226,10 @@ namespace route_following_plugin
             time_progress = resp.new_plan.maneuvers.back().lane_following_maneuver.end_time;
             speed_progress = target_speed;
 
-            time_req_to_stop = speed_progress / accel_target; // the time required to stop should be updated after each maneuver is generated so that it can be evaluated before planning the next maneuver
 
-            stopping_dist = 0.5 * speed_progress * time_req_to_stop;  
+            time_req_to_stop = std::max(speed_progress / accel_target, min_time_to_stop); // the time required to stop should be updated after each maneuver is generated so that it can be evaluated before planning the next maneuver
+
+            stopping_dist = std::max(0.5 * speed_progress * time_req_to_stop, min_stopping_dist);
             
 
             if(current_progress >= total_maneuver_length || last_lanelet_index == shortest_path.size() - 1)
