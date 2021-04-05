@@ -131,7 +131,7 @@ namespace trajectory_executor {
             std::string default_control_plugin_topic_;
 
             // Timers and associated spin rates
-            int _min_traj_publish_tickrate_hz {10};
+            int _min_traj_publish_tickrate_hz {30};
             ros::Timer _timer;
             int _default_spin_rate;
     };

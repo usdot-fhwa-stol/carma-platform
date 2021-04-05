@@ -24,7 +24,7 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "pure_pursuit_wrapper_node");
   ros::CARMANodeHandle nh;
 
-  ros::Publisher waypoints_pub = nh.advertise<autoware_msgs::Lane>("final_waypoints", 10, true);
+  ros::Publisher waypoints_pub = nh.advertise<autoware_msgs::Lane>("final_waypoints", 5, true);
 
   ros::Publisher discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
 
@@ -41,7 +41,7 @@ int main(int argc, char** argv)
   ros::Subscriber trajectory_plan_sub = nh.subscribe(
       "pure_pursuit/plan_trajectory", 1, &pure_pursuit_wrapper::PurePursuitWrapper::trajectoryPlanHandler, &purePursuitWrapper);
   
-  ros::CARMANodeHandle::setSpinRate(10);
+  ros::CARMANodeHandle::setSpinRate(30);
 
   ros::CARMANodeHandle::setSpinCallback(std::bind(&pure_pursuit_wrapper::PurePursuitWrapper::onSpin, &purePursuitWrapper));
 

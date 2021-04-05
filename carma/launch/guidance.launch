@@ -69,7 +69,7 @@
   <remap from="trajectory" to="plan_trajectory"/>
 
   <remap from="current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>
-  <remap from="current_velocity" to="$(optenv CARMA_INTR_NS)/vehicle/twist"/>
+  <remap from="current_velocity" to="/localization/ekf_twist"/>
   <remap from="controller/enable_robotic" to="$(optenv CARMA_INTR_NS)/controller/enable_robotic"/>
 
   <remap from="guidance_state" to="$(optenv CARMA_GUIDE_NS)/state"/>
@@ -98,9 +98,11 @@
   <remap from="/current_pose" to="$(optenv CARMA_LOCZ_NS)/current_pose"/>  
 
   <!-- Pure Pursuit Wrapper -->
-  <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch">
-	  <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
-  </include>
+  <group>
+    <include file="$(find pure_pursuit_wrapper)/launch/pure_pursuit_wrapper.launch">
+      <arg name="vehicle_calibration_dir" value="$(arg vehicle_calibration_dir)"/>
+    </include>
+  </group>
 
   <!-- Route Following Plugin -->
   <include file="$(find route_following_plugin)/launch/route_following_plugin.launch" />

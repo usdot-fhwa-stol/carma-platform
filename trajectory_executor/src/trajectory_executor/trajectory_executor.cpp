@@ -133,8 +133,8 @@ namespace trajectory_executor
         _private_nh = std::unique_ptr<ros::CARMANodeHandle>(new ros::CARMANodeHandle("~"));
         ROS_DEBUG("Initialized all node handles");
 
-        _private_nh->param("spin_rate", _default_spin_rate, 10);
-        _private_nh->param("trajectory_publish_rate", _min_traj_publish_tickrate_hz, 10);
+        _private_nh->param("spin_rate", _default_spin_rate, 30);
+        _private_nh->param("trajectory_publish_rate", _min_traj_publish_tickrate_hz, 30);
 
         ROS_DEBUG_STREAM("Initalized params with default_spin_rate " << _default_spin_rate 
             << " and trajectory_publish_rate " << _min_traj_publish_tickrate_hz);
@@ -158,7 +158,7 @@ namespace trajectory_executor
         }
 
         this->_traj_publisher_map = control_plugin_topics;
-        ROS_DEBUG("TrajectoryExecutor component initialized succesfully!");
+        ROS_DEBUG("TrajectoryExecutor component initialized successfully!");
 
         return true;
     }
