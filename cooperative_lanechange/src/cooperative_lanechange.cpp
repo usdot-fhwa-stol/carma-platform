@@ -241,13 +241,15 @@ namespace cooperative_lanechange
 
         //plan lanechange without filling in response
         std::vector<cav_msgs::TrajectoryPlanPoint> planned_trajectory_points = plan_lanechange(req);
+        
+        ros::Time request_sent_time;
 
         if(negotiate){
             //send mobility request
             //Planning for first lane change maneuver
             cav_msgs::MobilityRequest request = create_mobility_request(planned_trajectory_points, maneuver_plan[0]);
             outgoing_mobility_request_.publish(request);
-            ros::Time request_sent_time = ros::Time::now();
+            request_sent_time = ros::Time::now();
             cav_msgs::LaneChangeStatus lc_status_msg;
             lc_status_msg.status = cav_msgs::LaneChangeStatus::PLAN_SENT;
             lc_status_msg.description = "Requested lane merge";
@@ -275,6 +277,9 @@ namespace cooperative_lanechange
 
         }
         else{
+            if(!negotiate){
+                request_sent_time = ros::Time::now();
+            }
             ros::Time planning_end_time = ros::Time::now();
             ros::Duration passed_time = planning_end_time - request_sent_time;
             if(passed_time.toSec() >= lanechange_time_out_){
