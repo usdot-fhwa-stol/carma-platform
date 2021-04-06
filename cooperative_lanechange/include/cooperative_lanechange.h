@@ -239,7 +239,7 @@ namespace cooperative_lanechange
             carma_wm::WorldModelConstPtr wm_;
 
             //boolean which is updated if lane change request is accepted
-            bool is_lanechange_accepted_ = true;
+            bool is_lanechange_accepted_ = false;
 
             ros::Publisher outgoing_mobility_request_;
             ros::Publisher lanechange_status_pub_;

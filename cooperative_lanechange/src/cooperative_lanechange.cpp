@@ -211,6 +211,7 @@ namespace cooperative_lanechange
         int veh2_lanelet_id = 0;
         double veh2_downtrack = 0.0, veh2_speed = 0.0;
         bool foundRoadwayObject = false;
+        bool negotiate = true;
         std::vector<cav_msgs::RoadwayObstacle> rwol = wm_->getRoadwayObjects();
         //Assuming only one connected vehicle in list 
         for(int i=0;i<rwol.size();i++){
@@ -219,37 +220,42 @@ namespace cooperative_lanechange
                 veh2_downtrack = rwol[0].down_track; //Returns downtrack
                 veh2_speed = rwol[0].object.velocity.twist.linear.x;
                 foundRoadwayObject = true;
+                break;
             }
         }
-        if(!foundRoadwayObject){
-            ROS_WARN_STREAM("Did not find a connected vehicle roadway object, Cooperative Lane Change is not planning");
-            throw std::invalid_argument("Carma vehicles not found in world model ");
+        if(foundRoadwayObject){
+            //get current_gap
+            double current_gap = find_current_gap(veh2_lanelet_id,veh2_downtrack);
+            //get desired gap - desired time gap (default 3s)* relative velocity
+            double relative_velocity = current_speed_ - veh2_speed;
+            double desired_gap = desired_time_gap_ * relative_velocity;      
+            
+            if(current_gap > desired_gap){
+                negotiate = false;  //No need for negotiation
+            }
+            
+        }
+        else{
+            ROS_WARN_STREAM("Did not find a connected and automated vehicle roadway object");
+        }
 
-        }
-        //get current_gap
-        double current_gap = find_current_gap(veh2_lanelet_id,veh2_downtrack);
-        //get desired gap - desired time gap (default 3s)* relative velocity
-        double relative_velocity = current_speed_ - veh2_speed;
-        double desired_gap = desired_time_gap_ * relative_velocity;      
-         
-        if(current_gap < desired_gap){
-            return true;
-        }
         //plan lanechange without filling in response
         std::vector<cav_msgs::TrajectoryPlanPoint> planned_trajectory_points = plan_lanechange(req);
 
-        //send mobility request
-        //Planning for first lane change maneuver
-        cav_msgs::MobilityRequest request = create_mobility_request(planned_trajectory_points, maneuver_plan[0]);
-        outgoing_mobility_request_.publish(request);
-        ros::Time request_sent_time = ros::Time::now();
-        cav_msgs::LaneChangeStatus lc_status_msg;
-        lc_status_msg.status = cav_msgs::LaneChangeStatus::PLAN_SENT;
-        lc_status_msg.description = "Requested lane merge";
-        lanechange_status_pub_.publish(lc_status_msg);
+        if(negotiate){
+            //send mobility request
+            //Planning for first lane change maneuver
+            cav_msgs::MobilityRequest request = create_mobility_request(planned_trajectory_points, maneuver_plan[0]);
+            outgoing_mobility_request_.publish(request);
+            ros::Time request_sent_time = ros::Time::now();
+            cav_msgs::LaneChangeStatus lc_status_msg;
+            lc_status_msg.status = cav_msgs::LaneChangeStatus::PLAN_SENT;
+            lc_status_msg.description = "Requested lane merge";
+            lanechange_status_pub_.publish(lc_status_msg);
+        }
 
         //if ack mobility response, send lanechange response
-        if(is_lanechange_accepted_){
+        if(!negotiate || is_lanechange_accepted_){
             cav_msgs::TrajectoryPlan trajectory_plan;
             trajectory_plan.header.frame_id = "map";
             trajectory_plan.header.stamp = ros::Time::now();
@@ -288,7 +294,7 @@ namespace cooperative_lanechange
         cav_msgs::MobilityRequest request_msg;
         cav_msgs::MobilityHeader header;
         header.sender_id = sender_id_;
-        header.recipient_id = DEFAULT_STRING_;      //To do- find way to query recipient id
+        header.recipient_id = DEFAULT_STRING_;  
         header.sender_bsm_id = bsmIDtoString(bsm_core_);
         header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
         header.timestamp = trajectory_plan.front().target_time.toSec();
