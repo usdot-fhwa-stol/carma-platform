@@ -292,6 +292,7 @@ namespace cooperative_lanechange
             double destination_range_ = 5;
             double lanechange_time_out_ = 6.0;
             int num_points = traj_freq * trajectory_time_length_;
+            double min_timestep_ = 0.1;
 
 
             // generated trajectory plan
