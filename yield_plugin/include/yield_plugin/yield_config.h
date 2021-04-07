@@ -33,6 +33,12 @@ struct YieldPluginConfig
   double vehicle_height = 3.0;              // Host vehicle height in m
   double vehicle_width = 2.5;              // Host vehicle width in m
   double max_stop_speed = 1.0;           //  Maximum speed value to consider the ego vehicle stopped in m/s
+  bool enable_cooperative_behavior = true;       //parameter to enable cooperative behavior
+  bool always_accept_mobility_request = true;       //parameter to always accept mobility request
+  std::string vehicle_id = "DEFAULT_VEHICLE_ID";         // Vehicle id is the license plate of the vehicle
+  int acceptable_passed_timesteps = 3;              // acceptable number of timesteps to use the latest known mobility request before switching to yield
+  double intervehicle_collision_distance = 2.0;    //Intervehicle distance that is considered a collision
+  double safety_collision_time_gap = 2.0;          // Time gap to finish planning a yield earlier than collision time
 
 
   friend std::ostream& operator<<(std::ostream& output, const YieldPluginConfig& c)
@@ -47,6 +53,12 @@ struct YieldPluginConfig
           << "vehicle_height: " << c.vehicle_height << std::endl
           << "vehicle_width: " << c.vehicle_width << std::endl
           << "max_stop_speed: " << c.max_stop_speed << std::endl
+          << "enable_cooperative_behavior: " << c.enable_cooperative_behavior << std::endl
+          << "always_accept_mobility_request: " << c.always_accept_mobility_request << std::endl
+          << "vehicle_id: " << c.vehicle_id << std::endl
+          << "acceptable_passed_timesteps: " << c.acceptable_passed_timesteps << std::endl
+          << "intervehicle_collision_distance: " << c.intervehicle_collision_distance << std::endl
+          << "safety_collision_time_gap: " << c.safety_collision_time_gap << std::endl
           << "}" << std::endl;
     return output;
   }
