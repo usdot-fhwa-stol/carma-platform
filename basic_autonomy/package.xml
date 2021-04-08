@@ -17,9 +17,9 @@
 -->
 
 <package format="3">
-  <name>inlanecruising_plugin</name>
+  <name>basic_autonomy</name>
   <version>3.2.0</version>
-  <description>The inlanecruising_plugin converts final waypoint plan from autoware to a CARMA trajectory</description>
+  <description>The Basic Autonomy Library includes logic for waypoint generation in CARMA Platform.</description>
   <maintainer email="CARMA@dot.gov">carma</maintainer>
   <license>Apache License 2.0</license>
   <author email="CARMA@dot.gov">carma</author>
@@ -31,7 +31,6 @@
   <depend>carma_utils</depend>
   <depend>autoware_msgs</depend>
   <depend>carma_wm</depend>
-  <depend>basic_autonomy</depend>
   <depend>tf</depend>
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend> 

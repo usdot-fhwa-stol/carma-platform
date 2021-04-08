@@ -15,7 +15,7 @@
 #
 
 cmake_minimum_required(VERSION 2.8.3)
-project(inlanecruising_plugin)
+project(basic_autonomy)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++14)
@@ -31,7 +31,6 @@ set( CATKIN_DEPS
   trajectory_utils
   autoware_msgs
   carma_wm
-  basic_autonomy
   tf
   tf2
   tf2_geometry_msgs
@@ -53,6 +52,7 @@ find_package(Eigen3 REQUIRED)
 catkin_package(
   INCLUDE_DIRS include
   CATKIN_DEPENDS ${CATKIN_DEPS}
+  LIBRARIES basic_autonomy
   DEPENDS Boost EIGEN3
 )
 
@@ -67,28 +67,18 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
 )
 
-add_executable( ${PROJECT_NAME}
-  src/main.cpp)
-add_library(inlanecruising_plugin_library 
-  src/inlanecruising_plugin.cpp
+add_library(basic_autonomy 
+  src/basic_autonomy.cpp
+  src/smoothing/BSpline.cpp
 )
 
-add_dependencies(inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
-target_link_libraries(inlanecruising_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+add_dependencies(basic_autonomy ${catkin_EXPORTED_TARGETS})
+target_link_libraries(basic_autonomy ${catkin_LIBRARIES})
 
-add_dependencies(${PROJECT_NAME} inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME} inlanecruising_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+#target_link_libraries(basic_autonomy ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+#add_dependencies(basic_autonomy ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
-add_library(helper src/helper.cpp)
-target_link_libraries(helper
-  ${catkin_LIBRARIES}
-)
 
-add_executable(helper_node src/helper.cpp)
-target_link_libraries(helper_node
-  helper
-  ${catkin_LIBRARIES}
-)
 #############
 ## Install ##
 #############
@@ -98,14 +88,14 @@ install(DIRECTORY include
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME} inlanecruising_plugin_library
+install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 ## Install Other Resources
-install(DIRECTORY launch config
+install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
@@ -116,12 +106,7 @@ install(DIRECTORY launch config
 if(CATKIN_ENABLE_TESTING)
 
   catkin_add_gmock(${PROJECT_NAME}-test 
-    test/test_inlanecruising_plugin_planning.cpp
+    test/test_waypoint_generation.cpp
   )
-  target_link_libraries(${PROJECT_NAME}-test inlanecruising_plugin_library ${catkin_LIBRARIES})
-
-  find_package(rostest REQUIRED)
-  add_rostest_gtest(rostest_ilc test/ilc_plugin.test test/rostest_ilc.cpp)
-  target_link_libraries(rostest_ilc ${catkin_LIBRARIES})
+  target_link_libraries(${PROJECT_NAME}-test basic_autonomy ${catkin_LIBRARIES})
 endif()
-

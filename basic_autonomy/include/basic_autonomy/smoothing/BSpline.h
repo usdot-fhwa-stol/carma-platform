@@ -18,10 +18,10 @@
 
 #include <vector>
 #include <carma_wm/Geometry.h>
-#include <inlanecruising_plugin/smoothing/SplineI.h>
+#include <basic_autonomy/smoothing/SplineI.h>
 #include <unsupported/Eigen/Splines>
 
-namespace inlanecruising_plugin
+namespace basic_autonomy
 {
 namespace smoothing
 {
@@ -42,4 +42,4 @@ private:
   Spline2d spline_;
 };
 };  // namespace smoothing
-};  // namespace inlanecruising_plugin
+};  // namespace basic_autonomy
