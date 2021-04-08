@@ -125,6 +125,15 @@ public:
    */
   virtual std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end, bool shortest_path_only = false) const = 0;
 
+  /*!
+   * TODO 
+   * NOTE: This method really needs clarification of behavior for lane changes.
+  */
+  virtual std::vector<lanelet::BasicPoint2d> sampleRoutePoints(double start_downtrack, double end_downtrack, double step_size) const = 0;
+  /*! TODO
+   */
+  virtual boost::optional<lanelet::BasicPoint2d> pointFromRouteTrackPos(double downtrack) const = 0;
+
   /*! \brief Get a pointer to the current map. If the underlying map has changed the pointer will also need to be
    * reacquired
    *

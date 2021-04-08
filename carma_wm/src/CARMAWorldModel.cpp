@@ -278,6 +278,88 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double st
   return output;
 }
 
+std::vector<lanelet::BasicPoint2d> CARMAWorldModel::sampleRoutePoints(double start_downtrack, double end_downtrack, double step_size) const {
+  
+  std::vector<lanelet::BasicPoint2d> output;
+  if (!route_)
+  {
+    ROS_WARN_STREAM("Route has not yet been loaded");
+    return output;
+  }
+
+  double route_end = getRouteEndTrackPos().downtrack;
+
+  if (start_downtrack < 0 || start_downtrack > route_end
+    || end_downtrack < 0 || end_downtrack > route_end
+    || start_downtrack > end_downtrack) {
+    ROS_WARN_STREAM("Invalid input downtracks");
+    return output;
+  }
+
+  if (end_downtrack == start_downtrack) {
+    output.emplace_back(*(pointFromRouteTrackPos(start_downtrack))); // If a single point was provided return that point
+    return output;
+  }
+  
+  output.reserve(2 + (end_downtrack - start_downtrack) / step_size);
+  double downtrack = start_downtrack;
+  while (downtrack < end_downtrack) {
+    output.emplace_back(*(pointFromRouteTrackPos(downtrack)));
+    downtrack+=step_size;
+  }
+
+  output.emplace_back(*(pointFromRouteTrackPos(end_downtrack)));
+  return output;
+}
+
+boost::optional<lanelet::BasicPoint2d> CARMAWorldModel::pointFromRouteTrackPos(double downtrack) const {
+  if (!route_)
+  {
+    ROS_DEBUG_STREAM("Route has not yet been loaded");
+    return boost::none;
+  }
+
+  if (downtrack < 0 || downtrack > getRouteEndTrackPos().downtrack) {
+    ROS_DEBUG_STREAM("Tried to convert a downtrack of: " << downtrack << " to map point, but it did not fit in route bounds of " << getRouteEndTrackPos().downtrack);
+    return boost::none;
+  }
+
+  // lanelet::ConstLanelet prev_lanelet;
+  // double prev_lanelet_length = 0;
+  // double prev_lanelet_downtrack = 0;
+  // size_t prev_ll_i = 0;
+  size_t ls_i = shortest_path_distance_map_.getElementIndexByDistance(downtrack);
+  double ls_length = shortest_path_distance_map_.elementLength(ls_i);
+  double ls_downtrack = shortest_path_distance_map_.distanceToElement(ls_i);
+  auto linestring = shortest_path_centerlines_[ls_i];
+
+  double relative_downtrack = downtrack - ls_downtrack;
+  double lanelet_percentage = relative_downtrack / ls_length;
+  int centerline_size = linestring.size();
+  int index = lanelet_percentage * centerline_size;
+  int prior_idx = std::min(index, centerline_size - 1);
+  int next_idx = std::min(index + 1, centerline_size - 1);
+
+  if(prior_idx == next_idx) { // If both indexes are the same we are on the point
+    auto prior_point = linestring[prior_idx];
+    return lanelet::BasicPoint2d(prior_point.x(),prior_point.y());
+  }
+
+  double prior_downtrack = shortest_path_distance_map_.distanceToPointAlongElement(ls_i, prior_idx);
+  double next_downtrack = shortest_path_distance_map_.distanceToPointAlongElement(ls_i, next_idx);
+  
+  double prior_to_next_dist = next_downtrack - prior_downtrack;
+  double prior_to_target_dist = relative_downtrack - prior_downtrack;
+  double interpolation_percentage = prior_to_target_dist / prior_to_next_dist;
+
+  auto prior_point = linestring[prior_idx];
+  auto next_point = linestring[next_idx];
+  double x = prior_point.x() + interpolation_percentage * (next_point.x() - prior_point.x());
+  double y = prior_point.y() + interpolation_percentage * (next_point.y() - prior_point.y());
+  
+  return lanelet::BasicPoint2d(x,y);
+}
+
 lanelet::LaneletMapConstPtr CARMAWorldModel::getMap() const
 {
   return std::static_pointer_cast<lanelet::LaneletMap const>(semantic_map_);  // Cast pointer to const variant
@@ -290,7 +372,8 @@ LaneletRouteConstPtr CARMAWorldModel::getRoute() const
 
 TrackPos CARMAWorldModel::getRouteEndTrackPos() const
 {
-  return routeTrackPos(route_->getEndPoint().basicPoint2d());
+  TrackPos p(route_length_, 0);
+  return p;
 }
 
 void CARMAWorldModel::setMap(lanelet::LaneletMapPtr map)
@@ -314,6 +397,7 @@ void CARMAWorldModel::setRoute(LaneletRoutePtr route)
   lanelet::ConstLanelets path_lanelets(route_->shortestPath().begin(), route_->shortestPath().end());
   shortest_path_view_ = lanelet::utils::createConstSubmap(path_lanelets, {});
   computeDowntrackReferenceLine();
+  route_length_ = routeTrackPos(route_->getEndPoint().basicPoint2d()).downtrack; // Cache the route length with consideration for endpoint
 }
 
 void CARMAWorldModel::setRouteEndPoint(const lanelet::BasicPoint3d& end_point)
@@ -370,7 +454,8 @@ void CARMAWorldModel::computeDowntrackReferenceLine()
       {  // Get list of connected lanelets without lanechanges. On the shortest path this should only return 1 or 0
         // No lane change
         // Append distance to current centerline
-        lineStrings.back().insert(lineStrings.back().end(), nextCenterline.begin(), nextCenterline.end());
+        size_t offset = lineStrings.size() == 0 || lineStrings.back().size() == 0 ? 0 : 1; // Prevent duplicate points when concatenating. Not clear if causes an issue at lane changes
+        lineStrings.back().insert(lineStrings.back().end(), nextCenterline.begin() + offset, nextCenterline.end());
       }
       else if (connectionCount == 0)
       {

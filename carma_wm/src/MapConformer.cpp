@@ -530,7 +530,7 @@ void addValidSpeedLimit(Lanelet& lanelet, lanelet::LaneletMapPtr map, lanelet::V
     if(speed_limit.back().get()->speed_limit_ > max_speed)//Check that speed limit value does not exceed the maximum value
     {
     
-      ROS_WARN_STREAM("Invalid speed limit value. Value reset to maximum speed limit.");
+      ROS_DEBUG_STREAM("Invalid speed limit value. Value reset to maximum speed limit.");
       auto rar = std::make_shared<DigitalSpeedLimit>(DigitalSpeedLimit::buildData(lanelet::utils::getId(), max_speed, {lanelet},
       {}, allowed_participants));
       lanelet.removeRegulatoryElement(speed_limit.back());

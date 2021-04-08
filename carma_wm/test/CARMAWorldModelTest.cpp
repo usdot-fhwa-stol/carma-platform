@@ -1018,5 +1018,70 @@ TEST(CARMAWorldModelTest, setConfigSpeedLimitTest)
 
 }
 
+TEST(CARMAWorldModelTest, pointFromRouteTrackPos)
+{
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+
+  auto map = carma_wm::test::buildGuidanceTestMap(3.7, 10);
+
+  wm->setMap(map);
+  carma_wm::test::setSpeedLimit(20_mph, wm);
+
+  /**
+   * Total route length should be 100m
+   *
+   *        |1203|1213|1223|
+   *        | _  _  _  _  _|
+   *        |1202| Ob |1222|
+   *        | _  _  _  _  _|
+   *        |1201|1211|1221|    num   = lanelet id hardcoded for easier testing
+   *        | _  _  _  _  _|    |     = lane lines
+   *        |1200|1210|1220|    - - - = Lanelet boundary
+   *        |              |    O     = Default Obstacle
+   *        ****************
+   *           START_LINE
+   */
+  carma_wm::test::setRouteByIds({ 1200, 1201, 1202, 1203 }, wm);
+  auto point = wm->pointFromRouteTrackPos(0); // test start point
+  if (!point) {
+    FAIL() << "No point returned";
+  }
+  auto lanelet = map->laneletLayer.get(1200);
+  ASSERT_NEAR((*point).x(), lanelet.centerline().front().x(), 0.001);
+  ASSERT_NEAR((*point).y(), lanelet.centerline().front().y(), 0.001);
+
+  point = wm->pointFromRouteTrackPos(40.0); // Test end point
+  if (!point) {
+    FAIL() << "No point returned";
+  }
+  lanelet = map->laneletLayer.get(1203);
+  ASSERT_NEAR((*point).x(), lanelet.centerline().back().x(), 0.001);
+  ASSERT_NEAR((*point).y(), lanelet.centerline().back().y(), 0.001);
+
+  point = wm->pointFromRouteTrackPos(12.5); // Test mid point
+  if (!point) {
+    FAIL() << "No point returned";
+  }
+  lanelet = map->laneletLayer.get(1200);
+  ASSERT_NEAR((*point).x(), lanelet.centerline().front().x(), 0.001);
+  ASSERT_NEAR((*point).y(), 12.5, 0.001);
+
+  point = wm->pointFromRouteTrackPos(10.0); // Test lanelet connection point
+  if (!point) {
+    FAIL() << "No point returned";
+  }
+  lanelet = map->laneletLayer.get(1200);
+  ASSERT_NEAR((*point).x(), lanelet.centerline().back().x(), 0.001);
+  ASSERT_NEAR((*point).y(), lanelet.centerline().back().y(), 0.001);
+  
+  point = wm->pointFromRouteTrackPos(20.0); // Test lanelet connection point
+  if (!point) {
+    FAIL() << "No point returned";
+  }
+  lanelet = map->laneletLayer.get(1201);
+  ASSERT_NEAR((*point).x(), lanelet.centerline().back().x(), 0.001);
+  ASSERT_NEAR((*point).y(), lanelet.centerline().back().y(), 0.001);
+}
+
 
 }  // namespace carma_wm
