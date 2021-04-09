@@ -64,3 +64,7 @@ destination_range : 0
 #Double : The time after which a lane change request can be considered to time out
 #Units : seconds
 lanechange_time_out: 6.0
+
+# Double: The minimum timestep used for planning trajectory
+#Units: seconds
+min_timestep : 0.1

@@ -37,6 +37,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <cav_msgs/ManeuverPlan.h>
+#include <cav_msgs/ConnectedVehicleType.h>
 
 namespace cooperative_lanechange
 {
@@ -80,6 +81,7 @@ namespace cooperative_lanechange
         pnh_->param<int>("downsample_ratio", downsample_ratio_, 8);
         pnh_->param<double>("destination_range",destination_range_, 5);
         pnh_->param<double>("lanechange_time_out",lanechange_time_out_, 6.0);
+        pnh_->param<double>("min_timestep",min_timestep_);
         //tf listener for looking up earth to map transform 
         tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
 
@@ -206,36 +208,56 @@ namespace cooperative_lanechange
             lanechange_status_pub_.publish(lc_status_msg);
         }
 
+        int veh2_lanelet_id = 0;
+        double veh2_downtrack = 0.0, veh2_speed = 0.0;
+        bool foundRoadwayObject = false;
+        bool negotiate = true;
         std::vector<cav_msgs::RoadwayObstacle> rwol = wm_->getRoadwayObjects();
-        //Assuming only one object in list 
-        int veh2_lanelet_id = rwol[0].lanelet_id;
-        double veh2_downtrack = rwol[0].down_track;  //Returns downtrack
-        double veh2_speed = rwol[0].object.velocity.twist.linear.x;
-
-        //get current_gap
-        double current_gap = find_current_gap(veh2_lanelet_id,veh2_downtrack);
-        //get desired gap - desired time gap (default 3s)* relative velocity
-        double relative_velocity = current_speed_ - veh2_speed;
-        double desired_gap = desired_time_gap_ * relative_velocity;      
-         
-        if(current_gap < desired_gap){
-            return true;
+        //Assuming only one connected vehicle in list 
+        for(int i=0;i<rwol.size();i++){
+            if(rwol[i].connected_vehicle_type.type == cav_msgs::ConnectedVehicleType::CONNECTED_AND_AUTOMATED){
+                veh2_lanelet_id = rwol[0].lanelet_id;
+                veh2_downtrack = rwol[0].down_track; //Returns downtrack
+                veh2_speed = rwol[0].object.velocity.twist.linear.x;
+                foundRoadwayObject = true;
+                break;
+            }
         }
+        if(foundRoadwayObject){
+            //get current_gap
+            double current_gap = find_current_gap(veh2_lanelet_id,veh2_downtrack);
+            //get desired gap - desired time gap (default 3s)* relative velocity
+            double relative_velocity = current_speed_ - veh2_speed;
+            double desired_gap = desired_time_gap_ * relative_velocity;      
+            
+            if(current_gap > desired_gap){
+                negotiate = false;  //No need for negotiation
+            }
+            
+        }
+        else{
+            ROS_WARN_STREAM("Did not find a connected and automated vehicle roadway object");
+        }
+
         //plan lanechange without filling in response
         std::vector<cav_msgs::TrajectoryPlanPoint> planned_trajectory_points = plan_lanechange(req);
+        
+        ros::Time request_sent_time;
 
-        //send mobility request
-        //Planning for first lane change maneuver
-        cav_msgs::MobilityRequest request = create_mobility_request(planned_trajectory_points, maneuver_plan[0]);
-        outgoing_mobility_request_.publish(request);
-        ros::Time request_sent_time = ros::Time::now();
-        cav_msgs::LaneChangeStatus lc_status_msg;
-        lc_status_msg.status = cav_msgs::LaneChangeStatus::PLAN_SENT;
-        lc_status_msg.description = "Requested lane merge";
-        lanechange_status_pub_.publish(lc_status_msg);
+        if(negotiate){
+            //send mobility request
+            //Planning for first lane change maneuver
+            cav_msgs::MobilityRequest request = create_mobility_request(planned_trajectory_points, maneuver_plan[0]);
+            outgoing_mobility_request_.publish(request);
+            request_sent_time = ros::Time::now();
+            cav_msgs::LaneChangeStatus lc_status_msg;
+            lc_status_msg.status = cav_msgs::LaneChangeStatus::PLAN_SENT;
+            lc_status_msg.description = "Requested lane merge";
+            lanechange_status_pub_.publish(lc_status_msg);
+        }
 
         //if ack mobility response, send lanechange response
-        if(is_lanechange_accepted_){
+        if(!negotiate || is_lanechange_accepted_){
             cav_msgs::TrajectoryPlan trajectory_plan;
             trajectory_plan.header.frame_id = "map";
             trajectory_plan.header.stamp = ros::Time::now();
@@ -255,6 +277,9 @@ namespace cooperative_lanechange
 
         }
         else{
+            if(!negotiate){
+                request_sent_time = ros::Time::now();
+            }
             ros::Time planning_end_time = ros::Time::now();
             ros::Duration passed_time = planning_end_time - request_sent_time;
             if(passed_time.toSec() >= lanechange_time_out_){
@@ -274,7 +299,7 @@ namespace cooperative_lanechange
         cav_msgs::MobilityRequest request_msg;
         cav_msgs::MobilityHeader header;
         header.sender_id = sender_id_;
-        header.recipient_id = DEFAULT_STRING_;      //To do- find way to query recipient id
+        header.recipient_id = DEFAULT_STRING_;  
         header.sender_bsm_id = bsmIDtoString(bsm_core_);
         header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
         header.timestamp = trajectory_plan.front().target_time.toSec();
@@ -296,7 +321,7 @@ namespace cooperative_lanechange
         //Encode JSON with Boost Property Tree
         using boost::property_tree::ptree;
         ptree pt;
-        pt.put("speed",maneuver.lane_change_maneuver.start_speed);
+        pt.put("speed",maneuver.lane_change_maneuver.end_speed); 
         pt.put("start_lanelet",maneuver.lane_change_maneuver.starting_lane_id);
         pt.put("end_lanelet", maneuver.lane_change_maneuver.ending_lane_id);
         std::stringstream body_stream;
@@ -419,8 +444,7 @@ namespace cooperative_lanechange
             lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.end());
 
             first = true;
-            double delta_v = (lane_change_maneuver.end_speed - current_speed_)/future_route_geometry.size();
-            double prev_v = current_speed_;
+            
             for(auto p :future_route_geometry)
             {
                 if(first && points_and_target_speeds.size() !=0){
@@ -429,10 +453,16 @@ namespace cooperative_lanechange
                 }
                 PointSpeedPair pair;
                 pair.point = p;
-                pair.speed = prev_v+ delta_v;
+                pair.speed = lane_change_maneuver.end_speed;
                 points_and_target_speeds.push_back(pair);
-                prev_v = pair.speed;
 
+            }
+            //Downsample to 0.1s timestep
+            double maneuver_time = (lane_change_maneuver.end_dist - lane_change_maneuver.start_dist)/lane_change_maneuver.end_speed;
+            double delta_time_actual = maneuver_time/points_and_target_speeds.size();
+            if(delta_time_actual < min_timestep_){
+                int downsample_ratio = min_timestep_/delta_time_actual;
+                points_and_target_speeds = carma_utils::containers::downsample_vector(points_and_target_speeds,downsample_ratio);
             }
         }
 
