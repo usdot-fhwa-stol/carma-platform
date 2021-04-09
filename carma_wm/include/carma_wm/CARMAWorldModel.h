@@ -118,7 +118,7 @@ public:
 
   std::vector<lanelet::BasicPoint2d> sampleRoutePoints(double start_downtrack, double end_downtrack, double step_size) const override;
 
-  boost::optional<lanelet::BasicPoint2d> pointFromRouteTrackPos(double downtrack) const override;
+  boost::optional<lanelet::BasicPoint2d> pointFromRouteTrackPos(const TrackPos& route_pos) const override;
 
   lanelet::LaneletMapConstPtr getMap() const override;
 
