@@ -187,12 +187,14 @@ namespace traffic
     if(event_type=="CLOSED")
     {
     traffic_mobility_msg.params.detail.closed=cav_msgs::TrafficControlDetail::CLOSED;
+    traffic_mobility_msg.package.label=event_reason;
     }
     else if(event_type=="OPEN")
     {
     traffic_mobility_msg.params.detail.closed=cav_msgs::TrafficControlDetail::OPEN;
+    traffic_mobility_msg.package.label="";
     }
-    traffic_mobility_msg.package.label=event_reason;
+
     output_msg.push_back(traffic_mobility_msg);
 
     traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::MINHDWY_CHOICE;
