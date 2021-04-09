@@ -28,9 +28,17 @@ namespace traffic
       { 
            previous_strategy_params=mobility_msg.strategy_params;
            mobilityMessageParser(mobility_msg.strategy_params);
-           for(auto &traffic_msg:composeTrafficControlMesssages())
+
+           if(event_type=="CLOSED")
            {
-           traffic_control_pub_(traffic_msg);
+            for(auto &traffic_msg:composeTrafficControlMesssages())
+            {
+            traffic_control_pub_(traffic_msg);
+            }
+           }
+           else
+           {
+             return;
            }
       }
    }
@@ -183,18 +191,8 @@ namespace traffic
     std::vector<cav_msgs::TrafficControlMessageV01> output_msg;
 
     traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::CLOSED_CHOICE;
-    
-    if(event_type=="CLOSED")
-    {
     traffic_mobility_msg.params.detail.closed=cav_msgs::TrafficControlDetail::CLOSED;
     traffic_mobility_msg.package.label=event_reason;
-    }
-    else if(event_type=="OPEN")
-    {
-    traffic_mobility_msg.params.detail.closed=cav_msgs::TrafficControlDetail::OPEN;
-    traffic_mobility_msg.package.label="";
-    }
-
     output_msg.push_back(traffic_mobility_msg);
 
     traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::MINHDWY_CHOICE;
