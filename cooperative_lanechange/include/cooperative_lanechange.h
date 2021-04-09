@@ -298,6 +298,10 @@ namespace cooperative_lanechange
             // trajectory frequency
             double traj_freq = 10;
             std::string DEFAULT_STRING_= "";
+            //Time at which the request is first sent
+            ros::Time request_sent_time;
+            //boolean that records whether request has already been sent
+            bool request_sent = false;
 
             // ROS params
             //Vehicle params

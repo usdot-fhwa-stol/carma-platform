@@ -242,14 +242,15 @@ namespace cooperative_lanechange
         //plan lanechange without filling in response
         std::vector<cav_msgs::TrajectoryPlanPoint> planned_trajectory_points = plan_lanechange(req);
         
-        ros::Time request_sent_time;
-
         if(negotiate){
             //send mobility request
             //Planning for first lane change maneuver
             cav_msgs::MobilityRequest request = create_mobility_request(planned_trajectory_points, maneuver_plan[0]);
             outgoing_mobility_request_.publish(request);
-            request_sent_time = ros::Time::now();
+            if(!request_sent){
+                request_sent_time = ros::Time::now();
+                request_sent = true;
+            }
             cav_msgs::LaneChangeStatus lc_status_msg;
             lc_status_msg.status = cav_msgs::LaneChangeStatus::PLAN_SENT;
             lc_status_msg.description = "Requested lane merge";
@@ -277,8 +278,9 @@ namespace cooperative_lanechange
 
         }
         else{
-            if(!negotiate){
+            if(!negotiate && !request_sent){
                 request_sent_time = ros::Time::now();
+                request_sent = true;
             }
             ros::Time planning_end_time = ros::Time::now();
             ros::Duration passed_time = planning_end_time - request_sent_time;
@@ -459,9 +461,9 @@ namespace cooperative_lanechange
             }
             //Downsample to 0.1s timestep
             double maneuver_time = (lane_change_maneuver.end_dist - lane_change_maneuver.start_dist)/lane_change_maneuver.end_speed;
-            double delta_time_actual = maneuver_time/points_and_target_speeds.size();
-            if(delta_time_actual < min_timestep_){
-                int downsample_ratio = min_timestep_/delta_time_actual;
+            double time_step = maneuver_time/points_and_target_speeds.size();
+            if(time_step < min_timestep_){
+                int downsample_ratio = min_timestep_/time_step;
                 points_and_target_speeds = carma_utils::containers::downsample_vector(points_and_target_speeds,downsample_ratio);
             }
         }
