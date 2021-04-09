@@ -125,7 +125,8 @@ namespace route_following_plugin
             double start_dist = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_dist);
             double start_speed = getManeuverEndSpeed(req.prior_plan.maneuvers.back());
             ros::Time start_time = GET_MANEUVER_PROPERTY(req.prior_plan.maneuvers.back(), end_time);
-            auto optional_point = wm_->pointFromRouteTrackPos(start_dist);
+            carma_wm::TrackPos route_pos(start_dist, 0);
+            auto optional_point = wm_->pointFromRouteTrackPos(route_pos);
             if (!optional_point) {
                 throw std::invalid_argument("Could not get starting point for plan. Is maneuver plan beyond end of route?");
             }
