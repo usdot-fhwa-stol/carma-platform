@@ -222,13 +222,25 @@ computeCurvature(const lanelet::BasicPoint2d& p1, const lanelet::BasicPoint2d& p
  * \brief acos method that caps the input x value for 1 or -1 to avoid undefined output.
  *        This is meant to prevent issues with floating point approximations.
  *        The user should still make sure the input data is expected to be within the [-1, 1] range for this method to
- * give accurate results.
+ *        give accurate results.
  *
  * \param x The angle in radians
  *
  * \return The arc cosine of x
  */
 double safeAcos(double x);
+
+/**
+ * \brief asin method that caps the input x value for 1 or -1 to avoid undefined output.
+ *        This is meant to prevent issues with floating point approximations.
+ *        The user should still make sure the input data is expected to be within the [-1, 1] range for this method to
+ *        give accurate results.
+ *
+ * \param x The angle in radians
+ *
+ * \return The arc sine of x
+ */
+double safeAsin(double x);
 
 /**
  * \brief Calculates the angle between two vectors.
