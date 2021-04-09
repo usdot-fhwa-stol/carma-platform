@@ -1,0 +1,216 @@
+/*
+ * Copyright (C) 2019-2020 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+#include "cooperative_lanechange.h"
+#include <gtest/gtest.h>
+#include <ros/ros.h>
+#include <carma_wm/WMListener.h>
+#include <carma_wm/WorldModel.h>
+#include <carma_wm/CARMAWorldModel.h>
+#include <carma_wm/WMTestLibForGuidance.h>
+#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
+#include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
+#include <lanelet2_core/primitives/Lanelet.h>
+#include <lanelet2_extension/io/autoware_osm_parser.h>
+#include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_io/Io.h>
+#include <lanelet2_io/io_handlers/Factory.h>
+#include <lanelet2_io/io_handlers/Writer.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <lanelet2_core/geometry/LineString.h>
+#include <cav_msgs/MobilityResponse.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/Quaternion.h>
+#include <cav_msgs/LocationECEF.h>
+#include <cav_msgs/Trajectory.h>
+#include <sstream>
+#include <ros/package.h>
+
+    TEST(CooperativeLaneChangePlugin,TestTrajectorytoecef)
+    {
+        cooperative_lanechange::CooperativeLaneChangePlugin worker;
+
+        std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_plan;
+                
+        geometry_msgs::TransformStamped tf_msg;
+        tf_msg.transform.translation.x = 1.0;
+        tf_msg.transform.translation.y = 0;
+        tf_msg.transform.translation.z = 0;
+        geometry_msgs::Quaternion Quaternion;
+        tf_msg.transform.rotation.x =0.0;
+        tf_msg.transform.rotation.y =0.0;
+        tf_msg.transform.rotation.z =0.0;
+        tf_msg.transform.rotation.w =0.0;
+
+        cav_msgs::TrajectoryPlanPoint point_1;
+        point_1.x = 1.0;
+        point_1.y = 0.0;
+        trajectory_plan.push_back(point_1);
+
+        cav_msgs::LocationECEF ecef_point_1 = worker.trajectory_point_to_ecef(point_1, tf_msg);
+        EXPECT_TRUE(ecef_point_1.ecef_x == 1.0);
+
+        cav_msgs::TrajectoryPlanPoint point_2;
+        point_2.x = 1.0;
+        point_2.y = 1.0;
+        trajectory_plan.push_back(point_1);
+        
+        cav_msgs::Trajectory traj = worker.trajectory_plan_to_trajectory(trajectory_plan, tf_msg);
+        //EXPECT_TRUE(traj.location)
+        
+        EXPECT_TRUE(true);
+
+    }
+
+    TEST(CooperativeLaneChangePlugin,TestLaneChangefunctions)
+    {
+         // File to process. 
+        std::string path = ros::package::getPath("unobstructed_lanechange");
+        std::string file = "/resource/map/town01_vector_map_lane_change.osm";
+        file = path.append(file);
+        lanelet::Id start_id = 107;
+        lanelet::Id lane_change_start_id = 106;
+        lanelet::Id lag_veh_start_id = 101;
+        lanelet::Id end_id = 111;
+        int projector_type = 0;
+        std::string target_frame;
+        lanelet::ErrorMessages load_errors;
+        // Parse geo reference info from the original lanelet map (.osm)
+        lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+        lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+        lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+        if (map->laneletLayer.size() == 0)
+        {
+            FAIL() << "Input map does not contain any lanelets";
+        }
+        std::shared_ptr<carma_wm::CARMAWorldModel> cmw=std::make_shared<carma_wm::CARMAWorldModel>();
+        cmw->carma_wm::CARMAWorldModel::setMap(map);
+        //Set Route
+        carma_wm::test::setRouteByIds({start_id,end_id},cmw);
+        cmw->carma_wm::CARMAWorldModel::setMap(map);
+
+        //get starting position
+        auto llt=map.get()->laneletLayer.get(start_id);
+        lanelet::BasicPoint2d curr_pose = llt.centerline2d().front();
+
+        //Define arguments for function maneuvers_to_points
+        cooperative_lanechange::CooperativeLaneChangePlugin worker;
+        ros::Time::init(); //Initialize ros::Time
+
+        //get ending downtrack from lanelet id
+        double ending_downtrack;
+        auto shortest_path = cmw->getRoute()->shortestPath();
+
+        lanelet::BasicPoint2d veh_pos=shortest_path[0].centerline2d().front();
+        double starting_downtrack = cmw->routeTrackPos(veh_pos).downtrack;
+        ending_downtrack = cmw->routeTrackPos(shortest_path.back().centerline2d().back()).downtrack;
+
+        worker.wm_ = cmw;
+
+        //Define lane change maneuver
+        cav_msgs::Maneuver maneuver;
+        maneuver.type=cav_msgs::Maneuver::LANE_CHANGE;
+        maneuver.lane_change_maneuver.start_dist = starting_downtrack;
+        maneuver.lane_change_maneuver.end_dist = ending_downtrack;
+        maneuver.lane_change_maneuver.start_speed = 5.0;
+        maneuver.lane_change_maneuver.start_time = ros::Time::now();
+        //calculate end_time assuming constant acceleration
+        double acc = pow(maneuver.lane_change_maneuver.start_speed,2)/(2*(ending_downtrack - starting_downtrack));
+        double end_time = maneuver.lane_change_maneuver.start_speed/acc;
+        maneuver.lane_change_maneuver.end_speed = 25.0;
+        maneuver.lane_change_maneuver.end_time = ros::Time(end_time + 10.0);
+        maneuver.lane_change_maneuver.starting_lane_id = std::to_string(lane_change_start_id);
+        maneuver.lane_change_maneuver.ending_lane_id = std::to_string(end_id);
+        
+        std::vector<cav_msgs::Maneuver> maneuvers;
+        maneuvers.push_back(maneuver);
+        worker.current_speed_ = maneuver.lane_change_maneuver.start_speed;
+        cav_msgs::VehicleState vehicle_state;
+        vehicle_state.X_pos_global = veh_pos.x();
+        vehicle_state.Y_pos_global = veh_pos.y();
+        auto points_and_target_speeds = worker.maneuvers_to_points(maneuvers, starting_downtrack, cmw, vehicle_state);  
+        
+
+        /* Test plan lanechange */
+        cav_srvs::PlanTrajectoryRequest req;
+        cav_srvs::PlanTrajectoryResponse resp;
+        
+        ros::Time::init();
+        req.maneuver_plan.planning_start_time = ros::Time::now();
+        req.maneuver_plan.planning_completion_time = req.maneuver_plan.planning_start_time + ros::Duration(10.0);
+        req.vehicle_state.X_pos_global = veh_pos.x();
+        req.vehicle_state.Y_pos_global = veh_pos.y();
+        req.vehicle_state.longitudinal_vel = maneuver.lane_change_maneuver.start_speed;
+
+        std::vector<cav_msgs::Maneuver> maneuvers_msg;  
+        //Define lane change maneuver
+
+        maneuvers_msg.push_back(maneuver);
+        req.maneuver_plan.maneuvers = maneuvers_msg;
+        std::vector<cav_msgs::TrajectoryPlanPoint> traj_plan = worker.plan_lanechange(req);
+        EXPECT_TRUE(traj_plan.size() > 2);
+
+        /*Test compose trajectort and helper function*/
+        std::vector<cav_msgs::TrajectoryPlanPoint> trajectory;
+
+        int nearest_pt = worker.getNearestPointIndex(points_and_target_speeds,vehicle_state);
+
+        std::vector<lanelet::BasicPoint2d> points_split;
+        std::vector<double> speeds_split;
+        worker.splitPointSpeedPairs(points_and_target_speeds, &points_split, &speeds_split);
+        EXPECT_TRUE(points_split.size() == speeds_split.size());
+
+        //Test trajectory from points
+        std::vector<double> yaw_values ={};
+        yaw_values.resize(points_and_target_speeds.size(),0);
+        std::vector<double> times={};
+        times.resize(points_and_target_speeds.size(),0.1); // Sample time vector with all 0.1 speeds
+        std::vector<cav_msgs::TrajectoryPlanPoint> traj_points = worker.trajectory_from_points_times_orientations(points_split,times,yaw_values, ros::Time::now());
+
+        //Test apply speed limits
+        std::vector<double> speed_limits={};
+        speed_limits.resize(speeds_split.size(),5);
+        std::vector<double> constrained_speeds = worker.apply_speed_limits(speeds_split,speed_limits);
+
+        // Test adaptive lookahead
+        double lookahead = worker.get_adaptive_lookahead(5);   
+        std::vector<double> lookahead_speeds = worker.get_lookahead_speed(points_split,constrained_speeds, lookahead);
+
+        trajectory = worker.compose_trajectory_from_centerline(points_and_target_speeds, vehicle_state);
+        //Valid Trajectory has at least 2 points
+        EXPECT_TRUE(trajectory.size() > 2);
+
+        lanelet::BasicLineString2d route_geometry = worker.create_route_geom(starting_downtrack,start_id, ending_downtrack,cmw);
+        int nearest_pt_geom = worker.getNearestRouteIndex(route_geometry, vehicle_state);
+
+        //Test create lanechange route
+        lanelet::Lanelet start_lanelet = map->laneletLayer.get(start_id);
+        lanelet::Lanelet end_lanelet = map->laneletLayer.get(end_id);
+        lanelet::BasicPoint2d start_position(vehicle_state.X_pos_global, vehicle_state.Y_pos_global);
+        lanelet::BasicPoint2d end_position = end_lanelet.centerline2d().basicLineString().back() ;
+        lanelet::BasicLineString2d lc_route = worker.create_lanechange_path(start_position, start_lanelet, end_position, end_lanelet);
+
+        //Test Compute heading frame between two points
+        Eigen::Isometry2d frame = worker.compute_heading_frame(start_position, end_position);
+
+    }
+
+    int main (int argc, char **argv) {
+        testing::InitGoogleTest(&argc, argv);
+        ros::init(argc, argv, "test_yield_plugin");
+        auto res = RUN_ALL_TESTS();
+        return res;
+    }

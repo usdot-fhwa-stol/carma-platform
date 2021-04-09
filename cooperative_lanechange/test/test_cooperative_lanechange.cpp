@@ -33,6 +33,14 @@
 #include <sstream>
 #include <ros/package.h>
 #include <cav_msgs/LaneChangeStatus.h>
+#include <cav_msgs/VehicleState.h>
+//For Unit Test
+#include <cav_msgs/MobilityResponse.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <tf/LinearMath/Quaternion.h>
+#include <cav_msgs/LocationECEF.h>
+#include <cav_msgs/Trajectory.h>
+
 
 namespace cooperative_lanechange
 {

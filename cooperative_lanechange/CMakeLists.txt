@@ -118,6 +118,9 @@ install(DIRECTORY
 #  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
 # target_link_libraries(${PROJECT_NAME}-test cooperative_lanechange_plugin_lib ${catkin_LIBRARIES})
 
+catkin_add_gmock(${PROJECT_NAME}-test test/test_cooperative_plugin.cpp)
+target_link_libraries(${PROJECT_NAME}-test cooperative_lanechange_plugin_lib ${catkin_LIBRARIES})
+
 if(CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
   add_rostest_gtest(test_cooperative_lanechange test/cooperative_lanechange.test test/test_cooperative_lanechange.cpp)
