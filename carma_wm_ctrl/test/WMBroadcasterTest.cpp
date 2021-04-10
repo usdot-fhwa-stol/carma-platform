@@ -1242,10 +1242,44 @@ TEST(WMBroadcaster, addRegionAccessRule)
   participant2.vehicle_class = j2735_msgs::TrafficControlVehClass::PEDESTRIAN;
   msg_v02.params.vclasses = {};
   msg_v02.params.vclasses.push_back(participant2);
+  msg_v02.package.label = "Move over law";
   gf_ptr = std::make_shared<Geofence>(Geofence());
   wmb.addRegionAccessRule(gf_ptr,msg_v02,affected_llts);
 
   ASSERT_EQ(gf_ptr->invalidate_route_,false);
+
+  ASSERT_TRUE(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::RegionAccessRule::RuleName) == 0);
+  lanelet::RegionAccessRulePtr region_cess_reg = std::dynamic_pointer_cast<lanelet::RegionAccessRule>(gf_ptr->regulatory_element_);
+  ASSERT_EQ(region_cess_reg->getReason(),"Move over law") ;
+}
+
+
+TEST(WMBroadcaster, addRegionMinimumGap)
+{
+  auto gf_ptr = std::make_shared<Geofence>(Geofence());
+  auto map = carma_wm::getBroadcasterTestMap();
+
+  std::vector<lanelet::Lanelet> affected_llts {map->laneletLayer.get(map->laneletLayer.begin()->id())};
+
+  WMBroadcaster wmb(
+      [&](const autoware_lanelet2_msgs::MapBin& map_bin) {},
+      [&](const autoware_lanelet2_msgs::MapBin& geofence_bin) {},
+      [&](const cav_msgs::TrafficControlRequest& control_msg_pub_){},
+      [&](const cav_msgs::CheckActiveGeofence& active_pub_){},
+      std::make_unique<TestTimerFactory>());
+
+  cav_msgs::TrafficControlMessageV01 msg_v01;
+  cav_msgs::TrafficControlMessageV01 msg_v02;
+  j2735_msgs::TrafficControlVehClass participant1,participant2;
+  participant1.vehicle_class = j2735_msgs::TrafficControlVehClass::PASSENGER_CAR;
+  msg_v01.params.vclasses.push_back(participant1);
+  double min_gap =  12;
+  wmb.addRegionMinimumGap(gf_ptr,min_gap,affected_llts, {});
+
+  ASSERT_TRUE(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalMinimumGap::RuleName) == 0);
+  lanelet::DigitalMinimumGapPtr min_gap_reg = std::dynamic_pointer_cast<lanelet::DigitalMinimumGap>(gf_ptr->regulatory_element_);
+  ASSERT_NEAR(min_gap_reg->getMinimumGap(),min_gap, 0.0001) ;
+
 }
 
 TEST(WMBroadcaster, invertParticipants)
@@ -1458,9 +1492,11 @@ TEST(WMBroadcaster, RegionAccessRuleTest)
   auto map = carma_wm::getBroadcasterTestMap();
   
   ASSERT_EQ(map->regulatoryElementLayer.size(), 0);
+
+  const std::string& reason = "Move over law";
   // add regems
   lanelet::RegionAccessRulePtr old_reg = std::make_shared<lanelet::RegionAccessRule>(lanelet::RegionAccessRule::buildData(10082, {map->laneletLayer.get(10000)},{},
-                                                     { lanelet::Participants::VehicleCar }));
+                                                     { lanelet::Participants::VehicleCar }, reason));
   ASSERT_TRUE(old_reg->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::RegionAccessRule::RuleName) == 0);
   ASSERT_EQ(map->laneletLayer.get(10000).regulatoryElements().size(), 0);
   map->update(map->laneletLayer.get(10000), old_reg); // added a passing control line
@@ -1469,6 +1505,13 @@ TEST(WMBroadcaster, RegionAccessRuleTest)
   ASSERT_EQ(map->laneletLayer.find(10007)->regulatoryElements().front()->id(), old_reg->id());
   ASSERT_FALSE(old_reg->accessable(lanelet::Participants::VehicleBus));
   ASSERT_TRUE(old_reg->accessable(lanelet::Participants::VehicleCar));
+  lanelet::RegionAccessRulePtr accessRuleReg =  std::dynamic_pointer_cast<lanelet::RegionAccessRule>
+                    (map->regulatoryElementLayer.get(map->laneletLayer.find(10000)->regulatoryElements().front()->id()));
+  ASSERT_EQ(accessRuleReg->getReason(),"Move over law1");
+
+  lanelet::RegionAccessRulePtr accessRuleReg2 =  std::dynamic_pointer_cast<lanelet::RegionAccessRule>
+  (map->regulatoryElementLayer.get(map->laneletLayer.find(10007)->regulatoryElements().front()->id()));
+  ASSERT_EQ(accessRuleReg->getReason(),"Move over law");
 
   WMBroadcaster wmb(
       [&](const autoware_lanelet2_msgs::MapBin& map_bin) {
