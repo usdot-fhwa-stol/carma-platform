@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 LEIDOS.
+ * Copyright (C) 2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,10 +21,6 @@
 TEST(MobilityPathVisualizerTest, TestComposeVisualizationMarker)
 {
     mobilitypath_visualizer::MobilityPathVisualizer viz_node;
-    // 1 to 1 transform
-    tf2::Transform identity;
-    identity.setIdentity();
-    
     // INPUT MSG
     cav_msgs::MobilityPath input_msg;
     input_msg.header.plan_id = "";
@@ -46,15 +42,15 @@ TEST(MobilityPathVisualizerTest, TestComposeVisualizationMarker)
     // EXPECTED RESULT STATIC INFO
     visualization_msgs::MarkerArray expected_msg;
     visualization_msgs::Marker marker;
-    marker.header.frame_id = "map";
+    marker.header.frame_id = "earth";
     marker.header.stamp = ros::Time(10.0); //10sec
     marker.type = visualization_msgs::Marker::ARROW;
     marker.action = visualization_msgs::Marker::ADD;
     marker.ns = "mobilitypath_visualizer";
 
-    marker.scale.x = 0.5;
-    marker.scale.y = 0.5;
-    marker.scale.z = 0.5;
+    marker.scale.x = 2;
+    marker.scale.y = 2;
+    marker.scale.z = 1;
     marker.frame_locked = true;
 
     marker.color.r = expected_color_blue.red;
@@ -81,7 +77,7 @@ TEST(MobilityPathVisualizerTest, TestComposeVisualizationMarker)
 
     expected_msg.markers.push_back(marker);
 
-    auto result = viz_node.composeVisualizationMarker(input_msg, identity, expected_color_blue);
+    auto result = viz_node.composeVisualizationMarker(input_msg, expected_color_blue);
 
     EXPECT_EQ(expected_msg.markers[0].header.frame_id, result.markers[0].header.frame_id);
     EXPECT_EQ(expected_msg.markers[0].header.stamp, result.markers[0].header.stamp);
@@ -110,35 +106,9 @@ TEST(MobilityPathVisualizerTest, TestComposeVisualizationMarker)
     
 }
 
-TEST(MobilityPathVisualizerTest, TestECEFToMapPoint)
-{
-    mobilitypath_visualizer::MobilityPathVisualizer viz_node;
-    // 1 to 1 transform
-    tf2::Transform identity;
-    identity.setIdentity();
-
-    cav_msgs::LocationECEF ecef_point;
-    ecef_point.ecef_x = 100;
-    ecef_point.ecef_y = 200;
-    ecef_point.ecef_z = 300;
-    geometry_msgs::Point expected_point;
-    expected_point.x = 1;
-    expected_point.y = 2;
-    expected_point.z = 3;
-
-    auto result = viz_node.ECEFToMapPoint(ecef_point, identity);
-
-    EXPECT_NEAR(expected_point.x, result.x, 0.0001);
-    EXPECT_NEAR(expected_point.y, result.y, 0.0001);
-    EXPECT_NEAR(expected_point.z, result.z, 0.0001);
-}
-
 TEST(MobilityPathVisualizerTest, TestMatchTrajectoryTimestamps)
 {
     mobilitypath_visualizer::MobilityPathVisualizer viz_node;
-    // 1 to 1 transform
-    tf2::Transform identity;
-    identity.setIdentity();
     
     // INPUT RESULT STATIC INFO
     visualization_msgs::MarkerArray host_msg;
@@ -284,7 +254,7 @@ TEST(MobilityPathVisualizerTest, TestComposeLabelMarker)
     auto result = viz_node.composeLabelMarker(host_msg, {host_msg});
     
     //TEST STATIC
-    EXPECT_EQ(result.markers[0].header.frame_id, "map");
+    EXPECT_EQ(result.markers[0].header.frame_id, "earth");
     EXPECT_EQ(result.markers[0].type, visualization_msgs::Marker::TEXT_VIEW_FACING);
     EXPECT_EQ(result.markers[0].action, visualization_msgs::Marker::ADD);
     EXPECT_EQ(result.markers[0].ns, "mobilitypath_visualizer");

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 LEIDOS.
+# Copyright (C) 2021 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(mobilitypath_visualizer)
 
-## Compile as C++11, supported in ROS Kinetic and newer
+## Compile as C++14, supported in ROS Kinetic and newer
 add_compile_options(-std=c++14)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
@@ -25,11 +25,9 @@ set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  autoware_msgs
   carma_utils
   cav_msgs
   std_msgs
-  tf2_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -40,7 +38,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS roscpp autoware_msgs carma_utils cav_msgs std_msgs tf2_ros
+  CATKIN_DEPENDS roscpp carma_utils cav_msgs std_msgs
 )
 
 ###########
