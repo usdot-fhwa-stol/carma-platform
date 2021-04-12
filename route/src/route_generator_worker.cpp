@@ -211,12 +211,7 @@ namespace route {
                 return true;
             }
 
-            // Specify the end point of the route that is inside the last lanelet
-            lanelet::Point3d end_point{lanelet::utils::getId(), destination_points_in_map_with_vehicle.back().x(), destination_points_in_map_with_vehicle.back().y(), 0};
-
-            route->setEndPoint(end_point);
-
-            if (check_for_duplicate_lanelets_in_shortest_path(route))
+            if (check_for_duplicate_lanelets_in_shortest_path(route.get()))
             {
                 ROS_ERROR_STREAM("At least one duplicate Lanelet ID occurs in the shortest path. Routing cannot be completed.");
                 resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
@@ -224,6 +219,11 @@ namespace route {
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
                 return true;
             }
+
+            // Specify the end point of the route that is inside the last lanelet
+            lanelet::Point3d end_point{lanelet::utils::getId(), destination_points_in_map_with_vehicle.back().x(), destination_points_in_map_with_vehicle.back().y(), 0};
+
+            route->setEndPoint(end_point);
 
             // update route message
             route_msg_ = compose_route_msg(route);
@@ -253,13 +253,13 @@ namespace route {
         return true;
     }
 
-    bool RouteGeneratorWorker::check_for_duplicate_lanelets_in_shortest_path(const lanelet::Optional<lanelet::routing::Route>& route)
+    bool RouteGeneratorWorker::check_for_duplicate_lanelets_in_shortest_path(const lanelet::routing::Route& route)
     {
         // Create a vector for the lanelet IDs in the shortest path
         std::vector<lanelet::Id> shortest_path_lanelet_ids;
 
         // Iterate through the shortest path to populate shortest_path_lanelet_ids with lanelet IDs
-        for(const auto& ll : route.get().shortestPath())
+        for(const auto& ll : route.shortestPath())
         {
             shortest_path_lanelet_ids.push_back(ll.id());
         }
@@ -566,7 +566,7 @@ namespace route {
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
                 return true;
             }
-            else if(check_for_duplicate_lanelets_in_shortest_path(route))
+            else if(check_for_duplicate_lanelets_in_shortest_path(route.get()))
             {
                 ROS_ERROR_STREAM("At least one duplicate Lanelet ID occurs in the shortest path. Routing cannot be completed.");
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);

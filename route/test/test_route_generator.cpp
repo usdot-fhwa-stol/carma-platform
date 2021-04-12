@@ -528,7 +528,7 @@ TEST(RouteGeneratorTest, test_duplicate_lanelets_in_shortest_path)
 
     // Test that the shortest path in 'route_with_duplicates' contains duplicate lanelet IDs
     // The shortest path is 111 -> 101 -> 100 -> 104 -> 167 -> 169 -> 168 -> 170 -> 111
-    ASSERT_EQ(worker.check_for_duplicate_lanelets_in_shortest_path(route_with_duplicates), true);
+    ASSERT_EQ(worker.check_for_duplicate_lanelets_in_shortest_path(route_with_duplicates.get()), true);
 
     // Change the ending lanelet ID and update the route so the shortest path does not contain duplicate lanelet IDs
     end_id = 170;
@@ -537,7 +537,7 @@ TEST(RouteGeneratorTest, test_duplicate_lanelets_in_shortest_path)
 
     // Test that the shortest path in 'route_without_duplicates' does not contain duplicate Lanelet IDs
     // The shortest path is 111 -> 101 -> 100 -> 104 -> 167 -> 169 -> 168 -> 170
-    ASSERT_EQ(worker.check_for_duplicate_lanelets_in_shortest_path(route_without_duplicates), false);
+    ASSERT_EQ(worker.check_for_duplicate_lanelets_in_shortest_path(route_without_duplicates.get()), false);
 }
 
 TEST(RouteGeneratorTest, test_reroute_after_route_invalidation)

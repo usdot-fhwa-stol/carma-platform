@@ -152,7 +152,7 @@ namespace route {
          *        'true' indicates that the route's shortest path contains duplicate Lanelet IDs.
          * \param route Route object from lanelet2 lib routing function
          */
-        bool check_for_duplicate_lanelets_in_shortest_path(const lanelet::Optional<lanelet::routing::Route>& route);
+        bool check_for_duplicate_lanelets_in_shortest_path(const lanelet::routing::Route& route);
 
         /**
          * \brief Helper function to load route points from route file and convert them from lat/lon values to cooridinates in ECEF
