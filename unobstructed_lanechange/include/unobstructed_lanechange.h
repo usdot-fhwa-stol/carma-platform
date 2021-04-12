@@ -110,7 +110,7 @@ namespace unobstructed_lanechange
              * \return A list of trajectory points to send to the carma planning stack
              */
             std::vector<cav_msgs::TrajectoryPlanPoint> compose_trajectory_from_centerline(
-            const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state);
+            const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time, int starting_lanelet_id);
             /**
              * \brief Returns the nearest point to the provided vehicle pose in the provided list
              * 
@@ -158,6 +158,18 @@ namespace unobstructed_lanechange
             std::unique_ptr<smoothing::SplineI>
             compute_fit(const std::vector<lanelet::BasicPoint2d>& basic_points);
 
+              /**
+             * \brief Given the curvature fit, computes the curvature at the given step along the curve
+             * 
+             * \param step_along_the_curve Value in double from 0.0 (curvature start) to 1.0 (curvature end) representing where to calculate the curvature
+             * 
+             * \param fit_curve curvature fit
+             * 
+             * \return Curvature (k = 1/r, 1/meter)
+             */ 
+            double compute_curvature_at(const unobstructed_lanechange::smoothing::SplineI& fit_curve, double step_along_the_curve) const;
+
+
             std::vector<double> apply_speed_limits(const std::vector<double> speeds,
                                                              const std::vector<double> speed_limits);
             /**
@@ -195,6 +207,8 @@ namespace unobstructed_lanechange
             std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_from_points_times_orientations(
             const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& times, const std::vector<double>& yaws,
             ros::Time startTime);
+
+            int get_ending_point_index(lanelet::BasicLineString2d& points, double ending_downtrack);
 
             /**
             * \brief verify if the input yield trajectory plan is valid
@@ -248,10 +262,12 @@ namespace unobstructed_lanechange
             double minimum_lookahead_speed_ = 2.8;
             double maximum_lookahead_speed_ =13.9;
             double lateral_accel_limit_ = 1.5;
-            double moving_average_window_size_ = 5;
+            double speed_moving_average_window_size_ = 5;
+            double curvature_moving_average_window_size_ = 9;
             double curvature_calc_lookahead_count_ = 1;
             int downsample_ratio_ =8;
             bool enable_object_avoidance_lc_ = false;
+            double min_timestep_ = 0.1;
             
             // Time duration to ensure plan is recent
             double acceptable_time_difference_ = 1.0;

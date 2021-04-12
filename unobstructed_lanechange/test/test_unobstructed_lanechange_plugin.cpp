@@ -180,7 +180,7 @@ namespace unobstructed_lanechange
         double lookahead = worker.get_adaptive_lookahead(5);   
         std::vector<double> lookahead_speeds = worker.get_lookahead_speed(points_split,constrained_speeds, lookahead);
 
-        trajectory = worker.compose_trajectory_from_centerline(points_and_target_speeds, vehicle_state);
+        trajectory = worker.compose_trajectory_from_centerline(points_and_target_speeds, vehicle_state, ros::Time::now(), lane_change_start_id);
         //Valid Trajectory has at least 2 points
         EXPECT_TRUE(trajectory.size() > 2);
 
