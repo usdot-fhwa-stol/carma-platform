@@ -289,6 +289,7 @@ namespace cooperative_lanechange
                 lc_status_msg.status = cav_msgs::LaneChangeStatus::TIMED_OUT;
                 lc_status_msg.description = "Request timed out for lane merge";
                 lanechange_status_pub_.publish(lc_status_msg);
+                request_sent = false;  //Reset variable
             }
  
         }
@@ -397,6 +398,9 @@ namespace cooperative_lanechange
             {
                 maneuver_plan.push_back(maneuver);
             }
+        }
+        if(current_downtrack >= maneuver_plan.front().lane_change_maneuver.end_dist){
+            request_sent = false;
         }
         auto points_and_target_speeds = maneuvers_to_points(maneuver_plan, current_downtrack, wm_,req.vehicle_state);
 
