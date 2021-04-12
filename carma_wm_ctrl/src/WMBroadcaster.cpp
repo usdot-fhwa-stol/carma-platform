@@ -821,8 +821,12 @@ void WMBroadcaster::removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr) const
 
 void WMBroadcaster::currentLocationCallback(const geometry_msgs::PoseStamped& current_pos)
 {
-   cav_msgs::CheckActiveGeofence check = checkActiveGeofenceLogic(current_pos);
-   active_pub_(check);//Publish
+  if (current_map_ && current_map_->laneletLayer.size() != 0) {
+    cav_msgs::CheckActiveGeofence check = checkActiveGeofenceLogic(current_pos);
+    active_pub_(check);//Publish
+  } else {
+    ROS_DEBUG_STREAM("Could not check active geofence logic because map was not loaded");
+  }
 
 }
 
