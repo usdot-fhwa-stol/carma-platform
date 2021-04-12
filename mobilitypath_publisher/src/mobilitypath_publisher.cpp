@@ -65,7 +65,6 @@ namespace mobilitypath_publisher
         {
             ROS_WARN("%s", ex.what());
         }
-
     }
 
     void MobilityPathPublication::currentpose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
