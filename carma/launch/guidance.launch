@@ -164,6 +164,7 @@
   <!-- Mobility Path Publisher -->
   
   <group>
+    <remap from="mobility_path_msg" to="$(optenv CARMA_MSG_NS)/mobility_path_msg"/>
     <include file="$(find mobilitypath_publisher)/launch/mobilitypath_publisher.launch" />
   </group>
 

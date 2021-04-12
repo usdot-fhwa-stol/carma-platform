@@ -35,7 +35,8 @@
 namespace mobilitypath_visualizer {
 
     /**
-     * MobilityPathVisualizer TODO
+     * MobilityPathVisualizer visualizes all incoming and host's mobilitypath in rviz. It also detects if any path is close to 1meter distance
+     *                        detecting collision and displays it in text
      * 
     */ 
     struct MarkerColor
@@ -61,18 +62,41 @@ namespace mobilitypath_visualizer {
          */
         void run();
 
+        /**
+         * \brief Compose a visualization marker for mobilitypath messages.
+         * \param msg Mobiliy path message
+         * \param map_in_earth Transform to convert ECEF points into map points
+         * \param color color to visualize the marker, for example host car should have different color than other car
+         * \return Visualization Marker in arrow type
+         */
         visualization_msgs::MarkerArray composeVisualizationMarker(const cav_msgs::MobilityPath& msg, const tf2::Transform& map_in_earth, const MarkerColor& color);
 
+        /**
+         * \brief Compose a label marker that displays whether if any of the cav's path cross with that of host (respective points are within 1 meter)
+         * \param host_marker Host marker's visualization marker as arrow type
+         * \param cav_markers Other CAV marker's visualization markers as arrow type
+         * \note  This function assumes that every point's timestamp in marker is matched
+         * \return Visualization Marker in text type
+         */
         visualization_msgs::MarkerArray composeLabelMarker(visualization_msgs::MarkerArray host_marker, std::vector<visualization_msgs::MarkerArray> cav_markers);
 
-        // expects points in cm
+        /**
+         * \brief Accepts ECEF point in cm to convert to a point in map in meters
+         * \param ecef_point ECEF point to convert in cm
+         * \param map_in_earth A transform from ECEF to map
+         * \return Point in map
+         */
         geometry_msgs::Point ECEFToMapPoint(const cav_msgs::LocationECEF& ecef_point, const tf2::Transform& map_in_earth) const;
 
-        // we are assuming host is planning every 0.1s
-        // which means host position/time is updated every 0.1s and 
-        // it is nearly impossible for other cars' marker to be starting later than the host other than 0.1s error
-        // and unless the other car has significantly mismatched time
-    
+        /**
+         * \brief Matches timestamps of CAV's individual points of cav_markers to that of host_marker and interpolates their points using the speed between points
+         * \param host_marker Host marker's visualization marker as arrow type
+         * \param cav_markers Other CAV marker's visualization markers as arrow type
+         * \note  This function assumes 0.1s between any of the points. It also drops CAV markers that start later than the first point in host_marker does.
+         *        This is acceptable as the host is publishing in 0.1s and we don't need to visualize points in the future.
+         *        It extrapolates the last point CAV's just to conform with 
+         * \return Synchronized CAV markers 
+         */
         std::vector<visualization_msgs::MarkerArray> matchTrajectoryTimestamps(const visualization_msgs::MarkerArray& host_marker, 
                                                                     const std::vector<visualization_msgs::MarkerArray>& cav_markers) const;
 

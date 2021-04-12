@@ -80,9 +80,7 @@ namespace mobilitypath_visualizer {
         latest_cav_mob_path_msg_[msg.header.sender_id] = msg;
         try
         {
-            //tf2::convert(tf2_buffer_.lookupTransform("map", "map", ros::Time(0)).transform, map_in_earth_); 
-            tf2::Transform map_in_earth_;
-            map_in_earth_.setIdentity();
+            tf2::convert(tf2_buffer_.lookupTransform("map", "map", ros::Time(0)).transform, map_in_earth_); 
             MarkerColor cav_color;
             if (msg.header.sender_id == host_id_)
             {
