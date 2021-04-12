@@ -85,7 +85,7 @@ namespace cooperative_lanechange
              * 
              * \return the distance between subject vehicle and vehicle 2
              */ 
-            double find_current_gap(int veh2_lanelet_id, double veh2_downtrack);
+            double find_current_gap(long veh2_lanelet_id, double veh2_downtrack) const ;
             /**
              * \brief Converts a set of requested Lane Change maneuvers to point speed limit pairs. 
              * 
@@ -107,7 +107,7 @@ namespace cooperative_lanechange
              * 
              * \return the index of the element in points which is closest to state.
              */ 
-            int getNearestRouteIndex(lanelet::BasicLineString2d& points, const cav_msgs::VehicleState& state);
+            int getNearestRouteIndex(lanelet::BasicLineString2d& points, const cav_msgs::VehicleState& state) const;
             /**
              * \brief Creates a Lanelet2 Linestring from a vector or points along the geometry 
              * \param starting_downtrack downtrack along route where maneuver starts
@@ -126,7 +126,7 @@ namespace cooperative_lanechange
              * \param end_lanelet The lanelet in which lane change ends
              * \return A linestring path from start to end fit through Spline Library
              */
-            lanelet::BasicLineString2d create_lanechange_path(lanelet::BasicPoint2d start, lanelet::ConstLanelet& start_lanelet, lanelet::BasicPoint2d end, lanelet::ConstLanelet& end_lanelet);
+            lanelet::BasicLineString2d create_lanechange_path(lanelet::ConstLanelet& start_lanelet, lanelet::BasicPoint2d end, lanelet::ConstLanelet& end_lanelet);
             
             /**
              * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of trajectory points for trajectory planning
@@ -148,7 +148,7 @@ namespace cooperative_lanechange
              * \return index of nearest point in points
              */
             int getNearestPointIndex(const std::vector<PointSpeedPair>& points,
-                                               const cav_msgs::VehicleState& state);
+                                               const cav_msgs::VehicleState& state) const;
             /**
              * \brief Reduces the input points to only those points that fit within the provided time boundary
              * 
@@ -164,7 +164,7 @@ namespace cooperative_lanechange
              */ 
             void splitPointSpeedPairs(const std::vector<PointSpeedPair>& points,
                                             std::vector<lanelet::BasicPoint2d>* basic_points,
-                                            std::vector<double>* speeds);
+                                            std::vector<double>* speeds) const;
 
             /**
              * \brief Returns a 2D coordinate frame which is located at p1 and oriented so p2 lies on the +X axis
@@ -175,7 +175,7 @@ namespace cooperative_lanechange
              * \return A 2D coordinate frame transform
              */ 
             Eigen::Isometry2d compute_heading_frame(const lanelet::BasicPoint2d& p1,
-                                                              const lanelet::BasicPoint2d& p2);
+                                                              const lanelet::BasicPoint2d& p2) const;
             /**
              * \brief Computes a spline based on the provided points
              * 
@@ -187,7 +187,7 @@ namespace cooperative_lanechange
             compute_fit(const std::vector<lanelet::BasicPoint2d>& basic_points);
 
             std::vector<double> apply_speed_limits(const std::vector<double> speeds,
-                                                             const std::vector<double> speed_limits);
+                                                             const std::vector<double> speed_limits) const;
             /**
              * \brief Applies the provided speed limits to the provided speeds such that each element is capped at its corresponding speed limit if needed
              * 
@@ -196,7 +196,7 @@ namespace cooperative_lanechange
              * 
              * \return The capped speed limits. Has the same size as speeds
              */ 
-            double get_adaptive_lookahead(double velocity);
+            double get_adaptive_lookahead(double velocity) const;
 
               /**
              * \brief Returns the speeds of points closest to the lookahead distance.
@@ -207,7 +207,7 @@ namespace cooperative_lanechange
              * 
              * \return A vector of speed values shifted by the lookahead distance.
              */ 
-            std::vector<double> get_lookahead_speed(const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& speeds, const double& lookahead);
+            std::vector<double> get_lookahead_speed(const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& speeds, const double& lookahead) const;
               /**
              * \brief Method combines input points, times, orientations, and an absolute start time to form a valid carma platform trajectory
              * 
@@ -222,7 +222,7 @@ namespace cooperative_lanechange
              */
             std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_from_points_times_orientations(
             const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& times, const std::vector<double>& yaws,
-            ros::Time startTime);
+            ros::Time startTime)const;
 
             /**
              * \brief Callback to subscribed mobility response topic
@@ -235,7 +235,7 @@ namespace cooperative_lanechange
              * \param trajectory_plan A vector of lane change trajectory points
              * \param The mobility request message created from trajectory points, for publishing
              */
-            cav_msgs::MobilityRequest create_mobility_request(std::vector<cav_msgs::TrajectoryPlanPoint>& trajectory_plan, cav_msgs::Maneuver maneuver);
+            cav_msgs::MobilityRequest create_mobility_request(std::vector<cav_msgs::TrajectoryPlanPoint>& trajectory_plan, cav_msgs::Maneuver& maneuver);
 
             /**
              * \brief Converts Trajectory Plan to (Mobility) Trajectory

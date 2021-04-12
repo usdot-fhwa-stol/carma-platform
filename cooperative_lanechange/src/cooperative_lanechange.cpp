@@ -114,7 +114,7 @@ namespace cooperative_lanechange
     }
 
 
-    double CooperativeLaneChangePlugin::find_current_gap(int veh2_lanelet_id, double veh2_downtrack){
+    double CooperativeLaneChangePlugin::find_current_gap(long veh2_lanelet_id, double veh2_downtrack) const {
                 
         //find downtrack distance between ego and lag vehicle
         double current_gap = 0.0;
@@ -148,7 +148,7 @@ namespace cooperative_lanechange
         
         double downtrack_1 = wm_->routeTrackPos(p).downtrack;
         double remaining_downtrack = downtrack_1 - veh2_downtrack + ego_current_downtrack;
-        //double downtrack_1 = map_graph->routeTrackPos(p).downtrack;
+        
         current_gap = remaining_downtrack;
 
 
@@ -185,7 +185,7 @@ namespace cooperative_lanechange
         
         //Check if Lane Change is needed
         std::vector<cav_msgs::Maneuver> maneuver_plan;
-        for(const auto maneuver : req.maneuver_plan.maneuvers)
+        for(const auto& maneuver : req.maneuver_plan.maneuvers)
         {
             if(maneuver.type == cav_msgs::Maneuver::LANE_CHANGE)
             {
@@ -194,13 +194,13 @@ namespace cooperative_lanechange
         }
 
         //Current only checking for first lane change maneuver message
-        int target_lanelet_id = stoi(maneuver_plan[0].lane_change_maneuver.ending_lane_id);
+        long target_lanelet_id = stol(maneuver_plan[0].lane_change_maneuver.ending_lane_id);
         double target_downtrack = maneuver_plan[0].lane_change_maneuver.end_dist;
         //get subject vehicle info
         lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
         double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
         auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, veh_pos, 10);       
-        int current_lanelet_id = current_lanelets[0].second.id();
+        long current_lanelet_id = current_lanelets[0].second.id();
         if(current_lanelet_id == target_lanelet_id && current_downtrack >= target_downtrack - destination_range_){
             cav_msgs::LaneChangeStatus lc_status_msg;
             lc_status_msg.status = cav_msgs::LaneChangeStatus::PLANNING_SUCCESS;
@@ -208,7 +208,7 @@ namespace cooperative_lanechange
             lanechange_status_pub_.publish(lc_status_msg);
         }
 
-        int veh2_lanelet_id = 0;
+        long veh2_lanelet_id = 0;
         double veh2_downtrack = 0.0, veh2_speed = 0.0;
         bool foundRoadwayObject = false;
         bool negotiate = true;
@@ -268,7 +268,7 @@ namespace cooperative_lanechange
             trajectory_plan.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, minimum_speed_);
             resp.trajectory_plan = trajectory_plan;
 
-            for (int i=0; i<req.maneuver_plan.maneuvers.size(); i++){
+            for (unsigned char i=0; i<req.maneuver_plan.maneuvers.size(); i++){
                 if (req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::LANE_CHANGE){
                     resp.related_maneuvers.push_back(i);
                     break;
@@ -297,7 +297,7 @@ namespace cooperative_lanechange
         return true;
     }
     
-    cav_msgs::MobilityRequest CooperativeLaneChangePlugin::create_mobility_request(std::vector<cav_msgs::TrajectoryPlanPoint>& trajectory_plan, cav_msgs::Maneuver maneuver){
+    cav_msgs::MobilityRequest CooperativeLaneChangePlugin::create_mobility_request(std::vector<cav_msgs::TrajectoryPlanPoint>& trajectory_plan, cav_msgs::Maneuver& maneuver){
 
         cav_msgs::MobilityRequest request_msg;
         cav_msgs::MobilityHeader header;
@@ -305,7 +305,7 @@ namespace cooperative_lanechange
         header.recipient_id = DEFAULT_STRING_;  
         header.sender_bsm_id = bsmIDtoString(bsm_core_);
         header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
-        header.timestamp = trajectory_plan.front().target_time.toSec();
+        header.timestamp = trajectory_plan.front().target_time.toNSec();
         request_msg.header = header;
 
         request_msg.strategy = "carma/cooperative-lane-change";
@@ -314,11 +314,11 @@ namespace cooperative_lanechange
 
         //Location
         cav_msgs::LocationECEF location;
-        location.ecef_x = pose_msg_.pose.position.x;
-        location.ecef_y = pose_msg_.pose.position.y;
-        location.ecef_z = pose_msg_.pose.position.z;
-        //Using trajectory first point time as location timestamp;
-        location.timestamp = trajectory_plan.front().target_time.toSec();
+        location.ecef_x = int(pose_msg_.pose.position.x);
+        location.ecef_y = int(pose_msg_.pose.position.y);
+        location.ecef_z = int(pose_msg_.pose.position.z);
+        //Using trajectory first point time as location timestamp
+        location.timestamp = trajectory_plan.front().target_time.toNSec();
         request_msg.location = location;
         //Strategy params
         //Encode JSON with Boost Property Tree
@@ -344,7 +344,7 @@ namespace cooperative_lanechange
             ROS_WARN("%s", ex.what());
         }
         request_msg.trajectory = trajectory;
-        request_msg.expiration = trajectory_plan.back().target_time.toSec();
+        request_msg.expiration = trajectory_plan.back().target_time.toNSec();
         
         return request_msg;
     }
@@ -378,9 +378,9 @@ namespace cooperative_lanechange
     cav_msgs::LocationECEF CooperativeLaneChangePlugin::trajectory_point_to_ecef(const cav_msgs::TrajectoryPlanPoint& traj_point, const geometry_msgs::TransformStamped& tf) const{
         cav_msgs::LocationECEF ecef_point;    
 
-        ecef_point.ecef_x = traj_point.x * tf.transform.translation.x;
-        ecef_point.ecef_y = traj_point.y * tf.transform.translation.y;
-        ecef_point.ecef_z = 0.0 * tf.transform.translation.z;
+        ecef_point.ecef_x = int(traj_point.x * tf.transform.translation.x);
+        ecef_point.ecef_y = int(traj_point.y * tf.transform.translation.y);
+        ecef_point.ecef_z = int(0.0 * tf.transform.translation.z);
        
         return ecef_point;
     } 
@@ -392,7 +392,7 @@ namespace cooperative_lanechange
 
         //convert maneuver info to route points and speeds
         std::vector<cav_msgs::Maneuver> maneuver_plan;
-        for(const auto maneuver : req.maneuver_plan.maneuvers)
+        for(const auto& maneuver : req.maneuver_plan.maneuvers)
         {
             if(maneuver.type == cav_msgs::Maneuver::LANE_CHANGE)
             {
@@ -482,7 +482,6 @@ namespace cooperative_lanechange
         int nearest_pt_index = getNearestPointIndex(points, state);
 
         std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end()); // Points in front of current vehicle position
-        //auto time_bound_points = constrain_to_time_boundary(future_points, trajectory_time_length_ );
 
         std::vector<double> final_yaw_values;
         std::vector<double> final_actual_speeds;
@@ -601,7 +600,7 @@ namespace cooperative_lanechange
 
     std::vector<cav_msgs::TrajectoryPlanPoint> CooperativeLaneChangePlugin::trajectory_from_points_times_orientations(
     const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& times, const std::vector<double>& yaws,
-    ros::Time startTime)
+    ros::Time startTime) const
     {
         if (points.size() != times.size() || points.size() != yaws.size())
         {
@@ -629,7 +628,7 @@ namespace cooperative_lanechange
         return traj;
     }
 
-    double CooperativeLaneChangePlugin::get_adaptive_lookahead(double velocity)
+    double CooperativeLaneChangePlugin::get_adaptive_lookahead(double velocity) const
     {
         // lookahead:
         // v<10kph:  5m
@@ -652,7 +651,7 @@ namespace cooperative_lanechange
 
     }
 
-    std::vector<double> CooperativeLaneChangePlugin::get_lookahead_speed(const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& speeds, const double& lookahead)
+    std::vector<double> CooperativeLaneChangePlugin::get_lookahead_speed(const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& speeds, const double& lookahead) const
     {
   
         if (lookahead < minimum_lookahead_distance_)
@@ -691,7 +690,7 @@ namespace cooperative_lanechange
         }
 
     std::vector<double> CooperativeLaneChangePlugin::apply_speed_limits(const std::vector<double> speeds,
-                                                             const std::vector<double> speed_limits)
+                                                             const std::vector<double> speed_limits) const
     {
         if (speeds.size() != speed_limits.size())
         {
@@ -721,7 +720,7 @@ namespace cooperative_lanechange
 
 
     Eigen::Isometry2d CooperativeLaneChangePlugin::compute_heading_frame(const lanelet::BasicPoint2d& p1,
-                                                              const lanelet::BasicPoint2d& p2)
+                                                              const lanelet::BasicPoint2d& p2) const
     {
     Eigen::Rotation2Dd yaw(atan2(p2.y() - p1.y(), p2.x() - p1.x()));
 
@@ -763,7 +762,7 @@ namespace cooperative_lanechange
     }
     void CooperativeLaneChangePlugin::splitPointSpeedPairs(const std::vector<PointSpeedPair>& points,
                                                 std::vector<lanelet::BasicPoint2d>* basic_points,
-                                                std::vector<double>* speeds)
+                                                std::vector<double>* speeds) const
     {
         basic_points->reserve(points.size());
         speeds->reserve(points.size());
@@ -775,7 +774,7 @@ namespace cooperative_lanechange
         }
     }
 
-    int CooperativeLaneChangePlugin::getNearestRouteIndex(lanelet::BasicLineString2d& points, const cav_msgs::VehicleState& state)
+    int CooperativeLaneChangePlugin::getNearestRouteIndex(lanelet::BasicLineString2d& points, const cav_msgs::VehicleState& state) const
     {
         lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
                 double min_distance = std::numeric_limits<double>::max();
@@ -796,7 +795,7 @@ namespace cooperative_lanechange
     }
 
     int CooperativeLaneChangePlugin::getNearestPointIndex(const std::vector<PointSpeedPair>& points,
-                                               const cav_msgs::VehicleState& state)
+                                               const cav_msgs::VehicleState& state) const
     {
         lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
         ROS_DEBUG_STREAM("veh_point: " << veh_point.x() << ", " << veh_point.y());
@@ -819,7 +818,7 @@ namespace cooperative_lanechange
         return best_index;
     }
 
-    lanelet::BasicLineString2d  CooperativeLaneChangePlugin::create_lanechange_path(lanelet::BasicPoint2d start, lanelet::ConstLanelet& start_lanelet, lanelet::BasicPoint2d end, lanelet::ConstLanelet& end_lanelet)
+    lanelet::BasicLineString2d  CooperativeLaneChangePlugin::create_lanechange_path(lanelet::ConstLanelet& start_lanelet, lanelet::BasicPoint2d end, lanelet::ConstLanelet& end_lanelet)
     {
         std::vector<lanelet::BasicPoint2d> centerline_points={};
         lanelet::BasicLineString2d centerline_start_lane = start_lanelet.centerline2d().basicLineString();
@@ -852,7 +851,6 @@ namespace cooperative_lanechange
         }
 
         lanelet::BasicLineString2d lc_route;
-        //lc_route.push_back(start);
         double scaled_steps_along_curve = 0.0; // from 0 (start) to 1 (end) for the whole trajectory
         for(int i =0;i<centerline_points.size();i++){
             lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
@@ -894,7 +892,7 @@ namespace cooperative_lanechange
             lanelet::BasicLineString2d last=lanelets_in_path.back().centerline2d().basicLineString();
             lanelet::BasicPoint2d end = last.back();
             
-            lanelet::BasicLineString2d new_points = create_lanechange_path(start,lanelets_in_path[lane_change_iteration], end, lanelets_in_path.back());
+            lanelet::BasicLineString2d new_points = create_lanechange_path(lanelets_in_path[lane_change_iteration], end, lanelets_in_path.back());
             centerline_points.insert(centerline_points.end(),new_points.begin(),new_points.end() );
     
         return centerline_points;
