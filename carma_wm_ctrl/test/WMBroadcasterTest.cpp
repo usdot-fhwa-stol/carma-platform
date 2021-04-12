@@ -1274,12 +1274,14 @@ TEST(WMBroadcaster, addRegionMinimumGap)
   participant1.vehicle_class = j2735_msgs::TrafficControlVehClass::PASSENGER_CAR;
   msg_v01.params.vclasses.push_back(participant1);
   double min_gap =  12;
-  wmb.addRegionMinimumGap(gf_ptr,min_gap,affected_llts, {});
+  wmb.addRegionMinimumGap(gf_ptr, msg_v01,min_gap,affected_llts, {});
 
   ASSERT_TRUE(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalMinimumGap::RuleName) == 0);
   lanelet::DigitalMinimumGapPtr min_gap_reg = std::dynamic_pointer_cast<lanelet::DigitalMinimumGap>(gf_ptr->regulatory_element_);
   ASSERT_NEAR(min_gap_reg->getMinimumGap(),min_gap, 0.0001) ;
-
+  ros::V_string participants;
+  auto result = wmb.invertParticipants(wmb.participantsChecker(msg_v01));
+  ASSERT_EQ(result.size(), 5);
 }
 
 TEST(WMBroadcaster, invertParticipants)
@@ -1507,7 +1509,7 @@ TEST(WMBroadcaster, RegionAccessRuleTest)
   ASSERT_TRUE(old_reg->accessable(lanelet::Participants::VehicleCar));
   lanelet::RegionAccessRulePtr accessRuleReg =  std::dynamic_pointer_cast<lanelet::RegionAccessRule>
                     (map->regulatoryElementLayer.get(map->laneletLayer.find(10000)->regulatoryElements().front()->id()));
-  ASSERT_EQ(accessRuleReg->getReason(),"Move over law1");
+  ASSERT_EQ(accessRuleReg->getReason(),"Move over law");
 
   lanelet::RegionAccessRulePtr accessRuleReg2 =  std::dynamic_pointer_cast<lanelet::RegionAccessRule>
   (map->regulatoryElementLayer.get(map->laneletLayer.find(10007)->regulatoryElements().front()->id()));

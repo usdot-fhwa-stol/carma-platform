@@ -185,7 +185,7 @@ public:
    * \param afffected_llts affected lanelets
    * \param affected_areas affected areas
    */
-  void addRegionMinimumGap(std::shared_ptr<Geofence> gf_ptr, double min_gap, const std::vector<lanelet::Lanelet>& affected_llts, const std::vector<lanelet::Area>& affected_areas) const;
+  void addRegionMinimumGap(std::shared_ptr<Geofence> gf_ptr,  const cav_msgs::TrafficControlMessageV01& msg_v01, double min_gap, const std::vector<lanelet::Lanelet>& affected_llts, const std::vector<lanelet::Area>& affected_areas) const;
 
   /*!
    * \brief Generates participants list
