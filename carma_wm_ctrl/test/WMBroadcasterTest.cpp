@@ -1279,9 +1279,8 @@ TEST(WMBroadcaster, addRegionMinimumGap)
   ASSERT_TRUE(gf_ptr->regulatory_element_->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalMinimumGap::RuleName) == 0);
   lanelet::DigitalMinimumGapPtr min_gap_reg = std::dynamic_pointer_cast<lanelet::DigitalMinimumGap>(gf_ptr->regulatory_element_);
   ASSERT_NEAR(min_gap_reg->getMinimumGap(),min_gap, 0.0001) ;
-  ros::V_string participants;
-  auto result = wmb.invertParticipants(wmb.participantsChecker(msg_v01));
-  ASSERT_EQ(result.size(), 5);
+  auto result = wmb.participantsChecker(msg_v01);
+  ASSERT_EQ(result.size(), 1);
 }
 
 TEST(WMBroadcaster, invertParticipants)

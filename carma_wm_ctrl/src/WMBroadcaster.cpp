@@ -262,7 +262,7 @@ void WMBroadcaster::addRegionAccessRule(std::shared_ptr<Geofence> gf_ptr, const 
 void WMBroadcaster::addRegionMinimumGap(std::shared_ptr<Geofence> gf_ptr,  const cav_msgs::TrafficControlMessageV01& msg_v01, double min_gap, const std::vector<lanelet::Lanelet>& affected_llts, const std::vector<lanelet::Area>& affected_areas) const
 {
   auto regulatory_element = std::make_shared<lanelet::DigitalMinimumGap>(lanelet::DigitalMinimumGap::buildData(lanelet::utils::getId(), 
-                                        min_gap, affected_llts, affected_areas, invertParticipants(participantsChecker(msg_v01))));
+                                        min_gap, affected_llts, affected_areas,participantsChecker(msg_v01) ));
   
   gf_ptr->regulatory_element_ = regulatory_element;
 }
