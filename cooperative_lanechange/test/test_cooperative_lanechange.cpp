@@ -49,6 +49,18 @@ namespace cooperative_lanechange
         test_lanechange_status = *msg.get();
         ROS_INFO_STREAM("Test callback...");
     }
+    TEST(CooperativeLaneChangePlugin,TestMobilityResponse_cb){
+        cooperative_lanechange::CooperativeLaneChangePlugin worker;
+        ros::NodeHandle nh2;
+        worker.lanechange_status_pub_ = nh2.advertise<cav_msgs::LaneChangeStatus>("cooperative_lane_change_status",1);
+        cav_msgs::MobilityResponse mob_response_msg;
+        mob_response_msg.is_accepted = true;
+        worker.mobilityresponse_cb(mob_response_msg);
+        
+        ros::Subscriber lc_status_sub = nh2.subscribe("cooperative_lane_change_status", 5, status_callback);
+        EXPECT_EQ(1, lc_status_sub.getNumPublishers());
+        ros::spinOnce();
+    }
 
     TEST(CooperativeLaneChangePlugin,Testusingosm){
     // File to process. Path is relative to unobstructed_lanechange package
