@@ -26,7 +26,9 @@ namespace mobilitypath_visualizer {
         {
             double dx = pt2.x - pt1.x;
             double dy = pt2.y - pt1.y;
-            return sqrt(dx * dx + dy * dy);
+            double dz = pt2.z - pt1.z;
+
+            return sqrt(dx * dx + dy * dy + dz * dz);
         }
     }
 
@@ -141,12 +143,12 @@ namespace mobilitypath_visualizer {
 
             marker.points = {};
             arrow_start = arrow_end;
-            ROS_DEBUG_STREAM("Arrow start- x: " << arrow_start.x << ", y:" << arrow_start.y);
+            ROS_DEBUG_STREAM("Arrow start- x: " << arrow_start.x << ", y:" << arrow_start.y << ", z:" << arrow_start.z);
 
             arrow_end.x = arrow_start.x + (double)(msg.trajectory.offsets[i].offset_x)/ 100.0; //cm to m
             arrow_end.y = arrow_start.y + (double)(msg.trajectory.offsets[i].offset_y)/ 100.0;
             arrow_end.z = arrow_start.z + (double)(msg.trajectory.offsets[i].offset_z)/ 100.0;
-            ROS_DEBUG_STREAM("Arrow end- x: " << arrow_end.x << ", y:" << arrow_end.y);
+            ROS_DEBUG_STREAM("Arrow end- x: " << arrow_end.x << ", y:" << arrow_end.y  << ", z:" << arrow_end.z);
 
             marker.points.push_back(arrow_start);
             marker.points.push_back(arrow_end);
@@ -182,6 +184,8 @@ namespace mobilitypath_visualizer {
                     marker.header.stamp = ros::Time::now();
                     marker.pose.position.x = cav_marker.markers[idx].points[0].x;
                     marker.pose.position.y = cav_marker.markers[idx].points[0].y;
+                    marker.pose.position.z = cav_marker.markers[idx].points[0].z;
+
                     marker.text = "Collision in " + std::to_string((cav_marker.markers[idx].header.stamp - marker.header.stamp).toSec())+ "s!";
                     output.markers.push_back(marker);
                 }
@@ -194,6 +198,8 @@ namespace mobilitypath_visualizer {
                 marker.header.stamp = ros::Time::now();
                 marker.pose.position.x = cav_marker.markers[idx-1].points[1].x;
                 marker.pose.position.y = cav_marker.markers[idx-1].points[1].y;
+                marker.pose.position.z = cav_marker.markers[idx-1].points[1].z;
+
                 
                 marker.text = "Collision in " + std::to_string((cav_marker.markers[idx-1].header.stamp + ros::Duration(0.1) - marker.header.stamp).toSec())+ "s!";
                 output.markers.push_back(marker);
@@ -244,8 +250,12 @@ namespace mobilitypath_visualizer {
                 {
                     double dx = (curr_cav.markers[curr_idx].points[1].x - curr_cav.markers[curr_idx].points[0].x)/time_step * dt;
                     double dy = (curr_cav.markers[curr_idx].points[1].y - curr_cav.markers[curr_idx].points[0].y)/time_step * dt;
+                    double dz = (curr_cav.markers[curr_idx].points[1].z - curr_cav.markers[curr_idx].points[0].z)/time_step * dt;
+
                     curr_marker.points[0].x += dx; 
                     curr_marker.points[0].y += dy;
+                    curr_marker.points[0].z += dz;
+
                 } //else just loop and copy
                 curr_marker.header.stamp = curr_time;
                 synchronized_marker_array.markers.push_back(curr_marker);
@@ -265,8 +275,12 @@ namespace mobilitypath_visualizer {
             // extrapolate the last point just to conform with 0.1s interval between points
             double dx = (synchronized_marker_array.markers[curr_idx].points[1].x - synchronized_marker_array.markers[curr_idx].points[0].x)/(time_step - dt) * time_step;
             double dy = (synchronized_marker_array.markers[curr_idx].points[1].y - synchronized_marker_array.markers[curr_idx].points[0].y)/(time_step - dt) * time_step;
+            double dz = (synchronized_marker_array.markers[curr_idx].points[1].z - synchronized_marker_array.markers[curr_idx].points[0].z)/(time_step - dt) * time_step;
+
             synchronized_marker_array.markers[curr_idx].points[1].x = synchronized_marker_array.markers[curr_idx].points[0].x + dx; 
-            synchronized_marker_array.markers[curr_idx].points[1].y = synchronized_marker_array.markers[curr_idx].points[0].y + dy; 
+            synchronized_marker_array.markers[curr_idx].points[1].y = synchronized_marker_array.markers[curr_idx].points[0].y + dy;
+            synchronized_marker_array.markers[curr_idx].points[1].z = synchronized_marker_array.markers[curr_idx].points[0].z + dz; 
+
 
             synchronized_output.push_back(synchronized_marker_array);
             
