@@ -196,6 +196,15 @@ namespace unobstructed_lanechange
             const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& times, const std::vector<double>& yaws,
             ros::Time startTime);
 
+            /**
+            * \brief verify if the input yield trajectory plan is valid
+            * 
+            * \param yield_plan input yield trajectory plan
+            *
+            * \return true or falss
+            */
+            bool validate_yield_plan(const cav_msgs::TrajectoryPlan& yield_plan, const std::string& original_plan_id);
+
             //Internal Variables used in unit tests
             // Current vehicle forward speed
             double current_speed_;
@@ -218,6 +227,9 @@ namespace unobstructed_lanechange
             ros::ServiceServer trajectory_srv_;
             ros::ServiceServer maneuver_srv_;
 
+            // ros service client
+            ros::ServiceClient yield_client_;
+
             // ROS publishers and subscribers
             cav_msgs::Plugin plugin_discovery_msg_;
             ros::Subscriber pose_sub_;
@@ -239,6 +251,11 @@ namespace unobstructed_lanechange
             double moving_average_window_size_ = 5;
             double curvature_calc_lookahead_count_ = 1;
             int downsample_ratio_ =8;
+            bool enable_object_avoidance_lc_ = false;
+            
+            // Time duration to ensure plan is recent
+            double acceptable_time_difference_ = 1.0;
+            ros::Duration time_dur_ = ros::Duration(acceptable_time_difference_);
 
             int num_points = traj_freq * trajectory_time_length_;
 

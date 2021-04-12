@@ -61,6 +61,7 @@ target_link_libraries(${PROJECT_NAME}_node
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
   scripts/carma_record.sh
+  scripts/param_dump.sh
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

@@ -32,6 +32,7 @@ able to shut down other nodes.
     <!-- Handle global parameters for variables-->
     <remap from="~required_drivers" to="/required_drivers"/> 
     <remap from="~lidar_gps_drivers" to="/lidar_gps_drivers"/>
+    <remap from="~camera_drivers" to="/camera_drivers"/>
     <remap from="~truck" to="/truck"/>
     <remap from="~car" to="/car"/> 
     

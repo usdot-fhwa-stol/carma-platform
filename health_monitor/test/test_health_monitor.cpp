@@ -27,8 +27,9 @@ namespace health_monitor
         
         std::vector<std::string> required_drivers{"controller"};
         std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
+        std::vector<std::string> camera_drivers{"camera"};
 
-        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers,camera_drivers);
         
         cav_msgs::DriverStatus msg1;
         msg1.controller = true;
@@ -51,7 +52,14 @@ namespace health_monitor
         cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
         dm.update_driver_status(msg3_pointer, 1000);
 
-        EXPECT_EQ("s_1_l_1_g_1", dm.are_critical_drivers_operational_car(1500));
+        cav_msgs::DriverStatus msg4;
+        msg4.gnss = true;
+        msg4.name = "camera";
+        msg4.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
+        dm.update_driver_status(msg4_pointer, 1000);
+
+        EXPECT_EQ("s_1_l_1_g_1_c_1", dm.are_critical_drivers_operational_car(1500));
 
 }
 
@@ -61,8 +69,9 @@ namespace health_monitor
 
         std::vector<std::string> required_drivers{"controller"};
         std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
+        std::vector<std::string> camera_drivers{"camera"};
 
-        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers,camera_drivers);
 
         cav_msgs::DriverStatus msg1;
         msg1.controller = true;
@@ -85,6 +94,13 @@ namespace health_monitor
         cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
         dm.update_driver_status(msg3_pointer, 1000);
 
+        cav_msgs::DriverStatus msg4;
+        msg4.gnss = true;
+        msg4.name = "camera";
+        msg4.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
+        dm.update_driver_status(msg4_pointer, 1000);
+
         EXPECT_EQ("s_1_l_1_g_0", dm.are_critical_drivers_operational_car(1500));
 
     }
@@ -97,8 +113,9 @@ namespace health_monitor
 
         std::vector<std::string> required_drivers{"controller"};
         std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
+        std::vector<std::string> camera_drivers{"camera"};
 
-        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers,camera_drivers);
 
         cav_msgs::DriverStatus msg1;
         msg1.controller = true;
@@ -121,6 +138,13 @@ namespace health_monitor
         cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
         dm.update_driver_status(msg3_pointer, 1000);
 
+        cav_msgs::DriverStatus msg4;
+        msg4.gnss = true;
+        msg4.name = "camera";
+        msg4.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
+        dm.update_driver_status(msg4_pointer, 1000);
+
         EXPECT_EQ("s_1_l_0_g_1", dm.are_critical_drivers_operational_car(1500));
 
     }
@@ -133,8 +157,9 @@ namespace health_monitor
 
         std::vector<std::string> required_drivers{"controller"};
         std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
+        std::vector<std::string> camera_drivers{"camera"};
 
-        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers,camera_drivers);
 
         cav_msgs::DriverStatus msg1;
         msg1.controller = true;
@@ -157,6 +182,13 @@ namespace health_monitor
         cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
         dm.update_driver_status(msg3_pointer, 1000);
 
+        cav_msgs::DriverStatus msg4;
+        msg4.gnss = true;
+        msg4.name = "camera";
+        msg4.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
+        dm.update_driver_status(msg4_pointer, 1000);
+
         EXPECT_EQ("s_1_l_0_g_0", dm.are_critical_drivers_operational_car(1500));
 
     }
@@ -168,8 +200,9 @@ namespace health_monitor
 
         std::vector<std::string> required_drivers{"controller"};
         std::vector<std::string> lidar_gps_drivers{"lidar","gps"};
+        std::vector<std::string> camera_drivers{"camera"};
 
-        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers,camera_drivers);
 
         cav_msgs::DriverStatus msg1;
         msg1.controller = true;
@@ -192,6 +225,13 @@ namespace health_monitor
         cav_msgs::DriverStatusConstPtr msg3_pointer(new cav_msgs::DriverStatus(msg3));
         dm.update_driver_status(msg3_pointer, 1000);
 
+        cav_msgs::DriverStatus msg4;
+        msg4.gnss = true;
+        msg4.name = "camera";
+        msg4.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
+        dm.update_driver_status(msg4_pointer, 1000);
+
         EXPECT_EQ("s_0", dm.are_critical_drivers_operational_car(1500));
 
     }
@@ -202,8 +242,9 @@ namespace health_monitor
 
         std::vector<std::string> required_drivers{"controller"};
         std::vector<std::string> lidar_gps_drivers{"lidar1", "lidar2","gps"};
+        std::vector<std::string> camera_drivers{"camera"};
 
-        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers,camera_drivers);
 
         cav_msgs::DriverStatus msg1;
         msg1.controller = true;
@@ -233,7 +274,14 @@ namespace health_monitor
         cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
         dm.update_driver_status(msg4_pointer, 1000);
 
-        EXPECT_EQ("s_1_l1_1_l2_1_g_1", dm.are_critical_drivers_operational_truck(1500));
+        cav_msgs::DriverStatus msg5;
+        msg5.gnss = true;
+        msg5.name = "camera";
+        msg5.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg5_pointer(new cav_msgs::DriverStatus(msg5));
+        dm.update_driver_status(msg5_pointer, 1000);
+
+        EXPECT_EQ("s_1_l1_1_l2_1_g_1_c_1", dm.are_critical_drivers_operational_truck(1500));
 
     }
 
@@ -244,8 +292,9 @@ namespace health_monitor
 
         std::vector<std::string> required_drivers{"controller"};
         std::vector<std::string> lidar_gps_drivers{"lidar1", "lidar2","gps"};
+        std::vector<std::string> camera_drivers{"camera"};
 
-        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers,camera_drivers);
 
         cav_msgs::DriverStatus msg1;
         msg1.controller = true;
@@ -275,6 +324,13 @@ namespace health_monitor
         cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
         dm.update_driver_status(msg4_pointer, 1000);
 
+        cav_msgs::DriverStatus msg5;
+        msg5.gnss = true;
+        msg5.name = "camera";
+        msg5.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg5_pointer(new cav_msgs::DriverStatus(msg5));
+        dm.update_driver_status(msg5_pointer, 1000);
+
         EXPECT_EQ("s_1_l1_0_l2_1_g_1", dm.are_critical_drivers_operational_truck(1500));
 
     }
@@ -284,8 +340,9 @@ namespace health_monitor
         HealthMonitor node;
         std::vector<std::string> required_drivers{"controller"};
         std::vector<std::string> lidar_gps_drivers{"lidar1", "lidar2","gps"};
+        std::vector<std::string> camera_drivers{"camera"};
 
-        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers,camera_drivers);
 
         cav_msgs::DriverStatus msg1;
         msg1.controller = true;
@@ -315,6 +372,13 @@ namespace health_monitor
         cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
         dm.update_driver_status(msg4_pointer, 1000);
 
+        cav_msgs::DriverStatus msg5;
+        msg5.gnss = true;
+        msg5.name = "camera";
+        msg5.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg5_pointer(new cav_msgs::DriverStatus(msg5));
+        dm.update_driver_status(msg5_pointer, 1000);
+
         EXPECT_EQ("s_1_l1_0_l2_1_g_0", dm.are_critical_drivers_operational_truck(1500));
 
     }
@@ -325,8 +389,9 @@ namespace health_monitor
 
         std::vector<std::string> required_drivers{"controller"};
         std::vector<std::string> lidar_gps_drivers{"lidar1", "lidar2","gps"};
+        std::vector<std::string> camera_drivers{"camera"};
 
-        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers,camera_drivers);
 
         cav_msgs::DriverStatus msg1;
         msg1.controller = true;
@@ -356,6 +421,13 @@ namespace health_monitor
         cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
         dm.update_driver_status(msg4_pointer, 1000);
 
+        cav_msgs::DriverStatus msg5;
+        msg5.gnss = true;
+        msg5.name = "camera";
+        msg5.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg5_pointer(new cav_msgs::DriverStatus(msg5));
+        dm.update_driver_status(msg5_pointer, 1000);
+
         EXPECT_EQ("s_1_l1_1_l2_1_g_0", dm.are_critical_drivers_operational_truck(1500));
 
 
@@ -367,8 +439,9 @@ namespace health_monitor
 
         std::vector<std::string> required_drivers{"controller"};
         std::vector<std::string> lidar_gps_drivers{"lidar1", "lidar2","gps"};
+        std::vector<std::string> camera_drivers{"camera"};
 
-        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers,camera_drivers);
 
         cav_msgs::DriverStatus msg1;
         msg1.controller = true;
@@ -398,6 +471,13 @@ namespace health_monitor
         cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
         dm.update_driver_status(msg4_pointer, 1000);
 
+        cav_msgs::DriverStatus msg5;
+        msg5.gnss = true;
+        msg5.name = "camera";
+        msg5.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg5_pointer(new cav_msgs::DriverStatus(msg5));
+        dm.update_driver_status(msg5_pointer, 1000);
+
         EXPECT_EQ("s_1_l1_0_l2_0_g_1", dm.are_critical_drivers_operational_truck(1500));
 
     }
@@ -409,8 +489,9 @@ namespace health_monitor
 
         std::vector<std::string> required_drivers{"controller"};
         std::vector<std::string> lidar_gps_drivers{"lidar1", "lidar2","gps"};
+        std::vector<std::string> camera_drivers{"camera"};
 
-        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers,camera_drivers);
 
         cav_msgs::DriverStatus msg1;
         msg1.controller = true;
@@ -440,6 +521,13 @@ namespace health_monitor
         cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
         dm.update_driver_status(msg4_pointer, 1000);
 
+        cav_msgs::DriverStatus msg5;
+        msg5.gnss = true;
+        msg5.name = "camera";
+        msg5.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg5_pointer(new cav_msgs::DriverStatus(msg5));
+        dm.update_driver_status(msg5_pointer, 1000);
+
         EXPECT_EQ("s_1_l1_0_l2_0_g_0", dm.are_critical_drivers_operational_truck(1500));
 
     }
@@ -450,8 +538,9 @@ namespace health_monitor
 
         std::vector<std::string> required_drivers{"controller"};
         std::vector<std::string> lidar_gps_drivers{"lidar1", "lidar2","gps"};
+        std::vector<std::string> camera_drivers{"camera"};
 
-        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers);
+        DriverManager dm(required_drivers, 1000L,lidar_gps_drivers,camera_drivers);
 
         cav_msgs::DriverStatus msg1;
         msg1.controller = true;
@@ -480,6 +569,13 @@ namespace health_monitor
         msg4.status = cav_msgs::DriverStatus::OPERATIONAL;
         cav_msgs::DriverStatusConstPtr msg4_pointer(new cav_msgs::DriverStatus(msg4));
         dm.update_driver_status(msg4_pointer, 1000);
+
+        cav_msgs::DriverStatus msg5;
+        msg5.gnss = true;
+        msg5.name = "camera";
+        msg5.status = cav_msgs::DriverStatus::OPERATIONAL;
+        cav_msgs::DriverStatusConstPtr msg5_pointer(new cav_msgs::DriverStatus(msg5));
+        dm.update_driver_status(msg5_pointer, 1000);
 
         EXPECT_EQ("s_0", dm.are_critical_drivers_operational_truck(1500));
 

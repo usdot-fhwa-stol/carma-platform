@@ -82,7 +82,7 @@ class TrafficIncidentParserWorker
     \brief composeTrafficControlMesssage algorithm for extracting the closed lanelet from internally saved mobility message (or geofence) params and assign it to trafic contol message. 
     Closed lanelets are represent by vector of points, where each point represents the geometric middle point of a closed lanelet
   */
-  cav_msgs::TrafficControlMessageV01 composeTrafficControlMesssage();
+  std::vector<cav_msgs::TrafficControlMessageV01> composeTrafficControlMesssages();
 
     /*! \fngetIncidentOriginPoint()
     \brief getIncidentOriginPoint converts internally saved incident origin point from ECEF to local map frame
@@ -94,6 +94,9 @@ class TrafficIncidentParserWorker
   double down_track;
   double up_track;
   double min_gap;
+  double speed_advisory;
+  std::string event_reason;
+  std::string event_type;
 
   std::string previous_strategy_params="";
 

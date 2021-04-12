@@ -45,7 +45,6 @@ InLaneCruisingPlugin::InLaneCruisingPlugin(carma_wm::WorldModelConstPtr wm, InLa
                                            PublishPluginDiscoveryCB plugin_discovery_publisher)
   : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
 {
-  object_avoidance::ObjectAvoidance obj_;
   plugin_discovery_msg_.name = "InLaneCruisingPlugin";
   plugin_discovery_msg_.versionId = "v1.0";
   plugin_discovery_msg_.available = true;
@@ -76,32 +75,55 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
       maneuver_plan.push_back(req.maneuver_plan.maneuvers[i]);
     }
   }
-  auto points_and_target_speeds = maneuvers_to_points(maneuver_plan, current_downtrack, wm_); // Convert maneuvers to points
+  auto points_and_target_speeds = maneuvers_to_points(maneuver_plan, std::max((double)0, current_downtrack - config_.back_distance), wm_); // Convert maneuvers to points
 
   ROS_DEBUG_STREAM("points_and_target_speeds: " << points_and_target_speeds.size());
 
-  auto downsampled_points =
-      carma_utils::containers::downsample_vector(points_and_target_speeds, config_.downsample_ratio);
-
-  ROS_DEBUG_STREAM("downsample_points: " << downsampled_points.size());
-
   ROS_DEBUG_STREAM("PlanTrajectory");
 
-  cav_msgs::TrajectoryPlan trajectory;
-  trajectory.header.frame_id = "map";
-  trajectory.header.stamp = ros::Time::now();
-  trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
+  cav_msgs::TrajectoryPlan original_trajectory;
+  original_trajectory.header.frame_id = "map";
+  original_trajectory.header.stamp = ros::Time::now();
+  original_trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
-  trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state); // Compute the trajectory
-  trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
+  original_trajectory.trajectory_points = compose_trajectory_from_centerline(points_and_target_speeds, req.vehicle_state, req.header.stamp); // Compute the trajectory
+  original_trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, config_.minimum_speed);
 
   if (config_.enable_object_avoidance)
   {
-    resp.trajectory_plan = obj_.update_traj_for_object(trajectory, wm_, req.vehicle_state.longitudinal_vel);
+    if (yield_client_ && yield_client_.exists() && yield_client_.isValid())
+    {
+      ROS_DEBUG_STREAM("Yield Client is valid");
+      cav_srvs::PlanTrajectory yield_srv;
+      yield_srv.request.initial_trajectory_plan = original_trajectory;
+      yield_srv.request.vehicle_state = req.vehicle_state;
+
+      if (yield_client_.call(yield_srv))
+      {
+        cav_msgs::TrajectoryPlan yield_plan = yield_srv.response.trajectory_plan;
+        if (validate_yield_plan(yield_plan))
+        {
+          resp.trajectory_plan = yield_plan;
+        }
+        else
+        {
+          throw std::invalid_argument("Invalid Yield Trajectory");
+        }
+      }
+      else
+      {
+        throw std::invalid_argument("Unable to Call Yield Plugin");
+      }
+    }
+    else
+    {
+      throw std::invalid_argument("Yield Client is unavailable");
+    }
+    
   }
   else
   {
-    resp.trajectory_plan = trajectory;
+    resp.trajectory_plan = original_trajectory;
   }
   
   resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_FOLLOWING);
@@ -276,7 +298,7 @@ int InLaneCruisingPlugin::get_nearest_point_index(const std::vector<lanelet::Bas
 
 
 std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_trajectory_from_centerline(
-    const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state)
+    const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time)
 {
  ROS_DEBUG_STREAM("VehicleState: "
                    << " x: " << state.X_pos_global << " y: " << state.Y_pos_global << " yaw: " << state.orientation
@@ -355,7 +377,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   std::vector<double> final_yaw_values = carma_wm::geometry::compute_tangent_orientations(all_sampling_points);
 
-  std::vector<double> curvatures = better_curvature;
+  log::printDoublesPerLineWithPrefix("raw_curvatures[i]: ", better_curvature);
+
+  std::vector<double> curvatures = smoothing::moving_average_filter(better_curvature, config_.curvature_moving_average_window_size, false);
 
   std::vector<double> ideal_speeds =
       trajectory_utils::constrained_speeds_for_curvatures(curvatures, config_.lateral_accel_limit);
@@ -408,7 +432,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   log::printDoublesPerLineWithPrefix("postAccel[i]: ", final_actual_speeds);
 
-  final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, config_.moving_average_window_size);
+  final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, config_.speed_moving_average_window_size);
   log::printDoublesPerLineWithPrefix("post_average[i]: ", final_actual_speeds);
 
   for (auto& s : final_actual_speeds)  // Limit minimum speed. TODO how to handle stopping?
@@ -417,6 +441,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   }
 
   log::printDoublesPerLineWithPrefix("post_min_speed[i]: ", final_actual_speeds);
+
   // Convert speeds to times
   std::vector<double> times;
   trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
@@ -427,7 +452,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   // TODO When more plugins are implemented that might share trajectory planning the start time will need to be based
   // off the last point in the plan if an earlier plan was provided
   std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
-      trajectory_from_points_times_orientations(all_sampling_points, times, final_yaw_values, ros::Time::now());
+      trajectory_from_points_times_orientations(all_sampling_points, times, final_yaw_values, state_time); 
 
   return traj_points;
 }
@@ -518,21 +543,37 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
     auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist, true);
 
     ROS_DEBUG_STREAM("Maneuver");
-    std::vector<lanelet::ConstLanelet> lanelets_to_add;
+
+    lanelet::BasicLineString2d downsampled_centerline;
+    downsampled_centerline.reserve(200);
+
     for (auto l : lanelets)
     {
       ROS_DEBUG_STREAM("Lanelet ID: " << l.id());
       if (visited_lanelets.find(l.id()) == visited_lanelets.end())
       {
-        lanelets_to_add.push_back(l);
+        bool is_turn = false;
+        if(l.hasAttribute("turn_direction")) {
+          std::string turn_direction = l.attribute("turn_direction").value();
+          is_turn = turn_direction.compare("left") == 0 || turn_direction.compare("right") == 0;
+        }
+
+        
+        lanelet::BasicLineString2d centerline = l.centerline2d().basicLineString();
+        lanelet::BasicLineString2d downsampled_points;
+        if (is_turn) {
+          downsampled_points = carma_utils::containers::downsample_vector(centerline, config_.turn_downsample_ratio);
+        } else {
+          downsampled_points = carma_utils::containers::downsample_vector(centerline, config_.default_downsample_ratio);
+        }
+        downsampled_centerline = carma_wm::geometry::concatenate_line_strings(downsampled_centerline, downsampled_points);
         visited_lanelets.insert(l.id());
       }
     }
 
-    lanelet::BasicLineString2d route_geometry = carma_wm::geometry::concatenate_lanelets(lanelets_to_add);
 
     first = true;
-    for (auto p : route_geometry)
+    for (auto p : downsampled_centerline)
     {
       if (first && points_and_target_speeds.size() != 0)
       {
@@ -611,5 +652,32 @@ double InLaneCruisingPlugin::compute_curvature_at(const inlanecruising_plugin::s
   Eigen::Vector3d f_prime_prime = {f_prime_prime_pt.x(), f_prime_prime_pt.y(), 0};
   return (f_prime.cross(f_prime_prime)).norm()/(pow(f_prime.norm(),3));
 }
+
+void InLaneCruisingPlugin::set_yield_client(ros::ServiceClient& client)
+{
+  yield_client_ = client;
+}
+
+bool InLaneCruisingPlugin::validate_yield_plan(const cav_msgs::TrajectoryPlan& yield_plan)
+{
+  if (yield_plan.trajectory_points.size()>= 2)
+  {
+    if (yield_plan.trajectory_points[0].target_time > ros::Time::now())
+    {
+      return true;
+    }
+    else
+    {
+      ROS_DEBUG_STREAM("Old Yield Trajectory");
+    }
+  }
+  else
+  {
+    ROS_DEBUG_STREAM("Invalid Yield Trajectory"); 
+  }
+  return false;
+}
+
+
 
 }  // namespace inlanecruising_plugin

@@ -36,6 +36,9 @@ struct LocalizationManagerConfig
   int auto_initialization_timeout = 30000;
   //! Timeout in ms for GNSS only operation. Ignored when in GNSS mode.
   int gnss_only_operation_timeout = 20000;
+  //! Integer: Maximum allowed number of sequential timesteps to let lidar initialize before switching to GPS only mode
+  //! NOTE: Only used in GNSS only with NDT initialization mode
+  int sequential_timesteps_until_gps_operation = 5;
   //! Localization mode to use
   LocalizerMode localization_mode = LocalizerMode::AUTO_WITHOUT_TIMEOUT;
 };
