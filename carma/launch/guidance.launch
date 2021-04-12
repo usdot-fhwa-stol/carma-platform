@@ -159,11 +159,12 @@
 
   <!-- Route Node -->
   <include file="$(find route)/launch/route.launch">
-  <!-- Mobility Path Publisher -->
-  <include file="$(find mobilitypath_publisher)/launch/mobilitypath_publisher.launch" />
     <arg name="route_file_folder" value="$(arg route_file_folder)"/>
   </include>
-
+  
+  <!-- Mobility Path Publisher -->
+  <include file="$(find mobilitypath_publisher)/launch/mobilitypath_publisher.launch" />
+    
   <!-- Trajectory Plan Speed Visualizer -->
   <group>
     <include file="$(find trajectory_visualizer)/launch/trajectory_visualizer.launch" />
