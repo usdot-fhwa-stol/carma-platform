@@ -280,8 +280,19 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double st
     prioritized_lanelets.pop();
     output.push_back(pair.lanelet_);
   }
+  
+  //Sort lanelets according to shortest path
+  std::vector<lanelet::ConstLanelet> sorted_output;
+  for(auto llt : route_->shortestPath()){
+    for(int i=0; i < output.size();i++){
+      if(llt.id() == output[i].id()){
+        sorted_output.push_back(llt);
+        break;
+      }
+    }
+  }
 
-  return output;
+  return sorted_output;
 }
 
 std::vector<lanelet::BasicPoint2d> CARMAWorldModel::sampleRoutePoints(double start_downtrack, double end_downtrack,
