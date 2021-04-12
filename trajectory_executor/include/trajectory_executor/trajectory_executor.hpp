@@ -30,14 +30,6 @@
 #include <ros/callback_queue.h>
 
 namespace trajectory_executor {
-    /*!
-     * \brief This method trims the first point off of a TrajectoryPlan's point
-     * and returns a new message with the update.
-     * 
-     * \param plan The plan to modify
-     * \return A new message with the copied contents minus the first point
-     */
-    cav_msgs::TrajectoryPlan trimPastPoints(const cav_msgs::TrajectoryPlan &plan);
 
     /**
      * Trajectory Executor package primary worker class
