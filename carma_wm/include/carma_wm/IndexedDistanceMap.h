@@ -143,5 +143,14 @@ public:
    * \return The linestring point count
    */
   size_t size(size_t index) const;
+
+  /*!
+   * \brief Returns index of the linestring which the provided distance is within.
+   *        NOTE: Unlike the rest of this class, this method runs in O(log n) where n is this.size()
+   *
+   * \throw std::invalid_argument if distance does not fit within bounds [0, totalLength()]
+   * \return The linestring index which this distance is inside
+   */
+  size_t getElementIndexByDistance(double distance) const;
 };
 }  // namespace carma_wm
