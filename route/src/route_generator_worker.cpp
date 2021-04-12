@@ -253,7 +253,7 @@ namespace route {
         return true;
     }
 
-    bool RouteGeneratorWorker::check_for_duplicate_lanelets_in_shortest_path(const lanelet::routing::Route& route)
+    bool RouteGeneratorWorker::check_for_duplicate_lanelets_in_shortest_path(const lanelet::routing::Route& route) const
     {
         // Create a vector for the lanelet IDs in the shortest path
         std::vector<lanelet::Id> shortest_path_lanelet_ids;
