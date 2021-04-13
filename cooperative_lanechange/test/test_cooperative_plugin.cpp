@@ -39,6 +39,7 @@
 #include <sstream>
 #include <ros/package.h>
 #include <cav_msgs/LaneChangeStatus.h>
+#include <cav_msgs/PlanType.h>
 
     TEST(CooperativeLaneChangePlugin,TestTrajectorytoecef)
     {
@@ -164,6 +165,8 @@
         std::vector<cav_msgs::TrajectoryPlanPoint> traj_plan = worker.plan_lanechange(req);
         EXPECT_TRUE(traj_plan.size() > 2);
 
+        cav_msgs::MobilityRequest request = worker.create_mobility_request(traj_plan, maneuver);
+        EXPECT_EQ(cav_msgs::PlanType::CHANGE_LANE_LEFT, request.plan_type.type);
         /*Test compose trajectort and helper function*/
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory;
 
@@ -228,7 +231,7 @@
         EXPECT_EQ(10.0,resp.trajectory_plan.initial_longitudinal_velocity);
     }
 
-    TEST(CooperativeLaneChangePlugin,TestPlanTrajectorycb){
+    TEST(CooperativeLaneChangePlugin,Testcurrentgapcb){
         // File to process. 
         std::string path = ros::package::getPath("unobstructed_lanechange");
         std::string file = "/resource/map/town01_vector_map_lane_change.osm";
@@ -350,6 +353,8 @@
 
         EXPECT_TRUE(worker.find_current_gap(obstacle.lanelet_id,obstacle.down_track) > 0.0);
     }
+
+
 
     int main (int argc, char **argv) {
         testing::InitGoogleTest(&argc, argv);
