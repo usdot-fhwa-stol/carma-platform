@@ -259,23 +259,8 @@ namespace cooperative_lanechange
 
         //if ack mobility response, send lanechange response
         if(!negotiate || is_lanechange_accepted_){
-            cav_msgs::TrajectoryPlan trajectory_plan;
-            trajectory_plan.header.frame_id = "map";
-            trajectory_plan.header.stamp = ros::Time::now();
-            trajectory_plan.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
-
-            trajectory_plan.trajectory_points = planned_trajectory_points;
-            trajectory_plan.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, minimum_speed_);
-            resp.trajectory_plan = trajectory_plan;
-
-            for (unsigned char i=0; i<req.maneuver_plan.maneuvers.size(); i++){
-                if (req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::LANE_CHANGE){
-                    resp.related_maneuvers.push_back(i);
-                    break;
-                }
-            }
-            resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
-
+            add_maneuver_to_response(req,resp,planned_trajectory_points);
+            
         }
         else{
             if(!negotiate && !request_sent){
@@ -295,6 +280,25 @@ namespace cooperative_lanechange
         }
 
         return true;
+    }
+
+    void CooperativeLaneChangePlugin::add_maneuver_to_response(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp, std::vector<cav_msgs::TrajectoryPlanPoint> &planned_trajectory_points){
+        cav_msgs::TrajectoryPlan trajectory_plan;
+        trajectory_plan.header.frame_id = "map";
+        trajectory_plan.header.stamp = ros::Time::now();
+        trajectory_plan.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
+
+        trajectory_plan.trajectory_points = planned_trajectory_points;
+        trajectory_plan.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, minimum_speed_);
+        resp.trajectory_plan = trajectory_plan;
+
+        for (unsigned char i=0; i<req.maneuver_plan.maneuvers.size(); i++){
+            if (req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::LANE_CHANGE){
+                resp.related_maneuvers.push_back(i);
+                break;
+            }
+        }
+        resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
     }
     
     cav_msgs::MobilityRequest CooperativeLaneChangePlugin::create_mobility_request(std::vector<cav_msgs::TrajectoryPlanPoint>& trajectory_plan, cav_msgs::Maneuver& maneuver){
