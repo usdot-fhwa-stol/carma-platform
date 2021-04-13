@@ -210,7 +210,7 @@
 
     int main (int argc, char **argv) {
         testing::InitGoogleTest(&argc, argv);
-        ros::init(argc, argv, "test_yield_plugin");
+        ros::init(argc, argv, "test_cooperative_lanechange");
         auto res = RUN_ALL_TESTS();
         return res;
     }
