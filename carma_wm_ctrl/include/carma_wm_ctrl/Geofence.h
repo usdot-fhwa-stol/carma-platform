@@ -22,6 +22,7 @@
 #include <lanelet2_core/primitives/RegulatoryElement.h>
 #include <lanelet2_core/primitives/LaneletOrArea.h>
 #include <lanelet2_extension/regulatory_elements/DigitalSpeedLimit.h>
+#include <lanelet2_extension/regulatory_elements/DigitalMinimumGap.h>
 #include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
 
 #include <boost/uuid/uuid.hpp>
