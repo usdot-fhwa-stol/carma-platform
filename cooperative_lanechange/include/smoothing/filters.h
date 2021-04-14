@@ -30,37 +30,44 @@ namespace smoothing
  * 
  * \return The filterted points
  */
-std::vector<double> moving_average_filter(const std::vector<double> input, int window_size)
+std::vector<double> moving_average_filter(const std::vector<double> input, int window_size, bool ignore_first_point=true)
 {
-  int i = 0;
-  double average;
-  std::deque<double> samples;
+ if (window_size % 2 == 0) {
+    throw std::invalid_argument("moving_average_filter window size must be odd");
+  }
+
   std::vector<double> output;
   output.reserve(input.size());
-  for (auto value : input)
-  {
-    if (i < window_size)
-    {
-      samples.push_back(value);
-    }
-    else
-    {
-      samples.pop_front();
-      samples.push_back(value);
-    }
 
+  if (input.size() == 0) {
+    return output;
+  }
+
+  int start_index = 0;
+  if (ignore_first_point) {
+    start_index = 1;
+    output.push_back(input[0]);
+  }
+
+  for (int i = start_index; i<input.size(); i++) {
+    
+    
     double total = 0;
-    for (auto s : samples)
-    {
-      total += s;
-    }
+    int sample_min = std::max(0, i - window_size / 2);
+    int sample_max = std::min((int) input.size() - 1 , i + window_size / 2);
 
-    double average = total / samples.size();
-    output.push_back(average);
-    i++;
+    int count = sample_max - sample_min + 1;
+    std::vector<double> sample;
+    sample.reserve(count);
+    for (int j = sample_min; j <= sample_max; j++) {
+      total += input[j];
+    }
+    output.push_back(total / (double) count);
+
   }
 
   return output;
 }
+
 };  // namespace smoothing
 };  // namespace cooperative_lanechange_plugin

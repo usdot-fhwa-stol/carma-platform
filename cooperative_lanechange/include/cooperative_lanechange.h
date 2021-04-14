@@ -126,7 +126,7 @@ namespace cooperative_lanechange
              * \param end_lanelet The lanelet in which lane change ends
              * \return A linestring path from start to end fit through Spline Library
              */
-            lanelet::BasicLineString2d create_lanechange_path(lanelet::ConstLanelet& start_lanelet, lanelet::BasicPoint2d end, lanelet::ConstLanelet& end_lanelet);
+             lanelet::BasicLineString2d create_lanechange_path(lanelet::BasicPoint2d start, lanelet::ConstLanelet& start_lanelet, lanelet::BasicPoint2d end, lanelet::ConstLanelet& end_lanelet);
             
             /**
              * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of trajectory points for trajectory planning
@@ -137,8 +137,8 @@ namespace cooperative_lanechange
              * 
              * \return A list of trajectory points to send to the carma planning stack
              */
-            std::vector<cav_msgs::TrajectoryPlanPoint> compose_trajectory_from_centerline(
-            const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state);
+             std::vector<cav_msgs::TrajectoryPlanPoint> compose_trajectory_from_centerline(
+            const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time, int starting_lanelet_id);
             /**
              * \brief Returns the nearest point to the provided vehicle pose in the provided list
              * 
@@ -254,6 +254,18 @@ namespace cooperative_lanechange
             cav_msgs::LocationECEF trajectory_point_to_ecef(const cav_msgs::TrajectoryPlanPoint& traj_point, const geometry_msgs::TransformStamped& tf) const;
 
             void add_maneuver_to_response(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp, std::vector<cav_msgs::TrajectoryPlanPoint>& planned_trajectory_points);
+            
+                          /**
+             * \brief Given the curvature fit, computes the curvature at the given step along the curve
+             * 
+             * \param step_along_the_curve Value in double from 0.0 (curvature start) to 1.0 (curvature end) representing where to calculate the curvature
+             * 
+             * \param fit_curve curvature fit
+             * 
+             * \return Curvature (k = 1/r, 1/meter)
+             */ 
+            double compute_curvature_at(const cooperative_lanechange::smoothing::SplineI& fit_curve, double step_along_the_curve) const;
+            int get_ending_point_index(lanelet::BasicLineString2d& points, double ending_downtrack);
             // initialize this node
             void initialize();
 
@@ -320,7 +332,8 @@ namespace cooperative_lanechange
             double minimum_lookahead_speed_ = 2.8;
             double maximum_lookahead_speed_ =13.9;
             double lateral_accel_limit_ = 1.5;
-            double moving_average_window_size_ = 5;
+            double speed_moving_average_window_size_ = 5;
+            double curvature_moving_average_window_size_ = 9;
             double curvature_calc_lookahead_count_ = 1;
             int downsample_ratio_ =8;
             double destination_range_ = 5;

@@ -193,7 +193,7 @@
         double lookahead = worker.get_adaptive_lookahead(5);   
         std::vector<double> lookahead_speeds = worker.get_lookahead_speed(points_split,constrained_speeds, lookahead);
 
-        trajectory = worker.compose_trajectory_from_centerline(points_and_target_speeds, vehicle_state);
+        trajectory = worker.compose_trajectory_from_centerline(points_and_target_speeds, vehicle_state, ros::Time::now(),lane_change_start_id );
         //Valid Trajectory has at least 2 points
         EXPECT_TRUE(trajectory.size() > 2);
 
@@ -205,7 +205,7 @@
         lanelet::Lanelet end_lanelet = map->laneletLayer.get(end_id);
         lanelet::BasicPoint2d start_position(vehicle_state.X_pos_global, vehicle_state.Y_pos_global);
         lanelet::BasicPoint2d end_position = end_lanelet.centerline2d().basicLineString().back() ;
-        lanelet::BasicLineString2d lc_route = worker.create_lanechange_path( start_lanelet, end_position, end_lanelet);
+        lanelet::BasicLineString2d lc_route = worker.create_lanechange_path( start_position, start_lanelet, end_position, end_lanelet);
 
         //Test Compute heading frame between two points
         Eigen::Isometry2d frame = worker.compute_heading_frame(start_position, end_position);
