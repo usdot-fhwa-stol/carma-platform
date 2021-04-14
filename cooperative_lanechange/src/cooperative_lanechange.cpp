@@ -43,6 +43,7 @@ namespace cooperative_lanechange
 {
     void CooperativeLaneChangePlugin::initialize()
     {
+        //@SONAR_STOP@
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
         
@@ -94,10 +95,11 @@ namespace cooperative_lanechange
             cooperative_lanechange_plugin_discovery_pub_.publish(plugin_discovery_msg_);
             return true;
         });
-
+        //@SONAR_START@
     }
 
     void CooperativeLaneChangePlugin::mobilityresponse_cb(const cav_msgs::MobilityResponse &msg){
+        //@SONAR_STOP@
         cav_msgs::LaneChangeStatus lc_status_msg;
         if(msg.is_accepted){
             is_lanechange_accepted_ = true;
@@ -111,6 +113,7 @@ namespace cooperative_lanechange
             lc_status_msg.description = "Received lane merge rejection";
         }
         lanechange_status_pub_.publish(lc_status_msg);
+        //@SONAR_START@
     }
 
 
@@ -182,7 +185,7 @@ namespace cooperative_lanechange
     
 
     bool CooperativeLaneChangePlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp){
-        
+        //@SONAR_STOP
         //Check if Lane Change is needed
         std::vector<cav_msgs::Maneuver> maneuver_plan;
         for(const auto& maneuver : req.maneuver_plan.maneuvers)
@@ -278,7 +281,7 @@ namespace cooperative_lanechange
             }
  
         }
-
+        //@SONAR_START@
         return true;
     }
 
