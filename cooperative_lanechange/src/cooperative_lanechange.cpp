@@ -219,7 +219,7 @@ namespace cooperative_lanechange
         std::vector<cav_msgs::RoadwayObstacle> rwol = wm_->getRoadwayObjects();
         //Assuming only one connected vehicle in list 
         for(int i=0;i<rwol.size();i++){
-            if(rwol[i].connected_vehicle_type.type == cav_msgs::ConnectedVehicleType::CONNECTED_AND_AUTOMATED){
+            if(rwol[i].connected_vehicle_type.type == cav_msgs::ConnectedVehicleType::NOT_CONNECTED){
                 veh2_lanelet_id = rwol[0].lanelet_id;
                 veh2_downtrack = rwol[0].down_track; //Returns downtrack
                 veh2_speed = rwol[0].object.velocity.twist.linear.x;
@@ -228,8 +228,10 @@ namespace cooperative_lanechange
             }
         }
         if(foundRoadwayObject){
+            ROS_DEBUG_STREAM("Found Roadway object");
             //get current_gap
             double current_gap = find_current_gap(veh2_lanelet_id,veh2_downtrack);
+            ROS_DEBUG_STREAM("Current gap:"<<current_gap);
             //get desired gap - desired time gap (default 3s)* relative velocity
             double relative_velocity = current_speed_ - veh2_speed;
             double desired_gap = desired_time_gap_ * relative_velocity;      
@@ -240,14 +242,17 @@ namespace cooperative_lanechange
             
         }
         else{
+            ROS_DEBUG_STREAM("No roadway object");
             ROS_WARN_STREAM("Did not find a connected and automated vehicle roadway object");
             negotiate = false;
         }
 
         //plan lanechange without filling in response
+        ROS_DEBUG_STREAM("Planning lane change trajectory");
         std::vector<cav_msgs::TrajectoryPlanPoint> planned_trajectory_points = plan_lanechange(req);
         
         if(negotiate){
+            ROS_DEBUG_STREAM("Negotiating");
             //send mobility request
             //Planning for first lane change maneuver
             cav_msgs::MobilityRequest request = create_mobility_request(planned_trajectory_points, maneuver_plan[0]);
@@ -264,6 +269,7 @@ namespace cooperative_lanechange
 
         //if ack mobility response, send lanechange response
         if(!negotiate || is_lanechange_accepted_){
+            ROS_DEBUG_STREAM("Adding to response");
             add_maneuver_to_response(req,resp,planned_trajectory_points);
             
         }
@@ -411,14 +417,16 @@ namespace cooperative_lanechange
         if(current_downtrack >= maneuver_plan.front().lane_change_maneuver.end_dist){
             request_sent = false;
         }
+        ROS_DEBUG_STREAM("Current downtrack:"<<current_downtrack);
         auto points_and_target_speeds = maneuvers_to_points(maneuver_plan, current_downtrack, wm_,req.vehicle_state);
-
+        ROS_DEBUG_STREAM("Maneuvers to points size:"<<points_and_target_speeds.size());
         auto downsampled_points = carma_utils::containers::downsample_vector(points_and_target_speeds, downsample_ratio_);
 
         int starting_lanelet_id = stoi(maneuver_plan.front().lane_change_maneuver.starting_lane_id);
 
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points;
         trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state, req.header.stamp, starting_lanelet_id);
+        ROS_DEBUG_STREAM("Compose Trajectory size:"<<trajectory_points.size());
         return trajectory_points;
 
     }
@@ -588,7 +596,7 @@ namespace cooperative_lanechange
             tpp.y = points[i].y();
             tpp.yaw = yaws[i];
 
-            tpp.controller_plugin_name = control_plugin_name_;
+            tpp.controller_plugin_name = "default";
             tpp.planner_plugin_name = plugin_discovery_msg_.name;
 
             traj.push_back(tpp);
