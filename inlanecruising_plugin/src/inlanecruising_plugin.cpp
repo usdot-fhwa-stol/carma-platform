@@ -42,8 +42,8 @@ using oss = std::ostringstream;
 namespace inlanecruising_plugin
 {
 InLaneCruisingPlugin::InLaneCruisingPlugin(carma_wm::WorldModelConstPtr wm, InLaneCruisingPluginConfig config,
-                                           PublishPluginDiscoveryCB plugin_discovery_publisher)
-  : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
+                                           PublishPluginDiscoveryCB plugin_discovery_publisher, DebugPublisher debug_publisher)
+  : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher), debug_publisher_(debug_publisher)
 {
   plugin_discovery_msg_.name = "InLaneCruisingPlugin";
   plugin_discovery_msg_.versionId = "v1.0";
@@ -124,6 +124,11 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   else
   {
     resp.trajectory_plan = original_trajectory;
+  }
+
+  if (config_.publish_debug) { // Publish the debug message if in debug logging mode
+    debug_msg_.trajectory_plan = resp.trajectory_plan;
+    debug_publisher_(debug_msg_); 
   }
   
   resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_FOLLOWING);
@@ -388,8 +393,8 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   log::printDoublesPerLineWithPrefix("ideal_speeds: ", ideal_speeds);
   log::printDoublesPerLineWithPrefix("final_yaw_values[i]: ", final_yaw_values);
 
-  std::vector<double> final_actual_speeds = apply_speed_limits(ideal_speeds, distributed_speed_limits);
-  log::printDoublesPerLineWithPrefix("final_actual_speeds: ", final_actual_speeds);
+  std::vector<double> constrained_speed_limits = apply_speed_limits(ideal_speeds, distributed_speed_limits);
+  log::printDoublesPerLineWithPrefix("constrained_speed_limits: ", constrained_speed_limits);
 
   ROS_DEBUG("Processed all points in computed fit");
 
@@ -407,11 +412,11 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   std::vector<lanelet::BasicPoint2d> future_basic_points(all_sampling_points.begin() + nearest_pt_index + 1,
                                             all_sampling_points.end());  // Points in front of current vehicle position
 
-  std::vector<double> future_speeds(final_actual_speeds.begin() + nearest_pt_index + 1,
-                                            final_actual_speeds.end());  // Points in front of current vehicle position
+  std::vector<double> future_speeds(constrained_speed_limits.begin() + nearest_pt_index + 1,
+                                            constrained_speed_limits.end());  // Points in front of current vehicle position
   std::vector<double> future_yaw(final_yaw_values.begin() + nearest_pt_index + 1,
                                             final_yaw_values.end());  // Points in front of current vehicle position
-  final_actual_speeds = future_speeds;
+  std::vector<double>  final_actual_speeds = future_speeds;
   all_sampling_points = future_basic_points;
   final_yaw_values = future_yaw;
 
@@ -454,6 +459,22 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
       trajectory_from_points_times_orientations(all_sampling_points, times, final_yaw_values, state_time); 
 
+  if (config_.publish_debug) {
+    carma_debug_msgs::TrajectoryCurvatureSpeeds msg;
+    msg.velocity_profile = final_actual_speeds;
+    msg.relative_downtrack = downtracks;
+    msg.tangent_headings = final_yaw_values;
+    std::vector<double> aligned_speed_limits(constrained_speed_limits.begin() + nearest_pt_index,
+                                            constrained_speed_limits.end());
+    msg.speed_limits = aligned_speed_limits;
+    std::vector<double> aligned_curvatures(curvatures.begin() + nearest_pt_index,
+                                            curvatures.end());
+    msg.curvatures = aligned_curvatures;
+    msg.lat_accel_limit = config_.lateral_accel_limit;
+    msg.lon_accel_limit = config_.max_accel;
+    msg.starting_state = state;
+    debug_msg_ = msg;
+  }
   return traj_points;
 }
 
