@@ -65,7 +65,6 @@ namespace mobilitypath_publisher
         {
             ROS_WARN("%s", ex.what());
         }
-
     }
 
     void MobilityPathPublication::currentpose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
@@ -113,20 +112,24 @@ namespace mobilitypath_publisher
             traj.offsets = {};
         }
         else{
+            cav_msgs::LocationECEF prev_point = ecef_location;
             for (size_t i=1; i<traj_points.size(); i++){
                 
                     cav_msgs::LocationOffsetECEF offset;
                     cav_msgs::LocationECEF new_point = TrajectoryPointtoECEF(traj_points[i], tf);
-                    offset.offset_x = new_point.ecef_x - ecef_location.ecef_x;
-                    offset.offset_y = new_point.ecef_y - ecef_location.ecef_y;
-                    offset.offset_z = new_point.ecef_z - ecef_location.ecef_z;
+                    offset.offset_x = (new_point.ecef_x - prev_point.ecef_x) * 100; //m to cm to fit the msg standard
+                    offset.offset_y = (new_point.ecef_y - prev_point.ecef_y) * 100;
+                    offset.offset_z = (new_point.ecef_z - prev_point.ecef_z) * 100;
+                    prev_point = new_point;
                     traj.offsets.push_back(offset);
-                
             }
         }
         
-        
+        ecef_location.ecef_x *= 100; //m to cm to fit the msg standard
+        ecef_location.ecef_y *= 100;
+        ecef_location.ecef_z *= 100;
         traj.location = ecef_location;
+
         return traj;
     }
 
@@ -134,11 +137,16 @@ namespace mobilitypath_publisher
 
     cav_msgs::LocationECEF MobilityPathPublication::TrajectoryPointtoECEF(const cav_msgs::TrajectoryPlanPoint& traj_point, const geometry_msgs::TransformStamped& tf) const{
         cav_msgs::LocationECEF ecef_point;    
+        
+        tf2::Stamped<tf2::Transform> transform;
+        tf2::fromMsg(tf, transform);
 
-        ecef_point.ecef_x = traj_point.x * tf.transform.translation.x;
-        ecef_point.ecef_y = traj_point.y * tf.transform.translation.y;
-        ecef_point.ecef_z = 0.0 * tf.transform.translation.z;
-       
+        auto traj_point_vec = tf2::Vector3(traj_point.x, traj_point.y, 0.0);
+        tf2::Vector3 ecef_point_vec = transform * traj_point_vec;
+        ecef_point.ecef_x = ecef_point_vec.x();
+        ecef_point.ecef_y = ecef_point_vec.y();
+        ecef_point.ecef_z = ecef_point_vec.z();
+
         return ecef_point;
     } 
     

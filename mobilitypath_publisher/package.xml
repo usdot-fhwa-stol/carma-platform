@@ -28,4 +28,6 @@
   <depend>cav_msgs</depend>
   <depend>carma_utils</depend>
   <depend>tf2_ros</depend>
+  <depend>tf2</depend>
+
 </package>
