@@ -33,11 +33,15 @@
 #include <carma_wm/Geometry.h>
 #include "smoothing/SplineI.h"
 #include "smoothing/BSpline.h"
+#include <cav_msgs/MobilityResponse.h>
+#include <cav_msgs/MobilityRequest.h>
+#include <cav_msgs/BSM.h>
+#include <tf2_ros/transform_listener.h>
+#include <cav_msgs/LaneChangeStatus.h>
 
 
 
-
-namespace unobstructed_lanechange
+namespace cooperative_lanechange
 {
     /**
      * \brief Convenience class for pairing 2d points with speeds
@@ -48,7 +52,7 @@ namespace unobstructed_lanechange
     double speed = 0;
     };
 
-    class UnobstructedLaneChangePlugin
+    class CooperativeLaneChangePlugin
     {
         public:
             /**
@@ -65,9 +69,25 @@ namespace unobstructed_lanechange
              * \return True if success. False otherwise
              */ 
             bool plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp);
-            
             /**
-             * \brief Converts a set of requested lane change maneuvers to point speed limit pairs. 
+             * \brief Creates a vector of Trajectory Points from maneuver information in trajectory request
+             * 
+             * \param req The service request
+             * 
+             * \return vector of unobstructed lane change trajectory points
+             */ 
+            std::vector<cav_msgs::TrajectoryPlanPoint> plan_lanechange(cav_srvs::PlanTrajectoryRequest &req);
+            /**
+             * \brief Calculates distance between subject vehicle and vehicle 2
+             * 
+             * \param veh2_lanelet_id Current lanelet id of vehicle 2
+             * \param veh2_downtrack Downtrack of vehicle 2 in its current lanelet
+             * 
+             * \return the distance between subject vehicle and vehicle 2
+             */ 
+            double find_current_gap(long veh2_lanelet_id, double veh2_downtrack) const ;
+            /**
+             * \brief Converts a set of requested Lane Change maneuvers to point speed limit pairs. 
              * 
              * \param maneuvers The list of maneuvers to convert
              * \param max_starting_downtrack The maximum downtrack that is allowed for the first maneuver. This should be set to the vehicle position or earlier.
@@ -79,7 +99,15 @@ namespace unobstructed_lanechange
             std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
                                                 double max_starting_downtrack,
                                                 const carma_wm::WorldModelConstPtr& wm,const cav_msgs::VehicleState& state);
-            int getNearestRouteIndex(lanelet::BasicLineString2d& points, const cav_msgs::VehicleState& state);
+              /**
+             * \brief Finds the index for the point closest to the specified vehicle state
+             * 
+             * \param points A BasicLineString type variable, which is a vector of BasicPoint2d elements
+             * \param state The vehicle state to which the nearest index needs to be found
+             * 
+             * \return the index of the element in points which is closest to state.
+             */ 
+            int getNearestRouteIndex(lanelet::BasicLineString2d& points, const cav_msgs::VehicleState& state) const;
             /**
              * \brief Creates a Lanelet2 Linestring from a vector or points along the geometry 
              * \param starting_downtrack downtrack along route where maneuver starts
@@ -98,7 +126,7 @@ namespace unobstructed_lanechange
              * \param end_lanelet The lanelet in which lane change ends
              * \return A linestring path from start to end fit through Spline Library
              */
-            lanelet::BasicLineString2d create_lanechange_path(lanelet::BasicPoint2d start, lanelet::ConstLanelet& start_lanelet, lanelet::BasicPoint2d end, lanelet::ConstLanelet& end_lanelet);
+            lanelet::BasicLineString2d create_lanechange_path(lanelet::ConstLanelet& start_lanelet, lanelet::BasicPoint2d end, lanelet::ConstLanelet& end_lanelet);
             
             /**
              * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of trajectory points for trajectory planning
@@ -120,7 +148,7 @@ namespace unobstructed_lanechange
              * \return index of nearest point in points
              */
             int getNearestPointIndex(const std::vector<PointSpeedPair>& points,
-                                               const cav_msgs::VehicleState& state);
+                                               const cav_msgs::VehicleState& state) const;
             /**
              * \brief Reduces the input points to only those points that fit within the provided time boundary
              * 
@@ -136,7 +164,7 @@ namespace unobstructed_lanechange
              */ 
             void splitPointSpeedPairs(const std::vector<PointSpeedPair>& points,
                                             std::vector<lanelet::BasicPoint2d>* basic_points,
-                                            std::vector<double>* speeds);
+                                            std::vector<double>* speeds) const;
 
             /**
              * \brief Returns a 2D coordinate frame which is located at p1 and oriented so p2 lies on the +X axis
@@ -147,7 +175,7 @@ namespace unobstructed_lanechange
              * \return A 2D coordinate frame transform
              */ 
             Eigen::Isometry2d compute_heading_frame(const lanelet::BasicPoint2d& p1,
-                                                              const lanelet::BasicPoint2d& p2);
+                                                              const lanelet::BasicPoint2d& p2) const;
             /**
              * \brief Computes a spline based on the provided points
              * 
@@ -159,7 +187,7 @@ namespace unobstructed_lanechange
             compute_fit(const std::vector<lanelet::BasicPoint2d>& basic_points);
 
             std::vector<double> apply_speed_limits(const std::vector<double> speeds,
-                                                             const std::vector<double> speed_limits);
+                                                             const std::vector<double> speed_limits) const;
             /**
              * \brief Applies the provided speed limits to the provided speeds such that each element is capped at its corresponding speed limit if needed
              * 
@@ -168,7 +196,7 @@ namespace unobstructed_lanechange
              * 
              * \return The capped speed limits. Has the same size as speeds
              */ 
-            double get_adaptive_lookahead(double velocity);
+            double get_adaptive_lookahead(double velocity) const;
 
               /**
              * \brief Returns the speeds of points closest to the lookahead distance.
@@ -179,7 +207,7 @@ namespace unobstructed_lanechange
              * 
              * \return A vector of speed values shifted by the lookahead distance.
              */ 
-            std::vector<double> get_lookahead_speed(const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& speeds, const double& lookahead);
+            std::vector<double> get_lookahead_speed(const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& speeds, const double& lookahead) const;
               /**
              * \brief Method combines input points, times, orientations, and an absolute start time to form a valid carma platform trajectory
              * 
@@ -194,18 +222,42 @@ namespace unobstructed_lanechange
              */
             std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_from_points_times_orientations(
             const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& times, const std::vector<double>& yaws,
-            ros::Time startTime);
+            ros::Time startTime)const;
 
             /**
-            * \brief verify if the input yield trajectory plan is valid
-            * 
-            * \param yield_plan input yield trajectory plan
-            *
-            * \return true or falss
-            */
-            bool validate_yield_plan(const cav_msgs::TrajectoryPlan& yield_plan, const std::string& original_plan_id);
+             * \brief Callback to subscribed mobility response topic
+             * \param msg Latest mobility response message
+             */
+            void mobilityresponse_cb(const cav_msgs::MobilityResponse& msg);
 
-            //Internal Variables used in unit tests
+            /**
+             * \brief Creates a mobility request message from planned trajectory and requested maneuver info
+             * \param trajectory_plan A vector of lane change trajectory points
+             * \param The mobility request message created from trajectory points, for publishing
+             */
+            cav_msgs::MobilityRequest create_mobility_request(std::vector<cav_msgs::TrajectoryPlanPoint>& trajectory_plan, cav_msgs::Maneuver& maneuver);
+
+            /**
+             * \brief Converts Trajectory Plan to (Mobility) Trajectory
+             * \param traj_points vector of Trajectory Plan points to be converted to Trajectory type message
+             * \param tf The transform between the world frame and map frame in which the trajectory plan points are calculated
+             * \return The Trajectory type message in world frame
+             */
+            
+            cav_msgs::Trajectory trajectory_plan_to_trajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points, const geometry_msgs::TransformStamped& tf) const;
+            /**
+             * \brief Converts Trajectory Point to ECEF Transform
+             * \param traj_points A Trajectory Plan point to be converted to Trajectory type message
+             * \param tf The transform between the world frame and map frame in which the trajectory plan points are calculated
+             * \return The trajectory point message transformed to world frame
+             */
+            cav_msgs::LocationECEF trajectory_point_to_ecef(const cav_msgs::TrajectoryPlanPoint& traj_point, const geometry_msgs::TransformStamped& tf) const;
+
+            void add_maneuver_to_response(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp, std::vector<cav_msgs::TrajectoryPlanPoint>& planned_trajectory_points);
+            // initialize this node
+            void initialize();
+
+            //Internal Variables used in unit testsis_lanechange_accepted_
             // Current vehicle forward speed
             double current_speed_;
 
@@ -216,31 +268,51 @@ namespace unobstructed_lanechange
             std::shared_ptr<carma_wm::WMListener> wml_;
             carma_wm::WorldModelConstPtr wm_;
 
+            //boolean which is updated if lane change request is accepted
+            bool is_lanechange_accepted_ = false;
+
+            ros::Publisher outgoing_mobility_request_;
+            ros::Publisher lanechange_status_pub_;
+
             private:
 
             // node handles
             std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
-            ros::Publisher unobstructed_lanechange_plugin_discovery_pub_;
+            ros::Publisher cooperative_lanechange_plugin_discovery_pub_;
 
             // ros service servers
             ros::ServiceServer trajectory_srv_;
-            ros::ServiceServer maneuver_srv_;
-
-            // ros service client
-            ros::ServiceClient yield_client_;
 
             // ROS publishers and subscribers
             cav_msgs::Plugin plugin_discovery_msg_;
             ros::Subscriber pose_sub_;
             ros::Subscriber twist_sub_;
+            
+            ros::Subscriber incoming_mobility_response_;
+            ros::Subscriber bsm_sub_;
+
+            // TF listenser
+            tf2_ros::Buffer tf2_buffer_;
+            std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
 
             // trajectory frequency
             double traj_freq = 10;
+            std::string DEFAULT_STRING_= "";
+            //Time at which the request is first sent
+            ros::Time request_sent_time;
+            //boolean that records whether request has already been sent
+            bool request_sent = false;
 
             // ROS params
+            //Vehicle params
+            std::string sender_id_ = DEFAULT_STRING_;
+            cav_msgs::BSMCoreData bsm_core_;
+
+            //Plugin specific params
+            double desired_time_gap_ = 3.0;
             double trajectory_time_length_ = 6;
-            std::string control_plugin_name_ = "mpc_follower";
+            std::string control_plugin_name_ = "pure_pursuit";
             double minimum_speed_ = 2.0;
             double max_accel_ = 1.5;
             double minimum_lookahead_distance_ = 5.0;
@@ -251,20 +323,16 @@ namespace unobstructed_lanechange
             double moving_average_window_size_ = 5;
             double curvature_calc_lookahead_count_ = 1;
             int downsample_ratio_ =8;
-            bool enable_object_avoidance_lc_ = false;
-            
-            // Time duration to ensure plan is recent
-            double acceptable_time_difference_ = 1.0;
-            ros::Duration time_dur_ = ros::Duration(acceptable_time_difference_);
-
+            double destination_range_ = 5;
+            double lanechange_time_out_ = 6.0;
             int num_points = traj_freq * trajectory_time_length_;
+            double min_timestep_ = 0.1;
 
 
             // generated trajectory plan
             cav_msgs::TrajectoryPlan trajectory_msg;
             
-            // initialize this node
-            void initialize();
+
 
             /**
              * \brief Callback for the pose subscriber, which will store latest pose locally
@@ -278,6 +346,20 @@ namespace unobstructed_lanechange
              */
             void twist_cd(const geometry_msgs::TwistStampedConstPtr& msg);
 
+            /**
+             * \brief Callback to reads bsm message from topic
+             * \param msg The bsm message obtained from subscribed topic
+             * message info is stored in class variable
+             */
+            void bsm_cb(const cav_msgs::BSMConstPtr& msg);
+
+            std::string bsmIDtoString(cav_msgs::BSMCoreData bsm_core){
+              std::string res = "";
+              for (size_t i=0; i<bsm_core.id.size(); i++){
+                  res+=std::to_string(bsm_core.id[i]);
+              }
+              return res;
+            }
 
     
     };
