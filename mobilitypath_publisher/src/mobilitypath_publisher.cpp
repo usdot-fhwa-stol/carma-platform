@@ -124,10 +124,7 @@ namespace mobilitypath_publisher
                     traj.offsets.push_back(offset);
             }
         }
-        
-        ecef_location.ecef_x *= 100; //m to cm to fit the msg standard
-        ecef_location.ecef_y *= 100;
-        ecef_location.ecef_z *= 100;
+    
         traj.location = ecef_location;
 
         return traj;

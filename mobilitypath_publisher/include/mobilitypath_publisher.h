@@ -96,7 +96,7 @@ namespace mobilitypath_publisher
         cav_msgs::Trajectory TrajectoryPlantoTrajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points, const geometry_msgs::TransformStamped& tf) const;
 
     
-        // Convert Trajectory Point to ECEF Transform
+        // Convert Trajectory Point to ECEF Transform (accepts meters and outputs in cm)
         cav_msgs::LocationECEF TrajectoryPointtoECEF(const cav_msgs::TrajectoryPlanPoint& traj_point, const geometry_msgs::TransformStamped& tf) const;
 
         // sender's static ID which is its license plate
