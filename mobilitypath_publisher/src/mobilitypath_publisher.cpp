@@ -105,7 +105,7 @@ namespace mobilitypath_publisher
 
     cav_msgs::Trajectory MobilityPathPublication::TrajectoryPlantoTrajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points, const geometry_msgs::TransformStamped& tf) const{
         cav_msgs::Trajectory traj;
-        cav_msgs::LocationECEF ecef_location = TrajectoryPointtoECEF(traj_points[0], tf);
+        cav_msgs::LocationECEF ecef_location = TrajectoryPointtoECEF(traj_points[0], tf); //m to cm to fit the msg standard
 
         if (traj_points.size()<2){
             ROS_WARN("Received Trajectory Plan is too small");
@@ -116,10 +116,10 @@ namespace mobilitypath_publisher
             for (size_t i=1; i<traj_points.size(); i++){
                 
                     cav_msgs::LocationOffsetECEF offset;
-                    cav_msgs::LocationECEF new_point = TrajectoryPointtoECEF(traj_points[i], tf);
-                    offset.offset_x = (new_point.ecef_x - prev_point.ecef_x) * 100; //m to cm to fit the msg standard
-                    offset.offset_y = (new_point.ecef_y - prev_point.ecef_y) * 100;
-                    offset.offset_z = (new_point.ecef_z - prev_point.ecef_z) * 100;
+                    cav_msgs::LocationECEF new_point = TrajectoryPointtoECEF(traj_points[i], tf); //m to cm to fit the msg standard
+                    offset.offset_x = new_point.ecef_x - prev_point.ecef_x;  
+                    offset.offset_y = new_point.ecef_y - prev_point.ecef_y;
+                    offset.offset_z = new_point.ecef_z - prev_point.ecef_z;
                     prev_point = new_point;
                     traj.offsets.push_back(offset);
             }
@@ -143,9 +143,9 @@ namespace mobilitypath_publisher
         
         auto traj_point_vec = tf2::Vector3(traj_point.x, traj_point.y, 0.0);
         tf2::Vector3 ecef_point_vec = transform * traj_point_vec;
-        ecef_point.ecef_x = ecef_point_vec.x();
-        ecef_point.ecef_y = ecef_point_vec.y();
-        ecef_point.ecef_z = ecef_point_vec.z();
+        ecef_point.ecef_x = ecef_point_vec.x() * 100; // m to cm
+        ecef_point.ecef_y = ecef_point_vec.y() * 100;
+        ecef_point.ecef_z = ecef_point_vec.z() * 100; 
 
         return ecef_point;
     } 
