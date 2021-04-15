@@ -140,7 +140,7 @@ namespace mobilitypath_publisher
         
         tf2::Stamped<tf2::Transform> transform;
         tf2::fromMsg(tf, transform);
-
+        
         auto traj_point_vec = tf2::Vector3(traj_point.x, traj_point.y, 0.0);
         tf2::Vector3 ecef_point_vec = transform * traj_point_vec;
         ecef_point.ecef_x = ecef_point_vec.x();
