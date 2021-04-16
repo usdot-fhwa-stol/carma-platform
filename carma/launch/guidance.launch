@@ -157,6 +157,11 @@
     <include file="$(find unobstructed_lanechange)/launch/unobstructed_lanechange.launch" />
   </group>
 
+  <!-- Cooperative lanechange -->
+  <group>
+    <include file = "$(find cooperative_lanechange)/launch/cooperative_lanechange.launch"/>
+  </group>
+
   <!-- Route Node -->
   <include file="$(find route)/launch/route.launch">
     <arg name="route_file_folder" value="$(arg route_file_folder)"/>
