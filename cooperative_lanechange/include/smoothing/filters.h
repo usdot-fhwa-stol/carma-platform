@@ -68,6 +68,5 @@ std::vector<double> moving_average_filter(const std::vector<double> input, int w
 
   return output;
 }
-
 };  // namespace smoothing
 };  // namespace cooperative_lanechange_plugin

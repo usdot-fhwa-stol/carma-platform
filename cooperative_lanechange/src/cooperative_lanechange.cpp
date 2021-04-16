@@ -219,7 +219,7 @@ namespace cooperative_lanechange
         std::vector<cav_msgs::RoadwayObstacle> rwol = wm_->getRoadwayObjects();
         //Assuming only one connected vehicle in list 
         for(int i=0;i<rwol.size();i++){
-            if(rwol[i].connected_vehicle_type.type == cav_msgs::ConnectedVehicleType::NOT_CONNECTED){
+            if(rwol[i].connected_vehicle_type.type == cav_msgs::ConnectedVehicleType::CONNECTED_AND_AUTOMATED){
                 veh2_lanelet_id = rwol[0].lanelet_id;
                 veh2_downtrack = rwol[0].down_track; //Returns downtrack
                 veh2_speed = rwol[0].object.velocity.twist.linear.x;
@@ -441,7 +441,7 @@ namespace cooperative_lanechange
         {
             if(maneuver.type != cav_msgs::Maneuver::LANE_CHANGE)
             {
-                throw std::invalid_argument("Unobstructed Lane Change does  not support this maneuver type");
+                throw std::invalid_argument("Cooperative Lane Change does  not support this maneuver type");
             }
             cav_msgs::LaneChangeManeuver lane_change_maneuver = maneuver.lane_change_maneuver;
             
@@ -881,7 +881,7 @@ namespace cooperative_lanechange
                 }
             }
             if(!lane_change_req){
-                throw std::invalid_argument("Current path does not require a lane change. Request Incorrectly sent to Unobstructed lane change plugin");
+                throw std::invalid_argument("Current path does not require a lane change. Request Incorrectly sent to Cooperative lane change plugin");
             }
             //lane_follow till lane_change req
             lanelet::BasicLineString2d new_points =lanelets_in_path[lane_change_iteration-1].centerline2d().basicLineString();
