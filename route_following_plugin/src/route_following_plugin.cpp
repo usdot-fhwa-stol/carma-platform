@@ -48,6 +48,7 @@ namespace route_following_plugin
         pnh2_->param<double>("config_speed_limit",config_limit);
         pnh_->param<double>("buffer_time_lanechange",buffer_lanechange_time_);
         pnh_->param<double>("/guidance/route_end_jerk", jerk_, 0.05);
+      
         wml_.reset(new carma_wm::WMListener());
         // set world model point form wm listener
         wm_ = wml_->getWorldModel();
