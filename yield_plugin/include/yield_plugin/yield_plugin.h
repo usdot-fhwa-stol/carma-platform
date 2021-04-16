@@ -20,9 +20,14 @@
 #include <cav_msgs/TrajectoryPlan.h>
 #include <cav_msgs/TrajectoryPlanPoint.h>
 #include <cav_msgs/Plugin.h>
+#include <cav_msgs/MobilityRequest.h>
+#include <cav_msgs/MobilityResponse.h>
+#include <cav_msgs/BSM.h>
+#include <cav_msgs/LaneChangeStatus.h>
 #include <boost/shared_ptr.hpp>
 #include <carma_utils/CARMAUtils.h>
 #include <boost/geometry.hpp>
+#include <tf2_ros/transform_listener.h>
 #include <carma_wm/Geometry.h>
 #include <cav_srvs/PlanTrajectory.h>
 #include <carma_wm/WMListener.h>
@@ -32,10 +37,14 @@
 #include <carma_wm/WorldModel.h>
 #include <carma_wm/collision_detection.h>
 #include <trajectory_utils/quintic_coefficient_calculator.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <boost/property_tree/json_parser.hpp>
+
 
 namespace yield_plugin
 {
 using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
+using MobilityResponseCB = std::function<void(const cav_msgs::MobilityResponse&)>;
 
 /**
  * \brief Convenience class for pairing 2d points with speeds
@@ -61,7 +70,7 @@ public:
    * \param plugin_discovery_publisher Callback which will publish the current plugin discovery state
    */ 
   YieldPlugin(carma_wm::WorldModelConstPtr wm, YieldPluginConfig config,
-                       PublishPluginDiscoveryCB plugin_discovery_publisher);
+                       PublishPluginDiscoveryCB plugin_discovery_publisher, MobilityResponseCB mobility_response_publisher);
 
   /**
    * \brief Method to call at fixed rate in execution loop. Will publish plugin discovery updates
@@ -69,6 +78,7 @@ public:
    * \return True if the node should continue running. False otherwise
    */ 
   bool onSpin();
+  
 
   /**
    * \brief Service callback for trajectory planning
@@ -86,7 +96,7 @@ public:
    * \param current_speed_ current speed of the vehicle
    * \return modified trajectory plan
    */
-  cav_msgs::TrajectoryPlan update_traj_for_object(const cav_msgs::TrajectoryPlan& original_tp, double current_speed_);
+  cav_msgs::TrajectoryPlan update_traj_for_object(const cav_msgs::TrajectoryPlan& original_tp, double initial_velocity);
 
   /**
    * \brief calculate quintic polynomial equation for a given x
@@ -94,7 +104,7 @@ public:
    * \param x input variable to the polynomial
    * \return value of polynomial for given input
    */
-  double polynomial_calc(std::vector<double> coeff, double x);
+  double polynomial_calc(std::vector<double> coeff, double x) const;
 
   /**
    * \brief calculate derivative of quintic polynomial equation for a given x
@@ -102,32 +112,143 @@ public:
    * \param x input variable to the polynomial
    * \return value of derivative polynomial for given input
    */
-  double polynomial_calc_d(std::vector<double> coeff, double x);
+  double polynomial_calc_d(std::vector<double> coeff, double x) const;
 
   /**
    * \brief calculates the maximum speed in a set of tajectory points
    * \param trajectory_points trajectory points
    * \return maximum speed
    */
-  double max_trajectory_speed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points) ;
+  double max_trajectory_speed(const std::vector<cav_msgs::TrajectoryPlanPoint>& trajectory_points) const;
 
   /**
    * \brief calculates distance between trajectory points in a plan
    * \param trajectory_plan input trajectory plan 
    * \return vector of relative distances between trajectory points
    */                     
-  std::vector<double> get_relative_downtracks(const cav_msgs::TrajectoryPlan& trajectory_plan);  
+  std::vector<double> get_relative_downtracks(const cav_msgs::TrajectoryPlan& trajectory_plan) const;  
 
+  /**
+   * \brief callback for mobility request
+   * \param msg mobility request message 
+   */
+  void mobilityrequest_cb(const cav_msgs::MobilityRequestConstPtr& msg);
+
+  /**
+   * \brief callback for bsm message
+   * \param msg mobility bsm message 
+   */
+  void bsm_cb(const cav_msgs::BSMConstPtr& msg);
+
+  /**
+   * \brief convert a carma trajectory from ecef frame to map frame
+   * ecef trajectory consists of the point and a set of offsets with reference to the point
+   * \param ecef_trajectory carma trajectory (ecef frame)
+   * \param tf translate frame 
+   * \return vector of 2d points in map frame
+   */
+  std::vector<lanelet::BasicPoint2d> convert_eceftrajectory_to_mappoints(const cav_msgs::Trajectory& ecef_trajectory, const geometry_msgs::TransformStamped& tf) const;
   
+  /**
+   * \brief compose a mobility response message
+   * \param resp_recipient_id vehicle id of the recipient of the message
+   * \param req_plan_id plan id from the requested message
+   * \param response accept/reject to the response based on conditions
+   * \return filled mobility response
+   */
+  cav_msgs::MobilityResponse compose_mobility_response(const std::string& resp_recipient_id, const std::string& req_plan_id, bool response) const;
+  
+  /**
+   * \brief generate a Jerk Minimizing Trajectory(JMT) with the provided start and end conditions
+   * \param original_tp original trajectory plan
+   * \param intial_pos start position
+   * \param goal_pos final position
+   * \param initial_velocity start velocity
+   * \param goal_velocity end velocity
+   * \param planning_time time duration of the planning
+   * \return updated JMT trajectory 
+   */
+  cav_msgs::TrajectoryPlan generate_JMT_trajectory(const cav_msgs::TrajectoryPlan& original_tp, double initial_pos, double goal_pos, double initial_velocity, double goal_velocity, double planning_time) const;
+  
+  /**
+   * \brief update trajectory for yielding to an incoming cooperative behavior
+   * \param original_tp original trajectory plan
+   * \param current_speed current speed of the vehicle
+   * \return updated trajectory for cooperative behavior
+   */
+  cav_msgs::TrajectoryPlan update_traj_for_cooperative_behavior(const cav_msgs::TrajectoryPlan& original_tp, double current_speed);
+
+  /**
+   * \brief detect intersection point(s) of two trajectories
+   * \param trajectory1 vector of 2d trajectory points
+   * \param trajectory2 vector of 2d trajectory points
+   * \return vector of pairs of 2d intersection points and index of the point in trajectory array
+   */
+  std::vector<std::pair<int, lanelet::BasicPoint2d>> detect_trajectories_intersection(std::vector<lanelet::BasicPoint2d> self_trajectory, std::vector<lanelet::BasicPoint2d> incoming_trajectory) const;
+  
+
+  /**
+   * \brief set values for member variables related to cooperative behavior
+   * \param req_trajectory requested trajectory
+   * \param req_speed speed of requested cooperative behavior
+   * \param req_planning_time planning time for the requested cooperative behavior
+   * \param req_timestamp the mobility request time stamp 
+   */
+  void set_incoming_request_info(std::vector <lanelet::BasicPoint2d> req_trajectory, double req_speed, double req_planning_time, double req_timestamp);
+
+  /**
+   * \brief set the ros publisher for lanechange status topic
+   * \param publisher ros publiser
+   */
+  void set_lanechange_status_publisher(const ros::Publisher& publisher);
+
+  /**
+   * \brief Looks up the transform between map and earth frames, and sets the member variable
+   */
+  void lookupECEFtoMapTransform();
+
 private:
 
   carma_wm::WorldModelConstPtr wm_;
   YieldPluginConfig config_;
   PublishPluginDiscoveryCB plugin_discovery_publisher_;
+  MobilityResponseCB mobility_response_publisher_;
+  ros::Publisher lanechange_status_pub_;
+  geometry_msgs::TransformStamped tf_;
+
+  // flag to show if it is possible for the vehicle to accept the cooperative request
+  bool cooperative_request_acceptable_ = false;
+
+  // incoming request trajectory information:
+  std::vector <lanelet::BasicPoint2d> req_trajectory_points_;
+  double req_target_speed_ = 0;
+  double req_timestamp_ = 0;
+  double req_target_plan_time_ = 0;
+  int timesteps_since_last_req_ = 0;
+
+  // time between ecef trajectory points
+  double ecef_traj_timestep_ = 0.1;
+
 
   cav_msgs::Plugin plugin_discovery_msg_;
   geometry_msgs::Vector3 host_vehicle_size;
   double current_speed_;
+  // BSM Message
+  std::string host_bsm_id_;
+
+  // TF listenser
+  tf2_ros::Buffer tf2_buffer_;
+  std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
+
+  std::string bsmIDtoString(cav_msgs::BSMCoreData bsm_core)
+  {
+    std::string res = "";
+    for (size_t i=0; i<bsm_core.id.size(); i++)
+    {
+      res+=std::to_string(bsm_core.id[i]);
+    }
+      return res;
+  }
 
 };
 };  // namespace yield_plugin

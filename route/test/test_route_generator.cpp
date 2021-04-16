@@ -118,6 +118,10 @@ TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
     marker.pose.position.y = start_lanelet.centerline3d().front().y();
 
     route_marker_msg.markers.push_back(marker);
+    marker.pose.position.x = end_lanelet.centerline3d().back().x();
+    marker.pose.position.y = end_lanelet.centerline3d().back().y();
+    route_marker_msg.markers.push_back(marker);
+
 
     // Computes the shortest path and prints the list of lanelet IDs to get from the start to the end. Can be manually confirmed in JOSM
     auto route = map_graph->getRoute(start_lanelet, end_lanelet);
@@ -131,11 +135,13 @@ TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
         }
         std::cout << "\n";
         auto test_msg = worker.compose_route_marker_msg(route);
-        EXPECT_EQ(route_marker_msg.markers[0].pose.position.x, test_msg.markers[0].pose.position.x);
-        EXPECT_EQ(route_marker_msg.markers[0].pose.position.y, test_msg.markers[0].pose.position.y);
-        EXPECT_EQ(route_marker_msg.markers[1].pose.position.x, test_msg.markers[1].pose.position.x);
-        EXPECT_EQ(route_marker_msg.markers[1].pose.position.y, test_msg.markers[1].pose.position.y);
+        EXPECT_NEAR(route_marker_msg.markers[0].pose.position.x, test_msg.markers[0].pose.position.x, 10.0);
+        EXPECT_NEAR(route_marker_msg.markers[0].pose.position.y, test_msg.markers[0].pose.position.y, 10.0);
+        EXPECT_NEAR(route_marker_msg.markers[1].pose.position.x, test_msg.markers[1].pose.position.x, 10.0);
+        EXPECT_NEAR(route_marker_msg.markers[1].pose.position.y, test_msg.markers[1].pose.position.y, 10.0);
     }
+    
+    
 }
 
 TEST(RouteGeneratorTest, testLaneletRoutingVectorMap)
@@ -476,16 +482,25 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
     }
     cav_srvs::SetActiveRouteRequest req2;
     cav_srvs::SetActiveRouteResponse resp2;
+    geometry_msgs::PoseStamped msg;
 
-   resp2.errorStatus = 0;
+    //Assign vehicle position
+    msg.pose.position.x = 1106580;
+    msg.pose.position.y = 894697;
 
-   for(auto i: resp.availableRoutes)
-   {
+    geometry_msgs::PoseStampedPtr mpt(new geometry_msgs::PoseStamped(msg));
+
+    worker.pose_cb(mpt);
+
+    resp2.errorStatus = 0;
+
+    for(auto i: resp.availableRoutes)
+    {
         if(i.route_id  == "tfhrc_test_route")
         {
             req2.routeID = i.route_id;
 
-            ASSERT_EQ(worker.set_active_route_cb(req2, resp2), false);
+            ASSERT_EQ(worker.set_active_route_cb(req2, resp2), true);
         }
 
    }
