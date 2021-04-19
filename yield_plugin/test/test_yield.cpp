@@ -584,8 +584,6 @@ TEST(YieldPluginTest, min_digital_gap)
 
   double min_gap = 12;
 
-  // auto regulatory_element = std::make_shared<lanelet::DigitalMinimumGap>(lanelet::DigitalMinimumGap::buildData(lanelet::utils::getId(), 
-  //                                       min_gap, {ll_1200}, {},{ lanelet::Participants::VehicleCar } ));
   auto regulatory_element = std::make_shared<lanelet::DigitalMinimumGap>(lanelet::DigitalMinimumGap::buildData(lanelet::utils::getId(), min_gap, {ll_1200}, { },
                                                      { lanelet::Participants::VehicleCar }));
   ll_1200.addRegulatoryElement(regulatory_element);
@@ -621,24 +619,11 @@ TEST(YieldPluginTest, min_digital_gap)
   trajectory_point_4.y = 1.0;
   trajectory_point_4.target_time = ros::Time(3);
 
-  // trajectory_point_5.x = 5.0;
-  // trajectory_point_5.y = 1.0;
-  // trajectory_point_5.target_time = ros::Time(4);
-
-  // trajectory_point_6.x = 6.0;
-  // trajectory_point_6.y = 1.0;
-  // trajectory_point_6.target_time = ros::Time(5);
-
-  // trajectory_point_7.x = 7.0;
-  // trajectory_point_7.y = 1.0;
-  // trajectory_point_7.target_time = ros::Time(6);
-   
-  // original_tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4, trajectory_point_5, trajectory_point_6, trajectory_point_7};
   original_tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4};
 
   double gap = plugin.check_traj_for_digital_min_gap(original_tp);
 
-  EXPECT_GE(gap, 10);
+  EXPECT_EQ(gap, min_gap);
     
 
 }
