@@ -21,6 +21,28 @@
 #include <math.h>
 #include <tf/LinearMath/Vector3.h>
 #include <boost/property_tree/json_parser.hpp>
+#include <carma_wm/WMTestLibForGuidance.h>
+
+
+#include <lanelet2_core/primitives/Lanelet.h>
+#include <lanelet2_io/Io.h>
+#include <lanelet2_io/io_handlers/Factory.h>
+#include <lanelet2_io/io_handlers/Writer.h>
+#include <lanelet2_projection/UTM.h>
+#include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_core/Attribute.h>
+#include <lanelet2_core/primitives/Traits.h>
+#include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
+#include <lanelet2_extension/utility/query.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <lanelet2_extension/io/autoware_osm_parser.h>
+#include <carma_wm/MapConformer.h>
+#include <carma_wm/CARMAWorldModel.h>
+#include <ros/console.h>
+#include <unsupported/Eigen/Splines>
+#include <carma_utils/containers/containers.h>
+#include <tf/LinearMath/Vector3.h>
+
 
 
 using namespace yield_plugin;
@@ -147,13 +169,17 @@ TEST(YieldPluginTest, MaxTrajectorySpeed)
 
 TEST(YieldPluginTest, test_update_traj)
 {
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  auto map = carma_wm::test::buildGuidanceTestMap(100,100);
+
+  wm->setMap(map);
 
   YieldPluginConfig config;
   config.vehicle_length = 4;
   config.vehicle_width = 2;
   config.vehicle_height = 1;
   
-  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  // std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
   YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
 
   
@@ -546,6 +572,74 @@ TEST(YieldPluginTest, jmt_traj)
 
   EXPECT_EQ(jmt_traj.trajectory_points.size(), original_tp.trajectory_points.size());
   EXPECT_LE(jmt_traj.trajectory_points[2].target_time, original_tp.trajectory_points[2].target_time);
+
+}
+
+TEST(YieldPluginTest, min_digital_gap)
+{
+  std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+  auto map = carma_wm::test::buildGuidanceTestMap(3,3);
+
+  auto ll_1200 = map->laneletLayer.get(1200);
+
+  double min_gap = 12;
+
+  // auto regulatory_element = std::make_shared<lanelet::DigitalMinimumGap>(lanelet::DigitalMinimumGap::buildData(lanelet::utils::getId(), 
+  //                                       min_gap, {ll_1200}, {},{ lanelet::Participants::VehicleCar } ));
+  auto regulatory_element = std::make_shared<lanelet::DigitalMinimumGap>(lanelet::DigitalMinimumGap::buildData(lanelet::utils::getId(), min_gap, {ll_1200}, { },
+                                                     { lanelet::Participants::VehicleCar }));
+  ll_1200.addRegulatoryElement(regulatory_element);
+  map->add(regulatory_element);
+  wm->setMap(map);
+
+  YieldPluginConfig config;
+  YieldPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {});
+
+  cav_msgs::TrajectoryPlan original_tp;
+
+  cav_msgs::TrajectoryPlanPoint trajectory_point_1;
+  cav_msgs::TrajectoryPlanPoint trajectory_point_2;
+  cav_msgs::TrajectoryPlanPoint trajectory_point_3;
+  cav_msgs::TrajectoryPlanPoint trajectory_point_4;
+  cav_msgs::TrajectoryPlanPoint trajectory_point_5;
+  cav_msgs::TrajectoryPlanPoint trajectory_point_6;
+  cav_msgs::TrajectoryPlanPoint trajectory_point_7;
+
+  trajectory_point_1.x = 1.0;
+  trajectory_point_1.y = 1.0;
+  trajectory_point_1.target_time = ros::Time(0);
+
+  trajectory_point_2.x = 1.5;
+  trajectory_point_2.y = 1.0;
+  trajectory_point_2.target_time = ros::Time(1);
+
+  trajectory_point_3.x = 2.0;
+  trajectory_point_3.y = 1.0;
+  trajectory_point_3.target_time = ros::Time(2);
+  
+  trajectory_point_4.x = 2.5;
+  trajectory_point_4.y = 1.0;
+  trajectory_point_4.target_time = ros::Time(3);
+
+  // trajectory_point_5.x = 5.0;
+  // trajectory_point_5.y = 1.0;
+  // trajectory_point_5.target_time = ros::Time(4);
+
+  // trajectory_point_6.x = 6.0;
+  // trajectory_point_6.y = 1.0;
+  // trajectory_point_6.target_time = ros::Time(5);
+
+  // trajectory_point_7.x = 7.0;
+  // trajectory_point_7.y = 1.0;
+  // trajectory_point_7.target_time = ros::Time(6);
+   
+  // original_tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4, trajectory_point_5, trajectory_point_6, trajectory_point_7};
+  original_tp.trajectory_points = {trajectory_point_1, trajectory_point_2, trajectory_point_3, trajectory_point_4};
+
+  double gap = plugin.check_traj_for_digital_min_gap(original_tp);
+
+  EXPECT_GE(gap, 10);
+    
 
 }
 
