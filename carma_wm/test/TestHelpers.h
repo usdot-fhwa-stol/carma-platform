@@ -149,8 +149,8 @@ inline void addStraightRoute(CARMAWorldModel& cmw)
   lanelet::routing::Route route = std::move(*optional_route);
   LaneletRoutePtr route_ptr = std::make_shared<lanelet::routing::Route>(std::move(route));
   // 5. Set route and map
-  cmw.setRoute(route_ptr);
   cmw.setMap(map);
+  cmw.setRoute(route_ptr);
 }
 
 inline void addDisjointRoute(CARMAWorldModel& cmw)
@@ -194,8 +194,8 @@ inline void addDisjointRoute(CARMAWorldModel& cmw)
   lanelet::routing::Route route = std::move(*optional_route);
   LaneletRoutePtr route_ptr = std::make_shared<lanelet::routing::Route>(std::move(route));
   // 5. Set route and map
-  cmw.setRoute(route_ptr);
   cmw.setMap(map);
+  cmw.setRoute(route_ptr);
 }
 
 inline lanelet::LaneletMapPtr getDisjointRouteMap()

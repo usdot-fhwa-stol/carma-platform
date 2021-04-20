@@ -179,11 +179,25 @@ public:
    */
   void addRegionAccessRule(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const;
   /*!
+   * \brief Adds Minimum Gap to the map
+   * \param gf_ptr geofence pointer
+   * \param double min_gap
+   * \param afffected_llts affected lanelets
+   * \param affected_areas affected areas
+   */
+  void addRegionMinimumGap(std::shared_ptr<Geofence> gf_ptr,  const cav_msgs::TrafficControlMessageV01& msg_v01, double min_gap, const std::vector<lanelet::Lanelet>& affected_llts, const std::vector<lanelet::Area>& affected_areas) const;
+
+  /*!
    * \brief Generates participants list
    * \param msg_v01 message type
    */
   ros::V_string participantsChecker(const cav_msgs::TrafficControlMessageV01& msg_v01) const;
 
+  /*!
+   * \brief Generates inverse participants list of the given participants
+   * \param ros::V_string participants vector of strings 
+   */
+  ros::V_string invertParticipants(const ros::V_string& input_participants) const;
 
 private:
   lanelet::ConstLanelets route_path_;
@@ -209,8 +223,6 @@ private:
   GeofenceScheduler scheduler_;
   std::string base_map_georef_;
   double max_lane_width_;
-  
-
 };
 }  // namespace carma_wm_ctrl
 

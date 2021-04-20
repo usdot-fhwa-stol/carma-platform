@@ -17,15 +17,16 @@
 #include <lanelet2_extension/utility/message_conversion.h>
 #include "WMListenerWorker.h"
 
-
 namespace carma_wm
 {
-enum class GeofenceType{ INVALID, DIGITAL_SPEED_LIMIT, PASSING_CONTROL_LINE, /* ... others */ };
+enum class GeofenceType{ INVALID, DIGITAL_SPEED_LIMIT, PASSING_CONTROL_LINE, REGION_ACCESS_RULE, DIGITAL_MINIMUM_GAP/* ... others */ };
 // helper function that return geofence type as an enum, which makes it cleaner by allowing switch statement
 GeofenceType resolveGeofenceType(const std::string& rule_name)
 {
   if (rule_name.compare(lanelet::PassingControlLine::RuleName) == 0) return GeofenceType::PASSING_CONTROL_LINE;
   if (rule_name.compare(lanelet::DigitalSpeedLimit::RuleName) == 0) return GeofenceType::DIGITAL_SPEED_LIMIT;
+  if (rule_name.compare(lanelet::RegionAccessRule::RuleName) == 0) return GeofenceType::REGION_ACCESS_RULE;
+  if (rule_name.compare(lanelet::DigitalMinimumGap::RuleName) == 0) return GeofenceType::DIGITAL_MINIMUM_GAP;
 }
 
 WMListenerWorker::WMListenerWorker()
@@ -52,8 +53,33 @@ void WMListenerWorker::mapCallback(const autoware_lanelet2_msgs::MapBinConstPtr&
     map_callback_();
   }
 }
-void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg) const
+
+bool WMListenerWorker::checkIfReRoutingNeeded() const
 {
+  return rerouting_flag_;
+}
+
+void WMListenerWorker::enableUpdatesWithoutRoute()
+{
+  route_node_flag_=true;
+}
+
+void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg)
+{
+
+  if(geofence_msg->invalidates_route==true)
+  {  
+    rerouting_flag_=true;
+    ROS_DEBUG_STREAM("Received notice that route has been invalidated in mapUpdateCallback");
+    local_geofence_msg_ = boost::make_shared<autoware_lanelet2_msgs::MapBin>(*geofence_msg);
+
+    if(route_node_flag_!=true)
+    {
+     ROS_INFO_STREAM("Route is not yet available!");
+     return;
+    }
+  }
+
   // convert ros msg to geofence object
   auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
   carma_wm::fromBinMsg(*geofence_msg, gf_ptr);
@@ -93,7 +119,9 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinCon
   
   // set the map to set a new routing
   world_model_->setMap(world_model_->getMutableMap());
-  ROS_INFO_STREAM("Finished Applying the Map Update with Geofence Id:" << gf_ptr->id_);
+
+  
+  ROS_INFO_STREAM("Finished Applying the Map Update with Geofence Id:" << gf_ptr->id_); 
 }
 
 /*!
@@ -123,6 +151,18 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
       world_model_->getMutableMap()->update(parent_llt, speed);
       break;
     }
+    case GeofenceType::REGION_ACCESS_RULE:
+    {
+      lanelet::RegionAccessRulePtr rar = std::dynamic_pointer_cast<lanelet::RegionAccessRule>(factory_pcl);
+      world_model_->getMutableMap()->update(parent_llt, rar);
+      break;
+    }
+    case GeofenceType::DIGITAL_MINIMUM_GAP:
+    {
+      lanelet::DigitalMinimumGapPtr min_gap = std::dynamic_pointer_cast<lanelet::DigitalMinimumGap>(factory_pcl);
+      world_model_->getMutableMap()->update(parent_llt, min_gap);
+      break;
+    }
     default:
       ROS_WARN_STREAM("World Model instance received an unsupported geofence type in its map update callback!");
       break;
@@ -137,6 +177,13 @@ void WMListenerWorker::roadwayObjectListCallback(const cav_msgs::RoadwayObstacle
 
 void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
 {
+  if(rerouting_flag_==true && route_msg->is_rerouted && !route_node_flag_)
+  {
+    local_geofence_msg_->invalidates_route = false;
+    mapUpdateCallback(local_geofence_msg_);
+    rerouting_flag_ = false;
+  }
+
   if (!world_model_->getMap()) {
     ROS_ERROR_STREAM("WMListener received a route before a map was available. Dropping route message.");
     return;
@@ -155,6 +202,9 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
     auto ptr = std::make_shared<lanelet::routing::Route>(std::move(route_opt.get()));
     world_model_->setRoute(ptr);
   }
+
+  world_model_->setRouteEndPoint({route_msg->end_point.x,route_msg->end_point.y,route_msg->end_point.z});
+
   // Call route_callback_
   if (route_callback_)
   {

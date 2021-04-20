@@ -118,6 +118,10 @@ TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
     marker.pose.position.y = start_lanelet.centerline3d().front().y();
 
     route_marker_msg.markers.push_back(marker);
+    marker.pose.position.x = end_lanelet.centerline3d().back().x();
+    marker.pose.position.y = end_lanelet.centerline3d().back().y();
+    route_marker_msg.markers.push_back(marker);
+
 
     // Computes the shortest path and prints the list of lanelet IDs to get from the start to the end. Can be manually confirmed in JOSM
     auto route = map_graph->getRoute(start_lanelet, end_lanelet);
@@ -131,14 +135,14 @@ TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
         }
         std::cout << "\n";
         auto test_msg = worker.compose_route_marker_msg(route);
-        EXPECT_EQ(route_marker_msg.markers[0].pose.position.x, test_msg.markers[0].pose.position.x);
-        EXPECT_EQ(route_marker_msg.markers[0].pose.position.y, test_msg.markers[0].pose.position.y);
-        EXPECT_EQ(route_marker_msg.markers[1].pose.position.x, test_msg.markers[1].pose.position.x);
-        EXPECT_EQ(route_marker_msg.markers[1].pose.position.y, test_msg.markers[1].pose.position.y);
+        EXPECT_NEAR(route_marker_msg.markers[0].pose.position.x, test_msg.markers[0].pose.position.x, 10.0);
+        EXPECT_NEAR(route_marker_msg.markers[0].pose.position.y, test_msg.markers[0].pose.position.y, 10.0);
+        EXPECT_NEAR(route_marker_msg.markers[1].pose.position.x, test_msg.markers[1].pose.position.x, 10.0);
+        EXPECT_NEAR(route_marker_msg.markers[1].pose.position.y, test_msg.markers[1].pose.position.y, 10.0);
     }
+    
+    
 }
-
-
 
 TEST(RouteGeneratorTest, testLaneletRoutingVectorMap)
 {
@@ -308,7 +312,6 @@ TEST(RouteGeneratorTest, testReadLanelet111RouteFile)
     ASSERT_NEAR(4.79047e+06, points[0].getZ(), 5.0);
 }
 
-
 TEST(RouteGeneratorTest, testReadRoutetfhrcFile)
 {
     tf2_ros::Buffer tf_buffer;
@@ -476,22 +479,126 @@ TEST(RouteGeneratorTest, test_set_active_route_cb)
             ASSERT_NEAR(894697, points[0].getY(), 5.0);  
             ASSERT_NEAR(-6196590, points[0].getZ(), 5.0);
         }
-   }
+    }
     cav_srvs::SetActiveRouteRequest req2;
     cav_srvs::SetActiveRouteResponse resp2;
+    geometry_msgs::PoseStamped msg;
 
-   resp2.errorStatus = 0;
+    //Assign vehicle position
+    msg.pose.position.x = 1106580;
+    msg.pose.position.y = 894697;
 
-   for(auto i: resp.availableRoutes)
-   {
+    geometry_msgs::PoseStampedPtr mpt(new geometry_msgs::PoseStamped(msg));
+
+    worker.pose_cb(mpt);
+
+    resp2.errorStatus = 0;
+
+    for(auto i: resp.availableRoutes)
+    {
         if(i.route_id  == "tfhrc_test_route")
         {
             req2.routeID = i.route_id;
 
-            ASSERT_EQ(worker.set_active_route_cb(req2, resp2), false);
+            ASSERT_EQ(worker.set_active_route_cb(req2, resp2), true);
         }
 
    }
+}
+
+TEST(RouteGeneratorTest, test_duplicate_lanelets_in_shortest_path)
+{
+    tf2_ros::Buffer tf_buffer;
+    carma_wm::WorldModelConstPtr wm;
+    route::RouteGeneratorWorker worker(tf_buffer);
+
+    int projector_type = 0;
+    std::string target_frame;
+    lanelet::ErrorMessages load_errors;
+
+    // File location of the osm file for this test case:
+    std::string file = "../resource/map/town01_vector_map_1.osm";
+
+    // The parsing in this file was copied from https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/carma_wm_ctrl/test/MapToolsTest.cpp
+    lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+    lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+    lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+
+    // Starting and ending lanelet IDs (these were obtained from viewing the osm file in JOSM)
+    lanelet::Id start_id = 111;
+    lanelet::Id end_id = 111;
+    lanelet::Lanelet start_lanelet = map->laneletLayer.get(start_id);
+    lanelet::Lanelet end_lanelet = map->laneletLayer.get(end_id);
+
+    // Create and populate the 'via_lanelets_vector':
+    lanelet::ConstLanelets via_lanelets_vector;
+    lanelet::Id middle_id = 167;
+    via_lanelets_vector.push_back(map->laneletLayer.get(middle_id));
+
+    lanelet::LaneletMapConstPtr const_map(map);
+    lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
+    lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
+
+    auto route_with_duplicates = map_graph->getRouteVia(start_lanelet, via_lanelets_vector, end_lanelet);
+
+    // Test that the shortest path in 'route_with_duplicates' contains duplicate lanelet IDs
+    // The shortest path is 111 -> 101 -> 100 -> 104 -> 167 -> 169 -> 168 -> 170 -> 111
+    ASSERT_EQ(worker.check_for_duplicate_lanelets_in_shortest_path(route_with_duplicates.get()), true);
+
+    // Change the ending lanelet ID and update the route so the shortest path does not contain duplicate lanelet IDs
+    end_id = 170;
+    end_lanelet = map->laneletLayer.get(end_id);
+    auto route_without_duplicates = map_graph->getRouteVia(start_lanelet, via_lanelets_vector, end_lanelet);
+
+    // Test that the shortest path in 'route_without_duplicates' does not contain duplicate Lanelet IDs
+    // The shortest path is 111 -> 101 -> 100 -> 104 -> 167 -> 169 -> 168 -> 170
+    ASSERT_EQ(worker.check_for_duplicate_lanelets_in_shortest_path(route_without_duplicates.get()), false);
+}
+
+TEST(RouteGeneratorTest, test_reroute_after_route_invalidation)
+{
+    tf2_ros::Buffer tf_buffer;
+    route::RouteGeneratorWorker worker(tf_buffer);
+
+    auto cmw= carma_wm::test::getGuidanceTestMap();
+    worker.setWorldModelPtr(cmw);
+
+   // set route here
+    carma_wm::test::setRouteByIds({1200, 1201,1202,1203}, cmw);
+
+    lanelet::BasicPoint2d end_point{1.85, 87.5};
+
+    std::vector<lanelet::BasicPoint2d> dest_points;
+    dest_points.push_back(end_point);
+
+    geometry_msgs::PoseStamped msg;
+    //Assign vehicle position
+    msg.pose.position.x = 1.85;
+    msg.pose.position.y = 0.1;
+
+    geometry_msgs::PoseStampedPtr mpt(new geometry_msgs::PoseStamped(msg));
+
+    worker.pose_cb(mpt);
+
+    auto route = worker.reroute_after_route_invalidation(dest_points);
+
+    ASSERT_EQ(dest_points.size(), 1);
+    ASSERT_TRUE(!!route);
+    ASSERT_EQ(route->shortestPath().size(), 4);
+
+}
+
+TEST(RouteGeneratorTest, test_setReroutingChecker)
+{
+    tf2_ros::Buffer tf_buffer;
+    route::RouteGeneratorWorker worker(tf_buffer);
+    bool flag = false;
+    worker.setReroutingChecker([&]{
+        flag = true;
+        return flag;
+    });
+    EXPECT_NO_THROW(worker.reroutingChecker());
+    ASSERT_EQ(true,worker.reroutingChecker());
 }
 
 TEST(RouteGeneratorTest, test_get_closest_lanelet_from_route_llts)
@@ -576,7 +683,6 @@ TEST(RouteGeneratorTest, test_get_closest_lanelet_from_route_llts)
 
 
 }
-
 
 
 

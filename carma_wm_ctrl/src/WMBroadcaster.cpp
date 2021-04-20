@@ -167,6 +167,19 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
     addRegionAccessRule(gf_ptr,msg_v01,affected_llts);
   }
 
+  if (msg_detail.choice == cav_msgs::TrafficControlDetail::MINHDWY_CHOICE) 
+  {
+
+    double min_gap = (double)msg_detail.minhdwy;
+
+    if(min_gap < 0)
+    {
+      ROS_WARN_STREAM("Digital min gap is invalid. Value set to 0 meter.");
+      min_gap = 0;
+    }
+    addRegionMinimumGap(gf_ptr,msg_v01, min_gap, affected_llts, affected_areas);
+  }
+
   cav_msgs::TrafficControlSchedule msg_schedule = msg_v01.params.schedule;
   
   // Get schedule
@@ -232,13 +245,32 @@ void WMBroadcaster::addPassingControlLineFromMsg(std::shared_ptr<Geofence> gf_pt
 
 void WMBroadcaster::addRegionAccessRule(std::shared_ptr<Geofence> gf_ptr, const cav_msgs::TrafficControlMessageV01& msg_v01, const std::vector<lanelet::Lanelet>& affected_llts) const
 {
-   gf_ptr->regulatory_element_ = std::make_shared<lanelet::RegionAccessRule>(lanelet::RegionAccessRule::buildData(lanelet::utils::getId(),affected_llts,{},participantsChecker(msg_v01)));
+  const std::string& reason = msg_v01.package.label;
+  auto regulatory_element = std::make_shared<lanelet::RegionAccessRule>(lanelet::RegionAccessRule::buildData(lanelet::utils::getId(),affected_llts,{},invertParticipants(participantsChecker(msg_v01)), reason));
+
+  if(!regulatory_element->accessable(lanelet::Participants::VehicleCar) || !regulatory_element->accessable(lanelet::Participants::VehicleTruck )) 
+  {
+    gf_ptr->invalidate_route_=true;
+  }
+  else
+  {
+    gf_ptr->invalidate_route_=false;
+  }
+  gf_ptr->regulatory_element_ = regulatory_element;
+}
+
+void WMBroadcaster::addRegionMinimumGap(std::shared_ptr<Geofence> gf_ptr,  const cav_msgs::TrafficControlMessageV01& msg_v01, double min_gap, const std::vector<lanelet::Lanelet>& affected_llts, const std::vector<lanelet::Area>& affected_areas) const
+{
+  auto regulatory_element = std::make_shared<lanelet::DigitalMinimumGap>(lanelet::DigitalMinimumGap::buildData(lanelet::utils::getId(), 
+                                        min_gap, affected_llts, affected_areas,participantsChecker(msg_v01) ));
+  
+  gf_ptr->regulatory_element_ = regulatory_element;
 }
 
 ros::V_string WMBroadcaster::participantsChecker(const cav_msgs::TrafficControlMessageV01& msg_v01) const
 {
-    ros::V_string participants;
- for (j2735_msgs::TrafficControlVehClass participant : msg_v01.params.vclasses)
+  ros::V_string participants;
+  for (j2735_msgs::TrafficControlVehClass participant : msg_v01.params.vclasses)
   {
     // Currently j2735_msgs::TrafficControlVehClass::RAIL is not supported
     if (participant.vehicle_class == j2735_msgs::TrafficControlVehClass::ANY)
@@ -274,6 +306,22 @@ ros::V_string WMBroadcaster::participantsChecker(const cav_msgs::TrafficControlM
     }
   }
 
+  return  participants;
+}
+
+ros::V_string WMBroadcaster::invertParticipants(const ros::V_string& input_participants) const
+{
+  ros::V_string participants;
+
+  if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::Pedestrian ) == input_participants.end()) participants.emplace_back(lanelet::Participants::Pedestrian);
+  if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::Bicycle ) == input_participants.end()) participants.emplace_back(lanelet::Participants::Bicycle);
+  if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::Vehicle ) == input_participants.end())
+  {
+    if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleMotorcycle)== input_participants.end()) participants.emplace_back(lanelet::Participants::VehicleMotorcycle);
+    if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleBus)== input_participants.end()) participants.emplace_back(lanelet::Participants::VehicleBus);
+    if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleCar)== input_participants.end()) participants.emplace_back(lanelet::Participants::VehicleCar);
+    if(std::find(input_participants.begin(),input_participants.end(),lanelet::Participants::VehicleTruck)== input_participants.end()) participants.emplace_back(lanelet::Participants::VehicleTruck);
+  }
   return  participants;
 }
 
@@ -571,9 +619,8 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   autoware_lanelet2_msgs::MapBin gf_msg;
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
   carma_wm::toBinMsg(send_data, &gf_msg);
+  gf_msg.invalidates_route=gf_ptr->invalidate_route_; 
   map_update_pub_(gf_msg);
-  
-
 };
 
 void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
@@ -796,8 +843,12 @@ void WMBroadcaster::removeGeofenceHelper(std::shared_ptr<Geofence> gf_ptr) const
 
 void WMBroadcaster::currentLocationCallback(const geometry_msgs::PoseStamped& current_pos)
 {
-   cav_msgs::CheckActiveGeofence check = checkActiveGeofenceLogic(current_pos);
-   active_pub_(check);//Publish
+  if (current_map_ && current_map_->laneletLayer.size() != 0) {
+    cav_msgs::CheckActiveGeofence check = checkActiveGeofenceLogic(current_pos);
+    active_pub_(check);//Publish
+  } else {
+    ROS_DEBUG_STREAM("Could not check active geofence logic because map was not loaded");
+  }
 
 }
 
@@ -843,8 +894,7 @@ lanelet::BasicPoint2d curr_pos;
         for(auto id : active_geofence_llt_ids_) 
         {
           if (id == current_llt.id())
-          {
-            outgoing_geof.type = 1;
+          {           
             outgoing_geof.is_on_active_geofence = true;
             for (auto regem: current_llt.regulatoryElements())
               {
@@ -852,9 +902,27 @@ lanelet::BasicPoint2d curr_pos;
                   {
                     lanelet::DigitalSpeedLimitPtr speed =  std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>
                     (current_map_->regulatoryElementLayer.get(regem->id()));
-                   outgoing_geof.value = speed->speed_limit_.value();
+                    outgoing_geof.value = speed->speed_limit_.value();
+                    outgoing_geof.advisory_speed = speed->speed_limit_.value(); 
+                    outgoing_geof.type = cav_msgs::CheckActiveGeofence::SPEED_LIMIT;
                  }
-              }
+
+                 if(regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalMinimumGap::RuleName) == 0)
+                 {
+                    lanelet::DigitalMinimumGapPtr min_gap =  std::dynamic_pointer_cast<lanelet::DigitalMinimumGap>
+                    (current_map_->regulatoryElementLayer.get(regem->id()));
+                    outgoing_geof.minimum_gap = min_gap->getMinimumGap();
+                 }
+
+                 if(regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::RegionAccessRule::RuleName) == 0)
+                 {
+                    lanelet::RegionAccessRulePtr accessRuleReg =  std::dynamic_pointer_cast<lanelet::RegionAccessRule>
+                    (current_map_->regulatoryElementLayer.get(regem->id()));
+                    outgoing_geof.reason = accessRuleReg->getReason();
+                    outgoing_geof.type = cav_msgs::CheckActiveGeofence::LANE_CLOSED;
+                 }
+
+              }//End for loop
 
 
           }

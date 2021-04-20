@@ -39,12 +39,14 @@
 #include <geometry_msgs/Transform.h>
 #include <wgs84_utils/wgs84_utils.h>
 #include <boost/filesystem.hpp>
+#include <boost/optional.hpp>
 #include <visualization_msgs/MarkerArray.h>
 #include <geometry_msgs/TwistStamped.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <unordered_set>
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_extension/io/autoware_osm_parser.h>
-
+#include <functional>
 
 
 #include "route_state_worker.h"
@@ -55,7 +57,15 @@ namespace route {
     {
 
     public:
-
+        /**
+         * \brief reroutingChecker function to set the rerouting flag locally
+         */
+        std::function<bool()> reroutingChecker;
+        /**
+         * \brief setReroutingChecker function to set the rerouting flag
+         */
+        void setReroutingChecker(std::function<bool()> inputFunction);
+        
         /**
          * \brief Constructor for RouteGeneratorWorker class taking in dependencies via dependency injection
          * \param tf_buffer ROS tf tree buffer for getting latest tf between any two available frames
@@ -138,6 +148,13 @@ namespace route {
         void set_publishers(ros::Publisher route_event_pub, ros::Publisher route_state_pub, ros::Publisher route_pub,ros::Publisher route_marker_pub);
 
         /**
+         * \brief Helper function to check whether a route's shortest path contains any duplicate Lanelet IDs.
+         *        'true' indicates that the route's shortest path contains duplicate Lanelet IDs.
+         * \param route Route object from lanelet2 lib routing function
+         */
+        bool check_for_duplicate_lanelets_in_shortest_path(const lanelet::routing::Route& route) const;
+
+        /**
          * \brief Helper function to load route points from route file and convert them from lat/lon values to cooridinates in ECEF
          * \param route_id This function will read the route file with provided route_id
          */
@@ -201,6 +218,12 @@ namespace route {
         //Added for Unit Testing
         void addllt(lanelet::ConstLanelet llt);
 
+        /**
+         * \brief After route is invalidated, this function returns a new route based on the destinations points.
+         * \param destination_points_in_map vector of destination points
+         * \note Destination points will be removed if the current pose is past those points.
+        */
+        lanelet::Optional<lanelet::routing::Route> reroute_after_route_invalidation(std::vector<lanelet::BasicPoint2d>& destination_points_in_map);
 
     private:
 
@@ -237,6 +260,9 @@ namespace route {
         // current cross track and down track distance relative to the route
         double current_crosstrack_distance_, current_downtrack_distance_;
 
+        // current pose
+        lanelet::BasicPoint2d current_loc_;
+
         // current lanelet down track and cross track distance
         double ll_crosstrack_distance_, ll_downtrack_distance_;
         lanelet::Id ll_id_;
@@ -266,6 +292,10 @@ namespace route {
         int cte_count_ = 0;
 
         int cte_count_max_;
+        // destination points in map
+        std::vector<lanelet::BasicPoint2d> destination_points_in_map_;
+
+        boost::optional<geometry_msgs::PoseStamped> vehicle_pose_;
 
     };
 

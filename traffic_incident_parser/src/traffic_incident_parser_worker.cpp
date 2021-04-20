@@ -28,7 +28,18 @@ namespace traffic
       { 
            previous_strategy_params=mobility_msg.strategy_params;
            mobilityMessageParser(mobility_msg.strategy_params);
-           traffic_control_pub_(composeTrafficControlMesssage());
+
+           if(event_type=="CLOSED")
+           {
+            for(auto &traffic_msg:composeTrafficControlMesssages())
+            {
+            traffic_control_pub_(traffic_msg);
+            }
+           }
+           else
+           {
+             return;
+           }
       }
    }
 
@@ -53,7 +64,7 @@ namespace traffic
     }
     vec.push_back(mobility_strategy_params);
 
-    if (vec.size() != 5) 
+    if (vec.size() != 8) 
     {
       ROS_ERROR_STREAM("Given mobility strategy params are not correctly formatted.");
       return;
@@ -64,18 +75,24 @@ namespace traffic
     std::string downtrack_str=vec[2];
     std::string uptrack_str=vec[3];
     std::string min_gap_str=vec[4];
+    std::string speed_advisory_str=vec[5];
+    std::string event_reason_str=vec[6];
+    std::string event_type_str=vec[7];
 
     latitude=stod(stringParserHelper(lat_str,lat_str.find_last_of("lat:")));
     longitude=stod(stringParserHelper(lon_str,lon_str.find_last_of("lon:")));
     down_track=stod(stringParserHelper(downtrack_str,downtrack_str.find_last_of("down_track:")));
     up_track=stod(stringParserHelper(uptrack_str,uptrack_str.find_last_of("up_track:")));
     min_gap=stod(stringParserHelper(min_gap_str,min_gap_str.find_last_of("min_gap:")));
+    speed_advisory=stod(stringParserHelper(speed_advisory_str,speed_advisory_str.find_last_of("advisory_speed:")));
+    event_reason=stringParserHelper(event_reason_str,event_reason_str.find_last_of("event_reason:"));
+    event_type=stringParserHelper(event_type_str,event_type_str.find_last_of("event_type:"));
   }
 
   std::string TrafficIncidentParserWorker::stringParserHelper(std::string str, unsigned long str_index) const
   {
     std::string str_temp="";
-    for(int i=str_index+1;i<=str.length();i++)
+    for(int i=str_index+1;i<str.length();i++)
     {
         str_temp+=str[i];
     }
@@ -93,7 +110,7 @@ namespace traffic
     return {local_point3d.x(), local_point3d.y()};
   }
 
-  cav_msgs::TrafficControlMessageV01 TrafficIncidentParserWorker::composeTrafficControlMesssage()
+  std::vector<cav_msgs::TrafficControlMessageV01> TrafficIncidentParserWorker::composeTrafficControlMesssages()
   {
     local_point_=getIncidentOriginPoint();
     auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, local_point_, 1);  
@@ -158,12 +175,10 @@ namespace traffic
     
     traffic_mobility_msg.geometry_exists=true;
     traffic_mobility_msg.params_exists=true;
+    traffic_mobility_msg.package_exists=true;
     j2735_msgs::TrafficControlVehClass veh_type;
     veh_type.vehicle_class = j2735_msgs::TrafficControlVehClass::ANY; // TODO decide what vehicle is affected
     traffic_mobility_msg.params.vclasses.push_back(veh_type);
-    traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::CLOSED_CHOICE;
-    traffic_mobility_msg.params.detail.closed=cav_msgs::TrafficControlDetail::CLOSED;
-    traffic_mobility_msg.params.detail.minhdwy=min_gap;
 
     for(auto &i:center_line_points_left)
     {
@@ -172,7 +187,23 @@ namespace traffic
       path_point.y=i.y();
       traffic_mobility_msg.geometry.nodes.push_back(path_point);
     }
-      return traffic_mobility_msg;
+
+    std::vector<cav_msgs::TrafficControlMessageV01> output_msg;
+
+    traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::CLOSED_CHOICE;
+    traffic_mobility_msg.params.detail.closed=cav_msgs::TrafficControlDetail::CLOSED;
+    traffic_mobility_msg.package.label=event_reason;
+    output_msg.push_back(traffic_mobility_msg);
+
+    traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::MINHDWY_CHOICE;
+    traffic_mobility_msg.params.detail.minhdwy=min_gap;
+    output_msg.push_back(traffic_mobility_msg);
+
+    traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
+    traffic_mobility_msg.params.detail.maxspeed=speed_advisory;
+    output_msg.push_back(traffic_mobility_msg);
+
+    return output_msg;
     }
 
 }//traffic

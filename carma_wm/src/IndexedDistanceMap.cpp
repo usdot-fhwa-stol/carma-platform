@@ -41,6 +41,25 @@ void IndexedDistanceMap::pushBack(const lanelet::LineString2d& ls)
   id_index_map[ls.id()] = std::make_pair(ls_i, 0);  // Add linestirng id
 }
 
+size_t IndexedDistanceMap::getElementIndexByDistance(double distance) const {
+  if (distance < 0) {
+    throw std::invalid_argument("Distance must non-negative: " + std::to_string(distance));
+  }
+  if (distance > totalLength()) {
+    throw std::invalid_argument("Distance cannot be greater than distance map length");
+  }
+  if (accum_lengths.size() == 0) {
+    throw std::invalid_argument("No data available in distance map");
+  }
+
+  auto low = std::lower_bound (accum_lengths.begin(), accum_lengths.end(), distance, // Binary search to find the index 
+    [](const std::tuple<std::vector<double>, double>& a, const double& b){return std::get<1>(a) < b;});
+  if (low == accum_lengths.end()) { // If we reached the end, it means we should pick the final point since we already checked the bounds
+    return accum_lengths.size() - 1;
+  }
+  return low - accum_lengths.begin();
+}
+
 double IndexedDistanceMap::elementLength(size_t index) const
 {
   return std::get<0>(accum_lengths[index]).back();
@@ -84,4 +103,5 @@ size_t IndexedDistanceMap::size(size_t index) const
 {
   return std::get<0>(accum_lengths[index]).size();
 }
+
 }  // namespace carma_wm
