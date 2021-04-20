@@ -38,6 +38,7 @@ struct InLaneCruisingPluginConfig
                                            // computed curvature and output speeds
   double back_distance = 20;               // Number of meters behind the first maneuver that need to be included in points for curvature calculation
   bool enable_object_avoidance = false;    // Activate object avoidance logic
+  bool publish_debug = false; // True if debug publishing will be enabled
   
   friend std::ostream& operator<<(std::ostream& output, const InLaneCruisingPluginConfig& c)
   {
@@ -55,6 +56,7 @@ struct InLaneCruisingPluginConfig
            << "curvature_moving_average_window_size: " << c.curvature_moving_average_window_size << std::endl
            << "back_distance: " << c.back_distance << std::endl
            << "enable_object_avoidance: " << c.enable_object_avoidance << std::endl
+           << "publish_debug: " << c.publish_debug << std::endl
            << "}" << std::endl;
     return output;
   }

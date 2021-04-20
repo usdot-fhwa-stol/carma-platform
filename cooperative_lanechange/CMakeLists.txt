@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 LEIDOS.
+# Copyright (C) 2021 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -13,9 +13,8 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 #
-
-cmake_minimum_required(VERSION 2.8.3)
-project(inlanecruising_plugin)
+cmake_minimum_required(VERSION 3.0.2)
+project(cooperative_lanechange)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++14)
@@ -32,34 +31,37 @@ set( CATKIN_DEPS
   autoware_msgs
   carma_wm
   tf
-  tf2
+  tf2_ros
   tf2_geometry_msgs
-  carma_debug_msgs
+  unobstructed_lanechange
+  roslib
 )
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
  ${CATKIN_DEPS}
 )
-
 ## System dependencies are found with CMake's conventions
-find_package(Boost)
+find_package(Boost REQUIRED COMPONENTS system)
 find_package(Eigen3 REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
 ###################################
 
+
 catkin_package(
-  INCLUDE_DIRS include
-  CATKIN_DEPENDS ${CATKIN_DEPS}
-  DEPENDS Boost EIGEN3
+   INCLUDE_DIRS include
+   CATKIN_DEPENDS ${CATKIN_DEPS}
+   DEPENDS Boost Eigen3
 )
 
 ###########
 ## Build ##
 ###########
 
+## Specify additional locations of header files
+## Your package locations should be listed before other locations
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
@@ -67,62 +69,55 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
 )
 
+file(GLOB_RECURSE headers */*.hpp */*.h)
+
 add_executable( ${PROJECT_NAME}
+  ${headers}
+  src/cooperative_lanechange.cpp
   src/main.cpp)
-add_library(inlanecruising_plugin_library 
-  src/inlanecruising_plugin.cpp
-  src/smoothing/BSpline.cpp
-)
-target_link_libraries(inlanecruising_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(${PROJECT_NAME} inlanecruising_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(${PROJECT_NAME} inlanecruising_plugin_library ${catkin_EXPORTED_TARGETS})
 
-add_library(helper src/helper.cpp)
-target_link_libraries(helper
-  ${catkin_LIBRARIES}
-)
+add_library(cooperative_lanechange_plugin_lib src/cooperative_lanechange.cpp src/smoothing/BSpline.cpp)
 
-add_executable(helper_node src/helper.cpp)
-target_link_libraries(helper_node
-  helper
-  ${catkin_LIBRARIES}
-)
+add_dependencies(cooperative_lanechange_plugin_lib ${catkin_EXPORTED_TARGETS})
+
+target_link_libraries(${PROJECT_NAME} cooperative_lanechange_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+
 #############
 ## Install ##
 #############
 
-install(DIRECTORY include
+
+install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".svn" EXCLUDE
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME} inlanecruising_plugin_library
+install(TARGETS ${PROJECT_NAME} cooperative_lanechange_plugin_lib
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-## Install Other Resources
-install(DIRECTORY launch config
+# Mark other files for installation (e.g. launch and bag files, etc.)
+install(DIRECTORY
+  launch
+  config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
 
 #############
 ## Testing ##
 #############
+# catkin_add_gmock(${PROJECT_NAME}-test
+#  test/test_cooperative_lanechange.cpp
+#  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+# target_link_libraries(${PROJECT_NAME}-test cooperative_lanechange_plugin_lib ${catkin_LIBRARIES})
 
-if(CATKIN_ENABLE_TESTING)
-
-  catkin_add_gmock(${PROJECT_NAME}-test 
-    test/test_inlanecruising_plugin_planning.cpp
-    test/test_inlanecruising_plugin.cpp
-  )
-  target_link_libraries(${PROJECT_NAME}-test inlanecruising_plugin_library ${catkin_LIBRARIES})
-
-  find_package(rostest REQUIRED)
-  add_rostest_gtest(rostest_ilc test/ilc_plugin.test test/rostest_ilc.cpp)
-  target_link_libraries(rostest_ilc ${catkin_LIBRARIES})
-endif()
+catkin_add_gmock(${PROJECT_NAME}-test test/test_cooperative_plugin.cpp)
+target_link_libraries(${PROJECT_NAME}-test cooperative_lanechange_plugin_lib ${catkin_LIBRARIES})
 
