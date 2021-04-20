@@ -91,7 +91,7 @@ namespace plan_delegator
              * \brief Generate new PlanTrajecory service request based on current planning progress
              * \return a PlanTrajectory object which is ready to be used in the following service call
              */
-            cav_srvs::PlanTrajectory composePlanTrajectoryRequest(const cav_msgs::TrajectoryPlan& latest_trajectory_plan) const;
+            cav_srvs::PlanTrajectory composePlanTrajectoryRequest(const cav_msgs::TrajectoryPlan& latest_trajectory_plan, const uint16_t& current_maneuver_index) const;
 
         protected:
         
