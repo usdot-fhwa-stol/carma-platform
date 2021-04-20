@@ -95,15 +95,15 @@ namespace unobstructed_lanechange
         lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
         double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
 
-        //convert maneuver info to route points and speeds
+        // Only plan the trajectory for the requested LANE_CHANGE maneuver
         std::vector<cav_msgs::Maneuver> maneuver_plan;
-        for(const auto maneuver : req.maneuver_plan.maneuvers)
+        if(req.maneuver_plan.maneuvers[req.maneuver_index_to_plan].type != cav_msgs::Maneuver::LANE_CHANGE)
         {
-            if(maneuver.type == cav_msgs::Maneuver::LANE_CHANGE)
-            {
-                maneuver_plan.push_back(maneuver);
-            }
+            throw std::invalid_argument ("Unobstructed Lane Change Plugin doesn't support this maneuver type");
         }
+        maneuver_plan.push_back(req.maneuver_plan.maneuvers[req.maneuver_index_to_plan]);
+        resp.related_maneuvers.push_back(req.maneuver_index_to_plan);
+
         auto points_and_target_speeds = maneuvers_to_points(maneuver_plan, current_downtrack, wm_,req.vehicle_state);
         
         auto downsampled_points = carma_utils::containers::downsample_vector(points_and_target_speeds, downsample_ratio_);
@@ -154,12 +154,6 @@ namespace unobstructed_lanechange
 
         
 
-        for (int i=0; i<req.maneuver_plan.maneuvers.size(); i++){
-            if (req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::LANE_CHANGE){
-            resp.related_maneuvers.push_back(i);
-            break;
-            }
-        }
         resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
         return true;
