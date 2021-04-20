@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 LEIDOS.
+ * Copyright (C) 2019-2020 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,10 @@
 TEST(MobilityPathVisualizerTest, TestComposeVisualizationMarker)
 {
     mobilitypath_visualizer::MobilityPathVisualizer viz_node;
+    // 1 to 1 transform
+    tf2::Transform identity;
+    identity.setIdentity();
+    
     // INPUT MSG
     cav_msgs::MobilityPath input_msg;
     input_msg.header.plan_id = "";
@@ -42,15 +46,15 @@ TEST(MobilityPathVisualizerTest, TestComposeVisualizationMarker)
     // EXPECTED RESULT STATIC INFO
     visualization_msgs::MarkerArray expected_msg;
     visualization_msgs::Marker marker;
-    marker.header.frame_id = "earth";
+    marker.header.frame_id = "map";
     marker.header.stamp = ros::Time(10.0); //10sec
     marker.type = visualization_msgs::Marker::ARROW;
     marker.action = visualization_msgs::Marker::ADD;
     marker.ns = "mobilitypath_visualizer";
 
-    marker.scale.x = 2;
-    marker.scale.y = 2;
-    marker.scale.z = 1;
+    marker.scale.x = 0.5;
+    marker.scale.y = 0.5;
+    marker.scale.z = 0.5;
     marker.frame_locked = true;
 
     marker.color.r = expected_color_blue.red;
@@ -77,7 +81,7 @@ TEST(MobilityPathVisualizerTest, TestComposeVisualizationMarker)
 
     expected_msg.markers.push_back(marker);
 
-    auto result = viz_node.composeVisualizationMarker(input_msg, expected_color_blue);
+    auto result = viz_node.composeVisualizationMarker(input_msg, expected_color_blue, identity);
 
     EXPECT_EQ(expected_msg.markers[0].header.frame_id, result.markers[0].header.frame_id);
     EXPECT_EQ(expected_msg.markers[0].header.stamp, result.markers[0].header.stamp);
@@ -85,9 +89,6 @@ TEST(MobilityPathVisualizerTest, TestComposeVisualizationMarker)
     EXPECT_EQ(expected_msg.markers[0].action, result.markers[0].action);
     EXPECT_EQ(expected_msg.markers[0].ns, result.markers[0].ns);
     
-    EXPECT_EQ(expected_msg.markers[0].scale.x, result.markers[0].scale.x);
-    EXPECT_EQ(expected_msg.markers[0].scale.y, result.markers[0].scale.y);
-    EXPECT_EQ(expected_msg.markers[0].scale.z, result.markers[0].scale.z);
     EXPECT_EQ(expected_msg.markers[0].color.a, result.markers[0].color.a);
     EXPECT_EQ(expected_msg.markers[0].color.b, result.markers[0].color.b);
     EXPECT_EQ(expected_msg.markers[0].color.g, result.markers[0].color.g);
@@ -106,9 +107,35 @@ TEST(MobilityPathVisualizerTest, TestComposeVisualizationMarker)
     
 }
 
+TEST(MobilityPathVisualizerTest, TestECEFToMapPoint)
+{
+    mobilitypath_visualizer::MobilityPathVisualizer viz_node;
+    // 1 to 1 transform
+    tf2::Transform identity;
+    identity.setIdentity();
+
+    cav_msgs::LocationECEF ecef_point;
+    ecef_point.ecef_x = 100;
+    ecef_point.ecef_y = 200;
+    ecef_point.ecef_z = 300;
+    geometry_msgs::Point expected_point;
+    expected_point.x = 1;
+    expected_point.y = 2;
+    expected_point.z = 3;
+
+    auto result = viz_node.ECEFToMapPoint(ecef_point, identity);
+
+    EXPECT_NEAR(expected_point.x, result.x, 0.0001);
+    EXPECT_NEAR(expected_point.y, result.y, 0.0001);
+    EXPECT_NEAR(expected_point.z, result.z, 0.0001);
+}
+
 TEST(MobilityPathVisualizerTest, TestMatchTrajectoryTimestamps)
 {
     mobilitypath_visualizer::MobilityPathVisualizer viz_node;
+    // 1 to 1 transform
+    tf2::Transform identity;
+    identity.setIdentity();
     
     // INPUT RESULT STATIC INFO
     visualization_msgs::MarkerArray host_msg;
@@ -254,14 +281,12 @@ TEST(MobilityPathVisualizerTest, TestComposeLabelMarker)
     auto result = viz_node.composeLabelMarker(host_msg, {host_msg});
     
     //TEST STATIC
-    EXPECT_EQ(result.markers[0].header.frame_id, "earth");
+    EXPECT_EQ(result.markers[0].header.frame_id, "map");
     EXPECT_EQ(result.markers[0].type, visualization_msgs::Marker::TEXT_VIEW_FACING);
     EXPECT_EQ(result.markers[0].action, visualization_msgs::Marker::ADD);
     EXPECT_EQ(result.markers[0].ns, "mobilitypath_visualizer");
-    EXPECT_EQ(result.markers[0].scale.z, 0.5);
     EXPECT_EQ(result.markers[0].color.a, 1.0);
     EXPECT_EQ(result.markers[0].frame_locked, 1);
-    EXPECT_EQ(result.markers[0].lifetime, ros::Duration(2));
 
     // TEST DYNAMIC
     EXPECT_EQ(result.markers.size(), host_msg.markers.size() + 1);
@@ -274,7 +299,7 @@ TEST(MobilityPathVisualizerTest, TestComposeLabelMarker)
     EXPECT_NEAR(result.markers[2].pose.position.x, host_msg.markers[1].points[1].x,0.001);
     EXPECT_NEAR(result.markers[2].pose.position.y, host_msg.markers[1].points[1].y,0.001);
 
-    EXPECT_NEAR(result.markers[2].header.stamp.toSec(), ros::Time::now().toSec(),0.1);
+    EXPECT_NEAR(result.markers[2].header.stamp.toSec(), host_msg.markers[1].header.stamp.toSec() + 0.1,0.1);
     
 }
 

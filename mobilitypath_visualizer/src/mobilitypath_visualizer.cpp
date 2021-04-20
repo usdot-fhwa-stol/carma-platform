@@ -98,7 +98,7 @@ namespace mobilitypath_visualizer {
             else
             {
                 cav_color.blue = 1.0;
-                cav_markers_.push_back(composeVisualizationMarker(msg,cav_color));
+                cav_markers_.push_back(composeVisualizationMarker(msg,cav_color, map_in_earth_));
                 ROS_DEBUG_STREAM("Composed cav marker successfuly! with sender_id: " << msg.header.sender_id);
             }
         }
@@ -227,9 +227,9 @@ namespace mobilitypath_visualizer {
                 {
                     marker.id = idx;
                     marker.header.stamp = host_marker.markers[idx].header.stamp;
-                    marker.pose.position.x = cav_marker.markers[idx].points[0].x + 1;
-                    marker.pose.position.y = cav_marker.markers[idx].points[0].y + 1;
-                    marker.pose.position.z = cav_marker.markers[idx].points[0].z + 1;
+                    marker.pose.position.x = cav_marker.markers[idx].points[0].x;
+                    marker.pose.position.y = cav_marker.markers[idx].points[0].y;
+                    marker.pose.position.z = cav_marker.markers[idx].points[0].z;
                     marker.pose.orientation.w = 1.0f;
 
                     std::string collision_time = std::to_string((cav_marker.markers[idx].header.stamp - host_marker.markers[0].header.stamp).toSec());
@@ -246,9 +246,9 @@ namespace mobilitypath_visualizer {
                 // last point
                 marker.id = idx;
                 marker.header.stamp = host_marker.markers[idx-1].header.stamp;
-                marker.pose.position.x = cav_marker.markers[idx-1].points[1].x + 1;
-                marker.pose.position.y = cav_marker.markers[idx-1].points[1].y + 1;
-                marker.pose.position.z = cav_marker.markers[idx-1].points[1].z + 1;
+                marker.pose.position.x = cav_marker.markers[idx-1].points[1].x;
+                marker.pose.position.y = cav_marker.markers[idx-1].points[1].y;
+                marker.pose.position.z = cav_marker.markers[idx-1].points[1].z;
 
                 std::string collision_time = std::to_string((cav_marker.markers[idx-1].header.stamp + ros::Duration(0.1) - host_marker.markers[0].header.stamp).toSec());
                 collision_time = collision_time.substr(0,collision_time.size() - 4); //reduce precision to 2 decimals
