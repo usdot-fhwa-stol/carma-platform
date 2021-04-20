@@ -15,3 +15,15 @@
 # Double: Node spin rate
 # Units: Hz
 spin_rate: 10.0
+
+# Trajectory visualizer marker's arrow shaft diameter
+x: 0.5
+
+# Trajectory visualizer marker's arrow head diameter
+y: 0.5
+
+# If it is not zero, it specifies the trajectory arrow's head length.
+z: 1.0
+
+# Collision message display duration before disapearing(seconds)
+t: 3.0

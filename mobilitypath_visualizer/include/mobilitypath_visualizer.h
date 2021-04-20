@@ -23,6 +23,8 @@
 #include <vector>
 #include <cav_msgs/MobilityPath.h>
 #include <unordered_map>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 
 namespace mobilitypath_visualizer {
@@ -62,7 +64,15 @@ namespace mobilitypath_visualizer {
          * \param color color to visualize the marker, for example host car should have different color than other car
          * \return Visualization Marker in arrow type
          */
-        visualization_msgs::MarkerArray composeVisualizationMarker(const cav_msgs::MobilityPath& msg, const MarkerColor& color);
+        visualization_msgs::MarkerArray composeVisualizationMarker(const cav_msgs::MobilityPath& msg, const MarkerColor& color, const tf2::Transform& map_in_earth);
+        
+        /**
+         * \brief Accepts ECEF point in cm to convert to a point in map in meters
+         * \param ecef_point ECEF point to convert in cm
+         * \param map_in_earth A transform from ECEF to map
+         * \return Point in map
+         */
+        geometry_msgs::Point ECEFToMapPoint(const cav_msgs::LocationECEF& ecef_point, const tf2::Transform& map_in_earth) const;
 
         /**
          * \brief Compose a label marker that displays whether if any of the cav's path cross with that of host (respective points are within 1 meter)
@@ -102,6 +112,11 @@ namespace mobilitypath_visualizer {
         // initialize this node before running
         void initialize();
 
+        // TF listener
+        tf2_ros::Buffer tf2_buffer_;
+        std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
+        tf2::Transform map_in_earth_;
+
         // spin rate
         double spin_rate_;
 
@@ -122,6 +137,11 @@ namespace mobilitypath_visualizer {
         std::string host_id_;
         bool host_marker_received_ = false;
 
+        // Visualization::MarkerArray parameters
+        double x_;
+        double y_;
+        double z_;
+        double t_;
     };
 
 }

@@ -29,6 +29,7 @@ find_package(catkin REQUIRED COMPONENTS
   cav_msgs
   carma_utils
   tf2_ros
+  tf2
 )
 
 ## System dependencies are found with CMake's conventions
@@ -39,7 +40,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs cav_msgs carma_utils tf2_ros
+  CATKIN_DEPENDS roscpp std_msgs cav_msgs carma_utils tf2_ros tf2
 )
 
 ###########

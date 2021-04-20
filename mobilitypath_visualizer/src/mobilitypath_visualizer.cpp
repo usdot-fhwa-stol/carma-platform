@@ -47,6 +47,11 @@ namespace mobilitypath_visualizer {
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
         pnh_->param<double>("spin_rate", spin_rate_, 10.0);
+        pnh_->param<double>("x", x_, 0.5);
+        pnh_->param<double>("y", y_, 0.5);
+        pnh_->param<double>("z", z_, 1.0);
+        pnh_->param<double>("t", t_, 3.0);
+
         nh_->getParam("/vehicle_id", host_id_);
 
         // init publishers
@@ -57,12 +62,17 @@ namespace mobilitypath_visualizer {
         // init subscribers
         host_mob_path_sub_ = nh_->subscribe("mobility_path_msg", 1, &MobilityPathVisualizer::callbackMobilityPath, this);
         cav_mob_path_sub_ = nh_->subscribe("incoming_mobility_path", 1, &MobilityPathVisualizer::callbackMobilityPath, this);
+
+        tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
     }
     
     void MobilityPathVisualizer::callbackMobilityPath(const cav_msgs::MobilityPath& msg)
     {
         if (msg.header.timestamp == 0) //if empty
+        {
+            host_marker_received_ = false;
             return;
+        } 
         ROS_DEBUG_STREAM("Received a msg from sender: " << msg.header.sender_id << ", and plan id:" << msg.header.plan_id << ", for receiver:" 
                             << msg.header.recipient_id << ", time:" << msg.header.timestamp << ", at now: " << std::to_string(ros::Time::now().toSec()));
 
@@ -74,37 +84,44 @@ namespace mobilitypath_visualizer {
             return;
         }
         latest_cav_mob_path_msg_[msg.header.sender_id] = msg;
-        
-        MarkerColor cav_color;
-        if (msg.header.sender_id.compare(host_id_) ==0)
+        try
         {
-            cav_color.green = 1.0;
-            host_marker_ = composeVisualizationMarker(msg,cav_color);
-            host_marker_received_ = true;
-            ROS_DEBUG_STREAM("Composed host marker successfuly!");
+            tf2::convert(tf2_buffer_.lookupTransform("earth", "map", ros::Time(0)).transform, map_in_earth_); 
+            MarkerColor cav_color;
+            if (msg.header.sender_id.compare(host_id_) ==0)
+            {
+                cav_color.green = 1.0;
+                host_marker_ = composeVisualizationMarker(msg,cav_color, map_in_earth_);
+                host_marker_received_ = true;
+                ROS_DEBUG_STREAM("Composed host marker successfuly!");
+            }
+            else
+            {
+                cav_color.blue = 1.0;
+                cav_markers_.push_back(composeVisualizationMarker(msg,cav_color));
+                ROS_DEBUG_STREAM("Composed cav marker successfuly! with sender_id: " << msg.header.sender_id);
+            }
         }
-        else
+        catch (tf2::TransformException &ex)
         {
-            cav_color.blue = 1.0;
-            cav_markers_.push_back(composeVisualizationMarker(msg,cav_color));
-            ROS_DEBUG_STREAM("Composed cav marker successfuly! with sender_id: " << msg.header.sender_id);
+            ROS_WARN("%s", ex.what());
         }
     }
 
-    visualization_msgs::MarkerArray MobilityPathVisualizer::composeVisualizationMarker(const cav_msgs::MobilityPath& msg, const MarkerColor& color)
+    visualization_msgs::MarkerArray MobilityPathVisualizer::composeVisualizationMarker(const cav_msgs::MobilityPath& msg, const MarkerColor& color, const tf2::Transform& map_in_earth)
     {
         visualization_msgs::MarkerArray output;
         
         visualization_msgs::Marker marker;
-        marker.header.frame_id = "earth";
-        marker.header.stamp = ros::Time((double)msg.header.timestamp/1000.0); //milliseconds to sec
+        marker.header.frame_id = "map";
+        marker.header.stamp = ros::Time((double)msg.header.timestamp/1000.0);
         marker.type = visualization_msgs::Marker::ARROW;
         marker.action = visualization_msgs::Marker::ADD;
         marker.ns = "mobilitypath_visualizer";
 
-        marker.scale.x = 2.0;
-        marker.scale.y = 2.0;
-        marker.scale.z = 1.0;
+        marker.scale.x = x_;
+        marker.scale.y = y_;
+        marker.scale.z = z_;
         marker.frame_locked = true;
 
         marker.color.r = color.red;
@@ -113,19 +130,20 @@ namespace mobilitypath_visualizer {
         marker.color.a = 1.0f;
         
         size_t count = std::max(prev_marker_list_size_[msg.header.sender_id], msg.trajectory.offsets.size());
-  
+
+        auto curr_location_msg = msg; //variable to update on each iteration as offsets are measured since last traj point
+        
         marker.id = 0;
         geometry_msgs::Point arrow_start;
-         
-        arrow_start.x = (double)msg.trajectory.location.ecef_x /100.0; //cm to m
-        arrow_start.y = (double)msg.trajectory.location.ecef_y /100.0;
-        arrow_start.z = (double)msg.trajectory.location.ecef_z /100.0;
+        ROS_DEBUG_STREAM("ECEF point x: " << curr_location_msg.trajectory.location.ecef_x << ", y:" << curr_location_msg.trajectory.location.ecef_y);
+        arrow_start = ECEFToMapPoint(curr_location_msg.trajectory.location,map_in_earth); //also convert from cm to m
+        ROS_DEBUG_STREAM("Map point x: " << arrow_start.x << ", y:" << arrow_start.y);
 
         geometry_msgs::Point arrow_end;
-        arrow_end.x = (double)(msg.trajectory.location.ecef_x + msg.trajectory.offsets[0].offset_x) / 100.0; //cm to m
-        arrow_end.y = (double)(msg.trajectory.location.ecef_y + msg.trajectory.offsets[0].offset_y) / 100.0;
-        arrow_end.z = (double)(msg.trajectory.location.ecef_z + msg.trajectory.offsets[0].offset_z) / 100.0;
-        arrow_end = arrow_end;
+        curr_location_msg.trajectory.location.ecef_x += + msg.trajectory.offsets[0].offset_x;
+        curr_location_msg.trajectory.location.ecef_y += + msg.trajectory.offsets[0].offset_y;
+        curr_location_msg.trajectory.location.ecef_z += + msg.trajectory.offsets[0].offset_z;
+        arrow_end = ECEFToMapPoint(curr_location_msg.trajectory.location,map_in_earth); //also convert from cm to m
 
         marker.points.push_back(arrow_start);
         marker.points.push_back(arrow_end);
@@ -142,38 +160,64 @@ namespace mobilitypath_visualizer {
             }
 
             marker.points = {};
-            arrow_start = arrow_end;
-            ROS_DEBUG_STREAM("Arrow start- x: " << arrow_start.x << ", y:" << arrow_start.y << ", z:" << arrow_start.z);
+            ROS_DEBUG_STREAM("ECEF Point- DEBUG x: " << curr_location_msg.trajectory.location.ecef_x << ", y:" << curr_location_msg.trajectory.location.ecef_y);
+            arrow_start = ECEFToMapPoint(curr_location_msg.trajectory.location,map_in_earth); //convert from cm to m
+            ROS_DEBUG_STREAM("Map Point- DEBUG x: " << arrow_start.x << ", y:" << arrow_start.y);
 
-            arrow_end.x = arrow_start.x + (double)(msg.trajectory.offsets[i].offset_x)/ 100.0; //cm to m
-            arrow_end.y = arrow_start.y + (double)(msg.trajectory.offsets[i].offset_y)/ 100.0;
-            arrow_end.z = arrow_start.z + (double)(msg.trajectory.offsets[i].offset_z)/ 100.0;
-            ROS_DEBUG_STREAM("Arrow end- x: " << arrow_end.x << ", y:" << arrow_end.y  << ", z:" << arrow_end.z);
+            curr_location_msg.trajectory.location.ecef_x += msg.trajectory.offsets[i].offset_x;
+            curr_location_msg.trajectory.location.ecef_y += msg.trajectory.offsets[i].offset_y;
+            curr_location_msg.trajectory.location.ecef_z += msg.trajectory.offsets[i].offset_z;
+            arrow_end = ECEFToMapPoint(curr_location_msg.trajectory.location,map_in_earth);
 
             marker.points.push_back(arrow_start);
             marker.points.push_back(arrow_end);
 
             output.markers.push_back(marker);
         }
-
+        ROS_DEBUG_STREAM("Last ECEF Point- DEBUG x: " << curr_location_msg.trajectory.location.ecef_x << ", y:" << curr_location_msg.trajectory.location.ecef_y);
+        ROS_DEBUG_STREAM("Last Map Point- DEBUG x: " << arrow_end.x << ", y:" << arrow_end.y);
         prev_marker_list_size_[msg.header.sender_id] = msg.trajectory.offsets.size();
         
         return output;
     }
 
+    geometry_msgs::Point MobilityPathVisualizer::ECEFToMapPoint(const cav_msgs::LocationECEF& ecef_point, const tf2::Transform& map_in_earth) const
+    {
+        geometry_msgs::Point output;
+        // convert input point to transform
+        tf2::Transform point_in_earth;
+        tf2::Quaternion no_rotation(0, 0, 0, 1);
+        tf2::Vector3 input_point {(double)ecef_point.ecef_x/100.0, (double)ecef_point.ecef_y/100.0, (double)ecef_point.ecef_z/100.0}; //m to cm
+        point_in_earth.setOrigin(input_point);
+        point_in_earth.setRotation(no_rotation);
+        // convert to map frame by (T_e_m)^(-1) * T_e_p
+        auto point_in_map = map_in_earth.inverse() * point_in_earth;
+        output.x = point_in_map.getOrigin().getX();
+        output.y = point_in_map.getOrigin().getY();
+        output.z = point_in_map.getOrigin().getZ();
+
+        return output;
+    } 
+    
+
     visualization_msgs::MarkerArray MobilityPathVisualizer::composeLabelMarker(const visualization_msgs::MarkerArray& host_marker, const std::vector<visualization_msgs::MarkerArray>& cav_markers)
     {
         visualization_msgs::MarkerArray output;
         visualization_msgs::Marker marker;
-        marker.header.frame_id = "earth";
+        marker.header.frame_id = "map";
         marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
         marker.action = visualization_msgs::Marker::ADD;
         marker.ns = "mobilitypath_visualizer";
 
-        marker.scale.z = 0.5;
+        marker.scale.x = x_;
+        marker.scale.y = y_;
+        marker.scale.z = z_;
+        marker.color.r = 1.0;
+        marker.color.g = 1.0;
+        marker.color.b = 1.0;
         marker.color.a = 1.0;
         marker.frame_locked = true;
-        marker.lifetime = ros::Duration(2);
+        marker.lifetime = ros::Duration(t_);
         for (auto const& cav_marker: cav_markers)
         {
             size_t idx = 0;
@@ -181,31 +225,37 @@ namespace mobilitypath_visualizer {
             {
                 if (compute_2d_distance(cav_marker.markers[idx].points[0], host_marker.markers[idx].points[0]) <= 1.0) // within 1 meter
                 {
-                    marker.header.stamp = ros::Time::now();
-                    marker.pose.position.x = cav_marker.markers[idx].points[0].x;
-                    marker.pose.position.y = cav_marker.markers[idx].points[0].y;
-                    marker.pose.position.z = cav_marker.markers[idx].points[0].z;
+                    marker.id = idx;
+                    marker.header.stamp = host_marker.markers[idx].header.stamp;
+                    marker.pose.position.x = cav_marker.markers[idx].points[0].x + 1;
+                    marker.pose.position.y = cav_marker.markers[idx].points[0].y + 1;
+                    marker.pose.position.z = cav_marker.markers[idx].points[0].z + 1;
+                    marker.pose.orientation.w = 1.0f;
 
-                    marker.text = "Collision in " + std::to_string((cav_marker.markers[idx].header.stamp - marker.header.stamp).toSec())+ "s!";
+                    std::string collision_time = std::to_string((cav_marker.markers[idx].header.stamp - host_marker.markers[0].header.stamp).toSec());
+                    collision_time = collision_time.substr(0,collision_time.size() - 4); //reduce precision to 2 decimals
+                    marker.text = "Collision in " + collision_time + "s!";
+
                     output.markers.push_back(marker);
                 }
                 idx++;
             }
-            // last point
             
             if (compute_2d_distance(cav_marker.markers[idx-1].points[1], host_marker.markers[idx-1].points[1]) <= 1.0) // within 1 meter
-            {
-                marker.header.stamp = ros::Time::now();
-                marker.pose.position.x = cav_marker.markers[idx-1].points[1].x;
-                marker.pose.position.y = cav_marker.markers[idx-1].points[1].y;
-                marker.pose.position.z = cav_marker.markers[idx-1].points[1].z;
+            {   
+                // last point
+                marker.id = idx;
+                marker.header.stamp = host_marker.markers[idx-1].header.stamp;
+                marker.pose.position.x = cav_marker.markers[idx-1].points[1].x + 1;
+                marker.pose.position.y = cav_marker.markers[idx-1].points[1].y + 1;
+                marker.pose.position.z = cav_marker.markers[idx-1].points[1].z + 1;
 
-                
-                marker.text = "Collision in " + std::to_string((cav_marker.markers[idx-1].header.stamp + ros::Duration(0.1) - marker.header.stamp).toSec())+ "s!";
+                std::string collision_time = std::to_string((cav_marker.markers[idx-1].header.stamp + ros::Duration(0.1) - host_marker.markers[0].header.stamp).toSec());
+                collision_time = collision_time.substr(0,collision_time.size() - 4); //reduce precision to 2 decimals
+                marker.text = "Collision in " + collision_time + "s!";
                 output.markers.push_back(marker);
             }
         }
-        
         return output;
     }
 
@@ -296,12 +346,23 @@ namespace mobilitypath_visualizer {
         if (!host_marker_received_)
             return true;
 
-        //cav_markers_ = matchTrajectoryTimestamps(host_marker_, cav_markers_);
-        
         // publish host marker
         host_marker_pub_.publish(host_marker_);
-        
-        // publish cav markers
+
+        cav_markers_ = {}; // TODO: Remove after integration test
+
+        auto host_marker_tmp = host_marker_;
+        for (auto& marker : host_marker_tmp.markers)
+        {
+            marker.color.b = 1.0f;
+            marker.color.g = 0.0f;
+            marker.header.stamp -= ros::Duration(0.050);
+        }
+
+        cav_markers_.push_back(host_marker_tmp);
+
+        cav_markers_ = matchTrajectoryTimestamps(host_marker_, cav_markers_);
+
         for (auto const &marker: cav_markers_)
         {
             cav_marker_pub_.publish(marker);
@@ -309,11 +370,7 @@ namespace mobilitypath_visualizer {
 
         // publish label
         label_marker_ = composeLabelMarker(host_marker_, cav_markers_);
-        for (auto const &marker: label_marker_.markers)
-        {
-            label_marker_pub_.publish(marker);
-        }
-
+        label_marker_pub_.publish(label_marker_);
         return true;
     }
 
