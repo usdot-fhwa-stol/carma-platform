@@ -8,9 +8,9 @@ planning_topic_prefix: /guidance/plugins/
 # Units: N/a
 planning_topic_suffix: /plan_trajectory
 
-# Double: Spin rate of plan delegator, it is also the trajectory planning frequency
+# Double: The trajectory planning frequency
 # Units: Hz
-spin_rate: 10.0
+trajectory_planning_rate: 10.0
 
 # Double: Plan delegator will stop generating new trajectories
 # if the current plan is already over this threshold
