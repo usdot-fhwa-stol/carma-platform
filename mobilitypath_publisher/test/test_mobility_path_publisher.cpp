@@ -40,11 +40,11 @@ TEST(MobilityPathPublicationTest, test1)
     tf.transform.rotation.w =1;
     auto res = worker.mobilityPathMessageGenerator(plan, tf);
     EXPECT_EQ(3, res.trajectory.offsets.size());
-    EXPECT_EQ(200, res.trajectory.location.ecef_x);
+    EXPECT_EQ(2, res.trajectory.location.ecef_x);
     EXPECT_EQ(100, res.trajectory.offsets[0].offset_x);
-    EXPECT_EQ(300, res.trajectory.location.ecef_y);
+    EXPECT_EQ(3, res.trajectory.location.ecef_y);
     EXPECT_EQ(100, res.trajectory.offsets[1].offset_y);
-    EXPECT_EQ(300, res.trajectory.location.ecef_z);
+    EXPECT_EQ(3, res.trajectory.location.ecef_z);
     EXPECT_EQ(0, res.trajectory.offsets[2].offset_z);
 }
 
