@@ -86,6 +86,8 @@ namespace platoon_control
         	
         	ros::Publisher plugin_discovery_pub_;
 
+					ros::Timer discovery_pub_timer_;
+
 			// TODO: add communication to receive leader
 			PlatoonLeaderInfo leader;
 

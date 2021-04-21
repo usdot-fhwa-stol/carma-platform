@@ -90,11 +90,10 @@ namespace cooperative_lanechange
         // set world model point form wm listener
         wm_ = wml_->getWorldModel();
 
+        discovery_pub_timer_ = pnh_->createTimer(
+            ros::Duration(ros::Rate(10.0)),
+            [this](const auto&) -> { this->cooperative_lanechange_plugin_discovery_pub_.publish(this->plugin_discovery_msg_); });
 
-        ros::CARMANodeHandle::setSpinCallback([this]() -> bool {
-            cooperative_lanechange_plugin_discovery_pub_.publish(plugin_discovery_msg_);
-            return true;
-        });
         //@SONAR_START@
     }
 

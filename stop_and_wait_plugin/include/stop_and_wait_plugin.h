@@ -147,7 +147,8 @@ namespace stop_and_wait_plugin
         ros::Subscriber pose_sub_;
         ros::Subscriber twist_sub_;
         ros::Publisher jerk_pub_;
-
+        ros::Timer discovery_pub_timer_;
+        
         // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;
        

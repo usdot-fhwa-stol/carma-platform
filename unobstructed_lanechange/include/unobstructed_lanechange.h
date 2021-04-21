@@ -234,6 +234,7 @@ namespace unobstructed_lanechange
             cav_msgs::Plugin plugin_discovery_msg_;
             ros::Subscriber pose_sub_;
             ros::Subscriber twist_sub_;
+            ros::Timer discovery_pub_timer_;
 
             // trajectory frequency
             double traj_freq = 10;

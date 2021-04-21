@@ -21,21 +21,24 @@ namespace mobilitypath_publisher
 {
 // @SONAR_STOP@
     MobilityPathPublication::MobilityPathPublication():
-                            spin_rate_(10.0) {}
+                            path_pub_rate_(10.0) {}
 
     void MobilityPathPublication::initialize()
     {
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
-        pnh_->param<double>("spin_rate", spin_rate_, 10.0);
+        pnh_->param<double>("path_pub_rate", path_pub_rate_, 10.0);
         pnh_->getParam("vehicle_id", sender_id);
         mob_path_pub_ = nh_->advertise<cav_msgs::MobilityPath>("mobility_path_msg", 5);
         traj_sub_ = nh_->subscribe("plan_trajectory", 5, &MobilityPathPublication::trajectory_cb, this);
         pose_sub_ = nh_->subscribe("current_pose", 5, &MobilityPathPublication::currentpose_cb, this);
         bsm_sub_ = nh_->subscribe("bsm_outbound", 1, &MobilityPathPublication::bsm_cb, this);
         tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
-        ros::CARMANodeHandle::setSpinCallback(std::bind(&MobilityPathPublication::spinCallback, this));
-        ros::CARMANodeHandle::setSpinRate(spin_rate_);
+
+        path_pub_timer_ = pnh_->createTimer(
+            ros::Duration(ros::Rate(path_pub_rate_)),
+            [this](const auto&) -> { spinCallback(); });
+
     }
 
     void MobilityPathPublication::run()

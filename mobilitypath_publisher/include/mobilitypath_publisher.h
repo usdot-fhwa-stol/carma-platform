@@ -64,6 +64,8 @@ namespace mobilitypath_publisher
         ros::Subscriber accel_sub_;
         ros::Subscriber bsm_sub_;
 
+        ros::Timer path_pub_timer_;
+
         // ROS publishers
         ros::Publisher mob_path_pub_;
 

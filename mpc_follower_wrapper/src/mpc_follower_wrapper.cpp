@@ -48,10 +48,10 @@ void MPCFollowerWrapper::Initialize() {
   plugin_discovery_msg_.type = cav_msgs::Plugin::CONTROL;
   plugin_discovery_msg_.capability = "control_mpc_plan/plan_controls";
 
-  ros::CARMANodeHandle::setSpinCallback([this]() {
-    mpc_plugin_discovery_pub_.publish(plugin_discovery_msg_);
-    return true;
-  });
+  discovery_pub_timer_ = pnh_->createTimer(
+      ros::Duration(ros::Rate(10.0)),
+      [this](const auto&) -> { this->mpc_plugin_discovery_pub_.publish(this->plugin_discovery_msg_); });
+
 }
 
 void MPCFollowerWrapper::CurrentPoseHandler(const geometry_msgs::PoseStamped::ConstPtr& pose) {

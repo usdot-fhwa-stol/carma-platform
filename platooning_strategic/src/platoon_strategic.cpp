@@ -50,10 +50,10 @@ namespace platoon_strategic
         mob_op_sub_ = nh_->subscribe("incoming_mobility_operation_message", 1, &PlatoonStrategicPlugin::mob_op_cb, this);
 
 
-        ros::CARMANodeHandle::setSpinCallback([this]() -> bool {
-            platoon_strategic_plugin_discovery_pub_.publish(plugin_discovery_msg_);
-            return true;
-        });
+        discovery_pub_timer_ = pnh_->createTimer(
+            ros::Duration(ros::Rate(10.0)),
+            [this](const auto&) -> { this->platoon_strategic_plugin_discovery_pub_.publish(this->plugin_discovery_msg_); });
+
 
 
     }

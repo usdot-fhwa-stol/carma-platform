@@ -41,9 +41,9 @@ int main(int argc, char** argv)
   
   ros::Subscriber jerk_sub_ = nh.subscribe("plugins/StopandWaitPlugin/jerk_val", 1, &pure_pursuit_jerk_wrapper::PurePursuitJerkWrapper::updatejerk, &purePursuitJerkWrapper);
 
-  ros::CARMANodeHandle::setSpinRate(10);
-
-  ros::CARMANodeHandle::setSpinCallback(std::bind(&pure_pursuit_jerk_wrapper::PurePursuitJerkWrapper::onSpin, &purePursuitJerkWrapper));
+  ros::Timer discovery_pub_timer_ = pnh_->createTimer(
+            ros::Duration(ros::Rate(10.0)),
+            [&purePursuitJerkWrapper](const auto&) -> { purePursuitJerkWrapper.onSpin(); });
 
   ROS_INFO("Successfully launched node.");
   ros::CARMANodeHandle::spin();

@@ -67,11 +67,10 @@ namespace port_drayage_plugin
         });
 
         _pose_subscriber = std::make_shared<ros::Subscriber>(pose_sub);
-
-        std::function<bool()> spin_cb = [&]() {
-            return pdw.spin();
-        };
-        _nh->setSpinCallback(spin_cb);
+        
+        ros::Timer discovery_pub_timer_ = pnh_->createTimer(
+            ros::Duration(ros::Rate(10.0)),
+            [&pdw](const auto&) -> { pdw.spin(); });
 
         ros::CARMANodeHandle::spin();
 

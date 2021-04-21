@@ -79,20 +79,19 @@ namespace stop_and_wait_plugin
         pnh_->param<double>("min_jerk", min_jerk_limit_);
         pnh_->param<double>("/guidance/destination_downtrack_range",destination_downtrack_range_);
 
-        ros::CARMANodeHandle::setSpinCallback([this]() -> bool
-        {
-            plugin_discovery_pub_.publish(plugin_discovery_msg_);
-            std_msgs::Float64 jerk_msg;
-            jerk_msg.data = jerk_;
-            jerk_pub_.publish(jerk_msg);
-            return true;
-        });
+        discovery_pub_timer_ = pnh_->createTimer(
+            ros::Duration(ros::Rate(10.0)),
+            [this](const auto&) -> { 
+                this->plugin_discovery_pub_.publish(this->plugin_discovery_msg_);
+                std_msgs::Float64 jerk_msg;
+                jerk_msg.data = this->jerk_;
+                jerk_pub_.publish(jerk_msg);
+             });
     }
 
     void StopandWait::run()
     {
         initialize();
-        double spin_rate = pnh_->param<double>("spin_rate_hz",10.0);
         ros::CARMANodeHandle::spin();
     }
 

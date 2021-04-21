@@ -50,11 +50,10 @@ namespace route_following_plugin
         wml_.reset(new carma_wm::WMListener());
         // set world model point form wm listener
         wm_ = wml_->getWorldModel();
-        ros::CARMANodeHandle::setSpinCallback([this]() -> bool 
-        {
-           plugin_discovery_pub_.publish(plugin_discovery_msg_);
-            return true;
-        });
+
+        discovery_pub_timer_ = pnh_->createTimer(
+            ros::Duration(ros::Rate(10.0)),
+            [this](const auto&) -> { this->plugin_discovery_pub_.publish(this->plugin_discovery_msg_); });
     }
     void RouteFollowingPlugin::run()
     {
