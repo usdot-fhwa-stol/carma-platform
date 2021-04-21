@@ -97,7 +97,6 @@ namespace platoon_strategic
         psm_.onMobilityOperationMessage(mobility_op_msg_);
         psm_.onMobilityResponseMessage(mobility_resp_msg_);
         run_states();
-        ros::CARMANodeHandle::setSpinRate(10.0);
         ros::CARMANodeHandle::spin();
 
     }

@@ -93,7 +93,6 @@ namespace stop_and_wait_plugin
     {
         initialize();
         double spin_rate = pnh_->param<double>("spin_rate_hz",10.0);
-        ros::CARMANodeHandle::setSpinRate(spin_rate);
         ros::CARMANodeHandle::spin();
     }
 

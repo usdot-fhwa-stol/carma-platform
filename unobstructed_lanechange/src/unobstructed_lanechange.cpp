@@ -85,7 +85,6 @@ namespace unobstructed_lanechange
     void UnobstructedLaneChangePlugin::run()
     {
     	initialize();
-        ros::CARMANodeHandle::setSpinRate(10.0);
         ros::CARMANodeHandle::spin();
 
     }
