@@ -213,7 +213,7 @@ public:
    * \param original_tp original trajectory plan
    * \return minumum required
    */
-  double check_traj_for_digital_min_gap(const cav_msgs::TrajectoryPlan& original_tp);
+  double check_traj_for_digital_min_gap(const cav_msgs::TrajectoryPlan& original_tp) const;
 
 
 private:

@@ -425,10 +425,7 @@ namespace yield_plugin
         // check if a digital_gap is available
         double digital_gap = check_traj_for_digital_min_gap(original_tp);
         // if a digital gap is available, it is replaced as safety gap 
-        if (digital_gap < std::numeric_limits<double>::max())
-        {
-          safety_gap = digital_gap;
-        }
+        safety_gap = std::max(safety_gap, digital_gap);
       }
       // safety gap is implemented
       double goal_pos = x_lead - safety_gap; 
@@ -530,9 +527,9 @@ namespace yield_plugin
     return max_speed;
   }
 
-  double YieldPlugin::check_traj_for_digital_min_gap(const cav_msgs::TrajectoryPlan& original_tp)
+  double YieldPlugin::check_traj_for_digital_min_gap(const cav_msgs::TrajectoryPlan& original_tp) const
   {
-    double desired_gap = std::numeric_limits<double>::max();
+    double desired_gap = 0;
 
     for (size_t i = 0; i < original_tp.trajectory_points.size(); i++)
     {
@@ -544,10 +541,11 @@ namespace yield_plugin
         throw std::invalid_argument("Trajectory point is not on a valid lanelet.");
       }
       auto digital_min_gap = llts[0].regulatoryElementsAs<lanelet::DigitalMinimumGap>(); //Returns a list of these elements)
-      if (digital_min_gap.size() > 0) 
+      if (!digital_min_gap.empty()) 
       {
         double digital_gap = digital_min_gap[0]->getMinimumGap(); // Provided gap is in meters
-        desired_gap = std::min(desired_gap, digital_gap);
+        ROS_DEBUG_STREAM("Digital Gap found with value: " << digital_gap);
+        desired_gap = std::max(desired_gap, digital_gap);
       }
     }
     return desired_gap;
