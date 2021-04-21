@@ -81,7 +81,7 @@ namespace mobilitypath_visualizer {
          * \note  This function assumes that every point's timestamp in marker is matched
          * \return Visualization Marker in text type
          */
-        visualization_msgs::MarkerArray composeLabelMarker(const visualization_msgs::MarkerArray& host_marker, const std::vector<visualization_msgs::MarkerArray>& cav_markers);
+        visualization_msgs::MarkerArray composeLabelMarker(const visualization_msgs::MarkerArray& host_marker, const std::vector<visualization_msgs::MarkerArray>& cav_markers) const;
 
         /**
          * \brief Matches timestamps of CAV's individual points of cav_markers to that of host_marker and interpolates their points using the speed between points

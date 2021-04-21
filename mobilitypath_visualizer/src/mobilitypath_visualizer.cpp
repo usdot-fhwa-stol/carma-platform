@@ -32,7 +32,8 @@ namespace mobilitypath_visualizer {
         }
     }
 
-    MobilityPathVisualizer::MobilityPathVisualizer() {}
+    MobilityPathVisualizer::MobilityPathVisualizer() = default;
+
     void MobilityPathVisualizer::run()
     {
         initialize();
@@ -102,7 +103,7 @@ namespace mobilitypath_visualizer {
                 ROS_DEBUG_STREAM("Composed cav marker successfuly! with sender_id: " << msg.header.sender_id);
             }
         }
-        catch (tf2::TransformException &ex)
+        catch (const tf2::TransformException &ex)
         {
             ROS_WARN("%s", ex.what());
         }
@@ -124,15 +125,20 @@ namespace mobilitypath_visualizer {
         marker.scale.z = z_;
         marker.frame_locked = true;
 
-        marker.color.r = color.red;
-        marker.color.g = color.green;
-        marker.color.b = color.blue;
+        marker.color.r = (float)color.red;
+        marker.color.g = (float)color.green;
+        marker.color.b = (float)color.blue;
         marker.color.a = 1.0f;
         
         size_t count = std::max(prev_marker_list_size_[msg.header.sender_id], msg.trajectory.offsets.size());
 
         auto curr_location_msg = msg; //variable to update on each iteration as offsets are measured since last traj point
         
+        //location message standard is specified in meters, while the logic here expects cm to work with offsets
+        curr_location_msg.trajectory.location.ecef_x = curr_location_msg.trajectory.location.ecef_x * 100;
+        curr_location_msg.trajectory.location.ecef_y = curr_location_msg.trajectory.location.ecef_y * 100;
+        curr_location_msg.trajectory.location.ecef_z = curr_location_msg.trajectory.location.ecef_z * 100;
+
         marker.id = 0;
         geometry_msgs::Point arrow_start;
         ROS_DEBUG_STREAM("ECEF point x: " << curr_location_msg.trajectory.location.ecef_x << ", y:" << curr_location_msg.trajectory.location.ecef_y);
@@ -200,7 +206,7 @@ namespace mobilitypath_visualizer {
     } 
     
 
-    visualization_msgs::MarkerArray MobilityPathVisualizer::composeLabelMarker(const visualization_msgs::MarkerArray& host_marker, const std::vector<visualization_msgs::MarkerArray>& cav_markers)
+    visualization_msgs::MarkerArray MobilityPathVisualizer::composeLabelMarker(const visualization_msgs::MarkerArray& host_marker, const std::vector<visualization_msgs::MarkerArray>& cav_markers) const
     {
         visualization_msgs::MarkerArray output;
         visualization_msgs::Marker marker;
@@ -225,7 +231,7 @@ namespace mobilitypath_visualizer {
             {
                 if (compute_2d_distance(cav_marker.markers[idx].points[0], host_marker.markers[idx].points[0]) <= 1.0) // within 1 meter
                 {
-                    marker.id = idx;
+                    marker.id = (int32_t)idx;
                     marker.header.stamp = host_marker.markers[idx].header.stamp;
                     marker.pose.position.x = cav_marker.markers[idx].points[0].x;
                     marker.pose.position.y = cav_marker.markers[idx].points[0].y;
@@ -244,7 +250,7 @@ namespace mobilitypath_visualizer {
             if (compute_2d_distance(cav_marker.markers[idx-1].points[1], host_marker.markers[idx-1].points[1]) <= 1.0) // within 1 meter
             {   
                 // last point
-                marker.id = idx;
+                marker.id = (int32_t)idx;
                 marker.header.stamp = host_marker.markers[idx-1].header.stamp;
                 marker.pose.position.x = cav_marker.markers[idx-1].points[1].x;
                 marker.pose.position.y = cav_marker.markers[idx-1].points[1].y;
@@ -341,25 +347,12 @@ namespace mobilitypath_visualizer {
 
     bool MobilityPathVisualizer::spinCallback()
     {
-        
         // match cav_markers' timestamps to that of host
         if (!host_marker_received_)
             return true;
 
         // publish host marker
         host_marker_pub_.publish(host_marker_);
-
-        cav_markers_ = {}; // TODO: Remove after integration test
-
-        auto host_marker_tmp = host_marker_;
-        for (auto& marker : host_marker_tmp.markers)
-        {
-            marker.color.b = 1.0f;
-            marker.color.g = 0.0f;
-            marker.header.stamp -= ros::Duration(0.050);
-        }
-
-        cav_markers_.push_back(host_marker_tmp);
 
         cav_markers_ = matchTrajectoryTimestamps(host_marker_, cav_markers_);
 
