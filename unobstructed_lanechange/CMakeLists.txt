@@ -48,9 +48,9 @@ find_package(Eigen3 REQUIRED)
 
 
 catkin_package(
-   INCLUDE_DIRS include
-   CATKIN_DEPENDS ${CATKIN_DEPS}
-   DEPENDS Boost Eigen3
+  INCLUDE_DIRS include
+  CATKIN_DEPENDS ${CATKIN_DEPS}
+  DEPENDS Boost Eigen3
 )
 
 ###########
@@ -96,10 +96,8 @@ target_link_libraries(lc_helper_node
 #############
 
 
-install(DIRECTORY include/${PROJECT_NAME}/
+install(DIRECTORY include
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
 )
 
 ## Install C++
