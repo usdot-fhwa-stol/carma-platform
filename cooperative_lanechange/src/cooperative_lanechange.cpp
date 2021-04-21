@@ -92,7 +92,7 @@ namespace cooperative_lanechange
 
         discovery_pub_timer_ = pnh_->createTimer(
             ros::Duration(ros::Rate(10.0)),
-            [this](const auto&) -> { this->cooperative_lanechange_plugin_discovery_pub_.publish(this->plugin_discovery_msg_); });
+            [this](const auto&) { cooperative_lanechange_plugin_discovery_pub_.publish(plugin_discovery_msg_); });
 
         //@SONAR_START@
     }

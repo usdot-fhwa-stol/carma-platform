@@ -87,9 +87,9 @@ public:
     ros::ServiceClient yield_client = nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/YieldPlugin/plan_trajectory");
     worker.set_yield_client(yield_client);
 
-    ros::Timer discovery_pub_timer_ = pnh_->createTimer(
+    ros::Timer discovery_pub_timer_ = nh.createTimer(
             ros::Duration(ros::Rate(10.0)),
-            [this](const auto&) -> {worker.onSpin()});
+            [&worker](const auto&) {worker.onSpin();});
     ros::CARMANodeHandle::spin();
   }
 };

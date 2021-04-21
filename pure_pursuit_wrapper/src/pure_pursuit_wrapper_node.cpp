@@ -41,9 +41,9 @@ int main(int argc, char** argv)
   ros::Subscriber trajectory_plan_sub = nh.subscribe(
       "pure_pursuit/plan_trajectory", 1, &pure_pursuit_wrapper::PurePursuitWrapper::trajectoryPlanHandler, &purePursuitWrapper);
   
-  ros::Timer discovery_pub_timer_ = pnh_->createTimer(
+  ros::Timer discovery_pub_timer_ = nh.createTimer(
             ros::Duration(ros::Rate(10.0)),
-            [&purePursuitWrapper](const auto&) -> { purePursuitWrapper.onSpin(); });
+            [&purePursuitWrapper](const auto&) { purePursuitWrapper.onSpin(); });
 
   ROS_INFO("Successfully launched node.");
   ros::CARMANodeHandle::spin();

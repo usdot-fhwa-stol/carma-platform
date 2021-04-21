@@ -72,10 +72,10 @@ public:
     ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/PlatooningTacticalPlugin/plan_trajectory",
                                             &PlatooningTacticalPlugin::plan_trajectory_cb, &worker);
 
-    ros::Timer discovery_pub_timer_ = pnh_->createTimer(
+    ros::Timer discovery_pub_timer_ = nh.createTimer(
             ros::Duration(ros::Rate(10.0)),
-            [&worker](const auto&) -> { worker.onSpin(); });
-            
+            [&worker](const auto&) { worker.onSpin(); });
+
     ros::CARMANodeHandle::spin();
   }
 };

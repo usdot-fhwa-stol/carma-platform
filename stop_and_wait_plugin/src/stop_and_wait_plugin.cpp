@@ -81,10 +81,10 @@ namespace stop_and_wait_plugin
 
         discovery_pub_timer_ = pnh_->createTimer(
             ros::Duration(ros::Rate(10.0)),
-            [this](const auto&) -> { 
-                this->plugin_discovery_pub_.publish(this->plugin_discovery_msg_);
+            [this](const auto&) { 
+                plugin_discovery_pub_.publish(plugin_discovery_msg_);
                 std_msgs::Float64 jerk_msg;
-                jerk_msg.data = this->jerk_;
+                jerk_msg.data = jerk_;
                 jerk_pub_.publish(jerk_msg);
              });
     }

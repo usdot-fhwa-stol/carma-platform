@@ -68,9 +68,9 @@ namespace port_drayage_plugin
 
         _pose_subscriber = std::make_shared<ros::Subscriber>(pose_sub);
         
-        ros::Timer discovery_pub_timer_ = pnh_->createTimer(
+        ros::Timer discovery_pub_timer_ = _nh->createTimer(
             ros::Duration(ros::Rate(10.0)),
-            [&pdw](const auto&) -> { pdw.spin(); });
+            [&pdw](const auto&) { pdw.spin(); });
 
         ros::CARMANodeHandle::spin();
 

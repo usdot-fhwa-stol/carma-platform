@@ -63,11 +63,11 @@ namespace route {
     void Route::run()
     {
         initialize();
-        
+
         // spin with spin_callback function from RouteGeneratorWorker
         ros::Timer discovery_pub_timer_ = pnh_->createTimer(
             ros::Duration(ros::Rate(10.0)),
-            [&rg_worker_](const auto&) -> { rg_worker_.spin_callback(); });
+            [this](const auto&) { rg_worker_.spin_callback(); });
 
         ros::CARMANodeHandle::spin();
     }

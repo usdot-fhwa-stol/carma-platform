@@ -48,9 +48,9 @@ void MPCFollowerWrapper::Initialize() {
   plugin_discovery_msg_.type = cav_msgs::Plugin::CONTROL;
   plugin_discovery_msg_.capability = "control_mpc_plan/plan_controls";
 
-  discovery_pub_timer_ = pnh_->createTimer(
+  discovery_pub_timer_ = nh_.createTimer(
       ros::Duration(ros::Rate(10.0)),
-      [this](const auto&) -> { this->mpc_plugin_discovery_pub_.publish(this->plugin_discovery_msg_); });
+      [this](const auto&) { mpc_plugin_discovery_pub_.publish(plugin_discovery_msg_); });
 
 }
 

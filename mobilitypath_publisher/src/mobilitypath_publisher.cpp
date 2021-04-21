@@ -37,7 +37,7 @@ namespace mobilitypath_publisher
 
         path_pub_timer_ = pnh_->createTimer(
             ros::Duration(ros::Rate(path_pub_rate_)),
-            [this](const auto&) -> { spinCallback(); });
+            [this](const auto&) { this->spinCallback(); });
 
     }
 

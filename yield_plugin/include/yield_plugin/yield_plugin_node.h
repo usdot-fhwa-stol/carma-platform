@@ -82,10 +82,10 @@ public:
     ros::Subscriber bsm_sub = nh.subscribe("bsm_outbound", 1, &YieldPlugin::bsm_cb,  &worker);
     
 
-    ros::Timer discovery_pub_timer_ = pnh_->createTimer(
+    ros::Timer discovery_pub_timer_ = nh.createTimer(
             ros::Duration(ros::Rate(10.0)),
-            [&worker](const auto&) -> { worker.onSpin(); });
-            
+            [&worker](const auto&) { worker.onSpin(); });
+
     ros::CARMANodeHandle::spin();
   }
 };
