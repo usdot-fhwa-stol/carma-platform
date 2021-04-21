@@ -176,7 +176,6 @@ namespace cooperative_lanechange
     void CooperativeLaneChangePlugin::run()
     {
     	initialize();
-        ros::CARMANodeHandle::setSpinRate(10.0);
         ros::CARMANodeHandle::spin();
 
     }

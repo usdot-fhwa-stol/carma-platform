@@ -51,7 +51,7 @@ namespace mobilitypath_publisher
         // node handles
         std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
-        double spin_rate_;
+        double path_pub_rate_;
 
         bool spinCallback();
 
