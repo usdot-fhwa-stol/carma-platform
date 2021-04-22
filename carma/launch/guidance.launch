@@ -27,11 +27,13 @@
   
   <!-- Remap topics from external packages -->
   <remap from="bsm" to="$(optenv CARMA_MSG_NS)/outgoing_bsm"/>
+  <remap from="bsm_outbound" to="$(optenv CARMA_MSG_NS)/bsm_outbound"/>
   <remap from="incoming_map" to="$(optenv CARMA_MSG_NS)/incoming_map"/>
   <remap from="incoming_spat" to="$(optenv CARMA_MSG_NS)/incoming_spat"/>
   <remap from="outgoing_mobility_operation" to="$(optenv CARMA_MSG_NS)/outgoing_mobility_operation"/>
   <remap from="outgoing_mobility_request" to="$(optenv CARMA_MSG_NS)/outgoing_mobility_request"/>
   <remap from="outgoing_mobility_response" to="$(optenv CARMA_MSG_NS)/outgoing_mobility_response"/>
+  <remap from="incoming_mobility_response" to="$(optenv CARMA_MSG_NS)/incoming_mobility_response"/>
 
   <remap from="heading" to="$(optenv CARMA_INTR_NS)/gnss/heading_raw"/>
   <remap from="nav_sat_fix" to="$(optenv CARMA_INTR_NS)/gnss/fix_raw"/>
@@ -176,3 +178,4 @@
   </group>
 
 </launch>
+

@@ -121,12 +121,14 @@ namespace cooperative_lanechange
     double CooperativeLaneChangePlugin::find_current_gap(long veh2_lanelet_id, double veh2_downtrack) const {
                 
         //find downtrack distance between ego and lag vehicle
+        ROS_DEBUG_STREAM("entered find_current_gap");
         double current_gap = 0.0;
         lanelet::BasicPoint2d ego_pos(pose_msg_.pose.position.x,pose_msg_.pose.position.y);
-        double ego_current_downtrack = wm_->routeTrackPos(ego_pos).downtrack;
+        //double ego_current_downtrack = wm_->routeTrackPos(ego_pos).downtrack;
         
         lanelet::LaneletMapConstPtr const_map(wm_->getMap());
         lanelet::ConstLanelet veh2_lanelet = const_map->laneletLayer.get(veh2_lanelet_id);
+        ROS_DEBUG_STREAM("veh2_lanelet id " << veh2_lanelet.id());
 
         lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
         auto current_lanelets = lanelet::geometry::findNearest(const_map->laneletLayer, current_loc, 10);       
@@ -136,22 +138,40 @@ namespace cooperative_lanechange
             return true;
         }
         lanelet::ConstLanelet current_lanelet = current_lanelets[0].second;
-
+        ROS_DEBUG_STREAM("current llt id " << current_lanelet.id());
+        
         //Create temporary route between the two vehicles
         lanelet::ConstLanelet start_lanelet = veh2_lanelet;
         lanelet::ConstLanelet end_lanelet = current_lanelet;
         lanelet::traffic_rules::TrafficRulesUPtr traffic_rules = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany,lanelet::Participants::VehicleCar);
+        ROS_DEBUG_STREAM("traffic rules created]");
+        
         lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*(wm_->getMap()), *traffic_rules);
+        ROS_DEBUG_STREAM("Graph created]");
 
         auto temp_route = map_graph->getRoute(start_lanelet, end_lanelet);
+        ROS_DEBUG_STREAM("Route created]");
         
         auto shortest_path2 = temp_route.get().shortestPath();
+        ROS_DEBUG_STREAM("Shorted path created size: " << shortest_path2.size());
+        for (auto llt : shortest_path2)
+        {
+            ROS_DEBUG_STREAM("llt id  route: " << llt.id());
+        }  
+
 
         //To find downtrack- distance of veh2 from current to start of end lanelet + downtrack of veh1 in its own current lanelet
-        lanelet::BasicPoint2d p = shortest_path2.back().centerline2d().front(); //Start point of last lanelet in path
         
-        double downtrack_1 = wm_->routeTrackPos(p).downtrack;
-        double remaining_downtrack = downtrack_1 - veh2_downtrack + ego_current_downtrack;
+        double veh2_lanelet_start_downtrack = wm_->routeTrackPos(shortest_path2.front().centerline2d().front()).downtrack;
+        ROS_DEBUG_STREAM("veh2_lanelet_start_downtrack:" << veh2_lanelet_start_downtrack);
+
+        double ego_current_downtrack = wm_->routeTrackPos(ego_pos).downtrack;      
+        ROS_DEBUG_STREAM("ego_current_downtrack:" << ego_current_downtrack);
+        
+        
+        double remaining_downtrack = ego_current_downtrack - veh2_downtrack - veh2_lanelet_start_downtrack;
+        ROS_DEBUG_STREAM("Finding current gap");
+        ROS_DEBUG_STREAM("Ego current downtrack:"<<ego_current_downtrack<<" veh2 downtrack:"<<veh2_downtrack<<" veh2_lanelet_start_downtrack:"<<veh2_lanelet_start_downtrack);
         
         current_gap = remaining_downtrack;
 
@@ -219,7 +239,7 @@ namespace cooperative_lanechange
         std::vector<cav_msgs::RoadwayObstacle> rwol = wm_->getRoadwayObjects();
         //Assuming only one connected vehicle in list 
         for(int i=0;i<rwol.size();i++){
-            if(rwol[i].connected_vehicle_type.type == cav_msgs::ConnectedVehicleType::CONNECTED_AND_AUTOMATED){
+            if(rwol[i].connected_vehicle_type.type == cav_msgs::ConnectedVehicleType::NOT_CONNECTED){
                 veh2_lanelet_id = rwol[0].lanelet_id;
                 veh2_downtrack = rwol[0].down_track; //Returns downtrack
                 veh2_speed = rwol[0].object.velocity.twist.linear.x;
@@ -230,15 +250,21 @@ namespace cooperative_lanechange
         if(foundRoadwayObject){
             ROS_DEBUG_STREAM("Found Roadway object");
             //get current_gap
+            ROS_DEBUG_STREAM("veh2_lanelet_id:" << veh2_lanelet_id << "veh2_downtrack" << veh2_downtrack);
+            
             double current_gap = find_current_gap(veh2_lanelet_id,veh2_downtrack);
             ROS_DEBUG_STREAM("Current gap:"<<current_gap);
             //get desired gap - desired time gap (default 3s)* relative velocity
             double relative_velocity = current_speed_ - veh2_speed;
+            ROS_DEBUG_STREAM("Relative velocity:"<<relative_velocity);
             double desired_gap = desired_time_gap_ * relative_velocity;      
-            
-            if(current_gap > desired_gap){
-                negotiate = false;  //No need for negotiation
+            ROS_DEBUG_STREAM("Desired gap:"<<desired_gap);
+            if(desired_gap< 5.0){
+                desired_gap = 5.0;
             }
+            // if(current_gap > desired_gap){
+            //     negotiate = false;  //No need for negotiation
+            // }
             
         }
         else{
@@ -570,6 +596,11 @@ namespace cooperative_lanechange
         std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
             trajectory_from_points_times_orientations(future_geom_points, times, final_yaw_values, state_time);
         
+        ROS_DEBUG_STREAM("PRINTING FINAL SPEEDS");
+        for (auto speed : final_actual_speeds)
+        {
+            ROS_DEBUG_STREAM("Final Speed: " << speed);
+        }
         //std::vector<cav_msgs::TrajectoryPlanPoint> traj;
         return traj_points;
 
@@ -798,15 +829,12 @@ namespace cooperative_lanechange
                                                const cav_msgs::VehicleState& state) const
     {
         lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
-        ROS_DEBUG_STREAM("veh_point: " << veh_point.x() << ", " << veh_point.y());
         double min_distance = std::numeric_limits<double>::max();
         int i = 0;
         int best_index = 0;
         for (const auto& p : points)
         {
             double distance = lanelet::geometry::distance2d(p.point, veh_point);
-            ROS_DEBUG_STREAM("distance: " << distance);
-            ROS_DEBUG_STREAM("p: " << p.point.x() << ", " << p.point.y());
             if (distance < min_distance)
             {
             best_index = i;
@@ -899,3 +927,4 @@ namespace cooperative_lanechange
         
     }
 }
+
