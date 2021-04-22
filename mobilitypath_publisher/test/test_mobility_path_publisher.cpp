@@ -37,13 +37,14 @@ TEST(MobilityPathPublicationTest, test1)
     tf.transform.translation.x = 1;
     tf.transform.translation.y = 2;
     tf.transform.translation.z = 3;
+    tf.transform.rotation.w =1;
     auto res = worker.mobilityPathMessageGenerator(plan, tf);
     EXPECT_EQ(3, res.trajectory.offsets.size());
-    EXPECT_EQ(1, res.trajectory.location.ecef_x);
-    EXPECT_EQ(1, res.trajectory.offsets[0].offset_x);
-    EXPECT_EQ(2, res.trajectory.location.ecef_y);
-    EXPECT_EQ(4, res.trajectory.offsets[1].offset_y);
-    EXPECT_EQ(0, res.trajectory.location.ecef_z);
+    EXPECT_EQ(2, res.trajectory.location.ecef_x);
+    EXPECT_EQ(100, res.trajectory.offsets[0].offset_x);
+    EXPECT_EQ(3, res.trajectory.location.ecef_y);
+    EXPECT_EQ(100, res.trajectory.offsets[1].offset_y);
+    EXPECT_EQ(3, res.trajectory.location.ecef_z);
     EXPECT_EQ(0, res.trajectory.offsets[2].offset_z);
 }
 
@@ -63,11 +64,10 @@ TEST(MobilityPathPublicationTest, test2)
     geometry_msgs::TransformStamped tf;
     tf.transform.translation.x = 1;
     tf.transform.translation.y = 2;
+    tf.transform.rotation.w =1;
 
     auto res = worker.mobilityPathMessageGenerator(plan, tf);
     EXPECT_EQ(0, res.trajectory.offsets.size());
-    EXPECT_EQ(1, res.trajectory.location.ecef_x);
-    EXPECT_EQ(2, res.trajectory.location.ecef_y);
     
 }
 
