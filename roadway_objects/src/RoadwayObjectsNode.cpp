@@ -34,7 +34,6 @@ void RoadwayObjectsNode::publishObstacles(const cav_msgs::RoadwayObstacleList& o
 
 void RoadwayObjectsNode::run()
 {
-  nh_.setSpinRate(20);
   nh_.spin();
 }
 

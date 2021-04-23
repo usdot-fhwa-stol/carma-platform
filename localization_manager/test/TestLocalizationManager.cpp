@@ -60,7 +60,8 @@ TEST(LocalizationManager, testSpin)
 
   ros::Time::setNow(ros::Time(1.0));
 
-  ASSERT_TRUE(manager.onSpin());
+  ros::TimerEvent e;
+  manager.posePubTick(e);
   ASSERT_TRUE(!!status_msg);
 
   ASSERT_EQ(cav_msgs::LocalizationStatusReport::UNINITIALIZED, status_msg.get().status);
@@ -118,7 +119,8 @@ TEST(LocalizationManager, testSignals)
   manager.poseAndStatsCallback(pose_msg_ptr, stat_msg_ptr);
 
   ASSERT_EQ(LocalizationState::OPERATIONAL, manager.getState());
-
+  ros::TimerEvent e;
+  manager.posePubTick(e);
   ASSERT_TRUE(!!published_pose);
 
   ros::Time::setNow(ros::Time(3.2));
@@ -173,7 +175,7 @@ TEST(LocalizationManager, testSignals)
   ASSERT_FALSE(!!published_pose);
 
   manager.gnssPoseCallback(pose_msg_ptr);
-
+  manager.posePubTick(e);
   ASSERT_TRUE(!!published_pose);
 
   ros::Time::setNow(ros::Time(3.7));
@@ -224,7 +226,7 @@ TEST(LocalizationManager, testSignals)
 
   ros::Time::setNow(ros::Time(6.215));
 
-  manager.onSpin();
+  manager.posePubTick(e);
 
   ASSERT_EQ(LocalizationState::DEGRADED, manager.getState());
 
@@ -249,7 +251,7 @@ TEST(LocalizationManager, testSignals)
 
   ros::Time::setNow(ros::Time(6.6));
   
-  manager.onSpin();
+  manager.posePubTick(e);
 
   ASSERT_EQ(LocalizationState::DEGRADED_NO_LIDAR_FIX, manager.getState());
   

@@ -28,7 +28,7 @@ namespace plan_delegator
 
         pnh_.param<std::string>("planning_topic_prefix", planning_topic_prefix_, "/plugins/");        
         pnh_.param<std::string>("planning_topic_suffix", planning_topic_suffix_, "/plan_trajectory");
-        pnh_.param<double>("spin_rate", spin_rate_, 10.0);
+        pnh_.param<double>("trajectory_planning_rate", trajectory_planning_rate_, 10.0);
         pnh_.param<double>("trajectory_duration_threshold", max_trajectory_duration_, 6.0);
         pnh_.param<double>("min_speed", min_crawl_speed_, min_crawl_speed_);
 
@@ -41,8 +41,11 @@ namespace plan_delegator
         guidance_state_sub_ = nh_.subscribe<cav_msgs::GuidanceState>("guidance_state", 5, &PlanDelegator::guidanceStateCallback, this);
 
 
-        ros::CARMANodeHandle::setSpinCallback(std::bind(&PlanDelegator::spinCallback, this));
-        ros::CARMANodeHandle::setSpinRate(spin_rate_);
+        
+        traj_timer_ = pnh_.createTimer(
+            ros::Duration(ros::Rate(trajectory_planning_rate_)),
+            &PlanDelegator::onTrajPlanTick, 
+            this);
     }
     
     void PlanDelegator::run() 
@@ -207,7 +210,7 @@ namespace plan_delegator
         return latest_trajectory_plan;
     }
 
-    bool PlanDelegator::spinCallback()
+    void PlanDelegator::onTrajPlanTick(const ros::TimerEvent& te)
     {
         cav_msgs::TrajectoryPlan trajectory_plan = planTrajectory();
         // Check if planned trajectory is valid before send out
@@ -220,6 +223,5 @@ namespace plan_delegator
         {
             ROS_WARN_STREAM("Planned trajectory is empty. It will not be published!");
         }
-        return true;
     }
 }

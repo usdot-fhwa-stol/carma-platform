@@ -138,8 +138,8 @@ namespace health_monitor
     void HealthMonitor::run()
     {
         initialize();
-        ros::CARMANodeHandle::setSpinCallback(std::bind(&HealthMonitor::spin_cb, this));
         ros::CARMANodeHandle::setSpinRate(spin_rate_);
+        ros::CARMANodeHandle::setSpinCallback(std::bind(&HealthMonitor::spin_cb, this));
         ros::CARMANodeHandle::spin();
     }
 

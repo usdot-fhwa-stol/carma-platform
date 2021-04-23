@@ -291,6 +291,7 @@ namespace cooperative_lanechange
             
             ros::Subscriber incoming_mobility_response_;
             ros::Subscriber bsm_sub_;
+            ros::Timer discovery_pub_timer_;
 
             // TF listenser
             tf2_ros::Buffer tf2_buffer_;
