@@ -65,7 +65,7 @@ namespace route {
         initialize();
 
         // spin with spin_callback function from RouteGeneratorWorker
-        ros::Timer discovery_pub_timer_ = pnh_->createTimer(
+        ros::Timer spin_timer = pnh_->createTimer(
             ros::Duration(ros::Rate(10.0)),
             [this](const auto&) { rg_worker_.spin_callback(); });
 

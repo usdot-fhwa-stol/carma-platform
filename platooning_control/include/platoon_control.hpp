@@ -38,17 +38,17 @@ namespace platoon_control
     {
         public:
             
-            // Default constructor for PlatoonControlPlugin class
-            PlatoonControlPlugin();
+					// Default constructor for PlatoonControlPlugin class
+					PlatoonControlPlugin();
 
-            void initialize();
+					void initialize();
 
-            // general starting point of this node
-            void run();
-			// Compose twist message by calculating speed and steering commands.
-			geometry_msgs::TwistStamped composeTwist(const cav_msgs::TrajectoryPlanPoint& point);
+					// general starting point of this node
+					void run();
+					// Compose twist message by calculating speed and steering commands.
+					geometry_msgs::TwistStamped composeTwist(const cav_msgs::TrajectoryPlanPoint& point);
 			
-			// local copy of pose
+					// local copy of pose
         	boost::shared_ptr<geometry_msgs::PoseStamped const> pose_msg_;
 
         
@@ -60,16 +60,16 @@ namespace platoon_control
 
         	PlatoonControlWorker pcw_;
 
-			double current_speed_ = 0.0;
+					double current_speed_ = 0.0;
 
-			// callback function for pose
-			void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
+					// callback function for pose
+					void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
 
-			// callback function for trajectory plan
+					// callback function for trajectory plan
         	void TrajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp);
 
-			// callback function for current twist
-			void currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist);
+					// callback function for current twist
+					void currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist);
 
         	void publishTwist(const geometry_msgs::TwistStamped& twist) const;
 
@@ -79,8 +79,8 @@ namespace platoon_control
 
         	// ROS Subscriber
         	ros::Subscriber trajectory_plan_sub;
-			ros::Subscriber current_twist_sub_;
-			ros::Subscriber pose_sub_;
+					ros::Subscriber current_twist_sub_;
+					ros::Subscriber pose_sub_;
         	// ROS Publisher
         	ros::Publisher twist_pub_;
         	
@@ -88,8 +88,8 @@ namespace platoon_control
 
 					ros::Timer discovery_pub_timer_;
 
-			// TODO: add communication to receive leader
-			PlatoonLeaderInfo leader;
+					// TODO: add communication to receive leader
+					PlatoonLeaderInfo leader;
 
 
 
