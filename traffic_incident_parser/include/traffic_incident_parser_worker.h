@@ -20,6 +20,7 @@
 #include <ros/ros.h>
 #include <cav_msgs/MobilityOperation.h>
 #include <cav_msgs/TrafficControlMessageV01.h>
+#include <cav_msgs/TrafficControlMessage.h>
 #include <functional>
 #include <iostream>
 #include <string>
@@ -45,7 +46,7 @@ class TrafficIncidentParserWorker
 
  public:
 
-  using PublishTrafficControlCallback = std::function<void(const cav_msgs::TrafficControlMessageV01&)>;
+  using PublishTrafficControlCallback = std::function<void(const cav_msgs::TrafficControlMessage&)>;
 
   /*!
    * \brief Constructor

@@ -68,7 +68,6 @@ namespace mobilitypath_publisher
         {
             ROS_WARN("%s", ex.what());
         }
-
     }
 
     void MobilityPathPublication::currentpose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
@@ -109,39 +108,50 @@ namespace mobilitypath_publisher
 
     cav_msgs::Trajectory MobilityPathPublication::TrajectoryPlantoTrajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points, const geometry_msgs::TransformStamped& tf) const{
         cav_msgs::Trajectory traj;
-        cav_msgs::LocationECEF ecef_location = TrajectoryPointtoECEF(traj_points[0], tf);
+
+        tf2::Stamped<tf2::Transform> transform;
+        tf2::fromMsg(tf, transform);
+
+        cav_msgs::LocationECEF ecef_location = TrajectoryPointtoECEF(traj_points[0], transform); //m to cm to fit the msg standard
 
         if (traj_points.size()<2){
             ROS_WARN("Received Trajectory Plan is too small");
             traj.offsets = {};
         }
         else{
+            cav_msgs::LocationECEF prev_point = ecef_location;
             for (size_t i=1; i<traj_points.size(); i++){
                 
-                    cav_msgs::LocationOffsetECEF offset;
-                    cav_msgs::LocationECEF new_point = TrajectoryPointtoECEF(traj_points[i], tf);
-                    offset.offset_x = new_point.ecef_x - ecef_location.ecef_x;
-                    offset.offset_y = new_point.ecef_y - ecef_location.ecef_y;
-                    offset.offset_z = new_point.ecef_z - ecef_location.ecef_z;
-                    traj.offsets.push_back(offset);
-                
+                cav_msgs::LocationOffsetECEF offset;
+                cav_msgs::LocationECEF new_point = TrajectoryPointtoECEF(traj_points[i], transform); //m to cm to fit the msg standard
+                offset.offset_x = (int16_t)(new_point.ecef_x - prev_point.ecef_x);  
+                offset.offset_y = (int16_t)(new_point.ecef_y - prev_point.ecef_y);
+                offset.offset_z = (int16_t)(new_point.ecef_z - prev_point.ecef_z);
+                prev_point = new_point;
+                traj.offsets.push_back(offset);
             }
         }
-        
-        
-        traj.location = ecef_location;
+        //according to msg standard, ecef_location is in meters
+        ecef_location.ecef_x = ecef_location.ecef_x /100;
+        ecef_location.ecef_y = ecef_location.ecef_y /100;
+        ecef_location.ecef_z = ecef_location.ecef_z /100;
+
+        traj.location = ecef_location; 
+
         return traj;
     }
 
 
 
-    cav_msgs::LocationECEF MobilityPathPublication::TrajectoryPointtoECEF(const cav_msgs::TrajectoryPlanPoint& traj_point, const geometry_msgs::TransformStamped& tf) const{
+    cav_msgs::LocationECEF MobilityPathPublication::TrajectoryPointtoECEF(const cav_msgs::TrajectoryPlanPoint& traj_point, const tf2::Transform& transform) const{
         cav_msgs::LocationECEF ecef_point;    
+        
+        auto traj_point_vec = tf2::Vector3(traj_point.x, traj_point.y, 0.0);
+        tf2::Vector3 ecef_point_vec = transform * traj_point_vec;
+        ecef_point.ecef_x = (int32_t)(ecef_point_vec.x() * 100.0); // m to cm
+        ecef_point.ecef_y = (int32_t)(ecef_point_vec.y() * 100.0);
+        ecef_point.ecef_z = (int32_t)(ecef_point_vec.z() * 100.0); 
 
-        ecef_point.ecef_x = traj_point.x * tf.transform.translation.x;
-        ecef_point.ecef_y = traj_point.y * tf.transform.translation.y;
-        ecef_point.ecef_z = 0.0 * tf.transform.translation.z;
-       
         return ecef_point;
     } 
     

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 LEIDOS.
+# Copyright (C) 2021 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -15,9 +15,9 @@
 #
 
 cmake_minimum_required(VERSION 2.8.3)
-project(mobilitypath_publisher)
+project(mobilitypath_visualizer)
 
-## Compile as C++14
+## Compile as C++14, supported in ROS Kinetic and newer
 add_compile_options(-std=c++14)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
@@ -25,22 +25,21 @@ set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  std_msgs
-  cav_msgs
   carma_utils
+  cav_msgs
+  std_msgs
   tf2_ros
-  tf2
 )
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
 
 ###################################
 ## catkin specific configuration ##
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs cav_msgs carma_utils tf2_ros tf2
+  INCLUDE_DIRS include
+  CATKIN_DEPENDS roscpp carma_utils cav_msgs std_msgs tf2_ros
 )
 
 ###########
@@ -49,33 +48,33 @@ catkin_package(
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
   include
 )
 
 add_executable( ${PROJECT_NAME}
-  src/mobilitypath_publisher.cpp
-  src/main.cpp)
+  src/main.cpp
+)
 
-target_link_libraries(${PROJECT_NAME} mobilitypath_publisher_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+## Declare C++ library
+add_library(${PROJECT_NAME}_lib
+  src/mobilitypath_visualizer.cpp
+)
 
-add_library(mobilitypath_publisher_lib src/mobilitypath_publisher.cpp)
-
-add_dependencies(mobilitypath_publisher_lib ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib ${catkin_LIBRARIES})
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME}_lib ${catkin_EXPORTED_TARGETS})
 
 
 #############
 ## Install ##
 #############
 
-
-install(DIRECTORY include/${PROJECT_NAME}/
+install(DIRECTORY include
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.hpp"
-  )
+)
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_lib
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -89,8 +88,6 @@ install(DIRECTORY launch config
 #############
 ## Testing ##
 #############
-catkin_add_gmock(${PROJECT_NAME}-test
-  test/test_mobility_path_publisher.cpp
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
-target_link_libraries(${PROJECT_NAME}-test mobilitypath_publisher_lib ${catkin_LIBRARIES})
-
+find_package(rostest REQUIRED)
+  add_rostest_gtest(mob_path_viz test/mob_path_viz.test test/test_mobility_path_visualizer.cpp)
+target_link_libraries(mob_path_viz ${PROJECT_NAME}_lib ${catkin_LIBRARIES})

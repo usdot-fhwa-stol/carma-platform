@@ -26,6 +26,8 @@
 #include <cav_msgs/MobilityPath.h>
 #include <cav_msgs/BSM.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 namespace mobilitypath_publisher
 {
@@ -95,8 +97,8 @@ namespace mobilitypath_publisher
         cav_msgs::Trajectory TrajectoryPlantoTrajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points, const geometry_msgs::TransformStamped& tf) const;
 
     
-        // Convert Trajectory Point to ECEF Transform
-        cav_msgs::LocationECEF TrajectoryPointtoECEF(const cav_msgs::TrajectoryPlanPoint& traj_point, const geometry_msgs::TransformStamped& tf) const;
+        // Convert Trajectory Point to ECEF Transform (accepts meters and outputs in cm)
+        cav_msgs::LocationECEF TrajectoryPointtoECEF(const cav_msgs::TrajectoryPlanPoint& traj_point, const tf2::Transform& transform) const;
 
         // sender's static ID which is its license plate
         std::string sender_id = "USDOT-49096";
