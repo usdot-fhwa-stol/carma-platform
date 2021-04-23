@@ -93,11 +93,10 @@ public:
   void initialPoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg);
 
   /**
-   * \brief Spin callback
+   * \brief Timer callback that controls the publication of the selected pose and status report
    *
-   * \return True if the node should continue operation
    */
-  bool onSpin();
+  void posePubTick(const ros::TimerEvent& te);
 
   /**
    * \brief Callback for when a new state was triggered. Allows creation of entry/exit behavior for states
@@ -145,6 +144,7 @@ private:
   std::vector<TimerUniquePtr> expired_timers_;
   boost::optional<geometry_msgs::PoseStamped> last_raw_gnss_value_;
   boost::optional<tf2::Vector3> gnss_offset_;
+  boost::optional<geometry_msgs::PoseStamped> current_pose_;
 
   /**
    * \brief Helper function to both compute the NDT Frequency and update the previous pose timestamp

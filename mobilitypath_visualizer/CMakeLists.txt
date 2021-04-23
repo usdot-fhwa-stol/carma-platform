@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 LEIDOS.
+# Copyright (C) 2021 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -15,43 +15,31 @@
 #
 
 cmake_minimum_required(VERSION 2.8.3)
-project(platooning_tactical_plugin)
+project(mobilitypath_visualizer)
 
-## Compile as C++11, supported in ROS Kinetic and newer
+## Compile as C++14, supported in ROS Kinetic and newer
 add_compile_options(-std=c++14)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
-set( CATKIN_DEPS
-  roscpp
-  std_msgs
-  cav_msgs
-  cav_srvs
-  carma_utils
-  trajectory_utils
-  autoware_msgs
-  carma_wm
-  tf
-  tf2
-  tf2_geometry_msgs
-)
-
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
- ${CATKIN_DEPS}
+  roscpp
+  carma_utils
+  cav_msgs
+  std_msgs
+  tf2_ros
 )
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost)
-find_package(Eigen3 REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS ${CATKIN_DEPS}
-  DEPENDS Boost EIGEN3
+  INCLUDE_DIRS include
+  CATKIN_DEPENDS roscpp carma_utils cav_msgs std_msgs tf2_ros
 )
 
 ###########
@@ -59,24 +47,23 @@ catkin_package(
 ###########
 
 include_directories(
-  include
   ${catkin_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIRS}
+  include
 )
 
 add_executable( ${PROJECT_NAME}
-  src/platooning_tactical_plugin_node.cpp)
-  
-add_library(platooning_tactical_plugin_library 
-  src/platooning_tactical_plugin.cpp
-  src/smoothing/BSpline.cpp
+  src/main.cpp
 )
-target_link_libraries(platooning_tactical_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(platooning_tactical_plugin_library ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(${PROJECT_NAME} platooning_tactical_plugin_library ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(${PROJECT_NAME} platooning_tactical_plugin_library ${catkin_EXPORTED_TARGETS})
+## Declare C++ library
+add_library(${PROJECT_NAME}_lib
+  src/mobilitypath_visualizer.cpp
+)
+
+target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib ${catkin_LIBRARIES})
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME}_lib ${catkin_EXPORTED_TARGETS})
+
 
 #############
 ## Install ##
@@ -87,7 +74,7 @@ install(DIRECTORY include
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME} platooning_tactical_plugin_library
+install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_lib
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -101,9 +88,6 @@ install(DIRECTORY launch config
 #############
 ## Testing ##
 #############
-
-catkin_add_gmock(${PROJECT_NAME}-test 
-  test/test_platooning_tactical_plugin_planning.cpp
-  test/test_platooning_tactical_plugin.cpp
-)
-target_link_libraries(${PROJECT_NAME}-test platooning_tactical_plugin_library ${catkin_LIBRARIES})
+find_package(rostest REQUIRED)
+  add_rostest_gtest(mob_path_viz test/mob_path_viz.test test/test_mobility_path_visualizer.cpp)
+target_link_libraries(mob_path_viz ${PROJECT_NAME}_lib ${catkin_LIBRARIES})

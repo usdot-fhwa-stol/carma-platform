@@ -621,13 +621,29 @@ Visualization Manager:
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
-      Enabled: false
-      Marker Topic: /environment/prediction/motion_predictor/objects_markers
-      Name: MarkerArray
+      Enabled: true
+      Marker Topic: /guidance/cav_marker
+      Name: Incoming MobilityPath Marker
       Namespaces:
         {}
       Queue Size: 100
-      Value: false
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /guidance/host_marker
+      Name: Host MobilityPath Marker
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /guidance/label_marker
+      Name: MobilityPath Collision Warning
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -690,6 +706,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: true
-  Width: 1389
-  X: 329
-  Y: 331
+  Width: 967
+  X: 311
+  Y: 267

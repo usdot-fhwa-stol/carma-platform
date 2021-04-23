@@ -160,6 +160,7 @@ namespace route_following_plugin
         ros::Publisher plugin_discovery_pub_;
         ros::Subscriber pose_sub_;
         ros::Subscriber twist_sub_;
+        ros::Timer discovery_pub_timer_;
 
         // ROS service servers
         ros::ServiceServer plan_maneuver_srv_;        
