@@ -59,7 +59,7 @@ namespace cooperative_lanechange
         
         pose_sub_ = nh_->subscribe("current_pose", 1, &CooperativeLaneChangePlugin::pose_cb, this);
         twist_sub_ = nh_->subscribe("current_velocity", 1, &CooperativeLaneChangePlugin::twist_cd, this);
-        incoming_mobility_response_ = nh_->subscribe("incoming_mobilty_response", 1 , &CooperativeLaneChangePlugin::mobilityresponse_cb, this);
+        incoming_mobility_response_ = nh_->subscribe("incoming_mobility_response", 1 , &CooperativeLaneChangePlugin::mobilityresponse_cb, this);
         
         bsm_sub_ = nh_->subscribe("bsm_outbound", 1, &CooperativeLaneChangePlugin::bsm_cb, this);
         outgoing_mobility_request_ = nh_->advertise<cav_msgs::MobilityRequest>("outgoing_mobility_request", 5); // rate from yield plugin
@@ -295,6 +295,9 @@ namespace cooperative_lanechange
 
         //if ack mobility response, send lanechange response
         if(!negotiate || is_lanechange_accepted_){
+            ROS_DEBUG_STREAM("negotiate" << negotiate);
+            ROS_DEBUG_STREAM("negotis_lanechange_accepted_iate" << is_lanechange_accepted_);
+
             ROS_DEBUG_STREAM("Adding to response");
             add_maneuver_to_response(req,resp,planned_trajectory_points);
             
@@ -370,7 +373,8 @@ namespace cooperative_lanechange
         pt.put("end_lanelet", maneuver.lane_change_maneuver.ending_lane_id);
         std::stringstream body_stream;
         boost::property_tree::json_parser::write_json(body_stream,pt);
-        request_msg.strategy_params = body_stream.str();
+        //request_msg.strategy_params = body_stream.str();
+        request_msg.strategy_params = ""; 
         //Trajectory
         cav_msgs::Trajectory trajectory;
         //get earth to map tf
@@ -396,7 +400,7 @@ namespace cooperative_lanechange
 
         if (traj_points.size()<2){
             ROS_WARN("Received Trajectory Plan is too small");
-            traj.offsets = {};
+            traj.offsets = {};`
         }
         else{
             for (size_t i=1; i<traj_points.size(); i++){
