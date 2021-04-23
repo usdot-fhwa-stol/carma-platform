@@ -85,8 +85,8 @@ namespace guidance
 
         // Spin until system shutdown
         ROS_INFO_STREAM("Guidance node initialized, spinning at " << spin_rate << "hz...");
-        ros::CARMANodeHandle::setSpinCallback(std::bind(&GuidanceWorker::spin_cb, this));
         ros::CARMANodeHandle::setSpinRate(spin_rate);
+        ros::CARMANodeHandle::setSpinCallback(std::bind(&GuidanceWorker::spin_cb, this));
         ros::CARMANodeHandle::spin();
 
         // return

@@ -38,7 +38,6 @@
   void TrafficIncidentParserNode::run()
   {
     initialize();
-    ros::CARMANodeHandle::setSpinRate(20);
     ros::CARMANodeHandle::spin();
   }
 

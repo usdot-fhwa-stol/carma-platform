@@ -125,7 +125,6 @@ namespace trajectory_executor {
             // Timers and associated spin rates
             int _min_traj_publish_tickrate_hz {10};
             ros::Timer _timer;
-            int _default_spin_rate;
     };
 }
 
