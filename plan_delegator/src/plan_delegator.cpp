@@ -153,12 +153,15 @@ namespace plan_delegator
         // Track the index of the maneuver in the maneuver list for which the trajectory plan request is  for
         uint16_t current_maneuver_index = 0;
         
-        // iterate through maneuver list to make service call
-        for(const auto& maneuver : latest_maneuver_plan_.maneuvers)
+        // Loop through maneuver list to make service call to applicable Tactical Plugin
+        while(current_maneuver_index < latest_maneuver_plan_.maneuvers.size())
         {
+            const auto& maneuver = latest_maneuver_plan_.maneuvers[current_maneuver_index];
+
             // ignore expired maneuvers
             if(isManeuverExpired(maneuver))
             {
+                // Update the maneuver plan index for the next loop
                 ++current_maneuver_index;
                 continue;
             }
@@ -187,7 +190,7 @@ namespace plan_delegator
                     break;
                 }
 
-                // Update the current_maneuver_index based on the last maneuver index converted to a trajectory
+                // Update the maneuver plan index based on the last maneuver index converted to a trajectory
                 // This is required since inlanecruising_plugin can plan a trajectory over contiguous LANE_FOLLOWING maneuvers
                 current_maneuver_index = plan_req.response.related_maneuvers.back() + 1; 
             }
