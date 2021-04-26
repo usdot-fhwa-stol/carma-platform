@@ -66,15 +66,12 @@ public:
     StopandWaitConfig config;
 
     pnh.param<double>("minimal_trajectory_duration", config.minimal_trajectory_duration,
-                        config.minimal_trajectory_duration);
+                      config.minimal_trajectory_duration);
     pnh.param<double>("stop_timestep", config.stop_timestep, config.stop_timestep);
     pnh.param<double>("trajectory_step_size", config.trajectory_step_size, config.trajectory_step_size);
-    pnh.param<double>("accel_limit_multiplier", config.accel_limit_multiplier,
-                        config.accel_limit_multiplier);
-    pnh.param<double>("/vehicle_acceleration_limit", config.accel_limit,
-                        config.accel_limit);
+    pnh.param<double>("accel_limit_multiplier", config.accel_limit_multiplier, config.accel_limit_multiplier);
+    pnh.param<double>("/vehicle_acceleration_limit", config.accel_limit, config.accel_limit);
     pnh.param<double>("crawl_speed", config.crawl_speed, config.crawl_speed);
-
 
     ros::Publisher plugin_discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
 
@@ -83,11 +80,10 @@ public:
     ros::ServiceServer trajectory_srv_ =
         nh.advertiseService("plan_trajectory", &StopandWait::plan_trajectory_cb, &plugin);
 
-    ros::CARMANodeHandle::setSpinCallback(std::bind(&StopandWait::spinCallback, &plugin));
+    ros::Timer discovery_pub_timer =
+        pnh_->createTimer(ros::Duration(ros::Rate(10.0)), [&plugin](const auto&) { plugin.spinCallback(); });
 
-    double spin_rate = pnh.param<double>("spin_rate_hz", 10.0);
-    ros::CARMANodeHandle::setSpinRate(spin_rate);
     ros::CARMANodeHandle::spin();
   }
 };
-}  // stop_and_wait_plugin
+}  // namespace stop_and_wait_plugin

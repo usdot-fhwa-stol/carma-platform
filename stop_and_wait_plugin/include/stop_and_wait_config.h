@@ -23,12 +23,12 @@
  */
 struct StopandWaitConfig
 {
-  double minimal_trajectory_duration = 6.0;    // Trajectory length in seconds
-  double stop_timestep = 0.1;                  // Size of timesteps between stopped trajectory points
-  double trajectory_step_size = 1.0;                  // Downtrack distance between trajectory points
-  double accel_limit_multiplier = 0.5;         // Multiplier to compine with actual accel limit for target planning
-  double accel_limit = 2.0;                    // Longitudinal acceleration limit of the vehicle
-  double crawl_speed = 1.34112;                // Minimum speed the vehicle can command before being ready to stop
+  double minimal_trajectory_duration = 6.0;  // Trajectory length in seconds
+  double stop_timestep = 0.1;                // Size of timesteps between stopped trajectory points
+  double trajectory_step_size = 1.0;         // Downtrack distance between trajectory points
+  double accel_limit_multiplier = 0.5;       // Multiplier to compine with actual accel limit for target planning
+  double accel_limit = 2.0;                  // Longitudinal acceleration limit of the vehicle
+  double crawl_speed = 1.34112;              // Minimum speed the vehicle can command before being ready to stop
 
   friend std::ostream& operator<<(std::ostream& output, const StopandWaitConfig& c)
   {
