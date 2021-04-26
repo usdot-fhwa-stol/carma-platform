@@ -91,6 +91,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
 
   if (config_.enable_object_avoidance)
   {
+    ROS_DEBUG_STREAM("Activate Object Avoidance");
     if (yield_client_ && yield_client_.exists() && yield_client_.isValid())
     {
       ROS_DEBUG_STREAM("Yield Client is valid");
@@ -100,9 +101,11 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
 
       if (yield_client_.call(yield_srv))
       {
+        ROS_DEBUG_STREAM("Received Traj from Yield");
         cav_msgs::TrajectoryPlan yield_plan = yield_srv.response.trajectory_plan;
         if (validate_yield_plan(yield_plan))
         {
+          ROS_DEBUG_STREAM("Yield trajectory validated");
           resp.trajectory_plan = yield_plan;
         }
         else
@@ -123,6 +126,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   }
   else
   {
+    ROS_DEBUG_STREAM("Ignored Object Avoidance");
     resp.trajectory_plan = original_trajectory;
   }
 

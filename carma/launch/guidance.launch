@@ -157,6 +157,11 @@
     <include file="$(find unobstructed_lanechange)/launch/unobstructed_lanechange.launch" />
   </group>
 
+  <!-- Yield -->
+  <group>
+    <include file="$(find yield_plugin)/launch/yield_plugin.launch" />
+  </group>
+
   <!-- Cooperative lanechange -->
   <group>
     <include file = "$(find cooperative_lanechange)/launch/cooperative_lanechange.launch"/>

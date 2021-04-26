@@ -237,7 +237,7 @@ namespace yield_plugin
                                               cav_srvs::PlanTrajectoryResponse& resp)
   {
     if (req.initial_trajectory_plan.trajectory_points.size() < 2){
-      throw std::invalid_argument("Empty Trajectory received");
+      throw std::invalid_argument("Empty Trajectory received by Yield");
     }
     cav_msgs::TrajectoryPlan original_trajectory = req.initial_trajectory_plan;
     cav_msgs::TrajectoryPlan yield_trajectory;
@@ -257,6 +257,7 @@ namespace yield_plugin
     }
     else
     {
+      ROS_DEBUG_STREAM("Yield for Object Avoidance");
       yield_trajectory = update_traj_for_object(original_trajectory, req.vehicle_state.longitudinal_vel); // Compute the trajectory
     }
     yield_trajectory.header.frame_id = "map";
@@ -397,10 +398,11 @@ namespace yield_plugin
     host_vehicle_size.x = config_.vehicle_length;
     host_vehicle_size.y = config_.vehicle_width;
     host_vehicle_size.z = config_.vehicle_height; 
-    std::vector<cav_msgs::RoadwayObstacle> rwol_collision = carma_wm::collision_detection::WorldCollisionDetection(rwol2, original_tp, host_vehicle_size, current_velocity, config_.collision_horizon);
+    // std::vector<cav_msgs::RoadwayObstacle> rwol_collision = carma_wm::collision_detection::WorldCollisionDetection(rwol2, original_tp, host_vehicle_size, current_velocity, config_.collision_horizon);
     
     ROS_DEBUG_STREAM("Roadway Object List (rwol) size: " << rwol.size());
 
+    std::vector<cav_msgs::RoadwayObstacle> rwol_collision = rwol2;
     // correct the input types
     if(!rwol_collision.empty())
     {
@@ -459,6 +461,7 @@ namespace yield_plugin
 
       return update_tpp_vector;
     }
+    ROS_DEBUG_STREAM("No collision detection, so trajectory not modified.");
     return original_tp;
   }
 
