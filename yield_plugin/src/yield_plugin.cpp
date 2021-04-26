@@ -100,25 +100,48 @@ namespace yield_plugin
   {
     cav_msgs::TrajectoryPlan trajectory_plan;
     std::vector<lanelet::BasicPoint2d> map_points;
-    lanelet::BasicPoint2d first_point;
 
-    first_point.x() = ecef_trajectory.location.ecef_x * tf.transform.translation.x;
-    first_point.y() = ecef_trajectory.location.ecef_y * tf.transform.translation.y;
+    tf2::Stamped<tf2::Transform> transform;
+    tf2::fromMsg(tf, transform);
+
+    lanelet::BasicPoint2d first_point = ecef_to_map_point(ecef_trajectory.location, transform);
 
     map_points.push_back(first_point);
+    auto curr_point = ecef_trajectory.location;
 
     for (size_t i = 0; i<ecef_trajectory.offsets.size(); i++)
     {
       lanelet::BasicPoint2d offset_point;
-      double offset_x = ecef_trajectory.offsets[i].offset_x + ecef_trajectory.location.ecef_x;
-      double offset_y = ecef_trajectory.offsets[i].offset_y + ecef_trajectory.location.ecef_y;
-      offset_point.x() = offset_x * tf.transform.translation.x;
-      offset_point.y() = offset_y * tf.transform.translation.y;
+      curr_point.ecef_x += ecef_trajectory.offsets[i].offset_x;
+      curr_point.ecef_y += ecef_trajectory.offsets[i].offset_y;
+      curr_point.ecef_z += ecef_trajectory.offsets[i].offset_z;
+
+      offset_point = ecef_to_map_point(curr_point, transform);
+      
       map_points.push_back(offset_point);
     }
     
     return map_points;
   }
+
+  lanelet::BasicPoint2d YieldPlugin::ecef_to_map_point(const cav_msgs::LocationECEF& ecef_point, const tf2::Transform& map_in_earth) const
+  {
+    // convert input point to transform
+    tf2::Transform point_in_earth;
+    tf2::Quaternion no_rotation(0, 0, 0, 1);
+    tf2::Vector3 input_point {(double)ecef_point.ecef_x/100.0, (double)ecef_point.ecef_y/100.0, (double)ecef_point.ecef_z/100.0}; //m to cm
+    point_in_earth.setOrigin(input_point);
+    point_in_earth.setRotation(no_rotation);
+    // convert to map frame by (T_e_m)^(-1) * T_e_p
+    auto point_in_map = map_in_earth.inverse() * point_in_earth;
+    lanelet::BasicPoint2d output {
+      point_in_map.getOrigin().getX(),
+      point_in_map.getOrigin().getY()};
+
+    return output;
+  } 
+    
+  
 
   cav_msgs::MobilityResponse YieldPlugin::compose_mobility_response(const std::string& resp_recipient_id, const std::string& req_plan_id, bool response) const
   {

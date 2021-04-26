@@ -48,21 +48,24 @@
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_plan;
                 
         geometry_msgs::TransformStamped tf_msg;
-        tf_msg.transform.translation.x = 1.0;
+        tf_msg.transform.translation.x = 0.0;
         tf_msg.transform.translation.y = 0;
         tf_msg.transform.translation.z = 0;
         geometry_msgs::Quaternion Quaternion;
         tf_msg.transform.rotation.x =0.0;
         tf_msg.transform.rotation.y =0.0;
         tf_msg.transform.rotation.z =0.0;
-        tf_msg.transform.rotation.w =0.0;
+        tf_msg.transform.rotation.w =1.0;
 
         cav_msgs::TrajectoryPlanPoint point_1;
         point_1.x = 1.0;
         point_1.y = 0.0;
         trajectory_plan.push_back(point_1);
 
-        cav_msgs::LocationECEF ecef_point_1 = worker.trajectory_point_to_ecef(point_1, tf_msg);
+        tf2::Transform identity;
+        identity.setIdentity();
+
+        cav_msgs::LocationECEF ecef_point_1 = worker.trajectory_point_to_ecef(point_1, identity);
         EXPECT_TRUE(ecef_point_1.ecef_x == 1.0);
 
         cav_msgs::TrajectoryPlanPoint point_2;
