@@ -86,6 +86,7 @@ public:
     //TODO: Update yield client to use the Plugin Manager capabilities query, in case someone else wants to add an alternate yield implementation 
     ros::ServiceClient yield_client = nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/YieldPlugin/plan_trajectory");
     worker.set_yield_client(yield_client);
+    ROS_INFO_STREAM("Yield Client Set");
 
     ros::Timer discovery_pub_timer_ = nh.createTimer(
             ros::Duration(ros::Rate(10.0)),

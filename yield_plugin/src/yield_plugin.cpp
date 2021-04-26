@@ -260,7 +260,7 @@ namespace yield_plugin
                                               cav_srvs::PlanTrajectoryResponse& resp)
   {
     if (req.initial_trajectory_plan.trajectory_points.size() < 2){
-      throw std::invalid_argument("Empty Trajectory received");
+      throw std::invalid_argument("Empty Trajectory received by Yield");
     }
     cav_msgs::TrajectoryPlan original_trajectory = req.initial_trajectory_plan;
     cav_msgs::TrajectoryPlan yield_trajectory;
@@ -270,6 +270,7 @@ namespace yield_plugin
     {
       if (timesteps_since_last_req_ < config_.acceptable_passed_timesteps)
       {
+        ROS_DEBUG_STREAM("Yield for Object Avoidance");
         yield_trajectory = update_traj_for_cooperative_behavior(original_trajectory, req.vehicle_state.longitudinal_vel);
         timesteps_since_last_req_++;
       }
@@ -482,6 +483,7 @@ namespace yield_plugin
 
       return update_tpp_vector;
     }
+    ROS_DEBUG_STREAM("No collision detection, so trajectory not modified.");
     return original_tp;
   }
 

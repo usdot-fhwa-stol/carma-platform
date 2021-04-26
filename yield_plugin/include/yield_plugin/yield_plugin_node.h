@@ -76,7 +76,7 @@ public:
     
     worker.set_lanechange_status_publisher(lc_status_pub);
 
-    ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/Yieldlugin/plan_trajectory",
+    ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/YieldPlugin/plan_trajectory",
                                             &YieldPlugin::plan_trajectory_cb, &worker);
     ros::Subscriber mob_request_sub = nh.subscribe("incoming_mobility_request", 5, &YieldPlugin::mobilityrequest_cb,  &worker);
     ros::Subscriber bsm_sub = nh.subscribe("bsm_outbound", 1, &YieldPlugin::bsm_cb,  &worker);
