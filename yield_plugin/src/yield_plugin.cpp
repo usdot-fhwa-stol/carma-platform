@@ -192,10 +192,14 @@ namespace yield_plugin
         ptree pt;
         std::istringstream strstream(req_strategy_params);
         boost::property_tree::json_parser::read_json(strstream, pt);
-        double req_traj_speed = pt.get<double>("speed");
-        int start_lanelet_id = pt.get<int>("start_lanelet");
-        int end_lanelet_id = pt.get<int>("end_lanelet");
-
+        int req_traj_speed_full = pt.get<int>("s");
+        int req_traj_fractional = pt.get<int>("f");
+        int start_lanelet_id = pt.get<int>("sl");
+        int end_lanelet_id = pt.get<int>("el");
+        double req_traj_speed = (double)req_traj_speed_full + (double)(req_traj_fractional)/10.0;
+        ROS_DEBUG_STREAM("req_traj_speed" << req_traj_speed);
+        ROS_DEBUG_STREAM("start_lanelet_id" << start_lanelet_id);
+        ROS_DEBUG_STREAM("end_lanelet_id" << end_lanelet_id);
 
         std::vector<lanelet::BasicPoint2d> req_traj_plan = {};
 
