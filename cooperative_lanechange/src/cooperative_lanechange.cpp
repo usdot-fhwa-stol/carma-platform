@@ -354,14 +354,6 @@ namespace cooperative_lanechange
         request_msg.plan_type.type = cav_msgs::PlanType::CHANGE_LANE_LEFT;
         //Urgency- Currently unassigned
 
-        //Location
-        cav_msgs::LocationECEF location;
-        location.ecef_x = int(pose_msg_.pose.position.x);
-        location.ecef_y = int(pose_msg_.pose.position.y);
-        location.ecef_z = int(pose_msg_.pose.position.z);
-        //Using trajectory first point time as location timestamp
-        location.timestamp = trajectory_plan.front().target_time.toNSec();
-        request_msg.location = location;
         //Strategy params
         //Encode JSON with Boost Property Tree
         using boost::property_tree::ptree;
@@ -380,12 +372,26 @@ namespace cooperative_lanechange
         {
             geometry_msgs::TransformStamped tf = tf2_buffer_.lookupTransform("earth", "map", ros::Time(0));
             trajectory = trajectory_plan_to_trajectory(trajectory_plan, tf);
+            //Location
+            cav_msgs::TrajectoryPlanPoint temp_loc_to_convert;
+            temp_loc_to_convert.x = pose_msg_.pose.position.x;
+            temp_loc_to_convert.y = pose_msg_.pose.position.y;
+            tf2::Stamped<tf2::Transform> transform;
+            tf2::fromMsg(tf, transform);
+            cav_msgs::LocationECEF location = trajectory_point_to_ecef(temp_loc_to_convert, transform);
+
+            //Using trajectory first point time as location timestamp
+            location.timestamp = trajectory_plan.front().target_time.toNSec();
+
+            request_msg.location = location;
+
         }
         catch (tf2::TransformException &ex)
         {
             //Throw exception
             ROS_WARN("%s", ex.what());
         }
+
         request_msg.trajectory = trajectory;
         request_msg.expiration = trajectory_plan.back().target_time.toNSec();
         
@@ -417,10 +423,6 @@ namespace cooperative_lanechange
                 traj.offsets.push_back(offset);
             }
         }
-        //according to msg standard, ecef_location is in meters
-        ecef_location.ecef_x = ecef_location.ecef_x /100;
-        ecef_location.ecef_y = ecef_location.ecef_y /100;
-        ecef_location.ecef_z = ecef_location.ecef_z /100;
 
         traj.location = ecef_location; 
 
