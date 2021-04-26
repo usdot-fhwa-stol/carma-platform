@@ -52,18 +52,17 @@ namespace stop_and_wait_plugin
 StopandWait::StopandWait(carma_wm::WorldModelConstPtr wm, StopandWaitConfig config,
                          PublishPluginDiscoveryCB plugin_discovery_publisher)
   : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher)
-  {
-    plugin_discovery_msg_.name = "StopandWaitPlugin";
-    plugin_discovery_msg_.versionId = "v1.1";
-    plugin_discovery_msg_.available = true;
-    plugin_discovery_msg_.activated = false;
-    plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
-    plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
-  };
+{
+  plugin_discovery_msg_.name = "StopandWaitPlugin";
+  plugin_discovery_msg_.versionId = "v1.1";
+  plugin_discovery_msg_.available = true;
+  plugin_discovery_msg_.activated = false;
+  plugin_discovery_msg_.type = cav_msgs::Plugin::TACTICAL;
+  plugin_discovery_msg_.capability = "tactical_plan/plan_trajectory";
+};
 
 bool StopandWait::spinCallback()
 {
-
   plugin_discovery_publisher_(plugin_discovery_msg_);
   return true;
 }
@@ -91,7 +90,8 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
     throw std::invalid_argument("No valid maneuvers in plan provided to stop and wait plugin.");
   }
 
-  std::vector<PointSpeedPair> points_and_target_speeds = maneuvers_to_points(maneuver_plan, wm_, req.vehicle_state); // Now have 1m downsampled points from cur to endpoint
+  std::vector<PointSpeedPair> points_and_target_speeds = maneuvers_to_points(
+      maneuver_plan, wm_, req.vehicle_state);  // Now have 1m downsampled points from cur to endpoint
 
   // Trajectory plan
   cav_msgs::TrajectoryPlan trajectory;
@@ -99,14 +99,17 @@ bool StopandWait::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& req, cav_s
   trajectory.header.stamp = ros::Time::now();
   trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
-  double stop_location_buffer = 3.0; // By default use a 3m stopping buffer 
-  if (maneuver_plan[0].stop_and_wait_maneuver.parameters.presence_vector & cav_msgs::ManeuverParameters::HAS_FLOAT_META_DATA) {
+  double stop_location_buffer = 3.0;  // By default use a 3m stopping buffer
+  if (maneuver_plan[0].stop_and_wait_maneuver.parameters.presence_vector &
+      cav_msgs::ManeuverParameters::HAS_FLOAT_META_DATA)
+  {
     stop_location_buffer = maneuver_plan[0].stop_and_wait_maneuver.parameters.float_valued_meta_data[0];
     ROS_DEBUG_STREAM("Using stop buffer from meta data: " << stop_location_buffer);
   }
 
-  trajectory.trajectory_points =
-      compose_trajectory_from_centerline(points_and_target_speeds, current_downtrack, req.vehicle_state.longitudinal_vel, maneuver_plan[0].stop_and_wait_maneuver.end_dist, stop_location_buffer, req.header.stamp);
+  trajectory.trajectory_points = compose_trajectory_from_centerline(
+      points_and_target_speeds, current_downtrack, req.vehicle_state.longitudinal_vel,
+      maneuver_plan[0].stop_and_wait_maneuver.end_dist, stop_location_buffer, req.header.stamp);
   ROS_DEBUG_STREAM("Trajectory points size:" << trajectory.trajectory_points.size());
   trajectory.initial_longitudinal_velocity = req.vehicle_state.longitudinal_vel;
   resp.trajectory_plan = trajectory;
@@ -140,16 +143,19 @@ std::vector<PointSpeedPair> StopandWait::maneuvers_to_points(const std::vector<c
   double starting_downtrack = wm_->routeTrackPos(veh_pos).downtrack;  // The vehicle position
   double starting_speed = state.longitudinal_vel;
 
-  std::vector<lanelet::BasicPoint2d> route_points = wm->sampleRoutePoints(std::min(starting_downtrack + 1, stop_and_wait_maneuver.end_dist), stop_and_wait_maneuver.end_dist, 1.0); // TODO make step size a parameter
+  std::vector<lanelet::BasicPoint2d> route_points =
+      wm->sampleRoutePoints(std::min(starting_downtrack + 1, stop_and_wait_maneuver.end_dist),
+                            stop_and_wait_maneuver.end_dist, 1.0);  // TODO make step size a parameter
   route_points.insert(route_points.begin(), veh_pos);
-  
-  for (const auto& p : route_points) {
+
+  for (const auto& p : route_points)
+  {
     PointSpeedPair pair;
     pair.point = p;
     pair.speed = starting_speed;
     points_and_target_speeds.push_back(pair);
   }
-  
+
   return points_and_target_speeds;
 }
 
@@ -183,9 +189,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::trajectory_from_points_t
   return traj;
 }
 // TODO how are we going to handle crawling to the stop line if stopped before?
-std::vector<cav_msgs::TrajectoryPlanPoint>
-StopandWait::compose_trajectory_from_centerline(const std::vector<PointSpeedPair>& points, double starting_downtrack,
-                                                double starting_speed, double stop_location, double stop_location_buffer, ros::Time start_time)
+std::vector<cav_msgs::TrajectoryPlanPoint> StopandWait::compose_trajectory_from_centerline(
+    const std::vector<PointSpeedPair>& points, double starting_downtrack, double starting_speed, double stop_location,
+    double stop_location_buffer, ros::Time start_time)
 {
   std::vector<cav_msgs::TrajectoryPlanPoint> plan;
   if (points.size() == 0)
@@ -244,7 +250,8 @@ StopandWait::compose_trajectory_from_centerline(const std::vector<PointSpeedPair
   }
 
   // Now we have a trajectory that decelerates from our end point to somewhere in the maneuver
-  std::reverse(final_points.begin(), final_points.end()); // TODO seems lik final_points does not contain start and end point for some reason
+  std::reverse(final_points.begin(),
+               final_points.end());  // TODO seems lik final_points does not contain start and end point for some reason
 
   std::vector<double> speeds;
   std::vector<lanelet::BasicPoint2d> raw_points;
@@ -256,12 +263,15 @@ StopandWait::compose_trajectory_from_centerline(const std::vector<PointSpeedPair
   bool in_range = false;
   double stopped_downtrack = 0;
   lanelet::BasicPoint2d stopped_point;
-  for (size_t i = 0; i < speeds.size(); i++) { // Apply minimum speed constraint
+  for (size_t i = 0; i < speeds.size(); i++)
+  {  // Apply minimum speed constraint
     double downtrack = downtracks[i];
-    if (downtrack > downtracks.back() - stop_location_buffer && speeds[i] < config_.crawl_speed + 0.22352) { // if we are within the stopping buffer and going at crawl speed then command stop
+    if (downtrack > downtracks.back() - stop_location_buffer && speeds[i] < config_.crawl_speed + 0.22352)
+    {  // if we are within the stopping buffer and going at crawl speed then command stop
       speeds[i] = 0.0;
-      
-      if (!in_range) {
+
+      if (!in_range)
+      {
         stopped_downtrack = downtracks[i];
         stopped_point = raw_points[i];
         in_range = true;
@@ -269,25 +279,29 @@ StopandWait::compose_trajectory_from_centerline(const std::vector<PointSpeedPair
 
       downtracks[i] = stopped_downtrack;
       raw_points[i] = stopped_point;
-       
-    } else {
-      speeds[i] = std::max(speeds[i], config_.crawl_speed); // TODO make crawl_speed a parameter
+    }
+    else
+    {
+      speeds[i] = std::max(speeds[i], config_.crawl_speed);  // TODO make crawl_speed a parameter
     }
   }
 
   std::vector<double> times;
   trajectory_utils::conversions::speed_to_time(downtracks, speeds, &times);
 
-  for (size_t i = 0; i < times.size(); i++) {
-    if (times[i] != 0 && !std::isnormal(times[i]) && i !=0 ) { // If the time 
-      times[i] = times[i-1] + config_.stop_timestep;
+  for (size_t i = 0; i < times.size(); i++)
+  {
+    if (times[i] != 0 && !std::isnormal(times[i]) && i != 0)
+    {  // If the time
+      times[i] = times[i - 1] + config_.stop_timestep;
     }
-  } 
+  }
 
   std::vector<double> yaws = carma_wm::geometry::compute_tangent_orientations(raw_points);
 
-  for (int i = 0; i < points.size(); i ++) {
-      ROS_DEBUG_STREAM("1d: " << downtracks[i] << " t: " << times[i] << " v: " << speeds[i]);
+  for (int i = 0; i < points.size(); i++)
+  {
+    ROS_DEBUG_STREAM("1d: " << downtracks[i] << " t: " << times[i] << " v: " << speeds[i]);
   }
 
   auto traj = trajectory_from_points_times_orientations(raw_points, times, yaws, start_time);

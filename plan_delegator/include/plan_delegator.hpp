@@ -98,7 +98,7 @@ namespace plan_delegator
             // ROS params
             std::string planning_topic_prefix_ = "";
             std::string planning_topic_suffix_ = "";
-            double spin_rate_ = 10.0;
+            double trajectory_planning_rate_ = 10.0;
             double max_trajectory_duration_ = 6.0;
             double min_crawl_speed_ = 2.2352; // Min crawl speed in m/s
 
@@ -121,14 +121,14 @@ namespace plan_delegator
             ros::Subscriber pose_sub_;
             ros::Subscriber twist_sub_;
             ros::Subscriber guidance_state_sub_;
+            ros::Timer traj_timer_;
 
             bool guidance_engaged = false;
 
             /**
-             * \brief Callback function of node spin
-             * \return if callback function runs successfully
+             * \brief Callback function for triggering trajectory planning
              */
-            bool spinCallback();
+            void onTrajPlanTick(const ros::TimerEvent& te);
 
             /**
              * \brief Example if a maneuver plan contains at least one maneuver

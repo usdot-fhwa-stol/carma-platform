@@ -63,8 +63,12 @@ namespace route {
     void Route::run()
     {
         initialize();
+
         // spin with spin_callback function from RouteGeneratorWorker
-        ros::CARMANodeHandle::setSpinCallback(std::bind(&RouteGeneratorWorker::spin_callback, &rg_worker_));
+        ros::Timer spin_timer = pnh_->createTimer(
+            ros::Duration(ros::Rate(10.0)),
+            [this](const auto&) { rg_worker_.spin_callback(); });
+
         ros::CARMANodeHandle::spin();
     }
 

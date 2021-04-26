@@ -22,7 +22,7 @@
 #include <carma_wm/WMListener.h>
 #include <functional>
 #include <autoware_msgs/Lane.h>
-
+#include <carma_debug_msgs/TrajectoryCurvatureSpeeds.h>
 #include "inlanecruising_plugin.h"
 #include "inlanecruising_config.h"
 
@@ -47,6 +47,7 @@ public:
     auto wm_ = wml.getWorldModel();
 
     ros::Publisher discovery_pub = nh.advertise<cav_msgs::Plugin>("plugin_discovery", 1);
+    ros::Publisher trajectory_debug_pub = pnh.advertise<carma_debug_msgs::TrajectoryCurvatureSpeeds>("debug/trajectory_planning", 1);
     
     InLaneCruisingPluginConfig config;
 
@@ -68,10 +69,16 @@ public:
     
     config.lateral_accel_limit = config.lateral_accel_limit * config.lat_accel_multiplier;
     config.max_accel = config.max_accel *  config.max_accel_multiplier;
+    
+    // Determine if we will enable debug publishing by checking the current log level of the node
+    std::map< std::string, ros::console::levels::Level> logger;
+    ros::console::get_loggers(logger);
+    config.publish_debug = logger[ROSCONSOLE_DEFAULT_NAME] == ros::console::levels::Debug;
 
     ROS_INFO_STREAM("InLaneCruisingPlugin Params After Accel Change" << config);
     
-    InLaneCruisingPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); });
+    InLaneCruisingPlugin worker(wm_, config, [&discovery_pub](const auto& msg) { discovery_pub.publish(msg); },
+                                             [&trajectory_debug_pub](const auto& msg) { trajectory_debug_pub.publish(msg); });
 
     ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/InLaneCruisingPlugin/plan_trajectory",
                                             &InLaneCruisingPlugin::plan_trajectory_cb, &worker);
@@ -80,7 +87,9 @@ public:
     ros::ServiceClient yield_client = nh.serviceClient<cav_srvs::PlanTrajectory>("plugins/YieldPlugin/plan_trajectory");
     worker.set_yield_client(yield_client);
 
-    ros::CARMANodeHandle::setSpinCallback(std::bind(&InLaneCruisingPlugin::onSpin, &worker));
+    ros::Timer discovery_pub_timer_ = nh.createTimer(
+            ros::Duration(ros::Rate(10.0)),
+            [&worker](const auto&) {worker.onSpin();});
     ros::CARMANodeHandle::spin();
   }
 };

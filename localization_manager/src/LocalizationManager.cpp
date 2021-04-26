@@ -130,7 +130,7 @@ void LocalizationManager::poseAndStatsCallback(const geometry_msgs::PoseStampedC
   {
     
     ROS_DEBUG_STREAM("Publishing mixed pose with lidar_init_sequential_timesteps_counter_: " << lidar_init_sequential_timesteps_counter_ << ", and state" << state);
-    pose_pub_(*pose);
+    current_pose_ = *pose;
   }
 
   prev_ndt_stamp_ = pose->header.stamp;
@@ -161,7 +161,7 @@ void LocalizationManager::gnssPoseCallback(const geometry_msgs::PoseStampedConst
       corrected_pose.pose.position.z = corrected_pose.pose.position.z + gnss_offset_->z();
     }
     ROS_DEBUG_STREAM("Publishing GNSS pose with lidar_init_sequential_timesteps_counter_: " << lidar_init_sequential_timesteps_counter_);
-    pose_pub_(corrected_pose);
+    current_pose_ = corrected_pose;
   }
 }
 
@@ -169,6 +169,7 @@ void LocalizationManager::initialPoseCallback(const geometry_msgs::PoseWithCovar
 {
   lidar_init_sequential_timesteps_counter_ = 0;
   transition_table_.signal(LocalizationSignal::INITIAL_POSE);
+  current_pose_ = boost::none; // Reset the current pose until a new pose is recieved
   initialpose_pub_(*msg); // Forward the initial pose to the rest of the system
 }
 
@@ -222,7 +223,7 @@ void LocalizationManager::stateTransitionCallback(LocalizationState prev_state, 
   }
 }
 
-bool LocalizationManager::onSpin()
+void LocalizationManager::posePubTick(const ros::TimerEvent& te)
 {
   // Clear any expired timers
   expired_timers_.clear();
@@ -248,14 +249,18 @@ bool LocalizationManager::onSpin()
       transition_table_.getState() != LocalizationState::DEGRADED_NO_LIDAR_FIX)   
   {
     lidar_init_sequential_timesteps_counter_ = 0;
-    ROS_DEBUG_STREAM("OnSpin: Resetting lidar_init_sequential_timesteps_counter_: " << lidar_init_sequential_timesteps_counter_ << ", with new state: " << transition_table_.getState());
+    ROS_DEBUG_STREAM("posePubTick: Resetting lidar_init_sequential_timesteps_counter_: " << lidar_init_sequential_timesteps_counter_ << ", with new state: " << transition_table_.getState());
+  }
+
+  // Publish current pose message if available
+  if (current_pose_){
+    pose_pub_(*current_pose_);
   }
 
   // Create and publish status report message
   cav_msgs::LocalizationStatusReport msg = stateToMsg(transition_table_.getState(), ros::Time::now());
   state_pub_(msg);
 
-  return true;
 }
 
 LocalizationState LocalizationManager::getState() const

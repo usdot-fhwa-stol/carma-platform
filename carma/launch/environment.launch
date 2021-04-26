@@ -224,4 +224,10 @@
     </include>
   </group>
 
+  <!-- Traffic Incident Parser -->
+  <group>
+    <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
+    <include file="$(find traffic_incident_parser)/launch/traffic_incident_parser.launch"/>
+  </group>
+
 </launch>

@@ -32,9 +32,11 @@
 #include <unordered_set>
 #include <autoware_msgs/Lane.h>
 #include <ros/ros.h>
+#include <carma_debug_msgs/TrajectoryCurvatureSpeeds.h>
 namespace inlanecruising_plugin
 {
 using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
+using DebugPublisher = std::function<void(const carma_debug_msgs::TrajectoryCurvatureSpeeds&)>;
 
 /**
  * \brief Convenience class for pairing 2d points with speeds
@@ -58,9 +60,10 @@ public:
    * \param wm Pointer to intialized instance of the carma world model for accessing semantic map data
    * \param config The configuration to be used for this object
    * \param plugin_discovery_publisher Callback which will publish the current plugin discovery state
+   * \param debug_publisher Callback which will publish a debug message. The callback defaults to no-op.
    */ 
   InLaneCruisingPlugin(carma_wm::WorldModelConstPtr wm, InLaneCruisingPluginConfig config,
-                       PublishPluginDiscoveryCB plugin_discovery_publisher);
+                       PublishPluginDiscoveryCB plugin_discovery_publisher, DebugPublisher debug_publisher=[](const auto& msg){});
 
   /**
    * \brief Service callback for trajectory planning
@@ -269,6 +272,8 @@ private:
   ros::ServiceClient yield_client_;
 
   cav_msgs::Plugin plugin_discovery_msg_;
+  DebugPublisher debug_publisher_;
+  carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg_;
 
 };
 };  // namespace inlanecruising_plugin

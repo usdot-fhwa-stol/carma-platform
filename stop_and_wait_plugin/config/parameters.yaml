@@ -2,10 +2,6 @@
 # Units: seconds
 minimal_trajectory_duration : 6.0
 
-# Double: The rate at which the Guidance Node will process message
-# Units: Hz
-spin_rate_hz: 10
-
 # Double: Size of timesteps between stopped trajectory points when stopped
 # Units: seconds
 stop_timestep : 0.1

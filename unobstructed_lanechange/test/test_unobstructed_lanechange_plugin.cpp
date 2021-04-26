@@ -44,7 +44,7 @@
 namespace unobstructed_lanechange
 {
     TEST(UnobstructedLaneChangePlugin,Testusingosm){
-        // File to process. Path is relative to route package
+        // File to process. 
         std::string file = "../resource/map/town01_vector_map_lane_change.osm";
         lanelet::Id start_id = 111;
         lanelet::Id lane_change_start_id = 111;

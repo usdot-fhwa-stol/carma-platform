@@ -12,10 +12,6 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-# Integer: Spin rate for the subscribers, timers, and publishers in the Trajectory Executor
-# Units: Hz
-spin_rate: 10
-
 # Integer: Publish rate for the outbound trajectories to the control plugins.
 # Should be matched to timestep size in TrajectoryPlan inputs
 # Units: Hz
