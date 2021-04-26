@@ -398,11 +398,10 @@ namespace yield_plugin
     host_vehicle_size.x = config_.vehicle_length;
     host_vehicle_size.y = config_.vehicle_width;
     host_vehicle_size.z = config_.vehicle_height; 
-    // std::vector<cav_msgs::RoadwayObstacle> rwol_collision = carma_wm::collision_detection::WorldCollisionDetection(rwol2, original_tp, host_vehicle_size, current_velocity, config_.collision_horizon);
+    std::vector<cav_msgs::RoadwayObstacle> rwol_collision = carma_wm::collision_detection::WorldCollisionDetection(rwol2, original_tp, host_vehicle_size, current_velocity, config_.collision_horizon);
     
     ROS_DEBUG_STREAM("Roadway Object List (rwol) size: " << rwol.size());
 
-    std::vector<cav_msgs::RoadwayObstacle> rwol_collision = rwol2;
     // correct the input types
     if(!rwol_collision.empty())
     {
