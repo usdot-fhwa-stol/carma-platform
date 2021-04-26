@@ -31,9 +31,12 @@ namespace traffic
 
            if(event_type=="CLOSED")
            {
+            cav_msgs::TrafficControlMessage traffic_control_msg;
+            traffic_control_msg.choice=cav_msgs::TrafficControlMessage::TCMV01;
             for(auto &traffic_msg:composeTrafficControlMesssages())
             {
-            traffic_control_pub_(traffic_msg);
+            traffic_control_msg.tcmV01=traffic_msg;
+            traffic_control_pub_(traffic_control_msg);
             }
            }
            else

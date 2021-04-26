@@ -64,7 +64,7 @@ class TrafficIncidentParserNode
   /*! \fn publishTrafficControlMessage()
     \brief Publish traffic control message
   */
-  void publishTrafficControlMessage(const cav_msgs::TrafficControlMessageV01& traffic_control_msg) const;
+  void publishTrafficControlMessage(const cav_msgs::TrafficControlMessage& traffic_control_msg) const;
 
   /*!fn run()
     \brief General starting point to run this node

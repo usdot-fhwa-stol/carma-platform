@@ -58,7 +58,7 @@ void Localizer::run()
   // get params
   LocalizationManagerConfig config;
 
-  pnh_.param<double>("spin_rate", spin_rate_, 10.0);
+  pnh_.param<double>("pose_pub_rate", pose_pub_rate_, 10.0);
   pnh_.param<double>("fitness_score_degraded_threshold", config.fitness_score_degraded_threshold,
                      config.fitness_score_degraded_threshold);
   pnh_.param<double>("fitness_score_fault_threshold", config.fitness_score_fault_threshold,
@@ -98,7 +98,6 @@ void Localizer::run()
   pose_stats_synchronizer.registerCallback(boost::bind(&Localizer::poseAndStatsCallback, this, _1, _2));
 
   ros::CARMANodeHandle::setSystemAlertCallback(std::bind(&LocalizationManager::systemAlertCallback, manager_.get(), std_ph::_1));
-  ros::CARMANodeHandle::setSpinCallback(std::bind(&LocalizationManager::onSpin, manager_.get()));
 
   // initialize publishers
   managed_initial_pose_pub_ = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>("managed_initialpose", 1, true);
@@ -106,7 +105,10 @@ void Localizer::run()
   state_pub_ = nh_.advertise<cav_msgs::LocalizationStatusReport>("localization_status", 1);
 
   // spin
-  ros::CARMANodeHandle::setSpinRate(spin_rate_);
+  pose_timer_ = nh_.createTimer(
+      ros::Duration(ros::Rate(pose_pub_rate_)),
+      &LocalizationManager::posePubTick, 
+      manager_.get());
   ros::CARMANodeHandle::spin();
 }
 }  // namespace localizer

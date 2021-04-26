@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 LEIDOS.
+ * Copyright (C) 2021 LEIDOS.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,20 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include "mpc_follower_wrapper/mpc_follower_wrapper.hpp"
 
 #include <ros/ros.h>
-#include <ros/console.h>
 
-int main(int argc, char** argv) {
+#include "mobilitypath_visualizer.h"
 
-  ros::init(argc, argv, "mpc_follower_wrapper_node");
-  ros::CARMANodeHandle nh("");
+int main(int argc, char** argv)
+{ 
+    ros::init(argc, argv, "mobilitypath_visualizer");
+    mobilitypath_visualizer::MobilityPathVisualizer mobilitypath_visualizer_node;
+    mobilitypath_visualizer_node.run();
+    return 0;
 
-  mpc_follower_wrapper::MPCFollowerWrapper MPCFollowerWrapper(nh);
-  
-  ros::CARMANodeHandle::spin();
-
-  ROS_INFO("Node Exiting");
-  return 0;
-}
+};

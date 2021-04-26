@@ -120,10 +120,7 @@ namespace trajectory_executor
 
         ROS_DEBUG("TrajectoryExecutor component started succesfully! Starting to spin.");
 
-        ros::CARMANodeHandle::setSpinRate(_default_spin_rate);
         ros::CARMANodeHandle::spin();
-
-        ros::shutdown();
     }
 
     bool TrajectoryExecutor::init()
@@ -134,11 +131,9 @@ namespace trajectory_executor
         _private_nh = std::unique_ptr<ros::CARMANodeHandle>(new ros::CARMANodeHandle("~"));
         ROS_DEBUG("Initialized all node handles");
 
-        _private_nh->param("spin_rate", _default_spin_rate, 10);
         _private_nh->param("trajectory_publish_rate", _min_traj_publish_tickrate_hz, 10);
 
-        ROS_DEBUG_STREAM("Initalized params with default_spin_rate " << _default_spin_rate 
-            << " and trajectory_publish_rate " << _min_traj_publish_tickrate_hz);
+        ROS_DEBUG_STREAM("Initalized params with trajectory_publish_rate " << _min_traj_publish_tickrate_hz);
 
         this->_plan_sub = this->_public_nh->subscribe<const cav_msgs::TrajectoryPlan&>("trajectory", 5, &TrajectoryExecutor::onNewTrajectoryPlan, this);
         this->_state_sub = this->_public_nh->subscribe<cav_msgs::GuidanceState>("state", 5, &TrajectoryExecutor::guidanceStateMonitor, this);

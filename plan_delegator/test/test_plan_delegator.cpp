@@ -49,7 +49,7 @@
 
             double getSpinRate()
             {
-                return this->spin_rate_;
+                return this->trajectory_planning_rate_;
             }
 
             double getMaxTrajDuration()
