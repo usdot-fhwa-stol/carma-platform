@@ -393,7 +393,7 @@ namespace cooperative_lanechange
         }
 
         request_msg.trajectory = trajectory;
-        request_msg.expiration = trajectory_plan.back().target_time.toNSec();
+        request_msg.expiration = trajectory_plan.back().target_time.toNSec()*1000000; //nano to ms
         
         return request_msg;
     }
