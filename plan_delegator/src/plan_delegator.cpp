@@ -152,8 +152,11 @@ namespace plan_delegator
             ROS_INFO_STREAM("Guidance is not engaged. Plan delegator will not plan trajectory.");
             return latest_trajectory_plan;
         }
+
+        // Flag for the first received trajectory plan service response
+        bool first_trajectory_plan = true;
         
-        // Track the index of the maneuver in the maneuver list for which the trajectory plan request is  for
+        // Track the index of the starting maneuver in the maneuver plan that this trajectory plan service request is for
         uint16_t current_maneuver_index = 0;
         
         // Loop through maneuver list to make service call to applicable Tactical Plugin
@@ -187,6 +190,13 @@ namespace plan_delegator
                                                                 plan_req.response.trajectory_plan.trajectory_points.begin(),
                                                                 plan_req.response.trajectory_plan.trajectory_points.end());
                 
+                // Assign the trajectory plan's initial longitudinal velocity based on the first tactical plugin's response
+                if(first_trajectory_plan == true)
+                {
+                    latest_trajectory_plan.initial_longitudinal_velocity = plan_req.response.trajectory_plan.initial_longitudinal_velocity;
+                    first_trajectory_plan = false;
+                }
+
                 if(isTrajectoryLongEnough(latest_trajectory_plan))
                 {
                     ROS_INFO_STREAM("Plan Trajectory completed for " << latest_maneuver_plan_.maneuver_plan_id);
@@ -204,8 +214,6 @@ namespace plan_delegator
                 break;
             }
         }
-
-        latest_trajectory_plan.initial_longitudinal_velocity = latest_twist_.twist.linear.x;
 
         return latest_trajectory_plan;
     }
