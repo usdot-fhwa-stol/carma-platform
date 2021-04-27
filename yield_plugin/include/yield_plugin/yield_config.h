@@ -37,7 +37,7 @@ struct YieldPluginConfig
   bool always_accept_mobility_request = true;       //parameter to always accept mobility request
   std::string vehicle_id = "DEFAULT_VEHICLE_ID";         // Vehicle id is the license plate of the vehicle
   int acceptable_passed_timesteps = 3;              // acceptable number of timesteps to use the latest known mobility request before switching to yield
-  double intervehicle_collision_distance = 2.0;    //Intervehicle distance that is considered a collision
+  double intervehicle_collision_distance = 10.0;    //Intervehicle distance that is considered a collision
   double safety_collision_time_gap = 2.0;          // Time gap to finish planning a yield earlier than collision time
 
 

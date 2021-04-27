@@ -85,6 +85,8 @@ namespace yield_plugin
     // distance to consider trajectories colliding (chosen based on lane width and vehicle size)
     for (size_t i=0; i<incoming_trajectory.size(); i++)
     {
+      ROS_DEBUG_STREAM("incoming x: " << incoming_trajectory[i].x() << "incoming y: " << incoming_trajectory[i].y());
+
       double res = boost::geometry::distance(incoming_trajectory[i], self_traj);
     
       if (fabs(res) <= config_.intervehicle_collision_distance)
@@ -220,7 +222,8 @@ namespace yield_plugin
           timesteps_since_last_req_ = 0;
           lc_status_msg.status = cav_msgs::LaneChangeStatus::REQUEST_ACCEPTED;
           lc_status_msg.description = "Accepted lane merge request";
-          response_to_clc_req = true;   
+          response_to_clc_req = true;  
+          ROS_DEBUG_STREAM("clc accepted"); 
         }
         else
         {
@@ -228,10 +231,12 @@ namespace yield_plugin
           lc_status_msg.status = cav_msgs::LaneChangeStatus::REQUEST_REJECTED;
           lc_status_msg.description = "Rejected lane merge request";
           response_to_clc_req = false;
+          ROS_DEBUG_STREAM("clc rejected"); 
         }
         cav_msgs::MobilityResponse outgoing_response = compose_mobility_response(req_sender_id, req_plan_id, response_to_clc_req);
         mobility_response_publisher_(outgoing_response);
         lc_status_msg.status = cav_msgs::LaneChangeStatus::RESPONSE_SENT;
+        ROS_DEBUG_STREAM("response sent"); 
       }
     }
     if (lanechange_status_pub_.isLatched())
