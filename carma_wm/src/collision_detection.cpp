@@ -10,16 +10,59 @@ namespace carma_wm {
 
             collision_detection::MovingObject vehicle_object = ConvertVehicleToMovingObject(tp, size, veloctiy);
 
+            // for (auto i : rwol.roadway_obstacles){
+
+            //     collision_detection::MovingObject rwo = ConvertRoadwayObstacleToMovingObject(i);
+
+            //     bool collision = DetectCollision(vehicle_object, rwo, target_time);
+
+            //     if(collision) {
+            //         rwo_collison.push_back(i);
+            //     }
+            // }
+
+
             for (auto i : rwol.roadway_obstacles){
 
                 collision_detection::MovingObject rwo = ConvertRoadwayObstacleToMovingObject(i);
 
-                bool collision = DetectCollision(vehicle_object, rwo, target_time);
+                for (int j = 0; j < rwo.fp.size(); j++) {
+                    // std::cout << "helloooooo";
 
-                if(collision) {
-                    rwo_collison.push_back(i);
+                    std::deque<polygon_t> output;
+
+                    polygon_t vehicle = std::get<1>(vehicle_object.fp[j]);
+                    polygon_t object = std::get<1>(rwo.fp[j]);
+
+                    boost::geometry::correct(object);
+                    boost::geometry::correct(vehicle);
+
+                    boost::geometry::intersection(object, vehicle, output); 
+
+                    std::cout << "object " << boost::geometry::wkt( object) << std::endl;
+                    std::cout << "car " << boost::geometry::wkt(vehicle) << std::endl;
+
+                    if(output.size() > 0){
+
+                        BOOST_FOREACH(polygon_t const& p, output)
+                        {
+                            std::cout << ": " << boost::geometry::area(p) << std::endl;
+                        }
+
+                        std::cout << "yes" << std::endl << std::endl;
+                        rwo_collison.push_back(i);
+                        break;
+                    }
                 }
+
+                // bool collision = DetectCollision(vehicle_object, rwo, target_time);
+
+                // if(collision) {
+                //     rwo_collison.push_back(i);
+                // }
             }
+
+
 
             return rwo_collison;
         };
@@ -29,6 +72,9 @@ namespace carma_wm {
             collision_detection::MovingObject mo;
             
             mo.object_polygon = ObjectToBoostPolygon<polygon_t>(rwo.object.pose.pose, rwo.object.size);
+
+            std::tuple <__uint64_t,polygon_t> current_pose(i.header.stamp.toNSec() / 1000000, mo.object_polygon));
+            mo.fp.push_back(current_pose);
 
             // Add future polygons for roadway obstacle
             for (auto i : rwo.object.predictions){
@@ -110,6 +156,10 @@ namespace carma_wm {
                 std::deque<polygon_t> output;
 
                 boost::geometry::intersection(ob_1.object_polygon, ob_2.object_polygon, output); 
+
+                std::cout << boost::geometry::wkt(ob_1.object_polygon) << std::endl;
+                std::cout << boost::geometry::wkt(ob_2.object_polygon) << std::endl;
+                // std::cout << boost::geometry::wkt(output) << std::endl;
 
                 if(output.size() > 0){
                     return true;
