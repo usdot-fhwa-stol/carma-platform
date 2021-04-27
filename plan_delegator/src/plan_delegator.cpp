@@ -205,7 +205,10 @@ namespace plan_delegator
 
                 // Update the maneuver plan index based on the last maneuver index converted to a trajectory
                 // This is required since inlanecruising_plugin can plan a trajectory over contiguous LANE_FOLLOWING maneuvers
-                current_maneuver_index = plan_req.response.related_maneuvers.back() + 1; 
+                if(plan_req.response.related_maneuvers.size() > 0)
+                {
+                    current_maneuver_index = plan_req.response.related_maneuvers.back() + 1;
+                } 
             }
             else
             {
