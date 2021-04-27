@@ -404,7 +404,8 @@ namespace cooperative_lanechange
         }
 
         request_msg.trajectory = trajectory;
-        request_msg.expiration = trajectory_plan.back().target_time.toNSec()*1000000; //nano to ms
+        request_msg.expiration = trajectory_plan.back().target_time.toSec();
+        ROS_DEBUG_STREAM("request_msg.expiration: " << request_msg.expiration << "of which string size: " << std::to_string(request_msg.expiration).size());
         
         return request_msg;
     }
