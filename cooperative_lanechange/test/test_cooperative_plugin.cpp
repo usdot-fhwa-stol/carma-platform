@@ -216,6 +216,8 @@
         cooperative_lanechange::CooperativeLaneChangePlugin worker;
         cav_srvs::PlanTrajectoryRequest req;
         cav_srvs::PlanTrajectoryResponse resp;
+
+        req.maneuver_index_to_plan = 0;
         
         ros::Time::init();
         req.maneuver_plan.planning_start_time = ros::Time::now();
@@ -229,6 +231,7 @@
         std::vector<cav_msgs::TrajectoryPlanPoint> planned_trajectory ={};
         worker.add_maneuver_to_response(req,resp,planned_trajectory);
         EXPECT_EQ(10.0,resp.trajectory_plan.initial_longitudinal_velocity);
+        EXPECT_EQ(0, resp.related_maneuvers.back());
     }
 
     TEST(CooperativeLaneChangePlugin,Testcurrentgapcb){
