@@ -207,7 +207,7 @@ namespace yield_plugin
         bool response_to_clc_req = false;
         // ensure there is enough time for the yield
         double req_plan_time = req_expiration_sec - current_time_sec;
-        double req_timestamp = incoming_request.header.timestamp - current_time_sec;
+        double req_timestamp = (double)incoming_request.header.timestamp / 1000.0 - current_time_sec;
         set_incoming_request_info(req_traj_plan, req_traj_speed, req_plan_time, req_timestamp);
 
 
