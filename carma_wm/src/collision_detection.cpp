@@ -1,3 +1,4 @@
+ 
 #include "carma_wm/collision_detection.h"
 
 namespace carma_wm {
@@ -39,17 +40,17 @@ namespace carma_wm {
 
                     boost::geometry::intersection(object, vehicle, output); 
 
-                    std::cout << "object " << boost::geometry::wkt( object) << std::endl;
-                    std::cout << "car " << boost::geometry::wkt(vehicle) << std::endl;
+                    // std::cout << "object " << boost::geometry::wkt( object) << std::endl;
+                    // std::cout << "car " << boost::geometry::wkt(vehicle) << std::endl;
 
                     if(output.size() > 0){
 
-                        BOOST_FOREACH(polygon_t const& p, output)
-                        {
-                            std::cout << ": " << boost::geometry::area(p) << std::endl;
-                        }
+                        // BOOST_FOREACH(polygon_t const& p, output)
+                        // {
+                        //     std::cout << ": " << boost::geometry::area(p) << std::endl;
+                        // }
 
-                        std::cout << "yes" << std::endl << std::endl;
+                        // std::cout << "yes" << std::endl;
                         rwo_collison.push_back(i);
                         break;
                     }
@@ -73,7 +74,7 @@ namespace carma_wm {
             
             mo.object_polygon = ObjectToBoostPolygon<polygon_t>(rwo.object.pose.pose, rwo.object.size);
 
-            std::tuple <__uint64_t,polygon_t> current_pose(i.header.stamp.toNSec() / 1000000, mo.object_polygon));
+            std::tuple <__uint64_t,polygon_t> current_pose(0 , mo.object_polygon);
             mo.fp.push_back(current_pose);
 
             // Add future polygons for roadway obstacle
