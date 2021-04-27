@@ -347,7 +347,7 @@ namespace cooperative_lanechange
         header.recipient_id = DEFAULT_STRING_;  
         header.sender_bsm_id = bsmIDtoString(bsm_core_);
         header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
-        header.timestamp = trajectory_plan.front().target_time.toNSec() * *1000000;
+        header.timestamp = trajectory_plan.front().target_time.toNSec() *1000000;
         request_msg.header = header;
 
         request_msg.strategy = "carma/cooperative-lane-change";
