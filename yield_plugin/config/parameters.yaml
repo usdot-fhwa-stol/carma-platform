@@ -56,3 +56,6 @@ intervehicle_collision_distance: 2.0
 # Unit: s
 # Value type: Desired
 safety_collision_time_gap: 2.0
+# Flag to enable yield plugin to check for adjustable gap (for example digital gap from map)
+# Value type: Desired
+enable_adjustable_gap: true
