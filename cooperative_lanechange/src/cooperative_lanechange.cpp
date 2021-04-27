@@ -358,13 +358,24 @@ namespace cooperative_lanechange
         //Encode JSON with Boost Property Tree
         using boost::property_tree::ptree;
         ptree pt;
-        pt.put("speed",maneuver.lane_change_maneuver.end_speed); 
-        pt.put("start_lanelet",maneuver.lane_change_maneuver.starting_lane_id);
-        pt.put("end_lanelet", maneuver.lane_change_maneuver.ending_lane_id);
+        double end_speed_floor = std::floor(maneuver.lane_change_maneuver.end_speed);
+        int end_speed_fractional = (maneuver.lane_change_maneuver.end_speed - end_speed_floor) * 10;
+
+        ROS_DEBUG_STREAM("end_speed_floor" << end_speed_floor);
+        ROS_DEBUG_STREAM("end_speed_fractional" << end_speed_fractional);
+        ROS_DEBUG_STREAM("start_lanelet_id" << maneuver.lane_change_maneuver.starting_lane_id);
+        ROS_DEBUG_STREAM("end_lanelet_id" << maneuver.lane_change_maneuver.ending_lane_id);
+
+        pt.put("s",(int)end_speed_floor); 
+        pt.put("f",end_speed_fractional); 
+        pt.put("sl",maneuver.lane_change_maneuver.starting_lane_id);
+        pt.put("el", maneuver.lane_change_maneuver.ending_lane_id);
+
         std::stringstream body_stream;
         boost::property_tree::json_parser::write_json(body_stream,pt);
-        //request_msg.strategy_params = body_stream.str();
-        request_msg.strategy_params = ""; 
+        request_msg.strategy_params = body_stream.str(); 
+        ROS_DEBUG_STREAM("request_msg.strategy_params" << request_msg.strategy_params);
+
         //Trajectory
         cav_msgs::Trajectory trajectory;
         //get earth to map tf
