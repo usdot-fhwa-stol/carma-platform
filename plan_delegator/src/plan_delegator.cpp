@@ -217,23 +217,6 @@ namespace plan_delegator
                 break;
             }
         }
-<<<<<<< HEAD
-        //////////
-        // TODO UPDATE THE FOLLOWING IF STATEMENT AFTER VANDEN-PLAS release https://github.com/usdot-fhwa-stol/carma-platform/issues/1106
-        /////////
-        if (latest_trajectory_plan.trajectory_points.size() > 0) {
-            if(latest_trajectory_plan.trajectory_points[0].planner_plugin_name == "InLaneCruisingPlugin" || 
-            latest_trajectory_plan.trajectory_points[0].planner_plugin_name == "CooperativeLaneChangePlugin"){
-                latest_trajectory_plan.initial_longitudinal_velocity = std::max(latest_twist_.twist.linear.x, min_crawl_speed_); 
-            }
-            else{
-                latest_trajectory_plan.initial_longitudinal_velocity = latest_twist_.twist.linear.x; 
-            }
-        }
-        //////////////////// END TODO BLOCK
-=======
-
->>>>>>> develop
         return latest_trajectory_plan;
     }
 
