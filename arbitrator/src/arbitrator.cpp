@@ -48,6 +48,11 @@ namespace arbitrator
                     ROS_INFO("Aribtrator spinning in PAUSED state.");
                     paused_state();
                     break;
+                case SHUTDOWN:
+                    ROS_INFO("Arbitrator shutting down after being commanded to shutdown!");
+                    ros::shutdown();
+                    exit(0);
+                    break;
                 default:
                     throw std::invalid_argument("State machine attempting to process an illegal state value");
             }
