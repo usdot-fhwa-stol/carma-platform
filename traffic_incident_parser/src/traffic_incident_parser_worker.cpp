@@ -192,18 +192,32 @@ namespace traffic
     }
 
     traffic_mobility_msg.geometry.proj=projection_msg_;
+    traffic_mobility_msg.params.schedule.start=ros::Time::now();
+    traffic_mobility_msg.params.schedule.end_exists=false;
+    traffic_mobility_msg.params.schedule.dow_exists=false;
+    traffic_mobility_msg.params.schedule.between_exists=false;
+    traffic_mobility_msg.params.schedule.repeat_exists = false;
 
     std::vector<cav_msgs::TrafficControlMessageV01> output_msg;
 
+    boost::uuids::uuid closure_id = boost::uuids::random_generator()();
+    traffic_mobility_msg.id.id.clear();
+    std::copy(closure_id.begin(), closure_id.end(), traffic_mobility_msg.id.id.begin());
     traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::CLOSED_CHOICE;
     traffic_mobility_msg.params.detail.closed=cav_msgs::TrafficControlDetail::CLOSED;
     traffic_mobility_msg.package.label=event_reason;
     output_msg.push_back(traffic_mobility_msg);
 
+    boost::uuids::uuid headway_id = boost::uuids::random_generator()();
+    traffic_mobility_msg.id.id.clear();
+    std::copy(headway_id.begin(), headway_id.end(), traffic_mobility_msg.id.id.begin());
     traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::MINHDWY_CHOICE;
     traffic_mobility_msg.params.detail.minhdwy=min_gap;
     output_msg.push_back(traffic_mobility_msg);
 
+    boost::uuids::uuid speed_id = boost::uuids::random_generator()();
+    traffic_mobility_msg.id.id.clear();
+    std::copy(speed_id.begin(), speed_id.end(), traffic_mobility_msg.id.id.begin());
     traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
     traffic_mobility_msg.params.detail.maxspeed=speed_advisory;
     output_msg.push_back(traffic_mobility_msg);

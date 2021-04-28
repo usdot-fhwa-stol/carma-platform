@@ -37,6 +37,7 @@
 #include <limits>
 #include <carma_wm/Geometry.h>
 #include <math.h>
+#include <boost/date_time/date_defs.hpp>
 
 namespace carma_wm_ctrl
 {
@@ -182,18 +183,97 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
 
   cav_msgs::TrafficControlSchedule msg_schedule = msg_v01.params.schedule;
   
-  // Get schedule
-  for (auto daily_schedule : msg_schedule.between)
-  {
-    gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
-                                 msg_schedule.end,
-                                 daily_schedule.begin,     
-                                 daily_schedule.duration,
-                                 msg_schedule.repeat.offset,
-                                 msg_schedule.repeat.span,   
-                                 msg_schedule.repeat.period));
+  ros::Time end_time = msg_schedule.end;
+  if (!msg_schedule.end_exists) {
+    end_time = ros::TIME_MAX;
   }
-  
+
+
+  GeofenceSchedule::DayOfTheWeekSet week_day_set = { 0, 1, 2, 3, 4, 5, 6 }; // Default to all days  0==Sun to 6==Sat
+  if (msg_schedule.dow_exists) {
+   // sun (6), mon (5), tue (4), wed (3), thu (2), fri (1), sat (0)
+   week_day_set.clear();
+   for (size_t i = 0; i < msg_schedule.dow.dow.size(); i++) {
+     if (msg_schedule.dow.dow[i] == 1) {
+      switch(i) {
+          case 6: // sun
+            week_day_set.emplace(boost::gregorian::greg_weekday::weekday_enum::Sunday);
+            break;
+          case 5: // mon
+            week_day_set.emplace(boost::gregorian::greg_weekday::weekday_enum::Monday);
+            break;
+          case 4: // tue
+            week_day_set.emplace(boost::gregorian::greg_weekday::weekday_enum::Tuesday);
+            break;
+          case 3: // wed
+            week_day_set.emplace(boost::gregorian::greg_weekday::weekday_enum::Wednesday);
+            break;
+          case 2: // thur
+            week_day_set.emplace(boost::gregorian::greg_weekday::weekday_enum::Thursday);
+            break;
+          case 1: // fri
+            week_day_set.emplace(boost::gregorian::greg_weekday::weekday_enum::Friday);
+            break;
+          case 0: // sat
+            week_day_set.emplace(boost::gregorian::greg_weekday::weekday_enum::Saturday);
+            break;
+          default:
+            throw std::invalid_argument("Unrecognized weekday value: " + std::to_string(i));
+      }
+     }
+   }
+  }
+
+  if (msg_schedule.between_exists) {
+
+    // Get schedule
+    for (auto daily_schedule : msg_schedule.between)
+    {
+      if (msg_schedule.repeat_exists) {
+        gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
+                                    msg_schedule.end,
+                                    daily_schedule.begin,     
+                                    daily_schedule.duration,
+                                    msg_schedule.repeat.offset,
+                                    msg_schedule.repeat.span,   
+                                    msg_schedule.repeat.period,
+                                    week_day_set));
+      } else {
+        gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
+                                  msg_schedule.end,
+                                  daily_schedule.begin,     
+                                  daily_schedule.duration,
+                                  ros::Duration(0.0), // No offset
+                                  daily_schedule.duration - daily_schedule.begin,   // Applied for full lenth of 24 hrs
+                                  daily_schedule.duration - daily_schedule.begin,   // No repetition
+                                  week_day_set));         
+      }
+
+    }
+  }
+  else {
+    if (msg_schedule.repeat_exists) {
+      gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
+                                  msg_schedule.end,
+                                  ros::Duration(0.0),     
+                                  ros::Duration(86400.0), // 24 hr daily application
+                                  msg_schedule.repeat.offset,
+                                  msg_schedule.repeat.span,   
+                                  msg_schedule.repeat.period,
+                                  week_day_set)); 
+    } else {
+      gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
+                                  msg_schedule.end,
+                                  ros::Duration(0.0),     
+                                  ros::Duration(86400.0), // 24 hr daily application
+                                  ros::Duration(0.0), // No offset
+                                  ros::Duration(86400.0),   // Applied for full lenth of 24 hrs
+                                  ros::Duration(86400.0),   // No repetition
+                                  week_day_set)); 
+    }
+   
+  }
+    
   return gf_ptr;
 }
 
@@ -346,7 +426,7 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   std::copy(req_id.begin(),req_id.end(), uuid_id.begin());
   std::string reqid = boost::uuids::to_string(uuid_id).substr(0, 8);
   // drop if the req has never been sent
-  if (generated_geofence_reqids_.find(reqid) == generated_geofence_reqids_.end())
+  if (generated_geofence_reqids_.find(reqid) == generated_geofence_reqids_.end() && reqid.compare("00000000") != 0)
   {
     ROS_WARN_STREAM("CARMA_WM_CTRL received a TrafficControlMessage with unknown TrafficControlRequest ID (reqid): " << reqid);
     return;
@@ -754,7 +834,7 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
   boost::uuids::uuid uuid_id = boost::uuids::random_generator()(); 
   // take half as string
   std::string reqid = boost::uuids::to_string(uuid_id).substr(0, 8);
-  std::string req_id_test = "12345678";
+  std::string req_id_test = "12345678"; // TODO this is an extremely risky way of performing a unit test. This method needs to be refactored so that unit tests cannot side affect actual implementations
   generated_geofence_reqids_.insert(req_id_test);
   generated_geofence_reqids_.insert(reqid);
 
