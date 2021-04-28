@@ -193,6 +193,31 @@ namespace traffic
 
     traffic_mobility_msg.geometry.proj=projection_msg_;
 
+    //TODO once traffic incident node's input msg spec is updated to include schedule we can improve following hardcoded fields
+
+    traffic_mobility_msg.params.schedule.start=ros::Time(0);
+    traffic_mobility_msg.params.schedule.end=ros::Time(1628940250);
+    traffic_mobility_msg.params.schedule.end_exists=true;
+
+    traffic_mobility_msg.params.schedule.dow_exists=true;
+    j2735_msgs::DayOfWeek dow_msg;
+    for (int i = 0; i < 7; i++) //enable every day of week
+    {
+      dow_msg.dow[i] = (uint8_t)1;
+    }
+    traffic_mobility_msg.params.schedule.dow = dow_msg;
+
+    traffic_mobility_msg.params.schedule.between_exists = true;
+    cav_msgs::DailySchedule between_msg;
+    between_msg.begin = ros::Duration(0);
+    between_msg.duration = ros::Duration(1628940250);
+    traffic_mobility_msg.params.schedule.between.push_back(between_msg);
+
+    traffic_mobility_msg.params.schedule.repeat_exists = true;
+    traffic_mobility_msg.params.schedule.repeat.offset = ros::Duration(0);
+    traffic_mobility_msg.params.schedule.repeat.period = ros::Duration(5);
+    traffic_mobility_msg.params.schedule.repeat.span = ros::Duration(2);
+
     std::vector<cav_msgs::TrafficControlMessageV01> output_msg;
 
     traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::CLOSED_CHOICE;
@@ -206,10 +231,10 @@ namespace traffic
 
     traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
     traffic_mobility_msg.params.detail.maxspeed=speed_advisory;
-    output_msg.push_back(traffic_mobility_msg);
-
-    return output_msg;
    
+    output_msg.push_back(traffic_mobility_msg);
+ 
+    return output_msg;
 
     }
 
