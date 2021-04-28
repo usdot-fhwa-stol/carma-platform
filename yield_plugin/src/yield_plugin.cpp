@@ -327,7 +327,7 @@ namespace yield_plugin
       double dx = original_tp.trajectory_points[0].x - intersection_point.x();
       double dy = original_tp.trajectory_points[0].y - intersection_point.y();
       goal_pos = sqrt(dx*dx + dy*dy) - config_.x_gap;
-      ROS_DEBUG_STREAM("goal_pos: " << goal_pos);
+      ROS_DEBUG_STREAM("Goal position (goal_pos): " << goal_pos);
       double collision_time = req_timestamp_ + (intersection_points[0].first * ecef_traj_timestep_) - config_.safety_collision_time_gap;
       planning_time = std::min(planning_time, collision_time);
       ROS_DEBUG_STREAM("req time stamp: " << req_timestamp_);

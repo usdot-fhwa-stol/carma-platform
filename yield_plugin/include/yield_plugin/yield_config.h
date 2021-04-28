@@ -36,7 +36,7 @@ struct YieldPluginConfig
   bool enable_cooperative_behavior = true;       //parameter to enable cooperative behavior
   bool always_accept_mobility_request = true;       //parameter to always accept mobility request
   std::string vehicle_id = "DEFAULT_VEHICLE_ID";         // Vehicle id is the license plate of the vehicle
-  int acceptable_passed_timesteps = 3;              // acceptable number of timesteps to use the latest known mobility request before switching to yield
+  int acceptable_passed_timesteps = 10;              // acceptable number of timesteps to use the latest known mobility request before switching to yield
   double intervehicle_collision_distance = 10.0;    //Intervehicle distance that is considered a collision
   double safety_collision_time_gap = 2.0;          // Time gap to finish planning a yield earlier than collision time
   bool enable_adjustable_gap = true;          // Flag to enable yield plugin to check for adjustable gap for example digital gap from map
