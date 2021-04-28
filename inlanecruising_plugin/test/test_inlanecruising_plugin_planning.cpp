@@ -125,12 +125,21 @@ TEST(InLaneCruisingPluginTest, testPlanningCallback)
   maneuver2.lane_following_maneuver.end_speed = 6.7056;
   maneuver2.lane_following_maneuver.end_time = ros::Time(4.4704 + 7.45645430685);
 
+  // Create a third maneuver of a different type to test the final element in resp.related_maneuvers
+  cav_msgs::Maneuver maneuver3;
+  maneuver3.type = cav_msgs::Maneuver::LANE_CHANGE;
+
   req.maneuver_plan.maneuvers.push_back(maneuver);
   req.maneuver_plan.maneuvers.push_back(maneuver2);
+  req.maneuver_plan.maneuvers.push_back(maneuver3);
+
+  req.maneuver_index_to_plan = 0;
 
   cav_srvs::PlanTrajectoryResponse resp;
 
   plugin.plan_trajectory_cb(req, resp);
+
+  EXPECT_EQ(1, resp.related_maneuvers.back());
 
 }
 

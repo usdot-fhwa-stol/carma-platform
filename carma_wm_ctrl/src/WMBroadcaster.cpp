@@ -397,11 +397,12 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
   // convert all geofence points into our map's frame
   std::vector<lanelet::Point3d> gf_pts;
   for (auto pt : tcmV01.geometry.nodes)
-  {
+  { ROS_DEBUG_STREAM("Before conversion: Point X"<<pt.x<<"Before conversion: Point Y"<<pt.y);
     PJ_COORD c {{pt.x, pt.y, 0, 0}}; // z is not currently used
     PJ_COORD c_out;
     c_out = proj_trans(geofence_in_map_proj, PJ_FWD, c);
     gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), c_out.xyz.x, c_out.xyz.y});
+    ROS_DEBUG_STREAM("After conversion: Point X"<<c_out.xyz.x<<"After conversion: Point Y"<<c_out.xyz.y);
   }
 
   // Logic to detect which part is affected

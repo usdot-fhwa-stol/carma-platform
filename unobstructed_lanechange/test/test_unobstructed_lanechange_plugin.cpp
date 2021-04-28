@@ -145,14 +145,19 @@ namespace unobstructed_lanechange
         req.vehicle_state.longitudinal_vel = maneuver.lane_change_maneuver.start_speed;
 
         std::vector<cav_msgs::Maneuver> maneuvers_msg;  
-        //Define lane change maneuver
+        
+        // Create a second maneuver of a different type to test the final element in resp.related_maneuvers
+        cav_msgs::Maneuver maneuver2;
+        maneuver2.type = cav_msgs::Maneuver::LANE_FOLLOWING;
 
         maneuvers_msg.push_back(maneuver);
+        maneuvers_msg.push_back(maneuver2);
         req.maneuver_plan.maneuvers = maneuvers_msg;
         bool isTrajectory = worker.plan_trajectory_cb(req,resp);
         
         EXPECT_TRUE(isTrajectory);
         EXPECT_TRUE(resp.trajectory_plan.trajectory_points.size() > 2);
+        EXPECT_EQ(0, resp.related_maneuvers.back());
 
         /*Test compose trajectort and helper function*/
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory;

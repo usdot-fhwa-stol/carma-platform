@@ -39,6 +39,7 @@ struct YieldPluginConfig
   int acceptable_passed_timesteps = 3;              // acceptable number of timesteps to use the latest known mobility request before switching to yield
   double intervehicle_collision_distance = 10.0;    //Intervehicle distance that is considered a collision
   double safety_collision_time_gap = 2.0;          // Time gap to finish planning a yield earlier than collision time
+  bool enable_adjustable_gap = true;          // Flag to enable yield plugin to check for adjustable gap for example digital gap from map
 
 
   friend std::ostream& operator<<(std::ostream& output, const YieldPluginConfig& c)
@@ -59,6 +60,7 @@ struct YieldPluginConfig
           << "acceptable_passed_timesteps: " << c.acceptable_passed_timesteps << std::endl
           << "intervehicle_collision_distance: " << c.intervehicle_collision_distance << std::endl
           << "safety_collision_time_gap: " << c.safety_collision_time_gap << std::endl
+          << "enable_adjustable_gap: " << c.enable_adjustable_gap << std::endl
           << "}" << std::endl;
     return output;
   }

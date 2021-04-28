@@ -191,6 +191,8 @@ namespace traffic
       traffic_mobility_msg.geometry.nodes.push_back(path_point);
     }
 
+    traffic_mobility_msg.geometry.proj=projection_msg_;
+
     std::vector<cav_msgs::TrafficControlMessageV01> output_msg;
 
     traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::CLOSED_CHOICE;
@@ -207,6 +209,8 @@ namespace traffic
     output_msg.push_back(traffic_mobility_msg);
 
     return output_msg;
+   
+
     }
 
 }//traffic

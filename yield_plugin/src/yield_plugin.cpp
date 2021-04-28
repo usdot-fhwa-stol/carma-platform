@@ -32,6 +32,7 @@
 #include <yield_plugin/yield_plugin.h>
 
 
+
 using oss = std::ostringstream;
 
 namespace yield_plugin
@@ -454,8 +455,17 @@ namespace yield_plugin
       double collision_time = 0; //\TODO comming from carma_wm collision detection in future (CAR 4288)
 
       double goal_velocity = rwol_collision[0].object.velocity.twist.linear.x;
-      
-      double goal_pos = x_lead - std::max(goal_velocity * gap_time, config_.x_gap); 
+      // determine the safety inter-vehicle gap based on speed
+      double safety_gap = std::max(goal_velocity * gap_time, config_.x_gap);
+      if (config_.enable_adjustable_gap)
+      {
+        // check if a digital_gap is available
+        double digital_gap = check_traj_for_digital_min_gap(original_tp);
+        // if a digital gap is available, it is replaced as safety gap 
+        safety_gap = std::max(safety_gap, digital_gap);
+      }
+      // safety gap is implemented
+      double goal_pos = x_lead - safety_gap; 
 
       if (goal_velocity <= config_.min_obstacle_speed){
         ROS_WARN_STREAM("The obstacle is not moving");
@@ -551,11 +561,32 @@ namespace yield_plugin
       {
         max_speed = v;
       }
-    }  
+    }
     return max_speed;
   }
 
+  double YieldPlugin::check_traj_for_digital_min_gap(const cav_msgs::TrajectoryPlan& original_tp) const
+  {
+    double desired_gap = 0;
 
-
+    for (size_t i = 0; i < original_tp.trajectory_points.size(); i++)
+    {
+      lanelet::BasicPoint2d veh_pos(original_tp.trajectory_points[i].x, original_tp.trajectory_points[i].y);
+      auto llts = wm_->getLaneletsFromPoint(veh_pos, 1);
+      if (llts.empty())
+      {
+        ROS_WARN_STREAM("Trajectory point: " << original_tp.trajectory_points[i]);
+        throw std::invalid_argument("Trajectory point is not on a valid lanelet.");
+      }
+      auto digital_min_gap = llts[0].regulatoryElementsAs<lanelet::DigitalMinimumGap>(); //Returns a list of these elements)
+      if (!digital_min_gap.empty()) 
+      {
+        double digital_gap = digital_min_gap[0]->getMinimumGap(); // Provided gap is in meters
+        ROS_DEBUG_STREAM("Digital Gap found with value: " << digital_gap);
+        desired_gap = std::max(desired_gap, digital_gap);
+      }
+    }
+    return desired_gap;
+  }
 
 }  // namespace yield_plugin
