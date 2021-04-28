@@ -225,7 +225,7 @@ namespace yield_plugin
         }
         else
         {
-          ROS_DEBUG_STREAM("Igonore expired Mobility Request.");
+          ROS_DEBUG_STREAM("Ignore expired Mobility Request.");
           lc_status_msg.status = cav_msgs::LaneChangeStatus::REQUEST_REJECTED;
           lc_status_msg.description = "Rejected lane merge request";
           response_to_clc_req = false;
