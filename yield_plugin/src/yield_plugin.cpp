@@ -221,15 +221,14 @@ namespace yield_plugin
           lc_status_msg.status = cav_msgs::LaneChangeStatus::REQUEST_ACCEPTED;
           lc_status_msg.description = "Accepted lane merge request";
           response_to_clc_req = true;  
-          ROS_DEBUG_STREAM("clc accepted"); 
+          ROS_DEBUG_STREAM("CLC accepted"); 
         }
         else
         {
-          ROS_DEBUG_STREAM("Ignore expired Mobility Request.");
           lc_status_msg.status = cav_msgs::LaneChangeStatus::REQUEST_REJECTED;
           lc_status_msg.description = "Rejected lane merge request";
           response_to_clc_req = false;
-          ROS_DEBUG_STREAM("clc rejected"); 
+          ROS_DEBUG_STREAM("CLC rejected"); 
         }
         cav_msgs::MobilityResponse outgoing_response = compose_mobility_response(req_sender_id, req_plan_id, response_to_clc_req);
         mobility_response_publisher_(outgoing_response);
