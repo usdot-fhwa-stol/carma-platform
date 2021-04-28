@@ -138,7 +138,7 @@ namespace cooperative_lanechange
              * \return A list of trajectory points to send to the carma planning stack
              */
              std::vector<cav_msgs::TrajectoryPlanPoint> compose_trajectory_from_centerline(
-            const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time, int starting_lanelet_id);
+            const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time, int starting_lanelet_id, double max_speed);
             /**
              * \brief Returns the nearest point to the provided vehicle pose in the provided list
              * 

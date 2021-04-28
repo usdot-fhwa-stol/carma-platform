@@ -477,8 +477,9 @@ namespace cooperative_lanechange
 
         int starting_lanelet_id = stoi(maneuver_plan.front().lane_change_maneuver.starting_lane_id);
 
+        double final_max_speed = maneuver_plan.front().lane_change_maneuver.end_speed;
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points;
-        trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state, req.header.stamp, starting_lanelet_id);
+        trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state, req.header.stamp, starting_lanelet_id, final_max_speed);
         ROS_DEBUG_STREAM("Compose Trajectory size:"<<trajectory_points.size());
         return trajectory_points;
 
@@ -488,7 +489,7 @@ namespace cooperative_lanechange
     double max_starting_downtrack, const carma_wm::WorldModelConstPtr& wm,const cav_msgs::VehicleState& state){
         std::vector<PointSpeedPair> points_and_target_speeds;
         std::unordered_set<lanelet::Id> visited_lanelets;
-
+        ROS_DEBUG_STREAM("Maneuvers to points maneuver size:"<<maneuvers.size());
        bool first = true;
         for(const auto& maneuver : maneuvers)
         {
@@ -506,8 +507,10 @@ namespace cooperative_lanechange
                 }
                 first = false;
             }
+            ROS_DEBUG_STREAM("Maneuvers to points starting downtrack:"<<starting_downtrack);
             // //Get lane change route
             double ending_downtrack = lane_change_maneuver.end_dist;
+            ROS_DEBUG_STREAM("Maneuvers to points Ending downtrack:"<<ending_downtrack);
                 //Get geometry for maneuver
             if (starting_downtrack >= ending_downtrack)
             {
@@ -516,11 +519,12 @@ namespace cooperative_lanechange
 
             //get route geometry between starting and ending downtracks
             lanelet::BasicLineString2d route_geometry = create_route_geom(starting_downtrack, stoi(lane_change_maneuver.starting_lane_id), ending_downtrack, wm);
-
+            ROS_DEBUG_STREAM("route geometry size:"<<route_geometry.size());
             int nearest_pt_index = getNearestRouteIndex(route_geometry,state);
             int ending_pt_index = get_ending_point_index(route_geometry, ending_downtrack);
 
             lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.begin() + ending_pt_index);
+            ROS_DEBUG_STREAM("future geom size:"<<future_route_geometry.size());
             first = true;
 
             for(auto p :future_route_geometry)
@@ -536,13 +540,13 @@ namespace cooperative_lanechange
 
             }
         }
-
+        ROS_DEBUG_STREAM("Points and target speeds size:"<<points_and_target_speeds.size());
         return points_and_target_speeds;
 
     }
 
     std::vector<cav_msgs::TrajectoryPlanPoint> CooperativeLaneChangePlugin::compose_trajectory_from_centerline(
-    const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time, int starting_lanelet_id)
+    const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time, int starting_lanelet_id, double max_speed)
     {
         int nearest_pt_index = getNearestPointIndex(points, state);
 
@@ -610,7 +614,8 @@ namespace cooperative_lanechange
         final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, speed_moving_average_window_size_);
         for (auto& s : final_actual_speeds)  // Limit minimum speed. TODO how to handle stopping?
         {
-            s = std::max(s, minimum_speed_);
+            s = std::max(s, minimum_speed_); 
+            s = std::min(s, max_speed);
         }
 
         // Convert speeds to times

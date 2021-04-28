@@ -115,9 +115,9 @@ namespace route_following_plugin
         time_req_to_stop = sqrt(2*findSpeedLimit(shortest_path.back())/jerk_); 
         stopping_dist = findSpeedLimit(shortest_path.back())*time_req_to_stop - (0.167 * jerk_ * pow(time_req_to_stop,3));
         
-        // if(route_length - current_progress <= stopping_dist){
-        //     approaching_route_end = true;
-        // }
+        if(route_length - current_progress <= stopping_dist){
+            approaching_route_end = true;
+        }
         ROS_DEBUG_STREAM("Starting Loop");
         ROS_DEBUG_STREAM("Time Required To Stop: " << time_req_to_stop << " stopping_dist: " << stopping_dist<<" Speed limit:"<<findSpeedLimit(shortest_path.back())<< " Jerk:"<<jerk_);
         ROS_DEBUG_STREAM("total_maneuver_length: " << total_maneuver_length << " route_length: " << route_length);
@@ -134,14 +134,14 @@ namespace route_following_plugin
             ROS_DEBUG_STREAM("end_dist: " << end_dist);
             double dist_diff = end_dist - current_progress;
             ROS_DEBUG_STREAM("dist_diff: " << dist_diff);
-            // if(route_length - end_dist <= stopping_dist){
-            //     end_dist = route_length - stopping_dist; 
-            //     dist_diff = end_dist - current_progress;
-            //     approaching_route_end = true;
-            // }
-            // if(end_dist < current_progress){
-            //     break;
-            // }
+            if(route_length - end_dist <= stopping_dist){
+                end_dist = route_length - stopping_dist; 
+                dist_diff = end_dist - current_progress;
+                approaching_route_end = true;
+            }
+            if(end_dist < current_progress){
+                break;
+            }
             
             auto following_lanelets = wm_->getRoute()->followingRelations(shortest_path[last_lanelet_index]);
 
@@ -162,17 +162,7 @@ namespace route_following_plugin
                     lane_change_start_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index + 1].centerline2d().back()).downtrack - longl_travel_dist;
                     end_dist  = wm_->routeTrackPos(shortest_path[last_lanelet_index + 1].centerline2d().back()).downtrack;
                 }               
-                 //lane following till start_distance
-                // if(current_progress < lane_change_start_dist){
-                //     resp.new_plan.maneuvers.push_back(
-                //     composeManeuverMessage(current_progress, lane_change_start_dist, 
-                //                         speed_progress, target_speed, 
-                //                         shortest_path[last_lanelet_index].id(), time_progress));
-                // }
-                // else{ //update start_dist if beyond const start calculated above
-                //     lane_change_start_dist = current_progress;
 
-                // }
                 lane_change_start_dist = current_progress;
                 double starting_lanelet_id = shortest_path[last_lanelet_index].id();
                 double ending_lanelet_id = shortest_path[last_lanelet_index+1].id();
@@ -202,23 +192,23 @@ namespace route_following_plugin
             ++last_lanelet_index;
 
         }
-        // resp.new_plan.maneuvers.push_back(
-        //     composeStopandWaitManeuverMessage(current_progress,total_maneuver_length,
-        //     speed_progress,shortest_path[last_lanelet_index].id(),
-        //     shortest_path[last_lanelet_index].id(),time_progress,time_req_to_stop));
+        resp.new_plan.maneuvers.push_back(
+            composeStopandWaitManeuverMessage(current_progress,total_maneuver_length,
+            speed_progress,shortest_path[last_lanelet_index].id(),
+            shortest_path[last_lanelet_index].id(),time_progress,time_req_to_stop));
         
-        // ROS_DEBUG_STREAM("Done Loop: approaching_route_end: " << approaching_route_end);
-        // if(approaching_route_end){
-        //     ros::Time end_time = ros::Time::now();
-        //     if (resp.new_plan.maneuvers.size() > 0) {
-        //         end_time = resp.new_plan.maneuvers.back().lane_following_maneuver.end_time;
-        //     }
+        ROS_DEBUG_STREAM("Done Loop: approaching_route_end: " << approaching_route_end);
+        if(approaching_route_end){
+            ros::Time end_time = ros::Time::now();
+            if (resp.new_plan.maneuvers.size() > 0) {
+                end_time = resp.new_plan.maneuvers.back().lane_following_maneuver.end_time;
+            }
             
-        //     resp.new_plan.maneuvers.push_back(
-        //         composeStopandWaitManeuverMessage(current_progress,total_maneuver_length,
-        //         speed_progress,shortest_path[last_lanelet_index].id(),
-        //         shortest_path[last_lanelet_index].id(),end_time,time_req_to_stop)); 
-        // }
+            resp.new_plan.maneuvers.push_back(
+                composeStopandWaitManeuverMessage(current_progress,total_maneuver_length,
+                speed_progress,shortest_path[last_lanelet_index].id(),
+                shortest_path[last_lanelet_index].id(),end_time,time_req_to_stop)); 
+        }
         if(resp.new_plan.maneuvers.size() == 0)
         {
             ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
