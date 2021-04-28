@@ -15,6 +15,8 @@
  */
 
 #include "traffic_incident_parser_worker.h"
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
 
 namespace traffic
 {
@@ -201,7 +203,6 @@ namespace traffic
     std::vector<cav_msgs::TrafficControlMessageV01> output_msg;
 
     boost::uuids::uuid closure_id = boost::uuids::random_generator()();
-    traffic_mobility_msg.id.id.clear();
     std::copy(closure_id.begin(), closure_id.end(), traffic_mobility_msg.id.id.begin());
     traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::CLOSED_CHOICE;
     traffic_mobility_msg.params.detail.closed=cav_msgs::TrafficControlDetail::CLOSED;
@@ -209,14 +210,12 @@ namespace traffic
     output_msg.push_back(traffic_mobility_msg);
 
     boost::uuids::uuid headway_id = boost::uuids::random_generator()();
-    traffic_mobility_msg.id.id.clear();
     std::copy(headway_id.begin(), headway_id.end(), traffic_mobility_msg.id.id.begin());
     traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::MINHDWY_CHOICE;
     traffic_mobility_msg.params.detail.minhdwy=min_gap;
     output_msg.push_back(traffic_mobility_msg);
 
     boost::uuids::uuid speed_id = boost::uuids::random_generator()();
-    traffic_mobility_msg.id.id.clear();
     std::copy(speed_id.begin(), speed_id.end(), traffic_mobility_msg.id.id.begin());
     traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
     traffic_mobility_msg.params.detail.maxspeed=speed_advisory;
