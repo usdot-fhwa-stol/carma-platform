@@ -107,6 +107,8 @@ namespace arbitrator
             initialized_ = true;
             // TODO: load plan duration from parameters file
         }
+
+        ros::Duration(0.1).sleep();
     }
 
     void Arbitrator::planning_state()
