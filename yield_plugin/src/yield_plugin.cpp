@@ -205,7 +205,7 @@ namespace yield_plugin
 
         req_traj_plan = convert_eceftrajectory_to_mappoints(incoming_trajectory, tf_);
 
-        double req_expiration_sec = (double)incoming_request.expiration; //ms to second
+        double req_expiration_sec = (double)incoming_request.expiration;
         double current_time_sec = ros::Time::now().toSec();
 
         bool response_to_clc_req = false;
