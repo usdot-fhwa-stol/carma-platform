@@ -85,14 +85,11 @@ namespace yield_plugin
     // distance to consider trajectories colliding (chosen based on lane width and vehicle size)
     for (size_t i=0; i<incoming_trajectory.size(); i++)
     {
-      ROS_DEBUG_STREAM("incoming x: " << incoming_trajectory[i].x() << "incoming y: " << incoming_trajectory[i].y());
-
       double res = boost::geometry::distance(incoming_trajectory[i], self_traj);
     
       if (fabs(res) <= config_.intervehicle_collision_distance)
       {
-        ROS_DEBUG_STREAM("Collision Detected at x: " << incoming_trajectory[i].x() << " and y: " <<  incoming_trajectory[i].y());
-        intersection_points.push_back(std::make_pair(i, incoming_trajectory[i]));
+         intersection_points.push_back(std::make_pair(i, incoming_trajectory[i]));
       }
     }
     return intersection_points;
@@ -255,6 +252,7 @@ namespace yield_plugin
     req_trajectory_points_ = req_trajectory;
     req_target_speed_ = req_speed;
     req_target_plan_time_ = req_planning_time;
+    ROS_DEBUG_STREAM("req_target_plan_time_" << req_target_plan_time_); 
     req_timestamp_ = req_timestamp;
   }
 
@@ -281,7 +279,7 @@ namespace yield_plugin
       {
         ROS_DEBUG_STREAM("Yield for Object Avoidance");
         yield_trajectory = update_traj_for_cooperative_behavior(original_trajectory, req.vehicle_state.longitudinal_vel);
-        timesteps_since_last_req_++;
+        // timesteps_since_last_req_++;
       }
       else
       {
@@ -327,10 +325,12 @@ namespace yield_plugin
       double dx = original_tp.trajectory_points[0].x - intersection_point.x();
       double dy = original_tp.trajectory_points[0].y - intersection_point.y();
       goal_pos = sqrt(dx*dx + dy*dy) - config_.x_gap;
-
+      ROS_DEBUG_STREAM("goal_pos: " << goal_pos);
       double collision_time = req_timestamp_ + (intersection_points[0].first * ecef_traj_timestep_) - config_.safety_collision_time_gap;
       planning_time = std::min(planning_time, collision_time);
-      ROS_DEBUG_STREAM("Detected collision time: " << collision_time);
+      ROS_DEBUG_STREAM("req time stamp: " << req_timestamp_);
+      ROS_DEBUG_STREAM("Collision time: " << collision_time);
+      ROS_DEBUG_STREAM("intersection num: " << intersection_points[0].first);
       ROS_DEBUG_STREAM("Planning time: " << planning_time);
       // calculate distance traveled from beginning of trajectory to collision point
       double dx2 = intersection_point.x() - req_trajectory_points_[0].x();
@@ -339,8 +339,11 @@ namespace yield_plugin
       double incoming_trajectory_speed = sqrt(dx2*dx2 + dy2*dy2)/(intersection_points[0].first * ecef_traj_timestep_);
       // calculate goal velocity from request trajectory
       goal_velocity = std::min(goal_velocity, incoming_trajectory_speed);
-
       double min_time = (initial_velocity - goal_velocity)/config_.yield_max_deceleration;
+
+      ROS_DEBUG_STREAM("goal_velocity: " << goal_velocity);
+      ROS_DEBUG_STREAM("incoming_trajectory_speed: " << incoming_trajectory_speed);
+
       if (planning_time > min_time)
       {
         cooperative_request_acceptable_ = true;
