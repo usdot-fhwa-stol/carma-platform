@@ -754,7 +754,7 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
   boost::uuids::uuid uuid_id = boost::uuids::random_generator()(); 
   // take half as string
   std::string reqid = boost::uuids::to_string(uuid_id).substr(0, 8);
-  std::string req_id_test = "12345678";
+  std::string req_id_test = "00000000";
   generated_geofence_reqids_.insert(req_id_test);
   generated_geofence_reqids_.insert(reqid);
 
