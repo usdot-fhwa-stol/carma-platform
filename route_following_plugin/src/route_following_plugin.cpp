@@ -154,12 +154,10 @@ namespace route_following_plugin
                 //lane change start distance needs to be constant                
                 
                 if(wm_->routeTrackPos(shortest_path[last_lanelet_index + 1].centerline2d().back()).downtrack >= route_length){
-                    lane_change_start_dist = route_length - longl_travel_dist;
                     end_dist = route_length;
 
                 }
                 else{
-                    lane_change_start_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index + 1].centerline2d().back()).downtrack - longl_travel_dist;
                     end_dist  = wm_->routeTrackPos(shortest_path[last_lanelet_index + 1].centerline2d().back()).downtrack;
                 }               
 
