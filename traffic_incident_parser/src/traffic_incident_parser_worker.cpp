@@ -13,14 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+​
 #include "traffic_incident_parser_worker.h"
-
+​
 namespace traffic
 {
-
+​
   TrafficIncidentParserWorker::TrafficIncidentParserWorker(carma_wm::WorldModelConstPtr wm,const PublishTrafficControlCallback &traffic_control_pub) : traffic_control_pub_(traffic_control_pub),wm_(wm){};
-
+​
   void TrafficIncidentParserWorker::mobilityOperationCallback(const cav_msgs::MobilityOperation &mobility_msg)
   {
    
@@ -28,7 +28,7 @@ namespace traffic
       { 
            previous_strategy_params=mobility_msg.strategy_params;
            mobilityMessageParser(mobility_msg.strategy_params);
-
+​
            if(event_type=="CLOSED")
            {
             cav_msgs::TrafficControlMessage traffic_control_msg;
@@ -45,16 +45,16 @@ namespace traffic
            }
       }
    }
-
+​
   void TrafficIncidentParserWorker::projectionCallback(const std_msgs::String &projection_msg)
   {
       projection_msg_=projection_msg.data;
    }
-
-
+​
+​
   void TrafficIncidentParserWorker::mobilityMessageParser(std::string mobility_strategy_params)
   {
-
+​
    std::vector<std::string> vec={};
    std::string delimiter = ",";
    size_t pos = 0;
@@ -66,13 +66,13 @@ namespace traffic
         mobility_strategy_params.erase(0, pos + delimiter.length());
     }
     vec.push_back(mobility_strategy_params);
-
+​
     if (vec.size() != 8) 
     {
       ROS_ERROR_STREAM("Given mobility strategy params are not correctly formatted.");
       return;
     }  
-
+​
     std::string lat_str=vec[0];
     std::string lon_str=vec[1];
     std::string downtrack_str=vec[2];
@@ -81,7 +81,7 @@ namespace traffic
     std::string speed_advisory_str=vec[5];
     std::string event_reason_str=vec[6];
     std::string event_type_str=vec[7];
-
+​
     latitude=stod(stringParserHelper(lat_str,lat_str.find_last_of("lat:")));
     longitude=stod(stringParserHelper(lon_str,lon_str.find_last_of("lon:")));
     down_track=stod(stringParserHelper(downtrack_str,downtrack_str.find_last_of("down_track:")));
@@ -91,7 +91,7 @@ namespace traffic
     event_reason=stringParserHelper(event_reason_str,event_reason_str.find_last_of("event_reason:"));
     event_type=stringParserHelper(event_type_str,event_type_str.find_last_of("event_type:"));
   }
-
+​
   std::string TrafficIncidentParserWorker::stringParserHelper(std::string str, unsigned long str_index) const
   {
     std::string str_temp="";
@@ -101,7 +101,7 @@ namespace traffic
     }
     return str_temp;
   }
-
+​
  lanelet::BasicPoint2d TrafficIncidentParserWorker::getIncidentOriginPoint() const
   {
     lanelet::projection::LocalFrameProjector projector(projection_msg_.c_str());
@@ -112,7 +112,7 @@ namespace traffic
     auto local_point3d = projector.forward(gps_point);
     return {local_point3d.x(), local_point3d.y()};
   }
-
+​
   std::vector<cav_msgs::TrafficControlMessageV01> TrafficIncidentParserWorker::composeTrafficControlMesssages()
   {
     local_point_=getIncidentOriginPoint();
@@ -132,9 +132,19 @@ namespace traffic
         following_distance= std::fabs(tp.downtrack);
       }
       
-      auto back_point = current_lanelet.centerline().back().basicPoint2d();
-      auto front_point = current_lanelet.centerline().front().basicPoint2d();
-      lanelet::BasicPoint2d middle = {(back_point.x() + front_point.x())/2, (back_point.y() + front_point.y())/2};
+      lanelet::BasicPoint2d middle;
+​
+      if (current_lanelet.centerline2d().size() > 2)
+      {
+        int middle_idx = current_lanelet.centerline2d().size() / 2;
+        middle = current_lanelet.centerline2d()[middle_idx];
+      }
+      else
+      {
+        auto back_point = current_lanelet.centerline2d().back().basicPoint2d();
+        auto front_point = current_lanelet.centerline2d().front().basicPoint2d();
+        middle = {(back_point.x() + front_point.x())/2, (back_point.y() + front_point.y())/2};
+      }
           
       center_line_points_right.push_back(middle);
       if(next_lanelets.empty())
@@ -146,7 +156,7 @@ namespace traffic
       current_lanelet=next_lanelets[0];
       }
     }
-
+​
     current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, local_point_, 1); 
     current_lanelet = current_lanelets[0].second;
     carma_wm::TrackPos tp0 = carma_wm::geometry::trackPos(current_lanelet, local_point_);
@@ -159,9 +169,21 @@ namespace traffic
       {
         carma_wm::TrackPos tp1 = carma_wm::geometry::trackPos(next_lanelets[0], local_point_);
         previous_distance= std::fabs(tp1.downtrack);
-        auto back_point = next_lanelets[0].centerline().back().basicPoint2d();
-        auto front_point = next_lanelets[0].centerline().front().basicPoint2d();
-        lanelet::BasicPoint2d middle = {(back_point.x() + front_point.x())/2, (back_point.y() + front_point.y())/2};
+​
+        lanelet::BasicPoint2d middle;
+​
+        if (next_lanelets[0].centerline2d().size() > 2)
+        {
+          int middle_idx = next_lanelets[0].centerline2d().size() / 2;
+          middle = next_lanelets[0].centerline2d()[middle_idx];
+        }
+        else
+        {
+          auto back_point = next_lanelets[0].centerline2d().back().basicPoint2d();
+          auto front_point = next_lanelets[0].centerline2d().front().basicPoint2d();
+          middle = {(back_point.x() + front_point.x())/2, (back_point.y() + front_point.y())/2};
+        }
+​
         center_line_points_left.push_back(middle);
         current_lanelet=next_lanelets[0];
       }
@@ -182,7 +204,7 @@ namespace traffic
     j2735_msgs::TrafficControlVehClass veh_type;
     veh_type.vehicle_class = j2735_msgs::TrafficControlVehClass::ANY; // TODO decide what vehicle is affected
     traffic_mobility_msg.params.vclasses.push_back(veh_type);
-
+​
     for(auto &i:center_line_points_left)
     {
       cav_msgs::PathNode path_point;
@@ -190,15 +212,15 @@ namespace traffic
       path_point.y=i.y();
       traffic_mobility_msg.geometry.nodes.push_back(path_point);
     }
-
+​
     traffic_mobility_msg.geometry.proj=projection_msg_;
-
+​
     //TODO once traffic incident node's input msg spec is updated to include schedule we can improve following hardcoded fields
-
+​
     traffic_mobility_msg.params.schedule.start=ros::Time(0);
     traffic_mobility_msg.params.schedule.end=ros::Time(1628940250);
     traffic_mobility_msg.params.schedule.end_exists=true;
-
+​
     traffic_mobility_msg.params.schedule.dow_exists=true;
     j2735_msgs::DayOfWeek dow_msg;
     for (int i = 0; i < 7; i++) //enable every day of week
@@ -206,36 +228,36 @@ namespace traffic
       dow_msg.dow[i] = (uint8_t)1;
     }
     traffic_mobility_msg.params.schedule.dow = dow_msg;
-
+​
     traffic_mobility_msg.params.schedule.between_exists = true;
     cav_msgs::DailySchedule between_msg;
     between_msg.begin = ros::Duration(0);
     between_msg.duration = ros::Duration(1628940250);
     traffic_mobility_msg.params.schedule.between.push_back(between_msg);
-
+​
     traffic_mobility_msg.params.schedule.repeat_exists = true;
     traffic_mobility_msg.params.schedule.repeat.offset = ros::Duration(0);
     traffic_mobility_msg.params.schedule.repeat.period = ros::Duration(5);
     traffic_mobility_msg.params.schedule.repeat.span = ros::Duration(2);
-
+​
     std::vector<cav_msgs::TrafficControlMessageV01> output_msg;
-
+​
     traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::CLOSED_CHOICE;
     traffic_mobility_msg.params.detail.closed=cav_msgs::TrafficControlDetail::CLOSED;
     traffic_mobility_msg.package.label=event_reason;
     output_msg.push_back(traffic_mobility_msg);
-
+​
     traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::MINHDWY_CHOICE;
     traffic_mobility_msg.params.detail.minhdwy=min_gap;
     output_msg.push_back(traffic_mobility_msg);
-
+​
     traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
     traffic_mobility_msg.params.detail.maxspeed=speed_advisory;
    
     output_msg.push_back(traffic_mobility_msg);
  
     return output_msg;
-
+​
     }
-
+​
 }//traffic
