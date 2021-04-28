@@ -114,7 +114,7 @@ namespace health_monitor
         }
         else if ((camera==0) && (lidar1 ==1) && (lidar2 == 1) && (gps == 1) )
         {
-            return "s_1_l1_1_l2_1_g_1_c_1";
+            return "s_1_l1_1_l2_1_g_1_c_0";
         }
         else if((lidar1==1) && (lidar2==1) && (gps==1) && (camera == 1))
         {
@@ -169,15 +169,15 @@ namespace health_monitor
             }
             else if ((camera==0) && (lidar == 1) && (gps ==1))
             {
-                return "s_1_l_1_g_1_c_1";
+                return "s_1_l_1_g_1_c_0";
             }
             else if ((camera==0) && (lidar == 0) && (gps == 1))
             {
-                return "s_1_l_0_g_1_c_1";
+                return "s_1_l_0_g_1_c_0";
             }
             else if ((camera==0) && (lidar == 1) && (gps == 0))
             {
-                return "s_1_l_1_g_0_c_1";
+                return "s_1_l_1_g_0_c_0";
             }
             else if((lidar==1) && (gps==1) && (camera == 1))
             {
@@ -337,4 +337,3 @@ namespace health_monitor
     }
 
 }
-
