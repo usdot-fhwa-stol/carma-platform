@@ -277,12 +277,13 @@ namespace yield_plugin
     {
       if (timesteps_since_last_req_ < config_.acceptable_passed_timesteps)
       {
-        ROS_DEBUG_STREAM("Yield for Object Avoidance");
+        ROS_DEBUG_STREAM("Yield for CLC");
         yield_trajectory = update_traj_for_cooperative_behavior(original_trajectory, req.vehicle_state.longitudinal_vel);
         // timesteps_since_last_req_++;
       }
       else
       {
+        ROS_DEBUG_STREAM("Yield for object avoidance");
         yield_trajectory = update_traj_for_object(original_trajectory, req.vehicle_state.longitudinal_vel); // Compute the trajectory
       }
     }
