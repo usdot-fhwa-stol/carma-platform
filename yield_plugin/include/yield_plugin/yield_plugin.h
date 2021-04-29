@@ -242,6 +242,7 @@ private:
   double req_timestamp_ = 0;
   double req_target_plan_time_ = 0;
   int timesteps_since_last_req_ = 0;
+  int clc_urgency_ = 0;
 
   // time between ecef trajectory points
   double ecef_traj_timestep_ = 0.1;

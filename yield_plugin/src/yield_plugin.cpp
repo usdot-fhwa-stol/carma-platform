@@ -185,7 +185,8 @@ namespace yield_plugin
         cav_msgs::LocationECEF ecef_location = incoming_request.location;
         cav_msgs::Trajectory incoming_trajectory = incoming_request.trajectory;
         std::string req_strategy_params = incoming_request.strategy_params;
-        
+        clc_urgency_ = incoming_request.urgency;
+        ROS_DEBUG_STREAM("received urgency: " << clc_urgency_);
 
         // Parse strategy parameters
         using boost::property_tree::ptree;
@@ -214,7 +215,7 @@ namespace yield_plugin
         double req_timestamp = (double)incoming_request.header.timestamp / 1000.0 - current_time_sec;
         set_incoming_request_info(req_traj_plan, req_traj_speed, req_plan_time, req_timestamp);
 
-
+        
         if (req_expiration_sec - current_time_sec >= config_.tpmin && cooperative_request_acceptable_)
         {
           timesteps_since_last_req_ = 0;
@@ -236,6 +237,7 @@ namespace yield_plugin
         ROS_DEBUG_STREAM("response sent"); 
       }
     }
+    lanechange_status_pub_.publish(lc_status_msg);
     if (lanechange_status_pub_.isLatched())
     {
       lanechange_status_pub_.publish(lc_status_msg);
@@ -273,22 +275,24 @@ namespace yield_plugin
     cav_msgs::TrajectoryPlan yield_trajectory;
 
     // seperating cooperative yield with regular object detection for better performance.
-    if (config_.enable_cooperative_behavior)
+    if (config_.enable_cooperative_behavior && clc_urgency_ > config_.acceptable_urgency)
     {
+      ROS_DEBUG_STREAM("Only consider high urgency clc");
       if (timesteps_since_last_req_ < config_.acceptable_passed_timesteps)
       {
         ROS_DEBUG_STREAM("Yield for CLC. We haven't received an updated negotiation this timestep");
         yield_trajectory = update_traj_for_cooperative_behavior(original_trajectory, req.vehicle_state.longitudinal_vel);
-        // timesteps_since_last_req_++;
+        timesteps_since_last_req_++;
       }
       else
       {
-        ROS_DEBUG_STREAM("Yield for object avoidance");
+        ROS_DEBUG_STREAM("unreliable CLC communication, switching to object avoidance");
         yield_trajectory = update_traj_for_object(original_trajectory, req.vehicle_state.longitudinal_vel); // Compute the trajectory
-      }
+      }    
     }
     else
     {
+      ROS_DEBUG_STREAM("Yield for object avoidance");
       yield_trajectory = update_traj_for_object(original_trajectory, req.vehicle_state.longitudinal_vel); // Compute the trajectory
     }
     yield_trajectory.header.frame_id = "map";
@@ -328,7 +332,7 @@ namespace yield_plugin
       goal_pos = sqrt(dx*dx + dy*dy) - config_.x_gap;
       ROS_DEBUG_STREAM("Goal position (goal_pos): " << goal_pos);
       double collision_time = req_timestamp_ + (intersection_points[0].first * ecef_traj_timestep_) - config_.safety_collision_time_gap;
-      planning_time = std::min(planning_time, collision_time);
+      // planning_time = std::min(planning_time, collision_time);
       ROS_DEBUG_STREAM("req time stamp: " << req_timestamp_);
       ROS_DEBUG_STREAM("Collision time: " << collision_time);
       ROS_DEBUG_STREAM("intersection num: " << intersection_points[0].first);
@@ -377,6 +381,9 @@ namespace yield_plugin
     double initial_time = 0;
     double initial_accel = 0.0;
     double goal_accel = 0.0;
+
+    double original_max_speed = max_trajectory_speed(original_tp.trajectory_points);
+    ROS_DEBUG_STREAM("original_max_speed" << original_max_speed);
     std::vector<double> values = quintic_coefficient_calculator::quintic_coefficient_calculator(initial_pos, 
                                                                                                 goal_pos,
                                                                                                 initial_velocity, 
@@ -398,9 +405,12 @@ namespace yield_plugin
         if (dv >= config_.max_stop_speed)
         {
           ROS_DEBUG_STREAM("target speed: " << dv);
-          if (dv >= initial_velocity){
-            dv = initial_velocity;
+          if (dv >= original_max_speed){
+            dv = original_max_speed;
           }
+          // if (dv >= initial_velocity){
+          //   dv = std::max(config_.max_stop_speed, initial_velocity);
+          // }
           // trajectory point is copied to move all the available information, then its target time is updated
           jmt_tpp = original_tp.trajectory_points[i];
           jmt_tpp.target_time = jmt_trajectory_points[i-1].target_time + ros::Duration(original_traj_downtracks[i]/dv);
