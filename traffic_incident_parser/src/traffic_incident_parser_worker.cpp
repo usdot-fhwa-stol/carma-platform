@@ -17,6 +17,10 @@
 #include "traffic_incident_parser_worker.h"
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
+#include <carma_utils/containers/containers.h>
+#include <lanelet2_core/Attribute.h>
+#include <lanelet2_core/geometry/LineString.h>
+#include <lanelet2_core/primitives/Traits.h>
 
 namespace traffic
 {
@@ -117,82 +121,55 @@ namespace traffic
 
   std::vector<cav_msgs::TrafficControlMessageV01> TrafficIncidentParserWorker::composeTrafficControlMesssages()
   {
-    local_point_=getIncidentOriginPoint();
+    
     auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, local_point_, 1);  
     lanelet::ConstLanelet current_lanelet = current_lanelets[0].second;
-    double following_distance=0.0;
-    double previous_distance=0.0;
-    std::vector<lanelet::BasicPoint2d> center_line_points_right={};
-    std::vector<lanelet::BasicPoint2d> center_line_points_left={};
- 
-    while(following_distance<down_track) //Extract the center line point towards the downtrack lanelets
-    {
-      auto next_lanelets = wm_->getMapRoutingGraph()->following(current_lanelet);
-      if(!next_lanelets.empty())
-      {
-        carma_wm::TrackPos tp = carma_wm::geometry::trackPos(next_lanelets[0], local_point_);
-        following_distance= std::fabs(tp.downtrack);
+
+    lanelet::ConstLanelets lefts = wm_->getMapRoutingGraph()->lefts(current_lanelet);
+    lanelet::ConstLanelets rights = wm_->getMapRoutingGraph()->rights(current_lanelet);
+
+    std::vector<std::vector<lanelet::BasicPoint2d>> forward_lanes; // Ordered from right to left
+    for (auto ll : lefts) {
+      std::vector<lanelet::BasicPoint2d> following_lane;
+      auto cur_ll = ll;
+      double dist = 0;
+      size_t p_idx = 0;
+      lanelet::BasicPoint2d prev_point = lanelet::traits::to2D(cur_ll.centerline().front());
+      while (dist < down_track); {
+        if (p_idx == cur_ll.centerline().size()) {
+          auto next_lls = wm_->getMapRoutingGraph()->following(cur_ll, false);
+          if (next_lls.size() == 0) {
+            break;
+          }
+          auto next = next_lls[0];
+          cur_ll = next;
+          p_idx = 0;
+        }
+        if (p_idx != 0 || dist == 0) {
+          following_lane.push_back(lanelet::traits::to2D(cur_ll.centerline()[p_idx]));
+          dist += lanelet::geometry::distance2d(prev_point, following_lane.back());
+        }
+        
+        p_idx++;
       }
-      
-      auto back_point = current_lanelet.centerline().back().basicPoint2d();
-      auto front_point = current_lanelet.centerline().front().basicPoint2d();
-      lanelet::BasicPoint2d middle = {(back_point.x() + front_point.x())/2, (back_point.y() + front_point.y())/2};
-          
-      center_line_points_right.push_back(middle);
-      if(next_lanelets.empty())
-      {
+      if (following_lane.size() == 0) {
         break;
       }
-      else
-      {
-      current_lanelet=next_lanelets[0];
-      }
+      forward_lanes.emplace_back(following_lane);
     }
 
-    current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, local_point_, 1); 
-    current_lanelet = current_lanelets[0].second;
-    carma_wm::TrackPos tp0 = carma_wm::geometry::trackPos(current_lanelet, local_point_);
-    previous_distance= std::fabs(tp0.downtrack);
-    
-   while(previous_distance<up_track) //Extract the center line point towards the uptrack lanelets
-    {
-      auto next_lanelets = wm_->getMapRoutingGraph()->previous(current_lanelet);
-      if(!next_lanelets.empty())
-      {
-        carma_wm::TrackPos tp1 = carma_wm::geometry::trackPos(next_lanelets[0], local_point_);
-        previous_distance= std::fabs(tp1.downtrack);
-        auto back_point = next_lanelets[0].centerline().back().basicPoint2d();
-        auto front_point = next_lanelets[0].centerline().front().basicPoint2d();
-        lanelet::BasicPoint2d middle = {(back_point.x() + front_point.x())/2, (back_point.y() + front_point.y())/2};
-        center_line_points_left.push_back(middle);
-        current_lanelet=next_lanelets[0];
-      }
-       else
-      {
-        break;
-      }
-    }
-   
-    std::reverse(center_line_points_left.begin(), center_line_points_left.end());
-   
-    center_line_points_left.insert( center_line_points_left.end(), center_line_points_right.begin(), center_line_points_right.end() );
+   // auto route_lanelets = wm_->getLaneletsBetween(route_trackpos_min, route_trackpos_max, false);
+
+    std::vector<cav_msgs::TrafficControlMessageV01> output_msg;
+
     cav_msgs::TrafficControlMessageV01 traffic_mobility_msg;
-    
+  
     traffic_mobility_msg.geometry_exists=true;
     traffic_mobility_msg.params_exists=true;
     traffic_mobility_msg.package_exists=true;
     j2735_msgs::TrafficControlVehClass veh_type;
     veh_type.vehicle_class = j2735_msgs::TrafficControlVehClass::ANY; // TODO decide what vehicle is affected
     traffic_mobility_msg.params.vclasses.push_back(veh_type);
-
-    for(auto &i:center_line_points_left)
-    {
-      cav_msgs::PathNode path_point;
-      path_point.x=i.x();
-      path_point.y=i.y();
-      traffic_mobility_msg.geometry.nodes.push_back(path_point);
-    }
-
     traffic_mobility_msg.geometry.proj=projection_msg_;
     traffic_mobility_msg.params.schedule.start=ros::Time::now();
     traffic_mobility_msg.params.schedule.end_exists=false;
@@ -200,30 +177,45 @@ namespace traffic
     traffic_mobility_msg.params.schedule.between_exists=false;
     traffic_mobility_msg.params.schedule.repeat_exists = false;
 
-    std::vector<cav_msgs::TrafficControlMessageV01> output_msg;
+    for (size_t i = 0; i < forward_lanes.size(); i++) {
+      //forward_lanes[i] = carma_utils::containers::downsample_vector(forward_lanes[i], 8);
 
-    boost::uuids::uuid closure_id = boost::uuids::random_generator()();
-    std::copy(closure_id.begin(), closure_id.end(), traffic_mobility_msg.id.id.begin());
-    traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::CLOSED_CHOICE;
-    traffic_mobility_msg.params.detail.closed=cav_msgs::TrafficControlDetail::CLOSED;
-    traffic_mobility_msg.package.label=event_reason;
-    output_msg.push_back(traffic_mobility_msg);
+      traffic_mobility_msg.geometry.nodes.clear();
 
-    boost::uuids::uuid headway_id = boost::uuids::random_generator()();
-    std::copy(headway_id.begin(), headway_id.end(), traffic_mobility_msg.id.id.begin());
-    traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::MINHDWY_CHOICE;
-    traffic_mobility_msg.params.detail.minhdwy=min_gap;
-    output_msg.push_back(traffic_mobility_msg);
+      for(const auto& p : carma_utils::containers::downsample_vector(forward_lanes[i], 8))
+      {
+        cav_msgs::PathNode path_point;
+        path_point.x=p.x();
+        path_point.y=p.y();
+        traffic_mobility_msg.geometry.nodes.push_back(path_point);
+      }
 
-    boost::uuids::uuid speed_id = boost::uuids::random_generator()();
-    std::copy(speed_id.begin(), speed_id.end(), traffic_mobility_msg.id.id.begin());
-    traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
-    traffic_mobility_msg.params.detail.maxspeed=speed_advisory;
-    output_msg.push_back(traffic_mobility_msg);
+      if (i == 0) {
+        boost::uuids::uuid closure_id = boost::uuids::random_generator()();
+        std::copy(closure_id.begin(), closure_id.end(), traffic_mobility_msg.id.id.begin());
+        traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::CLOSED_CHOICE;
+        traffic_mobility_msg.params.detail.closed=cav_msgs::TrafficControlDetail::CLOSED;
+        traffic_mobility_msg.package.label=event_reason;
+        output_msg.push_back(traffic_mobility_msg);
+      }
+
+      boost::uuids::uuid headway_id = boost::uuids::random_generator()();
+      std::copy(headway_id.begin(), headway_id.end(), traffic_mobility_msg.id.id.begin());
+      traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::MINHDWY_CHOICE;
+      traffic_mobility_msg.params.detail.minhdwy=min_gap;
+      output_msg.push_back(traffic_mobility_msg);
+
+      boost::uuids::uuid speed_id = boost::uuids::random_generator()();
+      std::copy(speed_id.begin(), speed_id.end(), traffic_mobility_msg.id.id.begin());
+      traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
+      traffic_mobility_msg.params.detail.maxspeed=speed_advisory;
+      output_msg.push_back(traffic_mobility_msg);
+
+    }
+    
 
     return output_msg;
    
-
     }
 
 }//traffic
