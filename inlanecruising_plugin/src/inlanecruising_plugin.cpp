@@ -691,7 +691,9 @@ bool InLaneCruisingPlugin::validate_yield_plan(const cav_msgs::TrajectoryPlan& y
 {
   if (yield_plan.trajectory_points.size()>= 2)
   {
-    if (yield_plan.trajectory_points[0].target_time > ros::Time::now())
+    ROS_DEBUG_STREAM("Yield Trajectory Time" << (double)yield_plan.trajectory_points[0].target_time.toSec());
+    ROS_DEBUG_STREAM("Now:" << (double)ros::Time::now().toSec());
+    if (yield_plan.trajectory_points[0].target_time + ros::Duration(5.0) > ros::Time::now())
     {
       return true;
     }
@@ -704,7 +706,7 @@ bool InLaneCruisingPlugin::validate_yield_plan(const cav_msgs::TrajectoryPlan& y
   {
     ROS_DEBUG_STREAM("Invalid Yield Trajectory"); 
   }
-  return true;
+  return false;
 }
 
 
