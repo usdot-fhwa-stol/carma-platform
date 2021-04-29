@@ -47,7 +47,7 @@ namespace route_following_plugin
         pnh_->param<double>("minimal_maneuver_duration", mvr_duration_, 16.0);
         pnh2_->param<double>("config_speed_limit",config_limit);
         pnh_->param<double>("buffer_time_lanechange",buffer_lanechange_time_);
-        pnh_->param<double>("/guidance/route_end_jerk", jerk_, 1.0);
+        pnh2_->param<double>("guidance/route_end_jerk", jerk_, 1.0);
         wml_.reset(new carma_wm::WMListener());
         // set world model point form wm listener
         wm_ = wml_->getWorldModel();
@@ -148,16 +148,15 @@ namespace route_following_plugin
             //if not already on last lanelet in path, check relation with next lanelet- follow lane change procedure if req, else lane follow
             if(last_lanelet_index!= (shortest_path.size()-1) && identifyLaneChange(following_lanelets, shortest_path[last_lanelet_index + 1].id()))
             {
-                //calculate constant start distance for lane change
-                double longl_travel_dist = (target_speed*(LANE_CHANGE_TIME_MAX + buffer_lanechange_time_)); //*config_param for time
-                double lane_change_start_dist;               
-                //lane change start distance needs to be constant                
+                //calculate required distance for lane change
+                double longl_travel_dist = (target_speed*(LANE_CHANGE_TIME_MAX + buffer_lanechange_time_));
+                double lane_change_start_dist;                             
                 
                 if(wm_->routeTrackPos(shortest_path[last_lanelet_index + 1].centerline2d().back()).downtrack >= route_length){
                     end_dist = route_length;
 
                 }
-                else{
+                else{//lane change till end of lanelet
                     end_dist  = wm_->routeTrackPos(shortest_path[last_lanelet_index + 1].centerline2d().back()).downtrack;
                 }               
 
@@ -168,6 +167,7 @@ namespace route_following_plugin
                 composeLaneChangeManeuverMessage(lane_change_start_dist, end_dist, speed_progress, target_speed, 
                                     starting_lanelet_id, ending_lanelet_id,
                                     time_progress));
+                ++last_lanelet_index; //Corresponding to lane change happening over entire lanelet
             }
             else
             {

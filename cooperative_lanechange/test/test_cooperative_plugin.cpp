@@ -66,7 +66,7 @@
         identity.setIdentity();
 
         cav_msgs::LocationECEF ecef_point_1 = worker.trajectory_point_to_ecef(point_1, identity);
-        EXPECT_TRUE(ecef_point_1.ecef_x == 1.0);
+        EXPECT_TRUE(ecef_point_1.ecef_x == 100);
 
         cav_msgs::TrajectoryPlanPoint point_2;
         point_2.x = 1.0;

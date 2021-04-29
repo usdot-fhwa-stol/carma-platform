@@ -159,21 +159,16 @@ namespace cooperative_lanechange
         }  
 
 
-        //To find downtrack- distance of veh2 from current to start of end lanelet + downtrack of veh1 in its own current lanelet
+        //To find downtrack- creating temporary route from veh2 to veh1(ego vehicle)
         
-        double veh2_lanelet_start_downtrack = wm_->routeTrackPos(shortest_path2.front().centerline2d().front()).downtrack;
-        ROS_DEBUG_STREAM("veh2_lanelet_start_downtrack:" << veh2_lanelet_start_downtrack);
-
-        double ego_current_downtrack = wm_->routeTrackPos(ego_pos).downtrack;      
-        ROS_DEBUG_STREAM("ego_current_downtrack:" << ego_current_downtrack);
+        double veh1_current_downtrack = wm_->routeTrackPos(ego_pos).downtrack;      
+        ROS_DEBUG_STREAM("ego_current_downtrack:" << veh1_current_downtrack);
         
         
-        double remaining_downtrack = ego_current_downtrack - veh2_downtrack - veh2_lanelet_start_downtrack;
+        current_gap = veh1_current_downtrack - veh2_downtrack;
         ROS_DEBUG_STREAM("Finding current gap");
-        ROS_DEBUG_STREAM("Ego current downtrack:"<<ego_current_downtrack<<" veh2 downtrack:"<<veh2_downtrack<<" veh2_lanelet_start_downtrack:"<<veh2_lanelet_start_downtrack);
+        ROS_DEBUG_STREAM("Veh1 current downtrack:"<<veh1_current_downtrack<<" veh2 downtrack:"<<veh2_downtrack);
         
-        current_gap = remaining_downtrack;
-
 
         return current_gap;
 
@@ -293,8 +288,8 @@ namespace cooperative_lanechange
 
         //if ack mobility response, send lanechange response
         if(!negotiate || is_lanechange_accepted_){
-            ROS_DEBUG_STREAM("negotiate" << negotiate);
-            ROS_DEBUG_STREAM("negotis_lanechange_accepted_iate" << is_lanechange_accepted_);
+            ROS_DEBUG_STREAM("negotiate:" << negotiate);
+            ROS_DEBUG_STREAM("is_lanechange_accepted:" << is_lanechange_accepted_);
 
             ROS_DEBUG_STREAM("Adding to response");
             add_maneuver_to_response(req,resp,planned_trajectory_points);
