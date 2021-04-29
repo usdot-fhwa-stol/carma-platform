@@ -121,45 +121,69 @@ namespace traffic
 
   std::vector<cav_msgs::TrafficControlMessageV01> TrafficIncidentParserWorker::composeTrafficControlMesssages()
   {
-    
-    auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, local_point_, 1);  
+    ROS_DEBUG_STREAM("In composeTrafficControlMesssages");
+    local_point_=getIncidentOriginPoint();
+    ROS_DEBUG_STREAM("Responder point in map frame: " << local_point_.x() << ", " << local_point_.y());
+    auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, local_point_, 1); 
+    if (current_lanelets.size() == 0) {
+      ROS_ERROR_STREAM("No nearest lanelet to responder vehicle in map point: " << local_point_.x() << ", " << local_point_.y());
+      return {};
+    }
+     
     lanelet::ConstLanelet current_lanelet = current_lanelets[0].second;
 
-    lanelet::ConstLanelets lefts = wm_->getMapRoutingGraph()->lefts(current_lanelet);
+    ROS_DEBUG_STREAM("Nearest Lanelet: " << current_lanelet.id());
+
+    lanelet::ConstLanelets lefts = { current_lanelet };
+    for (const auto&& l : wm_->getMapRoutingGraph()->lefts(current_lanelet)) {
+      lefts.emplace_back(l);
+      ROS_DEBUG_STREAM("Left lanelet: " << l.id());
+    }
+    
+    lefts.push_back(current_lanelet);
     lanelet::ConstLanelets rights = wm_->getMapRoutingGraph()->rights(current_lanelet);
+    for (auto l : rights) {
+      ROS_DEBUG_STREAM("Right lanelet: " << l.id());
+    }
 
     std::vector<std::vector<lanelet::BasicPoint2d>> forward_lanes; // Ordered from right to left
     for (auto ll : lefts) {
+      ROS_DEBUG_STREAM("Processing left lanelet: " << ll.id());
       std::vector<lanelet::BasicPoint2d> following_lane;
       auto cur_ll = ll;
       double dist = 0;
       size_t p_idx = 0;
       lanelet::BasicPoint2d prev_point = lanelet::traits::to2D(cur_ll.centerline().front());
-      while (dist < down_track); {
+      while (dist < down_track) {
+        ROS_DEBUG_STREAM("Accumulating left lanelet: " << cur_ll.id());
         if (p_idx == cur_ll.centerline().size()) {
           auto next_lls = wm_->getMapRoutingGraph()->following(cur_ll, false);
           if (next_lls.size() == 0) {
+            ROS_DEBUG_STREAM("No followers");
             break;
           }
           auto next = next_lls[0];
+          ROS_DEBUG_STREAM("Getting next lanelet: " << next.id());
           cur_ll = next;
           p_idx = 0;
         }
         if (p_idx != 0 || dist == 0) {
+          
           following_lane.push_back(lanelet::traits::to2D(cur_ll.centerline()[p_idx]));
           dist += lanelet::geometry::distance2d(prev_point, following_lane.back());
         }
-        
+        ROS_DEBUG_STREAM("distance " << dist);
+        prev_point = lanelet::traits::to2D(cur_ll.centerline()[p_idx]);
         p_idx++;
       }
-      if (following_lane.size() == 0) {
-        break;
+      if (following_lane.size() != 0) {
+        ROS_DEBUG_STREAM("Adding lane");
+        forward_lanes.emplace_back(following_lane);
       }
-      forward_lanes.emplace_back(following_lane);
     }
 
    // auto route_lanelets = wm_->getLaneletsBetween(route_trackpos_min, route_trackpos_max, false);
-
+    ROS_DEBUG_STREAM("Constructing message for lanes: " << forward_lanes.size());
     std::vector<cav_msgs::TrafficControlMessageV01> output_msg;
 
     cav_msgs::TrafficControlMessageV01 traffic_mobility_msg;
