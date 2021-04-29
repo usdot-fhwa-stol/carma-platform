@@ -84,6 +84,10 @@ namespace cooperative_lanechange
         pnh_->param<double>("destination_range",destination_range_, 5);
         pnh_->param<double>("lanechange_time_out",lanechange_time_out_, 6.0);
         pnh_->param<double>("min_timestep",min_timestep_);
+        pnh_->param<double>("starting_downtrack_range", 5.0);
+        pnh_->param<double>("starting_fraction", 0.2);
+        pnh_->param<double>("mid_fraction", 0.5);
+
         //tf listener for looking up earth to map transform 
         tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
 
@@ -216,6 +220,9 @@ namespace cooperative_lanechange
         //get subject vehicle info
         lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
         double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
+        if(current_downtrack < maneuver_plan[0].lane_change_maneuver.start_dist - 5.0){
+            return true;
+        }
         auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, veh_pos, 10);       
         long current_lanelet_id = current_lanelets[0].second.id();
         if(current_lanelet_id == target_lanelet_id && current_downtrack >= target_downtrack - destination_range_){
@@ -262,7 +269,7 @@ namespace cooperative_lanechange
         }
         else{
             ROS_DEBUG_STREAM("No roadway object");
-            ROS_WARN_STREAM("Did not find a connected and automated vehicle roadway object");
+            //ROS_WARN_STREAM("Did not find a connected and automated vehicle roadway object");
             negotiate = false;
         }
 
@@ -348,6 +355,18 @@ namespace cooperative_lanechange
         request_msg.strategy = "carma/cooperative-lane-change";
         request_msg.plan_type.type = cav_msgs::PlanType::CHANGE_LANE_LEFT;
         //Urgency- Currently unassigned
+        int urgency;
+        if(maneuver_fraction_completed_ <= 0.2){
+            urgency = 10;
+        }
+        else if(maneuver_fraction_completed_ <= 0.5){
+            urgency = 5;
+        }
+        else{
+            urgency=1;
+        }
+        ROS_DEBUG_STREAM("Maneuver fraction completed:"<<maneuver_fraction_completed_);
+        request_msg.urgency = urgency;
 
         //Strategy params
         //Encode JSON with Boost Property Tree
@@ -516,7 +535,10 @@ namespace cooperative_lanechange
             lanelet::BasicLineString2d route_geometry = create_route_geom(starting_downtrack, stoi(lane_change_maneuver.starting_lane_id), ending_downtrack, wm);
             ROS_DEBUG_STREAM("route geometry size:"<<route_geometry.size());
             int nearest_pt_index = getNearestRouteIndex(route_geometry,state);
-            int ending_pt_index = get_ending_point_index(route_geometry, ending_downtrack);
+            int ending_pt_index = get_ending_point_index(route_geometry, ending_downtrack); 
+            //find percentage of maneuver left - for yield plugin use
+            int maneuver_points_size = route_geometry.size() - ending_pt_index;
+            double maneuver_fraction_completed_ = nearest_pt_index/maneuver_points_size;
 
             lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.begin() + ending_pt_index);
             ROS_DEBUG_STREAM("future geom size:"<<future_route_geometry.size());

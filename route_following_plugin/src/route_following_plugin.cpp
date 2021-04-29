@@ -153,10 +153,12 @@ namespace route_following_plugin
                 double lane_change_start_dist;                             
                 
                 if(wm_->routeTrackPos(shortest_path[last_lanelet_index + 1].centerline2d().back()).downtrack >= route_length){
+                    lane_change_start_dist = route_length - longl_travel_dist;
                     end_dist = route_length;
 
                 }
-                else{//lane change till end of lanelet
+                else{
+                    lane_change_start_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index + 1].centerline2d().back()).downtrack - longl_travel_dist;
                     end_dist  = wm_->routeTrackPos(shortest_path[last_lanelet_index + 1].centerline2d().back()).downtrack;
                 }               
 
@@ -167,7 +169,8 @@ namespace route_following_plugin
                 composeLaneChangeManeuverMessage(lane_change_start_dist, end_dist, speed_progress, target_speed, 
                                     starting_lanelet_id, ending_lanelet_id,
                                     time_progress));
-                ++last_lanelet_index; //Corresponding to lane change happening over entire lanelet
+                
+                ++last_lanelet_index;
             }
             else
             {

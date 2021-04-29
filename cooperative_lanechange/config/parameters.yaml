@@ -71,3 +71,11 @@ lanechange_time_out: 6.0
 # Double: The minimum timestep used for planning trajectory
 #Units: seconds
 min_timestep : 0.1
+
+#Double:  The range from the start from which the plugin can start working
+#Units: meters
+starting_downtrack_range : 5.0
+
+starting_fraction : 0.2
+
+mid_fraction : 0.5

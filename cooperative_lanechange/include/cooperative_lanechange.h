@@ -316,6 +316,8 @@ namespace cooperative_lanechange
             ros::Time request_sent_time;
             //boolean that records whether request has already been sent
             bool request_sent = false;
+            //fraction of the maneuver completed
+            double maneuver_fraction_completed_ = 0;
 
             // ROS params
             //Vehicle params
@@ -341,6 +343,11 @@ namespace cooperative_lanechange
             double lanechange_time_out_ = 6.0;
             int num_points = traj_freq * trajectory_time_length_;
             double min_timestep_ = 0.1;
+            double starting_downtrack_range_ = 5.0; //This parameter dictates how long before the start_dist, is it ok for the plugin to work if it's called early
+            double starting_fraction = 0.2;
+            double mid_fraction = 0.5;
+            
+
 
 
             // generated trajectory plan
