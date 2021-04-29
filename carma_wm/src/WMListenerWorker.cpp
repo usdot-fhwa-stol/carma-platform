@@ -66,8 +66,8 @@ void WMListenerWorker::enableUpdatesWithoutRoute()
 
 void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg)
 {
-
-  if(geofence_msg->invalidates_route==true)
+  //map_update_queue_.push_back(geofence_msg);
+  if(geofence_msg->invalidates_route==true && world_model_->getRoute())
   {  
     rerouting_flag_=true;
     ROS_DEBUG_STREAM("Received notice that route has been invalidated in mapUpdateCallback");
