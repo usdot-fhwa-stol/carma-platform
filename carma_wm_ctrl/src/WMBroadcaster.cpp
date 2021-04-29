@@ -185,6 +185,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
   
   ros::Time end_time = msg_schedule.end;
   if (!msg_schedule.end_exists) {
+    ROS_DEBUG_STREAM("No end time for geofence, using ros::TIME_MAX");
     end_time = ros::TIME_MAX;
   }
 
@@ -231,7 +232,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
     {
       if (msg_schedule.repeat_exists) {
         gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
-                                    msg_schedule.end,
+                                    end_time,
                                     daily_schedule.begin,     
                                     daily_schedule.duration,
                                     msg_schedule.repeat.offset,
@@ -240,7 +241,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
                                     week_day_set));
       } else {
         gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
-                                  msg_schedule.end,
+                                  end_time,
                                   daily_schedule.begin,     
                                   daily_schedule.duration,
                                   ros::Duration(0.0), // No offset
@@ -254,7 +255,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
   else {
     if (msg_schedule.repeat_exists) {
       gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
-                                  msg_schedule.end,
+                                  end_time,
                                   ros::Duration(0.0),     
                                   ros::Duration(86400.0), // 24 hr daily application
                                   msg_schedule.repeat.offset,
@@ -263,7 +264,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
                                   week_day_set)); 
     } else {
       gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
-                                  msg_schedule.end,
+                                  end_time,
                                   ros::Duration(0.0),     
                                   ros::Duration(86400.0), // 24 hr daily application
                                   ros::Duration(0.0), // No offset

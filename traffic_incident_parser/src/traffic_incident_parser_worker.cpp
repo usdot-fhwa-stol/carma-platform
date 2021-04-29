@@ -135,7 +135,7 @@ namespace traffic
     ROS_DEBUG_STREAM("Nearest Lanelet: " << current_lanelet.id());
 
     lanelet::ConstLanelets lefts = { current_lanelet };
-    for (const auto&& l : wm_->getMapRoutingGraph()->lefts(current_lanelet)) {
+    for (const auto& l : wm_->getMapRoutingGraph()->lefts(current_lanelet)) {
       lefts.emplace_back(l);
       ROS_DEBUG_STREAM("Left lanelet: " << l.id());
     }
