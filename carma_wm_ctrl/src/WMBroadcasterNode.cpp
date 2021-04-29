@@ -79,7 +79,8 @@ int WMBroadcasterNode::run()
 
   pnh2_.getParam("/config_speed_limit", config_limit);
   wmb_.setConfigSpeedLimit(config_limit);
-  
+  timer = pnh_.createTimer(ros::Duration(10), &WMBroadcaster::controlRequestFromRoute);
+
  
   // Spin
   cnh_.spin();
