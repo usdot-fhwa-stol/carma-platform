@@ -47,8 +47,7 @@ namespace route_following_plugin
         pnh_->param<double>("minimal_maneuver_duration", mvr_duration_, 16.0);
         pnh2_->param<double>("config_speed_limit",config_limit);
         pnh_->param<double>("buffer_time_lanechange",buffer_lanechange_time_);
-        pnh_->param<double>("/guidance/route_end_jerk", jerk_, 0.05);
-      
+        pnh2_->param<double>("guidance/route_end_jerk", jerk_, 1.0);
         wml_.reset(new carma_wm::WMListener());
         // set world model point form wm listener
         wm_ = wml_->getWorldModel();
@@ -149,27 +148,29 @@ namespace route_following_plugin
             //if not already on last lanelet in path, check relation with next lanelet- follow lane change procedure if req, else lane follow
             if(last_lanelet_index!= (shortest_path.size()-1) && identifyLaneChange(following_lanelets, shortest_path[last_lanelet_index + 1].id()))
             {
-                //calculate constant start distance for lane change
-                double longl_travel_dist = (target_speed*(LANE_CHANGE_TIME_MAX + buffer_lanechange_time_)); //*config_param for time
-                double lane_change_start_dist = end_dist-longl_travel_dist;
+                //calculate required distance for lane change
+                double longl_travel_dist = (target_speed*(LANE_CHANGE_TIME_MAX + buffer_lanechange_time_));
+                double lane_change_start_dist;                             
                 
-                //lane following till start_distance
-                if(current_progress < lane_change_start_dist){
-                    resp.new_plan.maneuvers.push_back(
-                    composeManeuverMessage(current_progress, lane_change_start_dist, 
-                                        speed_progress, target_speed, 
-                                        shortest_path[last_lanelet_index].id(), time_progress));
-                }
-                else{ //update start_dist if beyond const start calculated above
-                    lane_change_start_dist = current_progress;
+                if(wm_->routeTrackPos(shortest_path[last_lanelet_index + 1].centerline2d().back()).downtrack >= route_length){
+                    lane_change_start_dist = route_length - longl_travel_dist;
+                    end_dist = route_length;
 
                 }
+                else{
+                    lane_change_start_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index + 1].centerline2d().back()).downtrack - longl_travel_dist;
+                    end_dist  = wm_->routeTrackPos(shortest_path[last_lanelet_index + 1].centerline2d().back()).downtrack;
+                }               
+
+                lane_change_start_dist = current_progress;
                 double starting_lanelet_id = shortest_path[last_lanelet_index].id();
                 double ending_lanelet_id = shortest_path[last_lanelet_index+1].id();
                 resp.new_plan.maneuvers.push_back(
                 composeLaneChangeManeuverMessage(lane_change_start_dist, end_dist, speed_progress, target_speed, 
                                     starting_lanelet_id, ending_lanelet_id,
                                     time_progress));
+                
+                ++last_lanelet_index;
             }
             else
             {
@@ -180,7 +181,7 @@ namespace route_following_plugin
                 
             }
             current_progress += dist_diff;
-            time_progress = resp.new_plan.maneuvers.back().lane_following_maneuver.end_time;
+            //time_progress = resp.new_plan.maneuvers.back().lane_following_maneuver.end_time;
             speed_progress = target_speed;
             
 
@@ -257,7 +258,8 @@ namespace route_following_plugin
         }
         maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
         current_time = maneuver_msg.lane_following_maneuver.end_time;
-
+        ROS_INFO_STREAM("Creating lane follow start dist:"<<current_dist<<" end dist:"<<end_dist);
+        ROS_INFO_STREAM("Duration:"<<maneuver_msg.lane_following_maneuver.end_time.toSec() - maneuver_msg.lane_following_maneuver.start_time.toSec());
         return maneuver_msg;
     }
 
@@ -266,7 +268,7 @@ namespace route_following_plugin
         maneuver_msg.type = cav_msgs::Maneuver::LANE_CHANGE;
         maneuver_msg.lane_change_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
         maneuver_msg.lane_change_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
-        maneuver_msg.lane_change_maneuver.parameters.planning_tactical_plugin = "UnobstructedLaneChangePlugin";
+        maneuver_msg.lane_change_maneuver.parameters.planning_tactical_plugin = "CooperativeLaneChangePlugin";
         maneuver_msg.lane_change_maneuver.parameters.planning_strategic_plugin = "RouteFollowingPlugin";
         maneuver_msg.lane_change_maneuver.start_dist = current_dist;
         maneuver_msg.lane_change_maneuver.start_speed = current_speed;
@@ -283,7 +285,8 @@ namespace route_following_plugin
         maneuver_msg.lane_change_maneuver.starting_lane_id = std::to_string(starting_lane_id);
         maneuver_msg.lane_change_maneuver.ending_lane_id = std::to_string(ending_lane_id);
         current_time = maneuver_msg.lane_change_maneuver.end_time;
-
+        ROS_INFO_STREAM("Creating lane change start dist:"<<current_dist<<" end dist:"<<end_dist<<" Starting llt:"<<starting_lane_id<<" Ending llt:"<<ending_lane_id);
+        ROS_INFO_STREAM("Duration:"<<maneuver_msg.lane_change_maneuver.end_time.toSec() - maneuver_msg.lane_change_maneuver.start_time.toSec());
         return maneuver_msg;
     }
 
@@ -306,7 +309,8 @@ namespace route_following_plugin
         } 
         maneuver_msg.stop_and_wait_maneuver.end_time = current_time + ros::Duration(end_time);
         current_time = maneuver_msg.stop_and_wait_maneuver.end_time;
-        
+        ROS_INFO_STREAM("Creating stop and wait start dist:"<<current_dist<<" end dist:"<<end_dist);
+        ROS_INFO_STREAM("Duration:"<<maneuver_msg.stop_and_wait_maneuver.end_time.toSec() - maneuver_msg.stop_and_wait_maneuver.start_time.toSec());
         return maneuver_msg;
     }
     bool RouteFollowingPlugin::identifyLaneChange(lanelet::routing::LaneletRelations relations, int target_id)

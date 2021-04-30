@@ -7,4 +7,4 @@ route_end_jerk : 0.05
 
 # Double : Extra time allowed for lane change, in order to make transition smooth
 #Unit : seconds
-buffer_lanechange_time : 1.0
+buffer_lanechange_time : 3.0
