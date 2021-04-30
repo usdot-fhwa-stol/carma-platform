@@ -84,9 +84,10 @@ namespace cooperative_lanechange
         pnh_->param<double>("destination_range",destination_range_, 5);
         pnh_->param<double>("lanechange_time_out",lanechange_time_out_, 6.0);
         pnh_->param<double>("min_timestep",min_timestep_);
-        pnh_->param<double>("starting_downtrack_range", 5.0);
-        pnh_->param<double>("starting_fraction", 0.2);
-        pnh_->param<double>("mid_fraction", 0.5);
+        pnh_->param<double>("starting_downtrack_range", starting_downtrack_range_, 5.0);
+        pnh_->param<double>("starting_fraction", starting_fraction_, 0.2);
+        pnh_->param<double>("mid_fraction",mid_fraction_, 0.5);
+        pnh_->param<double>("min_desired_gap",min_desired_gap_, 5.0);
 
         //tf listener for looking up earth to map transform 
         tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
@@ -218,7 +219,7 @@ namespace cooperative_lanechange
         //get subject vehicle info
         lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
         double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
-        if(current_downtrack < maneuver_plan[0].lane_change_maneuver.start_dist - 5.0){
+        if(current_downtrack < maneuver_plan[0].lane_change_maneuver.start_dist - starting_downtrack_range_){
             return true;
         }
         auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, veh_pos, 10);       
@@ -257,7 +258,7 @@ namespace cooperative_lanechange
             ROS_DEBUG_STREAM("Relative velocity:"<<relative_velocity);
             double desired_gap = desired_time_gap_ * relative_velocity;      
             ROS_DEBUG_STREAM("Desired gap:"<<desired_gap);
-            if(desired_gap< 5.0){
+            if(desired_gap < 5.0){
                 desired_gap = 5.0;
             }
             // if(current_gap > desired_gap){
@@ -350,10 +351,10 @@ namespace cooperative_lanechange
         request_msg.plan_type.type = cav_msgs::PlanType::CHANGE_LANE_LEFT;
         //Urgency- Currently unassigned
         int urgency;
-        if(maneuver_fraction_completed_ <= 0.2){
+        if(maneuver_fraction_completed_ <= starting_fraction_){
             urgency = 10;
         }
-        else if(maneuver_fraction_completed_ <= 0.5){
+        else if(maneuver_fraction_completed_ <= mid_fraction_ ){
             urgency = 5;
         }
         else{

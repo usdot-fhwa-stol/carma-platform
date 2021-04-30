@@ -344,8 +344,9 @@ namespace cooperative_lanechange
             int num_points = traj_freq * trajectory_time_length_;
             double min_timestep_ = 0.1;
             double starting_downtrack_range_ = 5.0; //This parameter dictates how long before the start_dist, is it ok for the plugin to work if it's called early
-            double starting_fraction = 0.2;
-            double mid_fraction = 0.5;
+            double starting_fraction_ = 0.2;
+            double mid_fraction_ = 0.5;
+            double min_desired_gap_ =5.0;
             
 
 
