@@ -161,6 +161,7 @@
 
   <!-- Cooperative lanechange -->
   <group>
+    <remap from="incoming_mobility_response" to="$(optenv CARMA_MSG_NS)/incoming_mobility_response"/>
     <include file = "$(find cooperative_lanechange)/launch/cooperative_lanechange.launch"/>
   </group>
 
@@ -195,3 +196,4 @@
 
 
 </launch>
+
