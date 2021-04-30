@@ -66,7 +66,7 @@ int WMBroadcasterNode::run()
   // Base Map Georeference Sub
   georef_sub_ = cnh_.subscribe("georeference", 1, &WMBroadcaster::geoReferenceCallback, &wmb_);
   // Geofence Sub
-  geofence_sub_ = cnh_.subscribe("geofence", 1, &WMBroadcaster::geofenceCallback, &wmb_);
+  geofence_sub_ = cnh_.subscribe("geofence", 100, &WMBroadcaster::geofenceCallback, &wmb_);
   //Route Message Sub
   route_callmsg_sub_ = cnh_.subscribe("route", 1, &WMBroadcaster::routeCallbackMessage, &wmb_);
   //Current Location Sub

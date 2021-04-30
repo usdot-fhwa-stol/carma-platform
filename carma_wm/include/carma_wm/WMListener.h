@@ -23,6 +23,7 @@
 #include <carma_wm/WorldModel.h>
 #include <carma_utils/CARMAUtils.h>
 #include <autoware_lanelet2_msgs/MapBin.h>
+#include <queue>
 
 namespace carma_wm
 {
@@ -124,7 +125,6 @@ private:
  
   ros::CARMANodeHandle nh2_{"/"};
   lanelet::Velocity config_speed_limit_;
-
 
 };
 }  // namespace carma_wm

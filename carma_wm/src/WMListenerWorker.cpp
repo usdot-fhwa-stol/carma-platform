@@ -66,6 +66,8 @@ void WMListenerWorker::enableUpdatesWithoutRoute()
 
 void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg)
 {
+  ROS_ERROR_STREAM("Recieved Geofence Message D");
+  ROS_INFO_STREAM("New Map Update Received");
   //map_update_queue_.push_back(geofence_msg);
   if(geofence_msg->invalidates_route==true && world_model_->getRoute())
   {  
@@ -79,11 +81,11 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinCon
      return;
     }
   }
-
+  ROS_ERROR_STREAM("Recieved Geofence Message E");
   // convert ros msg to geofence object
   auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
   carma_wm::fromBinMsg(*geofence_msg, gf_ptr);
-  ROS_INFO_STREAM("New Map Update Received with Geofence Id:" << gf_ptr->id_);
+  ROS_INFO_STREAM("Processing Map Update with Geofence Id:" << gf_ptr->id_);
 
   ROS_INFO_STREAM("Geofence id" << gf_ptr->id_ << " requests removal of size: " << gf_ptr->remove_list_.size());
   for (auto pair : gf_ptr->remove_list_)
@@ -97,7 +99,7 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinCon
       if (pair.second->id() == regem->id()) world_model_->getMutableMap()->remove(parent_llt, regem);
     }
   }
-
+  ROS_ERROR_STREAM("Recieved Geofence Message F");
   ROS_INFO_STREAM("Geofence id" << gf_ptr->id_ << " requests update of size: " << gf_ptr->update_list_.size());
   // we should extract general regem to specific type of regem the geofence specifies
   

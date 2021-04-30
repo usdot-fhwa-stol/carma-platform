@@ -111,6 +111,8 @@ private:
   void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const;
   double config_speed_limit_;
   autoware_lanelet2_msgs::MapBinPtr local_geofence_msg_;
+
+  //std::queue<autoware_lanelet2_msgs::MapBinConstPtr> map_update_queue_; // Update queue used to cache map updates when they cannot be immeadiatly applied due to waiting for rerouting
   
   bool rerouting_flag_=false;
   bool route_node_flag_=false;
