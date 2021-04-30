@@ -217,7 +217,6 @@ namespace plan_delegator
                 break;
             }
         }
-
         return latest_trajectory_plan;
     }
 

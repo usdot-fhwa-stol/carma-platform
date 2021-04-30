@@ -47,11 +47,11 @@ enable_cooperative_behavior: true
 always_accept_mobility_request: true
 # Acceptable number of timesteps to use the latest known mobility request before switching to yield
 # Value type: Desired
-acceptable_passed_timesteps: 3
+acceptable_passed_timesteps: 10
 # Intervehicle distance that is considered a collision
 # Unit: m
 # Value type: Desired
-intervehicle_collision_distance: 2.0
+intervehicle_collision_distance: 6.0
 # Time gap to finish planning a yield earlier than collision time
 # Unit: s
 # Value type: Desired
@@ -59,3 +59,5 @@ safety_collision_time_gap: 2.0
 # Flag to enable yield plugin to check for adjustable gap (for example digital gap from map)
 # Value type: Desired
 enable_adjustable_gap: true
+
+acceptable_urgency: 5

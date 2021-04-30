@@ -106,9 +106,11 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
 
       if (yield_client_.call(yield_srv))
       {
+        ROS_DEBUG_STREAM("Received Traj from Yield");
         cav_msgs::TrajectoryPlan yield_plan = yield_srv.response.trajectory_plan;
         if (validate_yield_plan(yield_plan))
         {
+          ROS_DEBUG_STREAM("Yield trajectory validated");
           resp.trajectory_plan = yield_plan;
         }
         else
@@ -129,6 +131,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   }
   else
   {
+    ROS_DEBUG_STREAM("Ignored Object Avoidance");
     resp.trajectory_plan = original_trajectory;
   }
 
@@ -688,7 +691,9 @@ bool InLaneCruisingPlugin::validate_yield_plan(const cav_msgs::TrajectoryPlan& y
 {
   if (yield_plan.trajectory_points.size()>= 2)
   {
-    if (yield_plan.trajectory_points[0].target_time > ros::Time::now())
+    ROS_DEBUG_STREAM("Yield Trajectory Time" << (double)yield_plan.trajectory_points[0].target_time.toSec());
+    ROS_DEBUG_STREAM("Now:" << (double)ros::Time::now().toSec());
+    if (yield_plan.trajectory_points[0].target_time + ros::Duration(5.0) > ros::Time::now())
     {
       return true;
     }
