@@ -66,10 +66,9 @@ namespace unobstructed_lanechange
         // update ros_dur_ value
         time_dur_ = ros::Duration(acceptable_time_difference_);
 
-        ros::CARMANodeHandle::setSpinCallback([this]() -> bool {
-            unobstructed_lanechange_plugin_discovery_pub_.publish(plugin_discovery_msg_);
-            return true;
-        });
+        discovery_pub_timer_ = pnh_->createTimer(
+            ros::Duration(ros::Rate(10.0)),
+            [this](const auto&) { unobstructed_lanechange_plugin_discovery_pub_.publish(plugin_discovery_msg_); });
 
         wml_.reset(new carma_wm::WMListener());
         wm_ = wml_->getWorldModel();
@@ -88,7 +87,6 @@ namespace unobstructed_lanechange
     void UnobstructedLaneChangePlugin::run()
     {
     	initialize();
-        ros::CARMANodeHandle::setSpinRate(10.0);
         ros::CARMANodeHandle::spin();
 
     }
@@ -98,15 +96,15 @@ namespace unobstructed_lanechange
         lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
         double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
 
-        //convert maneuver info to route points and speeds
+        // Only plan the trajectory for the requested LANE_CHANGE maneuver
         std::vector<cav_msgs::Maneuver> maneuver_plan;
-        for(const auto maneuver : req.maneuver_plan.maneuvers)
+        if(req.maneuver_plan.maneuvers[req.maneuver_index_to_plan].type != cav_msgs::Maneuver::LANE_CHANGE)
         {
-            if(maneuver.type == cav_msgs::Maneuver::LANE_CHANGE)
-            {
-                maneuver_plan.push_back(maneuver);
-            }
+            throw std::invalid_argument ("Unobstructed Lane Change Plugin doesn't support this maneuver type");
         }
+        maneuver_plan.push_back(req.maneuver_plan.maneuvers[req.maneuver_index_to_plan]);
+        resp.related_maneuvers.push_back(req.maneuver_index_to_plan);
+
         auto points_and_target_speeds = maneuvers_to_points(maneuver_plan, current_downtrack, wm_,req.vehicle_state);
         
         auto downsampled_points = carma_utils::containers::downsample_vector(points_and_target_speeds, downsample_ratio_);
@@ -117,8 +115,8 @@ namespace unobstructed_lanechange
         original_trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
         int starting_lanelet_id = stoi(maneuver_plan.front().lane_change_maneuver.starting_lane_id);
-
-        original_trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state, req.header.stamp, starting_lanelet_id);
+        double final_max_speed = maneuver_plan.front().lane_change_maneuver.end_speed;
+        original_trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state, req.header.stamp, starting_lanelet_id, final_max_speed);
 
         original_trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, minimum_speed_);
 
@@ -159,12 +157,6 @@ namespace unobstructed_lanechange
 
         
 
-        for (int i=0; i<req.maneuver_plan.maneuvers.size(); i++){
-            if (req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::LANE_CHANGE){
-            resp.related_maneuvers.push_back(i);
-            break;
-            }
-        }
         resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
         return true;
@@ -229,7 +221,7 @@ namespace unobstructed_lanechange
     }
 
     std::vector<cav_msgs::TrajectoryPlanPoint> UnobstructedLaneChangePlugin::compose_trajectory_from_centerline(
-    const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time, int starting_lanelet_id)
+    const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time, int starting_lanelet_id, double max_speed)
     {
         int nearest_pt_index = getNearestPointIndex(points, state);
 
@@ -297,7 +289,8 @@ namespace unobstructed_lanechange
         final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, speed_moving_average_window_size_);
         for (auto& s : final_actual_speeds)  // Limit minimum speed. TODO how to handle stopping?
         {
-            s = std::max(s, minimum_speed_);
+            s = std::max(s, minimum_speed_); 
+            s = std::min(s, max_speed);
         }
 
         // Convert speeds to times
@@ -310,6 +303,11 @@ namespace unobstructed_lanechange
         std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
             trajectory_from_points_times_orientations(future_geom_points, times, final_yaw_values, state_time);
         
+        ROS_DEBUG_STREAM("PRINTING FINAL SPEEDS");
+        for (auto speed : final_actual_speeds)
+        {
+            ROS_DEBUG_STREAM("Final Speed: " << speed);
+        }
         //std::vector<cav_msgs::TrajectoryPlanPoint> traj;
         return traj_points;
 
@@ -536,15 +534,12 @@ namespace unobstructed_lanechange
                                                const cav_msgs::VehicleState& state)
     {
         lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
-        ROS_DEBUG_STREAM("veh_point: " << veh_point.x() << ", " << veh_point.y());
         double min_distance = std::numeric_limits<double>::max();
         int i = 0;
         int best_index = 0;
         for (const auto& p : points)
         {
             double distance = lanelet::geometry::distance2d(p.point, veh_point);
-            ROS_DEBUG_STREAM("distance: " << distance);
-            ROS_DEBUG_STREAM("p: " << p.point.x() << ", " << p.point.y());
             if (distance < min_distance)
             {
             best_index = i;

@@ -79,21 +79,19 @@ namespace stop_and_wait_plugin
         pnh_->param<double>("min_jerk", min_jerk_limit_);
         pnh_->param<double>("/guidance/destination_downtrack_range",destination_downtrack_range_);
 
-        ros::CARMANodeHandle::setSpinCallback([this]() -> bool
-        {
-            plugin_discovery_pub_.publish(plugin_discovery_msg_);
-            std_msgs::Float64 jerk_msg;
-            jerk_msg.data = jerk_;
-            jerk_pub_.publish(jerk_msg);
-            return true;
-        });
+        discovery_pub_timer_ = pnh_->createTimer(
+            ros::Duration(ros::Rate(10.0)),
+            [this](const auto&) { 
+                plugin_discovery_pub_.publish(plugin_discovery_msg_);
+                std_msgs::Float64 jerk_msg;
+                jerk_msg.data = jerk_;
+                jerk_pub_.publish(jerk_msg);
+             });
     }
 
     void StopandWait::run()
     {
         initialize();
-        double spin_rate = pnh_->param<double>("spin_rate_hz",10.0);
-        ros::CARMANodeHandle::setSpinRate(spin_rate);
         ros::CARMANodeHandle::spin();
     }
 
@@ -115,14 +113,15 @@ namespace stop_and_wait_plugin
         double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
         ROS_DEBUG_STREAM("Starting stop&wait planning");
         ROS_DEBUG_STREAM("Current_downtrack"<<current_downtrack);
+
+        // Only plan the trajectory for the requested STOP_AND_WAIT maneuver
         std::vector<cav_msgs::Maneuver> maneuver_plan;
-        for(const auto maneuver : req.maneuver_plan.maneuvers)
+        if(req.maneuver_plan.maneuvers[req.maneuver_index_to_plan].type != cav_msgs::Maneuver::STOP_AND_WAIT)
         {
-            if(maneuver.type == cav_msgs::Maneuver::STOP_AND_WAIT)
-            {
-                maneuver_plan.push_back(maneuver);
-            }
+            throw std::invalid_argument ("Stop and Wait Plugin doesn't support this maneuver type");
         }
+        maneuver_plan.push_back(req.maneuver_plan.maneuvers[req.maneuver_index_to_plan]);
+        resp.related_maneuvers.push_back(req.maneuver_index_to_plan);
 
         if(current_downtrack < maneuver_plan[0].stop_and_wait_maneuver.start_dist){
             //Do nothing
@@ -145,7 +144,6 @@ namespace stop_and_wait_plugin
         ROS_DEBUG_STREAM("Trajectory points size:"<<trajectory.trajectory_points.size());
         trajectory.initial_longitudinal_velocity = req.vehicle_state.longitudinal_vel;
         resp.trajectory_plan = trajectory;
-        resp.related_maneuvers.push_back(cav_msgs::Maneuver::STOP_AND_WAIT);
         resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
         return true;

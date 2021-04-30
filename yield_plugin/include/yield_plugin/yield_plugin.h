@@ -39,6 +39,7 @@
 #include <trajectory_utils/quintic_coefficient_calculator.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <boost/property_tree/json_parser.hpp>
+#include <carma_wm/TrafficControl.h>
 
 
 namespace yield_plugin
@@ -150,6 +151,14 @@ public:
   std::vector<lanelet::BasicPoint2d> convert_eceftrajectory_to_mappoints(const cav_msgs::Trajectory& ecef_trajectory, const geometry_msgs::TransformStamped& tf) const;
   
   /**
+   * \brief convert a point in ecef frame (in cm) into map frame (in meters)
+   * \param ecef_point carma point ecef frame in cm
+   * \param map_in_earth translate frame 
+   * \return 2d point in map frame
+   */
+  lanelet::BasicPoint2d ecef_to_map_point(const cav_msgs::LocationECEF& ecef_point, const tf2::Transform& map_in_earth) const;
+
+  /**
    * \brief compose a mobility response message
    * \param resp_recipient_id vehicle id of the recipient of the message
    * \param req_plan_id plan id from the requested message
@@ -207,6 +216,14 @@ public:
    */
   void lookupECEFtoMapTransform();
 
+  /**
+   * \brief checks trajectory for minimum gap associated with it
+   * \param original_tp original trajectory plan
+   * \return minumum required
+   */
+  double check_traj_for_digital_min_gap(const cav_msgs::TrajectoryPlan& original_tp) const;
+
+
 private:
 
   carma_wm::WorldModelConstPtr wm_;
@@ -225,6 +242,7 @@ private:
   double req_timestamp_ = 0;
   double req_target_plan_time_ = 0;
   int timesteps_since_last_req_ = 0;
+  int clc_urgency_ = 0;
 
   // time between ecef trajectory points
   double ecef_traj_timestep_ = 0.1;

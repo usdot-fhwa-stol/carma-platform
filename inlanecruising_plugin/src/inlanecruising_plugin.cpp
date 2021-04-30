@@ -66,13 +66,19 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
 
   lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
   double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
-  //only work on lane_following maneuver plans
+
+  // Only plan the trajectory for the initial LANE_FOLLOWING maneuver and any immediately sequential maneuvers of the same type
   std::vector<cav_msgs::Maneuver> maneuver_plan;
-  for(int i=0;i<req.maneuver_plan.maneuvers.size();i++)
+  for(size_t i = req.maneuver_index_to_plan; i < req.maneuver_plan.maneuvers.size(); i++)
   {
     if(req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::LANE_FOLLOWING)
     {
       maneuver_plan.push_back(req.maneuver_plan.maneuvers[i]);
+      resp.related_maneuvers.push_back(i);
+    }
+    else
+    {
+      break;
     }
   }
   auto points_and_target_speeds = maneuvers_to_points(maneuver_plan, std::max((double)0, current_downtrack - config_.back_distance), wm_); // Convert maneuvers to points
@@ -100,9 +106,11 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
 
       if (yield_client_.call(yield_srv))
       {
+        ROS_DEBUG_STREAM("Received Traj from Yield");
         cav_msgs::TrajectoryPlan yield_plan = yield_srv.response.trajectory_plan;
         if (validate_yield_plan(yield_plan))
         {
+          ROS_DEBUG_STREAM("Yield trajectory validated");
           resp.trajectory_plan = yield_plan;
         }
         else
@@ -123,6 +131,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
   }
   else
   {
+    ROS_DEBUG_STREAM("Ignored Object Avoidance");
     resp.trajectory_plan = original_trajectory;
   }
 
@@ -131,7 +140,6 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
     debug_publisher_(debug_msg_); 
   }
   
-  resp.related_maneuvers.push_back(cav_msgs::Maneuver::LANE_FOLLOWING);
   resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
   ros::WallTime end_time = ros::WallTime::now();  // Planning complete
@@ -683,7 +691,9 @@ bool InLaneCruisingPlugin::validate_yield_plan(const cav_msgs::TrajectoryPlan& y
 {
   if (yield_plan.trajectory_points.size()>= 2)
   {
-    if (yield_plan.trajectory_points[0].target_time > ros::Time::now())
+    ROS_DEBUG_STREAM("Yield Trajectory Time" << (double)yield_plan.trajectory_points[0].target_time.toSec());
+    ROS_DEBUG_STREAM("Now:" << (double)ros::Time::now().toSec());
+    if (yield_plan.trajectory_points[0].target_time + ros::Duration(5.0) > ros::Time::now())
     {
       return true;
     }

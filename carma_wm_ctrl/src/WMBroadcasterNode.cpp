@@ -82,7 +82,6 @@ int WMBroadcasterNode::run()
   
  
   // Spin
-  cnh_.setSpinRate(10);
   cnh_.spin();
   return 0;
 }

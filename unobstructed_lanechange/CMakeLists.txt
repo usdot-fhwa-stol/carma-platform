@@ -20,7 +20,7 @@ add_compile_options(-std=c++14)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
-set( CATKIN_DEPS
+set(CATKIN_DEPS
   roscpp
   std_msgs
   cav_msgs
@@ -48,8 +48,9 @@ find_package(Eigen3 REQUIRED)
 
 
 catkin_package(
-   CATKIN_DEPENDS ${CATKIN_DEPS}
-   DEPENDS Boost Eigen3
+  INCLUDE_DIRS include
+  CATKIN_DEPENDS ${CATKIN_DEPS}
+  DEPENDS Boost EIGEN3
 )
 
 ###########
@@ -67,7 +68,7 @@ include_directories(
 
 file(GLOB_RECURSE headers */*.hpp */*.h)
 
-add_executable( ${PROJECT_NAME}
+add_executable(${PROJECT_NAME}
   ${headers}
   src/unobstructed_lanechange.cpp
   src/main.cpp)
@@ -95,10 +96,8 @@ target_link_libraries(lc_helper_node
 #############
 
 
-install(DIRECTORY include/${PROJECT_NAME}/
+install(DIRECTORY include
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
 )
 
 ## Install C++

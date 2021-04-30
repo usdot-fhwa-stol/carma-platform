@@ -90,11 +90,10 @@ namespace cooperative_lanechange
         // set world model point form wm listener
         wm_ = wml_->getWorldModel();
 
+        discovery_pub_timer_ = pnh_->createTimer(
+            ros::Duration(ros::Rate(10.0)),
+            [this](const auto&) { cooperative_lanechange_plugin_discovery_pub_.publish(plugin_discovery_msg_); });
 
-        ros::CARMANodeHandle::setSpinCallback([this]() -> bool {
-            cooperative_lanechange_plugin_discovery_pub_.publish(plugin_discovery_msg_);
-            return true;
-        });
         //@SONAR_START@
     }
 
@@ -177,7 +176,6 @@ namespace cooperative_lanechange
     void CooperativeLaneChangePlugin::run()
     {
     	initialize();
-        ros::CARMANodeHandle::setSpinRate(10.0);
         ros::CARMANodeHandle::spin();
 
     }
@@ -186,15 +184,13 @@ namespace cooperative_lanechange
 
     bool CooperativeLaneChangePlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest &req, cav_srvs::PlanTrajectoryResponse &resp){
         //@SONAR_STOP
-        //Check if Lane Change is needed
+        //  Only plan the trajectory for the requested LANE_CHANGE maneuver
         std::vector<cav_msgs::Maneuver> maneuver_plan;
-        for(const auto& maneuver : req.maneuver_plan.maneuvers)
+        if(req.maneuver_plan.maneuvers[req.maneuver_index_to_plan].type != cav_msgs::Maneuver::LANE_CHANGE)
         {
-            if(maneuver.type == cav_msgs::Maneuver::LANE_CHANGE)
-            {
-                maneuver_plan.push_back(maneuver);
-            }
+            throw std::invalid_argument ("Cooperative Lane Change Plugin doesn't support this maneuver type");
         }
+        maneuver_plan.push_back(req.maneuver_plan.maneuvers[req.maneuver_index_to_plan]);
 
         //Current only checking for first lane change maneuver message
         long target_lanelet_id = stol(maneuver_plan[0].lane_change_maneuver.ending_lane_id);
@@ -295,12 +291,8 @@ namespace cooperative_lanechange
         trajectory_plan.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, minimum_speed_);
         resp.trajectory_plan = trajectory_plan;
 
-        for (unsigned char i=0; i<req.maneuver_plan.maneuvers.size(); i++){
-            if (req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::LANE_CHANGE){
-                resp.related_maneuvers.push_back(i);
-                break;
-            }
-        }
+        resp.related_maneuvers.push_back(req.maneuver_index_to_plan);
+
         resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
     }
     

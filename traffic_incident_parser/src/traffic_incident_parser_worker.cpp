@@ -31,9 +31,12 @@ namespace traffic
 
            if(event_type=="CLOSED")
            {
+            cav_msgs::TrafficControlMessage traffic_control_msg;
+            traffic_control_msg.choice=cav_msgs::TrafficControlMessage::TCMV01;
             for(auto &traffic_msg:composeTrafficControlMesssages())
             {
-            traffic_control_pub_(traffic_msg);
+            traffic_control_msg.tcmV01=traffic_msg;
+            traffic_control_pub_(traffic_control_msg);
             }
            }
            else
@@ -188,6 +191,8 @@ namespace traffic
       traffic_mobility_msg.geometry.nodes.push_back(path_point);
     }
 
+    traffic_mobility_msg.geometry.proj=projection_msg_;
+
     std::vector<cav_msgs::TrafficControlMessageV01> output_msg;
 
     traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::CLOSED_CHOICE;
@@ -204,6 +209,8 @@ namespace traffic
     output_msg.push_back(traffic_mobility_msg);
 
     return output_msg;
+   
+
     }
 
 }//traffic

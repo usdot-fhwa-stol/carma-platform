@@ -106,11 +106,12 @@ namespace unobstructed_lanechange
              * \param points The set of points that define the current lane the vehicle is in and are defined based on the request planning maneuvers. 
              *               These points must be in the same lane as the vehicle and must extend in front of it though it is fine if they also extend behind it. 
              * \param state The current state of the vehicle
+             * \param max_speed The maximum speed that the maneuver requires
              * 
              * \return A list of trajectory points to send to the carma planning stack
              */
             std::vector<cav_msgs::TrajectoryPlanPoint> compose_trajectory_from_centerline(
-            const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time, int starting_lanelet_id);
+            const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time, int starting_lanelet_id, double max_speed);
             /**
              * \brief Returns the nearest point to the provided vehicle pose in the provided list
              * 
@@ -248,6 +249,7 @@ namespace unobstructed_lanechange
             cav_msgs::Plugin plugin_discovery_msg_;
             ros::Subscriber pose_sub_;
             ros::Subscriber twist_sub_;
+            ros::Timer discovery_pub_timer_;
 
             // trajectory frequency
             double traj_freq = 10;

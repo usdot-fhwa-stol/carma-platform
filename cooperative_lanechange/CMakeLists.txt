@@ -89,10 +89,8 @@ target_link_libraries(${PROJECT_NAME} cooperative_lanechange_plugin_lib ${catkin
 #############
 
 
-install(DIRECTORY include/${PROJECT_NAME}/
+install(DIRECTORY include
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
 )
 
 ## Install C++
