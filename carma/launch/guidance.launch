@@ -188,5 +188,12 @@
     <include file="$(find trajectory_visualizer)/launch/trajectory_visualizer.launch" />
   </group>
 
+  <!-- Yield Plugin -->
+  <group>
+    <remap from="incoming_mobility_request" to="$(optenv CARMA_MSG_NS)/incoming_mobility_request"/>
+    <include file = "$(find yield_plugin)/launch/yield_plugin.launch"/>
+  </group>
+
+
 </launch>
 

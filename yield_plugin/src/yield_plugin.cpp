@@ -32,6 +32,7 @@
 #include <yield_plugin/yield_plugin.h>
 
 
+
 using oss = std::ostringstream;
 
 namespace yield_plugin
@@ -89,8 +90,7 @@ namespace yield_plugin
     
       if (fabs(res) <= config_.intervehicle_collision_distance)
       {
-        ROS_DEBUG_STREAM("Collision Detected at x: " << incoming_trajectory[i].x() << " and y: " <<  incoming_trajectory[i].y());
-        intersection_points.push_back(std::make_pair(i, incoming_trajectory[i]));
+         intersection_points.push_back(std::make_pair(i, incoming_trajectory[i]));
       }
     }
     return intersection_points;
@@ -185,7 +185,8 @@ namespace yield_plugin
         cav_msgs::LocationECEF ecef_location = incoming_request.location;
         cav_msgs::Trajectory incoming_trajectory = incoming_request.trajectory;
         std::string req_strategy_params = incoming_request.strategy_params;
-        
+        clc_urgency_ = incoming_request.urgency;
+        ROS_DEBUG_STREAM("received urgency: " << clc_urgency_);
 
         // Parse strategy parameters
         using boost::property_tree::ptree;
@@ -205,7 +206,7 @@ namespace yield_plugin
 
         req_traj_plan = convert_eceftrajectory_to_mappoints(incoming_trajectory, tf_);
 
-        double req_expiration_sec = (double)incoming_request.expiration/1000.0; //ms to second
+        double req_expiration_sec = (double)incoming_request.expiration;
         double current_time_sec = ros::Time::now().toSec();
 
         bool response_to_clc_req = false;
@@ -214,26 +215,29 @@ namespace yield_plugin
         double req_timestamp = (double)incoming_request.header.timestamp / 1000.0 - current_time_sec;
         set_incoming_request_info(req_traj_plan, req_traj_speed, req_plan_time, req_timestamp);
 
-
+        
         if (req_expiration_sec - current_time_sec >= config_.tpmin && cooperative_request_acceptable_)
         {
           timesteps_since_last_req_ = 0;
           lc_status_msg.status = cav_msgs::LaneChangeStatus::REQUEST_ACCEPTED;
           lc_status_msg.description = "Accepted lane merge request";
-          response_to_clc_req = true;   
+          response_to_clc_req = true;  
+          ROS_DEBUG_STREAM("CLC accepted"); 
         }
         else
         {
-          ROS_DEBUG_STREAM("Igonore expired Mobility Request.");
           lc_status_msg.status = cav_msgs::LaneChangeStatus::REQUEST_REJECTED;
           lc_status_msg.description = "Rejected lane merge request";
           response_to_clc_req = false;
+          ROS_DEBUG_STREAM("CLC rejected"); 
         }
         cav_msgs::MobilityResponse outgoing_response = compose_mobility_response(req_sender_id, req_plan_id, response_to_clc_req);
         mobility_response_publisher_(outgoing_response);
         lc_status_msg.status = cav_msgs::LaneChangeStatus::RESPONSE_SENT;
+        ROS_DEBUG_STREAM("response sent"); 
       }
     }
+    lanechange_status_pub_.publish(lc_status_msg);
     if (lanechange_status_pub_.isLatched())
     {
       lanechange_status_pub_.publish(lc_status_msg);
@@ -250,6 +254,7 @@ namespace yield_plugin
     req_trajectory_points_ = req_trajectory;
     req_target_speed_ = req_speed;
     req_target_plan_time_ = req_planning_time;
+    ROS_DEBUG_STREAM("req_target_plan_time_" << req_target_plan_time_); 
     req_timestamp_ = req_timestamp;
   }
 
@@ -264,26 +269,30 @@ namespace yield_plugin
                                               cav_srvs::PlanTrajectoryResponse& resp)
   {
     if (req.initial_trajectory_plan.trajectory_points.size() < 2){
-      throw std::invalid_argument("Empty Trajectory received");
+      throw std::invalid_argument("Empty Trajectory received by Yield");
     }
     cav_msgs::TrajectoryPlan original_trajectory = req.initial_trajectory_plan;
     cav_msgs::TrajectoryPlan yield_trajectory;
 
     // seperating cooperative yield with regular object detection for better performance.
-    if (config_.enable_cooperative_behavior)
+    if (config_.enable_cooperative_behavior && clc_urgency_ > config_.acceptable_urgency)
     {
+      ROS_DEBUG_STREAM("Only consider high urgency clc");
       if (timesteps_since_last_req_ < config_.acceptable_passed_timesteps)
       {
+        ROS_DEBUG_STREAM("Yield for CLC. We haven't received an updated negotiation this timestep");
         yield_trajectory = update_traj_for_cooperative_behavior(original_trajectory, req.vehicle_state.longitudinal_vel);
         timesteps_since_last_req_++;
       }
       else
       {
+        ROS_DEBUG_STREAM("unreliable CLC communication, switching to object avoidance");
         yield_trajectory = update_traj_for_object(original_trajectory, req.vehicle_state.longitudinal_vel); // Compute the trajectory
-      }
+      }    
     }
     else
     {
+      ROS_DEBUG_STREAM("Yield for object avoidance");
       yield_trajectory = update_traj_for_object(original_trajectory, req.vehicle_state.longitudinal_vel); // Compute the trajectory
     }
     yield_trajectory.header.frame_id = "map";
@@ -321,10 +330,12 @@ namespace yield_plugin
       double dx = original_tp.trajectory_points[0].x - intersection_point.x();
       double dy = original_tp.trajectory_points[0].y - intersection_point.y();
       goal_pos = sqrt(dx*dx + dy*dy) - config_.x_gap;
-
+      ROS_DEBUG_STREAM("Goal position (goal_pos): " << goal_pos);
       double collision_time = req_timestamp_ + (intersection_points[0].first * ecef_traj_timestep_) - config_.safety_collision_time_gap;
-      planning_time = std::min(planning_time, collision_time);
-      ROS_DEBUG_STREAM("Detected collision time: " << collision_time);
+      // planning_time = std::min(planning_time, collision_time);
+      ROS_DEBUG_STREAM("req time stamp: " << req_timestamp_);
+      ROS_DEBUG_STREAM("Collision time: " << collision_time);
+      ROS_DEBUG_STREAM("intersection num: " << intersection_points[0].first);
       ROS_DEBUG_STREAM("Planning time: " << planning_time);
       // calculate distance traveled from beginning of trajectory to collision point
       double dx2 = intersection_point.x() - req_trajectory_points_[0].x();
@@ -333,8 +344,11 @@ namespace yield_plugin
       double incoming_trajectory_speed = sqrt(dx2*dx2 + dy2*dy2)/(intersection_points[0].first * ecef_traj_timestep_);
       // calculate goal velocity from request trajectory
       goal_velocity = std::min(goal_velocity, incoming_trajectory_speed);
-
       double min_time = (initial_velocity - goal_velocity)/config_.yield_max_deceleration;
+
+      ROS_DEBUG_STREAM("goal_velocity: " << goal_velocity);
+      ROS_DEBUG_STREAM("incoming_trajectory_speed: " << incoming_trajectory_speed);
+
       if (planning_time > min_time)
       {
         cooperative_request_acceptable_ = true;
@@ -367,6 +381,9 @@ namespace yield_plugin
     double initial_time = 0;
     double initial_accel = 0.0;
     double goal_accel = 0.0;
+
+    double original_max_speed = max_trajectory_speed(original_tp.trajectory_points);
+    ROS_DEBUG_STREAM("original_max_speed" << original_max_speed);
     std::vector<double> values = quintic_coefficient_calculator::quintic_coefficient_calculator(initial_pos, 
                                                                                                 goal_pos,
                                                                                                 initial_velocity, 
@@ -388,9 +405,12 @@ namespace yield_plugin
         if (dv >= config_.max_stop_speed)
         {
           ROS_DEBUG_STREAM("target speed: " << dv);
-          if (dv >= initial_velocity){
-            dv = initial_velocity;
+          if (dv >= original_max_speed){
+            dv = original_max_speed;
           }
+          // if (dv >= initial_velocity){
+          //   dv = std::max(config_.max_stop_speed, initial_velocity);
+          // }
           // trajectory point is copied to move all the available information, then its target time is updated
           jmt_tpp = original_tp.trajectory_points[i];
           jmt_tpp.target_time = jmt_trajectory_points[i-1].target_time + ros::Duration(original_traj_downtracks[i]/dv);
@@ -444,8 +464,17 @@ namespace yield_plugin
       double collision_time = 0; //\TODO comming from carma_wm collision detection in future (CAR 4288)
 
       double goal_velocity = rwol_collision[0].object.velocity.twist.linear.x;
-      
-      double goal_pos = x_lead - std::max(goal_velocity * gap_time, config_.x_gap); 
+      // determine the safety inter-vehicle gap based on speed
+      double safety_gap = std::max(goal_velocity * gap_time, config_.x_gap);
+      if (config_.enable_adjustable_gap)
+      {
+        // check if a digital_gap is available
+        double digital_gap = check_traj_for_digital_min_gap(original_tp);
+        // if a digital gap is available, it is replaced as safety gap 
+        safety_gap = std::max(safety_gap, digital_gap);
+      }
+      // safety gap is implemented
+      double goal_pos = x_lead - safety_gap; 
 
       if (goal_velocity <= config_.min_obstacle_speed){
         ROS_WARN_STREAM("The obstacle is not moving");
@@ -486,6 +515,7 @@ namespace yield_plugin
 
       return update_tpp_vector;
     }
+    ROS_DEBUG_STREAM("No collision detection, so trajectory not modified.");
     return original_tp;
   }
 
@@ -540,11 +570,32 @@ namespace yield_plugin
       {
         max_speed = v;
       }
-    }  
+    }
     return max_speed;
   }
 
+  double YieldPlugin::check_traj_for_digital_min_gap(const cav_msgs::TrajectoryPlan& original_tp) const
+  {
+    double desired_gap = 0;
 
-
+    for (size_t i = 0; i < original_tp.trajectory_points.size(); i++)
+    {
+      lanelet::BasicPoint2d veh_pos(original_tp.trajectory_points[i].x, original_tp.trajectory_points[i].y);
+      auto llts = wm_->getLaneletsFromPoint(veh_pos, 1);
+      if (llts.empty())
+      {
+        ROS_WARN_STREAM("Trajectory point: " << original_tp.trajectory_points[i]);
+        throw std::invalid_argument("Trajectory point is not on a valid lanelet.");
+      }
+      auto digital_min_gap = llts[0].regulatoryElementsAs<lanelet::DigitalMinimumGap>(); //Returns a list of these elements)
+      if (!digital_min_gap.empty()) 
+      {
+        double digital_gap = digital_min_gap[0]->getMinimumGap(); // Provided gap is in meters
+        ROS_DEBUG_STREAM("Digital Gap found with value: " << digital_gap);
+        desired_gap = std::max(desired_gap, digital_gap);
+      }
+    }
+    return desired_gap;
+  }
 
 }  // namespace yield_plugin
