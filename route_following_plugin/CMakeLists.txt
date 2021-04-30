@@ -30,18 +30,17 @@ find_package(catkin REQUIRED COMPONENTS
   cav_srvs
   carma_utils
   carma_wm
-  roslib
 )
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
-find_package(unobstructed_lanechange REQUIRED)
+
 ###################################
 ## catkin specific configuration ##
 ###################################
 
 catkin_package(
-  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils cav_msgs carma_wm unobstructed_lanechange
+  CATKIN_DEPENDS roscpp std_msgs cav_srvs carma_utils cav_msgs carma_wm
 )
 
 ###########
@@ -51,7 +50,6 @@ catkin_package(
 include_directories(
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
-  ${unobstructed_lanechange_INCLUDE_DIRS}
   include
 )
 

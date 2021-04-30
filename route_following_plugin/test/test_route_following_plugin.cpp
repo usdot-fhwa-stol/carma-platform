@@ -31,7 +31,7 @@
 #include <lanelet2_extension/projection/local_frame_projector.h>
 #include <lanelet2_core/geometry/LineString.h>
 #include <string>
-#include <ros/package.h>
+
 
 namespace route_following_plugin
 {
@@ -147,7 +147,7 @@ namespace route_following_plugin
             //check target speeds in updated response
             lanelet::Velocity limit=30_mph;
             ASSERT_EQ(plan.response.new_plan.maneuvers[0].lane_following_maneuver.end_speed,0);
-            for(auto i=1;i<plan.response.new_plan.maneuvers.size()-1;i++){
+            for(auto i=1;i<plan.response.new_plan.maneuvers.size();i++){
                 ASSERT_EQ(plan.response.new_plan.maneuvers[i].lane_following_maneuver.end_speed, limit.value()) ;
             }
         }
@@ -158,11 +158,11 @@ namespace route_following_plugin
 
     }
 
-    TEST(RouteFollowingPlugin, TestAssociateSpeedLimitusingosm)
+    TEST(RouteFollowingPlugin,TestAssociateSpeedLimitusingosm)
     {
         // File to process. Path is relative to test folder
         std::string file = "../resource/map/town01_vector_map_1.osm";
-        lanelet::Id start_id=167;
+        lanelet::Id start_id=101;
         lanelet::Id end_id=111;
         /***
          * VAVLID PATHs (consists of lanenet ids): (This is also the shortest path because certain Lanelets missing)
@@ -193,7 +193,7 @@ namespace route_following_plugin
 
         RouteFollowingPlugin worker;
         //get position on map
-        auto llt=map.get()->laneletLayer.get(169);
+        auto llt=map.get()->laneletLayer.get(start_id);
         lanelet::LineString3d left_bound=llt.leftBound();
         lanelet::LineString3d right_bound=llt.rightBound();
         geometry_msgs::PoseStamped left;
@@ -239,7 +239,7 @@ namespace route_following_plugin
         plan_req1.planning_start_time;
         plan_req1.planning_completion_time;
         ros::Time current_time = ros::Time::now();
-        plan_req1.maneuvers.push_back(worker.composeManeuverMessage(0,0,0,0,0,current_time));
+        plan_req1.maneuvers.push_back(worker.composeManeuverMessage(0,0,0,0,start_id,current_time));
         pplan.prior_plan=plan_req1;
         plan.request=pplan;
         //PlanManeuversResponse 
@@ -273,114 +273,7 @@ namespace route_following_plugin
         else ASSERT_EQ(speed,11.176);                                                                            
     }
 
-    TEST(RouteFollowingPluginTest, testLaneChange)
-    {
-        //File to process. Path is relative to unobstructed lanechange package
-        std::string path = ros::package::getPath("unobstructed_lanechange");
-        std::string file = "/resource/map/town01_vector_map_lane_change.osm";
-        file = path.append(file);
-        lanelet::Id start_id = 166;
-        lanelet::Id end_id = 111;
-
-        // Write new map to file
-        int projector_type = 0;
-        std::string target_frame;
-        lanelet::ErrorMessages load_errors;
-        // Parse geo reference info from the original lanelet map (.osm)
-        lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
-        lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
-        lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
-        if (map->laneletLayer.size() == 0)
-        {
-            FAIL() << "Input map does not contain any lanelets";
-        }
-        std::shared_ptr<carma_wm::CARMAWorldModel> cmw=std::make_shared<carma_wm::CARMAWorldModel>();
-        cmw->carma_wm::CARMAWorldModel::setMap(map);
-
-        //Set Route
-        carma_wm::test::setRouteByIds({start_id,end_id},cmw);
-        cmw->carma_wm::CARMAWorldModel::setMap(map);
-
-        auto shortest_path = cmw->getRoute()->shortestPath();
-        
-
-        RouteFollowingPlugin worker;
-        //get position on map
-        auto llt=map.get()->laneletLayer.get(start_id);
-        lanelet::LineString3d left_bound=llt.leftBound();
-        lanelet::LineString3d right_bound=llt.rightBound();
-        geometry_msgs::PoseStamped left;
-        geometry_msgs::PoseStamped right;
-        for(lanelet::Point3d& p : left_bound)
-        {
-            left.pose.position.x=p.x();
-            left.pose.position.y=p.y();
-            left.pose.position.z=p.z();
-
-        }
-        for(lanelet::Point3d& p : right_bound)
-        {
-            right.pose.position.x=p.x();
-            right.pose.position.y=p.y();
-            right.pose.position.z=p.z();
-        }
-        worker.pose_msg_.pose.position.x=(left.pose.position.x+right.pose.position.x)/2;
-        worker.pose_msg_.pose.position.y=(left.pose.position.y+right.pose.position.y)/2;
-        worker.pose_msg_.pose.position.z=(left.pose.position.z+right.pose.position.z)/2;
-
-        worker.pose_msg_.pose.orientation.x=0.0;
-        worker.pose_msg_.pose.orientation.y=0.0;
-        worker.pose_msg_.pose.orientation.z=0.0;
-        worker.pose_msg_.pose.orientation.w=0.0;
-
-        //define twist
-        worker.current_speed_=0.0;
-
-        //Set Route
-        carma_wm::test::setRouteByIds({start_id,end_id},cmw);
-        cmw->carma_wm::CARMAWorldModel::setMap(map);
-        worker.wm_=cmw;
-        
-        ros::Time::init();  //initializing ros time to use ros::Time::now()
-        //Define plan for request and response
-        //PlanManeuversRequest
-        cav_srvs::PlanManeuvers plan;
-        cav_srvs::PlanManeuversRequest pplan;
-        
-        cav_msgs::ManeuverPlan plan_req1;
-        plan_req1.header;
-        plan_req1.maneuver_plan_id;
-        plan_req1.planning_start_time = ros::Time(0);
-        plan_req1.planning_completion_time = ros::Time(0.0);
-        
-        cav_msgs::Maneuver message;
-        message.type = cav_msgs::Maneuver::LANE_FOLLOWING;
-        message.lane_following_maneuver.start_dist =0.0;
-        message.lane_following_maneuver.end_dist =0.0;
-        message.lane_following_maneuver.lane_id = std::to_string(start_id);
-        message.lane_following_maneuver.start_speed =0.0;
-        message.lane_following_maneuver.end_speed =0.0;
-        message.lane_following_maneuver.start_time = ros::Time::now();
-        message.lane_following_maneuver.end_time = ros::Time::now();
-        plan_req1.maneuvers.push_back(message);
-        pplan.prior_plan=plan_req1;
-        plan.request=pplan;
-        //PlanManeuversResponse 
-        cav_srvs::PlanManeuversResponse newplan;
-        for(auto i=0;i<plan_req1.maneuvers.size();i++) newplan.new_plan.maneuvers.push_back(plan_req1.maneuvers[i]);
-
-        plan.response=newplan;
     
-        
-        if(worker.plan_maneuver_cb(plan.request,plan.response)){  
-            int maneuvers_size = plan.response.new_plan.maneuvers.size();
-            ASSERT_EQ(plan.response.new_plan.maneuvers[maneuvers_size -2].type, cav_msgs::Maneuver::LANE_CHANGE);
-        }
-        else{
-            EXPECT_TRUE(false);
-        }
-
-    }
 
 }
 
