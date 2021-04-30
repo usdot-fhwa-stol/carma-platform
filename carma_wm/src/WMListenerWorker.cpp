@@ -93,13 +93,17 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinCon
     auto parent_llt = world_model_->getMutableMap()->laneletLayer.get(pair.first);
     // we can only check by id, if the element is there
     // this is only for speed optimization, as world model here should blindly accept the map update received
-    for (auto regem: parent_llt.regulatoryElements())
+    auto regems_copy_to_check = parent_llt.regulatoryElements(); // save local copy as the regem can be deleted during iteration
+    ROS_DEBUG_STREAM("Regems found in lanelet: " << regems_copy_to_check.size());
+    for (auto regem: regems_copy_to_check)
     {
       // we can't use the deserialized element as its data address conflicts the one in this node
       if (pair.second->id() == regem->id()) world_model_->getMutableMap()->remove(parent_llt, regem);
     }
+    ROS_DEBUG_STREAM("Regems left in lanelet after removal: " << parent_llt.regulatoryElements().size());
+
   }
-  ROS_ERROR_STREAM("Recieved Geofence Message F");
+  ROS_ERROR_STREAM("Received Geofence Message F");
   ROS_INFO_STREAM("Geofence id" << gf_ptr->id_ << " requests update of size: " << gf_ptr->update_list_.size());
   // we should extract general regem to specific type of regem the geofence specifies
   
