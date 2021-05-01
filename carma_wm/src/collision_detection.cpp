@@ -58,7 +58,7 @@ namespace carma_wm {
 
                         double timediff = diff.toSec();
 
-                        std::cout << "timediff" << std::endl;
+                        std::cout << "time diff" << std::endl;
                         std::cout << timediff << std::endl;
 
                         double x = (i.object.size.x/2 - size.x/2)*(i.object.size.x/2 - size.x/2);
@@ -66,6 +66,18 @@ namespace carma_wm {
 
                         std::cout << "size diff" << std::endl;
                         std::cout << sqrt(x - y) << std::endl;
+
+                        
+                        double car_t_x = tp.trajectory_points[k].x - tp.trajectory_points[0].x /veloctiy.linear.x;
+                        double car_t_y = tp.trajectory_points[k].y - tp.trajectory_points[0].y/veloctiy.linear.y;
+
+                        double object_t_x = j.predicted_position.position.x - i.object.predictions[0].predicted_position.position.x / j.predicted_velocity.linear.x;
+                        double object_t_y = j.predicted_position.position.y - i.object.predictions[0].predicted_position.position.y / j.predicted_velocity.linear.y;
+
+
+                        std::cout << "car_t_x, car_t_y" << car_t_x << car_t_y << std::endl;
+                        std::cout << "object_t_x, object_t_y" << object_t_x << object_t_y << std::endl;
+
 
                         if(timediff <= 5) {
                             if(calcdistance <= sqrt(x - y) ) {
