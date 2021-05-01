@@ -39,12 +39,14 @@
 #include <trajectory_utils/quintic_coefficient_calculator.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <boost/property_tree/json_parser.hpp>
+#include <carma_wm/TrafficControl.h>
 
 
 namespace yield_plugin
 {
 using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
 using MobilityResponseCB = std::function<void(const cav_msgs::MobilityResponse&)>;
+using LaneChangeStatusCB = std::function<void(const cav_msgs::LaneChangeStatus&)>;
 
 /**
  * \brief Convenience class for pairing 2d points with speeds
@@ -68,9 +70,13 @@ public:
    * \param wm Pointer to intialized instance of the carma world model for accessing semantic map data
    * \param config The configuration to be used for this object
    * \param plugin_discovery_publisher Callback which will publish the current plugin discovery state
+   * \param mobility_response_publisher Callback which will publish the mobility response
+   * \param lc_status_publisher Callback which will publish the cooperative lane change status
    */ 
   YieldPlugin(carma_wm::WorldModelConstPtr wm, YieldPluginConfig config,
-                       PublishPluginDiscoveryCB plugin_discovery_publisher, MobilityResponseCB mobility_response_publisher);
+                       PublishPluginDiscoveryCB plugin_discovery_publisher, 
+                       MobilityResponseCB mobility_response_publisher,
+                       LaneChangeStatusCB lc_status_publisher);
 
   /**
    * \brief Method to call at fixed rate in execution loop. Will publish plugin discovery updates
@@ -150,6 +156,14 @@ public:
   std::vector<lanelet::BasicPoint2d> convert_eceftrajectory_to_mappoints(const cav_msgs::Trajectory& ecef_trajectory, const geometry_msgs::TransformStamped& tf) const;
   
   /**
+   * \brief convert a point in ecef frame (in cm) into map frame (in meters)
+   * \param ecef_point carma point ecef frame in cm
+   * \param map_in_earth translate frame 
+   * \return 2d point in map frame
+   */
+  lanelet::BasicPoint2d ecef_to_map_point(const cav_msgs::LocationECEF& ecef_point, const tf2::Transform& map_in_earth) const;
+
+  /**
    * \brief compose a mobility response message
    * \param resp_recipient_id vehicle id of the recipient of the message
    * \param req_plan_id plan id from the requested message
@@ -168,7 +182,7 @@ public:
    * \param planning_time time duration of the planning
    * \return updated JMT trajectory 
    */
-  cav_msgs::TrajectoryPlan generate_JMT_trajectory(const cav_msgs::TrajectoryPlan& original_tp, double initial_pos, double goal_pos, double initial_velocity, double goal_velocity, double planning_time) const;
+  cav_msgs::TrajectoryPlan generate_JMT_trajectory(const cav_msgs::TrajectoryPlan& original_tp, double initial_pos, double goal_pos, double initial_velocity, double goal_velocity, double planning_time);
   
   /**
    * \brief update trajectory for yielding to an incoming cooperative behavior
@@ -197,15 +211,17 @@ public:
   void set_incoming_request_info(std::vector <lanelet::BasicPoint2d> req_trajectory, double req_speed, double req_planning_time, double req_timestamp);
 
   /**
-   * \brief set the ros publisher for lanechange status topic
-   * \param publisher ros publiser
-   */
-  void set_lanechange_status_publisher(const ros::Publisher& publisher);
-
-  /**
    * \brief Looks up the transform between map and earth frames, and sets the member variable
    */
   void lookupECEFtoMapTransform();
+
+  /**
+   * \brief checks trajectory for minimum gap associated with it
+   * \param original_tp original trajectory plan
+   * \return minumum required
+   */
+  double check_traj_for_digital_min_gap(const cav_msgs::TrajectoryPlan& original_tp) const;
+
 
 private:
 
@@ -213,7 +229,8 @@ private:
   YieldPluginConfig config_;
   PublishPluginDiscoveryCB plugin_discovery_publisher_;
   MobilityResponseCB mobility_response_publisher_;
-  ros::Publisher lanechange_status_pub_;
+  LaneChangeStatusCB lc_status_publisher_;
+  // ros::Publisher lanechange_status_pub_;
   geometry_msgs::TransformStamped tf_;
 
   // flag to show if it is possible for the vehicle to accept the cooperative request
@@ -225,6 +242,7 @@ private:
   double req_timestamp_ = 0;
   double req_target_plan_time_ = 0;
   int timesteps_since_last_req_ = 0;
+  int clc_urgency_ = 0;
 
   // time between ecef trajectory points
   double ecef_traj_timestep_ = 0.1;
@@ -248,6 +266,46 @@ private:
       res+=std::to_string(bsm_core.id[i]);
     }
       return res;
+  }
+
+  // TODO replace with Basic Autonomy moving average filter
+  std::vector<double> moving_average_filter(const std::vector<double> input, int window_size, bool ignore_first_point=true)
+  {
+    if (window_size % 2 == 0) {
+      throw std::invalid_argument("moving_average_filter window size must be odd");
+    }
+
+    std::vector<double> output;
+    output.reserve(input.size());
+
+    if (input.size() == 0) {
+      return output;
+    }
+
+    int start_index = 0;
+    if (ignore_first_point) {
+      start_index = 1;
+      output.push_back(input[0]);
+    }
+
+    for (int i = start_index; i<input.size(); i++) {
+      
+      
+      double total = 0;
+      int sample_min = std::max(0, i - window_size / 2);
+      int sample_max = std::min((int) input.size() - 1 , i + window_size / 2);
+
+      int count = sample_max - sample_min + 1;
+      std::vector<double> sample;
+      sample.reserve(count);
+      for (int j = sample_min; j <= sample_max; j++) {
+        total += input[j];
+      }
+      output.push_back(total / (double) count);
+
+    }
+
+    return output;
   }
 
 };

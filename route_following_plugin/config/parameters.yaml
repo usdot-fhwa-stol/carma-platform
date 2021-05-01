@@ -4,3 +4,11 @@ minimal_maneuver_duration: 15
 #Double : The jerk used to bring vehicle to a halt at end of route
 #Unit : m/s3
 route_end_jerk : 0.05
+
+# Double : Extra time allowed for lane change, in order to make transition smooth
+#Unit : seconds
+buffer_lanechange_time : 3.0
+
+# String : The tactical plugin being used for lane change
+#For CLC: "CooperativeLaneChangePlugin" for unobstructed : "UnobstructedLaneChangePlugin"
+lane_change_plugin : "CooperativeLaneChangePlugin"

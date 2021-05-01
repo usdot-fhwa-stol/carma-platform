@@ -24,6 +24,7 @@
 #include <trajectory_utils/conversions/conversions.h>
 #include <carma_utils/containers/containers.h>
 #include "smoothing/filters.h"
+#include<limits>
 
 namespace unobstructed_lanechange
 {           
@@ -55,11 +56,13 @@ namespace unobstructed_lanechange
         pnh_->param<double>("minimum_lookahead_speed", minimum_lookahead_speed_, 2.8);
         pnh_->param<double>("maximum_lookahead_speed", maximum_lookahead_speed_, 13.9);
         pnh_->param<double>("lateral_accel_limit", lateral_accel_limit_, 1.5);
-        pnh_->param<double>("moving_average_window_size", moving_average_window_size_, 5);
+        pnh_->param<double>("speed_moving_average_window_size", speed_moving_average_window_size_, 5);
+        pnh_->param<double>("curvature_moving_average_window_size", curvature_moving_average_window_size_, 9);
         pnh_->param<double>("curvature_calc_lookahead_count", curvature_calc_lookahead_count_, 1);
         pnh_->param<int>("downsample_ratio", downsample_ratio_, 8);
         pnh_->param<bool>("enable_object_avoidance_lc", enable_object_avoidance_lc_, false);
         pnh_->param<double>("acceptable_time_difference_", acceptable_time_difference_, 1.0);
+        pnh_->param<double>("min_timestep",min_timestep_);
         // update ros_dur_ value
         time_dur_ = ros::Duration(acceptable_time_difference_);
 
@@ -93,15 +96,15 @@ namespace unobstructed_lanechange
         lanelet::BasicPoint2d veh_pos(req.vehicle_state.X_pos_global, req.vehicle_state.Y_pos_global);
         double current_downtrack = wm_->routeTrackPos(veh_pos).downtrack;
 
-        //convert maneuver info to route points and speeds
+        // Only plan the trajectory for the requested LANE_CHANGE maneuver
         std::vector<cav_msgs::Maneuver> maneuver_plan;
-        for(const auto maneuver : req.maneuver_plan.maneuvers)
+        if(req.maneuver_plan.maneuvers[req.maneuver_index_to_plan].type != cav_msgs::Maneuver::LANE_CHANGE)
         {
-            if(maneuver.type == cav_msgs::Maneuver::LANE_CHANGE)
-            {
-                maneuver_plan.push_back(maneuver);
-            }
+            throw std::invalid_argument ("Unobstructed Lane Change Plugin doesn't support this maneuver type");
         }
+        maneuver_plan.push_back(req.maneuver_plan.maneuvers[req.maneuver_index_to_plan]);
+        resp.related_maneuvers.push_back(req.maneuver_index_to_plan);
+
         auto points_and_target_speeds = maneuvers_to_points(maneuver_plan, current_downtrack, wm_,req.vehicle_state);
         
         auto downsampled_points = carma_utils::containers::downsample_vector(points_and_target_speeds, downsample_ratio_);
@@ -111,7 +114,9 @@ namespace unobstructed_lanechange
         original_trajectory.header.stamp = ros::Time::now();
         original_trajectory.trajectory_id = boost::uuids::to_string(boost::uuids::random_generator()());
 
-        original_trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state);
+        int starting_lanelet_id = stoi(maneuver_plan.front().lane_change_maneuver.starting_lane_id);
+        double final_max_speed = maneuver_plan.front().lane_change_maneuver.end_speed;
+        original_trajectory.trajectory_points = compose_trajectory_from_centerline(downsampled_points, req.vehicle_state, req.header.stamp, starting_lanelet_id, final_max_speed);
 
         original_trajectory.initial_longitudinal_velocity = std::max(req.vehicle_state.longitudinal_vel, minimum_speed_);
 
@@ -152,12 +157,6 @@ namespace unobstructed_lanechange
 
         
 
-        for (int i=0; i<req.maneuver_plan.maneuvers.size(); i++){
-            if (req.maneuver_plan.maneuvers[i].type == cav_msgs::Maneuver::LANE_CHANGE){
-            resp.related_maneuvers.push_back(i);
-            break;
-            }
-        }
         resp.maneuver_status.push_back(cav_srvs::PlanTrajectory::Response::MANEUVER_IN_PROGRESS);
 
         return true;
@@ -196,13 +195,13 @@ namespace unobstructed_lanechange
 
             //get route geometry between starting and ending downtracks
             lanelet::BasicLineString2d route_geometry = create_route_geom(starting_downtrack, stoi(lane_change_maneuver.starting_lane_id), ending_downtrack, wm);
-            
-            int nearest_pt_index = getNearestRouteIndex(route_geometry,state);
-            lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.end());
 
+            int nearest_pt_index = getNearestRouteIndex(route_geometry,state);
+            int ending_pt_index = get_ending_point_index(route_geometry, ending_downtrack);
+
+            lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.begin() + ending_pt_index);
             first = true;
-            double delta_v = (lane_change_maneuver.end_speed - current_speed_)/future_route_geometry.size();
-            double prev_v = current_speed_;
+
             for(auto p :future_route_geometry)
             {
                 if(first && points_and_target_speeds.size() !=0){
@@ -211,9 +210,8 @@ namespace unobstructed_lanechange
                 }
                 PointSpeedPair pair;
                 pair.point = p;
-                pair.speed = prev_v+ delta_v;
+                pair.speed = lane_change_maneuver.end_speed;
                 points_and_target_speeds.push_back(pair);
-                prev_v = pair.speed;
 
             }
         }
@@ -223,124 +221,94 @@ namespace unobstructed_lanechange
     }
 
     std::vector<cav_msgs::TrajectoryPlanPoint> UnobstructedLaneChangePlugin::compose_trajectory_from_centerline(
-    const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state)
+    const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time, int starting_lanelet_id, double max_speed)
     {
         int nearest_pt_index = getNearestPointIndex(points, state);
 
         std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end()); // Points in front of current vehicle position
-        //auto time_bound_points = constrain_to_time_boundary(future_points, trajectory_time_length_ );
+        auto time_bound_points = constrain_to_time_boundary(future_points, trajectory_time_length_ );
 
-        std::vector<double> final_yaw_values;
-        std::vector<double> final_actual_speeds;
-        std::vector<lanelet::BasicPoint2d> all_sampling_points;
+        //Get Speed profile based on one of the centerline points
+        
+        //get centerline of starting lanelet
+        auto starting_lanelet = wm_->getMap()->laneletLayer.get(starting_lanelet_id);
+        lanelet::BasicLineString2d starting_lanelet_centerline= starting_lanelet.centerline2d().basicLineString();
 
-        std::vector<double> speed_limits;
-        std::vector<lanelet::BasicPoint2d> curve_points;
-        splitPointSpeedPairs(future_points, &curve_points, &speed_limits);
-        std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(curve_points); // Compute splines based on curve points
+        //use nearest index of lane change path
+        lanelet::BasicLineString2d future_centerline(starting_lanelet_centerline.begin() + nearest_pt_index, starting_lanelet_centerline.end());
+        //reduce size of future centerline 
+        future_centerline.resize(time_bound_points.size());
+
+        std::vector<lanelet::BasicPoint2d> future_centerline_points;
+        for(int i=0;i<future_centerline.size();i++){
+            future_centerline_points.push_back(future_centerline[i]);
+        }
+        
+        std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(future_centerline_points); // Compute splines based on curve points
         if (!fit_curve)
         {
             throw std::invalid_argument("Could not fit a spline curve along the given trajectory!");
+        } 
+        
+        std::vector<double> downtracks_centerline = carma_wm::geometry::compute_arc_lengths(future_centerline_points);
+        int total_step_along_curve= downtracks_centerline.size();
+        size_t total_point_size = future_centerline_points.size();
+        double scaled_steps_along_curve =0.0;
+        std::vector<double> better_curvature;
+        for(size_t steps_along_curve =0;steps_along_curve < total_step_along_curve; steps_along_curve++){
+            lanelet::BasicPoint2d p =(*fit_curve)(scaled_steps_along_curve);
+
+            double c = compute_curvature_at((*fit_curve), scaled_steps_along_curve);
+            better_curvature.push_back(c);
+
+            scaled_steps_along_curve += 1.0/total_step_along_curve;
         }
-
-
-        std::vector<double> distributed_speed_limits;
-        distributed_speed_limits.reserve(curve_points.size());
-
-        // compute total length of the trajectory to get correct number of points 
-        // we expect using curve_resample_step_size
-        std::vector<double> downtracks_raw = carma_wm::geometry::compute_arc_lengths(curve_points);
-
-        int total_step_along_curve= downtracks_raw.size();
-        int current_speed_index = 0;
-        size_t total_point_size = curve_points.size();
-
-        double step_threshold_for_next_speed = (double)total_step_along_curve / (double)total_point_size;
-        double scaled_steps_along_curve = 0.0; // from 0 (start) to 1 (end) for the whole trajectory
-
-        //Geometry already fit to spline for lane change
-        for (size_t steps_along_curve = 0; steps_along_curve < total_step_along_curve; steps_along_curve++) // Resample curve at tighter resolution
-        {
-            
-            if ((double)steps_along_curve > step_threshold_for_next_speed)
-            {
-            step_threshold_for_next_speed += (double)total_step_along_curve / (double) total_point_size;
-            current_speed_index ++;
-            }
-            distributed_speed_limits.push_back(speed_limits[current_speed_index]); // Identify speed limits for resampled points
-            
-        }
-
-
-        std::vector<double> yaw_values = carma_wm::geometry::compute_tangent_orientations(curve_points);
-
-        std::vector<double> curvatures = carma_wm::geometry::local_circular_arc_curvatures(
-            curve_points, curvature_calc_lookahead_count_);  
-
-        curvatures = smoothing::moving_average_filter(curvatures, moving_average_window_size_);
-
+        std::vector<double> curvatures = smoothing::moving_average_filter(better_curvature, curvature_moving_average_window_size_, false);
 
         std::vector<double> ideal_speeds =
-            trajectory_utils::constrained_speeds_for_curvatures(curvatures, lateral_accel_limit_);
+                        trajectory_utils::constrained_speeds_for_curvatures(curvatures, lateral_accel_limit_);
 
-        std::vector<double> actual_speeds = apply_speed_limits(ideal_speeds, distributed_speed_limits);
+        //Compute yaw values from original trajectory
+        std::vector<lanelet::BasicPoint2d> future_geom_points;
+        std::vector<double> distributed_speed_limits;
+        splitPointSpeedPairs(time_bound_points, &future_geom_points, &distributed_speed_limits);
+        std::vector<double> final_yaw_values = carma_wm::geometry::compute_tangent_orientations(future_geom_points);
 
-        // Drop last point
-        final_yaw_values.insert(final_yaw_values.end(), yaw_values.begin(), yaw_values.end());
-        all_sampling_points.insert(all_sampling_points.end(), curve_points.begin(), curve_points.end() );
-        final_actual_speeds.insert(final_actual_speeds.end(), actual_speeds.begin(), actual_speeds.end());
-
-        if (all_sampling_points.size() == 0)
-        {
-            ROS_WARN_STREAM("No trajectory points could be generated");
-            return {};
+        //find min ideal speed
+        double min_ideal_speed = std::numeric_limits<double>::max();
+        for(int i=0;i<ideal_speeds.size();i++){
+            min_ideal_speed= std::min(ideal_speeds[i],min_ideal_speed);
         }
-
-        // Find Lookahead Distance based on Velocity
-        double lookahead_distance = get_adaptive_lookahead(state.longitudinal_vel);
-
-
-        // Apply lookahead speeds
-        final_actual_speeds = get_lookahead_speed(all_sampling_points, final_actual_speeds, lookahead_distance);
-        
-        // Add current vehicle point to front of the trajectory
-        lanelet::BasicPoint2d cur_veh_point(state.X_pos_global, state.Y_pos_global);
-
-        all_sampling_points.insert(all_sampling_points.begin(),
-                                    cur_veh_point);  // Add current vehicle position to front of sample points
-
-        final_actual_speeds.insert(final_actual_speeds.begin(), std::max(state.longitudinal_vel, minimum_speed_));
-
-        final_yaw_values.insert(final_yaw_values.begin(), state.orientation);
-
-        
+       //final speed - min value based on road curvature
+       std::vector<double> final_actual_speeds;
+       final_actual_speeds.resize(distributed_speed_limits.size(), min_ideal_speed);
+    
+    
         // Compute points to local downtracks
-        std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(all_sampling_points);
-
-        
-        // Apply accel limits
-        final_actual_speeds = trajectory_utils::apply_accel_limits_by_distance(downtracks, final_actual_speeds,
-                                                                                max_accel_, max_accel_);
-
-        
-        final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, moving_average_window_size_);
-
+        std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(future_geom_points);
+        final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, speed_moving_average_window_size_);
         for (auto& s : final_actual_speeds)  // Limit minimum speed. TODO how to handle stopping?
         {
-            s = std::max(s, minimum_speed_);
+            s = std::max(s, minimum_speed_); 
+            s = std::min(s, max_speed);
         }
 
         // Convert speeds to times
         std::vector<double> times;
         trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
 
-        
         // Build trajectory points
         // TODO When more plugins are implemented that might share trajectory planning the start time will need to be based
         // off the last point in the plan if an earlier plan was provided
         std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
-            trajectory_from_points_times_orientations(all_sampling_points, times, final_yaw_values, ros::Time::now());
-
+            trajectory_from_points_times_orientations(future_geom_points, times, final_yaw_values, state_time);
+        
+        ROS_DEBUG_STREAM("PRINTING FINAL SPEEDS");
+        for (auto speed : final_actual_speeds)
+        {
+            ROS_DEBUG_STREAM("Final Speed: " << speed);
+        }
+        //std::vector<cav_msgs::TrajectoryPlanPoint> traj;
         return traj_points;
 
     }
@@ -373,6 +341,16 @@ namespace unobstructed_lanechange
         }
 
         return traj;
+    }
+
+    double UnobstructedLaneChangePlugin::compute_curvature_at(const unobstructed_lanechange::smoothing::SplineI& fit_curve, double step_along_the_curve) const
+    {
+        lanelet::BasicPoint2d f_prime_pt = fit_curve.first_deriv(step_along_the_curve);
+        lanelet::BasicPoint2d f_prime_prime_pt = fit_curve.second_deriv(step_along_the_curve);
+        // Convert to 3d vector to do 3d vector operations like cross.
+        Eigen::Vector3d f_prime = {f_prime_pt.x(), f_prime_pt.y(), 0};
+        Eigen::Vector3d f_prime_prime = {f_prime_prime_pt.x(), f_prime_prime_pt.y(), 0};
+        return (f_prime.cross(f_prime_prime)).norm()/(pow(f_prime.norm(),3));
     }
 
     double UnobstructedLaneChangePlugin::get_adaptive_lookahead(double velocity)
@@ -540,20 +518,28 @@ namespace unobstructed_lanechange
         return best_index;
 
     }
+    int UnobstructedLaneChangePlugin::get_ending_point_index(lanelet::BasicLineString2d& points, double ending_downtrack){
+        int best_index = points.size()-1;
+        for(int i=points.size()-1;i>=0;i--){
+            double downtrack = wm_->routeTrackPos(points[i]).downtrack;
+            if(downtrack <= ending_downtrack){
+                best_index = i;
+                break;
+            }
+        }
+        return best_index;
+    }
 
     int UnobstructedLaneChangePlugin::getNearestPointIndex(const std::vector<PointSpeedPair>& points,
                                                const cav_msgs::VehicleState& state)
     {
         lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
-        ROS_DEBUG_STREAM("veh_point: " << veh_point.x() << ", " << veh_point.y());
         double min_distance = std::numeric_limits<double>::max();
         int i = 0;
         int best_index = 0;
         for (const auto& p : points)
         {
             double distance = lanelet::geometry::distance2d(p.point, veh_point);
-            ROS_DEBUG_STREAM("distance: " << distance);
-            ROS_DEBUG_STREAM("p: " << p.point.x() << ", " << p.point.y());
             if (distance < min_distance)
             {
             best_index = i;
@@ -639,8 +625,7 @@ namespace unobstructed_lanechange
             lanelet::BasicPoint2d start = first.front();
             lanelet::BasicLineString2d last=lanelets_in_path.back().centerline2d().basicLineString();
             lanelet::BasicPoint2d end = last.back();
-            
-            lanelet::BasicLineString2d new_points = create_lanechange_path(start,lanelets_in_path[lane_change_iteration], end, lanelets_in_path.back());
+            lanelet::BasicLineString2d new_points = create_lanechange_path(start,lanelets_in_path[lane_change_iteration], end, lanelets_in_path[lane_change_iteration+1]);
             centerline_points.insert(centerline_points.end(),new_points.begin(),new_points.end() );
     
         return centerline_points;

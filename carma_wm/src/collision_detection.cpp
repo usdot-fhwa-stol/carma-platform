@@ -136,6 +136,8 @@ namespace carma_wm {
             //     }
             }
 
+
+
             return rwo_collison;
         };
 
