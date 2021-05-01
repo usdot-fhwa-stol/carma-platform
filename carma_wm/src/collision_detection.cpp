@@ -17,6 +17,9 @@ namespace carma_wm {
 
                 for (auto j : i.object.predictions){
 
+                    std::cout << "next trajectory ....." << std::endl << std::endl << std::endl << std::endl << std::endl << std::endl << std::endl;
+
+
                     for(size_t k=0; k < tp.trajectory_points.size(); k++){
 
                         ROS_DEBUG_STREAM("in for loop");
@@ -77,6 +80,8 @@ namespace carma_wm {
 
                         std::cout << "car_t_x, car_t_y" << car_t_x << car_t_y << std::endl;
                         std::cout << "object_t_x, object_t_y" << object_t_x << object_t_y << std::endl;
+
+                        std::cout << "diff in time stuff " << car_t_x - object_t_x << car_t_y - object_t_y << std::endl;
 
 
                         if(timediff <= 5) {
