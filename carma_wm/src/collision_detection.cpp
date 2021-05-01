@@ -21,8 +21,8 @@ namespace carma_wm {
 
                         ROS_DEBUG_STREAM("in for loop");
 
-                        double distancex = ((double)tp.trajectory_points[k].x - (double)j.predicted_position.position.x)*((double)tp.trajectory_points[k].x - (double)j.predicted_position.position.x);
-                        double distancey = ((double)tp.trajectory_points[k].y - (double)j.predicted_position.position.y)*((double)tp.trajectory_points[k].y - (double)j.predicted_position.position.y);
+                        double distancex = (tp.trajectory_points[k].x - j.predicted_position.position.x)*(tp.trajectory_points[k].x - j.predicted_position.position.x);
+                        double distancey = (tp.trajectory_points[k].y - j.predicted_position.position.y)*(tp.trajectory_points[k].y - j.predicted_position.position.y);
 
                         ROS_DEBUG_STREAM("tp.trajectory_points[k].x");
                         ROS_DEBUG_STREAM(tp.trajectory_points[k].x);
@@ -36,23 +36,36 @@ namespace carma_wm {
                         ROS_DEBUG_STREAM("j.predicted_position.position.y");
                         ROS_DEBUG_STREAM(j.predicted_position.position.y);
 
+
+                        std::cout << "tp.trajectory_points[k].x" << std::endl;
+                        std::cout << tp.trajectory_points[k].x << std::endl;
+
+                        std::cout << "j.predicted_position.position.x" << std::endl;
+                        std::cout << j.predicted_position.position.x << std::endl;
+
+                        std::cout << "tp.trajectory_points[k].y" << std::endl;
+                        std::cout << tp.trajectory_points[k].y << std::endl;
+
+                        std::cout << "j.predicted_position.position.y" << std::endl;
+                        std::cout << j.predicted_position.position.y << std::endl;
+
                         double calcdistance = sqrt(distancex - distancey);
 
-                        ROS_DEBUG_STREAM("calcdistance");
-                        ROS_DEBUG_STREAM(calcdistance);
+                        std::cout <<  "calcdistance"<< std::endl;
+                        std::cout << calcdistance << std::endl;
 
                         ros::Duration diff= j.header.stamp - tp.trajectory_points[k].target_time;
 
                         double timediff = diff.toSec();
 
-                        ROS_DEBUG_STREAM("timediff");
-                        ROS_DEBUG_STREAM(timediff);
+                        std::cout << "timediff" << std::endl;
+                        std::cout << timediff << std::endl;
 
                         double x = (i.object.size.x/2 - size.x/2)*(i.object.size.x/2 - size.x/2);
                         double y = (i.object.size.y/2 - size.y/2)*(i.object.size.y/2 - size.y/2);
 
-                        ROS_DEBUG_STREAM("size diff");
-                        ROS_DEBUG_STREAM(sqrt(x - y));
+                        std::cout << "size diff" << std::endl;
+                        std::cout << sqrt(x - y) << std::endl;
 
                         if(timediff <= 5) {
                             if(calcdistance <= sqrt(x - y) ) {
