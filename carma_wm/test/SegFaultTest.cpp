@@ -25,7 +25,9 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <sstream>
 #include <string>
+#include <ros/console.h>
 #include "TestHelpers.h"
+#include <ros/ros.h>
 #include <carma_wm/MapConformer.h>
 #include <lanelet2_io/Io.h>
 #include <lanelet2_io/io_handlers/Factory.h>
@@ -51,7 +53,7 @@ TEST(SegFaultTest, updateSegFault) {
   ///////////
 
   // File to process. Path is relative to test folder
-  std::string file = "resource/tfhrc.osm";
+  std::string file = "/workspaces/carma_ws/carma/src/carma-platform/carma_wm/test/resource/tfhrc.osm";
 
   ///////////
   // START OF LOGIC
