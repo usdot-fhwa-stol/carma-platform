@@ -50,6 +50,23 @@ public:
    * \return lanelet::BasicPoint2d with x, y that matches the t-th step along the curve
    */ 
   virtual lanelet::BasicPoint2d operator()(double t) const = 0;
+   /**
+  *  \brief Get the BasicPoint2d representing the first_deriv along the curve at t-th step. 
+   * 
+   * \param t The t-th step to solve the spline at, where t is from 0 (beginning of curve) to 1 (end of curve)
+   * 
+   * \return lanelet::BasicPoint2d with x, y that matches the first_deriv at t-th step along the curve. This is not partial derivatives
+   */ 
+  virtual lanelet::BasicPoint2d first_deriv(double x) const = 0;
+
+  /**
+  *  \brief Get the BasicPoint2d representing the first_deriv along the curve at t-th step. 
+   * 
+   * \param t The t-th step to solve the spline at, where t is from 0 (beginning of curve) to 1 (end of curve)
+   * 
+   * \return lanelet::BasicPoint2d with x, y that matches the second_deriv at t-th step along the curve. This is not partial derivatives
+   */ 
+  virtual lanelet::BasicPoint2d second_deriv(double x) const = 0;
 };
 };  // namespace smoothing
 };  // namespace namespace unobstructed_lanechange_plugin
