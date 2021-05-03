@@ -182,7 +182,7 @@ public:
    * \param planning_time time duration of the planning
    * \return updated JMT trajectory 
    */
-  cav_msgs::TrajectoryPlan generate_JMT_trajectory(const cav_msgs::TrajectoryPlan& original_tp, double initial_pos, double goal_pos, double initial_velocity, double goal_velocity, double planning_time) const;
+  cav_msgs::TrajectoryPlan generate_JMT_trajectory(const cav_msgs::TrajectoryPlan& original_tp, double initial_pos, double goal_pos, double initial_velocity, double goal_velocity, double planning_time);
   
   /**
    * \brief update trajectory for yielding to an incoming cooperative behavior
@@ -266,6 +266,46 @@ private:
       res+=std::to_string(bsm_core.id[i]);
     }
       return res;
+  }
+
+  // TODO replace with Basic Autonomy moving average filter
+  std::vector<double> moving_average_filter(const std::vector<double> input, int window_size, bool ignore_first_point=true)
+  {
+    if (window_size % 2 == 0) {
+      throw std::invalid_argument("moving_average_filter window size must be odd");
+    }
+
+    std::vector<double> output;
+    output.reserve(input.size());
+
+    if (input.size() == 0) {
+      return output;
+    }
+
+    int start_index = 0;
+    if (ignore_first_point) {
+      start_index = 1;
+      output.push_back(input[0]);
+    }
+
+    for (int i = start_index; i<input.size(); i++) {
+      
+      
+      double total = 0;
+      int sample_min = std::max(0, i - window_size / 2);
+      int sample_max = std::min((int) input.size() - 1 , i + window_size / 2);
+
+      int count = sample_max - sample_min + 1;
+      std::vector<double> sample;
+      sample.reserve(count);
+      for (int j = sample_min; j <= sample_max; j++) {
+        total += input[j];
+      }
+      output.push_back(total / (double) count);
+
+    }
+
+    return output;
   }
 
 };

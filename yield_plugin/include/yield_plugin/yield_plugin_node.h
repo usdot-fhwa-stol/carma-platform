@@ -70,12 +70,13 @@ public:
     pnh.param<double>("safety_collision_time_gap", config.safety_collision_time_gap, config.safety_collision_time_gap);
     pnh.param<bool>("enable_adjustable_gap", config.enable_adjustable_gap, config.enable_adjustable_gap);
     pnh.param<int>("acceptable_urgency", config.acceptable_urgency, config.acceptable_urgency);
+    pnh.param<double>("speed_moving_average_window_size", config.speed_moving_average_window_size, config.speed_moving_average_window_size);
     ROS_INFO_STREAM("YieldPlugin Params" << config);
 
     YieldPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); }, [&mob_resp_pub](auto msg) { mob_resp_pub.publish(msg); },
                                     [&lc_status_pub](auto msg) { lc_status_pub.publish(msg); });
   
-    // worker.lookupECEFtoMapTransform();
+    worker.lookupECEFtoMapTransform();
     
     ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/YieldPlugin/plan_trajectory",
                                             &YieldPlugin::plan_trajectory_cb, &worker);
