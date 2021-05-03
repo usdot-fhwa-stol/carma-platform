@@ -15,14 +15,14 @@ namespace carma_wm {
 
             for (auto i : rwol.roadway_obstacles){
 
-                for (auto j : i.predictions){
+                for (auto j : i.object.predictions){
 
                     for(size_t k=0; k < tp.trajectory_points.size(); k++){
 
                         ROS_DEBUG_STREAM("in for loop");
 
-                        double distancex = (tp.trajectory_points[k].x - j.predicted_position.position.x)^2;
-                        double distancey = (tp.trajectory_points[k].y - j.predicted_position.position.y)^2;
+                        double distancex = ((double)tp.trajectory_points[k].x - (double)j.predicted_position.position.x)*((double)tp.trajectory_points[k].x - (double)j.predicted_position.position.x);
+                        double distancey = ((double)tp.trajectory_points[k].y - (double)j.predicted_position.position.y)*((double)tp.trajectory_points[k].y - (double)j.predicted_position.position.y);
 
                         ROS_DEBUG_STREAM("tp.trajectory_points[k].x");
                         ROS_DEBUG_STREAM(tp.trajectory_points[k].x);
@@ -30,20 +30,26 @@ namespace carma_wm {
                         ROS_DEBUG_STREAM("j.predicted_position.position.x");
                         ROS_DEBUG_STREAM(j.predicted_position.position.x);
 
+                        ROS_DEBUG_STREAM("tp.trajectory_points[k].y");
+                        ROS_DEBUG_STREAM(tp.trajectory_points[k].y);
+
+                        ROS_DEBUG_STREAM("j.predicted_position.position.y");
+                        ROS_DEBUG_STREAM(j.predicted_position.position.y);
+
                         double calcdistance = sqrt(distancex - distancey);
 
                         ROS_DEBUG_STREAM("calcdistance");
                         ROS_DEBUG_STREAM(calcdistance);
 
-                        ros::Duration diff= j.predicted_position.header.stamp-tp.trajectory_points[k].target_time;
+                        ros::Duration diff= j.header.stamp - tp.trajectory_points[k].target_time;
 
                         double timediff = diff.toSec();
 
                         ROS_DEBUG_STREAM("timediff");
                         ROS_DEBUG_STREAM(timediff);
 
-                        double x = (rwo.object.size.x/2 - size.x/2)^2;
-                        double y = (rwo.object.size.y/2 - size.y/2)^2;
+                        double x = (i.object.size.x/2 - size.x/2)*(i.object.size.x/2 - size.x/2);
+                        double y = (i.object.size.y/2 - size.y/2)*(i.object.size.y/2 - size.y/2);
 
                         ROS_DEBUG_STREAM("size diff");
                         ROS_DEBUG_STREAM(sqrt(x - y));
