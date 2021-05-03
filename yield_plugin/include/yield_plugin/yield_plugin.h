@@ -46,6 +46,7 @@ namespace yield_plugin
 {
 using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
 using MobilityResponseCB = std::function<void(const cav_msgs::MobilityResponse&)>;
+using LaneChangeStatusCB = std::function<void(const cav_msgs::LaneChangeStatus&)>;
 
 /**
  * \brief Convenience class for pairing 2d points with speeds
@@ -69,9 +70,13 @@ public:
    * \param wm Pointer to intialized instance of the carma world model for accessing semantic map data
    * \param config The configuration to be used for this object
    * \param plugin_discovery_publisher Callback which will publish the current plugin discovery state
+   * \param mobility_response_publisher Callback which will publish the mobility response
+   * \param lc_status_publisher Callback which will publish the cooperative lane change status
    */ 
   YieldPlugin(carma_wm::WorldModelConstPtr wm, YieldPluginConfig config,
-                       PublishPluginDiscoveryCB plugin_discovery_publisher, MobilityResponseCB mobility_response_publisher);
+                       PublishPluginDiscoveryCB plugin_discovery_publisher, 
+                       MobilityResponseCB mobility_response_publisher,
+                       LaneChangeStatusCB lc_status_publisher);
 
   /**
    * \brief Method to call at fixed rate in execution loop. Will publish plugin discovery updates
@@ -206,12 +211,6 @@ public:
   void set_incoming_request_info(std::vector <lanelet::BasicPoint2d> req_trajectory, double req_speed, double req_planning_time, double req_timestamp);
 
   /**
-   * \brief set the ros publisher for lanechange status topic
-   * \param publisher ros publiser
-   */
-  void set_lanechange_status_publisher(const ros::Publisher& publisher);
-
-  /**
    * \brief Looks up the transform between map and earth frames, and sets the member variable
    */
   void lookupECEFtoMapTransform();
@@ -230,7 +229,8 @@ private:
   YieldPluginConfig config_;
   PublishPluginDiscoveryCB plugin_discovery_publisher_;
   MobilityResponseCB mobility_response_publisher_;
-  ros::Publisher lanechange_status_pub_;
+  LaneChangeStatusCB lc_status_publisher_;
+  // ros::Publisher lanechange_status_pub_;
   geometry_msgs::TransformStamped tf_;
 
   // flag to show if it is possible for the vehicle to accept the cooperative request

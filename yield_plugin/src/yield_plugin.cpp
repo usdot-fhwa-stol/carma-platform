@@ -39,8 +39,10 @@ namespace yield_plugin
 {
   YieldPlugin::YieldPlugin(carma_wm::WorldModelConstPtr wm, YieldPluginConfig config,
                                             PublishPluginDiscoveryCB plugin_discovery_publisher, 
-                                            MobilityResponseCB mobility_response_publisher)
-    : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher), mobility_response_publisher_(mobility_response_publisher)
+                                            MobilityResponseCB mobility_response_publisher,
+                                            LaneChangeStatusCB lc_status_publisher)
+    : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher), 
+      mobility_response_publisher_(mobility_response_publisher), lc_status_publisher_(lc_status_publisher)
   {
     plugin_discovery_msg_.name = "YieldPlugin";
     plugin_discovery_msg_.versionId = "v1.0";
@@ -68,11 +70,6 @@ namespace yield_plugin
   {
     plugin_discovery_publisher_(plugin_discovery_msg_);
     return true;
-  }
-
-  void YieldPlugin::set_lanechange_status_publisher(const ros::Publisher& publisher)
-  {
-    lanechange_status_pub_ = publisher;
   }
 
   std::vector<std::pair<int, lanelet::BasicPoint2d>> YieldPlugin::detect_trajectories_intersection(std::vector<lanelet::BasicPoint2d> self_trajectory, std::vector<lanelet::BasicPoint2d> incoming_trajectory) const
@@ -237,15 +234,7 @@ namespace yield_plugin
         ROS_DEBUG_STREAM("response sent"); 
       }
     }
-    lanechange_status_pub_.publish(lc_status_msg);
-    if (lanechange_status_pub_.isLatched())
-    {
-      lanechange_status_pub_.publish(lc_status_msg);
-    }
-    else
-    {
-      ROS_WARN("Lane Change Status Topic is not latched.");
-    }
+    lc_status_publisher_(lc_status_msg);
     
   }
 
