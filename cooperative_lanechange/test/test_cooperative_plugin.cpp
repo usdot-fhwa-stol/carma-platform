@@ -48,22 +48,25 @@
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_plan;
                 
         geometry_msgs::TransformStamped tf_msg;
-        tf_msg.transform.translation.x = 1.0;
+        tf_msg.transform.translation.x = 0.0;
         tf_msg.transform.translation.y = 0;
         tf_msg.transform.translation.z = 0;
         geometry_msgs::Quaternion Quaternion;
         tf_msg.transform.rotation.x =0.0;
         tf_msg.transform.rotation.y =0.0;
         tf_msg.transform.rotation.z =0.0;
-        tf_msg.transform.rotation.w =0.0;
+        tf_msg.transform.rotation.w =1.0;
 
         cav_msgs::TrajectoryPlanPoint point_1;
         point_1.x = 1.0;
         point_1.y = 0.0;
         trajectory_plan.push_back(point_1);
 
-        cav_msgs::LocationECEF ecef_point_1 = worker.trajectory_point_to_ecef(point_1, tf_msg);
-        EXPECT_TRUE(ecef_point_1.ecef_x == 1.0);
+        tf2::Transform identity;
+        identity.setIdentity();
+
+        cav_msgs::LocationECEF ecef_point_1 = worker.trajectory_point_to_ecef(point_1, identity);
+        EXPECT_TRUE(ecef_point_1.ecef_x == 100);
 
         cav_msgs::TrajectoryPlanPoint point_2;
         point_2.x = 1.0;
@@ -193,7 +196,7 @@
         double lookahead = worker.get_adaptive_lookahead(5);   
         std::vector<double> lookahead_speeds = worker.get_lookahead_speed(points_split,constrained_speeds, lookahead);
 
-        trajectory = worker.compose_trajectory_from_centerline(points_and_target_speeds, vehicle_state);
+        trajectory = worker.compose_trajectory_from_centerline(points_and_target_speeds, vehicle_state, ros::Time::now(),lane_change_start_id, 15);
         //Valid Trajectory has at least 2 points
         EXPECT_TRUE(trajectory.size() > 2);
 
@@ -205,7 +208,7 @@
         lanelet::Lanelet end_lanelet = map->laneletLayer.get(end_id);
         lanelet::BasicPoint2d start_position(vehicle_state.X_pos_global, vehicle_state.Y_pos_global);
         lanelet::BasicPoint2d end_position = end_lanelet.centerline2d().basicLineString().back() ;
-        lanelet::BasicLineString2d lc_route = worker.create_lanechange_path( start_lanelet, end_position, end_lanelet);
+        lanelet::BasicLineString2d lc_route = worker.create_lanechange_path( start_position, start_lanelet, end_position, end_lanelet);
 
         //Test Compute heading frame between two points
         Eigen::Isometry2d frame = worker.compute_heading_frame(start_position, end_position);

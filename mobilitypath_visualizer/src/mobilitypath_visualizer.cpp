@@ -134,11 +134,6 @@ namespace mobilitypath_visualizer {
 
         auto curr_location_msg = msg; //variable to update on each iteration as offsets are measured since last traj point
         
-        //location message standard is specified in meters, while the logic here expects cm to work with offsets
-        curr_location_msg.trajectory.location.ecef_x = curr_location_msg.trajectory.location.ecef_x * 100;
-        curr_location_msg.trajectory.location.ecef_y = curr_location_msg.trajectory.location.ecef_y * 100;
-        curr_location_msg.trajectory.location.ecef_z = curr_location_msg.trajectory.location.ecef_z * 100;
-
         marker.id = 0;
         geometry_msgs::Point arrow_start;
         ROS_DEBUG_STREAM("ECEF point x: " << curr_location_msg.trajectory.location.ecef_x << ", y:" << curr_location_msg.trajectory.location.ecef_y);
