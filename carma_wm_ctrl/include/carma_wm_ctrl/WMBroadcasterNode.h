@@ -100,9 +100,6 @@ private:
   ros::Subscriber route_cache_sub_;
   ros::Timer timer;
 
-  cav_msgs::Route current_route;
-  void cacheRoute(const cav_msgs::Route& route_msg);
-
   WMBroadcaster wmb_;
 };
 }  // namespace carma_wm_ctrl

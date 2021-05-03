@@ -45,10 +45,6 @@ void WMBroadcasterNode::publishActiveGeofence(const cav_msgs::CheckActiveGeofenc
   active_pub_.publish(active_geof_msg);
 }
 
-void WMBroadcasterNode::cacheRoute(const cav_msgs::Route& route_msg)
-{
-  current_route = route_msg;
-}
 
 WMBroadcasterNode::WMBroadcasterNode()
   : wmb_(std::bind(&WMBroadcasterNode::publishMap, this, _1), std::bind(&WMBroadcasterNode::publishMapUpdate, this, _1), 
@@ -76,8 +72,6 @@ int WMBroadcasterNode::run()
   //Current Location Sub
   curr_location_sub_ = cnh_.subscribe("current_pose", 1,&WMBroadcaster::currentLocationCallback, &wmb_);
   
-  route_cache_sub_ = cnh_.subscribe("route", 1, &WMBroadcasterNode::cacheRoute, this);
-
   double config_limit;
   double lane_max_width;
   pnh_.getParam("max_lane_width", lane_max_width);
@@ -86,7 +80,7 @@ int WMBroadcasterNode::run()
   pnh2_.getParam("/config_speed_limit", config_limit);
   wmb_.setConfigSpeedLimit(config_limit);
 
-  timer = cnh_.createTimer(ros::Duration(10.0), [this](auto){wmb_.routeCallbackMessage(current_route);}, &wmb_);
+  timer = cnh_.createTimer(ros::Duration(10.0), [this](auto){wmb_.routeCallbackMessage(wmb_.getRoute());}, &wmb_);
  
   // Spin
   cnh_.spin();

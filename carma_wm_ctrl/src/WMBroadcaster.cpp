@@ -644,9 +644,15 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
 
 };
   
+cav_msgs::Route WMBroadcaster::getRoute()
+{
+  return current_route;
+}
+
 void  WMBroadcaster::routeCallbackMessage(const cav_msgs::Route& route_msg)
 {
 
+ current_route = route_msg;
  cav_msgs::TrafficControlRequest cR; 
  cR =  controlRequestFromRoute(route_msg);
  control_msg_pub_(cR);
