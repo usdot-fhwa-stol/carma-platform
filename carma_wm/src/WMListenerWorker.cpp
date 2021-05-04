@@ -75,9 +75,16 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinCon
 
     if(route_node_flag_!=true)
     {
-     ROS_INFO_STREAM("Route is not yet available!");
+     ROS_INFO_STREAM("Route is not yet available. Therefore quueing the update");
+     geofence_queue_.push (geofence_msg);
      return;
     }
+  }
+
+    while (!geofence_queue_.empty())
+  {
+    geofence_msg=geofence_queue_.front();
+    geofence_queue_.pop();
   }
 
   // convert ros msg to geofence object

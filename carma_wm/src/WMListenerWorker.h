@@ -20,8 +20,7 @@
 #include <cav_msgs/Route.h>
 #include <carma_wm/CARMAWorldModel.h>
 #include <carma_wm/TrafficControl.h>
-
-
+#include <queue>  
 
 namespace carma_wm
 {
@@ -111,6 +110,7 @@ private:
   void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const;
   double config_speed_limit_;
   autoware_lanelet2_msgs::MapBinPtr local_geofence_msg_;
+  std::queue<autoware_lanelet2_msgs::MapBin> geofence_queue_;
   
   bool rerouting_flag_=false;
   bool route_node_flag_=false;
