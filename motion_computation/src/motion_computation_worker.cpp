@@ -202,10 +202,19 @@ cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(c
 
   auto prev_pt_map = transform_to_map_frame(prev_pt_ecef);
 
+  double message_offset_x = 0.0;
+  double message_offset_y = 0.0;
+  double message_offset_z = 0.0;
+
   for (size_t i = 1; i < msg.trajectory.offsets.size(); i ++)
   {
     auto curr_pt_msg = msg.trajectory.offsets[i];
-    tf2::Vector3 curr_pt_ecef {ecef_x + (double)curr_pt_msg.offset_x /100.0, ecef_y + (double)curr_pt_msg.offset_y /100.0, ecef_z + (double)curr_pt_msg.offset_z /100.0};
+
+    message_offset_x = (double)curr_pt_msg.offset_x + message_offset_x;
+    message_offset_y = (double)curr_pt_msg.offset_y + message_offset_y;
+    message_offset_z = (double)curr_pt_msg.offset_z + message_offset_z;
+
+    tf2::Vector3 curr_pt_ecef {ecef_x + message_offset_x /100.0, ecef_y + message_offset_y /100.0, ecef_z + message_offset_z /100.0};
     auto curr_pt_map = transform_to_map_frame(curr_pt_ecef);
 
     cav_msgs::PredictedState curr_state;
