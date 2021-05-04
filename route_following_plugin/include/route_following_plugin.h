@@ -149,6 +149,9 @@ namespace route_following_plugin
         // config limit for vehicle speed limit set as ros parameter
         double config_limit=0.0;
 
+        //Tactical plugin being used for planning lane change
+        std::string lane_change_plugin_ = "CooperativeLaneChangePlugin";
+
     private:
 
         // CARMA ROS node handles
