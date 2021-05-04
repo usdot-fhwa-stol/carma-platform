@@ -239,7 +239,7 @@ namespace route_following_plugin
         plan_req1.planning_start_time;
         plan_req1.planning_completion_time;
         ros::Time current_time = ros::Time::now();
-        plan_req1.maneuvers.push_back(worker.composeManeuverMessage(0,0,0,0,int(start_id),current_time));
+        plan_req1.maneuvers.push_back(worker.composeManeuverMessage(0,0,0,0,start_id,current_time));
         pplan.prior_plan=plan_req1;
         plan.request=pplan;
         //PlanManeuversResponse 
