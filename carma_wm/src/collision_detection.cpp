@@ -46,20 +46,6 @@ namespace carma_wm {
                         ROS_DEBUG_STREAM("j.predicted_position.position.y");
                         ROS_DEBUG_STREAM(j.predicted_position.position.y);
 
-
-                        // std::cout << "tp.trajectory_points[k].x" << std::endl;
-                        // std::cout << tp.trajectory_points[k].x << std::endl;
-
-                        // std::cout << "j.predicted_position.position.x" << std::endl;
-                        // std::cout << j.predicted_position.position.x << std::endl;
-
-                        // std::cout << "tp.trajectory_points[k].y" << std::endl;
-                        // std::cout << tp.trajectory_points[k].y << std::endl;
-
-                        // std::cout << "j.predicted_position.position.y" << std::endl;
-                        // std::cout << j.predicted_position.position.y << std::endl;
-
-
                         std::cout << "distancex" << std::endl;
                         std::cout << tp.trajectory_points[k].x - j.predicted_position.position.x << std::endl;
 
