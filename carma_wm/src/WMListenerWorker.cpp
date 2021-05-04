@@ -81,7 +81,7 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinCon
     }
   }
 
-    while (!geofence_queue_.empty())
+    while (!geofence_queue_.empty() && rerouting_flag_==fasle)
   {
     geofence_msg=geofence_queue_.front();
     geofence_queue_.pop();
