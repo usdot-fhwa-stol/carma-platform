@@ -39,8 +39,10 @@ namespace yield_plugin
 {
   YieldPlugin::YieldPlugin(carma_wm::WorldModelConstPtr wm, YieldPluginConfig config,
                                             PublishPluginDiscoveryCB plugin_discovery_publisher, 
-                                            MobilityResponseCB mobility_response_publisher)
-    : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher), mobility_response_publisher_(mobility_response_publisher)
+                                            MobilityResponseCB mobility_response_publisher,
+                                            LaneChangeStatusCB lc_status_publisher)
+    : wm_(wm), config_(config), plugin_discovery_publisher_(plugin_discovery_publisher), 
+      mobility_response_publisher_(mobility_response_publisher), lc_status_publisher_(lc_status_publisher)
   {
     plugin_discovery_msg_.name = "YieldPlugin";
     plugin_discovery_msg_.versionId = "v1.0";
@@ -68,11 +70,6 @@ namespace yield_plugin
   {
     plugin_discovery_publisher_(plugin_discovery_msg_);
     return true;
-  }
-
-  void YieldPlugin::set_lanechange_status_publisher(const ros::Publisher& publisher)
-  {
-    lanechange_status_pub_ = publisher;
   }
 
   std::vector<std::pair<int, lanelet::BasicPoint2d>> YieldPlugin::detect_trajectories_intersection(std::vector<lanelet::BasicPoint2d> self_trajectory, std::vector<lanelet::BasicPoint2d> incoming_trajectory) const
@@ -237,15 +234,7 @@ namespace yield_plugin
         ROS_DEBUG_STREAM("response sent"); 
       }
     }
-    lanechange_status_pub_.publish(lc_status_msg);
-    if (lanechange_status_pub_.isLatched())
-    {
-      lanechange_status_pub_.publish(lc_status_msg);
-    }
-    else
-    {
-      ROS_WARN("Lane Change Status Topic is not latched.");
-    }
+    lc_status_publisher_(lc_status_msg);
     
   }
 
@@ -332,7 +321,6 @@ namespace yield_plugin
       goal_pos = sqrt(dx*dx + dy*dy) - config_.x_gap;
       ROS_DEBUG_STREAM("Goal position (goal_pos): " << goal_pos);
       double collision_time = req_timestamp_ + (intersection_points[0].first * ecef_traj_timestep_) - config_.safety_collision_time_gap;
-      // planning_time = std::min(planning_time, collision_time);
       ROS_DEBUG_STREAM("req time stamp: " << req_timestamp_);
       ROS_DEBUG_STREAM("Collision time: " << collision_time);
       ROS_DEBUG_STREAM("intersection num: " << intersection_points[0].first);
@@ -372,7 +360,7 @@ namespace yield_plugin
     return cooperative_trajectory;
   }
 
-  cav_msgs::TrajectoryPlan YieldPlugin::generate_JMT_trajectory(const cav_msgs::TrajectoryPlan& original_tp, double initial_pos, double goal_pos, double initial_velocity, double goal_velocity, double planning_time) const                                                         
+  cav_msgs::TrajectoryPlan YieldPlugin::generate_JMT_trajectory(const cav_msgs::TrajectoryPlan& original_tp, double initial_pos, double goal_pos, double initial_velocity, double goal_velocity, double planning_time)                                                         
   {
     cav_msgs::TrajectoryPlan jmt_trajectory;
     std::vector<cav_msgs::TrajectoryPlanPoint> jmt_trajectory_points;
@@ -394,37 +382,47 @@ namespace yield_plugin
                                                                                                 planning_time);
  
     std::vector<double> original_traj_downtracks = get_relative_downtracks(original_tp);
-      
+    std::vector<double> calculated_speeds = {};
+    calculated_speeds.push_back(initial_velocity);
     for(size_t i = 1; i < original_tp.trajectory_points.size(); i++ )
+    {
+      double traj_target_time = i * planning_time / original_tp.trajectory_points.size();
+      double dt_dist = polynomial_calc(values, traj_target_time);
+      double dv = polynomial_calc_d(values, traj_target_time);
+      // cav_msgs::TrajectoryPlanPoint jmt_tpp;
+      if (dv >= original_max_speed)
       {
-        double traj_target_time = i * planning_time / original_tp.trajectory_points.size();
-        double dt_dist = polynomial_calc(values, traj_target_time);
-        double dv = polynomial_calc_d(values, traj_target_time);
-        cav_msgs::TrajectoryPlanPoint jmt_tpp;
-        // the last moving trajectory point
-        if (dv >= config_.max_stop_speed)
-        {
-          ROS_DEBUG_STREAM("target speed: " << dv);
-          if (dv >= original_max_speed){
-            dv = original_max_speed;
-          }
-          // if (dv >= initial_velocity){
-          //   dv = std::max(config_.max_stop_speed, initial_velocity);
-          // }
-          // trajectory point is copied to move all the available information, then its target time is updated
-          jmt_tpp = original_tp.trajectory_points[i];
-          jmt_tpp.target_time = jmt_trajectory_points[i-1].target_time + ros::Duration(original_traj_downtracks[i]/dv);
-          jmt_trajectory_points.push_back(jmt_tpp);
-        }
-        else
-        {
-          ROS_DEBUG_STREAM("target speed is zero");
-          // if speed is zero, the vehicle will stay in previous location.
-          jmt_tpp = jmt_trajectory_points[i-1];
-          jmt_tpp.target_time = jmt_trajectory_points[0].target_time + ros::Duration(traj_target_time);
-          jmt_trajectory_points.push_back(jmt_tpp);
-        }
+        dv = original_max_speed;
       }
+      calculated_speeds.push_back(dv);
+    }
+    // moving average filter
+    std::vector<double> filtered_speeds = moving_average_filter(calculated_speeds, config_.speed_moving_average_window_size);
+
+    double prev_speed = filtered_speeds[0];
+    for(size_t i = 1; i < original_tp.trajectory_points.size(); i++ )
+    {
+      cav_msgs::TrajectoryPlanPoint jmt_tpp;
+      double current_speed = filtered_speeds[i];
+      double traj_target_time = i * planning_time / original_tp.trajectory_points.size();
+      if (current_speed >= config_.max_stop_speed)
+      {
+        double dt = (2 * original_traj_downtracks[i]) / (current_speed + prev_speed);
+        jmt_tpp = original_tp.trajectory_points[i];
+        jmt_tpp.target_time = jmt_trajectory_points[i-1].target_time + ros::Duration(dt);
+        jmt_trajectory_points.push_back(jmt_tpp);
+      }
+      else
+      {
+        ROS_DEBUG_STREAM("target speed is zero");
+        // if speed is zero, the vehicle will stay in previous location.
+        jmt_tpp = jmt_trajectory_points[i-1];
+        jmt_tpp.target_time = jmt_trajectory_points[0].target_time + ros::Duration(traj_target_time);
+        jmt_trajectory_points.push_back(jmt_tpp);
+      }
+      prev_speed = current_speed;
+    }
+    
     jmt_trajectory.header = original_tp.header;
     jmt_trajectory.trajectory_id = original_tp.trajectory_id;
     jmt_trajectory.trajectory_points = jmt_trajectory_points;
