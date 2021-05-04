@@ -13,14 +13,21 @@ namespace carma_wm {
 
             // collision_detection::MovingObject vehicle_object = ConvertVehicleToMovingObject(tp, size, veloctiy);
 
+            // lanelet::BasicPoint2d point(original_tp[0].x,original_tp[0].y);
+
+            // double vehicle_downtrack = CARMAWorldModel::routeTrackPos(point).downtrack;
+
             for (auto i : rwol.roadway_obstacles){
+
+                // ROS_DEBUG_STREAM("downtrack: ");
+                // ROS_DEBUG_STREAM(i.down_track - vehicle_downtrack);
 
                 for (auto j : i.object.predictions){
 
                     std::cout << "next trajectory ....." << std::endl << std::endl << std::endl << std::endl << std::endl << std::endl << std::endl;
 
 
-                    for(size_t k=0; k < tp.trajectory_points.size(); k++){
+                    for(size_t k=0; k < 2; k++){
 
                         ROS_DEBUG_STREAM("in for loop");
 
@@ -40,19 +47,28 @@ namespace carma_wm {
                         ROS_DEBUG_STREAM(j.predicted_position.position.y);
 
 
-                        std::cout << "tp.trajectory_points[k].x" << std::endl;
-                        std::cout << tp.trajectory_points[k].x << std::endl;
+                        // std::cout << "tp.trajectory_points[k].x" << std::endl;
+                        // std::cout << tp.trajectory_points[k].x << std::endl;
 
-                        std::cout << "j.predicted_position.position.x" << std::endl;
-                        std::cout << j.predicted_position.position.x << std::endl;
+                        // std::cout << "j.predicted_position.position.x" << std::endl;
+                        // std::cout << j.predicted_position.position.x << std::endl;
 
-                        std::cout << "tp.trajectory_points[k].y" << std::endl;
-                        std::cout << tp.trajectory_points[k].y << std::endl;
+                        // std::cout << "tp.trajectory_points[k].y" << std::endl;
+                        // std::cout << tp.trajectory_points[k].y << std::endl;
 
-                        std::cout << "j.predicted_position.position.y" << std::endl;
-                        std::cout << j.predicted_position.position.y << std::endl;
+                        // std::cout << "j.predicted_position.position.y" << std::endl;
+                        // std::cout << j.predicted_position.position.y << std::endl;
 
-                        double calcdistance = sqrt(distancex - distancey);
+
+                        std::cout << "distancex" << std::endl;
+                        std::cout << tp.trajectory_points[k].x - j.predicted_position.position.x << std::endl;
+
+
+                        std::cout << "distancey" << std::endl;
+                        std::cout << tp.trajectory_points[k].y - j.predicted_position.position.y << std::endl;
+
+
+                        double calcdistance = sqrt(abs(distancex + distancey));
 
                         std::cout <<  "calcdistance"<< std::endl;
                         std::cout << calcdistance << std::endl;
@@ -70,6 +86,10 @@ namespace carma_wm {
                         std::cout << "size diff" << std::endl;
                         std::cout << sqrt(x - y) << std::endl;
 
+                        std::cout << "veloctiy.linear.x" << veloctiy.linear.x << std::endl;
+                        std::cout << "veloctiy.linear.y" << veloctiy.linear.y << std::endl;
+                        std::cout << "j.predicted_velocity.linear.x" << j.predicted_velocity.linear.x << std::endl;
+                        std::cout << "j.predicted_velocity.linear.y" << j.predicted_velocity.linear.y << std::endl;
                         
                         double car_t_x = tp.trajectory_points[k].x - tp.trajectory_points[0].x /veloctiy.linear.x;
                         double car_t_y = tp.trajectory_points[k].y - tp.trajectory_points[0].y/veloctiy.linear.y;

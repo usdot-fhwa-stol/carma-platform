@@ -398,6 +398,24 @@ namespace yield_plugin
     host_vehicle_size.x = config_.vehicle_length;
     host_vehicle_size.y = config_.vehicle_width;
     host_vehicle_size.z = config_.vehicle_height; 
+
+
+    lanelet::BasicPoint2d point(original_tp.trajectory_points[0].x,original_tp.trajectory_points[0].y);
+    double vehicle_downtrack = wm_->routeTrackPos(point).downtrack;
+    
+    ROS_DEBUG_STREAM("vehicle_downtrack");
+    ROS_DEBUG_STREAM(vehicle_downtrack);
+
+
+    for (auto i : rwol2.roadway_obstacles){
+
+      ROS_DEBUG_STREAM("rwol.roadway_obstacles[0].down_track");
+      ROS_DEBUG_STREAM(i.down_track);
+
+      ROS_DEBUG_STREAM("vehicle_downtrack - rwol.roadway_obstacles[0].down_track");
+      ROS_DEBUG_STREAM(vehicle_downtrack - i.down_track);
+    }
+
     std::vector<cav_msgs::RoadwayObstacle> rwol_collision = carma_wm::collision_detection::WorldCollisionDetection(rwol2, original_tp, host_vehicle_size, current_velocity, config_.collision_horizon);
     
     ROS_DEBUG_STREAM("Roadway Object List (rwol) size: " << rwol.size());
