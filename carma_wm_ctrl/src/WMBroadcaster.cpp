@@ -489,7 +489,7 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
   // Logic to detect which part is affected
 
   std::unordered_set<lanelet::Lanelet> affected_lanelets;
-  for (int idx = 0; idx < gf_pts.size(); idx ++)
+  for (size_t idx = 0; idx < gf_pts.size(); idx ++)
   {
     std::unordered_set<lanelet::Lanelet> possible_lanelets;
     // get nearest few nearest llts within max_lane_width_
@@ -605,8 +605,8 @@ bool WMBroadcaster::shouldChangeControlLine(const lanelet::ConstLaneletOrArea& e
   bool should_change_pcl = false;
   for (auto control_line : pcl->controlLine())
   {
-    if (control_line.id() == el.lanelet()->leftBound2d().id() && gf_ptr->pcl_affects_left_ ||
-    control_line.id() == el.lanelet()->rightBound2d().id() && gf_ptr->pcl_affects_right_)
+    if ((control_line.id() == el.lanelet()->leftBound2d().id() && gf_ptr->pcl_affects_left_) ||
+        (control_line.id() == el.lanelet()->rightBound2d().id() && gf_ptr->pcl_affects_right_))
     {
       should_change_pcl = true;
       break;
