@@ -72,7 +72,7 @@ WorldModelConstPtr WMListener::getWorldModel()
   return worker_->getWorldModel();
 }
 
-void WMListener::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg)
+void WMListener::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr& geofence_msg)
 {
   ROS_ERROR_STREAM("Recieved Geofence Message A");
   ROS_ERROR_STREAM("Recieved Geofence Message B");

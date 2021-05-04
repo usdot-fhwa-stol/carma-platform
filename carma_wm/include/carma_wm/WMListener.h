@@ -111,7 +111,7 @@ public:
 
 private:
   // Callback function that uses lock to edit the map
-  void mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg);
+  void mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr& geofence_msg);
   ros::Subscriber roadway_objects_sub_;
   ros::Subscriber map_update_sub_;
   std::unique_ptr<WMListenerWorker> worker_;

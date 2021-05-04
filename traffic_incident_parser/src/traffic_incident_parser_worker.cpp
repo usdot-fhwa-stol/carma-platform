@@ -93,7 +93,7 @@ namespace traffic
     down_track=stod(stringParserHelper(downtrack_str,downtrack_str.find_last_of("down_track:")));
     up_track=stod(stringParserHelper(uptrack_str,uptrack_str.find_last_of("up_track:")));
     min_gap=stod(stringParserHelper(min_gap_str,min_gap_str.find_last_of("min_gap:")));
-    speed_advisory=stod(stringParserHelper(speed_advisory_str,speed_advisory_str.find_last_of("advisory_speed:")));
+    speed_advisory=stod(stringParserHelper(speed_advisory_str,speed_advisory_str.find_last_of("advisory_speed:"))) * 0.44704; // MPH to m/s
     event_reason=stringParserHelper(event_reason_str,event_reason_str.find_last_of("event_reason:"));
     event_type=stringParserHelper(event_type_str,event_type_str.find_last_of("event_type:"));
   }

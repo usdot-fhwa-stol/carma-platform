@@ -20,7 +20,7 @@
 #include <cav_msgs/Route.h>
 #include <carma_wm/CARMAWorldModel.h>
 #include <carma_wm/TrafficControl.h>
-
+#include <queue>
 
 
 namespace carma_wm
@@ -54,7 +54,7 @@ public:
    *
    * \param geofence_msg The new map update messages to generate the map edits from
    */
-  void mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg);
+  void mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr& geofence_msg);
 
   /*!
    * \brief Callback for route message. It is a TODO: To update function when route message spec is defined
@@ -110,10 +110,11 @@ private:
   std::function<void()> route_callback_;
   void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const;
   double config_speed_limit_;
-  autoware_lanelet2_msgs::MapBinPtr local_geofence_msg_;
 
-  //std::queue<autoware_lanelet2_msgs::MapBinConstPtr> map_update_queue_; // Update queue used to cache map updates when they cannot be immeadiatly applied due to waiting for rerouting
-  
+  size_t current_map_version_ = 0;
+  std::queue<autoware_lanelet2_msgs::MapBinPtr> map_update_queue_; // Update queue used to cache map updates when they cannot be immeadiatly applied due to waiting for rerouting
+  boost::optional<cav_msgs::RouteConstPtr> delayed_route_msg_;
+
   bool rerouting_flag_=false;
   bool route_node_flag_=false;
 };

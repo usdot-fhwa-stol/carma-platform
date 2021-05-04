@@ -223,6 +223,7 @@ private:
   GeofenceScheduler scheduler_;
   std::string base_map_georef_;
   double max_lane_width_;
+  size_t current_map_version_ = 0; // Version ID of the current_map_ variable. NOTE: This parameter needs to be incremented any time an new map is ready to be published
 };
 }  // namespace carma_wm_ctrl
 

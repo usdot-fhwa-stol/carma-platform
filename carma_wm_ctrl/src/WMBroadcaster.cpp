@@ -82,8 +82,10 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
   lanelet::MapConformer::ensureCompliance(current_map_, config_limit);
 
   // Publish map
+  current_map_version_ += 1;
   autoware_lanelet2_msgs::MapBin compliant_map_msg;
   lanelet::utils::conversion::toBinMsg(base_map_, &compliant_map_msg);
+  compliant_map_msg.map_version = current_map_version_;
   map_pub_(compliant_map_msg);
 };
 
@@ -702,6 +704,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
   carma_wm::toBinMsg(send_data, &gf_msg);
   gf_msg.invalidates_route=gf_ptr->invalidate_route_; 
+  gf_msg.map_version = current_map_version_;
   map_update_pub_(gf_msg);
 };
 
