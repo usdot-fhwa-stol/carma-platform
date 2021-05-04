@@ -108,7 +108,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
 
   // TODO: logic to determine what type of geofence goes here
   // currently only converting portion of control message that is relevant to:
-  // - digital speed limit, passing control line
+  // - digital speed limit, passing control line, digital minimum gap, region access rule
   lanelet::Velocity sL;
   cav_msgs::TrafficControlDetail msg_detail = msg_v01.params.detail;
  

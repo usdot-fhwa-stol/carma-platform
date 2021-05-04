@@ -15,11 +15,13 @@
  */
 
 #include <lanelet2_extension/utility/message_conversion.h>
+#include <lanelet2_extension/regulatory_elements/DirectionOfTravel.h>
+#include <lanelet2_extension/regulatory_elements/StopRule.h>
 #include "WMListenerWorker.h"
 
 namespace carma_wm
 {
-enum class GeofenceType{ INVALID, DIGITAL_SPEED_LIMIT, PASSING_CONTROL_LINE, REGION_ACCESS_RULE, DIGITAL_MINIMUM_GAP/* ... others */ };
+enum class GeofenceType{ INVALID, DIGITAL_SPEED_LIMIT, PASSING_CONTROL_LINE, REGION_ACCESS_RULE, DIGITAL_MINIMUM_GAP, DIRECTION_OF_TRAVEL, STOP_RULE/* ... others */ };
 // helper function that return geofence type as an enum, which makes it cleaner by allowing switch statement
 GeofenceType resolveGeofenceType(const std::string& rule_name)
 {
@@ -27,6 +29,10 @@ GeofenceType resolveGeofenceType(const std::string& rule_name)
   if (rule_name.compare(lanelet::DigitalSpeedLimit::RuleName) == 0) return GeofenceType::DIGITAL_SPEED_LIMIT;
   if (rule_name.compare(lanelet::RegionAccessRule::RuleName) == 0) return GeofenceType::REGION_ACCESS_RULE;
   if (rule_name.compare(lanelet::DigitalMinimumGap::RuleName) == 0) return GeofenceType::DIGITAL_MINIMUM_GAP;
+  if (rule_name.compare(lanelet::DirectionOfTravel::RuleName) == 0) return GeofenceType::DIRECTION_OF_TRAVEL;
+  if (rule_name.compare(lanelet::StopRule::RuleName) == 0) return GeofenceType::STOP_RULE;
+
+  return GeofenceType::INVALID;
 }
 
 WMListenerWorker::WMListenerWorker()
@@ -167,6 +173,18 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
     {
       lanelet::DigitalMinimumGapPtr min_gap = std::dynamic_pointer_cast<lanelet::DigitalMinimumGap>(factory_pcl);
       world_model_->getMutableMap()->update(parent_llt, min_gap);
+      break;
+    }
+    case GeofenceType::DIRECTION_OF_TRAVEL:
+    {
+      lanelet::DirectionOfTravelPtr dot = std::dynamic_pointer_cast<lanelet::DirectionOfTravel>(factory_pcl);
+      world_model_->getMutableMap()->update(parent_llt, dot);
+      break;
+    }
+    case GeofenceType::STOP_RULE:
+    {
+      lanelet::StopRulePtr sr = std::dynamic_pointer_cast<lanelet::StopRule>(factory_pcl);
+      world_model_->getMutableMap()->update(parent_llt, sr);
       break;
     }
     default:

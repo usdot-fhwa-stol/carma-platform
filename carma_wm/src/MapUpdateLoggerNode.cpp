@@ -33,135 +33,114 @@
 #include <lanelet2_extension/regulatory_elements/PassingControlLine.h>
 #include <lanelet2_extension/regulatory_elements/RegionAccessRule.h>
 #include <lanelet2_extension/regulatory_elements/StopRule.h>
-
-class ParameterIdVisitor : public boost::static_visitor<lanelet::Id>
-{
-public:
-  lanelet::Id operator()(const lanelet::ConstPoint3d& x) const
-  {
-    return x.id();
-  }
-  
-  lanelet::Id operator()(const lanelet::ConstLineString3d& x) const
-  {
-    return x.id();
-  }
-  
-  lanelet::Id operator()(const lanelet::ConstPolygon3d& x) const
-  {
-    return x.id();
-  }
-  
-  lanelet::Id operator()(const lanelet::ConstWeakLanelet& x) const
-  {
-    return x.lock().id();
-  }
-
-  lanelet::Id operator()(const lanelet::ConstWeakArea& x) const
-  {
-    return x.lock().id();
-  }
-};
-
+#include <iostream>
 
 carma_debug_msgs::LaneletIdRegulatoryElementPair pairToDebugMessage(const std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>& id_reg_pair) {
   carma_debug_msgs::LaneletIdRegulatoryElementPair pair;
+  std::cerr << "A " << std::endl;
   pair.lanelet_id = std::get<0>(id_reg_pair);
+  std::cerr << "B" << std::endl;
   auto element = std::get<1>(id_reg_pair);
+  std::cerr << "C" << std::endl;
   pair.element.rule_name = element->RuleName;
-
-  for (const auto& elems : element->getParameters()) {
-    std::string role = elems.first;
-    if (role.compare(lanelet::RoleNameString::Refers) == 0) {
-
-      for (const auto& param : elems.second) {
-        pair.element.refers_ids.push_back(std::to_string(boost::apply_visitor( ParameterIdVisitor(), param )));
-      } 
-
-    } else if (role.compare(lanelet::RoleNameString::RefLine) == 0){
-      
-      for (const auto& param : elems.second) {
-        pair.element.reference_line_ids.push_back(std::to_string(boost::apply_visitor( ParameterIdVisitor(), param )));
-      } 
-
-    } else {
-      ROS_WARN_STREAM("Unsupported param role: " << role);
-    }
-  }
-
+  std::cerr << "D" << std::endl;
 
   // TODO
   // It might be worth creating an rviz visualization of the map updates as well. Maybe a transparent polygon with text defining the geofence type and id.
   // This will require that we instantiate a world model instance here, but we will need to make that a configurable parameter so that this node can be prevented from crashing.
   std::string rule_name = std::string(element->RuleName);
+  std::cerr << "M" << std::endl;
   
   if (rule_name.compare("digital_minimum_gap") == 0) {
+    std::cerr << "N" << std::endl;
     
     auto cast = std::static_pointer_cast<lanelet::DigitalMinimumGap>(element);
+    std::cerr << "O" << std::endl;
     pair.element.min_gap = cast->getMinimumGap();
+    std::cerr << "P" << std::endl;
     pair.element.participants.insert(pair.element.participants.begin(), cast->participants_.begin(), cast->participants_.end());
-  
+    std::cerr << "Q" << std::endl;
   } else if (rule_name.compare("digital_speed_limit") == 0) {
-    
+    std::cerr << "R" << std::endl;
     auto cast = std::static_pointer_cast<lanelet::DigitalSpeedLimit>(element);
+    std::cerr << "S" << std::endl;
     pair.element.min_gap = cast->getSpeedLimit().value();
+    std::cerr << "T" << std::endl;
     pair.element.participants.insert(pair.element.participants.begin(), cast->participants_.begin(), cast->participants_.end());
-  
+    std::cerr << "U" << std::endl;
   } else if (rule_name.compare("direction_of_travel") == 0) {
-
+    std::cerr << "V" << std::endl;
     auto cast = std::static_pointer_cast<lanelet::DirectionOfTravel>(element);
+    std::cerr << "W" << std::endl;
     pair.element.direction = cast->direction_;
+    std::cerr << "X" << std::endl;
     pair.element.participants.insert(pair.element.participants.begin(), cast->participants_.begin(), cast->participants_.end());
-
+    std::cerr << "Y" << std::endl;
   } else if (rule_name.compare("passing_control_line") == 0) {
-    
+    std::cerr << "Z" << std::endl;
     auto cast = std::static_pointer_cast<lanelet::PassingControlLine>(element);
+    std::cerr << "AA" << std::endl;
     pair.element.left_participants.insert(pair.element.left_participants.begin(), cast->left_participants_.begin(), cast->left_participants_.end());
+    std::cerr << "BB" << std::endl;
     pair.element.right_participants.insert(pair.element.right_participants.begin(), cast->right_participants_.begin(), cast->right_participants_.end());
-
+    std::cerr << "CC" << std::endl;
   } else if (rule_name.compare("region_access_rule") == 0) {
-
+    std::cerr << "DD" << std::endl;
     auto cast = std::static_pointer_cast<lanelet::RegionAccessRule>(element);
+    std::cerr << "EE" << std::endl;
     pair.element.reason = cast->getReason();
+    std::cerr << "FF" << std::endl;
     pair.element.participants.insert(pair.element.participants.begin(), cast->participants_.begin(), cast->participants_.end());
-
+    std::cerr << "GG" << std::endl;
   } else if (rule_name.compare("stop_rule") == 0) {
-  
+    std::cerr << "HH" << std::endl;
     auto cast = std::static_pointer_cast<lanelet::StopRule>(element);
+    std::cerr << "II" << std::endl;
     pair.element.participants.insert(pair.element.participants.begin(), cast->participants_.begin(), cast->participants_.end());
-  
+    std::cerr << "JJ" << std::endl;
   } else {
 
     ROS_WARN_STREAM("MapUpdateLogger recieved unsupported regulatory element in map update.");
     pair.element.unsupported_type = true; 
 
   }
-
+  std::cerr << "KK" << std::endl;
   return pair;
 }
 
 carma_debug_msgs::MapUpdateReadable mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& update) {
   auto control = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
   carma_wm::fromBinMsg(*update, control);
-  ROS_INFO_STREAM("Recieved map update ");
+  std::cerr << "Recieved map update " << std::endl;
 
   carma_debug_msgs::MapUpdateReadable msg;
-
+  std::cerr << "1" << std::endl;
   msg.header = update->header;
+  std::cerr << "2 " << std::endl;
   msg.format_version = update->format_version;
+  std::cerr << "3 " << std::endl;
   msg.map_version = update->map_version;
+  std::cerr << "4 " << std::endl;
   msg.route_id = update->route_id;
+  std::cerr << "5 " << std::endl;
   msg.route_version = update->route_version;
+  std::cerr << "6" << std::endl;
   msg.invalidates_route = update->invalidates_route;
+  std::cerr << "7 " << std::endl;
 
   msg.traffic_control_id = boost::lexical_cast<std::string>(control->id_);
+  std::cerr << "8" << std::endl;
 
   for (auto id_reg_pair : control->update_list_) {
+    std::cerr << "9-loop" << std::endl;
     msg.update_list.push_back(pairToDebugMessage(id_reg_pair));
+    std::cerr << "10-loop" << std::endl;
   }
 
   for (auto id_reg_pair : control->remove_list_) {
+    std::cerr << "11-loop " << std::endl;
     msg.remove_list.push_back(pairToDebugMessage(id_reg_pair));
+    std::cerr << "12-loop " << std::endl;
   }
 
   return msg;
