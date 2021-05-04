@@ -42,13 +42,13 @@ carma_debug_msgs::LaneletIdRegulatoryElementPair pairToDebugMessage(const std::p
   std::cerr << "B" << std::endl;
   auto element = std::get<1>(id_reg_pair);
   std::cerr << "C" << std::endl;
-  pair.element.rule_name = element->RuleName;
+  std::string rule_name = element->attribute(lanelet::AttributeName::Subtype).value();
+  pair.element.rule_name = rule_name;
   std::cerr << "D" << std::endl;
 
   // TODO
   // It might be worth creating an rviz visualization of the map updates as well. Maybe a transparent polygon with text defining the geofence type and id.
   // This will require that we instantiate a world model instance here, but we will need to make that a configurable parameter so that this node can be prevented from crashing.
-  std::string rule_name = std::string(element->RuleName);
   std::cerr << "M" << std::endl;
   
   if (rule_name.compare("digital_minimum_gap") == 0) {
@@ -64,7 +64,7 @@ carma_debug_msgs::LaneletIdRegulatoryElementPair pairToDebugMessage(const std::p
     std::cerr << "R" << std::endl;
     auto cast = std::static_pointer_cast<lanelet::DigitalSpeedLimit>(element);
     std::cerr << "S" << std::endl;
-    pair.element.min_gap = cast->getSpeedLimit().value();
+    pair.element.speed_limit = cast->getSpeedLimit().value();
     std::cerr << "T" << std::endl;
     pair.element.participants.insert(pair.element.participants.begin(), cast->participants_.begin(), cast->participants_.end());
     std::cerr << "U" << std::endl;
