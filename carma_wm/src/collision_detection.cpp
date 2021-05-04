@@ -17,17 +17,17 @@ namespace carma_wm {
 
             // double vehicle_downtrack = CARMAWorldModel::routeTrackPos(point).downtrack;
 
-            for (auto i : rwol.roadway_obstacles){
+            for (auto i : rwol.roadway_obstacles) {
 
                 // ROS_DEBUG_STREAM("downtrack: ");
                 // ROS_DEBUG_STREAM(i.down_track - vehicle_downtrack);
 
-                for (auto j : i.object.predictions){
+                for (auto j : i.object.predictions) {
 
                     std::cout << "next trajectory ....." << std::endl << std::endl << std::endl << std::endl << std::endl << std::endl << std::endl;
 
 
-                    for(size_t k=0; k < 2; k++){
+                    for(size_t k=0; k < tp.trajectory_points.size(); k++) {
 
                         ROS_DEBUG_STREAM("in for loop");
 
@@ -73,6 +73,12 @@ namespace carma_wm {
                         std::cout <<  "calcdistance"<< std::endl;
                         std::cout << calcdistance << std::endl;
 
+                        std::cout <<  "j.header.stamp"<< std::endl;
+                        std::cout <<  j.header.stamp << std::endl;
+
+                        std::cout << "tp.trajectory_points[k].target_time"<< std::endl;
+                        std::cout << tp.trajectory_points[k].target_time << std::endl;
+
                         ros::Duration diff= j.header.stamp - tp.trajectory_points[k].target_time;
 
                         double timediff = diff.toSec();
@@ -80,8 +86,8 @@ namespace carma_wm {
                         std::cout << "time diff" << std::endl;
                         std::cout << timediff << std::endl;
 
-                        double x = (i.object.size.x/2 - size.x/2)*(i.object.size.x/2 - size.x/2);
-                        double y = (i.object.size.y/2 - size.y/2)*(i.object.size.y/2 - size.y/2);
+                        double x = (i.object.size.x - size.x)*(i.object.size.x - size.x);
+                        double y = (i.object.size.y - size.y)*(i.object.size.y - size.y);
 
                         std::cout << "size diff" << std::endl;
                         std::cout << sqrt(x - y) << std::endl;
@@ -91,18 +97,16 @@ namespace carma_wm {
                         std::cout << "j.predicted_velocity.linear.x" << j.predicted_velocity.linear.x << std::endl;
                         std::cout << "j.predicted_velocity.linear.y" << j.predicted_velocity.linear.y << std::endl;
                         
-                        double car_t_x = tp.trajectory_points[k].x - tp.trajectory_points[0].x /veloctiy.linear.x;
-                        double car_t_y = tp.trajectory_points[k].y - tp.trajectory_points[0].y/veloctiy.linear.y;
+                        double car_t_x = tp.trajectory_points[k].x - tp.trajectory_points[0].x / veloctiy.linear.x;
+                        // double car_t_y = tp.trajectory_points[k].y - tp.trajectory_points[0].y/veloctiy.linear.y;
 
-                        double object_t_x = j.predicted_position.position.x - i.object.predictions[0].predicted_position.position.x / j.predicted_velocity.linear.x;
-                        double object_t_y = j.predicted_position.position.y - i.object.predictions[0].predicted_position.position.y / j.predicted_velocity.linear.y;
+                        double object_t_x = j.predicted_position.position.x - i.object.predictions[0].predicted_position.position.x / i.object.velocity.twist.linear.x;
+                        // double object_t_y = j.predicted_position.position.y - i.object.predictions[0].predicted_position.position.y / j.predicted_velocity.linear.y;
 
+                        std::cout << "car_t_x" << car_t_x << std::endl;
+                        std::cout << "object_t_x" << object_t_x << std::endl;
 
-                        std::cout << "car_t_x, car_t_y" << car_t_x << car_t_y << std::endl;
-                        std::cout << "object_t_x, object_t_y" << object_t_x << object_t_y << std::endl;
-
-                        std::cout << "diff in time stuff " << car_t_x - object_t_x << car_t_y - object_t_y << std::endl;
-
+                        std::cout << "diff in time stuff " << car_t_x - object_t_x << std::endl;
 
                         if(timediff <= 5) {
                             if(calcdistance <= sqrt(x - y) ) {
