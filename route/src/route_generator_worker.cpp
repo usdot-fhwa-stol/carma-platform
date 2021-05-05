@@ -240,6 +240,7 @@ namespace route {
             route_msg_.header.stamp = ros::Time::now();
             route_msg_.header.frame_id = "map";
             route_msg_.route_name = req.routeID;
+            route_msg_.map_version = world_model_->getMapVersion();
             // since routing is done correctly, transit to route following state
             this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_STARTED);
             publish_route_event(cav_msgs::RouteEvent::ROUTE_STARTED);
@@ -580,11 +581,12 @@ namespace route {
             }    
             route_msg_=compose_route_msg(route);
             route_msg_.is_rerouted = true;
+            route_msg_.map_version = world_model_->getMapVersion();
             route_marker_msg_=compose_route_marker_msg(route);
             new_route_msg_generated_=true;
             new_route_marker_generated_=true;
         }
-    
+        
         // publish new route and set new route flag back to false
         if(new_route_msg_generated_ && new_route_marker_generated_)
         {

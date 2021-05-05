@@ -37,6 +37,7 @@
 #include <limits>
 #include <carma_wm/Geometry.h>
 #include <math.h>
+#include <boost/date_time/date_defs.hpp>
 
 namespace carma_wm_ctrl
 {
@@ -81,8 +82,10 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
   lanelet::MapConformer::ensureCompliance(current_map_, config_limit);
 
   // Publish map
+  current_map_version_ += 1; // Increment the map version. It should always start from 1 for the first map
   autoware_lanelet2_msgs::MapBin compliant_map_msg;
   lanelet::utils::conversion::toBinMsg(base_map_, &compliant_map_msg);
+  compliant_map_msg.map_version = current_map_version_;
   map_pub_(compliant_map_msg);
 };
 
@@ -107,7 +110,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
 
   // TODO: logic to determine what type of geofence goes here
   // currently only converting portion of control message that is relevant to:
-  // - digital speed limit, passing control line
+  // - digital speed limit, passing control line, digital minimum gap, region access rule
   lanelet::Velocity sL;
   cav_msgs::TrafficControlDetail msg_detail = msg_v01.params.detail;
  
@@ -117,7 +120,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
     //Acquire speed limit information from TafficControlDetail msg
     sL = lanelet::Velocity(msg_detail.maxspeed * lanelet::units::MPH()); 
     
-    if(config_limit > 0_mph && config_limit < 80_mph)//Accounting for the configured speed limit, input zero when not in use
+    if(config_limit > 0_mph && config_limit < 80_mph && config_limit < sL)//Accounting for the configured speed limit, input zero when not in use
         sL = config_limit;
     //Ensure Geofences do not provide invalid speed limit data (exceed predetermined maximum value)
     // @SONAR_STOP@
@@ -180,20 +183,101 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
     addRegionMinimumGap(gf_ptr,msg_v01, min_gap, affected_llts, affected_areas);
   }
 
+  // Handle schedule provessing
   cav_msgs::TrafficControlSchedule msg_schedule = msg_v01.params.schedule;
   
-  // Get schedule
-  for (auto daily_schedule : msg_schedule.between)
-  {
-    gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
-                                 msg_schedule.end,
-                                 daily_schedule.begin,     
-                                 daily_schedule.duration,
-                                 msg_schedule.repeat.offset,
-                                 msg_schedule.repeat.span,   
-                                 msg_schedule.repeat.period));
+  ros::Time end_time = msg_schedule.end;
+  if (!msg_schedule.end_exists) {
+    ROS_DEBUG_STREAM("No end time for geofence, using ros::TIME_MAX");
+    end_time = ros::TIME_MAX; // If there is no end time use the max time
   }
-  
+
+
+  // If the days of the week are specified then convert them to the boost format. 
+  GeofenceSchedule::DayOfTheWeekSet week_day_set = { 0, 1, 2, 3, 4, 5, 6 }; // Default to all days  0==Sun to 6==Sat
+  if (msg_schedule.dow_exists) {
+   // sun (6), mon (5), tue (4), wed (3), thu (2), fri (1), sat (0)
+   week_day_set.clear();
+   for (size_t i = 0; i < msg_schedule.dow.dow.size(); i++) {
+     if (msg_schedule.dow.dow[i] == 1) {
+      switch(i) {
+          case 6: // sun
+            week_day_set.emplace(boost::gregorian::greg_weekday::weekday_enum::Sunday);
+            break;
+          case 5: // mon
+            week_day_set.emplace(boost::gregorian::greg_weekday::weekday_enum::Monday);
+            break;
+          case 4: // tue
+            week_day_set.emplace(boost::gregorian::greg_weekday::weekday_enum::Tuesday);
+            break;
+          case 3: // wed
+            week_day_set.emplace(boost::gregorian::greg_weekday::weekday_enum::Wednesday);
+            break;
+          case 2: // thur
+            week_day_set.emplace(boost::gregorian::greg_weekday::weekday_enum::Thursday);
+            break;
+          case 1: // fri
+            week_day_set.emplace(boost::gregorian::greg_weekday::weekday_enum::Friday);
+            break;
+          case 0: // sat
+            week_day_set.emplace(boost::gregorian::greg_weekday::weekday_enum::Saturday);
+            break;
+          default:
+            throw std::invalid_argument("Unrecognized weekday value: " + std::to_string(i));
+      }
+     }
+   }
+  }
+
+  if (msg_schedule.between_exists) {
+
+    for (auto daily_schedule : msg_schedule.between)
+    {
+      if (msg_schedule.repeat_exists) {
+        gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
+                                    end_time,
+                                    daily_schedule.begin,     
+                                    daily_schedule.duration,
+                                    msg_schedule.repeat.offset,
+                                    msg_schedule.repeat.span,   
+                                    msg_schedule.repeat.period,
+                                    week_day_set));
+      } else {
+        gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
+                                  end_time,
+                                  daily_schedule.begin,     
+                                  daily_schedule.duration,
+                                  ros::Duration(0.0), // No offset
+                                  daily_schedule.duration - daily_schedule.begin,   // Compute schedule portion end time
+                                  daily_schedule.duration - daily_schedule.begin,   // No repetition so same as portion end time
+                                  week_day_set));         
+      }
+
+    }
+  }
+  else {
+    if (msg_schedule.repeat_exists) {
+      gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
+                                  end_time,
+                                  ros::Duration(0.0),     
+                                  ros::Duration(86400.0), // 24 hr daily application
+                                  msg_schedule.repeat.offset,
+                                  msg_schedule.repeat.span,   
+                                  msg_schedule.repeat.period,
+                                  week_day_set)); 
+    } else {
+      gf_ptr->schedules.push_back(GeofenceSchedule(msg_schedule.start,  
+                                  end_time,
+                                  ros::Duration(0.0),     
+                                  ros::Duration(86400.0), // 24 hr daily application
+                                  ros::Duration(0.0),     // No offset
+                                  ros::Duration(86400.0), // Applied for full lenth of 24 hrs
+                                  ros::Duration(86400.0), // No repetition
+                                  week_day_set)); 
+    }
+   
+  }
+    
   return gf_ptr;
 }
 
@@ -346,7 +430,7 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   std::copy(req_id.begin(),req_id.end(), uuid_id.begin());
   std::string reqid = boost::uuids::to_string(uuid_id).substr(0, 8);
   // drop if the req has never been sent
-  if (generated_geofence_reqids_.find(reqid) == generated_geofence_reqids_.end())
+  if (generated_geofence_reqids_.find(reqid) == generated_geofence_reqids_.end() && reqid.compare("00000000") != 0)
   {
     ROS_WARN_STREAM("CARMA_WM_CTRL received a TrafficControlMessage with unknown TrafficControlRequest ID (reqid): " << reqid);
     return;
@@ -397,18 +481,21 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
   // convert all geofence points into our map's frame
   std::vector<lanelet::Point3d> gf_pts;
   for (auto pt : tcmV01.geometry.nodes)
-  { ROS_DEBUG_STREAM("Before conversion: Point X"<<pt.x<<"Before conversion: Point Y"<<pt.y);
+  { 
+    ROS_DEBUG_STREAM("Before conversion: Point X "<< pt.x <<" Before conversion: Point Y "<< pt.y);
+
     PJ_COORD c {{pt.x, pt.y, 0, 0}}; // z is not currently used
     PJ_COORD c_out;
     c_out = proj_trans(geofence_in_map_proj, PJ_FWD, c);
     gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), c_out.xyz.x, c_out.xyz.y});
-    ROS_DEBUG_STREAM("After conversion: Point X"<<c_out.xyz.x<<"After conversion: Point Y"<<c_out.xyz.y);
+
+    ROS_DEBUG_STREAM("After conversion: Point X "<< c_out.xyz.x <<" After conversion: Point Y "<< c_out.xyz.y);
   }
 
   // Logic to detect which part is affected
 
   std::unordered_set<lanelet::Lanelet> affected_lanelets;
-  for (int idx = 0; idx < gf_pts.size(); idx ++)
+  for (size_t idx = 0; idx < gf_pts.size(); idx ++)
   {
     std::unordered_set<lanelet::Lanelet> possible_lanelets;
     // get nearest few nearest llts within max_lane_width_
@@ -524,8 +611,8 @@ bool WMBroadcaster::shouldChangeControlLine(const lanelet::ConstLaneletOrArea& e
   bool should_change_pcl = false;
   for (auto control_line : pcl->controlLine())
   {
-    if (control_line.id() == el.lanelet()->leftBound2d().id() && gf_ptr->pcl_affects_left_ ||
-    control_line.id() == el.lanelet()->rightBound2d().id() && gf_ptr->pcl_affects_right_)
+    if ((control_line.id() == el.lanelet()->leftBound2d().id() && gf_ptr->pcl_affects_left_) ||
+        (control_line.id() == el.lanelet()->rightBound2d().id() && gf_ptr->pcl_affects_right_))
     {
       should_change_pcl = true;
       break;
@@ -621,6 +708,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
   carma_wm::toBinMsg(send_data, &gf_msg);
   gf_msg.invalidates_route=gf_ptr->invalidate_route_; 
+  gf_msg.map_version = current_map_version_;
   map_update_pub_(gf_msg);
 };
 
@@ -639,6 +727,7 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
   
   carma_wm::toBinMsg(send_data, &gf_msg_revert);
+  gf_msg_revert.map_version = current_map_version_;
   map_update_pub_(gf_msg_revert);
 
 
@@ -754,7 +843,7 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
   boost::uuids::uuid uuid_id = boost::uuids::random_generator()(); 
   // take half as string
   std::string reqid = boost::uuids::to_string(uuid_id).substr(0, 8);
-  std::string req_id_test = "12345678";
+  std::string req_id_test = "12345678"; // TODO this is an extremely risky way of performing a unit test. This method needs to be refactored so that unit tests cannot side affect actual implementations
   generated_geofence_reqids_.insert(req_id_test);
   generated_geofence_reqids_.insert(reqid);
 
@@ -938,7 +1027,15 @@ lanelet::BasicPoint2d curr_pos;
 
 }
 
-
+void WMBroadcaster::newMapSubscriber(const ros::SingleSubscriberPublisher& single_sub_pub) const {
+  if (!current_map_) {
+    return;
+  }
+  autoware_lanelet2_msgs::MapBin map_msg;
+  lanelet::utils::conversion::toBinMsg(current_map_, &map_msg);
+  map_msg.map_version = current_map_version_;
+  single_sub_pub.publish(map_msg); // Publish the most updated version of the map to the new subscriber so any future updates are synchronized
+}
 
 
 

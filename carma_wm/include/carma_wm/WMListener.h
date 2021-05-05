@@ -23,6 +23,7 @@
 #include <carma_wm/WorldModel.h>
 #include <carma_utils/CARMAUtils.h>
 #include <autoware_lanelet2_msgs/MapBin.h>
+#include <queue>
 
 namespace carma_wm
 {
@@ -104,13 +105,23 @@ public:
    */
   void setConfigSpeedLimit(double config_lim) const;
 
+  /*!
+   * \brief Use to allow updates to occur even if they invalidate the current route.
+   *        This is only meant to be used by components which generate the route
+   */  
   void enableUpdatesWithoutRouteWL();
 
+  /*!
+   * \brief Returns true if a map update has been processed which requires rerouting.
+   *        This method is meant to be used by routing components. 
+   * 
+   * \return True is rerouting is needed
+   */ 
   bool checkIfReRoutingNeededWL() const;
 
 private:
   // Callback function that uses lock to edit the map
-  void mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& geofence_msg);
+  void mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr& geofence_msg);
   ros::Subscriber roadway_objects_sub_;
   ros::Subscriber map_update_sub_;
   std::unique_ptr<WMListenerWorker> worker_;
@@ -124,7 +135,6 @@ private:
  
   ros::CARMANodeHandle nh2_{"/"};
   lanelet::Velocity config_speed_limit_;
-
 
 };
 }  // namespace carma_wm
