@@ -468,14 +468,16 @@ namespace yield_plugin
       ROS_DEBUG_STREAM("i.object.velocity.twist.linear.x");
       ROS_DEBUG_STREAM(i.object.velocity.twist.linear.x);
 
-      if(current_velocity.linear.x > 0){
-
+      if(current_velocity.linear.x > 0.0) {
+        
+          // std::abs might not be needed cause vehicles in the behind of vehicle to cause problem
+        
           ROS_DEBUG_STREAM("std::abs(vehicle_downtrack - object_down_track)/current_velocity.linear.x");
 
-          ROS_DEBUG_STREAM(std::abs(vehicle_downtrack - object_down_track)/current_velocity.linear.x);
+          ROS_DEBUG_STREAM(object_down_track - vehicle_downtrack/current_velocity.linear.x);
 
-          if(std::abs(vehicle_downtrack - object_down_track)/current_velocity.linear.x < config_.collision_horizon) {
-            rwol_collision.push_back(i);
+          if((object_down_track - vehicle_downtrack)/current_velocity.linear.x < config_.collision_horizon) {
+              rwol_collision.push_back(i);
           }
       }
 
