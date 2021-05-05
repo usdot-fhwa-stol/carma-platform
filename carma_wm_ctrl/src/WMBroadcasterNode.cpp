@@ -80,8 +80,11 @@ int WMBroadcasterNode::run()
   pnh2_.getParam("/config_speed_limit", config_limit);
   wmb_.setConfigSpeedLimit(config_limit);
 
-  if(wmb_.getRoute().route_path_lanelet_ids.size() > 0)
-    timer = cnh_.createTimer(ros::Duration(10.0), [this](auto){wmb_.routeCallbackMessage(wmb_.getRoute());}, &wmb_);
+  
+    timer = cnh_.createTimer(ros::Duration(10.0), [this](auto){
+      if(wmb_.getRoute().route_path_lanelet_ids.size() > 0)
+      wmb_.routeCallbackMessage(wmb_.getRoute());
+      }, &wmb_);
  
   // Spin
   cnh_.spin();
