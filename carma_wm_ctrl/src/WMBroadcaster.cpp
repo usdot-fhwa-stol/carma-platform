@@ -1022,7 +1022,14 @@ lanelet::BasicPoint2d curr_pos;
 
 }
 
-
+void WMBroadcaster::newMapSubscriber(const ros::SingleSubscriberPublisher& single_sub_pub) const {
+  if (!current_map_) {
+    return;
+  }
+  autoware_lanelet2_msgs::MapBin map_msg;
+  lanelet::utils::conversion::toBinMsg(current_map_, &map_msg);
+  single_sub_pub.publish(map_msg);
+}
 
 
 

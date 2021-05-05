@@ -107,9 +107,11 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
 {
   ROS_ERROR_STREAM("Recieved Geofence Message D");
   ROS_INFO_STREAM("New Map Update Received");
+  ROS_ERROR_STREAM("Sequence: " << geofence_msg->header.seq);
 
   if(!world_model_->getMap() || current_map_version_ < geofence_msg->map_version) { // If our current map version is older than the version target by this update
     map_update_queue_.push(geofence_msg);
+    return;
   } else if (current_map_version_ > geofence_msg->map_version) { // If this update is for an older map
     ROS_WARN_STREAM("Dropping old map update as newer map is already available.");
     return;
@@ -303,8 +305,9 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
 
     }
 
-    rerouting_flag_ = false;
   }
+
+  rerouting_flag_ = false;
 
   if (!world_model_->getMap()) { // This check is a bit redundant but still useful from a debugging perspective as the alternative is a segfault
     ROS_ERROR_STREAM("WMListener received a route before a map was available. Dropping route message.");

@@ -199,6 +199,9 @@ public:
    */
   ros::V_string invertParticipants(const ros::V_string& input_participants) const;
 
+  void newMapSubscriber(const ros::SingleSubscriberPublisher& single_sub_pub) const;
+
+
 private:
   lanelet::ConstLanelets route_path_;
   std::unordered_set<lanelet::Id> active_geofence_llt_ids_; 

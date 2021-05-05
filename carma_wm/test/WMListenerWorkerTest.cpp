@@ -138,7 +138,7 @@ TEST(WMListenerWorkerTest, routeCallback)
   ///test route_node_flag_ and rerouting_flag_
   autoware_lanelet2_msgs::MapBin geofence_msg;
   geofence_msg.invalidates_route=true;
-  autoware_lanelet2_msgs::MapBinConstPtr geo_ptr(new autoware_lanelet2_msgs::MapBin(geofence_msg));
+  autoware_lanelet2_msgs::MapBinPtr geo_ptr(new autoware_lanelet2_msgs::MapBin(geofence_msg));
 
   wmlw.mapUpdateCallback(geo_ptr);
   wmlw.enableUpdatesWithoutRoute();
@@ -196,7 +196,7 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
             wmlw.getWorldModel()->getMap()->regulatoryElementLayer.end());
 
   // test the MapUpdateCallback
-  auto gf_msg_ptr =  boost::make_shared<const autoware_lanelet2_msgs::MapBin>(gf_obj_msg);
+  auto gf_msg_ptr =  boost::make_shared<autoware_lanelet2_msgs::MapBin>(gf_obj_msg);
   wmlw.mapUpdateCallback(gf_msg_ptr);
   
   // check if the map has the new speed limit now
@@ -230,7 +230,7 @@ TEST(WMListenerWorkerTest, mapUpdateCallback)
   carma_wm::toBinMsg(reverse_data, &gf_reverse_msg);
 
   // test the MapUpdateCallback reverse
-  auto gf_rev_msg_ptr =  boost::make_shared<const autoware_lanelet2_msgs::MapBin>(gf_reverse_msg);
+  auto gf_rev_msg_ptr =  boost::make_shared<autoware_lanelet2_msgs::MapBin>(gf_reverse_msg);
   EXPECT_THROW(wmlw.mapUpdateCallback(gf_msg_ptr), lanelet::InvalidInputError); // because we are trying update the exact same llt and regem relationship again
   wmlw.mapUpdateCallback(gf_rev_msg_ptr);
 
@@ -278,7 +278,7 @@ TEST(WMListenerWorkerTest, checkIfReRoutingNeeded2)
   WMListenerWorker wmlw;
   autoware_lanelet2_msgs::MapBin geofence_msg;
   geofence_msg.invalidates_route=true;
-  autoware_lanelet2_msgs::MapBinConstPtr geo_ptr(new autoware_lanelet2_msgs::MapBin(geofence_msg));
+  autoware_lanelet2_msgs::MapBinPtr geo_ptr(new autoware_lanelet2_msgs::MapBin(geofence_msg));
   wmlw.mapUpdateCallback(geo_ptr);
   ASSERT_EQ(true, wmlw.checkIfReRoutingNeeded());
 }
