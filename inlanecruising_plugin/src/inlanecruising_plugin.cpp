@@ -707,9 +707,8 @@ bool InLaneCruisingPlugin::validate_yield_plan(const cav_msgs::TrajectoryPlan& y
   {
     ROS_DEBUG_STREAM("Invalid Yield Trajectory"); 
   }
-  return true;
+  return false;
 }
-
 
 
 }  // namespace inlanecruising_plugin
