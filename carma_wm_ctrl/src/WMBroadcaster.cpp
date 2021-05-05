@@ -1028,6 +1028,7 @@ void WMBroadcaster::newMapSubscriber(const ros::SingleSubscriberPublisher& singl
   }
   autoware_lanelet2_msgs::MapBin map_msg;
   lanelet::utils::conversion::toBinMsg(current_map_, &map_msg);
+  map_msg.map_version = current_map_version_;
   single_sub_pub.publish(map_msg);
 }
 
