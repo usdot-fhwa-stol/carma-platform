@@ -120,7 +120,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
     //Acquire speed limit information from TafficControlDetail msg
     sL = lanelet::Velocity(msg_detail.maxspeed * lanelet::units::MPH()); 
     
-    if(config_limit > 0_mph && config_limit < 80_mph)//Accounting for the configured speed limit, input zero when not in use
+    if(config_limit > 0_mph && config_limit < 80_mph && config_limit < sL)//Accounting for the configured speed limit, input zero when not in use
         sL = config_limit;
     //Ensure Geofences do not provide invalid speed limit data (exceed predetermined maximum value)
     // @SONAR_STOP@
