@@ -399,6 +399,9 @@ namespace yield_plugin
     host_vehicle_size.y = config_.vehicle_width;
     host_vehicle_size.z = config_.vehicle_height; 
 
+
+    std::vector<cav_msgs::RoadwayObstacle> rwol_collision;
+
     // std::vector<cav_msgs::RoadwayObstacle> rwol_collision = carma_wm::collision_detection::WorldCollisionDetection(rwol2, original_tp, host_vehicle_size, current_velocity, config_.collision_horizon);
     
     lanelet::BasicPoint2d point(original_tp.trajectory_points[0].x,original_tp.trajectory_points[0].y);
@@ -412,14 +415,23 @@ namespace yield_plugin
       lanelet::BasicPoint2d point_o(i.object.pose.pose.position.x, i.object.pose.pose.position.y);
       double object_down_track = wm_->routeTrackPos(point_o).downtrack;
 
-      ROS_DEBUG_STREAM("rwol.roadway_obstacles[0].down_track");
-      ROS_DEBUG_STREAM(i.down_track);
+      // ROS_DEBUG_STREAM("rwol.roadway_obstacles[0].down_track");
+      // ROS_DEBUG_STREAM(i.down_track);
 
       ROS_DEBUG_STREAM("object_down_track");
       ROS_DEBUG_STREAM(object_down_track);
 
-      if(std::abs(vehicle_downtrack - object_down_track)/current_velocity.linear.x < config_.collision_horizon) {
-        rwol_collision.push_back(i);
+      ROS_DEBUG_STREAM(object_down_track);
+
+      if(current_velocity.linear.x > 0){
+
+          ROS_DEBUG_STREAM("std::abs(vehicle_downtrack - object_down_track)/current_velocity.linear.x");
+
+          ROS_DEBUG_STREAM(std::abs(vehicle_downtrack - object_down_track)/current_velocity.linear.x);
+
+          if(std::abs(vehicle_downtrack - object_down_track)/current_velocity.linear.x < config_.collision_horizon) {
+            rwol_collision.push_back(i);
+          }
       }
 
       ROS_DEBUG_STREAM("vehicle_downtrack - object_down_track");
