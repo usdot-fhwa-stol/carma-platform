@@ -74,12 +74,8 @@ WorldModelConstPtr WMListener::getWorldModel()
 
 void WMListener::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr& geofence_msg)
 {
-  ROS_ERROR_STREAM("Recieved Geofence Message A");
-  ROS_ERROR_STREAM("Recieved Geofence Message B");
   const std::lock_guard<std::mutex> lock(mw_mutex_);
-  ROS_ERROR_STREAM("Recieved Geofence Message C");
   worker_->mapUpdateCallback(geofence_msg);
-  ROS_ERROR_STREAM("Recieved Geofence Message D");
 }
 
 void WMListener::setMapCallback(std::function<void()> callback)

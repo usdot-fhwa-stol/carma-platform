@@ -105,11 +105,10 @@ void WMListenerWorker::enableUpdatesWithoutRoute()
 
 void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr& geofence_msg)
 {
-  ROS_ERROR_STREAM("Recieved Geofence Message D");
-  ROS_INFO_STREAM("New Map Update Received");
-  ROS_ERROR_STREAM("Sequence: " << geofence_msg->header.seq);
+  ROS_INFO_STREAM("New Map Update Received. SeqNum: " << geofence_msg->header.seq);
 
   if(!world_model_->getMap() || current_map_version_ < geofence_msg->map_version) { // If our current map version is older than the version target by this update
+    ROS_DEBUG_STREAM("Update recieved for newer map version than available. Queueing update until map is available.");
     map_update_queue_.push(geofence_msg);
     return;
   } else if (current_map_version_ > geofence_msg->map_version) { // If this update is for an older map
@@ -129,57 +128,53 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
      return;
     }
   }
-  ROS_ERROR_STREAM("Recieved Geofence Message E");
   // convert ros msg to geofence object
   auto gf_ptr = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
-  ROS_ERROR_STREAM("LOG 1 _ 1");
   carma_wm::fromBinMsg(*geofence_msg, gf_ptr);
-  ROS_ERROR_STREAM("LOG 1 _ 2");
+
   ROS_INFO_STREAM("Processing Map Update with Geofence Id:" << gf_ptr->id_);
 
-  ROS_INFO_STREAM("Geofence id" << gf_ptr->id_ << " requests removal of size: " << gf_ptr->remove_list_.size());
+  ROS_DEBUG_STREAM("Geofence id" << gf_ptr->id_ << " requests removal of size: " << gf_ptr->remove_list_.size());
   for (auto pair : gf_ptr->remove_list_)
   {
-    ROS_ERROR_STREAM("LOG 1 _ 3-Loop");
     auto parent_llt = world_model_->getMutableMap()->laneletLayer.get(pair.first);
-    ROS_ERROR_STREAM("LOG 1 _ 4");
     // we can only check by id, if the element is there
     // this is only for speed optimization, as world model here should blindly accept the map update received
     auto regems_copy_to_check = parent_llt.regulatoryElements(); // save local copy as the regem can be deleted during iteration
     ROS_DEBUG_STREAM("Regems found in lanelet: " << regems_copy_to_check.size());
     for (auto regem: regems_copy_to_check)
     {
-      ROS_ERROR_STREAM("LOG 1 _ 5-Loop");
       // we can't use the deserialized element as its data address conflicts the one in this node
       if (pair.second->id() == regem->id()) world_model_->getMutableMap()->remove(parent_llt, regem);
     }
     ROS_DEBUG_STREAM("Regems left in lanelet after removal: " << parent_llt.regulatoryElements().size());
 
   }
-  ROS_ERROR_STREAM("Received Geofence Message F");
+
   ROS_INFO_STREAM("Geofence id" << gf_ptr->id_ << " requests update of size: " << gf_ptr->update_list_.size());
+  
   // we should extract general regem to specific type of regem the geofence specifies
   
   for (auto pair : gf_ptr->update_list_)
   {
-    ROS_ERROR_STREAM("LOG 1 _ 6-Loop");
+
     auto parent_llt = world_model_->getMutableMap()->laneletLayer.get(pair.first);
-    ROS_ERROR_STREAM("LOG 1 _ 7-Loop");
+
     auto regemptr_it = world_model_->getMutableMap()->regulatoryElementLayer.find(pair.second->id());
-    ROS_ERROR_STREAM("LOG 1 _ 8-Loop");
+
     // if this regem is already in the map
     if (regemptr_it != world_model_->getMutableMap()->regulatoryElementLayer.end())
     {
-      ROS_ERROR_STREAM("LOG 1 _ 9-Loop");
+
       // again we should use the element with correct data address to be consistent
       world_model_->getMutableMap()->update(parent_llt, *regemptr_it);
-      ROS_ERROR_STREAM("LOG 1 _ 10-Loop");
+
     }
     else
     {
-      ROS_ERROR_STREAM("LOG 1 _ 11-Loop");
+
       newRegemUpdateHelper(parent_llt, pair.second.get());
-      ROS_ERROR_STREAM("LOG 1 _ 12-Loop");
+
     }
   }
   
@@ -199,66 +194,65 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
   */
 void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const
 {
-  ROS_ERROR_STREAM("LOG 2 _ 1");
+
   auto factory_pcl = lanelet::RegulatoryElementFactory::create(regem->attribute(lanelet::AttributeName::Subtype).value(),
                                                             std::const_pointer_cast<lanelet::RegulatoryElementData>(regem->constData()));
-  ROS_ERROR_STREAM("LOG 2 _ 2");
+
   // we should extract general regem to specific type of regem the geofence specifies
   switch(resolveGeofenceType(regem->attribute(lanelet::AttributeName::Subtype).value()))
   {
     case GeofenceType::PASSING_CONTROL_LINE:
     {
-      ROS_ERROR_STREAM("LOG 2 _ 3");
+
       lanelet::PassingControlLinePtr control_line = std::dynamic_pointer_cast<lanelet::PassingControlLine>(factory_pcl);
       world_model_->getMutableMap()->update(parent_llt, control_line);
-      ROS_ERROR_STREAM("LOG 2 _ 4");
+
       break;
     }
     case GeofenceType::DIGITAL_SPEED_LIMIT:
     {
-      ROS_ERROR_STREAM("LOG 2 _ 5");
+
       lanelet::DigitalSpeedLimitPtr speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(factory_pcl);
       world_model_->getMutableMap()->update(parent_llt, speed);
-      ROS_ERROR_STREAM("LOG 2 _ 6");
+
       break;
     }
     case GeofenceType::REGION_ACCESS_RULE:
     {
-      ROS_ERROR_STREAM("LOG 2 _ 7");
+
       lanelet::RegionAccessRulePtr rar = std::dynamic_pointer_cast<lanelet::RegionAccessRule>(factory_pcl);
       world_model_->getMutableMap()->update(parent_llt, rar);
-      ROS_ERROR_STREAM("LOG 2 _ 8");
+
       break;
     }
     case GeofenceType::DIGITAL_MINIMUM_GAP:
     {
-      ROS_ERROR_STREAM("LOG 2 _ 9");
+
       lanelet::DigitalMinimumGapPtr min_gap = std::dynamic_pointer_cast<lanelet::DigitalMinimumGap>(factory_pcl);
       world_model_->getMutableMap()->update(parent_llt, min_gap);
-      ROS_ERROR_STREAM("LOG 2 _ 10");
+
       break;
     }
     case GeofenceType::DIRECTION_OF_TRAVEL:
     {
-      ROS_ERROR_STREAM("LOG 2 _ 11");
+
       lanelet::DirectionOfTravelPtr dot = std::dynamic_pointer_cast<lanelet::DirectionOfTravel>(factory_pcl);
       world_model_->getMutableMap()->update(parent_llt, dot);
-      ROS_ERROR_STREAM("LOG 2 _ 12");
+
       break;
     }
     case GeofenceType::STOP_RULE:
     {
-      ROS_ERROR_STREAM("LOG 2 _ 13");
+
       lanelet::StopRulePtr sr = std::dynamic_pointer_cast<lanelet::StopRule>(factory_pcl);
       world_model_->getMutableMap()->update(parent_llt, sr);
-      ROS_ERROR_STREAM("LOG 2 _ 14");
+
       break;
     }
     default:
       ROS_WARN_STREAM("World Model instance received an unsupported geofence type in its map update callback!");
       break;
   }
-  ROS_ERROR_STREAM("LOG 2 _ 15");
 }
 
 void WMListenerWorker::roadwayObjectListCallback(const cav_msgs::RoadwayObstacleList& msg)
@@ -297,6 +291,7 @@ void WMListenerWorker::routeCallback(const cav_msgs::RouteConstPtr& route_msg)
         continue;
       }
       if (update->map_version == current_map_version_) { // Current update goes with current map which is also the map used by this route
+        ROS_DEBUG_STREAM("Applying queued update after route was recieved. ");
         mapUpdateCallback(update); // Apply the update
       } else {
         ROS_INFO_STREAM("Apply from reroute: Done applying updates for new map. However, more updates are waiting for a future map.");

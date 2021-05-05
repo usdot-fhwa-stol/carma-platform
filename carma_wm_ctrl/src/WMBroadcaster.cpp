@@ -82,7 +82,7 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
   lanelet::MapConformer::ensureCompliance(current_map_, config_limit);
 
   // Publish map
-  current_map_version_ += 1;
+  current_map_version_ += 1; // Increment the map version. It should always start from 1 for the first map
   autoware_lanelet2_msgs::MapBin compliant_map_msg;
   lanelet::utils::conversion::toBinMsg(base_map_, &compliant_map_msg);
   compliant_map_msg.map_version = current_map_version_;
@@ -183,15 +183,17 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
     addRegionMinimumGap(gf_ptr,msg_v01, min_gap, affected_llts, affected_areas);
   }
 
+  // Handle schedule provessing
   cav_msgs::TrafficControlSchedule msg_schedule = msg_v01.params.schedule;
   
   ros::Time end_time = msg_schedule.end;
   if (!msg_schedule.end_exists) {
     ROS_DEBUG_STREAM("No end time for geofence, using ros::TIME_MAX");
-    end_time = ros::TIME_MAX;
+    end_time = ros::TIME_MAX; // If there is no end time use the max time
   }
 
 
+  // If the days of the week are specified then convert them to the boost format. 
   GeofenceSchedule::DayOfTheWeekSet week_day_set = { 0, 1, 2, 3, 4, 5, 6 }; // Default to all days  0==Sun to 6==Sat
   if (msg_schedule.dow_exists) {
    // sun (6), mon (5), tue (4), wed (3), thu (2), fri (1), sat (0)
@@ -229,7 +231,6 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
 
   if (msg_schedule.between_exists) {
 
-    // Get schedule
     for (auto daily_schedule : msg_schedule.between)
     {
       if (msg_schedule.repeat_exists) {
@@ -247,8 +248,8 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
                                   daily_schedule.begin,     
                                   daily_schedule.duration,
                                   ros::Duration(0.0), // No offset
-                                  daily_schedule.duration - daily_schedule.begin,   // Applied for full lenth of 24 hrs
-                                  daily_schedule.duration - daily_schedule.begin,   // No repetition
+                                  daily_schedule.duration - daily_schedule.begin,   // Compute schedule portion end time
+                                  daily_schedule.duration - daily_schedule.begin,   // No repetition so same as portion end time
                                   week_day_set));         
       }
 
@@ -269,9 +270,9 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
                                   end_time,
                                   ros::Duration(0.0),     
                                   ros::Duration(86400.0), // 24 hr daily application
-                                  ros::Duration(0.0), // No offset
-                                  ros::Duration(86400.0),   // Applied for full lenth of 24 hrs
-                                  ros::Duration(86400.0),   // No repetition
+                                  ros::Duration(0.0),     // No offset
+                                  ros::Duration(86400.0), // Applied for full lenth of 24 hrs
+                                  ros::Duration(86400.0), // No repetition
                                   week_day_set)); 
     }
    
@@ -480,12 +481,15 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
   // convert all geofence points into our map's frame
   std::vector<lanelet::Point3d> gf_pts;
   for (auto pt : tcmV01.geometry.nodes)
-  { ROS_DEBUG_STREAM("Before conversion: Point X"<<pt.x<<"Before conversion: Point Y"<<pt.y);
+  { 
+    ROS_DEBUG_STREAM("Before conversion: Point X "<< pt.x <<" Before conversion: Point Y "<< pt.y);
+
     PJ_COORD c {{pt.x, pt.y, 0, 0}}; // z is not currently used
     PJ_COORD c_out;
     c_out = proj_trans(geofence_in_map_proj, PJ_FWD, c);
     gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), c_out.xyz.x, c_out.xyz.y});
-    ROS_DEBUG_STREAM("After conversion: Point X"<<c_out.xyz.x<<"After conversion: Point Y"<<c_out.xyz.y);
+
+    ROS_DEBUG_STREAM("After conversion: Point X "<< c_out.xyz.x <<" After conversion: Point Y "<< c_out.xyz.y);
   }
 
   // Logic to detect which part is affected
@@ -723,6 +727,7 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
   
   carma_wm::toBinMsg(send_data, &gf_msg_revert);
+  gf_msg_revert.map_version = current_map_version_;
   map_update_pub_(gf_msg_revert);
 
 
@@ -1029,7 +1034,7 @@ void WMBroadcaster::newMapSubscriber(const ros::SingleSubscriberPublisher& singl
   autoware_lanelet2_msgs::MapBin map_msg;
   lanelet::utils::conversion::toBinMsg(current_map_, &map_msg);
   map_msg.map_version = current_map_version_;
-  single_sub_pub.publish(map_msg);
+  single_sub_pub.publish(map_msg); // Publish the most updated version of the map to the new subscriber so any future updates are synchronized
 }
 
 

@@ -105,8 +105,18 @@ public:
    */
   void setConfigSpeedLimit(double config_lim) const;
 
+  /*!
+   * \brief Use to allow updates to occur even if they invalidate the current route.
+   *        This is only meant to be used by components which generate the route
+   */  
   void enableUpdatesWithoutRouteWL();
 
+  /*!
+   * \brief Returns true if a map update has been processed which requires rerouting.
+   *        This method is meant to be used by routing components. 
+   * 
+   * \return True is rerouting is needed
+   */ 
   bool checkIfReRoutingNeededWL() const;
 
 private:

@@ -35,6 +35,22 @@
 #include <lanelet2_extension/regulatory_elements/StopRule.h>
 #include <iostream>
 
+/**
+ * This node provides some debugging functionality for carma_wm in order to allow for inspection of map updates.
+ * The node can be run with 
+ *    rosrun carma_wm map_update_logger_node
+ * 
+ * The map updates can be inspected with 
+ *    rostopic echo /map_update_debug
+ */ 
+
+/**
+ * \brief Converts a TrafficControl pair into the corresponding debug message type
+ * 
+ * \param id_reg_pair The pair to convert
+ * 
+ * \return A corresponding carma_debug_msgs::LaneletIdRegulatoryElementPair
+ */ 
 carma_debug_msgs::LaneletIdRegulatoryElementPair pairToDebugMessage(const std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>& id_reg_pair) {
   carma_debug_msgs::LaneletIdRegulatoryElementPair pair;
   pair.lanelet_id = std::get<0>(id_reg_pair);
@@ -42,10 +58,6 @@ carma_debug_msgs::LaneletIdRegulatoryElementPair pairToDebugMessage(const std::p
   std::string rule_name = element->attribute(lanelet::AttributeName::Subtype).value();
   pair.element.rule_name = rule_name;
 
-  // TODO
-  // It might be worth creating an rviz visualization of the map updates as well. Maybe a transparent polygon with text defining the geofence type and id.
-  // This will require that we instantiate a world model instance here, but we will need to make that a configurable parameter so that this node can be prevented from crashing.
-  
   if (rule_name.compare("digital_minimum_gap") == 0) {
     
     auto cast = std::static_pointer_cast<lanelet::DigitalMinimumGap>(element);
@@ -90,10 +102,19 @@ carma_debug_msgs::LaneletIdRegulatoryElementPair pairToDebugMessage(const std::p
   return pair;
 }
 
+/**
+ * \brief Callback for map updates that converts them to a human readable format
+ * 
+ * \param update Msg to convert
+ * 
+ * \return Returned converted message
+ */ 
 carma_debug_msgs::MapUpdateReadable mapUpdateCallback(const autoware_lanelet2_msgs::MapBinConstPtr& update) {
+  
+  ROS_INFO_STREAM("Recieved map update ");
+
   auto control = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl());
   carma_wm::fromBinMsg(*update, control);
-  ROS_INFO_STREAM("Recieved map update ");
 
   carma_debug_msgs::MapUpdateReadable msg;
   msg.header = update->header;

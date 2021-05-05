@@ -111,7 +111,7 @@ private:
   void newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet::RegulatoryElement* regem) const;
   double config_speed_limit_;
 
-  size_t current_map_version_ = 0;
+  size_t current_map_version_ = 0; // Current map version based on recived map messages
   std::queue<autoware_lanelet2_msgs::MapBinPtr> map_update_queue_; // Update queue used to cache map updates when they cannot be immeadiatly applied due to waiting for rerouting
   boost::optional<cav_msgs::RouteConstPtr> delayed_route_msg_;
 

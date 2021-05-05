@@ -57,7 +57,7 @@ public:
   /*! \brief Set the current map
    *
    *  \param map A shared pointer to the map which will share ownership to this object
-   *  \param map_version Optional field to set the map version
+   *  \param map_version Optional field to set the map version. While this is technically optional its uses is highly advised to manage synchronization.
    */
   void setMap(lanelet::LaneletMapPtr map, size_t map_version = 0);
 
@@ -189,7 +189,7 @@ private:
                                                                     // only
   std::vector<cav_msgs::RoadwayObstacle> roadway_objects_; // 
 
-  size_t map_version_ = 0;
+  size_t map_version_ = 0; // The current map version. This is cached from calls to setMap();
 
   
 };
