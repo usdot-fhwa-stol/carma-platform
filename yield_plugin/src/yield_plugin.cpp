@@ -459,13 +459,14 @@ namespace yield_plugin
       lanelet::BasicPoint2d point_o(i.object.pose.pose.position.x, i.object.pose.pose.position.y);
       double object_down_track = wm_->routeTrackPos(point_o).downtrack;
 
-      // ROS_DEBUG_STREAM("rwol.roadway_obstacles[0].down_track");
-      // ROS_DEBUG_STREAM(i.down_track);
-
       ROS_DEBUG_STREAM("object_down_track");
       ROS_DEBUG_STREAM(object_down_track);
-
-      ROS_DEBUG_STREAM(object_down_track);
+      
+      ROS_DEBUG_STREAM("vehicle_downtrack - object_down_track");
+      ROS_DEBUG_STREAM(vehicle_downtrack - object_down_track);
+      
+      ROS_DEBUG_STREAM("i.object.velocity.twist.linear.x");
+      ROS_DEBUG_STREAM(i.object.velocity.twist.linear.x);
 
       if(current_velocity.linear.x > 0){
 
@@ -478,14 +479,9 @@ namespace yield_plugin
           }
       }
 
-      ROS_DEBUG_STREAM("vehicle_downtrack - object_down_track");
-      ROS_DEBUG_STREAM(vehicle_downtrack - object_down_track);
-      ROS_DEBUG_STREAM("i.object.velocity.twist.linear.x");
-      ROS_DEBUG_STREAM(i.object.velocity.twist.linear.x);
     }
 
-        ROS_DEBUG_STREAM("Roadway Object List (rwol) size: " << rwol.size());
-
+    ROS_DEBUG_STREAM("Roadway Object List (rwol) size: " << rwol.size());
 
     // correct the input types
     if(!rwol_collision.empty())
