@@ -59,5 +59,9 @@ safety_collision_time_gap: 2.0
 # Flag to enable yield plugin to check for adjustable gap (for example digital gap from map)
 # Value type: Desired
 enable_adjustable_gap: true
-
+# Minimum urgency value to consider the mobility request
+# Value type: Desired
 acceptable_urgency: 5
+# Window size for speed moving average filter
+# Value type: Desired (must be odd)
+speed_moving_average_window_size: 3.0

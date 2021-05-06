@@ -207,6 +207,13 @@ public:
    */ 
   void newMapSubscriber(const ros::SingleSubscriberPublisher& single_sub_pub) const;
 
+  /*!
+   * \brief Returns the most recently recieved route message.
+   * 
+   * \return The most recent route message.
+   */ 
+  cav_msgs::Route getRoute();
+
 
 private:
   lanelet::ConstLanelets route_path_;
@@ -238,6 +245,11 @@ private:
    */
   size_t current_map_version_ = 0; 
   };
+  cav_msgs::Route current_route; // Most recently recieved route message
+
+
+
+};
 }  // namespace carma_wm_ctrl
 
 

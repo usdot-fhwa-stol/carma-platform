@@ -48,6 +48,7 @@ namespace route_following_plugin
         pnh2_->param<double>("config_speed_limit",config_limit);
         pnh_->param<double>("buffer_time_lanechange",buffer_lanechange_time_);
         pnh2_->param<double>("guidance/route_end_jerk", jerk_, 1.0);
+        pnh2_->param<std::string>("guidance/lane_change_plugin", lane_change_plugin_);
         wml_.reset(new carma_wm::WMListener());
         // set world model point form wm listener
         wm_ = wml_->getWorldModel();
@@ -268,7 +269,7 @@ namespace route_following_plugin
         maneuver_msg.type = cav_msgs::Maneuver::LANE_CHANGE;
         maneuver_msg.lane_change_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
         maneuver_msg.lane_change_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
-        maneuver_msg.lane_change_maneuver.parameters.planning_tactical_plugin = "CooperativeLaneChangePlugin";
+        maneuver_msg.lane_change_maneuver.parameters.planning_tactical_plugin = lane_change_plugin_;
         maneuver_msg.lane_change_maneuver.parameters.planning_strategic_plugin = "RouteFollowingPlugin";
         maneuver_msg.lane_change_maneuver.start_dist = current_dist;
         maneuver_msg.lane_change_maneuver.start_speed = current_speed;
