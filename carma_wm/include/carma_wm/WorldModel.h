@@ -330,6 +330,14 @@ public:
    */
   virtual std::vector<lanelet::Lanelet> getLaneletsFromPoint(const lanelet::BasicPoint2d& point,
                                                              const unsigned int n) const = 0;
+
+  /**
+   * \brief Returns a monotonically increasing version number which represents the version stamp of the map geometry data
+   *        It is possible for the non-geometric aspects of the map to change without this value increasing.
+   * 
+   * \return map version
+   */ 
+  virtual size_t getMapVersion() const = 0;
 };
 
 // Helpful using declarations for carma_wm classes

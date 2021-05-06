@@ -458,14 +458,20 @@ TrackPos CARMAWorldModel::getRouteEndTrackPos() const
   return p;
 }
 
-void CARMAWorldModel::setMap(lanelet::LaneletMapPtr map)
+void CARMAWorldModel::setMap(lanelet::LaneletMapPtr map, size_t map_version)
 {
   semantic_map_ = map;
+  map_version_ = map_version;
   // Build routing graph from map
   TrafficRulesConstPtr traffic_rules = *(getTrafficRules(lanelet::Participants::Vehicle));
 
   lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*semantic_map_, *traffic_rules);
   map_routing_graph_ = std::move(map_graph);
+}
+
+size_t CARMAWorldModel::getMapVersion() const 
+{
+  return map_version_;
 }
 
 lanelet::LaneletMapPtr CARMAWorldModel::getMutableMap() const
