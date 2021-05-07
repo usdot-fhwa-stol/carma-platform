@@ -67,6 +67,13 @@ namespace port_drayage_plugin
         });
 
         _pose_subscriber = std::make_shared<ros::Subscriber>(pose_sub);
+
+        ros::Subscriber inbound_mobility_operation_sub = _nh->subscribe<cav_msgs::MobilityOperation>("incoming_mobility_operation", 5,
+            [&](const cav_msgs::MobilityOperationConstPtr& mobility_msg){
+            pdw.on_inbound_mobility_operation(mobility_msg);
+        });
+
+        _inbound_mobility_operation_subscriber = std::make_shared<ros::Subscriber>(inbound_mobility_operation_sub);
         
         ros::Timer discovery_pub_timer_ = _nh->createTimer(
             ros::Duration(ros::Rate(10.0)),

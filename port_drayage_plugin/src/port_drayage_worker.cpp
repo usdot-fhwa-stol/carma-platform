@@ -91,5 +91,76 @@ namespace port_drayage_plugin
         return msg;
     }
 
+    void PortDrayageWorker::on_inbound_mobility_operation(const cav_msgs::MobilityOperationConstPtr& mobility_operation_msg)
+    {
+        // Check if the received message is a new message for port drayage
+        if((mobility_operation_msg->strategy == PORT_DRAYAGE_STRATEGY_ID) && (mobility_operation_msg->strategy_params != _previous_strategy_params))
+        {
+            // Use Boost Property Tree to parse JSON-encoded strategy_params field in MobilityOperations message
+            using boost::property_tree::ptree;
+            ptree pt;
+            std::istringstream strategy_params_ss(mobility_operation_msg->strategy_params);
+            boost::property_tree::json_parser::read_json(strategy_params_ss, pt);
+            std::string received_cmv_id = pt.get<std::string>("cmv_id");
+
+            // Check if the received MobilityOperation message is intended for this specific vehicle   
+            if(received_cmv_id == _cmv_id)
+            {
+                ROS_DEBUG_STREAM("Processing new port drayage MobilityOperation message for cmv_id " << received_cmv_id);
+                _pdsm.process_event(PortDrayageEvent::RECEIVED_NEW_DESTINATION);
+                mobility_operation_message_parser(mobility_operation_msg->strategy_params);  
+                _previous_strategy_params = mobility_operation_msg->strategy_params;
+            }
+            else
+            {
+                ROS_DEBUG_STREAM("Ignoring received port drayage MobilityOperation message intended for cmv_id " << received_cmv_id);
+            }
+
+        }
+    }
+
+    void PortDrayageWorker::mobility_operation_message_parser(std::string mobility_operation_strategy_params)
+    {
+        // Use Boost Property Tree to parse JSON-encoded strategy_params field in MobilityOperations message
+        using boost::property_tree::ptree;
+        ptree pt;
+        std::istringstream mobility_operation_strategy_params_ss(mobility_operation_strategy_params);
+        boost::property_tree::json_parser::read_json(mobility_operation_strategy_params_ss, pt);
+
+        _received_cargo_id = pt.get<std::string>("cargo_id");
+        _received_operation = pt.get<std::string>("operation");
+        _received_cargo_flag = pt.get<bool>("cargo");
+        _received_start_long = pt.get<double>("location.longitude");
+        _received_start_lat = pt.get<double>("location.latitude");
+        _received_dest_long = pt.get<double>("destination.longitude");
+        _received_dest_lat = pt.get<double>("destination.latitude");
+        _received_curr_action_id = pt.get<std::string>("action_id");
+        _received_next_action_id = pt.get<std::string>("next_action");
+
+        ROS_DEBUG_STREAM("cargo id: " << _received_cargo_id);
+        ROS_DEBUG_STREAM("operation: " << _received_operation);
+        ROS_DEBUG_STREAM("cargo flag: " << _received_cargo_flag);
+        ROS_DEBUG_STREAM("start long: " << _received_start_long);
+        ROS_DEBUG_STREAM("start lat: " << _received_start_lat);
+        ROS_DEBUG_STREAM("dest long: " << _received_dest_long);
+        ROS_DEBUG_STREAM("dest lat: " << _received_dest_lat);
+        ROS_DEBUG_STREAM("current action id: " << _received_curr_action_id);
+        ROS_DEBUG_STREAM("next action id: " << _received_next_action_id);
+    }
+
+    double PortDrayageWorker::get_received_destination_long()
+    {
+        return _received_dest_long;
+    }
+
+    double PortDrayageWorker::get_received_destination_lat()
+    {
+        return _received_dest_lat;
+    }
+
+    std::string PortDrayageWorker::get_received_cargo_id()
+    {
+        return _received_cargo_id;
+    }
 
 } // namespace port_drayage_plugin
