@@ -50,6 +50,7 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
     ptree pt;
     std::stringstream body_stream;
     boost::property_tree::json_parser::read_json(strstream, pt);
+
     std::string cmv_id = pt.get<std::string>("cmv_id");
     std::string cargo_id = pt.get<std::string>("cargo_id");
     std::string operation = pt.get<std::string>("operation");
@@ -325,6 +326,42 @@ TEST(PortDrayageTest, testPlanManeuverCb)
 
 
 }
+
+TEST(PortDrayageTest, testInboundMobilityOperation)
+{
+    // Create PortDrayageWorker object with _cmv_id of "123"
+    port_drayage_plugin::PortDrayageWorker pdw{
+        "123", 
+        "TEST_CARGO_ID", 
+        "TEST_CARMA_HOST_ID", 
+        std::function<void(cav_msgs::MobilityOperation)>(), 
+        1.0};
+
+    // Create a MobilityOperationConstPtr with a cmv_id that is intended for this specific vehicle
+    // Note: The strategy_params using the schema for messages of this type that have strategy "carma/port_drayage"
+    cav_msgs::MobilityOperation mobility_operation_msg;
+    mobility_operation_msg.strategy = "carma/port_drayage";
+    mobility_operation_msg.strategy_params = "{ \"cmv_id\": 123, \"cargo_id\": 321, \"operation\": \"MOVING_TO_LOADING_AREA\", \"cargo\": \"false\", \"location\": { \"longitude\": 1.2, \"latitude\": 2.2 }, \"destination\": { \"longitude\": 3.2, \"latitude\": 4.2 }, \"action_id\": 32, \"next_action\": 33 }";
+    cav_msgs::MobilityOperationConstPtr mobility_operation_msg_ptr(new cav_msgs::MobilityOperation(mobility_operation_msg));
+    pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr);
+
+    ASSERT_EQ(3.2, pdw.get_received_destination_long());
+    ASSERT_EQ(4.2, pdw.get_received_destination_lat());
+    ASSERT_EQ("321", pdw.get_received_cargo_id());
+
+    // Create a MobilityOperationConstPtr with a cmv_id that is not intended for this specific vehicle
+    // Note: The strategy_params using the schema for messages of this type that have strategy "carma/port_drayage"
+    cav_msgs::MobilityOperation mobility_operation_msg2;
+    mobility_operation_msg2.strategy = "carma/port_drayage";
+    mobility_operation_msg2.strategy_params = "{ \"cmv_id\": 444, \"cargo_id\": 567, \"operation\": \"MOVING_TO_LOADING_AREA\", \"cargo\": \"false\", \"location\": { \"longitude\": 8.2, \"latitude\": 9.2 }, \"destination\": { \"longitude\": 10.2, \"latitude\": 11.2 }, \"action_id\": 44, \"next_action\": 45 }";
+    cav_msgs::MobilityOperationConstPtr mobility_operation_msg_ptr2(new cav_msgs::MobilityOperation(mobility_operation_msg2));
+    pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr2);
+
+    ASSERT_EQ(3.2, pdw.get_received_destination_long());
+    ASSERT_EQ(4.2, pdw.get_received_destination_lat());
+    ASSERT_EQ("321", pdw.get_received_cargo_id());
+}
+
 // Run all the tests
 int main(int argc, char **argv)
 {
