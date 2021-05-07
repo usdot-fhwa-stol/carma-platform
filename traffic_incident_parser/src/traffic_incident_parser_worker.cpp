@@ -41,8 +41,8 @@ namespace traffic
             traffic_control_msg.choice=cav_msgs::TrafficControlMessage::TCMV01;
             for(auto &traffic_msg:composeTrafficControlMesssages())
             {
-            traffic_control_msg.tcmV01=traffic_msg;
-            traffic_control_pub_(traffic_control_msg);
+              traffic_control_msg.tcmV01=traffic_msg;
+              traffic_control_pub_(traffic_control_msg);
             }
            }
            else
@@ -122,6 +122,11 @@ namespace traffic
   std::vector<cav_msgs::TrafficControlMessageV01> TrafficIncidentParserWorker::composeTrafficControlMesssages()
   {
     ROS_DEBUG_STREAM("In composeTrafficControlMesssages");
+    if(!wm_->getMap())
+    {
+      ROS_WARN_STREAM("Traffic Incident Parser received traffic control message, but it has not loaded the map yet. Returning empty list");
+      return {};
+    }
     local_point_=getIncidentOriginPoint();
     ROS_DEBUG_STREAM("Responder point in map frame: " << local_point_.x() << ", " << local_point_.y());
     auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, local_point_, 1); 
