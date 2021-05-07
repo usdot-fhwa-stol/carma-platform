@@ -551,13 +551,14 @@ namespace cooperative_lanechange
                     pair.speed = lane_change_maneuver.end_speed;
                 }
                 else{
-                    pair.speed = current_speed_;
+                    pair.speed = state.longitudinal_vel;
                 }
                 points_and_target_speeds.push_back(pair);
 
             }
         }
-        ROS_DEBUG_STREAM("Points and target speeds size:"<<points_and_target_speeds.size());
+        ROS_DEBUG_STREAM("Const speed assigned:"<<points_and_target_speeds.back().speed);
+    
         return points_and_target_speeds;
 
     }
