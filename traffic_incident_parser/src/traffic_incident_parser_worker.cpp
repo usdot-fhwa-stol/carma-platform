@@ -124,7 +124,7 @@ namespace traffic
     ROS_DEBUG_STREAM("In composeTrafficControlMesssages");
     if(!wm_->getMap())
     {
-      ROS_DEBUG_STREAM("Traffic Incident Parser received traffic control message, but it has not loaded the map yet. Returning empty list");
+      ROS_WARN_STREAM("Traffic Incident Parser received traffic control message, but it has not loaded the map yet. Returning empty list");
       return {};
     }
     local_point_=getIncidentOriginPoint();
