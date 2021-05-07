@@ -560,32 +560,52 @@ namespace cooperative_lanechange
     std::vector<cav_msgs::TrajectoryPlanPoint> CooperativeLaneChangePlugin::compose_trajectory_from_centerline(
     const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time, int starting_lanelet_id, double max_speed)
     {
+        ROS_DEBUG_STREAM("Input points size in: compose_trajectory_from_centerline" << points.size());
         int nearest_pt_index = getNearestPointIndex(points, state);
+        ROS_DEBUG_STREAM("nearest_pt_index: " << nearest_pt_index);
+
 
         std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end()); // Points in front of current vehicle position
+        ROS_DEBUG_STREAM("future_points points size in: " << future_points.size());
+        
         auto time_bound_points = constrain_to_time_boundary(future_points, trajectory_time_length_ );
+        ROS_DEBUG_STREAM("time_bound_points points size in: " << time_bound_points.size());
 
         //Get Speed profile based on one of the centerline points
         
         //get centerline of starting lanelet
         auto starting_lanelet = wm_->getMap()->laneletLayer.get(starting_lanelet_id);
         lanelet::BasicLineString2d starting_lanelet_centerline= starting_lanelet.centerline2d().basicLineString();
+        ROS_DEBUG_STREAM("starting_lanelet_centerline points size in: " << starting_lanelet_centerline.size());
+
 
         //use nearest index of lane change path
-        lanelet::BasicLineString2d future_centerline(starting_lanelet_centerline.begin() + nearest_pt_index, starting_lanelet_centerline.end());
+        lanelet::BasicLineString2d future_centerline(starting_lanelet_centerline.begin() + nearest_pt_index + 1, starting_lanelet_centerline.end());
         //reduce size of future centerline 
+        ROS_DEBUG_STREAM("future_centerline before points size in: " << future_centerline.size());
+
         future_centerline.resize(time_bound_points.size());
+
+        ROS_DEBUG_STREAM("future_centerline after points size in: " << future_centerline.size());
+
 
         std::vector<lanelet::BasicPoint2d> future_centerline_points;
         for(int i=0;i<future_centerline.size();i++){
             future_centerline_points.push_back(future_centerline[i]);
+            ROS_DEBUG_STREAM("future_centerline[i]: x: " << future_centerline[i].x() << ", y: " << future_centerline[i].y());
         }
+
+        ROS_DEBUG_STREAM("future_centerline_points points size in: " << future_centerline_points.size());
+
         
         std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(future_centerline_points); // Compute splines based on curve points
         if (!fit_curve)
         {
             throw std::invalid_argument("Could not fit a spline curve along the given trajectory!");
         } 
+
+        ROS_DEBUG_STREAM("Finished computing curve");
+
         
         std::vector<double> downtracks_centerline = carma_wm::geometry::compute_arc_lengths(future_centerline_points);
         int total_step_along_curve= downtracks_centerline.size();
