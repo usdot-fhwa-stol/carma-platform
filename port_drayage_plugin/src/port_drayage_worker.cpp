@@ -130,10 +130,10 @@ namespace port_drayage_plugin
         _received_cargo_id = pt.get<std::string>("cargo_id");
         _received_operation = pt.get<std::string>("operation");
         _received_cargo_flag = pt.get<bool>("cargo");
-        _received_start_long = pt.get<double>("location.longitude");
-        _received_start_lat = pt.get<double>("location.latitude");
-        _received_dest_long = pt.get<double>("destination.longitude");
-        _received_dest_lat = pt.get<double>("destination.latitude");
+        _received_start_long = pt.get<double>("location.longitude") * 0.0000001; // Convert 1/10 microdegrees to degrees
+        _received_start_lat = pt.get<double>("location.latitude") * 0.0000001; // Convert 1/10 microdegrees to degrees
+        _received_dest_long = pt.get<double>("destination.longitude") * 0.0000001; // Convert 1/10 microdegrees to degrees
+        _received_dest_lat = pt.get<double>("destination.latitude") * 0.0000001; // Convert 1/10 microdegrees to degrees
         _received_curr_action_id = pt.get<std::string>("action_id");
         _received_next_action_id = pt.get<std::string>("next_action");
 
