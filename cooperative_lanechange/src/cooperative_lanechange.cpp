@@ -547,7 +547,7 @@ namespace cooperative_lanechange
                 }
                 PointSpeedPair pair;
                 pair.point = p;
-                if(current_speed_  < minimum_speed_){
+                if(state.longitudinal_vel  < minimum_speed_){
                     pair.speed = lane_change_maneuver.end_speed;
                 }
                 else{
