@@ -318,6 +318,9 @@ namespace yield_plugin
       lanelet::BasicPoint2d intersection_point = intersection_points[0].second;
       double dx = original_tp.trajectory_points[0].x - intersection_point.x();
       double dy = original_tp.trajectory_points[0].y - intersection_point.y();
+      // check if a digital_gap is available
+      double digital_gap = check_traj_for_digital_min_gap(original_tp);
+      ROS_DEBUG_STREAM("digital_gap: " << digital_gap);
       goal_pos = sqrt(dx*dx + dy*dy) - config_.x_gap;
       ROS_DEBUG_STREAM("Goal position (goal_pos): " << goal_pos);
       double collision_time = req_timestamp_ + (intersection_points[0].first * ecef_traj_timestep_) - config_.safety_collision_time_gap;
@@ -507,6 +510,7 @@ namespace yield_plugin
       {
         // check if a digital_gap is available
         double digital_gap = check_traj_for_digital_min_gap(original_tp);
+        ROS_DEBUG_STREAM("digital_gap: " << digital_gap);
         // if a digital gap is available, it is replaced as safety gap 
         safety_gap = std::max(safety_gap, digital_gap);
       }
