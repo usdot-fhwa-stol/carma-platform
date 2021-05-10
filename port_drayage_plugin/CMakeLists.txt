@@ -108,9 +108,9 @@ install(TARGETS ${PROJECT_NAME}_node
 # )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
-install(FILES
-  config/params.yml
-  launch/port_drayage_plugin.launch
+install(DIRECTORY
+  launch
+  config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
