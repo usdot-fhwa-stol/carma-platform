@@ -57,7 +57,7 @@ int WMBroadcasterNode::run()
   // When a new node connects to this topic that node should be provided with an updated map which includes any already included map updates
   map_pub_ = cnh_.advertise<autoware_lanelet2_msgs::MapBin>("semantic_map", 1, [this](auto& pub){ wmb_.newMapSubscriber(pub); });
   // Map Update Publisher
-  map_update_pub_ = cnh_.advertise<autoware_lanelet2_msgs::MapBin>("map_update", 1, true);
+  map_update_pub_ = cnh_.advertise<autoware_lanelet2_msgs::MapBin>("map_update", 1);
   //Route Message Publisher
   control_msg_pub_= cnh_.advertise<cav_msgs::TrafficControlRequest>("outgoing_geofence_request", 1, true);
   //Check Active Geofence Publisher

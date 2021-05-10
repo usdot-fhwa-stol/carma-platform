@@ -88,7 +88,6 @@ namespace cooperative_lanechange
         pnh_->param<double>("starting_fraction", starting_fraction_, 0.2);
         pnh_->param<double>("mid_fraction",mid_fraction_, 0.5);
         pnh_->param<double>("min_desired_gap",min_desired_gap_, 5.0);
-        pnh_->param<double>("buffer_ending_downtrack",buffer_ending_downtrack_, 10.0);
 
         //tf listener for looking up earth to map transform 
         tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
@@ -519,7 +518,7 @@ namespace cooperative_lanechange
             }
             ROS_DEBUG_STREAM("Maneuvers to points starting downtrack:"<<starting_downtrack);
             // //Get lane change route
-            double ending_downtrack = lane_change_maneuver.end_dist + buffer_ending_downtrack_;
+            double ending_downtrack = lane_change_maneuver.end_dist;
             ROS_DEBUG_STREAM("Maneuvers to points Ending downtrack:"<<ending_downtrack);
                 //Get geometry for maneuver
             if (starting_downtrack >= ending_downtrack)
@@ -923,15 +922,6 @@ namespace cooperative_lanechange
             lanelet::BasicLineString2d new_points = create_lanechange_path(start,lanelets_in_path[lane_change_iteration], end, lanelets_in_path[lane_change_iteration+1]);
             centerline_points.insert(centerline_points.end(),new_points.begin(),new_points.end() );
 
-            if(lanelets_in_path.size() > 2){
-                //Add straightline centerline points
-                int i = lane_change_iteration;
-                while(i < lanelets_in_path.size() -1){
-                    i++;
-                    lanelet::BasicLineString2d straight_path = lanelets_in_path[i].centerline2d().basicLineString();
-                    centerline_points.insert(centerline_points.end(),straight_path.begin(), straight_path.end() );
-                }
-            }
     
         return centerline_points;
         

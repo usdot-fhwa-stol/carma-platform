@@ -347,7 +347,7 @@ namespace cooperative_lanechange
             double starting_fraction_ = 0.2;
             double mid_fraction_ = 0.5;
             double min_desired_gap_ =5.0;
-            double buffer_ending_downtrack_ = 10.0;            
+       
 
 
 

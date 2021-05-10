@@ -85,5 +85,3 @@ mid_fraction : 0.5
 #Double: The minimum gap required between 2 vehicles to start lane changing
 #Units: meters
 min_desired_gap: 5.0
-
-buffer_ending_downtrack: 10.0
