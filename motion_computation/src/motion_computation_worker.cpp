@@ -160,6 +160,10 @@ cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(c
 {
   cav_msgs::ExternalObject output;
 
+  output.size.x = 2.5;
+  output.size.y = 2.25;
+  output.size.z = 2.0;
+
   // get reference origin in ECEF (convert from cm to m)
   double ecef_x = (double)msg.trajectory.location.ecef_x/100.0;
   double ecef_y = (double)msg.trajectory.location.ecef_y/100.0;

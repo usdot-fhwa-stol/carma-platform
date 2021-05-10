@@ -47,7 +47,7 @@ enable_cooperative_behavior: true
 always_accept_mobility_request: true
 # Acceptable number of timesteps to use the latest known mobility request before switching to yield
 # Value type: Desired
-acceptable_passed_timesteps: 10
+acceptable_passed_timesteps: 5
 # Intervehicle distance that is considered a collision
 # Unit: m
 # Value type: Desired
@@ -64,4 +64,4 @@ enable_adjustable_gap: true
 acceptable_urgency: 5
 # Window size for speed moving average filter
 # Value type: Desired (must be odd)
-speed_moving_average_window_size: 3.0
+speed_moving_average_window_size: 7.0

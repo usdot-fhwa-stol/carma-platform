@@ -88,6 +88,7 @@ public:
             [&worker](const auto&) { worker.onSpin(); });
 
     ros::CARMANodeHandle::spin();
+    
   }
 };
 
