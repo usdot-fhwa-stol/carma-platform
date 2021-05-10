@@ -210,7 +210,12 @@ namespace unobstructed_lanechange
                 }
                 PointSpeedPair pair;
                 pair.point = p;
-                pair.speed = lane_change_maneuver.end_speed;
+                if(state.longitudinal_vel  < minimum_speed_){
+                    pair.speed = lane_change_maneuver.end_speed;
+                }
+                else{
+                    pair.speed = state.longitudinal_vel;
+                }
                 points_and_target_speeds.push_back(pair);
 
             }
@@ -223,75 +228,24 @@ namespace unobstructed_lanechange
     std::vector<cav_msgs::TrajectoryPlanPoint> UnobstructedLaneChangePlugin::compose_trajectory_from_centerline(
     const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time, int starting_lanelet_id, double max_speed)
     {
+        ROS_DEBUG_STREAM("Input points size in: compose_trajectory_from_centerline" << points.size());
         int nearest_pt_index = getNearestPointIndex(points, state);
+        ROS_DEBUG_STREAM("nearest_pt_index: " << nearest_pt_index);
+
 
         std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end()); // Points in front of current vehicle position
-        auto time_bound_points = constrain_to_time_boundary(future_points, trajectory_time_length_ );
-
-        //Get Speed profile based on one of the centerline points
+        ROS_DEBUG_STREAM("future_points points size in: " << future_points.size());
         
-        //get centerline of starting lanelet
-        auto starting_lanelet = wm_->getMap()->laneletLayer.get(starting_lanelet_id);
-        lanelet::BasicLineString2d starting_lanelet_centerline= starting_lanelet.centerline2d().basicLineString();
-
-        //use nearest index of lane change path
-        lanelet::BasicLineString2d future_centerline(starting_lanelet_centerline.begin() + nearest_pt_index, starting_lanelet_centerline.end());
-        //reduce size of future centerline 
-        future_centerline.resize(time_bound_points.size());
-
-        std::vector<lanelet::BasicPoint2d> future_centerline_points;
-        for(int i=0;i<future_centerline.size();i++){
-            future_centerline_points.push_back(future_centerline[i]);
-        }
-        
-        std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(future_centerline_points); // Compute splines based on curve points
-        if (!fit_curve)
-        {
-            throw std::invalid_argument("Could not fit a spline curve along the given trajectory!");
-        } 
-        
-        std::vector<double> downtracks_centerline = carma_wm::geometry::compute_arc_lengths(future_centerline_points);
-        int total_step_along_curve= downtracks_centerline.size();
-        size_t total_point_size = future_centerline_points.size();
-        double scaled_steps_along_curve =0.0;
-        std::vector<double> better_curvature;
-        for(size_t steps_along_curve =0;steps_along_curve < total_step_along_curve; steps_along_curve++){
-            lanelet::BasicPoint2d p =(*fit_curve)(scaled_steps_along_curve);
-
-            double c = compute_curvature_at((*fit_curve), scaled_steps_along_curve);
-            better_curvature.push_back(c);
-
-            scaled_steps_along_curve += 1.0/total_step_along_curve;
-        }
-        std::vector<double> curvatures = smoothing::moving_average_filter(better_curvature, curvature_moving_average_window_size_, false);
-
-        std::vector<double> ideal_speeds =
-                        trajectory_utils::constrained_speeds_for_curvatures(curvatures, lateral_accel_limit_);
-
         //Compute yaw values from original trajectory
         std::vector<lanelet::BasicPoint2d> future_geom_points;
-        std::vector<double> distributed_speed_limits;
-        splitPointSpeedPairs(time_bound_points, &future_geom_points, &distributed_speed_limits);
+        std::vector<double> final_actual_speeds;
+        splitPointSpeedPairs(future_points, &future_geom_points, &final_actual_speeds);
         std::vector<double> final_yaw_values = carma_wm::geometry::compute_tangent_orientations(future_geom_points);
 
-        //find min ideal speed
-        double min_ideal_speed = std::numeric_limits<double>::max();
-        for(int i=0;i<ideal_speeds.size();i++){
-            min_ideal_speed= std::min(ideal_speeds[i],min_ideal_speed);
-        }
-       //final speed - min value based on road curvature
-       std::vector<double> final_actual_speeds;
-       final_actual_speeds.resize(distributed_speed_limits.size(), min_ideal_speed);
-    
     
         // Compute points to local downtracks
         std::vector<double> downtracks = carma_wm::geometry::compute_arc_lengths(future_geom_points);
         final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, speed_moving_average_window_size_);
-        for (auto& s : final_actual_speeds)  // Limit minimum speed. TODO how to handle stopping?
-        {
-            s = std::max(s, minimum_speed_); 
-            s = std::min(s, max_speed);
-        }
 
         // Convert speeds to times
         std::vector<double> times;
