@@ -200,9 +200,9 @@ public:
   ros::V_string invertParticipants(const ros::V_string& input_participants) const;
 
   /*!
-   *  \brief Callback triggered whenever a new subscriber connects to the semantic_map topic of this node.
-   *         This callback will publish the most recent updated map to that node so that any missed updates are already included.
-   *          // TODO
+   *  \brief Callback triggered whenever a new subscriber connects to the map_update topic of this node.
+   *         This callback will publish the all updates for the current map to that node so that any missed updates are already included.
+   *          
    *  \param single_sub_pub A publisher which will publish exclusively to the new subscriber 
    */ 
   void newUpdateSubscriber(const ros::SingleSubscriberPublisher& single_sub_pub) const;
