@@ -202,10 +202,10 @@ public:
   /*!
    *  \brief Callback triggered whenever a new subscriber connects to the semantic_map topic of this node.
    *         This callback will publish the most recent updated map to that node so that any missed updates are already included.
-   * 
+   *          // TODO
    *  \param single_sub_pub A publisher which will publish exclusively to the new subscriber 
    */ 
-  void newMapSubscriber(const ros::SingleSubscriberPublisher& single_sub_pub) const;
+  void newUpdateSubscriber(const ros::SingleSubscriberPublisher& single_sub_pub) const;
 
   /*!
    * \brief Returns the most recently recieved route message.
@@ -245,9 +245,13 @@ private:
    */
   size_t current_map_version_ = 0; 
 
-  cav_msgs::Route current_route; // Most recently recieved route message
-
-
+  cav_msgs::Route current_route; // Most recently received route message
+  /**
+   * Queue which stores the map updates applied to the current map version as a sequence of diffs
+   * This queue is implemented as a vector because it gets reused by each new subscriber connection
+   * NOTE: This queue should be cleared each time the current_map_version changes
+   */
+  std::vector<autoware_lanelet2_msgs::MapBin> map_update_message_queue_; 
 
 };
 }  // namespace carma_wm_ctrl
