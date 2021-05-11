@@ -30,13 +30,13 @@ namespace traffic
   void TrafficIncidentParserWorker::mobilityOperationCallback(const cav_msgs::MobilityOperation &mobility_msg)
   {
    
-        if((mobility_msg.strategy=="carma3/Incident_Use_Case") && (mobility_msg.strategy_params!=previous_strategy_params))
+      if((mobility_msg.strategy=="carma3/Incident_Use_Case"))
       { 
-           previous_strategy_params=mobility_msg.strategy_params;
-           mobilityMessageParser(mobility_msg.strategy_params);
+           bool valid_msg = mobilityMessageParser(mobility_msg.strategy_params);
 
-           if(event_type=="CLOSED")
+           if(valid_msg && event_type=="CLOSED")
            {
+            previous_strategy_params=mobility_msg.strategy_params;
             cav_msgs::TrafficControlMessage traffic_control_msg;
             traffic_control_msg.choice=cav_msgs::TrafficControlMessage::TCMV01;
             for(auto &traffic_msg:composeTrafficControlMesssages())
@@ -58,7 +58,7 @@ namespace traffic
    }
 
 
-  void TrafficIncidentParserWorker::mobilityMessageParser(std::string mobility_strategy_params)
+  bool TrafficIncidentParserWorker::mobilityMessageParser(std::string mobility_strategy_params)
   {
 
    std::vector<std::string> vec={};
@@ -76,7 +76,7 @@ namespace traffic
     if (vec.size() != 8) 
     {
       ROS_ERROR_STREAM("Given mobility strategy params are not correctly formatted.");
-      return;
+      return false;
     }  
 
     std::string lat_str=vec[0];
@@ -88,14 +88,49 @@ namespace traffic
     std::string event_reason_str=vec[6];
     std::string event_type_str=vec[7];
 
-    latitude=stod(stringParserHelper(lat_str,lat_str.find_last_of("lat:")));
-    longitude=stod(stringParserHelper(lon_str,lon_str.find_last_of("lon:")));
-    down_track=stod(stringParserHelper(downtrack_str,downtrack_str.find_last_of("down_track:")));
-    up_track=stod(stringParserHelper(uptrack_str,uptrack_str.find_last_of("up_track:")));
-    min_gap=stod(stringParserHelper(min_gap_str,min_gap_str.find_last_of("min_gap:")));
-    speed_advisory=stod(stringParserHelper(speed_advisory_str,speed_advisory_str.find_last_of("advisory_speed:")));
-    event_reason=stringParserHelper(event_reason_str,event_reason_str.find_last_of("event_reason:"));
-    event_type=stringParserHelper(event_type_str,event_type_str.find_last_of("event_type:"));
+    // Evaluate if this message should be forwarded based on the gps point
+    double temp_lat = stod(stringParserHelper(lat_str,lat_str.find_last_of("lat:")));
+    double temp_lon = stod(stringParserHelper(lon_str,lon_str.find_last_of("lon:")));
+    
+    double constexpr APPROXIMATE_DEG_PER_5M = 0.00005;
+    double delta_lat = temp_lat - latitude;
+    double delta_lon = temp_lon - longitude;
+    double approximate_degree_delta = sqrt(delta_lat*delta_lat + delta_lon*delta_lon);
+    
+    double temp_down_track=stod(stringParserHelper(downtrack_str,downtrack_str.find_last_of("down_track:")));
+    double temp_up_track=stod(stringParserHelper(uptrack_str,uptrack_str.find_last_of("up_track:")));
+    double temp_min_gap=stod(stringParserHelper(min_gap_str,min_gap_str.find_last_of("min_gap:")));
+    double temp_speed_advisory=stod(stringParserHelper(speed_advisory_str,speed_advisory_str.find_last_of("advisory_speed:")));
+    std::string temp_event_reason=stringParserHelper(event_reason_str,event_reason_str.find_last_of("event_reason:"));
+    std::string temp_event_type=stringParserHelper(event_type_str,event_type_str.find_last_of("event_type:"));
+
+    if ( approximate_degree_delta < APPROXIMATE_DEG_PER_5M // If the vehicle has not moved more than 5m and the parameters remain unchanged
+      && temp_down_track == down_track 
+      && temp_up_track == up_track 
+      && temp_min_gap == min_gap 
+      && temp_speed_advisory == speed_advisory 
+      && temp_event_reason == event_reason 
+      && temp_event_type == event_type) {
+      
+      ROS_DEBUG_STREAM("Strategy params are unchanged so ignoring new message: " << mobility_strategy_params
+        << " degree_delta: " << approximate_degree_delta 
+        << " prev_lat: " << latitude << " prev_lon: " << longitude);
+
+      return false;
+
+    }
+
+    // Valid message contents so populate member variables
+    latitude = temp_lat;
+    longitude = temp_lon;
+    down_track = temp_down_track;
+    up_track = temp_up_track;
+    min_gap = temp_min_gap;
+    speed_advisory = temp_speed_advisory;
+    event_reason = temp_event_reason;
+    event_type = temp_event_type;
+    
+    return true;
   }
 
   std::string TrafficIncidentParserWorker::stringParserHelper(std::string str, unsigned long str_index) const
