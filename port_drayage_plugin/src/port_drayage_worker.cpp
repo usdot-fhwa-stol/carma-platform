@@ -103,7 +103,7 @@ namespace port_drayage_plugin
             boost::property_tree::json_parser::read_json(strategy_params_ss, pt);
             std::string received_cmv_id = pt.get<std::string>("cmv_id");
 
-            // Check if the received MobilityOperation message is intended for this specific vehicle   
+            // Check if the received MobilityOperation message is intended for this vehicle's cmv_id   
             if(received_cmv_id == _cmv_id)
             {
                 ROS_DEBUG_STREAM("Processing new port drayage MobilityOperation message for cmv_id " << received_cmv_id);
@@ -130,10 +130,10 @@ namespace port_drayage_plugin
         _received_cargo_id = pt.get<std::string>("cargo_id");
         _received_operation = pt.get<std::string>("operation");
         _received_cargo_flag = pt.get<bool>("cargo");
-        _received_start_long = pt.get<double>("location.longitude") * 0.0000001; // Convert 1/10 microdegrees to degrees
-        _received_start_lat = pt.get<double>("location.latitude") * 0.0000001; // Convert 1/10 microdegrees to degrees
-        _received_dest_long = pt.get<double>("destination.longitude") * 0.0000001; // Convert 1/10 microdegrees to degrees
-        _received_dest_lat = pt.get<double>("destination.latitude") * 0.0000001; // Convert 1/10 microdegrees to degrees
+        _received_start_long = pt.get<double>("location.longitude") / 10000000; // Convert 1/10 microdegrees to degrees
+        _received_start_lat = pt.get<double>("location.latitude") / 10000000; // Convert 1/10 microdegrees to degrees
+        _received_dest_long = pt.get<double>("destination.longitude") / 10000000; // Convert 1/10 microdegrees to degrees
+        _received_dest_lat = pt.get<double>("destination.latitude") / 10000000; // Convert 1/10 microdegrees to degrees
         _received_curr_action_id = pt.get<std::string>("action_id");
         _received_next_action_id = pt.get<std::string>("next_action");
 
@@ -146,21 +146,6 @@ namespace port_drayage_plugin
         ROS_DEBUG_STREAM("dest lat: " << _received_dest_lat);
         ROS_DEBUG_STREAM("current action id: " << _received_curr_action_id);
         ROS_DEBUG_STREAM("next action id: " << _received_next_action_id);
-    }
-
-    double PortDrayageWorker::get_received_destination_long()
-    {
-        return _received_dest_long;
-    }
-
-    double PortDrayageWorker::get_received_destination_lat()
-    {
-        return _received_dest_lat;
-    }
-
-    std::string PortDrayageWorker::get_received_cargo_id()
-    {
-        return _received_cargo_id;
     }
 
 } // namespace port_drayage_plugin

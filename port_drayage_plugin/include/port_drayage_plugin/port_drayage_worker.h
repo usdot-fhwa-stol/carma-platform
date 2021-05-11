@@ -45,17 +45,9 @@ namespace port_drayage_plugin
             std::string _cmv_id;
             std::string _cargo_id;
             std::function<void(cav_msgs::MobilityOperation)> _publish_mobility_operation;
-            
+
+            // Data member for storing the strategy_params field of the last processed port drayage MobilityOperation message intended for this vehicle's cmv_id
             std::string _previous_strategy_params;
-            std::string _received_cargo_id;
-            std::string _received_operation;
-            bool _received_cargo_flag;
-            double _received_start_long;
-            double _received_start_lat;
-            double _received_dest_long;
-            double _received_dest_lat;
-            std::string _received_curr_action_id;
-            std::string _received_next_action_id;
 
             // Constants
             const std::string PORT_DRAYAGE_PLUGIN_ID = "Port Drayage Plugin";
@@ -126,9 +118,9 @@ namespace port_drayage_plugin
 
             /**
              * \brief Callback to process a received MobilityOperation message
-             * \param mobility_msg a received MobilityOperation message
+             * \param mobility_operation_msg a received MobilityOperation message
              */
-            void on_inbound_mobility_operation(const cav_msgs::MobilityOperationConstPtr& mobility_msg);
+            void on_inbound_mobility_operation(const cav_msgs::MobilityOperationConstPtr& mobility_operation_msg);
 
             /**
              * \brief Function to help parse the text included in an inbound MobilityOperation message's 
@@ -137,22 +129,6 @@ namespace port_drayage_plugin
              * \param mobility_operation_strategy_params the strategy_params field of a MobilityOperation message
              */
             void mobility_operation_message_parser(std::string mobility_operation_strategy_params);
-
-            /**
-             * \brief Getter function that returns the destination longitude associated with the last processed MobilityOperation message
-             */
-            double get_received_destination_long();
-
-            /**
-             * \brief Getter function that returns the destination latitude associated with the last processed MobilityOperation message
-             */
-            double get_received_destination_lat();
-
-            /**
-             * \brief Getter function that returns the cargo ID associated with the last processed MobilityOperation message
-             */
-            std::string get_received_cargo_id();
-
 
             /**
              * \brief Spin and process data
@@ -170,6 +146,16 @@ namespace port_drayage_plugin
              */
             bool check_for_stop(const cav_msgs::ManeuverPlanConstPtr& plan, const geometry_msgs::TwistStampedConstPtr& speed) const;
 
+            // Data members for storing the data located in the strategy_params field of a received port drayage MobilityOperation message intended for this vehicle's cmv_id
+            std::string _received_cargo_id;
+            std::string _received_operation;
+            bool _received_cargo_flag;
+            double _received_start_long;
+            double _received_start_lat;
+            double _received_dest_long;
+            double _received_dest_lat;
+            std::string _received_curr_action_id;
+            std::string _received_next_action_id;
 
     };
 } // namespace port_drayage_plugin

@@ -341,25 +341,43 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
     // Note: The strategy_params using the schema for messages of this type that have strategy "carma/port_drayage"
     cav_msgs::MobilityOperation mobility_operation_msg;
     mobility_operation_msg.strategy = "carma/port_drayage";
-    mobility_operation_msg.strategy_params = "{ \"cmv_id\": 123, \"cargo_id\": 321, \"operation\": \"MOVING_TO_LOADING_AREA\", \"cargo\": \"false\", \"location\": { \"longitude\": -77150342, \"latitude\": 389554370 }, \"destination\": { \"longitude\": -771481980, \"latitude\": 389550030 }, \"action_id\": 32, \"next_action\": 33 }";
+    mobility_operation_msg.strategy_params = "{ \"cmv_id\": \"123\", \"cargo_id\": \"321\", \"cargo\": \"false\", \"location\"\
+        : { \"latitude\": \"389554377\", \"longitude\": \"-771503421\" }, \"destination\": { \"latitude\"\
+        : \"389550038\", \"longitude\": \"-771481983\" }, \"operation\": \"MOVING_TO_LOADING_AREA\", \"action_id\"\
+        : \"32\", \"next_action\": \"33\" }";
     cav_msgs::MobilityOperationConstPtr mobility_operation_msg_ptr(new cav_msgs::MobilityOperation(mobility_operation_msg));
     pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr);
 
-    ASSERT_EQ(-77.1481980, pdw.get_received_destination_long());
-    ASSERT_EQ(38.9550030, pdw.get_received_destination_lat());
-    ASSERT_EQ("321", pdw.get_received_cargo_id());
+    ASSERT_EQ("321", pdw._received_cargo_id);
+    ASSERT_EQ("MOVING_TO_LOADING_AREA", pdw._received_operation);
+    ASSERT_EQ(false, pdw._received_cargo_flag);
+    ASSERT_EQ(-77.1503421, pdw._received_start_long);
+    ASSERT_EQ(38.9554377, pdw._received_start_lat);
+    ASSERT_EQ(-77.1481983, pdw._received_dest_long);
+    ASSERT_EQ(38.9550038, pdw._received_dest_lat);
+    ASSERT_EQ("32", pdw._received_curr_action_id);
+    ASSERT_EQ("33", pdw._received_next_action_id);
 
     // Create a MobilityOperationConstPtr with a cmv_id that is not intended for this specific vehicle
     // Note: The strategy_params using the schema for messages of this type that have strategy "carma/port_drayage"
     cav_msgs::MobilityOperation mobility_operation_msg2;
     mobility_operation_msg2.strategy = "carma/port_drayage";
-    mobility_operation_msg2.strategy_params = "{ \"cmv_id\": 444, \"cargo_id\": 567, \"operation\": \"MOVING_TO_LOADING_AREA\", \"cargo\": \"false\", \"location\": { \"longitude\": -88150342, \"latitude\": 429554370 }, \"destination\": { \"longitude\": -771481980, \"latitude\": 389550030 }, \"action_id\": 44, \"next_action\": 45 }";
+    mobility_operation_msg2.strategy_params = "{ \"cmv_id\": \"444\", \"cargo_id\": \"567\", \"cargo\": \"true\", \"location\"\
+        : { \"latitude\": \"489554377\", \"longitude\": \"-671503421\" }, \"destination\": { \"latitude\"\
+        : \"489550038\", \"longitude\": \"-571481983\" }, \"operation\": \"MOVING_FROM_LOADING_AREA\", \"action_id\"\
+        : \"44\", \"next_action\": \"45\" }";
     cav_msgs::MobilityOperationConstPtr mobility_operation_msg_ptr2(new cav_msgs::MobilityOperation(mobility_operation_msg2));
     pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr2);
 
-    ASSERT_EQ(-77.1481980, pdw.get_received_destination_long());
-    ASSERT_EQ(38.9550030, pdw.get_received_destination_lat());
-    ASSERT_EQ("321", pdw.get_received_cargo_id());
+    ASSERT_EQ("321", pdw._received_cargo_id);
+    ASSERT_EQ("MOVING_TO_LOADING_AREA", pdw._received_operation);
+    ASSERT_EQ(false, pdw._received_cargo_flag);
+    ASSERT_EQ(-77.1503421, pdw._received_start_long);
+    ASSERT_EQ(38.9554377, pdw._received_start_lat);
+    ASSERT_EQ(-77.1481983, pdw._received_dest_long);
+    ASSERT_EQ(38.9550038, pdw._received_dest_lat);
+    ASSERT_EQ("32", pdw._received_curr_action_id);
+    ASSERT_EQ("33", pdw._received_next_action_id);
 }
 
 // Run all the tests
