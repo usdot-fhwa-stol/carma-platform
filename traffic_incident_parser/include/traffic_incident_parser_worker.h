@@ -69,8 +69,10 @@ class TrafficIncidentParserWorker
     /*! \fn mobilityMessageParser(std::string mobility_strategy_params)
     \brief mobilityMessageParser helps to parse incoming mobility operation message to required format
     \param  std::string mobility_strategy_params
+
+    \return True if the new message is valid and can be used. False if not new or not valid.
   */
-  void mobilityMessageParser(std::string mobility_strategy_params);
+  bool mobilityMessageParser(std::string mobility_strategy_params);
 
     /*! \fn stringParserHelper(std::string str,int str_index)
     \brief stringParserHelper helps to convert string to double data type.
@@ -90,12 +92,12 @@ class TrafficIncidentParserWorker
   */
   lanelet::BasicPoint2d getIncidentOriginPoint() const;
 
-  double latitude;
-  double longitude;
-  double down_track;
-  double up_track;
-  double min_gap;
-  double speed_advisory;
+  double latitude = 0.0;
+  double longitude = 0.0;
+  double down_track = 0.0;
+  double up_track = 0.0;
+  double min_gap = 0.0;
+  double speed_advisory = 0.0;
   std::string event_reason;
   std::string event_type;
 
