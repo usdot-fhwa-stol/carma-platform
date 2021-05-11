@@ -198,7 +198,7 @@ cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(c
   // get planned trajectory points
   auto prev_pt_msg = msg.trajectory.offsets[0]; // setup first point to be processed later
   cav_msgs::PredictedState prev_state;
-  tf2::Vector3 prev_pt_ecef {ecef_x + (double)prev_pt_msg.offset_x /100.0, ecef_y + (double)prev_pt_msg.offset_y /100.0, ecef_z + (double)prev_pt_msg.offset_z /100.0};
+  tf2::Vector3 prev_pt_ecef {ecef_x /100.0, ecef_y /100.0, ecef_z /100.0};
 
   auto prev_pt_map = transform_to_map_frame(prev_pt_ecef);
 
@@ -206,7 +206,7 @@ cav_msgs::ExternalObject MotionComputationWorker::mobilityPathToExternalObject(c
   double message_offset_y = 0.0;
   double message_offset_z = 0.0;
 
-  for (size_t i = 1; i < msg.trajectory.offsets.size(); i ++)
+  for (size_t i = 0; i < msg.trajectory.offsets.size(); i ++)
   {
     auto curr_pt_msg = msg.trajectory.offsets[i];
 
