@@ -34,7 +34,7 @@ namespace port_drayage_plugin
         std::string cargo_id;
         _pnh->param<std::string>("cargo_id", cargo_id, "");
 
-        ros::Publisher outbound_mob_op = _nh->advertise<cav_msgs::MobilityOperation>("outbound_mobility_operation", 5);
+        ros::Publisher outbound_mob_op = _nh->advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 5);
         _outbound_mobility_operations_publisher = std::make_shared<ros::Publisher>(outbound_mob_op);
         PortDrayageWorker pdw{
             cmv_id,
@@ -46,13 +46,13 @@ namespace port_drayage_plugin
             speed_epsilon
         };
         
-        ros::Subscriber maneuver_sub = _nh->subscribe<cav_msgs::ManeuverPlan>("final_Maneuver_plan", 5, 
+        ros::Subscriber maneuver_sub = _nh->subscribe<cav_msgs::ManeuverPlan>("final_maneuver_plan", 5, 
             [&](const cav_msgs::ManeuverPlanConstPtr& plan) {
                 pdw.set_maneuver_plan(plan);
         });
         _maneuver_plan_subscriber = std::make_shared<ros::Subscriber>(maneuver_sub);
 
-        ros::Subscriber twist_sub = _nh->subscribe<geometry_msgs::TwistStamped>("localization/ekf_twist", 5, 
+        ros::Subscriber twist_sub = _nh->subscribe<geometry_msgs::TwistStamped>("/localization/ekf_twist", 5, 
             [&](const geometry_msgs::TwistStampedConstPtr& speed) {
                 pdw.set_current_speed(speed);
                 _cur_speed = speed->twist;
