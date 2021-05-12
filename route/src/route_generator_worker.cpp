@@ -349,6 +349,7 @@ namespace route {
                 {
                     points.push_back(ll.centerline()[i]);
                 }
+                ROS_DEBUG_STREAM("Processed last lanelet for visualization");
                 continue;
             }
             for(const auto& pt : ll.centerline())
@@ -359,7 +360,7 @@ namespace route {
 
         route_marker_msg_.markers={};
 
-        if (!points.empty())
+        if (points.empty())
         {
             ROS_WARN_STREAM("No central line points! Returning");
             return route_marker_msg_;
