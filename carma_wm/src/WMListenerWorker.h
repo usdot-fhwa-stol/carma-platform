@@ -117,5 +117,6 @@ private:
 
   bool rerouting_flag_=false;
   bool route_node_flag_=false;
+  long most_recent_update_msg_seq_ = -1; // Tracks the current sequence number for map update messages. Dropping even a single message would invalidate the map
 };
 }  // namespace carma_wm

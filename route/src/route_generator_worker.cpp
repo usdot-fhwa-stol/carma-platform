@@ -129,9 +129,11 @@ namespace route {
 
     bool RouteGeneratorWorker::set_active_route_cb(cav_srvs::SetActiveRouteRequest &req, cav_srvs::SetActiveRouteResponse &resp)
     {
+        ROS_INFO_STREAM("set_active_route_cb: Selected ID:" << req.routeID);
         // only allow activate a new route in route selection state
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::SELECTION)
         {
+            ROS_DEBUG_STREAM("Valid state proceeding with selection");
             // entering to routing state once destinations are picked
             this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_SELECTED);
             publish_route_event(cav_msgs::RouteEvent::ROUTE_SELECTED);
@@ -347,6 +349,7 @@ namespace route {
                 {
                     points.push_back(ll.centerline()[i]);
                 }
+                ROS_DEBUG_STREAM("Processed last lanelet for visualization");
                 continue;
             }
             for(const auto& pt : ll.centerline())
@@ -357,9 +360,10 @@ namespace route {
 
         route_marker_msg_.markers={};
 
-        if (!points.empty())
+        if (points.empty())
         {
             ROS_WARN_STREAM("No central line points! Returning");
+            return route_marker_msg_;
         }
 
         // create the marker msgs
