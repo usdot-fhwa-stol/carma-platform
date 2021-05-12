@@ -611,9 +611,9 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
       while (curr_idx + 1 < lanelets.size() && 
               std::find(following_lanelets.begin(),following_lanelets.end(), lanelets[curr_idx + 1]) != following_lanelets.end())
       {
-        ROS_DEBUG_STREAM("Added following lanelet Id: " << lanelets[curr_idx].id());
-        straight_lanelets.push_back(lanelets[curr_idx + 1]);
         curr_idx++;
+        ROS_DEBUG_STREAM("Added following lanelet Id: " << lanelets[curr_idx].id());
+        straight_lanelets.push_back(lanelets[curr_idx]);
         following_lanelets = wm->getMapRoutingGraph()->following(lanelets[curr_idx]);
       }
     }
