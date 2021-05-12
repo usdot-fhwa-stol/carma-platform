@@ -47,8 +47,8 @@ namespace route_following_plugin
         pnh_->param<double>("minimal_maneuver_duration", mvr_duration_, 16.0);
         pnh2_->param<double>("config_speed_limit",config_limit);
         pnh_->param<double>("buffer_time_lanechange",buffer_lanechange_time_);
-        pnh2_->param<double>("guidance/route_end_jerk", jerk_, 1.0);
-        pnh2_->param<std::string>("guidance/lane_change_plugin", lane_change_plugin_);
+        nh_->param<double>("route_end_jerk", jerk_, 100.0);
+        nh_->param<std::string>("lane_change_plugin", lane_change_plugin_);
         wml_.reset(new carma_wm::WMListener());
         // set world model point form wm listener
         wm_ = wml_->getWorldModel();
@@ -130,7 +130,7 @@ namespace route_following_plugin
             ROS_DEBUG_STREAM("target_speed: " << target_speed);
             ROS_DEBUG_STREAM("time_progress: " << time_progress.toSec());
             auto p = shortest_path[last_lanelet_index].centerline2d().back();
-            double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
+            double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack - 0.5; // 0.5 meter buffer to not include next lanelet
             end_dist = std::min(end_dist, total_maneuver_length);
             ROS_DEBUG_STREAM("end_dist: " << end_dist);
             double dist_diff = end_dist - current_progress;
@@ -160,7 +160,7 @@ namespace route_following_plugin
                 }
                 else{
                     lane_change_start_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index + 1].centerline2d().back()).downtrack - longl_travel_dist;
-                    end_dist  = wm_->routeTrackPos(shortest_path[last_lanelet_index + 1].centerline2d().back()).downtrack;
+                    end_dist  = wm_->routeTrackPos(shortest_path[last_lanelet_index + 1].centerline2d().back()).downtrack  - 0.5; // 0.5 meter buffer to not include next lanelet;
                 }               
 
                 lane_change_start_dist = current_progress;
@@ -194,10 +194,6 @@ namespace route_following_plugin
             ++last_lanelet_index;
 
         }
-        resp.new_plan.maneuvers.push_back(
-            composeStopandWaitManeuverMessage(current_progress,total_maneuver_length,
-            speed_progress,shortest_path[last_lanelet_index].id(),
-            shortest_path[last_lanelet_index].id(),time_progress,time_req_to_stop));
         
         ROS_DEBUG_STREAM("Done Loop: approaching_route_end: " << approaching_route_end);
         if(approaching_route_end){
@@ -270,6 +266,7 @@ namespace route_following_plugin
         maneuver_msg.lane_change_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
         maneuver_msg.lane_change_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
         maneuver_msg.lane_change_maneuver.parameters.planning_tactical_plugin = lane_change_plugin_;
+        ROS_DEBUG_STREAM("Plugin used for lane change:"<<lane_change_plugin_);
         maneuver_msg.lane_change_maneuver.parameters.planning_strategic_plugin = "RouteFollowingPlugin";
         maneuver_msg.lane_change_maneuver.start_dist = current_dist;
         maneuver_msg.lane_change_maneuver.start_speed = current_speed;
