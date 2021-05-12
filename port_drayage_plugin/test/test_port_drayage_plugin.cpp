@@ -348,15 +348,16 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
     cav_msgs::MobilityOperationConstPtr mobility_operation_msg_ptr(new cav_msgs::MobilityOperation(mobility_operation_msg));
     pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr);
 
-    ASSERT_EQ("321", pdw._received_cargo_id);
-    ASSERT_EQ("MOVING_TO_LOADING_AREA", pdw._received_operation);
-    ASSERT_EQ(false, pdw._received_cargo_flag);
-    ASSERT_EQ(-77.1503421, pdw._received_start_long);
-    ASSERT_EQ(38.9554377, pdw._received_start_lat);
-    ASSERT_EQ(-77.1481983, pdw._received_dest_long);
-    ASSERT_EQ(38.9550038, pdw._received_dest_lat);
-    ASSERT_EQ("32", pdw._received_curr_action_id);
-    ASSERT_EQ("33", pdw._received_next_action_id);
+    ASSERT_EQ("321", pdw._latest_mobility_operation_msg.cargo_id);
+    ASSERT_EQ("MOVING_TO_LOADING_AREA", pdw._latest_mobility_operation_msg.operation);
+    ASSERT_EQ(port_drayage_plugin::PortDrayageEvent::RECEIVED_NEW_DESTINATION, pdw._latest_mobility_operation_msg.port_drayage_event_type);
+    ASSERT_EQ(false, pdw._latest_mobility_operation_msg.has_cargo);
+    ASSERT_EQ(-77.1503421, *pdw._latest_mobility_operation_msg.start_longitude);
+    ASSERT_EQ(38.9554377, *pdw._latest_mobility_operation_msg.start_latitude);
+    ASSERT_EQ(-77.1481983, *pdw._latest_mobility_operation_msg.dest_longitude);
+    ASSERT_EQ(38.9550038, *pdw._latest_mobility_operation_msg.dest_latitude);
+    ASSERT_EQ("32", pdw._latest_mobility_operation_msg.current_action_id);
+    ASSERT_EQ("33", pdw._latest_mobility_operation_msg.next_action_id);
 
     // Create a MobilityOperationConstPtr with a cmv_id that is not intended for this specific vehicle
     // Note: The strategy_params using the schema for messages of this type that have strategy "carma/port_drayage"
@@ -369,15 +370,16 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
     cav_msgs::MobilityOperationConstPtr mobility_operation_msg_ptr2(new cav_msgs::MobilityOperation(mobility_operation_msg2));
     pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr2);
 
-    ASSERT_EQ("321", pdw._received_cargo_id);
-    ASSERT_EQ("MOVING_TO_LOADING_AREA", pdw._received_operation);
-    ASSERT_EQ(false, pdw._received_cargo_flag);
-    ASSERT_EQ(-77.1503421, pdw._received_start_long);
-    ASSERT_EQ(38.9554377, pdw._received_start_lat);
-    ASSERT_EQ(-77.1481983, pdw._received_dest_long);
-    ASSERT_EQ(38.9550038, pdw._received_dest_lat);
-    ASSERT_EQ("32", pdw._received_curr_action_id);
-    ASSERT_EQ("33", pdw._received_next_action_id);
+    ASSERT_EQ("321", pdw._latest_mobility_operation_msg.cargo_id);
+    ASSERT_EQ("MOVING_TO_LOADING_AREA", pdw._latest_mobility_operation_msg.operation);
+    ASSERT_EQ(port_drayage_plugin::PortDrayageEvent::RECEIVED_NEW_DESTINATION, pdw._latest_mobility_operation_msg.port_drayage_event_type);
+    ASSERT_EQ(false, pdw._latest_mobility_operation_msg.has_cargo);
+    ASSERT_EQ(-77.1503421, *pdw._latest_mobility_operation_msg.start_longitude);
+    ASSERT_EQ(38.9554377, *pdw._latest_mobility_operation_msg.start_latitude);
+    ASSERT_EQ(-77.1481983, *pdw._latest_mobility_operation_msg.dest_longitude);
+    ASSERT_EQ(38.9550038, *pdw._latest_mobility_operation_msg.dest_latitude);
+    ASSERT_EQ("32", pdw._latest_mobility_operation_msg.current_action_id);
+    ASSERT_EQ("33", pdw._latest_mobility_operation_msg.next_action_id);
 }
 
 // Run all the tests

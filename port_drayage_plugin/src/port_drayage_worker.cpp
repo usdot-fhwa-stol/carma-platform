@@ -91,61 +91,83 @@ namespace port_drayage_plugin
         return msg;
     }
 
-    void PortDrayageWorker::on_inbound_mobility_operation(const cav_msgs::MobilityOperationConstPtr& mobility_operation_msg)
-    {
+    void PortDrayageWorker::on_inbound_mobility_operation(const cav_msgs::MobilityOperationConstPtr& msg) {
         // Check if the received message is a new message for port drayage
-        if((mobility_operation_msg->strategy == PORT_DRAYAGE_STRATEGY_ID) && (mobility_operation_msg->strategy_params != _previous_strategy_params))
-        {
+        if((msg->strategy == PORT_DRAYAGE_STRATEGY_ID) && (msg->strategy_params != _previous_strategy_params)) {
             // Use Boost Property Tree to parse JSON-encoded strategy_params field in MobilityOperations message
             using boost::property_tree::ptree;
             ptree pt;
-            std::istringstream strategy_params_ss(mobility_operation_msg->strategy_params);
+            std::istringstream strategy_params_ss(msg->strategy_params);
             boost::property_tree::json_parser::read_json(strategy_params_ss, pt);
-            std::string received_cmv_id = pt.get<std::string>("cmv_id");
+            std::string mobility_operation_cmv_id = pt.get<std::string>("cmv_id");
 
             // Check if the received MobilityOperation message is intended for this vehicle's cmv_id   
-            if(received_cmv_id == _cmv_id)
-            {
-                ROS_DEBUG_STREAM("Processing new port drayage MobilityOperation message for cmv_id " << received_cmv_id);
-                _pdsm.process_event(PortDrayageEvent::RECEIVED_NEW_DESTINATION);
-                mobility_operation_message_parser(mobility_operation_msg->strategy_params);  
-                _previous_strategy_params = mobility_operation_msg->strategy_params;
+            if(mobility_operation_cmv_id == _cmv_id) {
+                ROS_DEBUG_STREAM("Processing new port drayage MobilityOperation message for cmv_id " << mobility_operation_cmv_id);
+                mobility_operation_message_parser(msg->strategy_params);  
+                _previous_strategy_params = msg->strategy_params;
+                
+                // Process event based on the PortDrayageEvent associated with the received MobilityOperation message
+                switch(_latest_mobility_operation_msg.port_drayage_event_type) {
+                    case PortDrayageEvent::RECEIVED_NEW_DESTINATION:
+                        _pdsm.process_event(PortDrayageEvent::RECEIVED_NEW_DESTINATION);
+                        break;
+                    default:
+                        break;
+                }
             }
-            else
-            {
-                ROS_DEBUG_STREAM("Ignoring received port drayage MobilityOperation message intended for cmv_id " << received_cmv_id);
+            else {
+                ROS_DEBUG_STREAM("Ignoring received port drayage MobilityOperation message intended for cmv_id " << mobility_operation_cmv_id);
             }
-
         }
     }
 
-    void PortDrayageWorker::mobility_operation_message_parser(std::string mobility_operation_strategy_params)
-    {
+    void PortDrayageWorker::mobility_operation_message_parser(std::string mobility_operation_strategy_params) {
         // Use Boost Property Tree to parse JSON-encoded strategy_params field in MobilityOperations message
         using boost::property_tree::ptree;
         ptree pt;
         std::istringstream mobility_operation_strategy_params_ss(mobility_operation_strategy_params);
         boost::property_tree::json_parser::read_json(mobility_operation_strategy_params_ss, pt);
 
-        _received_cargo_id = pt.get<std::string>("cargo_id");
-        _received_operation = pt.get<std::string>("operation");
-        _received_cargo_flag = pt.get<bool>("cargo");
-        _received_start_long = pt.get<double>("location.longitude") / 10000000; // Convert 1/10 microdegrees to degrees
-        _received_start_lat = pt.get<double>("location.latitude") / 10000000; // Convert 1/10 microdegrees to degrees
-        _received_dest_long = pt.get<double>("destination.longitude") / 10000000; // Convert 1/10 microdegrees to degrees
-        _received_dest_lat = pt.get<double>("destination.latitude") / 10000000; // Convert 1/10 microdegrees to degrees
-        _received_curr_action_id = pt.get<std::string>("action_id");
-        _received_next_action_id = pt.get<std::string>("next_action");
+        _latest_mobility_operation_msg.cargo_id = pt.get<std::string>("cargo_id");
+        _latest_mobility_operation_msg.has_cargo = pt.get<bool>("cargo");
+        _latest_mobility_operation_msg.current_action_id = pt.get<std::string>("action_id");
+        _latest_mobility_operation_msg.next_action_id = pt.get<std::string>("next_action");
+        _latest_mobility_operation_msg.operation = pt.get<std::string>("operation");
 
-        ROS_DEBUG_STREAM("cargo id: " << _received_cargo_id);
-        ROS_DEBUG_STREAM("operation: " << _received_operation);
-        ROS_DEBUG_STREAM("cargo flag: " << _received_cargo_flag);
-        ROS_DEBUG_STREAM("start long: " << _received_start_long);
-        ROS_DEBUG_STREAM("start lat: " << _received_start_lat);
-        ROS_DEBUG_STREAM("dest long: " << _received_dest_long);
-        ROS_DEBUG_STREAM("dest lat: " << _received_dest_lat);
-        ROS_DEBUG_STREAM("current action id: " << _received_curr_action_id);
-        ROS_DEBUG_STREAM("next action id: " << _received_next_action_id);
+        if(_latest_mobility_operation_msg.operation == "MOVING_TO_LOADING_AREA") {
+            _latest_mobility_operation_msg.port_drayage_event_type = PortDrayageEvent::RECEIVED_NEW_DESTINATION;
+        }
+
+        // Parse starting longitude/latitude fields if they exist:
+        if((pt.count("location.longitude") != 0) && (pt.count("location.latitude") != 0)) {
+            _latest_mobility_operation_msg.start_longitude = pt.get<double>("location.longitude") / 10000000; // Convert 1/10 microdegrees to degrees
+            _latest_mobility_operation_msg.start_latitude = pt.get<double>("location.latitude") / 10000000; // Convert 1/10 microdegrees to degrees
+            ROS_DEBUG_STREAM("start long: " << *_latest_mobility_operation_msg.start_longitude);
+            ROS_DEBUG_STREAM("start lat: " << *_latest_mobility_operation_msg.start_latitude);
+        }
+        else {
+            _latest_mobility_operation_msg.start_longitude = boost::optional<double>();
+            _latest_mobility_operation_msg.start_latitude = boost::optional<double>();
+        }
+
+        // Parse destination longitude/latitude fields if they exist:
+        if((pt.count("destination.longitude") != 0) && (pt.count("destination.latitude") != 0)) {
+            _latest_mobility_operation_msg.dest_longitude = pt.get<double>("destination.longitude") / 10000000; // Convert 1/10 microdegrees to degrees
+            _latest_mobility_operation_msg.dest_latitude = pt.get<double>("destination.latitude") / 10000000; // Convert 1/10 microdegrees to degrees
+            ROS_DEBUG_STREAM("dest long: " << *_latest_mobility_operation_msg.dest_longitude);
+            ROS_DEBUG_STREAM("dest lat: " << *_latest_mobility_operation_msg.dest_latitude);
+        }
+        else {
+            _latest_mobility_operation_msg.dest_longitude = boost::optional<double>();
+            _latest_mobility_operation_msg.dest_latitude = boost::optional<double>();
+        }
+
+        ROS_DEBUG_STREAM("cargo id: " << _latest_mobility_operation_msg.cargo_id);
+        ROS_DEBUG_STREAM("operation: " << _latest_mobility_operation_msg.operation);
+        ROS_DEBUG_STREAM("cargo flag: " << _latest_mobility_operation_msg.has_cargo);
+        ROS_DEBUG_STREAM("current action id: " << _latest_mobility_operation_msg.current_action_id);
+        ROS_DEBUG_STREAM("next action id: " << _latest_mobility_operation_msg.next_action_id);
     }
 
 } // namespace port_drayage_plugin
