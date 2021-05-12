@@ -16,5 +16,6 @@
 
 <launch>
   <node name="traffic_incident_parser" pkg="traffic_incident_parser" type="traffic_incident_parser_node">
+  <remap from="/environment/geofence" to="incoming_geofence_control"/>
   </node>
 </launch>
