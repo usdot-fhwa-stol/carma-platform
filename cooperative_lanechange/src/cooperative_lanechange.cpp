@@ -474,7 +474,6 @@ namespace cooperative_lanechange
             throw std::invalid_argument ("Cooperative Lane Change Plugin doesn't support this maneuver type");
         }
         maneuver_plan.push_back(req.maneuver_plan.maneuvers[req.maneuver_index_to_plan]);
-        resp.related_maneuvers.push_back(req.maneuver_index_to_plan);
 
         if(current_downtrack >= maneuver_plan.front().lane_change_maneuver.end_dist){
             request_sent = false;
@@ -534,7 +533,7 @@ namespace cooperative_lanechange
             ROS_DEBUG_STREAM("Nearest pt index in maneuvers to points:"<<nearest_pt_index);
             ROS_DEBUG_STREAM("Ending point index in maneuvers to points:"<<ending_pt_index);
             ROS_DEBUG_STREAM("State x:"<<state.X_pos_global<<" y:"<<state.Y_pos_global);
-            ROS_DEBUG_STREAM("Curr pose x:"<<<<" y:"<<pose_msg_.pose.position.y);
+            ROS_DEBUG_STREAM("Curr pose x:" <<" y:"<<pose_msg_.pose.position.y);
             //find percentage of maneuver left - for yield plugin use
             int maneuver_points_size = route_geometry.size() - ending_pt_index;
             double maneuver_fraction_completed_ = nearest_pt_index/maneuver_points_size;
