@@ -130,7 +130,7 @@ namespace route_following_plugin
             ROS_DEBUG_STREAM("target_speed: " << target_speed);
             ROS_DEBUG_STREAM("time_progress: " << time_progress.toSec());
             auto p = shortest_path[last_lanelet_index].centerline2d().back();
-            double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack - 0.5; // 0.5 meter buffer to not include next lanelet
+            double end_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index].centerline2d().back()).downtrack;
             end_dist = std::min(end_dist, total_maneuver_length);
             ROS_DEBUG_STREAM("end_dist: " << end_dist);
             double dist_diff = end_dist - current_progress;
@@ -160,7 +160,7 @@ namespace route_following_plugin
                 }
                 else{
                     lane_change_start_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index + 1].centerline2d().back()).downtrack - longl_travel_dist;
-                    end_dist  = wm_->routeTrackPos(shortest_path[last_lanelet_index + 1].centerline2d().back()).downtrack  - 0.5; // 0.5 meter buffer to not include next lanelet;
+                    end_dist  = wm_->routeTrackPos(shortest_path[last_lanelet_index + 1].centerline2d().back()).downtrack;
                 }               
 
                 lane_change_start_dist = current_progress;

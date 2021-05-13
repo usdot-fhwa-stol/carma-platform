@@ -657,7 +657,7 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
       points_and_target_speeds.push_back(pair);
     }
   }
-
+    // Here we are limiting the trajectory length to the given length by maneuver end dist as opposed to the end of lanelets involved.
     double starting_route_downtrack = wm_->routeTrackPos(points_and_target_speeds.front().point).downtrack; 
     size_t i = 0;
     size_t max_i = 0;
