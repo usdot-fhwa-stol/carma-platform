@@ -110,9 +110,11 @@ namespace port_drayage_plugin
                 // Process event based on the PortDrayageEvent associated with the received MobilityOperation message
                 switch(_latest_mobility_operation_msg.port_drayage_event_type) {
                     case PortDrayageEvent::RECEIVED_NEW_DESTINATION:
+                        ROS_DEBUG_STREAM("Processing RECEIVED_NEW_DESTINATION event for operation type " << _latest_mobility_operation_msg.operation);
                         _pdsm.process_event(PortDrayageEvent::RECEIVED_NEW_DESTINATION);
                         break;
                     default:
+                        ROS_DEBUG_STREAM("Not processing an event for operation type " << _latest_mobility_operation_msg.operation);
                         break;
                 }
             }
@@ -139,8 +141,8 @@ namespace port_drayage_plugin
             _latest_mobility_operation_msg.port_drayage_event_type = PortDrayageEvent::RECEIVED_NEW_DESTINATION;
         }
 
-        // Parse starting longitude/latitude fields if they exist:
-        if((pt.count("location.longitude") != 0) && (pt.count("location.latitude") != 0)) {
+        // Parse starting longitude/latitude fields if 'location' field exists in strategy_params:
+        if (pt.count("location") != 0){
             _latest_mobility_operation_msg.start_longitude = pt.get<double>("location.longitude") / 10000000; // Convert 1/10 microdegrees to degrees
             _latest_mobility_operation_msg.start_latitude = pt.get<double>("location.latitude") / 10000000; // Convert 1/10 microdegrees to degrees
             ROS_DEBUG_STREAM("start long: " << *_latest_mobility_operation_msg.start_longitude);
@@ -151,8 +153,8 @@ namespace port_drayage_plugin
             _latest_mobility_operation_msg.start_latitude = boost::optional<double>();
         }
 
-        // Parse destination longitude/latitude fields if they exist:
-        if((pt.count("destination.longitude") != 0) && (pt.count("destination.latitude") != 0)) {
+        // Parse destination longitude/latitude fields if 'destination' field exists in strategy_params:
+        if(pt.count("destination") != 0) {
             _latest_mobility_operation_msg.dest_longitude = pt.get<double>("destination.longitude") / 10000000; // Convert 1/10 microdegrees to degrees
             _latest_mobility_operation_msg.dest_latitude = pt.get<double>("destination.latitude") / 10000000; // Convert 1/10 microdegrees to degrees
             ROS_DEBUG_STREAM("dest long: " << *_latest_mobility_operation_msg.dest_longitude);
