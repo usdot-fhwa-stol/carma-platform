@@ -572,6 +572,12 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
 
     auto lanelets = wm->getLaneletsBetween(starting_downtrack, lane_following_maneuver.end_dist, true);
 
+    if (lanelets.empty())
+    {
+      ROS_ERROR_STREAM("Detected no lanelets between starting_downtrack: " << starting_downtrack  << ", and lane_following_maneuver.end_dist: " << lane_following_maneuver.end_dist);
+      throw std::invalid_argument("Detected no lanelets between starting_downtrack and end_dist");
+    }
+
     ROS_DEBUG_STREAM("Maneuver");
 
     lanelet::BasicLineString2d downsampled_centerline;
@@ -582,12 +588,8 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
     int curr_idx = 0;
     auto following_lanelets = wm->getMapRoutingGraph()->following(lanelets[curr_idx]);
     lanelet::ConstLanelets straight_lanelets;
-    if (lanelets.empty())
-    {
-      ROS_ERROR_STREAM("Detected no lanelets between starting_downtrack: " << starting_downtrack  << ", and lane_following_maneuver.end_dist: " << lane_following_maneuver.end_dist);
-      throw std::invalid_argument("Detected no lanelets between starting_downtrack and end_dist");
-    }
-    else if (lanelets.size() <= 1) // no lane change anyways if only size 1
+
+    if (lanelets.size() <= 1) // no lane change anyways if only size 1
     {
       ROS_DEBUG_STREAM("Detected one straight lanelet Id: " << lanelets[curr_idx].id());
       straight_lanelets = lanelets;
