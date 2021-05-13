@@ -591,9 +591,7 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
         ROS_DEBUG_STREAM("start_to_end: " << start_to_end.x() << ", " << start_to_end.y());
         ROS_DEBUG_STREAM("interior_angle: " << interior_angle);
         // Save the lanelet if the direction of two points inside aligns with that of the lanelet
-        // TODO If the interior angle to the end point cannot be used an alternative approach would be to compare the direction with the lanelet edges
-        // Maybe project points onto the edge and compare interior angles???
-        if (interior_angle < M_PI_2 && interior_angle >= 0) affected_lanelets.insert(llt); // TODO this is a suspect check. Lanelets are curved and the size of them also makes this somewhat impractical
+        if (interior_angle < M_PI_2 && interior_angle >= 0) affected_lanelets.insert(llt); 
       }
     }
   }
