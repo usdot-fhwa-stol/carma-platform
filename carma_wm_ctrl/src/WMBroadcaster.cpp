@@ -708,6 +708,8 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   autoware_lanelet2_msgs::MapBin gf_msg;
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
   carma_wm::toBinMsg(send_data, &gf_msg);
+  update_count_++; // Update the sequence count for the geofence messages
+  gf_msg.header.seq = update_count_;
   gf_msg.invalidates_route=gf_ptr->invalidate_route_; 
   gf_msg.map_version = current_map_version_;
   map_update_message_queue_.push_back(gf_msg); // Add diff to current map update queue
@@ -729,6 +731,8 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
   
   carma_wm::toBinMsg(send_data, &gf_msg_revert);
+  update_count_++; // Update the sequence count for geofence messages
+  gf_msg_revert.header.seq = update_count_;
   gf_msg_revert.map_version = current_map_version_;
   map_update_message_queue_.push_back(gf_msg_revert); // Add diff to current map update queue
   map_update_pub_(gf_msg_revert);
