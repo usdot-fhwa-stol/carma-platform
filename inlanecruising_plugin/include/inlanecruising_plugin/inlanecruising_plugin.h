@@ -176,6 +176,8 @@ public:
    */ 
   int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points, const cav_msgs::VehicleState& state) const;
 
+  int get_ending_point_index(lanelet::BasicLineString2d& points, double ending_downtrack);
+
   /**
    * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
    */ 

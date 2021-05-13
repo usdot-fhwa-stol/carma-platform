@@ -658,7 +658,39 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
     }
   }
 
-  return points_and_target_speeds;
+    double starting_route_downtrack = wm_->routeTrackPos(points_and_target_speeds.front().point).downtrack; 
+    size_t i = 0;
+    size_t max_i = 0;
+    double dist_accumulator = starting_route_downtrack;
+    lanelet::BasicPoint2d prev_point;
+    for (auto point_speed_pair : points_and_target_speeds) {
+      auto current_point = point_speed_pair.point;
+      if (i == 0) {
+        prev_point = current_point;
+        continue;
+      }
+
+      double delta_d = lanelet::geometry::distance2d(prev_point, current_point);
+      dist_accumulator += delta_d;
+
+      double ending_downtrack = maneuvers.back().lane_following_maneuver.end_dist;
+      if(ending_downtrack + config_.buffer_ending_downtrack < wm_->getRouteEndTrackPos().downtrack){
+        ending_downtrack = ending_downtrack + config_.buffer_ending_downtrack;
+      } 
+
+      if (dist_accumulator > ending_downtrack) {
+        max_i = i;
+        break;
+      }
+      prev_point = current_point;
+      i++;
+    }
+    if (max_i == 0) {
+      max_i = points_and_target_speeds.size() - 1;
+    }
+
+    std::vector<PointSpeedPair> constrained_points(points_and_target_speeds.begin(), points_and_target_speeds.begin() + max_i);
+    return constrained_points;
 }
 
 int InLaneCruisingPlugin::get_nearest_point_index(const std::vector<PointSpeedPair>& points,

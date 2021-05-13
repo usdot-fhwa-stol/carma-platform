@@ -65,6 +65,7 @@ public:
     pnh.param<double>("/vehicle_acceleration_limit", config.max_accel, config.max_accel);
     pnh.param<double>("/vehicle_lateral_accel_limit", config.lateral_accel_limit, config.lateral_accel_limit);
     pnh.param<bool>("enable_object_avoidance", config.enable_object_avoidance, config.enable_object_avoidance);
+    pnh.param<bool>("buffer_ending_downtrack", config.buffer_ending_downtrack, config.buffer_ending_downtrack);
 
     ROS_INFO_STREAM("InLaneCruisingPlugin Params" << config);
     
