@@ -58,7 +58,7 @@ struct InLaneCruisingPluginConfig
            << "back_distance: " << c.back_distance << std::endl
            << "enable_object_avoidance: " << c.enable_object_avoidance << std::endl
            << "publish_debug: " << c.publish_debug << std::endl
-           << "buffer_ending_downtrack: " << c.buffer_ending_downtrack_ << std::endl
+           << "buffer_ending_downtrack: " << c.buffer_ending_downtrack << std::endl
            << "}" << std::endl;
     return output;
   }
