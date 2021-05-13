@@ -58,6 +58,7 @@ public:
     pnh.param<double>("minimum_speed", config.minimum_speed, config.minimum_speed);
     pnh.param<double>("max_accel_multiplier", config.max_accel_multiplier, config.max_accel_multiplier);
     pnh.param<double>("lat_accel_multiplier", config.lat_accel_multiplier, config.lat_accel_multiplier);
+    pnh.param<double>("back_distance", config.back_distance, config.back_distance);
     pnh.param<int>("speed_moving_average_window_size", config.speed_moving_average_window_size,
                      config.speed_moving_average_window_size);
     pnh.param<int>("curvature_moving_average_window_size", config.curvature_moving_average_window_size,

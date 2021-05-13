@@ -531,6 +531,10 @@ namespace cooperative_lanechange
             ROS_DEBUG_STREAM("route geometry size:"<<route_geometry.size());
             int nearest_pt_index = getNearestRouteIndex(route_geometry,state);
             int ending_pt_index = get_ending_point_index(route_geometry, ending_downtrack); 
+            ROS_DEBUG_STREAM("Nearest pt index in maneuvers to points:"<<nearest_pt_index);
+            ROS_DEBUG_STREAM("Ending point index in maneuvers to points:"<<ending_pt_index);
+            ROS_DEBUG_STREAM("State x:"<<state.X_pos_global<<" y:"<<state.Y_pos_global);
+            ROS_DEBUG_STREAM("Curr pose x:"<<pose_msg_.pose.position.x<<" y:"<<pose_msg_.pose.position.y);
             //find percentage of maneuver left - for yield plugin use
             int maneuver_points_size = route_geometry.size() - ending_pt_index;
             double maneuver_fraction_completed_ = nearest_pt_index/maneuver_points_size;
