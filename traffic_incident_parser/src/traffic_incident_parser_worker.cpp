@@ -192,8 +192,25 @@ namespace traffic
       std::vector<lanelet::BasicPoint2d> following_lane;
       auto cur_ll = ll;
       double dist = 0;
-      size_t p_idx = 0;
-      lanelet::BasicPoint2d prev_point = lanelet::traits::to2D(cur_ll.centerline().front());
+      
+      
+      // Identify the point to start the accumulation from
+      lanelet::ArcCoordinates arc_pos = lanelet::geometry::toArcCoordinates(lanelet::traits::to2D(cur_ll.centerline()), local_point_);
+      lanelet::ConstPoint2d start_point = lanelet::traits::to2D(lanelet::geometry::nearestPointAtDistance(cur_ll.centerline(), arc_pos.length));
+      
+      ROS_DEBUG_STREAM("arc_pos: " << arc_pos.length);
+      ROS_DEBUG_STREAM("start_point" << start_point.id() << " : " << start_point.x() << ", " << start_point.y());
+
+      auto point_iterator = std::find_if(cur_ll.centerline().begin(), cur_ll.centerline().end(), [&start_point](const auto& it){return it.x() == start_point.x() && start_point.y() == it.y();});
+      
+      if (point_iterator == cur_ll.centerline().end()) {
+        throw std::invalid_argument("Point extracted from line string not member of linestring!!!");
+      }
+
+      lanelet::BasicPoint2d prev_point = start_point.basicPoint2d();
+      size_t p_idx = point_iterator - cur_ll.centerline().begin(); // Get the index of the selected point
+      ROS_DEBUG_STREAM("p_idx: " << p_idx);
+      // Accumulate distance
       while (dist < down_track) {
         ROS_DEBUG_STREAM("Accumulating left lanelet: " << cur_ll.id());
         if (p_idx == cur_ll.centerline().size()) {
