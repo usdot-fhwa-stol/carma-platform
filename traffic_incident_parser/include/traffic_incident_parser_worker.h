@@ -92,6 +92,25 @@ class TrafficIncidentParserWorker
   */
   lanelet::BasicPoint2d getIncidentOriginPoint() const;
 
+  /*! \fn getAdjacentForwardCenterlines(const lanelet::ConstLanelets& adjacentSet,
+    const lanelet::BasicPoint2d& start_point, double downtrack, std::vector<std::vector<lanelet::BasicPoint2d>>* forward_lanes)
+    \brief Helper method to compute the concatenated centerlines of the lanes in front of the emergency vehicle point
+    \param adjacentSet The set of adjacent lanes to start from 
+    \param start_point Point to start the downtrack calculation from. Should be the emergency vehicle points
+    \param The downtrack distance to grab centerline points from  
+    \param forward_lanes Ouput parameter which will be populated with the centerlines for each lane up to the downtrack distance
+  */
+  void getAdjacentForwardCenterlines(const lanelet::ConstLanelets& adjacentSet,
+    const lanelet::BasicPoint2d& start_point, double downtrack, std::vector<std::vector<lanelet::BasicPoint2d>>* forward_lanes);
+
+  /*! \fn getAdjacentReverseCenterlines(const lanelet::ConstLanelets& adjacentSet,
+    const lanelet::BasicPoint2d& start_point, double uptrack, std::vector<std::vector<lanelet::BasicPoint2d>>* reverse_lanes)
+
+    \brief Helper method that is identical to getAdjacentForwardCenterlines except it works in reverse using uptrack distance
+  */
+  void getAdjacentReverseCenterlines(const lanelet::ConstLanelets& adjacentSet,
+    const lanelet::BasicPoint2d& start_point, double uptrack, std::vector<std::vector<lanelet::BasicPoint2d>>* reverse_lanes);
+  
   double latitude = 0.0;
   double longitude = 0.0;
   double down_track = 0.0;
