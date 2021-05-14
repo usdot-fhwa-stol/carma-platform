@@ -469,6 +469,7 @@ void WMBroadcaster::setConfigSpeedLimit(double cL)
 // currently only supports geofence message version 1: TrafficControlMessageV01 
 lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_msgs::TrafficControlMessageV01& tcmV01)
 {
+  ROS_DEBUG_STREAM("Getting affected lanelets");
   if (!current_map_)
   {
     throw lanelet::InvalidObjectStateError(std::string("Base lanelet map is not loaded to the WMBroadcaster"));
@@ -490,53 +491,83 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
     c_out = proj_trans(geofence_in_map_proj, PJ_FWD, c);
     gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), c_out.xyz.x, c_out.xyz.y});
 
-    ROS_DEBUG_STREAM("After conversion: Point X "<< c_out.xyz.x <<" After conversion: Point Y "<< c_out.xyz.y);
+    ROS_DEBUG_STREAM("After conversion: Point X "<< gf_pts.back().x() <<" After conversion: Point Y "<< gf_pts.back().y());
   }
 
   // Logic to detect which part is affected
-
+  ROS_DEBUG_STREAM("Get affected lanelets loop");
   std::unordered_set<lanelet::Lanelet> affected_lanelets;
   for (size_t idx = 0; idx < gf_pts.size(); idx ++)
   {
+    ROS_DEBUG_STREAM("Index: " << idx << " Point: " << gf_pts[idx].x() << ", " << gf_pts[idx].y());
     std::unordered_set<lanelet::Lanelet> possible_lanelets;
-    // get nearest few nearest llts within max_lane_width_
-    // which actually house this geofence_point
-    auto searchFunc = [&](const lanelet::BoundingBox2d& lltBox, const lanelet::Lanelet& llt) 
-    {
-      bool should_stop_searching = boost::geometry::distance(gf_pts[idx].basicPoint2d(), llt.polygon2d()) > max_lane_width_;
-      if (!should_stop_searching && boost::geometry::within(gf_pts[idx].basicPoint2d(), llt.polygon2d()))
-      {
-        possible_lanelets.insert(llt);
-      }
-      return should_stop_searching;
-    };
 
-    // this call updates possible_lanelets
-    current_map_->laneletLayer.nearestUntil(gf_pts[idx], searchFunc);
+    // This loop identifes the lanelets which this point lies within that could be impacted by the geofence
+    // This loop somewhat inefficiently calls the findNearest method iteratively until all the possible lanelets are identified. 
+    // The reason findNearest is used instead of nearestUntil is because that method orders results by bounding box which
+    // can give invalid sequences when dealing with large curved lanelets.  
+    bool continue_search = true; 
+    size_t nearest_count = 0;
+    while (continue_search) {
+      
+      nearest_count += 10; // Increase the index search radius by 10 each loop until all nearby lanelets are found
+
+      for (const auto& ll_pair : lanelet::geometry::findNearest(current_map_->laneletLayer, gf_pts[idx].basicPoint2d(), nearest_count)) { // Get the nearest lanelets and iterate over them
+        auto ll = std::get<1>(ll_pair);
+
+        if (possible_lanelets.find(ll) != possible_lanelets.end()) { // Skip if already found
+          continue;
+        }
+
+        double dist = std::get<0>(ll_pair);
+        ROS_DEBUG_STREAM("Distance to lanelet " << ll.id() << ": " << dist << " max_lane_width: " << max_lane_width_);
+        
+        if (dist > max_lane_width_) { // Only save values closer than max_lane_width. Since we are iterating in distance order when we reach this distance the search can stop
+          continue_search = false;
+          break;
+        }
+
+        // Check if the point is inside this lanelet
+        if(dist == 0.0) { // boost geometry uses a distance of 0 to indicate a point is within a polygon
+          possible_lanelets.insert(ll);
+        }
+
+      }
+
+      if (nearest_count >= current_map_->laneletLayer.size()) { // if we are out of lanelets to evaluate then end the search
+        continue_search = false;
+      }
+    }
 
     // among these llts, filter the ones that are on same direction as the geofence using routing
     if (idx + 1 == gf_pts.size()) // we only check this for the last gf_pt after saving everything
     {
+      ROS_DEBUG_STREAM("Last point");
       std::unordered_set<lanelet::Lanelet> filtered = filterSuccessorLanelets(possible_lanelets, affected_lanelets);
+      ROS_DEBUG_STREAM("Got successor lanelets of size: " << filtered.size());
       affected_lanelets.insert(filtered.begin(), filtered.end());
       break;
     } 
 
+    ROS_DEBUG_STREAM("Checking possible lanelets");
     // check if each lines connecting end points of the llt is crossing with the line connecting current and next gf_pts
     for (auto llt: possible_lanelets)
     {
+      ROS_DEBUG_STREAM("Evaluating lanelet: " << llt.id());
       lanelet::BasicLineString2d gf_dir_line({gf_pts[idx].basicPoint2d(), gf_pts[idx+1].basicPoint2d()});
       lanelet::BasicLineString2d llt_boundary({(llt.leftBound2d().end() -1)->basicPoint2d(), (llt.rightBound2d().end() - 1)->basicPoint2d()});
       
       // record the llts that are on the same dir
       if (boost::geometry::intersects(llt_boundary, gf_dir_line))
       {
+        ROS_DEBUG_STREAM("Overlaps end line");
         affected_lanelets.insert(llt);
       }
       // check condition if two geofence points are in one lanelet then check matching direction and record it also
       else if (boost::geometry::within(gf_pts[idx+1].basicPoint2d(), llt.polygon2d()) && 
               affected_lanelets.find(llt) == affected_lanelets.end())
       { 
+        ROS_DEBUG_STREAM("Within new lanelet");
         lanelet::BasicPoint2d median({((llt.leftBound2d().end() - 1)->basicPoint2d().x() + (llt.rightBound2d().end() - 1)->basicPoint2d().x())/2 , 
                                       ((llt.leftBound2d().end() - 1)->basicPoint2d().y() + (llt.rightBound2d().end() - 1)->basicPoint2d().y())/2});
         // turn into vectors
@@ -552,12 +583,20 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
 
         // Get angle between both vectors
         double interior_angle = carma_wm::geometry::getAngleBetweenVectors(start_to_median, start_to_end);
+
+        ROS_DEBUG_STREAM("vec_to_median: " << vec_to_median.x() << ", " << vec_to_median.y());
+        ROS_DEBUG_STREAM("vec_to_gf_start: " << vec_to_gf_start.x() << ", " << vec_to_gf_start.y());
+        ROS_DEBUG_STREAM("vec_to_gf_end: " << vec_to_gf_end.x() << ", " << vec_to_gf_end.y());
+        ROS_DEBUG_STREAM("start_to_median: " << start_to_median.x() << ", " << start_to_median.y());
+        ROS_DEBUG_STREAM("start_to_end: " << start_to_end.x() << ", " << start_to_end.y());
+        ROS_DEBUG_STREAM("interior_angle: " << interior_angle);
         // Save the lanelet if the direction of two points inside aligns with that of the lanelet
-        if (interior_angle < M_PI_2 && interior_angle >= 0) affected_lanelets.insert(llt);
+        if (interior_angle < M_PI_2 && interior_angle >= 0) affected_lanelets.insert(llt); 
       }
     }
   }
   
+  ROS_DEBUG_STREAM("affected_lanelets size: " << affected_lanelets.size());
   // Currently only returning lanelet, but this could be expanded to LanelerOrArea compound object 
   // by implementing non-const version of that LaneletOrArea
   lanelet::ConstLaneletOrAreas affected_parts;
