@@ -154,6 +154,125 @@ namespace traffic
     return {local_point3d.x(), local_point3d.y()};
   }
 
+  /**
+   * \brief Helper method to get the nearest point index of a point and a linestring
+   */ 
+  size_t getNearestPointIndex(const lanelet::ConstLineString3d& points,
+                                                const lanelet::BasicPoint2d& point)
+  {
+    double min_distance = std::numeric_limits<double>::max();
+    size_t i = 0;
+    size_t best_index = 0;
+    for (const auto& p : points)
+    {
+      double distance = lanelet::geometry::distance2d(p, point);
+      if (distance < min_distance)
+      {
+        best_index = i;
+        min_distance = distance;
+      }
+      i++;
+    }
+
+    return best_index;
+  }
+
+  void TrafficIncidentParserWorker::getAdjacentForwardCenterlines(const lanelet::ConstLanelets& adjacentSet,
+    const lanelet::BasicPoint2d& start_point, double downtrack, std::vector<std::vector<lanelet::BasicPoint2d>>* forward_lanes)
+  {
+    ROS_DEBUG_STREAM("getAdjacentForwardCenterlines");
+    for (auto ll : adjacentSet) {
+      ROS_DEBUG_STREAM("Processing adjacent lanelet: " << ll.id());
+      std::vector<lanelet::BasicPoint2d> following_lane;
+      auto cur_ll = ll;
+      double dist = 0;
+      
+      
+      // Identify the point to start the accumulation from
+      size_t p_idx = getNearestPointIndex(cur_ll.centerline(), start_point); // Get the index of the nearest point
+
+      lanelet::BasicPoint2d prev_point = cur_ll.centerline()[p_idx].basicPoint2d();
+
+      ROS_DEBUG_STREAM("nearest point" << cur_ll.centerline()[p_idx].id() << " : " << prev_point.x() << ", " << prev_point.y());
+      
+      ROS_DEBUG_STREAM("p_idx: " << p_idx);
+
+      // Accumulate distance
+      while (dist < downtrack) {
+        ROS_DEBUG_STREAM("Accumulating lanelet: " << cur_ll.id());
+        if (p_idx == cur_ll.centerline().size()) {
+          auto next_lls = wm_->getMapRoutingGraph()->following(cur_ll, false);
+          if (next_lls.size() == 0) {
+            ROS_DEBUG_STREAM("No followers");
+            break;
+          }
+          auto next = next_lls[0];
+          ROS_DEBUG_STREAM("Getting next lanelet: " << next.id());
+          cur_ll = next;
+          p_idx = 0;
+        }
+        if (p_idx != 0 || dist == 0) {
+          
+          following_lane.push_back(lanelet::traits::to2D(cur_ll.centerline()[p_idx]));
+          dist += lanelet::geometry::distance2d(prev_point, following_lane.back());
+        }
+        ROS_DEBUG_STREAM("distance " << dist);
+        prev_point = lanelet::traits::to2D(cur_ll.centerline()[p_idx]);
+        p_idx++;
+      }
+      ROS_DEBUG_STREAM("Adding lane with size: " << following_lane.size());
+      forward_lanes->emplace_back(following_lane);
+    }
+  }
+
+  void TrafficIncidentParserWorker::getAdjacentReverseCenterlines(const lanelet::ConstLanelets& adjacentSet,
+    const lanelet::BasicPoint2d& start_point, double uptrack, std::vector<std::vector<lanelet::BasicPoint2d>>* reverse_lanes)
+  {
+    ROS_DEBUG_STREAM("getAdjacentReverseCenterlines");
+    for (auto ll : adjacentSet) {
+      ROS_DEBUG_STREAM("Processing adjacent lanelet: " << ll.id());
+      std::vector<lanelet::BasicPoint2d> previous_lane;
+      auto cur_ll = ll;
+      double dist = 0;
+      
+      
+      // Identify the point to start the accumulation from
+      size_t p_idx = getNearestPointIndex(cur_ll.centerline(), start_point); // Get the index of the nearest point
+
+      lanelet::BasicPoint2d prev_point = cur_ll.centerline()[p_idx].basicPoint2d();
+
+      ROS_DEBUG_STREAM("nearest point" << cur_ll.centerline()[p_idx].id() << " : " << prev_point.x() << ", " << prev_point.y());
+      
+      ROS_DEBUG_STREAM("p_idx: " << p_idx);
+
+      // Accumulate distance
+      while (dist < uptrack) {
+        ROS_DEBUG_STREAM("Accumulating lanelet: " << cur_ll.id());
+        if (p_idx == 0) {
+          auto next_lls = wm_->getMapRoutingGraph()->previous(cur_ll, false);
+          if (next_lls.size() == 0) {
+            ROS_DEBUG_STREAM("No previous lanelets");
+            break;
+          }
+          auto next = next_lls[0];
+          ROS_DEBUG_STREAM("Getting next lanelet: " << next.id());
+          cur_ll = next;
+          p_idx = cur_ll.centerline().size() - 1;
+        }
+        if (p_idx != cur_ll.centerline().size() - 1 || dist == 0) {
+          
+          previous_lane.push_back(lanelet::traits::to2D(cur_ll.centerline()[p_idx]));
+          dist += lanelet::geometry::distance2d(prev_point, previous_lane.back());
+        }
+        ROS_DEBUG_STREAM("distance " << dist);
+        prev_point = lanelet::traits::to2D(cur_ll.centerline()[p_idx]);
+        p_idx--;
+      }
+      ROS_DEBUG_STREAM("Adding lane with size: " << previous_lane.size());
+      reverse_lanes->emplace_back(previous_lane);
+    }
+  }
+
   std::vector<cav_msgs::TrafficControlMessageV01> TrafficIncidentParserWorker::composeTrafficControlMesssages()
   {
     ROS_DEBUG_STREAM("In composeTrafficControlMesssages");
@@ -186,44 +305,33 @@ namespace traffic
       ROS_DEBUG_STREAM("Right lanelet: " << l.id());
     }
 
-    std::vector<std::vector<lanelet::BasicPoint2d>> forward_lanes; // Ordered from right to left
-    for (auto ll : lefts) {
-      ROS_DEBUG_STREAM("Processing left lanelet: " << ll.id());
-      std::vector<lanelet::BasicPoint2d> following_lane;
-      auto cur_ll = ll;
-      double dist = 0;
-      size_t p_idx = 0;
-      lanelet::BasicPoint2d prev_point = lanelet::traits::to2D(cur_ll.centerline().front());
-      while (dist < down_track) {
-        ROS_DEBUG_STREAM("Accumulating left lanelet: " << cur_ll.id());
-        if (p_idx == cur_ll.centerline().size()) {
-          auto next_lls = wm_->getMapRoutingGraph()->following(cur_ll, false);
-          if (next_lls.size() == 0) {
-            ROS_DEBUG_STREAM("No followers");
-            break;
-          }
-          auto next = next_lls[0];
-          ROS_DEBUG_STREAM("Getting next lanelet: " << next.id());
-          cur_ll = next;
-          p_idx = 0;
-        }
-        if (p_idx != 0 || dist == 0) {
-          
-          following_lane.push_back(lanelet::traits::to2D(cur_ll.centerline()[p_idx]));
-          dist += lanelet::geometry::distance2d(prev_point, following_lane.back());
-        }
-        ROS_DEBUG_STREAM("distance " << dist);
-        prev_point = lanelet::traits::to2D(cur_ll.centerline()[p_idx]);
-        p_idx++;
-      }
-      if (following_lane.size() != 0) {
-        ROS_DEBUG_STREAM("Adding lane");
-        forward_lanes.emplace_back(following_lane);
+    // Assume that if there are more lanelets to the left than the right then the tahoe is on the left
+    std::vector<std::vector<lanelet::BasicPoint2d>> forward_lanes, reverse_lanes;
+
+    if (lefts.size() >=  rights.size()) {
+      ROS_DEBUG_STREAM("Emergency vehicle on the left ");
+      getAdjacentForwardCenterlines(lefts, local_point_, down_track, &forward_lanes);
+      getAdjacentReverseCenterlines(lefts, local_point_, up_track, &reverse_lanes);     
+    } else {
+      ROS_DEBUG_STREAM("Emergency vehicle on the right ");
+      getAdjacentForwardCenterlines(rights, local_point_, down_track, &forward_lanes);
+      getAdjacentReverseCenterlines(rights, local_point_, up_track, &reverse_lanes);   
+    }
+
+    for (auto& lane : reverse_lanes) {
+      std::reverse(lane.begin(), lane.end()); // Reverse the backward points
+    }
+  
+    // Compine results
+    for (size_t i = 0; i < reverse_lanes.size(); i++) {
+      if (forward_lanes[i].size() > 1) {
+        reverse_lanes[i].insert(reverse_lanes[i].end(), forward_lanes[i].begin() + 1, forward_lanes[i].end()); // Concat linestirngs but drop the shared point
       }
     }
 
+    
    // auto route_lanelets = wm_->getLaneletsBetween(route_trackpos_min, route_trackpos_max, false);
-    ROS_DEBUG_STREAM("Constructing message for lanes: " << forward_lanes.size());
+    ROS_DEBUG_STREAM("Constructing message for lanes: " << reverse_lanes.size());
     std::vector<cav_msgs::TrafficControlMessageV01> output_msg;
 
     cav_msgs::TrafficControlMessageV01 traffic_mobility_msg;
@@ -241,12 +349,14 @@ namespace traffic
     traffic_mobility_msg.params.schedule.between_exists=false;
     traffic_mobility_msg.params.schedule.repeat_exists = false;
 
-    for (size_t i = 0; i < forward_lanes.size(); i++) {
-      //forward_lanes[i] = carma_utils::containers::downsample_vector(forward_lanes[i], 8);
+    for (size_t i = 0; i < reverse_lanes.size(); i++) {
 
       traffic_mobility_msg.geometry.nodes.clear();
-
-      for(const auto& p : carma_utils::containers::downsample_vector(forward_lanes[i], 8))
+      if (reverse_lanes[i].size() == 0) {
+        ROS_DEBUG_STREAM("Skipping empty lane");
+        continue;
+      }
+      for(const auto& p : carma_utils::containers::downsample_vector(reverse_lanes[i], 8))
       {
         cav_msgs::PathNode path_point;
         path_point.x=p.x();
