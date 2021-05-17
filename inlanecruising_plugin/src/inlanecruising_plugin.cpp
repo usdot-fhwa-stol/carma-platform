@@ -419,6 +419,10 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   ROS_DEBUG_STREAM("Curvature right now: " << better_curvature[nearest_pt_index] << ", at x: " << state.X_pos_global << ", y: " << state.Y_pos_global);
 
   int buffer_pt_index = get_nearest_point_index(all_sampling_points, ending_state_before_buffer);
+  ROS_DEBUG_STREAM("<<<<buffer_pt_index: " << buffer_pt_index);
+  ROS_DEBUG_STREAM("<<<<nearest_pt_index: " << nearest_pt_index);
+  ROS_DEBUG_STREAM("<<<<Ending point: x: " << all_sampling_points[buffer_pt_index].x() << ", y:" << all_sampling_points[buffer_pt_index].y());
+
 //drop buffer points here
   std::vector<lanelet::BasicPoint2d> future_basic_points(all_sampling_points.begin() + nearest_pt_index + 1,
                                             all_sampling_points.begin()+ buffer_pt_index);  // Points in front of current vehicle position
@@ -430,6 +434,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   std::vector<double>  final_actual_speeds = future_speeds;
   all_sampling_points = future_basic_points;
   final_yaw_values = future_yaw;
+  ROS_DEBUG_STREAM("<<<<future_basic_points.size() : " << future_basic_points.size() );
 
   lanelet::BasicPoint2d cur_veh_point(state.X_pos_global, state.Y_pos_global);
 
@@ -667,33 +672,42 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
     size_t max_i = 0;
     double dist_accumulator = starting_route_downtrack;
     lanelet::BasicPoint2d prev_point;
+
+    double ending_downtrack = maneuvers.back().lane_following_maneuver.end_dist;
+    if(ending_downtrack + config_.buffer_ending_downtrack < wm_->getRouteEndTrackPos().downtrack){
+      ending_downtrack = ending_downtrack + config_.buffer_ending_downtrack;
+    } 
+    ROS_DEBUG_STREAM("ending_downtrack: " << ending_downtrack << ", and dist_accumulator" << dist_accumulator);
+
     for (auto point_speed_pair : points_and_target_speeds) {
       auto current_point = point_speed_pair.point;
       if (i == 0) {
         prev_point = current_point;
+        i++;
         continue;
       }
 
       double delta_d = lanelet::geometry::distance2d(prev_point, current_point);
+      ROS_DEBUG_STREAM("delta_d: " << delta_d << ", dist_accumulator:" << dist_accumulator);
       dist_accumulator += delta_d;
-
-      double ending_downtrack = maneuvers.back().lane_following_maneuver.end_dist;
-      if(ending_downtrack + config_.buffer_ending_downtrack < wm_->getRouteEndTrackPos().downtrack){
-        ending_downtrack = ending_downtrack + config_.buffer_ending_downtrack;
-      } 
-
+      
       if (dist_accumulator > ending_downtrack) {
         max_i = i;
+        ROS_DEBUG_STREAM("Max_i breaking at: i: " << i << ", max_i: " << max_i);
         break;
       }
       prev_point = current_point;
       i++;
+      ROS_DEBUG_STREAM("i: " << i << ", max_i: " << max_i);
     }
     if (max_i == 0) {
       max_i = points_and_target_speeds.size() - 1;
+      ROS_DEBUG_STREAM("Max_i was zero, so turned to max_i: " << max_i);
     }
     ending_state_before_buffer.X_pos_global = points_and_target_speeds[max_i].point.x();
     ending_state_before_buffer.Y_pos_global = points_and_target_speeds[max_i].point.y();
+    ROS_DEBUG_STREAM("i: " << i << ", max_i: " << max_i);
+
     std::vector<PointSpeedPair> constrained_points(points_and_target_speeds.begin(), points_and_target_speeds.begin() + max_i);
     return constrained_points;
 }
