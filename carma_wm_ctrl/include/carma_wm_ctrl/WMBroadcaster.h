@@ -253,6 +253,8 @@ private:
    */
   std::vector<autoware_lanelet2_msgs::MapBin> map_update_message_queue_; 
 
+  size_t update_count_ = 0; // Records the total number of sent map updates. Used as the set value for update.header.seq
+
 };
 }  // namespace carma_wm_ctrl
 
