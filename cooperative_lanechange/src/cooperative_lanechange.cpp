@@ -78,7 +78,7 @@ namespace cooperative_lanechange
         pnh_->param<double>("maximum_lookahead_speed", maximum_lookahead_speed_, 13.9);
         pnh_->param<double>("lateral_accel_limit", lateral_accel_limit_, 1.5);
         pnh_->param<double>("speed_moving_average_window_size", speed_moving_average_window_size_, 5);
-        pnh_->param<double>("curvature_moving_average_window_size", speed_moving_average_window_size_, 5);
+        pnh_->param<double>("curvature_moving_average_window_size", curvature_moving_average_window_size_, 5);
         pnh_->param<double>("curvature_calc_lookahead_count", curvature_calc_lookahead_count_, 1);
         pnh_->param<int>("downsample_ratio", downsample_ratio_, 8);
         pnh_->param<double>("destination_range",destination_range_, 5);
@@ -533,7 +533,7 @@ namespace cooperative_lanechange
             ROS_DEBUG_STREAM("Nearest pt index in maneuvers to points:"<<nearest_pt_index);
             ROS_DEBUG_STREAM("Ending point index in maneuvers to points:"<<ending_pt_index);
             ROS_DEBUG_STREAM("State x:"<<state.X_pos_global<<" y:"<<state.Y_pos_global);
-            ROS_DEBUG_STREAM("Curr pose x:" <<" y:"<<pose_msg_.pose.position.y);
+            ROS_DEBUG_STREAM("Curr pose x:" << pose_msg_.pose.position.x << " y:"<<pose_msg_.pose.position.y);
             //find percentage of maneuver left - for yield plugin use
             int maneuver_points_size = route_geometry.size() - ending_pt_index;
             double maneuver_fraction_completed_ = nearest_pt_index/maneuver_points_size;

@@ -411,20 +411,22 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   {
     ROS_WARN_STREAM("No trajectory points could be generated");
     return {};
-  }
+  };
 
   // Add current vehicle point to front of the trajectory
 
   nearest_pt_index = get_nearest_point_index(all_sampling_points, state);
   ROS_DEBUG_STREAM("Curvature right now: " << better_curvature[nearest_pt_index] << ", at x: " << state.X_pos_global << ", y: " << state.Y_pos_global);
 
+  int buffer_pt_index = get_nearest_point_index(all_sampling_points, ending_state_before_buffer);
+//drop buffer points here
   std::vector<lanelet::BasicPoint2d> future_basic_points(all_sampling_points.begin() + nearest_pt_index + 1,
-                                            all_sampling_points.end());  // Points in front of current vehicle position
+                                            all_sampling_points.begin()+ buffer_pt_index);  // Points in front of current vehicle position
 
   std::vector<double> future_speeds(constrained_speed_limits.begin() + nearest_pt_index + 1,
-                                            constrained_speed_limits.end());  // Points in front of current vehicle position
+                                            constrained_speed_limits.begin() + buffer_pt_index);  // Points in front of current vehicle position
   std::vector<double> future_yaw(final_yaw_values.begin() + nearest_pt_index + 1,
-                                            final_yaw_values.end());  // Points in front of current vehicle position
+                                            final_yaw_values.begin() + buffer_pt_index);  // Points in front of current vehicle position
   std::vector<double>  final_actual_speeds = future_speeds;
   all_sampling_points = future_basic_points;
   final_yaw_values = future_yaw;
@@ -690,7 +692,8 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
     if (max_i == 0) {
       max_i = points_and_target_speeds.size() - 1;
     }
-
+    ending_state_before_buffer.X_pos_global = points_and_target_speeds[max_i].point.x();
+    ending_state_before_buffer.Y_pos_global = points_and_target_speeds[max_i].point.y();
     std::vector<PointSpeedPair> constrained_points(points_and_target_speeds.begin(), points_and_target_speeds.begin() + max_i);
     return constrained_points;
 }

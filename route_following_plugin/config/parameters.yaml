@@ -11,4 +11,4 @@ buffer_lanechange_time : 3.0
 
 # String : The tactical plugin being used for lane change
 #For CLC: "CooperativeLaneChangePlugin" for unobstructed : "UnobstructedLaneChangePlugin"
-lane_change_plugin : "UnobstructedLaneChangePlugin"
+lane_change_plugin : "CooperativeLaneChangePlugin"

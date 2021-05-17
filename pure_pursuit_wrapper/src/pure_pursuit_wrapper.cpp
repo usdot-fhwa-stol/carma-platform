@@ -68,7 +68,7 @@ void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::C
     wp.pose.pose.position.x = tp->trajectory_points[i].x;
     wp.pose.pose.position.y = tp->trajectory_points[i].y;
     wp.twist.twist.linear.x = lag_speeds[i];
-    ROS_DEBUG_STREAM("Setting waypoint idx: " << i <<", x: " << tp->trajectory_points[i].x << 
+    ROS_DEBUG_STREAM("Setting waypoint idx: " << i <<", with planner: << " << tp->trajectory_points[i].planner_plugin_name << ", x: " << tp->trajectory_points[i].x << 
                             ", y: " << tp->trajectory_points[i].y <<
                             ", speed: " << lag_speeds[i]* 2.23694 << "mph");
     waypoints.push_back(wp);

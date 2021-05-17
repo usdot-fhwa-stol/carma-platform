@@ -276,6 +276,7 @@ private:
   cav_msgs::Plugin plugin_discovery_msg_;
   DebugPublisher debug_publisher_;
   carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg_;
+  cav_msgs::VehicleState ending_state_before_buffer;
 
 };
 };  // namespace inlanecruising_plugin
