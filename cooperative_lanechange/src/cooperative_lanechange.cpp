@@ -539,19 +539,19 @@ namespace cooperative_lanechange
             int maneuver_points_size = route_geometry.size() - ending_pt_index;
             double maneuver_fraction_completed_ = nearest_pt_index/maneuver_points_size;
 
-            ending_state_before_buffer_.X_pos_global = route_geometry[ending_pt_index].x();
-            ending_state_before_buffer_.Y_pos_global = route_geometry[ending_pt_index].y();
+            // ending_state_before_buffer_.X_pos_global = route_geometry[ending_pt_index].x();
+            // ending_state_before_buffer_.Y_pos_global = route_geometry[ending_pt_index].y();
             
-            double route_length = wm_->getRouteEndTrackPos().downtrack;
-            int ending_pt_index_with_buffer;
-            if(ending_downtrack + ending_buffer_downtrack_ < route_length){
-                ending_pt_index_with_buffer = get_ending_point_index(route_geometry, ending_downtrack + ending_buffer_downtrack_);
-            }
-            else{
-                ending_pt_index_with_buffer = ending_pt_index;
-            }
+            // double route_length = wm_->getRouteEndTrackPos().downtrack;
+            // int ending_pt_index_with_buffer;
+            // if(ending_downtrack + ending_buffer_downtrack_ < route_length){
+            //     ending_pt_index_with_buffer = get_ending_point_index(route_geometry, ending_downtrack + ending_buffer_downtrack_);
+            // }
+            // else{
+              //  ending_pt_index_with_buffer = ending_pt_index;
+            // }
             
-            lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.begin() + ending_pt_index_with_buffer);
+            lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.begin() + ending_pt_index);
             first = true;
             
             ROS_DEBUG_STREAM("future geom size:"<<future_route_geometry.size());
@@ -606,11 +606,11 @@ namespace cooperative_lanechange
         std::vector<double> times;
         trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
 
-        //Remove extra points
-        int end_dist_pt_index = getNearestPointIndex(future_geom_points, ending_state_before_buffer_);
-        future_geom_points.resize(end_dist_pt_index + 1);
-        times.resize(end_dist_pt_index + 1);
-        final_yaw_values.resize(end_dist_pt_index + 1);
+        // //Remove extra points
+        // int end_dist_pt_index = getNearestPointIndex(future_geom_points, ending_state_before_buffer_);
+        // future_geom_points.resize(end_dist_pt_index + 1);
+        // times.resize(end_dist_pt_index + 1);
+        // final_yaw_values.resize(end_dist_pt_index + 1);
 
         // Build trajectory points
         // TODO When more plugins are implemented that might share trajectory planning the start time will need to be based
