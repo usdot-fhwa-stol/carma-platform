@@ -85,3 +85,7 @@ mid_fraction : 0.5
 #Double: The minimum gap required between 2 vehicles to start lane changing
 #Units: meters
 min_desired_gap: 5.0
+
+# Double : The additional downtrack beyond requested end dist used to fit points along spline. Extra points removed before returning trajectory. Feature not used if end dist is route end
+#Units: meters
+ending_buffer_downtrack : 5.0

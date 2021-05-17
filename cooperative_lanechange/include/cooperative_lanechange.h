@@ -108,6 +108,8 @@ namespace cooperative_lanechange
              * \return the index of the element in points which is closest to state.
              */ 
             int getNearestRouteIndex(lanelet::BasicLineString2d& points, const cav_msgs::VehicleState& state) const;
+
+            int getNearestPointIndex(const std::vector<lanelet::BasicPoint2d>& points, const cav_msgs::VehicleState& state) const;
             /**
              * \brief Creates a Lanelet2 Linestring from a vector or points along the geometry 
              * \param starting_downtrack downtrack along route where maneuver starts
@@ -347,9 +349,10 @@ namespace cooperative_lanechange
             double starting_fraction_ = 0.2;
             double mid_fraction_ = 0.5;
             double min_desired_gap_ =5.0;
+            double ending_buffer_downtrack_ = 5.0;
        
 
-
+            cav_msgs::VehicleState  ending_state_before_buffer_;
 
             // generated trajectory plan
             cav_msgs::TrajectoryPlan trajectory_msg;
