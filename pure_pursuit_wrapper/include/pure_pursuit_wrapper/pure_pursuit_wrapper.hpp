@@ -52,6 +52,7 @@ class PurePursuitWrapper {
          */ 
         std::vector<double> apply_response_lag(const std::vector<double>& speeds, const std::vector<double> downtracks, double response_lag) const;
 
+        std::vector<cav_msgs::TrajectoryPlanPoint> remove_repeated_timestamps(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points);
     private:
     PurePursuitWrapperConfig config_;
     WaypointPub waypoint_pub_;
