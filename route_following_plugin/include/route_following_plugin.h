@@ -175,6 +175,9 @@ namespace route_following_plugin
         //extra time allowed for lane changing, in order to make transition smooth
         double buffer_lanechange_time_ = 1.0;
 
+        bool is_lanechanging_ = false;
+        double lane_change_end_dist_ =0.0;
+
         //lane change constant
         static constexpr double LATERAL_ACCELERATION_LIMIT_IN_MS=2.00;
         static const int MAX_LANE_WIDTH=3.70;

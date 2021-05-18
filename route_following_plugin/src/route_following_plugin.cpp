@@ -147,12 +147,20 @@ namespace route_following_plugin
             auto following_lanelets = wm_->getRoute()->followingRelations(shortest_path[last_lanelet_index]);
 
             //if not already on last lanelet in path, check relation with next lanelet- follow lane change procedure if req, else lane follow
-            if(last_lanelet_index!= (shortest_path.size()-1) && identifyLaneChange(following_lanelets, shortest_path[last_lanelet_index + 1].id()))
+            if(is_lanechanging_ && current_progress >= lane_change_end_dist_ - 0.1){
+                    lane_change_end_dist_ =0.0;
+                    is_lanechanging_ = false;
+            }
+            if((last_lanelet_index!= (shortest_path.size()-1) && identifyLaneChange(following_lanelets, shortest_path[last_lanelet_index + 1].id())) || is_lanechanging_)
             {
+
+                if(!is_lanechanging_){
+                    is_lanechanging_ = true;
+                }
                 //calculate required distance for lane change
                 double longl_travel_dist = (target_speed*(LANE_CHANGE_TIME_MAX + buffer_lanechange_time_));
                 double lane_change_start_dist;                             
-                
+                //TO DO- This if else condition might not be needed
                 if(wm_->routeTrackPos(shortest_path[last_lanelet_index + 1].centerline2d().back()).downtrack >= route_length){
                     lane_change_start_dist = route_length - longl_travel_dist;
                     end_dist = route_length;
@@ -162,7 +170,9 @@ namespace route_following_plugin
                     lane_change_start_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index + 1].centerline2d().back()).downtrack - longl_travel_dist;
                     end_dist  = wm_->routeTrackPos(shortest_path[last_lanelet_index + 1].centerline2d().back()).downtrack;
                 }               
+                dist_diff = end_dist - current_progress;
 
+                lane_change_end_dist_ = end_dist;
                 lane_change_start_dist = current_progress;
                 double starting_lanelet_id = shortest_path[last_lanelet_index].id();
                 double ending_lanelet_id = shortest_path[last_lanelet_index+1].id();
