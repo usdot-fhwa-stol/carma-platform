@@ -47,6 +47,7 @@ void PurePursuitWrapper::trajectoryPlanHandler(const cav_msgs::TrajectoryPlan::C
 
   //Remove trajectory points with duplicated timestamps
   std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points = remove_repeated_timestamps(tp->trajectory_points);
+  ROS_DEBUG_STREAM("Original Trajectory size:"<<tp->trajectory_points.size() <<" Size after removing duplicate timestamps:"<<trajectory_points.size());
 
   trajectory_utils::conversions::trajectory_to_downtrack_time(trajectory_points, &downtracks, &times);
 
@@ -119,6 +120,9 @@ std::vector<cav_msgs::TrajectoryPlanPoint> PurePursuitWrapper::remove_repeated_t
     if(point.target_time != prev_point.target_time){
       new_traj_points.push_back(point);
       prev_point = point;
+    }
+    else{
+      ROS_DEBUG_STREAM("Duplicate point found");
     }
   }
 

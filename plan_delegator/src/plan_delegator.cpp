@@ -190,7 +190,7 @@ namespace plan_delegator
                 if(latest_trajectory_plan.trajectory_points.size() !=0){
                     
                     if(latest_trajectory_plan.trajectory_points.back().target_time == plan_req.response.trajectory_plan.trajectory_points.front().target_time){
-
+                        ROS_DEBUG_STREAM("Removing duplicate point");
                         plan_req.response.trajectory_plan.trajectory_points.erase(plan_req.response.trajectory_plan.trajectory_points.begin());
                     }
                 }

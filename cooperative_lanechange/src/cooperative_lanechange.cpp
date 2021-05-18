@@ -547,7 +547,9 @@ namespace cooperative_lanechange
             if(ending_downtrack + ending_buffer_downtrack_ < route_length){
                 ending_pt_index = get_ending_point_index(route_geometry, ending_downtrack + ending_buffer_downtrack_);
             }
-           
+           else{
+               ROS_DEBUG_STREAM("Route Length is less than buffer requested");
+           }
             
             lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.begin() + ending_pt_index);
             first = true;
@@ -605,10 +607,10 @@ namespace cooperative_lanechange
         trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
 
         // //Remove extra points
-        // int end_dist_pt_index = getNearestPointIndex(future_geom_points, ending_state_before_buffer_);
-        // future_geom_points.resize(end_dist_pt_index + 1);
-        // times.resize(end_dist_pt_index + 1);
-        // final_yaw_values.resize(end_dist_pt_index + 1);
+        int end_dist_pt_index = getNearestPointIndex(future_geom_points, ending_state_before_buffer_);
+        future_geom_points.resize(end_dist_pt_index + 1);
+        times.resize(end_dist_pt_index + 1);
+        final_yaw_values.resize(end_dist_pt_index + 1);
 
         // Build trajectory points
         // TODO When more plugins are implemented that might share trajectory planning the start time will need to be based
