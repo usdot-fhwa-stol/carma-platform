@@ -532,7 +532,7 @@ namespace cooperative_lanechange
             int nearest_pt_index = getNearestRouteIndex(route_geometry,state);
             int ending_pt_index = get_ending_point_index(route_geometry, ending_downtrack); 
             ROS_DEBUG_STREAM("Nearest pt index in maneuvers to points:"<<nearest_pt_index);
-            ROS_DEBUG_STREAM("Ending point index in maneuvers to points:"<<ending_pt_index);
+            
             ROS_DEBUG_STREAM("State x:"<<state.X_pos_global<<" y:"<<state.Y_pos_global);
             ROS_DEBUG_STREAM("Curr pose x:" << pose_msg_.pose.position.x << " y:"<<pose_msg_.pose.position.y);
             //find percentage of maneuver left - for yield plugin use
@@ -541,6 +541,9 @@ namespace cooperative_lanechange
 
             ending_state_before_buffer_.X_pos_global = route_geometry[ending_pt_index].x();
             ending_state_before_buffer_.Y_pos_global = route_geometry[ending_pt_index].y();
+            ROS_DEBUG_STREAM("Ending point index in maneuvers to points:"<<ending_pt_index);
+            ROS_DEBUG_STREAM("ending_state_before_buffer_:"<<ending_state_before_buffer_.X_pos_global << 
+                    ", ending_state_before_buffer_.Y_pos_global" << ending_state_before_buffer_.Y_pos_globa);
             
             double route_length = wm_->getRouteEndTrackPos().downtrack;
             
@@ -607,10 +610,13 @@ namespace cooperative_lanechange
         trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
 
         // //Remove extra points
+        ROS_DEBUG_STREAM("1 future_geom_points.size()" << future_geom_points.size());
         int end_dist_pt_index = getNearestPointIndex(future_geom_points, ending_state_before_buffer_);
         future_geom_points.resize(end_dist_pt_index + 1);
         times.resize(end_dist_pt_index + 1);
         final_yaw_values.resize(end_dist_pt_index + 1);
+        ROS_DEBUG_STREAM("2 future_geom_points.size()" << future_geom_points.size());
+
 
         // Build trajectory points
         // TODO When more plugins are implemented that might share trajectory planning the start time will need to be based
@@ -618,11 +624,6 @@ namespace cooperative_lanechange
         std::vector<cav_msgs::TrajectoryPlanPoint> traj_points =
             trajectory_from_points_times_orientations(future_geom_points, times, final_yaw_values, state_time);
         
-        ROS_DEBUG_STREAM("PRINTING FINAL SPEEDS");
-        for (auto speed : final_actual_speeds)
-        {
-            ROS_DEBUG_STREAM("Final Speed: " << speed);
-        }
         //std::vector<cav_msgs::TrajectoryPlanPoint> traj;
         return traj_points;
 
@@ -639,12 +640,13 @@ namespace cooperative_lanechange
 
         std::vector<cav_msgs::TrajectoryPlanPoint> traj;
         traj.reserve(points.size());
-
+        ROS_DEBUG_STREAM("Going to iterate size points.size(): " << points.size());
         for (int i = 0; i < points.size(); i++)
         {
             cav_msgs::TrajectoryPlanPoint tpp;
             ros::Duration relative_time(times[i]);
             tpp.target_time = startTime + relative_time;
+            ROS_DEBUG_STREAM("Adding point x: " << points[i].x() << ", points[i].y()" << points[i].y());
             tpp.x = points[i].x();
             tpp.y = points[i].y();
             tpp.yaw = yaws[i];
