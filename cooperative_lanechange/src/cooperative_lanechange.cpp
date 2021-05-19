@@ -887,6 +887,7 @@ namespace cooperative_lanechange
             }
             i++;
         }
+        return best_index;
     }
 
      lanelet::BasicLineString2d CooperativeLaneChangePlugin::create_lanechange_path(lanelet::BasicPoint2d start, lanelet::ConstLanelet& start_lanelet, lanelet::BasicPoint2d end, lanelet::ConstLanelet& end_lanelet)
