@@ -543,7 +543,7 @@ namespace cooperative_lanechange
             ending_state_before_buffer_.Y_pos_global = route_geometry[ending_pt_index].y();
             ROS_DEBUG_STREAM("Ending point index in maneuvers to points:"<<ending_pt_index);
             ROS_DEBUG_STREAM("ending_state_before_buffer_:"<<ending_state_before_buffer_.X_pos_global << 
-                    ", ending_state_before_buffer_.Y_pos_global" << ending_state_before_buffer_.Y_pos_globa);
+                    ", ending_state_before_buffer_.Y_pos_global" << ending_state_before_buffer_.Y_pos_global);
             
             double route_length = wm_->getRouteEndTrackPos().downtrack;
             
