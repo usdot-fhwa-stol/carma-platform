@@ -176,8 +176,9 @@ namespace route_following_plugin
         double buffer_lanechange_time_ = 1.0;
 
         bool is_lanechanging_ = false;
-        double lane_change_end_dist_ =0.0;
-
+        std::unordered_map<int, double> lanechange_end_dist_map_; // saves last_lanelet_lanechange_index vs lanechange end dist
+        std::unordered_map<int,bool> is_first_lanechange_lanelet_; // returns true if firstlanechange
+        std::unordered_map<int, bool> is_lanechanging_lanelet_; // return true if lanehcangin idx
         //lane change constant
         static constexpr double LATERAL_ACCELERATION_LIMIT_IN_MS=2.00;
         static const int MAX_LANE_WIDTH=3.70;
