@@ -203,7 +203,7 @@ namespace route_following_plugin
                 ROS_DEBUG_STREAM("mish: dist_diff:" << dist_diff <<" at last_lanelet_index" << last_lanelet_index);
                 ROS_DEBUG_STREAM("lanechange_end_dist_map_[last_lanelet_index]" << lanechange_end_dist_map_[last_lanelet_index] <<
                                     "current_progress:" << current_progress);
-                if (std::fabs(resp.new_plan.maneuvers.back().lane_change_maneuver.end_dist - end_dist) < 0.1) // check if this is duplicate lanechange maneuver (occurs for 2nd lanelet of the lanechange)
+                if (std::fabs(resp.new_plan.maneuvers.back().lane_change_maneuver.end_dist - end_dist) > 0.1) // check if this is duplicate lanechange maneuver (occurs for 2nd lanelet of the lanechange)
                 {
                     resp.new_plan.maneuvers.push_back(
                 composeLaneChangeManeuverMessage(lane_change_start_dist, end_dist, speed_progress, target_speed, 
