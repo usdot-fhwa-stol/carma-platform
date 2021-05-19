@@ -1035,13 +1035,17 @@ lanelet::BasicPoint2d curr_pos;
         next_distance = distToNearestActiveGeofence(curr_pos);
         for(auto id : active_geofence_llt_ids_) 
         {
+          ROS_DEBUG_STREAM("Checking geofence for lanelet " << id);
           if (id == current_llt.id())
           {           
+            ROS_DEBUG_STREAM("Creating active_geofence msg for lanelet " << current_llt.id());
             outgoing_geof.is_on_active_geofence = true;
             for (auto regem: current_llt.regulatoryElements())
               {
+                  ROS_DEBUG_STREAM("Lanelet Regulatory Element: " << regem->attribute(lanelet::AttributeName::Subtype).value());
                   if (regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0)
                   {
+                    ROS_DEBUG_STREAM("Assigning SPEED_LIMIT fields");
                     lanelet::DigitalSpeedLimitPtr speed =  std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>
                     (current_map_->regulatoryElementLayer.get(regem->id()));
                     outgoing_geof.value = speed->speed_limit_.value();
@@ -1051,13 +1055,15 @@ lanelet::BasicPoint2d curr_pos;
 
                  if(regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalMinimumGap::RuleName) == 0)
                  {
+                    ROS_DEBUG_STREAM("Assigning min gap fields");
                     lanelet::DigitalMinimumGapPtr min_gap =  std::dynamic_pointer_cast<lanelet::DigitalMinimumGap>
                     (current_map_->regulatoryElementLayer.get(regem->id()));
                     outgoing_geof.minimum_gap = min_gap->getMinimumGap();
                  }
-
+                 
                  if(regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::RegionAccessRule::RuleName) == 0)
                  {
+                    ROS_DEBUG_STREAM("Assigning LANE CLOSED");
                     lanelet::RegionAccessRulePtr accessRuleReg =  std::dynamic_pointer_cast<lanelet::RegionAccessRule>
                     (current_map_->regulatoryElementLayer.get(regem->id()));
                     outgoing_geof.reason = accessRuleReg->getReason();
