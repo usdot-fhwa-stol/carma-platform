@@ -35,6 +35,7 @@ namespace platoon_strategic
             PlatoonMember(std::string staticId, std::string bsmId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp): staticId(staticId),
             bsmId(bsmId), commandSpeed(commandSpeed), vehicleSpeed(vehicleSpeed), timestamp(timestamp) {}
         };
+        
 
 
     class PlatoonManager
@@ -124,22 +125,24 @@ namespace platoon_strategic
     std::shared_ptr<ros::NodeHandle> nh_;
 
 
-    double minGap = 22.0;
-    double maxGap = 32.0;
-    std::string previousFunctionalLeaderID = "";
-    int previousFunctionalLeaderIndex = -1;
+    double minGap_ = 22.0;
+    double maxGap_ = 32.0;
+    std::string previousFunctionalLeaderID_ = "";
+    int previousFunctionalLeaderIndex_ = -1;
 
-    double maxSpacing = 4.0;
-    double minSpacing = 3.9;
-    double lowerBoundary = 1.6;
-    double upperBoundary = 1.7 ;
+    double maxSpacing_ = 4.0;
+    double minSpacing_ = 3.9;
+    double lowerBoundary_ = 1.6;
+    double upperBoundary_ = 1.7 ;
 
-    double vehicleLength = 5.0;  // m
+    double vehicleLength_ = 5.0;  // m
 
-    double gapWithFront = 0.0;
+    double gapWithFront_ = 0.0;
+
+    double downtrack_progress_ = 0;
 
 
-    std::string algorithmType = "APF_ALGORITHM";
+    std::string algorithmType_ = "APF_ALGORITHM";
 
     bool insufficientGapWithPredecessor(double distanceToFrontVehicle);
     std::vector<double> calculateTimeHeadway(std::vector<double> downtrackDistance, std::vector<double> speed) const;
@@ -158,6 +161,7 @@ namespace platoon_strategic
     void cmd_cd(const geometry_msgs::TwistStampedConstPtr& msg);
     void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
 
+    // ?????????? what is hostmobilityid
     std::string HostMobilityId = "hostid";
 
     

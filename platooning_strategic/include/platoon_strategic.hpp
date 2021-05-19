@@ -24,6 +24,8 @@
 #include <cav_msgs/TrajectoryPlanPoint.h>
 #include <cav_msgs/Plugin.h>
 #include <boost/shared_ptr.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include <carma_utils/CARMAUtils.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
@@ -32,8 +34,16 @@
 #include <cav_msgs/MobilityOperation.h>
 #include <cav_msgs/MobilityRequest.h>
 #include <cav_msgs/MobilityResponse.h>
+#include <cav_msgs/PlatooningInfo.h>
 #include <cav_msgs/PlanType.h>
+#include <cav_msgs/BSM.h>
 #include <state_machine.hpp>
+#include <carma_wm/WMListener.h>
+#include <carma_wm/WorldModel.h>
+#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/geometry/BoundingBox.h>
+#include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
+#include "platoon_config.h"
 
 // #include <leader_state.hpp>
 
@@ -41,6 +51,12 @@
 
 namespace platoon_strategic
 {
+    using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
+    using MobilityResponseCB = std::function<void(const cav_msgs::MobilityResponse&)>;
+    using MobilityRequestCB = std::function<void(const cav_msgs::MobilityRequest&)>;
+    using MobilityOperationCB = std::function<void(const cav_msgs::MobilityOperation&)>;
+    using PlatooningInfoCB = std::function<void(const cav_msgs::PlatooningInfo&)>;
+
     class PlatoonStrategicPlugin
     {
         public:
@@ -48,15 +64,49 @@ namespace platoon_strategic
             // Default constructor for PlatoonStrategicPlugin class
             PlatoonStrategicPlugin();
 
-            // general starting point of this node
-            void run();
+            /**
+            * \brief Constructor
+            * 
+            * \param wm Pointer to intialized instance of the carma world model for accessing semantic map data
+            * \param config The configuration to be used for this object
+            * \param plugin_discovery_publisher Callback which will publish the current plugin discovery state
+            */ 
+            PlatoonStrategicPlugin(carma_wm::WorldModelConstPtr wm, PlatoonPluginConfig config,
+                                PublishPluginDiscoveryCB plugin_discovery_publisher, MobilityResponseCB mobility_response_publisher,
+                                MobilityRequestCB mobility_request_publisher, MobilityOperationCB mobility_operation_publisher,
+                                PlatooningInfoCB platooning_info_publisher);
 
-            // local copy of pose
-            boost::shared_ptr<geometry_msgs::PoseStamped const> pose_msg_;
+
+            // callback functions
+            void mob_op_cb(const cav_msgs::MobilityOperation& msg);
+            void mob_req_cb(const cav_msgs::MobilityRequest& msg);
+            void mob_resp_cb(const cav_msgs::MobilityResponse& msg);
+
+            // service callbacks for carma trajectory planning
+            bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
+            int findLaneletIndexFromPath(int target_id, lanelet::routing::LaneletPath& path);
+
+            cav_msgs::Maneuver composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time& current_time);
+            void updateCurrentStatus(cav_msgs::Maneuver maneuver, double& speed, double& current_progress, int& lane_id);
+            void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
+            /**
+            * \brief Callback for the twist subscriber, which will store latest twist locally
+            * \param msg Latest twist message
+            */
+            void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
+
+            void bsm_cb(const cav_msgs::BSMConstPtr& msg);
+            
+            bool onSpin();
+            // general starting point of this node
+            // void run();
+
+            
 
             void run_states();
 
             PlatooningStateMachine psm_{nh_};
+            
 
         protected:
 
@@ -64,16 +114,34 @@ namespace platoon_strategic
             void run_leader_waiting();
             void run_candidate_follower();
             void run_follower();
+            
 
         
         private:
 
             
+            PublishPluginDiscoveryCB plugin_discovery_publisher_;
+            MobilityRequestCB mobility_request_publisher_;
+            MobilityResponseCB mobility_response_publisher_;
+            MobilityOperationCB mobility_operation_publisher_;
+            PlatooningInfoCB platooning_info_publisher_;
+
+
 
             // CARMA ROS node handles
             std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
-            
+            // wm listener pointer and pointer to the actual wm object
+            std::shared_ptr<carma_wm::WMListener> wml_;
+            carma_wm::WorldModelConstPtr wm_;
+
+            PlatoonPluginConfig config_;
+            // local copy of pose
+            // Current vehicle pose in map
+            geometry_msgs::PoseStamped pose_msg_;
+            //Internal Variables used in unit tests
+            // Current vehicle forward speed
+            double current_speed_;
 
             long waitingStartTime;
             long candidatestateStartTime;
@@ -89,17 +157,34 @@ namespace platoon_strategic
             ros::Subscriber mob_resp_sub_;
             ros::Subscriber mob_op_sub_;
 
-            ros::Timer discovery_pub_timer_;
+            bool isVehicleRightInFront(std::string rearVehicleBsmId, double downtrack);
+            
+            double findSpeedLimit(const lanelet::ConstLanelet& llt);
+            
+            MobilityRequestResponse mob_req_cb_leader(const cav_msgs::MobilityRequest& msg);
+            MobilityRequestResponse mob_req_cb_leaderwaiting(const cav_msgs::MobilityRequest& msg);
+            MobilityRequestResponse mob_req_cb_follower(const cav_msgs::MobilityRequest& msg);
+            MobilityRequestResponse mob_req_cb_candidatefollower(const cav_msgs::MobilityRequest& msg);
+            MobilityRequestResponse mob_req_cb_standby(const cav_msgs::MobilityRequest& msg);
+            
+            void mob_resp_cb_leader(const cav_msgs::MobilityResponse& msg);
+            void mob_resp_cb_leaderwaiting(const cav_msgs::MobilityResponse& msg);
+            void mob_resp_cb_follower(const cav_msgs::MobilityResponse& msg);
+            void mob_resp_cb_candidatefollower(const cav_msgs::MobilityResponse& msg);
+            void mob_resp_cb_standby(const cav_msgs::MobilityResponse& msg);
 
 
-            // service callbacks for carma trajectory planning
-            bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
+            
+            
+            void mob_op_cb_leader(const cav_msgs::MobilityOperation& msg);
+            void mob_op_cb_leaderwaiting(const cav_msgs::MobilityOperation& msg);
+            void mob_op_cb_follower(const cav_msgs::MobilityOperation& msg);
+            void mob_op_cb_candidatefollower(const cav_msgs::MobilityOperation& msg);
+            void mob_op_cb_standby(const cav_msgs::MobilityOperation& msg);
 
-            void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
+            
 
-            void mob_req_cb(const cav_msgs::MobilityRequest& msg);
-            void mob_resp_cb(const cav_msgs::MobilityResponse& msg);
-            void mob_op_cb(const cav_msgs::MobilityOperation& msg);
+            std::string host_bsm_id_ = "";
 
             // ros service servers
             ros::ServiceServer maneuver_srv_;
@@ -124,7 +209,7 @@ namespace platoon_strategic
             int num_points = traj_freq * trajectory_time_length_;
 
             // initialize this node
-            void initialize();
+            // void initialize();
 
             // generated trajectory plan
             cav_msgs::TrajectoryPlan trajectory_msg;
@@ -142,35 +227,54 @@ namespace platoon_strategic
             void composeMobilityOperationCandidateFollower(cav_msgs::MobilityOperation &msg);
 
 
-            double maxAllowedJoinTimeGap = 15.0;
-            double maxAllowedJoinGap = 90;
-            int maxPlatoonSize = 10;
-            double vehicleLength = 5.0;
+            double maxAllowedJoinTimeGap_ = 15.0;
+            double maxAllowedJoinGap_ = 90;
+            int maxPlatoonSize_ = 10;
+            double vehicleLength_ = 5.0;
             std::mutex plan_mutex_;
-            int infoMessageInterval;
+            int infoMessageInterval_ = 200; //ms
             long lastHeartBeatTime = 0.0;
-            int statusMessageInterval = 100;
-            int NEGOTIATION_TIMEOUT = 5000;  // ms
+            int statusMessageInterval_ = 100;
+            
             int noLeaderUpdatesCounter = 0;
             int LEADER_TIMEOUT_COUNTER_LIMIT = 5;
             double waitingStateTimeout = 25.0; // s
             double desiredJoinGap = 30.0; // m
             double desiredJoinTimeGap = 4.0; // s
 
+            PlatoonPlan current_plan_;
 
+
+            // Platooning Plugin Info 
             const std::string MOBILITY_STRATEGY = "Carma/Platooning";
             const std::string OPERATION_INFO_TYPE = "INFO";
             const std::string OPERATION_STATUS_TYPE = "STATUS";
             const std::string OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%1%,DTD:%2%,SPEED:%3%";
+            const std::string JOIN_AT_REAR_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";
+            int NEGOTIATION_TIMEOUT = 5000;  // ms
+            
 
 
             // Check these values
             std::string HostMobilityId = "hostid";
             std::string BSMID = "BSM";
             std::string MobilityId = "mobilityid";
+
+            // leader_waiting
+            std::string applicantId_;
+
+            std::string bsmIDtoString(cav_msgs::BSMCoreData bsm_core)
+            {
+                std::string res = "";
+                for (size_t i=0; i<bsm_core.id.size(); i++)
+                {
+                res+=std::to_string(bsm_core.id[i]);
+                }
+                return res;
+            }
             
 
 
-    
+
     };
 }
