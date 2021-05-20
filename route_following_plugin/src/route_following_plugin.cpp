@@ -179,12 +179,17 @@ namespace route_following_plugin
                     starting_lanelet_id = shortest_path[last_lanelet_index].id();
                     ending_lanelet_id = shortest_path[last_lanelet_index+1].id();
                     last_lanelet_index_temp = last_lanelet_index + 1;
+                    ROS_DEBUG_STREAM("This is first lanechange lanelet, so starting_lanelet_id:" << starting_lanelet_id <<
+                        ", ending_lanelet_id" << ending_lanelet_id << ", last_lanelet_index_temp" << last_lanelet_index_temp);
+
                 }
                 else  //if not duplicate, yet not first lanehcange lanelet (because later, we are not composing for duplicate lc lanelet anyway)
                 {
                     starting_lanelet_id = shortest_path[last_lanelet_index -1].id();
                     ending_lanelet_id = shortest_path[last_lanelet_index].id();
                     last_lanelet_index_temp = last_lanelet_index;
+                    ROS_DEBUG_STREAM("This is second lanechange lanelet, so starting_lanelet_id:" << starting_lanelet_id <<
+                        ", ending_lanelet_id" << ending_lanelet_id << ", last_lanelet_index_temp" << last_lanelet_index_temp);
                 }
 
                 /////////                            
@@ -203,7 +208,8 @@ namespace route_following_plugin
                 ROS_DEBUG_STREAM("mish: dist_diff:" << dist_diff <<" at last_lanelet_index" << last_lanelet_index);
                 ROS_DEBUG_STREAM("lanechange_end_dist_map_[last_lanelet_index]" << lanechange_end_dist_map_[last_lanelet_index] <<
                                     "current_progress:" << current_progress);
-                if (std::fabs(resp.new_plan.maneuvers.back().lane_change_maneuver.end_dist - end_dist) > 0.1) // check if this is duplicate lanechange maneuver (occurs for 2nd lanelet of the lanechange)
+                
+                if (std::fabs(lane_change_start_dist - end_dist) > 0.1) // check if this is duplicate lanechange maneuver (occurs for 2nd lanelet of the lanechange)
                 {
                     resp.new_plan.maneuvers.push_back(
                 composeLaneChangeManeuverMessage(lane_change_start_dist, end_dist, speed_progress, target_speed, 
