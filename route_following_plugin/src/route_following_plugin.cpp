@@ -157,7 +157,7 @@ namespace route_following_plugin
             //if not already on last lanelet in path, check relation with next lanelet- follow lane change procedure if req, else lane follow
             
             // de facto lanechanging checker
-            if (following_lanelets.empty() || identifyLaneChange(following_lanelets, shortest_path[last_lanelet_index + 1].id()))
+            if (identifyLaneChange(following_lanelets, shortest_path[last_lanelet_index + 1].id()))
             {
                 ROS_DEBUG_STREAM("Lane change detected for index:" << last_lanelet_index);
                 is_lanechanging_lanelet_[last_lanelet_index]= true;
@@ -211,10 +211,10 @@ namespace route_following_plugin
                 ROS_DEBUG_STREAM("lanechange_end_dist_map_[last_lanelet_index]" << lanechange_end_dist_map_[last_lanelet_index] <<
                                     "current_progress:" << current_progress);
                 
-                if (std::fabs(lane_change_start_dist - end_dist) > 0.1) // check if this is duplicate lanechange maneuver (occurs for 2nd lanelet of the lanechange)
+                if (std::fabs(lane_change_start_dist - lanechange_end_dist_map_[last_lanelet_index]) > 0.1) // check if this is duplicate lanechange maneuver (occurs for 2nd lanelet of the lanechange)
                 {
                     resp.new_plan.maneuvers.push_back(
-                composeLaneChangeManeuverMessage(lane_change_start_dist, end_dist, speed_progress, target_speed, 
+                composeLaneChangeManeuverMessage(lane_change_start_dist, lanechange_end_dist_map_[last_lanelet_index], speed_progress, target_speed, 
                                     starting_lanelet_id, ending_lanelet_id,
                                     time_progress));
                 }
