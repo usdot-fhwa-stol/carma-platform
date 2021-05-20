@@ -105,7 +105,11 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
   // used for assigning them to the regem as parameters
   for (auto llt_or_area : gf_ptr->affected_parts_)
   {
-    if (llt_or_area.isLanelet()) affected_llts.push_back(current_map_->laneletLayer.get(llt_or_area.lanelet()->id()));
+    if (llt_or_area.isLanelet())
+    {
+      affected_llts.push_back(current_map_->laneletLayer.get(llt_or_area.lanelet()->id()));
+      ROS_DEBUG_STREAM("Geofence affects lanelet ID " << llt_or_area.lanelet()->id());
+    }
     if (llt_or_area.isArea()) affected_areas.push_back(current_map_->areaLayer.get(llt_or_area.area()->id()));
   }
 
@@ -136,6 +140,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
            ROS_WARN_STREAM("Digital  speed limit is invalid. Value set to 0mph.");
       sL = 0_mph;
     }// @SONAR_START@
+    ROS_DEBUG_STREAM("Adding MAXSPEED to " < affected_llts.size() << " Lanelets.");
     gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
                                         sL, affected_llts, affected_areas, { lanelet::Participants::VehicleCar }));
   }
@@ -168,6 +173,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
 
  if (msg_detail.choice == cav_msgs::TrafficControlDetail::CLOSED_CHOICE && msg_detail.closed==cav_msgs::TrafficControlDetail::CLOSED)
   {
+    ROS_DEBUG_STREAM("Adding REGIONACCESSRULE to " < affected_llts.size() << " Lanelets.");
     addRegionAccessRule(gf_ptr,msg_v01,affected_llts);
   }
 
@@ -181,6 +187,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
       ROS_WARN_STREAM("Digital min gap is invalid. Value set to 0 meter.");
       min_gap = 0;
     }
+    ROS_DEBUG_STREAM("Adding MIN_GAP to " < affected_llts.size() << " Lanelets.");
     addRegionMinimumGap(gf_ptr,msg_v01, min_gap, affected_llts, affected_areas);
   }
 
@@ -1045,17 +1052,22 @@ lanelet::BasicPoint2d curr_pos;
                   ROS_DEBUG_STREAM("Lanelet Regulatory Element: " << regem->attribute(lanelet::AttributeName::Subtype).value());
                   if (regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0)
                   {
-                    ROS_DEBUG_STREAM("Assigning SPEED_LIMIT fields");
+                    ROS_DEBUG_STREAM("Assigning SPEED_LIMIT");
                     lanelet::DigitalSpeedLimitPtr speed =  std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>
                     (current_map_->regulatoryElementLayer.get(regem->id()));
                     outgoing_geof.value = speed->speed_limit_.value();
                     outgoing_geof.advisory_speed = speed->speed_limit_.value(); 
-                    outgoing_geof.type = cav_msgs::CheckActiveGeofence::SPEED_LIMIT;
+                    
+                    // Cannot overrule outgoing_geof.type if it is already set to LANE_CLOSED
+                    if(outgoing_geof.type != cav_msgs::CheckActiveGeofence::LANE_CLOSED);
+                    {
+                      outgoing_geof.type = cav_msgs::CheckActiveGeofence::SPEED_LIMIT;
+                    }
                  }
 
                  if(regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalMinimumGap::RuleName) == 0)
                  {
-                    ROS_DEBUG_STREAM("Assigning min gap fields");
+                    ROS_DEBUG_STREAM("Assigning MIN_GAP fields");
                     lanelet::DigitalMinimumGapPtr min_gap =  std::dynamic_pointer_cast<lanelet::DigitalMinimumGap>
                     (current_map_->regulatoryElementLayer.get(regem->id()));
                     outgoing_geof.minimum_gap = min_gap->getMinimumGap();
@@ -1063,7 +1075,7 @@ lanelet::BasicPoint2d curr_pos;
                  
                  if(regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::RegionAccessRule::RuleName) == 0)
                  {
-                    ROS_DEBUG_STREAM("Assigning LANE CLOSED");
+                    ROS_DEBUG_STREAM("Assigning LANE_CLOSED");
                     lanelet::RegionAccessRulePtr accessRuleReg =  std::dynamic_pointer_cast<lanelet::RegionAccessRule>
                     (current_map_->regulatoryElementLayer.get(regem->id()));
                     outgoing_geof.reason = accessRuleReg->getReason();
