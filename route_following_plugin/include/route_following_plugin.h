@@ -26,7 +26,7 @@
 #include <cav_srvs/PlanManeuvers.h>
 
 /**
- * \brief Macro definition to enable easier access to fields shared across the maneuver typees
+ * \brief Macro definition to enable easier access to fields shared across the maneuver types
  * \param mvr The maneuver object to invoke the accessors on
  * \param property The name of the field to access on the specific maneuver types. Must be shared by all extant maneuver types
  * \return Expands to an expression (in the form of chained ternary operators) that evalutes to the desired field
@@ -36,16 +36,15 @@
             ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN ? (mvr).intersection_transit_right_turn_maneuver.property :\
                 ((mvr).type == cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT ? (mvr).intersection_transit_straight_maneuver.property :\
                     ((mvr).type == cav_msgs::Maneuver::LANE_CHANGE ? (mvr).lane_change_maneuver.property :\
+                        (mvr).type == cav_msgs::Maneuver::LANE_FOLLOWING ? (mvr).lane_following_maneuver.property :\
                         throw new std::invalid_argument("GET_MANEUVER_PROPERTY (property) called on maneuver with invalid type id"))))))
-
-
+                        
 namespace route_following_plugin
 {
 
     class RouteFollowingPlugin
     {
-
-    public:
+        public:
 
         // constant speed limit for test
         // TODO Once world_model and vector map is ready, it should be removed
@@ -56,6 +55,7 @@ namespace route_following_plugin
          * \brief Default constructor for RouteFollowingPlugin class
          */
         RouteFollowingPlugin();
+
 
         /**
          * \brief General entry point to begin the operation of this class
@@ -80,18 +80,8 @@ namespace route_following_plugin
          * \param current_time Start time of the current maneuver passed as reference
          * \return A lane keeping maneuver message which is ready to be published
          */
-        cav_msgs::Maneuver composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time& current_time);
-        /**
-         * \brief Compose a stop and wait maneuver message based on input params
-         * \param current_dist Start downtrack distance of the current maneuver
-         * \param end_dist End downtrack distance of the current maneuver
-         * \param current_speed Start speed of the current maneuver
-         * \param start_lane_id Starting Lanelet ID of the current maneuver
-         * \param target_speed Target speed of the current maneuver
-         * \param current_time Start time of the current maneuver passed as reference
-         * \return A lane keeping maneuver message which is ready to be published
-         */
-        cav_msgs::Maneuver composeStopandWaitManeuverMessage(double current_dist, double end_dist, double current_speed, int start_lane_id, int target_lane_id, ros::Time& current_time, double end_time);
+        cav_msgs::Maneuver composeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int lane_id, ros::Time current_time);
+
         /**
          * \brief Compose a lane change maneuver message based on input params
          * \param current_dist Start downtrack distance of the current maneuver
@@ -103,16 +93,8 @@ namespace route_following_plugin
          * \param current_time Start time of the current maneuver passed as reference
          * \return A lane keeping maneuver message which is ready to be published
          */
-        cav_msgs::Maneuver composeLaneChangeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int starting_lane_id, int ending_lane_id, ros::Time& current_time);
-        /**
-         * \brief Given a prior maneuver plan, update current speed, current_progress and current lanelet id for requested plan
-         * \param maneuver A maneuver message from the end of the prior plan, used to update current request
-         * \param speed current speed value passed as reference, updated in the function
-         * \param current_progress the current_progress passed as reference, updated in the function
-         * \param lane_id The lanelet id of the current lanelet passed as reference, updated in the function
-         * \return Whether we need a lanechange to reach to the next lanelet in the shortest path
-         */
-        void updateCurrentStatus(cav_msgs::Maneuver maneuver, double& speed, double& current_progress, int& lane_id);
+        cav_msgs::Maneuver composeLaneChangeManeuverMessage(double current_dist, double end_dist, double current_speed, double target_speed, int starting_lane_id, int ending_lane_id, ros::Time current_time);
+        
         /**
          * \brief Given a LaneletRelations and ID of the next lanelet in the shortest path
          * \param relations LaneletRelations relative to the previous lanelet
@@ -121,6 +103,8 @@ namespace route_following_plugin
          */
         bool identifyLaneChange(lanelet::routing::LaneletRelations relations, int target_id);
 
+        void set_maneuver_start_dist(cav_msgs::Maneuver& maneuver, double start_dist);
+
         /**
          * \brief Service callback for arbitrator maneuver planning
          * \param req Plan maneuver request
@@ -128,12 +112,21 @@ namespace route_following_plugin
          * \return If service call successed
          */
         bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
+
+        double get_final_speed(cav_msgs::Maneuver maneuver);
+
+        double get_end_dist(cav_msgs::Maneuver maneuver);
+
         /**
          * \brief Given a Lanelet, find it's associated Speed Limit from the vector map
          * \param llt Constant Lanelet object
          * \return value of speed limit as a double, returns default value of 25 mph
          */
         double findSpeedLimit(const lanelet::ConstLanelet& llt);
+
+        void route_cb();
+
+        std::function<void()> route_set; 
 
         //Internal Variables used in unit tests
         // Current vehicle forward speed
@@ -152,7 +145,7 @@ namespace route_following_plugin
         //Tactical plugin being used for planning lane change
         std::string lane_change_plugin_ = "CooperativeLaneChangePlugin";
 
-    private:
+        private:
 
         // CARMA ROS node handles
         std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
@@ -166,25 +159,20 @@ namespace route_following_plugin
         ros::Timer discovery_pub_timer_;
 
         // ROS service servers
-        ros::ServiceServer plan_maneuver_srv_;        
+        ros::ServiceServer plan_maneuver_srv_;  
+
+        //Queue of maneuver plans
+        std::vector<cav_msgs::Maneuver> maneuvers;
 
         // Minimal duration of maneuver, loaded from config file
         double mvr_duration_;
-        //Jerk used to come to stop at end of route
-        double jerk_ = 0.05;
-        //extra time allowed for lane changing, in order to make transition smooth
-        double buffer_lanechange_time_ = 1.0;
 
-        //lane change constant
-        static constexpr double LATERAL_ACCELERATION_LIMIT_IN_MS=2.00;
-        static const int MAX_LANE_WIDTH=3.70;
-        static constexpr double LANE_CHANGE_TIME_MAX=sqrt(2*MAX_LANE_WIDTH/LATERAL_ACCELERATION_LIMIT_IN_MS);
-
-        //Small constant to compare double with approx zero
-        const double epislon_ = 0.001;
 
         // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
+
+        //Small constant to compare double with approx zero
+        const double epislon_ = 0.001;
 
         /**
          * \brief Initialize ROS publishers, subscribers, service servers and service clients
@@ -202,9 +190,6 @@ namespace route_following_plugin
          * \param msg Latest twist message
          */
         void twist_cd(const geometry_msgs::TwistStampedConstPtr& msg);
- 
-    
-    
-    };
 
+    };
 }
