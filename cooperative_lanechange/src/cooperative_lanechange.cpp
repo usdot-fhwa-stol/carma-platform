@@ -851,6 +851,10 @@ namespace cooperative_lanechange
                 break;
             }
         }
+        if (best_index == 0)
+        {
+            best_index = points.size() - 1;
+        }
         return best_index;
     }
 
