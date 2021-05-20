@@ -838,11 +838,16 @@ namespace cooperative_lanechange
     }
 
         int CooperativeLaneChangePlugin::get_ending_point_index(lanelet::BasicLineString2d& points, double ending_downtrack){
-        int best_index = points.size()-1;
-        for(int i=points.size()-1;i>=0;i--){
+        int best_index = 0;
+        
+        for(int i=0;i < points.size();i++){
             double downtrack = wm_->routeTrackPos(points[i]).downtrack;
-            if(downtrack <= ending_downtrack){
-                best_index = i;
+            ROS_DEBUG_STREAM("get_ending_point_index>> points[i].x(): " << points[i].x() << ", points[i].y(): " << points[i].y() << ", downtrack: "<< downtrack);
+
+            if(downtrack > ending_downtrack){
+                best_index = i - 1;
+                ROS_DEBUG_STREAM("get_ending_point_index>> Found best_idx: " << best_index<<", points[i].x(): " << points[i].x() << ", points[i].y(): " << points[i].y() << ", downtrack: "<< downtrack);
+
                 break;
             }
         }
