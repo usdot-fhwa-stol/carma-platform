@@ -24,6 +24,7 @@
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
 #include <cav_srvs/PlanManeuvers.h>
+#include <cav_msgs/UpcomingLaneChangeStatus.h>
 
 /**
  * \brief Macro definition to enable easier access to fields shared across the maneuver typees
@@ -148,6 +149,12 @@ namespace route_following_plugin
 
         // config limit for vehicle speed limit set as ros parameter
         double config_limit=0.0;
+        /**
+         * \brief Given lane change status
+         * \param 
+         * \return 
+         */
+        cav_msgs::UpcomingLaneChangeStatus ComposeLaneChangeStatus(double lane_change_start_dist,lanelet::ConstLanelet starting_lanelet,lanelet::ConstLanelet ending_lanelet,double current_downtrack);
 
     private:
 
@@ -158,6 +165,7 @@ namespace route_following_plugin
 
         // ROS publishers and subscribers
         ros::Publisher plugin_discovery_pub_;
+        ros::Publisher upcoming_lane_change_status_pub_;
         ros::Subscriber pose_sub_;
         ros::Subscriber twist_sub_;
         ros::Timer discovery_pub_timer_;
@@ -182,6 +190,9 @@ namespace route_following_plugin
 
         // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
+
+        //Upcoming Lane Change message
+        cav_msgs::UpcomingLaneChangeStatus upcoming_lane_change_status_msg_;
 
         /**
          * \brief Initialize ROS publishers, subscribers, service servers and service clients
