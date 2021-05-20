@@ -114,7 +114,9 @@ namespace route_following_plugin
 
             int end_lanelet =0;
             updateCurrentStatus(req.prior_plan.maneuvers.back(),speed_progress,current_progress,end_lanelet);
+            ROS_DEBUG_STREAM("was >> last_lanelet_index:" << last_lanelet_index);
             last_lanelet_index = findLaneletIndexFromPath(end_lanelet,shortest_path);
+            ROS_DEBUG_STREAM("after updateCurrentStatus >> last_lanelet_index:" << last_lanelet_index);
         }
 
         bool approaching_route_end = false;
@@ -155,7 +157,7 @@ namespace route_following_plugin
             //if not already on last lanelet in path, check relation with next lanelet- follow lane change procedure if req, else lane follow
             
             // de facto lanechanging checker
-            if (identifyLaneChange(following_lanelets, shortest_path[last_lanelet_index + 1].id()))
+            if (following_lanelets.empty() || identifyLaneChange(following_lanelets, shortest_path[last_lanelet_index + 1].id()))
             {
                 ROS_DEBUG_STREAM("Lane change detected for index:" << last_lanelet_index);
                 is_lanechanging_lanelet_[last_lanelet_index]= true;
@@ -383,7 +385,7 @@ namespace route_following_plugin
             current_progress =GET_MANEUVER_PROPERTY(maneuver,end_dist);
             lane_id = stoi(GET_MANEUVER_PROPERTY(maneuver,ending_lane_id));
         }
-
+        ROS_INFO_STREAM("updateCurrentStatus: speed:"<<speed<<", current_progress:"<<current_progress << ", lane_id:"<<lane_id);
     }
 
     double RouteFollowingPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt)
