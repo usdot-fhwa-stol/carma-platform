@@ -924,7 +924,6 @@ namespace cooperative_lanechange
             centerline_points.push_back(current_position);
 
         }
-        centerline_points.push_back(end);
 
         std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(centerline_points);
         if(!fit_curve)
