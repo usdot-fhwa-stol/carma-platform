@@ -915,6 +915,7 @@ namespace cooperative_lanechange
             centerline_points.push_back(current_position);
 
         }
+        centerline_points.push_back(end);
 
         std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(centerline_points);
         if(!fit_curve)
@@ -930,7 +931,7 @@ namespace cooperative_lanechange
             lc_route.push_back(p);
             scaled_steps_along_curve += 1.0/total_points;
         }
-        lc_route.push_back(end);
+        lc_route.push_back(end); // at 1.0 scaled steps
 
         return lc_route;
     }
@@ -939,7 +940,7 @@ namespace cooperative_lanechange
     {
         //Create route geometry for lane change maneuver
         //Starting downtrack maybe in the previous lanelet, if it is, have a lane follow till new lanelet starts
-        std::vector<lanelet::ConstLanelet> lanelets_in_path = wm->getLaneletsBetween(starting_downtrack, ending_downtrack, true);
+        std::vector<lanelet::ConstLanelet> lanelets_in_path = wm->getLaneletsBetween(starting_downtrack + 0.1, ending_downtrack -0.1, true); // try our best to avoid picking up before andnext lanelets
         lanelet::BasicLineString2d centerline_points = {};
         int lane_change_iteration = 0;
         if(lanelets_in_path[0].id() != starting_lane_id){
@@ -962,7 +963,7 @@ namespace cooperative_lanechange
 
             lanelet::BasicLineString2d first=lanelets_in_path[lane_change_iteration].centerline2d().basicLineString();
             lanelet::BasicPoint2d start = first.front();
-            lanelet::BasicLineString2d last=lanelets_in_path.back().centerline2d().basicLineString();
+            lanelet::BasicLineString2d last=lanelets_in_path[lane_change_iteration + 1].centerline2d().basicLineString();
             lanelet::BasicPoint2d end = last.back();
             lanelet::BasicLineString2d new_points = create_lanechange_path(start,lanelets_in_path[lane_change_iteration], end, lanelets_in_path[lane_change_iteration+1]);
             centerline_points.insert(centerline_points.end(),new_points.begin(),new_points.end() );
