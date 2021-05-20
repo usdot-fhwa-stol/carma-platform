@@ -247,7 +247,7 @@ namespace cooperative_lanechange
                 break;
             }
         }
-        if(foundRoadwayObject){
+        if(false){
             ROS_DEBUG_STREAM("Found Roadway object");
             //get current_gap
             ROS_DEBUG_STREAM("veh2_lanelet_id:" << veh2_lanelet_id << "veh2_downtrack" << veh2_downtrack);
