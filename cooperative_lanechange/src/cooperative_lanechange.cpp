@@ -554,7 +554,7 @@ namespace cooperative_lanechange
                ROS_DEBUG_STREAM("Route Length is less than buffer requested");
            }
             
-            lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.begin() + ending_pt_index);
+            lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.begin());
             first = true;
             
             ROS_DEBUG_STREAM("future geom size:"<<future_route_geometry.size());
