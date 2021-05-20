@@ -846,7 +846,7 @@ namespace cooperative_lanechange
 
             if(downtrack > ending_downtrack){
                 best_index = i - 1;
-                ROS_DEBUG_STREAM("get_ending_point_index>> Found best_idx: " << best_index<<", points[i].x(): " << points[i].x() << ", points[i].y(): " << points[i].y() << ", downtrack: "<< downtrack);
+                ROS_DEBUG_STREAM("get_ending_point_index>> Found best_idx: " << best_index -1<<", points[i].x(): " << points[i -1].x() << ", points[i].y(): " << points[i - 1].y() << ", downtrack: "<< downtrack);
 
                 break;
             }
