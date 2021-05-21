@@ -91,7 +91,7 @@ install(DIRECTORY launch config
 #############
 ## Testing ##
 #############
-# catkin_add_gmock(${PROJECT_NAME}-test
-# test/test_route_following_plugin.cpp
-#  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
-# target_link_libraries(${PROJECT_NAME}-test route_following_plugin_lib ${catkin_LIBRARIES})
+catkin_add_gmock(${PROJECT_NAME}-test
+test/test_route_following_plugin.cpp
+ WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
+target_link_libraries(${PROJECT_NAME}-test route_following_plugin_lib ${catkin_LIBRARIES})
