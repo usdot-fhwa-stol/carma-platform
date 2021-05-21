@@ -66,7 +66,6 @@ add_executable( ${PROJECT_NAME}
 
 add_library(platoon_strategic_plugin_lib
  src/platoon_strategic.cpp
- src/state_machine.cpp
  src/platoon_manager.cpp)
 
 add_dependencies(platoon_strategic_plugin_lib ${catkin_EXPORTED_TARGETS})
@@ -94,7 +93,7 @@ install(TARGETS ${PROJECT_NAME}
 
 # Mark other files for installation (e.g. launch and bag files, etc.)
 install(DIRECTORY
-  launch
+  launch config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
@@ -105,7 +104,6 @@ install(DIRECTORY
 
 catkin_add_gmock(${PROJECT_NAME}-test
   test/test_platoon_manager.cpp
-  test/test_state_machine.cpp
   test/mobility_messages.cpp
   test/main_test.cpp)
 

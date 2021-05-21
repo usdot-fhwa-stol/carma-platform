@@ -1,4 +1,7 @@
 #include "platoon_manager.hpp"
+#include "platoon_strategic.hpp"
+#include "platoon_config.h"
+// #include "platoon_strategic.hpp"
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 #include <carma_wm/WMListener.h>
@@ -7,7 +10,54 @@
 #include <carma_utils/CARMAUtils.h>
 // #include "TestHelpers.h"
 
+using namespace platoon_strategic;
 
+TEST(PlatoonManagerTest, test_construct)
+{
+    PlatoonPluginConfig config;
+    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+
+    PlatoonStrategicPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+
+    cav_msgs::MobilityOperation msg;
+    msg.strategy_params = "INFO|REAR:1,LENGTH:2,SPEED:3,SIZE:4";
+    plugin.mob_op_cb(msg);
+}
+
+TEST(PlatoonManagerTest, test_split)
+{
+    cav_msgs::MobilityOperation msg;
+    std::string strategyParams("INFO|REAR:1,LENGTH:2,SPEED:3,SIZE:4");
+    std::vector<std::string> inputsParams;
+    boost::algorithm::split(inputsParams, strategyParams, boost::is_any_of(","));
+    std::vector<std::string> rearVehicleBsmId_parsed;
+    boost::algorithm::split(rearVehicleBsmId_parsed, inputsParams[0], boost::is_any_of(":"));
+    std::string rearVehicleBsmId = rearVehicleBsmId_parsed[1];
+    std::cout << "rearVehicleBsmId: " << rearVehicleBsmId << std::endl;
+
+    std::vector<std::string> rearVehicleDtd_parsed;
+    boost::algorithm::split(rearVehicleDtd_parsed, inputsParams[1], boost::is_any_of(":"));
+    double rearVehicleDtd = std::stod(rearVehicleDtd_parsed[1]);
+    std::cout << "rearVehicleDtd: " << rearVehicleDtd << std::endl;
+
+
+    
+}
+
+TEST(PlatoonManagerTest, test_compose)
+{
+    std::string OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%1%,DTD:%2%,SPEED:%3%";
+    double cmdSpeed = 1;
+    double current_speed = 2;
+    double current_downtrack = 4;
+    boost::format fmter(OPERATION_STATUS_PARAMS);
+    fmter %cmdSpeed;
+    fmter %current_downtrack;
+    fmter %current_speed;
+    std::string statusParams = fmter.str();
+
+    std::cout << "statusParams: " << statusParams << std::endl;
+}
 
 TEST(PlatoonManagerTest, test1)
 {

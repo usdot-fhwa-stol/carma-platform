@@ -31,7 +31,7 @@ namespace platoon_strategic
       mobility_response_publisher_(mobility_response_publisher), mobility_request_publisher_(mobility_request_publisher),
       mobility_operation_publisher_(mobility_operation_publisher), platooning_info_publisher_(platooning_info_publisher)
     {
-        plugin_discovery_msg_.name = "YieldPlugin";
+        plugin_discovery_msg_.name = "PlatoonStrategicPlugin";
         plugin_discovery_msg_.versionId = "v1.0";
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = false;
@@ -40,40 +40,6 @@ namespace platoon_strategic
     }
                                     
 
-    // void PlatoonStrategicPlugin::initialize()
-    // {
-    //     nh_.reset(new ros::CARMANodeHandle());
-    //     pnh_.reset(new ros::CARMANodeHandle("~"));
-
-        
-        
-    //     maneuver_srv_ = nh_->advertiseService("strategic_plan/plan_maneuvers", &PlatoonStrategicPlugin::plan_maneuver_cb, this);
-
-    //     mob_op_pub_ = nh_->advertise<cav_msgs::MobilityOperation>("mobility_operation_message", 5);
-    //     mob_req_pub_ = nh_->advertise<cav_msgs::MobilityRequest>("mobility_request_message", 5);
-                
-    //     platoon_strategic_plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
-    //     plugin_discovery_msg_.name = "PlatooningStrategicPlugin";
-    //     plugin_discovery_msg_.versionId = "v1.0";
-    //     plugin_discovery_msg_.available = true;
-    //     plugin_discovery_msg_.activated = false;
-    //     plugin_discovery_msg_.type = cav_msgs::Plugin::STRATEGIC;
-    //     plugin_discovery_msg_.capability = "strategic_plan/plan_maneuvers";
-        
-    //     pose_sub_ = nh_->subscribe("current_pose", 1, &PlatoonStrategicPlugin::pose_cb, this);
-
-    //     mob_req_sub_ = nh_->subscribe("incoming_mobility_request_message", 1, &PlatoonStrategicPlugin::mob_req_cb, this);
-    //     mob_resp_sub_ = nh_->subscribe("incoming_mobility_response_message", 1, &PlatoonStrategicPlugin::mob_resp_cb, this);
-    //     mob_op_sub_ = nh_->subscribe("incoming_mobility_operation_message", 1, &PlatoonStrategicPlugin::mob_op_cb, this);
-
-
-    //     ros::CARMANodeHandle::setSpinCallback([this]() -> bool {
-    //         platoon_strategic_plugin_discovery_pub_.publish(plugin_discovery_msg_);
-    //         return true;
-    //     });
-
-
-    // }
 
     bool PlatoonStrategicPlugin::onSpin() 
     {
@@ -81,50 +47,9 @@ namespace platoon_strategic
         return true;
     }
 
-    void PlatoonStrategicPlugin::run_states(){
-        
-        switch (psm_.current_platoon_state)
-        {
-        case PlatoonState::STANDBY:
-            break;
-        case PlatoonState::LEADERWAITING:
-            waitingStartTime = ros::Time::now().toSec()*1000;
-            run_leader_waiting();
-            break;
-
-        case PlatoonState::LEADER:
-            run_leader();
-            break;
-        
-        case PlatoonState::CANDIDATEFOLLOWER:
-            candidatestateStartTime = ros::Time::now().toSec()*1000;
-            run_candidate_follower();
-            break;
-        
-        case PlatoonState::FOLLOWER:
-            run_follower();
-            break;
-        
-        default:
-            throw std::invalid_argument("Invalid State");
-            break;
-        }
+    
 
 
-    }
-
-
-    // void PlatoonStrategicPlugin::run()
-    // {
-    // 	// initialize();
-    //     psm_.onMobilityRequestMessage(mobility_req_msg_);
-    //     psm_.onMobilityOperationMessage(mobility_op_msg_);
-    //     psm_.onMobilityResponseMessage(mobility_resp_msg_);
-    //     run_states();
-    //     ros::CARMANodeHandle::setSpinRate(10.0);
-    //     ros::CARMANodeHandle::spin();
-
-    // }
 
     int PlatoonStrategicPlugin::findLaneletIndexFromPath(int target_id, lanelet::routing::LaneletPath& path)
     {
@@ -273,12 +198,12 @@ namespace platoon_strategic
         if(config_.config_limit > 0.0 && config_.config_limit < hardcoded_max)
         {
             param_speed = config_.config_limit;
-            ROS_DEBUG("Using Configurable value");
+            ROS_DEBUG_STREAM("Using Configurable value");
         }
         else 
         {
             param_speed = hardcoded_max;
-            ROS_DEBUG(" Using Hardcoded maximum");
+            ROS_DEBUG_STREAM(" Using Hardcoded maximum");
         }
         //If either value is 0, use the other valid limit
         if(traffic_speed <= config_.epislon || param_speed <= config_.epislon){
@@ -314,8 +239,8 @@ namespace platoon_strategic
         }
         maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
         current_time = maneuver_msg.lane_following_maneuver.end_time;
-        ROS_INFO_STREAM("Creating lane follow start dist:"<<current_dist<<" end dist:"<<end_dist);
-        ROS_INFO_STREAM("Duration:"<<maneuver_msg.lane_following_maneuver.end_time.toSec() - maneuver_msg.lane_following_maneuver.start_time.toSec());
+        ROS_DEBUG_STREAM("Creating lane follow start dist:"<<current_dist<<" end dist:"<<end_dist);
+        ROS_DEBUG_STREAM("Duration:"<< maneuver_msg.lane_following_maneuver.end_time.toSec() - maneuver_msg.lane_following_maneuver.start_time.toSec());
         return maneuver_msg;
     }
 
@@ -326,9 +251,9 @@ namespace platoon_strategic
             // Task 1
                 if(tsStart - waitingStartTime > waitingStateTimeout * 1000) {
                     //TODO if the current state timeouts, we need to have a kind of ABORT message to inform the applicant
-                    ROS_DEBUG("LeaderWaitingState is timeout, changing back to PlatoonLeaderState.");
+                    ROS_DEBUG_STREAM("LeaderWaitingState is timeout, changing back to PlatoonLeaderState.");
                     // plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
-                    psm_.current_platoon_state = PlatoonState::LEADER;
+                    pm_.current_platoon_state = PlatoonState::LEADER;
                 }
                 // Task 2
                 cav_msgs::MobilityOperation status;
@@ -349,7 +274,7 @@ namespace platoon_strategic
                     composeMobilityOperationLeader(infoOperation, "INFO");
                     mob_op_pub_.publish(infoOperation);
                     lastHeartBeatTime = ros::Time::now().toSec()*1000.0;
-                    ROS_DEBUG("Published heart beat platoon INFO mobility operatrion message");
+                    ROS_DEBUG_STREAM("Published heart beat platoon INFO mobility operatrion message");
                 }
             // Task 2
             if (isTimeForHeartBeat) {
@@ -358,22 +283,22 @@ namespace platoon_strategic
             // Task 3
             {
                 // std::lock_guard<std::mutex> lock(plan_mutex_);
-                if(psm_.current_plan.valid) {
-                    bool isCurrentPlanTimeout = ((ros::Time::now().toSec()*1000 - psm_.current_plan.planStartTime) > NEGOTIATION_TIMEOUT);
+                if(pm_.current_plan.valid) {
+                    bool isCurrentPlanTimeout = ((ros::Time::now().toSec()*1000 - pm_.current_plan.planStartTime) > NEGOTIATION_TIMEOUT);
                     if(isCurrentPlanTimeout) {
-                        ROS_DEBUG("Give up current on waiting plan with planId: " , psm_.current_plan.planId);
-                        psm_.current_plan.valid = false;
+                        ROS_DEBUG_STREAM("Give up current on waiting plan with planId: " << pm_.current_plan.planId);
+                        pm_.current_plan.valid = false;
                     }    
                 }
             }
 
             // Task 4
-            bool hasFollower = (psm_.pm_.getTotalPlatooningSize() > 1);
+            bool hasFollower = (pm_.getTotalPlatooningSize() > 1);
             if(hasFollower) {
                 cav_msgs::MobilityOperation statusOperation;
                 composeMobilityOperationLeader(statusOperation, "STATUS");
                 mob_op_pub_.publish(statusOperation);
-                ROS_DEBUG("Published platoon STATUS operation message");
+                ROS_DEBUG_STREAM("Published platoon STATUS operation message");
             }
             long tsEnd =  ros::Time::now().toSec()*1000;
             long sleepDuration = std::max(int(statusMessageInterval_ - (tsEnd - tsStart)), 0);
@@ -396,13 +321,13 @@ namespace platoon_strategic
             mob_op_pub_.publish(status);
             // Job 2
             // Get the number of vehicles in this platoon who is in front of us
-            int vehicleInFront = psm_.pm_.getNumberOfVehicleInFront();
+            int vehicleInFront = pm_.getNumberOfVehicleInFront();
                 if(vehicleInFront == 0) {
                     noLeaderUpdatesCounter++;
                     if(noLeaderUpdatesCounter >= LEADER_TIMEOUT_COUNTER_LIMIT) {
-                        ROS_DEBUG("noLeaderUpdatesCounter = " , noLeaderUpdatesCounter , " and change to leader state");
-                        psm_.pm_.changeFromFollowerToLeader();
-                        psm_.current_platoon_state = PlatoonState::LEADER;
+                        ROS_DEBUG_STREAM("noLeaderUpdatesCounter = " << noLeaderUpdatesCounter << " and change to leader state");
+                        pm_.changeFromFollowerToLeader();
+                        pm_.current_platoon_state = PlatoonState::LEADER;
                         
                     }
                 } else {
@@ -420,20 +345,20 @@ namespace platoon_strategic
         // Task 1
         bool isCurrentStateTimeout = (tsStart - candidatestateStartTime) > waitingStateTimeout * 1000;
         if(isCurrentStateTimeout) {
-            ROS_DEBUG("The current candidate follower state is timeout. Change back to leader state.");
-            psm_.current_platoon_state = PlatoonState::LEADER;
+            ROS_DEBUG_STREAM("The current candidate follower state is timeout. Change back to leader state.");
+            pm_.current_platoon_state = PlatoonState::LEADER;
         }
         // Task 2
 
-        if(psm_.current_plan.valid) {
+        if(pm_.current_plan.valid) {
             {
-                std::lock_guard<std::mutex> lock(plan_mutex_);
-                if(psm_.current_plan.valid) {
-                    bool isPlanTimeout = (tsStart - psm_.current_plan.planStartTime) > NEGOTIATION_TIMEOUT;
+                // std::lock_guard<std::mutex> lock(plan_mutex_);
+                if(pm_.current_plan.valid) {
+                    bool isPlanTimeout = (tsStart - pm_.current_plan.planStartTime) > NEGOTIATION_TIMEOUT;
                     if(isPlanTimeout) {
-                        psm_.current_plan.valid = false;
-                        ROS_DEBUG("The current plan did not receive any response. Abort and change to leader state.");
-                        psm_.current_platoon_state = PlatoonState::LEADER;
+                        pm_.current_plan.valid = false;
+                        ROS_DEBUG_STREAM("The current plan did not receive any response. Abort and change to leader state.");
+                        pm_.current_platoon_state = PlatoonState::LEADER;
                     }    
                 }
             }
@@ -442,18 +367,18 @@ namespace platoon_strategic
         // Task 3
                 double desiredJoinGap2 = desiredJoinTimeGap;
                 double maxJoinGap = std::max(desiredJoinGap, desiredJoinGap2);
-                double currentGap = psm_.pm_.getDistanceToFrontVehicle();
-                ROS_DEBUG("Based on desired join time gap, the desired join distance gap is " , desiredJoinGap2 , " ms");
-                ROS_DEBUG("Since we have max allowed gap as " , desiredJoinGap , " m then max join gap became " , maxJoinGap , " m");
-                ROS_DEBUG("The current gap from radar is " , currentGap , " m");
-                if(currentGap <= maxJoinGap && psm_.current_plan.valid == false) {
+                double currentGap = pm_.getDistanceToFrontVehicle();
+                ROS_DEBUG_STREAM("Based on desired join time gap, the desired join distance gap is " << desiredJoinGap2 << " ms");
+                ROS_DEBUG_STREAM("Since we have max allowed gap as " << desiredJoinGap << " m then max join gap became " << maxJoinGap << " m");
+                ROS_DEBUG_STREAM("The current gap from radar is " << currentGap << " m");
+                if(currentGap <= maxJoinGap && pm_.current_plan.valid == false) {
                     cav_msgs::MobilityRequest request;
                     std::string planId = boost::uuids::to_string(boost::uuids::random_generator()());
                     long currentTime = ros::Time::now().toSec()*1000.0; 
                     request.header.plan_id = planId;
-                    request.header.recipient_id = psm_.targetLeaderId;
-                    request.header.sender_bsm_id = BSMID;
-                    request.header.sender_id = MobilityId;
+                    request.header.recipient_id = pm_.targetLeaderId;
+                    request.header.sender_bsm_id = host_bsm_id_;
+                    request.header.sender_id = HostMobilityId;
                     request.header.timestamp = currentTime;
                     cav_msgs::LocationECEF loc;
                     request.location = loc;
@@ -464,19 +389,19 @@ namespace platoon_strategic
                     request.urgency = 50;
                     mobility_request_publisher_(request);
                     // mob_req_pub_.publish(request);
-                    ROS_DEBUG("Published Mobility Candidate-Join request to the leader");
+                    ROS_DEBUG_STREAM("Published Mobility Candidate-Join request to the leader");
                     
-                    PlatoonPlan* new_plan = new PlatoonPlan(true, currentTime, planId, psm_.targetLeaderId);
+                    PlatoonPlan* new_plan = new PlatoonPlan(true, currentTime, planId, pm_.targetLeaderId);
 
-                    psm_.current_plan = *new_plan;
+                    pm_.current_plan = *new_plan;
                 }
         
          //Task 4
-                if(psm_.pm_.getTotalPlatooningSize() > 1) {
+                if(pm_.getTotalPlatooningSize() > 1) {
                     cav_msgs::MobilityOperation status;
                     composeMobilityOperationCandidateFollower(status);
                     mob_op_pub_.publish(status);
-                    ROS_DEBUG("Published platoon STATUS operation message");
+                    ROS_DEBUG_STREAM("Published platoon STATUS operation message");
                 }
                 long tsEnd =  ros::Time::now().toSec()*1000;
                 long sleepDuration = std::max(int(statusMessageInterval_ - (tsEnd - tsStart)), 0);
@@ -488,7 +413,7 @@ namespace platoon_strategic
 
     void PlatoonStrategicPlugin::mob_req_cb(const cav_msgs::MobilityRequest& msg)
     {
-        mob_req_cb_leader(msg);
+        // mob_req_cb_leader(msg);
     }
 
     MobilityRequestResponse PlatoonStrategicPlugin::mob_req_cb_standby(const cav_msgs::MobilityRequest& msg)
@@ -501,7 +426,7 @@ namespace platoon_strategic
     {
         // This state does not handle any mobility request for now
         // TODO Maybe it should handle some ABORT request from a waiting leader
-        ROS_DEBUG("Recived mobility request with type " , msg.plan_type.type , " but ignored.");
+        ROS_DEBUG_STREAM("Recived mobility request with type " << msg.plan_type.type << " but ignored.");
         return MobilityRequestResponse::NO_RESPONSE;
 
     }
@@ -517,16 +442,16 @@ namespace platoon_strategic
         bool isCandidateJoin = msg.plan_type.type == cav_msgs::PlanType::PLATOON_FOLLOWER_JOIN;
         if(isTargetVehicle && isCandidateJoin)
         {
-            ROS_DEBUG("Target vehicle " , applicantId_ , " is actually joining.");
-            ROS_DEBUG("Changing to PlatoonLeaderState and send ACK to target vehicle");
+            ROS_DEBUG_STREAM("Target vehicle " << applicantId_ << " is actually joining.");
+            ROS_DEBUG_STREAM("Changing to PlatoonLeaderState and send ACK to target vehicle");
             // TODO replace this
             // plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
             return MobilityRequestResponse::ACK;
         }
         else 
         {
-            ROS_DEBUG("Received platoon request with vehicle id = " , msg.header.sender_id);
-            ROS_DEBUG("The request type is " , msg.plan_type.type , " and we choose to ignore");
+            ROS_DEBUG_STREAM("Received platoon request with vehicle id = " << msg.header.sender_id);
+            ROS_DEBUG_STREAM("The request type is " << msg.plan_type.type << " and we choose to ignore");
             return MobilityRequestResponse::NO_RESPONSE;
         }
 
@@ -546,8 +471,8 @@ namespace platoon_strategic
             cav_msgs::MobilityHeader msgHeader = msg.header;
             std::string params = msg.strategy;
             std::string applicantId = msgHeader.sender_id;
-            ROS_DEBUG("Receive mobility JOIN request from " , applicantId , " and PlanId = " , msgHeader.plan_id);
-            ROS_DEBUG("The strategy parameters are " , params);
+            ROS_DEBUG_STREAM("Receive mobility JOIN request from " << applicantId << " and PlanId = " << msgHeader.plan_id);
+            ROS_DEBUG_STREAM("The strategy parameters are " << params);
             // For JOIN_PLATOON_AT_REAR message, the strategy params is defined as "SIZE:xx,SPEED:xx,DTD:xx"
             // TODO In future, we should remove down track distance from this string and use location field in request message
             std::vector<std::string> inputsParams;
@@ -556,28 +481,28 @@ namespace platoon_strategic
             std::vector<std::string> applicantSize_parsed;
             boost::algorithm::split(applicantSize_parsed, inputsParams[0], boost::is_any_of(":"));
             int applicantSize = std::stoi(applicantSize_parsed[1]);
-            ROS_DEBUG("applicantSize: " , applicantSize);
+            ROS_DEBUG_STREAM("applicantSize: " << applicantSize);
 
             std::vector<std::string> applicantCurrentSpeed_parsed;
             boost::algorithm::split(applicantCurrentSpeed_parsed, inputsParams[1], boost::is_any_of(":"));
             double applicantCurrentSpeed = std::stod(applicantCurrentSpeed_parsed[1]);
-            ROS_DEBUG("applicantCurrentSpeed: " , applicantCurrentSpeed);
+            ROS_DEBUG_STREAM("applicantCurrentSpeed: " << applicantCurrentSpeed);
 
             std::vector<std::string> applicantCurrentDtd_parsed;
             boost::algorithm::split(applicantCurrentDtd_parsed, inputsParams[2], boost::is_any_of(":"));
             double applicantCurrentDtd = std::stod(applicantCurrentDtd_parsed[1]);
-            ROS_DEBUG("applicantCurrentDtd: " , applicantCurrentDtd);
+            ROS_DEBUG_STREAM("applicantCurrentDtd: " << applicantCurrentDtd);
 
             // Check if we have enough room for that applicant
-            int currentPlatoonSize = psm_.pm_.getTotalPlatooningSize();
+            int currentPlatoonSize = pm_.getTotalPlatooningSize();
             bool hasEnoughRoomInPlatoon = applicantSize + currentPlatoonSize <= maxPlatoonSize_;
             if(hasEnoughRoomInPlatoon) {
-                ROS_DEBUG("The current platoon has enough room for the applicant with size " , applicantSize);
-                double currentRearDtd = psm_.pm_.getPlatoonRearDowntrackDistance();
-                ROS_DEBUG("The current platoon rear dtd is " , currentRearDtd);
+                ROS_DEBUG_STREAM("The current platoon has enough room for the applicant with size " << applicantSize);
+                double currentRearDtd = pm_.getPlatoonRearDowntrackDistance();
+                ROS_DEBUG_STREAM("The current platoon rear dtd is " << currentRearDtd);
                 double currentGap = currentRearDtd - applicantCurrentDtd - vehicleLength_;
                 double currentTimeGap = currentGap / applicantCurrentSpeed;
-                ROS_DEBUG("The gap between current platoon rear and applicant is " , currentGap , "m or " , currentTimeGap , "s");
+                ROS_DEBUG_STREAM("The gap between current platoon rear and applicant is " << currentGap << "m or " << currentTimeGap << "s");
                 if(currentGap < 0) {
                     ROS_WARN("We should not receive any request from the vehicle in front of us. NACK it.");
                     return MobilityRequestResponse::NACK;
@@ -585,24 +510,24 @@ namespace platoon_strategic
                 // Check if the applicant can join based on max timeGap/gap
                 bool isDistanceCloseEnough = (currentGap <= maxAllowedJoinGap_) || (currentTimeGap <= maxAllowedJoinTimeGap_);
                 if(isDistanceCloseEnough) {
-                    ROS_DEBUG("The applicant is close enough and we will allow it to try to join");
-                    ROS_DEBUG("Change to LeaderWaitingState and waiting for " , msg.header.sender_id , " to join");
+                    ROS_DEBUG_STREAM("The applicant is close enough and we will allow it to try to join");
+                    ROS_DEBUG_STREAM("Change to LeaderWaitingState and waiting for " << msg.header.sender_id << " to join");
                     // TODO????????????
                     // plugin.setState(new LeaderWaitingState(plugin, log, pluginServiceLocator, applicantId));??????????????
                     return MobilityRequestResponse::ACK;
                 } else {
-                    ROS_DEBUG("The applicant is too far away from us. NACK.");
+                    ROS_DEBUG_STREAM("The applicant is too far away from us. NACK.");
                     return MobilityRequestResponse::NACK;
                 }
             }
             else 
             {
-                ROS_DEBUG("The current platoon does not have enough room for applicant of size " , applicantSize , ". NACK");
+                ROS_DEBUG_STREAM("The current platoon does not have enough room for applicant of size " << applicantSize << ". NACK");
                 return MobilityRequestResponse::NACK;
             } 
         } 
         else {
-            ROS_DEBUG("Received mobility request with type " , msg.plan_type.type , " and ignored.");
+            ROS_DEBUG_STREAM("Received mobility request with type " << msg.plan_type.type << " and ignored.");
             return MobilityRequestResponse::NO_RESPONSE;
         }
     }
@@ -614,22 +539,22 @@ namespace platoon_strategic
 
     void PlatoonStrategicPlugin::mob_resp_cb_standby(const cav_msgs::MobilityResponse& msg)
     {
-        mobility_resp_msg_ = msg;
+        // In standby state, it will not send out any requests so it will also ignore all responses
     }
 
 
     void PlatoonStrategicPlugin::mob_resp_cb_candidatefollower(const cav_msgs::MobilityResponse& msg)
     {
-        if (psm_.current_plan.valid)
+        if (pm_.current_plan.valid)
         {
-            bool isForCurrentPlan = msg.header.plan_id == psm_.current_plan.planId;
-            bool isFromTargetVehicle = msg.header.sender_id == psm_.targetLeaderId;
+            bool isForCurrentPlan = msg.header.plan_id == pm_.current_plan.planId;
+            bool isFromTargetVehicle = msg.header.sender_id == pm_.targetLeaderId;
             if(isForCurrentPlan && isFromTargetVehicle)
             {
                 if(msg.is_accepted) {
                     // We change to follower state and start to actually follow that leader
                     // The platoon manager also need to change the platoon Id to the one that the target leader is using 
-                    ROS_DEBUG("The leader " , msg.header.sender_id , " agreed on our join. Change to follower state.");
+                    ROS_DEBUG_STREAM("The leader " << msg.header.sender_id << " agreed on our join. Change to follower state.");
                     // TODO: update these accordingly
                     // plugin.platoonManager.changeFromLeaderToFollower(targetPlatoonId);
                     // plugin.setState(new FollowerState(plugin, log, pluginServiceLocator));
@@ -637,19 +562,19 @@ namespace platoon_strategic
                 } 
                 else{
                     // We change back to normal leader state and try to join other platoons
-                    ROS_DEBUG("The leader " , msg.header.sender_id , " does not agree on our join. Change back to leader state.");
+                    ROS_DEBUG_STREAM("The leader " << msg.header.sender_id << " does not agree on our join. Change back to leader state.");
                     // TODO: update these accordingly
                     // plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
                 }
             }
             else 
             {
-                ROS_DEBUG("Ignore received response message because it is not for the current plan.");
+                ROS_DEBUG_STREAM("Ignore received response message because it is not for the current plan.");
             }  
         }
         else 
         {
-            ROS_DEBUG("Ignore received response message because we are not in any negotiation process.");
+            ROS_DEBUG_STREAM("Ignore received response message because we are not in any negotiation process.");
         }
     }
 
@@ -663,14 +588,14 @@ namespace platoon_strategic
 
     void PlatoonStrategicPlugin::mob_resp_cb_leader(const cav_msgs::MobilityResponse& msg)
     {
-        if (psm_.current_plan.valid)
+        if (pm_.current_plan.valid)
         {
-            if(psm_.current_plan.planId == msg.header.plan_id && psm_.current_plan.peerId == msg.header.sender_id)
+            if(pm_.current_plan.planId == msg.header.plan_id && pm_.current_plan.peerId == msg.header.sender_id)
             {
                 if (msg.is_accepted)
                 {
-                    ROS_DEBUG("Received positive response for plan id = " , psm_.current_plan.planId);
-                    ROS_DEBUG("Change to CandidateFollower state and notify trajectory failure in order to replan");
+                    ROS_DEBUG_STREAM("Received positive response for plan id = " << pm_.current_plan.planId);
+                    ROS_DEBUG_STREAM("Change to CandidateFollower state and notify trajectory failure in order to replan");
                         // Change to candidate follower state and request a new plan to catch up with the front platoon
                         // TODO: update these accordingly
                         // plugin.setState(new CandidateFollowerState(plugin, log, pluginServiceLocator, currentPlan.peerId, potentialNewPlatoonId, this.trajectoryEndLocation));
@@ -678,25 +603,42 @@ namespace platoon_strategic
                 }
                 else 
                 {
-                    ROS_DEBUG("Received negative response for plan id = " , psm_.current_plan.planId);
+                    ROS_DEBUG_STREAM("Received negative response for plan id = " << pm_.current_plan.planId);
                     // Forget about the previous plan totally
                     // this.currentPlan = null;
-                    psm_.current_plan.valid = false;
+                    pm_.current_plan.valid = false;
                 }
             }
             else
             {
-                ROS_DEBUG("Ignore the response message because planID match: " , (psm_.current_plan.planId == msg.header.plan_id));
-                ROS_DEBUG("My plan id = " , psm_.current_plan.planId , " and response plan Id = " , msg.header.plan_id);
-                ROS_DEBUG("And peer id match " , (psm_.current_plan.peerId == msg.header.sender_id));
-                ROS_DEBUG("Expected peer id = " , psm_.current_plan.peerId , " and response sender Id = " , msg.header.sender_id);
+                ROS_DEBUG_STREAM("Ignore the response message because planID match: " << (pm_.current_plan.planId == msg.header.plan_id));
+                ROS_DEBUG_STREAM("My plan id = " << pm_.current_plan.planId << " and response plan Id = " << msg.header.plan_id);
+                ROS_DEBUG_STREAM("And peer id match " << (pm_.current_plan.peerId == msg.header.sender_id));
+                ROS_DEBUG_STREAM("Expected peer id = " << pm_.current_plan.peerId << " and response sender Id = " << msg.header.sender_id);
             }
         }
     }
 
+    cav_msgs::PlatooningInfo PlatoonStrategicPlugin::compose_platoon_info_msg()
+    {
+        cav_msgs::PlatooningInfo status_msg;
+        status_msg.state = cav_msgs::PlatooningInfo::DISABLED;
+        status_msg.platoon_id = "";
+        status_msg.size = 0;
+        status_msg.size_limit = 1;
+        status_msg.leader_id = "1";
+        status_msg.leader_downtrack_distance = 1.0;
+        status_msg.leader_cmd_speed = 1;
+        status_msg.host_platoon_position = 1.0;
+        status_msg.host_cmd_speed = 1.0;
+        status_msg.desired_gap = 1.0;
+
+        return status_msg;
+    }
+
     void PlatoonStrategicPlugin::mob_op_cb(const cav_msgs::MobilityOperation& msg)
     {
-        mob_op_cb_leader(msg);
+        // mob_op_cb_leader(msg);
     }
 
     void PlatoonStrategicPlugin::mob_op_cb_standby(const cav_msgs::MobilityOperation& msg)
@@ -715,10 +657,10 @@ namespace platoon_strategic
             std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
             // TODO: update this
             // plugin.platoonManager.memberUpdates(vehicleID, platoonId, msg.getHeader().getSenderBsmId(), statusParams);
-            ROS_DEBUG("Received platoon status message from " , msg.header.sender_id);
+            ROS_DEBUG_STREAM("Received platoon status message from " << msg.header.sender_id);
         }
         else {
-            ROS_DEBUG("Received a mobility operation message with params " , msg.strategy_params , " but ignored.");
+            ROS_DEBUG_STREAM("Received a mobility operation message with params " << msg.strategy_params << " but ignored.");
         }
     }
 
@@ -734,7 +676,7 @@ namespace platoon_strategic
             std::string vehicleID = msg.header.sender_id;
             std::string platoonID = msg.header.plan_id;
             std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
-            ROS_DEBUG("Receive operation message from vehicle: " , vehicleID);
+            ROS_DEBUG_STREAM("Receive operation message from vehicle: " << vehicleID);
             // TODO: update this
             // plugin.platoonManager.memberUpdates(vehicleID, platoonID, msg.getHeader().getSenderBsmId(), statusParams);
         }
@@ -750,9 +692,9 @@ namespace platoon_strategic
             std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
             // / TODO: update these accordingly
             // plugin.platoonManager.memberUpdates(vehicleID, platoonId, msg.getHeader().getSenderBsmId(), statusParams);
-            ROS_DEBUG("Received platoon status message from " , msg.header.sender_id);
+            ROS_DEBUG_STREAM("Received platoon status message from " << msg.header.sender_id);
         } else {
-            ROS_DEBUG("Received a mobility operation message with params " , msg.strategy_params , " but ignored.");
+            ROS_DEBUG_STREAM("Received a mobility operation message with params " << msg.strategy_params << " but ignored.");
         }
     }
 
@@ -768,7 +710,7 @@ namespace platoon_strategic
         bool isPlatoonInfoMsg = (strategyParams.rfind(OPERATION_INFO_TYPE, 0) == 0);
         bool isPlatoonStatusMsg = (strategyParams.rfind(OPERATION_STATUS_TYPE, 0) == 0);
         // original: boolean isNotInNegotiation = (this.currentPlan == null);
-        bool isNotInNegotiation = psm_.current_plan.valid;
+        bool isNotInNegotiation = pm_.current_plan.valid;
         if(isPlatoonInfoMsg && isNotInNegotiation)
         {
             // For INFO params, the string format is INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d
@@ -780,16 +722,16 @@ namespace platoon_strategic
             std::vector<std::string> rearVehicleBsmId_parsed;
             boost::algorithm::split(rearVehicleBsmId_parsed, inputsParams[0], boost::is_any_of(":"));
             std::string rearVehicleBsmId = rearVehicleBsmId_parsed[1];
-            ROS_DEBUG("rearVehicleBsmId: " , rearVehicleBsmId);
+            ROS_DEBUG_STREAM("rearVehicleBsmId: " << rearVehicleBsmId);
 
             std::vector<std::string> rearVehicleDtd_parsed;
-            boost::algorithm::split(rearVehicleDtd_parsed, inputsParams[0], boost::is_any_of(":"));
-            double rearVehicleDtd = std::stod(rearVehicleDtd_parsed[4]);
-            ROS_DEBUG("rearVehicleDtd: " , rearVehicleDtd);
+            boost::algorithm::split(rearVehicleDtd_parsed, inputsParams[1], boost::is_any_of(":"));
+            double rearVehicleDtd = std::stod(rearVehicleDtd_parsed[1]);
+            ROS_DEBUG_STREAM("rearVehicleDtd: " << rearVehicleDtd);
             // We are trying to validate is the platoon rear is right in front of the host vehicle
             if(isVehicleRightInFront(rearVehicleBsmId, rearVehicleDtd))
             {
-                ROS_DEBUG("Found a platoon with id = " , platoonId , " in front of us.");
+                ROS_DEBUG_STREAM("Found a platoon with id = " << platoonId << " in front of us.");
                 cav_msgs::MobilityRequest request;
                 request.header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
                 request.header.recipient_id = senderId;
@@ -800,8 +742,8 @@ namespace platoon_strategic
                 request.plan_type.type = cav_msgs::PlanType::JOIN_PLATOON_AT_REAR;
                 request.strategy = MOBILITY_STRATEGY;
 
-                int platoon_size = psm_.pm_.getTotalPlatooningSize();
-                double current_speed = psm_.pm_.getCurrentSpeed();
+                int platoon_size = pm_.getTotalPlatooningSize();
+                double current_speed = pm_.getCurrentSpeed();
                 double current_downtrack;///TODO: replace with downtrack update function
 
                 boost::format fmter(OPERATION_STATUS_PARAMS);
@@ -814,26 +756,26 @@ namespace platoon_strategic
 
                 // this.currentPlan = new PlatoonPlan(System.currentTimeMillis(), request.getHeader().getPlanId(), senderId);
                 mob_op_pub_.publish(request);
-                ROS_DEBUG("Publishing request to leader " , senderId , " with params " , request.strategy_params , " and plan id = " , request.header.plan_id);
+                ROS_DEBUG_STREAM("Publishing request to leader " << senderId << " with params " << request.strategy_params << " and plan id = " << request.header.plan_id);
                 // this.potentialNewPlatoonId = platoonId;
             }
             else 
             {
-                ROS_DEBUG("Ignore platoon with platoon id: " , platoonId , " because it is not right in front of us");
+                ROS_DEBUG_STREAM("Ignore platoon with platoon id: " << platoonId << " because it is not right in front of us");
             }
         }
         else if(isPlatoonStatusMsg) 
         {
             // If it is platoon status message, the params string is in format: STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx
             std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.length() + 1);
-            ROS_DEBUG("Receive operation status message from vehicle: " , senderId , " with params: " , statusParams);
-            psm_.pm_.memberUpdates(senderId, platoonId, msg.header.sender_bsm_id, statusParams);
+            ROS_DEBUG_STREAM("Receive operation status message from vehicle: " << senderId << " with params: " << statusParams);
+            pm_.memberUpdates(senderId, platoonId, msg.header.sender_bsm_id, statusParams);
 
         }
         else
         {
-            ROS_DEBUG("Receive operation message but ignore it because isPlatoonInfoMsg = " , isPlatoonInfoMsg, 
-            ", isNotInNegotiation = " , isNotInNegotiation , " and isPlatoonStatusMsg = " , isPlatoonStatusMsg);
+            ROS_DEBUG_STREAM("Receive operation message but ignore it because isPlatoonInfoMsg = " << isPlatoonInfoMsg << 
+            ", isNotInNegotiation = " << isNotInNegotiation << " and isPlatoonStatusMsg = " << isPlatoonStatusMsg);
         }
     }
 
@@ -841,20 +783,20 @@ namespace platoon_strategic
         // double currentDtd = getCurrentDowntrackDistance();
         double currentDtd;
         if(downtrack > currentDtd) {
-            ROS_DEBUG("Found a platoon in front. We are able to join");
+            ROS_DEBUG_STREAM("Found a platoon in front. We are able to join");
             return true;
         } else {
-            ROS_DEBUG("Ignoring platoon from our back.");
-            ROS_DEBUG("The front platoon dtd is " , downtrack , " and we are current at " , currentDtd);
+            ROS_DEBUG_STREAM("Ignoring platoon from our back.");
+            ROS_DEBUG_STREAM("The front platoon dtd is " << downtrack << " and we are current at " << currentDtd);
             return false;
         }
     }
 
 
     void PlatoonStrategicPlugin::composeMobilityOperationLeader(cav_msgs::MobilityOperation &msg, const std::string& type){
-        msg.header.plan_id = psm_.pm_.currentPlatoonID;
+        msg.header.plan_id = pm_.currentPlatoonID;
         msg.header.recipient_id = "";
-        msg.header.sender_bsm_id = BSMID;
+        msg.header.sender_bsm_id = host_bsm_id_;
         std::string hostStaticId = HostMobilityId;
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toSec()*1000.0;
@@ -863,11 +805,11 @@ namespace platoon_strategic
         if (type == OPERATION_INFO_TYPE){
             // For INFO params, the string format is INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d
 
-            std::string PlatoonRearBsmId = BSMID;
-            int CurrentPlatoonLength = psm_.pm_.getCurrentPlatoonLength();
-            double current_speed = psm_.pm_.getCurrentSpeed();
-            int PlatoonSize = psm_.pm_.getTotalPlatooningSize();
-            double PlatoonRearDowntrackDistance = psm_.pm_.getPlatoonRearDowntrackDistance();
+            std::string PlatoonRearBsmId = host_bsm_id_;
+            int CurrentPlatoonLength = pm_.getCurrentPlatoonLength();
+            double current_speed = pm_.getCurrentSpeed();
+            int PlatoonSize = pm_.getTotalPlatooningSize();
+            double PlatoonRearDowntrackDistance = pm_.getPlatoonRearDowntrackDistance();
 
             boost::format fmter(OPERATION_INFO_TYPE);
             fmter %PlatoonRearBsmId;
@@ -893,22 +835,25 @@ namespace platoon_strategic
             ROS_ERROR("UNKNOW strategy param string!!!");
             msg.strategy_params = "";
         }
-        ROS_DEBUG("Composed a mobility operation message with params " , msg.strategy_params);
+        ROS_DEBUG_STREAM("Composed a mobility operation message with params " << msg.strategy_params);
     
     }
 
     void PlatoonStrategicPlugin::composeMobilityOperationFollower(cav_msgs::MobilityOperation &msg) const{
-        msg.header.plan_id = psm_.pm_.currentPlatoonID;
+        msg.header.plan_id = pm_.currentPlatoonID;
         // All platoon mobility operation message is just for broadcast
         msg.header.recipient_id = "";
-        msg.header.sender_bsm_id = BSMID;
+        msg.header.sender_bsm_id = host_bsm_id_;
         std::string hostStaticId = HostMobilityId;
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toSec()*1000.0;
         msg.strategy = MOBILITY_STRATEGY;
         
         double cmdSpeed, current_speed, current_downtrack;
-
+        // double cmdSpeed = plugin.getLastSpeedCmd();
+        // String statusParams = String.format(PlatooningPlugin.OPERATION_STATUS_PARAMS,
+        //                                     cmdSpeed, pluginServiceLocator.getRouteService().getCurrentDowntrackDistance(),
+        //                                     pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed());
         boost::format fmter(OPERATION_STATUS_PARAMS);
         fmter %cmdSpeed;
         fmter %current_downtrack;
@@ -916,22 +861,25 @@ namespace platoon_strategic
                     
         std::string statusParams = fmter.str();
         msg.strategy_params = statusParams;
-        ROS_DEBUG("Composed a mobility operation message with params " , msg.strategy_params);
+        ROS_DEBUG_STREAM("Composed a mobility operation message with params " << msg.strategy_params);
     }
 
 
     void PlatoonStrategicPlugin::composeMobilityOperationLeaderWaiting(cav_msgs::MobilityOperation &msg) const
     {
-        msg.header.plan_id = psm_.pm_.currentPlatoonID;
+        msg.header.plan_id = pm_.currentPlatoonID;
         // This message is for broadcast
         msg.header.recipient_id = "";
-        msg.header.sender_bsm_id = BSMID;
+        msg.header.sender_bsm_id = host_bsm_id_;
         std::string hostStaticId = HostMobilityId;
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toSec()*1000;
         msg.strategy = MOBILITY_STRATEGY;
         // For STATUS params, the string format is "STATUS|CMDSPEED:5.0,DOWNTRACK:100.0,SPEED:5.0"
         double cmdSpeed, current_speed, current_downtrack;
+        // double cmdSpeed = plugin.getLastSpeedCmd();
+        // double downtrackDistance = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
+        // double currentSpeed = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
         boost::format fmter(OPERATION_STATUS_PARAMS);
         fmter %cmdSpeed;
         fmter %current_downtrack;
@@ -945,10 +893,10 @@ namespace platoon_strategic
 
     void PlatoonStrategicPlugin::composeMobilityOperationCandidateFollower(cav_msgs::MobilityOperation &msg)
     {
-        msg.header.plan_id = psm_.pm_.currentPlatoonID;
+        msg.header.plan_id = pm_.currentPlatoonID;
         // All platoon mobility operation message is just for broadcast
         msg.header.recipient_id = "";
-        msg.header.sender_bsm_id = BSMID;
+        msg.header.sender_bsm_id = host_bsm_id_;
         std::string hostStaticId = HostMobilityId;
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toSec()*1000.0; 
@@ -957,6 +905,11 @@ namespace platoon_strategic
         // // For STATUS params, the string format is "STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx"
         
         double cmdSpeed, current_speed, current_downtrack;
+        // double cmdSpeed = plugin.getLastSpeedCmd();
+        // // For STATUS params, the string format is "STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx"
+        // String statusParams = String.format(PlatooningPlugin.OPERATION_STATUS_PARAMS,
+        //                                     cmdSpeed, pluginServiceLocator.getRouteService().getCurrentDowntrackDistance(),
+        //                                     pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed());
         boost::format fmter(OPERATION_STATUS_PARAMS);
         fmter %cmdSpeed;
         fmter %current_downtrack;
@@ -964,7 +917,7 @@ namespace platoon_strategic
                     
         std::string statusParams = fmter.str();
         msg.strategy_params = statusParams;
-        ROS_DEBUG("Composed a mobility operation message with params " , msg.strategy_params);
+        ROS_DEBUG_STREAM("Composed a mobility operation message with params " << msg.strategy_params);
     }
 
 

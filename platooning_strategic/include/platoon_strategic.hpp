@@ -19,6 +19,7 @@
 #pragma once
 
 #include <vector>
+#include <ros/ros.h>
 #include <math.h>
 #include <cav_msgs/TrajectoryPlan.h>
 #include <cav_msgs/TrajectoryPlanPoint.h>
@@ -29,7 +30,7 @@
 #include <carma_utils/CARMAUtils.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
-#include <cav_srvs/PlanTrajectory.h>
+#include <cav_srvs/PlanManeuvers.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <cav_msgs/MobilityOperation.h>
 #include <cav_msgs/MobilityRequest.h>
@@ -37,15 +38,13 @@
 #include <cav_msgs/PlatooningInfo.h>
 #include <cav_msgs/PlanType.h>
 #include <cav_msgs/BSM.h>
-#include <state_machine.hpp>
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include "platoon_config.h"
-
-// #include <leader_state.hpp>
+#include <platoon_manager.hpp>
 
 
 
@@ -98,18 +97,11 @@ namespace platoon_strategic
             void bsm_cb(const cav_msgs::BSMConstPtr& msg);
             
             bool onSpin();
-            // general starting point of this node
-            // void run();
 
+
+            PlatoonManager pm_;
             
-
-            void run_states();
-
-            PlatooningStateMachine psm_{nh_};
             
-
-        protected:
-
             void run_leader();
             void run_leader_waiting();
             void run_candidate_follower();
@@ -126,10 +118,6 @@ namespace platoon_strategic
             MobilityOperationCB mobility_operation_publisher_;
             PlatooningInfoCB platooning_info_publisher_;
 
-
-
-            // CARMA ROS node handles
-            std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
             // wm listener pointer and pointer to the actual wm object
             std::shared_ptr<carma_wm::WMListener> wml_;
@@ -173,6 +161,7 @@ namespace platoon_strategic
             void mob_resp_cb_candidatefollower(const cav_msgs::MobilityResponse& msg);
             void mob_resp_cb_standby(const cav_msgs::MobilityResponse& msg);
 
+            cav_msgs::PlatooningInfo compose_platoon_info_msg();
 
             
             
@@ -192,28 +181,13 @@ namespace platoon_strategic
             // Plugin discovery message
             cav_msgs::Plugin plugin_discovery_msg_;
 
-            // trajectory frequency
-            double traj_freq = 10;
-
-            // ROS params
-            double trajectory_time_length_ = 6;
-            std::string control_plugin_name_ = "mpc_follower";
+            
             
 
             // start vehicle speed
             double start_speed_;
             // target vehicle speed
             double target_speed_;
-
-
-            int num_points = traj_freq * trajectory_time_length_;
-
-            // initialize this node
-            // void initialize();
-
-            // generated trajectory plan
-            cav_msgs::TrajectoryPlan trajectory_msg;
-
 
 
             cav_msgs::MobilityRequest mobility_req_msg_;
@@ -258,7 +232,6 @@ namespace platoon_strategic
             // Check these values
             std::string HostMobilityId = "hostid";
             std::string BSMID = "BSM";
-            std::string MobilityId = "mobilityid";
 
             // leader_waiting
             std::string applicantId_;

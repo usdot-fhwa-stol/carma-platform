@@ -24,11 +24,6 @@ namespace platoon_strategic
 {
     PlatoonManager::PlatoonManager(){}
 
-    PlatoonManager::PlatoonManager(std::shared_ptr<ros::NodeHandle> nh): nh_(nh) {
-                twist_sub_ = nh_->subscribe("current_velocity", 1, &PlatoonManager::twist_cd, this);
-                cmd_sub_ = nh_->subscribe("command_velocity", 1, &PlatoonManager::cmd_cd, this);
-                pose_sub_ = nh_->subscribe("current_pose", 1, &PlatoonManager::pose_cb, this);
-        };
 
     void PlatoonManager::memberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& senderBsmId,const std::string& params){
 
@@ -435,19 +430,5 @@ namespace platoon_strategic
         }
     }
 
-
-    void PlatoonManager::cmd_cd(const geometry_msgs::TwistStampedConstPtr& msg)
-    {
-        command_speed_ = msg->twist.linear.x;
-    }
-
-    void PlatoonManager::twist_cd(const geometry_msgs::TwistStampedConstPtr& msg)
-    {
-        current_speed_ = msg->twist.linear.x;
-    }
-
-    void PlatoonManager::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg){
-        pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
-    }
 
 }

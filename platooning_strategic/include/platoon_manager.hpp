@@ -18,6 +18,39 @@
 
 namespace platoon_strategic
 {
+    struct PlatoonPlan {
+        
+        bool valid;
+        long planStartTime;
+        std::string planId;
+        std::string peerId;
+        PlatoonPlan():valid(""), planStartTime(0), planId(""), peerId("") {} ;
+        PlatoonPlan(bool valid, long planStartTime, std::string planId, std::string peerId): 
+            valid(valid), planStartTime(planStartTime), planId(planId), peerId(peerId) {}  
+    };
+
+    /**
+        * A response to an MobilityRequest message.
+        * ACK - indicates that the plugin accepts the MobilityRequest and will handle making any adjustments needed to avoid a conflict
+        * NACK - indicates that the plugin rejects the MobilityRequest and would suggest the other vehicle replan
+        * NO_RESPONSE - indicates that the plugin is indifferent but sees no conflict
+    */
+
+    enum MobilityRequestResponse {
+            ACK,
+            NACK,
+            NO_RESPONSE
+    };
+
+    enum PlatoonState{
+        STANDBY,
+        LEADERWAITING,
+        LEADER,
+        CANDIDATEFOLLOWER,
+        FOLLOWER
+    };
+
+    
         struct PlatoonMember{
             // Static ID is permanent ID for each vehicle
             std::string staticId;
@@ -45,12 +78,6 @@ namespace platoon_strategic
         std::vector<PlatoonMember> platoon;
 
         PlatoonManager();
-
-        PlatoonManager(std::shared_ptr<ros::NodeHandle> nh);
-
-        ros::Subscriber twist_sub_;
-        ros::Subscriber cmd_sub_;
-        ros::Subscriber pose_sub_;
 
         // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;
@@ -101,8 +128,16 @@ namespace platoon_strategic
         int getNumberOfVehicleInFront();
         double getCurrentPlatoonLength();
         double getPlatoonRearDowntrackDistance();
-
-
+        
+        // double maxAllowedJoinGap = 90;
+        // int maxPlatoonSize = 10;
+        // double vehicleLength = 5.0;
+        // int infoMessageInterval;
+        // const std::string targetPlatoonId;
+        // const std::string OPERATION_INFO_TYPE = "INFO";
+        // const std::string OPERATION_STATUS_TYPE = "STATUS";
+        // const std::string JOIN_AT_REAR_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";
+        // const ;
         double getDistanceFromRouteStart() const;
         double getDistanceToFrontVehicle();
         double getCurrentSpeed() const;
@@ -118,8 +153,25 @@ namespace platoon_strategic
         double current_speed_;
         double command_speed_;
 
+        PlatoonState current_platoon_state;
+            std::string applicantID = "";
+            PlatoonPlan current_plan;
+
+            std::string targetLeaderId = "";
+
 
     private:
+
+    double maxAllowedJoinTimeGap = 15.0;
+        double maxAllowedJoinGap = 90;
+        int maxPlatoonSize = 10;
+        double vehicleLength = 5.0;
+        int infoMessageInterval;
+        const std::string targetPlatoonId;
+        const std::string OPERATION_INFO_TYPE = "INFO";
+        const std::string OPERATION_STATUS_TYPE = "STATUS";
+        const std::string JOIN_AT_REAR_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";
+        const std::string  MOBILITY_STRATEGY = "Carma/Platooning";
     
 
     std::shared_ptr<ros::NodeHandle> nh_;
@@ -156,10 +208,6 @@ namespace platoon_strategic
 
     std::vector<double> getTimeHeadwayFromIndex(std::vector<double> timeHeadways, int start) const;
 
-
-    void twist_cd(const geometry_msgs::TwistStampedConstPtr& msg);
-    void cmd_cd(const geometry_msgs::TwistStampedConstPtr& msg);
-    void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
 
     // ?????????? what is hostmobilityid
     std::string HostMobilityId = "hostid";
