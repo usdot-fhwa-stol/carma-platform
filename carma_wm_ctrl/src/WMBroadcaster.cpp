@@ -1026,6 +1026,14 @@ lanelet::BasicPoint2d curr_pos;
   ROS_DEBUG_STREAM("OLD: Using nearest, on lanelet " << current_llt_nearest.id());
   ROS_DEBUG_STREAM("Using findNearest,  on lanelet " << current_llt_findNearest.second.id());
   auto current_llt = current_llt_findNearest.second;
+  auto adjacent_rights = current_map_->laneletLayer.findUsages(current_llt.rightBound());
+  //lanelet::ConstLanelet adjacent_right_llt;
+  if(adjacent_rights.size() > 0){
+    ROS_DEBUG_STREAM("Right adjacent lanelet is " << adjacent_rights[0].id());
+  }
+  else{
+    ROS_DEBUG_STREAM("No right adjacent lanelet");
+  }
   cav_msgs::CheckActiveGeofence outgoing_geof; //message to publish
   double next_distance = 0 ; //Distance to next geofence
 
