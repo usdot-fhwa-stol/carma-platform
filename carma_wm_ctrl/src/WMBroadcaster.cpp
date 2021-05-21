@@ -137,7 +137,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
       sL = 0_mph;
     }// @SONAR_START@
     gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
-                                        sL, affected_llts, affected_areas, participantsChecker(msg_v01) )); // TODO Participant list should be extracted from control message
+                                        sL, affected_llts, affected_areas, participantsChecker(msg_v01) ));
   }
   
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::MINSPEED_CHOICE) 
@@ -159,7 +159,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
       sL = 0_mph;
     }// @SONAR_START@
     gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
-                                        sL, affected_llts, affected_areas, participantsChecker(msg_v01) )); // TODO Participant list should be extracted from control message
+                                        sL, affected_llts, affected_areas, participantsChecker(msg_v01) ));
   }
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::LATPERM_CHOICE || msg_detail.choice == cav_msgs::TrafficControlDetail::LATAFFINITY_CHOICE)
   {
