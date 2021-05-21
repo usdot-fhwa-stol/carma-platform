@@ -527,7 +527,7 @@ namespace cooperative_lanechange
             }
 
             //get route geometry between starting and ending downtracks
-            lanelet::BasicLineString2d route_geometry = create_route_geom(starting_downtrack, stoi(lane_change_maneuver.starting_lane_id), ending_downtrack, wm);
+            lanelet::BasicLineString2d route_geometry = create_route_geom(starting_downtrack, stoi(lane_change_maneuver.starting_lane_id), ending_downtrack + ending_buffer_downtrack_, wm);
             ROS_DEBUG_STREAM("route geometry size:"<<route_geometry.size());
             int nearest_pt_index = getNearestRouteIndex(route_geometry,state);
             int ending_pt_index = get_ending_point_index(route_geometry, ending_downtrack); 
@@ -552,9 +552,10 @@ namespace cooperative_lanechange
             }
            else{
                ROS_DEBUG_STREAM("Route Length is less than buffer requested");
+               ending_pt_index = route_geometry.size() - 1;
            }
             
-            lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.end());
+            lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.begin() + ending_pt_index);
             first = true;
             
             ROS_DEBUG_STREAM("future geom size:"<<future_route_geometry.size());
