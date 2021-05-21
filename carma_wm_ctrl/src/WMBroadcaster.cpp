@@ -137,7 +137,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
       sL = 0_mph;
     }// @SONAR_START@
     gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
-                                        sL, affected_llts, affected_areas, { lanelet::Participants::VehicleCar }));
+                                        sL, affected_llts, affected_areas, participantsChecker(msg_v01) )); // TODO Participant list should be extracted from control message
   }
   
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::MINSPEED_CHOICE) 
@@ -159,7 +159,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
       sL = 0_mph;
     }// @SONAR_START@
     gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
-                                        sL, affected_llts, affected_areas, { lanelet::Participants::VehicleCar }));
+                                        sL, affected_llts, affected_areas, participantsChecker(msg_v01) )); // TODO Participant list should be extracted from control message
   }
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::LATPERM_CHOICE || msg_detail.choice == cav_msgs::TrafficControlDetail::LATAFFINITY_CHOICE)
   {
@@ -693,6 +693,8 @@ void WMBroadcaster::addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) con
     {
       current_map_->update(current_map_->laneletLayer.get(el.id()), gf_ptr->regulatory_element_);
       gf_ptr->update_list_.push_back(std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>(el.id(), gf_ptr->regulatory_element_));
+    } else {
+      ROS_WARN_STREAM("Regulatory element with invalid id in geofence cannot be added to the map");
     }
   }
   
