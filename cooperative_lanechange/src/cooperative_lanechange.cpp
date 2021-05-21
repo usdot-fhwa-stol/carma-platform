@@ -972,7 +972,7 @@ namespace cooperative_lanechange
             }
             //lane_follow till lane_change req
             lanelet::BasicLineString2d new_points =lanelets_in_path[lane_change_iteration-1].centerline2d().basicLineString();
-            centerline_points.insert(centerline_points.end(), new_points.begin(), new_points.end() - 1); // - 1 to avoid duplication in starting from lanechange
+            centerline_points.insert(centerline_points.end(), new_points.begin(), new_points.end()); // TODO:- 1 to avoid duplication in starting from lanechange
         }
 
         lanelet::BasicLineString2d first=lanelets_in_path[lane_change_iteration].centerline2d().basicLineString();
