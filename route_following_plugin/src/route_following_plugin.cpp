@@ -255,7 +255,7 @@ namespace route_following_plugin
         return;
         lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
-        if (upcoming_lane_change_msg_.lane_change != cav_msgs::UpcomingLaneChangeStatus::NONE && current_progress < upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack)
+        if (upcoming_lane_change_status_msg_.lane_change != cav_msgs::UpcomingLaneChangeStatus::NONE && current_progress < upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack)
         {
             upcoming_lane_change_status_msg_.downtrack_until_lanechange=upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack-current_progress;
             upcoming_lane_change_status_pub_.publish(upcoming_lane_change_status_msg_); 
