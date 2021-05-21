@@ -86,13 +86,13 @@ public:
                                     [&mob_request_pub](auto msg) { mob_request_pub.publish(msg); }, [&mob_operation_pub](auto msg) { mob_operation_pub.publish(msg); },
                                     [&platoon_info_pub](auto msg) { platoon_info_pub.publish(msg); } );
   
-    // ros::ServiceServer maneuver_srv_ = nh.advertiseService("plugins/Platooning/plan_maneuvers",
-                                            // &PlatoonStrategicPlugin::plan_maneuver_cb, &worker);
+    ros::ServiceServer maneuver_srv_ = nh.advertiseService("plugins/PlatoonStrategic/plan_maneuvers",
+                                            &PlatoonStrategicPlugin::plan_maneuver_cb, &worker);
     ros::Subscriber mob_request_sub = nh.subscribe("incoming_mobility_request", 5, &PlatoonStrategicPlugin::mob_req_cb,  &worker);
     ros::Subscriber mob_response_sub = nh.subscribe("incoming_mobility_response", 5, &PlatoonStrategicPlugin::mob_resp_cb,  &worker);
     ros::Subscriber mob_operation_sub = nh.subscribe("incoming_mobility_operation", 5, &PlatoonStrategicPlugin::mob_op_cb,  &worker);
     ros::Subscriber current_pose_sub = nh.subscribe("current_pose", 5, &PlatoonStrategicPlugin::pose_cb,  &worker);
-    ros::Subscriber current_twist_sub = nh.subscribe("current_velocity", 5, &PlatoonStrategicPlugin::pose_cb,  &worker);
+    ros::Subscriber current_twist_sub = nh.subscribe("current_velocity", 5, &PlatoonStrategicPlugin::twist_cb,  &worker);
     ros::Subscriber bsm_sub = nh.subscribe("bsm_outbound", 1, &PlatoonStrategicPlugin::bsm_cb,  &worker);
     
     ros::Timer discovery_pub_timer_ = nh.createTimer(
