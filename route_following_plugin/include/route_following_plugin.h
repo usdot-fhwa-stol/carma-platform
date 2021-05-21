@@ -99,7 +99,7 @@ namespace route_following_plugin
          * \param target_id ID of the next lanelet in the shortest path
          * \return Whether we need a lanechange to reach to the next lanelet in the shortest path
          */
-        bool identifyLaneChange(lanelet::routing::LaneletRelations relations, int target_id);
+        bool isLaneChangeNeeded(lanelet::routing::LaneletRelations relations, int target_id);
         
         /**
          * \brief Set the start distance of a maneuver based on the progress along the route
@@ -124,9 +124,9 @@ namespace route_following_plugin
         bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
 
         /**
-         * \brief Given a Lanelet, find it's associated Speed Limit from the vector map
+         * \brief Given a Lanelet, find it's associated Speed Limit
          * \param llt Constant Lanelet object
-         * \return value of speed limit as a double, returns default value of 25 mph
+         * \return value of speed limit in mps
          */
         double findSpeedLimit(const lanelet::ConstLanelet& llt);
         /**
@@ -170,7 +170,7 @@ namespace route_following_plugin
 
 
         // Minimal duration of maneuver, loaded from config file
-        double mvr_duration_;
+        double min_mvr_duration_;
 
 
         // Plugin discovery message
@@ -192,7 +192,7 @@ namespace route_following_plugin
          * \brief Callback for the twist subscriber, which will store latest twist locally
          * \param msg Latest twist message
          */
-        void twist_cd(const geometry_msgs::TwistStampedConstPtr& msg);
+        void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
 
     };
 }
