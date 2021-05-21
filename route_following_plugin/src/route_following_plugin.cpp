@@ -157,7 +157,7 @@ namespace route_following_plugin
             //if not already on last lanelet in path, check relation with next lanelet- follow lane change procedure if req, else lane follow
             
             // de facto lanechanging checker
-            if (identifyLaneChange(following_lanelets, shortest_path[last_lanelet_index + 1].id()))
+            if ((last_lanelet_index + 1) < shortest_path.size() && identifyLaneChange(following_lanelets, shortest_path[last_lanelet_index + 1].id()))
             {
                 ROS_DEBUG_STREAM("Lane change detected for index:" << last_lanelet_index);
                 is_lanechanging_lanelet_[last_lanelet_index]= true;
