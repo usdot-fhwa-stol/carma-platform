@@ -991,7 +991,7 @@ namespace cooperative_lanechange
                 buffer_points = {};
                 buffer_points = lanelets_in_path[i].centerline2d().basicLineString();
                 ROS_ERROR_STREAM("Adding extra points of size: " << buffer_points.size() << ", ending at x:" << buffer_points.back().x() << ", y:" << buffer_points.back().y());
-                centerline_points.insert(centerline_points.end(), buffer_points.begin() + 1, buffer_points.end()); // + 1 to avoid duplication
+                centerline_points.insert(centerline_points.end(), buffer_points.begin(), buffer_points.end()); // TODO + 1 to avoid duplication
             }
         }
     
