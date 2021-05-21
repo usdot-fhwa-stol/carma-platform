@@ -529,12 +529,16 @@ namespace cooperative_lanechange
             //get route geometry between starting and ending downtracks
             lanelet::BasicLineString2d route_geometry = create_route_geom(starting_downtrack, stoi(lane_change_maneuver.starting_lane_id), ending_downtrack + ending_buffer_downtrack_, wm);
             ROS_DEBUG_STREAM("route geometry size:"<<route_geometry.size());
+            ROS_ERROR_STREAM("route geometry size:"<<route_geometry.size());
+
             int nearest_pt_index = getNearestRouteIndex(route_geometry,state);
             int ending_pt_index = get_ending_point_index(route_geometry, ending_downtrack); 
             ROS_DEBUG_STREAM("Nearest pt index in maneuvers to points:"<<nearest_pt_index);
             
             ROS_DEBUG_STREAM("State x:"<<state.X_pos_global<<" y:"<<state.Y_pos_global);
             ROS_DEBUG_STREAM("Curr pose x:" << pose_msg_.pose.position.x << " y:"<<pose_msg_.pose.position.y);
+            ROS_ERROR_STREAM("Curr pose x:" << pose_msg_.pose.position.x << " y:"<<pose_msg_.pose.position.y);
+
             //find percentage of maneuver left - for yield plugin use
             int maneuver_points_size = route_geometry.size() - ending_pt_index;
             double maneuver_fraction_completed_ = nearest_pt_index/maneuver_points_size;
@@ -543,6 +547,8 @@ namespace cooperative_lanechange
             ending_state_before_buffer_.Y_pos_global = route_geometry[ending_pt_index].y();
             ROS_DEBUG_STREAM("Ending point index in maneuvers to points:"<<ending_pt_index);
             ROS_DEBUG_STREAM("ending_state_before_buffer_:"<<ending_state_before_buffer_.X_pos_global << 
+                    ", ending_state_before_buffer_.Y_pos_global" << ending_state_before_buffer_.Y_pos_global);
+            ROS_ERROR_STREAM("ending_state_before_buffer_:"<<ending_state_before_buffer_.X_pos_global << 
                     ", ending_state_before_buffer_.Y_pos_global" << ending_state_before_buffer_.Y_pos_global);
             
             double route_length = wm_->getRouteEndTrackPos().downtrack;
@@ -559,6 +565,7 @@ namespace cooperative_lanechange
             first = true;
             
             ROS_DEBUG_STREAM("future geom size:"<<future_route_geometry.size());
+            ROS_ERROR_STREAM("future geom size:"<<future_route_geometry.size());
 
             for(auto p :future_route_geometry)
             {
@@ -578,7 +585,9 @@ namespace cooperative_lanechange
 
             }
         }
+        ROS_ERROR_STREAM("Const speed assigned:"<<points_and_target_speeds.back().speed);
         ROS_DEBUG_STREAM("Const speed assigned:"<<points_and_target_speeds.back().speed);
+
     
         return points_and_target_speeds;
 
@@ -972,7 +981,8 @@ namespace cooperative_lanechange
             }
             //lane_follow till lane_change req
             lanelet::BasicLineString2d new_points =lanelets_in_path[lane_change_iteration-1].centerline2d().basicLineString();
-            centerline_points.insert(centerline_points.end(), new_points.begin(), new_points.end()); // TODO:- 1 to avoid duplication in starting from lanechange
+            lanelet::BasicLineString2d new_points_spliced(new_points.begin(), new_points.end() - 1);
+            centerline_points.insert(centerline_points.end(), new_points_spliced.begin(), new_points_spliced.end()); // TODO:- 1 to avoid duplication in starting from lanechange
         }
         
         lanelet::BasicLineString2d first=lanelets_in_path[lane_change_iteration].centerline2d().basicLineString();
@@ -990,11 +1000,14 @@ namespace cooperative_lanechange
             {
                 buffer_points = {};
                 buffer_points = lanelets_in_path[i].centerline2d().basicLineString();
-                ROS_ERROR_STREAM("Adding extra points of size: " << buffer_points.size() << ", ending at x:" << buffer_points.back().x() << ", y:" << buffer_points.back().y());
-                centerline_points.insert(centerline_points.end(), buffer_points.begin(), buffer_points.end()); // TODO + 1 to avoid duplication
+                lanelet::BasicLineString2d  buffer_points_spliced(buffer_points.begin() + 1, buffer_points.end());
+                ROS_ERROR_STREAM("Adding extra points of size: " << buffer_points_spliced.size() << ", ending at x:" << buffer_points_spliced.back().x() << ", y:" << buffer_points_spliced.back().y());
+                
+                centerline_points.insert(centerline_points.end(), buffer_points_spliced.begin(), buffer_points_spliced.end()); // TODO + 1 to avoid duplication
             }
         }
-    
+        ROS_ERROR_STREAM("Reached the end of create_centerline_points");
+
         return centerline_points;
         
     }
