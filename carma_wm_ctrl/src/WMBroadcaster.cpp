@@ -941,7 +941,7 @@ double WMBroadcaster::distToNearestActiveGeofence(const lanelet::BasicPoint2d& c
   }
   
   // Get the lanelet of this point
-  auto curr_lanelet = current_map_->laneletLayer.nearest(curr_pos, 1)[0]; //guaranteed to at least return 1 lanelet
+  auto curr_lanelet = lanelet::geometry::findNearest(current_map_->laneletLayer, curr_pos, 1)[0].second;
 
   // Check if this point at least is actually within this lanelets
   //if (!boost::geometry::within(curr_pos, curr_lanelet.polygon2d().basicPolygon()))
@@ -1021,8 +1021,11 @@ lanelet::BasicPoint2d curr_pos;
   
   
 
-  auto current_llt = current_map_->laneletLayer.nearest(curr_pos, 1)[0];
-  ROS_DEBUG_STREAM("Currently on lanelet " << current_llt.id());
+  auto current_llt_nearest = current_map_->laneletLayer.nearest(curr_pos, 1)[0];
+  auto current_llt_findNearest = lanelet::geometry::findNearest(current_map_->laneletLayer, curr_pos, 1)[0];
+  ROS_DEBUG_STREAM("OLD: Using nearest, on lanelet " << current_llt_nearest.id());
+  ROS_DEBUG_STREAM("Using findNearest,  on lanelet " << current_llt_findNearest.second.id());
+  auto current_llt = current_llt_findNearest.second;
   cav_msgs::CheckActiveGeofence outgoing_geof; //message to publish
   double next_distance = 0 ; //Distance to next geofence
 
