@@ -967,7 +967,7 @@ namespace cooperative_lanechange
             }
             //lane_follow till lane_change req
             lanelet::BasicLineString2d new_points =lanelets_in_path[lane_change_iteration-1].centerline2d().basicLineString();
-            centerline_points.insert(centerline_points.end(), new_points.begin(), new_points.end());
+            centerline_points.insert(centerline_points.end(), new_points.begin(), new_points.end() - 1); // - 1 to avoid duplication in starting from lanechange
         }
 
             lanelet::BasicLineString2d first=lanelets_in_path[lane_change_iteration].centerline2d().basicLineString();
@@ -976,7 +976,15 @@ namespace cooperative_lanechange
             lanelet::BasicPoint2d end = last.back();
             lanelet::BasicLineString2d new_points = create_lanechange_path(start,lanelets_in_path[lane_change_iteration], end, lanelets_in_path[lane_change_iteration+1]);
             centerline_points.insert(centerline_points.end(),new_points.begin(),new_points.end() );
-
+            ROS_DEBUG_STREAM("Theoretically we should be adding extra buffer points below");
+            //"lane_follow" beyond lanechange
+            lanelet::BasicLineString2d buffer_points;
+            for ( int i = lane_change_iteration + 2; lane_change_iteration < lanelets_in_path.size(); i ++)
+            {
+                buffer_points = lanelets_in_path[i].centerline2d().basicLineString();
+                ROS_DEBUG_STREAM("Adding extra points of size: " << buffer_points.size() << ", ending at x:" << buffer_points.back().x() << ", y:" << buffer_points.back().y());
+                centerline_points.insert(centerline_points.end(), buffer_points.begin() + 1, buffer_points.end()); // + 1 to avoid duplication
+            }
     
         return centerline_points;
         
