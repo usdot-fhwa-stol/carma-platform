@@ -77,7 +77,7 @@ namespace route_following_plugin
         EXPECT_FALSE(rfp.identifyLaneChange(relations, 0));
     }
 
-    TEST(RouteFollowingPlugin,DISABLED_TestAssociateSpeedLimit)
+    TEST(RouteFollowingPlugin,TestAssociateSpeedLimit)
     {
         //Use Guidance Lib to create map
         carma_wm::test::MapOptions options;
@@ -161,7 +161,7 @@ namespace route_following_plugin
 
     }
 
-    TEST(RouteFollowingPlugin,DISABLED_TestAssociateSpeedLimitusingosm)
+    TEST(RouteFollowingPlugin,TestAssociateSpeedLimitusingosm)
     {
         // File to process. Path is relative to test folder
         std::string file = "../resource/map/town01_vector_map_1.osm";

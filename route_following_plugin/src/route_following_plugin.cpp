@@ -178,7 +178,6 @@ namespace route_following_plugin
             time_progress += maneuver_duration;
             switch(maneuver.type){
                 case cav_msgs::Maneuver::LANE_FOLLOWING :
-                std::cout<<"Time progress in update Time progress:"<<prev_time.toSec() - GET_MANEUVER_PROPERTY(maneuver, start_time).toSec() <<std::endl;
                 maneuver.lane_following_maneuver.start_time = prev_time;
                 maneuver.lane_following_maneuver.end_time = time_progress;
             case cav_msgs::Maneuver::LANE_CHANGE :
