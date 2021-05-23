@@ -114,7 +114,12 @@ namespace route_following_plugin
          * \param start_time The starting time for the first maneuver in the sequence, each consequent maneuver is pushed ahead by same amount
          */
         void updateTimeProgress(std::vector<cav_msgs::Maneuver>& maneuvers, ros::Time start_time);
-
+        /**
+         * \brief Given an maneuver update the starting speed
+         * \param maneuver maneuver to update the starting speed for
+         * \param start_time The starting speed for the maneuver passed as argument
+         */
+        void updateStartingSpeed(cav_msgs::Maneuver& maneuver, double start_speed);
         /**
          * \brief Service callback for arbitrator maneuver planning
          * \param req Plan maneuver request
@@ -133,7 +138,7 @@ namespace route_following_plugin
          * \brief Calculate maneuver plan for remaining route. This callback is triggered when a new route has been received and processed by the world model
          *
          */
-        std::vector<cav_msgs::Maneuver> route_cb(lanelet::routing::LaneletPath route_shortest_path, lanelet::BasicPoint2d& current_loc);
+        std::vector<cav_msgs::Maneuver> route_cb(lanelet::routing::LaneletPath route_shortest_path);
 
         //Internal Variables used in unit tests
         // Current vehicle forward speed
@@ -141,6 +146,7 @@ namespace route_following_plugin
 
         // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;
+        lanelet::BasicPoint2d current_loc_;
 
         // wm listener pointer and pointer to the actual wm object
         std::shared_ptr<carma_wm::WMListener> wml_;

@@ -145,7 +145,8 @@ namespace route_following_plugin
         ros::Time::init();
         auto shortest_path = cmw->getRoute()->shortestPath();
         lanelet::BasicPoint2d curr_loc(worker.pose_msg_.pose.position.x, worker.pose_msg_.pose.position.y);
-        worker.latest_maneuver_plan_ = worker.route_cb(shortest_path, curr_loc);
+        worker.current_loc_ = curr_loc;
+        worker.latest_maneuver_plan_ = worker.route_cb(shortest_path);
         if(worker.plan_maneuver_cb(plan.request,plan.response)){    
             //check target speeds in updated response
             lanelet::Velocity limit=30_mph;
@@ -253,7 +254,8 @@ namespace route_following_plugin
     
         ros::Time::init();  //initializing ros time to use ros::Time::now()
         lanelet::BasicPoint2d curr_loc(worker.pose_msg_.pose.position.x, worker.pose_msg_.pose.position.y);
-        worker.latest_maneuver_plan_ = worker.route_cb(shortest_path, curr_loc);
+        worker.current_loc_ = curr_loc;
+        worker.latest_maneuver_plan_ = worker.route_cb(shortest_path);
         if(worker.plan_maneuver_cb(plan.request,plan.response)){   
             //check target speeds in updated response
             lanelet::Velocity limit=25_mph;

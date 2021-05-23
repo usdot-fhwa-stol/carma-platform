@@ -55,9 +55,7 @@ namespace route_following_plugin
 
         //set a route callback to update route and calculate maneuver
         wml_->setRouteCallback([this]() { 
-
-            lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
-            this->latest_maneuver_plan_ = route_cb(wm_->getRoute()->shortestPath(), current_loc);
+            this->latest_maneuver_plan_ = route_cb(wm_->getRoute()->shortestPath());
         });
         
         discovery_pub_timer_ = pnh_->createTimer(
@@ -80,24 +78,23 @@ namespace route_following_plugin
         current_speed_ = msg->twist.linear.x;
     }
 
-    std::vector<cav_msgs::Maneuver> RouteFollowingPlugin::route_cb(lanelet::routing::LaneletPath route_shortest_path, lanelet::BasicPoint2d& current_loc){
+    std::vector<cav_msgs::Maneuver> RouteFollowingPlugin::route_cb(lanelet::routing::LaneletPath route_shortest_path){
         std::vector <cav_msgs::Maneuver> maneuvers;
         //This function calculates the maneuver plan every time the route is set
-
+        ROS_DEBUG_STREAM("New route created");
         //Go through entire route - identify lane changes and fill in the spaces with lane following
-        auto nearest_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc, 10); 
+        auto nearest_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc_, 10);   //Return 10 nearest lanelets
         if(nearest_lanelets.size() == 0)
         {
             ROS_WARN_STREAM("Cannot find any lanelet in map!");
+            return maneuvers; 
         }
-
-        //auto shortest_path = wm_->getRoute()->shortestPath();
 
         //Check if current position is on shortest path, if not on shortest path return empty maneuver  
         int current_lanelet_index = -1;
         for (auto llt : nearest_lanelets)
         {
-            if (boost::geometry::within(current_loc, llt.second.polygon2d()))
+            if (boost::geometry::within(current_loc_, llt.second.polygon2d()))
             {
                 int potential_index = findLaneletIndexFromPath(llt.second.id(), route_shortest_path);
                 if (potential_index != -1)
@@ -109,13 +106,14 @@ namespace route_following_plugin
         }
         if(current_lanelet_index == -1)
         {
-            ROS_ERROR_STREAM("Current position is not on the shortest path! Returning an empty maneuver");
+            ROS_WARN_STREAM("Current position is not on the shortest path! Returning an empty maneuver");
+            return maneuvers;
         }
 
         double route_length = wm_->getRouteEndTrackPos().downtrack;
         double prev_mvr_end_speed = 0.0;
         //Find lane changes in path - up to the second to last lanelet in path (till lane change is possible)
-        for(int i = 0;i < route_shortest_path.size() - 2; i++){
+        for(int i = 0; i < route_shortest_path.size() - 1; ++i){
             auto following_lanelets = wm_->getRoute()->followingRelations(route_shortest_path[i]);
             double target_speed_in_lanelet = findSpeedLimit(route_shortest_path[i]);
             double start_dist = wm_->routeTrackPos(route_shortest_path[i].centerline2d().front()).downtrack;
@@ -138,7 +136,7 @@ namespace route_following_plugin
             double end_dist = wm_->routeTrackPos(route_shortest_path.back().centerline2d().back()).downtrack; 
             maneuvers.push_back(composeLaneFollowingManeuverMessage(start_dist, end_dist, prev_mvr_end_speed, target_speed_in_lanelet, route_shortest_path.back().id(),ros::Time::now()));
         }
-        
+        ROS_DEBUG_STREAM("Maneuver plan along route successfully generated");
         return maneuvers;
     }
 
@@ -146,36 +144,40 @@ namespace route_following_plugin
     { 
         if(latest_maneuver_plan_.empty()){
             ROS_ERROR_STREAM("A maneuver plan has not been generated");
-            return true;
+            return false;
         }
-
-        lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
         
-        double current_downtrack = wm_->routeTrackPos(current_loc).downtrack;
+        double current_downtrack = wm_->routeTrackPos(current_loc_).downtrack;
         double speed_progress = current_speed_;
         
         //update start distance of first maneuver and time for all maneuvers
         setManeuverStartDist(latest_maneuver_plan_.front(), current_downtrack);
         //Update time progress for maneuvers
         updateTimeProgress(latest_maneuver_plan_, ros::Time::now());
-        //update starting speed
         
         //Return the set of maneuvers which intersect those 15s
         int i=0;
         double planned_time = 0.0;
         while(planned_time < min_mvr_duration_ && i < latest_maneuver_plan_.size()){
+            //Ignore plans for distance already covered
+            if(GET_MANEUVER_PROPERTY(latest_maneuver_plan_[i], end_dist) < current_downtrack){
+                ++i;
+                continue;
+            }
             double maneuver_start_time = GET_MANEUVER_PROPERTY(latest_maneuver_plan_[i], start_time).toSec();
             double maneuver_end_time = GET_MANEUVER_PROPERTY(latest_maneuver_plan_[i],end_time).toSec();
             planned_time += maneuver_end_time - maneuver_start_time;
-
+            
             resp.new_plan.maneuvers.push_back(latest_maneuver_plan_[i]);
-            i++;
+            ++i;
         }
         
         if(resp.new_plan.maneuvers.size() == 0)
         {
             ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
         }
+        //update starting speed of first maneuver
+        updateStartingSpeed(resp.new_plan.maneuvers.front(), speed_progress);
         return true;
     }
 
@@ -216,6 +218,31 @@ namespace route_following_plugin
             }
             prev_time = time_progress;
         }
+    }
+
+    void RouteFollowingPlugin::updateStartingSpeed(cav_msgs::Maneuver& maneuver, double start_speed){
+                switch(maneuver.type){
+                case cav_msgs::Maneuver::LANE_FOLLOWING :
+                maneuver.lane_following_maneuver.start_speed = start_speed;
+                break;
+            case cav_msgs::Maneuver::LANE_CHANGE :
+                maneuver.lane_change_maneuver.start_speed = start_speed;
+                break;
+            case cav_msgs::Maneuver::INTERSECTION_TRANSIT_STRAIGHT :
+                maneuver.intersection_transit_straight_maneuver.start_speed = start_speed;
+                break;
+            case cav_msgs::Maneuver::INTERSECTION_TRANSIT_LEFT_TURN :
+                maneuver.intersection_transit_left_turn_maneuver.start_speed = start_speed;
+                break;
+            case cav_msgs::Maneuver::INTERSECTION_TRANSIT_RIGHT_TURN :
+                maneuver.intersection_transit_right_turn_maneuver.start_speed = start_speed;
+                break;
+            case cav_msgs::Maneuver::STOP_AND_WAIT :
+                maneuver.stop_and_wait_maneuver.start_speed = start_speed;
+                break;
+            default :
+                ROS_DEBUG_STREAM("Invalid maneuver type, cannot update starting speed for maneuver");
+            }
     }
 
     void RouteFollowingPlugin::setManeuverStartDist(cav_msgs::Maneuver& maneuver, double start_dist){
