@@ -944,8 +944,8 @@ double WMBroadcaster::distToNearestActiveGeofence(const lanelet::BasicPoint2d& c
   auto curr_lanelet = lanelet::geometry::findNearest(current_map_->laneletLayer, curr_pos, 1)[0].second;
 
   // Check if this point at least is actually within this lanelets
-  //if (!boost::geometry::within(curr_pos, curr_lanelet.polygon2d().basicPolygon()))
-  //  throw std::invalid_argument("Given point is not within any lanelet");
+  if (!boost::geometry::within(curr_pos, curr_lanelet.polygon2d().basicPolygon()))
+    throw std::invalid_argument("Given point is not within any lanelet");
 
   // get route distance (downtrack + cross_track) distances to every lanelets by their ids
   std::vector<double> route_distances;
@@ -1021,23 +1021,11 @@ lanelet::BasicPoint2d curr_pos;
   
   
 
-  auto current_llt_nearest = current_map_->laneletLayer.nearest(curr_pos, 1)[0];
+  //auto current_llt_nearest = current_map_->laneletLayer.nearest(curr_pos, 1)[0];
   auto current_llt_findNearest = lanelet::geometry::findNearest(current_map_->laneletLayer, curr_pos, 1)[0];
-  ROS_DEBUG_STREAM("OLD: Using nearest, on lanelet " << current_llt_nearest.id());
-  ROS_DEBUG_STREAM("Using findNearest,  on lanelet " << current_llt_findNearest.second.id());
+  //ROS_DEBUG_STREAM("OLD: Using nearest, on lanelet " << current_llt_nearest.id());
+  //ROS_DEBUG_STREAM("Using findNearest,  on lanelet " << current_llt_findNearest.second.id());
   auto current_llt = current_llt_findNearest.second;
-
-  auto adjacent_rights = current_map_->laneletLayer.findUsages(current_llt.rightBound());
-  //lanelet::ConstLanelet adjacent_right_llt;
-  if(adjacent_rights.size() > 1){
-    for(auto llt : adjacent_rights){
-      ROS_DEBUG_STREAM("Right lane line used by lanelet " << llt.id());
-    }
-  }
-  else{
-    ROS_DEBUG_STREAM("No right adjacent lanelet");
-  }
-
 
   cav_msgs::CheckActiveGeofence outgoing_geof; //message to publish
   double next_distance = 0 ; //Distance to next geofence
@@ -1127,6 +1115,64 @@ lanelet::BasicPoint2d curr_pos;
                     }
                     // Change the 'type' and 'reason' for this active geofence if the vehicle is in a lane parallel to a closed lane
                     else {
+                      // Obtain all same-direction lanes sharing the right lane boundary (will include the current lanelet)
+                      auto right_boundary_lanelets = current_map_->laneletLayer.findUsages(current_llt.rightBound());
+
+                      // Check if right adjacent lane is closed
+                      if(right_boundary_lanelets.size() > 1){
+                        for(auto lanelet : right_boundary_lanelets){
+                          // Only check the adjacent right lanelet; ignore the current lanelet
+                          if(lanelet.id() != current_llt.id()){
+                            ROS_DEBUG_STREAM("Checking if right adjacent lanelet " << lanelet.id() << " is closed");
+                            for (auto rightRegem: lanelet.regulatoryElements())
+                            {
+                              if(rightRegem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::RegionAccessRule::RuleName) == 0)
+                              {
+                                lanelet::RegionAccessRulePtr rightAccessRuleReg =  std::dynamic_pointer_cast<lanelet::RegionAccessRule>
+                                (current_map_->regulatoryElementLayer.get(rightRegem->id()));
+                                if(!rightAccessRuleReg->accessable(lanelet::Participants::VehicleCar) || !rightAccessRuleReg->accessable(lanelet::Participants::VehicleTruck))
+                                {
+                                  ROS_DEBUG_STREAM("Right adjacent Lanelet " << lanelet.id() << " is CLOSED");
+                                  ROS_DEBUG_STREAM("Assigning LANE_CLOSED type");
+                                  ROS_DEBUG_STREAM("Assigning reason " << rightAccessRuleReg->getReason());
+                                  outgoing_geof.reason = rightAccessRuleReg->getReason();
+                                  outgoing_geof.type = cav_msgs::CheckActiveGeofence::LANE_CLOSED;
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+
+                      // Obtain all same-direction lanes sharing the left lane boundary (will include the current lanelet)
+                      auto left_boundary_lanelets = current_map_->laneletLayer.findUsages(current_llt.leftBound());
+
+                      // Check if left adjacent lane is closed
+                      if(left_boundary_lanelets.size() > 1){
+                        for(auto lanelet : left_boundary_lanelets){
+                          // Only check the adjacent left lanelet; ignore the current lanelet
+                          if(lanelet.id() != current_llt.id()){
+                            ROS_DEBUG_STREAM("Checking if left adjacent lanelet " << lanelet.id() << " is closed");
+                            for (auto leftRegem: lanelet.regulatoryElements())
+                            {
+                              if(leftRegem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::RegionAccessRule::RuleName) == 0)
+                              {
+                                lanelet::RegionAccessRulePtr leftAccessRuleReg =  std::dynamic_pointer_cast<lanelet::RegionAccessRule>
+                                (current_map_->regulatoryElementLayer.get(leftRegem->id()));
+                                if(!leftAccessRuleReg->accessable(lanelet::Participants::VehicleCar) || !leftAccessRuleReg->accessable(lanelet::Participants::VehicleTruck))
+                                {
+                                  ROS_DEBUG_STREAM("Left adjacent Lanelet " << lanelet.id() << " is CLOSED");
+                                  ROS_DEBUG_STREAM("Assigning LANE_CLOSED type");
+                                  ROS_DEBUG_STREAM("Assigning reason " << leftAccessRuleReg->getReason());
+                                  outgoing_geof.reason = leftAccessRuleReg->getReason();
+                                  outgoing_geof.type = cav_msgs::CheckActiveGeofence::LANE_CLOSED;
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                      /**
                       ROS_DEBUG_STREAM("Checking non-routable right lanes");
                       // Check if any right parallel lane(s) are closed
                       lanelet::ConstLanelets rights = map_graph->adjacentRights(current_llt);
@@ -1223,7 +1269,7 @@ lanelet::BasicPoint2d curr_pos;
                             }
                           }
                         }
-                      }
+                      }**/
 
 
 
