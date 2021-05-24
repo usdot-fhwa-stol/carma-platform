@@ -171,7 +171,7 @@ namespace route_following_plugin
                 composeLaneChangeManeuverMessage(lane_change_start_dist, end_dist, speed_progress, target_speed, 
                                     starting_lanelet_id, ending_lanelet_id,
                                     time_progress));
-
+                ROS_DEBUG_STREAM("before composing lane change status msg");
                upcoming_lane_change_status_msg_=ComposeLaneChangeStatus(lane_change_start_dist,shortest_path[last_lanelet_index],shortest_path[last_lanelet_index+1],current_downtrack);   
                
                 
@@ -227,6 +227,7 @@ namespace route_following_plugin
 
         if (current_downtrack <= upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack)
         { 
+            ROS_DEBUG_STREAM("ComposeLaneChangeStatus First IF: current_downtrack " << current_downtrack << ",upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack " << upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack);
                return upcoming_lane_change_status_msg_;
         }
 
@@ -236,15 +237,17 @@ namespace route_following_plugin
         // change to left if detected
         for (auto &relation : wm_->getRoute()->leftRelations(starting_lanelet))
         {
+            ROS_DEBUG_STREAM("Checking relation.lanelet.id()" < <relation.lanelet.id());
             if (relation.lanelet.id() == ending_lanelet.id())
             {
+                ROS_DEBUG_STREAM("relation.lanelet.id()" << relation.lanelet.id() << " is LEFT");
                 upcoming_lanechange_status_msg.lane_change = cav_msgs::UpcomingLaneChangeStatus::LEFT;
                 break;
             }  
         }
-   
+        ROS_DEBUG_STREAM("lane_change_start_dist <<" << lane_change_start_dist);
        upcoming_lanechange_status_msg.last_recorded_lanechange_downtrack=lane_change_start_dist;
-
+        ROS_DEBUG_STREAM("==== ComposeLaneChangeStatus Exiting now");
        return upcoming_lanechange_status_msg;
     }
      
@@ -255,9 +258,14 @@ namespace route_following_plugin
         return;
         lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
+        ROS_ERROR_STREAM("pose_cb : current_progress" << current_progress);
+        ROS_ERROR_STREAM("upcoming_lane_change_status_msg_.lane_change : " << upcoming_lane_change_status_msg_.lane_change << 
+            ", upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack" << upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack);
+        
         if (upcoming_lane_change_status_msg_.lane_change != cav_msgs::UpcomingLaneChangeStatus::NONE && current_progress < upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack)
         {
             upcoming_lane_change_status_msg_.downtrack_until_lanechange=upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack-current_progress;
+            ROS_ERROR_STREAM("upcoming_lane_change_status_msg_.downtrack_until_lanechange" << upcoming_lane_change_status_msg_.downtrack_until_lanechange);
             upcoming_lane_change_status_pub_.publish(upcoming_lane_change_status_msg_); 
         }
       
