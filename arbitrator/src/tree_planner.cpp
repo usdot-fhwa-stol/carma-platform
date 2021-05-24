@@ -34,11 +34,13 @@ namespace arbitrator
 
         while (!open_list.empty())
         {
+            ROS_DEBUG_STREAM("Executing tree planner with open-list of size: " << open_list.size());
             std::vector<std::pair<cav_msgs::ManeuverPlan, double>> new_open_list;
             for (auto it = open_list.begin(); it != open_list.end(); it++)
             {
                 // Pop the first element off the open list
                 cav_msgs::ManeuverPlan cur_plan = it->first;
+                ROS_DEBUG_STREAM("Tree planner expanding plan " << cur_plan.maneuver_plan_id);
                 ros::Duration plan_duration; // zero duration
 
                 // If we're not at the root, plan_duration is nonzero (our plan should have maneuvers)
@@ -46,24 +48,32 @@ namespace arbitrator
                 {
                     // get plan duration
                     plan_duration = arbitrator_utils::get_plan_end_time(cur_plan) - arbitrator_utils::get_plan_start_time(cur_plan); 
+                } else {
+                    ROS_WARN_STREAM("Tree planner received maneuver plan: " << cur_plan.maneuver_plan_id << " with no maneuvers!!!");
                 }
+
                 // Evaluate terminal condition
                 if (plan_duration >= target_plan_duration_) 
                 {
+                    ROS_WARN_STREAM("Planning complete with plan " << cur_plan.maneuver_plan_id << " meeting time requirement with time " << plan_duration);
                     return cur_plan;
                 } else if (plan_duration > longest_plan_duration) {
+                    ROS_WARN_STREAM("Planning continued with plan " << cur_plan.maneuver_plan_id << " not yet meeting time requirement with time " << plan_duration);
                     longest_plan_duration = plan_duration;
                     longest_plan = cur_plan;
                 }
 
                 // Expand it, and reprioritize
                 std::vector<cav_msgs::ManeuverPlan> children = neighbor_generator_.generate_neighbors(cur_plan);
+                ROS_WARN_STREAM("Tree plan neighbor list generated of size: " << children.size());
                 
                 // Compute cost for each child and store in open list
                 for (auto child = children.begin(); child != children.end(); child++)
                 {
-                    if (child->maneuvers.empty())
+                    if (child->maneuvers.empty()) {
+                        ROS_WARN_STREAM("Tree planner received maneuver plan: " << child.maneuver_plan_id << " with no maneuvers!!!");
                         continue;   
+                    }
                     new_open_list.push_back(std::make_pair(*child, cost_function_.compute_cost_per_unit_distance(*child)));
                 }
             }

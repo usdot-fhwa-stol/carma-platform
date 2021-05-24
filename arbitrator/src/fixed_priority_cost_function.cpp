@@ -18,6 +18,7 @@
 #include "arbitrator_utils.hpp"
 #include "cav_msgs/ManeuverParameters.h"
 #include <limits>
+#include <ros/ros.h>
 
 namespace arbitrator
 {
@@ -36,7 +37,9 @@ namespace arbitrator
         // Normalize the list and invert into costs
         for (auto it = plugin_priorities.begin(); it != plugin_priorities.end(); it++)
         {
-            plugin_costs_[it->first] = 1.0 - (it->second / max_priority);
+            double cost = 1.0 - (it->second / max_priority);
+            ROS_DEBUG_STREAM("Storing cost: " << it->first << " -> " << cost);
+            plugin_costs_[it->first] = cost;
         }
     }
 
@@ -50,12 +53,14 @@ namespace arbitrator
                 plugin_costs_.at(planning_plugin);
         }
 
+        ROS_DEBUG_STREAM("Total cost for plan: " << plan.maneuver_plan_id << " = " << total_cost);
         return total_cost;
     }
 
     double FixedPriorityCostFunction::compute_cost_per_unit_distance(const cav_msgs::ManeuverPlan& plan)
     {
         double plan_dist = arbitrator_utils::get_plan_end_distance(plan) - arbitrator_utils::get_plan_start_distance(plan);
-        return compute_total_cost(plan) / plan_dist;
+        double cost = compute_total_cost(plan) / plan_dist;
+        ROS_DEBUG_STREAM("Unit distance cost for plan: " << plan.maneuver_plan_id << " = " << cost);
     }
 }

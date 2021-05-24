@@ -17,6 +17,7 @@
 #include "capabilities_interface.hpp"
 #include <cav_srvs/PlanManeuvers.h>
 #include <exception>
+#include <ros/ros.h>
 
 namespace arbitrator
 {
@@ -24,6 +25,7 @@ namespace arbitrator
     
     std::vector<std::string> CapabilitiesInterface::get_topics_for_capability(const std::string& query_string)
     {
+        ROS_DEBUG_STREAM("Received query for capability " << query_string);
         std::vector<std::string> topics = {};
 
         cav_srvs::GetPluginApi srv;
