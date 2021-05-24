@@ -1037,7 +1037,7 @@ cav_msgs::CheckActiveGeofence WMBroadcaster::checkActiveGeofenceLogic(const geom
         outgoing_geof.is_on_active_geofence = true;
         for (auto regem: current_llt.regulatoryElements())
         {
-          // Assign active geofence information based on the speed limit associated with this lanelet
+          // Assign active geofence fields based on the speed limit associated with this lanelet
           if (regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0)
           {
             lanelet::DigitalSpeedLimitPtr speed =  std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>
@@ -1053,7 +1053,7 @@ cav_msgs::CheckActiveGeofence WMBroadcaster::checkActiveGeofenceLogic(const geom
             }
           }
 
-          // Assign active geofence information based on the minimum gap associated with this lanelet (if it exists)
+          // Assign active geofence fields based on the minimum gap associated with this lanelet (if it exists)
           if(regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalMinimumGap::RuleName) == 0)
           {
             lanelet::DigitalMinimumGapPtr min_gap =  std::dynamic_pointer_cast<lanelet::DigitalMinimumGap>
@@ -1062,7 +1062,7 @@ cav_msgs::CheckActiveGeofence WMBroadcaster::checkActiveGeofenceLogic(const geom
             ROS_DEBUG_STREAM("Active geofence has a minimum gap of " << min_gap->getMinimumGap());
           }
                  
-          // Assign active geofence information based on whether the current lane is closed or is immediately adjacent to a closed lane
+          // Assign active geofence fields based on whether the current lane is closed or is immediately adjacent to a closed lane
           if(regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::RegionAccessRule::RuleName) == 0)
           {
             lanelet::RegionAccessRulePtr accessRuleReg =  std::dynamic_pointer_cast<lanelet::RegionAccessRule>
@@ -1144,7 +1144,6 @@ cav_msgs::CheckActiveGeofence WMBroadcaster::checkActiveGeofenceLogic(const geom
       }
     }
   }
-
   return outgoing_geof;
 }
 
