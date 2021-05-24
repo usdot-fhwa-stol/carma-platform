@@ -1026,14 +1026,19 @@ lanelet::BasicPoint2d curr_pos;
   ROS_DEBUG_STREAM("OLD: Using nearest, on lanelet " << current_llt_nearest.id());
   ROS_DEBUG_STREAM("Using findNearest,  on lanelet " << current_llt_findNearest.second.id());
   auto current_llt = current_llt_findNearest.second;
+
   auto adjacent_rights = current_map_->laneletLayer.findUsages(current_llt.rightBound());
   //lanelet::ConstLanelet adjacent_right_llt;
-  if(adjacent_rights.size() > 0){
-    ROS_DEBUG_STREAM("Right adjacent lanelet is " << adjacent_rights[0].id());
+  if(adjacent_rights.size() > 1){
+    for(auto llt : adjacent_rights){
+      ROS_DEBUG_STREAM("Right lane line used by lanelet " << llt.id());
+    }
   }
   else{
     ROS_DEBUG_STREAM("No right adjacent lanelet");
   }
+
+
   cav_msgs::CheckActiveGeofence outgoing_geof; //message to publish
   double next_distance = 0 ; //Distance to next geofence
 
@@ -1046,6 +1051,7 @@ lanelet::BasicPoint2d curr_pos;
     return outgoing_geof;
   }
 
+  /**
   bool in_active_geofence = false;
   for (auto id : active_geofence_llt_ids_){
     if (current_llt.id() == id){
@@ -1053,10 +1059,11 @@ lanelet::BasicPoint2d curr_pos;
       ROS_DEBUG_STREAM("In a geofence lanelet");
     }
   }
+  **/
   
   
     /* determine whether or not the vehicle's current position is within an active geofence */
-     if (in_active_geofence)
+     if (boost::geometry::within(curr_pos, current_llt.polygon2d().basicPolygon()))
       {         
         next_distance = distToNearestActiveGeofence(curr_pos);
         for(auto id : active_geofence_llt_ids_) 
@@ -1105,8 +1112,7 @@ lanelet::BasicPoint2d curr_pos;
                     }
                     
                     // Obtain map routing graph 
-                    lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(
-                    lanelet::traffic_rules::CarmaUSTrafficRules::Location, lanelet::Participants::Vehicle);
+                    lanelet::traffic_rules::TrafficRulesUPtr traffic_rules_car = lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::traffic_rules::CarmaUSTrafficRules::Location, lanelet::Participants::VehicleCar);
                     lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*current_map_, *traffic_rules_car);
 
                     // Change the 'type' and 'reason' for this active geofence if the vehicle is in a closed lane
@@ -1124,6 +1130,7 @@ lanelet::BasicPoint2d curr_pos;
                       ROS_DEBUG_STREAM("Checking non-routable right lanes");
                       // Check if any right parallel lane(s) are closed
                       lanelet::ConstLanelets rights = map_graph->adjacentRights(current_llt);
+                      ROS_DEBUG_STREAM(rights.size());
                       for(auto lanelet : rights){
                         ROS_DEBUG_STREAM("Non-routable Right Lanelet: " << lanelet.id());
                         for (auto rightRegem: lanelet.regulatoryElements())
@@ -1148,6 +1155,7 @@ lanelet::BasicPoint2d curr_pos;
                       // Check if any left parallel lane(s) are closed
                       ROS_DEBUG_STREAM("Checking non-routable left lanes");
                       lanelet::ConstLanelets lefts = map_graph->adjacentLefts(current_llt);
+                      ROS_DEBUG_STREAM(lefts.size());
                       for(auto lanelet : lefts){
                         ROS_DEBUG_STREAM("Non-routable Left Lanelet: " << lanelet.id());
                         for (auto leftRegem: lanelet.regulatoryElements())
@@ -1172,6 +1180,7 @@ lanelet::BasicPoint2d curr_pos;
                       // Debug lines
                       ROS_DEBUG_STREAM("Checking routable left lanes");
                       lanelet::ConstLanelets routableLefts = map_graph->lefts(current_llt);
+                      ROS_DEBUG_STREAM(routableLefts.size());
                       for(auto lanelet : routableLefts){
                         ROS_DEBUG_STREAM("Routable left lanelet: " << lanelet.id());
                         for (auto leftRegem: lanelet.regulatoryElements())
@@ -1194,6 +1203,7 @@ lanelet::BasicPoint2d curr_pos;
                       }
                       ROS_DEBUG_STREAM("Checking routable right lanes");
                       lanelet::ConstLanelets routableRights = map_graph->rights(current_llt);
+                      ROS_DEBUG_STREAM(routableRights.size());
                       for(auto lanelet : routableRights){
                         ROS_DEBUG_STREAM("Routable right lanelet: " << lanelet.id());
                         for (auto rightRegem: lanelet.regulatoryElements())
