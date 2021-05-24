@@ -167,17 +167,20 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
 
     auto regemptr_it = world_model_->getMutableMap()->regulatoryElementLayer.find(pair.second->id());
 
-    // if this regem is already in the map
-    if (regemptr_it != world_model_->getMutableMap()->regulatoryElementLayer.end())
+    // if this regem is already in the map.
+    // This section is expected to be called to add back regulations which were previously removed by expired geofences.
+    if (regemptr_it != world_model_->getMutableMap()->regulatoryElementLayer.end())  
     {
 
+      ROS_DEBUG_STREAM("Reapplying previously existing element");
       // again we should use the element with correct data address to be consistent
       world_model_->getMutableMap()->update(parent_llt, *regemptr_it);
 
     }
-    else
+    else // Updates are treated as new regulations after the old value was removed. In both cases we enter this block. 
     {
 
+      ROS_DEBUG_STREAM("New regulatory element " << pair.second->id());
       newRegemUpdateHelper(parent_llt, pair.second.get());
 
     }

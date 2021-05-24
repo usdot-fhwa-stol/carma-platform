@@ -27,7 +27,7 @@
     // Setup pub/sub
     projection_sub_=nh_.subscribe("georeference",1,&TrafficIncidentParserWorker::projectionCallback,&traffic_parser_worker_);
     mobility_operation_sub_=nh_.subscribe("incoming_mobility_operation",10,&TrafficIncidentParserWorker::mobilityOperationCallback,&traffic_parser_worker_);
-    traffic_control_msg_pub_=nh_.advertise<cav_msgs::TrafficControlMessage>("geofence", 100,true);
+    traffic_control_msg_pub_=nh_.advertise<cav_msgs::TrafficControlMessage>("geofence", 100,[this](auto& pub){ traffic_parser_worker_.newGeofenceSubscriber(pub); });
   }
 
   void TrafficIncidentParserNode::publishTrafficControlMessage(const cav_msgs::TrafficControlMessage& traffic_control_msg) const
