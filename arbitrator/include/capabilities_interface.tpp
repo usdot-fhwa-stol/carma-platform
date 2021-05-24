@@ -22,6 +22,7 @@
 #include <string>
 #include <functional>
 #include <cav_srvs/PlanManeuvers.h>
+#include <ros/ros.h>
 
 namespace arbitrator 
 {
@@ -29,11 +30,15 @@ namespace arbitrator
     std::map<std::string, MSrv> CapabilitiesInterface::multiplex_service_call_for_capability(std::string query_string, MSrv msg)
     {
         std::vector<std::string> topics = get_topics_for_capability(query_string);
+        ROS_DEBUG_STREAM("Multiplexing service call for " << query_string << " across " << topics.size() << " topics.");
+
         std::map<std::string, MSrv> responses;
         for (auto i = topics.begin(); i != topics.end(); i++) 
         {
             ros::ServiceClient sc = nh_->serviceClient<cav_srvs::PlanManeuvers>(*i);
+            ROS_DEBUG_STREAM("Multiplexed " << query_string << " call being sent to " << topics[i]);
             if (sc.call(msg)) {
+                ROS_DEBUG_STREAM("Multiplexed " << query_string << " response received from " << topics[i]);
                 responses.emplace(*i, msg);
             }
         }
