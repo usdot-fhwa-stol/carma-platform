@@ -982,7 +982,7 @@ namespace cooperative_lanechange
             //lane_follow till lane_change req
             lanelet::BasicLineString2d new_points =lanelets_in_path[lane_change_iteration-1].centerline2d().basicLineString();
             lanelet::BasicLineString2d new_points_spliced(new_points.begin(), new_points.end() - 1);
-            centerline_points.insert(centerline_points.end(), new_points_spliced.begin(), new_points_spliced.end()); // TODO:- 1 to avoid duplication in starting from lanechange
+            centerline_points.insert(centerline_points.end(), new_points_spliced.begin(), new_points_spliced.end());
         }
         
         lanelet::BasicLineString2d first=lanelets_in_path[lane_change_iteration].centerline2d().basicLineString();
@@ -1005,7 +1005,7 @@ namespace cooperative_lanechange
                 buffer_points = lanelets_in_path[i].centerline2d().basicLineString();
                 lanelet::BasicLineString2d  buffer_points_spliced(buffer_points.begin() + 1, buffer_points.end());
                 ROS_ERROR_STREAM("Adding extra points of size: " << buffer_points_spliced.size() << ", ending at x:" << buffer_points_spliced.back().x() << ", y:" << buffer_points_spliced.back().y());
-                centerline_points.insert(centerline_points.end(), buffer_points_spliced.begin(), buffer_points_spliced.end()); // TODO + 1 to avoid duplication
+                centerline_points.insert(centerline_points.end(), buffer_points_spliced.begin(), buffer_points_spliced.end());
             }
         }
         ROS_ERROR_STREAM("Reached the end of create_centerline_points");
