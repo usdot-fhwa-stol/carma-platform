@@ -994,15 +994,17 @@ namespace cooperative_lanechange
         ROS_ERROR_STREAM("Theoretically we should be adding extra buffer points below");
         //"lane_follow" beyond lanechange
         lanelet::BasicLineString2d buffer_points = {};
+        ROS_ERROR_STREAM("lane_change_iteration: " << lane_change_iteration);
+        ROS_ERROR_STREAM("lanelets_in_path size: " << lanelets_in_path.size());
         if (lane_change_iteration + 2 < lanelets_in_path.size())
         {
-            for ( int i = lane_change_iteration + 2; lane_change_iteration < lanelets_in_path.size(); i ++)
+            for ( int i = (lane_change_iteration + 2); i < lanelets_in_path.size(); i++)
             {
                 buffer_points = {};
+                ROS_ERROR_STREAM("i now" << i);
                 buffer_points = lanelets_in_path[i].centerline2d().basicLineString();
                 lanelet::BasicLineString2d  buffer_points_spliced(buffer_points.begin() + 1, buffer_points.end());
                 ROS_ERROR_STREAM("Adding extra points of size: " << buffer_points_spliced.size() << ", ending at x:" << buffer_points_spliced.back().x() << ", y:" << buffer_points_spliced.back().y());
-                
                 centerline_points.insert(centerline_points.end(), buffer_points_spliced.begin(), buffer_points_spliced.end()); // TODO + 1 to avoid duplication
             }
         }
