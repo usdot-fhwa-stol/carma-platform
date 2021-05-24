@@ -277,7 +277,7 @@ void MotionComputationWorker::calculateAngVelocityOfPredictedStates(cav_msgs::Ex
   auto prev_orient = object.pose.pose.orientation;
   for (auto& pred: object.predictions)
   {
-    pred.predicted_velocity.angular.z = (getYawFromQuaternionMsg(prev_orient) - 
+    pred.predicted_velocity.linear.x = (getYawFromQuaternionMsg(prev_orient) - 
                                      getYawFromQuaternionMsg(pred.predicted_position.orientation)) / mobility_path_prediction_time_step_;
   }
 }
@@ -303,7 +303,7 @@ cav_msgs::PredictedState MotionComputationWorker::composePredictedState(const tf
   output_state.predicted_position.orientation.w = vehicle_orientation.getW();
 
   // Set velocity
-  output_state.predicted_velocity.linear.x = vehicle_vector.norm() / mobility_path_prediction_time_step_;
+  output_state.predicted_velocity.angular.z = vehicle_vector.norm() / mobility_path_prediction_time_step_;
 
   // Set timestamp
   output_state.header.stamp = prev_time_stamp;
