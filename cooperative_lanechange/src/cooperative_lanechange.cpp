@@ -531,7 +531,10 @@ namespace cooperative_lanechange
             ROS_DEBUG_STREAM("route geometry size:"<<route_geometry.size());
             ROS_ERROR_STREAM("route geometry size:"<<route_geometry.size());
 
-            int nearest_pt_index = getNearestRouteIndex(route_geometry,state);
+            //int nearest_pt_index = getNearestRouteIndex(route_geometry,state);
+            lanelet::BasicPoint2d state_pos(state.X_pos_global, state.Y_pos_global);
+            double current_downtrack = wm_->routeTrackPos(state_pos).downtrack;
+            int nearest_pt_index = get_ending_point_index(route_geometry, current_downtrack);
             int ending_pt_index = get_ending_point_index(route_geometry, ending_downtrack); 
             ROS_DEBUG_STREAM("Nearest pt index in maneuvers to points:"<<nearest_pt_index);
             
@@ -856,7 +859,7 @@ namespace cooperative_lanechange
 
             if(downtrack > ending_downtrack){
                 best_index = i - 1;
-                ROS_DEBUG_STREAM("get_ending_point_index>> Found best_idx: " << best_index -1<<", points[i].x(): " << points[i -1].x() << ", points[i].y(): " << points[i - 1].y() << ", downtrack: "<< downtrack);
+                ROS_DEBUG_STREAM("get_ending_point_index>> Found best_idx: " << best_index<<", points[i].x(): " << points[i].x() << ", points[i].y(): " << points[i].y() << ", downtrack: "<< downtrack);
 
                 break;
             }
