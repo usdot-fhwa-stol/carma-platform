@@ -625,9 +625,9 @@ namespace cooperative_lanechange
         // //Remove extra points
         ROS_DEBUG_STREAM("1 future_geom_points.size()" << future_geom_points.size());
         int end_dist_pt_index = getNearestPointIndex(future_geom_points, ending_state_before_buffer_);
-        future_geom_points.resize(end_dist_pt_index + 1);
-        times.resize(end_dist_pt_index + 1);
-        final_yaw_values.resize(end_dist_pt_index + 1);
+        future_geom_points.resize(end_dist_pt_index);
+        times.resize(end_dist_pt_index);
+        final_yaw_values.resize(end_dist_pt_index);
         ROS_DEBUG_STREAM("2 future_geom_points.size()" << future_geom_points.size());
 
 
