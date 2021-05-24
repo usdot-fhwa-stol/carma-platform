@@ -36,9 +36,9 @@ namespace arbitrator
         for (auto i = topics.begin(); i != topics.end(); i++) 
         {
             ros::ServiceClient sc = nh_->serviceClient<cav_srvs::PlanManeuvers>(*i);
-            ROS_DEBUG_STREAM("Multiplexed " << query_string << " call being sent to " << topics[i]);
+            ROS_DEBUG_STREAM("Multiplexed " << query_string << " call being sent to " << *i);
             if (sc.call(msg)) {
-                ROS_DEBUG_STREAM("Multiplexed " << query_string << " response received from " << topics[i]);
+                ROS_DEBUG_STREAM("Multiplexed " << query_string << " response received from " << *i);
                 responses.emplace(*i, msg);
             }
         }
