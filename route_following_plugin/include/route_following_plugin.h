@@ -176,7 +176,7 @@ namespace route_following_plugin
 
 
         // Minimal duration of maneuver, loaded from config file
-        double min_mvr_duration_;
+        double min_plan_duration_;
 
 
         // Plugin discovery message

@@ -24,7 +24,7 @@
 
 namespace route_following_plugin
 {
-    RouteFollowingPlugin::RouteFollowingPlugin() : min_mvr_duration_(16.0), current_speed_(0.0) { }
+    RouteFollowingPlugin::RouteFollowingPlugin() : min_plan_duration_(16.0), current_speed_(0.0) { }
 
     void RouteFollowingPlugin::initialize()
     {
@@ -46,7 +46,7 @@ namespace route_following_plugin
         twist_sub_ = nh_->subscribe("current_velocity", 1, &RouteFollowingPlugin::twist_cb, this);
 
         // read ros parameters
-        pnh_->param<double>("minimal_maneuver_duration", min_mvr_duration_, 16.0);
+        pnh_->param<double>("minimal_maneuver_duration", min_plan_duration_, 16.0);
         pnh_->param<std::string>("lane_change_plugin", lane_change_plugin_);
 
         wml_.reset(new carma_wm::WMListener());
@@ -72,6 +72,7 @@ namespace route_following_plugin
     void RouteFollowingPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
         pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
+        lanelet::BasicPoint2d curr_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
     }
     void RouteFollowingPlugin::twist_cb(const geometry_msgs::TwistStampedConstPtr& msg)
     {
@@ -107,7 +108,6 @@ namespace route_following_plugin
         if(current_lanelet_index == -1)
         {
             ROS_WARN_STREAM("Current position is not on the shortest path! Returning an empty maneuver");
-            return maneuvers;
         }
 
         double route_length = wm_->getRouteEndTrackPos().downtrack;
@@ -148,17 +148,11 @@ namespace route_following_plugin
         }
         
         double current_downtrack = wm_->routeTrackPos(current_loc_).downtrack;
-        double speed_progress = current_speed_;
         
-        //update start distance of first maneuver and time for all maneuvers
-        setManeuverStartDist(latest_maneuver_plan_.front(), current_downtrack);
-        //Update time progress for maneuvers
-        updateTimeProgress(latest_maneuver_plan_, ros::Time::now());
-        
-        //Return the set of maneuvers which intersect those 15s
+        //Return the set of maneuvers which intersect with min_plan_duration
         int i=0;
         double planned_time = 0.0;
-        while(planned_time < min_mvr_duration_ && i < latest_maneuver_plan_.size()){
+        while(planned_time < min_plan_duration_ && i < latest_maneuver_plan_.size()){
             //Ignore plans for distance already covered
             if(GET_MANEUVER_PROPERTY(latest_maneuver_plan_[i], end_dist) < current_downtrack){
                 ++i;
@@ -176,8 +170,15 @@ namespace route_following_plugin
         {
             ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
         }
+        //update plan
+
+        //update start distance of first maneuver and time for all maneuvers
+        setManeuverStartDist(resp.new_plan.maneuvers.front(), current_downtrack);
+        //Update time progress for maneuvers
+        updateTimeProgress(resp.new_plan.maneuvers, ros::Time::now());
         //update starting speed of first maneuver
-        updateStartingSpeed(resp.new_plan.maneuvers.front(), speed_progress);
+        updateStartingSpeed(resp.new_plan.maneuvers.front(), current_speed_);
+
         return true;
     }
 
@@ -300,7 +301,7 @@ namespace route_following_plugin
         // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
         double cur_plus_target = start_speed + target_speed;
         if (cur_plus_target < 0.00001) {
-            maneuver_msg.lane_following_maneuver.end_time = start_time + ros::Duration(min_mvr_duration_);
+            maneuver_msg.lane_following_maneuver.end_time = start_time + ros::Duration(min_plan_duration_);
         } else {
             maneuver_msg.lane_following_maneuver.end_time = start_time + ros::Duration((end_dist - start_dist) / (0.5 * cur_plus_target));
         }
@@ -325,7 +326,7 @@ namespace route_following_plugin
         // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
         double cur_plus_target = start_speed + target_speed;
         if (cur_plus_target < 0.00001) {
-            maneuver_msg.lane_change_maneuver.end_time = start_time + ros::Duration(min_mvr_duration_);
+            maneuver_msg.lane_change_maneuver.end_time = start_time + ros::Duration(min_plan_duration_);
         } else {
             maneuver_msg.lane_change_maneuver.end_time = start_time + ros::Duration((end_dist - start_dist) / (0.5 * cur_plus_target));
         }
