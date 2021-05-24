@@ -79,17 +79,17 @@ namespace platoon_control
 
         	// ROS Subscriber
         	ros::Subscriber trajectory_plan_sub;
-					ros::Subscriber current_twist_sub_;
-					ros::Subscriber pose_sub_;
+			ros::Subscriber current_twist_sub_;
+			ros::Subscriber pose_sub_;
         	// ROS Publisher
         	ros::Publisher twist_pub_;
         	
         	ros::Publisher plugin_discovery_pub_;
 
-					ros::Timer discovery_pub_timer_;
+			ros::Timer discovery_pub_timer_;
 
-					// TODO: add communication to receive leader
-					PlatoonLeaderInfo leader;
+			// TODO: add communication to receive leader
+			PlatoonLeaderInfo leader;
 
 
 

@@ -31,7 +31,7 @@ namespace platoon_strategic
       mobility_response_publisher_(mobility_response_publisher), mobility_request_publisher_(mobility_request_publisher),
       mobility_operation_publisher_(mobility_operation_publisher), platooning_info_publisher_(platooning_info_publisher)
     {
-        plugin_discovery_msg_.name = "PlatoonStrategic";
+        plugin_discovery_msg_.name = "PlatooningStrategicPlugin";
         plugin_discovery_msg_.versionId = "v1.0";
         plugin_discovery_msg_.available = true;
         plugin_discovery_msg_.activated = false;

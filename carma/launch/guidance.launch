@@ -107,7 +107,10 @@
   <!-- Pure Pursuit Jerk Wrapper -->
   <include file="$(find pure_pursuit_jerk_wrapper)/launch/pure_pursuit_jerk_wrapper.launch" />
 
-    <!-- Route Following Plugin -->
+  <!-- Platooning Control Plugin -->
+  <include file="$(find platoon_control)/launch/platoon_control.launch" />
+
+  <!-- Route Following Plugin -->
   <include file="$(find route_following_plugin)/launch/route_following_plugin.launch" />
   
   <!-- Twist Filter -->

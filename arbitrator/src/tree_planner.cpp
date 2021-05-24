@@ -71,7 +71,7 @@ namespace arbitrator
                 for (auto child = children.begin(); child != children.end(); child++)
                 {
                     if (child->maneuvers.empty()) {
-                        ROS_WARN_STREAM("Tree planner received maneuver plan: " << child.maneuver_plan_id << " with no maneuvers!!!");
+                        ROS_WARN_STREAM("Tree planner received maneuver plan: " << child->maneuver_plan_id << " with no maneuvers!!!");
                         continue;   
                     }
                     new_open_list.push_back(std::make_pair(*child, cost_function_.compute_cost_per_unit_distance(*child)));

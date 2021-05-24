@@ -246,6 +246,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> PlatooningTacticalPlugin::trajectory_
     tpp.y = points[i].y();
     tpp.yaw = yaws[i];
 
+    // TODO: update the name
     tpp.controller_plugin_name = "default";
     tpp.planner_plugin_name = plugin_discovery_msg_.name;
 
@@ -277,13 +278,14 @@ std::vector<PointSpeedPair> PlatooningTacticalPlugin::maneuvers_to_points(const 
     }
 
 
-    if (manuever.lane_following_maneuver.parameters.neogition_type == cav_msgs::ManeuverParameters::PLATOONING)
-    {
-      if ( manuever.lane_following_maneuver.start_speed != manuever.lane_following_maneuver.end_speed)
-      {
-        throw std::invalid_argument("Invalid Platooning Maneuver");
-      }
-    }
+    // if (manuever.lane_following_maneuver.parameters.neogition_type == cav_msgs::ManeuverParameters::PLATOONING)
+    // {
+    //   // TODO: start and end speed are floats, sp compare them with epsilon 
+    //   // if ( manuever.lane_following_maneuver.start_speed != manuever.lane_following_maneuver.end_speed)
+    //   // {
+    //   //   throw std::invalid_argument("Invalid Platooning Maneuver");
+    //   // }
+    // }
 
     cav_msgs::LaneFollowingManeuver lane_following_maneuver = manuever.lane_following_maneuver;
 
