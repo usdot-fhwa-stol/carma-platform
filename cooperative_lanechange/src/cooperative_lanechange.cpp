@@ -852,7 +852,7 @@ namespace cooperative_lanechange
 
         int CooperativeLaneChangePlugin::get_ending_point_index(lanelet::BasicLineString2d& points, double ending_downtrack){
         int best_index = 0;
-        
+        bool set_index = false;
         for(int i=0;i < points.size();i++){
             double downtrack = wm_->routeTrackPos(points[i]).downtrack;
             ROS_DEBUG_STREAM("get_ending_point_index>> points[i].x(): " << points[i].x() << ", points[i].y(): " << points[i].y() << ", downtrack: "<< downtrack);
@@ -860,11 +860,11 @@ namespace cooperative_lanechange
             if(downtrack > ending_downtrack){
                 best_index = i - 1;
                 ROS_DEBUG_STREAM("get_ending_point_index>> Found best_idx: " << best_index<<", points[i].x(): " << points[i].x() << ", points[i].y(): " << points[i].y() << ", downtrack: "<< downtrack);
-
+                set_index = true;
                 break;
             }
         }
-        if (best_index == 0)
+        if (!set_index)
         {
             best_index = points.size() - 1;
         }
