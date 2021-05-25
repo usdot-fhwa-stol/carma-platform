@@ -1457,11 +1457,11 @@ TEST(WMBroadcaster, checkActiveGeofenceLogicTest)
 {
    // Create geofence pointer
   auto gf = std::make_shared<Geofence>(Geofence());
-  gf->schedules.push_back(carma_wm_ctrl::GeofenceSchedule(ros::Time(0),  // Schedule between 1 and 8
+  gf->schedules.push_back(carma_wm_ctrl::GeofenceSchedule(ros::Time(0),  // Schedule between 0 and 8
                                  ros::Time(8),
-                                 ros::Duration(0),    // Starts at 2
-                                 ros::Duration(1.1),  // Ends at 3.1
-                                 ros::Duration(0),    // 0 offset for repetition start, so still starts at 2
+                                 ros::Duration(0),    // Starts at 0
+                                 ros::Duration(1.1),  // Ends at 1.1
+                                 ros::Duration(0),    // 0 offset for repetition start, so still starts at 0
                                  ros::Duration(1),    // Duration of 1 and interval of two so active durations are (2-3)
                                  ros::Duration(2)));
 
