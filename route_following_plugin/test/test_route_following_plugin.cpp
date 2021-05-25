@@ -300,9 +300,6 @@ namespace route_following_plugin
         double start_time_change = GET_MANEUVER_PROPERTY(maneuvers.front(), start_time).toSec() - start_time.toSec();
         ASSERT_EQ(start_time_change, 10.0);
 
-        std::cout<<"Time before updating:"<<maneuvers.front().lane_following_maneuver.start_time.toSec() - start_time.toSec()<<std::endl;
-        std::cout<<"Time after updating:"<<GET_MANEUVER_PROPERTY(maneuvers.front(), start_time).toSec() - start_time.toSec()<<std::endl; 
-
     }
     
 

@@ -66,7 +66,7 @@ namespace route_following_plugin
          * \param path A list of lanelet with different lanelet IDs
          * \return Index of the target lanelet in the list
          */
-        int findLaneletIndexFromPath(int target_id, lanelet::routing::LaneletPath& path);
+        int findLaneletIndexFromPath(int target_id,const lanelet::routing::LaneletPath& path);
 
         /**
          * \brief Compose a lane keeping maneuver message based on input params
@@ -78,7 +78,7 @@ namespace route_following_plugin
          * \param start_time Start time of the current maneuver passed as reference
          * \return A lane keeping maneuver message which is ready to be published
          */
-        cav_msgs::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, int lane_id, ros::Time start_time);
+        cav_msgs::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id lane_id, ros::Time start_time);
 
         /**
          * \brief Compose a lane change maneuver message based on input params
@@ -91,13 +91,13 @@ namespace route_following_plugin
          * \param start_time Start time of the current maneuver passed as reference
          * \return A lane keeping maneuver message which is ready to be published
          */
-        cav_msgs::Maneuver composeLaneChangeManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, int starting_lane_id,int ending_lane_id, ros::Time start_time);
+        cav_msgs::Maneuver composeLaneChangeManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id starting_lane_id,lanelet::Id ending_lane_id, ros::Time start_time);
         
         /**
          * \brief Given a LaneletRelations and ID of the next lanelet in the shortest path
          * \param relations LaneletRelations relative to the previous lanelet
          * \param target_id ID of the next lanelet in the shortest path
-         * \return Whether we need a lanechange to reach to the next lanelet in the shortest path
+         * \return Whether we need a lanechange to reach to the next lanelet in the shortest path.
          */
         bool isLaneChangeNeeded(lanelet::routing::LaneletRelations relations, int target_id);
         
@@ -138,7 +138,7 @@ namespace route_following_plugin
          * \brief Calculate maneuver plan for remaining route. This callback is triggered when a new route has been received and processed by the world model
          *
          */
-        std::vector<cav_msgs::Maneuver> route_cb(lanelet::routing::LaneletPath route_shortest_path);
+        std::vector<cav_msgs::Maneuver> route_cb(const lanelet::routing::LaneletPath& route_shortest_path);
 
         //Internal Variables used in unit tests
         // Current vehicle forward speed
@@ -181,6 +181,10 @@ namespace route_following_plugin
 
         // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
+
+        std::string planning_strategic_plugin_ = "RouteFollowingPlugin";
+        std::string lanefollow_planning_tactical_plugin_ = "InLaneCruisingPlugin"; 
+        //lane change tactical plugin declared as a public member
 
 
         /**
