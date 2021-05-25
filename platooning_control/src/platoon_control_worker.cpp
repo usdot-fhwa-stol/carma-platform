@@ -4,7 +4,12 @@
 namespace platoon_control
 {
    
-	PlatoonControlWorker::PlatoonControlWorker(){}
+	PlatoonControlWorker::PlatoonControlWorker()
+    {
+        pid_ctrl_ = PIDController();
+        pp_ = PurePursuit();
+
+    }
 
 	double PlatoonControlWorker::getLastSpeedCommand() const {
         return speedCmd_;
@@ -18,21 +23,21 @@ namespace platoon_control
 
 
 	        double leaderCurrentPosition = leader.vehiclePosition;
-	        ROS_DEBUG("The current leader position is " , leaderCurrentPosition);
+	        ROS_DEBUG_STREAM("The current leader position is " << leaderCurrentPosition);
 	        double hostVehiclePosition = getCurrentDowntrackDistance(point);
 	        double hostVehicleSpeed = currentSpeed;
 
-	        ROS_DEBUG("The host vehicle speed is + " , hostVehicleSpeed , " and its position is " , hostVehiclePosition);
+	        ROS_DEBUG_STREAM("The host vehicle speed is + " << hostVehicleSpeed << " and its position is " << hostVehiclePosition);
 	        // If the host vehicle is the fifth vehicle and it is following the third vehicle, the leader index here is 2
 	        // vehiclesInFront should be 2, because number of vehicles in front is 4, then numOfVehiclesGaps = VehicleInFront - leaderIndex   
 	        int leaderIndex = leader.leaderIndex;////TODO: Communicate leader index in the platoon (plugin_.platoonManager.getIndexOf(leader);)
-	        int numOfVehiclesGaps = leader.NumberOfVehicleInFront - leaderIndex;////TODO: Communicate behicles ahead in the platoon (plugin_.platoonManager.getNumberOfVehicleInFront() - leaderIndex;)
-	        ROS_DEBUG("The host vehicle have " , numOfVehiclesGaps ," vehicles between itself and its leader (includes the leader)");
+	        int numOfVehiclesGaps = leader.NumberOfVehicleInFront - leaderIndex;////TODO: Communicate vehicles ahead in the platoon (plugin_.platoonManager.getNumberOfVehicleInFront() - leaderIndex;)
+	        ROS_DEBUG_STREAM("The host vehicle have " << numOfVehiclesGaps << " vehicles between itself and its leader (includes the leader)");
 	        desiredGap_ = std::max(hostVehicleSpeed * timeHeadway * numOfVehiclesGaps, standStillHeadway * numOfVehiclesGaps);
-	        ROS_DEBUG("The desired gap with the leader is " , desiredGap_);
+	        ROS_DEBUG_STREAM("The desired gap with the leader is " << desiredGap_);
 	        // ROS_DEBUG("Based on raw radar, the current gap with the front vehicle is " , getDistanceToFrontVehicle());
 	        double desiredHostPosition = leaderCurrentPosition - desiredGap_;
-	        ROS_DEBUG("The desired host position and the setpoint for pid controller is " , desiredHostPosition);
+	        ROS_DEBUG_STREAM("The desired host position and the setpoint for pid controller is " << desiredHostPosition);
 	        // PD controller is used to adjust the speed to maintain the distance gap between the subject vehicle and leader vehicle
 	        // Error input for PD controller is defined as the difference between leaderCurrentPosition and desiredLeaderPosition
 	        // A positive error implies that that the two vehicles are too far and a negative error implies that the two vehicles are too close
@@ -42,8 +47,8 @@ namespace platoon_control
 	        controllerOutput = pid_ctrl_.calculate(desiredHostPosition, hostVehiclePosition);//; = speedController_.apply(signal).get().getData();
 
 		    double adjSpeedCmd = controllerOutput + leader.commandSpeed;
-	        ROS_DEBUG("Adjusted Speed Cmd = " , adjSpeedCmd , "; Controller Output = " , controllerOutput
-	        	, "; Leader CmdSpeed= " , leader.commandSpeed , "; Adjustment Cap " , adjustmentCap);
+	        ROS_DEBUG_STREAM("Adjusted Speed Cmd = " << adjSpeedCmd << "; Controller Output = " << controllerOutput
+	        	<< "; Leader CmdSpeed= " << leader.commandSpeed << "; Adjustment Cap " << adjustmentCap);
 	            // After we get a adjSpeedCmd, we apply three filters on it if the filter is enabled
 	            // First: we do not allow the difference between command speed of the host vehicle and the leader's commandSpeed higher than adjustmentCap
 	        if(enableMaxAdjustmentFilter) {
@@ -52,7 +57,7 @@ namespace platoon_control
                 } else if(adjSpeedCmd < leader.commandSpeed - adjustmentCap) {
                     adjSpeedCmd = leader.commandSpeed - adjustmentCap;
                 }
-                ROS_DEBUG("The adjusted cmd speed after max adjustment cap is " , adjSpeedCmd , " m/s");
+                ROS_DEBUG_STREAM("The adjusted cmd speed after max adjustment cap is " << adjSpeedCmd << " m/s");
             }
         
             // Third: we allow do not a large gap between two consecutive speed commands
@@ -66,16 +71,16 @@ namespace platoon_control
                     adjSpeedCmd = min;
                 }
                 lastCmdSpeed = adjSpeedCmd;
-                ROS_DEBUG("The speed command after max accel cap is: " , adjSpeedCmd , " m/s");
+                ROS_DEBUG_STREAM("The speed command after max accel cap is: " << adjSpeedCmd << " m/s");
             }
             speedCmd_ = adjSpeedCmd;
-            ROS_DEBUG("A speed command is generated from command generator: " , speedCmd_ , " m/s");
+            ROS_DEBUG_STREAM("A speed command is generated from command generator: " << speedCmd_ << " m/s");
 
         }
 
         else {
             // TODO if there is no leader available, we should change back to Leader State and re-join other platoon later
-            ROS_DEBUG("There is no leader available");
+            ROS_DEBUG_STREAM("There is no leader available");
             speedCmd_ = currentSpeed;
             pid_ctrl_.reset();
         }

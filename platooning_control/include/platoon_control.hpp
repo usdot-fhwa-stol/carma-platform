@@ -23,6 +23,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <cav_msgs/TrajectoryPlan.h>
 #include <cav_msgs/Plugin.h>
+#include <cav_msgs/PlatooningInfo.h>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <math.h>
@@ -60,16 +61,19 @@ namespace platoon_control
 
         	PlatoonControlWorker pcw_;
 
-					double current_speed_ = 0.0;
+			double current_speed_ = 0.0;
 
-					// callback function for pose
-					void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
+			// callback function for pose
+			void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
 
-					// callback function for trajectory plan
-        	void TrajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp);
+			// callback function for platoon info
+			void platoonInfo_cb(const cav_msgs::PlatooningInfoConstPtr& msg);
 
-					// callback function for current twist
-					void currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist);
+			// callback function for trajectory plan
+        	void trajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp);
+
+			// callback function for current twist
+			void currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist);
 
         	void publishTwist(const geometry_msgs::TwistStamped& twist) const;
 
@@ -81,6 +85,7 @@ namespace platoon_control
         	ros::Subscriber trajectory_plan_sub;
 			ros::Subscriber current_twist_sub_;
 			ros::Subscriber pose_sub_;
+			ros::Subscriber platoon_info_sub_;
         	// ROS Publisher
         	ros::Publisher twist_pub_;
         	
@@ -89,7 +94,7 @@ namespace platoon_control
 			ros::Timer discovery_pub_timer_;
 
 			// TODO: add communication to receive leader
-			PlatoonLeaderInfo leader;
+			PlatoonLeaderInfo platoon_leader_;
 
 
 

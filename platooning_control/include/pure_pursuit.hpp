@@ -25,7 +25,7 @@ namespace platoon_control
 
 
     public:
-    	PurePursuit() = default;
+    	PurePursuit();
 
     	double calculateSteer(const cav_msgs::TrajectoryPlanPoint& tp);
 
