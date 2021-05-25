@@ -43,10 +43,10 @@ namespace trajectory_executor
 
         out[default_control_plugin_] = default_control_plugin_topic_;
 
-        //Hardcoding jerk control wrapper
-        std::string default_jerk_control_plugin = "Pure Pursuit Jerk";
-        std::string default_jerk_control_plugin_topic_ = "/guidance/pure_pursuit/plan_jerk_trajectory";
-        out[default_jerk_control_plugin]=default_jerk_control_plugin_topic_;
+        // //Hardcoding jerk control wrapper
+        // std::string default_jerk_control_plugin = "Pure Pursuit Jerk";
+        // std::string default_jerk_control_plugin_topic_ = "/guidance/pure_pursuit/plan_jerk_trajectory";
+        // out[default_jerk_control_plugin]=default_jerk_control_plugin_topic_;
         return out;
     }
     
