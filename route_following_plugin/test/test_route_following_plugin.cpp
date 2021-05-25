@@ -77,7 +77,7 @@ namespace route_following_plugin
         EXPECT_FALSE(rfp.isLaneChangeNeeded(relations, 0));
     }
 
-    TEST(RouteFollowingPlugin,TestAssociateSpeedLimit)
+    TEST(RouteFollowingPlugin, TestAssociateSpeedLimit)
     {
         //Use Guidance Lib to create map
         carma_wm::test::MapOptions options;
@@ -132,7 +132,7 @@ namespace route_following_plugin
         plan_req1.planning_completion_time;
         
         ros::Time current_time = ros::Time::now();
-        plan_req1.maneuvers.push_back(worker.composeLaneFollowingManeuverMessage(0,0,0,0,0, current_time));
+        plan_req1.maneuvers.push_back(worker.composeLaneFollowingManeuverMessage(0,0,0,11.176,0, current_time));
         pplan.prior_plan=plan_req1;
         plan.request=pplan;
         //PlanManeuversResponse 
@@ -150,7 +150,7 @@ namespace route_following_plugin
         if(worker.plan_maneuver_cb(plan.request,plan.response)){    
             //check target speeds in updated response
             lanelet::Velocity limit=30_mph;
-            ASSERT_EQ(plan.response.new_plan.maneuvers[0].lane_following_maneuver.end_speed,0);
+            ASSERT_EQ(plan.response.new_plan.maneuvers[0].lane_following_maneuver.end_speed,11.176);
             for(auto i=1;i<plan.response.new_plan.maneuvers.size();i++){
                 ASSERT_EQ(plan.response.new_plan.maneuvers[i].lane_following_maneuver.end_speed, limit.value()) ;
             }
@@ -196,6 +196,7 @@ namespace route_following_plugin
         cmw->carma_wm::CARMAWorldModel::setMap(map);
 
         RouteFollowingPlugin worker;
+        ros::Time::init();  //initializing ros time to use ros::Time::now()
         //get position on map
         auto llt=map.get()->laneletLayer.get(start_id);
         lanelet::LineString3d left_bound=llt.leftBound();
@@ -243,7 +244,7 @@ namespace route_following_plugin
         plan_req1.planning_start_time;
         plan_req1.planning_completion_time;
         ros::Time current_time = ros::Time::now();
-        plan_req1.maneuvers.push_back(worker.composeLaneFollowingManeuverMessage(0,0,0,0,start_id,current_time));
+        plan_req1.maneuvers.push_back(worker.composeLaneFollowingManeuverMessage(0,0,0,11.176,start_id,current_time));
         pplan.prior_plan=plan_req1;
         plan.request=pplan;
         //PlanManeuversResponse 
@@ -252,7 +253,6 @@ namespace route_following_plugin
 
         plan.response=newplan;
     
-        ros::Time::init();  //initializing ros time to use ros::Time::now()
         lanelet::BasicPoint2d curr_loc(worker.pose_msg_.pose.position.x, worker.pose_msg_.pose.position.y);
         worker.current_loc_ = curr_loc;
         worker.latest_maneuver_plan_ = worker.route_cb(shortest_path);
@@ -280,7 +280,7 @@ namespace route_following_plugin
         else ASSERT_EQ(speed,11.176);                                                                            
     }
 
-        TEST(RouteFollowingPlugin,TestHelperfunctions)
+        TEST(RouteFollowingPlugin, TestHelperfunctions)
     {   
         RouteFollowingPlugin worker;
         /*composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, int lane_id, ros::Time start_time);*/

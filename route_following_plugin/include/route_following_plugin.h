@@ -66,7 +66,7 @@ namespace route_following_plugin
          * \param path A list of lanelet with different lanelet IDs
          * \return Index of the target lanelet in the list
          */
-        int findLaneletIndexFromPath(int target_id,const lanelet::routing::LaneletPath& path);
+        int findLaneletIndexFromPath(int target_id,const lanelet::routing::LaneletPath& path) const;
 
         /**
          * \brief Compose a lane keeping maneuver message based on input params
@@ -78,7 +78,7 @@ namespace route_following_plugin
          * \param start_time Start time of the current maneuver passed as reference
          * \return A lane keeping maneuver message which is ready to be published
          */
-        cav_msgs::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id lane_id, ros::Time start_time);
+        cav_msgs::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id lane_id, ros::Time start_time) const;
 
         /**
          * \brief Compose a lane change maneuver message based on input params
@@ -91,7 +91,7 @@ namespace route_following_plugin
          * \param start_time Start time of the current maneuver passed as reference
          * \return A lane keeping maneuver message which is ready to be published
          */
-        cav_msgs::Maneuver composeLaneChangeManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id starting_lane_id,lanelet::Id ending_lane_id, ros::Time start_time);
+        cav_msgs::Maneuver composeLaneChangeManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id starting_lane_id,lanelet::Id ending_lane_id, ros::Time start_time) const;
         
         /**
          * \brief Given a LaneletRelations and ID of the next lanelet in the shortest path
@@ -106,20 +106,20 @@ namespace route_following_plugin
          * \param maneuver A maneuver (non-specific to type) to be performed
          * \param start_dist the starting distance that the maneuver need to be updated to
          */
-        void setManeuverStartDist(cav_msgs::Maneuver& maneuver, double start_dist);
+        void setManeuverStartDist(cav_msgs::Maneuver& maneuver, double start_dist) const;
 
         /**
          * \brief Given an array of maneuvers update the starting time for each
          * \param maneuvers An array of maneuvers (non-specific to type) 
          * \param start_time The starting time for the first maneuver in the sequence, each consequent maneuver is pushed ahead by same amount
          */
-        void updateTimeProgress(std::vector<cav_msgs::Maneuver>& maneuvers, ros::Time start_time);
+        void updateTimeProgress(std::vector<cav_msgs::Maneuver>& maneuvers, ros::Time start_time) const;
         /**
          * \brief Given an maneuver update the starting speed
          * \param maneuver maneuver to update the starting speed for
          * \param start_time The starting speed for the maneuver passed as argument
          */
-        void updateStartingSpeed(cav_msgs::Maneuver& maneuver, double start_speed);
+        void updateStartingSpeed(cav_msgs::Maneuver& maneuver, double start_speed) const;
         /**
          * \brief Service callback for arbitrator maneuver planning
          * \param req Plan maneuver request

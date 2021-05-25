@@ -24,7 +24,7 @@
 
 namespace route_following_plugin
 {
-    RouteFollowingPlugin::RouteFollowingPlugin() : min_plan_duration_(16.0), current_speed_(0.0) { }
+    RouteFollowingPlugin::RouteFollowingPlugin() : current_speed_(0.0) , min_plan_duration_(16.0) { }
 
     void RouteFollowingPlugin::initialize()
     {
@@ -87,7 +87,7 @@ namespace route_following_plugin
         ROS_DEBUG_STREAM("New route created");
         //Go through entire route - identify lane changes and fill in the spaces with lane following
         auto nearest_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc_, 10);   //Return 10 nearest lanelets
-        if(nearest_lanelets.size() == 0)
+        if(nearest_lanelets.empty())
         {
             ROS_WARN_STREAM("Cannot find any lanelet in map!");
             return maneuvers; 
@@ -102,9 +102,9 @@ namespace route_following_plugin
             double target_speed_in_lanelet = findSpeedLimit(route_shortest_path[shortest_path_index]);
 
             //update start distance and start speed from previous maneuver if it exists
-            double start_dist = (maneuvers.size() > 0) ?  GET_MANEUVER_PROPERTY(maneuvers.back(), end_dist) :
+            double start_dist = (maneuvers.empty()) ?  GET_MANEUVER_PROPERTY(maneuvers.back(), end_dist) :
                                                         wm_->routeTrackPos(route_shortest_path[shortest_path_index].centerline2d().front()).downtrack;
-            start_speed = (maneuvers.size() > 0) ? GET_MANEUVER_PROPERTY(maneuvers.back(), end_speed) : 0.0;
+            start_speed = (maneuvers.empty()) ? GET_MANEUVER_PROPERTY(maneuvers.back(), end_speed) : 0.0;
 
             double end_dist = wm_->routeTrackPos(route_shortest_path[shortest_path_index].centerline2d().back()).downtrack; 
             end_dist = std::min(end_dist, route_length);
@@ -173,19 +173,15 @@ namespace route_following_plugin
         return true;
     }
 
-    void RouteFollowingPlugin::updateTimeProgress(std::vector<cav_msgs::Maneuver>& maneuvers, ros::Time start_time){
+    void RouteFollowingPlugin::updateTimeProgress(std::vector<cav_msgs::Maneuver>& maneuvers, ros::Time start_time) const {
         ros::Time time_progress = start_time;
         ros::Time prev_time = time_progress;
 
         for(auto& maneuver : maneuvers){
             double cur_plus_target = GET_MANEUVER_PROPERTY(maneuver,start_speed) + GET_MANEUVER_PROPERTY(maneuver, end_speed);
             ros::Duration maneuver_duration;
-            if (cur_plus_target < 0.00001) {
-                maneuver_duration = ros::Duration(min_plan_duration_);
-            } else {
-                maneuver_duration = ros::Duration((GET_MANEUVER_PROPERTY(maneuver,end_dist) - GET_MANEUVER_PROPERTY(maneuver,start_dist)) / (0.5 * cur_plus_target));
-            }
-        
+            maneuver_duration = ros::Duration((GET_MANEUVER_PROPERTY(maneuver,end_dist) - GET_MANEUVER_PROPERTY(maneuver,start_dist)) / (0.5 * cur_plus_target));
+
             time_progress += maneuver_duration;
             switch(maneuver.type){
                 case cav_msgs::Maneuver::LANE_FOLLOWING :
@@ -213,13 +209,13 @@ namespace route_following_plugin
                 maneuver.stop_and_wait_maneuver.start_time = time_progress;
                 break;
             default :
-                throw("Invalid maneuver type, cannot update time progress for maneuver");
+                throw std::invalid_argument("Invalid maneuver type, cannot update time progress for maneuver");
             }
             prev_time = time_progress;
         }
     }
 
-    void RouteFollowingPlugin::updateStartingSpeed(cav_msgs::Maneuver& maneuver, double start_speed){
+    void RouteFollowingPlugin::updateStartingSpeed(cav_msgs::Maneuver& maneuver, double start_speed) const {
                 switch(maneuver.type){
                 case cav_msgs::Maneuver::LANE_FOLLOWING :
                 maneuver.lane_following_maneuver.start_speed = start_speed;
@@ -240,11 +236,11 @@ namespace route_following_plugin
                 maneuver.stop_and_wait_maneuver.start_speed = start_speed;
                 break;
             default :
-                throw("Invalid maneuver type, cannot update starting speed for maneuver");
+                throw std::invalid_argument("Invalid maneuver type, cannot update starting speed for maneuver");
             }
     }
 
-    void RouteFollowingPlugin::setManeuverStartDist(cav_msgs::Maneuver& maneuver, double start_dist){
+    void RouteFollowingPlugin::setManeuverStartDist(cav_msgs::Maneuver& maneuver, double start_dist) const { 
         switch(maneuver.type){
             case cav_msgs::Maneuver::LANE_FOLLOWING :
                 maneuver.lane_following_maneuver.start_dist = start_dist;
@@ -265,13 +261,13 @@ namespace route_following_plugin
                 maneuver.stop_and_wait_maneuver.start_dist = start_dist;
                 break;
             default :
-                throw("Invalid maneuver type");
+                throw std::invalid_argument("Invalid maneuver type");
         }
 
     }
     
 
-    int RouteFollowingPlugin::findLaneletIndexFromPath(int target_id,const lanelet::routing::LaneletPath& path)
+    int RouteFollowingPlugin::findLaneletIndexFromPath(int target_id,const lanelet::routing::LaneletPath& path) const
     {
         for(size_t i = 0; i < path.size(); ++i)
         {
@@ -283,7 +279,7 @@ namespace route_following_plugin
         return -1;
     }
     
-    cav_msgs::Maneuver RouteFollowingPlugin::composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id lane_id, ros::Time start_time){
+    cav_msgs::Maneuver RouteFollowingPlugin::composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id lane_id, ros::Time start_time) const {
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::LANE_FOLLOWING;
         maneuver_msg.lane_following_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
@@ -299,7 +295,7 @@ namespace route_following_plugin
         // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
         double cur_plus_target = start_speed + target_speed;
         if (cur_plus_target < 0.00001) {
-            maneuver_msg.lane_following_maneuver.end_time = start_time + ros::Duration(min_plan_duration_);
+            throw std::invalid_argument("Requested zero speed lane following.");
         } else {
             maneuver_msg.lane_following_maneuver.end_time = start_time + ros::Duration((end_dist - start_dist) / (0.5 * cur_plus_target));
         }
@@ -309,7 +305,7 @@ namespace route_following_plugin
         return maneuver_msg;
     }
 
-    cav_msgs::Maneuver RouteFollowingPlugin::composeLaneChangeManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id starting_lane_id,lanelet::Id ending_lane_id, ros::Time start_time){
+    cav_msgs::Maneuver RouteFollowingPlugin::composeLaneChangeManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id starting_lane_id,lanelet::Id ending_lane_id, ros::Time start_time) const{
         cav_msgs::Maneuver maneuver_msg;
         maneuver_msg.type = cav_msgs::Maneuver::LANE_CHANGE;
         maneuver_msg.lane_change_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
@@ -324,7 +320,7 @@ namespace route_following_plugin
         // because it is a rough plan, assume vehicle can always reach to the target speed in a lanelet
         double cur_plus_target = start_speed + target_speed;
         if (cur_plus_target < 0.00001) {
-            maneuver_msg.lane_change_maneuver.end_time = start_time + ros::Duration(min_plan_duration_);
+            throw std::invalid_argument("Requested zero speed lane change.");
         } else {
             maneuver_msg.lane_change_maneuver.end_time = start_time + ros::Duration((end_dist - start_dist) / (0.5 * cur_plus_target));
         }
@@ -358,7 +354,7 @@ namespace route_following_plugin
         } 
         catch(const std::exception& e)
         {
-            throw("Valid traffic rules object could not be built");
+            throw std::invalid_argument("Valid traffic rules object could not be built");
         }
         
     }
