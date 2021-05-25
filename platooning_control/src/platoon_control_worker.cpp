@@ -27,7 +27,7 @@ namespace platoon_control
 	        double hostVehiclePosition = getCurrentDowntrackDistance(point);
 	        double hostVehicleSpeed = currentSpeed;
 
-	        ROS_DEBUG_STREAM("The host vehicle speed is + " << hostVehicleSpeed << " and its position is " << hostVehiclePosition);
+	        ROS_DEBUG_STREAM("The host vehicle speed is " << hostVehicleSpeed << " and its position is " << hostVehiclePosition);
 	        // If the host vehicle is the fifth vehicle and it is following the third vehicle, the leader index here is 2
 	        // vehiclesInFront should be 2, because number of vehicles in front is 4, then numOfVehiclesGaps = VehicleInFront - leaderIndex   
 	        int leaderIndex = leader.leaderIndex;////TODO: Communicate leader index in the platoon (plugin_.platoonManager.getIndexOf(leader);)

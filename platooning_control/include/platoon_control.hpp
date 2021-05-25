@@ -21,6 +21,7 @@
 #include <string>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <autoware_msgs/ControlCommandStamped.h>
 #include <cav_msgs/TrajectoryPlan.h>
 #include <cav_msgs/Plugin.h>
 #include <cav_msgs/PlatooningInfo.h>
@@ -88,6 +89,7 @@ namespace platoon_control
 			ros::Subscriber platoon_info_sub_;
         	// ROS Publisher
         	ros::Publisher twist_pub_;
+			ros::Publisher ctrl_pub_;
         	
         	ros::Publisher plugin_discovery_pub_;
 

@@ -42,7 +42,7 @@ namespace platoon_control
     	double _dt = 0.1;
         double _max = 100.0;
         double _min = -100.0;
-        double _Kp = 1.0;
+        double _Kp = 0.5;
         double _Kd = -0.5;
         double _Ki = 0.0;
         double _pre_error = 0.0;
