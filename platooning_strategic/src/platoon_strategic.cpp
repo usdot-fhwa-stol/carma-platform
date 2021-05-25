@@ -169,7 +169,9 @@ namespace platoon_strategic
             {
                 break;
             }
-
+            cav_msgs::PlatooningInfo platoon_status = compose_platoon_info_msg();
+            platoon_status.leader_downtrack_distance = current_progress;
+            platooning_info_publisher_(platoon_status);
             ++last_lanelet_index;
         }
 
@@ -258,7 +260,8 @@ namespace platoon_strategic
                 // Task 2
                 cav_msgs::MobilityOperation status;
                 composeMobilityOperationLeaderWaiting(status);
-                mob_op_pub_.publish(status);
+                // mob_op_pub_.publish(status);
+                mobility_operation_publisher_(status);
                 long tsEnd = ros::Time::now().toSec()*1000;
                 int sleepDuration = std::max(int(statusMessageInterval_ - (tsEnd - tsStart)), 0);
                 // ros::Duration(sleepDuration/1000).sleep();
@@ -272,7 +275,7 @@ namespace platoon_strategic
             if(isTimeForHeartBeat) {
                     cav_msgs::MobilityOperation infoOperation;
                     composeMobilityOperationLeader(infoOperation, "INFO");
-                    mob_op_pub_.publish(infoOperation);
+                    mobility_operation_publisher_(infoOperation);
                     lastHeartBeatTime = ros::Time::now().toSec()*1000.0;
                     ROS_DEBUG_STREAM("Published heart beat platoon INFO mobility operatrion message");
                 }
@@ -297,7 +300,8 @@ namespace platoon_strategic
             if(hasFollower) {
                 cav_msgs::MobilityOperation statusOperation;
                 composeMobilityOperationLeader(statusOperation, "STATUS");
-                mob_op_pub_.publish(statusOperation);
+                // mob_op_pub_.publish(statusOperation);
+                mobility_operation_publisher_(statusOperation);
                 ROS_DEBUG_STREAM("Published platoon STATUS operation message");
             }
             long tsEnd =  ros::Time::now().toSec()*1000;
@@ -318,7 +322,8 @@ namespace platoon_strategic
             // Job 1
             cav_msgs::MobilityOperation status;
             composeMobilityOperationFollower(status);
-            mob_op_pub_.publish(status);
+            // mob_op_pub_.publish(status);
+            mobility_operation_publisher_(status);
             // Job 2
             // Get the number of vehicles in this platoon who is in front of us
             int vehicleInFront = pm_.getNumberOfVehicleInFront();
@@ -400,7 +405,8 @@ namespace platoon_strategic
                 if(pm_.getTotalPlatooningSize() > 1) {
                     cav_msgs::MobilityOperation status;
                     composeMobilityOperationCandidateFollower(status);
-                    mob_op_pub_.publish(status);
+                    // mob_op_pub_.publish(status);
+                    mobility_operation_publisher_(status);
                     ROS_DEBUG_STREAM("Published platoon STATUS operation message");
                 }
                 long tsEnd =  ros::Time::now().toSec()*1000;
@@ -622,10 +628,10 @@ namespace platoon_strategic
     cav_msgs::PlatooningInfo PlatoonStrategicPlugin::compose_platoon_info_msg()
     {
         cav_msgs::PlatooningInfo status_msg;
-        status_msg.state = cav_msgs::PlatooningInfo::DISABLED;
-        status_msg.platoon_id = "";
-        status_msg.size = 0;
-        status_msg.size_limit = 1;
+        status_msg.state = cav_msgs::PlatooningInfo::LEADING;
+        status_msg.platoon_id = "platoon";
+        status_msg.size = 1;
+        status_msg.size_limit = 2;
         status_msg.leader_id = "1";
         status_msg.leader_downtrack_distance = 1.0;
         status_msg.leader_cmd_speed = 1;
@@ -755,7 +761,8 @@ namespace platoon_strategic
                 request.urgency = 50;
 
                 // this.currentPlan = new PlatoonPlan(System.currentTimeMillis(), request.getHeader().getPlanId(), senderId);
-                mob_op_pub_.publish(request);
+                // mob_op_pub_.publish(request);
+                mobility_request_publisher_(request);
                 ROS_DEBUG_STREAM("Publishing request to leader " << senderId << " with params " << request.strategy_params << " and plan id = " << request.header.plan_id);
                 // this.potentialNewPlatoonId = platoonId;
             }
