@@ -181,7 +181,7 @@ namespace route {
          * \brief compose_route_marker_msg is a function to generate route rviz markers
          * \param route Route object from lanelet2 lib routing function
          */
-        visualization_msgs::MarkerArray compose_route_marker_msg(const lanelet::Optional<lanelet::routing::Route>& route);
+        visualization_msgs::Marker compose_route_marker_msg(const lanelet::Optional<lanelet::routing::Route>& route);
 
         /**
         * \brief crosstrack_error_check is a function that determines when the vehicle has left the route and reports when a crosstrack error has

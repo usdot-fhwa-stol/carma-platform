@@ -329,7 +329,7 @@ namespace route {
         return map_points;
     }
 
-    visualization_msgs::MarkerArray RouteGeneratorWorker::compose_route_marker_msg(const lanelet::Optional<lanelet::routing::Route>& route)
+    visualization_msgs::Marker RouteGeneratorWorker::compose_route_marker_msg(const lanelet::Optional<lanelet::routing::Route>& route)
     {
         std::vector<lanelet::ConstPoint3d> points;
         auto end_point_3d = route.get().getEndPoint();
@@ -367,7 +367,7 @@ namespace route {
         visualization_msgs::Marker marker;
         marker.header.frame_id = "map";
         marker.header.stamp = ros::Time();
-        marker.type = visualization_msgs::Marker::SPHERE;//
+        marker.type = visualization_msgs::Marker::SPHERE_LIST;//
         marker.action = visualization_msgs::Marker::ADD;
         marker.ns = "route_visualizer";
 
@@ -375,11 +375,11 @@ namespace route {
         marker.scale.y = 0.5;
         marker.scale.z = 0.5;
         marker.frame_locked = true;
+
+        marker.id = 0;
  
         for (int i = 0; i < points.size(); i=i+5)
         {
-            marker.id = i;
-
             marker.color.r = 1.0F;
             marker.color.g = 1.0F;
             marker.color.b = 1.0F;
@@ -393,6 +393,9 @@ namespace route {
             marker.pose.orientation.w = 1.0;
             
             route_marker_msg.markers.push_back(marker);
+
+            geometry_msgs::Point temp_point;
+            route_marker_msg.points.push_back(temp_point);
         }
         new_route_marker_generated_ = true;
         return route_marker_msg;
