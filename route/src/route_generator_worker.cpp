@@ -378,7 +378,7 @@ namespace route {
         marker.color.b = 1.0F;
         marker.color.a = 1.0F;
 
-        if (!points.empty())
+        if (points.empty())
         {
             ROS_WARN_STREAM("No central line points! Returning");
             return route_marker_msg_;
