@@ -245,7 +245,7 @@ namespace route {
         cav_msgs::Route      route_msg_;
         cav_msgs::RouteEvent route_event_msg_;
         cav_msgs::RouteState route_state_msg_;
-        visualization_msgs::MarkerArray route_marker_msg_;
+        visualization_msgs::Marker route_marker_msg_;
         std::vector<lanelet::ConstPoint3d> points_; 
         
         //List of lanelets in the route

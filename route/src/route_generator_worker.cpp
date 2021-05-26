@@ -355,7 +355,7 @@ namespace route {
             }
         }
 
-        route_marker_msg_.markers={};
+        route_marker_msg_.points={};
 
         if (!points.empty())
         {
@@ -363,7 +363,6 @@ namespace route {
         }
 
         // create the marker msgs
-        visualization_msgs::MarkerArray route_marker_msg;
         visualization_msgs::Marker marker;
         marker.header.frame_id = "map";
         marker.header.stamp = ros::Time();
@@ -377,28 +376,21 @@ namespace route {
         marker.frame_locked = true;
 
         marker.id = 0;
+        marker.color.r = 1.0F;
+        marker.color.g = 1.0F;
+        marker.color.b = 1.0F;
+        marker.color.a = 1.0F;
  
         for (int i = 0; i < points.size(); i=i+5)
         {
-            marker.color.r = 1.0F;
-            marker.color.g = 1.0F;
-            marker.color.b = 1.0F;
-            marker.color.a = 1.0F;
-
-            marker.pose.position.x = points[i].x();
-            marker.pose.position.y = points[i].y();
-            marker.pose.orientation.x = 0.0;
-            marker.pose.orientation.y = 0.0;
-            marker.pose.orientation.z = 0.0;
-            marker.pose.orientation.w = 1.0;
-            
-            route_marker_msg.markers.push_back(marker);
-
             geometry_msgs::Point temp_point;
-            route_marker_msg.points.push_back(temp_point);
+            temp_point.x = points[i].x();
+            temp_point.y = points[i].y();
+            
+            marker.points.push_back(temp_point);
         }
         new_route_marker_generated_ = true;
-        return route_marker_msg;
+        return marker;
     }
 
     cav_msgs::Route RouteGeneratorWorker::compose_route_msg(const lanelet::Optional<lanelet::routing::Route>& route)
