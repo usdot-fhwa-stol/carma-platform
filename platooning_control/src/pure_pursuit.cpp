@@ -49,10 +49,10 @@ namespace platoon_control
 
 	double PurePursuit::calculateSteer(const cav_msgs::TrajectoryPlanPoint& tp){
 		// skip the first trajectory point
-		if (tp0.x == 0 && tp0.y == 0){
-			tp0 = tp;
-			return 0.0;
-		}
+		// if (tp0.x == 0 && tp0.y == 0){
+		// 	tp0 = tp;
+		// 	return 0.0;
+		// }
 		double lookahead = getLookaheadDist(tp);
 		double v = getVelocity(tp, lookahead);
 		double yaw = getYaw();

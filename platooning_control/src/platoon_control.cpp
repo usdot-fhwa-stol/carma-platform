@@ -67,7 +67,7 @@ namespace platoon_control
 
         pose_sub_ = nh_->subscribe("current_pose", 1, &PlatoonControlPlugin::pose_cb, this);
 
-        pcw_.setInitialPose(pose_msg_);
+        // pcw_.setInitialPose(pose_msg_);
 		
 
 		plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
@@ -92,28 +92,50 @@ namespace platoon_control
 
 
     void  PlatoonControlPlugin::trajectoryPlan_cb(const cav_msgs::TrajectoryPlan::ConstPtr& tp){
-    	for(int i = 0; i < tp->trajectory_points.size() - 1; i++ ) {
+        
+        if (!initial_pose_set_)
+        {
+            pcw_.setInitialPose(pose_msg_);
+            ROS_DEBUG_STREAM("initial pose set");
+            initial_pose_set_ = true;
+        }
+
+        cav_msgs::TrajectoryPlanPoint t1 = tp->trajectory_points[1];
+
+    	geometry_msgs::TwistStamped twist_msg = composeTwist(t1);
+
+    	publishTwist(twist_msg);
+
+        autoware_msgs::ControlCommandStamped ctrl_msg;
+        ctrl_msg.cmd.linear_velocity = twist_msg.twist.linear.x;
+        ROS_DEBUG_STREAM("command speed " << ctrl_msg.cmd.linear_velocity);
+        ctrl_msg.cmd.steering_angle = twist_msg.twist.angular.z * 180/M_PI;
+        ROS_DEBUG_STREAM("command steering " << ctrl_msg.cmd.steering_angle);
+        ctrl_pub_.publish(ctrl_msg);
+
+    	// for (int i = 0; i < tp->trajectory_points.size() - 1; i++ ) {
     		
-    		cav_msgs::TrajectoryPlanPoint t1 = tp->trajectory_points[i];
+    	// 	cav_msgs::TrajectoryPlanPoint t1 = tp->trajectory_points[i];
 
-    		geometry_msgs::TwistStamped twist_msg = composeTwist(t1);
+    	// 	geometry_msgs::TwistStamped twist_msg = composeTwist(t1);
 
-    		publishTwist(twist_msg);
+    	// 	publishTwist(twist_msg);
 
-            autoware_msgs::ControlCommandStamped ctrl_msg;
-            ctrl_msg.cmd.linear_velocity = twist_msg.twist.linear.x;
-            ROS_DEBUG_STREAM("command speed " << ctrl_msg.cmd.linear_velocity);
-            ctrl_msg.cmd.steering_angle = twist_msg.twist.angular.z * 180/M_PI;
-            ROS_DEBUG_STREAM("command steering " << ctrl_msg.cmd.steering_angle);
-            ctrl_pub_.publish(ctrl_msg);
+        //     autoware_msgs::ControlCommandStamped ctrl_msg;
+        //     ctrl_msg.cmd.linear_velocity = twist_msg.twist.linear.x;
+        //     ROS_DEBUG_STREAM("command speed " << ctrl_msg.cmd.linear_velocity);
+        //     ctrl_msg.cmd.steering_angle = twist_msg.twist.angular.z * 180/M_PI;
+        //     ROS_DEBUG_STREAM("command steering " << ctrl_msg.cmd.steering_angle);
+        //     ctrl_pub_.publish(ctrl_msg);
 
-    	}
+    	// }
 
     }
 
     void PlatoonControlPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
-        pose_msg_ = msg;
+        // pose_msg_ = msg;
+        pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
     }
 
     void PlatoonControlPlugin::platoonInfo_cb(const cav_msgs::PlatooningInfoConstPtr& msg)
@@ -147,7 +169,7 @@ namespace platoon_control
         pcw_.setLeader(platoon_leader_);
         // pcw_.setCurrentPose(pose_msg_);
     	pcw_.generateSpeed(point);
-    	pcw_.generateSteer(point);
+    	// pcw_.generateSteer(point);
     	current_twist.twist.linear.x = pcw_.speedCmd_;
         ROS_DEBUG_STREAM("desired speed:  " << pcw_.speedCmd_);
     	current_twist.twist.angular.z = pcw_.steerCmd_;

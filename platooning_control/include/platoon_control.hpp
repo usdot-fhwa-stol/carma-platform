@@ -51,7 +51,7 @@ namespace platoon_control
 					geometry_msgs::TwistStamped composeTwist(const cav_msgs::TrajectoryPlanPoint& point);
 			
 					// local copy of pose
-        	boost::shared_ptr<geometry_msgs::PoseStamped const> pose_msg_;
+        	geometry_msgs::PoseStamped pose_msg_;
 
         
         private:
@@ -61,6 +61,8 @@ namespace platoon_control
         	std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
         	PlatoonControlWorker pcw_;
+
+			bool initial_pose_set_ = false;
 
 			double current_speed_ = 0.0;
 

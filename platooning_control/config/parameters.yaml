@@ -1,13 +1,13 @@
 timeHeadway: 2.0
 standStillHeadway: 12.0
-maxAccel: 2.5
+maxAccel: 1.0
 Kp: 0.3
 Kd: 0.1
 Ki: 0.035
-max_value: 10.0
-min_value: -10.0
+max_value: 15.0
+min_value: -1.0
 CMD_TIMESTEP: 100
-adjustmentCap: 5.0
+adjustmentCap: 10.0
 dt: 0.1
 integratorMax: 100
 integratorMin: -100

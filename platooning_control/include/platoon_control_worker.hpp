@@ -4,6 +4,7 @@
 #include <cav_msgs/MobilityOperation.h>
 #include <cav_msgs/MobilityRequest.h>
 #include <cav_msgs/MobilityResponse.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <cav_msgs/PlanType.h>
 #include "pid_controller.hpp"
 #include "pure_pursuit.hpp"
@@ -74,9 +75,9 @@ namespace platoon_control
 
         PlatoonLeaderInfo platoon_leader;
 
-        void setInitialPose(const geometry_msgs::PoseStampedConstPtr& msg)
+        void setInitialPose(const geometry_msgs::PoseStamped msg)
 		{
-			initial_pose_ = msg->pose;
+			initial_pose_ = msg.pose;
 		}
 
 		// geometry pose

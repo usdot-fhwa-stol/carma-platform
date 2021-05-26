@@ -112,10 +112,11 @@ namespace platoon_control
 
     double PlatoonControlWorker::getCurrentDowntrackDistance(const cav_msgs::TrajectoryPlanPoint& point) {
         
-        double x_diff = (point.x-initial_pose_.position.x);
-		double y_diff = (point.y-initial_pose_.position.y);
+        double x_diff = (point.x - initial_pose_.position.x);
+		double y_diff = (point.y - initial_pose_.position.y);
 		double dist = std::sqrt(x_diff * x_diff + y_diff * y_diff);
     	return dist;
+        ROS_DEBUG_STREAM("down track distance: " << dist);
     }
 
     // TODO Get information about front vehicle from world model (if needed)
