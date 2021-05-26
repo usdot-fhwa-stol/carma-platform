@@ -478,7 +478,46 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
     throw lanelet::InvalidObjectStateError(std::string("Base lanelet map has empty proj string loaded as georeference. Therefore, WMBroadcaster failed to\n ") +
                                           std::string("get transformation between the geofence and the map"));
 
-  PJ* geofence_in_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, tcmV01.geometry.proj.c_str(), base_map_georef_.c_str(), nullptr);
+
+  // There are two ways to store the projection used in the traffic control message
+  // The first approach is to store the entire projection in the proj string. 
+  // The second approach is to populate the other fields in the TCM message.
+  // Here we check which fields were already provided in the projection string and if they were not provided we set them with the value provided in the TCM message
+  std::string projection = tcmV01.geometry.proj;
+
+  ROS_DEBUG_STREAM("Projection field before remaning message processing: " << projection);
+
+  if (projection.find("+datum=") == std::string::npos && !tcmV01.geometry.datum.empty()) { // Datum is not a universal projection so only add it if it was provided
+    projection.append(" +datum=" + std::to_string(tcmV01.geometry.reflon));
+  }
+
+  if (projection.find("+lat_0=") == std::string::npos) { // Lat and Lon are universal proj string attributes and can always be used
+    projection.append(" +lat_0=" + std::to_string(tcmV01.geometry.reflat));
+  }
+
+  if (projection.find("+lon_0=") == std::string::npos) {
+    projection.append(" +lon_0=" + std::to_string(tcmV01.geometry.reflon));
+  }
+
+  if (projection.find("+h_0=") == std::string::npos && tcmV01.geometry.refelv != 0.0) { // Height only applies to some projections and should only be set if elevation is non-zero
+    projection.append(" +h_0=" + std::to_string(tcmV01.geometry.refelv));
+  }
+
+  ROS_DEBUG_STREAM("Projection field after remaning message processing: " << projection);
+
+  ROS_DEBUG_STREAM("Traffic Control heading provided: " << tcmV01.geometry.heading << " System understanding is that this value will not affect the projection and is only provided for supporting derivative calculations.");
+
+  // Create the resulting projection transformation
+  PJ* geofence_in_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, projection.c_str(), base_map_georef_.c_str(), nullptr);
+  
+  if (geofence_in_map_proj == 0) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
+    
+    ROS_ERROR_STREAM("Failed to generate projection between geofence and map with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX) 
+      << " MapProjection: " << base_map_georef_ << " Message Projection: " << projection);
+
+    return {}; // Ignore geofence if it could not be projected into the map frame
+  
+  }
   
   // convert all geofence points into our map's frame
   std::vector<lanelet::Point3d> gf_pts;
