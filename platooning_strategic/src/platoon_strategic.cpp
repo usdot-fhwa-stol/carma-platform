@@ -171,7 +171,7 @@ namespace platoon_strategic
             }
             cav_msgs::PlatooningInfo platoon_status = compose_platoon_info_msg();
             platoon_status.leader_downtrack_distance = current_progress;
-            platooning_info_publisher_(platoon_status);
+            // platooning_info_publisher_(platoon_status);
             ++last_lanelet_index;
         }
 
