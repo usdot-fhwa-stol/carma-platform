@@ -132,6 +132,7 @@ namespace route {
         // only allow activate a new route in route selection state
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::SELECTION)
         {
+        	ROS_DEBUG_STREAM("Valid state proceeding with selection");
             // entering to routing state once destinations are picked
             this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_SELECTED);
             publish_route_event(cav_msgs::RouteEvent::ROUTE_SELECTED);
@@ -357,11 +358,6 @@ namespace route {
 
         route_marker_msg_.points={};
 
-        if (!points.empty())
-        {
-            ROS_WARN_STREAM("No central line points! Returning");
-        }
-
         // create the marker msgs
         visualization_msgs::Marker marker;
         marker.header.frame_id = "map";
@@ -380,6 +376,12 @@ namespace route {
         marker.color.g = 1.0F;
         marker.color.b = 1.0F;
         marker.color.a = 1.0F;
+
+        if (!points.empty())
+        {
+            ROS_WARN_STREAM("No central line points! Returning");
+            return route_marker_msg_;
+        }
  
         for (int i = 0; i < points.size(); i=i+5)
         {
