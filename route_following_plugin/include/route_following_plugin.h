@@ -97,7 +97,7 @@ namespace route_following_plugin
          * \param target_id ID of the next lanelet in the shortest path
          * \return Whether we need a lanechange to reach to the next lanelet in the shortest path.
          */
-        bool isLaneChangeNeeded(lanelet::routing::LaneletRelations relations, int target_id);
+        bool isLaneChangeNeeded(lanelet::routing::LaneletRelations relations, lanelet::Id target_id) const;
         
         /**
          * \brief Set the start distance of a maneuver based on the progress along the route

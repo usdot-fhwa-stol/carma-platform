@@ -94,7 +94,10 @@ namespace route_following_plugin
         }
 
         double route_length = wm_->getRouteEndTrackPos().downtrack;
-        double start_dist, end_dist, start_speed;
+        double start_dist = 0.0;
+        double end_dist = 0.0;
+        double start_speed = 0.0;
+
         size_t shortest_path_index;
         //Find lane changes in path - up to the second to last lanelet in path (till lane change is possible)
         for(shortest_path_index = 0; shortest_path_index < route_shortest_path.size() - 1; ++shortest_path_index){
@@ -336,7 +339,7 @@ namespace route_following_plugin
         return maneuver_msg;
     }
 
-    bool RouteFollowingPlugin::isLaneChangeNeeded(lanelet::routing::LaneletRelations relations, int target_id)
+    bool RouteFollowingPlugin::isLaneChangeNeeded(lanelet::routing::LaneletRelations relations, lanelet::Id target_id) const
     {
         //This method is constrained to the lanelet being checked against being accessible. A non-accessible target lanelet would result in unspecified behavior
         for(auto& relation : relations)
@@ -351,12 +354,11 @@ namespace route_following_plugin
 
     double RouteFollowingPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt)
     {
-        try
+        if(lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules())
         {
-           lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules();
            return (*traffic_rules)->speedLimit(llt).speedLimit.value();
         } 
-        catch(const std::exception& e)
+        else
         {
             throw std::invalid_argument("Valid traffic rules object could not be built");
         }
