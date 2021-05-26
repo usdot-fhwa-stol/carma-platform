@@ -534,7 +534,9 @@ namespace cooperative_lanechange
             //int nearest_pt_index = getNearestRouteIndex(route_geometry,state);
             lanelet::BasicPoint2d state_pos(state.X_pos_global, state.Y_pos_global);
             double current_downtrack = wm_->routeTrackPos(state_pos).downtrack;
+            ROS_DEBUG_STREAM("nearest_pt_index calc starting");
             int nearest_pt_index = get_ending_point_index(route_geometry, current_downtrack);
+            ROS_DEBUG_STREAM("ending_pt_index calc starting");
             int ending_pt_index = get_ending_point_index(route_geometry, ending_downtrack); 
             ROS_DEBUG_STREAM("Nearest pt index in maneuvers to points:"<<nearest_pt_index);
             
@@ -557,19 +559,30 @@ namespace cooperative_lanechange
             double route_length = wm_->getRouteEndTrackPos().downtrack;
             
             if(ending_downtrack + ending_buffer_downtrack_ < route_length){
+                ROS_DEBUG_STREAM("ending_pt_index inside IF calc starting");
                 ending_pt_index = get_ending_point_index(route_geometry, ending_downtrack + ending_buffer_downtrack_);
             }
            else{
                ROS_DEBUG_STREAM("Route Length is less than buffer requested");
                ending_pt_index = route_geometry.size() - 1;
            }
-            
+            ROS_ERROR_STREAM("So the latest indexes: nearest_pt_index: " << nearest_pt_index << ", ending_pt_index: " << ending_pt_index);
+            ROS_DEBUG_STREAM("So the latest indexes: nearest_pt_index: " << nearest_pt_index << ", ending_pt_index: " << ending_pt_index);
+
             lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.begin() + ending_pt_index);
             first = true;
-            
-            ROS_DEBUG_STREAM("future geom size:"<<future_route_geometry.size());
             ROS_ERROR_STREAM("future geom size:"<<future_route_geometry.size());
-
+            ROS_DEBUG_STREAM("future geom size:"<<future_route_geometry.size());
+            //DEBUG TODO DELETE THIS:
+            if (future_route_geometry.size() == 0 )
+            {
+                int debug_i = 0;
+                while (debug_i < 40)
+                {
+                    ROS_ERROR_STREAM("unfortunately ZEROOOOO");
+                    debug_i++;
+                }
+            }
             for(auto p :future_route_geometry)
             {
                 if(first && points_and_target_speeds.size() !=0){
@@ -859,7 +872,7 @@ namespace cooperative_lanechange
 
             if(downtrack > ending_downtrack){
                 best_index = i - 1;
-                ROS_DEBUG_STREAM("get_ending_point_index>> Found best_idx: " << best_index<<", points[i].x(): " << points[i].x() << ", points[i].y(): " << points[i].y() << ", downtrack: "<< downtrack);
+                ROS_DEBUG_STREAM("get_ending_point_index>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y() << ", downtrack: "<< downtrack);
                 set_index = true;
                 break;
             }
