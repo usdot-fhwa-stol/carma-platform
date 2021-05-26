@@ -29,10 +29,10 @@ namespace port_drayage_plugin
 
         double speed_epsilon = _pnh->param("stop_speed_epsilon", 1.0);
         declaration = _pnh->param("declaration", 1.0);
-        std::string cmv_id;
-        _pnh->param<std::string>("cmv_id", cmv_id, "");
-        std::string cargo_id;
-        _pnh->param<std::string>("cargo_id", cargo_id, "");
+        int cmv_id;
+        _pnh->param<int>("cmv_id", cmv_id, 123);
+        int cargo_id;
+        _pnh->param<int>("cargo_id", cargo_id, 321);
 
         ros::Publisher outbound_mob_op = _nh->advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 5);
         _outbound_mobility_operations_publisher = std::make_shared<ros::Publisher>(outbound_mob_op);

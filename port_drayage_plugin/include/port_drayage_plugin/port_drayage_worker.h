@@ -32,12 +32,12 @@ namespace port_drayage_plugin
      */
     struct PortDrayageMobilityOperationMsg
     {
-        std::string cargo_id;
+        int cargo_id;
         std::string operation;
         PortDrayageEvent port_drayage_event_type; // PortDrayageEvent associated with this message
         bool has_cargo; // Flag to indicate whether vehicle has cargo during this action
-        std::string current_action_id;
-        std::string next_action_id;
+        int current_action_id;
+        int next_action_id;
         boost::optional<double> dest_longitude;
         boost::optional<double> dest_latitude;
         boost::optional<double> start_longitude; // Starting longitude of the carma vehicle
@@ -61,8 +61,8 @@ namespace port_drayage_plugin
             PortDrayageStateMachine _pdsm;
             std::string _host_id;
             std::string _host_bsm_id;
-            std::string _cmv_id;
-            std::string _cargo_id;
+            int _cmv_id;
+            int _cargo_id;
             std::function<void(cav_msgs::MobilityOperation)> _publish_mobility_operation;
 
             // Data member for storing the strategy_params field of the last processed port drayage MobilityOperation message intended for this vehicle's cmv_id
@@ -78,10 +78,10 @@ namespace port_drayage_plugin
             /**
              * \brief Standard constructor for the PortDrayageWorker
              * 
-             * \param cmv_id The Carrier Motor Vehicle ID string for the host
+             * \param cmv_id The Carrier Motor Vehicle ID integer for the host
              * vehicle
              * 
-             * \param cargo_id The identification string for the cargo carried
+             * \param cargo_id The identification integer for the cargo carried
              * by the host vehicle. If no cargo is being carried this should be
              * empty.
              * 
@@ -96,8 +96,8 @@ namespace port_drayage_plugin
              * comparing the current vehicle's speed to 0.0
              */
             PortDrayageWorker(
-                std::string cmv_id,
-                std::string cargo_id,
+                int cmv_id,
+                int cargo_id,
                 std::string host_id,
                 std::function<void(cav_msgs::MobilityOperation)> mobility_operations_publisher, 
                 double stop_speed_epsilon) :

@@ -33,8 +33,8 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
 {
     ros::Time::init();
     port_drayage_plugin::PortDrayageWorker pdw{
-        "TEST_ID", 
-        "TEST_CARGO_ID", 
+        123, // CMV ID 
+        321, // Cargo ID 
         "TEST_CARMA_HOST_ID", 
         std::function<void(cav_msgs::MobilityOperation)>(), 
         1.0};
@@ -46,26 +46,40 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
     ASSERT_FALSE(msg.strategy_params.empty());
 
     std::istringstream strstream(msg.strategy_params);
+    std::cout << strstream.str();
     using boost::property_tree::ptree;
     ptree pt;
-    std::stringstream body_stream;
     boost::property_tree::json_parser::read_json(strstream, pt);
 
-    std::string cmv_id = pt.get<std::string>("cmv_id");
-    std::string cargo_id = pt.get<std::string>("cargo_id");
+    int cmv_id = pt.get<int>("cmv_id");
+    int cargo_id = pt.get<int>("cargo_id");
     std::string operation = pt.get<std::string>("operation");
+    bool cargo = pt.get<bool>("cargo");
+    double vehicle_longitude = pt.get<double>("location.longitude");
+    double vehicle_latitude = pt.get<double>("location.latitude");
+    double dest_longitude = pt.get<double>("destination.longitude");
+    double dest_latitude = pt.get<double>("destination.latitude");
+    int action_id = pt.get<int>("action_id");
+    int next_action = pt.get<int>("next_action");
 
-    ASSERT_EQ("TEST_ID", cmv_id);
-    ASSERT_EQ("TEST_CARGO_ID", cargo_id);
+    ASSERT_EQ(123, cmv_id);
+    ASSERT_EQ(321, cargo_id);
     ASSERT_EQ("ARRIVED_AT_DESTINATION", operation);
+    ASSERT_FALSE(cargo);
+    ASSERT_EQ(0, vehicle_longitude);
+    ASSERT_EQ(0, vehicle_latitude);
+    ASSERT_EQ(0, dest_longitude);
+    ASSERT_EQ(0, dest_latitude);
+    ASSERT_EQ(0, action_id);
+    ASSERT_EQ(0, next_action);
 }
 
 TEST(PortDrayageTest, testCheckStop1)
 {
     ros::Time::init();
     port_drayage_plugin::PortDrayageWorker pdw{
-        "TEST_ID", 
-        "TEST_CARGO_ID", 
+        123, // CMV ID
+        321, // Cargo ID
         "TEST_CARMA_HOST_ID", 
         std::function<void(cav_msgs::MobilityOperation)>(), 
         1.0};
@@ -92,8 +106,8 @@ TEST(PortDrayageTest, testCheckStop2)
 {
     ros::Time::init();
     port_drayage_plugin::PortDrayageWorker pdw{
-        "TEST_ID", 
-        "TEST_CARGO_ID", 
+        123, // CMV ID 
+        321, // Cargo ID
         "TEST_CARMA_HOST_ID", 
         std::function<void(cav_msgs::MobilityOperation)>(), 
         1.0};
@@ -120,8 +134,8 @@ TEST(PortDrayageTest, testCheckStop3)
 {
     ros::Time::init();
     port_drayage_plugin::PortDrayageWorker pdw{
-        "TEST_ID", 
-        "TEST_CARGO_ID", 
+        123, // CMV ID
+        321, // Cargo ID 
         "TEST_CARMA_HOST_ID", 
         std::function<void(cav_msgs::MobilityOperation)>(), 
         1.0};
@@ -149,8 +163,8 @@ TEST(PortDrayageTest, testCheckStop4)
 {
     ros::Time::init();
     port_drayage_plugin::PortDrayageWorker pdw{
-        "TEST_ID", 
-        "TEST_CARGO_ID", 
+        123, // CMV ID
+        321, // Cargo ID 
         "TEST_CARMA_HOST_ID", 
         std::function<void(cav_msgs::MobilityOperation)>(), 
         1.0};
@@ -329,10 +343,10 @@ TEST(PortDrayageTest, testPlanManeuverCb)
 
 TEST(PortDrayageTest, testInboundMobilityOperation)
 {
-    // Create PortDrayageWorker object with _cmv_id of "123"
+    // Create PortDrayageWorker object with _cmv_id of 123
     port_drayage_plugin::PortDrayageWorker pdw{
-        "123", 
-        "TEST_CARGO_ID", 
+        123, // CMV ID 
+        321, // Cargo ID 
         "TEST_CARMA_HOST_ID", 
         std::function<void(cav_msgs::MobilityOperation)>(), 
         1.0};
@@ -348,7 +362,7 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
     cav_msgs::MobilityOperationConstPtr mobility_operation_msg_ptr(new cav_msgs::MobilityOperation(mobility_operation_msg));
     pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr);
 
-    ASSERT_EQ("321", pdw._latest_mobility_operation_msg.cargo_id);
+    ASSERT_EQ(321, pdw._latest_mobility_operation_msg.cargo_id);
     ASSERT_EQ("MOVING_TO_LOADING_AREA", pdw._latest_mobility_operation_msg.operation);
     ASSERT_EQ(port_drayage_plugin::PortDrayageEvent::RECEIVED_NEW_DESTINATION, pdw._latest_mobility_operation_msg.port_drayage_event_type);
     ASSERT_EQ(false, pdw._latest_mobility_operation_msg.has_cargo);
@@ -356,8 +370,8 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
     ASSERT_EQ(38.9554377, *pdw._latest_mobility_operation_msg.start_latitude);
     ASSERT_EQ(-77.1481983, *pdw._latest_mobility_operation_msg.dest_longitude);
     ASSERT_EQ(38.9550038, *pdw._latest_mobility_operation_msg.dest_latitude);
-    ASSERT_EQ("32", pdw._latest_mobility_operation_msg.current_action_id);
-    ASSERT_EQ("33", pdw._latest_mobility_operation_msg.next_action_id);
+    ASSERT_EQ(32, pdw._latest_mobility_operation_msg.current_action_id);
+    ASSERT_EQ(33, pdw._latest_mobility_operation_msg.next_action_id);
 
     // Create a MobilityOperationConstPtr with a cmv_id that is not intended for this specific vehicle
     // Note: The strategy_params using the schema for messages of this type that have strategy "carma/port_drayage"
@@ -370,7 +384,7 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
     cav_msgs::MobilityOperationConstPtr mobility_operation_msg_ptr2(new cav_msgs::MobilityOperation(mobility_operation_msg2));
     pdw.on_inbound_mobility_operation(mobility_operation_msg_ptr2);
 
-    ASSERT_EQ("321", pdw._latest_mobility_operation_msg.cargo_id);
+    ASSERT_EQ(321, pdw._latest_mobility_operation_msg.cargo_id);
     ASSERT_EQ("MOVING_TO_LOADING_AREA", pdw._latest_mobility_operation_msg.operation);
     ASSERT_EQ(port_drayage_plugin::PortDrayageEvent::RECEIVED_NEW_DESTINATION, pdw._latest_mobility_operation_msg.port_drayage_event_type);
     ASSERT_EQ(false, pdw._latest_mobility_operation_msg.has_cargo);
@@ -378,8 +392,8 @@ TEST(PortDrayageTest, testInboundMobilityOperation)
     ASSERT_EQ(38.9554377, *pdw._latest_mobility_operation_msg.start_latitude);
     ASSERT_EQ(-77.1481983, *pdw._latest_mobility_operation_msg.dest_longitude);
     ASSERT_EQ(38.9550038, *pdw._latest_mobility_operation_msg.dest_latitude);
-    ASSERT_EQ("32", pdw._latest_mobility_operation_msg.current_action_id);
-    ASSERT_EQ("33", pdw._latest_mobility_operation_msg.next_action_id);
+    ASSERT_EQ(32, pdw._latest_mobility_operation_msg.current_action_id);
+    ASSERT_EQ(33, pdw._latest_mobility_operation_msg.next_action_id);
 }
 
 // Run all the tests

@@ -84,6 +84,20 @@ namespace port_drayage_plugin
         pt.put("cmv_id", _cmv_id);
         pt.put("cargo_id", _cargo_id);
         pt.put("operation", PORT_DRAYAGE_ARRIVAL_OPERATION_ID);
+
+        // Certain fields required by CARMA Streets are unnecessary for arrival messages and can be zero-filled
+        pt.put("cargo", 0); 
+        ptree location;
+        location.put("latitude", 0);
+        location.put("longitude", 0);
+        pt.put_child("location", location);
+        ptree destination;
+        destination.put("latitude", 0);
+        destination.put("longitude", 0);
+        pt.put_child("destination", destination);
+        pt.put("action_id", 0);
+        pt.put("next_action", 0);
+
         std::stringstream body_stream;
         boost::property_tree::json_parser::write_json(body_stream, pt);
         msg.strategy_params = body_stream.str();
@@ -99,7 +113,7 @@ namespace port_drayage_plugin
             ptree pt;
             std::istringstream strategy_params_ss(msg->strategy_params);
             boost::property_tree::json_parser::read_json(strategy_params_ss, pt);
-            std::string mobility_operation_cmv_id = pt.get<std::string>("cmv_id");
+            int mobility_operation_cmv_id = pt.get<int>("cmv_id");
 
             // Check if the received MobilityOperation message is intended for this vehicle's cmv_id   
             if(mobility_operation_cmv_id == _cmv_id) {
@@ -131,10 +145,10 @@ namespace port_drayage_plugin
         std::istringstream mobility_operation_strategy_params_ss(mobility_operation_strategy_params);
         boost::property_tree::json_parser::read_json(mobility_operation_strategy_params_ss, pt);
 
-        _latest_mobility_operation_msg.cargo_id = pt.get<std::string>("cargo_id");
+        _latest_mobility_operation_msg.cargo_id = pt.get<int>("cargo_id");
         _latest_mobility_operation_msg.has_cargo = pt.get<bool>("cargo");
-        _latest_mobility_operation_msg.current_action_id = pt.get<std::string>("action_id");
-        _latest_mobility_operation_msg.next_action_id = pt.get<std::string>("next_action");
+        _latest_mobility_operation_msg.current_action_id = pt.get<int>("action_id");
+        _latest_mobility_operation_msg.next_action_id = pt.get<int>("next_action");
         _latest_mobility_operation_msg.operation = pt.get<std::string>("operation");
 
         if(_latest_mobility_operation_msg.operation == "MOVING_TO_LOADING_AREA") {
