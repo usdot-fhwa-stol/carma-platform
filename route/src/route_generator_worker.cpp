@@ -129,6 +129,7 @@ namespace route {
 
     bool RouteGeneratorWorker::set_active_route_cb(cav_srvs::SetActiveRouteRequest &req, cav_srvs::SetActiveRouteResponse &resp)
     {
+        ROS_INFO_STREAM("set_active_route_cb: Selected ID:" << req.routeID);
         // only allow activate a new route in route selection state
         if(this->rs_worker_.get_route_state() == RouteStateWorker::RouteState::SELECTION)
         {
