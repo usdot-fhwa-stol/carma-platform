@@ -367,9 +367,9 @@ namespace route {
         marker.action = visualization_msgs::Marker::ADD;
         marker.ns = "route_visualizer";
 
-        marker.scale.x = 0.5;
-        marker.scale.y = 0.5;
-        marker.scale.z = 0.5;
+        marker.scale.x = 0.65;
+        marker.scale.y = 0.65;
+        marker.scale.z = 0.65;
         marker.frame_locked = true;
 
         marker.id = 0;
