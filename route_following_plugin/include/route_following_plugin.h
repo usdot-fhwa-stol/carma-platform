@@ -47,8 +47,6 @@ namespace route_following_plugin
     {
         public:
 
-        // constant speed limit for test
-
         /**
          * \brief Default constructor for RouteFollowingPlugin class
          */
@@ -136,7 +134,7 @@ namespace route_following_plugin
         double findSpeedLimit(const lanelet::ConstLanelet& llt);
         /**
          * \brief Calculate maneuver plan for remaining route. This callback is triggered when a new route has been received and processed by the world model
-         *
+         * \param route_shortest_path A list of lanelets along the shortest path of the route using which the maneuver plan is calculated.
          */
         std::vector<cav_msgs::Maneuver> route_cb(const lanelet::routing::LaneletPath& route_shortest_path);
 
@@ -145,7 +143,7 @@ namespace route_following_plugin
         double current_speed_;
 
         // Current vehicle pose in map
-        geometry_msgs::PoseStamped pose_msg_;
+        geometry_msgs::PoseStampedConstPtr pose_msg_;
         lanelet::BasicPoint2d current_loc_;
 
         // wm listener pointer and pointer to the actual wm object

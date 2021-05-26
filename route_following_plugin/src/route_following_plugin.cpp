@@ -46,7 +46,7 @@ namespace route_following_plugin
         twist_sub_ = nh_->subscribe("current_velocity", 1, &RouteFollowingPlugin::twist_cb, this);
 
         // read ros parameters
-        pnh_->param<double>("minimal_maneuver_duration", min_plan_duration_, 16.0);
+        pnh_->param<double>("minimal_plan_duration", min_plan_duration_, 16.0);
         pnh_->param<std::string>("lane_change_plugin", lane_change_plugin_);
 
         wml_.reset(new carma_wm::WMListener());
@@ -71,8 +71,8 @@ namespace route_following_plugin
 
     void RouteFollowingPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
-        pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
-        lanelet::BasicPoint2d curr_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
+        pose_msg_ = msg;
+        lanelet::BasicPoint2d curr_loc(pose_msg_->pose.position.x, pose_msg_->pose.position.y);
         current_loc_ = curr_loc;
     }
     void RouteFollowingPlugin::twist_cb(const geometry_msgs::TwistStampedConstPtr& msg)
@@ -94,7 +94,7 @@ namespace route_following_plugin
         }
 
         double route_length = wm_->getRouteEndTrackPos().downtrack;
-        double start_speed;
+        double start_dist, end_dist, start_speed;
         size_t shortest_path_index;
         //Find lane changes in path - up to the second to last lanelet in path (till lane change is possible)
         for(shortest_path_index = 0; shortest_path_index < route_shortest_path.size() - 1; ++shortest_path_index){
@@ -102,11 +102,11 @@ namespace route_following_plugin
             double target_speed_in_lanelet = findSpeedLimit(route_shortest_path[shortest_path_index]);
 
             //update start distance and start speed from previous maneuver if it exists
-            double start_dist = (maneuvers.empty()) ?  GET_MANEUVER_PROPERTY(maneuvers.back(), end_dist) :
-                                                        wm_->routeTrackPos(route_shortest_path[shortest_path_index].centerline2d().front()).downtrack;
-            start_speed = (maneuvers.empty()) ? GET_MANEUVER_PROPERTY(maneuvers.back(), end_speed) : 0.0;
+            start_dist = (maneuvers.empty()) ?  wm_->routeTrackPos(route_shortest_path[shortest_path_index].centerline2d().front()).downtrack :
+                                                        GET_MANEUVER_PROPERTY(maneuvers.back(), end_dist);
+            start_speed = (maneuvers.empty()) ? 0.0 : GET_MANEUVER_PROPERTY(maneuvers.back(), end_speed);
 
-            double end_dist = wm_->routeTrackPos(route_shortest_path[shortest_path_index].centerline2d().back()).downtrack; 
+            end_dist = wm_->routeTrackPos(route_shortest_path[shortest_path_index].centerline2d().back()).downtrack; 
             end_dist = std::min(end_dist, route_length);
 
             if(isLaneChangeNeeded(following_lanelets, route_shortest_path[shortest_path_index + 1].id())){
@@ -122,8 +122,8 @@ namespace route_following_plugin
         //add lane follow as last maneuver if there is a lanelet unplanned for in path
         if(shortest_path_index < route_shortest_path.size() -1){
             double target_speed_in_lanelet = findSpeedLimit(route_shortest_path.back());
-            double start_dist = wm_->routeTrackPos(route_shortest_path.back().centerline2d().front()).downtrack;
-            double end_dist = wm_->routeTrackPos(route_shortest_path.back().centerline2d().back()).downtrack; 
+            start_dist = wm_->routeTrackPos(route_shortest_path.back().centerline2d().front()).downtrack;
+            end_dist = wm_->routeTrackPos(route_shortest_path.back().centerline2d().back()).downtrack; 
             maneuvers.push_back(composeLaneFollowingManeuverMessage(start_dist, end_dist, start_speed, target_speed_in_lanelet, route_shortest_path.back().id(),ros::Time::now()));
         }
         ////------------------
