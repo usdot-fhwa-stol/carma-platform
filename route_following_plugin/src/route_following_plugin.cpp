@@ -178,9 +178,13 @@ namespace route_following_plugin
         ros::Time prev_time = time_progress;
 
         for(auto& maneuver : maneuvers){
-            double cur_plus_target = GET_MANEUVER_PROPERTY(maneuver,start_speed) + GET_MANEUVER_PROPERTY(maneuver, end_speed);
+            double maneuver_start_speed = GET_MANEUVER_PROPERTY(maneuver,start_speed);
+            double manever_end_speed = GET_MANEUVER_PROPERTY(maneuver,end_speed);
+            double cur_plus_target = maneuver_start_speed + manever_end_speed;
             ros::Duration maneuver_duration;
-            maneuver_duration = ros::Duration((GET_MANEUVER_PROPERTY(maneuver,end_dist) - GET_MANEUVER_PROPERTY(maneuver,start_dist)) / (0.5 * cur_plus_target));
+            double maneuver_start_dist = GET_MANEUVER_PROPERTY(maneuver,start_dist);
+            double maneuver_end_dist = GET_MANEUVER_PROPERTY(maneuver,end_dist);
+            maneuver_duration = ros::Duration((maneuver_end_dist - maneuver_start_dist) / (0.5 * cur_plus_target));
 
             time_progress += maneuver_duration;
             switch(maneuver.type){

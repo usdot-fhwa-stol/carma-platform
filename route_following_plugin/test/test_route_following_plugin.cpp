@@ -109,14 +109,10 @@ namespace route_following_plugin
         worker.wm_=cmw;
 
         //Define current position and velocity
-        worker.pose_msg_.pose.position.x=5.55;
-        worker.pose_msg_.pose.position.y=12.5;
-        worker.pose_msg_.pose.position.z=0.0;
+
+        lanelet::BasicPoint2d current_loc = start_lanelet.centerline2d().front();
+        worker.current_loc_ = current_loc;
         
-        worker.pose_msg_.pose.orientation.x=0.0;
-        worker.pose_msg_.pose.orientation.y=0.0;
-        worker.pose_msg_.pose.orientation.z=0.0;
-        worker.pose_msg_.pose.orientation.w=0.0;
         //define twist
         worker.current_speed_=10.0;
         
@@ -144,8 +140,7 @@ namespace route_following_plugin
         //RouteFollowing plan maneuver callback
         ros::Time::init();
         auto shortest_path = cmw->getRoute()->shortestPath();
-        lanelet::BasicPoint2d curr_loc(worker.pose_msg_.pose.position.x, worker.pose_msg_.pose.position.y);
-        worker.current_loc_ = curr_loc;
+
         worker.latest_maneuver_plan_ = worker.route_cb(shortest_path);
         if(worker.plan_maneuver_cb(plan.request,plan.response)){    
             //check target speeds in updated response
@@ -162,7 +157,7 @@ namespace route_following_plugin
 
     }
 
-    TEST(RouteFollowingPlugin,TestAssociateSpeedLimitusingosm)
+    TEST(RouteFollowingPlugin, TestAssociateSpeedLimitusingosm)
     {
         // File to process. Path is relative to test folder
         std::string file = "../resource/map/town01_vector_map_1.osm";
@@ -216,15 +211,11 @@ namespace route_following_plugin
             right.pose.position.y=p.y();
             right.pose.position.z=p.z();
         }
-        worker.pose_msg_.pose.position.x=(left.pose.position.x+right.pose.position.x)/2;
-        worker.pose_msg_.pose.position.y=(left.pose.position.y+right.pose.position.y)/2;
-        worker.pose_msg_.pose.position.z=(left.pose.position.z+right.pose.position.z)/2;
-
-        worker.pose_msg_.pose.orientation.x=0.0;
-        worker.pose_msg_.pose.orientation.y=0.0;
-        worker.pose_msg_.pose.orientation.z=0.0;
-        worker.pose_msg_.pose.orientation.w=0.0;
-
+        //Assign start of centerline of start lanelet as current position
+        lanelet::BasicPoint2d start_location;
+        start_location = llt.centerline2d().back();
+        worker.current_loc_ = start_location;
+        
         //define twist
         worker.current_speed_=0.0;
 
@@ -244,7 +235,7 @@ namespace route_following_plugin
         plan_req1.planning_start_time;
         plan_req1.planning_completion_time;
         ros::Time current_time = ros::Time::now();
-        plan_req1.maneuvers.push_back(worker.composeLaneFollowingManeuverMessage(0,0,0,11.176,start_id,current_time));
+        plan_req1.maneuvers.push_back(worker.composeLaneFollowingManeuverMessage(0.0, 100.0 ,0,11.176,start_id,current_time));
         pplan.prior_plan=plan_req1;
         plan.request=pplan;
         //PlanManeuversResponse 
@@ -252,25 +243,22 @@ namespace route_following_plugin
         for(auto i=0;i<plan_req1.maneuvers.size();i++) newplan.new_plan.maneuvers.push_back(plan_req1.maneuvers[i]);
 
         plan.response=newplan;
-    
-        lanelet::BasicPoint2d curr_loc(worker.pose_msg_.pose.position.x, worker.pose_msg_.pose.position.y);
-        worker.current_loc_ = curr_loc;
         worker.latest_maneuver_plan_ = worker.route_cb(shortest_path);
         if(worker.plan_maneuver_cb(plan.request,plan.response)){   
             //check target speeds in updated response
             lanelet::Velocity limit=25_mph;
-            ASSERT_EQ(plan.response.new_plan.maneuvers[0].lane_following_maneuver.end_speed,0);
-            for(auto i=1;i<plan.response.new_plan.maneuvers.size() -1 ;i++){
+            
+            for(auto i=0;i<plan.response.new_plan.maneuvers.size() -1 ;i++){
+                std::cout<<"Maneuver end speed:"<<plan.response.new_plan.maneuvers[i].lane_following_maneuver.end_speed<<std::endl;
                 ASSERT_EQ(plan.response.new_plan.maneuvers[i].lane_following_maneuver.end_speed, limit.value()) ;
             }
             
         }
         else{
-            EXPECT_TRUE(false);
+            EXPECT_TRUE(false); 
         }
         //Test findSpeedLimit function
-        lanelet::BasicPoint2d current_loc(worker.pose_msg_.pose.position.x, worker.pose_msg_.pose.position.y);
-        auto current_lanelets= lanelet::geometry::findNearest(worker.wm_->getMap()->laneletLayer, current_loc, 10); 
+        auto current_lanelets= lanelet::geometry::findNearest(worker.wm_->getMap()->laneletLayer, worker.current_loc_, 10); 
         lanelet::ConstLanelet current_lanelet = current_lanelets[0].second;
         double speed=worker.findSpeedLimit(current_lanelet);
         if(speed < 11.176)
