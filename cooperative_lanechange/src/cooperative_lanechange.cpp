@@ -934,7 +934,12 @@ namespace cooperative_lanechange
         lanelet::BasicPoint2d start_lane_pt  = centerline_start_lane[0];
         lanelet::BasicPoint2d end_lane_pt = centerline_end_lane[0];
         double dist = sqrt(pow((end_lane_pt.x() - start_lane_pt.x()),2) + pow((end_lane_pt.y() - start_lane_pt.y()),2));
-        int total_points = centerline_start_lane.size();
+
+        if (centerline_start_lane.size() != centerline_end_lane.size())
+        {
+            ROS_ERROR_STREAM(">>>>>>>>>>>>>>>> WOOOOOOOOW the size is not EQUAL <<<<<<<<<<<<<");
+        }
+        int total_points = std::min(centerline_start_lane.size(), centerline_end_lane.size());
         double delta_step = 1.0/total_points;
 
         centerline_points.push_back(start_lane_pt);
@@ -951,6 +956,8 @@ namespace cooperative_lanechange
 
         }
 
+        centerline_points.push_back(centerline_end_lane.back());
+
         std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(centerline_points);
         if(!fit_curve)
         {
@@ -965,7 +972,7 @@ namespace cooperative_lanechange
             lc_route.push_back(p);
             scaled_steps_along_curve += 1.0/total_points;
         }
-        lc_route.push_back(end); // at 1.0 scaled steps
+        lc_route.push_back(centerline_end_lane.back()); // at 1.0 scaled steps
 
         return lc_route;
     }
