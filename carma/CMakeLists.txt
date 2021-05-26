@@ -30,7 +30,6 @@ find_package(catkin REQUIRED
         j2735_msgs
         autoware_msgs
         derived_object_msgs
-        radar_msgs
 )
 
 catkin_package()

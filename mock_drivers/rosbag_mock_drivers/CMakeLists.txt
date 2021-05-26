@@ -14,6 +14,8 @@ set ( PKG_CATKIN_DEPENDS
   carma_utils
   cav_msgs
   cav_srvs
+  radar_msgs
+  derived_object_msgs
 )
 
 find_package(catkin REQUIRED COMPONENTS

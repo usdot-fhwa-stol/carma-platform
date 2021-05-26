@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # This script can be used to convert csv files into route files for use in the CARMA platform
 # Currently only lat,lon, and speed limit are supported fields

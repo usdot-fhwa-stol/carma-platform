@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import rospy
 import rostopic
 import rosgraph
@@ -120,10 +120,10 @@ def run(args):
 if __name__ == '__main__':
     try:
       if (len(sys.argv) < 4 or len(sys.argv) > 5):
-        print 'At one-two arguments required extract_rpy_from_quat <in topic> <out topic> <element path> <list path>'
+        print('At one-two arguments required extract_rpy_from_quat <in topic> <out topic> <element path> <list path>')
 
       run(sys.argv)
     except rospy.ROSInterruptException:
         print("ROS Exception")
         pass
-        
+
