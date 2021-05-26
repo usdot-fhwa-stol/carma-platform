@@ -97,7 +97,7 @@ namespace platoon_control
     }
 
     void PlatoonControlWorker::generateSteer(const cav_msgs::TrajectoryPlanPoint& point){
-        pp_.current_pose_ = current_pose;
+        pp_.current_pose_ = initial_pose_;
     	steerCmd_ = pp_.calculateSteer(point);
     }
 
@@ -112,8 +112,8 @@ namespace platoon_control
 
     double PlatoonControlWorker::getCurrentDowntrackDistance(const cav_msgs::TrajectoryPlanPoint& point) {
         
-        double x_diff = (point.x-current_pose.position.x);
-		double y_diff = (point.y-current_pose.position.y);
+        double x_diff = (point.x-initial_pose_.position.x);
+		double y_diff = (point.y-initial_pose_.position.y);
 		double dist = std::sqrt(x_diff * x_diff + y_diff * y_diff);
     	return dist;
     }

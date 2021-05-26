@@ -74,13 +74,13 @@ namespace platoon_control
 
         PlatoonLeaderInfo platoon_leader;
 
-        void setCurrentPose(const geometry_msgs::PoseStampedConstPtr& msg)
+        void setInitialPose(const geometry_msgs::PoseStampedConstPtr& msg)
 		{
-			current_pose = msg->pose;
+			initial_pose_ = msg->pose;
 		}
 
 		// geometry pose
-		geometry_msgs::Pose current_pose;
+		geometry_msgs::Pose initial_pose_;
 
 
     private:
@@ -102,13 +102,13 @@ namespace platoon_control
         double dist_to_front_vehicle;
 
         bool leaderSpeedCapEnabled = true;
-        bool enableMaxAdjustmentFilter = leaderSpeedCapEnabled;
+        bool enableMaxAdjustmentFilter = true;
         
         bool speedLimitCapEnabled = true;
-        bool enableLocalSpeedLimitFilter = speedLimitCapEnabled;
+        bool enableLocalSpeedLimitFilter = true;
         
         bool maxAccelCapEnabled = true;
-        bool enableMaxAccelFilter = maxAccelCapEnabled;
+        bool enableMaxAccelFilter = true;
         
 
     };
