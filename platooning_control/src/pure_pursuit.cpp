@@ -60,7 +60,7 @@ namespace platoon_control
 		std::vector<double> v2 = {cos(yaw), sin(yaw)};
 		double alpha = getAlpha(lookahead, v1, v2);
 		int direction = getSteeringDirection(v1, v2);
-		double steering = direction* atan((2 * wheelbase_ * sin(alpha))/(lookahead));// change (lookahead) to (Kdd_*v) if steering is bad
+		double steering = direction* atan((2 * config_.wheelbase * sin(alpha))/(lookahead));// change (lookahead) to (Kdd_*v) if steering is bad
 		tp0 = tp;
 		if (std::isnan(steering)) return prev_steering;
 		prev_steering = steering;

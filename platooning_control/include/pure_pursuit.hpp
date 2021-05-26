@@ -3,12 +3,11 @@
 #include <ros/ros.h>
 #include <math.h> 
 #include <iostream>
-// #include <Eigen/Core>
-// #include <Eigen/LU>
 #include <geometry_msgs/PoseStamped.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include <cav_msgs/TrajectoryPlan.h>
+#include "platoon_control_config.h"
 
 
 
@@ -32,6 +31,8 @@ namespace platoon_control
 		// geometry pose
 		geometry_msgs::Pose current_pose_;
 
+		PlatooningControlPluginConfig config_;
+
     private:
 
 		// calculate the lookahead distance from next trajectory point
@@ -48,12 +49,7 @@ namespace platoon_control
 
 		// calculate command velocity from trajecoty point
 		double getVelocity(const cav_msgs::TrajectoryPlanPoint& tp, double delta_pos) const;
-		
-		// vehicle wheel base
-		double wheelbase_ = 2.7;
 
-		// coefficient for smooth steering
-		double Kdd_ = 4.5;
 
 		double prev_steering = 0.0;
 

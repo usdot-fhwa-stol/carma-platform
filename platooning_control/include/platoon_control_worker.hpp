@@ -7,6 +7,7 @@
 #include <cav_msgs/PlanType.h>
 #include "pid_controller.hpp"
 #include "pure_pursuit.hpp"
+#include "platoon_control_config.h"
 #include <boost/optional.hpp>
 
 
@@ -48,8 +49,10 @@ namespace platoon_control
     {
     public:
 
+        
         PlatoonControlWorker();
 
+        void updateConfigParams(PlatooningControlPluginConfig new_config);
 
         double getLastSpeedCommand() const;
 
@@ -63,7 +66,6 @@ namespace platoon_control
 
         double speedCmd;
         double currentSpeed;
-        double adjustmentCap = 10.0;
         double lastCmdSpeed = 0.0;
 
 
@@ -71,12 +73,6 @@ namespace platoon_control
         double steerCmd_ = 0;
 
         PlatoonLeaderInfo platoon_leader;
-
-
-        // platooning_desired_time_headway"
-        double timeHeadway = 2.0;
-        // platooning standstillheadway"
-        double standStillHeadway = 12.0;
 
         void setCurrentPose(const geometry_msgs::PoseStampedConstPtr& msg)
 		{
@@ -88,6 +84,8 @@ namespace platoon_control
 
 
     private:
+        // config parameters
+        PlatooningControlPluginConfig ctrl_config;
 
         // pid controller object
         PIDController pid_ctrl_;
@@ -95,15 +93,8 @@ namespace platoon_control
         // pure pursuit controller object
         PurePursuit pp_;
 
-    	double maxAccel = 2.5; // m/s/s
+    	// double desiredTimeGap = 1.0; // s
 
-    	double desiredTimeGap = 1.0; // s
-
-
-        double desiredGap_ = 0.0;
-
-
-        long CMD_TIMESTEP = 100;
 
 
         double getCurrentDowntrackDistance(const cav_msgs::TrajectoryPlanPoint& point);
@@ -118,11 +109,6 @@ namespace platoon_control
 
         bool enableMaxAccelFilter = maxAccelCapEnabled;
         bool maxAccelCapEnabled = true;
-
-    	
-    
-
-    
 
     };
 }

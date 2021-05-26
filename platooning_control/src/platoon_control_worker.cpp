@@ -11,6 +11,13 @@ namespace platoon_control
 
     }
 
+    void PlatoonControlWorker::updateConfigParams(PlatooningControlPluginConfig new_config)
+    {
+        ctrl_config = new_config;
+        pid_ctrl_.config_ = new_config;
+        pp_.config_ = new_config;
+    }
+
 	double PlatoonControlWorker::getLastSpeedCommand() const {
         return speedCmd_;
     }
@@ -33,10 +40,10 @@ namespace platoon_control
 	        int leaderIndex = leader.leaderIndex;////TODO: Communicate leader index in the platoon (plugin_.platoonManager.getIndexOf(leader);)
 	        int numOfVehiclesGaps = leader.NumberOfVehicleInFront - leaderIndex;////TODO: Communicate vehicles ahead in the platoon (plugin_.platoonManager.getNumberOfVehicleInFront() - leaderIndex;)
 	        ROS_DEBUG_STREAM("The host vehicle have " << numOfVehiclesGaps << " vehicles between itself and its leader (includes the leader)");
-	        desiredGap_ = std::max(hostVehicleSpeed * timeHeadway * numOfVehiclesGaps, standStillHeadway * numOfVehiclesGaps);
-	        ROS_DEBUG_STREAM("The desired gap with the leader is " << desiredGap_);
+	        double desiredGap = std::max(hostVehicleSpeed * ctrl_config.timeHeadway * numOfVehiclesGaps, ctrl_config.standStillHeadway * numOfVehiclesGaps);
+	        ROS_DEBUG_STREAM("The desired gap with the leader is " << desiredGap);
 	        // ROS_DEBUG("Based on raw radar, the current gap with the front vehicle is " , getDistanceToFrontVehicle());
-	        double desiredHostPosition = leaderCurrentPosition - desiredGap_;
+	        double desiredHostPosition = leaderCurrentPosition - desiredGap;
 	        ROS_DEBUG_STREAM("The desired host position and the setpoint for pid controller is " << desiredHostPosition);
 	        // PD controller is used to adjust the speed to maintain the distance gap between the subject vehicle and leader vehicle
 	        // Error input for PD controller is defined as the difference between leaderCurrentPosition and desiredLeaderPosition
@@ -48,14 +55,14 @@ namespace platoon_control
 
 		    double adjSpeedCmd = controllerOutput + leader.commandSpeed;
 	        ROS_DEBUG_STREAM("Adjusted Speed Cmd = " << adjSpeedCmd << "; Controller Output = " << controllerOutput
-	        	<< "; Leader CmdSpeed= " << leader.commandSpeed << "; Adjustment Cap " << adjustmentCap);
+	        	<< "; Leader CmdSpeed= " << leader.commandSpeed << "; Adjustment Cap " << ctrl_config.adjustmentCap);
 	            // After we get a adjSpeedCmd, we apply three filters on it if the filter is enabled
 	            // First: we do not allow the difference between command speed of the host vehicle and the leader's commandSpeed higher than adjustmentCap
 	        if(enableMaxAdjustmentFilter) {
-                if(adjSpeedCmd > leader.commandSpeed + adjustmentCap) {
-                    adjSpeedCmd = leader.commandSpeed + adjustmentCap;
-                } else if(adjSpeedCmd < leader.commandSpeed - adjustmentCap) {
-                    adjSpeedCmd = leader.commandSpeed - adjustmentCap;
+                if(adjSpeedCmd > leader.commandSpeed + ctrl_config.adjustmentCap) {
+                    adjSpeedCmd = leader.commandSpeed + ctrl_config.adjustmentCap;
+                } else if(adjSpeedCmd < leader.commandSpeed - ctrl_config.adjustmentCap) {
+                    adjSpeedCmd = leader.commandSpeed - ctrl_config.adjustmentCap;
                 }
                 ROS_DEBUG_STREAM("The adjusted cmd speed after max adjustment cap is " << adjSpeedCmd << " m/s");
             }
@@ -63,8 +70,8 @@ namespace platoon_control
             // Third: we allow do not a large gap between two consecutive speed commands
             if(enableMaxAccelFilter) {
                 
-                double max = lastCmdSpeed + (maxAccel * (CMD_TIMESTEP / 1000.0));
-                double min = lastCmdSpeed - (maxAccel * (CMD_TIMESTEP / 1000.0));
+                double max = lastCmdSpeed + (ctrl_config.maxAccel * (ctrl_config.CMD_TIMESTEP / 1000.0));
+                double min = lastCmdSpeed - (ctrl_config.maxAccel * (ctrl_config.CMD_TIMESTEP / 1000.0));
                 if(adjSpeedCmd > max) {
                     adjSpeedCmd = max; 
                 } else if (adjSpeedCmd < min) {

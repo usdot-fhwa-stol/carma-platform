@@ -20,7 +20,10 @@
 namespace platoon_control
 {
 // @SONAR_STOP@
-    PlatoonControlPlugin::PlatoonControlPlugin(){}
+    PlatoonControlPlugin::PlatoonControlPlugin()
+    {
+        pcw_ = PlatoonControlWorker();
+    }
     
 
     void PlatoonControlPlugin::initialize(){
@@ -28,7 +31,25 @@ namespace platoon_control
     	nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
 
-        pcw_ = PlatoonControlWorker();
+        PlatooningControlPluginConfig config;
+
+        pnh_->param<double>("timeHeadway", config.timeHeadway, config.timeHeadway);
+        pnh_->param<double>("standStillHeadway", config.standStillHeadway, config.standStillHeadway);
+        pnh_->param<double>("maxAccel", config.maxAccel, config.maxAccel);
+        pnh_->param<double>("Kp", config.Kp, config.Kp);
+        pnh_->param<double>("Kd", config.Kd, config.Kd);
+        pnh_->param<double>("Ki", config.Ki, config.Ki);
+        pnh_->param<double>("max_value", config.max_value, config.max_value);
+        pnh_->param<double>("min_value", config.min_value, config.min_value);
+        pnh_->param<double>("dt", config.dt, config.dt);
+        pnh_->param<double>("adjustmentCap", config.adjustmentCap, config.adjustmentCap);
+        pnh_->param<double>("integratorMax", config.integratorMax, config.integratorMax);
+        pnh_->param<double>("integratorMin", config.integratorMin, config.integratorMin);
+        pnh_->param<double>("Kdd", config.Kdd, config.Kdd);
+        pnh_->param<int>("CMD_TIMESTEP", config.CMD_TIMESTEP, config.CMD_TIMESTEP);
+        pnh_->param<double>("wheelbase", config.wheelbase, config.wheelbase);
+
+        pcw_.updateConfigParams(config);
 
 	  	// Trajectory Plan Subscriber
 		trajectory_plan_sub = nh_->subscribe<cav_msgs::TrajectoryPlan>("PlatooningControlPlugin/plan_trajectory", 1, &PlatoonControlPlugin::trajectoryPlan_cb, this);
