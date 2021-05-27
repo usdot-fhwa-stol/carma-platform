@@ -607,7 +607,7 @@ Visualization Manager:
         {}
       Queue Size: 10
       Value: true
-    - Class: rviz/MarkerArray
+    - Class: rviz/Marker
       Enabled: true
       Marker Topic: /guidance/route_marker
       Name: RouteMarker
