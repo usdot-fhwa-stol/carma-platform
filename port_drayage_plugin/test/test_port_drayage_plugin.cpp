@@ -46,7 +46,6 @@ TEST(PortDrayageTest, testComposeArrivalMessage)
     ASSERT_FALSE(msg.strategy_params.empty());
 
     std::istringstream strstream(msg.strategy_params);
-    std::cout << strstream.str();
     using boost::property_tree::ptree;
     ptree pt;
     boost::property_tree::json_parser::read_json(strstream, pt);
