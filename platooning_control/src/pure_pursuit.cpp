@@ -25,7 +25,7 @@ namespace platoon_control
 	}
 
 	double PurePursuit::getYaw(const cav_msgs::TrajectoryPlanPoint& tp) const{
-		double yaw = atan2(tp.x - current_pose_.position.x, tp.y - current_pose_.position.y);
+		double yaw = atan2(tp.y - current_pose_.position.y, tp.x - current_pose_.position.x);
 		return yaw;
 	}
 

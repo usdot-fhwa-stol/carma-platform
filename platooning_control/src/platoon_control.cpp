@@ -101,7 +101,7 @@ namespace platoon_control
         }
 
         cav_msgs::TrajectoryPlanPoint t1 = tp->trajectory_points[1];
-        cav_msgs::TrajectoryPlanPoint t2 = tp->trajectory_points[3];
+        cav_msgs::TrajectoryPlanPoint t2 = tp->trajectory_points[7];
 
     	geometry_msgs::TwistStamped twist_msg = composeTwist(t1, t2);
 
@@ -110,7 +110,7 @@ namespace platoon_control
         autoware_msgs::ControlCommandStamped ctrl_msg;
         ctrl_msg.cmd.linear_velocity = twist_msg.twist.linear.x;
         ROS_DEBUG_STREAM("command speed " << ctrl_msg.cmd.linear_velocity);
-        ctrl_msg.cmd.steering_angle = twist_msg.twist.angular.z;// * 180/M_PI;
+        ctrl_msg.cmd.steering_angle = twist_msg.twist.angular.z/10;
         ROS_DEBUG_STREAM("command steering " << ctrl_msg.cmd.steering_angle);
         ctrl_pub_.publish(ctrl_msg);
 
