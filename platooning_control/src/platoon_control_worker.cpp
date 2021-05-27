@@ -109,6 +109,7 @@ namespace platoon_control
 
     void PlatoonControlWorker::generateSteer(const cav_msgs::TrajectoryPlanPoint& point){
         pp_.current_pose_ = current_pose_;
+        pp_.velocity_ = currentSpeed;
     	steerCmd_ = pp_.calculateSteer(point);
     }
 

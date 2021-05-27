@@ -30,6 +30,7 @@ namespace platoon_control
 
 		// geometry pose
 		geometry_msgs::Pose current_pose_;
+		double velocity_ = 0.0;
 
 		PlatooningControlPluginConfig config_;
 
@@ -52,6 +53,7 @@ namespace platoon_control
 
 
 		double prev_steering = 0.0;
+		
 
 		
 		// previous trajectory point

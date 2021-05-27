@@ -15,12 +15,12 @@ namespace platoon_control
 	}
 
 	double PurePursuit::getVelocity(const cav_msgs::TrajectoryPlanPoint& tp, double delta_pos) const {
-		ros::Duration delta_t = tp.target_time - tp0.target_time;
-		double delta_t_second = fabs(delta_t.toSec());
+		// ros::Duration delta_t = tp.target_time - ros::Time::now();
+		// double delta_t_second = fabs(delta_t.toSec());
 
-		if(delta_t_second != 0) {
-			return delta_pos / delta_t_second;
-		}
+		// if(delta_t_second != 0) {
+		// 	return delta_pos / delta_t_second;
+		// }
 		return 0.0;
 	}
 
@@ -54,15 +54,18 @@ namespace platoon_control
 		// 	return 0.0;
 		// }
 		double lookahead = getLookaheadDist(tp);
-		double v = getVelocity(tp, lookahead);
+		double v = velocity_;//sgetVelocity(tp, lookahead);
+		ROS_DEBUG_STREAM("pp speed: " << velocity_);
 		double yaw = getYaw(tp);
 		ROS_DEBUG_STREAM("calculated yaw: " << yaw);
 		std::vector<double> v1 = {tp.x - current_pose_.position.x , tp.y - current_pose_.position.y};
 		std::vector<double> v2 = {cos(yaw), sin(yaw)};
 		double alpha = getAlpha(lookahead, v1, v2);
+		ROS_DEBUG_STREAM("calculated alpha: " << alpha);
 		int direction = getSteeringDirection(v1, v2);
-		double steering = direction* atan((2 * config_.wheelbase * sin(alpha))/(lookahead));// change (lookahead) to (Kdd_*v) if steering is bad
-		tp0 = tp;
+		ROS_DEBUG_STREAM("calculated direction: " << direction);
+		double steering = (-1) * direction* atan((2 * config_.wheelbase * sin(alpha))/(lookahead));// change (lookahead) to (Kdd_*v) if steering is bad
+		ROS_DEBUG_STREAM("calculated steering: " << steering);
 		if (std::isnan(steering)) return prev_steering;
 		prev_steering = steering;
 		return steering;
