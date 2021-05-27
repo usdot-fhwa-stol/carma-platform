@@ -60,6 +60,7 @@ int WMBroadcasterNode::run()
   map_update_pub_ = cnh_.advertise<autoware_lanelet2_msgs::MapBin>("map_update", 200, [this](auto& pub){ wmb_.newUpdateSubscriber(pub); });
   //Route Message Publisher
   control_msg_pub_= cnh_.advertise<cav_msgs::TrafficControlRequest>("outgoing_geofence_request", 1, true);
+  TCR_timer = cnh_.createTimer(ros::Duration(10), &WMBroadcaster::TCR_timerCallBack,&wmb_ );
   //Check Active Geofence Publisher
   active_pub_ = cnh_.advertise<cav_msgs::CheckActiveGeofence>("active_geofence", 200, true);
   // Base Map Sub

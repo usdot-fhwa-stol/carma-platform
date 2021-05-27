@@ -99,6 +99,7 @@ private:
   ros::Subscriber curr_location_sub_;
   ros::Subscriber route_cache_sub_;
   ros::Timer timer;
+  ros::Timer TCR_timer;
 
   WMBroadcaster wmb_;
 };

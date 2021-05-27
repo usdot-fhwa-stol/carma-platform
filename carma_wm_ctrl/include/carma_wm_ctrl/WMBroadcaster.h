@@ -214,6 +214,8 @@ public:
    */ 
   cav_msgs::Route getRoute();
 
+  void TCR_timerCallBack(const ros::TimerEvent &);
+
 
 private:
   lanelet::ConstLanelets route_path_;
@@ -254,6 +256,8 @@ private:
   std::vector<autoware_lanelet2_msgs::MapBin> map_update_message_queue_; 
 
   size_t update_count_ = 0; // Records the total number of sent map updates. Used as the set value for update.header.seq
+
+ cav_msgs::TrafficControlRequest cR; 
 
 };
 }  // namespace carma_wm_ctrl
