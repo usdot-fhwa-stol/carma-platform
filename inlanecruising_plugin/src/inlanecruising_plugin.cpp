@@ -247,10 +247,10 @@ std::vector<double> InLaneCruisingPlugin::optimize_speed(const std::vector<doubl
     }
   }
 
-  log::printDoublesPerLineWithPrefix("only_reverse[i]: ", output);
+  //log::printDoublesPerLineWithPrefix("only_reverse[i]: ", output);
   
   output = trajectory_utils::apply_accel_limits_by_distance(downtracks, output, accel_limit, accel_limit);
-  log::printDoublesPerLineWithPrefix("after_forward[i]: ", output);
+  //log::printDoublesPerLineWithPrefix("after_forward[i]: ", output);
 
   return output;
 }
@@ -293,11 +293,13 @@ int InLaneCruisingPlugin::get_nearest_point_index(const std::vector<lanelet::Bas
                                                const cav_msgs::VehicleState& state) const
 {
   lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
+  ROS_DEBUG_STREAM("get_nearest_point_index: veh_point: " << veh_point.x() << ", " << veh_point.y());
   double min_distance = std::numeric_limits<double>::max();
   int i = 0;
   int best_index = 0;
   for (const auto& p : points)
   {
+    
     double distance = lanelet::geometry::distance2d(p, veh_point);
     if (distance < min_distance)
     {
@@ -318,11 +320,11 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
                    << " x: " << state.X_pos_global << " y: " << state.Y_pos_global << " yaw: " << state.orientation
                    << " speed: " << state.longitudinal_vel);
 
-  log::printDebugPerLine(points, &log::pointSpeedPairToStream);
+  //log::printDebugPerLine(points, &log::pointSpeedPairToStream);
 
   int nearest_pt_index = get_nearest_point_index(points, state);
 
-  ROS_DEBUG_STREAM("NearestPtIndex: " << nearest_pt_index);
+  //ROS_DEBUG_STREAM("NearestPtIndex: " << nearest_pt_index);
 
   std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end()); // Points in front of current vehicle position
   auto time_bound_points = constrain_to_time_boundary(future_points, config_.trajectory_time_length);
@@ -398,12 +400,12 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   std::vector<double> ideal_speeds =
       trajectory_utils::constrained_speeds_for_curvatures(curvatures, config_.lateral_accel_limit);
   
-  log::printDoublesPerLineWithPrefix("curvatures[i]: ", curvatures);
-  log::printDoublesPerLineWithPrefix("ideal_speeds: ", ideal_speeds);
-  log::printDoublesPerLineWithPrefix("final_yaw_values[i]: ", final_yaw_values);
+  //log::printDoublesPerLineWithPrefix("curvatures[i]: ", curvatures);
+  //log::printDoublesPerLineWithPrefix("ideal_speeds: ", ideal_speeds);
+  //log::printDoublesPerLineWithPrefix("final_yaw_values[i]: ", final_yaw_values);
 
   std::vector<double> constrained_speed_limits = apply_speed_limits(ideal_speeds, distributed_speed_limits);
-  log::printDoublesPerLineWithPrefix("constrained_speed_limits: ", constrained_speed_limits);
+  //log::printDoublesPerLineWithPrefix("constrained_speed_limits: ", constrained_speed_limits);
 
   ROS_DEBUG("Processed all points in computed fit");
 
@@ -416,7 +418,8 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   // Add current vehicle point to front of the trajectory
 
   nearest_pt_index = get_nearest_point_index(all_sampling_points, state);
-  ROS_DEBUG_STREAM("Curvature right now: " << better_curvature[nearest_pt_index] << ", at x: " << state.X_pos_global << ", y: " << state.Y_pos_global);
+  ROS_DEBUG_STREAM("Curvature right now: " << better_curvature[nearest_pt_index] << ", at state x: " << state.X_pos_global << ", state y: " << state.Y_pos_global);
+  ROS_DEBUG_STREAM("Corresponding to point: x: " << all_sampling_points[nearest_pt_index].x() << ", y:" << all_sampling_points[nearest_pt_index].y());
 
   int buffer_pt_index = get_nearest_point_index(all_sampling_points, ending_state_before_buffer);
   ROS_DEBUG_STREAM("<<<<buffer_pt_index: " << buffer_pt_index);
@@ -451,23 +454,23 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   // Apply accel limits
   final_actual_speeds = optimize_speed(downtracks, final_actual_speeds, config_.max_accel);
 
-  log::printDoublesPerLineWithPrefix("postAccel[i]: ", final_actual_speeds);
+  //log::printDoublesPerLineWithPrefix("postAccel[i]: ", final_actual_speeds);
 
   final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, config_.speed_moving_average_window_size);
-  log::printDoublesPerLineWithPrefix("post_average[i]: ", final_actual_speeds);
+  //log::printDoublesPerLineWithPrefix("post_average[i]: ", final_actual_speeds);
 
   for (auto& s : final_actual_speeds)  // Limit minimum speed. TODO how to handle stopping?
   {
     s = std::max(s, config_.minimum_speed);
   }
 
-  log::printDoublesPerLineWithPrefix("post_min_speed[i]: ", final_actual_speeds);
+  //log::printDoublesPerLineWithPrefix("post_min_speed[i]: ", final_actual_speeds);
 
   // Convert speeds to times
   std::vector<double> times;
   trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
 
-  log::printDoublesPerLineWithPrefix("times[i]: ", times);
+  //log::printDoublesPerLineWithPrefix("times[i]: ", times);
   
   // Build trajectory points
   // TODO When more plugins are implemented that might share trajectory planning the start time will need to be based
@@ -688,7 +691,8 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
       }
 
       double delta_d = lanelet::geometry::distance2d(prev_point, current_point);
-      ROS_DEBUG_STREAM("delta_d: " << delta_d << ", dist_accumulator:" << dist_accumulator);
+      ROS_DEBUG_STREAM("delta_d: " << delta_d << ", dist_accumulator:" << dist_accumulator <<", current_point.x():" << current_point.x() << 
+        "current_point.y():" << current_point.y());
       dist_accumulator += delta_d;
       
       if (dist_accumulator > ending_downtrack) {
@@ -706,6 +710,9 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
     }
     ending_state_before_buffer.X_pos_global = points_and_target_speeds[max_i].point.x();
     ending_state_before_buffer.Y_pos_global = points_and_target_speeds[max_i].point.y();
+    ROS_DEBUG_STREAM("Here ending_state_before_buffer.X_pos_global: " << ending_state_before_buffer.X_pos_global << 
+      ", and Y_pos_global" << ending_state_before_buffer.Y_pos_global);
+
     ROS_DEBUG_STREAM("i: " << i << ", max_i: " << max_i);
 
     std::vector<PointSpeedPair> constrained_points(points_and_target_speeds.begin(), points_and_target_speeds.begin() + max_i);
