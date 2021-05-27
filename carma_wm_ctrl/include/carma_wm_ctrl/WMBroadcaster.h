@@ -257,7 +257,7 @@ private:
 
   size_t update_count_ = 0; // Records the total number of sent map updates. Used as the set value for update.header.seq
 
- cav_msgs::TrafficControlRequest cR; 
+ cav_msgs::TrafficControlRequest cR_; 
 
 };
 }  // namespace carma_wm_ctrl
