@@ -7,9 +7,10 @@ namespace platoon_control
 	PurePursuit::PurePursuit(){}
 
 	double PurePursuit::getLookaheadDist(const cav_msgs::TrajectoryPlanPoint& tp) const{
-		double x_diff = (tp.x-tp0.x);
-		double y_diff = (tp.y-tp0.y);
+		double x_diff = (tp.x - current_pose_.position.x);
+		double y_diff = (tp.y - current_pose_.position.x);
 		double dist = std::sqrt(x_diff * x_diff + y_diff * y_diff);
+		ROS_DEBUG_STREAM("calculated lookahead: " << dist);
 		return dist;
 	}
 
@@ -23,9 +24,8 @@ namespace platoon_control
 		return 0.0;
 	}
 
-	double PurePursuit::getYaw() const{
-		double yaw;
-		yaw = atan2(current_pose_.orientation.x, current_pose_.orientation.z);
+	double PurePursuit::getYaw(const cav_msgs::TrajectoryPlanPoint& tp) const{
+		double yaw = atan2(tp.x - current_pose_.position.x, tp.y - current_pose_.position.y);
 		return yaw;
 	}
 
@@ -55,7 +55,8 @@ namespace platoon_control
 		// }
 		double lookahead = getLookaheadDist(tp);
 		double v = getVelocity(tp, lookahead);
-		double yaw = getYaw();
+		double yaw = getYaw(tp);
+		ROS_DEBUG_STREAM("calculated yaw: " << yaw);
 		std::vector<double> v1 = {tp.x - current_pose_.position.x , tp.y - current_pose_.position.y};
 		std::vector<double> v2 = {cos(yaw), sin(yaw)};
 		double alpha = getAlpha(lookahead, v1, v2);

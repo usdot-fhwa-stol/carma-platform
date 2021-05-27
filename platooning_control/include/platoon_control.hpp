@@ -48,7 +48,7 @@ namespace platoon_control
 					// general starting point of this node
 					void run();
 					// Compose twist message by calculating speed and steering commands.
-					geometry_msgs::TwistStamped composeTwist(const cav_msgs::TrajectoryPlanPoint& point);
+					geometry_msgs::TwistStamped composeTwist(const cav_msgs::TrajectoryPlanPoint& point0, const cav_msgs::TrajectoryPlanPoint& point_end);
 			
 					// local copy of pose
         	geometry_msgs::PoseStamped pose_msg_;

@@ -75,13 +75,19 @@ namespace platoon_control
 
         PlatoonLeaderInfo platoon_leader;
 
-        void setInitialPose(const geometry_msgs::PoseStamped msg)
-		{
-			initial_pose_ = msg.pose;
-		}
+        void setInitialPose(const geometry_msgs::PoseStamped msg);
+		// {
+		// 	initial_pose_ = msg.pose;
+		// }
+
+        void setCurrentPose(const geometry_msgs::PoseStamped msg);
+		// {
+		// 	current_pose_ = msg.pose;
+		// }
 
 		// geometry pose
 		geometry_msgs::Pose initial_pose_;
+        geometry_msgs::Pose current_pose_;
 
 
     private:

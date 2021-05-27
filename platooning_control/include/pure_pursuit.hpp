@@ -39,7 +39,7 @@ namespace platoon_control
 		double getLookaheadDist(const cav_msgs::TrajectoryPlanPoint& tp) const;
 
 		// calculate yaw angle of the vehicle
-		double getYaw() const;
+		double getYaw(const cav_msgs::TrajectoryPlanPoint& tp) const;
 
 		// calculate alpha angle
 		double getAlpha(double lookahead, std::vector<double> v1, std::vector<double> v2) const;

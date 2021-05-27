@@ -22,7 +22,18 @@ namespace platoon_control
         return speedCmd_;
     }
 
-    void PlatoonControlWorker::generateSpeed(const cav_msgs::TrajectoryPlanPoint& point) {
+    void PlatoonControlWorker::setInitialPose(const geometry_msgs::PoseStamped msg)
+	{
+		initial_pose_ = msg.pose;
+	}
+
+    void PlatoonControlWorker::setCurrentPose(const geometry_msgs::PoseStamped msg)
+	{
+		current_pose_ = msg.pose;
+	}
+
+    void PlatoonControlWorker::generateSpeed(const cav_msgs::TrajectoryPlanPoint& point)
+    {
         
         PlatoonLeaderInfo leader = platoon_leader;
     	if(leader.staticId != "") {
@@ -97,7 +108,7 @@ namespace platoon_control
     }
 
     void PlatoonControlWorker::generateSteer(const cav_msgs::TrajectoryPlanPoint& point){
-        pp_.current_pose_ = initial_pose_;
+        pp_.current_pose_ = current_pose_;
     	steerCmd_ = pp_.calculateSteer(point);
     }
 
