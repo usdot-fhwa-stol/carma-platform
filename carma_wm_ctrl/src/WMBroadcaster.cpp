@@ -416,13 +416,17 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   
   std::lock_guard<std::mutex> guard(map_mutex_);
   // quickly check if the id has been added
-  if (geofence_msg.choice != cav_msgs::TrafficControlMessage::TCMV01)
+  if (geofence_msg.choice != cav_msgs::TrafficControlMessage::TCMV01) {
+    ROS_WARN_STREAM("Dropping recieved geofence for unsupported TrafficControl version: " << geofence_msg.choice);
     return;
+  }
 
   boost::uuids::uuid id;
   std::copy(geofence_msg.tcmV01.id.id.begin(), geofence_msg.tcmV01.id.id.end(), id.begin());
-  if (checked_geofence_ids_.find(boost::uuids::to_string(id)) != checked_geofence_ids_.end())
+  if (checked_geofence_ids_.find(boost::uuids::to_string(id)) != checked_geofence_ids_.end()) { 
+    ROS_DEBUG_STREAM("Dropping recieved TrafficControl message with already handled id: " <<  boost::uuids::to_string(id));
     return;
+  }
 
   // convert reqid to string check if it has been seen before
   boost::array<uint8_t, 16UL> req_id;
@@ -903,7 +907,8 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
     throw lanelet::InvalidObjectStateError(std::string("Base georeference map may not be loaded to the WMBroadcaster"));
 
   }
-
+  
+  // Convert the minimum point to latlon
   lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
   lanelet::BasicPoint3d localPoint;
 
@@ -912,23 +917,48 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
 
   lanelet::GPSPoint gpsRoute = local_projector.reverse(localPoint); //If the appropriate library is included, the reverse() function can be used to convert from local xyz to lat/lon
 
+  // Create a local transverse mercator frame at the minimum point to allow us to get east,north oriented bounds 
+  std::string local_tmerc_enu_proj = "+proj=tmerc +datum=WGS84 +h_0=0 +lat_0=" + std::to_string(gpsRoute.lat) + " +lon_0=" + std::to_string(gpsRoute.lon);
+
+  // Create transform from map frame to local transform mercator frame at bounds min point
+  PJ* tmerc_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, target_frame.c_str(), local_tmerc_enu_proj.c_str(), nullptr);
+  
+  if (tmerc_proj == 0) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
+    
+    ROS_ERROR_STREAM("Failed to generate projection between request bounds frame and map with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX) 
+      << " MapProjection: " << target_frame << " Message Projection: " << local_tmerc_enu_proj);
+
+    return {}; // Ignore geofence if it could not be projected into the map frame
+  
+  }
+
+  ROS_DEBUG_STREAM("Before conversion: MinPoint ( "<< minX <<", " << minY <<" )");
+  ROS_DEBUG_STREAM("Before conversion: MaxPoint ( "<< maxX <<", " << maxY <<" )");
+
+  PJ_COORD pj_min {{minX, minY, 0, 0}}; // z is not currently used
+  PJ_COORD pj_min_tmerc;
+  PJ_COORD pj_max {{maxX, maxY, 0, 0}}; // z is not currently used
+  PJ_COORD pj_max_tmerc;
+  pj_min_tmerc = proj_trans(tmerc_proj, PJ_FWD, pj_min);
+  pj_max_tmerc = proj_trans(tmerc_proj, PJ_FWD, pj_max);
+
+  ROS_DEBUG_STREAM("After conversion: MinPoint ( "<< pj_min_tmerc.xyz.x <<", " << pj_min_tmerc.xyz.y <<" )");
+  ROS_DEBUG_STREAM("After conversion: MaxPoint ( "<< pj_max_tmerc.xyz.x <<", " << pj_max_tmerc.xyz.y <<" )");
+
   cav_msgs::TrafficControlRequest cR; /*Fill the latitude value in message cB with the value of lat */
   cav_msgs::TrafficControlBounds cB; /*Fill the longitude value in message cB with the value of lon*/
   
   cB.reflat = gpsRoute.lat;
   cB.reflon = gpsRoute.lon;
 
-  cav_msgs::OffsetPoint offsetX;
-  offsetX.deltax = maxX - minX;
-  cav_msgs::OffsetPoint offsetY;
-  offsetY.deltay = maxY - minY;
-  cB.offsets[0].deltax = minX;
-  cB.offsets[0].deltay = maxY;
-  cB.offsets[1].deltax = maxX;
-  cB.offsets[1].deltay = minY;
-  cB.offsets[2].deltax = maxX;
-  cB.offsets[2].deltay = maxY;
-  cB.oldest =ros::Time::now();
+  cB.offsets[0].deltax = pj_max_tmerc.xyz.x; // Points in clockwise order min,min (lat,lon point) -> max,min -> max,max -> min,max
+  cB.offsets[0].deltay = pj_min_tmerc.xyz.y;
+  cB.offsets[1].deltax = pj_max_tmerc.xyz.x;
+  cB.offsets[1].deltay = pj_max_tmerc.xyz.y;
+  cB.offsets[2].deltax = pj_min_tmerc.xyz.x;
+  cB.offsets[2].deltay = pj_max_tmerc.xyz.y;
+
+  cB.oldest =ros::Time::now(); // TODO this needs to be set to 0 or an older value as otherwise this will filter out all controls
   
   cR.choice = cav_msgs::TrafficControlRequest::TCRV01;
   
