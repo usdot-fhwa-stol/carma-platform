@@ -863,7 +863,7 @@ namespace cooperative_lanechange
 
     }
 
-        int CooperativeLaneChangePlugin::get_ending_point_index(lanelet::BasicLineString2d& points, double ending_downtrack){
+    int CooperativeLaneChangePlugin::get_ending_point_index(lanelet::BasicLineString2d& points, double ending_downtrack){
         int best_index = 0;
         bool set_index = false;
         for(int i=0;i < points.size();i++){

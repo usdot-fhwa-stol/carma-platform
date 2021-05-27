@@ -289,26 +289,29 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::constrain_to_time_boundary(con
   return time_bound_points;
 }
 
-int InLaneCruisingPlugin::get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points,
+int InLaneCruisingPlugin::get_ending_point_index(const std::vector<lanelet::BasicPoint2d>& points,
                                                const cav_msgs::VehicleState& state) const
 {
-  lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
-  ROS_DEBUG_STREAM("get_nearest_point_index: veh_point: " << veh_point.x() << ", " << veh_point.y());
-  double min_distance = std::numeric_limits<double>::max();
-  int i = 0;
+  lanelet::BasicPoint2d state_pos(state.X_pos_global, state.Y_pos_global);
+  double ending_downtrack = wm_->routeTrackPos(state_pos).downtrack;
+  ROS_DEBUG_STREAM("get_ending_point_index: state_pos: " << state_pos.x() << ", " << state_pos.y() << ", ending_downtrack" << ending_downtrack);
   int best_index = 0;
-  for (const auto& p : points)
-  {
-    
-    double distance = lanelet::geometry::distance2d(p, veh_point);
-    if (distance < min_distance)
-    {
-      best_index = i;
-      min_distance = distance;
-    }
-    i++;
-  }
+  bool set_index = false;
+  for(int i=0;i < points.size();i++){
+      double downtrack = wm_->routeTrackPos(points[i]).downtrack;
+      ROS_DEBUG_STREAM("get_ending_point_index>> points[i].x(): " << points[i].x() << ", points[i].y(): " << points[i].y() << ", downtrack: "<< downtrack);
 
+      if(downtrack > ending_downtrack){
+          best_index = i - 1;
+          ROS_DEBUG_STREAM("get_ending_point_index>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y() << ", downtrack: "<< downtrack);
+          set_index = true;
+          break;
+      }
+  }
+  if (!set_index)
+  {
+      best_index = points.size() - 1;
+  }
   return best_index;
 }
 
@@ -417,11 +420,11 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   // Add current vehicle point to front of the trajectory
 
-  nearest_pt_index = get_nearest_point_index(all_sampling_points, state);
+  nearest_pt_index = get_ending_point_index(all_sampling_points, state);
   ROS_DEBUG_STREAM("Curvature right now: " << better_curvature[nearest_pt_index] << ", at state x: " << state.X_pos_global << ", state y: " << state.Y_pos_global);
   ROS_DEBUG_STREAM("Corresponding to point: x: " << all_sampling_points[nearest_pt_index].x() << ", y:" << all_sampling_points[nearest_pt_index].y());
 
-  int buffer_pt_index = get_nearest_point_index(all_sampling_points, ending_state_before_buffer);
+  int buffer_pt_index = get_ending_point_index(all_sampling_points, ending_state_before_buffer);
   ROS_DEBUG_STREAM("<<<<buffer_pt_index: " << buffer_pt_index);
   ROS_DEBUG_STREAM("<<<<nearest_pt_index: " << nearest_pt_index);
   ROS_DEBUG_STREAM("<<<<Ending point: x: " << all_sampling_points[buffer_pt_index].x() << ", y:" << all_sampling_points[buffer_pt_index].y());
