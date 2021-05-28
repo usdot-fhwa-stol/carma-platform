@@ -790,16 +790,10 @@ void  WMBroadcaster::routeCallbackMessage(const cav_msgs::Route& route_msg)
 {
 
  current_route = route_msg;
- cR_ =  controlRequestFromRoute(route_msg);
-//  control_msg_pub_(cR);
+ cav_msgs::TrafficControlRequest cR; 
+ cR =  controlRequestFromRoute(route_msg);
+ control_msg_pub_(cR);
 }
-
-  void WMBroadcaster::TCR_timerCallBack(const ros::TimerEvent &){
-    if(cR_.choice != 0)
-    {    
-      control_msg_pub_(cR_);
-    }
-  }
 
 cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav_msgs::Route& route_msg, std::shared_ptr<j2735_msgs::Id64b> req_id_for_testing)
 {
