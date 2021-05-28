@@ -54,18 +54,15 @@ namespace platoon_control
 		// 	return 0.0;
 		// }
 		double lookahead = getLookaheadDist(tp);
-		double v = velocity_;//sgetVelocity(tp, lookahead);
-		ROS_DEBUG_STREAM("pp speed: " << velocity_);
-		double yaw = getYaw(tp);
+		double v = getVelocity(tp, lookahead);
+		double yaw = 0;//getYaw(tp);
 		ROS_DEBUG_STREAM("calculated yaw: " << yaw);
 		std::vector<double> v1 = {tp.x - current_pose_.position.x , tp.y - current_pose_.position.y};
 		std::vector<double> v2 = {cos(yaw), sin(yaw)};
-		double alpha = getAlpha(lookahead, v1, v2);
-		ROS_DEBUG_STREAM("calculated alpha: " << alpha);
+		double alpha = getYaw(tp) - yaw;//getAlpha(lookahead, v1, v2);
 		int direction = getSteeringDirection(v1, v2);
-		ROS_DEBUG_STREAM("calculated direction: " << direction);
-		double steering = (-1) * direction* atan((2 * config_.wheelbase * sin(alpha))/(lookahead));// change (lookahead) to (Kdd_*v) if steering is bad
-		ROS_DEBUG_STREAM("calculated steering: " << steering);
+		double steering = atan((2 * config_.wheelbase * sin(alpha))/(lookahead));// change (lookahead) to (Kdd_*v) if steering is bad
+		tp0 = tp;
 		if (std::isnan(steering)) return prev_steering;
 		prev_steering = steering;
 		return steering;
