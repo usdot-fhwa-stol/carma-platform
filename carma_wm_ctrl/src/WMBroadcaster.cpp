@@ -514,7 +514,7 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
   // Create the resulting projection transformation
   PJ* geofence_in_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, projection.c_str(), base_map_georef_.c_str(), nullptr);
   
-  if (geofence_in_map_proj == 0) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
+  if (geofence_in_map_proj == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
     
     ROS_ERROR_STREAM("Failed to generate projection between geofence and map with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX) 
       << " MapProjection: " << base_map_georef_ << " Message Projection: " << projection);
@@ -923,7 +923,7 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
   // Create transform from map frame to local transform mercator frame at bounds min point
   PJ* tmerc_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, target_frame.c_str(), local_tmerc_enu_proj.c_str(), nullptr);
   
-  if (tmerc_proj == 0) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
+  if (tmerc_proj == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
     
     ROS_ERROR_STREAM("Failed to generate projection between request bounds frame and map with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX) 
       << " MapProjection: " << target_frame << " Message Projection: " << local_tmerc_enu_proj);
