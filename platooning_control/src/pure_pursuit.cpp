@@ -8,7 +8,7 @@ namespace platoon_control
 
 	double PurePursuit::getLookaheadDist(const cav_msgs::TrajectoryPlanPoint& tp) const{
 		double x_diff = (tp.x - current_pose_.position.x);
-		double y_diff = (tp.y - current_pose_.position.x);
+		double y_diff = (tp.y - current_pose_.position.y);
 		double dist = std::sqrt(x_diff * x_diff + y_diff * y_diff);
 		ROS_DEBUG_STREAM("calculated lookahead: " << dist);
 		return dist;
@@ -60,8 +60,10 @@ namespace platoon_control
 		std::vector<double> v1 = {tp.x - current_pose_.position.x , tp.y - current_pose_.position.y};
 		std::vector<double> v2 = {cos(yaw), sin(yaw)};
 		double alpha = getYaw(tp) - yaw;//getAlpha(lookahead, v1, v2);
+		ROS_DEBUG_STREAM("calculated alpha: " << alpha);
 		int direction = getSteeringDirection(v1, v2);
 		double steering = atan((2 * config_.wheelbase * sin(alpha))/(lookahead));// change (lookahead) to (Kdd_*v) if steering is bad
+		ROS_DEBUG_STREAM("calculated steering: " << steering);
 		tp0 = tp;
 		if (std::isnan(steering)) return prev_steering;
 		prev_steering = steering;
