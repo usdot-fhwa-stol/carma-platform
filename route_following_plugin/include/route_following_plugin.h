@@ -73,10 +73,9 @@ namespace route_following_plugin
          * \param start_speed Start speed of the current maneuver
          * \param target_speed Target speed pf the current maneuver, usually it is the lanelet speed limit
          * \param lane_id Lanelet ID of the current maneuver
-         * \param start_time Start time of the current maneuver passed as reference
          * \return A lane keeping maneuver message which is ready to be published
          */
-        cav_msgs::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id lane_id, ros::Time start_time) const;
+        cav_msgs::Maneuver composeLaneFollowingManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id lane_id) const;
 
         /**
          * \brief Compose a lane change maneuver message based on input params
@@ -86,10 +85,9 @@ namespace route_following_plugin
          * \param start_lane_id Starting Lanelet ID of the current maneuver
          * \param ending_lane_id Ending Lanelet ID of the current maneuver
          * \param target_speed Target speed of the current maneuver
-         * \param start_time Start time of the current maneuver passed as reference
          * \return A lane keeping maneuver message which is ready to be published
          */
-        cav_msgs::Maneuver composeLaneChangeManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id starting_lane_id,lanelet::Id ending_lane_id, ros::Time start_time) const;
+        cav_msgs::Maneuver composeLaneChangeManeuverMessage(double start_dist, double end_dist, double start_speed, double target_speed, lanelet::Id starting_lane_id,lanelet::Id ending_lane_id) const;
         
         /**
          * \brief Given a LaneletRelations and ID of the next lanelet in the shortest path
@@ -124,7 +122,7 @@ namespace route_following_plugin
          * \param resp Plan maneuver response with a list of maneuver plan
          * \return If service call successed
          */
-        bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
+        bool planManeuverCb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);
 
         /**
          * \brief Given a Lanelet, find it's associated Speed Limit
@@ -136,7 +134,7 @@ namespace route_following_plugin
          * \brief Calculate maneuver plan for remaining route. This callback is triggered when a new route has been received and processed by the world model
          * \param route_shortest_path A list of lanelets along the shortest path of the route using which the maneuver plan is calculated.
          */
-        std::vector<cav_msgs::Maneuver> route_cb(const lanelet::routing::LaneletPath& route_shortest_path);
+        std::vector<cav_msgs::Maneuver> routeCb(const lanelet::routing::LaneletPath& route_shortest_path);
 
         //Internal Variables used in unit tests
         // Current vehicle forward speed
@@ -201,6 +199,12 @@ namespace route_following_plugin
          * \param msg Latest twist message
          */
         void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
+
+        /**
+         * \brief returns duration as ros::Duration required to complete maneuver given its start dist, end dist, start speed and end speed
+         * \param maneuver The maneuver message to calculate duration for
+         */
+        ros::Duration maneuverDuration(cav_msgs::Maneuver &maneuver) const;
 
     };
 }
