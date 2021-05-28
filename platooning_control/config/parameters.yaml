@@ -7,9 +7,9 @@ Ki: 0.035
 max_value: 11.0
 min_value: -1.0
 CMD_TIMESTEP: 100
-adjustmentCap: 6.0
+adjustmentCap: 4.0
 dt: 0.1
 integratorMax: 100
 integratorMin: -100
-wheelbase: 3.0
+wheelbase: 0.5
 Kdd: 4.5

@@ -65,10 +65,12 @@ namespace platoon_control
 		int direction = getSteeringDirection(v1, v2);
 		double steering = atan((2 * config_.wheelbase * alphaSin)/(lookahead));// change (lookahead) to (Kdd_*v) if steering is bad
 		ROS_DEBUG_STREAM("calculated steering: " << steering);
+		double steering2 = lowPassfilter(steering);
+		ROS_DEBUG_STREAM("filtered steering: " << steering2);
 		tp0 = tp;
-		if (std::isnan(steering)) return prev_steering;
-		prev_steering = steering;
-		return steering;
+		if (std::isnan(steering2)) return prev_steering;
+		prev_steering = steering2;
+		return steering2;
 	}
 
 	double PurePursuit::getAlphaSin(cav_msgs::TrajectoryPlanPoint tp, geometry_msgs::Pose current_pose)
@@ -86,6 +88,16 @@ namespace platoon_control
 		tf::Point tf_p = inverse * p;
 		geometry_msgs::Point tf_point_msg;
 		tf::pointTFToMsg(tf_p, tf_point_msg);
-		return tf_point_msg.y;
+		ROS_DEBUG_STREAM("tf_point_msg y: " << tf_point_msg.y);
+		ROS_DEBUG_STREAM("tf_point_msg x: " << tf_point_msg.x);
+		double s = tf_point_msg.y/(std::sqrt(tf_point_msg.y*tf_point_msg.y + tf_point_msg.x*tf_point_msg.x));
+		return s;
+	}
+
+	double PurePursuit::lowPassfilter(double angle)
+	{	
+		double gain = 2.0;
+		angle = gain * angle + (1 - gain) * prev_steering;
+    	return angle;
 	}
 }

@@ -52,6 +52,7 @@ namespace platoon_control
 		double getVelocity(const cav_msgs::TrajectoryPlanPoint& tp, double delta_pos) const;
 
 		double getAlphaSin(cav_msgs::TrajectoryPlanPoint tp, geometry_msgs::Pose current_pose);
+		double lowPassfilter(double angle);
 
 
 		double prev_steering = 0.0;
