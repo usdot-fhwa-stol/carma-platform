@@ -51,6 +51,8 @@ namespace platoon_control
 		// calculate command velocity from trajecoty point
 		double getVelocity(const cav_msgs::TrajectoryPlanPoint& tp, double delta_pos) const;
 
+		double getAlphaSin(cav_msgs::TrajectoryPlanPoint tp, geometry_msgs::Pose current_pose);
+
 
 		double prev_steering = 0.0;
 		

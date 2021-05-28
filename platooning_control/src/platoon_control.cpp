@@ -102,7 +102,6 @@ namespace platoon_control
 
         cav_msgs::TrajectoryPlanPoint t1 = tp->trajectory_points[1];
         cav_msgs::TrajectoryPlanPoint t2 = tp->trajectory_points[10];
-        // ROS_DEBUG_STREAM("pp target x: " << tp->trajectory_points[5].x << " and y: " << tp->trajectory_points[5].y);
 
     	geometry_msgs::TwistStamped twist_msg = composeTwist(t1, t2);
 

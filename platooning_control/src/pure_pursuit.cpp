@@ -60,13 +60,32 @@ namespace platoon_control
 		std::vector<double> v1 = {tp.x - current_pose_.position.x , tp.y - current_pose_.position.y};
 		std::vector<double> v2 = {cos(yaw), sin(yaw)};
 		double alpha = getYaw(tp) - yaw;//getAlpha(lookahead, v1, v2);
-		ROS_DEBUG_STREAM("calculated alpha: " << alpha);
+		double alphaSin = getAlphaSin(tp, current_pose_);
+		ROS_DEBUG_STREAM("alphaSin: " << alphaSin);
 		int direction = getSteeringDirection(v1, v2);
-		double steering = atan((2 * config_.wheelbase * sin(alpha))/(lookahead));// change (lookahead) to (Kdd_*v) if steering is bad
+		double steering = atan((2 * config_.wheelbase * alphaSin)/(lookahead));// change (lookahead) to (Kdd_*v) if steering is bad
 		ROS_DEBUG_STREAM("calculated steering: " << steering);
 		tp0 = tp;
 		if (std::isnan(steering)) return prev_steering;
 		prev_steering = steering;
 		return steering;
+	}
+
+	double PurePursuit::getAlphaSin(cav_msgs::TrajectoryPlanPoint tp, geometry_msgs::Pose current_pose)
+	{
+		geometry_msgs::Point point_msg;
+		point_msg.x = tp.x;
+		point_msg.y = tp.y;
+		point_msg.z = 0;
+
+		tf::Transform inverse;
+		tf::poseMsgToTF(current_pose, inverse);
+
+		tf::Point p;
+		tf::pointMsgToTF(point_msg, p);
+		tf::Point tf_p = inverse * p;
+		geometry_msgs::Point tf_point_msg;
+		tf::pointTFToMsg(tf_p, tf_point_msg);
+		return tf_point_msg.y;
 	}
 }
