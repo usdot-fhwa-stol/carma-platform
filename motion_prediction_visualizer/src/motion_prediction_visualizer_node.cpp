@@ -1,32 +1,33 @@
 #include "ros/ros.h"
 #include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
+
 #include <cav_msgs/ExternalObject.h>
 #include <cav_msgs/ExternalObjectList.h>
 #include "motion_computation_visualizer.h"
 #include <geometry_msgs/PoseArray.h>
+#include <cav_msgs/RoadwayObstacleList.h>
 
-ros::Publisher marker_pub;
+ros::Publisher pose_array_pub;
 
-void chatterCallback(const cav_msgs::ExternalObjectListPtr msg) {
+void chatterCallback(const cav_msgs::RoadwayObstacleListPtr msg) {
 
-  visualization_msgs::Marker line_list;
-  line_list.header.frame_id = "/map";
-  line_list.header.stamp = ros::Time::now();
+  visualization_msgs::MarkerArray line_list;
 
-  line_list.color.r = 1.0;
-  line_list.color.a = 1.0;
+  geometry_msgs::PoseArray posearray;
+  posearray.header.stamp = ros::Time::now(); 
+  posearray.header.frame_id = "map";
 
-  for (auto& obj : msg->objects)
+  for (auto& obj : msg->roadway_obstacles)
   {
     ROS_INFO("I heard:");
 
-    for (auto& p : obj.predictions) {
-        line_list.points.push_back(p.predicted_position.position);
+    for (auto& p : obj.object.predictions) {
+        posearray.poses.push_back(p.predicted_position);
+        // line_list.markers.push_back(p.predicted_position);
     }
-    // p.predicted_velocity.linear
-    // p.predicted_velocity.angular
 
-    marker_pub.publish(line_list);
+    pose_array_pub.publish(posearray);
   }
 }
 
@@ -37,8 +38,8 @@ int main(int argc, char **argv)
 
   ros::NodeHandle n;
 
-  ros::Subscriber sub = n.subscribe("/enviroment/roadway_object", 1000, chatterCallback);
-  marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 1);
+  ros::Subscriber sub = n.subscribe("/environment/roadway_objects", 1000, chatterCallback);
+  pose_array_pub = n.advertise<geometry_msgs::PoseArray>("motion_computation_visualize", 1);
 
   ros::spin();
 

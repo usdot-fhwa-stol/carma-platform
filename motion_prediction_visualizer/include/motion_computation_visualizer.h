@@ -27,6 +27,7 @@
 #include <cav_msgs/ExternalObject.h>
 #include <cav_msgs/ExternalObjectList.h>
 #include <visualization_msgs/Marker.h>
+#include <cav_msgs/RoadwayObstacleList.h>
 
 
 class MotionPredictionVisualizer
