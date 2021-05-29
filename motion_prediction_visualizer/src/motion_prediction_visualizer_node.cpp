@@ -10,7 +10,7 @@
 
 ros::Publisher pose_array_pub;
 
-void chatterCallback(const cav_msgs::RoadwayObstacleListPtr msg) {
+void chatterCallback(const cav_msgs::ExternalObjectListPtr msg) {
 
   visualization_msgs::MarkerArray line_list;
 
@@ -18,11 +18,11 @@ void chatterCallback(const cav_msgs::RoadwayObstacleListPtr msg) {
   posearray.header.stamp = ros::Time::now(); 
   posearray.header.frame_id = "map";
 
-  for (auto& obj : msg->roadway_obstacles)
+  for (auto& obj : msg->objects)
   {
     ROS_INFO("I heard:");
 
-    for (auto& p : obj.object.predictions) {
+    for (auto& p : obj.predictions) {
         posearray.poses.push_back(p.predicted_position);
         // line_list.markers.push_back(p.predicted_position);
     }
@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 
   ros::NodeHandle n;
 
-  ros::Subscriber sub = n.subscribe("/environment/roadway_objects", 1000, chatterCallback);
+  ros::Subscriber sub = n.subscribe("/environment/external_objects", 1000, chatterCallback);
   pose_array_pub = n.advertise<geometry_msgs::PoseArray>("motion_computation_visualize", 1);
 
   ros::spin();
