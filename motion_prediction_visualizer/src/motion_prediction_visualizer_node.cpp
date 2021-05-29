@@ -28,14 +28,12 @@ void chatterCallback(const cav_msgs::ExternalObjectListPtr msg) {
 
     marker_pub.publish(line_list);
   }
-
-  // ROS_INFO("I heard: [%s]", msg->data.c_str());
 }
 
 int main(int argc, char **argv)
 {
 
-  ros::init(argc, argv, "listener");
+  ros::init(argc, argv, "motion_computation_visualizer");
 
   ros::NodeHandle n;
 
