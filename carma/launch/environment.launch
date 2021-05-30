@@ -65,6 +65,12 @@
   <include file="$(find roadway_objects)/launch/roadway_objects.launch"/>
 </group>
 
+  <!-- CARMA Motion Computation Visualizer Node -->
+ <group>
+  <remap from= "external_objects" to= "external_object_predictions"/>
+  <include file="$(find motion_computation_visualizer)/launch/motion_computation_visualizer.launch"/>
+</group>
+
   <!-- calibration_publisher -->
   
   <group>

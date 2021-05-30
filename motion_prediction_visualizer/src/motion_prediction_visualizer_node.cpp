@@ -1,18 +1,14 @@
 #include "ros/ros.h"
-#include <visualization_msgs/Marker.h>
-#include <visualization_msgs/MarkerArray.h>
+#include <carma_utils/CARMAUtils.h>
 
 #include <cav_msgs/ExternalObject.h>
 #include <cav_msgs/ExternalObjectList.h>
-#include "motion_computation_visualizer.h"
 #include <geometry_msgs/PoseArray.h>
 #include <cav_msgs/RoadwayObstacleList.h>
 
 ros::Publisher pose_array_pub;
 
-void chatterCallback(const cav_msgs::ExternalObjectListPtr msg) {
-
-  visualization_msgs::MarkerArray line_list;
+void external_object_callback(const cav_msgs::ExternalObjectListPtr msg) {
 
   geometry_msgs::PoseArray posearray;
   posearray.header.stamp = ros::Time::now(); 
@@ -24,7 +20,6 @@ void chatterCallback(const cav_msgs::ExternalObjectListPtr msg) {
 
     for (auto& p : obj.predictions) {
         posearray.poses.push_back(p.predicted_position);
-        // line_list.markers.push_back(p.predicted_position);
     }
 
     pose_array_pub.publish(posearray);
@@ -36,12 +31,12 @@ int main(int argc, char **argv)
 
   ros::init(argc, argv, "motion_computation_visualizer");
 
-  ros::NodeHandle n;
+  ros::CARMANodeHandle nh_;
 
-  ros::Subscriber sub = n.subscribe("/environment/external_objects", 1000, chatterCallback);
-  pose_array_pub = n.advertise<geometry_msgs::PoseArray>("motion_computation_visualize", 1);
+  ros::Subscriber sub = nh_.subscribe("external_objects", 1000, external_object_callback);
+  pose_array_pub = nh_.advertise<geometry_msgs::PoseArray>("motion_computation_visualize", 1);
 
-  ros::spin();
+  nh_.spin();
 
   return 0;
 }
