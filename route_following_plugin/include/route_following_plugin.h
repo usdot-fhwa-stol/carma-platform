@@ -24,6 +24,7 @@
 #include <carma_wm/WMListener.h>
 #include <carma_wm/WorldModel.h>
 #include <cav_srvs/PlanManeuvers.h>
+#include <gtest/gtest_prod.h>
 
 /**
  * \brief Macro definition to enable easier access to fields shared across the maneuver types
@@ -136,24 +137,6 @@ namespace route_following_plugin
          */
         std::vector<cav_msgs::Maneuver> routeCb(const lanelet::routing::LaneletPath& route_shortest_path);
 
-        //Internal Variables used in unit tests
-        // Current vehicle forward speed
-        double current_speed_;
-
-        // Current vehicle pose in map
-        geometry_msgs::PoseStampedConstPtr pose_msg_;
-        lanelet::BasicPoint2d current_loc_;
-
-        // wm listener pointer and pointer to the actual wm object
-        std::shared_ptr<carma_wm::WMListener> wml_;
-        carma_wm::WorldModelConstPtr wm_;
-
-        //Queue of maneuver plans
-        std::vector<cav_msgs::Maneuver> latest_maneuver_plan_;
-
-        //Tactical plugin being used for planning lane change
-        std::string lane_change_plugin_ = "CooperativeLaneChangePlugin";
-
         private:
 
         // CARMA ROS node handles
@@ -178,10 +161,29 @@ namespace route_following_plugin
         // Plugin discovery message
         cav_msgs::Plugin plugin_discovery_msg_;
 
+        // Current vehicle forward speed
+        double current_speed_;
+
+        // Current vehicle pose in map
+        geometry_msgs::PoseStampedConstPtr pose_msg_;
+        lanelet::BasicPoint2d current_loc_;
+
+        // wm listener pointer and pointer to the actual wm object
+        std::shared_ptr<carma_wm::WMListener> wml_;
+        carma_wm::WorldModelConstPtr wm_;
+
+        //Queue of maneuver plans
+        std::vector<cav_msgs::Maneuver> latest_maneuver_plan_;
+
+        //Tactical plugin being used for planning lane change
+        std::string lane_change_plugin_ = "CooperativeLaneChangePlugin";
+
         std::string planning_strategic_plugin_ = "RouteFollowingPlugin";
         std::string lanefollow_planning_tactical_plugin_ = "InLaneCruisingPlugin"; 
         //lane change tactical plugin declared as a public member
 
+        //constant small value to compare doubles approaching zero value
+        const double epsilon_ = 0.00001;
 
         /**
          * \brief Initialize ROS publishers, subscribers, service servers and service clients
@@ -205,6 +207,14 @@ namespace route_following_plugin
          * \param maneuver The maneuver message to calculate duration for
          */
         ros::Duration maneuverDuration(cav_msgs::Maneuver &maneuver) const;
+
+        //Unit Tests
+        FRIEND_TEST(RouteFollowingPluginTest, testFindLaneletIndexFromPath);
+        FRIEND_TEST(RouteFollowingPluginTest, testComposeManeuverMessage);
+        FRIEND_TEST(RouteFollowingPluginTest, testIdentifyLaneChange);
+        FRIEND_TEST(RouteFollowingPlugin, TestAssociateSpeedLimit);
+        FRIEND_TEST(RouteFollowingPlugin, TestAssociateSpeedLimitusingosm);
+        FRIEND_TEST(RouteFollowingPlugin, TestHelperfunctions);
 
     };
 }

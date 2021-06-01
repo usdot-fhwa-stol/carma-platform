@@ -189,6 +189,9 @@ namespace route_following_plugin
         double maneuver_start_speed = GET_MANEUVER_PROPERTY(maneuver, start_speed);
         double manever_end_speed = GET_MANEUVER_PROPERTY(maneuver, end_speed);
         double cur_plus_target = maneuver_start_speed + manever_end_speed;
+        if(cur_plus_target < epsilon_){
+            throw std::invalid_argument("Maneuver start and ending speed is zero");
+        }
         ros::Duration duration;
         double maneuver_start_dist = GET_MANEUVER_PROPERTY(maneuver, start_dist);
         double maneuver_end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
