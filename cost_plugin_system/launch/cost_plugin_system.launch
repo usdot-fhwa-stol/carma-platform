@@ -14,7 +14,7 @@
   This file is used to launch the CARMA3 Cost Plugin System node
 -->
 <launch>
-    <node name="cost_plugin_system" pkg="cost_plugin_system" type="node" output="screen">
+    <node name="cost_plugin_system" pkg="cost_plugin_system" type="cost_plugin_system_node">
         <rosparam command="load" file="$(find cost_plugin_system)/config/parameters.yaml"/>
     </node>
 </launch>

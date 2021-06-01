@@ -211,6 +211,15 @@ namespace route {
                 return true;
             }
 
+            if (check_for_duplicate_lanelets_in_shortest_path(route.get()))
+            {
+                ROS_ERROR_STREAM("At least one duplicate Lanelet ID occurs in the shortest path. Routing cannot be completed.");
+                resp.errorStatus = cav_srvs::SetActiveRouteResponse::ROUTING_FAILURE;
+                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+                publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
+                return true;
+            }
+
             // Specify the end point of the route that is inside the last lanelet
             lanelet::Point3d end_point{lanelet::utils::getId(), destination_points_in_map_with_vehicle.back().x(), destination_points_in_map_with_vehicle.back().y(), 0};
 
@@ -231,6 +240,7 @@ namespace route {
             route_msg_.header.stamp = ros::Time::now();
             route_msg_.header.frame_id = "map";
             route_msg_.route_name = req.routeID;
+            route_msg_.map_version = world_model_->getMapVersion();
             // since routing is done correctly, transit to route following state
             this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_STARTED);
             publish_route_event(cav_msgs::RouteEvent::ROUTE_STARTED);
@@ -242,6 +252,31 @@ namespace route {
         resp.errorStatus = cav_srvs::SetActiveRouteResponse::ALREADY_FOLLOWING_ROUTE;
 
         return true;
+    }
+
+    bool RouteGeneratorWorker::check_for_duplicate_lanelets_in_shortest_path(const lanelet::routing::Route& route) const
+    {
+        // Create a vector for the lanelet IDs in the shortest path
+        std::vector<lanelet::Id> shortest_path_lanelet_ids;
+
+        // Iterate through the shortest path to populate shortest_path_lanelet_ids with lanelet IDs
+        for(const auto& ll : route.shortestPath())
+        {
+            shortest_path_lanelet_ids.push_back(ll.id());
+        }
+
+        // Verify that there are no duplicate lanelet IDs in the shortest path
+        std::sort(shortest_path_lanelet_ids.begin(), shortest_path_lanelet_ids.end());
+        auto it = std::adjacent_find(shortest_path_lanelet_ids.begin(), shortest_path_lanelet_ids.end());
+        
+        if (it != shortest_path_lanelet_ids.end())
+        {
+            // Route's shortest path contains duplicate lanelet IDs
+            return true;
+        }
+
+        // Route's shortest path does not duplicate lanelet IDs
+        return false;
     }
 
     std::vector<tf2::Vector3> RouteGeneratorWorker::load_route_destinations_in_ecef(const std::string& route_id) const
@@ -366,12 +401,12 @@ namespace route {
     cav_msgs::Route RouteGeneratorWorker::compose_route_msg(const lanelet::Optional<lanelet::routing::Route>& route)
     {
         cav_msgs::Route msg;
-        // iterate thought the shortest path to populat shortest_path_lanelet_ids
+        // iterate through the shortest path to populate shortest_path_lanelet_ids
         for(const auto& ll : route.get().shortestPath())
         {
             msg.shortest_path_lanelet_ids.push_back(ll.id());
         }
-        // iterate thought the all lanelet in the route to populat route_path_lanelet_ids
+        // iterate through all lanelet in the route to populate route_path_lanelet_ids
         for(const auto& ll : route.get().laneletSubmap()->laneletLayer)
         {
             msg.route_path_lanelet_ids.push_back(ll.id());
@@ -532,18 +567,26 @@ namespace route {
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
                 return true;
             }
+            else if(check_for_duplicate_lanelets_in_shortest_path(route.get()))
+            {
+                ROS_ERROR_STREAM("At least one duplicate Lanelet ID occurs in the shortest path. Routing cannot be completed.");
+                this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_GEN_FAILED);
+                publish_route_event(cav_msgs::RouteEvent::ROUTE_GEN_FAILED);
+                return true;
+            }
             else
             {
                 this->rs_worker_.on_route_event(RouteStateWorker::RouteEvent::ROUTE_STARTED);
                 publish_route_event(cav_msgs::RouteEvent::ROUTE_STARTED);  
-            }                    
+            }    
             route_msg_=compose_route_msg(route);
             route_msg_.is_rerouted = true;
+            route_msg_.map_version = world_model_->getMapVersion();
             route_marker_msg_=compose_route_marker_msg(route);
             new_route_msg_generated_=true;
             new_route_marker_generated_=true;
         }
-    
+        
         // publish new route and set new route flag back to false
         if(new_route_msg_generated_ && new_route_marker_generated_)
         {

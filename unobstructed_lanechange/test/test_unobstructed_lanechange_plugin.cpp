@@ -44,7 +44,7 @@
 namespace unobstructed_lanechange
 {
     TEST(UnobstructedLaneChangePlugin,Testusingosm){
-        // File to process. Path is relative to route package
+        // File to process. 
         std::string file = "../resource/map/town01_vector_map_lane_change.osm";
         lanelet::Id start_id = 111;
         lanelet::Id lane_change_start_id = 111;
@@ -145,14 +145,19 @@ namespace unobstructed_lanechange
         req.vehicle_state.longitudinal_vel = maneuver.lane_change_maneuver.start_speed;
 
         std::vector<cav_msgs::Maneuver> maneuvers_msg;  
-        //Define lane change maneuver
+        
+        // Create a second maneuver of a different type to test the final element in resp.related_maneuvers
+        cav_msgs::Maneuver maneuver2;
+        maneuver2.type = cav_msgs::Maneuver::LANE_FOLLOWING;
 
         maneuvers_msg.push_back(maneuver);
+        maneuvers_msg.push_back(maneuver2);
         req.maneuver_plan.maneuvers = maneuvers_msg;
         bool isTrajectory = worker.plan_trajectory_cb(req,resp);
         
         EXPECT_TRUE(isTrajectory);
         EXPECT_TRUE(resp.trajectory_plan.trajectory_points.size() > 2);
+        EXPECT_EQ(0, resp.related_maneuvers.back());
 
         /*Test compose trajectort and helper function*/
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory;
@@ -180,7 +185,7 @@ namespace unobstructed_lanechange
         double lookahead = worker.get_adaptive_lookahead(5);   
         std::vector<double> lookahead_speeds = worker.get_lookahead_speed(points_split,constrained_speeds, lookahead);
 
-        trajectory = worker.compose_trajectory_from_centerline(points_and_target_speeds, vehicle_state);
+        trajectory = worker.compose_trajectory_from_centerline(points_and_target_speeds, vehicle_state, ros::Time::now(), lane_change_start_id, 15.0);
         //Valid Trajectory has at least 2 points
         EXPECT_TRUE(trajectory.size() > 2);
 

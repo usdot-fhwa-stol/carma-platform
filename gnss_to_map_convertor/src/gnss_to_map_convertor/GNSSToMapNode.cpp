@@ -81,7 +81,6 @@ namespace gnss_to_map_convertor {
     fix_sub_ = cnh_.subscribe("gnss_fix_fused", 2, &GNSSToMapNode::fixCb, this);
 
     // Spin
-    cnh_.setSpinRate(20);
     cnh_.spin();
     return 0;
   }

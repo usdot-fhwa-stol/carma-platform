@@ -26,6 +26,8 @@
 #include <cav_msgs/MobilityPath.h>
 #include <cav_msgs/BSM.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 namespace mobilitypath_publisher
 {
@@ -51,7 +53,7 @@ namespace mobilitypath_publisher
         // node handles
         std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
-        double spin_rate_;
+        double path_pub_rate_;
 
         bool spinCallback();
 
@@ -63,6 +65,8 @@ namespace mobilitypath_publisher
         ros::Subscriber pose_sub_;
         ros::Subscriber accel_sub_;
         ros::Subscriber bsm_sub_;
+
+        ros::Timer path_pub_timer_;
 
         // ROS publishers
         ros::Publisher mob_path_pub_;
@@ -93,8 +97,8 @@ namespace mobilitypath_publisher
         cav_msgs::Trajectory TrajectoryPlantoTrajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points, const geometry_msgs::TransformStamped& tf) const;
 
     
-        // Convert Trajectory Point to ECEF Transform
-        cav_msgs::LocationECEF TrajectoryPointtoECEF(const cav_msgs::TrajectoryPlanPoint& traj_point, const geometry_msgs::TransformStamped& tf) const;
+        // Convert Trajectory Point to ECEF Transform (accepts meters and outputs in cm)
+        cav_msgs::LocationECEF TrajectoryPointtoECEF(const cav_msgs::TrajectoryPlanPoint& traj_point, const tf2::Transform& transform) const;
 
         // sender's static ID which is its license plate
         std::string sender_id = "USDOT-49096";

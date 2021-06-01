@@ -20,6 +20,7 @@
 #include <ros/ros.h>
 #include <cav_msgs/MobilityOperation.h>
 #include <cav_msgs/TrafficControlMessageV01.h>
+#include <cav_msgs/TrafficControlMessage.h>
 #include <functional>
 #include <iostream>
 #include <string>
@@ -45,7 +46,7 @@ class TrafficIncidentParserWorker
 
  public:
 
-  using PublishTrafficControlCallback = std::function<void(const cav_msgs::TrafficControlMessageV01&)>;
+  using PublishTrafficControlCallback = std::function<void(const cav_msgs::TrafficControlMessage&)>;
 
   /*!
    * \brief Constructor
@@ -82,7 +83,7 @@ class TrafficIncidentParserWorker
     \brief composeTrafficControlMesssage algorithm for extracting the closed lanelet from internally saved mobility message (or geofence) params and assign it to trafic contol message. 
     Closed lanelets are represent by vector of points, where each point represents the geometric middle point of a closed lanelet
   */
-  cav_msgs::TrafficControlMessageV01 composeTrafficControlMesssage();
+  std::vector<cav_msgs::TrafficControlMessageV01> composeTrafficControlMesssages();
 
     /*! \fngetIncidentOriginPoint()
     \brief getIncidentOriginPoint converts internally saved incident origin point from ECEF to local map frame
@@ -95,6 +96,8 @@ class TrafficIncidentParserWorker
   double up_track;
   double min_gap;
   double speed_advisory;
+  std::string event_reason;
+  std::string event_type;
 
   std::string previous_strategy_params="";
 

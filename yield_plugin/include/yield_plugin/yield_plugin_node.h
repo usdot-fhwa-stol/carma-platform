@@ -68,6 +68,8 @@ public:
     pnh.param<int>("acceptable_passed_timesteps", config.acceptable_passed_timesteps, config.acceptable_passed_timesteps);
     pnh.param<double>("intervehicle_collision_distance", config.intervehicle_collision_distance, config.intervehicle_collision_distance);
     pnh.param<double>("safety_collision_time_gap", config.safety_collision_time_gap, config.safety_collision_time_gap);
+    pnh.param<bool>("enable_adjustable_gap", config.enable_adjustable_gap, config.enable_adjustable_gap);
+    pnh.param<int>("acceptable_urgency", config.acceptable_urgency, config.acceptable_urgency);
     ROS_INFO_STREAM("YieldPlugin Params" << config);
 
     YieldPlugin worker(wm_, config, [&discovery_pub](auto msg) { discovery_pub.publish(msg); }, [&mob_resp_pub](auto msg) { mob_resp_pub.publish(msg); });
@@ -76,13 +78,16 @@ public:
     
     worker.set_lanechange_status_publisher(lc_status_pub);
 
-    ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/Yieldlugin/plan_trajectory",
+    ros::ServiceServer trajectory_srv_ = nh.advertiseService("plugins/YieldPlugin/plan_trajectory",
                                             &YieldPlugin::plan_trajectory_cb, &worker);
     ros::Subscriber mob_request_sub = nh.subscribe("incoming_mobility_request", 5, &YieldPlugin::mobilityrequest_cb,  &worker);
     ros::Subscriber bsm_sub = nh.subscribe("bsm_outbound", 1, &YieldPlugin::bsm_cb,  &worker);
     
 
-    ros::CARMANodeHandle::setSpinCallback(std::bind(&YieldPlugin::onSpin, &worker));
+    ros::Timer discovery_pub_timer_ = nh.createTimer(
+            ros::Duration(ros::Rate(10.0)),
+            [&worker](const auto&) { worker.onSpin(); });
+
     ros::CARMANodeHandle::spin();
   }
 };

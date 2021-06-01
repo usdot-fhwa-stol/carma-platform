@@ -27,11 +27,13 @@
   
   <!-- Remap topics from external packages -->
   <remap from="bsm" to="$(optenv CARMA_MSG_NS)/outgoing_bsm"/>
+  <remap from="bsm_outbound" to="$(optenv CARMA_MSG_NS)/bsm_outbound"/>
   <remap from="incoming_map" to="$(optenv CARMA_MSG_NS)/incoming_map"/>
   <remap from="incoming_spat" to="$(optenv CARMA_MSG_NS)/incoming_spat"/>
   <remap from="outgoing_mobility_operation" to="$(optenv CARMA_MSG_NS)/outgoing_mobility_operation"/>
   <remap from="outgoing_mobility_request" to="$(optenv CARMA_MSG_NS)/outgoing_mobility_request"/>
   <remap from="outgoing_mobility_response" to="$(optenv CARMA_MSG_NS)/outgoing_mobility_response"/>
+  <remap from="incoming_mobility_response" to="$(optenv CARMA_MSG_NS)/incoming_mobility_response"/>
 
   <remap from="heading" to="$(optenv CARMA_INTR_NS)/gnss/heading_raw"/>
   <remap from="nav_sat_fix" to="$(optenv CARMA_INTR_NS)/gnss/fix_raw"/>
@@ -157,16 +159,48 @@
     <include file="$(find unobstructed_lanechange)/launch/unobstructed_lanechange.launch" />
   </group>
 
+  <!-- Cooperative lanechange -->
+  <group>
+    <remap from="incoming_mobility_response" to="$(optenv CARMA_MSG_NS)/incoming_mobility_response"/>
+    <include file = "$(find cooperative_lanechange)/launch/cooperative_lanechange.launch"/>
+  </group>
+
   <!-- Route Node -->
   <include file="$(find route)/launch/route.launch">
-  <!-- Mobility Path Publisher -->
-  <include file="$(find mobilitypath_publisher)/launch/mobilitypath_publisher.launch" />
     <arg name="route_file_folder" value="$(arg route_file_folder)"/>
   </include>
+
+  <!-- Mobility Path Publisher -->
+  <group>
+    <remap from="mobility_path_msg" to="$(optenv CARMA_MSG_NS)/mobility_path_msg"/>
+    <include file="$(find mobilitypath_publisher)/launch/mobilitypath_publisher.launch" />
+  </group>
+
+  <!-- MobilityPath Visualizer -->
+  <group>
+    <remap from="mobility_path_msg" to="$(optenv CARMA_MSG_NS)/mobility_path_msg"/>
+    <remap from="incoming_mobility_path" to="$(optenv CARMA_MSG_NS)/incoming_mobility_path"/>
+    <include file="$(find mobilitypath_visualizer)/launch/mobilitypath_visualizer.launch"/>
+  </group>
 
   <!-- Trajectory Plan Speed Visualizer -->
   <group>
     <include file="$(find trajectory_visualizer)/launch/trajectory_visualizer.launch" />
   </group>
 
+  <!-- Yield Plugin -->
+  <group>
+    <remap from="incoming_mobility_request" to="$(optenv CARMA_MSG_NS)/incoming_mobility_request"/>
+    <include file = "$(find yield_plugin)/launch/yield_plugin.launch"/>
+  </group>
+
+  <!-- Port Drayage Plugin -->
+  <group>
+    <remap from="outgoing_mobility_operation" to="$(optenv CARMA_MSG_NS)/outgoing_mobility_operation"/>
+    <remap from="incoming_mobility_operation" to="$(optenv CARMA_MSG_NS)/incoming_mobility_operation"/>
+    <include file="$(find port_drayage_plugin)/launch/port_drayage_plugin.launch" />
+  </group>
+
+
 </launch>
+

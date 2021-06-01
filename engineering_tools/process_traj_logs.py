@@ -184,7 +184,7 @@ for content in core_data["content"]:
     c = float(split[1])
     core_data["time_steps"][-1][DataSource.FINAL_YAWS].append(c)
 
-  if (data_source == DataSource.SPEED_LIMIT_CONSTRAINED_SPEEDS or data_source == DataSource.FINAL_YAWS) and "final_actual_speeds:" in content:
+  if (data_source == DataSource.SPEED_LIMIT_CONSTRAINED_SPEEDS or data_source == DataSource.FINAL_YAWS) and "constrained_speed_limits:" in content:
     data_source = DataSource.SPEED_LIMIT_CONSTRAINED_SPEEDS
     split = content.split(':')
     c = float(split[1])

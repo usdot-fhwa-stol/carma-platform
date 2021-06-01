@@ -21,21 +21,24 @@ namespace mobilitypath_publisher
 {
 // @SONAR_STOP@
     MobilityPathPublication::MobilityPathPublication():
-                            spin_rate_(10.0) {}
+                            path_pub_rate_(10.0) {}
 
     void MobilityPathPublication::initialize()
     {
         nh_.reset(new ros::CARMANodeHandle());
         pnh_.reset(new ros::CARMANodeHandle("~"));
-        pnh_->param<double>("spin_rate", spin_rate_, 10.0);
+        pnh_->param<double>("path_pub_rate", path_pub_rate_, 10.0);
         pnh_->getParam("vehicle_id", sender_id);
         mob_path_pub_ = nh_->advertise<cav_msgs::MobilityPath>("mobility_path_msg", 5);
         traj_sub_ = nh_->subscribe("plan_trajectory", 5, &MobilityPathPublication::trajectory_cb, this);
         pose_sub_ = nh_->subscribe("current_pose", 5, &MobilityPathPublication::currentpose_cb, this);
         bsm_sub_ = nh_->subscribe("bsm_outbound", 1, &MobilityPathPublication::bsm_cb, this);
         tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
-        ros::CARMANodeHandle::setSpinCallback(std::bind(&MobilityPathPublication::spinCallback, this));
-        ros::CARMANodeHandle::setSpinRate(spin_rate_);
+
+        path_pub_timer_ = pnh_->createTimer(
+            ros::Duration(ros::Rate(path_pub_rate_)),
+            [this](const auto&) { this->spinCallback(); });
+
     }
 
     void MobilityPathPublication::run()
@@ -65,7 +68,6 @@ namespace mobilitypath_publisher
         {
             ROS_WARN("%s", ex.what());
         }
-
     }
 
     void MobilityPathPublication::currentpose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
@@ -106,39 +108,46 @@ namespace mobilitypath_publisher
 
     cav_msgs::Trajectory MobilityPathPublication::TrajectoryPlantoTrajectory(const std::vector<cav_msgs::TrajectoryPlanPoint>& traj_points, const geometry_msgs::TransformStamped& tf) const{
         cav_msgs::Trajectory traj;
-        cav_msgs::LocationECEF ecef_location = TrajectoryPointtoECEF(traj_points[0], tf);
+
+        tf2::Stamped<tf2::Transform> transform;
+        tf2::fromMsg(tf, transform);
+
+        cav_msgs::LocationECEF ecef_location = TrajectoryPointtoECEF(traj_points[0], transform); //m to cm to fit the msg standard
 
         if (traj_points.size()<2){
             ROS_WARN("Received Trajectory Plan is too small");
             traj.offsets = {};
         }
         else{
+            cav_msgs::LocationECEF prev_point = ecef_location;
             for (size_t i=1; i<traj_points.size(); i++){
                 
-                    cav_msgs::LocationOffsetECEF offset;
-                    cav_msgs::LocationECEF new_point = TrajectoryPointtoECEF(traj_points[i], tf);
-                    offset.offset_x = new_point.ecef_x - ecef_location.ecef_x;
-                    offset.offset_y = new_point.ecef_y - ecef_location.ecef_y;
-                    offset.offset_z = new_point.ecef_z - ecef_location.ecef_z;
-                    traj.offsets.push_back(offset);
-                
+                cav_msgs::LocationOffsetECEF offset;
+                cav_msgs::LocationECEF new_point = TrajectoryPointtoECEF(traj_points[i], transform); //m to cm to fit the msg standard
+                offset.offset_x = (int16_t)(new_point.ecef_x - prev_point.ecef_x);  
+                offset.offset_y = (int16_t)(new_point.ecef_y - prev_point.ecef_y);
+                offset.offset_z = (int16_t)(new_point.ecef_z - prev_point.ecef_z);
+                prev_point = new_point;
+                traj.offsets.push_back(offset);
             }
         }
-        
-        
-        traj.location = ecef_location;
+
+        traj.location = ecef_location; 
+
         return traj;
     }
 
 
 
-    cav_msgs::LocationECEF MobilityPathPublication::TrajectoryPointtoECEF(const cav_msgs::TrajectoryPlanPoint& traj_point, const geometry_msgs::TransformStamped& tf) const{
+    cav_msgs::LocationECEF MobilityPathPublication::TrajectoryPointtoECEF(const cav_msgs::TrajectoryPlanPoint& traj_point, const tf2::Transform& transform) const{
         cav_msgs::LocationECEF ecef_point;    
+        
+        auto traj_point_vec = tf2::Vector3(traj_point.x, traj_point.y, 0.0);
+        tf2::Vector3 ecef_point_vec = transform * traj_point_vec;
+        ecef_point.ecef_x = (int32_t)(ecef_point_vec.x() * 100.0); // m to cm
+        ecef_point.ecef_y = (int32_t)(ecef_point_vec.y() * 100.0);
+        ecef_point.ecef_z = (int32_t)(ecef_point_vec.z() * 100.0); 
 
-        ecef_point.ecef_x = traj_point.x * tf.transform.translation.x;
-        ecef_point.ecef_y = traj_point.y * tf.transform.translation.y;
-        ecef_point.ecef_z = 0.0 * tf.transform.translation.z;
-       
         return ecef_point;
     } 
     

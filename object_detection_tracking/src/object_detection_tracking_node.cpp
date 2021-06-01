@@ -64,7 +64,6 @@ namespace object{
   void ObjectDetectionTrackingNode::run()
   {
     initialize();
-    nh_.setSpinRate(20);
     nh_.spin();
   }
 
