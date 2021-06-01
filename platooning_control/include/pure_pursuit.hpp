@@ -34,6 +34,9 @@ namespace platoon_control
 
 		PlatooningControlPluginConfig config_;
 
+		double getAlpha(cav_msgs::TrajectoryPlanPoint tp, geometry_msgs::Pose current_pose);
+		double lowPassfilter(double angle);
+
     private:
 
 		// calculate the lookahead distance from next trajectory point
@@ -42,17 +45,10 @@ namespace platoon_control
 		// calculate yaw angle of the vehicle
 		double getYaw(const cav_msgs::TrajectoryPlanPoint& tp) const;
 
-		// calculate alpha angle
-		double getAlpha(double lookahead, std::vector<double> v1, std::vector<double> v2) const;
-
 		// calculate steering direction
 		int getSteeringDirection(std::vector<double> v1, std::vector<double> v2) const;
 
-		// calculate command velocity from trajecoty point
-		double getVelocity(const cav_msgs::TrajectoryPlanPoint& tp, double delta_pos) const;
-
-		double getAlphaSin(cav_msgs::TrajectoryPlanPoint tp, geometry_msgs::Pose current_pose);
-		double lowPassfilter(double angle);
+		
 
 
 		double prev_steering = 0.0;
@@ -61,6 +57,7 @@ namespace platoon_control
 		
 		// previous trajectory point
 		cav_msgs::TrajectoryPlanPoint tp0;
+
 
 		// helper function (if needed)
 		// inline double deg2rad(double deg) const

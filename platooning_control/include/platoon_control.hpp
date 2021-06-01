@@ -40,18 +40,25 @@ namespace platoon_control
     {
         public:
             
-					// Default constructor for PlatoonControlPlugin class
-					PlatoonControlPlugin();
+			// Default constructor for PlatoonControlPlugin class
+			PlatoonControlPlugin();
 
-					void initialize();
+			void initialize();
 
-					// general starting point of this node
-					void run();
-					// Compose twist message by calculating speed and steering commands.
-					geometry_msgs::TwistStamped composeTwist(const cav_msgs::TrajectoryPlanPoint& point0, const cav_msgs::TrajectoryPlanPoint& point_end);
+			// general starting point of this node
+			void run();
+
+			// Compose twist message by calculating speed and steering commands.
+			geometry_msgs::TwistStamped composeTwist(const cav_msgs::TrajectoryPlanPoint& point0, const cav_msgs::TrajectoryPlanPoint& point_end);
+
+			// find the point correspoding to the lookahead distance
+			cav_msgs::TrajectoryPlanPoint getLookaheadTrajectoryPoint(cav_msgs::TrajectoryPlan trajectory_plan);
 			
-					// local copy of pose
+			// local copy of pose
         	geometry_msgs::PoseStamped pose_msg_;
+
+			// current speed (in m/s)
+			double current_speed_ = 0.0;
 
         
         private:
@@ -60,11 +67,16 @@ namespace platoon_control
         	// CARMA ROS node handles
         	std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
+			// platoon control worker object
         	PlatoonControlWorker pcw_;
 
-			bool initial_pose_set_ = false;
+			// platooning config object
+			PlatooningControlPluginConfig config_;
 
-			double current_speed_ = 0.0;
+
+			// Variables
+			bool initial_pose_set_ = false;
+			PlatoonLeaderInfo platoon_leader_;
 
 			// callback function for pose
 			void pose_cb(const geometry_msgs::PoseStampedConstPtr& msg);
@@ -80,6 +92,8 @@ namespace platoon_control
 
         	void publishTwist(const geometry_msgs::TwistStamped& twist) const;
 
+			
+
         	// Plugin discovery message
         	cav_msgs::Plugin plugin_discovery_msg_;
 
@@ -92,13 +106,10 @@ namespace platoon_control
         	// ROS Publisher
         	ros::Publisher twist_pub_;
 			ros::Publisher ctrl_pub_;
-        	
         	ros::Publisher plugin_discovery_pub_;
-
 			ros::Timer discovery_pub_timer_;
-
-			// TODO: add communication to receive leader
-			PlatoonLeaderInfo platoon_leader_;
+			
+			
 
 
 

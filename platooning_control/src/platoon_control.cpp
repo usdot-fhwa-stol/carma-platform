@@ -48,8 +48,11 @@ namespace platoon_control
         pnh_->param<double>("Kdd", config.Kdd, config.Kdd);
         pnh_->param<int>("CMD_TIMESTEP", config.CMD_TIMESTEP, config.CMD_TIMESTEP);
         pnh_->param<double>("wheelbase", config.wheelbase, config.wheelbase);
+        pnh_->param<double>("lowpass_gain", config.lowpass_gain, config.lowpass_gain);
+        pnh_->param<double>("lookahead_ratio", config.lookahead_ratio, config.lookahead_ratio);
 
         pcw_.updateConfigParams(config);
+        config_ = config;
 
 	  	// Trajectory Plan Subscriber
 		trajectory_plan_sub = nh_->subscribe<cav_msgs::TrajectoryPlan>("PlatooningControlPlugin/plan_trajectory", 1, &PlatoonControlPlugin::trajectoryPlan_cb, this);
@@ -66,9 +69,6 @@ namespace platoon_control
 
 
         pose_sub_ = nh_->subscribe("current_pose", 1, &PlatoonControlPlugin::pose_cb, this);
-
-        // pcw_.setInitialPose(pose_msg_);
-		
 
 		plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
         plugin_discovery_msg_.name = "PlatooningControlPlugin";
@@ -100,10 +100,10 @@ namespace platoon_control
             initial_pose_set_ = true;
         }
 
-        cav_msgs::TrajectoryPlanPoint t1 = tp->trajectory_points[1];
-        cav_msgs::TrajectoryPlanPoint t2 = tp->trajectory_points[10];
+        cav_msgs::TrajectoryPlanPoint first_trajectory_point = tp->trajectory_points[1];
+        cav_msgs::TrajectoryPlanPoint lookahead_point = tp->trajectory_points[10];
 
-    	geometry_msgs::TwistStamped twist_msg = composeTwist(t1, t2);
+    	geometry_msgs::TwistStamped twist_msg = composeTwist(first_trajectory_point, lookahead_point);
 
     	publishTwist(twist_msg);
 
@@ -114,6 +114,43 @@ namespace platoon_control
         ROS_DEBUG_STREAM("command steering " << ctrl_msg.cmd.steering_angle);
         ctrl_pub_.publish(ctrl_msg);
 
+    }
+
+    cav_msgs::TrajectoryPlanPoint PlatoonControlPlugin::getLookaheadTrajectoryPoint(cav_msgs::TrajectoryPlan trajectory_plan)
+    {   
+        cav_msgs::TrajectoryPlanPoint lookahead_point;
+
+        double lookahead_dist = config_.lookahead_ratio * current_speed_;
+            
+        double traveled_dist = 0.0;
+        bool found_point = false;
+
+        for (size_t i=1; i<trajectory_plan.trajectory_points.size(); i++)
+        {
+            double dx = trajectory_plan.trajectory_points[i].x - trajectory_plan.trajectory_points[i-1].x;
+            double dy = trajectory_plan.trajectory_points[i].y - trajectory_plan.trajectory_points[i-1].y;
+
+            double dist = std::sqrt(dx*dx + dy*dy);            
+
+            traveled_dist += dist;
+
+            if ((lookahead_dist - traveled_dist) < 1.0)
+            {
+                lookahead_point =  trajectory_plan.trajectory_points[i];
+                found_point = true;
+                ROS_DEBUG_STREAM("found lookahead point at index: " << i);
+                break;
+            }
+        }
+
+        if (!found_point)
+        {
+            lookahead_point = trajectory_plan.trajectory_points.back();
+            ROS_DEBUG_STREAM("lookahead point set as the last trajectory point");
+        }
+
+        
+        return lookahead_point;
     }
 
     void PlatoonControlPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
@@ -147,13 +184,12 @@ namespace platoon_control
     }
 
 // @SONAR_START@
-    geometry_msgs::TwistStamped PlatoonControlPlugin::composeTwist(const cav_msgs::TrajectoryPlanPoint& point0, const cav_msgs::TrajectoryPlanPoint& point_end){
+    geometry_msgs::TwistStamped PlatoonControlPlugin::composeTwist(const cav_msgs::TrajectoryPlanPoint& first_trajectory_point, const cav_msgs::TrajectoryPlanPoint& lookahead_point){
     	geometry_msgs::TwistStamped current_twist;
         pcw_.setCurrentSpeed(current_speed_);
         pcw_.setLeader(platoon_leader_);
-        // pcw_.setCurrentPose(pose_msg_);
-    	pcw_.generateSpeed(point0);
-    	pcw_.generateSteer(point_end);
+    	pcw_.generateSpeed(first_trajectory_point);
+    	pcw_.generateSteer(lookahead_point);
     	current_twist.twist.linear.x = pcw_.speedCmd_;
         ROS_DEBUG_STREAM("desired speed:  " << pcw_.speedCmd_);
     	current_twist.twist.angular.z = pcw_.steerCmd_;

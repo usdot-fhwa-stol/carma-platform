@@ -38,6 +38,8 @@ struct PlatooningControlPluginConfig
   double integratorMin = -100;
   double Kdd = 4.5;                             //coeficient for smooth steering
   double wheelbase = 2.7;
+  double lowpass_gain = 1.0;
+  double lookahead_ratio = 2.0;
   
   
   friend std::ostream& operator<<(std::ostream& output, const PlatooningControlPluginConfig& c)
@@ -58,6 +60,8 @@ struct PlatooningControlPluginConfig
            << "integratorMin: " << c.integratorMin << std::endl
            << "Kdd: " << c.Kdd << std::endl
            << "wheelbase: " << c.wheelbase << std::endl
+           << "lowpass_gain: " << c.lowpass_gain << std::endl
+           << "lookahead_ratio: " << c.lookahead_ratio << std::endl
            << "}" << std::endl;
     return output;
   }

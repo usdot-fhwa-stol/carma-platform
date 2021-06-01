@@ -14,29 +14,10 @@ namespace platoon_control
 		return dist;
 	}
 
-	double PurePursuit::getVelocity(const cav_msgs::TrajectoryPlanPoint& tp, double delta_pos) const {
-		// ros::Duration delta_t = tp.target_time - ros::Time::now();
-		// double delta_t_second = fabs(delta_t.toSec());
-
-		// if(delta_t_second != 0) {
-		// 	return delta_pos / delta_t_second;
-		// }
-		return 0.0;
-	}
 
 	double PurePursuit::getYaw(const cav_msgs::TrajectoryPlanPoint& tp) const{
 		double yaw = atan2(tp.y - current_pose_.position.y, tp.x - current_pose_.position.x);
 		return yaw;
-	}
-
-	double PurePursuit::getAlpha(double lookahead, std::vector<double> v1, std::vector<double> v2) const {
-		
-		double inner_prod = v1[0]*v2[0] + v1[1]*v2[1];
-		double value = inner_prod/lookahead;
-		if (value > 1) value = 1;
-		else if (value < -1) value = -1;
-		double alpha = acos(value);
-        return alpha;
 	}
 
 	int PurePursuit::getSteeringDirection(std::vector<double> v1, std::vector<double> v2) const{
@@ -48,56 +29,32 @@ namespace platoon_control
 	}
 
 	double PurePursuit::calculateSteer(const cav_msgs::TrajectoryPlanPoint& tp){
-		// skip the first trajectory point
-		// if (tp0.x == 0 && tp0.y == 0){
-		// 	tp0 = tp;
-		// 	return 0.0;
-		// }
+
 		double lookahead = getLookaheadDist(tp);
-		double v = getVelocity(tp, lookahead);
-		double yaw = 0;//getYaw(tp);
-		ROS_DEBUG_STREAM("calculated yaw: " << yaw);
-		std::vector<double> v1 = {tp.x - current_pose_.position.x , tp.y - current_pose_.position.y};
-		std::vector<double> v2 = {cos(yaw), sin(yaw)};
-		double alpha = getYaw(tp) - yaw;//getAlpha(lookahead, v1, v2);
-		double alphaSin = getAlphaSin(tp, current_pose_);
-		ROS_DEBUG_STREAM("alphaSin: " << alphaSin);
-		int direction = getSteeringDirection(v1, v2);
-		double steering = atan((2 * config_.wheelbase * alphaSin)/(lookahead));// change (lookahead) to (Kdd_*v) if steering is bad
+		ROS_DEBUG_STREAM("calculated lookahead: " << lookahead);
+		double alpha = getAlpha(tp, current_pose_);
+		ROS_DEBUG_STREAM("calculated alpha: " << alpha);
+		double steering = atan((2 * config_.wheelbase * sin(alpha))/(lookahead));
 		ROS_DEBUG_STREAM("calculated steering: " << steering);
-		double steering2 = lowPassfilter(steering);
-		ROS_DEBUG_STREAM("filtered steering: " << steering2);
-		tp0 = tp;
-		if (std::isnan(steering2)) return prev_steering;
-		prev_steering = steering2;
-		return steering2;
+		double filtered_steering = lowPassfilter(steering);
+		ROS_DEBUG_STREAM("filtered steering: " << filtered_steering);
+		if (std::isnan(filtered_steering)) return prev_steering;
+		prev_steering = filtered_steering;
+		return filtered_steering;
 	}
 
-	double PurePursuit::getAlphaSin(cav_msgs::TrajectoryPlanPoint tp, geometry_msgs::Pose current_pose)
+	double PurePursuit::getAlpha(cav_msgs::TrajectoryPlanPoint tp, geometry_msgs::Pose current_pose)
 	{
-		geometry_msgs::Point point_msg;
-		point_msg.x = tp.x;
-		point_msg.y = tp.y;
-		point_msg.z = 0;
-
-		tf::Transform inverse;
-		tf::poseMsgToTF(current_pose, inverse);
-
-		tf::Point p;
-		tf::pointMsgToTF(point_msg, p);
-		tf::Point tf_p = inverse * p;
-		geometry_msgs::Point tf_point_msg;
-		tf::pointTFToMsg(tf_p, tf_point_msg);
-		ROS_DEBUG_STREAM("tf_point_msg y: " << tf_point_msg.y);
-		ROS_DEBUG_STREAM("tf_point_msg x: " << tf_point_msg.x);
-		double s = tf_point_msg.y/(std::sqrt(tf_point_msg.y*tf_point_msg.y + tf_point_msg.x*tf_point_msg.x));
-		return s;
+		double dot = tp.x*current_pose.position.x + tp.y*current_pose.position.y;
+    	double det = tp.x*tp.y*current_pose.position.y - tp.y*tp.y*current_pose.position.x;
+    	double alpha = atan2(det, dot);
+		return alpha;
 	}
 
 	double PurePursuit::lowPassfilter(double angle)
 	{	
-		double gain = 2.0;
-		angle = gain * angle + (1 - gain) * prev_steering;
+		// angle = config_.lowpass_gain * angle + (1 - config_.lowpass_gain) * prev_steering;
+		angle = prev_steering + config_.lowpass_gain*(angle - prev_steering);
     	return angle;
 	}
 }

@@ -30,7 +30,6 @@ namespace platoon_control
     void PlatoonControlWorker::setCurrentPose(const geometry_msgs::PoseStamped msg)
 	{
 		current_pose_ = msg.pose;
-        // ROS_DEBUG_STREAM("pose x: " << current_pose_.position.x << "pose y: " << current_pose_.position.y);
 	}
 
     void PlatoonControlWorker::generateSpeed(const cav_msgs::TrajectoryPlanPoint& point)
