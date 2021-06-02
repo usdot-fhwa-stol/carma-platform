@@ -23,7 +23,6 @@ namespace platoon_strategic
 {
     PlatoonStrategicPlugin::PlatoonStrategicPlugin()
     {
-        // pm_ = PlatoonManager();
     }
 
     PlatoonStrategicPlugin::PlatoonStrategicPlugin(carma_wm::WorldModelConstPtr wm, PlatoonPluginConfig config,
@@ -283,7 +282,7 @@ namespace platoon_strategic
             bool isTimeForHeartBeat = tsStart - lastHeartBeatTime >= infoMessageInterval_;
             if(isTimeForHeartBeat) {
                     cav_msgs::MobilityOperation infoOperation;
-                    composeMobilityOperationLeader(infoOperation, "INFO");
+                    composeMobilityOperationLeader(infoOperation,OPERATION_INFO_TYPE);
                     mobility_operation_publisher_(infoOperation);
                     lastHeartBeatTime = ros::Time::now().toSec()*1000.0;
                     ROS_DEBUG_STREAM("Published heart beat platoon INFO mobility operatrion message");
@@ -308,7 +307,7 @@ namespace platoon_strategic
             bool hasFollower = (pm_.getTotalPlatooningSize() > 1);
             if(hasFollower) {
                 cav_msgs::MobilityOperation statusOperation;
-                composeMobilityOperationLeader(statusOperation, "STATUS");
+                composeMobilityOperationLeader(statusOperation, OPERATION_STATUS_TYPE);
                 // mob_op_pub_.publish(statusOperation);
                 mobility_operation_publisher_(statusOperation);
                 ROS_DEBUG_STREAM("Published platoon STATUS operation message");
