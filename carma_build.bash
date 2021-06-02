@@ -99,5 +99,6 @@ fi
 ###
 echo "Building CARMA"
 cd ${carma_workspace}
+
 colcon build --cmake-args ${carma_build_args}
 echo echo "CARMA built successfuly. Binaries sourced from $(realpath ./install/setup.bash)"

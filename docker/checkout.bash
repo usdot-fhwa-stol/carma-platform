@@ -45,6 +45,6 @@ if [[ "$BRANCH" = "develop" ]]; then
 else
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-msgs.git --branch develop
       git clone --depth=1 https://github.com/usdot-fhwa-stol/novatel_gps_driver.git --branch develop
-      git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-utils.git --branch develop
+      git clone --depth=1 https://github.com/mjeronimo/carma-utils.git --branch feature/ros-noetic-port
       git clone --depth=1 https://github.com/usdot-fhwa-stol/carma-messenger.git --branch develop
 fi
