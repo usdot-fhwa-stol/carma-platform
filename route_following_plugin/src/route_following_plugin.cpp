@@ -43,22 +43,12 @@ namespace route_following_plugin
         plugin_discovery_msg_.capability = "strategic_plan/plan_maneuvers";
 
         pose_sub_ = nh_->subscribe("current_pose", 1, &RouteFollowingPlugin::pose_cb, this);
-<<<<<<< HEAD
-        twist_sub_ = nh_->subscribe("current_velocity", 1, &RouteFollowingPlugin::twist_cd, this);
-        
-        pnh_->param<double>("minimal_maneuver_duration", mvr_duration_, 16.0);
-        pnh2_->param<double>("config_speed_limit",config_limit);
-        pnh_->param<double>("buffer_time_lanechange",buffer_lanechange_time_);
-        nh_->param<double>("route_end_jerk", jerk_, 100.0);
-        nh_->param<std::string>("lane_change_plugin", lane_change_plugin_);
-=======
         twist_sub_ = nh_->subscribe("current_velocity", 1, &RouteFollowingPlugin::twist_cb, this);
 
         // read ros parameters
         pnh_->param<double>("minimal_plan_duration", min_plan_duration_, 16.0);
         pnh_->param<std::string>("lane_change_plugin", lane_change_plugin_);
 
->>>>>>> feature/route_following_update
         wml_.reset(new carma_wm::WMListener());
         // set world model point form wm listener
         wm_ = wml_->getWorldModel();
@@ -138,39 +128,10 @@ namespace route_following_plugin
         //add lane follow as last maneuver if there is a lanelet unplanned for in path
         if (shortest_path_index < route_shortest_path.size() - 1)
         {
-<<<<<<< HEAD
-            ROS_ERROR_STREAM("Current position is not on the shortest path! Returning an empty maneuver");
-            return true;
-        }
-        double current_progress = wm_->routeTrackPos(current_loc).downtrack;
-        double speed_progress = current_speed_;
-        ros::Time time_progress = ros::Time::now();
-        double target_speed=findSpeedLimit(current_lanelet);   //get Speed Limit
-
-        double total_maneuver_length = current_progress + mvr_duration_ * target_speed;
-        double route_length=  wm_->getRouteEndTrackPos().downtrack; 
-        total_maneuver_length = std::min(total_maneuver_length, route_length);
-
-        //Update current status based on prior plan
-        if(req.prior_plan.maneuvers.size()!=0){
-            time_progress = req.prior_plan.planning_completion_time;
-            if (time_progress.toSec() == 0.0)
-            {
-                ROS_DEBUG_STREAM("given time_progress (planning_completion_time) was zero!, defaulting to current time");
-                time_progress =  ros::Time::now();
-            }
-
-            int end_lanelet =0;
-            updateCurrentStatus(req.prior_plan.maneuvers.back(),speed_progress,current_progress,end_lanelet);
-            ROS_DEBUG_STREAM("was >> last_lanelet_index:" << last_lanelet_index);
-            last_lanelet_index = findLaneletIndexFromPath(end_lanelet,shortest_path);
-            ROS_DEBUG_STREAM("after updateCurrentStatus >> last_lanelet_index:" << last_lanelet_index);
-=======
             double target_speed_in_lanelet = findSpeedLimit(route_shortest_path.back());
             start_dist = wm_->routeTrackPos(route_shortest_path.back().centerline2d().front()).downtrack;
             end_dist = wm_->routeTrackPos(route_shortest_path.back().centerline2d().back()).downtrack;
             maneuvers.push_back(composeLaneFollowingManeuverMessage(start_dist, end_dist, start_speed, target_speed_in_lanelet, route_shortest_path.back().id()));
->>>>>>> feature/route_following_update
         }
         ////------------------
         ROS_DEBUG_STREAM("Maneuver plan along route successfully generated");
@@ -185,91 +146,11 @@ namespace route_following_plugin
             return false;
         }
 
-<<<<<<< HEAD
-            //if not already on last lanelet in path, check relation with next lanelet- follow lane change procedure if req, else lane follow
-            
-            // de facto lanechanging checker
-            if ((last_lanelet_index + 1) < shortest_path.size() && identifyLaneChange(following_lanelets, shortest_path[last_lanelet_index + 1].id()))
-            {
-                ROS_DEBUG_STREAM("Lane change detected for index:" << last_lanelet_index);
-                is_lanechanging_lanelet_[last_lanelet_index]= true;
-                is_lanechanging_lanelet_[last_lanelet_index + 1] = true; //next lanelet is also technically lanechange
-                is_first_lanechange_lanelet_[last_lanelet_index] = true;
-            }
-
-            if(is_lanechanging_lanelet_[last_lanelet_index])
-            {
-                //calculate required distance for lane change
-                ROS_DEBUG_STREAM("Found lanechange at last_lanelet_index:" << last_lanelet_index);
-                double longl_travel_dist = (target_speed*(LANE_CHANGE_TIME_MAX + buffer_lanechange_time_));
-                double lane_change_start_dist; 
-                double starting_lanelet_id;
-                double ending_lanelet_id;
-                int last_lanelet_index_temp; // use this index to handle 2 lc llts end_dist where they have to be same
-                lane_change_start_dist = current_progress;
-
-                if (is_first_lanechange_lanelet_[last_lanelet_index]) //handle lanelet mismatch if either of lc llts
-                {
-                    starting_lanelet_id = shortest_path[last_lanelet_index].id();
-                    ending_lanelet_id = shortest_path[last_lanelet_index+1].id();
-                    last_lanelet_index_temp = last_lanelet_index + 1;
-                    ROS_DEBUG_STREAM("This is first lanechange lanelet, so starting_lanelet_id:" << starting_lanelet_id <<
-                        ", ending_lanelet_id" << ending_lanelet_id << ", last_lanelet_index_temp" << last_lanelet_index_temp);
-
-                }
-                else  //if not duplicate, yet not first lanehcange lanelet (because later, we are not composing for duplicate lc lanelet anyway)
-                {
-                    starting_lanelet_id = shortest_path[last_lanelet_index -1].id();
-                    ending_lanelet_id = shortest_path[last_lanelet_index].id();
-                    last_lanelet_index_temp = last_lanelet_index;
-                    ROS_DEBUG_STREAM("This is second lanechange lanelet, so starting_lanelet_id:" << starting_lanelet_id <<
-                        ", ending_lanelet_id" << ending_lanelet_id << ", last_lanelet_index_temp" << last_lanelet_index_temp);
-                }
-
-                /////////                            
-                //TO DO- This if else condition might not be needed
-                if(wm_->routeTrackPos(shortest_path[last_lanelet_index_temp].centerline2d().back()).downtrack >= route_length){
-                    //lane_change_start_dist = route_length - longl_travel_dist;
-                    lanechange_end_dist_map_[last_lanelet_index] = route_length;
-
-                }
-                else{
-                    //lane_change_start_dist = wm_->routeTrackPos(shortest_path[last_lanelet_index + 1].centerline2d().back()).downtrack - longl_travel_dist;
-                    lanechange_end_dist_map_[last_lanelet_index]  = wm_->routeTrackPos(shortest_path[last_lanelet_index_temp].centerline2d().back()).downtrack;
-                }
-                ////////////////               
-                dist_diff = lanechange_end_dist_map_[last_lanelet_index] - current_progress; //this could be zero if it is the second lanelet for lanechange, which is consistent for the rest of the logic
-                ROS_DEBUG_STREAM("mish: dist_diff:" << dist_diff <<" at last_lanelet_index" << last_lanelet_index);
-                ROS_DEBUG_STREAM("lanechange_end_dist_map_[last_lanelet_index]" << lanechange_end_dist_map_[last_lanelet_index] <<
-                                    "current_progress:" << current_progress);
-                
-                if (std::fabs(lane_change_start_dist - lanechange_end_dist_map_[last_lanelet_index]) > 0.1) // check if this is duplicate lanechange maneuver (occurs for 2nd lanelet of the lanechange)
-                {
-                    resp.new_plan.maneuvers.push_back(
-                composeLaneChangeManeuverMessage(lane_change_start_dist, lanechange_end_dist_map_[last_lanelet_index], speed_progress, target_speed, 
-                                    starting_lanelet_id, ending_lanelet_id,
-                                    time_progress));
-                }
-            }
-            else
-            {
-                resp.new_plan.maneuvers.push_back(
-                composeManeuverMessage(current_progress, end_dist,  
-                                    speed_progress, target_speed, 
-                                    shortest_path[last_lanelet_index].id(), time_progress));
-                
-            }
-            current_progress += dist_diff;
-            //time_progress = resp.new_plan.maneuvers.back().lane_following_maneuver.end_time;
-            speed_progress = target_speed;
-            
-=======
         double current_downtrack = wm_->routeTrackPos(current_loc_).downtrack;
 
         //Return the set of maneuvers which intersect with min_plan_duration
         int i = 0;
         double planned_time = 0.0;
->>>>>>> feature/route_following_update
 
         while (planned_time < min_plan_duration_ && i < latest_maneuver_plan_.size())
         {
@@ -279,22 +160,9 @@ namespace route_following_plugin
                 ++i;
                 continue;
             }
-<<<<<<< HEAD
-
-            ++last_lanelet_index;
-
-        }
-        
-        ROS_DEBUG_STREAM("Done Loop: approaching_route_end: " << approaching_route_end);
-        if(approaching_route_end){
-            ros::Time end_time = ros::Time::now();
-            if (resp.new_plan.maneuvers.size() > 0) {
-                end_time = resp.new_plan.maneuvers.back().lane_following_maneuver.end_time;
-=======
             if(planned_time == 0.0){
                 //update start distance of first maneuver
                 setManeuverStartDist(latest_maneuver_plan_[i], current_downtrack);
->>>>>>> feature/route_following_update
             }
             planned_time += getManeuverDuration(latest_maneuver_plan_[i], 0.0001).toSec();
 
@@ -466,17 +334,9 @@ namespace route_following_plugin
         maneuver_msg.lane_change_maneuver.parameters.neogition_type = cav_msgs::ManeuverParameters::NO_NEGOTIATION;
         maneuver_msg.lane_change_maneuver.parameters.presence_vector = cav_msgs::ManeuverParameters::HAS_TACTICAL_PLUGIN;
         maneuver_msg.lane_change_maneuver.parameters.planning_tactical_plugin = lane_change_plugin_;
-<<<<<<< HEAD
-        ROS_DEBUG_STREAM("Plugin used for lane change:"<<lane_change_plugin_);
-        maneuver_msg.lane_change_maneuver.parameters.planning_strategic_plugin = "RouteFollowingPlugin";
-        maneuver_msg.lane_change_maneuver.start_dist = current_dist;
-        maneuver_msg.lane_change_maneuver.start_speed = current_speed;
-        maneuver_msg.lane_change_maneuver.start_time = current_time;
-=======
         maneuver_msg.lane_change_maneuver.parameters.planning_strategic_plugin = planning_strategic_plugin_;
         maneuver_msg.lane_change_maneuver.start_dist = start_dist;
         maneuver_msg.lane_change_maneuver.start_speed = start_speed;
->>>>>>> feature/route_following_update
         maneuver_msg.lane_change_maneuver.end_dist = end_dist;
         maneuver_msg.lane_change_maneuver.end_speed = target_speed;
         maneuver_msg.lane_change_maneuver.starting_lane_id = std::to_string(starting_lane_id);
@@ -501,30 +361,7 @@ namespace route_following_plugin
         return true;
     }
 
-<<<<<<< HEAD
-    void RouteFollowingPlugin::updateCurrentStatus(cav_msgs::Maneuver maneuver, double& speed, double& current_progress, int& lane_id){
-        if(maneuver.type == cav_msgs::Maneuver::STOP_AND_WAIT){
-            speed =0.0;
-            current_progress = maneuver.stop_and_wait_maneuver.end_dist;
-            lane_id = stoi(maneuver.stop_and_wait_maneuver.ending_lane_id);
-        }
-        else if(maneuver.type == cav_msgs::Maneuver::LANE_FOLLOWING){
-            speed =  maneuver.lane_following_maneuver.end_speed;
-            current_progress =  maneuver.lane_following_maneuver.end_dist;
-            lane_id =  stoi(maneuver.lane_following_maneuver.lane_id);
-        }
-        else{
-            speed = GET_MANEUVER_PROPERTY(maneuver,end_speed);
-            current_progress =GET_MANEUVER_PROPERTY(maneuver,end_dist);
-            lane_id = stoi(GET_MANEUVER_PROPERTY(maneuver,ending_lane_id));
-        }
-        ROS_INFO_STREAM("updateCurrentStatus: speed:"<<speed<<", current_progress:"<<current_progress << ", lane_id:"<<lane_id);
-    }
-
-    double RouteFollowingPlugin::findSpeedLimit(const lanelet::ConstLanelet& llt)
-=======
     double RouteFollowingPlugin::findSpeedLimit(const lanelet::ConstLanelet &llt)
->>>>>>> feature/route_following_update
     {
         lanelet::Optional<carma_wm::TrafficRulesConstPtr> traffic_rules = wm_->getTrafficRules();
         if (traffic_rules)

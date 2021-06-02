@@ -159,19 +159,8 @@ namespace route_following_plugin
         ros::ServiceServer plan_maneuver_srv_;  
 
 
-<<<<<<< HEAD
-        bool is_lanechanging_ = false;
-        std::unordered_map<int, double> lanechange_end_dist_map_; // saves last_lanelet_lanechange_index vs lanechange end dist
-        std::unordered_map<int,bool> is_first_lanechange_lanelet_; // returns true if firstlanechange
-        std::unordered_map<int, bool> is_lanechanging_lanelet_; // return true if lanehcangin idx
-        //lane change constant
-        static constexpr double LATERAL_ACCELERATION_LIMIT_IN_MS=2.00;
-        static const int MAX_LANE_WIDTH=3.70;
-        static constexpr double LANE_CHANGE_TIME_MAX=sqrt(2*MAX_LANE_WIDTH/LATERAL_ACCELERATION_LIMIT_IN_MS);
-=======
         // Minimal duration of maneuver, loaded from config file
         double min_plan_duration_;
->>>>>>> feature/route_following_update
 
 
         // Plugin discovery message
