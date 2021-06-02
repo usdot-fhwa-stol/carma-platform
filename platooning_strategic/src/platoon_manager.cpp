@@ -415,7 +415,7 @@ namespace platoon_strategic
         // }
         // auto current_lanelet = current_lanelets[0];
         // auto shortest_path = wm_->getRoute()->shortestPath();
-        double current_progress = wm_->routeTrackPos(current_loc).downtrack;
+        double current_progress;// = wm_->routeTrackPos(current_loc).downtrack;
         // downtrack_progress_ = downtrack_progress_ + current_progress;
         return current_progress;
     }

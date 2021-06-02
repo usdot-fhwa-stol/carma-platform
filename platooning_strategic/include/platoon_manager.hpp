@@ -24,7 +24,8 @@ namespace platoon_strategic
         long planStartTime;
         std::string planId;
         std::string peerId;
-        PlatoonPlan():valid(""), planStartTime(0), planId(""), peerId("") {} ;
+        PlatoonPlan(){} ;
+        // PlatoonPlan():valid(false), planStartTime(0), planId(""), peerId("") {} ;
         PlatoonPlan(bool valid, long planStartTime, std::string planId, std::string peerId): 
             valid(valid), planStartTime(planStartTime), planId(planId), peerId(peerId) {}  
     };
@@ -64,7 +65,8 @@ namespace platoon_strategic
             double vehiclePosition;
             // The local time stamp when the host vehicle update any informations of this member
             long   timestamp;
-            PlatoonMember(): staticId(""), bsmId(""), commandSpeed(0.0), vehicleSpeed(0.0), timestamp(0) {} 
+            PlatoonMember(){};
+            // PlatoonMember(): staticId(""), bsmId(""), commandSpeed(0.0), vehicleSpeed(0.0), timestamp(0) {} 
             PlatoonMember(std::string staticId, std::string bsmId, double commandSpeed, double vehicleSpeed, double vehiclePosition, long timestamp): staticId(staticId),
             bsmId(bsmId), commandSpeed(commandSpeed), vehicleSpeed(vehicleSpeed), timestamp(timestamp) {}
         };
@@ -75,16 +77,18 @@ namespace platoon_strategic
     {
     public:
 
+        PlatoonManager();
+
         std::vector<PlatoonMember> platoon;
 
-        PlatoonManager();
+        
 
         // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;
 
         // wm listener pointer and pointer to the actual wm object
-        std::shared_ptr<carma_wm::WMListener> wml_;
-        carma_wm::WorldModelConstPtr wm_;
+        // std::shared_ptr<carma_wm::WMListener> wml_;
+        // carma_wm::WorldModelConstPtr wm_;
 
 
 
@@ -153,7 +157,7 @@ namespace platoon_strategic
         double current_speed_;
         double command_speed_;
 
-        PlatoonState current_platoon_state;
+        PlatoonState current_platoon_state = PlatoonState::LEADER;
             std::string applicantID = "";
             PlatoonPlan current_plan;
 
@@ -167,14 +171,19 @@ namespace platoon_strategic
         int maxPlatoonSize = 10;
         double vehicleLength = 5.0;
         int infoMessageInterval;
-        const std::string targetPlatoonId;
-        const std::string OPERATION_INFO_TYPE = "INFO";
-        const std::string OPERATION_STATUS_TYPE = "STATUS";
-        const std::string JOIN_AT_REAR_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";
-        const std::string  MOBILITY_STRATEGY = "Carma/Platooning";
+        // const std::string targetPlatoonId;
+        // const std::string OPERATION_INFO_TYPE = "INFO";
+        // const std::string OPERATION_STATUS_TYPE = "STATUS";
+        // const std::string JOIN_AT_REAR_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";
+        // const std::string  MOBILITY_STRATEGY = "Carma/Platooning";
+        std::string targetPlatoonId;
+        std::string OPERATION_INFO_TYPE = "INFO";
+        std::string OPERATION_STATUS_TYPE = "STATUS";
+        std::string JOIN_AT_REAR_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";
+        std::string  MOBILITY_STRATEGY = "Carma/Platooning";
     
 
-    std::shared_ptr<ros::NodeHandle> nh_;
+
 
 
     double minGap_ = 22.0;
