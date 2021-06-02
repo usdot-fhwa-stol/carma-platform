@@ -58,7 +58,6 @@ WORKDIR /home/carma/carma_ws/src
 RUN git clone https://github.com/astuff/astuff_sensor_msgs -b melodic && ls 
 WORKDIR ~
 
-RUN sudo apt-get install -y ros-noetic-radar-msgs ros-noetic-perception
 RUN ~/carma_ws/src/carma-platform/docker/install.sh
 
 # /////////////////////////////////////////////////////////////////////////////
