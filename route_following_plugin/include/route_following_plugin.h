@@ -60,6 +60,13 @@ namespace route_following_plugin
         void run();
 
         /**
+         * \brief Initialize ROS publishers, subscribers, service servers and service clients
+         */
+        void initialize();
+
+        private:
+
+        /**
          * \brief Given a LaneletPath object, find index of the lanelet which has target_id as its lanelet ID
          * \param target_id The laenlet ID this function is looking for
          * \param path A list of lanelet with different lanelet IDs
@@ -137,8 +144,6 @@ namespace route_following_plugin
          */
         std::vector<cav_msgs::Maneuver> routeCb(const lanelet::routing::LaneletPath& route_shortest_path);
 
-        private:
-
         // CARMA ROS node handles
         std::shared_ptr<ros::CARMANodeHandle> nh_, pnh_;
 
@@ -180,15 +185,6 @@ namespace route_following_plugin
 
         std::string planning_strategic_plugin_ = "RouteFollowingPlugin";
         std::string lanefollow_planning_tactical_plugin_ = "InLaneCruisingPlugin"; 
-        //lane change tactical plugin declared as a public member
-
-        //constant small value to compare doubles approaching zero value
-        const double epsilon_ = 0.00001;
-
-        /**
-         * \brief Initialize ROS publishers, subscribers, service servers and service clients
-         */
-        void initialize();
 
         /**
          * \brief Callback for the pose subscriber, which will store latest pose locally
@@ -205,8 +201,10 @@ namespace route_following_plugin
         /**
          * \brief returns duration as ros::Duration required to complete maneuver given its start dist, end dist, start speed and end speed
          * \param maneuver The maneuver message to calculate duration for
+         * \param epsilon The acceptable min start_speed + target_speed in the maneuver message, under which the maneuver is treated as faulty.
+         * Throws exception if sum of start and target speed of maneuver is below limit defined by parameter epsilon
          */
-        ros::Duration maneuverDuration(cav_msgs::Maneuver &maneuver) const;
+        ros::Duration getManeuverDuration(cav_msgs::Maneuver &maneuver, double epsilon) const;
 
         //Unit Tests
         FRIEND_TEST(RouteFollowingPluginTest, testFindLaneletIndexFromPath);

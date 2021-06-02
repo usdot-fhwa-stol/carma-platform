@@ -164,7 +164,7 @@ namespace route_following_plugin
                 //update start distance of first maneuver
                 setManeuverStartDist(latest_maneuver_plan_[i], current_downtrack);
             }
-            planned_time += maneuverDuration(latest_maneuver_plan_[i]).toSec();
+            planned_time += getManeuverDuration(latest_maneuver_plan_[i], 0.0001).toSec();
 
             resp.new_plan.maneuvers.push_back(latest_maneuver_plan_[i]);
             ++i;
@@ -184,12 +184,12 @@ namespace route_following_plugin
         return true;
     }
 
-    ros::Duration RouteFollowingPlugin::maneuverDuration(cav_msgs::Maneuver &maneuver) const
+    ros::Duration RouteFollowingPlugin::getManeuverDuration(cav_msgs::Maneuver &maneuver, double epsilon) const
     {
         double maneuver_start_speed = GET_MANEUVER_PROPERTY(maneuver, start_speed);
         double manever_end_speed = GET_MANEUVER_PROPERTY(maneuver, end_speed);
         double cur_plus_target = maneuver_start_speed + manever_end_speed;
-        if(cur_plus_target < epsilon_){
+        if(cur_plus_target < epsilon){
             throw std::invalid_argument("Maneuver start and ending speed is zero");
         }
         ros::Duration duration;
@@ -207,7 +207,7 @@ namespace route_following_plugin
 
         for (auto &maneuver : maneuvers)
         {
-            time_progress += maneuverDuration(maneuver);
+            time_progress += getManeuverDuration(maneuver, 0.001);
             switch (maneuver.type)
             {
             case cav_msgs::Maneuver::LANE_FOLLOWING:
