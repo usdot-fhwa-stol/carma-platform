@@ -85,11 +85,15 @@ namespace route_following_plugin
         std::vector<cav_msgs::Maneuver> maneuvers;
         //This function calculates the maneuver plan every time the route is set
         ROS_DEBUG_STREAM("New route created");
+        ROS_ERROR_STREAM("New route created");
+
         //Go through entire route - identify lane changes and fill in the spaces with lane following
         auto nearest_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc_, 10); //Return 10 nearest lanelets
         if (nearest_lanelets.empty())
         {
             ROS_WARN_STREAM("Cannot find any lanelet in map!");
+            ROS_ERROR_STREAM("Cannot find any lanelet in map!");
+
             return maneuvers;
         }
 
@@ -104,23 +108,42 @@ namespace route_following_plugin
         //Find lane changes in path - up to the second to last lanelet in path (till lane change is possible)
         for (shortest_path_index = 0; shortest_path_index < route_shortest_path.size() - 1; ++shortest_path_index)
         {
+            ROS_DEBUG_STREAM("current shortest_path_index:" << shortest_path_index);
+            ROS_ERROR_STREAM("current shortest_path_index:" << shortest_path_index);
+
             auto following_lanelets = wm_->getRoute()->followingRelations(route_shortest_path[shortest_path_index]);
+            ROS_DEBUG_STREAM("following_lanelets.size():" << following_lanelets.size());
+            ROS_ERROR_STREAM("following_lanelets.size():" << following_lanelets.size());
+
             double target_speed_in_lanelet = findSpeedLimit(route_shortest_path[shortest_path_index]);
 
             //update start distance and start speed from previous maneuver if it exists
             start_dist = (maneuvers.empty()) ? wm_->routeTrackPos(route_shortest_path[shortest_path_index].centerline2d().front()).downtrack : GET_MANEUVER_PROPERTY(maneuvers.back(), end_dist);
             start_speed = (maneuvers.empty()) ? 0.0 : GET_MANEUVER_PROPERTY(maneuvers.back(), end_speed);
+            ROS_DEBUG_STREAM("start_dist:" << start_dist << ", start_speed:" << start_speed);
+            ROS_ERROR_STREAM("start_dist:" << start_dist << ", start_speed:" << start_speed);
 
+                
             end_dist = wm_->routeTrackPos(route_shortest_path[shortest_path_index].centerline2d().back()).downtrack;
+            ROS_DEBUG_STREAM("end_dist:" << end_dist);
+            ROS_ERROR_STREAM("end_dist:" << end_dist);
+
             end_dist = std::min(end_dist, route_length);
+            ROS_DEBUG_STREAM("min end_dist:" << end_dist);
+            ROS_ERROR_STREAM("min end_dist:" << end_dist);
 
             if (isLaneChangeNeeded(following_lanelets, route_shortest_path[shortest_path_index + 1].id()))
             {
+                ROS_DEBUG_STREAM("LaneCHangeNeeded");
+                ROS_ERROR_STREAM("LaneCHangeNeeded");
+    
                 maneuvers.push_back(composeLaneChangeManeuverMessage(start_dist, end_dist, start_speed, target_speed_in_lanelet, route_shortest_path[shortest_path_index].id(), route_shortest_path[shortest_path_index + 1].id()));
                 ++shortest_path_index; //Since lane change covers 2 lanelets - skip planning for the next lanelet
             }
             else
             {
+                ROS_DEBUG_STREAM("Lanechange NOT Needed ");
+                ROS_ERROR_STREAM("Lanechange NOT Needed :");
                 maneuvers.push_back(composeLaneFollowingManeuverMessage(start_dist, end_dist, start_speed, target_speed_in_lanelet, route_shortest_path[shortest_path_index].id()));
             }
         }
@@ -154,9 +177,14 @@ namespace route_following_plugin
 
         while (planned_time < min_plan_duration_ && i < latest_maneuver_plan_.size())
         {
+            ROS_DEBUG_STREAM("Checking maneuver id " << i);
+            ROS_ERROR_STREAM("Checking maneuver id " << i);
             //Ignore plans for distance already covered
             if (GET_MANEUVER_PROPERTY(latest_maneuver_plan_[i], end_dist) < current_downtrack)
             {
+                ROS_DEBUG_STREAM("Skipping maneuver id " << i);
+                ROS_ERROR_STREAM("Skipping maneuver id " << i);
+
                 ++i;
                 continue;
             }
@@ -173,6 +201,8 @@ namespace route_following_plugin
         if (resp.new_plan.maneuvers.size() == 0)
         {
             ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
+            ROS_ERROR_STREAM("Cannot plan maneuver because no route is found");
+
         }
         //update plan
 
@@ -195,6 +225,10 @@ namespace route_following_plugin
         ros::Duration duration;
         double maneuver_start_dist = GET_MANEUVER_PROPERTY(maneuver, start_dist);
         double maneuver_end_dist = GET_MANEUVER_PROPERTY(maneuver, end_dist);
+
+        ROS_DEBUG_STREAM("maneuver_end_dist: " << maneuver_end_dist << ", maneuver_start_dist: " << maneuver_start_dist << ", cur_plus_target: " << cur_plus_target);
+        ROS_ERROR_STREAM("maneuver_end_dist: " << maneuver_end_dist << ", maneuver_start_dist: " << maneuver_start_dist << ", cur_plus_target: " << cur_plus_target);
+
         duration = ros::Duration((maneuver_end_dist - maneuver_start_dist) / (0.5 * cur_plus_target));
 
         return duration;
@@ -304,6 +338,9 @@ namespace route_following_plugin
                 return i;
             }
         }
+        ROS_DEBUG_STREAM("Returning -1 because could not find lanelet id" << target_id);
+        ROS_ERROR_STREAM("Returning -1 because could not find lanelet id" << target_id);
+
         return -1;
     }
 
@@ -322,7 +359,8 @@ namespace route_following_plugin
         maneuver_msg.lane_following_maneuver.lane_id = std::to_string(lane_id);
         //Start time and end time for maneuver are assigned in updateTimeProgress
 
-        ROS_INFO_STREAM("Creating lane follow start dist: " << start_dist << " end dist: " << end_dist);
+        ROS_DEBUG_STREAM("Creating lane follow start dist: " << start_dist << " end dist: " << end_dist << "lane_id" << maneuver_msg.lane_following_maneuver.lane_id);
+        ROS_ERROR_STREAM("Creating lane follow start dist: " << start_dist << " end dist: " << end_dist << "lane_id" << maneuver_msg.lane_following_maneuver.lane_id);
         
         return maneuver_msg;
     }
@@ -343,7 +381,8 @@ namespace route_following_plugin
         maneuver_msg.lane_change_maneuver.ending_lane_id = std::to_string(ending_lane_id);
         //Start time and end time for maneuver are assigned in updateTimeProgress
 
-        ROS_INFO_STREAM("Creating lane change start dist: " << start_dist << " end dist: " << end_dist << " Starting llt: " << starting_lane_id << " Ending llt: " << ending_lane_id);
+        ROS_DEBUG_STREAM("Creating lane change start dist: " << start_dist << " end dist: " << end_dist << " Starting llt: " << starting_lane_id << " Ending llt: " << ending_lane_id);
+        ROS_ERROR_STREAM("Creating lane change start dist: " << start_dist << " end dist: " << end_dist << " Starting llt: " << starting_lane_id << " Ending llt: " << ending_lane_id);
 
         return maneuver_msg;
     }
