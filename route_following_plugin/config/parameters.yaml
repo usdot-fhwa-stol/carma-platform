@@ -1,5 +1,5 @@
 # The minimum duration of a maneuver plan, in seconds
-minimal_maneuver_duration: 15
+minimal_plan_duration: 15
 
 #Double : The jerk used to bring vehicle to a halt at end of route
 #Unit : m/s3
