@@ -268,11 +268,10 @@ namespace platoon_strategic
                 // Task 2
                 cav_msgs::MobilityOperation status;
                 status = composeMobilityOperationLeaderWaiting();
-                // mob_op_pub_.publish(status);
                 mobility_operation_publisher_(status);
                 long tsEnd = ros::Time::now().toSec()*1000;
                 int sleepDuration = std::max(int(statusMessageInterval_ - (tsEnd - tsStart)), 0);
-                // ros::Duration(sleepDuration/1000).sleep();
+                ros::Duration(sleepDuration/1000).sleep();
     }
 
     void PlatoonStrategicPlugin::run_leader(){
@@ -280,6 +279,7 @@ namespace platoon_strategic
         long tsStart = ros::Time::now().toSec()*1000;
             // Task 1
             bool isTimeForHeartBeat = tsStart - lastHeartBeatTime >= infoMessageInterval_;
+            ROS_DEBUG_STREAM("time since last heart beat: " << tsStart - lastHeartBeatTime);
             if(isTimeForHeartBeat) {
                     cav_msgs::MobilityOperation infoOperation;
                     infoOperation = composeMobilityOperationLeader(OPERATION_INFO_TYPE);
@@ -288,9 +288,9 @@ namespace platoon_strategic
                     ROS_DEBUG_STREAM("Published heart beat platoon INFO mobility operatrion message");
                 }
             // Task 2
-            if (isTimeForHeartBeat) {
-                    // updateLightBar();
-            }
+            // if (isTimeForHeartBeat) {
+            //     updateLightBar();
+            // }
             // Task 3
             {
                 // std::lock_guard<std::mutex> lock(plan_mutex_);
@@ -644,17 +644,59 @@ namespace platoon_strategic
     cav_msgs::PlatooningInfo PlatoonStrategicPlugin::compose_platoon_info_msg()
     {
         cav_msgs::PlatooningInfo status_msg;
-        status_msg.state = cav_msgs::PlatooningInfo::LEADING;
-        status_msg.platoon_id = "platoon";
-        status_msg.size = pm_.getTotalPlatooningSize();
-        status_msg.size_limit = 2;
-        PlatoonMember leader = pm_.getLeader();
-        status_msg.leader_id = leader.staticId;
-        status_msg.leader_downtrack_distance = leader.vehiclePosition;
-        status_msg.leader_cmd_speed = leader.commandSpeed;
-        status_msg.host_platoon_position = 1.0;
-        status_msg.host_cmd_speed = 1.0;
-        status_msg.desired_gap = 1.0;
+        
+        if (pm_.current_platoon_state == PlatoonState::STANDBY)
+        {
+            status_msg.state = cav_msgs::PlatooningInfo::DISABLED;
+        }
+        else if (pm_.current_platoon_state == PlatoonState::LEADER)
+        {
+            status_msg.state = pm_.getTotalPlatooningSize() == 1 ? cav_msgs::PlatooningInfo::SEARCHING : cav_msgs::PlatooningInfo::LEADING;
+        }
+        else if (pm_.current_platoon_state == LEADERWAITING)
+        {
+            status_msg.state = cav_msgs::PlatooningInfo::CONNECTING_TO_NEW_FOLLOWER;
+        }
+        else if (pm_.current_platoon_state == CANDIDATEFOLLOWER)
+        {
+            status_msg.state = cav_msgs::PlatooningInfo::CONNECTING_TO_NEW_LEADER;
+        }
+        else if (pm_.current_platoon_state == FOLLOWER)
+        {
+            status_msg.state = cav_msgs::PlatooningInfo::FOLLOWING;
+        }
+
+        if (pm_.current_platoon_state != PlatoonState::STANDBY)
+        {
+            status_msg.platoon_id = pm_.current_plan.planId;
+            status_msg.size = pm_.getTotalPlatooningSize();
+            status_msg.size_limit = config_.maxPlatoonSize;
+
+            PlatoonMember platoon_leader = pm_.getLeader();
+            status_msg.leader_id = platoon_leader.staticId;
+            status_msg.leader_downtrack_distance = platoon_leader.vehiclePosition;
+            status_msg.leader_cmd_speed = platoon_leader.commandSpeed;
+            status_msg.host_platoon_position = pm_.getNumberOfVehicleInFront();
+            // TODO: get this info from platoon control plugin
+            // (cmdSpeedSub.getLastMessage() != null ? cmdSpeedSub.getLastMessage().getSpeed() : 0.0));
+            status_msg.host_cmd_speed = 2.0;
+            status_msg.desired_gap = 12.0;
+
+        }
+
+
+        // cav_msgs::PlatooningInfo status_msg;
+        // status_msg.state = cav_msgs::PlatooningInfo::LEADING;
+        // status_msg.platoon_id = "platoon";
+        // status_msg.size = pm_.getTotalPlatooningSize();
+        // status_msg.size_limit = 2;
+        // PlatoonMember leader = pm_.getLeader();
+        // status_msg.leader_id = leader.staticId;
+        // status_msg.leader_downtrack_distance = leader.vehiclePosition;
+        // status_msg.leader_cmd_speed = leader.commandSpeed;
+        // status_msg.host_platoon_position = 1.0;
+        // status_msg.host_cmd_speed = 1.0;
+        // status_msg.desired_gap = 1.0;
 
         return status_msg;
     }
