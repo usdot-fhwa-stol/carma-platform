@@ -132,6 +132,12 @@ namespace route_following_plugin
             ROS_DEBUG_STREAM("min end_dist:" << end_dist);
             ROS_ERROR_STREAM("min end_dist:" << end_dist);
 
+            if (std::fabs(start_dist - end_dist) < 0.1) //TODO: edge case that was not recreatable. Sometimes start and end dist was same which crashes inlanecruising
+            {
+                ROS_WARN_STREAM("start and end dist are equal! shortest path id" << shortest_path_index << ", lanelet id:" << route_shortest_path[shortest_path_index].id() <<
+                    ", start and end dist:" << start_dist);
+                continue;
+            }
             if (isLaneChangeNeeded(following_lanelets, route_shortest_path[shortest_path_index + 1].id()))
             {
                 ROS_DEBUG_STREAM("LaneCHangeNeeded");
