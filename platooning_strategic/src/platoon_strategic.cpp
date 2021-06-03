@@ -179,7 +179,7 @@ namespace platoon_strategic
             }
             cav_msgs::PlatooningInfo platoon_status = compose_platoon_info_msg();
             platoon_status.leader_downtrack_distance = current_progress;
-            // platooning_info_publisher_(platoon_status);
+            platooning_info_publisher_(platoon_status);
             ++last_lanelet_index;
         }
 
@@ -646,11 +646,12 @@ namespace platoon_strategic
         cav_msgs::PlatooningInfo status_msg;
         status_msg.state = cav_msgs::PlatooningInfo::LEADING;
         status_msg.platoon_id = "platoon";
-        status_msg.size = 1;
+        status_msg.size = pm_.getTotalPlatooningSize();
         status_msg.size_limit = 2;
-        status_msg.leader_id = "1";
-        status_msg.leader_downtrack_distance = 1.0;
-        status_msg.leader_cmd_speed = 1;
+        PlatoonMember leader = pm_.getLeader();
+        status_msg.leader_id = leader.staticId;
+        status_msg.leader_downtrack_distance = leader.vehiclePosition;
+        status_msg.leader_cmd_speed = leader.commandSpeed;
         status_msg.host_platoon_position = 1.0;
         status_msg.host_cmd_speed = 1.0;
         status_msg.desired_gap = 1.0;
