@@ -53,7 +53,7 @@ public:
     ros::Publisher mob_response_pub = nh.advertise<cav_msgs::MobilityResponse>("outgoing_mobility_response", 1);
     ros::Publisher mob_request_pub = nh.advertise<cav_msgs::MobilityRequest>("outgoing_mobility_request", 1);
     ros::Publisher mob_operation_pub = nh.advertise<cav_msgs::MobilityOperation>("outgoing_mobility_operation", 1);
-    ros::Publisher platoon_info_pub = nh.advertise<cav_msgs::PlatooningInfo>("platoon_info", 1);
+    ros::Publisher platoon_info_pub = nh.advertise<cav_msgs::PlatooningInfo>("platooning_info", 1);
 
 
     PlatoonPluginConfig config;

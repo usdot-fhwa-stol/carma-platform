@@ -80,19 +80,12 @@ namespace platoon_strategic
     void PlatoonStrategicPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
         pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
-
-        // TODO: update with a wm function to get the actual downtrack
-        double dx = pose_msg_.pose.position.x - initial_pose_.pose.position.x;
-        double dy = pose_msg_.pose.position.y - initial_pose_.pose.position.y;
-        current_downtrack_ = std::sqrt(dx*dx + dy*dy);
-        // TODO: add a propoer function to platoon manager
-        pm_.current_downtrack_didtance_ = current_downtrack_;
-        ROS_DEBUG_STREAM("current_downtrack: " << current_downtrack_);
     }
 
     void PlatoonStrategicPlugin::twist_cb(const geometry_msgs::TwistStampedConstPtr& msg)
     {
         current_speed_ = msg->twist.linear.x;
+        ROS_DEBUG_STREAM("current_speed_cb:" << current_speed_);
     }
 
     void PlatoonStrategicPlugin::updateCurrentStatus(cav_msgs::Maneuver maneuver, double& speed, double& current_progress, int& lane_id){
@@ -192,15 +185,27 @@ namespace platoon_strategic
             {
                 break;
             }
-            cav_msgs::PlatooningInfo platoon_status = compose_platoon_info_msg();
-            platooning_info_publisher_(platoon_status);
             ++last_lanelet_index;
         }
 
         if(resp.new_plan.maneuvers.size() == 0)
         {
             ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
-        }        
+        }  
+
+
+        // TODO: update with a wm function to get the actual downtrack
+        double dx = pose_msg_.pose.position.x - initial_pose_.pose.position.x;
+        double dy = pose_msg_.pose.position.y - initial_pose_.pose.position.y;
+        current_downtrack_ = std::sqrt(dx*dx + dy*dy);
+        // TODO: add a propoer function to platoon manager
+        pm_.current_downtrack_didtance_ = current_downtrack_;
+        ROS_DEBUG_STREAM("current_downtrack: " << current_downtrack_);
+
+        cav_msgs::PlatooningInfo platoon_status = compose_platoon_info_msg();
+        platooning_info_publisher_(platoon_status);
+
+
         return true;
     }
 
@@ -886,7 +891,7 @@ namespace platoon_strategic
 
             std::string PlatoonRearBsmId = host_bsm_id_;
             int CurrentPlatoonLength = pm_.getCurrentPlatoonLength();
-            double current_speed = pm_.getCurrentSpeed();
+            double current_speed = current_speed_;
             int PlatoonSize = pm_.getTotalPlatooningSize();
             double PlatoonRearDowntrackDistance = pm_.getPlatoonRearDowntrackDistance();
 
