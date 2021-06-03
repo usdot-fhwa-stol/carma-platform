@@ -149,7 +149,7 @@ namespace route_following_plugin
         }
         //TO DO  - Update this block so that Stop and wait is the last maneuver ----
         //add lane follow as last maneuver if there is a lanelet unplanned for in path
-        if (shortest_path_index < route_shortest_path.size() - 1)
+        if (shortest_path_index < route_shortest_path.size())
         {
             double target_speed_in_lanelet = findSpeedLimit(route_shortest_path.back());
             start_dist = wm_->routeTrackPos(route_shortest_path.back().centerline2d().front()).downtrack;
@@ -202,7 +202,7 @@ namespace route_following_plugin
         {
             ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
             ROS_ERROR_STREAM("Cannot plan maneuver because no route is found");
-
+            return true;
         }
         //update plan
 
