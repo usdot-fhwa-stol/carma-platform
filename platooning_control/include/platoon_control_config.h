@@ -38,7 +38,7 @@ struct PlatooningControlPluginConfig
   double integratorMin = -100;
   double Kdd = 4.5;                             //coeficient for smooth steering
   double wheelbase = 2.7;
-  double lowpass_gain = 1.0;
+  double lowpass_gain = 0.5;
   double lookahead_ratio = 2.0;
   
   
