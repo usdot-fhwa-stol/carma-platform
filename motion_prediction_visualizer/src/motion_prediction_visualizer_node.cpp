@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 
   ros::NodeHandle n;
 
-  ros::Subscriber sub = n.subscribe("/environment/external_objects", 1000, chatterCallback);
+  ros::Subscriber sub = n.subscribe("/environment/external_object_predictions", 1000, chatterCallback);
   pose_array_pub = n.advertise<geometry_msgs::PoseArray>("motion_computation_visualize", 1);
 
   ros::spin();
