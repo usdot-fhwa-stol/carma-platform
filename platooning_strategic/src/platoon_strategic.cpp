@@ -267,7 +267,7 @@ namespace platoon_strategic
                 }
                 // Task 2
                 cav_msgs::MobilityOperation status;
-                composeMobilityOperationLeaderWaiting(status);
+                status = composeMobilityOperationLeaderWaiting();
                 // mob_op_pub_.publish(status);
                 mobility_operation_publisher_(status);
                 long tsEnd = ros::Time::now().toSec()*1000;
@@ -282,7 +282,7 @@ namespace platoon_strategic
             bool isTimeForHeartBeat = tsStart - lastHeartBeatTime >= infoMessageInterval_;
             if(isTimeForHeartBeat) {
                     cav_msgs::MobilityOperation infoOperation;
-                    composeMobilityOperationLeader(infoOperation,OPERATION_INFO_TYPE);
+                    infoOperation = composeMobilityOperationLeader(OPERATION_INFO_TYPE);
                     mobility_operation_publisher_(infoOperation);
                     lastHeartBeatTime = ros::Time::now().toSec()*1000.0;
                     ROS_DEBUG_STREAM("Published heart beat platoon INFO mobility operatrion message");
@@ -307,7 +307,7 @@ namespace platoon_strategic
             bool hasFollower = (pm_.getTotalPlatooningSize() > 1);
             if(hasFollower) {
                 cav_msgs::MobilityOperation statusOperation;
-                composeMobilityOperationLeader(statusOperation, OPERATION_STATUS_TYPE);
+                statusOperation = composeMobilityOperationLeader(OPERATION_STATUS_TYPE);
                 // mob_op_pub_.publish(statusOperation);
                 mobility_operation_publisher_(statusOperation);
                 ROS_DEBUG_STREAM("Published platoon STATUS operation message");
@@ -315,7 +315,7 @@ namespace platoon_strategic
             long tsEnd =  ros::Time::now().toSec()*1000;
             long sleepDuration = std::max(int(statusMessageInterval_ - (tsEnd - tsStart)), 0);
             // is sleep needed?
-            // ros::Duration(sleepDuration/1000).sleep();
+            ros::Duration(sleepDuration/1000).sleep();
         
     }
 
@@ -329,7 +329,7 @@ namespace platoon_strategic
         long tsStart = ros::Time::now().toSec()*1000;
             // Job 1
             cav_msgs::MobilityOperation status;
-            composeMobilityOperationFollower(status);
+            status = composeMobilityOperationFollower();
             // mob_op_pub_.publish(status);
             mobility_operation_publisher_(status);
             // Job 2
@@ -412,7 +412,7 @@ namespace platoon_strategic
          //Task 4
                 if(pm_.getTotalPlatooningSize() > 1) {
                     cav_msgs::MobilityOperation status;
-                    composeMobilityOperationCandidateFollower(status);
+                    status = composeMobilityOperationCandidateFollower();
                     // mob_op_pub_.publish(status);
                     mobility_operation_publisher_(status);
                     ROS_DEBUG_STREAM("Published platoon STATUS operation message");
@@ -816,7 +816,8 @@ namespace platoon_strategic
     }
 
 
-    void PlatoonStrategicPlugin::composeMobilityOperationLeader(cav_msgs::MobilityOperation &msg, const std::string& type){
+    cav_msgs::MobilityOperation PlatoonStrategicPlugin::composeMobilityOperationLeader(const std::string& type){
+        cav_msgs::MobilityOperation msg;
         msg.header.plan_id = pm_.currentPlatoonID;
         msg.header.recipient_id = "";
         msg.header.sender_bsm_id = host_bsm_id_;
@@ -834,7 +835,7 @@ namespace platoon_strategic
             int PlatoonSize = pm_.getTotalPlatooningSize();
             double PlatoonRearDowntrackDistance = pm_.getPlatoonRearDowntrackDistance();
 
-            boost::format fmter(OPERATION_INFO_TYPE);
+            boost::format fmter(OPERATION_INFO_PARAMS);
             fmter %PlatoonRearBsmId;
             fmter %CurrentPlatoonLength;
             fmter %current_speed;
@@ -859,10 +860,13 @@ namespace platoon_strategic
             msg.strategy_params = "";
         }
         ROS_DEBUG_STREAM("Composed a mobility operation message with params " << msg.strategy_params);
-    
+
+        return msg;
     }
 
-    void PlatoonStrategicPlugin::composeMobilityOperationFollower(cav_msgs::MobilityOperation &msg) const{
+    cav_msgs::MobilityOperation PlatoonStrategicPlugin::composeMobilityOperationFollower()
+    {
+        cav_msgs::MobilityOperation msg;
         msg.header.plan_id = pm_.currentPlatoonID;
         // All platoon mobility operation message is just for broadcast
         msg.header.recipient_id = "";
@@ -885,11 +889,13 @@ namespace platoon_strategic
         std::string statusParams = fmter.str();
         msg.strategy_params = statusParams;
         ROS_DEBUG_STREAM("Composed a mobility operation message with params " << msg.strategy_params);
+        return msg;
     }
 
 
-    void PlatoonStrategicPlugin::composeMobilityOperationLeaderWaiting(cav_msgs::MobilityOperation &msg) const
+    cav_msgs::MobilityOperation PlatoonStrategicPlugin::composeMobilityOperationLeaderWaiting()
     {
+        cav_msgs::MobilityOperation msg;
         msg.header.plan_id = pm_.currentPlatoonID;
         // This message is for broadcast
         msg.header.recipient_id = "";
@@ -910,12 +916,14 @@ namespace platoon_strategic
                     
         std::string statusParams = fmter.str();
         msg.strategy_params = statusParams;
-        
+        return msg;
     }
 
 
-    void PlatoonStrategicPlugin::composeMobilityOperationCandidateFollower(cav_msgs::MobilityOperation &msg)
+    cav_msgs::MobilityOperation PlatoonStrategicPlugin::composeMobilityOperationCandidateFollower()
     {
+        cav_msgs::MobilityOperation msg;
+
         msg.header.plan_id = pm_.currentPlatoonID;
         // All platoon mobility operation message is just for broadcast
         msg.header.recipient_id = "";
@@ -941,6 +949,8 @@ namespace platoon_strategic
         std::string statusParams = fmter.str();
         msg.strategy_params = statusParams;
         ROS_DEBUG_STREAM("Composed a mobility operation message with params " << msg.strategy_params);
+
+        return msg;
     }
 
 

@@ -195,10 +195,10 @@ namespace platoon_strategic
             cav_msgs::MobilityOperation mobility_op_msg_;
 
 
-            void composeMobilityOperationLeader(cav_msgs::MobilityOperation &msg, const std::string& type);
-            void composeMobilityOperationFollower(cav_msgs::MobilityOperation &msg) const;
-            void composeMobilityOperationLeaderWaiting(cav_msgs::MobilityOperation &msg) const;
-            void composeMobilityOperationCandidateFollower(cav_msgs::MobilityOperation &msg);
+            cav_msgs::MobilityOperation composeMobilityOperationLeader(const std::string& type);
+            cav_msgs::MobilityOperation composeMobilityOperationFollower();
+            cav_msgs::MobilityOperation composeMobilityOperationLeaderWaiting();
+            cav_msgs::MobilityOperation composeMobilityOperationCandidateFollower();
 
 
             double maxAllowedJoinTimeGap_ = 15.0;
@@ -223,6 +223,7 @@ namespace platoon_strategic
             const std::string MOBILITY_STRATEGY = "Carma/Platooning";
             const std::string OPERATION_INFO_TYPE = "INFO";
             const std::string OPERATION_STATUS_TYPE = "STATUS";
+            const std::string OPERATION_INFO_PARAMS   = "INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d,DTD:%.2f";
             const std::string OPERATION_STATUS_PARAMS = "STATUS|CMDSPEED:%1%,DTD:%2%,SPEED:%3%";
             const std::string JOIN_AT_REAR_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";
             int NEGOTIATION_TIMEOUT = 5000;  // ms
