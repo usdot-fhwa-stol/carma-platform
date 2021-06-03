@@ -80,6 +80,14 @@ namespace platoon_strategic
     void PlatoonStrategicPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
         pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
+
+        // TODO: update with a wm function to get the actual downtrack
+        double dx = pose_msg_.pose.position.x - initial_pose_.pose.position.x;
+        double dy = pose_msg_.pose.position.y - initial_pose_.pose.position.y;
+        current_downtrack_ = std::sqrt(dx*dx + dy*dy);
+        // TODO: add a propoer function to platoon manager
+        pm_.current_downtrack_didtance_ = current_downtrack_;
+        ROS_DEBUG_STREAM("current_downtrack: " << current_downtrack_);
     }
 
     void PlatoonStrategicPlugin::twist_cb(const geometry_msgs::TwistStampedConstPtr& msg)
@@ -99,6 +107,13 @@ namespace platoon_strategic
 
     bool PlatoonStrategicPlugin::plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp)
     {
+        bool pose_initialize = false;
+        if (!pose_initialize)
+        {
+            initial_pose_ = pose_msg_;
+            ROS_DEBUG_STREAM("first pose initialized!");
+        }
+
         lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
         auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc, 10);       
         if(current_lanelets.size() == 0)
@@ -178,7 +193,6 @@ namespace platoon_strategic
                 break;
             }
             cav_msgs::PlatooningInfo platoon_status = compose_platoon_info_msg();
-            platoon_status.leader_downtrack_distance = current_progress;
             platooning_info_publisher_(platoon_status);
             ++last_lanelet_index;
         }
@@ -644,7 +658,7 @@ namespace platoon_strategic
     cav_msgs::PlatooningInfo PlatoonStrategicPlugin::compose_platoon_info_msg()
     {
         cav_msgs::PlatooningInfo status_msg;
-        
+
         if (pm_.current_platoon_state == PlatoonState::STANDBY)
         {
             status_msg.state = cav_msgs::PlatooningInfo::DISABLED;
@@ -808,13 +822,12 @@ namespace platoon_strategic
                 request.strategy = MOBILITY_STRATEGY;
 
                 int platoon_size = pm_.getTotalPlatooningSize();
-                double current_speed = pm_.getCurrentSpeed();
-                double current_downtrack;///TODO: replace with downtrack update function
+                
 
                 boost::format fmter(OPERATION_STATUS_PARAMS);
                 fmter %platoon_size;
-                fmter %current_speed;
-                fmter %current_downtrack;
+                fmter %current_speed_;
+                fmter %current_downtrack_;
                 
                 request.strategy_params = fmter.str();
                 request.urgency = 50;
@@ -846,8 +859,7 @@ namespace platoon_strategic
     }
 
     bool PlatoonStrategicPlugin::isVehicleRightInFront(std::string rearVehicleBsmId, double downtrack) {
-        // double currentDtd = getCurrentDowntrackDistance();
-        double currentDtd;
+        double currentDtd = current_downtrack_;
         if(downtrack > currentDtd) {
             ROS_DEBUG_STREAM("Found a platoon in front. We are able to join");
             return true;
@@ -890,11 +902,11 @@ namespace platoon_strategic
         }
         else if (type == OPERATION_STATUS_TYPE){
             // For STATUS params, the string format is "STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx"
-            double cmdSpeed, current_speed, current_downtrack;
+            double cmdSpeed;//TODO update cmd speed
             boost::format fmter(OPERATION_STATUS_PARAMS);
             fmter %cmdSpeed;
-            fmter %current_downtrack;
-            fmter %current_speed;
+            fmter %current_downtrack_;
+            fmter %current_speed_;
                     
             std::string statusParams = fmter.str();
             msg.strategy_params = statusParams;
@@ -919,15 +931,16 @@ namespace platoon_strategic
         msg.header.timestamp = ros::Time::now().toSec()*1000.0;
         msg.strategy = MOBILITY_STRATEGY;
         
-        double cmdSpeed, current_speed, current_downtrack;
+        // TODO: update cmdspeed
+        double cmdSpeed;
         // double cmdSpeed = plugin.getLastSpeedCmd();
         // String statusParams = String.format(PlatooningPlugin.OPERATION_STATUS_PARAMS,
         //                                     cmdSpeed, pluginServiceLocator.getRouteService().getCurrentDowntrackDistance(),
         //                                     pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed());
         boost::format fmter(OPERATION_STATUS_PARAMS);
         fmter %cmdSpeed;
-        fmter %current_downtrack;
-        fmter %current_speed;
+        fmter %current_downtrack_;
+        fmter %current_speed_;
                     
         std::string statusParams = fmter.str();
         msg.strategy_params = statusParams;
@@ -948,14 +961,15 @@ namespace platoon_strategic
         msg.header.timestamp = ros::Time::now().toSec()*1000;
         msg.strategy = MOBILITY_STRATEGY;
         // For STATUS params, the string format is "STATUS|CMDSPEED:5.0,DOWNTRACK:100.0,SPEED:5.0"
-        double cmdSpeed, current_speed, current_downtrack;
+        // TODO: update cmdspeed
+        double cmdSpeed;
         // double cmdSpeed = plugin.getLastSpeedCmd();
         // double downtrackDistance = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
         // double currentSpeed = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
         boost::format fmter(OPERATION_STATUS_PARAMS);
         fmter %cmdSpeed;
-        fmter %current_downtrack;
-        fmter %current_speed;
+        fmter %current_downtrack_;
+        fmter %current_speed_;
                     
         std::string statusParams = fmter.str();
         msg.strategy_params = statusParams;
@@ -977,8 +991,8 @@ namespace platoon_strategic
         msg.strategy = MOBILITY_STRATEGY;
         
         // // For STATUS params, the string format is "STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx"
-        
-        double cmdSpeed, current_speed, current_downtrack;
+        // TODO update smdspeed
+        double cmdSpeed;
         // double cmdSpeed = plugin.getLastSpeedCmd();
         // // For STATUS params, the string format is "STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx"
         // String statusParams = String.format(PlatooningPlugin.OPERATION_STATUS_PARAMS,
@@ -986,8 +1000,8 @@ namespace platoon_strategic
         //                                     pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed());
         boost::format fmter(OPERATION_STATUS_PARAMS);
         fmter %cmdSpeed;
-        fmter %current_downtrack;
-        fmter %current_speed;
+        fmter %current_downtrack_;
+        fmter %current_speed_;
                     
         std::string statusParams = fmter.str();
         msg.strategy_params = statusParams;

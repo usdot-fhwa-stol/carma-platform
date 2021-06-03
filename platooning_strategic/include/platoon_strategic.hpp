@@ -127,9 +127,11 @@ namespace platoon_strategic
             // local copy of pose
             // Current vehicle pose in map
             geometry_msgs::PoseStamped pose_msg_;
+            geometry_msgs::PoseStamped initial_pose_;
             //Internal Variables used in unit tests
             // Current vehicle forward speed
-            double current_speed_;
+            double current_speed_ = 0;
+            double current_downtrack_ = 0;
 
             long waitingStartTime;
             long candidatestateStartTime;

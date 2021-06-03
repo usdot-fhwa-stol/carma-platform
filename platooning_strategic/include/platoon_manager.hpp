@@ -86,6 +86,8 @@ namespace platoon_strategic
         // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;
 
+        double current_downtrack_didtance_ = 0;
+
         // wm listener pointer and pointer to the actual wm object
         // std::shared_ptr<carma_wm::WMListener> wml_;
         // carma_wm::WorldModelConstPtr wm_;
