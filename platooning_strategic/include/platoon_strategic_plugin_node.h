@@ -79,6 +79,7 @@ public:
     pnh.param<double>("minGap", config.minGap, config.minGap);
     pnh.param<double>("maxGap", config.maxGap, config.maxGap);
     pnh.getParam("/vehicle_length", config.vehicleLength);
+    pnh.getParam("/vehicle_id", config.vehicle_id);
     
     ROS_INFO_STREAM("PlatoonPluginConfig Params" << config);
 

@@ -58,6 +58,8 @@ struct PlatoonPluginConfig
   double minGap                = 22.0; // m
   double maxGap                = 32.0; // m
 
+  std::string vehicle_id       = "default_id";
+
 
   friend std::ostream& operator<<(std::ostream& output, const PlatoonPluginConfig& c)
   {
@@ -87,6 +89,7 @@ struct PlatoonPluginConfig
           << "minSpacing: " << c.minSpacing << std::endl
           << "kpminGapPID: " << c.minGap << std::endl
           << "maxGap: " << c.maxGap << std::endl
+          << "vehicle_id: " << c.vehicle_id << std::endl
           << "}" << std::endl;
     return output;
   }

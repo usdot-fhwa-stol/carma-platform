@@ -52,6 +52,10 @@ namespace platoon_strategic
         {
             run_leader();
         }
+
+        cav_msgs::PlatooningInfo platoon_status = compose_platoon_info_msg();
+        platooning_info_publisher_(platoon_status);
+
         return true;
     }
 
@@ -201,9 +205,9 @@ namespace platoon_strategic
         // TODO: add a propoer function to platoon manager
         pm_.current_downtrack_didtance_ = current_downtrack_;
         ROS_DEBUG_STREAM("current_downtrack: " << current_downtrack_);
+        pm_.current_platoon_state = PlatoonState::LEADER;
 
-        cav_msgs::PlatooningInfo platoon_status = compose_platoon_info_msg();
-        platooning_info_publisher_(platoon_status);
+        
 
 
         return true;
@@ -410,7 +414,7 @@ namespace platoon_strategic
                     request.header.plan_id = planId;
                     request.header.recipient_id = pm_.targetLeaderId;
                     request.header.sender_bsm_id = host_bsm_id_;
-                    request.header.sender_id = HostMobilityId;
+                    request.header.sender_id = config_.vehicle_id;
                     request.header.timestamp = currentTime;
                     cav_msgs::LocationECEF loc;
                     request.location = loc;
@@ -702,7 +706,7 @@ namespace platoon_strategic
             }
             else
             {
-                status_msg.leader_id = HostMobilityId;
+                status_msg.leader_id = config_.vehicle_id;
                 status_msg.leader_downtrack_distance = current_downtrack_;
                 status_msg.leader_cmd_speed = current_speed_;
                 status_msg.host_platoon_position = 0;
@@ -729,7 +733,7 @@ namespace platoon_strategic
         {
             // TODO: add a queue for status messages
         }
-        // mob_op_cb_leader(msg);
+        mob_op_cb_leader(msg);
     }
 
     void PlatoonStrategicPlugin::mob_op_cb_standby(const cav_msgs::MobilityOperation& msg)
@@ -801,7 +805,7 @@ namespace platoon_strategic
         bool isPlatoonInfoMsg = (strategyParams.rfind(OPERATION_INFO_TYPE, 0) == 0);
         bool isPlatoonStatusMsg = (strategyParams.rfind(OPERATION_STATUS_TYPE, 0) == 0);
         // original: boolean isNotInNegotiation = (this.currentPlan == null);
-        bool isNotInNegotiation = pm_.current_plan.valid;
+        bool isNotInNegotiation = (pm_.current_plan.valid == false);
         if(isPlatoonInfoMsg && isNotInNegotiation)
         {
             // For INFO params, the string format is INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d
@@ -827,7 +831,7 @@ namespace platoon_strategic
                 request.header.plan_id = boost::uuids::to_string(boost::uuids::random_generator()());
                 request.header.recipient_id = senderId;
                 request.header.sender_bsm_id = host_bsm_id_;
-                request.header.sender_id = HostMobilityId;
+                request.header.sender_id = config_.vehicle_id;
                 request.header.timestamp = ros::Time::now().toNSec() * 1000000;
                 // request.location  TODO: add ecef location here
                 request.plan_type.type = cav_msgs::PlanType::JOIN_PLATOON_AT_REAR;
@@ -836,7 +840,7 @@ namespace platoon_strategic
                 int platoon_size = pm_.getTotalPlatooningSize();
                 
 
-                boost::format fmter(OPERATION_STATUS_PARAMS);
+                boost::format fmter(JOIN_AT_REAR_PARAMS);
                 fmter %platoon_size;
                 fmter %current_speed_;
                 fmter %current_downtrack_;
@@ -889,7 +893,7 @@ namespace platoon_strategic
         msg.header.plan_id = pm_.currentPlatoonID;
         msg.header.recipient_id = "";
         msg.header.sender_bsm_id = host_bsm_id_;
-        std::string hostStaticId = HostMobilityId;
+        std::string hostStaticId = config_.vehicle_id;
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toSec()*1000.0;
         msg.strategy = MOBILITY_STRATEGY;
@@ -939,7 +943,7 @@ namespace platoon_strategic
         // All platoon mobility operation message is just for broadcast
         msg.header.recipient_id = "";
         msg.header.sender_bsm_id = host_bsm_id_;
-        std::string hostStaticId = HostMobilityId;
+        std::string hostStaticId = config_.vehicle_id;
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toSec()*1000.0;
         msg.strategy = MOBILITY_STRATEGY;
@@ -969,7 +973,7 @@ namespace platoon_strategic
         // This message is for broadcast
         msg.header.recipient_id = "";
         msg.header.sender_bsm_id = host_bsm_id_;
-        std::string hostStaticId = HostMobilityId;
+        std::string hostStaticId = config_.vehicle_id;
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toSec()*1000;
         msg.strategy = MOBILITY_STRATEGY;
@@ -998,7 +1002,7 @@ namespace platoon_strategic
         // All platoon mobility operation message is just for broadcast
         msg.header.recipient_id = "";
         msg.header.sender_bsm_id = host_bsm_id_;
-        std::string hostStaticId = HostMobilityId;
+        std::string hostStaticId = config_.vehicle_id;
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toSec()*1000.0; 
         msg.strategy = MOBILITY_STRATEGY;

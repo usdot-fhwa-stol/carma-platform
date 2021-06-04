@@ -79,6 +79,7 @@ namespace platoon_strategic
 
         PlatoonManager();
 
+        // todo initialize as empty
         std::vector<PlatoonMember> platoon;
 
         
@@ -144,7 +145,7 @@ namespace platoon_strategic
 
         int platoonSize;
         std::string leaderID;
-        std::string currentPlatoonID;
+        std::string currentPlatoonID = "test_plan";
         bool isFollower;
 
         double current_speed_;
