@@ -62,7 +62,7 @@ if [[ $COMPONENT_VERSION_STRING = "develop" ]]; then
         --build-arg VCS_REF=`git rev-parse --short HEAD` \
         --build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` .
 else
-    docker build --no-cache -t $USERNAME/$IMAGE:$COMPONENT_VERSION_STRING \
+    docker build --network=host --no-cache -t $USERNAME/$IMAGE:$COMPONENT_VERSION_STRING \
         --build-arg VERSION="$COMPONENT_VERSION_STRING" \
         --build-arg VCS_REF=`git rev-parse --short HEAD` \
         --build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` .
