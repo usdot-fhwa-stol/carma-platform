@@ -23,9 +23,7 @@
 namespace platoon_strategic
 {
     PlatoonManager::PlatoonManager()
-    {
-        current_plan.planId = "test_plan";
-    }
+    {}
 
 
     void PlatoonManager::memberUpdates(const std::string& senderId, const std::string& platoonId, const std::string& senderBsmId,const std::string& params){
