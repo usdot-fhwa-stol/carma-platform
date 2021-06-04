@@ -51,6 +51,7 @@
 #include <carma_wm/TrafficControl.h>
 #include <std_msgs/String.h>
 #include <unordered_set>
+#include <visualization_msgs/MarkerArray.h>
 
 namespace carma_wm_ctrl
 {
@@ -116,6 +117,11 @@ public:
   * \param route_msg The message containing route information
   */
   void routeCallbackMessage(const cav_msgs::Route& route_msg);
+  /*!
+  * \brief Calls controlRequestFromRoute() and publishes the TrafficControlRequest Message returned after the completed operations
+  * \param route_msg The message containing route information
+  */
+  visualization_msgs::Marker composeTCMMarkerVisualizer(const std::vector<lanelet::Point3d>& input);
 
  /*!
   * \brief Pulls vehicle information from CARMA Cloud at startup by providing its selected route in a TrafficControlRequest message that is published after a route is selected.
@@ -207,6 +213,8 @@ public:
    */ 
   void newMapSubscriber(const ros::SingleSubscriberPublisher& single_sub_pub) const;
 
+  visualization_msgs::MarkerArray tcm_marker_array_;
+
 
 private:
   lanelet::ConstLanelets route_path_;
@@ -232,7 +240,7 @@ private:
   GeofenceScheduler scheduler_;
   std::string base_map_georef_;
   double max_lane_width_;
-  /* Version ID of the current_map_ variable. Monotonically increasing value
+   /* Version ID of the current_map_ variable. Monotonically increasing value
    * NOTE: This parameter needs to be incremented any time a new map is ready to be published. 
    * It should not be incremented for updates that do not require a full map publication.
    */

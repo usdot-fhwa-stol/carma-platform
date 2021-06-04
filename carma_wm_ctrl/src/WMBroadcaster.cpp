@@ -488,10 +488,11 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
     PJ_COORD c_out;
     c_out = proj_trans(geofence_in_map_proj, PJ_FWD, c);
     gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), c_out.xyz.x, c_out.xyz.y});
-
+  
     ROS_DEBUG_STREAM("After conversion: Point X "<< c_out.xyz.x <<" After conversion: Point Y "<< c_out.xyz.y);
   }
-
+  
+  tcm_marker_array_.markers.push_back(composeTCMMarkerVisualizer(gf_pts));
   // Logic to detect which part is affected
 
   std::unordered_set<lanelet::Lanelet> affected_lanelets;
@@ -862,6 +863,48 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
   return cR;
 
 }
+
+ visualization_msgs::Marker WMBroadcaster::composeTCMMarkerVisualizer(const std::vector<lanelet::Point3d>& input)
+ {
+ 
+         // create the marker msgs
+        visualization_msgs::Marker marker;
+        marker.header.frame_id = "map";
+        marker.header.stamp = ros::Time();
+        marker.type = visualization_msgs::Marker::SPHERE_LIST;
+        marker.action = visualization_msgs::Marker::ADD;
+        marker.ns = "route_visualizer";
+
+        marker.scale.x = 0.65;
+        marker.scale.y = 0.65;
+        marker.scale.z = 0.65;
+        marker.frame_locked = true;
+        
+        if (!tcm_marker_array_.markers.empty()) 
+        {
+        marker.id = tcm_marker_array_.markers.back().id + 1;
+        }
+        else
+        {
+        marker.id = 0;
+        }
+        marker.color.r = 0.0F;
+        marker.color.g = 1.0F;
+        marker.color.b = 0.0F;
+        marker.color.a = 1.0F;
+ 
+        for (int i = 0; i < input.size(); i++)
+        {
+            geometry_msgs::Point temp_point;
+            temp_point.x = input[i].x();
+            temp_point.y = input[i].y();
+            temp_point.z = 1; //to show up on top of the lanelet lines
+            
+            marker.points.push_back(temp_point);
+        }
+       
+        return marker;
+ }
 
 double WMBroadcaster::distToNearestActiveGeofence(const lanelet::BasicPoint2d& curr_pos)
 {
