@@ -692,36 +692,43 @@ namespace platoon_strategic
             status_msg.size_limit = config_.maxPlatoonSize;
 
             PlatoonMember platoon_leader = pm_.getLeader();
-            status_msg.leader_id = platoon_leader.staticId;
-            status_msg.leader_downtrack_distance = platoon_leader.vehiclePosition;
-            status_msg.leader_cmd_speed = platoon_leader.commandSpeed;
-            status_msg.host_platoon_position = pm_.getNumberOfVehicleInFront();
+            if (platoon_leader.staticId != "")
+            {
+                status_msg.leader_id = platoon_leader.staticId;
+                status_msg.leader_downtrack_distance = platoon_leader.vehiclePosition;
+                status_msg.leader_cmd_speed = platoon_leader.commandSpeed;
+                status_msg.host_platoon_position = pm_.getNumberOfVehicleInFront();
+
+            }
+            else
+            {
+                status_msg.leader_id = HostMobilityId;
+                status_msg.leader_downtrack_distance = current_downtrack_;
+                status_msg.leader_cmd_speed = current_speed_;
+                status_msg.host_platoon_position = 0;
+   
+            }
+            
             // TODO: get this info from platoon control plugin
             // (cmdSpeedSub.getLastMessage() != null ? cmdSpeedSub.getLastMessage().getSpeed() : 0.0));
             status_msg.host_cmd_speed = 2.0;
             status_msg.desired_gap = 12.0;
 
         }
-
-
-        // cav_msgs::PlatooningInfo status_msg;
-        // status_msg.state = cav_msgs::PlatooningInfo::LEADING;
-        // status_msg.platoon_id = "platoon";
-        // status_msg.size = pm_.getTotalPlatooningSize();
-        // status_msg.size_limit = 2;
-        // PlatoonMember leader = pm_.getLeader();
-        // status_msg.leader_id = leader.staticId;
-        // status_msg.leader_downtrack_distance = leader.vehiclePosition;
-        // status_msg.leader_cmd_speed = leader.commandSpeed;
-        // status_msg.host_platoon_position = 1.0;
-        // status_msg.host_cmd_speed = 1.0;
-        // status_msg.desired_gap = 1.0;
-
         return status_msg;
     }
 
     void PlatoonStrategicPlugin::mob_op_cb(const cav_msgs::MobilityOperation& msg)
     {
+        
+        if (msg.strategy_params.rfind(OPERATION_INFO_TYPE, 0) == 0)
+        {
+            //  this.state.onMobilityOperationMessage(msg);
+        }
+        else
+        {
+            // TODO: add a queue for status messages
+        }
         // mob_op_cb_leader(msg);
     }
 

@@ -388,7 +388,7 @@ namespace platoon_strategic
     
      //Currently not used in implementation
     double PlatoonManager::getDistanceFromRouteStart() const{
-        return 0.0;
+        return current_downtrack_didtance_;
     }
 
     double PlatoonManager::getDistanceToFrontVehicle() {
@@ -404,19 +404,9 @@ namespace platoon_strategic
     }
 
     // TODO: make sure we are not skipping lanelets!!
-    double PlatoonManager::getCurrentDowntrackDistance() const{
-
-        // lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
-        // auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, current_loc, 1);
-        // if(current_lanelets.size() == 0)
-        // {
-        //     ROS_WARN_STREAM("Cannot find any lanelet in map!");
-        //     return true;
-        // }
-        // auto current_lanelet = current_lanelets[0];
-        // auto shortest_path = wm_->getRoute()->shortestPath();
-        double current_progress = current_downtrack_didtance_;// = wm_->routeTrackPos(current_loc).downtrack;
-        // downtrack_progress_ = downtrack_progress_ + current_progress;
+    double PlatoonManager::getCurrentDowntrackDistance() const
+    {
+        double current_progress = current_downtrack_didtance_;
         return current_progress;
     }
 
