@@ -358,13 +358,18 @@ namespace traffic
         continue;
       }
       cav_msgs::PathNode prev_point;
-      prev_point.x = reverse_lanes.front().front().x();
-      prev_point.y = reverse_lanes.front().front().y();
+      prev_point.x = reverse_lanes[i].front().x();
+      prev_point.y = reverse_lanes[i].front().y();
       for(const auto& p : carma_utils::containers::downsample_vector(reverse_lanes[i], 8))
       {
-        prev_point.x=p.x() - prev_point.x;
-        prev_point.y=p.y() - prev_point.y;
-        traffic_mobility_msg.geometry.nodes.push_back(prev_point);
+        cav_msgs::PathNode delta;
+        ROS_INFO_STREAM("prev_point x" << prev_point.x << ", prev_point y" << prev_point.y);
+        ROS_INFO_STREAM("p.x()" << p.x() << ", p.y()" << p.y());
+        delta.x=p.x() - prev_point.x;
+        delta.y=p.y() - prev_point.y;
+        ROS_INFO_STREAM("diff x" << delta.x << ", diff y" << delta.y);
+
+        traffic_mobility_msg.geometry.nodes.push_back(delta);
         prev_point.x = p.x();
         prev_point.y = p.y();
       }
