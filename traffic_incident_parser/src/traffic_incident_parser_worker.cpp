@@ -357,12 +357,16 @@ namespace traffic
         ROS_DEBUG_STREAM("Skipping empty lane");
         continue;
       }
+      cav_msgs::PathNode prev_point;
+      prev_point.x = reverse_lanes.front().front().x();
+      prev_point.y = reverse_lanes.front().front().y();
       for(const auto& p : carma_utils::containers::downsample_vector(reverse_lanes[i], 8))
       {
-        cav_msgs::PathNode path_point;
-        path_point.x=p.x();
-        path_point.y=p.y();
-        traffic_mobility_msg.geometry.nodes.push_back(path_point);
+        prev_point.x=p.x() - prev_point.x;
+        prev_point.y=p.y() - prev_point.y;
+        traffic_mobility_msg.geometry.nodes.push_back(prev_point);
+        prev_point.x = p.x();
+        prev_point.y = p.y();
       }
 
       if (i == 0) {
