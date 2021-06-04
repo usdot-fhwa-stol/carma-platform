@@ -48,6 +48,8 @@ namespace platoon_strategic
     bool PlatoonStrategicPlugin::onSpin() 
     {
         plugin_discovery_publisher_(plugin_discovery_msg_);
+        cav_msgs::PlatooningInfo platoon_status = compose_platoon_info_msg();
+        platooning_info_publisher_(platoon_status);
         if (pm_.current_platoon_state == PlatoonState::LEADER)
         {
             run_leader();
@@ -193,7 +195,8 @@ namespace platoon_strategic
             ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
         }  
 
-
+        pm_.current_platoon_state = PlatoonState::LEADER;
+        ROS_WARN_STREAM("state is leader");
         // TODO: update with a wm function to get the actual downtrack
         double dx = pose_msg_.pose.position.x - initial_pose_.pose.position.x;
         double dy = pose_msg_.pose.position.y - initial_pose_.pose.position.y;
@@ -201,9 +204,6 @@ namespace platoon_strategic
         // TODO: add a propoer function to platoon manager
         pm_.current_downtrack_didtance_ = current_downtrack_;
         ROS_DEBUG_STREAM("current_downtrack: " << current_downtrack_);
-
-        cav_msgs::PlatooningInfo platoon_status = compose_platoon_info_msg();
-        platooning_info_publisher_(platoon_status);
 
 
         return true;

@@ -135,15 +135,6 @@ namespace platoon_strategic
         double getCurrentPlatoonLength();
         double getPlatoonRearDowntrackDistance();
         
-        // double maxAllowedJoinGap = 90;
-        // int maxPlatoonSize = 10;
-        // double vehicleLength = 5.0;
-        // int infoMessageInterval;
-        // const std::string targetPlatoonId;
-        // const std::string OPERATION_INFO_TYPE = "INFO";
-        // const std::string OPERATION_STATUS_TYPE = "STATUS";
-        // const std::string JOIN_AT_REAR_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";
-        // const ;
         double getDistanceFromRouteStart() const;
         double getDistanceToFrontVehicle();
         double getCurrentSpeed() const;
@@ -159,11 +150,11 @@ namespace platoon_strategic
         double current_speed_;
         double command_speed_;
 
-        PlatoonState current_platoon_state = PlatoonState::LEADER;
-            std::string applicantID = "";
-            PlatoonPlan current_plan;
+        PlatoonState current_platoon_state = PlatoonState::STANDBY;
+        std::string applicantID = "1";
+        PlatoonPlan current_plan;
 
-            std::string targetLeaderId = "";
+        std::string targetLeaderId = "2";
 
 
     private:
@@ -173,11 +164,7 @@ namespace platoon_strategic
         int maxPlatoonSize = 10;
         double vehicleLength = 5.0;
         int infoMessageInterval;
-        // const std::string targetPlatoonId;
-        // const std::string OPERATION_INFO_TYPE = "INFO";
-        // const std::string OPERATION_STATUS_TYPE = "STATUS";
-        // const std::string JOIN_AT_REAR_PARAMS = "SIZE:%1%,SPEED:%2%,DTD:%3%";
-        // const std::string  MOBILITY_STRATEGY = "Carma/Platooning";
+
         std::string targetPlatoonId;
         std::string OPERATION_INFO_TYPE = "INFO";
         std::string OPERATION_STATUS_TYPE = "STATUS";
