@@ -59,7 +59,7 @@ RUN git clone https://github.com/astuff/astuff_sensor_msgs -b melodic && ls
 WORKDIR ~
 
 # remove autoware msgs in noetic
-RUN sudo apt-get remove -y ros-noetic-autoware-* && sudo apt-get autoremove
+#RUN sudo apt-get remove -y ros-noetic-autoware-* && sudo apt-get autoremove
 
 RUN ~/carma_ws/src/carma-platform/docker/install.sh
 
