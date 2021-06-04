@@ -97,8 +97,15 @@ fi
 ###
 # Build CARMA 
 ###
+
+source /opt/autoware.ai/ros/install/setup.bash
+echo "Autoware built successfuly. Binaries sourced from $(realpath ./install/setup.bash)"
+
 echo "Building CARMA"
 cd ${carma_workspace}
 
-colcon build --cmake-args ${carma_build_args}
-echo echo "CARMA built successfuly. Binaries sourced from $(realpath ./install/setup.bash)"
+#colcon build --packages-up-to rosbag_mock_drivers --cmake-args "-DCMAKE_BUILD_TYPE=Debug"
+
+
+colcon build --cmake-args "-DCMAKE_BUILD_TYPE=Debug"#${carma_build_args}
+echo "CARMA built successfuly. Binaries sourced from $(realpath ./install/setup.bash)"

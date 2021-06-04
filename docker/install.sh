@@ -19,7 +19,7 @@
 
 set -ex
 
-source /opt/ros/noetic/setup.bash
+#source /opt/ros/noetic/setup.bash
 source /opt/autoware.ai/ros/install/setup.bash --extend
 
 cd ~/carma_ws
@@ -27,5 +27,5 @@ cd ~/carma_ws
 
 # Copy the installed files
 cd ~/carma_ws 
-cp -r install/. /opt/carma/install
+cp -r install/ /opt/carma/install
 chmod -R +x /opt/carma/install 
