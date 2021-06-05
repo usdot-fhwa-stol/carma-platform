@@ -19,7 +19,6 @@
 
 set -ex
 
-#source /opt/ros/noetic/setup.bash
 source /opt/autoware.ai/ros/install/setup.bash --extend
 
 cd ~/carma_ws
