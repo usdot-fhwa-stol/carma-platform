@@ -485,7 +485,7 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
   cav_msgs::PathNode prev_pt;
   for (auto pt : tcmV01.geometry.nodes)
   { 
-    ROS_DEBUG_STREAM("Before conversion: Point X "<< pt.x <<" Before conversion: Point Y "<< pt.y);
+    //ROS_INFO_STREAM("Before conversion: Point X "<< pt.x <<" Before conversion: Point Y "<< pt.y);
 
     PJ_COORD c {{prev_pt.x + pt.x, prev_pt.y + pt.y, 0, 0}}; // z is not currently used
     PJ_COORD c_out;
@@ -494,7 +494,7 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
     prev_pt.x += pt.x;
     prev_pt.y += pt.y;
 
-    ROS_DEBUG_STREAM("After conversion: Point X "<< gf_pts.back().x() <<" After conversion: Point Y "<< gf_pts.back().y());
+    ROS_INFO_STREAM("After conversion: Point X "<< gf_pts.back().x() <<" After conversion: Point Y "<< gf_pts.back().y());
   }
 
   // Logic to detect which part is affected
