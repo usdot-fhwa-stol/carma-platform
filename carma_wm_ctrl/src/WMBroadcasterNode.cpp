@@ -72,6 +72,8 @@ int WMBroadcasterNode::run()
   route_callmsg_sub_ = cnh_.subscribe("route", 1, &WMBroadcaster::routeCallbackMessage, &wmb_);
   //Current Location Sub
   curr_location_sub_ = cnh_.subscribe("current_pose", 1,&WMBroadcaster::currentLocationCallback, &wmb_);
+  //TCM Visualizer pub
+  tcm_visualizer_pub_= cnh_.advertise<visualization_msgs::MarkerArray>("tcm_visualizer",1,true);
   
   double config_limit;
   double lane_max_width;
@@ -86,11 +88,20 @@ int WMBroadcasterNode::run()
       if(wmb_.getRoute().route_path_lanelet_ids.size() > 0)
       wmb_.routeCallbackMessage(wmb_.getRoute());
       }, false);
+
+  ros::CARMANodeHandle::setSpinCallback(std::bind(&WMBroadcasterNode::spinCallBack, this));
  
   // Spin
   cnh_.spin();
   return 0;
 }
+
+bool WMBroadcasterNode::spinCallBack()
+{
+    tcm_visualizer_pub_.publish(wmb_.tcm_marker_array_);
+    return true;
+}
+
 
 // @SONAR_START@
 
