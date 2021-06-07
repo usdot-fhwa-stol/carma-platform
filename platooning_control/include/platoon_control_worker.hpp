@@ -72,6 +72,7 @@ namespace platoon_control
 
         double speedCmd_ = 0;
         double steerCmd_ = 0;
+        double desired_gap_ = ctrl_config.standStillHeadway;
 
         PlatoonLeaderInfo platoon_leader;
 

@@ -67,6 +67,7 @@ namespace platoon_control
 		// Control Publisher
 		twist_pub_ = nh_->advertise<geometry_msgs::TwistStamped>("twist_raw", 10, true);
         ctrl_pub_ = nh_->advertise<autoware_msgs::ControlCommandStamped>("ctrl_raw", 10, true);
+        platoon_info_pub_ = nh_->advertise<cav_msgs::PlatooningInfo>("platooning_info", 10, true);
 
 
         pose_sub_ = nh_->subscribe("current_pose", 1, &PlatoonControlPlugin::pose_cb, this);
@@ -171,12 +172,16 @@ namespace platoon_control
         platoon_leader_.vehiclePosition = msg->leader_downtrack_distance;
         platoon_leader_.commandSpeed = msg->leader_cmd_speed;
         // TODO: index is 0 temp to test the leader state
-        platoon_leader_.NumberOfVehicleInFront = 0;
+        platoon_leader_.NumberOfVehicleInFront = 1;
         platoon_leader_.leaderIndex = 0;
 
         ROS_DEBUG_STREAM("Platoon leader leader id:  " << platoon_leader_.staticId);
         ROS_DEBUG_STREAM("Platoon leader leader pose:  " << platoon_leader_.vehiclePosition);
         ROS_DEBUG_STREAM("Platoon leader leader cmd speed:  " << platoon_leader_.commandSpeed);
+
+        cav_msgs::PlatooningInfo platooing_info_msg = *msg;
+        platooing_info_msg.desired_gap = pcw_.desired_gap_;
+        platoon_info_pub_.publish(platooing_info_msg);
     }
 
 

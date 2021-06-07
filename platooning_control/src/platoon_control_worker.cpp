@@ -54,6 +54,7 @@ namespace platoon_control
 	        int numOfVehiclesGaps = leader.NumberOfVehicleInFront - leaderIndex;////TODO: Communicate vehicles ahead in the platoon (plugin_.platoonManager.getNumberOfVehicleInFront() - leaderIndex;)
 	        ROS_DEBUG_STREAM("The host vehicle have " << numOfVehiclesGaps << " vehicles between itself and its leader (includes the leader)");
 	        double desiredGap = std::max(hostVehicleSpeed * ctrl_config.timeHeadway * numOfVehiclesGaps, ctrl_config.standStillHeadway * numOfVehiclesGaps);
+            desired_gap_ = desiredGap;
 	        ROS_DEBUG_STREAM("The desired gap with the leader is " << desiredGap);
 	        // ROS_DEBUG("Based on raw radar, the current gap with the front vehicle is " , getDistanceToFrontVehicle());
 	        double desiredHostPosition = leaderCurrentPosition - desiredGap;
@@ -77,11 +78,18 @@ namespace platoon_control
 
         }
 
+        else if (leader.staticId == ctrl_config.vehicle_id)
+        {
+            ROS_DEBUG_STREAM("Host vehicle is the leader");
+            speed_cmd = currentSpeed;
+            pid_ctrl_.reset();
+        }
+
         else 
         {
             // TODO if there is no leader available, we should change back to Leader State and re-join other platoon later
             ROS_DEBUG_STREAM("There is no leader available");
-            speed_cmd = currentSpeed;
+            speed_cmd = 0.0;
             pid_ctrl_.reset();
         }
 
