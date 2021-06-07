@@ -22,7 +22,7 @@ set -ex
 source /opt/autoware.ai/ros/install/setup.bash --extend
 
 cd ~/carma_ws
-./src/carma-platform/carma_build.bash -c ~/carma_ws -a /opt/autoware.ai/ -x -m "-DCMAKE_BUILD_TYPE=Release"
+./src/carma-platform/carma_build.bash -c ~/carma_ws -a /opt/autoware.ai/ -x -m "-DCMAKE_BUILD_TYPE=Debug"
 
 # Copy the installed files
 cd ~/carma_ws 

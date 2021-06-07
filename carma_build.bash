@@ -104,5 +104,5 @@ echo "Autoware built successfuly. Binaries sourced from $(realpath ./install/set
 echo "Building CARMA"
 cd ${carma_workspace}
 
-colcon build --cmake-args "-DCMAKE_BUILD_TYPE=Debug"
+colcon build --cmake-args ${carma_build_args}
 echo "CARMA built successfuly. Binaries sourced from $(realpath ./install/setup.bash)"
