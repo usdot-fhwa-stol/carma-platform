@@ -856,6 +856,16 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
   } //end of while loop
   
 
+/*ALTERNATE BOUNDING BOX IDEA
+//llt.back().
+lanelet::BoundingBox2d bbox;//overarching box
+
+//X-value of the last lanelet in the route
+maxY = path.back().leftBound2d().back().y();//Y-value of the last lanelet in the route
+bbox.corner(lanelet::BoundingBox2d::TopRight).x() = path.back().leftBound2d().back().x();//Assign the top right x and y values to be the coordinates of the right Right Bound of the last lanelet in the route
+
+
+/****************************************************/
   std::string target_frame = base_map_georef_;
   if (target_frame.empty()) 
   {
@@ -870,6 +880,12 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
 
   localPoint.x()= minX;
   localPoint.y()= minY;
+
+  ROS_WARN_STREAM("Top Left: ("<< minX <<", "<<maxY<<")");
+  ROS_WARN_STREAM("Top Right: ("<< maxX <<", "<<maxY<<")");
+  ROS_WARN_STREAM("Bottom Left: ("<< minX <<", "<<minY<<")");
+  ROS_WARN_STREAM("Bottom Right: ("<< maxX <<", "<<minY<<")");
+
 
   lanelet::GPSPoint gpsRoute = local_projector.reverse(localPoint); //If the appropriate library is included, the reverse() function can be used to convert from local xyz to lat/lon
 
