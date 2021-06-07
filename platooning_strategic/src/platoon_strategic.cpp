@@ -48,10 +48,27 @@ namespace platoon_strategic
     bool PlatoonStrategicPlugin::onSpin() 
     {
         plugin_discovery_publisher_(plugin_discovery_msg_);
+        
         if (pm_.current_platoon_state == PlatoonState::LEADER)
         {
             run_leader();
         }
+        else if (pm_.current_platoon_state == PlatoonState::FOLLOWER)
+        {
+            run_follower();
+        }
+        else if (pm_.current_platoon_state == PlatoonState::CANDIDATEFOLLOWER)
+        {
+            run_candidate_follower();
+        }
+        else if (pm_.current_platoon_state == PlatoonState::LEADERWAITING)
+        {
+            run_leader_waiting();
+        }
+        // else if (pm_.current_platoon_state == PlatoonState::STANDBY)
+        // {
+        //     run_standby();
+        // }
 
         cav_msgs::PlatooningInfo platoon_status = compose_platoon_info_msg();
         platooning_info_publisher_(platoon_status);
@@ -198,9 +215,10 @@ namespace platoon_strategic
         }  
 
 
-        if (PlatoonState::STANDBY)
+        if (pm_.current_platoon_state == PlatoonState::STANDBY)
         {
             pm_.current_platoon_state = PlatoonState::LEADER;
+            ROS_DEBUG_STREAM("change the state from standby to leader");
         }
 
         // TODO: update with a wm function to get the actual downtrack
