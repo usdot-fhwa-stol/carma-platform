@@ -50,6 +50,7 @@ namespace platoon_control
         pnh_->param<double>("wheelbase", config.wheelbase, config.wheelbase);
         pnh_->param<double>("lowpass_gain", config.lowpass_gain, config.lowpass_gain);
         pnh_->param<double>("lookahead_ratio", config.lookahead_ratio, config.lookahead_ratio);
+        pnh_->getParam("/vehicle_id", config.vehicle_id);
 
         pcw_.updateConfigParams(config);
         config_ = config;
@@ -101,16 +102,20 @@ namespace platoon_control
         }
 
         cav_msgs::TrajectoryPlanPoint first_trajectory_point = tp->trajectory_points[1];
-        cav_msgs::TrajectoryPlanPoint lookahead_point = tp->trajectory_points[10];
+        cav_msgs::TrajectoryPlanPoint lookahead_point = getLookaheadTrajectoryPoint(*tp);
+
+        trajectory_speed_ = getTrajectorySpeed(tp->trajectory_points);
 
     	geometry_msgs::TwistStamped twist_msg = composeTwist(first_trajectory_point, lookahead_point);
+
+        
 
     	publishTwist(twist_msg);
 
         autoware_msgs::ControlCommandStamped ctrl_msg;
         ctrl_msg.cmd.linear_velocity = twist_msg.twist.linear.x;
         ROS_DEBUG_STREAM("command speed " << ctrl_msg.cmd.linear_velocity);
-        ctrl_msg.cmd.steering_angle = 0;// twist_msg.twist.angular.z;
+        ctrl_msg.cmd.steering_angle = twist_msg.twist.angular.z;
         ROS_DEBUG_STREAM("command steering " << ctrl_msg.cmd.steering_angle);
         ctrl_pub_.publish(ctrl_msg);
 
@@ -186,16 +191,39 @@ namespace platoon_control
 // @SONAR_START@
     geometry_msgs::TwistStamped PlatoonControlPlugin::composeTwist(const cav_msgs::TrajectoryPlanPoint& first_trajectory_point, const cav_msgs::TrajectoryPlanPoint& lookahead_point){
     	geometry_msgs::TwistStamped current_twist;
-        pcw_.setCurrentSpeed(current_speed_);
+        pcw_.setCurrentSpeed(trajectory_speed_);
+        // pcw_.setCurrentSpeed(current_speed_);
         pcw_.setLeader(platoon_leader_);
     	pcw_.generateSpeed(first_trajectory_point);
     	pcw_.generateSteer(lookahead_point);
     	current_twist.twist.linear.x = pcw_.speedCmd_;
         ROS_DEBUG_STREAM("desired speed:  " << pcw_.speedCmd_);
-    	current_twist.twist.angular.z = pcw_.steerCmd_;
+        // TODO: temporary until steering is fixed
+    	current_twist.twist.angular.z = 0;//pcw_.steerCmd_;
         ROS_DEBUG_STREAM("desired steering:  " << pcw_.steerCmd_);
         current_twist.header.stamp = ros::Time::now();
     	return current_twist;
+    }
+
+    // extract maximum speed of trajectory
+    double PlatoonControlPlugin::getTrajectorySpeed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points)
+    {   
+        double trajectory_speed = 0;
+
+        for(size_t i = 0; i < trajectory_points.size() - 2; i++ )
+        {
+            double dx = trajectory_points[i + 1].x - trajectory_points[i].x;
+            double dy = trajectory_points[i + 1].y - trajectory_points[i].y;
+            double d = sqrt(dx*dx + dy*dy); 
+            double t = (trajectory_points[i + 1].target_time.toSec() - trajectory_points[i].target_time.toSec());
+            double v = d/t;
+            if(v > trajectory_speed)
+            {
+                trajectory_speed = v;
+            }
+        }
+        return trajectory_speed;
+
     }
 
 }

@@ -34,9 +34,11 @@ namespace platoon_control
 
     void PlatoonControlWorker::generateSpeed(const cav_msgs::TrajectoryPlanPoint& point)
     {
+        double speed_cmd = 0;
         
         PlatoonLeaderInfo leader = platoon_leader;
-    	if(leader.staticId != "") {
+    	if(leader.staticId != "" && leader.staticId != ctrl_config.vehicle_id)
+        {
             double controllerOutput = 0.0;
 
 
@@ -69,39 +71,44 @@ namespace platoon_control
 	        	<< "; Leader CmdSpeed= " << leader.commandSpeed << "; Adjustment Cap " << ctrl_config.adjustmentCap);
 	            // After we get a adjSpeedCmd, we apply three filters on it if the filter is enabled
 	            // First: we do not allow the difference between command speed of the host vehicle and the leader's commandSpeed higher than adjustmentCap
-	        if(enableMaxAdjustmentFilter) {
-                if(adjSpeedCmd > leader.commandSpeed + ctrl_config.adjustmentCap) {
-                    adjSpeedCmd = leader.commandSpeed + ctrl_config.adjustmentCap;
-                } else if(adjSpeedCmd < leader.commandSpeed - ctrl_config.adjustmentCap) {
-                    adjSpeedCmd = leader.commandSpeed - ctrl_config.adjustmentCap;
+	        
+            speed_cmd = adjSpeedCmd;
+            ROS_DEBUG_STREAM("A speed command is generated from command generator: " << speed_cmd << " m/s");
+
+        }
+
+        else 
+        {
+            // TODO if there is no leader available, we should change back to Leader State and re-join other platoon later
+            ROS_DEBUG_STREAM("There is no leader available");
+            speed_cmd = currentSpeed;
+            pid_ctrl_.reset();
+        }
+
+        if(enableMaxAdjustmentFilter) {
+                if(speed_cmd > leader.commandSpeed + ctrl_config.adjustmentCap) {
+                    speed_cmd = leader.commandSpeed + ctrl_config.adjustmentCap;
+                } else if(speed_cmd < leader.commandSpeed - ctrl_config.adjustmentCap) {
+                    speed_cmd = leader.commandSpeed - ctrl_config.adjustmentCap;
                 }
-                ROS_DEBUG_STREAM("The adjusted cmd speed after max adjustment cap is " << adjSpeedCmd << " m/s");
-            }
+                ROS_DEBUG_STREAM("The adjusted cmd speed after max adjustment cap is " << speed_cmd << " m/s");
+        }
         
-            // Third: we allow do not a large gap between two consecutive speed commands
-            if(enableMaxAccelFilter) {
+        // Third: we allow do not a large gap between two consecutive speed commands
+        if(enableMaxAccelFilter) {
                 
                 double max = lastCmdSpeed + (ctrl_config.maxAccel * (ctrl_config.CMD_TIMESTEP / 1000.0));
                 double min = lastCmdSpeed - (ctrl_config.maxAccel * (ctrl_config.CMD_TIMESTEP / 1000.0));
-                if(adjSpeedCmd > max) {
-                    adjSpeedCmd = max; 
-                } else if (adjSpeedCmd < min) {
-                    adjSpeedCmd = min;
+                if(speed_cmd > max) {
+                    speed_cmd = max; 
+                } else if (speed_cmd < min) {
+                    speed_cmd = min;
                 }
-                lastCmdSpeed = adjSpeedCmd;
-                ROS_DEBUG_STREAM("The speed command after max accel cap is: " << adjSpeedCmd << " m/s");
-            }
-            speedCmd_ = adjSpeedCmd;
-            ROS_DEBUG_STREAM("A speed command is generated from command generator: " << speedCmd_ << " m/s");
-
+                lastCmdSpeed = speed_cmd;
+                ROS_DEBUG_STREAM("The speed command after max accel cap is: " << speed_cmd << " m/s");
         }
 
-        else {
-            // TODO if there is no leader available, we should change back to Leader State and re-join other platoon later
-            ROS_DEBUG_STREAM("There is no leader available");
-            speedCmd_ = currentSpeed;
-            pid_ctrl_.reset();
-        }
+        speedCmd_ = speed_cmd;
 
         lastCmdSpeed = speedCmd_;
 

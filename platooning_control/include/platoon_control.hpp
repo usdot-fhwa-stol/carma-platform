@@ -59,6 +59,7 @@ namespace platoon_control
 
 			// current speed (in m/s)
 			double current_speed_ = 0.0;
+			double trajectory_speed_ = 0.0;
 
         
         private:
@@ -91,6 +92,8 @@ namespace platoon_control
 			void currentTwist_cb(const geometry_msgs::TwistStamped::ConstPtr& twist);
 
         	void publishTwist(const geometry_msgs::TwistStamped& twist) const;
+
+			double getTrajectorySpeed(std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points);
 
 			
 
