@@ -198,6 +198,11 @@ namespace platoon_strategic
         }  
 
 
+        if (PlatoonState::STANDBY)
+        {
+            pm_.current_platoon_state = PlatoonState::LEADER;
+        }
+
         // TODO: update with a wm function to get the actual downtrack
         double dx = pose_msg_.pose.position.x - initial_pose_.pose.position.x;
         double dy = pose_msg_.pose.position.y - initial_pose_.pose.position.y;
@@ -205,11 +210,7 @@ namespace platoon_strategic
         // TODO: add a propoer function to platoon manager
         pm_.current_downtrack_didtance_ = current_downtrack_;
         ROS_DEBUG_STREAM("current_downtrack: " << current_downtrack_);
-        pm_.current_platoon_state = PlatoonState::LEADER;
-
         
-
-
         return true;
     }
 
@@ -454,6 +455,22 @@ namespace platoon_strategic
         {
             mob_req_cb_leader(msg);
         }
+        else if (pm_.current_platoon_state == PlatoonState::FOLLOWER)
+        {
+            mob_req_cb_follower(msg);
+        }
+        else if (pm_.current_platoon_state == PlatoonState::CANDIDATEFOLLOWER)
+        {
+            mob_req_cb_candidatefollower(msg);
+        }
+        else if (pm_.current_platoon_state == PlatoonState::LEADERWAITING)
+        {
+            mob_req_cb_leaderwaiting(msg);
+        }
+        else if (pm_.current_platoon_state == PlatoonState::STANDBY)
+        {
+            mob_req_cb_standby(msg);
+        }
     }
 
     MobilityRequestResponse PlatoonStrategicPlugin::mob_req_cb_standby(const cav_msgs::MobilityRequest& msg)
@@ -576,7 +593,26 @@ namespace platoon_strategic
 
     void PlatoonStrategicPlugin::mob_resp_cb(const cav_msgs::MobilityResponse& msg)
     {
-        // In standby state, it will not send out any requests so it will also ignore all responses
+        if (pm_.current_platoon_state == PlatoonState::LEADER)
+        {
+            mob_resp_cb_leader(msg);
+        }
+        else if (pm_.current_platoon_state == PlatoonState::FOLLOWER)
+        {
+            mob_resp_cb_follower(msg);
+        }
+        else if (pm_.current_platoon_state == PlatoonState::CANDIDATEFOLLOWER)
+        {
+            mob_resp_cb_candidatefollower(msg);
+        }
+        else if (pm_.current_platoon_state == PlatoonState::LEADERWAITING)
+        {
+            mob_resp_cb_leaderwaiting(msg);
+        }
+        else if (pm_.current_platoon_state == PlatoonState::STANDBY)
+        {
+            mob_resp_cb_standby(msg);
+        }
     }
 
     void PlatoonStrategicPlugin::mob_resp_cb_standby(const cav_msgs::MobilityResponse& msg)
@@ -724,16 +760,38 @@ namespace platoon_strategic
 
     void PlatoonStrategicPlugin::mob_op_cb(const cav_msgs::MobilityOperation& msg)
     {
+        if (pm_.current_platoon_state == PlatoonState::LEADER)
+        {
+            mob_op_cb_leader(msg);
+        }
+        else if (pm_.current_platoon_state == PlatoonState::FOLLOWER)
+        {
+            mob_op_cb_follower(msg);
+        }
+        else if (pm_.current_platoon_state == PlatoonState::CANDIDATEFOLLOWER)
+        {
+            mob_op_cb_candidatefollower(msg);
+        }
+        else if (pm_.current_platoon_state == PlatoonState::LEADERWAITING)
+        {
+            mob_op_cb_leaderwaiting(msg);
+        }
+        else if (pm_.current_platoon_state == PlatoonState::STANDBY)
+        {
+            mob_op_cb_standby(msg);
+        }
+    
+
+        // TODO: If needed, add a queue for status messages
+        // if (msg.strategy_params.rfind(OPERATION_INFO_TYPE, 0) == 0)
+        // {
+        //     //  this.state.onMobilityOperationMessage(msg);
+        // }
+        // else
+        // {
+        //     // TODO: add a queue for status messages
+        // }
         
-        if (msg.strategy_params.rfind(OPERATION_INFO_TYPE, 0) == 0)
-        {
-            //  this.state.onMobilityOperationMessage(msg);
-        }
-        else
-        {
-            // TODO: add a queue for status messages
-        }
-        mob_op_cb_leader(msg);
     }
 
     void PlatoonStrategicPlugin::mob_op_cb_standby(const cav_msgs::MobilityOperation& msg)
