@@ -19,7 +19,7 @@ import subprocess
 import sys
 
 # Usage:
-# reindex_active_rosbags.py <path to folder containing .bag.active files>
+# python reindex_active_rosbags.py <path to folder containing .bag.active files>
 
 def reindex_bag_files(source_folder):
     # List of bag files to re-index

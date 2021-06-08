@@ -18,11 +18,11 @@ import sys
 import csv
 import matplotlib.pyplot as plt
 import rospy
-import rosbag # Imported "pip install --extra-index-url https://rospypi.github.io/simple/ rospy rosbag rospkg"
+import rosbag # To import this, run the following command: "pip install --extra-index-url https://rospypi.github.io/simple/ rospy rosbag rospkg"
 import datetime
 
 # Usage:
-# analyze_TIM_test_rosbags.py <path to folder containing TIM test case .bag files>
+# python analyze_TIM_test_rosbags.py <path to folder containing TIM test case .bag files>
 
 # Helper Function: Get times associated with the system entering the geofence and exiting the geofence
 def get_geofence_entrance_and_exit_times(bag):
