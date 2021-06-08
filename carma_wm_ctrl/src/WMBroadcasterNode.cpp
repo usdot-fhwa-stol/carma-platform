@@ -87,10 +87,9 @@ int WMBroadcasterNode::run()
     timer = cnh_.createTimer(ros::Duration(10.0), [this](auto){
       if(wmb_.getRoute().route_path_lanelet_ids.size() > 0)
       wmb_.routeCallbackMessage(wmb_.getRoute());
+      spinCallBack();
       }, false);
 
-  ros::CARMANodeHandle::setSpinCallback(std::bind(&WMBroadcasterNode::spinCallBack, this));
- 
   // Spin
   cnh_.spin();
   return 0;

@@ -442,6 +442,7 @@ void WMBroadcaster::geofenceCallback(const cav_msgs::TrafficControlMessage& geof
   if (gf_ptr->affected_parts_.size() == 0)
   {
     ROS_WARN_STREAM("There is no applicable component in map for the new geofence message received by WMBroadcaster with id: " << gf_ptr->id_);
+    tcm_marker_array_.markers.resize(tcm_marker_array_.markers.size() - 1); //truncate this geofence
     return;
   }
   scheduler_.addGeofence(gf_ptr);  // Add the geofence to the scheduler
@@ -953,7 +954,7 @@ visualization_msgs::Marker WMBroadcaster::composeTCMMarkerVisualizer(const std::
             geometry_msgs::Point temp_point;
             temp_point.x = input[i].x();
             temp_point.y = input[i].y();
-            temp_point.z = 1; //to show up on top of the lanelet lines
+            temp_point.z = 2; //to show up on top of the lanelet lines
 
             marker.points.push_back(temp_point);
         }
