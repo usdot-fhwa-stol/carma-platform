@@ -85,7 +85,7 @@ int WMBroadcasterNode::run()
     timer = cnh_.createTimer(ros::Duration(10.0), [this](auto){
       if(wmb_.getRoute().route_path_lanelet_ids.size() > 0)
       wmb_.routeCallbackMessage(wmb_.getRoute());
-      }, &wmb_);
+      }, false);
  
   // Spin
   cnh_.spin();
