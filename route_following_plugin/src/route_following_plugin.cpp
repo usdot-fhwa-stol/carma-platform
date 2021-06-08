@@ -238,7 +238,7 @@ namespace route_following_plugin
         // change to left if detected
         for (auto &relation : wm_->getRoute()->leftRelations(starting_lanelet))
         {
-            ROS_DEBUG_STREAM("Checking relation.lanelet.id()" < <relation.lanelet.id());
+            ROS_DEBUG_STREAM("Checking relation.lanelet.id()" <<relation.lanelet.id());
             if (relation.lanelet.id() == ending_lanelet.id())
             {
                 ROS_DEBUG_STREAM("relation.lanelet.id()" << relation.lanelet.id() << " is LEFT");
