@@ -16,14 +16,14 @@ void external_object_callback(const cav_msgs::ExternalObjectListPtr msg) {
 
   for (auto& obj : msg->objects)
   {
-    ROS_INFO("I heard:");
 
     for (auto& p : obj.predictions) {
         posearray.poses.push_back(p.predicted_position);
     }
-
-    pose_array_pub.publish(posearray);
   }
+
+  pose_array_pub.publish(posearray);
+  
 }
 
 int main(int argc, char **argv)
