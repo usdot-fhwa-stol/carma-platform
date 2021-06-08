@@ -1125,7 +1125,7 @@ namespace platoon_strategic
         tf2_buffer_.setUsingDedicatedThread(true);
         try
         {
-        tf_ = tf2_buffer_.lookupTransform("earth", "map", ros::Time(0)); //save to local copy of transform 20 sec timeout
+        tf_ = tf2_buffer_.lookupTransform("earth", "map", ros::Time(0), ros::Duration(20.0)); //save to local copy of transform 20 sec timeout
         }
         catch (const tf2::TransformException &ex)
         {
