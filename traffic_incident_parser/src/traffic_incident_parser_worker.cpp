@@ -360,6 +360,7 @@ namespace traffic
       cav_msgs::PathNode prev_point;
       prev_point.x = reverse_lanes[i].front().x();
       prev_point.y = reverse_lanes[i].front().y();
+      bool first = true;
       for(const auto& p : carma_utils::containers::downsample_vector(reverse_lanes[i], 8))
       {
         cav_msgs::PathNode delta;
@@ -368,8 +369,16 @@ namespace traffic
         delta.x=p.x() - prev_point.x;
         delta.y=p.y() - prev_point.y;
         ROS_DEBUG_STREAM("calculated diff x" << delta.x << ", diff y" << delta.y);
-
-        traffic_mobility_msg.geometry.nodes.push_back(delta);
+        if (first)
+        {
+          traffic_mobility_msg.geometry.nodes.push_back(prev_point); //traffic incident parser actually sends coordinates in carma-platform's proj frame
+          first = false;
+        }
+        else
+        {
+          traffic_mobility_msg.geometry.nodes.push_back(delta);
+        }
+        
         prev_point.x = p.x();
         prev_point.y = p.y();
       }
