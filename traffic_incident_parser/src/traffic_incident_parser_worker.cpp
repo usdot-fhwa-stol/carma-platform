@@ -363,11 +363,11 @@ namespace traffic
       for(const auto& p : carma_utils::containers::downsample_vector(reverse_lanes[i], 8))
       {
         cav_msgs::PathNode delta;
-        ROS_INFO_STREAM("prev_point x" << prev_point.x << ", prev_point y" << prev_point.y);
-        ROS_INFO_STREAM("p.x()" << p.x() << ", p.y()" << p.y());
+        ROS_DEBUG_STREAM("prev_point x" << prev_point.x << ", prev_point y" << prev_point.y);
+        ROS_DEBUG_STREAM("p.x()" << p.x() << ", p.y()" << p.y());
         delta.x=p.x() - prev_point.x;
         delta.y=p.y() - prev_point.y;
-        ROS_INFO_STREAM("diff x" << delta.x << ", diff y" << delta.y);
+        ROS_DEBUG_STREAM("calculated diff x" << delta.x << ", diff y" << delta.y);
 
         traffic_mobility_msg.geometry.nodes.push_back(delta);
         prev_point.x = p.x();
