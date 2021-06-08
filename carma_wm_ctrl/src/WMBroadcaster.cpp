@@ -938,8 +938,10 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
   
   }
 
-  ROS_DEBUG_STREAM("Before conversion: MinPoint ( "<< minX <<", " << minY <<" )");
-  ROS_DEBUG_STREAM("Before conversion: MaxPoint ( "<< maxX <<", " << maxY <<" )");
+  ROS_DEBUG_STREAM("Before conversion: Top Left: ("<< minX <<", "<<maxY<<")");
+  ROS_DEBUG_STREAM("Before conversion: Top Right: ("<< maxX <<", "<<maxY<<")");
+  ROS_DEBUG_STREAM("Before conversion: Bottom Left: ("<< minX <<", "<<minY<<")");
+  ROS_DEBUG_STREAM("Before conversion: Bottom Right: ("<< maxX <<", "<<minY<<")");
 
   PJ_COORD pj_min {{minX, minY, 0, 0}}; // z is not currently used
   PJ_COORD pj_min_tmerc;
@@ -957,12 +959,12 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
   cB.reflat = gpsRoute.lat;
   cB.reflon = gpsRoute.lon;
 
-  cB.offsets[0].deltax = pj_max_tmerc.xyz.x; // Points in clockwise order min,min (lat,lon point) -> max,min -> max,max -> min,max
-  cB.offsets[0].deltay = pj_min_tmerc.xyz.y;
-  cB.offsets[1].deltax = pj_max_tmerc.xyz.x;
-  cB.offsets[1].deltay = pj_max_tmerc.xyz.y;
-  cB.offsets[2].deltax = pj_min_tmerc.xyz.x;
-  cB.offsets[2].deltay = pj_max_tmerc.xyz.y;
+  cB.offsets[0].deltax = pj_max_tmerc.xyz.x - pj_min_tmerc.xyz.x; // Points in clockwise order min,min (lat,lon point) -> max,min -> max,max -> min,max
+  cB.offsets[0].deltay = pj_min_tmerc.xyz.y - pj_min_tmerc.xyz.y; // calculating the offsets
+  cB.offsets[1].deltax = pj_max_tmerc.xyz.x - pj_min_tmerc.xyz.x;
+  cB.offsets[1].deltay = pj_max_tmerc.xyz.y - pj_min_tmerc.xyz.y;
+  cB.offsets[2].deltax = pj_min_tmerc.xyz.x - pj_min_tmerc.xyz.x;
+  cB.offsets[2].deltay = pj_max_tmerc.xyz.y - pj_min_tmerc.xyz.y;
 
   cB.oldest =ros::Time::now(); // TODO this needs to be set to 0 or an older value as otherwise this will filter out all controls
   
