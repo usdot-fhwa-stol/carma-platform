@@ -895,17 +895,53 @@ bbox.corner(lanelet::BoundingBox2d::TopRight).x() = path.back().leftBound2d().ba
   cB.reflat = gpsRoute.lat;
   cB.reflon = gpsRoute.lon;
 
+
   cav_msgs::OffsetPoint offsetX;
   offsetX.deltax = maxX - minX;
   cav_msgs::OffsetPoint offsetY;
   offsetY.deltay = maxY - minY;
-  cB.offsets[0].deltax = minX;
-  cB.offsets[0].deltay = maxY;
-  cB.offsets[1].deltax = maxX;
-  cB.offsets[1].deltay = minY;
-  cB.offsets[2].deltax = maxX;
-  cB.offsets[2].deltay = maxY;
+  cB.offsets[0].deltax = offsetX.deltax;
+  cB.offsets[0].deltay = offsetY.deltay;
+  cB.offsets[1].deltax = offsetX.deltax;
+  cB.offsets[1].deltay = offsetY.deltay;
+  cB.offsets[2].deltax = offsetX.deltax;
+  cB.offsets[2].deltay = offsetY.deltay;
   cB.oldest =ros::Time::now();
+
+ ////////////////////////DEBUG////////////////////////////
+  lanelet::BasicPoint3d localPoint1;
+  lanelet::BasicPoint3d localPoint2;
+  lanelet::BasicPoint3d localPoint3;
+  lanelet::BasicPoint3d localPoint4;
+
+  localPoint1.x() = localPoint.x();
+  localPoint1.y() = localPoint.y();
+  localPoint2.x() = localPoint1.x() + cB.offsets[0].deltax;
+  localPoint2.y() = localPoint1.y() + cB.offsets[0].deltay;
+  localPoint3.x() = localPoint1.x() + cB.offsets[1].deltax;
+  localPoint3.y() = localPoint1.y() + cB.offsets[1].deltay; 
+  localPoint4.x() = localPoint1.x() + cB.offsets[2].deltax;
+  localPoint4.y() = localPoint1.y() + cB.offsets[2].deltay; 
+
+
+  lanelet::GPSPoint gpsRoute1 = local_projector.reverse(localPoint1);
+  lanelet::GPSPoint gpsRoute2 = local_projector.reverse(localPoint2);
+  lanelet::GPSPoint gpsRoute3 = local_projector.reverse(localPoint3);
+  lanelet::GPSPoint gpsRoute4 = local_projector.reverse(localPoint4);
+
+  ROS_DEBUG_STREAM("Lat1: "<< std::to_string(gpsRoute1.lat));
+  ROS_DEBUG_STREAM("Lon1: "<<std::to_string(gpsRoute1.lon));
+
+  ROS_DEBUG_STREAM("Lat2: "<< std::to_string(gpsRoute2.lat));
+  ROS_DEBUG_STREAM("Lon2: "<<std::to_string(gpsRoute2.lon));
+
+  ROS_DEBUG_STREAM("Lat3: "<< std::to_string(gpsRoute3.lat));
+  ROS_DEBUG_STREAM("Lon3: "<<std::to_string(gpsRoute3.lon));
+
+  ROS_DEBUG_STREAM("Lat4: "<< std::to_string(gpsRoute4.lat));
+  ROS_DEBUG_STREAM("Lon4: "<<std::to_string(gpsRoute4.lon));
+    ////////////////////////DEBUG////////////////////////////
+
   
   cR.choice = cav_msgs::TrafficControlRequest::TCRV01;
   
