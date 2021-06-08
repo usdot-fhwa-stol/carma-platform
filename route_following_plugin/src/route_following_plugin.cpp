@@ -35,6 +35,7 @@ namespace route_following_plugin
         plan_maneuver_srv_ = nh_->advertiseService("plugins/RouteFollowing/plan_maneuvers", &RouteFollowingPlugin::plan_maneuver_cb, this);
                 
         plugin_discovery_pub_ = nh_->advertise<cav_msgs::Plugin>("plugin_discovery", 1);
+        upcoming_lane_change_status_pub_ = nh_->advertise<cav_msgs::UpcomingLaneChangeStatus>("upcoming_lane_change_status", 1);
         plugin_discovery_msg_.name = "RouteFollowing";
         plugin_discovery_msg_.versionId = "v1.0";
         plugin_discovery_msg_.available = true;
@@ -95,6 +96,7 @@ namespace route_following_plugin
             return true;
         }
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
+        double current_downtrack=current_progress;
         double speed_progress = current_speed_;
         ros::Time time_progress = ros::Time::now();
         double target_speed=findSpeedLimit(current_lanelet);   //get Speed Limit
@@ -170,6 +172,9 @@ namespace route_following_plugin
                 composeLaneChangeManeuverMessage(lane_change_start_dist, end_dist, speed_progress, target_speed, 
                                     starting_lanelet_id, ending_lanelet_id,
                                     time_progress));
+
+               ROS_DEBUG_STREAM("before composing lane change status msg");
+               upcoming_lane_change_status_msg_=ComposeLaneChangeStatus(lane_change_start_dist,shortest_path[last_lanelet_index],shortest_path[last_lanelet_index+1],current_downtrack);   
                 
                 ++last_lanelet_index;
             }
@@ -217,10 +222,56 @@ namespace route_following_plugin
         }
         return true;
     }
+
+     cav_msgs::UpcomingLaneChangeStatus RouteFollowingPlugin::ComposeLaneChangeStatus(double lane_change_start_dist,lanelet::ConstLanelet starting_lanelet,lanelet::ConstLanelet ending_lanelet,double current_downtrack)
+    {
+
+        if (current_downtrack <= upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack)
+        { 
+            ROS_DEBUG_STREAM("ComposeLaneChangeStatus First IF: current_downtrack " << current_downtrack << ",upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack " << upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack);
+               return upcoming_lane_change_status_msg_;
+        }
+
+        cav_msgs::UpcomingLaneChangeStatus upcoming_lanechange_status_msg;
+        // default to right lane change
+        upcoming_lanechange_status_msg.lane_change = cav_msgs::UpcomingLaneChangeStatus::RIGHT; 
+        // change to left if detected
+        for (auto &relation : wm_->getRoute()->leftRelations(starting_lanelet))
+        {
+            ROS_DEBUG_STREAM("Checking relation.lanelet.id()" < <relation.lanelet.id());
+            if (relation.lanelet.id() == ending_lanelet.id())
+            {
+                ROS_DEBUG_STREAM("relation.lanelet.id()" << relation.lanelet.id() << " is LEFT");
+                upcoming_lanechange_status_msg.lane_change = cav_msgs::UpcomingLaneChangeStatus::LEFT;
+                break;
+            }  
+        }
+        ROS_DEBUG_STREAM("lane_change_start_dist <<" << lane_change_start_dist);
+       upcoming_lanechange_status_msg.last_recorded_lanechange_downtrack=lane_change_start_dist;
+        ROS_DEBUG_STREAM("==== ComposeLaneChangeStatus Exiting now");
+       return upcoming_lanechange_status_msg;
+    }
+
     void RouteFollowingPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
         pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
+
+        if (!wm_->getRoute())
+        return;
+        lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
+        double current_progress = wm_->routeTrackPos(current_loc).downtrack;
+        ROS_ERROR_STREAM("pose_cb : current_progress" << current_progress);
+        ROS_ERROR_STREAM("upcoming_lane_change_status_msg_.lane_change : " << upcoming_lane_change_status_msg_.lane_change << 
+            ", upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack" << upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack);
+
+        if (upcoming_lane_change_status_msg_.lane_change != cav_msgs::UpcomingLaneChangeStatus::NONE && current_progress < upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack)
+        {
+            upcoming_lane_change_status_msg_.downtrack_until_lanechange=upcoming_lane_change_status_msg_.last_recorded_lanechange_downtrack-current_progress;
+            ROS_ERROR_STREAM("upcoming_lane_change_status_msg_.downtrack_until_lanechange" << upcoming_lane_change_status_msg_.downtrack_until_lanechange);
+            upcoming_lane_change_status_pub_.publish(upcoming_lane_change_status_msg_); 
+        }
     }
+    
     void RouteFollowingPlugin::twist_cd(const geometry_msgs::TwistStampedConstPtr& msg)
     {
         current_speed_ = msg->twist.linear.x;

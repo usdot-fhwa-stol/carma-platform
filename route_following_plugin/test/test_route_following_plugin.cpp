@@ -273,6 +273,52 @@ namespace route_following_plugin
         else ASSERT_EQ(speed,11.176);                                                                            
     }
 
+    TEST(RouteFollowingPlugin,testComposeLaneChangeStatus)
+    {
+        //Use Guidance Lib to create map
+        carma_wm::test::MapOptions options;
+        options.lane_length_=25;
+        options.lane_width_=3.7;
+        options.speed_limit_=carma_wm::test::MapOptions::SpeedLimit::DEFAULT;
+        options.obstacle_=carma_wm::test::MapOptions::Obstacle::NONE;
+        std::shared_ptr<carma_wm::CARMAWorldModel> cmw=std::make_shared<carma_wm::CARMAWorldModel>();
+        //create the Semantic Map
+        lanelet::LaneletMapPtr map=carma_wm::test::buildGuidanceTestMap(options.lane_width_,options.lane_length_);
+
+        //set the map with default routingGraph
+        cmw->carma_wm::CARMAWorldModel::setMap(map);
+        carma_wm::test::setRouteByIds({1210,1213},cmw);
+
+        lanelet::LaneletMapConstPtr const_map(map);
+        lanelet::traffic_rules::TrafficRulesUPtr traffic_rules=lanelet::traffic_rules::TrafficRulesFactory::create(lanelet::Locations::Germany, lanelet::Participants::VehicleCar);
+        lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
+
+        //Compute and print shortest path
+        lanelet::Lanelet start_lanelet=map->laneletLayer.get(1210);
+        lanelet::Lanelet end_lanelet=map->laneletLayer.get(1223);
+        lanelet::Lanelet end_lanelet_1=map->laneletLayer.get(1220);
+        auto route = map_graph->getRoute(start_lanelet, end_lanelet);
+
+        cmw.get()->setConfigSpeedLimit(30.0);
+
+        RouteFollowingPlugin worker;
+        cmw->carma_wm::CARMAWorldModel::setMap(map);
+        worker.wm_=cmw;
+
+        auto lane_change_status_msg=worker.ComposeLaneChangeStatus(10,start_lanelet,end_lanelet_1,10);
+
+        ASSERT_EQ(lane_change_status_msg.lane_change,cav_msgs::UpcomingLaneChangeStatus::RIGHT);
+        ASSERT_EQ(lane_change_status_msg.downtrack_until_lanechange,0);
+        ASSERT_EQ(lane_change_status_msg.last_recorded_lanechange_downtrack,10);
+
+        lane_change_status_msg=worker.ComposeLaneChangeStatus(10,end_lanelet_1,start_lanelet,10);
+
+        ASSERT_EQ(lane_change_status_msg.lane_change,cav_msgs::UpcomingLaneChangeStatus::LEFT);
+        ASSERT_EQ(lane_change_status_msg.downtrack_until_lanechange,0);
+        ASSERT_EQ(lane_change_status_msg.last_recorded_lanechange_downtrack,10);
+
+    }
+
     
 
 }
