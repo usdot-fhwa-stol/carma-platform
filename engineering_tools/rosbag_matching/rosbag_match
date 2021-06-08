@@ -35,6 +35,7 @@ for dir in */; do
 			
 			# determine match
 			difference=$(echo "${time[0]:0:13}-$ros_time" | bc -l)
+#			echo $difference
 			if [[ "$(echo "$difference<0 " | bc -l)" -eq "1"  ]]; then
 				difference=${difference:1}					
 			fi
@@ -44,7 +45,8 @@ for dir in */; do
 				match="1"
 				match_dir=$dir
 				match_time=${time:0:13}
-				
+				match_diff=$difference
+								
 				# rename the directory
 				cd ..
 				match_log=${rosbag%.bag}.log
@@ -58,7 +60,7 @@ for dir in */; do
 done
 
 if [[ "$match" -eq "1" ]]; then
-	echo "Match Found: Match at $match_dir. Renamed to $match_log Rosbag Time: $ros_time Logfile Time: $match_time" 
+	echo "Match Found: Match at $match_dir. Renamed to $match_log Rosbag Time: $ros_time Logfile Time: $match_time Time difference: $match_diff" 
 else
 	echo "Match not found."
 fi
