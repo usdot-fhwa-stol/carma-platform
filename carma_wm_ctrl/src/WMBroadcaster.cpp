@@ -960,13 +960,14 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
   cB.reflon = gpsRoute.lon;
 
   cB.offsets[0].deltax = pj_max_tmerc.xyz.x - pj_min_tmerc.xyz.x; // Points in clockwise order min,min (lat,lon point) -> max,min -> max,max -> min,max
-  cB.offsets[0].deltay = pj_min_tmerc.xyz.y - pj_min_tmerc.xyz.y; // calculating the offsets
+  cB.offsets[0].deltay = 0.0;                                     // calculating the offsets
   cB.offsets[1].deltax = pj_max_tmerc.xyz.x - pj_min_tmerc.xyz.x;
   cB.offsets[1].deltay = pj_max_tmerc.xyz.y - pj_min_tmerc.xyz.y;
   cB.offsets[2].deltax = pj_min_tmerc.xyz.x - pj_min_tmerc.xyz.x;
-  cB.offsets[2].deltay = pj_max_tmerc.xyz.y - pj_min_tmerc.xyz.y;
+  cB.offsets[2].deltay = 0.0;
 
    ////////////////////////DEBUG////////////////////////////
+   // TODO: remove this block after successful integration test with carma-cloud
   lanelet::BasicPoint3d localPoint1;
   lanelet::BasicPoint3d localPoint2;
   lanelet::BasicPoint3d localPoint3;
@@ -998,7 +999,7 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
 
   ROS_DEBUG_STREAM("Lat4: "<< std::to_string(gpsRoute4.lat));
   ROS_DEBUG_STREAM("Lon4: "<<std::to_string(gpsRoute4.lon));
-    ////////////////////////DEBUG////////////////////////////
+  ////////////////////////DEBUG////////////////////////////
     
 
   cB.oldest =ros::Time::now(); // TODO this needs to be set to 0 or an older value as otherwise this will filter out all controls
