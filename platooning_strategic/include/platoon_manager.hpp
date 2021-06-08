@@ -80,7 +80,7 @@ namespace platoon_strategic
         PlatoonManager();
 
         // todo initialize as empty
-        std::vector<PlatoonMember> platoon;
+        std::vector<PlatoonMember> platoon{};
 
         
 
@@ -143,7 +143,7 @@ namespace platoon_strategic
         double getCurrentDowntrackDistance() const;
 
 
-        int platoonSize;
+        int platoonSize = 1;
         std::string leaderID;
         std::string currentPlatoonID = "test_plan";
         bool isFollower;
