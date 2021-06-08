@@ -45,8 +45,9 @@
 #include <lanelet2_extension/traffic_rules/CarmaUSTrafficRules.h>
 #include "platoon_config.h"
 #include <platoon_manager.hpp>
-
-
+#include <tf2_ros/transform_listener.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 namespace platoon_strategic
 {
@@ -107,6 +108,7 @@ namespace platoon_strategic
             void run_candidate_follower();
             void run_follower();
             
+            void lookupECEFtoMapTransform();
 
         
         private:
@@ -173,6 +175,11 @@ namespace platoon_strategic
             void mob_op_cb_candidatefollower(const cav_msgs::MobilityOperation& msg);
             void mob_op_cb_standby(const cav_msgs::MobilityOperation& msg);
 
+            // TF listenser
+            tf2_ros::Buffer tf2_buffer_;
+            std::unique_ptr<tf2_ros::TransformListener> tf2_listener_;
+            geometry_msgs::TransformStamped tf_;
+
             
 
             std::string host_bsm_id_ = "";
@@ -201,6 +208,12 @@ namespace platoon_strategic
             cav_msgs::MobilityOperation composeMobilityOperationFollower();
             cav_msgs::MobilityOperation composeMobilityOperationLeaderWaiting();
             cav_msgs::MobilityOperation composeMobilityOperationCandidateFollower();
+
+            cav_msgs::LocationECEF pose_to_ecef(geometry_msgs::PoseStamped pose_msg, geometry_msgs::TransformStamped tf);
+            lanelet::BasicPoint2d ecef_to_map_point(cav_msgs::LocationECEF ecef_point, geometry_msgs::TransformStamped tf);
+
+            
+
 
 
             double maxAllowedJoinTimeGap_ = 15.0;

@@ -87,6 +87,8 @@ public:
                                     [&mob_request_pub](auto msg) { mob_request_pub.publish(msg); }, [&mob_operation_pub](auto msg) { mob_operation_pub.publish(msg); },
                                     [&platoon_info_pub](auto msg) { platoon_info_pub.publish(msg); } );
   
+    worker.lookupECEFtoMapTransform();
+
     ros::ServiceServer maneuver_srv_ = nh.advertiseService("plugins/PlatooningStrategicPlugin/plan_maneuvers",
                                             &PlatoonStrategicPlugin::plan_maneuver_cb, &worker);
     ros::Subscriber mob_request_sub = nh.subscribe("incoming_mobility_request", 5, &PlatoonStrategicPlugin::mob_req_cb,  &worker);

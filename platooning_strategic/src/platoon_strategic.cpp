@@ -126,6 +126,7 @@ namespace platoon_strategic
         {
             initial_pose_ = pose_msg_;
             ROS_DEBUG_STREAM("first pose initialized!");
+            pose_initialize = true;
         }
 
         lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
@@ -221,11 +222,8 @@ namespace platoon_strategic
             ROS_DEBUG_STREAM("change the state from standby to leader");
         }
 
-        // TODO: update with a wm function to get the actual downtrack
-        double dx = pose_msg_.pose.position.x - initial_pose_.pose.position.x;
-        double dy = pose_msg_.pose.position.y - initial_pose_.pose.position.y;
-        current_downtrack_ = std::sqrt(dx*dx + dy*dy);
-        // TODO: add a propoer function to platoon manager
+        carma_wm::TrackPos tc = wm_->routeTrackPos(current_loc);
+        current_downtrack_ = tc.downtrack;
         pm_.current_downtrack_didtance_ = current_downtrack_;
         ROS_DEBUG_STREAM("current_downtrack: " << current_downtrack_);
         
@@ -443,7 +441,6 @@ namespace platoon_strategic
                     request.strategy_params = "";
                     request.urgency = 50;
                     mobility_request_publisher_(request);
-                    // mob_req_pub_.publish(request);
                     ROS_DEBUG_STREAM("Published Mobility Candidate-Join request to the leader");
                     
                     PlatoonPlan* new_plan = new PlatoonPlan(true, currentTime, planId, pm_.targetLeaderId);
@@ -898,7 +895,15 @@ namespace platoon_strategic
             std::vector<std::string> rearVehicleDtd_parsed;
             boost::algorithm::split(rearVehicleDtd_parsed, inputsParams[1], boost::is_any_of(":"));
             double rearVehicleDtd = std::stod(rearVehicleDtd_parsed[1]);
-            ROS_DEBUG_STREAM("rearVehicleDtd: " << rearVehicleDtd);
+
+            
+            ROS_DEBUG_STREAM("rearVehicleDtd from message: " << rearVehicleDtd);
+            cav_msgs::LocationECEF ecef_loc = msg.location;
+            lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc, tf_);
+            rearVehicleDtd = wm_->routeTrackPos(incoming_pose).downtrack;
+
+            ROS_DEBUG_STREAM("rearVehicleDtd from location: " << rearVehicleDtd);
+            
             // We are trying to validate is the platoon rear is right in front of the host vehicle
             if(isVehicleRightInFront(rearVehicleBsmId, rearVehicleDtd))
             {
@@ -963,6 +968,41 @@ namespace platoon_strategic
         }
     }
 
+    cav_msgs::LocationECEF PlatoonStrategicPlugin::pose_to_ecef(geometry_msgs::PoseStamped pose_msg, geometry_msgs::TransformStamped tf)
+    {
+        tf2::Stamped<tf2::Transform> transform;
+        tf2::fromMsg(tf, transform);
+        
+        cav_msgs::LocationECEF ecef_point;    
+        
+        auto pose_vec = tf2::Vector3(pose_msg.pose.position.x, pose_msg.pose.position.y, 0.0);
+        tf2::Vector3 ecef_point_vec = transform * pose_vec;
+        ecef_point.ecef_x = (int32_t)(ecef_point_vec.x() * 100.0); // m to cm
+        ecef_point.ecef_y = (int32_t)(ecef_point_vec.y() * 100.0);
+        ecef_point.ecef_z = (int32_t)(ecef_point_vec.z() * 100.0); 
+
+        return ecef_point;
+    }
+
+    lanelet::BasicPoint2d PlatoonStrategicPlugin::ecef_to_map_point(cav_msgs::LocationECEF ecef_point, geometry_msgs::TransformStamped tf)
+    {
+        tf2::Stamped<tf2::Transform> map_in_earth;
+        tf2::fromMsg(tf, map_in_earth);
+        // convert input point to transform
+        tf2::Transform point_in_earth;
+        tf2::Quaternion no_rotation(0, 0, 0, 1);
+        tf2::Vector3 input_point {(double)ecef_point.ecef_x/100.0, (double)ecef_point.ecef_y/100.0, (double)ecef_point.ecef_z/100.0}; //m to cm
+        point_in_earth.setOrigin(input_point);
+        point_in_earth.setRotation(no_rotation);
+        // convert to map frame by (T_e_m)^(-1) * T_e_p
+        auto point_in_map = map_in_earth.inverse() * point_in_earth;
+        lanelet::BasicPoint2d output {
+        point_in_map.getOrigin().getX(),
+        point_in_map.getOrigin().getY()};
+
+        return output;
+    } 
+
 
     cav_msgs::MobilityOperation PlatoonStrategicPlugin::composeMobilityOperationLeader(const std::string& type){
         cav_msgs::MobilityOperation msg;
@@ -973,6 +1013,9 @@ namespace platoon_strategic
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toSec()*1000.0;
         msg.strategy = MOBILITY_STRATEGY;
+
+        cav_msgs::LocationECEF ecef_point = pose_to_ecef(pose_msg_, tf_);
+        msg.location = ecef_point;
 
         if (type == OPERATION_INFO_TYPE){
             // For INFO params, the string format is INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d
@@ -1023,6 +1066,9 @@ namespace platoon_strategic
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toSec()*1000.0;
         msg.strategy = MOBILITY_STRATEGY;
+
+        cav_msgs::LocationECEF ecef_point = pose_to_ecef(pose_msg_, tf_);
+        msg.location = ecef_point;
         
         // TODO: update cmdspeed
         double cmdSpeed;
@@ -1052,6 +1098,10 @@ namespace platoon_strategic
         std::string hostStaticId = config_.vehicle_id;
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toSec()*1000;
+
+        cav_msgs::LocationECEF ecef_point = pose_to_ecef(pose_msg_, tf_);
+        msg.location = ecef_point;
+
         msg.strategy = MOBILITY_STRATEGY;
         // For STATUS params, the string format is "STATUS|CMDSPEED:5.0,DOWNTRACK:100.0,SPEED:5.0"
         // TODO: update cmdspeed
@@ -1069,6 +1119,19 @@ namespace platoon_strategic
         return msg;
     }
 
+    void PlatoonStrategicPlugin::lookupECEFtoMapTransform()
+    {
+        tf2_listener_.reset(new tf2_ros::TransformListener(tf2_buffer_));
+        tf2_buffer_.setUsingDedicatedThread(true);
+        try
+        {
+        tf_ = tf2_buffer_.lookupTransform("earth", "map", ros::Time(0)); //save to local copy of transform 20 sec timeout
+        }
+        catch (const tf2::TransformException &ex)
+        {
+        ROS_WARN("%s", ex.what());
+        }
+    }
 
     cav_msgs::MobilityOperation PlatoonStrategicPlugin::composeMobilityOperationCandidateFollower()
     {
@@ -1082,6 +1145,9 @@ namespace platoon_strategic
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toSec()*1000.0; 
         msg.strategy = MOBILITY_STRATEGY;
+
+        cav_msgs::LocationECEF ecef_point = pose_to_ecef(pose_msg_, tf_);
+        msg.location = ecef_point;
         
         // // For STATUS params, the string format is "STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx"
         // TODO update smdspeed
