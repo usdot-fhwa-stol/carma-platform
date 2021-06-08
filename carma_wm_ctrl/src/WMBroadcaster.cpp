@@ -966,6 +966,41 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
   cB.offsets[2].deltax = pj_min_tmerc.xyz.x - pj_min_tmerc.xyz.x;
   cB.offsets[2].deltay = pj_max_tmerc.xyz.y - pj_min_tmerc.xyz.y;
 
+   ////////////////////////DEBUG////////////////////////////
+  lanelet::BasicPoint3d localPoint1;
+  lanelet::BasicPoint3d localPoint2;
+  lanelet::BasicPoint3d localPoint3;
+  lanelet::BasicPoint3d localPoint4;
+
+  localPoint1.x() = localPoint.x();
+  localPoint1.y() = localPoint.y();
+  localPoint2.x() = localPoint1.x() + cB.offsets[0].deltax;
+  localPoint2.y() = localPoint1.y() + cB.offsets[0].deltay;
+  localPoint3.x() = localPoint1.x() + cB.offsets[1].deltax;
+  localPoint3.y() = localPoint1.y() + cB.offsets[1].deltay; 
+  localPoint4.x() = localPoint1.x() + cB.offsets[2].deltax;
+  localPoint4.y() = localPoint1.y() + cB.offsets[2].deltay; 
+
+
+  lanelet::GPSPoint gpsRoute1 = local_projector.reverse(localPoint1);
+  lanelet::GPSPoint gpsRoute2 = local_projector.reverse(localPoint2);
+  lanelet::GPSPoint gpsRoute3 = local_projector.reverse(localPoint3);
+  lanelet::GPSPoint gpsRoute4 = local_projector.reverse(localPoint4);
+
+  ROS_DEBUG_STREAM("Lat1: "<< std::to_string(gpsRoute1.lat));
+  ROS_DEBUG_STREAM("Lon1: "<<std::to_string(gpsRoute1.lon));
+
+  ROS_DEBUG_STREAM("Lat2: "<< std::to_string(gpsRoute2.lat));
+  ROS_DEBUG_STREAM("Lon2: "<<std::to_string(gpsRoute2.lon));
+
+  ROS_DEBUG_STREAM("Lat3: "<< std::to_string(gpsRoute3.lat));
+  ROS_DEBUG_STREAM("Lon3: "<<std::to_string(gpsRoute3.lon));
+
+  ROS_DEBUG_STREAM("Lat4: "<< std::to_string(gpsRoute4.lat));
+  ROS_DEBUG_STREAM("Lon4: "<<std::to_string(gpsRoute4.lon));
+    ////////////////////////DEBUG////////////////////////////
+    
+
   cB.oldest =ros::Time::now(); // TODO this needs to be set to 0 or an older value as otherwise this will filter out all controls
   
   cR.choice = cav_msgs::TrafficControlRequest::TCRV01;
