@@ -167,14 +167,13 @@ install(TARGETS motion_prediction_visualizer_node
 )
 
 ## Mark cpp header files for installation
-install(DIRECTORY include
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-)
+# install(DIRECTORY include
+#         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+# )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 install(DIRECTORY
         launch
-        config
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
