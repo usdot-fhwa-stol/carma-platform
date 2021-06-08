@@ -76,9 +76,7 @@ public:
    * @param active_geof_msg The geofence information to publish
    */
   void publishActiveGeofence(const cav_msgs::CheckActiveGeofence& active_geof_msg);
-
-  bool spinCallBack();
-
+  
 private:
   ros::CARMANodeHandle cnh_;
   ros::CARMANodeHandle pnh_{"~"};
