@@ -144,7 +144,7 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
   // check points that are inside lanelets
   pt.x = -8.5; pt.y = -9.5; pt.z = 0; // straight geofence line across 2 lanelets
   gf_msg.geometry.nodes.push_back(pt);
-  pt.x = -8.5; pt.y = -8.5; pt.z = 0;
+  pt.x = 0.0; pt.y = 1.0; pt.z = 0; //-8.5 -8.5
   gf_msg.geometry.nodes.push_back(pt);
   
   lanelet::ConstLaneletOrAreas affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
@@ -152,11 +152,11 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasFromTransform)
   ASSERT_EQ(affected_parts[0].id(), 10002);
   ASSERT_EQ(affected_parts[1].id(), 10001);
   // check points that are outside, on the edge, and on the point that makes up the lanelets
-  pt.x = -20; pt.y = -10; pt.z = 0;
+  pt.x = -11.5; pt.y = -1.5; pt.z = 0; // -20, -10
   gf_msg.geometry.nodes.push_back(pt);
-  pt.x = -9; pt.y = -8.5; pt.z = 0;
+  pt.x = 11.0; pt.y = 1.5; pt.z = 0; // -9 -8.5
   gf_msg.geometry.nodes.push_back(pt);
-  pt.x = 0; pt.y = 0; pt.z = 0;
+  pt.x = 9; pt.y = 8.5; pt.z = 0; // 0 0
   gf_msg.geometry.nodes.push_back(pt);
   
   affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
@@ -215,29 +215,29 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
   ASSERT_EQ(affected_parts.size(), 0); // this is 0 because there will never be geofence with only 1 pt
                                        // if there is, it won't apply to the map as it doesn't have any direction information, 
                                        // which makes it confusing for overlapping lanelets
-  pt.x = 1.75; pt.y = 0.45; pt.z = 0;
+  pt.x = 0.0; pt.y = -0.05; pt.z = 0; //1.75 0.45
   gf_msg.geometry.nodes.push_back(pt);
   affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
   ASSERT_EQ(affected_parts.size(), 0); // although there are two points in the same lanelet,
                                        // lanelet and the two points are not in the same direction
 
   gf_msg.geometry.nodes.pop_back();
-  pt.x = 1.75; pt.y = 0.55; pt.z = 0;
+  pt.x = 0.0; pt.y = 0.05; pt.z = 0; //1.75 0.55
   gf_msg.geometry.nodes.push_back(pt);
   affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
   ASSERT_EQ(affected_parts.size(), 1); // because two points are in one geofence, it will be recorded now
   gf_msg.geometry.nodes.pop_back();
   gf_msg.geometry.nodes.pop_back();
 
-  pt.x = 0.5; pt.y = 0.5; pt.z = 0;    // first of series geofence points across multiple lanelets
+  pt.x = 0.5; pt.y = 0.5; pt.z = 0;    // first of series geofence points across multiple lanelets 0.5 0.5
   gf_msg.geometry.nodes.push_back(pt);
-  pt.x = 0.5; pt.y = 1.1; pt.z = 0;    // adding point in the next lanelet
+  pt.x = 0.0; pt.y = 0.6; pt.z = 0;    // adding point in the next lanelet 0.5 1.1
   gf_msg.geometry.nodes.push_back(pt);
   affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg); 
   ASSERT_EQ(affected_parts.size(), 3);    // although (0.5,1.1) is in another overlapping lanelet (llt_unreg)
                                           // that lanelet is disjoint/doesnt have same direction/not successor of the any lanelet
   
-  pt.x = 1.5; pt.y = 2.1; pt.z = 0;    // adding further points in different lanelet narrowing down our direction
+  pt.x = 1.0; pt.y = 1.0; pt.z = 0;    // adding further points in different lanelet narrowing down our direction 1.5 2.1
   gf_msg.geometry.nodes.push_back(pt);
   affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);
   ASSERT_EQ(affected_parts.size(), 3);    // now they are actually 3 different lanelets because we changed direction
@@ -251,11 +251,11 @@ TEST(WMBroadcaster, getAffectedLaneletOrAreasOnlyLogic)
   ASSERT_TRUE(std::find(affected_parts_ids.begin(), affected_parts_ids.end(), 10006) != affected_parts_ids.end());
 
   // check points that are outside, on the edge, and on the point that makes up the lanelets
-  pt.x = 0.5; pt.y = 0; pt.z = 0;
+  pt.x = -1.0; pt.y = -2.1; pt.z = 0; //0.5 0
   gf_msg.geometry.nodes.push_back(pt);
-  pt.x = 1.0; pt.y = 0; pt.z = 0;
+  pt.x = 0.5; pt.y = 0; pt.z = 0; // 1 0
   gf_msg.geometry.nodes.push_back(pt);
-  pt.x = 10; pt.y = 10; pt.z = 0;
+  pt.x = 9; pt.y = 10; pt.z = 0; // 10 10
   gf_msg.geometry.nodes.push_back(pt);
   
   affected_parts = wmb.getAffectedLaneletOrAreas(gf_msg);

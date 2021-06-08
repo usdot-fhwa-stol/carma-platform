@@ -105,7 +105,7 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
 
   TEST(TrafficIncidentParserWorkerTest, composeTrafficControlMesssage)
 {
-
+  ros::Time::init();
   auto cmw= carma_wm::test::getGuidanceTestMap();
   carma_wm::test::setRouteByIds({1200, 1201,1202,1203}, cmw);
   
@@ -120,14 +120,14 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
   
   std::vector<cav_msgs::TrafficControlMessageV01> traffic_mobility_msg_test=traffic_worker.composeTrafficControlMesssages();
 
-  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[0].x,1.85,0.001);
-  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[0].y,12.5,0.001);
-  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[1].x,1.85,0.001);
-  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[1].y,37.5,0.001);
-  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[2].x,1.85,0.001);
-  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[2].y,62.5,0.001);
-  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[3].x,1.85,0.001);
-  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[3].y,87.5,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[0].x,0.0,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[0].y,0.0,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[1].x,3.7,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[1].y,0.0,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[2].x,0.0,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[2].y,25.0,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[3].x,0.0,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[3].y,25.0,0.00);
 
   EXPECT_EQ(traffic_mobility_msg_test[0].geometry_exists,true);
   EXPECT_EQ(traffic_mobility_msg_test[0].params_exists,true);
@@ -146,7 +146,7 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
 
  TEST(TrafficIncidentParserWorkerTest, composeTrafficControlMesssage1)
 {
-
+  ros::Time::init();
   auto cmw= carma_wm::test::getGuidanceTestMap();
   carma_wm::test::setRouteByIds({1200, 1201,1202,1203}, cmw);
   
@@ -161,14 +161,14 @@ TEST(TrafficIncidentParserWorkerTest, testMobilityMessageParser3)
   
   std::vector<cav_msgs::TrafficControlMessageV01> traffic_mobility_msg_test=traffic_worker.composeTrafficControlMesssages();
 
-  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[0].x,1.85,0.001);
-  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[0].y,12.5,0.001);
-  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[1].x,1.85,0.001);
-  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[1].y,37.5,0.001);
-  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[2].x,1.85,0.001);
-  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[2].y,62.5,0.001);
-  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[3].x,1.85,0.001);
-  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[3].y,87.5,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[0].x,0.0,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[0].y,0.0,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[1].x,0.0,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[1].y,25.0,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[2].x,0.0,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[2].y,25.0,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[3].x,0.0,0.001);
+  EXPECT_NEAR(traffic_mobility_msg_test[0].geometry.nodes[3].y,25.0,0.001);
 
   EXPECT_EQ(traffic_mobility_msg_test[0].geometry_exists,true);
   EXPECT_EQ(traffic_mobility_msg_test[0].params_exists,true);

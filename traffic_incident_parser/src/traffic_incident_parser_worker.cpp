@@ -357,12 +357,30 @@ namespace traffic
         ROS_DEBUG_STREAM("Skipping empty lane");
         continue;
       }
+      cav_msgs::PathNode prev_point;
+      prev_point.x = reverse_lanes[i].front().x();
+      prev_point.y = reverse_lanes[i].front().y();
+      bool first = true;
       for(const auto& p : carma_utils::containers::downsample_vector(reverse_lanes[i], 8))
       {
-        cav_msgs::PathNode path_point;
-        path_point.x=p.x();
-        path_point.y=p.y();
-        traffic_mobility_msg.geometry.nodes.push_back(path_point);
+        cav_msgs::PathNode delta;
+        ROS_DEBUG_STREAM("prev_point x" << prev_point.x << ", prev_point y" << prev_point.y);
+        ROS_DEBUG_STREAM("p.x()" << p.x() << ", p.y()" << p.y());
+        delta.x=p.x() - prev_point.x;
+        delta.y=p.y() - prev_point.y;
+        ROS_DEBUG_STREAM("calculated diff x" << delta.x << ", diff y" << delta.y);
+        if (first)
+        {
+          traffic_mobility_msg.geometry.nodes.push_back(prev_point); //traffic incident parser actually sends coordinates in carma-platform's proj frame
+          first = false;
+        }
+        else
+        {
+          traffic_mobility_msg.geometry.nodes.push_back(delta);
+        }
+        
+        prev_point.x = p.x();
+        prev_point.y = p.y();
       }
 
       if (i == 0) {
