@@ -172,7 +172,7 @@ namespace platoon_control
         platoon_leader_.vehiclePosition = msg->leader_downtrack_distance;
         platoon_leader_.commandSpeed = msg->leader_cmd_speed;
         // TODO: index is 0 temp to test the leader state
-        platoon_leader_.NumberOfVehicleInFront = 1;
+        platoon_leader_.NumberOfVehicleInFront = msg->host_platoon_position;
         platoon_leader_.leaderIndex = 0;
 
         ROS_DEBUG_STREAM("Platoon leader leader id:  " << platoon_leader_.staticId);
