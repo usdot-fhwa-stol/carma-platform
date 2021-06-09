@@ -389,6 +389,7 @@ namespace route {
             geometry_msgs::Point temp_point;
             temp_point.x = points[i].x();
             temp_point.y = points[i].y();
+            temp_point.z = 1; //to show up on top of the lanelet lines
             
             marker.points.push_back(temp_point);
         }

@@ -639,6 +639,14 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /environment/tcm_visualizer
+      Name: TCM Visualizer
+      Namespaces:
+        route_visualizer: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
