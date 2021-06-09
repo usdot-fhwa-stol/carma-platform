@@ -466,6 +466,7 @@ namespace platoon_strategic
 
     void PlatoonStrategicPlugin::mob_req_cb(const cav_msgs::MobilityRequest& msg)
     {
+
         if (pm_.current_platoon_state == PlatoonState::LEADER)
         {
             mob_req_cb_leader(msg);
@@ -540,9 +541,8 @@ namespace platoon_strategic
             //     1. The size limitation on current platoon based on the plugin's parameters.
             //     2. Calculate how long that vehicle can be in a reasonable distance to actually join us.
             // TODO We ignore the lane information for now and assume the applicant is in the same lane with us.
-
             cav_msgs::MobilityHeader msgHeader = msg.header;
-            std::string params = msg.strategy;
+            std::string params = msg.strategy_params;
             std::string applicantId = msgHeader.sender_id;
             ROS_DEBUG_STREAM("Receive mobility JOIN request from " << applicantId << " and PlanId = " << msgHeader.plan_id);
             ROS_DEBUG_STREAM("The strategy parameters are " << params);
@@ -550,22 +550,21 @@ namespace platoon_strategic
             // TODO In future, we should remove down track distance from this string and use location field in request message
             std::vector<std::string> inputsParams;
             boost::algorithm::split(inputsParams, params, boost::is_any_of(","));
-
+            
             std::vector<std::string> applicantSize_parsed;
             boost::algorithm::split(applicantSize_parsed, inputsParams[0], boost::is_any_of(":"));
             int applicantSize = std::stoi(applicantSize_parsed[1]);
             ROS_DEBUG_STREAM("applicantSize: " << applicantSize);
-
+            
             std::vector<std::string> applicantCurrentSpeed_parsed;
             boost::algorithm::split(applicantCurrentSpeed_parsed, inputsParams[1], boost::is_any_of(":"));
             double applicantCurrentSpeed = std::stod(applicantCurrentSpeed_parsed[1]);
             ROS_DEBUG_STREAM("applicantCurrentSpeed: " << applicantCurrentSpeed);
-
+            
             std::vector<std::string> applicantCurrentDtd_parsed;
             boost::algorithm::split(applicantCurrentDtd_parsed, inputsParams[2], boost::is_any_of(":"));
             double applicantCurrentDtd = std::stod(applicantCurrentDtd_parsed[1]);
             ROS_DEBUG_STREAM("applicantCurrentDtd: " << applicantCurrentDtd);
-
             // Check if we have enough room for that applicant
             int currentPlatoonSize = pm_.getTotalPlatooningSize();
             bool hasEnoughRoomInPlatoon = applicantSize + currentPlatoonSize <= maxPlatoonSize_;
@@ -573,7 +572,7 @@ namespace platoon_strategic
                 ROS_DEBUG_STREAM("The current platoon has enough room for the applicant with size " << applicantSize);
                 double currentRearDtd = pm_.getPlatoonRearDowntrackDistance();
                 ROS_DEBUG_STREAM("The current platoon rear dtd is " << currentRearDtd);
-                double currentGap = currentRearDtd - applicantCurrentDtd - vehicleLength_;
+                double currentGap = currentRearDtd - applicantCurrentDtd - config_.vehicleLength;
                 double currentTimeGap = currentGap / applicantCurrentSpeed;
                 ROS_DEBUG_STREAM("The gap between current platoon rear and applicant is " << currentGap << "m or " << currentTimeGap << "s");
                 if(currentGap < 0) {

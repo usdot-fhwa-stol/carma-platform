@@ -151,7 +151,8 @@ namespace platoon_strategic
         double current_speed_;
         double command_speed_;
 
-        PlatoonState current_platoon_state = PlatoonState::STANDBY;
+        // TODO Temporary
+        PlatoonState current_platoon_state = PlatoonState::LEADER;
         std::string applicantID = "1";
         PlatoonPlan current_plan;
 
