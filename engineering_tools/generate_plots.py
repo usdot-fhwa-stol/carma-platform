@@ -486,7 +486,7 @@ def comparison_plots(plots = [1,2], plot_type = "line", save_figs = "off", black
         if save_fig == "png":
             plt.savefig("C:/Users/Public/Documents/outplots/{}/{}/Figure_{}.png".format(run, plot_type, plt.gcf().number))
         elif save_fig == "html":
-            mpld3.save_html(plt.gcf(), "C:/Users/Public/Documents/outhtml/{}/{}/Figure_{}.html".format(run, plot_type, plt.gcf().number))
+            mpld3.save_html(plt.gcf(), "C:/Users/Public/Documents/outhtml/{}/{}/Figure_Comparison_{}.html".format(run, plot_type, plt.gcf().number))
 
     # Concatenate all runs into one list
     runs = black_pacifica_runs + ford_fusion_runs + blue_lexus_runs
