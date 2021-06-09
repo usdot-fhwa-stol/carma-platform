@@ -130,6 +130,7 @@ namespace platoon_strategic
             // Current vehicle pose in map
             geometry_msgs::PoseStamped pose_msg_;
             geometry_msgs::PoseStamped initial_pose_;
+            
             cav_msgs::LocationECEF ecef_point_;
             //Internal Variables used in unit tests
             // Current vehicle forward speed

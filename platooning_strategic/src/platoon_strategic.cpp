@@ -125,7 +125,8 @@ namespace platoon_strategic
         bool pose_initialize = false;
         if (!pose_initialize)
         {
-            initial_pose_ = pose_msg_;
+            initial_pose_.pose.position.x =  -228.121873152;
+            initial_pose_.pose.position.y =  458.520020515;
             ROS_DEBUG_STREAM("first pose initialized!");
             pose_initialize = true;
         }
@@ -223,8 +224,11 @@ namespace platoon_strategic
             ROS_DEBUG_STREAM("change the state from standby to leader");
         }
 
-        carma_wm::TrackPos tc = wm_->routeTrackPos(current_loc);
-        current_downtrack_ = tc.downtrack;
+        // carma_wm::TrackPos tc = wm_->routeTrackPos(current_loc);
+        // current_downtrack_ = tc.downtrack;
+        double dx = pose_msg_.pose.position.x - initial_pose_.pose.position.x;
+        double dy = pose_msg_.pose.position.y - initial_pose_.pose.position.y;
+        current_downtrack_ = std::sqrt(dx*dx + dy*dy);
         pm_.current_downtrack_didtance_ = current_downtrack_;
         ROS_DEBUG_STREAM("current_downtrack: " << current_downtrack_);
         
@@ -569,7 +573,7 @@ namespace platoon_strategic
             ROS_DEBUG_STREAM("applicantCurrentDtd from message: " << applicantCurrentDtd);
 
             lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(msg.location, tf_);
-            applicantCurrentDtd = wm_->routeTrackPos(incoming_pose).downtrack;
+            // applicantCurrentDtd = wm_->routeTrackPos(incoming_pose).downtrack;
             ROS_DEBUG_STREAM("applicantCurrentDtd from ecef pose: " << applicantCurrentDtd);
             // Check if we have enough room for that applicant
             int currentPlatoonSize = pm_.getTotalPlatooningSize();
@@ -907,9 +911,9 @@ namespace platoon_strategic
             ROS_DEBUG_STREAM("rearVehicleDtd from message: " << rearVehicleDtd);
             cav_msgs::LocationECEF ecef_loc = msg.location;
             lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(ecef_loc, tf_);
-            rearVehicleDtd = wm_->routeTrackPos(incoming_pose).downtrack;
+            // rearVehicleDtd = wm_->routeTrackPos(incoming_pose).downtrack;
 
-            ROS_DEBUG_STREAM("rearVehicleDtd from location: " << rearVehicleDtd);
+            ROS_DEBUG_STREAM("rearVehicleDtd from ecef: " << rearVehicleDtd);
             
             // We are trying to validate is the platoon rear is right in front of the host vehicle
             if(isVehicleRightInFront(rearVehicleBsmId, rearVehicleDtd))
