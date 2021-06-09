@@ -101,6 +101,7 @@ namespace platoon_strategic
     void PlatoonStrategicPlugin::pose_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     {
         pose_msg_ = geometry_msgs::PoseStamped(*msg.get());
+        ecef_point_ = pose_to_ecef(pose_msg_, tf_);
     }
 
     void PlatoonStrategicPlugin::twist_cb(const geometry_msgs::TwistStampedConstPtr& msg)
@@ -440,6 +441,7 @@ namespace platoon_strategic
                     request.strategy = MOBILITY_STRATEGY;
                     request.strategy_params = "";
                     request.urgency = 50;
+                    request.location = ecef_point_;
                     mobility_request_publisher_(request);
                     ROS_DEBUG_STREAM("Published Mobility Candidate-Join request to the leader");
                     
@@ -564,7 +566,12 @@ namespace platoon_strategic
             std::vector<std::string> applicantCurrentDtd_parsed;
             boost::algorithm::split(applicantCurrentDtd_parsed, inputsParams[2], boost::is_any_of(":"));
             double applicantCurrentDtd = std::stod(applicantCurrentDtd_parsed[1]);
-            ROS_DEBUG_STREAM("applicantCurrentDtd: " << applicantCurrentDtd);
+            ROS_DEBUG_STREAM("applicantCurrentDtd from message: " << applicantCurrentDtd);
+
+            lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(msg.location, tf_);
+            applicantCurrentDtd = wm_->routeTrackPos(incoming_pose).downtrack;
+            ROS_DEBUG_STREAM("applicantCurrentDtd from ecef pose: " << applicantCurrentDtd);
+            // applicantCurrentDtd = ???????
             // Check if we have enough room for that applicant
             int currentPlatoonSize = pm_.getTotalPlatooningSize();
             bool hasEnoughRoomInPlatoon = applicantSize + currentPlatoonSize <= maxPlatoonSize_;
@@ -914,6 +921,7 @@ namespace platoon_strategic
                 request.header.sender_id = config_.vehicle_id;
                 request.header.timestamp = ros::Time::now().toNSec() * 1000000;
                 // request.location  TODO: add ecef location here
+                request.location = ecef_point_;
                 request.plan_type.type = cav_msgs::PlanType::JOIN_PLATOON_AT_REAR;
                 request.strategy = MOBILITY_STRATEGY;
 
@@ -1013,8 +1021,8 @@ namespace platoon_strategic
         msg.header.timestamp = ros::Time::now().toSec()*1000.0;
         msg.strategy = MOBILITY_STRATEGY;
 
-        cav_msgs::LocationECEF ecef_point = pose_to_ecef(pose_msg_, tf_);
-        msg.location = ecef_point;
+        
+        msg.location = ecef_point_;
 
         if (type == OPERATION_INFO_TYPE){
             // For INFO params, the string format is INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d
@@ -1065,9 +1073,7 @@ namespace platoon_strategic
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toSec()*1000.0;
         msg.strategy = MOBILITY_STRATEGY;
-
-        cav_msgs::LocationECEF ecef_point = pose_to_ecef(pose_msg_, tf_);
-        msg.location = ecef_point;
+        msg.location = ecef_point_;
         
         // TODO: update cmdspeed
         double cmdSpeed;
@@ -1098,8 +1104,7 @@ namespace platoon_strategic
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toSec()*1000;
 
-        cav_msgs::LocationECEF ecef_point = pose_to_ecef(pose_msg_, tf_);
-        msg.location = ecef_point;
+        msg.location = ecef_point_;
 
         msg.strategy = MOBILITY_STRATEGY;
         // For STATUS params, the string format is "STATUS|CMDSPEED:5.0,DOWNTRACK:100.0,SPEED:5.0"
@@ -1145,8 +1150,7 @@ namespace platoon_strategic
         msg.header.timestamp = ros::Time::now().toSec()*1000.0; 
         msg.strategy = MOBILITY_STRATEGY;
 
-        cav_msgs::LocationECEF ecef_point = pose_to_ecef(pose_msg_, tf_);
-        msg.location = ecef_point;
+        msg.location = ecef_point_;
         
         // // For STATUS params, the string format is "STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx"
         // TODO update smdspeed
