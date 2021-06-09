@@ -298,9 +298,11 @@ namespace platoon_strategic
 
 
     void PlatoonStrategicPlugin::run_leader_waiting(){
+        ROS_DEBUG_STREAM("Run LeaderWaiting State ");
         long tsStart = ros::Time::now().toSec()*1000;
             // Task 1
-                if(tsStart - waitingStartTime > waitingStateTimeout * 1000) {
+                if(tsStart - waitingStartTime > waitingStateTimeout * 1000) 
+                {
                     //TODO if the current state timeouts, we need to have a kind of ABORT message to inform the applicant
                     ROS_DEBUG_STREAM("LeaderWaitingState is timeout, changing back to PlatoonLeaderState.");
                     // plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
@@ -310,6 +312,7 @@ namespace platoon_strategic
                 cav_msgs::MobilityOperation status;
                 status = composeMobilityOperationLeaderWaiting();
                 mobility_operation_publisher_(status);
+                ROS_DEBUG_STREAM("publish status message");
                 long tsEnd = ros::Time::now().toSec()*1000;
                 int sleepDuration = std::max(int(statusMessageInterval_ - (tsEnd - tsStart)), 0);
                 ros::Duration(sleepDuration/1000).sleep();
@@ -333,16 +336,15 @@ namespace platoon_strategic
             //     updateLightBar();
             // }
             // Task 3
-            {
-                // std::lock_guard<std::mutex> lock(plan_mutex_);
-                if(pm_.current_plan.valid) {
+                if(pm_.current_plan.valid)
+                {
                     bool isCurrentPlanTimeout = ((ros::Time::now().toSec()*1000 - pm_.current_plan.planStartTime) > NEGOTIATION_TIMEOUT);
-                    if(isCurrentPlanTimeout) {
+                    if(isCurrentPlanTimeout) 
+                    {
                         ROS_DEBUG_STREAM("Give up current on waiting plan with planId: " << pm_.current_plan.planId);
                         pm_.current_plan.valid = false;
                     }    
                 }
-            }
 
             // Task 4
             bool hasFollower = (pm_.getTotalPlatooningSize() > 1);
@@ -434,14 +436,12 @@ namespace platoon_strategic
                     request.header.sender_bsm_id = host_bsm_id_;
                     request.header.sender_id = config_.vehicle_id;
                     request.header.timestamp = currentTime;
-                    cav_msgs::LocationECEF loc;
-                    request.location = loc;
                     request.plan_type.type = cav_msgs::PlanType::PLATOON_FOLLOWER_JOIN;
                     std::string MOBILITY_STRATEGY;
                     request.strategy = MOBILITY_STRATEGY;
                     request.strategy_params = "";
                     request.urgency = 50;
-                    request.location = ecef_point_;
+                    request.location = pose_to_ecef(pose_msg_, tf_);
                     mobility_request_publisher_(request);
                     ROS_DEBUG_STREAM("Published Mobility Candidate-Join request to the leader");
                     
@@ -571,7 +571,6 @@ namespace platoon_strategic
             lanelet::BasicPoint2d incoming_pose = ecef_to_map_point(msg.location, tf_);
             applicantCurrentDtd = wm_->routeTrackPos(incoming_pose).downtrack;
             ROS_DEBUG_STREAM("applicantCurrentDtd from ecef pose: " << applicantCurrentDtd);
-            // applicantCurrentDtd = ???????
             // Check if we have enough room for that applicant
             int currentPlatoonSize = pm_.getTotalPlatooningSize();
             bool hasEnoughRoomInPlatoon = applicantSize + currentPlatoonSize <= maxPlatoonSize_;
@@ -849,9 +848,11 @@ namespace platoon_strategic
         if(isPlatoonStatusMsg) {
             std::string vehicleID = msg.header.sender_id;
             std::string platoonID = msg.header.plan_id;
+            std::string senderBSM = msg.header.sender_bsm_id;
             std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
             ROS_DEBUG_STREAM("Receive operation message from vehicle: " << vehicleID);
             // TODO: update this
+            pm_.memberUpdates(vehicleID, platoonID, senderBSM, statusParams);
             // plugin.platoonManager.memberUpdates(vehicleID, platoonID, msg.getHeader().getSenderBsmId(), statusParams);
         }
     }
@@ -920,8 +921,7 @@ namespace platoon_strategic
                 request.header.sender_bsm_id = host_bsm_id_;
                 request.header.sender_id = config_.vehicle_id;
                 request.header.timestamp = ros::Time::now().toNSec() * 1000000;
-                // request.location  TODO: add ecef location here
-                request.location = ecef_point_;
+                request.location = pose_to_ecef(pose_msg_, tf_);
                 request.plan_type.type = cav_msgs::PlanType::JOIN_PLATOON_AT_REAR;
                 request.strategy = MOBILITY_STRATEGY;
 
@@ -1022,7 +1022,7 @@ namespace platoon_strategic
         msg.strategy = MOBILITY_STRATEGY;
 
         
-        msg.location = ecef_point_;
+        msg.location = pose_to_ecef(pose_msg_, tf_);;
 
         if (type == OPERATION_INFO_TYPE){
             // For INFO params, the string format is INFO|REAR:%s,LENGTH:%.2f,SPEED:%.2f,SIZE:%d
@@ -1073,7 +1073,7 @@ namespace platoon_strategic
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toSec()*1000.0;
         msg.strategy = MOBILITY_STRATEGY;
-        msg.location = ecef_point_;
+        msg.location = pose_to_ecef(pose_msg_, tf_);
         
         // TODO: update cmdspeed
         double cmdSpeed;
@@ -1104,7 +1104,7 @@ namespace platoon_strategic
         msg.header.sender_id = hostStaticId;
         msg.header.timestamp = ros::Time::now().toSec()*1000;
 
-        msg.location = ecef_point_;
+        msg.location = pose_to_ecef(pose_msg_, tf_);
 
         msg.strategy = MOBILITY_STRATEGY;
         // For STATUS params, the string format is "STATUS|CMDSPEED:5.0,DOWNTRACK:100.0,SPEED:5.0"
@@ -1150,7 +1150,7 @@ namespace platoon_strategic
         msg.header.timestamp = ros::Time::now().toSec()*1000.0; 
         msg.strategy = MOBILITY_STRATEGY;
 
-        msg.location = ecef_point_;
+        msg.location = pose_to_ecef(pose_msg_, tf_);
         
         // // For STATUS params, the string format is "STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx"
         // TODO update smdspeed
