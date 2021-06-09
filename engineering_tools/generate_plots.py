@@ -484,7 +484,7 @@ def comparison_plots(plots = [1,2], plot_type = "line", save_figs = "off", black
         plt.grid(True, alpha=0.5)
         plt.title(plot_title + "\n" + run)
         if save_fig == "png":
-            plt.savefig("C:/Users/Public/Documents/outplots/{}/{}/Figure_{}.png".format(run, plot_type, plt.gcf().number))
+            plt.savefig("C:/Users/Public/Documents/outplots/{}/{}/Figure_Comparison_{}.png".format(run, plot_type, plt.gcf().number))
         elif save_fig == "html":
             mpld3.save_html(plt.gcf(), "C:/Users/Public/Documents/outhtml/{}/{}/Figure_Comparison_{}.html".format(run, plot_type, plt.gcf().number))
 
