@@ -52,6 +52,7 @@
 #include <std_msgs/String.h>
 #include <unordered_set>
 #include <visualization_msgs/MarkerArray.h>
+#include <cav_msgs/TrafficControlRequestPolygon.h>
 
 namespace carma_wm_ctrl
 {
@@ -123,6 +124,12 @@ public:
   * \param input The message containing tcm information
   */
   visualization_msgs::Marker composeTCMMarkerVisualizer(const std::vector<lanelet::Point3d>& input);
+
+   /*!
+  * \brief composeTCRStatus() compose TCM Request visualization on UI
+  * \param input The message containing tcr information
+  */
+  cav_msgs::TrafficControlRequestPolygon composeTCRStatus(const lanelet::BasicPoint3d& localPoint, const cav_msgs::TrafficControlBounds& cB, const lanelet::projection::LocalFrameProjector& local_projector);
 
  /*!
   * \brief Pulls vehicle information from CARMA Cloud at startup by providing its selected route in a TrafficControlRequest message that is published after a route is selected.
@@ -215,6 +222,7 @@ public:
   void newUpdateSubscriber(const ros::SingleSubscriberPublisher& single_sub_pub) const;
 
   visualization_msgs::MarkerArray tcm_marker_array_;
+  cav_msgs::TrafficControlRequestPolygon tcr_polygon_;
   
   /*!
    * \brief Returns the most recently recieved route message.

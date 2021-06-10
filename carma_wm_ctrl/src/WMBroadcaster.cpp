@@ -489,36 +489,49 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
   // The second approach is to populate the other fields in the TCM message.
   // Here we check which fields were already provided in the projection string and if they were not provided we set them with the value provided in the TCM message
   std::string projection = tcmV01.geometry.proj;
-
+  std::string universal_frame = "EPSG:4326"; //lat/long included in TCM is in this frame as it is universal
+  
   ROS_DEBUG_STREAM("Projection field before remaning message processing: " << projection);
 
-  if (projection.find("+datum=") == std::string::npos && !tcmV01.geometry.datum.empty()) { // Datum is not a universal projection so only add it if it was provided
-    projection.append(" +datum=" + std::to_string(tcmV01.geometry.reflon));
-  }
+  if (projection.find("epsg") == std::string::npos && projection.find("EPSG") == std::string::npos)
+  {
+    if (projection.find("+datum=") == std::string::npos && !tcmV01.geometry.datum.empty()) { // Datum is not a universal projection so only add it if it was provided
+    projection.append(" +datum=" + tcmV01.geometry.datum);
+    }
 
-  if (projection.find("+lat_0=") == std::string::npos) { // Lat and Lon are universal proj string attributes and can always be used
-    projection.append(" +lat_0=" + std::to_string(tcmV01.geometry.reflat));
-  }
+    if (projection.find("+lat_0=") == std::string::npos && tcmV01.geometry.reflat!= 0.0) { // Lat and Lon are universal proj string attributes and can always be used
+      projection.append(" +lat_0=" + std::to_string(tcmV01.geometry.reflat));
+    }
 
-  if (projection.find("+lon_0=") == std::string::npos) {
-    projection.append(" +lon_0=" + std::to_string(tcmV01.geometry.reflon));
-  }
+    if (projection.find("+lon_0=") == std::string::npos && tcmV01.geometry.reflon!= 0.0) {
+      projection.append(" +lon_0=" + std::to_string(tcmV01.geometry.reflon));
+    }
 
-  if (projection.find("+h_0=") == std::string::npos && tcmV01.geometry.refelv != 0.0) { // Height only applies to some projections and should only be set if elevation is non-zero
-    projection.append(" +h_0=" + std::to_string(tcmV01.geometry.refelv));
+    if (projection.find("+h_0=") == std::string::npos && tcmV01.geometry.refelv != 0.0) { // Height only applies to some projections and should only be set if elevation is non-zero
+      projection.append(" +h_0=" + std::to_string(tcmV01.geometry.refelv));
+    }
   }
-
+  
   ROS_DEBUG_STREAM("Projection field after remaning message processing: " << projection);
 
   ROS_DEBUG_STREAM("Traffic Control heading provided: " << tcmV01.geometry.heading << " System understanding is that this value will not affect the projection and is only provided for supporting derivative calculations.");
-
-  // Create the resulting projection transformation
-  PJ* geofence_in_map_proj = proj_create_crs_to_crs(PJ_DEFAULT_CTX, projection.c_str(), base_map_georef_.c_str(), nullptr);
   
-  if (geofence_in_map_proj == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
+  // Create the resulting projection transformation
+  PJ* universal_to_target = proj_create_crs_to_crs(PJ_DEFAULT_CTX, universal_frame.c_str(), projection.c_str(), nullptr);
+  if (universal_to_target == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
     
     ROS_ERROR_STREAM("Failed to generate projection between geofence and map with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX) 
-      << " MapProjection: " << base_map_georef_ << " Message Projection: " << projection);
+      << " universal_frame: " << universal_frame << " projection: " << projection);
+
+    return {}; // Ignore geofence if it could not be projected from universal to TCM frame
+  }
+  
+  PJ* target_to_map = proj_create_crs_to_crs(PJ_DEFAULT_CTX, projection.c_str(), base_map_georef_.c_str(), nullptr);
+
+  if (target_to_map == nullptr) { // proj_create_crs_to_crs returns 0 when there is an error in the projection
+    
+    ROS_ERROR_STREAM("Failed to generate projection between geofence and map with error number: " <<  proj_context_errno(PJ_DEFAULT_CTX) 
+      << " target_to_map: " << target_to_map << " base_map_georef_: " << base_map_georef_);
 
     return {}; // Ignore geofence if it could not be projected into the map frame
   
@@ -527,18 +540,26 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
   // convert all geofence points into our map's frame
   std::vector<lanelet::Point3d> gf_pts;
   cav_msgs::PathNode prev_pt;
+  PJ_COORD c_init_latlong{{tcmV01.geometry.reflat, tcmV01.geometry.reflon, tcmV01.geometry.refelv}};
+  PJ_COORD c_init = proj_trans(universal_to_target, PJ_FWD, c_init_latlong);
+
+  prev_pt.x = c_init.xyz.x;
+  prev_pt.y =  c_init.xyz.y;
+
+  ROS_DEBUG_STREAM("In TCM's frame, initial Point X "<< prev_pt.x<<" Before conversion: Point Y "<< prev_pt.y );
   for (auto pt : tcmV01.geometry.nodes)
   { 
-    ROS_DEBUG_STREAM("Before conversion: Point X "<< pt.x <<" Before conversion: Point Y "<< pt.y);
+    ROS_DEBUG_STREAM("Before conversion in TCM frame: Point X "<< pt.x <<" Before conversion: Point Y "<< pt.y);
 
     PJ_COORD c {{prev_pt.x + pt.x, prev_pt.y + pt.y, 0, 0}}; // z is not currently used
     PJ_COORD c_out;
-    c_out = proj_trans(geofence_in_map_proj, PJ_FWD, c);
+    c_out = proj_trans(target_to_map, PJ_FWD, c);
+
     gf_pts.push_back(lanelet::Point3d{current_map_->pointLayer.uniqueId(), c_out.xyz.x, c_out.xyz.y});
     prev_pt.x += pt.x;
     prev_pt.y += pt.y;
 
-    ROS_DEBUG_STREAM("After conversion: Point X "<< gf_pts.back().x() <<" After conversion: Point Y "<< gf_pts.back().y());
+    ROS_DEBUG_STREAM("After conversion in Map frame: Point X "<< gf_pts.back().x() <<" After conversion: Point Y "<< gf_pts.back().y());
   }
 
   tcm_marker_array_.markers.push_back(composeTCMMarkerVisualizer(gf_pts));
@@ -963,44 +984,10 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
   cB.offsets[0].deltay = 0.0;                                     // calculating the offsets
   cB.offsets[1].deltax = pj_max_tmerc.xyz.x - pj_min_tmerc.xyz.x;
   cB.offsets[1].deltay = pj_max_tmerc.xyz.y - pj_min_tmerc.xyz.y;
-  cB.offsets[2].deltax = pj_min_tmerc.xyz.x - pj_min_tmerc.xyz.x;
-  cB.offsets[2].deltay = 0.0;
+  cB.offsets[2].deltax = 0.0;
+  cB.offsets[2].deltay = pj_max_tmerc.xyz.y - pj_min_tmerc.xyz.y;
 
-   ////////////////////////DEBUG////////////////////////////
-   // TODO: remove this block after successful integration test with carma-cloud
-  lanelet::BasicPoint3d localPoint1;
-  lanelet::BasicPoint3d localPoint2;
-  lanelet::BasicPoint3d localPoint3;
-  lanelet::BasicPoint3d localPoint4;
-
-  localPoint1.x() = localPoint.x();
-  localPoint1.y() = localPoint.y();
-  localPoint2.x() = localPoint1.x() + cB.offsets[0].deltax;
-  localPoint2.y() = localPoint1.y() + cB.offsets[0].deltay;
-  localPoint3.x() = localPoint1.x() + cB.offsets[1].deltax;
-  localPoint3.y() = localPoint1.y() + cB.offsets[1].deltay; 
-  localPoint4.x() = localPoint1.x() + cB.offsets[2].deltax;
-  localPoint4.y() = localPoint1.y() + cB.offsets[2].deltay; 
-
-
-  lanelet::GPSPoint gpsRoute1 = local_projector.reverse(localPoint1);
-  lanelet::GPSPoint gpsRoute2 = local_projector.reverse(localPoint2);
-  lanelet::GPSPoint gpsRoute3 = local_projector.reverse(localPoint3);
-  lanelet::GPSPoint gpsRoute4 = local_projector.reverse(localPoint4);
-
-  ROS_DEBUG_STREAM("Lat1: "<< std::to_string(gpsRoute1.lat));
-  ROS_DEBUG_STREAM("Lon1: "<<std::to_string(gpsRoute1.lon));
-
-  ROS_DEBUG_STREAM("Lat2: "<< std::to_string(gpsRoute2.lat));
-  ROS_DEBUG_STREAM("Lon2: "<<std::to_string(gpsRoute2.lon));
-
-  ROS_DEBUG_STREAM("Lat3: "<< std::to_string(gpsRoute3.lat));
-  ROS_DEBUG_STREAM("Lon3: "<<std::to_string(gpsRoute3.lon));
-
-  ROS_DEBUG_STREAM("Lat4: "<< std::to_string(gpsRoute4.lat));
-  ROS_DEBUG_STREAM("Lon4: "<<std::to_string(gpsRoute4.lon));
-  ////////////////////////DEBUG////////////////////////////
-    
+  tcr_polygon_ = composeTCRStatus(localPoint, cB, local_projector); // TCR polygon can be visualized in UI
 
   cB.oldest =ros::Time::now(); // TODO this needs to be set to 0 or an older value as otherwise this will filter out all controls
   
@@ -1028,6 +1015,40 @@ cav_msgs::TrafficControlRequest WMBroadcaster::controlRequestFromRoute(const cav
   
   return cR;
 
+}
+
+cav_msgs::TrafficControlRequestPolygon WMBroadcaster::composeTCRStatus(const lanelet::BasicPoint3d& localPoint, const cav_msgs::TrafficControlBounds& cB, const lanelet::projection::LocalFrameProjector& local_projector)
+{
+  cav_msgs::TrafficControlRequestPolygon output;
+  lanelet::BasicPoint3d local_point_tmp;
+
+  int i = -1;
+  while (i < 3) // three offsets; offsets.size() doesn't return accurate size
+  {
+    if (i == -1)
+    {
+      local_point_tmp.x() = localPoint.x();
+      local_point_tmp.y() = localPoint.y();
+    }
+    else
+    {
+      local_point_tmp.x() = localPoint.x() + cB.offsets[i].deltax;;
+      local_point_tmp.y() = localPoint.y() + cB.offsets[i].deltay;;
+    }
+    lanelet::GPSPoint gps_vertex = local_projector.reverse(local_point_tmp);
+    
+    cav_msgs::Position3D gps_msg;
+    gps_msg.elevation = gps_vertex.ele;
+    gps_msg.latitude = gps_vertex.lat;
+    gps_msg.longitude = gps_vertex.lon;
+    output.polygon_list.push_back(gps_msg);
+
+    ROS_ERROR_STREAM("TCR Vertex Lat: "<< std::to_string(gps_vertex.lat));
+    ROS_ERROR_STREAM("TCR Vertex Lon: "<<std::to_string(gps_vertex.lon));
+
+    i++;
+  }
+  return output;
 }
 
 visualization_msgs::Marker WMBroadcaster::composeTCMMarkerVisualizer(const std::vector<lanelet::Point3d>& input)
