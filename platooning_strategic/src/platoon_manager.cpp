@@ -96,7 +96,7 @@ namespace platoon_strategic
                 pm.commandSpeed = cmdSpeed;
                 pm.vehiclePosition = dtDistance;
                 pm.vehicleSpeed = curSpeed;
-                pm.timestamp = ros::Time::now().toNSec() *1000000;
+                pm.timestamp = ros::Time::now().toNSec()/1000000;
                 ROS_DEBUG("Receive and update platooning info on vehicel " , pm.staticId);
                 ROS_DEBUG("    BSM ID = "                                  , pm.bsmId);
                 ROS_DEBUG("    Speed = "                                   , pm.vehicleSpeed);
@@ -108,7 +108,7 @@ namespace platoon_strategic
         }
 
         if(!isExisted) {
-            long cur_t = ros::Time::now().toNSec() *1000000; // time in millisecond
+            long cur_t = ros::Time::now().toNSec()/1000000; // time in millisecond
             PlatoonMember newMember = PlatoonMember(senderId, senderBsmId, cmdSpeed, curSpeed, dtDistance, cur_t);
             
             platoon.push_back(newMember);
