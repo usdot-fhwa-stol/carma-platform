@@ -244,7 +244,7 @@ namespace route_following_plugin
 
         if (!wm_->getRoute())
         return;
-        lanelet::BasicPoint2d current_loc(pose_msg_->pose.position.x, pose_msg_->pose.position.y);
+        lanelet::BasicPoint2d current_loc(pose_msg_.pose.position.x, pose_msg_.pose.position.y);
         double current_progress = wm_->routeTrackPos(current_loc).downtrack;
         ROS_ERROR_STREAM("pose_cb : current_progress" << current_progress);
         ROS_ERROR_STREAM("upcoming_lane_change_status_msg_.lane_change : " << upcoming_lane_change_status_msg_.lane_change << 

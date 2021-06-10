@@ -182,7 +182,7 @@ namespace route_following_plugin
         double current_speed_;
 
         // Current vehicle pose in map
-        geometry_msgs::PoseStampedConstPtr pose_msg_;
+        geometry_msgs::PoseStamped pose_msg_;
         lanelet::BasicPoint2d current_loc_;
 
         // wm listener pointer and pointer to the actual wm object
