@@ -15,6 +15,7 @@
  */
 #include <basic_autonomy/basic_autonomy.h>
 #include <basic_autonomy/log/log.h>
+#include <basic_autonomy/helper_functions.h>
 
 
 namespace basic_autonomy
@@ -274,63 +275,6 @@ namespace waypoint_generation
         return points_and_target_speeds;
     }
 
-    int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points,
-                                               const cav_msgs::VehicleState& state)
-    {
-        lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
-        double min_distance = std::numeric_limits<double>::max();
-        int i = 0;
-        int best_index = 0;
-        for (const auto& p : points)
-        {
-            double distance = lanelet::geometry::distance2d(p, veh_point);
-            if (distance < min_distance)
-            {
-                best_index = i;
-                min_distance = distance;
-            }
-            i++;
-        }
-
-        return best_index;
-    }
-
-    int get_nearest_point_index(const std::vector<PointSpeedPair>& points,
-                                               const cav_msgs::VehicleState& state)
-    {
-        lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
-        ROS_DEBUG_STREAM("veh_point: " << veh_point.x() << ", " << veh_point.y());
-        double min_distance = std::numeric_limits<double>::max();
-        int i = 0;
-        int best_index = 0;
-        for (const auto& p : points)
-        {
-            double distance = lanelet::geometry::distance2d(p.point, veh_point);
-            if (distance < min_distance)
-            {
-            best_index = i;
-            min_distance = distance;
-            }
-            i++;
-        }
-
-        return best_index;
-    }
-
-    void split_point_speed_pairs(const std::vector<PointSpeedPair>& points,
-                                                std::vector<lanelet::BasicPoint2d>* basic_points,
-                                                std::vector<double>* speeds)
-    {
-        basic_points->reserve(points.size());
-        speeds->reserve(points.size());
-
-        for (const auto& p : points)
-        {
-            basic_points->push_back(p.point);
-            speeds->push_back(p.speed);
-        }
-    }
-
     std::vector<PointSpeedPair> attach_back_points(const std::vector<PointSpeedPair>& points, 
                           const int nearest_pt_index, std::vector<PointSpeedPair> future_points, double back_distance)
     {
@@ -547,7 +491,8 @@ namespace waypoint_generation
                                                         double lateral_accel_limit, 
                                                         int speed_moving_average_window_size, 
                                                         int curvature_moving_average_window_size,
-                                                        double back_distance)
+                                                        double back_distance,
+                                                        double buffer_ending_downtrack)
     {
         DetailedTrajConfig detailed_config;
 
@@ -559,6 +504,7 @@ namespace waypoint_generation
         detailed_config.speed_moving_average_window_size = speed_moving_average_window_size;
         detailed_config.curvature_moving_average_window_size = curvature_moving_average_window_size;
         detailed_config.back_distance = back_distance;
+        detailed_config.buffer_ending_downtrack = buffer_ending_downtrack;
 
         return detailed_config;
     }
@@ -576,7 +522,203 @@ namespace waypoint_generation
         return general_config;
     }
 
+    std::vector<PointSpeedPair> maneuvers_to_points_lanechange(const std::vector<cav_msgs::Maneuver>& maneuvers,
+                                                                      double max_starting_downtrack,
+                                                                      const carma_wm::WorldModelConstPtr& wm,
+                                                                      cav_msgs::VehicleState state, double& maneuver_fraction_completed, cav_msgs::VehicleState& ending_state_before_buffer, const DetailedTrajConfig& detailed_config)
+    {
+        std::vector<PointSpeedPair> points_and_target_speeds;
+        std::unordered_set<lanelet::Id> visited_lanelets;
 
+        bool first = true;
+        for(const auto& maneuver : maneuvers){
+            if(maneuver.type != cav_msgs::Maneuver::LANE_CHANGE)
+            {
+                throw std::invalid_argument("Not a lanechange maneuver, cannot create lane change points.");
+            }
+            cav_msgs::LaneChangeManeuver lane_change_maneuver = maneuver.lane_change_maneuver;
+
+            double starting_downtrack = lane_change_maneuver.start_dist;
+            if(first){
+                if(starting_downtrack > max_starting_downtrack)
+                {
+                    starting_downtrack = max_starting_downtrack;
+                }
+                first = false;
+            }
+            double ending_downtrack = lane_change_maneuver.end_dist;
+
+            //Get geometry for maneuver
+            if(starting_downtrack >= ending_downtrack)
+            {
+                throw std::invalid_argument("Start distance is greater than or equal to ending distance");
+            }
+
+            //get route geometry between starting and ending downtracks
+            std::vector<lanelet::BasicPoint2d> route_geometry = create_route_geom(starting_downtrack, stoi(lane_change_maneuver.starting_lane_id), ending_downtrack, wm);
+
+            lanelet::BasicPoint2d state_pos(state.X_pos_global, state.Y_pos_global);
+            double current_downtrack  = wm->routeTrackPos(state_pos).downtrack;
+            int nearest_pt_index = get_nearest_point_index(route_geometry, wm, current_downtrack);
+            int ending_pt_index = get_nearest_point_index(route_geometry, wm, ending_downtrack);
+            
+            //find percentage of maneuver left - for yield plugin use
+            int maneuver_points_size = route_geometry.size() - ending_pt_index;
+            maneuver_fraction_completed = nearest_pt_index/maneuver_points_size;
+
+            ending_state_before_buffer.X_pos_global = route_geometry[ending_pt_index].x();
+            ending_state_before_buffer.Y_pos_global = route_geometry[ending_pt_index].y();
+            
+            double route_length = wm->getRouteEndTrackPos().downtrack;
+            if(ending_downtrack + detailed_config.buffer_ending_downtrack < route_length){
+                ending_pt_index = get_nearest_point_index(route_geometry, wm,  ending_downtrack + detailed_config.buffer_ending_downtrack);
+            }
+            else{
+                ending_pt_index = route_geometry.size() - 1;
+            }
+
+            lanelet::BasicLineString2d future_route_geometry(route_geometry.begin() + nearest_pt_index, route_geometry.begin() + ending_pt_index);
+            first = true;        
+
+            for(auto p :future_route_geometry)
+            {
+                if(first && points_and_target_speeds.size() !=0){
+                    first = false;
+                    continue; // Skip the first point if we have already added points from a previous maneuver to avoid duplicates
+                }
+                PointSpeedPair pair;
+                pair.point = p;
+                //If current speed is above min speed, keep at current speed. Otherwise use end speed from maneuver.
+                pair.speed = (state.longitudinal_vel  > detailed_config.minimum_speed) ?  state.longitudinal_vel : lane_change_maneuver.end_speed;
+                points_and_target_speeds.push_back(pair);
+
+            }
+        }    
+
+        return points_and_target_speeds;
+            
+    }
+    
+
+    std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanechange_trajectory_from_centerline(
+                        const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time, int starting_lanelet_id, double max_speed, 
+                        const carma_wm::WorldModelConstPtr& wm, cav_msgs::VehicleState ending_state_before_buffer, const DetailedTrajConfig& detailed_config)
+    {
+        int nearest_pt_index = get_nearest_point_index(points, state);
+
+        std::vector<PointSpeedPair> future_points(points.begin() + nearest_pt_index + 1, points.end());
+
+        //Compute yaw values from original trajectory.
+        std::vector<lanelet::BasicPoint2d> future_geom_points;
+        std::vector<double> final_actual_speeds;
+        split_point_speed_pairs(future_points, &future_geom_points, &final_actual_speeds);
+        std::vector<double> final_yaw_values = carma_wm::geometry::compute_tangent_orientations(future_geom_points);
+
+        std::vector<double> downtracks= carma_wm::geometry::compute_arc_lengths(future_geom_points);
+        final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, detailed_config.speed_moving_average_window_size);
+
+        std::vector<double> times;
+        trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
+
+        //Remove extra points
+        int end_dist_pt_index = get_nearest_point_index(future_geom_points, ending_state_before_buffer);
+        future_geom_points.resize(end_dist_pt_index);
+        
+        times.resize(end_dist_pt_index);
+        final_yaw_values.resize(end_dist_pt_index);
+
+        std::vector<cav_msgs::TrajectoryPlanPoint> traj_points = 
+            trajectory_from_points_times_orientations(future_geom_points, times, final_yaw_values, state_time);
+
+        //TODO : fix the planner plugin name in trajectory_from_points_times_orientation - 
+        //The planner plugin name should be defined in the tactical plugin
+
+        return traj_points;
+    }
+
+    lanelet::BasicLineString2d create_lanechange_path(lanelet::BasicPoint2d start, lanelet::ConstLanelet& start_lanelet, lanelet::BasicPoint2d end, lanelet::ConstLanelet& end_lanelet)
+    {
+        std::vector<lanelet::BasicPoint2d> centerline_points={};
+        lanelet::BasicLineString2d centerline_start_lane = start_lanelet.centerline2d().basicLineString();
+        lanelet::BasicLineString2d centerline_end_lane = end_lanelet.centerline2d().basicLineString();
+
+        lanelet::BasicPoint2d start_lane_pt  = centerline_start_lane[0];
+        lanelet::BasicPoint2d end_lane_pt = centerline_end_lane[0];
+        double dist = sqrt(pow((end_lane_pt.x() - start_lane_pt.x()),2) + pow((end_lane_pt.y() - start_lane_pt.y()),2));
+        int total_points = std::min(centerline_start_lane.size(), centerline_end_lane.size());
+        double delta_step = 1.0/total_points;
+
+        centerline_points.push_back(start_lane_pt);
+
+        for(int i=1;i<total_points;i++){
+            lanelet::BasicPoint2d current_position;
+            start_lane_pt = centerline_start_lane[i];
+            end_lane_pt = centerline_end_lane[i];
+            double delta = delta_step*i;
+            current_position.x() = end_lane_pt.x()*delta + (1-delta)* start_lane_pt.x();
+            current_position.y() = end_lane_pt.y()*delta + (1-delta)* start_lane_pt.y();
+
+            centerline_points.push_back(current_position);
+
+        }
+
+        std::unique_ptr<smoothing::SplineI> fit_curve = compute_fit(centerline_points);
+        if(!fit_curve)
+        {
+            throw std::invalid_argument("Could not fit a spline curve along the given trajectory!");
+        }
+
+        lanelet::BasicLineString2d lc_route;
+        //lc_route.push_back(start);
+        double scaled_steps_along_curve = 0.0; // from 0 (start) to 1 (end) for the whole trajectory
+        for(int i =0;i<centerline_points.size();i++){
+            lanelet::BasicPoint2d p = (*fit_curve)(scaled_steps_along_curve);
+            lc_route.push_back(p);
+            scaled_steps_along_curve += 1.0/total_points;
+        }
+        lc_route.push_back(end);
+
+        return lc_route;
+    }
+
+    std::vector<lanelet::BasicPoint2d> create_route_geom( double starting_downtrack, int starting_lane_id, double ending_downtrack, const carma_wm::WorldModelConstPtr& wm)
+    {
+        //Create route geometry for lane change maneuver
+        //Starting downtrack maybe in the previous lanelet, if it is, have a lane follow till new lanelet starts
+        std::vector<lanelet::ConstLanelet> lanelets_in_path = wm->getLaneletsBetween(starting_downtrack, ending_downtrack, true);
+        lanelet::BasicLineString2d centerline_points = {};
+        int lane_change_iteration = 0;
+        if(lanelets_in_path[0].id() != starting_lane_id){
+            bool lane_change_req= false;
+            //Check if future lanelet is lane change lanelet
+            for(int i=0;i<lanelets_in_path.size();i++){
+                if(lanelets_in_path[i].id() == starting_lane_id){
+                    lane_change_req = true;
+                    lane_change_iteration = i;
+                    break;
+                }
+            }
+            if(!lane_change_req){
+                throw std::invalid_argument("Current path does not require a lane change. Request Incorrectly sent to Cooperative lane change plugin");
+            }
+            //lane_follow till lane_change req
+            lanelet::BasicLineString2d new_points =lanelets_in_path[lane_change_iteration-1].centerline2d().basicLineString();
+            lanelet::BasicLineString2d new_points_spliced(new_points.begin(), new_points.end() - 1);
+            centerline_points.insert(centerline_points.end(), new_points_spliced.begin(), new_points_spliced.end());
+        }
+
+        lanelet::BasicLineString2d first=lanelets_in_path[lane_change_iteration].centerline2d().basicLineString();
+        lanelet::BasicPoint2d start = first.front();
+        lanelet::BasicLineString2d last=lanelets_in_path.back().centerline2d().basicLineString();
+        lanelet::BasicPoint2d end = last.back();
+        lanelet::BasicLineString2d new_points = create_lanechange_path(start,lanelets_in_path[lane_change_iteration], end, lanelets_in_path[lane_change_iteration+1]);
+        centerline_points.insert(centerline_points.end(),new_points.begin(),new_points.end() );
+    
+        std::vector<lanelet::BasicPoint2d> centerline_as_vector(centerline_points.begin(), centerline_points.end());
+    
+        return centerline_as_vector;
+        
+    }                                                                  
 
     
 }

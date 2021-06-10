@@ -67,6 +67,7 @@ namespace waypoint_generation
         int curvature_moving_average_window_size = 9;  // Size of the window used in the moving average filter to smooth the curvature profile
                                                 // computed curvature and output speeds
         double back_distance = 20;               // Number of meters behind the first maneuver that need to be included in points for curvature calculation
+        double buffer_ending_downtrack = 20.0;    //The additional downtrack beyond requested end dist used to fit points along spline
     };
 
 /**
@@ -153,23 +154,6 @@ namespace waypoint_generation
                                                   const carma_wm::WorldModelConstPtr& wm,
                                                   const GeneralTrajConfig& general_config);
   
-  /**
-   * \brief Returns the nearest point to the provided vehicle pose in the provided list
-   * 
-   * \param points The points to evaluate
-   * \param state The current vehicle state
-   * 
-   * \return index of nearest point in points
-   */ 
-  int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points, const cav_msgs::VehicleState& state);
-  int get_nearest_point_index(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state);
-
-  /**
-   * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
-   */ 
-  void split_point_speed_pairs(const std::vector<PointSpeedPair>& points, std::vector<lanelet::BasicPoint2d>* basic_points,
-                            std::vector<double>* speeds);
-  
    /**
    * \brief Attaches back_distance length of points in front of future points
    * 
@@ -204,22 +188,6 @@ namespace waypoint_generation
   double compute_curvature_at(const basic_autonomy::smoothing::SplineI& fit_curve, double step_along_the_curve);
 
   /**
-   * \brief Method combines input points, times, orientations, and an absolute start time to form a valid carma platform trajectory
-   * 
-   * NOTE: All input vectors must be the same size. The output vector will take this size.
-   * 
-   * \param points The points in the map frame that the trajectory will follow. Units m
-   * \param times The times which at the vehicle should arrive at the specified points. First point should have a value of 0. Units s
-   * \param yaws The orientation the vehicle should achieve at each point. Units radians
-   * \param startTime The absolute start time which will be used to update the input relative times. Units s
-   * 
-   * \return A list of trajectory points built from the provided inputs.
-   */ 
-  std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_from_points_times_orientations(
-      const std::vector<lanelet::BasicPoint2d>& points, const std::vector<double>& times,
-      const std::vector<double>& yaws, ros::Time startTime);
-
-  /**
    * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of trajectory points for trajectory planning
    * 
    * \param points The set of points that define the current lane the vehicle is in and are defined based on the request planning maneuvers. 
@@ -233,7 +201,25 @@ namespace waypoint_generation
   compose_trajectory_from_centerline(const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, 
                                     const ros::Time& state_time, const DetailedTrajConfig& detailed_config);
 
-  
+//Functions for lane change
+
+    std::vector<PointSpeedPair> maneuvers_to_points_lanechange(const std::vector<cav_msgs::Maneuver>& maneuvers,
+                                                                      double max_starting_downtrack,
+                                                                      const carma_wm::WorldModelConstPtr& wm,
+                                                                      cav_msgs::VehicleState state, double& maneuver_fraction_completed,
+                                                                       cav_msgs::VehicleState& ending_state_before_buffer, const DetailedTrajConfig& detailed_config);
+
+    std::vector<cav_msgs::TrajectoryPlanPoint> compose_lanechange_trajectory_from_centerline(
+                        const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time, int starting_lanelet_id, double max_speed, 
+                        const carma_wm::WorldModelConstPtr& wm, cav_msgs::VehicleState ending_state_before_buffer, const DetailedTrajConfig& detailed_config);
+
+
+    std::vector<lanelet::BasicPoint2d> create_route_geom( double starting_downtrack, int starting_lane_id, 
+                    double ending_downtrack, const carma_wm::WorldModelConstPtr& wm);
+
+    lanelet::BasicLineString2d create_lanechange_path(lanelet::BasicPoint2d start, lanelet::ConstLanelet& start_lanelet, 
+                lanelet::BasicPoint2d end, lanelet::ConstLanelet& end_lanelet);
+
   DetailedTrajConfig compose_detailed_trajectory_config( double trajectory_time_length,
                                                         double curve_resample_step_size,
                                                         double minimum_speed,
@@ -241,7 +227,8 @@ namespace waypoint_generation
                                                         double lateral_accel_limit, 
                                                         int speed_moving_average_window_size, 
                                                         int curvature_moving_average_window_size,
-                                                        double back_distance);
+                                                        double back_distance,
+                                                         double buffer_ending_downtrack);
 
   GeneralTrajConfig compose_general_trajectory_config( std::string trajectory_type,
                                                     int default_downsample_ratio,

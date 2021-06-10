@@ -15,11 +15,26 @@
  */
 
 #include <basic_autonomy/basic_autonomy.h>
+#include <basic_autonomy/helper_functions.h>
 #include <gtest/gtest.h>
 #include <ros/ros.h>
 #include <carma_wm/CARMAWorldModel.h>
 #include <math.h>
 #include <tf/LinearMath/Vector3.h>
+#include <carma_wm/WMTestLibForGuidance.h>
+#include <lanelet2_extension/io/autoware_osm_parser.h>
+#include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_io/Io.h>
+#include <lanelet2_io/io_handlers/Factory.h>
+#include <lanelet2_io/io_handlers/Writer.h>
+#include <lanelet2_extension/projection/local_frame_projector.h>
+#include <lanelet2_core/geometry/LineString.h>
+#include <string>
+#include <sstream>
+#include <ros/package.h>
+#include <cav_msgs/Maneuver.h>
+#include <cav_msgs/VehicleState.h>
+
 
 namespace basic_autonomy
 {
@@ -580,6 +595,86 @@ TEST(BasicAutonomyTest, attach_back_points)
     ASSERT_NEAR(4.0, result[2].point.y(), 0.0000001);
     ASSERT_NEAR(5.0, result[3].point.y(), 0.0000001);
     ASSERT_NEAR(6.0, result[4].point.y(), 0.0000001);
+}
+
+
+TEST(BasicAutonomyTest, maneuvers_to_lanechange_points){
+
+    std::string path = ros::package::getPath("basic_autonomy");
+    std::string file = "/resource/map/town01_vector_map_lane_change.osm";
+    file = path.append(file);
+    int projector_type = 0;
+    std::string target_frame;
+    lanelet::ErrorMessages load_errors;
+    lanelet::io_handlers::AutowareOsmParser::parseMapParams(file, &projector_type, &target_frame);
+    lanelet::projection::LocalFrameProjector local_projector(target_frame.c_str());
+    lanelet::LaneletMapPtr map = lanelet::load(file, local_projector, &load_errors);
+    if (map->laneletLayer.size() == 0)
+    {
+        FAIL() << "Input map does not contain any lanelets";
+    }
+    std::shared_ptr<carma_wm::CARMAWorldModel> cmw = std::make_shared<carma_wm::CARMAWorldModel>();
+    cmw->carma_wm::CARMAWorldModel::setMap(map);
+    //Set Route
+    lanelet::Id start_id = 106;
+    lanelet::Id end_id = 111;
+    carma_wm::test::setRouteByIds({start_id,end_id}, cmw);
+    cmw->carma_wm::CARMAWorldModel::setMap(map);
+    //get starting position
+    auto shortest_path = cmw->getRoute()->shortestPath();
+    lanelet::BasicPoint2d veh_pos = shortest_path[0].centerline2d().front();
+    double starting_downtrack = cmw->routeTrackPos(veh_pos).downtrack;
+    double ending_downtrack = cmw->routeTrackPos(shortest_path.back().centerline2d().back()).downtrack;
+
+    //Testing maneuvers to points lanechange
+    //Arguments for function-
+    cav_msgs::Maneuver maneuver;
+    maneuver.type = cav_msgs::Maneuver::LANE_CHANGE;
+    maneuver.lane_change_maneuver.start_dist = starting_downtrack;
+    maneuver.lane_change_maneuver.end_dist = ending_downtrack;
+    maneuver.lane_change_maneuver.start_speed = 5.0;
+    maneuver.lane_change_maneuver.start_time = ros::Time::now();
+    //calculate end_time assuming constant acceleration
+    double acc = pow(maneuver.lane_change_maneuver.start_speed,2)/(2*(ending_downtrack - starting_downtrack));
+    double end_time = maneuver.lane_change_maneuver.start_speed/acc;
+    maneuver.lane_change_maneuver.end_speed = 25.0;
+    maneuver.lane_change_maneuver.end_time = ros::Time(end_time + 10.0);
+    maneuver.lane_change_maneuver.starting_lane_id = std::to_string(start_id);
+    maneuver.lane_change_maneuver.ending_lane_id = std::to_string(end_id);
+
+    std::vector<cav_msgs::Maneuver> maneuvers;
+    maneuvers.push_back(maneuver);
+    cav_msgs::VehicleState state;
+    state.X_pos_global = veh_pos.x();
+    state.Y_pos_global = veh_pos.y();
+    state.longitudinal_vel = 8.0;
+    
+    const waypoint_generation::DetailedTrajConfig config = waypoint_generation::compose_detailed_trajectory_config(0,0,0,0,0,5,0,0, 20);
+    double maneuver_fraction_completed;
+    cav_msgs::VehicleState ending_state;
+    std::vector<basic_autonomy::waypoint_generation::PointSpeedPair> points = basic_autonomy::waypoint_generation::maneuvers_to_points_lanechange(maneuvers, starting_downtrack, cmw, state, maneuver_fraction_completed, ending_state, config);
+    ros::Time state_time = ros::Time::now();
+    double target_speed = 11.176;
+    EXPECT_EQ(points.back().speed, state.longitudinal_vel);
+    std::vector<cav_msgs::TrajectoryPlanPoint> trajectory_points = basic_autonomy::waypoint_generation::compose_lanechange_trajectory_from_centerline(points,
+                        state, state_time, start_id, target_speed, cmw, ending_state, config);
+    EXPECT_TRUE(trajectory_points.size() > 2);
+    
+    basic_autonomy::waypoint_generation::create_route_geom(starting_downtrack, int(start_id), ending_downtrack, cmw);
+    
+    lanelet::ConstLanelet start_lanelet = shortest_path.front();
+    lanelet::BasicPoint2d lc_start_point = start_lanelet.centerline2d().front();
+    lanelet::ConstLanelet end_lanelet = shortest_path.back();
+    lanelet::BasicPoint2d lc_end_point = end_lanelet.centerline2d().back();
+    //create lanechange path creates the actual lanechange path. From starting of first lanelet's centerline, to the end of the adjacent
+    //lanelet's centerline
+    lanelet::BasicLineString2d lc_geom = basic_autonomy::waypoint_generation::create_lanechange_path(lc_start_point, start_lanelet,
+                    lc_end_point, end_lanelet);
+    ASSERT_NEAR(lc_start_point.y(), lc_geom.front().y(), 0.000001);
+    ASSERT_NEAR(lc_start_point.x(), lc_geom.front().x(), 0.000001);
+    
+    EXPECT_TRUE(true);
+
 }
 
 } //basic_autonomy namespace
