@@ -107,6 +107,10 @@ namespace platoon_strategic
     void PlatoonStrategicPlugin::twist_cb(const geometry_msgs::TwistStampedConstPtr& msg)
     {
         current_speed_ = msg->twist.linear.x;
+        if (current_speed_ < 0.1)
+        {
+            current_speed_ = 0.0;
+        }
         ROS_DEBUG_STREAM("current_speed_cb:" << current_speed_);
     }
 
@@ -718,7 +722,7 @@ namespace platoon_strategic
     {
         if (pm_.current_plan.valid)
         {
-            if(pm_.current_plan.planId == msg.header.plan_id && pm_.current_plan.peerId == msg.header.sender_id)
+            if(true)//TODO: update this(pm_.current_plan.planId == msg.header.plan_id && pm_.current_plan.peerId == msg.header.sender_id)
             {
                 if (msg.is_accepted)
                 {
