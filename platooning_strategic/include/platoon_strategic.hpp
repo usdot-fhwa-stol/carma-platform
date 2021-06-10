@@ -138,8 +138,8 @@ namespace platoon_strategic
             double current_speed_ = 0;
             double current_downtrack_ = 0;
 
-            long waitingStartTime;
-            long candidatestateStartTime;
+            long waitingStartTime = 0;
+            long candidatestateStartTime = 0;
 
 
             ros::Publisher platoon_strategic_plugin_discovery_pub_;
@@ -192,14 +192,6 @@ namespace platoon_strategic
 
             // Plugin discovery message
             cav_msgs::Plugin plugin_discovery_msg_;
-
-            
-            
-
-            // start vehicle speed
-            double start_speed_;
-            // target vehicle speed
-            double target_speed_;
 
 
             cav_msgs::MobilityRequest mobility_req_msg_;

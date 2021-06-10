@@ -107,7 +107,7 @@ namespace platoon_strategic
     void PlatoonStrategicPlugin::twist_cb(const geometry_msgs::TwistStampedConstPtr& msg)
     {
         current_speed_ = msg->twist.linear.x;
-        if (current_speed_ < 0.1)
+        if (current_speed_ < 0.01)
         {
             current_speed_ = 0.0;
         }
@@ -307,7 +307,7 @@ namespace platoon_strategic
 
     void PlatoonStrategicPlugin::run_leader_waiting(){
         ROS_DEBUG_STREAM("Run LeaderWaiting State ");
-        long tsStart = ros::Time::now().toSec()*1000;
+        long tsStart = ros::Time::now().toNSec()*1000;
             // Task 1
                 if(tsStart - waitingStartTime > waitingStateTimeout * 1000) 
                 {
@@ -321,14 +321,14 @@ namespace platoon_strategic
                 status = composeMobilityOperationLeaderWaiting();
                 mobility_operation_publisher_(status);
                 ROS_DEBUG_STREAM("publish status message");
-                long tsEnd = ros::Time::now().toSec()*1000;
+                long tsEnd = ros::Time::now().toNSec() *1000000; 
                 int sleepDuration = std::max(int(statusMessageInterval_ - (tsEnd - tsStart)), 0);
                 ros::Duration(sleepDuration/1000).sleep();
     }
 
     void PlatoonStrategicPlugin::run_leader(){
 
-        long tsStart = ros::Time::now().toSec()*1000;
+        long tsStart = ros::Time::now().toNSec() *1000000; 
             // Task 1
             bool isTimeForHeartBeat = tsStart - lastHeartBeatTime >= infoMessageInterval_;
             ROS_DEBUG_STREAM("time since last heart beat: " << tsStart - lastHeartBeatTime);
@@ -336,7 +336,7 @@ namespace platoon_strategic
                     cav_msgs::MobilityOperation infoOperation;
                     infoOperation = composeMobilityOperationLeader(OPERATION_INFO_TYPE);
                     mobility_operation_publisher_(infoOperation);
-                    lastHeartBeatTime = ros::Time::now().toSec()*1000.0;
+                    lastHeartBeatTime = ros::Time::now().toNSec() *1000000; 
                     ROS_DEBUG_STREAM("Published heart beat platoon INFO mobility operatrion message");
                 }
             // Task 2
@@ -346,7 +346,7 @@ namespace platoon_strategic
             // Task 3
                 if(pm_.current_plan.valid)
                 {
-                    bool isCurrentPlanTimeout = ((ros::Time::now().toSec()*1000 - pm_.current_plan.planStartTime) > NEGOTIATION_TIMEOUT);
+                    bool isCurrentPlanTimeout = ((ros::Time::now().toNSec() *1000000  - pm_.current_plan.planStartTime) > NEGOTIATION_TIMEOUT);
                     if(isCurrentPlanTimeout) 
                     {
                         ROS_DEBUG_STREAM("Give up current on waiting plan with planId: " << pm_.current_plan.planId);
@@ -363,7 +363,7 @@ namespace platoon_strategic
                 mobility_operation_publisher_(statusOperation);
                 ROS_DEBUG_STREAM("Published platoon STATUS operation message");
             }
-            long tsEnd =  ros::Time::now().toSec()*1000;
+            long tsEnd =  ros::Time::now().toNSec() *1000000; 
             long sleepDuration = std::max(int(statusMessageInterval_ - (tsEnd - tsStart)), 0);
             // is sleep needed?
             ros::Duration(sleepDuration/1000).sleep();
@@ -377,7 +377,7 @@ namespace platoon_strategic
         // 2. Abort current request if we wait for long enough time for response from leader and change back to leader state
         // 3. Check the current distance with the target platoon rear and send out CANDIDATE-JOIN request when we get close
         // 4. Publish operation status every 100 milliseconds if we still have followers
-        long tsStart = ros::Time::now().toSec()*1000;
+        long tsStart = ros::Time::now().toNSec() *1000000; 
             // Job 1
             cav_msgs::MobilityOperation status;
             status = composeMobilityOperationFollower();
@@ -398,14 +398,14 @@ namespace platoon_strategic
                     // reset counter to zero when we get updates again
                     noLeaderUpdatesCounter = 0;
                 }
-                long tsEnd = ros::Time::now().toSec()*1000.0;
+                long tsEnd = ros::Time::now().toNSec() *1000000;
                 long sleepDuration = std::max(int(statusMessageInterval_ - (tsEnd - tsStart)), 0);
                 ros::Duration(sleepDuration/1000).sleep();
         
     }
 
     void PlatoonStrategicPlugin::run_candidate_follower(){
-        long tsStart = ros::Time::now().toSec()*1000.0; 
+        long tsStart = ros::Time::now().toNSec() *1000000;
         // Task 1
         bool isCurrentStateTimeout = (tsStart - candidatestateStartTime) > waitingStateTimeout * 1000;
         if(isCurrentStateTimeout) {
@@ -429,8 +429,8 @@ namespace platoon_strategic
         }
 
         // Task 3
-                double desiredJoinGap2 = desiredJoinTimeGap;
-                double maxJoinGap = std::max(desiredJoinGap, desiredJoinGap2);
+                double desiredJoinGap2 = config_.desiredJoinTimeGap * current_speed_;
+                double maxJoinGap = std::max(config_.desiredJoinGap, desiredJoinGap2);
                 double currentGap = pm_.getDistanceToFrontVehicle();
                 ROS_DEBUG_STREAM("Based on desired join time gap, the desired join distance gap is " << desiredJoinGap2 << " ms");
                 ROS_DEBUG_STREAM("Since we have max allowed gap as " << desiredJoinGap << " m then max join gap became " << maxJoinGap << " m");
@@ -462,11 +462,10 @@ namespace platoon_strategic
                 if(pm_.getTotalPlatooningSize() > 1) {
                     cav_msgs::MobilityOperation status;
                     status = composeMobilityOperationCandidateFollower();
-                    // mob_op_pub_.publish(status);
                     mobility_operation_publisher_(status);
                     ROS_DEBUG_STREAM("Published platoon STATUS operation message");
                 }
-                long tsEnd =  ros::Time::now().toSec()*1000;
+                long tsEnd =  ros::Time::now().toNSec() *1000000; 
                 long sleepDuration = std::max(int(statusMessageInterval_ - (tsEnd - tsStart)), 0);
                 ros::Duration(sleepDuration/1000).sleep();
         
@@ -624,6 +623,7 @@ namespace platoon_strategic
                     ROS_DEBUG_STREAM("The applicant is close enough and we will allow it to try to join");
                     ROS_DEBUG_STREAM("Change to LeaderWaitingState and waiting for " << msg.header.sender_id << " to join");
                     pm_.current_platoon_state = PlatoonState::LEADERWAITING;
+                    waitingStartTime = ros::Time::now().toNSec() *1000000;
                     // plugin.setState(new LeaderWaitingState(plugin, log, pluginServiceLocator, applicantId));
                     return MobilityRequestResponse::ACK;
                 } else {
@@ -731,6 +731,7 @@ namespace platoon_strategic
                         // Change to candidate follower state and request a new plan to catch up with the front platoon
                         // TODO: update these accordingly
                         pm_.current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
+                        candidatestateStartTime = ros::Time::now().toNSec() *1000000;
                         // plugin.setState(new CandidateFollowerState(plugin, log, pluginServiceLocator, currentPlan.peerId, potentialNewPlatoonId, this.trajectoryEndLocation));
                         // pluginServiceLocator.getArbitratorService().requestNewPlan(this.trajectoryEndLocation);
                 }
@@ -801,10 +802,9 @@ namespace platoon_strategic
    
             }
             
-            // TODO: get this info from platoon control plugin
-            // (cmdSpeedSub.getLastMessage() != null ? cmdSpeedSub.getLastMessage().getSpeed() : 0.0));
-            status_msg.host_cmd_speed = 2.0;
-            status_msg.desired_gap = 12.0;
+            // This info is updated at platoon control plugin
+            status_msg.host_cmd_speed = 0.0;
+            status_msg.desired_gap = 0.0;
 
         }
         return status_msg;
