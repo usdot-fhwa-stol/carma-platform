@@ -307,7 +307,7 @@ namespace platoon_strategic
 
     void PlatoonStrategicPlugin::run_leader_waiting(){
         ROS_DEBUG_STREAM("Run LeaderWaiting State ");
-        long tsStart = ros::Time::now().toNSec()*1000;
+        long tsStart = ros::Time::now().toNSec()*1000000;
             // Task 1
                 if(tsStart - waitingStartTime > waitingStateTimeout * 1000) 
                 {
@@ -322,7 +322,7 @@ namespace platoon_strategic
                 mobility_operation_publisher_(status);
                 ROS_DEBUG_STREAM("publish status message");
                 long tsEnd = ros::Time::now().toNSec() *1000000; 
-                int sleepDuration = std::max(int(statusMessageInterval_ - (tsEnd - tsStart)), 0);
+                int sleepDuration = 10;//std::max(int(statusMessageInterval_ - (tsEnd - tsStart)), 0);
                 ros::Duration(sleepDuration/1000).sleep();
     }
 
@@ -364,7 +364,7 @@ namespace platoon_strategic
                 ROS_DEBUG_STREAM("Published platoon STATUS operation message");
             }
             long tsEnd =  ros::Time::now().toNSec() *1000000; 
-            long sleepDuration = std::max(int(statusMessageInterval_ - (tsEnd - tsStart)), 0);
+            long sleepDuration = 10;//std::max(int(statusMessageInterval_ - (tsEnd - tsStart)), 0);
             // is sleep needed?
             ros::Duration(sleepDuration/1000).sleep();
         
@@ -399,7 +399,7 @@ namespace platoon_strategic
                     noLeaderUpdatesCounter = 0;
                 }
                 long tsEnd = ros::Time::now().toNSec() *1000000;
-                long sleepDuration = std::max(int(statusMessageInterval_ - (tsEnd - tsStart)), 0);
+                long sleepDuration = 10;//std::max(int(statusMessageInterval_ - (tsEnd - tsStart)), 0);
                 ros::Duration(sleepDuration/1000).sleep();
         
     }
@@ -466,7 +466,7 @@ namespace platoon_strategic
                     ROS_DEBUG_STREAM("Published platoon STATUS operation message");
                 }
                 long tsEnd =  ros::Time::now().toNSec() *1000000; 
-                long sleepDuration = std::max(int(statusMessageInterval_ - (tsEnd - tsStart)), 0);
+                long sleepDuration = 10;//std::max(int(statusMessageInterval_ - (tsEnd - tsStart)), 0);
                 ros::Duration(sleepDuration/1000).sleep();
         
     }
