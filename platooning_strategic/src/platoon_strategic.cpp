@@ -1077,7 +1077,7 @@ namespace platoon_strategic
         }
         else if (type == OPERATION_STATUS_TYPE){
             // For STATUS params, the string format is "STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx"
-            double cmdSpeed;//TODO update cmd speed
+            double cmdSpeed = 0;//TODO update cmd speed
             boost::format fmter(OPERATION_STATUS_PARAMS);
             fmter %cmdSpeed;
             fmter %current_downtrack_;
@@ -1108,7 +1108,7 @@ namespace platoon_strategic
         msg.location = pose_to_ecef(pose_msg_, tf_);
         
         // TODO: update cmdspeed
-        double cmdSpeed;
+        double cmdSpeed = 0;
         // double cmdSpeed = plugin.getLastSpeedCmd();
         // String statusParams = String.format(PlatooningPlugin.OPERATION_STATUS_PARAMS,
         //                                     cmdSpeed, pluginServiceLocator.getRouteService().getCurrentDowntrackDistance(),
@@ -1141,7 +1141,7 @@ namespace platoon_strategic
         msg.strategy = MOBILITY_STRATEGY;
         // For STATUS params, the string format is "STATUS|CMDSPEED:5.0,DOWNTRACK:100.0,SPEED:5.0"
         // TODO: update cmdspeed
-        double cmdSpeed;
+        double cmdSpeed = 0;
         // double cmdSpeed = plugin.getLastSpeedCmd();
         // double downtrackDistance = pluginServiceLocator.getRouteService().getCurrentDowntrackDistance();
         // double currentSpeed = pluginServiceLocator.getManeuverPlanner().getManeuverInputs().getCurrentSpeed();
@@ -1186,7 +1186,7 @@ namespace platoon_strategic
         
         // // For STATUS params, the string format is "STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx"
         // TODO update smdspeed
-        double cmdSpeed;
+        double cmdSpeed = 0;
         // double cmdSpeed = plugin.getLastSpeedCmd();
         // // For STATUS params, the string format is "STATUS|CMDSPEED:xx,DTD:xx,SPEED:xx"
         // String statusParams = String.format(PlatooningPlugin.OPERATION_STATUS_PARAMS,
