@@ -130,7 +130,9 @@ namespace platoon_strategic
     }
         
     double PlatoonManager::getPlatoonRearDowntrackDistance(){
-        if(platoon.size() == 0) {
+        if(platoon.size() < 1) 
+        {
+            
             double dist = getCurrentDowntrackDistance();
             return dist;
         }

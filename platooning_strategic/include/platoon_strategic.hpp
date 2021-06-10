@@ -81,6 +81,7 @@ namespace platoon_strategic
             void mob_op_cb(const cav_msgs::MobilityOperation& msg);
             void mob_req_cb(const cav_msgs::MobilityRequest& msg);
             void mob_resp_cb(const cav_msgs::MobilityResponse& msg);
+            MobilityRequestResponse handle_mob_req(const cav_msgs::MobilityRequest& msg);
 
             // service callbacks for carma trajectory planning
             bool plan_maneuver_cb(cav_srvs::PlanManeuversRequest &req, cav_srvs::PlanManeuversResponse &resp);

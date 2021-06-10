@@ -18,11 +18,8 @@ TEST(PlatoonManagerTest, test_construct)
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
 
     PlatoonStrategicPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
-    plugin.pm_.current_platoon_state == PlatoonState::LEADER;
+    plugin.pm_.current_platoon_state = PlatoonState::LEADER;
 
-    // cav_msgs::MobilityOperation msg;
-    // msg.strategy_params = "INFO|REAR:1,LENGTH:2,SPEED:3,SIZE:4";
-    // plugin.mob_op_cb(msg);
 }
 
 TEST(PlatoonManagerTest, test_split)
@@ -40,9 +37,29 @@ TEST(PlatoonManagerTest, test_split)
     boost::algorithm::split(rearVehicleDtd_parsed, inputsParams[1], boost::is_any_of(":"));
     double rearVehicleDtd = std::stod(rearVehicleDtd_parsed[1]);
     std::cout << "rearVehicleDtd: " << rearVehicleDtd << std::endl;
+}
 
 
-    
+TEST(PlatoonManagerTest, test_states)
+{
+    ros::Time::init();
+
+    PlatoonPluginConfig config;
+    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+
+    PlatoonStrategicPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    plugin.pm_.current_platoon_state = PlatoonState::LEADER;
+    plugin.pm_.current_downtrack_didtance_ = 20;
+
+    cav_msgs::MobilityRequest request;
+    request.plan_type.type = 3;
+    request.strategy_params = "SIZE:1,SPEED:0,DTD:11.5599";
+
+    plugin.mob_req_cb(request);
+
+    EXPECT_EQ(plugin.pm_.current_platoon_state, PlatoonState::LEADERWAITING);
+
+
 }
 
 TEST(PlatoonManagerTest, test_compose)
