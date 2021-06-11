@@ -408,7 +408,9 @@ namespace platoon_strategic
     void PlatoonStrategicPlugin::run_candidate_follower(){
         long tsStart = ros::Time::now().toNSec()/1000000;
         // Task 1
-        bool isCurrentStateTimeout = (tsStart - candidatestateStartTime) > waitingStateTimeout * 1000;
+        bool isCurrentStateTimeout = false;//(tsStart - candidatestateStartTime) > waitingStateTimeout * 1000;
+        ROS_DEBUG_STREAM("timeout1: " << tsStart - candidatestateStartTime);
+        ROS_DEBUG_STREAM("waitingStateTimeout: " << waitingStateTimeout*1000);
         if(isCurrentStateTimeout) {
             ROS_DEBUG_STREAM("The current candidate follower state is timeout. Change back to leader state.");
             pm_.current_platoon_state = PlatoonState::LEADER;
@@ -420,7 +422,8 @@ namespace platoon_strategic
                 // std::lock_guard<std::mutex> lock(plan_mutex_);
                 if(pm_.current_plan.valid) {
                     ROS_DEBUG_STREAM("pm_.current_plan.planStartTime: " << pm_.current_plan.planStartTime);
-                    ROS_DEBUG_STREAM("timeout: " << tsStart - pm_.current_plan.planStartTime);
+                    ROS_DEBUG_STREAM("timeout2: " << tsStart - pm_.current_plan.planStartTime);
+                    ROS_DEBUG_STREAM("NEGOTIATION_TIMEOUT: " << NEGOTIATION_TIMEOUT);
                     bool isPlanTimeout = false;//(tsStart - pm_.current_plan.planStartTime) > NEGOTIATION_TIMEOUT;
                     if(isPlanTimeout) {
                         pm_.current_plan.valid = false;
@@ -439,7 +442,9 @@ namespace platoon_strategic
                 ROS_DEBUG_STREAM("Based on desired join time gap, the desired join distance gap is " << desiredJoinGap2 << " ms");
                 ROS_DEBUG_STREAM("Since we have max allowed gap as " << desiredJoinGap << " m then max join gap became " << maxJoinGap << " m");
                 ROS_DEBUG_STREAM("The current gap from radar is " << currentGap << " m");
-                if(currentGap <= maxJoinGap && pm_.current_plan.valid == false) {
+                // TODO: temporary
+                if(true)//(currentGap <= maxJoinGap && pm_.current_plan.valid == false) {
+                {
                     cav_msgs::MobilityRequest request;
                     std::string planId = boost::uuids::to_string(boost::uuids::random_generator()());
                     long currentTime = ros::Time::now().toNSec()/1000000; 
@@ -809,8 +814,8 @@ namespace platoon_strategic
             }
             
             // This info is updated at platoon control plugin
-            status_msg.host_cmd_speed = 0.0;
-            status_msg.desired_gap = 0.0;
+            status_msg.host_cmd_speed = 2.0;
+            status_msg.desired_gap = 6.0;
 
         }
         return status_msg;
