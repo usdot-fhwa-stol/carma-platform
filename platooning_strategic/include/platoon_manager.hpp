@@ -153,10 +153,12 @@ namespace platoon_strategic
 
         // TODO Temporary
         PlatoonState current_platoon_state = PlatoonState::STANDBY;
-        std::string applicantID = "1";
+
         PlatoonPlan current_plan;
 
         std::string targetLeaderId = "2";
+
+        std::string HostMobilityId = "hostid";
 
 
     private:
@@ -209,7 +211,7 @@ namespace platoon_strategic
     std::vector<double> getTimeHeadwayFromIndex(std::vector<double> timeHeadways, int start) const;
 
 
-    std::string HostMobilityId = "hostid";
+    
 
     
 

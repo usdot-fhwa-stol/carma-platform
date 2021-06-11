@@ -225,7 +225,7 @@ namespace platoon_strategic
         if (pm_.current_platoon_state == PlatoonState::STANDBY)
         {
             pm_.current_platoon_state = PlatoonState::LEADER;
-            ROS_DEBUG_STREAM("change the state from standby to leader");
+            ROS_DEBUG_STREAM("change the state from standby to leader at start-up");
         }
 
         // carma_wm::TrackPos tc = wm_->routeTrackPos(current_loc);
@@ -234,6 +234,7 @@ namespace platoon_strategic
         double dy = pose_msg_.pose.position.y - initial_pose_.pose.position.y;
         current_downtrack_ = std::sqrt(dx*dx + dy*dy);
         pm_.current_downtrack_didtance_ = current_downtrack_;
+        pm_.HostMobilityId = config_.vehicle_id;
         ROS_DEBUG_STREAM("current_downtrack: " << current_downtrack_);
         
         return true;
@@ -418,11 +419,14 @@ namespace platoon_strategic
             {
                 // std::lock_guard<std::mutex> lock(plan_mutex_);
                 if(pm_.current_plan.valid) {
-                    bool isPlanTimeout = (tsStart - pm_.current_plan.planStartTime) > NEGOTIATION_TIMEOUT;
+                    ROS_DEBUG_STREAM("pm_.current_plan.planStartTime: " << pm_.current_plan.planStartTime);
+                    ROS_DEBUG_STREAM("timeout: " << tsStart - pm_.current_plan.planStartTime);
+                    bool isPlanTimeout = false;//(tsStart - pm_.current_plan.planStartTime) > NEGOTIATION_TIMEOUT;
                     if(isPlanTimeout) {
                         pm_.current_plan.valid = false;
                         ROS_DEBUG_STREAM("The current plan did not receive any response. Abort and change to leader state.");
                         pm_.current_platoon_state = PlatoonState::LEADER;
+                        ROS_DEBUG_STREAM("Changed the state back to Leader");
                     }    
                 }
             }
@@ -863,7 +867,7 @@ namespace platoon_strategic
             std::string platoonId = msg.header.plan_id;
             std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
             // TODO: update this
-            // plugin.platoonManager.memberUpdates(vehicleID, platoonId, msg.getHeader().getSenderBsmId(), statusParams);
+            pm_.memberUpdates(vehicleID, platoonId, msg.header.sender_bsm_id, statusParams);
             ROS_DEBUG_STREAM("Received platoon status message from " << msg.header.sender_id);
         }
         else {
@@ -901,6 +905,7 @@ namespace platoon_strategic
             std::string statusParams = strategyParams.substr(OPERATION_STATUS_TYPE.size() + 1);
             // / TODO: update these accordingly
             // plugin.platoonManager.memberUpdates(vehicleID, platoonId, msg.getHeader().getSenderBsmId(), statusParams);
+            pm_.memberUpdates(vehicleID, platoonId, msg.header.sender_bsm_id, statusParams);
             ROS_DEBUG_STREAM("Received platoon status message from " << msg.header.sender_id);
         } else {
             ROS_DEBUG_STREAM("Received a mobility operation message with params " << msg.strategy_params << " but ignored.");
