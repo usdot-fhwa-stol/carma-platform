@@ -247,10 +247,10 @@ std::vector<double> InLaneCruisingPlugin::optimize_speed(const std::vector<doubl
     }
   }
 
-  //log::printDoublesPerLineWithPrefix("only_reverse[i]: ", output);
+  log::printDoublesPerLineWithPrefix("only_reverse[i]: ", output);
   
   output = trajectory_utils::apply_accel_limits_by_distance(downtracks, output, accel_limit, accel_limit);
-  //log::printDoublesPerLineWithPrefix("after_forward[i]: ", output);
+  log::printDoublesPerLineWithPrefix("after_forward[i]: ", output);
 
   return output;
 }
@@ -323,7 +323,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
                    << " x: " << state.X_pos_global << " y: " << state.Y_pos_global << " yaw: " << state.orientation
                    << " speed: " << state.longitudinal_vel);
 
-  //log::printDebugPerLine(points, &log::pointSpeedPairToStream);
+  log::printDebugPerLine(points, &log::pointSpeedPairToStream);
 
   int nearest_pt_index = get_nearest_point_index(points, state);
 
@@ -403,12 +403,12 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   std::vector<double> ideal_speeds =
       trajectory_utils::constrained_speeds_for_curvatures(curvatures, config_.lateral_accel_limit);
   
-  //log::printDoublesPerLineWithPrefix("curvatures[i]: ", curvatures);
-  //log::printDoublesPerLineWithPrefix("ideal_speeds: ", ideal_speeds);
-  //log::printDoublesPerLineWithPrefix("final_yaw_values[i]: ", final_yaw_values);
+  log::printDoublesPerLineWithPrefix("curvatures[i]: ", curvatures);
+  log::printDoublesPerLineWithPrefix("ideal_speeds: ", ideal_speeds);
+  log::printDoublesPerLineWithPrefix("final_yaw_values[i]: ", final_yaw_values);
 
   std::vector<double> constrained_speed_limits = apply_speed_limits(ideal_speeds, distributed_speed_limits);
-  //log::printDoublesPerLineWithPrefix("constrained_speed_limits: ", constrained_speed_limits);
+  log::printDoublesPerLineWithPrefix("constrained_speed_limits: ", constrained_speed_limits);
 
   ROS_DEBUG("Processed all points in computed fit");
 
@@ -457,23 +457,23 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   // Apply accel limits
   final_actual_speeds = optimize_speed(downtracks, final_actual_speeds, config_.max_accel);
 
-  //log::printDoublesPerLineWithPrefix("postAccel[i]: ", final_actual_speeds);
+  log::printDoublesPerLineWithPrefix("postAccel[i]: ", final_actual_speeds);
 
   final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, config_.speed_moving_average_window_size);
-  //log::printDoublesPerLineWithPrefix("post_average[i]: ", final_actual_speeds);
+  log::printDoublesPerLineWithPrefix("post_average[i]: ", final_actual_speeds);
 
   for (auto& s : final_actual_speeds)  // Limit minimum speed. TODO how to handle stopping?
   {
     s = std::max(s, config_.minimum_speed);
   }
 
-  //log::printDoublesPerLineWithPrefix("post_min_speed[i]: ", final_actual_speeds);
+  log::printDoublesPerLineWithPrefix("post_min_speed[i]: ", final_actual_speeds);
 
   // Convert speeds to times
   std::vector<double> times;
   trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
 
-  //log::printDoublesPerLineWithPrefix("times[i]: ", times);
+  log::printDoublesPerLineWithPrefix("times[i]: ", times);
   
   // Build trajectory points
   // TODO When more plugins are implemented that might share trajectory planning the start time will need to be based
