@@ -99,8 +99,6 @@ namespace cooperative_lanechange
             std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
                                                 double max_starting_downtrack,
                                                 const carma_wm::WorldModelConstPtr& wm,const cav_msgs::VehicleState& state);
-
-            int get_ending_point_index(lanelet::BasicLineString2d& points, double ending_downtrack);
             /**
              * \brief Creates a Lanelet2 Linestring from a vector or points along the geometry 
              * \param starting_downtrack downtrack along route where maneuver starts
@@ -113,13 +111,11 @@ namespace cooperative_lanechange
 
             /**
              * \brief Given a start and end point, create a vector of points fit through a spline between the points (using a Spline library)
-             * \param start The start position
              * \param start_lanelet The lanelet from which lane change starts
-             * \param end The end position
              * \param end_lanelet The lanelet in which lane change ends
              * \return A linestring path from start to end fit through Spline Library
              */
-             lanelet::BasicLineString2d create_lanechange_path(lanelet::BasicPoint2d start, lanelet::ConstLanelet& start_lanelet, lanelet::BasicPoint2d end, lanelet::ConstLanelet& end_lanelet);
+             lanelet::BasicLineString2d create_lanechange_path(lanelet::ConstLanelet& start_lanelet, lanelet::ConstLanelet& end_lanelet);
             
             /**
              * \brief Method converts a list of lanelet centerline points and current vehicle state into a usable list of trajectory points for trajectory planning
@@ -135,15 +131,33 @@ namespace cooperative_lanechange
             /**
              * \brief Returns the nearest point to the provided vehicle pose in the provided list
              * 
+             * \param points The points and speed pairs to evaluate
+             * \param state The current vehicle state
+             * 
+             * \return index of nearest point in points
+             */
+            int get_nearest_point_index(const std::vector<PointSpeedPair>& points,
+                                               const cav_msgs::VehicleState& state) const;
+            /**
+             * \brief Overload: Returns the nearest point to the provided vehicle pose in the provided list
+             * 
              * \param points The points to evaluate
              * \param state The current vehicle state
              * 
              * \return index of nearest point in points
              */
-            int get_ending_point_index(const std::vector<PointSpeedPair>& points,
+            int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points,
                                                const cav_msgs::VehicleState& state) const;
-            int get_ending_point_index(const std::vector<lanelet::BasicPoint2d>& points,
-                                               const cav_msgs::VehicleState& state) const;
+            /**
+             * \brief Returns the nearest point to the provided vehicle pose in the provided list
+             * 
+             * \param points BasicLineString2d points
+             * \param ending_downtrack ending downtrack along the route to get index of
+             * 
+             * \return index of nearest point in points
+             */
+            int get_nearest_route_point_index(lanelet::BasicLineString2d& points, double ending_downtrack);
+
             /**
              * \brief Reduces the input points to only those points that fit within the provided time boundary
              * 
@@ -344,14 +358,11 @@ namespace cooperative_lanechange
             double min_desired_gap_ =5.0;
             double ending_buffer_downtrack_ = 5.0;
        
-
-            cav_msgs::VehicleState  ending_state_before_buffer_;
+            cav_msgs::VehicleState  ending_state_before_buffer_; //state before applying extra points for curvature calculation that are removed later
 
             // generated trajectory plan
             cav_msgs::TrajectoryPlan trajectory_msg;
             
-
-
             /**
              * \brief Callback for the pose subscriber, which will store latest pose locally
              * \param msg Latest pose message

@@ -159,7 +159,7 @@ public:
   /**
    * \brief Returns the nearest point to the provided vehicle pose in the provided list
    * 
-   * \param points The points to evaluate
+   * \param points The point speed pairs to evaluate
    * \param state The current vehicle state
    * 
    * \return index of nearest point in points
@@ -174,7 +174,7 @@ public:
    * 
    * \return index of nearest point in points
    */ 
-  int get_ending_point_index(const std::vector<lanelet::BasicPoint2d>& points, const cav_msgs::VehicleState& state) const;
+  int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points, const cav_msgs::VehicleState& state) const;
 
   /**
    * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
@@ -274,7 +274,7 @@ private:
   cav_msgs::Plugin plugin_discovery_msg_;
   DebugPublisher debug_publisher_;
   carma_debug_msgs::TrajectoryCurvatureSpeeds debug_msg_;
-  cav_msgs::VehicleState ending_state_before_buffer;
+  cav_msgs::VehicleState ending_state_before_buffer; //state before applying extra points for curvature calculation that are removed later
 
 };
 };  // namespace inlanecruising_plugin
