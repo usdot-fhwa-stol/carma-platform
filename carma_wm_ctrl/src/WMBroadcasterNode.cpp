@@ -54,8 +54,7 @@ WMBroadcasterNode::WMBroadcasterNode()
 int WMBroadcasterNode::run()
 {
   // Map Publisher
-  // When a new node connects to this topic that node should be provided with an updated map which includes any already included map updates
-  map_pub_ = cnh_.advertise<autoware_lanelet2_msgs::MapBin>("semantic_map", 1, [this](auto& pub){ wmb_.newMapSubscriber(pub); });
+  map_pub_ = cnh_.advertise<autoware_lanelet2_msgs::MapBin>("semantic_map", 1, true);
   // Map Update Publisher
   // When a new node connects to this topic that node should be provided with all previous updates for the current map version
   map_update_pub_ = cnh_.advertise<autoware_lanelet2_msgs::MapBin>("map_update", 200, [this](auto& pub){ wmb_.newUpdateSubscriber(pub); });
@@ -68,11 +67,7 @@ int WMBroadcasterNode::run()
   // Base Map Georeference Sub
   georef_sub_ = cnh_.subscribe("georeference", 1, &WMBroadcaster::geoReferenceCallback, &wmb_);
   // Geofence Sub
-<<<<<<< HEAD
   geofence_sub_ = cnh_.subscribe("geofence", 200, &WMBroadcaster::geofenceCallback, &wmb_);
-=======
-  geofence_sub_ = cnh_.subscribe("geofence", 100, &WMBroadcaster::geofenceCallback, &wmb_);
->>>>>>> develop
   //Route Message Sub
   route_callmsg_sub_ = cnh_.subscribe("route", 1, &WMBroadcaster::routeCallbackMessage, &wmb_);
   //Current Location Sub

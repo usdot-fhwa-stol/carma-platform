@@ -162,7 +162,6 @@ namespace traffic
   size_t getNearestPointIndex(const lanelet::ConstLineString3d& points,
                                                 const lanelet::BasicPoint2d& point)
   {
-<<<<<<< HEAD
     double min_distance = std::numeric_limits<double>::max();
     size_t i = 0;
     size_t best_index = 0;
@@ -296,37 +295,17 @@ namespace traffic
 
     ROS_DEBUG_STREAM("Nearest Lanelet: " << current_lanelet.id());
 
-=======
-    ROS_DEBUG_STREAM("In composeTrafficControlMesssages");
-    local_point_=getIncidentOriginPoint();
-    ROS_DEBUG_STREAM("Responder point in map frame: " << local_point_.x() << ", " << local_point_.y());
-    auto current_lanelets = lanelet::geometry::findNearest(wm_->getMap()->laneletLayer, local_point_, 1); 
-    if (current_lanelets.size() == 0) {
-      ROS_ERROR_STREAM("No nearest lanelet to responder vehicle in map point: " << local_point_.x() << ", " << local_point_.y());
-      return {};
-    }
-     
-    lanelet::ConstLanelet current_lanelet = current_lanelets[0].second;
-
-    ROS_DEBUG_STREAM("Nearest Lanelet: " << current_lanelet.id());
-
->>>>>>> develop
     lanelet::ConstLanelets lefts = { current_lanelet };
     for (const auto& l : wm_->getMapRoutingGraph()->lefts(current_lanelet)) {
       lefts.emplace_back(l);
       ROS_DEBUG_STREAM("Left lanelet: " << l.id());
     }
     
-<<<<<<< HEAD
-=======
-    lefts.push_back(current_lanelet);
->>>>>>> develop
     lanelet::ConstLanelets rights = wm_->getMapRoutingGraph()->rights(current_lanelet);
     for (auto l : rights) {
       ROS_DEBUG_STREAM("Right lanelet: " << l.id());
     }
 
-<<<<<<< HEAD
     // Assume that if there are more lanelets to the left than the right then the tahoe is on the left
     std::vector<std::vector<lanelet::BasicPoint2d>> forward_lanes, reverse_lanes;
 
@@ -354,46 +333,6 @@ namespace traffic
     
    // auto route_lanelets = wm_->getLaneletsBetween(route_trackpos_min, route_trackpos_max, false);
     ROS_DEBUG_STREAM("Constructing message for lanes: " << reverse_lanes.size());
-=======
-    std::vector<std::vector<lanelet::BasicPoint2d>> forward_lanes; // Ordered from right to left
-    for (auto ll : lefts) {
-      ROS_DEBUG_STREAM("Processing left lanelet: " << ll.id());
-      std::vector<lanelet::BasicPoint2d> following_lane;
-      auto cur_ll = ll;
-      double dist = 0;
-      size_t p_idx = 0;
-      lanelet::BasicPoint2d prev_point = lanelet::traits::to2D(cur_ll.centerline().front());
-      while (dist < down_track) {
-        ROS_DEBUG_STREAM("Accumulating left lanelet: " << cur_ll.id());
-        if (p_idx == cur_ll.centerline().size()) {
-          auto next_lls = wm_->getMapRoutingGraph()->following(cur_ll, false);
-          if (next_lls.size() == 0) {
-            ROS_DEBUG_STREAM("No followers");
-            break;
-          }
-          auto next = next_lls[0];
-          ROS_DEBUG_STREAM("Getting next lanelet: " << next.id());
-          cur_ll = next;
-          p_idx = 0;
-        }
-        if (p_idx != 0 || dist == 0) {
-          
-          following_lane.push_back(lanelet::traits::to2D(cur_ll.centerline()[p_idx]));
-          dist += lanelet::geometry::distance2d(prev_point, following_lane.back());
-        }
-        ROS_DEBUG_STREAM("distance " << dist);
-        prev_point = lanelet::traits::to2D(cur_ll.centerline()[p_idx]);
-        p_idx++;
-      }
-      if (following_lane.size() != 0) {
-        ROS_DEBUG_STREAM("Adding lane");
-        forward_lanes.emplace_back(following_lane);
-      }
-    }
-
-   // auto route_lanelets = wm_->getLaneletsBetween(route_trackpos_min, route_trackpos_max, false);
-    ROS_DEBUG_STREAM("Constructing message for lanes: " << forward_lanes.size());
->>>>>>> develop
     std::vector<cav_msgs::TrafficControlMessageV01> output_msg;
 
     cav_msgs::TrafficControlMessageV01 traffic_mobility_msg;
@@ -411,7 +350,6 @@ namespace traffic
     traffic_mobility_msg.params.schedule.between_exists=false;
     traffic_mobility_msg.params.schedule.repeat_exists = false;
 
-<<<<<<< HEAD
     for (size_t i = 0; i < reverse_lanes.size(); i++) {
 
       traffic_mobility_msg.geometry.nodes.clear();
@@ -466,56 +404,17 @@ namespace traffic
       traffic_mobility_msg.params.detail.maxspeed=speed_advisory;
       output_msg.push_back(traffic_mobility_msg);
 
-=======
-    for (size_t i = 0; i < forward_lanes.size(); i++) {
-      //forward_lanes[i] = carma_utils::containers::downsample_vector(forward_lanes[i], 8);
-
-      traffic_mobility_msg.geometry.nodes.clear();
-
-      for(const auto& p : carma_utils::containers::downsample_vector(forward_lanes[i], 8))
-      {
-        cav_msgs::PathNode path_point;
-        path_point.x=p.x();
-        path_point.y=p.y();
-        traffic_mobility_msg.geometry.nodes.push_back(path_point);
-      }
-
-      if (i == 0) {
-        boost::uuids::uuid closure_id = boost::uuids::random_generator()();
-        std::copy(closure_id.begin(), closure_id.end(), traffic_mobility_msg.id.id.begin());
-        traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::CLOSED_CHOICE;
-        traffic_mobility_msg.params.detail.closed=cav_msgs::TrafficControlDetail::CLOSED;
-        traffic_mobility_msg.package.label=event_reason;
-        output_msg.push_back(traffic_mobility_msg);
-      }
-
-      boost::uuids::uuid headway_id = boost::uuids::random_generator()();
-      std::copy(headway_id.begin(), headway_id.end(), traffic_mobility_msg.id.id.begin());
-      traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::MINHDWY_CHOICE;
-      traffic_mobility_msg.params.detail.minhdwy=min_gap;
-      output_msg.push_back(traffic_mobility_msg);
-
-      boost::uuids::uuid speed_id = boost::uuids::random_generator()();
-      std::copy(speed_id.begin(), speed_id.end(), traffic_mobility_msg.id.id.begin());
-      traffic_mobility_msg.params.detail.choice=cav_msgs::TrafficControlDetail::MAXSPEED_CHOICE;
-      traffic_mobility_msg.params.detail.maxspeed=speed_advisory;
-      output_msg.push_back(traffic_mobility_msg);
-
->>>>>>> develop
     }
     
 
     return output_msg;
    
-<<<<<<< HEAD
     }
   
   void TrafficIncidentParserWorker::newGeofenceSubscriber(const ros::SingleSubscriberPublisher& single_sub_pub) const {
 
     for (const auto& msg : geofence_message_queue_) {
       single_sub_pub.publish(msg); // For each applied update for the current map version publish the update to the new subscriber
-=======
->>>>>>> develop
     }
   }
 

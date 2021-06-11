@@ -207,7 +207,6 @@ public:
   ros::V_string invertParticipants(const ros::V_string& input_participants) const;
 
   /*!
-<<<<<<< HEAD
    *  \brief Callback triggered whenever a new subscriber connects to the map_update topic of this node.
    *         This callback will publish the all updates for the current map to that node so that any missed updates are already included.
    *          
@@ -223,14 +222,6 @@ public:
    * \return The most recent route message.
    */ 
   cav_msgs::Route getRoute();
-=======
-   *  \brief Callback triggered whenever a new subscriber connects to the semantic_map topic of this node.
-   *         This callback will publish the most recent updated map to that node so that any missed updates are already included.
-   * 
-   *  \param single_sub_pub A publisher which will publish exclusively to the new subscriber 
-   */ 
-  void newMapSubscriber(const ros::SingleSubscriberPublisher& single_sub_pub) const;
->>>>>>> develop
 
 
 private:
@@ -262,7 +253,6 @@ private:
    * It should not be incremented for updates that do not require a full map publication.
    */
   size_t current_map_version_ = 0; 
-<<<<<<< HEAD
 
   cav_msgs::Route current_route; // Most recently received route message
   /**
@@ -275,9 +265,6 @@ private:
   size_t update_count_ = 0; // Records the total number of sent map updates. Used as the set value for update.header.seq
 
 };
-=======
-  };
->>>>>>> develop
 }  // namespace carma_wm_ctrl
 
 

@@ -105,18 +105,12 @@ void WMListenerWorker::enableUpdatesWithoutRoute()
 
 void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr& geofence_msg)
 {
-<<<<<<< HEAD
   ROS_INFO_STREAM("Map Update Being Evaluated. SeqNum: " << geofence_msg->header.seq);
 
   if (geofence_msg->header.seq <= most_recent_update_msg_seq_) {
     ROS_DEBUG_STREAM("Dropping map update which has already been processed. Received seq: " << geofence_msg->header.seq << " prev seq: " << most_recent_update_msg_seq_);
     return;
   } else if(!world_model_->getMap() || current_map_version_ < geofence_msg->map_version) { // If our current map version is older than the version target by this update
-=======
-  ROS_INFO_STREAM("New Map Update Received. SeqNum: " << geofence_msg->header.seq);
-
-  if(!world_model_->getMap() || current_map_version_ < geofence_msg->map_version) { // If our current map version is older than the version target by this update
->>>>>>> develop
     ROS_DEBUG_STREAM("Update recieved for newer map version than available. Queueing update until map is available.");
     map_update_queue_.push(geofence_msg);
     return;
@@ -125,11 +119,8 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     return;
   }
 
-<<<<<<< HEAD
   most_recent_update_msg_seq_ = geofence_msg->header.seq; // Update current sequence count
 
-=======
->>>>>>> develop
   if(geofence_msg->invalidates_route==true && world_model_->getRoute())
   {  
     rerouting_flag_=true;
@@ -176,19 +167,12 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
 
     auto regemptr_it = world_model_->getMutableMap()->regulatoryElementLayer.find(pair.second->id());
 
-<<<<<<< HEAD
     // if this regem is already in the map.
     // This section is expected to be called to add back regulations which were previously removed by expired geofences.
     if (regemptr_it != world_model_->getMutableMap()->regulatoryElementLayer.end())  
     {
 
       ROS_DEBUG_STREAM("Reapplying previously existing element");
-=======
-    // if this regem is already in the map
-    if (regemptr_it != world_model_->getMutableMap()->regulatoryElementLayer.end())
-    {
-
->>>>>>> develop
       // again we should use the element with correct data address to be consistent
       world_model_->getMutableMap()->update(parent_llt, *regemptr_it);
 
@@ -196,10 +180,7 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
     else // Updates are treated as new regulations after the old value was removed. In both cases we enter this block. 
     {
 
-<<<<<<< HEAD
       ROS_DEBUG_STREAM("New regulatory element " << pair.second->id());
-=======
->>>>>>> develop
       newRegemUpdateHelper(parent_llt, pair.second.get());
 
     }

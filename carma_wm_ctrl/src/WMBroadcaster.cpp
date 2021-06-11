@@ -83,10 +83,7 @@ void WMBroadcaster::baseMapCallback(const autoware_lanelet2_msgs::MapBinConstPtr
 
   // Publish map
   current_map_version_ += 1; // Increment the map version. It should always start from 1 for the first map
-<<<<<<< HEAD
   map_update_message_queue_.clear(); // Clear the update queue as the map version has changed
-=======
->>>>>>> develop
   autoware_lanelet2_msgs::MapBin compliant_map_msg;
   lanelet::utils::conversion::toBinMsg(base_map_, &compliant_map_msg);
   compliant_map_msg.map_version = current_map_version_;
@@ -541,11 +538,7 @@ lanelet::ConstLaneletOrAreas WMBroadcaster::getAffectedLaneletOrAreas(const cav_
     prev_pt.x += pt.x;
     prev_pt.y += pt.y;
 
-<<<<<<< HEAD
     ROS_DEBUG_STREAM("After conversion: Point X "<< gf_pts.back().x() <<" After conversion: Point Y "<< gf_pts.back().y());
-=======
-    ROS_DEBUG_STREAM("After conversion: Point X "<< c_out.xyz.x <<" After conversion: Point Y "<< c_out.xyz.y);
->>>>>>> develop
   }
 
   tcm_marker_array_.markers.push_back(composeTCMMarkerVisualizer(gf_pts));
@@ -809,10 +802,7 @@ void WMBroadcaster::addGeofence(std::shared_ptr<Geofence> gf_ptr)
   gf_msg.header.seq = update_count_;
   gf_msg.invalidates_route=gf_ptr->invalidate_route_; 
   gf_msg.map_version = current_map_version_;
-<<<<<<< HEAD
   map_update_message_queue_.push_back(gf_msg); // Add diff to current map update queue
-=======
->>>>>>> develop
   map_update_pub_(gf_msg);
 };
 
@@ -831,14 +821,10 @@ void WMBroadcaster::removeGeofence(std::shared_ptr<Geofence> gf_ptr)
   auto send_data = std::make_shared<carma_wm::TrafficControl>(carma_wm::TrafficControl(gf_ptr->id_, gf_ptr->update_list_, gf_ptr->remove_list_));
   
   carma_wm::toBinMsg(send_data, &gf_msg_revert);
-<<<<<<< HEAD
   update_count_++; // Update the sequence count for geofence messages
   gf_msg_revert.header.seq = update_count_;
   gf_msg_revert.map_version = current_map_version_;
   map_update_message_queue_.push_back(gf_msg_revert); // Add diff to current map update queue
-=======
-  gf_msg_revert.map_version = current_map_version_;
->>>>>>> develop
   map_update_pub_(gf_msg_revert);
 
 
@@ -1318,22 +1304,11 @@ cav_msgs::CheckActiveGeofence WMBroadcaster::checkActiveGeofenceLogic(const geom
   return outgoing_geof;
 }
 
-<<<<<<< HEAD
 void WMBroadcaster::newUpdateSubscriber(const ros::SingleSubscriberPublisher& single_sub_pub) const {
 
   for (const auto& msg : map_update_message_queue_) {
     single_sub_pub.publish(msg); // For each applied update for the current map version publish the update to the new subscriber
   }
-=======
-void WMBroadcaster::newMapSubscriber(const ros::SingleSubscriberPublisher& single_sub_pub) const {
-  if (!current_map_) {
-    return;
-  }
-  autoware_lanelet2_msgs::MapBin map_msg;
-  lanelet::utils::conversion::toBinMsg(current_map_, &map_msg);
-  map_msg.map_version = current_map_version_;
-  single_sub_pub.publish(map_msg); // Publish the most updated version of the map to the new subscriber so any future updates are synchronized
->>>>>>> develop
 }
 
 
