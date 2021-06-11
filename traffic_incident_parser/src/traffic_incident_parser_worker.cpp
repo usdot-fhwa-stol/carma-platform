@@ -239,7 +239,7 @@ namespace traffic
       
       
       // Identify the point to start the accumulation from
-      size_t p_idx = getNearestPointIndex(cur_ll.centerline(), start_point); // Get the index of the nearest point
+      int p_idx = getNearestPointIndex(cur_ll.centerline(), start_point); // Get the index of the nearest point
 
       lanelet::BasicPoint2d prev_point = cur_ll.centerline()[p_idx].basicPoint2d();
 

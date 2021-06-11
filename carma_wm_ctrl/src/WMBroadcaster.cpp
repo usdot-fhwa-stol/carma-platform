@@ -1043,8 +1043,8 @@ cav_msgs::TrafficControlRequestPolygon WMBroadcaster::composeTCRStatus(const lan
     gps_msg.longitude = gps_vertex.lon;
     output.polygon_list.push_back(gps_msg);
 
-    ROS_ERROR_STREAM("TCR Vertex Lat: "<< std::to_string(gps_vertex.lat));
-    ROS_ERROR_STREAM("TCR Vertex Lon: "<<std::to_string(gps_vertex.lon));
+    ROS_DEBUG_STREAM("TCR Vertex Lat: "<< std::to_string(gps_vertex.lat));
+    ROS_DEBUG_STREAM("TCR Vertex Lon: "<<std::to_string(gps_vertex.lon));
 
     i++;
   }
