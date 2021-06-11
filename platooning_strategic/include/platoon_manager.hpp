@@ -209,7 +209,6 @@ namespace platoon_strategic
     std::vector<double> getTimeHeadwayFromIndex(std::vector<double> timeHeadways, int start) const;
 
 
-    // ?????????? what is hostmobilityid
     std::string HostMobilityId = "hostid";
 
     

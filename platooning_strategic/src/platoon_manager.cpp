@@ -65,15 +65,17 @@ namespace platoon_strategic
                 currentPlatoonID = platoonId;
                 updatesOrAddMemberInfo(senderId, senderBsmId, cmdSpeed, dtDistance, curSpeed);
 
-            } else if((currentPlatoonID == platoonId) && isVehicleInFrontOf) {
+            } else // if((currentPlatoonID == platoonId) && isVehicleInFrontOf) 
+            {
                 ROS_DEBUG("This STATUS messages is from our platoon in front of us. Updating the info...");
                 updatesOrAddMemberInfo(senderId, senderBsmId, cmdSpeed, dtDistance, curSpeed);
                 leaderID = (platoon.size()==0) ? HostMobilityId : platoon[0].staticId;
                 ROS_DEBUG("The first vehicle in our list is now " , leaderID);
 
-            } else{
-                ROS_DEBUG("This STATUS message is not from our platoon. We ignore this message with id: " , senderId);
-            }
+            } 
+            // else{
+            //     ROS_DEBUG("This STATUS message is not from our platoon. We ignore this message with id: " , senderId);
+            // }
         }else {
             // If we are currently in any leader state, we only updates platoon member based on platoon ID
             if(currentPlatoonID == platoonId) {

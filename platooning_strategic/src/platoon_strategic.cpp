@@ -676,6 +676,7 @@ namespace platoon_strategic
 
     void PlatoonStrategicPlugin::mob_resp_cb_candidatefollower(const cav_msgs::MobilityResponse& msg)
     {
+        ROS_DEBUG_STREAM("Callback for candidate follower ");
         if (pm_.current_plan.valid)
         {
             bool isForCurrentPlan = msg.header.plan_id == pm_.current_plan.planId;
@@ -688,7 +689,7 @@ namespace platoon_strategic
                     ROS_DEBUG_STREAM("The leader " << msg.header.sender_id << " agreed on our join. Change to follower state.");
                     // TODO: update these accordingly
                     pm_.current_platoon_state = PlatoonState::FOLLOWER;
-                    // plugin.platoonManager.changeFromLeaderToFollower(targetPlatoonId);
+                    pm_.changeFromLeaderToFollower(msg.header.plan_id);
                     // plugin.setState(new FollowerState(plugin, log, pluginServiceLocator));
                     // pluginServiceLocator.getArbitratorService().requestNewPlan(this.trajectoryEndLocation);
                 } 
