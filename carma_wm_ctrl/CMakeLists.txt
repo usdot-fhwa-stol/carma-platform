@@ -108,10 +108,10 @@ install(DIRECTORY launch
 
 catkin_add_gmock(${PROJECT_NAME}-test
  test/TestMain.cpp
- #test/GeofenceSchedulerTest.cpp
- #test/GeofenceScheduleTest.cpp
+ test/GeofenceSchedulerTest.cpp
+ test/GeofenceScheduleTest.cpp
  test/WMBroadcasterTest.cpp
- #test/MapToolsTest.cpp
+ test/MapToolsTest.cpp
  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test # Add test directory as working directory for unit tests
 )
 
