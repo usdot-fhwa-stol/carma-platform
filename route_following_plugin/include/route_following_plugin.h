@@ -65,6 +65,17 @@ namespace route_following_plugin
          */
         void initialize();
 
+        // wm listener pointer and pointer to the actual wm object
+        std::shared_ptr<carma_wm::WMListener> wml_;
+        carma_wm::WorldModelConstPtr wm_;
+
+        /**
+         * \brief ComposeLaneChangeStatus() Given lane change status
+         * \param lane_change_start_dist,starting_lanelet,ending_lanelet,current_downtrack
+         */
+        cav_msgs::UpcomingLaneChangeStatus ComposeLaneChangeStatus(double lane_change_start_dist,lanelet::ConstLanelet starting_lanelet,lanelet::ConstLanelet ending_lanelet,double current_downtrack);
+        
+
         private:
 
         /**
@@ -140,12 +151,6 @@ namespace route_following_plugin
          */
         double findSpeedLimit(const lanelet::ConstLanelet& llt);
 
-                 /**
-         * \brief ComposeLaneChangeStatus() Given lane change status
-         * \param lane_change_start_dist,starting_lanelet,ending_lanelet,current_downtrack
-         */
-        cav_msgs::UpcomingLaneChangeStatus ComposeLaneChangeStatus(double lane_change_start_dist,lanelet::ConstLanelet starting_lanelet,lanelet::ConstLanelet ending_lanelet,double current_downtrack);
-        
         /**
          * \brief Calculate maneuver plan for remaining route. This callback is triggered when a new route has been received and processed by the world model
          * \param route_shortest_path A list of lanelets along the shortest path of the route using which the maneuver plan is calculated.
@@ -184,10 +189,6 @@ namespace route_following_plugin
         // Current vehicle pose in map
         geometry_msgs::PoseStamped pose_msg_;
         lanelet::BasicPoint2d current_loc_;
-
-        // wm listener pointer and pointer to the actual wm object
-        std::shared_ptr<carma_wm::WMListener> wml_;
-        carma_wm::WorldModelConstPtr wm_;
 
         //Queue of maneuver plans
         std::vector<cav_msgs::Maneuver> latest_maneuver_plan_;
