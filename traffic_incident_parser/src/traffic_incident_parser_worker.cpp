@@ -36,13 +36,15 @@ namespace traffic
 
            if(valid_msg && event_type=="CLOSED")
            {
+            geofence_message_queue_.clear(); // Clear the previous geofence message queue since the geofence set will now be updated
             previous_strategy_params=mobility_msg.strategy_params;
             cav_msgs::TrafficControlMessage traffic_control_msg;
             traffic_control_msg.choice=cav_msgs::TrafficControlMessage::TCMV01;
             for(auto &traffic_msg:composeTrafficControlMesssages())
             {
               traffic_control_msg.tcmV01=traffic_msg;
-              traffic_control_pub_(traffic_control_msg);
+              geofence_message_queue_.push_back(traffic_control_msg); // Add the message to the geofence_message_queue for publication to new subscribers
+              traffic_control_pub_(traffic_control_msg); // Publish the message to existing subscribers
             }
            }
            else
@@ -299,7 +301,6 @@ namespace traffic
       ROS_DEBUG_STREAM("Left lanelet: " << l.id());
     }
     
-    lefts.push_back(current_lanelet);
     lanelet::ConstLanelets rights = wm_->getMapRoutingGraph()->rights(current_lanelet);
     for (auto l : rights) {
       ROS_DEBUG_STREAM("Right lanelet: " << l.id());
@@ -309,11 +310,11 @@ namespace traffic
     std::vector<std::vector<lanelet::BasicPoint2d>> forward_lanes, reverse_lanes;
 
     if (lefts.size() >=  rights.size()) {
-      ROS_DEBUG_STREAM("Emergency vehicle on the left ");
+      ROS_DEBUG_STREAM("Emergency vehicle on the right ");
       getAdjacentForwardCenterlines(lefts, local_point_, down_track, &forward_lanes);
       getAdjacentReverseCenterlines(lefts, local_point_, up_track, &reverse_lanes);     
     } else {
-      ROS_DEBUG_STREAM("Emergency vehicle on the right ");
+      ROS_DEBUG_STREAM("Emergency vehicle on the left ");
       getAdjacentForwardCenterlines(rights, local_point_, down_track, &forward_lanes);
       getAdjacentReverseCenterlines(rights, local_point_, up_track, &reverse_lanes);   
     }
@@ -391,5 +392,12 @@ namespace traffic
     return output_msg;
    
     }
+  
+  void TrafficIncidentParserWorker::newGeofenceSubscriber(const ros::SingleSubscriberPublisher& single_sub_pub) const {
+
+    for (const auto& msg : geofence_message_queue_) {
+      single_sub_pub.publish(msg); // For each applied update for the current map version publish the update to the new subscriber
+    }
+  }
 
 }//traffic

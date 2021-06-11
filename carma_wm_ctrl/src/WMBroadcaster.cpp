@@ -137,7 +137,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
       sL = 0_mph;
     }// @SONAR_START@
     gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
-                                        sL, affected_llts, affected_areas, { lanelet::Participants::VehicleCar }));
+                                        sL, affected_llts, affected_areas, participantsChecker(msg_v01) ));
   }
   
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::MINSPEED_CHOICE) 
@@ -159,7 +159,7 @@ std::shared_ptr<Geofence> WMBroadcaster::geofenceFromMsg(const cav_msgs::Traffic
       sL = 0_mph;
     }// @SONAR_START@
     gf_ptr->regulatory_element_ = std::make_shared<lanelet::DigitalSpeedLimit>(lanelet::DigitalSpeedLimit::buildData(lanelet::utils::getId(), 
-                                        sL, affected_llts, affected_areas, { lanelet::Participants::VehicleCar }));
+                                        sL, affected_llts, affected_areas, participantsChecker(msg_v01) ));
   }
   if (msg_detail.choice == cav_msgs::TrafficControlDetail::LATPERM_CHOICE || msg_detail.choice == cav_msgs::TrafficControlDetail::LATAFFINITY_CHOICE)
   {
@@ -693,6 +693,8 @@ void WMBroadcaster::addRegulatoryComponent(std::shared_ptr<Geofence> gf_ptr) con
     {
       current_map_->update(current_map_->laneletLayer.get(el.id()), gf_ptr->regulatory_element_);
       gf_ptr->update_list_.push_back(std::pair<lanelet::Id, lanelet::RegulatoryElementPtr>(el.id(), gf_ptr->regulatory_element_));
+    } else {
+      ROS_WARN_STREAM("Regulatory element with invalid id in geofence cannot be added to the map");
     }
   }
   
@@ -933,7 +935,7 @@ double WMBroadcaster::distToNearestActiveGeofence(const lanelet::BasicPoint2d& c
   }
   
   // Get the lanelet of this point
-  auto curr_lanelet = current_map_->laneletLayer.nearest(curr_pos, 1)[0]; //guaranteed to at least return 1 lanelet
+  auto curr_lanelet = lanelet::geometry::findNearest(current_map_->laneletLayer, curr_pos, 1)[0].second;
 
   // Check if this point at least is actually within this lanelets
   if (!boost::geometry::within(curr_pos, curr_lanelet.polygon2d().basicPolygon()))
@@ -1002,23 +1004,17 @@ cav_msgs::CheckActiveGeofence WMBroadcaster::checkActiveGeofenceLogic(const geom
     throw lanelet::InvalidObjectStateError(std::string("Lanelet map 'current_map_' is not loaded to the WMBroadcaster"));
   }
 
-//Store current position values to be compared to geofence boundary values
+  // Store current position values to be compared to geofence boundary values
   double current_pos_x = current_pos.pose.position.x;
   double current_pos_y = current_pos.pose.position.y;
 
 
-lanelet::BasicPoint2d curr_pos;
+  lanelet::BasicPoint2d curr_pos;
   curr_pos.x() = current_pos_x;
   curr_pos.y() = current_pos_y;
-  
-  
 
-  auto current_llt = current_map_->laneletLayer.nearest(curr_pos, 1)[0];
   cav_msgs::CheckActiveGeofence outgoing_geof; //message to publish
   double next_distance = 0 ; //Distance to next geofence
-
-  
-  std::vector<double> route_distances;
 
   if (active_geofence_llt_ids_.size() <= 0 ) 
   {
@@ -1026,57 +1022,131 @@ lanelet::BasicPoint2d curr_pos;
     return outgoing_geof;
   }
 
+  // Obtain the closest lanelet to the vehicle's current position
+  auto current_llt = lanelet::geometry::findNearest(current_map_->laneletLayer, curr_pos, 1)[0].second;
+  
+  /* determine whether or not the vehicle's current position is within an active geofence */
+  if (boost::geometry::within(curr_pos, current_llt.polygon2d().basicPolygon()))
+  {         
+    next_distance = distToNearestActiveGeofence(curr_pos);
+    outgoing_geof.distance_to_next_geofence = next_distance;
 
-  
-  
-    /* determine whether or not the vehicle's current position is within an active geofence */
-     if (boost::geometry::within(curr_pos, current_llt.polygon2d().basicPolygon()))
-      {         
-        next_distance = distToNearestActiveGeofence(curr_pos);
-        for(auto id : active_geofence_llt_ids_) 
+    for(auto id : active_geofence_llt_ids_) 
+    {
+      if (id == current_llt.id())
+      {           
+        ROS_DEBUG_STREAM("Vehicle is on Lanelet " << current_llt.id() << ", which has an active geofence");
+        outgoing_geof.is_on_active_geofence = true;
+        for (auto regem: current_llt.regulatoryElements())
         {
-          if (id == current_llt.id())
-          {           
-            outgoing_geof.is_on_active_geofence = true;
-            for (auto regem: current_llt.regulatoryElements())
+          // Assign active geofence fields based on the speed limit associated with this lanelet
+          if (regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0)
+          {
+            lanelet::DigitalSpeedLimitPtr speed =  std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>
+            (current_map_->regulatoryElementLayer.get(regem->id()));
+            outgoing_geof.value = speed->speed_limit_.value();
+            outgoing_geof.advisory_speed = speed->speed_limit_.value(); 
+            ROS_DEBUG_STREAM("Active geofence has a speed limit of " << speed->speed_limit_.value());
+                    
+            // Cannot overrule outgoing_geof.type if it is already set to LANE_CLOSED
+            if(outgoing_geof.type != cav_msgs::CheckActiveGeofence::LANE_CLOSED)
+            {
+              outgoing_geof.type = cav_msgs::CheckActiveGeofence::SPEED_LIMIT;
+            }
+          }
+
+          // Assign active geofence fields based on the minimum gap associated with this lanelet (if it exists)
+          if(regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalMinimumGap::RuleName) == 0)
+          {
+            lanelet::DigitalMinimumGapPtr min_gap =  std::dynamic_pointer_cast<lanelet::DigitalMinimumGap>
+            (current_map_->regulatoryElementLayer.get(regem->id()));
+            outgoing_geof.minimum_gap = min_gap->getMinimumGap();
+            ROS_DEBUG_STREAM("Active geofence has a minimum gap of " << min_gap->getMinimumGap());
+          }
+                 
+          // Assign active geofence fields based on whether the current lane is closed or is immediately adjacent to a closed lane
+          if(regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::RegionAccessRule::RuleName) == 0)
+          {
+            lanelet::RegionAccessRulePtr accessRuleReg =  std::dynamic_pointer_cast<lanelet::RegionAccessRule>
+            (current_map_->regulatoryElementLayer.get(regem->id()));
+
+            // Update the 'type' and 'reason' for this active geofence if the vehicle is in a closed lane
+            if(!accessRuleReg->accessable(lanelet::Participants::VehicleCar) || !accessRuleReg->accessable(lanelet::Participants::VehicleTruck)) 
+            {
+              ROS_DEBUG_STREAM("Active geofence is a closed lane.");
+              ROS_DEBUG_STREAM("Closed lane reason: " << accessRuleReg->getReason());
+              outgoing_geof.reason = accessRuleReg->getReason();
+              outgoing_geof.type = cav_msgs::CheckActiveGeofence::LANE_CLOSED;
+            }
+            // Otherwise, update the 'type' and 'reason' for this active geofence if the vehicle is in a lane immediately adjacent to a closed lane with the same travel direction
+            else 
+            {
+              // Obtain all same-direction lanes sharing the right lane boundary (will include the current lanelet)
+              auto right_boundary_lanelets = current_map_->laneletLayer.findUsages(current_llt.rightBound());
+
+              // Check if the adjacent right lane is closed
+              if(right_boundary_lanelets.size() > 1)
               {
-                  if (regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalSpeedLimit::RuleName) == 0)
+                for(auto lanelet : right_boundary_lanelets)
+                {
+                  // Only check the adjacent right lanelet; ignore the current lanelet
+                  if(lanelet.id() != current_llt.id())
                   {
-                    lanelet::DigitalSpeedLimitPtr speed =  std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>
-                    (current_map_->regulatoryElementLayer.get(regem->id()));
-                    outgoing_geof.value = speed->speed_limit_.value();
-                    outgoing_geof.advisory_speed = speed->speed_limit_.value(); 
-                    outgoing_geof.type = cav_msgs::CheckActiveGeofence::SPEED_LIMIT;
-                 }
+                    for (auto rightRegem: lanelet.regulatoryElements())
+                    {
+                      if(rightRegem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::RegionAccessRule::RuleName) == 0)
+                      {
+                        lanelet::RegionAccessRulePtr rightAccessRuleReg =  std::dynamic_pointer_cast<lanelet::RegionAccessRule>
+                        (current_map_->regulatoryElementLayer.get(rightRegem->id()));
+                        if(!rightAccessRuleReg->accessable(lanelet::Participants::VehicleCar) || !rightAccessRuleReg->accessable(lanelet::Participants::VehicleTruck))
+                        {
+                          ROS_DEBUG_STREAM("Right adjacent Lanelet " << lanelet.id() << " is CLOSED");
+                          ROS_DEBUG_STREAM("Assigning LANE_CLOSED type to active geofence");
+                          ROS_DEBUG_STREAM("Assigning reason " << rightAccessRuleReg->getReason());
+                          outgoing_geof.reason = rightAccessRuleReg->getReason();
+                          outgoing_geof.type = cav_msgs::CheckActiveGeofence::LANE_CLOSED;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
 
-                 if(regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::DigitalMinimumGap::RuleName) == 0)
-                 {
-                    lanelet::DigitalMinimumGapPtr min_gap =  std::dynamic_pointer_cast<lanelet::DigitalMinimumGap>
-                    (current_map_->regulatoryElementLayer.get(regem->id()));
-                    outgoing_geof.minimum_gap = min_gap->getMinimumGap();
-                 }
-
-                 if(regem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::RegionAccessRule::RuleName) == 0)
-                 {
-                    lanelet::RegionAccessRulePtr accessRuleReg =  std::dynamic_pointer_cast<lanelet::RegionAccessRule>
-                    (current_map_->regulatoryElementLayer.get(regem->id()));
-                    outgoing_geof.reason = accessRuleReg->getReason();
-                    outgoing_geof.type = cav_msgs::CheckActiveGeofence::LANE_CLOSED;
-                 }
-
-              }//End for loop
-
-
+              // Check if the adjacent left lane is closed
+              auto left_boundary_lanelets = current_map_->laneletLayer.findUsages(current_llt.leftBound());
+              if(left_boundary_lanelets.size() > 1)
+              {
+                for(auto lanelet : left_boundary_lanelets)
+                {
+                  // Only check the adjacent left lanelet; ignore the current lanelet
+                  if(lanelet.id() != current_llt.id())
+                  {
+                    for (auto leftRegem: lanelet.regulatoryElements())
+                    {
+                      if(leftRegem->attribute(lanelet::AttributeName::Subtype).value().compare(lanelet::RegionAccessRule::RuleName) == 0)
+                      {
+                        lanelet::RegionAccessRulePtr leftAccessRuleReg =  std::dynamic_pointer_cast<lanelet::RegionAccessRule>
+                        (current_map_->regulatoryElementLayer.get(leftRegem->id()));
+                        if(!leftAccessRuleReg->accessable(lanelet::Participants::VehicleCar) || !leftAccessRuleReg->accessable(lanelet::Participants::VehicleTruck))
+                        {
+                          ROS_DEBUG_STREAM("Left adjacent Lanelet " << lanelet.id() << " is CLOSED");
+                          ROS_DEBUG_STREAM("Assigning LANE_CLOSED type to active geofence");
+                          ROS_DEBUG_STREAM("Assigning reason " << leftAccessRuleReg->getReason());
+                          outgoing_geof.reason = leftAccessRuleReg->getReason();
+                          outgoing_geof.type = cav_msgs::CheckActiveGeofence::LANE_CLOSED;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
-
-      outgoing_geof.distance_to_next_geofence = next_distance;
-
-  //end for loop
-    return outgoing_geof;
-  
-
+    }
+  }
+  return outgoing_geof;
 }
 
 void WMBroadcaster::newUpdateSubscriber(const ros::SingleSubscriberPublisher& single_sub_pub) const {
