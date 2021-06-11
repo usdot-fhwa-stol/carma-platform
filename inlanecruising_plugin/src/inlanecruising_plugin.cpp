@@ -416,7 +416,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   {
     ROS_WARN_STREAM("No trajectory points could be generated");
     return {};
-  };
+  }
 
   // Add current vehicle point to front of the trajectory
 
@@ -429,7 +429,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
   ROS_DEBUG_STREAM("<<<<nearest_pt_index: " << nearest_pt_index);
   ROS_DEBUG_STREAM("<<<<Ending point: x: " << all_sampling_points[buffer_pt_index].x() << ", y:" << all_sampling_points[buffer_pt_index].y());
 
-//drop buffer points here
+  //drop buffer points here
   std::vector<lanelet::BasicPoint2d> future_basic_points(all_sampling_points.begin() + nearest_pt_index + 1,
                                             all_sampling_points.begin()+ buffer_pt_index);  // Points in front of current vehicle position
 
@@ -596,7 +596,8 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
     lanelet::BasicLineString2d downsampled_centerline;
     downsampled_centerline.reserve(200);
 
-    // getLaneletsBetween returns shortest path that is ordered
+    // getLaneletsBetween is inclusive lanelets between its two boundaries
+    // which may return lanechange lanelets, so 
     // exclude lanechanges and plan for only the straight part
     int curr_idx = 0;
     auto following_lanelets = wm->getMapRoutingGraph()->following(lanelets[curr_idx]);

@@ -3,7 +3,7 @@ minimal_maneuver_duration: 15
 
 #Double : The jerk used to bring vehicle to a halt at end of route
 #Unit : m/s3
-route_end_jerk : 100.0
+route_end_jerk : 3.0
 
 # Double : Extra time allowed for lane change, in order to make transition smooth
 #Unit : seconds

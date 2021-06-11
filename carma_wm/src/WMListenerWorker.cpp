@@ -173,11 +173,6 @@ void WMListenerWorker::mapUpdateCallback(const autoware_lanelet2_msgs::MapBinPtr
 
       // again we should use the element with correct data address to be consistent
       world_model_->getMutableMap()->update(parent_llt, *regemptr_it);
-      auto factory_pcl = lanelet::RegulatoryElementFactory::create((*regemptr_it)->attribute(lanelet::AttributeName::Subtype).value(),
-                                                            std::const_pointer_cast<lanelet::RegulatoryElementData>((*regemptr_it)->constData()));
-      lanelet::DigitalSpeedLimitPtr speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(factory_pcl);
-      ROS_DEBUG_STREAM("updateed llt id:" << parent_llt.id() << ", with digital speed limit of: " << speed->speed_limit_.value()<<"in ms");
-
     }
     else
     {
@@ -223,7 +218,6 @@ void WMListenerWorker::newRegemUpdateHelper(lanelet::Lanelet parent_llt, lanelet
 
       lanelet::DigitalSpeedLimitPtr speed = std::dynamic_pointer_cast<lanelet::DigitalSpeedLimit>(factory_pcl);
       world_model_->getMutableMap()->update(parent_llt, speed);
-      ROS_DEBUG_STREAM("updateed llt id:" << parent_llt.id() << ", with digital speed limit of: " << speed->speed_limit_.value()<<"in ms");
       break;
     }
     case GeofenceType::REGION_ACCESS_RULE:

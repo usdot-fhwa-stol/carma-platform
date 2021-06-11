@@ -99,17 +99,8 @@ namespace cooperative_lanechange
             std::vector<PointSpeedPair> maneuvers_to_points(const std::vector<cav_msgs::Maneuver>& maneuvers,
                                                 double max_starting_downtrack,
                                                 const carma_wm::WorldModelConstPtr& wm,const cav_msgs::VehicleState& state);
-              /**
-             * \brief Finds the index for the point closest to the specified vehicle state
-             * 
-             * \param points A BasicLineString type variable, which is a vector of BasicPoint2d elements
-             * \param state The vehicle state to which the nearest index needs to be found
-             * 
-             * \return the index of the element in points which is closest to state.
-             */ 
-            int getNearestRouteIndex(lanelet::BasicLineString2d& points, const cav_msgs::VehicleState& state) const;
 
-            int getNearestPointIndex(const std::vector<lanelet::BasicPoint2d>& points, const cav_msgs::VehicleState& state) const;
+            int get_ending_point_index(lanelet::BasicLineString2d& points, double ending_downtrack);
             /**
              * \brief Creates a Lanelet2 Linestring from a vector or points along the geometry 
              * \param starting_downtrack downtrack along route where maneuver starts
@@ -149,7 +140,9 @@ namespace cooperative_lanechange
              * 
              * \return index of nearest point in points
              */
-            int getNearestPointIndex(const std::vector<PointSpeedPair>& points,
+            int get_ending_point_index(const std::vector<PointSpeedPair>& points,
+                                               const cav_msgs::VehicleState& state) const;
+            int get_ending_point_index(const std::vector<lanelet::BasicPoint2d>& points,
                                                const cav_msgs::VehicleState& state) const;
             /**
              * \brief Reduces the input points to only those points that fit within the provided time boundary
@@ -267,7 +260,7 @@ namespace cooperative_lanechange
              * \return Curvature (k = 1/r, 1/meter)
              */ 
             double compute_curvature_at(const cooperative_lanechange::smoothing::SplineI& fit_curve, double step_along_the_curve) const;
-            int get_ending_point_index(lanelet::BasicLineString2d& points, double ending_downtrack);
+
             // initialize this node
             void initialize();
 

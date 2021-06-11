@@ -531,7 +531,6 @@ namespace cooperative_lanechange
             ROS_DEBUG_STREAM("route geometry size:"<<route_geometry.size());
             ROS_ERROR_STREAM("route geometry size:"<<route_geometry.size());
 
-            //int nearest_pt_index = getNearestRouteIndex(route_geometry,state);
             lanelet::BasicPoint2d state_pos(state.X_pos_global, state.Y_pos_global);
             double current_downtrack = wm_->routeTrackPos(state_pos).downtrack;
             ROS_DEBUG_STREAM("nearest_pt_index calc starting");
@@ -613,7 +612,7 @@ namespace cooperative_lanechange
     const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time, int starting_lanelet_id, double max_speed)
     {
         ROS_DEBUG_STREAM("Input points size in: compose_trajectory_from_centerline" << points.size());
-        int nearest_pt_index = getNearestPointIndex(points, state);
+        int nearest_pt_index = get_ending_point_index(points, state);
         ROS_DEBUG_STREAM("nearest_pt_index: " << nearest_pt_index);
 
 
@@ -635,9 +634,9 @@ namespace cooperative_lanechange
         std::vector<double> times;
         trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
 
-        // //Remove extra points
+        // Remove extra points
         ROS_DEBUG_STREAM("1 future_geom_points.size()" << future_geom_points.size());
-        int end_dist_pt_index = getNearestPointIndex(future_geom_points, ending_state_before_buffer_);
+        int end_dist_pt_index = get_ending_point_index(future_geom_points, ending_state_before_buffer_);
         future_geom_points.resize(end_dist_pt_index);
         times.resize(end_dist_pt_index);
         final_yaw_values.resize(end_dist_pt_index);
@@ -843,26 +842,6 @@ namespace cooperative_lanechange
         }
     }
 
-    int CooperativeLaneChangePlugin::getNearestRouteIndex(lanelet::BasicLineString2d& points, const cav_msgs::VehicleState& state) const
-    {
-        lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
-                double min_distance = std::numeric_limits<double>::max();
-        int i = 0;
-        int best_index = 0;
-        for (const auto& p : points)
-        {
-            double distance = lanelet::geometry::distance2d(p,veh_point);
-            if (distance < min_distance)
-            {
-            best_index = i;
-            min_distance = distance;
-            }
-            i++;
-        }
-        return best_index;
-
-    }
-
     int CooperativeLaneChangePlugin::get_ending_point_index(lanelet::BasicLineString2d& points, double ending_downtrack){
         int best_index = 0;
         bool set_index = false;
@@ -884,43 +863,54 @@ namespace cooperative_lanechange
         return best_index;
     }
 
-    int CooperativeLaneChangePlugin::getNearestPointIndex(const std::vector<PointSpeedPair>& points,
+    int CooperativeLaneChangePlugin::get_ending_point_index(const std::vector<lanelet::BasicPoint2d>& points,
                                                const cav_msgs::VehicleState& state) const
     {
-        lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
-        double min_distance = std::numeric_limits<double>::max();
-        int i = 0;
+        lanelet::BasicPoint2d state_pos(state.X_pos_global, state.Y_pos_global);
+        double ending_downtrack = wm_->routeTrackPos(state_pos).downtrack;
+        ROS_DEBUG_STREAM("get_ending_point_index: state_pos: " << state_pos.x() << ", " << state_pos.y() << ", ending_downtrack" << ending_downtrack);
         int best_index = 0;
-        for (const auto& p : points)
-        {
-            double distance = lanelet::geometry::distance2d(p.point, veh_point);
-            if (distance < min_distance)
-            {
-            best_index = i;
-            min_distance = distance;
-            }
-            i++;
-        }
+        bool set_index = false;
+        for(int i=0;i < points.size();i++){
+            double downtrack = wm_->routeTrackPos(points[i]).downtrack;
+            ROS_DEBUG_STREAM("get_ending_point_index>> points[i].x(): " << points[i].x() << ", points[i].y(): " << points[i].y() << ", downtrack: "<< downtrack);
 
+            if(downtrack > ending_downtrack){
+                best_index = i - 1;
+                ROS_DEBUG_STREAM("get_ending_point_index>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y() << ", downtrack: "<< downtrack);
+                set_index = true;
+                break;
+            }
+        }
+        if (!set_index)
+        {
+            best_index = points.size() - 1;
+        }
         return best_index;
     }
-
-    int CooperativeLaneChangePlugin::getNearestPointIndex(const std::vector<lanelet::BasicPoint2d>& points,
+    
+    int CooperativeLaneChangePlugin::get_ending_point_index(const std::vector<PointSpeedPair>& points,
                                                const cav_msgs::VehicleState& state) const
     {
-        lanelet::BasicPoint2d veh_point(state.X_pos_global, state.Y_pos_global);
-        double min_distance = std::numeric_limits<double>::max();
-        int i = 0;
+        lanelet::BasicPoint2d state_pos(state.X_pos_global, state.Y_pos_global);
+        double ending_downtrack = wm_->routeTrackPos(state_pos).downtrack;
+        ROS_DEBUG_STREAM("get_ending_point_index: state_pos: " << state_pos.x() << ", " << state_pos.y() << ", ending_downtrack" << ending_downtrack);
         int best_index = 0;
-        for (const auto& p : points)
-        {
-            double distance = lanelet::geometry::distance2d(p, veh_point);
-            if (distance < min_distance)
-            {
-            best_index = i;
-            min_distance = distance;
+        bool set_index = false;
+        for(int i=0;i < points.size();i++){
+            double downtrack = wm_->routeTrackPos(points[i].point).downtrack;
+            ROS_DEBUG_STREAM("get_ending_point_index>> points[i].x(): " << points[i].point.x() << ", points[i].y(): " << points[i].point.y() << ", downtrack: "<< downtrack);
+
+            if(downtrack > ending_downtrack){
+                best_index = i - 1;
+                ROS_DEBUG_STREAM("get_ending_point_index>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].point.x() << ", points[i].y(): " << points[best_index].point.y() << ", downtrack: "<< downtrack);
+                set_index = true;
+                break;
             }
-            i++;
+        }
+        if (!set_index)
+        {
+            best_index = points.size() - 1;
         }
         return best_index;
     }
