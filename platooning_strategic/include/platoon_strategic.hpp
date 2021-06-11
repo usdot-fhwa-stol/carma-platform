@@ -244,8 +244,8 @@ namespace platoon_strategic
             std::string HostMobilityId = "hostid";
             std::string BSMID = "BSM";
 
-            // leader_waiting
-            std::string applicantId_;
+            // leader_waiting applicant id
+            std::string lw_applicantId_ = "";
 
             std::string bsmIDtoString(cav_msgs::BSMCoreData bsm_core)
             {

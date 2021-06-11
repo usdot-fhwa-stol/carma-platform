@@ -144,12 +144,12 @@ namespace platoon_strategic
 
 
         int platoonSize = 1;
-        std::string leaderID;
+        std::string leaderID = "";
         std::string currentPlatoonID = "test_plan";
         bool isFollower;
 
-        double current_speed_;
-        double command_speed_;
+        double current_speed_ = 0;
+        double command_speed_ = 0;
 
         // TODO Temporary
         PlatoonState current_platoon_state = PlatoonState::STANDBY;
@@ -165,7 +165,7 @@ namespace platoon_strategic
         double maxAllowedJoinGap = 90;
         int maxPlatoonSize = 10;
         double vehicleLength = 5.0;
-        int infoMessageInterval;
+        int infoMessageInterval = 200;
 
         std::string targetPlatoonId;
         std::string OPERATION_INFO_TYPE = "INFO";

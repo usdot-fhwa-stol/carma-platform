@@ -546,11 +546,11 @@ namespace platoon_strategic
 
     MobilityRequestResponse PlatoonStrategicPlugin::mob_req_cb_leaderwaiting(const cav_msgs::MobilityRequest& msg)
     {
-        bool isTargetVehicle = (msg.header.sender_id == applicantId_);
+        bool isTargetVehicle = (msg.header.sender_id == lw_applicantId_);
         bool isCandidateJoin = msg.plan_type.type == cav_msgs::PlanType::PLATOON_FOLLOWER_JOIN;
         if(isTargetVehicle && isCandidateJoin)
         {
-            ROS_DEBUG_STREAM("Target vehicle " << applicantId_ << " is actually joining.");
+            ROS_DEBUG_STREAM("Target vehicle " << lw_applicantId_ << " is actually joining.");
             ROS_DEBUG_STREAM("Changing to PlatoonLeaderState and send ACK to target vehicle");
             pm_.current_platoon_state = PlatoonState::LEADER;
             // plugin.setState(new LeaderState(plugin, log, pluginServiceLocator));
@@ -624,6 +624,7 @@ namespace platoon_strategic
                     ROS_DEBUG_STREAM("Change to LeaderWaitingState and waiting for " << msg.header.sender_id << " to join");
                     pm_.current_platoon_state = PlatoonState::LEADERWAITING;
                     waitingStartTime = ros::Time::now().toNSec()/1000000;
+                    lw_applicantId_ = msg.header.sender_id;
                     // plugin.setState(new LeaderWaitingState(plugin, log, pluginServiceLocator, applicantId));
                     return MobilityRequestResponse::ACK;
                 } else {
