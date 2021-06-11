@@ -68,7 +68,7 @@
   <!-- CARMA Motion Computation Visualizer Node -->
  <group>
   <remap from= "external_objects" to= "external_object_predictions"/>
-  <include file="$(find motion_computation_visualizer)/launch/motion_computation_visualizer.launch"/>
+  <include file="$(find motion_prediction_visualizer)/launch/motion_prediction_visualizer.launch"/>
 </group>
 
   <!-- calibration_publisher -->
