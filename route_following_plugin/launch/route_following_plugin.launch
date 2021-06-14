@@ -14,7 +14,6 @@
   This file is used to launch a ros wrapper of Autoware planner as a CARMA strategic plugin.
 -->
 <launch>
-    <node name="route_following_plugin" pkg="route_following_plugin" type="route_following_plugin" output="log">
-      <rosparam command="load" file="$(find route_following_plugin)/config/parameters.yaml"/>
-    </node>
+    <rosparam command="load" file="$(find route_following_plugin)/config/parameters.yaml"/>
+    <node name="route_following_plugin" pkg="route_following_plugin" type="route_following_plugin" output="log"/>
 </launch>
