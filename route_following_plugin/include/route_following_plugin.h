@@ -186,6 +186,9 @@ namespace route_following_plugin
         std::string planning_strategic_plugin_ = "RouteFollowingPlugin";
         std::string lanefollow_planning_tactical_plugin_ = "InLaneCruisingPlugin"; 
 
+        //Small constant to compare doubles against
+        double epsilon_ = 0.0001;
+
         /**
          * \brief Callback for the pose subscriber, which will store latest pose locally
          * \param msg Latest pose message

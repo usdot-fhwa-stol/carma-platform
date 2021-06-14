@@ -171,7 +171,7 @@ namespace route_following_plugin
                 //update start distance of first maneuver
                 setManeuverStartDist(latest_maneuver_plan_[i], current_downtrack);
             }
-            planned_time += getManeuverDuration(latest_maneuver_plan_[i], 0.0001).toSec();
+            planned_time += getManeuverDuration(latest_maneuver_plan_[i], epsilon_).toSec();
 
             resp.new_plan.maneuvers.push_back(latest_maneuver_plan_[i]);
             ++i;
@@ -180,7 +180,7 @@ namespace route_following_plugin
         if (resp.new_plan.maneuvers.size() == 0)
         {
             ROS_WARN_STREAM("Cannot plan maneuver because no route is found");
-            return true;
+            return false;
         }
         //update plan
 
@@ -215,7 +215,7 @@ namespace route_following_plugin
 
         for (auto &maneuver : maneuvers)
         {
-            time_progress += getManeuverDuration(maneuver, 0.001);
+            time_progress += getManeuverDuration(maneuver, epsilon_);
             switch (maneuver.type)
             {
             case cav_msgs::Maneuver::LANE_FOLLOWING:
