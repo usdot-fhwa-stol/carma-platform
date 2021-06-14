@@ -1,5 +1,3 @@
-maxAccel: 2.5
-statusTimeoutFactor: 2.5
 maxPlatoonSize: 10
 algorithmType: 0
 statusMessageInterval: 100

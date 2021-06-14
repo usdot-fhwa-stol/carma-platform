@@ -100,7 +100,7 @@ TEST(PlatoonManagerTest, test1)
     
 }
 
-TEST(PlatoonStrategicPlugin, test_cb)
+TEST(PlatoonStrategicPlugin, test_req_cb1)
 {
     PlatoonPluginConfig config;
     std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
@@ -112,6 +112,36 @@ TEST(PlatoonStrategicPlugin, test_cb)
     request.plan_type.type = cav_msgs::PlanType::JOIN_PLATOON_AT_REAR;
     request.strategy_params = "SIZE:2,SPEED:22,DTD:22";
     plugin.mob_req_cb(request);
+}
+
+TEST(PlatoonStrategicPlugin, test_req_cb2)
+{
+    PlatoonPluginConfig config;
+    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+
+    PlatoonStrategicPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    plugin.pm_.current_platoon_state = PlatoonState::LEADERWAITING;
+
+    cav_msgs::MobilityRequest request;
+    request.header.sender_id = "";
+    request.plan_type.type = cav_msgs::PlanType::PLATOON_FOLLOWER_JOIN;
+    request.strategy_params = "SIZE:2,SPEED:22,DTD:22";
+
+    // MobilityRequestResponse res = plugin.handle_mob_req(request);
+    // EXPECT_EQ(res, MobilityRequestResponse::ACK);
+    plugin.mob_req_cb(request);
+    EXPECT_EQ(plugin.pm_.current_platoon_state, PlatoonState::LEADER);
+}
+
+TEST(PlatoonStrategicPlugin, test_run_candidate)
+{
+    PlatoonPluginConfig config;
+    std::shared_ptr<carma_wm::CARMAWorldModel> wm = std::make_shared<carma_wm::CARMAWorldModel>();
+
+    PlatoonStrategicPlugin plugin(wm, config, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {}, [&](auto msg) {});
+    plugin.pm_.current_platoon_state = PlatoonState::CANDIDATEFOLLOWER;
+    plugin.onSpin();
+
 }
 
 TEST(PlatoonManagerTest, test2)

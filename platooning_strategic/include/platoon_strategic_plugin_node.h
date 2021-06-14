@@ -58,8 +58,6 @@ public:
 
     PlatoonPluginConfig config;
 
-    pnh.param<double>("maxAccel", config.maxAccel, config.maxAccel);
-    pnh.param<double>("statusTimeoutFactor", config.statusTimeoutFactor, config.statusTimeoutFactor);
     pnh.param<int>("maxPlatoonSize", config.maxPlatoonSize, config.maxPlatoonSize);
     pnh.param<int>("algorithmType", config.algorithmType, config.algorithmType);
     pnh.param<int>("statusMessageInterval", config.statusMessageInterval, config.statusMessageInterval);
@@ -97,6 +95,7 @@ public:
     ros::Subscriber current_pose_sub = nh.subscribe("current_pose", 5, &PlatoonStrategicPlugin::pose_cb,  &worker);
     ros::Subscriber current_twist_sub = nh.subscribe("current_velocity", 5, &PlatoonStrategicPlugin::twist_cb,  &worker);
     ros::Subscriber bsm_sub = nh.subscribe("bsm_outbound", 1, &PlatoonStrategicPlugin::bsm_cb,  &worker);
+    ros::Subscriber cmd_sub = nh.subscribe("twist_raw", 1, &PlatoonStrategicPlugin::cmd_cb,  &worker);
     
     ros::Timer discovery_pub_timer_ = nh.createTimer(
             ros::Duration(ros::Rate(10.0)),

@@ -34,18 +34,18 @@ namespace platoon_strategic
         std::vector<std::string> cmd_parsed;
         boost::algorithm::split(cmd_parsed, inputsParams[0], boost::is_any_of(":"));
         double cmdSpeed = std::stod(cmd_parsed[1]);
-        ROS_DEBUG("Command Speed: " , cmdSpeed);
+        ROS_DEBUG_STREAM("Command Speed: " << cmdSpeed);
 
 
         std::vector<std::string> dtd_parsed;
         boost::algorithm::split(dtd_parsed, inputsParams[1], boost::is_any_of(":"));
         double dtDistance = std::stod(dtd_parsed[1]);
-        ROS_DEBUG("Downtrack Distance: " , dtDistance);
+        ROS_DEBUG_STREAM("Downtrack Distance: " << dtDistance);
 
         std::vector<std::string> cur_parsed;
         boost::algorithm::split(cur_parsed, inputsParams[2], boost::is_any_of(":"));
         double curSpeed = std::stod(cur_parsed[1]);
-        ROS_DEBUG("Current Speed Speed: " , curSpeed);
+        ROS_DEBUG_STREAM("Current Speed Speed: " << curSpeed);
 
 
         // If we are currently in a follower state:
@@ -60,26 +60,26 @@ namespace platoon_strategic
             bool isVehicleInFrontOf = (dtDistance >= getCurrentDowntrackDistance());
 
             if(needPlatoonIdChange) {
-                ROS_DEBUG("It seems that the current leader is joining another platoon.");
-                ROS_DEBUG("So the platoon ID is changed from " , currentPlatoonID , " to " , platoonId);
+                ROS_DEBUG_STREAM("It seems that the current leader is joining another platoon.");
+                ROS_DEBUG_STREAM("So the platoon ID is changed from " << currentPlatoonID << " to " << platoonId);
                 currentPlatoonID = platoonId;
                 updatesOrAddMemberInfo(senderId, senderBsmId, cmdSpeed, dtDistance, curSpeed);
 
-            } else // if((currentPlatoonID == platoonId) && isVehicleInFrontOf) 
+            } else if((currentPlatoonID == platoonId) && isVehicleInFrontOf) 
             {
-                ROS_DEBUG("This STATUS messages is from our platoon in front of us. Updating the info...");
+                ROS_DEBUG_STREAM("This STATUS messages is from our platoon in front of us. Updating the info...");
                 updatesOrAddMemberInfo(senderId, senderBsmId, cmdSpeed, dtDistance, curSpeed);
                 leaderID = (platoon.size()==0) ? HostMobilityId : platoon[0].staticId;
-                ROS_DEBUG("The first vehicle in our list is now " , leaderID);
+                ROS_DEBUG_STREAM("The first vehicle in our list is now " << leaderID);
 
             } 
-            // else{
-            //     ROS_DEBUG("This STATUS message is not from our platoon. We ignore this message with id: " , senderId);
-            // }
-        }else {
+            else{
+                ROS_DEBUG_STREAM("This STATUS message is not from our platoon. We ignore this message with id: " << senderId);
+            }
+        } else {
             // If we are currently in any leader state, we only updates platoon member based on platoon ID
             if(currentPlatoonID == platoonId) {
-                ROS_DEBUG("This STATUS messages is from our platoon. Updating the info...");
+                ROS_DEBUG_STREAM("This STATUS messages is from our platoon. Updating the info...");
                 updatesOrAddMemberInfo(senderId, senderBsmId, cmdSpeed, dtDistance, curSpeed);
             }
         }
@@ -99,11 +99,11 @@ namespace platoon_strategic
                 pm.vehiclePosition = dtDistance;
                 pm.vehicleSpeed = curSpeed;
                 pm.timestamp = ros::Time::now().toNSec()/1000000;
-                ROS_DEBUG("Receive and update platooning info on vehicel " , pm.staticId);
-                ROS_DEBUG("    BSM ID = "                                  , pm.bsmId);
-                ROS_DEBUG("    Speed = "                                   , pm.vehicleSpeed);
-                ROS_DEBUG("    Location = "                                , pm.vehiclePosition);
-                ROS_DEBUG("    CommandSpeed = "                            , pm.commandSpeed);
+                ROS_DEBUG_STREAM("Receive and update platooning info on vehicel " << pm.staticId);
+                ROS_DEBUG_STREAM("    BSM ID = "                                  << pm.bsmId);
+                ROS_DEBUG_STREAM("    Speed = "                                   << pm.vehicleSpeed);
+                ROS_DEBUG_STREAM("    Location = "                                << pm.vehiclePosition);
+                ROS_DEBUG_STREAM("    CommandSpeed = "                            << pm.commandSpeed);
                 isExisted = true;
                 break;
             }
@@ -117,7 +117,7 @@ namespace platoon_strategic
 
             std::sort(std::begin(platoon), std::end(platoon), [](const PlatoonMember &a, const PlatoonMember &b){return a.vehiclePosition < b.vehiclePosition;});
 
-            ROS_DEBUG("Add a new vehicle into our platoon list " , newMember.staticId);
+            ROS_DEBUG_STREAM("Add a new vehicle into our platoon list " << newMember.staticId);
         }
 
     }

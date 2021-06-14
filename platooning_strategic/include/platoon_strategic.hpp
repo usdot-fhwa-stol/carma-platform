@@ -95,6 +95,7 @@ namespace platoon_strategic
             * \param msg Latest twist message
             */
             void twist_cb(const geometry_msgs::TwistStampedConstPtr& msg);
+            void cmd_cb(const geometry_msgs::TwistStampedConstPtr& msg);
 
             void bsm_cb(const cav_msgs::BSMConstPtr& msg);
             
@@ -135,11 +136,15 @@ namespace platoon_strategic
             cav_msgs::LocationECEF ecef_point_;
             //Internal Variables used in unit tests
             // Current vehicle forward speed
+            double cmd_speed_ = 0;
             double current_speed_ = 0;
             double current_downtrack_ = 0;
 
             long waitingStartTime = 0;
             long candidatestateStartTime = 0;
+
+            std::string potentialNewPlatoonId = "";
+            std::string targetPlatoonId = "";
 
 
             ros::Publisher platoon_strategic_plugin_discovery_pub_;

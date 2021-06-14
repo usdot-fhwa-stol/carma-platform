@@ -146,12 +146,11 @@ namespace platoon_strategic
         int platoonSize = 1;
         std::string leaderID = "";
         std::string currentPlatoonID = "test_plan";
-        bool isFollower;
+        bool isFollower = false;
 
         double current_speed_ = 0;
         double command_speed_ = 0;
 
-        // TODO Temporary
         PlatoonState current_platoon_state = PlatoonState::STANDBY;
 
         PlatoonPlan current_plan;

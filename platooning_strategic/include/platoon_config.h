@@ -24,13 +24,6 @@
 struct PlatoonPluginConfig
 {
   // following parameters are for general platooning plugin
-  double maxAccel              = 2.5;  // m/s/s
-  double kpPID                 = 1.5;  // 1
-  double kiPID                 = 0.0;  // 1
-  double kdPID                 = -0.1; // 1
-  double integratorMaxCap      = 0.0;  // 1
-  double integratorMinCap      = 0.0;  // 1
-  double statusTimeoutFactor   = 2.5;  // 1
   double vehicleLength         = 5.0;  // m
   int    maxPlatoonSize        = 10;   // 1
   int    algorithmType         = 0;    // N/A
@@ -64,14 +57,6 @@ struct PlatoonPluginConfig
   friend std::ostream& operator<<(std::ostream& output, const PlatoonPluginConfig& c)
   {
     output << "PlatoonPluginConfig { " << std::endl
-          << "maxAccel: " << c.maxAccel << std::endl
-          << "kpPID: " << c.kpPID << std::endl
-          << "kiPID: " << c.kiPID << std::endl
-          << "kdPID: " << c.kdPID << std::endl
-          << "integratorMaxCap: " << c.integratorMaxCap << std::endl
-          << "integratorMinCap: " << c.integratorMinCap << std::endl
-          << "statusTimeoutFactor: " << c.statusTimeoutFactor << std::endl
-          << "vehicleLength: " << c.vehicleLength << std::endl
           << "maxPlatoonSize: " << c.maxPlatoonSize << std::endl
           << "algorithmType: " << c.algorithmType << std::endl
           << "statusMessageInterval: " << c.statusMessageInterval << std::endl
