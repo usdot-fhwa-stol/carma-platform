@@ -27,11 +27,13 @@
 #include <basic_autonomy/basic_autonomy.h>
 #include <cav_srvs/PlanTrajectory.h>
 #include <carma_wm/WMListener.h>
+#include <carma_debug_msgs/TrajectoryCurvatureSpeeds.h>
 #include <functional>
 #include "inlanecruising_config.h"
 #include <unordered_set>
 #include <autoware_msgs/Lane.h>
 #include <ros/ros.h>
+
 namespace inlanecruising_plugin
 {
 using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;

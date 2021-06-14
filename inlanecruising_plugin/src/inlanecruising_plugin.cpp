@@ -92,7 +92,7 @@ bool InLaneCruisingPlugin::plan_trajectory_cb(cav_srvs::PlanTrajectoryRequest& r
                                                                             config_.lateral_accel_limit * config_.lat_accel_multiplier, 
                                                                             config_.speed_moving_average_window_size, 
                                                                             config_.curvature_moving_average_window_size, config_.back_distance,
-                                                                            config.ending_buffer_downtrack);
+                                                                            config_.buffer_ending_downtrack);
   
   auto points_and_target_speeds = basic_autonomy:: waypoint_generation::maneuvers_to_points(maneuver_plan, 
                                                                         std::max((double)0, current_downtrack - config_.back_distance), 

@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include <basic_autonomy/basic_autonomy.h>
+
 #include <basic_autonomy/log/log.h>
 #include <basic_autonomy/helper_functions.h>
 
@@ -404,8 +404,8 @@ namespace waypoint_generation
 
         log::printDoublesPerLineWithPrefix("raw_curvatures[i]: ", better_curvature);
 
-        std::vector<double> curvatures = smoothing::moving_average_filter(better_curvature, detailed_config.curvature_moving_average_window_size, false);
-
+        //std::vector<double> curvatures = basic_autonomy::smoothing::moving_average_filter(better_curvature, detailed_config.curvature_moving_average_window_size, false);
+        std::vector<double> curvatures;
         std::vector<double> ideal_speeds =
             trajectory_utils::constrained_speeds_for_curvatures(curvatures, detailed_config.lateral_accel_limit);
         
@@ -458,7 +458,7 @@ namespace waypoint_generation
 
         log::printDoublesPerLineWithPrefix("postAccel[i]: ", final_actual_speeds);
 
-        final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, detailed_config.speed_moving_average_window_size);
+        //final_actual_speeds = basic_autonomy::smoothing::moving_average_filter(final_actual_speeds, detailed_config.speed_moving_average_window_size);
         
         log::printDoublesPerLineWithPrefix("post_average[i]: ", final_actual_speeds);
 
@@ -615,7 +615,7 @@ namespace waypoint_generation
         std::vector<double> final_yaw_values = carma_wm::geometry::compute_tangent_orientations(future_geom_points);
 
         std::vector<double> downtracks= carma_wm::geometry::compute_arc_lengths(future_geom_points);
-        final_actual_speeds = smoothing::moving_average_filter(final_actual_speeds, detailed_config.speed_moving_average_window_size);
+        //final_actual_speeds = basic_autonomy::smoothing::moving_average_filter(final_actual_speeds, detailed_config.speed_moving_average_window_size);
 
         std::vector<double> times;
         trajectory_utils::conversions::speed_to_time(downtracks, final_actual_speeds, &times);
