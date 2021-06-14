@@ -116,7 +116,7 @@ public:
 
   TrackPos routeTrackPos(const lanelet::BasicPoint2d& point) const override;
 
-  std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end, bool shortest_path_only = false) const override;
+  std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end, bool bounds_inclusive = true, bool shortest_path_only = false) const override;
 
   std::vector<lanelet::BasicPoint2d> sampleRoutePoints(double start_downtrack, double end_downtrack, double step_size) const override;
 

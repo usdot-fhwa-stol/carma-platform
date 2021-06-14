@@ -657,13 +657,16 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
     double ending_downtrack = maneuvers.back().lane_following_maneuver.end_dist;
     if(ending_downtrack + config_.buffer_ending_downtrack < wm_->getRouteEndTrackPos().downtrack){
       ending_downtrack = ending_downtrack + config_.buffer_ending_downtrack;
+    }
+    else
+    {
+      ending_downtrack = wm_->getRouteEndTrackPos().downtrack;
     } 
 
-    for (auto point_speed_pair : points_and_target_speeds) {
-      auto current_point = point_speed_pair.point;
+    for (int i = 0; i < points_and_target_speeds.size(); i ++) {
+      auto current_point = points_and_target_speeds[i].point;
       if (i == 0) {
         prev_point = current_point;
-        i++;
         continue;
       }
 
@@ -678,7 +681,6 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
         break;
       }
       prev_point = current_point;
-      i++;
     }
     if (max_i == 0) {
       max_i = points_and_target_speeds.size() - 1;

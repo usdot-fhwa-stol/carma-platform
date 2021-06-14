@@ -128,12 +128,13 @@ public:
   virtual TrackPos routeTrackPos(const lanelet::BasicPoint2d& point) const = 0;
 
   /*! \brief Returns a list of lanelets which are part of the route and whose downtrack bounds exist within the provided
-   * start and end distances The bounds are included so areas which end exactly at start or start exactly at end are
-   * included
+   * start and end distances. 
    *
    * \param start The starting downtrack for the query
    * \param end The ending downtrack for the query
    * \param shortest_path_only If true the lanelets returned will be part of the route shortest path
+   * \param bounds_inclusive If true, the bounds are included so areas which end exactly at start or start exactly at end are
+   * included
    *
    * \throws std::invalid_argument If the route is not yet loaded or if start >= end
    *
@@ -141,7 +142,7 @@ public:
    * not return lanelets which are not part of the route
    */
   virtual std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end,
-                                                                bool shortest_path_only = false) const = 0;
+                                                                bool bounds_inclusive = true, bool shortest_path_only = false) const = 0;
 
   /*! \brief Samples the route centerline between the provided downtracks with the provided step size. 
    *         At lane changes the points should exhibit a discontinuous jump at the end of the initial lanelet

@@ -856,7 +856,7 @@ namespace cooperative_lanechange
     {
         //Create route geometry for lane change maneuver
         //Starting downtrack maybe in the previous lanelet, if it is, have a lane follow until new lanelet starts
-        std::vector<lanelet::ConstLanelet> lanelets_in_path = wm->getLaneletsBetween(starting_downtrack + 0.1, ending_downtrack -0.1, true); // +/-0.1 meters: try our best to avoid picking up before and next lanelets
+        std::vector<lanelet::ConstLanelet> lanelets_in_path = wm->getLaneletsBetween(starting_downtrack, ending_downtrack, true);
         std::vector<lanelet::BasicPoint2d> centerline_points = {};
         int lane_change_iteration = 0;
         if(lanelets_in_path[0].id() != starting_lane_id){
