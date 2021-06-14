@@ -200,8 +200,8 @@ TEST(InLaneCruisingPluginTest, get_nearest_point_index)
   state.X_pos_global = 3.3;
   state.Y_pos_global = 3.3;
 
-  ASSERT_EQ(3, plugin.get_nearest_point_index(points, state));
-  ASSERT_EQ(3, plugin.get_nearest_point_index(basic_points, state));
+  ASSERT_EQ(3, wm->get_nearest_point_index(points, state));
+  ASSERT_EQ(3, wm->get_nearest_point_index(basic_points, state));
 }
 
 TEST(InLaneCruisingPluginTest, get_nearest_basic_point_index)
@@ -236,7 +236,7 @@ TEST(InLaneCruisingPluginTest, get_nearest_basic_point_index)
   state.X_pos_global = 3.3;
   state.Y_pos_global = 3.3;
 
-  ASSERT_EQ(3, plugin.get_nearest_point_index(points, state));
+  ASSERT_EQ(3, wm->get_nearest_point_index(points, state));
 }
 
 TEST(InLaneCruisingPluginTest, split_point_speed_pairs)
@@ -266,7 +266,7 @@ TEST(InLaneCruisingPluginTest, split_point_speed_pairs)
   std::vector<lanelet::BasicPoint2d> basic_points;
   std::vector<double> speeds;
 
-  plugin.split_point_speed_pairs(points, &basic_points, &speeds);
+  wm->split_point_speed_pairs(points, &basic_points, &speeds);
 
   ASSERT_EQ(points.size(), basic_points.size());
   ASSERT_NEAR(0.0, basic_points[0].x(), 0.0000001);

@@ -173,11 +173,11 @@
         /*Test compose trajectort and helper function*/
         std::vector<cav_msgs::TrajectoryPlanPoint> trajectory;
 
-        int nearest_pt = worker.get_nearest_point_index(points_and_target_speeds,vehicle_state);
+        int nearest_pt = cmw->get_nearest_point_index(points_and_target_speeds,vehicle_state);
 
         std::vector<lanelet::BasicPoint2d> points_split;
         std::vector<double> speeds_split;
-        worker.splitPointSpeedPairs(points_and_target_speeds, &points_split, &speeds_split);
+        cmw->split_point_speed_pairs(points_and_target_speeds, &points_split, &speeds_split);
         EXPECT_TRUE(points_split.size() == speeds_split.size());
 
         //Test trajectory from points
@@ -200,10 +200,10 @@
         //Valid Trajectory has at least 2 points
         EXPECT_TRUE(trajectory.size() > 2);
 
-        lanelet::BasicLineString2d route_geometry = worker.create_route_geom(starting_downtrack,start_id, ending_downtrack,cmw);
+        auto route_geometry = worker.create_route_geom(starting_downtrack,start_id, ending_downtrack,cmw);
         lanelet::BasicPoint2d state_pos(vehicle_state.X_pos_global, vehicle_state.Y_pos_global);
         double current_downtrack = cmw->routeTrackPos(state_pos).downtrack;
-        int nearest_pt_geom = worker.get_nearest_point_index(route_geometry, current_downtrack);
+        int nearest_pt_geom = cmw->get_nearest_point_index(route_geometry, current_downtrack);
 
         //Test create lanechange route
         lanelet::Lanelet start_lanelet = map->laneletLayer.get(start_id);

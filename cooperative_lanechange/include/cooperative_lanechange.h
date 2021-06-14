@@ -43,15 +43,9 @@
 
 namespace cooperative_lanechange
 {
-    /**
-     * \brief Convenience class for pairing 2d points with speeds
-    */ 
-    struct PointSpeedPair
-    {
-    lanelet::BasicPoint2d point;
-    double speed = 0;
-    };
-
+  // Helpful using declarations
+  using PointSpeedPair = carma_wm::PointSpeedPair;
+  
     class CooperativeLaneChangePlugin
     {
         public:
@@ -104,10 +98,10 @@ namespace cooperative_lanechange
              * \param starting_downtrack downtrack along route where maneuver starts
              * \param ending_downtrack downtrack along route where maneuver starts
              * \param wm Pointer to intialized world model for semantic map access
-             * \return A Linestring of the path from starting downtrack to ending downtrack
+             * \return Points in a path from starting downtrack to ending downtrack
              */
             
-            lanelet::BasicLineString2d create_route_geom(double starting_downtrack, int starting_lane_id, double ending_downtrack, const carma_wm::WorldModelConstPtr& wm);
+            std::vector<lanelet::BasicPoint2d> create_route_geom(double starting_downtrack, int starting_lane_id, double ending_downtrack, const carma_wm::WorldModelConstPtr& wm);
 
             /**
              * \brief Given a start and end point, create a vector of points fit through a spline between the points (using a Spline library)
@@ -128,35 +122,6 @@ namespace cooperative_lanechange
              */
              std::vector<cav_msgs::TrajectoryPlanPoint> compose_trajectory_from_centerline(
             const std::vector<PointSpeedPair>& points, const cav_msgs::VehicleState& state, const ros::Time& state_time, int starting_lanelet_id, double max_speed);
-            /**
-             * \brief Returns the nearest point to the provided vehicle pose in the provided list
-             * 
-             * \param points The points and speed pairs to evaluate
-             * \param state The current vehicle state
-             * 
-             * \return index of nearest point in points
-             */
-            int get_nearest_point_index(const std::vector<PointSpeedPair>& points,
-                                               const cav_msgs::VehicleState& state) const;
-            /**
-             * \brief Overload: Returns the nearest point to the provided vehicle pose in the provided list
-             * 
-             * \param points The points to evaluate
-             * \param state The current vehicle state
-             * 
-             * \return index of nearest point in points
-             */
-            int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points,
-                                               const cav_msgs::VehicleState& state) const;
-            /**
-             * \brief Overload: Returns the nearest point to the provided vehicle pose in the provided list
-             * 
-             * \param points BasicLineString2d points
-             * \param ending_downtrack ending downtrack along the route to get index of
-             * 
-             * \return index of nearest point in points
-             */
-            int get_nearest_point_index(lanelet::BasicLineString2d& points, double ending_downtrack);
 
             /**
              * \brief Reduces the input points to only those points that fit within the provided time boundary
@@ -167,13 +132,6 @@ namespace cooperative_lanechange
              * \return The subset of points that fit within time_span
              */ 
             std::vector<PointSpeedPair> constrain_to_time_boundary(const std::vector<PointSpeedPair>& points,double time_span);
-            
-            /**
-             * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
-             */ 
-            void splitPointSpeedPairs(const std::vector<PointSpeedPair>& points,
-                                            std::vector<lanelet::BasicPoint2d>* basic_points,
-                                            std::vector<double>* speeds) const;
 
             /**
              * \brief Returns a 2D coordinate frame which is located at p1 and oriented so p2 lies on the +X axis

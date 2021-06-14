@@ -32,6 +32,7 @@
 #include <cav_msgs/ExternalObject.h>
 #include <cav_msgs/ExternalObjectList.h>
 #include "TrackPos.h"
+#include <cav_msgs/VehicleState.h>
 
 namespace carma_wm
 {
@@ -57,6 +58,15 @@ enum LaneSection
   LANE_FULL
 };
 
+/**
+ * \brief Convenience class for pairing 2d points with speeds
+*/ 
+struct PointSpeedPair
+{
+lanelet::BasicPoint2d point;
+double speed = 0;
+};
+
 /*! \brief An interface which provides read access to the semantic map and route.
  *         This class is not thread safe. All units of distance are in meters
  *
@@ -65,7 +75,9 @@ enum LaneSection
  */
 class WorldModel
 {
+
 public:
+
   /**
    * @brief Virtual destructor to ensure delete safety for pointers to implementing classes
    *
@@ -338,6 +350,42 @@ public:
    * \return map version
    */ 
   virtual size_t getMapVersion() const = 0;
+
+  /**
+   * \brief Overload: Returns the nearest point to the provided vehicle pose in the provided list
+   * 
+   * \param points The points and speed pairs to evaluate
+   * \param state The current vehicle state
+   * 
+   * \return index of nearest point in points
+   */
+  virtual int get_nearest_point_index(const std::vector<PointSpeedPair>& points,
+                                      const cav_msgs::VehicleState& state) const  = 0;
+  /**
+   * \brief Overload: Returns the nearest point to the provided vehicle pose in the provided list
+   * 
+   * \param points The points to evaluate
+   * \param state The current vehicle state
+   * 
+   * \return index of nearest point in points
+   */
+  virtual int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points,
+                                      const cav_msgs::VehicleState& state) const  = 0;
+  /**
+   * \brief Returns the nearest point to the provided vehicle pose in the provided list
+   * 
+   * \param points BasicLineString2d points
+   * \param ending_downtrack ending downtrack along the route to get index of
+   * 
+   * \return index of nearest point in points
+   */
+  virtual int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points, double ending_downtrack) const  = 0;
+
+  /**
+   * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
+   */ 
+  virtual void split_point_speed_pairs(const std::vector<PointSpeedPair>& points, std::vector<lanelet::BasicPoint2d>* basic_points,
+                            std::vector<double>* speeds)  const  = 0;
 };
 
 // Helpful using declarations for carma_wm classes
