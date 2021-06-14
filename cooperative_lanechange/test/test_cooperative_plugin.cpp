@@ -203,7 +203,7 @@
         lanelet::BasicLineString2d route_geometry = worker.create_route_geom(starting_downtrack,start_id, ending_downtrack,cmw);
         lanelet::BasicPoint2d state_pos(vehicle_state.X_pos_global, vehicle_state.Y_pos_global);
         double current_downtrack = cmw->routeTrackPos(state_pos).downtrack;
-        int nearest_pt_geom = worker.get_nearest_route_point_index(route_geometry, current_downtrack);
+        int nearest_pt_geom = worker.get_nearest_point_index(route_geometry, current_downtrack);
 
         //Test create lanechange route
         lanelet::Lanelet start_lanelet = map->laneletLayer.get(start_id);

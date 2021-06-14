@@ -149,14 +149,14 @@ namespace cooperative_lanechange
             int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points,
                                                const cav_msgs::VehicleState& state) const;
             /**
-             * \brief Returns the nearest point to the provided vehicle pose in the provided list
+             * \brief Overload: Returns the nearest point to the provided vehicle pose in the provided list
              * 
              * \param points BasicLineString2d points
              * \param ending_downtrack ending downtrack along the route to get index of
              * 
              * \return index of nearest point in points
              */
-            int get_nearest_route_point_index(lanelet::BasicLineString2d& points, double ending_downtrack);
+            int get_nearest_point_index(lanelet::BasicLineString2d& points, double ending_downtrack);
 
             /**
              * \brief Reduces the input points to only those points that fit within the provided time boundary

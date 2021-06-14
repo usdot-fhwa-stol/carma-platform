@@ -296,7 +296,6 @@ int InLaneCruisingPlugin::get_nearest_point_index(const std::vector<lanelet::Bas
   double ending_downtrack = wm_->routeTrackPos(state_pos).downtrack;
   ROS_DEBUG_STREAM("get_nearest_point_index: state_pos: " << state_pos.x() << ", " << state_pos.y() << ", ending_downtrack" << ending_downtrack);
   int best_index = 0;
-  bool set_index = false;
   for(int i=0;i < points.size();i++){
       double downtrack = wm_->routeTrackPos(points[i]).downtrack;
       ROS_DEBUG_STREAM("get_nearest_point_index>> points[i].x(): " << points[i].x() << ", points[i].y(): " << points[i].y() << ", downtrack: "<< downtrack);
@@ -304,13 +303,8 @@ int InLaneCruisingPlugin::get_nearest_point_index(const std::vector<lanelet::Bas
       if(downtrack > ending_downtrack){
           best_index = i - 1;
           ROS_DEBUG_STREAM("get_nearest_point_index>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y() << ", downtrack: "<< downtrack);
-          set_index = true;
           break;
       }
-  }
-  if (!set_index)
-  {
-      best_index = points.size() - 1;
   }
   return best_index;
 }

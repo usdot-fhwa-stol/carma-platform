@@ -532,8 +532,8 @@ namespace cooperative_lanechange
 
             lanelet::BasicPoint2d state_pos(state.X_pos_global, state.Y_pos_global);
             double current_downtrack = wm_->routeTrackPos(state_pos).downtrack;
-            int nearest_pt_index = get_nearest_route_point_index(route_geometry, current_downtrack);
-            int ending_pt_index = get_nearest_route_point_index(route_geometry, ending_downtrack); 
+            int nearest_pt_index = get_nearest_point_index(route_geometry, current_downtrack);
+            int ending_pt_index = get_nearest_point_index(route_geometry, ending_downtrack); 
             ROS_DEBUG_STREAM("Nearest pt index in maneuvers to points:"<<nearest_pt_index);
             ROS_DEBUG_STREAM("Ending point index in maneuvers to points:"<<ending_pt_index);
 
@@ -553,7 +553,7 @@ namespace cooperative_lanechange
             double route_length = wm_->getRouteEndTrackPos().downtrack;
             
             if(ending_downtrack + ending_buffer_downtrack_ < route_length){
-                ending_pt_index = get_nearest_route_point_index(route_geometry, ending_downtrack + ending_buffer_downtrack_);
+                ending_pt_index = get_nearest_point_index(route_geometry, ending_downtrack + ending_buffer_downtrack_);
             }
             else{
                ending_pt_index = route_geometry.size() - 1;
@@ -818,23 +818,17 @@ namespace cooperative_lanechange
         }
     }
 
-    int CooperativeLaneChangePlugin::get_nearest_route_point_index(lanelet::BasicLineString2d& points, double ending_downtrack){
+    int CooperativeLaneChangePlugin::get_nearest_point_index(lanelet::BasicLineString2d& points, double ending_downtrack){
         int best_index = 0;
-        bool set_index = false;
         for(int i=0;i < points.size();i++){
             double downtrack = wm_->routeTrackPos(points[i]).downtrack;
             if(downtrack > ending_downtrack){
                 best_index = i - 1;
-                ROS_DEBUG_STREAM("get_nearest_route_point_index>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y() << ", downtrack: "<< downtrack);
-                set_index = true;
+                ROS_DEBUG_STREAM("get_nearest_point_index>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y() << ", downtrack: "<< downtrack);
                 break;
             }
         }
-        if (!set_index)
-        {
-            best_index = points.size() - 1;
-        }
-        ROS_DEBUG_STREAM("get_nearest_route_point_index>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y());
+        ROS_DEBUG_STREAM("get_nearest_point_index>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y());
 
         return best_index;
     }
@@ -846,20 +840,14 @@ namespace cooperative_lanechange
         double ending_downtrack = wm_->routeTrackPos(state_pos).downtrack;
         ROS_DEBUG_STREAM("get_nearest_point_index: state_pos: " << state_pos.x() << ", " << state_pos.y() << ", ending_downtrack" << ending_downtrack);
         int best_index = 0;
-        bool set_index = false;
         for(int i=0;i < points.size();i++){
             double downtrack = wm_->routeTrackPos(points[i]).downtrack;
 
             if(downtrack > ending_downtrack){
                 best_index = i - 1;
                 ROS_DEBUG_STREAM("get_nearest_point_index>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y() << ", downtrack: "<< downtrack);
-                set_index = true;
                 break;
             }
-        }
-        if (!set_index)
-        {
-            best_index = points.size() - 1;
         }
         ROS_DEBUG_STREAM("get_nearest_point_index>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y());
 
@@ -873,19 +861,13 @@ namespace cooperative_lanechange
         double ending_downtrack = wm_->routeTrackPos(state_pos).downtrack;
         ROS_DEBUG_STREAM("get_nearest_point_index: state_pos: " << state_pos.x() << ", " << state_pos.y() << ", ending_downtrack" << ending_downtrack);
         int best_index = 0;
-        bool set_index = false;
         for(int i=0;i < points.size();i++){
             double downtrack = wm_->routeTrackPos(points[i].point).downtrack;
             if(downtrack > ending_downtrack){
                 best_index = i - 1;
                 ROS_DEBUG_STREAM("get_nearest_point_index>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].point.x() << ", points[i].y(): " << points[best_index].point.y() << ", downtrack: "<< downtrack);
-                set_index = true;
                 break;
             }
-        }
-        if (!set_index)
-        {
-            best_index = points.size() - 1;
         }
         ROS_DEBUG_STREAM("get_nearest_point_index>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].point.x() << ", points[i].y(): " << points[best_index].point.y());
 
