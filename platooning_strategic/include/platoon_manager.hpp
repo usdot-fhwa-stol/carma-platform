@@ -143,7 +143,7 @@ namespace platoon_strategic
         double getCurrentDowntrackDistance() const;
 
 
-        int platoonSize = 1;
+        int platoonSize = 2;
         std::string leaderID = "";
         std::string currentPlatoonID = "test_plan";
         bool isFollower = false;

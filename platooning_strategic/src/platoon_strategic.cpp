@@ -414,7 +414,7 @@ namespace platoon_strategic
     void PlatoonStrategicPlugin::run_candidate_follower(){
         long tsStart = ros::Time::now().toNSec()/1000000;
         // Task 1
-        bool isCurrentStateTimeout = (tsStart - candidatestateStartTime) > waitingStateTimeout * 1000;
+        bool isCurrentStateTimeout = false;// (tsStart - candidatestateStartTime) > waitingStateTimeout * 1000;
         ROS_DEBUG_STREAM("timeout1: " << tsStart - candidatestateStartTime);
         ROS_DEBUG_STREAM("waitingStateTimeout: " << waitingStateTimeout*1000);
         if(isCurrentStateTimeout) {
@@ -430,7 +430,7 @@ namespace platoon_strategic
                     ROS_DEBUG_STREAM("pm_.current_plan.planStartTime: " << pm_.current_plan.planStartTime);
                     ROS_DEBUG_STREAM("timeout2: " << tsStart - pm_.current_plan.planStartTime);
                     ROS_DEBUG_STREAM("NEGOTIATION_TIMEOUT: " << NEGOTIATION_TIMEOUT);
-                    bool isPlanTimeout = (tsStart - pm_.current_plan.planStartTime) > NEGOTIATION_TIMEOUT;
+                    bool isPlanTimeout = false;//(tsStart - pm_.current_plan.planStartTime) > NEGOTIATION_TIMEOUT;
                     if(isPlanTimeout) {
                         pm_.current_plan.valid = false;
                         ROS_DEBUG_STREAM("The current plan did not receive any response. Abort and change to leader state.");
@@ -697,7 +697,7 @@ namespace platoon_strategic
     void PlatoonStrategicPlugin::mob_resp_cb_candidatefollower(const cav_msgs::MobilityResponse& msg)
     {
         ROS_DEBUG_STREAM("Callback for candidate follower ");
-        if (pm_.current_plan.valid)
+        if (true)//(pm_.current_plan.valid)
         {
             bool isForCurrentPlan = msg.header.plan_id == pm_.current_plan.planId;
             bool isFromTargetVehicle = msg.header.sender_id == pm_.targetLeaderId;
@@ -788,15 +788,15 @@ namespace platoon_strategic
         {
             status_msg.state = pm_.getTotalPlatooningSize() == 1 ? cav_msgs::PlatooningInfo::SEARCHING : cav_msgs::PlatooningInfo::LEADING;
         }
-        else if (pm_.current_platoon_state == LEADERWAITING)
+        else if (pm_.current_platoon_state == PlatoonState::LEADERWAITING)
         {
             status_msg.state = cav_msgs::PlatooningInfo::CONNECTING_TO_NEW_FOLLOWER;
         }
-        else if (pm_.current_platoon_state == CANDIDATEFOLLOWER)
+        else if (pm_.current_platoon_state == PlatoonState::CANDIDATEFOLLOWER)
         {
             status_msg.state = cav_msgs::PlatooningInfo::CONNECTING_TO_NEW_LEADER;
         }
-        else if (pm_.current_platoon_state == FOLLOWER)
+        else if (pm_.current_platoon_state == PlatoonState::FOLLOWER)
         {
             status_msg.state = cav_msgs::PlatooningInfo::FOLLOWING;
         }
@@ -924,6 +924,7 @@ namespace platoon_strategic
             // plugin.platoonManager.memberUpdates(vehicleID, platoonId, msg.getHeader().getSenderBsmId(), statusParams);
             pm_.memberUpdates(vehicleID, platoonId, msg.header.sender_bsm_id, statusParams);
             ROS_DEBUG_STREAM("Received platoon status message from " << msg.header.sender_id);
+            ROS_DEBUG_STREAM("member updated");
         } else {
             ROS_DEBUG_STREAM("Received a mobility operation message with params " << msg.strategy_params << " but ignored.");
         }

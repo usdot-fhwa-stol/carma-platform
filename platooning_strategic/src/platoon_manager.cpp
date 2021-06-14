@@ -125,9 +125,9 @@ namespace platoon_strategic
 
 
     int PlatoonManager::getTotalPlatooningSize() const{
-        // if(isFollower) {
-        //     return platoonSize;
-        // }
+        if(isFollower) {
+            return platoonSize;
+        }
         return platoon.size() + 1;
     }
         
