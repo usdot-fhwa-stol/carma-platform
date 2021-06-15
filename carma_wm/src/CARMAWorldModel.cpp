@@ -1047,7 +1047,7 @@ void CARMAWorldModel::setConfigSpeedLimit(double config_lim)
 }
 
 int CARMAWorldModel::get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points, double ending_downtrack) const{
-    int best_index = 0;
+    int best_index = points.size() - 1;
     for(int i=0;i < points.size();i++){
         double downtrack = routeTrackPos(points[i]).downtrack;
         if(downtrack > ending_downtrack){
