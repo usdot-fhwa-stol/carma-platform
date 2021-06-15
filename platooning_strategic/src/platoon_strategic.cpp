@@ -135,8 +135,12 @@ namespace platoon_strategic
         bool pose_initialize = false;
         if (!pose_initialize)
         {
-            initial_pose_.pose.position.x =  -228.121873152;
-            initial_pose_.pose.position.y =  458.520020515;
+            // summit                   
+            initial_pose_.pose.position.x =  -0.790936994017;
+            initial_pose_.pose.position.y =  558.514141773;
+            // tfhrc
+            // initial_pose_.pose.position.x =  -228.121873152;
+            // initial_pose_.pose.position.y =  458.520020515;
             ROS_DEBUG_STREAM("first pose initialized!");
             pose_initialize = true;
         }
