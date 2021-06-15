@@ -40,6 +40,7 @@ struct PlatooningControlPluginConfig
   double wheelbase = 2.7;
   double lowpass_gain = 0.5;
   double lookahead_ratio = 2.0;
+  double min_lookahead_dist = 6.0;
   std::string vehicle_id = "DEFAULT_VEHICLE_ID";         // Vehicle id is the license plate of the vehicle
   
   
@@ -63,6 +64,7 @@ struct PlatooningControlPluginConfig
            << "wheelbase: " << c.wheelbase << std::endl
            << "lowpass_gain: " << c.lowpass_gain << std::endl
            << "lookahead_ratio: " << c.lookahead_ratio << std::endl
+           << "min_lookahead_dist: " << c.min_lookahead_dist << std::endl
            << "vehicle_id: " << c.vehicle_id << std::endl
            << "}" << std::endl;
     return output;

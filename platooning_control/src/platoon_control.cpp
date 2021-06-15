@@ -50,6 +50,7 @@ namespace platoon_control
         pnh_->param<double>("wheelbase", config.wheelbase, config.wheelbase);
         pnh_->param<double>("lowpass_gain", config.lowpass_gain, config.lowpass_gain);
         pnh_->param<double>("lookahead_ratio", config.lookahead_ratio, config.lookahead_ratio);
+        pnh_->param<double>("min_lookahead_dist", config.min_lookahead_dist, config.min_lookahead_dist);
         pnh_->getParam("/vehicle_id", config.vehicle_id);
 
         pcw_.updateConfigParams(config);
@@ -127,6 +128,10 @@ namespace platoon_control
         cav_msgs::TrajectoryPlanPoint lookahead_point;
 
         double lookahead_dist = config_.lookahead_ratio * current_speed_;
+        ROS_DEBUG_STREAM("lookahead based on speed: " << lookahead_dist);
+
+        lookahead_dist = std::max(config_.min_lookahead_dist, lookahead_dist);
+        ROS_DEBUG_STREAM("final lookahead: " << lookahead_dist);
             
         double traveled_dist = 0.0;
         bool found_point = false;
@@ -204,7 +209,7 @@ namespace platoon_control
     	current_twist.twist.linear.x = pcw_.speedCmd_;
         ROS_DEBUG_STREAM("desired speed:  " << pcw_.speedCmd_);
         // TODO: temporary until steering is fixed
-    	current_twist.twist.angular.z = 0;//pcw_.steerCmd_;
+    	current_twist.twist.angular.z = pcw_.steerCmd_;
         ROS_DEBUG_STREAM("desired steering:  " << pcw_.steerCmd_);
         current_twist.header.stamp = ros::Time::now();
     	return current_twist;
