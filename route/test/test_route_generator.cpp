@@ -94,33 +94,36 @@ TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
     lanelet::routing::RoutingGraphUPtr map_graph = lanelet::routing::RoutingGraph::build(*map, *traffic_rules);
     
     // Create MarkerArray to test
-    visualization_msgs::MarkerArray route_marker_msg;
-    route_marker_msg.markers={};
 
     visualization_msgs::Marker marker;
     marker.header.frame_id = "map";
     marker.header.stamp = ros::Time();
-    marker.type = visualization_msgs::Marker::SPHERE;//
+    marker.type = visualization_msgs::Marker::SPHERE_LIST;//
     marker.action = visualization_msgs::Marker::ADD;
     marker.ns = "route_visualizer";
 
-    marker.scale.x = 0.5;
-    marker.scale.y = 0.5;
-    marker.scale.z = 0.5;
+    marker.scale.x = 0.65;
+    marker.scale.y = 0.65;
+    marker.scale.z = 0.65;
     marker.frame_locked = true;
 
-    marker.color.r = 1.0f;
-    marker.color.g = 1.0f;
-    marker.color.b = 1.0f;
-    marker.color.a = 1.0f;
+    marker.id = 0;
+    marker.color.r = 1.0F;
+    marker.color.g = 1.0F;
+    marker.color.b = 1.0F;
+    marker.color.a = 1.0F;
 
-    marker.pose.position.x = start_lanelet.centerline3d().front().x();
-    marker.pose.position.y = start_lanelet.centerline3d().front().y();
+    geometry_msgs::Point p1;
+    p1.x = start_lanelet.centerline3d().front().x();
+    p1.y = start_lanelet.centerline3d().front().y();
 
-    route_marker_msg.markers.push_back(marker);
-    marker.pose.position.x = end_lanelet.centerline3d().back().x();
-    marker.pose.position.y = end_lanelet.centerline3d().back().y();
-    route_marker_msg.markers.push_back(marker);
+    marker.points.push_back(p1);
+
+    geometry_msgs::Point p2;
+    p2.x = start_lanelet.centerline3d().back().x();
+    p2.y = start_lanelet.centerline3d().back().y();
+
+    marker.points.push_back(p2);
 
 
     // Computes the shortest path and prints the list of lanelet IDs to get from the start to the end. Can be manually confirmed in JOSM
@@ -135,10 +138,11 @@ TEST(RouteGeneratorTest, testRouteVisualizerCenterLineParser)
         }
         std::cout << "\n";
         auto test_msg = worker.compose_route_marker_msg(route);
-        EXPECT_NEAR(route_marker_msg.markers[0].pose.position.x, test_msg.markers[0].pose.position.x, 10.0);
-        EXPECT_NEAR(route_marker_msg.markers[0].pose.position.y, test_msg.markers[0].pose.position.y, 10.0);
-        EXPECT_NEAR(route_marker_msg.markers[1].pose.position.x, test_msg.markers[1].pose.position.x, 10.0);
-        EXPECT_NEAR(route_marker_msg.markers[1].pose.position.y, test_msg.markers[1].pose.position.y, 10.0);
+        ASSERT_EQ(marker.points.size(), test_msg.points.size());
+        EXPECT_NEAR(marker.points[0].x, test_msg.points[0].x, 10.0);
+        EXPECT_NEAR(marker.points[0].y, test_msg.points[0].y, 10.0);
+        EXPECT_NEAR(marker.points[1].x, test_msg.points[1].x, 10.0);
+        EXPECT_NEAR(marker.points[1].y, test_msg.points[1].y, 10.0);
     }
     
     

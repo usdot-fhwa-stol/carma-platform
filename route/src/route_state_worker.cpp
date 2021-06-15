@@ -15,6 +15,7 @@
  */
 
 #include "route_state_worker.h"
+#include <ros/ros.h>
 
 namespace route {
 
@@ -23,6 +24,9 @@ namespace route {
     }
 
     void RouteStateWorker::on_route_event(RouteEvent event) {
+        
+        auto old_state = state_;
+
         switch (state_)
         {
         case RouteState::LOADING:
@@ -60,5 +64,7 @@ namespace route {
             // should not reach here
             throw std::invalid_argument("Current state is illegal: " + std::to_string(state_));
         }
+
+        ROS_INFO_STREAM("Received Route Event: " << event << " transitioning from: " << old_state << " to: " << state_);
     }
 }

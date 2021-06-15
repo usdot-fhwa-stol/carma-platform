@@ -32,7 +32,7 @@ namespace route {
         route_pub_ = nh_->advertise<cav_msgs::Route>("route", 1, true);
         route_event_pub_ = nh_->advertise<cav_msgs::RouteEvent>("route_event", 1);
         route_state_pub_ = nh_->advertise<cav_msgs::RouteState>("route_state", 1, true);
-        route_marker_pub_= nh_->advertise<visualization_msgs::MarkerArray>("route_marker", 1, true);
+        route_marker_pub_= nh_->advertise<visualization_msgs::Marker>("route_marker", 1, true);
         // init subscribers
         pose_sub_ = nh_->subscribe("current_pose", 1, &RouteGeneratorWorker::pose_cb, &rg_worker_);
         twist_sub_ = nh_->subscribe("current_velocity", 1, &RouteGeneratorWorker::twist_cd, &rg_worker_);
