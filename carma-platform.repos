@@ -9,64 +9,64 @@ repositories:
     version: feature/ros-noetic-port
   carma/src/avt_vimba_camera:
     type: git
-    url: https://github.com/mjeronimo/avt_vimba_camera.git
-    version: feature/ros-noetic-port
+    url: git@github.com:usdot-fhwa-stol/avt_vimba_camera.git
+    version: noetic/develop
   carma/src/carma-base:
     type: git
     url: https://github.com/mjeronimo/carma-base.git
     version: feature/ros-noetic-port
   carma/src/carma-cohda-dsrc-driver:
     type: git
-    url: https://github.com/mjeronimo/carma-cohda-dsrc-driver.git
-    version: feature/ros-noetic-port
+    url: git@github.com:usdot-fhwa-stol/carma-cohda-dsrc-driver.git
+    version: noetic/develop
   carma/src/carma-config:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-config.git
-    version: develop
+    version: noetic/develop
   carma/src/carma-delphi-esr-driver:
     type: git
-    url: https://github.com/mjeronimo/carma-delphi-esr-driver.git
-    version: feature/ros-noetic-port
+    url: git@github.com:usdot-fhwa-stol/carma-delphi-esr-driver.git
+    version: noetic/develop
   carma/src/carma-delphi-srr2-driver:
     type: git
-    url: https://github.com/mjeronimo/carma-delphi-srr2-driver.git
-    version: feature/ros-noetic-port
+    url: git@github.com:usdot-fhwa-stol/carma-delphi-srr2-driver.git
+    version: noetic/develop
   carma/src/carma-garmin-lidar-lite-v3-driver-wrapper:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-garmin-lidar-lite-v3-driver-wrapper.git
-    version: develop
+    version: noetic/develop
   carma/src/carma-messenger:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-messenger.git
-    version: develop
+    version: noetic/develop
   carma/src/carma-msgs:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-msgs.git
-    version: develop
+    version: noetic/develop
   carma/src/carma-platform:
     type: git
     url: https://github.com/mjeronimo/carma-platform.git
     version: feature/ros-noetic-port
   carma/src/carma-ssc-interface-wrapper:
     type: git
-    url: https://github.com/mjeronimo/carma-ssc-interface-wrapper.git
-    version: feature/noetic-port
+    url: git@github.com:usdot-fhwa-stol/carma-ssc-interface-wrapper.git
+    version: noetic/develop
   carma/src/carma-utils:
     type: git
-    url: https://github.com/mjeronimo/carma-utils.git
-    version: feature/ros-noetic-port
+    url: git@github.com:usdot-fhwa-stol/carma-utils.git
+    version: noetic/develop
   carma/src/carma-vehicle-model-framework:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-vehicle-model-framework.git
-    version: develop
+    version: noetic/develop
   carma/src/carma-velodyne-lidar-driver:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-velodyne-lidar-driver.git
-    version: develop
+    version: noetic/develop
   carma/src/carma-web-ui:
     type: git
     url: git@github.com:usdot-fhwa-stol/carma-web-ui.git
-    version: develop
+    version: noetic/develop
   carma/src/kvaser_interface:
     type: git
     url: git@github.com:astuff/kvaser_interface.git
@@ -74,8 +74,8 @@ repositories:
   carma/src/novatel_gps_driver:
     type: git
     url: git@github.com:usdot-fhwa-stol/novatel_gps_driver.git
-    version: develop
+    version: noetic/develop
   carma/src/opendrive2lanelet:
     type: git
-    url: https://github.com/mjeronimo/opendrive2lanelet.git
-    version: feature/ros-noetic-port
+    url: git@github.com:usdot-fhwa-stol/opendrive2lanelet.git
+    version: noetic/develop
