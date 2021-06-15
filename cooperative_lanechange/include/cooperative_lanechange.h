@@ -38,13 +38,13 @@
 #include <cav_msgs/BSM.h>
 #include <tf2_ros/transform_listener.h>
 #include <cav_msgs/LaneChangeStatus.h>
-
+#include <basic_autonomy/helper_functions.h>
 
 
 namespace cooperative_lanechange
 {
   // Helpful using declarations
-  using PointSpeedPair = carma_wm::PointSpeedPair;
+  using PointSpeedPair = basic_autonomy::waypoint_generation::PointSpeedPair;
   
     class CooperativeLaneChangePlugin
     {

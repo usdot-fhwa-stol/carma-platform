@@ -233,7 +233,7 @@ public:
 };
 
 std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double start, double end,
-                                                                       bool shortest_path_only, bool bounds_inclusive) const
+                                                                       bool shortest_path_only) const
 {
   // Check if the route was loaded yet
   if (!route_)
@@ -263,23 +263,11 @@ std::vector<lanelet::ConstLanelet> CARMAWorldModel::getLaneletsBetween(double st
     TrackPos min = routeTrackPos(front);
     TrackPos max = routeTrackPos(back);
 
-    if (!bounds_inclusive) // reduce bounds slightly to avoid including exact bounds
-    {
-      if (std::max(min.downtrack, start + 0.00001) > std::min(max.downtrack, end - 0.00001))
-      {  // Check for 1d intersection
-        // No intersection so continue
-        continue;
-      }
+    if (std::max(min.downtrack, start) > std::min(max.downtrack, end))
+    {  // Check for 1d intersection
+      // No intersection so continue
+      continue;
     }
-    else
-    {
-      if (std::max(min.downtrack, start) > std::min(max.downtrack, end))
-      {  // Check for 1d intersection
-        // No intersection so continue
-        continue;
-      }
-    }
-    
     // Intersection has occurred so add lanelet to list
     LaneletDowntrackPair pair(lanelet, min.downtrack);
     prioritized_lanelets.push(pair);
@@ -1044,58 +1032,6 @@ std::vector<lanelet::Lanelet> CARMAWorldModel::getLaneletsFromPoint(const lanele
 void CARMAWorldModel::setConfigSpeedLimit(double config_lim)
 {
   config_speed_limit_ = config_lim;
-}
-
-int CARMAWorldModel::get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, double ending_downtrack) const{
-    int best_index = points.size() - 1;
-    for(int i=0;i < points.size();i++){
-        double downtrack = routeTrackPos(points[i]).downtrack;
-        if(downtrack > ending_downtrack){
-            best_index = i - 1;
-            if (best_index < 0)
-            {
-              throw std::invalid_argument("Given points are beyond the ending_downtrack");
-            }
-            ROS_DEBUG_STREAM("get_nearest_index_by_downtrack>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y() << ", downtrack: "<< downtrack);
-            break;
-        }
-    }
-    ROS_DEBUG_STREAM("get_nearest_index_by_downtrack>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y());
-
-    return best_index;
-}
-
-int CARMAWorldModel::get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points,
-                                            const cav_msgs::VehicleState& state) const
-{
-    lanelet::BasicPoint2d state_pos(state.X_pos_global, state.Y_pos_global);
-    double ending_downtrack = routeTrackPos(state_pos).downtrack;
-    return get_nearest_index_by_downtrack(points, ending_downtrack);
-}
-
-int CARMAWorldModel::get_nearest_index_by_downtrack(const std::vector<PointSpeedPair>& points,
-                                            const cav_msgs::VehicleState& state) const
-{
-    lanelet::BasicPoint2d state_pos(state.X_pos_global, state.Y_pos_global);
-    double ending_downtrack = routeTrackPos(state_pos).downtrack;
-    std::vector<lanelet::BasicPoint2d> basic_points;
-    std::vector<double> speeds;
-    split_point_speed_pairs(points, &basic_points, &speeds);
-    return get_nearest_index_by_downtrack(basic_points, ending_downtrack);
-}
-
-void CARMAWorldModel::split_point_speed_pairs(const std::vector<PointSpeedPair>& points,
-                                                std::vector<lanelet::BasicPoint2d>* basic_points,
-                                                std::vector<double>* speeds) const
-{
-  basic_points->reserve(points.size());
-  speeds->reserve(points.size());
-
-  for (const auto& p : points)
-  {
-    basic_points->push_back(p.point);
-    speeds->push_back(p.speed);
-  }
 }
 
 }  // namespace carma_wm

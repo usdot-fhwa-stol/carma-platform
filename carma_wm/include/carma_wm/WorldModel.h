@@ -32,7 +32,6 @@
 #include <cav_msgs/ExternalObject.h>
 #include <cav_msgs/ExternalObjectList.h>
 #include "TrackPos.h"
-#include <cav_msgs/VehicleState.h>
 
 namespace carma_wm
 {
@@ -58,15 +57,6 @@ enum LaneSection
   LANE_FULL
 };
 
-/**
- * \brief Convenience class for pairing 2d points with speeds
-*/ 
-struct PointSpeedPair
-{
-lanelet::BasicPoint2d point;
-double speed = 0;
-};
-
 /*! \brief An interface which provides read access to the semantic map and route.
  *         This class is not thread safe. All units of distance are in meters
  *
@@ -75,9 +65,7 @@ double speed = 0;
  */
 class WorldModel
 {
-
 public:
-
   /**
    * @brief Virtual destructor to ensure delete safety for pointers to implementing classes
    *
@@ -128,14 +116,12 @@ public:
   virtual TrackPos routeTrackPos(const lanelet::BasicPoint2d& point) const = 0;
 
   /*! \brief Returns a list of lanelets which are part of the route and whose downtrack bounds exist within the provided
-   * start and end distances. 
+   * start and end distances The bounds are included so areas which end exactly at start or start exactly at end are
+   * included
    *
    * \param start The starting downtrack for the query
    * \param end The ending downtrack for the query
    * \param shortest_path_only If true the lanelets returned will be part of the route shortest path
-   * \param bounds_inclusive If true, the bounds are included so areas which end exactly at start or start exactly at end are
-   * included. NOTE: Non-inclusive behavior toggled by !bounds_inclusive is not equivalent to a != check as it merely shrinks bounds
-   * by 0.00001 to get new start and end distances. 
    *
    * \throws std::invalid_argument If the route is not yet loaded or if start >= end
    *
@@ -143,7 +129,7 @@ public:
    * not return lanelets which are not part of the route
    */
   virtual std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end,
-                                                                bool shortest_path_only = false, bool bounds_inclusive = true) const = 0;
+                                                                bool shortest_path_only = false) const = 0;
 
   /*! \brief Samples the route centerline between the provided downtracks with the provided step size. 
    *         At lane changes the points should exhibit a discontinuous jump at the end of the initial lanelet
@@ -352,49 +338,6 @@ public:
    * \return map version
    */ 
   virtual size_t getMapVersion() const = 0;
-
-  /**
-   * \brief Overload: Returns the nearest point to the provided vehicle pose in the provided list by utilizing the downtrack measured along the route
-   * NOTE: This function compares the downtrack, provided by routeTrackPos, of each points in the list to get the closest one to the given point's downtrack.
-   * Therefore, it is rather costlier method than comparing cartesian distance between the points and getting the closest. This way, however, the function
-   * correctly returns the end point's index if the given state, despite being valid, is farther than the given points and can technically be near any of them.
-   * 
-   * \param points The points and speed pairs to evaluate
-   * \param state The current vehicle state
-   * 
-   * \return index of nearest point in points
-   */
-  virtual int get_nearest_index_by_downtrack(const std::vector<PointSpeedPair>& points,
-                                      const cav_msgs::VehicleState& state) const  = 0;
-  /**
-   * \brief Overload: Returns the nearest point to the provided vehicle pose  in the provided list by utilizing the downtrack measured along the route
-   * NOTE: This function compares the downtrack, provided by routeTrackPos, of each points in the list to get the closest one to the given point's downtrack.
-   * Therefore, it is rather costlier method than comparing cartesian distance between the points and getting the closest. This way, however, the function
-   * correctly returns the end point if the given state, despite being valid, is farther than the given points and can technically be near any of them.
-   * 
-   * \param points The points to evaluate
-   * \param state The current vehicle state
-   * 
-   * \return index of nearest point in points
-   */
-  virtual int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points,
-                                      const cav_msgs::VehicleState& state) const  = 0;
-  /**
-   * \brief Returns the nearest point to the provided vehicle pose in the provided list by utilizing the downtrack measured along the route
-   * This function compares the downtrack, provided by routeTrackPos, of each points in the list to get the closest one to the given downtrack.
-   * 
-   * \param points BasicLineString2d points
-   * \param ending_downtrack ending downtrack along the route to get index of
-   * 
-   * \return index of nearest point in points
-   */
-  virtual int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, double ending_downtrack) const  = 0;
-
-  /**
-   * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
-   */ 
-  virtual void split_point_speed_pairs(const std::vector<PointSpeedPair>& points, std::vector<lanelet::BasicPoint2d>* basic_points,
-                            std::vector<double>* speeds)  const  = 0;
 };
 
 // Helpful using declarations for carma_wm classes

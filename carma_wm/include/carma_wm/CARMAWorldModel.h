@@ -41,7 +41,6 @@ namespace carma_wm
  */
 class CARMAWorldModel : public WorldModel
 {
-
 public:
   /**
    * @brief Constructor
@@ -116,7 +115,7 @@ public:
 
   TrackPos routeTrackPos(const lanelet::BasicPoint2d& point) const override;
 
-  std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end, bool shortest_path_only = false, bool bounds_inclusive = true) const override;
+  std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end, bool shortest_path_only = false) const override;
 
   std::vector<lanelet::BasicPoint2d> sampleRoutePoints(double start_downtrack, double end_downtrack, double step_size) const override;
 
@@ -153,14 +152,7 @@ public:
 
   size_t getMapVersion() const override;
 
-  int get_nearest_index_by_downtrack(const std::vector<PointSpeedPair>& points,
-                                      const cav_msgs::VehicleState& state) const override;
-  int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points,
-                                        const cav_msgs::VehicleState& state) const override;
-  int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, double ending_downtrack) const override;
 
-  void split_point_speed_pairs(const std::vector<PointSpeedPair>& points, std::vector<lanelet::BasicPoint2d>* basic_points,
-                            std::vector<double>* speeds) const override;
 private:
   
   double config_speed_limit_;

@@ -33,11 +33,13 @@
 #include <autoware_msgs/Lane.h>
 #include <ros/ros.h>
 #include <carma_debug_msgs/TrajectoryCurvatureSpeeds.h>
+#include <basic_autonomy/helper_functions.h>
+
 namespace inlanecruising_plugin
 {
 using PublishPluginDiscoveryCB = std::function<void(const cav_msgs::Plugin&)>;
 using DebugPublisher = std::function<void(const carma_debug_msgs::TrajectoryCurvatureSpeeds&)>;
-using PointSpeedPair = carma_wm::PointSpeedPair;
+using PointSpeedPair = basic_autonomy::waypoint_generation::PointSpeedPair;
 
 /**
  * \brief Class containing primary business logic for the In-Lane Cruising Plugin

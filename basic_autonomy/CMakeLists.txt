@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 LEIDOS.
+# Copyright (C) 2018-2020 LEIDOS.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -13,8 +13,9 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 #
-cmake_minimum_required(VERSION 3.0.2)
-project(cooperative_lanechange)
+
+cmake_minimum_required(VERSION 2.8.3)
+project(basic_autonomy)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++14)
@@ -25,44 +26,33 @@ set( CATKIN_DEPS
   roscpp
   std_msgs
   cav_msgs
-  cav_srvs
-  carma_utils
-  trajectory_utils
-  autoware_msgs
   carma_wm
-  tf
-  tf2_ros
-  tf2_geometry_msgs
-  unobstructed_lanechange
-  roslib
-  basic_autonomy
 )
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
  ${CATKIN_DEPS}
 )
+
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost)
 find_package(Eigen3 REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
 ###################################
 
-
 catkin_package(
-   INCLUDE_DIRS include
-   CATKIN_DEPENDS ${CATKIN_DEPS}
-   DEPENDS Boost Eigen3
+  INCLUDE_DIRS include
+  CATKIN_DEPENDS ${CATKIN_DEPS}
+  LIBRARIES basic_autonomy
+  DEPENDS Boost EIGEN3
 )
 
 ###########
 ## Build ##
 ###########
 
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
@@ -70,53 +60,45 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
 )
 
-file(GLOB_RECURSE headers */*.hpp */*.h)
+add_library(basic_autonomy 
+  src/basic_autonomy.cpp
+)
 
-add_executable( ${PROJECT_NAME}
-  ${headers}
-  src/cooperative_lanechange.cpp
-  src/main.cpp)
+add_dependencies(basic_autonomy ${catkin_EXPORTED_TARGETS})
+target_link_libraries(basic_autonomy ${catkin_LIBRARIES})
 
-
-add_library(cooperative_lanechange_plugin_lib src/cooperative_lanechange.cpp src/smoothing/BSpline.cpp)
-
-add_dependencies(cooperative_lanechange_plugin_lib ${catkin_EXPORTED_TARGETS})
-
-target_link_libraries(${PROJECT_NAME} cooperative_lanechange_plugin_lib ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+#target_link_libraries(basic_autonomy ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+#add_dependencies(basic_autonomy ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 
 #############
 ## Install ##
 #############
 
-
 install(DIRECTORY include
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
 ## Install C++
-install(TARGETS ${PROJECT_NAME} cooperative_lanechange_plugin_lib
+install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-# Mark other files for installation (e.g. launch and bag files, etc.)
-install(DIRECTORY
-  launch
-  config
+## Install Other Resources
+install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
-
 
 #############
 ## Testing ##
 #############
-# catkin_add_gmock(${PROJECT_NAME}-test
-#  test/test_cooperative_lanechange.cpp
-#  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/test)
-# target_link_libraries(${PROJECT_NAME}-test cooperative_lanechange_plugin_lib ${catkin_LIBRARIES})
 
-catkin_add_gmock(${PROJECT_NAME}-test test/test_cooperative_plugin.cpp)
-target_link_libraries(${PROJECT_NAME}-test cooperative_lanechange_plugin_lib ${catkin_LIBRARIES})
-
+# if(CATKIN_ENABLE_TESTING)
+# 
+#   catkin_add_gmock(${PROJECT_NAME}-test 
+#     test/test_waypoint_generation.cpp
+#   )
+#   target_link_libraries(${PROJECT_NAME}-test basic_autonomy ${catkin_LIBRARIES})
+# endif()
