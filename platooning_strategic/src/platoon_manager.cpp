@@ -51,7 +51,8 @@ namespace platoon_strategic
         // If we are currently in a follower state:
         // 1. We will update platoon ID based on leader's STATUS
         // 2. We will update platoon members info based on platoon ID if it is in front of us 
-        if(isFollower) {
+        if(isFollower) 
+        {
                     
             bool isFromLeader = (leaderID == senderId);
             
@@ -65,7 +66,8 @@ namespace platoon_strategic
                 currentPlatoonID = platoonId;
                 updatesOrAddMemberInfo(senderId, senderBsmId, cmdSpeed, dtDistance, curSpeed);
 
-            } else if((currentPlatoonID == platoonId) && isVehicleInFrontOf) 
+            } 
+            else if((currentPlatoonID == platoonId) && isVehicleInFrontOf) 
             {
                 ROS_DEBUG_STREAM("This STATUS messages is from our platoon in front of us. Updating the info...");
                 updatesOrAddMemberInfo(senderId, senderBsmId, cmdSpeed, dtDistance, curSpeed);
@@ -73,12 +75,16 @@ namespace platoon_strategic
                 ROS_DEBUG_STREAM("The first vehicle in our list is now " << leaderID);
 
             } 
-            else{
+            else
+            {
                 ROS_DEBUG_STREAM("This STATUS message is not from our platoon. We ignore this message with id: " << senderId);
             }
-        } else {
+        }
+        else
+        {
             // If we are currently in any leader state, we only updates platoon member based on platoon ID
-            if(currentPlatoonID == platoonId) {
+            if(true)//TOTO update later(currentPlatoonID == platoonId)
+            {
                 ROS_DEBUG_STREAM("This STATUS messages is from our platoon. Updating the info...");
                 updatesOrAddMemberInfo(senderId, senderBsmId, cmdSpeed, dtDistance, curSpeed);
             }
@@ -143,7 +149,11 @@ namespace platoon_strategic
 
     PlatoonMember PlatoonManager::getLeader(){
         PlatoonMember leader ;
-        if(isFollower && platoon.size() != 0) {
+        ROS_DEBUG_STREAM("platoon size: " << platoon.size());
+        if(isFollower && platoon.size() != 0) 
+        {
+
+            ROS_DEBUG_STREAM("Leader initially set as first vehicle in platoon");
             // return the first vehicle in the platoon as default if no valid algorithm applied
             leader = platoon[0];
             if (algorithmType_ == "APF_ALGORITHM"){
@@ -151,7 +161,7 @@ namespace platoon_strategic
                     
                     if(newLeaderIndex < platoon.size() && newLeaderIndex >= 0) {
                         leader = platoon[newLeaderIndex];
-                        ROS_DEBUG("APF output: " , leader.staticId);
+                        ROS_DEBUG_STREAM("APF output: " << leader.staticId);
                         previousFunctionalLeaderIndex_ = newLeaderIndex;
                         previousFunctionalLeaderID_ = leader.staticId;
                     }
@@ -160,7 +170,7 @@ namespace platoon_strategic
                         leader = platoon[platoon.size() - 1];
                         previousFunctionalLeaderIndex_ = platoon.size() - 1;
                         previousFunctionalLeaderID_ = leader.staticId;
-                        ROS_DEBUG("Based on the output of APF algorithm we start to follow our predecessor.");
+                        ROS_DEBUG_STREAM("Based on the output of APF algorithm we start to follow our predecessor.");
                     }
             }
         }

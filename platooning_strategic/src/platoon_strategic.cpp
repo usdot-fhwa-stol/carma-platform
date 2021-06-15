@@ -812,6 +812,7 @@ namespace platoon_strategic
             status_msg.size_limit = config_.maxPlatoonSize;
 
             PlatoonMember platoon_leader = pm_.getLeader();
+            ROS_DEBUG_STREAM("platoon_leader " << platoon_leader.staticId);
             if (platoon_leader.staticId != "")
             {
                 status_msg.leader_id = platoon_leader.staticId;
@@ -824,7 +825,7 @@ namespace platoon_strategic
             {
                 status_msg.leader_id = config_.vehicle_id;
                 status_msg.leader_downtrack_distance = current_downtrack_;
-                status_msg.leader_cmd_speed = current_speed_;
+                status_msg.leader_cmd_speed = cmd_speed_;
                 status_msg.host_platoon_position = 0;
    
             }
