@@ -1046,7 +1046,7 @@ void CARMAWorldModel::setConfigSpeedLimit(double config_lim)
   config_speed_limit_ = config_lim;
 }
 
-int CARMAWorldModel::get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points, double ending_downtrack) const{
+int CARMAWorldModel::get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, double ending_downtrack) const{
     int best_index = points.size() - 1;
     for(int i=0;i < points.size();i++){
         double downtrack = routeTrackPos(points[i]).downtrack;
@@ -1056,24 +1056,24 @@ int CARMAWorldModel::get_nearest_point_index(const std::vector<lanelet::BasicPoi
             {
               throw std::invalid_argument("Given points are beyond the ending_downtrack");
             }
-            ROS_DEBUG_STREAM("get_nearest_point_index>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y() << ", downtrack: "<< downtrack);
+            ROS_DEBUG_STREAM("get_nearest_index_by_downtrack>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y() << ", downtrack: "<< downtrack);
             break;
         }
     }
-    ROS_DEBUG_STREAM("get_nearest_point_index>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y());
+    ROS_DEBUG_STREAM("get_nearest_index_by_downtrack>> Found best_idx: " << best_index<<", points[i].x(): " << points[best_index].x() << ", points[i].y(): " << points[best_index].y());
 
     return best_index;
 }
 
-int CARMAWorldModel::get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points,
+int CARMAWorldModel::get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points,
                                             const cav_msgs::VehicleState& state) const
 {
     lanelet::BasicPoint2d state_pos(state.X_pos_global, state.Y_pos_global);
     double ending_downtrack = routeTrackPos(state_pos).downtrack;
-    return get_nearest_point_index(points, ending_downtrack);
+    return get_nearest_index_by_downtrack(points, ending_downtrack);
 }
 
-int CARMAWorldModel::get_nearest_point_index(const std::vector<PointSpeedPair>& points,
+int CARMAWorldModel::get_nearest_index_by_downtrack(const std::vector<PointSpeedPair>& points,
                                             const cav_msgs::VehicleState& state) const
 {
     lanelet::BasicPoint2d state_pos(state.X_pos_global, state.Y_pos_global);
@@ -1081,7 +1081,7 @@ int CARMAWorldModel::get_nearest_point_index(const std::vector<PointSpeedPair>& 
     std::vector<lanelet::BasicPoint2d> basic_points;
     std::vector<double> speeds;
     split_point_speed_pairs(points, &basic_points, &speeds);
-    return get_nearest_point_index(basic_points, ending_downtrack);
+    return get_nearest_index_by_downtrack(basic_points, ending_downtrack);
 }
 
 void CARMAWorldModel::split_point_speed_pairs(const std::vector<PointSpeedPair>& points,

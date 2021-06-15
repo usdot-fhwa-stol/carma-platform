@@ -299,7 +299,7 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   log::printDebugPerLine(points, &log::pointSpeedPairToStream);
 
-  int nearest_pt_index = wm_->get_nearest_point_index(points, state);
+  int nearest_pt_index = wm_->get_nearest_index_by_downtrack(points, state);
 
   ROS_DEBUG_STREAM("NearestPtIndex: " << nearest_pt_index);
 
@@ -394,12 +394,12 @@ std::vector<cav_msgs::TrajectoryPlanPoint> InLaneCruisingPlugin::compose_traject
 
   // Add current vehicle point to front of the trajectory
 
-  nearest_pt_index = wm_->get_nearest_point_index(all_sampling_points, state);
+  nearest_pt_index = wm_->get_nearest_index_by_downtrack(all_sampling_points, state);
   ROS_DEBUG_STREAM("Current state's nearest_pt_index: " << nearest_pt_index);
   ROS_DEBUG_STREAM("Curvature right now: " << better_curvature[nearest_pt_index] << ", at state x: " << state.X_pos_global << ", state y: " << state.Y_pos_global);
   ROS_DEBUG_STREAM("Corresponding to point: x: " << all_sampling_points[nearest_pt_index].x() << ", y:" << all_sampling_points[nearest_pt_index].y());
 
-  int buffer_pt_index = wm_->get_nearest_point_index(all_sampling_points, ending_state_before_buffer);
+  int buffer_pt_index = wm_->get_nearest_index_by_downtrack(all_sampling_points, ending_state_before_buffer);
   ROS_DEBUG_STREAM("Ending state's index before applying buffer (buffer_pt_index): " << buffer_pt_index);
   ROS_DEBUG_STREAM("Corresponding to point: x: " << all_sampling_points[buffer_pt_index].x() << ", y:" << all_sampling_points[buffer_pt_index].y());
   

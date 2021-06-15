@@ -354,34 +354,41 @@ public:
   virtual size_t getMapVersion() const = 0;
 
   /**
-   * \brief Overload: Returns the nearest point to the provided vehicle pose in the provided list
+   * \brief Overload: Returns the nearest point to the provided vehicle pose in the provided list by utilizing the downtrack measured along the route
+   * NOTE: This function compares the downtrack, provided by routeTrackPos, of each points in the list to get the closest one to the given point's downtrack.
+   * Therefore, it is rather costlier method than comparing cartesian distance between the points and getting the closest. This way, however, the function
+   * correctly returns the end point's index if the given state, despite being valid, is farther than the given points and can technically be near any of them.
    * 
    * \param points The points and speed pairs to evaluate
    * \param state The current vehicle state
    * 
    * \return index of nearest point in points
    */
-  virtual int get_nearest_point_index(const std::vector<PointSpeedPair>& points,
+  virtual int get_nearest_index_by_downtrack(const std::vector<PointSpeedPair>& points,
                                       const cav_msgs::VehicleState& state) const  = 0;
   /**
-   * \brief Overload: Returns the nearest point to the provided vehicle pose in the provided list
+   * \brief Overload: Returns the nearest point to the provided vehicle pose  in the provided list by utilizing the downtrack measured along the route
+   * NOTE: This function compares the downtrack, provided by routeTrackPos, of each points in the list to get the closest one to the given point's downtrack.
+   * Therefore, it is rather costlier method than comparing cartesian distance between the points and getting the closest. This way, however, the function
+   * correctly returns the end point if the given state, despite being valid, is farther than the given points and can technically be near any of them.
    * 
    * \param points The points to evaluate
    * \param state The current vehicle state
    * 
    * \return index of nearest point in points
    */
-  virtual int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points,
+  virtual int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points,
                                       const cav_msgs::VehicleState& state) const  = 0;
   /**
-   * \brief Returns the nearest point to the provided vehicle pose in the provided list
+   * \brief Returns the nearest point to the provided vehicle pose in the provided list by utilizing the downtrack measured along the route
+   * This function compares the downtrack, provided by routeTrackPos, of each points in the list to get the closest one to the given downtrack.
    * 
    * \param points BasicLineString2d points
    * \param ending_downtrack ending downtrack along the route to get index of
    * 
    * \return index of nearest point in points
    */
-  virtual int get_nearest_point_index(const std::vector<lanelet::BasicPoint2d>& points, double ending_downtrack) const  = 0;
+  virtual int get_nearest_index_by_downtrack(const std::vector<lanelet::BasicPoint2d>& points, double ending_downtrack) const  = 0;
 
   /**
    * \brief Helper method to split a list of PointSpeedPair into separate point and speed lists 
