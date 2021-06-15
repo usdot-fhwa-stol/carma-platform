@@ -131,10 +131,6 @@ namespace mobilitypath_publisher
                 traj.offsets.push_back(offset);
             }
         }
-        //according to msg standard, ecef_location is in meters
-        ecef_location.ecef_x = ecef_location.ecef_x /100;
-        ecef_location.ecef_y = ecef_location.ecef_y /100;
-        ecef_location.ecef_z = ecef_location.ecef_z /100;
 
         traj.location = ecef_location; 
 
