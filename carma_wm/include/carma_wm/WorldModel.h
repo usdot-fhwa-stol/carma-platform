@@ -134,7 +134,8 @@ public:
    * \param end The ending downtrack for the query
    * \param shortest_path_only If true the lanelets returned will be part of the route shortest path
    * \param bounds_inclusive If true, the bounds are included so areas which end exactly at start or start exactly at end are
-   * included
+   * included. NOTE: Non-inclusive behavior toggled by !bounds_inclusive is not equivalent to a != check as it merely shrinks bounds
+   * by 0.00001 to get new start and end distances. 
    *
    * \throws std::invalid_argument If the route is not yet loaded or if start >= end
    *
@@ -142,7 +143,7 @@ public:
    * not return lanelets which are not part of the route
    */
   virtual std::vector<lanelet::ConstLanelet> getLaneletsBetween(double start, double end,
-                                                                bool bounds_inclusive = true, bool shortest_path_only = false) const = 0;
+                                                                bool shortest_path_only = false, bool bounds_inclusive = true) const = 0;
 
   /*! \brief Samples the route centerline between the provided downtracks with the provided step size. 
    *         At lane changes the points should exhibit a discontinuous jump at the end of the initial lanelet
