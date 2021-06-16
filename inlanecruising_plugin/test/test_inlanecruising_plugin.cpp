@@ -200,8 +200,8 @@ TEST(InLaneCruisingPluginTest, get_nearest_index_by_downtrack)
   state.X_pos_global = 3.3;
   state.Y_pos_global = 3.3;
 
-  ASSERT_EQ(3, basic_autonomy::waypoint_generation::get_nearest_index_by_downtrack(points, state));
-  ASSERT_EQ(3, basic_autonomy::waypoint_generation::get_nearest_index_by_downtrack(basic_points, state));
+  ASSERT_EQ(3, basic_autonomy::waypoint_generation::get_nearest_index_by_downtrack(points, wm, state));
+  ASSERT_EQ(3, basic_autonomy::waypoint_generation::get_nearest_index_by_downtrack(basic_points, wm, state));
 }
 
 TEST(InLaneCruisingPluginTest, get_nearest_basic_point_index)
@@ -236,7 +236,7 @@ TEST(InLaneCruisingPluginTest, get_nearest_basic_point_index)
   state.X_pos_global = 3.3;
   state.Y_pos_global = 3.3;
 
-  ASSERT_EQ(3, basic_autonomy::waypoint_generation::get_nearest_index_by_downtrack(points, state));
+  ASSERT_EQ(3, basic_autonomy::waypoint_generation::get_nearest_index_by_downtrack(points, wm, state));
 }
 
 TEST(InLaneCruisingPluginTest, split_point_speed_pairs)
