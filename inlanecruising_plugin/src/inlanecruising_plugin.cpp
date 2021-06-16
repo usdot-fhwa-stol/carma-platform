@@ -658,8 +658,8 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
     } 
     
     size_t max_i = points_and_target_speeds.size() - 1;
-    size_t without_buffer_i = points_and_target_speeds.size() - 1;
-    bool found_without_buffer = false;
+    size_t unbuffered_idx = points_and_target_speeds.size() - 1;
+    bool found_unbuffered_idx = false;
     double dist_accumulator = starting_route_downtrack;
     lanelet::BasicPoint2d prev_point;
 
@@ -674,11 +674,11 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
       ROS_DEBUG_STREAM("Index i: " << i << ", delta_d: " << delta_d << ", dist_accumulator:" << dist_accumulator <<", current_point.x():" << current_point.x() << 
         "current_point.y():" << current_point.y());
       dist_accumulator += delta_d;
-      if (dist_accumulator > maneuvers.back().lane_following_maneuver.end_dist && !found_without_buffer)
+      if (dist_accumulator > maneuvers.back().lane_following_maneuver.end_dist && !found_unbuffered_idx)
       {
-        without_buffer_i = i;
-        ROS_DEBUG_STREAM("Found index without_buffer_i at: i: " << i);
-        found_without_buffer = true;
+        unbuffered_idx = i;
+        ROS_DEBUG_STREAM("Found index unbuffered_idx at: i: " << i);
+        found_unbuffered_idx = true;
       }
       if (dist_accumulator > ending_downtrack) {
         max_i = i;
@@ -687,8 +687,8 @@ std::vector<PointSpeedPair> InLaneCruisingPlugin::maneuvers_to_points(const std:
       }
       prev_point = current_point;
     }
-    ending_state_before_buffer.X_pos_global = points_and_target_speeds[without_buffer_i].point.x();
-    ending_state_before_buffer.Y_pos_global = points_and_target_speeds[without_buffer_i].point.y();
+    ending_state_before_buffer.X_pos_global = points_and_target_speeds[unbuffered_idx].point.x();
+    ending_state_before_buffer.Y_pos_global = points_and_target_speeds[unbuffered_idx].point.y();
     ROS_DEBUG_STREAM("Here ending_state_before_buffer.X_pos_global: " << ending_state_before_buffer.X_pos_global << 
       ", and Y_pos_global" << ending_state_before_buffer.Y_pos_global);
 
